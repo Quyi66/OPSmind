@@ -1,13 +1,67 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
+import { resolve } from 'path'
 
-export default defineConfig(({ mode }) => {
+// 插件
+import { createHtmlPlugin } from 'vite-plugin-html'
+import { visualizer } from 'rollup-plugin-visualizer'
+import { VitePWA } from 'vite-plugin-pwa'
+
+export default defineConfig(({ command, mode }) => {
   // 加载环境变量
   const env = loadEnv(mode, process.cwd(), '')
+  const isProduction = mode === 'production'
+  const isDevelopment = mode === 'development'
 
   return {
-    plugins: [vue()],
+    plugins: [
+      vue({
+        script: {
+          defineModel: true,
+          propsDestructure: true
+        }
+      }),
+
+      // HTML 模板处理
+      createHtmlPlugin({
+        inject: {
+          data: {
+            title: env.VITE_APP_TITLE || 'OpsMind Dashboard',
+            description: env.VITE_APP_DESCRIPTION || 'OpsMind Vue 3 Dashboard'
+          }
+        }
+      }),
+
+      // 构建分析（仅生产环境）
+      isProduction && visualizer({
+        filename: 'dist/stats.html',
+        open: false,
+        gzipSize: true,
+        brotliSize: true
+      }),
+
+      // PWA 支持（可选）
+      env.VITE_PWA_ENABLED === 'true' && VitePWA({
+        registerType: 'autoUpdate',
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        },
+        manifest: {
+          name: env.VITE_APP_TITLE || 'OpsMind Dashboard',
+          short_name: 'OpsMind',
+          description: env.VITE_APP_DESCRIPTION,
+          theme_color: '#409eff',
+          icons: [
+            {
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png'
+            }
+          ]
+        }
+      })
+    ].filter(Boolean),
 
     // 设置基础路径，开发环境使用根路径，生产环境使用子路径
     base: mode === 'production' ? '/opsmind/base/' : '/',
@@ -116,7 +170,14 @@ export default defineConfig(({ mode }) => {
     // 路径别名
     resolve: {
       alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url))
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+        '@core': fileURLToPath(new URL('./src/core', import.meta.url)),
+        '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
+        '@modules': fileURLToPath(new URL('./src/modules', import.meta.url)),
+        '@views': fileURLToPath(new URL('./src/views', import.meta.url)),
+        '@config': fileURLToPath(new URL('./src/config', import.meta.url)),
+        '@assets': fileURLToPath(new URL('./src/assets', import.meta.url)),
+        '@styles': fileURLToPath(new URL('./src/styles', import.meta.url))
       }
     },
 
@@ -124,30 +185,102 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: env.VITE_BUILD_OUTDIR || 'dist',
       assetsDir: env.VITE_BUILD_ASSETSDIR || 'assets',
-      // 生成 source map 用于调试
-      sourcemap: mode === 'development' || env.VITE_BUILD_SOURCEMAP === 'true',
+      sourcemap: isDevelopment || env.VITE_BUILD_SOURCEMAP === 'true',
+
+      // 构建目标
+      target: 'es2020',
+
+      // 资源内联限制
+      assetsInlineLimit: 4096,
+
       // 分包策略
       rollupOptions: {
+        input: {
+          main: resolve(__dirname, 'index.html')
+        },
         output: {
-          manualChunks: {
-            'element-plus': ['element-plus'],
-            'vue-vendor': ['vue', 'vue-router', 'pinia'],
-            crypto: ['crypto-js'],
-            axios: ['axios']
+          // 更细粒度的分包
+          manualChunks: (id) => {
+            // 第三方库
+            if (id.includes('node_modules')) {
+              if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
+                return 'vue-vendor'
+              }
+              if (id.includes('element-plus')) {
+                return 'element-plus'
+              }
+              if (id.includes('axios')) {
+                return 'http'
+              }
+              if (id.includes('crypto-js')) {
+                return 'crypto'
+              }
+              return 'vendor'
+            }
+
+            // 核心模块
+            if (id.includes('/src/core/')) {
+              return 'core'
+            }
+
+            // 共享模块
+            if (id.includes('/src/shared/')) {
+              return 'shared'
+            }
+
+            // 业务模块
+            if (id.includes('/src/modules/')) {
+              const match = id.match(/\/src\/modules\/([^\/]+)\//)
+              if (match) {
+                return `module-${match[1]}`
+              }
+            }
+          },
+
+          // 文件命名
+          chunkFileNames: (chunkInfo) => {
+            const facadeModuleId = chunkInfo.facadeModuleId
+            if (facadeModuleId && facadeModuleId.includes('/src/modules/')) {
+              return 'js/modules/[name]-[hash].js'
+            }
+            return 'js/[name]-[hash].js'
+          },
+          entryFileNames: 'js/[name]-[hash].js',
+          assetFileNames: (assetInfo) => {
+            const fileName = assetInfo.names?.[0] || assetInfo.name || 'asset'
+            const info = fileName.split('.')
+            const ext = info[info.length - 1]
+
+            if (/\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/i.test(fileName)) {
+              return `media/[name]-[hash].${ext}`
+            }
+            if (/\.(png|jpe?g|gif|svg)(\?.*)?$/i.test(fileName)) {
+              return `images/[name]-[hash].${ext}`
+            }
+            if (/\.(woff2?|eot|ttf|otf)(\?.*)?$/i.test(fileName)) {
+              return `fonts/[name]-[hash].${ext}`
+            }
+            return `assets/[name]-[hash].${ext}`
           }
         }
       },
+
       // 构建优化
-      minify: mode === 'production' ? 'terser' : false,
-      terserOptions:
-        mode === 'production'
-          ? {
-            compress: {
-              drop_console: true,
-              drop_debugger: true
-            }
-          }
-          : undefined
+      minify: isProduction ? 'terser' : false,
+      terserOptions: isProduction ? {
+        compress: {
+          drop_console: !env.VITE_DEBUG,
+          drop_debugger: true,
+          pure_funcs: ['console.log', 'console.info']
+        },
+        mangle: {
+          safari10: true
+        }
+      } : undefined,
+
+      // 构建报告
+      reportCompressedSize: isProduction,
+      chunkSizeWarningLimit: 1000
     },
 
     // CSS 配置

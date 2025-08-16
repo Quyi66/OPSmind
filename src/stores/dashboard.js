@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { angularBridge } from '@/services/angularjs-bridge'
+import { hybridModuleManager } from '@/core/modules/HybridModuleManager.js'
+import { apiService } from '@/core/api'
+import { authService } from '@/core/auth'
 
 export const useDashboardStore = defineStore('dashboard', () => {
   // 状态
@@ -9,6 +12,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const systemStats = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const lastUpdated = ref(null)
 
   // 计算属性
   const desktopModules = computed(() => {
@@ -21,6 +25,25 @@ export const useDashboardStore = defineStore('dashboard', () => {
     return availableModules.value
       .filter(module => module.showIn && module.showIn.dock)
       .sort((a, b) => a.showIn.dock - b.showIn.dock)
+  })
+
+  // 混合模块统计
+  const moduleStats = computed(() => {
+    const stats = hybridModuleManager.getMigrationStats()
+    return {
+      total: availableModules.value.length,
+      vue: stats.vue,
+      angular: stats.angular,
+      hybrid: stats.hybrid,
+      migrationProgress: stats.migrationProgress
+    }
+  })
+
+  // 是否需要刷新数据
+  const needsRefresh = computed(() => {
+    if (!lastUpdated.value) return true
+    const fiveMinutes = 5 * 60 * 1000
+    return Date.now() - lastUpdated.value > fiveMinutes
   })
 
   // 操作方法

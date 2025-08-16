@@ -8,7 +8,14 @@ export default defineConfig({
   // 路径别名
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@core': fileURLToPath(new URL('./src/core', import.meta.url)),
+      '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
+      '@modules': fileURLToPath(new URL('./src/modules', import.meta.url)),
+      '@views': fileURLToPath(new URL('./src/views', import.meta.url)),
+      '@config': fileURLToPath(new URL('./src/config', import.meta.url)),
+      '@assets': fileURLToPath(new URL('./src/assets', import.meta.url)),
+      '@styles': fileURLToPath(new URL('./src/styles', import.meta.url))
     }
   },
 
@@ -31,15 +38,32 @@ export default defineConfig({
     // 测试覆盖率配置
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'html', 'lcov'],
+      reportsDirectory: './coverage',
       exclude: [
         'node_modules/',
         'src/main.js',
-        'src/router/',
+        'src/core/router/',
         '**/*.config.js',
         '**/*.config.ts',
-        'tests/'
-      ]
+        'tests/',
+        'build/',
+        'dist/',
+        '.husky/',
+        '.github/',
+        '**/*.d.ts'
+      ],
+      include: [
+        'src/**/*.{js,ts,vue}'
+      ],
+      thresholds: {
+        global: {
+          branches: 70,
+          functions: 70,
+          lines: 70,
+          statements: 70
+        }
+      }
     },
 
     // 测试超时时间
