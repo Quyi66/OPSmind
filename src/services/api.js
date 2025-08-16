@@ -31,8 +31,10 @@ class ApiService {
   async getTenants() {
     try {
       const cacheBuster = Date.now()
-      const response = await fetch(`${this.baseURL}/oplus-portal/api/tenants/all?cacheBuster=${cacheBuster}`)
-      
+      const response = await fetch(
+        `${this.baseURL}/oplus-portal/api/tenants/all?cacheBuster=${cacheBuster}`
+      )
+
       if (response.ok) {
         const tenants = await response.json()
         console.log('✅ Tenants loaded:', tenants.length)
@@ -49,7 +51,7 @@ class ApiService {
   async verifyLicense() {
     try {
       const response = await fetch(`${this.baseURL}/oplus-portal/api/licenses/verify`)
-      
+
       if (response.ok) {
         const result = await response.json()
         console.log('✅ License verified')
@@ -66,8 +68,10 @@ class ApiService {
   async checkOTP() {
     try {
       const cacheBuster = Date.now()
-      const response = await fetch(`${this.baseURL}/oplus-portal/api/authenticate/otp?cacheBuster=${cacheBuster}`)
-      
+      const response = await fetch(
+        `${this.baseURL}/oplus-portal/api/authenticate/otp?cacheBuster=${cacheBuster}`
+      )
+
       if (response.ok) {
         const result = await response.json()
         console.log('✅ OTP status checked:', result)
@@ -84,13 +88,13 @@ class ApiService {
   async getAccount() {
     try {
       const response = await this.authenticatedRequest(`${this.baseURL}/oplus-portal/api/account`)
-      
+
       if (response.ok) {
         const accountInfo = await response.json()
         console.log('✅ Account info loaded:', accountInfo.login || accountInfo.username)
         return accountInfo
       }
-      
+
       throw new Error('Failed to get account info')
     } catch (error) {
       console.error('❌ Failed to get account info:', error)
@@ -123,14 +127,16 @@ class ApiService {
   // 获取系统统计信息
   async getSystemStats() {
     try {
-      const response = await this.authenticatedRequest(`${this.baseURL}/oplus-portal/api/dashboard/stats`)
-      
+      const response = await this.authenticatedRequest(
+        `${this.baseURL}/oplus-portal/api/dashboard/stats`
+      )
+
       if (response.ok) {
         const stats = await response.json()
         console.log('✅ System stats loaded')
         return stats
       }
-      
+
       // 如果 API 不存在，返回模拟数据
       return this.getMockStats()
     } catch (error) {

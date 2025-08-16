@@ -25,8 +25,6 @@ export class AngularModuleManager {
     return getAllModules()
   }
 
-
-
   /**
    * 根据代码获取模块配置
    */

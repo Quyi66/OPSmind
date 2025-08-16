@@ -78,8 +78,7 @@ const router = createRouter({
         title: 'CAC 模块测试',
         requiresAuth: true
       }
-    },
-
+    }
   ]
 })
 

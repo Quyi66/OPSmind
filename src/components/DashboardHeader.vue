@@ -9,7 +9,7 @@
         <h1 class="app-title">OpsMind</h1>
       </div>
     </div>
-    
+
     <div class="header-center">
       <!-- 搜索框 -->
       <div class="search-section">
@@ -24,21 +24,19 @@
             <el-icon><Search /></el-icon>
           </template>
           <template #append>
-            <el-button @click="handleSearch" :loading="loading">
-              搜索
-            </el-button>
+            <el-button @click="handleSearch" :loading="loading">搜索</el-button>
           </template>
         </el-input>
       </div>
     </div>
-    
+
     <div class="header-right">
       <!-- 操作按钮 -->
       <div class="actions-section">
         <!-- 刷新按钮 -->
         <el-tooltip content="刷新数据" placement="bottom">
-          <el-button 
-            circle 
+          <el-button
+            circle
             @click="$emit('refresh')"
             :loading="loading"
             type="text"
@@ -47,19 +45,14 @@
             <el-icon><Refresh /></el-icon>
           </el-button>
         </el-tooltip>
-        
+
         <!-- 帮助按钮 -->
         <el-tooltip content="帮助文档" placement="bottom">
-          <el-button 
-            circle 
-            @click="openHelp"
-            type="text"
-            class="action-btn"
-          >
+          <el-button circle @click="openHelp" type="text" class="action-btn">
             <el-icon><QuestionFilled /></el-icon>
           </el-button>
         </el-tooltip>
-        
+
         <!-- 用户信息 -->
         <el-dropdown @command="handleUserCommand" class="user-dropdown">
           <div class="user-info">
@@ -96,14 +89,14 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/services/auth'
-import { 
-  Search, 
-  Refresh, 
-  QuestionFilled, 
-  User, 
-  ArrowDown, 
-  Setting, 
-  SwitchButton 
+import {
+  Search,
+  Refresh,
+  QuestionFilled,
+  User,
+  ArrowDown,
+  Setting,
+  SwitchButton
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -134,7 +127,7 @@ const handleSearch = () => {
   }
 }
 
-const handleUserCommand = (command) => {
+const handleUserCommand = command => {
   switch (command) {
     case 'profile':
       ElMessage.info('个人资料功能开发中...')
@@ -236,7 +229,7 @@ const openHelp = () => {
 .action-btn {
   font-size: 18px;
   color: #595959;
-  
+
   &:hover {
     color: #1890ff;
   }
@@ -253,7 +246,7 @@ const openHelp = () => {
   padding: 8px 12px;
   border-radius: 6px;
   transition: background-color 0.3s;
-  
+
   &:hover {
     background-color: #f5f5f5;
   }
@@ -279,15 +272,15 @@ const openHelp = () => {
   .dashboard-header {
     padding: 0 16px;
   }
-  
+
   .header-center {
     margin: 0 20px;
   }
-  
+
   .app-title {
     display: none;
   }
-  
+
   .user-name {
     display: none;
   }
@@ -297,7 +290,7 @@ const openHelp = () => {
   .header-center {
     display: none;
   }
-  
+
   .actions-section {
     gap: 8px;
   }

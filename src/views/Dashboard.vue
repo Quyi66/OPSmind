@@ -1,38 +1,35 @@
 <template>
   <div class="dashboard">
     <!-- 顶部导航栏 -->
-    <DashboardHeader 
-      :user="dashboardStore.currentUser" 
+    <DashboardHeader
+      :user="dashboardStore.currentUser"
       :loading="dashboardStore.loading"
       @search="handleSearch"
       @refresh="handleRefresh"
     />
-    
+
     <!-- 主内容区 -->
     <div class="dashboard-content">
       <!-- 加载状态 -->
-      <div v-if="dashboardStore.loading" class="loading-container" v-loading="true" element-loading-text="正在加载仪表盘数据...">
-      </div>
-      
+      <div
+        v-if="dashboardStore.loading"
+        class="loading-container"
+        v-loading="true"
+        element-loading-text="正在加载仪表盘数据..."
+      ></div>
+
       <!-- 错误状态 -->
       <div v-else-if="dashboardStore.error" class="error-container">
-        <el-alert
-          :title="dashboardStore.error"
-          type="error"
-          show-icon
-          :closable="false"
-        />
-        <el-button @click="handleRefresh" type="primary" class="mt-3">
-          重新加载
-        </el-button>
+        <el-alert :title="dashboardStore.error" type="error" show-icon :closable="false" />
+        <el-button @click="handleRefresh" type="primary" class="mt-3">重新加载</el-button>
       </div>
-      
+
       <!-- 正常内容 -->
       <div v-else class="dashboard-main">
         <!-- 统计卡片区域 -->
         <div class="stats-section">
-          <StatsCard 
-            v-for="stat in dashboardStore.systemStats" 
+          <StatsCard
+            v-for="stat in dashboardStore.systemStats"
             :key="stat.id"
             :title="stat.title"
             :value="stat.value"
@@ -40,7 +37,7 @@
             @click="handleStatClick(stat)"
           />
         </div>
-        
+
         <!-- 功能模块网格 -->
         <div class="modules-section">
           <h2 class="section-title">功能模块</h2>
@@ -53,7 +50,7 @@
             />
           </div>
         </div>
-        
+
         <!-- 快速操作区域 -->
         <div class="quick-actions-section">
           <QuickActions />
@@ -93,7 +90,7 @@ const loadDashboardData = async () => {
   }
 }
 
-const handleModuleClick = async (module) => {
+const handleModuleClick = async module => {
   try {
     await dashboardStore.openModule(module.code)
   } catch (error) {
@@ -101,12 +98,12 @@ const handleModuleClick = async (module) => {
   }
 }
 
-const handleStatClick = (stat) => {
+const handleStatClick = stat => {
   // 根据统计项类型跳转到相应页面
   console.log('Stat clicked:', stat)
 }
 
-const handleSearch = (query) => {
+const handleSearch = query => {
   // 实现搜索功能
   console.log('Search:', query)
   ElMessage.info(`搜索: ${query}`)
@@ -181,12 +178,12 @@ const handleRefresh = async () => {
   .dashboard-content {
     padding: 10px;
   }
-  
+
   .stats-section {
     grid-template-columns: 1fr;
     gap: 10px;
   }
-  
+
   .modules-grid {
     grid-template-columns: 1fr;
     gap: 10px;

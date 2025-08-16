@@ -3,7 +3,7 @@
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <el-loading-directive v-loading="loading" element-loading-text="正在加载模块...">
-        <div style="height: 400px;"></div>
+        <div style="height: 400px"></div>
       </el-loading-directive>
     </div>
 
@@ -41,7 +41,7 @@ const props = defineProps({
   moduleCode: {
     type: String,
     required: true,
-    validator: (value) => ['cac', 'jao', 'dts', 'udp', 'gfs', 'acm'].includes(value)
+    validator: value => ['cac', 'jao', 'dts', 'udp', 'gfs', 'acm'].includes(value)
   },
   moduleName: {
     type: String,
@@ -68,9 +68,7 @@ const moduleConfigs = {
       '/app/modules/cac/cac.controller.js',
       '/app/modules/cac/cac.state.js'
     ],
-    styles: [
-      '/content/css/oplus-cac.css'
-    ],
+    styles: ['/content/css/oplus-cac.css'],
     templateUrl: '/app/modules/cac/cac-index.html',
     controller: 'cacCtrl',
     controllerAs: 'cacVm'
@@ -82,9 +80,7 @@ const moduleConfigs = {
       '/app/modules/jao/jao.state.js',
       '/app/modules/jao/job.service.js'
     ],
-    styles: [
-      '/content/css/oplus-jao.css'
-    ],
+    styles: ['/content/css/oplus-jao.css'],
     templateUrl: '/app/modules/jao/jao-index.html'
   }
 }
@@ -94,31 +90,30 @@ const loadAngularModule = async () => {
   try {
     loading.value = true
     error.value = ''
-    
+
     console.log('🔄 Loading AngularJS module:', props.moduleCode)
-    
+
     const config = moduleConfigs[props.moduleCode]
     if (!config) {
       throw new Error(`不支持的模块: ${props.moduleCode}`)
     }
-    
+
     // 1. 确保 AngularJS 已加载
     await ensureAngularJSLoaded()
-    
+
     // 2. 加载模块样式
     await loadModuleStyles(config.styles)
-    
+
     // 3. 加载模块依赖
     await loadModuleDependencies(config.dependencies)
-    
+
     // 4. 创建 AngularJS 应用
     await createAngularApp(config)
-    
+
     loading.value = false
     console.log('✅ AngularJS module loaded successfully:', props.moduleCode)
-    
+
     emit('loaded', props.moduleCode)
-    
   } catch (err) {
     console.error('❌ Failed to load AngularJS module:', err)
     error.value = err.message || '模块加载失败'
@@ -132,7 +127,7 @@ const ensureAngularJSLoaded = async () => {
   if (window.angular) {
     return Promise.resolve()
   }
-  
+
   return new Promise((resolve, reject) => {
     const script = document.createElement('script')
     script.src = '/lib/angular/angular.js'
@@ -146,7 +141,7 @@ const ensureAngularJSLoaded = async () => {
 }
 
 // 加载模块样式
-const loadModuleStyles = async (styles) => {
+const loadModuleStyles = async styles => {
   const promises = styles.map(styleUrl => {
     return new Promise((resolve, reject) => {
       // 检查是否已加载
@@ -154,7 +149,7 @@ const loadModuleStyles = async (styles) => {
         resolve()
         return
       }
-      
+
       const link = document.createElement('link')
       link.rel = 'stylesheet'
       link.href = styleUrl
@@ -163,13 +158,13 @@ const loadModuleStyles = async (styles) => {
       document.head.appendChild(link)
     })
   })
-  
+
   await Promise.all(promises)
   console.log('✅ Module styles loaded')
 }
 
 // 加载模块依赖
-const loadModuleDependencies = async (dependencies) => {
+const loadModuleDependencies = async dependencies => {
   for (const dep of dependencies) {
     await loadScript(dep)
   }
@@ -177,14 +172,14 @@ const loadModuleDependencies = async (dependencies) => {
 }
 
 // 加载脚本
-const loadScript = (src) => {
+const loadScript = src => {
   return new Promise((resolve, reject) => {
     // 检查是否已加载
     if (document.querySelector(`script[src="${src}"]`)) {
       resolve()
       return
     }
-    
+
     const script = document.createElement('script')
     script.src = src
     script.onload = resolve
@@ -194,49 +189,54 @@ const loadScript = (src) => {
 }
 
 // 创建 AngularJS 应用
-const createAngularApp = async (config) => {
+const createAngularApp = async config => {
   await nextTick()
-  
+
   if (!angularContainer.value) {
     throw new Error('Angular container not found')
   }
-  
+
   // 设置认证信息
   setupAuthBridge()
-  
+
   // 创建一个独立的 AngularJS 模块
   const appModuleName = `embedded-${props.moduleCode}-${Date.now()}`
-  
+
   // 定义嵌入式模块，依赖目标模块
-  window.angular.module(appModuleName, [config.moduleName, 'ui.router'])
-    .controller('EmbeddedController', ['$scope', '$state', function($scope, $state) {
-      console.log('🎯 Embedded AngularJS controller initialized')
-      
-      $scope.moduleCode = props.moduleCode
-      $scope.moduleName = props.moduleName
-      
-      // 模块特定的初始化逻辑
-      if (props.moduleCode === 'cac') {
-        initCacModule($scope)
+  window.angular
+    .module(appModuleName, [config.moduleName, 'ui.router'])
+    .controller('EmbeddedController', [
+      '$scope',
+      '$state',
+      function ($scope, $state) {
+        console.log('🎯 Embedded AngularJS controller initialized')
+
+        $scope.moduleCode = props.moduleCode
+        $scope.moduleName = props.moduleName
+
+        // 模块特定的初始化逻辑
+        if (props.moduleCode === 'cac') {
+          initCacModule($scope)
+        }
+
+        // 通知Vue组件模块已准备就绪
+        emit('ready', {
+          moduleCode: props.moduleCode,
+          scope: $scope,
+          state: $state
+        })
       }
-      
-      // 通知Vue组件模块已准备就绪
-      emit('ready', {
-        moduleCode: props.moduleCode,
-        scope: $scope,
-        state: $state
-      })
-    }])
-  
+    ])
+
   // 加载模板
   const template = await loadTemplate(config.templateUrl)
   angularContainer.value.innerHTML = template
-  
+
   // 启动 AngularJS 应用
   angularElement.value = window.angular.element(angularContainer.value)
   window.angular.bootstrap(angularContainer.value, [appModuleName])
   angularScope.value = angularElement.value.scope()
-  
+
   console.log('🚀 AngularJS app bootstrapped with module:', props.moduleCode)
 }
 
@@ -244,39 +244,39 @@ const createAngularApp = async (config) => {
 const setupAuthBridge = () => {
   const token = authService.getToken()
   const user = authService.getCurrentUser()
-  
+
   if (token && user) {
     // 设置全局变量供 AngularJS 使用
     window.vueAuthToken = token
     window.vueUserInfo = user
-    
+
     console.log('🔗 Auth bridge setup for embedded module')
   }
 }
 
 // 初始化CAC模块特定逻辑
-const initCacModule = (scope) => {
+const initCacModule = scope => {
   scope.views = {
-    chosed: "",
-    emailMenuEnabled: "yes"
+    chosed: '',
+    emailMenuEnabled: 'yes'
   }
-  
-  scope.startInspection = function() {
+
+  scope.startInspection = function () {
     console.log('开始系统巡检...')
     // 调用真实的 CAC 服务
   }
-  
-  scope.viewReports = function() {
+
+  scope.viewReports = function () {
     console.log('查看巡检报告...')
   }
-  
-  scope.manageHosts = function() {
+
+  scope.manageHosts = function () {
     console.log('主机管理...')
   }
 }
 
 // 加载模板
-const loadTemplate = async (templateUrl) => {
+const loadTemplate = async templateUrl => {
   try {
     const response = await fetch(templateUrl)
     if (!response.ok) {

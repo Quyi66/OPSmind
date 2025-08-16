@@ -5,22 +5,15 @@
       <div class="module-header">
         <h3>{{ moduleTitle }}</h3>
         <div class="module-actions">
-          <el-button @click="openInNewWindow" type="primary" size="small">
-            新窗口打开
-          </el-button>
-          <el-button @click="closeModule" size="small">
-            关闭
-          </el-button>
+          <el-button @click="openInNewWindow" type="primary" size="small">新窗口打开</el-button>
+          <el-button @click="closeModule" size="small">关闭</el-button>
         </div>
       </div>
 
       <div class="module-content-container">
         <!-- 直接嵌入的 AngularJS 模块 -->
         <div v-if="isDirectModule" class="direct-module">
-          <AngularJSEmbedded
-            :module-code="moduleCode"
-            :module-name="moduleTitle"
-          />
+          <AngularJSEmbedded :module-code="moduleCode" :module-name="moduleTitle" />
         </div>
 
         <!-- iframe 模块 -->
@@ -29,8 +22,8 @@
             :src="moduleUrl"
             frameborder="0"
             class="angular-iframe"
-            @load="onIframeLoad">
-          </iframe>
+            @load="onIframeLoad"
+          ></iframe>
         </div>
       </div>
     </div>
@@ -48,18 +41,18 @@ const moduleUrl = ref('')
 const moduleTitle = ref('')
 
 const moduleNames = {
-  '__jao': '作业编排',
-  '__gfs': '脚本管理',
-  '__cmd': '命令管理',
-  'cac': '配置管理',
-  '__dts': '数据传输',
-  '__udp': '统一开发平台',
-  '__flow': '工作流',
-  '__os': '操作系统',
-  '__search': '搜索',
-  '__ssc': '系统服务中心',
-  '__adm': '系统管理',
-  '__dev': '开发工具'
+  __jao: '作业编排',
+  __gfs: '脚本管理',
+  __cmd: '命令管理',
+  cac: '配置管理',
+  __dts: '数据传输',
+  __udp: '统一开发平台',
+  __flow: '工作流',
+  __os: '操作系统',
+  __search: '搜索',
+  __ssc: '系统服务中心',
+  __adm: '系统管理',
+  __dev: '开发工具'
 }
 
 // 支持直接嵌入的模块列表
@@ -70,7 +63,7 @@ const isDirectModule = computed(() => {
   return directModules.includes(moduleCode.value)
 })
 
-const showModule = (event) => {
+const showModule = event => {
   const { moduleCode: code, url } = event.detail
   moduleCode.value = code
   moduleUrl.value = url
@@ -80,7 +73,7 @@ const showModule = (event) => {
   console.log('📱 Showing AngularJS module:', code, url)
 }
 
-const handleKeydown = (event) => {
+const handleKeydown = event => {
   if (event.key === 'Escape' && visible.value) {
     closeModule()
   }
@@ -100,7 +93,7 @@ const openInNewWindow = () => {
   }
 }
 
-const openInIframe = () => {
+const _openInIframe = () => {
   // 强制使用 iframe 模式（即使是直接模块）
   console.log('🔄 Switching to iframe mode for module:', moduleCode.value)
   // 这里可以添加切换逻辑
@@ -218,11 +211,11 @@ onUnmounted(() => {
     height: 85vh;
     top: 60px;
   }
-  
+
   .module-header {
     padding: 12px 16px;
   }
-  
+
   .module-header h3 {
     font-size: 16px;
   }

@@ -66,13 +66,13 @@ const moduleUrl = computed(() => {
 
 // 模块路由映射
 const moduleRoutes = {
-  'cac': '/oplus/base/#/app/cac',
-  'jao': '/oplus/base/#/app/jao',
-  'dts': '/oplus/base/#/app/dts',
-  'udp': '/oplus/base/#/app/udp',
-  'gfs': '/oplus/base/#/app/gfs',
-  'acm': '/oplus/base/#/app/acm',
-  'adm': '/oplus/base/#/app/admin'
+  cac: '/oplus/base/#/app/cac',
+  jao: '/oplus/base/#/app/jao',
+  dts: '/oplus/base/#/app/dts',
+  udp: '/oplus/base/#/app/udp',
+  gfs: '/oplus/base/#/app/gfs',
+  acm: '/oplus/base/#/app/acm',
+  adm: '/oplus/base/#/app/admin'
 }
 
 // 获取正确的Angular服务器地址
@@ -90,22 +90,22 @@ function buildModuleUrlWithAuth() {
   const route = moduleRoutes[props.moduleCode] || '/oplus/base/'
   const serverUrl = props.baseUrl || getAngularServerUrl()
   const baseUrl = `${serverUrl}${route}`
-  
+
   try {
     const token = authService.getToken()
     const user = authService.getCurrentUser()
-    
+
     if (token && user) {
       // 将认证信息保存到 sessionStorage
       const authData = {
-        token: token,
-        user: user,
+        token,
+        user,
         timestamp: Date.now()
       }
-      
+
       sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
       console.log('🔗 Vue auth data saved for Angular module:', props.moduleCode)
-      
+
       // URL 中添加认证标识
       const separator = baseUrl.includes('?') ? '&' : '?'
       return `${baseUrl}${separator}vue_auth=true&module=${props.moduleCode}&t=${Date.now()}`
@@ -113,7 +113,7 @@ function buildModuleUrlWithAuth() {
   } catch (err) {
     console.warn('Failed to get auth info for module URL:', err)
   }
-  
+
   return baseUrl
 }
 
@@ -123,10 +123,10 @@ function onIframeLoad() {
   loading.value = false
   error.value = ''
   retryCount.value = 0
-  
+
   // 设置iframe通信
   setupIframeMessaging()
-  
+
   emit('loaded', props.moduleCode)
 }
 
@@ -135,7 +135,7 @@ function onIframeError() {
   console.error('❌ Angular module iframe load error:', props.moduleCode)
   loading.value = false
   error.value = `无法加载 ${props.moduleName} 模块`
-  
+
   emit('error', { moduleCode: props.moduleCode, error: error.value })
 }
 
@@ -145,7 +145,7 @@ function retryLoad() {
     retryCount.value++
     loading.value = true
     error.value = ''
-    
+
     // 重新设置iframe src
     if (moduleIframe.value) {
       moduleIframe.value.src = moduleUrl.value
@@ -158,20 +158,20 @@ function retryLoad() {
 // 设置iframe通信
 function setupIframeMessaging() {
   // 监听来自Angular模块的消息
-  const handleMessage = (event) => {
+  const handleMessage = event => {
     // 验证消息来源
     if (event.origin !== new URL(props.baseUrl).origin) {
       return
     }
-    
+
     console.log('📨 Message from Angular module:', event.data)
-    
+
     // 转发消息给父组件
     emit('message', {
       moduleCode: props.moduleCode,
       data: event.data
     })
-    
+
     // 处理特定消息类型
     if (event.data.type === 'module-ready') {
       console.log('🎯 Angular module is ready:', props.moduleCode)
@@ -179,9 +179,9 @@ function setupIframeMessaging() {
       console.log('🧭 Angular module navigation:', event.data.route)
     }
   }
-  
+
   window.addEventListener('message', handleMessage)
-  
+
   // 组件卸载时清理
   onUnmounted(() => {
     window.removeEventListener('message', handleMessage)
@@ -197,11 +197,14 @@ function sendMessageToModule(message) {
 }
 
 // 监听模块代码变化
-watch(() => props.moduleCode, () => {
-  loading.value = true
-  error.value = ''
-  retryCount.value = 0
-})
+watch(
+  () => props.moduleCode,
+  () => {
+    loading.value = true
+    error.value = ''
+    retryCount.value = 0
+  }
+)
 
 // 暴露方法给父组件
 defineExpose({

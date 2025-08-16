@@ -7,16 +7,20 @@
         <p>正在初始化 {{ moduleTitle }} 模块...</p>
         <div class="loading-steps">
           <div class="step" :class="{ active: currentStep >= 1 }">
-            <i class="fas fa-check-circle"></i> 加载AngularJS核心
+            <i class="fas fa-check-circle"></i>
+            加载AngularJS核心
           </div>
           <div class="step" :class="{ active: currentStep >= 2 }">
-            <i class="fas fa-check-circle"></i> 加载模块依赖
+            <i class="fas fa-check-circle"></i>
+            加载模块依赖
           </div>
           <div class="step" :class="{ active: currentStep >= 3 }">
-            <i class="fas fa-check-circle"></i> 初始化模块
+            <i class="fas fa-check-circle"></i>
+            初始化模块
           </div>
           <div class="step" :class="{ active: currentStep >= 4 }">
-            <i class="fas fa-check-circle"></i> 启动应用
+            <i class="fas fa-check-circle"></i>
+            启动应用
           </div>
         </div>
       </div>
@@ -24,11 +28,7 @@
 
     <!-- 错误状态 -->
     <div v-if="error && !loading" class="error-container">
-      <el-result
-        icon="error"
-        :title="`${moduleTitle} 模块加载失败`"
-        :sub-title="error"
-      >
+      <el-result icon="error" :title="`${moduleTitle} 模块加载失败`" :sub-title="error">
         <template #extra>
           <el-button type="primary" @click="retryLoad">重试</el-button>
           <el-button @click="$emit('close')">关闭</el-button>
@@ -37,9 +37,9 @@
     </div>
 
     <!-- AngularJS 应用容器 -->
-    <div 
+    <div
       v-show="!loading && !error"
-      ref="angularContainer" 
+      ref="angularContainer"
       class="angular-container"
       :id="`angular-app-${moduleCode}`"
     >
@@ -58,7 +58,7 @@ const props = defineProps({
   moduleCode: {
     type: String,
     required: true,
-    validator: (value) => ['cac', 'jao'].includes(value)
+    validator: value => ['cac', 'jao'].includes(value)
   },
   moduleTitle: {
     type: String,
@@ -102,10 +102,7 @@ const moduleConfigs = {
       '/src/webapp/app/modules/cac/cac.controller.js',
       '/src/webapp/app/modules/cac/cac.state.js'
     ],
-    styles: [
-      '/src/webapp/content/css/oplus-commons.css',
-      '/src/webapp/content/css/oplus-cac.css'
-    ],
+    styles: ['/src/webapp/content/css/oplus-commons.css', '/src/webapp/content/css/oplus-cac.css'],
     templateUrl: '/src/webapp/app/modules/cac/cac-index.html',
     controller: 'cacCtrl',
     controllerAs: 'cacVm'
@@ -118,35 +115,34 @@ const loadAngularModule = async () => {
     loading.value = true
     error.value = ''
     currentStep.value = 0
-    
+
     console.log('🔄 Loading AngularJS module directly:', props.moduleCode)
-    
+
     const config = moduleConfigs[props.moduleCode]
     if (!config) {
       throw new Error(`不支持的模块: ${props.moduleCode}`)
     }
-    
+
     // 步骤1: 确保AngularJS已加载
     currentStep.value = 1
     await ensureAngularJSLoaded()
-    
+
     // 步骤2: 加载模块依赖
     currentStep.value = 2
     await loadModuleDependencies(config)
-    
+
     // 步骤3: 初始化模块
     currentStep.value = 3
     await initializeModule(config)
-    
+
     // 步骤4: 启动应用
     currentStep.value = 4
     await startAngularApp(config)
-    
+
     loading.value = false
     console.log('✅ AngularJS module loaded successfully:', props.moduleCode)
-    
+
     emit('loaded', props.moduleCode)
-    
   } catch (err) {
     console.error('❌ Failed to load AngularJS module:', err)
     error.value = err.message || '模块加载失败'
@@ -163,16 +159,16 @@ const ensureAngularJSLoaded = async () => {
   }
 
   console.log('🔄 Loading AngularJS from local files...')
-  
+
   try {
     // 从本地加载AngularJS核心
     await loadScript('/src/webapp/lib/angular/angular.min.js')
-    
+
     // 验证AngularJS是否正确加载
     if (!window.angular) {
       throw new Error('AngularJS failed to load from local file')
     }
-    
+
     console.log('✅ AngularJS core loaded successfully from local file')
     console.log('📦 AngularJS version:', window.angular.version.full)
   } catch (error) {
@@ -182,7 +178,7 @@ const ensureAngularJSLoaded = async () => {
 }
 
 // 加载脚本
-const loadScript = (src) => {
+const loadScript = src => {
   return new Promise((resolve, reject) => {
     // 检查是否已加载
     const existingScript = document.querySelector(`script[src="${src}"]`)
@@ -191,26 +187,26 @@ const loadScript = (src) => {
       resolve()
       return
     }
-    
+
     console.log('🔄 Loading script:', src)
-    
+
     const script = document.createElement('script')
     script.src = src
     script.type = 'text/javascript'
     script.async = true
-    
+
     const cleanup = () => {
       script.removeEventListener('load', onLoad)
       script.removeEventListener('error', onError)
     }
-    
+
     const onLoad = () => {
       console.log('✅ Script loaded successfully:', src)
       cleanupWithTimeout()
       resolve()
     }
 
-    const onError = (event) => {
+    const onError = event => {
       console.error('❌ Script load error:', src, event)
       cleanupWithTimeout()
       // 移除失败的script标签
@@ -231,41 +227,41 @@ const loadScript = (src) => {
       }
       reject(new Error(`Script load timeout: ${src}`))
     }, 15000) // 15秒超时
-    
+
     // 清理超时
     const originalCleanup = cleanup
     const cleanupWithTimeout = () => {
       clearTimeout(timeoutId)
       originalCleanup()
     }
-    
+
     document.head.appendChild(script)
   })
 }
 
 // 加载模块依赖
-const loadModuleDependencies = async (config) => {
+const loadModuleDependencies = async config => {
   console.log('📦 Loading module dependencies...')
-  
+
   // 加载样式文件
   if (config.styles) {
     for (const styleUrl of config.styles) {
       await loadStylesheet(styleUrl)
     }
   }
-  
+
   // 加载脚本文件
   if (config.scripts) {
     for (const scriptUrl of config.scripts) {
       await loadScript(scriptUrl)
     }
   }
-  
+
   console.log('✅ Module dependencies loaded')
 }
 
 // 加载样式表
-const loadStylesheet = (href) => {
+const loadStylesheet = href => {
   return new Promise((resolve, reject) => {
     // 检查是否已加载
     const existingLink = document.querySelector(`link[href="${href}"]`)
@@ -274,65 +270,65 @@ const loadStylesheet = (href) => {
       resolve()
       return
     }
-    
+
     console.log('🔄 Loading stylesheet:', href)
-    
+
     const link = document.createElement('link')
     link.rel = 'stylesheet'
     link.href = href
-    
+
     const cleanup = () => {
       link.removeEventListener('load', onLoad)
       link.removeEventListener('error', onError)
     }
-    
+
     const onLoad = () => {
       console.log('✅ Stylesheet loaded successfully:', href)
       cleanup()
       resolve()
     }
-    
-    const onError = (event) => {
+
+    const onError = event => {
       console.error('❌ Stylesheet load error:', href, event)
       cleanup()
       // 样式加载失败不阻塞模块加载
       resolve()
     }
-    
+
     link.addEventListener('load', onLoad)
     link.addEventListener('error', onError)
-    
+
     document.head.appendChild(link)
   })
 }
 
 // 初始化模块
-const initializeModule = async (config) => {
+const initializeModule = async config => {
   await nextTick()
-  
+
   if (!angularContainer.value) {
     throw new Error('Angular container not found')
   }
-  
+
   // 设置认证信息
   setupAuthBridge()
-  
+
   console.log('🎯 Initializing AngularJS module:', config.name)
 }
 
 // 启动AngularJS应用
-const startAngularApp = async (config) => {
+const startAngularApp = async config => {
   const container = angularContainer.value
-  
+
   // 确保AngularJS已完全加载
   if (!window.angular) {
     throw new Error('AngularJS not loaded')
   }
-  
+
   try {
     // 等待一下确保所有模块都已注册
     await new Promise(resolve => setTimeout(resolve, 500))
-    
+
     // 检查CAC模块是否已注册
     try {
       window.angular.module('oplus.cac')
@@ -340,23 +336,27 @@ const startAngularApp = async (config) => {
     } catch (e) {
       throw new Error('CAC module not registered')
     }
-    
+
     // 创建主应用，依赖CAC模块
     const appName = 'cacEmbeddedApp'
     const app = window.angular.module(appName, ['oplus.cac', 'ui.router'])
-    
+
     // 配置路由
-    app.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
-      $urlRouterProvider.otherwise('/cac')
-      
-      $stateProvider.state('cac', {
-        url: '/cac',
-        template: '<div ui-view="cacList"></div>',
-        controller: 'cacCtrl',
-        controllerAs: 'cacVm'
-      })
-    }])
-    
+    app.config([
+      '$stateProvider',
+      '$urlRouterProvider',
+      function ($stateProvider, $urlRouterProvider) {
+        $urlRouterProvider.otherwise('/cac')
+
+        $stateProvider.state('cac', {
+          url: '/cac',
+          template: '<div ui-view="cacList"></div>',
+          controller: 'cacCtrl',
+          controllerAs: 'cacVm'
+        })
+      }
+    ])
+
     // 加载模板
     let template = '<div ui-view></div>'
     if (config.templateUrl) {
@@ -369,23 +369,22 @@ const startAngularApp = async (config) => {
         console.warn('Failed to load template, using default')
       }
     }
-    
+
     // 设置模板
     container.innerHTML = template
-    
+
     // 启动AngularJS应用
     window.angular.bootstrap(container, [appName])
     angularApp.value = app
-    
+
     console.log('🚀 CAC AngularJS app started:', appName)
-    
+
     // 通知Vue组件模块已准备就绪
     emit('ready', {
       moduleCode: props.moduleCode,
       controller: config.controller,
-      app: app
+      app
     })
-    
   } catch (error) {
     console.error('❌ Failed to start AngularJS app:', error)
     throw new Error(`CAC模块启动失败: ${error.message}`)
@@ -399,12 +398,12 @@ const setupAuthBridge = () => {
   try {
     const token = authService.getToken()
     const user = authService.getCurrentUser()
-    
+
     if (token && user) {
       // 设置全局变量供AngularJS使用
       window.vueAuthToken = token
       window.vueUserInfo = user
-      
+
       console.log('🔗 Auth bridge setup for embedded module')
     }
   } catch (err) {
@@ -424,7 +423,7 @@ const cleanup = () => {
   }
   angularScope.value = null
   angularApp.value = null
-  
+
   // 清理全局变量
   delete window.vueAuthToken
   delete window.vueUserInfo
@@ -475,8 +474,12 @@ defineExpose({
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-steps {
@@ -556,7 +559,7 @@ defineExpose({
   background: white;
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -596,7 +599,7 @@ defineExpose({
   background: white;
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: transform 0.2s;
   display: flex;
@@ -643,7 +646,7 @@ defineExpose({
   background: white;
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   min-width: 120px;
 }
 
@@ -701,7 +704,7 @@ defineExpose({
   background: white;
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .angular-container :deep(.recent-activities h3),

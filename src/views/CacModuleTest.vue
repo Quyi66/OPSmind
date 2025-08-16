@@ -10,34 +10,21 @@
         <template #header>
           <span>测试控制</span>
         </template>
-        
+
         <div class="control-buttons">
-          <el-button 
-            @click="openCacModule" 
-            type="primary" 
-            size="large"
-            :loading="loading"
-          >
+          <el-button @click="openCacModule" type="primary" size="large" :loading="loading">
             <i class="fas fa-cogs"></i>
             启动 CAC 配置管理模块
           </el-button>
-          
-          <el-button 
-            @click="switchToEmbeddedMode" 
-            type="success" 
-            size="large"
-          >
+
+          <el-button @click="switchToEmbeddedMode" type="success" size="large">
             <i class="fas fa-puzzle-piece"></i>
             切换到嵌入模式
           </el-button>
         </div>
 
         <div class="test-info">
-          <el-alert
-            title="测试说明"
-            type="info"
-            :closable="false"
-          >
+          <el-alert title="测试说明" type="info" :closable="false">
             <p>点击上方按钮将会：</p>
             <ul>
               <li>触发 showAngularModuleContainer 事件</li>
@@ -59,25 +46,17 @@
             <el-button @click="clearLogs" size="small">清除</el-button>
           </div>
         </template>
-        
+
         <div class="logs-content">
-          <div 
-            v-for="(log, index) in logs" 
-            :key="index" 
-            class="log-item"
-          >
+          <div v-for="(log, index) in logs" :key="index" class="log-item">
             <span class="log-time">{{ formatTime(log.timestamp) }}</span>
             <span class="log-message">{{ log.message }}</span>
           </div>
-          
-          <div v-if="logs.length === 0" class="no-logs">
-            暂无操作日志
-          </div>
+
+          <div v-if="logs.length === 0" class="no-logs">暂无操作日志</div>
         </div>
       </el-card>
     </div>
-
-
 
     <!-- 模态框容器 -->
     <AngularModuleContainerModal />
@@ -94,12 +73,12 @@ const loading = ref(false)
 const logs = ref([])
 
 // 方法
-const addLog = (message) => {
+const addLog = message => {
   logs.value.unshift({
     message,
     timestamp: Date.now()
   })
-  
+
   // 限制日志数量
   if (logs.value.length > 20) {
     logs.value = logs.value.slice(0, 20)
@@ -109,7 +88,7 @@ const addLog = (message) => {
 const openCacModule = () => {
   loading.value = true
   addLog('🚀 触发 CAC 模块启动事件')
-  
+
   try {
     // 触发显示AngularJS容器模块的事件
     const event = new CustomEvent('showAngularModuleContainer', {
@@ -120,10 +99,9 @@ const openCacModule = () => {
       }
     })
     window.dispatchEvent(event)
-    
+
     addLog('✅ 成功触发 showAngularModuleContainer 事件')
     ElMessage.success('CAC 模块启动中...')
-    
   } catch (error) {
     addLog(`❌ 启动失败: ${error.message}`)
     ElMessage.error('CAC 模块启动失败')
@@ -136,7 +114,7 @@ const openCacModule = () => {
 
 const switchToEmbeddedMode = () => {
   addLog('🔄 切换到嵌入模式')
-  
+
   try {
     // 触发显示AngularJS容器模块的事件（嵌入模式）
     const event = new CustomEvent('showAngularModuleContainer', {
@@ -147,10 +125,9 @@ const switchToEmbeddedMode = () => {
       }
     })
     window.dispatchEvent(event)
-    
+
     addLog('✅ 成功触发嵌入模式事件')
     ElMessage.success('CAC 模块（嵌入模式）启动中...')
-    
   } catch (error) {
     addLog(`❌ 切换失败: ${error.message}`)
     ElMessage.error('切换到嵌入模式失败')
@@ -162,21 +139,21 @@ const clearLogs = () => {
   addLog('🧹 日志已清除')
 }
 
-const formatTime = (timestamp) => {
+const formatTime = timestamp => {
   return new Date(timestamp).toLocaleTimeString()
 }
 
 // 生命周期
 onMounted(() => {
   addLog('📱 CAC 模块测试页面已加载')
-  
+
   // 监听模块容器事件
-  const handleModuleEvent = (event) => {
+  const handleModuleEvent = event => {
     addLog(`📨 收到模块事件: ${event.type}`)
   }
-  
+
   window.addEventListener('showAngularModuleContainer', handleModuleEvent)
-  
+
   // 清理
   return () => {
     window.removeEventListener('showAngularModuleContainer', handleModuleEvent)
@@ -277,12 +254,12 @@ onMounted(() => {
   .cac-module-test {
     padding: 1rem;
   }
-  
+
   .control-buttons {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .control-buttons .el-button {
     width: 100%;
     max-width: 300px;

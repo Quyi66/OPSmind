@@ -1,6 +1,6 @@
 <template>
-  <div 
-    class="module-card" 
+  <div
+    class="module-card"
     :style="{ borderLeftColor: module.color }"
     @click="$emit('click', module)"
   >
@@ -13,7 +13,7 @@
         <p class="module-description">{{ moduleDescription }}</p>
       </div>
     </div>
-    
+
     <div class="module-footer">
       <div class="module-meta">
         <span class="module-type">{{ moduleTypeText }}</span>
@@ -23,19 +23,10 @@
         </span>
       </div>
       <div class="module-actions">
-        <el-button 
-          type="primary" 
-          size="small"
-          @click.stop="$emit('click', module)"
-        >
+        <el-button type="primary" size="small" @click.stop="$emit('click', module)">
           {{ getButtonText }}
         </el-button>
-        <el-tag 
-          v-if="isEnhancedModule" 
-          size="small" 
-          type="success"
-          class="enhanced-tag"
-        >
+        <el-tag v-if="isEnhancedModule" size="small" type="success" class="enhanced-tag">
           增强版
         </el-tag>
       </div>
@@ -54,31 +45,31 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['click'])
+const _emit = defineEmits(['click'])
 
 const moduleDescription = computed(() => {
   // 根据模块代码返回描述
   const descriptions = {
-    '__jao': '一键作业编排和执行平台，支持复杂作业流程管理',
-    '__gfs': '脚本文件管理系统，提供脚本版本控制和执行',
-    '__cmd': '命令管理工具，支持批量命令执行和管理',
-    '__acm': '资产配置管理，统一管理IT基础设施资产',
-    '__dts': '数据传输服务，提供数据源管理和数据同步',
-    '__cac': '配置审计与合规性检查，支持系统巡检和配置管理',
-    'cac': '配置审计与合规性检查，支持系统巡检和配置管理',
-    '__applets': '应用管理中心，管理和配置各种小应用',
-    '__search': '系统搜索中心，全局搜索各类资源',
-    '__ssc': '自助服务中心，提供用户自助服务功能'
+    __jao: '一键作业编排和执行平台，支持复杂作业流程管理',
+    __gfs: '脚本文件管理系统，提供脚本版本控制和执行',
+    __cmd: '命令管理工具，支持批量命令执行和管理',
+    __acm: '资产配置管理，统一管理IT基础设施资产',
+    __dts: '数据传输服务，提供数据源管理和数据同步',
+    __cac: '配置审计与合规性检查，支持系统巡检和配置管理',
+    cac: '配置审计与合规性检查，支持系统巡检和配置管理',
+    __applets: '应用管理中心，管理和配置各种小应用',
+    __search: '系统搜索中心，全局搜索各类资源',
+    __ssc: '自助服务中心，提供用户自助服务功能'
   }
-  
+
   return descriptions[props.module.code] || '暂无描述'
 })
 
 const moduleTypeText = computed(() => {
   const types = {
-    'Application': '应用',
-    'Library': '库',
-    'PrivateTool': '工具'
+    Application: '应用',
+    Library: '库',
+    PrivateTool: '工具'
   }
   return types[props.module.type] || '应用'
 })
@@ -119,7 +110,7 @@ const getButtonText = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -195,15 +186,15 @@ const getButtonText = computed(() => {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  
+
   &.status-active {
     color: #52c41a;
   }
-  
+
   &.status-inactive {
     color: #f5222d;
   }
-  
+
   &.status-warning {
     color: #faad14;
   }
@@ -227,34 +218,34 @@ const getButtonText = computed(() => {
     padding: 16px;
     gap: 12px;
   }
-  
+
   .module-header {
     gap: 12px;
   }
-  
+
   .module-icon {
     width: 40px;
     height: 40px;
     font-size: 18px;
   }
-  
+
   .module-title {
     font-size: 16px;
   }
-  
+
   .module-description {
     font-size: 13px;
   }
-  
+
   .module-footer {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .module-actions {
     width: 100%;
-    
+
     .el-button {
       width: 100%;
     }

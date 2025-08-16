@@ -11,17 +11,15 @@ class AuthService {
 
   // AES 加密方法（与后台一致）
   encrypt(word) {
-    if (!word) return ""
+    if (!word) return ''
     const key = CryptoJS.enc.Utf8.parse(this.encryptionKey)
     const iv = CryptoJS.enc.Utf8.parse(this.encryptionKey)
     return CryptoJS.AES.encrypt(word, key, {
-      iv: iv,
+      iv,
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Iso10126
     }).toString()
   }
-
-
 
   // 登录
   async login(credentials) {
@@ -68,7 +66,7 @@ class AuthService {
       // 创建基本用户信息（后续会在 dashboard 中获取完整信息）
       this.currentUser = {
         login: credentials.username,
-        username: credentials.username,
+        username: credentials.username
         // 其他信息会在 dashboard 加载时从 /api/account 获取
       }
 
@@ -86,16 +84,11 @@ class AuthService {
 
       // 不在登录时调用后续接口，让 dashboard 页面自己调用
       return data
-
     } catch (error) {
       console.error('❌ Login error:', error)
       throw error
     }
   }
-
-
-
-
 
   // 登出
   async logout() {
@@ -105,10 +98,10 @@ class AuthService {
       localStorage.removeItem('oplus_user')
       sessionStorage.removeItem('oplus_token')
       sessionStorage.removeItem('oplus_user')
-      
+
       this.token = null
       this.currentUser = null
-      
+
       console.log('✅ Logout successful')
     } catch (error) {
       console.error('❌ Logout error:', error)
@@ -187,13 +180,13 @@ class AuthService {
   // 获取认证 token
   getToken() {
     if (this.token) return this.token
-    
+
     const token = localStorage.getItem('oplus_token') || sessionStorage.getItem('oplus_token')
     if (token) {
       this.token = token
       return token
     }
-    
+
     return null
   }
 
@@ -237,7 +230,7 @@ class AuthService {
     const token = this.getToken()
     if (token) {
       return {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     }

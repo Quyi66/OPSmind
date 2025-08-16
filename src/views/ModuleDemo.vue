@@ -5,7 +5,7 @@
         <h1>Angular 模块集成演示</h1>
         <p>在 Vue 3 中嵌入 Angular 1.5.8 模块</p>
       </el-header>
-      
+
       <el-main>
         <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
           <!-- Angular 模块集成 -->
@@ -42,14 +42,14 @@
               </div>
             </el-card>
           </el-tab-pane>
-          
+
           <!-- 状态监控 -->
           <el-tab-pane label="状态监控" name="status">
             <el-card>
               <template #header>
                 <span>模块状态监控</span>
               </template>
-              
+
               <el-row :gutter="20">
                 <el-col :span="12">
                   <h3>认证状态</h3>
@@ -67,7 +67,7 @@
                     </el-descriptions-item>
                   </el-descriptions>
                 </el-col>
-                
+
                 <el-col :span="12">
                   <h3>模块状态</h3>
                   <el-table :data="moduleStatusList" size="small">
@@ -86,7 +86,7 @@
             </el-card>
           </el-tab-pane>
         </el-tabs>
-        
+
         <!-- 消息日志 -->
         <el-card class="message-log" v-if="messages.length > 0">
           <template #header>
@@ -95,7 +95,7 @@
               <el-button size="small" @click="clearMessages">清空</el-button>
             </div>
           </template>
-          
+
           <el-timeline>
             <el-timeline-item
               v-for="(message, index) in messages.slice(-10)"
@@ -103,7 +103,8 @@
               :timestamp="message.timestamp"
               :type="message.type"
             >
-              <strong>{{ message.source }}:</strong> {{ message.content }}
+              <strong>{{ message.source }}:</strong>
+              {{ message.content }}
             </el-timeline-item>
           </el-timeline>
         </el-card>
@@ -115,9 +116,23 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import {
-  ElContainer, ElHeader, ElMain, ElTabs, ElTabPane, ElCard,
-  ElButton, ElButtonGroup, ElRow, ElCol, ElDescriptions,
-  ElDescriptionsItem, ElTag, ElTable, ElTableColumn, ElTimeline, ElTimelineItem
+  ElContainer,
+  ElHeader,
+  ElMain,
+  ElTabs,
+  ElTabPane,
+  ElCard,
+  ElButton,
+  ElButtonGroup,
+  ElRow,
+  ElCol,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElTag,
+  ElTable,
+  ElTableColumn,
+  ElTimeline,
+  ElTimelineItem
 } from 'element-plus'
 import AngularModuleFrame from '@/components/modules/AngularModuleFrame.vue'
 import { angularModuleManager } from '@/services/AngularModuleManager.js'
@@ -158,11 +173,11 @@ const moduleStatusList = computed(() => {
 })
 
 // 方法
-const handleTabChange = (tabName) => {
+const handleTabChange = tabName => {
   addMessage('系统', `切换到 ${tabName} 标签页`, 'info')
 }
 
-const switchModule = (moduleCode) => {
+const switchModule = moduleCode => {
   currentModule.value = moduleCode
   refreshKey.value++
   addMessage('系统', `切换到 ${moduleCode.toUpperCase()} 模块`, 'info')
@@ -173,12 +188,16 @@ const refreshModule = () => {
   addMessage('系统', `刷新 ${currentModule.value.toUpperCase()} 模块`, 'info')
 }
 
-const getStatusType = (status) => {
+const getStatusType = status => {
   switch (status) {
-    case '已加载': return 'success'
-    case '加载中': return 'warning'
-    case '加载失败': return 'danger'
-    default: return 'info'
+    case '已加载':
+      return 'success'
+    case '加载中':
+      return 'warning'
+    case '加载失败':
+      return 'danger'
+    default:
+      return 'info'
   }
 }
 
@@ -196,7 +215,7 @@ const clearMessages = () => {
 }
 
 // 事件处理
-const onModuleLoaded = (data) => {
+const onModuleLoaded = data => {
   const { moduleCode, loadTime } = data
   moduleStatus[moduleCode] = {
     status: '已加载',
@@ -205,7 +224,7 @@ const onModuleLoaded = (data) => {
   addMessage('模块', `${moduleCode.toUpperCase()} 模块加载成功 (${loadTime}ms)`, 'success')
 }
 
-const onModuleError = (data) => {
+const onModuleError = data => {
   const { moduleCode, error } = data
   moduleStatus[moduleCode] = {
     status: '加载失败',
@@ -214,12 +233,12 @@ const onModuleError = (data) => {
   addMessage('模块', `${moduleCode.toUpperCase()} 模块加载失败: ${error}`, 'danger')
 }
 
-const onRouteChange = (data) => {
+const onRouteChange = data => {
   const { moduleCode, route } = data
   addMessage('路由', `${moduleCode.toUpperCase()} 切换到: ${route}`, 'info')
 }
 
-const onModuleMessage = (data) => {
+const onModuleMessage = data => {
   const { moduleCode, data: messageData } = data
   addMessage('消息', `${moduleCode.toUpperCase()}: ${JSON.stringify(messageData)}`, 'info')
 }

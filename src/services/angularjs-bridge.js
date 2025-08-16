@@ -8,7 +8,7 @@ export class AngularJSBridge {
     this.isReady = false
     this.initPromise = this.initBridge()
   }
-  
+
   async initBridge() {
     // Vue Dashboard 作为主应用，始终使用独立模式
     console.log('🔍 Vue Dashboard running as main application')
@@ -19,14 +19,14 @@ export class AngularJSBridge {
     this.isReady = true
     console.log('✅ Bridge initialized successfully')
   }
-  
+
   // 创建 PostMessage 桥接对象（用于 iframe 通信）
   createPostMessageBridge() {
     let requestId = 0
     const pendingRequests = new Map()
 
     // 监听来自父窗口的响应
-    window.addEventListener('message', (event) => {
+    window.addEventListener('message', event => {
       if (event.data.requestId && pendingRequests.has(event.data.requestId)) {
         const { resolve, reject } = pendingRequests.get(event.data.requestId)
         if (event.data.error) {
@@ -43,12 +43,15 @@ export class AngularJSBridge {
         const id = ++requestId
         pendingRequests.set(id, { resolve, reject })
 
-        window.parent.postMessage({
-          target: 'opsmind-dashboard',
-          type: `REQUEST_${type}`,
-          requestId: id,
-          payload
-        }, '*')
+        window.parent.postMessage(
+          {
+            target: 'opsmind-dashboard',
+            type: `REQUEST_${type}`,
+            requestId: id,
+            payload
+          },
+          '*'
+        )
 
         // 设置超时
         setTimeout(() => {
@@ -65,7 +68,7 @@ export class AngularJSBridge {
         console.log('📦 Requesting modules from parent')
         return sendRequest('MODULES')
       },
-      translate: (key) => {
+      translate: key => {
         console.log('🌐 Requesting translation for:', key)
         return sendRequest('TRANSLATION', { key })
       },
@@ -73,13 +76,16 @@ export class AngularJSBridge {
         console.log('👤 Requesting user info from parent')
         return sendRequest('USER_INFO')
       },
-      openModule: (moduleCode) => {
+      openModule: moduleCode => {
         console.log('🚀 Opening module:', moduleCode)
-        window.parent.postMessage({
-          target: 'opsmind-dashboard',
-          type: 'OPEN_MODULE',
-          payload: { moduleCode }
-        }, '*')
+        window.parent.postMessage(
+          {
+            target: 'opsmind-dashboard',
+            type: 'OPEN_MODULE',
+            payload: { moduleCode }
+          },
+          '*'
+        )
       },
       getSystemStats: () => {
         console.log('📊 Requesting stats from parent')
@@ -102,7 +108,7 @@ export class AngularJSBridge {
           return apiService.getDefaultModules()
         }
       },
-      translate: (key) => Promise.resolve(key),
+      translate: key => Promise.resolve(key),
       getCurrentUser: async () => {
         try {
           const { authService } = await import('./auth.js')
@@ -120,7 +126,7 @@ export class AngularJSBridge {
           return null
         }
       },
-      openModule: async (moduleData) => {
+      openModule: async moduleData => {
         const moduleCode = typeof moduleData === 'string' ? moduleData : moduleData.code
         const moduleEntry = typeof moduleData === 'object' ? moduleData.entry?.value : null
         const moduleTitle = typeof moduleData === 'object' ? moduleData.title : moduleCode
@@ -160,9 +166,9 @@ export class AngularJSBridge {
   createEnhancedBridge() {
     return {
       getAvailableModules: () => this.getAngularModules(),
-      translate: (key) => Promise.resolve(key), // 简单的翻译实现
+      translate: key => Promise.resolve(key), // 简单的翻译实现
       getCurrentUser: () => this.getCurrentUserInfo(),
-      openModule: async (moduleCode) => await this.openModule(moduleCode),
+      openModule: async moduleCode => await this.openModule(moduleCode),
       getSystemStats: () => this.getSystemStats()
     }
   }
@@ -327,42 +333,43 @@ export class AngularJSBridge {
   // 创建模拟桥接对象（用于开发测试）
   createMockBridge() {
     return {
-      getAvailableModules: () => Promise.resolve([
-        {
-          code: '__jao',
-          title: '作业编排',
-          icon: 'fa-oplus-jao',
-          color: '#212529',
-          showIn: { desktop: 3, dock: 3 },
-          entry: { type: 'InternalState', value: 'app.jao' }
-        },
-        {
-          code: '__gfs',
-          title: '脚本管理',
-          icon: 'fa-oplus-gfs',
-          color: '#607D8B',
-          showIn: { desktop: 2 },
-          entry: { type: 'InternalState', value: 'app.gfs' }
-        },
-        {
-          code: '__cmd',
-          title: '命令管理',
-          icon: 'fa-oplus-cmd',
-          color: '#212529',
-          showIn: { desktop: 1, dock: 1 },
-          entry: { type: 'InternalState', value: 'app.jao_cmd' }
-        },
-        {
-          code: '__applets',
-          title: '应用管理',
-          icon: 'fa-oplus-applet',
-          color: '#2196F3',
-          showIn: { desktop: 100 },
-          entry: { type: 'InternalState', value: 'app.applist' }
-        }
-      ]),
-      
-      translate: (key) => {
+      getAvailableModules: () =>
+        Promise.resolve([
+          {
+            code: '__jao',
+            title: '作业编排',
+            icon: 'fa-oplus-jao',
+            color: '#212529',
+            showIn: { desktop: 3, dock: 3 },
+            entry: { type: 'InternalState', value: 'app.jao' }
+          },
+          {
+            code: '__gfs',
+            title: '脚本管理',
+            icon: 'fa-oplus-gfs',
+            color: '#607D8B',
+            showIn: { desktop: 2 },
+            entry: { type: 'InternalState', value: 'app.gfs' }
+          },
+          {
+            code: '__cmd',
+            title: '命令管理',
+            icon: 'fa-oplus-cmd',
+            color: '#212529',
+            showIn: { desktop: 1, dock: 1 },
+            entry: { type: 'InternalState', value: 'app.jao_cmd' }
+          },
+          {
+            code: '__applets',
+            title: '应用管理',
+            icon: 'fa-oplus-applet',
+            color: '#2196F3',
+            showIn: { desktop: 100 },
+            entry: { type: 'InternalState', value: 'app.applist' }
+          }
+        ]),
+
+      translate: key => {
         const translations = {
           'app.nav.jao': '作业编排',
           'app.nav.gfs': '脚本管理',
@@ -371,50 +378,51 @@ export class AngularJSBridge {
         }
         return translations[key] || key
       },
-      
+
       getCurrentUser: () => {
         // 不返回 mock 用户，只返回真实认证用户
         return null
       },
-      
-      openModule: (moduleCode) => {
+
+      openModule: moduleCode => {
         console.log('Mock: Opening module', moduleCode)
       },
-      
-      getSystemStats: () => Promise.resolve([
-        { id: 'jobs', title: '作业总数', value: 156, icon: 'fa-tasks' },
-        { id: 'scripts', title: '脚本数量', value: 89, icon: 'fa-file-code' },
-        { id: 'assets', title: '资产数量', value: 234, icon: 'fa-server' },
-        { id: 'alerts', title: '告警数量', value: 12, icon: 'fa-exclamation-triangle' }
-      ])
+
+      getSystemStats: () =>
+        Promise.resolve([
+          { id: 'jobs', title: '作业总数', value: 156, icon: 'fa-tasks' },
+          { id: 'scripts', title: '脚本数量', value: 89, icon: 'fa-file-code' },
+          { id: 'assets', title: '资产数量', value: 234, icon: 'fa-server' },
+          { id: 'alerts', title: '告警数量', value: 12, icon: 'fa-exclamation-triangle' }
+        ])
     }
   }
-  
+
   // 确保桥接已初始化
   async ensureReady() {
     if (!this.isReady) {
       await this.initPromise
     }
   }
-  
+
   // 获取所有可用模块
   async getAvailableModules() {
     await this.ensureReady()
     return await this.bridge.getAvailableModules()
   }
-  
+
   // 翻译文本
   async translate(key) {
     await this.ensureReady()
     return this.bridge.translate(key)
   }
-  
+
   // 获取当前用户
   async getCurrentUser() {
     await this.ensureReady()
     return this.bridge.getCurrentUser()
   }
-  
+
   // 构建模块 URL - 直接嵌入模式，不使用外部服务器
   buildModuleUrl(moduleCode, moduleEntry = null) {
     // 直接返回模块标识，用于内部嵌入
@@ -464,8 +472,8 @@ export class AngularJSBridge {
       if (token && user) {
         // 将认证信息保存到 sessionStorage，供 AngularJS 使用
         const authData = {
-          token: token,
-          user: user,
+          token,
+          user,
           timestamp: Date.now()
         }
 
@@ -505,12 +513,12 @@ export class AngularJSBridge {
   buildAngularModuleUrl(moduleCode) {
     const baseUrl = 'http://localhost:8081'
     const moduleRoutes = {
-      '__jao': '/jao',
-      '__gfs': '/gfs',
-      '__cmd': '/cmd',
-      '__cac': '/cac',
-      '__dts': '/dts',
-      '__udp': '/udp'
+      __jao: '/jao',
+      __gfs: '/gfs',
+      __cmd: '/cmd',
+      __cac: '/cac',
+      __dts: '/dts',
+      __udp: '/udp'
     }
 
     const route = moduleRoutes[moduleCode] || '/home'
@@ -532,7 +540,7 @@ export class AngularJSBridge {
     })
     window.dispatchEvent(event)
   }
-  
+
   // 获取系统统计
   async getSystemStats() {
     await this.ensureReady()

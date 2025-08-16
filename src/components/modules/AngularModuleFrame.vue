@@ -9,15 +9,15 @@
           <p class="module-description">{{ moduleConfig?.description }}</p>
         </div>
       </div>
-      
+
       <div class="module-actions">
         <!-- 路由切换 -->
-        <el-select 
+        <el-select
           v-if="Object.keys(moduleRoutes).length > 1"
-          v-model="currentRoute" 
+          v-model="currentRoute"
           @change="handleRouteChange"
           size="small"
-          style="width: 200px;"
+          style="width: 200px"
         >
           <el-option
             v-for="(url, name) in moduleRoutes"
@@ -26,7 +26,7 @@
             :value="name"
           />
         </el-select>
-        
+
         <!-- 操作按钮 -->
         <el-button-group size="small">
           <el-button @click="refreshModule" :loading="loading">
@@ -55,11 +55,7 @@
 
     <!-- 错误状态 -->
     <div v-if="error" class="error-overlay">
-      <el-result
-        icon="error"
-        :title="`${moduleConfig?.name} 模块加载失败`"
-        :sub-title="error"
-      >
+      <el-result icon="error" :title="`${moduleConfig?.name} 模块加载失败`" :sub-title="error">
         <template #extra>
           <el-button type="primary" @click="retryLoad">重试</el-button>
           <el-button @click="reportError">报告问题</el-button>
@@ -74,7 +70,7 @@
       :src="iframeUrl"
       :title="moduleConfig?.title"
       class="module-iframe"
-      :class="{ 'fullscreen': isFullscreen }"
+      :class="{ fullscreen: isFullscreen }"
       @load="onIframeLoad"
       @error="onIframeError"
       sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-top-navigation allow-downloads"
@@ -91,7 +87,7 @@
         </el-tag>
         <span class="status-text">{{ statusText }}</span>
       </div>
-      
+
       <div class="module-meta">
         <span>路由: {{ currentRoute }}</span>
         <span v-if="loadTime">加载时间: {{ loadTime }}ms</span>
@@ -103,9 +99,16 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { 
-  ElSelect, ElOption, ElButton, ElButtonGroup, ElIcon, ElProgress,
-  ElResult, ElTag, ElMessage 
+import {
+  ElSelect,
+  ElOption,
+  ElButton,
+  ElButtonGroup,
+  ElIcon,
+  ElProgress,
+  ElResult,
+  ElTag,
+  ElMessage
 } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { angularModuleManager } from '@/services/AngularModuleManager.js'
@@ -178,10 +181,10 @@ const iframeUrl = computed(() => {
 })
 
 // 方法
-const getRouteLabel = (routeName) => {
+const getRouteLabel = routeName => {
   const labels = {
     main: '主页面',
-    template: '模板管理', 
+    template: '模板管理',
     rules: '规则管理',
     hosts: '主机管理',
     jobs: '作业管理',
@@ -211,16 +214,20 @@ const getRouteLabel = (routeName) => {
   return labels[routeName] || routeName
 }
 
-const getStatusType = (status) => {
+const getStatusType = status => {
   switch (status) {
-    case '已加载': return 'success'
-    case '加载中': return 'warning' 
-    case '加载失败': return 'danger'
-    default: return 'info'
+    case '已加载':
+      return 'success'
+    case '加载中':
+      return 'warning'
+    case '加载失败':
+      return 'danger'
+    default:
+      return 'info'
   }
 }
 
-const handleRouteChange = (routeName) => {
+const handleRouteChange = routeName => {
   currentRoute.value = routeName
   loadModule()
   emit('route-change', { moduleCode: props.moduleCode, route: routeName })
@@ -296,7 +303,6 @@ const loadModule = async () => {
         }
       }, 30000) // 30秒超时
     }
-
   } catch (err) {
     clearInterval(progressInterval)
     console.error('❌ Load module error:', err)
@@ -348,7 +354,7 @@ const onIframeError = (customError = null) => {
 }
 
 const setupIframeMessaging = () => {
-  const handleMessage = (event) => {
+  const handleMessage = event => {
     // 验证消息来源
     if (!iframeUrl.value) return
 
@@ -400,7 +406,7 @@ const sendAuthDataToIframe = () => {
     const userStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser')
 
     const authData = {
-      token: token,
+      token,
       user: userStr ? JSON.parse(userStr) : null,
       timestamp: Date.now()
     }
@@ -409,13 +415,15 @@ const sendAuthDataToIframe = () => {
     sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
 
     // 发送消息到iframe
-    moduleIframe.value.contentWindow.postMessage({
-      type: 'vue-auth-data',
-      authData: authData
-    }, '*')
+    moduleIframe.value.contentWindow.postMessage(
+      {
+        type: 'vue-auth-data',
+        authData
+      },
+      '*'
+    )
 
     console.log('🔗 Auth data sent to iframe')
-
   } catch (e) {
     console.error('Failed to send auth data to iframe:', e)
   }
@@ -433,10 +441,10 @@ onMounted(() => {
   if (props.route && moduleRoutes.value[props.route]) {
     currentRoute.value = props.route
   }
-  
+
   // 加载模块
   loadModule()
-  
+
   // 设置自动刷新
   if (props.autoRefresh) {
     setInterval(() => {
@@ -448,17 +456,23 @@ onMounted(() => {
 })
 
 // 监听属性变化
-watch(() => props.moduleCode, () => {
-  currentRoute.value = 'main'
-  loadModule()
-})
-
-watch(() => props.route, (newRoute) => {
-  if (newRoute && moduleRoutes.value[newRoute]) {
-    currentRoute.value = newRoute
+watch(
+  () => props.moduleCode,
+  () => {
+    currentRoute.value = 'main'
     loadModule()
   }
-})
+)
+
+watch(
+  () => props.route,
+  newRoute => {
+    if (newRoute && moduleRoutes.value[newRoute]) {
+      currentRoute.value = newRoute
+      loadModule()
+    }
+  }
+)
 
 // 暴露方法
 defineExpose({
@@ -544,8 +558,12 @@ defineExpose({
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .module-iframe {

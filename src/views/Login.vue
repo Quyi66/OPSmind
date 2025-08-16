@@ -5,7 +5,7 @@
         <h1>OpsMind Dashboard</h1>
         <p>运维管理平台</p>
       </div>
-      
+
       <div v-if="initializing" class="initializing-container">
         <p>正在初始化登录页面...</p>
         <div class="loading-spinner">
@@ -19,27 +19,22 @@
         :model="loginForm"
         :rules="loginRules"
         class="login-form"
-        @submit.prevent="handleLogin">
-
+        @submit.prevent="handleLogin"
+      >
         <div v-if="authError" class="error-message">
-          <el-alert
-            :title="errorMessage"
-            type="error"
-            :closable="false"
-            show-icon>
-          </el-alert>
+          <el-alert :title="errorMessage" type="error" :closable="false" show-icon></el-alert>
         </div>
-        
+
         <el-form-item prop="username">
           <el-input
             v-model="loginForm.username"
             placeholder="用户名"
             size="large"
             prefix-icon="User"
-            :disabled="loading">
-          </el-input>
+            :disabled="loading"
+          ></el-input>
         </el-form-item>
-        
+
         <el-form-item prop="password">
           <el-input
             v-model="loginForm.password"
@@ -48,10 +43,10 @@
             size="large"
             prefix-icon="Lock"
             :disabled="loading"
-            @keyup.enter="handleLogin">
-          </el-input>
+            @keyup.enter="handleLogin"
+          ></el-input>
         </el-form-item>
-        
+
         <el-form-item v-if="showOTP" prop="otpCode">
           <el-input
             v-model="loginForm.otpCode"
@@ -60,28 +55,27 @@
             prefix-icon="Key"
             :disabled="loading"
             maxlength="6"
-            @keyup.enter="handleLogin">
-          </el-input>
+            @keyup.enter="handleLogin"
+          ></el-input>
         </el-form-item>
-        
+
         <el-form-item>
-          <el-checkbox v-model="loginForm.rememberMe" :disabled="loading">
-            记住我
-          </el-checkbox>
+          <el-checkbox v-model="loginForm.rememberMe" :disabled="loading">记住我</el-checkbox>
         </el-form-item>
-        
+
         <el-form-item>
-          <el-button 
-            type="primary" 
-            size="large" 
+          <el-button
+            type="primary"
+            size="large"
             :loading="loading"
             @click="handleLogin"
-            class="login-button">
+            class="login-button"
+          >
             {{ loading ? '登录中...' : '登录' }}
           </el-button>
         </el-form-item>
       </el-form>
-      
+
       <div class="login-footer">
         <p>&copy; 2024 OpsMind. All rights reserved.</p>
       </div>
@@ -114,9 +108,7 @@ const loginRules = {
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 4, max: 100, message: '密码长度在 4 到 100 个字符', trigger: 'blur' }
   ],
-  otpCode: [
-    { len: 6, message: '动态验证码必须是6位数字', trigger: 'blur' }
-  ]
+  otpCode: [{ len: 6, message: '动态验证码必须是6位数字', trigger: 'blur' }]
 }
 
 const loading = ref(false)
@@ -129,22 +121,22 @@ const licenseInfo = ref(null)
 
 const handleLogin = async () => {
   if (loading.value) return
-  
+
   try {
     await loginFormRef.value.validate()
-    
+
     loading.value = true
     authError.value = false
-    
+
     console.log('🔐 Attempting login:', loginForm.username)
-    
+
     const result = await authService.login({
       username: loginForm.username,
       password: loginForm.password,
       otpCode: loginForm.otpCode,
       rememberMe: loginForm.rememberMe
     })
-    
+
     console.log('✅ Login successful:', result)
     ElMessage.success('登录成功')
 
@@ -162,11 +154,10 @@ const handleLogin = async () => {
 
     console.log('🔄 Navigating to home...')
     await router.push('/home')
-    
   } catch (error) {
     console.error('❌ Login failed:', error)
     authError.value = true
-    
+
     if (error.code === 'UnknownAccount') {
       errorMessage.value = '用户不存在'
     } else if (error.code === 'IncorrectCredentials') {

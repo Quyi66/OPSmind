@@ -17,14 +17,14 @@ export const ANGULAR_MODULES_CONFIG = {
     entryUrl: '/cac',
     // 可用的子路由
     routes: {
-      main: '/cac',                    // 主入口，会自动跳转
+      main: '/cac', // 主入口，会自动跳转
       dashboard: '/cac/template/square', // 仪表盘
-      template: '/cac/template',       // 模板管理
-      rules: '/cac/rules',             // 规则管理
-      hosts: '/cac/hosts',             // 主机管理
-      jobs: '/cac/jobs',               // 作业管理
-      results: '/cac/results',         // 结果查看
-      script: '/cac/script'            // 脚本管理
+      template: '/cac/template', // 模板管理
+      rules: '/cac/rules', // 规则管理
+      hosts: '/cac/hosts', // 主机管理
+      jobs: '/cac/jobs', // 作业管理
+      results: '/cac/results', // 结果查看
+      script: '/cac/script' // 脚本管理
     },
     defaultRoute: '/cac',
     features: ['配置检查', '合规审计', '模板管理', '主机管理', '脚本管理']
@@ -337,10 +337,11 @@ export function searchModules(keyword) {
   if (!keyword) return getAllModules()
 
   const lowerKeyword = keyword.toLowerCase()
-  return getAllModules().filter(module => 
-    module.name.toLowerCase().includes(lowerKeyword) ||
-    module.title.toLowerCase().includes(lowerKeyword) ||
-    module.description.toLowerCase().includes(lowerKeyword) ||
-    module.features.some(feature => feature.toLowerCase().includes(lowerKeyword))
+  return getAllModules().filter(
+    module =>
+      module.name.toLowerCase().includes(lowerKeyword) ||
+      module.title.toLowerCase().includes(lowerKeyword) ||
+      module.description.toLowerCase().includes(lowerKeyword) ||
+      module.features.some(feature => feature.toLowerCase().includes(lowerKeyword))
   )
 }

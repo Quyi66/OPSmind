@@ -20,7 +20,7 @@
             </el-select>
           </el-card>
         </el-col>
-        
+
         <el-col :span="8">
           <el-card>
             <template #header>路由选择</template>
@@ -34,16 +34,18 @@
             </el-select>
           </el-card>
         </el-col>
-        
+
         <el-col :span="8">
           <el-card>
             <template #header>操作</template>
             <el-button-group>
               <el-button @click="refreshModule" :loading="loading">
-                <i class="fas fa-refresh"></i> 刷新
+                <i class="fas fa-refresh"></i>
+                刷新
               </el-button>
               <el-button @click="openInNewWindow">
-                <i class="fas fa-external-link-alt"></i> 新窗口
+                <i class="fas fa-external-link-alt"></i>
+                新窗口
               </el-button>
               <el-button @click="toggleFullscreen">
                 <i :class="isFullscreen ? 'fas fa-compress' : 'fas fa-expand'"></i>
@@ -76,7 +78,7 @@
             </el-descriptions>
           </el-card>
         </el-col>
-        
+
         <el-col :span="12">
           <el-card>
             <template #header>认证状态</template>
@@ -100,7 +102,7 @@
       </el-row>
     </div>
 
-    <div class="iframe-container" :class="{ 'fullscreen': isFullscreen }">
+    <div class="iframe-container" :class="{ fullscreen: isFullscreen }">
       <AngularModuleFrame
         v-if="selectedModule"
         :key="`test-${selectedModule}-${refreshKey}`"
@@ -113,7 +115,7 @@
         @route-change="onRouteChange"
         @message="onModuleMessage"
       />
-      
+
       <div v-else class="no-module">
         <el-empty description="请选择要测试的模块" />
       </div>
@@ -126,11 +128,7 @@
           <el-button @click="clearLogs" size="small" type="warning">清空</el-button>
         </template>
         <div class="log-container">
-          <div 
-            v-for="(log, index) in logs" 
-            :key="index"
-            :class="['log-item', `log-${log.type}`]"
-          >
+          <div v-for="(log, index) in logs" :key="index" :class="['log-item', `log-${log.type}`]">
             <span class="log-time">{{ log.time }}</span>
             <span class="log-message">{{ log.message }}</span>
           </div>
@@ -142,9 +140,18 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { 
-  ElRow, ElCol, ElCard, ElSelect, ElOption, ElButton, ElButtonGroup,
-  ElDescriptions, ElDescriptionsItem, ElTag, ElEmpty
+import {
+  ElRow,
+  ElCol,
+  ElCard,
+  ElSelect,
+  ElOption,
+  ElButton,
+  ElButtonGroup,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElTag,
+  ElEmpty
 } from 'element-plus'
 import AngularModuleFrame from '@/components/modules/AngularModuleFrame.vue'
 import { angularModuleManager } from '@/services/AngularModuleManager.js'
@@ -176,7 +183,7 @@ const authStatus = computed(() => {
   // 模拟认证状态检查
   const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken')
   const userStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser')
-  
+
   return {
     hasToken: !!token,
     user: userStr ? JSON.parse(userStr) : null,
@@ -185,7 +192,7 @@ const authStatus = computed(() => {
 })
 
 // 方法
-const getRouteLabel = (routeName) => {
+const getRouteLabel = routeName => {
   const labels = {
     main: '主页面',
     template: '模板管理',
@@ -197,12 +204,16 @@ const getRouteLabel = (routeName) => {
   return labels[routeName] || routeName
 }
 
-const getStatusType = (status) => {
+const getStatusType = status => {
   switch (status) {
-    case '已加载': return 'success'
-    case '加载中': return 'warning'
-    case '加载失败': return 'danger'
-    default: return 'info'
+    case '已加载':
+      return 'success'
+    case '加载中':
+      return 'warning'
+    case '加载失败':
+      return 'danger'
+    default:
+      return 'info'
   }
 }
 
@@ -212,7 +223,7 @@ const addLog = (message, type = 'info') => {
     message,
     type
   })
-  
+
   // 限制日志数量
   if (logs.value.length > 100) {
     logs.value = logs.value.slice(0, 100)
@@ -221,31 +232,31 @@ const addLog = (message, type = 'info') => {
 
 const loadModule = () => {
   if (!selectedModule.value) return
-  
+
   loading.value = true
   status.value = '加载中'
   refreshKey.value++
   selectedRoute.value = 'main'
-  
+
   addLog(`开始加载模块: ${currentModuleConfig.value?.name}`, 'info')
 }
 
 const changeRoute = () => {
   if (!selectedModule.value || !selectedRoute.value) return
-  
+
   addLog(`切换路由: ${getRouteLabel(selectedRoute.value)}`, 'info')
 }
 
 const refreshModule = () => {
   if (!selectedModule.value) return
-  
+
   refreshKey.value++
   addLog('刷新模块', 'info')
 }
 
 const openInNewWindow = () => {
   if (!selectedModule.value) return
-  
+
   const url = angularModuleManager.getModuleUrl(selectedModule.value)
   window.open(url, '_blank', 'width=1200,height=800')
   addLog('在新窗口打开模块', 'info')
@@ -261,35 +272,35 @@ const clearLogs = () => {
 }
 
 // 事件处理
-const onModuleLoaded = (data) => {
+const onModuleLoaded = data => {
   loading.value = false
   status.value = '已加载'
   loadTime.value = data.loadTime
-  
+
   addLog(`模块加载成功: ${data.moduleCode} (${data.loadTime}ms)`, 'success')
 }
 
-const onModuleError = (data) => {
+const onModuleError = data => {
   loading.value = false
   status.value = '加载失败'
   loadTime.value = null
-  
+
   addLog(`模块加载失败: ${data.moduleCode} - ${data.error}`, 'error')
 }
 
-const onRouteChange = (data) => {
+const onRouteChange = data => {
   selectedRoute.value = data.route
   addLog(`路由变更: ${data.moduleCode} -> ${getRouteLabel(data.route)}`, 'info')
 }
 
-const onModuleMessage = (data) => {
+const onModuleMessage = data => {
   addLog(`收到消息: ${JSON.stringify(data.data)}`, 'info')
 }
 
 // 生命周期
 onMounted(() => {
   addLog('iframe 测试页面已加载', 'info')
-  
+
   // 设置默认模块
   if (availableModules.value.length > 0) {
     selectedModule.value = 'cac'
@@ -371,8 +382,16 @@ onMounted(() => {
   flex: 1;
 }
 
-.log-info .log-message { color: #606266; }
-.log-success .log-message { color: #67c23a; }
-.log-warning .log-message { color: #e6a23c; }
-.log-error .log-message { color: #f56c6c; }
+.log-info .log-message {
+  color: #606266;
+}
+.log-success .log-message {
+  color: #67c23a;
+}
+.log-warning .log-message {
+  color: #e6a23c;
+}
+.log-error .log-message {
+  color: #f56c6c;
+}
 </style>

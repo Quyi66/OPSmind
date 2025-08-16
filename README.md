@@ -23,28 +23,57 @@
 
 ## 快速开始
 
-### 1. 安装依赖
+### 1. 环境要求
+
+- Node.js 16+
+- npm 7+ 或 yarn 1.22+ 或 pnpm 6+
+
+### 2. 安装依赖
 
 ```bash
-cd src/opsmind
+# 使用 npm
 npm install
+
+# 或使用 yarn
+yarn install
+
+# 或使用 pnpm
+pnpm install
 ```
 
-### 2. 启动开发服务器
+### 3. 启动开发服务器
 
 ```bash
-# 在项目根目录启动（同时启动 AngularJS 和 Vue 应用）
+# 使用便捷脚本（推荐）
+./scripts/dev.sh
+
+# 或直接使用 npm
 npm run dev
 
-# 或者单独启动 Vue 应用
-cd src/opsmind
-npm run dev
+# 或使用 yarn
+yarn dev
 ```
 
-### 3. 访问应用
+### 4. 访问应用
 
 - Vue 仪表盘: http://localhost:5173
 - AngularJS 主应用: http://localhost:3000/oplus/base/
+
+### 5. 开发工具
+
+```bash
+# 代码检查
+npm run lint
+
+# 运行测试
+npm run test
+
+# 测试覆盖率
+npm run test:coverage
+
+# 代码格式化
+npm run format
+```
 
 ## 项目结构
 
@@ -133,29 +162,77 @@ window.addEventListener('message', (event) => {
 
 ## 构建部署
 
-### 开发环境
+### 开发构建
 
 ```bash
-npm run dev
+# 开发环境构建（包含 source map）
+npm run build:dev
+
+# 或使用构建脚本
+./scripts/build.sh dev
 ```
 
 ### 生产构建
 
 ```bash
-npm run build
+# 生产环境构建（优化压缩）
+npm run build:prod
+
+# 或使用构建脚本（包含测试）
+./scripts/build.sh prod
 ```
 
-构建产物将输出到 `dist/` 目录。
+### 预览构建结果
+
+```bash
+# 预览构建结果
+npm run preview
+
+# 构建并预览
+npm run preview:build
+```
+
+### 可用脚本
+
+| 脚本 | 描述 |
+|------|------|
+| `npm run dev` | 启动开发服务器 |
+| `npm run build` | 生产构建 |
+| `npm run build:dev` | 开发构建 |
+| `npm run build:prod` | 生产构建（优化） |
+| `npm run preview` | 预览构建结果 |
+| `npm run lint` | 代码检查并修复 |
+| `npm run lint:check` | 仅检查代码 |
+| `npm run test` | 运行测试（监视模式） |
+| `npm run test:run` | 运行测试（单次） |
+| `npm run test:ui` | 测试 UI 界面 |
+| `npm run test:coverage` | 测试覆盖率 |
+| `npm run format` | 格式化代码 |
+| `npm run clean` | 清理构建缓存 |
 
 ### 部署配置
 
 生产环境需要配置 Nginx 代理：
 
 ```nginx
-location /dashboard/ {
-    proxy_pass http://vue-dashboard-server/;
+# Vue 应用
+location /opsmind/base/ {
+    alias /path/to/dist/;
+    try_files $uri $uri/ /opsmind/base/index.html;
+
+    # 静态资源缓存
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+
+# API 代理
+location /oplus-portal/ {
+    proxy_pass http://backend-server/;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 }
 ```
 

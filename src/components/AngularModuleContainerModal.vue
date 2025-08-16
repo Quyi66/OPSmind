@@ -10,15 +10,18 @@
         </div>
         <div class="modal-actions">
           <el-button @click="refreshModule" size="small" :loading="loading">
-            <i class="fas fa-refresh"></i> 刷新
+            <i class="fas fa-refresh"></i>
+            刷新
           </el-button>
 
           <el-button @click="openInNewWindow" type="primary" size="small">
-            <i class="fas fa-external-link-alt"></i> 新窗口
+            <i class="fas fa-external-link-alt"></i>
+            新窗口
           </el-button>
 
           <el-button @click="closeModule" size="small">
-            <i class="fas fa-times"></i> 关闭
+            <i class="fas fa-times"></i>
+            关闭
           </el-button>
         </div>
       </div>
@@ -64,7 +67,7 @@ const moduleIcon = computed(() => {
 })
 
 // 方法
-const showModule = (event) => {
+const showModule = event => {
   const { moduleCode: code, title } = event.detail
 
   moduleCode.value = code
@@ -100,30 +103,30 @@ const openInNewWindow = () => {
   }
 }
 
-const handleKeydown = (event) => {
+const handleKeydown = event => {
   if (event.key === 'Escape' && visible.value) {
     closeModule()
   }
 }
 
 // 事件处理
-const onModuleLoaded = (data) => {
+const onModuleLoaded = data => {
   loading.value = false
   console.log('✅ Module loaded in modal:', data)
   ElMessage.success(`${moduleTitle.value} 加载完成`)
 }
 
-const onModuleError = (data) => {
+const onModuleError = data => {
   loading.value = false
   console.error('❌ Module load error in modal:', data)
   ElMessage.error(`${moduleTitle.value} 加载失败: ${data.error}`)
 }
 
-const onRouteChange = (data) => {
+const onRouteChange = data => {
   console.log('🧭 Route changed in modal:', data)
 }
 
-const onModuleMessage = (data) => {
+const onModuleMessage = data => {
   console.log('📨 Module message in modal:', data)
 }
 
@@ -223,18 +226,18 @@ onUnmounted(() => {
     height: 100vh;
     border-radius: 0;
   }
-  
+
   .modal-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
     border-radius: 0;
   }
-  
+
   .modal-title {
     justify-content: center;
   }
-  
+
   .modal-actions {
     justify-content: center;
     flex-wrap: wrap;

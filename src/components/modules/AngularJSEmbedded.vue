@@ -6,7 +6,7 @@
         <p>正在加载 {{ moduleName }} 模块...</p>
       </div>
     </div>
-    
+
     <div v-if="error" class="error-container">
       <div class="error-message">
         <i class="fa fa-exclamation-triangle"></i>
@@ -15,13 +15,9 @@
         <el-button @click="retry" type="primary">重试</el-button>
       </div>
     </div>
-    
+
     <!-- AngularJS 应用挂载点 -->
-    <div 
-      ref="angularContainer" 
-      class="angular-container"
-      v-show="!loading && !error">
-    </div>
+    <div ref="angularContainer" class="angular-container" v-show="!loading && !error"></div>
   </div>
 </template>
 
@@ -61,33 +57,32 @@ const moduleConfigs = {
 }
 
 // 加载 AngularJS 模块
-const loadAngularModule = async (moduleCode) => {
+const loadAngularModule = async moduleCode => {
   try {
     loading.value = true
     error.value = ''
-    
+
     console.log('🔄 Loading AngularJS module:', moduleCode)
-    
+
     const config = moduleConfigs[moduleCode]
     if (!config) {
       throw new Error(`不支持的模块: ${moduleCode}`)
     }
-    
+
     // 1. 确保 AngularJS 已加载
     await ensureAngularJSLoaded()
-    
+
     // 2. 加载模块样式
     await loadModuleStyles(config.styles)
-    
+
     // 3. 加载模块依赖
     await loadModuleDependencies(config.dependencies)
-    
+
     // 4. 创建 AngularJS 应用
     await createAngularApp(config)
-    
+
     loading.value = false
     console.log('✅ AngularJS module loaded successfully:', moduleCode)
-    
   } catch (err) {
     console.error('❌ Failed to load AngularJS module:', err)
     error.value = err.message || '模块加载失败'
@@ -128,7 +123,7 @@ const ensureAngularJSLoaded = async () => {
 }
 
 // 加载脚本
-const loadScript = (src) => {
+const loadScript = src => {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script')
     script.src = src
@@ -139,9 +134,9 @@ const loadScript = (src) => {
 }
 
 // 加载模块样式
-const loadModuleStyles = async (styles) => {
+const loadModuleStyles = async styles => {
   if (!styles || !Array.isArray(styles)) return
-  
+
   for (const href of styles) {
     if (!document.querySelector(`link[href="${href}"]`)) {
       const link = document.createElement('link')
@@ -153,14 +148,14 @@ const loadModuleStyles = async (styles) => {
 }
 
 // 加载模块依赖
-const loadModuleDependencies = async (dependencies) => {
+const loadModuleDependencies = async dependencies => {
   // 这里需要根据实际情况加载依赖模块
   // 暂时跳过，假设依赖已经存在
   console.log('📦 Module dependencies:', dependencies)
 }
 
 // 创建 AngularJS 应用
-const createAngularApp = async (config) => {
+const createAngularApp = async config => {
   if (!angularContainer.value) {
     throw new Error('Angular container not found')
   }
@@ -169,8 +164,9 @@ const createAngularApp = async (config) => {
   const appModuleName = `embedded-${props.moduleCode}-${Date.now()}`
 
   // 定义嵌入式模块，依赖 UI-Router
-  window.angular.module(appModuleName, ['ui.router'])
-    .controller('EmbeddedController', ['$scope', function($scope) {
+  window.angular.module(appModuleName, ['ui.router']).controller('EmbeddedController', [
+    '$scope',
+    function ($scope) {
       console.log('🎯 Embedded AngularJS controller initialized')
 
       // CAC 模块的控制器逻辑
@@ -178,22 +174,23 @@ const createAngularApp = async (config) => {
       $scope.moduleName = props.moduleName
 
       // CAC 功能方法
-      $scope.startInspection = function() {
+      $scope.startInspection = function () {
         console.log('开始系统巡检...')
         // 这里可以调用真实的 CAC 服务
       }
 
-      $scope.viewReports = function() {
+      $scope.viewReports = function () {
         console.log('查看巡检报告...')
       }
 
-      $scope.manageHosts = function() {
+      $scope.manageHosts = function () {
         console.log('主机管理...')
       }
 
       // 初始化完成
       console.log('CAC embedded controller initialized')
-    }])
+    }
+  ])
 
   // 设置模板
   const template = await loadTemplate(config.templateUrl)
@@ -208,7 +205,7 @@ const createAngularApp = async (config) => {
 }
 
 // 加载模板
-const loadTemplate = async (templateUrl) => {
+const loadTemplate = async templateUrl => {
   try {
     console.log('Loading template from:', templateUrl)
     const response = await fetch(templateUrl)
@@ -268,16 +265,16 @@ const cleanup = () => {
     angularScope.$destroy()
     angularScope = null
   }
-  
+
   if (angularElement) {
     angularElement.remove()
     angularElement = null
   }
-  
+
   if (angularContainer.value) {
     angularContainer.value.innerHTML = ''
   }
-  
+
   console.log('🧹 AngularJS app cleaned up')
 }
 
@@ -292,11 +289,15 @@ onBeforeUnmount(() => {
 })
 
 // 监听模块代码变化
-watch(() => props.moduleCode, (newCode) => {
-  if (newCode) {
-    loadAngularModule(newCode)
-  }
-}, { immediate: true })
+watch(
+  () => props.moduleCode,
+  newCode => {
+    if (newCode) {
+      loadAngularModule(newCode)
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>
@@ -383,7 +384,7 @@ watch(() => props.moduleCode, (newCode) => {
   background: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 

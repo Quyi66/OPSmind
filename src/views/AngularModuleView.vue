@@ -51,7 +51,7 @@ const moduleConfig = computed(() => {
 })
 
 // 方法
-const getRouteLabel = (routeName) => {
+const getRouteLabel = routeName => {
   const labels = {
     main: '主页面',
     template: '模板管理',
@@ -85,20 +85,20 @@ const getRouteLabel = (routeName) => {
 }
 
 // 事件处理
-const onModuleLoaded = (data) => {
+const onModuleLoaded = data => {
   console.log('✅ Module loaded:', data)
 }
 
-const onModuleError = (data) => {
+const onModuleError = data => {
   console.error('❌ Module error:', data)
 }
 
-const onRouteChange = (data) => {
+const onRouteChange = data => {
   currentRoute.value = data.route
   console.log('🧭 Route changed:', data)
 }
 
-const onModuleMessage = (data) => {
+const onModuleMessage = data => {
   console.log('📨 Module message:', data)
 }
 
@@ -121,18 +121,24 @@ onMounted(() => {
 })
 
 // 监听路由变化
-watch(() => route.params.moduleCode, (newCode, oldCode) => {
-  if (newCode !== oldCode) {
-    refreshKey.value++
-    currentRoute.value = 'main'
+watch(
+  () => route.params.moduleCode,
+  (newCode, oldCode) => {
+    if (newCode !== oldCode) {
+      refreshKey.value++
+      currentRoute.value = 'main'
+    }
   }
-})
+)
 
-watch(() => route.query.route, (newRoute) => {
-  if (newRoute) {
-    currentRoute.value = newRoute
+watch(
+  () => route.query.route,
+  newRoute => {
+    if (newRoute) {
+      currentRoute.value = newRoute
+    }
   }
-})
+)
 </script>
 
 <style scoped>

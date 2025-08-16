@@ -9,20 +9,20 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const systemStats = ref([])
   const loading = ref(false)
   const error = ref(null)
-  
+
   // 计算属性
   const desktopModules = computed(() => {
     return availableModules.value
       .filter(module => module.showIn && module.showIn.desktop)
       .sort((a, b) => a.showIn.desktop - b.showIn.desktop)
   })
-  
+
   const dockModules = computed(() => {
     return availableModules.value
       .filter(module => module.showIn && module.showIn.dock)
       .sort((a, b) => a.showIn.dock - b.showIn.dock)
   })
-  
+
   // 操作方法
   const loadDashboardData = async () => {
     loading.value = true
@@ -74,8 +74,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
       loading.value = false
     }
   }
-  
-  const openModule = async (moduleCode) => {
+
+  const openModule = async moduleCode => {
     try {
       console.log('🚀 Opening module from dashboard:', moduleCode)
 
@@ -91,30 +91,29 @@ export const useDashboardStore = defineStore('dashboard', () => {
       })
       window.dispatchEvent(event)
       console.log('📱 Triggered module modal for:', cleanModuleCode)
-
     } catch (err) {
       console.error('Failed to open module:', err)
       error.value = `无法打开模块: ${moduleCode}`
     }
   }
-  
+
   // 获取模块标题的辅助函数
-  const getModuleTitle = (moduleCode) => {
+  const getModuleTitle = moduleCode => {
     const titles = {
-      'cac': 'CAC 配置管理',
-      'jao': 'JAO 作业编排',
-      'gfs': 'GFS 脚本管理',
-      'dts': 'DTS 数据传输',
-      'udp': 'UDP 统一开发平台',
-      'acm': 'ACM 资产配置管理',
-      'adm': 'ADM 系统管理',
-      'app': 'APP 应用管理',
-      'search': 'SEARCH 搜索中心',
-      'dev': 'DEV 开发工具'
+      cac: 'CAC 配置管理',
+      jao: 'JAO 作业编排',
+      gfs: 'GFS 脚本管理',
+      dts: 'DTS 数据传输',
+      udp: 'UDP 统一开发平台',
+      acm: 'ACM 资产配置管理',
+      adm: 'ADM 系统管理',
+      app: 'APP 应用管理',
+      search: 'SEARCH 搜索中心',
+      dev: 'DEV 开发工具'
     }
     return titles[moduleCode] || moduleCode.toUpperCase()
   }
-  
+
   const refreshStats = async () => {
     try {
       systemStats.value = await angularBridge.getSystemStats()
@@ -122,7 +121,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
       console.error('Failed to refresh stats:', err)
     }
   }
-  
+
   // 重置状态
   const reset = () => {
     currentUser.value = null
@@ -131,7 +130,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loading.value = false
     error.value = null
   }
-  
+
   return {
     // 状态
     currentUser,
@@ -139,11 +138,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
     systemStats,
     loading,
     error,
-    
+
     // 计算属性
     desktopModules,
     dockModules,
-    
+
     // 方法
     loadDashboardData,
     openModule,

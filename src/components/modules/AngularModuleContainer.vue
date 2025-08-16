@@ -9,31 +9,35 @@
           <p class="module-description">{{ moduleDescription }}</p>
         </div>
       </div>
-      
+
       <div class="module-actions">
         <el-button-group size="small">
-          <el-button 
+          <el-button
             :type="viewMode === 'iframe' ? 'primary' : 'default'"
             @click="switchViewMode('iframe')"
             :disabled="loading"
           >
-            <i class="fas fa-window-maximize"></i> iframe
+            <i class="fas fa-window-maximize"></i>
+            iframe
           </el-button>
-          <el-button 
+          <el-button
             :type="viewMode === 'embedded' ? 'primary' : 'default'"
             @click="switchViewMode('embedded')"
             :disabled="loading || !supportsEmbedded"
           >
-            <i class="fas fa-puzzle-piece"></i> 嵌入
+            <i class="fas fa-puzzle-piece"></i>
+            嵌入
           </el-button>
         </el-button-group>
-        
+
         <el-button @click="refreshModule" size="small" :loading="loading">
-          <i class="fas fa-refresh"></i> 刷新
+          <i class="fas fa-refresh"></i>
+          刷新
         </el-button>
-        
+
         <el-button @click="openInNewWindow" size="small" type="primary">
-          <i class="fas fa-external-link-alt"></i> 新窗口
+          <i class="fas fa-external-link-alt"></i>
+          新窗口
         </el-button>
       </div>
     </div>
@@ -54,11 +58,7 @@
 
       <!-- 错误状态 -->
       <div v-if="error && !loading" class="error-overlay">
-        <el-result
-          icon="error"
-          :title="`${moduleTitle} 模块加载失败`"
-          :sub-title="error"
-        >
+        <el-result icon="error" :title="`${moduleTitle} 模块加载失败`" :sub-title="error">
           <template #extra>
             <el-button type="primary" @click="retryLoad">重试</el-button>
             <el-button @click="switchViewMode(viewMode === 'iframe' ? 'embedded' : 'iframe')">
@@ -103,7 +103,7 @@
         </el-tag>
         <span class="status-text">{{ statusText }}</span>
       </div>
-      
+
       <div class="module-meta">
         <span>模式: {{ viewMode === 'iframe' ? 'iframe' : '嵌入' }}</span>
         <span v-if="loadTime">加载时间: {{ loadTime }}ms</span>
@@ -115,8 +115,14 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { 
-  ElButton, ElButtonGroup, ElIcon, ElProgress, ElResult, ElTag, ElMessage 
+import {
+  ElButton,
+  ElButtonGroup,
+  ElIcon,
+  ElProgress,
+  ElResult,
+  ElTag,
+  ElMessage
 } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { authService } from '@/services/auth'
@@ -126,12 +132,12 @@ const props = defineProps({
   moduleCode: {
     type: String,
     required: true,
-    validator: (value) => ['cac', 'jao', 'gfs', 'dts', 'udp', 'acm'].includes(value)
+    validator: value => ['cac', 'jao', 'gfs', 'dts', 'udp', 'acm'].includes(value)
   },
   viewMode: {
     type: String,
     default: 'iframe',
-    validator: (value) => ['iframe', 'embedded'].includes(value)
+    validator: value => ['iframe', 'embedded'].includes(value)
   },
   showHeader: {
     type: Boolean,
@@ -209,7 +215,7 @@ const supportsEmbedded = computed(() => moduleConfig.value.supportsEmbedded || f
 
 const viewMode = computed({
   get: () => currentViewMode.value,
-  set: (value) => {
+  set: value => {
     currentViewMode.value = value
     emit('viewModeChanged', value)
   }
@@ -225,34 +231,34 @@ const angularContainer = ref(null)
 
 // 构建模块URL
 function buildModuleUrl() {
-  const containerUrl = import.meta.env.DEV 
+  const containerUrl = import.meta.env.DEV
     ? 'http://localhost:3000/angular-container.html'
     : '/angular-container.html'
-  
+
   const params = new URLSearchParams({
     module: props.moduleCode,
     t: Date.now().toString()
   })
-  
+
   // 添加认证信息
   try {
     const token = authService.getToken()
     const user = authService.getCurrentUser()
-    
+
     if (token && user) {
       const authData = {
-        token: token,
-        user: user,
+        token,
+        user,
         timestamp: Date.now()
       }
-      
+
       sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
       params.append('vue_auth', 'true')
     }
   } catch (err) {
     console.warn('Failed to add auth info to module URL:', err)
   }
-  
+
   return `${containerUrl}?${params.toString()}`
 }
 
@@ -262,7 +268,7 @@ function switchViewMode(mode) {
     ElMessage.warning(`${moduleTitle.value} 模块暂不支持嵌入模式`)
     return
   }
-  
+
   viewMode.value = mode
   loadModule()
 }
@@ -270,7 +276,7 @@ function switchViewMode(mode) {
 // 加载模块
 async function loadModule() {
   if (loading.value) return
-  
+
   try {
     loading.value = true
     error.value = ''
@@ -278,9 +284,9 @@ async function loadModule() {
     statusText.value = `正在加载 ${moduleTitle.value} 模块...`
     loadingProgress.value = 0
     loadingText.value = '初始化...'
-    
+
     const startTime = Date.now()
-    
+
     if (viewMode.value === 'iframe') {
       await loadIframeModule()
     } else {
@@ -289,27 +295,26 @@ async function loadModule() {
       console.log('🔄 Embedded mode will be handled by AngularJSDirectEmbed component')
       loadingProgress.value = 50
       loadingText.value = '准备嵌入模块...'
-      
+
       // 等待一下让DOM渲染完成
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
       // 状态将由子组件的事件处理更新
       return
     }
-    
+
     loadTime.value = Date.now() - startTime
     lastUpdate.value = Date.now()
     status.value = '已加载'
     statusText.value = `${moduleTitle.value} 模块加载成功`
-    
+
     emit('loaded', props.moduleCode)
-    
   } catch (err) {
     console.error('Failed to load module:', err)
     error.value = err.message || '模块加载失败'
     status.value = '加载失败'
     statusText.value = `${moduleTitle.value} 模块加载失败`
-    
+
     emit('error', { moduleCode: props.moduleCode, error: error.value })
   } finally {
     if (viewMode.value === 'iframe') {
@@ -324,25 +329,25 @@ async function loadModule() {
 async function loadIframeModule() {
   loadingText.value = '准备iframe容器...'
   loadingProgress.value = 20
-  
+
   // 等待DOM更新
   await nextTick()
-  
+
   // 如果iframe还没有渲染，等待一下
   let retryCount = 0
   while (!moduleIframe.value && retryCount < 10) {
     await new Promise(resolve => setTimeout(resolve, 100))
     retryCount++
   }
-  
+
   return new Promise((resolve, reject) => {
     if (!moduleIframe.value) {
       reject(new Error('iframe容器未找到，请检查DOM渲染状态'))
       return
     }
-    
+
     const iframe = moduleIframe.value
-    
+
     const cleanup = () => {
       iframe.removeEventListener('load', onLoad)
       iframe.removeEventListener('error', onError)
@@ -375,10 +380,10 @@ async function loadIframeModule() {
       clearTimeout(timeoutId)
       originalCleanup()
     }
-    
+
     loadingProgress.value = 50
     loadingText.value = '加载模块内容...'
-    
+
     console.log('🔄 Starting iframe load for:', moduleUrl.value)
   })
 }
@@ -388,42 +393,42 @@ async function loadEmbeddedModule() {
   if (!supportsEmbedded.value) {
     throw new Error(`${moduleTitle.value} 模块不支持嵌入模式`)
   }
-  
+
   loadingText.value = '准备嵌入容器...'
   loadingProgress.value = 20
-  
+
   // 等待DOM更新
   await nextTick()
-  
+
   // 如果容器还没有渲染，等待一下
   let retryCount = 0
   while (!angularContainer.value && retryCount < 10) {
     await new Promise(resolve => setTimeout(resolve, 100))
     retryCount++
   }
-  
+
   if (!angularContainer.value) {
     throw new Error('嵌入容器未找到，请检查DOM渲染状态')
   }
-  
+
   loadingText.value = '加载AngularJS核心...'
   loadingProgress.value = 40
-  
+
   // 确保AngularJS已加载
   await ensureAngularJSLoaded()
-  
+
   loadingText.value = '加载模块脚本...'
   loadingProgress.value = 60
-  
+
   // 加载模块特定脚本
   await loadModuleScripts()
-  
+
   loadingText.value = '初始化模块...'
   loadingProgress.value = 80
-  
+
   // 初始化AngularJS应用
   await initializeAngularApp()
-  
+
   loadingProgress.value = 100
   loadingText.value = '模块加载完成'
 }
@@ -433,7 +438,7 @@ async function ensureAngularJSLoaded() {
   if (window.angular) {
     return Promise.resolve()
   }
-  
+
   // 这里可以动态加载AngularJS
   // 但在实际项目中，建议在页面中预先加载
   throw new Error('AngularJS未加载，请确保在页面中包含AngularJS库')
@@ -453,20 +458,20 @@ async function loadModuleScripts() {
 async function initializeAngularApp() {
   const container = angularContainer.value
   const appName = `embedded-${props.moduleCode}-${Date.now()}`
-  
+
   // 创建嵌入式应用
   const app = window.angular.module(appName, [`oplus.${props.moduleCode}`, 'ui.router'])
-  
+
   // 设置模板
   container.innerHTML = `<div ui-view></div>`
-  
+
   // 启动应用
   window.angular.bootstrap(container, [appName])
-  
+
   emit('ready', {
     moduleCode: props.moduleCode,
-    appName: appName,
-    container: container
+    appName,
+    container
   })
 }
 
@@ -484,27 +489,24 @@ function onIframeError() {
 
 // 设置iframe通信
 function setupIframeMessaging() {
-  const handleMessage = (event) => {
+  const handleMessage = event => {
     // 验证消息来源
-    const allowedOrigins = [
-      'http://localhost:3000',
-      window.location.origin
-    ]
-    
+    const allowedOrigins = ['http://localhost:3000', window.location.origin]
+
     if (!allowedOrigins.includes(event.origin)) {
       return
     }
-    
+
     console.log('📨 Message from Angular module:', event.data)
-    
+
     emit('message', {
       moduleCode: props.moduleCode,
       data: event.data
     })
   }
-  
+
   window.addEventListener('message', handleMessage)
-  
+
   onUnmounted(() => {
     window.removeEventListener('message', handleMessage)
   })
@@ -528,10 +530,14 @@ function openInNewWindow() {
 // 获取状态类型
 function getStatusType(status) {
   switch (status) {
-    case '已加载': return 'success'
-    case '加载中': return 'warning'
-    case '加载失败': return 'danger'
-    default: return 'info'
+    case '已加载':
+      return 'success'
+    case '加载中':
+      return 'warning'
+    case '加载失败':
+      return 'danger'
+    default:
+      return 'info'
   }
 }
 
@@ -548,7 +554,7 @@ function onEmbeddedLoaded(moduleCode) {
   statusText.value = `${moduleTitle.value} 模块加载成功`
   lastUpdate.value = Date.now()
   loadTime.value = Date.now() - (loadTime.value || Date.now())
-  
+
   console.log('✅ Embedded module loaded:', moduleCode)
   emit('loaded', moduleCode)
 }
@@ -558,7 +564,7 @@ function onEmbeddedError({ moduleCode, error: errorMsg }) {
   error.value = errorMsg
   status.value = '加载失败'
   statusText.value = `${moduleTitle.value} 模块加载失败`
-  
+
   console.error('❌ Embedded module error:', moduleCode, errorMsg)
   emit('error', { moduleCode, error: errorMsg })
 }
@@ -580,11 +586,14 @@ onMounted(() => {
 })
 
 // 监听模块代码变化
-watch(() => props.moduleCode, () => {
-  if (props.autoLoad) {
-    loadModule()
+watch(
+  () => props.moduleCode,
+  () => {
+    if (props.autoLoad) {
+      loadModule()
+    }
   }
-})
+)
 
 // 暴露方法
 defineExpose({
@@ -684,8 +693,12 @@ defineExpose({
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-progress {
@@ -750,17 +763,17 @@ defineExpose({
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .module-actions {
     justify-content: center;
   }
-  
+
   .status-bar {
     flex-direction: column;
     gap: 0.5rem;
     align-items: stretch;
   }
-  
+
   .module-meta {
     justify-content: center;
   }

@@ -41,7 +41,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['click'])
+const _emit = defineEmits(['click'])
 
 const formattedValue = computed(() => {
   if (typeof props.value === 'number') {
@@ -53,7 +53,7 @@ const formattedValue = computed(() => {
 
 const trendClass = computed(() => {
   if (!props.trend) return ''
-  
+
   switch (props.trend.type) {
     case 'up':
       return 'trend-up'
@@ -68,7 +68,7 @@ const trendClass = computed(() => {
 
 const trendIcon = computed(() => {
   if (!props.trend) return ''
-  
+
   switch (props.trend.type) {
     case 'up':
       return 'fa-arrow-up'
@@ -98,7 +98,7 @@ const trendText = computed(() => {
   display: flex;
   align-items: center;
   gap: 20px;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -142,15 +142,15 @@ const trendText = computed(() => {
   gap: 4px;
   font-size: 12px;
   font-weight: 500;
-  
+
   &.trend-up {
     color: #52c41a;
   }
-  
+
   &.trend-down {
     color: #f5222d;
   }
-  
+
   &.trend-stable {
     color: #faad14;
   }
@@ -162,13 +162,13 @@ const trendText = computed(() => {
     padding: 16px;
     gap: 16px;
   }
-  
+
   .stats-icon {
     width: 48px;
     height: 48px;
     font-size: 20px;
   }
-  
+
   .stats-value {
     font-size: 24px;
   }
@@ -180,7 +180,7 @@ const trendText = computed(() => {
     text-align: center;
     gap: 12px;
   }
-  
+
   .stats-icon {
     width: 56px;
     height: 56px;

@@ -1,14 +1,14 @@
 <template>
   <div class="quick-actions">
     <h2 class="section-title">快速操作</h2>
-    
+
     <div class="actions-grid">
       <!-- 常用操作 -->
       <div class="action-group">
         <h3 class="group-title">常用操作</h3>
         <div class="action-items">
-          <div 
-            v-for="action in commonActions" 
+          <div
+            v-for="action in commonActions"
             :key="action.id"
             class="action-item"
             @click="handleActionClick(action)"
@@ -23,16 +23,12 @@
           </div>
         </div>
       </div>
-      
+
       <!-- 最近活动 -->
       <div class="action-group">
         <h3 class="group-title">最近活动</h3>
         <div class="recent-activities">
-          <div 
-            v-for="activity in recentActivities" 
-            :key="activity.id"
-            class="activity-item"
-          >
+          <div v-for="activity in recentActivities" :key="activity.id" class="activity-item">
             <div class="activity-icon">
               <i :class="activity.icon"></i>
             </div>
@@ -44,7 +40,7 @@
               {{ getStatusText(activity.status) }}
             </div>
           </div>
-          
+
           <div v-if="recentActivities.length === 0" class="empty-state">
             <i class="fa fa-inbox"></i>
             <p>暂无最近活动</p>
@@ -134,7 +130,7 @@ const loadRecentActivities = () => {
   ]
 }
 
-const handleActionClick = (action) => {
+const handleActionClick = action => {
   switch (action.action) {
     case 'create-job':
       ElMessage.info('跳转到作业创建页面...')
@@ -154,20 +150,20 @@ const handleActionClick = (action) => {
   }
 }
 
-const formatTime = (time) => {
+const formatTime = time => {
   const now = new Date()
   const diff = now - time
   const minutes = Math.floor(diff / (1000 * 60))
   const hours = Math.floor(diff / (1000 * 60 * 60))
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  
+
   if (minutes < 1) return '刚刚'
   if (minutes < 60) return `${minutes}分钟前`
   if (hours < 24) return `${hours}小时前`
   return `${days}天前`
 }
 
-const getStatusText = (status) => {
+const getStatusText = status => {
   const statusMap = {
     success: '成功',
     warning: '警告',
@@ -224,7 +220,7 @@ const getStatusText = (status) => {
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s;
-  
+
   &:hover {
     background-color: #f5f5f5;
   }
@@ -305,22 +301,22 @@ const getStatusText = (status) => {
   font-size: 12px;
   padding: 2px 8px;
   border-radius: 4px;
-  
+
   &.success {
     background-color: #f6ffed;
     color: #52c41a;
   }
-  
+
   &.warning {
     background-color: #fffbe6;
     color: #faad14;
   }
-  
+
   &.error {
     background-color: #fff2f0;
     color: #f5222d;
   }
-  
+
   &.running {
     background-color: #e6f7ff;
     color: #1890ff;
@@ -331,13 +327,13 @@ const getStatusText = (status) => {
   text-align: center;
   padding: 40px 20px;
   color: #8c8c8c;
-  
+
   i {
     font-size: 32px;
     margin-bottom: 12px;
     display: block;
   }
-  
+
   p {
     margin: 0;
     font-size: 14px;
@@ -350,11 +346,11 @@ const getStatusText = (status) => {
     grid-template-columns: 1fr;
     gap: 24px;
   }
-  
+
   .action-item {
     padding: 8px;
   }
-  
+
   .action-icon {
     width: 32px;
     height: 32px;

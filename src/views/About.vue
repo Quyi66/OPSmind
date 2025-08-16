@@ -6,16 +6,16 @@
         <h1>OpsMind Dashboard</h1>
         <p class="version">Version 1.0.0</p>
       </div>
-      
+
       <div class="about-content">
         <div class="info-section">
           <h2>关于 OpsMind</h2>
           <p>
-            OpsMind 是一个现代化的运维管理平台，提供统一的运维工具和服务。
-            本仪表盘基于 Vue 3 构建，与现有 AngularJS 系统无缝集成。
+            OpsMind 是一个现代化的运维管理平台，提供统一的运维工具和服务。 本仪表盘基于 Vue 3
+            构建，与现有 AngularJS 系统无缝集成。
           </p>
         </div>
-        
+
         <div class="tech-section">
           <h2>技术栈</h2>
           <div class="tech-grid">
@@ -37,11 +37,9 @@
             </div>
           </div>
         </div>
-        
+
         <div class="actions-section">
-          <el-button type="primary" @click="goBack">
-            返回仪表盘
-          </el-button>
+          <el-button type="primary" @click="goBack">返回仪表盘</el-button>
         </div>
       </div>
     </div>
@@ -105,14 +103,14 @@ h1 {
   .tech-section {
     margin-bottom: 32px;
   }
-  
+
   h2 {
     font-size: 20px;
     font-weight: 600;
     color: #262626;
     margin: 0 0 16px 0;
   }
-  
+
   p {
     color: #595959;
     line-height: 1.6;
@@ -133,12 +131,12 @@ h1 {
   padding: 12px;
   background: #f5f5f5;
   border-radius: 6px;
-  
+
   i {
     font-size: 20px;
     color: #1890ff;
   }
-  
+
   span {
     font-weight: 500;
     color: #262626;
@@ -153,7 +151,7 @@ h1 {
   .about-container {
     padding: 24px;
   }
-  
+
   .tech-grid {
     grid-template-columns: 1fr;
   }
