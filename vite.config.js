@@ -3,10 +3,10 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
 
-// 插件
-import { createHtmlPlugin } from 'vite-plugin-html'
-import { visualizer } from 'rollup-plugin-visualizer'
-import { VitePWA } from 'vite-plugin-pwa'
+// 插件 (可选，需要时安装)
+// import { createHtmlPlugin } from 'vite-plugin-html'
+// import { visualizer } from 'rollup-plugin-visualizer'
+// import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ command, mode }) => {
   // 加载环境变量
@@ -21,47 +21,45 @@ export default defineConfig(({ command, mode }) => {
           defineModel: true,
           propsDestructure: true
         }
-      }),
-
-      // HTML 模板处理
-      createHtmlPlugin({
-        inject: {
-          data: {
-            title: env.VITE_APP_TITLE || 'OpsMind Dashboard',
-            description: env.VITE_APP_DESCRIPTION || 'OpsMind Vue 3 Dashboard'
-          }
-        }
-      }),
-
-      // 构建分析（仅生产环境）
-      isProduction && visualizer({
-        filename: 'dist/stats.html',
-        open: false,
-        gzipSize: true,
-        brotliSize: true
-      }),
-
-      // PWA 支持（可选）
-      env.VITE_PWA_ENABLED === 'true' && VitePWA({
-        registerType: 'autoUpdate',
-        workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}']
-        },
-        manifest: {
-          name: env.VITE_APP_TITLE || 'OpsMind Dashboard',
-          short_name: 'OpsMind',
-          description: env.VITE_APP_DESCRIPTION,
-          theme_color: '#409eff',
-          icons: [
-            {
-              src: 'pwa-192x192.png',
-              sizes: '192x192',
-              type: 'image/png'
-            }
-          ]
-        }
       })
-    ].filter(Boolean),
+
+      // 可选插件 - 需要时取消注释并安装对应依赖
+      // createHtmlPlugin({
+      //   inject: {
+      //     data: {
+      //       title: env.VITE_APP_TITLE || 'OpsMind Dashboard',
+      //       description: env.VITE_APP_DESCRIPTION || 'OpsMind Vue 3 Dashboard'
+      //     }
+      //   }
+      // }),
+
+      // isProduction && visualizer({
+      //   filename: 'dist/stats.html',
+      //   open: false,
+      //   gzipSize: true,
+      //   brotliSize: true
+      // }),
+
+      // env.VITE_PWA_ENABLED === 'true' && VitePWA({
+      //   registerType: 'autoUpdate',
+      //   workbox: {
+      //     globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+      //   },
+      //   manifest: {
+      //     name: env.VITE_APP_TITLE || 'OpsMind Dashboard',
+      //     short_name: 'OpsMind',
+      //     description: env.VITE_APP_DESCRIPTION,
+      //     theme_color: '#409eff',
+      //     icons: [
+      //       {
+      //         src: 'pwa-192x192.png',
+      //         sizes: '192x192',
+      //         type: 'image/png'
+      //       }
+      //     ]
+      //   }
+      // })
+    ],
 
     // 设置基础路径，开发环境使用根路径，生产环境使用子路径
     base: mode === 'production' ? '/opsmind/base/' : '/',
@@ -247,7 +245,8 @@ export default defineConfig(({ command, mode }) => {
           },
           entryFileNames: 'js/[name]-[hash].js',
           assetFileNames: (assetInfo) => {
-            const fileName = assetInfo.names?.[0] || assetInfo.name || 'asset'
+            // 使用 names 数组的第一个元素，如果不存在则使用默认名称
+            const fileName = assetInfo.names?.[0] || 'asset'
             const info = fileName.split('.')
             const ext = info[info.length - 1]
 

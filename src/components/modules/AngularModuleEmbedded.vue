@@ -35,7 +35,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElAlert, ElButton } from 'element-plus'
-import { authService } from '@/services/auth'
+import { authService } from '@/core/auth'
 
 const props = defineProps({
   moduleCode: {

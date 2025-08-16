@@ -79,7 +79,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
         console.log('🔒 Authentication required, redirecting to login')
         // 清除可能存在的无效认证信息
         try {
-          const { authService } = await import('@/services/auth.js')
+          const { authService } = await import('@/core/auth')
           await authService.logout()
         } catch (logoutError) {
           console.error('Failed to logout:', logoutError)

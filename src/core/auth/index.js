@@ -1,10 +1,11 @@
 /**
  * 现代化认证服务
  * 统一管理用户认证、权限和会话
+ * 基于旧版认证服务完整迁移
  */
 
 import { ref, reactive, computed } from 'vue'
-import { apiService } from '@/core/api'
+import CryptoJS from 'crypto-js'
 
 // 认证状态
 const authState = reactive({
@@ -16,18 +17,43 @@ const authState = reactive({
   lastActivity: null
 })
 
-// 会话配置
+// 会话配置 - 使用旧版的存储键名保持兼容性
 const SESSION_CONFIG = {
-  tokenKey: 'opsmind_auth_token',
-  userKey: 'opsmind_user_info',
+  tokenKey: 'oplus_token',
+  userKey: 'oplus_user',
   timeout: 30 * 60 * 1000, // 30分钟
-  refreshThreshold: 5 * 60 * 1000 // 5分钟前刷新
+  refreshThreshold: 5 * 60 * 1000, // 5分钟前刷新
+  encryptionKey: 'Oplus@2022!!sys@' // 加密密钥
 }
 
 class AuthService {
   constructor() {
+    // 使用相对路径，让 webpack 代理处理
+    this.baseURL = ''
     this.initializeAuth()
     this.setupActivityMonitor()
+  }
+
+  /**
+   * AES 加密方法（与后台一致）
+   */
+  encrypt(word) {
+    if (!word) return ''
+    const key = CryptoJS.enc.Utf8.parse(SESSION_CONFIG.encryptionKey)
+    const iv = CryptoJS.enc.Utf8.parse(SESSION_CONFIG.encryptionKey)
+    return CryptoJS.AES.encrypt(word, key, {
+      iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Iso10126
+    }).toString()
+  }
+
+  /**
+   * 获取租户 ID
+   */
+  getTenantId() {
+    // 可以从配置或 URL 参数获取
+    return 'ff808081727a047f017292d0d72e0004' // 默认租户 ID
   }
 
   /**
@@ -35,89 +61,157 @@ class AuthService {
    */
   initializeAuth() {
     try {
-      const token = localStorage.getItem(SESSION_CONFIG.tokenKey)
-      const userInfo = localStorage.getItem(SESSION_CONFIG.userKey)
+      // 支持从 localStorage 和 sessionStorage 恢复
+      const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
+      const userInfo = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
 
       if (token && userInfo) {
-        authState.token = token
-        authState.user = JSON.parse(userInfo)
-        authState.isAuthenticated = true
-        authState.lastActivity = Date.now()
+        const parsedUser = JSON.parse(userInfo)
+        // 验证用户对象是否有效
+        if (parsedUser && parsedUser.login) {
+          authState.token = token
+          authState.user = parsedUser
+          authState.isAuthenticated = true
+          authState.lastActivity = Date.now()
 
-        console.log('🔐 Auth state restored from localStorage')
-        this.validateSession()
+          console.log('🔐 Auth state restored from storage:', parsedUser.login)
+          this.validateSession()
+        } else {
+          console.warn('⚠️ Invalid user data in storage, clearing...')
+          this.clearAuthState()
+        }
       }
     } catch (error) {
       console.error('Failed to restore auth state:', error)
-      this.logout()
+      this.clearAuthState()
     }
   }
 
   /**
-   * 登录
+   * 登录 - 完全基于旧版实现
    */
   async login(credentials) {
     authState.isLoading = true
 
     try {
-      const response = await apiService.post('/auth/login', credentials)
-      const { token, user, permissions = [] } = response.data
+      console.log('🔐 Sending login request to:', `${this.baseURL}/oplus-portal/api/authenticate`)
 
-      // 更新认证状态
-      authState.token = token
-      authState.user = user
-      authState.permissions = permissions
+      // 加密用户名、密码和 OTP 代码
+      const encryptedData = {
+        username: this.encrypt(credentials.username),
+        password: this.encrypt(credentials.password),
+        rememberMe: credentials.rememberMe,
+        tenantId: this.getTenantId()
+      }
+
+      // 如果有 OTP 代码，也需要加密
+      if (credentials.otpCode) {
+        encryptedData.otpCode = this.encrypt(credentials.otpCode)
+      }
+
+      console.log('🔒 Encrypted login data prepared')
+
+      const response = await fetch(`${this.baseURL}/oplus-portal/api/authenticate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(encryptedData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw {
+          status: response.status,
+          code: errorData.code || 'LOGIN_FAILED',
+          message: errorData.message || '登录失败'
+        }
+      }
+
+      const data = await response.json()
+
+      // 保存认证信息
+      authState.token = data.id_token || data.access_token || data.token
+
+      // 创建基本用户信息（后续会在 dashboard 中获取完整信息）
+      authState.user = {
+        login: credentials.username,
+        username: credentials.username
+        // 其他信息会在 dashboard 加载时从 /api/account 获取
+      }
       authState.isAuthenticated = true
       authState.lastActivity = Date.now()
 
-      // 持久化到本地存储
-      localStorage.setItem(SESSION_CONFIG.tokenKey, token)
-      localStorage.setItem(SESSION_CONFIG.userKey, JSON.stringify(user))
+      // 保存到存储
+      const userJson = JSON.stringify(authState.user)
+      if (credentials.rememberMe) {
+        localStorage.setItem(SESSION_CONFIG.tokenKey, authState.token)
+        localStorage.setItem(SESSION_CONFIG.userKey, userJson)
+      } else {
+        sessionStorage.setItem(SESSION_CONFIG.tokenKey, authState.token)
+        sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
+      }
 
-      console.log('✅ Login successful:', user.login)
-      return { success: true, user }
+      console.log('✅ Login successful, token and user saved:', authState.user.login)
+
+      // 返回与旧版兼容的格式
+      return data
 
     } catch (error) {
-      console.error('❌ Login failed:', error)
-      return { 
-        success: false, 
-        error: error.message || '登录失败' 
-      }
+      console.error('❌ Login error:', error)
+      throw error
     } finally {
       authState.isLoading = false
     }
   }
 
   /**
-   * 登出
+   * 登出 - 基于旧版实现
    */
   async logout() {
     try {
-      // 调用后端登出接口
-      if (authState.token) {
-        await apiService.post('/auth/logout')
+      // 清除本地存储
+      this.clearAuthState()
+      console.log('✅ Logout successful')
+
+      // 跳转到登录页面
+      if (typeof window !== 'undefined' && window.location) {
+        // 使用 window.location 确保完全刷新页面状态
+        window.location.href = '/login'
       }
     } catch (error) {
-      console.warn('Logout API call failed:', error)
-    } finally {
-      // 清除本地状态
-      this.clearAuthState()
-      console.log('👋 Logout completed')
+      console.error('❌ Logout error:', error)
     }
   }
 
   /**
-   * 清除认证状态
+   * 清除认证状态 - 兼容旧版存储键名
    */
   clearAuthState() {
+    // 清除状态
     authState.user = null
     authState.token = null
     authState.permissions = []
     authState.isAuthenticated = false
     authState.lastActivity = null
 
+    // 清除所有可能的存储位置
     localStorage.removeItem(SESSION_CONFIG.tokenKey)
     localStorage.removeItem(SESSION_CONFIG.userKey)
+    sessionStorage.removeItem(SESSION_CONFIG.tokenKey)
+    sessionStorage.removeItem(SESSION_CONFIG.userKey)
+
+    // 清除旧版可能使用的其他键名
+    localStorage.removeItem('opsmind_auth_token')
+    localStorage.removeItem('opsmind_user_info')
+  }
+
+  /**
+   * 清除无效的认证信息
+   */
+  clearInvalidAuth() {
+    console.log('🧹 Clearing invalid authentication data')
+    this.clearAuthState()
   }
 
   /**
@@ -125,17 +219,41 @@ class AuthService {
    */
   async refreshToken() {
     try {
-      const response = await apiService.post('/auth/refresh', {
-        token: authState.token
+      const response = await fetch(`${this.baseURL}/oplus-portal/api/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authState.token}`
+        },
+        body: JSON.stringify({
+          token: authState.token
+        })
       })
 
-      const { token: newToken } = response.data
-      authState.token = newToken
-      authState.lastActivity = Date.now()
+      if (!response.ok) {
+        throw new Error('Token refresh failed')
+      }
 
-      localStorage.setItem(SESSION_CONFIG.tokenKey, newToken)
-      console.log('🔄 Token refreshed')
-      return true
+      const data = await response.json()
+      const newToken = data.token || data.id_token || data.access_token
+
+      if (newToken) {
+        authState.token = newToken
+        authState.lastActivity = Date.now()
+
+        // 更新存储中的token
+        const tokenKey = SESSION_CONFIG.tokenKey
+        if (localStorage.getItem(tokenKey)) {
+          localStorage.setItem(tokenKey, newToken)
+        } else if (sessionStorage.getItem(tokenKey)) {
+          sessionStorage.setItem(tokenKey, newToken)
+        }
+
+        console.log('🔄 Token refreshed')
+        return true
+      } else {
+        throw new Error('No token in refresh response')
+      }
 
     } catch (error) {
       console.error('Token refresh failed:', error)
@@ -176,8 +294,8 @@ class AuthService {
     if (!permission) return true
 
     return authState.permissions.includes(permission) ||
-           authState.permissions.includes('admin') ||
-           authState.user?.role === 'admin'
+      authState.permissions.includes('admin') ||
+      authState.user?.role === 'admin'
   }
 
   /**
@@ -189,16 +307,42 @@ class AuthService {
   }
 
   /**
-   * 获取认证头
+   * 获取认证头 - 兼容旧版格式
    */
   getAuthHeaders() {
-    if (!authState.token) return {}
-    
-    return {
-      'Authorization': `Bearer ${authState.token}`,
-      'X-User-ID': authState.user?.id,
-      'X-Tenant-ID': authState.user?.tenantId
+    const token = this.getToken()
+    if (token) {
+      return {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
     }
+    return {
+      'Content-Type': 'application/json'
+    }
+  }
+
+  /**
+   * 发起认证请求 - 兼容旧版实现
+   */
+  async authenticatedRequest(url, options = {}) {
+    const headers = {
+      ...this.getAuthHeaders(),
+      ...options.headers
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers
+    })
+
+    if (response.status === 401) {
+      // Token 过期，清除认证信息
+      this.logout()
+      throw new Error('Authentication expired')
+    }
+
+    return response
   }
 
   /**
@@ -216,9 +360,9 @@ class AuthService {
   setupActivityMonitor() {
     // 监听用户活动
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart']
-    
+
     const updateActivity = () => this.updateActivity()
-    
+
     events.forEach(event => {
       document.addEventListener(event, updateActivity, { passive: true })
     })
@@ -231,17 +375,167 @@ class AuthService {
     }, 60000) // 每分钟检查一次
   }
 
-  // Getter 方法
+  /**
+   * 初始化登录页面（依次调用所需接口）
+   */
+  async initializeLogin() {
+    console.log('🔄 Initializing login page...')
+
+    try {
+      // 1. 获取所有租户
+      const tenants = await this.getTenants()
+
+      // 2. 验证许可证
+      const license = await this.verifyLicense()
+
+      // 3. 检查 OTP 状态
+      const otpEnabled = await this.checkOTP()
+
+      console.log('✅ Login initialization completed')
+
+      return {
+        tenants,
+        license,
+        otpEnabled
+      }
+    } catch (error) {
+      console.error('❌ Login initialization failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 获取所有租户
+   */
+  async getTenants() {
+    try {
+      const cacheBuster = Date.now()
+      const response = await fetch(
+        `${this.baseURL}/oplus-portal/api/tenants/all?cacheBuster=${cacheBuster}`
+      )
+
+      if (response.ok) {
+        const tenants = await response.json()
+        console.log('✅ Tenants loaded:', tenants.length)
+        return tenants
+      }
+      return []
+    } catch (error) {
+      console.warn('Failed to load tenants:', error)
+      return []
+    }
+  }
+
+  /**
+   * 验证许可证
+   */
+  async verifyLicense() {
+    try {
+      const response = await fetch(`${this.baseURL}/oplus-portal/api/licenses/verify`)
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('✅ License verified')
+        return result
+      }
+      return null
+    } catch (error) {
+      console.warn('Failed to verify license:', error)
+      return null
+    }
+  }
+
+  /**
+   * 检查 OTP 状态
+   */
+  async checkOTP() {
+    try {
+      const cacheBuster = Date.now()
+      const response = await fetch(
+        `${this.baseURL}/oplus-portal/api/authenticate/otp?cacheBuster=${cacheBuster}`
+      )
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('✅ OTP status checked:', result)
+        return result
+      }
+      return false
+    } catch (error) {
+      console.warn('Failed to check OTP:', error)
+      return false
+    }
+  }
+
+  // Getter 方法 - 兼容旧版实现
   isAuthenticated() {
-    return authState.isAuthenticated
+    if (authState.isAuthenticated && authState.token && authState.user && authState.user.login) {
+      return true
+    }
+
+    // 从存储中恢复
+    const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
+    const user = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
+
+    if (token && user) {
+      try {
+        const parsedUser = JSON.parse(user)
+        // 验证用户对象是否有效
+        if (parsedUser && parsedUser.login) {
+          authState.token = token
+          authState.user = parsedUser
+          authState.isAuthenticated = true
+          authState.lastActivity = Date.now()
+          console.log('✅ Authentication restored from storage:', parsedUser.login)
+          return true
+        } else {
+          console.warn('⚠️ Invalid user data in storage, clearing...')
+          this.clearInvalidAuth()
+        }
+      } catch (error) {
+        console.error('❌ Failed to parse user data from storage:', error)
+        this.clearInvalidAuth()
+      }
+    }
+
+    return false
   }
 
   getCurrentUser() {
-    return authState.user
+    if (authState.user && authState.user.login) {
+      return authState.user
+    }
+
+    const user = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
+    if (user) {
+      try {
+        const parsedUser = JSON.parse(user)
+        if (parsedUser && parsedUser.login) {
+          authState.user = parsedUser
+          return authState.user
+        } else {
+          console.warn('⚠️ Invalid user data, clearing...')
+          this.clearInvalidAuth()
+        }
+      } catch (error) {
+        console.error('❌ Failed to parse user data:', error)
+        this.clearInvalidAuth()
+      }
+    }
+
+    return null
   }
 
   getToken() {
-    return authState.token
+    if (authState.token) return authState.token
+
+    const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
+    if (token) {
+      authState.token = token
+      return token
+    }
+
+    return null
   }
 
   getPermissions() {

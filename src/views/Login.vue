@@ -4,6 +4,20 @@
       <div class="login-header">
         <h1>OpsMind Dashboard</h1>
         <p>运维管理平台</p>
+        <!-- 开发环境提示 -->
+        <div v-if="isDev" class="dev-notice">
+          <el-alert
+            title="开发环境"
+            type="info"
+            :closable="false"
+            show-icon
+          >
+            <template #default>
+              <p>默认账号: <strong>admin</strong></p>
+              <p>默认密码: <strong>Oplus@2020</strong></p>
+            </template>
+          </el-alert>
+        </div>
       </div>
 
       <div v-if="initializing" class="initializing-container">
@@ -64,15 +78,29 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            :loading="loading"
-            @click="handleLogin"
-            class="login-button"
-          >
-            {{ loading ? '登录中...' : '登录' }}
-          </el-button>
+          <div class="login-buttons">
+            <el-button
+              type="primary"
+              size="large"
+              :loading="loading"
+              @click="handleLogin"
+              :class="isDev ? 'login-button-dev' : 'login-button'"
+            >
+              {{ loading ? '登录中...' : '登录' }}
+            </el-button>
+
+            <!-- 开发环境快速登录按钮 -->
+            <el-button
+              v-if="isDev"
+              type="success"
+              size="large"
+              :loading="loading"
+              @click="handleQuickLogin"
+              class="quick-login-button"
+            >
+              快速登录
+            </el-button>
+          </div>
         </el-form-item>
       </el-form>
 
@@ -87,16 +115,23 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElForm, ElFormItem, ElInput, ElButton, ElCheckbox, ElAlert, ElMessage } from 'element-plus'
-import { authService } from '@/services/auth'
+import { authService } from '@/core/auth'
+import { getDevLoginDefaults, logDevInfo, isDevelopment } from '@/config/dev-defaults'
 
 const router = useRouter()
 const loginFormRef = ref()
 
+// 开发环境标识
+const isDev = isDevelopment()
+
+// 获取开发环境默认值
+const devDefaults = getDevLoginDefaults()
+
 const loginForm = reactive({
-  username: '',
-  password: '',
+  username: devDefaults.username,
+  password: devDefaults.password,
   otpCode: '',
-  rememberMe: false
+  rememberMe: devDefaults.rememberMe
 })
 
 const loginRules = {
@@ -172,6 +207,20 @@ const handleLogin = async () => {
   }
 }
 
+// 开发环境快速登录
+const handleQuickLogin = async () => {
+  if (!isDev) return
+
+  // 确保表单已填充默认值
+  const defaults = getDevLoginDefaults()
+  loginForm.username = defaults.username
+  loginForm.password = defaults.password
+  loginForm.rememberMe = defaults.rememberMe
+
+  // 直接调用登录
+  await handleLogin()
+}
+
 const initializeLoginPage = async () => {
   try {
     initializing.value = true
@@ -202,6 +251,11 @@ const initializeLoginPage = async () => {
 
 onMounted(() => {
   initializeLoginPage()
+
+  // 开发环境提示
+  if (isDev) {
+    logDevInfo()
+  }
 })
 </script>
 
@@ -242,6 +296,20 @@ onMounted(() => {
   margin: 0;
 }
 
+.dev-notice {
+  margin-top: 16px;
+  text-align: left;
+}
+
+.dev-notice .el-alert {
+  border-radius: 8px;
+}
+
+.dev-notice p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
 .login-form {
   margin-bottom: 24px;
 }
@@ -250,11 +318,32 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
+.login-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .login-button {
   width: 100%;
   height: 44px;
   font-size: 16px;
   font-weight: 500;
+}
+
+.login-button-dev {
+  flex: 1;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.quick-login-button {
+  height: 44px;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 100px;
+  flex-shrink: 0;
 }
 
 .login-footer {

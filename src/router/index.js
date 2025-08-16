@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Dashboard from '@/views/Dashboard.vue'
 import Login from '@/views/Login.vue'
-import { authService } from '@/services/auth'
+import { authService } from '@/core/auth'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),

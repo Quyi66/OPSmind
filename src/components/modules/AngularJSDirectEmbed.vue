@@ -52,7 +52,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElIcon, ElResult, ElButton, ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
-import { authService } from '@/services/auth'
+import { authService } from '@/core/auth'
 
 const props = defineProps({
   moduleCode: {

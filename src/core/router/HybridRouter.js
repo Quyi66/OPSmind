@@ -5,7 +5,7 @@
 
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { hybridModuleManager, MODULE_TYPES } from '@/core/modules/HybridModuleManager.js'
-import { authService } from '@/services/auth.js'
+import { authService } from '@/core/auth'
 
 // 基础路由配置
 const baseRoutes = [
@@ -169,7 +169,7 @@ class HybridRouter {
 
     // 根据功能开关决定使用 Vue 还是 Angular
     const migratedFeatures = module.metadata.migratedFeatures || []
-    
+
     migratedFeatures.forEach(feature => {
       const featurePath = `/${module.code}/${feature.toLowerCase()}`
       routes.push({
@@ -226,7 +226,7 @@ class HybridRouter {
 
       // 认证检查
       const isAuthenticated = authService.isAuthenticated()
-      
+
       if (to.meta.requiresAuth && !isAuthenticated) {
         console.log('🔒 Redirecting to login - authentication required')
         next('/login')
@@ -252,7 +252,7 @@ class HybridRouter {
       // 功能开关检查
       if (to.meta.feature) {
         const isEnabled = hybridModuleManager.isFeatureEnabled(
-          to.meta.moduleCode, 
+          to.meta.moduleCode,
           to.meta.feature
         )
         if (!isEnabled) {
@@ -270,7 +270,7 @@ class HybridRouter {
     this.router.afterEach((to, from) => {
       // 记录路由跳转
       console.log(`🧭 Route changed: ${from.path} → ${to.path}`)
-      
+
       // 发送路由变化事件
       this.emitRouteChange(to, from)
     })
@@ -327,7 +327,7 @@ class HybridRouter {
    */
   addModuleRoutes(module) {
     let routes = []
-    
+
     switch (module.type) {
       case MODULE_TYPES.VUE_NATIVE:
         routes = this.createVueModuleRoutes(module)

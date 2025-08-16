@@ -125,7 +125,7 @@ import {
   ElMessage
 } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
-import { authService } from '@/services/auth'
+import { authService } from '@/core/auth'
 import AngularJSDirectEmbed from './AngularJSDirectEmbed.vue'
 
 const props = defineProps({

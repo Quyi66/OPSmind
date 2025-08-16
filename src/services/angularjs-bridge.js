@@ -177,7 +177,7 @@ export class AngularJSBridge {
   async getAngularModules() {
     try {
       // 尝试从认证服务获取真实的应用数据
-      const { authService } = await import('./auth.js')
+      const { authService } = await import('@/core/auth')
       const applets = await authService.getApplets()
 
       if (applets && applets.length > 0) {
@@ -265,7 +265,7 @@ export class AngularJSBridge {
   async getCurrentUserInfo() {
     try {
       // 尝试从认证服务获取真实用户信息
-      const { authService } = await import('./auth.js')
+      const { authService } = await import('@/core/auth')
       const isAuthenticated = authService.isAuthenticated()
       const user = authService.getCurrentUser()
 
@@ -286,7 +286,7 @@ export class AngularJSBridge {
       console.error('❌ Failed to get user info from auth service:', error)
       // 发生错误时也清除可能的无效状态
       try {
-        const { authService } = await import('./auth.js')
+        const { authService } = await import('@/core/auth')
         await authService.logout()
       } catch (logoutError) {
         console.error('Failed to logout on error:', logoutError)

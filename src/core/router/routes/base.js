@@ -10,7 +10,7 @@ export const baseRoutes = [
   {
     path: '/login',
     name: 'login',
-    component: () => import('@/views/auth/Login.vue'),
+    component: () => import('@/views/Login.vue'),
     meta: {
       title: '登录 - OpsMind',
       requiresGuest: true,
@@ -20,7 +20,7 @@ export const baseRoutes = [
   {
     path: '/home',
     name: 'home',
-    component: () => import('@/modules/dashboard/views/Dashboard.vue'),
+    component: () => import('@/views/Dashboard.vue'),
     meta: {
       title: 'OpsMind 仪表盘',
       requiresAuth: true,
@@ -44,31 +44,6 @@ export const baseRoutes = [
       title: '迁移管理 - OpsMind',
       requiresAuth: true,
       requiresPermission: 'admin'
-    }
-  },
-  // 错误页面
-  {
-    path: '/error/403',
-    name: 'error-403',
-    component: () => import('@/views/error/Error403.vue'),
-    meta: {
-      title: '访问被拒绝'
-    }
-  },
-  {
-    path: '/error/404',
-    name: 'error-404',
-    component: () => import('@/views/error/Error404.vue'),
-    meta: {
-      title: '页面未找到'
-    }
-  },
-  {
-    path: '/error/500',
-    name: 'error-500',
-    component: () => import('@/views/error/Error500.vue'),
-    meta: {
-      title: '服务器错误'
     }
   },
   // 通配符路由 - 必须放在最后

@@ -88,7 +88,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { authService } from '@/services/auth'
+import { authService } from '@/core/auth'
 import {
   Search,
   Refresh,
@@ -143,9 +143,9 @@ const handleUserCommand = command => {
 
 const handleLogout = async () => {
   try {
+    ElMessage.success('正在安全登出...')
     await authService.logout()
-    ElMessage.success('已安全登出')
-    router.push('/login')
+    // 认证服务会自动处理页面跳转
   } catch (error) {
     console.error('Logout error:', error)
     ElMessage.error('登出失败')

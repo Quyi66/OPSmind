@@ -34,7 +34,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { authService } from '@/services/auth'
+import { authService } from '@/core/auth'
 
 const props = defineProps({
   moduleCode: {
