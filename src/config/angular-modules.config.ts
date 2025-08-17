@@ -1,7 +1,10 @@
 /**
  * Angular 模块配置 - TypeScript版本
  * 统一管理所有Angular模块的路由和配置信息
+ * URL 配置已抽取到 module-urls.config.ts 中单独管理
  */
+
+import { appUrlManager } from './module-urls.config'
 
 interface ModuleRoutes {
   [key: string]: string
@@ -15,9 +18,6 @@ interface AngularModuleConfig {
   color: string
   description: string
   angularModule: string
-  entryUrl: string
-  routes: ModuleRoutes
-  defaultRoute: string
   features: string[]
   permissions?: string[]
   enabled?: boolean
@@ -37,20 +37,6 @@ export const ANGULAR_MODULES_CONFIG: AngularModulesConfig = {
     color: '#28a745',
     description: '系统配置审计、合规性检查和配置管理',
     angularModule: 'oplus.cac',
-    // 入口URL - 会自动跳转到具体页面
-    entryUrl: '/cac',
-    // 可用的子路由
-    routes: {
-      main: '/cac', // 主入口，会自动跳转
-      dashboard: '/cac/template/square', // 仪表盘
-      template: '/cac/template', // 模板管理
-      rules: '/cac/rules', // 规则管理
-      hosts: '/cac/hosts', // 主机管理
-      jobs: '/cac/jobs', // 作业管理
-      results: '/cac/results', // 结果查看
-      script: '/cac/script' // 脚本管理
-    },
-    defaultRoute: '/cac',
     features: ['配置检查', '合规审计', '模板管理', '主机管理', '脚本管理']
   },
 
@@ -63,16 +49,6 @@ export const ANGULAR_MODULES_CONFIG: AngularModulesConfig = {
     color: '#007bff',
     description: '自动化作业编排、调度和执行管理',
     angularModule: 'oplus.jao',
-    entryUrl: '/jao',
-    routes: {
-      main: '/jao',
-      jobs: '/jao/jobs',
-      commands: '/jao/commands',
-      flows: '/jao/flows',
-      schedules: '/jao/schedules',
-      history: '/jao/history'
-    },
-    defaultRoute: '/jao',
     features: ['作业编排', '命令管理', '流程设计', '调度管理', '执行历史']
   },
 
@@ -85,15 +61,6 @@ export const ANGULAR_MODULES_CONFIG: AngularModulesConfig = {
     color: '#6f42c1',
     description: '系统信息收集、管理和监控',
     angularModule: 'oplus.sim',
-    entryUrl: '/sim',
-    routes: {
-      main: '/sim',
-      hosts: '/sim/hosts',
-      monitoring: '/sim/monitoring',
-      reports: '/sim/reports',
-      settings: '/sim/settings'
-    },
-    defaultRoute: '/sim',
     features: ['主机信息', '系统监控', '报表管理', '配置设置']
   },
 
@@ -106,15 +73,6 @@ export const ANGULAR_MODULES_CONFIG: AngularModulesConfig = {
     color: '#dc3545',
     description: '用户身份管理、权限控制和访问管理',
     angularModule: 'oplus.uim',
-    entryUrl: '/uim',
-    routes: {
-      main: '/uim',
-      users: '/uim/users',
-      roles: '/uim/roles',
-      permissions: '/uim/permissions',
-      groups: '/uim/groups'
-    },
-    defaultRoute: '/uim',
     features: ['用户管理', '角色管理', '权限管理', '用户组管理']
   }
 }
@@ -148,41 +106,24 @@ export function hasModule(moduleCode: string): boolean {
 }
 
 /**
- * 获取模块的默认路由
+ * 获取模块的入口 URL
  */
-export function getModuleDefaultRoute(moduleCode: string): string | null {
-  const config = getModuleConfig(moduleCode)
-  return config?.defaultRoute || null
+export function getModuleEntryUrl(moduleCode: string): string | null {
+  return appUrlManager.getAppUrl(moduleCode)
 }
 
 /**
- * 获取模块的所有路由
+ * 检查模块是否可用
  */
-export function getModuleRoutes(moduleCode: string): ModuleRoutes | null {
-  const config = getModuleConfig(moduleCode)
-  return config?.routes || null
+export function isModuleAvailable(moduleCode: string): boolean {
+  return appUrlManager.hasApp(moduleCode)
 }
 
 /**
- * 检查路由是否属于指定模块
+ * 获取所有可用模块的代码
  */
-export function isModuleRoute(moduleCode: string, route: string): boolean {
-  const config = getModuleConfig(moduleCode)
-  if (!config) return false
-  
-  return Object.values(config.routes).includes(route)
-}
-
-/**
- * 根据路由获取模块代码
- */
-export function getModuleCodeByRoute(route: string): string | null {
-  for (const [code, config] of Object.entries(ANGULAR_MODULES_CONFIG)) {
-    if (Object.values(config.routes).includes(route)) {
-      return code
-    }
-  }
-  return null
+export function getAvailableModuleCodes(): string[] {
+  return appUrlManager.getAvailableApps()
 }
 
 /**
@@ -211,16 +152,12 @@ export class ModuleConfigValidator {
       errors.push('模块名称不能为空')
     }
 
-    if (!config.entryUrl) {
-      errors.push('入口URL不能为空')
+    if (!config.title) {
+      errors.push('模块标题不能为空')
     }
 
-    if (!config.routes || Object.keys(config.routes).length === 0) {
-      errors.push('路由配置不能为空')
-    }
-
-    if (!config.defaultRoute) {
-      errors.push('默认路由不能为空')
+    if (!config.angularModule) {
+      errors.push('Angular模块名不能为空')
     }
 
     return {
@@ -252,8 +189,8 @@ export class ModuleConfigValidator {
 }
 
 // 导出类型
-export type { 
-  AngularModuleConfig, 
-  ModuleRoutes, 
-  AngularModulesConfig 
+export type {
+  AngularModuleConfig,
+  ModuleRoutes,
+  AngularModulesConfig
 }

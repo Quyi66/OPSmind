@@ -9,10 +9,9 @@ import {
   getAllModuleConfigs,
   getEnabledModuleConfigs,
   hasModule,
-  getModuleDefaultRoute,
-  getModuleRoutes,
-  isModuleRoute,
-  getModuleCodeByRoute,
+  getModuleEntryUrl,
+  isModuleAvailable,
+  getAvailableModuleCodes,
   getModulePermissions
 } from '@/config/angular-modules.config.ts'
 
@@ -39,26 +38,24 @@ export class AngularModuleManager {
    * 获取模块的完整URL
    */
   getModuleUrl(moduleCode, route = null) {
-    const module = getModuleConfig(moduleCode)
-    if (!module) return null
-
-    const baseUrl = this.isDev ? 'http://localhost:8080' : '/oplus/base'
-    const targetRoute = route || module.defaultRoute
-    return `${baseUrl}${targetRoute}`
+    // 使用新的 URL 管理器获取应用入口 URL
+    return getModuleEntryUrl(moduleCode)
   }
 
   /**
-   * 获取模块的所有可用路由
+   * 获取模块的所有可用路由（已废弃，保留兼容性）
    */
   getModuleRoutes(moduleCode) {
-    return getModuleRoutes(moduleCode) || {}
+    // 对于 iframe 集成，不再关心内部路由
+    console.warn(`getModuleRoutes is deprecated for iframe apps. Module: ${moduleCode}`)
+    return {}
   }
 
   /**
    * 检查模块是否存在
    */
   hasModule(moduleCode) {
-    return hasModule(moduleCode)
+    return hasModule(moduleCode) && isModuleAvailable(moduleCode)
   }
 
   /**
