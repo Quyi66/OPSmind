@@ -1,6 +1,6 @@
 <template>
   <!-- 模态框遮罩 -->
-  <div class="modal-overlay" v-if="visible" @click="closeModule">
+  <div class="modal-overlay" v-if="visible">
     <div class="angular-module-modal" :style="{ width: modalWidth }" @click.stop>
       <!-- 关闭按钮 -->
       <div class="close-button-container">
@@ -140,6 +140,10 @@ const closeModule = () => {
   moduleTitle.value = ''
   loading.value = false
 
+  // 通知菜单清除高亮状态
+  const event = new CustomEvent('clearMenuHighlight')
+  window.dispatchEvent(event)
+
   console.log('📱 Closed AngularJS module modal')
 }
 
@@ -190,24 +194,22 @@ onUnmounted(() => {
   left: 0;
   width: 100vw;
   height: calc(100vh - 50px); /* 减去顶部菜单高度 */
-  background: rgba(0, 0, 0, 0.3);
+  background: #f5f5f5; /* 与home主页背景色一致 */
   z-index: 1000;
   display: flex;
   align-items: flex-start; /* 改为顶部对齐 */
-  justify-content: flex-start; /* 改为左对齐 */
-  backdrop-filter: blur(2px);
+  justify-content: center; /* 居中对齐 */
   padding-top: 0; /* 移除顶部间距 */
-  padding-left: 0; /* 移除左侧间距 */
 }
 
 .angular-module-modal {
   /* 默认宽度 - 中等屏幕 */
   width: 90vw;
   height: calc(100vh - 50px);
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e4e7ed;
+  background: #ffffff; /* 使用纯白背景 */
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08); /* 非常柔和的阴影 */
+  border: none; /* 完全移除边框 */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -227,20 +229,23 @@ onUnmounted(() => {
   padding: 6px 8px !important;
   min-height: 32px !important;
   color: #909399 !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-  border-radius: 4px !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+  border: none !important; /* 完全移除边框 */
 
   &:hover {
     color: #f56c6c !important;
-    background: rgba(245, 108, 108, 0.1) !important;
+    background: rgba(245, 108, 108, 0.08) !important;
+    box-shadow: 0 2px 16px rgba(245, 108, 108, 0.15) !important;
   }
 }
 
 .modal-content {
   flex: 1;
   overflow: hidden;
-  background: #f5f7fa;
+  background: #ffffff; /* 使用纯白背景 */
+  border-radius: 0 0 8px 8px; /* 底部圆角与外层一致 */
 }
 
 .iframe-container {
@@ -299,6 +304,7 @@ onUnmounted(() => {
     border-radius: 0;
     border: none;
     margin: 0;
+    background: #ffffff; /* 移动端使用纯白背景 */
   }
 
   .close-button-container {

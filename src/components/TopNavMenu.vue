@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
@@ -169,13 +169,13 @@ const handleMenuClick = (menu) => {
   // 触发iframe弹窗显示模块
   const event = new CustomEvent('showAngularModuleContainer', {
     detail: {
-      moduleCode: 'cac', // 默认都使用cac模块
+      moduleCode: menu.code, // 使用实际的菜单代码
       title: menu.name
     }
   })
   window.dispatchEvent(event)
 
-  console.log('🚀 Menu clicked, showing iframe for:', menu.name)
+  console.log('🚀 Menu clicked, showing iframe for:', menu.name, 'with module code:', menu.code)
 }
 
 const handleLogoClick = () => {
@@ -217,6 +217,22 @@ const handleLogout = async () => {
     ElMessage.error('登出失败')
   }
 }
+
+const handleClearHighlight = () => {
+  activeMenu.value = ''
+  console.log('🧭 Menu highlight cleared')
+}
+
+// 生命周期
+onMounted(() => {
+  window.addEventListener('clearMenuHighlight', handleClearHighlight)
+  console.log('🧭 TopNavMenu mounted')
+})
+
+onUnmounted(() => {
+  window.removeEventListener('clearMenuHighlight', handleClearHighlight)
+  console.log('🧭 TopNavMenu unmounted')
+})
 </script>
 
 <style scoped lang="scss">
@@ -248,9 +264,34 @@ const handleLogout = async () => {
   padding: 6px 8px;
   border-radius: 6px;
   transition: background-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
 
   &:hover {
     background: rgba(24, 144, 255, 0.1);
+  }
+
+  /* 水波纹效果 */
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(24, 144, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  &:active::before {
+    width: 200px;
+    height: 200px;
   }
 }
 
@@ -292,6 +333,7 @@ const handleLogout = async () => {
   cursor: pointer;
   border-radius: 6px;
   transition: all 0.3s ease;
+  overflow: hidden;
 
   &:hover {
     background: rgba(24, 144, 255, 0.1);
@@ -303,6 +345,31 @@ const handleLogout = async () => {
     .nav-link {
       color: #1890ff;
     }
+  }
+
+  /* 水波纹效果 */
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(24, 144, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s, height 0.5s;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &:active::before {
+    width: 120px;
+    height: 120px;
   }
 }
 
@@ -316,6 +383,8 @@ const handleLogout = async () => {
   font-size: 14px;
   font-weight: 500;
   transition: color 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .nav-icon {

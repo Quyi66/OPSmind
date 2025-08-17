@@ -82,39 +82,59 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
 
 // 应用 URL 配置 - 只配置入口 URL，不关心内部路由
 const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
-  cac: {
-    entryUrl: '#/cac',
-    description: 'CAC 配置审计与合规性检查应用',
+  gfs: {
+    entryUrl: '#/gfs',
+    description: '脚本管理应用',
     enabled: true
   },
   jao: {
     entryUrl: '#/jao',
-    description: 'JAO 作业编排应用',
+    description: '作业编排应用',
     enabled: true
   },
-  sim: {
-    entryUrl: '#/sim',
-    description: 'SIM 系统信息管理应用',
+  cmd: {
+    entryUrl: '#/cmd',
+    description: '命令管理应用',
     enabled: true
   },
-  uim: {
-    entryUrl: '#/uim',
-    description: 'UIM 用户身份管理应用',
+  cac: {
+    entryUrl: '#/cac',
+    description: '系统巡检应用',
     enabled: true
   },
-  gfs: {
-    entryUrl: '#/gfs',
-    description: 'GFS 脚本文件管理应用',
+  password: {
+    entryUrl: '#/password',
+    description: '密码管理应用',
     enabled: true
   },
-  dts: {
-    entryUrl: '#/dts',
-    description: 'DTS 数据传输应用',
+  sudo: {
+    entryUrl: '#/sudo',
+    description: 'sudo权限管理应用',
     enabled: true
   },
-  udp: {
-    entryUrl: '#/udp',
-    description: 'UDP 统一开发平台应用',
+  acm: {
+    entryUrl: '#/acm',
+    description: '资产管理应用',
+    enabled: true
+  },
+  patches: {
+    entryUrl: '#/patches',
+    description: '补丁管理应用',
+    enabled: true
+  },
+  software: {
+    entryUrl: '#/software',
+    description: '软件管理应用',
+    enabled: true
+  },
+  workflow: {
+    entryUrl: '#/workflow',
+    description: '流程管理应用',
+    enabled: true
+  },
+  users: {
+    entryUrl: '#/users',
+    description: '用户管理应用',
     enabled: true
   }
 }
@@ -175,9 +195,9 @@ export class AppUrlManager {
   private buildAngularUrl(path: string): string {
     const { baseUrl } = this.envConfig.angularjs
 
-    // 如果路径已经包含 #，直接拼接
+    // 如果路径已经包含 #，直接拼接（注意避免双斜杠）
     if (path.startsWith('#')) {
-      return `${baseUrl}/${path}`
+      return `${baseUrl}${path}`
     }
 
     // 否则添加 # 前缀

@@ -23,13 +23,17 @@ export class SingleIframeManager {
 
   // 模块路由映射
   private moduleRoutes: Record<string, string> = {
-    'cac': '#/cac',
-    'jao': '#/jao',
-    'sim': '#/sim',
-    'uim': '#/uim',
-    'gfs': '#/gfs',
-    'dts': '#/dts',
-    'udp': '#/udp',
+    'gfs': '#/gfs',           // 脚本
+    'jao': '#/jao',           // 作业
+    'cmd': '#/cmd',           // 命令
+    'cac': '#/cac',           // 系统巡检
+    'password': '#/password', // 密码管理
+    'sudo': '#/sudo',         // sudo权限管理
+    'acm': '#/acm',           // 资产管理
+    'patches': '#/patches',   // 补丁管理
+    'software': '#/software', // 软件管理
+    'workflow': '#/workflow', // 流程管理
+    'users': '#/users',       // 用户管理
     'dashboard': '#/dashboard'
   }
 
@@ -91,7 +95,10 @@ export class SingleIframeManager {
         this.iframe.src = authUrl
         this.isLoading = true
 
-        console.log(`🔗 Loading Angular app: ${this.iframe.src}`)
+        console.log(`🔗 Loading Angular app:`)
+        console.log(`   Base URL: ${baseUrl}`)
+        console.log(`   Auth URL: ${authUrl}`)
+        console.log(`   Final iframe src: ${this.iframe.src}`)
 
       } catch (error) {
         console.error('❌ Initialize iframe error:', error)
@@ -162,21 +169,27 @@ export class SingleIframeManager {
       throw new Error('Iframe not initialized')
     }
 
-    // 获取模块路由
-    const route = this.moduleRoutes[moduleCode]
-    console.log(`🗺️ Available routes:`, this.moduleRoutes)
-    console.log(`🎯 Target route for ${moduleCode}:`, route)
-
-    if (!route) {
-      throw new Error(`No route found for module: ${moduleCode}`)
-    }
-
     try {
+      // 使用appUrlManager获取完整的应用URL
+      const fullUrl = appUrlManager.getAppUrl(moduleCode)
+      if (!fullUrl) {
+        throw new Error(`App URL not found for module: ${moduleCode}`)
+      }
+
+      console.log(`🔗 Module URL generation:`)
+      console.log(`   Module code: ${moduleCode}`)
+      console.log(`   Generated URL: ${fullUrl}`)
+
+      // 构建带认证的URL
+      const authUrl = this.buildAuthUrl(fullUrl)
+      console.log(`   Auth URL: ${authUrl}`)
+
       // 移动 iframe 到目标容器
       this.moveToContainer(targetContainer)
 
-      // 切换路由（真正的秒开！）
-      await this.changeRoute(route)
+      // 直接设置iframe的src，而不是只改变hash
+      this.iframe.src = authUrl
+      console.log(`   Final iframe src: ${this.iframe.src}`)
 
       // 重新发送认证数据，确保模块切换后认证状态正确
       this.sendAuthData()
@@ -184,7 +197,7 @@ export class SingleIframeManager {
       this.currentModule = moduleCode
 
       const switchTime = performance.now() - startTime
-      console.log(`✅ Module ${moduleCode} switched in ${switchTime.toFixed(2)}ms (ROUTE CHANGE)`)
+      console.log(`✅ Module ${moduleCode} switched in ${switchTime.toFixed(2)}ms (URL CHANGE)`)
 
       return switchTime
 
@@ -221,6 +234,11 @@ export class SingleIframeManager {
     }
 
     try {
+      console.log(`🔄 Changing route:`)
+      console.log(`   Target route: ${route}`)
+      console.log(`   Current iframe URL: ${this.iframe.src}`)
+      console.log(`   Current iframe hash: ${this.iframe.contentWindow.location.hash}`)
+
       // 方法1: 直接改变 hash
       this.iframe.contentWindow.location.hash = route
 
@@ -230,13 +248,15 @@ export class SingleIframeManager {
         route: route
       }, '*')
 
-      console.log(`🔄 Route changed to: ${route}`)
+      console.log(`✅ Route changed to: ${route}`)
+      console.log(`   New iframe hash: ${this.iframe.contentWindow.location.hash}`)
+      console.log(`   Full iframe URL: ${this.iframe.contentWindow.location.href}`)
 
       // 等待路由切换完成
       await this.waitForRouteChange()
 
     } catch (error) {
-      console.error('Failed to change route:', error)
+      console.error('❌ Failed to change route:', error)
       throw error
     }
   }
