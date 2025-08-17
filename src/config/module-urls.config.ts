@@ -173,13 +173,16 @@ export class AppUrlManager {
    * 构建 AngularJS 应用 URL
    */
   private buildAngularUrl(path: string): string {
-    const { baseUrl, hashMode } = this.envConfig.angularjs
-    const separator = hashMode ? '#' : ''
+    const { baseUrl } = this.envConfig.angularjs
 
-    // 确保路径以 / 开头
+    // 如果路径已经包含 #，直接拼接
+    if (path.startsWith('#')) {
+      return `${baseUrl}/${path}`
+    }
+
+    // 否则添加 # 前缀
     const normalizedPath = path.startsWith('/') ? path : `/${path}`
-
-    return `${baseUrl}/${separator}${normalizedPath}`
+    return `${baseUrl}/#${normalizedPath}`
   }
 
   /**

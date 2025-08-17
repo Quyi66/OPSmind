@@ -67,13 +67,16 @@
 import { onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
+import { useModuleNavigation } from '@/composables/useModuleNavigation'
 import DashboardHeader from '@/components/DashboardHeader.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import ModuleCard from '@/components/ModuleCard.vue'
 import QuickActions from '@/components/QuickActions.vue'
 import AngularModuleContainerModal from '@/components/AngularModuleContainerModal.vue'
+import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
 
 const dashboardStore = useDashboardStore()
+const { navigateToModule } = useModuleNavigation()
 
 onMounted(async () => {
   await loadDashboardData()
@@ -84,6 +87,12 @@ const loadDashboardData = async () => {
   try {
     await dashboardStore.loadDashboardData()
     console.log('✅ Dashboard data loaded in component')
+
+    // 启动模块预加载（延迟执行，避免影响主要加载）
+    setTimeout(() => {
+      console.log('🚀 Starting module preloading...')
+      ModulePreloadManager.preloadCommonModules()
+    }, 2000) // 2秒后开始预加载
   } catch (error) {
     console.error('❌ Failed to load dashboard data:', error)
     ElMessage.error('加载仪表盘数据失败')
@@ -92,8 +101,16 @@ const loadDashboardData = async () => {
 
 const handleModuleClick = async module => {
   try {
-    await dashboardStore.openModule(module.code)
+    console.log('🚀 Module clicked:', module.code)
+
+    // 清理模块代码
+    const cleanModuleCode = module.code.replace(/^__/, '')
+
+    // 直接使用 Vue Router 导航
+    await navigateToModule(cleanModuleCode)
+
   } catch (error) {
+    console.error('❌ Failed to navigate to module:', error)
     ElMessage.error(`打开模块失败: ${module.title}`)
   }
 }

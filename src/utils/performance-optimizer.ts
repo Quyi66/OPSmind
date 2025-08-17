@@ -1,0 +1,263 @@
+/**
+ * 性能优化工具
+ * 提供各种性能优化功能，包括预加载、预连接等
+ */
+
+// 预连接的域名列表
+const PRECONNECT_DOMAINS = [
+  'http://localhost:8080',
+  'http://10.1.40.112:80',
+  // 可以根据环境添加更多域名
+]
+
+/**
+ * 添加 DNS 预解析和预连接
+ */
+export function setupPreconnections() {
+  const head = document.head
+
+  PRECONNECT_DOMAINS.forEach(domain => {
+    try {
+      const url = new URL(domain)
+      
+      // DNS 预解析
+      const dnsLink = document.createElement('link')
+      dnsLink.rel = 'dns-prefetch'
+      dnsLink.href = url.origin
+      head.appendChild(dnsLink)
+
+      // 预连接
+      const preconnectLink = document.createElement('link')
+      preconnectLink.rel = 'preconnect'
+      preconnectLink.href = url.origin
+      preconnectLink.crossOrigin = 'anonymous'
+      head.appendChild(preconnectLink)
+
+      console.log(`🔗 Added preconnect for: ${url.origin}`)
+    } catch (error) {
+      console.warn(`Failed to add preconnect for: ${domain}`, error)
+    }
+  })
+}
+
+/**
+ * 预加载关键资源
+ */
+export function preloadCriticalResources() {
+  const head = document.head
+
+  // 预加载关键的 CSS 和 JS 文件
+  const criticalResources = [
+    // 可以添加关键的 CSS/JS 文件
+  ]
+
+  criticalResources.forEach(resource => {
+    const link = document.createElement('link')
+    link.rel = 'preload'
+    link.href = resource.href
+    link.as = resource.as
+    if (resource.type) link.type = resource.type
+    head.appendChild(link)
+  })
+}
+
+/**
+ * iframe 预加载优化
+ */
+export class IframePreloader {
+  private static cache = new Map<string, HTMLIFrameElement>()
+  private static preloadQueue = new Set<string>()
+
+  /**
+   * 预加载 iframe
+   */
+  static preload(url: string): Promise<HTMLIFrameElement> {
+    return new Promise((resolve, reject) => {
+      // 检查缓存
+      if (this.cache.has(url)) {
+        resolve(this.cache.get(url)!)
+        return
+      }
+
+      // 检查是否正在预加载
+      if (this.preloadQueue.has(url)) {
+        // 等待预加载完成
+        const checkInterval = setInterval(() => {
+          if (this.cache.has(url)) {
+            clearInterval(checkInterval)
+            resolve(this.cache.get(url)!)
+          }
+        }, 100)
+        return
+      }
+
+      this.preloadQueue.add(url)
+
+      // 创建隐藏的 iframe 进行预加载
+      const iframe = document.createElement('iframe')
+      iframe.style.display = 'none'
+      iframe.style.position = 'absolute'
+      iframe.style.left = '-9999px'
+      iframe.style.top = '-9999px'
+      iframe.style.width = '1px'
+      iframe.style.height = '1px'
+
+      iframe.onload = () => {
+        console.log(`✅ Iframe preloaded: ${url}`)
+        this.cache.set(url, iframe)
+        this.preloadQueue.delete(url)
+        resolve(iframe)
+      }
+
+      iframe.onerror = () => {
+        console.error(`❌ Iframe preload failed: ${url}`)
+        this.preloadQueue.delete(url)
+        document.body.removeChild(iframe)
+        reject(new Error(`Failed to preload iframe: ${url}`))
+      }
+
+      iframe.src = url
+      document.body.appendChild(iframe)
+
+      // 设置超时
+      setTimeout(() => {
+        if (this.preloadQueue.has(url)) {
+          this.preloadQueue.delete(url)
+          document.body.removeChild(iframe)
+          reject(new Error(`Iframe preload timeout: ${url}`))
+        }
+      }, 10000) // 10秒超时
+    })
+  }
+
+  /**
+   * 获取预加载的 iframe
+   */
+  static getPreloaded(url: string): HTMLIFrameElement | null {
+    return this.cache.get(url) || null
+  }
+
+  /**
+   * 清理预加载缓存
+   */
+  static cleanup(url?: string) {
+    if (url) {
+      const iframe = this.cache.get(url)
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe)
+      }
+      this.cache.delete(url)
+    } else {
+      // 清理所有缓存
+      this.cache.forEach(iframe => {
+        if (iframe.parentNode) {
+          iframe.parentNode.removeChild(iframe)
+        }
+      })
+      this.cache.clear()
+    }
+  }
+}
+
+/**
+ * 模块加载性能监控
+ */
+export class ModuleLoadMonitor {
+  private static metrics = new Map<string, any>()
+
+  static startTiming(moduleCode: string) {
+    this.metrics.set(moduleCode, {
+      startTime: performance.now(),
+      moduleCode
+    })
+  }
+
+  static endTiming(moduleCode: string) {
+    const metric = this.metrics.get(moduleCode)
+    if (metric) {
+      metric.endTime = performance.now()
+      metric.loadTime = metric.endTime - metric.startTime
+      
+      console.log(`📊 Module load time: ${moduleCode} - ${metric.loadTime.toFixed(2)}ms`)
+      
+      // 可以发送到分析服务
+      this.reportMetrics(metric)
+    }
+  }
+
+  private static reportMetrics(metric: any) {
+    // 这里可以发送到性能监控服务
+    if (metric.loadTime > 2000) {
+      console.warn(`⚠️ Slow module load detected: ${metric.moduleCode} - ${metric.loadTime.toFixed(2)}ms`)
+    }
+  }
+
+  static getMetrics(moduleCode?: string) {
+    if (moduleCode) {
+      return this.metrics.get(moduleCode)
+    }
+    return Array.from(this.metrics.values())
+  }
+}
+
+/**
+ * 网络状态优化
+ */
+export function optimizeForNetworkCondition() {
+  if ('connection' in navigator) {
+    const connection = (navigator as any).connection
+    
+    if (connection) {
+      console.log(`📶 Network: ${connection.effectiveType}, ${connection.downlink}Mbps`)
+      
+      // 根据网络状况调整策略
+      if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
+        // 慢网络：禁用预加载，减少并发
+        return {
+          enablePreload: false,
+          maxConcurrent: 1,
+          timeout: 60000
+        }
+      } else if (connection.effectiveType === '3g') {
+        // 中等网络：限制预加载
+        return {
+          enablePreload: true,
+          maxConcurrent: 2,
+          timeout: 30000
+        }
+      } else {
+        // 快网络：启用所有优化
+        return {
+          enablePreload: true,
+          maxConcurrent: 4,
+          timeout: 15000
+        }
+      }
+    }
+  }
+
+  // 默认配置
+  return {
+    enablePreload: true,
+    maxConcurrent: 2,
+    timeout: 20000
+  }
+}
+
+/**
+ * 初始化性能优化
+ */
+export function initPerformanceOptimizations() {
+  // 设置预连接
+  setupPreconnections()
+  
+  // 预加载关键资源
+  preloadCriticalResources()
+  
+  // 获取网络状况
+  const networkConfig = optimizeForNetworkCondition()
+  
+  console.log('🚀 Performance optimizations initialized:', networkConfig)
+  
+  return networkConfig
+}

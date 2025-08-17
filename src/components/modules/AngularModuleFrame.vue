@@ -42,42 +42,30 @@
       </div>
     </div>
 
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading-overlay">
-      <div class="loading-content">
-        <el-icon class="loading-icon"><Loading /></el-icon>
-        <p>正在加载 {{ moduleConfig?.name }} 模块...</p>
-        <div class="loading-progress">
-          <el-progress :percentage="loadProgress" :show-text="false" />
-        </div>
+    <!-- iframe 容器 -->
+    <div
+      ref="iframeContainer"
+      class="iframe-container"
+      :class="{ fullscreen: isFullscreen }"
+    >
+      <!-- 加载覆盖层 -->
+      <div v-if="loading" class="loading-overlay">
+        <SkeletonLoader
+          :module-code="moduleCode"
+          class="skeleton-container"
+        />
+      </div>
+
+      <!-- 错误覆盖层 -->
+      <div v-if="error" class="error-overlay">
+        <el-result icon="error" :title="`${moduleConfig?.name} 模块加载失败`" :sub-title="error">
+          <template #extra>
+            <el-button type="primary" @click="retryLoad">重试</el-button>
+            <el-button @click="reportError">报告问题</el-button>
+          </template>
+        </el-result>
       </div>
     </div>
-
-    <!-- 错误状态 -->
-    <div v-if="error" class="error-overlay">
-      <el-result icon="error" :title="`${moduleConfig?.name} 模块加载失败`" :sub-title="error">
-        <template #extra>
-          <el-button type="primary" @click="retryLoad">重试</el-button>
-          <el-button @click="reportError">报告问题</el-button>
-        </template>
-      </el-result>
-    </div>
-
-    <!-- Angular 模块 iframe -->
-    <iframe
-      v-show="!loading && !error"
-      ref="moduleIframe"
-      :src="iframeUrl"
-      :title="moduleConfig?.title"
-      class="module-iframe"
-      :class="{ fullscreen: isFullscreen }"
-      @load="onIframeLoad"
-      @error="onIframeError"
-      sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-top-navigation allow-downloads"
-      allow="fullscreen"
-      frameborder="0"
-      referrerpolicy="no-referrer-when-downgrade"
-    ></iframe>
 
     <!-- 状态栏 -->
     <div v-if="showStatusBar" class="status-bar">
@@ -113,6 +101,8 @@ import {
 import { Loading } from '@element-plus/icons-vue'
 import { angularModuleManager } from '@/services/AngularModuleManager.js'
 import { authService } from '@/core/auth'
+import { singleIframeManager } from '@/utils/single-iframe-manager'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
 const props = defineProps({
   moduleCode: {
@@ -152,7 +142,7 @@ const loadTime = ref(null)
 const loadProgress = ref(0)
 const isFullscreen = ref(false)
 const currentRoute = ref('main')
-const moduleIframe = ref(null)
+const iframeContainer = ref(null) // 改为容器引用
 const retryCount = ref(0)
 const startTime = ref(0)
 
@@ -276,47 +266,55 @@ const loadModule = async () => {
     return
   }
 
+  if (!iframeContainer.value) {
+    error.value = 'iframe 容器未准备好'
+    return
+  }
+
   loading.value = true
   error.value = ''
   status.value = '加载中'
   statusText.value = `正在加载 ${moduleConfig.value.name}...`
-  loadProgress.value = 0
+  loadProgress.value = 50
 
   startTime.value = Date.now()
 
-  // 模拟加载进度
-  const progressInterval = setInterval(() => {
-    if (loadProgress.value < 90) {
-      loadProgress.value += Math.random() * 10
-    }
-  }, 100)
-
   try {
-    await nextTick()
+    console.log(`⚡ Switching to module with SINGLE iframe: ${props.moduleCode}`)
 
-    // 检查URL是否有效
-    if (!iframeUrl.value) {
-      throw new Error('无法生成模块URL')
-    }
+    // 使用单 iframe 管理器 - 路由切换，真正秒开！
+    const switchTime = await singleIframeManager.switchToModule(props.moduleCode, iframeContainer.value)
 
-    console.log('🔗 Loading iframe with URL:', iframeUrl.value)
+    // 切换完成
+    loading.value = false
+    loadTime.value = switchTime
+    status.value = '已加载'
+    loadProgress.value = 100
 
-    // 设置iframe src会触发加载
-    if (moduleIframe.value) {
-      moduleIframe.value.src = iframeUrl.value
+    console.log(`✅ Module ${props.moduleCode} switched in ${switchTime.toFixed(2)}ms (ROUTE CHANGE)`)
 
-      // 设置超时检测
-      setTimeout(() => {
-        if (loading.value) {
-          console.warn('⏰ Iframe load timeout')
-          onIframeError('加载超时，请检查网络连接')
-        }
-      }, 30000) // 30秒超时
-    }
+    // 触发加载完成事件
+    emit('loaded', {
+      moduleCode: props.moduleCode,
+      route: currentRoute.value,
+      loadTime: switchTime
+    })
+
   } catch (err) {
-    clearInterval(progressInterval)
-    console.error('❌ Load module error:', err)
-    onIframeError(err.message)
+    console.error('❌ Switch module error:', err)
+
+    // 如果 iframe 还没初始化完成，显示等待状态
+    if (err.message.includes('not initialized')) {
+      statusText.value = 'Angular 应用正在初始化中，请稍候...'
+      loadProgress.value = 75
+
+      // 继续等待
+      setTimeout(() => {
+        loadModule()
+      }, 1000)
+    } else {
+      onIframeError(err.message)
+    }
   }
 }
 
@@ -337,10 +335,8 @@ const onIframeLoad = () => {
   // 设置iframe通信
   setupIframeMessaging()
 
-  // 发送认证数据到iframe
-  setTimeout(() => {
-    sendAuthDataToIframe()
-  }, 500)
+  // 立即发送认证数据到iframe
+  sendAuthDataToIframe()
 
   emit('loaded', {
     moduleCode: props.moduleCode,
@@ -363,8 +359,16 @@ const onIframeError = (customError = null) => {
   })
 }
 
+// 消息处理器引用，用于清理
+let messageHandler = null
+
 const setupIframeMessaging = () => {
-  const handleMessage = event => {
+  // 清理之前的监听器
+  if (messageHandler) {
+    window.removeEventListener('message', messageHandler)
+  }
+
+  messageHandler = event => {
     // 验证消息来源
     if (!iframeUrl.value) return
 
@@ -398,12 +402,15 @@ const setupIframeMessaging = () => {
     })
   }
 
-  window.addEventListener('message', handleMessage)
+  window.addEventListener('message', messageHandler)
+}
 
-  // 组件卸载时清理
-  onUnmounted(() => {
-    window.removeEventListener('message', handleMessage)
-  })
+// 清理消息监听器
+const cleanupIframeMessaging = () => {
+  if (messageHandler) {
+    window.removeEventListener('message', messageHandler)
+    messageHandler = null
+  }
 }
 
 // 发送认证数据到iframe
@@ -490,6 +497,11 @@ onMounted(() => {
   }
 })
 
+onUnmounted(() => {
+  // 清理消息监听器
+  cleanupIframeMessaging()
+})
+
 // 监听属性变化
 watch(
   () => props.moduleCode,
@@ -516,6 +528,13 @@ defineExpose({
   toggleFullscreen,
   getStatus: () => ({ status: status.value, loading: loading.value, error: error.value })
 })
+
+// 注册组件
+defineOptions({
+  components: {
+    SkeletonLoader
+  }
+})
 </script>
 
 <style scoped>
@@ -527,6 +546,29 @@ defineExpose({
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.skeleton-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+}
+
+.iframe-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.iframe-container.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: white;
 }
 
 .module-header {

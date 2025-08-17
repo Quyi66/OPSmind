@@ -10,6 +10,7 @@ import { setupGlobalComponents } from '@/shared/components'
 import { setupGlobalDirectives } from '@/shared/directives'
 import { setupErrorHandler } from '@/core/error'
 import { setupPerformanceMonitor } from '@/core/performance'
+import { initPerformanceOptimizations } from '@/utils/performance-optimizer'
 
 // 导入全局样式
 import '@/styles/main.scss'
@@ -25,6 +26,9 @@ if (import.meta.env.DEV) {
   setupPerformanceMonitor(app)
 }
 
+// 初始化性能优化
+initPerformanceOptimizations()
+
 // 注册 Element Plus 图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
@@ -37,6 +41,14 @@ app.use(ElementPlus)
 // 设置路由
 const router = setupRouter()
 app.use(router)
+
+// 暴露路由实例和管理器供调试和测试
+if (import.meta.env.DEV) {
+  const { singleIframeManager } = await import('@/utils/single-iframe-manager')
+  window.singleIframeManager = singleIframeManager
+  window.__VUE_ROUTER__ = router
+  console.log('🔧 singleIframeManager and router exposed to window for debugging')
+}
 
 // 设置全局组件和指令
 setupGlobalComponents(app)

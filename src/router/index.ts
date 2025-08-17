@@ -28,53 +28,20 @@ const routes: CustomRouteRecord[] = [
     }
   },
   {
+    path: '/module/:moduleCode',
+    name: 'module',
+    component: () => import('@/views/ModulePage.vue'),
+    meta: {
+      title: '模块页面',
+      requiresAuth: true
+    }
+  },
+  {
     path: '/about',
     name: 'about',
     component: () => import('@/views/About.vue'),
     meta: {
       title: '关于'
-    }
-  },
-  {
-    path: '/modules/:moduleCode',
-    name: 'angular-module',
-    component: () => import('@/views/AngularModuleView.vue'),
-    meta: {
-      title: 'Angular 模块',
-      requiresAuth: true
-    }
-  },
-  // CAC 模块专用路由
-  {
-    path: '/cac',
-    name: 'cac-module',
-    component: () => import('@/views/AngularModuleView.vue'),
-    meta: {
-      title: 'CAC 配置管理',
-      requiresAuth: true
-    },
-    beforeEnter: (to, _from, next) => {
-      // 设置模块代码
-      to.params.moduleCode = 'cac'
-      next()
-    }
-  },
-  {
-    path: '/test/angular-integration',
-    name: 'angular-integration-test',
-    component: () => import('@/views/AngularIntegrationTest.vue'),
-    meta: {
-      title: 'AngularJS 集成测试',
-      requiresAuth: true
-    }
-  },
-  {
-    path: '/test/cac-module',
-    name: 'cac-module-test',
-    component: () => import('@/views/CacModuleTest.vue'),
-    meta: {
-      title: 'CAC 模块测试',
-      requiresAuth: true
     }
   }
 ]

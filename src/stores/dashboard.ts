@@ -157,25 +157,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   const openModule = async (moduleCode: string): Promise<void> => {
-    try {
-      console.log('🚀 Opening module from dashboard:', moduleCode)
-
-      // 清理模块代码（移除前缀下划线）
-      const cleanModuleCode = moduleCode.replace(/^__/, '')
-
-      // 使用iframe方式打开模块
-      const event = new CustomEvent('showAngularModuleContainer', {
-        detail: {
-          moduleCode: cleanModuleCode,
-          title: getModuleTitle(cleanModuleCode)
-        }
-      })
-      window.dispatchEvent(event)
-      console.log('📱 Triggered module modal for:', cleanModuleCode)
-    } catch (err) {
-      console.error('Failed to open module:', err)
-      error.value = `无法打开模块: ${moduleCode}`
-    }
+    // 这个方法现在只是一个占位符
+    // 实际的导航逻辑在 Dashboard 组件中处理
+    console.log('🚀 openModule called for:', moduleCode)
   }
 
   // 获取模块标题的辅助函数
