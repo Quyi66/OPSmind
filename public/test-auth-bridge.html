@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>认证桥接测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .success { border-left-color: #28a745; background-color: #d4edda; }
+        .warning { border-left-color: #ffc107; background-color: #fff3cd; }
+        .error { border-left-color: #dc3545; background-color: #f8d7da; }
+        .auth-data {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 认证桥接测试页面</h1>
+        <p>这个页面模拟 AngularJS 应用，用于测试从 Vue 主应用接收认证数据。</p>
+        
+        <div id="status" class="status">
+            等待认证数据...
+        </div>
+        
+        <div>
+            <button onclick="requestAuthData()">请求认证数据</button>
+            <button onclick="checkStorage()">检查存储</button>
+            <button onclick="clearData()">清除数据</button>
+        </div>
+        
+        <h3>接收到的认证数据:</h3>
+        <div id="authData" class="auth-data">暂无数据</div>
+        
+        <h3>存储中的数据:</h3>
+        <div id="storageData" class="auth-data">暂无数据</div>
+        
+        <h3>消息日志:</h3>
+        <div id="messageLog" class="auth-data">暂无消息</div>
+    </div>
+
+    <script>
+        let messageLog = [];
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            messageLog.push(`[${timestamp}] ${message}`);
+            document.getElementById('messageLog').textContent = messageLog.join('\n');
+            console.log(message);
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+        
+        function updateAuthData(data) {
+            document.getElementById('authData').textContent = JSON.stringify(data, null, 2);
+        }
+        
+        function updateStorageData() {
+            const storageData = {
+                localStorage: {
+                    oplus_token: localStorage.getItem('oplus_token'),
+                    oplus_user: localStorage.getItem('oplus_user'),
+                    vue_auth_bridge: localStorage.getItem('vue-auth-bridge')
+                },
+                sessionStorage: {
+                    oplus_token: sessionStorage.getItem('oplus_token'),
+                    oplus_user: sessionStorage.getItem('oplus_user'),
+                    vue_auth_bridge: sessionStorage.getItem('vue-auth-bridge')
+                }
+            };
+            document.getElementById('storageData').textContent = JSON.stringify(storageData, null, 2);
+        }
+        
+        // 监听来自父窗口的消息
+        window.addEventListener('message', function(event) {
+            log(`收到消息: ${JSON.stringify(event.data)}`);
+            
+            if (event.data && event.data.type === 'vue-auth-data') {
+                const authData = event.data.authData;
+                log('✅ 收到认证数据');
+                updateStatus('✅ 认证数据接收成功', 'success');
+                updateAuthData(authData);
+                
+                // 设置到本地存储
+                if (authData.token) {
+                    localStorage.setItem('oplus_token', authData.token);
+                    sessionStorage.setItem('oplus_token', authData.token);
+                    log('Token 已保存到存储');
+                }
+                
+                if (authData.user) {
+                    localStorage.setItem('oplus_user', JSON.stringify(authData.user));
+                    sessionStorage.setItem('oplus_user', JSON.stringify(authData.user));
+                    log('用户信息已保存到存储');
+                }
+                
+                updateStorageData();
+            }
+        });
+        
+        // 请求认证数据
+        function requestAuthData() {
+            if (window.parent !== window) {
+                log('📤 向父窗口请求认证数据');
+                window.parent.postMessage({
+                    type: 'request-auth-data'
+                }, '*');
+                updateStatus('📤 已发送认证数据请求', 'warning');
+            } else {
+                log('⚠️ 不在 iframe 中，无法请求认证数据');
+                updateStatus('⚠️ 不在 iframe 中', 'warning');
+            }
+        }
+        
+        // 检查存储
+        function checkStorage() {
+            updateStorageData();
+            log('🔍 存储数据已更新');
+        }
+        
+        // 清除数据
+        function clearData() {
+            localStorage.removeItem('oplus_token');
+            localStorage.removeItem('oplus_user');
+            localStorage.removeItem('vue-auth-bridge');
+            sessionStorage.removeItem('oplus_token');
+            sessionStorage.removeItem('oplus_user');
+            sessionStorage.removeItem('vue-auth-bridge');
+            
+            document.getElementById('authData').textContent = '暂无数据';
+            updateStorageData();
+            log('🗑️ 所有数据已清除');
+            updateStatus('🗑️ 数据已清除', 'warning');
+        }
+        
+        // 页面加载时自动请求认证数据
+        window.addEventListener('load', function() {
+            log('📄 页面加载完成');
+            updateStorageData();
+            
+            // 如果在 iframe 中，自动请求认证数据
+            if (window.parent !== window) {
+                setTimeout(requestAuthData, 1000);
+            }
+        });
+        
+        log('🚀 认证桥接测试页面初始化完成');
+    </script>
+</body>
+</html>

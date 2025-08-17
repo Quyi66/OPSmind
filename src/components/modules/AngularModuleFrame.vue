@@ -173,12 +173,21 @@ const iframeUrl = computed(() => {
   try {
     const url = angularModuleManager.getModuleUrl(props.moduleCode, routeUrl)
     console.log('🔗 Generated iframe URL:', url)
-    return url
+
+    // 添加认证参数到 URL
+    return addAuthParamsToUrl(url)
   } catch (err) {
     console.error('Failed to get module URL:', err)
     return ''
   }
 })
+
+// 添加认证参数到 URL
+const addAuthParamsToUrl = (baseUrl) => {
+  // 暂时不在 URL 中添加认证参数，改为通过 postMessage 传递
+  // 这样更安全，避免敏感信息出现在 URL 中
+  return baseUrl
+}
 
 // 方法
 const getRouteLabel = routeName => {
@@ -401,18 +410,28 @@ const sendAuthDataToIframe = () => {
   if (!moduleIframe.value || !moduleIframe.value.contentWindow) return
 
   try {
-    // 从Vue应用获取认证信息
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken')
-    const userStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser')
+    // 使用正确的认证服务获取认证信息
+    const { authService } = require('@/core/auth')
+    const token = authService.getToken()
+    const user = authService.getCurrentUser()
+
+    if (!token || !user) {
+      console.warn('⚠️ No auth data available to send to iframe')
+      return
+    }
 
     const authData = {
       token,
-      user: userStr ? JSON.parse(userStr) : null,
+      user,
       timestamp: Date.now()
     }
 
-    // 同时设置到sessionStorage供iframe使用
+    // 同时设置到sessionStorage供iframe使用（使用兼容的键名）
     sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
+
+    // 为了兼容性，也设置旧的键名
+    sessionStorage.setItem('oplus_token', token)
+    sessionStorage.setItem('oplus_user', JSON.stringify(user))
 
     // 发送消息到iframe
     moduleIframe.value.contentWindow.postMessage(
@@ -423,7 +442,11 @@ const sendAuthDataToIframe = () => {
       '*'
     )
 
-    console.log('🔗 Auth data sent to iframe')
+    console.log('🔗 Auth data sent to iframe:', {
+      hasToken: !!token,
+      userLogin: user?.login,
+      tenantId: user?.tenantId
+    })
   } catch (e) {
     console.error('Failed to send auth data to iframe:', e)
   }
