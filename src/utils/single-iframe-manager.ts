@@ -245,8 +245,8 @@ export class SingleIframeManager {
    */
   private waitForRouteChange(): Promise<void> {
     return new Promise((resolve) => {
-      // 增加等待时间，确保认证数据传递和路由切换完成
-      setTimeout(resolve, 500)
+      // 减少等待时间，优化速度
+      setTimeout(resolve, 100)
     })
   }
 

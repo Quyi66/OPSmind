@@ -23,6 +23,7 @@
         @error="onModuleError"
         @route-change="onRouteChange"
         @message="onModuleMessage"
+        @close="onModuleClose"
       />
     </div>
   </div>
@@ -104,6 +105,12 @@ const onRouteChange = data => {
 
 const onModuleMessage = data => {
   console.log('📨 Module message:', data)
+}
+
+const onModuleClose = data => {
+  console.log('🚪 Module closed:', data)
+  // 跳转回首页
+  router.push('/home')
 }
 
 // 生命周期

@@ -1,65 +1,55 @@
 <template>
-  <div class="angular-module-frame">
-    <!-- 简单的头部工具栏 -->
-    <div class="module-header">
-      <div class="module-title">
-        {{ moduleConfig?.name || '模块' }}
-      </div>
-      <div class="module-actions">
-        <el-button size="small" @click="refreshModule" :loading="loading">刷新</el-button>
-        <el-button size="small" @click="toggleFullscreen">
-          {{ isFullscreen ? '退出全屏' : '全屏' }}
-        </el-button>
-        <el-button size="small" @click="openInNewWindow">新窗口</el-button>
-        <el-button size="small" type="danger" @click="closeModule">关闭</el-button>
-      </div>
-    </div>
-
-    <!-- iframe 容器 -->
-    <div
-      ref="iframeContainer"
-      class="iframe-container"
-      :class="{ fullscreen: isFullscreen }"
-    >
-      <!-- 加载覆盖层 -->
-      <div v-if="loading" class="loading-overlay">
-        <SkeletonLoader
-          :module-code="moduleCode"
-          class="skeleton-container"
-        />
+  <!-- 弹窗遮罩层 -->
+  <div v-if="visible" class="modal-overlay" @click="closeModule">
+    <!-- 弹窗主体 -->
+    <div class="modal-dialog" @click.stop>
+      <!-- 标准模态框头部 -->
+      <div class="modal-header">
+        <h4 class="modal-title">{{ moduleConfig?.name || '模块' }}</h4>
+        <button type="button" class="modal-close" @click="closeModule" aria-label="关闭">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
 
-      <!-- 错误覆盖层 -->
-      <div v-if="error" class="error-overlay">
-        <el-result icon="error" :title="`${moduleConfig?.name} 模块加载失败`" :sub-title="error">
-          <template #extra>
-            <el-button type="primary" @click="retryLoad">重试</el-button>
-            <el-button @click="reportError">报告问题</el-button>
-          </template>
-        </el-result>
+      <!-- 顶部菜单栏 -->
+      <div class="modal-toolbar">
+        <div class="toolbar-left">
+          <span class="module-status">{{ status }}</span>
+        </div>
+        <div class="toolbar-right">
+          <button class="toolbar-btn" @click="refreshModule" :disabled="loading" title="刷新">
+            刷新
+          </button>
+          <button class="toolbar-btn" @click="openInNewWindow" title="新窗口打开">
+            新窗口
+          </button>
+        </div>
       </div>
 
-      <!-- 调试信息 -->
-      <div v-if="!loading && !error" class="debug-info" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px; border-radius: 4px; font-size: 12px; z-index: 1000;">
-        <div>Container: {{ !!iframeContainer }}</div>
-        <div>Module: {{ moduleCode }}</div>
-        <div>Status: {{ status }}</div>
-      </div>
-    </div>
+      <!-- 弹窗内容 -->
 
-    <!-- 状态栏 -->
-    <div v-if="showStatusBar" class="status-bar">
-      <div class="status-info">
-        <el-tag :type="getStatusType(status)" size="small">
-          {{ status }}
-        </el-tag>
-        <span class="status-text">{{ statusText }}</span>
-      </div>
+      <div class="modal-body">
+        <!-- iframe 容器 -->
+        <div
+          ref="iframeContainer"
+          class="iframe-container"
+        >
+          <!-- 简单加载状态 -->
+          <div v-if="loading" class="loading-overlay">
+            <div class="loading-text">正在加载...</div>
+          </div>
 
-      <div class="module-meta">
-        <span>路由: {{ currentRoute }}</span>
-        <span v-if="loadTime">加载时间: {{ loadTime }}ms</span>
-        <span>{{ new Date().toLocaleTimeString() }}</span>
+          <!-- 错误状态 -->
+          <div v-if="error" class="error-overlay">
+            <div class="error-content">
+              <i class="fas fa-exclamation-triangle"></i>
+              <div class="error-message">{{ error }}</div>
+              <div class="error-actions">
+                <button class="retry-btn" @click="retryLoad">重试</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -83,7 +73,6 @@ import { Loading } from '@element-plus/icons-vue'
 import { angularModuleManager } from '@/services/AngularModuleManager.js'
 import { authService } from '@/core/auth'
 import { singleIframeManager } from '@/utils/single-iframe-manager'
-import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
 const props = defineProps({
   moduleCode: {
@@ -118,13 +107,14 @@ const emit = defineEmits(['loaded', 'error', 'route-change', 'message', 'close']
 const router = useRouter()
 
 // 响应式数据
+const visible = ref(true) // 弹窗显示状态
 const loading = ref(true)
 const error = ref('')
 const status = ref('未加载')
 const statusText = ref('')
 const loadTime = ref(null)
 const loadProgress = ref(0)
-const isFullscreen = ref(false)
+// 移除全屏状态，因为弹窗本身就是全屏的
 const currentRoute = ref('main')
 const iframeContainer = ref(null) // 改为容器引用
 const retryCount = ref(0)
@@ -227,21 +217,24 @@ const openInNewWindow = () => {
   }
 }
 
-const toggleFullscreen = () => {
-  isFullscreen.value = !isFullscreen.value
-}
+// 移除全屏切换功能
 
 const closeModule = () => {
+  // 立即隐藏弹窗
+  visible.value = false
+
   // 清理资源
   cleanupIframeMessaging()
 
   // 发送关闭事件
   emit('close', { moduleCode: props.moduleCode })
 
-  // 导航回首页
-  router.push('/home')
-
-  ElMessage.success(`${moduleConfig.value?.name || '模块'} 已关闭`)
+  // 备用路由跳转（如果父组件没有处理关闭事件）
+  setTimeout(() => {
+    if (visible.value === false) {
+      router.push('/home')
+    }
+  }, 100)
 }
 
 const retryLoad = () => {
@@ -555,27 +548,148 @@ watch(
 defineExpose({
   refresh: refreshModule,
   changeRoute: handleRouteChange,
-  toggleFullscreen,
   getStatus: () => ({ status: status.value, loading: loading.value, error: error.value })
 })
 
 // 注册组件
 defineOptions({
-  components: {
-    SkeletonLoader
-  }
+  name: 'AngularModuleFrame'
 })
 </script>
 
 <style scoped>
-.angular-module-frame {
+/* 弹窗遮罩层 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* 弹窗主体 */
+.modal-dialog {
+  background: white;
+  border-radius: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 100vw;
+  height: calc(100vh - 60px); /* 顶部预留60px空间 */
+  margin-top: 60px; /* 顶部偏移 */
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background: white;
-  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 全屏模式 */
+.modal-fullscreen {
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+}
+
+/* 标准模态框头部 */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  flex-shrink: 0;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* 标准模态框关闭按钮 */
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  color: #333;
+  background: #f5f5f5;
+}
+
+/* 工具栏 */
+.modal-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e5e5;
+  flex-shrink: 0;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.module-status {
+  font-size: 12px;
+  color: #666;
+  padding: 2px 8px;
+  background: #e9ecef;
+  border-radius: 12px;
+}
+
+.toolbar-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #666;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 弹窗内容 */
+.modal-body {
+  flex: 1;
+  overflow: hidden;
 }
 
 .skeleton-container {
@@ -589,16 +703,59 @@ defineOptions({
   width: 100%;
   height: 100%;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-.iframe-container.fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  background: white;
+.loading-overlay,
+.error-overlay {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+}
+
+.loading-text {
+  color: #606266;
+  font-size: 14px;
+}
+
+.error-content {
+  text-align: center;
+  color: #f56c6c;
+}
+
+.error-content i {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.error-message {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.retry-btn {
+  padding: 8px 16px;
+  background: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.retry-btn:hover {
+  background: #66b1ff;
+}
+
+.fa-spin {
+  animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .module-header {
@@ -631,20 +788,9 @@ defineOptions({
   background: #f5f7fa;
 }
 
-.loading-content {
-  text-align: center;
+.loading-text {
   color: #606266;
-}
-
-.loading-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  animation: spin 1s linear infinite;
-}
-
-.loading-progress {
-  width: 200px;
-  margin-top: 1rem;
+  font-size: 14px;
 }
 
 @keyframes spin {
