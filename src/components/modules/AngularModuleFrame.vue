@@ -1,44 +1,17 @@
 <template>
   <div class="angular-module-frame">
-    <!-- 模块头部信息 -->
-    <div v-if="showHeader" class="module-header">
-      <div class="module-info">
-        <i :class="moduleConfig?.icon" class="module-icon"></i>
-        <div class="module-details">
-          <h3 class="module-title">{{ moduleConfig?.title }}</h3>
-          <p class="module-description">{{ moduleConfig?.description }}</p>
-        </div>
+    <!-- 简单的头部工具栏 -->
+    <div class="module-header">
+      <div class="module-title">
+        {{ moduleConfig?.name || '模块' }}
       </div>
-
       <div class="module-actions">
-        <!-- 路由切换 -->
-        <el-select
-          v-if="Object.keys(moduleRoutes).length > 1"
-          v-model="currentRoute"
-          @change="handleRouteChange"
-          size="small"
-          style="width: 200px"
-        >
-          <el-option
-            v-for="(url, name) in moduleRoutes"
-            :key="name"
-            :label="getRouteLabel(name)"
-            :value="name"
-          />
-        </el-select>
-
-        <!-- 操作按钮 -->
-        <el-button-group size="small">
-          <el-button @click="refreshModule" :loading="loading">
-            <i class="fas fa-refresh"></i>
-          </el-button>
-          <el-button @click="openInNewWindow">
-            <i class="fas fa-external-link-alt"></i>
-          </el-button>
-          <el-button @click="toggleFullscreen">
-            <i :class="isFullscreen ? 'fas fa-compress' : 'fas fa-expand'"></i>
-          </el-button>
-        </el-button-group>
+        <el-button size="small" @click="refreshModule" :loading="loading">刷新</el-button>
+        <el-button size="small" @click="toggleFullscreen">
+          {{ isFullscreen ? '退出全屏' : '全屏' }}
+        </el-button>
+        <el-button size="small" @click="openInNewWindow">新窗口</el-button>
+        <el-button size="small" type="danger" @click="closeModule">关闭</el-button>
       </div>
     </div>
 
@@ -94,6 +67,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   ElSelect,
   ElOption,
@@ -138,7 +112,10 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['loaded', 'error', 'route-change', 'message'])
+const emit = defineEmits(['loaded', 'error', 'route-change', 'message', 'close'])
+
+// 路由器
+const router = useRouter()
 
 // 响应式数据
 const loading = ref(true)
@@ -252,6 +229,19 @@ const openInNewWindow = () => {
 
 const toggleFullscreen = () => {
   isFullscreen.value = !isFullscreen.value
+}
+
+const closeModule = () => {
+  // 清理资源
+  cleanupIframeMessaging()
+
+  // 发送关闭事件
+  emit('close', { moduleCode: props.moduleCode })
+
+  // 导航回首页
+  router.push('/home')
+
+  ElMessage.success(`${moduleConfig.value?.name || '模块'} 已关闭`)
 }
 
 const retryLoad = () => {
@@ -615,38 +605,21 @@ defineOptions({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  padding: 12px 16px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #e4e7ed;
 }
 
-.module-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.module-icon {
-  font-size: 2rem;
-  opacity: 0.9;
-}
-
-.module-details h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.module-details p {
-  margin: 0;
-  opacity: 0.8;
-  font-size: 0.875rem;
+.module-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #303133;
 }
 
 .module-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 8px;
 }
 
 .loading-overlay,
