@@ -187,9 +187,12 @@ export class SingleIframeManager {
       // 移动 iframe 到目标容器
       this.moveToContainer(targetContainer)
 
-      // 直接设置iframe的src，而不是只改变hash
+      // 直接设置iframe的src，强制重新加载
       this.iframe.src = authUrl
       console.log(`   Final iframe src: ${this.iframe.src}`)
+
+      // 强制刷新iframe以确保URL变更生效
+      this.iframe.contentWindow?.location.reload()
 
       // 重新发送认证数据，确保模块切换后认证状态正确
       this.sendAuthData()

@@ -100,7 +100,7 @@ const showModule = async event => {
         await singleIframeManager.switchToModule(code, iframeContainer.value)
         loading.value = false
         console.log('✅ Module switched via single-iframe-manager:', code)
-        ElMessage.success(`已切换到 ${moduleTitle.value}`)
+        // 移除成功提示消息
       }
     } catch (error) {
       loading.value = false
@@ -125,7 +125,7 @@ const showModule = async event => {
       await singleIframeManager.switchToModule(code, iframeContainer.value)
       loading.value = false
       console.log('✅ Module loaded in modal via single-iframe-manager:', code)
-      ElMessage.success(`${moduleTitle.value} 加载完成`)
+      // 移除成功提示消息
     }
   } catch (error) {
     loading.value = false

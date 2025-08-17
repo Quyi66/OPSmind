@@ -43,7 +43,8 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useModuleNavigation } from '@/composables/useModuleNavigation'
@@ -54,6 +55,47 @@ import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
 
 const dashboardStore = useDashboardStore()
 const { navigateToModule } = useModuleNavigation()
+const route = useRoute()
+
+// 监听路由变化，自动显示对应的iframe
+watch(() => route.path, (newPath) => {
+  console.log('🧭 Route changed to:', newPath)
+
+  // 如果是功能模块路由，自动显示iframe
+  const moduleCode = newPath.substring(1) // 移除开头的 '/'
+  const moduleList = ['gfs', 'jao', 'cmd', 'cac', 'password', 'sudo', 'acm', 'patches', 'software', 'workflow', 'users']
+
+  if (moduleList.includes(moduleCode)) {
+    console.log('🎯 Auto-showing iframe for module:', moduleCode)
+
+    // 触发iframe显示
+    const event = new CustomEvent('showAngularModuleContainer', {
+      detail: {
+        moduleCode: moduleCode,
+        title: getModuleTitle(moduleCode)
+      }
+    })
+    window.dispatchEvent(event)
+  }
+}, { immediate: true })
+
+// 获取模块标题
+const getModuleTitle = (moduleCode) => {
+  const titleMap = {
+    gfs: '脚本管理',
+    jao: '作业编排',
+    cmd: '命令管理',
+    cac: '系统巡检',
+    password: '密码管理',
+    sudo: 'sudo权限管理',
+    acm: '资产管理',
+    patches: '补丁管理',
+    software: '软件管理',
+    workflow: '流程管理',
+    users: '用户管理'
+  }
+  return titleMap[moduleCode] || moduleCode.toUpperCase()
+}
 
 onMounted(async () => {
   await loadDashboardData()

@@ -16,6 +16,10 @@ export interface AppUrlConfig {
 
 // 环境配置
 export interface EnvironmentConfig {
+  vue: {
+    baseUrl: string
+    hashMode: boolean
+  }
   angularjs: {
     baseUrl: string
     hashMode: boolean
@@ -31,6 +35,10 @@ export interface EnvironmentConfig {
 // 多环境配置
 const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
   development: {
+    vue: {
+      baseUrl: 'http://localhost:3000',
+      hashMode: true
+    },
     angularjs: {
       baseUrl: 'http://localhost:8080/oplus/base',
       hashMode: true
@@ -43,6 +51,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     }
   },
   production: {
+    vue: {
+      baseUrl: '',
+      hashMode: true
+    },
     angularjs: {
       baseUrl: '/oplus/base',
       hashMode: true
@@ -55,6 +67,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     }
   },
   test: {
+    vue: {
+      baseUrl: 'http://test-server:3000',
+      hashMode: true
+    },
     angularjs: {
       baseUrl: 'http://test-server:8080/oplus/base',
       hashMode: true
@@ -67,6 +83,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     }
   },
   staging: {
+    vue: {
+      baseUrl: 'http://staging-server:3000',
+      hashMode: true
+    },
     angularjs: {
       baseUrl: 'http://staging-server/oplus/base',
       hashMode: true
@@ -186,7 +206,14 @@ export class AppUrlManager {
       return this.getAngularBaseUrl()
     }
 
-    return this.buildAngularUrl(appConfig.entryUrl)
+    const fullUrl = this.buildAngularUrl(appConfig.entryUrl)
+    console.log(`🔗 URL Generation Debug:`)
+    console.log(`   App code: ${appCode}`)
+    console.log(`   Entry URL: ${appConfig.entryUrl}`)
+    console.log(`   Angular base URL: ${this.getAngularBaseUrl()}`)
+    console.log(`   Final URL: ${fullUrl}`)
+
+    return fullUrl
   }
 
   /**
@@ -203,6 +230,13 @@ export class AppUrlManager {
     // 否则添加 # 前缀
     const normalizedPath = path.startsWith('/') ? path : `/${path}`
     return `${baseUrl}/#${normalizedPath}`
+  }
+
+  /**
+   * 获取 Vue 基础 URL
+   */
+  getVueBaseUrl(): string {
+    return this.envConfig.vue.baseUrl
   }
 
   /**

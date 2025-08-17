@@ -166,6 +166,9 @@ const displayUserName = computed(() => {
 const handleMenuClick = (menu) => {
   activeMenu.value = menu.code
 
+  // 更新浏览器URL
+  router.push(`/${menu.code}`)
+
   // 触发iframe弹窗显示模块
   const event = new CustomEvent('showAngularModuleContainer', {
     detail: {
@@ -176,6 +179,7 @@ const handleMenuClick = (menu) => {
   window.dispatchEvent(event)
 
   console.log('🚀 Menu clicked, showing iframe for:', menu.name, 'with module code:', menu.code)
+  console.log('🔗 Browser URL updated to:', `/${menu.code}`)
 }
 
 const handleLogoClick = () => {
@@ -190,6 +194,7 @@ const handleLogoClick = () => {
   router.push('/home')
 
   console.log('🏠 Logo clicked, returning to home')
+  console.log('🔗 Browser URL updated to: /home')
 }
 
 
