@@ -357,6 +357,7 @@ export class SingleIframeManager {
         return
       }
 
+      // 确保用户数据完全可序列化
       const serializableUser = {
         id: user.id,
         login: user.login,
@@ -364,11 +365,11 @@ export class SingleIframeManager {
         email: user.email,
         role: user.role,
         tenantId: user.tenantId,
-        permissions: user.permissions
+        permissions: Array.isArray(user.permissions) ? [...user.permissions] : user.permissions
       }
 
       const authData = {
-        token,
+        token: String(token),
         user: serializableUser,
         timestamp: Date.now()
       }
@@ -384,11 +385,13 @@ export class SingleIframeManager {
         'oplus_user': !!sessionStorage.getItem('oplus_user')
       })
 
-      // 发送到 iframe
-      this.iframe.contentWindow.postMessage({
+      // 发送到 iframe - 使用 JSON 序列化确保数据可克隆
+      const messageData = {
         type: 'vue-auth-data',
-        authData
-      }, '*')
+        authData: JSON.parse(JSON.stringify(authData)) // 深度克隆确保可序列化
+      }
+
+      this.iframe.contentWindow.postMessage(messageData, '*')
 
       console.log('🔐 Auth data sent to Angular iframe via postMessage')
 
