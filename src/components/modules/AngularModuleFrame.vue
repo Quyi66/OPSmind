@@ -112,6 +112,7 @@ import {
 } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { angularModuleManager } from '@/services/AngularModuleManager.js'
+import { authService } from '@/core/auth'
 
 const props = defineProps({
   moduleCode: {
@@ -410,8 +411,7 @@ const sendAuthDataToIframe = () => {
   if (!moduleIframe.value || !moduleIframe.value.contentWindow) return
 
   try {
-    // 使用正确的认证服务获取认证信息
-    const { authService } = require('@/core/auth')
+    // 使用导入的认证服务获取认证信息
     const token = authService.getToken()
     const user = authService.getCurrentUser()
 
@@ -420,9 +420,21 @@ const sendAuthDataToIframe = () => {
       return
     }
 
+    // 创建可序列化的用户对象，只包含基本属性
+    const serializableUser = {
+      id: user.id,
+      login: user.login,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      tenantId: user.tenantId,
+      permissions: user.permissions,
+      // 只包含基本的可序列化属性
+    }
+
     const authData = {
       token,
-      user,
+      user: serializableUser,
       timestamp: Date.now()
     }
 
@@ -431,21 +443,21 @@ const sendAuthDataToIframe = () => {
 
     // 为了兼容性，也设置旧的键名
     sessionStorage.setItem('oplus_token', token)
-    sessionStorage.setItem('oplus_user', JSON.stringify(user))
+    sessionStorage.setItem('oplus_user', JSON.stringify(serializableUser))
 
-    // 发送消息到iframe
+    // 发送消息到iframe - 确保数据可序列化
     moduleIframe.value.contentWindow.postMessage(
       {
         type: 'vue-auth-data',
-        authData
+        authData: JSON.parse(JSON.stringify(authData)) // 深度克隆确保可序列化
       },
       '*'
     )
 
     console.log('🔗 Auth data sent to iframe:', {
       hasToken: !!token,
-      userLogin: user?.login,
-      tenantId: user?.tenantId
+      userLogin: serializableUser?.login,
+      tenantId: serializableUser?.tenantId
     })
   } catch (e) {
     console.error('Failed to send auth data to iframe:', e)
