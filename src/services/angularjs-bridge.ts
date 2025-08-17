@@ -100,7 +100,7 @@ export class AngularJSBridge {
       showMessage: (message: string, type = 'info') => sendRequest('SHOW_MESSAGE', { message, type }),
       openModal: (config: any) => sendRequest('OPEN_MODAL', config),
       closeModal: (result?: any) => sendRequest('CLOSE_MODAL', { result }),
-      callService: (serviceName: string, method: string, params: any[] = []) => 
+      callService: (serviceName: string, method: string, params: any[] = []) =>
         sendRequest('CALL_SERVICE', { serviceName, method, params })
     }
   }
@@ -120,25 +120,17 @@ export class AngularJSBridge {
       },
 
       async getMenus() {
-        return [
-          {
-            id: 'dashboard',
-            name: '仪表盘',
-            icon: 'dashboard',
-            path: '/home',
-            children: []
-          },
-          {
-            id: 'system',
-            name: '系统管理',
-            icon: 'setting',
-            path: '/system',
-            children: [
-              { id: 'users', name: '用户管理', path: '/system/users' },
-              { id: 'roles', name: '角色管理', path: '/system/roles' }
-            ]
-          }
-        ]
+        try {
+          // 尝试获取真实的应用列表
+          const { apiService } = await import('@/core/api')
+          const applets = await apiService.getApplets()
+          return apiService.convertAppletsToModules(applets)
+        } catch (error) {
+          console.warn('Failed to get real modules, using defaults:', error)
+          // 如果获取失败，使用默认模块
+          const { apiService } = await import('@/core/api')
+          return apiService.getDefaultModules()
+        }
       },
 
       async getPermissions() {

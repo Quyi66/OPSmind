@@ -120,18 +120,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
       // 并行加载其他数据
       const [modules, stats] = await Promise.all([
-        angularJSBridge.getMenus(), // 使用菜单作为模块列表
-        Promise.resolve([]) // 暂时使用空数组作为系统统计
+        angularJSBridge.getMenus(), // 获取真实的模块列表
+        getSystemStats() // 获取系统统计信息
       ])
 
       currentUser.value = user as User
-      availableModules.value = modules.map((menu: any) => ({
-        code: menu.id,
-        name: menu.name,
-        title: menu.name,
-        icon: menu.icon,
-        showIn: { desktop: 1 } // 默认显示在桌面
-      }))
+      availableModules.value = modules || []
       systemStats.value = stats
       lastUpdated.value = Date.now()
 
@@ -201,10 +195,19 @@ export const useDashboardStore = defineStore('dashboard', () => {
     return titles[moduleCode] || moduleCode.toUpperCase()
   }
 
+  const getSystemStats = async (): Promise<SystemStat[]> => {
+    try {
+      const { apiService } = await import('@/core/api')
+      return await apiService.getSystemStats()
+    } catch (err) {
+      console.error('Failed to get system stats:', err)
+      return []
+    }
+  }
+
   const refreshStats = async (): Promise<void> => {
     try {
-      // 暂时使用空实现
-      systemStats.value = []
+      systemStats.value = await getSystemStats()
       lastUpdated.value = Date.now()
     } catch (err) {
       console.error('Failed to refresh stats:', err)
