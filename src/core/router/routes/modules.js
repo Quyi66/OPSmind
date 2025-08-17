@@ -8,7 +8,13 @@ export const moduleRoutes = [
   {
     path: '/cac',
     name: 'cac-main',
-    component: () => import('@/views/AngularModuleView.vue'),
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/AngularModuleView.vue')
+      }
+    ],
     meta: {
       title: 'CAC 配置管理',
       requiresAuth: true,
@@ -33,7 +39,13 @@ export const moduleRoutes = [
   {
     path: '/jao',
     name: 'jao-main',
-    component: () => import('@/views/AngularModuleView.vue'),
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/AngularModuleView.vue')
+      }
+    ],
     meta: {
       title: 'JAO 作业编排',
       requiresAuth: true,
@@ -58,7 +70,13 @@ export const moduleRoutes = [
   {
     path: '/gfs',
     name: 'gfs-main',
-    component: () => import('@/views/AngularModuleView.vue'),
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/AngularModuleView.vue')
+      }
+    ],
     meta: {
       title: 'GFS 脚本管理',
       requiresAuth: true,
@@ -133,7 +151,13 @@ export const moduleRoutes = [
   {
     path: '/cmd',
     name: 'cmd-main',
-    component: () => import('@/views/AngularModuleView.vue'),
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/AngularModuleView.vue')
+      }
+    ],
     meta: {
       title: '命令管理',
       requiresAuth: true,
@@ -158,7 +182,13 @@ export const moduleRoutes = [
   {
     path: '/acm',
     name: 'acm-main',
-    component: () => import('@/views/AngularModuleView.vue'),
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/AngularModuleView.vue')
+      }
+    ],
     meta: {
       title: '资产管理',
       requiresAuth: true,

@@ -2,43 +2,20 @@
   <!-- 模态框遮罩 -->
   <div class="modal-overlay" v-if="visible" @click="closeModule">
     <div class="angular-module-modal" @click.stop>
-      <!-- 模态框头部 -->
-      <div class="modal-header">
-        <div class="modal-title">
-          <i :class="moduleIcon" class="module-icon"></i>
-          <h3>{{ moduleTitle }}</h3>
-        </div>
-        <div class="modal-actions">
-          <el-button @click="refreshModule" size="small" :loading="loading">
-            <i class="fas fa-refresh"></i>
-            刷新
-          </el-button>
-
-          <el-button @click="openInNewWindow" type="primary" size="small">
-            <i class="fas fa-external-link-alt"></i>
-            新窗口
-          </el-button>
-
-          <el-button @click="closeModule" size="small">
-            <i class="fas fa-times"></i>
-            关闭
-          </el-button>
-        </div>
+      <!-- 关闭按钮 -->
+      <div class="close-button-container">
+        <el-button @click="closeModule" size="small" type="text" class="close-btn">
+          <i class="fas fa-times"></i>
+        </el-button>
       </div>
 
       <!-- 模态框内容 -->
       <div class="modal-content">
-        <AngularModuleFrame
+        <div
           v-if="moduleCode"
-          :key="`modal-${moduleCode}-${refreshKey}`"
-          :module-code="moduleCode"
-          :show-header="false"
-          :show-status-bar="true"
-          @loaded="onModuleLoaded"
-          @error="onModuleError"
-          @route-change="onRouteChange"
-          @message="onModuleMessage"
-        />
+          ref="iframeContainer"
+          class="iframe-container"
+        ></div>
       </div>
     </div>
   </div>
@@ -47,8 +24,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElButton, ElMessage } from 'element-plus'
-import AngularModuleFrame from './modules/AngularModuleFrame.vue'
-import { angularModuleManager } from '@/services/AngularModuleManager.js'
+import { singleIframeManager } from '@/utils/single-iframe-manager'
 
 // 响应式数据
 const visible = ref(false)
@@ -56,27 +32,67 @@ const moduleCode = ref('')
 const moduleTitle = ref('')
 const loading = ref(false)
 const refreshKey = ref(0)
+const iframeContainer = ref(null)
 
 // 计算属性
-const moduleConfig = computed(() => {
-  return angularModuleManager.getModule(moduleCode.value)
-})
-
 const moduleIcon = computed(() => {
-  return moduleConfig.value?.icon || 'fas fa-cube'
+  return 'fas fa-cube' // 使用默认图标
 })
 
 // 方法
-const showModule = event => {
+const showModule = async event => {
   const { moduleCode: code, title } = event.detail
 
+  // 如果是相同模块，不需要重新加载
+  if (visible.value && moduleCode.value === code) {
+    console.log('📱 Same module already showing:', code)
+    return
+  }
+
   moduleCode.value = code
-  moduleTitle.value = title || moduleConfig.value?.title || code.toUpperCase()
+  moduleTitle.value = title || code.toUpperCase()
+
+  // 如果弹窗已经显示，直接切换模块
+  if (visible.value) {
+    loading.value = true
+    console.log('📱 Switching to different module:', code)
+
+    try {
+      if (iframeContainer.value) {
+        await singleIframeManager.switchToModule(code, iframeContainer.value)
+        loading.value = false
+        console.log('✅ Module switched via single-iframe-manager:', code)
+        ElMessage.success(`已切换到 ${moduleTitle.value}`)
+      }
+    } catch (error) {
+      loading.value = false
+      console.error('❌ Failed to switch module:', error)
+      ElMessage.error(`切换到 ${moduleTitle.value} 失败`)
+    }
+    return
+  }
+
+  // 首次显示弹窗
   visible.value = true
   loading.value = true
-  refreshKey.value++
-
   console.log('📱 Showing AngularJS module in modal:', code, title)
+
+  try {
+    // 等待下一个tick确保DOM已更新
+    await new Promise(resolve => setTimeout(resolve, 0))
+
+    if (iframeContainer.value) {
+      // 使用single-iframe-manager切换到指定模块
+      await singleIframeManager.switchToModule(code, iframeContainer.value)
+      loading.value = false
+      console.log('✅ Module loaded in modal via single-iframe-manager:', code)
+      ElMessage.success(`${moduleTitle.value} 加载完成`)
+    }
+  } catch (error) {
+    loading.value = false
+    console.error('❌ Failed to load module in modal:', error)
+    ElMessage.error(`${moduleTitle.value} 加载失败`)
+  }
 }
 
 const closeModule = () => {
@@ -88,20 +104,7 @@ const closeModule = () => {
   console.log('📱 Closed AngularJS module modal')
 }
 
-const refreshModule = () => {
-  refreshKey.value++
-  loading.value = true
-  console.log('🔄 Refreshing module:', moduleCode.value)
-}
 
-const openInNewWindow = () => {
-  if (moduleCode.value) {
-    const url = angularModuleManager.getModuleUrl(moduleCode.value)
-    window.open(url, '_blank', 'width=1200,height=800')
-    console.log('🔗 Opened module in new window:', url)
-    ElMessage.success(`${moduleTitle.value} 已在新窗口打开`)
-  }
-}
 
 const handleKeydown = event => {
   if (event.key === 'Escape' && visible.value) {
@@ -110,35 +113,23 @@ const handleKeydown = event => {
 }
 
 // 事件处理
-const onModuleLoaded = data => {
-  loading.value = false
-  console.log('✅ Module loaded in modal:', data)
-  ElMessage.success(`${moduleTitle.value} 加载完成`)
-}
+// 不再需要这些事件处理函数，因为我们使用single-iframe-manager
 
-const onModuleError = data => {
-  loading.value = false
-  console.error('❌ Module load error in modal:', data)
-  ElMessage.error(`${moduleTitle.value} 加载失败: ${data.error}`)
-}
-
-const onRouteChange = data => {
-  console.log('🧭 Route changed in modal:', data)
-}
-
-const onModuleMessage = data => {
-  console.log('📨 Module message in modal:', data)
+const handleCloseEvent = () => {
+  closeModule()
 }
 
 // 生命周期
 onMounted(() => {
   window.addEventListener('showAngularModuleContainer', showModule)
+  window.addEventListener('closeAngularModuleContainer', handleCloseEvent)
   document.addEventListener('keydown', handleKeydown)
   console.log('📱 AngularModuleContainerModal mounted')
 })
 
 onUnmounted(() => {
   window.removeEventListener('showAngularModuleContainer', showModule)
+  window.removeEventListener('closeAngularModuleContainer', handleCloseEvent)
   document.removeEventListener('keydown', handleKeydown)
   console.log('📱 AngularModuleContainerModal unmounted')
 })
@@ -147,63 +138,53 @@ onUnmounted(() => {
 <style scoped>
 .modal-overlay {
   position: fixed;
-  top: 0;
+  top: 50px; /* 顶部菜单高度 */
   left: 0;
   width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  height: calc(100vh - 50px); /* 减去顶部菜单高度 */
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
+  align-items: flex-start; /* 改为顶部对齐 */
+  justify-content: flex-start; /* 改为左对齐 */
+  backdrop-filter: blur(2px);
+  padding-top: 0; /* 移除顶部间距 */
+  padding-left: 0; /* 移除左侧间距 */
 }
 
 .angular-module-modal {
-  width: 95vw;
-  height: 90vh;
-  max-width: 1400px;
-  max-height: 900px;
+  width: calc(100vw - 24px); /* 占满整个宽度，减去左右边距 */
+  height: calc(100vh - 50px); /* 占满剩余高度 */
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  margin: 0 12px; /* 左右各12px边距 */
+  position: relative;
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e4e7ed;
-  background: #f8f9fa;
-  border-radius: 12px 12px 0 0;
+.close-button-container {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
 }
 
-.modal-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
+.close-btn {
+  padding: 6px 8px !important;
+  min-height: 32px !important;
+  color: #909399 !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 
-.module-icon {
-  font-size: 1.5rem;
-  color: #409eff;
-}
-
-.modal-title h3 {
-  margin: 0;
-  color: #303133;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
+  &:hover {
+    color: #f56c6c !important;
+    background: rgba(245, 108, 108, 0.1) !important;
+  }
 }
 
 .modal-content {
@@ -212,35 +193,45 @@ onUnmounted(() => {
   background: #f5f7fa;
 }
 
+.iframe-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 /* 响应式设计 */
 @media (max-width: 1200px) {
   .angular-module-modal {
-    width: 98vw;
-    height: 95vh;
+    width: 90vw;
+    height: calc(100vh - 60px);
   }
 }
 
 @media (max-width: 768px) {
+  .modal-overlay {
+    top: 60px;
+    height: calc(100vh - 60px);
+  }
+
   .angular-module-modal {
-    width: 100vw;
-    height: 100vh;
-    border-radius: 0;
+    width: 95vw;
+    height: calc(100vh - 60px);
+    border-radius: 2px;
+    border: none;
   }
 
   .modal-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-    border-radius: 0;
+    padding: 6px 10px;
+    min-height: 36px;
+    border-radius: 2px 2px 0 0;
   }
 
-  .modal-title {
-    justify-content: center;
+  .modal-title h3 {
+    font-size: 13px;
   }
 
-  .modal-actions {
-    justify-content: center;
-    flex-wrap: wrap;
+  .module-icon {
+    font-size: 14px;
   }
 }
 

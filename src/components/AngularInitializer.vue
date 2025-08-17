@@ -5,7 +5,7 @@
         <div v-if="!isCompleted" class="loading-spinner"></div>
         <div v-else class="success-icon">🚀</div>
       </div>
-      
+
       <div class="initializer-info">
         <div class="initializer-title">
           {{ isCompleted ? 'Angular 应用已就绪' : '正在初始化 Angular 应用...' }}
@@ -14,17 +14,17 @@
           {{ statusText }}
         </div>
       </div>
-      
+
       <div class="initializer-progress">
-        <div 
-          class="progress-fill" 
+        <div
+          class="progress-fill"
           :style="{ width: progress + '%' }"
         ></div>
       </div>
-      
-      <button 
-        v-if="isCompleted" 
-        @click="hideInitializer" 
+
+      <button
+        v-if="isCompleted"
+        @click="hideInitializer"
         class="close-btn"
         title="关闭"
       >
@@ -46,11 +46,10 @@ const statusText = ref('准备初始化...')
 let checkInterval = null
 
 onMounted(() => {
-  // 检查是否需要显示初始化器
-  if (!singleIframeManager.isReady()) {
-    showInitializer.value = true
-    startInitialization()
-  }
+  // 不再需要初始化器，因为iframe现在是按需创建的
+  // 直接标记为完成状态
+  showInitializer.value = false
+  isCompleted.value = true
 })
 
 onUnmounted(() => {
@@ -62,11 +61,11 @@ onUnmounted(() => {
 const startInitialization = () => {
   statusText.value = '正在创建 Angular iframe...'
   progress.value = 10
-  
+
   // 定期检查初始化状态
   checkInterval = setInterval(() => {
     const status = singleIframeManager.getStatus()
-    
+
     if (status.isLoading) {
       statusText.value = '正在加载 Angular 应用...'
       progress.value = 50
@@ -74,9 +73,9 @@ const startInitialization = () => {
       statusText.value = '初始化完成！'
       progress.value = 100
       isCompleted.value = true
-      
+
       clearInterval(checkInterval)
-      
+
       // 3秒后自动隐藏
       setTimeout(() => {
         if (isCompleted.value) {

@@ -1,12 +1,5 @@
 <template>
   <div class="dashboard">
-    <!-- 顶部菜单导航栏 -->
-    <TopNavMenu
-      :user="dashboardStore.currentUser"
-      @menu-click="handleMenuClick"
-      @search="handleSearch"
-    />
-
     <!-- 主内容区 -->
     <div class="dashboard-content">
       <!-- 加载状态 -->
@@ -54,7 +47,6 @@ import { onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useModuleNavigation } from '@/composables/useModuleNavigation'
-import TopNavMenu from '@/components/TopNavMenu.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import QuickActions from '@/components/QuickActions.vue'
 import AngularModuleContainerModal from '@/components/AngularModuleContainerModal.vue'
@@ -84,21 +76,7 @@ const loadDashboardData = async () => {
   }
 }
 
-const handleMenuClick = async menu => {
-  try {
-    console.log('🚀 Menu clicked:', menu.code)
 
-    // 清理模块代码
-    const cleanModuleCode = menu.code.replace(/^__/, '')
-
-    // 直接使用 Vue Router 导航
-    await navigateToModule(cleanModuleCode)
-
-  } catch (error) {
-    console.error('❌ Failed to navigate to module:', error)
-    ElMessage.error(`打开模块失败: ${menu.name}`)
-  }
-}
 
 const handleStatClick = stat => {
   // 根据统计项类型跳转到相应页面

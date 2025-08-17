@@ -2,7 +2,7 @@
   <div class="top-nav-menu">
     <div class="nav-container">
       <!-- Logo 区域 -->
-      <div class="logo-section">
+      <div class="logo-section" @click="handleLogoClick">
         <div class="logo-placeholder">
           <i class="fa fa-cube"></i>
         </div>
@@ -29,21 +29,6 @@
 
       <!-- 右侧用户区域 -->
       <div class="user-section">
-        <!-- 搜索框 -->
-        <div class="search-section">
-          <el-input
-            v-model="searchQuery"
-            placeholder="搜索功能..."
-            class="search-input"
-            clearable
-            @keyup.enter="handleSearch"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-        </div>
-
         <!-- 用户信息 -->
         <el-dropdown @command="handleUserCommand" class="user-dropdown">
           <div class="user-info">
@@ -76,12 +61,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
 import {
-  Search,
   User,
   ArrowDown,
   Setting,
@@ -89,6 +73,7 @@ import {
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
+const route = useRoute()
 
 const props = defineProps({
   user: {
@@ -97,10 +82,11 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['menu-click', 'search'])
-
-const searchQuery = ref('')
+// 不再需要emit事件，直接在组件内处理所有逻辑
 const activeMenu = ref('')
+
+// 由于菜单不再使用路由导航，activeMenu由点击事件直接控制
+// 不再需要监听路由变化
 
 // 菜单配置数据
 const menuItems = ref([
@@ -108,77 +94,66 @@ const menuItems = ref([
     code: 'gfs',
     name: '脚本',
     icon: 'fas fa-file-code',
-    route: '/gfs',
     description: '脚本文件管理和版本控制'
   },
   {
     code: 'jao',
     name: '作业',
     icon: 'fas fa-tasks',
-    route: '/jao',
     description: '自动化作业编排和调度管理'
   },
   {
     code: 'cmd',
     name: '命令',
     icon: 'fas fa-terminal',
-    route: '/cmd',
     description: '系统命令管理和执行'
   },
   {
     code: 'cac',
     name: '系统巡检',
     icon: 'fas fa-search',
-    route: '/cac',
     description: '系统配置审计与合规性检查'
   },
   {
     code: 'password',
     name: '密码管理',
     icon: 'fas fa-key',
-    route: '/password',
     description: '密码策略和安全管理'
   },
   {
     code: 'sudo',
     name: 'sudo权限管理',
     icon: 'fas fa-user-shield',
-    route: '/sudo',
     description: 'sudo权限分配和管理'
   },
   {
     code: 'acm',
     name: '资产管理',
     icon: 'fas fa-server',
-    route: '/acm',
     description: 'IT基础设施资产管理'
   },
   {
     code: 'patches',
     name: '补丁管理',
     icon: 'fas fa-download',
-    route: '/patches',
     description: '系统补丁和更新管理'
   },
   {
     code: 'software',
     name: '软件管理',
     icon: 'fas fa-box',
-    route: '/software',
     description: '软件包安装和管理'
   },
   {
     code: 'workflow',
     name: '流程管理',
     icon: 'fas fa-project-diagram',
-    route: '/workflow',
     description: '业务流程设计和管理'
   },
   {
     code: 'users',
     name: '用户管理',
     icon: 'fas fa-users',
-    route: '/users',
     description: '用户账户和权限管理'
   }
 ])
@@ -190,19 +165,34 @@ const displayUserName = computed(() => {
 
 const handleMenuClick = (menu) => {
   activeMenu.value = menu.code
-  emit('menu-click', menu)
 
-  // 导航到对应路由
-  if (menu.route) {
-    router.push(menu.route)
-  }
+  // 触发iframe弹窗显示模块
+  const event = new CustomEvent('showAngularModuleContainer', {
+    detail: {
+      moduleCode: 'cac', // 默认都使用cac模块
+      title: menu.name
+    }
+  })
+  window.dispatchEvent(event)
+
+  console.log('🚀 Menu clicked, showing iframe for:', menu.name)
 }
 
-const handleSearch = () => {
-  if (searchQuery.value.trim()) {
-    emit('search', searchQuery.value.trim())
-  }
+const handleLogoClick = () => {
+  // 清除活跃菜单
+  activeMenu.value = ''
+
+  // 关闭任何打开的iframe弹窗
+  const event = new CustomEvent('closeAngularModuleContainer')
+  window.dispatchEvent(event)
+
+  // 导航到home页面
+  router.push('/home')
+
+  console.log('🏠 Logo clicked, returning to home')
 }
+
+
 
 const handleUserCommand = command => {
   switch (command) {
@@ -236,15 +226,15 @@ const handleLogout = async () => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 1001;
 }
 
 .nav-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 60px;
-  padding: 0 24px;
+  height: 50px;
+  padding: 0 16px;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -252,24 +242,32 @@ const handleLogout = async () => {
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex: 0 0 auto;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background: rgba(24, 144, 255, 0.1);
+  }
 }
 
 .logo-placeholder {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   background: linear-gradient(135deg, #1890ff, #096dd9);
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .app-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: #262626;
   margin: 0;
@@ -277,13 +275,13 @@ const handleLogout = async () => {
 
 .main-nav {
   flex: 1;
-  margin: 0 40px;
+  margin: 0 24px;
 }
 
 .nav-list {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -311,8 +309,8 @@ const handleLogout = async () => {
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 6px;
+  padding: 10px 12px;
   color: #595959;
   text-decoration: none;
   font-size: 14px;
@@ -333,14 +331,7 @@ const handleLogout = async () => {
 .user-section {
   display: flex;
   align-items: center;
-  gap: 20px;
   flex: 0 0 auto;
-}
-
-.search-section {
-  .search-input {
-    width: 240px;
-  }
 }
 
 .user-dropdown {
@@ -380,10 +371,6 @@ const handleLogout = async () => {
   .main-nav {
     margin: 0 20px;
   }
-
-  .search-input {
-    width: 200px !important;
-  }
 }
 
 @media (max-width: 992px) {
@@ -402,10 +389,6 @@ const handleLogout = async () => {
 
   .nav-icon {
     font-size: 18px;
-  }
-
-  .search-input {
-    width: 160px !important;
   }
 }
 
@@ -426,10 +409,6 @@ const handleLogout = async () => {
     width: 36px;
     height: 36px;
     font-size: 16px;
-  }
-
-  .search-section {
-    display: none;
   }
 
   .user-name {

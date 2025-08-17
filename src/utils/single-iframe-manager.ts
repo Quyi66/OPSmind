@@ -34,7 +34,8 @@ export class SingleIframeManager {
   }
 
   private constructor() {
-    this.initializeIframe()
+    // 不再自动初始化iframe，只在需要时初始化
+    // this.initializeIframe()
   }
 
   static getInstance(): SingleIframeManager {

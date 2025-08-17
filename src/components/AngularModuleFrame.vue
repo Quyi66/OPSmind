@@ -104,15 +104,16 @@ const onIframeLoad = () => {
   ElMessage.success(`${moduleTitle.value} 加载完成`)
 }
 
-onMounted(() => {
-  window.addEventListener('showAngularModule', showModule)
-  document.addEventListener('keydown', handleKeydown)
-})
+// 禁用事件监听器 - 这个组件已被弃用，不再使用
+// onMounted(() => {
+//   window.addEventListener('showAngularModule', showModule)
+//   document.addEventListener('keydown', handleKeydown)
+// })
 
-onUnmounted(() => {
-  window.removeEventListener('showAngularModule', showModule)
-  document.removeEventListener('keydown', handleKeydown)
-})
+// onUnmounted(() => {
+//   window.removeEventListener('showAngularModule', showModule)
+//   document.removeEventListener('keydown', handleKeydown)
+// })
 </script>
 
 <style scoped>

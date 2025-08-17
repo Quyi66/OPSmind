@@ -1,23 +1,12 @@
 <template>
   <div class="angular-module-view">
-    <!-- 面包屑导航 -->
-    <div class="breadcrumb-nav">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-        <el-breadcrumb-item>{{ moduleConfig?.name }}</el-breadcrumb-item>
-        <el-breadcrumb-item v-if="currentRoute !== 'main'">
-          {{ getRouteLabel(currentRoute) }}
-        </el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
-
     <!-- 模块内容 -->
     <div class="module-content">
       <AngularModuleFrame
         :key="`module-${moduleCode}-${refreshKey}`"
         :module-code="moduleCode"
         :route="routeParam"
-        :show-header="true"
+        :show-header="false"
         :show-status-bar="true"
         @loaded="onModuleLoaded"
         @error="onModuleError"
@@ -156,19 +145,12 @@ watch(
 .angular-module-view {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   background: #f5f7fa;
-}
-
-.breadcrumb-nav {
-  padding: 1rem;
-  background: white;
-  border-bottom: 1px solid #e4e7ed;
 }
 
 .module-content {
   flex: 1;
-  padding: 1rem;
   overflow: hidden;
 }
 </style>

@@ -20,7 +20,13 @@ export const baseRoutes = [
   {
     path: '/home',
     name: 'home',
-    component: () => import('@/views/Dashboard.vue'),
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/Dashboard.vue')
+      }
+    ],
     meta: {
       title: 'OpsMind 仪表盘',
       requiresAuth: true,
