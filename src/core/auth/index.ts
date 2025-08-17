@@ -1,14 +1,25 @@
 /**
- * 现代化认证服务
+ * 现代化认证服务 - TypeScript版本
  * 统一管理用户认证、权限和会话
  * 基于旧版认证服务完整迁移
  */
 
-import { ref, reactive, computed } from 'vue'
+import { reactive, computed } from 'vue'
 import CryptoJS from 'crypto-js'
+import type {
+  User,
+  LoginCredentials,
+  LoginResponse,
+  AuthState,
+  SessionConfig,
+  Tenant,
+  License,
+  OTPStatus,
+  AuthService as IAuthService
+} from '@/types/auth'
 
 // 认证状态
-const authState = reactive({
+const authState = reactive<AuthState>({
   user: null,
   token: null,
   permissions: [],
@@ -18,7 +29,7 @@ const authState = reactive({
 })
 
 // 会话配置 - 使用旧版的存储键名保持兼容性
-const SESSION_CONFIG = {
+const SESSION_CONFIG: SessionConfig = {
   tokenKey: 'oplus_token',
   userKey: 'oplus_user',
   timeout: 30 * 60 * 1000, // 30分钟
@@ -26,7 +37,9 @@ const SESSION_CONFIG = {
   encryptionKey: 'Oplus@2022!!sys@' // 加密密钥
 }
 
-class AuthService {
+class AuthService implements IAuthService {
+  private baseURL: string
+
   constructor() {
     // 使用相对路径，让 webpack 代理处理
     this.baseURL = ''
@@ -37,7 +50,7 @@ class AuthService {
   /**
    * AES 加密方法（与后台一致）
    */
-  encrypt(word) {
+  encrypt(word: string): string {
     if (!word) return ''
     const key = CryptoJS.enc.Utf8.parse(SESSION_CONFIG.encryptionKey)
     const iv = CryptoJS.enc.Utf8.parse(SESSION_CONFIG.encryptionKey)
@@ -51,7 +64,7 @@ class AuthService {
   /**
    * 获取租户 ID
    */
-  getTenantId() {
+  getTenantId(): string {
     // 可以从配置或 URL 参数获取
     return 'ff808081727a047f017292d0d72e0004' // 默认租户 ID
   }
@@ -59,14 +72,14 @@ class AuthService {
   /**
    * 初始化认证状态
    */
-  initializeAuth() {
+  private initializeAuth(): void {
     try {
       // 支持从 localStorage 和 sessionStorage 恢复
       const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
       const userInfo = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
 
       if (token && userInfo) {
-        const parsedUser = JSON.parse(userInfo)
+        const parsedUser = JSON.parse(userInfo) as User
         // 验证用户对象是否有效
         if (parsedUser && parsedUser.login) {
           authState.token = token
@@ -90,23 +103,23 @@ class AuthService {
   /**
    * 登录 - 完全基于旧版实现
    */
-  async login(credentials) {
+  async login(credentials: LoginCredentials): Promise<LoginResponse> {
     authState.isLoading = true
 
     try {
       console.log('🔐 Sending login request to:', `${this.baseURL}/oplus-portal/api/authenticate`)
 
       // 加密用户名、密码和 OTP 代码
-      const encryptedData = {
+      const encryptedData: Record<string, any> = {
         username: this.encrypt(credentials.username),
         password: this.encrypt(credentials.password),
         rememberMe: credentials.rememberMe,
-        tenantId: this.getTenantId()
+        tenantId: credentials.tenantId || this.getTenantId()
       }
 
       // 如果有 OTP 代码，也需要加密
-      if (credentials.otpCode) {
-        encryptedData.otpCode = this.encrypt(credentials.otpCode)
+      if (credentials.otp) {
+        encryptedData.otpCode = this.encrypt(credentials.otp)
       }
 
       console.log('🔒 Encrypted login data prepared')
@@ -131,13 +144,20 @@ class AuthService {
       const data = await response.json()
 
       // 保存认证信息
-      authState.token = data.id_token || data.access_token || data.token
+      const token = data.id_token || data.access_token || data.token
+      if (!token) {
+        throw new Error('No token received from server')
+      }
+      authState.token = token
 
       // 创建基本用户信息（后续会在 dashboard 中获取完整信息）
       authState.user = {
+        id: data.userId || credentials.username,
         login: credentials.username,
-        username: credentials.username
-        // 其他信息会在 dashboard 加载时从 /api/account 获取
+        name: credentials.username,
+        role: data.role || 'user',
+        permissions: data.permissions || [],
+        tenantId: credentials.tenantId || this.getTenantId()
       }
       authState.isAuthenticated = true
       authState.lastActivity = Date.now()
@@ -145,21 +165,31 @@ class AuthService {
       // 保存到存储
       const userJson = JSON.stringify(authState.user)
       if (credentials.rememberMe) {
-        localStorage.setItem(SESSION_CONFIG.tokenKey, authState.token)
+        localStorage.setItem(SESSION_CONFIG.tokenKey, token)
         localStorage.setItem(SESSION_CONFIG.userKey, userJson)
       } else {
-        sessionStorage.setItem(SESSION_CONFIG.tokenKey, authState.token)
+        sessionStorage.setItem(SESSION_CONFIG.tokenKey, token)
         sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
       }
 
       console.log('✅ Login successful, token and user saved:', authState.user.login)
 
       // 返回与旧版兼容的格式
-      return data
+      return {
+        success: true,
+        data: {
+          user: authState.user,
+          token: token,
+          permissions: authState.user.permissions
+        }
+      }
 
     } catch (error) {
       console.error('❌ Login error:', error)
-      throw error
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      }
     } finally {
       authState.isLoading = false
     }
@@ -168,7 +198,7 @@ class AuthService {
   /**
    * 登出 - 基于旧版实现
    */
-  async logout() {
+  async logout(): Promise<void> {
     try {
       // 清除本地存储
       this.clearAuthState()
@@ -187,7 +217,7 @@ class AuthService {
   /**
    * 清除认证状态 - 兼容旧版存储键名
    */
-  clearAuthState() {
+  private clearAuthState(): void {
     // 清除状态
     authState.user = null
     authState.token = null
@@ -209,7 +239,7 @@ class AuthService {
   /**
    * 清除无效的认证信息
    */
-  clearInvalidAuth() {
+  private clearInvalidAuth(): void {
     console.log('🧹 Clearing invalid authentication data')
     this.clearAuthState()
   }
@@ -217,7 +247,7 @@ class AuthService {
   /**
    * 刷新令牌
    */
-  async refreshToken() {
+  async refreshToken(): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseURL}/oplus-portal/api/auth/refresh`, {
         method: 'POST',
@@ -265,7 +295,7 @@ class AuthService {
   /**
    * 验证会话
    */
-  async validateSession() {
+  async validateSession(): Promise<boolean> {
     if (!authState.isAuthenticated) return false
 
     const now = Date.now()
@@ -289,7 +319,7 @@ class AuthService {
   /**
    * 检查权限
    */
-  hasPermission(permission) {
+  hasPermission(permission: string): boolean {
     if (!authState.isAuthenticated) return false
     if (!permission) return true
 
@@ -301,15 +331,15 @@ class AuthService {
   /**
    * 检查角色
    */
-  hasRole(role) {
+  hasRole(role: string): boolean {
     if (!authState.isAuthenticated) return false
-    return authState.user?.role === role || authState.user?.roles?.includes(role)
+    return authState.user?.role === role
   }
 
   /**
    * 获取认证头 - 兼容旧版格式
    */
-  getAuthHeaders() {
+  getAuthHeaders(): Record<string, string> {
     const token = this.getToken()
     if (token) {
       return {
@@ -325,7 +355,7 @@ class AuthService {
   /**
    * 发起认证请求 - 兼容旧版实现
    */
-  async authenticatedRequest(url, options = {}) {
+  async authenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
     const headers = {
       ...this.getAuthHeaders(),
       ...options.headers
@@ -348,7 +378,7 @@ class AuthService {
   /**
    * 更新用户活动时间
    */
-  updateActivity() {
+  updateActivity(): void {
     if (authState.isAuthenticated) {
       authState.lastActivity = Date.now()
     }
@@ -357,7 +387,7 @@ class AuthService {
   /**
    * 设置活动监控
    */
-  setupActivityMonitor() {
+  private setupActivityMonitor(): void {
     // 监听用户活动
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart']
 
@@ -378,7 +408,11 @@ class AuthService {
   /**
    * 初始化登录页面（依次调用所需接口）
    */
-  async initializeLogin() {
+  async initializeLogin(): Promise<{
+    tenants: Tenant[]
+    license: License
+    otpEnabled: OTPStatus
+  }> {
     console.log('🔄 Initializing login page...')
 
     try {
@@ -407,7 +441,7 @@ class AuthService {
   /**
    * 获取所有租户
    */
-  async getTenants() {
+  async getTenants(): Promise<Tenant[]> {
     try {
       const cacheBuster = Date.now()
       const response = await fetch(
@@ -429,7 +463,7 @@ class AuthService {
   /**
    * 验证许可证
    */
-  async verifyLicense() {
+  async verifyLicense(): Promise<License> {
     try {
       const response = await fetch(`${this.baseURL}/oplus-portal/api/licenses/verify`)
 
@@ -438,17 +472,17 @@ class AuthService {
         console.log('✅ License verified')
         return result
       }
-      return null
+      return { valid: false, features: [] }
     } catch (error) {
       console.warn('Failed to verify license:', error)
-      return null
+      return { valid: false, features: [] }
     }
   }
 
   /**
    * 检查 OTP 状态
    */
-  async checkOTP() {
+  async checkOTP(): Promise<OTPStatus> {
     try {
       const cacheBuster = Date.now()
       const response = await fetch(
@@ -460,15 +494,15 @@ class AuthService {
         console.log('✅ OTP status checked:', result)
         return result
       }
-      return false
+      return { enabled: false, required: false }
     } catch (error) {
       console.warn('Failed to check OTP:', error)
-      return false
+      return { enabled: false, required: false }
     }
   }
 
   // Getter 方法 - 兼容旧版实现
-  isAuthenticated() {
+  isAuthenticated(): boolean {
     if (authState.isAuthenticated && authState.token && authState.user && authState.user.login) {
       return true
     }
@@ -479,7 +513,7 @@ class AuthService {
 
     if (token && user) {
       try {
-        const parsedUser = JSON.parse(user)
+        const parsedUser = JSON.parse(user) as User
         // 验证用户对象是否有效
         if (parsedUser && parsedUser.login) {
           authState.token = token
@@ -501,7 +535,7 @@ class AuthService {
     return false
   }
 
-  getCurrentUser() {
+  getCurrentUser(): User | null {
     if (authState.user && authState.user.login) {
       return authState.user
     }
@@ -509,7 +543,7 @@ class AuthService {
     const user = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
     if (user) {
       try {
-        const parsedUser = JSON.parse(user)
+        const parsedUser = JSON.parse(user) as User
         if (parsedUser && parsedUser.login) {
           authState.user = parsedUser
           return authState.user
@@ -526,7 +560,7 @@ class AuthService {
     return null
   }
 
-  getToken() {
+  getToken(): string | null {
     if (authState.token) return authState.token
 
     const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
@@ -538,11 +572,11 @@ class AuthService {
     return null
   }
 
-  getPermissions() {
+  getPermissions(): string[] {
     return authState.permissions
   }
 
-  isLoading() {
+  isLoading(): boolean {
     return authState.isLoading
   }
 }
@@ -567,3 +601,6 @@ export const useAuth = () => {
     refreshToken: authService.refreshToken.bind(authService)
   }
 }
+
+// 导出类型
+export type { User, LoginCredentials, LoginResponse, AuthState, SessionConfig }

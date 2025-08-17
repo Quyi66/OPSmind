@@ -1,9 +1,33 @@
 /**
- * 开发环境默认配置
+ * 开发环境默认配置 - TypeScript版本
  * 用于开发和测试环境的默认值设置
  */
 
-export const DEV_DEFAULTS = {
+interface LoginDefaults {
+  username: string
+  password: string
+  rememberMe: boolean
+}
+
+interface APIConfig {
+  baseURL: string
+  timeout: number
+}
+
+interface DebugConfig {
+  enableConsoleLog: boolean
+  enableNetworkLog: boolean
+  enableAuthLog: boolean
+}
+
+interface DevDefaults {
+  LOGIN: LoginDefaults
+  IS_DEV: boolean
+  API: APIConfig
+  DEBUG: DebugConfig
+}
+
+export const DEV_DEFAULTS: DevDefaults = {
   // 默认登录凭据
   LOGIN: {
     username: 'admin',
@@ -31,7 +55,7 @@ export const DEV_DEFAULTS = {
 /**
  * 获取开发环境默认登录信息
  */
-export function getDevLoginDefaults() {
+export function getDevLoginDefaults(): LoginDefaults {
   if (!DEV_DEFAULTS.IS_DEV) {
     return {
       username: '',
@@ -46,7 +70,7 @@ export function getDevLoginDefaults() {
 /**
  * 在控制台输出开发环境信息
  */
-export function logDevInfo() {
+export function logDevInfo(): void {
   if (!DEV_DEFAULTS.IS_DEV) return
 
   console.group('🔧 OpsMind 开发环境信息')
@@ -60,6 +84,9 @@ export function logDevInfo() {
 /**
  * 检查是否为开发环境
  */
-export function isDevelopment() {
+export function isDevelopment(): boolean {
   return DEV_DEFAULTS.IS_DEV
 }
+
+// 导出类型
+export type { LoginDefaults, APIConfig, DebugConfig, DevDefaults }

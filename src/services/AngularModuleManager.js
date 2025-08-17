@@ -5,13 +5,16 @@
 
 import {
   ANGULAR_MODULES_CONFIG,
-  MODULE_CATEGORIES,
-  getModuleUrl,
   getModuleConfig,
-  getAllModules,
-  getModulesByCategory,
-  searchModules
-} from '@/config/angular-modules.config.js'
+  getAllModuleConfigs,
+  getEnabledModuleConfigs,
+  hasModule,
+  getModuleDefaultRoute,
+  getModuleRoutes,
+  isModuleRoute,
+  getModuleCodeByRoute,
+  getModulePermissions
+} from '@/config/angular-modules.config.ts'
 
 export class AngularModuleManager {
   constructor() {
@@ -22,7 +25,7 @@ export class AngularModuleManager {
    * 获取所有模块列表
    */
   getAllModules() {
-    return getAllModules()
+    return getAllModuleConfigs()
   }
 
   /**
@@ -36,36 +39,46 @@ export class AngularModuleManager {
    * 获取模块的完整URL
    */
   getModuleUrl(moduleCode, route = null) {
-    return getModuleUrl(moduleCode, route, this.isDev)
+    const module = getModuleConfig(moduleCode)
+    if (!module) return null
+
+    const baseUrl = this.isDev ? 'http://localhost:8080' : '/oplus/base'
+    const targetRoute = route || module.defaultRoute
+    return `${baseUrl}${targetRoute}`
   }
 
   /**
    * 获取模块的所有可用路由
    */
   getModuleRoutes(moduleCode) {
-    const module = this.getModule(moduleCode)
-    return module ? module.routes : {}
+    return getModuleRoutes(moduleCode) || {}
   }
 
   /**
    * 检查模块是否存在
    */
   hasModule(moduleCode) {
-    return moduleCode in ANGULAR_MODULES_CONFIG
+    return hasModule(moduleCode)
   }
 
   /**
    * 根据分类获取模块
    */
   getModulesByCategory() {
-    return getModulesByCategory()
+    // 简化实现，返回所有启用的模块
+    return { all: getEnabledModuleConfigs() }
   }
 
   /**
    * 搜索模块
    */
   searchModules(keyword) {
-    return searchModules(keyword)
+    const modules = getAllModuleConfigs()
+    return modules.filter(module =>
+      module.name.toLowerCase().includes(keyword.toLowerCase()) ||
+      module.title.toLowerCase().includes(keyword.toLowerCase()) ||
+      module.description.toLowerCase().includes(keyword.toLowerCase())
+    )
   }
 
   /**

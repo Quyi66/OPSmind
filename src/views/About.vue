@@ -2,7 +2,7 @@
   <div class="about">
     <div class="about-container">
       <div class="about-header">
-        <img src="/content/images/logo-default.png" alt="OpsMind" class="logo" />
+        <img src="@/assets/images/logo-default.svg" alt="OpsMind" class="logo" />
         <h1>OpsMind Dashboard</h1>
         <p class="version">Version 1.0.0</p>
       </div>

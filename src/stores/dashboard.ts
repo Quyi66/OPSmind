@@ -1,34 +1,92 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { angularBridge } from '@/services/angularjs-bridge'
+import { ref, computed, type Ref, type ComputedRef } from 'vue'
+import { angularJSBridge } from '@/services/angularjs-bridge'
 import { hybridModuleManager } from '@/core/modules/HybridModuleManager.js'
-import { apiService } from '@/core/api'
 import { authService } from '@/core/auth'
+import type { User } from '@/types/auth'
+
+interface ModuleShowIn {
+  desktop?: number
+  dock?: number
+}
+
+interface Module {
+  code: string
+  name: string
+  title: string
+  icon?: string
+  color?: string
+  showIn?: ModuleShowIn
+  enabled?: boolean
+}
+
+interface SystemStat {
+  name: string
+  value: number | string
+  unit?: string
+  trend?: 'up' | 'down' | 'stable'
+}
+
+interface ModuleStats {
+  total: number
+  vue: number
+  angular: number
+  hybrid: number
+  migrationProgress: {
+    percentage: number
+    completed: number
+    inProgress: number
+    remaining: number
+  }
+}
+
+interface DashboardState {
+  currentUser: Ref<User | null>
+  availableModules: Ref<Module[]>
+  systemStats: Ref<SystemStat[]>
+  loading: Ref<boolean>
+  error: Ref<string | null>
+  lastUpdated: Ref<number | null>
+}
+
+interface DashboardGetters {
+  desktopModules: ComputedRef<Module[]>
+  dockModules: ComputedRef<Module[]>
+  moduleStats: ComputedRef<ModuleStats>
+  needsRefresh: ComputedRef<boolean>
+}
+
+interface DashboardActions {
+  loadDashboardData(): Promise<void>
+  openModule(moduleCode: string): Promise<void>
+  refreshStats(): Promise<void>
+  reset(): void
+}
 
 export const useDashboardStore = defineStore('dashboard', () => {
   // 状态
-  const currentUser = ref(null)
-  const availableModules = ref([])
-  const systemStats = ref([])
-  const loading = ref(false)
-  const error = ref(null)
-  const lastUpdated = ref(null)
+  const currentUser: Ref<User | null> = ref(null)
+  const availableModules: Ref<Module[]> = ref([])
+  const systemStats: Ref<SystemStat[]> = ref([])
+  const loading: Ref<boolean> = ref(false)
+  const error: Ref<string | null> = ref(null)
+  const lastUpdated: Ref<number | null> = ref(null)
 
   // 计算属性
-  const desktopModules = computed(() => {
+  const desktopModules: ComputedRef<Module[]> = computed(() => {
     return availableModules.value
-      .filter(module => module.showIn && module.showIn.desktop)
-      .sort((a, b) => a.showIn.desktop - b.showIn.desktop)
+      .filter(module => module.showIn?.desktop !== undefined)
+      .sort((a, b) => (a.showIn?.desktop || 0) - (b.showIn?.desktop || 0))
   })
 
-  const dockModules = computed(() => {
+  const dockModules: ComputedRef<Module[]> = computed(() => {
     return availableModules.value
-      .filter(module => module.showIn && module.showIn.dock)
-      .sort((a, b) => a.showIn.dock - b.showIn.dock)
+      .filter(module => module.showIn?.dock !== undefined)
+      .sort((a, b) => (a.showIn?.dock || 0) - (b.showIn?.dock || 0))
   })
 
   // 混合模块统计
-  const moduleStats = computed(() => {
+  const moduleStats: ComputedRef<ModuleStats> = computed(() => {
     const stats = hybridModuleManager.getMigrationStats()
     return {
       total: availableModules.value.length,
@@ -40,20 +98,20 @@ export const useDashboardStore = defineStore('dashboard', () => {
   })
 
   // 是否需要刷新数据
-  const needsRefresh = computed(() => {
+  const needsRefresh: ComputedRef<boolean> = computed(() => {
     if (!lastUpdated.value) return true
     const fiveMinutes = 5 * 60 * 1000
     return Date.now() - lastUpdated.value > fiveMinutes
   })
 
   // 操作方法
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (): Promise<void> => {
     loading.value = true
     error.value = null
 
     try {
       // 首先检查用户认证状态
-      const user = await angularBridge.getCurrentUser()
+      const user = await angularJSBridge.getUserInfo()
 
       if (!user) {
         // 用户未登录，抛出认证错误
@@ -62,24 +120,30 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
       // 并行加载其他数据
       const [modules, stats] = await Promise.all([
-        angularBridge.getAvailableModules(),
-        angularBridge.getSystemStats()
+        angularJSBridge.getMenus(), // 使用菜单作为模块列表
+        Promise.resolve([]) // 暂时使用空数组作为系统统计
       ])
 
-      currentUser.value = user
-      availableModules.value = modules
+      currentUser.value = user as User
+      availableModules.value = modules.map((menu: any) => ({
+        code: menu.id,
+        name: menu.name,
+        title: menu.name,
+        icon: menu.icon,
+        showIn: { desktop: 1 } // 默认显示在桌面
+      }))
       systemStats.value = stats
+      lastUpdated.value = Date.now()
 
       console.log('✅ Dashboard data loaded successfully')
     } catch (err) {
       console.error('❌ Failed to load dashboard data:', err)
 
       // 如果是认证错误，触发重新认证
-      if (err.message === 'AUTHENTICATION_REQUIRED') {
+      if (err instanceof Error && err.message === 'AUTHENTICATION_REQUIRED') {
         console.log('🔒 Authentication required, redirecting to login')
         // 清除可能存在的无效认证信息
         try {
-          const { authService } = await import('@/core/auth')
           await authService.logout()
         } catch (logoutError) {
           console.error('Failed to logout:', logoutError)
@@ -89,16 +153,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
         error.value = null
 
         // 强制跳转到登录页
-        window.location.href = '/opsmind/base/#/login'
+        window.location.href = '/login'
       } else {
-        error.value = err.message
+        error.value = err instanceof Error ? err.message : String(err)
       }
     } finally {
       loading.value = false
     }
   }
 
-  const openModule = async moduleCode => {
+  const openModule = async (moduleCode: string): Promise<void> => {
     try {
       console.log('🚀 Opening module from dashboard:', moduleCode)
 
@@ -121,8 +185,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   // 获取模块标题的辅助函数
-  const getModuleTitle = moduleCode => {
-    const titles = {
+  const getModuleTitle = (moduleCode: string): string => {
+    const titles: Record<string, string> = {
       cac: 'CAC 配置管理',
       jao: 'JAO 作业编排',
       gfs: 'GFS 脚本管理',
@@ -137,21 +201,24 @@ export const useDashboardStore = defineStore('dashboard', () => {
     return titles[moduleCode] || moduleCode.toUpperCase()
   }
 
-  const refreshStats = async () => {
+  const refreshStats = async (): Promise<void> => {
     try {
-      systemStats.value = await angularBridge.getSystemStats()
+      // 暂时使用空实现
+      systemStats.value = []
+      lastUpdated.value = Date.now()
     } catch (err) {
       console.error('Failed to refresh stats:', err)
     }
   }
 
   // 重置状态
-  const reset = () => {
+  const reset = (): void => {
     currentUser.value = null
     availableModules.value = []
     systemStats.value = []
     loading.value = false
     error.value = null
+    lastUpdated.value = null
   }
 
   return {
@@ -161,10 +228,13 @@ export const useDashboardStore = defineStore('dashboard', () => {
     systemStats,
     loading,
     error,
+    lastUpdated,
 
     // 计算属性
     desktopModules,
     dockModules,
+    moduleStats,
+    needsRefresh,
 
     // 方法
     loadDashboardData,
@@ -173,3 +243,13 @@ export const useDashboardStore = defineStore('dashboard', () => {
     reset
   }
 })
+
+// 导出类型
+export type {
+  Module,
+  SystemStat,
+  ModuleStats,
+  DashboardState,
+  DashboardGetters,
+  DashboardActions
+}

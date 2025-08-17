@@ -1,14 +1,21 @@
 /**
- * 混合路由管理器
+ * 混合路由管理器 - TypeScript版本
  * 智能分发 Vue 原生路由和 Angular iframe 路由
  */
 
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, type Router, type RouteRecordRaw } from 'vue-router'
 import { hybridModuleManager, MODULE_TYPES } from '@/core/modules/HybridModuleManager.js'
 import { authService } from '@/core/auth'
+import type {
+  CustomRouteRecord,
+  ModuleRoute,
+  HybridRouter as IHybridRouter
+} from '@/types/router'
+import { ModuleType } from '@/types/router'
+import type { ModuleConfig } from '@/types/modules'
 
 // 基础路由配置
-const baseRoutes = [
+const baseRoutes: CustomRouteRecord[] = [
   {
     path: '/',
     redirect: '/home'
@@ -30,30 +37,48 @@ const baseRoutes = [
     meta: {
       title: 'OpsMind 仪表盘',
       requiresAuth: true,
-      moduleType: MODULE_TYPES.VUE_NATIVE
+      moduleType: ModuleType.VUE_NATIVE
     }
   }
 ]
 
-class HybridRouter {
+interface ModuleRouteInfo {
+  type: ModuleType
+  routes: string[]
+  component?: any
+}
+
+class HybridRouter implements IHybridRouter {
+  public router: Router
+  private moduleRoutes: Map<string, ModuleRouteInfo>
+
   constructor() {
-    this.router = null
     this.moduleRoutes = new Map()
-    this.routeCache = new Map()
+    this.router = this.createRouter()
     this.init()
+  }
+
+  /**
+   * 创建路由器实例
+   */
+  private createRouter(): Router {
+    return createRouter({
+      history: createWebHashHistory(import.meta.env.BASE_URL),
+      routes: []
+    })
   }
 
   /**
    * 初始化路由器
    */
-  init() {
+  private init(): void {
     // 生成动态路由
     const dynamicRoutes = this.generateDynamicRoutes()
     const allRoutes = [...baseRoutes, ...dynamicRoutes]
 
-    this.router = createRouter({
-      history: createWebHashHistory(import.meta.env.BASE_URL),
-      routes: allRoutes
+    // 添加所有路由
+    allRoutes.forEach(route => {
+      this.router.addRoute(route as RouteRecordRaw)
     })
 
     this.setupGuards()
@@ -63,8 +88,8 @@ class HybridRouter {
   /**
    * 生成动态路由
    */
-  generateDynamicRoutes() {
-    const routes = []
+  private generateDynamicRoutes(): RouteRecordRaw[] {
+    const routes: RouteRecordRaw[] = []
     const modules = hybridModuleManager.getAvailableModules()
 
     modules.forEach(module => {
@@ -86,8 +111,8 @@ class HybridRouter {
   /**
    * 创建 Vue 模块路由
    */
-  createVueModuleRoutes(module) {
-    const routes = []
+  private createVueModuleRoutes(module: ModuleConfig): RouteRecordRaw[] {
+    const routes: RouteRecordRaw[] = []
 
     // 主路由
     routes.push({
@@ -103,8 +128,8 @@ class HybridRouter {
     })
 
     // 子路由 (如果有)
-    if (module.routes && module.routes.length > 0) {
-      module.routes.forEach(route => {
+    if (module.meta?.routes && Array.isArray(module.meta.routes)) {
+      module.meta.routes.forEach((route: string) => {
         if (route !== `/${module.code}`) {
           routes.push({
             path: route,
@@ -128,8 +153,8 @@ class HybridRouter {
   /**
    * 创建 Angular 模块路由
    */
-  createAngularModuleRoutes(module) {
-    const routes = []
+  private createAngularModuleRoutes(module: ModuleConfig): RouteRecordRaw[] {
+    const routes: RouteRecordRaw[] = []
 
     // 主路由
     routes.push({
@@ -164,13 +189,13 @@ class HybridRouter {
   /**
    * 创建混合模块路由
    */
-  createHybridModuleRoutes(module) {
-    const routes = []
+  private createHybridModuleRoutes(module: ModuleConfig): RouteRecordRaw[] {
+    const routes: RouteRecordRaw[] = []
 
     // 根据功能开关决定使用 Vue 还是 Angular
-    const migratedFeatures = module.metadata.migratedFeatures || []
+    const migratedFeatures = module.meta?.migratedFeatures || []
 
-    migratedFeatures.forEach(feature => {
+    migratedFeatures.forEach((feature: string) => {
       const featurePath = `/${module.code}/${feature.toLowerCase()}`
       routes.push({
         path: featurePath,
@@ -198,9 +223,9 @@ class HybridRouter {
         moduleCode: module.code,
         isLegacyFallback: true
       },
-      beforeEnter: (to, from, next) => {
+      beforeEnter: (to, _from, next) => {
         // 检查是否有对应的 Vue 实现
-        const feature = to.params.pathMatch?.[0]
+        const feature = Array.isArray(to.params.pathMatch) ? to.params.pathMatch[0] : to.params.pathMatch
         if (feature && migratedFeatures.includes(feature)) {
           // 重定向到 Vue 实现
           next(`/${module.code}/${feature}`)
@@ -216,32 +241,32 @@ class HybridRouter {
   /**
    * 设置路由守卫
    */
-  setupGuards() {
+  setupGuards(): void {
     // 全局前置守卫
-    this.router.beforeEach(async (to, from, next) => {
+    this.router.beforeEach(async (to, _from, next) => {
       // 设置页面标题
-      if (to.meta.title) {
-        document.title = to.meta.title
+      if (to.meta?.title) {
+        document.title = to.meta.title as string
       }
 
       // 认证检查
       const isAuthenticated = authService.isAuthenticated()
 
-      if (to.meta.requiresAuth && !isAuthenticated) {
+      if (to.meta?.requiresAuth && !isAuthenticated) {
         console.log('🔒 Redirecting to login - authentication required')
         next('/login')
         return
       }
 
-      if (to.meta.requiresGuest && isAuthenticated) {
+      if (to.meta?.requiresGuest && isAuthenticated) {
         console.log('✅ Already authenticated, redirecting to home')
         next('/home')
         return
       }
 
       // 模块访问权限检查
-      if (to.meta.moduleCode) {
-        const hasPermission = await this.checkModulePermission(to.meta.moduleCode)
+      if (to.meta?.moduleCode) {
+        const hasPermission = await this.checkModulePermission(to.meta.moduleCode as string)
         if (!hasPermission) {
           console.log(`❌ No permission for module: ${to.meta.moduleCode}`)
           next('/home')
@@ -250,10 +275,10 @@ class HybridRouter {
       }
 
       // 功能开关检查
-      if (to.meta.feature) {
+      if (to.meta?.feature && to.meta?.moduleCode) {
         const isEnabled = hybridModuleManager.isFeatureEnabled(
-          to.meta.moduleCode,
-          to.meta.feature
+          to.meta.moduleCode as string,
+          to.meta.feature as string
         )
         if (!isEnabled) {
           console.log(`🚩 Feature disabled: ${to.meta.moduleCode}.${to.meta.feature}`)
@@ -279,12 +304,12 @@ class HybridRouter {
   /**
    * 设置模块路由映射
    */
-  setupModuleRoutes() {
+  private setupModuleRoutes(): void {
     const modules = hybridModuleManager.getAvailableModules()
     modules.forEach(module => {
       this.moduleRoutes.set(module.code, {
         type: module.type,
-        routes: module.routes || [],
+        routes: module.meta?.routes || [],
         component: module.component
       })
     })
@@ -293,7 +318,7 @@ class HybridRouter {
   /**
    * 检查模块访问权限
    */
-  async checkModulePermission(moduleCode) {
+  async checkModulePermission(_moduleCode: string): Promise<boolean> {
     // 这里可以实现具体的权限检查逻辑
     // 例如检查用户角色、模块权限等
     const currentUser = authService.getCurrentUser()
@@ -307,7 +332,7 @@ class HybridRouter {
   /**
    * 发送路由变化事件
    */
-  emitRouteChange(to, from) {
+  private emitRouteChange(to: any, from: any): void {
     // 可以用于统计、日志记录等
     const event = new CustomEvent('route-change', {
       detail: { to, from }
@@ -318,42 +343,110 @@ class HybridRouter {
   /**
    * 获取路由器实例
    */
-  getRouter() {
+  getRouter(): Router {
     return this.router
   }
 
   /**
    * 动态添加模块路由
    */
-  addModuleRoutes(module) {
-    let routes = []
+  addModuleRoute(moduleRoute: ModuleRoute): void {
+    // 简化处理，直接创建路由记录
+    const routes: RouteRecordRaw[] = []
 
-    switch (module.type) {
-      case MODULE_TYPES.VUE_NATIVE:
-        routes = this.createVueModuleRoutes(module)
-        break
-      case MODULE_TYPES.ANGULAR_IFRAME:
-        routes = this.createAngularModuleRoutes(module)
-        break
-      case MODULE_TYPES.HYBRID:
-        routes = this.createHybridModuleRoutes(module)
-        break
-    }
+    // 主路由
+    routes.push({
+      path: moduleRoute.path,
+      name: `${moduleRoute.code}-main`,
+      component: (typeof moduleRoute.component === 'string')
+        ? () => import('@/views/AngularModuleView.vue')
+        : moduleRoute.component || (() => import('@/views/AngularModuleView.vue')),
+      meta: {
+        title: moduleRoute.name,
+        requiresAuth: true,
+        moduleCode: moduleRoute.code,
+        ...moduleRoute.meta
+      }
+    })
 
     routes.forEach(route => {
       this.router.addRoute(route)
     })
 
-    console.log(`🔄 Added routes for module: ${module.code}`)
+    console.log(`🔄 Added routes for module: ${moduleRoute.code}`)
   }
 
   /**
    * 移除模块路由
    */
-  removeModuleRoutes(moduleCode) {
+  removeModuleRoute(moduleCode: string): void {
     // Vue Router 4 不直接支持移除路由，需要重新创建路由器
     // 或者使用路由守卫来阻止访问
     console.log(`🗑️ Module routes marked for removal: ${moduleCode}`)
+  }
+
+  /**
+   * 更新模块路由
+   */
+  updateModuleRoute(code: string, moduleRoute: Partial<ModuleRoute>): void {
+    // 先移除旧路由，再添加新路由
+    this.removeModuleRoute(code)
+    if (moduleRoute.code) {
+      this.addModuleRoute(moduleRoute as ModuleRoute)
+    }
+  }
+
+  /**
+   * 导航到模块
+   */
+  async navigateToModule(moduleCode: string, params?: Record<string, any>): Promise<void> {
+    if (params) {
+      await this.router.push({ name: `${moduleCode}-main`, params })
+    } else {
+      await this.router.push(`/${moduleCode}`)
+    }
+  }
+
+  /**
+   * 导航到Vue路由
+   */
+  async navigateToVueRoute(name: string, params?: Record<string, any>): Promise<void> {
+    if (params) {
+      await this.router.push({ name, params })
+    } else {
+      await this.router.push({ name })
+    }
+  }
+
+  /**
+   * 检查是否为模块路由
+   */
+  isModuleRoute(path: string): boolean {
+    const segments = path.split('/').filter(Boolean)
+    if (segments.length === 0) return false
+
+    const moduleCode = segments[0]
+    return this.moduleRoutes.has(moduleCode)
+  }
+
+  /**
+   * 从路径获取模块信息
+   */
+  getModuleFromPath(path: string): ModuleRoute | null {
+    const segments = path.split('/').filter(Boolean)
+    if (segments.length === 0) return null
+
+    const moduleCode = segments[0]
+    const moduleInfo = this.moduleRoutes.get(moduleCode)
+
+    if (!moduleInfo) return null
+
+    return {
+      code: moduleCode,
+      name: moduleCode,
+      path: `/${moduleCode}`,
+      type: moduleInfo.type
+    }
   }
 }
 
