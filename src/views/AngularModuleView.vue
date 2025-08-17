@@ -43,10 +43,14 @@ const refreshKey = ref(0)
 const currentRoute = ref('main')
 
 // 计算属性
-const moduleCode = computed(() => route.params.moduleCode)
+const moduleCode = computed(() => {
+  // 优先从路由参数获取，如果没有则从 meta 信息获取
+  return route.params.moduleCode || route.meta?.moduleCode
+})
 const routeParam = computed(() => route.query.route || null)
 
 const moduleConfig = computed(() => {
+  console.log('🔍 Getting module config for:', moduleCode.value)
   return angularModuleManager.getModule(moduleCode.value)
 })
 

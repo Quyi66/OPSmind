@@ -24,7 +24,7 @@ export class SingleIframeManager {
   // 模块路由映射
   private moduleRoutes: Record<string, string> = {
     'cac': '#/cac',
-    'jao': '#/jao', 
+    'jao': '#/jao',
     'sim': '#/sim',
     'uim': '#/uim',
     'gfs': '#/gfs',
@@ -55,26 +55,26 @@ export class SingleIframeManager {
     this.initPromise = new Promise(async (resolve, reject) => {
       try {
         console.log('🚀 Initializing single iframe for Angular app...')
-        
+
         // 创建 iframe
         this.iframe = this.createIframe()
-        
+
         // 创建隐藏容器
         this.container = this.createContainer()
         this.container.appendChild(this.iframe)
-        
+
         // 设置加载监听
         this.iframe.onload = () => {
           console.log('✅ Angular iframe loaded successfully')
           this.isInitialized = true
           this.isLoading = false
-          
+
           // 发送认证数据
           this.sendAuthData()
-          
+
           // 隐藏 Angular 的工具栏和背景
           this.hideAngularUI()
-          
+
           resolve()
         }
 
@@ -86,9 +86,10 @@ export class SingleIframeManager {
 
         // 开始加载 Angular 应用（默认到 dashboard）
         const baseUrl = appUrlManager.getAngularBaseUrl()
-        this.iframe.src = `${baseUrl}/#/dashboard`
+        const authUrl = this.buildAuthUrl(`${baseUrl}/#/dashboard`)
+        this.iframe.src = authUrl
         this.isLoading = true
-        
+
         console.log(`🔗 Loading Angular app: ${this.iframe.src}`)
 
       } catch (error) {
@@ -116,7 +117,7 @@ export class SingleIframeManager {
     iframe.setAttribute('allow', 'fullscreen')
     iframe.setAttribute('loading', 'eager')
     iframe.setAttribute('importance', 'high')
-    
+
     return iframe
   }
 
@@ -145,6 +146,13 @@ export class SingleIframeManager {
   async switchToModule(moduleCode: string, targetContainer: HTMLElement): Promise<number> {
     const startTime = performance.now()
     console.log(`⚡ Switching to module: ${moduleCode}`)
+    console.log(`📍 Target container:`, targetContainer)
+    console.log(`🔧 Manager state:`, {
+      isInitialized: this.isInitialized,
+      isLoading: this.isLoading,
+      currentModule: this.currentModule,
+      hasIframe: !!this.iframe
+    })
 
     // 确保 iframe 已初始化
     await this.ensureInitialized()
@@ -155,6 +163,9 @@ export class SingleIframeManager {
 
     // 获取模块路由
     const route = this.moduleRoutes[moduleCode]
+    console.log(`🗺️ Available routes:`, this.moduleRoutes)
+    console.log(`🎯 Target route for ${moduleCode}:`, route)
+
     if (!route) {
       throw new Error(`No route found for module: ${moduleCode}`)
     }
@@ -162,15 +173,18 @@ export class SingleIframeManager {
     try {
       // 移动 iframe 到目标容器
       this.moveToContainer(targetContainer)
-      
+
       // 切换路由（真正的秒开！）
       await this.changeRoute(route)
-      
+
+      // 重新发送认证数据，确保模块切换后认证状态正确
+      this.sendAuthData()
+
       this.currentModule = moduleCode
-      
+
       const switchTime = performance.now() - startTime
       console.log(`✅ Module ${moduleCode} switched in ${switchTime.toFixed(2)}ms (ROUTE CHANGE)`)
-      
+
       return switchTime
 
     } catch (error) {
@@ -208,7 +222,7 @@ export class SingleIframeManager {
     try {
       // 方法1: 直接改变 hash
       this.iframe.contentWindow.location.hash = route
-      
+
       // 方法2: 通过 postMessage 通知 Angular 切换路由（备用）
       this.iframe.contentWindow.postMessage({
         type: 'route-change',
@@ -216,7 +230,7 @@ export class SingleIframeManager {
       }, '*')
 
       console.log(`🔄 Route changed to: ${route}`)
-      
+
       // 等待路由切换完成
       await this.waitForRouteChange()
 
@@ -231,8 +245,8 @@ export class SingleIframeManager {
    */
   private waitForRouteChange(): Promise<void> {
     return new Promise((resolve) => {
-      // 简单延迟，实际可以监听 Angular 路由事件
-      setTimeout(resolve, 100)
+      // 增加等待时间，确保认证数据传递和路由切换完成
+      setTimeout(resolve, 500)
     })
   }
 
@@ -240,10 +254,23 @@ export class SingleIframeManager {
    * 移动 iframe 到目标容器
    */
   private moveToContainer(targetContainer: HTMLElement) {
-    if (!this.iframe) return
+    if (!this.iframe) {
+      console.error('❌ No iframe to move')
+      return
+    }
+
+    console.log(`📦 Moving iframe to container:`, {
+      currentParent: this.iframe.parentNode,
+      targetContainer: targetContainer,
+      needsMove: this.iframe.parentNode !== targetContainer,
+      targetContainerRect: targetContainer.getBoundingClientRect()
+    })
 
     if (this.iframe.parentNode !== targetContainer) {
       targetContainer.appendChild(this.iframe)
+      console.log(`✅ Iframe moved to new container`)
+    } else {
+      console.log(`ℹ️ Iframe already in target container`)
     }
 
     // 显示 iframe
@@ -253,21 +280,80 @@ export class SingleIframeManager {
       border: none;
       display: block;
       pointer-events: auto;
+      background: white;
     `
+
+    console.log(`🎨 Iframe styles applied:`, {
+      width: this.iframe.style.width,
+      height: this.iframe.style.height,
+      display: this.iframe.style.display,
+      src: this.iframe.src,
+      parentNode: this.iframe.parentNode === targetContainer ? 'correct' : 'wrong'
+    })
+
+    // 验证 iframe 是否真的可见
+    const iframeRect = this.iframe.getBoundingClientRect()
+    console.log(`📏 Iframe dimensions after move:`, {
+      width: iframeRect.width,
+      height: iframeRect.height,
+      visible: iframeRect.width > 0 && iframeRect.height > 0,
+      top: iframeRect.top,
+      left: iframeRect.left
+    })
+  }
+
+  /**
+   * 构建带认证参数的 URL（参照重构前的实现）
+   */
+  private buildAuthUrl(baseUrl: string): string {
+    try {
+      const token = authService.getToken()
+      const user = authService.getCurrentUser()
+
+      if (token && user) {
+        // 将认证信息保存到 sessionStorage（使用重构前的键名）
+        const authData = {
+          token,
+          user,
+          timestamp: Date.now()
+        }
+
+        sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
+        console.log('🔗 Vue auth data saved for Angular app')
+
+        // URL 中添加认证标识（参照重构前的实现）
+        const separator = baseUrl.includes('?') ? '&' : '?'
+        return `${baseUrl}${separator}vue_auth=true&t=${Date.now()}`
+      }
+    } catch (err) {
+      console.warn('Failed to get auth info for URL:', err)
+    }
+
+    return baseUrl
   }
 
   /**
    * 发送认证数据到 Angular
    */
   private sendAuthData() {
-    if (!this.iframe?.contentWindow) return
+    if (!this.iframe?.contentWindow) {
+      console.warn('⚠️ Iframe content window not available')
+      return
+    }
 
     try {
       const token = authService.getToken()
       const user = authService.getCurrentUser()
 
+      console.log('🔍 Auth data check:', {
+        hasToken: !!token,
+        hasUser: !!user,
+        tokenLength: token?.length,
+        userLogin: user?.login
+      })
+
       if (!token || !user) {
-        console.warn('⚠️ No auth data available')
+        console.warn('⚠️ No auth data available - token or user missing')
         return
       }
 
@@ -287,9 +373,16 @@ export class SingleIframeManager {
         timestamp: Date.now()
       }
 
-      // 设置到 sessionStorage
+      // 使用与重构前相同的 sessionStorage 键名
+      sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
       sessionStorage.setItem('oplus_token', token)
       sessionStorage.setItem('oplus_user', JSON.stringify(serializableUser))
+
+      console.log('🔐 Auth data saved to sessionStorage:', {
+        'vue-auth-bridge': !!sessionStorage.getItem('vue-auth-bridge'),
+        'oplus_token': !!sessionStorage.getItem('oplus_token'),
+        'oplus_user': !!sessionStorage.getItem('oplus_user')
+      })
 
       // 发送到 iframe
       this.iframe.contentWindow.postMessage({
@@ -297,7 +390,7 @@ export class SingleIframeManager {
         authData
       }, '*')
 
-      console.log('🔐 Auth data sent to Angular iframe')
+      console.log('🔐 Auth data sent to Angular iframe via postMessage')
 
     } catch (error) {
       console.error('Failed to send auth data:', error)
@@ -358,11 +451,11 @@ export class SingleIframeManager {
     if (this.iframe && this.iframe.parentNode) {
       this.iframe.parentNode.removeChild(this.iframe)
     }
-    
+
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container)
     }
-    
+
     this.iframe = null
     this.container = null
     this.isInitialized = false

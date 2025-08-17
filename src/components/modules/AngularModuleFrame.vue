@@ -65,6 +65,13 @@
           </template>
         </el-result>
       </div>
+
+      <!-- 调试信息 -->
+      <div v-if="!loading && !error" class="debug-info" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px; border-radius: 4px; font-size: 12px; z-index: 1000;">
+        <div>Container: {{ !!iframeContainer }}</div>
+        <div>Module: {{ moduleCode }}</div>
+        <div>Status: {{ status }}</div>
+      </div>
     </div>
 
     <!-- 状态栏 -->
@@ -281,6 +288,25 @@ const loadModule = async () => {
 
   try {
     console.log(`⚡ Switching to module with SINGLE iframe: ${props.moduleCode}`)
+    console.log(`📦 Module config:`, moduleConfig.value)
+    console.log(`📍 Container element:`, iframeContainer.value)
+
+    // 检查容器的实际状态
+    if (iframeContainer.value) {
+      const rect = iframeContainer.value.getBoundingClientRect()
+      console.log(`📏 Container dimensions:`, {
+        width: rect.width,
+        height: rect.height,
+        top: rect.top,
+        left: rect.left,
+        visible: rect.width > 0 && rect.height > 0
+      })
+      console.log(`🎨 Container styles:`, {
+        display: getComputedStyle(iframeContainer.value).display,
+        position: getComputedStyle(iframeContainer.value).position,
+        zIndex: getComputedStyle(iframeContainer.value).zIndex
+      })
+    }
 
     // 使用单 iframe 管理器 - 路由切换，真正秒开！
     const switchTime = await singleIframeManager.switchToModule(props.moduleCode, iframeContainer.value)
@@ -292,6 +318,20 @@ const loadModule = async () => {
     loadProgress.value = 100
 
     console.log(`✅ Module ${props.moduleCode} switched in ${switchTime.toFixed(2)}ms (ROUTE CHANGE)`)
+
+    // 验证 iframe 是否正确显示
+    const iframe = iframeContainer.value.querySelector('iframe')
+    if (iframe) {
+      console.log(`🎯 Iframe found in container:`, {
+        src: iframe.src,
+        display: iframe.style.display,
+        width: iframe.style.width,
+        height: iframe.style.height,
+        parentNode: iframe.parentNode === iframeContainer.value
+      })
+    } else {
+      console.warn(`⚠️ No iframe found in container`)
+    }
 
     // 触发加载完成事件
     emit('loaded', {

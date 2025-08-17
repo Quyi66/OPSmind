@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug URL Manager</title>
+</head>
+<body>
+    <h1>Debug URL Manager</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        // 模拟 import.meta.env
+        window.import = {
+            meta: {
+                env: {
+                    DEV: true
+                }
+            }
+        };
+        
+        // 简化的 AppUrlManager 类
+        class AppUrlManager {
+            constructor() {
+                this.currentEnv = this.detectEnvironment();
+                this.envConfig = this.getEnvironmentConfig();
+            }
+            
+            detectEnvironment() {
+                if (typeof window === 'undefined') return 'production';
+                
+                const hostname = window.location.hostname;
+                const isDev = window.import?.meta?.env?.DEV;
+                
+                console.log('Hostname:', hostname);
+                console.log('isDev:', isDev);
+                
+                if (isDev || hostname === 'localhost' || hostname === '127.0.0.1') {
+                    return 'development';
+                }
+                
+                if (hostname.includes('test')) {
+                    return 'test';
+                }
+                
+                if (hostname.includes('staging')) {
+                    return 'staging';
+                }
+                
+                return 'production';
+            }
+            
+            getEnvironmentConfig() {
+                const configs = {
+                    development: {
+                        angularjs: {
+                            baseUrl: 'http://localhost:8080/oplus/base',
+                            hashMode: true
+                        }
+                    },
+                    production: {
+                        angularjs: {
+                            baseUrl: '/oplus/base',
+                            hashMode: true
+                        }
+                    }
+                };
+                return configs[this.currentEnv];
+            }
+            
+            getAppUrl(appCode) {
+                const appConfigs = {
+                    cac: {
+                        entryUrl: '#/cac',
+                        enabled: true
+                    }
+                };
+                
+                const appConfig = appConfigs[appCode];
+                if (!appConfig || !appConfig.enabled) {
+                    return this.envConfig.angularjs.baseUrl;
+                }
+                
+                return this.buildAngularUrl(appConfig.entryUrl);
+            }
+            
+            buildAngularUrl(path) {
+                const { baseUrl } = this.envConfig.angularjs;
+                
+                if (path.startsWith('#')) {
+                    return `${baseUrl}/${path}`;
+                }
+                
+                const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+                return `${baseUrl}/#${normalizedPath}`;
+            }
+        }
+        
+        const appUrlManager = new AppUrlManager();
+        
+        const output = document.getElementById('output');
+        output.innerHTML = `
+            <p><strong>Environment:</strong> ${appUrlManager.currentEnv}</p>
+            <p><strong>Hostname:</strong> ${window.location.hostname}</p>
+            <p><strong>isDev:</strong> ${window.import?.meta?.env?.DEV}</p>
+            <p><strong>Base URL:</strong> ${appUrlManager.envConfig.angularjs.baseUrl}</p>
+            <p><strong>CAC URL:</strong> ${appUrlManager.getAppUrl('cac')}</p>
+        `;
+    </script>
+</body>
+</html>
