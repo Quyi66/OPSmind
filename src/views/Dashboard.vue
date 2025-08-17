@@ -1,11 +1,10 @@
 <template>
   <div class="dashboard">
-    <!-- 顶部导航栏 -->
-    <DashboardHeader
+    <!-- 顶部菜单导航栏 -->
+    <TopNavMenu
       :user="dashboardStore.currentUser"
-      :loading="dashboardStore.loading"
+      @menu-click="handleMenuClick"
       @search="handleSearch"
-      @refresh="handleRefresh"
     />
 
     <!-- 主内容区 -->
@@ -38,19 +37,6 @@
           />
         </div>
 
-        <!-- 功能模块网格 -->
-        <div class="modules-section">
-          <h2 class="section-title">功能模块</h2>
-          <div class="modules-grid">
-            <ModuleCard
-              v-for="module in dashboardStore.desktopModules"
-              :key="module.code"
-              :module="module"
-              @click="handleModuleClick"
-            />
-          </div>
-        </div>
-
         <!-- 快速操作区域 -->
         <div class="quick-actions-section">
           <QuickActions />
@@ -68,9 +54,8 @@ import { onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useModuleNavigation } from '@/composables/useModuleNavigation'
-import DashboardHeader from '@/components/DashboardHeader.vue'
+import TopNavMenu from '@/components/TopNavMenu.vue'
 import StatsCard from '@/components/StatsCard.vue'
-import ModuleCard from '@/components/ModuleCard.vue'
 import QuickActions from '@/components/QuickActions.vue'
 import AngularModuleContainerModal from '@/components/AngularModuleContainerModal.vue'
 import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
@@ -99,19 +84,19 @@ const loadDashboardData = async () => {
   }
 }
 
-const handleModuleClick = async module => {
+const handleMenuClick = async menu => {
   try {
-    console.log('🚀 Module clicked:', module.code)
+    console.log('🚀 Menu clicked:', menu.code)
 
     // 清理模块代码
-    const cleanModuleCode = module.code.replace(/^__/, '')
+    const cleanModuleCode = menu.code.replace(/^__/, '')
 
     // 直接使用 Vue Router 导航
     await navigateToModule(cleanModuleCode)
 
   } catch (error) {
     console.error('❌ Failed to navigate to module:', error)
-    ElMessage.error(`打开模块失败: ${module.title}`)
+    ElMessage.error(`打开模块失败: ${menu.name}`)
   }
 }
 
@@ -158,6 +143,7 @@ const handleRefresh = async () => {
 .dashboard-main {
   max-width: 1200px;
   margin: 0 auto;
+  padding-top: 20px;
 }
 
 .stats-section {
@@ -165,25 +151,6 @@ const handleRefresh = async () => {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   margin-bottom: 40px;
-}
-
-.modules-section {
-  margin-bottom: 40px;
-}
-
-.section-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #262626;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #1890ff;
-  padding-bottom: 10px;
-}
-
-.modules-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
 }
 
 .quick-actions-section {
@@ -196,14 +163,14 @@ const handleRefresh = async () => {
     padding: 10px;
   }
 
+  .dashboard-main {
+    padding-top: 10px;
+  }
+
   .stats-section {
     grid-template-columns: 1fr;
     gap: 10px;
-  }
-
-  .modules-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    margin-bottom: 24px;
   }
 }
 </style>
