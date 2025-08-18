@@ -34,7 +34,6 @@ dist-ssr
 
 # Build outputs
 dist/
-build/
 coverage/
 
 # Cache
