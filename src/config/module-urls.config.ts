@@ -104,57 +104,57 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
 const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
   gfs: {
     entryUrl: '#/gfs',
-    description: '脚本管理应用',
+    description: '脚本',
     enabled: true
   },
   jao: {
     entryUrl: '#/jao',
-    description: '作业编排应用',
+    description: '作业',
     enabled: true
   },
   cmd: {
     entryUrl: '#/cmd',
-    description: '命令管理应用',
+    description: '命令',
     enabled: true
   },
   cac: {
     entryUrl: '#/cac',
-    description: '系统巡检应用',
+    description: '系统巡检',
     enabled: true
   },
   password: {
-    entryUrl: '#/password',
-    description: '密码管理应用',
+    entryUrl: '#/apw/pmsv2',
+    description: '密码管理',
     enabled: true
   },
   sudo: {
-    entryUrl: '#/sudo',
-    description: 'sudo权限管理应用',
+    entryUrl: '#/apw/sudo',
+    description: 'sudo权限管理',
     enabled: true
   },
   acm: {
-    entryUrl: '#/acm',
-    description: '资产管理应用',
+    entryUrl: '#/apw/acm',
+    description: '资产管理',
     enabled: true
   },
   patches: {
-    entryUrl: '#/patches',
-    description: '补丁管理应用',
+    entryUrl: '#/apw/vap',
+    description: '补丁管理',
     enabled: true
   },
   software: {
-    entryUrl: '#/software',
-    description: '软件管理应用',
+    entryUrl: '#/apw/spm',
+    description: '软件管理',
     enabled: true
   },
   workflow: {
-    entryUrl: '#/workflow',
-    description: '流程管理应用',
+    entryUrl: '#/flow',
+    description: '流程管理',
     enabled: true
   },
   users: {
-    entryUrl: '#/users',
-    description: '用户管理应用',
+    entryUrl: '#/apw/uim',
+    description: '用户管理',
     enabled: true
   }
 }
