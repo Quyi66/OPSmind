@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "OpsMind Vue 3 Dashboard",
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "vite --config build/vite.config.dev.js",
     "dev:host": "vite --host 0.0.0.0 --port 5173",
