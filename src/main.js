@@ -24,6 +24,9 @@ setupErrorHandler(app)
 // 设置性能监控
 if (import.meta.env.DEV) {
   setupPerformanceMonitor(app)
+
+  // 引入认证调试工具
+  import('./utils/auth-debug.js')
 }
 
 // 初始化性能优化

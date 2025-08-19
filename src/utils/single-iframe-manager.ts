@@ -360,8 +360,14 @@ export class SingleIframeManager {
    * 发送认证数据到 Angular
    */
   private sendAuthData() {
+    console.log(`🚀 [SingleIframeManager] Starting to send auth data to Angular iframe for module: ${this.currentModule}`)
+
     if (!this.iframe?.contentWindow) {
-      console.warn('⚠️ Iframe content window not available')
+      console.warn('⚠️ [SingleIframeManager] Iframe content window not available:', {
+        hasIframe: !!this.iframe,
+        hasContentWindow: !!this.iframe?.contentWindow,
+        currentModule: this.currentModule
+      })
       return
     }
 
@@ -369,15 +375,20 @@ export class SingleIframeManager {
       const token = authService.getToken()
       const user = authService.getCurrentUser()
 
-      console.log('🔍 Auth data check:', {
+      console.log('🔍 [SingleIframeManager] Auth data check:', {
         hasToken: !!token,
         hasUser: !!user,
         tokenLength: token?.length,
-        userLogin: user?.login
+        userLogin: user?.login,
+        currentModule: this.currentModule
       })
 
       if (!token || !user) {
-        console.warn('⚠️ No auth data available - token or user missing')
+        console.warn('⚠️ [SingleIframeManager] No auth data available - token or user missing:', {
+          hasToken: !!token,
+          hasUser: !!user,
+          currentModule: this.currentModule
+        })
         return
       }
 
@@ -403,10 +414,11 @@ export class SingleIframeManager {
       sessionStorage.setItem('oplus_token', token)
       sessionStorage.setItem('oplus_user', JSON.stringify(serializableUser))
 
-      console.log('🔐 Auth data saved to sessionStorage:', {
+      console.log('🔐 [SingleIframeManager] Auth data saved to sessionStorage:', {
         'vue-auth-bridge': !!sessionStorage.getItem('vue-auth-bridge'),
         'oplus_token': !!sessionStorage.getItem('oplus_token'),
-        'oplus_user': !!sessionStorage.getItem('oplus_user')
+        'oplus_user': !!sessionStorage.getItem('oplus_user'),
+        currentModule: this.currentModule
       })
 
       // 发送到 iframe - 使用 JSON 序列化确保数据可克隆
@@ -416,11 +428,12 @@ export class SingleIframeManager {
       }
 
       this.iframe.contentWindow.postMessage(messageData, '*')
+      console.log(`📤 [SingleIframeManager] Auth data sent via postMessage to Angular iframe`)
 
-      console.log('🔐 Auth data sent to Angular iframe via postMessage')
+      console.log(`✅ [SingleIframeManager] Auth data sent to Angular iframe successfully for module: ${this.currentModule}`)
 
     } catch (error) {
-      console.error('Failed to send auth data:', error)
+      console.error(`❌ [SingleIframeManager] Failed to send auth data for module ${this.currentModule}:`, error)
     }
   }
 

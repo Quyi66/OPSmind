@@ -187,6 +187,9 @@ const handleLogin = async () => {
       userLogin: currentUser?.login
     })
 
+    // 登录成功后通知所有iframe模块更新认证状态
+    notifyIframeModulesAuthUpdate()
+
     console.log('🔄 Navigating to home...')
     await router.push('/home')
   } catch (error) {
@@ -219,6 +222,80 @@ const handleQuickLogin = async () => {
 
   // 直接调用登录
   await handleLogin()
+}
+
+// 通知所有iframe模块认证状态更新
+const notifyIframeModulesAuthUpdate = () => {
+  try {
+    console.log('🚀 [Login] Starting iframe modules auth update notification...')
+
+    // 使用iframe管理器广播认证更新
+    const { GlobalIframeManager } = require('@/utils/iframe-manager')
+    const iframeManager = GlobalIframeManager.getInstance()
+    console.log('🔗 [Login] Using GlobalIframeManager for auth broadcast')
+    iframeManager.broadcastAuthUpdate()
+
+    // 同时也向页面中的其他iframe发送（兼容性处理）
+    const iframes = document.querySelectorAll('iframe')
+    console.log(`🔍 [Login] Found ${iframes.length} additional iframes in DOM`)
+
+    if (iframes.length > 0) {
+      const token = authService.getToken()
+      const user = authService.getCurrentUser()
+
+      if (token && user) {
+        const authData = {
+          token,
+          user: {
+            id: user.id,
+            login: user.login,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            tenantId: user.tenantId,
+            permissions: user.permissions
+          },
+          timestamp: Date.now()
+        }
+
+        console.log('🔐 [Login] Sending auth data to additional iframes:', {
+          hasToken: !!token,
+          userLogin: user.login,
+          tenantId: user.tenantId,
+          iframeCount: iframes.length
+        })
+
+        let sentToAdditional = 0
+        iframes.forEach((iframe, index) => {
+          if (iframe.contentWindow) {
+            try {
+              iframe.contentWindow.postMessage({
+                type: 'vue-auth-data',
+                authData
+              }, '*')
+              sentToAdditional++
+              console.log(`📤 [Login] Auth data sent to additional iframe ${index + 1}:`, iframe.src)
+            } catch (error) {
+              console.error(`❌ [Login] Failed to send auth data to iframe ${index + 1}:`, error)
+            }
+          } else {
+            console.warn(`⚠️ [Login] iframe ${index + 1} has no contentWindow`)
+          }
+        })
+
+        console.log(`✅ [Login] Auth data sent to ${sentToAdditional}/${iframes.length} additional iframes`)
+      } else {
+        console.warn('⚠️ [Login] No auth data available for additional iframes:', {
+          hasToken: !!token,
+          hasUser: !!user
+        })
+      }
+    }
+
+    console.log('✅ [Login] Auth update notification completed successfully')
+  } catch (error) {
+    console.error('❌ [Login] Failed to notify iframe modules:', error)
+  }
 }
 
 const initializeLoginPage = async () => {

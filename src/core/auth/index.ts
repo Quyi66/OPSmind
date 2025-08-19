@@ -149,6 +149,10 @@ class AuthService implements IAuthService {
         throw new Error('No token received from server')
       }
       authState.token = token
+      console.log('🔐 [AuthService] Token received and set:', {
+        tokenLength: token.length,
+        tokenPrefix: token.substring(0, 20) + '...'
+      })
 
       // 创建基本用户信息（后续会在 dashboard 中获取完整信息）
       authState.user = {
@@ -162,17 +166,28 @@ class AuthService implements IAuthService {
       authState.isAuthenticated = true
       authState.lastActivity = Date.now()
 
+      console.log('👤 [AuthService] User info created:', {
+        id: authState.user.id,
+        login: authState.user.login,
+        name: authState.user.name,
+        role: authState.user.role,
+        tenantId: authState.user.tenantId,
+        permissionsCount: authState.user.permissions?.length || 0
+      })
+
       // 保存到存储
       const userJson = JSON.stringify(authState.user)
       if (credentials.rememberMe) {
         localStorage.setItem(SESSION_CONFIG.tokenKey, token)
         localStorage.setItem(SESSION_CONFIG.userKey, userJson)
+        console.log('💾 [AuthService] Auth data saved to localStorage (remember me enabled)')
       } else {
         sessionStorage.setItem(SESSION_CONFIG.tokenKey, token)
         sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
+        console.log('💾 [AuthService] Auth data saved to sessionStorage')
       }
 
-      console.log('✅ Login successful, token and user saved:', authState.user.login)
+      console.log('✅ [AuthService] Login successful, token and user saved:', authState.user.login)
 
       // 返回与旧版兼容的格式
       return {
@@ -578,6 +593,31 @@ class AuthService implements IAuthService {
 
   isLoading(): boolean {
     return authState.isLoading
+  }
+
+  /**
+   * 设置认证状态 - 用于第三方系统iframe集成
+   * @param token JWT token
+   * @param user 用户信息
+   */
+  setAuthState(token: string, user: User): void {
+    try {
+      authState.token = token
+      authState.user = user
+      authState.isAuthenticated = true
+      authState.lastActivity = Date.now()
+      authState.permissions = user.permissions || []
+
+      // 保存到存储
+      const userJson = JSON.stringify(user)
+      sessionStorage.setItem(SESSION_CONFIG.tokenKey, token)
+      sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
+
+      console.log('✅ Auth state set for third-party integration:', user.login)
+    } catch (error) {
+      console.error('❌ Failed to set auth state:', error)
+      throw error
+    }
   }
 }
 
