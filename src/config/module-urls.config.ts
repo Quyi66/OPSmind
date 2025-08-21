@@ -143,6 +143,11 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
     description: '系统巡检',
     enabled: true
   },
+  sim: {
+    entryUrl: '#/sim',
+    description: '系统信息管理',
+    enabled: true
+  },
   password: {
     entryUrl: '#/apw/pmsv2',
     description: '密码管理',

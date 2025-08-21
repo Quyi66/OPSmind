@@ -12,11 +12,33 @@ export function useOptimizedModuleLoader(moduleCode: string) {
   const error = ref('')
   const loadTime = ref(0)
   const networkConfig = ref(optimizeForNetworkCondition())
-  
-  // 计算模块 URL
-  const moduleUrl = computed(() => {
+
+  // 计算基础模块 URL
+  const baseModuleUrl = computed(() => {
     return angularModuleManager.getModuleUrl(moduleCode)
   })
+
+  // 构建带token的模块URL
+  async function buildModuleUrlWithToken(baseUrl: string): Promise<string> {
+    try {
+      const [{ authService }, { appUrlManager }] = await Promise.all([
+        import('@/core/auth'),
+        import('@/config/module-urls.config')
+      ])
+
+      const token = authService.getToken()
+
+      if (token) {
+        const tokenParam = appUrlManager.getTokenParam()
+        const separator = baseUrl.includes('?') ? '&' : '?'
+        return `${baseUrl}${separator}${tokenParam}=${token}&vue_auth=true&module=${moduleCode}&t=${Date.now()}`
+      }
+    } catch (error) {
+      console.warn('Failed to add token to module URL:', error)
+    }
+
+    return baseUrl
+  }
 
   // 预加载模块
   const preloadModule = async () => {
@@ -27,8 +49,13 @@ export function useOptimizedModuleLoader(moduleCode: string) {
 
     try {
       console.log(`🔄 Preloading module: ${moduleCode}`)
-      await IframePreloader.preload(moduleUrl.value)
-      console.log(`✅ Module preloaded: ${moduleCode}`)
+      const url = baseModuleUrl.value
+      if (url) {
+        await IframePreloader.preload(url)
+        console.log(`✅ Module preloaded: ${moduleCode}`)
+      } else {
+        console.warn(`⚠️ No URL found for module: ${moduleCode}`)
+      }
     } catch (error) {
       console.warn(`⚠️ Preload failed for ${moduleCode}:`, error)
     }
@@ -41,15 +68,23 @@ export function useOptimizedModuleLoader(moduleCode: string) {
     error.value = ''
 
     try {
+      const url = baseModuleUrl.value
+      if (!url) {
+        throw new Error(`No URL found for module: ${moduleCode}`)
+      }
+
+      // 构建带token的URL
+      const urlWithToken = await buildModuleUrlWithToken(url)
+
       // 尝试使用预加载的 iframe
-      const preloadedIframe = IframePreloader.getPreloaded(moduleUrl.value)
-      
+      const preloadedIframe = IframePreloader.getPreloaded(url)
+
       if (preloadedIframe) {
         console.log(`⚡ Using preloaded iframe for: ${moduleCode}`)
-        
+
         // 将预加载的内容复制到目标 iframe
-        targetIframe.src = moduleUrl.value
-        
+        targetIframe.src = urlWithToken
+
         // 模拟快速加载
         setTimeout(() => {
           loading.value = false
@@ -58,10 +93,10 @@ export function useOptimizedModuleLoader(moduleCode: string) {
         }, 100)
       } else {
         console.log(`🔄 Loading iframe normally for: ${moduleCode}`)
-        
+
         // 正常加载
-        targetIframe.src = moduleUrl.value
-        
+        targetIframe.src = urlWithToken
+
         // 设置超时
         const timeout = setTimeout(() => {
           if (loading.value) {
@@ -94,7 +129,7 @@ export function useOptimizedModuleLoader(moduleCode: string) {
         targetIframe.addEventListener('error', handleError)
       }
     } catch (err) {
-      error.value = err.message || '加载失败'
+      error.value = (err as Error).message || '加载失败'
       loading.value = false
       ModuleLoadMonitor.endTiming(moduleCode)
     }
@@ -102,7 +137,10 @@ export function useOptimizedModuleLoader(moduleCode: string) {
 
   // 清理资源
   const cleanup = () => {
-    IframePreloader.cleanup(moduleUrl.value)
+    const url = baseModuleUrl.value
+    if (url) {
+      IframePreloader.cleanup(url)
+    }
   }
 
   // 获取加载统计
@@ -122,7 +160,7 @@ export function useOptimizedModuleLoader(moduleCode: string) {
     loading,
     error,
     loadTime,
-    moduleUrl,
+    moduleUrl: baseModuleUrl,
     networkConfig,
     preloadModule,
     loadModule,
@@ -162,12 +200,16 @@ export class ModulePreloadManager {
 
     while (this.preloadQueue.length > 0 && networkConfig.enablePreload) {
       const moduleCode = this.preloadQueue.shift()!
-      
+
       try {
-        const moduleUrl = angularModuleManager.getModuleUrl(moduleCode)
-        await IframePreloader.preload(moduleUrl)
-        this.preloadedModules.add(moduleCode)
-        console.log(`✅ Preloaded module: ${moduleCode}`)
+        const baseUrl = angularModuleManager.getModuleUrl(moduleCode)
+        if (baseUrl) {
+          await IframePreloader.preload(baseUrl) // 传递原始URL给预加载器，它会内部添加token
+          this.preloadedModules.add(moduleCode)
+          console.log(`✅ Preloaded module: ${moduleCode}`)
+        } else {
+          console.warn(`⚠️ No URL found for module: ${moduleCode}`)
+        }
       } catch (error) {
         console.warn(`⚠️ Failed to preload module: ${moduleCode}`, error)
       }
@@ -210,4 +252,6 @@ export class ModulePreloadManager {
       preloadedModules: Array.from(this.preloadedModules)
     }
   }
+
+
 }

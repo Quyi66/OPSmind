@@ -161,8 +161,10 @@ export class GlobalIframeManager {
         }
       }
 
-      // 开始加载
-      iframe.src = url
+      // 开始加载（使用带token的URL）
+      this.buildUrlWithToken(url, moduleCode).then(urlWithToken => {
+        iframe.src = urlWithToken
+      })
       this.container?.appendChild(iframe)
 
     } catch (error) {
@@ -256,6 +258,36 @@ export class GlobalIframeManager {
     } catch (error) {
       console.error('❌ [iframe-manager] Failed to verify auth data:', error)
     }
+  }
+
+  /**
+   * 构建带token的URL
+   */
+  private async buildUrlWithToken(baseUrl: string, moduleCode: string): Promise<string> {
+    try {
+      const token = authService.getToken()
+
+      if (token) {
+        const { appUrlManager } = await import('@/config/module-urls.config')
+        const tokenParam = appUrlManager.getTokenParam()
+        const separator = baseUrl.includes('?') ? '&' : '?'
+        const finalUrl = `${baseUrl}${separator}${tokenParam}=${token}&vue_auth=true&module=${moduleCode}&t=${Date.now()}`
+
+        console.log('🔗 [iframe-manager] Built URL with token for preload:', {
+          moduleCode,
+          baseUrl,
+          hasToken: !!token,
+          tokenLength: token.length,
+          finalUrl: finalUrl.substring(0, 100) + '...'
+        })
+
+        return finalUrl
+      }
+    } catch (error) {
+      console.warn('Failed to add token to iframe URL:', error)
+    }
+
+    return baseUrl
   }
 
   /**
@@ -507,7 +539,10 @@ export class GlobalIframeManager {
       // 添加到缓存和容器
       this.iframes.set(moduleCode, instance)
       targetContainer.appendChild(iframe)
-      iframe.src = url
+      // 使用带token的URL进行按需加载
+      this.buildUrlWithToken(url, moduleCode).then(urlWithToken => {
+        iframe.src = urlWithToken
+      })
     })
   }
 

@@ -19,7 +19,7 @@ export function setupPreconnections() {
   PRECONNECT_DOMAINS.forEach(domain => {
     try {
       const url = new URL(domain)
-      
+
       // DNS 预解析
       const dnsLink = document.createElement('link')
       dnsLink.rel = 'dns-prefetch'
@@ -69,11 +69,14 @@ export class IframePreloader {
   private static preloadQueue = new Set<string>()
 
   /**
-   * 预加载 iframe
+   * 预加载 iframe（支持token参数）
    */
   static preload(url: string): Promise<HTMLIFrameElement> {
-    return new Promise((resolve, reject) => {
-      // 检查缓存
+    return new Promise(async (resolve, reject) => {
+      // 构建带token的URL
+      const urlWithToken = await this.buildUrlWithToken(url)
+
+      // 检查缓存（使用原始URL作为key）
       if (this.cache.has(url)) {
         resolve(this.cache.get(url)!)
         return
@@ -103,20 +106,21 @@ export class IframePreloader {
       iframe.style.height = '1px'
 
       iframe.onload = () => {
-        console.log(`✅ Iframe preloaded: ${url}`)
+        console.log(`✅ Iframe preloaded: ${urlWithToken}`)
         this.cache.set(url, iframe)
         this.preloadQueue.delete(url)
         resolve(iframe)
       }
 
       iframe.onerror = () => {
-        console.error(`❌ Iframe preload failed: ${url}`)
+        console.error(`❌ Iframe preload failed: ${urlWithToken}`)
         this.preloadQueue.delete(url)
         document.body.removeChild(iframe)
         reject(new Error(`Failed to preload iframe: ${url}`))
       }
 
-      iframe.src = url
+      // 使用带token的URL进行预加载
+      iframe.src = urlWithToken
       document.body.appendChild(iframe)
 
       // 设置超时
@@ -128,6 +132,40 @@ export class IframePreloader {
         }
       }, 10000) // 10秒超时
     })
+  }
+
+  /**
+   * 构建带token的URL
+   */
+  private static async buildUrlWithToken(baseUrl: string): Promise<string> {
+    try {
+      // 动态导入authService以避免循环依赖
+      const [{ authService }, { appUrlManager }] = await Promise.all([
+        import('@/core/auth'),
+        import('@/config/module-urls.config')
+      ])
+
+      const token = authService.getToken()
+
+      if (token) {
+        const tokenParam = appUrlManager.getTokenParam()
+        const separator = baseUrl.includes('?') ? '&' : '?'
+        const finalUrl = `${baseUrl}${separator}${tokenParam}=${token}&vue_auth=true&t=${Date.now()}`
+
+        console.log('🔗 Built preload URL with token:', {
+          baseUrl,
+          hasToken: !!token,
+          tokenLength: token.length,
+          finalUrl: finalUrl.substring(0, 100) + '...'
+        })
+
+        return finalUrl
+      }
+    } catch (error) {
+      console.warn('Failed to add token to preload URL:', error)
+    }
+
+    return baseUrl
   }
 
   /**
@@ -177,9 +215,9 @@ export class ModuleLoadMonitor {
     if (metric) {
       metric.endTime = performance.now()
       metric.loadTime = metric.endTime - metric.startTime
-      
+
       console.log(`📊 Module load time: ${moduleCode} - ${metric.loadTime.toFixed(2)}ms`)
-      
+
       // 可以发送到分析服务
       this.reportMetrics(metric)
     }
@@ -206,10 +244,10 @@ export class ModuleLoadMonitor {
 export function optimizeForNetworkCondition() {
   if ('connection' in navigator) {
     const connection = (navigator as any).connection
-    
+
     if (connection) {
       console.log(`📶 Network: ${connection.effectiveType}, ${connection.downlink}Mbps`)
-      
+
       // 根据网络状况调整策略
       if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
         // 慢网络：禁用预加载，减少并发
@@ -250,14 +288,14 @@ export function optimizeForNetworkCondition() {
 export function initPerformanceOptimizations() {
   // 设置预连接
   setupPreconnections()
-  
+
   // 预加载关键资源
   preloadCriticalResources()
-  
+
   // 获取网络状况
   const networkConfig = optimizeForNetworkCondition()
-  
+
   console.log('🚀 Performance optimizations initialized:', networkConfig)
-  
+
   return networkConfig
 }
