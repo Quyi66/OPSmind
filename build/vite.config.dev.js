@@ -12,6 +12,9 @@ export default defineConfig({
     })
   ],
 
+  // 设置基础路径
+  base: '/ops/',
+
   // 开发服务器配置
   server: {
     port: 5173,

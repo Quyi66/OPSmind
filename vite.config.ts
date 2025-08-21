@@ -61,8 +61,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
       // })
     ],
 
-    // 设置基础路径，开发环境使用根路径，生产环境使用子路径
-    base: mode === 'production' ? '/opsmind/base/' : '/',
+    // 设置基础路径，开发环境使用ops路径，生产环境使用子路径
+    base: mode === 'production' ? '/opsmind/base/' : '/ops/',
 
     // 开发服务器配置
     server: {

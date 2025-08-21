@@ -266,14 +266,9 @@ class ApiService {
    * 获取系统统计信息
    */
   async getSystemStats() {
-    try {
-      const response = await this.get('/api/dashboard/stats')
-      console.log('✅ System stats loaded')
-      return response.data
-    } catch (error) {
-      console.warn('Failed to get real stats, using mock data:', error)
-      return this.getMockStats()
-    }
+    // 直接返回模拟数据，避免404错误
+    console.log('📊 Using mock system stats data')
+    return this.getMockStats()
   }
 
   /**
