@@ -126,6 +126,7 @@ import {
 } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { authService } from '@/core/auth'
+import { appUrlManager } from '@/config/module-urls.config'
 import AngularJSDirectEmbed from './AngularJSDirectEmbed.vue'
 
 const props = defineProps({
@@ -229,7 +230,7 @@ const moduleUrl = computed(() => {
 const moduleIframe = ref(null)
 const angularContainer = ref(null)
 
-// 构建模块URL
+// 构建模块URL（支持token参数传递）
 function buildModuleUrl() {
   const containerUrl = import.meta.env.DEV
     ? 'http://localhost:3000/angular-container.html'
@@ -240,20 +241,23 @@ function buildModuleUrl() {
     t: Date.now().toString()
   })
 
-  // 添加认证信息
+  // 添加认证信息，包括token
   try {
     const token = authService.getToken()
     const user = authService.getCurrentUser()
 
     if (token && user) {
-      const authData = {
-        token,
-        user,
-        timestamp: Date.now()
-      }
-
-      sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
+      // 使用配置的token参数名
+      const tokenParam = appUrlManager.getTokenParam()
+      params.append(tokenParam, token)
       params.append('vue_auth', 'true')
+
+      console.log('🔗 Built container URL with token:', {
+        moduleCode: props.moduleCode,
+        tokenParam,
+        hasToken: !!token,
+        tokenLength: token.length
+      })
     }
   } catch (err) {
     console.warn('Failed to add auth info to module URL:', err)

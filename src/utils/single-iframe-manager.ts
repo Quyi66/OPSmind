@@ -6,11 +6,7 @@
 import { authService } from '@/core/auth'
 import { appUrlManager } from '@/config/module-urls.config'
 
-interface ModuleRoute {
-  moduleCode: string
-  route: string
-  title: string
-}
+
 
 export class SingleIframeManager {
   private static instance: SingleIframeManager
@@ -228,51 +224,7 @@ export class SingleIframeManager {
     await this.initializeIframe()
   }
 
-  /**
-   * 改变 Angular 路由
-   */
-  private async changeRoute(route: string): Promise<void> {
-    if (!this.iframe?.contentWindow) {
-      throw new Error('Iframe content window not available')
-    }
 
-    try {
-      console.log(`🔄 Changing route:`)
-      console.log(`   Target route: ${route}`)
-      console.log(`   Current iframe URL: ${this.iframe.src}`)
-      console.log(`   Current iframe hash: ${this.iframe.contentWindow.location.hash}`)
-
-      // 方法1: 直接改变 hash
-      this.iframe.contentWindow.location.hash = route
-
-      // 方法2: 通过 postMessage 通知 Angular 切换路由（备用）
-      this.iframe.contentWindow.postMessage({
-        type: 'route-change',
-        route: route
-      }, '*')
-
-      console.log(`✅ Route changed to: ${route}`)
-      console.log(`   New iframe hash: ${this.iframe.contentWindow.location.hash}`)
-      console.log(`   Full iframe URL: ${this.iframe.contentWindow.location.href}`)
-
-      // 等待路由切换完成
-      await this.waitForRouteChange()
-
-    } catch (error) {
-      console.error('❌ Failed to change route:', error)
-      throw error
-    }
-  }
-
-  /**
-   * 等待路由切换完成
-   */
-  private waitForRouteChange(): Promise<void> {
-    return new Promise((resolve) => {
-      // 减少等待时间，优化速度
-      setTimeout(resolve, 100)
-    })
-  }
 
   /**
    * 移动 iframe 到目标容器
@@ -327,7 +279,7 @@ export class SingleIframeManager {
   }
 
   /**
-   * 构建带认证参数的 URL（参照重构前的实现）
+   * 构建带认证参数的 URL（支持token参数传递）
    */
   private buildAuthUrl(baseUrl: string): string {
     try {
@@ -335,19 +287,35 @@ export class SingleIframeManager {
       const user = authService.getCurrentUser()
 
       if (token && user) {
-        // 将认证信息保存到 sessionStorage（使用重构前的键名）
-        const authData = {
-          token,
-          user,
-          timestamp: Date.now()
-        }
+        console.log('🔗 Building URL with token for Angular app')
 
-        sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
-        console.log('🔗 Vue auth data saved for Angular app')
-
-        // URL 中添加认证标识（参照重构前的实现）
+        // URL 中添加认证参数，包括token（使用配置的参数名）
         const separator = baseUrl.includes('?') ? '&' : '?'
-        return `${baseUrl}${separator}vue_auth=true&t=${Date.now()}`
+        const tokenParam = appUrlManager.getTokenParam()
+        const urlPrefix = appUrlManager.getUrlPrefix()
+
+        const params = new URLSearchParams({
+          [tokenParam]: token,
+          vue_auth: 'true',
+          t: Date.now().toString()
+        })
+
+        // URL前缀应该只用于特殊情况，这里暂时不使用
+        // 直接使用原始baseUrl，确保URL格式正确
+        let finalBaseUrl = baseUrl
+
+        const finalUrl = `${finalBaseUrl}${separator}${params.toString()}`
+        console.log('🔗 Built auth URL with token and prefix:', {
+          originalBaseUrl: baseUrl,
+          finalBaseUrl,
+          urlPrefix,
+          tokenParam,
+          hasToken: !!token,
+          tokenLength: token.length,
+          finalUrl: finalUrl.substring(0, 100) + '...' // 只显示前100个字符用于调试
+        })
+
+        return finalUrl
       }
     } catch (err) {
       console.warn('Failed to get auth info for URL:', err)
@@ -357,100 +325,40 @@ export class SingleIframeManager {
   }
 
   /**
-   * 发送认证数据到 Angular
+   * 验证认证状态（token已通过URL传递，无需postMessage）
    */
   private sendAuthData() {
-    console.log(`🚀 [SingleIframeManager] Starting to send auth data to Angular iframe for module: ${this.currentModule}`)
+    console.log(`� [SingleIframeManager] Auth data already passed via URL for module: ${this.currentModule}`)
 
-    if (!this.iframe?.contentWindow) {
-      console.warn('⚠️ [SingleIframeManager] Iframe content window not available:', {
-        hasIframe: !!this.iframe,
-        hasContentWindow: !!this.iframe?.contentWindow,
-        currentModule: this.currentModule
-      })
-      return
-    }
+    // 认证数据已通过URL参数传递给iframe，无需额外处理
+    const token = authService.getToken()
+    const user = authService.getCurrentUser()
 
-    try {
-      const token = authService.getToken()
-      const user = authService.getCurrentUser()
-
-      console.log('🔍 [SingleIframeManager] Auth data check:', {
+    if (token && user) {
+      console.log('✅ [SingleIframeManager] Auth data available and passed via URL:', {
         hasToken: !!token,
-        hasUser: !!user,
         tokenLength: token?.length,
         userLogin: user?.login,
         currentModule: this.currentModule
       })
-
-      if (!token || !user) {
-        console.warn('⚠️ [SingleIframeManager] No auth data available - token or user missing:', {
-          hasToken: !!token,
-          hasUser: !!user,
-          currentModule: this.currentModule
-        })
-        return
-      }
-
-      // 确保用户数据完全可序列化
-      const serializableUser = {
-        id: user.id,
-        login: user.login,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        tenantId: user.tenantId,
-        permissions: Array.isArray(user.permissions) ? [...user.permissions] : user.permissions
-      }
-
-      const authData = {
-        token: String(token),
-        user: serializableUser,
-        timestamp: Date.now()
-      }
-
-      // 使用与重构前相同的 sessionStorage 键名
-      sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
-      sessionStorage.setItem('oplus_token', token)
-      sessionStorage.setItem('oplus_user', JSON.stringify(serializableUser))
-
-      console.log('🔐 [SingleIframeManager] Auth data saved to sessionStorage:', {
-        'vue-auth-bridge': !!sessionStorage.getItem('vue-auth-bridge'),
-        'oplus_token': !!sessionStorage.getItem('oplus_token'),
-        'oplus_user': !!sessionStorage.getItem('oplus_user'),
+    } else {
+      console.warn('⚠️ [SingleIframeManager] No auth data available:', {
+        hasToken: !!token,
+        hasUser: !!user,
         currentModule: this.currentModule
       })
-
-      // 发送到 iframe - 使用 JSON 序列化确保数据可克隆
-      const messageData = {
-        type: 'vue-auth-data',
-        authData: JSON.parse(JSON.stringify(authData)) // 深度克隆确保可序列化
-      }
-
-      this.iframe.contentWindow.postMessage(messageData, '*')
-      console.log(`📤 [SingleIframeManager] Auth data sent via postMessage to Angular iframe`)
-
-      console.log(`✅ [SingleIframeManager] Auth data sent to Angular iframe successfully for module: ${this.currentModule}`)
-
-    } catch (error) {
-      console.error(`❌ [SingleIframeManager] Failed to send auth data for module ${this.currentModule}:`, error)
     }
   }
 
   /**
-   * 隐藏 Angular 的工具栏和背景
+   * 隐藏 Angular 的工具栏和背景（通过CSS样式）
    */
   private hideAngularUI() {
     if (!this.iframe?.contentWindow) return
 
     try {
-      // 通过 postMessage 告诉 Angular 隐藏 UI 元素
-      this.iframe.contentWindow.postMessage({
-        type: 'hide-ui-elements',
-        elements: ['toolbar', 'sidebar', 'background']
-      }, '*')
-
-      console.log('🎨 Requested Angular to hide UI elements')
+      // Angular应用应该通过URL参数自行处理UI隐藏
+      console.log('🎨 Angular UI hiding should be handled by the Angular app based on URL parameters')
 
     } catch (error) {
       console.error('Failed to hide Angular UI:', error)

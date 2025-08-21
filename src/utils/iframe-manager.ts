@@ -229,11 +229,11 @@ export class GlobalIframeManager {
   }
 
   /**
-   * 发送认证数据到 iframe
+   * 验证认证数据（token已通过URL传递）
    */
   private sendAuthData(iframe: HTMLIFrameElement) {
     try {
-      console.log('🔐 [iframe-manager] Starting to send auth data to iframe:', iframe.src)
+      console.log('🔗 [iframe-manager] Auth data already passed via URL to iframe:', iframe.src)
 
       const token = authService.getToken()
       const user = authService.getCurrentUser()
@@ -247,50 +247,14 @@ export class GlobalIframeManager {
         return
       }
 
-      const serializableUser = {
-        id: user.id,
-        login: user.login,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        tenantId: user.tenantId,
-        permissions: user.permissions
-      }
-
-      const authData = {
-        token,
-        user: serializableUser,
-        timestamp: Date.now()
-      }
-
-      console.log('🔐 [iframe-manager] Auth data prepared:', {
+      console.log('✅ [iframe-manager] Auth data available and passed via URL:', {
         hasToken: !!token,
         tokenLength: token?.length,
-        userLogin: serializableUser.login,
-        tenantId: serializableUser.tenantId,
-        permissionsCount: serializableUser.permissions?.length || 0,
-        timestamp: authData.timestamp
+        userLogin: user?.login,
+        iframeSrc: iframe.src
       })
-
-      // 设置到 sessionStorage
-      sessionStorage.setItem('oplus_token', token)
-      sessionStorage.setItem('oplus_user', JSON.stringify(serializableUser))
-      console.log('🔐 [iframe-manager] Auth data saved to sessionStorage')
-
-      // 发送到 iframe
-      if (iframe.contentWindow) {
-        iframe.contentWindow.postMessage({
-          type: 'vue-auth-data',
-          authData
-        }, '*')
-        console.log('🔐 [iframe-manager] Auth data sent via postMessage to iframe:', iframe.src)
-      } else {
-        console.warn('⚠️ [iframe-manager] iframe.contentWindow is null, cannot send message')
-      }
-
-      console.log('✅ [iframe-manager] Auth data sent to iframe successfully')
     } catch (error) {
-      console.error('❌ [iframe-manager] Failed to send auth data:', error)
+      console.error('❌ [iframe-manager] Failed to verify auth data:', error)
     }
   }
 
@@ -340,64 +304,20 @@ export class GlobalIframeManager {
         totalIframes: this.iframes.size
       })
 
-      // 更新sessionStorage
-      sessionStorage.setItem('oplus_token', token)
-      sessionStorage.setItem('oplus_user', JSON.stringify(serializableUser))
-      sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
-      console.log('🔐 [iframe-manager] Auth data saved to sessionStorage for broadcast')
-
-      let sentCount = 0
-      let loadedCount = 0
-
-      // 向所有已加载的iframe发送认证数据
-      this.iframes.forEach((instance, moduleCode) => {
-        console.log(`🔍 [iframe-manager] Checking module ${moduleCode}:`, {
-          isLoaded: instance.isLoaded,
-          hasContentWindow: !!instance.iframe.contentWindow,
-          src: instance.iframe.src
-        })
-
-        if (instance.isLoaded && instance.iframe.contentWindow) {
-          loadedCount++
-          try {
-            // 发送Vue认证数据格式
-            instance.iframe.contentWindow.postMessage({
-              type: 'vue-auth-data',
-              authData
-            }, '*')
-            console.log(`📤 [iframe-manager] Vue auth data sent to ${moduleCode}`)
-
-            // 同时发送OPLUS格式（兼容第三方系统）
-            instance.iframe.contentWindow.postMessage({
-              type: 'OPLUS_AUTH_STATUS',
-              data: {
-                status: 'success',
-                message: 'Authentication successful',
-                timestamp: Date.now(),
-                userInfo: {
-                  loginId: user.login,
-                  displayName: user.name || user.login,
-                  tenantId: user.tenantId
-                }
-              }
-            }, '*')
-            console.log(`📤 [iframe-manager] OPLUS auth status sent to ${moduleCode}`)
-
-            sentCount++
-            console.log(`✅ [iframe-manager] Auth update sent to module: ${moduleCode}`)
-          } catch (error) {
-            console.error(`❌ [iframe-manager] Failed to send auth update to ${moduleCode}:`, error)
-          }
-        } else {
-          console.log(`⏭️ [iframe-manager] Skipping module ${moduleCode}: not loaded or no contentWindow`)
-        }
+      console.log(`🔗 [iframe-manager] Auth data already passed via URL to all iframes:`, {
+        totalModules: this.iframes.size,
+        hasToken: !!token,
+        tokenLength: token?.length,
+        userLogin: serializableUser.login,
+        tenantId: serializableUser.tenantId
       })
 
-      console.log(`✅ [iframe-manager] Auth update broadcast completed:`, {
-        totalModules: this.iframes.size,
-        loadedModules: loadedCount,
-        sentToModules: sentCount,
-        successRate: loadedCount > 0 ? `${Math.round((sentCount / loadedCount) * 100)}%` : '0%'
+      // 认证数据已通过URL参数传递给所有iframe，无需postMessage
+      this.iframes.forEach((instance, moduleCode) => {
+        console.log(`✅ [iframe-manager] Module ${moduleCode} should have auth data via URL:`, {
+          isLoaded: instance.isLoaded,
+          src: instance.iframe.src
+        })
       })
     } catch (error) {
       console.error('❌ [iframe-manager] Failed to broadcast auth update:', error)

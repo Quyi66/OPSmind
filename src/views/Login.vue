@@ -235,57 +235,23 @@ const notifyIframeModulesAuthUpdate = () => {
     console.log('🔗 [Login] Using GlobalIframeManager for auth broadcast')
     iframeManager.broadcastAuthUpdate()
 
-    // 同时也向页面中的其他iframe发送（兼容性处理）
+    // 认证数据已通过URL参数传递给iframe，无需postMessage
     const iframes = document.querySelectorAll('iframe')
-    console.log(`🔍 [Login] Found ${iframes.length} additional iframes in DOM`)
+    console.log(`🔗 [Login] Found ${iframes.length} iframes - auth data passed via URL`)
 
     if (iframes.length > 0) {
       const token = authService.getToken()
       const user = authService.getCurrentUser()
 
       if (token && user) {
-        const authData = {
-          token,
-          user: {
-            id: user.id,
-            login: user.login,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            tenantId: user.tenantId,
-            permissions: user.permissions
-          },
-          timestamp: Date.now()
-        }
-
-        console.log('🔐 [Login] Sending auth data to additional iframes:', {
+        console.log('✅ [Login] Auth data available and passed via URL to iframes:', {
           hasToken: !!token,
           userLogin: user.login,
           tenantId: user.tenantId,
           iframeCount: iframes.length
         })
-
-        let sentToAdditional = 0
-        iframes.forEach((iframe, index) => {
-          if (iframe.contentWindow) {
-            try {
-              iframe.contentWindow.postMessage({
-                type: 'vue-auth-data',
-                authData
-              }, '*')
-              sentToAdditional++
-              console.log(`📤 [Login] Auth data sent to additional iframe ${index + 1}:`, iframe.src)
-            } catch (error) {
-              console.error(`❌ [Login] Failed to send auth data to iframe ${index + 1}:`, error)
-            }
-          } else {
-            console.warn(`⚠️ [Login] iframe ${index + 1} has no contentWindow`)
-          }
-        })
-
-        console.log(`✅ [Login] Auth data sent to ${sentToAdditional}/${iframes.length} additional iframes`)
       } else {
-        console.warn('⚠️ [Login] No auth data available for additional iframes:', {
+        console.warn('⚠️ [Login] No auth data available:', {
           hasToken: !!token,
           hasUser: !!user
         })
