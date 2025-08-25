@@ -212,9 +212,7 @@ onUnmounted(() => {
 .nav-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   height: 50px;
-  padding: 0 16px;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -222,14 +220,15 @@ onUnmounted(() => {
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
+  gap: 6px;
+  padding: 10px 12px;
+  height: 50px;
   cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 6px;
+  border-right: 1px solid #e8e8e8;
   transition: background-color 0.3s ease;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 
   &:hover {
     background: rgba(24, 144, 255, 0.1);
@@ -250,7 +249,9 @@ onUnmounted(() => {
     border-radius: 50%;
     background: rgba(24, 144, 255, 0.3);
     transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
+    transition:
+      width 0.6s,
+      height 0.6s;
   }
 
   &:active::before {
@@ -260,27 +261,29 @@ onUnmounted(() => {
 }
 
 .logo-placeholder {
-  width: 32px;
-  height: 32px;
+  width: 16px;
+  height: 16px;
   background: linear-gradient(135deg, #1890ff, #096dd9);
-  border-radius: 6px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 14px;
+  font-size: 10px;
+  flex-shrink: 0;
 }
 
 .app-title {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 500;
   color: #262626;
   margin: 0;
+  white-space: nowrap;
 }
 
 .main-nav {
   flex: 1;
-  margin: 0 24px;
+  padding: 0 16px;
 }
 
 .nav-list {
@@ -365,6 +368,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
+  padding-right: 16px;
 }
 
 .user-dropdown {
@@ -397,12 +401,12 @@ onUnmounted(() => {
 
 // 响应式设计
 @media (max-width: 1200px) {
-  .nav-container {
-    padding: 0 16px;
+  .main-nav {
+    padding: 0 12px;
   }
 
-  .main-nav {
-    margin: 0 20px;
+  .user-section {
+    padding-right: 12px;
   }
 }
 
@@ -426,22 +430,26 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .nav-container {
-    padding: 0 12px;
+  .main-nav {
+    padding: 0 8px;
   }
 
-  .main-nav {
-    margin: 0 12px;
+  .user-section {
+    padding-right: 8px;
   }
 
   .app-title {
-    font-size: 20px;
+    display: none;
   }
 
   .logo-placeholder {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
+
+  .logo-section {
+    padding: 10px 8px;
   }
 
   .user-name {
