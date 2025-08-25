@@ -63,10 +63,12 @@ const currentMenuItemTitle = computed(() => {
 })
 
 // 处理左侧菜单项点击
-const handleMenuItemClick = (menuItem) => {
+const handleMenuItemClick = menuItem => {
   console.log('🎯 Main layout received menu item click:', menuItem.name)
   menuStore.setActiveMenuItem(menuItem.code)
 }
+
+
 </script>
 
 <style scoped lang="scss">

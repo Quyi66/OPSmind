@@ -1,7 +1,7 @@
 <template>
   <div class="top-nav-menu">
     <div class="nav-container">
-      <!-- Logo 区域 -->
+      <!-- OpsMind 标题栏 -->
       <div class="logo-section" @click="handleLogoClick">
         <div class="logo-placeholder">
           <i class="fa fa-cube"></i>
@@ -134,7 +134,6 @@ const handleGroupClick = (group) => {
     menuStore.setActiveGroup(group.code)
   }
 }
-
 const handleLogoClick = () => {
   // 清除菜单状态
   menuStore.clearActiveMenu()
@@ -149,6 +148,8 @@ const handleLogoClick = () => {
   console.log('🏠 Logo clicked, returning to home')
   console.log('🔗 Browser URL updated to: /home')
 }
+
+
 
 
 
@@ -207,28 +208,34 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   z-index: 1001;
+  margin: 0;
+  padding: 0;
 }
 
 .nav-container {
   display: flex;
   align-items: center;
   height: 50px;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .logo-section {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 12px;
-  height: 50px;
+  justify-content: center;
+  flex: 0 0 auto;
   cursor: pointer;
-  border-right: 1px solid #e8e8e8;
+  padding: 8px 2px;
   transition: background-color 0.3s ease;
   position: relative;
   overflow: hidden;
-  flex-shrink: 0;
+  width: 60px;
+  height: 50px;
+  border-right: 1px solid #e8e8e8;
+  margin: 0;
 
   &:hover {
     background: rgba(24, 144, 255, 0.1);
@@ -261,8 +268,8 @@ onUnmounted(() => {
 }
 
 .logo-placeholder {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   background: linear-gradient(135deg, #1890ff, #096dd9);
   border-radius: 4px;
   display: flex;
@@ -270,19 +277,23 @@ onUnmounted(() => {
   justify-content: center;
   color: white;
   font-size: 10px;
-  flex-shrink: 0;
+  margin-bottom: 2px;
 }
 
 .app-title {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 9px;
+  font-weight: 600;
   color: #262626;
   margin: 0;
-  white-space: nowrap;
+  text-align: center;
+  line-height: 1;
 }
 
 .main-nav {
   flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 0 16px;
 }
 
@@ -368,7 +379,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
-  padding-right: 16px;
 }
 
 .user-dropdown {
