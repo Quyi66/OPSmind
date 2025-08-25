@@ -12,6 +12,19 @@
       <!-- 主菜单 -->
       <nav class="main-nav">
         <ul class="nav-list">
+          <!-- 首页菜单项 -->
+          <li
+            class="nav-item"
+            :class="{ active: activeGroup === 'home' }"
+            @click="handleHomeClick"
+          >
+            <div class="nav-link">
+              <i :class="homeMenu.icon" class="nav-icon"></i>
+              <span class="nav-text">{{ homeMenu.name }}</span>
+            </div>
+          </li>
+
+          <!-- 分组菜单项 -->
           <li
             v-for="group in menuGroups"
             :key="group.code"
@@ -85,6 +98,7 @@ const props = defineProps({
 })
 
 // 计算属性
+const homeMenu = computed(() => menuStore.homeMenu)
 const menuGroups = computed(() => menuStore.menuGroups)
 const activeGroup = computed(() => menuStore.activeGroup)
 
@@ -92,6 +106,21 @@ const displayUserName = computed(() => {
   if (!props.user) return '未登录'
   return props.user.firstName || props.user.login || '用户'
 })
+
+// 处理首页菜单点击
+const handleHomeClick = () => {
+  console.log('🏠 Home clicked')
+
+  // 设置首页为激活状态
+  menuStore.setHomeActive()
+
+  // 关闭任何打开的iframe弹窗
+  const event = new CustomEvent('closeAngularModuleContainer')
+  window.dispatchEvent(event)
+
+  // 导航到home页面
+  router.push('/home')
+}
 
 // 处理分组菜单点击
 const handleGroupClick = (group) => {

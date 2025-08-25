@@ -4,6 +4,15 @@
  */
 
 export const MENU_CONFIG = {
+  // 特殊菜单项（首页）
+  homeMenu: {
+    code: 'home',
+    name: '首页',
+    icon: 'fas fa-home',
+    description: '系统仪表盘',
+    type: 'home'
+  },
+
   // 一级菜单分组
   groups: [
     {
@@ -110,6 +119,13 @@ export const MENU_CONFIG = {
 }
 
 /**
+ * 获取首页菜单项
+ */
+export function getHomeMenu() {
+  return MENU_CONFIG.homeMenu
+}
+
+/**
  * 获取所有一级菜单分组
  */
 export function getMenuGroups() {
@@ -139,8 +155,8 @@ export function getMenuItemInfo(menuCode) {
     const menuItem = group.children.find(child => child.code === menuCode)
     if (menuItem) {
       return {
-        group: group,
-        menuItem: menuItem
+        group,
+        menuItem
       }
     }
   }

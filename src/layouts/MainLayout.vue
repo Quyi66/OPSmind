@@ -19,7 +19,16 @@
 
       <!-- 主内容区域 -->
       <div class="main-content" :class="{ 'with-side-menu': showSideMenu }">
-        <router-view />
+        <!-- 如果有选中的菜单项，显示iframe -->
+        <AngularModuleInlineFrame
+          v-if="activeMenuItem"
+          :module-code="activeMenuItem"
+          :module-title="currentMenuItemTitle"
+          class="module-frame"
+        />
+
+        <!-- 否则显示默认的路由视图（仪表盘） -->
+        <router-view v-else />
       </div>
     </div>
   </div>
@@ -29,6 +38,7 @@
 import { computed } from 'vue'
 import TopNavMenu from '@/components/TopNavMenu.vue'
 import SideMenu from '@/components/SideMenu.vue'
+import AngularModuleInlineFrame from '@/components/AngularModuleInlineFrame.vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useMenuStore } from '@/stores/menu.js'
 
@@ -39,6 +49,10 @@ const currentUser = computed(() => dashboardStore.currentUser)
 const showSideMenu = computed(() => menuStore.showSideMenu)
 const activeGroup = computed(() => menuStore.activeGroup)
 const activeMenuItem = computed(() => menuStore.activeMenuItem)
+const currentMenuItemTitle = computed(() => {
+  const menuItem = menuStore.currentMenuItem
+  return menuItem ? menuItem.name : ''
+})
 
 // 处理左侧菜单项点击
 const handleMenuItemClick = (menuItem) => {
@@ -81,6 +95,13 @@ const handleSideMenuCollapse = (collapsed) => {
     // 当有左侧菜单时的样式调整
     background: #fff;
   }
+}
+
+.module-frame {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0; // 确保iframe能够正确缩放
 }
 
 // 响应式设计

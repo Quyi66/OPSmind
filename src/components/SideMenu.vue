@@ -17,9 +17,9 @@
         v-for="menuItem in currentGroup.children"
         :key="menuItem.code"
         class="menu-item"
-        :class="{ 
+        :class="{
           'active': activeMenuItem === menuItem.code,
-          'collapsed': collapsed 
+          'collapsed': collapsed
         }"
         @click="handleMenuItemClick(menuItem)"
         :title="collapsed ? menuItem.name : ''"
@@ -75,22 +75,16 @@ const currentGroup = computed(() => {
 // 方法
 const handleMenuItemClick = (menuItem) => {
   console.log('🚀 Side menu item clicked:', menuItem.name, 'with code:', menuItem.code)
-  
+
   // 发射事件给父组件
   emit('menu-item-click', menuItem)
-  
+
   // 更新浏览器URL
   router.push(`/${menuItem.code}`)
-  
-  // 触发iframe弹窗显示模块
-  const event = new CustomEvent('showAngularModuleContainer', {
-    detail: {
-      moduleCode: menuItem.code,
-      title: menuItem.name
-    }
-  })
-  window.dispatchEvent(event)
-  
+
+  // 注意：不再触发弹窗模式的iframe，而是在主内容区域显示
+  // 这个逻辑将在主布局中处理
+
   console.log('🔗 Browser URL updated to:', `/${menuItem.code}`)
 }
 
@@ -200,7 +194,7 @@ watch(() => props.activeGroup, (newGroup) => {
 
   &.collapsed {
     margin: 2px 4px;
-    
+
     .menu-item-content {
       justify-content: center;
       padding: 12px 8px;
@@ -283,35 +277,35 @@ watch(() => props.activeGroup, (newGroup) => {
 @media (max-width: 768px) {
   .side-menu {
     width: 200px;
-    
+
     &.collapsed {
       width: 50px;
     }
   }
-  
+
   .menu-header {
     padding: 12px;
-    
+
     .group-info {
       .group-icon {
         font-size: 16px;
         margin-right: 8px;
       }
-      
+
       .group-name {
         font-size: 14px;
       }
     }
   }
-  
+
   .menu-item-content {
     padding: 10px 12px;
-    
+
     .menu-item-icon {
       font-size: 14px;
       margin-right: 8px;
     }
-    
+
     .menu-item-text {
       font-size: 13px;
     }

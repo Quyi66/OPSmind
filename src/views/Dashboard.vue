@@ -68,16 +68,11 @@ watch(() => route.path, (newPath) => {
   const moduleList = allMenuItems.map(item => item.code)
 
   if (moduleList.includes(moduleCode)) {
-    console.log('🎯 Auto-showing iframe for module:', moduleCode)
+    console.log('🎯 Module route detected:', moduleCode)
 
-    // 触发iframe显示
-    const event = new CustomEvent('showAngularModuleContainer', {
-      detail: {
-        moduleCode: moduleCode,
-        title: getModuleTitle(moduleCode)
-      }
-    })
-    window.dispatchEvent(event)
+    // 注意：不再在这里触发弹窗模式的iframe
+    // iframe现在由MainLayout中的AngularModuleInlineFrame组件处理
+    // 这里只是记录路由变化
   }
 }, { immediate: true })
 

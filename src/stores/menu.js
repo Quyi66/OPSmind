@@ -5,7 +5,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getMenuGroups, getMenuGroup, getMenuItemInfo } from '@/config/menu.config.js'
+import { getMenuGroups, getMenuGroup, getMenuItemInfo, getHomeMenu } from '@/config/menu.config.js'
 
 export const useMenuStore = defineStore('menu', () => {
   // 状态
@@ -25,6 +25,10 @@ export const useMenuStore = defineStore('menu', () => {
     return info ? info.menuItem : null
   })
 
+  const homeMenu = computed(() => {
+    return getHomeMenu()
+  })
+
   const menuGroups = computed(() => {
     return getMenuGroups()
   })
@@ -37,7 +41,7 @@ export const useMenuStore = defineStore('menu', () => {
   const setActiveGroup = (groupCode) => {
     console.log('🎯 Setting active group:', groupCode)
     activeGroup.value = groupCode
-    
+
     // 如果选择了分组，显示左侧菜单
     if (groupCode) {
       showSideMenu.value = true
@@ -45,7 +49,7 @@ export const useMenuStore = defineStore('menu', () => {
     } else {
       showSideMenu.value = false
     }
-    
+
     // 清除当前选中的菜单项（因为切换了分组）
     activeMenuItem.value = ''
   }
@@ -53,7 +57,7 @@ export const useMenuStore = defineStore('menu', () => {
   const setActiveMenuItem = (menuCode) => {
     console.log('🎯 Setting active menu item:', menuCode)
     activeMenuItem.value = menuCode
-    
+
     // 根据菜单项自动设置对应的分组
     const info = getMenuItemInfo(menuCode)
     if (info && info.group.code !== activeGroup.value) {
@@ -65,6 +69,13 @@ export const useMenuStore = defineStore('menu', () => {
   const clearActiveMenu = () => {
     console.log('🧹 Clearing active menu')
     activeGroup.value = ''
+    activeMenuItem.value = ''
+    showSideMenu.value = false
+  }
+
+  const setHomeActive = () => {
+    console.log('🏠 Setting home active')
+    activeGroup.value = 'home'
     activeMenuItem.value = ''
     showSideMenu.value = false
   }
@@ -83,12 +94,12 @@ export const useMenuStore = defineStore('menu', () => {
   const setMenuFromRoute = (routePath) => {
     // 移除开头的 '/'
     const moduleCode = routePath.substring(1)
-    
+
     if (!moduleCode || moduleCode === 'home') {
-      clearActiveMenu()
+      setHomeActive()
       return
     }
-    
+
     // 查找对应的菜单项
     const info = getMenuItemInfo(moduleCode)
     if (info) {
@@ -103,7 +114,7 @@ export const useMenuStore = defineStore('menu', () => {
   // 获取面包屑导航
   const getBreadcrumb = () => {
     const breadcrumb = []
-    
+
     if (currentGroup.value) {
       breadcrumb.push({
         name: currentGroup.value.name,
@@ -111,7 +122,7 @@ export const useMenuStore = defineStore('menu', () => {
         type: 'group'
       })
     }
-    
+
     if (currentMenuItem.value) {
       breadcrumb.push({
         name: currentMenuItem.value.name,
@@ -119,7 +130,7 @@ export const useMenuStore = defineStore('menu', () => {
         type: 'item'
       })
     }
-    
+
     return breadcrumb
   }
 
@@ -129,17 +140,19 @@ export const useMenuStore = defineStore('menu', () => {
     activeMenuItem,
     sideMenuCollapsed,
     showSideMenu,
-    
+
     // 计算属性
     currentGroup,
     currentMenuItem,
+    homeMenu,
     menuGroups,
     currentSubMenus,
-    
+
     // 动作
     setActiveGroup,
     setActiveMenuItem,
     clearActiveMenu,
+    setHomeActive,
     toggleSideMenu,
     setSideMenuCollapsed,
     setMenuFromRoute,
