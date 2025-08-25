@@ -1,16 +1,5 @@
 <template>
-  <div class="side-menu" :class="{ 'collapsed': collapsed }">
-    <!-- 菜单头部 -->
-    <div class="menu-header" v-if="currentGroup">
-      <div class="group-info">
-        <i :class="currentGroup.icon" class="group-icon"></i>
-        <span class="group-name" v-if="!collapsed">{{ currentGroup.name }}</span>
-      </div>
-      <div class="collapse-btn" @click="toggleCollapse" v-if="!collapsed">
-        <i class="fas fa-chevron-left"></i>
-      </div>
-    </div>
-
+  <div class="side-menu">
     <!-- 菜单项列表 -->
     <div class="menu-items" v-if="currentGroup">
       <div
@@ -18,26 +7,19 @@
         :key="menuItem.code"
         class="menu-item"
         :class="{
-          'active': activeMenuItem === menuItem.code,
-          'collapsed': collapsed
+          active: activeMenuItem === menuItem.code
         }"
-        @click="handleMenuItemClick(menuItem)"
-        :title="collapsed ? menuItem.name : ''"
+        @click="handleMenuItemClick(menuItem, $event)"
       >
         <div class="menu-item-content">
           <i :class="menuItem.icon" class="menu-item-icon"></i>
-          <span class="menu-item-text" v-if="!collapsed">{{ menuItem.name }}</span>
+          <span class="menu-item-text">{{ menuItem.name }}</span>
         </div>
       </div>
     </div>
 
-    <!-- 展开按钮（折叠状态下） -->
-    <div class="expand-btn" v-if="collapsed" @click="toggleCollapse">
-      <i class="fas fa-chevron-right"></i>
-    </div>
-
     <!-- 空状态 -->
-    <div class="empty-state" v-if="!currentGroup && !collapsed">
+    <div class="empty-state" v-if="!currentGroup">
       <i class="fas fa-mouse-pointer"></i>
       <p>请选择顶部菜单</p>
     </div>
@@ -45,7 +27,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getMenuGroup } from '@/config/menu.config.js'
 
@@ -62,10 +44,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['menu-item-click', 'collapse-change'])
-
-// 响应式数据
-const collapsed = ref(false)
+const emit = defineEmits(['menu-item-click'])
 
 // 计算属性
 const currentGroup = computed(() => {
@@ -73,8 +52,11 @@ const currentGroup = computed(() => {
 })
 
 // 方法
-const handleMenuItemClick = (menuItem) => {
+const handleMenuItemClick = (menuItem, event) => {
   console.log('🚀 Side menu item clicked:', menuItem.name, 'with code:', menuItem.code)
+
+  // 创建水波纹效果
+  createRippleEffect(event)
 
   // 发射事件给父组件
   emit('menu-item-click', menuItem)
@@ -88,36 +70,53 @@ const handleMenuItemClick = (menuItem) => {
   console.log('🔗 Browser URL updated to:', `/${menuItem.code}`)
 }
 
-const toggleCollapse = () => {
-  collapsed.value = !collapsed.value
-  emit('collapse-change', collapsed.value)
-  console.log('📱 Side menu collapsed:', collapsed.value)
+// 创建水波纹效果
+const createRippleEffect = event => {
+  const button = event.currentTarget
+  const rect = button.getBoundingClientRect()
+  const size = Math.max(rect.width, rect.height)
+  const x = event.clientX - rect.left - size / 2
+  const y = event.clientY - rect.top - size / 2
+
+  // 移除之前的水波纹
+  const existingRipple = button.querySelector('.ripple')
+  if (existingRipple) {
+    existingRipple.remove()
+  }
+
+  // 创建新的水波纹元素
+  const ripple = document.createElement('span')
+  ripple.className = 'ripple'
+  ripple.style.width = ripple.style.height = `${size}px`
+  ripple.style.left = `${x}px`
+  ripple.style.top = `${y}px`
+
+  button.appendChild(ripple)
+
+  // 动画结束后移除元素
+  setTimeout(() => {
+    if (ripple.parentNode) {
+      ripple.parentNode.removeChild(ripple)
+    }
+  }, 600)
 }
 
-// 监听activeGroup变化，自动展开菜单
+// 监听activeGroup变化
 watch(() => props.activeGroup, (newGroup) => {
-  if (newGroup && collapsed.value) {
-    collapsed.value = false
-    emit('collapse-change', collapsed.value)
-  }
+  console.log('📱 Side menu group changed:', newGroup)
 })
 </script>
 
 <style scoped lang="scss">
 .side-menu {
-  width: 240px;
+  width: 60px;
   background: #fff;
   border-right: 1px solid #e8e8e8;
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease;
   position: relative;
   z-index: 100;
-
-  &.collapsed {
-    width: 60px;
-  }
 }
 
 .menu-header {
@@ -169,87 +168,77 @@ watch(() => props.activeGroup, (newGroup) => {
 .menu-item {
   cursor: pointer;
   transition: all 0.2s ease;
-  margin: 2px 8px;
+  margin: 3px;
   border-radius: 6px;
+  position: relative;
+  overflow: hidden;
 
-  &:hover {
-    background: #f0f7ff;
+  &:hover:not(.active) {
+    background: #f5f5f5;
+    transform: translateY(-1px);
   }
 
   &.active {
-    background: #e6f7ff;
-    border-left: 3px solid #1890ff;
-    margin-left: 8px;
+    background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
 
     .menu-item-content {
       .menu-item-icon {
         color: #1890ff;
+        transform: scale(1.1);
       }
       .menu-item-text {
         color: #1890ff;
-        font-weight: 500;
+        font-weight: 600;
       }
-    }
-  }
-
-  &.collapsed {
-    margin: 2px 4px;
-
-    .menu-item-content {
-      justify-content: center;
-      padding: 12px 8px;
     }
   }
 }
 
 .menu-item-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 12px 16px;
+  justify-content: center;
+  padding: 8px 2px;
+  text-align: center;
+  min-height: 45px;
 
   .menu-item-icon {
-    font-size: 16px;
+    font-size: 18px;
     color: #595959;
-    margin-right: 12px;
-    width: 16px;
+    margin-bottom: 4px;
+    width: auto;
     text-align: center;
+    transition: all 0.3s ease;
   }
 
   .menu-item-text {
-    font-size: 14px;
+    font-size: 11px;
     color: #262626;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
+    line-height: 1.1;
+    transition: all 0.3s ease;
   }
 }
 
-.expand-btn {
+// 水波纹效果
+.ripple {
   position: absolute;
-  top: 50%;
-  right: -12px;
-  transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
-  background: #fff;
-  border: 1px solid #d9d9d9;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
+  background: rgba(24, 144, 255, 0.3);
+  transform: scale(0);
+  animation: ripple-animation 0.6s linear;
+  pointer-events: none;
+}
 
-  &:hover {
-    background: #f0f7ff;
-    border-color: #1890ff;
-    color: #1890ff;
-  }
-
-  i {
-    font-size: 12px;
-    color: #8c8c8c;
+@keyframes ripple-animation {
+  to {
+    transform: scale(2);
+    opacity: 0;
   }
 }
 
@@ -276,38 +265,24 @@ watch(() => props.activeGroup, (newGroup) => {
 // 响应式设计
 @media (max-width: 768px) {
   .side-menu {
-    width: 200px;
-
-    &.collapsed {
-      width: 50px;
-    }
+    width: 55px;
   }
 
-  .menu-header {
-    padding: 12px;
-
-    .group-info {
-      .group-icon {
-        font-size: 16px;
-        margin-right: 8px;
-      }
-
-      .group-name {
-        font-size: 14px;
-      }
-    }
+  .menu-item {
+    margin: 2px;
   }
 
   .menu-item-content {
-    padding: 10px 12px;
+    padding: 8px 2px;
+    min-height: 50px;
 
     .menu-item-icon {
-      font-size: 14px;
-      margin-right: 8px;
+      font-size: 16px;
+      margin-bottom: 3px;
     }
 
     .menu-item-text {
-      font-size: 13px;
+      font-size: 10px;
     }
   }
 }

@@ -46,19 +46,20 @@ export const useMenuStore = defineStore('menu', () => {
     if (groupCode) {
       showSideMenu.value = true
       sideMenuCollapsed.value = false
+
+      // 清除当前选中的菜单项，让用户手动选择
+      activeMenuItem.value = ''
     } else {
       showSideMenu.value = false
+      activeMenuItem.value = ''
     }
-
-    // 清除当前选中的菜单项（因为切换了分组）
-    activeMenuItem.value = ''
   }
 
   const setActiveMenuItem = (menuCode) => {
     console.log('🎯 Setting active menu item:', menuCode)
     activeMenuItem.value = menuCode
 
-    // 根据菜单项自动设置对应的分组
+    // 根据菜单项自动设置对应的分组（但不触发自动选择第一个菜单项）
     const info = getMenuItemInfo(menuCode)
     if (info && info.group.code !== activeGroup.value) {
       activeGroup.value = info.group.code
@@ -103,8 +104,10 @@ export const useMenuStore = defineStore('menu', () => {
     // 查找对应的菜单项
     const info = getMenuItemInfo(moduleCode)
     if (info) {
-      setActiveGroup(info.group.code)
-      setActiveMenuItem(moduleCode)
+      // 直接设置状态，不触发自动选择逻辑
+      activeGroup.value = info.group.code
+      activeMenuItem.value = moduleCode
+      showSideMenu.value = true
       console.log('🧭 Menu state set from route:', routePath, '-> Group:', info.group.code, 'Item:', moduleCode)
     } else {
       console.warn('⚠️ No menu item found for route:', routePath)

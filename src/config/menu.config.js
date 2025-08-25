@@ -49,13 +49,13 @@ export const MENU_CONFIG = {
       children: [
         {
           code: 'patches',
-          name: '补丁管理',
+          name: '补丁',
           icon: 'fas fa-download',
           description: '系统补丁和更新管理'
         },
         {
           code: 'software',
-          name: '软件管理',
+          name: '软件',
           icon: 'fas fa-box',
           description: '软件包安装和管理'
         }
@@ -69,7 +69,7 @@ export const MENU_CONFIG = {
       children: [
         {
           code: 'cac',
-          name: '系统巡检',
+          name: '巡检',
           icon: 'fas fa-search',
           description: '系统配置审计与合规性检查'
         }
@@ -83,7 +83,7 @@ export const MENU_CONFIG = {
       children: [
         {
           code: 'acm',
-          name: '资产管理',
+          name: '资产',
           icon: 'fas fa-server',
           description: 'IT基础设施资产管理'
         }
@@ -97,19 +97,19 @@ export const MENU_CONFIG = {
       children: [
         {
           code: 'users',
-          name: '用户管理',
+          name: '用户',
           icon: 'fas fa-users',
           description: '用户账户和权限管理'
         },
         {
           code: 'sudo',
-          name: 'sudo权限管理',
+          name: 'sudo权限',
           icon: 'fas fa-user-shield',
           description: 'sudo权限分配和管理'
         },
         {
           code: 'password',
-          name: '密码管理',
+          name: '密码',
           icon: 'fas fa-key',
           description: '密码策略和安全管理'
         }
