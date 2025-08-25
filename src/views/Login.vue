@@ -1,111 +1,131 @@
 <template>
   <div class="login-container">
-    <div class="login-card">
-      <div class="login-header">
-        <h1>OpsMind Dashboard</h1>
-        <p>运维管理平台</p>
-        <!-- 开发环境提示 -->
-        <div v-if="isDev" class="dev-notice">
-          <el-alert
-            title="开发环境"
-            type="info"
-            :closable="false"
-            show-icon
-          >
-            <template #default>
-              <p>默认账号: <strong>admin</strong></p>
-              <p>默认密码: <strong>Oplus@2020</strong></p>
-            </template>
-          </el-alert>
-        </div>
+    <!-- Logo 区域 -->
+    <div class="logo-section">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="8" fill="#2196F3"/>
+          <path d="M8 12h16v8H8z" fill="white" opacity="0.9"/>
+          <path d="M12 8h8v16h-8z" fill="white" opacity="0.7"/>
+        </svg>
+        <span class="logo-text">OpsMind</span>
       </div>
+    </div>
 
-      <div v-if="initializing" class="initializing-container">
-        <p>正在初始化登录页面...</p>
-        <div class="loading-spinner">
-          <i class="el-icon-loading"></i>
-        </div>
-      </div>
-
-      <el-form
-        v-else
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="loginRules"
-        class="login-form"
-        @submit.prevent="handleLogin"
-      >
-        <div v-if="authError" class="error-message">
-          <el-alert :title="errorMessage" type="error" :closable="false" show-icon></el-alert>
-        </div>
-
-        <el-form-item prop="username">
-          <el-input
-            v-model="loginForm.username"
-            placeholder="用户名"
-            size="large"
-            prefix-icon="User"
-            :disabled="loading"
-          ></el-input>
-        </el-form-item>
-
-        <el-form-item prop="password">
-          <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="密码"
-            size="large"
-            prefix-icon="Lock"
-            :disabled="loading"
-            @keyup.enter="handleLogin"
-          ></el-input>
-        </el-form-item>
-
-        <el-form-item v-if="showOTP" prop="otpCode">
-          <el-input
-            v-model="loginForm.otpCode"
-            placeholder="动态验证码"
-            size="large"
-            prefix-icon="Key"
-            :disabled="loading"
-            maxlength="6"
-            @keyup.enter="handleLogin"
-          ></el-input>
-        </el-form-item>
-
-        <el-form-item>
-          <el-checkbox v-model="loginForm.rememberMe" :disabled="loading">记住我</el-checkbox>
-        </el-form-item>
-
-        <el-form-item>
-          <div class="login-buttons">
-            <el-button
-              type="primary"
-              size="large"
-              :loading="loading"
-              @click="handleLogin"
-              :class="isDev ? 'login-button-dev' : 'login-button'"
-            >
-              {{ loading ? '登录中...' : '登录' }}
-            </el-button>
-
-            <!-- 开发环境快速登录按钮 -->
-            <el-button
-              v-if="isDev"
-              type="success"
-              size="large"
-              :loading="loading"
-              @click="handleQuickLogin"
-              class="quick-login-button"
-            >
-              快速登录
-            </el-button>
+    <!-- 主要内容区域 - 统一的白色卡片 -->
+    <div class="main-content">
+      <div class="login-card">
+        <!-- 左侧插图区域 -->
+        <div class="login-illustration">
+          <div class="illustration-content">
+            <img src="@/assets/images/login-illustration.svg" alt="OpsMind Dashboard" class="illustration-image" />
           </div>
-        </el-form-item>
-      </el-form>
+        </div>
 
-      <div class="login-footer">
-        <p>&copy; 2024 OpsMind. All rights reserved.</p>
+        <!-- 右侧登录表单区域 -->
+        <div class="login-form-section">
+        <div class="login-header">
+          <h1>用户登录</h1>
+          <!-- 开发环境提示 -->
+          <div v-if="isDev" class="dev-notice">
+            <el-alert
+              title="开发环境"
+              type="info"
+              :closable="false"
+              show-icon
+            >
+              <template #default>
+                <p>默认账号: <strong>admin</strong></p>
+                <p>默认密码: <strong>Oplus@2020</strong></p>
+              </template>
+            </el-alert>
+          </div>
+        </div>
+
+        <div v-if="initializing" class="initializing-container">
+          <p>正在初始化登录页面...</p>
+          <div class="loading-spinner">
+            <i class="el-icon-loading"></i>
+          </div>
+        </div>
+
+        <el-form
+          v-else
+          ref="loginFormRef"
+          :model="loginForm"
+          :rules="loginRules"
+          class="login-form"
+          @submit.prevent="handleLogin"
+        >
+          <div v-if="authError" class="error-message">
+            <el-alert :title="errorMessage" type="error" :closable="false" show-icon></el-alert>
+          </div>
+
+          <el-form-item prop="username">
+            <el-input
+              v-model="loginForm.username"
+              placeholder="用户名"
+              size="large"
+              prefix-icon="User"
+              :disabled="loading"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item prop="password">
+            <el-input
+              v-model="loginForm.password"
+              type="password"
+              placeholder="密码"
+              size="large"
+              prefix-icon="Lock"
+              :disabled="loading"
+              @keyup.enter="handleLogin"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item v-if="showOTP" prop="otpCode">
+            <el-input
+              v-model="loginForm.otpCode"
+              placeholder="动态验证码"
+              size="large"
+              prefix-icon="Key"
+              :disabled="loading"
+              maxlength="6"
+              @keyup.enter="handleLogin"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item>
+            <el-checkbox v-model="loginForm.rememberMe" :disabled="loading">保持登录状态</el-checkbox>
+          </el-form-item>
+
+          <el-form-item>
+            <div class="login-buttons">
+              <el-button
+                type="primary"
+                size="large"
+                :loading="loading"
+                @click="handleLogin"
+                :class="isDev ? 'login-button-dev' : 'login-button'"
+              >
+                {{ loading ? '登录中...' : '登录' }}
+              </el-button>
+
+              <!-- 开发环境快速登录按钮 -->
+              <el-button
+                v-if="isDev"
+                type="success"
+                size="large"
+                :loading="loading"
+                @click="handleQuickLogin"
+                class="quick-login-button"
+              >
+                快速登录
+              </el-button>
+            </div>
+          </el-form-item>
+        </el-form>
+        </div>
       </div>
     </div>
   </div>
@@ -188,7 +208,7 @@ const handleLogin = async () => {
     })
 
     // 登录成功后通知所有iframe模块更新认证状态
-    notifyIframeModulesAuthUpdate()
+    await notifyIframeModulesAuthUpdate()
 
     console.log('🔄 Navigating to home...')
     await router.push('/home')
@@ -225,15 +245,19 @@ const handleQuickLogin = async () => {
 }
 
 // 通知所有iframe模块认证状态更新
-const notifyIframeModulesAuthUpdate = () => {
+const notifyIframeModulesAuthUpdate = async () => {
   try {
     console.log('🚀 [Login] Starting iframe modules auth update notification...')
 
     // 使用iframe管理器广播认证更新
-    const { GlobalIframeManager } = require('@/utils/iframe-manager')
-    const iframeManager = GlobalIframeManager.getInstance()
-    console.log('🔗 [Login] Using GlobalIframeManager for auth broadcast')
-    iframeManager.broadcastAuthUpdate()
+    try {
+      const { GlobalIframeManager } = await import('@/utils/iframe-manager')
+      const iframeManager = GlobalIframeManager.getInstance()
+      console.log('🔗 [Login] Using GlobalIframeManager for auth broadcast')
+      iframeManager.broadcastAuthUpdate()
+    } catch (error) {
+      console.warn('⚠️ [Login] Failed to load iframe manager:', error)
+    }
 
     // 认证数据已通过URL参数传递给iframe，无需postMessage
     const iframes = document.querySelectorAll('iframe')
@@ -308,35 +332,119 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 50%, #1e5f99 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 40px;
 }
 
+/* 添加背景装饰点 */
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size:
+    50px 50px,
+    80px 80px,
+    100px 100px;
+  pointer-events: none;
+}
+
+/* Logo 区域 */
+.logo-section {
+  position: absolute;
+  top: 60px;
+  left: 60px;
+  z-index: 10;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-text {
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+/* 主要内容区域 */
+.main-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* 统一的白色卡片容器 */
 .login-card {
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  padding: 40px;
+  display: flex;
+  overflow: hidden;
+  width: 800px;
+  height: 520px;
+  position: relative;
+  z-index: 1;
+}
+
+/* 左侧插图区域 */
+.login-illustration {
+  flex: 0 0 480px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #f8fbff 0%, #e8f4fd 100%);
+  padding: 60px 40px;
+}
+
+.illustration-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
+  height: 100%;
+}
+
+.illustration-image {
+  width: 100%;
+  height: 100%;
   max-width: 400px;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+/* 右侧登录表单区域 */
+.login-form-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 32px;
+  background: white;
 }
 
 .login-header {
-  text-align: center;
-  margin-bottom: 32px;
+  text-align: left;
+  margin-bottom: 24px;
 }
 
 .login-header h1 {
-  color: #2c3e50;
-  font-size: 28px;
+  color: #333;
+  font-size: 20px;
   font-weight: 600;
-  margin: 0 0 8px 0;
-}
-
-.login-header p {
-  color: #7f8c8d;
-  font-size: 14px;
-  margin: 0;
+  margin: 0 0 16px 0;
 }
 
 .dev-notice {
@@ -354,49 +462,92 @@ onMounted(() => {
 }
 
 .login-form {
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 
 .error-message {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+/* 表单项样式 */
+.login-form :deep(.el-form-item) {
+  margin-bottom: 16px;
+}
+
+.login-form :deep(.el-input__wrapper) {
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  box-shadow: none;
+  padding: 10px 12px;
+  height: 40px;
+}
+
+.login-form :deep(.el-input__wrapper:hover) {
+  border-color: #2196f3;
+}
+
+.login-form :deep(.el-input__wrapper.is-focus) {
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.login-form :deep(.el-input__inner) {
+  font-size: 14px;
+  color: #333;
+}
+
+.login-form :deep(.el-input__inner::placeholder) {
+  color: #999;
+}
+
+/* 复选框样式 */
+.login-form :deep(.el-checkbox__label) {
+  font-size: 14px;
+  color: #666;
 }
 
 .login-buttons {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
+  margin-top: 20px;
 }
 
 .login-button {
   width: 100%;
-  height: 44px;
-  font-size: 16px;
+  height: 40px;
+  font-size: 14px;
   font-weight: 500;
+  border-radius: 6px;
+  background: #2196f3;
+  border: none;
+}
+
+.login-button:hover {
+  background: #1976d2;
 }
 
 .login-button-dev {
   flex: 1;
-  height: 44px;
-  font-size: 16px;
+  height: 40px;
+  font-size: 14px;
   font-weight: 500;
+  border-radius: 6px;
+  background: #2196f3;
+  border: none;
+}
+
+.login-button-dev:hover {
+  background: #1976d2;
 }
 
 .quick-login-button {
-  height: 44px;
-  font-size: 14px;
-  font-weight: 500;
-  min-width: 100px;
-  flex-shrink: 0;
-}
-
-.login-footer {
-  text-align: center;
-  color: #95a5a6;
+  height: 40px;
   font-size: 12px;
-}
-
-.login-footer p {
-  margin: 0;
+  font-weight: 500;
+  min-width: 80px;
+  flex-shrink: 0;
+  border-radius: 6px;
 }
 
 .initializing-container {
@@ -408,7 +559,7 @@ onMounted(() => {
 .loading-spinner {
   margin-top: 16px;
   font-size: 24px;
-  color: #409eff;
+  color: #2196f3;
 }
 
 .loading-spinner i {
@@ -425,14 +576,92 @@ onMounted(() => {
 }
 
 /* 响应式设计 */
-@media (max-width: 480px) {
+@media (max-width: 900px) {
+  .login-container {
+    padding: 20px;
+  }
+
   .login-card {
-    padding: 24px;
-    margin: 0 16px;
+    width: 90%;
+    max-width: 700px;
+    height: auto;
+    min-height: 450px;
+  }
+
+  .login-illustration {
+    flex: 0 0 400px;
+    padding: 40px 30px;
+  }
+
+  .login-form-section {
+    padding: 30px 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-card {
+    flex-direction: column;
+    width: 95%;
+    max-width: 400px;
+    height: auto;
+  }
+
+  .login-illustration {
+    flex: none;
+    padding: 30px;
+    height: 200px;
+  }
+
+  .illustration-content {
+    height: 100%;
+  }
+
+  .illustration-image {
+    max-width: 250px;
+    max-height: 150px;
+  }
+
+  .login-form-section {
+    flex: none;
+    padding: 24px 32px 32px;
   }
 
   .login-header h1 {
-    font-size: 24px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 16px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 350px;
+  }
+
+  .login-illustration {
+    padding: 20px;
+    height: 160px;
+  }
+
+  .illustration-image {
+    max-width: 200px;
+    max-height: 120px;
+  }
+
+  .login-form-section {
+    padding: 20px 24px 24px;
+  }
+
+  .logo-section {
+    top: 20px;
+    left: 20px;
+  }
+
+  .logo-text {
+    font-size: 18px;
   }
 }
 </style>
