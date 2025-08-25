@@ -13,15 +13,15 @@
       <nav class="main-nav">
         <ul class="nav-list">
           <li
-            v-for="menu in menuItems"
-            :key="menu.code"
+            v-for="group in menuGroups"
+            :key="group.code"
             class="nav-item"
-            :class="{ active: activeMenu === menu.code }"
-            @click="handleMenuClick(menu)"
+            :class="{ active: activeGroup === group.code }"
+            @click="handleGroupClick(group)"
           >
             <div class="nav-link">
-              <i :class="menu.icon" class="nav-icon"></i>
-              <span class="nav-text">{{ menu.name }}</span>
+              <i :class="group.icon" class="nav-icon"></i>
+              <span class="nav-text">{{ group.name }}</span>
             </div>
           </li>
         </ul>
@@ -65,6 +65,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
+import { useMenuStore } from '@/stores/menu.js'
 import {
   User,
   ArrowDown,
@@ -74,6 +75,7 @@ import {
 
 const router = useRouter()
 const route = useRoute()
+const menuStore = useMenuStore()
 
 const props = defineProps({
   user: {
@@ -82,109 +84,31 @@ const props = defineProps({
   }
 })
 
-// 不再需要emit事件，直接在组件内处理所有逻辑
-const activeMenu = ref('')
-
-// 由于菜单不再使用路由导航，activeMenu由点击事件直接控制
-// 不再需要监听路由变化
-
-// 菜单配置数据
-const menuItems = ref([
-  {
-    code: 'gfs',
-    name: '脚本',
-    icon: 'fas fa-file-code',
-    description: '脚本文件管理和版本控制'
-  },
-  {
-    code: 'jao',
-    name: '作业',
-    icon: 'fas fa-tasks',
-    description: '自动化作业编排和调度管理'
-  },
-  {
-    code: 'cmd',
-    name: '命令',
-    icon: 'fas fa-terminal',
-    description: '系统命令管理和执行'
-  },
-  {
-    code: 'cac',
-    name: '系统巡检',
-    icon: 'fas fa-search',
-    description: '系统配置审计与合规性检查'
-  },
-  {
-    code: 'password',
-    name: '密码管理',
-    icon: 'fas fa-key',
-    description: '密码策略和安全管理'
-  },
-  {
-    code: 'sudo',
-    name: 'sudo权限管理',
-    icon: 'fas fa-user-shield',
-    description: 'sudo权限分配和管理'
-  },
-  {
-    code: 'acm',
-    name: '资产管理',
-    icon: 'fas fa-server',
-    description: 'IT基础设施资产管理'
-  },
-  {
-    code: 'patches',
-    name: '补丁管理',
-    icon: 'fas fa-download',
-    description: '系统补丁和更新管理'
-  },
-  {
-    code: 'software',
-    name: '软件管理',
-    icon: 'fas fa-box',
-    description: '软件包安装和管理'
-  },
-  {
-    code: 'workflow',
-    name: '流程管理',
-    icon: 'fas fa-project-diagram',
-    description: '业务流程设计和管理'
-  },
-  {
-    code: 'users',
-    name: '用户管理',
-    icon: 'fas fa-users',
-    description: '用户账户和权限管理'
-  }
-])
+// 计算属性
+const menuGroups = computed(() => menuStore.menuGroups)
+const activeGroup = computed(() => menuStore.activeGroup)
 
 const displayUserName = computed(() => {
   if (!props.user) return '未登录'
   return props.user.firstName || props.user.login || '用户'
 })
 
-const handleMenuClick = (menu) => {
-  activeMenu.value = menu.code
+// 处理分组菜单点击
+const handleGroupClick = (group) => {
+  console.log('🚀 Group clicked:', group.name, 'with code:', group.code)
 
-  // 更新浏览器URL
-  router.push(`/${menu.code}`)
-
-  // 触发iframe弹窗显示模块
-  const event = new CustomEvent('showAngularModuleContainer', {
-    detail: {
-      moduleCode: menu.code, // 使用实际的菜单代码
-      title: menu.name
-    }
-  })
-  window.dispatchEvent(event)
-
-  console.log('🚀 Menu clicked, showing iframe for:', menu.name, 'with module code:', menu.code)
-  console.log('🔗 Browser URL updated to:', `/${menu.code}`)
+  // 如果点击的是当前激活的分组，则切换显示/隐藏左侧菜单
+  if (activeGroup.value === group.code) {
+    menuStore.toggleSideMenu()
+  } else {
+    // 否则激活新的分组
+    menuStore.setActiveGroup(group.code)
+  }
 }
 
 const handleLogoClick = () => {
-  // 清除活跃菜单
-  activeMenu.value = ''
+  // 清除菜单状态
+  menuStore.clearActiveMenu()
 
   // 关闭任何打开的iframe弹窗
   const event = new CustomEvent('closeAngularModuleContainer')
@@ -224,9 +148,15 @@ const handleLogout = async () => {
 }
 
 const handleClearHighlight = () => {
-  activeMenu.value = ''
+  menuStore.clearActiveMenu()
   console.log('🧭 Menu highlight cleared')
 }
+
+// 监听路由变化，自动设置菜单状态
+watch(() => route.path, (newPath) => {
+  console.log('🧭 Route changed to:', newPath)
+  menuStore.setMenuFromRoute(newPath)
+}, { immediate: true })
 
 // 生命周期
 onMounted(() => {

@@ -48,6 +48,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useModuleNavigation } from '@/composables/useModuleNavigation'
+import { getAllMenuItems } from '@/config/menu.config.js'
 import StatsCard from '@/components/StatsCard.vue'
 import QuickActions from '@/components/QuickActions.vue'
 import AngularModuleContainerModal from '@/components/AngularModuleContainerModal.vue'
@@ -63,7 +64,8 @@ watch(() => route.path, (newPath) => {
 
   // 如果是功能模块路由，自动显示iframe
   const moduleCode = newPath.substring(1) // 移除开头的 '/'
-  const moduleList = ['gfs', 'jao', 'cmd', 'cac', 'password', 'sudo', 'acm', 'patches', 'software', 'workflow', 'users']
+  const allMenuItems = getAllMenuItems()
+  const moduleList = allMenuItems.map(item => item.code)
 
   if (moduleList.includes(moduleCode)) {
     console.log('🎯 Auto-showing iframe for module:', moduleCode)
@@ -81,20 +83,9 @@ watch(() => route.path, (newPath) => {
 
 // 获取模块标题
 const getModuleTitle = (moduleCode) => {
-  const titleMap = {
-    gfs: '脚本管理',
-    jao: '作业编排',
-    cmd: '命令管理',
-    cac: '系统巡检',
-    password: '密码管理',
-    sudo: 'sudo权限管理',
-    acm: '资产管理',
-    patches: '补丁管理',
-    software: '软件管理',
-    workflow: '流程管理',
-    users: '用户管理'
-  }
-  return titleMap[moduleCode] || moduleCode.toUpperCase()
+  const allMenuItems = getAllMenuItems()
+  const menuItem = allMenuItems.find(item => item.code === moduleCode)
+  return menuItem ? menuItem.name : moduleCode.toUpperCase()
 }
 
 onMounted(async () => {
