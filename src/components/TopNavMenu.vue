@@ -2,7 +2,7 @@
   <div class="top-nav-menu">
     <div class="nav-container">
       <!-- OpsMind 标题栏 -->
-      <div class="logo-section" @click="handleLogoClick">
+      <div class="logo-section">
         <div class="logo-placeholder">
           <i class="fa fa-cube"></i>
         </div>
@@ -15,7 +15,6 @@
           <!-- 首页菜单项 -->
           <li
             class="nav-item"
-            :class="{ active: activeGroup === 'home' }"
             @click="handleHomeClick"
           >
             <div class="nav-link">
@@ -74,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
@@ -134,20 +133,7 @@ const handleGroupClick = (group) => {
     menuStore.setActiveGroup(group.code)
   }
 }
-const handleLogoClick = () => {
-  // 清除菜单状态
-  menuStore.clearActiveMenu()
 
-  // 关闭任何打开的iframe弹窗
-  const event = new CustomEvent('closeAngularModuleContainer')
-  window.dispatchEvent(event)
-
-  // 导航到home页面
-  router.push('/home')
-
-  console.log('🏠 Logo clicked, returning to home')
-  console.log('🔗 Browser URL updated to: /home')
-}
 
 
 
@@ -223,53 +209,19 @@ onUnmounted(() => {
 
 .logo-section {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
   flex: 0 0 auto;
-  cursor: pointer;
-  padding: 8px 2px;
-  transition: background-color 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  width: 60px;
+  padding: 10px 12px;
   height: 50px;
-  border-right: 1px solid #e8e8e8;
   margin: 0;
 
-  &:hover {
-    background: rgba(24, 144, 255, 0.1);
-  }
 
-  /* 水波纹效果 */
-  &:active {
-    transform: scale(0.98);
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(24, 144, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition:
-      width 0.6s,
-      height 0.6s;
-  }
-
-  &:active::before {
-    width: 200px;
-    height: 200px;
-  }
 }
 
 .logo-placeholder {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   background: linear-gradient(135deg, #1890ff, #096dd9);
   border-radius: 4px;
   display: flex;
@@ -277,16 +229,15 @@ onUnmounted(() => {
   justify-content: center;
   color: white;
   font-size: 10px;
-  margin-bottom: 2px;
+  flex-shrink: 0;
 }
 
 .app-title {
-  font-size: 9px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: #262626;
   margin: 0;
-  text-align: center;
-  line-height: 1;
+  white-space: nowrap;
 }
 
 .main-nav {
@@ -460,6 +411,7 @@ onUnmounted(() => {
 
   .logo-section {
     padding: 10px 8px;
+    gap: 4px;
   }
 
   .user-name {

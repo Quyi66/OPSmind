@@ -52,31 +52,58 @@ const initIframeManager = async () => {
 
 // 加载模块
 const loadModule = async moduleCode => {
-  if (!moduleCode) return
+  if (!moduleCode) {
+    loading.value = false
+    return
+  }
 
   console.log('📱 Loading module in inline frame:', moduleCode)
   loading.value = true
 
-  await initIframeManager()
+  try {
+    await initIframeManager()
 
-  if (singleIframeManager) {
-    // 等待DOM更新
-    await nextTick()
+    if (singleIframeManager) {
+      // 等待DOM更新
+      await nextTick()
 
-    if (iframeContainer.value) {
-      await singleIframeManager.switchToModule(moduleCode, iframeContainer.value)
-      loading.value = false
-      console.log('✅ Module loaded in inline frame:', moduleCode)
+      if (iframeContainer.value) {
+        // 先清理之前的模块
+        if (singleIframeManager.clearContainer) {
+          singleIframeManager.clearContainer(iframeContainer.value)
+        }
+
+        // 加载新模块
+        await singleIframeManager.switchToModule(moduleCode, iframeContainer.value)
+        loading.value = false
+        console.log('✅ Module loaded in inline frame:', moduleCode)
+      }
     }
+  } catch (error) {
+    loading.value = false
+    console.error('❌ Failed to load module:', moduleCode, error)
   }
 }
 
 
 
+// 防抖处理，避免快速切换时的冲突
+let loadTimeout = null
+
 // 监听模块代码变化
 watch(() => props.moduleCode, (newCode) => {
+  // 清除之前的定时器
+  if (loadTimeout) {
+    clearTimeout(loadTimeout)
+  }
+
   if (newCode) {
-    loadModule(newCode)
+    // 延迟加载，避免快速切换时的冲突
+    loadTimeout = setTimeout(() => {
+      loadModule(newCode)
+    }, 50)
+  } else {
+    loading.value = false
   }
 }, { immediate: true })
 
@@ -92,6 +119,12 @@ onMounted(() => {
 
 onUnmounted(() => {
   console.log('🔧 AngularModuleInlineFrame unmounted for:', props.moduleCode)
+
+  // 清理定时器
+  if (loadTimeout) {
+    clearTimeout(loadTimeout)
+    loadTimeout = null
+  }
 })
 </script>
 

@@ -26,15 +26,6 @@
           class="module-frame"
         />
 
-        <!-- 如果显示左侧菜单但没有选中项，显示提示 -->
-        <div v-else-if="showSideMenu" class="menu-placeholder">
-          <div class="placeholder-content">
-            <i class="fas fa-hand-pointer"></i>
-            <h3>请选择功能模块</h3>
-            <p>从左侧菜单中选择您要使用的功能模块</p>
-          </div>
-        </div>
-
         <!-- 否则显示默认的路由视图（仪表盘） -->
         <router-view v-else />
       </div>
@@ -107,36 +98,6 @@ const handleMenuItemClick = menuItem => {
   width: 100%;
   height: 100%;
   min-height: 0; // 确保iframe能够正确缩放
-}
-
-.menu-placeholder {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fafafa;
-
-  .placeholder-content {
-    text-align: center;
-    color: #999;
-
-    i {
-      font-size: 64px;
-      margin-bottom: 24px;
-      color: #ddd;
-    }
-
-    h3 {
-      font-size: 20px;
-      margin-bottom: 12px;
-      color: #666;
-    }
-
-    p {
-      font-size: 14px;
-      margin: 0;
-    }
-  }
 }
 
 // 响应式设计

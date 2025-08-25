@@ -40,6 +40,10 @@ export const useMenuStore = defineStore('menu', () => {
   // 动作
   const setActiveGroup = (groupCode) => {
     console.log('🎯 Setting active group:', groupCode)
+
+    // 先清除当前选中的菜单项，避免冲突
+    activeMenuItem.value = ''
+
     activeGroup.value = groupCode
 
     // 如果选择了分组，显示左侧菜单
@@ -47,8 +51,15 @@ export const useMenuStore = defineStore('menu', () => {
       showSideMenu.value = true
       sideMenuCollapsed.value = false
 
-      // 清除当前选中的菜单项，让用户手动选择
-      activeMenuItem.value = ''
+      // 延迟自动选中第一个二级菜单项，确保前一个模块已卸载
+      setTimeout(() => {
+        const group = getMenuGroup(groupCode)
+        if (group && group.children && group.children.length > 0) {
+          const firstMenuItem = group.children[0]
+          console.log('🎯 Auto-selecting first menu item:', firstMenuItem.code)
+          setActiveMenuItem(firstMenuItem.code)
+        }
+      }, 100) // 100ms延迟，确保状态更新完成
     } else {
       showSideMenu.value = false
       activeMenuItem.value = ''
@@ -59,7 +70,7 @@ export const useMenuStore = defineStore('menu', () => {
     console.log('🎯 Setting active menu item:', menuCode)
     activeMenuItem.value = menuCode
 
-    // 根据菜单项自动设置对应的分组（但不触发自动选择第一个菜单项）
+    // 根据菜单项自动设置对应的分组（但不触发自动选择逻辑）
     const info = getMenuItemInfo(menuCode)
     if (info && info.group.code !== activeGroup.value) {
       activeGroup.value = info.group.code
