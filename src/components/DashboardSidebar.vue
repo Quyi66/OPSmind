@@ -3,7 +3,7 @@
     <!-- 欢迎信息区域 -->
     <div class="welcome-section">
       <div class="user-avatar">
-        <img :src="userInfo.avatar" :alt="userInfo.name" />
+        <!-- 纯图标，通过CSS显示 -->
       </div>
       <div class="welcome-content">
         <div class="welcome-line1">{{ userInfo.greeting }}</div>
@@ -160,28 +160,32 @@ const handleRecentClick = (item) => {
 
 // 欢迎信息区域
 .welcome-section {
-  padding: 24px 20px;
+  padding: 16px;
   background: linear-gradient(135deg, #2D8CF0 0%, #19BE6B 100%);
   color: white;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   border-radius: 12px;
   margin: 16px;
   box-shadow: 0 4px 20px rgba(45, 140, 240, 0.15);
 }
 
 .user-avatar {
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  overflow: hidden;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  // 使用图标而不是图片
+  &::before {
+    content: '👤';
+    font-size: 20px;
+    color: white;
   }
 }
 
@@ -190,17 +194,23 @@ const handleRecentClick = (item) => {
 }
 
 .welcome-line1 {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 4px 0;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 2px 0;
   line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .welcome-line2 {
-  font-size: 12px;
-  opacity: 0.9;
+  font-size: 11px;
+  opacity: 0.8;
   margin: 0;
   line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 // 我的待办区域
@@ -226,15 +236,15 @@ const handleRecentClick = (item) => {
 .todo-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .todo-item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 12px;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
   background: #fff;
   margin-bottom: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -271,7 +281,7 @@ const handleRecentClick = (item) => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .todo-title {
@@ -294,15 +304,17 @@ const handleRecentClick = (item) => {
 
 .todo-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
+  margin-top: 2px;
 }
 
 .ignore-btn {
-  font-size: 11px;
+  font-size: 10px;
   color: #8c8c8c;
-  padding: 2px 8px;
+  padding: 2px 6px;
   height: auto;
+  min-height: auto;
 
   &:hover {
     color: #262626;
@@ -312,9 +324,9 @@ const handleRecentClick = (item) => {
 .process-btn {
   background: #2D8CF0;
   border-color: #2D8CF0;
-  border-radius: 6px;
-  font-size: 11px;
-  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 3px 8px;
   height: auto;
 
   &:hover {
@@ -330,16 +342,16 @@ const handleRecentClick = (item) => {
 }
 
 .recent-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
 .recent-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 10px 8px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -348,7 +360,7 @@ const handleRecentClick = (item) => {
 
   &:hover {
     background-color: #f8f9fa;
-    transform: translateX(2px);
+    transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   }
 }
@@ -367,10 +379,13 @@ const handleRecentClick = (item) => {
 }
 
 .recent-name {
-  font-size: 13px;
+  font-size: 11px;
   color: #262626;
   line-height: 1.2;
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 // 响应式设计
@@ -392,7 +407,22 @@ const handleRecentClick = (item) => {
   }
 
   .recent-list {
+    grid-template-columns: 1fr 1fr;
     gap: 6px;
+  }
+
+  .recent-item {
+    padding: 10px 6px;
+  }
+
+  .recent-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .recent-name {
+    font-size: 11px;
   }
 }
 </style>

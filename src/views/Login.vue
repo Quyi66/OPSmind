@@ -249,12 +249,11 @@ const notifyIframeModulesAuthUpdate = async () => {
   try {
     console.log('🚀 [Login] Starting iframe modules auth update notification...')
 
-    // 使用iframe管理器广播认证更新
+    // 使用单iframe管理器发送认证更新
     try {
-      const { GlobalIframeManager } = await import('@/utils/iframe-manager')
-      const iframeManager = GlobalIframeManager.getInstance()
-      console.log('🔗 [Login] Using GlobalIframeManager for auth broadcast')
-      iframeManager.broadcastAuthUpdate()
+      const { singleIframeManager } = await import('@/utils/single-iframe-manager')
+      console.log('🔗 [Login] Using SingleIframeManager for auth broadcast')
+      singleIframeManager.sendAuthData()
     } catch (error) {
       console.warn('⚠️ [Login] Failed to load iframe manager:', error)
     }

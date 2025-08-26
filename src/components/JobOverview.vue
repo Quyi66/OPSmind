@@ -337,12 +337,13 @@ const chartOption = computed(() => ({
 
 .chart-container {
   flex: 1;
-  min-height: 200px;
+  height: 180px;
+  min-height: 180px;
 }
 
 .chart {
   width: 100%;
-  height: 100%;
+  height: 180px;
 }
 
 // 响应式设计

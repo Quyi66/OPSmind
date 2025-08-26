@@ -84,8 +84,8 @@ const chartOption = computed(() => ({
   grid: {
     left: '20%',
     right: '10%',
-    top: '10%',
-    bottom: '10%',
+    top: '5%',
+    bottom: '5%',
     containLabel: false
   },
   xAxis: {
@@ -146,9 +146,9 @@ const chartOption = computed(() => ({
 <style scoped lang="scss">
 .asset-overview {
   background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -156,7 +156,7 @@ const chartOption = computed(() => ({
   transition: box-shadow 0.3s ease;
 
   &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -223,12 +223,13 @@ const chartOption = computed(() => ({
 
 .chart-container {
   flex: 1;
-  min-height: 200px;
+  height: 180px;
+  min-height: 180px;
 }
 
 .chart {
   width: 100%;
-  height: 100%;
+  height: 180px;
 }
 
 // 响应式设计
