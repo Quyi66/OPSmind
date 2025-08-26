@@ -243,23 +243,12 @@ class ApiService {
   }
 
   /**
-   * 获取应用列表
+   * 获取应用列表 (已废弃 - 现在使用静态配置)
+   * @deprecated 使用 angular-modules.config.ts 中的静态配置
    */
   async getApplets() {
-    try {
-      const cacheBuster = Date.now()
-      const response = await this.get(
-        `/udp/api/udp/applets?isPaging=true&cacheBuster=${cacheBuster}&query=`
-      )
-
-      const applets = response.data
-      console.log('✅ Applets loaded:', applets.length || 'unknown count')
-      console.log('📋 Applets data sample:', applets.slice(0, 3)) // 显示前3个应用的数据结构
-      return applets
-    } catch (error) {
-      console.error('❌ Failed to get applets:', error)
-      throw error
-    }
+    console.warn('⚠️ getApplets() is deprecated. Use static module configuration instead.')
+    throw new Error('getApplets() is deprecated. Use static module configuration from angular-modules.config.ts')
   }
 
   /**
@@ -308,106 +297,22 @@ class ApiService {
   }
 
   /**
-   * 转换应用数据为模块格式
+   * 转换应用数据为模块格式 (已废弃)
+   * @deprecated 使用 angular-modules.config.ts 中的静态配置
    */
   convertAppletsToModules(applets) {
-    console.log('🔄 Converting applets to modules:', applets?.length || 0, 'items')
-
-    if (!applets || !Array.isArray(applets)) {
-      console.log('⚠️ No valid applets data, using default modules')
-      return this.getDefaultModules()
-    }
-
-    const modules = applets.map(applet => {
-      // 解析 setting JSON 来获取图标和颜色
-      let setting = {}
-      try {
-        setting = JSON.parse(applet.setting || '{}')
-      } catch (error) {
-        console.warn('Failed to parse setting for applet:', applet.name, error)
-      }
-
-      return {
-        code: applet.name, // 使用 name 作为模块代码
-        title: applet.title,
-        icon: setting.icon || 'fa-cube',
-        color: setting.color || '#2196F3',
-        showIn: { desktop: 1 },
-        entry: {
-          type: 'AngularApplet',
-          value: applet.entry,
-          appletId: applet.id
-        },
-        description: applet.description || applet.title,
-        // 保存原始数据以备后用
-        _applet: applet
-      }
-    })
-
-    console.log('✅ Converted modules:', modules.length)
-    return modules.length > 0 ? modules : this.getDefaultModules()
+    console.warn('⚠️ convertAppletsToModules() is deprecated. Use static module configuration instead.')
+    return []
   }
 
   /**
-   * 默认模块列表
+   * 默认模块列表 (已废弃 - 使用静态配置)
+   * @deprecated 使用 angular-modules.config.ts 中的静态配置
    */
   getDefaultModules() {
-    return [
-      {
-        code: '__jao',
-        title: '作业编排',
-        icon: 'fa-oplus-jao',
-        color: '#212529',
-        showIn: { desktop: 3, dock: 3 },
-        entry: { type: 'AngularState', value: 'app.jao' },
-        description: '自动化作业编排和调度管理'
-      },
-      {
-        code: '__gfs',
-        title: '脚本管理',
-        icon: 'fa-oplus-gfs',
-        color: '#607D8B',
-        showIn: { desktop: 2 },
-        entry: { type: 'AngularState', value: 'app.gfs' },
-        description: '脚本文件管理和版本控制'
-      },
-      {
-        code: '__cmd',
-        title: '命令管理',
-        icon: 'fa-oplus-cmd',
-        color: '#212529',
-        showIn: { desktop: 1, dock: 1 },
-        entry: { type: 'AngularState', value: 'app.jao_cmd' },
-        description: '系统命令管理和执行'
-      },
-      {
-        code: '__cac',
-        title: '配置管理',
-        icon: 'fa-oplus-cac',
-        color: '#4CAF50',
-        showIn: { desktop: 4 },
-        entry: { type: 'AngularState', value: 'app.cac' },
-        description: '系统配置和参数管理'
-      },
-      {
-        code: '__dts',
-        title: '数据传输',
-        icon: 'fa-oplus-dts',
-        color: '#FF9800',
-        showIn: { desktop: 5 },
-        entry: { type: 'AngularState', value: 'app.dts' },
-        description: '数据传输和同步服务'
-      },
-      {
-        code: '__udp',
-        title: '统一开发平台',
-        icon: 'fa-oplus-udp',
-        color: '#2196F3',
-        showIn: { desktop: 6 },
-        entry: { type: 'AngularState', value: 'app.udp' },
-        description: '统一开发和部署平台'
-      }
-    ]
+    console.warn('⚠️ getDefaultModules() is deprecated. Use getAllModuleConfigs() from angular-modules.config.ts instead.')
+    // 返回空数组，强制使用静态配置
+    return []
   }
 }
 

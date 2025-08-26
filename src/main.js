@@ -11,6 +11,7 @@ import { setupGlobalDirectives } from '@/shared/directives'
 import { setupErrorHandler } from '@/core/error'
 import { setupPerformanceMonitor } from '@/core/performance'
 import { initPerformanceOptimizations } from '@/utils/performance-optimizer'
+import { applyIframeResourceFix } from '@/utils/iframe-resource-fix'
 
 // 导入全局样式
 import '@/styles/main.scss'
@@ -31,6 +32,9 @@ if (import.meta.env.DEV) {
 
 // 初始化性能优化
 initPerformanceOptimizations()
+
+// 应用iframe资源修复
+applyIframeResourceFix()
 
 // 注册 Element Plus 图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

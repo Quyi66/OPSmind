@@ -120,17 +120,26 @@ export class AngularJSBridge {
       },
 
       async getMenus() {
-        try {
-          // 尝试获取真实的应用列表
-          const { apiService } = await import('@/core/api')
-          const applets = await apiService.getApplets()
-          return apiService.convertAppletsToModules(applets)
-        } catch (error) {
-          console.warn('Failed to get real modules, using defaults:', error)
-          // 如果获取失败，使用默认模块
-          const { apiService } = await import('@/core/api')
-          return apiService.getDefaultModules()
-        }
+        // 直接使用静态配置的模块列表
+        const { getAllModuleConfigs } = await import('@/config/angular-modules.config')
+        const moduleConfigs = getAllModuleConfigs()
+
+        // 转换为菜单格式
+        return moduleConfigs.map(config => ({
+          code: config.code,
+          name: config.name,
+          title: config.title,
+          icon: config.icon,
+          color: config.color,
+          description: config.description,
+          showIn: { desktop: 1 },
+          entry: {
+            type: 'AngularModule',
+            value: config.angularModule
+          },
+          features: config.features,
+          permissions: config.permissions || []
+        }))
       },
 
       async getPermissions() {

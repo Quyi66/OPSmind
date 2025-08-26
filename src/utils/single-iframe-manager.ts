@@ -5,6 +5,13 @@
 
 import { authService } from '@/core/auth'
 import { appUrlManager } from '@/config/module-urls.config'
+import {
+  debounce,
+  shouldReloadIframe,
+  safeSetIframeSrc,
+  iframeOperationQueue,
+  cleanupIframeResources
+} from './iframe-resource-fix'
 
 
 
@@ -16,6 +23,7 @@ export class SingleIframeManager {
   private isLoading = false
   private currentModule: string | null = null
   private initPromise: Promise<void> | null = null
+  private lastUrl: string | null = null
 
   // 模块路由映射
   private moduleRoutes: Record<string, string> = {
@@ -145,7 +153,7 @@ export class SingleIframeManager {
   }
 
   /**
-   * 切换到指定模块（路由切换）
+   * 切换到指定模块（优化版本 - 减少不必要的重新加载）
    */
   async switchToModule(moduleCode: string, targetContainer: HTMLElement): Promise<number> {
     const startTime = performance.now()
@@ -157,6 +165,8 @@ export class SingleIframeManager {
       currentModule: this.currentModule,
       hasIframe: !!this.iframe
     })
+
+
 
     // 确保 iframe 已初始化
     await this.ensureInitialized()
@@ -183,12 +193,21 @@ export class SingleIframeManager {
       // 移动 iframe 到目标容器
       this.moveToContainer(targetContainer)
 
-      // 直接设置iframe的src，强制重新加载
-      this.iframe.src = authUrl
-      console.log(`   Final iframe src: ${this.iframe.src}`)
+      // 优化：只有URL真正改变时才重新加载
+      if (shouldReloadIframe(this.lastUrl || '', authUrl)) {
+        console.log(`🔄 URL changed, updating iframe src safely...`)
 
-      // 强制刷新iframe以确保URL变更生效
-      this.iframe.contentWindow?.location.reload()
+        // 使用队列化操作，避免并发冲突
+        await iframeOperationQueue.add(async () => {
+          if (this.iframe) {
+            await safeSetIframeSrc(this.iframe, authUrl)
+            this.lastUrl = authUrl
+          }
+        })
+
+      } else {
+        console.log(`⚡ Same URL, skipping reload for better performance`)
+      }
 
       // 重新发送认证数据，确保模块切换后认证状态正确
       this.sendAuthData()
@@ -196,7 +215,7 @@ export class SingleIframeManager {
       this.currentModule = moduleCode
 
       const switchTime = performance.now() - startTime
-      console.log(`✅ Module ${moduleCode} switched in ${switchTime.toFixed(2)}ms (URL CHANGE)`)
+      console.log(`✅ Module ${moduleCode} switched in ${switchTime.toFixed(2)}ms (OPTIMIZED)`)
 
       return switchTime
 
@@ -392,23 +411,53 @@ export class SingleIframeManager {
     }
   }
 
+
+
+  /**
+   * 清理容器中的iframe
+   */
+  clearContainer(container: HTMLElement) {
+    try {
+      // 移除所有iframe子元素
+      const iframes = container.querySelectorAll('iframe')
+      iframes.forEach(iframe => {
+        if (iframe !== this.iframe) {
+          iframe.remove()
+          console.log('🗑️ Removed orphaned iframe from container')
+        }
+      })
+    } catch (error) {
+      console.error('❌ Failed to clear container:', error)
+    }
+  }
+
   /**
    * 销毁管理器
    */
   destroy() {
-    if (this.iframe && this.iframe.parentNode) {
-      this.iframe.parentNode.removeChild(this.iframe)
+    // 清理iframe资源
+    if (this.iframe) {
+      cleanupIframeResources(this.iframe)
+
+      if (this.iframe.parentNode) {
+        this.iframe.parentNode.removeChild(this.iframe)
+      }
     }
 
+    // 移除容器
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container)
     }
 
+    // 重置状态
     this.iframe = null
     this.container = null
     this.isInitialized = false
     this.currentModule = null
     this.initPromise = null
+    this.lastUrl = null
+
+    console.log('🧹 SingleIframeManager destroyed')
   }
 }
 
