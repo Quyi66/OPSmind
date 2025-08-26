@@ -164,7 +164,7 @@ const chartOption = computed(() => ({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .header-actions {
@@ -202,16 +202,17 @@ const chartOption = computed(() => ({
 }
 
 .section-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #262626;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 
   i {
     color: #1890ff;
+    font-size: 14px;
   }
 }
 
@@ -223,13 +224,13 @@ const chartOption = computed(() => ({
 
 .chart-container {
   flex: 1;
-  height: 180px;
-  min-height: 180px;
+  height: 160px;
+  min-height: 160px;
 }
 
 .chart {
   width: 100%;
-  height: 180px;
+  height: 160px;
 }
 
 // 响应式设计
