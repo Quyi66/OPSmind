@@ -6,8 +6,8 @@
         <img :src="userInfo.avatar" :alt="userInfo.name" />
       </div>
       <div class="welcome-content">
-        <h3 class="welcome-title">{{ userInfo.greeting }}</h3>
-        <p class="welcome-subtitle">{{ userInfo.subtitle }}</p>
+        <div class="welcome-line1">{{ userInfo.greeting }}</div>
+        <div class="welcome-line2">{{ userInfo.subtitle }}</div>
       </div>
     </div>
 
@@ -25,20 +25,33 @@
         >
           <div class="todo-indicator" :class="todo.priority"></div>
           <div class="todo-content">
+            <!-- 第一行：待办提示 -->
             <div class="todo-title">{{ todo.title }}</div>
+            <!-- 第二行：From 与时间 -->
             <div class="todo-meta">
-              <span class="todo-source">{{ todo.source }}</span>
+              <span class="todo-source">From {{ todo.source }}</span>
               <span class="todo-time">{{ todo.time }}</span>
             </div>
+            <!-- 第三行：忽略与立即处理按钮 -->
+            <div class="todo-actions">
+              <el-button
+                type="text"
+                size="small"
+                class="ignore-btn"
+                @click="handleTodoIgnore(todo)"
+              >
+                忽略
+              </el-button>
+              <el-button
+                type="primary"
+                size="small"
+                class="process-btn"
+                @click="handleTodoProcess(todo)"
+              >
+                立即处理
+              </el-button>
+            </div>
           </div>
-          <el-button
-            type="primary"
-            size="small"
-            class="todo-action-btn"
-            @click="handleTodoProcess(todo)"
-          >
-            立即处理
-          </el-button>
         </div>
       </div>
     </div>
@@ -48,7 +61,7 @@
       <div class="section-header">
         <h4 class="section-title">最近使用</h4>
       </div>
-      <div class="recent-grid">
+      <div class="recent-list">
         <div
           v-for="item in recentItems"
           :key="item.id"
@@ -121,6 +134,10 @@ const handleTodoProcess = (todo) => {
   ElMessage.success(`正在处理: ${todo.title}`)
 }
 
+const handleTodoIgnore = (todo) => {
+  ElMessage.info(`已忽略: ${todo.title}`)
+}
+
 const viewAllTodos = () => {
   ElMessage.info('查看全部待办')
 }
@@ -172,16 +189,18 @@ const handleRecentClick = (item) => {
   flex: 1;
 }
 
-.welcome-title {
+.welcome-line1 {
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 4px 0;
+  line-height: 1.2;
 }
 
-.welcome-subtitle {
+.welcome-line2 {
   font-size: 12px;
   opacity: 0.9;
   margin: 0;
+  line-height: 1.2;
 }
 
 // 我的待办区域
@@ -250,27 +269,16 @@ const handleRecentClick = (item) => {
 .todo-content {
   flex: 1;
   min-width: 0;
-}
-
-.todo-action-btn {
-  background: #2D8CF0;
-  border-color: #2D8CF0;
-  border-radius: 8px;
-  font-size: 12px;
-  padding: 4px 12px;
-  height: auto;
-
-  &:hover {
-    background: #1c7ed6;
-    border-color: #1c7ed6;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .todo-title {
   font-size: 13px;
   color: #262626;
   line-height: 1.4;
-  margin-bottom: 4px;
+  font-weight: 500;
 }
 
 .todo-meta {
@@ -284,25 +292,55 @@ const handleRecentClick = (item) => {
   color: #1890ff;
 }
 
+.todo-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ignore-btn {
+  font-size: 11px;
+  color: #8c8c8c;
+  padding: 2px 8px;
+  height: auto;
+
+  &:hover {
+    color: #262626;
+  }
+}
+
+.process-btn {
+  background: #2D8CF0;
+  border-color: #2D8CF0;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 4px 12px;
+  height: auto;
+
+  &:hover {
+    background: #1c7ed6;
+    border-color: #1c7ed6;
+  }
+}
+
 // 最近使用区域
 .recent-section {
   padding: 20px;
   flex: 1;
 }
 
-.recent-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+.recent-list {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  padding: 0 16px;
 }
 
 .recent-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 12px 6px;
-  border-radius: 12px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   background: #fff;
@@ -310,29 +348,29 @@ const handleRecentClick = (item) => {
 
   &:hover {
     background-color: #f8f9fa;
-    transform: translateY(-2px);
+    transform: translateX(2px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   }
 }
 
 .recent-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: rgba(45, 140, 240, 0.1);
-  border-radius: 8px;
-  margin-bottom: 6px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 12px;
   color: #2D8CF0;
+  flex-shrink: 0;
 }
 
 .recent-name {
-  font-size: 12px;
+  font-size: 13px;
   color: #262626;
-  text-align: center;
   line-height: 1.2;
+  flex: 1;
 }
 
 // 响应式设计
@@ -353,8 +391,8 @@ const handleRecentClick = (item) => {
     padding: 16px;
   }
 
-  .recent-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .recent-list {
+    gap: 6px;
   }
 }
 </style>
