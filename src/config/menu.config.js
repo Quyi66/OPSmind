@@ -42,16 +42,22 @@ export const MENU_CONFIG = {
       ]
     },
     {
-      code: 'patch-vulnerability',
-      name: '补丁漏洞',
+      code: 'patch-testing',
+      name: '补丁测试',
       icon: 'fas fa-shield-alt',
-      description: '补丁和软件管理',
+      description: '补丁测试和漏洞管理',
       children: [
         {
           code: 'patches',
           name: '补丁',
           icon: 'fas fa-download',
           description: '系统补丁和更新管理'
+        },
+        {
+          code: 'vulnerability',
+          name: '漏洞',
+          icon: 'fas fa-bug',
+          description: '安全漏洞扫描和管理'
         },
         {
           code: 'software',

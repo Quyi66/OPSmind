@@ -21,7 +21,13 @@ const routes: CustomRouteRecord[] = [
   {
     path: '/home',
     name: 'home',
-    component: Dashboard,
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: Dashboard
+      }
+    ],
     meta: {
       title: 'OpsMind 仪表盘',
       requiresAuth: true

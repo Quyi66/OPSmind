@@ -22,27 +22,29 @@
       <!-- 主内容区 -->
       <div class="dashboard-content">
         <div class="dashboard-main">
-          <!-- 软件概览区域 -->
-          <div class="software-section">
-            <SoftwareOverview />
+          <!-- 顶部软件概览区域 -->
+          <div class="dashboard-row dashboard-row-top">
+            <div class="dashboard-card dashboard-card-full">
+              <SoftwareOverview />
+            </div>
           </div>
 
           <!-- 中间区域：作业概览和巡检概览 -->
-          <div class="middle-section">
-            <div class="job-overview-container">
+          <div class="dashboard-row dashboard-row-middle">
+            <div class="dashboard-card dashboard-card-half">
               <JobOverview />
             </div>
-            <div class="inspection-overview-container">
+            <div class="dashboard-card dashboard-card-half">
               <InspectionOverview />
             </div>
           </div>
 
           <!-- 底部区域：资产概览和漏洞概览 -->
-          <div class="bottom-section">
-            <div class="asset-overview-container">
+          <div class="dashboard-row dashboard-row-bottom">
+            <div class="dashboard-card dashboard-card-half">
               <AssetOverview />
             </div>
-            <div class="vulnerability-overview-container">
+            <div class="dashboard-card dashboard-card-half">
               <VulnerabilityOverview />
             </div>
           </div>
@@ -142,152 +144,295 @@ const handleRefresh = async () => {
 
 <style scoped lang="scss">
 .dashboard {
-  height: 100vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
   background-color: #f0f2f5;
+  min-height: 0;
 }
 
+// Dashboard主布局
 .dashboard-layout {
   flex: 1;
   display: flex;
   overflow: hidden;
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: #f5f6fa;
 }
 
+// 左侧边栏
 .dashboard-sidebar {
   flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #e8eaed;
 }
 
+// 主内容区域
 .dashboard-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  background-color: #F5F6FA;
-  height: 100vh;
+  overflow-x: hidden;
+  padding: 24px;
+  background-color: #f5f6fa;
+  min-height: 0;
+
+  // 自定义滚动条
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
 }
 
+// 加载和错误状态
 .loading-container,
 .error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  height: 100%;
   width: 100%;
+  min-height: 400px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+// Dashboard主容器
 .dashboard-main {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 40px); /* 减去padding */
-  gap: 16px;
+  gap: 24px;
+  min-height: calc(100vh - 200px);
+  width: 100%;
 }
 
-.software-section {
-  flex: 1; /* 占1/3高度 */
+// Dashboard行布局
+.dashboard-row {
   display: flex;
-  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+
+  &.dashboard-row-top {
+    flex: 0 0 auto;
+    min-height: 280px;
+  }
+
+  &.dashboard-row-middle,
+  &.dashboard-row-bottom {
+    flex: 1;
+    min-height: 320px;
+  }
 }
 
-.middle-section,
-.bottom-section {
-  flex: 1; /* 各占1/3高度 */
-  display: flex;
-  gap: 16px;
-}
-
-.job-overview-container,
-.inspection-overview-container,
-.asset-overview-container,
-.vulnerability-overview-container {
-  flex: 1;
-  height: 100%;
+// Dashboard卡片
+.dashboard-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  position: relative;
+  transition: all 0.3s ease;
+  border: 1px solid #e8eaed;
+
+  &:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+
+  &.dashboard-card-full {
+    flex: 1;
+    width: 100%;
+  }
+
+  &.dashboard-card-half {
+    flex: 1;
+    min-width: 0; // 防止flex子元素溢出
+  }
 }
 
 // 响应式设计
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
   .dashboard-main {
-    height: auto; /* 在小屏幕上允许滚动 */
+    max-width: 100%;
+    padding: 0 12px;
   }
 
-  .software-section,
-  .middle-section,
-  .bottom-section {
-    flex: none; /* 取消flex比例 */
+  .dashboard-row {
+    gap: 20px;
   }
 
-  .middle-section,
-  .bottom-section {
-    flex-direction: column;
+  .dashboard-card {
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .dashboard-content {
+    padding: 20px;
+  }
+
+  .dashboard-main {
+    gap: 20px;
+    min-height: auto;
+  }
+
+  .dashboard-row {
     gap: 16px;
+
+    &.dashboard-row-top {
+      min-height: 240px;
+    }
+
+    &.dashboard-row-middle,
+    &.dashboard-row-bottom {
+      min-height: 280px;
+    }
+  }
+}
+
+@media (max-width: 992px) {
+  .dashboard-row {
+    &.dashboard-row-middle,
+    &.dashboard-row-bottom {
+      flex-direction: column;
+      gap: 16px;
+    }
   }
 
-  .job-overview-container,
-  .inspection-overview-container,
-  .asset-overview-container,
-  .vulnerability-overview-container {
-    flex: none;
-    height: 350px;
+  .dashboard-card {
+    &.dashboard-card-half {
+      flex: none;
+      width: 100%;
+      min-height: 280px;
+    }
   }
 }
 
 @media (max-width: 768px) {
-  .dashboard-layout {
-    flex-direction: column;
-  }
-
-  .dashboard-sidebar {
-    order: 2;
-    height: auto;
-  }
-
   .dashboard-content {
-    order: 1;
-    padding: 10px;
+    padding: 16px;
   }
 
   .dashboard-main {
-    height: auto; /* 移动端允许滚动 */
+    gap: 16px;
+  }
+
+  .dashboard-row {
     gap: 12px;
+
+    &.dashboard-row-top {
+      min-height: 200px;
+    }
+
+    &.dashboard-row-middle,
+    &.dashboard-row-bottom {
+      min-height: 240px;
+    }
   }
 
-  .software-section,
-  .middle-section,
-  .bottom-section {
-    flex: none; /* 移动端取消flex比例 */
-  }
+  .dashboard-card {
+    border-radius: 8px;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
 
-  .middle-section,
-  .bottom-section {
-    gap: 12px;
-  }
+    &:hover {
+      transform: none;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
 
-  .job-overview-container,
-  .inspection-overview-container,
-  .asset-overview-container,
-  .vulnerability-overview-container {
-    flex: none;
-    height: 300px;
+    &.dashboard-card-half {
+      min-height: 240px;
+    }
   }
 }
 
 @media (max-width: 576px) {
   .dashboard-content {
-    padding: 8px;
+    padding: 12px;
   }
 
   .dashboard-main {
     gap: 12px;
   }
 
-  .overview-left,
-  .overview-right {
-    height: 300px;
+  .dashboard-row {
+    gap: 8px;
+
+    &.dashboard-row-top {
+      min-height: 180px;
+    }
+
+    &.dashboard-row-middle,
+    &.dashboard-row-bottom {
+      min-height: 200px;
+    }
+  }
+
+  .dashboard-card {
+    border-radius: 6px;
+
+    &.dashboard-card-half {
+      min-height: 200px;
+    }
+  }
+}
+
+// 横屏移动端优化
+@media (max-width: 768px) and (orientation: landscape) {
+  .dashboard-content {
+    padding: 12px;
+  }
+
+  .dashboard-row {
+    &.dashboard-row-middle,
+    &.dashboard-row-bottom {
+      flex-direction: row;
+    }
+  }
+
+  .dashboard-card {
+    &.dashboard-card-half {
+      flex: 1;
+      min-height: 200px;
+    }
+  }
+}
+
+// 高分辨率屏幕优化
+@media (min-width: 1600px) {
+  .dashboard-main {
+    max-width: 1800px;
+  }
+
+  .dashboard-row {
+    gap: 32px;
+
+    &.dashboard-row-top {
+      min-height: 320px;
+    }
+
+    &.dashboard-row-middle,
+    &.dashboard-row-bottom {
+      min-height: 360px;
+    }
+  }
+
+  .dashboard-card {
+    border-radius: 16px;
   }
 }
 </style>
