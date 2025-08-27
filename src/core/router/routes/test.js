@@ -12,5 +12,14 @@ export const testRoutes = [
       title: '测试页面',
       requiresAuth: false
     }
+  },
+  {
+    path: '/tailwind-test',
+    name: 'TailwindTest',
+    component: () => import('@/views/TailwindTest.vue'),
+    meta: {
+      title: 'Tailwind CSS 测试',
+      requiresAuth: false
+    }
   }
 ]

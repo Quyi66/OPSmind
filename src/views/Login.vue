@@ -1,130 +1,177 @@
 <template>
-  <div class="login-container">
-    <!-- Logo 区域 -->
-    <div class="logo-section">
-      <div class="logo">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="32" height="32" rx="8" fill="#2196F3"/>
-          <path d="M8 12h16v8H8z" fill="white" opacity="0.9"/>
-          <path d="M12 8h8v16h-8z" fill="white" opacity="0.7"/>
-        </svg>
-        <span class="logo-text">OpsMind</span>
+  <div class="min-h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 relative overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-20">
+      <div class="absolute top-20 left-20 w-2 h-2 bg-white rounded-full"></div>
+      <div class="absolute top-32 left-40 w-1 h-1 bg-white rounded-full"></div>
+      <div class="absolute top-40 left-60 w-2 h-2 bg-white rounded-full"></div>
+      <div class="absolute top-60 left-80 w-1 h-1 bg-white rounded-full"></div>
+      <div class="absolute top-80 left-32 w-2 h-2 bg-white rounded-full"></div>
+      <div class="absolute bottom-40 right-40 w-2 h-2 bg-white rounded-full"></div>
+      <div class="absolute bottom-60 right-60 w-1 h-1 bg-white rounded-full"></div>
+      <div class="absolute bottom-80 right-80 w-2 h-2 bg-white rounded-full"></div>
+      <!-- Dotted pattern -->
+      <div class="absolute bottom-0 right-0 w-96 h-96 opacity-30">
+        <div class="grid grid-cols-12 gap-2 p-8">
+          <div v-for="i in 144" :key="i" class="w-1 h-1 bg-white rounded-full"></div>
+        </div>
       </div>
     </div>
 
-    <!-- 主要内容区域 - 统一的白色卡片 -->
-    <div class="main-content">
-      <div class="login-card">
-        <!-- 左侧插图区域 -->
-        <div class="login-illustration">
-          <div class="illustration-content">
-            <img src="@/assets/images/login-illustration.svg" alt="OpsMind Dashboard" class="illustration-image" />
-          </div>
+    <!-- Header -->
+    <header class="relative z-10 p-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div class="w-6 h-6 bg-white rounded transform rotate-45"></div>
         </div>
+        <span class="text-white text-xl font-bold">OpsMind</span>
+      </div>
+    </header>
 
-        <!-- 右侧登录表单区域 -->
-        <div class="login-form-section">
-        <div class="login-header">
-          <h1>用户登录</h1>
-          <!-- 开发环境提示 -->
-          <div v-if="isDev" class="dev-notice">
-            <el-alert
-              title="开发环境"
-              type="info"
-              :closable="false"
-              show-icon
-            >
-              <template #default>
-                <p>默认账号: <strong>admin</strong></p>
-                <p>默认密码: <strong>Oplus@2020</strong></p>
-              </template>
-            </el-alert>
-          </div>
-        </div>
+    <!-- Main Content -->
+    <div class="relative z-10 flex items-center justify-center min-h-[calc(100vh-120px)]">
+      <div class="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-4xl w-full mx-4">
+        <div class="flex">
+          <!-- Left Side - Illustration -->
+          <div class="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-50 to-blue-100 items-center justify-center p-12">
+            <div class="relative">
+              <!-- 3D Isometric Illustration Placeholder -->
+              <div class="relative w-80 h-80">
+                <!-- Main Platform -->
+                <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-64 h-8 bg-blue-600 rounded-lg shadow-lg" style="transform: translateX(-50%) rotateX(60deg) rotateY(-15deg);"></div>
 
-        <div v-if="initializing" class="initializing-container">
-          <p>正在初始化登录页面...</p>
-          <div class="loading-spinner">
-            <i class="el-icon-loading"></i>
-          </div>
-        </div>
+                <!-- Devices -->
+                <div class="absolute bottom-8 left-1/4 w-20 h-24 bg-blue-500 rounded shadow-lg transform rotate-12">
+                  <div class="w-full h-3 bg-blue-400 rounded-t"></div>
+                  <div class="p-2">
+                    <div class="w-full h-2 bg-blue-300 rounded mb-1"></div>
+                    <div class="w-3/4 h-2 bg-blue-300 rounded mb-1"></div>
+                    <div class="w-1/2 h-2 bg-blue-300 rounded"></div>
+                  </div>
+                </div>
 
-        <el-form
-          v-else
-          ref="loginFormRef"
-          :model="loginForm"
-          :rules="loginRules"
-          class="login-form"
-          @submit.prevent="handleLogin"
-        >
-          <div v-if="authError" class="error-message">
-            <el-alert :title="errorMessage" type="error" :closable="false" show-icon></el-alert>
-          </div>
+                <div class="absolute bottom-12 right-1/4 w-24 h-16 bg-blue-600 rounded shadow-lg transform -rotate-6">
+                  <div class="w-full h-2 bg-blue-500 rounded-t"></div>
+                  <div class="p-2">
+                    <div class="w-full h-1 bg-blue-400 rounded mb-1"></div>
+                    <div class="w-2/3 h-1 bg-blue-400 rounded mb-1"></div>
+                    <div class="w-1/3 h-1 bg-blue-400 rounded"></div>
+                  </div>
+                </div>
 
-          <el-form-item prop="username">
-            <el-input
-              v-model="loginForm.username"
-              placeholder="用户名"
-              size="large"
-              prefix-icon="User"
-              :disabled="loading"
-            ></el-input>
-          </el-form-item>
+                <div class="absolute bottom-16 left-1/2 transform -translate-x-1/2 w-28 h-20 bg-blue-700 rounded shadow-lg">
+                  <div class="w-full h-3 bg-blue-600 rounded-t"></div>
+                  <div class="p-2">
+                    <div class="w-full h-2 bg-blue-500 rounded mb-1"></div>
+                    <div class="w-4/5 h-2 bg-blue-500 rounded mb-1"></div>
+                    <div class="w-3/5 h-2 bg-blue-500 rounded"></div>
+                  </div>
+                </div>
 
-          <el-form-item prop="password">
-            <el-input
-              v-model="loginForm.password"
-              type="password"
-              placeholder="密码"
-              size="large"
-              prefix-icon="Lock"
-              :disabled="loading"
-              @keyup.enter="handleLogin"
-            ></el-input>
-          </el-form-item>
-
-          <el-form-item v-if="showOTP" prop="otpCode">
-            <el-input
-              v-model="loginForm.otpCode"
-              placeholder="动态验证码"
-              size="large"
-              prefix-icon="Key"
-              :disabled="loading"
-              maxlength="6"
-              @keyup.enter="handleLogin"
-            ></el-input>
-          </el-form-item>
-
-          <el-form-item>
-            <el-checkbox v-model="loginForm.rememberMe" :disabled="loading">保持登录状态</el-checkbox>
-          </el-form-item>
-
-          <el-form-item>
-            <div class="login-buttons">
-              <el-button
-                type="primary"
-                size="large"
-                :loading="loading"
-                @click="handleLogin"
-                :class="isDev ? 'login-button-dev' : 'login-button'"
-              >
-                {{ loading ? '登录中...' : '登录' }}
-              </el-button>
-
-              <!-- 开发环境快速登录按钮 -->
-              <el-button
-                v-if="isDev"
-                type="success"
-                size="large"
-                :loading="loading"
-                @click="handleQuickLogin"
-                class="quick-login-button"
-              >
-                快速登录
-              </el-button>
+                <!-- Floating Elements -->
+                <div class="absolute top-4 left-8 w-6 h-6 bg-blue-400 rounded-full shadow-lg animate-bounce"></div>
+                <div class="absolute top-8 right-12 w-4 h-4 bg-blue-300 rounded shadow-lg animate-pulse"></div>
+                <div class="absolute top-16 left-16 w-8 h-8 bg-blue-500 rounded shadow-lg transform rotate-45 animate-float"></div>
+              </div>
             </div>
-          </el-form-item>
-        </el-form>
+          </div>
+
+          <!-- Right Side - Login Form -->
+          <div class="w-full md:w-1/2 p-12">
+            <div class="max-w-sm mx-auto">
+              <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">用户登录</h2>
+
+              <!-- 开发环境提示 -->
+              <div v-if="isDev" class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="text-sm text-blue-800">
+                  <p class="font-medium mb-1">开发环境</p>
+                  <p>默认账号: <strong>admin</strong></p>
+                  <p>默认密码: <strong>Oplus@2020</strong></p>
+                </div>
+              </div>
+
+              <div v-if="initializing" class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="mt-4 text-gray-600">正在初始化登录页面...</p>
+              </div>
+
+              <form v-else @submit.prevent="handleLogin" class="space-y-6">
+                <div v-if="authError" class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p class="text-sm text-red-800">{{ errorMessage }}</p>
+                </div>
+
+                <div>
+                  <input
+                    v-model="loginForm.username"
+                    type="text"
+                    placeholder="用户名"
+                    autocomplete="username"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                    :disabled="loading"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <input
+                    v-model="loginForm.password"
+                    type="password"
+                    placeholder="密码"
+                    autocomplete="current-password"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                    :disabled="loading"
+                    @keyup.enter="handleLogin"
+                    required
+                  />
+                </div>
+
+                <div v-if="showOTP">
+                  <input
+                    v-model="loginForm.otpCode"
+                    type="text"
+                    placeholder="动态验证码"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                    :disabled="loading"
+                    maxlength="6"
+                    @keyup.enter="handleLogin"
+                  />
+                </div>
+
+                <div class="flex items-center">
+                  <input
+                    v-model="loginForm.rememberMe"
+                    type="checkbox"
+                    id="remember"
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    :disabled="loading"
+                  />
+                  <label for="remember" class="ml-2 text-sm text-gray-600">
+                    保持登录状态
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 font-medium"
+                  :disabled="loading"
+                >
+                  <span v-if="loading">登录中...</span>
+                  <span v-else>登录</span>
+                </button>
+
+                <!-- 开发环境快速登录按钮 -->
+                <button
+                  v-if="isDev"
+                  type="button"
+                  @click="handleQuickLogin"
+                  class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200 font-medium"
+                  :disabled="loading"
+                >
+                  快速登录 (开发环境)
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -178,7 +225,12 @@ const handleLogin = async () => {
   if (loading.value) return
 
   try {
-    await loginFormRef.value.validate()
+    // 简单的表单验证
+    if (!loginForm.username || !loginForm.password) {
+      authError.value = true
+      errorMessage.value = '请输入用户名和密码'
+      return
+    }
 
     loading.value = true
     authError.value = false
@@ -326,341 +378,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.login-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #4a90e2 0%, #357abd 50%, #1e5f99 100%);
-  position: relative;
-  overflow: hidden;
-  padding: 40px;
+/* 自定义动画 */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 
-/* 添加背景装饰点 */
-.login-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image:
-    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-    radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size:
-    50px 50px,
-    80px 80px,
-    100px 100px;
-  pointer-events: none;
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
-/* Logo 区域 */
-.logo-section {
-  position: absolute;
-  top: 60px;
-  left: 60px;
-  z-index: 10;
-}
+/* Tailwind CSS 样式已经通过类名应用，这里只需要添加自定义动画 */
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
 
-.logo-text {
-  color: white;
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-}
-
-/* 主要内容区域 */
-.main-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-}
-
-/* 统一的白色卡片容器 */
-.login-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  display: flex;
-  overflow: hidden;
-  width: 800px;
-  height: 520px;
-  position: relative;
-  z-index: 1;
-}
-
-/* 左侧插图区域 */
-.login-illustration {
-  flex: 0 0 480px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(135deg, #f8fbff 0%, #e8f4fd 100%);
-  padding: 60px 40px;
-}
-
-.illustration-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-}
-
-.illustration-image {
-  width: 100%;
-  height: 100%;
-  max-width: 400px;
-  max-height: 300px;
-  object-fit: contain;
-}
-
-/* 右侧登录表单区域 */
-.login-form-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 40px 32px;
-  background: white;
-}
-
-.login-header {
-  text-align: left;
-  margin-bottom: 24px;
-}
-
-.login-header h1 {
-  color: #333;
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 16px 0;
-}
-
-.dev-notice {
-  margin-top: 16px;
-  text-align: left;
-}
-
-.dev-notice .el-alert {
-  border-radius: 8px;
-}
-
-.dev-notice p {
-  margin: 4px 0;
-  font-size: 13px;
-}
-
-.login-form {
-  margin-bottom: 0;
-}
-
-.error-message {
-  margin-bottom: 16px;
-}
-
-/* 表单项样式 */
-.login-form :deep(.el-form-item) {
-  margin-bottom: 16px;
-}
-
-.login-form :deep(.el-input__wrapper) {
-  border-radius: 6px;
-  border: 1px solid #e0e0e0;
-  box-shadow: none;
-  padding: 10px 12px;
-  height: 40px;
-}
-
-.login-form :deep(.el-input__wrapper:hover) {
-  border-color: #2196f3;
-}
-
-.login-form :deep(.el-input__wrapper.is-focus) {
-  border-color: #2196f3;
-  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
-}
-
-.login-form :deep(.el-input__inner) {
-  font-size: 14px;
-  color: #333;
-}
-
-.login-form :deep(.el-input__inner::placeholder) {
-  color: #999;
-}
-
-/* 复选框样式 */
-.login-form :deep(.el-checkbox__label) {
-  font-size: 14px;
-  color: #666;
-}
-
-.login-buttons {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.login-button {
-  width: 100%;
-  height: 40px;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 6px;
-  background: #2196f3;
-  border: none;
-}
-
-.login-button:hover {
-  background: #1976d2;
-}
-
-.login-button-dev {
-  flex: 1;
-  height: 40px;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 6px;
-  background: #2196f3;
-  border: none;
-}
-
-.login-button-dev:hover {
-  background: #1976d2;
-}
-
-.quick-login-button {
-  height: 40px;
-  font-size: 12px;
-  font-weight: 500;
-  min-width: 80px;
-  flex-shrink: 0;
-  border-radius: 6px;
-}
-
-.initializing-container {
-  text-align: center;
-  padding: 40px 20px;
-  color: #666;
-}
-
-.loading-spinner {
-  margin-top: 16px;
-  font-size: 24px;
-  color: #2196f3;
-}
-
-.loading-spinner i {
-  animation: rotating 2s linear infinite;
-}
-
-@keyframes rotating {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* 响应式设计 */
-@media (max-width: 900px) {
-  .login-container {
-    padding: 20px;
-  }
-
-  .login-card {
-    width: 90%;
-    max-width: 700px;
-    height: auto;
-    min-height: 450px;
-  }
-
-  .login-illustration {
-    flex: 0 0 400px;
-    padding: 40px 30px;
-  }
-
-  .login-form-section {
-    padding: 30px 24px;
-  }
-}
-
-@media (max-width: 768px) {
-  .login-card {
-    flex-direction: column;
-    width: 95%;
-    max-width: 400px;
-    height: auto;
-  }
-
-  .login-illustration {
-    flex: none;
-    padding: 30px;
-    height: 200px;
-  }
-
-  .illustration-content {
-    height: 100%;
-  }
-
-  .illustration-image {
-    max-width: 250px;
-    max-height: 150px;
-  }
-
-  .login-form-section {
-    flex: none;
-    padding: 24px 32px 32px;
-  }
-
-  .login-header h1 {
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 480px) {
-  .login-container {
-    padding: 16px;
-  }
-
-  .login-card {
-    width: 100%;
-    max-width: 350px;
-  }
-
-  .login-illustration {
-    padding: 20px;
-    height: 160px;
-  }
-
-  .illustration-image {
-    max-width: 200px;
-    max-height: 120px;
-  }
-
-  .login-form-section {
-    padding: 20px 24px 24px;
-  }
-
-  .logo-section {
-    top: 20px;
-    left: 20px;
-  }
-
-  .logo-text {
-    font-size: 18px;
-  }
-}
 </style>

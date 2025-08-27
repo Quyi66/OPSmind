@@ -1,5 +1,8 @@
-// 导入变量
+// 导入变量 (必须在最前面)
 @use './variables.scss' as *;
+
+// Tailwind CSS v4 - 使用 @import 而不是 @tailwind 指令
+@import "tailwindcss";
 
 // 全局重置样式
 * {
@@ -21,7 +24,9 @@ body {
   height: 100%;
 }
 
-// 通用工具类
+// 通用工具类 (注释掉与Tailwind冲突的类)
+// 这些类已经被Tailwind CSS提供，无需重复定义
+/*
 .text-center {
   text-align: center;
 }
@@ -85,8 +90,11 @@ body {
 .flex-column {
   flex-direction: column;
 }
+*/
 
-// 间距工具类
+// 间距工具类 (注释掉与Tailwind冲突的类)
+// Tailwind提供了更完整的间距系统: m-0, m-1, m-2, p-0, p-1, p-2 等
+/*
 .m-0 {
   margin: 0;
 }
@@ -134,8 +142,11 @@ body {
 .p-5 {
   padding: $spacing-xl;
 }
+*/
 
-// 边距工具类
+// 边距和内边距工具类 (注释掉与Tailwind冲突的类)
+// Tailwind提供了完整的间距系统: mt-1, mb-2, ml-3, mr-4, pt-1, pb-2, pl-3, pr-4 等
+/*
 .mt-1 {
   margin-top: $spacing-xs;
 }
@@ -265,7 +276,8 @@ body {
   padding-right: $spacing-lg;
 }
 
-// 响应式工具类
+// 响应式工具类 (注释掉与Tailwind冲突的类)
+// Tailwind提供了响应式前缀: md:hidden, md:block, sm:hidden, sm:block 等
 @media (max-width: $breakpoint-md) {
   .d-md-none {
     display: none;
@@ -285,3 +297,4 @@ body {
     display: block;
   }
 }
+*/
