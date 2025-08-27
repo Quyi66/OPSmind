@@ -154,11 +154,12 @@ const handleRefresh = async () => {
 /* 主内容区域 */
 .dashboard-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 32px;
+  overflow: hidden;
+  padding: 8px 16px 6px 16px;
   background: transparent;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Dashboard主容器 */
@@ -166,30 +167,53 @@ const handleRefresh = async () => {
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
 }
 
 /* Dashboard行布局 */
 .dashboard-row {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   width: 100%;
+}
+
+/* 第一行 - AI助手区域 */
+.dashboard-row:nth-child(1) {
+  flex: 0 0 80px;
+  min-height: 80px;
+}
+
+/* 第二行 - 作业概览 & 巡检概览 */
+.dashboard-row:nth-child(2) {
+  flex: 6;
+  min-height: 0;
+}
+
+/* 第三行 - 资产概览 & 漏洞概览 */
+.dashboard-row:nth-child(3) {
+  flex: 3;
+  min-height: 0;
 }
 
 /* Dashboard卡片 */
 .dashboard-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid #e8eaed;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   overflow: hidden;
-  transition: box-shadow 0.3s ease;
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .dashboard-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
 }
 
 .dashboard-card.full-width {
@@ -218,11 +242,24 @@ const handleRefresh = async () => {
 /* 响应式设计 */
 @media (max-width: 1024px) {
   .dashboard-main {
-    gap: 20px;
+    gap: 16px;
   }
 
   .dashboard-row {
-    gap: 20px;
+    gap: 16px;
+  }
+
+  /* 保持1:5:4的比例 */
+  .dashboard-row:nth-child(1) {
+    flex: 1;
+  }
+
+  .dashboard-row:nth-child(2) {
+    flex: 5;
+  }
+
+  .dashboard-row:nth-child(3) {
+    flex: 4;
   }
 }
 
@@ -238,16 +275,27 @@ const handleRefresh = async () => {
   }
 
   .dashboard-content {
-    padding: 16px;
+    padding: 12px;
+    overflow-y: auto;
   }
 
   .dashboard-main {
-    gap: 16px;
+    gap: 12px;
+    height: auto;
   }
 
   .dashboard-row {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
+    flex: none;
+  }
+
+  /* 移动端重置高度 */
+  .dashboard-row:nth-child(1),
+  .dashboard-row:nth-child(2),
+  .dashboard-row:nth-child(3) {
+    flex: none;
+    min-height: auto;
   }
 
   .dashboard-card.half-width {

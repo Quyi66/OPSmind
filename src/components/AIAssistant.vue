@@ -123,10 +123,11 @@ const handleChatClick = (chat) => {
 
 <style scoped lang="scss">
 .ai-assistant {
-  padding: 20px;
+  padding: 12px 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .assistant-banner {
@@ -134,9 +135,9 @@ const handleChatClick = (chat) => {
   align-items: center;
   justify-content: space-between;
   background: #f8f9fa;
-  border-radius: 12px;
-  padding: 16px 20px;
-  gap: 20px;
+  border-radius: 10px;
+  padding: 10px 16px;
+  gap: 16px;
 }
 
 .banner-content {
@@ -147,8 +148,8 @@ const handleChatClick = (chat) => {
 }
 
 .robot-icon {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   background: linear-gradient(135deg, #2D8CF0 0%, #19BE6B 100%);
   border-radius: 50%;
   display: flex;
@@ -157,7 +158,7 @@ const handleChatClick = (chat) => {
   flex-shrink: 0;
 
   i {
-    font-size: 18px;
+    font-size: 14px;
     color: white;
   }
 }
@@ -167,11 +168,11 @@ const handleChatClick = (chat) => {
 }
 
 .banner-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #262626;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .search-container {
@@ -183,9 +184,10 @@ const handleChatClick = (chat) => {
   align-items: center;
   background: white;
   border: 1px solid #d9d9d9;
-  border-radius: 20px;
-  padding: 8px 12px;
-  min-width: 280px;
+  border-radius: 16px;
+  padding: 5px 10px;
+  min-width: 220px;
+  height: 32px;
   transition: border-color 0.3s ease;
 
   &:focus-within {

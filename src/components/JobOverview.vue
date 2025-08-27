@@ -1,5 +1,6 @@
 <template>
   <div class="job-overview">
+    <!-- 标题 -->
     <div class="section-header">
       <h3 class="section-title">作业概览</h3>
       <div class="header-actions">
@@ -13,50 +14,44 @@
         v-for="stat in jobStats"
         :key="stat.id"
         class="job-stat-item"
-        :class="stat.type"
+        :class="stat.cardClass"
       >
         <div class="stat-icon" :class="stat.iconClass">
           <i :class="stat.icon"></i>
         </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ stat.value }}</div>
+        <div class="stat-content">
           <div class="stat-label">{{ stat.label }}</div>
+          <div class="stat-value">{{ stat.value }}</div>
         </div>
       </div>
     </div>
 
-    <!-- 图表标题 -->
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-medium text-gray-900">近10天执行作业数据</h3>
-      <div class="flex items-center space-x-4">
-        <span class="text-xs text-gray-500">单位：次</span>
-        <div class="flex items-center space-x-4">
-          <div class="flex items-center space-x-1">
-            <div class="w-3 h-3 bg-blue-500 rounded"></div>
-            <span class="text-xs text-gray-600">REST作业</span>
-          </div>
-          <div class="flex items-center space-x-1">
-            <div class="w-3 h-3 bg-blue-400 rounded"></div>
-            <span class="text-xs text-gray-600">合令作业</span>
-          </div>
-          <div class="flex items-center space-x-1">
-            <div class="w-3 h-3 bg-green-500 rounded"></div>
-            <span class="text-xs text-gray-600">脚本作业</span>
-          </div>
+    <!-- 图表标题和图例 -->
+    <div class="chart-header">
+      <h4 class="chart-title">近10天执行作业数据</h4>
+      <div class="chart-legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: #3b82f6;"></div>
+          <span>REST作业</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #f97316;"></div>
+          <span>命令作业</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #10b981;"></div>
+          <span>脚本作业</span>
         </div>
       </div>
     </div>
 
-    <!-- 图表容器 -->
-    <div class="h-48 flex items-end justify-between space-x-2">
-      <div v-for="(day, index) in chartData.dates" :key="index" class="flex-1 flex flex-col items-center">
-        <div class="w-full flex flex-col items-center space-y-1 mb-2">
-          <div class="w-full bg-blue-500 rounded-t" :style="`height: ${chartData.restJobs[index] / 5}px`"></div>
-          <div class="w-full bg-blue-400 rounded" :style="`height: ${chartData.commandJobs[index] / 5}px`"></div>
-          <div class="w-full bg-green-500 rounded-b" :style="`height: ${chartData.scriptJobs[index] / 5}px`"></div>
-        </div>
-        <span class="text-xs text-gray-500">{{ day }}</span>
-      </div>
+    <!-- ECharts图表容器 -->
+    <div class="chart-container">
+      <v-chart
+        class="chart"
+        :option="chartOption"
+        autoresize
+      />
     </div>
   </div>
 </template>
@@ -92,7 +87,7 @@ const jobStats = ref([
     value: '78',
     icon: 'fas fa-globe',
     iconClass: 'blue-icon',
-    type: 'primary'
+    cardClass: 'blue-card'
   },
   {
     id: 'command-jobs',
@@ -100,7 +95,7 @@ const jobStats = ref([
     value: '2',
     icon: 'fas fa-terminal',
     iconClass: 'orange-icon',
-    type: 'warning'
+    cardClass: 'orange-card'
   },
   {
     id: 'script-jobs',
@@ -108,7 +103,7 @@ const jobStats = ref([
     value: '56',
     icon: 'fas fa-file-code',
     iconClass: 'green-icon',
-    type: 'success'
+    cardClass: 'green-card'
   }
 ])
 
@@ -129,12 +124,19 @@ const chartOption = computed(() => ({
     trigger: 'axis',
     axisPointer: {
       type: 'shadow'
+    },
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: '#e8e8e8',
+    borderWidth: 1,
+    textStyle: {
+      color: '#333'
     }
   },
   grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '3%',
+    left: '5%',
+    right: '5%',
+    bottom: '15%',
+    top: '10%',
     containLabel: true
   },
   xAxis: {
@@ -146,7 +148,12 @@ const chartOption = computed(() => ({
       }
     },
     axisLabel: {
-      color: '#666'
+      color: '#666',
+      fontSize: 12,
+      margin: 10
+    },
+    axisTick: {
+      show: false
     }
   },
   yAxis: {
@@ -159,11 +166,13 @@ const chartOption = computed(() => ({
       show: false
     },
     axisLabel: {
-      color: '#666'
+      color: '#666',
+      fontSize: 12
     },
     splitLine: {
       lineStyle: {
-        color: '#f0f0f0'
+        color: '#f0f0f0',
+        type: 'dashed'
       }
     }
   },
@@ -173,16 +182,19 @@ const chartOption = computed(() => ({
       type: 'bar',
       data: chartData.value.restJobs,
       itemStyle: {
-        color: '#2D8CF0'
+        color: '#3b82f6',
+        borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '20%'
+      barWidth: '20%',
+      barGap: '20%'
     },
     {
       name: '命令作业',
       type: 'bar',
       data: chartData.value.commandJobs,
       itemStyle: {
-        color: '#19BE6B'
+        color: '#f97316',
+        borderRadius: [2, 2, 0, 0]
       },
       barWidth: '20%'
     },
@@ -191,7 +203,8 @@ const chartOption = computed(() => ({
       type: 'bar',
       data: chartData.value.scriptJobs,
       itemStyle: {
-        color: '#52c41a'
+        color: '#10b981',
+        borderRadius: [2, 2, 0, 0]
       },
       barWidth: '20%'
     }
@@ -201,7 +214,6 @@ const chartOption = computed(() => ({
 
 <style scoped lang="scss">
 .job-overview {
-  padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -209,17 +221,42 @@ const chartOption = computed(() => ({
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+// 标题区域
+.section-header {
+  flex: 0 0 auto;
+  height: 40px;
+}
+
+// 统计区域
+.job-stats {
+  flex: 0 0 auto;
+  height: 80px;
+}
+
+// 图表标题区域
+.chart-header {
+  flex: 0 0 auto;
+  height: 40px;
+}
+
+// 图表区域
+.chart-container {
+  flex: 1;
+  min-height: 0;
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 0 16px;
+  margin-bottom: 0;
 }
 
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #262626;
+  color: #374151;
   margin: 0;
 }
 
@@ -244,10 +281,15 @@ const chartOption = computed(() => ({
   }
 }
 
+// 作业统计样式
 .job-stats {
   display: flex;
   gap: 16px;
-  margin-bottom: 24px;
+  align-items: center;
+  padding: 0 16px;
+  background: #fafbfc;
+  border-radius: 8px;
+  margin: 0 16px;
 }
 
 .job-stat-item {
@@ -255,61 +297,125 @@ const chartOption = computed(() => ({
   align-items: center;
   gap: 12px;
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 8px;
   flex: 1;
+  border: 1px solid #f5f6f7;
   background: white;
-  border: 1px solid #f0f0f0;
   transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  &.blue-card {
+    border-color: #e8f2ff;
+  }
+
+  &.orange-card {
+    border-color: #fff4e6;
+  }
+
+  &.green-card {
+    border-color: #e8f5e8;
   }
 }
 
 .stat-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 12px;
   flex-shrink: 0;
 
   i {
-    font-size: 16px;
+    font-size: 24px;
     color: white;
   }
 
   &.blue-icon {
-    background: #2D8CF0;
+    background: #3b82f6;
   }
 
   &.orange-icon {
-    background: #FF9900;
+    background: #f97316;
   }
 
   &.green-icon {
-    background: #19BE6B;
+    background: #10b981;
   }
 }
 
-.stat-info {
+.stat-content {
   flex: 1;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #262626;
-  line-height: 1.2;
-  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .stat-label {
-  font-size: 13px;
-  color: #8c8c8c;
+  font-size: 14px;
+  color: #6b7280;
   font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333333;
+  line-height: 1.2;
+}
+
+
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  padding: 0 16px;
+}
+
+.chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.chart-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+}
+
+.chart {
+  width: 100%;
+  height: 100%;
 }
 
 .chart-header {

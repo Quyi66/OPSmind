@@ -149,7 +149,7 @@ const chartOption = computed(() => ({
 
 <style scoped lang="scss">
 .asset-overview {
-  padding: 20px;
+  padding: 16px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -161,13 +161,13 @@ const chartOption = computed(() => ({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #262626;
+  color: #374151;
   margin: 0;
 }
 
@@ -178,29 +178,28 @@ const chartOption = computed(() => ({
 
 .filter-tabs {
   display: flex;
-  background: #f5f5f5;
-  border-radius: 6px;
-  padding: 2px;
+  gap: 8px;
 }
 
 .filter-tab {
   padding: 6px 12px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 12px;
-  color: #666;
+  font-weight: 500;
+  color: #6b7280;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    color: #2D8CF0;
+    background: #f8f9fa;
   }
 
   &.active {
-    background: #2D8CF0;
-    color: white;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-color: #e8f2ff;
+    color: #3b82f6;
+    background: #f8fbff;
   }
 }
 
@@ -209,61 +208,75 @@ const chartOption = computed(() => ({
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  justify-content: center;
 }
 
 .asset-item {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .asset-label {
-  font-size: 13px;
-  color: #262626;
+  font-size: 14px;
+  color: #374151;
   font-weight: 500;
-  min-width: 120px;
+  min-width: 140px;
   text-align: left;
 }
 
 .asset-bar-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex: 1;
 }
 
 .asset-bar {
   flex: 1;
-  height: 8px;
-  background: #f0f0f0;
-  border-radius: 4px;
+  height: 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .asset-bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: width 0.8s ease;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
+    border-radius: 6px 6px 0 0;
+  }
 
   &.blue-bar {
-    background: #2D8CF0;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   }
 
   &.green-bar {
-    background: #19BE6B;
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
   }
 
   &.orange-bar {
-    background: #FF9900;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   }
 }
 
 .asset-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #262626;
-  min-width: 20px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #333333;
+  min-width: 24px;
   text-align: right;
 }
 

@@ -1,5 +1,6 @@
 <template>
   <div class="inspection-overview">
+    <!-- 标题 -->
     <div class="section-header">
       <h3 class="section-title">巡检概览</h3>
       <div class="header-actions">
@@ -9,31 +10,33 @@
 
     <!-- 巡检统计 -->
     <div class="inspection-stats">
-      <div v-for="stat in inspectionStats" :key="stat.id" class="stat-item">
+      <div v-for="stat in inspectionStats" :key="stat.id" class="stat-item" :class="stat.cardClass">
         <div class="stat-icon" :class="stat.iconClass">
-          <div class="stat-indicator" :class="stat.colorClass"></div>
+          <i :class="stat.icon"></i>
         </div>
-        <div class="stat-value">{{ stat.value }}</div>
-        <div class="stat-label">{{ stat.label }}</div>
+        <div class="stat-content">
+          <div class="stat-label">{{ stat.label }}</div>
+          <div class="stat-value">{{ stat.value }}</div>
+        </div>
       </div>
     </div>
 
-    <!-- 图表标题 -->
+    <!-- 图表标题和图例 -->
     <div class="chart-header">
       <h4 class="chart-title">近10天巡检结果情况</h4>
       <div class="chart-legend">
-        <span class="legend-item">
-          <span class="legend-color" style="background: #52c41a;"></span>
-          正常
-        </span>
-        <span class="legend-item">
-          <span class="legend-color" style="background: #faad14;"></span>
-          异常
-        </span>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #10b981;"></div>
+          <span>正常</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #fbbf24;"></div>
+          <span>异常</span>
+        </div>
       </div>
     </div>
 
-    <!-- 图表容器 -->
+    <!-- ECharts图表容器 -->
     <div class="chart-container">
       <v-chart
         class="chart"
@@ -73,22 +76,25 @@ const inspectionStats = ref([
     id: 'total-inspections',
     label: '本月巡检次数',
     value: '23',
-    iconClass: 'blue-bg',
-    colorClass: 'blue-indicator'
+    icon: 'fas fa-search',
+    iconClass: 'blue-icon',
+    cardClass: 'blue-card'
   },
   {
     id: 'normal-inspections',
     label: '正常',
     value: '23',
-    iconClass: 'green-bg',
-    colorClass: 'green-indicator'
+    icon: 'fas fa-check-circle',
+    iconClass: 'green-icon',
+    cardClass: 'green-card'
   },
   {
     id: 'abnormal-inspections',
     label: '异常',
     value: '9',
-    iconClass: 'red-bg',
-    colorClass: 'red-indicator'
+    icon: 'fas fa-exclamation-triangle',
+    iconClass: 'red-icon',
+    cardClass: 'red-card'
   }
 ])
 
@@ -108,12 +114,19 @@ const chartOption = computed(() => ({
     trigger: 'axis',
     axisPointer: {
       type: 'shadow'
+    },
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: '#e8e8e8',
+    borderWidth: 1,
+    textStyle: {
+      color: '#333'
     }
   },
   grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '3%',
+    left: '5%',
+    right: '5%',
+    bottom: '15%',
+    top: '10%',
     containLabel: true
   },
   xAxis: {
@@ -125,7 +138,12 @@ const chartOption = computed(() => ({
       }
     },
     axisLabel: {
-      color: '#666'
+      color: '#666',
+      fontSize: 12,
+      margin: 10
+    },
+    axisTick: {
+      show: false
     }
   },
   yAxis: {
@@ -138,11 +156,13 @@ const chartOption = computed(() => ({
       show: false
     },
     axisLabel: {
-      color: '#666'
+      color: '#666',
+      fontSize: 12
     },
     splitLine: {
       lineStyle: {
-        color: '#f0f0f0'
+        color: '#f0f0f0',
+        type: 'dashed'
       }
     }
   },
@@ -152,16 +172,19 @@ const chartOption = computed(() => ({
       type: 'bar',
       data: chartData.value.normal,
       itemStyle: {
-        color: '#19BE6B'
+        color: '#10b981',
+        borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '30%'
+      barWidth: '30%',
+      barGap: '20%'
     },
     {
       name: '异常',
       type: 'bar',
       data: chartData.value.abnormal,
       itemStyle: {
-        color: '#FF9900'
+        color: '#fbbf24',
+        borderRadius: [2, 2, 0, 0]
       },
       barWidth: '30%'
     }
@@ -171,7 +194,6 @@ const chartOption = computed(() => ({
 
 <style scoped lang="scss">
 .inspection-overview {
-  padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -179,17 +201,42 @@ const chartOption = computed(() => ({
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+// 标题区域
+.section-header {
+  flex: 0 0 auto;
+  height: 40px;
+}
+
+// 统计区域
+.inspection-stats {
+  flex: 0 0 auto;
+  height: 80px;
+}
+
+// 图表标题区域
+.chart-header {
+  flex: 0 0 auto;
+  height: 40px;
+}
+
+// 图表区域
+.chart-container {
+  flex: 1;
+  min-height: 0;
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 0 16px;
+  margin-bottom: 0;
 }
 
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #262626;
+  color: #374151;
   margin: 0;
 }
 
@@ -217,103 +264,140 @@ const chartOption = computed(() => ({
 // 巡检统计样式
 .inspection-stats {
   display: flex;
-  gap: 20px;
-  margin-bottom: 24px;
-  justify-content: space-around;
+  gap: 16px;
+  align-items: center;
+  padding: 0 16px;
+  background: #fafbfc;
+  border-radius: 8px;
+  margin: 0 16px;
 }
 
 .stat-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
   flex: 1;
+  border: 1px solid #f5f6f7;
+  background: white;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  &.blue-card {
+    border-color: #e8f2ff;
+  }
+
+  &.green-card {
+    border-color: #e8f5e8;
+  }
+
+  &.red-card {
+    border-color: #ffe8e8;
+  }
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  flex-shrink: 0;
 
-  &.blue-bg {
-    background: rgba(45, 140, 240, 0.1);
+  i {
+    font-size: 20px;
+    color: white;
   }
 
-  &.green-bg {
-    background: rgba(25, 190, 107, 0.1);
+  &.blue-icon {
+    background: #3b82f6;
   }
 
-  &.red-bg {
-    background: rgba(255, 77, 79, 0.1);
+  &.green-icon {
+    background: #10b981;
+  }
+
+  &.red-icon {
+    background: #ef4444;
   }
 }
 
-.stat-indicator {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-
-  &.blue-indicator {
-    background: #2D8CF0;
-  }
-
-  &.green-indicator {
-    background: #19BE6B;
-  }
-
-  &.red-indicator {
-    background: #ff4d4f;
-  }
+.stat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .stat-value {
   font-size: 24px;
   font-weight: 700;
-  color: #262626;
+  color: #333333;
   line-height: 1.2;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .stat-label {
   font-size: 12px;
-  color: #8c8c8c;
+  color: #6b7280;
   font-weight: 500;
 }
 
-.inspection-stats {
+// 图表样式
+.chart-header {
   display: flex;
-  gap: 16px;
-  margin-bottom: 8px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  padding: 0 16px;
 }
 
-.inspection-stat-item {
+.chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 20px;
+}
+
+.legend-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 8px;
-  flex: 1;
-  border: 1px solid #f0f0f0;
-
-  &.primary {
-    background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
-    border-color: #91d5ff;
-  }
-
-  &.success {
-    background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
-    border-color: #b7eb8f;
-  }
-
-  &.danger {
-    background: linear-gradient(135deg, #fff2f0 0%, #ffccc7 100%);
-    border-color: #ffa39e;
-  }
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
 }
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.chart-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+}
+
+.chart {
+  width: 100%;
+  height: 100%;
+}
+
+
 
 .stat-icon {
   width: 32px;
@@ -338,65 +422,7 @@ const chartOption = computed(() => ({
   }
 }
 
-.stat-info {
-  flex: 1;
-}
 
-.stat-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #262626;
-  line-height: 1.2;
-  margin-bottom: 2px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #8c8c8c;
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.chart-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #262626;
-  margin: 0;
-}
-
-.chart-legend {
-  display: flex;
-  gap: 16px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #666;
-}
-
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-}
-
-.chart-container {
-  flex: 1;
-  min-height: 200px;
-}
-
-.chart {
-  width: 100%;
-  height: 100%;
-}
 
 // 响应式设计
 @media (max-width: 768px) {
