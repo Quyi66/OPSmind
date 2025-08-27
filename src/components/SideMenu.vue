@@ -263,18 +263,41 @@ watch(() => props.activeGroup, (newGroup) => {
 }
 
 // 响应式设计
+@media (max-width: 992px) {
+  .side-menu {
+    width: 56px;
+  }
+
+  .menu-item-content {
+    padding: 10px 4px;
+    min-height: 56px;
+
+    .menu-item-icon {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .menu-item-text {
+      font-size: 11px;
+      line-height: 1.2;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .side-menu {
-    width: 55px;
+    width: 54px;
+    background: #fff;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
   }
 
   .menu-item {
-    margin: 2px;
+    margin: 1px;
   }
 
   .menu-item-content {
     padding: 8px 2px;
-    min-height: 50px;
+    min-height: 52px;
 
     .menu-item-icon {
       font-size: 16px;
@@ -283,6 +306,62 @@ watch(() => props.activeGroup, (newGroup) => {
 
     .menu-item-text {
       font-size: 10px;
+      line-height: 1.1;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .side-menu {
+    width: 50px;
+  }
+
+  .menu-item-content {
+    padding: 6px 1px;
+    min-height: 48px;
+
+    .menu-item-icon {
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .menu-item-text {
+      font-size: 9px;
+      line-height: 1;
+    }
+  }
+
+  .empty-state {
+    padding: 20px 10px;
+
+    i {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 12px;
+    }
+  }
+}
+
+// 横屏移动端优化
+@media (max-width: 768px) and (orientation: landscape) {
+  .side-menu {
+    width: 52px;
+  }
+
+  .menu-item-content {
+    padding: 6px 2px;
+    min-height: 46px;
+
+    .menu-item-icon {
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+
+    .menu-item-text {
+      font-size: 9px;
     }
   }
 }

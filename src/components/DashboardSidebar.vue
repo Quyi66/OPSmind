@@ -151,11 +151,31 @@ const handleRecentClick = (item) => {
 .dashboard-sidebar {
   width: 280px;
   background: #fff;
-  border-right: 1px solid #e8e8e8;
+  border-right: 1px solid #e8eaed;
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh; // 动态视口高度支持
   overflow-y: auto;
+  flex-shrink: 0;
+
+  // 自定义滚动条
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f8f9fa;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 2px;
+
+    &:hover {
+      background: #adb5bd;
+    }
+  }
 }
 
 // 欢迎信息区域
@@ -389,21 +409,99 @@ const handleRecentClick = (item) => {
 }
 
 // 响应式设计
+@media (max-width: 1200px) {
+  .dashboard-sidebar {
+    width: 260px;
+  }
+
+  .welcome-section {
+    margin: 12px;
+    padding: 14px;
+  }
+
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+
+    &::before {
+      font-size: 18px;
+    }
+  }
+
+  .welcome-line1 {
+    font-size: 12px;
+  }
+
+  .welcome-line2 {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 992px) {
+  .dashboard-sidebar {
+    width: 240px;
+  }
+
+  .recent-list {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .recent-item {
+    padding: 8px 6px;
+  }
+
+  .recent-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+
+  .recent-name {
+    font-size: 11px;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-sidebar {
     width: 100%;
     height: auto;
     border-right: none;
-    border-bottom: 1px solid #e8e8e8;
+    border-bottom: 1px solid #e8eaed;
+    position: relative;
   }
 
   .welcome-section {
-    padding: 16px;
+    margin: 10px;
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+
+    &::before {
+      font-size: 16px;
+    }
+  }
+
+  .welcome-line1 {
+    font-size: 11px;
+  }
+
+  .welcome-line2 {
+    font-size: 10px;
   }
 
   .todo-section,
   .recent-section {
-    padding: 16px;
+    padding: 12px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    margin-bottom: 8px;
   }
 
   .recent-list {
@@ -412,7 +510,7 @@ const handleRecentClick = (item) => {
   }
 
   .recent-item {
-    padding: 10px 6px;
+    padding: 8px 4px;
   }
 
   .recent-icon {
@@ -422,7 +520,71 @@ const handleRecentClick = (item) => {
   }
 
   .recent-name {
+    font-size: 10px;
+  }
+
+  .todo-item {
+    padding: 8px 10px;
+  }
+
+  .todo-title {
     font-size: 11px;
+  }
+
+  .todo-meta {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 576px) {
+  .dashboard-sidebar {
+    width: 100%;
+  }
+
+  .welcome-section {
+    margin: 8px;
+    padding: 10px;
+  }
+
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+
+    &::before {
+      font-size: 14px;
+    }
+  }
+
+  .welcome-line1 {
+    font-size: 10px;
+  }
+
+  .welcome-line2 {
+    font-size: 9px;
+  }
+
+  .todo-section,
+  .recent-section {
+    padding: 10px;
+  }
+
+  .recent-list {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .recent-item {
+    padding: 6px 4px;
+  }
+
+  .recent-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .recent-name {
+    font-size: 9px;
   }
 }
 </style>
