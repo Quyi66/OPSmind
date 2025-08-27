@@ -4,7 +4,7 @@
     <div class="section-header">
       <h3 class="section-title">巡检概览</h3>
       <div class="header-actions">
-        <button class="more-btn">更多</button>
+        <button class="more-btn">...</button>
       </div>
     </div>
 
@@ -246,18 +246,18 @@ const chartOption = computed(() => ({
 }
 
 .more-btn {
-  background: none;
+  background: transparent;
   border: none;
-  color: #8c8c8c;
+  color: #6b7280;
   font-size: 12px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
   transition: all 0.3s ease;
 
   &:hover {
-    color: #2D8CF0;
-    background: #f0f7ff;
+    background: #f8f9fa;
+    color: #374151;
   }
 }
 

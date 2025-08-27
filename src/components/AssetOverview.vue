@@ -6,6 +6,7 @@
         <div class="filter-tabs">
           <button class="filter-tab active">按类型</button>
           <button class="filter-tab">按系统</button>
+          <button class="more-btn">...</button>
         </div>
       </div>
     </div>
@@ -200,6 +201,23 @@ const chartOption = computed(() => ({
     border-color: #e8f2ff;
     color: #3b82f6;
     background: #f8fbff;
+  }
+}
+
+.more-btn {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #f8f9fa;
+    color: #374151;
   }
 }
 

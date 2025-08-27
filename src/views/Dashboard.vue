@@ -194,7 +194,7 @@ const handleRefresh = async () => {
 
 /* 第三行 - 资产概览 & 漏洞概览 */
 .dashboard-row:nth-child(3) {
-  flex: 3;
+  flex: 4;
   min-height: 0;
 }
 
@@ -249,17 +249,17 @@ const handleRefresh = async () => {
     gap: 16px;
   }
 
-  /* 保持1:5:4的比例 */
+  /* 保持1:4:5的比例 */
   .dashboard-row:nth-child(1) {
     flex: 1;
   }
 
   .dashboard-row:nth-child(2) {
-    flex: 5;
+    flex: 4;
   }
 
   .dashboard-row:nth-child(3) {
-    flex: 4;
+    flex: 5;
   }
 }
 

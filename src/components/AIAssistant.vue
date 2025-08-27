@@ -144,7 +144,7 @@ const handleChatClick = (chat) => {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1;
+  flex: 2;
 }
 
 .robot-icon {
@@ -176,7 +176,9 @@ const handleChatClick = (chat) => {
 }
 
 .search-container {
-  flex-shrink: 0;
+  flex: 3;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .search-input-wrapper {
@@ -186,7 +188,8 @@ const handleChatClick = (chat) => {
   border: 1px solid #d9d9d9;
   border-radius: 16px;
   padding: 5px 10px;
-  min-width: 220px;
+  width: 100%;
+  max-width: 280px;
   height: 32px;
   transition: border-color 0.3s ease;
 
