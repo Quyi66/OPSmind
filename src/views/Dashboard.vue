@@ -17,39 +17,46 @@
     <!-- 主体布局 -->
     <div v-else class="dashboard-layout">
       <!-- 左侧边栏 -->
-      <DashboardSidebar class="dashboard-sidebar" />
+      <aside class="dashboard-sidebar">
+        <DashboardSidebar />
+      </aside>
 
       <!-- 主内容区 -->
-      <div class="dashboard-content">
+      <main class="dashboard-content">
         <div class="dashboard-main">
-          <!-- 顶部软件概览区域 -->
-          <div class="dashboard-row dashboard-row-top">
-            <div class="dashboard-card dashboard-card-full">
+          <div class="grid grid-cols-12 gap-6">
+            <!-- AI Assistant -->
+            <div class="col-span-4 bg-white rounded-xl p-4 border border-gray-200">
+              <AIAssistant />
+            </div>
+
+            <!-- Operations Overview -->
+            <div class="col-span-4 bg-white rounded-xl p-4 border border-gray-200">
               <SoftwareOverview />
             </div>
-          </div>
 
-          <!-- 中间区域：作业概览和巡检概览 -->
-          <div class="dashboard-row dashboard-row-middle">
-            <div class="dashboard-card dashboard-card-half">
-              <JobOverview />
-            </div>
-            <div class="dashboard-card dashboard-card-half">
+            <!-- Inspection Overview -->
+            <div class="col-span-4 bg-white rounded-xl p-4 border border-gray-200">
               <InspectionOverview />
             </div>
-          </div>
 
-          <!-- 底部区域：资产概览和漏洞概览 -->
-          <div class="dashboard-row dashboard-row-bottom">
-            <div class="dashboard-card dashboard-card-half">
+            <!-- Operations Chart -->
+            <div class="col-span-6 bg-white rounded-xl p-4 border border-gray-200">
+              <JobOverview />
+            </div>
+
+            <!-- Asset Overview -->
+            <div class="col-span-6 bg-white rounded-xl p-4 border border-gray-200">
               <AssetOverview />
             </div>
-            <div class="dashboard-card dashboard-card-half">
+
+            <!-- Monitoring Overview -->
+            <div class="col-span-12 bg-white rounded-xl p-4 border border-gray-200">
               <VulnerabilityOverview />
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
 
     <!-- AngularJS 模块容器 -->
@@ -62,7 +69,7 @@ import { onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
-import { useModuleNavigation } from '@/composables/useModuleNavigation'
+
 import { getAllMenuItems } from '@/config/menu.config.js'
 import DashboardSidebar from '@/components/DashboardSidebar.vue'
 import SoftwareOverview from '@/components/SoftwareOverview.vue'
@@ -70,11 +77,11 @@ import JobOverview from '@/components/JobOverview.vue'
 import InspectionOverview from '@/components/InspectionOverview.vue'
 import AssetOverview from '@/components/AssetOverview.vue'
 import VulnerabilityOverview from '@/components/VulnerabilityOverview.vue'
+import AIAssistant from '@/components/AIAssistant.vue'
 import AngularModuleContainerModal from '@/components/AngularModuleContainerModal.vue'
 import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
 
 const dashboardStore = useDashboardStore()
-const { navigateToModule } = useModuleNavigation()
 const route = useRoute()
 
 // 监听路由变化，自动显示对应的iframe
@@ -95,12 +102,7 @@ watch(() => route.path, (newPath) => {
   }
 }, { immediate: true })
 
-// 获取模块标题
-const getModuleTitle = (moduleCode) => {
-  const allMenuItems = getAllMenuItems()
-  const menuItem = allMenuItems.find(item => item.code === moduleCode)
-  return menuItem ? menuItem.name : moduleCode.toUpperCase()
-}
+
 
 onMounted(async () => {
   await loadDashboardData()
@@ -123,26 +125,13 @@ const loadDashboardData = async () => {
   }
 }
 
-
-
-const handleStatClick = stat => {
-  // 根据统计项类型跳转到相应页面
-  console.log('Stat clicked:', stat)
-}
-
-const handleSearch = query => {
-  // 实现搜索功能
-  console.log('Search:', query)
-  ElMessage.info(`搜索: ${query}`)
-}
-
 const handleRefresh = async () => {
   await loadDashboardData()
   ElMessage.success('数据已刷新')
 }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .dashboard {
   flex: 1;
   display: flex;
@@ -151,7 +140,7 @@ const handleRefresh = async () => {
   min-height: 0;
 }
 
-// Dashboard主布局
+/* Dashboard主布局 */
 .dashboard-layout {
   flex: 1;
   display: flex;
@@ -160,14 +149,14 @@ const handleRefresh = async () => {
   background: #f5f6fa;
 }
 
-// 左侧边栏
+/* 左侧边栏 */
 .dashboard-sidebar {
   flex-shrink: 0;
   background: #fff;
   border-right: 1px solid #e8eaed;
 }
 
-// 主内容区域
+/* 主内容区域 */
 .dashboard-content {
   flex: 1;
   overflow-y: auto;
@@ -175,28 +164,16 @@ const handleRefresh = async () => {
   padding: 24px;
   background-color: #f5f6fa;
   min-height: 0;
-
-  // 自定义滚动条
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-
-    &:hover {
-      background: #a8a8a8;
-    }
-  }
 }
 
-// 加载和错误状态
+/* Dashboard主容器 */
+.dashboard-main {
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* 加载和错误状态 */
 .loading-container,
 .error-container {
   display: flex;
@@ -206,233 +183,46 @@ const handleRefresh = async () => {
   height: 100%;
   width: 100%;
   min-height: 400px;
-  background: #fff;
+  background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-// Dashboard主容器
-.dashboard-main {
-  max-width: 1600px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  min-height: calc(100vh - 200px);
-  width: 100%;
-}
-
-// Dashboard行布局
-.dashboard-row {
-  display: flex;
-  gap: 24px;
-  width: 100%;
-
-  &.dashboard-row-top {
-    flex: 0 0 auto;
-    min-height: 280px;
-  }
-
-  &.dashboard-row-middle,
-  &.dashboard-row-bottom {
-    flex: 1;
-    min-height: 320px;
-  }
-}
-
-// Dashboard卡片
-.dashboard-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid #e8eaed;
-
-  &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
-  }
-
-  &.dashboard-card-full {
-    flex: 1;
-    width: 100%;
-  }
-
-  &.dashboard-card-half {
-    flex: 1;
-    min-width: 0; // 防止flex子元素溢出
-  }
-}
-
-// 响应式设计
-@media (max-width: 1400px) {
-  .dashboard-main {
-    max-width: 100%;
-    padding: 0 12px;
-  }
-
-  .dashboard-row {
-    gap: 20px;
-  }
-
-  .dashboard-card {
-    border-radius: 10px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .dashboard-content {
-    padding: 20px;
-  }
-
-  .dashboard-main {
-    gap: 20px;
-    min-height: auto;
-  }
-
-  .dashboard-row {
-    gap: 16px;
-
-    &.dashboard-row-top {
-      min-height: 240px;
-    }
-
-    &.dashboard-row-middle,
-    &.dashboard-row-bottom {
-      min-height: 280px;
-    }
-  }
-}
-
-@media (max-width: 992px) {
-  .dashboard-row {
-    &.dashboard-row-middle,
-    &.dashboard-row-bottom {
-      flex-direction: column;
-      gap: 16px;
-    }
-  }
-
-  .dashboard-card {
-    &.dashboard-card-half {
-      flex: none;
-      width: 100%;
-      min-height: 280px;
-    }
-  }
-}
-
+/* 响应式设计 */
 @media (max-width: 768px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .dashboard-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e8eaed;
+  }
+
   .dashboard-content {
     padding: 16px;
   }
 
-  .dashboard-main {
-    gap: 16px;
+  .grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1rem;
   }
 
-  .dashboard-row {
-    gap: 12px;
-
-    &.dashboard-row-top {
-      min-height: 200px;
-    }
-
-    &.dashboard-row-middle,
-    &.dashboard-row-bottom {
-      min-height: 240px;
-    }
-  }
-
-  .dashboard-card {
-    border-radius: 8px;
-    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
-
-    &:hover {
-      transform: none;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    &.dashboard-card-half {
-      min-height: 240px;
-    }
+  .col-span-4,
+  .col-span-6,
+  .col-span-12 {
+    grid-column: span 1 / span 1;
   }
 }
 
-@media (max-width: 576px) {
-  .dashboard-content {
-    padding: 12px;
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .dashboard-main {
-    gap: 12px;
-  }
-
-  .dashboard-row {
-    gap: 8px;
-
-    &.dashboard-row-top {
-      min-height: 180px;
-    }
-
-    &.dashboard-row-middle,
-    &.dashboard-row-bottom {
-      min-height: 200px;
-    }
-  }
-
-  .dashboard-card {
-    border-radius: 6px;
-
-    &.dashboard-card-half {
-      min-height: 200px;
-    }
-  }
-}
-
-// 横屏移动端优化
-@media (max-width: 768px) and (orientation: landscape) {
-  .dashboard-content {
-    padding: 12px;
-  }
-
-  .dashboard-row {
-    &.dashboard-row-middle,
-    &.dashboard-row-bottom {
-      flex-direction: row;
-    }
-  }
-
-  .dashboard-card {
-    &.dashboard-card-half {
-      flex: 1;
-      min-height: 200px;
-    }
-  }
-}
-
-// 高分辨率屏幕优化
-@media (min-width: 1600px) {
-  .dashboard-main {
-    max-width: 1800px;
-  }
-
-  .dashboard-row {
-    gap: 32px;
-
-    &.dashboard-row-top {
-      min-height: 320px;
-    }
-
-    &.dashboard-row-middle,
-    &.dashboard-row-bottom {
-      min-height: 360px;
-    }
-  }
-
-  .dashboard-card {
-    border-radius: 16px;
+  .col-span-4 {
+    grid-column: span 6 / span 6;
   }
 }
 </style>

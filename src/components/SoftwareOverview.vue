@@ -1,27 +1,21 @@
 <template>
   <div class="software-overview">
-    <div class="section-header">
-      <h3 class="section-title">
-        <i class="fa fa-chart-line"></i>
-        软件概览
-      </h3>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-medium text-gray-900">作业概况</h3>
+      <button class="text-gray-400 hover:text-gray-600">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+        </svg>
+      </button>
     </div>
 
-    <div class="stats-grid">
-      <div
-        v-for="stat in statsData"
-        :key="stat.id"
-        class="stat-card"
-        :class="stat.type"
-        @click="handleStatClick(stat)"
-      >
-        <div class="stat-icon">
-          <i :class="stat.icon"></i>
+    <div class="grid grid-cols-3 gap-4">
+      <div v-for="stat in statsData" :key="stat.id" class="text-center">
+        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2" :class="stat.bgClass">
+          <div class="w-4 h-4 rounded" :class="stat.colorClass"></div>
         </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ stat.value }}</div>
-          <div class="stat-label">{{ stat.label }}</div>
-        </div>
+        <div class="text-2xl font-bold text-gray-900">{{ stat.value }}</div>
+        <div class="text-xs text-gray-500">{{ stat.label }}</div>
       </div>
     </div>
   </div>
@@ -34,36 +28,25 @@ import { ElMessage } from 'element-plus'
 // 统计数据
 const statsData = ref([
   {
-    id: 'scan-hosts',
-    label: '扫描主机数',
-    value: '3',
-    icon: 'fa fa-server',
-    type: 'blue',
-    color: '#2D8CF0'
+    id: 'rest-jobs',
+    label: 'REST作业',
+    value: '78',
+    bgClass: 'bg-blue-100',
+    colorClass: 'bg-blue-600'
   },
   {
-    id: 'key-indicator-1',
-    label: '关键指标',
-    value: '8',
-    icon: 'fa fa-target',
-    type: 'green',
-    color: '#19BE6B'
+    id: 'command-jobs',
+    label: '合令作业',
+    value: '2',
+    bgClass: 'bg-orange-100',
+    colorClass: 'bg-orange-600'
   },
   {
-    id: 'key-indicator-2',
-    label: '关键指标',
-    value: '29930',
-    icon: 'fa fa-database',
-    type: 'blue',
-    color: '#2D8CF0'
-  },
-  {
-    id: 'key-indicator-3',
-    label: '关键指标',
-    value: '1351',
-    icon: 'fa fa-chart-line',
-    type: 'green',
-    color: '#19BE6B'
+    id: 'script-jobs',
+    label: '脚本作业',
+    value: '56',
+    bgClass: 'bg-green-100',
+    colorClass: 'bg-green-600'
   }
 ])
 

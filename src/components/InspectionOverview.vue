@@ -1,30 +1,21 @@
 <template>
   <div class="inspection-overview">
-    <div class="section-header">
-      <h3 class="section-title">
-        <i class="fa fa-shield-alt"></i>
-        巡检概览
-      </h3>
-      <div class="header-actions">
-        <el-button type="text" size="small">更多</el-button>
-      </div>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-medium text-gray-900">巡检概况</h3>
+      <button class="text-gray-400 hover:text-gray-600">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+        </svg>
+      </button>
     </div>
 
-    <!-- 巡检统计 -->
-    <div class="inspection-stats">
-      <div
-        v-for="stat in inspectionStats"
-        :key="stat.id"
-        class="inspection-stat-item"
-        :class="stat.type"
-      >
-        <div class="stat-icon">
-          <i :class="stat.icon"></i>
+    <div class="grid grid-cols-3 gap-4">
+      <div v-for="stat in inspectionStats" :key="stat.id" class="text-center">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2" :class="stat.bgClass">
+          <div class="w-4 h-4 rounded" :class="stat.colorClass"></div>
         </div>
-        <div class="stat-info">
-          <div class="stat-value">{{ stat.value }}</div>
-          <div class="stat-label">{{ stat.label }}</div>
-        </div>
+        <div class="text-2xl font-bold text-gray-900">{{ stat.value }}</div>
+        <div class="text-xs text-gray-500">{{ stat.label }}</div>
       </div>
     </div>
 
@@ -83,22 +74,22 @@ const inspectionStats = ref([
     id: 'total-inspections',
     label: '本月巡检次数',
     value: '23',
-    icon: 'fa fa-search',
-    type: 'primary'
+    bgClass: 'bg-blue-100',
+    colorClass: 'bg-blue-600'
   },
   {
     id: 'normal-inspections',
     label: '正常',
     value: '23',
-    icon: 'fa fa-check-circle',
-    type: 'success'
+    bgClass: 'bg-green-100',
+    colorClass: 'bg-green-600'
   },
   {
     id: 'abnormal-inspections',
     label: '异常',
     value: '9',
-    icon: 'fa fa-exclamation-circle',
-    type: 'danger'
+    bgClass: 'bg-red-100',
+    colorClass: 'bg-red-600'
   }
 ])
 

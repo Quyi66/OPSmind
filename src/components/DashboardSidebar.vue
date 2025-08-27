@@ -1,77 +1,51 @@
 <template>
   <div class="dashboard-sidebar">
-    <!-- 欢迎信息区域 -->
-    <div class="welcome-section">
-      <div class="user-avatar">
-        <!-- 纯图标，通过CSS显示 -->
-      </div>
-      <div class="welcome-content">
-        <div class="welcome-line1">{{ userInfo.greeting }}</div>
-        <div class="welcome-line2">{{ userInfo.subtitle }}</div>
+    <!-- User Profile Section -->
+    <div class="p-4">
+      <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+        <div class="flex items-center space-x-3">
+          <img src="/placeholder.svg" alt="Manager" class="w-12 h-12 rounded-full border-2 border-white">
+          <div>
+            <h3 class="font-medium">{{ userInfo.greeting }}</h3>
+            <p class="text-blue-100 text-sm">{{ userInfo.subtitle }}</p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- 我的待办区域 -->
-    <div class="todo-section">
-      <div class="section-header">
-        <h4 class="section-title">我的待办</h4>
-        <el-button type="text" size="small" @click="viewAllTodos">查看全部</el-button>
-      </div>
-      <div class="todo-list">
-        <div
-          v-for="todo in todoList"
-          :key="todo.id"
-          class="todo-item"
-        >
-          <div class="todo-indicator" :class="todo.priority"></div>
-          <div class="todo-content">
-            <!-- 第一行：待办提示 -->
-            <div class="todo-title">{{ todo.title }}</div>
-            <!-- 第二行：From 与时间 -->
-            <div class="todo-meta">
-              <span class="todo-source">From {{ todo.source }}</span>
-              <span class="todo-time">{{ todo.time }}</span>
+    <!-- My Tasks -->
+    <div class="px-4 pb-4">
+      <h4 class="text-gray-900 font-medium mb-3">我的待办</h4>
+      <div class="space-y-3">
+        <div v-for="task in todoList" :key="task.id" class="flex items-start space-x-3">
+          <div class="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm text-gray-900">{{ task.title }}</p>
+            <div class="flex items-center justify-between mt-1">
+              <span class="text-xs text-gray-500">发送人:{{ task.source }}</span>
+              <span class="text-xs text-gray-400">{{ task.time }}</span>
             </div>
-            <!-- 第三行：忽略与立即处理按钮 -->
-            <div class="todo-actions">
-              <el-button
-                type="text"
-                size="small"
-                class="ignore-btn"
-                @click="handleTodoIgnore(todo)"
-              >
-                忽略
-              </el-button>
-              <el-button
-                type="primary"
-                size="small"
-                class="process-btn"
-                @click="handleTodoProcess(todo)"
+            <div class="flex items-center justify-between mt-2">
+              <span class="text-xs text-gray-500">{{ task.priority === 'high' ? '急急' : '普通' }}</span>
+              <button
+                @click="handleTodoProcess(task)"
+                class="text-xs text-blue-600 hover:text-blue-800"
               >
                 立即处理
-              </el-button>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 最近使用区域 -->
-    <div class="recent-section">
-      <div class="section-header">
-        <h4 class="section-title">最近使用</h4>
-      </div>
-      <div class="recent-list">
-        <div
-          v-for="item in recentItems"
-          :key="item.id"
-          class="recent-item"
-          @click="handleRecentClick(item)"
-        >
-          <div class="recent-icon">
-            <i :class="item.icon"></i>
-          </div>
-          <span class="recent-name">{{ item.name }}</span>
+    <!-- Recent Usage -->
+    <div class="px-4">
+      <h4 class="text-gray-900 font-medium mb-3">最近使用</h4>
+      <div class="grid grid-cols-2 gap-3">
+        <div v-for="item in recentItems" :key="item.name" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+          <div class="w-4 h-4 bg-gray-400 rounded"></div>
+          <span class="text-sm text-gray-700">{{ item.name }}</span>
         </div>
       </div>
     </div>

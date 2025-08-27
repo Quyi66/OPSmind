@@ -1,32 +1,23 @@
 <template>
   <div class="asset-overview">
-    <div class="section-header">
-      <h3 class="section-title">
-        <i class="fa fa-server"></i>
-        资产概览
-      </h3>
-      <div class="header-actions">
-        <div class="tab-switcher">
-          <button
-            v-for="tab in platformTabs"
-            :key="tab.value"
-            :class="['tab-btn', { active: selectedPlatform === tab.value }]"
-            @click="selectedPlatform = tab.value"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
-        <el-button type="text" size="small">更多</el-button>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-medium text-gray-900">资产概况</h3>
+      <div class="flex space-x-2">
+        <button class="text-xs text-blue-600 px-2 py-1 bg-blue-50 rounded">按类型</button>
+        <button class="text-xs text-gray-600 px-2 py-1 hover:bg-gray-50 rounded">按系统</button>
       </div>
     </div>
 
-    <!-- 图表容器 -->
-    <div class="chart-container">
-      <v-chart
-        class="chart"
-        :option="chartOption"
-        autoresize
-      />
+    <div class="space-y-4">
+      <div v-for="(asset, index) in assetData.categories" :key="index" class="flex items-center justify-between">
+        <span class="text-sm text-gray-600">{{ asset }}</span>
+        <div class="flex items-center space-x-2 flex-1 mx-4">
+          <div class="flex-1 bg-gray-200 rounded-full h-2">
+            <div class="bg-blue-500 h-2 rounded-full" :style="`width: ${(assetData.values[index] / 5) * 100}%`"></div>
+          </div>
+          <span class="text-sm font-medium text-gray-900">{{ assetData.values[index] }}</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>

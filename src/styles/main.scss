@@ -1,8 +1,8 @@
 // 导入变量 (必须在最前面)
 @use './variables.scss' as *;
 
-// Tailwind CSS v4 - 简化导入
-@import "tailwindcss";
+// Tailwind CSS - 使用 @use 替代 @import
+@use "tailwindcss";
 
 // 全局重置样式
 * {

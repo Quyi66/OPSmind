@@ -29,31 +29,37 @@
     </div>
 
     <!-- 图表标题 -->
-    <div class="chart-header">
-      <h4 class="chart-title">近10天作业数据</h4>
-      <div class="chart-legend">
-        <span class="legend-item">
-          <span class="legend-color" style="background: #1890ff;"></span>
-          REST作业
-        </span>
-        <span class="legend-item">
-          <span class="legend-color" style="background: #52c41a;"></span>
-          命令作业
-        </span>
-        <span class="legend-item">
-          <span class="legend-color" style="background: #faad14;"></span>
-          脚本作业
-        </span>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-medium text-gray-900">近10天执行作业数据</h3>
+      <div class="flex items-center space-x-4">
+        <span class="text-xs text-gray-500">单位：次</span>
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-1">
+            <div class="w-3 h-3 bg-blue-500 rounded"></div>
+            <span class="text-xs text-gray-600">REST作业</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <div class="w-3 h-3 bg-blue-400 rounded"></div>
+            <span class="text-xs text-gray-600">合令作业</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <div class="w-3 h-3 bg-green-500 rounded"></div>
+            <span class="text-xs text-gray-600">脚本作业</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- 图表容器 -->
-    <div class="chart-container">
-      <v-chart
-        class="chart"
-        :option="chartOption"
-        autoresize
-      />
+    <div class="h-48 flex items-end justify-between space-x-2">
+      <div v-for="(day, index) in chartData.dates" :key="index" class="flex-1 flex flex-col items-center">
+        <div class="w-full flex flex-col items-center space-y-1 mb-2">
+          <div class="w-full bg-blue-500 rounded-t" :style="`height: ${chartData.restJobs[index] / 5}px`"></div>
+          <div class="w-full bg-blue-400 rounded" :style="`height: ${chartData.commandJobs[index] / 5}px`"></div>
+          <div class="w-full bg-green-500 rounded-b" :style="`height: ${chartData.scriptJobs[index] / 5}px`"></div>
+        </div>
+        <span class="text-xs text-gray-500">{{ day }}</span>
+      </div>
     </div>
   </div>
 </template>
