@@ -24,34 +24,29 @@
       <!-- 主内容区 -->
       <main class="dashboard-content">
         <div class="dashboard-main">
-          <div class="grid grid-cols-12 gap-6">
-            <!-- AI Assistant -->
-            <div class="col-span-4 bg-white rounded-xl p-4 border border-gray-200">
+          <!-- 第一行：操作提示区域 -->
+          <div class="dashboard-row">
+            <div class="dashboard-card full-width">
               <AIAssistant />
             </div>
+          </div>
 
-            <!-- Operations Overview -->
-            <div class="col-span-4 bg-white rounded-xl p-4 border border-gray-200">
-              <SoftwareOverview />
-            </div>
-
-            <!-- Inspection Overview -->
-            <div class="col-span-4 bg-white rounded-xl p-4 border border-gray-200">
-              <InspectionOverview />
-            </div>
-
-            <!-- Operations Chart -->
-            <div class="col-span-6 bg-white rounded-xl p-4 border border-gray-200">
+          <!-- 第二行：作业概览 & 巡检概览 -->
+          <div class="dashboard-row">
+            <div class="dashboard-card half-width">
               <JobOverview />
             </div>
+            <div class="dashboard-card half-width">
+              <InspectionOverview />
+            </div>
+          </div>
 
-            <!-- Asset Overview -->
-            <div class="col-span-6 bg-white rounded-xl p-4 border border-gray-200">
+          <!-- 第三行：资产概览 & 漏洞概览 -->
+          <div class="dashboard-row">
+            <div class="dashboard-card half-width">
               <AssetOverview />
             </div>
-
-            <!-- Monitoring Overview -->
-            <div class="col-span-12 bg-white rounded-xl p-4 border border-gray-200">
+            <div class="dashboard-card half-width">
               <VulnerabilityOverview />
             </div>
           </div>
@@ -72,7 +67,6 @@ import { useDashboardStore } from '@/stores/dashboard'
 
 import { getAllMenuItems } from '@/config/menu.config.js'
 import DashboardSidebar from '@/components/DashboardSidebar.vue'
-import SoftwareOverview from '@/components/SoftwareOverview.vue'
 import JobOverview from '@/components/JobOverview.vue'
 import InspectionOverview from '@/components/InspectionOverview.vue'
 import AssetOverview from '@/components/AssetOverview.vue'
@@ -136,7 +130,7 @@ const handleRefresh = async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #f0f2f5;
+  background: linear-gradient(135deg, #f5f6fa 0%, #f0f2f5 100%);
   min-height: 0;
 }
 
@@ -146,7 +140,7 @@ const handleRefresh = async () => {
   display: flex;
   overflow: hidden;
   font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: #f5f6fa;
+  background: transparent;
 }
 
 /* 左侧边栏 */
@@ -154,6 +148,7 @@ const handleRefresh = async () => {
   flex-shrink: 0;
   background: #fff;
   border-right: 1px solid #e8eaed;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
 }
 
 /* 主内容区域 */
@@ -161,8 +156,8 @@ const handleRefresh = async () => {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 24px;
-  background-color: #f5f6fa;
+  padding: 32px;
+  background: transparent;
   min-height: 0;
 }
 
@@ -171,6 +166,38 @@ const handleRefresh = async () => {
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Dashboard行布局 */
+.dashboard-row {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+}
+
+/* Dashboard卡片 */
+.dashboard-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e8eaed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-card.full-width {
+  width: 100%;
+}
+
+.dashboard-card.half-width {
+  flex: 1;
 }
 
 /* 加载和错误状态 */
@@ -189,6 +216,16 @@ const handleRefresh = async () => {
 }
 
 /* 响应式设计 */
+@media (max-width: 1024px) {
+  .dashboard-main {
+    gap: 20px;
+  }
+
+  .dashboard-row {
+    gap: 20px;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-layout {
     flex-direction: column;
@@ -204,25 +241,17 @@ const handleRefresh = async () => {
     padding: 16px;
   }
 
-  .grid {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-    gap: 1rem;
+  .dashboard-main {
+    gap: 16px;
   }
 
-  .col-span-4,
-  .col-span-6,
-  .col-span-12 {
-    grid-column: span 1 / span 1;
-  }
-}
-
-@media (max-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+  .dashboard-row {
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .col-span-4 {
-    grid-column: span 6 / span 6;
+  .dashboard-card.half-width {
+    width: 100%;
   }
 }
 </style>

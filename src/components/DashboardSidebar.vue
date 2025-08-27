@@ -1,51 +1,73 @@
 <template>
   <div class="dashboard-sidebar">
-    <!-- User Profile Section -->
-    <div class="p-4">
-      <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
-        <div class="flex items-center space-x-3">
-          <img src="/placeholder.svg" alt="Manager" class="w-12 h-12 rounded-full border-2 border-white">
-          <div>
-            <h3 class="font-medium">{{ userInfo.greeting }}</h3>
-            <p class="text-blue-100 text-sm">{{ userInfo.subtitle }}</p>
+    <!-- 个人信息卡片 -->
+    <div class="user-profile-section">
+      <div class="user-profile-card">
+        <div class="user-avatar">
+          <img :src="userInfo.avatar" :alt="userInfo.name" class="avatar-image">
+        </div>
+        <div class="user-info">
+          <h3 class="user-greeting">{{ userInfo.greeting }}</h3>
+          <p class="user-date">{{ userInfo.date }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 我的待办 -->
+    <div class="todo-section">
+      <div class="section-card">
+        <div class="section-header">
+          <h4 class="section-title">我的待办</h4>
+        </div>
+
+        <div class="todo-list">
+          <div
+            v-for="todo in todoList"
+            :key="todo.id"
+            class="todo-item"
+            @click="handleTodoClick(todo)"
+          >
+            <div class="todo-content">
+              <div class="todo-indicator">
+                <i class="fas fa-exclamation-triangle text-red-500"></i>
+              </div>
+              <div class="todo-details">
+                <p class="todo-text">{{ todo.title }}</p>
+                <p class="todo-time">{{ todo.time }}</p>
+                <div class="todo-actions">
+                  <button
+                    @click.stop="handleTodoProcess(todo)"
+                    class="process-btn"
+                  >
+                    立即处理
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- My Tasks -->
-    <div class="px-4 pb-4">
-      <h4 class="text-gray-900 font-medium mb-3">我的待办</h4>
-      <div class="space-y-3">
-        <div v-for="task in todoList" :key="task.id" class="flex items-start space-x-3">
-          <div class="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm text-gray-900">{{ task.title }}</p>
-            <div class="flex items-center justify-between mt-1">
-              <span class="text-xs text-gray-500">发送人:{{ task.source }}</span>
-              <span class="text-xs text-gray-400">{{ task.time }}</span>
-            </div>
-            <div class="flex items-center justify-between mt-2">
-              <span class="text-xs text-gray-500">{{ task.priority === 'high' ? '急急' : '普通' }}</span>
-              <button
-                @click="handleTodoProcess(task)"
-                class="text-xs text-blue-600 hover:text-blue-800"
-              >
-                立即处理
-              </button>
-            </div>
-          </div>
+    <!-- 最近使用 -->
+    <div class="recent-section">
+      <div class="section-card">
+        <div class="section-header">
+          <h4 class="section-title">最近使用</h4>
         </div>
-      </div>
-    </div>
 
-    <!-- Recent Usage -->
-    <div class="px-4">
-      <h4 class="text-gray-900 font-medium mb-3">最近使用</h4>
-      <div class="grid grid-cols-2 gap-3">
-        <div v-for="item in recentItems" :key="item.name" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-          <div class="w-4 h-4 bg-gray-400 rounded"></div>
-          <span class="text-sm text-gray-700">{{ item.name }}</span>
+        <div class="recent-grid">
+          <div
+            v-for="item in recentItems"
+            :key="item.id"
+            class="recent-item"
+            @click="handleRecentClick(item)"
+          >
+            <div class="recent-icon">
+              <i :class="item.icon"></i>
+            </div>
+            <span class="recent-name">{{ item.name }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -60,43 +82,42 @@ import { ElButton, ElMessage } from 'element-plus'
 const userInfo = ref({
   name: '管理员',
   avatar: 'https://via.placeholder.com/60x60/667eea/ffffff?text=管',
-  greeting: '管理员下午好，欢迎登录',
-  subtitle: '今天是2025-07-16 星期三'
+  greeting: '管理员 下午好，欢迎登录',
+  date: '今天是2025-07-16 星期三'
 })
 
 // 待办事项列表
 const todoList = ref([
   {
     id: 1,
-    title: '您有新的系统通知，请及时查看',
-    source: 'system',
-    time: '2025-07-14 10:52:34',
+    title: '您有新的脚本需求审批，请及时查看',
+    time: '2025-07-14 10:22:34',
     priority: 'high'
   },
   {
     id: 2,
-    title: '您有新的系统通知，请及时查看',
-    source: 'system',
-    time: '2025-07-14 10:52:34',
+    title: '您有新的脚本需求审批，请及时查看',
+    time: '2025-07-14 10:22:34',
     priority: 'normal'
   },
   {
     id: 3,
-    title: '您有新的系统通知，请及时查看',
-    source: 'system',
-    time: '2025-07-14 10:52:34',
+    title: '您有新的脚本需求审批，请及时查看',
+    time: '2025-07-14 10:22:34',
     priority: 'normal'
   }
 ])
 
 // 最近使用的功能模块
 const recentItems = ref([
-  { id: 1, name: '命令管理', icon: 'fa-terminal' },
-  { id: 2, name: '资产信息', icon: 'fa-server' },
-  { id: 3, name: '数据管理', icon: 'fa-database' },
-  { id: 4, name: '资源权限', icon: 'fa-key' },
-  { id: 5, name: '异常设备', icon: 'fa-exclamation-triangle' },
-  { id: 6, name: '操作记录', icon: 'fa-history' }
+  { id: 1, name: '命令管理', icon: 'fas fa-terminal' },
+  { id: 2, name: '资源信息', icon: 'fas fa-server' },
+  { id: 3, name: '数据管理', icon: 'fas fa-database' },
+  { id: 4, name: '资源权限', icon: 'fas fa-key' },
+  { id: 5, name: '异常设备', icon: 'fas fa-exclamation-triangle' },
+  { id: 6, name: '操作记录', icon: 'fas fa-history' },
+  { id: 7, name: '系统监控', icon: 'fas fa-chart-line' },
+  { id: 8, name: '用户管理', icon: 'fas fa-users' }
 ])
 
 // 事件处理
@@ -132,6 +153,7 @@ const handleRecentClick = (item) => {
   height: 100dvh; // 动态视口高度支持
   overflow-y: auto;
   flex-shrink: 0;
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   // 自定义滚动条
   &::-webkit-scrollbar {
@@ -152,72 +174,67 @@ const handleRecentClick = (item) => {
   }
 }
 
-// 欢迎信息区域
-.welcome-section {
+// 个人信息区域
+.user-profile-section {
   padding: 16px;
-  background: linear-gradient(135deg, #2D8CF0 0%, #19BE6B 100%);
-  color: white;
+}
+
+.user-profile-card {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #2D8CF0 0%, #19BE6B 100%);
   border-radius: 12px;
-  margin: 16px;
+  color: white;
   box-shadow: 0 4px 20px rgba(45, 140, 240, 0.15);
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-
-  // 使用图标而不是图片
-  &::before {
-    content: '👤';
-    font-size: 20px;
-    color: white;
-  }
 }
 
-.welcome-content {
+.avatar-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid white;
+  object-fit: cover;
+}
+
+.user-info {
   flex: 1;
 }
 
-.welcome-line1 {
-  font-size: 13px;
+.user-greeting {
+  font-size: 14px;
   font-weight: 500;
-  margin: 0 0 2px 0;
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  margin: 0 0 4px 0;
+  color: white;
 }
 
-.welcome-line2 {
-  font-size: 11px;
-  opacity: 0.8;
+.user-date {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
   margin: 0;
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-// 我的待办区域
-.todo-section {
-  padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
+// 通用区域样式
+.todo-section,
+.recent-section {
+  padding: 0 16px 16px 16px;
+}
+
+.section-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
 }
 
 .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  padding: 16px 16px 12px 16px;
+  border-bottom: 1px solid #f5f5f5;
 }
 
 .section-title {
@@ -227,160 +244,141 @@ const handleRecentClick = (item) => {
   margin: 0;
 }
 
+.view-all-btn {
+  font-size: 12px;
+  color: #2D8CF0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    color: #1890ff;
+  }
+}
+
+// 待办事项样式
 .todo-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding: 0 16px 16px 16px;
 }
 
 .todo-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 8px;
-  background: #fff;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
 
   &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-  }
-}
-
-.todo-indicator {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-top: 6px;
-  flex-shrink: 0;
-
-  &.high {
-    background-color: #ff4d4f;
-  }
-
-  &.normal {
-    background-color: #52c41a;
-  }
-
-  &.low {
-    background-color: #faad14;
+    background-color: #fafafa;
   }
 }
 
 .todo-content {
-  flex: 1;
-  min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.todo-title {
+.todo-indicator {
+  flex-shrink: 0;
+  margin-top: 2px;
+
+  i {
+    font-size: 12px;
+  }
+}
+
+.todo-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.todo-text {
   font-size: 13px;
   color: #262626;
   line-height: 1.4;
-  font-weight: 500;
+  margin: 0 0 4px 0;
 }
 
-.todo-meta {
-  display: flex;
-  justify-content: space-between;
+.todo-time {
   font-size: 11px;
   color: #8c8c8c;
-}
-
-.todo-source {
-  color: #1890ff;
+  margin: 0 0 8px 0;
 }
 
 .todo-actions {
   display: flex;
-  gap: 6px;
-  align-items: center;
-  margin-top: 2px;
-}
-
-.ignore-btn {
-  font-size: 10px;
-  color: #8c8c8c;
-  padding: 2px 6px;
-  height: auto;
-  min-height: auto;
-
-  &:hover {
-    color: #262626;
-  }
+  justify-content: flex-end;
 }
 
 .process-btn {
-  background: #2D8CF0;
-  border-color: #2D8CF0;
-  border-radius: 4px;
-  font-size: 10px;
-  padding: 3px 8px;
-  height: auto;
+  font-size: 12px;
+  color: #2D8CF0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 
   &:hover {
-    background: #1c7ed6;
-    border-color: #1c7ed6;
+    color: #1890ff;
   }
 }
 
-// 最近使用区域
-.recent-section {
-  padding: 20px;
-  flex: 1;
-}
-
-.recent-list {
+// 最近使用样式
+.recent-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+  padding: 16px;
 }
 
 .recent-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 10px 8px;
+  padding: 12px 8px;
   border-radius: 8px;
+  background: #f8f9fa;
   cursor: pointer;
-  transition: all 0.3s ease;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
 
   &:hover {
-    background-color: #f8f9fa;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    background: #e9ecef;
+    transform: translateY(-1px);
   }
 }
 
 .recent-icon {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(45, 140, 240, 0.1);
+  background: #dee2e6;
   border-radius: 6px;
-  font-size: 12px;
-  color: #2D8CF0;
-  flex-shrink: 0;
+  margin-bottom: 6px;
+
+  i {
+    font-size: 14px;
+    color: #495057;
+  }
 }
 
 .recent-name {
   font-size: 11px;
-  color: #262626;
+  color: #495057;
+  text-align: center;
   line-height: 1.2;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-all;
 }
+
+
+
+
 
 // 响应式设计
 @media (max-width: 1200px) {
@@ -388,25 +386,24 @@ const handleRecentClick = (item) => {
     width: 260px;
   }
 
-  .welcome-section {
-    margin: 12px;
+  .user-profile-section {
+    padding: 12px;
+  }
+
+  .user-profile-card {
     padding: 14px;
   }
 
-  .user-avatar {
-    width: 36px;
-    height: 36px;
-
-    &::before {
-      font-size: 18px;
-    }
+  .avatar-image {
+    width: 40px;
+    height: 40px;
   }
 
-  .welcome-line1 {
-    font-size: 12px;
+  .user-greeting {
+    font-size: 13px;
   }
 
-  .welcome-line2 {
+  .user-date {
     font-size: 11px;
   }
 }
@@ -416,23 +413,27 @@ const handleRecentClick = (item) => {
     width: 240px;
   }
 
-  .recent-list {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+  .recent-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 12px;
   }
 
   .recent-item {
-    padding: 8px 6px;
+    padding: 10px 6px;
   }
 
   .recent-icon {
-    width: 30px;
-    height: 30px;
-    font-size: 13px;
+    width: 28px;
+    height: 28px;
+
+    i {
+      font-size: 12px;
+    }
   }
 
   .recent-name {
-    font-size: 11px;
+    font-size: 10px;
   }
 }
 
@@ -445,42 +446,40 @@ const handleRecentClick = (item) => {
     position: relative;
   }
 
-  .welcome-section {
-    margin: 10px;
+  .user-profile-section {
     padding: 12px;
-    border-radius: 8px;
   }
 
-  .user-avatar {
-    width: 32px;
-    height: 32px;
-
-    &::before {
-      font-size: 16px;
-    }
+  .user-profile-card {
+    padding: 12px;
   }
 
-  .welcome-line1 {
-    font-size: 11px;
+  .avatar-image {
+    width: 36px;
+    height: 36px;
   }
 
-  .welcome-line2 {
+  .user-greeting {
+    font-size: 12px;
+  }
+
+  .user-date {
     font-size: 10px;
   }
 
   .todo-section,
   .recent-section {
-    padding: 12px;
+    padding: 0 12px 12px 12px;
   }
 
   .section-title {
     font-size: 13px;
-    margin-bottom: 8px;
   }
 
-  .recent-list {
-    grid-template-columns: 1fr 1fr;
+  .recent-grid {
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
+    padding: 12px;
   }
 
   .recent-item {
@@ -488,25 +487,28 @@ const handleRecentClick = (item) => {
   }
 
   .recent-icon {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+    width: 24px;
+    height: 24px;
+
+    i {
+      font-size: 11px;
+    }
   }
 
   .recent-name {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .todo-item {
-    padding: 8px 10px;
+    padding: 10px 0;
   }
 
-  .todo-title {
-    font-size: 11px;
+  .todo-text {
+    font-size: 12px;
   }
 
-  .todo-meta {
-    font-size: 9px;
+  .todo-time {
+    font-size: 10px;
   }
 }
 
@@ -515,36 +517,36 @@ const handleRecentClick = (item) => {
     width: 100%;
   }
 
-  .welcome-section {
-    margin: 8px;
+  .user-profile-section {
     padding: 10px;
   }
 
-  .user-avatar {
-    width: 28px;
-    height: 28px;
-
-    &::before {
-      font-size: 14px;
-    }
+  .user-profile-card {
+    padding: 10px;
   }
 
-  .welcome-line1 {
-    font-size: 10px;
+  .avatar-image {
+    width: 32px;
+    height: 32px;
   }
 
-  .welcome-line2 {
+  .user-greeting {
+    font-size: 11px;
+  }
+
+  .user-date {
     font-size: 9px;
   }
 
   .todo-section,
   .recent-section {
-    padding: 10px;
+    padding: 0 10px 10px 10px;
   }
 
-  .recent-list {
-    grid-template-columns: 1fr;
+  .recent-grid {
+    grid-template-columns: repeat(2, 1fr);
     gap: 4px;
+    padding: 10px;
   }
 
   .recent-item {
@@ -552,13 +554,16 @@ const handleRecentClick = (item) => {
   }
 
   .recent-icon {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
+    width: 20px;
+    height: 20px;
+
+    i {
+      font-size: 10px;
+    }
   }
 
   .recent-name {
-    font-size: 9px;
+    font-size: 8px;
   }
 }
 </style>

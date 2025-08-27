@@ -1,12 +1,9 @@
 <template>
   <div class="job-overview">
     <div class="section-header">
-      <h3 class="section-title">
-        <i class="fa fa-tasks"></i>
-        作业概览
-      </h3>
+      <h3 class="section-title">作业概览</h3>
       <div class="header-actions">
-        <el-button type="text" size="small">更多</el-button>
+        <button class="more-btn">更多</button>
       </div>
     </div>
 
@@ -18,7 +15,7 @@
         class="job-stat-item"
         :class="stat.type"
       >
-        <div class="stat-icon">
+        <div class="stat-icon" :class="stat.iconClass">
           <i :class="stat.icon"></i>
         </div>
         <div class="stat-info">
@@ -93,21 +90,24 @@ const jobStats = ref([
     id: 'rest-jobs',
     label: 'REST作业',
     value: '78',
-    icon: 'fa fa-globe',
+    icon: 'fas fa-globe',
+    iconClass: 'blue-icon',
     type: 'primary'
   },
   {
     id: 'command-jobs',
     label: '命令作业',
     value: '2',
-    icon: 'fa fa-terminal',
+    icon: 'fas fa-terminal',
+    iconClass: 'orange-icon',
     type: 'warning'
   },
   {
     id: 'script-jobs',
     label: '脚本作业',
     value: '56',
-    icon: 'fa fa-file-code',
+    icon: 'fas fa-file-code',
+    iconClass: 'green-icon',
     type: 'success'
   }
 ])
@@ -201,94 +201,96 @@ const chartOption = computed(() => ({
 
 <style scoped lang="scss">
 .job-overview {
-  background: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: box-shadow 0.3s ease;
-
-  &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  }
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 20px;
 }
 
 .section-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: #262626;
   margin: 0;
+}
+
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+}
 
-  i {
-    color: #1890ff;
-    font-size: 14px;
+.more-btn {
+  background: none;
+  border: none;
+  color: #8c8c8c;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: #2D8CF0;
+    background: #f0f7ff;
   }
 }
 
 .job-stats {
   display: flex;
   gap: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 24px;
 }
 
 .job-stat-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 8px;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
   flex: 1;
+  background: white;
   border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
 
-  &.primary {
-    background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
-    border-color: #91d5ff;
-  }
-
-  &.warning {
-    background: linear-gradient(135deg, #fffbe6 0%, #fff1b8 100%);
-    border-color: #ffe58f;
-  }
-
-  &.success {
-    background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
-    border-color: #b7eb8f;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 }
 
 .stat-icon {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  font-size: 14px;
-  color: white;
+  border-radius: 8px;
+  flex-shrink: 0;
 
-  .primary & {
-    background: #1890ff;
+  i {
+    font-size: 16px;
+    color: white;
   }
 
-  .warning & {
-    background: #faad14;
+  &.blue-icon {
+    background: #2D8CF0;
   }
 
-  .success & {
-    background: #52c41a;
+  &.orange-icon {
+    background: #FF9900;
+  }
+
+  &.green-icon {
+    background: #19BE6B;
   }
 }
 
@@ -297,16 +299,17 @@ const chartOption = computed(() => ({
 }
 
 .stat-value {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   color: #262626;
   line-height: 1.2;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 13px;
   color: #8c8c8c;
+  font-weight: 500;
 }
 
 .chart-header {

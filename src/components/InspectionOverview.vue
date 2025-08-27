@@ -1,21 +1,20 @@
 <template>
   <div class="inspection-overview">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-medium text-gray-900">巡检概况</h3>
-      <button class="text-gray-400 hover:text-gray-600">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
-        </svg>
-      </button>
+    <div class="section-header">
+      <h3 class="section-title">巡检概览</h3>
+      <div class="header-actions">
+        <button class="more-btn">更多</button>
+      </div>
     </div>
 
-    <div class="grid grid-cols-3 gap-4">
-      <div v-for="stat in inspectionStats" :key="stat.id" class="text-center">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2" :class="stat.bgClass">
-          <div class="w-4 h-4 rounded" :class="stat.colorClass"></div>
+    <!-- 巡检统计 -->
+    <div class="inspection-stats">
+      <div v-for="stat in inspectionStats" :key="stat.id" class="stat-item">
+        <div class="stat-icon" :class="stat.iconClass">
+          <div class="stat-indicator" :class="stat.colorClass"></div>
         </div>
-        <div class="text-2xl font-bold text-gray-900">{{ stat.value }}</div>
-        <div class="text-xs text-gray-500">{{ stat.label }}</div>
+        <div class="stat-value">{{ stat.value }}</div>
+        <div class="stat-label">{{ stat.label }}</div>
       </div>
     </div>
 
@@ -74,22 +73,22 @@ const inspectionStats = ref([
     id: 'total-inspections',
     label: '本月巡检次数',
     value: '23',
-    bgClass: 'bg-blue-100',
-    colorClass: 'bg-blue-600'
+    iconClass: 'blue-bg',
+    colorClass: 'blue-indicator'
   },
   {
     id: 'normal-inspections',
     label: '正常',
     value: '23',
-    bgClass: 'bg-green-100',
-    colorClass: 'bg-green-600'
+    iconClass: 'green-bg',
+    colorClass: 'green-indicator'
   },
   {
     id: 'abnormal-inspections',
     label: '异常',
     value: '9',
-    bgClass: 'bg-red-100',
-    colorClass: 'bg-red-600'
+    iconClass: 'red-bg',
+    colorClass: 'red-indicator'
   }
 ])
 
@@ -172,41 +171,117 @@ const chartOption = computed(() => ({
 
 <style scoped lang="scss">
 .inspection-overview {
-  background: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: box-shadow 0.3s ease;
-
-  &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  }
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 20px;
 }
 
 .section-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: #262626;
   margin: 0;
+}
+
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+}
 
-  i {
-    color: #52c41a;
-    font-size: 14px;
+.more-btn {
+  background: none;
+  border: none;
+  color: #8c8c8c;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: #2D8CF0;
+    background: #f0f7ff;
   }
+}
+
+// 巡检统计样式
+.inspection-stats {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+  justify-content: space-around;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+
+  &.blue-bg {
+    background: rgba(45, 140, 240, 0.1);
+  }
+
+  &.green-bg {
+    background: rgba(25, 190, 107, 0.1);
+  }
+
+  &.red-bg {
+    background: rgba(255, 77, 79, 0.1);
+  }
+}
+
+.stat-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+
+  &.blue-indicator {
+    background: #2D8CF0;
+  }
+
+  &.green-indicator {
+    background: #19BE6B;
+  }
+
+  &.red-indicator {
+    background: #ff4d4f;
+  }
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #262626;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #8c8c8c;
+  font-weight: 500;
 }
 
 .inspection-stats {

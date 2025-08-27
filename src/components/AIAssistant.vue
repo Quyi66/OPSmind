@@ -1,70 +1,36 @@
 <template>
   <div class="ai-assistant">
-    <div class="flex items-center space-x-3 mb-4">
-      <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
+    <!-- 操作提示横幅 -->
+    <div class="assistant-banner">
+      <div class="banner-content">
+        <div class="robot-icon">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div class="banner-text">
+          <h3 class="banner-title">OPS智能助手，很高兴为您服务</h3>
+        </div>
       </div>
-      <div>
-        <h3 class="font-medium text-gray-900">OPS智能助手，很高兴为你服务</h3>
-        <p class="text-sm text-gray-500">为运维人员设计的助手Agent，帮助解决系统维护问题。</p>
-      </div>
-    </div>
-    
-    <div class="bg-gray-50 rounded-lg p-3 mb-3">
-      <input 
-        v-model="searchQuery"
-        type="text" 
-        placeholder="问我想要做的地方" 
-        class="w-full bg-transparent text-sm text-gray-700 placeholder-gray-400 border-none outline-none"
-        @keyup.enter="handleSearch"
-      >
-    </div>
-    
-    <div class="flex justify-end">
-      <button 
-        @click="handleSearch"
-        class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors"
-        :disabled="!searchQuery.trim()"
-      >
-        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
-        </svg>
-      </button>
-    </div>
-
-    <!-- 快捷操作 -->
-    <div v-if="quickActions.length > 0" class="mt-4">
-      <h4 class="text-xs font-medium text-gray-500 mb-2">快捷操作</h4>
-      <div class="space-y-2">
-        <button
-          v-for="action in quickActions"
-          :key="action.id"
-          @click="handleQuickAction(action)"
-          class="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-        >
-          <i :class="action.icon" class="mr-2"></i>
-          {{ action.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- 最近对话 -->
-    <div v-if="recentChats.length > 0" class="mt-4">
-      <h4 class="text-xs font-medium text-gray-500 mb-2">最近对话</h4>
-      <div class="space-y-1">
-        <div
-          v-for="chat in recentChats"
-          :key="chat.id"
-          class="px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
-          @click="handleChatClick(chat)"
-        >
-          <div class="truncate">{{ chat.question }}</div>
-          <div class="text-xs text-gray-400 mt-1">{{ chat.time }}</div>
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="问我想要做的地方"
+            class="search-input"
+            @keyup.enter="handleSearch"
+          >
+          <button
+            @click="handleSearch"
+            class="search-btn"
+            :disabled="!searchQuery.trim()"
+          >
+            <i class="fas fa-search"></i>
+          </button>
         </div>
       </div>
     </div>
+
+
   </div>
 </template>
 
@@ -124,23 +90,23 @@ const handleSearch = () => {
     ElMessage.warning('请输入您的问题')
     return
   }
-  
+
   ElMessage.info(`正在处理您的问题: ${searchQuery.value}`)
   // 这里可以调用AI助手API
   console.log('AI Assistant Query:', searchQuery.value)
-  
+
   // 模拟添加到最近对话
   recentChats.value.unshift({
     id: Date.now(),
     question: searchQuery.value,
     time: '刚刚'
   })
-  
+
   // 限制最近对话数量
   if (recentChats.value.length > 5) {
     recentChats.value = recentChats.value.slice(0, 5)
   }
-  
+
   searchQuery.value = ''
 }
 
@@ -157,15 +123,154 @@ const handleChatClick = (chat) => {
 
 <style scoped lang="scss">
 .ai-assistant {
+  padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
+.assistant-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px 20px;
+  gap: 20px;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.robot-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #2D8CF0 0%, #19BE6B 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  i {
+    font-size: 18px;
+    color: white;
+  }
+}
+
+.banner-text {
+  flex: 1;
+}
+
+.banner-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.search-container {
+  flex-shrink: 0;
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 20px;
+  padding: 8px 12px;
+  min-width: 280px;
+  transition: border-color 0.3s ease;
+
+  &:focus-within {
+    border-color: #2D8CF0;
+    box-shadow: 0 0 0 2px rgba(45, 140, 240, 0.1);
+  }
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #262626;
+  padding: 0;
+
+  &::placeholder {
+    color: #8c8c8c;
+  }
+}
+
+.search-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 8px;
+  color: #8c8c8c;
+  transition: color 0.3s ease;
+
+  &:hover:not(:disabled) {
+    color: #2D8CF0;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
+
 // 响应式设计
+@media (max-width: 1024px) {
+  .assistant-banner {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .search-input-wrapper {
+    min-width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   .ai-assistant {
-    padding: 12px;
+    padding: 16px;
+  }
+
+  .assistant-banner {
+    padding: 12px 16px;
+  }
+
+  .robot-icon {
+    width: 36px;
+    height: 36px;
+
+    i {
+      font-size: 16px;
+    }
+  }
+
+  .banner-title {
+    font-size: 14px;
+  }
+
+  .search-input-wrapper {
+    padding: 6px 10px;
+  }
+
+  .search-input {
+    font-size: 13px;
   }
 }
 </style>
