@@ -130,6 +130,7 @@
                     v-model="loginForm.otpCode"
                     type="text"
                     placeholder="动态验证码"
+                    autocomplete="one-time-code"
                     class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                     :disabled="loading"
                     maxlength="6"
@@ -181,12 +182,11 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElForm, ElFormItem, ElInput, ElButton, ElCheckbox, ElAlert, ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
 import { getDevLoginDefaults, logDevInfo, isDevelopment } from '@/config/dev-defaults'
 
 const router = useRouter()
-const loginFormRef = ref()
 
 // 开发环境标识
 const isDev = isDevelopment()
@@ -200,18 +200,6 @@ const loginForm = reactive({
   otpCode: '',
   rememberMe: devDefaults.rememberMe
 })
-
-const loginRules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 1, max: 50, message: '用户名长度在 1 到 50 个字符', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 4, max: 100, message: '密码长度在 4 到 100 个字符', trigger: 'blur' }
-  ],
-  otpCode: [{ len: 6, message: '动态验证码必须是6位数字', trigger: 'blur' }]
-}
 
 const loading = ref(false)
 const authError = ref(false)
