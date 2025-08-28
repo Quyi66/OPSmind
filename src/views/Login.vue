@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 relative overflow-hidden">
+  <div class="min-h-screen login-background relative overflow-hidden">
     <!-- Background Pattern -->
     <div class="absolute inset-0 opacity-20">
       <div class="absolute top-20 left-20 w-2 h-2 bg-white rounded-full"></div>
@@ -32,60 +32,15 @@
           <!-- Left Side - Illustration -->
           <div class="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-50 to-blue-100 items-center justify-center p-12">
             <div class="relative">
-              <!-- 3D Isometric Illustration Placeholder -->
-              <div class="relative w-80 h-80">
-                <!-- Main Platform -->
-                <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-64 h-8 bg-blue-600 rounded-lg shadow-lg" style="transform: translateX(-50%) rotateX(60deg) rotateY(-15deg);"></div>
-
-                <!-- Devices -->
-                <div class="absolute bottom-8 left-1/4 w-20 h-24 bg-blue-500 rounded shadow-lg transform rotate-12">
-                  <div class="w-full h-3 bg-blue-400 rounded-t"></div>
-                  <div class="p-2">
-                    <div class="w-full h-2 bg-blue-300 rounded mb-1"></div>
-                    <div class="w-3/4 h-2 bg-blue-300 rounded mb-1"></div>
-                    <div class="w-1/2 h-2 bg-blue-300 rounded"></div>
-                  </div>
-                </div>
-
-                <div class="absolute bottom-12 right-1/4 w-24 h-16 bg-blue-600 rounded shadow-lg transform -rotate-6">
-                  <div class="w-full h-2 bg-blue-500 rounded-t"></div>
-                  <div class="p-2">
-                    <div class="w-full h-1 bg-blue-400 rounded mb-1"></div>
-                    <div class="w-2/3 h-1 bg-blue-400 rounded mb-1"></div>
-                    <div class="w-1/3 h-1 bg-blue-400 rounded"></div>
-                  </div>
-                </div>
-
-                <div class="absolute bottom-16 left-1/2 transform -translate-x-1/2 w-28 h-20 bg-blue-700 rounded shadow-lg">
-                  <div class="w-full h-3 bg-blue-600 rounded-t"></div>
-                  <div class="p-2">
-                    <div class="w-full h-2 bg-blue-500 rounded mb-1"></div>
-                    <div class="w-4/5 h-2 bg-blue-500 rounded mb-1"></div>
-                    <div class="w-3/5 h-2 bg-blue-500 rounded"></div>
-                  </div>
-                </div>
-
-                <!-- Floating Elements -->
-                <div class="absolute top-4 left-8 w-6 h-6 bg-blue-400 rounded-full shadow-lg animate-bounce"></div>
-                <div class="absolute top-8 right-12 w-4 h-4 bg-blue-300 rounded shadow-lg animate-pulse"></div>
-                <div class="absolute top-16 left-16 w-8 h-8 bg-blue-500 rounded shadow-lg transform rotate-45 animate-float"></div>
-              </div>
+              <!-- Login Illustration -->
+              <img src="@/assets/images/login-illu@2x.png" alt="Login Illustration" class="w-80 h-80 object-contain" />
             </div>
           </div>
 
           <!-- Right Side - Login Form -->
-          <div class="w-full md:w-1/2 p-12">
-            <div class="max-w-sm mx-auto">
+          <div class="w-full md:w-1/2 p-12 flex items-center justify-center">
+            <div class="max-w-sm w-full">
               <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">用户登录</h2>
-
-              <!-- 开发环境提示 -->
-              <div v-if="isDev" class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div class="text-sm text-blue-800">
-                  <p class="font-medium mb-1">开发环境</p>
-                  <p>默认账号: <strong>admin</strong></p>
-                  <p>默认密码: <strong>Oplus@2020</strong></p>
-                </div>
-              </div>
 
               <div v-if="initializing" class="text-center py-8">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -156,17 +111,6 @@
                   <span v-if="loading">登录中...</span>
                   <span v-else>登录</span>
                 </button>
-
-                <!-- 开发环境快速登录按钮 -->
-                <button
-                  v-if="isDev"
-                  type="button"
-                  @click="handleQuickLogin"
-                  class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200 font-medium"
-                  :disabled="loading"
-                >
-                  快速登录 (开发环境)
-                </button>
               </form>
             </div>
           </div>
@@ -181,21 +125,14 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
-import { getDevLoginDefaults, logDevInfo, isDevelopment } from '@/config/dev-defaults'
 
 const router = useRouter()
 
-// 开发环境标识
-const isDev = isDevelopment()
-
-// 获取开发环境默认值
-const devDefaults = getDevLoginDefaults()
-
 const loginForm = reactive({
-  username: devDefaults.username,
-  password: devDefaults.password,
+  username: '',
+  password: '',
   otpCode: '',
-  rememberMe: devDefaults.rememberMe
+  rememberMe: false
 })
 
 const loading = ref(false)
@@ -265,20 +202,6 @@ const handleLogin = async () => {
   } finally {
     loading.value = false
   }
-}
-
-// 开发环境快速登录
-const handleQuickLogin = async () => {
-  if (!isDev) return
-
-  // 确保表单已填充默认值
-  const defaults = getDevLoginDefaults()
-  loginForm.username = defaults.username
-  loginForm.password = defaults.password
-  loginForm.rememberMe = defaults.rememberMe
-
-  // 直接调用登录
-  await handleLogin()
 }
 
 // 通知所有iframe模块认证状态更新
@@ -354,15 +277,18 @@ const initializeLoginPage = async () => {
 
 onMounted(() => {
   initializeLoginPage()
-
-  // 开发环境提示
-  if (isDev) {
-    logDevInfo()
-  }
 })
 </script>
 
 <style scoped>
+/* Login Background */
+.login-background {
+  background-image: url('@/assets/images/bg-login@2x.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 /* 自定义动画 */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
