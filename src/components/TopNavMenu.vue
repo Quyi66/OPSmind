@@ -111,6 +111,60 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+
+          <!-- Settings Button -->
+          <el-tooltip content="设置" placement="bottom">
+            <button
+              @click="handleSettingsClick"
+              class="menu-action-btn"
+            >
+              <el-icon><Setting /></el-icon>
+            </button>
+          </el-tooltip>
+
+          <!-- About Dropdown -->
+          <el-dropdown @command="handleAboutCommand" class="about-dropdown">
+            <el-tooltip content="关于" placement="bottom">
+              <button class="menu-action-btn">
+                <el-icon><InfoFilled /></el-icon>
+              </button>
+            </el-tooltip>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="help">
+                  帮助
+                </el-dropdown-item>
+                <el-dropdown-item command="about">
+                  关于
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
+          <!-- Language Switch Dropdown -->
+          <el-dropdown @command="handleLanguageCommand" class="language-dropdown">
+            <el-tooltip content="语言" placement="bottom">
+              <button class="menu-action-btn">
+                <el-icon><More /></el-icon>
+              </button>
+            </el-tooltip>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="zh-cn">
+                  <span>中文简体</span>
+                  <el-icon v-if="currentLanguage === 'zh-cn'" style="margin-left: auto;"><Check /></el-icon>
+                </el-dropdown-item>
+                <el-dropdown-item command="zh-tw">
+                  <span>中文繁體</span>
+                  <el-icon v-if="currentLanguage === 'zh-tw'" style="margin-left: auto;"><Check /></el-icon>
+                </el-dropdown-item>
+                <el-dropdown-item command="en">
+                  <span>English</span>
+                  <el-icon v-if="currentLanguage === 'en'" style="margin-left: auto;"><Check /></el-icon>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
 
@@ -157,9 +211,11 @@ import { authService } from '@/core/auth'
 import { useMenuStore } from '@/stores/menu.js'
 import {
   User,
-  ArrowDown,
   Setting,
-  SwitchButton
+  SwitchButton,
+  InfoFilled,
+  More,
+  Check
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -188,6 +244,9 @@ const notificationCount = ref(3) // 示例通知数量
 
 // 移动菜单状态
 const showMobileMenu = ref(false)
+
+// 语言切换状态
+const currentLanguage = ref('zh-cn')
 
 // 处理首页菜单点击
 const handleHomeClick = () => {
@@ -274,6 +333,43 @@ const handleLogout = async () => {
 const handleClearHighlight = () => {
   menuStore.clearActiveMenu()
   console.log('🧭 Menu highlight cleared')
+}
+
+// 处理设置按钮点击
+const handleSettingsClick = () => {
+  console.log('⚙️ Settings clicked')
+  ElMessage.info('设置功能开发中...')
+  // 这里可以打开设置页面或弹窗
+}
+
+// 处理关于下拉菜单命令
+const handleAboutCommand = (command) => {
+  console.log('ℹ️ About command:', command)
+  switch (command) {
+    case 'help':
+      ElMessage.info('帮助功能开发中...')
+      // 这里可以打开帮助页面
+      break
+    case 'about':
+      ElMessage.info('关于功能开发中...')
+      // 这里可以打开关于页面
+      break
+  }
+}
+
+// 处理语言切换
+const handleLanguageCommand = (language) => {
+  console.log('🌐 Language switched to:', language)
+  currentLanguage.value = language
+
+  const languageNames = {
+    'zh-cn': '中文简体',
+    'zh-tw': '中文繁體',
+    'en': 'English'
+  }
+
+  ElMessage.success(`已切换到${languageNames[language]}`)
+  // 这里可以实现实际的语言切换逻辑
 }
 
 // 监听路由变化，自动设置菜单状态
@@ -524,6 +620,42 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   font-weight: 500;
+}
+
+// 菜单操作按钮
+.menu-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  width: 2rem;
+  height: 2rem;
+
+  &:hover {
+    color: #6b7280;
+    background: #f9fafb;
+  }
+
+  .el-icon {
+    font-size: 1.125rem;
+  }
+}
+
+// 语言下拉菜单
+.language-dropdown {
+  .el-dropdown-menu__item {
+    &.is-active {
+      color: #2563eb;
+      background-color: #eff6ff;
+      font-weight: 500;
+    }
+  }
 }
 
 // 用户下拉菜单
