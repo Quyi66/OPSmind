@@ -4,11 +4,8 @@
     <header class="bg-white border-b border-gray-200">
       <div class="flex items-center justify-between px-6 py-3">
         <div class="flex items-center space-x-8">
-          <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-              <span class="text-white font-bold text-sm">OP</span>
-            </div>
-            <span class="text-xl font-semibold text-gray-900">OPSmind</span>
+          <div class="flex items-center">
+            <img src="@/assets/icons/logo@2x.png" alt="OpsMind" class="h-8 w-auto object-contain" />
           </div>
 
           <nav class="flex space-x-6">

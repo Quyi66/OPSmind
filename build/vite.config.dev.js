@@ -57,7 +57,7 @@ export default defineConfig({
       },
 
       '/oplus-portal': {
-        target: 'http://10.1.40.112:80',
+        target: 'http://localhost:18080',
         changeOrigin: true,
         secure: false
       },

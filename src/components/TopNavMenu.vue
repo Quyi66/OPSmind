@@ -6,10 +6,7 @@
         <div class="nav-left">
           <!-- Logo Section -->
           <div class="logo-section">
-            <div class="logo-icon">
-              <span class="logo-text">OP</span>
-            </div>
-            <span class="brand-name">OPSmind</span>
+            <img :src="logoImage" alt="OpsMind" class="brand-logo" />
           </div>
 
           <!-- Navigation Menu -->
@@ -21,7 +18,7 @@
               :class="{ 'nav-item-active': activeGroup === '' }"
               @click.prevent="handleHomeClick"
             >
-              <span class="nav-icon nav-icon-home"></span>
+              <img :src="iconHome" alt="首页" class="nav-icon nav-icon-home" />
               <span class="nav-text">{{ homeMenu.name }}</span>
             </a>
 
@@ -34,7 +31,7 @@
               :class="{ 'nav-item-active': activeGroup === group.code }"
               @click.prevent="handleGroupClick(group)"
             >
-              <span class="nav-icon" :class="getMenuIconColor(group.code)"></span>
+              <img :src="getMenuIcon(group.code)" :alt="group.name" class="nav-icon" />
               <span class="nav-text">{{ group.name }}</span>
             </a>
           </nav>
@@ -181,7 +178,7 @@
             :class="{ 'mobile-nav-item-active': activeGroup === '' }"
             @click.prevent="handleHomeClick"
           >
-            <span class="mobile-nav-icon mobile-nav-icon-home"></span>
+            <img :src="iconHome" alt="首页" class="mobile-nav-icon mobile-nav-icon-home" />
             <span class="mobile-nav-text">{{ homeMenu.name }}</span>
           </a>
 
@@ -194,7 +191,7 @@
             :class="{ 'mobile-nav-item-active': activeGroup === group.code }"
             @click.prevent="handleGroupClick(group)"
           >
-            <span class="mobile-nav-icon" :class="getMenuIconColor(group.code)"></span>
+            <img :src="getMenuIcon(group.code)" :alt="group.name" class="mobile-nav-icon" />
             <span class="mobile-nav-text">{{ group.name }}</span>
           </a>
         </nav>
@@ -217,6 +214,17 @@ import {
   More,
   Check
 } from '@element-plus/icons-vue'
+
+// 导入菜单图标
+import iconHome from '@/assets/icons/menu/icon-home@2x.png'
+import iconJao from '@/assets/icons/menu/icon-jao@2x.png'
+import iconPatch from '@/assets/icons/menu/icon-patch@2x.png'
+import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
+import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
+import iconUser from '@/assets/icons/menu/icon-user@2x.png'
+
+// 导入logo
+import logoImage from '@/assets/icons/logo@2x.png'
 
 const router = useRouter()
 const route = useRoute()
@@ -276,16 +284,16 @@ const handleGroupClick = (group) => {
   }
 }
 
-// 获取菜单图标颜色
-const getMenuIconColor = (groupCode) => {
-  const colorMap = {
-    'automation': 'bg-yellow-500',
-    'patch-testing': 'bg-purple-500',
-    'system-inspection': 'bg-blue-500',
-    'asset-management': 'bg-yellow-600',
-    'user-management': 'bg-green-500'
+// 获取菜单图标
+const getMenuIcon = (groupCode) => {
+  const iconMap = {
+    'automation': iconJao,
+    'patch-testing': iconPatch,
+    'system-inspection': iconGfs,
+    'asset-management': iconAsset,
+    'user-management': iconUser
   }
-  return colorMap[groupCode] || 'bg-gray-500'
+  return iconMap[groupCode] || iconHome
 }
 
 // 处理通知点击
@@ -430,31 +438,14 @@ onUnmounted(() => {
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   flex-shrink: 0;
 }
 
-.logo-icon {
-  width: 2rem;
+.brand-logo {
   height: 2rem;
-  background: #2563eb;
-  border-radius: 0.375rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo-text {
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.875rem;
-}
-
-.brand-name {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  white-space: nowrap;
+  width: auto;
+  object-fit: contain;
+  object-position: center;
 }
 
 // 导航菜单
@@ -496,9 +487,10 @@ onUnmounted(() => {
   height: 1rem;
   border-radius: 0.25rem;
   flex-shrink: 0;
+  object-fit: contain;
 
   &.nav-icon-home {
-    background: #f97316;
+    // 首页图标特殊样式可以在这里添加
   }
 }
 
@@ -750,9 +742,10 @@ onUnmounted(() => {
   height: 1rem;
   border-radius: 0.25rem;
   flex-shrink: 0;
+  object-fit: contain;
 
   &.mobile-nav-icon-home {
-    background: #f97316;
+    // 首页图标特殊样式可以在这里添加
   }
 }
 
