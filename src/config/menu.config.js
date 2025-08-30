@@ -22,16 +22,16 @@ export const MENU_CONFIG = {
       description: '自动化脚本、作业和命令管理',
       children: [
         {
-          code: 'gfs',
-          name: '脚本',
-          icon: 'fas fa-file-code',
-          description: '脚本文件管理和版本控制'
-        },
-        {
           code: 'jao',
           name: '作业',
           icon: 'fas fa-tasks',
           description: '自动化作业编排和调度管理'
+        },
+        {
+          code: 'gfs',
+          name: '脚本',
+          icon: 'fas fa-file-code',
+          description: '脚本文件管理和版本控制'
         },
         {
           code: 'cmd',
@@ -43,7 +43,7 @@ export const MENU_CONFIG = {
     },
     {
       code: 'patch-testing',
-      name: '补丁测试',
+      name: '补丁漏洞',
       icon: 'fas fa-shield-alt',
       description: '补丁测试和漏洞管理',
       children: [
@@ -53,12 +53,12 @@ export const MENU_CONFIG = {
           icon: 'fas fa-download',
           description: '系统补丁和更新管理'
         },
-        {
-          code: 'vulnerability',
-          name: '漏洞',
-          icon: 'fas fa-bug',
-          description: '安全漏洞扫描和管理'
-        },
+        // {
+        //   code: 'vulnerability',
+        //   name: '漏洞',
+        //   icon: 'fas fa-bug',
+        //   description: '安全漏洞扫描和管理'
+        // },
         {
           code: 'software',
           name: '软件',

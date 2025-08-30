@@ -19,7 +19,7 @@
             </a>
             <a href="#" class="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900">
               <span class="w-4 h-4 bg-purple-500 rounded"></span>
-              <span>补丁测试</span>
+              <span>补丁漏洞</span>
             </a>
             <a href="#" class="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900">
               <span class="w-4 h-4 bg-blue-500 rounded"></span>
