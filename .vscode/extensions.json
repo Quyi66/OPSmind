@@ -3,30 +3,29 @@
     // Vue 开发
     "Vue.volar",
     "Vue.vscode-typescript-vue-plugin",
-    
+
     // 代码质量
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "bradlc.vscode-tailwindcss",
-    
+
     // 开发工具
     "ms-vscode.vscode-typescript-next",
     "christian-kohler.path-intellisense",
     "christian-kohler.npm-intellisense",
     "formulahendry.auto-rename-tag",
     "ms-vscode.vscode-json",
-    
+
     // Git
     "eamodio.gitlens",
-    
+
     // 测试
     "vitest.explorer",
-    
+
     // 其他实用工具
     "editorconfig.editorconfig",
     "ms-vscode.live-server",
     "ritwickdey.liveserver",
-    "gruntfuggly.todo-tree",
-    "streetsidesoftware.code-spell-checker"
+    "gruntfuggly.todo-tree"
   ]
 }
