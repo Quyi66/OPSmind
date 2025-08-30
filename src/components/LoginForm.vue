@@ -1,13 +1,13 @@
 <template>
   <div class="h-full">
-    <!-- 8等份垂直布局容器 -->
-    <div class="flex flex-col h-full">
-      <!-- 上边距 (2) -->
-      <div class="flex-[2]"></div>
+    <!-- 优化的垂直布局容器 -->
+    <div class="flex flex-col h-full px-1">
+      <!-- 上边距 -->
+      <div class="flex-[1.5]"></div>
 
-      <!-- 用户登录标题 (1) -->
-      <div class="flex-1 flex items-center">
-        <h2 class="text-lg font-medium text-gray-800">用户登录</h2>
+      <!-- 用户登录标题 -->
+      <div class="mb-8">
+        <h2 class="text-lg font-medium text-gray-800 text-center">用户登录</h2>
       </div>
 
       <!-- Loading State -->
@@ -29,19 +29,20 @@
 
       <!-- Login Form -->
       <template v-else>
-        <!-- 用户名输入框 (1) -->
-        <div class="flex-1 flex items-center">
-          <div class="w-full">
-            <!-- Error Message -->
-            <div
-              v-if="authError"
-              class="mb-2 p-2 bg-red-50 border-l-3 border-red-400 rounded"
-              role="alert"
-              aria-live="assertive"
-            >
-              <p class="text-xs font-medium text-red-800">{{ errorMessage }}</p>
-            </div>
+        <!-- 表单区域 -->
+        <div class="space-y-6">
+          <!-- Error Message -->
+          <div
+            v-if="authError"
+            class="p-3 bg-red-50 border border-red-200 rounded"
+            role="alert"
+            aria-live="assertive"
+          >
+            <p class="text-sm font-medium text-red-800">{{ errorMessage }}</p>
+          </div>
 
+          <!-- 用户名输入框 -->
+          <div>
             <label for="username" class="sr-only">用户名</label>
             <input
               id="username"
@@ -50,9 +51,9 @@
               placeholder="用户名"
               autocomplete="username"
               spellcheck="false"
-              class="w-full px-4 py-3.5 text-base border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500"
+              class="w-full px-4 py-4 text-sm border border-gray-300 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500"
               :class="{
-                'border-red-300 focus:ring-red-500': authError && !loginForm.username
+                'border-red-300 focus:ring-red-500 focus:bg-red-50': authError && !loginForm.username
               }"
               :disabled="loading"
               :aria-invalid="authError && !loginForm.username ? 'true' : 'false'"
@@ -60,11 +61,9 @@
               required
             />
           </div>
-        </div>
 
-        <!-- 密码输入框 (1) -->
-        <div class="flex-1 flex items-center">
-          <div class="w-full">
+          <!-- 密码输入框 -->
+          <div>
             <label for="password" class="sr-only">密码</label>
             <input
               id="password"
@@ -73,9 +72,9 @@
               placeholder="密码"
               autocomplete="current-password"
               spellcheck="false"
-              class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500"
+              class="w-full px-4 py-4 text-sm border border-gray-300 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500"
               :class="{
-                'border-red-300 focus:ring-red-500': authError && !loginForm.password
+                'border-red-300 focus:ring-red-500 focus:bg-red-50': authError && !loginForm.password
               }"
               :disabled="loading"
               :aria-invalid="authError && !loginForm.password ? 'true' : 'false'"
@@ -83,81 +82,81 @@
               @keyup.enter="handleLogin"
               required
             />
-
-            <!-- OTP Field (if enabled) -->
-            <div v-if="showOTP" class="mt-2">
-              <label for="otp" class="sr-only">动态验证码</label>
-              <input
-                id="otp"
-                v-model="loginForm.otpCode"
-                type="text"
-                placeholder="动态验证码"
-                autocomplete="one-time-code"
-                spellcheck="false"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                class="w-full px-3 py-2 text-xs border border-gray-300 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500 text-center tracking-widest"
-                :disabled="loading"
-                maxlength="6"
-                @keyup.enter="handleLogin"
-              />
-            </div>
-
-            <!-- Remember Me Checkbox -->
-            <div class="mt-2 flex items-center">
-              <input
-                id="remember"
-                v-model="loginForm.rememberMe"
-                type="checkbox"
-                class="w-3 h-3 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 transition-colors duration-200 disabled:opacity-50"
-                :disabled="loading"
-              />
-              <label for="remember" class="ml-2 text-xs text-gray-600 cursor-pointer select-none">
-                保持登录状态
-              </label>
-            </div>
           </div>
-        </div>
 
-        <!-- 登录按钮 (1) -->
-        <div class="flex-1 flex items-center">
-          <button
-            type="submit"
-            class="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg font-medium text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="loading || !loginForm.username || !loginForm.password"
-            :aria-label="loading ? '登录中，请稍候' : '登录'"
-            @click="handleLogin"
-          >
-            <span v-if="loading" class="flex items-center justify-center">
-              <svg
-                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <circle
-                  class="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  stroke-width="4"
-                ></circle>
-                <path
-                  class="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              <span>登录中...</span>
-            </span>
-            <span v-else>登录</span>
-          </button>
+          <!-- OTP Field (if enabled) -->
+          <div v-if="showOTP">
+            <label for="otp" class="sr-only">动态验证码</label>
+            <input
+              id="otp"
+              v-model="loginForm.otpCode"
+              type="text"
+              placeholder="动态验证码"
+              autocomplete="one-time-code"
+              spellcheck="false"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              class="w-full px-4 py-4 text-sm border border-gray-300 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500 text-center tracking-widest"
+              :disabled="loading"
+              maxlength="6"
+              @keyup.enter="handleLogin"
+            />
+          </div>
+
+          <!-- Remember Me Checkbox -->
+          <div class="flex items-center">
+            <input
+              id="remember"
+              v-model="loginForm.rememberMe"
+              type="checkbox"
+              class="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 transition-colors duration-200 disabled:opacity-50"
+              :disabled="loading"
+            />
+            <label for="remember" class="ml-2 text-sm text-gray-600 cursor-pointer select-none">
+              保持登录状态
+            </label>
+          </div>
+
+          <!-- 登录按钮 -->
+          <div class="pt-4">
+            <button
+              type="submit"
+              class="w-full bg-blue-600 text-white py-5 px-4 rounded font-medium text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              :disabled="loading || !loginForm.username || !loginForm.password"
+              :aria-label="loading ? '登录中，请稍候' : '登录'"
+              @click="handleLogin"
+            >
+              <span v-if="loading" class="flex items-center justify-center">
+                <svg
+                  class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span>登录中...</span>
+              </span>
+              <span v-else>登录</span>
+            </button>
+          </div>
         </div>
       </template>
 
-      <!-- 下边距 (1) -->
-      <div class="flex-1"></div>
+      <!-- 下边距 -->
+      <div class="flex-[1.5]"></div>
     </div>
   </div>
 </template>
