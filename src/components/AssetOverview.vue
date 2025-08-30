@@ -11,21 +11,9 @@
       </div>
     </div>
 
-    <!-- 横向条形图 -->
-    <div class="asset-chart">
-      <div v-for="(asset, index) in assetData.categories" :key="index" class="asset-item">
-        <div class="asset-label">{{ asset }}</div>
-        <div class="asset-bar-container">
-          <div class="asset-bar">
-            <div
-              class="asset-bar-fill"
-              :class="getBarColorClass(index)"
-              :style="`width: ${(assetData.values[index] / Math.max(...assetData.values)) * 100}%`"
-            ></div>
-          </div>
-          <span class="asset-value">{{ assetData.values[index] }}</span>
-        </div>
-      </div>
+    <!-- ECharts横向柱状图 -->
+    <div class="chart-container">
+      <v-chart class="chart" :option="chartOption" autoresize />
     </div>
   </div>
 </template>
@@ -42,16 +30,8 @@ import {
   GridComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
-import { ElSelect, ElOption, ElButton } from 'element-plus'
 
-use([
-  CanvasRenderer,
-  BarChart,
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent
-])
+use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
 
 // Tab选项
 const platformTabs = ref([
@@ -64,12 +44,12 @@ const selectedPlatform = ref('enterprise')
 
 // 资产数据
 const assetData = ref({
-  categories: ['Linux操作系统', 'Unix操作系统', 'Windows操作系统'],
-  values: [4, 1, 4]
+  categories: ['Windows服务器', 'Unix服务器', 'Linux服务器'],
+  values: [2, 1, 4]
 })
 
 // 获取条形图颜色类
-const getBarColorClass = (index) => {
+const getBarColorClass = index => {
   const colors = ['blue-bar', 'green-bar', 'orange-bar']
   return colors[index % colors.length]
 }
@@ -81,48 +61,63 @@ const chartOption = computed(() => ({
     axisPointer: {
       type: 'shadow'
     },
-    formatter: function(params) {
+    formatter: function (params) {
       const data = params[0]
       return `${data.name}: ${data.value}`
     }
   },
   grid: {
-    left: '20%',
-    right: '10%',
-    top: '5%',
-    bottom: '5%',
-    containLabel: false
+    left: '5%',
+    right: '15%',
+    top: '10%',
+    bottom: '15%',
+    containLabel: true
   },
   xAxis: {
     type: 'value',
+    min: 0,
+    max: Math.max(...assetData.value.values),
+    interval: 1,
     axisLine: {
-      show: false
-    },
-    axisTick: {
-      show: false
-    },
-    axisLabel: {
-      color: '#666'
-    },
-    splitLine: {
+      show: true,
       lineStyle: {
-        color: '#f0f0f0'
+        color: '#e8e8e8'
       }
     },
-    max: 5
+    axisTick: {
+      show: true,
+      lineStyle: {
+        color: '#e8e8e8'
+      }
+    },
+    axisLabel: {
+      color: '#999',
+      fontSize: 14
+    },
+    splitLine: {
+      show: true,
+      lineStyle: {
+        color: '#f5f5f5',
+        type: 'solid'
+      }
+    }
   },
   yAxis: {
     type: 'category',
     data: assetData.value.categories,
     axisLine: {
-      show: false
+      show: true,
+      lineStyle: {
+        color: '#e8e8e8'
+      }
     },
     axisTick: {
       show: false
     },
     axisLabel: {
-      color: '#666',
-      fontSize: 12
+      color: '#999',
+      fontSize: 12,
+      margin: 10
     }
   },
   series: [
@@ -130,18 +125,17 @@ const chartOption = computed(() => ({
       type: 'bar',
       data: assetData.value.values,
       itemStyle: {
-        color: function(params) {
-          const colors = ['#1890ff', '#52c41a', '#faad14']
-          return colors[params.dataIndex % colors.length]
-        },
-        borderRadius: [0, 4, 4, 0]
+        color: '#1890ff',
+        borderRadius: [0, 2, 2, 0]
       },
-      barWidth: '60%',
+      barWidth: '30%',
       label: {
         show: true,
         position: 'right',
-        color: '#666',
-        fontSize: 12
+        color: '#1890ff',
+        fontSize: 12,
+        fontWeight: 'bold',
+        distance: 5
       }
     }
   ]
@@ -154,7 +148,15 @@ const chartOption = computed(() => ({
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    'PingFang SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 .section-header {
@@ -221,82 +223,16 @@ const chartOption = computed(() => ({
   }
 }
 
-// 资产图表样式
-.asset-chart {
+// 图表容器样式
+.chart-container {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  justify-content: center;
   padding: 16px;
+  min-height: 200px;
 }
 
-.asset-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.asset-label {
-  font-size: 14px;
-  color: #374151;
-  font-weight: 500;
-  min-width: 140px;
-  text-align: left;
-}
-
-.asset-bar-container {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
-}
-
-.asset-bar {
-  flex: 1;
-  height: 12px;
-  background: #f3f4f6;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.asset-bar-fill {
+.chart {
+  width: 100%;
   height: 100%;
-  border-radius: 6px;
-  transition: width 0.8s ease;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
-    border-radius: 6px 6px 0 0;
-  }
-
-  &.blue-bar {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  }
-
-  &.green-bar {
-    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
-  }
-
-  &.orange-bar {
-    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-  }
-}
-
-.asset-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333333;
-  min-width: 24px;
-  text-align: right;
 }
 
 .section-title {
