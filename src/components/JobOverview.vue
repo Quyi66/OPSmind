@@ -10,8 +10,15 @@
 
     <!-- 作业统计 -->
     <div class="job-stats">
-      <TypeCountCard v-for="stat in jobStats" :key="stat.id" :type-name="stat.label" :count="stat.value"
-        :icon="stat.icon" :icon-type="stat.iconType" @click="handleStatClick(stat.id)" />
+      <TypeCountCard
+        v-for="stat in jobStats"
+        :key="stat.id"
+        :type-name="stat.label"
+        :count="stat.value"
+        :icon="stat.icon"
+        :icon-type="stat.iconType"
+        @click="handleStatClick(stat.id)"
+      />
     </div>
 
     <!-- 图表标题和图例 -->
@@ -23,7 +30,7 @@
           <span>REST作业</span>
         </div>
         <div class="legend-item">
-          <div class="legend-color" style="background: #f97316"></div>
+          <div class="legend-color" style="background: #60a5fa"></div>
           <span>命令作业</span>
         </div>
         <div class="legend-item">
@@ -114,10 +121,10 @@ const chartOption = computed(() => ({
     }
   },
   grid: {
-    left: '5%',
-    right: '5%',
-    bottom: '15%',
-    top: '10%',
+    left: 50,
+    right: 20,
+    bottom: 50,
+    top: 20,
     containLabel: true
   },
   xAxis: {
@@ -166,7 +173,7 @@ const chartOption = computed(() => ({
         color: '#3b82f6',
         borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '20%',
+      barWidth: '18%',
       barGap: '20%'
     },
     {
@@ -174,10 +181,10 @@ const chartOption = computed(() => ({
       type: 'bar',
       data: chartData.value.commandJobs,
       itemStyle: {
-        color: '#f97316',
+        color: '#60a5fa',
         borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '20%'
+      barWidth: '18%'
     },
     {
       name: '脚本作业',
@@ -187,7 +194,7 @@ const chartOption = computed(() => ({
         color: '#10b981',
         borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '20%'
+      barWidth: '18%'
     }
   ]
 }))
@@ -363,13 +370,13 @@ const chartOption = computed(() => ({
 
 .chart-container {
   flex: 1;
-  height: 180px;
-  min-height: 180px;
+  height: 200px;
+  min-height: 200px;
 }
 
 .chart {
   width: 100%;
-  height: 180px;
+  height: 200px;
 }
 
 // 响应式设计

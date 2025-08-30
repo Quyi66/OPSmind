@@ -26,11 +26,11 @@
       <h4 class="chart-title">近10天巡检结果情况</h4>
       <div class="chart-legend">
         <div class="legend-item">
-          <div class="legend-color" style="background: #10b981;"></div>
+          <div class="legend-color" style="background: #10b981"></div>
           <span>正常</span>
         </div>
         <div class="legend-item">
-          <div class="legend-color" style="background: #fbbf24;"></div>
+          <div class="legend-color" style="background: #fbbf24"></div>
           <span>异常</span>
         </div>
       </div>
@@ -38,11 +38,7 @@
 
     <!-- ECharts图表容器 -->
     <div class="chart-container">
-      <v-chart
-        class="chart"
-        :option="chartOption"
-        autoresize
-      />
+      <v-chart class="chart" :option="chartOption" autoresize />
     </div>
   </div>
 </template>
@@ -62,14 +58,7 @@ import VChart from 'vue-echarts'
 
 import TypeCountCard from './TypeCountCard.vue'
 
-use([
-  CanvasRenderer,
-  BarChart,
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent
-])
+use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
 
 // 巡检统计数据
 const inspectionStats = ref([
@@ -97,7 +86,7 @@ const inspectionStats = ref([
 ])
 
 // 处理统计卡片点击事件
-const handleStatClick = (statId) => {
+const handleStatClick = statId => {
   console.log('Clicked stat:', statId)
   // 这里可以添加具体的点击处理逻辑
 }
@@ -127,10 +116,10 @@ const chartOption = computed(() => ({
     }
   },
   grid: {
-    left: '5%',
-    right: '5%',
-    bottom: '15%',
-    top: '10%',
+    left: 50,
+    right: 20,
+    bottom: 50,
+    top: 20,
     containLabel: true
   },
   xAxis: {
@@ -179,7 +168,7 @@ const chartOption = computed(() => ({
         color: '#10b981',
         borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '30%',
+      barWidth: '27%',
       barGap: '20%'
     },
     {
@@ -190,7 +179,7 @@ const chartOption = computed(() => ({
         color: '#fbbf24',
         borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '30%'
+      barWidth: '27%'
     }
   ]
 }))
@@ -202,7 +191,15 @@ const chartOption = computed(() => ({
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    'PingFang SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 // 标题区域
@@ -313,7 +310,8 @@ const chartOption = computed(() => ({
 
 .chart-container {
   flex: 1;
-  min-height: 0;
+  height: 200px;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   padding: 0 16px;
@@ -321,10 +319,8 @@ const chartOption = computed(() => ({
 
 .chart {
   width: 100%;
-  height: 100%;
+  height: 200px;
 }
-
-
 
 .stat-icon {
   width: 32px;
@@ -348,8 +344,6 @@ const chartOption = computed(() => ({
     background: #ff4d4f;
   }
 }
-
-
 
 // 响应式设计
 @media (max-width: 768px) {
