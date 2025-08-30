@@ -17,9 +17,7 @@
     <!-- 主体布局 -->
     <div v-else class="dashboard-layout">
       <!-- 左侧边栏 -->
-      <aside class="dashboard-sidebar">
-        <DashboardSidebar />
-      </aside>
+      <DashboardSidebar />
 
       <!-- 主内容区 -->
       <main class="dashboard-content">
@@ -143,13 +141,7 @@ const handleRefresh = async () => {
   background: transparent;
 }
 
-/* 左侧边栏 */
-.dashboard-sidebar {
-  flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #e8eaed;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
-}
+
 
 /* 主内容区域 */
 .dashboard-content {

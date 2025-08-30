@@ -1,44 +1,42 @@
 <template>
   <div class="dashboard-sidebar">
-    <!-- 个人信息和待办卡片 -->
-    <div class="user-todo-section">
-      <div class="section-card">
-        <!-- 个人信息区域 -->
-        <div class="user-profile-card">
-          <div class="user-avatar">
-            <img :src="userInfo.avatar" :alt="userInfo.name" class="avatar-image" />
-          </div>
-          <div class="user-info">
-            <h3 class="user-greeting">{{ userInfo.greeting }}</h3>
-            <p class="user-date">{{ userInfo.date }}</p>
-          </div>
+    <!-- 第一张卡片：个人信息 + 我的待办 -->
+    <div class="user-todo-card">
+      <!-- 个人信息区域 -->
+      <div class="user-profile-card">
+        <div class="user-avatar">
+          <img :src="userInfo.avatar" :alt="userInfo.name" class="avatar-image" />
+        </div>
+        <div class="user-info">
+          <h3 class="user-greeting">{{ userInfo.greeting }}</h3>
+          <p class="user-date">{{ userInfo.date }}</p>
+        </div>
+      </div>
+
+      <!-- 我的待办区域 -->
+      <div class="todo-section">
+        <div class="section-header">
+          <h4 class="section-title">我的待办</h4>
         </div>
 
-        <!-- 我的待办区域 -->
-        <div class="todo-content">
-          <div class="section-header">
-            <h4 class="section-title">我的待办</h4>
-          </div>
-
-          <div class="todo-list">
-            <div
-              v-for="todo in todoList"
-              :key="todo.id"
-              class="todo-item"
-              @click="handleTodoClick(todo)"
-            >
-              <div class="todo-content">
-                <div class="todo-indicator">
-                  <i class="fas fa-exclamation-triangle text-red-500"></i>
-                </div>
-                <div class="todo-details">
-                  <p class="todo-text">{{ todo.title }}</p>
-                  <p class="todo-time">{{ todo.time }}</p>
-                  <div class="todo-actions">
-                    <button @click.stop="handleTodoProcess(todo)" class="process-btn">
-                      立即处理
-                    </button>
-                  </div>
+        <div class="todo-list">
+          <div
+            v-for="todo in todoList"
+            :key="todo.id"
+            class="todo-item"
+            @click="handleTodoClick(todo)"
+          >
+            <div class="todo-content">
+              <div class="todo-indicator">
+                <i class="fas fa-exclamation-triangle text-red-500"></i>
+              </div>
+              <div class="todo-details">
+                <p class="todo-text">{{ todo.title }}</p>
+                <p class="todo-time">{{ todo.time }}</p>
+                <div class="todo-actions">
+                  <button @click.stop="handleTodoProcess(todo)" class="process-btn">
+                    立即处理
+                  </button>
                 </div>
               </div>
             </div>
@@ -47,25 +45,23 @@
       </div>
     </div>
 
-    <!-- 最近使用 -->
-    <div class="recent-section">
-      <div class="section-card">
-        <div class="section-header">
-          <h4 class="section-title">最近使用</h4>
-        </div>
+    <!-- 第二张卡片：最近使用 -->
+    <div class="recent-card">
+      <div class="section-header">
+        <h4 class="section-title">最近使用</h4>
+      </div>
 
-        <div class="recent-grid">
-          <div
-            v-for="item in recentItems"
-            :key="item.id"
-            class="recent-item"
-            @click="handleRecentClick(item)"
-          >
-            <div class="recent-icon">
-              <i :class="item.icon"></i>
-            </div>
-            <span class="recent-name">{{ item.name }}</span>
+      <div class="recent-grid">
+        <div
+          v-for="item in recentItems"
+          :key="item.id"
+          class="recent-item"
+          @click="handleRecentClick(item)"
+        >
+          <div class="recent-icon">
+            <i :class="item.icon"></i>
           </div>
+          <span class="recent-name">{{ item.name }}</span>
         </div>
       </div>
     </div>
@@ -188,8 +184,7 @@ const handleRecentClick = item => {
 <style scoped lang="scss">
 .dashboard-sidebar {
   width: 280px;
-  background: #fff;
-  border-right: 1px solid #e8eaed;
+  background: transparent;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -225,9 +220,13 @@ const handleRecentClick = item => {
   }
 }
 
-// 个人信息和待办区域
-.user-todo-section {
-  padding: 16px;
+// 第一张卡片：个人信息 + 待办
+.user-todo-card {
+  margin: 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
 }
 
 .user-profile-card {
@@ -237,9 +236,7 @@ const handleRecentClick = item => {
   padding: 20px 16px;
   background: url('@/assets/icons/bg-avatar.png') no-repeat center center;
   background-size: cover;
-  border-radius: 8px;
   color: white;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .user-avatar {
@@ -273,12 +270,9 @@ const handleRecentClick = item => {
   line-height: 1.2;
 }
 
-// 通用区域样式
-.recent-section {
-  padding: 0 16px 16px 16px;
-}
-
-.section-card {
+// 第二张卡片：最近使用
+.recent-card {
+  margin: 0 16px 16px 16px;
   background: white;
   border-radius: 12px;
   border: 1px solid #f0f0f0;
@@ -288,6 +282,11 @@ const handleRecentClick = item => {
 .section-header {
   padding: 16px 16px 12px 16px;
   border-bottom: 1px solid #f5f5f5;
+}
+
+// 待办区域的标题不需要下边框，与个人信息紧贴
+.todo-section .section-header {
+  border-bottom: none;
 }
 
 .section-title {
@@ -311,8 +310,8 @@ const handleRecentClick = item => {
 }
 
 // 待办事项样式
-.todo-content {
-  padding: 0;
+.todo-section {
+  background: white;
 }
 
 .todo-list {
@@ -439,8 +438,8 @@ const handleRecentClick = item => {
     width: 260px;
   }
 
-  .user-profile-section {
-    padding: 12px;
+  .user-todo-card {
+    margin: 12px;
   }
 
   .user-profile-card {
@@ -499,8 +498,9 @@ const handleRecentClick = item => {
     position: relative;
   }
 
-  .user-profile-section {
-    padding: 12px;
+  .user-todo-card,
+  .recent-card {
+    margin: 12px;
   }
 
   .user-profile-card {
@@ -520,9 +520,9 @@ const handleRecentClick = item => {
     font-size: 10px;
   }
 
-  .todo-section,
-  .recent-section {
-    padding: 0 12px 12px 12px;
+  .user-todo-card,
+  .recent-card {
+    margin: 12px;
   }
 
   .section-title {
@@ -570,8 +570,9 @@ const handleRecentClick = item => {
     width: 100%;
   }
 
-  .user-profile-section {
-    padding: 10px;
+  .user-todo-card,
+  .recent-card {
+    margin: 10px;
   }
 
   .user-profile-card {
@@ -589,11 +590,6 @@ const handleRecentClick = item => {
 
   .user-date {
     font-size: 9px;
-  }
-
-  .todo-section,
-  .recent-section {
-    padding: 0 10px 10px 10px;
   }
 
   .recent-grid {
