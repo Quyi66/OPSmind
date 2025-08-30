@@ -150,7 +150,6 @@ const chartOption = computed(() => ({
 
 <style scoped lang="scss">
 .asset-overview {
-  padding: 16px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -162,7 +161,8 @@ const chartOption = computed(() => ({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 0;
+  padding: 0 16px;
 }
 
 .section-title {
@@ -228,6 +228,7 @@ const chartOption = computed(() => ({
   flex-direction: column;
   gap: 16px;
   justify-content: center;
+  padding: 16px;
 }
 
 .asset-item {
