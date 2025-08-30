@@ -28,12 +28,16 @@
           >
             <div class="todo-content">
               <div class="todo-indicator">
-                <i class="fas fa-exclamation-triangle text-red-500"></i>
+                <div class="red-dot"></div>
               </div>
               <div class="todo-details">
                 <p class="todo-text">{{ todo.title }}</p>
-                <p class="todo-time">{{ todo.time }}</p>
+                <div class="todo-meta">
+                  <span class="todo-sender">发送人:{{ todo.sender }}</span>
+                  <span class="todo-time">{{ todo.time }}</span>
+                </div>
                 <div class="todo-actions">
+                  <button @click.stop="handleTodoIgnore(todo)" class="ignore-btn">忽略</button>
                   <button @click.stop="handleTodoProcess(todo)" class="process-btn">
                     立即处理
                   </button>
@@ -129,21 +133,24 @@ onMounted(() => {
 const todoList = ref([
   {
     id: 1,
-    title: '您有新的脚本需求审批，请及时查看',
+    title: '您有新的脚本需要审批，请及时查看',
+    sender: 'system',
     time: '2025-07-14 10:22:34',
     priority: 'high'
   },
   {
     id: 2,
-    title: '您有新的脚本需求审批，请及时查看',
+    title: '您有新的脚本需要审批，请及时查看',
+    sender: 'system',
     time: '2025-07-14 10:22:34',
-    priority: 'normal'
+    priority: 'high'
   },
   {
     id: 3,
-    title: '您有新的脚本需求审批，请及时查看',
+    title: '您有新的脚本需要审批，请及时查看',
+    sender: 'system',
     time: '2025-07-14 10:22:34',
-    priority: 'normal'
+    priority: 'high'
   }
 ])
 
@@ -183,7 +190,7 @@ const handleRecentClick = item => {
 
 <style scoped lang="scss">
 .dashboard-sidebar {
-  width: 280px;
+  width: 360px;
   background: transparent;
   display: flex;
   flex-direction: column;
@@ -191,6 +198,8 @@ const handleRecentClick = item => {
   height: 100dvh; // 动态视口高度支持
   overflow-y: auto;
   flex-shrink: 0;
+  padding-left: 8px;
+  padding-right: 16px;
   font-family:
     'PingFang SC',
     -apple-system,
@@ -287,6 +296,7 @@ const handleRecentClick = item => {
 // 待办区域的标题不需要下边框，与个人信息紧贴
 .todo-section .section-header {
   border-bottom: none;
+  padding: 12px 16px 8px 16px;
 }
 
 .section-title {
@@ -315,11 +325,11 @@ const handleRecentClick = item => {
 }
 
 .todo-list {
-  padding: 0 16px 16px 16px;
+  padding: 0 16px 12px 16px;
 }
 
 .todo-item {
-  padding: 12px 0;
+  padding: 6px 0;
   border-bottom: 1px solid #f5f5f5;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -341,11 +351,14 @@ const handleRecentClick = item => {
 
 .todo-indicator {
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 6px;
+}
 
-  i {
-    font-size: 12px;
-  }
+.red-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #ff4d4f;
+  border-radius: 50%;
 }
 
 .todo-details {
@@ -356,31 +369,58 @@ const handleRecentClick = item => {
 .todo-text {
   font-size: 13px;
   color: #262626;
-  line-height: 1.4;
+  line-height: 1.3;
   margin: 0 0 4px 0;
+}
+
+.todo-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.todo-sender {
+  font-size: 11px;
+  color: #8c8c8c;
 }
 
 .todo-time {
   font-size: 11px;
   color: #8c8c8c;
-  margin: 0 0 8px 0;
 }
 
 .todo-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.process-btn {
+.ignore-btn {
   font-size: 12px;
-  color: #2d8cf0;
+  color: #8c8c8c;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
 
   &:hover {
+    color: #595959;
+  }
+}
+
+.process-btn {
+  font-size: 12px;
+  color: #2d8cf0;
+  background: none;
+  border: 1px solid #2d8cf0;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 4px 12px;
+
+  &:hover {
     color: #1890ff;
+    border-color: #1890ff;
   }
 }
 
@@ -435,7 +475,7 @@ const handleRecentClick = item => {
 // 响应式设计
 @media (max-width: 1200px) {
   .dashboard-sidebar {
-    width: 260px;
+    width: 340px;
   }
 
   .user-todo-card {
@@ -462,7 +502,7 @@ const handleRecentClick = item => {
 
 @media (max-width: 992px) {
   .dashboard-sidebar {
-    width: 240px;
+    width: 320px;
   }
 
   .recent-grid {

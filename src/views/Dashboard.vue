@@ -77,24 +77,26 @@ const dashboardStore = useDashboardStore()
 const route = useRoute()
 
 // 监听路由变化，自动显示对应的iframe
-watch(() => route.path, (newPath) => {
-  console.log('🧭 Route changed to:', newPath)
+watch(
+  () => route.path,
+  newPath => {
+    console.log('🧭 Route changed to:', newPath)
 
-  // 如果是功能模块路由，自动显示iframe
-  const moduleCode = newPath.substring(1) // 移除开头的 '/'
-  const allMenuItems = getAllMenuItems()
-  const moduleList = allMenuItems.map(item => item.code)
+    // 如果是功能模块路由，自动显示iframe
+    const moduleCode = newPath.substring(1) // 移除开头的 '/'
+    const allMenuItems = getAllMenuItems()
+    const moduleList = allMenuItems.map(item => item.code)
 
-  if (moduleList.includes(moduleCode)) {
-    console.log('🎯 Module route detected:', moduleCode)
+    if (moduleList.includes(moduleCode)) {
+      console.log('🎯 Module route detected:', moduleCode)
 
-    // 注意：不再在这里触发弹窗模式的iframe
-    // iframe现在由MainLayout中的AngularModuleInlineFrame组件处理
-    // 这里只是记录路由变化
-  }
-}, { immediate: true })
-
-
+      // 注意：不再在这里触发弹窗模式的iframe
+      // iframe现在由MainLayout中的AngularModuleInlineFrame组件处理
+      // 这里只是记录路由变化
+    }
+  },
+  { immediate: true }
+)
 
 onMounted(async () => {
   await loadDashboardData()
@@ -137,17 +139,23 @@ const handleRefresh = async () => {
   flex: 1;
   display: flex;
   overflow: hidden;
-  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    'PingFang SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
   background: transparent;
 }
-
-
 
 /* 主内容区域 */
 .dashboard-content {
   flex: 1;
   overflow: hidden;
-  padding: 24px 16px 6px 16px;
+  padding: 24px 16px 6px 0px;
   background: transparent;
   min-height: 0;
   display: flex;
@@ -195,7 +203,9 @@ const handleRefresh = async () => {
   background: white;
   border-radius: 16px;
   border: 1px solid #e8eaed;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
   overflow: hidden;
   transition: all 0.3s ease;
   height: 100%;
@@ -204,7 +214,9 @@ const handleRefresh = async () => {
 }
 
 .dashboard-card:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
 }
 
