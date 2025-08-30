@@ -1,46 +1,44 @@
 <template>
   <div class="dashboard-sidebar">
-    <!-- 个人信息卡片 -->
-    <div class="user-profile-section">
-      <div class="user-profile-card">
-        <div class="user-avatar">
-          <img :src="userInfo.avatar" :alt="userInfo.name" class="avatar-image">
-        </div>
-        <div class="user-info">
-          <h3 class="user-greeting">{{ userInfo.greeting }}</h3>
-          <p class="user-date">{{ userInfo.date }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 我的待办 -->
-    <div class="todo-section">
+    <!-- 个人信息和待办卡片 -->
+    <div class="user-todo-section">
       <div class="section-card">
-        <div class="section-header">
-          <h4 class="section-title">我的待办</h4>
+        <!-- 个人信息区域 -->
+        <div class="user-profile-card">
+          <div class="user-avatar">
+            <img :src="userInfo.avatar" :alt="userInfo.name" class="avatar-image" />
+          </div>
+          <div class="user-info">
+            <h3 class="user-greeting">{{ userInfo.greeting }}</h3>
+            <p class="user-date">{{ userInfo.date }}</p>
+          </div>
         </div>
 
-        <div class="todo-list">
-          <div
-            v-for="todo in todoList"
-            :key="todo.id"
-            class="todo-item"
-            @click="handleTodoClick(todo)"
-          >
-            <div class="todo-content">
-              <div class="todo-indicator">
-                <i class="fas fa-exclamation-triangle text-red-500"></i>
-              </div>
-              <div class="todo-details">
-                <p class="todo-text">{{ todo.title }}</p>
-                <p class="todo-time">{{ todo.time }}</p>
-                <div class="todo-actions">
-                  <button
-                    @click.stop="handleTodoProcess(todo)"
-                    class="process-btn"
-                  >
-                    立即处理
-                  </button>
+        <!-- 我的待办区域 -->
+        <div class="todo-content">
+          <div class="section-header">
+            <h4 class="section-title">我的待办</h4>
+          </div>
+
+          <div class="todo-list">
+            <div
+              v-for="todo in todoList"
+              :key="todo.id"
+              class="todo-item"
+              @click="handleTodoClick(todo)"
+            >
+              <div class="todo-content">
+                <div class="todo-indicator">
+                  <i class="fas fa-exclamation-triangle text-red-500"></i>
+                </div>
+                <div class="todo-details">
+                  <p class="todo-text">{{ todo.title }}</p>
+                  <p class="todo-time">{{ todo.time }}</p>
+                  <div class="todo-actions">
+                    <button @click.stop="handleTodoProcess(todo)" class="process-btn">
+                      立即处理
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -75,17 +73,60 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { ElButton, ElMessage } from 'element-plus'
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { authService } from '@/core/auth'
 
 import avatarImage from '@/assets/icons/avatar@2x.png'
+
+// 获取当前时间段
+const getTimeOfDay = () => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '凌晨'
+  if (hour < 12) return '上午'
+  if (hour < 18) return '下午'
+  return '晚上'
+}
+
+// 获取当前日期
+const getCurrentDate = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+  const weekday = weekdays[now.getDay()]
+  return `今天是${year}-${month}-${day} ${weekday}`
+}
 
 // 用户信息
 const userInfo = ref({
   name: '管理员',
   avatar: avatarImage,
-  greeting: '管理员 下午好，欢迎登录',
-  date: '今天是2025-07-16 星期三'
+  greeting: '管理员下午好，欢迎登录',
+  date: getCurrentDate()
+})
+
+// 获取用户信息
+const loadUserInfo = async () => {
+  try {
+    const user = await authService.getCurrentUser()
+    if (user) {
+      const timeOfDay = getTimeOfDay()
+      userInfo.value = {
+        name: user.name || user.login || '管理员',
+        avatar: avatarImage,
+        greeting: `${user.name || user.login || '管理员'}${timeOfDay}好，欢迎登录`,
+        date: getCurrentDate()
+      }
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+}
+
+onMounted(() => {
+  loadUserInfo()
 })
 
 // 待办事项列表
@@ -123,15 +164,15 @@ const recentItems = ref([
 ])
 
 // 事件处理
-const handleTodoClick = (todo) => {
+const handleTodoClick = todo => {
   ElMessage.info(`点击待办: ${todo.title}`)
 }
 
-const handleTodoProcess = (todo) => {
+const handleTodoProcess = todo => {
   ElMessage.success(`正在处理: ${todo.title}`)
 }
 
-const handleTodoIgnore = (todo) => {
+const handleTodoIgnore = todo => {
   ElMessage.info(`已忽略: ${todo.title}`)
 }
 
@@ -139,7 +180,7 @@ const viewAllTodos = () => {
   ElMessage.info('查看全部待办')
 }
 
-const handleRecentClick = (item) => {
+const handleRecentClick = item => {
   ElMessage.info(`打开模块: ${item.name}`)
 }
 </script>
@@ -155,7 +196,15 @@ const handleRecentClick = (item) => {
   height: 100dvh; // 动态视口高度支持
   overflow-y: auto;
   flex-shrink: 0;
-  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    'PingFang SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 
   // 自定义滚动条
   &::-webkit-scrollbar {
@@ -176,8 +225,8 @@ const handleRecentClick = (item) => {
   }
 }
 
-// 个人信息区域
-.user-profile-section {
+// 个人信息和待办区域
+.user-todo-section {
   padding: 16px;
 }
 
@@ -185,11 +234,12 @@ const handleRecentClick = (item) => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, #2D8CF0 0%, #19BE6B 100%);
-  border-radius: 12px;
+  padding: 20px 16px;
+  background: url('@/assets/icons/bg-avatar.png') no-repeat center center;
+  background-size: cover;
+  border-radius: 8px;
   color: white;
-  box-shadow: 0 4px 20px rgba(45, 140, 240, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .user-avatar {
@@ -200,7 +250,7 @@ const handleRecentClick = (item) => {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 2px solid white;
+  border: none;
   object-fit: cover;
 }
 
@@ -209,20 +259,21 @@ const handleRecentClick = (item) => {
 }
 
 .user-greeting {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   margin: 0 0 4px 0;
   color: white;
+  line-height: 1.2;
 }
 
 .user-date {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
+  line-height: 1.2;
 }
 
 // 通用区域样式
-.todo-section,
 .recent-section {
   padding: 0 16px 16px 16px;
 }
@@ -248,7 +299,7 @@ const handleRecentClick = (item) => {
 
 .view-all-btn {
   font-size: 12px;
-  color: #2D8CF0;
+  color: #2d8cf0;
   background: none;
   border: none;
   cursor: pointer;
@@ -260,6 +311,10 @@ const handleRecentClick = (item) => {
 }
 
 // 待办事项样式
+.todo-content {
+  padding: 0;
+}
+
 .todo-list {
   padding: 0 16px 16px 16px;
 }
@@ -319,7 +374,7 @@ const handleRecentClick = (item) => {
 
 .process-btn {
   font-size: 12px;
-  color: #2D8CF0;
+  color: #2d8cf0;
   background: none;
   border: none;
   cursor: pointer;
@@ -377,10 +432,6 @@ const handleRecentClick = (item) => {
   line-height: 1.2;
   word-break: break-all;
 }
-
-
-
-
 
 // 响应式设计
 @media (max-width: 1200px) {
