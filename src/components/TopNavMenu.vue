@@ -12,43 +12,26 @@
           <!-- Navigation Menu -->
           <nav class="nav-menu">
             <!-- 首页菜单项 -->
-            <a
-              href="#"
-              class="nav-item"
-              :class="{ 'nav-item-active': activeGroup === '' }"
-              @click.prevent="handleHomeClick"
-            >
+            <a href="#" class="nav-item" :class="{ 'nav-item-active': activeGroup === '' }"
+              @click.prevent="handleHomeClick">
               <img :src="iconHome" alt="首页" class="nav-icon nav-icon-home" />
               <span class="nav-text">{{ homeMenu.name }}</span>
             </a>
 
             <!-- 分组菜单项 -->
-            <a
-              v-for="group in menuGroups"
-              :key="group.code"
-              href="#"
-              class="nav-item"
-              :class="{ 'nav-item-active': activeGroup === group.code }"
-              @click.prevent="handleGroupClick(group)"
-            >
+            <a v-for="group in menuGroups" :key="group.code" href="#" class="nav-item"
+              :class="{ 'nav-item-active': activeGroup === group.code }" @click.prevent="handleGroupClick(group)">
               <img :src="getMenuIcon(group.code)" :alt="group.name" class="nav-icon" />
               <span class="nav-text">{{ group.name }}</span>
             </a>
           </nav>
 
           <!-- Mobile Menu Button -->
-          <button
-            @click="toggleMobileMenu"
-            class="mobile-menu-btn"
-            :class="{ 'mobile-menu-btn-active': showMobileMenu }"
-          >
+          <button @click="toggleMobileMenu" class="mobile-menu-btn"
+            :class="{ 'mobile-menu-btn-active': showMobileMenu }">
             <svg class="mobile-menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                :d="showMobileMenu ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'"
-              ></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                :d="showMobileMenu ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'"></path>
             </svg>
           </button>
         </div>
@@ -65,8 +48,7 @@
             <button @click="handleNotificationClick" class="notification-btn">
               <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
                 <path
-                  d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"
-                />
+                  d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
               </svg>
               <!-- Notification Badge -->
               <span v-if="notificationCount > 0" class="notification-badge">
@@ -81,25 +63,29 @@
               <el-avatar :size="32" class="user-avatar" :src="avatarImage"></el-avatar>
               <span class="user-name">{{ displayUserName }}</span>
               <svg class="dropdown-arrow" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fill-rule="evenodd"
+                <path fill-rule="evenodd"
                   d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd"
-                />
+                  clip-rule="evenodd" />
               </svg>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">
-                  <el-icon><User /></el-icon>
+                  <el-icon>
+                    <User />
+                  </el-icon>
                   个人资料
                 </el-dropdown-item>
                 <el-dropdown-item command="settings">
-                  <el-icon><Setting /></el-icon>
+                  <el-icon>
+                    <Setting />
+                  </el-icon>
                   系统设置
                 </el-dropdown-item>
                 <el-dropdown-item divided command="logout">
-                  <el-icon><SwitchButton /></el-icon>
+                  <el-icon>
+                    <SwitchButton />
+                  </el-icon>
                   退出登录
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -109,7 +95,9 @@
           <!-- Settings Button -->
           <el-tooltip content="设置" placement="bottom">
             <button @click="handleSettingsClick" class="menu-action-btn">
-              <el-icon><Setting /></el-icon>
+              <el-icon>
+                <Setting />
+              </el-icon>
             </button>
           </el-tooltip>
 
@@ -117,7 +105,9 @@
           <el-dropdown @command="handleAboutCommand" class="about-dropdown">
             <el-tooltip content="关于" placement="bottom">
               <button class="menu-action-btn">
-                <el-icon><InfoFilled /></el-icon>
+                <el-icon>
+                  <InfoFilled />
+                </el-icon>
               </button>
             </el-tooltip>
             <template #dropdown>
@@ -132,7 +122,9 @@
           <el-dropdown @command="handleLanguageCommand" class="language-dropdown">
             <el-tooltip content="语言" placement="bottom">
               <button class="menu-action-btn">
-                <el-icon><More /></el-icon>
+                <el-icon>
+                  <More />
+                </el-icon>
               </button>
             </el-tooltip>
             <template #dropdown>
@@ -165,25 +157,15 @@
       <div v-if="showMobileMenu" class="mobile-menu-dropdown">
         <nav class="mobile-nav">
           <!-- 首页菜单项 -->
-          <a
-            href="#"
-            class="mobile-nav-item"
-            :class="{ 'mobile-nav-item-active': activeGroup === '' }"
-            @click.prevent="handleHomeClick"
-          >
+          <a href="#" class="mobile-nav-item" :class="{ 'mobile-nav-item-active': activeGroup === '' }"
+            @click.prevent="handleHomeClick">
             <img :src="iconHome" alt="首页" class="mobile-nav-icon mobile-nav-icon-home" />
             <span class="mobile-nav-text">{{ homeMenu.name }}</span>
           </a>
 
           <!-- 分组菜单项 -->
-          <a
-            v-for="group in menuGroups"
-            :key="group.code"
-            href="#"
-            class="mobile-nav-item"
-            :class="{ 'mobile-nav-item-active': activeGroup === group.code }"
-            @click.prevent="handleGroupClick(group)"
-          >
+          <a v-for="group in menuGroups" :key="group.code" href="#" class="mobile-nav-item"
+            :class="{ 'mobile-nav-item-active': activeGroup === group.code }" @click.prevent="handleGroupClick(group)">
             <img :src="getMenuIcon(group.code)" :alt="group.name" class="mobile-nav-icon" />
             <span class="mobile-nav-text">{{ group.name }}</span>
           </a>

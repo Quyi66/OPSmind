@@ -91,9 +91,25 @@ const handleStatClick = statId => {
   // 这里可以添加具体的点击处理逻辑
 }
 
+// 生成近10天日期
+const generateLast10Days = () => {
+  const dates = []
+  const today = new Date()
+
+  for (let i = 9; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(today.getDate() - i)
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    dates.push(`${month}/${day}`)
+  }
+
+  return dates
+}
+
 // 图表数据
 const chartData = ref({
-  dates: ['07/01', '07/02', '07/03', '07/04', '07/05', '07/06', '07/07', '07/08', '07/09', '07/10'],
+  dates: generateLast10Days(),
   normal: [150, 180, 160, 200, 220, 190, 240, 210, 180, 230],
   abnormal: [50, 60, 40, 80, 90, 70, 100, 85, 65, 95]
 })
@@ -168,7 +184,7 @@ const chartOption = computed(() => ({
         color: '#10b981',
         borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '27%',
+      barWidth: '22%',
       barGap: '20%'
     },
     {
@@ -179,7 +195,7 @@ const chartOption = computed(() => ({
         color: '#fbbf24',
         borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '27%'
+      barWidth: '22%'
     }
   ]
 }))
