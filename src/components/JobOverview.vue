@@ -10,20 +10,8 @@
 
     <!-- 作业统计 -->
     <div class="job-stats">
-      <div
-        v-for="stat in jobStats"
-        :key="stat.id"
-        class="job-stat-item"
-        :class="stat.cardClass"
-      >
-        <div class="stat-icon" :class="stat.iconClass">
-          <i :class="stat.icon"></i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-label">{{ stat.label }}</div>
-          <div class="stat-value">{{ stat.value }}</div>
-        </div>
-      </div>
+      <TypeCountCard v-for="stat in jobStats" :key="stat.id" :type-name="stat.label" :count="stat.value"
+        :icon="stat.icon" :icon-type="stat.iconType" @click="handleStatClick(stat.id)" />
     </div>
 
     <!-- 图表标题和图例 -->
@@ -31,15 +19,15 @@
       <h4 class="chart-title">近10天执行作业数据</h4>
       <div class="chart-legend">
         <div class="legend-item">
-          <div class="legend-color" style="background: #3b82f6;"></div>
+          <div class="legend-color" style="background: #3b82f6"></div>
           <span>REST作业</span>
         </div>
         <div class="legend-item">
-          <div class="legend-color" style="background: #f97316;"></div>
+          <div class="legend-color" style="background: #f97316"></div>
           <span>命令作业</span>
         </div>
         <div class="legend-item">
-          <div class="legend-color" style="background: #10b981;"></div>
+          <div class="legend-color" style="background: #10b981"></div>
           <span>脚本作业</span>
         </div>
       </div>
@@ -47,11 +35,7 @@
 
     <!-- ECharts图表容器 -->
     <div class="chart-container">
-      <v-chart
-        class="chart"
-        :option="chartOption"
-        autoresize
-      />
+      <v-chart class="chart" :option="chartOption" autoresize />
     </div>
   </div>
 </template>
@@ -68,16 +52,10 @@ import {
   GridComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
-import { ElButton } from 'element-plus'
 
-use([
-  CanvasRenderer,
-  BarChart,
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent
-])
+import TypeCountCard from './TypeCountCard.vue'
+
+use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
 
 // 作业统计数据
 const jobStats = ref([
@@ -85,27 +63,30 @@ const jobStats = ref([
     id: 'rest-jobs',
     label: 'REST作业',
     value: '78',
-    icon: 'fas fa-globe',
-    iconClass: 'blue-icon',
-    cardClass: 'blue-card'
+    icon: new URL('@/assets/icons/dashboard/icon-job-rest@2x.png', import.meta.url).href,
+    iconType: 'image'
   },
   {
     id: 'command-jobs',
     label: '命令作业',
     value: '2',
-    icon: 'fas fa-terminal',
-    iconClass: 'orange-icon',
-    cardClass: 'orange-card'
+    icon: new URL('@/assets/icons/dashboard/icon-job-cmd@2x.png', import.meta.url).href,
+    iconType: 'image'
   },
   {
     id: 'script-jobs',
     label: '脚本作业',
     value: '56',
-    icon: 'fas fa-file-code',
-    iconClass: 'green-icon',
-    cardClass: 'green-card'
+    icon: new URL('@/assets/icons/dashboard/icon-job-shell@2x.png', import.meta.url).href,
+    iconType: 'image'
   }
 ])
+
+// 处理统计卡片点击事件
+const handleStatClick = statId => {
+  console.log('Clicked stat:', statId)
+  // 这里可以添加具体的点击处理逻辑
+}
 
 // 图表数据
 const chartData = ref({
@@ -218,7 +199,15 @@ const chartOption = computed(() => ({
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    'PingFang SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
 // 标题区域
@@ -230,7 +219,7 @@ const chartOption = computed(() => ({
 // 统计区域
 .job-stats {
   flex: 0 0 auto;
-  height: 80px;
+  height: 92px; // 60px卡片高度 + 32px padding (16px * 2)
 }
 
 // 图表标题区域
@@ -286,90 +275,11 @@ const chartOption = computed(() => ({
   display: flex;
   gap: 16px;
   align-items: center;
-  padding: 0 16px;
+  padding: 16px;
   background: #fafbfc;
   border-radius: 8px;
   margin: 0 16px;
 }
-
-.job-stat-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 8px;
-  flex: 1;
-  border: 1px solid #f5f6f7;
-  background: white;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-
-  &.blue-card {
-    border-color: #e8f2ff;
-  }
-
-  &.orange-card {
-    border-color: #fff4e6;
-  }
-
-  &.green-card {
-    border-color: #e8f5e8;
-  }
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  flex-shrink: 0;
-
-  i {
-    font-size: 24px;
-    color: white;
-  }
-
-  &.blue-icon {
-    background: #3b82f6;
-  }
-
-  &.orange-icon {
-    background: #f97316;
-  }
-
-  &.green-icon {
-    background: #10b981;
-  }
-}
-
-.stat-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #333333;
-  line-height: 1.2;
-}
-
-
 
 .chart-header {
   display: flex;

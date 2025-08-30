@@ -10,15 +10,15 @@
 
     <!-- 巡检统计 -->
     <div class="inspection-stats">
-      <div v-for="stat in inspectionStats" :key="stat.id" class="stat-item" :class="stat.cardClass">
-        <div class="stat-icon" :class="stat.iconClass">
-          <i :class="stat.icon"></i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-label">{{ stat.label }}</div>
-          <div class="stat-value">{{ stat.value }}</div>
-        </div>
-      </div>
+      <TypeCountCard
+        v-for="stat in inspectionStats"
+        :key="stat.id"
+        :type-name="stat.label"
+        :count="stat.value"
+        :icon="stat.icon"
+        :icon-type="stat.iconType"
+        @click="handleStatClick(stat.id)"
+      />
     </div>
 
     <!-- 图表标题和图例 -->
@@ -59,7 +59,8 @@ import {
   GridComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
-import { ElButton } from 'element-plus'
+
+import TypeCountCard from './TypeCountCard.vue'
 
 use([
   CanvasRenderer,
@@ -76,27 +77,30 @@ const inspectionStats = ref([
     id: 'total-inspections',
     label: '本月巡检次数',
     value: '23',
-    icon: 'fas fa-search',
-    iconClass: 'blue-icon',
-    cardClass: 'blue-card'
+    icon: new URL('@/assets/icons/dashboard/icon-gfs-curentmonth@2x.png', import.meta.url).href,
+    iconType: 'image'
   },
   {
     id: 'normal-inspections',
     label: '正常',
     value: '23',
-    icon: 'fas fa-check-circle',
-    iconClass: 'green-icon',
-    cardClass: 'green-card'
+    icon: new URL('@/assets/icons/dashboard/icon-gfs-normal@2x.png', import.meta.url).href,
+    iconType: 'image'
   },
   {
     id: 'abnormal-inspections',
     label: '异常',
     value: '9',
-    icon: 'fas fa-exclamation-triangle',
-    iconClass: 'red-icon',
-    cardClass: 'red-card'
+    icon: new URL('@/assets/icons/dashboard/icon-gfs-except@2x.png', import.meta.url).href,
+    iconType: 'image'
   }
 ])
+
+// 处理统计卡片点击事件
+const handleStatClick = (statId) => {
+  console.log('Clicked stat:', statId)
+  // 这里可以添加具体的点击处理逻辑
+}
 
 // 图表数据
 const chartData = ref({
@@ -210,7 +214,7 @@ const chartOption = computed(() => ({
 // 统计区域
 .inspection-stats {
   flex: 0 0 auto;
-  height: 80px;
+  height: 92px; // 60px卡片高度 + 32px padding (16px * 2)
 }
 
 // 图表标题区域
@@ -266,87 +270,10 @@ const chartOption = computed(() => ({
   display: flex;
   gap: 16px;
   align-items: center;
-  padding: 0 16px;
+  padding: 16px;
   background: #fafbfc;
   border-radius: 8px;
   margin: 0 16px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 8px;
-  flex: 1;
-  border: 1px solid #f5f6f7;
-  background: white;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-
-  &.blue-card {
-    border-color: #e8f2ff;
-  }
-
-  &.green-card {
-    border-color: #e8f5e8;
-  }
-
-  &.red-card {
-    border-color: #ffe8e8;
-  }
-}
-
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  i {
-    font-size: 20px;
-    color: white;
-  }
-
-  &.blue-icon {
-    background: #3b82f6;
-  }
-
-  &.green-icon {
-    background: #10b981;
-  }
-
-  &.red-icon {
-    background: #ef4444;
-  }
-}
-
-.stat-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #333333;
-  line-height: 1.2;
-  margin-bottom: 2px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
 }
 
 // 图表样式
