@@ -55,26 +55,21 @@
 
         <!-- Right Side User Area -->
         <div class="nav-right">
-          <!-- Status Indicator -->
-          <div class="status-indicator">
-            <span class="status-dot"></span>
-            <span class="status-text">A OPS</span>
+          <!-- AI OPS Button -->
+          <div class="ai-ops-wrapper" @click="handleAiOpsClick">
+            <img :src="aiOpsIcon" alt="AI OPS" class="ai-ops-simple" />
           </div>
 
           <!-- Notification Button -->
           <div class="notification-wrapper">
-            <button
-              @click="handleNotificationClick"
-              class="notification-btn"
-            >
+            <button @click="handleNotificationClick" class="notification-btn">
               <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                <path
+                  d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"
+                />
               </svg>
               <!-- Notification Badge -->
-              <span
-                v-if="notificationCount > 0"
-                class="notification-badge"
-              >
+              <span v-if="notificationCount > 0" class="notification-badge">
                 {{ notificationCount > 99 ? '99+' : notificationCount }}
               </span>
             </button>
@@ -83,12 +78,14 @@
           <!-- User Dropdown -->
           <el-dropdown @command="handleUserCommand" class="user-dropdown">
             <div class="user-dropdown-trigger">
-              <el-avatar :size="32" class="user-avatar">
-                <el-icon><User /></el-icon>
-              </el-avatar>
+              <el-avatar :size="32" class="user-avatar" :src="avatarImage"></el-avatar>
               <span class="user-name">{{ displayUserName }}</span>
               <svg class="dropdown-arrow" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                <path
+                  fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd"
+                />
               </svg>
             </div>
             <template #dropdown>
@@ -111,10 +108,7 @@
 
           <!-- Settings Button -->
           <el-tooltip content="设置" placement="bottom">
-            <button
-              @click="handleSettingsClick"
-              class="menu-action-btn"
-            >
+            <button @click="handleSettingsClick" class="menu-action-btn">
               <el-icon><Setting /></el-icon>
             </button>
           </el-tooltip>
@@ -128,12 +122,8 @@
             </el-tooltip>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="help">
-                  帮助
-                </el-dropdown-item>
-                <el-dropdown-item command="about">
-                  关于
-                </el-dropdown-item>
+                <el-dropdown-item command="help">帮助</el-dropdown-item>
+                <el-dropdown-item command="about">关于</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -149,15 +139,21 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="zh-cn">
                   <span>中文简体</span>
-                  <el-icon v-if="currentLanguage === 'zh-cn'" style="margin-left: auto;"><Check /></el-icon>
+                  <el-icon v-if="currentLanguage === 'zh-cn'" style="margin-left: auto">
+                    <Check />
+                  </el-icon>
                 </el-dropdown-item>
                 <el-dropdown-item command="zh-tw">
                   <span>中文繁體</span>
-                  <el-icon v-if="currentLanguage === 'zh-tw'" style="margin-left: auto;"><Check /></el-icon>
+                  <el-icon v-if="currentLanguage === 'zh-tw'" style="margin-left: auto">
+                    <Check />
+                  </el-icon>
                 </el-dropdown-item>
                 <el-dropdown-item command="en">
                   <span>English</span>
-                  <el-icon v-if="currentLanguage === 'en'" style="margin-left: auto;"><Check /></el-icon>
+                  <el-icon v-if="currentLanguage === 'en'" style="margin-left: auto">
+                    <Check />
+                  </el-icon>
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -166,10 +162,7 @@
       </div>
 
       <!-- Mobile Menu Dropdown -->
-      <div
-        v-if="showMobileMenu"
-        class="mobile-menu-dropdown"
-      >
+      <div v-if="showMobileMenu" class="mobile-menu-dropdown">
         <nav class="mobile-nav">
           <!-- 首页菜单项 -->
           <a
@@ -206,14 +199,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
 import { useMenuStore } from '@/stores/menu.js'
-import {
-  User,
-  Setting,
-  SwitchButton,
-  InfoFilled,
-  More,
-  Check
-} from '@element-plus/icons-vue'
+import { User, Setting, SwitchButton, InfoFilled, More, Check } from '@element-plus/icons-vue'
 
 // 导入菜单图标
 import iconHome from '@/assets/icons/menu/icon-home@2x.png'
@@ -223,8 +209,10 @@ import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
 import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
 import iconUser from '@/assets/icons/menu/icon-user@2x.png'
 
-// 导入logo
+// 导入logo、aiOPS图标和用户头像
 import logoImage from '@/assets/icons/logo@2x.png'
+import aiOpsIcon from '@/assets/icons/aiOPS@2x.png'
+import avatarImage from '@/assets/icons/avatar@2x.png'
 
 const router = useRouter()
 const route = useRoute()
@@ -272,7 +260,7 @@ const handleHomeClick = () => {
 }
 
 // 处理分组菜单点击
-const handleGroupClick = (group) => {
+const handleGroupClick = group => {
   console.log('🚀 Group clicked:', group.name, 'with code:', group.code)
 
   // 如果点击的是当前激活的分组，则切换显示/隐藏左侧菜单
@@ -285,9 +273,9 @@ const handleGroupClick = (group) => {
 }
 
 // 获取菜单图标
-const getMenuIcon = (groupCode) => {
+const getMenuIcon = groupCode => {
   const iconMap = {
-    'automation': iconJao,
+    automation: iconJao,
     'patch-testing': iconPatch,
     'system-inspection': iconGfs,
     'asset-management': iconAsset,
@@ -308,11 +296,6 @@ const toggleMobileMenu = () => {
   showMobileMenu.value = !showMobileMenu.value
   console.log('📱 Mobile menu toggled:', showMobileMenu.value)
 }
-
-
-
-
-
 
 const handleUserCommand = command => {
   switch (command) {
@@ -350,8 +333,15 @@ const handleSettingsClick = () => {
   // 这里可以打开设置页面或弹窗
 }
 
+// 处理AI OPS按钮点击
+const handleAiOpsClick = () => {
+  console.log('🤖 AI OPS clicked')
+  ElMessage.info('AI OPS功能开发中...')
+  // 这里可以打开AI OPS页面或弹窗
+}
+
 // 处理关于下拉菜单命令
-const handleAboutCommand = (command) => {
+const handleAboutCommand = command => {
   console.log('ℹ️ About command:', command)
   switch (command) {
     case 'help':
@@ -366,14 +356,14 @@ const handleAboutCommand = (command) => {
 }
 
 // 处理语言切换
-const handleLanguageCommand = (language) => {
+const handleLanguageCommand = language => {
   console.log('🌐 Language switched to:', language)
   currentLanguage.value = language
 
   const languageNames = {
     'zh-cn': '中文简体',
     'zh-tw': '中文繁體',
-    'en': 'English'
+    en: 'English'
   }
 
   ElMessage.success(`已切换到${languageNames[language]}`)
@@ -381,10 +371,14 @@ const handleLanguageCommand = (language) => {
 }
 
 // 监听路由变化，自动设置菜单状态
-watch(() => route.path, (newPath) => {
-  console.log('🧭 Route changed to:', newPath)
-  menuStore.setMenuFromRoute(newPath)
-}, { immediate: true })
+watch(
+  () => route.path,
+  newPath => {
+    console.log('🧭 Route changed to:', newPath)
+    menuStore.setMenuFromRoute(newPath)
+  },
+  { immediate: true }
+)
 
 // 生命周期
 onMounted(() => {
@@ -406,7 +400,9 @@ onUnmounted(() => {
   z-index: 1000;
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 // 顶部导航头部
@@ -544,30 +540,27 @@ onUnmounted(() => {
   }
 }
 
-// 状态指示器
-.status-indicator {
-  display: none;
+// AI OPS按钮
+// AI OPS简单样式 - 模仿logo的实现
+.ai-ops-wrapper {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #f3f4f6;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+  transition: background 0.2s ease-in-out;
 
-  @media (min-width: 640px) {
-    display: flex;
+  &:hover {
+    background: #f9fafb;
   }
 }
 
-.status-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  background: #10b981;
-  border-radius: 50%;
-}
-
-.status-text {
-  font-size: 0.875rem;
-  color: #374151;
+.ai-ops-simple {
+  height: 1.5rem;
+  width: auto;
+  object-fit: contain;
+  object-position: center;
 }
 
 // 通知按钮

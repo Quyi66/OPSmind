@@ -2,15 +2,9 @@
   <div class="side-menu">
     <!-- 菜单项列表 -->
     <div class="menu-items" v-if="currentGroup">
-      <div
-        v-for="menuItem in currentGroup.children"
-        :key="menuItem.code"
-        class="menu-item"
-        :class="{
-          active: activeMenuItem === menuItem.code
-        }"
-        @click="handleMenuItemClick(menuItem, $event)"
-      >
+      <div v-for="menuItem in currentGroup.children" :key="menuItem.code" class="menu-item" :class="{
+        active: activeMenuItem === menuItem.code
+      }" @click="handleMenuItemClick(menuItem, $event)">
         <div class="menu-item-content">
           <i :class="menuItem.icon" class="menu-item-icon"></i>
           <span class="menu-item-text">{{ menuItem.name }}</span>
@@ -187,6 +181,7 @@ watch(() => props.activeGroup, (newGroup) => {
         color: #1890ff;
         transform: scale(1.1);
       }
+
       .menu-item-text {
         color: #1890ff;
         font-weight: 600;

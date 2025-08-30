@@ -78,10 +78,12 @@
 import { ref, computed } from 'vue'
 import { ElButton, ElMessage } from 'element-plus'
 
+import avatarImage from '@/assets/icons/avatar@2x.png'
+
 // 用户信息
 const userInfo = ref({
   name: '管理员',
-  avatar: 'https://via.placeholder.com/60x60/667eea/ffffff?text=管',
+  avatar: avatarImage,
   greeting: '管理员 下午好，欢迎登录',
   date: '今天是2025-07-16 星期三'
 })

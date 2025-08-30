@@ -1,15 +1,17 @@
 <template>
   <div class="ai-assistant">
-    <!-- 操作提示横幅 -->
+    <!-- 智能助手横幅 -->
     <div class="assistant-banner">
-      <div class="banner-content">
-        <div class="robot-icon">
-          <i class="fas fa-robot"></i>
-        </div>
+      <!-- 左侧：图标与文字 -->
+      <div class="banner-left">
+        <img src="@/assets/icons/aiOPS2@2x.png" alt="AI助手" class="ai-ops-icon" />
         <div class="banner-text">
-          <h3 class="banner-title">OPS智能助手，很高兴为您服务</h3>
+          <h3 class="banner-title">OPS智能助手，很高兴为你服务</h3>
+          <p class="banner-subtitle">为运维人员设计的助手Agent，帮助解决系统维护问题。</p>
         </div>
       </div>
+
+      <!-- 右侧：搜索栏 -->
       <div class="search-container">
         <div class="search-input-wrapper">
           <input
@@ -18,19 +20,13 @@
             placeholder="问我想要做的地方"
             class="search-input"
             @keyup.enter="handleSearch"
-          >
-          <button
-            @click="handleSearch"
-            class="search-btn"
-            :disabled="!searchQuery.trim()"
-          >
+          />
+          <button @click="handleSearch" class="search-btn" :disabled="!searchQuery.trim()">
             <i class="fas fa-search"></i>
           </button>
         </div>
       </div>
     </div>
-
-
   </div>
 </template>
 
@@ -40,30 +36,6 @@ import { ElMessage } from 'element-plus'
 
 // 搜索查询
 const searchQuery = ref('')
-
-// 快捷操作
-const quickActions = ref([
-  {
-    id: 1,
-    label: '检查系统状态',
-    icon: 'fa fa-heartbeat'
-  },
-  {
-    id: 2,
-    label: '查看错误日志',
-    icon: 'fa fa-exclamation-triangle'
-  },
-  {
-    id: 3,
-    label: '性能监控',
-    icon: 'fa fa-chart-line'
-  },
-  {
-    id: 4,
-    label: '重启服务',
-    icon: 'fa fa-refresh'
-  }
-])
 
 // 最近对话
 const recentChats = ref([
@@ -110,24 +82,19 @@ const handleSearch = () => {
   searchQuery.value = ''
 }
 
-const handleQuickAction = (action) => {
-  ElMessage.info(`执行操作: ${action.label}`)
-  console.log('Quick Action:', action)
-}
-
-const handleChatClick = (chat) => {
-  searchQuery.value = chat.question
-  ElMessage.info(`重新提问: ${chat.question}`)
-}
+// 处理聊天记录点击（预留功能）
+// const handleChatClick = chat => {
+//   searchQuery.value = chat.question
+//   ElMessage.info(`重新提问: ${chat.question}`)
+// }
 </script>
 
 <style scoped lang="scss">
 .ai-assistant {
-  padding: 12px 20px;
+  padding: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
 .assistant-banner {
@@ -136,31 +103,23 @@ const handleChatClick = (chat) => {
   justify-content: space-between;
   background: #f8f9fa;
   border-radius: 10px;
-  padding: 10px 16px;
-  gap: 16px;
+  padding: 12px 16px;
+  gap: 20px;
+  height: 100%;
 }
 
-.banner-content {
+.banner-left {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 2;
+  flex: 1;
 }
 
-.robot-icon {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #2D8CF0 0%, #19BE6B 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ai-ops-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
   flex-shrink: 0;
-
-  i {
-    font-size: 14px;
-    color: white;
-  }
 }
 
 .banner-text {
@@ -168,17 +127,26 @@ const handleChatClick = (chat) => {
 }
 
 .banner-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: #262626;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+}
+
+.banner-subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: #8c8c8c;
   margin: 0;
   line-height: 1.3;
 }
 
 .search-container {
-  flex: 3;
+  flex: 2;
   display: flex;
   justify-content: flex-end;
+  padding-left: 16px;
 }
 
 .search-input-wrapper {
@@ -186,15 +154,15 @@ const handleChatClick = (chat) => {
   align-items: center;
   background: white;
   border: 1px solid #d9d9d9;
-  border-radius: 16px;
-  padding: 5px 10px;
+  border-radius: 12px;
+  padding: 8px 16px;
   width: 100%;
-  max-width: 280px;
-  height: 32px;
+  min-width: 280px;
+  height: 40px;
   transition: border-color 0.3s ease;
 
   &:focus-within {
-    border-color: #2D8CF0;
+    border-color: #2d8cf0;
     box-shadow: 0 0 0 2px rgba(45, 140, 240, 0.1);
   }
 }
@@ -204,7 +172,7 @@ const handleChatClick = (chat) => {
   border: none;
   outline: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 15px;
   color: #262626;
   padding: 0;
 
@@ -223,7 +191,7 @@ const handleChatClick = (chat) => {
   transition: color 0.3s ease;
 
   &:hover:not(:disabled) {
-    color: #2D8CF0;
+    color: #2d8cf0;
   }
 
   &:disabled {
@@ -240,42 +208,55 @@ const handleChatClick = (chat) => {
 @media (max-width: 1024px) {
   .assistant-banner {
     flex-direction: column;
+    align-items: flex-start;
     gap: 16px;
   }
 
+  .banner-left {
+    width: 100%;
+  }
+
+  .search-container {
+    width: 100%;
+    justify-content: stretch;
+    padding-left: 0;
+  }
+
   .search-input-wrapper {
-    min-width: 100%;
+    width: 100%;
+    min-width: auto;
   }
 }
 
 @media (max-width: 768px) {
   .ai-assistant {
-    padding: 16px;
+    padding: 0;
   }
 
   .assistant-banner {
     padding: 12px 16px;
   }
 
-  .robot-icon {
+  .ai-ops-icon {
     width: 36px;
     height: 36px;
-
-    i {
-      font-size: 16px;
-    }
   }
 
   .banner-title {
-    font-size: 14px;
+    font-size: 15px;
+  }
+
+  .banner-subtitle {
+    font-size: 11px;
   }
 
   .search-input-wrapper {
-    padding: 6px 10px;
+    padding: 8px 12px;
+    height: 40px;
   }
 
   .search-input {
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 </style>
