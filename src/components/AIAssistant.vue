@@ -127,7 +127,7 @@ const handleSearch = () => {
 }
 
 .banner-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #262626;
   margin: 0 0 4px 0;
@@ -135,7 +135,7 @@ const handleSearch = () => {
 }
 
 .banner-subtitle {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
   color: #8c8c8c;
   margin: 0;
@@ -153,16 +153,15 @@ const handleSearch = () => {
   display: flex;
   align-items: center;
   background: white;
-  border: 1px solid #d9d9d9;
+  border: none;
   border-radius: 12px;
   padding: 8px 16px;
   width: 100%;
   min-width: 280px;
   height: 40px;
-  transition: border-color 0.3s ease;
+  transition: box-shadow 0.3s ease;
 
   &:focus-within {
-    border-color: #2d8cf0;
     box-shadow: 0 0 0 2px rgba(45, 140, 240, 0.1);
   }
 }
@@ -172,7 +171,7 @@ const handleSearch = () => {
   border: none;
   outline: none;
   background: transparent;
-  font-size: 15px;
+  font-size: 14px;
   color: #262626;
   padding: 0;
 

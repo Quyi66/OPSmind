@@ -147,7 +147,7 @@ const handleRefresh = async () => {
 .dashboard-content {
   flex: 1;
   overflow: hidden;
-  padding: 8px 16px 6px 16px;
+  padding: 24px 16px 6px 16px;
   background: transparent;
   min-height: 0;
   display: flex;
@@ -174,8 +174,8 @@ const handleRefresh = async () => {
 
 /* 第一行 - AI助手区域 */
 .dashboard-row:nth-child(1) {
-  flex: 0 0 80px;
-  min-height: 80px;
+  flex: 0 0 60px;
+  min-height: 60px;
 }
 
 /* 第二行 - 作业概览 & 巡检概览 */

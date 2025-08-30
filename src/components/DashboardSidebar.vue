@@ -222,7 +222,7 @@ const handleRecentClick = item => {
 
 // 第一张卡片：个人信息 + 待办
 .user-todo-card {
-  margin: 16px;
+  margin: 24px 16px 16px 16px;
   background: white;
   border-radius: 12px;
   border: 1px solid #f0f0f0;
@@ -439,7 +439,7 @@ const handleRecentClick = item => {
   }
 
   .user-todo-card {
-    margin: 12px;
+    margin: 20px 12px 12px 12px;
   }
 
   .user-profile-card {
@@ -498,9 +498,12 @@ const handleRecentClick = item => {
     position: relative;
   }
 
-  .user-todo-card,
+  .user-todo-card {
+    margin: 20px 12px 12px 12px;
+  }
+
   .recent-card {
-    margin: 12px;
+    margin: 0 12px 12px 12px;
   }
 
   .user-profile-card {
@@ -570,9 +573,12 @@ const handleRecentClick = item => {
     width: 100%;
   }
 
-  .user-todo-card,
+  .user-todo-card {
+    margin: 18px 10px 10px 10px;
+  }
+
   .recent-card {
-    margin: 10px;
+    margin: 0 10px 10px 10px;
   }
 
   .user-profile-card {
