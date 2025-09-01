@@ -173,12 +173,12 @@ const handleTodoClick = todo => {
   ElMessage.info(`点击待办: ${todo.title}`)
 }
 
-const handleTodoProcess = todo => {
-  ElMessage.success(`正在处理: ${todo.title}`)
+const handleTodoProcess = (_todo) => {
+  ElMessage.info('我的待办功能开发中...')
 }
 
-const handleTodoIgnore = todo => {
-  ElMessage.info(`已忽略: ${todo.title}`)
+const handleTodoIgnore = (_todo) => {
+  ElMessage.info('我的待办功能开发中...')
 }
 
 const viewAllTodos = () => {
