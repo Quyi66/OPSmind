@@ -5,7 +5,8 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getMenuGroups, getMenuGroup, getMenuItemInfo, getHomeMenu } from '@/config/menu.config.js'
+import router from '@/router'
+import { getMenuGroups, getMenuGroup, getMenuItemInfo, getHomeMenu, getGroupAlias, resolveGroupCode } from '@/config/menu.config.js'
 
 export const useMenuStore = defineStore('menu', () => {
   const RECENT_KEY = 'opsmind_recent_features'
@@ -81,6 +82,18 @@ export const useMenuStore = defineStore('menu', () => {
 
     // 记录最近使用
     recordRecent(menuCode)
+
+    // 同步URL：优先使用 #/一级功能/二级功能
+    try {
+      if (info) {
+        const alias = getGroupAlias(info.group.code)
+        router.push(`/${alias}/${menuCode}`)
+      } else {
+        router.push(`/${menuCode}`)
+      }
+    } catch (e) {
+      console.warn('Failed to push route for menu item:', menuCode, e)
+    }
   }
 
   const clearActiveMenu = () => {
@@ -109,19 +122,24 @@ export const useMenuStore = defineStore('menu', () => {
 
   // 根据当前路由自动设置菜单状态
   const setMenuFromRoute = (routePath) => {
-    // 移除开头的 '/'
-    const moduleCode = routePath.substring(1)
+    // 规范化路径
+    const clean = routePath.startsWith('/') ? routePath.slice(1) : routePath
 
-    if (!moduleCode || moduleCode === 'home') {
+    if (!clean || clean === 'home') {
       setHomeActive()
       return
     }
+
+    const parts = clean.split('/').filter(Boolean)
+    const moduleCode = parts.length >= 2 ? parts[1] : parts[0]
+    const groupAlias = parts.length >= 2 ? parts[0] : null
+    const groupCode = groupAlias ? resolveGroupCode(groupAlias) : null
 
     // 查找对应的菜单项
     const info = getMenuItemInfo(moduleCode)
     if (info) {
       // 直接设置状态，不触发自动选择逻辑
-      activeGroup.value = info.group.code
+      activeGroup.value = groupCode || info.group.code
       activeMenuItem.value = moduleCode
       showSideMenu.value = true
       console.log('🧭 Menu state set from route:', routePath, '-> Group:', info.group.code, 'Item:', moduleCode)

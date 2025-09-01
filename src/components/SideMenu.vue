@@ -22,10 +22,7 @@
 
 <script setup>
 import { computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { getMenuGroup } from '@/config/menu.config.js'
-
-const router = useRouter()
 
 const props = defineProps({
   activeGroup: {
@@ -55,13 +52,7 @@ const handleMenuItemClick = (menuItem, event) => {
   // 发射事件给父组件
   emit('menu-item-click', menuItem)
 
-  // 更新浏览器URL
-  router.push(`/${menuItem.code}`)
-
-  // 注意：不再触发弹窗模式的iframe，而是在主内容区域显示
-  // 这个逻辑将在主布局中处理
-
-  console.log('🔗 Browser URL updated to:', `/${menuItem.code}`)
+  // URL 更新与模块加载由父级处理（MainLayout → menuStore.setActiveMenuItem）
 }
 
 // 创建水波纹效果

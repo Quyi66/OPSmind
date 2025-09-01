@@ -130,6 +130,19 @@ export const MENU_CONFIG = {
   ]
 }
 
+// 一级分组简写（URL友好别名）
+export const GROUP_ALIAS_MAP = {
+  'automation': 'auto',
+  'patch-testing': 'pt',
+  'system-inspection': 'si',
+  'asset-management': 'am',
+  'user-management': 'um',
+  home: 'home'
+}
+
+// 反向映射
+const ALIAS_TO_GROUP = Object.fromEntries(Object.entries(GROUP_ALIAS_MAP).map(([k, v]) => [v, k]))
+
 /**
  * 获取首页菜单项
  */
@@ -190,4 +203,18 @@ export function getAllMenuItems() {
     })
   })
   return allItems
+}
+
+/**
+ * 获取分组的URL简写
+ */
+export function getGroupAlias(groupCode) {
+  return GROUP_ALIAS_MAP[groupCode] || groupCode
+}
+
+/**
+ * 将URL中的简写还原为真实分组代码
+ */
+export function resolveGroupCode(aliasOrCode) {
+  return ALIAS_TO_GROUP[aliasOrCode] || aliasOrCode
 }
