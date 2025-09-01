@@ -4,10 +4,9 @@
 // Tailwind CSS - 使用 @use 替代 @import
 @use "tailwindcss";
 
-// 全局重置样式
-* {
-  margin: 0;
-  padding: 0;
+// 全局基础重置（配合 Tailwind Preflight）
+// 仅保留 box-sizing，避免覆盖 Tailwind 的间距工具类
+:where(*, *::before, *::after) {
   box-sizing: border-box;
 }
 
