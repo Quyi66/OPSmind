@@ -21,7 +21,27 @@ export default defineConfig(({ command, mode }): UserConfig => {
           defineModel: true,
           propsDestructure: true
         }
-      })
+      }),
+      // 在开发环境下，将 /ops 重定向为 /ops/，避免 Vite base 提示
+      {
+        name: 'ops-trailing-slash-redirect',
+        configureServer(server) {
+          const base = (mode === 'production' ? '/opsmind/base/' : '/ops/')
+          const noSlash = base.endsWith('/') ? base.slice(0, -1) : base
+          server.middlewares.use((req, res, next) => {
+            const url = req.url || '/'
+            const path = url.split('?')[0]
+            if (path === noSlash) {
+              const query = url.slice(path.length)
+              res.statusCode = 302
+              res.setHeader('Location', `${base}${query}`)
+              res.end()
+              return
+            }
+            next()
+          })
+        }
+      }
 
       // 可选插件 - 需要时取消注释并安装对应依赖
       // createHtmlPlugin({

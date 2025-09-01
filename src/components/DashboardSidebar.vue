@@ -189,7 +189,8 @@ const handleRecentClick = item => {
   if (item._placeholder) return
   // 激活模块并导航到可直达的路由 `/:code`
   try {
-    menuStore.setActiveMenuItem(item.code) // 内部会同步更新 URL
+    menuStore.setActiveMenuItem(item.code)
+    router.push(`/${item.code}`)
   } catch (e) {}
 }
 </script>

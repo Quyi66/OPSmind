@@ -43,6 +43,7 @@
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import TopNavMenu from '@/components/TopNavMenu.vue'
 import SideMenu from '@/components/SideMenu.vue'
 import AngularModuleInlineFrame from '@/components/AngularModuleInlineFrame.vue'
@@ -50,6 +51,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { useMenuStore } from '@/stores/menu.js'
 
 const dashboardStore = useDashboardStore()
+const router = useRouter()
 const menuStore = useMenuStore()
 
 // 响应式状态
@@ -69,6 +71,7 @@ const currentMenuItemTitle = computed(() => {
 const handleMenuItemClick = menuItem => {
   console.log('🎯 Main layout received menu item click:', menuItem.name)
   menuStore.setActiveMenuItem(menuItem.code)
+  try { router.push(`/${menuItem.code}`) } catch {}
 }
 
 const closeMobileMenu = () => {

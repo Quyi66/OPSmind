@@ -5,7 +5,11 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import router from '@/router'
+// 避免循环依赖：通过全局暴露获取路由实例
+function getRouter() {
+  if (typeof window !== 'undefined' && window.__VUE_ROUTER__) return window.__VUE_ROUTER__
+  return null
+}
 import { getMenuGroups, getMenuGroup, getMenuItemInfo, getHomeMenu, getGroupAlias, resolveGroupCode } from '@/config/menu.config.js'
 
 export const useMenuStore = defineStore('menu', () => {
@@ -85,11 +89,10 @@ export const useMenuStore = defineStore('menu', () => {
 
     // 同步URL：优先使用 #/一级功能/二级功能
     try {
-      if (info) {
-        const alias = getGroupAlias(info.group.code)
-        router.push(`/${alias}/${menuCode}`)
-      } else {
-        router.push(`/${menuCode}`)
+      const r = getRouter()
+      if (r) {
+        // 核心路由采用短路径（/#/<moduleCode>），此处保持一致
+        r.push(`/${menuCode}`)
       }
     } catch (e) {
       console.warn('Failed to push route for menu item:', menuCode, e)

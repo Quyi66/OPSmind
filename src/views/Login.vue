@@ -44,18 +44,11 @@
           />
         </div>
 
-        <!-- 右侧登录表单卡片 -->
-        <div class="w-full md:w-1/2 h-full bg-white flex">
-          <!-- 左边距 (1) -->
-          <div class="hidden md:block flex-1"></div>
-
-          <!-- 登录表单内容 (4) -->
-          <div class="flex-[4] w-full p-6 md:p-0">
+        <!-- 右侧登录表单卡片：占满右半部分 -->
+        <div class="w-full md:w-1/2 h-full bg-white flex items-center">
+          <div class="w-full px-6 md:px-10">
             <LoginForm />
           </div>
-
-          <!-- 右边距 (1) -->
-          <div class="hidden md:block flex-1"></div>
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@
           <!-- Navigation Menu -->
           <nav class="nav-menu">
             <!-- 首页菜单项 -->
-            <a href="#" class="nav-item" :class="{ 'nav-item-active': activeGroup === '' }"
+            <a href="#" class="nav-item" :class="{ 'nav-item-active': activeGroup === 'home' }"
               @click.prevent="handleHomeClick">
               <img :src="iconHome" alt="首页" class="nav-icon nav-icon-home" />
               <span class="nav-text">{{ homeMenu.name }}</span>
@@ -172,7 +172,7 @@
       <div v-if="showMobileMenu" class="mobile-menu-dropdown">
         <nav class="mobile-nav">
           <!-- 首页菜单项 -->
-          <a href="#" class="mobile-nav-item" :class="{ 'mobile-nav-item-active': activeGroup === '' }"
+          <a href="#" class="mobile-nav-item" :class="{ 'mobile-nav-item-active': activeGroup === 'home' }"
             @click.prevent="handleHomeClick">
             <img :src="iconHome" alt="首页" class="mobile-nav-icon mobile-nav-icon-home" />
             <span class="mobile-nav-text">{{ homeMenu.name }}</span>
