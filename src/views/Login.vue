@@ -31,7 +31,7 @@
       <div class="flex shadow-2xl rounded-2xl overflow-hidden border border-gray-100">
         <!-- 左侧插图卡片 -->
         <div
-          class="w-[280px] h-[360px] relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
+          class="w-[340px] h-[440px] relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
         >
           <div
             class="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-indigo-400/5 to-purple-400/5"
@@ -45,7 +45,7 @@
         </div>
 
         <!-- 右侧登录表单卡片 -->
-        <div class="w-[280px] h-[360px] bg-white flex">
+        <div class="w-[420px] h-[440px] bg-white flex">
           <!-- 左边距 (1) -->
           <div class="flex-1"></div>
 
