@@ -198,8 +198,11 @@ const handleRecentClick = item => {
   height: 100dvh; // 动态视口高度支持
   overflow-y: auto;
   flex-shrink: 0;
-  padding-left: 8px;
-  padding-right: 16px;
+  // 进一步调小：左 10px，右 5px（与内容左边距 5px 合计 10px）
+  padding-left: 10px;
+  padding-right: 5px;
+  // 继续压缩与底部间距
+  padding-bottom: 4px;
   font-family:
     'PingFang SC',
     -apple-system,
@@ -231,7 +234,8 @@ const handleRecentClick = item => {
 
 // 第一张卡片：个人信息 + 待办
 .user-todo-card {
-  margin: 24px 16px 16px 16px;
+  // 顶部间距更紧凑，与内容区保持一致
+  margin: 16px 16px 16px 16px;
   background: white;
   border-radius: 12px;
   border: 1px solid #f0f0f0;
@@ -281,7 +285,8 @@ const handleRecentClick = item => {
 
 // 第二张卡片：最近使用
 .recent-card {
-  margin: 0 16px 16px 16px;
+  // 末卡片底部去掉外边距，统一由容器 padding-bottom 提供 16px 留白
+  margin: 0 16px 0 16px;
   background: white;
   border-radius: 12px;
   border: 1px solid #f0f0f0;
@@ -429,7 +434,8 @@ const handleRecentClick = item => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  padding: 16px;
+  /* 下内边距再减小，进一步贴近底部 */
+  padding: 16px 16px 6px;
 }
 
 .recent-item {
@@ -508,7 +514,7 @@ const handleRecentClick = item => {
   .recent-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 6px;
-    padding: 12px;
+    padding: 10px 10px 6px;
   }
 
   .recent-item {
@@ -575,7 +581,7 @@ const handleRecentClick = item => {
   .recent-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 6px;
-    padding: 12px;
+    padding: 10px 10px 6px;
   }
 
   .recent-item {
@@ -618,7 +624,7 @@ const handleRecentClick = item => {
   }
 
   .recent-card {
-    margin: 0 10px 10px 10px;
+    margin: 0 10px 8px 10px;
   }
 
   .user-profile-card {
@@ -641,7 +647,7 @@ const handleRecentClick = item => {
   .recent-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 4px;
-    padding: 10px;
+    padding: 8px 8px 6px;
   }
 
   .recent-item {

@@ -60,7 +60,7 @@
           <!-- User Dropdown -->
           <el-dropdown @command="handleUserCommand" class="user-dropdown">
             <div class="user-dropdown-trigger">
-              <el-avatar :size="32" class="user-avatar" :src="avatarImage"></el-avatar>
+              <el-avatar :size="28" class="user-avatar" :src="avatarImage"></el-avatar>
               <span class="user-name">{{ displayUserName }}</span>
               <svg class="dropdown-arrow" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd"
@@ -123,7 +123,22 @@
             <el-tooltip content="语言" placement="bottom">
               <button class="menu-action-btn">
                 <el-icon>
-                  <More />
+                  <!-- Globe icon for language/i18n -->
+                  <svg
+                    class="language-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M3 12h18" />
+                    <path d="M12 3c3 3.5 3 14.5 0 18" />
+                    <path d="M12 3c-3 3.5-3 14.5 0 18" />
+                  </svg>
                 </el-icon>
               </button>
             </el-tooltip>
@@ -181,7 +196,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
 import { useMenuStore } from '@/stores/menu.js'
-import { User, Setting, SwitchButton, InfoFilled, More, Check } from '@element-plus/icons-vue'
+import { User, Setting, SwitchButton, InfoFilled, Check } from '@element-plus/icons-vue'
 
 // 导入菜单图标
 import iconHome from '@/assets/icons/menu/icon-home@2x.png'
@@ -514,11 +529,11 @@ onUnmounted(() => {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
   flex-shrink: 0;
 
   @media (min-width: 640px) {
-    gap: 1rem;
+    gap: 0.5rem;
   }
 }
 
@@ -529,7 +544,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 0.125rem;
   border-radius: 0.375rem;
   transition: background 0.2s ease-in-out;
 
@@ -539,7 +554,7 @@ onUnmounted(() => {
 }
 
 .ai-ops-simple {
-  height: 1.5rem;
+  height: 1.25rem;
   width: auto;
   object-fit: contain;
   object-position: center;
@@ -554,7 +569,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0.375rem;
   color: #9ca3af;
   background: transparent;
   border: none;
@@ -569,8 +584,8 @@ onUnmounted(() => {
 }
 
 .notification-icon {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1rem;
+  height: 1rem;
 }
 
 .notification-badge {
@@ -579,10 +594,10 @@ onUnmounted(() => {
   right: -0.25rem;
   background: #ef4444;
   color: #fff;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   border-radius: 50%;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1rem;
+  height: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -594,15 +609,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0.375rem;
   color: #9ca3af;
   background: transparent;
   border: none;
   border-radius: 0.375rem;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
 
   &:hover {
     color: #6b7280;
@@ -610,7 +625,7 @@ onUnmounted(() => {
   }
 
   .el-icon {
-    font-size: 1.125rem;
+    font-size: 1rem;
   }
 }
 
@@ -633,8 +648,8 @@ onUnmounted(() => {
 .user-dropdown-trigger {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.5rem;
+  gap: 0.375rem;
+  padding: 0.125rem 0.375rem;
   border-radius: 0.5rem;
   transition: background-color 0.2s ease-in-out;
 
@@ -657,7 +672,7 @@ onUnmounted(() => {
   font-size: 0.875rem;
   color: #374151;
 
-  @media (min-width: 640px) {
+  @media (min-width: 768px) {
     display: inline;
   }
 }
@@ -671,6 +686,13 @@ onUnmounted(() => {
   @media (min-width: 640px) {
     display: inline;
   }
+}
+
+// Language icon sizing within el-icon
+.language-icon {
+  width: 1rem;
+  height: 1rem;
+  display: block;
 }
 
 // 移动端菜单下拉

@@ -155,7 +155,8 @@ const handleRefresh = async () => {
 .dashboard-content {
   flex: 1;
   overflow: hidden;
-  padding: 24px 16px 6px 0px;
+  /* 更紧凑顶部间距：24px -> 16px；底部保持 16px；左侧 5px 保持 */
+  padding: 16px 16px 16px 5px;
   background: transparent;
   min-height: 0;
   display: flex;
