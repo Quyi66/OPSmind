@@ -74,6 +74,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
 import { useMenuStore } from '@/stores/menu.js'
@@ -157,6 +158,7 @@ const todoList = ref([
 
 // 最近使用：来源于菜单 Store，并限制展示前 10 项
 const menuStore = useMenuStore()
+const router = useRouter()
 const recentItems = computed(() => (menuStore.recentItems || []).slice(0, 10))
 
 // 事件处理
@@ -177,9 +179,10 @@ const viewAllTodos = () => {
 }
 
 const handleRecentClick = item => {
-  // 跳转并记录（recordRecent 在 store 内部也会处理）
+  // 激活模块并导航到可直达的路由 `/:code`
   try {
     menuStore.setActiveMenuItem(item.code)
+    router.push(`/${item.code}`)
   } catch (e) {}
   ElMessage.info(`打开模块: ${item.name}`)
 }
@@ -430,16 +433,16 @@ const handleRecentClick = item => {
 .recent-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 列，共 5 行 */
-  gap: 8px;
-  padding: 16px 16px 6px;
+  gap: 6px; /* 更紧凑的行距 */
+  padding: 12px 12px 6px; /* 上下内边距压缩 */
 }
 
 .recent-item {
   display: flex;
   flex-direction: row; /* 左图标 右名称 */
   align-items: center;
-  gap: 8px;
-  padding: 10px 8px;
+  gap: 6px; /* 更紧凑的间距 */
+  padding: 8px 6px; /* 更小的内边距，保证 5 行空间 */
   border-radius: 8px;
   background: #f8f9fa;
   cursor: pointer;
@@ -452,8 +455,8 @@ const handleRecentClick = item => {
 }
 
 .recent-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px; /* 更小图标 */
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -462,13 +465,13 @@ const handleRecentClick = item => {
   margin: 0; /* 水平布局不需要底部间距 */
 
   i {
-    font-size: 14px;
+    font-size: 12px;
     color: #495057;
   }
 }
 
 .recent-name {
-  font-size: 12px;
+  font-size: 11px; /* 文本略小以适应密度 */
   color: #495057;
   text-align: left;
   line-height: 1.2;
