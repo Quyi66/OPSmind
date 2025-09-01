@@ -168,9 +168,15 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
     description: '软件管理',
     enabled: true
   },
-  workflow: {
+  // 新增流程（二级功能：#/flow）。保留 workflow 作为别名以兼容
+  flow: {
     entryUrl: '#/flow',
     description: '流程管理',
+    enabled: true
+  },
+  workflow: {
+    entryUrl: '#/flow',
+    description: '流程管理（别名）',
     enabled: true
   },
   users: {

@@ -36,7 +36,8 @@ export class SingleIframeManager {
     'acm': '#/acm',           // 资产管理
     'patches': '#/patches',   // 补丁管理
     'software': '#/software', // 软件管理
-    'workflow': '#/workflow', // 流程管理
+    'flow': '#/flow',         // 流程管理
+    'workflow': '#/flow',     // 流程管理（别名）
     'users': '#/users',       // 用户管理
     'dashboard': '#/dashboard'
   }
