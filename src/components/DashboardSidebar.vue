@@ -57,9 +57,9 @@
 
       <div class="recent-grid">
         <div
-          v-for="item in recentItems"
+          v-for="item in displayRecentItems"
           :key="item.code"
-          class="recent-item"
+          :class="['recent-item', { placeholder: item._placeholder }]"
           @click="handleRecentClick(item)"
         >
           <div class="recent-icon">
@@ -156,10 +156,17 @@ const todoList = ref([
   }
 ])
 
-// 最近使用：来源于菜单 Store，并限制展示前 10 项
+// 最近使用：来源于菜单 Store，固定 10 个格子（5 行 × 2 列）
 const menuStore = useMenuStore()
 const router = useRouter()
-const recentItems = computed(() => (menuStore.recentItems || []).slice(0, 10))
+const displayRecentItems = computed(() => {
+  const items = (menuStore.recentItems || []).slice(0, 10)
+  const padded = [...items]
+  while (padded.length < 10) {
+    padded.push({ code: `__placeholder_${padded.length}`, name: '', icon: '', _placeholder: true })
+  }
+  return padded
+})
 
 // 事件处理
 const handleTodoClick = todo => {
@@ -179,12 +186,12 @@ const viewAllTodos = () => {
 }
 
 const handleRecentClick = item => {
+  if (item._placeholder) return
   // 激活模块并导航到可直达的路由 `/:code`
   try {
     menuStore.setActiveMenuItem(item.code)
     router.push(`/${item.code}`)
   } catch (e) {}
-  ElMessage.info(`打开模块: ${item.name}`)
 }
 </script>
 
@@ -201,8 +208,8 @@ const handleRecentClick = item => {
   // 进一步调小：左 10px，右 5px（与内容左边距 5px 合计 10px）
   padding-left: 10px;
   padding-right: 5px;
-  // 继续压缩与底部间距
-  padding-bottom: 4px;
+  // 与仪表盘主内容底部间距一致
+  padding-bottom: 16px;
   font-family:
     'PingFang SC',
     -apple-system,
@@ -296,6 +303,12 @@ const handleRecentClick = item => {
 .section-header {
   padding: 16px 16px 12px 16px;
   border-bottom: 1px solid #f5f5f5;
+}
+
+// 最近使用标题更紧凑，且移除下分割线
+.recent-card .section-header {
+  padding: 10px 16px 8px 16px;
+  border-bottom: none;
 }
 
 // 待办区域的标题不需要下边框，与个人信息紧贴
@@ -434,7 +447,10 @@ const handleRecentClick = item => {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 列，共 5 行 */
   gap: 6px; /* 更紧凑的行距 */
-  padding: 12px 12px 6px; /* 上下内边距压缩 */
+  padding: 8px 16px 8px; /* 更紧凑且与标题左右对齐 */
+  height: 220px; /* 固定占位高度：5 行（~36px/行）+ 4*6 间隙 + 8+8 内边距 */
+  min-height: 220px;
+  overflow: hidden;
 }
 
 .recent-item {
@@ -442,7 +458,7 @@ const handleRecentClick = item => {
   flex-direction: row; /* 左图标 右名称 */
   align-items: center;
   gap: 6px; /* 更紧凑的间距 */
-  padding: 8px 6px; /* 更小的内边距，保证 5 行空间 */
+  padding: 6px 6px; /* 再压缩行高，便于 5 行固定占位 */
   border-radius: 8px;
   background: #f8f9fa;
   cursor: pointer;
@@ -452,6 +468,12 @@ const handleRecentClick = item => {
     background: #e9ecef;
     transform: translateY(-1px);
   }
+}
+
+.recent-item.placeholder {
+  background: transparent;
+  pointer-events: none;
+  visibility: hidden; /* 占位但不显示内容 */
 }
 
 .recent-icon {
@@ -475,7 +497,9 @@ const handleRecentClick = item => {
   color: #495057;
   text-align: left;
   line-height: 1.2;
-  word-break: break-all;
+  white-space: nowrap; /* 固定行高，避免换行增高 */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 // 响应式设计

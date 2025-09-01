@@ -281,12 +281,12 @@ const chartOption = computed(() => ({
 // 巡检统计样式
 .inspection-stats {
   display: flex;
-  gap: 16px;
+  gap: 12px; /* 收紧卡片间距 */
   align-items: center;
-  padding: 16px;
+  padding: 12px 12px; /* 收紧左右内边距 */
   background: #fafbfc;
   border-radius: 8px;
-  margin: 0 16px;
+  margin: 0 12px; /* 收紧左右外边距 */
 }
 
 // 图表样式

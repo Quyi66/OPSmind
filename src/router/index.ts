@@ -9,23 +9,7 @@ const routes: CustomRouteRecord[] = [
     path: '/',
     redirect: '/home'
   },
-  // 直达二级功能的短路径（例如 /cmd、/jao）
-  // 放在明确路由之后，避免与 /login 等冲突
-  {
-    path: '/:moduleCode',
-    name: 'feature-shortcut',
-    component: () => import('@/layouts/MainLayout.vue'),
-    children: [
-      {
-        path: '',
-        component: Dashboard
-      }
-    ],
-    meta: {
-      title: 'OpsMind 模块',
-      requiresAuth: true
-    }
-  },
+  
   {
     path: '/login',
     name: 'login',
@@ -65,6 +49,22 @@ const routes: CustomRouteRecord[] = [
     component: () => import('@/views/About.vue'),
     meta: {
       title: '关于'
+    }
+  },
+  // 直达二级功能的短路径（例如 /cmd、/jao）。必须放在最后，避免与显式路由冲突
+  {
+    path: '/:moduleCode',
+    name: 'feature-shortcut',
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: Dashboard
+      }
+    ],
+    meta: {
+      title: 'OpsMind 模块',
+      requiresAuth: true
     }
   }
 ]

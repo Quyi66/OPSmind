@@ -54,13 +54,13 @@ const formattedCount = computed(() => {
 .type-count-card {
   background: #fff;
   border-radius: 8px;
-  padding: 16px;
+  padding: 12px 10px; /* 收紧左右内边距，给标题留空间 */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
   height: 60px;
   flex: 1;
@@ -80,7 +80,7 @@ const formattedCount = computed(() => {
 }
 
 .icon-container {
-  width: 40px;
+  width: 36px; /* 收窄以释放文本宽度 */
   height: 48px;
   display: flex;
   align-items: flex-start;
@@ -107,6 +107,7 @@ const formattedCount = computed(() => {
   font-size: 14px;
   color: #666;
   line-height: 1.2;
+  white-space: nowrap; /* 保持单行显示 */
 }
 
 .type-count {
