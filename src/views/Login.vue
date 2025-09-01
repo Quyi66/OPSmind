@@ -28,10 +28,10 @@
     <!-- Main Content -->
     <div class="relative z-10 flex items-center justify-center min-h-[calc(100vh-120px)]">
       <!-- 合并的登录卡片控件 -->
-      <div class="flex shadow-2xl rounded-2xl overflow-hidden border border-gray-100">
+      <div class="flex w-[760px] h-[440px] shadow-2xl rounded-2xl overflow-hidden border border-gray-100">
         <!-- 左侧插图卡片 -->
         <div
-          class="w-[340px] h-[440px] relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
+          class="w-1/2 h-full relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
         >
           <div
             class="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-indigo-400/5 to-purple-400/5"
@@ -45,7 +45,7 @@
         </div>
 
         <!-- 右侧登录表单卡片 -->
-        <div class="w-[420px] h-[440px] bg-white flex">
+        <div class="w-1/2 h-full bg-white flex">
           <!-- 左边距 (1) -->
           <div class="flex-1"></div>
 
