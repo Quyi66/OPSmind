@@ -8,11 +8,13 @@ import { ref, computed } from 'vue'
 import { getMenuGroups, getMenuGroup, getMenuItemInfo, getHomeMenu } from '@/config/menu.config.js'
 
 export const useMenuStore = defineStore('menu', () => {
+  const RECENT_KEY = 'opsmind_recent_features'
   // 状态
   const activeGroup = ref('') // 当前激活的一级菜单分组
   const activeMenuItem = ref('') // 当前激活的二级菜单项
   const sideMenuCollapsed = ref(false) // 左侧菜单是否折叠
   const showSideMenu = ref(false) // 是否显示左侧菜单
+  const recentItems = ref(loadRecent()) // 最近使用功能
 
   // 计算属性
   const currentGroup = computed(() => {
@@ -76,6 +78,9 @@ export const useMenuStore = defineStore('menu', () => {
       activeGroup.value = info.group.code
       showSideMenu.value = true
     }
+
+    // 记录最近使用
+    recordRecent(menuCode)
   }
 
   const clearActiveMenu = () => {
@@ -120,6 +125,8 @@ export const useMenuStore = defineStore('menu', () => {
       activeMenuItem.value = moduleCode
       showSideMenu.value = true
       console.log('🧭 Menu state set from route:', routePath, '-> Group:', info.group.code, 'Item:', moduleCode)
+      // 记录最近使用
+      recordRecent(moduleCode)
     } else {
       console.warn('⚠️ No menu item found for route:', routePath)
     }
@@ -154,6 +161,7 @@ export const useMenuStore = defineStore('menu', () => {
     activeMenuItem,
     sideMenuCollapsed,
     showSideMenu,
+    recentItems,
 
     // 计算属性
     currentGroup,
@@ -170,6 +178,47 @@ export const useMenuStore = defineStore('menu', () => {
     toggleSideMenu,
     setSideMenuCollapsed,
     setMenuFromRoute,
-    getBreadcrumb
+    getBreadcrumb,
+    recordRecent
+  }
+
+  // 最近使用相关
+  function loadRecent() {
+    try {
+      const raw = localStorage.getItem(RECENT_KEY)
+      const parsed = raw ? JSON.parse(raw) : []
+      if (Array.isArray(parsed)) return parsed
+    } catch (e) {
+      console.warn('Failed to load recent features:', e)
+    }
+    return []
+  }
+
+  function saveRecent(list) {
+    try {
+      localStorage.setItem(RECENT_KEY, JSON.stringify(list))
+    } catch (e) {
+      console.warn('Failed to save recent features:', e)
+    }
+  }
+
+  function recordRecent(menuCode) {
+    const info = getMenuItemInfo(menuCode)
+    if (!info) return
+    const item = {
+      code: info.menuItem.code,
+      name: info.menuItem.name,
+      icon: info.menuItem.icon,
+      group: info.group.code
+    }
+
+    // 去重并前置
+    const filtered = recentItems.value.filter(i => i.code !== item.code)
+    filtered.unshift(item)
+
+    // 仅保留最近10个
+    const limited = filtered.slice(0, 10)
+    recentItems.value = limited
+    saveRecent(limited)
   }
 })

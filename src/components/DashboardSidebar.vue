@@ -58,7 +58,7 @@
       <div class="recent-grid">
         <div
           v-for="item in recentItems"
-          :key="item.id"
+          :key="item.code"
           class="recent-item"
           @click="handleRecentClick(item)"
         >
@@ -73,9 +73,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
+import { useMenuStore } from '@/stores/menu.js'
 
 import avatarImage from '@/assets/icons/avatar@2x.png'
 
@@ -154,17 +155,9 @@ const todoList = ref([
   }
 ])
 
-// 最近使用的功能模块
-const recentItems = ref([
-  { id: 1, name: '命令管理', icon: 'fas fa-terminal' },
-  { id: 2, name: '资源信息', icon: 'fas fa-server' },
-  { id: 3, name: '数据管理', icon: 'fas fa-database' },
-  { id: 4, name: '资源权限', icon: 'fas fa-key' },
-  { id: 5, name: '异常设备', icon: 'fas fa-exclamation-triangle' },
-  { id: 6, name: '操作记录', icon: 'fas fa-history' },
-  { id: 7, name: '系统监控', icon: 'fas fa-chart-line' },
-  { id: 8, name: '用户管理', icon: 'fas fa-users' }
-])
+// 最近使用：来源于菜单 Store，并限制展示前 10 项
+const menuStore = useMenuStore()
+const recentItems = computed(() => (menuStore.recentItems || []).slice(0, 10))
 
 // 事件处理
 const handleTodoClick = todo => {
@@ -184,6 +177,10 @@ const viewAllTodos = () => {
 }
 
 const handleRecentClick = item => {
+  // 跳转并记录（recordRecent 在 store 内部也会处理）
+  try {
+    menuStore.setActiveMenuItem(item.code)
+  } catch (e) {}
   ElMessage.info(`打开模块: ${item.name}`)
 }
 </script>
@@ -432,17 +429,17 @@ const handleRecentClick = item => {
 // 最近使用样式
 .recent-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr); /* 2 列，共 5 行 */
   gap: 8px;
-  /* 下内边距再减小，进一步贴近底部 */
   padding: 16px 16px 6px;
 }
 
 .recent-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* 左图标 右名称 */
   align-items: center;
-  padding: 12px 8px;
+  gap: 8px;
+  padding: 10px 8px;
   border-radius: 8px;
   background: #f8f9fa;
   cursor: pointer;
@@ -455,14 +452,14 @@ const handleRecentClick = item => {
 }
 
 .recent-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #dee2e6;
   border-radius: 6px;
-  margin-bottom: 6px;
+  margin: 0; /* 水平布局不需要底部间距 */
 
   i {
     font-size: 14px;
@@ -471,9 +468,9 @@ const handleRecentClick = item => {
 }
 
 .recent-name {
-  font-size: 11px;
+  font-size: 12px;
   color: #495057;
-  text-align: center;
+  text-align: left;
   line-height: 1.2;
   word-break: break-all;
 }
@@ -512,7 +509,7 @@ const handleRecentClick = item => {
   }
 
   .recent-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 6px;
     padding: 10px 10px 6px;
   }
@@ -579,7 +576,7 @@ const handleRecentClick = item => {
   }
 
   .recent-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 6px;
     padding: 10px 10px 6px;
   }
