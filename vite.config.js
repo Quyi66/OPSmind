@@ -61,8 +61,8 @@ export default defineConfig(({ command, mode }) => {
       // })
     ],
 
-    // 设置基础路径，开发环境使用根路径，生产环境使用子路径
-    base: mode === 'production' ? '/opsmind/base/' : '/',
+    // 设置基础路径，生产环境与开发环境均使用 /ops/
+    base: mode === 'production' ? '/ops/' : '/ops/',
 
     // 开发服务器配置
     server: {
@@ -197,41 +197,24 @@ export default defineConfig(({ command, mode }) => {
           main: resolve(__dirname, 'index.html')
         },
         output: {
-          // 更细粒度的分包
+          // 更细粒度的分包（避免循环依赖造成的执行顺序问题）
           manualChunks: (id) => {
             // 第三方库
             if (id.includes('node_modules')) {
-              if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
-                return 'vue-vendor'
+              // 合并 Vue 生态与 Element Plus，避免互相引用导致 TDZ
+              if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router') || id.includes('element-plus') || id.includes('@element-plus')) {
+                return 'vue-stack'
               }
-              if (id.includes('element-plus')) {
-                return 'element-plus'
-              }
-              if (id.includes('axios')) {
-                return 'http'
-              }
-              if (id.includes('crypto-js')) {
-                return 'crypto'
-              }
+              if (id.includes('axios')) return 'http'
+              if (id.includes('crypto-js')) return 'crypto'
               return 'vendor'
             }
 
-            // 核心模块
-            if (id.includes('/src/core/')) {
-              return 'core'
-            }
-
-            // 共享模块
-            if (id.includes('/src/shared/')) {
-              return 'shared'
-            }
-
-            // 业务模块
+            if (id.includes('/src/core/')) return 'core'
+            if (id.includes('/src/shared/')) return 'shared'
             if (id.includes('/src/modules/')) {
               const match = id.match(/\/src\/modules\/([^\/]+)\//)
-              if (match) {
-                return `module-${match[1]}`
-              }
+              if (match) return `module-${match[1]}`
             }
           },
 
