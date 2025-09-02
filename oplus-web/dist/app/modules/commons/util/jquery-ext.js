@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function($){$.fn.hasClassMatch=function(t){var r=$(this).attr("class");if(!r||!t)return!1;for(var s=0,a=(r=r.split(/\s+/)).length;s<a;s++)if(r[s].match(t))return!0;return!1},$.fn.removeClassMatch=function(t){return this.each(function(){var r=$(this).attr("class");if(!r||!t)return!1;for(var s=[],a=0,n=(r=r.split(/\s+/)).length;a<n;a++)r[a].match(t)||s.push(r[a]);$(this).attr("class",s.join(" "))})}}(jQuery);

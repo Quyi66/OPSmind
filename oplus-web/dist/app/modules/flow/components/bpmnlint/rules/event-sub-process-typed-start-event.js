@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+const{is}=require("bpmnlint-utils");module.exports=function(){return{check:function(n,e){if(!is(n,"bpmn:SubProcess")||!n.triggeredByEvent)return;(n.flowElements||[]).forEach(function(n){if(!is(n,"bpmn:StartEvent"))return!1;0===(n.eventDefinitions||[]).length&&e.report(n.id,"Start event is missing event definition")})}}};

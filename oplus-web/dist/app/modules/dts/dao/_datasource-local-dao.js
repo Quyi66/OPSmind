@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function t(t){var a=t.createDao("oplus.dts.datasources");this.findAllDatasources=a.findAllEntities,this.findDatasource=a.findEntity,this.saveDatasource=a.saveEntity,this.deleteDatasource=a.deleteEntity}angular.module("oplus.dts").service("_datasourceLocalDao",t),t.$inject=["localDaoFactory"]}();

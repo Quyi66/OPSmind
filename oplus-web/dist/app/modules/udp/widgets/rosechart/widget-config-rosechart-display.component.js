@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.udp").component("udpWidgetConfigRosechartDisplay",{templateUrl:"app/modules/udp/widgets/rosechart/widget-config-rosechart-display.html",bindings:{props:"=ngModel",chartType:"<",options:"<"},controller:["themeService",function(t){this.palettes=t.getChartPalettes()}]})}();

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e,i,a){var n=this;n.apiKey=a,n.isEdit=!!a,n.apiKey&&!n.apiKey.isEternal&&(n.apiKey.expireCount=Number(n.apiKey.expireCount)>=0?Number(n.apiKey.expireCount):0,n.apiKey.expireTime=new Date(n.apiKey.expireTime)),n.cancel=function(){i.dismiss()},n.confirm=function(){i.close(n.apiKey)}}angular.module("oplus.ssc").controller("apiKeyEditDialogCtrl",e),e.$inject=["$translate","$uibModalInstance","apiKey"]}();

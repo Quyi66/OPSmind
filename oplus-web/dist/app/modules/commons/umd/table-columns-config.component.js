@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.commons").component("tableColumnsConfig",{bindings:{theModel:"=",theFields:"<",options:"<"},templateUrl:"app/modules/commons/umd/table-columns-config.html",controller:["$scope","$element","udmUtil",function(o,n,t){this.$onInit=function(){},this.attrsByCode={}}]})}();

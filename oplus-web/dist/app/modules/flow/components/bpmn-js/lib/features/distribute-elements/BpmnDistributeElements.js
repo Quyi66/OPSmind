@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+import{filter}from"min-dash";import{isAny}from"../modeling/util/ModelingUtil";export default function BpmnDistributeElements(n){n.registerFilter(function(n){return filter(n,function(n){var t=isAny(n,["bpmn:Association","bpmn:BoundaryEvent","bpmn:DataInputAssociation","bpmn:DataOutputAssociation","bpmn:Lane","bpmn:MessageFlow","bpmn:Participant","bpmn:SequenceFlow","bpmn:TextAnnotation"]);return!(n.labelTarget||t)})})}BpmnDistributeElements.$inject=["distributeElements"];

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function r(r){return r("api/account",{},{get:{method:"GET",params:{},isArray:!1,interceptor:{response:function(r){return r}}}})}angular.module("oplus.uaa").factory("Account",r),r.$inject=["$resource"]}();

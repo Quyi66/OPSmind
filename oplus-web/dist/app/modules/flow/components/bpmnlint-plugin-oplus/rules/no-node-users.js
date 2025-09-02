@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+const{is}=require("bpmnlint-utils"),find=require("lodash/find");module.exports=function(){return{check:function(e,n){if(is(e,"bpmn:UserTask")){var i=e.extensionElements;if(i)(function(e,n){if(!e)return;return e.$attrs[n]||e.get(n)})(find(i.get("values"),function(e){return is(e,"flowable:CustomProperties")}),"findUserType")||n.report(e.id,"员工节点未设置节点人员!")}}}};

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+import inherits from"inherits";import CommandInterceptor from"diagram-js/lib/command/CommandInterceptor";import{is}from"../../../util/ModelUtil";export default function CreateDataObjectBehavior(e,t,a){CommandInterceptor.call(this,e),this.preExecute("shape.create",function(e){var a=e.context.shape;if(is(a,"bpmn:DataObjectReference")&&"label"!==a.type){var r=t.create("bpmn:DataObject");a.businessObject.dataObjectRef=r}})}CreateDataObjectBehavior.$inject=["eventBus","bpmnFactory","moddle"],inherits(CreateDataObjectBehavior,CommandInterceptor);

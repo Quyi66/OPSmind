@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.commons").directive("opHelpDoc",["$http",function(n){return{restrict:"A",link:function(n,i,o,e){window.$oplus.appConfig.ui.enableHelpDoc?$(i).on("click",function(){var n=window.$oplus.appConfig.ui.help,i=function(){var n=window.location.hash.split("/");if(n.length>1&&n[1]){var i=n[1],o="";return"admin"===i&&(o+="/"+n[2]),"#/"+i+o+"/overview"}return""}();i?window.open(n.split("#/")[0]+i):window.open(n)}):$(i).addClass("hidden")}}}])}();

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e){var l=this;l.changeLevel=function(n,o){e.changeLevel({name:n,level:o},function(){l.loggers=e.findAll()})},l.loggers=e.findAll()}angular.module("oplus.adm").controller("LogsController",e),e.$inject=["LogsService"]}();

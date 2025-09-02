@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e){var t="cac";this.getAssetModel=function(){return e.callApi(t,"POST","/api/cac/v2/get/asssets-model-types",null,null)},this.getSelectAssetModel=function(){return e.callApi(t,"POST","/api/cac/v2/get/assets-model-data",null,null)},this.saveSelectAssetModel=function(s){return e.callApi(t,"POST","/api/cac/v2/save/assets-model-data",null,s)}}angular.module("oplus.cac").service("CacAssetModelService",e),e.$inject=["restUtils"]}();

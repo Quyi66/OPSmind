@@ -83,11 +83,15 @@ try {
   }
 } catch {}
 
-// 暴露路由实例和管理器供调试和测试
+// 暴露路由实例，供菜单等非组件模块访问（生产/开发环境均生效）
+try {
+  window.__VUE_ROUTER__ = router
+} catch {}
+
+// 开发环境下额外暴露调试对象
 if (import.meta.env.DEV) {
   import('@/utils/single-iframe-manager').then(({ singleIframeManager }) => {
     window.singleIframeManager = singleIframeManager
-    window.__VUE_ROUTER__ = router
     console.log('🔧 singleIframeManager and router exposed to window for debugging')
   })
 }

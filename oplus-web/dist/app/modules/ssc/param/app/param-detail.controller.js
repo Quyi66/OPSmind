@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function n(n,a,t,c,i){var e=this;e.clear=function(){i.close({action:"cancel"}),i.dismiss({action:"cancel"})},e.param=c;var o=c.id;e.detailSign=!0,null!==o&&function(n){t.findParamById(n).then(function(n){e.param=n}).catch(function(n){throw n})}(o)}angular.module("oplus.ssc").controller("tenantParamDetailController",n),n.$inject=["$scope","$stateParams","paramService","entity","$uibModalInstance"]}();

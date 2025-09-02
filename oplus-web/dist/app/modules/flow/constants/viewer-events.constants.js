@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+export default{emitBpmnViewer:"emitBpmnViewer",broadcastReRender:"broadcastReRender",emitProcessAttrs:"emitProcessAttrs",buildExecParams:"buildExecParams",buildExecParamsReceive:"buildExecParamsReceive"};

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+"use strict";function EditorActions(t,o,e,i,n,g){g.register({toggleTokenSimulation:function(){o.toggleMode()}}),g.register({togglePauseTokenSimulation:function(){e.toggle()}}),g.register({resetTokenSimulation:function(){n.resetSimulation()}}),g.register({toggleTokenSimulationLog:function(){i.toggle()}})}EditorActions.$inject=["eventBus","toggleMode","pauseSimulation","log","resetSimulation","editorActions"],module.exports=EditorActions;

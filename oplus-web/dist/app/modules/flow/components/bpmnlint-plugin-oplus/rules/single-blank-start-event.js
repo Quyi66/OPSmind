@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+const{is}=require("bpmnlint-utils");module.exports=function(){return{check:function(n,e){if(!is(n,"bpmn:FlowElementsContainer"))return;if((n.flowElements||[]).filter(function(n){if(!is(n,"bpmn:StartEvent"))return!1;return 0===(n.eventDefinitions||[]).length}).length>1){const t=is(n,"bpmn:SubProcess")?"Sub process":"Process";e.report(n.id,t+" has multiple blank start events")}}}};

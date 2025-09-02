@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.app").config(["$stateProvider",function(l){l.state("app.ssc.config.email",{url:"/email",views:{ssc_config:{templateUrl:function(){return"app/modules/ssc/email/email.html"},controller:"sscEmailCtrl",controllerAs:"vm"}}})}])}();

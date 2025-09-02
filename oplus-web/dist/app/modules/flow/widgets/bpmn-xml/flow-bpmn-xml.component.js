@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+flowBpmnXmlCtrl.$inject=[];export default function flowBpmnXmlCtrl(){var e=this;e.codemirrorLoaded=function(e){e.on("change",function(){setTimeout(function(){e.refresh()},200)})},e.codeOption={value:"",mode:"application/xml",readOnly:!0,styleActiveLine:!0,lineNumbers:!0,line:!0,tabSize:4,autoRefresh:!0,theme:"opluscode",lineWrapping:!0,autofocus:!0,onLoad:e.codemirrorLoaded}}

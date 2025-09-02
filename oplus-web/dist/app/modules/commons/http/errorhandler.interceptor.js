@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function t(t,r){return{responseError:function(o){401===o.status&&(""===o.data||o.data.path&&0===o.data.path.indexOf("/api/account"))||r.$emit("oplusApp.httpError",o);return t.reject(o)}}}angular.module("oplus.commons").factory("errorHandlerInterceptor",t),t.$inject=["$q","$rootScope"]}();

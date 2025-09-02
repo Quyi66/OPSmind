@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function c(){var c=!1;this.useLocalDb=function(o){c=o},this.$get=["_cacLocalDao","_cacRemoteDao",function(o,a){return c?o:a}]}angular.module("oplus.cac").provider("cacDao",c),c.$inject=[]}();

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+module.exports.getMid=function(t){var e=t.bbox();return{x:e.x+e.width/2,y:e.y+e.height/2}},module.exports.distance=function(t,e){return Math.sqrt(Math.pow(t.x-e.x,2)+Math.pow(t.y-e.y,2))};

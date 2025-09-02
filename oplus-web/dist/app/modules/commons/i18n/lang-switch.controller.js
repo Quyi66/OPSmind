@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function n(n,t,a,e){var i=this;this.languages=null,this.currentLanguage=t.use(),this.changeLanguage=function(n){a.initLanguage(n).then(function(){window.location.reload()})},this.$onInit=function(){a.getAllLanguages().then(function(n){i.languages=n})}}angular.module("oplus.commons").controller("LangSwitchController",n),n.$inject=["$state","$translate","i18nService","tmhDynamicLocale"]}();
