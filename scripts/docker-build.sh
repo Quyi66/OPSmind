@@ -4,6 +4,7 @@ set -euo pipefail
 
 TAG="opsmind-web:latest"
 TAG_SET="false"
+# Set release version here (leave empty to keep default tag)
 VERSION=""
 PLATFORM=""
 NO_CACHE=""
@@ -18,7 +19,7 @@ Usage: scripts/docker-build.sh [options]
 
 Options:
   -t, --tag <tag>           Image tag (default: opsmind-web:latest)
-  -v, --version <version>   Version to tag image with (e.g. 1.2.3). If set and --tag not provided, image tag becomes opsmind-web:<version>
+                            To set version, edit VERSION at top of this script.
   --platform <platform>     docker buildx platform (e.g. linux/amd64)
   --no-cache                Build without cache
   --skip-opsmind-build      Skip building opsmind dist (expects ./dist present)
@@ -40,8 +41,6 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     -t|--tag)
       TAG="$2"; TAG_SET="true"; shift; shift ;;
-    -v|--version)
-      VERSION="$2"; shift; shift ;;
     --platform)
       PLATFORM="$2"; shift; shift ;;
     --no-cache)
@@ -118,17 +117,15 @@ ensure_buildx() {
 # Build outputs
 mkdir -p "$(dirname "$EXPORT_AMD64_TAR")"
 
-# Common labels
-LABEL_ARGS=()
+# Common labels (string, robust under set -u)
+LABEL_FLAGS=""
 if [[ -n "$VERSION" ]]; then
   CREATED_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   GIT_REV="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
-  LABEL_ARGS+=(
-    --label "org.opencontainers.image.title=${IMAGE_NAME_NO_TAG}"
-    --label "org.opencontainers.image.version=${VERSION}"
-    --label "org.opencontainers.image.revision=${GIT_REV}"
-    --label "org.opencontainers.image.created=${CREATED_TS}"
-  )
+  LABEL_FLAGS="${LABEL_FLAGS} --label org.opencontainers.image.title=${IMAGE_NAME_NO_TAG}"
+  LABEL_FLAGS="${LABEL_FLAGS} --label org.opencontainers.image.version=${VERSION}"
+  LABEL_FLAGS="${LABEL_FLAGS} --label org.opencontainers.image.revision=${GIT_REV}"
+  LABEL_FLAGS="${LABEL_FLAGS} --label org.opencontainers.image.created=${CREATED_TS}"
 fi
 
 if [[ "$MULTI_ARCH" == "true" ]]; then
@@ -137,7 +134,7 @@ if [[ "$MULTI_ARCH" == "true" ]]; then
 
   # 1) Build and load arm64 image for local run on M1 (if applicable)
   echo "[build] Building arm64 (load to local engine)"
-  docker buildx build --platform linux/arm64 -t "$TAG" $NO_CACHE --provenance=false "${LABEL_ARGS[@]}" --load .
+  docker buildx build --platform linux/arm64 -t "$TAG" $NO_CACHE --provenance=false $LABEL_FLAGS --load .
 
   # Tag also as :latest locally when a version is provided
   if [[ -n "$VERSION" ]]; then
@@ -147,11 +144,11 @@ if [[ "$MULTI_ARCH" == "true" ]]; then
   # 2) Build and export amd64 tar for distribution
   if [[ -n "${EXPORT_AMD64_TAR}" ]]; then
     echo "[build] Building amd64 and exporting tar -> $EXPORT_AMD64_TAR"
-    docker buildx build --platform linux/amd64 -t "$TAG" $NO_CACHE --provenance=false "${LABEL_ARGS[@]}" \
+    docker buildx build --platform linux/amd64 -t "$TAG" $NO_CACHE --provenance=false $LABEL_FLAGS \
       -o type=docker,dest="$EXPORT_AMD64_TAR" .
   else
     echo "[build] Building amd64 (load to local engine)"
-    docker buildx build --platform linux/amd64 -t "$TAG" $NO_CACHE --provenance=false "${LABEL_ARGS[@]}" --load .
+    docker buildx build --platform linux/amd64 -t "$TAG" $NO_CACHE --provenance=false $LABEL_FLAGS --load .
   fi
 
   echo "[build] Multi-arch done. AMD64 tar at: $EXPORT_AMD64_TAR"
@@ -160,16 +157,16 @@ else
   if [[ -n "$PLATFORM" ]]; then
     echo "[build] Single-arch buildx for platform: $PLATFORM"
     ensure_buildx
-    docker buildx build --platform "$PLATFORM" -t "$TAG" $NO_CACHE --provenance=false "${LABEL_ARGS[@]}" --load .
+    docker buildx build --platform "$PLATFORM" -t "$TAG" $NO_CACHE --provenance=false $LABEL_FLAGS --load .
     # If user also wants tar and platform=linux/amd64, export tar too
     if [[ "$PLATFORM" == "linux/amd64" ]]; then
       echo "[build] Exporting amd64 tar -> $EXPORT_AMD64_TAR"
-      docker buildx build --platform linux/amd64 -t "$TAG" $NO_CACHE --provenance=false "${LABEL_ARGS[@]}" \
+      docker buildx build --platform linux/amd64 -t "$TAG" $NO_CACHE --provenance=false $LABEL_FLAGS \
         -o type=docker,dest="$EXPORT_AMD64_TAR" .
     fi
   else
     echo "[build] Default docker build (host arch)"
-    docker build -t "$TAG" $NO_CACHE "${LABEL_ARGS[@]}" .
+    docker build -t "$TAG" $NO_CACHE $LABEL_FLAGS .
   fi
   echo "[build] Done. Image: $TAG"
 fi
