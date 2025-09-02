@@ -2,7 +2,7 @@
 # Run a test container for opsmind-all-in-one image
 set -euo pipefail
 
-IMAGE_TAG="opsmind-all-in-one:latest"
+IMAGE_TAG="opsmind-web:latest"
 CONTAINER_NAME="opsmind-aio"
 HOST_PORT=8080
 BACKEND_SCHEME="http"
@@ -16,7 +16,7 @@ usage() {
 Usage: scripts/docker-run-test.sh [options]
 
 Options:
-  -t, --tag <image>        Docker image tag (default: opsmind-all-in-one:latest)
+  -t, --tag <image>        Docker image tag (default: opsmind-web:latest)
   -n, --name <name>        Container name (default: opsmind-aio)
   -p, --port <host_port>   Host port to map to 80 (default: 8080)
   --backend-url <url>      Backend base URL (e.g. http://10.1.40.112:80)
@@ -100,4 +100,3 @@ if [[ "$DETACH" == "-d" || "$DETACH" == "--rm -d" ]]; then
 else
   echo "[run] Running in foreground..."
 fi
-
