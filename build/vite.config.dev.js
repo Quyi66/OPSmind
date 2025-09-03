@@ -12,6 +12,11 @@ export default defineConfig({
     })
   ],
 
+
+
+  // 设置基础路径
+  base: '/ops/',
+
   // 开发服务器配置
   server: {
     port: 5173,
@@ -52,7 +57,7 @@ export default defineConfig({
       },
 
       '/oplus-portal': {
-        target: 'http://10.1.40.112:80',
+        target: 'http://localhost:18080',
         changeOrigin: true,
         secure: false
       },

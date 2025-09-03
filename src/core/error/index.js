@@ -127,8 +127,14 @@ class ErrorHandler {
    * 显示用户错误信息
    */
   showUserError(errorInfo) {
+    // 抑制低级别系统类告警（如页面初次加载时的无害异常）
+    if (errorInfo.type === ERROR_TYPES.SYSTEM && errorInfo.level === ERROR_LEVELS.WARNING) {
+      // 仅记录，不提示用户
+      return
+    }
+
     const userMessage = this.getUserMessage(errorInfo)
-    
+
     switch (errorInfo.level) {
       case ERROR_LEVELS.CRITICAL:
         ElNotification({

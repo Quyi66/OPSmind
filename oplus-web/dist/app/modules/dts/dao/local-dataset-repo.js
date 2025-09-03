@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+"use strict";!function(){function e(e){var t=[];this.defineLocalDataset=function(e,n,r){t.push({code:e,name:n,service:r})},this.getDaoInstance=function(n){var r=_.find(t,{code:n});if(r){if(!r.service)throw new ReferenceError('Local dataset "'+n+'" has no service');var a=e.get(r.service);if(!a)throw new ReferenceError('Cannot find service instance for local dataset "'+n+'"');return a}return null},this.getAllDatasets=function(){return t}}angular.module("oplus.dts").service("localDatasetRepo",e),e.$inject=["$injector"]}();

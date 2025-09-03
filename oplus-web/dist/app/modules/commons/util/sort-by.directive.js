@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.commons").directive("jhSortBy",function(){return{restrict:"A",scope:!1,require:"^jhSort",link:function(t,n,o,r){n.bind("click",function(){r.sort(o.jhSortBy)})}}})}();

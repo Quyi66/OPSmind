@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e,n,t,a){var c=this;c.param=n,c.clear=function(){e.dismiss("cancel")},c.confirmDelete=function(n){t.delete({id:n},function(){a.toast("success","删除成功"),e.close(!0)},function(){a.alertWarning("警告","删除失败!")})}}angular.module("oplus.adm").controller("ParamDeleteController",e),e.$inject=["$uibModalInstance","entity","Param","messageService"]}();

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function n(n,e,t,c){var i=this;i.tenant=e,i.clear=function(){n.dismiss("cancel")},i.confirmDelete=function(e){t.delete({id:e},function(){c.toast("success","删除成功"),n.close(!0)},function(){c.alertWarning("警告","此租户关联其它资源，删除失败!")})}}angular.module("oplus.adm").controller("TenantDeleteController",n),n.$inject=["$uibModalInstance","entity","Tenant","messageService"]}();

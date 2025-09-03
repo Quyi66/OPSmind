@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+const{isAny}=require("bpmnlint-utils");module.exports=function(){return{check:function(n,e){if(!isAny(n,["bpmn:Task","bpmn:Gateway","bpmn:SubProcess","bpmn:Event"])||n.triggeredByEvent)return;const t=n.incoming||[],i=n.outgoing||[];t.length||i.length||e.report(n.id,"Element is not connected 222")}}};

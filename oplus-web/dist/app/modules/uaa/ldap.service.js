@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function r(r){return r("api/users/sync",{},{syncLdapUsers:{method:"GET",isArray:!0}})}angular.module("oplus.uaa").factory("Ldap",r),r.$inject=["$resource"]}();

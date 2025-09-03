@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+angular.module("oplus.udp").value("widgetValues",{IN_PAGE:"in_display",IN_CANVAS:"in_design",events:{PageParamChanged:"UDP_PAGEPARAM_CHANGED",WidgetEvent:"UDP_WIDGET_EVENT"}});

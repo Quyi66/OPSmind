@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function i(i,t,c){var l="cac";this.getAllFixItem=function(){return i.callApi(l,"GET","/api/cac/v3/fix-item",null)},this.fixItemList=function(t){return i.callApi(l,"POST","/api/cac/v3/fix-log/run",null,t)},this.getByFixLogIdAllData=function(t){return i.callApi(l,"GET","/api/cac/v3/fix-item-result/v3/{fixLogId}",{fixLogId:t})}}angular.module("oplus.cac").service("CacFixLogService",i),i.$inject=["restUtils","$q","$http"]}();

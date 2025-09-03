@@ -42,7 +42,7 @@ export function logStorageAuth() {
   console.log('localStorage:')
   console.log('  - oplus_token:', !!localToken, localToken?.length || 0)
   console.log('  - oplus_user:', !!localUser)
-  
+
   console.log('sessionStorage:')
   console.log('  - oplus_token:', !!sessionToken, sessionToken?.length || 0)
   console.log('  - oplus_user:', !!sessionUser)
@@ -68,10 +68,10 @@ export function logStorageAuth() {
  */
 export function logIframeStatus() {
   const iframes = document.querySelectorAll('iframe')
-  
+
   console.group('🖼️ [AuthDebug] Iframe Status')
   console.log('Total iframes found:', iframes.length)
-  
+
   iframes.forEach((iframe, index) => {
     console.log(`Iframe ${index + 1}:`, {
       src: iframe.src,
@@ -97,7 +97,7 @@ export function sendTestMessageToIframes() {
 
   console.group('📤 [AuthDebug] Sending Test Messages')
   console.log('Sending to', iframes.length, 'iframes')
-  
+
   iframes.forEach((iframe, index) => {
     if (iframe.contentWindow) {
       try {
@@ -114,18 +114,20 @@ export function sendTestMessageToIframes() {
 }
 
 /**
- * 强制重新发送认证数据到所有iframe
+ * 强制重新发送认证数据到iframe
  */
 export function forceResendAuthData() {
   try {
     console.log('🔄 [AuthDebug] Force resending auth data...')
-    
-    // 使用iframe管理器广播
-    const { GlobalIframeManager } = require('@/utils/iframe-manager')
-    const iframeManager = GlobalIframeManager.getInstance()
-    iframeManager.broadcastAuthUpdate()
-    
-    console.log('✅ [AuthDebug] Auth data resent via iframe manager')
+
+    // 使用单iframe管理器发送认证数据
+    import('@/utils/single-iframe-manager').then(({ singleIframeManager }) => {
+      singleIframeManager.sendAuthData()
+      console.log('✅ [AuthDebug] Auth data resent via single iframe manager')
+    }).catch(error => {
+      console.error('❌ [AuthDebug] Failed to load single iframe manager:', error)
+    })
+
   } catch (error) {
     console.error('❌ [AuthDebug] Failed to resend auth data:', error)
   }
@@ -137,11 +139,11 @@ export function forceResendAuthData() {
 export function generateAuthDebugReport() {
   console.log('🔍 [AuthDebug] Generating complete auth debug report...')
   console.log('='.repeat(60))
-  
+
   logAuthStatus()
   logStorageAuth()
   logIframeStatus()
-  
+
   console.log('='.repeat(60))
   console.log('✅ [AuthDebug] Debug report completed')
 }
@@ -159,7 +161,7 @@ export function exposeDebugMethods() {
       forceResendAuthData,
       generateAuthDebugReport
     }
-    
+
     console.log('🛠️ [AuthDebug] Debug methods exposed to window.authDebug')
     console.log('Available methods:')
     console.log('  - window.authDebug.logAuthStatus()')

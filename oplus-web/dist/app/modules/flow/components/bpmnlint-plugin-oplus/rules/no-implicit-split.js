@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+const{isAny}=require("bpmnlint-utils");function hasCondition(n){return!!n.conditionExpression}function isDefaultFlow(n,i){return n.default===i}module.exports=function(){return{check:function(n,i){if(!isAny(n,["bpmn:Task","bpmn:Event"]))return;(n.outgoing||[]).filter(i=>!hasCondition(i)&&!isDefaultFlow(n,i)).length>1&&i.report(n.id,"Flow splits implicitly")}}};

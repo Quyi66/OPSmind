@@ -1,40 +1,55 @@
 <template>
   <div class="dashboard">
-    <!-- 主内容区 -->
-    <div class="dashboard-content">
-      <!-- 加载状态 -->
-      <div
-        v-if="dashboardStore.loading"
-        class="loading-container"
-        v-loading="true"
-        element-loading-text="正在加载仪表盘数据..."
-      ></div>
+    <!-- 加载状态 -->
+    <div
+      v-if="dashboardStore.loading"
+      class="loading-container"
+      v-loading="true"
+      element-loading-text="正在加载仪表盘数据..."
+    ></div>
 
-      <!-- 错误状态 -->
-      <div v-else-if="dashboardStore.error" class="error-container">
-        <el-alert :title="dashboardStore.error" type="error" show-icon :closable="false" />
-        <el-button @click="handleRefresh" type="primary" class="mt-3">重新加载</el-button>
-      </div>
+    <!-- 错误状态 -->
+    <div v-else-if="dashboardStore.error" class="error-container">
+      <el-alert :title="dashboardStore.error" type="error" show-icon :closable="false" />
+      <el-button @click="handleRefresh" type="primary" class="mt-3">重新加载</el-button>
+    </div>
 
-      <!-- 正常内容 -->
-      <div v-else class="dashboard-main">
-        <!-- 统计卡片区域 -->
-        <div class="stats-section">
-          <StatsCard
-            v-for="stat in dashboardStore.systemStats"
-            :key="stat.id"
-            :title="stat.title"
-            :value="stat.value"
-            :icon="stat.icon"
-            @click="handleStatClick(stat)"
-          />
+    <!-- 主体布局 -->
+    <div v-else class="dashboard-layout">
+      <!-- 左侧边栏 -->
+      <DashboardSidebar />
+
+      <!-- 主内容区 -->
+      <main class="dashboard-content">
+        <div class="dashboard-main">
+          <!-- 第一行：操作提示区域 -->
+          <div class="dashboard-row">
+            <div class="dashboard-card full-width">
+              <AIAssistant />
+            </div>
+          </div>
+
+          <!-- 第二行：作业概览 & 巡检概览 -->
+          <div class="dashboard-row">
+            <div class="dashboard-card half-width">
+              <JobOverview />
+            </div>
+            <div class="dashboard-card half-width">
+              <InspectionOverview />
+            </div>
+          </div>
+
+          <!-- 第三行：资产概览 & 漏洞概览 -->
+          <div class="dashboard-row">
+            <div class="dashboard-card half-width">
+              <AssetOverview />
+            </div>
+            <div class="dashboard-card half-width">
+              <VulnerabilityOverview />
+            </div>
+          </div>
         </div>
-
-        <!-- 快速操作区域 -->
-        <div class="quick-actions-section">
-          <QuickActions />
-        </div>
-      </div>
+      </main>
     </div>
 
     <!-- AngularJS 模块容器 -->
@@ -47,55 +62,41 @@ import { onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
-import { useModuleNavigation } from '@/composables/useModuleNavigation'
-import StatsCard from '@/components/StatsCard.vue'
-import QuickActions from '@/components/QuickActions.vue'
+
+import { getAllMenuItems } from '@/config/menu.config.js'
+import DashboardSidebar from '@/components/DashboardSidebar.vue'
+import JobOverview from '@/components/JobOverview.vue'
+import InspectionOverview from '@/components/InspectionOverview.vue'
+import AssetOverview from '@/components/AssetOverview.vue'
+import VulnerabilityOverview from '@/components/VulnerabilityOverview.vue'
+import AIAssistant from '@/components/AIAssistant.vue'
 import AngularModuleContainerModal from '@/components/AngularModuleContainerModal.vue'
 import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
 
 const dashboardStore = useDashboardStore()
-const { navigateToModule } = useModuleNavigation()
 const route = useRoute()
 
 // 监听路由变化，自动显示对应的iframe
-watch(() => route.path, (newPath) => {
-  console.log('🧭 Route changed to:', newPath)
+watch(
+  () => route.path,
+  newPath => {
+    console.log('🧭 Route changed to:', newPath)
 
-  // 如果是功能模块路由，自动显示iframe
-  const moduleCode = newPath.substring(1) // 移除开头的 '/'
-  const moduleList = ['gfs', 'jao', 'cmd', 'cac', 'password', 'sudo', 'acm', 'patches', 'software', 'workflow', 'users']
+    // 如果是功能模块路由，自动显示iframe
+    const moduleCode = newPath.substring(1) // 移除开头的 '/'
+    const allMenuItems = getAllMenuItems()
+    const moduleList = allMenuItems.map(item => item.code)
 
-  if (moduleList.includes(moduleCode)) {
-    console.log('🎯 Auto-showing iframe for module:', moduleCode)
+    if (moduleList.includes(moduleCode)) {
+      console.log('🎯 Module route detected:', moduleCode)
 
-    // 触发iframe显示
-    const event = new CustomEvent('showAngularModuleContainer', {
-      detail: {
-        moduleCode: moduleCode,
-        title: getModuleTitle(moduleCode)
-      }
-    })
-    window.dispatchEvent(event)
-  }
-}, { immediate: true })
-
-// 获取模块标题
-const getModuleTitle = (moduleCode) => {
-  const titleMap = {
-    gfs: '脚本管理',
-    jao: '作业编排',
-    cmd: '命令管理',
-    cac: '系统巡检',
-    password: '密码管理',
-    sudo: 'sudo权限管理',
-    acm: '资产管理',
-    patches: '补丁管理',
-    software: '软件管理',
-    workflow: '流程管理',
-    users: '用户管理'
-  }
-  return titleMap[moduleCode] || moduleCode.toUpperCase()
-}
+      // 注意：不再在这里触发弹窗模式的iframe
+      // iframe现在由MainLayout中的AngularModuleInlineFrame组件处理
+      // 这里只是记录路由变化
+    }
+  },
+  { immediate: true }
+)
 
 onMounted(async () => {
   await loadDashboardData()
@@ -118,79 +119,192 @@ const loadDashboardData = async () => {
   }
 }
 
-
-
-const handleStatClick = stat => {
-  // 根据统计项类型跳转到相应页面
-  console.log('Stat clicked:', stat)
-}
-
-const handleSearch = query => {
-  // 实现搜索功能
-  console.log('Search:', query)
-  ElMessage.info(`搜索: ${query}`)
-}
-
 const handleRefresh = async () => {
   await loadDashboardData()
   ElMessage.success('数据已刷新')
 }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .dashboard {
-  height: 100vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #f5f6fa 0%, #f0f2f5 100%);
+  min-height: 0;
 }
 
+/* Dashboard主布局 */
+.dashboard-layout {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  font-family:
+    'PingFang SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  background: transparent;
+}
+
+/* 主内容区域 */
 .dashboard-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 20px;
+  overflow: hidden;
+  /* 更紧凑顶部间距：24px -> 16px；底部保持 16px；左侧 5px 保持 */
+  padding: 16px 16px 16px 5px;
+  background: transparent;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
+/* Dashboard主容器 */
+.dashboard-main {
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Dashboard行布局 */
+.dashboard-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+/* 第一行 - AI助手区域 */
+.dashboard-row:nth-child(1) {
+  flex: 0 0 60px;
+  min-height: 60px;
+}
+
+/* 第二行 - 作业概览 & 巡检概览 */
+.dashboard-row:nth-child(2) {
+  flex: 6;
+  min-height: 0;
+}
+
+/* 第三行 - 资产概览 & 漏洞概览 */
+.dashboard-row:nth-child(3) {
+  flex: 4;
+  min-height: 0;
+}
+
+/* Dashboard卡片 */
+.dashboard-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e8eaed;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-card:hover {
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.dashboard-card.full-width {
+  width: 100%;
+}
+
+.dashboard-card.half-width {
+  flex: 1;
+}
+
+/* 加载和错误状态 */
 .loading-container,
 .error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 400px;
+  height: 100%;
+  width: 100%;
+  min-height: 400px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.dashboard-main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-top: 20px;
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .dashboard-main {
+    gap: 16px;
+  }
+
+  .dashboard-row {
+    gap: 16px;
+  }
+
+  /* 保持1:4:5的比例 */
+  .dashboard-row:nth-child(1) {
+    flex: 1;
+  }
+
+  .dashboard-row:nth-child(2) {
+    flex: 4;
+  }
+
+  .dashboard-row:nth-child(3) {
+    flex: 5;
+  }
 }
 
-.stats-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 40px;
-}
-
-.quick-actions-section {
-  margin-top: 40px;
-}
-
-// 响应式设计
 @media (max-width: 768px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .dashboard-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e8eaed;
+  }
+
   .dashboard-content {
-    padding: 10px;
+    padding: 12px;
+    overflow-y: auto;
   }
 
   .dashboard-main {
-    padding-top: 10px;
+    gap: 12px;
+    height: auto;
   }
 
-  .stats-section {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    margin-bottom: 24px;
+  .dashboard-row {
+    flex-direction: column;
+    gap: 12px;
+    flex: none;
+  }
+
+  /* 移动端重置高度 */
+  .dashboard-row:nth-child(1),
+  .dashboard-row:nth-child(2),
+  .dashboard-row:nth-child(3) {
+    flex: none;
+    min-height: auto;
+  }
+
+  .dashboard-card.half-width {
+    width: 100%;
   }
 }
 </style>

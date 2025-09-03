@@ -75,8 +75,12 @@ class AuthService implements IAuthService {
   private initializeAuth(): void {
     try {
       // 支持从 localStorage 和 sessionStorage 恢复
-      const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
-      const userInfo = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
+      const token =
+        localStorage.getItem(SESSION_CONFIG.tokenKey) ||
+        sessionStorage.getItem(SESSION_CONFIG.tokenKey)
+      const userInfo =
+        localStorage.getItem(SESSION_CONFIG.userKey) ||
+        sessionStorage.getItem(SESSION_CONFIG.userKey)
 
       if (token && userInfo) {
         const parsedUser = JSON.parse(userInfo) as User
@@ -198,7 +202,6 @@ class AuthService implements IAuthService {
           permissions: authState.user.permissions
         }
       }
-
     } catch (error) {
       console.error('❌ Login error:', error)
       return {
@@ -222,7 +225,7 @@ class AuthService implements IAuthService {
       // 跳转到登录页面
       if (typeof window !== 'undefined' && window.location) {
         // 使用 window.location 确保完全刷新页面状态
-        window.location.href = '/login'
+        window.location.href = '/ops/'
       }
     } catch (error) {
       console.error('❌ Logout error:', error)
@@ -268,7 +271,7 @@ class AuthService implements IAuthService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authState.token}`
+          Authorization: `Bearer ${authState.token}`
         },
         body: JSON.stringify({
           token: authState.token
@@ -299,7 +302,6 @@ class AuthService implements IAuthService {
       } else {
         throw new Error('No token in refresh response')
       }
-
     } catch (error) {
       console.error('Token refresh failed:', error)
       this.logout()
@@ -338,9 +340,11 @@ class AuthService implements IAuthService {
     if (!authState.isAuthenticated) return false
     if (!permission) return true
 
-    return authState.permissions.includes(permission) ||
+    return (
+      authState.permissions.includes(permission) ||
       authState.permissions.includes('admin') ||
       authState.user?.role === 'admin'
+    )
   }
 
   /**
@@ -523,8 +527,11 @@ class AuthService implements IAuthService {
     }
 
     // 从存储中恢复
-    const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
-    const user = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
+    const token =
+      localStorage.getItem(SESSION_CONFIG.tokenKey) ||
+      sessionStorage.getItem(SESSION_CONFIG.tokenKey)
+    const user =
+      localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
 
     if (token && user) {
       try {
@@ -555,7 +562,8 @@ class AuthService implements IAuthService {
       return authState.user
     }
 
-    const user = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
+    const user =
+      localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
     if (user) {
       try {
         const parsedUser = JSON.parse(user) as User
@@ -578,7 +586,9 @@ class AuthService implements IAuthService {
   getToken(): string | null {
     if (authState.token) return authState.token
 
-    const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
+    const token =
+      localStorage.getItem(SESSION_CONFIG.tokenKey) ||
+      sessionStorage.getItem(SESSION_CONFIG.tokenKey)
     if (token) {
       authState.token = token
       return token

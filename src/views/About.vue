@@ -2,7 +2,7 @@
   <div class="about">
     <div class="about-container">
       <div class="about-header">
-        <img src="@/assets/images/logo-default.svg" alt="OpsMind" class="logo" />
+        <img src="@/assets/icons/logo@2x.png" alt="OpsMind" class="logo" />
         <h1>OpsMind Dashboard</h1>
         <p class="version">Version 1.0.0</p>
       </div>
@@ -81,8 +81,10 @@ const goBack = () => {
 }
 
 .logo {
-  height: 64px;
+  height: 80px;
+  width: auto;
   margin-bottom: 16px;
+  object-fit: contain;
 }
 
 h1 {

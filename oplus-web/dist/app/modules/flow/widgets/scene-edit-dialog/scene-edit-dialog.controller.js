@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+flowSceneEditDialogCtrl.$inject=["$translate","$uibModalInstance","mode","scene","allChecked"];export default function flowSceneEditDialogCtrl(e,d,n,c,t){var i=this;i.sceneMode={add:"add",edit:"edit"},c&&(i.scene=c),i.mode=n||i.sceneMode.add,i.allChecked=t||!1,i.cancel=function(){d.dismiss()},i.confirm=function(){d.close(i.scene)}}

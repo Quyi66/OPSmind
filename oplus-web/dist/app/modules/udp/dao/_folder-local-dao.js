@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e,t){var n=t.createDao("oplus.udp.folders");function o(t){var o=e.defer();return t=t||{},n.findAllEntities().then(function(e){t.noContent&&e.forEach(function(e){delete e.html}),o.resolve(e)}).catch(function(e){o.reject(e)}),o.promise}this.findFolder=n.findEntity,this.findAllFolders=o,this.findFolderByType=o,this.saveFolder=n.saveEntity,this.deleteFolder=n.deleteEntity}angular.module("oplus.udp").service("_folderLocalDao",e),e.$inject=["$q","localDaoFactory"]}();

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.jao").component("jaoCiDataView",{bindings:{ciId:"<"},templateUrl:"app/modules/jao/datamodel/dc-data-view.html",controller:["$scope","$element","$http",function(o,e,t){var s=this;t.get("app/modules/jao/assets/model-view.json").success(function(o){s.theData=o}).error(function(o){throw o}),t.get("app/modules/jao/assets/model-config.json").success(function(o){s.theModel=o}).error(function(o){throw o})}]})}();

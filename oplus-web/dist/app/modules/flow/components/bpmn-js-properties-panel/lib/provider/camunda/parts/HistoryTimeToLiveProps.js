@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+"use strict";var is=require("bpmn-js/lib/util/ModelUtil").is,getBusinessObject=require("bpmn-js/lib/util/ModelUtil").getBusinessObject,historyTimeToLive=require("./implementation/HistoryTimeToLive");module.exports=function(e,i,s,t){var r=getBusinessObject(i);(is(i,"camunda:Process")||is(i,"bpmn:Participant")&&r.get("processRef"))&&(e.entries=e.entries.concat(historyTimeToLive(i,s,{getBusinessObject:function(e){var i=getBusinessObject(e);return is(i,"bpmn:Participant")?i.get("processRef"):i}},t)))};

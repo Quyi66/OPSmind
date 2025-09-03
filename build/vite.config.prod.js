@@ -6,7 +6,7 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [vue()],
   
-  base: '/opsmind/base/',
+  base: '/ops/',
   
   resolve: {
     alias: {
@@ -19,24 +19,12 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: false,
     
-    // 分包策略优化
+    // 分包策略优化（将 Vue/Pinia/Vue Router/Element Plus 合并，避免循环依赖）
     rollupOptions: {
       output: {
-        // 更细粒度的分包
         manualChunks: {
-          // Vue 核心
-          'vue-vendor': ['vue', 'vue-router'],
-          
-          // 状态管理
-          'store': ['pinia'],
-          
-          // UI 组件库
-          'element-plus': ['element-plus', '@element-plus/icons-vue'],
-          
-          // 工具库
+          'vue-stack': ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue'],
           'utils': ['axios', 'crypto-js'],
-          
-          // 业务模块
           'services': [/src\/services/],
           'stores': [/src\/stores/]
         },

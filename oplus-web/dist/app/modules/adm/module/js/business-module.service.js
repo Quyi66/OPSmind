@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e,t,u){return e("api/business-modules/:id",{},{query:{method:"GET",isArray:!0},get:{method:"GET",transformResponse:function(e){return e&&(e=angular.fromJson(e)),e}},update:{method:"PUT"}})}angular.module("oplus.adm").factory("BusinessModule",e),e.$inject=["$resource","$http","$q"]}();

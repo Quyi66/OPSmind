@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.udp").component("udpWidgetInteractionPostproc",{bindings:{procProps:"="},templateUrl:"app/modules/udp/helper/widget-interaction-postproc.html",controller:["widgetInteraction",function(t){this.postProcs=t.POST_PROCS}]})}();

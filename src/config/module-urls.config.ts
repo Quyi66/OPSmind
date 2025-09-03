@@ -12,6 +12,7 @@ export interface AppUrlConfig {
   entryUrl: string        // 应用入口 URL
   description?: string    // 应用描述
   enabled?: boolean      // 是否启用
+  urlPrefix?: string     // URL前缀（用于iframe集成）
 }
 
 // 环境配置
@@ -29,6 +30,10 @@ export interface EnvironmentConfig {
   }
   static: {
     baseUrl: string
+  }
+  iframe: {
+    urlPrefix: string      // iframe URL前缀
+    tokenParam: string     // token参数名
   }
 }
 
@@ -48,6 +53,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     },
     static: {
       baseUrl: 'http://localhost:8080'
+    },
+    iframe: {
+      urlPrefix: '/iframe',
+      tokenParam: 'token'
     }
   },
   production: {
@@ -64,6 +73,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     },
     static: {
       baseUrl: ''
+    },
+    iframe: {
+      urlPrefix: '/iframe',
+      tokenParam: 'token'
     }
   },
   test: {
@@ -80,6 +93,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     },
     static: {
       baseUrl: 'http://test-server:8080'
+    },
+    iframe: {
+      urlPrefix: '/iframe',
+      tokenParam: 'token'
     }
   },
   staging: {
@@ -96,6 +113,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     },
     static: {
       baseUrl: 'http://staging-server'
+    },
+    iframe: {
+      urlPrefix: '/iframe',
+      tokenParam: 'token'
     }
   }
 }
@@ -147,9 +168,15 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
     description: '软件管理',
     enabled: true
   },
-  workflow: {
+  // 新增流程（二级功能：#/flow）。保留 workflow 作为别名以兼容
+  flow: {
     entryUrl: '#/flow',
     description: '流程管理',
+    enabled: true
+  },
+  workflow: {
+    entryUrl: '#/flow',
+    description: '流程管理（别名）',
     enabled: true
   },
   users: {
@@ -206,7 +233,10 @@ export class AppUrlManager {
       return this.getAngularBaseUrl()
     }
 
+    // 直接构建标准的Angular URL，不使用URL前缀
+    // URL前缀功能暂时禁用，避免路径错误
     const fullUrl = this.buildAngularUrl(appConfig.entryUrl)
+
     console.log(`🔗 URL Generation Debug:`)
     console.log(`   App code: ${appCode}`)
     console.log(`   Entry URL: ${appConfig.entryUrl}`)
@@ -214,6 +244,27 @@ export class AppUrlManager {
     console.log(`   Final URL: ${fullUrl}`)
 
     return fullUrl
+  }
+
+  /**
+   * 获取iframe配置
+   */
+  getIframeConfig() {
+    return this.envConfig.iframe
+  }
+
+  /**
+   * 获取token参数名
+   */
+  getTokenParam(): string {
+    return this.envConfig.iframe.tokenParam
+  }
+
+  /**
+   * 获取URL前缀
+   */
+  getUrlPrefix(): string {
+    return this.envConfig.iframe.urlPrefix
   }
 
   /**

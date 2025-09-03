@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+"use strict";var entryFactory=require("../../../factory/EntryFactory"),is=require("bpmn-js/lib/util/ModelUtil").is,getBusinessObject=require("bpmn-js/lib/util/ModelUtil").getBusinessObject;module.exports=function(t,e,i){getBusinessObject(e)&&is(e,"camunda:Initiator")&&!is(e.parent,"bpmn:SubProcess")&&t.entries.push(entryFactory.textField(i,{id:"initiator",label:i("Initiator"),modelProperty:"initiator"}))};

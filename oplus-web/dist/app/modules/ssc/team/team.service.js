@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e,s,t){this.findTeamById=e.findTeamById,this.findTeams=e.findTeams,this.deleteTeamById=e.deleteTeamById,this.getAllUsersBasicInfo=function(e){var i=s.defer();return t.get("api/users/basic"+(void 0===e?"":"?tenantId="+e)).success(function(e){i.resolve(e)}).error(function(e){i.reject(e)}),i.promise},this.saveTeam=e.saveTeam}angular.module("oplus.ssc").service("Team",e),e.$inject=["TeamDao","$q","$http"]}();

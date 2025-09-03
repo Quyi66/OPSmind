@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.udp").run(["$translate","echartsWidgetBuilder","widgetFactory","chartUpdater",function(e,t,r,i){r.defineWidget({type:"piechart",name:e.instant("udp.w.piechart.name"),group:"data",widthMode:"wm-full",resizable:"h",configController:function(e,t){i.upgradeProps(e.uwProps),e.axisOptions={xAxis:{customizable:""},yAxis:{customizable:""}}},controlRenderer:t.getControlRenderer("pie")})}])}();

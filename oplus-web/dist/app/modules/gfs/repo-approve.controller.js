@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e,t,s){this.repo=t.repo,this.dir=t.dir,this.repoType="stage",this.options={base:"",dirSize:"children",canApprove:!0,showStatus:!1,showActions:!0,showStageStatus:!0,useSelector:!0,multipleSelect:!0,changeUrl:!0,canSelectDirectory:!0}}angular.module("oplus.gfs").controller("GfsRepoApproveCtrl",e),e.$inject=["$state","$stateParams","repoType"]}();

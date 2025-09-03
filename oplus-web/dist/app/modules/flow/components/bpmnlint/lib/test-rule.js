@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+const traverse=require("./traverse");class Reporter{constructor({moddleRoot:e,rule:s}){this.rule=s,this.moddleRoot=e,this.messages=[],this.report=this.report.bind(this)}report(e,s){this.messages.push({id:e,message:s})}}module.exports=function({moddleRoot:e,rule:s}){const r=new Reporter({rule:s,moddleRoot:e});return traverse(e,e=>s.check(e,r)),r.messages};

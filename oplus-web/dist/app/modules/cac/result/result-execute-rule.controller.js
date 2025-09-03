@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){function e(e,n,t,c,a,u){var l=this,o=n.rule;l.views={ruleValue:n.rule,tableInstance:null,cancel:function(){a.close({action:"cancel"})},reset:function(){l.views.ruleValue=o},execute:function(){l.views.ruleValue=u.instant("common.messages.operation.success",{operation:u.instant("cac.common.run")})}}}angular.module("oplus.cac").controller("CacResultExecuteRuleCtrl",e),e.$inject=["$state","entity","$timeout","cacService","$uibModalInstance","$translate"]}();

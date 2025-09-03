@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function o(){var o=!1;this.useLocalDb=function(e){o=e},this.$get=["_folderLocalDao","_folderRemoteDao",function(e,t){return o?e:t}]}angular.module("oplus.udp").provider("folderDao",o),o.$inject=[]}();

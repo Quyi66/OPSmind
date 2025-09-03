@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory, type Router, type RouteRecordRaw } from 'vue-router'
-import Dashboard from '@/views/Dashboard.vue'
+// 使用按需加载，避免潜在的循环依赖导致的初始化错误
 import Login from '@/views/Login.vue'
 import { authService } from '@/core/auth'
 import type { CustomRouteRecord } from '@/types/router'
@@ -9,6 +9,7 @@ const routes: CustomRouteRecord[] = [
     path: '/',
     redirect: '/home'
   },
+  
   {
     path: '/login',
     name: 'login',
@@ -21,9 +22,31 @@ const routes: CustomRouteRecord[] = [
   {
     path: '/home',
     name: 'home',
-    component: Dashboard,
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/Dashboard.vue')
+      }
+    ],
     meta: {
       title: 'OpsMind 仪表盘',
+      requiresAuth: true
+    }
+  },
+  // 二级功能路由：#/一级功能/二级功能
+  {
+    path: '/:groupCode/:moduleCode',
+    name: 'feature-grouped',
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/Dashboard.vue')
+      }
+    ],
+    meta: {
+      title: 'OpsMind 模块',
       requiresAuth: true
     }
   },
@@ -42,6 +65,22 @@ const routes: CustomRouteRecord[] = [
     component: () => import('@/views/About.vue'),
     meta: {
       title: '关于'
+    }
+  },
+  // 直达二级功能的短路径（例如 /cmd、/jao）。必须放在最后，避免与显式路由冲突
+  {
+    path: '/:moduleCode',
+    name: 'feature-shortcut',
+    component: () => import('@/layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/Dashboard.vue')
+      }
+    ],
+    meta: {
+      title: 'OpsMind 模块',
+      requiresAuth: true
     }
   }
 ]
