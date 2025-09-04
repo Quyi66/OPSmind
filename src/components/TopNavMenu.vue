@@ -6,7 +6,7 @@
         <div class="nav-left">
           <!-- Logo Section -->
           <div class="logo-section">
-            <img :src="logoImage" alt="OpsMind" class="brand-logo" />
+            <img :src="logoImage" alt="OPSmind" class="brand-logo" />
           </div>
 
           <!-- Navigation Menu -->

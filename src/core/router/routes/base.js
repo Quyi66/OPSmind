@@ -12,7 +12,7 @@ export const baseRoutes = [
     name: 'login',
     component: () => import('@/views/Login.vue'),
     meta: {
-      title: '登录 - OpsMind',
+      title: '登录 - OPSmind',
       requiresGuest: true,
       layout: 'auth'
     }
@@ -64,7 +64,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: '脚本管理 - OpsMind',
+      title: '脚本管理 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'gfs'

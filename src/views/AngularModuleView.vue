@@ -112,7 +112,7 @@ onMounted(() => {
   }
 
   // 设置页面标题
-  document.title = `${moduleConfig.value.name} - OpsMind`
+  document.title = `${moduleConfig.value.name} - OPSmind`
 
   // 设置初始路由
   if (routeParam.value) {

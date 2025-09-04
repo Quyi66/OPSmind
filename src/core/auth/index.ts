@@ -32,8 +32,10 @@ const authState = reactive<AuthState>({
 const SESSION_CONFIG: SessionConfig = {
   tokenKey: 'oplus_token',
   userKey: 'oplus_user',
-  timeout: 30 * 60 * 1000, // 30分钟
-  refreshThreshold: 5 * 60 * 1000, // 5分钟前刷新
+  // 将会话超时从 30 分钟提升为 24 小时（空闲超时）
+  timeout: 24 * 60 * 60 * 1000, // 24小时
+  // 在超时前 5 分钟触发刷新逻辑（基于空闲时间阈值）
+  refreshThreshold: 24 * 60 * 60 * 1000 - 5 * 60 * 1000, // 23小时55分钟
   encryptionKey: 'Oplus@2022!!sys@' // 加密密钥
 }
 

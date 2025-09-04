@@ -1,7 +1,7 @@
 {
   "name": "opsmind-dashboard-vue",
   "version": "1.0.0",
-  "description": "OpsMind Vue 3 Dashboard",
+  "description": "OPSmind Vue 3 Dashboard",
   "type": "module",
   "engines": {
     "node": ">=22.0.0",

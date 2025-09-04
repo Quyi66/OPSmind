@@ -42,43 +42,6 @@ export default defineConfig(({ command, mode }): UserConfig => {
           })
         }
       }
-
-      // 可选插件 - 需要时取消注释并安装对应依赖
-      // createHtmlPlugin({
-      //   inject: {
-      //     data: {
-      //       title: env.VITE_APP_TITLE || 'OpsMind Dashboard',
-      //       description: env.VITE_APP_DESCRIPTION || 'OpsMind Vue 3 Dashboard'
-      //     }
-      //   }
-      // }),
-
-      // isProduction && visualizer({
-      //   filename: 'dist/stats.html',
-      //   open: false,
-      //   gzipSize: true,
-      //   brotliSize: true
-      // }),
-
-      // env.VITE_PWA_ENABLED === 'true' && VitePWA({
-      //   registerType: 'autoUpdate',
-      //   workbox: {
-      //     globPatterns: ['**/*.{js,css,html,ico,png,svg}']
-      //   },
-      //   manifest: {
-      //     name: env.VITE_APP_TITLE || 'OpsMind Dashboard',
-      //     short_name: 'OpsMind',
-      //     description: env.VITE_APP_DESCRIPTION,
-      //     theme_color: '#409eff',
-      //     icons: [
-      //       {
-      //         src: 'pwa-192x192.png',
-      //         sizes: '192x192',
-      //         type: 'image/png'
-      //       }
-      //     ]
-      //   }
-      // })
     ],
 
     // 设置基础路径，开发环境使用ops路径，生产环境使用子路径

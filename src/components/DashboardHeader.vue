@@ -3,7 +3,7 @@
     <div class="header-left">
       <!-- Logo 区域 -->
       <div class="logo-section">
-        <img src="@/assets/icons/logo@2x.png" alt="OpsMind" class="brand-logo" />
+        <img src="@/assets/icons/logo@2x.png" alt="OPSmind" class="brand-logo" />
       </div>
     </div>
 

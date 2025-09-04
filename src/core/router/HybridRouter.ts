@@ -25,7 +25,7 @@ const baseRoutes: CustomRouteRecord[] = [
     name: 'login',
     component: () => import('@/views/Login.vue'),
     meta: {
-      title: '登录 - OpsMind',
+      title: '登录 - OPSmind',
       requiresGuest: true,
       layout: 'auth'
     }

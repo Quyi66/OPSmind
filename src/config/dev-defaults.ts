@@ -73,7 +73,7 @@ export function getDevLoginDefaults(): LoginDefaults {
 export function logDevInfo(): void {
   if (!DEV_DEFAULTS.IS_DEV) return
 
-  console.group('🔧 OpsMind 开发环境信息')
+  console.group('🔧 OPSmind 开发环境信息')
   console.log('📝 默认账号:', DEV_DEFAULTS.LOGIN.username)
   console.log('🔑 默认密码:', DEV_DEFAULTS.LOGIN.password)
   console.log('⚡ 使用快速登录按钮可直接登录')

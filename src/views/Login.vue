@@ -21,7 +21,7 @@
     <!-- Header -->
     <header class="relative z-10 p-6">
       <div class="flex items-center">
-        <img src="@/assets/icons/logo@2x.png" alt="OpsMind" class="h-10 w-auto object-contain" />
+        <img src="@/assets/icons/logo@2x.png" alt="OPSmind" class="h-10 w-auto object-contain" />
       </div>
     </header>
 
@@ -38,7 +38,7 @@
           ></div>
           <img
             src="@/assets/images/login-illu@2x.png"
-            alt="OpsMind Login Illustration"
+            alt="OPSmind Login Illustration"
             class="w-full h-full object-cover drop-shadow-lg"
             loading="eager"
           />

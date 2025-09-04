@@ -97,7 +97,7 @@ export default {
         <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
           <div class="w-6 h-6 bg-white rounded transform rotate-45"></div>
         </div>
-        <span class="text-white text-xl font-bold">OpsMind</span>
+        <span class="text-white text-xl font-bold">OPSmind</span>
       </div>
     </header>
 

@@ -105,7 +105,7 @@ app.mount('#app')
 
 // 开发环境下的调试信息
 if (import.meta.env.DEV) {
-  console.log('🚀 OpsMind Vue Dashboard started in development mode')
+  console.log('🚀 OPSmind Vue Dashboard started in development mode')
   console.log('📍 Base URL:', import.meta.env.BASE_URL)
   console.log('🔧 Environment:', import.meta.env.MODE)
 }

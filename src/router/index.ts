@@ -15,7 +15,7 @@ const routes: CustomRouteRecord[] = [
     name: 'login',
     component: Login,
     meta: {
-      title: '登录 - OpsMind',
+      title: '登录 - OPSmind',
       requiresGuest: true
     }
   },
@@ -46,7 +46,7 @@ const routes: CustomRouteRecord[] = [
       }
     ],
     meta: {
-      title: 'OpsMind 模块',
+      title: 'OPSmind 模块',
       requiresAuth: true
     }
   },
@@ -79,7 +79,7 @@ const routes: CustomRouteRecord[] = [
       }
     ],
     meta: {
-      title: 'OpsMind 模块',
+      title: 'OPSmind 模块',
       requiresAuth: true
     }
   }
