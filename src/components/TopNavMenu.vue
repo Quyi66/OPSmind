@@ -76,12 +76,6 @@
                   </el-icon>
                   个人资料
                 </el-dropdown-item>
-                <el-dropdown-item command="settings">
-                  <el-icon>
-                    <Setting />
-                  </el-icon>
-                  系统设置
-                </el-dropdown-item>
                 <el-dropdown-item divided command="logout">
                   <el-icon>
                     <SwitchButton />
@@ -297,10 +291,10 @@ const toggleMobileMenu = () => {
 const handleUserCommand = command => {
   switch (command) {
     case 'profile':
-      ElMessage.info('个人资料功能开发中...')
-      break
-    case 'settings':
-      ElMessage.info('系统设置功能开发中...')
+      // 通过 Inline Iframe 打开 Angular 基座的 /#/settings
+      try {
+        menuStore.setActiveMenuItem('settings')
+      } catch (e) {}
       break
     case 'logout':
       handleLogout()
@@ -325,9 +319,10 @@ const handleClearHighlight = () => {
 
 // 处理设置按钮点击
 const handleSettingsClick = () => {
-  console.log('⚙️ Settings clicked')
-  ElMessage.info('设置功能开发中...')
-  // 这里可以打开设置页面或弹窗
+  // 顶部“设置”按钮：通过 Inline Iframe 打开 /#/ssc
+  try {
+    menuStore.setActiveMenuItem('ssc')
+  } catch (e) {}
 }
 
 // 处理AI OPS按钮点击

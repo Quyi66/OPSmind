@@ -96,7 +96,7 @@ watch(() => props.activeGroup, (newGroup) => {
 .side-menu {
   width: 60px;
   background: #fff;
-  border-right: 1px solid #e8e8e8;
+  border-right: 0;
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;

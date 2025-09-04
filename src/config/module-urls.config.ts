@@ -168,6 +168,18 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
     description: '软件管理',
     enabled: true
   },
+  // 个人资料（打开 Angular 基座 settings 页面）
+  settings: {
+    entryUrl: '#/settings',
+    description: '个人资料设置',
+    enabled: true
+  },
+  // 系统设置中心（自定义 ssc 页面）
+  ssc: {
+    entryUrl: '#/ssc',
+    description: '系统设置中心',
+    enabled: true
+  },
   // 新增流程（二级功能：#/flow）。保留 workflow 作为别名以兼容
   flow: {
     entryUrl: '#/flow',

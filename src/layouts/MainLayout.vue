@@ -20,6 +20,12 @@
 
       <!-- 主内容区域 -->
       <div class="main-content" :class="{ 'with-side-menu': showSideMenu }">
+        <!-- 模块内嵌头部（仅文字标题 + 关闭按钮） -->
+        <div v-if="showModuleToolbar" class="module-toolbar">
+          <div class="module-toolbar-title">{{ moduleTitleText }}</div>
+          <button class="module-toolbar-close" @click="handleCloseModule" aria-label="关闭">×</button>
+        </div>
+
         <!-- 如果有选中的菜单项，显示iframe -->
         <AngularModuleInlineFrame
           v-if="activeMenuItem"
@@ -73,6 +79,16 @@ const currentMenuItemTitle = computed(() => {
 // 是否为首页（仪表盘）路由
 const isHomeRoute = computed(() => route.path === '/home' || route.path === '/')
 
+// 是否展示设置相关的模块工具栏
+const showModuleToolbar = computed(() => ['settings', 'ssc'].includes(activeMenuItem.value))
+
+// 标题文本：settings -> 个人资料；ssc -> 系统设置
+const moduleTitleText = computed(() => {
+  if (activeMenuItem.value === 'settings') return '个人资料'
+  if (activeMenuItem.value === 'ssc') return '系统设置'
+  return ''
+})
+
 // 方法
 const handleMenuItemClick = menuItem => {
   console.log('🎯 Main layout received menu item click:', menuItem.name)
@@ -85,6 +101,16 @@ const closeMobileMenu = () => {
     menuStore.hideSideMenu()
   }
 }
+
+// 关闭当前内嵌模块（返回首页）
+const handleCloseModule = () => {
+  try {
+    menuStore.clearActiveMenu()
+    router.push('/home')
+  } catch (e) {}
+}
+
+// 仅保留标题显示，不提供标签切换
 
 // 检查是否为移动端
 const checkMobile = () => {
@@ -218,6 +244,41 @@ onUnmounted(() => {
   min-height: 0;
   border: none;
   background: #fff;
+}
+
+/* 内嵌模块顶部工具栏 */
+.module-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: transparent;
+  border-bottom: none;
+  padding: 8px 0;
+}
+
+.module-toolbar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.module-toolbar-close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: #9ca3af;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color .2s, color .2s;
+
+  &:hover {
+    background: #f3f4f6;
+    color: #111827;
+  }
 }
 
 // 移动端遮罩层
