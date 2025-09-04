@@ -168,6 +168,12 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
     description: '软件管理',
     enabled: true
   },
+  // 帮助中心
+  help: {
+    entryUrl: '#/help',
+    description: '帮助中心',
+    enabled: true
+  },
   // 个人资料（打开 Angular 基座 settings 页面）
   settings: {
     entryUrl: '#/settings',

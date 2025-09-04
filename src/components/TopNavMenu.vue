@@ -95,66 +95,58 @@
             </button>
           </el-tooltip>
 
-          <!-- About Dropdown -->
-          <el-dropdown @command="handleAboutCommand" class="about-dropdown">
-            <el-tooltip content="关于" placement="bottom">
-              <button class="menu-action-btn">
-                <el-icon>
-                  <InfoFilled />
-                </el-icon>
-              </button>
-            </el-tooltip>
+          <!-- About Dropdown: hover/click 展开，包含“帮助”和“关于” -->
+          <el-dropdown trigger="hover" @command="handleAboutCommand" class="about-dropdown">
+            <button class="menu-action-btn" aria-label="关于">
+              <el-icon>
+                <InfoFilled />
+              </el-icon>
+            </button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="help">帮助</el-dropdown-item>
-                <el-dropdown-item command="about">关于</el-dropdown-item>
+                <el-dropdown-item command="help" disabled>
+                  <el-icon style="margin-right:6px; color:#9ca3af"><QuestionFilled /></el-icon>
+                  <span style="color:#9ca3af">帮助</span>
+                </el-dropdown-item>
+                <el-dropdown-item command="about">
+                  <el-icon style="margin-right:6px"><InfoFilled /></el-icon>
+                  关于
+                </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
 
-          <!-- Language Switch Dropdown -->
-          <el-dropdown @command="handleLanguageCommand" class="language-dropdown">
-            <el-tooltip content="语言" placement="bottom">
-              <button class="menu-action-btn">
-                <el-icon>
-                  <!-- Globe icon for language/i18n -->
-                  <svg
-                    class="language-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <circle cx="12" cy="12" r="9" />
-                    <path d="M3 12h18" />
-                    <path d="M12 3c3 3.5 3 14.5 0 18" />
-                    <path d="M12 3c-3 3.5-3 14.5 0 18" />
-                  </svg>
-                </el-icon>
-              </button>
-            </el-tooltip>
+          <!-- Language Dropdown: 三个选项，全部置灰禁用 -->
+          <el-dropdown trigger="hover" class="language-dropdown">
+            <button class="menu-action-btn" aria-label="语言">
+              <el-icon>
+                <svg
+                  class="language-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M3 12h18" />
+                  <path d="M12 3c3 3.5 3 14.5 0 18" />
+                  <path d="M12 3c-3 3.5-3 14.5 0 18" />
+                </svg>
+              </el-icon>
+            </button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="zh-cn">
-                  <span>中文简体</span>
-                  <el-icon v-if="currentLanguage === 'zh-cn'" style="margin-left: auto">
-                    <Check />
-                  </el-icon>
+                <el-dropdown-item disabled>
+                  <span style="color:#9ca3af">中文简体</span>
                 </el-dropdown-item>
-                <el-dropdown-item command="zh-tw">
-                  <span>中文繁體</span>
-                  <el-icon v-if="currentLanguage === 'zh-tw'" style="margin-left: auto">
-                    <Check />
-                  </el-icon>
+                <el-dropdown-item disabled>
+                  <span style="color:#9ca3af">中文繁体</span>
                 </el-dropdown-item>
-                <el-dropdown-item command="en">
-                  <span>English</span>
-                  <el-icon v-if="currentLanguage === 'en'" style="margin-left: auto">
-                    <Check />
-                  </el-icon>
+                <el-dropdown-item disabled>
+                  <span style="color:#9ca3af">English</span>
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -181,6 +173,26 @@
         </nav>
       </div>
     </header>
+
+    <!-- About 对话框 -->
+    <el-dialog v-model="versionDialogVisible" title="About" width="800px" append-to-body class="about-dialog">
+      <el-tabs v-model="aboutActiveTab" class="about-tabs">
+        <el-tab-pane label="版本信息" name="versions">
+          <div v-loading="versionLoading">
+            <el-table :data="versionRows" stripe size="small" class="about-table">
+              <el-table-column prop="name" label="名称" width="180" />
+              <el-table-column prop="version" label="版本" width="140" />
+              <el-table-column prop="build" label="打包时间" />
+              <el-table-column prop="code" label="代码版本" width="220" />
+            </el-table>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+
+      <template #footer>
+        <el-button type="primary" @click="versionDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -188,9 +200,10 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { appUrlManager } from '@/config/module-urls.config'
 import { authService } from '@/core/auth'
 import { useMenuStore } from '@/stores/menu.js'
-import { User, Setting, SwitchButton, InfoFilled, Check } from '@element-plus/icons-vue'
+import { User, Setting, SwitchButton, InfoFilled, Check, QuestionFilled } from '@element-plus/icons-vue'
 
 // 导入菜单图标
 import iconHome from '@/assets/icons/menu/icon-home@2x.png'
@@ -226,13 +239,13 @@ const displayUserName = computed(() => {
   return props.user.firstName || props.user.login || '用户'
 })
 
-// 通知相关状态
-const notificationCount = ref(3) // 示例通知数量
+// 通知相关状态 - 默认无未读
+const notificationCount = ref(0)
 
 // 移动菜单状态
 const showMobileMenu = ref(false)
 
-// 语言切换状态
+// 语言切换状态（暂不真正切换，仅提示开发中）
 const currentLanguage = ref('zh-cn')
 
 // 处理首页菜单点击
@@ -333,33 +346,75 @@ const handleAiOpsClick = () => {
 }
 
 // 处理关于下拉菜单命令
-const handleAboutCommand = command => {
+const versionDialogVisible = ref(false)
+const versionLoading = ref(false)
+const versionRows = ref([])
+const aboutActiveTab = ref('versions')
+
+const handleAboutCommand = async (command) => {
   console.log('ℹ️ About command:', command)
   switch (command) {
     case 'help':
-      ElMessage.info('帮助功能开发中...')
-      // 这里可以打开帮助页面
+      // 当前不提供帮助入口，提示开发中
+      ElMessage.info('帮助开发中...')
       break
     case 'about':
-      ElMessage.info('关于功能开发中...')
-      // 这里可以打开关于页面
+      await openVersionDialog()
       break
   }
 }
 
-// 处理语言切换
-const handleLanguageCommand = language => {
-  console.log('🌐 Language switched to:', language)
-  currentLanguage.value = language
+async function openVersionDialog() {
+  try {
+    versionLoading.value = true
+    versionDialogVisible.value = true
+    // 按优先级尝试多种可用地址
+    const candidates = []
+    try {
+      const angularBase = appUrlManager.getAngularBaseUrl() || '/oplus/base'
+      candidates.push(`${angularBase}/app/modules/VERSION.json`)
+    } catch {}
+    candidates.push(`${window.location.origin}/oplus/base/app/modules/VERSION.json`)
+    candidates.push('http://localhost:18080/oplus/base/app/modules/VERSION.json')
 
-  const languageNames = {
-    'zh-cn': '中文简体',
-    'zh-tw': '中文繁體',
-    en: 'English'
+    let data = null
+    let lastErr = null
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: 'no-cache', mode: 'cors' })
+        if (res.ok) {
+          data = await res.json()
+          break
+        } else {
+          lastErr = new Error(`HTTP ${res.status} for ${url}`)
+        }
+      } catch (e) {
+        lastErr = e
+      }
+    }
+    if (!data) throw lastErr || new Error('无法获取版本信息')
+
+    const versions = data?.versions || {}
+    const builds = data?.builds || {}
+    // 仅展示存在版本信息的条目
+    const names = Object.keys(versions).sort()
+    versionRows.value = names.map(name => ({
+      name,
+      version: versions[name],
+      build: builds[name] ? `#${builds[name]}` : '-',
+      code: '-'
+    }))
+  } catch (e) {
+    console.error('加载版本信息失败:', e)
+    ElMessage.error('版本信息加载失败')
+  } finally {
+    versionLoading.value = false
   }
+}
 
-  ElMessage.success(`已切换到${languageNames[language]}`)
-  // 这里可以实现实际的语言切换逻辑
+// 处理语言切换（仅提示开发中）
+const handleLanguageCommand = (_language) => {
+  ElMessage.info('语言功能开发中...')
 }
 
 // 监听路由变化，自动设置菜单状态
@@ -384,7 +439,32 @@ onUnmounted(() => {
 })
 </script>
 
+
+
 <style scoped lang="scss">
+/* About 对话框尺寸与滚动 */
+.about-dialog :deep(.el-dialog__body) {
+  max-height: 70vh;
+  overflow: auto;
+  padding-top: 8px;
+}
+
+/* 表头深色背景，强调区分 */
+.about-table :deep(.el-table__header th) {
+  background-color: #eef2f7;
+  color: #374151;
+  font-weight: 600;
+}
+
+/* 去掉竖直分隔线（未启用 border，本行做额外保险） */
+.about-table :deep(.el-table__row > td) {
+  border-right: none !important;
+}
+
+/* 去掉表格顶部额外的横线 */
+.about-table :deep(.el-table__inner-wrapper::before) {
+  display: none;
+}
 // 顶部导航包装器
 .top-nav-wrapper {
   position: sticky;
