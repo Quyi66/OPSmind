@@ -156,7 +156,7 @@ const handleRefresh = async () => {
   flex: 1;
   overflow: hidden;
   /* 更紧凑顶部间距：24px -> 16px；底部保持 16px；左侧 5px 保持 */
-  padding: 16px 16px 16px 5px;
+  padding: 16px 16px 16px 0;
   background: transparent;
   min-height: 0;
   display: flex;

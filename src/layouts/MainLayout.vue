@@ -1,5 +1,5 @@
 <template>
-  <div class="main-layout">
+  <div class="main-layout" :class="{ 'is-home': isHomeRoute }">
     <!-- 顶部菜单 -->
     <TopNavMenu
       :user="currentUser"
@@ -45,7 +45,7 @@
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import TopNavMenu from '@/components/TopNavMenu.vue'
 import SideMenu from '@/components/SideMenu.vue'
 import AngularModuleInlineFrame from '@/components/AngularModuleInlineFrame.vue'
@@ -55,6 +55,7 @@ import { useMenuStore } from '@/stores/menu.js'
 const dashboardStore = useDashboardStore()
 const router = useRouter()
 const menuStore = useMenuStore()
+const route = useRoute()
 
 // 响应式状态
 const isMobile = ref(false)
@@ -68,6 +69,9 @@ const currentMenuItemTitle = computed(() => {
   const menuItem = menuStore.currentMenuItem
   return menuItem ? menuItem.name : ''
 })
+
+// 是否为首页（仪表盘）路由
+const isHomeRoute = computed(() => route.path === '/home' || route.path === '/')
 
 // 方法
 const handleMenuItemClick = menuItem => {
@@ -109,6 +113,17 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
+/* 首页（仪表盘）去除左侧纵向分割线 */
+.main-layout.is-home :deep(.side-menu) {
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+/* 首页隐藏侧边菜单容器，避免出现可交互的细条区域 */
+.main-layout.is-home .side-menu-container {
+  display: none !important;
+}
+
 // 顶部导航
 .main-header {
   flex-shrink: 0;
@@ -144,6 +159,7 @@ onUnmounted(() => {
 
 // 侧边菜单容器
 .side-menu-container {
+  display: none; /* 全局移除左侧图标栏 */
   flex-shrink: 0;
   z-index: 200;
   transition: transform 0.3s ease-in-out;

@@ -318,13 +318,13 @@ const handleRecentClick = item => {
   }
 
   .recent-grid {
-    gap: 4px; /* 27寸：行间距减半 */
+    gap: 3px; /* 27寸：行间距调为原来的约1/3 */
   }
 
   .recent-item {
     gap: 8px;
     padding: 8px 8px;
-    max-height: 44px;
+    height: 100%;
   }
 
   .recent-icon {
@@ -417,13 +417,13 @@ const handleRecentClick = item => {
   }
 
   .recent-grid {
-    gap: 5px; /* 27寸+：行间距减半 */
+    gap: 3px; /* 27寸+：继续保持紧凑 */
   }
 
   .recent-item {
     gap: 10px;
     padding: 10px 10px;
-    max-height: 48px;
+    height: 100%;
   }
 
   .recent-icon {
@@ -647,11 +647,11 @@ const handleRecentClick = item => {
 .recent-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 列，共 5 行 */
-  gap: 6px; /* 更紧凑的行距 */
-  padding: 8px 16px 8px; /* 更紧凑且与标题左右对齐 */
-  height: 220px; /* 固定占位高度：5 行（~36px/行）+ 4*6 间隙 + 8+8 内边距 */
-  min-height: 220px;
-  overflow: hidden;
+  gap: 6px; /* 行距 */
+  padding: 8px 16px 8px; /* 与标题左右对齐 */
+  /* 自适应行高：5 行等比分配可用高度，最小 36px */
+  grid-template-rows: repeat(5, minmax(36px, 1fr));
+  align-content: stretch;
 }
 
 .recent-item {
@@ -664,8 +664,8 @@ const handleRecentClick = item => {
   background: #f8f9fa;
   cursor: pointer;
   transition: all 0.2s ease;
-  max-height: 40px; /* 控制最大行高，防止大屏放大后过高 */
-  overflow: hidden;
+  min-height: 36px;
+  height: 100%; /* 随网格行高自适应填满 */
 
   &:hover {
     background: #e9ecef;

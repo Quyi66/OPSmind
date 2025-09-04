@@ -401,8 +401,12 @@ onUnmounted(() => {
 
 // 顶部导航头部
 .top-nav-header {
+  /* 顶部菜单栏占满宽度（整条白底） */
   background: #fff;
   position: relative;
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 // 导航容器
@@ -410,17 +414,16 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1.5rem;
+  /* 与内容区对齐：左右内边距与主容器一致 */
+  padding: 0.5rem 1rem; /* 16px */
+  /* 顶部菜单与内容区使用相同的定宽容器 */
   max-width: var(--app-max-width);
   margin: 0 auto;
   width: 100%;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow:
-    0 1px 3px 0 rgba(0, 0, 0, 0.1),
-    0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
+  /* 让白底来自整条 header，容器透明，仅负责对齐 */
+  background: transparent;
+  border-bottom: none;
+  box-shadow: none;
 }
 
 // 左侧导航区域
