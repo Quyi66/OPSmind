@@ -1,7 +1,14 @@
 <template>
   <div class="asset-overview">
     <div class="section-header">
-      <h3 class="section-title">资产概览</h3>
+      <h3 class="section-title">
+        <img
+          :src="assetHeaderIcon"
+          alt="资产概览"
+          class="section-icon"
+        />
+        资产概览
+      </h3>
       <div class="header-actions">
         <div class="filter-tabs">
           <button class="filter-tab active">按类型</button>
@@ -32,6 +39,9 @@ import {
 import VChart from 'vue-echarts'
 
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
+
+// 标题图标
+const assetHeaderIcon = new URL('@/assets/icons/dashboard/icon-assetview@2x.png', import.meta.url).href
 
 // Tab选项
 const platformTabs = ref([
@@ -248,6 +258,12 @@ const chartOption = computed(() => ({
     color: #1890ff;
     font-size: 14px;
   }
+}
+
+.section-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 .header-actions {

@@ -2,7 +2,14 @@
   <div class="job-overview">
     <!-- 标题 -->
     <div class="section-header">
-      <h3 class="section-title">作业概览</h3>
+      <h3 class="section-title">
+        <img
+          :src="jobHeaderIcon"
+          alt="作业概览"
+          class="section-icon"
+        />
+        作业概览
+      </h3>
       <div class="header-actions">
         <button class="more-btn">...</button>
       </div>
@@ -63,6 +70,9 @@ import VChart from 'vue-echarts'
 import TypeCountCard from './TypeCountCard.vue'
 
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
+
+// 标题图标
+const jobHeaderIcon = new URL('@/assets/icons/dashboard/icon-jobview@2x.png', import.meta.url).href
 
 // 作业统计数据
 const jobStats = ref([
@@ -270,6 +280,9 @@ const chartOption = computed(() => ({
   font-weight: 600;
   color: #374151;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .header-actions {
@@ -291,6 +304,12 @@ const chartOption = computed(() => ({
     background: #f8f9fa;
     color: #374151;
   }
+}
+
+.section-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 // 作业统计样式
