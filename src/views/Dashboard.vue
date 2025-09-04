@@ -165,7 +165,7 @@ const handleRefresh = async () => {
 
 /* Dashboard主容器 */
 .dashboard-main {
-  max-width: 1600px;
+  max-width: var(--app-max-width);
   margin: 0 auto;
   width: 100%;
   height: 100%;

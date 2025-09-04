@@ -395,11 +395,8 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow:
-    0 1px 3px 0 rgba(0, 0, 0, 0.1),
-    0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  /* 顶部条左右留白区域使用与外围一致的背景 */
+  background: var(--app-surround-bg);
 }
 
 // 顶部导航头部
@@ -414,8 +411,16 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1.5rem;
-  max-width: 100%;
+  max-width: var(--app-max-width);
   margin: 0 auto;
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 // 左侧导航区域
@@ -749,5 +754,120 @@ onUnmounted(() => {
 .mobile-nav-text {
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+/* 大屏（27寸等 ≥1600px）放大排版与触控目标 */
+@media (min-width: 1600px) {
+  .nav-container {
+    padding: 0.75rem 2rem;
+  }
+
+  .nav-left {
+    gap: 2.5rem;
+  }
+
+  .brand-logo {
+    height: 2.5rem;
+  }
+
+  .nav-menu {
+    gap: 0.5rem;
+  }
+
+  .nav-item {
+    gap: 0.625rem;
+    padding: 0.625rem 1rem;
+  }
+
+  .nav-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .nav-text {
+    font-size: 1rem;
+  }
+
+  .ai-ops-simple {
+    height: 1.5rem;
+  }
+
+  .notification-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .notification-badge {
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 0.75rem;
+    top: -0.3rem;
+    right: -0.3rem;
+  }
+
+  .menu-action-btn {
+    width: 2rem;
+    height: 2rem;
+
+    .el-icon {
+      font-size: 1.125rem;
+    }
+  }
+
+  .language-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .user-dropdown-trigger {
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .user-name {
+    font-size: 1rem;
+  }
+
+  .dropdown-arrow {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+}
+
+/* 超宽屏（≥1920px）进一步放大 */
+@media (min-width: 1920px) {
+  .nav-container {
+    padding: 1rem 2.5rem;
+  }
+
+  .brand-logo {
+    height: 2.75rem;
+  }
+
+  .nav-item {
+    padding: 0.75rem 1.1rem;
+  }
+
+  .nav-icon {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
+  .nav-text {
+    font-size: 1.05rem;
+  }
+
+  .menu-action-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+
+    .el-icon {
+      font-size: 1.2rem;
+    }
+  }
+
+  .ai-ops-simple {
+    height: 1.75rem;
+  }
 }
 </style>

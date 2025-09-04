@@ -162,7 +162,8 @@ const chartOption = computed(() => ({
     axisLabel: {
       color: '#666',
       fontSize: 12,
-      margin: 10
+      margin: 10,
+      hideOverlap: true
     },
     axisTick: {
       show: false
@@ -348,8 +349,8 @@ const chartOption = computed(() => ({
 
 .chart-container {
   flex: 1;
-  height: 200px;
-  min-height: 200px;
+  /* 中等屏高下更充裕，但避免溢出导致轴被裁切 */
+  min-height: clamp(210px, 26vh, 280px);
   display: flex;
   flex-direction: column;
   padding: 0 16px;
@@ -357,7 +358,8 @@ const chartOption = computed(() => ({
 
 .chart {
   width: 100%;
-  height: 200px;
+  height: 100%;
+  min-height: clamp(210px, 26vh, 280px);
 }
 
 .stat-icon {

@@ -249,6 +249,45 @@ watch(() => props.activeGroup, (newGroup) => {
 }
 
 // 响应式设计
+@media (min-width: 1600px) {
+  .side-menu {
+    width: 76px;
+  }
+
+  .menu-item-content {
+    padding: 14px 6px;
+    min-height: 70px;
+
+    .menu-item-icon {
+      font-size: 22px;
+    }
+
+    .menu-item-text {
+      font-size: 14px;
+      line-height: 1.2;
+    }
+  }
+}
+
+@media (min-width: 1920px) {
+  .side-menu {
+    width: 84px;
+  }
+
+  .menu-item-content {
+    padding: 16px 8px;
+    min-height: 78px;
+
+    .menu-item-icon {
+      font-size: 24px;
+    }
+
+    .menu-item-text {
+      font-size: 15px;
+    }
+  }
+}
+
 @media (max-width: 992px) {
   .side-menu {
     width: 56px;

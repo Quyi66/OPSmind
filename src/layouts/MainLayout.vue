@@ -8,6 +8,7 @@
 
     <!-- 主体区域 -->
     <div class="main-body">
+      <div class="main-container">
       <!-- 左侧菜单 -->
       <SideMenu
         v-if="showSideMenu"
@@ -29,6 +30,7 @@
 
         <!-- 否则显示默认的路由视图（仪表盘） -->
         <router-view v-else class="router-view" />
+      </div>
       </div>
     </div>
 
@@ -122,6 +124,24 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
+/* 定宽居中主容器 */
+.main-container {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 1600px) {
+  .main-container {
+    /* 仅在大屏（27寸等）为底部预留留白 */
+    padding-bottom: 24px;
+  }
+}
+
 // 侧边菜单容器
 .side-menu-container {
   flex-shrink: 0;
@@ -151,6 +171,7 @@ onUnmounted(() => {
   overflow: hidden;
   background: #fff;
   transition: all 0.3s ease-in-out;
+  /* 底部留白由 .main-container 控制 */
 
   &.with-side-menu {
     background: #fff;
