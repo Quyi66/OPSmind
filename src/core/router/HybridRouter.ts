@@ -35,7 +35,7 @@ const baseRoutes: CustomRouteRecord[] = [
     name: 'home',
     component: () => import('@/views/Dashboard.vue'),
     meta: {
-      title: 'OpsMind 仪表盘',
+      title: 'OPSmind 仪表盘',
       requiresAuth: true,
       moduleType: ModuleType.VUE_NATIVE
     }

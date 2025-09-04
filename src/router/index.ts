@@ -9,7 +9,7 @@ const routes: CustomRouteRecord[] = [
     path: '/',
     redirect: '/home'
   },
-  
+
   {
     path: '/login',
     name: 'login',
@@ -30,7 +30,7 @@ const routes: CustomRouteRecord[] = [
       }
     ],
     meta: {
-      title: 'OpsMind 仪表盘',
+      title: 'OPSmind 仪表盘',
       requiresAuth: true
     }
   },
