@@ -5,12 +5,19 @@
     // 读取当前脚本的查询参数（便于在 SPA 内注入时传参）
     var cs = (function(){ try { return document.currentScript ? new URL(document.currentScript.src).searchParams : null } catch(_) { return null } })()
     // 先写死一个默认 token（可被 URL 或脚本参数覆盖）
-    var token = qs.get('token') || (cs && cs.get('token')) || 'WtEuG6BbIN98knzt'
+    var token = qs.get('token') || (cs && cs.get('token')) || 'tRnUImvfrP77TFr0'
     var embed = qs.get('embed') || (cs && cs.get('embed')) || 'https://udify.app/embed.min.js'
     var q = qs.get('q') || (cs && cs.get('q')) || ''
-    // 从页面 URL 或当前脚本的查询参数读取 mode
+    // 从页面 URL 或当前脚本的查询参数读取 mode/auto
     var mode = (qs.get('mode') || (cs && cs.get('mode')) || 'page').toLowerCase() // 'page' | 'bubble'
-    var autoOpen = mode !== 'bubble'
+    var autoFlag = (qs.get('auto') === '1') || (cs && cs.get('auto') === '1')
+    var compactFlag = (qs.get('compact') === '1') || (cs && cs.get('compact') === '1')
+    var autoOpen = autoFlag || mode !== 'bubble'
+
+    // 标记紧凑模式（用于在宿主页注入CSS隐藏头像等）
+    if (compactFlag) {
+      try { document.documentElement.setAttribute('data-compact', '1') } catch(_) {}
+    }
 
     // 如需强制 URL 或环境传入，可删除上面默认值并恢复缺少-token 的提示
     var statusEl = document.getElementById('status')
@@ -42,7 +49,7 @@
           }
           var win = document.getElementById('dify-chatbot-bubble-window')
           if (win) {
-            if (autoOpen) {
+            if (autoOpen && mode !== 'bubble') {
               var btn2 = document.getElementById('dify-chatbot-bubble-button')
               if (btn2) btn2.style.display = 'none'
             }

@@ -38,7 +38,7 @@ import { ElMessage } from 'element-plus'
 // 搜索查询
 const searchQuery = ref('')
 // 先代码写死一个默认 token（用于中转页 URL），可被环境变量覆盖
-const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'WtEuG6BbIN98knzt'
+const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'tRnUImvfrP77TFr0'
 
 // 最近对话
 const recentChats = ref([

@@ -6,9 +6,39 @@
   <title>OPS智能助手 · 气泡</title>
   <link rel="icon" type="image/png" href="/icons/aiOPS2.png">
   <style>
-    html, body { height: 100%; margin: 0; background: #f7f8fa; }
-    /* 保持页面简洁，展示右下角气泡按钮，由用户点击唤起 */
-    #dify-chatbot-bubble-button { display: block !important; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #fff;
+      overflow: hidden; /* prevent double scrollbars in iframe */
+    }
+    /* Make the chat window occupy the entire iframe viewport */
+    #dify-chatbot-bubble-window {
+      position: fixed !important;
+      inset: 0 !important; /* top/right/bottom/left = 0 */
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      border-radius: 0 !important;
+      border: 0 !important;
+      box-shadow: none !important;
+    }
+    /* Hide the floating bubble button when used inside iframe panel */
+    #dify-chatbot-bubble-button { display: none !important; }
+    /* Compact mode: reduce side avatar footprint to enlarge center content */
+    html[data-compact="1"] #dify-chatbot-bubble-window [class*="avatar" i],
+    html[data-compact="1"] #dify-chatbot-bubble-window img[alt*="avatar" i],
+    html[data-compact="1"] #dify-chatbot-bubble-window [data-testid*="avatar" i] {
+      display: none !important;
+      width: 0 !important;
+      min-width: 0 !important;
+    }
+    html[data-compact="1"] #dify-chatbot-bubble-window [class*="message" i] {
+      max-width: 100% !important;
+    }
+    /* Hide status text in embedded mode */
+    #status { display: none !important; }
   </style>
 </head>
 <body>
@@ -17,4 +47,3 @@
   <script src="aiops-embed-init.js?mode=bubble" defer></script>
 </body>
 </html>
-

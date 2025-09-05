@@ -15,7 +15,7 @@ import DIFY_EMBED_LOCAL from '@/assets/vendor/dify/embed.min.js?url'
 const AI_ICON = new URL('@/assets/icons/aiOPS2@2x.png', import.meta.url).href
 // URL 优先，其次环境变量，最后回退默认
 const URL_TOKEN = (() => { try { return new URLSearchParams(location.search).get('token') || '' } catch { return '' } })()
-const TOKEN = URL_TOKEN || (import.meta.env.VITE_DIFY_TOKEN || 'WtEuG6BbIN98knzt')
+const TOKEN = URL_TOKEN || (import.meta.env.VITE_DIFY_TOKEN || 'tRnUImvfrP77TFr0')
 const EMBED_SRC = import.meta.env.VITE_DIFY_EMBED_URL || DIFY_EMBED_LOCAL || 'https://udify.app/embed.min.js'
 const ready = ref(false)
 const statusText = ref('正在加载 OPS 智能助手...')

@@ -64,7 +64,7 @@
           <!-- User Dropdown -->
           <el-dropdown @command="handleUserCommand" class="user-dropdown">
             <div class="user-dropdown-trigger">
-              <el-avatar :size="32" class="user-avatar" :src="avatarImage"></el-avatar>
+              <el-avatar :size="24" class="user-avatar" :src="avatarImage"></el-avatar>
               <span class="user-name">{{ displayUserName }}</span>
               <svg class="dropdown-arrow" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd"
@@ -217,8 +217,7 @@ import iconPatch from '@/assets/icons/menu/icon-patch@2x.png'
 import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
 import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
 import iconUser from '@/assets/icons/menu/icon-user@2x.png'
-// 可自定义 Dify 脚本地址（默认公网）
-const EMBED_SRC = import.meta.env.VITE_DIFY_EMBED_URL || 'https://udify.app/embed.min.js'
+// 自绘气泡方案：不直接在当前页注入 Dify 脚本，改为 iframe 承载全屏页
 
 // 导入logo、aiOPS图标和用户头像
 import logoImage from '@/assets/icons/logo@2x.png'
@@ -347,109 +346,87 @@ const handleSettingsClick = () => {
 }
 
 // 先代码写死一个默认 token（可被环境变量覆盖）
-const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'WtEuG6BbIN98knzt'
+const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'tRnUImvfrP77TFr0'
 
-// 处理AI OPS按钮点击：在当前页面以 Dify 气泡方式集成（不新开标签页）
+// 处理AI OPS按钮点击：显示/隐藏右下角面板（iframe 内为气泡方案页面）
 const handleAiOpsClick = async () => {
   try {
-    // 已存在则显示按钮并返回（避免重复注入）
-    const bubbleBtn = document.getElementById('dify-chatbot-bubble-button')
-    if (bubbleBtn) {
-      bubbleBtn.style.display = ''
-      return
-    }
-
-    // 1) 配置全局对象（避免使用内联 <script> 以兼容 CSP）
-    window.difyChatbotConfig = {
-      token: DIFY_TOKEN,
-      inputs: {},
-      systemVariables: {},
-      userVariables: {},
-    }
-
-    // 2) 注入样式，设置按钮颜色与窗口大小（只注入一次；CSP 若禁止内联样式，此步不会影响脚本加载）
-    const styleId = 'ops-dify-bubble-style'
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style')
-      style.id = styleId
-      style.textContent = `
-        #dify-chatbot-bubble-button { background-color: #1C64F2 !important; z-index: 2147483647 !important; }
-        #dify-chatbot-bubble-window { width: 24rem !important; height: 40rem !important; }
-      `
-      try { document.head.appendChild(style) } catch {}
-    }
-
-    // 3) 优先注入本地初始化脚本（统一处理 bubble 模式），避免直接依赖外链特性
-    const base = import.meta.env.BASE_URL || '/'
-    const initId = 'ops-dify-bubble-loader'
-    let initLoader = document.getElementById(initId)
-    if (!initLoader) {
-      const params = new URLSearchParams()
-      params.set('mode', 'bubble')
-      params.set('embed', EMBED_SRC)
-      if (DIFY_TOKEN) params.set('token', DIFY_TOKEN)
-      initLoader = document.createElement('script')
-      initLoader.id = initId
-      initLoader.defer = true
-      initLoader.src = `${base}aiops-embed-init.js?${params.toString()}`
-      initLoader.onload = () => {
-        // 等待按钮出现
-        let tries = 0
-        const t = setInterval(() => {
-          tries++
-          const btn = document.getElementById('dify-chatbot-bubble-button')
-          if (btn) {
-            btn.style.display = ''
-            clearInterval(t)
-          } else if (tries > 40) {
-            clearInterval(t)
-            console.warn('Dify bubble button not detected after init loader')
-            // 兜底：直接注入外链脚本一次
-            try {
-              const scriptId = DIFY_TOKEN
-              const existing = document.getElementById(scriptId)
-              if (existing) existing.remove()
-              const s = document.createElement('script')
-              s.id = scriptId // match Dify recommended snippet
-              s.defer = true
-              s.src = EMBED_SRC
-              document.head.appendChild(s)
-            } catch {}
-          }
-        }, 250)
-      }
-      initLoader.onerror = (e) => {
-        console.error('Failed to load init script:', e)
-        // 退回直接注入外链脚本
-        try {
-          const scriptId = DIFY_TOKEN
-          if (!document.getElementById(scriptId)) {
-            const s = document.createElement('script')
-            s.id = scriptId
-            s.defer = true
-            s.src = EMBED_SRC
-            document.head.appendChild(s)
-          }
-        } catch {}
-      }
-      document.head.appendChild(initLoader)
+    ensureOpsBubble()
+    const panel = document.getElementById('ops-dify-bubble-panel')
+    if (!panel) return
+    if (panel.classList.contains('visible')) {
+      panel.classList.remove('visible')
     } else {
-      // 已存在本地初始化脚本：短轮询检测按钮
-      let tries = 0
-      const t = setInterval(() => {
-        tries++
-        const btn = document.getElementById('dify-chatbot-bubble-button')
-        if (btn) {
-          btn.style.display = ''
-          clearInterval(t)
-        } else if (tries > 40) {
-          clearInterval(t)
-          console.warn('Dify bubble button not detected (init loader existed)')
-        }
-      }, 250)
+      panel.classList.add('visible')
     }
   } catch (e) {
-    console.warn('Failed to init AI OPS bubble:', e)
+    console.warn('Failed to mount/toggle OPS bubble panel:', e)
+  }
+}
+
+function ensureOpsBubble() {
+  const base = import.meta.env.BASE_URL || '/'
+  const C = {
+    root: 'ops-dify-bubble-root',
+    panel: 'ops-dify-bubble-panel',
+    iframe: 'ops-dify-bubble-iframe',
+    style: 'ops-dify-bubble-style-self'
+  }
+  // 样式（只注入一次）
+  if (!document.getElementById(C.style)) {
+    const style = document.createElement('style')
+    style.id = C.style
+    style.textContent = `
+      #${C.panel} {
+        position: fixed; right: 0; bottom: 16px; top: var(--ops-bubble-top, 64px);
+        width: min(34vw, 30rem);
+        background: #fff; border: none; box-shadow: none; /* match full mode */
+        border-radius: 12px 0 0 12px; overflow: hidden;
+        z-index: 2147483647; display: none; pointer-events: auto;
+      }
+      #${C.panel}.visible { display: block; }
+      #${C.iframe} { width: 100%; height: 100%; border: 0; background: #fff; }
+    `
+    document.head.appendChild(style)
+  }
+  // 根容器
+  if (!document.getElementById(C.root)) {
+    const root = document.createElement('div')
+    root.id = C.root
+    document.body.appendChild(root)
+
+    // 面板 + iframe（指向全屏页，让其在 iframe 内填满即可）
+    const panel = document.createElement('div')
+    panel.id = C.panel
+    const iframe = document.createElement('iframe')
+    iframe.id = C.iframe
+    const params = new URLSearchParams()
+    if (DIFY_TOKEN) params.set('token', DIFY_TOKEN)
+    params.set('auto', '1') // 创建后自动打开聊天窗口
+    params.set('compact', '1') // 紧凑模式：尽量扩大中间内容
+    // 使用“气泡方案”的页面作为 iframe 内容，内部会呈现 Dify 气泡按钮并自动打开
+    iframe.src = `${window.location.origin}${base}aiops-bubble.html${params.toString() ? `?${params.toString()}` : ''}`
+    panel.appendChild(iframe)
+    root.appendChild(panel)
+    // 计算顶部菜单栏高度，令面板上边缘贴合菜单栏底部
+    function setPanelTopOffset() {
+      try {
+        const header = document.querySelector('.top-nav-header') || document.querySelector('.top-nav-wrapper')
+        const h = header ? (header.getBoundingClientRect().height || header.offsetHeight || 0) : 0
+        // 额外预留 8px 间距
+        const top = Math.max(0, Math.round(h + 8))
+        panel.style.top = top + 'px'
+      } catch {}
+    }
+    setPanelTopOffset()
+    window.addEventListener('resize', setPanelTopOffset)
+    window.addEventListener('orientationchange', setPanelTopOffset)
+
+    // 初始不显示；由菜单点击进行显隐切换
+    // ESC 关闭面板（再次点击顶部菜单可重新显示）
+    window.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape') panel.classList.remove('visible')
+    })
   }
 }
 
@@ -626,7 +603,7 @@ onUnmounted(() => {
 }
 
 .brand-logo {
-  height: 2rem;
+  height: 1.5rem; /* shrink logo to reduce header height */
   width: auto;
   object-fit: contain;
   object-position: center;
