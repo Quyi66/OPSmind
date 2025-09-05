@@ -4,6 +4,7 @@ import { angularJSBridge } from '@/services/angularjs-bridge'
 import { hybridModuleManager } from '@/core/modules/HybridModuleManager.js'
 import { authService } from '@/core/auth'
 import type { User } from '@/types/auth'
+import type { DashboardFullData } from '@/types/dashboard'
 
 interface ModuleShowIn {
   desktop?: number
@@ -44,6 +45,7 @@ interface DashboardState {
   currentUser: Ref<User | null>
   availableModules: Ref<Module[]>
   systemStats: Ref<SystemStat[]>
+  dashboardFullData: Ref<DashboardFullData | null>
   loading: Ref<boolean>
   error: Ref<string | null>
   lastUpdated: Ref<number | null>
@@ -68,6 +70,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const currentUser: Ref<User | null> = ref(null)
   const availableModules: Ref<Module[]> = ref([])
   const systemStats: Ref<SystemStat[]> = ref([])
+  const dashboardFullData: Ref<DashboardFullData | null> = ref(null)
   const loading: Ref<boolean> = ref(false)
   const error: Ref<string | null> = ref(null)
   const lastUpdated: Ref<number | null> = ref(null)
@@ -119,14 +122,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
       }
 
       // 并行加载其他数据
-      const [modules, stats] = await Promise.all([
+      const [modules, stats, fullData] = await Promise.all([
         angularJSBridge.getMenus(), // 获取真实的模块列表
-        getSystemStats() // 获取系统统计信息
+        getSystemStats(), // 获取系统统计信息（历史兼容）
+        getDashboardFullData() // 获取仪表盘全量数据
       ])
 
       currentUser.value = user as User
       availableModules.value = modules || []
       systemStats.value = stats
+      dashboardFullData.value = fullData
       lastUpdated.value = Date.now()
 
       console.log('✅ Dashboard data loaded successfully')
@@ -189,6 +194,19 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  const getDashboardFullData = async (): Promise<DashboardFullData> => {
+    try {
+      const { apiService } = await import('@/core/api')
+      const data = await apiService.getDashboardFullData()
+      return data as DashboardFullData
+    } catch (err) {
+      console.error('Failed to get dashboard full data:', err)
+      // 使用 API 内置的 mock 已处理，这里确保有返回
+      const { apiService } = await import('@/core/api')
+      return apiService.getMockDashboardFullData()
+    }
+  }
+
   const refreshStats = async (): Promise<void> => {
     try {
       systemStats.value = await getSystemStats()
@@ -203,6 +221,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     currentUser.value = null
     availableModules.value = []
     systemStats.value = []
+    dashboardFullData.value = null
     loading.value = false
     error.value = null
     lastUpdated.value = null
@@ -213,6 +232,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     currentUser,
     availableModules,
     systemStats,
+    dashboardFullData,
     loading,
     error,
     lastUpdated,

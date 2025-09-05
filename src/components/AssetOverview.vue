@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
@@ -37,6 +37,7 @@ import {
   GridComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
+import { useDashboardStore } from '@/stores/dashboard'
 
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
 
@@ -52,10 +53,15 @@ const platformTabs = ref([
 // 选中的平台
 const selectedPlatform = ref('enterprise')
 
-// 资产数据
-const assetData = ref({
-  categories: ['Windows服务器', 'Unix服务器', 'Linux服务器'],
-  values: [2, 1, 4]
+const dashboardStore = useDashboardStore()
+
+// 资产数据（来自 API 数据）
+const assetData = computed(() => {
+  const a = dashboardStore.dashboardFullData?.assetOverview
+  return {
+    categories: ['Windows服务器', 'Unix服务器', 'Linux服务器'],
+    values: [a?.windowsServers ?? 0, a?.unixServers ?? 0, a?.linuxServers ?? 0]
+  }
 })
 
 // 获取条形图颜色类
@@ -86,7 +92,7 @@ const chartOption = computed(() => ({
   xAxis: {
     type: 'value',
     min: 0,
-    max: Math.max(...assetData.value.values),
+    max: Math.max(1, ...assetData.value.values),
     interval: 1,
     axisLine: {
       show: true,

@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
@@ -68,36 +68,42 @@ import {
 import VChart from 'vue-echarts'
 
 import TypeCountCard from './TypeCountCard.vue'
+import { useDashboardStore } from '@/stores/dashboard'
 
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
 
 // 标题图标
 const jobHeaderIcon = new URL('@/assets/icons/dashboard/icon-jobview@2x.png', import.meta.url).href
 
-// 作业统计数据
-const jobStats = ref([
-  {
-    id: 'rest-jobs',
-    label: 'REST作业',
-    value: '78',
-    icon: new URL('@/assets/icons/dashboard/icon-job-rest@2x.png', import.meta.url).href,
-    iconType: 'image'
-  },
-  {
-    id: 'command-jobs',
-    label: '命令作业',
-    value: '2',
-    icon: new URL('@/assets/icons/dashboard/icon-job-cmd@2x.png', import.meta.url).href,
-    iconType: 'image'
-  },
-  {
-    id: 'script-jobs',
-    label: '脚本作业',
-    value: '56',
-    icon: new URL('@/assets/icons/dashboard/icon-job-shell@2x.png', import.meta.url).href,
-    iconType: 'image'
-  }
-])
+const dashboardStore = useDashboardStore()
+
+// 作业统计（来自 API 数据）
+const jobStats = computed(() => {
+  const totals = dashboardStore.dashboardFullData?.totalJobStats
+  return [
+    {
+      id: 'rest-jobs',
+      label: 'REST作业',
+      value: totals?.restJobs ?? 0,
+      icon: new URL('@/assets/icons/dashboard/icon-job-rest@2x.png', import.meta.url).href,
+      iconType: 'image'
+    },
+    {
+      id: 'command-jobs',
+      label: '命令作业',
+      value: totals?.commandJobs ?? 0,
+      icon: new URL('@/assets/icons/dashboard/icon-job-cmd@2x.png', import.meta.url).href,
+      iconType: 'image'
+    },
+    {
+      id: 'script-jobs',
+      label: '脚本作业',
+      value: totals?.scriptJobs ?? 0,
+      icon: new URL('@/assets/icons/dashboard/icon-job-shell@2x.png', import.meta.url).href,
+      iconType: 'image'
+    }
+  ]
+})
 
 // 处理统计卡片点击事件
 const handleStatClick = statId => {
@@ -105,28 +111,15 @@ const handleStatClick = statId => {
   // 这里可以添加具体的点击处理逻辑
 }
 
-// 生成近10天日期
-const generateLast10Days = () => {
-  const dates = []
-  const today = new Date()
-
-  for (let i = 9; i >= 0; i--) {
-    const date = new Date(today)
-    date.setDate(today.getDate() - i)
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    dates.push(`${month}/${day}`)
+// 图表数据（来自 API 数据）
+const chartData = computed(() => {
+  const list = dashboardStore.dashboardFullData?.recentJobStats || []
+  return {
+    dates: list.map(i => i.date.replace('-', '/')),
+    restJobs: list.map(i => i.restJobs),
+    commandJobs: list.map(i => i.commandJobs),
+    scriptJobs: list.map(i => i.scriptJobs)
   }
-
-  return dates
-}
-
-// 图表数据
-const chartData = ref({
-  dates: generateLast10Days(),
-  restJobs: [180, 200, 170, 220, 240, 210, 230, 200, 190, 220],
-  commandJobs: [80, 100, 90, 120, 130, 110, 140, 120, 100, 130],
-  scriptJobs: [150, 170, 140, 180, 190, 160, 200, 180, 160, 190]
 })
 
 // ECharts 配置

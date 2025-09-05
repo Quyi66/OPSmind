@@ -47,11 +47,11 @@ class ApiService {
         const authHeaders = authService.getAuthHeaders()
         config.headers = { ...config.headers, ...authHeaders }
 
-        // 添加缓存破坏参数
+        // 添加缓存破坏参数（后端约定使用 cacheBuster）
         if (config.method === 'get' && config.cache !== false) {
           config.params = {
             ...config.params,
-            _t: Date.now()
+            cacheBuster: Date.now()
           }
         }
 
@@ -261,6 +261,20 @@ class ApiService {
   }
 
   /**
+   * 获取首页仪表盘全量数据
+   */
+  async getDashboardFullData() {
+    try {
+      const res = await this.get('/api/dashboard/full-data')
+      // axios response unwrap
+      return res?.data
+    } catch (error) {
+      console.warn('⚠️ Failed to fetch dashboard full data, using mock:', error?.message || error)
+      return this.getMockDashboardFullData()
+    }
+  }
+
+  /**
    * 模拟统计数据
    */
   getMockStats() {
@@ -294,6 +308,64 @@ class ApiService {
         trend: { type: 'down', value: 8, text: '较上月减少 8%' }
       }
     ]
+  }
+
+  /**
+   * 仪表盘数据模拟（与后端约定结构一致）
+   */
+  getMockDashboardFullData() {
+    return {
+      totalJobStats: {
+        restJobs: 23,
+        scriptJobs: 408,
+        commandJobs: 3
+      },
+      recentJobStats: [
+        { date: '08-26', restJobs: 0, scriptJobs: 18, commandJobs: 0, totalJobs: 18 },
+        { date: '08-27', restJobs: 0, scriptJobs: 16, commandJobs: 0, totalJobs: 16 },
+        { date: '08-28', restJobs: 0, scriptJobs: 4, commandJobs: 0, totalJobs: 4 },
+        { date: '08-29', restJobs: 0, scriptJobs: 2, commandJobs: 0, totalJobs: 2 },
+        { date: '08-30', restJobs: 0, scriptJobs: 2, commandJobs: 0, totalJobs: 2 },
+        { date: '08-31', restJobs: 0, scriptJobs: 2, commandJobs: 0, totalJobs: 2 },
+        { date: '09-01', restJobs: 3, scriptJobs: 10, commandJobs: 0, totalJobs: 13 },
+        { date: '09-02', restJobs: 0, scriptJobs: 2, commandJobs: 0, totalJobs: 2 },
+        { date: '09-03', restJobs: 0, scriptJobs: 4, commandJobs: 0, totalJobs: 4 },
+        { date: '09-04', restJobs: 0, scriptJobs: 4, commandJobs: 0, totalJobs: 4 }
+      ],
+      monthlyInspectionStats: {
+        monthlyInspections: 20,
+        normalInspections: 20,
+        abnormalInspections: 0
+      },
+      recentInspectionStats: [
+        { date: '08-26', totalInspections: 18, normalInspections: 2, abnormalInspections: 16 },
+        { date: '08-27', totalInspections: 16, normalInspections: 8, abnormalInspections: 8 },
+        { date: '08-28', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
+        { date: '08-29', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '08-30', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '08-31', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '09-01', totalInspections: 10, normalInspections: 10, abnormalInspections: 0 },
+        { date: '09-02', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '09-03', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
+        { date: '09-04', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 }
+      ],
+      assetOverview: {
+        linuxServers: 2,
+        unixServers: 0,
+        windowsServers: 0
+      },
+      vulnerabilityOverview: {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0
+      },
+      windowsVulnStats: {
+        totalCritical: 0,
+        totalRollups: 0,
+        totalSecurity: 0
+      }
+    }
   }
 
   /**
