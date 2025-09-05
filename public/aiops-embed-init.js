@@ -1,5 +1,10 @@
 ;(function () {
   try {
+    // Defaults: move constants to the top for easy override/visibility
+    // const DEFAULT_TOKEN = 'tRnUImvfrP77TFr0'
+    const DEFAULT_TOKEN = 'CqLqxTQL8FeNqAqK'
+    const DEFAULT_BASE_URL = 'http://10.1.8.229:18081'
+
     const qs = new URLSearchParams(location.search || '')
     const rt = (function () {
       try {
@@ -9,7 +14,6 @@
         return {}
       }
     })()
-    const DEFAULT_TOKEN = 'tRnUImvfrP77TFr0'
 
     // Resolve token: URL > runtime
     let token = qs.get('token') || rt.DIFY_TOKEN || ''
@@ -26,7 +30,7 @@
     if (!token) token = DEFAULT_TOKEN
     // Embed script: use local only
     const embed = 'dify/embed.min.js'
-    const difyBase = String(rt.DIFY_APP || rt.DIFY_ORIGIN || '').replace(/\/$/, '')
+    const difyBase = String(rt.DIFY_APP || rt.DIFY_ORIGIN || DEFAULT_BASE_URL).replace(/\/$/, '')
     // No initial question injection
     // Mode/page behavior
     const mode = (qs.get('mode') || 'page').toLowerCase() // 'page' | 'bubble'
@@ -105,17 +109,19 @@
     // Preconnect to Dify base when provided
     try {
       if (difyBase) {
-        var pre = document.createElement('link')
+        const pre = document.createElement('link')
         pre.rel = 'preconnect'
         pre.href = difyBase
         pre.crossOrigin = ''
         document.head.appendChild(pre)
-        var dns = document.createElement('link')
+        const dns = document.createElement('link')
         dns.rel = 'dns-prefetch'
         dns.href = difyBase
         document.head.appendChild(dns)
       }
-    } catch (_e) {}
+    } catch (e) {
+      console.log(e)
+    }
   } catch (e) {
     const status = document.getElementById('status')
     if (status) status.textContent = `初始化失败：${e && e.message ? e.message : e}`
