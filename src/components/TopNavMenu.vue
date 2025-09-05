@@ -346,34 +346,12 @@ const handleSettingsClick = () => {
 
 // 处理AI OPS按钮点击
 const handleAiOpsClick = async () => {
-  // 先同步打开一个空白页，保证处于用户手势上下文，避免被浏览器拦截
-  const newTab = window.open('about:blank', '_blank')
+  // 新Tab打开静态中转页（已为该路径放宽 CSP）
+  const base = import.meta.env.BASE_URL || '/'
+  // 这里可附带 ?q= 预填输入（如需从别处传入内容，可替换 q）
+  const url = `${window.location.origin}${base}aiops-embed.html`
+  const newTab = window.open(url, '_blank')
   if (newTab) newTab.opener = null
-
-  const normalizeUrl = (u) => {
-    if (!u) return 'https://dify.ai'
-    const s = String(u).trim()
-    if (/^https?:\/\//i.test(s)) return s
-    if (s.startsWith('//')) return `${window.location.protocol}${s}`
-    if (s.startsWith('/')) return `${window.location.origin}${s}`
-    return s
-  }
-
-  try {
-    let target = dashboardStore.aiOpsUrl
-    if (!target) {
-      await dashboardStore.fetchAiOpsUrl()
-      target = dashboardStore.aiOpsUrl
-    }
-    const finalUrl = normalizeUrl(target)
-    if (newTab) newTab.location.href = finalUrl
-    else window.open(finalUrl, '_blank')
-  } catch (e) {
-    console.error('Failed to open AI OPS URL:', e)
-    const fallback = 'https://dify.ai'
-    if (newTab) newTab.location.href = fallback
-    else window.open(fallback, '_blank')
-  }
 }
 
 // 处理关于下拉菜单命令

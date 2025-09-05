@@ -8,6 +8,15 @@ export const baseRoutes = [
     redirect: '/home'
   },
   {
+    path: '/aiops',
+    name: 'aiops',
+    component: () => import('@/views/AiOpsAssistant.vue'),
+    meta: {
+      title: 'OPS智能助手',
+      requiresAuth: true
+    }
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('@/views/Login.vue'),

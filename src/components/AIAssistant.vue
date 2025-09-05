@@ -36,7 +36,8 @@ import { ElMessage } from 'element-plus'
 
 // 搜索查询
 const searchQuery = ref('')
-const DIFY_OFFICIAL_URL = 'https://dify.ai'
+// 供中转页使用的可选 token（如未配置则使用中转页默认）
+const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || ''
 
 // 最近对话
 const recentChats = ref([
@@ -64,28 +65,34 @@ const handleSearch = () => {
     return
   }
 
-  ElMessage.info(`正在处理您的问题: ${searchQuery.value}`)
-  // 这里可以调用AI助手API
-  console.log('AI Assistant Query:', searchQuery.value)
+  const q = searchQuery.value.trim()
+
+  // 先同步打开新页，确保处于用户手势上下文
+  try {
+    const base = import.meta.env.BASE_URL || '/'
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    if (DIFY_TOKEN) params.set('token', DIFY_TOKEN)
+    const url = `${window.location.origin}${base}aiops-embed.html${params.toString() ? `?${params.toString()}` : ''}`
+    const win = window.open(url, '_blank')
+    if (win) win.opener = null
+  } catch (e) {
+    console.warn('Failed to open aiops-embed page:', e)
+  }
+
+  ElMessage.info(`正在处理您的问题: ${q}`)
+  console.log('AI Assistant Query:', q)
 
   // 模拟添加到最近对话
   recentChats.value.unshift({
     id: Date.now(),
-    question: searchQuery.value,
+    question: q,
     time: '刚刚'
   })
 
   // 限制最近对话数量
   if (recentChats.value.length > 5) {
     recentChats.value = recentChats.value.slice(0, 5)
-  }
-
-  // 打开 Dify 官网（新标签页）
-  try {
-    const newWin = window.open(DIFY_OFFICIAL_URL, '_blank')
-    if (newWin) newWin.opener = null
-  } catch (e) {
-    console.warn('Failed to open Dify site:', e)
   }
 
   searchQuery.value = ''
