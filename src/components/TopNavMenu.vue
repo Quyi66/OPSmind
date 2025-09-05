@@ -217,6 +217,8 @@ import iconPatch from '@/assets/icons/menu/icon-patch@2x.png'
 import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
 import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
 import iconUser from '@/assets/icons/menu/icon-user@2x.png'
+// 可自定义 Dify 脚本地址（默认公网）
+const EMBED_SRC = import.meta.env.VITE_DIFY_EMBED_URL || 'https://udify.app/embed.min.js'
 
 // 导入logo、aiOPS图标和用户头像
 import logoImage from '@/assets/icons/logo@2x.png'
@@ -350,7 +352,7 @@ const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'WtEuG6BbIN98knzt'
 // 处理AI OPS按钮点击：在当前页面以 Dify 气泡方式集成（不新开标签页）
 const handleAiOpsClick = async () => {
   try {
-    // 若已加载，显示气泡按钮并返回（不重复注入）
+    // 已存在则显示按钮并返回（避免重复注入）
     const bubbleBtn = document.getElementById('dify-chatbot-bubble-button')
     if (bubbleBtn) {
       bubbleBtn.style.display = ''
@@ -365,26 +367,86 @@ const handleAiOpsClick = async () => {
       userVariables: {},
     }
 
-    // 2) 注入样式，设置按钮颜色与窗口大小（只注入一次）
+    // 2) 注入样式，设置按钮颜色与窗口大小（只注入一次；CSP 若禁止内联样式，此步不会影响脚本加载）
     const styleId = 'ops-dify-bubble-style'
     if (!document.getElementById(styleId)) {
       const style = document.createElement('style')
       style.id = styleId
       style.textContent = `
-        #dify-chatbot-bubble-button { background-color: #1C64F2 !important; }
+        #dify-chatbot-bubble-button { background-color: #1C64F2 !important; z-index: 2147483647 !important; }
         #dify-chatbot-bubble-window { width: 24rem !important; height: 40rem !important; }
       `
-      document.head.appendChild(style)
+      try { document.head.appendChild(style) } catch {}
     }
 
-    // 3) 注入官方脚本（只注入一次），加载后会在页面右下角显示气泡按钮
-    const scriptId = DIFY_TOKEN
-    if (!document.getElementById(scriptId)) {
-      const s = document.createElement('script')
-      s.src = 'https://udify.app/embed.min.js'
-      s.id = scriptId
-      s.defer = true
-      document.body.appendChild(s)
+    // 3) 优先注入本地初始化脚本（统一处理 bubble 模式），避免直接依赖外链特性
+    const base = import.meta.env.BASE_URL || '/'
+    const initId = 'ops-dify-bubble-loader'
+    let initLoader = document.getElementById(initId)
+    if (!initLoader) {
+      const params = new URLSearchParams()
+      params.set('mode', 'bubble')
+      params.set('embed', EMBED_SRC)
+      if (DIFY_TOKEN) params.set('token', DIFY_TOKEN)
+      initLoader = document.createElement('script')
+      initLoader.id = initId
+      initLoader.defer = true
+      initLoader.src = `${base}aiops-embed-init.js?${params.toString()}`
+      initLoader.onload = () => {
+        // 等待按钮出现
+        let tries = 0
+        const t = setInterval(() => {
+          tries++
+          const btn = document.getElementById('dify-chatbot-bubble-button')
+          if (btn) {
+            btn.style.display = ''
+            clearInterval(t)
+          } else if (tries > 40) {
+            clearInterval(t)
+            console.warn('Dify bubble button not detected after init loader')
+            // 兜底：直接注入外链脚本一次
+            try {
+              const scriptId = DIFY_TOKEN
+              const existing = document.getElementById(scriptId)
+              if (existing) existing.remove()
+              const s = document.createElement('script')
+              s.id = scriptId // match Dify recommended snippet
+              s.defer = true
+              s.src = EMBED_SRC
+              document.head.appendChild(s)
+            } catch {}
+          }
+        }, 250)
+      }
+      initLoader.onerror = (e) => {
+        console.error('Failed to load init script:', e)
+        // 退回直接注入外链脚本
+        try {
+          const scriptId = DIFY_TOKEN
+          if (!document.getElementById(scriptId)) {
+            const s = document.createElement('script')
+            s.id = scriptId
+            s.defer = true
+            s.src = EMBED_SRC
+            document.head.appendChild(s)
+          }
+        } catch {}
+      }
+      document.head.appendChild(initLoader)
+    } else {
+      // 已存在本地初始化脚本：短轮询检测按钮
+      let tries = 0
+      const t = setInterval(() => {
+        tries++
+        const btn = document.getElementById('dify-chatbot-bubble-button')
+        if (btn) {
+          btn.style.display = ''
+          clearInterval(t)
+        } else if (tries > 40) {
+          clearInterval(t)
+          console.warn('Dify bubble button not detected (init loader existed)')
+        }
+      }, 250)
     }
   } catch (e) {
     console.warn('Failed to init AI OPS bubble:', e)

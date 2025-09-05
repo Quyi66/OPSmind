@@ -26,6 +26,7 @@
     // 动态加载脚本
     var script = document.createElement('script')
     script.src = embed
+    script.id = token // align with Dify snippet expectation
     script.defer = true
     script.onload = function () {
       var status = document.getElementById('status')
