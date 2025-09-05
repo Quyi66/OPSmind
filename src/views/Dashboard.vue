@@ -202,7 +202,7 @@ const handleRefresh = async () => {
 /* Dashboard卡片 */
 .dashboard-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 4px; /* 进一步收窄圆角 */
   border: 1px solid #e8eaed;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
@@ -240,7 +240,7 @@ const handleRefresh = async () => {
   width: 100%;
   min-height: 400px;
   background: white;
-  border-radius: 8px;
+  border-radius: 4px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 

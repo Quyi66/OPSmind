@@ -342,7 +342,7 @@ const chartOption = computed(() => ({
   align-items: center;
   padding: 16px;
   background: #fafbfc;
-  border-radius: 8px;
+  border-radius: 4px;
   margin: 0 16px;
 }
 

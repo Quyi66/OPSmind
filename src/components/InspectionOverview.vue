@@ -329,7 +329,7 @@ const chartOption = computed(() => ({
   align-items: center;
   padding: 12px 12px; /* 收紧左右内边距 */
   background: #fafbfc;
-  border-radius: 8px;
+  border-radius: 4px;
   margin: 0 12px; /* 收紧左右外边距 */
 }
 

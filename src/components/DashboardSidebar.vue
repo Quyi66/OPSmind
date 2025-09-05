@@ -445,7 +445,7 @@ const handleRecentClick = item => {
   // 顶部间距更紧凑，与内容区保持一致
   margin: 16px 16px 16px 16px;
   background: white;
-  border-radius: 12px;
+  border-radius: 4px;
   border: 1px solid #f0f0f0;
   overflow: hidden;
 }
@@ -496,7 +496,7 @@ const handleRecentClick = item => {
   // 末卡片底部去掉外边距，统一由容器 padding-bottom 提供 16px 留白
   margin: 0 16px 0 16px;
   background: white;
-  border-radius: 12px;
+  border-radius: 4px;
   border: 1px solid #f0f0f0;
   overflow: hidden;
 }

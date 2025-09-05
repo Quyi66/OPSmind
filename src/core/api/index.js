@@ -275,6 +275,18 @@ class ApiService {
   }
 
   /**
+   * 获取系统参数
+   * @param {string} domain 参数域，如 'ai'
+   * @param {string} name 参数名，如 'url'
+   */
+  async getParam(domain, name) {
+    const safeDomain = encodeURIComponent(domain)
+    const safeName = encodeURIComponent(name)
+    const res = await this.get(`/api/params/${safeDomain}/${safeName}`, { cache: false })
+    return res?.data
+  }
+
+  /**
    * 模拟统计数据
    */
   getMockStats() {

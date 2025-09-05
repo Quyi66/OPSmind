@@ -92,10 +92,8 @@ const router: Router = createRouter({
 
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
-  // 设置页面标题
-  if (to.meta?.title) {
-    document.title = to.meta.title as string
-  }
+  // 固定页面标题为 OPSmind（不随路由变化）
+  document.title = 'OPSmind'
 
   // 如果是从登录页面跳转到主页面，延迟一下确保认证状态已更新
   if (from.path === '/login' && to.path === '/home') {

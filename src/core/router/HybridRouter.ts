@@ -244,10 +244,8 @@ class HybridRouter implements IHybridRouter {
   setupGuards(): void {
     // 全局前置守卫
     this.router.beforeEach(async (to, _from, next) => {
-      // 设置页面标题
-      if (to.meta?.title) {
-        document.title = to.meta.title as string
-      }
+      // 固定页面标题
+      document.title = 'OPSmind'
 
       // 认证检查
       const isAuthenticated = authService.isAuthenticated()

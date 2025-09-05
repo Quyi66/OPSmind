@@ -36,6 +36,7 @@ import { ElMessage } from 'element-plus'
 
 // 搜索查询
 const searchQuery = ref('')
+const DIFY_OFFICIAL_URL = 'https://dify.ai'
 
 // 最近对话
 const recentChats = ref([
@@ -79,6 +80,14 @@ const handleSearch = () => {
     recentChats.value = recentChats.value.slice(0, 5)
   }
 
+  // 打开 Dify 官网（新标签页）
+  try {
+    const newWin = window.open(DIFY_OFFICIAL_URL, '_blank')
+    if (newWin) newWin.opener = null
+  } catch (e) {
+    console.warn('Failed to open Dify site:', e)
+  }
+
   searchQuery.value = ''
 }
 
@@ -102,7 +111,7 @@ const handleSearch = () => {
   align-items: center;
   justify-content: space-between;
   background: #f8f9fa;
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 12px 16px;
   gap: 20px;
   height: 100%;
@@ -153,16 +162,17 @@ const handleSearch = () => {
   display: flex;
   align-items: center;
   background: white;
-  border: none;
-  border-radius: 12px;
+  border: 1px solid transparent; /* 默认无边框视觉，仅占位避免抖动 */
+  border-radius: 4px; /* 收紧圆角 */
   padding: 8px 16px;
   width: 100%;
   min-width: 280px;
   height: 40px;
-  transition: box-shadow 0.3s ease;
+  transition: border-color 0.15s ease, box-shadow 0.3s ease;
 
   &:focus-within {
-    box-shadow: 0 0 0 2px rgba(45, 140, 240, 0.1);
+    border-color: #93c5fd; /* 聚焦时更浅蓝色边框 */
+    box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.25); /* 更细的高亮 */
   }
 }
 
