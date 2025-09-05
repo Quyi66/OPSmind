@@ -120,6 +120,31 @@ const chartData = computed(() => {
   }
 })
 
+// Y 轴最大值与刻度：
+// - 刻度始终为 5 段，间隔为 5 的倍数
+// - 最小 yMax = 25（即 0,5,10,15,20,25）
+// - 根据数据最大值 +10% 余量，计算最小需要的步长，再向上取整到 5 的倍数
+const yMax = computed(() => {
+  const d = chartData.value
+  const all = [
+    ...(Array.isArray(d.normal) ? d.normal : []),
+    ...(Array.isArray(d.abnormal) ? d.abnormal : [])
+  ].map(v => (typeof v === 'number' && isFinite(v) ? v : Number(v) || 0))
+
+  const rawMax = Math.max(0, ...all)
+  const minYMax = 25
+
+  if (rawMax <= 0) return minYMax
+
+  // 加 10% 余量
+  const withMargin = rawMax + Math.ceil(rawMax * 0.1)
+  // 计算最小步长（5 段），并向上取整到 5 的倍数，使 interval 始终是 5 的倍数
+  const minStep = Math.ceil(withMargin / 5)
+  const step = Math.max(5, Math.ceil(minStep / 5) * 5) // 步长为 5 的倍数，且至少为 5
+  const yMaxVal = step * 5
+  return Math.max(minYMax, yMaxVal)
+})
+
 // ECharts 配置
 const chartOption = computed(() => ({
   animation: true,
@@ -164,7 +189,10 @@ const chartOption = computed(() => ({
   },
   yAxis: {
     type: 'value',
-    max: 250,
+    min: 0,
+    max: yMax.value,
+    interval: Math.max(1, yMax.value / 5), // 此处将为 5 的倍数
+    splitNumber: 5,
     axisLine: {
       show: false
     },
