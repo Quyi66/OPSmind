@@ -106,7 +106,7 @@ export class IframePreloader {
       iframe.style.height = '1px'
 
       iframe.onload = () => {
-        console.log(`✅ Iframe preloaded: ${urlWithToken}`)
+        // console.log(`✅ Iframe preloaded: ${urlWithToken}`)
         this.cache.set(url, iframe)
         this.preloadQueue.delete(url)
         resolve(iframe)

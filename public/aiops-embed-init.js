@@ -16,8 +16,12 @@
     if (!token) {
       try {
         const ls = window.localStorage
-        token = ls.getItem('DIFY_TOKEN') || ls.getItem('ops:dify_token') || ls.getItem('dify:token') || ''
-      } catch {}
+        token =
+          ls.getItem('DIFY_TOKEN') || ls.getItem('ops:dify_token') || ls.getItem('dify:token') || ''
+      } catch (e) {
+        console.log(e)
+
+      }
     }
     if (!token) token = DEFAULT_TOKEN
     // Embed script: use local only

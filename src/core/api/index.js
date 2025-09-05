@@ -264,14 +264,25 @@ class ApiService {
    * 获取首页仪表盘全量数据
    */
   async getDashboardFullData() {
-    try {
-      const res = await this.get('svs/api/dashboard/full-data')
-      // axios response unwrap
-      return res?.data
-    } catch (error) {
-      console.warn('⚠️ Failed to fetch dashboard full data, using mock:', error?.message || error)
-      return this.getMockDashboardFullData()
+    const res = await this.get('svs/api/dashboard/full-data')
+    const data = res?.data || {}
+
+    // Adapt backend payload into frontend expected shape when necessary
+    // - Ensure recentJobStats has totalJobs
+    // - Map linuxVulnStats -> vulnerabilityOverview if frontend field missing
+    const adapted = { ...data }
+    if (Array.isArray(adapted.recentJobStats)) {
+      adapted.recentJobStats = adapted.recentJobStats.map((i) => ({
+        ...i,
+        totalJobs:
+          (i?.restJobs || 0) + (i?.scriptJobs || 0) + (i?.commandJobs || 0)
+      }))
     }
+    if (!adapted.vulnerabilityOverview && adapted.linuxVulnStats) {
+      adapted.vulnerabilityOverview = adapted.linuxVulnStats
+    }
+
+    return adapted
   }
 
   /**
@@ -326,31 +337,31 @@ class ApiService {
    * 仪表盘数据模拟（与后端约定结构一致）
    */
   getMockDashboardFullData() {
-    return {
+    // Updated mock data to match provided dashboard API payload
+    const provided = {
       totalJobStats: {
-        restJobs: 23,
-        scriptJobs: 408,
+        restJobs: 56,
+        scriptJobs: 452,
         commandJobs: 3
       },
       recentJobStats: [
-        { date: '08-26', restJobs: 0, scriptJobs: 18, commandJobs: 0, totalJobs: 18 },
-        { date: '08-27', restJobs: 0, scriptJobs: 16, commandJobs: 0, totalJobs: 16 },
-        { date: '08-28', restJobs: 0, scriptJobs: 4, commandJobs: 0, totalJobs: 4 },
-        { date: '08-29', restJobs: 0, scriptJobs: 2, commandJobs: 0, totalJobs: 2 },
-        { date: '08-30', restJobs: 0, scriptJobs: 2, commandJobs: 0, totalJobs: 2 },
-        { date: '08-31', restJobs: 0, scriptJobs: 2, commandJobs: 0, totalJobs: 2 },
-        { date: '09-01', restJobs: 3, scriptJobs: 10, commandJobs: 0, totalJobs: 13 },
-        { date: '09-02', restJobs: 0, scriptJobs: 2, commandJobs: 0, totalJobs: 2 },
-        { date: '09-03', restJobs: 0, scriptJobs: 4, commandJobs: 0, totalJobs: 4 },
-        { date: '09-04', restJobs: 0, scriptJobs: 4, commandJobs: 0, totalJobs: 4 }
+        { date: '08-27', restJobs: 0, scriptJobs: 16, commandJobs: 0 },
+        { date: '08-28', restJobs: 0, scriptJobs: 4, commandJobs: 0 },
+        { date: '08-29', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '08-30', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '08-31', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '09-01', restJobs: 3, scriptJobs: 10, commandJobs: 0 },
+        { date: '09-02', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '09-03', restJobs: 0, scriptJobs: 4, commandJobs: 0 },
+        { date: '09-04', restJobs: 0, scriptJobs: 4, commandJobs: 0 },
+        { date: '09-05', restJobs: 33, scriptJobs: 44, commandJobs: 0 }
       ],
       monthlyInspectionStats: {
-        monthlyInspections: 20,
-        normalInspections: 20,
+        monthlyInspections: 22,
+        normalInspections: 22,
         abnormalInspections: 0
       },
       recentInspectionStats: [
-        { date: '08-26', totalInspections: 18, normalInspections: 2, abnormalInspections: 16 },
         { date: '08-27', totalInspections: 16, normalInspections: 8, abnormalInspections: 8 },
         { date: '08-28', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
         { date: '08-29', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
@@ -359,14 +370,15 @@ class ApiService {
         { date: '09-01', totalInspections: 10, normalInspections: 10, abnormalInspections: 0 },
         { date: '09-02', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
         { date: '09-03', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
-        { date: '09-04', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 }
+        { date: '09-04', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
+        { date: '09-05', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 }
       ],
       assetOverview: {
-        linuxServers: 2,
+        linuxServers: 5,
         unixServers: 0,
         windowsServers: 0
       },
-      vulnerabilityOverview: {
+      linuxVulnStats: {
         critical: 0,
         high: 0,
         medium: 0,
@@ -377,6 +389,22 @@ class ApiService {
         totalRollups: 0,
         totalSecurity: 0
       }
+    }
+
+    // Map to frontend types: add totalJobs and map linuxVulnStats -> vulnerabilityOverview
+    const recentJobStats = provided.recentJobStats.map(i => ({
+      ...i,
+      totalJobs: (i.restJobs || 0) + (i.scriptJobs || 0) + (i.commandJobs || 0)
+    }))
+
+    return {
+      totalJobStats: provided.totalJobStats,
+      recentJobStats,
+      monthlyInspectionStats: provided.monthlyInspectionStats,
+      recentInspectionStats: provided.recentInspectionStats,
+      assetOverview: provided.assetOverview,
+      vulnerabilityOverview: provided.linuxVulnStats,
+      windowsVulnStats: provided.windowsVulnStats
     }
   }
 

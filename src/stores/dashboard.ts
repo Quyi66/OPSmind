@@ -196,16 +196,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   const getDashboardFullData = async (): Promise<DashboardFullData> => {
-    try {
-      const { apiService } = await import('@/core/api')
-      const data = await apiService.getDashboardFullData()
-      return data as DashboardFullData
-    } catch (err) {
-      console.error('Failed to get dashboard full data:', err)
-      // 使用 API 内置的 mock 已处理，这里确保有返回
-      const { apiService } = await import('@/core/api')
-      return apiService.getMockDashboardFullData()
-    }
+    const { apiService } = await import('@/core/api')
+    const data = await apiService.getDashboardFullData()
+    return data as DashboardFullData
   }
 
   const refreshStats = async (): Promise<void> => {
