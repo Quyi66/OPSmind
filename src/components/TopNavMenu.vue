@@ -345,8 +345,20 @@ const handleSettingsClick = () => {
   } catch (e) {}
 }
 
-// 先代码写死一个默认 token（可被环境变量覆盖）
-const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'tRnUImvfrP77TFr0'
+// Dify runtime token: prefer URL param, then runtime-config.js, then env; no hardcoded fallback
+function getDifyToken() {
+  try {
+    const urlToken = new URLSearchParams(location.search).get('token')
+    if (urlToken) return urlToken
+  } catch {}
+  try {
+    const rt = (window).__OPS_RUNTIME__ || {}
+    if (rt.DIFY_TOKEN) return rt.DIFY_TOKEN
+  } catch {}
+  try {
+    return import.meta.env.VITE_DIFY_TOKEN || ''
+  } catch { return '' }
+}
 
 // 处理AI OPS按钮点击：显示/隐藏右下角面板（iframe 内为气泡方案页面）
 const handleAiOpsClick = async () => {
@@ -401,7 +413,8 @@ function ensureOpsBubble() {
     const iframe = document.createElement('iframe')
     iframe.id = C.iframe
     const params = new URLSearchParams()
-    if (DIFY_TOKEN) params.set('token', DIFY_TOKEN)
+    const token = getDifyToken()
+    if (token) params.set('token', token)
     params.set('auto', '1') // 创建后自动打开聊天窗口
     params.set('compact', '1') // 紧凑模式：尽量扩大中间内容
     // 使用“气泡方案”的页面作为 iframe 内容，内部会呈现 Dify 气泡按钮并自动打开
