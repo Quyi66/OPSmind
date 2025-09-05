@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OPS智能助手 · 气泡</title>
+  <link rel="icon" type="image/png" href="/icons/aiOPS2.png">
+  <style>
+    html, body { height: 100%; margin: 0; background: #f7f8fa; }
+    /* 保持页面简洁，展示右下角气泡按钮，由用户点击唤起 */
+    #dify-chatbot-bubble-button { display: block !important; }
+  </style>
+</head>
+<body>
+  <div id="status" style="position:fixed;top:12px;left:12px;color:#999;font-size:12px;z-index:2147483647"></div>
+  <!-- 使用统一初始化脚本；通过 ?mode=bubble 禁用自动打开与隐藏按钮 -->
+  <script src="aiops-embed-init.js?mode=bubble" defer></script>
+</body>
+</html>
+

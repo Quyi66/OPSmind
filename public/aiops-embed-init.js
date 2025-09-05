@@ -2,10 +2,15 @@
   try {
     // 解析查询参数
     var qs = new URLSearchParams(location.search)
-    // 先写死一个默认 token（可被 URL 覆盖）
-    var token = qs.get('token') || 'tRnUImvfrP77TFr0'
-    var embed = qs.get('embed') || 'https://udify.app/embed.min.js'
-    var q = qs.get('q') || ''
+    // 读取当前脚本的查询参数（便于在 SPA 内注入时传参）
+    var cs = (function(){ try { return document.currentScript ? new URL(document.currentScript.src).searchParams : null } catch(_) { return null } })()
+    // 先写死一个默认 token（可被 URL 或脚本参数覆盖）
+    var token = qs.get('token') || (cs && cs.get('token')) || 'WtEuG6BbIN98knzt'
+    var embed = qs.get('embed') || (cs && cs.get('embed')) || 'https://udify.app/embed.min.js'
+    var q = qs.get('q') || (cs && cs.get('q')) || ''
+    // 从页面 URL 或当前脚本的查询参数读取 mode
+    var mode = (qs.get('mode') || (cs && cs.get('mode')) || 'page').toLowerCase() // 'page' | 'bubble'
+    var autoOpen = mode !== 'bubble'
 
     // 如需强制 URL 或环境传入，可删除上面默认值并恢复缺少-token 的提示
     var statusEl = document.getElementById('status')
@@ -26,19 +31,23 @@
       var status = document.getElementById('status')
       var tryOpen = function () {
         try {
-          if (window.difyChatbot && typeof window.difyChatbot.open === 'function') {
-            window.difyChatbot.open()
-          } else {
-            var btn = document.getElementById('dify-chatbot-bubble-button')
-            if (btn) btn.click()
+          if (autoOpen) {
+            if (window.difyChatbot && typeof window.difyChatbot.open === 'function') {
+              window.difyChatbot.open()
+            } else {
+              var btn = document.getElementById('dify-chatbot-bubble-button')
+              if (btn) btn.click()
+            }
           }
           var win = document.getElementById('dify-chatbot-bubble-window')
           if (win) {
-            var btn2 = document.getElementById('dify-chatbot-bubble-button')
-            if (btn2) btn2.style.display = 'none'
+            if (autoOpen) {
+              var btn2 = document.getElementById('dify-chatbot-bubble-button')
+              if (btn2) btn2.style.display = 'none'
+            }
             if (status) status.classList.add('hidden')
             // 若带有 q，则尝试自动填充并发送
-            if (q) {
+            if (q && autoOpen) {
               tryAutoAsk(q)
             }
             return true

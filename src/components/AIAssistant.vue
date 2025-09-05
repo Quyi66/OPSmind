@@ -19,6 +19,7 @@
             type="text"
             placeholder="询问任何系统维护问题"
             class="search-input"
+            @focus="handleFocus"
             @keyup.enter="handleSearch"
           />
           <button @click="handleSearch" class="search-btn" :disabled="!searchQuery.trim()">
@@ -37,7 +38,7 @@ import { ElMessage } from 'element-plus'
 // 搜索查询
 const searchQuery = ref('')
 // 先代码写死一个默认 token（用于中转页 URL），可被环境变量覆盖
-const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'tRnUImvfrP77TFr0'
+const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'WtEuG6BbIN98knzt'
 
 // 最近对话
 const recentChats = ref([
@@ -73,7 +74,7 @@ const handleSearch = () => {
     const params = new URLSearchParams()
     if (q) params.set('q', q)
     if (DIFY_TOKEN) params.set('token', DIFY_TOKEN)
-    const url = `${window.location.origin}${base}aiops-embed.html${params.toString() ? `?${params.toString()}` : ''}`
+    const url = `${window.location.origin}${base}aiops-full.html${params.toString() ? `?${params.toString()}` : ''}`
     const win = window.open(url, '_blank')
     if (win) win.opener = null
   } catch (e) {
@@ -96,6 +97,26 @@ const handleSearch = () => {
   }
 
   searchQuery.value = ''
+}
+
+// 点击搜索框即新建 Tab，进入全屏助手页（并传 token）；做轻量防抖避免重复打开
+let focusCooldown = false
+function handleFocus(e) {
+  try {
+    if (focusCooldown) return
+    focusCooldown = true
+    const base = import.meta.env.BASE_URL || '/'
+    const params = new URLSearchParams()
+    if (DIFY_TOKEN) params.set('token', DIFY_TOKEN)
+    const url = `${window.location.origin}${base}aiops-full.html${params.toString() ? `?${params.toString()}` : ''}`
+    const win = window.open(url, '_blank')
+    if (win) win.opener = null
+    // 尝试移除输入框焦点，避免浏览器/输入法导致的二次触发
+    if (e && e.target && typeof e.target.blur === 'function') e.target.blur()
+  } catch (err) {
+  } finally {
+    setTimeout(() => { focusCooldown = false }, 800)
+  }
 }
 
 // 处理聊天记录点击（预留功能）

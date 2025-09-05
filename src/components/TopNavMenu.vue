@@ -344,18 +344,51 @@ const handleSettingsClick = () => {
   } catch (e) {}
 }
 
-// 先代码写死一个默认 token（用于中转页 URL），可被环境变量覆盖
-const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'tRnUImvfrP77TFr0'
+// 先代码写死一个默认 token（可被环境变量覆盖）
+const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'WtEuG6BbIN98knzt'
 
-// 处理AI OPS按钮点击
+// 处理AI OPS按钮点击：在当前页面以 Dify 气泡方式集成（不新开标签页）
 const handleAiOpsClick = async () => {
-  // 新Tab打开静态中转页（已为该路径放宽 CSP）
-  const base = import.meta.env.BASE_URL || '/'
-  const params = new URLSearchParams()
-  if (DIFY_TOKEN) params.set('token', DIFY_TOKEN)
-  const url = `${window.location.origin}${base}aiops-embed.html${params.toString() ? `?${params.toString()}` : ''}`
-  const newTab = window.open(url, '_blank')
-  if (newTab) newTab.opener = null
+  try {
+    // 若已加载，显示气泡按钮并返回（不重复注入）
+    const bubbleBtn = document.getElementById('dify-chatbot-bubble-button')
+    if (bubbleBtn) {
+      bubbleBtn.style.display = ''
+      return
+    }
+
+    // 1) 配置全局对象（避免使用内联 <script> 以兼容 CSP）
+    window.difyChatbotConfig = {
+      token: DIFY_TOKEN,
+      inputs: {},
+      systemVariables: {},
+      userVariables: {},
+    }
+
+    // 2) 注入样式，设置按钮颜色与窗口大小（只注入一次）
+    const styleId = 'ops-dify-bubble-style'
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style')
+      style.id = styleId
+      style.textContent = `
+        #dify-chatbot-bubble-button { background-color: #1C64F2 !important; }
+        #dify-chatbot-bubble-window { width: 24rem !important; height: 40rem !important; }
+      `
+      document.head.appendChild(style)
+    }
+
+    // 3) 注入官方脚本（只注入一次），加载后会在页面右下角显示气泡按钮
+    const scriptId = DIFY_TOKEN
+    if (!document.getElementById(scriptId)) {
+      const s = document.createElement('script')
+      s.src = 'https://udify.app/embed.min.js'
+      s.id = scriptId
+      s.defer = true
+      document.body.appendChild(s)
+    }
+  } catch (e) {
+    console.warn('Failed to init AI OPS bubble:', e)
+  }
 }
 
 // 处理关于下拉菜单命令

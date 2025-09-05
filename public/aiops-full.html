@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OPS智能助手</title>
+  <link rel="icon" type="image/png" href="/icons/aiOPS2.png">
+  <style>
+    html, body { height: 100%; margin: 0; background: #fff; overflow: hidden; }
+    #dify-chatbot-bubble-window {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      border-radius: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      z-index: 2147483647 !important;
+    }
+    #dify-chatbot-bubble-button { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="status" style="position:fixed;top:12px;left:12px;color:#999;font-size:12px;z-index:2147483647"></div>
+  <!-- 使用统一初始化脚本，默认 mode=page，会自动打开并尝试发送 q -->
+  <script src="aiops-embed-init.js" defer></script>
+</body>
+</html>
