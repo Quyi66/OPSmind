@@ -12,17 +12,28 @@
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 
 import DIFY_EMBED_LOCAL from '@/assets/vendor/dify/embed.min.js?url'
+const AI_ICON = new URL('@/assets/icons/aiOPS2@2x.png', import.meta.url).href
+// 先写死一个默认 token（可被环境变量覆盖）
 const TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'tRnUImvfrP77TFr0'
 const EMBED_SRC = import.meta.env.VITE_DIFY_EMBED_URL || DIFY_EMBED_LOCAL || 'https://udify.app/embed.min.js'
 const ready = ref(false)
 const statusText = ref('正在加载 OPS 智能助手...')
+const DEFAULT_ASK = (() => {
+  try {
+    return new URLSearchParams(location.search).get('q') || ''
+  } catch {
+    return ''
+  }
+})()
 
 onMounted(() => {
   try {
+    // 设置浏览器标签页 favicon 为智能助手图标
+    setFavicon(AI_ICON)
     // 配置全局变量
     window.difyChatbotConfig = {
       token: TOKEN,
-      inputs: {},
+      inputs: DEFAULT_ASK ? { q: DEFAULT_ASK, question: DEFAULT_ASK } : {},
       systemVariables: {},
       userVariables: {}
     }
@@ -70,6 +81,10 @@ onMounted(() => {
             // 隐藏气泡按钮，防止遮挡
             const btn = document.getElementById('dify-chatbot-bubble-button')
             if (btn) btn.style.display = 'none'
+            // 若 URL 携带 q，尝试自动发送为首条消息
+            if (DEFAULT_ASK) {
+              tryAutoAsk(DEFAULT_ASK)
+            }
             ready.value = true
             return true
           }
@@ -99,6 +114,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   try {
+    restoreFavicon()
     const script = document.getElementById(TOKEN)
     if (script) script.remove()
     const style = document.getElementById('dify-chatbot-style-overrides')
@@ -108,6 +124,69 @@ onBeforeUnmount(() => {
     if (bubble && bubble.parentNode) bubble.parentNode.removeChild(bubble)
   } catch {}
 })
+
+function tryAutoAsk(message) {
+  if (!message) return
+  let attempts = 0
+  const maxAttempts = 40 // ~10s
+
+  const timer = setInterval(() => {
+    attempts++
+    try {
+      // 1) 若官方对象提供发送方法，优先调用
+      if (window.difyChatbot) {
+        const methods = ['send', 'ask', 'input', 'sendMessage', 'push']
+        for (const m of methods) {
+          if (typeof window.difyChatbot[m] === 'function') {
+            try {
+              window.difyChatbot[m](message)
+              clearInterval(timer)
+              return
+            } catch {}
+          }
+        }
+      }
+
+      // 2) 直接在 DOM 中寻找输入框与发送按钮（若非跨域 iframe）
+      const container = document.getElementById('dify-chatbot-bubble-window')
+      if (container) {
+        const input = container.querySelector('textarea, input[type="text"], [contenteditable="true"]')
+        if (input) {
+          try {
+            if ('value' in input) {
+              input.value = message
+              input.dispatchEvent(new Event('input', { bubbles: true }))
+              input.dispatchEvent(new Event('change', { bubbles: true }))
+            } else {
+              input.textContent = message
+              input.dispatchEvent(new Event('input', { bubbles: true }))
+            }
+            let sendBtn = Array.from(container.querySelectorAll('button')).find(b => {
+              const t = (b.getAttribute('aria-label') || b.textContent || '').trim()
+              return /send|发送|提交|enter/i.test(t)
+            })
+            if (!sendBtn) {
+              sendBtn = Array.from(container.querySelectorAll('button')).find(b => /send|paper|arrow|提交|发送/i.test(b.className || ''))
+            }
+            if (sendBtn) {
+              sendBtn.click()
+              clearInterval(timer)
+              return
+            }
+          } catch {}
+        }
+        const iframe = container.querySelector('iframe')
+        if (iframe && iframe.contentWindow) {
+          try {
+            iframe.contentWindow.postMessage({ source: 'opsmind', type: 'dify:send', payload: { text: message } }, '*')
+          } catch {}
+        }
+      }
+    } catch {}
+
+    if (attempts >= maxAttempts) clearInterval(timer)
+  }, 250)
+}
 
 function retryOpen() {
   try {
@@ -144,6 +223,38 @@ function retryOpen() {
     console.error('Retry open failed:', e)
     statusText.value = '手动打开失败，查看控制台错误。'
   }
+}
+
+// --- Favicon helpers ---
+let previousFaviconHref = ''
+let createdFavicon = false
+function setFavicon(href) {
+  try {
+    let link = document.querySelector('link[rel="icon"]')
+    if (!link) {
+      link = document.createElement('link')
+      link.rel = 'icon'
+      createdFavicon = true
+      document.head.appendChild(link)
+    } else {
+      createdFavicon = false
+      previousFaviconHref = link.getAttribute('href') || ''
+    }
+    link.type = 'image/png'
+    link.href = href
+  } catch {}
+}
+function restoreFavicon() {
+  try {
+    const link = document.querySelector('link[rel="icon"]')
+    if (!link) return
+    if (createdFavicon) {
+      // We created it here; remove on exit
+      link.parentNode && link.parentNode.removeChild(link)
+    } else if (previousFaviconHref) {
+      link.href = previousFaviconHref
+    }
+  } catch {}
 }
 </script>
 

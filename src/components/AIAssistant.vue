@@ -17,7 +17,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="问我想要做的地方"
+            placeholder="询问任何系统维护问题"
             class="search-input"
             @keyup.enter="handleSearch"
           />
@@ -36,8 +36,8 @@ import { ElMessage } from 'element-plus'
 
 // 搜索查询
 const searchQuery = ref('')
-// 供中转页使用的可选 token（如未配置则使用中转页默认）
-const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || ''
+// 先代码写死一个默认 token（用于中转页 URL），可被环境变量覆盖
+const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'tRnUImvfrP77TFr0'
 
 // 最近对话
 const recentChats = ref([

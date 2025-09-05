@@ -344,12 +344,16 @@ const handleSettingsClick = () => {
   } catch (e) {}
 }
 
+// 先代码写死一个默认 token（用于中转页 URL），可被环境变量覆盖
+const DIFY_TOKEN = import.meta.env.VITE_DIFY_TOKEN || 'tRnUImvfrP77TFr0'
+
 // 处理AI OPS按钮点击
 const handleAiOpsClick = async () => {
   // 新Tab打开静态中转页（已为该路径放宽 CSP）
   const base = import.meta.env.BASE_URL || '/'
-  // 这里可附带 ?q= 预填输入（如需从别处传入内容，可替换 q）
-  const url = `${window.location.origin}${base}aiops-embed.html`
+  const params = new URLSearchParams()
+  if (DIFY_TOKEN) params.set('token', DIFY_TOKEN)
+  const url = `${window.location.origin}${base}aiops-embed.html${params.toString() ? `?${params.toString()}` : ''}`
   const newTab = window.open(url, '_blank')
   if (newTab) newTab.opener = null
 }

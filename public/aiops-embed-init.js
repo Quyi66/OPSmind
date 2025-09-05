@@ -2,9 +2,13 @@
   try {
     // 解析查询参数
     var qs = new URLSearchParams(location.search)
-    var token = qs.get('token') || 'tRnUImvfrP77TFrP77TFrP77TFrP77TFr0'.replace('P77TFrP77TFrP77TFrP77TFr', '') // 简单避免静态扫描
+    // 先写死一个默认 token（可被 URL 覆盖）
+    var token = qs.get('token') || 'tRnUImvfrP77TFr0'
     var embed = qs.get('embed') || 'https://udify.app/embed.min.js'
     var q = qs.get('q') || ''
+
+    // 如需强制 URL 或环境传入，可删除上面默认值并恢复缺少-token 的提示
+    var statusEl = document.getElementById('status')
 
     // 配置 Dify Chatbot（可将 q 传给 Start 节点的变量）
     window.difyChatbotConfig = {
@@ -33,6 +37,10 @@
             var btn2 = document.getElementById('dify-chatbot-bubble-button')
             if (btn2) btn2.style.display = 'none'
             if (status) status.classList.add('hidden')
+            // 若带有 q，则尝试自动填充并发送
+            if (q) {
+              tryAutoAsk(q)
+            }
             return true
           }
         } catch (e) { /* ignore */ }
@@ -60,3 +68,89 @@
   }
 })()
 
+// 尝试将 q 作为用户输入自动发送到聊天窗口
+function tryAutoAsk(message) {
+  if (!message) return
+
+  var attempts = 0
+  var maxAttempts = 40 // ~10 秒
+
+  var timer = setInterval(function () {
+    attempts++
+    try {
+      // 1) 优先尝试官方对象可能提供的发送方法
+      if (window.difyChatbot) {
+        var methods = ['send', 'ask', 'input', 'sendMessage', 'push']
+        for (var i = 0; i < methods.length; i++) {
+          var m = methods[i]
+          if (typeof window.difyChatbot[m] === 'function') {
+            try {
+              // 常见方法可能接受字符串或对象
+              var ok = window.difyChatbot[m].length > 0
+                ? window.difyChatbot[m](message)
+                : window.difyChatbot[m]()
+              clearInterval(timer)
+              return
+            } catch (_) {}
+          }
+        }
+      }
+
+      // 2) 直接尝试在窗口 DOM 中找到输入框并点击发送（若非跨域 iframe）
+      var container = document.getElementById('dify-chatbot-bubble-window')
+      if (container) {
+        // 查找输入元素
+        var input = container.querySelector('textarea, input[type="text"], [contenteditable="true"]')
+        if (input) {
+          try {
+            // 设置值并派发事件
+            if ('value' in input) {
+              input.value = message
+              var ev1 = new Event('input', { bubbles: true })
+              input.dispatchEvent(ev1)
+              var ev2 = new Event('change', { bubbles: true })
+              input.dispatchEvent(ev2)
+            } else {
+              input.textContent = message
+              var ev3 = new Event('input', { bubbles: true })
+              input.dispatchEvent(ev3)
+            }
+            // 找到“发送”按钮
+            var btns = Array.prototype.slice.call(container.querySelectorAll('button'))
+            var sendBtn = btns.find(function (b) {
+              var t = (b.getAttribute('aria-label') || b.textContent || '').trim()
+              return /send|发送|提交|enter/i.test(t)
+            })
+            if (!sendBtn) {
+              // 退一步查找带有纸飞机/箭头图标的按钮
+              sendBtn = btns.find(function (b) {
+                var cls = b.className || ''
+                return /send|paper|arrow|提交|发送/i.test(cls)
+              })
+            }
+            if (sendBtn) {
+              sendBtn.click()
+              clearInterval(timer)
+              return
+            }
+          } catch (_) {
+            // 可能因跨域或 Shadow DOM 导致失败
+          }
+        }
+
+        // 3) 若为 iframe，尝试通过 postMessage 通知（取决于官方脚本是否支持）
+        var iframe = container.querySelector('iframe')
+        if (iframe && iframe.contentWindow) {
+          try {
+            iframe.contentWindow.postMessage({ source: 'opsmind', type: 'dify:send', payload: { text: message } }, '*')
+            // 无法确认是否成功，只尝试发送一次
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+
+    if (attempts >= maxAttempts) {
+      clearInterval(timer)
+    }
+  }, 250)
+}
