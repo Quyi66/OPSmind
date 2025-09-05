@@ -10,13 +10,10 @@
   </style>
 </head>
 <body>
-  <div class="tip">此测试页使用纯官方片段加载气泡。若此处也无气泡按钮，多半为 token 无效或被域名限制。</div>
-  <script>
-  window.difyChatbotConfig = {
-    token: 'tRnUImvfrP77TFr0',
-    inputs: {}, systemVariables: {}, userVariables: {}
-  }
-  </script>
-  <script src="https://udify.app/embed.min.js" id="tRnUImvfrP77TFr0" defer></script>
+  <div class="tip">此测试页使用统一初始化脚本加载气泡（从 URL 或 runtime-config.js 获取 token 与地址）。</div>
+  <!-- Runtime config if mounted (optional) -->
+  <script src="runtime-config.js" defer></script>
+  <!-- Use bubble mode; 可在查询参数中带 ?token=...&embed=... -->
+  <script src="aiops-embed-init.js?mode=bubble" defer></script>
 </body>
 </html>

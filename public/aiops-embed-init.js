@@ -6,8 +6,8 @@
     var cs = (function(){ try { return document.currentScript ? new URL(document.currentScript.src).searchParams : null } catch(_) { return null } })()
     // 读取 runtime 配置（由容器 entrypoint 渲染）
     var rt = (function(){ try { return window.__OPS_RUNTIME__ || {} } catch(_) { return {} } })()
-    // 先写死一个默认 token（可被 URL 或脚本参数覆盖）
-    var token = qs.get('token') || (cs && cs.get('token')) || rt.DIFY_TOKEN || 'tRnUImvfrP77TFr0'
+    // 获取 token（仅来源于 URL、当前脚本参数或 runtime-config），不再写死默认值
+    var token = qs.get('token') || (cs && cs.get('token')) || rt.DIFY_TOKEN || ''
     var runtimeEmbed = rt.DIFY_EMBED_URL
     // Prefer a single origin variable if provided (e.g., https://dify.example.com[:port])
     if (!runtimeEmbed && rt.DIFY_APP) {
@@ -40,8 +40,11 @@
       try { document.documentElement.setAttribute('data-compact', '1') } catch(_) {}
     }
 
-    // 如需强制 URL 或环境传入，可删除上面默认值并恢复缺少-token 的提示
     var statusEl = document.getElementById('status')
+    if (!token) {
+      if (statusEl) statusEl.textContent = '缺少 token：请通过 URL 传入 ?token=...，或通过运行时配置设置 DIFY_TOKEN。'
+      return
+    }
 
     // 配置 Dify Chatbot（可将 q 传给 Start 节点的变量）
     window.difyChatbotConfig = {

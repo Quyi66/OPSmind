@@ -13,10 +13,23 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 
 import DIFY_EMBED_LOCAL from '@/assets/vendor/dify/embed.min.js?url'
 const AI_ICON = new URL('@/assets/icons/aiOPS2@2x.png', import.meta.url).href
-// URL 优先，其次环境变量，最后回退默认
+// 运行时配置（若存在 runtime-config.js）
+const RUNTIME = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
+// Token 获取：URL 参数 -> runtime-config -> 环境变量；不再写死默认
 const URL_TOKEN = (() => { try { return new URLSearchParams(location.search).get('token') || '' } catch { return '' } })()
-const TOKEN = URL_TOKEN || (import.meta.env.VITE_DIFY_TOKEN || 'tRnUImvfrP77TFr0')
-const EMBED_SRC = import.meta.env.VITE_DIFY_EMBED_URL || DIFY_EMBED_LOCAL || 'https://udify.app/embed.min.js'
+const TOKEN = URL_TOKEN || RUNTIME.DIFY_TOKEN || (import.meta.env.VITE_DIFY_TOKEN || '')
+// Embed 地址：env -> runtime(DIFY_EMBED_URL 或由 DIFY_APP 拼装) -> 本地占位 -> 公网默认
+const RUNTIME_EMBED = (() => {
+  try {
+    if (RUNTIME.DIFY_EMBED_URL) return RUNTIME.DIFY_EMBED_URL
+    if (RUNTIME.DIFY_APP) {
+      const origin = String(RUNTIME.DIFY_APP).replace(/\/$/, '')
+      return `${origin}/embed.min.js`
+    }
+  } catch {}
+  return ''
+})()
+const EMBED_SRC = import.meta.env.VITE_DIFY_EMBED_URL || RUNTIME_EMBED || DIFY_EMBED_LOCAL || 'https://udify.app/embed.min.js'
 const ready = ref(false)
 const statusText = ref('正在加载 OPS 智能助手...')
 const DEFAULT_ASK = (() => {
@@ -29,6 +42,10 @@ const DEFAULT_ASK = (() => {
 
 onMounted(() => {
   try {
+    if (!TOKEN) {
+      statusText.value = '缺少 token：请通过 URL 传入 ?token=...，或通过运行时配置/环境变量设置 DIFY_TOKEN。'
+      return
+    }
     // 设置浏览器标签页 favicon 为智能助手图标
     setFavicon(AI_ICON)
     // 配置全局变量
