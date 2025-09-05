@@ -10,10 +10,10 @@
       }
     })()
     // Read defaults from runtime-config.js (centralized control)
-    const DIFY_TOKNE = String(rt.DIFY_TOKNE || '')
+    const DIFY_TOKEN = String(rt.DIFY_TOKEN || '')
     const DIFY_BASE_URL = String(rt.DIFY_BASE_URL || '')
 
-    // Resolve token: URL > runtime
+    // Resolve token: URL > runtime (DIFY_TOKEN) > localStorage
     let token = qs.get('token') || rt.DIFY_TOKEN || ''
     if (!token) {
       try {
@@ -25,10 +25,10 @@
 
       }
     }
-    if (!token) token = DIFY_TOKNE
+    if (!token) token = DIFY_TOKEN
     // Embed script: use local only
     const embed = 'dify/embed.min.js'
-    const difyBase = String(rt.DIFY_APP || rt.DIFY_ORIGIN || DIFY_BASE_URL).replace(/\/$/, '')
+    const difyBase = String(DIFY_BASE_URL).replace(/\/$/, '')
     // No initial question injection
     // Mode/page behavior
     const mode = (qs.get('mode') || 'page').toLowerCase() // 'page' | 'bubble'
@@ -44,9 +44,7 @@
     }
 
     // Pass config to Dify
-    window.difyChatbotConfig = difyBase
-      ? { token, baseUrl: difyBase, inputs: {}, systemVariables: {}, userVariables: {} }
-      : { token, inputs: {}, systemVariables: {}, userVariables: {} }
+    window.difyChatbotConfig = { token, baseUrl: difyBase, inputs: {}, systemVariables: {}, userVariables: {} }
 
     // If already injected (same token as element id), try to open directly
     const existing = document.getElementById(token)

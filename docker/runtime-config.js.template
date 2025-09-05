@@ -1,12 +1,5 @@
 ;window.__OPS_RUNTIME__ = window.__OPS_RUNTIME__ || {};
 // Dify runtime configuration rendered by entrypoint via envsubst
-// Minimal set required by public embed pages.
-window.__OPS_RUNTIME__.DIFY_TOKEN  = "${DIFY_TOKEN}";
-// Preferred single origin variable (e.g., https://dify.example.com[:port])
-window.__OPS_RUNTIME__.DIFY_APP = "${DIFY_APP}";
-// Backward compatibility
-window.__OPS_RUNTIME__.DIFY_ORIGIN = "${DIFY_ORIGIN}";
-
-// Centralized defaults for embed init (container-level fallbacks)
-window.__OPS_RUNTIME__.DIFY_TOKNE = "${DIFY_TOKNE}";
+// Unified keys for embed pages.
+window.__OPS_RUNTIME__.DIFY_TOKEN = "${DIFY_TOKEN}";
 window.__OPS_RUNTIME__.DIFY_BASE_URL = "${DIFY_BASE_URL}";
