@@ -4,16 +4,16 @@ FROM nginx:1.25-alpine
 RUN apk add --no-cache bash curl gettext
 
 # ---- Runtime-configurable backend ----
-# Default values; can be overridden via `docker run -e ...`
-ENV BACKEND_SCHEME=http \
-    BACKEND_HOST=10.1.40.112 \
-    BACKEND_PORT=80 \
+# Use a single backend URL (schema+host[:port]) and an internal oplus port
+# Can be overridden via `docker run -e BACKEND_URL=... -e OPLUS_PORT=...`
+ENV BACKEND_URL=http://10.1.40.112:80 \
     OPLUS_PORT=8081
 
 # ---- Nginx config ----
 RUN rm -f /etc/nginx/conf.d/default.conf
 COPY docker/nginx/default.conf /etc/nginx/templates/default.conf.template
 COPY docker/nginx/oplus.conf /etc/nginx/templates/oplus.conf.template
+COPY docker/runtime-config.js.template /etc/nginx/templates/runtime-config.js.template
 
 # ---- App static assets ----
 COPY dist/ /usr/share/nginx/html/opsmind/

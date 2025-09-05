@@ -4,9 +4,30 @@
     var qs = new URLSearchParams(location.search)
     // 读取当前脚本的查询参数（便于在 SPA 内注入时传参）
     var cs = (function(){ try { return document.currentScript ? new URL(document.currentScript.src).searchParams : null } catch(_) { return null } })()
+    // 读取 runtime 配置（由容器 entrypoint 渲染）
+    var rt = (function(){ try { return window.__OPS_RUNTIME__ || {} } catch(_) { return {} } })()
     // 先写死一个默认 token（可被 URL 或脚本参数覆盖）
-    var token = qs.get('token') || (cs && cs.get('token')) || 'tRnUImvfrP77TFr0'
-    var embed = qs.get('embed') || (cs && cs.get('embed')) || 'https://udify.app/embed.min.js'
+    var token = qs.get('token') || (cs && cs.get('token')) || rt.DIFY_TOKEN || 'tRnUImvfrP77TFr0'
+    var runtimeEmbed = rt.DIFY_EMBED_URL
+    // Prefer a single origin variable if provided (e.g., https://dify.example.com[:port])
+    if (!runtimeEmbed && rt.DIFY_APP) {
+      try {
+        var originA = String(rt.DIFY_APP).replace(/\/$/, '')
+        runtimeEmbed = originA + '/embed.min.js'
+      } catch (_) {}
+    }
+    // Backward compatibility: DIFY_ORIGIN
+    if (!runtimeEmbed && rt.DIFY_ORIGIN) {
+      try {
+        var originB = String(rt.DIFY_ORIGIN).replace(/\/$/, '')
+        runtimeEmbed = originB + '/embed.min.js'
+      } catch (_) {}
+    }
+    // Backward compatibility: compose from scheme/host/port if origin is not provided
+    if (!runtimeEmbed && rt.DIFY_SCHEME && rt.DIFY_HOST) {
+      runtimeEmbed = rt.DIFY_SCHEME + '://' + rt.DIFY_HOST + (rt.DIFY_PORT ? (':' + rt.DIFY_PORT) : '') + '/embed.min.js'
+    }
+    var embed = qs.get('embed') || (cs && cs.get('embed')) || runtimeEmbed || 'https://udify.app/embed.min.js'
     var q = qs.get('q') || (cs && cs.get('q')) || ''
     // 从页面 URL 或当前脚本的查询参数读取 mode/auto
     var mode = (qs.get('mode') || (cs && cs.get('mode')) || 'page').toLowerCase() // 'page' | 'bubble'
