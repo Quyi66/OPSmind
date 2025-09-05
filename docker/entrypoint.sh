@@ -18,7 +18,7 @@ envsubst '${BACKEND_URL} ${OPLUS_PORT}' < "$OPLUS_TEMPLATE" > "$OPLUS_TARGET"
 RUNTIME_TEMPLATE="/etc/nginx/templates/runtime-config.js.template"
 RUNTIME_TARGET="/usr/share/nginx/html/opsmind/runtime-config.js"
 echo "[entrypoint] Rendering runtime-config.js (DIFY_* envs)"
-envsubst '${DIFY_SCHEME} ${DIFY_HOST} ${DIFY_PORT} ${DIFY_TOKEN} ${DIFY_EMBED_URL} ${DIFY_ORIGIN} ${DIFY_APP}' < "$RUNTIME_TEMPLATE" > "$RUNTIME_TARGET" || true
+envsubst '${DIFY_TOKEN} ${DIFY_ORIGIN} ${DIFY_APP} ${DIFY_TOKNE} ${DIFY_BASE_URL}' < "$RUNTIME_TEMPLATE" > "$RUNTIME_TARGET" || true
 
 echo "[entrypoint] Starting nginx..."
 exec "$@"

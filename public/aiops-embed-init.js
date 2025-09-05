@@ -1,10 +1,5 @@
 ;(function () {
   try {
-    // Defaults: move constants to the top for easy override/visibility
-    // const DEFAULT_TOKEN = 'tRnUImvfrP77TFr0'
-    const DEFAULT_TOKEN = 'CqLqxTQL8FeNqAqK'
-    const DEFAULT_BASE_URL = 'http://10.1.8.229:18081'
-
     const qs = new URLSearchParams(location.search || '')
     const rt = (function () {
       try {
@@ -14,6 +9,9 @@
         return {}
       }
     })()
+    // Read defaults from runtime-config.js (centralized control)
+    const DIFY_TOKNE = String(rt.DIFY_TOKNE || '')
+    const DIFY_BASE_URL = String(rt.DIFY_BASE_URL || '')
 
     // Resolve token: URL > runtime
     let token = qs.get('token') || rt.DIFY_TOKEN || ''
@@ -27,10 +25,10 @@
 
       }
     }
-    if (!token) token = DEFAULT_TOKEN
+    if (!token) token = DIFY_TOKNE
     // Embed script: use local only
     const embed = 'dify/embed.min.js'
-    const difyBase = String(rt.DIFY_APP || rt.DIFY_ORIGIN || DEFAULT_BASE_URL).replace(/\/$/, '')
+    const difyBase = String(rt.DIFY_APP || rt.DIFY_ORIGIN || DIFY_BASE_URL).replace(/\/$/, '')
     // No initial question injection
     // Mode/page behavior
     const mode = (qs.get('mode') || 'page').toLowerCase() // 'page' | 'bubble'
