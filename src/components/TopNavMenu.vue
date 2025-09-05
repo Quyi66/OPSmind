@@ -20,7 +20,6 @@
 
             <!-- 分组菜单项 -->
             <a v-for="group in menuGroups" :key="group.code" href="#" class="nav-item"
-              v-if="!isStandaloneActive"
               :class="{ 'nav-item-active': activeGroup === group.code }" @click.prevent="handleGroupClick(group)">
               <img :src="getMenuIcon(group.code)" :alt="group.name" class="nav-icon" />
               <span class="nav-text">{{ group.name }}</span>
@@ -40,28 +39,32 @@
         <!-- Right Side User Area -->
         <div class="nav-right">
           <!-- AI OPS Button -->
-          <div class="ai-ops-wrapper" @click="handleAiOpsClick">
-            <img :src="aiOpsIcon" alt="AI OPS" class="ai-ops-simple" />
-          </div>
+          <el-tooltip content="AI OPS" placement="bottom">
+            <div class="ai-ops-wrapper" @click="handleAiOpsClick">
+              <img :src="aiOpsIcon" alt="AI OPS" class="ai-ops-simple" />
+            </div>
+          </el-tooltip>
 
           <!-- Notification Button -->
           <div class="notification-wrapper">
-            <button @click="handleNotificationClick" class="notification-btn">
-              <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-              </svg>
-              <!-- Notification Badge -->
-              <span v-if="notificationCount > 0" class="notification-badge">
-                {{ notificationCount > 99 ? '99+' : notificationCount }}
-              </span>
-            </button>
+            <el-tooltip content="通知" placement="bottom">
+              <button @click="handleNotificationClick" class="notification-btn" aria-label="通知">
+                <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                </svg>
+                <!-- Notification Badge -->
+                <span v-if="notificationCount > 0" class="notification-badge">
+                  {{ notificationCount > 99 ? '99+' : notificationCount }}
+                </span>
+              </button>
+            </el-tooltip>
           </div>
 
           <!-- User Dropdown -->
           <el-dropdown @command="handleUserCommand" class="user-dropdown">
             <div class="user-dropdown-trigger">
-              <el-avatar :size="28" class="user-avatar" :src="avatarImage"></el-avatar>
+              <el-avatar :size="32" class="user-avatar" :src="avatarImage"></el-avatar>
               <span class="user-name">{{ displayUserName }}</span>
               <svg class="dropdown-arrow" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd"
@@ -167,7 +170,6 @@
 
           <!-- 分组菜单项 -->
           <a v-for="group in menuGroups" :key="group.code" href="#" class="mobile-nav-item"
-            v-if="!isStandaloneActive"
             :class="{ 'mobile-nav-item-active': activeGroup === group.code }" @click.prevent="handleGroupClick(group)">
             <img :src="getMenuIcon(group.code)" :alt="group.name" class="mobile-nav-icon" />
             <span class="mobile-nav-text">{{ group.name }}</span>
@@ -235,7 +237,6 @@ const props = defineProps({
 const homeMenu = computed(() => menuStore.homeMenu)
 const menuGroups = computed(() => menuStore.menuGroups)
 const activeGroup = computed(() => menuStore.activeGroup)
-const isStandaloneActive = computed(() => ['settings', 'ssc'].includes(menuStore.activeMenuItem))
 
 const displayUserName = computed(() => {
   if (!props.user) return '未登录'
@@ -492,8 +493,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* 与内容区对齐：左右内边距与主容器一致 */
-  padding: 0.5rem 1rem; /* 16px */
+  /* 与内容区对齐：左右内边距与主容器一致；进一步减小高度 */
+  padding: 0.25rem 1rem; /* 再次收紧垂直间距 */
   /* 顶部菜单与内容区使用相同的定宽容器 */
   max-width: var(--app-max-width);
   margin: 0 auto;
@@ -542,7 +543,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.3rem 0.5rem; /* 进一步收紧内边距 */
   margin: 0 0.25rem;
   border-radius: 0.5rem;
   text-decoration: none;
@@ -562,8 +563,8 @@ onUnmounted(() => {
 }
 
 .nav-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem; /* 放大图标尺寸 */
+  height: 1.25rem;
   border-radius: 0.25rem;
   flex-shrink: 0;
   object-fit: contain;
@@ -574,7 +575,7 @@ onUnmounted(() => {
 }
 
 .nav-text {
-  font-size: 0.875rem;
+  font-size: 1rem; /* 字体放大一档 */
   font-weight: 500;
 }
 
@@ -640,7 +641,7 @@ onUnmounted(() => {
 }
 
 .ai-ops-simple {
-  height: 1.25rem;
+  height: 1.5rem; /* 按要求放大到 1.5rem */
   width: auto;
   object-fit: contain;
   object-position: center;
@@ -670,8 +671,8 @@ onUnmounted(() => {
 }
 
 .notification-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem; /* 放大图标尺寸 */
+  height: 1.25rem;
 }
 
 .notification-badge {
@@ -702,8 +703,8 @@ onUnmounted(() => {
   border-radius: 0.375rem;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;   /* 放大触控目标 */
+  height: 2rem;
 
   &:hover {
     color: #6b7280;
@@ -711,7 +712,7 @@ onUnmounted(() => {
   }
 
   .el-icon {
-    font-size: 1rem;
+    font-size: 1.25rem; /* 放大内部图标 */
   }
 }
 
@@ -755,7 +756,7 @@ onUnmounted(() => {
 
 .user-name {
   display: none;
-  font-size: 0.875rem;
+  font-size: 1rem; /* 放大用户名字号 */
   color: #374151;
 
   @media (min-width: 768px) {
@@ -765,8 +766,8 @@ onUnmounted(() => {
 
 .dropdown-arrow {
   display: none;
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem;  /* 放大下拉箭头 */
+  height: 1.25rem;
   color: #9ca3af;
 
   @media (min-width: 640px) {
@@ -776,8 +777,8 @@ onUnmounted(() => {
 
 // Language icon sizing within el-icon
 .language-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem;  /* 放大语言图标 */
+  height: 1.25rem;
   display: block;
 }
 
@@ -821,8 +822,8 @@ onUnmounted(() => {
 }
 
 .mobile-nav-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem; /* 移动端图标同步放大 */
+  height: 1.25rem;
   border-radius: 0.25rem;
   flex-shrink: 0;
   object-fit: contain;
@@ -833,7 +834,7 @@ onUnmounted(() => {
 }
 
 .mobile-nav-text {
-  font-size: 0.875rem;
+  font-size: 1rem; /* 移动端字体同步放大 */
   font-weight: 500;
 }
 

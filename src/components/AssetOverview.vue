@@ -12,7 +12,7 @@
       <div class="header-actions">
         <div class="filter-tabs">
           <button class="filter-tab active">按类型</button>
-          <button class="filter-tab">按系统</button>
+          <button class="filter-tab" disabled aria-disabled="true" title="暂不可用">按系统</button>
           <button class="more-btn">...</button>
         </div>
       </div>
@@ -216,10 +216,20 @@ const chartOption = computed(() => ({
   }
 
   &.active {
-    border-color: #e8f2ff;
-    color: #3b82f6;
-    background: #f8fbff;
+    /* 仅强调文字颜色，不要背景和边框；颜色更浅一些 */
+    border-color: transparent;
+    background: transparent;
+    color: #60a5fa; /* 浅蓝（blue-400） */
   }
+}
+
+.filter-tab:disabled,
+.filter-tab[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 1; /* 保持清晰可读 */
+  background: transparent;
+  color: #8a8a8a; /* 略深的灰，提升对比度 */
+  border: none; /* 不要边框 */
 }
 
 .more-btn {

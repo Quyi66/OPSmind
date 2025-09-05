@@ -337,7 +337,7 @@ const handleRecentClick = item => {
   }
 
   .recent-name {
-    font-size: 12px;
+    font-size: 13px; /* 大屏同步放大一档 */
   }
 }
 
@@ -696,7 +696,7 @@ const handleRecentClick = item => {
 }
 
 .recent-name {
-  font-size: 11px; /* 文本略小以适应密度 */
+  font-size: 12px; /* 文本整体放大一档 */
   color: #495057;
   text-align: left;
   line-height: 1.2;
@@ -758,7 +758,7 @@ const handleRecentClick = item => {
   }
 
   .recent-name {
-    font-size: 10px;
+    font-size: 11px;
   }
 }
 
@@ -825,7 +825,7 @@ const handleRecentClick = item => {
   }
 
   .recent-name {
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .todo-item {
@@ -891,7 +891,7 @@ const handleRecentClick = item => {
   }
 
   .recent-name {
-    font-size: 8px;
+    font-size: 9px;
   }
 }
 </style>
