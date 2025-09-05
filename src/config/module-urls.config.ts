@@ -45,7 +45,8 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
       hashMode: true
     },
     angularjs: {
-      baseUrl: 'http://localhost:8080/oplus/base',
+      // 使用同源路径，通过 Vite 代理到本地 8080，避免 X-Frame-Options SAMEORIGIN 限制
+      baseUrl: '/oplus/base',
       hashMode: true
     },
     api: {
