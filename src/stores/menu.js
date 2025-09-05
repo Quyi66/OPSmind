@@ -20,6 +20,8 @@ export const useMenuStore = defineStore('menu', () => {
   const sideMenuCollapsed = ref(false) // 左侧菜单是否折叠
   const showSideMenu = ref(false) // 是否显示左侧菜单
   const recentItems = ref(loadRecent()) // 最近使用功能
+  // 独立页面（不属于任何分组的内嵌页），打开时隐藏左侧二级菜单
+  const STANDALONE_ITEMS = ['settings', 'ssc']
 
   // 计算属性
   const currentGroup = computed(() => {
@@ -76,6 +78,13 @@ export const useMenuStore = defineStore('menu', () => {
   const setActiveMenuItem = (menuCode) => {
     console.log('🎯 Setting active menu item:', menuCode)
     activeMenuItem.value = menuCode
+
+    // 独立页面：隐藏左侧菜单，避免与之前分组的菜单混淆
+    if (STANDALONE_ITEMS.includes(menuCode)) {
+      showSideMenu.value = false
+      // 不记录最近使用，且不改变当前激活分组
+      return
+    }
 
     // 根据菜单项自动设置对应的分组（但不触发自动选择逻辑）
     const info = getMenuItemInfo(menuCode)

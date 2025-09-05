@@ -185,7 +185,7 @@ onUnmounted(() => {
 
 // 侧边菜单容器
 .side-menu-container {
-  display: none; /* 全局移除左侧图标栏 */
+  /* 根据业务状态控制显示，取消全局隐藏以恢复二级左侧菜单 */
   flex-shrink: 0;
   z-index: 200;
   transition: transform 0.3s ease-in-out;

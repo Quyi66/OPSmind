@@ -20,6 +20,7 @@
 
             <!-- 分组菜单项 -->
             <a v-for="group in menuGroups" :key="group.code" href="#" class="nav-item"
+              v-if="!isStandaloneActive"
               :class="{ 'nav-item-active': activeGroup === group.code }" @click.prevent="handleGroupClick(group)">
               <img :src="getMenuIcon(group.code)" :alt="group.name" class="nav-icon" />
               <span class="nav-text">{{ group.name }}</span>
@@ -166,6 +167,7 @@
 
           <!-- 分组菜单项 -->
           <a v-for="group in menuGroups" :key="group.code" href="#" class="mobile-nav-item"
+            v-if="!isStandaloneActive"
             :class="{ 'mobile-nav-item-active': activeGroup === group.code }" @click.prevent="handleGroupClick(group)">
             <img :src="getMenuIcon(group.code)" :alt="group.name" class="mobile-nav-icon" />
             <span class="mobile-nav-text">{{ group.name }}</span>
@@ -233,6 +235,7 @@ const props = defineProps({
 const homeMenu = computed(() => menuStore.homeMenu)
 const menuGroups = computed(() => menuStore.menuGroups)
 const activeGroup = computed(() => menuStore.activeGroup)
+const isStandaloneActive = computed(() => ['settings', 'ssc'].includes(menuStore.activeMenuItem))
 
 const displayUserName = computed(() => {
   if (!props.user) return '未登录'
