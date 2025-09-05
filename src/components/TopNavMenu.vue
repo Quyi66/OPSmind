@@ -436,15 +436,60 @@ function ensureOpsBubble() {
       <meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
       <style>
         html,body{height:100%;margin:0;background:#fff;}
-        /* 可按需自定义气泡按钮颜色与窗口尺寸 */
+        /* 按钮主色 */
         #dify-chatbot-bubble-button{ background-color:#1C64F2 !important; }
-        #dify-chatbot-bubble-window{ width:24rem !important; height:40rem !important; }
+        /* 让聊天窗占满 iframe 可视区域 */
+        #dify-chatbot-bubble-window{
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          max-width: none !important;
+          max-height: none !important;
+          border-radius: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
       </style>
     </head><body>
       <script>
         window.difyChatbotConfig = { token: ${tokenJson}, inputs: {}, systemVariables: {}, userVariables: {} }
       <\/script>
       <script src=\"${embedSrc}\" id=\"${tokenAttr}\" defer><\/script>
+      <script>
+        (function(){
+          var attempts = 0, max = 60;
+          var timer = setInterval(function(){
+            attempts++;
+            try{
+              if (window.difyChatbot && typeof window.difyChatbot.open === 'function') {
+                window.difyChatbot.open();
+              } else {
+                var btn = document.getElementById('dify-chatbot-bubble-button');
+                if (btn) btn.click();
+              }
+              var win = document.getElementById('dify-chatbot-bubble-window');
+              if (win) {
+                // 打开后隐藏按钮，避免遮挡
+                var btn2 = document.getElementById('dify-chatbot-bubble-button');
+                if (btn2) btn2.style.display = 'none';
+                // 再次确保全屏样式（保险）
+                win.style.position = 'fixed';
+                win.style.inset = '0';
+                win.style.width = '100vw';
+                win.style.height = '100vh';
+                win.style.maxWidth = 'none';
+                win.style.maxHeight = 'none';
+                win.style.borderRadius = '0';
+                win.style.border = 'none';
+                win.style.boxShadow = 'none';
+                clearInterval(timer);
+              }
+            }catch(e){}
+            if (attempts > max) clearInterval(timer);
+          }, 250);
+        })();
+      <\/script>
     </body></html>`
     iframe.srcdoc = html
     panel.appendChild(iframe)
