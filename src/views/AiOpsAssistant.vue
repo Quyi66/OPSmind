@@ -14,7 +14,7 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 const AI_ICON = new URL('@/assets/icons/aiOPS2@2x.png', import.meta.url).href
 // 运行时配置（若存在 runtime-config.js）
 const RUNTIME = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
-// Token 获取：URL 参数 -> runtime-config -> 环境变量；不再写死默认
+// Token 获取：URL 参数 -> runtime DIFY_TOKEN -> 环境变量（兼容）
 const URL_TOKEN = (() => { try { return new URLSearchParams(location.search).get('token') || '' } catch { return '' } })()
 const DEFAULT_DIFY_TOKEN = 'tRnUImvfrP77TFr0'
 const TOKEN = URL_TOKEN || RUNTIME.DIFY_TOKEN || (import.meta.env.VITE_DIFY_TOKEN || DEFAULT_DIFY_TOKEN)
@@ -33,7 +33,7 @@ const DEFAULT_ASK = (() => {
 onMounted(() => {
   try {
     if (!TOKEN) {
-      statusText.value = '缺少 token：请通过 URL 传入 ?token=...，或通过运行时配置/环境变量设置 DIFY_TOKEN。'
+      statusText.value = '缺少 token：请通过 URL 传入 ?token=...，或通过运行时配置设置 DIFY_TOKEN。'
       return
     }
     // 设置浏览器标签页 favicon 为智能助手图标
@@ -41,6 +41,7 @@ onMounted(() => {
     // 配置全局变量
     window.difyChatbotConfig = {
       token: TOKEN,
+      baseUrl: String(RUNTIME.DIFY_BASE_URL || '').replace(/\/$/, ''),
       inputs: DEFAULT_ASK ? { q: DEFAULT_ASK, question: DEFAULT_ASK } : {},
       systemVariables: {},
       userVariables: {}

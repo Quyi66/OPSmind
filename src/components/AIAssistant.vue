@@ -40,7 +40,10 @@ const searchQuery = ref('')
 // 动态获取 Dify token：优先 URL 参数 -> runtime-config.js -> 环境变量；不写死
 function getDifyToken() {
   try { const t = new URLSearchParams(location.search).get('token'); if (t) return t } catch {}
-  try { const rt = (window).__OPS_RUNTIME__ || {}; if (rt.DIFY_TOKEN) return rt.DIFY_TOKEN } catch {}
+  try {
+    const rt = (window).__OPS_RUNTIME__ || {}
+    if (rt.DIFY_TOKEN) return rt.DIFY_TOKEN
+  } catch {}
   try { return import.meta.env.VITE_DIFY_TOKEN || '' } catch { return '' }
 }
 

@@ -429,7 +429,7 @@ function ensureOpsBubble() {
     const token = getDifyToken()
     const embedSrc = `${window.location.origin}${base}dify/embed.min.js`
     const rt = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
-    const difyBase = String(rt.DIFY_APP || rt.DIFY_ORIGIN || import.meta.env.VITE_DIFY_APP || 'https://udify.app').replace(/\/$/, '')
+    const difyBase = String(rt.DIFY_BASE_URL || '').replace(/\/$/, '')
     iframe.setAttribute('allow', 'fullscreen;microphone')
     // 使用 srcdoc 注入最小页面，确保聊天框在此 iframe 内创建
     const tokenJson = JSON.stringify(token || '')
@@ -527,26 +527,28 @@ function prewarmAiOps() {
   try {
     const base = import.meta.env.BASE_URL || '/'
     const embedHref = `${base}dify/embed.min.js`
-    // Preload local embed script (fetch into cache, no execute)
-    const preload = document.createElement('link')
-    preload.rel = 'preload'
-    preload.as = 'script'
-    preload.href = embedHref
-    document.head.appendChild(preload)
+    // Prefer prefetch to avoid preload unused warning if user never opens bot
+    const link = document.createElement('link')
+    link.rel = 'prefetch'
+    link.href = embedHref
+    link.as = 'script'
+    document.head.appendChild(link)
 
-    // Preconnect to Dify base
+    // Preconnect to Dify base (unified key)
     const rt = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
-    const difyBase = String(rt.DIFY_APP || rt.DIFY_ORIGIN || import.meta.env.VITE_DIFY_APP || 'https://udify.app').replace(/\/$/, '')
-    const preconnect = document.createElement('link')
-    preconnect.rel = 'preconnect'
-    preconnect.href = difyBase
-    preconnect.crossOrigin = ''
-    document.head.appendChild(preconnect)
+    const difyBase = String(rt.DIFY_BASE_URL || '').replace(/\/$/, '')
+    if (difyBase) {
+      const preconnect = document.createElement('link')
+      preconnect.rel = 'preconnect'
+      preconnect.href = difyBase
+      preconnect.crossOrigin = ''
+      document.head.appendChild(preconnect)
 
-    const dns = document.createElement('link')
-    dns.rel = 'dns-prefetch'
-    dns.href = difyBase
-    document.head.appendChild(dns)
+      const dns = document.createElement('link')
+      dns.rel = 'dns-prefetch'
+      dns.href = difyBase
+      document.head.appendChild(dns)
+    }
   } catch {}
 }
 
