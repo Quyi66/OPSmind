@@ -26,6 +26,7 @@
     if (!token) token = DEFAULT_TOKEN
     // Embed script: use local only
     const embed = 'dify/embed.min.js'
+    const difyBase = String(rt.DIFY_APP || rt.DIFY_ORIGIN || '').replace(/\/$/, '')
     // No initial question injection
     // Mode/page behavior
     const mode = (qs.get('mode') || 'page').toLowerCase() // 'page' | 'bubble'
@@ -41,7 +42,9 @@
     }
 
     // Pass config to Dify
-    window.difyChatbotConfig = { token, inputs: {}, systemVariables: {}, userVariables: {} }
+    window.difyChatbotConfig = difyBase
+      ? { token, baseUrl: difyBase, inputs: {}, systemVariables: {}, userVariables: {} }
+      : { token, inputs: {}, systemVariables: {}, userVariables: {} }
 
     // If already injected (same token as element id), try to open directly
     const existing = document.getElementById(token)
@@ -99,6 +102,20 @@
       }, interval)
     }
     // No auto-send behavior by design
+    // Preconnect to Dify base when provided
+    try {
+      if (difyBase) {
+        var pre = document.createElement('link')
+        pre.rel = 'preconnect'
+        pre.href = difyBase
+        pre.crossOrigin = ''
+        document.head.appendChild(pre)
+        var dns = document.createElement('link')
+        dns.rel = 'dns-prefetch'
+        dns.href = difyBase
+        document.head.appendChild(dns)
+      }
+    } catch (_e) {}
   } catch (e) {
     const status = document.getElementById('status')
     if (status) status.textContent = `初始化失败：${e && e.message ? e.message : e}`

@@ -40,7 +40,7 @@
         <div class="nav-right">
           <!-- AI OPS Button -->
           <el-tooltip content="AI OPS" placement="bottom">
-            <div class="ai-ops-wrapper" @click="handleAiOpsClick">
+            <div class="ai-ops-wrapper" @mouseenter="prewarmAiOps" @click="handleAiOpsClick">
               <img :src="aiOpsIcon" alt="AI OPS" class="ai-ops-simple" />
             </div>
           </el-tooltip>
@@ -428,12 +428,15 @@ function ensureOpsBubble() {
     // 仅本地加载，避免跨域与远端依赖
     const token = getDifyToken()
     const embedSrc = `${window.location.origin}${base}dify/embed.min.js`
+    const rt = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
+    const difyBase = String(rt.DIFY_APP || rt.DIFY_ORIGIN || import.meta.env.VITE_DIFY_APP || 'https://udify.app').replace(/\/$/, '')
     iframe.setAttribute('allow', 'fullscreen;microphone')
     // 使用 srcdoc 注入最小页面，确保聊天框在此 iframe 内创建
     const tokenJson = JSON.stringify(token || '')
     const tokenAttr = String(token || '').replace(/"/g, '&quot;')
     const html = `<!doctype html><html lang="zh-CN"><head>
       <meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
+      <link rel=\"preconnect\" href=\"${difyBase}\" crossorigin>
       <style>
         html,body{height:100%;margin:0;background:#fff;}
         /* 按钮主色 */
@@ -453,7 +456,7 @@ function ensureOpsBubble() {
       </style>
     </head><body>
       <script>
-        window.difyChatbotConfig = { token: ${tokenJson}, inputs: {}, systemVariables: {}, userVariables: {} }
+        window.difyChatbotConfig = { token: ${tokenJson}, baseUrl: '${difyBase}', inputs: {}, systemVariables: {}, userVariables: {} }
       <\/script>
       <script src=\"${embedSrc}\" id=\"${tokenAttr}\" defer><\/script>
       <script>
@@ -514,6 +517,37 @@ function ensureOpsBubble() {
       if (ev.key === 'Escape') panel.classList.remove('visible')
     })
   }
+}
+
+// 预热 AI OPS：预加载本地脚本 + 预连接 Dify 服务
+let aiOpsPrewarmed = false
+function prewarmAiOps() {
+  if (aiOpsPrewarmed) return
+  aiOpsPrewarmed = true
+  try {
+    const base = import.meta.env.BASE_URL || '/'
+    const embedHref = `${base}dify/embed.min.js`
+    // Preload local embed script (fetch into cache, no execute)
+    const preload = document.createElement('link')
+    preload.rel = 'preload'
+    preload.as = 'script'
+    preload.href = embedHref
+    document.head.appendChild(preload)
+
+    // Preconnect to Dify base
+    const rt = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
+    const difyBase = String(rt.DIFY_APP || rt.DIFY_ORIGIN || import.meta.env.VITE_DIFY_APP || 'https://udify.app').replace(/\/$/, '')
+    const preconnect = document.createElement('link')
+    preconnect.rel = 'preconnect'
+    preconnect.href = difyBase
+    preconnect.crossOrigin = ''
+    document.head.appendChild(preconnect)
+
+    const dns = document.createElement('link')
+    dns.rel = 'dns-prefetch'
+    dns.href = difyBase
+    document.head.appendChild(dns)
+  } catch {}
 }
 
 // 处理关于下拉菜单命令
@@ -602,6 +636,15 @@ watch(
 onMounted(() => {
   window.addEventListener('clearMenuHighlight', handleClearHighlight)
   console.log('🧭 TopNavMenu mounted')
+  // 预热 AI OPS 资源，提升首次打开速度
+  try {
+    if ('requestIdleCallback' in window) {
+      // @ts-ignore
+      window.requestIdleCallback(() => prewarmAiOps())
+    } else {
+      setTimeout(() => prewarmAiOps(), 0)
+    }
+  } catch {}
 })
 
 onUnmounted(() => {
