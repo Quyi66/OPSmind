@@ -346,18 +346,31 @@ const handleSettingsClick = () => {
 }
 
 // Dify runtime token: prefer URL param, then runtime-config.js, then env; no hardcoded fallback
+const DEFAULT_DIFY_TOKEN = 'tRnUImvfrP77TFr0'
 function getDifyToken() {
+  // 1) URL param
   try {
     const urlToken = new URLSearchParams(location.search).get('token')
     if (urlToken) return urlToken
   } catch {}
+  // 2) LocalStorage (dev convenience)
+  try {
+    const ls = window.localStorage
+    const keys = ['DIFY_TOKEN', 'ops:dify_token', 'dify:token']
+    for (const k of keys) {
+      const v = ls.getItem(k)
+      if (v) return v
+    }
+  } catch {}
+  // 3) Runtime config
   try {
     const rt = (window).__OPS_RUNTIME__ || {}
     if (rt.DIFY_TOKEN) return rt.DIFY_TOKEN
   } catch {}
+  // 4) Env var
   try {
-    return import.meta.env.VITE_DIFY_TOKEN || ''
-  } catch { return '' }
+    return import.meta.env.VITE_DIFY_TOKEN || DEFAULT_DIFY_TOKEN
+  } catch { return DEFAULT_DIFY_TOKEN }
 }
 
 // 处理AI OPS按钮点击：显示/隐藏右下角面板（iframe 内为气泡方案页面）
@@ -407,18 +420,33 @@ function ensureOpsBubble() {
     root.id = C.root
     document.body.appendChild(root)
 
-    // 面板 + iframe（指向全屏页，让其在 iframe 内填满即可）
+    // 面板 + iframe（在创建的 iframe 文档内直接注入脚本与配置）
     const panel = document.createElement('div')
     panel.id = C.panel
     const iframe = document.createElement('iframe')
     iframe.id = C.iframe
-    const params = new URLSearchParams()
+    // 仅本地加载，避免跨域与远端依赖
     const token = getDifyToken()
-    if (token) params.set('token', token)
-    params.set('auto', '1') // 创建后自动打开聊天窗口
-    params.set('compact', '1') // 紧凑模式：尽量扩大中间内容
-    // 使用“气泡方案”的页面作为 iframe 内容，内部会呈现 Dify 气泡按钮并自动打开
-    iframe.src = `${window.location.origin}${base}aiops-bubble.html${params.toString() ? `?${params.toString()}` : ''}`
+    const embedSrc = `${window.location.origin}${base}dify/embed.min.js`
+    iframe.setAttribute('allow', 'fullscreen;microphone')
+    // 使用 srcdoc 注入最小页面，确保聊天框在此 iframe 内创建
+    const tokenJson = JSON.stringify(token || '')
+    const tokenAttr = String(token || '').replace(/"/g, '&quot;')
+    const html = `<!doctype html><html lang="zh-CN"><head>
+      <meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
+      <style>
+        html,body{height:100%;margin:0;background:#fff;}
+        /* 可按需自定义气泡按钮颜色与窗口尺寸 */
+        #dify-chatbot-bubble-button{ background-color:#1C64F2 !important; }
+        #dify-chatbot-bubble-window{ width:24rem !important; height:40rem !important; }
+      </style>
+    </head><body>
+      <script>
+        window.difyChatbotConfig = { token: ${tokenJson}, inputs: {}, systemVariables: {}, userVariables: {} }
+      <\/script>
+      <script src=\"${embedSrc}\" id=\"${tokenAttr}\" defer><\/script>
+    </body></html>`
+    iframe.srcdoc = html
     panel.appendChild(iframe)
     root.appendChild(panel)
     // 计算顶部菜单栏高度，令面板上边缘贴合菜单栏底部

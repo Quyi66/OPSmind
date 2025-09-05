@@ -26,8 +26,8 @@
       border: 0 !important;
       box-shadow: none !important;
     }
-    /* Hide the floating bubble button when used inside iframe panel */
-    #dify-chatbot-bubble-button { display: none !important; }
+    /* Keep the floating bubble button visible in bubble mode.
+       If auto-open succeeds, the init script may optionally hide it. */
     /* Compact mode: reduce side avatar footprint to enlarge center content */
     html[data-compact="1"] #dify-chatbot-bubble-window [class*="avatar" i],
     html[data-compact="1"] #dify-chatbot-bubble-window img[alt*="avatar" i],

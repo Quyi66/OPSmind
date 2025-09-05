@@ -9,9 +9,17 @@
         return {}
       }
     })()
+    const DEFAULT_TOKEN = 'tRnUImvfrP77TFr0'
 
     // Resolve token: URL > runtime
-    const token = qs.get('token') || rt.DIFY_TOKEN || ''
+    let token = qs.get('token') || rt.DIFY_TOKEN || ''
+    if (!token) {
+      try {
+        const ls = window.localStorage
+        token = ls.getItem('DIFY_TOKEN') || ls.getItem('ops:dify_token') || ls.getItem('dify:token') || ''
+      } catch {}
+    }
+    if (!token) token = DEFAULT_TOKEN
     // Embed script: use local only
     const embed = 'dify/embed.min.js'
     // No initial question injection
@@ -53,6 +61,8 @@
     // Open logic with small retry loop
     function waitAndOpen() {
       let attempts = 0
+      const maxAttempts = mode === 'bubble' ? 60 : 20
+      const interval = mode === 'bubble' ? 250 : 200
       const timer = setInterval(function () {
         attempts++
         try {
@@ -78,11 +88,11 @@
           console.log(e)
         }
 
-        if (attempts > 20) {
+        if (attempts > maxAttempts) {
           clearInterval(timer)
           if (statusEl) statusEl.textContent = '加载失败：请检查脚本或 CSP 配置。'
         }
-      }, 200)
+      }, interval)
     }
     // No auto-send behavior by design
   } catch (e) {
