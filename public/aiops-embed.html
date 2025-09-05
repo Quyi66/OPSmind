@@ -5,7 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>OPS智能助手</title>
   <style>
-    html, body { height: 100%; margin: 0; background: #fff; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #fff;
+      overflow: hidden; /* prevent double scrollbars */
+    }
+
+    /* Make the chatbot window occupy the full viewport */
+    #dify-chatbot-bubble-window {
+      position: fixed !important;
+      inset: 0 !important; /* top/right/bottom/left = 0 */
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    /* Hide the floating bubble button for a clean full-page view */
+    #dify-chatbot-bubble-button {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -18,9 +40,30 @@
    }
   </script>
   <script src="https://udify.app/embed.min.js" id="tRnUImvfrP77TFr0" defer></script>
+  <script>
+    // Auto-open the chatbot once the embed is ready
+    (function() {
+      function openChatWhenReady() {
+        var btn = document.getElementById('dify-chatbot-bubble-button');
+        var wnd = document.getElementById('dify-chatbot-bubble-window');
+        if (btn && (!wnd || wnd.style.display === 'none')) {
+          try { btn.click(); } catch (e) {}
+        }
+        // Keep trying until the window exists
+        if (!document.getElementById('dify-chatbot-bubble-window')) {
+          requestAnimationFrame(openChatWhenReady);
+        }
+      }
+      if (document.readyState === 'complete') {
+        openChatWhenReady();
+      } else {
+        window.addEventListener('load', openChatWhenReady);
+      }
+    })();
+  </script>
   <style>
+    /* Optional: keep your theme color if the button is ever shown */
     #dify-chatbot-bubble-button { background-color: #1C64F2 !important; }
-    #dify-chatbot-bubble-window { width: 24rem !important; height: 40rem !important; }
   </style>
 </body>
 </html>
