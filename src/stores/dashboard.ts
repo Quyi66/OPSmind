@@ -71,6 +71,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const availableModules: Ref<Module[]> = ref([])
   const systemStats: Ref<SystemStat[]> = ref([])
   const dashboardFullData: Ref<DashboardFullData | null> = ref(null)
+  const aiOpsUrl: Ref<string | null> = ref(null)
   const loading: Ref<boolean> = ref(false)
   const error: Ref<string | null> = ref(null)
   const lastUpdated: Ref<number | null> = ref(null)
@@ -216,12 +217,35 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  // 获取 AI OPS URL 参数
+  const fetchAiOpsUrl = async (): Promise<string | null> => {
+    try {
+      const { apiService } = await import('@/core/api')
+      const result = await apiService.getParam('ai', 'url')
+      let url: string | null = null
+      if (typeof result === 'string') url = result
+      else if (result?.value && typeof result.value === 'string') url = result.value
+      else if (result?.url && typeof result.url === 'string') url = result.url
+      else if (result && typeof result === 'object') {
+        const maybe = result.data || result.param || result.ai || result.name
+        if (typeof maybe === 'string') url = maybe
+      }
+      aiOpsUrl.value = url
+      console.log('🔗 AI OPS URL param (store):', aiOpsUrl.value)
+      return aiOpsUrl.value
+    } catch (e) {
+      console.warn('⚠️ Failed to fetch AI OPS URL param (store):', e)
+      return null
+    }
+  }
+
   // 重置状态
   const reset = (): void => {
     currentUser.value = null
     availableModules.value = []
     systemStats.value = []
     dashboardFullData.value = null
+    aiOpsUrl.value = null
     loading.value = false
     error.value = null
     lastUpdated.value = null
@@ -233,6 +257,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     availableModules,
     systemStats,
     dashboardFullData,
+    aiOpsUrl,
     loading,
     error,
     lastUpdated,
@@ -247,6 +272,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadDashboardData,
     openModule,
     refreshStats,
+    fetchAiOpsUrl,
     reset
   }
 })

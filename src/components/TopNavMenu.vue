@@ -207,6 +207,7 @@ import { ElMessage } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
 import { authService } from '@/core/auth'
 import { useMenuStore } from '@/stores/menu.js'
+import { useDashboardStore } from '@/stores/dashboard'
 import { User, Setting, SwitchButton, InfoFilled, Check, QuestionFilled } from '@element-plus/icons-vue'
 
 // 导入菜单图标
@@ -225,6 +226,7 @@ import avatarImage from '@/assets/icons/avatar@2x.png'
 const router = useRouter()
 const route = useRoute()
 const menuStore = useMenuStore()
+const dashboardStore = useDashboardStore()
 
 const props = defineProps({
   user: {
@@ -343,10 +345,35 @@ const handleSettingsClick = () => {
 }
 
 // 处理AI OPS按钮点击
-const handleAiOpsClick = () => {
-  console.log('🤖 AI OPS clicked')
-  ElMessage.info('AI OPS功能开发中...')
-  // 这里可以打开AI OPS页面或弹窗
+const handleAiOpsClick = async () => {
+  // 先同步打开一个空白页，保证处于用户手势上下文，避免被浏览器拦截
+  const newTab = window.open('about:blank', '_blank')
+  if (newTab) newTab.opener = null
+
+  const normalizeUrl = (u) => {
+    if (!u) return 'https://dify.ai'
+    const s = String(u).trim()
+    if (/^https?:\/\//i.test(s)) return s
+    if (s.startsWith('//')) return `${window.location.protocol}${s}`
+    if (s.startsWith('/')) return `${window.location.origin}${s}`
+    return s
+  }
+
+  try {
+    let target = dashboardStore.aiOpsUrl
+    if (!target) {
+      await dashboardStore.fetchAiOpsUrl()
+      target = dashboardStore.aiOpsUrl
+    }
+    const finalUrl = normalizeUrl(target)
+    if (newTab) newTab.location.href = finalUrl
+    else window.open(finalUrl, '_blank')
+  } catch (e) {
+    console.error('Failed to open AI OPS URL:', e)
+    const fallback = 'https://dify.ai'
+    if (newTab) newTab.location.href = fallback
+    else window.open(fallback, '_blank')
+  }
 }
 
 // 处理关于下拉菜单命令
