@@ -53,7 +53,7 @@ const formattedCount = computed(() => {
 <style scoped lang="scss">
 .type-count-card {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 12px 10px; /* 收紧左右内边距，给标题留空间 */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;

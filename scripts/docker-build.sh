@@ -4,7 +4,7 @@ set -euo pipefail
 
 TAG="opsmind-web:latest"
 TAG_SET="false"
-# Set release version here (leave empty to keep default tag)
+# Set release version here (leave empty to infer from --tag)
 VERSION=""
 PLATFORM=""
 NO_CACHE=""
@@ -72,10 +72,24 @@ if [[ -n "$VERSION" && "$TAG_SET" != "true" ]]; then
   TAG="${IMAGE_NAME_NO_TAG}:${VERSION}"
 fi
 
-# Auto-adjust default amd64 tar path when version is set and user didn't override export path
+# Determine effective version for artifact naming (prefer VERSION, fallback to tag suffix)
+EFFECTIVE_VERSION=""
+if [[ -n "$VERSION" ]]; then
+  EFFECTIVE_VERSION="$VERSION"
+else
+  # If user passed a tag like repo:1.2.3, and it's not 'latest', use that
+  if [[ "$TAG" == *:* ]]; then
+    TAG_VER="${TAG##*:}"
+    if [[ -n "$TAG_VER" && "$TAG_VER" != "latest" ]]; then
+      EFFECTIVE_VERSION="$TAG_VER"
+    fi
+  fi
+fi
+
+# Auto-adjust default amd64 tar path when version is known and user didn't override export path
 DEFAULT_TAR_PATH="build/opsmind-web-amd64.tar"
-if [[ -n "$VERSION" && "$EXPORT_AMD64_TAR" == "$DEFAULT_TAR_PATH" ]]; then
-  EXPORT_AMD64_TAR="build/${DEFAULT_REPO_NAME}-${VERSION}-amd64.tar"
+if [[ -n "$EFFECTIVE_VERSION" && "$EXPORT_AMD64_TAR" == "$DEFAULT_TAR_PATH" ]]; then
+  EXPORT_AMD64_TAR="build/${DEFAULT_REPO_NAME}-${EFFECTIVE_VERSION}-amd64.tar"
 fi
 
 echo "[build] Image tag: $TAG"
@@ -90,14 +104,10 @@ if [[ ! -f "oplus-web/dist/index.html" ]]; then
   exit 1
 fi
 
-# Ensure opsmind build exists (or build it)
+# Ensure opsmind build exists (always rebuild unless explicitly skipped)
 if [[ "$SKIP_OPSMIND_BUILD" != "true" ]]; then
-  if [[ ! -f "dist/index.html" ]]; then
-    echo "[build] opsmind dist not found, running npm build..."
-    npm run build
-  else
-    echo "[build] Found existing ./dist, skipping npm build."
-  fi
+  echo "[build] Building opsmind dist (vite build)..."
+  npm run build
 else
   echo "[build] --skip-opsmind-build set; expecting existing ./dist"
 fi

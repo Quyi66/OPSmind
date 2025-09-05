@@ -2,7 +2,14 @@
   <div class="inspection-overview">
     <!-- 标题 -->
     <div class="section-header">
-      <h3 class="section-title">巡检概览</h3>
+      <h3 class="section-title">
+        <img
+          :src="inspectionHeaderIcon"
+          alt="巡检概览"
+          class="section-icon"
+        />
+        巡检概览
+      </h3>
       <div class="header-actions">
         <button class="more-btn">...</button>
       </div>
@@ -44,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
@@ -57,33 +64,45 @@ import {
 import VChart from 'vue-echarts'
 
 import TypeCountCard from './TypeCountCard.vue'
+import { useDashboardStore } from '@/stores/dashboard'
 
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
 
-// 巡检统计数据
-const inspectionStats = ref([
-  {
-    id: 'total-inspections',
-    label: '本月巡检次数',
-    value: '23',
-    icon: new URL('@/assets/icons/dashboard/icon-gfs-curentmonth@2x.png', import.meta.url).href,
-    iconType: 'image'
-  },
-  {
-    id: 'normal-inspections',
-    label: '正常',
-    value: '23',
-    icon: new URL('@/assets/icons/dashboard/icon-gfs-normal@2x.png', import.meta.url).href,
-    iconType: 'image'
-  },
-  {
-    id: 'abnormal-inspections',
-    label: '异常',
-    value: '9',
-    icon: new URL('@/assets/icons/dashboard/icon-gfs-except@2x.png', import.meta.url).href,
-    iconType: 'image'
-  }
-])
+// 标题图标
+const inspectionHeaderIcon = new URL(
+  '@/assets/icons/dashboard/icon-gfsview@2x.png',
+  import.meta.url
+).href
+
+const dashboardStore = useDashboardStore()
+
+// 巡检统计（来自 API 数据）
+const inspectionStats = computed(() => {
+  const m = dashboardStore.dashboardFullData?.monthlyInspectionStats
+  return [
+    {
+      id: 'total-inspections',
+      label: '本月巡检次数',
+      value: m?.monthlyInspections ?? 0,
+      icon: new URL('@/assets/icons/dashboard/icon-gfs-curentmonth@2x.png', import.meta.url).href,
+      iconType: 'image'
+    },
+    {
+      id: 'normal-inspections',
+      label: '正常',
+      value: m?.normalInspections ?? 0,
+      icon: new URL('@/assets/icons/dashboard/icon-gfs-normal@2x.png', import.meta.url).href,
+      iconType: 'image'
+    },
+    {
+      id: 'abnormal-inspections',
+      label: '异常',
+      value: m?.abnormalInspections ?? 0,
+      icon: new URL('@/assets/icons/dashboard/icon-gfs-except@2x.png', import.meta.url).href,
+      iconType: 'image'
+    }
+  ]
+})
 
 // 处理统计卡片点击事件
 const handleStatClick = statId => {
@@ -91,27 +110,39 @@ const handleStatClick = statId => {
   // 这里可以添加具体的点击处理逻辑
 }
 
-// 生成近10天日期
-const generateLast10Days = () => {
-  const dates = []
-  const today = new Date()
-
-  for (let i = 9; i >= 0; i--) {
-    const date = new Date(today)
-    date.setDate(today.getDate() - i)
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    dates.push(`${month}/${day}`)
+// 图表数据（来自 API 数据）
+const chartData = computed(() => {
+  const list = dashboardStore.dashboardFullData?.recentInspectionStats || []
+  return {
+    dates: list.map(i => i.date.replace('-', '/')),
+    normal: list.map(i => i.normalInspections),
+    abnormal: list.map(i => i.abnormalInspections)
   }
+})
 
-  return dates
-}
+// Y 轴最大值与刻度：
+// - 刻度始终为 5 段，间隔为 5 的倍数
+// - 最小 yMax = 25（即 0,5,10,15,20,25）
+// - 根据数据最大值 +10% 余量，计算最小需要的步长，再向上取整到 5 的倍数
+const yMax = computed(() => {
+  const d = chartData.value
+  const all = [
+    ...(Array.isArray(d.normal) ? d.normal : []),
+    ...(Array.isArray(d.abnormal) ? d.abnormal : [])
+  ].map(v => (typeof v === 'number' && isFinite(v) ? v : Number(v) || 0))
 
-// 图表数据
-const chartData = ref({
-  dates: generateLast10Days(),
-  normal: [150, 180, 160, 200, 220, 190, 240, 210, 180, 230],
-  abnormal: [50, 60, 40, 80, 90, 70, 100, 85, 65, 95]
+  const rawMax = Math.max(0, ...all)
+  const minYMax = 25
+
+  if (rawMax <= 0) return minYMax
+
+  // 加 10% 余量
+  const withMargin = rawMax + Math.ceil(rawMax * 0.1)
+  // 计算最小步长（5 段），并向上取整到 5 的倍数，使 interval 始终是 5 的倍数
+  const minStep = Math.ceil(withMargin / 5)
+  const step = Math.max(5, Math.ceil(minStep / 5) * 5) // 步长为 5 的倍数，且至少为 5
+  const yMaxVal = step * 5
+  return Math.max(minYMax, yMaxVal)
 })
 
 // ECharts 配置
@@ -149,7 +180,8 @@ const chartOption = computed(() => ({
     axisLabel: {
       color: '#666',
       fontSize: 12,
-      margin: 10
+      margin: 10,
+      hideOverlap: true
     },
     axisTick: {
       show: false
@@ -157,7 +189,10 @@ const chartOption = computed(() => ({
   },
   yAxis: {
     type: 'value',
-    max: 250,
+    min: 0,
+    max: yMax.value,
+    interval: Math.max(1, yMax.value / 5), // 此处将为 5 的倍数
+    splitNumber: 5,
     axisLine: {
       show: false
     },
@@ -255,6 +290,9 @@ const chartOption = computed(() => ({
   font-weight: 600;
   color: #374151;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .header-actions {
@@ -278,6 +316,12 @@ const chartOption = computed(() => ({
   }
 }
 
+.section-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
 // 巡检统计样式
 .inspection-stats {
   display: flex;
@@ -285,7 +329,7 @@ const chartOption = computed(() => ({
   align-items: center;
   padding: 12px 12px; /* 收紧左右内边距 */
   background: #fafbfc;
-  border-radius: 8px;
+  border-radius: 4px;
   margin: 0 12px; /* 收紧左右外边距 */
 }
 
@@ -326,8 +370,8 @@ const chartOption = computed(() => ({
 
 .chart-container {
   flex: 1;
-  height: 200px;
-  min-height: 200px;
+  /* 中等屏高下更充裕，但避免溢出导致轴被裁切 */
+  min-height: clamp(210px, 26vh, 280px);
   display: flex;
   flex-direction: column;
   padding: 0 16px;
@@ -335,7 +379,8 @@ const chartOption = computed(() => ({
 
 .chart {
   width: 100%;
-  height: 200px;
+  height: 100%;
+  min-height: clamp(210px, 26vh, 280px);
 }
 
 .stat-icon {

@@ -1,5 +1,5 @@
 <template>
-  <div class="main-layout">
+  <div class="main-layout" :class="{ 'is-home': isHomeRoute }">
     <!-- 顶部菜单 -->
     <TopNavMenu
       :user="currentUser"
@@ -8,6 +8,7 @@
 
     <!-- 主体区域 -->
     <div class="main-body">
+      <div class="main-container">
       <!-- 左侧菜单 -->
       <SideMenu
         v-if="showSideMenu"
@@ -19,6 +20,12 @@
 
       <!-- 主内容区域 -->
       <div class="main-content" :class="{ 'with-side-menu': showSideMenu }">
+        <!-- 模块内嵌头部（仅文字标题 + 关闭按钮） -->
+        <div v-if="showModuleToolbar" class="module-toolbar">
+          <div class="module-toolbar-title">{{ moduleTitleText }}</div>
+          <button class="module-toolbar-close" @click="handleCloseModule" aria-label="关闭">×</button>
+        </div>
+
         <!-- 如果有选中的菜单项，显示iframe -->
         <AngularModuleInlineFrame
           v-if="activeMenuItem"
@@ -29,6 +36,7 @@
 
         <!-- 否则显示默认的路由视图（仪表盘） -->
         <router-view v-else class="router-view" />
+      </div>
       </div>
     </div>
 
@@ -43,7 +51,7 @@
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import TopNavMenu from '@/components/TopNavMenu.vue'
 import SideMenu from '@/components/SideMenu.vue'
 import AngularModuleInlineFrame from '@/components/AngularModuleInlineFrame.vue'
@@ -53,6 +61,7 @@ import { useMenuStore } from '@/stores/menu.js'
 const dashboardStore = useDashboardStore()
 const router = useRouter()
 const menuStore = useMenuStore()
+const route = useRoute()
 
 // 响应式状态
 const isMobile = ref(false)
@@ -67,6 +76,19 @@ const currentMenuItemTitle = computed(() => {
   return menuItem ? menuItem.name : ''
 })
 
+// 是否为首页（仪表盘）路由
+const isHomeRoute = computed(() => route.path === '/home' || route.path === '/')
+
+// 是否展示设置相关的模块工具栏
+const showModuleToolbar = computed(() => ['settings', 'ssc'].includes(activeMenuItem.value))
+
+// 标题文本：settings -> 个人资料；ssc -> 系统设置
+const moduleTitleText = computed(() => {
+  if (activeMenuItem.value === 'settings') return '个人资料'
+  if (activeMenuItem.value === 'ssc') return '系统设置'
+  return ''
+})
+
 // 方法
 const handleMenuItemClick = menuItem => {
   console.log('🎯 Main layout received menu item click:', menuItem.name)
@@ -79,6 +101,16 @@ const closeMobileMenu = () => {
     menuStore.hideSideMenu()
   }
 }
+
+// 关闭当前内嵌模块（返回首页）
+const handleCloseModule = () => {
+  try {
+    menuStore.clearActiveMenu()
+    router.push('/home')
+  } catch (e) {}
+}
+
+// 仅保留标题显示，不提供标签切换
 
 // 检查是否为移动端
 const checkMobile = () => {
@@ -107,6 +139,17 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
+/* 首页（仪表盘）去除左侧纵向分割线 */
+.main-layout.is-home :deep(.side-menu) {
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+/* 首页隐藏侧边菜单容器，避免出现可交互的细条区域 */
+.main-layout.is-home .side-menu-container {
+  display: none !important;
+}
+
 // 顶部导航
 .main-header {
   flex-shrink: 0;
@@ -122,8 +165,27 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
+/* 定宽居中主容器 */
+.main-container {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 1600px) {
+  .main-container {
+    /* 仅在大屏（27寸等）为底部预留留白 */
+    padding-bottom: 24px;
+  }
+}
+
 // 侧边菜单容器
 .side-menu-container {
+  /* 根据业务状态控制显示，取消全局隐藏以恢复二级左侧菜单 */
   flex-shrink: 0;
   z-index: 200;
   transition: transform 0.3s ease-in-out;
@@ -151,6 +213,7 @@ onUnmounted(() => {
   overflow: hidden;
   background: #fff;
   transition: all 0.3s ease-in-out;
+  /* 底部留白由 .main-container 控制 */
 
   &.with-side-menu {
     background: #fff;
@@ -181,6 +244,41 @@ onUnmounted(() => {
   min-height: 0;
   border: none;
   background: #fff;
+}
+
+/* 内嵌模块顶部工具栏 */
+.module-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: transparent;
+  border-bottom: none;
+  padding: 8px 0;
+}
+
+.module-toolbar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.module-toolbar-close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: #9ca3af;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color .2s, color .2s;
+
+  &:hover {
+    background: #f3f4f6;
+    color: #111827;
+  }
 }
 
 // 移动端遮罩层

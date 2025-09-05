@@ -47,11 +47,11 @@ class ApiService {
         const authHeaders = authService.getAuthHeaders()
         config.headers = { ...config.headers, ...authHeaders }
 
-        // 添加缓存破坏参数
+        // 添加缓存破坏参数（后端约定使用 cacheBuster）
         if (config.method === 'get' && config.cache !== false) {
           config.params = {
             ...config.params,
-            _t: Date.now()
+            cacheBuster: Date.now()
           }
         }
 
@@ -261,6 +261,43 @@ class ApiService {
   }
 
   /**
+   * 获取首页仪表盘全量数据
+   */
+  async getDashboardFullData() {
+    const res = await this.get('svs/api/dashboard/full-data')
+    const data = res?.data || {}
+
+    // Adapt backend payload into frontend expected shape when necessary
+    // - Ensure recentJobStats has totalJobs
+    // - Map linuxVulnStats -> vulnerabilityOverview if frontend field missing
+    const adapted = { ...data }
+    if (Array.isArray(adapted.recentJobStats)) {
+      adapted.recentJobStats = adapted.recentJobStats.map((i) => ({
+        ...i,
+        totalJobs:
+          (i?.restJobs || 0) + (i?.scriptJobs || 0) + (i?.commandJobs || 0)
+      }))
+    }
+    if (!adapted.vulnerabilityOverview && adapted.linuxVulnStats) {
+      adapted.vulnerabilityOverview = adapted.linuxVulnStats
+    }
+
+    return adapted
+  }
+
+  /**
+   * 获取系统参数
+   * @param {string} domain 参数域，如 'ai'
+   * @param {string} name 参数名，如 'url'
+   */
+  async getParam(domain, name) {
+    const safeDomain = encodeURIComponent(domain)
+    const safeName = encodeURIComponent(name)
+    const res = await this.get(`/api/params/${safeDomain}/${safeName}`, { cache: false })
+    return res?.data
+  }
+
+  /**
    * 模拟统计数据
    */
   getMockStats() {
@@ -294,6 +331,81 @@ class ApiService {
         trend: { type: 'down', value: 8, text: '较上月减少 8%' }
       }
     ]
+  }
+
+  /**
+   * 仪表盘数据模拟（与后端约定结构一致）
+   */
+  getMockDashboardFullData() {
+    // Updated mock data to match provided dashboard API payload
+    const provided = {
+      totalJobStats: {
+        restJobs: 56,
+        scriptJobs: 452,
+        commandJobs: 3
+      },
+      recentJobStats: [
+        { date: '08-27', restJobs: 0, scriptJobs: 16, commandJobs: 0 },
+        { date: '08-28', restJobs: 0, scriptJobs: 4, commandJobs: 0 },
+        { date: '08-29', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '08-30', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '08-31', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '09-01', restJobs: 3, scriptJobs: 10, commandJobs: 0 },
+        { date: '09-02', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '09-03', restJobs: 0, scriptJobs: 4, commandJobs: 0 },
+        { date: '09-04', restJobs: 0, scriptJobs: 4, commandJobs: 0 },
+        { date: '09-05', restJobs: 33, scriptJobs: 44, commandJobs: 0 }
+      ],
+      monthlyInspectionStats: {
+        monthlyInspections: 22,
+        normalInspections: 22,
+        abnormalInspections: 0
+      },
+      recentInspectionStats: [
+        { date: '08-27', totalInspections: 16, normalInspections: 8, abnormalInspections: 8 },
+        { date: '08-28', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
+        { date: '08-29', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '08-30', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '08-31', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '09-01', totalInspections: 10, normalInspections: 10, abnormalInspections: 0 },
+        { date: '09-02', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '09-03', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
+        { date: '09-04', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
+        { date: '09-05', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 }
+      ],
+      assetOverview: {
+        linuxServers: 5,
+        unixServers: 0,
+        windowsServers: 0
+      },
+      linuxVulnStats: {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0
+      },
+      windowsVulnStats: {
+        totalCritical: 0,
+        totalRollups: 0,
+        totalSecurity: 0
+      }
+    }
+
+    // Map to frontend types: add totalJobs and map linuxVulnStats -> vulnerabilityOverview
+    const recentJobStats = provided.recentJobStats.map(i => ({
+      ...i,
+      totalJobs: (i.restJobs || 0) + (i.scriptJobs || 0) + (i.commandJobs || 0)
+    }))
+
+    return {
+      totalJobStats: provided.totalJobStats,
+      recentJobStats,
+      monthlyInspectionStats: provided.monthlyInspectionStats,
+      recentInspectionStats: provided.recentInspectionStats,
+      assetOverview: provided.assetOverview,
+      vulnerabilityOverview: provided.linuxVulnStats,
+      windowsVulnStats: provided.windowsVulnStats
+    }
   }
 
   /**

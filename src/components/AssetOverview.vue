@@ -1,11 +1,18 @@
 <template>
   <div class="asset-overview">
     <div class="section-header">
-      <h3 class="section-title">资产概览</h3>
+      <h3 class="section-title">
+        <img
+          :src="assetHeaderIcon"
+          alt="资产概览"
+          class="section-icon"
+        />
+        资产概览
+      </h3>
       <div class="header-actions">
         <div class="filter-tabs">
           <button class="filter-tab active">按类型</button>
-          <button class="filter-tab">按系统</button>
+          <button class="filter-tab" disabled aria-disabled="true" title="暂不可用">按系统</button>
           <button class="more-btn">...</button>
         </div>
       </div>
@@ -19,7 +26,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
@@ -30,8 +37,12 @@ import {
   GridComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
+import { useDashboardStore } from '@/stores/dashboard'
 
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
+
+// 标题图标
+const assetHeaderIcon = new URL('@/assets/icons/dashboard/icon-assetview@2x.png', import.meta.url).href
 
 // Tab选项
 const platformTabs = ref([
@@ -42,10 +53,15 @@ const platformTabs = ref([
 // 选中的平台
 const selectedPlatform = ref('enterprise')
 
-// 资产数据
-const assetData = ref({
-  categories: ['Windows服务器', 'Unix服务器', 'Linux服务器'],
-  values: [2, 1, 4]
+const dashboardStore = useDashboardStore()
+
+// 资产数据（来自 API 数据）
+const assetData = computed(() => {
+  const a = dashboardStore.dashboardFullData?.assetOverview
+  return {
+    categories: ['Windows服务器', 'Unix服务器', 'Linux服务器'],
+    values: [a?.windowsServers ?? 0, a?.unixServers ?? 0, a?.linuxServers ?? 0]
+  }
 })
 
 // 获取条形图颜色类
@@ -76,7 +92,7 @@ const chartOption = computed(() => ({
   xAxis: {
     type: 'value',
     min: 0,
-    max: Math.max(...assetData.value.values),
+    max: Math.max(1, ...assetData.value.values),
     interval: 1,
     axisLine: {
       show: true,
@@ -200,10 +216,20 @@ const chartOption = computed(() => ({
   }
 
   &.active {
-    border-color: #e8f2ff;
-    color: #3b82f6;
-    background: #f8fbff;
+    /* 仅强调文字颜色，不要背景和边框；颜色更浅一些 */
+    border-color: transparent;
+    background: transparent;
+    color: #60a5fa; /* 浅蓝（blue-400） */
   }
+}
+
+.filter-tab:disabled,
+.filter-tab[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 1; /* 保持清晰可读 */
+  background: transparent;
+  color: #8a8a8a; /* 略深的灰，提升对比度 */
+  border: none; /* 不要边框 */
 }
 
 .more-btn {
@@ -250,6 +276,12 @@ const chartOption = computed(() => ({
   }
 }
 
+.section-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -258,13 +290,13 @@ const chartOption = computed(() => ({
 
 .chart-container {
   flex: 1;
-  height: 160px;
-  min-height: 160px;
+  min-height: 220px;
 }
 
 .chart {
   width: 100%;
-  height: 160px;
+  height: 100%;
+  min-height: 220px;
 }
 
 // 响应式设计

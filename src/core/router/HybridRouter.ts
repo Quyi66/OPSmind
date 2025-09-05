@@ -25,7 +25,7 @@ const baseRoutes: CustomRouteRecord[] = [
     name: 'login',
     component: () => import('@/views/Login.vue'),
     meta: {
-      title: '登录 - OpsMind',
+      title: '登录 - OPSmind',
       requiresGuest: true,
       layout: 'auth'
     }
@@ -35,7 +35,7 @@ const baseRoutes: CustomRouteRecord[] = [
     name: 'home',
     component: () => import('@/views/Dashboard.vue'),
     meta: {
-      title: 'OpsMind 仪表盘',
+      title: 'OPSmind 仪表盘',
       requiresAuth: true,
       moduleType: ModuleType.VUE_NATIVE
     }
@@ -244,10 +244,8 @@ class HybridRouter implements IHybridRouter {
   setupGuards(): void {
     // 全局前置守卫
     this.router.beforeEach(async (to, _from, next) => {
-      // 设置页面标题
-      if (to.meta?.title) {
-        document.title = to.meta.title as string
-      }
+      // 固定页面标题
+      document.title = 'OPSmind'
 
       // 认证检查
       const isAuthenticated = authService.isAuthenticated()

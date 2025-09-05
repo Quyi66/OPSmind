@@ -1,0 +1,12 @@
+;window.__OPS_RUNTIME__ = window.__OPS_RUNTIME__ || {};
+// Dify runtime configuration rendered by entrypoint via envsubst
+// Provide either full DIFY_EMBED_URL, or individual parts (scheme/host/port)
+window.__OPS_RUNTIME__.DIFY_SCHEME = "${DIFY_SCHEME}";
+window.__OPS_RUNTIME__.DIFY_HOST   = "${DIFY_HOST}";
+window.__OPS_RUNTIME__.DIFY_PORT   = "${DIFY_PORT}";
+window.__OPS_RUNTIME__.DIFY_TOKEN  = "${DIFY_TOKEN}";
+window.__OPS_RUNTIME__.DIFY_EMBED_URL = "${DIFY_EMBED_URL}";
+// Preferred single origin variable (e.g., https://dify.example.com[:port])
+window.__OPS_RUNTIME__.DIFY_APP = "${DIFY_APP}";
+// Backward compatibility
+window.__OPS_RUNTIME__.DIFY_ORIGIN = "${DIFY_ORIGIN}";

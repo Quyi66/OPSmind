@@ -5,7 +5,7 @@
       <div class="flex items-center justify-between px-6 py-3">
         <div class="flex items-center space-x-8">
           <div class="flex items-center">
-            <img src="@/assets/icons/logo@2x.png" alt="OpsMind" class="h-8 w-auto object-contain" />
+            <img src="@/assets/icons/logo@2x.png" alt="OPSmind" class="h-8 w-auto object-contain" />
           </div>
 
           <nav class="flex space-x-6">

@@ -17,8 +17,9 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="问我想要做的地方"
+            placeholder="询问任何系统维护问题"
             class="search-input"
+            @focus="handleFocus"
             @keyup.enter="handleSearch"
           />
           <button @click="handleSearch" class="search-btn" :disabled="!searchQuery.trim()">
@@ -36,6 +37,12 @@ import { ElMessage } from 'element-plus'
 
 // 搜索查询
 const searchQuery = ref('')
+// 动态获取 Dify token：优先 URL 参数 -> runtime-config.js -> 环境变量；不写死
+function getDifyToken() {
+  try { const t = new URLSearchParams(location.search).get('token'); if (t) return t } catch {}
+  try { const rt = (window).__OPS_RUNTIME__ || {}; if (rt.DIFY_TOKEN) return rt.DIFY_TOKEN } catch {}
+  try { return import.meta.env.VITE_DIFY_TOKEN || '' } catch { return '' }
+}
 
 // 最近对话
 const recentChats = ref([
@@ -63,14 +70,29 @@ const handleSearch = () => {
     return
   }
 
-  ElMessage.info(`正在处理您的问题: ${searchQuery.value}`)
-  // 这里可以调用AI助手API
-  console.log('AI Assistant Query:', searchQuery.value)
+  const q = searchQuery.value.trim()
+
+  // 先同步打开新页，确保处于用户手势上下文
+  try {
+    const base = import.meta.env.BASE_URL || '/'
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    const token = getDifyToken()
+    if (token) params.set('token', token)
+    const url = `${window.location.origin}${base}aiops-full.html${params.toString() ? `?${params.toString()}` : ''}`
+    const win = window.open(url, '_blank')
+    if (win) win.opener = null
+  } catch (e) {
+    console.warn('Failed to open aiops-embed page:', e)
+  }
+
+  ElMessage.info(`正在处理您的问题: ${q}`)
+  console.log('AI Assistant Query:', q)
 
   // 模拟添加到最近对话
   recentChats.value.unshift({
     id: Date.now(),
-    question: searchQuery.value,
+    question: q,
     time: '刚刚'
   })
 
@@ -80,6 +102,27 @@ const handleSearch = () => {
   }
 
   searchQuery.value = ''
+}
+
+// 点击搜索框即新建 Tab，进入全屏助手页（并传 token）；做轻量防抖避免重复打开
+let focusCooldown = false
+function handleFocus(e) {
+  try {
+    if (focusCooldown) return
+    focusCooldown = true
+    const base = import.meta.env.BASE_URL || '/'
+    const params = new URLSearchParams()
+    const token = getDifyToken()
+    if (token) params.set('token', token)
+    const url = `${window.location.origin}${base}aiops-full.html${params.toString() ? `?${params.toString()}` : ''}`
+    const win = window.open(url, '_blank')
+    if (win) win.opener = null
+    // 尝试移除输入框焦点，避免浏览器/输入法导致的二次触发
+    if (e && e.target && typeof e.target.blur === 'function') e.target.blur()
+  } catch (err) {
+  } finally {
+    setTimeout(() => { focusCooldown = false }, 800)
+  }
 }
 
 // 处理聊天记录点击（预留功能）
@@ -102,7 +145,7 @@ const handleSearch = () => {
   align-items: center;
   justify-content: space-between;
   background: #f8f9fa;
-  border-radius: 10px;
+  border-radius: 4px;
   padding: 12px 16px;
   gap: 20px;
   height: 100%;
@@ -153,16 +196,17 @@ const handleSearch = () => {
   display: flex;
   align-items: center;
   background: white;
-  border: none;
-  border-radius: 12px;
+  border: 1px solid transparent; /* 默认无边框视觉，仅占位避免抖动 */
+  border-radius: 4px; /* 收紧圆角 */
   padding: 8px 16px;
   width: 100%;
   min-width: 280px;
   height: 40px;
-  transition: box-shadow 0.3s ease;
+  transition: border-color 0.15s ease, box-shadow 0.3s ease;
 
   &:focus-within {
-    box-shadow: 0 0 0 2px rgba(45, 140, 240, 0.1);
+    border-color: #93c5fd; /* 聚焦时更浅蓝色边框 */
+    box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.25); /* 更细的高亮 */
   }
 }
 

@@ -45,7 +45,8 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
       hashMode: true
     },
     angularjs: {
-      baseUrl: 'http://localhost:8080/oplus/base',
+      // 使用同源路径，通过 Vite 代理到本地 8080，避免 X-Frame-Options SAMEORIGIN 限制
+      baseUrl: '/oplus/base',
       hashMode: true
     },
     api: {
@@ -166,6 +167,24 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
   software: {
     entryUrl: '#/apw/spm',
     description: '软件管理',
+    enabled: true
+  },
+  // 帮助中心
+  help: {
+    entryUrl: '#/help',
+    description: '帮助中心',
+    enabled: true
+  },
+  // 个人资料（打开 Angular 基座 settings 页面）
+  settings: {
+    entryUrl: '#/settings',
+    description: '个人资料设置',
+    enabled: true
+  },
+  // 系统设置中心（自定义 ssc 页面）
+  ssc: {
+    entryUrl: '#/ssc',
+    description: '系统设置中心',
     enabled: true
   },
   // 新增流程（二级功能：#/flow）。保留 workflow 作为别名以兼容

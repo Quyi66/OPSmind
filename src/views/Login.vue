@@ -20,15 +20,18 @@
 
     <!-- Header -->
     <header class="relative z-10 p-6">
-      <div class="flex items-center">
-        <img src="@/assets/icons/logo@2x.png" alt="OpsMind" class="h-10 w-auto object-contain" />
+      <div class="login-container">
+        <div class="flex items-center">
+          <img src="@/assets/icons/logo@2x.png" alt="OPSmind" class="h-10 w-auto object-contain" />
+        </div>
       </div>
     </header>
 
     <!-- Main Content -->
-    <div class="relative z-10 flex items-center justify-center min-h-[calc(100vh-120px)] px-4">
-      <!-- 合并的登录卡片控件 -->
-      <div class="flex w-full max-w-[760px] h-auto min-h-[400px] md:min-h-[420px] lg:h-[460px] shadow-2xl rounded-2xl overflow-hidden border border-gray-100 bg-white/70 backdrop-blur-sm">
+    <div class="relative z-10 min-h-[calc(100vh-120px)]">
+      <div class="login-container flex items-center justify-center min-h-[inherit] px-4">
+        <!-- 合并的登录卡片控件 -->
+        <div class="flex w-full max-w-[760px] h-auto min-h-[400px] md:min-h-[420px] lg:h-[460px] shadow-2xl rounded-2xl overflow-hidden border border-gray-100 bg-white/70 backdrop-blur-sm">
         <!-- 左侧插图卡片（中等及以上屏幕显示） -->
         <div
           class="hidden md:block md:w-1/2 h-full relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
@@ -38,16 +41,17 @@
           ></div>
           <img
             src="@/assets/images/login-illu@2x.png"
-            alt="OpsMind Login Illustration"
+            alt="OPSmind Login Illustration"
             class="w-full h-full object-cover drop-shadow-lg"
             loading="eager"
           />
         </div>
 
-        <!-- 右侧登录表单卡片：占满右半部分 -->
-        <div class="w-full md:w-1/2 h-full bg-white flex items-center">
-          <div class="w-full px-6 md:px-10">
-            <LoginForm />
+          <!-- 右侧登录表单卡片：占满右半部分 -->
+          <div class="w-full md:w-1/2 h-full bg-white flex items-center">
+            <div class="w-full px-6 md:px-10">
+              <LoginForm />
+            </div>
           </div>
         </div>
       </div>
@@ -66,6 +70,15 @@ import LoginForm from '@/components/LoginForm.vue'
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+/* 定宽居中容器（登录页专用） */
+.login-container {
+  max-width: var(--app-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 /* 自定义动画 */

@@ -113,6 +113,9 @@ const loadDashboardData = async () => {
       console.log('🚀 Starting module preloading...')
       ModulePreloadManager.preloadCommonModules()
     }, 2000) // 2秒后开始预加载
+
+    // 登录成功后（首页）获取 AI OPS URL 参数并打印
+    await dashboardStore.fetchAiOpsUrl()
   } catch (error) {
     console.error('❌ Failed to load dashboard data:', error)
     ElMessage.error('加载仪表盘数据失败')
@@ -156,7 +159,7 @@ const handleRefresh = async () => {
   flex: 1;
   overflow: hidden;
   /* 更紧凑顶部间距：24px -> 16px；底部保持 16px；左侧 5px 保持 */
-  padding: 16px 16px 16px 5px;
+  padding: 16px 16px 16px 0;
   background: transparent;
   min-height: 0;
   display: flex;
@@ -165,7 +168,7 @@ const handleRefresh = async () => {
 
 /* Dashboard主容器 */
 .dashboard-main {
-  max-width: 1600px;
+  max-width: var(--app-max-width);
   margin: 0 auto;
   width: 100%;
   height: 100%;
@@ -202,7 +205,7 @@ const handleRefresh = async () => {
 /* Dashboard卡片 */
 .dashboard-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 4px; /* 进一步收窄圆角 */
   border: 1px solid #e8eaed;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
@@ -240,7 +243,7 @@ const handleRefresh = async () => {
   width: 100%;
   min-height: 400px;
   background: white;
-  border-radius: 8px;
+  border-radius: 4px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 

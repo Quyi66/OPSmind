@@ -143,12 +143,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
 
 const router = useRouter()
+
+// 本地存储键名
+const REMEMBER_KEY = 'ops_remember_me'
+const LAST_USERNAME_KEY = 'ops_last_login_username'
 
 const loginForm = reactive({
   username: '',
@@ -211,6 +215,16 @@ const handleLogin = async () => {
       hasUser: !!currentUser,
       userLogin: currentUser?.login
     })
+
+    // 持久化“保持登录状态”偏好与最后登录用户名
+    try {
+      localStorage.setItem(REMEMBER_KEY, String(!!loginForm.rememberMe))
+      if (loginForm.rememberMe) {
+        localStorage.setItem(LAST_USERNAME_KEY, loginForm.username || '')
+      } else {
+        localStorage.removeItem(LAST_USERNAME_KEY)
+      }
+    } catch {}
 
     // 登录成功后通知所有iframe模块更新认证状态
     await notifyIframeModulesAuthUpdate()
@@ -307,6 +321,31 @@ const initializeLoginPage = async () => {
 }
 
 onMounted(() => {
+  // 读取“保持登录状态”与最近登录用户名
+  try {
+    const remembered = localStorage.getItem(REMEMBER_KEY)
+    if (remembered != null) {
+      loginForm.rememberMe = remembered === 'true'
+    }
+    if (loginForm.rememberMe) {
+      const lastUser = localStorage.getItem(LAST_USERNAME_KEY)
+      if (lastUser) loginForm.username = lastUser
+    }
+  } catch {}
+
   initializeLoginPage()
 })
+
+// 在勾选变化时立即保存偏好
+watch(
+  () => loginForm.rememberMe,
+  (val) => {
+    try {
+      localStorage.setItem(REMEMBER_KEY, String(!!val))
+      if (!val) {
+        localStorage.removeItem(LAST_USERNAME_KEY)
+      }
+    } catch {}
+  }
+)
 </script>

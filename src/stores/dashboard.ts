@@ -4,6 +4,7 @@ import { angularJSBridge } from '@/services/angularjs-bridge'
 import { hybridModuleManager } from '@/core/modules/HybridModuleManager.js'
 import { authService } from '@/core/auth'
 import type { User } from '@/types/auth'
+import type { DashboardFullData } from '@/types/dashboard'
 
 interface ModuleShowIn {
   desktop?: number
@@ -44,6 +45,7 @@ interface DashboardState {
   currentUser: Ref<User | null>
   availableModules: Ref<Module[]>
   systemStats: Ref<SystemStat[]>
+  dashboardFullData: Ref<DashboardFullData | null>
   loading: Ref<boolean>
   error: Ref<string | null>
   lastUpdated: Ref<number | null>
@@ -68,6 +70,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const currentUser: Ref<User | null> = ref(null)
   const availableModules: Ref<Module[]> = ref([])
   const systemStats: Ref<SystemStat[]> = ref([])
+  const dashboardFullData: Ref<DashboardFullData | null> = ref(null)
+  const aiOpsUrl: Ref<string | null> = ref(null)
   const loading: Ref<boolean> = ref(false)
   const error: Ref<string | null> = ref(null)
   const lastUpdated: Ref<number | null> = ref(null)
@@ -119,14 +123,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
       }
 
       // 并行加载其他数据
-      const [modules, stats] = await Promise.all([
+      const [modules, stats, fullData] = await Promise.all([
         angularJSBridge.getMenus(), // 获取真实的模块列表
-        getSystemStats() // 获取系统统计信息
+        getSystemStats(), // 获取系统统计信息（历史兼容）
+        getDashboardFullData() // 获取仪表盘全量数据
       ])
 
       currentUser.value = user as User
       availableModules.value = modules || []
       systemStats.value = stats
+      dashboardFullData.value = fullData
       lastUpdated.value = Date.now()
 
       console.log('✅ Dashboard data loaded successfully')
@@ -189,6 +195,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  const getDashboardFullData = async (): Promise<DashboardFullData> => {
+    const { apiService } = await import('@/core/api')
+    const data = await apiService.getDashboardFullData()
+    return data as DashboardFullData
+  }
+
   const refreshStats = async (): Promise<void> => {
     try {
       systemStats.value = await getSystemStats()
@@ -198,11 +210,35 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  // 获取 AI OPS URL 参数
+  const fetchAiOpsUrl = async (): Promise<string | null> => {
+    try {
+      const { apiService } = await import('@/core/api')
+      const result = await apiService.getParam('ai', 'url')
+      let url: string | null = null
+      if (typeof result === 'string') url = result
+      else if (result?.value && typeof result.value === 'string') url = result.value
+      else if (result?.url && typeof result.url === 'string') url = result.url
+      else if (result && typeof result === 'object') {
+        const maybe = result.data || result.param || result.ai || result.name
+        if (typeof maybe === 'string') url = maybe
+      }
+      aiOpsUrl.value = url
+      console.log('🔗 AI OPS URL param (store):', aiOpsUrl.value)
+      return aiOpsUrl.value
+    } catch (e) {
+      console.warn('⚠️ Failed to fetch AI OPS URL param (store):', e)
+      return null
+    }
+  }
+
   // 重置状态
   const reset = (): void => {
     currentUser.value = null
     availableModules.value = []
     systemStats.value = []
+    dashboardFullData.value = null
+    aiOpsUrl.value = null
     loading.value = false
     error.value = null
     lastUpdated.value = null
@@ -213,6 +249,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
     currentUser,
     availableModules,
     systemStats,
+    dashboardFullData,
+    aiOpsUrl,
     loading,
     error,
     lastUpdated,
@@ -227,6 +265,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loadDashboardData,
     openModule,
     refreshStats,
+    fetchAiOpsUrl,
     reset
   }
 })

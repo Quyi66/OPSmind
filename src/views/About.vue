@@ -2,16 +2,16 @@
   <div class="about">
     <div class="about-container">
       <div class="about-header">
-        <img src="@/assets/icons/logo@2x.png" alt="OpsMind" class="logo" />
-        <h1>OpsMind Dashboard</h1>
+        <img src="@/assets/icons/logo@2x.png" alt="OPSmind" class="logo" />
+        <h1>OPSmind Dashboard</h1>
         <p class="version">Version 1.0.0</p>
       </div>
 
       <div class="about-content">
         <div class="info-section">
-          <h2>关于 OpsMind</h2>
+          <h2>关于 OPSmind</h2>
           <p>
-            OpsMind 是一个现代化的运维管理平台，提供统一的运维工具和服务。 本仪表盘基于 Vue 3
+            OPSmind 是一个现代化的运维管理平台，提供统一的运维工具和服务。 本仪表盘基于 Vue 3
             构建，与现有 AngularJS 系统无缝集成。
           </p>
         </div>

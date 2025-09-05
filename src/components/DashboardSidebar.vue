@@ -201,8 +201,10 @@ const handleRecentClick = item => {
   background: transparent;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh; // 动态视口高度支持
+  /* 占满父容器高度，保证分隔线延伸到页面底部 */
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
   overflow-y: auto;
   flex-shrink: 0;
   // 进一步调小：左 10px，右 5px（与内容左边距 5px 合计 10px）
@@ -239,12 +241,211 @@ const handleRecentClick = item => {
   }
 }
 
+@media (min-width: 1600px) {
+  .dashboard-sidebar {
+    width: 400px;
+  }
+
+  /* 让两张卡片在大屏下竖向铺满侧栏高度 */
+  .user-todo-card,
+  .recent-card {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  .todo-section {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .todo-list {
+    flex: 1 1 0;
+    overflow: auto;
+  }
+
+  .dashboard-sidebar .recent-grid {
+    height: auto;
+    min-height: 0;
+    flex: 1 1 0;
+    overflow: auto;
+  }
+
+  .user-profile-card {
+    padding: 24px 18px;
+  }
+
+  .avatar-image {
+    width: 56px;
+    height: 56px;
+  }
+
+  .user-greeting {
+    font-size: 15px;
+  }
+
+  .user-date {
+    font-size: 12px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  .todo-item {
+    padding: 10px 0;
+  }
+
+  .todo-text {
+    font-size: 14px;
+  }
+
+  .todo-sender,
+  .todo-time {
+    font-size: 12px;
+  }
+
+  .ignore-btn,
+  .process-btn {
+    font-size: 13px;
+  }
+
+  .process-btn {
+    padding: 6px 14px;
+  }
+
+  .recent-grid {
+    gap: 3px; /* 27寸：行间距调为原来的约1/3 */
+  }
+
+  .recent-item {
+    gap: 8px;
+    padding: 8px 8px;
+    height: 100%;
+  }
+
+  .recent-icon {
+    width: 28px;
+    height: 28px;
+
+    i {
+      font-size: 14px;
+    }
+  }
+
+  .recent-name {
+    font-size: 13px; /* 大屏同步放大一档 */
+  }
+}
+
+@media (min-width: 1920px) {
+  .dashboard-sidebar {
+    width: 440px;
+  }
+
+  .user-todo-card,
+  .recent-card {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  .todo-section {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .todo-list {
+    flex: 1 1 0;
+    overflow: auto;
+  }
+
+  .dashboard-sidebar .recent-grid {
+    height: auto;
+    min-height: 0;
+    flex: 1 1 0;
+    overflow: auto;
+  }
+
+  .user-profile-card {
+    padding: 26px 20px;
+  }
+
+  .avatar-image {
+    width: 64px;
+    height: 64px;
+  }
+
+  .user-greeting {
+    font-size: 16px;
+  }
+
+  .user-date {
+    font-size: 13px;
+  }
+
+  .section-title {
+    font-size: 17px;
+  }
+
+  .todo-item {
+    padding: 12px 0;
+  }
+
+  .todo-text {
+    font-size: 15px;
+  }
+
+  .todo-sender,
+  .todo-time {
+    font-size: 13px;
+  }
+
+  .ignore-btn,
+  .process-btn {
+    font-size: 14px;
+  }
+
+  .process-btn {
+    padding: 8px 16px;
+  }
+
+  .recent-grid {
+    gap: 3px; /* 27寸+：继续保持紧凑 */
+  }
+
+  .recent-item {
+    gap: 10px;
+    padding: 10px 10px;
+    height: 100%;
+  }
+
+  .recent-icon {
+    width: 32px;
+    height: 32px;
+
+    i {
+      font-size: 16px;
+    }
+  }
+
+  .recent-name {
+    font-size: 13px;
+  }
+}
+
 // 第一张卡片：个人信息 + 待办
 .user-todo-card {
   // 顶部间距更紧凑，与内容区保持一致
   margin: 16px 16px 16px 16px;
   background: white;
-  border-radius: 12px;
+  border-radius: 4px;
   border: 1px solid #f0f0f0;
   overflow: hidden;
 }
@@ -295,7 +496,7 @@ const handleRecentClick = item => {
   // 末卡片底部去掉外边距，统一由容器 padding-bottom 提供 16px 留白
   margin: 0 16px 0 16px;
   background: white;
-  border-radius: 12px;
+  border-radius: 4px;
   border: 1px solid #f0f0f0;
   overflow: hidden;
 }
@@ -446,11 +647,11 @@ const handleRecentClick = item => {
 .recent-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 列，共 5 行 */
-  gap: 6px; /* 更紧凑的行距 */
-  padding: 8px 16px 8px; /* 更紧凑且与标题左右对齐 */
-  height: 220px; /* 固定占位高度：5 行（~36px/行）+ 4*6 间隙 + 8+8 内边距 */
-  min-height: 220px;
-  overflow: hidden;
+  gap: 6px; /* 行距 */
+  padding: 8px 16px 8px; /* 与标题左右对齐 */
+  /* 自适应行高：5 行等比分配可用高度，最小 36px */
+  grid-template-rows: repeat(5, minmax(36px, 1fr));
+  align-content: stretch;
 }
 
 .recent-item {
@@ -463,6 +664,8 @@ const handleRecentClick = item => {
   background: #f8f9fa;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 36px;
+  height: 100%; /* 随网格行高自适应填满 */
 
   &:hover {
     background: #e9ecef;
@@ -493,7 +696,7 @@ const handleRecentClick = item => {
 }
 
 .recent-name {
-  font-size: 11px; /* 文本略小以适应密度 */
+  font-size: 12px; /* 文本整体放大一档 */
   color: #495057;
   text-align: left;
   line-height: 1.2;
@@ -555,7 +758,7 @@ const handleRecentClick = item => {
   }
 
   .recent-name {
-    font-size: 10px;
+    font-size: 11px;
   }
 }
 
@@ -622,7 +825,7 @@ const handleRecentClick = item => {
   }
 
   .recent-name {
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .todo-item {
@@ -688,7 +891,7 @@ const handleRecentClick = item => {
   }
 
   .recent-name {
-    font-size: 8px;
+    font-size: 9px;
   }
 }
 </style>
