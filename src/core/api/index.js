@@ -265,7 +265,7 @@ class ApiService {
    */
   async getDashboardFullData() {
     try {
-      const res = await this.get('/api/dashboard/full-data')
+      const res = await this.get('svs/api/dashboard/full-data')
       // axios response unwrap
       return res?.data
     } catch (error) {
