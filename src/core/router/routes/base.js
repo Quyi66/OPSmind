@@ -69,6 +69,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'gfs-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
