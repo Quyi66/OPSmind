@@ -99,7 +99,12 @@ watch(
 )
 
 onMounted(async () => {
-  await loadDashboardData()
+  // 仅在首页（/home）加载仪表盘数据，避免在切换到其他应用时触发
+  if (route.name === 'home' || route.path === '/home') {
+    await loadDashboardData()
+  } else {
+    console.log('⏭️ Skip dashboard data load (not on /home):', route.path)
+  }
 })
 
 const loadDashboardData = async () => {
