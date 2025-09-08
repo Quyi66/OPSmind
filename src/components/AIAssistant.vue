@@ -23,7 +23,7 @@
             @keyup.enter="handleSearch"
           />
           <button @click="handleSearch" class="search-btn" :disabled="!searchQuery.trim()">
-            <i class="fas fa-search"></i>
+            <img class="search-icon" src="@/assets/icons/icon-aiops-search@2x.png" alt="Search" />
           </button>
         </div>
       </div>
@@ -245,8 +245,11 @@ function handleFocus(e) {
     cursor: not-allowed;
   }
 
-  i {
-    font-size: 14px;
+  .search-icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+    object-fit: contain;
   }
 }
 

@@ -16,6 +16,19 @@ import { applyIframeResourceFix } from '@/utils/iframe-resource-fix'
 // 导入全局样式
 import '@/styles/main.scss'
 
+// 统一设置浏览器 Tab 图标（favicon）为 src/assets/icons/logo-opsmind@2x.png
+try {
+  const faviconHref = new URL('@/assets/icons/logo-opsmind@2x.png', import.meta.url).href
+  const doc = document
+  if (doc && doc.head) {
+    let link = doc.querySelector('link[rel="icon"]') || doc.createElement('link')
+    link.setAttribute('rel', 'icon')
+    link.setAttribute('type', 'image/png')
+    link.setAttribute('href', faviconHref)
+    if (!link.parentNode) doc.head.appendChild(link)
+  }
+} catch {}
+
 // 创建应用实例
 const app = createApp(App)
 
