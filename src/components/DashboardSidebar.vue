@@ -77,6 +77,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
+import { apiService } from '@/core/api'
 import { useMenuStore } from '@/stores/menu.js'
 
 import avatarImage from '@/assets/icons/avatar@2x.png'
@@ -109,18 +110,31 @@ const userInfo = ref({
   date: getCurrentDate()
 })
 
-// 获取用户信息
+// 获取用户信息（优先从 /api/account 使用 fullName）
 const loadUserInfo = async () => {
   try {
-    const user = await authService.getCurrentUser()
-    if (user) {
-      const timeOfDay = getTimeOfDay()
-      userInfo.value = {
-        name: user.name || user.login || '管理员',
-        avatar: avatarImage,
-        greeting: `${user.name || user.login || '管理员'}${timeOfDay}好，欢迎登录`,
-        date: getCurrentDate()
+    let displayName = '管理员'
+
+    // 优先从真实接口获取账户信息
+    try {
+      const account = await apiService.getAccount()
+      if (account && (account.fullName || account.login)) {
+        displayName = account.fullName || account.login
       }
+    } catch (e) {
+      // 接口不可用时回退到本地认证信息
+      const user = authService.getCurrentUser()
+      if (user) {
+        displayName = user.fullName || user.name || user.login || '管理员'
+      }
+    }
+
+    const timeOfDay = getTimeOfDay()
+    userInfo.value = {
+      name: displayName,
+      avatar: avatarImage,
+      greeting: `${displayName}${timeOfDay}好，欢迎登录`,
+      date: getCurrentDate()
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)

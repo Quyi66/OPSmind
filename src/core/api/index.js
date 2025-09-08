@@ -286,6 +286,14 @@ class ApiService {
   }
 
   /**
+   * 获取当前登录账户信息（使用 fullName 展示）
+   */
+  async getAccount() {
+    const res = await this.get('/api/account', { cache: false })
+    return res?.data
+  }
+
+  /**
    * 获取系统参数
    * @param {string} domain 参数域，如 'ai'
    * @param {string} name 参数名，如 'url'

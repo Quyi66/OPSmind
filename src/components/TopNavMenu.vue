@@ -206,6 +206,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
 import { authService } from '@/core/auth'
+import { apiService } from '@/core/api'
 import { useMenuStore } from '@/stores/menu.js'
 import { useDashboardStore } from '@/stores/dashboard'
 import { User, Setting, SwitchButton, InfoFilled, Check, QuestionFilled } from '@element-plus/icons-vue'
@@ -241,9 +242,12 @@ const homeMenu = computed(() => menuStore.homeMenu)
 const menuGroups = computed(() => menuStore.menuGroups)
 const activeGroup = computed(() => menuStore.activeGroup)
 
+const accountFullName = ref('')
 const displayUserName = computed(() => {
-  if (!props.user) return '未登录'
-  return props.user.firstName || props.user.login || '用户'
+  if (accountFullName.value) return accountFullName.value
+  const u = props.user || authService.getCurrentUser() || null
+  if (!u) return '未登录'
+  return u.fullName || u.firstName || u.name || u.login || '用户'
 })
 
 // 通知相关状态 - 默认无未读
@@ -254,6 +258,18 @@ const showMobileMenu = ref(false)
 
 // 语言切换状态（暂不真正切换，仅提示开发中）
 const currentLanguage = ref('zh-cn')
+
+// 加载账号信息（优先显示 fullName）
+onMounted(async () => {
+  try {
+    const acc = await apiService.getAccount().catch(() => null)
+    if (acc && (acc.fullName || acc.login)) {
+      accountFullName.value = acc.fullName || ''
+    }
+  } catch (e) {
+    // 忽略错误，保持旧回退逻辑
+  }
+})
 
 // 处理首页菜单点击
 const handleHomeClick = () => {
