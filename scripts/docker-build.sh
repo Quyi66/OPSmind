@@ -8,7 +8,7 @@ TAG_SET="false"
 
 # Release version: set here; do not pass via args. Example: 1.2.3
 # When empty, falls back to 'latest'.
-VERSION="1.0.5"
+VERSION="1.1.0"
 
 PLATFORM=""
 NO_CACHE=""
