@@ -36,7 +36,7 @@ Example (what this script effectively runs):
     -e DIFY_BASE_URL=https://udify.app \
     -e DIFY_TOKEN=tRnUImvfrP77TFr0 \
     opsmind-web:latest
- 
+
 Overrides:
   -e BACKEND_URL=...      Backend base URL (schema+host[:port])
   -e DIFY_TOKEN=...       Dify API token

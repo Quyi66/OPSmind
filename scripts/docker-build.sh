@@ -2,10 +2,14 @@
 # Build Docker image that bundles opsmind (Vue) and oplus (Angular) into one Nginx image
 set -euo pipefail
 
+# Image repo/name (can be overridden via -t). Version is controlled ONLY by VERSION below.
 TAG="opsmind-web:latest"
 TAG_SET="false"
-# Set release version here (leave empty to infer from --tag)
-VERSION=""
+
+# Release version: set here; do not pass via args. Example: 1.2.3
+# When empty, falls back to 'latest'.
+VERSION="1.0.5"
+
 PLATFORM=""
 NO_CACHE=""
 SKIP_OPSMIND_BUILD="false"
@@ -18,8 +22,7 @@ usage() {
 Usage: scripts/docker-build.sh [options]
 
 Options:
-  -t, --tag <tag>           Image tag (default: opsmind-web:latest)
-                            To set version, edit VERSION at top of this script.
+  -t, --tag <name>          Image name/repo (default: opsmind-web). Version comes from VERSION in script.
   --platform <platform>     docker buildx platform (e.g. linux/amd64)
   --no-cache                Build without cache
   --skip-opsmind-build      Skip building opsmind dist (expects ./dist present)
@@ -34,6 +37,7 @@ Notes:
       1) opsmind build output in ./dist
       2) oplus build output in ./oplus-web/dist
   - If ./dist is missing and --skip-opsmind-build is not set, it will run "npm run build".
+  - To set release version, edit VERSION variable near the top of this script.
 USAGE
 }
 
@@ -64,35 +68,28 @@ done
 
 DEFAULT_REPO_NAME="opsmind-web"
 
-# Derive final image tags based on provided VERSION
+# Compute image names from VERSION (do not infer from args)
 IMAGE_NAME_NO_TAG="${TAG%%:*}"
 if [[ -z "$IMAGE_NAME_NO_TAG" ]]; then IMAGE_NAME_NO_TAG="$DEFAULT_REPO_NAME"; fi
-
-if [[ -n "$VERSION" && "$TAG_SET" != "true" ]]; then
-  TAG="${IMAGE_NAME_NO_TAG}:${VERSION}"
-fi
-
-# Determine effective version for artifact naming (prefer VERSION, fallback to tag suffix)
-EFFECTIVE_VERSION=""
 if [[ -n "$VERSION" ]]; then
-  EFFECTIVE_VERSION="$VERSION"
+  TAG_VERSIONED="${IMAGE_NAME_NO_TAG}:${VERSION}"
+  TAG_LATEST="${IMAGE_NAME_NO_TAG}:latest"
 else
-  # If user passed a tag like repo:1.2.3, and it's not 'latest', use that
-  if [[ "$TAG" == *:* ]]; then
-    TAG_VER="${TAG##*:}"
-    if [[ -n "$TAG_VER" && "$TAG_VER" != "latest" ]]; then
-      EFFECTIVE_VERSION="$TAG_VER"
-    fi
-  fi
+  TAG_VERSIONED="${IMAGE_NAME_NO_TAG}:latest"
+  TAG_LATEST=""
 fi
 
-# Auto-adjust default amd64 tar path when version is known and user didn't override export path
+# Auto-adjust default amd64 tar path when version is set and user didn't override export path
 DEFAULT_TAR_PATH="build/opsmind-web-amd64.tar"
-if [[ -n "$EFFECTIVE_VERSION" && "$EXPORT_AMD64_TAR" == "$DEFAULT_TAR_PATH" ]]; then
-  EXPORT_AMD64_TAR="build/${DEFAULT_REPO_NAME}-${EFFECTIVE_VERSION}-amd64.tar"
+if [[ -n "$VERSION" && "$EXPORT_AMD64_TAR" == "$DEFAULT_TAR_PATH" ]]; then
+  EXPORT_AMD64_TAR="build/${DEFAULT_REPO_NAME}-${VERSION}-amd64.tar"
 fi
 
-echo "[build] Image tag: $TAG"
+if [[ -n "$TAG_LATEST" ]]; then
+  echo "[build] Image tags: $TAG_VERSIONED (+ latest)"
+else
+  echo "[build] Image tag:  $TAG_VERSIONED"
+fi
 echo "[build] Platform:  ${PLATFORM:-(default)}"
 if [[ -n "$VERSION" ]]; then echo "[build] Version:   $VERSION"; fi
 echo "[build] AMD64 tar: ${EXPORT_AMD64_TAR:-(disabled)}"
@@ -144,21 +141,21 @@ if [[ "$MULTI_ARCH" == "true" ]]; then
 
   # 1) Build and load arm64 image for local run on M1 (if applicable)
   echo "[build] Building arm64 (load to local engine)"
-  docker buildx build --platform linux/arm64 -t "$TAG" $NO_CACHE --provenance=false $LABEL_FLAGS --load .
+  docker buildx build --platform linux/arm64 -t "$TAG_VERSIONED" $NO_CACHE --provenance=false $LABEL_FLAGS --load .
 
   # Tag also as :latest locally when a version is provided
-  if [[ -n "$VERSION" ]]; then
-    docker tag "$TAG" "${IMAGE_NAME_NO_TAG}:latest" || true
+  if [[ -n "$TAG_LATEST" ]]; then
+    docker tag "$TAG_VERSIONED" "$TAG_LATEST" || true
   fi
 
   # 2) Build and export amd64 tar for distribution
   if [[ -n "${EXPORT_AMD64_TAR}" ]]; then
     echo "[build] Building amd64 and exporting tar -> $EXPORT_AMD64_TAR"
-    docker buildx build --platform linux/amd64 -t "$TAG" $NO_CACHE --provenance=false $LABEL_FLAGS \
+    docker buildx build --platform linux/amd64 -t "$TAG_VERSIONED" $NO_CACHE --provenance=false $LABEL_FLAGS \
       -o type=docker,dest="$EXPORT_AMD64_TAR" .
   else
     echo "[build] Building amd64 (load to local engine)"
-    docker buildx build --platform linux/amd64 -t "$TAG" $NO_CACHE --provenance=false $LABEL_FLAGS --load .
+    docker buildx build --platform linux/amd64 -t "$TAG_VERSIONED" $NO_CACHE --provenance=false $LABEL_FLAGS --load .
   fi
 
   echo "[build] Multi-arch done. AMD64 tar at: $EXPORT_AMD64_TAR"
@@ -167,16 +164,19 @@ else
   if [[ -n "$PLATFORM" ]]; then
     echo "[build] Single-arch buildx for platform: $PLATFORM"
     ensure_buildx
-    docker buildx build --platform "$PLATFORM" -t "$TAG" $NO_CACHE --provenance=false $LABEL_FLAGS --load .
+    docker buildx build --platform "$PLATFORM" -t "$TAG_VERSIONED" $NO_CACHE --provenance=false $LABEL_FLAGS --load .
     # If user also wants tar and platform=linux/amd64, export tar too
     if [[ "$PLATFORM" == "linux/amd64" ]]; then
       echo "[build] Exporting amd64 tar -> $EXPORT_AMD64_TAR"
-      docker buildx build --platform linux/amd64 -t "$TAG" $NO_CACHE --provenance=false $LABEL_FLAGS \
+      docker buildx build --platform linux/amd64 -t "$TAG_VERSIONED" $NO_CACHE --provenance=false $LABEL_FLAGS \
         -o type=docker,dest="$EXPORT_AMD64_TAR" .
     fi
   else
     echo "[build] Default docker build (host arch)"
-    docker build -t "$TAG" $NO_CACHE $LABEL_FLAGS .
+    docker build -t "$TAG_VERSIONED" $NO_CACHE $LABEL_FLAGS .
   fi
-  echo "[build] Done. Image: $TAG"
+  if [[ -n "$TAG_LATEST" ]]; then
+    docker tag "$TAG_VERSIONED" "$TAG_LATEST" || true
+  fi
+  echo "[build] Done. Image: $TAG_VERSIONED"
 fi
