@@ -77,7 +77,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
-import { apiService } from '@/core/api'
+import { accountService } from '@/core/account'
 import { useMenuStore } from '@/stores/menu.js'
 
 import avatarImage from '@/assets/icons/avatar@2x.png'
@@ -115,17 +115,22 @@ const loadUserInfo = async () => {
   try {
     let displayName = '管理员'
 
-    // 优先从真实接口获取账户信息
-    try {
-      const account = await apiService.getAccount()
-      if (account && (account.fullName || account.login)) {
-        displayName = account.fullName || account.login
-      }
-    } catch (e) {
-      // 接口不可用时回退到本地认证信息
-      const user = authService.getCurrentUser()
-      if (user) {
-        displayName = user.fullName || user.name || user.login || '管理员'
+    // 优先使用缓存；若无则拉取并缓存
+    const cached = accountService.getCached()
+    if (cached && (cached.fullName || cached.login)) {
+      displayName = cached.fullName || cached.login
+    } else {
+      try {
+        const account = await accountService.getAccount()
+        if (account && (account.fullName || account.login)) {
+          displayName = account.fullName || account.login
+        }
+      } catch (e) {
+        // 接口不可用时回退到本地认证信息
+        const user = authService.getCurrentUser()
+        if (user) {
+          displayName = (user && (user.fullName || user.name || user.login)) || '管理员'
+        }
       }
     }
 

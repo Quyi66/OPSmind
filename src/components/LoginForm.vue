@@ -147,6 +147,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
+import { accountService } from '@/core/account'
 
 const router = useRouter()
 
@@ -228,6 +229,14 @@ const handleLogin = async () => {
 
     // 登录成功后通知所有iframe模块更新认证状态
     await notifyIframeModulesAuthUpdate()
+
+    // 登录成功后获取并缓存账户信息（优先 fullName 展示）
+    try {
+      await accountService.getAccount({ forceRefresh: true })
+      console.log('✅ Account info fetched and cached after login')
+    } catch (e) {
+      console.warn('⚠️ Failed to fetch account info after login:', e)
+    }
 
     console.log('🔄 Navigating to home...')
     await router.push('/home')

@@ -206,7 +206,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
 import { authService } from '@/core/auth'
-import { apiService } from '@/core/api'
+import { accountService } from '@/core/account'
 import { useMenuStore } from '@/stores/menu.js'
 import { useDashboardStore } from '@/stores/dashboard'
 import { User, Setting, SwitchButton, InfoFilled, Check, QuestionFilled } from '@element-plus/icons-vue'
@@ -259,13 +259,11 @@ const showMobileMenu = ref(false)
 // 语言切换状态（暂不真正切换，仅提示开发中）
 const currentLanguage = ref('zh-cn')
 
-// 加载账号信息（优先显示 fullName）
+// 加载账号信息（优先缓存，再请求；用于显示 fullName）
 onMounted(async () => {
   try {
-    const acc = await apiService.getAccount().catch(() => null)
-    if (acc && (acc.fullName || acc.login)) {
-      accountFullName.value = acc.fullName || ''
-    }
+    const acc = (accountService.getCached()) || (await accountService.getAccount().catch(() => null))
+    if (acc && (acc.fullName || acc.login)) accountFullName.value = acc.fullName || ''
   } catch (e) {
     // 忽略错误，保持旧回退逻辑
   }
@@ -341,6 +339,8 @@ const handleUserCommand = command => {
 const handleLogout = async () => {
   try {
     ElMessage.success('正在安全登出...')
+    // 清理账户缓存
+    try { accountService.clear() } catch {}
     await authService.logout()
   } catch (error) {
     console.error('Logout error:', error)
