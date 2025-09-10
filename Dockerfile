@@ -23,10 +23,6 @@ COPY oplus-web/dist/ /usr/share/nginx/html/oplus/
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Healthcheck: opsmind index should be reachable
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=5 \
-  CMD wget -qO- http://127.0.0.1/ops/index.html >/dev/null 2>&1 || exit 1
-
 EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
