@@ -19,7 +19,8 @@
           <h4 class="section-title">我的待办</h4>
         </div>
 
-        <div class="todo-list">
+        <div class="todo-list fixed-height">
+          <div v-if="!todoList.length" class="todo-empty">暂无待办</div>
           <div
             v-for="todo in todoList"
             :key="todo.id"
@@ -150,30 +151,8 @@ onMounted(() => {
   loadUserInfo()
 })
 
-// 待办事项列表
-const todoList = ref([
-  {
-    id: 1,
-    title: '您有新的脚本需要审批，请及时查看',
-    sender: 'system',
-    time: '2025-07-14 10:22:34',
-    priority: 'high'
-  },
-  {
-    id: 2,
-    title: '您有新的脚本需要审批，请及时查看',
-    sender: 'system',
-    time: '2025-07-14 10:22:34',
-    priority: 'high'
-  },
-  {
-    id: 3,
-    title: '您有新的脚本需要审批，请及时查看',
-    sender: 'system',
-    time: '2025-07-14 10:22:34',
-    priority: 'high'
-  }
-])
+// 待办事项列表（移除mock数据，保留固定展示高度）
+const todoList = ref([])
 
 // 最近使用：来源于菜单 Store，固定 10 个格子（5 行 × 2 列）
 const menuStore = useMenuStore()
@@ -564,6 +543,24 @@ const handleRecentClick = item => {
 
 .todo-list {
   padding: 0 16px 12px 16px;
+}
+
+/* 固定高度：按3个待办项的视觉高度预留空间（不随内容增减） */
+.todo-list.fixed-height {
+  /* 约每项 ~68-72px（含标题、meta、按钮等），这里统一按 72px 估算 */
+  min-height: 216px; /* 72 * 3 */
+  max-height: 216px;
+  overflow: hidden; /* 固定区域不滚动，保持卡片高度稳定 */
+  display: block;
+}
+
+.todo-empty {
+  height: 216px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8c8c8c;
+  font-size: 12px;
 }
 
 .todo-item {
