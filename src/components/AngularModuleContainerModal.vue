@@ -11,18 +11,14 @@
 
       <!-- 模态框内容 -->
       <div class="modal-content">
-        <div
-          v-if="moduleCode"
-          ref="iframeContainer"
-          class="iframe-container"
-        ></div>
+        <div v-if="moduleCode" ref="iframeContainer" class="iframe-container"></div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { ElButton, ElMessage } from 'element-plus'
 import { singleIframeManager } from '@/utils/single-iframe-manager'
 
@@ -31,14 +27,8 @@ const visible = ref(false)
 const moduleCode = ref('')
 const moduleTitle = ref('')
 const loading = ref(false)
-const refreshKey = ref(0)
 const iframeContainer = ref(null)
 const modalWidth = ref('90vw')
-
-// 计算属性
-const moduleIcon = computed(() => {
-  return 'fas fa-cube' // 使用默认图标
-})
 
 // 动态计算iframe宽度
 const calculateModalWidth = () => {
@@ -50,10 +40,10 @@ const calculateModalWidth = () => {
 
   if (screenWidth >= 2560) {
     // 4K及以上超大屏：75%宽度，最大1800px
-    modalWidth.value = Math.min(screenWidth * 0.75, 1800) + 'px'
+    modalWidth.value = `${Math.min(screenWidth * 0.75, 1800)  }px`
   } else if (screenWidth >= 1920) {
     // 超大屏：80%宽度，最大1600px
-    modalWidth.value = Math.min(screenWidth * 0.8, 1600) + 'px'
+    modalWidth.value = `${Math.min(screenWidth * 0.8, 1600)  }px`
   } else if (screenWidth >= 1440) {
     // 大屏：85%宽度
     modalWidth.value = '85vw'
@@ -71,7 +61,7 @@ const calculateModalWidth = () => {
   // 超宽屏特殊处理（比例大于2.5:1）
   if (aspectRatio > 2.5 && screenWidth >= 1440) {
     const currentWidth = parseInt(modalWidth.value)
-    modalWidth.value = Math.min(currentWidth * 0.9, 1400) + 'px'
+    modalWidth.value = `${Math.min(currentWidth * 0.9, 1400)  }px`
   }
 
   console.log(`📱 Screen: ${screenWidth}x${screenHeight}px (${aspectRatio.toFixed(2)}:1), Modal width: ${modalWidth.value}`)

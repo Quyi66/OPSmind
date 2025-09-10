@@ -102,7 +102,6 @@ function buildModuleUrlWithAuth() {
       // URL 中添加认证参数，包括token（使用配置的参数名）
       const separator = baseUrl.includes('?') ? '&' : '?'
       const tokenParam = appUrlManager.getTokenParam()
-      const urlPrefix = appUrlManager.getUrlPrefix()
 
       const params = new URLSearchParams({
         [tokenParam]: token,
@@ -113,19 +112,8 @@ function buildModuleUrlWithAuth() {
 
       // URL前缀应该只用于特殊情况，这里暂时不使用
       // 直接使用原始baseUrl，确保URL格式正确
-      let finalBaseUrl = baseUrl
-
+      const finalBaseUrl = baseUrl
       const finalUrl = `${finalBaseUrl}${separator}${params.toString()}`
-      console.log('🔗 Built module auth URL with token and prefix:', {
-        moduleCode: props.moduleCode,
-        originalBaseUrl: baseUrl,
-        finalBaseUrl,
-        urlPrefix,
-        tokenParam,
-        hasToken: !!token,
-        tokenLength: token.length,
-        finalUrl: finalUrl.substring(0, 100) + '...' // 只显示前100个字符用于调试
-      })
 
       return finalUrl
     }
