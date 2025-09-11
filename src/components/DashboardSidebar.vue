@@ -20,7 +20,9 @@
         </div>
 
         <div class="todo-list fixed-height">
-          <div v-if="!todoList.length" class="todo-empty">暂无待办</div>
+          <div v-if="!todoList.length" class="todo-empty">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
           <div
             v-for="todo in todoList"
             :key="todo.id"
@@ -548,19 +550,25 @@ const handleRecentClick = item => {
 /* 固定高度：按3个待办项的视觉高度预留空间（不随内容增减） */
 .todo-list.fixed-height {
   /* 约每项 ~68-72px（含标题、meta、按钮等），这里统一按 72px 估算 */
-  min-height: 216px; /* 72 * 3 */
-  max-height: 216px;
+  min-height: 264px; /* 提高高度（约 3.5 行视觉空间） */
+  max-height: 264px;
   overflow: hidden; /* 固定区域不滚动，保持卡片高度稳定 */
   display: block;
 }
 
 .todo-empty {
-  height: 216px;
+  height: 264px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8c8c8c;
-  font-size: 12px;
+  color: #d1d5db; /* 略深的中性灰 */
+  position: relative;
+}
+
+.todo-empty i {
+  font-size: 72px; /* 更大图标，类似背景的视觉效果 */
+  opacity: 0.25; /* 更浅一些的背景效果 */
+  transform: translateY(-6px); /* 轻微上移，视觉更平衡 */
 }
 
 .todo-item {
