@@ -4,9 +4,9 @@
  */
 
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { hybridModuleManager } from '@/core/modules/HybridModuleManager.js'
-import { authService } from '@/core/auth'
-import { FeatureFlagEvaluator } from '@/config/feature-flags.config.js'
+// import { hybridModuleManager } from '@/core/modules/HybridModuleManager.js'
+// import { authService } from '@/core/auth'
+// import { FeatureFlagEvaluator } from '@/config/feature-flags.config.js'
 
 // 导入路由配置
 import { baseRoutes } from './routes/base.js'

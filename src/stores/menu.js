@@ -5,15 +5,22 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { authService } from '@/core/auth'
 // 避免循环依赖：通过全局暴露获取路由实例
 function getRouter() {
   if (typeof window !== 'undefined' && window.__VUE_ROUTER__) return window.__VUE_ROUTER__
   return null
 }
-import { getMenuGroups, getMenuGroup, getMenuItemInfo, getHomeMenu, getGroupAlias, resolveGroupCode } from '@/config/menu.config.js'
+import {
+  getMenuGroups,
+  getMenuGroup,
+  getMenuItemInfo,
+  getHomeMenu,
+  resolveGroupCode
+} from '@/config/menu.config.js'
 
 export const useMenuStore = defineStore('menu', () => {
-  const RECENT_KEY = 'opsmind_recent_features'
+  const BASE_RECENT_KEY = 'opsmind_recent_features'
   // 状态
   const activeGroup = ref('') // 当前激活的一级菜单分组
   const activeMenuItem = ref('') // 当前激活的二级菜单项
@@ -47,7 +54,7 @@ export const useMenuStore = defineStore('menu', () => {
   })
 
   // 动作
-  const setActiveGroup = (groupCode) => {
+  const setActiveGroup = groupCode => {
     console.log('🎯 Setting active group:', groupCode)
 
     // 先清除当前选中的菜单项，避免冲突
@@ -75,7 +82,7 @@ export const useMenuStore = defineStore('menu', () => {
     }
   }
 
-  const setActiveMenuItem = (menuCode) => {
+  const setActiveMenuItem = menuCode => {
     console.log('🎯 Setting active menu item:', menuCode)
     activeMenuItem.value = menuCode
 
@@ -127,13 +134,13 @@ export const useMenuStore = defineStore('menu', () => {
     console.log('📱 Side menu visibility toggled:', showSideMenu.value)
   }
 
-  const setSideMenuCollapsed = (collapsed) => {
+  const setSideMenuCollapsed = collapsed => {
     sideMenuCollapsed.value = collapsed
     console.log('📱 Side menu collapsed state changed:', collapsed)
   }
 
   // 根据当前路由自动设置菜单状态
-  const setMenuFromRoute = (routePath) => {
+  const setMenuFromRoute = routePath => {
     // 规范化路径
     const clean = routePath.startsWith('/') ? routePath.slice(1) : routePath
 
@@ -154,7 +161,14 @@ export const useMenuStore = defineStore('menu', () => {
       activeGroup.value = groupCode || info.group.code
       activeMenuItem.value = moduleCode
       showSideMenu.value = true
-      console.log('🧭 Menu state set from route:', routePath, '-> Group:', info.group.code, 'Item:', moduleCode)
+      console.log(
+        '🧭 Menu state set from route:',
+        routePath,
+        '-> Group:',
+        info.group.code,
+        'Item:',
+        moduleCode
+      )
       // 记录最近使用
       recordRecent(moduleCode)
     } else {
@@ -213,22 +227,47 @@ export const useMenuStore = defineStore('menu', () => {
   }
 
   // 最近使用相关
+  function getRecentKey() {
+    try {
+      const user = authService.getCurrentUser()
+      const login = user?.login || user?.name || 'guest'
+      return `${BASE_RECENT_KEY}:${login}`
+    } catch (e) {
+      return `${BASE_RECENT_KEY}:guest`
+    }
+  }
+
   function loadRecent() {
     try {
-      const raw = localStorage.getItem(RECENT_KEY)
+      const userKey = getRecentKey()
+      const raw = localStorage.getItem(userKey)
       const parsed = raw ? JSON.parse(raw) : []
       if (Array.isArray(parsed)) return parsed
-    } catch (e) {
-      console.warn('Failed to load recent features:', e)
+    } catch {
+      console.warn('Failed to load recent features')
+    }
+    // 兼容迁移：如果用户键下没有数据，尝试读取旧全局键一次
+    try {
+      const legacyRaw = localStorage.getItem(BASE_RECENT_KEY)
+      const legacy = legacyRaw ? JSON.parse(legacyRaw) : []
+      if (Array.isArray(legacy) && legacy.length) {
+        // 将旧数据迁移到当前用户键下
+        saveRecent(legacy)
+        // 可选择清理旧键：保留以防他人用户使用同一浏览器，此处不清理
+        return legacy
+      }
+    } catch {
+      // ignore
     }
     return []
   }
 
   function saveRecent(list) {
     try {
-      localStorage.setItem(RECENT_KEY, JSON.stringify(list))
-    } catch (e) {
-      console.warn('Failed to save recent features:', e)
+      const userKey = getRecentKey()
+      localStorage.setItem(userKey, JSON.stringify(list))
+    } catch {
+      console.warn('Failed to save recent features')
     }
   }
 
