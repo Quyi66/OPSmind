@@ -405,16 +405,18 @@ const setupIframeMessaging = () => {
       return
     }
 
-    console.log('📨 Message from Angular module:', event.data)
+    console.log(`📨 [AngularModuleFrame] Message from Angular module ${props.moduleCode}:`, event.data)
 
     // 处理认证数据请求
     if (event.data && event.data.type === 'request-auth-data') {
+      console.log(`🔄 [AngularModuleFrame] Auth data requested by module ${props.moduleCode}`)
       sendAuthDataToIframe()
       return
     }
 
     // 处理认证刷新请求
     if (event.data && event.data.type === 'request-auth-refresh') {
+      console.log(`🔄 [AngularModuleFrame] Auth refresh requested by module ${props.moduleCode}`)
       refreshAuthData()
       return
     }
@@ -438,7 +440,16 @@ const cleanupIframeMessaging = () => {
 
 // 发送认证数据到iframe
 const sendAuthDataToIframe = () => {
-  if (!moduleIframe.value || !moduleIframe.value.contentWindow) return
+  console.log(`🚀 [AngularModuleFrame] Starting to send auth data to iframe for module: ${props.moduleCode}`)
+
+  if (!moduleIframe.value || !moduleIframe.value.contentWindow) {
+    console.warn(`⚠️ [AngularModuleFrame] Cannot send auth data - iframe not ready:`, {
+      hasIframe: !!moduleIframe.value,
+      hasContentWindow: !!moduleIframe.value?.contentWindow,
+      moduleCode: props.moduleCode
+    })
+    return
+  }
 
   try {
     // 使用导入的认证服务获取认证信息
@@ -446,7 +457,11 @@ const sendAuthDataToIframe = () => {
     const user = authService.getCurrentUser()
 
     if (!token || !user) {
-      console.warn('⚠️ No auth data available to send to iframe')
+      console.warn(`⚠️ [AngularModuleFrame] No auth data available for module ${props.moduleCode}:`, {
+        hasToken: !!token,
+        hasUser: !!user,
+        userLogin: user?.login
+      })
       return
     }
 
@@ -468,29 +483,38 @@ const sendAuthDataToIframe = () => {
       timestamp: Date.now()
     }
 
+    console.log(`🔐 [AngularModuleFrame] Auth data prepared for module ${props.moduleCode}:`, {
+      hasToken: !!token,
+      tokenLength: token?.length,
+      userLogin: serializableUser.login,
+      tenantId: serializableUser.tenantId,
+      permissionsCount: serializableUser.permissions?.length || 0,
+      timestamp: authData.timestamp
+    })
+
     // 同时设置到sessionStorage供iframe使用（使用兼容的键名）
     sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
-
-    // 为了兼容性，也设置旧的键名
     sessionStorage.setItem('oplus_token', token)
     sessionStorage.setItem('oplus_user', JSON.stringify(serializableUser))
+    console.log(`💾 [AngularModuleFrame] Auth data saved to sessionStorage for module ${props.moduleCode}`)
 
     // 发送消息到iframe - 确保数据可序列化
-    moduleIframe.value.contentWindow.postMessage(
-      {
-        type: 'vue-auth-data',
-        authData: JSON.parse(JSON.stringify(authData)) // 深度克隆确保可序列化
-      },
-      '*'
-    )
+    const messageData = {
+      type: 'vue-auth-data',
+      authData: JSON.parse(JSON.stringify(authData)) // 深度克隆确保可序列化
+    }
 
-    console.log('🔗 Auth data sent to iframe:', {
+    moduleIframe.value.contentWindow.postMessage(messageData, '*')
+    console.log(`📤 [AngularModuleFrame] Auth data sent via postMessage to module ${props.moduleCode}`)
+
+    console.log(`✅ [AngularModuleFrame] Auth data sent to iframe successfully:`, {
+      moduleCode: props.moduleCode,
       hasToken: !!token,
       userLogin: serializableUser?.login,
       tenantId: serializableUser?.tenantId
     })
   } catch (e) {
-    console.error('Failed to send auth data to iframe:', e)
+    console.error(`❌ [AngularModuleFrame] Failed to send auth data to iframe for module ${props.moduleCode}:`, e)
   }
 }
 

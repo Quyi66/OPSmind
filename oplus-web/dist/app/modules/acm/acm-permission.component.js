@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e,t,s,a,i,m,n,c){var o=this;o.appModule="ACM",o.showPermissionRWX=["r","w","x"],n.getTablePermission().then(function(e){o.moduleData=e})}angular.module("oplus.acm").component("acmPermission",{templateUrl:"app/modules/acm/acm-permission.html",controller:["$scope","$element","$http","restUtils","$state","messageService","acmService","$translate",e]}),e.$inject=["$scope","$element","$http","restUtils","$state","messageService","acmService","$translate"]}();

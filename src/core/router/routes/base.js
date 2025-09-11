@@ -8,11 +8,20 @@ export const baseRoutes = [
     redirect: '/home'
   },
   {
+    path: '/aiops',
+    name: 'aiops',
+    component: () => import('@/views/AiOpsAssistant.vue'),
+    meta: {
+      title: 'OPS智能助手',
+      requiresAuth: true
+    }
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('@/views/Login.vue'),
     meta: {
-      title: '登录 - OpsMind',
+      title: '登录 - OPSmind',
       requiresGuest: true,
       layout: 'auth'
     }
@@ -28,7 +37,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: 'OpsMind 仪表盘',
+      title: 'OPSmind 仪表盘',
       requiresAuth: true,
       moduleType: 'vue-native',
       moduleCode: 'dashboard'
@@ -39,7 +48,7 @@ export const baseRoutes = [
     name: 'about',
     component: () => import('@/views/About.vue'),
     meta: {
-      title: '关于 - OpsMind'
+      title: '关于 - OPSmind'
     }
   },
   {
@@ -47,7 +56,7 @@ export const baseRoutes = [
     name: 'migration-dashboard',
     component: () => import('@/views/MigrationDashboard.vue'),
     meta: {
-      title: '迁移管理 - OpsMind',
+      title: '迁移管理 - OPSmind',
       requiresAuth: true,
       requiresPermission: 'admin'
     }
@@ -60,11 +69,12 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'gfs-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
     meta: {
-      title: '脚本管理 - OpsMind',
+      title: '脚本管理 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'gfs'
@@ -81,7 +91,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: '作业编排 - OpsMind',
+      title: '作业编排 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'jao'
@@ -98,7 +108,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: '命令管理 - OpsMind',
+      title: '命令管理 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'cmd'
@@ -115,7 +125,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: '系统巡检 - OpsMind',
+      title: '系统巡检 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'cac'
@@ -132,7 +142,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: '密码管理 - OpsMind',
+      title: '密码管理 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'password'
@@ -149,7 +159,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: 'sudo权限管理 - OpsMind',
+      title: 'sudo权限管理 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'sudo'
@@ -166,7 +176,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: '资产管理 - OpsMind',
+      title: '资产管理 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'acm'
@@ -183,7 +193,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: '补丁管理 - OpsMind',
+      title: '补丁管理 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'patches'
@@ -200,7 +210,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: '软件管理 - OpsMind',
+      title: '软件管理 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'software'
@@ -217,7 +227,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: '流程管理 - OpsMind',
+      title: '流程管理 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'workflow'
@@ -234,7 +244,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: '用户管理 - OpsMind',
+      title: '用户管理 - OPSmind',
       requiresAuth: true,
       moduleType: 'iframe',
       moduleCode: 'users'

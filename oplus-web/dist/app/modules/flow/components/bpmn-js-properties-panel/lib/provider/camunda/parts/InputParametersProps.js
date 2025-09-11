@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+"use strict";var getTemplate=require("../element-templates/Helper").getTemplate,inputParameters=require("./implementation/InputParameters");module.exports=function(e,t,r,a,i){if(!getTemplate(t,a)){var n=inputParameters(t,r,{},i);e.entries=e.entries.concat(n.entries)}};

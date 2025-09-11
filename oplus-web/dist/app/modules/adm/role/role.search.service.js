@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function r(r){return r("api/_search/roles/:id",{},{query:{method:"GET",isArray:!0}})}angular.module("oplus.adm").factory("RoleSearch",r),r.$inject=["$resource"]}();

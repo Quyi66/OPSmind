@@ -1,395 +1,100 @@
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <div class="login-header">
-        <h1>OpsMind Dashboard</h1>
-        <p>运维管理平台</p>
-        <!-- 开发环境提示 -->
-        <div v-if="isDev" class="dev-notice">
-          <el-alert
-            title="开发环境"
-            type="info"
-            :closable="false"
-            show-icon
-          >
-            <template #default>
-              <p>默认账号: <strong>admin</strong></p>
-              <p>默认密码: <strong>Oplus@2020</strong></p>
-            </template>
-          </el-alert>
+  <div class="min-h-screen login-background relative overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-20">
+      <div class="absolute top-20 left-20 w-2 h-2 bg-white rounded-full"></div>
+      <div class="absolute top-32 left-40 w-1 h-1 bg-white rounded-full"></div>
+      <div class="absolute top-40 left-60 w-2 h-2 bg-white rounded-full"></div>
+      <div class="absolute top-60 left-80 w-1 h-1 bg-white rounded-full"></div>
+      <div class="absolute top-80 left-32 w-2 h-2 bg-white rounded-full"></div>
+      <div class="absolute bottom-40 right-40 w-2 h-2 bg-white rounded-full"></div>
+      <div class="absolute bottom-60 right-60 w-1 h-1 bg-white rounded-full"></div>
+      <div class="absolute bottom-80 right-80 w-2 h-2 bg-white rounded-full"></div>
+      <!-- Dotted pattern -->
+      <div class="absolute bottom-0 right-0 w-96 h-96 opacity-30">
+        <div class="grid grid-cols-12 gap-2 p-8">
+          <div v-for="i in 144" :key="i" class="w-1 h-1 bg-white rounded-full"></div>
         </div>
       </div>
+    </div>
 
-      <div v-if="initializing" class="initializing-container">
-        <p>正在初始化登录页面...</p>
-        <div class="loading-spinner">
-          <i class="el-icon-loading"></i>
+    <!-- Header -->
+    <header class="relative z-10 p-6">
+      <div class="login-container">
+        <div class="flex items-center">
+          <img src="@/assets/icons/logo@2x.png" alt="OPSmind" class="h-10 w-auto object-contain" />
         </div>
       </div>
+    </header>
 
-      <el-form
-        v-else
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="loginRules"
-        class="login-form"
-        @submit.prevent="handleLogin"
-      >
-        <div v-if="authError" class="error-message">
-          <el-alert :title="errorMessage" type="error" :closable="false" show-icon></el-alert>
+    <!-- Main Content -->
+    <div class="relative z-10 min-h-[calc(100vh-120px)]">
+      <div class="login-container flex items-center justify-center min-h-[inherit] px-4">
+        <!-- 合并的登录卡片控件 -->
+        <div class="flex w-full max-w-[760px] h-auto min-h-[400px] md:min-h-[420px] lg:h-[460px] shadow-2xl rounded-2xl overflow-hidden border border-gray-100 bg-white/70 backdrop-blur-sm">
+        <!-- 左侧插图卡片（中等及以上屏幕显示） -->
+        <div
+          class="hidden md:block md:w-1/2 h-full relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
+        >
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-indigo-400/5 to-purple-400/5"
+          ></div>
+          <img
+            src="@/assets/images/login-illu@2x.png"
+            alt="OPSmind Login Illustration"
+            class="w-full h-full object-cover drop-shadow-lg"
+            loading="eager"
+          />
         </div>
 
-        <el-form-item prop="username">
-          <el-input
-            v-model="loginForm.username"
-            placeholder="用户名"
-            size="large"
-            prefix-icon="User"
-            :disabled="loading"
-          ></el-input>
-        </el-form-item>
-
-        <el-form-item prop="password">
-          <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="密码"
-            size="large"
-            prefix-icon="Lock"
-            :disabled="loading"
-            @keyup.enter="handleLogin"
-          ></el-input>
-        </el-form-item>
-
-        <el-form-item v-if="showOTP" prop="otpCode">
-          <el-input
-            v-model="loginForm.otpCode"
-            placeholder="动态验证码"
-            size="large"
-            prefix-icon="Key"
-            :disabled="loading"
-            maxlength="6"
-            @keyup.enter="handleLogin"
-          ></el-input>
-        </el-form-item>
-
-        <el-form-item>
-          <el-checkbox v-model="loginForm.rememberMe" :disabled="loading">记住我</el-checkbox>
-        </el-form-item>
-
-        <el-form-item>
-          <div class="login-buttons">
-            <el-button
-              type="primary"
-              size="large"
-              :loading="loading"
-              @click="handleLogin"
-              :class="isDev ? 'login-button-dev' : 'login-button'"
-            >
-              {{ loading ? '登录中...' : '登录' }}
-            </el-button>
-
-            <!-- 开发环境快速登录按钮 -->
-            <el-button
-              v-if="isDev"
-              type="success"
-              size="large"
-              :loading="loading"
-              @click="handleQuickLogin"
-              class="quick-login-button"
-            >
-              快速登录
-            </el-button>
+          <!-- 右侧登录表单卡片：占满右半部分 -->
+          <div class="w-full md:w-1/2 h-full bg-white flex items-center">
+            <div class="w-full px-6 md:px-10">
+              <LoginForm />
+            </div>
           </div>
-        </el-form-item>
-      </el-form>
-
-      <div class="login-footer">
-        <p>&copy; 2024 OpsMind. All rights reserved.</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElForm, ElFormItem, ElInput, ElButton, ElCheckbox, ElAlert, ElMessage } from 'element-plus'
-import { authService } from '@/core/auth'
-import { getDevLoginDefaults, logDevInfo, isDevelopment } from '@/config/dev-defaults'
-
-const router = useRouter()
-const loginFormRef = ref()
-
-// 开发环境标识
-const isDev = isDevelopment()
-
-// 获取开发环境默认值
-const devDefaults = getDevLoginDefaults()
-
-const loginForm = reactive({
-  username: devDefaults.username,
-  password: devDefaults.password,
-  otpCode: '',
-  rememberMe: devDefaults.rememberMe
-})
-
-const loginRules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 1, max: 50, message: '用户名长度在 1 到 50 个字符', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 4, max: 100, message: '密码长度在 4 到 100 个字符', trigger: 'blur' }
-  ],
-  otpCode: [{ len: 6, message: '动态验证码必须是6位数字', trigger: 'blur' }]
-}
-
-const loading = ref(false)
-const authError = ref(false)
-const errorMessage = ref('')
-const showOTP = ref(false)
-const initializing = ref(true)
-const tenants = ref([])
-const licenseInfo = ref(null)
-
-const handleLogin = async () => {
-  if (loading.value) return
-
-  try {
-    await loginFormRef.value.validate()
-
-    loading.value = true
-    authError.value = false
-
-    console.log('🔐 Attempting login:', loginForm.username)
-
-    const result = await authService.login({
-      username: loginForm.username,
-      password: loginForm.password,
-      otpCode: loginForm.otpCode,
-      rememberMe: loginForm.rememberMe
-    })
-
-    console.log('✅ Login successful:', result)
-    ElMessage.success('登录成功')
-
-    // 确保认证状态已更新，然后跳转到仪表盘
-    await new Promise(resolve => setTimeout(resolve, 100))
-
-    // 验证认证状态
-    const isAuthenticated = authService.isAuthenticated()
-    const currentUser = authService.getCurrentUser()
-    console.log('🔍 Auth status before navigation:', {
-      isAuthenticated,
-      hasUser: !!currentUser,
-      userLogin: currentUser?.login
-    })
-
-    console.log('🔄 Navigating to home...')
-    await router.push('/home')
-  } catch (error) {
-    console.error('❌ Login failed:', error)
-    authError.value = true
-
-    if (error.code === 'UnknownAccount') {
-      errorMessage.value = '用户不存在'
-    } else if (error.code === 'IncorrectCredentials') {
-      errorMessage.value = '用户名或密码错误'
-    } else if (error.code === 'UnknownTenantAccount') {
-      errorMessage.value = '用户未注册到当前租户'
-    } else {
-      errorMessage.value = error.message || '登录失败，请检查用户名和密码'
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-// 开发环境快速登录
-const handleQuickLogin = async () => {
-  if (!isDev) return
-
-  // 确保表单已填充默认值
-  const defaults = getDevLoginDefaults()
-  loginForm.username = defaults.username
-  loginForm.password = defaults.password
-  loginForm.rememberMe = defaults.rememberMe
-
-  // 直接调用登录
-  await handleLogin()
-}
-
-const initializeLoginPage = async () => {
-  try {
-    initializing.value = true
-    console.log('🔄 Initializing login page...')
-
-    const result = await authService.initializeLogin()
-
-    tenants.value = result.tenants || []
-    licenseInfo.value = result.license
-    showOTP.value = result.otpEnabled || false
-
-    console.log('✅ Login page initialized successfully')
-  } catch (error) {
-    console.error('❌ Failed to initialize login page:', error)
-    // 即使初始化失败，也允许用户尝试登录
-  } finally {
-    initializing.value = false
-
-    // 自动聚焦到用户名输入框
-    setTimeout(() => {
-      const usernameInput = document.querySelector('input[placeholder="用户名"]')
-      if (usernameInput) {
-        usernameInput.focus()
-      }
-    }, 100)
-  }
-}
-
-onMounted(() => {
-  initializeLoginPage()
-
-  // 开发环境提示
-  if (isDev) {
-    logDevInfo()
-  }
-})
+import LoginForm from '@/components/LoginForm.vue'
 </script>
 
 <style scoped>
+/* Login Background */
+.login-background {
+  background-image: url('@/assets/images/bg-login@2x.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* 定宽居中容器（登录页专用） */
 .login-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  max-width: var(--app-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
-.login-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  padding: 40px;
-  width: 100%;
-  max-width: 400px;
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.login-header h1 {
-  color: #2c3e50;
-  font-size: 28px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-}
-
-.login-header p {
-  color: #7f8c8d;
-  font-size: 14px;
-  margin: 0;
-}
-
-.dev-notice {
-  margin-top: 16px;
-  text-align: left;
-}
-
-.dev-notice .el-alert {
-  border-radius: 8px;
-}
-
-.dev-notice p {
-  margin: 4px 0;
-  font-size: 13px;
-}
-
-.login-form {
-  margin-bottom: 24px;
-}
-
-.error-message {
-  margin-bottom: 20px;
-}
-
-.login-buttons {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.login-button {
-  width: 100%;
-  height: 44px;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.login-button-dev {
-  flex: 1;
-  height: 44px;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.quick-login-button {
-  height: 44px;
-  font-size: 14px;
-  font-weight: 500;
-  min-width: 100px;
-  flex-shrink: 0;
-}
-
-.login-footer {
-  text-align: center;
-  color: #95a5a6;
-  font-size: 12px;
-}
-
-.login-footer p {
-  margin: 0;
-}
-
-.initializing-container {
-  text-align: center;
-  padding: 40px 20px;
-  color: #666;
-}
-
-.loading-spinner {
-  margin-top: 16px;
-  font-size: 24px;
-  color: #409eff;
-}
-
-.loading-spinner i {
-  animation: rotating 2s linear infinite;
-}
-
-@keyframes rotating {
-  from {
-    transform: rotate(0deg);
+/* 自定义动画 */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
   }
-  to {
-    transform: rotate(360deg);
+  50% {
+    transform: translateY(-10px);
   }
 }
 
-/* 响应式设计 */
-@media (max-width: 480px) {
-  .login-card {
-    padding: 24px;
-    margin: 0 16px;
-  }
-
-  .login-header h1 {
-    font-size: 24px;
-  }
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
+
+/* Tailwind CSS 样式已经通过类名应用，这里只需要添加自定义动画 */
 </style>

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.commons").service("udmUtil",[function(){var t=this;this.groupModelAttrs=function(u){var r=[];0!==u.length&&"group"===u[0].type||u.unshift({title:t.defaultGroup,type:"group"});var o=t.defaultGroup;return u.forEach(function(t){"group"===t.type?(o=t.title,r.push({group:o,attrs:[]})):_.find(r,{group:o}).attrs.push(t)}),r},this.defaultGroup="Default"}])}();

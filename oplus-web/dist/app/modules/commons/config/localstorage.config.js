@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function o(o,e){o.setKeyPrefix("oplus-"),e.setKeyPrefix("oplus-")}angular.module("oplus.commons").config(o),o.$inject=["$localStorageProvider","$sessionStorageProvider"]}();

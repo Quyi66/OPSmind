@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function n(n,r){return{responseError:function(r){return n.reject(r)}}}angular.module("oplus.commons").factory("accessDenyInterceptor",n),n.$inject=["$q","$injector"]}();

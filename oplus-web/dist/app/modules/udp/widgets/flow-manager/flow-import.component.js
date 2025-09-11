@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function o(o,t,e,n,l,c,i){var a=this;a.importFlow=function(){c.importFlow(a.flow).then(function(o){n.close(o)}).catch(function(o){throw o})},a.flow={appCode:i,file:{}},a.cancel=function(){n.dismiss()}}angular.module("oplus.udp").controller("flowImportCtrl",o),o.$inject=["$scope","messageService","$translate","$uibModalInstance","pageDataUtil","jaoFlowService","appletCode"]}();

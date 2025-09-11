@@ -9,7 +9,7 @@ import { onMounted } from 'vue'
 
 onMounted(() => {
   // 初始化应用
-  console.log('OpsMind Dashboard App mounted')
+  console.log('OPSmind Dashboard App mounted')
 })
 </script>
 

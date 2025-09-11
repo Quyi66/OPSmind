@@ -32,8 +32,10 @@ const authState = reactive<AuthState>({
 const SESSION_CONFIG: SessionConfig = {
   tokenKey: 'oplus_token',
   userKey: 'oplus_user',
-  timeout: 30 * 60 * 1000, // 30分钟
-  refreshThreshold: 5 * 60 * 1000, // 5分钟前刷新
+  // 将会话超时从 30 分钟提升为 24 小时（空闲超时）
+  timeout: 24 * 60 * 60 * 1000, // 24小时
+  // 在超时前 5 分钟触发刷新逻辑（基于空闲时间阈值）
+  refreshThreshold: 24 * 60 * 60 * 1000 - 5 * 60 * 1000, // 23小时55分钟
   encryptionKey: 'Oplus@2022!!sys@' // 加密密钥
 }
 
@@ -75,8 +77,12 @@ class AuthService implements IAuthService {
   private initializeAuth(): void {
     try {
       // 支持从 localStorage 和 sessionStorage 恢复
-      const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
-      const userInfo = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
+      const token =
+        localStorage.getItem(SESSION_CONFIG.tokenKey) ||
+        sessionStorage.getItem(SESSION_CONFIG.tokenKey)
+      const userInfo =
+        localStorage.getItem(SESSION_CONFIG.userKey) ||
+        sessionStorage.getItem(SESSION_CONFIG.userKey)
 
       if (token && userInfo) {
         const parsedUser = JSON.parse(userInfo) as User
@@ -149,6 +155,10 @@ class AuthService implements IAuthService {
         throw new Error('No token received from server')
       }
       authState.token = token
+      console.log('🔐 [AuthService] Token received and set:', {
+        tokenLength: token.length,
+        tokenPrefix: token.substring(0, 20) + '...'
+      })
 
       // 创建基本用户信息（后续会在 dashboard 中获取完整信息）
       authState.user = {
@@ -162,17 +172,28 @@ class AuthService implements IAuthService {
       authState.isAuthenticated = true
       authState.lastActivity = Date.now()
 
+      console.log('👤 [AuthService] User info created:', {
+        id: authState.user.id,
+        login: authState.user.login,
+        name: authState.user.name,
+        role: authState.user.role,
+        tenantId: authState.user.tenantId,
+        permissionsCount: authState.user.permissions?.length || 0
+      })
+
       // 保存到存储
       const userJson = JSON.stringify(authState.user)
       if (credentials.rememberMe) {
         localStorage.setItem(SESSION_CONFIG.tokenKey, token)
         localStorage.setItem(SESSION_CONFIG.userKey, userJson)
+        console.log('💾 [AuthService] Auth data saved to localStorage (remember me enabled)')
       } else {
         sessionStorage.setItem(SESSION_CONFIG.tokenKey, token)
         sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
+        console.log('💾 [AuthService] Auth data saved to sessionStorage')
       }
 
-      console.log('✅ Login successful, token and user saved:', authState.user.login)
+      console.log('✅ [AuthService] Login successful, token and user saved:', authState.user.login)
 
       // 返回与旧版兼容的格式
       return {
@@ -183,7 +204,6 @@ class AuthService implements IAuthService {
           permissions: authState.user.permissions
         }
       }
-
     } catch (error) {
       console.error('❌ Login error:', error)
       return {
@@ -207,7 +227,7 @@ class AuthService implements IAuthService {
       // 跳转到登录页面
       if (typeof window !== 'undefined' && window.location) {
         // 使用 window.location 确保完全刷新页面状态
-        window.location.href = '/login'
+        window.location.href = '/ops/'
       }
     } catch (error) {
       console.error('❌ Logout error:', error)
@@ -253,7 +273,7 @@ class AuthService implements IAuthService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authState.token}`
+          Authorization: `Bearer ${authState.token}`
         },
         body: JSON.stringify({
           token: authState.token
@@ -284,7 +304,6 @@ class AuthService implements IAuthService {
       } else {
         throw new Error('No token in refresh response')
       }
-
     } catch (error) {
       console.error('Token refresh failed:', error)
       this.logout()
@@ -323,9 +342,11 @@ class AuthService implements IAuthService {
     if (!authState.isAuthenticated) return false
     if (!permission) return true
 
-    return authState.permissions.includes(permission) ||
+    return (
+      authState.permissions.includes(permission) ||
       authState.permissions.includes('admin') ||
       authState.user?.role === 'admin'
+    )
   }
 
   /**
@@ -508,8 +529,11 @@ class AuthService implements IAuthService {
     }
 
     // 从存储中恢复
-    const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
-    const user = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
+    const token =
+      localStorage.getItem(SESSION_CONFIG.tokenKey) ||
+      sessionStorage.getItem(SESSION_CONFIG.tokenKey)
+    const user =
+      localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
 
     if (token && user) {
       try {
@@ -540,7 +564,8 @@ class AuthService implements IAuthService {
       return authState.user
     }
 
-    const user = localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
+    const user =
+      localStorage.getItem(SESSION_CONFIG.userKey) || sessionStorage.getItem(SESSION_CONFIG.userKey)
     if (user) {
       try {
         const parsedUser = JSON.parse(user) as User
@@ -563,7 +588,9 @@ class AuthService implements IAuthService {
   getToken(): string | null {
     if (authState.token) return authState.token
 
-    const token = localStorage.getItem(SESSION_CONFIG.tokenKey) || sessionStorage.getItem(SESSION_CONFIG.tokenKey)
+    const token =
+      localStorage.getItem(SESSION_CONFIG.tokenKey) ||
+      sessionStorage.getItem(SESSION_CONFIG.tokenKey)
     if (token) {
       authState.token = token
       return token
@@ -578,6 +605,31 @@ class AuthService implements IAuthService {
 
   isLoading(): boolean {
     return authState.isLoading
+  }
+
+  /**
+   * 设置认证状态 - 用于第三方系统iframe集成
+   * @param token JWT token
+   * @param user 用户信息
+   */
+  setAuthState(token: string, user: User): void {
+    try {
+      authState.token = token
+      authState.user = user
+      authState.isAuthenticated = true
+      authState.lastActivity = Date.now()
+      authState.permissions = user.permissions || []
+
+      // 保存到存储
+      const userJson = JSON.stringify(user)
+      sessionStorage.setItem(SESSION_CONFIG.tokenKey, token)
+      sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
+
+      console.log('✅ Auth state set for third-party integration:', user.login)
+    } catch (error) {
+      console.error('❌ Failed to set auth state:', error)
+      throw error
+    }
   }
 }
 

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+import{getNewShapePosition}from"./AutoPlaceUtil";export default function AutoPlace(e,t){function a(t,a){return e.fire(t,a)}this.append=function(e,o){a("autoPlace.start",{source:e,shape:o});var n=a("autoPlace",{source:e,shape:o});n||(n=getNewShapePosition(e,o));var u=t.appendShape(e,o,n,e.parent);return a("autoPlace.end",{source:e,shape:u}),u}}AutoPlace.$inject=["eventBus","modeling"];

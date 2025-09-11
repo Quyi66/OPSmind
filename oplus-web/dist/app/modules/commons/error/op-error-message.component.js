@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.commons").component("opErrorMessage",{bindings:{message:"<"},templateUrl:"app/modules/....html",controller:["$scope","$element",function(e,o){}]})}();

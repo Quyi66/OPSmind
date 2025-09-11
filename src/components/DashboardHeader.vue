@@ -3,10 +3,7 @@
     <div class="header-left">
       <!-- Logo 区域 -->
       <div class="logo-section">
-        <div class="logo-placeholder">
-          <i class="fa fa-cube"></i>
-        </div>
-        <h1 class="app-title">OpsMind</h1>
+        <img src="@/assets/icons/logo@2x.png" alt="OPSmind" class="brand-logo" />
       </div>
     </div>
 
@@ -99,7 +96,7 @@ import {
   SwitchButton
 } from '@element-plus/icons-vue'
 
-const router = useRouter()
+const _router = useRouter()
 
 const props = defineProps({
   user: {
@@ -177,26 +174,13 @@ const openHelp = () => {
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
-.logo-placeholder {
-  width: 32px;
+.brand-logo {
   height: 32px;
-  background: linear-gradient(135deg, #1890ff, #722ed1);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 16px;
-}
-
-.app-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #262626;
-  margin: 0;
+  width: auto;
+  object-fit: contain;
+  object-position: center;
 }
 
 .header-center {

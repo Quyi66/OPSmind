@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+function isConditionalForking(n){const i=n.default,o=n.outgoing||[];return i||o.find(hasCondition)}function hasCondition(n){return!!n.conditionExpression}function isDefaultFlow(n,i){return n.default===i}module.exports=function(){return{check:function(n,i){if(!isConditionalForking(n))return;(n.outgoing||[]).forEach(o=>{!hasCondition(o)&&!isDefaultFlow(n,o)&&i.report(o.id,"Sequence flow is missing condition")})}}};

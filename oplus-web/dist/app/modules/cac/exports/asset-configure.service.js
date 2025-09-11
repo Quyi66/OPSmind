@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e){var s="cac";this.saveAssetConfigureData=function(t){return e.callApi(s,"POST","/api/cac/v3/save/asssets-configure-data",null,t)},this.getAssetConfigureTypes=function(){return e.callApi(s,"POST","/api/cac/v3/get/asssets-configure-types",null,null)},this.getAssetConfigureData=function(){return e.callApi(s,"POST","/api/cac/v3/get/asssets-configure-data",null,null)}}angular.module("oplus.cac").service("CacAssetConfigureExportService",e),e.$inject=["restUtils"]}();

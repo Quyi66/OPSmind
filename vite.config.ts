@@ -21,48 +21,31 @@ export default defineConfig(({ command, mode }): UserConfig => {
           defineModel: true,
           propsDestructure: true
         }
-      })
-
-      // 可选插件 - 需要时取消注释并安装对应依赖
-      // createHtmlPlugin({
-      //   inject: {
-      //     data: {
-      //       title: env.VITE_APP_TITLE || 'OpsMind Dashboard',
-      //       description: env.VITE_APP_DESCRIPTION || 'OpsMind Vue 3 Dashboard'
-      //     }
-      //   }
-      // }),
-
-      // isProduction && visualizer({
-      //   filename: 'dist/stats.html',
-      //   open: false,
-      //   gzipSize: true,
-      //   brotliSize: true
-      // }),
-
-      // env.VITE_PWA_ENABLED === 'true' && VitePWA({
-      //   registerType: 'autoUpdate',
-      //   workbox: {
-      //     globPatterns: ['**/*.{js,css,html,ico,png,svg}']
-      //   },
-      //   manifest: {
-      //     name: env.VITE_APP_TITLE || 'OpsMind Dashboard',
-      //     short_name: 'OpsMind',
-      //     description: env.VITE_APP_DESCRIPTION,
-      //     theme_color: '#409eff',
-      //     icons: [
-      //       {
-      //         src: 'pwa-192x192.png',
-      //         sizes: '192x192',
-      //         type: 'image/png'
-      //       }
-      //     ]
-      //   }
-      // })
+      }),
+      // 在开发环境下，将 /ops 重定向为 /ops/，避免 Vite base 提示
+      {
+        name: 'ops-trailing-slash-redirect',
+        configureServer(server) {
+          const base = (mode === 'production' ? '/ops/' : '/ops/')
+          const noSlash = base.endsWith('/') ? base.slice(0, -1) : base
+          server.middlewares.use((req, res, next) => {
+            const url = req.url || '/'
+            const path = url.split('?')[0]
+            if (path === noSlash) {
+              const query = url.slice(path.length)
+              res.statusCode = 302
+              res.setHeader('Location', `${base}${query}`)
+              res.end()
+              return
+            }
+            next()
+          })
+        }
+      }
     ],
 
-    // 设置基础路径，开发环境使用根路径，生产环境使用子路径
-    base: mode === 'production' ? '/opsmind/base/' : '/',
+    // 设置基础路径，开发环境使用ops路径，生产环境使用子路径
+    base: mode === 'production' ? '/ops/' : '/ops/',
 
     // 开发服务器配置
     server: {
@@ -199,41 +182,28 @@ export default defineConfig(({ command, mode }): UserConfig => {
           main: resolve(__dirname, 'index.html')
         },
         output: {
-          // 更细粒度的分包
+          // 更细粒度的分包（避免循环依赖造成的执行顺序问题）
           manualChunks: (id: string) => {
             // 第三方库
             if (id.includes('node_modules')) {
-              if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
-                return 'vue-vendor'
+              // 将 Vue 生态 + Element Plus 合并到同一块，避免互相引用导致的 TDZ 问题
+              if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router') || id.includes('element-plus') || id.includes('@element-plus')) {
+                return 'vue-stack'
               }
-              if (id.includes('element-plus')) {
-                return 'element-plus'
-              }
-              if (id.includes('axios')) {
-                return 'http'
-              }
-              if (id.includes('crypto-js')) {
-                return 'crypto'
-              }
+              if (id.includes('axios')) return 'http'
+              if (id.includes('crypto-js')) return 'crypto'
               return 'vendor'
             }
 
             // 核心模块
-            if (id.includes('/src/core/')) {
-              return 'core'
-            }
-
+            if (id.includes('/src/core/')) return 'core'
             // 共享模块
-            if (id.includes('/src/shared/')) {
-              return 'shared'
-            }
+            if (id.includes('/src/shared/')) return 'shared'
 
             // 业务模块
             if (id.includes('/src/modules/')) {
               const match = id.match(/\/src\/modules\/([^\/]+)\//)
-              if (match) {
-                return `module-${match[1]}`
-              }
+              if (match) return `module-${match[1]}`
             }
           },
 

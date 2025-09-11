@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function i(i){this.exportConfigRelation=i.exportConfigRelation,this.exportConfigAnalysis=i.exportConfigAnalysis,this.exportPages=i.exportPages,this.importPagesRelation=i.importPagesRelation,this.importPagesAnalysis=i.importPagesAnalysis,this.findTenantConfigsById=i.findTenantConfigsById,this.findAllTenantConfigs=i.findAllTenantConfigs,this.exportConfig=i.exportConfig}angular.module("oplus.adm").service("tenantConfigService",i),i.$inject=["tenantConfigDao"]}();

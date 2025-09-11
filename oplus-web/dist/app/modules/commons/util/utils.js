@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+angular.module("oplus.commons").service("utils",function(){this.formatDuration=function(r,i){var m,n;if(angular.isNumber(r)&&!angular.isNumber(i))m=1e3*r;else{if(0===r||0===i)return"";var o=moment(i),t=moment(r);if(!o.isValid()||!t.isValid())return"NA";m=o.diff(t)}return n=moment.duration(m),Math.floor(n.hours())+moment.utc(m).format(":mm:ss")}});

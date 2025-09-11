@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function r(r,e,t){return r("api/permissions/:id",{},{query:{method:"GET",isArray:!0},get:{method:"GET",transformResponse:function(r){return r&&(r=angular.fromJson(r)),r}},update:{method:"PUT"}})}angular.module("oplus.adm").factory("Permission",r),r.$inject=["$resource","$q","$http"]}();

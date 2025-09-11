@@ -1,0 +1,5 @@
+;window.__OPS_RUNTIME__ = window.__OPS_RUNTIME__ || {};
+// Dify runtime configuration rendered by entrypoint via envsubst
+// Unified keys for embed pages.
+window.__OPS_RUNTIME__.DIFY_TOKEN = "${DIFY_TOKEN}";
+window.__OPS_RUNTIME__.DIFY_BASE_URL = "${DIFY_BASE_URL}";

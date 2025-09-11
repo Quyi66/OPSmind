@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+"use strict";var is=require("bpmn-js/lib/util/ModelUtil").is,eventDefinitionHelper=require("../../../helper/EventDefinitionHelper"),error=require("./implementation/ErrorEventDefinition"),forEach=require("lodash/forEach");module.exports=function(e,r,n,i){forEach(["bpmn:StartEvent","bpmn:BoundaryEvent","bpmn:EndEvent"],function(t){if(is(r,t)){var o=eventDefinitionHelper.getErrorEventDefinition(r);if(o){var E=is(r,"bpmn:StartEvent")||is(r,"bpmn:BoundaryEvent");error(e,r,n,o,E,E,i)}}})};

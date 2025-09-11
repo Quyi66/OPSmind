@@ -47,11 +47,11 @@ class ApiService {
         const authHeaders = authService.getAuthHeaders()
         config.headers = { ...config.headers, ...authHeaders }
 
-        // 添加缓存破坏参数
+        // 添加缓存破坏参数（后端约定使用 cacheBuster）
         if (config.method === 'get' && config.cache !== false) {
           config.params = {
             ...config.params,
-            _t: Date.now()
+            cacheBuster: Date.now()
           }
         }
 
@@ -243,37 +243,66 @@ class ApiService {
   }
 
   /**
-   * 获取应用列表
+   * 获取应用列表 (已废弃 - 现在使用静态配置)
+   * @deprecated 使用 angular-modules.config.ts 中的静态配置
    */
   async getApplets() {
-    try {
-      const cacheBuster = Date.now()
-      const response = await this.get(
-        `/udp/api/udp/applets?isPaging=true&cacheBuster=${cacheBuster}&query=`
-      )
-
-      const applets = response.data
-      console.log('✅ Applets loaded:', applets.length || 'unknown count')
-      console.log('📋 Applets data sample:', applets.slice(0, 3)) // 显示前3个应用的数据结构
-      return applets
-    } catch (error) {
-      console.error('❌ Failed to get applets:', error)
-      throw error
-    }
+    console.warn('⚠️ getApplets() is deprecated. Use static module configuration instead.')
+    throw new Error('getApplets() is deprecated. Use static module configuration from angular-modules.config.ts')
   }
 
   /**
    * 获取系统统计信息
    */
   async getSystemStats() {
-    try {
-      const response = await this.get('/api/dashboard/stats')
-      console.log('✅ System stats loaded')
-      return response.data
-    } catch (error) {
-      console.warn('Failed to get real stats, using mock data:', error)
-      return this.getMockStats()
+    // 直接返回模拟数据，避免404错误
+    console.log('📊 Using mock system stats data')
+    return this.getMockStats()
+  }
+
+  /**
+   * 获取首页仪表盘全量数据
+   */
+  async getDashboardFullData() {
+    const res = await this.get('svs/api/dashboard/full-data')
+    const data = res?.data || {}
+
+    // Adapt backend payload into frontend expected shape when necessary
+    // - Ensure recentJobStats has totalJobs
+    // - Map linuxVulnStats -> vulnerabilityOverview if frontend field missing
+    const adapted = { ...data }
+    if (Array.isArray(adapted.recentJobStats)) {
+      adapted.recentJobStats = adapted.recentJobStats.map((i) => ({
+        ...i,
+        totalJobs:
+          (i?.restJobs || 0) + (i?.scriptJobs || 0) + (i?.commandJobs || 0)
+      }))
     }
+    if (!adapted.vulnerabilityOverview && adapted.linuxVulnStats) {
+      adapted.vulnerabilityOverview = adapted.linuxVulnStats
+    }
+
+    return adapted
+  }
+
+  /**
+   * 获取当前登录账户信息（使用 fullName 展示）
+   */
+  async getAccount() {
+    const res = await this.get('/api/account', { cache: false })
+    return res?.data
+  }
+
+  /**
+   * 获取系统参数
+   * @param {string} domain 参数域，如 'ai'
+   * @param {string} name 参数名，如 'url'
+   */
+  async getParam(domain, name) {
+    const safeDomain = encodeURIComponent(domain)
+    const safeName = encodeURIComponent(name)
+    const res = await this.get(`/api/params/${safeDomain}/${safeName}`, { cache: false })
+    return res?.data
   }
 
   /**
@@ -313,106 +342,97 @@ class ApiService {
   }
 
   /**
-   * 转换应用数据为模块格式
+   * 仪表盘数据模拟（与后端约定结构一致）
    */
-  convertAppletsToModules(applets) {
-    console.log('🔄 Converting applets to modules:', applets?.length || 0, 'items')
-
-    if (!applets || !Array.isArray(applets)) {
-      console.log('⚠️ No valid applets data, using default modules')
-      return this.getDefaultModules()
+  getMockDashboardFullData() {
+    // Updated mock data to match provided dashboard API payload
+    const provided = {
+      totalJobStats: {
+        restJobs: 56,
+        scriptJobs: 452,
+        commandJobs: 3
+      },
+      recentJobStats: [
+        { date: '08-27', restJobs: 0, scriptJobs: 16, commandJobs: 0 },
+        { date: '08-28', restJobs: 0, scriptJobs: 4, commandJobs: 0 },
+        { date: '08-29', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '08-30', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '08-31', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '09-01', restJobs: 3, scriptJobs: 10, commandJobs: 0 },
+        { date: '09-02', restJobs: 0, scriptJobs: 2, commandJobs: 0 },
+        { date: '09-03', restJobs: 0, scriptJobs: 4, commandJobs: 0 },
+        { date: '09-04', restJobs: 0, scriptJobs: 4, commandJobs: 0 },
+        { date: '09-05', restJobs: 33, scriptJobs: 44, commandJobs: 0 }
+      ],
+      monthlyInspectionStats: {
+        monthlyInspections: 22,
+        normalInspections: 22,
+        abnormalInspections: 0
+      },
+      recentInspectionStats: [
+        { date: '08-27', totalInspections: 16, normalInspections: 8, abnormalInspections: 8 },
+        { date: '08-28', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
+        { date: '08-29', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '08-30', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '08-31', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '09-01', totalInspections: 10, normalInspections: 10, abnormalInspections: 0 },
+        { date: '09-02', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 },
+        { date: '09-03', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
+        { date: '09-04', totalInspections: 4, normalInspections: 4, abnormalInspections: 0 },
+        { date: '09-05', totalInspections: 2, normalInspections: 2, abnormalInspections: 0 }
+      ],
+      assetOverview: {
+        linuxServers: 5,
+        unixServers: 0,
+        windowsServers: 0
+      },
+      linuxVulnStats: {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0
+      },
+      windowsVulnStats: {
+        totalCritical: 0,
+        totalRollups: 0,
+        totalSecurity: 0
+      }
     }
 
-    const modules = applets.map(applet => {
-      // 解析 setting JSON 来获取图标和颜色
-      let setting = {}
-      try {
-        setting = JSON.parse(applet.setting || '{}')
-      } catch (error) {
-        console.warn('Failed to parse setting for applet:', applet.name, error)
-      }
+    // Map to frontend types: add totalJobs and map linuxVulnStats -> vulnerabilityOverview
+    const recentJobStats = provided.recentJobStats.map(i => ({
+      ...i,
+      totalJobs: (i.restJobs || 0) + (i.scriptJobs || 0) + (i.commandJobs || 0)
+    }))
 
-      return {
-        code: applet.name, // 使用 name 作为模块代码
-        title: applet.title,
-        icon: setting.icon || 'fa-cube',
-        color: setting.color || '#2196F3',
-        showIn: { desktop: 1 },
-        entry: {
-          type: 'AngularApplet',
-          value: applet.entry,
-          appletId: applet.id
-        },
-        description: applet.description || applet.title,
-        // 保存原始数据以备后用
-        _applet: applet
-      }
-    })
-
-    console.log('✅ Converted modules:', modules.length)
-    return modules.length > 0 ? modules : this.getDefaultModules()
+    return {
+      totalJobStats: provided.totalJobStats,
+      recentJobStats,
+      monthlyInspectionStats: provided.monthlyInspectionStats,
+      recentInspectionStats: provided.recentInspectionStats,
+      assetOverview: provided.assetOverview,
+      vulnerabilityOverview: provided.linuxVulnStats,
+      windowsVulnStats: provided.windowsVulnStats
+    }
   }
 
   /**
-   * 默认模块列表
+   * 转换应用数据为模块格式 (已废弃)
+   * @deprecated 使用 angular-modules.config.ts 中的静态配置
+   */
+  convertAppletsToModules(applets) {
+    console.warn('⚠️ convertAppletsToModules() is deprecated. Use static module configuration instead.')
+    return []
+  }
+
+  /**
+   * 默认模块列表 (已废弃 - 使用静态配置)
+   * @deprecated 使用 angular-modules.config.ts 中的静态配置
    */
   getDefaultModules() {
-    return [
-      {
-        code: '__jao',
-        title: '作业编排',
-        icon: 'fa-oplus-jao',
-        color: '#212529',
-        showIn: { desktop: 3, dock: 3 },
-        entry: { type: 'AngularState', value: 'app.jao' },
-        description: '自动化作业编排和调度管理'
-      },
-      {
-        code: '__gfs',
-        title: '脚本管理',
-        icon: 'fa-oplus-gfs',
-        color: '#607D8B',
-        showIn: { desktop: 2 },
-        entry: { type: 'AngularState', value: 'app.gfs' },
-        description: '脚本文件管理和版本控制'
-      },
-      {
-        code: '__cmd',
-        title: '命令管理',
-        icon: 'fa-oplus-cmd',
-        color: '#212529',
-        showIn: { desktop: 1, dock: 1 },
-        entry: { type: 'AngularState', value: 'app.jao_cmd' },
-        description: '系统命令管理和执行'
-      },
-      {
-        code: '__cac',
-        title: '配置管理',
-        icon: 'fa-oplus-cac',
-        color: '#4CAF50',
-        showIn: { desktop: 4 },
-        entry: { type: 'AngularState', value: 'app.cac' },
-        description: '系统配置和参数管理'
-      },
-      {
-        code: '__dts',
-        title: '数据传输',
-        icon: 'fa-oplus-dts',
-        color: '#FF9800',
-        showIn: { desktop: 5 },
-        entry: { type: 'AngularState', value: 'app.dts' },
-        description: '数据传输和同步服务'
-      },
-      {
-        code: '__udp',
-        title: '统一开发平台',
-        icon: 'fa-oplus-udp',
-        color: '#2196F3',
-        showIn: { desktop: 6 },
-        entry: { type: 'AngularState', value: 'app.udp' },
-        description: '统一开发和部署平台'
-      }
-    ]
+    console.warn('⚠️ getDefaultModules() is deprecated. Use getAllModuleConfigs() from angular-modules.config.ts instead.')
+    // 返回空数组，强制使用静态配置
+    return []
   }
 }
 

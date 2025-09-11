@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function r(r,t,e,o,n,c){return{responseError:function(r){r.status,0;return t.reject(r)}}}angular.module("oplus.commons").factory("authExpiredInterceptor",r),r.$inject=["$rootScope","$q","$injector","$localStorage","$sessionStorage","currentUser"]}();

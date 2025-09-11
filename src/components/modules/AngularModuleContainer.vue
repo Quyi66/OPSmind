@@ -126,6 +126,7 @@ import {
 } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { authService } from '@/core/auth'
+import { appUrlManager } from '@/config/module-urls.config'
 import AngularJSDirectEmbed from './AngularJSDirectEmbed.vue'
 
 const props = defineProps({
@@ -213,6 +214,7 @@ const moduleDescription = computed(() => moduleConfig.value.description || '')
 const moduleIcon = computed(() => moduleConfig.value.icon || 'fas fa-cube')
 const supportsEmbedded = computed(() => moduleConfig.value.supportsEmbedded || false)
 
+// eslint-disable-next-line vue/no-dupe-keys
 const viewMode = computed({
   get: () => currentViewMode.value,
   set: value => {
@@ -227,9 +229,8 @@ const moduleUrl = computed(() => {
 
 // 引用
 const moduleIframe = ref(null)
-const angularContainer = ref(null)
 
-// 构建模块URL
+// 构建模块URL（支持token参数传递）
 function buildModuleUrl() {
   const containerUrl = import.meta.env.DEV
     ? 'http://localhost:3000/angular-container.html'
@@ -240,20 +241,23 @@ function buildModuleUrl() {
     t: Date.now().toString()
   })
 
-  // 添加认证信息
+  // 添加认证信息，包括token
   try {
     const token = authService.getToken()
     const user = authService.getCurrentUser()
 
     if (token && user) {
-      const authData = {
-        token,
-        user,
-        timestamp: Date.now()
-      }
-
-      sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
+      // 使用配置的token参数名
+      const tokenParam = appUrlManager.getTokenParam()
+      params.append(tokenParam, token)
       params.append('vue_auth', 'true')
+
+      console.log('🔗 Built container URL with token:', {
+        moduleCode: props.moduleCode,
+        tokenParam,
+        hasToken: !!token,
+        tokenLength: token.length
+      })
     }
   } catch (err) {
     console.warn('Failed to add auth info to module URL:', err)
@@ -385,93 +389,6 @@ async function loadIframeModule() {
     loadingText.value = '加载模块内容...'
 
     console.log('🔄 Starting iframe load for:', moduleUrl.value)
-  })
-}
-
-// 加载嵌入模块
-async function loadEmbeddedModule() {
-  if (!supportsEmbedded.value) {
-    throw new Error(`${moduleTitle.value} 模块不支持嵌入模式`)
-  }
-
-  loadingText.value = '准备嵌入容器...'
-  loadingProgress.value = 20
-
-  // 等待DOM更新
-  await nextTick()
-
-  // 如果容器还没有渲染，等待一下
-  let retryCount = 0
-  while (!angularContainer.value && retryCount < 10) {
-    await new Promise(resolve => setTimeout(resolve, 100))
-    retryCount++
-  }
-
-  if (!angularContainer.value) {
-    throw new Error('嵌入容器未找到，请检查DOM渲染状态')
-  }
-
-  loadingText.value = '加载AngularJS核心...'
-  loadingProgress.value = 40
-
-  // 确保AngularJS已加载
-  await ensureAngularJSLoaded()
-
-  loadingText.value = '加载模块脚本...'
-  loadingProgress.value = 60
-
-  // 加载模块特定脚本
-  await loadModuleScripts()
-
-  loadingText.value = '初始化模块...'
-  loadingProgress.value = 80
-
-  // 初始化AngularJS应用
-  await initializeAngularApp()
-
-  loadingProgress.value = 100
-  loadingText.value = '模块加载完成'
-}
-
-// 确保AngularJS已加载
-async function ensureAngularJSLoaded() {
-  if (window.angular) {
-    return Promise.resolve()
-  }
-
-  // 这里可以动态加载AngularJS
-  // 但在实际项目中，建议在页面中预先加载
-  throw new Error('AngularJS未加载，请确保在页面中包含AngularJS库')
-}
-
-// 加载模块脚本
-async function loadModuleScripts() {
-  // 使用模块加载器加载脚本
-  if (window.AngularModuleLoader) {
-    await window.AngularModuleLoader.loadModule(props.moduleCode)
-  } else {
-    throw new Error('AngularJS模块加载器未找到')
-  }
-}
-
-// 初始化AngularJS应用
-async function initializeAngularApp() {
-  const container = angularContainer.value
-  const appName = `embedded-${props.moduleCode}-${Date.now()}`
-
-  // 创建嵌入式应用
-  const app = window.angular.module(appName, [`oplus.${props.moduleCode}`, 'ui.router'])
-
-  // 设置模板
-  container.innerHTML = `<div ui-view></div>`
-
-  // 启动应用
-  window.angular.bootstrap(container, [appName])
-
-  emit('ready', {
-    moduleCode: props.moduleCode,
-    appName,
-    container
   })
 }
 

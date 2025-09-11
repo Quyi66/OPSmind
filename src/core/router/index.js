@@ -4,9 +4,9 @@
  */
 
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { hybridModuleManager } from '@/core/modules/HybridModuleManager.js'
-import { authService } from '@/core/auth'
-import { FeatureFlagEvaluator } from '@/config/feature-flags.config.js'
+// import { hybridModuleManager } from '@/core/modules/HybridModuleManager.js'
+// import { authService } from '@/core/auth'
+// import { FeatureFlagEvaluator } from '@/config/feature-flags.config.js'
 
 // 导入路由配置
 import { baseRoutes } from './routes/base.js'
@@ -49,10 +49,8 @@ export function setupRouter() {
 
   // 全局前置守卫
   router.beforeEach(async (to, from, next) => {
-    // 设置页面标题
-    if (to.meta.title) {
-      document.title = to.meta.title
-    }
+    // 固定页面标题，避免被各路由覆盖
+    document.title = 'OPSmind'
 
     // 记录路由跳转
     console.log(`🧭 Route: ${from.path} → ${to.path}`)

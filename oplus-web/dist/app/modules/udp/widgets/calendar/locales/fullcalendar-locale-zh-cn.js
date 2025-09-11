@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";!function e(){void 0!==window.FullCalendar&&window.FullCalendar.globalLocales&&Array.isArray(window.FullCalendar.globalLocales)?window.FullCalendar.globalLocales.push({code:"zh-cn",buttonText:{prev:"上月",next:"下月",today:"今天",month:"月",week:"周",day:"日",list:"列表"},weekText:"周",allDayText:"全天",moreLinkText:"更多",noEventsText:"没有事件显示"}):setTimeout(e,100)}()}();

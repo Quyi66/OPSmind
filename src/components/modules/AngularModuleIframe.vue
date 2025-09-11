@@ -35,6 +35,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { authService } from '@/core/auth'
+import { appUrlManager } from '@/config/module-urls.config'
 
 const props = defineProps({
   moduleCode: {
@@ -85,7 +86,7 @@ const getAngularServerUrl = () => {
   return window.location.origin
 }
 
-// 构建带认证信息的模块URL
+// 构建带认证信息的模块URL（支持token参数传递）
 function buildModuleUrlWithAuth() {
   const route = moduleRoutes[props.moduleCode] || '/oplus/base/'
   const serverUrl = props.baseUrl || getAngularServerUrl()
@@ -96,19 +97,25 @@ function buildModuleUrlWithAuth() {
     const user = authService.getCurrentUser()
 
     if (token && user) {
-      // 将认证信息保存到 sessionStorage
-      const authData = {
-        token,
-        user,
-        timestamp: Date.now()
-      }
+      console.log('🔗 Building URL with token for Angular module:', props.moduleCode)
 
-      sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
-      console.log('🔗 Vue auth data saved for Angular module:', props.moduleCode)
-
-      // URL 中添加认证标识
+      // URL 中添加认证参数，包括token（使用配置的参数名）
       const separator = baseUrl.includes('?') ? '&' : '?'
-      return `${baseUrl}${separator}vue_auth=true&module=${props.moduleCode}&t=${Date.now()}`
+      const tokenParam = appUrlManager.getTokenParam()
+
+      const params = new URLSearchParams({
+        [tokenParam]: token,
+        vue_auth: 'true',
+        module: props.moduleCode,
+        t: Date.now().toString()
+      })
+
+      // URL前缀应该只用于特殊情况，这里暂时不使用
+      // 直接使用原始baseUrl，确保URL格式正确
+      const finalBaseUrl = baseUrl
+      const finalUrl = `${finalBaseUrl}${separator}${params.toString()}`
+
+      return finalUrl
     }
   } catch (err) {
     console.warn('Failed to get auth info for module URL:', err)

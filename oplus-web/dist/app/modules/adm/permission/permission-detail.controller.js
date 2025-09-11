@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function o(o,e,s,t,i,n,r){var a=this;a.permission=i,a.previousState=t.name;var p=e.$on("oplusApp:permissionUpdate",function(o,e){a.permission=e});o.$on("$destroy",p)}angular.module("oplus.adm").controller("PermissionDetailController",o),o.$inject=["$scope","$rootScope","$stateParams","previousState","entity","Permission","Role"]}();

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+module.exports=function e(r,i){i(r);var n=r.$descriptor;n.isGeneric||n.properties.filter(e=>!e.isAttr&&!e.isReference&&"String"!==e.type).forEach(n=>{if(n.name in r){const t=r[n.name];n.isMany?t.forEach(r=>{e(r,i)}):e(t,i)}})};

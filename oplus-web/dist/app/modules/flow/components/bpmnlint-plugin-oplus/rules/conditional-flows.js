@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+export default function(){return{check:function(n,o){if(!isConditionalForking(n))return;(n.outgoing||[]).forEach(i=>{!hasCondition(i)&&!isDefaultFlow(n,i)&&o.report(i.id,"连线缺少条件！")})}}}function isConditionalForking(n){const o=n.default,i=n.outgoing||[];return o||i.find(hasCondition)}function hasCondition(n){return!!n.conditionExpression}function isDefaultFlow(n,o){return n.default===o}

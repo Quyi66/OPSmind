@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";window.$oplus=window.$oplus||{},window.$oplus.fancytreeDefault={extensions:["wide","glyph","filter"],toggleEffect:!1,strings:{noData:"no data"},glyph:{preset:"awesome5",map:{doc:"fas fa-file",docOpen:"fas fa-file",folder:"fas fa-folder text-muted",folderOpen:"fas fa-folder-open text-muted",expanderClosed:"far fa-angle-right",expanderOpen:"far fa-angle-down",nodata:"far fa-inbox"}},filter:{counter:!1,autoExpand:!0,mode:"hide",highlight:!1}}}();

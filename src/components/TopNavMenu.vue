@@ -1,62 +1,202 @@
 <template>
-  <div class="top-nav-menu">
-    <div class="nav-container">
-      <!-- Logo 区域 -->
-      <div class="logo-section" @click="handleLogoClick">
-        <div class="logo-placeholder">
-          <i class="fa fa-cube"></i>
-        </div>
-        <h1 class="app-title">OpsMind</h1>
-      </div>
-
-      <!-- 主菜单 -->
-      <nav class="main-nav">
-        <ul class="nav-list">
-          <li
-            v-for="menu in menuItems"
-            :key="menu.code"
-            class="nav-item"
-            :class="{ active: activeMenu === menu.code }"
-            @click="handleMenuClick(menu)"
-          >
-            <div class="nav-link">
-              <i :class="menu.icon" class="nav-icon"></i>
-              <span class="nav-text">{{ menu.name }}</span>
-            </div>
-          </li>
-        </ul>
-      </nav>
-
-      <!-- 右侧用户区域 -->
-      <div class="user-section">
-        <!-- 用户信息 -->
-        <el-dropdown @command="handleUserCommand" class="user-dropdown">
-          <div class="user-info">
-            <el-avatar :size="32" class="user-avatar">
-              <el-icon><User /></el-icon>
-            </el-avatar>
-            <span class="user-name">{{ displayUserName }}</span>
-            <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+  <div class="top-nav-wrapper">
+    <!-- Header -->
+    <header class="top-nav-header">
+      <div class="nav-container">
+        <div class="nav-left">
+          <!-- Logo Section -->
+          <div class="logo-section">
+            <img :src="logoImage" alt="OPSmind" class="brand-logo" />
           </div>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="profile">
-                <el-icon><User /></el-icon>
-                个人资料
-              </el-dropdown-item>
-              <el-dropdown-item command="settings">
-                <el-icon><Setting /></el-icon>
-                系统设置
-              </el-dropdown-item>
-              <el-dropdown-item divided command="logout">
-                <el-icon><SwitchButton /></el-icon>
-                退出登录
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+
+          <!-- Navigation Menu -->
+          <nav class="nav-menu">
+            <!-- 首页菜单项 -->
+            <a href="#" class="nav-item" :class="{ 'nav-item-active': activeGroup === 'home' }"
+              @click.prevent="handleHomeClick">
+              <img :src="iconHome" alt="首页" class="nav-icon nav-icon-home" />
+              <span class="nav-text">{{ homeMenu.name }}</span>
+            </a>
+
+            <!-- 分组菜单项 -->
+            <a v-for="group in menuGroups" :key="group.code" href="#" class="nav-item"
+              :class="{ 'nav-item-active': activeGroup === group.code }" @click.prevent="handleGroupClick(group)">
+              <img :src="getMenuIcon(group.code)" :alt="group.name" class="nav-icon" />
+              <span class="nav-text">{{ group.name }}</span>
+            </a>
+          </nav>
+
+          <!-- Mobile Menu Button -->
+          <button @click="toggleMobileMenu" class="mobile-menu-btn"
+            :class="{ 'mobile-menu-btn-active': showMobileMenu }">
+            <svg class="mobile-menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                :d="showMobileMenu ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Right Side User Area -->
+        <div class="nav-right">
+          <!-- AI OPS Button -->
+          <el-tooltip content="AI OPS" placement="bottom">
+            <div class="ai-ops-wrapper" @mouseenter="prewarmAiOps" @click="handleAiOpsClick">
+              <img :src="aiOpsIcon" alt="AI OPS" class="ai-ops-simple" />
+            </div>
+          </el-tooltip>
+
+          <!-- Notification Button -->
+          <div class="notification-wrapper">
+            <el-tooltip content="通知" placement="bottom">
+              <button @click="handleNotificationClick" class="notification-btn" aria-label="通知">
+                <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                </svg>
+                <!-- Notification Badge -->
+                <span v-if="notificationCount > 0" class="notification-badge">
+                  {{ notificationCount > 99 ? '99+' : notificationCount }}
+                </span>
+              </button>
+            </el-tooltip>
+          </div>
+
+          <!-- User Dropdown -->
+          <el-dropdown @command="handleUserCommand" class="user-dropdown">
+            <div class="user-dropdown-trigger">
+              <el-avatar :size="24" class="user-avatar" :src="avatarImage"></el-avatar>
+              <span class="user-name">{{ displayUserName }}</span>
+              <svg class="dropdown-arrow" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd" />
+              </svg>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="profile">
+                  <el-icon>
+                    <User />
+                  </el-icon>
+                  个人资料
+                </el-dropdown-item>
+                <el-dropdown-item divided command="logout">
+                  <el-icon>
+                    <SwitchButton />
+                  </el-icon>
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
+          <!-- Settings Button -->
+          <el-tooltip content="设置" placement="bottom">
+            <button @click="handleSettingsClick" class="menu-action-btn">
+              <el-icon>
+                <Setting />
+              </el-icon>
+            </button>
+          </el-tooltip>
+
+          <!-- About Dropdown: hover/click 展开，包含“帮助”和“关于” -->
+          <el-dropdown trigger="hover" @command="handleAboutCommand" class="about-dropdown">
+            <button class="menu-action-btn" aria-label="关于">
+              <el-icon>
+                <InfoFilled />
+              </el-icon>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="help" disabled>
+                  <el-icon style="margin-right:6px; color:#9ca3af"><QuestionFilled /></el-icon>
+                  <span style="color:#9ca3af">帮助</span>
+                </el-dropdown-item>
+                <el-dropdown-item command="about">
+                  <el-icon style="margin-right:6px"><InfoFilled /></el-icon>
+                  关于
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
+          <!-- Language Dropdown: 三个选项，全部置灰禁用 -->
+          <el-dropdown trigger="hover" class="language-dropdown">
+            <button class="menu-action-btn" aria-label="语言">
+              <el-icon>
+                <svg
+                  class="language-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M3 12h18" />
+                  <path d="M12 3c3 3.5 3 14.5 0 18" />
+                  <path d="M12 3c-3 3.5-3 14.5 0 18" />
+                </svg>
+              </el-icon>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item disabled>
+                  <span style="color:#9ca3af">中文简体</span>
+                </el-dropdown-item>
+                <el-dropdown-item disabled>
+                  <span style="color:#9ca3af">中文繁体</span>
+                </el-dropdown-item>
+                <el-dropdown-item disabled>
+                  <span style="color:#9ca3af">English</span>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
       </div>
-    </div>
+
+      <!-- Mobile Menu Dropdown -->
+      <div v-if="showMobileMenu" class="mobile-menu-dropdown">
+        <nav class="mobile-nav">
+          <!-- 首页菜单项 -->
+          <a href="#" class="mobile-nav-item" :class="{ 'mobile-nav-item-active': activeGroup === 'home' }"
+            @click.prevent="handleHomeClick">
+            <img :src="iconHome" alt="首页" class="mobile-nav-icon mobile-nav-icon-home" />
+            <span class="mobile-nav-text">{{ homeMenu.name }}</span>
+          </a>
+
+          <!-- 分组菜单项 -->
+          <a v-for="group in menuGroups" :key="group.code" href="#" class="mobile-nav-item"
+            :class="{ 'mobile-nav-item-active': activeGroup === group.code }" @click.prevent="handleGroupClick(group)">
+            <img :src="getMenuIcon(group.code)" :alt="group.name" class="mobile-nav-icon" />
+            <span class="mobile-nav-text">{{ group.name }}</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- About 对话框 -->
+    <el-dialog v-model="versionDialogVisible" title="About" width="800px" append-to-body class="about-dialog">
+      <el-tabs v-model="aboutActiveTab" class="about-tabs">
+        <el-tab-pane label="版本信息" name="versions">
+          <div v-loading="versionLoading">
+            <el-table :data="versionRows" stripe size="small" class="about-table">
+              <el-table-column prop="name" label="名称" width="180" />
+              <el-table-column prop="version" label="版本" width="140" />
+              <el-table-column prop="build" label="打包时间" />
+              <el-table-column prop="code" label="代码版本" width="220" />
+            </el-table>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+
+      <template #footer>
+        <el-button type="primary" @click="versionDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -64,16 +204,31 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { appUrlManager } from '@/config/module-urls.config'
 import { authService } from '@/core/auth'
-import {
-  User,
-  ArrowDown,
-  Setting,
-  SwitchButton
-} from '@element-plus/icons-vue'
+import { accountService } from '@/core/account'
+import { useMenuStore } from '@/stores/menu.js'
+import { useDashboardStore } from '@/stores/dashboard'
+import { User, Setting, SwitchButton, InfoFilled, Check, QuestionFilled } from '@element-plus/icons-vue'
+
+// 导入菜单图标
+import iconHome from '@/assets/icons/menu/icon-home@2x.png'
+import iconJao from '@/assets/icons/menu/icon-jao@2x.png'
+import iconPatch from '@/assets/icons/menu/icon-patch@2x.png'
+import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
+import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
+import iconUser from '@/assets/icons/menu/icon-user@2x.png'
+// 自绘气泡方案：不直接在当前页注入 Dify 脚本，改为 iframe 承载全屏页
+
+// 导入logo、aiOPS图标和用户头像
+import logoImage from '@/assets/icons/logo@2x.png'
+import aiOpsIcon from '@/assets/icons/aiOPS@2x.png'
+import avatarImage from '@/assets/icons/avatar@2x.png'
 
 const router = useRouter()
 const route = useRoute()
+const menuStore = useMenuStore()
+const dashboardStore = useDashboardStore()
 
 const props = defineProps({
   user: {
@@ -82,109 +237,44 @@ const props = defineProps({
   }
 })
 
-// 不再需要emit事件，直接在组件内处理所有逻辑
-const activeMenu = ref('')
+// 计算属性
+const homeMenu = computed(() => menuStore.homeMenu)
+const menuGroups = computed(() => menuStore.menuGroups)
+const activeGroup = computed(() => menuStore.activeGroup)
 
-// 由于菜单不再使用路由导航，activeMenu由点击事件直接控制
-// 不再需要监听路由变化
-
-// 菜单配置数据
-const menuItems = ref([
-  {
-    code: 'gfs',
-    name: '脚本',
-    icon: 'fas fa-file-code',
-    description: '脚本文件管理和版本控制'
-  },
-  {
-    code: 'jao',
-    name: '作业',
-    icon: 'fas fa-tasks',
-    description: '自动化作业编排和调度管理'
-  },
-  {
-    code: 'cmd',
-    name: '命令',
-    icon: 'fas fa-terminal',
-    description: '系统命令管理和执行'
-  },
-  {
-    code: 'cac',
-    name: '系统巡检',
-    icon: 'fas fa-search',
-    description: '系统配置审计与合规性检查'
-  },
-  {
-    code: 'password',
-    name: '密码管理',
-    icon: 'fas fa-key',
-    description: '密码策略和安全管理'
-  },
-  {
-    code: 'sudo',
-    name: 'sudo权限管理',
-    icon: 'fas fa-user-shield',
-    description: 'sudo权限分配和管理'
-  },
-  {
-    code: 'acm',
-    name: '资产管理',
-    icon: 'fas fa-server',
-    description: 'IT基础设施资产管理'
-  },
-  {
-    code: 'patches',
-    name: '补丁管理',
-    icon: 'fas fa-download',
-    description: '系统补丁和更新管理'
-  },
-  {
-    code: 'software',
-    name: '软件管理',
-    icon: 'fas fa-box',
-    description: '软件包安装和管理'
-  },
-  {
-    code: 'workflow',
-    name: '流程管理',
-    icon: 'fas fa-project-diagram',
-    description: '业务流程设计和管理'
-  },
-  {
-    code: 'users',
-    name: '用户管理',
-    icon: 'fas fa-users',
-    description: '用户账户和权限管理'
-  }
-])
-
+const accountFullName = ref('')
 const displayUserName = computed(() => {
-  if (!props.user) return '未登录'
-  return props.user.firstName || props.user.login || '用户'
+  if (accountFullName.value) return accountFullName.value
+  const u = props.user || authService.getCurrentUser() || null
+  if (!u) return '未登录'
+  return u.fullName || u.firstName || u.name || u.login || '用户'
 })
 
-const handleMenuClick = (menu) => {
-  activeMenu.value = menu.code
+// 通知相关状态 - 默认无未读
+const notificationCount = ref(0)
 
-  // 更新浏览器URL
-  router.push(`/${menu.code}`)
+// 移动菜单状态
+const showMobileMenu = ref(false)
 
-  // 触发iframe弹窗显示模块
-  const event = new CustomEvent('showAngularModuleContainer', {
-    detail: {
-      moduleCode: menu.code, // 使用实际的菜单代码
-      title: menu.name
-    }
-  })
-  window.dispatchEvent(event)
+// 语言切换状态（暂不真正切换，仅提示开发中）
+const currentLanguage = ref('zh-cn')
 
-  console.log('🚀 Menu clicked, showing iframe for:', menu.name, 'with module code:', menu.code)
-  console.log('🔗 Browser URL updated to:', `/${menu.code}`)
-}
+// 加载账号信息（优先缓存，再请求；用于显示 fullName）
+onMounted(async () => {
+  try {
+    const acc = (accountService.getCached()) || (await accountService.getAccount().catch(() => null))
+    if (acc && (acc.fullName || acc.login)) accountFullName.value = acc.fullName || ''
+  } catch (e) {
+    // 忽略错误，保持旧回退逻辑
+  }
+})
 
-const handleLogoClick = () => {
-  // 清除活跃菜单
-  activeMenu.value = ''
+// 处理首页菜单点击
+const handleHomeClick = () => {
+  console.log('🏠 Home clicked')
+
+  // 设置首页为激活状态
+  menuStore.setHomeActive()
 
   // 关闭任何打开的iframe弹窗
   const event = new CustomEvent('closeAngularModuleContainer')
@@ -192,20 +282,53 @@ const handleLogoClick = () => {
 
   // 导航到home页面
   router.push('/home')
-
-  console.log('🏠 Logo clicked, returning to home')
-  console.log('🔗 Browser URL updated to: /home')
 }
 
+// 处理分组菜单点击
+const handleGroupClick = group => {
+  console.log('🚀 Group clicked:', group.name, 'with code:', group.code)
 
+  // 如果点击的是当前激活的分组，则切换显示/隐藏左侧菜单
+  if (activeGroup.value === group.code) {
+    menuStore.toggleSideMenu()
+  } else {
+    // 否则激活新的分组
+    menuStore.setActiveGroup(group.code)
+  }
+}
+
+// 获取菜单图标
+const getMenuIcon = groupCode => {
+  const iconMap = {
+    automation: iconJao,
+    'patch-testing': iconPatch,
+    'system-inspection': iconGfs,
+    'asset-management': iconAsset,
+    'user-management': iconUser
+  }
+  return iconMap[groupCode] || iconHome
+}
+
+// 处理通知点击
+const handleNotificationClick = () => {
+  console.log('🔔 Notification clicked')
+  ElMessage.info('通知功能开发中...')
+  // 这里可以打开通知面板或跳转到通知页面
+}
+
+// 切换移动菜单
+const toggleMobileMenu = () => {
+  showMobileMenu.value = !showMobileMenu.value
+  console.log('📱 Mobile menu toggled:', showMobileMenu.value)
+}
 
 const handleUserCommand = command => {
   switch (command) {
     case 'profile':
-      ElMessage.info('个人资料功能开发中...')
-      break
-    case 'settings':
-      ElMessage.info('系统设置功能开发中...')
+      // 通过 Inline Iframe 打开 Angular 基座的 /#/settings
+      try {
+        menuStore.setActiveMenuItem('settings')
+      } catch (e) {}
       break
     case 'logout':
       handleLogout()
@@ -216,6 +339,8 @@ const handleUserCommand = command => {
 const handleLogout = async () => {
   try {
     ElMessage.success('正在安全登出...')
+    // 清理账户缓存
+    try { accountService.clear() } catch {}
     await authService.logout()
   } catch (error) {
     console.error('Logout error:', error)
@@ -224,14 +349,320 @@ const handleLogout = async () => {
 }
 
 const handleClearHighlight = () => {
-  activeMenu.value = ''
+  menuStore.clearActiveMenu()
   console.log('🧭 Menu highlight cleared')
 }
+
+// 处理设置按钮点击
+const handleSettingsClick = () => {
+  // 顶部“设置”按钮：通过 Inline Iframe 打开 /#/ssc
+  try {
+    menuStore.setActiveMenuItem('ssc')
+  } catch (e) {}
+}
+
+// Dify runtime token: prefer URL param, then runtime-config.js, then env; no hardcoded fallback
+const DEFAULT_DIFY_TOKEN = 'tRnUImvfrP77TFr0'
+function getDifyToken() {
+  // 1) URL param
+  try {
+    const urlToken = new URLSearchParams(location.search).get('token')
+    if (urlToken) return urlToken
+  } catch {}
+  // 2) LocalStorage (dev convenience)
+  try {
+    const ls = window.localStorage
+    const keys = ['DIFY_TOKEN', 'ops:dify_token', 'dify:token']
+    for (const k of keys) {
+      const v = ls.getItem(k)
+      if (v) return v
+    }
+  } catch {}
+  // 3) Runtime config
+  try {
+    const rt = (window).__OPS_RUNTIME__ || {}
+    if (rt.DIFY_TOKEN) return rt.DIFY_TOKEN
+  } catch {}
+  // 4) Env var
+  try {
+    return import.meta.env.VITE_DIFY_TOKEN || DEFAULT_DIFY_TOKEN
+  } catch { return DEFAULT_DIFY_TOKEN }
+}
+
+// 处理AI OPS按钮点击：显示/隐藏右下角面板（iframe 内为气泡方案页面）
+const handleAiOpsClick = async () => {
+  try {
+    ensureOpsBubble()
+    const panel = document.getElementById('ops-dify-bubble-panel')
+    if (!panel) return
+    if (panel.classList.contains('visible')) {
+      panel.classList.remove('visible')
+    } else {
+      panel.classList.add('visible')
+    }
+  } catch (e) {
+    console.warn('Failed to mount/toggle OPS bubble panel:', e)
+  }
+}
+
+function ensureOpsBubble() {
+  const base = import.meta.env.BASE_URL || '/'
+  const C = {
+    root: 'ops-dify-bubble-root',
+    panel: 'ops-dify-bubble-panel',
+    iframe: 'ops-dify-bubble-iframe',
+    style: 'ops-dify-bubble-style-self'
+  }
+  // 样式（只注入一次）
+  if (!document.getElementById(C.style)) {
+    const style = document.createElement('style')
+    style.id = C.style
+    style.textContent = `
+      #${C.panel} {
+        position: fixed; right: 0; bottom: 16px; top: var(--ops-bubble-top, 64px);
+        width: min(34vw, 30rem);
+        background: #fff; border: none; box-shadow: none; /* match full mode */
+        border-radius: 12px 0 0 12px; overflow: hidden;
+        z-index: 2147483647; display: none; pointer-events: auto;
+      }
+      #${C.panel}.visible { display: block; }
+      #${C.iframe} { width: 100%; height: 100%; border: 0; background: #fff; }
+    `
+    document.head.appendChild(style)
+  }
+  // 根容器
+  if (!document.getElementById(C.root)) {
+    const root = document.createElement('div')
+    root.id = C.root
+    document.body.appendChild(root)
+
+    // 面板 + iframe（在创建的 iframe 文档内直接注入脚本与配置）
+    const panel = document.createElement('div')
+    panel.id = C.panel
+    const iframe = document.createElement('iframe')
+    iframe.id = C.iframe
+    // 仅本地加载，避免跨域与远端依赖
+    const token = getDifyToken()
+    const embedSrc = `${window.location.origin}${base}dify/embed.min.js`
+    const rt = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
+    const difyBase = String(rt.DIFY_BASE_URL || '').replace(/\/$/, '')
+    iframe.setAttribute('allow', 'fullscreen;microphone')
+    // 使用 srcdoc 注入最小页面，确保聊天框在此 iframe 内创建
+    const tokenJson = JSON.stringify(token || '')
+    const tokenAttr = String(token || '').replace(/"/g, '&quot;')
+    const html = `<!doctype html><html lang="zh-CN"><head>
+      <meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
+      <link rel=\"preconnect\" href=\"${difyBase}\" crossorigin>
+      <style>
+        html,body{height:100%;margin:0;background:#fff;}
+        /* 按钮主色 */
+        #dify-chatbot-bubble-button{ background-color:#1C64F2 !important; }
+        /* 让聊天窗占满 iframe 可视区域 */
+        #dify-chatbot-bubble-window{
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          max-width: none !important;
+          max-height: none !important;
+          border-radius: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+      </style>
+    </head><body>
+      <script>
+        window.difyChatbotConfig = { token: ${tokenJson}, baseUrl: '${difyBase}', inputs: {}, systemVariables: {}, userVariables: {} }
+      <\/script>
+      <script src=\"${embedSrc}\" id=\"${tokenAttr}\" defer><\/script>
+      <script>
+        (function(){
+          var attempts = 0, max = 60;
+          var timer = setInterval(function(){
+            attempts++;
+            try{
+              if (window.difyChatbot && typeof window.difyChatbot.open === 'function') {
+                window.difyChatbot.open();
+              } else {
+                var btn = document.getElementById('dify-chatbot-bubble-button');
+                if (btn) btn.click();
+              }
+              var win = document.getElementById('dify-chatbot-bubble-window');
+              if (win) {
+                // 打开后隐藏按钮，避免遮挡
+                var btn2 = document.getElementById('dify-chatbot-bubble-button');
+                if (btn2) btn2.style.display = 'none';
+                // 再次确保全屏样式（保险）
+                win.style.position = 'fixed';
+                win.style.inset = '0';
+                win.style.width = '100vw';
+                win.style.height = '100vh';
+                win.style.maxWidth = 'none';
+                win.style.maxHeight = 'none';
+                win.style.borderRadius = '0';
+                win.style.border = 'none';
+                win.style.boxShadow = 'none';
+                clearInterval(timer);
+              }
+            }catch(e){}
+            if (attempts > max) clearInterval(timer);
+          }, 250);
+        })();
+      <\/script>
+    </body></html>`
+    iframe.srcdoc = html
+    panel.appendChild(iframe)
+    root.appendChild(panel)
+    // 计算顶部菜单栏高度，令面板上边缘贴合菜单栏底部
+    function setPanelTopOffset() {
+      try {
+        const header = document.querySelector('.top-nav-header') || document.querySelector('.top-nav-wrapper')
+        const h = header ? (header.getBoundingClientRect().height || header.offsetHeight || 0) : 0
+        // 额外预留 8px 间距
+        const top = Math.max(0, Math.round(h + 8))
+        panel.style.top = top + 'px'
+      } catch {}
+    }
+    setPanelTopOffset()
+    window.addEventListener('resize', setPanelTopOffset)
+    window.addEventListener('orientationchange', setPanelTopOffset)
+
+    // 初始不显示；由菜单点击进行显隐切换
+    // ESC 关闭面板（再次点击顶部菜单可重新显示）
+    window.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape') panel.classList.remove('visible')
+    })
+  }
+}
+
+// 预热 AI OPS：预加载本地脚本 + 预连接 Dify 服务
+let aiOpsPrewarmed = false
+function prewarmAiOps() {
+  if (aiOpsPrewarmed) return
+  aiOpsPrewarmed = true
+  try {
+    const base = import.meta.env.BASE_URL || '/'
+    const embedHref = `${base}dify/embed.min.js`
+    // Prefer prefetch to avoid preload unused warning if user never opens bot
+    const link = document.createElement('link')
+    link.rel = 'prefetch'
+    link.href = embedHref
+    link.as = 'script'
+    document.head.appendChild(link)
+
+    // Preconnect to Dify base (unified key)
+    const rt = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
+    const difyBase = String(rt.DIFY_BASE_URL || '').replace(/\/$/, '')
+    if (difyBase) {
+      const preconnect = document.createElement('link')
+      preconnect.rel = 'preconnect'
+      preconnect.href = difyBase
+      preconnect.crossOrigin = ''
+      document.head.appendChild(preconnect)
+
+      const dns = document.createElement('link')
+      dns.rel = 'dns-prefetch'
+      dns.href = difyBase
+      document.head.appendChild(dns)
+    }
+  } catch {}
+}
+
+// 处理关于下拉菜单命令
+const versionDialogVisible = ref(false)
+const versionLoading = ref(false)
+const versionRows = ref([])
+const aboutActiveTab = ref('versions')
+
+const handleAboutCommand = async (command) => {
+  console.log('ℹ️ About command:', command)
+  switch (command) {
+    case 'help':
+      // 当前不提供帮助入口，提示开发中
+      ElMessage.info('帮助开发中...')
+      break
+    case 'about':
+      await openVersionDialog()
+      break
+  }
+}
+
+async function openVersionDialog() {
+  try {
+    versionLoading.value = true
+    versionDialogVisible.value = true
+    // 按优先级尝试多种可用地址
+    const candidates = []
+    try {
+      const angularBase = appUrlManager.getAngularBaseUrl() || '/oplus/base'
+      candidates.push(`${angularBase}/app/modules/VERSION.json`)
+    } catch {}
+    candidates.push(`${window.location.origin}/oplus/base/app/modules/VERSION.json`)
+    candidates.push('http://localhost:18080/oplus/base/app/modules/VERSION.json')
+
+    let data = null
+    let lastErr = null
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: 'no-cache', mode: 'cors' })
+        if (res.ok) {
+          data = await res.json()
+          break
+        } else {
+          lastErr = new Error(`HTTP ${res.status} for ${url}`)
+        }
+      } catch (e) {
+        lastErr = e
+      }
+    }
+    if (!data) throw lastErr || new Error('无法获取版本信息')
+
+    const versions = data?.versions || {}
+    const builds = data?.builds || {}
+    // 仅展示存在版本信息的条目
+    const names = Object.keys(versions).sort()
+    versionRows.value = names.map(name => ({
+      name,
+      version: versions[name],
+      build: builds[name] ? `#${builds[name]}` : '-',
+      code: '-'
+    }))
+  } catch (e) {
+    console.error('加载版本信息失败:', e)
+    ElMessage.error('版本信息加载失败')
+  } finally {
+    versionLoading.value = false
+  }
+}
+
+// 处理语言切换（仅提示开发中）
+const handleLanguageCommand = (_language) => {
+  ElMessage.info('语言功能开发中...')
+}
+
+// 监听路由变化，自动设置菜单状态
+watch(
+  () => route.path,
+  newPath => {
+    console.log('🧭 Route changed to:', newPath)
+    menuStore.setMenuFromRoute(newPath)
+  },
+  { immediate: true }
+)
 
 // 生命周期
 onMounted(() => {
   window.addEventListener('clearMenuHighlight', handleClearHighlight)
   console.log('🧭 TopNavMenu mounted')
+  // 预热 AI OPS 资源，提升首次打开速度
+  try {
+    if ('requestIdleCallback' in window) {
+      // @ts-ignore
+      window.requestIdleCallback(() => prewarmAiOps())
+    } else {
+      setTimeout(() => prewarmAiOps(), 0)
+    }
+  } catch {}
 })
 
 onUnmounted(() => {
@@ -240,253 +671,513 @@ onUnmounted(() => {
 })
 </script>
 
+
+
 <style scoped lang="scss">
-.top-nav-menu {
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1001;
+/* About 对话框尺寸与滚动 */
+.about-dialog :deep(.el-dialog__body) {
+  max-height: 70vh;
+  overflow: auto;
+  padding-top: 8px;
 }
 
+/* 表头深色背景，强调区分 */
+.about-table :deep(.el-table__header th) {
+  background-color: #eef2f7;
+  color: #374151;
+  font-weight: 600;
+}
+
+/* 去掉竖直分隔线（未启用 border，本行做额外保险） */
+.about-table :deep(.el-table__row > td) {
+  border-right: none !important;
+}
+
+/* 去掉表格顶部额外的横线 */
+.about-table :deep(.el-table__inner-wrapper::before) {
+  display: none;
+}
+// 顶部导航包装器
+.top-nav-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  /* 顶部条左右留白区域使用与外围一致的背景 */
+  background: var(--app-surround-bg);
+}
+
+// 顶部导航头部
+.top-nav-header {
+  /* 顶部菜单栏占满宽度（整条白底） */
+  background: #fff;
+  position: relative;
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+// 导航容器
 .nav-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 50px;
-  padding: 0 16px;
-  max-width: 1400px;
+  /* 与内容区对齐：左右内边距与主容器一致；进一步减小高度 */
+  padding: 0.25rem 1rem; /* 再次收紧垂直间距 */
+  /* 顶部菜单与内容区使用相同的定宽容器 */
+  max-width: var(--app-max-width);
   margin: 0 auto;
+  width: 100%;
+  /* 让白底来自整条 header，容器透明，仅负责对齐 */
+  background: transparent;
+  border-bottom: none;
+  box-shadow: none;
 }
 
+// 左侧导航区域
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
+  min-width: 0; // 防止flex子元素溢出
+}
+
+// Logo区域
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
-  cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 6px;
-  transition: background-color 0.3s ease;
-  position: relative;
-  overflow: hidden;
-
-  &:hover {
-    background: rgba(24, 144, 255, 0.1);
-  }
-
-  /* 水波纹效果 */
-  &:active {
-    transform: scale(0.98);
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(24, 144, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-  }
-
-  &:active::before {
-    width: 200px;
-    height: 200px;
-  }
+  flex-shrink: 0;
 }
 
-.logo-placeholder {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #1890ff, #096dd9);
-  border-radius: 6px;
-  display: flex;
+.brand-logo {
+  height: 1.5rem; /* shrink logo to reduce header height */
+  width: auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+// 导航菜单
+.nav-menu {
+  display: none;
   align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 14px;
-}
+  gap: 0.25rem;
 
-.app-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #262626;
-  margin: 0;
-}
-
-.main-nav {
-  flex: 1;
-  margin: 0 24px;
-}
-
-.nav-list {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  @media (min-width: 768px) {
+    display: flex;
+  }
 }
 
 .nav-item {
-  position: relative;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  overflow: hidden;
-
-  &:hover {
-    background: rgba(24, 144, 255, 0.1);
-  }
-
-  &.active {
-    background: rgba(24, 144, 255, 0.15);
-
-    .nav-link {
-      color: #1890ff;
-    }
-  }
-
-  /* 水波纹效果 */
-  &:active {
-    transform: scale(0.98);
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(24, 144, 255, 0.2);
-    transform: translate(-50%, -50%);
-    transition: width 0.5s, height 0.5s;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  &:active::before {
-    width: 120px;
-    height: 120px;
-  }
-}
-
-.nav-link {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 12px;
-  color: #595959;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem; /* 进一步收紧内边距 */
+  margin: 0 0.25rem;
+  border-radius: 0.5rem;
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: color 0.3s ease;
-  position: relative;
-  z-index: 1;
+  color: #6b7280;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+
+  &:hover {
+    color: #111827;
+    background: #f9fafb;
+  }
+
+  &.nav-item-active {
+    color: #ea580c;
+    background: #fff7ed;
+  }
 }
 
 .nav-icon {
-  font-size: 16px;
-  width: 16px;
-  text-align: center;
+  width: 1.25rem; /* 放大图标尺寸 */
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+  object-fit: contain;
+
+  &.nav-icon-home {
+    // 首页图标特殊样式可以在这里添加
+  }
 }
 
 .nav-text {
-  white-space: nowrap;
+  font-size: 1rem; /* 字体放大一档 */
+  font-weight: 500;
 }
 
-.user-section {
+// 移动端菜单按钮
+.mobile-menu-btn {
   display: flex;
   align-items: center;
-  flex: 0 0 auto;
+  justify-content: center;
+  padding: 0.5rem;
+  color: #6b7280;
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+
+  &:hover {
+    color: #111827;
+    background: #f9fafb;
+  }
+
+  &.mobile-menu-btn-active {
+    color: #ea580c;
+    background: #fff7ed;
+  }
 }
 
+.mobile-menu-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+// 右侧导航区域
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+
+  @media (min-width: 640px) {
+    gap: 0.5rem;
+  }
+}
+
+// AI OPS按钮
+// AI OPS简单样式 - 模仿logo的实现
+.ai-ops-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0.125rem;
+  border-radius: 0.375rem;
+  transition: background 0.2s ease-in-out;
+
+  &:hover {
+    background: #f9fafb;
+  }
+}
+
+.ai-ops-simple {
+  height: 1.5rem; /* 按要求放大到 1.5rem */
+  width: auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+// 通知按钮
+.notification-wrapper {
+  position: relative;
+}
+
+.notification-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  transition: color 0.2s ease-in-out;
+  cursor: pointer;
+  position: relative;
+
+  &:hover {
+    color: #6b7280;
+  }
+}
+
+.notification-icon {
+  width: 1.25rem; /* 放大图标尺寸 */
+  height: 1.25rem;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.7rem;
+  border-radius: 50%;
+  width: 1rem;
+  height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+
+// 菜单操作按钮
+.menu-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  width: 2rem;   /* 放大触控目标 */
+  height: 2rem;
+
+  &:hover {
+    color: #6b7280;
+    background: #f9fafb;
+  }
+
+  .el-icon {
+    font-size: 1.25rem; /* 放大内部图标 */
+  }
+}
+
+// 语言下拉菜单
+.language-dropdown {
+  .el-dropdown-menu__item {
+    &.is-active {
+      color: #2563eb;
+      background-color: #eff6ff;
+      font-weight: 500;
+    }
+  }
+}
+
+// 用户下拉菜单
 .user-dropdown {
   cursor: pointer;
 }
 
-.user-info {
+.user-dropdown-trigger {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: background-color 0.3s ease;
+  gap: 0.375rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease-in-out;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: #f9fafb;
+  }
+}
+
+.user-avatar {
+  border: 2px solid #e5e7eb;
+  transition: border-color 0.2s ease-in-out;
+
+  &:hover {
+    border-color: #d1d5db;
   }
 }
 
 .user-name {
-  font-size: 14px;
-  color: #262626;
+  display: none;
+  font-size: 1rem; /* 放大用户名字号 */
+  color: #374151;
+
+  @media (min-width: 768px) {
+    display: inline;
+  }
+}
+
+.dropdown-arrow {
+  display: none;
+  width: 1.25rem;  /* 放大下拉箭头 */
+  height: 1.25rem;
+  color: #9ca3af;
+
+  @media (min-width: 640px) {
+    display: inline;
+  }
+}
+
+// Language icon sizing within el-icon
+.language-icon {
+  width: 1.25rem;  /* 放大语言图标 */
+  height: 1.25rem;
+  display: block;
+}
+
+// 移动端菜单下拉
+.mobile-menu-dropdown {
+  display: block;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  padding: 1rem 1.5rem;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mobile-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: #6b7280;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    color: #111827;
+    background: #f9fafb;
+  }
+
+  &.mobile-nav-item-active {
+    color: #ea580c;
+    background: #fff7ed;
+  }
+}
+
+.mobile-nav-icon {
+  width: 1.25rem; /* 移动端图标同步放大 */
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+  object-fit: contain;
+
+  &.mobile-nav-icon-home {
+    // 首页图标特殊样式可以在这里添加
+  }
+}
+
+.mobile-nav-text {
+  font-size: 1rem; /* 移动端字体同步放大 */
   font-weight: 500;
 }
 
-.dropdown-icon {
-  font-size: 12px;
-  color: #8c8c8c;
-}
-
-// 响应式设计
-@media (max-width: 1200px) {
+/* 大屏（27寸等 ≥1600px）放大排版与触控目标 */
+@media (min-width: 1600px) {
   .nav-container {
-    padding: 0 16px;
+    padding: 0.75rem 2rem;
   }
 
-  .main-nav {
-    margin: 0 20px;
-  }
-}
-
-@media (max-width: 992px) {
-  .nav-list {
-    gap: 4px;
+  .nav-left {
+    gap: 2.5rem;
   }
 
-  .nav-link {
-    padding: 10px 12px;
-    font-size: 13px;
+  .brand-logo {
+    height: 2.5rem;
   }
 
-  .nav-text {
-    display: none;
+  .nav-menu {
+    gap: 0.5rem;
+  }
+
+  .nav-item {
+    gap: 0.625rem;
+    padding: 0.625rem 1rem;
   }
 
   .nav-icon {
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 768px) {
-  .nav-container {
-    padding: 0 12px;
+    width: 1.25rem;
+    height: 1.25rem;
   }
 
-  .main-nav {
-    margin: 0 12px;
+  .nav-text {
+    font-size: 1rem;
   }
 
-  .app-title {
-    font-size: 20px;
+  .ai-ops-simple {
+    height: 1.5rem;
   }
 
-  .logo-placeholder {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
+  .notification-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .notification-badge {
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 0.75rem;
+    top: -0.3rem;
+    right: -0.3rem;
+  }
+
+  .menu-action-btn {
+    width: 2rem;
+    height: 2rem;
+
+    .el-icon {
+      font-size: 1.125rem;
+    }
+  }
+
+  .language-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .user-dropdown-trigger {
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
   }
 
   .user-name {
-    display: none;
+    font-size: 1rem;
+  }
+
+  .dropdown-arrow {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+}
+
+/* 超宽屏（≥1920px）进一步放大 */
+@media (min-width: 1920px) {
+  .nav-container {
+    padding: 1rem 2.5rem;
+  }
+
+  .brand-logo {
+    height: 2.75rem;
+  }
+
+  .nav-item {
+    padding: 0.75rem 1.1rem;
+  }
+
+  .nav-icon {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
+  .nav-text {
+    font-size: 1.05rem;
+  }
+
+  .menu-action-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+
+    .el-icon {
+      font-size: 1.2rem;
+    }
+  }
+
+  .ai-ops-simple {
+    height: 1.75rem;
   }
 }
 </style>

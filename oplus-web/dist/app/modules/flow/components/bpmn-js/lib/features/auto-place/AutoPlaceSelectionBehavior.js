@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+export default function AutoPlaceSelectionBehavior(e,t){e.on("autoPlace.end",500,function(e){t.select(e.shape)})}AutoPlaceSelectionBehavior.$inject=["eventBus","selection"];

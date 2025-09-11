@@ -11,9 +11,23 @@ import { setupGlobalDirectives } from '@/shared/directives'
 import { setupErrorHandler } from '@/core/error'
 import { setupPerformanceMonitor } from '@/core/performance'
 import { initPerformanceOptimizations } from '@/utils/performance-optimizer'
+import { applyIframeResourceFix } from '@/utils/iframe-resource-fix'
 
 // 导入全局样式
 import '@/styles/main.scss'
+
+// 统一设置浏览器 Tab 图标（favicon）为 src/assets/icons/logo-opsmind@2x.png
+try {
+  const faviconHref = new URL('@/assets/icons/logo-opsmind@2x.png', import.meta.url).href
+  const doc = document
+  if (doc && doc.head) {
+    let link = doc.querySelector('link[rel="icon"]') || doc.createElement('link')
+    link.setAttribute('rel', 'icon')
+    link.setAttribute('type', 'image/png')
+    link.setAttribute('href', faviconHref)
+    if (!link.parentNode) doc.head.appendChild(link)
+  }
+} catch {}
 
 // 创建应用实例
 const app = createApp(App)
@@ -24,10 +38,16 @@ setupErrorHandler(app)
 // 设置性能监控
 if (import.meta.env.DEV) {
   setupPerformanceMonitor(app)
+
+  // 引入认证调试工具
+  import('./utils/auth-debug.js')
 }
 
 // 初始化性能优化
 initPerformanceOptimizations()
+
+// 应用iframe资源修复
+applyIframeResourceFix()
 
 // 注册 Element Plus 图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
@@ -38,16 +58,55 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(createPinia())
 app.use(ElementPlus)
 
+// 规范化基础路径：将 /ops 重写为 /ops/（保留查询与 hash）
+function normalizeBaseTrailingSlash() {
+  try {
+    if (typeof window === 'undefined') return
+    const rawBase = import.meta.env.BASE_URL || '/'
+    const base = String(rawBase)
+    if (base === '/') return
+    const needsSlash = base.endsWith('/') ? base : `${base}/`
+    const noSlash = needsSlash.slice(0, -1)
+    const { pathname, search, hash } = window.location
+    if (pathname === noSlash) {
+      const target = `${needsSlash}${search || ''}${hash || ''}`
+      if (window.history && typeof window.history.replaceState === 'function') {
+        window.history.replaceState(null, '', target)
+      } else {
+        window.location.replace(target)
+      }
+    }
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('normalizeBaseTrailingSlash failed:', e)
+  }
+}
+normalizeBaseTrailingSlash()
+
 // 设置路由
 const router = setupRouter()
 app.use(router)
 
-// 暴露路由实例和管理器供调试和测试
-if (import.meta.env.DEV) {
-  const { singleIframeManager } = await import('@/utils/single-iframe-manager')
-  window.singleIframeManager = singleIframeManager
+// 若访问为 /ops 或 /ops/ 且没有 hash，自动导航到 #/home
+try {
+  const base = import.meta.env.BASE_URL || '/'
+  const noSlash = base.endsWith('/') ? base.slice(0, -1) : base
+  const { pathname, hash } = window.location
+  if ((pathname === base || pathname === noSlash) && (!hash || hash === '#')) {
+    router.replace('/home')
+  }
+} catch {}
+
+// 暴露路由实例，供菜单等非组件模块访问（生产/开发环境均生效）
+try {
   window.__VUE_ROUTER__ = router
-  console.log('🔧 singleIframeManager and router exposed to window for debugging')
+} catch {}
+
+// 开发环境下额外暴露调试对象
+if (import.meta.env.DEV) {
+  import('@/utils/single-iframe-manager').then(({ singleIframeManager }) => {
+    window.singleIframeManager = singleIframeManager
+    console.log('🔧 singleIframeManager and router exposed to window for debugging')
+  })
 }
 
 // 设置全局组件和指令
@@ -59,7 +118,7 @@ app.mount('#app')
 
 // 开发环境下的调试信息
 if (import.meta.env.DEV) {
-  console.log('🚀 OpsMind Vue Dashboard started in development mode')
+  console.log('🚀 OPSmind Vue Dashboard started in development mode')
   console.log('📍 Base URL:', import.meta.env.BASE_URL)
   console.log('🔧 Environment:', import.meta.env.MODE)
 }

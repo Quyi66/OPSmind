@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.cac").config(["$stateProvider",function(l){l.state("app.cac.rule",{url:"/rule",cache:!1,views:{cacList:{templateUrl:"app/modules/cac/rule/rule-list.html",controller:"CacRuleListCtrl",controllerAs:"cacRuleListCtrlVm"}}})}])}();

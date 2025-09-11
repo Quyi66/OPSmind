@@ -12,6 +12,7 @@ export interface AppUrlConfig {
   entryUrl: string        // 应用入口 URL
   description?: string    // 应用描述
   enabled?: boolean      // 是否启用
+  urlPrefix?: string     // URL前缀（用于iframe集成）
 }
 
 // 环境配置
@@ -30,6 +31,10 @@ export interface EnvironmentConfig {
   static: {
     baseUrl: string
   }
+  iframe: {
+    urlPrefix: string      // iframe URL前缀
+    tokenParam: string     // token参数名
+  }
 }
 
 // 多环境配置
@@ -40,7 +45,8 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
       hashMode: true
     },
     angularjs: {
-      baseUrl: 'http://localhost:8080/oplus/base',
+      // 使用同源路径，通过 Vite 代理到本地 8080，避免 X-Frame-Options SAMEORIGIN 限制
+      baseUrl: '/oplus/base',
       hashMode: true
     },
     api: {
@@ -48,6 +54,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     },
     static: {
       baseUrl: 'http://localhost:8080'
+    },
+    iframe: {
+      urlPrefix: '/iframe',
+      tokenParam: 'token'
     }
   },
   production: {
@@ -64,6 +74,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     },
     static: {
       baseUrl: ''
+    },
+    iframe: {
+      urlPrefix: '/iframe',
+      tokenParam: 'token'
     }
   },
   test: {
@@ -80,6 +94,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     },
     static: {
       baseUrl: 'http://test-server:8080'
+    },
+    iframe: {
+      urlPrefix: '/iframe',
+      tokenParam: 'token'
     }
   },
   staging: {
@@ -96,6 +114,10 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
     },
     static: {
       baseUrl: 'http://staging-server'
+    },
+    iframe: {
+      urlPrefix: '/iframe',
+      tokenParam: 'token'
     }
   }
 }
@@ -104,57 +126,81 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
 const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
   gfs: {
     entryUrl: '#/gfs',
-    description: '脚本管理应用',
+    description: '脚本',
     enabled: true
   },
   jao: {
     entryUrl: '#/jao',
-    description: '作业编排应用',
+    description: '作业',
     enabled: true
   },
   cmd: {
     entryUrl: '#/cmd',
-    description: '命令管理应用',
+    description: '命令',
     enabled: true
   },
   cac: {
     entryUrl: '#/cac',
-    description: '系统巡检应用',
+    description: '系统巡检',
     enabled: true
   },
   password: {
-    entryUrl: '#/password',
-    description: '密码管理应用',
+    entryUrl: '#/apw/pmsv2',
+    description: '密码管理',
     enabled: true
   },
   sudo: {
-    entryUrl: '#/sudo',
-    description: 'sudo权限管理应用',
+    entryUrl: '#/apw/sudo',
+    description: 'sudo权限管理',
     enabled: true
   },
   acm: {
-    entryUrl: '#/acm',
-    description: '资产管理应用',
+    entryUrl: '#/apw/acm',
+    description: '资产管理',
     enabled: true
   },
   patches: {
-    entryUrl: '#/patches',
-    description: '补丁管理应用',
+    entryUrl: '#/apw/vap',
+    description: '补丁管理',
     enabled: true
   },
   software: {
-    entryUrl: '#/software',
-    description: '软件管理应用',
+    entryUrl: '#/apw/spm',
+    description: '软件管理',
+    enabled: true
+  },
+  // 帮助中心
+  help: {
+    entryUrl: '#/help',
+    description: '帮助中心',
+    enabled: true
+  },
+  // 个人资料（打开 Angular 基座 settings 页面）
+  settings: {
+    entryUrl: '#/settings',
+    description: '个人资料设置',
+    enabled: true
+  },
+  // 系统设置中心（自定义 ssc 页面）
+  ssc: {
+    entryUrl: '#/ssc',
+    description: '系统设置中心',
+    enabled: true
+  },
+  // 新增流程（二级功能：#/flow）。保留 workflow 作为别名以兼容
+  flow: {
+    entryUrl: '#/flow',
+    description: '流程管理',
     enabled: true
   },
   workflow: {
-    entryUrl: '#/workflow',
-    description: '流程管理应用',
+    entryUrl: '#/flow',
+    description: '流程管理（别名）',
     enabled: true
   },
   users: {
-    entryUrl: '#/users',
-    description: '用户管理应用',
+    entryUrl: '#/apw/uim',
+    description: '用户管理',
     enabled: true
   }
 }
@@ -206,7 +252,10 @@ export class AppUrlManager {
       return this.getAngularBaseUrl()
     }
 
+    // 直接构建标准的Angular URL，不使用URL前缀
+    // URL前缀功能暂时禁用，避免路径错误
     const fullUrl = this.buildAngularUrl(appConfig.entryUrl)
+
     console.log(`🔗 URL Generation Debug:`)
     console.log(`   App code: ${appCode}`)
     console.log(`   Entry URL: ${appConfig.entryUrl}`)
@@ -214,6 +263,27 @@ export class AppUrlManager {
     console.log(`   Final URL: ${fullUrl}`)
 
     return fullUrl
+  }
+
+  /**
+   * 获取iframe配置
+   */
+  getIframeConfig() {
+    return this.envConfig.iframe
+  }
+
+  /**
+   * 获取token参数名
+   */
+  getTokenParam(): string {
+    return this.envConfig.iframe.tokenParam
+  }
+
+  /**
+   * 获取URL前缀
+   */
+  getUrlPrefix(): string {
+    return this.envConfig.iframe.urlPrefix
   }
 
   /**
