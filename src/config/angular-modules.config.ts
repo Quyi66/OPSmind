@@ -52,18 +52,6 @@ export const ANGULAR_MODULES_CONFIG: AngularModulesConfig = {
     features: ['作业编排', '命令管理', '流程设计', '调度管理', '执行历史']
   },
 
-  // SIM - 系统信息管理
-  sim: {
-    code: 'sim',
-    name: 'SIM 系统信息',
-    title: '系统信息管理与监控',
-    icon: 'fa-server',
-    color: '#6f42c1',
-    description: '系统信息收集、管理和监控',
-    angularModule: 'oplus.sim',
-    features: ['主机信息', '系统监控', '报表管理', '配置设置']
-  },
-
   // UIM - 用户身份管理
   uim: {
     code: 'uim',
