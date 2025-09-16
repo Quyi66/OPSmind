@@ -225,7 +225,7 @@ export class ModulePreloadManager {
    * 预加载常用模块
    */
   static preloadCommonModules() {
-    const commonModules = ['cac', 'jao', 'sim'] // 常用模块列表
+    const commonModules = ['cac', 'jao'] // 常用模块列表（移除未配置的 sim）
     commonModules.forEach(moduleCode => {
       this.addToPreloadQueue(moduleCode)
     })

@@ -126,7 +126,7 @@ export class SingleIframeManager {
       border: none;
       display: block;
     `
-    iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-top-navigation allow-downloads')
+    iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms')
     iframe.setAttribute('allow', 'fullscreen')
     iframe.setAttribute('loading', 'eager')
     iframe.setAttribute('importance', 'high')
