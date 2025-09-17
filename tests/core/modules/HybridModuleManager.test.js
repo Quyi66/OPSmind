@@ -34,7 +34,7 @@ describe('Hybrid Module Manager', () => {
         code: 'test-vue',
         name: '测试 Vue 模块',
         type: MODULE_TYPES.VUE_NATIVE,
-        component: () => import('@/views/TestView.vue'),
+        component: () => import('@/views/About.vue'),
         features: ['功能1', '功能2']
       }
 
@@ -85,7 +85,7 @@ describe('Hybrid Module Manager', () => {
       hybridModuleManager.registerVueModule({
         code: 'test-vue',
         name: '测试模块',
-        component: () => import('@/views/Test.vue')
+        component: () => import('@/views/About.vue')
       })
 
       const vueModules = hybridModuleManager.getModulesByType(MODULE_TYPES.VUE_NATIVE)

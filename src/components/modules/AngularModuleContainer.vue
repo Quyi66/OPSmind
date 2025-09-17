@@ -11,25 +11,6 @@
       </div>
 
       <div class="module-actions">
-        <el-button-group size="small">
-          <el-button
-            :type="viewMode === 'iframe' ? 'primary' : 'default'"
-            @click="switchViewMode('iframe')"
-            :disabled="loading"
-          >
-            <i class="fas fa-window-maximize"></i>
-            iframe
-          </el-button>
-          <el-button
-            :type="viewMode === 'embedded' ? 'primary' : 'default'"
-            @click="switchViewMode('embedded')"
-            :disabled="loading || !supportsEmbedded"
-          >
-            <i class="fas fa-puzzle-piece"></i>
-            嵌入
-          </el-button>
-        </el-button-group>
-
         <el-button @click="refreshModule" size="small" :loading="loading">
           <i class="fas fa-refresh"></i>
           刷新
@@ -61,15 +42,12 @@
         <el-result icon="error" :title="`${moduleTitle} 模块加载失败`" :sub-title="error">
           <template #extra>
             <el-button type="primary" @click="retryLoad">重试</el-button>
-            <el-button @click="switchViewMode(viewMode === 'iframe' ? 'embedded' : 'iframe')">
-              切换到{{ viewMode === 'iframe' ? '嵌入' : 'iframe' }}模式
-            </el-button>
           </template>
         </el-result>
       </div>
 
       <!-- iframe 模式 -->
-      <div v-if="viewMode === 'iframe'" class="iframe-container">
+      <div class="iframe-container">
         <iframe
           v-show="!loading && !error"
           ref="moduleIframe"
@@ -82,17 +60,7 @@
         ></iframe>
       </div>
 
-      <!-- 嵌入模式 -->
-      <div v-if="viewMode === 'embedded'" class="embedded-container">
-        <AngularJSDirectEmbed
-          v-if="!loading && !error"
-          :module-code="moduleCode"
-          :module-title="moduleTitle"
-          @loaded="onEmbeddedLoaded"
-          @error="onEmbeddedError"
-          @ready="onEmbeddedReady"
-        />
-      </div>
+
     </div>
 
     <!-- 状态栏 -->
@@ -105,7 +73,7 @@
       </div>
 
       <div class="module-meta">
-        <span>模式: {{ viewMode === 'iframe' ? 'iframe' : '嵌入' }}</span>
+        <span>模式: iframe</span>
         <span v-if="loadTime">加载时间: {{ loadTime }}ms</span>
         <span v-if="lastUpdate">更新: {{ formatTime(lastUpdate) }}</span>
       </div>
@@ -115,30 +83,16 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import {
-  ElButton,
-  ElButtonGroup,
-  ElIcon,
-  ElProgress,
-  ElResult,
-  ElTag,
-  ElMessage
-} from 'element-plus'
+import { ElButton, ElIcon, ElProgress, ElResult, ElTag, ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { authService } from '@/core/auth'
 import { appUrlManager } from '@/config/module-urls.config'
-import AngularJSDirectEmbed from './AngularJSDirectEmbed.vue'
 
 const props = defineProps({
   moduleCode: {
     type: String,
     required: true,
     validator: value => ['cac', 'jao', 'gfs', 'dts', 'udp', 'acm'].includes(value)
-  },
-  viewMode: {
-    type: String,
-    default: 'iframe',
-    validator: value => ['iframe', 'embedded'].includes(value)
   },
   showHeader: {
     type: Boolean,
@@ -154,7 +108,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['loaded', 'error', 'message', 'ready', 'viewModeChanged'])
+const emit = defineEmits(['loaded', 'error', 'message', 'ready'])
 
 // 响应式数据
 const loading = ref(false)
@@ -165,45 +119,38 @@ const loadTime = ref(null)
 const lastUpdate = ref(null)
 const loadingProgress = ref(0)
 const loadingText = ref('')
-const currentViewMode = ref(props.viewMode)
 
 // 模块配置
 const moduleConfigs = {
   cac: {
     title: 'CAC 配置管理',
     description: '配置审计与合规性检查',
-    icon: 'fas fa-cogs',
-    supportsEmbedded: true
+    icon: 'fas fa-cogs'
   },
   jao: {
     title: 'JAO 作业编排',
     description: '自动化作业编排与执行',
-    icon: 'fas fa-tasks',
-    supportsEmbedded: true
+    icon: 'fas fa-tasks'
   },
   gfs: {
     title: 'GFS 脚本管理',
     description: '脚本文件管理系统',
-    icon: 'fas fa-file-code',
-    supportsEmbedded: false
+    icon: 'fas fa-file-code'
   },
   dts: {
     title: 'DTS 数据传输',
     description: '数据传输与同步服务',
-    icon: 'fas fa-exchange-alt',
-    supportsEmbedded: false
+    icon: 'fas fa-exchange-alt'
   },
   udp: {
     title: 'UDP 统一开发平台',
     description: '统一开发与部署平台',
-    icon: 'fas fa-code',
-    supportsEmbedded: false
+    icon: 'fas fa-code'
   },
   acm: {
     title: 'ACM 资产配置管理',
     description: '资产配置管理',
-    icon: 'fas fa-server',
-    supportsEmbedded: false
+    icon: 'fas fa-server'
   }
 }
 
@@ -212,16 +159,8 @@ const moduleConfig = computed(() => moduleConfigs[props.moduleCode] || {})
 const moduleTitle = computed(() => moduleConfig.value.title || props.moduleCode.toUpperCase())
 const moduleDescription = computed(() => moduleConfig.value.description || '')
 const moduleIcon = computed(() => moduleConfig.value.icon || 'fas fa-cube')
-const supportsEmbedded = computed(() => moduleConfig.value.supportsEmbedded || false)
 
-// eslint-disable-next-line vue/no-dupe-keys
-const viewMode = computed({
-  get: () => currentViewMode.value,
-  set: value => {
-    currentViewMode.value = value
-    emit('viewModeChanged', value)
-  }
-})
+// 不再支持嵌入模式，统一使用 iframe
 
 const moduleUrl = computed(() => {
   return buildModuleUrl()
@@ -266,16 +205,7 @@ function buildModuleUrl() {
   return `${containerUrl}?${params.toString()}`
 }
 
-// 切换视图模式
-function switchViewMode(mode) {
-  if (mode === 'embedded' && !supportsEmbedded.value) {
-    ElMessage.warning(`${moduleTitle.value} 模块暂不支持嵌入模式`)
-    return
-  }
-
-  viewMode.value = mode
-  loadModule()
-}
+// 视图模式固定为 iframe
 
 // 加载模块
 async function loadModule() {
@@ -291,21 +221,7 @@ async function loadModule() {
 
     const startTime = Date.now()
 
-    if (viewMode.value === 'iframe') {
-      await loadIframeModule()
-    } else {
-      // 嵌入模式直接由AngularJSDirectEmbed组件处理
-      // 这里只需要设置状态，实际加载由子组件完成
-      console.log('🔄 Embedded mode will be handled by AngularJSDirectEmbed component')
-      loadingProgress.value = 50
-      loadingText.value = '准备嵌入模块...'
-
-      // 等待一下让DOM渲染完成
-      await new Promise(resolve => setTimeout(resolve, 100))
-
-      // 状态将由子组件的事件处理更新
-      return
-    }
+    await loadIframeModule()
 
     loadTime.value = Date.now() - startTime
     lastUpdate.value = Date.now()
@@ -321,11 +237,8 @@ async function loadModule() {
 
     emit('error', { moduleCode: props.moduleCode, error: error.value })
   } finally {
-    if (viewMode.value === 'iframe') {
-      loading.value = false
-      loadingProgress.value = 100
-    }
-    // 嵌入模式的loading状态由子组件控制
+    loading.value = false
+    loadingProgress.value = 100
   }
 }
 
@@ -463,37 +376,7 @@ function formatTime(timestamp) {
   return new Date(timestamp).toLocaleTimeString()
 }
 
-// 嵌入模式事件处理
-function onEmbeddedLoaded(moduleCode) {
-  loading.value = false
-  error.value = ''
-  status.value = '已加载'
-  statusText.value = `${moduleTitle.value} 模块加载成功`
-  lastUpdate.value = Date.now()
-  loadTime.value = Date.now() - (loadTime.value || Date.now())
-
-  console.log('✅ Embedded module loaded:', moduleCode)
-  emit('loaded', moduleCode)
-}
-
-function onEmbeddedError({ moduleCode, error: errorMsg }) {
-  loading.value = false
-  error.value = errorMsg
-  status.value = '加载失败'
-  statusText.value = `${moduleTitle.value} 模块加载失败`
-
-  console.error('❌ Embedded module error:', moduleCode, errorMsg)
-  emit('error', { moduleCode, error: errorMsg })
-}
-
-function onEmbeddedReady({ moduleCode, controller, scope }) {
-  console.log('🎯 Embedded module ready:', moduleCode, controller)
-  emit('ready', {
-    moduleCode,
-    controller,
-    scope
-  })
-}
+// 移除嵌入模式相关事件处理
 
 // 生命周期
 onMounted(() => {
@@ -516,7 +399,6 @@ watch(
 defineExpose({
   loadModule,
   refreshModule,
-  switchViewMode,
   getStatus: () => ({
     loading: loading.value,
     error: error.value,
@@ -629,8 +511,7 @@ defineExpose({
   font-size: 0.875rem;
 }
 
-.iframe-container,
-.embedded-container {
+.iframe-container {
   height: 100%;
 }
 
@@ -641,11 +522,7 @@ defineExpose({
   background: white;
 }
 
-.angular-embedded {
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-}
+
 
 .status-bar {
   display: flex;

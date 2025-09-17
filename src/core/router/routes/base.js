@@ -54,7 +54,8 @@ export const baseRoutes = [
   {
     path: '/migration',
     name: 'migration-dashboard',
-    component: () => import('@/views/MigrationDashboard.vue'),
+    // 回退到仪表盘，原 MigrationDashboard.vue 缺失
+    component: () => import('@/views/Dashboard.vue'),
     meta: {
       title: '迁移管理 - OPSmind',
       requiresAuth: true,

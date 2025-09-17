@@ -73,7 +73,7 @@ import SkeletonLoader from '@/components/SkeletonLoader.vue'
 const route = useRoute()
 const router = useRouter()
 
-const moduleCode = computed(() => route.params.moduleCode as string)
+const moduleCode = computed(() => String(route.params.moduleCode || ''))
 const moduleConfig = computed(() => getModuleConfig(moduleCode.value))
 const moduleTitle = computed(() => moduleConfig.value?.title || moduleCode.value)
 
