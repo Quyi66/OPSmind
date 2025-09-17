@@ -36,6 +36,7 @@
         >
           <!-- 简单加载状态 -->
           <div v-if="loading" class="loading-overlay">
+            <el-icon class="loading-spinner"><Loading /></el-icon>
             <div class="loading-text">正在加载...</div>
           </div>
 
@@ -743,6 +744,18 @@ defineOptions({
 .loading-text {
   color: #606266;
   font-size: 14px;
+}
+
+.loading-spinner {
+  font-size: 28px;
+  color: #409eff;
+  margin-right: 8px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .error-content {

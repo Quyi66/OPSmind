@@ -255,11 +255,6 @@ export class AppUrlManager {
     // 直接构建标准的Angular URL，不使用URL前缀
     // URL前缀功能暂时禁用，避免路径错误
     const fullUrl = this.buildAngularUrl(appConfig.entryUrl)
-
-    console.log(`🔗 URL Generation Debug:`)
-    console.log(`   App code: ${appCode}`)
-    console.log(`   Entry URL: ${appConfig.entryUrl}`)
-    console.log(`   Angular base URL: ${this.getAngularBaseUrl()}`)
     console.log(`   Final URL: ${fullUrl}`)
 
     return fullUrl

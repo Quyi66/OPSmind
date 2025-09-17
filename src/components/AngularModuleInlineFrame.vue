@@ -2,7 +2,7 @@
   <div class="angular-module-inline-frame" v-if="moduleCode">
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-container">
-      <el-loading-spinner />
+      <el-icon class="loading-spinner"><Loading /></el-icon>
       <p>正在加载 {{ moduleTitle }}...</p>
     </div>
 
@@ -19,6 +19,8 @@
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ElIcon } from 'element-plus'
+import { Loading } from '@element-plus/icons-vue'
 
 const props = defineProps({
   moduleCode: {
@@ -152,6 +154,17 @@ onUnmounted(() => {
     margin-top: 16px;
     font-size: 14px;
   }
+}
+
+.loading-spinner {
+  font-size: 28px;
+  color: #409eff;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .iframe-container {

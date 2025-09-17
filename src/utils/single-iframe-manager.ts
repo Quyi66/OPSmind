@@ -102,7 +102,6 @@ export class SingleIframeManager {
 
         console.log(`🔗 Loading Angular app:`)
         console.log(`   Base URL: ${baseUrl}`)
-        console.log(`   Auth URL: ${authUrl}`)
         console.log(`   Final iframe src: ${this.iframe.src}`)
 
       } catch (error) {
@@ -159,7 +158,6 @@ export class SingleIframeManager {
   async switchToModule(moduleCode: string, targetContainer: HTMLElement): Promise<number> {
     const startTime = performance.now()
     console.log(`⚡ Switching to module: ${moduleCode}`)
-    console.log(`📍 Target container:`, targetContainer)
     console.log(`🔧 Manager state:`, {
       isInitialized: this.isInitialized,
       isLoading: this.isLoading,
@@ -189,7 +187,6 @@ export class SingleIframeManager {
 
       // 构建带认证的URL
       const authUrl = this.buildAuthUrl(fullUrl)
-      console.log(`   Auth URL: ${authUrl}`)
 
       // 移动 iframe 到目标容器
       this.moveToContainer(targetContainer)
@@ -323,17 +320,7 @@ export class SingleIframeManager {
         // URL前缀应该只用于特殊情况，这里暂时不使用
         // 直接使用原始baseUrl，确保URL格式正确
         let finalBaseUrl = baseUrl
-
         const finalUrl = `${finalBaseUrl}${separator}${params.toString()}`
-        console.log('🔗 Built auth URL with token and prefix:', {
-          originalBaseUrl: baseUrl,
-          finalBaseUrl,
-          urlPrefix,
-          tokenParam,
-          hasToken: !!token,
-          tokenLength: token.length,
-          finalUrl: finalUrl.substring(0, 100) + '...' // 只显示前100个字符用于调试
-        })
 
         return finalUrl
       }
@@ -375,14 +362,6 @@ export class SingleIframeManager {
    */
   private hideAngularUI() {
     if (!this.iframe?.contentWindow) return
-
-    try {
-      // Angular应用应该通过URL参数自行处理UI隐藏
-      console.log('🎨 Angular UI hiding should be handled by the Angular app based on URL parameters')
-
-    } catch (error) {
-      console.error('Failed to hide Angular UI:', error)
-    }
   }
 
   /**

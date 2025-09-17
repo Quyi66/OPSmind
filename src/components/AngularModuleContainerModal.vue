@@ -11,6 +11,11 @@
 
       <!-- 模态框内容 -->
       <div class="modal-content">
+        <div v-if="loading" class="loading-overlay">
+          <el-icon class="loading-spinner"><Loading /></el-icon>
+          <p class="loading-text">正在加载 {{ moduleTitle }}...</p>
+        </div>
+
         <div v-if="moduleCode" ref="iframeContainer" class="iframe-container"></div>
       </div>
     </div>
@@ -19,7 +24,8 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { ElButton, ElMessage } from 'element-plus'
+import { ElButton, ElMessage, ElIcon } from 'element-plus'
+import { Loading } from '@element-plus/icons-vue'
 import { singleIframeManager } from '@/utils/single-iframe-manager'
 
 // 响应式数据
@@ -236,6 +242,33 @@ onUnmounted(() => {
   overflow: hidden;
   background: #ffffff; /* 使用纯白背景 */
   border-radius: 0 0 8px 8px; /* 底部圆角与外层一致 */
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.9);
+  z-index: 5;
+}
+
+.loading-spinner {
+  font-size: 28px;
+  color: #409eff;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  margin-top: 12px;
+  color: #606266;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .iframe-container {
