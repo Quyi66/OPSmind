@@ -33,6 +33,12 @@ export default defineConfig(({ command, mode }) => {
       host: env.VITE_DEV_HOST || '0.0.0.0',
       open: env.VITE_DEV_OPEN === 'true',
       cors: env.VITE_DEV_CORS === 'true',
+      // 禁止缓存（开发环境）
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
       // 静态文件服务
       fs: {
         allow: ['..'] // 允许访问上级目录
@@ -75,6 +81,11 @@ export default defineConfig(({ command, mode }) => {
             proxy.on('proxyReq', (proxyReq, req) => {
               console.log('📡 Proxying to Angular:', req.method, req.url, '->', proxyReq.path)
             })
+            proxy.on('proxyRes', (proxyRes) => {
+              proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+              proxyRes.headers['pragma'] = 'no-cache'
+              proxyRes.headers['expires'] = '0'
+            })
           }
         },
 
@@ -89,6 +100,11 @@ export default defineConfig(({ command, mode }) => {
             })
             proxy.on('proxyReq', (proxyReq, req) => {
               console.log('Proxying request:', req.method, req.url)
+            })
+            proxy.on('proxyRes', (proxyRes) => {
+              proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+              proxyRes.headers['pragma'] = 'no-cache'
+              proxyRes.headers['expires'] = '0'
             })
           }
         },
@@ -122,6 +138,11 @@ export default defineConfig(({ command, mode }) => {
             })
             proxy.on('proxyReq', (proxyReq, req) => {
               console.log('AngularJS proxy:', req.method, req.url)
+            })
+            proxy.on('proxyRes', (proxyRes) => {
+              proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+              proxyRes.headers['pragma'] = 'no-cache'
+              proxyRes.headers['expires'] = '0'
             })
           }
         }

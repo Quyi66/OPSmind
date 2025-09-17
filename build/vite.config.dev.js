@@ -23,6 +23,12 @@ export default defineConfig({
     host: '0.0.0.0',
     open: true,
     cors: true,
+    // 禁止缓存（开发环境）
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    },
 
     // 热更新配置
     hmr: {
@@ -53,19 +59,40 @@ export default defineConfig({
           }
           console.log('🔄 Angular proxy rewrite:', path, '->', newPath)
           return newPath
+        },
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+            proxyRes.headers['pragma'] = 'no-cache'
+            proxyRes.headers['expires'] = '0'
+          })
         }
       },
 
       '/oplus-portal': {
         target: 'http://localhost:18080',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+            proxyRes.headers['pragma'] = 'no-cache'
+            proxyRes.headers['expires'] = '0'
+          })
+        }
       },
 
       '/oplus/base': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+            proxyRes.headers['pragma'] = 'no-cache'
+            proxyRes.headers['expires'] = '0'
+          })
+        }
       }
     }
   },
