@@ -79,7 +79,7 @@ const route = useRoute()
 // 监听路由变化，自动显示对应的iframe
 watch(
   () => route.path,
-  newPath => {
+  async newPath => {
     console.log('🧭 Route changed to:', newPath)
 
     // 如果是功能模块路由，自动显示iframe
@@ -93,6 +93,16 @@ watch(
       // 注意：不再在这里触发弹窗模式的iframe
       // iframe现在由MainLayout中的AngularModuleInlineFrame组件处理
       // 这里只是记录路由变化
+    }
+
+    // 返回首页时，确保加载仪表盘数据（修复偶现返回首页后全是0的问题）
+    if (newPath === '/home' || route.name === 'home') {
+      // 避免重复请求：仅在未加载或需要刷新时触发
+      const shouldLoad = !dashboardStore.loading && (!dashboardStore.dashboardFullData || dashboardStore.needsRefresh)
+      if (shouldLoad) {
+        console.log('🏠 Home route detected, loading dashboard data...')
+        await loadDashboardData()
+      }
     }
   },
   { immediate: true }
