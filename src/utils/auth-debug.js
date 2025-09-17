@@ -161,15 +161,6 @@ export function exposeDebugMethods() {
       forceResendAuthData,
       generateAuthDebugReport
     }
-
-    console.log('🛠️ [AuthDebug] Debug methods exposed to window.authDebug')
-    console.log('Available methods:')
-    console.log('  - window.authDebug.logAuthStatus()')
-    console.log('  - window.authDebug.logStorageAuth()')
-    console.log('  - window.authDebug.logIframeStatus()')
-    console.log('  - window.authDebug.sendTestMessageToIframes()')
-    console.log('  - window.authDebug.forceResendAuthData()')
-    console.log('  - window.authDebug.generateAuthDebugReport()')
   }
 }
 

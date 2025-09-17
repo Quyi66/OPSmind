@@ -33,6 +33,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'home-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
@@ -88,6 +89,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'jao-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
@@ -105,6 +107,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'cmd-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
@@ -122,6 +125,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'cac-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
@@ -139,6 +143,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'password-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
@@ -156,6 +161,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'sudo-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
@@ -173,6 +179,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'acm-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
@@ -190,6 +197,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'patches-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
@@ -207,6 +215,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'software-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
@@ -224,6 +233,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'workflow-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],
@@ -241,6 +251,7 @@ export const baseRoutes = [
     children: [
       {
         path: '',
+        name: 'users-index',
         component: () => import('@/views/Dashboard.vue')
       }
     ],

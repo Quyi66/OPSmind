@@ -6,14 +6,11 @@
 import { authService } from '@/core/auth'
 import { appUrlManager } from '@/config/module-urls.config'
 import {
-  debounce,
   shouldReloadIframe,
   safeSetIframeSrc,
   iframeOperationQueue,
   cleanupIframeResources
 } from './iframe-resource-fix'
-
-
 
 export class SingleIframeManager {
   private static instance: SingleIframeManager
@@ -78,9 +75,6 @@ export class SingleIframeManager {
           console.log('✅ Angular iframe loaded successfully')
           this.isInitialized = true
           this.isLoading = false
-
-          // 发送认证数据
-          this.sendAuthData()
 
           // 隐藏 Angular 的工具栏和背景
           this.hideAngularUI()
@@ -165,8 +159,6 @@ export class SingleIframeManager {
       hasIframe: !!this.iframe
     })
 
-
-
     // 确保 iframe 已初始化
     await this.ensureInitialized()
 
@@ -192,7 +184,8 @@ export class SingleIframeManager {
       this.moveToContainer(targetContainer)
 
       // 优化：只有URL真正改变时才重新加载
-      if (shouldReloadIframe(this.lastUrl || '', authUrl)) {
+      const needReload = shouldReloadIframe(this.lastUrl || '', authUrl)
+      if (needReload) {
         console.log(`🔄 URL changed, updating iframe src safely...`)
 
         // 使用队列化操作，避免并发冲突
@@ -207,10 +200,12 @@ export class SingleIframeManager {
         console.log(`⚡ Same URL, skipping reload for better performance`)
       }
 
-      // 重新发送认证数据，确保模块切换后认证状态正确
-      this.sendAuthData()
-
+      // 先更新当前模块，再根据是否需要重新加载决定是否记录/校验认证信息
       this.currentModule = moduleCode
+      if (needReload) {
+        // 认证参数通过 URL 传递，此处仅做一次性日志/校验，避免重复日志
+        this.sendAuthData()
+      }
 
       const switchTime = performance.now() - startTime
       console.log(`✅ Module ${moduleCode} switched in ${switchTime.toFixed(2)}ms (OPTIMIZED)`)
@@ -356,6 +351,9 @@ export class SingleIframeManager {
       })
     }
   }
+
+  // 移除等待逻辑，改为即刻构建URL；
+  // 若当下没有token，Angular端从同源storage读取
 
   /**
    * 隐藏 Angular 的工具栏和背景（通过CSS样式）

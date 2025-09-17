@@ -12,6 +12,7 @@ export const moduleRoutes = [
     children: [
       {
         path: '',
+        name: 'cac-main-index',
         component: () => import('@/views/AngularModuleView.vue')
       }
     ],
@@ -43,6 +44,7 @@ export const moduleRoutes = [
     children: [
       {
         path: '',
+        name: 'jao-main-index',
         component: () => import('@/views/AngularModuleView.vue')
       }
     ],
@@ -74,6 +76,7 @@ export const moduleRoutes = [
     children: [
       {
         path: '',
+        name: 'gfs-main-index',
         component: () => import('@/views/AngularModuleView.vue')
       }
     ],
@@ -155,6 +158,7 @@ export const moduleRoutes = [
     children: [
       {
         path: '',
+        name: 'cmd-main-index',
         component: () => import('@/views/AngularModuleView.vue')
       }
     ],
@@ -186,6 +190,7 @@ export const moduleRoutes = [
     children: [
       {
         path: '',
+        name: 'acm-main-index',
         component: () => import('@/views/AngularModuleView.vue')
       }
     ],
