@@ -5,7 +5,7 @@
       <button class="retry-btn" @click="retryOpen">手动打开</button>
     </div>
   </div>
-  
+
 </template>
 
 <script setup>
@@ -13,13 +13,26 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 
 const AI_ICON = new URL('@/assets/icons/aiOPS2@2x.png', import.meta.url).href
 // 运行时配置（若存在 runtime-config.js）
-const RUNTIME = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
+const RUNTIME = (() => {
+  try {
+    return window.__OPS_RUNTIME__ || {}
+  } catch {
+    return {}
+  }
+})()
 // Token 获取：URL 参数 -> runtime DIFY_TOKEN -> 环境变量（兼容）
-const URL_TOKEN = (() => { try { return new URLSearchParams(location.search).get('token') || '' } catch { return '' } })()
+const URL_TOKEN = (() => {
+  try {
+    return new URLSearchParams(location.search).get('token') || ''
+  } catch {
+    return ''
+  }
+})()
 const DEFAULT_DIFY_TOKEN = 'tRnUImvfrP77TFr0'
-const TOKEN = URL_TOKEN || RUNTIME.DIFY_TOKEN || (import.meta.env.VITE_DIFY_TOKEN || DEFAULT_DIFY_TOKEN)
+const TOKEN =
+  URL_TOKEN || RUNTIME.DIFY_TOKEN || import.meta.env.VITE_DIFY_TOKEN || DEFAULT_DIFY_TOKEN
 // Embed 地址：仅本地加载（public/dify/embed.min.js），统一策略
-const EMBED_SRC = `${(import.meta.env.BASE_URL || '/') }dify/embed.min.js`
+const EMBED_SRC = `${import.meta.env.BASE_URL || '/'}dify/embed.min.js`
 const ready = ref(false)
 const statusText = ref('正在加载 OPS 智能助手...')
 const DEFAULT_ASK = (() => {
@@ -109,7 +122,8 @@ onMounted(() => {
           clearInterval(timer)
           // 即使未检测到窗口，也不一直显示loading，避免空白页卡住
           if (!ready.value) {
-            statusText.value = '加载失败：未检测到 Dify 窗口。请点击“手动打开”，或检查脚本加载与网络/CSP。'
+            statusText.value =
+              '加载失败：未检测到 Dify 窗口。请点击“手动打开”，或检查脚本加载与网络/CSP。'
           }
         }
       }, 250)
@@ -131,7 +145,9 @@ onBeforeUnmount(() => {
     // 清理气泡 DOM（若存在）
     const bubble = document.getElementById('dify-chatbot-bubble')
     if (bubble && bubble.parentNode) bubble.parentNode.removeChild(bubble)
-  } catch {}
+  } catch {
+    /* empty */
+  }
 })
 
 function tryAutoAsk(message) {
@@ -151,7 +167,9 @@ function tryAutoAsk(message) {
               window.difyChatbot[m](message)
               clearInterval(timer)
               return
-            } catch {}
+            } catch {
+              /* empty */
+            }
           }
         }
       }
@@ -159,7 +177,9 @@ function tryAutoAsk(message) {
       // 2) 直接在 DOM 中寻找输入框与发送按钮（若非跨域 iframe）
       const container = document.getElementById('dify-chatbot-bubble-window')
       if (container) {
-        const input = container.querySelector('textarea, input[type="text"], [contenteditable="true"]')
+        const input = container.querySelector(
+          'textarea, input[type="text"], [contenteditable="true"]'
+        )
         if (input) {
           try {
             if ('value' in input) {
@@ -175,23 +195,34 @@ function tryAutoAsk(message) {
               return /send|发送|提交|enter/i.test(t)
             })
             if (!sendBtn) {
-              sendBtn = Array.from(container.querySelectorAll('button')).find(b => /send|paper|arrow|提交|发送/i.test(b.className || ''))
+              sendBtn = Array.from(container.querySelectorAll('button')).find(b =>
+                /send|paper|arrow|提交|发送/i.test(b.className || '')
+              )
             }
             if (sendBtn) {
               sendBtn.click()
               clearInterval(timer)
               return
             }
-          } catch {}
+          } catch {
+            /* empty */
+          }
         }
         const iframe = container.querySelector('iframe')
         if (iframe && iframe.contentWindow) {
           try {
-            iframe.contentWindow.postMessage({ source: 'opsmind', type: 'dify:send', payload: { text: message } }, '*')
-          } catch {}
+            iframe.contentWindow.postMessage(
+              { source: 'opsmind', type: 'dify:send', payload: { text: message } },
+              '*'
+            )
+          } catch {
+            /* empty */
+          }
         }
       }
-    } catch {}
+    } catch {
+      /* empty */
+    }
 
     if (attempts >= maxAttempts) clearInterval(timer)
   }, 250)
@@ -251,7 +282,9 @@ function setFavicon(href) {
     }
     link.type = 'image/png'
     link.href = href
-  } catch {}
+  } catch {
+    /* empty */
+  }
 }
 function restoreFavicon() {
   try {
@@ -263,7 +296,9 @@ function restoreFavicon() {
     } else if (previousFaviconHref) {
       link.href = previousFaviconHref
     }
-  } catch {}
+  } catch {
+    /* empty */
+  }
 }
 </script>
 

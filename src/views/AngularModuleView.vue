@@ -21,7 +21,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElBreadcrumb, ElBreadcrumbItem } from 'element-plus'
 import AngularModuleFrame from '@/components/modules/AngularModuleFrame.vue'
 import { angularModuleManager } from '@/services/AngularModuleManager.js'
 
@@ -43,40 +42,6 @@ const moduleConfig = computed(() => {
   console.log('🔍 Getting module config for:', moduleCode.value)
   return angularModuleManager.getModule(moduleCode.value)
 })
-
-// 方法
-const getRouteLabel = routeName => {
-  const labels = {
-    main: '主页面',
-    template: '模板管理',
-    rules: '规则管理',
-    hosts: '主机管理',
-    jobs: '作业管理',
-    results: '结果查看',
-    commands: '命令管理',
-    flows: '流程管理',
-    schedules: '调度管理',
-    datasources: '数据源',
-    datasets: '数据集',
-    transfers: '传输任务',
-    pages: '页面管理',
-    widgets: '组件管理',
-    themes: '主题管理',
-    scripts: '脚本管理',
-    versions: '版本管理',
-    executions: '执行记录',
-    assets: '资产管理',
-    configs: '配置管理',
-    monitoring: '监控告警',
-    config: '系统配置',
-    users: '用户管理',
-    logs: '日志管理',
-    list: '应用列表',
-    translator: '翻译工具',
-    components: '组件测试'
-  }
-  return labels[routeName] || routeName
-}
 
 // 事件处理
 const onModuleLoaded = data => {
