@@ -3,6 +3,21 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
 
+const DEFAULT_ANGULAR_TARGET = 'http://localhost:3000'
+const DEFAULT_BACKEND_TARGET = 'http://10.1.40.112:80'
+
+function normalizeTarget(value: string | undefined, fallback: string): string {
+  if (!value) return fallback
+  const trimmed = value.trim()
+  if (!trimmed) return fallback
+  const sanitized = trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed
+  if (!/^https?:\/\//.test(sanitized)) {
+    console.warn(`[vite-config] Invalid target "${value}". Falling back to ${fallback}.`)
+    return fallback
+  }
+  return sanitized
+}
+
 // 插件 (可选，需要时安装)
 // import { createHtmlPlugin } from 'vite-plugin-html'
 // import { visualizer } from 'rollup-plugin-visualizer'
@@ -13,6 +28,14 @@ export default defineConfig(({ command, mode }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), '')
   const isProduction = mode === 'production'
   const isDevelopment = mode === 'development'
+  const angularTarget = normalizeTarget(
+    env.VITE_ANGULAR_URL || env.VITE_ANGULAR_PROXY_URL,
+    DEFAULT_ANGULAR_TARGET
+  )
+  const backendTarget = normalizeTarget(
+    env.VITE_BACKEND_URL || env.VITE_BACKEND_PROXY_URL,
+    DEFAULT_BACKEND_TARGET
+  )
 
   return {
     plugins: [
@@ -67,7 +90,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       proxy: {
         // Angular 应用代理 - 将 /angular 代理到 Angular 服务器
         '/angular': {
-          target: env.VITE_ANGULAR_PROXY_URL || 'http://localhost:3000',
+          target: angularTarget,
           changeOrigin: true,
           secure: false,
           rewrite: (path: string) => {
@@ -111,7 +134,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
 
         // API 请求代理到后台服务器
         '/oplus-portal': {
-          target: env.VITE_BACKEND_PROXY_URL || 'http://10.1.40.112:80',
+          target: backendTarget,
           changeOrigin: true,
           secure: false,
           configure: (proxy) => {
@@ -130,7 +153,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
         },
         // AngularJS 静态文件代理
         '/oplus/base': {
-          target: env.VITE_ANGULARJS_PROXY_URL || 'http://localhost:8080',
+          target: angularTarget,
           changeOrigin: true,
           secure: false,
           configure: (proxy) => {

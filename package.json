@@ -8,11 +8,11 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "vite --config build/vite.config.dev.js",
+    "dev": "vite",
     "dev:host": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-    "build:prod": "vite build --mode production --config build/vite.config.prod.js",
+    "build:prod": "vite build --mode production",
     "build:analyze": "vite build --mode production && npx vite-bundle-analyzer dist/stats.html",
     "preview": "vite preview",
     "preview:build": "npm run build && vite preview",

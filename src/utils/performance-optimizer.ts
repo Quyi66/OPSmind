@@ -3,12 +3,17 @@
  * 提供各种性能优化功能，包括预加载、预连接等
  */
 
+const ANGULAR_ENDPOINT = (import.meta.env.VITE_ANGULAR_URL || '').trim()
+const BACKEND_ENDPOINT = (import.meta.env.VITE_BACKEND_URL || '').trim()
+
 // 预连接的域名列表
-const PRECONNECT_DOMAINS = [
-  'http://localhost:8080',
-  'http://10.1.40.112:80',
-  // 可以根据环境添加更多域名
-]
+const PRECONNECT_DOMAINS = Array.from(
+  new Set(
+    [ANGULAR_ENDPOINT, BACKEND_ENDPOINT]
+      .map(extractOrigin)
+      .filter((origin): origin is string => Boolean(origin))
+  )
+)
 
 /**
  * 添加 DNS 预解析和预连接
@@ -38,6 +43,16 @@ export function setupPreconnections() {
       console.warn(`Failed to add preconnect for: ${domain}`, error)
     }
   })
+}
+
+function extractOrigin(target: string): string | null {
+  if (!target) return null
+  try {
+    const url = new URL(target)
+    return url.origin
+  } catch (error) {
+    return null
+  }
 }
 
 /**

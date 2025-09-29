@@ -99,7 +99,7 @@ src/opsmind/
 │   │   └── index.js
 │   └── main.js             # 应用入口
 ├── package.json
-├── vite.config.js
+├── vite.config.ts
 └── index.html
 ```
 

@@ -4,6 +4,8 @@
  * 不关心应用内部的路由结构，只配置应用的入口地址
  */
 
+const DEFAULT_BACKEND_ROOT = (import.meta.env.VITE_BACKEND_URL || 'http://10.1.40.112:80').trim()
+
 // 环境类型
 export type Environment = 'development' | 'production' | 'test' | 'staging'
 
@@ -50,7 +52,7 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
       hashMode: true
     },
     api: {
-      baseUrl: 'http://10.1.40.112:80'
+      baseUrl: DEFAULT_BACKEND_ROOT
     },
     static: {
       baseUrl: 'http://localhost:8080'

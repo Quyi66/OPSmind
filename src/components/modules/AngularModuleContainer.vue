@@ -171,9 +171,7 @@ const moduleIframe = ref(null)
 
 // 构建模块URL（支持token参数传递）
 function buildModuleUrl() {
-  const containerUrl = import.meta.env.DEV
-    ? 'http://localhost:3000/angular-container.html'
-    : '/angular-container.html'
+  const containerUrl = resolveAngularContainerUrl()
 
   const params = new URLSearchParams({
     module: props.moduleCode,
@@ -202,7 +200,20 @@ function buildModuleUrl() {
     console.warn('Failed to add auth info to module URL:', err)
   }
 
-  return `${containerUrl}?${params.toString()}`
+  const separator = containerUrl.includes('?') ? '&' : '?'
+  return `${containerUrl}${separator}${params.toString()}`
+}
+
+function resolveAngularContainerUrl(): string {
+  const envUrl = (import.meta.env.VITE_ANGULAR_URL || import.meta.env.VITE_ANGULAR_PROXY_URL || '').trim()
+  if (envUrl) {
+    const sanitized = envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl
+    return `${sanitized}/angular-container.html`
+  }
+
+  return import.meta.env.DEV
+    ? 'http://localhost:3000/angular-container.html'
+    : '/angular-container.html'
 }
 
 // 视图模式固定为 iframe
