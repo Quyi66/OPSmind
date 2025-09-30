@@ -35,10 +35,6 @@
 - 使用配置的token参数名
 - 移除sessionStorage存储逻辑
 
-#### `src/components/angular/modules/AngularModuleContainer.vue`
-- 更新URL构建逻辑
-- 添加token参数支持
-
 ### 2. 配置文件更新
 
 #### `src/config/module-urls.config.ts`

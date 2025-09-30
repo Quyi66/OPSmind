@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onUnmounted, nextTick } from 'vue'
 import { ElIcon } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 
@@ -107,22 +107,7 @@ watch(
   { immediate: true }
 )
 
-// 监听模块标题变化
-watch(
-  () => props.moduleTitle,
-  newTitle => {
-    console.log('📝 Module title updated:', newTitle)
-  }
-)
-
-// 生命周期
-onMounted(() => {
-  console.log('🔧 AngularModuleInlineFrame mounted for:', props.moduleCode)
-})
-
 onUnmounted(() => {
-  console.log('🔧 AngularModuleInlineFrame unmounted for:', props.moduleCode)
-
   // 清理定时器
   if (loadTimeout) {
     clearTimeout(loadTimeout)

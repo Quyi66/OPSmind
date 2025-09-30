@@ -20,9 +20,7 @@
           <button class="toolbar-btn" @click="refreshModule" :disabled="loading" title="刷新">
             刷新
           </button>
-          <button class="toolbar-btn" @click="openInNewWindow" title="新窗口打开">
-            新窗口
-          </button>
+          <button class="toolbar-btn" @click="openInNewWindow" title="新窗口打开">新窗口</button>
         </div>
       </div>
 
@@ -30,10 +28,7 @@
 
       <div class="modal-body">
         <!-- iframe 容器 -->
-        <div
-          ref="iframeContainer"
-          class="iframe-container"
-        >
+        <div ref="iframeContainer" class="iframe-container">
           <!-- 简单加载状态 -->
           <div v-if="loading" class="loading-overlay">
             <el-icon class="loading-spinner"><Loading /></el-icon>
@@ -57,52 +52,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  ElSelect,
-  ElOption,
-  ElButton,
-  ElButtonGroup,
-  ElIcon,
-  ElProgress,
-  ElResult,
-  ElTag,
-  ElMessage
-} from 'element-plus'
+import { ElIcon, ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { angularModuleManager } from '@/services/AngularModuleManager.js'
-import { authService } from '@/core/auth'
 import { singleIframeManager } from '@/utils/single-iframe-manager'
 
 const props = defineProps({
   moduleCode: {
     type: String,
     required: true
-  },
-  route: {
-    type: String,
-    default: null
-  },
-  showHeader: {
-    type: Boolean,
-    default: true
-  },
-  showStatusBar: {
-    type: Boolean,
-    default: true
-  },
-  autoRefresh: {
-    type: Boolean,
-    default: false
-  },
-  refreshInterval: {
-    type: Number,
-    default: 300000 // 5分钟
   }
 })
 
-const emit = defineEmits(['loaded', 'error', 'route-change', 'message', 'close'])
+const emit = defineEmits(['loaded', 'error', 'message', 'close'])
 
 // 路由器
 const router = useRouter()
@@ -112,32 +76,21 @@ const visible = ref(true) // 弹窗显示状态
 const loading = ref(true)
 const error = ref('')
 const status = ref('未加载')
-const statusText = ref('')
 const loadTime = ref(null)
-const loadProgress = ref(0)
 // 移除全屏状态，因为弹窗本身就是全屏的
-const currentRoute = ref('main')
 const iframeContainer = ref(null) // 改为容器引用
 const retryCount = ref(0)
-const startTime = ref(0)
 
 // 计算属性
 const moduleConfig = computed(() => {
   return angularModuleManager.getModule(props.moduleCode)
 })
 
-const moduleRoutes = computed(() => {
-  return angularModuleManager.getModuleRoutes(props.moduleCode)
-})
-
 const iframeUrl = computed(() => {
   if (!moduleConfig.value) return ''
 
-  const routeName = props.route || currentRoute.value
-  const routeUrl = moduleRoutes.value[routeName]
-
   try {
-    const url = angularModuleManager.getModuleUrl(props.moduleCode, routeUrl)
+    const url = angularModuleManager.getModuleUrl(props.moduleCode)
     console.log('🔗 Generated iframe URL:', url)
 
     // 添加认证参数到 URL
@@ -149,65 +102,13 @@ const iframeUrl = computed(() => {
 })
 
 // 添加认证参数到 URL
-const addAuthParamsToUrl = (baseUrl) => {
+const addAuthParamsToUrl = baseUrl => {
   // 暂时不在 URL 中添加认证参数，改为通过 postMessage 传递
   // 这样更安全，避免敏感信息出现在 URL 中
   return baseUrl
 }
 
 // 方法
-const getRouteLabel = routeName => {
-  const labels = {
-    main: '主页面',
-    template: '模板管理',
-    rules: '规则管理',
-    hosts: '主机管理',
-    jobs: '作业管理',
-    results: '结果查看',
-    commands: '命令管理',
-    flows: '流程管理',
-    schedules: '调度管理',
-    datasources: '数据源',
-    datasets: '数据集',
-    transfers: '传输任务',
-    pages: '页面管理',
-    widgets: '组件管理',
-    themes: '主题管理',
-    scripts: '脚本管理',
-    versions: '版本管理',
-    executions: '执行记录',
-    assets: '资产管理',
-    configs: '配置管理',
-    monitoring: '监控告警',
-    config: '系统配置',
-    users: '用户管理',
-    logs: '日志管理',
-    list: '应用列表',
-    translator: '翻译工具',
-    components: '组件测试'
-  }
-  return labels[routeName] || routeName
-}
-
-const getStatusType = status => {
-  switch (status) {
-    case '已加载':
-      return 'success'
-    case '加载中':
-      return 'warning'
-    case '加载失败':
-      return 'danger'
-    default:
-      return 'info'
-  }
-}
-
-const handleRouteChange = routeName => {
-  currentRoute.value = routeName
-  loadModule()
-  emit('route-change', { moduleCode: props.moduleCode, route: routeName })
-}
-
 const refreshModule = () => {
   loadModule()
 }
@@ -225,7 +126,7 @@ const closeModule = () => {
   visible.value = false
 
   // 清理资源
-  cleanupIframeMessaging()
+  teardownIframeMessaging()
 
   // 发送关闭事件
   emit('close', { moduleCode: props.moduleCode })
@@ -247,10 +148,6 @@ const retryLoad = () => {
   }
 }
 
-const reportError = () => {
-  ElMessage.info('错误报告功能开发中...')
-}
-
 const loadModule = async () => {
   if (!moduleConfig.value) {
     error.value = `模块 ${props.moduleCode} 不存在`
@@ -265,10 +162,6 @@ const loadModule = async () => {
   loading.value = true
   error.value = ''
   status.value = '加载中'
-  statusText.value = `正在加载 ${moduleConfig.value.name}...`
-  loadProgress.value = 50
-
-  startTime.value = Date.now()
 
   try {
     console.log(`⚡ Switching to module with SINGLE iframe: ${props.moduleCode}`)
@@ -293,15 +186,19 @@ const loadModule = async () => {
     }
 
     // 使用单 iframe 管理器 - 路由切换，真正秒开！
-    const switchTime = await singleIframeManager.switchToModule(props.moduleCode, iframeContainer.value)
+    const switchTime = await singleIframeManager.switchToModule(
+      props.moduleCode,
+      iframeContainer.value
+    )
 
     // 切换完成
     loading.value = false
     loadTime.value = switchTime
     status.value = '已加载'
-    loadProgress.value = 100
 
-    console.log(`✅ Module ${props.moduleCode} switched in ${switchTime.toFixed(2)}ms (ROUTE CHANGE)`)
+    console.log(
+      `✅ Module ${props.moduleCode} switched in ${switchTime.toFixed(2)}ms (ROUTE CHANGE)`
+    )
 
     // 验证 iframe 是否正确显示
     const iframe = iframeContainer.value.querySelector('iframe')
@@ -320,60 +217,30 @@ const loadModule = async () => {
     // 触发加载完成事件
     emit('loaded', {
       moduleCode: props.moduleCode,
-      route: currentRoute.value,
       loadTime: switchTime
     })
 
   } catch (err) {
     console.error('❌ Switch module error:', err)
 
-    // 如果 iframe 还没初始化完成，显示等待状态
-    if (err.message.includes('not initialized')) {
-      statusText.value = 'Angular 应用正在初始化中，请稍候...'
-      loadProgress.value = 75
+    const message = typeof err?.message === 'string' ? err.message : ''
 
-      // 继续等待
+    // 如果 iframe 还没初始化完成，显示等待状态
+    if (message.includes('not initialized')) {
       setTimeout(() => {
         loadModule()
       }, 1000)
-    } else {
-      onIframeError(err.message)
+      return
     }
+
+    onIframeError(message)
   }
-}
-
-const onIframeLoad = () => {
-  const endTime = Date.now()
-  const actualLoadTime = endTime - (startTime.value || endTime)
-
-  loading.value = false
-  error.value = ''
-  status.value = '已加载'
-  statusText.value = `${moduleConfig.value.name} 加载成功`
-  loadTime.value = actualLoadTime
-  loadProgress.value = 100
-  retryCount.value = 0
-
-  console.log(`✅ Angular module loaded: ${props.moduleCode}`)
-
-  // 设置iframe通信
-  setupIframeMessaging()
-
-  // 立即发送认证数据到iframe
-  sendAuthDataToIframe()
-
-  emit('loaded', {
-    moduleCode: props.moduleCode,
-    route: currentRoute.value,
-    loadTime: loadTime.value
-  })
 }
 
 const onIframeError = (customError = null) => {
   loading.value = false
   error.value = customError || `无法加载 ${moduleConfig.value?.name} 模块，请检查网络连接`
   status.value = '加载失败'
-  statusText.value = '模块加载失败'
 
   console.error(`❌ Angular module load failed: ${props.moduleCode}`, error.value)
 
@@ -387,13 +254,9 @@ const onIframeError = (customError = null) => {
 let messageHandler = null
 
 const setupIframeMessaging = () => {
-  // 清理之前的监听器
-  if (messageHandler) {
-    window.removeEventListener('message', messageHandler)
-  }
+  teardownIframeMessaging()
 
   messageHandler = event => {
-    // 验证消息来源
     if (!iframeUrl.value) return
 
     try {
@@ -401,24 +264,9 @@ const setupIframeMessaging = () => {
       if (event.origin !== iframeOrigin) {
         return
       }
+      // eslint-disable-next-line no-unused-vars
     } catch (e) {
       console.warn('Invalid iframe URL:', iframeUrl.value)
-      return
-    }
-
-    console.log(`📨 [AngularModuleFrame] Message from Angular module ${props.moduleCode}:`, event.data)
-
-    // 处理认证数据请求
-    if (event.data && event.data.type === 'request-auth-data') {
-      console.log(`🔄 [AngularModuleFrame] Auth data requested by module ${props.moduleCode}`)
-      sendAuthDataToIframe()
-      return
-    }
-
-    // 处理认证刷新请求
-    if (event.data && event.data.type === 'request-auth-refresh') {
-      console.log(`🔄 [AngularModuleFrame] Auth refresh requested by module ${props.moduleCode}`)
-      refreshAuthData()
       return
     }
 
@@ -431,150 +279,32 @@ const setupIframeMessaging = () => {
   window.addEventListener('message', messageHandler)
 }
 
-// 清理消息监听器
-const cleanupIframeMessaging = () => {
+const teardownIframeMessaging = () => {
   if (messageHandler) {
     window.removeEventListener('message', messageHandler)
     messageHandler = null
   }
 }
 
-// 发送认证数据到iframe
-const sendAuthDataToIframe = () => {
-  console.log(`🚀 [AngularModuleFrame] Starting to send auth data to iframe for module: ${props.moduleCode}`)
-
-  if (!moduleIframe.value || !moduleIframe.value.contentWindow) {
-    console.warn(`⚠️ [AngularModuleFrame] Cannot send auth data - iframe not ready:`, {
-      hasIframe: !!moduleIframe.value,
-      hasContentWindow: !!moduleIframe.value?.contentWindow,
-      moduleCode: props.moduleCode
-    })
-    return
-  }
-
-  try {
-    // 使用导入的认证服务获取认证信息
-    const token = authService.getToken()
-    const user = authService.getCurrentUser()
-
-    if (!token || !user) {
-      console.warn(`⚠️ [AngularModuleFrame] No auth data available for module ${props.moduleCode}:`, {
-        hasToken: !!token,
-        hasUser: !!user,
-        userLogin: user?.login
-      })
-      return
-    }
-
-    // 创建可序列化的用户对象，只包含基本属性
-    const serializableUser = {
-      id: user.id,
-      login: user.login,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      tenantId: user.tenantId,
-      permissions: user.permissions,
-      // 只包含基本的可序列化属性
-    }
-
-    const authData = {
-      token,
-      user: serializableUser,
-      timestamp: Date.now()
-    }
-
-    console.log(`🔐 [AngularModuleFrame] Auth data prepared for module ${props.moduleCode}:`, {
-      hasToken: !!token,
-      tokenLength: token?.length,
-      userLogin: serializableUser.login,
-      tenantId: serializableUser.tenantId,
-      permissionsCount: serializableUser.permissions?.length || 0,
-      timestamp: authData.timestamp
-    })
-
-    // 同时设置到sessionStorage供iframe使用（使用兼容的键名）
-    sessionStorage.setItem('vue-auth-bridge', JSON.stringify(authData))
-    sessionStorage.setItem('oplus_token', token)
-    sessionStorage.setItem('oplus_user', JSON.stringify(serializableUser))
-    console.log(`💾 [AngularModuleFrame] Auth data saved to sessionStorage for module ${props.moduleCode}`)
-
-    // 发送消息到iframe - 确保数据可序列化
-    const messageData = {
-      type: 'vue-auth-data',
-      authData: JSON.parse(JSON.stringify(authData)) // 深度克隆确保可序列化
-    }
-
-    moduleIframe.value.contentWindow.postMessage(messageData, '*')
-    console.log(`📤 [AngularModuleFrame] Auth data sent via postMessage to module ${props.moduleCode}`)
-
-    console.log(`✅ [AngularModuleFrame] Auth data sent to iframe successfully:`, {
-      moduleCode: props.moduleCode,
-      hasToken: !!token,
-      userLogin: serializableUser?.login,
-      tenantId: serializableUser?.tenantId
-    })
-  } catch (e) {
-    console.error(`❌ [AngularModuleFrame] Failed to send auth data to iframe for module ${props.moduleCode}:`, e)
-  }
-}
-
-// 刷新认证数据
-const refreshAuthData = () => {
-  console.log('🔄 Refreshing auth data for iframe')
-  sendAuthDataToIframe()
-}
-
 // 生命周期
 onMounted(() => {
-  // 初始化路由
-  if (props.route && moduleRoutes.value[props.route]) {
-    currentRoute.value = props.route
-  }
+  setupIframeMessaging()
 
   // 加载模块
   loadModule()
-
-  // 设置自动刷新
-  if (props.autoRefresh) {
-    setInterval(() => {
-      if (!loading.value && !error.value) {
-        refreshModule()
-      }
-    }, props.refreshInterval)
-  }
 })
 
 onUnmounted(() => {
-  // 清理消息监听器
-  cleanupIframeMessaging()
+  teardownIframeMessaging()
 })
 
 // 监听属性变化
 watch(
   () => props.moduleCode,
   () => {
-    currentRoute.value = 'main'
     loadModule()
   }
 )
-
-watch(
-  () => props.route,
-  newRoute => {
-    if (newRoute && moduleRoutes.value[newRoute]) {
-      currentRoute.value = newRoute
-      loadModule()
-    }
-  }
-)
-
-// 暴露方法
-defineExpose({
-  refresh: refreshModule,
-  changeRoute: handleRouteChange,
-  getStatus: () => ({ status: status.value, loading: loading.value, error: error.value })
-})
 
 // 注册组件
 defineOptions({
@@ -754,8 +484,12 @@ defineOptions({
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-content {
@@ -791,8 +525,12 @@ defineOptions({
 }
 
 @keyframes fa-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .module-header {

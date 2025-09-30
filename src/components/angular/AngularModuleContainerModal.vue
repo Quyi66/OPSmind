@@ -46,10 +46,10 @@ const calculateModalWidth = () => {
 
   if (screenWidth >= 2560) {
     // 4K及以上超大屏：75%宽度，最大1800px
-    modalWidth.value = `${Math.min(screenWidth * 0.75, 1800)  }px`
+    modalWidth.value = `${Math.min(screenWidth * 0.75, 1800)}px`
   } else if (screenWidth >= 1920) {
     // 超大屏：80%宽度，最大1600px
-    modalWidth.value = `${Math.min(screenWidth * 0.8, 1600)  }px`
+    modalWidth.value = `${Math.min(screenWidth * 0.8, 1600)}px`
   } else if (screenWidth >= 1440) {
     // 大屏：85%宽度
     modalWidth.value = '85vw'
@@ -67,7 +67,7 @@ const calculateModalWidth = () => {
   // 超宽屏特殊处理（比例大于2.5:1）
   if (aspectRatio > 2.5 && screenWidth >= 1440) {
     const currentWidth = parseInt(modalWidth.value)
-    modalWidth.value = `${Math.min(currentWidth * 0.9, 1400)  }px`
+    modalWidth.value = `${Math.min(currentWidth * 0.9, 1400)}px`
   }
 
   console.log(
@@ -247,7 +247,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.9);
   z-index: 5;
 }
 
