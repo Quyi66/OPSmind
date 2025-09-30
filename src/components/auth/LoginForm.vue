@@ -8,134 +8,146 @@
       </div>
 
       <!-- Login Form -->
-        <!-- 表单区域（语义化 form，便于键盘提交与无障碍） -->
-        <form class="space-y-6" @submit.prevent="handleLogin" novalidate>
-          <!-- Error Message -->
-          <div
-            v-if="authError"
-            class="p-3 bg-red-50 border border-red-200 rounded"
-            role="alert"
-            aria-live="assertive"
-          >
-            <p class="text-sm font-medium text-red-800">{{ errorMessage }}</p>
-          </div>
+      <!-- 表单区域（语义化 form，便于键盘提交与无障碍） -->
+      <form class="space-y-6" @submit.prevent="handleLogin" novalidate>
+        <!-- Error Message -->
+        <div
+          v-if="authError"
+          class="p-3 bg-red-50 border border-red-200 rounded"
+          role="alert"
+          aria-live="assertive"
+        >
+          <p class="text-sm font-medium text-red-800">{{ errorMessage }}</p>
+        </div>
 
-          <!-- 用户名输入框 -->
-          <div>
-            <label for="username" class="sr-only">用户名</label>
+        <!-- 用户名输入框 -->
+        <div>
+          <label for="username" class="sr-only">用户名</label>
+          <input
+            id="username"
+            v-model="loginForm.username"
+            type="text"
+            placeholder="用户名"
+            autocomplete="username"
+            spellcheck="false"
+            class="w-full h-10 px-4 text-sm border border-transparent rounded bg-gray-50 focus:outline-none focus:ring-0 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500"
+            :class="{
+              'border-red-300 focus:ring-red-500 focus:bg-red-50': authError && !loginForm.username
+            }"
+            :disabled="loading"
+            :aria-invalid="authError && !loginForm.username ? 'true' : 'false'"
+            :aria-describedby="authError && !loginForm.username ? 'username-error' : undefined"
+            required
+          />
+        </div>
+
+        <!-- 密码输入框 -->
+        <div>
+          <label for="password" class="sr-only">密码</label>
+          <div class="relative">
             <input
-              id="username"
-              v-model="loginForm.username"
-              type="text"
-              placeholder="用户名"
-              autocomplete="username"
+              id="password"
+              v-model="loginForm.password"
+              type="password"
+              placeholder="密码"
+              autocomplete="current-password"
               spellcheck="false"
               class="w-full h-10 px-4 text-sm border border-transparent rounded bg-gray-50 focus:outline-none focus:ring-0 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500"
               :class="{
-                'border-red-300 focus:ring-red-500 focus:bg-red-50': authError && !loginForm.username
+                'border-red-300 focus:ring-red-500 focus:bg-red-50':
+                  authError && !loginForm.password
               }"
               :disabled="loading"
-              :aria-invalid="authError && !loginForm.username ? 'true' : 'false'"
-              :aria-describedby="authError && !loginForm.username ? 'username-error' : undefined"
+              :aria-invalid="authError && !loginForm.password ? 'true' : 'false'"
+              :aria-describedby="
+                [
+                  authError && !loginForm.password ? 'password-error' : '',
+                  capsLockOn ? 'capslock-hint' : ''
+                ]
+                  .filter(Boolean)
+                  .join(' ') || undefined
+              "
+              @keyup="checkCaps"
+              @keydown="checkCaps"
               required
             />
           </div>
+          <p
+            v-if="capsLockOn"
+            id="capslock-hint"
+            class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 inline-block"
+          >
+            大写锁定已开启，可能导致密码错误
+          </p>
+        </div>
 
-          <!-- 密码输入框 -->
-          <div>
-            <label for="password" class="sr-only">密码</label>
-            <div class="relative">
-              <input
-                id="password"
-                v-model="loginForm.password"
-                type="password"
-                placeholder="密码"
-                autocomplete="current-password"
-                spellcheck="false"
-              class="w-full h-10 px-4 text-sm border border-transparent rounded bg-gray-50 focus:outline-none focus:ring-0 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500"
-                :class="{
-                  'border-red-300 focus:ring-red-500 focus:bg-red-50': authError && !loginForm.password
-                }"
-                :disabled="loading"
-                :aria-invalid="authError && !loginForm.password ? 'true' : 'false'"
-                :aria-describedby="[authError && !loginForm.password ? 'password-error' : '', capsLockOn ? 'capslock-hint' : ''].filter(Boolean).join(' ') || undefined"
-                @keyup="checkCaps"
-                @keydown="checkCaps"
-                required
-              />
-            </div>
-            <p v-if="capsLockOn" id="capslock-hint" class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 inline-block">
-              大写锁定已开启，可能导致密码错误
-            </p>
-          </div>
+        <!-- OTP Field (if enabled) -->
+        <div v-if="showOTP">
+          <label for="otp" class="sr-only">动态验证码</label>
+          <input
+            id="otp"
+            v-model="loginForm.otpCode"
+            type="text"
+            placeholder="动态验证码"
+            autocomplete="one-time-code"
+            spellcheck="false"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            class="w-full h-10 px-4 text-sm border border-transparent rounded bg-gray-50 focus:outline-none focus:ring-0 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500 text-center tracking-widest"
+            :disabled="loading"
+            maxlength="6"
+          />
+        </div>
 
-          <!-- OTP Field (if enabled) -->
-          <div v-if="showOTP">
-            <label for="otp" class="sr-only">动态验证码</label>
-            <input
-              id="otp"
-              v-model="loginForm.otpCode"
-              type="text"
-              placeholder="动态验证码"
-              autocomplete="one-time-code"
-              spellcheck="false"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              class="w-full h-10 px-4 text-sm border border-transparent rounded bg-gray-50 focus:outline-none focus:ring-0 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500 text-center tracking-widest"
-              :disabled="loading"
-              maxlength="6"
-            />
-          </div>
+        <!-- Remember Me -->
+        <div class="flex items-center">
+          <input
+            id="remember"
+            v-model="loginForm.rememberMe"
+            type="checkbox"
+            class="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 transition-colors duration-200 disabled:opacity-50"
+            :disabled="loading"
+          />
+          <label for="remember" class="ml-2 text-sm text-gray-600 cursor-pointer select-none">
+            保持登录状态
+          </label>
+        </div>
 
-          <!-- Remember Me -->
-          <div class="flex items-center">
-            <input
-              id="remember"
-              v-model="loginForm.rememberMe"
-              type="checkbox"
-              class="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 transition-colors duration-200 disabled:opacity-50"
-              :disabled="loading"
-            />
-            <label for="remember" class="ml-2 text-sm text-gray-600 cursor-pointer select-none">
-              保持登录状态
-            </label>
-          </div>
-
-          <!-- 登录按钮 -->
-          <div>
-            <button
-              type="submit"
-              class="w-full h-10 bg-blue-500 text-white px-4 rounded font-medium text-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-200 disabled:cursor-not-allowed shadow-sm"
-              :disabled="loading || !loginForm.username || !loginForm.password"
-              :aria-label="loading ? '登录中，请稍候' : '登录'"
-            >
-              <span v-if="loading" class="flex items-center justify-center">
-                <svg
-                  class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
-                  ></circle>
-                  <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                <span>登录中...</span>
-              </span>
-              <span v-else>登录</span>
-            </button>
-          </div>
-        </form>
+        <!-- 登录按钮 -->
+        <div>
+          <button
+            type="submit"
+            class="w-full h-10 bg-blue-500 text-white px-4 rounded font-medium text-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-200 disabled:cursor-not-allowed shadow-sm"
+            :disabled="loading || !loginForm.username || !loginForm.password"
+            :aria-label="loading ? '登录中，请稍候' : '登录'"
+          >
+            <span v-if="loading" class="flex items-center justify-center">
+              <svg
+                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span>登录中...</span>
+            </span>
+            <span v-else>登录</span>
+          </button>
+        </div>
+      </form>
 
       <!-- 固定底部间距通过父容器 py 控制，无需额外挤压占位 -->
     </div>
@@ -171,9 +183,10 @@ const tenants = ref([])
 const licenseInfo = ref(null)
 const capsLockOn = ref(false)
 
-const checkCaps = (e) => {
+const checkCaps = e => {
   try {
     capsLockOn.value = !!e.getModifierState && e.getModifierState('CapsLock')
+    // eslint-disable-next-line no-unused-vars
   } catch (_) {
     capsLockOn.value = false
   }
@@ -225,7 +238,9 @@ const handleLogin = async () => {
       } else {
         localStorage.removeItem(LAST_USERNAME_KEY)
       }
-    } catch {}
+    } catch {
+      /* empty */
+    }
 
     // 登录成功后通知所有iframe模块更新认证状态
     await notifyIframeModulesAuthUpdate()
@@ -340,7 +355,9 @@ onMounted(() => {
       const lastUser = localStorage.getItem(LAST_USERNAME_KEY)
       if (lastUser) loginForm.username = lastUser
     }
-  } catch {}
+  } catch {
+    /* empty */
+  }
 
   initializeLoginPage()
 })
@@ -348,13 +365,15 @@ onMounted(() => {
 // 在勾选变化时立即保存偏好
 watch(
   () => loginForm.rememberMe,
-  (val) => {
+  val => {
     try {
       localStorage.setItem(REMEMBER_KEY, String(!!val))
       if (!val) {
         localStorage.removeItem(LAST_USERNAME_KEY)
       }
-    } catch {}
+    } catch {
+      /* empty */
+    }
   }
 )
 </script>

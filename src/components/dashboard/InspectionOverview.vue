@@ -3,11 +3,7 @@
     <!-- 标题 -->
     <div class="section-header">
       <h3 class="section-title">
-        <img
-          :src="inspectionHeaderIcon"
-          alt="巡检概览"
-          class="section-icon"
-        />
+        <img :src="inspectionHeaderIcon" alt="巡检概览" class="section-icon" />
         巡检概览
       </h3>
       <div class="header-actions">

@@ -128,6 +128,7 @@ const loadUserInfo = async () => {
         if (account && (account.fullName || account.login)) {
           displayName = account.fullName || account.login
         }
+        // eslint-disable-next-line no-unused-vars
       } catch (e) {
         // 接口不可用时回退到本地认证信息
         const user = authService.getCurrentUser()
@@ -173,16 +174,12 @@ const handleTodoClick = todo => {
   ElMessage.info(`点击待办: ${todo.title}`)
 }
 
-const handleTodoProcess = (_todo) => {
+const handleTodoProcess = _todo => {
   ElMessage.info('我的待办功能开发中...')
 }
 
-const handleTodoIgnore = (_todo) => {
+const handleTodoIgnore = _todo => {
   ElMessage.info('我的待办功能开发中...')
-}
-
-const viewAllTodos = () => {
-  ElMessage.info('查看全部待办')
 }
 
 const handleRecentClick = item => {
@@ -191,7 +188,10 @@ const handleRecentClick = item => {
   try {
     menuStore.setActiveMenuItem(item.code)
     router.push(`/${item.code}`)
-  } catch (e) {}
+    // eslint-disable-next-line no-unused-vars
+  } catch (e) {
+    /* empty */
+  }
 }
 </script>
 

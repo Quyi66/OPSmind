@@ -4,14 +4,19 @@
       <h3 class="font-medium text-gray-900">作业概况</h3>
       <button class="text-gray-400 hover:text-gray-600">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+          <path
+            d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+          />
         </svg>
       </button>
     </div>
 
     <div class="grid grid-cols-3 gap-4">
       <div v-for="stat in statsData" :key="stat.id" class="text-center">
-        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2" :class="stat.bgClass">
+        <div
+          class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2"
+          :class="stat.bgClass"
+        >
           <div class="w-4 h-4 rounded" :class="stat.colorClass"></div>
         </div>
         <div class="text-2xl font-bold text-gray-900">{{ stat.value }}</div>
@@ -23,7 +28,6 @@
 
 <script setup>
 import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
 
 // 统计数据
 const statsData = ref([
@@ -49,11 +53,6 @@ const statsData = ref([
     colorClass: 'bg-green-600'
   }
 ])
-
-// 事件处理
-const handleStatClick = (stat) => {
-  ElMessage.info(`查看${stat.label}详情`)
-}
 </script>
 
 <style scoped lang="scss">
@@ -116,7 +115,7 @@ const handleStatClick = (stat) => {
   }
 
   &.blue {
-    border-left: 4px solid #2D8CF0;
+    border-left: 4px solid #2d8cf0;
 
     &:hover {
       box-shadow: 0 4px 20px rgba(45, 140, 240, 0.15);
@@ -124,7 +123,7 @@ const handleStatClick = (stat) => {
   }
 
   &.green {
-    border-left: 4px solid #19BE6B;
+    border-left: 4px solid #19be6b;
 
     &:hover {
       box-shadow: 0 4px 20px rgba(25, 190, 107, 0.15);
@@ -132,7 +131,7 @@ const handleStatClick = (stat) => {
   }
 
   &.orange {
-    border-left: 4px solid #FF9900;
+    border-left: 4px solid #ff9900;
 
     &:hover {
       box-shadow: 0 4px 20px rgba(255, 153, 0, 0.15);
@@ -140,7 +139,7 @@ const handleStatClick = (stat) => {
   }
 
   &.red {
-    border-left: 4px solid #ED4014;
+    border-left: 4px solid #ed4014;
 
     &:hover {
       box-shadow: 0 4px 20px rgba(237, 64, 20, 0.15);

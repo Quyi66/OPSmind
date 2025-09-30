@@ -2,11 +2,7 @@
   <div class="asset-overview">
     <div class="section-header">
       <h3 class="section-title">
-        <img
-          :src="assetHeaderIcon"
-          alt="资产概览"
-          class="section-icon"
-        />
+        <img :src="assetHeaderIcon" alt="资产概览" class="section-icon" />
         资产概览
       </h3>
       <div class="header-actions">
@@ -26,7 +22,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
@@ -44,15 +40,6 @@ use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent
 // 标题图标
 const assetHeaderIcon = new URL('@/assets/icons/dashboard/icon-assetview@2x.png', import.meta.url).href
 
-// Tab选项
-const platformTabs = ref([
-  { label: '企业版', value: 'enterprise' },
-  { label: '社区版', value: 'community' }
-])
-
-// 选中的平台
-const selectedPlatform = ref('enterprise')
-
 const dashboardStore = useDashboardStore()
 
 // 资产数据（来自 API 数据）
@@ -64,12 +51,6 @@ const assetData = computed(() => {
   }
 })
 
-// 获取条形图颜色类
-const getBarColorClass = index => {
-  const colors = ['blue-bar', 'green-bar', 'orange-bar']
-  return colors[index % colors.length]
-}
-
 // ECharts 配置
 const chartOption = computed(() => ({
   tooltip: {
@@ -77,7 +58,7 @@ const chartOption = computed(() => ({
     axisPointer: {
       type: 'shadow'
     },
-    formatter: function (params) {
+    formatter(params) {
       const data = params[0]
       return `${data.name}: ${data.value}`
     }
