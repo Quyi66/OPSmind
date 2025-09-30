@@ -81,10 +81,12 @@ npm run format
 src/opsmind/
 ├── src/
 │   ├── components/          # Vue 组件
-│   │   ├── DashboardHeader.vue
-│   │   ├── StatsCard.vue
-│   │   ├── ModuleCard.vue
-│   │   └── QuickActions.vue
+│   │   ├── ai/              # AI 助手相关组件
+│   │   ├── angular/         # AngularJS 集成组件（含 modules/ 子目录）
+│   │   ├── auth/            # 认证与登录组件
+│   │   ├── dashboard/       # 仪表盘业务组件
+│   │   ├── layout/          # 布局与导航组件
+│   │   └── shared/          # 通用复用组件
 │   ├── views/              # 页面视图
 │   │   ├── Dashboard.vue
 │   │   └── About.vue

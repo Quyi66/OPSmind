@@ -52,9 +52,9 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import TopNavMenu from '@/components/TopNavMenu.vue'
-import SideMenu from '@/components/SideMenu.vue'
-import AngularModuleInlineFrame from '@/components/AngularModuleInlineFrame.vue'
+import TopNavMenu from '@/components/layout/TopNavMenu.vue'
+import SideMenu from '@/components/layout/SideMenu.vue'
+import AngularModuleInlineFrame from '@/components/angular/AngularModuleInlineFrame.vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useMenuStore } from '@/stores/menu.js'
 

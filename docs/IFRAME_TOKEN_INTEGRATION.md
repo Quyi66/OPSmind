@@ -30,12 +30,12 @@
 - 移除postMessage相关代码
 - 简化认证数据传递逻辑
 
-#### `src/components/modules/AngularModuleIframe.vue`
+#### `src/components/angular/modules/AngularModuleFrame.vue`
 - 修改 `buildModuleUrlWithAuth` 方法
 - 使用配置的token参数名
 - 移除sessionStorage存储逻辑
 
-#### `src/components/modules/AngularModuleContainer.vue`
+#### `src/components/angular/modules/AngularModuleContainer.vue`
 - 更新URL构建逻辑
 - 添加token参数支持
 

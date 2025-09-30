@@ -43,7 +43,7 @@ class HybridModuleManager {
         ...config,
         type: MODULE_TYPES.ANGULAR_IFRAME,
         status: MODULE_STATUS.AVAILABLE,
-        component: () => import('@/components/modules/AngularModuleFrame.vue'),
+        component: () => import('@/components/angular/modules/AngularModuleFrame.vue'),
         metadata: {
           isLegacy: true,
           migrationPriority: this.getMigrationPriority(config.code),

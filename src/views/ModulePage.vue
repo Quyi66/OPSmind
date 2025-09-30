@@ -68,7 +68,7 @@ import { ElButton, ElResult, ElMessage } from 'element-plus'
 import { ArrowLeft, Refresh, FullScreen, Minus } from '@element-plus/icons-vue'
 import { singleIframeManager } from '@/utils/single-iframe-manager'
 import { getModuleConfig } from '@/config/angular-modules.config'
-import SkeletonLoader from '@/components/SkeletonLoader.vue'
+import SkeletonLoader from '@/components/shared/SkeletonLoader.vue'
 
 const route = useRoute()
 const router = useRouter()

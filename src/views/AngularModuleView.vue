@@ -21,7 +21,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import AngularModuleFrame from '@/components/modules/AngularModuleFrame.vue'
+import AngularModuleFrame from '@/components/angular/modules/AngularModuleFrame.vue'
 import { angularModuleManager } from '@/services/AngularModuleManager.js'
 
 const route = useRoute()

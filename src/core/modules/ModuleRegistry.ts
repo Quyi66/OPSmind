@@ -299,7 +299,7 @@ class ModuleRegistry implements IModuleRegistry {
    */
   private async loadLegacyModule(_moduleInstance: ModuleInstance): Promise<any> {
     // 返回 iframe 容器组件
-    const { default: AngularModuleFrame } = await import('@/components/modules/AngularModuleFrame.vue')
+    const { default: AngularModuleFrame } = await import('@/components/angular/modules/AngularModuleFrame.vue')
     return AngularModuleFrame
   }
 
