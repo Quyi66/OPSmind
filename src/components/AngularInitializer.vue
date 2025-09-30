@@ -1,5 +1,5 @@
 <template>
-  <div v-if="showInitializer" class="angular-initializer" :class="{ 'completed': isCompleted }">
+  <div v-if="showInitializer" class="angular-initializer" :class="{ completed: isCompleted }">
     <div class="initializer-content">
       <div class="initializer-icon">
         <div v-if="!isCompleted" class="loading-spinner"></div>
@@ -16,34 +16,21 @@
       </div>
 
       <div class="initializer-progress">
-        <div
-          class="progress-fill"
-          :style="{ width: progress + '%' }"
-        ></div>
+        <div class="progress-fill" :style="{ width: progress + '%' }"></div>
       </div>
 
-      <button
-        v-if="isCompleted"
-        @click="hideInitializer"
-        class="close-btn"
-        title="关闭"
-      >
-        ×
-      </button>
+      <button v-if="isCompleted" @click="hideInitializer" class="close-btn" title="关闭">×</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { singleIframeManager } from '@/utils/single-iframe-manager'
+import { ref, onMounted } from 'vue'
 
 const showInitializer = ref(false)
 const progress = ref(0)
 const isCompleted = ref(false)
 const statusText = ref('准备初始化...')
-
-let checkInterval = null
 
 onMounted(() => {
   // 不再需要初始化器，因为iframe现在是按需创建的
@@ -51,40 +38,6 @@ onMounted(() => {
   showInitializer.value = false
   isCompleted.value = true
 })
-
-onUnmounted(() => {
-  if (checkInterval) {
-    clearInterval(checkInterval)
-  }
-})
-
-const startInitialization = () => {
-  statusText.value = '正在创建 Angular iframe...'
-  progress.value = 10
-
-  // 定期检查初始化状态
-  checkInterval = setInterval(() => {
-    const status = singleIframeManager.getStatus()
-
-    if (status.isLoading) {
-      statusText.value = '正在加载 Angular 应用...'
-      progress.value = 50
-    } else if (status.isInitialized) {
-      statusText.value = '初始化完成！'
-      progress.value = 100
-      isCompleted.value = true
-
-      clearInterval(checkInterval)
-
-      // 3秒后自动隐藏
-      setTimeout(() => {
-        if (isCompleted.value) {
-          hideInitializer()
-        }
-      }, 3000)
-    }
-  }, 500)
-}
 
 const hideInitializer = () => {
   showInitializer.value = false
@@ -142,8 +95,12 @@ const hideInitializer = () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .initializer-info {

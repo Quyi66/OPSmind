@@ -70,7 +70,9 @@ const calculateModalWidth = () => {
     modalWidth.value = `${Math.min(currentWidth * 0.9, 1400)  }px`
   }
 
-  console.log(`📱 Screen: ${screenWidth}x${screenHeight}px (${aspectRatio.toFixed(2)}:1), Modal width: ${modalWidth.value}`)
+  console.log(
+    `📱 Screen: ${screenWidth}x${screenHeight}px (${aspectRatio.toFixed(2)}:1), Modal width: ${modalWidth.value}`
+  )
 }
 
 // 方法
@@ -229,12 +231,6 @@ onUnmounted(() => {
   border-radius: 8px !important;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
   border: none !important; /* 完全移除边框 */
-
-  &:hover {
-    color: #f56c6c !important;
-    background: rgba(245, 108, 108, 0.08) !important;
-    box-shadow: 0 2px 16px rgba(245, 108, 108, 0.15) !important;
-  }
 }
 
 .modal-content {
@@ -267,8 +263,12 @@ onUnmounted(() => {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .iframe-container {

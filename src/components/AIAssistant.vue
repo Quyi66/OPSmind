@@ -39,12 +39,23 @@ import { ElMessage } from 'element-plus'
 const searchQuery = ref('')
 // 动态获取 Dify token：优先 URL 参数 -> runtime-config.js -> 环境变量；不写死
 function getDifyToken() {
-  try { const t = new URLSearchParams(location.search).get('token'); if (t) return t } catch {}
   try {
-    const rt = (window).__OPS_RUNTIME__ || {}
+    const t = new URLSearchParams(location.search).get('token')
+    if (t) return t
+  } catch {
+    /* empty */
+  }
+  try {
+    const rt = window.__OPS_RUNTIME__ || {}
     if (rt.DIFY_TOKEN) return rt.DIFY_TOKEN
-  } catch {}
-  try { return import.meta.env.VITE_DIFY_TOKEN || '' } catch { return '' }
+  } catch {
+    /* empty */
+  }
+  try {
+    return import.meta.env.VITE_DIFY_TOKEN || ''
+  } catch {
+    return ''
+  }
 }
 
 // 最近对话
@@ -122,9 +133,13 @@ function handleFocus(e) {
     if (win) win.opener = null
     // 尝试移除输入框焦点，避免浏览器/输入法导致的二次触发
     if (e && e.target && typeof e.target.blur === 'function') e.target.blur()
+    // eslint-disable-next-line no-unused-vars
   } catch (err) {
+    /* empty */
   } finally {
-    setTimeout(() => { focusCooldown = false }, 800)
+    setTimeout(() => {
+      focusCooldown = false
+    }, 800)
   }
 }
 
@@ -205,7 +220,9 @@ function handleFocus(e) {
   width: 100%;
   min-width: 280px;
   height: 40px;
-  transition: border-color 0.15s ease, box-shadow 0.3s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.3s ease;
 
   &:focus-within {
     border-color: #93c5fd; /* 聚焦时更浅蓝色边框 */

@@ -7,13 +7,7 @@
     </div>
 
     <!-- iframe容器 -->
-    <div
-      v-show="!loading"
-      ref="iframeContainer"
-      class="iframe-container"
-    ></div>
-
-
+    <div v-show="!loading" ref="iframeContainer" class="iframe-container"></div>
   </div>
 </template>
 
@@ -93,26 +87,33 @@ const loadModule = async moduleCode => {
 let loadTimeout = null
 
 // 监听模块代码变化
-watch(() => props.moduleCode, (newCode) => {
-  // 清除之前的定时器
-  if (loadTimeout) {
-    clearTimeout(loadTimeout)
-  }
+watch(
+  () => props.moduleCode,
+  newCode => {
+    // 清除之前的定时器
+    if (loadTimeout) {
+      clearTimeout(loadTimeout)
+    }
 
-  if (newCode) {
-    // 延迟加载，避免快速切换时的冲突
-    loadTimeout = setTimeout(() => {
-      loadModule(newCode)
-    }, 50)
-  } else {
-    loading.value = false
-  }
-}, { immediate: true })
+    if (newCode) {
+      // 延迟加载，避免快速切换时的冲突
+      loadTimeout = setTimeout(() => {
+        loadModule(newCode)
+      }, 50)
+    } else {
+      loading.value = false
+    }
+  },
+  { immediate: true }
+)
 
 // 监听模块标题变化
-watch(() => props.moduleTitle, (newTitle) => {
-  console.log('📝 Module title updated:', newTitle)
-})
+watch(
+  () => props.moduleTitle,
+  newTitle => {
+    console.log('📝 Module title updated:', newTitle)
+  }
+)
 
 // 生命周期
 onMounted(() => {
@@ -163,8 +164,12 @@ onUnmounted(() => {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .iframe-container {
