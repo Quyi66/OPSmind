@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e){return{getTemplates:function(){return e.getTemplates()}}}angular.module("oplus.cac").factory("cacTemplateUserService",e),e.$inject=["cacDao"]}();

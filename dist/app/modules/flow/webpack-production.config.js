@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+const makeWebpackConfig=require("./make-webpack-config"),config=makeWebpackConfig({longTermCaching:!0,separateStylesheet:!0,devtool:!1,mode:"production"});module.exports=config;

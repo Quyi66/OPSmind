@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e,r,o){var t=e("api/roles/:id",{},{query:{method:"GET",isArray:!0},get:{method:"GET",transformResponse:function(e){return e&&(e=angular.fromJson(e)),e}},update:{method:"PUT"}});return t.updateRolePermissions=function(e){var t=o.defer();return r.put("api/roles/permissions",e).success(function(e){t.resolve(e)}).error(function(e){t.reject(e)}),t.promise},t}angular.module("oplus.adm").factory("Role",e),e.$inject=["$resource","$http","$q"]}();

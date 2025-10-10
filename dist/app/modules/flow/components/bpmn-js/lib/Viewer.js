@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+import inherits from"inherits";import CoreModule from"./core";import TranslateModule from"diagram-js/lib/i18n/translate";import SelectionModule from"diagram-js/lib/features/selection";import OverlaysModule from"diagram-js/lib/features/overlays";import BaseViewer from"./BaseViewer";export default function Viewer(e){BaseViewer.call(this,e)}inherits(Viewer,BaseViewer),Viewer.prototype._modules=[CoreModule,TranslateModule,SelectionModule,OverlaysModule],Viewer.prototype._moddleExtensions={};

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";var e={templateUrl:"app/modules/udp/widgets/dsfield-selector.html",bindings:{theModel:"=",fields:"<",options:"<"},controller:["$scope",function(e){this.options=_.merge({},{converter:{kinds:"js,str",varTypes:"field"}},this.options)}]};angular.module("oplus.udp").component("udpDsfieldSelector",e)}();

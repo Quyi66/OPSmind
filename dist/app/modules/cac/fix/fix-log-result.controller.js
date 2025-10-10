@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){function c(c,n){this.runId=c.jobId,this.cancel=function(){n.close({action:"cancel"})}}angular.module("oplus.cac").controller("CacFixLogResultCtrl",c),c.$inject=["params","$uibModalInstance"]}();

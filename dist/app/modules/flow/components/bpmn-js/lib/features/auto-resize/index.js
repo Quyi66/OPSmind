@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+import BpmnAutoResize from"./BpmnAutoResize";import BpmnAutoResizeProvider from"./BpmnAutoResizeProvider";export default{__init__:["bpmnAutoResize","bpmnAutoResizeProvider"],bpmnAutoResize:["type",BpmnAutoResize],bpmnAutoResizeProvider:["type",BpmnAutoResizeProvider]};

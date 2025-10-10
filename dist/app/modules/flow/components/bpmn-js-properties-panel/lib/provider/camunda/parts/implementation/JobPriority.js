@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+"use strict";var entryFactory=require("../../../../factory/EntryFactory"),cmdHelper=require("../../../../helper/CmdHelper");module.exports=function(r,e,t,o){var i=t.getBusinessObject,n=entryFactory.textField(o,{id:"jobPriority",label:o("Job Priority"),modelProperty:"jobPriority",get:function(r,e){return{jobPriority:i(r).get("camunda:jobPriority")}},set:function(r,e){var t=i(r);return cmdHelper.updateBusinessObject(r,t,{"camunda:jobPriority":e.jobPriority||void 0})}});return[n]};

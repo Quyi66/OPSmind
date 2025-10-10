@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function o(o){o.state("docs",{parent:"admin",url:"/docs",data:{pageTitle:"global.menu.admin.apidocs"},views:{"content@":{templateUrl:"app/modules/adm/docs/docs.html",controller:"DocsController",controllerAs:"vm"}},resolve:{}})}angular.module("oplus.adm").config(o),o.$inject=["$stateProvider"]}();

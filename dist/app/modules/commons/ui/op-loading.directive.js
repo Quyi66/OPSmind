@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.commons").directive("opLoading",["$compile",function(i){return{restrict:"A",link:function(i,n,s){var e;e="spinner"===angular.extend({},{style:"ellipsis"},i.$eval(s.opLoading)).style?'<i class="fa fa-3x fa-pulse fa-spinner"></i>':'<div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>',n.append(e)}}}])}();

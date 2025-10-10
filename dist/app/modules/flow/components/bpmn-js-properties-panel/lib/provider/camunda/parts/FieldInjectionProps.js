@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+"use strict";var ImplementationTypeHelper=require("../../../helper/ImplementationTypeHelper"),fieldInjection=require("./implementation/FieldInjection");module.exports=function(e,i,n,t){var r=ImplementationTypeHelper.getServiceTaskLikeBusinessObject(i);if(r){var l=fieldInjection(i,n,t,{businessObject:r});l&&l.length>0&&(e.entries=e.entries.concat(l))}};

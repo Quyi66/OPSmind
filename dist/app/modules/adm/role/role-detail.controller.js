@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function o(o,e,t,r,n,l,s,a){var i=this;i.role=n,i.previousState=r.name;var u=e.$on("oplusApp:roleUpdate",function(o,e){i.role=e});o.$on("$destroy",u)}angular.module("oplus.adm").controller("RoleDetailController",o),o.$inject=["$scope","$rootScope","$stateParams","previousState","entity","Role","Permission","User"]}();

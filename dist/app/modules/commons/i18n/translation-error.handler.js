@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function n(n,r){return function(o,t,e){return r.error('The "'+t+"/"+o+'" part was not loaded.'),n.when({})}}angular.module("oplus.commons").factory("translationErrorHandler",n),n.$inject=["$q","$log"]}();

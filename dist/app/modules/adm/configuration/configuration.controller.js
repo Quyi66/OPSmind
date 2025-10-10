@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function n(n,i){var o=this;o.allConfiguration=null,o.configuration=null,i.get().then(function(n){o.configuration=n}),i.getEnv().then(function(n){o.allConfiguration=n})}angular.module("oplus.adm").controller("JhiConfigurationController",n),n.$inject=["$filter","JhiConfigurationService"]}();

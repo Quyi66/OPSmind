@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function t(t){var e=t("date");this.timeToDate=function(t){return t?new Date(e(new Date,"yyyy-MM-dd")+"T"+t):void 0},this.formatTime=function(t,i){return t?e(this.timeToDate(t),i):""},this.formatDate=function(t,i){return t?("localTime"===i||"time"===i?i="HH:mm":"localDate"===i||"date"===i?i="yyyy-MM-dd":"localDateTime"===i?i="yyyy-MM-ddTHH:mm:ss":"dateTime"===i?i="yyyy-MM-dd HH:mm":"fullTime"===i&&(i="HH:mm:ss"),e(t,i)):""}}angular.module("oplus.commons").service("dateTime",t),t.$inject=["$filter"]}();

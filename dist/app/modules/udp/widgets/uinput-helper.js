@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function t(){var t={};this.register=function(e,n){angular.isFunction(n)?t[e]=new n:t[e]=n},this.getDefinition=function(e){var n=t[e];n||(n=t.input);return n}}angular.module("oplus.commons").service("uinputHelper",[function(){this.upgrade=function(t,e){[t,e].forEach(function(t){t&&(t.datatype||t.format&&(t.datatype=t.format,delete t.format),t.devicetype&&(t.sourcedef=t.devicetype))})},this.DEFAULT_CIT="linux"}]),angular.module("oplus.udp").service("ControlFactory",t),t.$inject=[]}();

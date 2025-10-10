@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e,a,o,t,n,i){var r;e.pageId=o,e.pageParams=t,e.closePageInModal=function(){n.dismissModal(),e.$destroy()},$(window).resize(function(){clearTimeout(r),r=setTimeout(function(){e.$broadcast("WIDGET_RESIZE",{from:"WINDOW_RESIZE"})},500)})}angular.module("oplus.udp").controller("PageViewCtrl",e),e.$inject=["$scope","$state","pageId","pageParams","pageService","runningState"]}();

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+export default function EditorActions(t,i){var n=t.get("editorActions",!1);n&&n.register({toggleLinting:function(){i.toggle()}})}EditorActions.$inject=["injector","linting"];

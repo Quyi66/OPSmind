@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.commons").factory("PaginationUtil",function(){return{parseAscending:function(n){return!(n.split(",").length>1)||"asc"===n.split(",").slice(-1)[0]},parsePage:function(n){return parseInt(n)},parsePredicate:function(n){var t=n.split(",");t.length>1&&t.pop();return t.join(",")}}})}();

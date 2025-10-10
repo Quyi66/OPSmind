@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.jao").component("jaoRestJobConfig",{templateUrl:"app/modules/jao/rest-job-config.html",controller:["dataEx",function(o){this.configInterceptor=this.configInterceptor||{},this.configInterceptor.parseParams=function(t){return o.extractVars(t.curl)}}],bindings:{jobConfig:"=theModel",isEditMode:"=editMode",options:"<",configInterceptor:"<"}})}();

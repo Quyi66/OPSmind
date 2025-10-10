@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.commons").filter("characters",function(){return function(r,t,n){if(isNaN(t))return r;if(t<=0)return"";if(r&&r.length>t){if(r=r.substring(0,t),n)for(;" "===r.charAt(r.length-1);)r=r.substr(0,r.length-1);else{var e=r.lastIndexOf(" ");-1!==e&&(r=r.substr(0,e))}return r+"..."}return r}})}();

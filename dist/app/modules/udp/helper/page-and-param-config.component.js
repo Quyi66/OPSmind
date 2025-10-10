@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.udp").component("udpPageAndParamConfig",{bindings:{excluded:"<",pageId:"=",paramsJson:"=",onChange:"&",options:"<"},templateUrl:"app/modules/udp/helper/page-and-param-config.html",controller:["$scope","widgetDataInterface",function(e,n){}]})}();

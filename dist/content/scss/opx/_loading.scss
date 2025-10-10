@@ -1,0 +1,83 @@
+/* 定制版本：只隐藏特定的应用启动加载动画，用于iframe嵌入第三方系统 */
+
+/* 隐藏主页面初始加载时的空白状态加载动画 */
+/* 只隐藏直接在master-body下的初始加载动画，不影响其他组件的加载动画 */
+#master-body > .op-blank-slate.bg-dark {
+  display: none;
+}
+
+/* 隐藏全局加载指示器 */
+#opx-loading {
+  display: none;
+}
+
+/* 保持op-loading指令的正常样式 */
+[op-loading] {
+  text-align: center;
+  opacity: 0.25;
+}
+
+//https://loading.io/css/
+.lds-ellipsis {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.lds-ellipsis div {
+  position: absolute;
+  top: 33px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #000;
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+
+.lds-ellipsis div:nth-child(1) {
+  left: 8px;
+  animation: lds-ellipsis1 0.6s infinite;
+}
+
+.lds-ellipsis div:nth-child(2) {
+  left: 8px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+
+.lds-ellipsis div:nth-child(3) {
+  left: 32px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+
+.lds-ellipsis div:nth-child(4) {
+  left: 56px;
+  animation: lds-ellipsis3 0.6s infinite;
+}
+
+@keyframes lds-ellipsis1 {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes lds-ellipsis3 {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
+
+@keyframes lds-ellipsis2 {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(24px, 0);
+  }
+}

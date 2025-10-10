@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function t(t,n,e,o,a){var r=this;r.tenant=a,r.previousState=o.name;var i=n.$on("oplusApp:tenantUpdate",function(t,n){r.tenant=n});t.$on("$destroy",i)}angular.module("oplus.adm").controller("TenantDetailController",t),t.$inject=["$scope","$rootScope","$filter","previousState","entity"]}();

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+const{is}=require("bpmnlint-utils");module.exports=function(){return{check:function(n,e){if(!is(n,"bpmn:Event"))return;(n.eventDefinitions||[]).length>1&&e.report(n.id,"Event has multiple event definitions")}}};

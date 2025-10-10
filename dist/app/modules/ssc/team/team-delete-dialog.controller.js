@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e,t,n,a,c){var s=this;s.team=t,s.clear=function(){e.dismiss("cancel")},s.confirmDelete=function(t){n.deleteTeamById(t).then(function(){c.toast("success",a.instant("team.deleted")),e.close(!0)}).catch(function(t){throw c.alertWarning(a.instant("adm.content.warning"),a.instant("adm.content.error")),e.close(!0),t})}}angular.module("oplus.ssc").controller("TeamDeleteController",e),e.$inject=["$uibModalInstance","entity","Team","$translate","messageService"]}();

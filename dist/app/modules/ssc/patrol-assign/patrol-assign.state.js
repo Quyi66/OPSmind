@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.app").config(["$stateProvider",function(s){s.state("app.ssc.config.patrol-assign",{url:"/patrol-assign",views:{ssc_config:{templateUrl:"app/modules/ssc/patrol-assign/patrol-assign.html",controller:"PatrolAssignController",controllerAs:"vm"}}})}])}();

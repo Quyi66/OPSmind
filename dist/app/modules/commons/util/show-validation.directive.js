@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.commons").directive("showValidation",function(){return{restrict:"A",require:"form",link:function(n,t,e,r){t.find(".form-group").each(function(){var t=angular.element(this),e=t.find("input[ng-model],textarea[ng-model],select[ng-model]");e.length>0&&e.each(function(){var e=angular.element(this).attr("name");n.$watch(function(){return r[e].$invalid&&r[e].$dirty},function(n){t.toggleClass("has-error",n)})})})}}})}();

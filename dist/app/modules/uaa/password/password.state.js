@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function o(o){o.state("password",{parent:"account",url:"/password",data:{authorities:[],pageTitle:"global.menu.account.password"},views:{"content@":{templateUrl:"app/modules/uaa/password/password.html",controller:"PasswordController",controllerAs:"vm"}},resolve:{}})}angular.module("oplus.uaa").config(o),o.$inject=["$stateProvider"]}();

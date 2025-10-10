@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.commons").service("userPref",function(){var e,t="oplus.userpref";function n(){return e=JSON.parse(localStorage.getItem(t)||"{}")}function r(){localStorage.setItem(t,JSON.stringify(e))}n(),this.load=n,this.merge=function(t){angular.extend(e,t),r()},this.saveItem=function(t,n){e[t]=n,r()},this.readItem=function(t,n){return e[t]||n}})}();

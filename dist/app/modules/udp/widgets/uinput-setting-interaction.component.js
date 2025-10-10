@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+angular.module("oplus.udp").component("uinputSettingInteraction",{templateUrl:"app/modules/udp/widgets/uinput-setting-interaction.html",bindings:{props:"="},controller:["$scope",function(t){}]});

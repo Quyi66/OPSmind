@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function t(t){t.state("logs",{parent:"admin",url:"/logs",data:{authorities:["ROLE_ADMIN"],pageTitle:"logs.title"},views:{"content@":{templateUrl:"app/modules/adm/logs/logs.html",controller:"LogsController",controllerAs:"vm"}},resolve:{}})}angular.module("oplus.adm").config(t),t.$inject=["$stateProvider"]}();

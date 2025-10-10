@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";function e(e){return{deleteRule:function(u){return e.deleteRule(u)},queryRule:function(u){return e.queryRule(u)},uploadRule:function(u){return e.uploadRule(u)},updateRule:function(u){return e.updateRule(u)},addRule:function(u){return e.addRule(u)},checkRuleName:function(u){return e.checkRuleName(u)}}}angular.module("oplus.cac").factory("cacRuleService",e),e.$inject=["cacDao"]}();

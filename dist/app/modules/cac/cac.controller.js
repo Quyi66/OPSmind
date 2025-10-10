@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){var e=angular.module("oplus.cac");function c(e,c,a,t){var l=this;l.views={chosed:"",emailMenuEnabled:"yes"};var n=t.path();(n.indexOf("job")>-1||n.indexOf("result")>-1)&&(l.views.chosed="history"),(n.indexOf("check-list")>-1||n.indexOf("check-result")>-1)&&(l.views.chosed="check_log"),"app.cac"===e.current.name&&e.go("app.cac.template.square"),"app.cac3"===e.current.name&&e.go("app.cac3.templates.list")}e.controller("cacCtrl",c),e.controller("cac3Ctrl",c),c.$inject=["$state","$element","$timeout","$location"]}();

@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){function t(t,a,e,l){this.params={template_id:l.templateId,template_name:l.templateName}}angular.module("oplus.cac").controller("CacDashboardTemplateCtrl",t),t.$inject=["$scope","$timeout","$state","$stateParams"]}();

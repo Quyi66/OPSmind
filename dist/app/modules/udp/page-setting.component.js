@@ -1,0 +1,2 @@
+/*! oplus-modules v1.0.0 */
+!function(){"use strict";angular.module("oplus.udp").component("udpPageSetting",{bindings:{page:"="},templateUrl:"app/modules/udp/page-setting.html",controller:["themeService",function(t){angular.isString(this.page.setting)&&(this.page.setting={})}]})}();
