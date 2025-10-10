@@ -1,7 +1,0 @@
-
-@for $i from 1 through 100 {
-  .udp-wpct-#{$i} {
-    width: percentage($i/100);
-  }
-}
-

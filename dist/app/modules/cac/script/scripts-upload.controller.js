@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){function c(c,e,i,t,o,r,s){this.views={scriptsList:[]}}angular.module("oplus.cac").controller("CacScriptsUploadCtrl",c),c.$inject=["$scope","$timeout","cacService","cacScriptService","$compile","$uibModal","messageService"]}();

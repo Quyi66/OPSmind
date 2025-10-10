@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function n(n,t,e,a,c){var s=this;s.param=t,s.clear=function(){n.dismiss("cancel")},s.confirmDelete=function(t){a.deleteParam(t).then(function(){e.toast("success",c.instant("adm.content.delete_success")),n.close(!0)}).catch(function(t){throw e.alertWarning(c.instant("adm.content.warning"),c.instant("adm.content.error")),n.close(!0),t})}}angular.module("oplus.ssc").controller("tenantParamDeleteController",n),n.$inject=["$uibModalInstance","entity","messageService","paramService","$translate"]}();

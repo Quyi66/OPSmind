@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){function e(e,t,o,a,c){}angular.module("oplus.cac").controller("CacAssetModelController",e),e.$inject=["$scope","$state","messageService","$http","$stateParams"]}();

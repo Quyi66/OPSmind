@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import{add as collectionAdd}from"diagram-js/lib/util/Collections";import{getBusinessObject}from"../../../../util/ModelUtil";export function createCategoryValue(e,t){var o=t.create("bpmn:CategoryValue"),r=t.create("bpmn:Category",{categoryValue:[o]});return collectionAdd(e.get("rootElements"),r),getBusinessObject(r).$parent=e,getBusinessObject(o).$parent=r,o}

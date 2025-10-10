@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var assign=require("lodash/assign"),fieldInjection=require("./implementation/FieldInjection");module.exports=function(e,i,n,s,t){s=assign({idPrefix:"listener-",insideListener:!0},s);var r=fieldInjection(i,n,t,s);r&&r.length>0&&(e.entries=e.entries.concat(r))};

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-const BpmnModdle=require("bpmn-moddle"),readFileSync=require("fs").readFileSync;function createModdle(e,d="bpmn:Definitions"){const o=new BpmnModdle;return new Promise((r,n)=>{o.fromXML(e,d,{lax:!0},function(e,d,t){return e?n(e):r({root:d,context:t,moddle:o})})})}function readModdle(e){return createModdle(readFileSync(e,"utf8"))}module.exports.createModdle=createModdle,module.exports.readModdle=readModdle;

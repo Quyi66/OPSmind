@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function i(i,t){var s="dts";this.findStoreApi=function(){return t.callApi(s,"GET","/api/dts/store/apis")},this.findSwaggerApi=function(){return t.callApi(s,"GET","/api/dts/publisher/apis")},this.saveSwaggerApi=function(i){return t.callApi(s,"PUT","/api/dts/publisher/apis",null,i)}}angular.module("oplus.dts").service("apiService",i),i.$inject=["$q","restUtils"]}();

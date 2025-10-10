@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var values=require("lodash/values");function ElementTemplates(){this._templates={},this.set=function(t){var e=this._templates={};return t.forEach(function(t){e[t.id]=t}),this},this.get=function(t){return this._templates[t]},this.getAll=function(){return values(this._templates)}}module.exports=ElementTemplates;

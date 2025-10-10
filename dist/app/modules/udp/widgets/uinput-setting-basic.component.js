@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-angular.module("oplus.udp").component("uinputSettingBasic",{bindings:{props:"=",options:"<"},templateUrl:"app/modules/udp/widgets/uinput-setting-basic.html",controller:["$scope","restUtils","messageService",function(t,e,s){}]});

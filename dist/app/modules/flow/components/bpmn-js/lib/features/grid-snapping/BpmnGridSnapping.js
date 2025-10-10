@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import{isAny}from"../modeling/util/ModelingUtil";export default function BpmnGridSnapping(n){n.on(["create.init","shape.move.init"],function(n){var i=n.context,t=n.shape;isAny(t,["bpmn:Participant","bpmn:SubProcess","bpmn:TextAnnotation"])&&(i.gridSnappingContext||(i.gridSnappingContext={}),i.gridSnappingContext.snapLocation="top-left")})}BpmnGridSnapping.$inject=["eventBus"];

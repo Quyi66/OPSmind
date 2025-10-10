@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.jao").directive("jaoJobRunButton",function(){return{restrict:"A",replace:!0,scope:{},link:function(o,t,n,u){o.$eval(n.jaoJobRunButton)},controller:["$scope","$attrs",function(){}]}})}();

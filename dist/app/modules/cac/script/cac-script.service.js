@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t){return{deleteScript:function(e){return t.deleteScript(e)},deleteScriptFile:function(e){return t.deleteScriptFile(e)},queryScript:function(e){return t.queryScript(e)},getScriptContentByName:function(e){return t.getScriptContentByName(e)},updateScript:function(e){return t.updateScript(e)},addScript:function(e){return t.addScript(e)},uploadFile:function(e){return t.uploadFile(e)},checkScript:function(e){return t.checkScript(e)}}}angular.module("oplus.cac").factory("cacScriptService",t),t.$inject=["cacDao"]}();

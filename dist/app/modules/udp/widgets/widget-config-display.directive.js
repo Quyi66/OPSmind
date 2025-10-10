@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){var e=[function(){return{restrict:"E",transclude:!0,templateUrl:"app/modules/udp/widgets/widget-config-display.html",controller:["$scope","themeService",function(e,t){e.options=angular.extend({cardMode:!0},e.options)}]}}];angular.module("oplus.udp").directive("udpWidgetConfigDisplay",e)}();

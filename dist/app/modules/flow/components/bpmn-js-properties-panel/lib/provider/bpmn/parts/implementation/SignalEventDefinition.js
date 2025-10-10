@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var eventDefinitionReference=require("./EventDefinitionReference"),elementReferenceProperty=require("./ElementReferenceProperty");module.exports=function(e,n,r,t,i){e.entries=e.entries.concat(eventDefinitionReference(n,t,r,{label:i("Signal"),elementName:"signal",elementType:"bpmn:Signal",referenceProperty:"signalRef",newElementIdPrefix:"Signal_"})),e.entries=e.entries.concat(elementReferenceProperty(n,t,r,i,{id:"signal-element-name",label:i("Signal Name"),referenceProperty:"signalRef",modelProperty:"name",shouldValidate:!0}))};

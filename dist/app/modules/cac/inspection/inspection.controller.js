@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){function e(e,t,c,n,o){}angular.module("oplus.cac").controller("CacInspectionController",e),e.$inject=["$scope","$state","messageService","$http","$stateParams"]}();

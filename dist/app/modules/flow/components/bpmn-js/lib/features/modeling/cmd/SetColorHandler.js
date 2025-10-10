@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import{assign,forEach}from"min-dash";var DEFAULT_COLORS={fill:void 0,stroke:void 0};export default function SetColorHandler(e){this._commandStack=e}SetColorHandler.$inject=["commandStack"],SetColorHandler.prototype.postExecute=function(e){var o=e.elements,t=e.colors||DEFAULT_COLORS,r=this,i={};"fill"in t&&assign(i,{fill:t.fill}),"stroke"in t&&assign(i,{stroke:t.stroke}),forEach(o,function(e){r._commandStack.execute("element.updateProperties",{element:e,properties:{di:i}})})};

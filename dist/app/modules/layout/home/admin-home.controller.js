@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,n,i,o,t,a){var s=this;s.isLoading=!0,s.homeType=window.$oplus.appConfig.ui.homeType,s.pageCode=window.$oplus.appConfig.ui.homePageCode,s.isTenantAdminUI=a.isTenantAdminUI(),o(function(){n.isAuthenticated&&(s.isTenantAdminUI&&(s.homeType="default"),s.isLoading=!1)})}angular.module("oplus.layout").controller("AdminHomeCtrl",e),e.$inject=["$scope","currentUser","$state","$timeout","messageService","tenantUtil"]}();

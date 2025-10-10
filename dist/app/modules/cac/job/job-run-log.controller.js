@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){function c(c,n,o){var a=this;this.jobId=n.jobId,this.cancel=function(){o.close({action:"cancel"})},c.queryJob(a.jobId).then(function(c){a.runId=c.taskId})}angular.module("oplus.cac").controller("CacJobRunLogCtrl",c),c.$inject=["cacJobService","params","$uibModalInstance"]}();

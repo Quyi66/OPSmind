@@ -119,7 +119,11 @@ export class SingleIframeManager {
       border: none;
       display: block;
     `
-    iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms')
+    // Permit sandboxed Angular modules to trigger downloads/popups when exporting data
+    iframe.setAttribute(
+      'sandbox',
+      'allow-same-origin allow-scripts allow-forms allow-downloads allow-popups'
+    )
     iframe.setAttribute('allow', 'fullscreen')
     iframe.setAttribute('loading', 'eager')
     iframe.setAttribute('importance', 'high')

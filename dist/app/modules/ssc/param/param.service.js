@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function a(a){this.findParamByTenantId=a.findParamByTenantId,this.findAllParam=a.findAllParam,this.findParamById=a.findParamById,this.saveParam=a.saveParam,this.deleteParam=a.deleteParam}angular.module("oplus.ssc").service("paramService",a),a.$inject=["paramDao"]}();

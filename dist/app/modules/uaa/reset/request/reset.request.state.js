@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e){e.state("requestReset",{parent:"account",url:"/reset/request",data:{authorities:[]},views:{"content@":{templateUrl:"app/modules/uaa/reset/request/reset.request.html",controller:"RequestResetController",controllerAs:"vm"}},resolve:{}})}angular.module("oplus.uaa").config(e),e.$inject=["$stateProvider"]}();

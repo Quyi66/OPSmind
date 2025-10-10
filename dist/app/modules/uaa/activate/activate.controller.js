@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function n(n,t,c){var e=this;t.activateAccount({key:n.key}).then(function(){e.error=null,e.success="OK"}).catch(function(){e.success=null,e.error="ERROR"}),e.login=c.open}angular.module("oplus.uaa").controller("ActivationController",n),n.$inject=["$stateParams","Auth","LoginService"]}();

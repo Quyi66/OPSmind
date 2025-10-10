@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,o,r){return e("api/login-logs/:id",{},{query:{method:"GET",isArray:!1},get:{method:"GET",transformResponse:function(e){return e&&(e=angular.fromJson(e)),e}},update:{method:"PUT"}})}angular.module("oplus.ssc").factory("SyslogService",e),e.$inject=["$resource","$http","$q"]}();

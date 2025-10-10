@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.udp").component("flowRecordStep",{bindings:{theFlow:"=theModel",_options:"<options"},templateUrl:"app/modules/udp/widgets/flow-record/flow-record.html",controller:["$scope","$timeout","$interval","messageService","$rootScope","$translate","$state","dataEx","pageDataUtil","jaoFlowService",function(e,o,t,l,a,r,n,i,p,s){}]})}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e){this.search=function(s,r,i,c){return e.callApi("search","GET","/api/es/search?keyword={keyword}&page={page}&size={size}&module={module}",{module:s,keyword:r,page:i,size:c},null)}}angular.module("oplus.search").service("searchService",e),e.$inject=["restUtils"]}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.commons").provider("stateProviderRef",[function(){var t={};this.injectStateProvider=function(e){t.$stateProvider=e},this.$get=[function(){return{get:function(){return t.$stateProvider}}}]}])}();

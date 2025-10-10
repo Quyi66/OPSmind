@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e){e.state("register",{parent:"account",url:"/register",data:{authorities:[],pageTitle:"register.title"},views:{"content@":{templateUrl:"app/modules/uaa/register/register.html",controller:"RegisterController",controllerAs:"vm"}}})}angular.module("oplus.uaa").config(e),e.$inject=["$stateProvider"]}();

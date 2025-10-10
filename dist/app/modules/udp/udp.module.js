@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-angular.module("oplus.udp",["ui.router.state.events","angularFileUpload","ngclipboard","ng-sortable","ui.sortable","ui.codemirror","ui.tinymce","oplus.commons","oplus.uaa","oplus.dts"]);

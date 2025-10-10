@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-const{is}=require("bpmnlint-utils");function flowKey(e){const i=e.conditionExpression,o=i?i.body:"";return(e.sourceRef?e.sourceRef.id:e.id)+"#"+(e.targetRef?e.targetRef.id:e.id)+"#"+o}module.exports=function(){const e={},i={},o={};return{check:function(n,t){if(!is(n,"bpmn:SequenceFlow"))return;const c=flowKey(n);if(c in e){t.report(n.id,"SequenceFlow is a duplicate");const e=n.sourceRef.id,c=n.targetRef.id;i[e]||(t.report(e,"Duplicate outgoing sequence flows"),i[e]=!0),o[c]||(t.report(c,"Duplicate incoming sequence flows"),o[c]=!0)}else e[c]=n}}};

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-function StaticResolver(e){this.cache=e}module.exports=StaticResolver,StaticResolver.prototype.resolveRule=function(e,t){return this.resolve("rule",e,t)},StaticResolver.prototype.resolveConfig=function(e,t){return this.resolve("config",e,t)},StaticResolver.prototype.resolve=function(e,t,o){const r=`${t}/${o}`,n=this.cache[`${e}:${r}`];if(!n)throw new Error(`unknown ${e} <${r}>`);return n};

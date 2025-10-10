@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-flowProcessResultCtrl.$inject=["$state","$stateParams"];export default function flowProcessResultCtrl(s,t){var e=this;e.processId=t.processId,e.instanceId=t.instanceId,e.detailId=t.detailId,e.back=function(){s.go("app.flow.result_list.table",{processId:e.processId})}}

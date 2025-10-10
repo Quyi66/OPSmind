@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.commons").provider("modalState",["$stateProvider",function(t){var n=this;this.$get=function(){return n},this.state=function(e,o){var r;return t.state(e,{url:o.url,onEnter:["$state","modalHelper",function(t,n){var u=Object.values(o.views)[0];u.modaless=!0,(r=n.openModal(u)).result.finally(function(){r=null,t.$current.name===e&&t.go("^")})}],onExit:function(){r&&r.close()}}),n}}])}();

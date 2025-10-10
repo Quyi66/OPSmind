@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-export default function lineIntersect(x,y,n,t){var r,e,u,a;return 0==(r=(t.y-n.y)*(y.x-x.x)-(t.x-n.x)*(y.y-x.y))?null:(e=x.y-n.y,u=x.x-n.x,a=((t.x-n.x)*e-(t.y-n.y)*u)/r,{x:Math.round(x.x+a*(y.x-x.x)),y:Math.round(x.y+a*(y.y-x.y))})}

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.uaa").provider("uaaService",function(){var i=!1;this.disableUaa=function(){i=!0},this.$get=[function(){return{isDisabled:function(){return i}}}]})}();

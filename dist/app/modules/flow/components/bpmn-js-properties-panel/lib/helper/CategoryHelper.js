@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var collectionAdd=require("diagram-js/lib/util/Collections").add,getBusinessObject=require("bpmn-js/lib/util/ModelUtil").getBusinessObject,CategoryHelper={};module.exports=CategoryHelper,CategoryHelper.createCategoryValue=function(e,t){var r=t.create("bpmn:CategoryValue"),a=t.create("bpmn:Category",{categoryValue:[r]});return collectionAdd(e.get("rootElements"),a),getBusinessObject(a).$parent=e,getBusinessObject(r).$parent=a,r};

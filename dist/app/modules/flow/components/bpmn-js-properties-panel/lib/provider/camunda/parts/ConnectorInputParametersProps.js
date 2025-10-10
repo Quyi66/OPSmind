@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var inputParameters=require("./implementation/InputParameters");module.exports=function(e,r,t,n){var i=inputParameters(r,t,{idPrefix:"connector-",insideConnector:!0},n);e.entries=e.entries.concat(i.entries)};

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function o(){var o=!1;this.useLocalDb=function(t){o=t},this.$get=["_datasourceLocalDao","_datasourceRemoteDao",function(t,a){return o?t:a}]}angular.module("oplus.dts").provider("datasourceDao",o),o.$inject=[]}();

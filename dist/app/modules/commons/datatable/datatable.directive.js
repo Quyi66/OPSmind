@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.commons").directive("opDatatable",["$compile","dataTable",function(o,t){return{restrict:"C",scope:{},bindToController:{columns:"<",datas:"<",options:"<"},controller:function(){},controllerAs:"opDatatableVm",link:function(o,n,a,i){i.options&&options.ajax&&options.ajax.url?t.initTable(n,i.columns,void 0,i.options):o.$watch("opDatatableVm.datas",function(o,a){o&&t.initTable(n,i.columns,i.datas,i.options)})}}}])}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.udp").component("udpWidgetConfigFields",{templateUrl:"app/modules/udp/widgets/widget-config-fields.html",bindings:{datasetFields:"=",options:"<",props:"="},controller:["$scope","$attrs",function(t,e){if(!e.datasetFields||!e.props)throw new Error('Attribute "dataset-fields" and "props" are required for directive <udp-widget-config-dataset>')}]})}();

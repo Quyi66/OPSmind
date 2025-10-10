@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t,n,e,c,s){var a=this;a.tag=n,a.clear=function(){t.dismiss("cancel")},a.confirmDelete=function(n){c.deleteTagById(n).then(function(){e.toast("success",s.instant("adm.content.delete_success")),t.close(!0)}).catch(function(n){throw e.alertWarning(s.instant("adm.content.warning"),s.instant("adm.content.error")),t.close(!0),n})}}angular.module("oplus.ssc").controller("udpTagDeleteController",t),t.$inject=["$uibModalInstance","entity","messageService","udpTagsService","$translate"]}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,n,t,o){var c=this;c.role=n,c.clear=function(){e.dismiss("cancel")},c.confirmDelete=function(n){t.delete({id:n},function(){o.toast("success","删除成功"),e.close(!0)},function(){o.alertWarning("警告","该角色正在被用户使用,无法删除!")})}}angular.module("oplus.adm").controller("RoleDeleteController",e),e.$inject=["$uibModalInstance","entity","Role","messageService"]}();

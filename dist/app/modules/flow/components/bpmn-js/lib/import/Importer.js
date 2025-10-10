@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import BpmnTreeWalker from"./BpmnTreeWalker";import{isFunction}from"min-dash";export function importBpmnDiagram(r,e,n,t){var i,o,m;isFunction(n)&&(t=n,n=null);var a,p=[];try{i=r.get("bpmnImporter"),o=r.get("eventBus"),m=r.get("translate"),o.fire("import.render.start",{definitions:e}),function(r,e){new BpmnTreeWalker({root:function(r){return i.add(r)},element:function(r,e){return i.add(r,e)},error:function(r,e){p.push({message:r,context:e})}},m).handleDefinitions(r,e)}(e,n),o.fire("import.render.complete",{error:a,warnings:p})}catch(r){a=r}t(a,p)}

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t){return{deleteHost:function(e){return t.deleteHost(e)},addHost:function(e){return t.addHost(e)},uploadHostExcel:function(e){return t.uploadHostExcel(e)},getAllCategory:function(){return t.getAllCategory()},getHostListByCategory:function(e){return t.getHostListByCategory(e)}}}angular.module("oplus.cac").factory("cacHostService",t),t.$inject=["cacDao"]}();

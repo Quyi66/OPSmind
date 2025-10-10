@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.udp").run(["echartsWidgetBuilder","messageService","widgetFactory","widgetDataUtil","themeService","mapConfig",function(e,t,i,a,n,o){i.defineWidget({type:"map",name:"地图",group:"data",resizable:"hw",configController:function(e){e.axisOptions={xAxis:{name:"地点",customizable:""},yAxis:{name:"数值",disableColor:!0,multiple:!0,customizable:"chartType,pointStyle"}},e.mapTypes=o.getMapTypes()},controlRenderer:e.getControlRenderer("map")})}])}();
