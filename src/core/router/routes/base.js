@@ -54,7 +54,7 @@ export const baseRoutes = [
   },
   // 管理后台
   {
-    path: '/admin',
+    path: '/admin/:group?/:page?',
     name: 'admin',
     component: () => import('@/layouts/AdminLayout.vue'),
     meta: {

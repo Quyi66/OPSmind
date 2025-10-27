@@ -4,10 +4,6 @@
     <header class="top-nav-header">
       <div class="nav-container">
         <div class="nav-left">
-          <!-- Logo Section -->
-          <div class="logo-section">
-            <img :src="logoImage" alt="OPSmind" class="brand-logo" />
-          </div>
 
           <!-- Navigation Menu -->
           <nav class="nav-menu">
@@ -211,6 +207,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
+import { getDefaultAdminTarget } from '@/config/admin-menu.config'
 import { authService } from '@/core/auth'
 import { accountService } from '@/core/account'
 import { useMenuStore } from '@/stores/menu.js'
@@ -264,6 +261,7 @@ const showMobileMenu = ref(false)
 
 // 语言切换状态（暂不真正切换，仅提示开发中）
 const currentLanguage = ref('zh-cn')
+
 
 // 加载账号信息（优先缓存，再请求；用于显示 fullName）
 onMounted(async () => {
@@ -343,7 +341,9 @@ const handleUserCommand = command => {
         const token = authService.getToken()
         const tokenParam = appUrlManager.getTokenParam()
         const q = token ? `?${tokenParam}=${encodeURIComponent(token)}&vue_auth=true` : ''
-        const url = `${base}${q}#/admin`
+        const def = getDefaultAdminTarget()
+        const path = `#/admin/${def.groupCode}/${def.pageCode}`
+        const url = `${base}${q}${path}`
         window.open(url, '_blank', 'noopener')
       } catch (e) {
         console.warn('Failed to open admin page:', e)
@@ -871,6 +871,8 @@ onUnmounted(() => {
     gap: 0.5rem;
   }
 }
+
+/* (admin 专用) 右侧 Logo 与搜索已从全局头部移除 */
 
 // AI OPS按钮
 // AI OPS简单样式 - 模仿logo的实现
