@@ -106,11 +106,13 @@
 
       <!-- 主体内容 -->
       <main class="admin-content">
-        <component :is="currentComponent" />
+        <div class="admin-content-inner">
+          <component :is="currentComponent" />
+        </div>
       </main>
     </div>
   </div>
-  
+
 </template>
 
 <script setup>
@@ -177,6 +179,14 @@ const activeGroup = ref('')
 const activePage = ref('')
 const defaultOpeneds = computed(() => (activeGroup.value ? [activeGroup.value] : []))
 
+// 当前二级菜单名称（用于更新浏览器 Tab 标题）
+const currentSubTitle = computed(() => {
+  const g = menu.find(m => m.code === activeGroup.value)
+  if (!g) return ''
+  const c = (g.children || []).find(it => it.code === activePage.value)
+  return c?.name || ''
+})
+
 function syncFromRoute() {
   const g = String(route.params.group || '')
   const p = String(route.params.page || '')
@@ -200,11 +210,20 @@ function normalizeOrRedirect() {
 
 onMounted(() => {
   normalizeOrRedirect()
+  updateDocumentTitle()
 })
 
 watch(() => route.fullPath, () => {
   syncFromRoute()
+  updateDocumentTitle()
 })
+
+function updateDocumentTitle() {
+  try {
+    const sub = currentSubTitle.value
+    document.title = sub ? `OPSmind - ${sub}` : 'OPSmind'
+  } catch {}
+}
 
 // 切换菜单：更新 URL 为 /admin/:group/:page
 const onMenuSelect = (index) => {
@@ -239,15 +258,24 @@ const AdminPlaceholder = {
 
 <style scoped lang="scss">
 .admin-layout {
+  /* Admin light theme variables */
+  --admin-bg: #f5f7fb;
+  --admin-surface: #ffffff;
+  --admin-border: #eaeef3;
+  --admin-muted: #6b7280;
+  --admin-text: #1f2937;
+  --admin-primary: #2563eb;
+  --admin-primary-weak: #eff6ff;
+
   display: flex;
   height: 100vh;
-  background: #f6f8fa;
+  background: var(--admin-bg);
 }
 
 .admin-sider {
   width: 220px;
-  background: #fff;
-  border-right: 1px solid #eef0f3;
+  background: var(--admin-surface);
+  border-right: 1px solid var(--admin-border);
 }
 
 .sider-header {
@@ -267,6 +295,21 @@ const AdminPlaceholder = {
 .admin-menu {
   height: 100%;
   border-right: 0;
+}
+.admin-sider :deep(.el-menu) {
+  border-right: none;
+  background-color: transparent;
+}
+.admin-sider :deep(.el-sub-menu__title),
+.admin-sider :deep(.el-menu-item) {
+  height: 44px;
+  line-height: 44px;
+  color: var(--admin-text);
+}
+.admin-sider :deep(.el-menu-item.is-active) {
+  background: var(--admin-primary-weak);
+  color: var(--admin-primary);
+  border-left: 3px solid var(--admin-primary);
 }
 
 .menu-icon {
@@ -289,8 +332,8 @@ const AdminPlaceholder = {
   gap: 8px;
   /* 与主页顶部 .nav-container 对齐的内边距 */
   padding: 0.25rem 1rem;
-  background: #fff;
-  border-bottom: 1px solid #eef0f3;
+  background: var(--admin-surface);
+  border-bottom: 1px solid var(--admin-border);
 }
 .admin-header-right { display: flex; align-items: center; gap: 12px; }
 .search-wrapper { width: 220px; }
@@ -308,5 +351,28 @@ const AdminPlaceholder = {
 .user-avatar :deep(img),
 .user-avatar :deep(.el-avatar__img) { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .user-name { display: inline; color: #374151; white-space: nowrap; }
-.admin-content { flex: 1; overflow: auto; background: #fff; }
+.admin-content { flex: 1; overflow: auto; background: var(--admin-bg); }
+.admin-content-inner {
+  max-width: 1440px;
+  margin: 12px auto;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  padding: 12px 16px 16px;
+}
+
+/* Table and common components polish */
+.admin-content-inner :deep(.el-table__header th) {
+  background: #f8fafc;
+  color: var(--admin-text);
+}
+.admin-content-inner :deep(.el-table__cell),
+.admin-content-inner :deep(.el-table__header .cell) {
+  font-size: 14px; /* 表格字体整体放大一号 */
+}
+.admin-content-inner :deep(.el-table .el-table__row:hover>td) {
+  background: #fafbff;
+}
+/* 使用 Element Plus 默认的浅色 primary plain 背景，更现代更轻巧 */
 </style>
