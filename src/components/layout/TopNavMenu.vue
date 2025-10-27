@@ -4,6 +4,10 @@
     <header class="top-nav-header">
       <div class="nav-container">
         <div class="nav-left">
+          <!-- Logo Section -->
+          <div class="logo-section">
+            <img :src="logoImage" alt="OPSmind" class="brand-logo" />
+          </div>
 
           <!-- Navigation Menu -->
           <nav class="nav-menu">
