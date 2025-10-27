@@ -67,6 +67,16 @@ const routes: CustomRouteRecord[] = [
       title: '关于'
     }
   },
+  // 管理后台
+  {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('@/layouts/AdminLayout.vue'),
+    meta: {
+      title: '管理后台',
+      requiresAuth: true
+    }
+  },
   // 直达二级功能的短路径（例如 /cmd、/jao）。必须放在最后，避免与显式路由冲突
   {
     path: '/:moduleCode',

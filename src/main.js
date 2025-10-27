@@ -12,6 +12,9 @@ import { setupErrorHandler } from '@/core/error'
 import { setupPerformanceMonitor } from '@/core/performance'
 import { initPerformanceOptimizations } from '@/utils/performance-optimizer'
 import { applyIframeResourceFix } from '@/utils/iframe-resource-fix'
+import { appUrlManager } from '@/config/module-urls.config'
+import { authService } from '@/core/auth'
+import angularJSBridge from '@/services/angularjs-bridge'
 
 // 导入全局样式
 import '@/styles/main.scss'
@@ -48,6 +51,47 @@ initPerformanceOptimizations()
 
 // 应用iframe资源修复
 applyIframeResourceFix()
+
+// 从 URL 中引导认证（用于新开 Tab 通过 ?token=... 免登录）
+async function bootstrapAuthFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search || '')
+    const tokenParam = appUrlManager.getTokenParam()
+    const hasFlag = params.get('vue_auth') === 'true'
+    const token = params.get(tokenParam)
+    if (!hasFlag || !token) return
+
+    // 已有会话则跳过
+    if (authService.isAuthenticated()) return
+
+    // 获取用户信息（使用 AngularJSBridge 的轻量 mock）
+    let user = authService.getCurrentUser()
+    if (!user) {
+      try {
+        user = await angularJSBridge.getUserInfo()
+      } catch (e) {
+        // 兜底用户（最少字段即可通过守卫）
+        user = { id: 'link-user', login: 'linked', name: 'Linked User', role: 'user', permissions: [] }
+      }
+    }
+
+    // 应用 token + 用户到会话（写入 sessionStorage）
+    authService.setAuthState(token, user)
+
+    // 安全起见，移除地址栏中的 token 参数（保留 hash）
+    try {
+      const { pathname, hash } = window.location
+      const base = import.meta.env.BASE_URL || '/'
+      const cleanUrl = `${pathname.startsWith(base) ? pathname : base}${hash || ''}`
+      window.history.replaceState(null, '', cleanUrl)
+    } catch {}
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn('bootstrapAuthFromUrl failed:', e)
+  }
+}
+
+// 等待 URL 认证引导完成，避免首跳触发登录页
+await bootstrapAuthFromUrl()
 
 // 注册 Element Plus 图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

@@ -52,6 +52,25 @@ export const baseRoutes = [
       title: '关于 - OPSmind'
     }
   },
+  // 管理后台
+  {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('@/layouts/AdminLayout.vue'),
+    meta: {
+      title: '管理后台',
+      requiresAuth: true
+    }
+  },
+  // 错误页 - 404
+  {
+    path: '/error/404',
+    name: 'error-404',
+    component: () => import('@/views/Error404.vue'),
+    meta: {
+      title: '未找到页面'
+    }
+  },
   {
     path: '/migration',
     name: 'migration-dashboard',

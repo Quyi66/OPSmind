@@ -80,6 +80,12 @@
                   </el-icon>
                   个人资料
                 </el-dropdown-item>
+                <el-dropdown-item command="admin">
+                  <el-icon>
+                    <Setting />
+                  </el-icon>
+                  管理后台
+                </el-dropdown-item>
                 <el-dropdown-item divided command="logout">
                   <el-icon>
                     <SwitchButton />
@@ -330,6 +336,20 @@ const handleUserCommand = command => {
         menuStore.setActiveMenuItem('settings')
       } catch (e) {}
       break
+    case 'admin': {
+      // 新开页签进入管理后台 /ops/#/admin，并自动携带 token（便于新 Tab 自动登录）
+      try {
+        const base = import.meta.env.BASE_URL || '/'
+        const token = authService.getToken()
+        const tokenParam = appUrlManager.getTokenParam()
+        const q = token ? `?${tokenParam}=${encodeURIComponent(token)}&vue_auth=true` : ''
+        const url = `${base}${q}#/admin`
+        window.open(url, '_blank', 'noopener')
+      } catch (e) {
+        console.warn('Failed to open admin page:', e)
+      }
+      break
+    }
     case 'logout':
       handleLogout()
       break
