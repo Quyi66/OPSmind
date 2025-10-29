@@ -44,10 +44,14 @@
     <!-- 工具栏：筛选 + 搜索 -->
     <div class="ac-toolbar">
       <div class="left">
-        <el-select v-model="filterOS" size="small" style="width: 140px">
-          <el-option label="全部" value="all" />
-          <el-option label="linux" value="linux" />
-          <el-option label="windows" value="windows" />
+        <el-select v-model="filterOS" size="small" style="width: 180px" @change="applySearch">
+          <el-option :label="'全部'" value="all" />
+          <el-option
+            v-for="opt in osOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
         </el-select>
       </div>
       <div class="right">
@@ -95,7 +99,7 @@
 
     <!-- 分页区（简化为每页条数 + 统计） -->
     <div class="ac-pager">
-      <el-select v-model="pageSize" size="small" style="width: 80px">
+      <el-select v-model="pageSize" size="small" style="width: 80px" @change="refreshData">
         <el-option v-for="s in pageSizeOptions" :key="s" :label="s" :value="s" />
       </el-select>
       <span class="pager-info">{{ pageFrom }} - {{ pageTo }} / {{ filteredRows.length }}</span>
@@ -104,16 +108,18 @@
   
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, EditPen, Search, InfoFilled, Connection } from '@element-plus/icons-vue'
+import { datasourceService } from '@/services/dts/datasource.service'
 
 // Tabs
 const activeTab = ref('info')
 
 // Filters
 const filterOS = ref('all')
+const osOptions = ref<{ label: string; value: string }[]>([])
 const keyword = ref('')
 
 // Pagination
@@ -121,14 +127,9 @@ const pageSizeOptions = [10, 20, 50, 100]
 const pageSize = ref(100)
 const currentPage = ref(1)
 
-// Mock rows (示例数据)
-const rows = ref([
-  { assetCode: 'linux', ip: '172.12.88.195', name: '', instanceGroup: '', aapGroup: '', loginUser: 'root', execUser: 'ansible', updatedAt: '2025-10-15 17:28:05' },
-  { assetCode: 'linux', ip: '192.168.1.156', name: '', instanceGroup: '', aapGroup: '', loginUser: 'root', execUser: 'ansible', updatedAt: '2025-10-15 17:28:05' },
-  { assetCode: 'linux', ip: '10.234.156.99', name: '', instanceGroup: '', aapGroup: '', loginUser: 'root', execUser: 'ansible', updatedAt: '2025-10-15 17:28:05' },
-  { assetCode: 'linux', ip: '192.168.1.200', name: 'default', instanceGroup: '', aapGroup: '', loginUser: '', execUser: '', updatedAt: '2025-10-15 17:58:56' },
-  { assetCode: 'linux', ip: '192.168.1.15', name: 'default', instanceGroup: '', aapGroup: '', loginUser: 'root', execUser: 'root', updatedAt: '2025-10-21 10:29:46' }
-])
+// Data rows
+const rows = ref<any[]>([])
+const loading = ref(false)
 
 const filteredRows = computed(() => {
   let data = rows.value
@@ -164,7 +165,57 @@ function editRow(row) {
 
 function applySearch() {
   currentPage.value = 1
+  fetchAutomationConfigs()
 }
+
+async function fetchResourceTypes() {
+  try {
+    const res = await datasourceService.doQuery('ACM_GET_RESOURCE_TYPE', { params: null })
+    const list = Array.isArray(res?.records) ? res.records : []
+    osOptions.value = list.map((i: any) => ({ label: i.title || i.code, value: i.code }))
+  } catch (e) {
+    // 静默失败，保留默认选项
+  }
+}
+
+async function fetchAutomationConfigs() {
+  loading.value = true
+  try {
+    const res = await datasourceService.doQuery('ACM_AUTOMATION_GET', {
+      params: { cit: 'oplus_all', param: keyword.value || 'x' },
+      size: pageSize.value,
+      page: currentPage.value,
+      filter: ''
+    })
+    const list = Array.isArray(res?.records) ? res.records : []
+    rows.value = list.map((r: any) => ({
+      id: r.id,
+      cid: r.cid,
+      assetCode: r.ci_type || '',
+      ip: r.hostKey || '',
+      name: r.ansibleConfigName || '',
+      instanceGroup: r.instanceGroup || '',
+      aapGroup: r.aapInstanceGroup || '',
+      loginUser: r.loginUser || '',
+      execUser: r.runUser || '',
+      updatedAt: r.updated_at || r.updatedAt || ''
+    }))
+  } catch (e) {
+    ElMessage.error('获取自动化配置失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function refreshData() {
+  currentPage.value = 1
+  fetchAutomationConfigs()
+}
+
+onMounted(async () => {
+  await fetchResourceTypes()
+  await fetchAutomationConfigs()
+})
 </script>
 
 <style scoped>
