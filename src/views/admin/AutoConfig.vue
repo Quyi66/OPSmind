@@ -4,13 +4,9 @@
     <div class="ac-header">
       <h2 class="ac-title">自动化配置</h2>
       <div class="ac-actions">
-        <el-button type="primary" plain size="small">
-          <el-icon style="margin-right:6px"><Plus /></el-icon>
-          新增Ansible连接配置
-        </el-button>
-        <el-button size="small" plain>设备纳管</el-button>
-        <el-button size="small" type="success" plain @click="openBatchDialog">
-          批量修改纳管设备
+        <el-button type="primary" plain size="small" @click="openBatchDialog">
+          <el-icon style="margin-right:6px"><EditPen /></el-icon>
+          批量设置纳管机器账户
         </el-button>
       </div>
     </div>
@@ -25,7 +21,7 @@
           </span>
         </template>
       </el-tab-pane>
-      <el-tab-pane name="ansible">
+      <el-tab-pane name="ansible" disabled>
         <template #label>
           <span class="tab-label">
             <el-icon class="tab-icon"><Connection /></el-icon>
@@ -91,11 +87,9 @@
       <el-table-column prop="updatedAt" label="更新时间" width="200" />
       <el-table-column label="操作" width="100" fixed="right">
         <template #default="{ row }">
-          <el-tooltip content="编辑" placement="top">
-            <el-button link type="primary" size="small" @click="editRow(row)">
-              <el-icon><EditPen /></el-icon>
-            </el-button>
-          </el-tooltip>
+          <el-button link type="primary" size="small" :disabled="true">
+            <el-icon><EditPen /></el-icon>
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -171,7 +165,7 @@
       </template>
     </el-dialog>
   </div>
-  
+
 </template>
 
 <script setup lang="ts">
