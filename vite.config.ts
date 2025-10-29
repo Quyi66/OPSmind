@@ -214,8 +214,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
       assetsDir: env.VITE_BUILD_ASSETSDIR || 'assets',
       sourcemap: isDevelopment || env.VITE_BUILD_SOURCEMAP === 'true',
 
-      // 构建目标
-      target: 'es2020',
+      // 构建目标：启用顶层 await 支持
+      target: 'es2022',
 
       // 资源内联限制
       assetsInlineLimit: 4096,

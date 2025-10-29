@@ -2,13 +2,13 @@
 # Build Docker image that bundles opsmind (Vue) and oplus (Angular) into one Nginx image
 set -euo pipefail
 
-# Image repo/name (can be overridden via -t). Version is controlled ONLY by VERSION below.
-TAG="opsmind-web:latest"
+# Image repo/name (can be overridden via -t). Do NOT include tag here.
+TAG="opsmind-web"
 TAG_SET="false"
 
-# Release version: set here; do not pass via args. Example: 1.2.3
-# When empty, falls back to 'latest'.
-VERSION="1.1.9"
+# Release version: set here in script (do not use env)
+# Example: 1.2.3
+VERSION="1.2.0"
 
 PLATFORM=""
 NO_CACHE=""
@@ -22,7 +22,7 @@ usage() {
 Usage: scripts/docker-build.sh [options]
 
 Options:
-  -t, --tag <name>          Image name/repo (default: opsmind-web). Version comes from VERSION in script.
+  -t, --tag <name>          Image name/repo (default: opsmind-web). Version comes from VERSION in this script.
   --platform <platform>     docker buildx platform (e.g. linux/amd64)
   --no-cache                Build without cache
   --skip-opsmind-build      Skip building opsmind dist (expects ./dist present)
@@ -37,7 +37,7 @@ Notes:
       1) opsmind build output in ./dist
       2) oplus build output in ./oplus-web/dist
   - If ./dist is missing and --skip-opsmind-build is not set, it will run "npm run build".
-  - To set release version, edit VERSION variable near the top of this script.
+  - Release version is set by editing VERSION at the top of this script.
 USAGE
 }
 
@@ -68,16 +68,11 @@ done
 
 DEFAULT_REPO_NAME="opsmind-web"
 
-# Compute image names from VERSION (do not infer from args)
+# Compute image name without tag and the versioned tag
 IMAGE_NAME_NO_TAG="${TAG%%:*}"
 if [[ -z "$IMAGE_NAME_NO_TAG" ]]; then IMAGE_NAME_NO_TAG="$DEFAULT_REPO_NAME"; fi
-if [[ -n "$VERSION" ]]; then
-  TAG_VERSIONED="${IMAGE_NAME_NO_TAG}:${VERSION}"
-  TAG_LATEST="${IMAGE_NAME_NO_TAG}:latest"
-else
-  TAG_VERSIONED="${IMAGE_NAME_NO_TAG}:latest"
-  TAG_LATEST=""
-fi
+TAG_VERSIONED="${IMAGE_NAME_NO_TAG}:${VERSION}"
+TAG_LATEST=""  # Never use :latest
 
 # Auto-adjust default amd64 tar path when version is set and user didn't override export path
 DEFAULT_TAR_PATH="build/opsmind-web-amd64.tar"
@@ -85,11 +80,7 @@ if [[ -n "$VERSION" && "$EXPORT_AMD64_TAR" == "$DEFAULT_TAR_PATH" ]]; then
   EXPORT_AMD64_TAR="build/${DEFAULT_REPO_NAME}-${VERSION}-amd64.tar"
 fi
 
-if [[ -n "$TAG_LATEST" ]]; then
-  echo "[build] Image tags: $TAG_VERSIONED (+ latest)"
-else
-  echo "[build] Image tag:  $TAG_VERSIONED"
-fi
+echo "[build] Image tag:  $TAG_VERSIONED"
 echo "[build] Platform:  ${PLATFORM:-(default)}"
 if [[ -n "$VERSION" ]]; then echo "[build] Version:   $VERSION"; fi
 echo "[build] AMD64 tar: ${EXPORT_AMD64_TAR:-(disabled)}"
@@ -143,10 +134,7 @@ if [[ "$MULTI_ARCH" == "true" ]]; then
   echo "[build] Building arm64 (load to local engine)"
   docker buildx build --platform linux/arm64 -t "$TAG_VERSIONED" $NO_CACHE --provenance=false $LABEL_FLAGS --load .
 
-  # Tag also as :latest locally when a version is provided
-  if [[ -n "$TAG_LATEST" ]]; then
-    docker tag "$TAG_VERSIONED" "$TAG_LATEST" || true
-  fi
+  # Do not tag :latest
 
   # 2) Build and export amd64 tar for distribution
   if [[ -n "${EXPORT_AMD64_TAR}" ]]; then
@@ -174,9 +162,6 @@ else
   else
     echo "[build] Default docker build (host arch)"
     docker build -t "$TAG_VERSIONED" $NO_CACHE $LABEL_FLAGS .
-  fi
-  if [[ -n "$TAG_LATEST" ]]; then
-    docker tag "$TAG_VERSIONED" "$TAG_LATEST" || true
   fi
   echo "[build] Done. Image: $TAG_VERSIONED"
 fi
