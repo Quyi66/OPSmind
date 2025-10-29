@@ -47,6 +47,15 @@ class ApiService {
         const authHeaders = authService.getAuthHeaders()
         config.headers = { ...config.headers, ...authHeaders }
 
+        // 如果是 FormData 上传，移除默认的 Content-Type，让浏览器自动设置带 boundary 的 multipart/form-data
+        try {
+          if (config.data instanceof FormData) {
+            if (config.headers && 'Content-Type' in config.headers) {
+              delete config.headers['Content-Type']
+            }
+          }
+        } catch {}
+
         // 添加缓存破坏参数（后端约定使用 cacheBuster）
         if (config.method === 'get' && config.cache !== false) {
           config.params = {
@@ -176,9 +185,6 @@ class ApiService {
     formData.append('file', file)
 
     return this.client.post(url, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      },
       onUploadProgress: (progressEvent) => {
         if (onProgress) {
           const percentCompleted = Math.round(

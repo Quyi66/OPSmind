@@ -9,6 +9,9 @@
           新增Ansible连接配置
         </el-button>
         <el-button size="small" plain>设备纳管</el-button>
+        <el-button size="small" type="success" plain @click="openBatchDialog">
+          批量修改纳管设备
+        </el-button>
       </div>
     </div>
 
@@ -104,6 +107,69 @@
       </el-select>
       <span class="pager-info">{{ pageFrom }} - {{ pageTo }} / {{ filteredRows.length }}</span>
     </div>
+
+    <!-- 批量修改对话框 -->
+    <el-dialog v-model="batchVisible" title="批量修改纳管设备" width="520px">
+      <div class="batch-tip">
+        请选择 Excel 模版文件（.xlsx / .xls），上传后将按模版批量更新纳管设备的登录/执行密码。
+      </div>
+      <el-upload
+        drag
+        action="#"
+        :auto-upload="false"
+        :limit="1"
+        :on-change="onFilePicked"
+        :on-remove="onFileRemoved"
+        :file-list="fileList"
+        accept=".xlsx,.xls"
+        class="batch-upload"
+      >
+        <el-icon class="el-icon--upload"><Connection /></el-icon>
+        <div class="el-upload__text">将文件拖到此处，或 <em>点击上传</em></div>
+        <template #tip>
+          <div class="el-upload__tip">仅支持 .xlsx / .xls，最多 1 个文件</div>
+        </template>
+      </el-upload>
+      <el-progress v-if="uploadPercent > 0" :percentage="uploadPercent" :stroke-width="6" style="margin-top:8px"/>
+
+      <template #footer>
+        <el-button @click="batchVisible = false" :disabled="uploading">取消</el-button>
+        <el-button type="primary" @click="submitBatch" :loading="uploading" :disabled="!selectedFile">提交</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 批量结果对话框 -->
+    <el-dialog v-model="batchResultVisible" title="批量处理结果" width="680px">
+      <div class="result-summary">
+        <el-tag type="info">总计: {{ batchResult?.total || 0 }}</el-tag>
+        <el-tag type="success" style="margin-left:8px">成功: {{ batchResult?.successCount || 0 }}</el-tag>
+        <el-tag :type="(batchResult?.failCount||0) > 0 ? 'danger' : 'success'" style="margin-left:8px">失败: {{ batchResult?.failCount || 0 }}</el-tag>
+      </div>
+
+      <div v-if="(batchResult?.successList?.length||0) > 0" class="result-block">
+        <div class="block-title">成功列表</div>
+        <el-table :data="batchResult?.successList || []" size="small" border>
+          <el-table-column prop="rowNum" label="#" width="60" />
+          <el-table-column prop="hostIp" label="IP" width="160" />
+          <el-table-column prop="ciId" label="CI ID" min-width="180" />
+          <el-table-column prop="message" label="说明" min-width="220" />
+        </el-table>
+      </div>
+
+      <div v-if="(batchResult?.failList?.length||0) > 0" class="result-block">
+        <div class="block-title">失败列表</div>
+        <el-table :data="batchResult?.failList || []" size="small" border>
+          <el-table-column prop="rowNum" label="#" width="60" />
+          <el-table-column prop="hostIp" label="IP" width="160" />
+          <el-table-column prop="ciId" label="CI ID" min-width="180" />
+          <el-table-column prop="message" label="错误" min-width="220" />
+        </el-table>
+      </div>
+
+      <template #footer>
+        <el-button type="primary" @click="batchResultVisible=false">知道了</el-button>
+      </template>
+    </el-dialog>
   </div>
   
 </template>
@@ -113,6 +179,8 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, EditPen, Search, InfoFilled, Connection } from '@element-plus/icons-vue'
 import { datasourceService } from '@/services/dts/datasource.service'
+import { batchUpdateDevicePasswords } from '@/services/acm/automation.service'
+import type { BatchUpdateResult } from '@/types/acm'
 
 // Tabs
 const activeTab = ref('info')
@@ -130,6 +198,17 @@ const currentPage = ref(1)
 // Data rows
 const rows = ref<any[]>([])
 const loading = ref(false)
+
+// Batch update dialog state
+const batchVisible = ref(false)
+const selectedFile = ref<File | null>(null)
+const fileList = ref<any[]>([])
+const uploading = ref(false)
+const uploadPercent = ref(0)
+
+// Batch result display
+const batchResultVisible = ref(false)
+const batchResult = ref<BatchUpdateResult | null>(null)
 
 const filteredRows = computed(() => {
   let data = rows.value
@@ -166,6 +245,44 @@ function editRow(row) {
 function applySearch() {
   currentPage.value = 1
   fetchAutomationConfigs()
+}
+
+function openBatchDialog() {
+  batchVisible.value = true
+}
+
+function onFilePicked(file: any, files: any[]) {
+  // Element Plus passes UploadFile; original file is at file.raw
+  const f: File | null = file?.raw || null
+  selectedFile.value = f
+  fileList.value = files
+}
+
+function onFileRemoved() {
+  selectedFile.value = null
+  fileList.value = []
+}
+
+async function submitBatch() {
+  if (!selectedFile.value) return
+  uploading.value = true
+  uploadPercent.value = 0
+  try {
+    const result = await batchUpdateDevicePasswords(selectedFile.value, (p) => (uploadPercent.value = p))
+    // 展示结果
+    batchResult.value = result || { total: 0, successCount: 0, failCount: 0, successList: [], failList: [] }
+    batchResultVisible.value = true
+    // 关闭上传对话框
+    batchVisible.value = false
+    selectedFile.value = null
+    fileList.value = []
+    // 刷新列表
+    await fetchAutomationConfigs()
+  } catch (e: any) {
+    ElMessage.error(e?.message || '上传失败')
+  } finally {
+    uploading.value = false
+  }
 }
 
 async function fetchResourceTypes() {
