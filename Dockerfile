@@ -1,7 +1,9 @@
-FROM nginx:1.25-alpine
+FROM nginx:1.25
 
 # ---- Base packages ----
-RUN apk add --no-cache bash curl gettext
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends bash curl gettext-base \
+    && rm -rf /var/lib/apt/lists/*
 
 # ---- Runtime-configurable backend ----
 # Use a single backend URL (schema+host[:port]) and an internal oplus port

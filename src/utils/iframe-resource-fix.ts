@@ -11,12 +11,12 @@ export function debounce<T extends (...args: any[]) => any>(
   wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null
-  
+
   return (...args: Parameters<T>) => {
     if (timeout) {
       clearTimeout(timeout)
     }
-    
+
     timeout = setTimeout(() => {
       func.apply(null, args)
     }, wait)
@@ -33,10 +33,10 @@ export function cleanupIframeResources(iframe: HTMLIFrameElement) {
       // 尝试停止加载
       iframe.contentWindow.stop?.()
     }
-    
+
     // 清空src，释放资源
     iframe.src = 'about:blank'
-    
+
     console.log('🧹 Iframe resources cleaned up')
   } catch (error) {
     console.warn('⚠️ Failed to cleanup iframe resources:', error)
@@ -87,7 +87,7 @@ export function shouldReloadIframe(currentSrc: string, newSrc: string): boolean 
   try {
     const current = new URL(currentSrc)
     const newUrl = new URL(newSrc)
-    
+
     // 如果主机、路径或hash不同，需要重新加载
     return (
       current.origin !== newUrl.origin ||
@@ -137,7 +137,7 @@ class IframeOperationQueue {
         } catch (error) {
           console.error('❌ Iframe operation failed:', error)
         }
-        
+
         // 在操作之间添加小延迟，避免资源冲突
         await new Promise(resolve => setTimeout(resolve, 50))
       }
@@ -158,7 +158,7 @@ export function applyIframeResourceFix() {
   window.addEventListener('error', (event) => {
     if (event.message?.includes('ERR_INSUFFICIENT_RESOURCES')) {
       console.warn('🚨 Detected ERR_INSUFFICIENT_RESOURCES, applying fixes...')
-      
+
       // 清理所有iframe资源
       const iframes = document.querySelectorAll('iframe')
       iframes.forEach(iframe => {
