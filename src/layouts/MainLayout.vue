@@ -20,22 +20,12 @@
 
       <!-- 主内容区域 -->
       <div class="main-content" :class="{ 'with-side-menu': showSideMenu }">
-        <!-- 模块内嵌头部（仅文字标题 + 关闭按钮） -->
-        <div v-if="showModuleToolbar" class="module-toolbar">
-          <div class="module-toolbar-title">{{ moduleTitleText }}</div>
+        <div v-if="moduleToolbarTitle" class="module-toolbar">
+          <div class="module-toolbar-title">{{ moduleToolbarTitle }}</div>
           <button class="module-toolbar-close" @click="handleCloseModule" aria-label="关闭">×</button>
         </div>
 
-        <!-- 如果有选中的菜单项，显示iframe -->
-        <AngularModuleInlineFrame
-          v-if="activeMenuItem"
-          :module-code="activeMenuItem"
-          :module-title="currentMenuItemTitle"
-          class="module-frame"
-        />
-
-        <!-- 否则显示默认的路由视图（仪表盘） -->
-        <router-view v-else class="router-view" />
+        <router-view class="router-view" />
       </div>
       </div>
     </div>
@@ -54,7 +44,6 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import TopNavMenu from '@/components/layout/TopNavMenu.vue'
 import SideMenu from '@/components/layout/SideMenu.vue'
-import AngularModuleInlineFrame from '@/components/angular/AngularModuleInlineFrame.vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useMenuStore } from '@/stores/menu.js'
 
@@ -76,6 +65,11 @@ const currentMenuItemTitle = computed(() => {
   return menuItem ? menuItem.name : ''
 })
 
+const moduleTitleFromRoute = computed(() => {
+  const raw = route.meta?.moduleTitle
+  return typeof raw === 'string' ? raw : ''
+})
+
 // 是否为首页（仪表盘）路由
 const isHomeRoute = computed(() => route.path === '/home' || route.path === '/')
 
@@ -87,6 +81,14 @@ const moduleTitleText = computed(() => {
   if (activeMenuItem.value === 'settings') return '个人资料'
   if (activeMenuItem.value === 'ssc') return '系统设置'
   return ''
+})
+
+const moduleToolbarTitle = computed(() => {
+  if (!showModuleToolbar.value && !route.meta?.showModuleToolbar) return ''
+
+  if (moduleTitleText.value) return moduleTitleText.value
+  if (moduleTitleFromRoute.value) return moduleTitleFromRoute.value
+  return currentMenuItemTitle.value
 })
 
 // 方法
@@ -234,16 +236,6 @@ onUnmounted(() => {
   flex: 1;
   overflow: auto;
   min-height: 0;
-}
-
-// 模块框架
-.module-frame {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  border: none;
-  background: #fff;
 }
 
 /* 内嵌模块顶部工具栏 */
