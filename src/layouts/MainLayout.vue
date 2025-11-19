@@ -34,8 +34,11 @@
           class="module-frame"
         />
 
-        <!-- 否则显示默认的路由视图（仪表盘） -->
-        <router-view v-else class="router-view" />
+        <!-- 仅在首页且未选模块时展示仪表盘 -->
+        <router-view v-else-if="shouldShowDashboard" class="router-view" />
+
+        <!-- 其他情况下保持占位，避免闪回仪表盘 -->
+        <div v-else class="module-loading-placeholder">模块加载中…</div>
       </div>
       </div>
     </div>
@@ -75,6 +78,7 @@ const currentMenuItemTitle = computed(() => {
   const menuItem = menuStore.currentMenuItem
   return menuItem ? menuItem.name : ''
 })
+const shouldShowDashboard = computed(() => !activeMenuItem.value && isHomeRoute.value)
 
 // 是否为首页（仪表盘）路由
 const isHomeRoute = computed(() => route.path === '/home' || route.path === '/')
@@ -244,6 +248,15 @@ onUnmounted(() => {
   min-height: 0;
   border: none;
   background: #fff;
+}
+
+.module-loading-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 14px;
 }
 
 /* 内嵌模块顶部工具栏 */

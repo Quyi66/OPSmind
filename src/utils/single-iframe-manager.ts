@@ -21,6 +21,7 @@ export class SingleIframeManager {
   private initPromise: Promise<void> | null = null
   private lastUrl: string | null = null
   private modulesRequiringFullReload = new Set<string>()
+  private modulesWithHashNavigationIssues = new Set<string>(['gfs', 'cmd'])
   private parseUrl(url: string | null): URL | null {
     if (!url) {
       return null
@@ -95,6 +96,10 @@ export class SingleIframeManager {
   }
 
   private shouldForceReload(moduleCode: string, hashFragment: string): boolean {
+    if (this.modulesWithHashNavigationIssues.has(moduleCode)) {
+      return true
+    }
+
     if (this.modulesRequiringFullReload.has(moduleCode)) {
       return true
     }
