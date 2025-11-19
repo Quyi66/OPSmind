@@ -101,7 +101,7 @@ const handleSearch = () => {
   }
 
   ElMessage.info(`正在处理您的问题: ${q}`)
-  console.log('AI Assistant Query:', q)
+  //console.log('AI Assistant Query:', q)
 
   // 模拟添加到最近对话
   recentChats.value.unshift({

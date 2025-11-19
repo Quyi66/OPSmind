@@ -74,10 +74,10 @@ export function logDevInfo(): void {
   if (!DEV_DEFAULTS.IS_DEV) return
 
   console.group('🔧 OPSmind 开发环境信息')
-  console.log('📝 默认账号:', DEV_DEFAULTS.LOGIN.username)
-  console.log('🔑 默认密码:', DEV_DEFAULTS.LOGIN.password)
-  console.log('⚡ 使用快速登录按钮可直接登录')
-  console.log('🌐 API 基础地址:', DEV_DEFAULTS.API.baseURL || '相对路径')
+  //console.log('📝 默认账号:', DEV_DEFAULTS.LOGIN.username)
+  //console.log('🔑 默认密码:', DEV_DEFAULTS.LOGIN.password)
+  //console.log('⚡ 使用快速登录按钮可直接登录')
+  //console.log('🌐 API 基础地址:', DEV_DEFAULTS.API.baseURL || '相对路径')
   console.groupEnd()
 }
 

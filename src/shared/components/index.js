@@ -52,5 +52,5 @@ export function setupGlobalComponents(app) {
   // app.component('AppFooter', AppFooter)
   // app.component('PageContainer', PageContainer)
 
-  console.log('📦 Global components setup completed (no components registered yet)')
+  //console.log('📦 Global components setup completed (no components registered yet)')
 }

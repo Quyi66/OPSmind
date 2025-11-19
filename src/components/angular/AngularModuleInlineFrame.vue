@@ -53,7 +53,7 @@ const loadModule = async moduleCode => {
     return
   }
 
-  console.log('📱 Loading module in inline frame:', moduleCode)
+  //console.log('📱 Loading module in inline frame:', moduleCode)
   loading.value = true
 
   try {
@@ -72,7 +72,7 @@ const loadModule = async moduleCode => {
         // 加载新模块
         await singleIframeManager.switchToModule(moduleCode, iframeContainer.value)
         loading.value = false
-        console.log('✅ Module loaded in inline frame:', moduleCode)
+        //console.log('✅ Module loaded in inline frame:', moduleCode)
       }
     }
   } catch (error) {

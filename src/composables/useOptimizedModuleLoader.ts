@@ -43,16 +43,16 @@ export function useOptimizedModuleLoader(moduleCode: string) {
   // 预加载模块
   const preloadModule = async () => {
     if (!networkConfig.value.enablePreload) {
-      console.log('⚠️ Preload disabled due to network conditions')
+      //console.log('⚠️ Preload disabled due to network conditions')
       return
     }
 
     try {
-      console.log(`🔄 Preloading module: ${moduleCode}`)
+      //console.log(`🔄 Preloading module: ${moduleCode}`)
       const url = baseModuleUrl.value
       if (url) {
         await IframePreloader.preload(url)
-        console.log(`✅ Module preloaded: ${moduleCode}`)
+        //console.log(`✅ Module preloaded: ${moduleCode}`)
       } else {
         console.warn(`⚠️ No URL found for module: ${moduleCode}`)
       }
@@ -80,7 +80,7 @@ export function useOptimizedModuleLoader(moduleCode: string) {
       const preloadedIframe = IframePreloader.getPreloaded(url)
 
       if (preloadedIframe) {
-        console.log(`⚡ Using preloaded iframe for: ${moduleCode}`)
+        //console.log(`⚡ Using preloaded iframe for: ${moduleCode}`)
 
         // 将预加载的内容复制到目标 iframe
         targetIframe.src = urlWithToken
@@ -92,7 +92,7 @@ export function useOptimizedModuleLoader(moduleCode: string) {
           loadTime.value = ModuleLoadMonitor.getMetrics(moduleCode)?.loadTime || 0
         }, 100)
       } else {
-        console.log(`🔄 Loading iframe normally for: ${moduleCode}`)
+        //console.log(`🔄 Loading iframe normally for: ${moduleCode}`)
 
         // 正常加载
         targetIframe.src = urlWithToken
@@ -206,7 +206,7 @@ export class ModulePreloadManager {
         if (baseUrl) {
           await IframePreloader.preload(baseUrl) // 传递原始URL给预加载器，它会内部添加token
           this.preloadedModules.add(moduleCode)
-          console.log(`✅ Preloaded module: ${moduleCode}`)
+          //console.log(`✅ Preloaded module: ${moduleCode}`)
         } else {
           console.warn(`⚠️ No URL found for module: ${moduleCode}`)
         }

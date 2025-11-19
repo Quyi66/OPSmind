@@ -53,7 +53,7 @@ export function setupRouter() {
     document.title = 'OPSmind'
 
     // 记录路由跳转
-    console.log(`🧭 Route: ${from.path} → ${to.path}`)
+    //console.log(`🧭 Route: ${from.path} → ${to.path}`)
 
     next()
   })
@@ -83,7 +83,7 @@ export function addModuleRoute(moduleConfig) {
     router.addRoute(route)
   })
 
-  console.log(`📍 Added routes for module: ${moduleConfig.code}`)
+  //console.log(`📍 Added routes for module: ${moduleConfig.code}`)
 }
 
 /**

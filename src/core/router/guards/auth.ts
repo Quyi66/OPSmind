@@ -15,26 +15,26 @@ export function setupAuthGuard(router: Router): void {
     const isAuthenticated = authService.isAuthenticated()
     const currentUser = authService.getCurrentUser()
 
-    console.log('🛡️ Auth Guard:', {
-      from: from.path,
-      to: to.path,
-      isAuthenticated,
-      hasUser: !!currentUser,
-      userLogin: currentUser?.login,
-      requiresAuth: to.meta?.requiresAuth,
-      requiresGuest: to.meta?.requiresGuest
-    })
+    //console.log('🛡️ Auth Guard:', {
+    //   from: from.path,
+    //   to: to.path,
+    //   isAuthenticated,
+    //   hasUser: !!currentUser,
+    //   userLogin: currentUser?.login,
+    //   requiresAuth: to.meta?.requiresAuth,
+    //   requiresGuest: to.meta?.requiresGuest
+    // })
 
     // 需要认证但未登录
     if (to.meta?.requiresAuth && !isAuthenticated) {
-      console.log('🔒 Redirecting to login - authentication required')
+      //console.log('🔒 Redirecting to login - authentication required')
       next('/login')
       return
     }
 
     // 已登录用户访问登录页
     if (to.meta?.requiresGuest && isAuthenticated) {
-      console.log('✅ Already authenticated, redirecting to home')
+      //console.log('✅ Already authenticated, redirecting to home')
       next('/home')
       return
     }

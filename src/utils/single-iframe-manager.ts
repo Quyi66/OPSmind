@@ -159,11 +159,11 @@ export class SingleIframeManager {
 
     const alreadyMatched = iframeWindow.location.hash === normalizedHash
 
-    console.log('🧭 Navigating within iframe via hash update:', {
-      from: iframeWindow.location.hash,
-      to: normalizedHash,
-      alreadyMatched
-    })
+    //console.log('🧭 Navigating within iframe via hash update:', {
+    //   from: iframeWindow.location.hash,
+    //   to: normalizedHash,
+    //   alreadyMatched
+    // })
 
     if (!alreadyMatched) {
       iframeWindow.location.hash = normalizedHash
@@ -279,13 +279,13 @@ export class SingleIframeManager {
     try {
       const angularGlobal = (iframeWindow as any).angular
       if (!angularGlobal?.element) {
-        console.log('ℹ️ AngularJS global not ready, falling back to hash navigation')
+        //console.log('ℹ️ AngularJS global not ready, falling back to hash navigation')
         return false
       }
 
       const injector = angularGlobal.element(iframeWindow.document.body).injector?.()
       if (!injector?.get) {
-        console.log('ℹ️ AngularJS injector not available yet, falling back to hash navigation')
+        //console.log('ℹ️ AngularJS injector not available yet, falling back to hash navigation')
         return false
       }
 
@@ -293,7 +293,7 @@ export class SingleIframeManager {
       const $rootScope = injector.get('$rootScope')
 
       if (!$location || typeof $location.path !== 'function') {
-        console.log('ℹ️ AngularJS $location service missing or invalid, falling back to hash navigation')
+        //console.log('ℹ️ AngularJS $location service missing or invalid, falling back to hash navigation')
         return false
       }
 
@@ -305,18 +305,18 @@ export class SingleIframeManager {
       const searchChanged = !this.areSearchParamsEqual(currentSearch, search)
 
       if (!pathChanged && !searchChanged) {
-        console.log('ℹ️ AngularJS already on target route', {
-          path,
-          search
-        })
+        //console.log('ℹ️ AngularJS already on target route', {
+        //   path,
+        //   search
+        // })
         return true
       }
 
-      console.log('🛣️ Triggering AngularJS route navigation via $location', {
-        fromPath: currentPath,
-        toPath: path,
-        search
-      })
+      //console.log('🛣️ Triggering AngularJS route navigation via $location', {
+      //   fromPath: currentPath,
+      //   toPath: path,
+      //   search
+      // })
 
       $location.path(path)
       $location.search(search)
@@ -391,7 +391,7 @@ export class SingleIframeManager {
 
     this.initPromise = new Promise(async (resolve, reject) => {
       try {
-        console.log('🚀 Initializing single iframe for Angular app...')
+        //console.log('🚀 Initializing single iframe for Angular app...')
 
         // 创建 iframe
         this.iframe = this.createIframe()
@@ -402,7 +402,7 @@ export class SingleIframeManager {
 
         // 设置加载监听
         this.iframe.onload = () => {
-          console.log('✅ Angular iframe loaded successfully')
+          //console.log('✅ Angular iframe loaded successfully')
           this.isInitialized = true
           this.isLoading = false
 
@@ -432,10 +432,10 @@ export class SingleIframeManager {
         const rawRoute = this.extractHashFragment(targetEntryUrl)
         const displayedRoute = rawRoute ? `#${rawRoute}` : targetEntryUrl
 
-        console.log(`🔗 Loading Angular app:`)
-        console.log(`   Base URL: ${baseUrl}`)
-        console.log(`   Route: ${displayedRoute}`)
-        console.log(`   Final iframe src: ${this.iframe.src}`)
+        //console.log(`🔗 Loading Angular app:`)
+        //console.log(`   Base URL: ${baseUrl}`)
+        //console.log(`   Route: ${displayedRoute}`)
+        //console.log(`   Final iframe src: ${this.iframe.src}`)
 
       } catch (error) {
         console.error('❌ Initialize iframe error:', error)
@@ -494,13 +494,13 @@ export class SingleIframeManager {
    */
   async switchToModule(moduleCode: string, targetContainer: HTMLElement): Promise<number> {
     const startTime = performance.now()
-    console.log(`⚡ Switching to module: ${moduleCode}`)
-    console.log(`🔧 Manager state:`, {
-      isInitialized: this.isInitialized,
-      isLoading: this.isLoading,
-      currentModule: this.currentModule,
-      hasIframe: !!this.iframe
-    })
+    //console.log(`⚡ Switching to module: ${moduleCode}`)
+    //console.log(`🔧 Manager state:`, {
+    //   isInitialized: this.isInitialized,
+    //   isLoading: this.isLoading,
+    //   currentModule: this.currentModule,
+    //   hasIframe: !!this.iframe
+    // })
 
     try {
       const fullUrl = appUrlManager.getAppUrl(moduleCode)
@@ -515,9 +515,9 @@ export class SingleIframeManager {
         throw new Error('Iframe not initialized')
       }
 
-      console.log(`🔗 Module URL generation:`)
-      console.log(`   Module code: ${moduleCode}`)
-      console.log(`   Generated URL: ${fullUrl}`)
+      //console.log(`🔗 Module URL generation:`)
+      //console.log(`   Module code: ${moduleCode}`)
+      //console.log(`   Generated URL: ${fullUrl}`)
 
       const targetBaseUrl = this.resolveBaseUrl(fullUrl)
       if (!targetBaseUrl) {
@@ -538,21 +538,21 @@ export class SingleIframeManager {
         : ''
       const hashChanged = currentHashFragment !== this.normalizeHashFragment(targetHashFragment)
 
-      console.log('🧪 Navigation decision:', {
-        needsFullReload,
-        mustForceReload,
-        hashChanged,
-        currentBaseSignature,
-        targetBaseSignature,
-        currentHashFragment,
-        targetHashFragment: this.normalizeHashFragment(targetHashFragment)
-      })
+      //console.log('🧪 Navigation decision:', {
+        // needsFullReload,
+      //   mustForceReload,
+      //   hashChanged,
+      //   currentBaseSignature,
+      //   targetBaseSignature,
+      //   currentHashFragment,
+      //   targetHashFragment: this.normalizeHashFragment(targetHashFragment)
+      // })
 
       // 移动 iframe 到目标容器
       this.moveToContainer(targetContainer)
 
       if (needsFullReload) {
-        console.log(`🔄 Performing full iframe reload for module ${moduleCode}`)
+        //console.log(`🔄 Performing full iframe reload for module ${moduleCode}`)
 
         const authUrl = this.buildAuthUrl(fullUrl)
 
@@ -572,17 +572,17 @@ export class SingleIframeManager {
           this.isLoading = false
         }
       } else if (hashChanged) {
-        console.log(`⚡ Fast navigation within iframe for module ${moduleCode}`)
+        //console.log(`⚡ Fast navigation within iframe for module ${moduleCode}`)
         this.navigateWithinIframe(moduleCode, targetHashFragment)
         this.updateLastUrlHash(targetHashFragment)
         this.currentModule = moduleCode
       } else {
-        console.log(`ℹ️ Module ${moduleCode} already active, no navigation needed`)
+        //console.log(`ℹ️ Module ${moduleCode} already active, no navigation needed`)
         this.currentModule = moduleCode
       }
 
       const switchTime = performance.now() - startTime
-      console.log(`✅ Module ${moduleCode} switched in ${switchTime.toFixed(2)}ms (OPTIMIZED)`)
+      //console.log(`✅ Module ${moduleCode} switched in ${switchTime.toFixed(2)}ms (OPTIMIZED)`)
 
       return switchTime
 
@@ -621,18 +621,18 @@ export class SingleIframeManager {
       return
     }
 
-    console.log(`📦 Moving iframe to container:`, {
-      currentParent: this.iframe.parentNode,
-      targetContainer: targetContainer,
-      needsMove: this.iframe.parentNode !== targetContainer,
-      targetContainerRect: targetContainer.getBoundingClientRect()
-    })
+    //console.log(`📦 Moving iframe to container:`, {
+    //   currentParent: this.iframe.parentNode,
+    //   targetContainer: targetContainer,
+    //   needsMove: this.iframe.parentNode !== targetContainer,
+    //   targetContainerRect: targetContainer.getBoundingClientRect()
+    // })
 
     if (this.iframe.parentNode !== targetContainer) {
       targetContainer.appendChild(this.iframe)
-      console.log(`✅ Iframe moved to new container`)
+      //console.log(`✅ Iframe moved to new container`)
     } else {
-      console.log(`ℹ️ Iframe already in target container`)
+      //console.log(`ℹ️ Iframe already in target container`)
     }
 
     // 显示 iframe
@@ -645,23 +645,23 @@ export class SingleIframeManager {
       background: white;
     `
 
-    console.log(`🎨 Iframe styles applied:`, {
-      width: this.iframe.style.width,
-      height: this.iframe.style.height,
-      display: this.iframe.style.display,
-      src: this.iframe.src,
-      parentNode: this.iframe.parentNode === targetContainer ? 'correct' : 'wrong'
-    })
+    //console.log(`🎨 Iframe styles applied:`, {
+    //   width: this.iframe.style.width,
+    //   height: this.iframe.style.height,
+    //   display: this.iframe.style.display,
+    //   src: this.iframe.src,
+    //   parentNode: this.iframe.parentNode === targetContainer ? 'correct' : 'wrong'
+    // })
 
     // 验证 iframe 是否真的可见
     const iframeRect = this.iframe.getBoundingClientRect()
-    console.log(`📏 Iframe dimensions after move:`, {
-      width: iframeRect.width,
-      height: iframeRect.height,
-      visible: iframeRect.width > 0 && iframeRect.height > 0,
-      top: iframeRect.top,
-      left: iframeRect.left
-    })
+    //console.log(`📏 Iframe dimensions after move:`, {
+    //   width: iframeRect.width,
+    //   height: iframeRect.height,
+    //   visible: iframeRect.width > 0 && iframeRect.height > 0,
+    //   top: iframeRect.top,
+    //   left: iframeRect.left
+    // })
   }
 
   /**
@@ -673,7 +673,7 @@ export class SingleIframeManager {
       const user = authService.getCurrentUser()
 
       if (token && user) {
-        console.log('🔗 Building URL with token for Angular app')
+        //console.log('🔗 Building URL with token for Angular app')
 
         const resolvedUrl = new URL(baseUrl, window.location.origin)
         const tokenParam = appUrlManager.getTokenParam()
@@ -695,19 +695,19 @@ export class SingleIframeManager {
    * 验证认证状态（token已通过URL传递，无需postMessage）
    */
   private sendAuthData() {
-    console.log(`� [SingleIframeManager] Auth data already passed via URL for module: ${this.currentModule}`)
+    //console.log(`� [SingleIframeManager] Auth data already passed via URL for module: ${this.currentModule}`)
 
     // 认证数据已通过URL参数传递给iframe，无需额外处理
     const token = authService.getToken()
     const user = authService.getCurrentUser()
 
     if (token && user) {
-      console.log('✅ [SingleIframeManager] Auth data available and passed via URL:', {
-        hasToken: !!token,
-        tokenLength: token?.length,
-        userLogin: user?.login,
-        currentModule: this.currentModule
-      })
+      //console.log('✅ [SingleIframeManager] Auth data available and passed via URL:', {
+      //   hasToken: !!token,
+      //   tokenLength: token?.length,
+      //   userLogin: user?.login,
+      //   currentModule: this.currentModule
+      // })
     } else {
       console.warn('⚠️ [SingleIframeManager] No auth data available:', {
         hasToken: !!token,
@@ -766,7 +766,7 @@ export class SingleIframeManager {
       iframes.forEach(iframe => {
         if (iframe !== this.iframe) {
           iframe.remove()
-          console.log('🗑️ Removed orphaned iframe from container')
+          //console.log('🗑️ Removed orphaned iframe from container')
         }
       })
     } catch (error) {
@@ -800,7 +800,7 @@ export class SingleIframeManager {
     this.initPromise = null
     this.lastUrl = null
 
-    console.log('🧹 SingleIframeManager destroyed')
+    //console.log('🧹 SingleIframeManager destroyed')
   }
 }
 

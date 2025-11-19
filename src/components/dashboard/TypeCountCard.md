@@ -46,7 +46,7 @@
 import TypeCountCard from './TypeCountCard.vue'
 
 const handleClick = () => {
-  console.log('卡片被点击')
+  //console.log('卡片被点击')
 }
 </script>
 ```
@@ -96,7 +96,7 @@ const stats = ref([
 ])
 
 const handleStatClick = (statId) => {
-  console.log('点击了统计项:', statId)
+  //console.log('点击了统计项:', statId)
 }
 </script>
 

@@ -3,9 +3,9 @@
     <!-- 顶部工具栏 -->
     <div class="module-toolbar">
       <div class="toolbar-left">
-        <el-button 
-          @click="goBack" 
-          type="primary" 
+        <el-button
+          @click="goBack"
+          type="primary"
           :icon="ArrowLeft"
           size="small"
         >
@@ -13,18 +13,18 @@
         </el-button>
         <span class="module-title">{{ moduleTitle }}</span>
       </div>
-      
+
       <div class="toolbar-right">
-        <el-button 
-          @click="refreshModule" 
+        <el-button
+          @click="refreshModule"
           :icon="Refresh"
           size="small"
           :loading="isRefreshing"
         >
           刷新
         </el-button>
-        <el-button 
-          @click="toggleFullscreen" 
+        <el-button
+          @click="toggleFullscreen"
           :icon="isFullscreen ? Minus : FullScreen"
           size="small"
         >
@@ -34,7 +34,7 @@
     </div>
 
     <!-- 模块容器 -->
-    <div 
+    <div
       ref="moduleContainer"
       class="module-container"
       :class="{ 'fullscreen': isFullscreen }"
@@ -46,9 +46,9 @@
 
       <!-- 错误状态 -->
       <div v-if="error" class="error-overlay">
-        <el-result 
-          icon="error" 
-          :title="`${moduleTitle} 模块加载失败`" 
+        <el-result
+          icon="error"
+          :title="`${moduleTitle} 模块加载失败`"
           :sub-title="error"
         >
           <template #extra>
@@ -84,7 +84,7 @@ const isRefreshing = ref(false)
 const isFullscreen = ref(false)
 
 onMounted(async () => {
-  console.log(`📱 Module page mounted for: ${moduleCode.value}`)
+  //console.log(`📱 Module page mounted for: ${moduleCode.value}`)
   await loadModule()
 })
 
@@ -103,17 +103,17 @@ const loadModule = async () => {
   error.value = ''
 
   try {
-    console.log(`⚡ Loading module: ${moduleCode.value}`)
-    
+    //console.log(`⚡ Loading module: ${moduleCode.value}`)
+
     const startTime = performance.now()
     await singleIframeManager.switchToModule(moduleCode.value, moduleContainer.value)
     const loadTime = performance.now() - startTime
-    
+
     loading.value = false
-    console.log(`✅ Module ${moduleCode.value} loaded in ${loadTime.toFixed(2)}ms`)
-    
+    //console.log(`✅ Module ${moduleCode.value} loaded in ${loadTime.toFixed(2)}ms`)
+
     ElMessage.success(`${moduleTitle.value} 加载完成`)
-    
+
   } catch (err) {
     console.error('❌ Failed to load module:', err)
     loading.value = false
@@ -128,7 +128,7 @@ const retryLoad = () => {
 
 const refreshModule = async () => {
   isRefreshing.value = true
-  
+
   try {
     // 重新切换到当前模块
     await singleIframeManager.switchToModule(moduleCode.value, moduleContainer.value)
@@ -147,7 +147,7 @@ const goBack = () => {
 
 const toggleFullscreen = () => {
   isFullscreen.value = !isFullscreen.value
-  
+
   if (isFullscreen.value) {
     document.documentElement.requestFullscreen?.()
   } else {
@@ -247,16 +247,16 @@ document.addEventListener('fullscreenchange', () => {
   .module-toolbar {
     padding: 8px 12px;
   }
-  
+
   .toolbar-left,
   .toolbar-right {
     gap: 6px;
   }
-  
+
   .module-title {
     font-size: 14px;
   }
-  
+
   .module-container {
     margin: 4px;
   }

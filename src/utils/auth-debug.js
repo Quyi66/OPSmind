@@ -14,17 +14,17 @@ export function logAuthStatus() {
   const isAuthenticated = authService.isAuthenticated()
 
   console.group('🔐 [AuthDebug] Current Auth Status')
-  console.log('Is Authenticated:', isAuthenticated)
-  console.log('Has Token:', !!token)
-  console.log('Token Length:', token?.length || 0)
-  console.log('Token Preview:', token ? `${token.substring(0, 20)}...` : 'null')
-  console.log('Has User:', !!user)
-  console.log('User Login:', user?.login || 'null')
-  console.log('User Name:', user?.name || 'null')
-  console.log('User Role:', user?.role || 'null')
-  console.log('Tenant ID:', user?.tenantId || 'null')
-  console.log('Permissions Count:', user?.permissions?.length || 0)
-  console.log('Last Activity:', authService.isLoading() ? 'Loading...' : 'Available')
+  //console.log('Is Authenticated:', isAuthenticated)
+  //console.log('Has Token:', !!token)
+  //console.log('Token Length:', token?.length || 0)
+  //console.log('Token Preview:', token ? `${token.substring(0, 20)}...` : 'null')
+  //console.log('Has User:', !!user)
+  //console.log('User Login:', user?.login || 'null')
+  //console.log('User Name:', user?.name || 'null')
+  //console.log('User Role:', user?.role || 'null')
+  //console.log('Tenant ID:', user?.tenantId || 'null')
+  //console.log('Permissions Count:', user?.permissions?.length || 0)
+  //console.log('Last Activity:', authService.isLoading() ? 'Loading...' : 'Available')
   console.groupEnd()
 }
 
@@ -39,25 +39,25 @@ export function logStorageAuth() {
   const vueBridge = sessionStorage.getItem('vue-auth-bridge')
 
   console.group('💾 [AuthDebug] Storage Auth Data')
-  console.log('localStorage:')
-  console.log('  - oplus_token:', !!localToken, localToken?.length || 0)
-  console.log('  - oplus_user:', !!localUser)
+  //console.log('localStorage:')
+  //console.log('  - oplus_token:', !!localToken, localToken?.length || 0)
+  //console.log('  - oplus_user:', !!localUser)
 
-  console.log('sessionStorage:')
-  console.log('  - oplus_token:', !!sessionToken, sessionToken?.length || 0)
-  console.log('  - oplus_user:', !!sessionUser)
-  console.log('  - vue-auth-bridge:', !!vueBridge)
+  //console.log('sessionStorage:')
+  //console.log('  - oplus_token:', !!sessionToken, sessionToken?.length || 0)
+  //console.log('  - oplus_user:', !!sessionUser)
+  //console.log('  - vue-auth-bridge:', !!vueBridge)
 
   if (sessionUser) {
     try {
       const parsedUser = JSON.parse(sessionUser)
-      console.log('  - parsed user:', {
-        login: parsedUser.login,
-        name: parsedUser.name,
-        tenantId: parsedUser.tenantId
-      })
+      //console.log('  - parsed user:', {
+      //   login: parsedUser.login,
+      //   name: parsedUser.name,
+      //   tenantId: parsedUser.tenantId
+      // })
     } catch (e) {
-      console.log('  - user parse error:', e.message)
+      //console.log('  - user parse error:', e.message)
     }
   }
   console.groupEnd()
@@ -70,16 +70,16 @@ export function logIframeStatus() {
   const iframes = document.querySelectorAll('iframe')
 
   console.group('🖼️ [AuthDebug] Iframe Status')
-  console.log('Total iframes found:', iframes.length)
+  //console.log('Total iframes found:', iframes.length)
 
   iframes.forEach((iframe, index) => {
-    console.log(`Iframe ${index + 1}:`, {
-      src: iframe.src,
-      hasContentWindow: !!iframe.contentWindow,
-      display: iframe.style.display,
-      width: iframe.style.width || iframe.width,
-      height: iframe.style.height || iframe.height
-    })
+    //console.log(`Iframe ${index + 1}:`, {
+    //   src: iframe.src,
+    //   hasContentWindow: !!iframe.contentWindow,
+    //   display: iframe.style.display,
+    //   width: iframe.style.width || iframe.width,
+    //   height: iframe.style.height || iframe.height
+    // })
   })
   console.groupEnd()
 }
@@ -96,18 +96,18 @@ export function sendTestMessageToIframes() {
   }
 
   console.group('📤 [AuthDebug] Sending Test Messages')
-  console.log('Sending to', iframes.length, 'iframes')
+  //console.log('Sending to', iframes.length, 'iframes')
 
   iframes.forEach((iframe, index) => {
     if (iframe.contentWindow) {
       try {
         iframe.contentWindow.postMessage(testMessage, '*')
-        console.log(`✅ Test message sent to iframe ${index + 1}:`, iframe.src)
+        //console.log(`✅ Test message sent to iframe ${index + 1}:`, iframe.src)
       } catch (error) {
-        console.log(`❌ Failed to send test message to iframe ${index + 1}:`, error)
+        //console.log(`❌ Failed to send test message to iframe ${index + 1}:`, error)
       }
     } else {
-      console.log(`⚠️ Iframe ${index + 1} has no contentWindow`)
+      //console.log(`⚠️ Iframe ${index + 1} has no contentWindow`)
     }
   })
   console.groupEnd()
@@ -118,12 +118,12 @@ export function sendTestMessageToIframes() {
  */
 export function forceResendAuthData() {
   try {
-    console.log('🔄 [AuthDebug] Force resending auth data...')
+    //console.log('🔄 [AuthDebug] Force resending auth data...')
 
     // 使用单iframe管理器发送认证数据
     import('@/utils/single-iframe-manager').then(({ singleIframeManager }) => {
       singleIframeManager.sendAuthData()
-      console.log('✅ [AuthDebug] Auth data resent via single iframe manager')
+      //console.log('✅ [AuthDebug] Auth data resent via single iframe manager')
     }).catch(error => {
       console.error('❌ [AuthDebug] Failed to load single iframe manager:', error)
     })
@@ -137,15 +137,15 @@ export function forceResendAuthData() {
  * 完整的认证调试报告
  */
 export function generateAuthDebugReport() {
-  console.log('🔍 [AuthDebug] Generating complete auth debug report...')
-  console.log('='.repeat(60))
+  //console.log('🔍 [AuthDebug] Generating complete auth debug report...')
+  //console.log('='.repeat(60))
 
   logAuthStatus()
   logStorageAuth()
   logIframeStatus()
 
-  console.log('='.repeat(60))
-  console.log('✅ [AuthDebug] Debug report completed')
+  //console.log('='.repeat(60))
+  //console.log('✅ [AuthDebug] Debug report completed')
 }
 
 /**

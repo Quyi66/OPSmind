@@ -3,7 +3,7 @@
     <header class="module-page__header">
       <div class="module-page__title">
         <h1>{{ title }}</h1>
-        <p v-if="description" class="module-page__description">{{ description }}</p>
+        <!-- <p v-if="description" class="module-page__description">{{ description }}</p> -->
       </div>
       <div class="module-page__actions">
         <slot name="actions" />
@@ -49,7 +49,7 @@ const props = defineProps({
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  padding: 24px 32px 16px;
+  padding: 8px 32px 8px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.25);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.03) 0%, rgba(15, 23, 42, 0) 100%);
 }
@@ -80,7 +80,7 @@ const props = defineProps({
 
 .module-page__body {
   flex: 1;
-  padding: 0 32px 32px;
+  padding: 0 32px 32px 0;
   overflow: auto;
   background: linear-gradient(180deg, rgba(241, 245, 249, 0.6) 0%, rgba(248, 250, 252, 0.6) 100%);
 }

@@ -33,13 +33,13 @@ const moduleCode = computed(() => {
 })
 
 const moduleConfig = computed(() => {
-  console.log('🔍 Getting module config for:', moduleCode.value)
+  //console.log('🔍 Getting module config for:', moduleCode.value)
   return angularModuleManager.getModule(moduleCode.value)
 })
 
 // 事件处理
 const onModuleLoaded = data => {
-  console.log('✅ Module loaded:', data)
+  //console.log('✅ Module loaded:', data)
 }
 
 const onModuleError = data => {
@@ -47,11 +47,11 @@ const onModuleError = data => {
 }
 
 const onModuleMessage = data => {
-  console.log('📨 Module message:', data)
+  //console.log('📨 Module message:', data)
 }
 
 const onModuleClose = data => {
-  console.log('🚪 Module closed:', data)
+  //console.log('🚪 Module closed:', data)
   // 跳转回首页
   router.push('/home')
 }

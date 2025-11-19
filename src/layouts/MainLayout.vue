@@ -93,7 +93,7 @@ const moduleToolbarTitle = computed(() => {
 
 // 方法
 const handleMenuItemClick = menuItem => {
-  console.log('🎯 Main layout received menu item click:', menuItem.name)
+  //console.log('🎯 Main layout received menu item click:', menuItem.name)
   menuStore.setActiveMenuItem(menuItem.code)
   try { router.push(`/${menuItem.code}`) } catch {}
 }

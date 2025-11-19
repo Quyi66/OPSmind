@@ -91,7 +91,7 @@ const iframeUrl = computed(() => {
 
   try {
     const url = angularModuleManager.getModuleUrl(props.moduleCode)
-    console.log('🔗 Generated iframe URL:', url)
+    //console.log('🔗 Generated iframe URL:', url)
 
     // 添加认证参数到 URL
     return addAuthParamsToUrl(url)
@@ -164,21 +164,21 @@ const loadModule = async () => {
   status.value = '加载中'
 
   try {
-    console.log(`⚡ Switching to module with SINGLE iframe: ${props.moduleCode}`)
-    console.log(`📦 Module config:`, moduleConfig.value)
-    console.log(`📍 Container element:`, iframeContainer.value)
+    //console.log(`⚡ Switching to module with SINGLE iframe: ${props.moduleCode}`)
+    //console.log(`📦 Module config:`, moduleConfig.value)
+    //console.log(`📍 Container element:`, iframeContainer.value)
 
     // 检查容器的实际状态
     if (iframeContainer.value) {
       const rect = iframeContainer.value.getBoundingClientRect()
-      console.log(`📏 Container dimensions:`, {
+      //console.log(`📏 Container dimensions:`, {
         width: rect.width,
         height: rect.height,
         top: rect.top,
         left: rect.left,
         visible: rect.width > 0 && rect.height > 0
       })
-      console.log(`🎨 Container styles:`, {
+      //console.log(`🎨 Container styles:`, {
         display: getComputedStyle(iframeContainer.value).display,
         position: getComputedStyle(iframeContainer.value).position,
         zIndex: getComputedStyle(iframeContainer.value).zIndex
@@ -196,14 +196,14 @@ const loadModule = async () => {
     loadTime.value = switchTime
     status.value = '已加载'
 
-    console.log(
+    //console.log(
       `✅ Module ${props.moduleCode} switched in ${switchTime.toFixed(2)}ms (ROUTE CHANGE)`
     )
 
     // 验证 iframe 是否正确显示
     const iframe = iframeContainer.value.querySelector('iframe')
     if (iframe) {
-      console.log(`🎯 Iframe found in container:`, {
+      //console.log(`🎯 Iframe found in container:`, {
         src: iframe.src,
         display: iframe.style.display,
         width: iframe.style.width,

@@ -38,7 +38,7 @@ export function setupPreconnections() {
       preconnectLink.crossOrigin = 'anonymous'
       head.appendChild(preconnectLink)
 
-      console.log(`🔗 Added preconnect for: ${url.origin}`)
+      //console.log(`🔗 Added preconnect for: ${url.origin}`)
     } catch (error) {
       console.warn(`Failed to add preconnect for: ${domain}`, error)
     }
@@ -121,7 +121,7 @@ export class IframePreloader {
       iframe.style.height = '1px'
 
       iframe.onload = () => {
-        // console.log(`✅ Iframe preloaded: ${urlWithToken}`)
+        // //console.log(`✅ Iframe preloaded: ${urlWithToken}`)
         this.cache.set(url, iframe)
         this.preloadQueue.delete(url)
         resolve(iframe)
@@ -167,12 +167,12 @@ export class IframePreloader {
         const separator = baseUrl.includes('?') ? '&' : '?'
         const finalUrl = `${baseUrl}${separator}${tokenParam}=${token}&vue_auth=true&t=${Date.now()}`
 
-        console.log('🔗 Built preload URL with token:', {
-          baseUrl,
-          hasToken: !!token,
-          tokenLength: token.length,
-          finalUrl: finalUrl.substring(0, 100) + '...'
-        })
+        //console.log('🔗 Built preload URL with token:', {
+        //   baseUrl,
+        //   hasToken: !!token,
+        //   tokenLength: token.length,
+        //   finalUrl: finalUrl.substring(0, 100) + '...'
+        // })
 
         return finalUrl
       }
@@ -231,7 +231,7 @@ export class ModuleLoadMonitor {
       metric.endTime = performance.now()
       metric.loadTime = metric.endTime - metric.startTime
 
-      console.log(`📊 Module load time: ${moduleCode} - ${metric.loadTime.toFixed(2)}ms`)
+      //console.log(`📊 Module load time: ${moduleCode} - ${metric.loadTime.toFixed(2)}ms`)
 
       // 可以发送到分析服务
       this.reportMetrics(metric)
@@ -261,7 +261,7 @@ export function optimizeForNetworkCondition() {
     const connection = (navigator as any).connection
 
     if (connection) {
-      console.log(`📶 Network: ${connection.effectiveType}, ${connection.downlink}Mbps`)
+      //console.log(`📶 Network: ${connection.effectiveType}, ${connection.downlink}Mbps`)
 
       // 根据网络状况调整策略
       if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
@@ -310,7 +310,7 @@ export function initPerformanceOptimizations() {
   // 获取网络状况
   const networkConfig = optimizeForNetworkCondition()
 
-  console.log('🚀 Performance optimizations initialized:', networkConfig)
+  //console.log('🚀 Performance optimizations initialized:', networkConfig)
 
   return networkConfig
 }

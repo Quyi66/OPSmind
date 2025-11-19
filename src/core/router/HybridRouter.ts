@@ -251,13 +251,13 @@ class HybridRouter implements IHybridRouter {
       const isAuthenticated = authService.isAuthenticated()
 
       if (to.meta?.requiresAuth && !isAuthenticated) {
-        console.log('🔒 Redirecting to login - authentication required')
+        //console.log('🔒 Redirecting to login - authentication required')
         next('/login')
         return
       }
 
       if (to.meta?.requiresGuest && isAuthenticated) {
-        console.log('✅ Already authenticated, redirecting to home')
+        //console.log('✅ Already authenticated, redirecting to home')
         next('/home')
         return
       }
@@ -266,7 +266,7 @@ class HybridRouter implements IHybridRouter {
       if (to.meta?.moduleCode) {
         const hasPermission = await this.checkModulePermission(to.meta.moduleCode as string)
         if (!hasPermission) {
-          console.log(`❌ No permission for module: ${to.meta.moduleCode}`)
+          //console.log(`❌ No permission for module: ${to.meta.moduleCode}`)
           next('/home')
           return
         }
@@ -279,7 +279,7 @@ class HybridRouter implements IHybridRouter {
           to.meta.feature as string
         )
         if (!isEnabled) {
-          console.log(`🚩 Feature disabled: ${to.meta.moduleCode}.${to.meta.feature}`)
+          //console.log(`🚩 Feature disabled: ${to.meta.moduleCode}.${to.meta.feature}`)
           // 重定向到模块主页
           next(`/${to.meta.moduleCode}`)
           return
@@ -292,7 +292,7 @@ class HybridRouter implements IHybridRouter {
     // 全局后置钩子
     this.router.afterEach((to, from) => {
       // 记录路由跳转
-      console.log(`🧭 Route changed: ${from.path} → ${to.path}`)
+      //console.log(`🧭 Route changed: ${from.path} → ${to.path}`)
 
       // 发送路由变化事件
       this.emitRouteChange(to, from)
@@ -371,7 +371,7 @@ class HybridRouter implements IHybridRouter {
       this.router.addRoute(route)
     })
 
-    console.log(`🔄 Added routes for module: ${moduleRoute.code}`)
+    //console.log(`🔄 Added routes for module: ${moduleRoute.code}`)
   }
 
   /**
@@ -380,7 +380,7 @@ class HybridRouter implements IHybridRouter {
   removeModuleRoute(moduleCode: string): void {
     // Vue Router 4 不直接支持移除路由，需要重新创建路由器
     // 或者使用路由守卫来阻止访问
-    console.log(`🗑️ Module routes marked for removal: ${moduleCode}`)
+    //console.log(`🗑️ Module routes marked for removal: ${moduleCode}`)
   }
 
   /**

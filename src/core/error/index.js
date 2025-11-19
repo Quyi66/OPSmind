@@ -33,16 +33,16 @@ class ErrorHandler {
    */
   handle(error, context = {}) {
     const errorInfo = this.normalizeError(error, context)
-    
+
     // 记录错误
     this.logError(errorInfo)
-    
+
     // 显示用户友好的错误信息
     this.showUserError(errorInfo)
-    
+
     // 上报错误（如果需要）
     this.reportError(errorInfo)
-    
+
     return errorInfo
   }
 
@@ -75,19 +75,19 @@ class ErrorHandler {
     if (error.name === 'NetworkError' || error.code === 'NETWORK_ERROR') {
       return ERROR_TYPES.NETWORK
     }
-    
+
     if (error.status === 401 || error.message.includes('Authentication')) {
       return ERROR_TYPES.AUTH
     }
-    
+
     if (error.status === 403 || error.message.includes('Permission')) {
       return ERROR_TYPES.PERMISSION
     }
-    
+
     if (error.name === 'ValidationError') {
       return ERROR_TYPES.VALIDATION
     }
-    
+
     return ERROR_TYPES.SYSTEM
   }
 
@@ -98,11 +98,11 @@ class ErrorHandler {
     if (error.status >= 500) {
       return ERROR_LEVELS.CRITICAL
     }
-    
+
     if (error.status >= 400) {
       return ERROR_LEVELS.ERROR
     }
-    
+
     return ERROR_LEVELS.WARNING
   }
 
@@ -112,7 +112,7 @@ class ErrorHandler {
   logError(errorInfo) {
     // 添加到错误队列
     this.errorQueue.unshift(errorInfo)
-    
+
     // 限制队列大小
     if (this.errorQueue.length > this.maxQueueSize) {
       this.errorQueue = this.errorQueue.slice(0, this.maxQueueSize)
@@ -144,7 +144,7 @@ class ErrorHandler {
           duration: 0 // 不自动关闭
         })
         break
-        
+
       case ERROR_LEVELS.ERROR:
         ElMessage({
           message: userMessage,
@@ -152,7 +152,7 @@ class ErrorHandler {
           duration: 5000
         })
         break
-        
+
       case ERROR_LEVELS.WARNING:
         ElMessage({
           message: userMessage,
@@ -160,7 +160,7 @@ class ErrorHandler {
           duration: 3000
         })
         break
-        
+
       default:
         ElMessage({
           message: userMessage,
@@ -193,7 +193,7 @@ class ErrorHandler {
     // 只上报严重错误
     if (errorInfo.level === ERROR_LEVELS.CRITICAL) {
       // 这里可以集成错误监控服务
-      console.log('📊 Reporting critical error:', errorInfo.id)
+      //console.log('📊 Reporting critical error:', errorInfo.id)
     }
   }
 
@@ -266,7 +266,7 @@ export function setupErrorHandler(app) {
     })
   })
 
-  console.log('🛡️ Global error handler setup completed')
+  //console.log('🛡️ Global error handler setup completed')
 }
 
 // 导出 Composition API

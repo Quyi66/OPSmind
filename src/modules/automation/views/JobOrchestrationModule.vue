@@ -1,79 +1,131 @@
 <template>
   <ModulePageLayout
-    title="自动化作业编排"
-    description="集中管理批量作业、作业模板和执行计划，逐步替换原 Angular JAO 模块。"
+    :title="moduleTitle"
+    :description="moduleDescription"
   >
-    <section class="module-section">
-      <el-card shadow="hover" class="module-card">
-        <template #header>
-          <div class="module-card__header">
-            <span>重构路线图</span>
-            <el-tag type="warning" size="small">Phase 1</el-tag>
-          </div>
-        </template>
-        <ul class="module-checklist">
-          <li>梳理作业列表、模板管理、执行详情等核心页面</li>
-          <li>统一封装作业相关的 API 请求与数据模型</li>
-          <li>复刻原有筛选器、状态展示与执行流程交互</li>
-        </ul>
-      </el-card>
+    <div class="jao-module">
+      <aside class="jao-module__nav">
+        <div
+          v-for="item in navItems"
+          :key="item.key"
+          class="nav-item"
+          :class="{ 'is-active': activeView === item.key }"
+          @click="activeView = item.key"
+        >
+          <i :class="['fa', item.icon]"></i>
+          <span>{{ item.label }}</span>
+        </div>
+      </aside>
 
-      <el-card shadow="never" class="module-card module-card--placeholder">
-        <el-empty
-          description="新的作业编排工作台开发中"
-        />
-      </el-card>
-    </section>
+      <section class="jao-module__content">
+        <component :is="activeComponent" />
+      </section>
+    </div>
   </ModulePageLayout>
 </template>
 
 <script setup>
+import { computed, ref } from 'vue'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
+import JobListView from '@/modules/automation/components/job/JobListView.vue'
+import JobScheduleView from '@/modules/automation/components/job/JobScheduleView.vue'
+import JobMyRequestsView from '@/modules/automation/components/job/JobMyRequestsView.vue'
+import JobApprovalsView from '@/modules/automation/components/job/JobApprovalsView.vue'
+import JobRunLogsView from '@/modules/automation/components/job/JobRunLogsView.vue'
+import JobStatisticsView from '@/modules/automation/components/job/JobStatisticsView.vue'
+import JobTaskSchedulerView from '@/modules/automation/components/job/JobTaskSchedulerView.vue'
 
-defineProps({
-  moduleCode: {
-    type: String,
-    default: ''
-  },
-  title: {
-    type: String,
-    default: ''
-  },
-  description: {
-    type: String,
-    default: ''
-  },
-  moduleDefinition: {
-    type: Object,
-    default: null
-  }
-})
+const navItems = [
+  { key: 'jobs', label: '作业列表', icon: 'fa-list-alt' },
+  { key: 'schedule', label: '作业编排', icon: 'fa-network-wired' },
+  { key: 'requests', label: '我的申请', icon: 'fa-inbox' },
+  { key: 'approvals', label: '作业审批', icon: 'fa-user-check' },
+  { key: 'runLogs', label: '运行记录', icon: 'fa-history' },
+  { key: 'statistics', label: '数据统计', icon: 'fa-chart-line' },
+  { key: 'taskScheduler', label: '任务调度', icon: 'fa-clock' }
+]
+
+const componentMap = {
+  jobs: JobListView,
+  schedule: JobScheduleView,
+  requests: JobMyRequestsView,
+  approvals: JobApprovalsView,
+  runLogs: JobRunLogsView,
+  statistics: JobStatisticsView,
+  taskScheduler: JobTaskSchedulerView
+}
+
+const activeView = ref('jobs')
+
+const moduleTitle = '自动化作业编排'
+const moduleDescription =
+  '集中管理批量作业、模板与执行计划，逐步完成对旧版 Angular 模块的替换。'
+
+const activeComponent = computed(() => componentMap[activeView.value] || JobListView)
 </script>
 
 <style scoped lang="scss">
-.module-section {
+.jao-module {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: 150px 1fr;
+  // gap: 20px;
+  min-height: 720px;
 }
 
-.module-card__header {
+.jao-module__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 8px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.nav-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 8px;
+  border-radius: 10px;
+  color: #334155;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
-.module-checklist {
-  margin: 0;
-  padding-left: 18px;
-  color: #475569;
-  line-height: 1.7;
+.nav-item i {
+  width: 18px;
+  text-align: center;
 }
 
-.module-card--placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 260px;
+.nav-item:hover {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+.nav-item.is-active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.jao-module__content {
+  min-height: 100%;
+}
+
+@media (max-width: 1024px) {
+  .jao-module {
+    grid-template-columns: 1fr;
+  }
+
+  .jao-module__nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav-item {
+    flex: 1 0 140px;
+  }
 }
 </style>

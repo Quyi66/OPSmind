@@ -80,7 +80,7 @@ const route = useRoute()
 watch(
   () => route.path,
   async newPath => {
-    console.log('🧭 Route changed to:', newPath)
+    //console.log('🧭 Route changed to:', newPath)
 
     // 如果是功能模块路由，自动显示iframe
     const moduleCode = newPath.substring(1) // 移除开头的 '/'
@@ -88,7 +88,7 @@ watch(
     const moduleList = allMenuItems.map(item => item.code)
 
     if (moduleList.includes(moduleCode)) {
-      console.log('🎯 Module route detected:', moduleCode)
+      //console.log('🎯 Module route detected:', moduleCode)
 
       // 注意：不再在这里触发弹窗模式的iframe
       // iframe现在由MainLayout中的AngularModuleInlineFrame组件处理
@@ -100,7 +100,7 @@ watch(
       // 避免重复请求：仅在未加载或需要刷新时触发
       const shouldLoad = !dashboardStore.loading && (!dashboardStore.dashboardFullData || dashboardStore.needsRefresh)
       if (shouldLoad) {
-        console.log('🏠 Home route detected, loading dashboard data...')
+        //console.log('🏠 Home route detected, loading dashboard data...')
         await loadDashboardData()
       }
     }
@@ -113,19 +113,19 @@ onMounted(async () => {
   if (route.name === 'home' || route.path === '/home') {
     await loadDashboardData()
   } else {
-    console.log('⏭️ Skip dashboard data load (not on /home):', route.path)
+    //console.log('⏭️ Skip dashboard data load (not on /home):', route.path)
   }
 })
 
 const loadDashboardData = async () => {
-  console.log('🔄 Starting to load dashboard data...')
+  //console.log('🔄 Starting to load dashboard data...')
   try {
     await dashboardStore.loadDashboardData()
-    console.log('✅ Dashboard data loaded in component')
+    //console.log('✅ Dashboard data loaded in component')
 
     // 启动模块预加载（延迟执行，避免影响主要加载）
     setTimeout(() => {
-      console.log('🚀 Starting module preloading...')
+      //console.log('🚀 Starting module preloading...')
       ModulePreloadManager.preloadCommonModules()
     }, 2000) // 2秒后开始预加载
 

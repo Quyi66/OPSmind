@@ -11,11 +11,11 @@ export function setupFeatureFlagGuard(router) {
     if (to.meta.featureFlag) {
       const currentUser = authService.getCurrentUser()
       const evaluator = new FeatureFlagEvaluator(currentUser)
-      
+
       const isEnabled = evaluator.isEnabled(to.meta.featureFlag)
-      
+
       if (!isEnabled) {
-        console.log(`🚩 Feature disabled: ${to.meta.featureFlag}`)
+        //console.log(`🚩 Feature disabled: ${to.meta.featureFlag}`)
         // 重定向到首页或显示功能不可用页面
         next('/home')
         return
@@ -26,15 +26,15 @@ export function setupFeatureFlagGuard(router) {
     if (to.meta.moduleCode && to.meta.feature) {
       const currentUser = authService.getCurrentUser()
       const evaluator = new FeatureFlagEvaluator(currentUser)
-      
+
       const shouldUseVue = evaluator.shouldUseVueVersion(
-        to.meta.moduleCode, 
+        to.meta.moduleCode,
         to.meta.feature
       )
-      
+
       if (shouldUseVue && to.meta.vueComponent) {
         // 重定向到 Vue 版本
-        console.log(`🔄 Redirecting to Vue version: ${to.meta.moduleCode}.${to.meta.feature}`)
+        //console.log(`🔄 Redirecting to Vue version: ${to.meta.moduleCode}.${to.meta.feature}`)
         // 这里可以动态修改组件或重定向到 Vue 路由
       }
     }

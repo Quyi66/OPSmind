@@ -149,7 +149,7 @@ try {
 if (import.meta.env.DEV) {
   import('@/utils/single-iframe-manager').then(({ singleIframeManager }) => {
     window.singleIframeManager = singleIframeManager
-    console.log('🔧 singleIframeManager and router exposed to window for debugging')
+    //console.log('🔧 singleIframeManager and router exposed to window for debugging')
   })
 }
 
@@ -207,11 +207,11 @@ window.addEventListener('message', event => {
 
 // 开发环境下的调试信息
 if (import.meta.env.DEV) {
-  console.log('🚀 OPSmind Vue Dashboard started in development mode')
-  console.log('📍 Base URL:', import.meta.env.BASE_URL)
-  console.log('🔧 Environment:', import.meta.env.MODE)
+  //console.log('🚀 OPSmind Vue Dashboard started in development mode')
+  //console.log('📍 Base URL:', import.meta.env.BASE_URL)
+  //console.log('🔧 Environment:', import.meta.env.MODE)
 }
 
 // Vue Dashboard 作为主应用运行
-console.log('🎯 Vue Dashboard initialized as main application')
-console.log('🔗 Ready to integrate AngularJS modules')
+//console.log('🎯 Vue Dashboard initialized as main application')
+//console.log('🔗 Ready to integrate AngularJS modules')

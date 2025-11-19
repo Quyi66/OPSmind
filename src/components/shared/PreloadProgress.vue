@@ -5,7 +5,7 @@
         <div v-if="!isCompleted" class="loading-spinner"></div>
         <div v-else class="success-icon">✅</div>
       </div>
-      
+
       <div class="progress-info">
         <div class="progress-title">
           {{ isCompleted ? '所有模块已就绪' : '正在预加载模块...' }}
@@ -14,17 +14,17 @@
           {{ loaded }}/{{ total }} 个模块 ({{ progress }}%)
         </div>
       </div>
-      
+
       <div class="progress-bar">
-        <div 
-          class="progress-fill" 
+        <div
+          class="progress-fill"
           :style="{ width: progress + '%' }"
         ></div>
       </div>
-      
-      <button 
-        v-if="isCompleted" 
-        @click="hideProgress" 
+
+      <button
+        v-if="isCompleted"
+        @click="hideProgress"
         class="close-btn"
         title="关闭"
       >
@@ -54,17 +54,17 @@ onMounted(() => {
     total.value = t
     progress.value = p
     showProgress.value = true
-    
-    console.log(`📊 Preload progress: ${p}% (${l}/${t})`)
+
+    //console.log(`📊 Preload progress: ${p}% (${l}/${t})`)
   }
 
   // 监听预加载完成
   completeListener = (event) => {
     const { totalModules, loadedModules } = event.detail
     isCompleted.value = true
-    
-    console.log(`🎉 All ${totalModules} modules preloaded!`)
-    
+
+    //console.log(`🎉 All ${totalModules} modules preloaded!`)
+
     // 3秒后自动隐藏
     setTimeout(() => {
       if (isCompleted.value) {
@@ -212,13 +212,13 @@ const hideProgress = () => {
     left: 10px;
     min-width: auto;
   }
-  
+
   .progress-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .progress-info {
     width: 100%;
   }

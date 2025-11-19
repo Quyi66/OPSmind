@@ -93,7 +93,7 @@ class AuthService implements IAuthService {
           authState.isAuthenticated = true
           authState.lastActivity = Date.now()
 
-          console.log('🔐 Auth state restored from storage:', parsedUser.login)
+          //console.log('🔐 Auth state restored from storage:', parsedUser.login)
           this.validateSession()
         } else {
           console.warn('⚠️ Invalid user data in storage, clearing...')
@@ -113,7 +113,7 @@ class AuthService implements IAuthService {
     authState.isLoading = true
 
     try {
-      console.log('🔐 Sending login request to:', `${this.baseURL}/oplus-portal/api/authenticate`)
+      //console.log('🔐 Sending login request to:', `${this.baseURL}/oplus-portal/api/authenticate`)
 
       // 加密用户名、密码和 OTP 代码
       const encryptedData: Record<string, any> = {
@@ -128,7 +128,7 @@ class AuthService implements IAuthService {
         encryptedData.otpCode = this.encrypt(credentials.otp)
       }
 
-      console.log('🔒 Encrypted login data prepared')
+      //console.log('🔒 Encrypted login data prepared')
 
       const response = await fetch(`${this.baseURL}/oplus-portal/api/authenticate`, {
         method: 'POST',
@@ -155,10 +155,10 @@ class AuthService implements IAuthService {
         throw new Error('No token received from server')
       }
       authState.token = token
-      console.log('🔐 [AuthService] Token received and set:', {
-        tokenLength: token.length,
-        tokenPrefix: token.substring(0, 20) + '...'
-      })
+      //console.log('🔐 [AuthService] Token received and set:', {
+      //   tokenLength: token.length,
+      //   tokenPrefix: token.substring(0, 20) + '...'
+      // })
 
       // 创建基本用户信息（后续会在 dashboard 中获取完整信息）
       authState.user = {
@@ -172,28 +172,28 @@ class AuthService implements IAuthService {
       authState.isAuthenticated = true
       authState.lastActivity = Date.now()
 
-      console.log('👤 [AuthService] User info created:', {
-        id: authState.user.id,
-        login: authState.user.login,
-        name: authState.user.name,
-        role: authState.user.role,
-        tenantId: authState.user.tenantId,
-        permissionsCount: authState.user.permissions?.length || 0
-      })
+      //console.log('👤 [AuthService] User info created:', {
+      //   id: authState.user.id,
+      //   login: authState.user.login,
+      //   name: authState.user.name,
+      //   role: authState.user.role,
+      //   tenantId: authState.user.tenantId,
+      //   permissionsCount: authState.user.permissions?.length || 0
+      // })
 
       // 保存到存储
       const userJson = JSON.stringify(authState.user)
       if (credentials.rememberMe) {
         localStorage.setItem(SESSION_CONFIG.tokenKey, token)
         localStorage.setItem(SESSION_CONFIG.userKey, userJson)
-        console.log('💾 [AuthService] Auth data saved to localStorage (remember me enabled)')
+        //console.log('💾 [AuthService] Auth data saved to localStorage (remember me enabled)')
       } else {
         sessionStorage.setItem(SESSION_CONFIG.tokenKey, token)
         sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
-        console.log('💾 [AuthService] Auth data saved to sessionStorage')
+        //console.log('💾 [AuthService] Auth data saved to sessionStorage')
       }
 
-      console.log('✅ [AuthService] Login successful, token and user saved:', authState.user.login)
+      //console.log('✅ [AuthService] Login successful, token and user saved:', authState.user.login)
 
       // 返回与旧版兼容的格式
       return {
@@ -222,7 +222,7 @@ class AuthService implements IAuthService {
     try {
       // 清除本地存储
       this.clearAuthState()
-      console.log('✅ Logout successful')
+      //console.log('✅ Logout successful')
 
       // 跳转到登录页面
       if (typeof window !== 'undefined' && window.location) {
@@ -260,7 +260,7 @@ class AuthService implements IAuthService {
    * 清除无效的认证信息
    */
   private clearInvalidAuth(): void {
-    console.log('🧹 Clearing invalid authentication data')
+    //console.log('🧹 Clearing invalid authentication data')
     this.clearAuthState()
   }
 
@@ -299,7 +299,7 @@ class AuthService implements IAuthService {
           sessionStorage.setItem(tokenKey, newToken)
         }
 
-        console.log('🔄 Token refreshed')
+        //console.log('🔄 Token refreshed')
         return true
       } else {
         throw new Error('No token in refresh response')
@@ -322,7 +322,7 @@ class AuthService implements IAuthService {
 
     // 会话超时
     if (timeSinceActivity > SESSION_CONFIG.timeout) {
-      console.log('⏰ Session timeout')
+      //console.log('⏰ Session timeout')
       this.logout()
       return false
     }
@@ -434,7 +434,7 @@ class AuthService implements IAuthService {
     license: License
     otpEnabled: OTPStatus
   }> {
-    console.log('🔄 Initializing login page...')
+    //console.log('🔄 Initializing login page...')
 
     try {
       // 1. 获取所有租户
@@ -446,7 +446,7 @@ class AuthService implements IAuthService {
       // 3. 检查 OTP 状态
       const otpEnabled = await this.checkOTP()
 
-      console.log('✅ Login initialization completed')
+      //console.log('✅ Login initialization completed')
 
       return {
         tenants,
@@ -471,7 +471,7 @@ class AuthService implements IAuthService {
 
       if (response.ok) {
         const tenants = await response.json()
-        console.log('✅ Tenants loaded:', tenants.length)
+        //console.log('✅ Tenants loaded:', tenants.length)
         return tenants
       }
       return []
@@ -490,7 +490,7 @@ class AuthService implements IAuthService {
 
       if (response.ok) {
         const result = await response.json()
-        console.log('✅ License verified')
+        //console.log('✅ License verified')
         return result
       }
       return { valid: false, features: [] }
@@ -512,7 +512,7 @@ class AuthService implements IAuthService {
 
       if (response.ok) {
         const result = await response.json()
-        console.log('✅ OTP status checked:', result)
+        //console.log('✅ OTP status checked:', result)
         return result
       }
       return { enabled: false, required: false }
@@ -544,7 +544,7 @@ class AuthService implements IAuthService {
           authState.user = parsedUser
           authState.isAuthenticated = true
           authState.lastActivity = Date.now()
-          console.log('✅ Authentication restored from storage:', parsedUser.login)
+          //console.log('✅ Authentication restored from storage:', parsedUser.login)
           return true
         } else {
           console.warn('⚠️ Invalid user data in storage, clearing...')
@@ -625,7 +625,7 @@ class AuthService implements IAuthService {
       sessionStorage.setItem(SESSION_CONFIG.tokenKey, token)
       sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
 
-      console.log('✅ Auth state set for third-party integration:', user.login)
+      //console.log('✅ Auth state set for third-party integration:', user.login)
     } catch (error) {
       console.error('❌ Failed to set auth state:', error)
       throw error

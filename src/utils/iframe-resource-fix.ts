@@ -37,7 +37,7 @@ export function cleanupIframeResources(iframe: HTMLIFrameElement) {
     // 清空src，释放资源
     iframe.src = 'about:blank'
 
-    console.log('🧹 Iframe resources cleaned up')
+    //console.log('🧹 Iframe resources cleaned up')
   } catch (error) {
     console.warn('⚠️ Failed to cleanup iframe resources:', error)
   }
@@ -169,5 +169,5 @@ export function applyIframeResourceFix() {
     }
   })
 
-  console.log('🔧 Iframe resource fix applied')
+  //console.log('🔧 Iframe resource fix applied')
 }

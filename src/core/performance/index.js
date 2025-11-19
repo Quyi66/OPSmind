@@ -18,8 +18,8 @@ class PerformanceMonitor {
     this.isEnabled = true
     this.setupObservers()
     this.startMetricsCollection()
-    
-    console.log('📊 Performance monitoring enabled')
+
+    //console.log('📊 Performance monitoring enabled')
   }
 
   /**
@@ -31,8 +31,8 @@ class PerformanceMonitor {
     this.isEnabled = false
     this.observers.forEach(observer => observer.disconnect())
     this.observers = []
-    
-    console.log('📊 Performance monitoring disabled')
+
+    //console.log('📊 Performance monitoring disabled')
   }
 
   /**
@@ -91,7 +91,7 @@ class PerformanceMonitor {
     }
 
     this.metrics.set('navigation', metrics)
-    console.log('📊 Navigation metrics:', metrics)
+    //console.log('📊 Navigation metrics:', metrics)
   }
 
   /**
@@ -123,7 +123,7 @@ class PerformanceMonitor {
       startTime: entry.startTime
     })
     this.metrics.set('longTasks', longTasks)
-    
+
     console.warn('⚠️ Long task detected:', entry.duration + 'ms')
   }
 
@@ -195,10 +195,10 @@ class PerformanceMonitor {
   recordPageShow() {
     const showTime = Date.now()
     const lastHideTime = this.metrics.get('lastHideTime')
-    
+
     if (lastHideTime) {
       const hideDuration = showTime - lastHideTime
-      console.log('📊 Page was hidden for:', hideDuration + 'ms')
+      //console.log('📊 Page was hidden for:', hideDuration + 'ms')
     }
   }
 
@@ -208,8 +208,8 @@ class PerformanceMonitor {
   recordPageUnload() {
     const unloadTime = Date.now()
     const sessionDuration = unloadTime - (this.metrics.get('sessionStart') || unloadTime)
-    
-    console.log('📊 Session duration:', sessionDuration + 'ms')
+
+    //console.log('📊 Session duration:', sessionDuration + 'ms')
   }
 
   /**
@@ -241,8 +241,8 @@ class PerformanceMonitor {
       resourceCount: resources.length,
       totalResourceSize: resources.reduce((sum, r) => sum + (r.size || 0), 0),
       longTaskCount: longTasks.length,
-      averageLongTaskDuration: longTasks.length > 0 
-        ? longTasks.reduce((sum, t) => sum + t.duration, 0) / longTasks.length 
+      averageLongTaskDuration: longTasks.length > 0
+        ? longTasks.reduce((sum, t) => sum + t.duration, 0) / longTasks.length
         : 0
     }
   }
@@ -252,7 +252,7 @@ class PerformanceMonitor {
    */
   clearMetrics() {
     this.metrics.clear()
-    console.log('📊 Performance metrics cleared')
+    //console.log('📊 Performance metrics cleared')
   }
 }
 
@@ -266,11 +266,11 @@ export function setupPerformanceMonitor(app) {
   // 只在开发环境启用
   if (import.meta.env.DEV) {
     performanceMonitor.enable()
-    
+
     // 添加全局方法
     window.__PERFORMANCE_MONITOR__ = performanceMonitor
-    
-    console.log('📊 Performance monitor setup completed')
+
+    //console.log('📊 Performance monitor setup completed')
   }
 }
 

@@ -36,7 +36,7 @@ class MigrationTracker {
       totalEffort: 0,
       completedEffort: 0
     })
-    
+
     this.initializeDefaultTasks()
   }
 
@@ -128,8 +128,8 @@ class MigrationTracker {
 
     this.migrationTasks.set(task.moduleCode, task)
     this.updateMetrics()
-    
-    console.log(`📋 Migration task added: ${task.moduleCode}`)
+
+    //console.log(`📋 Migration task added: ${task.moduleCode}`)
     return task
   }
 
@@ -153,7 +153,7 @@ class MigrationTracker {
     }
 
     this.updateMetrics()
-    console.log(`📝 Migration task updated: ${moduleCode}`)
+    //console.log(`📝 Migration task updated: ${moduleCode}`)
     return task
   }
 
@@ -167,7 +167,7 @@ class MigrationTracker {
     if (!task.completedFeatures.includes(feature)) {
       task.completedFeatures.push(feature)
       task.updatedAt = new Date()
-      
+
       // 检查是否所有功能都已完成
       if (task.completedFeatures.length === task.features.length) {
         task.phase = MIGRATION_PHASES.COMPLETED
@@ -175,7 +175,7 @@ class MigrationTracker {
       }
 
       this.updateMigrationTask(moduleCode, {})
-      console.log(`✅ Feature completed: ${moduleCode}.${feature}`)
+      //console.log(`✅ Feature completed: ${moduleCode}.${feature}`)
       return true
     }
     return false
@@ -196,7 +196,7 @@ class MigrationTracker {
     })
 
     task.updatedAt = new Date()
-    console.log(`🚫 Blocker added: ${moduleCode} - ${blocker}`)
+    //console.log(`🚫 Blocker added: ${moduleCode} - ${blocker}`)
     return true
   }
 
@@ -212,7 +212,7 @@ class MigrationTracker {
       blocker.resolved = true
       blocker.resolvedAt = new Date()
       task.updatedAt = new Date()
-      console.log(`✅ Blocker resolved: ${moduleCode} - ${blockerId}`)
+      //console.log(`✅ Blocker resolved: ${moduleCode} - ${blockerId}`)
       return true
     }
     return false
@@ -250,7 +250,7 @@ class MigrationTracker {
    * 获取活跃任务 (进行中的任务)
    */
   getActiveTasks() {
-    return this.getAllMigrationTasks().filter(task => 
+    return this.getAllMigrationTasks().filter(task =>
       [MIGRATION_PHASES.DEVELOPMENT, MIGRATION_PHASES.TESTING].includes(task.phase)
     )
   }
@@ -259,7 +259,7 @@ class MigrationTracker {
    * 获取阻塞任务
    */
   getBlockedTasks() {
-    return this.getAllMigrationTasks().filter(task => 
+    return this.getAllMigrationTasks().filter(task =>
       task.blockers.some(blocker => !blocker.resolved)
     )
   }
@@ -269,7 +269,7 @@ class MigrationTracker {
    */
   updateMetrics() {
     const tasks = this.getAllMigrationTasks()
-    
+
     this.metrics.totalModules = tasks.length
     this.metrics.completedModules = tasks.filter(
       t => t.phase === MIGRATION_PHASES.COMPLETED
@@ -281,7 +281,7 @@ class MigrationTracker {
       t => [MIGRATION_PHASES.PLANNING, MIGRATION_PHASES.ANALYSIS].includes(t.phase)
     ).length
 
-    this.metrics.totalEffort = tasks.reduce((sum, task) => 
+    this.metrics.totalEffort = tasks.reduce((sum, task) =>
       sum + (task.estimatedEffort || 0), 0
     )
     this.metrics.completedEffort = tasks
@@ -294,7 +294,7 @@ class MigrationTracker {
    */
   generateReport() {
     const tasks = this.getAllMigrationTasks()
-    const completionRate = this.metrics.totalModules > 0 
+    const completionRate = this.metrics.totalModules > 0
       ? Math.round((this.metrics.completedModules / this.metrics.totalModules) * 100)
       : 0
 

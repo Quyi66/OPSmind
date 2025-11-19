@@ -113,7 +113,7 @@ router.beforeEach(async (to, from, next) => {
   const isAuthenticated = authService.isAuthenticated()
   const currentUser = authService.getCurrentUser()
 
-  console.log('🛡️ Route guard:', {
+  //console.log('🛡️ Route guard:', {
     from: from.path,
     to: to.path,
     isAuthenticated,
@@ -125,11 +125,11 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.meta?.requiresAuth && !isAuthenticated) {
     // 需要认证但未登录，跳转到登录页
-    console.log('🔒 Redirecting to login')
+    //console.log('🔒 Redirecting to login')
     next('/login')
   } else if (to.meta?.requiresGuest && isAuthenticated) {
     // 已登录用户访问登录页，跳转到仪表盘
-    console.log('✅ Already authenticated, redirecting to home')
+    //console.log('✅ Already authenticated, redirecting to home')
     next('/home')
   } else {
     next()

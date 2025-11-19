@@ -29,7 +29,7 @@ class HybridModuleManager {
     this.loadingModules = ref(new Set())
     this.migrationConfig = reactive(new Map()) // 迁移配置
     this.featureFlags = reactive(new Map())    // 功能开关
-    
+
     this.initializeModules()
   }
 
@@ -92,7 +92,7 @@ class HybridModuleManager {
     }
 
     this.modules.set(code, module)
-    console.log(`📦 Module registered: ${code} (${type})`)
+    //console.log(`📦 Module registered: ${code} (${type})`)
     return module
   }
 
@@ -122,7 +122,7 @@ class HybridModuleManager {
       module.metadata.remainingFeatures = module.features.filter(
         f => !migratedFeatures.includes(f)
       )
-      console.log(`🔄 Module marked as hybrid: ${moduleCode}`)
+      //console.log(`🔄 Module marked as hybrid: ${moduleCode}`)
     }
   }
 
@@ -132,7 +132,7 @@ class HybridModuleManager {
   setFeatureFlag(moduleCode, feature, enabled) {
     const key = `${moduleCode}.${feature}`
     this.featureFlags.set(key, enabled)
-    console.log(`🚩 Feature flag set: ${key} = ${enabled}`)
+    //console.log(`🚩 Feature flag set: ${key} = ${enabled}`)
   }
 
   /**
@@ -267,7 +267,7 @@ export const useHybridModules = () => {
     hybridModules: computed(() => hybridModuleManager.getModulesByType(MODULE_TYPES.HYBRID)),
     migrationStats: computed(() => hybridModuleManager.getMigrationStats()),
     recommendedPath: computed(() => hybridModuleManager.getRecommendedMigrationPath()),
-    
+
     // 方法
     getModule: hybridModuleManager.getModule.bind(hybridModuleManager),
     setFeatureFlag: hybridModuleManager.setFeatureFlag.bind(hybridModuleManager),

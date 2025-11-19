@@ -55,7 +55,7 @@ export const useMenuStore = defineStore('menu', () => {
 
   // 动作
   const setActiveGroup = groupCode => {
-    console.log('🎯 Setting active group:', groupCode)
+    //console.log('🎯 Setting active group:', groupCode)
 
     // 先清除当前选中的菜单项，避免冲突
     activeMenuItem.value = ''
@@ -72,7 +72,7 @@ export const useMenuStore = defineStore('menu', () => {
         const group = getMenuGroup(groupCode)
         if (group && group.children && group.children.length > 0) {
           const firstMenuItem = group.children[0]
-          console.log('🎯 Auto-selecting first menu item:', firstMenuItem.code)
+          //console.log('🎯 Auto-selecting first menu item:', firstMenuItem.code)
           setActiveMenuItem(firstMenuItem.code)
         }
       }, 100) // 100ms延迟，确保状态更新完成
@@ -83,7 +83,7 @@ export const useMenuStore = defineStore('menu', () => {
   }
 
   const setActiveMenuItem = menuCode => {
-    console.log('🎯 Setting active menu item:', menuCode)
+    //console.log('🎯 Setting active menu item:', menuCode)
     activeMenuItem.value = menuCode
 
     // 独立页面：隐藏左侧菜单，避免与之前分组的菜单混淆
@@ -116,14 +116,14 @@ export const useMenuStore = defineStore('menu', () => {
   }
 
   const clearActiveMenu = () => {
-    console.log('🧹 Clearing active menu')
+    //console.log('🧹 Clearing active menu')
     activeGroup.value = ''
     activeMenuItem.value = ''
     showSideMenu.value = false
   }
 
   const setHomeActive = () => {
-    console.log('🏠 Setting home active')
+    //console.log('🏠 Setting home active')
     activeGroup.value = 'home'
     activeMenuItem.value = ''
     showSideMenu.value = false
@@ -131,12 +131,12 @@ export const useMenuStore = defineStore('menu', () => {
 
   const toggleSideMenu = () => {
     showSideMenu.value = !showSideMenu.value
-    console.log('📱 Side menu visibility toggled:', showSideMenu.value)
+    //console.log('📱 Side menu visibility toggled:', showSideMenu.value)
   }
 
   const setSideMenuCollapsed = collapsed => {
     sideMenuCollapsed.value = collapsed
-    console.log('📱 Side menu collapsed state changed:', collapsed)
+    //console.log('📱 Side menu collapsed state changed:', collapsed)
   }
 
   // 根据当前路由自动设置菜单状态
@@ -161,14 +161,14 @@ export const useMenuStore = defineStore('menu', () => {
       activeGroup.value = groupCode || info.group.code
       activeMenuItem.value = moduleCode
       showSideMenu.value = true
-      console.log(
-        '🧭 Menu state set from route:',
-        routePath,
-        '-> Group:',
-        info.group.code,
-        'Item:',
-        moduleCode
-      )
+      //console.log(
+      //   '🧭 Menu state set from route:',
+      //   routePath,
+      //   '-> Group:',
+      //   info.group.code,
+      //   'Item:',
+      //   moduleCode
+      // )
       // 记录最近使用
       recordRecent(moduleCode)
     } else {

@@ -70,9 +70,9 @@ const calculateModalWidth = () => {
     modalWidth.value = `${Math.min(currentWidth * 0.9, 1400)}px`
   }
 
-  console.log(
-    `📱 Screen: ${screenWidth}x${screenHeight}px (${aspectRatio.toFixed(2)}:1), Modal width: ${modalWidth.value}`
-  )
+  //console.log(
+    // `📱 Screen: ${screenWidth}x${screenHeight}px (${aspectRatio.toFixed(2)}:1), Modal width: ${modalWidth.value}`
+  // )
 }
 
 // 方法
@@ -81,7 +81,7 @@ const showModule = async event => {
 
   // 如果是相同模块，不需要重新加载
   if (visible.value && moduleCode.value === code) {
-    console.log('📱 Same module already showing:', code)
+    //console.log('📱 Same module already showing:', code)
     return
   }
 
@@ -91,13 +91,13 @@ const showModule = async event => {
   // 如果弹窗已经显示，直接切换模块
   if (visible.value) {
     loading.value = true
-    console.log('📱 Switching to different module:', code)
+    //console.log('📱 Switching to different module:', code)
 
     try {
       if (iframeContainer.value) {
         await singleIframeManager.switchToModule(code, iframeContainer.value)
         loading.value = false
-        console.log('✅ Module switched via single-iframe-manager:', code)
+        //console.log('✅ Module switched via single-iframe-manager:', code)
         // 移除成功提示消息
       }
     } catch (error) {
@@ -112,7 +112,7 @@ const showModule = async event => {
   calculateModalWidth() // 计算合适的宽度
   visible.value = true
   loading.value = true
-  console.log('📱 Showing AngularJS module in modal:', code, title)
+  //console.log('📱 Showing AngularJS module in modal:', code, title)
 
   try {
     // 等待下一个tick确保DOM已更新
@@ -122,7 +122,7 @@ const showModule = async event => {
       // 使用single-iframe-manager切换到指定模块
       await singleIframeManager.switchToModule(code, iframeContainer.value)
       loading.value = false
-      console.log('✅ Module loaded in modal via single-iframe-manager:', code)
+      //console.log('✅ Module loaded in modal via single-iframe-manager:', code)
       // 移除成功提示消息
     }
   } catch (error) {
@@ -142,7 +142,7 @@ const closeModule = () => {
   const event = new CustomEvent('clearMenuHighlight')
   window.dispatchEvent(event)
 
-  console.log('📱 Closed AngularJS module modal')
+  //console.log('📱 Closed AngularJS module modal')
 }
 
 
@@ -173,7 +173,7 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
   document.addEventListener('keydown', handleKeydown)
   calculateModalWidth() // 初始化宽度
-  console.log('📱 AngularModuleContainerModal mounted')
+  //console.log('📱 AngularModuleContainerModal mounted')
 })
 
 onUnmounted(() => {
@@ -181,7 +181,7 @@ onUnmounted(() => {
   window.removeEventListener('closeAngularModuleContainer', handleCloseEvent)
   window.removeEventListener('resize', handleResize)
   document.removeEventListener('keydown', handleKeydown)
-  console.log('📱 AngularModuleContainerModal unmounted')
+  //console.log('📱 AngularModuleContainerModal unmounted')
 })
 </script>
 

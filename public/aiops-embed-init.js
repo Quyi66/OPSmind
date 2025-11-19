@@ -5,7 +5,7 @@
       try {
         return window.__OPS_RUNTIME__ || {}
       } catch (e) {
-        console.log(e)
+        //console.log(e)
         return {}
       }
     })()
@@ -21,7 +21,7 @@
         token =
           ls.getItem('DIFY_TOKEN') || ls.getItem('ops:dify_token') || ls.getItem('dify:token') || ''
       } catch (e) {
-        console.log(e)
+        //console.log(e)
 
       }
     }
@@ -92,7 +92,7 @@
             return
           }
         } catch (e) {
-          console.log(e)
+          //console.log(e)
         }
 
         if (attempts > maxAttempts) {
@@ -116,7 +116,7 @@
         document.head.appendChild(dns)
       }
     } catch (e) {
-      console.log(e)
+      //console.log(e)
     }
   } catch (e) {
     const status = document.getElementById('status')

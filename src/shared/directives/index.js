@@ -91,7 +91,7 @@ const debounce = {
   mounted(el, binding) {
     const { value, arg, modifiers } = binding
     const delay = Object.keys(modifiers)[0] || 300
-    
+
     let timer = null
     const handler = (...args) => {
       clearTimeout(timer)
@@ -120,10 +120,10 @@ const throttle = {
   mounted(el, binding) {
     const { value, arg, modifiers } = binding
     const delay = Object.keys(modifiers)[0] || 300
-    
+
     let timer = null
     let lastTime = 0
-    
+
     const handler = (...args) => {
       const now = Date.now()
       if (now - lastTime >= delay) {
@@ -151,12 +151,12 @@ const throttle = {
 const copy = {
   mounted(el, binding) {
     const { value } = binding
-    
+
     const handler = async () => {
       try {
         await navigator.clipboard.writeText(value)
-        console.log('📋 Text copied to clipboard')
-        
+        //console.log('📋 Text copied to clipboard')
+
         // 可以添加成功提示
         el.classList.add('copy-success')
         setTimeout(() => {
@@ -189,7 +189,7 @@ const copy = {
 const lazy = {
   mounted(el, binding) {
     const { value } = binding
-    
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -226,5 +226,5 @@ export function setupGlobalDirectives(app) {
   app.directive('copy', copy)
   app.directive('lazy', lazy)
 
-  console.log('📝 Global directives registered')
+  //console.log('📝 Global directives registered')
 }

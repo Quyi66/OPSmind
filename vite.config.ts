@@ -114,15 +114,15 @@ export default defineConfig(({ command, mode }): UserConfig => {
               newPath = newPath.replace('/oplus/base', '')
             }
 
-            console.log('🔄 Angular proxy rewrite:', path, '->', newPath)
+            //console.log('🔄 Angular proxy rewrite:', path, '->', newPath)
             return newPath
           },
           configure: (proxy) => {
             proxy.on('error', (err) => {
-              console.log('❌ Angular proxy error:', err.message)
+              //console.log('❌ Angular proxy error:', err.message)
             })
             proxy.on('proxyReq', (proxyReq, req) => {
-              console.log('📡 Proxying to Angular:', req.method, req.url, '->', proxyReq.path)
+              //console.log('📡 Proxying to Angular:', req.method, req.url, '->', proxyReq.path)
             })
             proxy.on('proxyRes', (proxyRes) => {
               proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
@@ -139,10 +139,10 @@ export default defineConfig(({ command, mode }): UserConfig => {
           secure: false,
           configure: (proxy) => {
             proxy.on('error', (err) => {
-              console.log('Proxy error:', err.message)
+              //console.log('Proxy error:', err.message)
             })
             proxy.on('proxyReq', (proxyReq, req) => {
-              console.log('Proxying request:', req.method, req.url)
+              //console.log('Proxying request:', req.method, req.url)
             })
             proxy.on('proxyRes', (proxyRes) => {
               proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
@@ -158,7 +158,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
           secure: false,
           configure: (proxy) => {
             proxy.on('error', (err, _req, res) => {
-              console.log('AngularJS proxy error:', err.message)
+              //console.log('AngularJS proxy error:', err.message)
               // 如果 AngularJS 服务器不可用，返回一个错误页面
               if (res && typeof res.writeHead === 'function') {
                 res.writeHead(503, { 'Content-Type': 'text/html' })
@@ -182,7 +182,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
               }
             })
             proxy.on('proxyReq', (proxyReq, req) => {
-              console.log('AngularJS proxy:', req.method, req.url)
+              //console.log('AngularJS proxy:', req.method, req.url)
             })
             proxy.on('proxyRes', (proxyRes) => {
               proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'

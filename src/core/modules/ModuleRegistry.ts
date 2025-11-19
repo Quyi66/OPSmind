@@ -71,7 +71,7 @@ class ModuleRegistry implements IModuleRegistry {
     }
 
     this.state.modules.set(code, moduleInstance)
-    console.log(`📦 Module registered: ${code} (${type})`)
+    //console.log(`📦 Module registered: ${code} (${type})`)
   }
 
   /**
@@ -82,7 +82,7 @@ class ModuleRegistry implements IModuleRegistry {
       this.state.modules.delete(code)
       this.state.loadingModules.delete(code)
       this.state.errorModules.delete(code)
-      console.log(`🗑️ Module unregistered: ${code}`)
+      //console.log(`🗑️ Module unregistered: ${code}`)
     }
   }
 
@@ -93,7 +93,7 @@ class ModuleRegistry implements IModuleRegistry {
     const moduleInstance = this.state.modules.get(code)
     if (moduleInstance) {
       Object.assign(moduleInstance.config, config)
-      console.log(`🔄 Module updated: ${code}`)
+      //console.log(`🔄 Module updated: ${code}`)
     }
   }
 
@@ -180,7 +180,7 @@ class ModuleRegistry implements IModuleRegistry {
       moduleInstance.loadTime = Date.now() - startTime
       moduleInstance.status = MODULE_STATUS.AVAILABLE
 
-      console.log(`✅ Module loaded: ${code} (${moduleInstance.loadTime}ms)`)
+      //console.log(`✅ Module loaded: ${code} (${moduleInstance.loadTime}ms)`)
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
@@ -207,7 +207,7 @@ class ModuleRegistry implements IModuleRegistry {
       delete moduleInstance.loadTime
       delete moduleInstance.errorMessage
       moduleInstance.status = MODULE_STATUS.AVAILABLE
-      console.log(`🗑️ Module unloaded: ${code}`)
+      //console.log(`🗑️ Module unloaded: ${code}`)
     }
   }
 

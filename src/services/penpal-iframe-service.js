@@ -34,11 +34,11 @@ export class PenpalIframeService {
    */
   async connectToIframe(iframe, options = {}) {
     if (this.connectionPromise) {
-      console.log('🔄 [PenpalIframeService] Connection already in progress, waiting...')
+      //console.log('🔄 [PenpalIframeService] Connection already in progress, waiting...')
       return this.connectionPromise
     }
 
-    console.log('🚀 [PenpalIframeService] Starting connection to Angular iframe...')
+    //console.log('🚀 [PenpalIframeService] Starting connection to Angular iframe...')
 
     this.iframe = iframe
     const { onConnect, onDisconnect, onError, timeout = 30000 } = options
@@ -58,7 +58,7 @@ export class PenpalIframeService {
    */
   async establishConnection(timeout) {
     try {
-      console.log('🔗 [PenpalIframeService] Establishing Penpal connection...')
+      //console.log('🔗 [PenpalIframeService] Establishing Penpal connection...')
 
       // 定义父应用提供给子应用的方法
       const parentMethods = {
@@ -75,20 +75,20 @@ export class PenpalIframeService {
 
         // 接收认证数据请求
         requestAuthData: () => {
-          console.log('🔄 [PenpalIframeService] Angular requesting auth data via Penpal')
+          //console.log('🔄 [PenpalIframeService] Angular requesting auth data via Penpal')
           return this.getAuthData()
         },
 
         // 接收状态更新
         updateStatus: (status) => {
-          console.log('📊 [PenpalIframeService] Status update from Angular:', status)
+          //console.log('📊 [PenpalIframeService] Status update from Angular:', status)
           this.logMessage('RECEIVED', 'status-update', status)
           return { received: true, timestamp: Date.now() }
         },
 
         // 接收日志消息
         log: (level, message, data) => {
-          console.log(`📝 [PenpalIframeService] Angular log [${level}]:`, message, data)
+          //console.log(`📝 [PenpalIframeService] Angular log [${level}]:`, message, data)
           this.logMessage('RECEIVED', 'log', { level, message, data })
         }
       }
@@ -104,7 +104,7 @@ export class PenpalIframeService {
       this.child = await this.connection.promise
       this.isConnected = true
 
-      console.log('✅ [PenpalIframeService] Penpal connection established successfully')
+      //console.log('✅ [PenpalIframeService] Penpal connection established successfully')
       this.logMessage('SYSTEM', 'connection-established', {
         timeout,
         availableMethods: Object.keys(this.child || {})
@@ -160,7 +160,7 @@ export class PenpalIframeService {
         source: 'penpal-iframe-service'
       }
 
-      console.log('🔐 [PenpalIframeService] Providing auth data:', {
+      //console.log('🔐 [PenpalIframeService] Providing auth data:', {
         hasToken: !!token,
         tokenLength: token?.length,
         userLogin: user?.login,
@@ -195,14 +195,14 @@ export class PenpalIframeService {
     }
 
     try {
-      console.log('📤 [PenpalIframeService] Sending auth data to Angular...')
+      //console.log('📤 [PenpalIframeService] Sending auth data to Angular...')
 
       const authData = this.getAuthData()
 
       // 调用Angular应用的receiveAuthData方法
       if (typeof this.child.receiveAuthData === 'function') {
         const result = await this.child.receiveAuthData(authData)
-        console.log('✅ [PenpalIframeService] Auth data sent successfully:', result)
+        //console.log('✅ [PenpalIframeService] Auth data sent successfully:', result)
         this.logMessage('SENT', 'auth-data-success', { result })
         return result
       } else {
@@ -225,7 +225,7 @@ export class PenpalIframeService {
       clearInterval(this.pingInterval)
     }
 
-    console.log('🏓 [PenpalIframeService] Starting heartbeat mechanism...')
+    //console.log('🏓 [PenpalIframeService] Starting heartbeat mechanism...')
 
     this.pingInterval = setInterval(async () => {
       await this.sendPing()
@@ -253,7 +253,7 @@ export class PenpalIframeService {
         source: 'penpal-iframe-service'
       }
 
-      console.log('🏓 [PenpalIframeService] >>>> PING SENT TO ANGULAR <<<<')
+      //console.log('🏓 [PenpalIframeService] >>>> PING SENT TO ANGULAR <<<<')
       this.logMessage('SENT', 'ping', pingData)
 
       // 调用Angular应用的receivePing方法
@@ -275,7 +275,7 @@ export class PenpalIframeService {
    * @param {Object} data - ping数据
    */
   handlePingFromChild(data) {
-    console.log('🏓 [PenpalIframeService] <<<< PING RECEIVED FROM ANGULAR <<<<')
+    //console.log('🏓 [PenpalIframeService] <<<< PING RECEIVED FROM ANGULAR <<<<')
     this.logMessage('RECEIVED', 'ping', data)
   }
 
@@ -289,7 +289,7 @@ export class PenpalIframeService {
     const roundTripTime = now - originalTimestamp
     this.lastPongTime = now
 
-    console.log('🏓 [PenpalIframeService] <<<< PONG RECEIVED FROM ANGULAR <<<<')
+    //console.log('🏓 [PenpalIframeService] <<<< PONG RECEIVED FROM ANGULAR <<<<')
     this.logMessage('RECEIVED', 'pong', {
       ...pongData,
       roundTripTime: `${roundTripTime}ms`,
@@ -319,14 +319,14 @@ export class PenpalIframeService {
       data
     }
 
-    console.log('JSON:', JSON.stringify(logEntry, null, 2))
+    //console.log('JSON:', JSON.stringify(logEntry, null, 2))
   }
 
   /**
    * 断开连接
    */
   disconnect() {
-    console.log('🔌 [PenpalIframeService] Disconnecting...')
+    //console.log('🔌 [PenpalIframeService] Disconnecting...')
 
     if (this.pingInterval) {
       clearInterval(this.pingInterval)
@@ -347,7 +347,7 @@ export class PenpalIframeService {
     this.logMessage('SYSTEM', 'disconnected', {})
     this.connectionCallbacks.onDisconnect()
 
-    console.log('✅ [PenpalIframeService] Disconnected successfully')
+    //console.log('✅ [PenpalIframeService] Disconnected successfully')
   }
 
   /**

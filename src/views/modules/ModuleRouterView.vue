@@ -9,7 +9,7 @@
 <script setup>
 import { computed, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
-import ModuleUnderConstruction from '@/modules/shared/views/ModuleUnderConstruction.vue'
+// import ModuleUnderConstruction from '@/modules/shared/views/ModuleUnderConstruction.vue'
 import { getModuleDefinition } from '@/modules/registry'
 
 const asyncComponentCache = new WeakMap()
@@ -42,7 +42,7 @@ const componentProps = computed(() => {
 const resolvedComponent = computed(() => {
   const definition = moduleDefinition.value
   const loader = definition?.loader
-  if (!loader) return ModuleUnderConstruction
+  // if (!loader) return ModuleUnderConstruction
 
   if (!asyncComponentCache.has(loader)) {
     asyncComponentCache.set(
@@ -61,6 +61,6 @@ const resolvedComponent = computed(() => {
     )
   }
 
-  return asyncComponentCache.get(loader) || ModuleUnderConstruction
+  return asyncComponentCache.get(loader)
 })
 </script>

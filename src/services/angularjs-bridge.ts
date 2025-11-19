@@ -38,13 +38,13 @@ export class AngularJSBridge {
 
   async initBridge(): Promise<void> {
     // Vue Dashboard 作为主应用，始终使用独立模式
-    console.log('🔍 Vue Dashboard running as main application')
-    console.log('📍 Current URL:', window.location.href)
+    //console.log('🔍 Vue Dashboard running as main application')
+    //console.log('📍 Current URL:', window.location.href)
 
     // 临时使用简单的 mock 桥接，确保页面能正常加载
     this.bridge = this.createSimpleMockBridge()
     this.isReady = true
-    console.log('✅ Bridge initialized successfully')
+    //console.log('✅ Bridge initialized successfully')
   }
 
   // 创建 PostMessage 桥接对象（用于 iframe 通信）
@@ -147,26 +147,26 @@ export class AngularJSBridge {
       },
 
       async navigateTo(path: string) {
-        console.log(`🧭 Mock navigation to: ${path}`)
+        //console.log(`🧭 Mock navigation to: ${path}`)
         // 在实际应用中，这里会触发路由跳转
       },
 
       async showMessage(message: string, type = 'info') {
-        console.log(`📢 Mock message (${type}): ${message}`)
+        //console.log(`📢 Mock message (${type}): ${message}`)
         // 在实际应用中，这里会显示消息提示
       },
 
       async openModal(config: any) {
-        console.log('🔲 Mock modal opened:', config)
+        //console.log('🔲 Mock modal opened:', config)
         return { confirmed: true }
       },
 
       async closeModal(result?: any) {
-        console.log('🔲 Mock modal closed:', result)
+        //console.log('🔲 Mock modal closed:', result)
       },
 
       async callService(serviceName: string, method: string, params: any[] = []) {
-        console.log(`🔧 Mock service call: ${serviceName}.${method}`, params)
+        //console.log(`🔧 Mock service call: ${serviceName}.${method}`, params)
         return { success: true, data: null }
       }
     }
