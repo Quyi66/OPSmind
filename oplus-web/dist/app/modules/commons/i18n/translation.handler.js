@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t,n,a,e){return{initialize:function(){},updateTitle:function(t){!t&&a.$current.data&&a.$current.data.pageTitle&&(t=a.$current.data.pageTitle)}}}angular.module("oplus.commons").factory("translationHandler",t),t.$inject=["$rootScope","$window","$state","$translate"]}();

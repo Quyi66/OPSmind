@@ -1,8 +1,0 @@
-{
-  "extends": [
-    "plugin:oplus/recommended"
-  ],
-  "rules": {
-
-  }
-}

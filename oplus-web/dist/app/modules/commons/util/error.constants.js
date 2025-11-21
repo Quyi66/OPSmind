@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";var e;angular.module("oplus.commons").constant("errorConstants",{EMAIL_ALREADY_USED_TYPE:(e="http://www.jhipster.tech/problem")+"/email-already-used",LOGIN_ALREADY_USED_TYPE:e+"/login-already-used",EMAIL_NOT_FOUND_TYPE:e+"/email-not-found"})}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-export function is(e,n){var t=getBusinessObject(e);return t&&"function"==typeof t.$instanceOf&&t.$instanceOf(n)}export function getBusinessObject(e){return e&&e.businessObject||e}

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.udp").service("datatableWidgetUpdater",function(){this.updateProps=function(e){e.dataset&&e.dataset.hideParams&&(e.dataset.paramView="hidden",delete e.dataset.hideParams),(e.fields||[]).forEach(function(e){!e.field&&e.name&&(e.field=e.name,delete e.name)})}})}();

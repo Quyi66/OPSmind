@@ -1,1 +1,0 @@
-Folder `lib` is to save 3rd party libraries that cannot directly fetched by bower.

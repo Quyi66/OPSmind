@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,a,t,i,o,r,c){var s=i.id;this.id=s,this.viewMode=s?"app.appman.datamodel.edit"===a.current.name?"edit":"view":"create"}angular.module("oplus.jao").controller("jaodcDataCtrl",e),e.$inject=["$scope","$state","jaoJobService","$stateParams","$location","messageService","userPref"]}();

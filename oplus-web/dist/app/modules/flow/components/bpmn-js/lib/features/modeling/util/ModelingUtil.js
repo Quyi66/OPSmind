@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import{some}from"min-dash";import{is}from"../../../util/ModelUtil";export function isAny(r,t){return some(t,function(t){return is(r,t)})}export function getParent(r,t){for("string"==typeof t&&(t=[t]);r=r.parent;)if(isAny(r,t))return r;return null}

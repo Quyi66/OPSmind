@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-const{isAny}=require("bpmnlint-utils");module.exports=function(){return{check:function(n,i){if(!isAny(n,["bpmn:Task","bpmn:Event"]))return;(n.incoming||[]).length>1&&i.report(n.id,"Incoming flows do not join")}}};

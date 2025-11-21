@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function o(o,s){this.gatewayPath=s.trustAsResourceUrl(window.$oplus.appConfig.apiBaseUrls.portal+"/swagger-ui.html")}angular.module("oplus.adm").controller("DocsController",o),o.$inject=["$scope","$sce"]}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-const{is}=require("bpmnlint-utils");module.exports=function(){return{check:function(n,t){if(!is(n,"bpmn:Gateway"))return;const i=n.incoming||[],e=n.outgoing||[];i.length>1&&e.length>1&&t.report(n.id,"Gateway forks and joins")}}};

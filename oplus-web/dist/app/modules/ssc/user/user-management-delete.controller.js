@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,n,t){var s=this;s.user=n,s.clear=function(){e.dismiss("cancel")},s.confirmDelete=function(){t.delete({tenantUserId:s.user.tenantUserId},function(){e.close(s.user)})}}angular.module("oplus.ssc").controller("UserManagementDeleteController",e),e.$inject=["$uibModalInstance","entity","User"]}();

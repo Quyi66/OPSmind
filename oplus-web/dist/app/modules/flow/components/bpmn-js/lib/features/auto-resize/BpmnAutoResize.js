@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import AutoResize from"diagram-js/lib/features/auto-resize/AutoResize";import inherits from"inherits";import{is}from"../../util/ModelUtil";export default function BpmnAutoResize(e){e.invoke(AutoResize,this)}BpmnAutoResize.$inject=["injector"],inherits(BpmnAutoResize,AutoResize),BpmnAutoResize.prototype.resize=function(e,i,t){is(e,"bpmn:Participant")?this._modeling.resizeLane(e,i,null,t):this._modeling.resizeShape(e,i,null,t)};

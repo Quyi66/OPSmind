@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.udp").component("udpWidgetConfigChartDisplay",{templateUrl:"app/modules/udp/widgets/widget-config-chart-display.html",bindings:{props:"=ngModel",chartType:"<",options:"<"},controller:["themeService",function(t){this.palettes=t.getChartPalettes()}]})}();

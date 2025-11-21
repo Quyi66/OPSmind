@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import entryFactory from"bpmn-js-properties-panel/lib/factory/EntryFactory";import{is}from"bpmn-js/lib/util/ModelUtil";export default function(e,t){is(t,"bpmn:ServiceTask")&&e.entries.push(entryFactory.textField(null,{id:"name",description:"权限的标题",label:"标题",modelProperty:"name"}))}

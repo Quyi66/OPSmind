@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import*as translations from"./translations";import{isNullOrUndefined}from"util";export default function customTranslate(a,l){l=l||{};var r=localStorage["oplus.locale"]&&localStorage["oplus.locale"].replace("-","_");return(a=translations[r][a]||a).replace(/{([^}]+)}/g,function(a,t){var n=l[t];return isNullOrUndefined(translations[r][l[t]])||(n=translations[r][l[t]]),n||"{"+t+"}"})}

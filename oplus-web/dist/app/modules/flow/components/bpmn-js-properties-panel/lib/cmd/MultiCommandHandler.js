@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var forEach=require("lodash/forEach");function MultiCommandHandler(t){this._commandStack=t}MultiCommandHandler.$inject=["commandStack"],module.exports=MultiCommandHandler,MultiCommandHandler.prototype.preExecute=function(t){var a=this._commandStack;forEach(t,function(t){a.execute(t.cmd,t.context)})};

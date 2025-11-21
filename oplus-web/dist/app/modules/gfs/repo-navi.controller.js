@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t,e,o){this.repo=e.repo,this.dir=e.dir,this.repoType=o,this.options={base:"",showStatus:"git"===o,showStageIndicator:"git"===o,showStageStatus:"git"===o,includeStage:"git"===o,jumpToApprove:"git"===o,canApprove:!1,canTestRun:!0,changeUrl:!0,showActions:!0,allowAddFile:!0,useSelector:!0,multipleSelect:!0,canSelectDirectory:!0}}angular.module("oplus.gfs").controller("GfsRepoNavCtrl",t),t.$inject=["$state","$stateParams","repoType"]}();

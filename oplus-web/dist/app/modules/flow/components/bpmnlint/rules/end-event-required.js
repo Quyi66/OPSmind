@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-const{is,isAny}=require("bpmnlint-utils");module.exports=function(){return{check:function(s,n){if(isAny(s,["bpmn:Process","bpmn:SubProcess"])&&!function(s){return(s.flowElements||[]).some(s=>is(s,"bpmn:EndEvent"))}(s)){const e=is(s,"bpmn:SubProcess")?"Sub process":"Process";n.report(s.id,e+" is missing end event")}}}};

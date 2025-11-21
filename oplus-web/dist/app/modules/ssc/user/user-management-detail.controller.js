@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function s(s,i,n){var r=this;r.user=n,r.clear=function(){s.dismiss("cancel")},function(){r.permissions=[];var s={};for(var i in r.user.roles){var n=r.user.roles[i];if(null!=n.permissions&&n.permissions.length>0)for(var e in n.permissions){var o=n.permissions[e];null==s[o.id]&&(r.permissions.push(o),s[o.id]=o)}}}()}angular.module("oplus.ssc").controller("UserManagementDetailController",s),s.$inject=["$uibModalInstance","User","entity"]}();

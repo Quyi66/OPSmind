@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function n(n){return{getJob:function(t){return n.getJob(t)},queryJob:function(t){return n.queryJob(t)},deleteJob:function(t){return n.deleteJob(t)},updateJob:function(t){return n.updateJob(t)},addJob:function(t){return n.addJob(t)},run:function(t){return n.run(t)}}}angular.module("oplus.cac").factory("cacJobService",n),n.$inject=["cacDao"]}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var getBusinessObject=require("bpmn-js/lib/util/ModelUtil").getBusinessObject,is=require("bpmn-js/lib/util/ModelUtil").is,asyncContinuation=require("./implementation/AsyncContinuation");module.exports=function(e,i,n,t){is(i,"camunda:AsyncCapable")&&(e.entries=e.entries.concat(asyncContinuation(i,n,{getBusinessObject},t)))};

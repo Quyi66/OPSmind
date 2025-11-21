@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.commons").component("udpWidgetAccessConfig",{templateUrl:"app/modules/udp/security/widget-access-config.html",bindings:{theModel:"="}})}();

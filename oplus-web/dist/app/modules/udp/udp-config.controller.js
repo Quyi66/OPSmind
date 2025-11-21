@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t){var e,o="oplus.udp",i=this;this.restrictedMode=!1,this.devMode=!1,this.$update=function(){localStorage.setItem(o,JSON.stringify(i))},e=o,_.extend(i,JSON.parse(localStorage.getItem(e)||"{}"))}function e(t,e){this.config=e,t.$watch("$ctrl.config",function(t,o){t!==o&&e.$update()},!0)}angular.module("oplus.udp").service("udpModuleConfig",t),t.$inject=["$state"],angular.module("oplus.udp").controller("UdpConfigCtrl",e),e.$inject=["$scope","udpModuleConfig"]}();

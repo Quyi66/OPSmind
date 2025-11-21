@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import{is}from"../../../util/ModelUtil";var HIGHER_PRIORITY=1750;export default function CreateParticipantBehavior(t,e,i){e.on(["create.start","shape.move.start"],HIGHER_PRIORITY,function(e){var a=e.context,n=a.shape,r=t.getRootElement();is(n,"bpmn:Participant")&&is(r,"bpmn:Process")&&r.children.length&&(a.createConstraints&&(n.width=i.snapValue(n.width,{min:n.width}),n.height=i.snapValue(n.height,{min:n.height})))})}CreateParticipantBehavior.$inject=["canvas","eventBus","gridSnapping"];

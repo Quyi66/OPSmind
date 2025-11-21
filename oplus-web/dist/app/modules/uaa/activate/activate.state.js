@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t){t.state("activate",{parent:"account",url:"/activate?key",data:{authorities:[],pageTitle:"activate.title"},views:{"content@":{templateUrl:"app/modules/uaa/activate/activate.html",controller:"ActivationController",controllerAs:"vm"}}})}angular.module("oplus.uaa").config(t),t.$inject=["$stateProvider"]}();

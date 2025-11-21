@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function n(n,t,e,a){var s=this;s.param=t,s.clear=function(){n.dismiss("cancel")},s.confirmDelete=function(t){e.delete({id:t},function(){a.toast("success",$translate.instant("adm.content.delete_success")),n.close(!0)},function(){a.alertWarning($translate.instant("adm.content.warning"),$translate.instant("adm.content.error"))})}}angular.module("oplus.ssc").controller("SscParamDeleteController",n),n.$inject=["$uibModalInstance","entity","Param","messageService"]}();

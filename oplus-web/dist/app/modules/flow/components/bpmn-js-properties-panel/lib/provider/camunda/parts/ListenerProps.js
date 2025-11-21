@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var listener=require("./implementation/Listener");module.exports=function(e,t,r,n){var i=listener(t,r,{},n);return e.entries=e.entries.concat(i.entries),{getSelectedListener:i.getSelectedListener}};

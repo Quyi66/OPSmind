@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.udp").component("udpMediaSelector",{templateUrl:"app/modules/udp/helper/media-selector.html",bindings:{theModel:"=",options:"<"},controller:["themeService",function(){var e=this;this.images=[],["air-conditioner.svg","bulb.svg","electricity-meter.svg","elevator.svg","monitor.svg","movement-sensor.svg","smoke-sensor.svg","thermometer.svg"].forEach(function(o){e.images.push({source:o,url:"./content/medialib/icons/"+o})}),this.mediaTypes=[{type:"fa",name:"Font Icon"},{type:"img",name:"Icon"}]}]})}();

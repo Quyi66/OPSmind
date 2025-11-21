@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t,e,n,s,c,a){var i=this;i.doExport=function(){var t={appletIds:a,containsScript:i.containsScript},n=c("date")(new Date,"yyyyMMddHHmmss");s.exportAppletByIds(t,n),e.close(!0)},i.cancelExport=function(){e.dismiss()},i.containsScript=!1}angular.module("oplus.ssc").controller("appletManageExportCtrl",t),t.$inject=["$scope","$uibModalInstance","messageService","appletManageService","$filter","ids"]}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,n,s,c,i){var t=this;function o(){e.modalInstance.close("close")}t.register=function(){c.register(t.fileInfo.file).then(function(e){s.toast("success","软件激活成功！"),o()},function(e){t.msg=e.title})},t.close=o,t.cancel=function(){e.modalInstance.dismiss("cancel")},t.msg=i,t.ngf={pattern:"",maxSize:"1MB"},t.fileInfo={}}angular.module("oplus.uaa").controller("LicenseRegisterCtrl",e),e.$inject=["$scope","$uibModal","messageService","licenseService","msg"]}();

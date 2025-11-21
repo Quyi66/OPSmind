@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function o(){var o=!1;this.useLocalDb=function(e){o=e},this.$get=["_pageLocalDao","_pageRemoteDao",function(e,t){return o?e:t}]}angular.module("oplus.udp").provider("pageDao",o),o.$inject=[]}();

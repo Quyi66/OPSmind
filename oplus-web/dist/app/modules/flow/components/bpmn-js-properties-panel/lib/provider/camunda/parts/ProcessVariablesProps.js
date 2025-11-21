@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var isAny=require("bpmn-js/lib/features/modeling/util/ModelingUtil").isAny,is=require("bpmn-js/lib/util/ModelUtil").is,getBusinessObject=require("bpmn-js/lib/util/ModelUtil").getBusinessObject,processVariables=require("./implementation/ProcessVariables");function canHaveOverview(e){var i=getBusinessObject(e);return isAny(e,["bpmn:Process","bpmn:SubProcess"])||is(e,"bpmn:Participant")&&i.get("processRef")}module.exports=function(e,i,s){if(canHaveOverview(i)){var r=processVariables(i,s);e.entries=e.entries.concat(r)}};

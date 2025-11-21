@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.adm").config(["$stateProvider",function(a){!function(a){a.state("app.adm",{url:"/adm",views:{mainView:{template:'<div ui-view="adm_main_view" class="w-100 h-100"></div>'}}}).state("app.adm.config",{url:"/config",views:{adm_main_view:{templateUrl:"app/modules/adm/config-index.html",controller:"admCtrl",controllerAs:"admVm"}}})}(a)}])}();

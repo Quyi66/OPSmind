@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.udp").component("opTaskbar",{templateUrl:"app/modules/app/window/taskbar.component.html",controller:["$scope","$compile","$timeout",function(o,n,p){this.useWindowUI=window.$oplus.appConfig.useWindowUI,this.logoNavbarPath=window.$oplus.appConfig.ui.headerLogo,this.barBackgroundColor=window.$oplus.appConfig.ui.barBackgroundColor}]})}();

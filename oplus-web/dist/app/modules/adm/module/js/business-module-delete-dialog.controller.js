@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,n,s,t){var i=this;i.businessModule=n,i.clear=function(){e.dismiss("cancel")},i.confirmDelete=function(n){s.delete({id:n},function(){t.toast("success","删除成功"),e.close(!0)},function(){t.alertWarning("警告","删除失败!")})}}angular.module("oplus.adm").controller("BusinessModuleDeleteController",e),e.$inject=["$uibModalInstance","entity","BusinessModule","messageService"]}();

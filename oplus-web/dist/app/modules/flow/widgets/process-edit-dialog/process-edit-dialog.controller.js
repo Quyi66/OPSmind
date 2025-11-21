@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-flowEditDialogCtrl.$inject=["$uibModalInstance","title","mode","data"];export default function flowEditDialogCtrl(t,i,a,o){var l=this;l.title=i,l.mode=a,l.data=o,l.cancel=function(){t.dismiss()},l.confirm=function(){t.close(l.data)}}

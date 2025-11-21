@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-const elementArr=[{name:"JobTask",type:"task"},{name:"RebootTask",type:"task"},{name:"ManualTask",type:"task"},{name:"Connection",type:"connection"}];export default{prefix:"opflow",prefixEx:function(){return`${this.prefix}:`},elements:elementArr,elementObj:(()=>{var e={};return elementArr.map(t=>e[t.name]=t.name),e})(),getElementsByType:function(e){return this.elements.filter(t=>t.type===e).map(e=>`${this.prefix}:${e.name}`)},getElementsByName:function(e){return this.elements.find(t=>t.name===e)?`${this.prefix}:${e}`:""}};

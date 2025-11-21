@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){function e(e,n,t,a,i){this.findAllPagesInfo=function(){return n.findAllPages({noContent:!0})}}angular.module("oplus.udp").service("widgetDataInterface",e),e.$inject=["$q","pageService","datasetService","messageService","errorHandler"]}();

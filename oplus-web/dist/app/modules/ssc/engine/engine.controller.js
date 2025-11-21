@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,n,o,t,l,a,c,i){}angular.module("oplus.ssc").controller("EngineController",e),e.$inject=["$scope","$uibModal","$compile","dataTable","$translate","Param","sscEngineService","$timeout"]}();

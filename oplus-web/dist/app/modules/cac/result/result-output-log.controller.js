@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){function t(t,c,u,n,e){var i=this;i.views={id:u.id,cancel:function(){e.close({action:"cancel"})},output:{}},c.queryOutput(i.views.id).then(function(t){i.views.output=t}).catch(function(t){throw t})}angular.module("oplus.cac").controller("CacResultOutputLogCtrl",t),t.$inject=["cacService","cacResultService","entity","$uibModal","$uibModalInstance"]}();
