@@ -66,19 +66,68 @@ const role = {
  * 加载指令
  * 用法: v-loading="isLoading"
  */
+const LOADING_OVERLAY_CLASS = 'ops-loading-overlay'
+const LOADING_CONTAINER_CLASS = 'ops-loading-container'
+
+function createLoadingOverlay() {
+  const overlay = document.createElement('div')
+  overlay.className = LOADING_OVERLAY_CLASS
+
+  const spinner = document.createElement('div')
+  spinner.className = 'ops-loading-spinner'
+  overlay.appendChild(spinner)
+
+  return overlay
+}
+
+function showLoading(el) {
+  if (!el._opsLoadingOverlay) {
+    el._opsLoadingOverlay = createLoadingOverlay()
+  }
+
+  const computedPosition = window.getComputedStyle(el).position
+  if (!el._opsLoadingOriginalPosition && (!computedPosition || computedPosition === 'static')) {
+    el._opsLoadingOriginalPosition = el.style.position || ''
+    el.style.position = 'relative'
+  }
+
+  el.classList.add(LOADING_CONTAINER_CLASS)
+
+  if (!el.contains(el._opsLoadingOverlay)) {
+    el.appendChild(el._opsLoadingOverlay)
+  }
+}
+
+function hideLoading(el) {
+  if (el._opsLoadingOverlay && el.contains(el._opsLoadingOverlay)) {
+    el.removeChild(el._opsLoadingOverlay)
+  }
+
+  if (el._opsLoadingOriginalPosition !== undefined) {
+    el.style.position = el._opsLoadingOriginalPosition
+    delete el._opsLoadingOriginalPosition
+  }
+
+  el.classList.remove(LOADING_CONTAINER_CLASS)
+}
+
 const loading = {
   mounted(el, binding) {
-    const { value } = binding
-    if (value) {
-      el.classList.add('is-loading')
+    if (binding.value) {
+      showLoading(el)
     }
   },
   updated(el, binding) {
-    const { value } = binding
-    if (value) {
-      el.classList.add('is-loading')
+    if (binding.value) {
+      showLoading(el)
     } else {
-      el.classList.remove('is-loading')
+      hideLoading(el)
+    }
+  },
+  unmounted(el) {
+    hideLoading(el)
+    if (el._opsLoadingOverlay) {
+      delete el._opsLoadingOverlay
     }
   }
 }

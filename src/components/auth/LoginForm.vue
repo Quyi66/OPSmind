@@ -225,10 +225,10 @@ const handleLogin = async () => {
     const isAuthenticated = authService.isAuthenticated()
     const currentUser = authService.getCurrentUser()
     //console.log('🔍 Auth status before navigation:', {
-      isAuthenticated,
-      hasUser: !!currentUser,
-      userLogin: currentUser?.login
-    })
+    //   isAuthenticated,
+    //   hasUser: !!currentUser,
+    //   userLogin: currentUser?.login
+    // })
 
     // 持久化“保持登录状态”偏好与最后登录用户名
     try {
@@ -297,11 +297,11 @@ const notifyIframeModulesAuthUpdate = async () => {
 
       if (token && user) {
         //console.log('✅ [Login] Auth data available and passed via URL to iframes:', {
-          hasToken: !!token,
-          userLogin: user.login,
-          tenantId: user.tenantId,
-          iframeCount: iframes.length
-        })
+        //   hasToken: !!token,
+        //   userLogin: user.login,
+        //   tenantId: user.tenantId,
+        //   iframeCount: iframes.length
+        // })
       } else {
         console.warn('⚠️ [Login] No auth data available:', {
           hasToken: !!token,

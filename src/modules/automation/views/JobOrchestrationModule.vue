@@ -27,7 +27,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
-import JobListView from '@/modules/automation/components/job/JobListView.vue'
+import JobListView from '@/modules/automation/components/job/JobListView/JobListView.vue'
 import JobScheduleView from '@/modules/automation/components/job/JobScheduleView.vue'
 import JobMyRequestsView from '@/modules/automation/components/job/JobMyRequestsView.vue'
 import JobApprovalsView from '@/modules/automation/components/job/JobApprovalsView.vue'
@@ -105,8 +105,8 @@ const activeComponent = computed(() => componentMap[activeView.value] || JobList
 }
 
 .nav-item.is-active {
-  background: #2563eb;
-  color: #fff;
+  background-color: rgba(173, 181, 189, .25);
+  border-left-color: rgba(173, 181, 189, .5);
 }
 
 .jao-module__content {

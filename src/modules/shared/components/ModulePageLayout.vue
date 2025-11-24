@@ -83,6 +83,7 @@ const props = defineProps({
   padding: 0 32px 32px 0;
   overflow: auto;
   background: linear-gradient(180deg, rgba(241, 245, 249, 0.6) 0%, rgba(248, 250, 252, 0.6) 100%);
+  font-size: 13px;
 }
 
 @media (max-width: 1024px) {

@@ -125,6 +125,7 @@
         :data="paginatedJobs"
         @selection-change="handleSelectionChange"
         class="job-table"
+        max-height="calc(100vh - 420px)"
       >
         <el-table-column type="selection" width="48" />
         <el-table-column prop="title" label="作业" min-width="220" show-overflow-tooltip>
@@ -151,7 +152,7 @@
         </el-table-column>
         <el-table-column prop="appletCode" label="所属应用" min-width="140">
           <template #default="{ row }">
-            {{ row.appletCode || '未分配' }}
+            {{ row.appletCode || '未分类' }}
           </template>
         </el-table-column>
         <el-table-column prop="updatedBy" label="修改人" width="140" />
@@ -168,23 +169,23 @@
         <el-table-column label="操作" fixed="right" width="150">
           <template #default="{ row }">
             <div class="table-actions">
-              <el-tooltip content="查看详情">
+              <el-tooltip content="执行">
                 <el-button link class="action-button" @click="handleViewJob(row)">
-                  <i class="fa fa-eye"></i>
+                  <el-icon><VideoPlay /></el-icon>
                 </el-button>
               </el-tooltip>
-              <el-tooltip content="复制为新作业">
+              <el-tooltip content="复制">
                 <el-button link class="action-button" @click="handleCopy(row)">
                   <i class="fa fa-copy"></i>
                 </el-button>
               </el-tooltip>
-              <el-tooltip content="删除">
+              <el-tooltip content="执行历史">
                 <el-button
                   link
-                  class="action-button action-button--danger"
-                  @click="handleDeleteJobs([row.id])"
+                  class="action-button action-button--history"
+                  @click="handleViewHistory(row)"
                 >
-                  <i class="fa fa-trash"></i>
+                  <i class="fa fa-history"></i>
                 </el-button>
               </el-tooltip>
             </div>
@@ -203,6 +204,20 @@
         />
       </div>
     </section>
+
+    <ExecuteJobDialog
+      v-if="executeDialogVisible"
+      v-model:visible="executeDialogVisible"
+      :job-id="executeJobMeta?.id || ''"
+      :job-type="executeJobMeta?.type || ''"
+      :fallback-config-json="executeJobMeta?.configJson || ''"
+    />
+    <ExecuteHistoryDialog
+      v-if="historyDialogVisible"
+      v-model:visible="historyDialogVisible"
+      :job-id="historyJobMeta?.id || ''"
+      :job-title="historyJobMeta?.title || ''"
+    />
   </div>
 </template>
 
@@ -214,11 +229,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
 import { Plus, Delete, RefreshRight, Search, ArrowDown } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
+import ExecuteJobDialog from './ExecuteJobDialog.vue'
+import ExecuteHistoryDialog from './ExecuteHistoryDialog.vue'
 
 const store = useAutomationJobStore()
 const { error, filteredJobs, jobs } = storeToRefs(store)
 
-const keyword = ref(store.filters.keyword)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const selectedRows = ref([])
@@ -230,6 +246,11 @@ const loading = ref(false)
 const paginatedJobs = ref([])
 const currentApp = ref({ title: '' })
 const originalJobs = ref([])
+const keyword = ref('')
+const executeDialogVisible = ref(false)
+const executeJobMeta = ref(null)
+const historyDialogVisible = ref(false)
+const historyJobMeta = ref(null)
 
 /** 过滤app */
 function filterApplets() {
@@ -259,11 +280,53 @@ function filterList(key, value) {
   })
 }
 
-watch(keyword, (value) => {
-  store.setKeyword(value)
-  currentPage.value = 1
+/**删除作业 */
+function handleDeleteJobs() {
+  const jobIds = selectedIds.value
+  ElMessageBox.confirm(
+      `确定要删除选中的 ${jobIds.length} 个作业吗？`,
+      '删除确认',
+      {
+        type: 'warning',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消'
+      }
+  ).then(() => {
+      ElMessage.success('删除成功')
+      jaoApi.deleteJobs(JSON.stringify(jobIds)).then(() => {
+        getAppTableList(currentApp.value.name)
+      })
+  }).catch(() => {
+      // 取消删除
+  })
+}
+
+
+/** 执行作业 */
+function handleViewJob(row) {
+  if (!row?.id) {
+    ElMessage.warning('无法获取作业信息')
+    return
+  }
+  executeJobMeta.value = {
+    id: row.id,
+    type: row.type ?? '',
+    configJson: row.configJson ?? ''
+  }
+  executeDialogVisible.value = true
+}
+
+watch(executeDialogVisible, (visible) => {
+  if (!visible) {
+    executeJobMeta.value = null
+  }
 })
 
+watch(historyDialogVisible, (visible) => {
+  if (!visible) {
+    historyJobMeta.value = null
+  }
+})
 
 const jobTypeOptions = computed(() =>
   JOB_TYPE_OPTIONS.map((option) => ({
@@ -318,16 +381,10 @@ watch(selectedIds, (ids) => {
   }
 })
 
-/** 切换作业列表 */
-function selectApplet(app) {
-  // store.setApplet(appletCode)
-  // currentPage.value = 1
-  // selectedRows.value = []
-  // moveTarget.value = ''
+function getAppTableList(appletCode) {
   loading.value = true
   paginatedJobs.value = []
-  currentApp.value = app
-  jaoApi.appTableList({ appletCode: app.name }).then((response) => {
+  jaoApi.appTableList({ appletCode }).then((response) => {
     paginatedJobs.value = response.data
     originalJobs.value = response.data
     loading.value = false
@@ -335,6 +392,12 @@ function selectApplet(app) {
     loading.value = false
     // console.error('Failed to fetch app list:', error);
   });
+}
+
+/** 切换作业列表 */
+function selectApplet(app) {
+  getAppTableList(app.name)
+  currentApp.value = app
 }
 
 function handleSelectionChange(rows) {
@@ -386,30 +449,6 @@ async function handleMoveJobs() {
   }
 }
 
-async function handleDeleteJobs(ids) {
-  const jobIds = ids ?? selectedIds.value
-  if (!jobIds.length) {
-    return
-  }
-
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除选中的 ${jobIds.length} 个作业吗？`,
-      '删除确认',
-      {
-        type: 'warning',
-        confirmButtonText: '删除',
-        cancelButtonText: '取消'
-      }
-    )
-  } catch {
-    return
-  }
-
-  await store.deleteJobs(jobIds)
-  ElMessage.success('删除成功')
-  selectedRows.value = []
-}
 
 async function handleCopy(row) {
   if (!row?.id) return
@@ -417,11 +456,16 @@ async function handleCopy(row) {
   ElMessage.success('复制成功')
 }
 
-function openAngularRoute(hashPath) {
-  const base = appUrlManager.getAngularBaseUrl()
-  const normalizedHash = hashPath.startsWith('#') ? hashPath : `#${hashPath}`
-  const url = `${base}${normalizedHash}`
-  window.open(url, '_blank', 'noopener')
+function handleViewHistory(row) {
+  if (!row?.id) {
+    ElMessage.warning('无法获取作业信息')
+    return
+  }
+  historyJobMeta.value = {
+    id: row.id,
+    title: row.title || ''
+  }
+  historyDialogVisible.value = true
 }
 
 function handleCreateJob(type) {
@@ -434,13 +478,6 @@ function handleCreateJob(type) {
   const hash = params.toString()
     ? `#/appman/job/create?${params.toString()}`
     : '#/appman/job/create'
-  openAngularRoute(hash)
-}
-
-function handleViewJob(row) {
-  if (!row?.id) return
-  const hash = `#/appman/job/view/${encodeURIComponent(row.id)}`
-  openAngularRoute(hash)
 }
 
 function reloadJobs() {
@@ -473,31 +510,21 @@ function typeIcon(type) {
   return item?.icon ?? 'fa-question-circle'
 }
 
-watch(
-  () => [store.filters.type, store.filters.appletCode],
-  () => {
-    currentPage.value = 1
-    selectedRows.value = []
-    moveTarget.value = ''
-    void store.loadJobs()
-  },
-  { immediate: true }
-)
-
-onMounted(() => {
-  // if (!jobs.value.length) {
-  //   void store.loadJobs()
-  // }
-  // debugger
+function getAppList() {
   jaoApi.appList().then((response) => {
     // //console.log('App List:', response.data);
-    appOptions.value = [{ name: '', show: true, title: '所有应用' }, { name: '$NULL$', show: true, title: '未分配' }].concat(response.data.map(app => ({ ...app, show: true })))
+    appOptions.value = [{ name: '', show: true, title: '所有应用' }, { name: '$NULL$', show: true, title: '未分类' }].concat(response.data.map(app => ({ ...app, show: true })))
   }).catch((error) => {
     console.error('Failed to fetch app list:', error);
   });
+}
+
+onMounted(() => {
+  getAppList()
 })
 </script>
 
 <style scoped lang="scss">
 @import '@/modules/automation/styles/common.scss';
+
 </style>
