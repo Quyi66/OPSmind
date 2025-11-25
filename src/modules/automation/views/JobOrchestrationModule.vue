@@ -28,7 +28,7 @@
 import { computed, ref } from 'vue'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
 import JobListView from '@/modules/automation/components/job/JobListView/JobListView.vue'
-import JobScheduleView from '@/modules/automation/components/job/JobScheduleView.vue'
+import JobScheduleView from '@/modules/automation/components/job/schedule/JobScheduleView.vue'
 import JobMyRequestsView from '@/modules/automation/components/job/JobMyRequestsView.vue'
 import JobApprovalsView from '@/modules/automation/components/job/JobApprovalsView.vue'
 import JobRunLogsView from '@/modules/automation/components/job/JobRunLogsView.vue'

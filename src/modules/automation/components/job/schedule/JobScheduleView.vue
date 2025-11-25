@@ -131,58 +131,61 @@
         <p>选择左侧流程以查看实例</p>
       </div>
     </section>
+
+    <FlowEditor
+      v-model="flowEditorVisible"
+      :mode="flowEditorMode"
+      :flow-id="editingFlowId"
+      @saved="handleFlowSaved"
+    />
+
+    <FlowInstanceViewer
+      v-model="instanceViewerVisible"
+      :instance-id="viewingInstanceId"
+    />
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
 import * as jaoApi from '@/modules/automation/api/jao'
+import FlowEditor from './components/FlowEditor.vue'
+import FlowInstanceViewer from './components/FlowInstanceViewer.vue'
 
-type FlowRecord = {
-  id: string
-  name: string
-  updatedAt?: string
-  createdAt?: string
-}
-
-type InstanceRecord = {
-  id: string
-  name: string
-  hostCount: number
-  stepCount: number
-  createdAt?: string
-  createdBy?: string
-}
-
-const flowList = ref<FlowRecord[]>([])
+const flowList = ref([])
 const flowsLoading = ref(false)
 const flowFilter = ref('')
-const orderField = ref<'name' | 'updatedAt'>('updatedAt')
+const orderField = ref('updatedAt')
 const orderDesc = ref(false)
 const activeFlowId = ref('')
-const instanceRows = ref<InstanceRecord[]>([])
+const instanceRows = ref([])
 const instancesLoading = ref(false)
 const instanceKeyword = ref('')
 const legacyBase = computed(() => appUrlManager.getAppUrl('jao').replace(/#.*$/, ''))
 const collator = new Intl.Collator('zh-Hans-CN', { sensitivity: 'base', numeric: true })
+const flowEditorVisible = ref(false)
+const flowEditorMode = ref('edit')
+const editingFlowId = ref('')
+const instanceViewerVisible = ref(false)
+const viewingInstanceId = ref('')
 
 const visibleFlows = computed(() => {
   const term = flowFilter.value.trim().toLowerCase()
   const filtered = !term
     ? [...flowList.value]
-    : flowList.value.filter((flow: FlowRecord) => flow.name?.toLowerCase().includes(term))
-  return filtered.sort((a: FlowRecord, b: FlowRecord) => compareFlows(a, b))
+    : flowList.value.filter((flow) => flow.name?.toLowerCase().includes(term))
+  return filtered.sort((a, b) => compareFlows(a, b))
 })
 
-const activeFlow = computed(() => flowList.value.find((flow: FlowRecord) => flow.id === activeFlowId.value) || null)
+const activeFlow = computed(() => flowList.value.find((flow) => flow.id === activeFlowId.value) || null)
 const orderFieldLabel = computed(() => (orderField.value === 'name' ? '名称' : '更新时间'))
 
 const filteredInstances = computed(() => {
   if (!instanceKeyword.value) return instanceRows.value
   const term = instanceKeyword.value.trim().toLowerCase()
-  return instanceRows.value.filter((item: InstanceRecord) => {
+  return instanceRows.value.filter((item) => {
     return (
       item.name.toLowerCase().includes(term) ||
       (item.createdBy ? item.createdBy.toLowerCase().includes(term) : false)
@@ -190,17 +193,17 @@ const filteredInstances = computed(() => {
   })
 })
 
-watch(flowList, (list: FlowRecord[]) => {
+watch(flowList, (list) => {
   if (!list.length) {
     activeFlowId.value = ''
     return
   }
-  if (!list.some((flow: FlowRecord) => flow.id === activeFlowId.value)) {
+  if (!list.some((flow) => flow.id === activeFlowId.value)) {
     activeFlowId.value = list[0].id
   }
 })
 
-watch(activeFlowId, (id: string) => {
+watch(activeFlowId, (id) => {
   instanceKeyword.value = ''
   if (!id) {
     instanceRows.value = []
@@ -218,7 +221,7 @@ async function fetchFlowList() {
   try {
     const response = await jaoApi.fetchFlows()
     flowList.value = normalizeFlows(resolveResponseArray(response))
-  } catch (error: any) {
+  } catch (error) {
     ElMessage.error(error?.message || '获取流程列表失败')
     flowList.value = []
   } finally {
@@ -226,13 +229,13 @@ async function fetchFlowList() {
   }
 }
 
-async function fetchFlowInstances(flowId: string) {
+async function fetchFlowInstances(flowId) {
   if (!flowId) return
   instancesLoading.value = true
   try {
     const response = await jaoApi.fetchFlowInstances(flowId)
     instanceRows.value = normalizeInstances(resolveResponseArray(response))
-  } catch (error: any) {
+  } catch (error) {
     ElMessage.error(error?.message || '获取流程实例失败')
     instanceRows.value = []
   } finally {
@@ -246,11 +249,11 @@ function refreshInstances() {
   }
 }
 
-function handleSelectFlow(flow: FlowRecord) {
+function handleSelectFlow(flow) {
   activeFlowId.value = flow.id
 }
 
-function handleOrderCommand(field: 'name' | 'updatedAt') {
+function handleOrderCommand(field) {
   if (orderField.value === field) {
     orderDesc.value = !orderDesc.value
   } else {
@@ -259,27 +262,44 @@ function handleOrderCommand(field: 'name' | 'updatedAt') {
   }
 }
 
+function openFlowEditor(mode, flowId = '') {
+  flowEditorMode.value = mode
+  editingFlowId.value = flowId
+  flowEditorVisible.value = true
+}
+
 function handleCreateFlow() {
-  window.open(`${legacyBase.value}#/jao/flows/new`, '_blank', 'noopener')
+  openFlowEditor('create')
 }
 
-function handleRunFlow(flow: FlowRecord) {
-  window.open(`${legacyBase.value}#/jao/flows/${flow.id}/instance/create`, '_blank', 'noopener')
+function handleRunFlow(flow) {
+  openFlowEditor('run', flow.id)
 }
 
-function handleEditFlow(flow: FlowRecord) {
-  window.open(`${legacyBase.value}#/jao/flows/${flow.id}/edit`, '_blank', 'noopener')
+function handleEditFlow(flow) {
+  openFlowEditor('edit', flow.id)
 }
 
-function handleLegacyFlowDetail(flow: FlowRecord) {
+function handleFlowSaved() {
+  flowEditorVisible.value = false
+  const wasEditingFlowId = editingFlowId.value
+  editingFlowId.value = ''
+  fetchFlowList()
+  if (wasEditingFlowId === activeFlowId.value && activeFlowId.value) {
+    refreshInstances()
+  }
+}
+
+function handleLegacyFlowDetail(flow) {
   window.open(`${legacyBase.value}#/jao/flows/${flow.id}/instances/list`, '_blank', 'noopener')
 }
 
-function handleViewInstance(instance: InstanceRecord) {
-  window.open(`${legacyBase.value}#/jao/flows/instance/${instance.id}/view`, '_blank', 'noopener')
+function handleViewInstance(instance) {
+  viewingInstanceId.value = instance.id
+  instanceViewerVisible.value = true
 }
 
-function compareFlows(a: FlowRecord, b: FlowRecord) {
+function compareFlows(a, b) {
   const field = orderField.value
   let diff = 0
   if (field === 'name') {
@@ -295,44 +315,48 @@ function compareFlows(a: FlowRecord, b: FlowRecord) {
   return orderDesc.value ? -diff : diff
 }
 
-function normalizeFlows(rows: any[]): FlowRecord[] {
+function normalizeFlows(rows) {
   if (!Array.isArray(rows)) return []
-  return rows.map((row) => ({
-    id: row.id ?? row.flowId ?? '',
-    name: row.name ?? row.flowName ?? '未命名流程',
-    updatedAt: row.updatedAt ?? row.updated_at ?? row.modifiedAt ?? '',
-    createdAt: row.createdAt ?? row.created_at ?? ''
-  })).filter((item) => !!item.id)
+  return rows
+    .map((row) => ({
+      id: row.id ?? row.flowId ?? '',
+      name: row.name ?? row.flowName ?? '未命名流程',
+      updatedAt: row.updatedAt ?? row.updated_at ?? row.modifiedAt ?? '',
+      createdAt: row.createdAt ?? row.created_at ?? ''
+    }))
+    .filter((item) => !!item.id)
 }
 
-function normalizeInstances(rows: any[]): InstanceRecord[] {
+function normalizeInstances(rows) {
   if (!Array.isArray(rows)) return []
-  return rows.map((row) => {
-    const hosts = safeJsonArray(row.hosts)
-    const steps = safeJsonArray(row.stepIds)
-    return {
-      id: row.id ?? row.instanceId ?? '',
-      name: row.name ?? row.instanceName ?? '未命名实例',
-      hostCount: hosts.length,
-      stepCount: steps.length,
-      createdAt: row.createdAt ?? row.startTime ?? row.created_at,
-      createdBy: row.createdBy ?? row.creator ?? row.runBy ?? ''
-    }
-  }).filter((item) => !!item.id)
+  return rows
+    .map((row) => {
+      const hosts = safeJsonArray(row.hosts)
+      const steps = safeJsonArray(row.stepIds)
+      return {
+        id: row.id ?? row.instanceId ?? '',
+        name: row.name ?? row.instanceName ?? '未命名实例',
+        hostCount: hosts.length,
+        stepCount: steps.length,
+        createdAt: row.createdAt ?? row.startTime ?? row.created_at,
+        createdBy: row.createdBy ?? row.creator ?? row.runBy ?? ''
+      }
+    })
+    .filter((item) => !!item.id)
 }
 
-function safeJsonArray(source: unknown) {
+function safeJsonArray(source) {
   if (!source) return []
   if (Array.isArray(source)) return source
   try {
-    const parsed = JSON.parse(source as string)
+    const parsed = JSON.parse(String(source))
     return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
   }
 }
 
-function resolveResponseArray(response: any): any[] {
+function resolveResponseArray(response) {
   if (!response) return []
   if (Array.isArray(response)) return response
   if (Array.isArray(response?.data)) return response.data
@@ -341,14 +365,14 @@ function resolveResponseArray(response: any): any[] {
   return []
 }
 
-function formatDateTime(value?: string | number | Date) {
+function formatDateTime(value) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-function pad(value: number) {
+function pad(value) {
   return value < 10 ? `0${value}` : String(value)
 }
 </script>
