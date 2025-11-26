@@ -24,10 +24,10 @@ export interface JobTypeOption {
 
 export const JOB_TYPE_OPTIONS: JobTypeOption[] = [
   { label: '全部类型', value: '', icon: 'fa-list' },
-  { label: '脚本作业', value: 'script', icon: 'fa-laptop-code' },
+  { label: '脚本作业', value: 'script', icon: 'fa-file-alt' },
   { label: '命令作业', value: 'command', icon: 'fa-terminal' },
-  { label: 'REST 作业', value: 'rest', icon: 'fa-cloud-upload-alt' },
-  // { label: '流程作业', value: 'process', icon: 'fa-project-diagram' }
+  { label: 'REST 作业', value: 'rest', icon: 'fa-cloud-upload' },
+  // { label: '流程作业', value: 'process', icon: 'fa-random' }
 ]
 
 export const useAutomationJobStore = defineStore('automation/jobs', () => {

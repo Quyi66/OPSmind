@@ -7,14 +7,13 @@
       <el-scrollbar class="sidebar-list">
         <button
           v-for="applet in appOptions"
-          :key="applet"
+          :key="applet.name || 'all'"
           class="sidebar-item"
           :class="{ 'is-active': currentApp.name === applet.name }"
           @click="selectApplet(applet)"
           v-show="applet.show"
         >
           <span>{{ applet.title }}</span>
-          <!-- <el-tag type="info" size="small">{{ appletCounts[applet] || 0 }}</el-tag> -->
         </button>
       </el-scrollbar>
     </aside>
@@ -68,8 +67,9 @@
               v-model="jobTypeValue"
               size="small"
               class="header-select--narrow"
-              @change="filterList('type', jobTypeValue)"
+              @change="filterList"
             >
+              <el-option label="全部" value="all" />
               <el-option
                 v-for="option in jobTypeOptions"
                 :key="option.value"
@@ -122,7 +122,7 @@
 
       <el-table
         v-loading="loading"
-        :data="paginatedJobs"
+        :data="displayedJobs"
         @selection-change="handleSelectionChange"
         class="job-table"
         max-height="calc(100vh - 420px)"
@@ -197,9 +197,9 @@
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
-          :total="paginatedJobs.length"
-          :page-sizes="[10, 20, 50]"
-          layout="total, sizes, prev, pager, next"
+          :total="filteredJobsCount"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
           background
         />
       </div>
@@ -218,6 +218,14 @@
       :job-id="historyJobMeta?.id || ''"
       :job-title="historyJobMeta?.title || ''"
     />
+    <CreateJobDialog
+      v-if="createDialogVisible"
+      v-model="createDialogVisible"
+      :job-type="createJobType"
+      :applet-code="currentApp.name"
+      :applets-list="appOptions"
+      @success="handleCreateSuccess"
+    />
   </div>
 </template>
 
@@ -231,6 +239,7 @@ import { Plus, Delete, RefreshRight, Search, ArrowDown } from '@element-plus/ico
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteJobDialog from './ExecuteJobDialog.vue'
 import ExecuteHistoryDialog from './ExecuteHistoryDialog.vue'
+import CreateJobDialog from './CreateJobDialog.vue'
 
 const store = useAutomationJobStore()
 const { error, filteredJobs, jobs } = storeToRefs(store)
@@ -251,6 +260,8 @@ const executeDialogVisible = ref(false)
 const executeJobMeta = ref(null)
 const historyDialogVisible = ref(false)
 const historyJobMeta = ref(null)
+const createDialogVisible = ref(false)
+const createJobType = ref('')
 
 /** 过滤app */
 function filterApplets() {
@@ -260,24 +271,28 @@ function filterApplets() {
   })
 }
 
-const jobTypeValue = ref('')
-/** 过滤列表 */
-function filterList(key, value) {
-  // if (!key && !value) {
-  //   paginatedJobs.value = originalJobs.value.filter((job) => {
-  //     if (job)
-  //   })
-  // }
-  if (!value) {
-    paginatedJobs.value = originalJobs.value
-    return
+const jobTypeValue = ref('all')
+
+/** 过滤列表 - 支持关键词和类型筛选 */
+function filterList() {
+  let filtered = originalJobs.value
+
+  // 按类型筛选
+  if (jobTypeValue.value && jobTypeValue.value !== 'all') {
+    filtered = filtered.filter(job => job.type === jobTypeValue.value)
   }
-  paginatedJobs.value = originalJobs.value.filter((job) => {
-    if (job[key] !== value) {
-      return false
-    }
-    return true
-  })
+
+  // 按关键词搜索（搜索标题、描述、ID）
+  if (keyword.value && keyword.value.trim()) {
+    const kw = keyword.value.trim().toLowerCase()
+    filtered = filtered.filter(job => {
+      return (job.title && job.title.toLowerCase().includes(kw)) ||
+             (job.description && job.description.toLowerCase().includes(kw)) ||
+             (job.id && job.id.toLowerCase().includes(kw))
+    })
+  }
+
+  paginatedJobs.value = filtered
 }
 
 /**删除作业 */
@@ -331,13 +346,17 @@ watch(historyDialogVisible, (visible) => {
 const jobTypeOptions = computed(() =>
   JOB_TYPE_OPTIONS.map((option) => ({
     label: option.label,
-    value: option.value,
+    value: option.value || 'all',  // 把空字符串映射为 'all' 用于筛选
     icon: option.icon
   }))
 )
 
 const createJobOptions = computed(() =>
-  jobTypeOptions.value.filter((option) => option.value !== 'all')
+  JOB_TYPE_OPTIONS.filter((option) => option.value !== '').map((option) => ({
+    label: option.label,
+    value: option.value,
+    icon: option.icon
+  }))
 )
 
 const selectedIds = computed(() =>
@@ -374,6 +393,16 @@ const moveTargetOptions = computed(() =>
 )
 
 const canMove = computed(() => selectedIds.value.length > 0 && !!moveTarget.value)
+
+// 过滤后的数据总数
+const filteredJobsCount = computed(() => paginatedJobs.value.length)
+
+// 当前页显示的数据
+const displayedJobs = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return paginatedJobs.value.slice(start, end)
+})
 
 watch(selectedIds, (ids) => {
   if (!ids.length) {
@@ -441,6 +470,8 @@ async function handleMoveJobs() {
     await store.moveSelected(selectedIds.value, moveTarget.value)
     ElMessage.success('移动成功')
     selectedRows.value = []
+    // 刷新当前列表
+    getAppTableList(currentApp.value.name)
   } catch (error_) {
     const message = error_ instanceof Error ? error_.message : '移动作业失败'
     ElMessage.error(message)
@@ -452,8 +483,14 @@ async function handleMoveJobs() {
 
 async function handleCopy(row) {
   if (!row?.id) return
-  await store.duplicateJob(row.id)
-  ElMessage.success('复制成功')
+  try {
+    await store.duplicateJob(row.id)
+    ElMessage.success('复制成功')
+    // 刷新当前列表
+    getAppTableList(currentApp.value.name)
+  } catch (error) {
+    ElMessage.error('复制失败')
+  }
 }
 
 function handleViewHistory(row) {
@@ -469,19 +506,21 @@ function handleViewHistory(row) {
 }
 
 function handleCreateJob(type) {
-  const applet = store.filters.appletCode
-  const params = new URLSearchParams()
-  if (type) params.append('type', type)
-  if (applet && applet !== 'ALL' && applet !== '__UNASSIGNED__') {
-    params.append('appletCode', applet)
-  }
-  const hash = params.toString()
-    ? `#/appman/job/create?${params.toString()}`
-    : '#/appman/job/create'
+  createJobType.value = type || ''
+  createDialogVisible.value = true
+}
+
+/**
+ * 创建作业成功后刷新列表
+ */
+function handleCreateSuccess() {
+  getAppTableList(currentApp.value.name)
 }
 
 function reloadJobs() {
-  void store.loadJobs()
+  if (currentApp.value && currentApp.value.name !== undefined) {
+    getAppTableList(currentApp.value.name)
+  }
 }
 
 function formatDate(value) {
@@ -510,10 +549,50 @@ function typeIcon(type) {
   return item?.icon ?? 'fa-question-circle'
 }
 
+/**
+ * 翻译应用标题，处理 #{key} 格式
+ */
+function translateAppTitle(title) {
+  if (!title) return ''
+
+  if (title.startsWith('#{') && title.endsWith('}')) {
+    const key = title.slice(2, -1)
+    const translations = {
+      'cac.index.square': '系统巡检',
+      'acm.title': '资产管理',
+      'app_pms.title': '密码管理',
+      'app_sudo.title': 'sudo权限管理',
+      'app_vap.title': '补丁管理',
+      'app_spm.title': '软件管理',
+      'app_uim.name': '用户管理'
+    }
+    return translations[key] || title
+  }
+
+  return title
+}
+
 function getAppList() {
   jaoApi.appList().then((response) => {
-    // //console.log('App List:', response.data);
-    appOptions.value = [{ name: '', show: true, title: '所有应用' }, { name: '$NULL$', show: true, title: '未分类' }].concat(response.data.map(app => ({ ...app, show: true })))
+    const apps = response.data || []
+
+    // 处理应用列表，翻译标题
+    const translatedApps = apps.map(app => ({
+      ...app,
+      show: true,
+      title: translateAppTitle(app.title)
+    }))
+
+    // 添加"所有应用"和"未分类"选项在最前面
+    appOptions.value = [
+      { name: '', show: true, title: '所有应用' },
+      { name: '$NULL$', show: true, title: '未分类' }
+    ].concat(translatedApps)
+
+    // 默认选中第一个（所有应用）
+    if (appOptions.value.length > 0) {
+      selectApplet(appOptions.value[0])
+    }
   }).catch((error) => {
     console.error('Failed to fetch app list:', error);
   });

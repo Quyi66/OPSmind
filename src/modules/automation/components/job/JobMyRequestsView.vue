@@ -1,41 +1,350 @@
 <template>
-  <div class="placeholder-card">
-    <el-empty
-      image-size="120"
-      description="暂无作业申请记录"
-    >
-      <div class="tips">
-        作业申请迁移尚未完成，可先通过旧版系统查看
+  <div class="my-requests-view">
+    <header class="page-header">
+      <h3 class="page-title">我的申请</h3>
+      <div class="header-actions">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索作业名称"
+          clearable
+          style="width: 240px"
+          @input="handleSearch"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+        <el-select
+          v-model="statusFilter"
+          placeholder="状态筛选"
+          clearable
+          style="width: 140px"
+          @change="handleSearch"
+        >
+          <el-option label="全部状态" :value="null" />
+          <el-option label="待审批" :value="0" />
+          <el-option label="已通过" :value="1" />
+          <el-option label="已拒绝" :value="2" />
+          <el-option label="已取消" :value="3" />
+        </el-select>
+        <el-button
+          type="danger"
+          size="small"
+          :disabled="!selectedIds.length"
+          @click="handleBatchDelete"
+        >
+          <i class="fa fa-trash me-1" />删除
+        </el-button>
       </div>
-      <el-button type="primary" text @click="openLegacy">
-        打开旧版我的申请
-      </el-button>
-    </el-empty>
+    </header>
+
+    <div class="table-container">
+      <el-table
+        v-loading="loading"
+        :data="filteredData"
+        stripe
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
+
+        <el-table-column label="作业" min-width="250">
+          <template #default="{ row }">
+            <div class="job-cell">
+              <a class="job-name" @click="handleViewDetail(row)">
+                {{ row.jobName }}
+              </a>
+              <div class="job-meta">
+                <span class="job-type">
+                  <i :class="getJobTypeIcon(row.jobType)" />
+                  {{ getJobTypeLabel(row.jobType) }}
+                </span>
+                <el-tag size="small" type="info">{{ row.jobId }}</el-tag>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="审批模式" width="130">
+          <template #default="{ row }">
+            {{ getApproveModeLabel(row.approveMode) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="有效时长" width="110">
+          <template #default="{ row }">
+            {{ row.approveMode !== 'limitParams' && row.validHour ? `${row.validHour} 小时` : '-' }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="审批人" width="120">
+          <template #default="{ row }">
+            {{ row.approver || '-' }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="审批时间" width="170">
+          <template #default="{ row }">
+            {{ formatDateTime(row.approveTime) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.status)">
+              {{ getStatusLabel(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="过期时间" width="170">
+          <template #default="{ row }">
+            {{ formatExpirationTime(row.expirationTime) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="100" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.status === 0"
+              type="danger"
+              text
+              size="small"
+              @click="handleCancel(row)"
+            >
+              取消
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { appUrlManager } from '@/config/module-urls.config'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import * as jaoApi from '@/modules/automation/api/jao'
 
-function openLegacy() {
-  const url = appUrlManager.getAppUrl('jao')
-  window.open(`${url.replace(/#.*$/, '')}#/jao/approve/my`, '_blank', 'noopener')
+const loading = ref(false)
+const tableData = ref([])
+const selectedIds = ref([])
+const searchKeyword = ref('')
+const statusFilter = ref(null)
+
+const filteredData = computed(() => {
+  let data = tableData.value
+
+  // 文本筛选
+  if (searchKeyword.value) {
+    const keyword = searchKeyword.value.toLowerCase()
+    data = data.filter(item =>
+      item.jobName?.toLowerCase().includes(keyword) ||
+      item.jobId?.toLowerCase().includes(keyword) ||
+      item.approver?.toLowerCase().includes(keyword)
+    )
+  }
+
+  // 状态筛选
+  if (statusFilter.value !== null && statusFilter.value !== undefined) {
+    data = data.filter(item => item.status === statusFilter.value)
+  }
+
+  return data
+})
+
+const jobTypeMap = {
+  standalone: { icon: 'fa fa-terminal', label: '独立作业' },
+  flow: { icon: 'fa fa-stream', label: '流程作业' },
+  schedule: { icon: 'fa fa-clock', label: '定时作业' }
+}
+
+const approveModeMap = {
+  limitParams: '限定参数',
+  noLimitParams: '不限定参数'
+}
+
+const statusMap = {
+  0: { label: '待审批', type: 'warning' },
+  1: { label: '已通过', type: 'success' },
+  2: { label: '已拒绝', type: 'danger' },
+  3: { label: '已取消', type: 'info' }
+}
+
+onMounted(() => {
+  fetchData()
+})
+
+async function fetchData() {
+  loading.value = true
+  try {
+    const response = await jaoApi.fetchMyApproveList()
+    tableData.value = response?.data || response || []
+  } catch (error) {
+    ElMessage.error(error?.message || '获取申请列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function handleSelectionChange(selection) {
+  selectedIds.value = selection.map(item => item.id)
+}
+
+function handleSearch() {
+  // 筛选逻辑由 computed 自动处理
+}
+
+function getJobTypeIcon(type) {
+  return jobTypeMap[type]?.icon || 'fa fa-file'
+}
+
+function getJobTypeLabel(type) {
+  return jobTypeMap[type]?.label || type
+}
+
+function getApproveModeLabel(mode) {
+  return approveModeMap[mode] || '-'
+}
+
+function getStatusLabel(status) {
+  return statusMap[status]?.label || '-'
+}
+
+function getStatusType(status) {
+  return statusMap[status]?.type || 'info'
+}
+
+function formatDateTime(value) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
+function formatExpirationTime(value) {
+  if (!value) return '-'
+  if (value === 'expired') return '已过期'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
+function handleViewDetail(row) {
+  ElMessage.info('查看详情功能开发中')
+}
+
+async function handleCancel(row) {
+  try {
+    await ElMessageBox.confirm('确定要取消此申请吗？', '取消申请', {
+      type: 'warning'
+    })
+
+    loading.value = true
+    await jaoApi.cancelApprove(row.id)
+    ElMessage.success('已取消申请')
+    await fetchData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error?.message || '取消申请失败')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleBatchDelete() {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedIds.value.length} 条申请吗？`,
+      '批量删除',
+      { type: 'warning' }
+    )
+
+    loading.value = true
+    await jaoApi.deleteApprove(selectedIds.value.join(','))
+    ElMessage.success('删除成功')
+    selectedIds.value = []
+    await fetchData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error?.message || '删除失败')
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
 <style scoped>
-.placeholder-card {
+.my-requests-view {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 0;
+  flex-direction: column;
+  height: 100%;
   background: #fff;
   border-radius: 12px;
-  border: 1px dashed rgba(148, 163, 184, 0.4);
+  overflow: hidden;
 }
 
-.tips {
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.table-container {
+  flex: 1;
+  padding: 24px;
+  overflow: auto;
+}
+
+.job-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.job-name {
+  font-weight: 500;
+  color: #3b82f6;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.job-name:hover {
+  text-decoration: underline;
+}
+
+.job-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.job-type {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: #64748b;
-  margin-bottom: 12px;
+}
+
+.job-type i {
+  font-size: 13px;
 }
 </style>

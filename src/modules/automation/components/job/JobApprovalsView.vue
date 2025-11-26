@@ -1,41 +1,389 @@
 <template>
-  <div class="placeholder-card">
-    <el-empty
-      image-size="120"
-      description="审批列表暂未迁移至新版界面"
-    >
-      <div class="tips">
-        您可以继续使用旧版页面处理审批任务
+  <div class="approvals-view">
+    <header class="page-header">
+      <h3 class="page-title">作业审批</h3>
+      <div class="header-actions">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索作业名称"
+          clearable
+          style="width: 240px"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+        <el-select
+          v-model="statusFilter"
+          placeholder="状态筛选"
+          clearable
+          style="width: 140px"
+        >
+          <el-option label="全部状态" :value="null" />
+          <el-option label="待审批" :value="0" />
+          <el-option label="已通过" :value="1" />
+          <el-option label="已拒绝" :value="2" />
+          <el-option label="已取消" :value="3" />
+        </el-select>
       </div>
-      <el-button type="primary" text @click="openLegacy">
-        打开旧版作业审批
-      </el-button>
-    </el-empty>
+    </header>
+
+    <div class="table-container">
+      <el-table
+        v-loading="loading"
+        :data="filteredData"
+        stripe
+      >
+        <el-table-column label="作业" min-width="250">
+          <template #default="{ row }">
+            <div class="job-cell">
+              <a class="job-name" @click="handleViewDetail(row)">
+                {{ row.jobName }}
+              </a>
+              <div class="job-meta">
+                <span class="job-type">
+                  <i :class="getJobTypeIcon(row.jobType)" />
+                  {{ getJobTypeLabel(row.jobType) }}
+                </span>
+                <el-tag size="small" type="info">{{ row.jobId }}</el-tag>
+              </div>
+              <div v-if="row.description" class="job-description">
+                {{ row.description }}
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="审批模式" width="130">
+          <template #default="{ row }">
+            {{ getApproveModeLabel(row.approveMode) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="有效时长" width="110">
+          <template #default="{ row }">
+            {{ row.approveMode !== 'limitParams' && row.validHour ? `${row.validHour} 小时` : '-' }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="申请人" width="120">
+          <template #default="{ row }">
+            {{ row.applicant || '-' }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="申请时间" width="170">
+          <template #default="{ row }">
+            {{ formatDateTime(row.applyTime) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.status)">
+              {{ getStatusLabel(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="过期时间" width="170">
+          <template #default="{ row }">
+            {{ formatExpirationTime(row.expirationTime) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <div class="action-buttons">
+              <el-button
+                v-if="row.status === 0"
+                type="success"
+                text
+                size="small"
+                @click="handlePass(row)"
+              >
+                通过
+              </el-button>
+              <el-button
+                v-if="row.status === 0"
+                type="danger"
+                text
+                size="small"
+                @click="handleRefuse(row)"
+              >
+                拒绝
+              </el-button>
+              <el-button
+                v-if="row.status === 1 && row.canCanceled"
+                type="warning"
+                text
+                size="small"
+                @click="handleDiscard(row)"
+              >
+                作废
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { appUrlManager } from '@/config/module-urls.config'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import * as jaoApi from '@/modules/automation/api/jao'
 
-function openLegacy() {
-  const url = appUrlManager.getAppUrl('jao')
-  window.open(`${url.replace(/#.*$/, '')}#/jao/approve/list`, '_blank', 'noopener')
+const loading = ref(false)
+const tableData = ref([])
+const searchKeyword = ref('')
+const statusFilter = ref(null)
+
+const filteredData = computed(() => {
+  let data = tableData.value
+
+  // 文本筛选
+  if (searchKeyword.value) {
+    const keyword = searchKeyword.value.toLowerCase()
+    data = data.filter(item =>
+      item.jobName?.toLowerCase().includes(keyword) ||
+      item.jobId?.toLowerCase().includes(keyword) ||
+      item.applicant?.toLowerCase().includes(keyword)
+    )
+  }
+
+  // 状态筛选
+  if (statusFilter.value !== null && statusFilter.value !== undefined) {
+    data = data.filter(item => item.status === statusFilter.value)
+  }
+
+  return data
+})
+
+const jobTypeMap = {
+  standalone: { icon: 'fa fa-terminal', label: '独立作业' },
+  flow: { icon: 'fa fa-stream', label: '流程作业' },
+  schedule: { icon: 'fa fa-clock', label: '定时作业' }
+}
+
+const approveModeMap = {
+  limitParams: '限定参数',
+  noLimitParams: '不限定参数'
+}
+
+const statusMap = {
+  0: { label: '待审批', type: 'warning' },
+  1: { label: '已通过', type: 'success' },
+  2: { label: '已拒绝', type: 'danger' },
+  3: { label: '已取消', type: 'info' }
+}
+
+onMounted(() => {
+  fetchData()
+})
+
+async function fetchData() {
+  loading.value = true
+  try {
+    const response = await jaoApi.fetchApproveList()
+    tableData.value = response?.data || response || []
+  } catch (error) {
+    ElMessage.error(error?.message || '获取审批列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+function getJobTypeIcon(type) {
+  return jobTypeMap[type]?.icon || 'fa fa-file'
+}
+
+function getJobTypeLabel(type) {
+  return jobTypeMap[type]?.label || type
+}
+
+function getApproveModeLabel(mode) {
+  return approveModeMap[mode] || '-'
+}
+
+function getStatusLabel(status) {
+  return statusMap[status]?.label || '-'
+}
+
+function getStatusType(status) {
+  return statusMap[status]?.type || 'info'
+}
+
+function formatDateTime(value) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
+function formatExpirationTime(value) {
+  if (!value) return '-'
+  if (value === 'expired') return '已过期'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
+function handleViewDetail(row) {
+  ElMessage.info('查看详情功能开发中')
+}
+
+async function handlePass(row) {
+  try {
+    await ElMessageBox.confirm(
+      `确定要通过作业 "${row.jobName}" 的审批申请吗？`,
+      '通过审批',
+      { type: 'success' }
+    )
+
+    loading.value = true
+    await jaoApi.passApprove(row.id, null)
+    ElMessage.success('审批已通过')
+    await fetchData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error?.message || '审批通过失败')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleRefuse(row) {
+  try {
+    const { value: reason } = await ElMessageBox.prompt(
+      '请输入拒绝理由',
+      '拒绝审批',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputType: 'textarea',
+        inputPlaceholder: '请输入拒绝理由'
+      }
+    )
+
+    loading.value = true
+    await jaoApi.refuseApprove(row.id, reason)
+    ElMessage.success('审批已拒绝')
+    await fetchData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error?.message || '拒绝审批失败')
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleDiscard(row) {
+  try {
+    await ElMessageBox.confirm(
+      `确定要作废作业 "${row.jobName}" 的审批吗？`,
+      '作废审批',
+      { type: 'warning' }
+    )
+
+    loading.value = true
+    await jaoApi.discardApprove(row.id)
+    ElMessage.success('审批已作废')
+    await fetchData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error?.message || '作废审批失败')
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
 <style scoped>
-.placeholder-card {
+.approvals-view {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 0;
+  flex-direction: column;
+  height: 100%;
   background: #fff;
   border-radius: 12px;
-  border: 1px dashed rgba(148, 163, 184, 0.4);
+  overflow: hidden;
 }
 
-.tips {
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.table-container {
+  flex: 1;
+  padding: 24px;
+  overflow: auto;
+}
+
+.job-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.job-name {
+  font-weight: 500;
+  color: #3b82f6;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.job-name:hover {
+  text-decoration: underline;
+}
+
+.job-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.job-type {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: #64748b;
-  margin-bottom: 12px;
+}
+
+.job-type i {
+  font-size: 13px;
+}
+
+.job-description {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 4px;
 }
 </style>

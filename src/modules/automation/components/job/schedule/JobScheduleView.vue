@@ -68,9 +68,9 @@
                     <i class="fa fa-edit" />
                   </el-button>
                 </el-tooltip>
-                <el-tooltip content="旧版更多" placement="top">
-                  <el-button text circle size="small" @click.stop="handleLegacyFlowDetail(flow)">
-                    <i class="fa fa-external-link-alt" />
+                <el-tooltip content="删除" placement="top">
+                  <el-button text circle size="small" @click.stop="handleDeleteFlow(flow)">
+                    <i class="fa fa-trash-alt" />
                   </el-button>
                 </el-tooltip>
               </div>
@@ -148,7 +148,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
 import * as jaoApi from '@/modules/automation/api/jao'
 import FlowEditor from './components/FlowEditor.vue'
@@ -280,6 +280,33 @@ function handleEditFlow(flow) {
   openFlowEditor('edit', flow.id)
 }
 
+function handleDeleteFlow(flow) {
+  ElMessageBox.confirm(
+    `确定要删除流程「${flow.name}」吗？此操作不可恢复。`,
+    '删除确认',
+    {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonClass: 'el-button--danger'
+    }
+  ).then(async () => {
+    try {
+      await jaoApi.deleteFlow(flow.id)
+      ElMessage.success('删除成功')
+      // 如果删除的是当前选中的流程，清空选中
+      if (activeFlowId.value === flow.id) {
+        activeFlowId.value = ''
+      }
+      fetchFlowList()
+    } catch (error) {
+      ElMessage.error(error?.message || '删除失败')
+    }
+  }).catch(() => {
+    // 用户取消删除
+  })
+}
+
 function handleFlowSaved() {
   flowEditorVisible.value = false
   const wasEditingFlowId = editingFlowId.value
@@ -288,10 +315,6 @@ function handleFlowSaved() {
   if (wasEditingFlowId === activeFlowId.value && activeFlowId.value) {
     refreshInstances()
   }
-}
-
-function handleLegacyFlowDetail(flow) {
-  window.open(`${legacyBase.value}#/jao/flows/${flow.id}/instances/list`, '_blank', 'noopener')
 }
 
 function handleViewInstance(instance) {

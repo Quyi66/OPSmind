@@ -15,10 +15,54 @@ export const deleteJobs = (ids) => {
   return useApi().delete(`jao/api/jao/jobs/delete-batch?ids=${ids}`);
 }
 
+/** 创建作业 */
+export const createJob = (data) => {
+  return useApi().post('/jao/api/jao/jobs', data);
+}
+
 /** 获取作业详情 */
 export const getJobDetail = (id) => {
   return useApi().get(`/jao/api/jao/jobs/${id}`);
 }
+
+// ==================== 作业申请相关 API ====================
+
+/** 获取我的申请列表 */
+export function fetchMyApproveList() {
+  return useApi().get('/jao/api/jao/jobs/approve/my')
+}
+
+/** 取消申请 */
+export function cancelApprove(approveId) {
+  return useApi().post('/jao/api/jao/approve/cancel', { approveId })
+}
+
+/** 删除申请 */
+export function deleteApprove(ids) {
+  return useApi().delete('/jao/api/jao/approve/delete-batch', { params: { ids } })
+}
+
+/** 获取审批列表 */
+export function fetchApproveList() {
+  return useApi().get('/jao/api/jao/jobs/approve/list')
+}
+
+/** 通过审批 */
+export function passApprove(approveId, remark) {
+  return useApi().post('/jao/api/jao/approve/approve', { approveId, remark })
+}
+
+/** 拒绝审批 */
+export function refuseApprove(approveId, remark) {
+  return useApi().post('/jao/api/jao/approve/refuse', { approveId, remark })
+}
+
+/** 作废审批 */
+export function discardApprove(approveId) {
+  return useApi().post('/jao/api/jao/approve/discard', { approveId })
+}
+
+// ==================== 作业执行相关 API ====================
 
 /** 执行作业 */
 export const executeJob = (data) => {
@@ -35,6 +79,125 @@ export const fetchJobRunLogs = (payload) => {
   return useApi().post('/dts/api/dts/q/data/JAO_LIST_RUN_LOGS/', payload, {
     params: { cacheBuster: Date.now() }
   });
+}
+
+/** 查询作业统计数据（最近30天） */
+export function fetchJobStats() {
+  return useApi().post('/dts/api/dts/q/data/JAO_COUNT_RUNS_BY_TIME/', {
+    params: {}
+  }, {
+    params: { cacheBuster: Date.now() }
+  })
+}
+
+/** 查询各作业运行次数汇总 */
+export function fetchJobRunCounts() {
+  return useApi().post('/dts/api/dts/q/data/JAO_COUNT_RUNS_BY_JOB/', {
+    params: {}
+  }, {
+    params: { cacheBuster: Date.now() }
+  })
+}
+
+// ==================== 定时任务相关 API ====================
+
+/** 获取定时任务列表 */
+export function fetchCronJobs() {
+  return useApi().get('/jao/api/jao/cron', {
+    params: { cacheBuster: Date.now() }
+  })
+}
+
+/** 创建定时任务 */
+export function createCronJob(data) {
+  return useApi().post('/jao/api/jao/cron', data)
+}
+
+/** 更新定时任务 */
+export function updateCronJob(data) {
+  return useApi().put('/jao/api/jao/cron', data)
+}
+
+/** 删除定时任务 */
+export function deleteCronJob(id) {
+  return useApi().delete(`/jao/api/jao/cron/${id}`)
+}
+
+/** 启动定时任务 */
+export function startCronJob(id) {
+  return useApi().get(`/jao/api/jao/cron/start/${id}`)
+}
+
+/** 停止定时任务 */
+export function stopCronJob(id) {
+  return useApi().get(`/jao/api/jao/cron/stop/${id}`)
+}
+
+/** 获取应用列表（用于任务类型映射） */
+export function fetchApplets() {
+  return useApi().get('/udp/api/udp/applets', {
+    params: { isPaging: true, cacheBuster: Date.now() }
+  })
+}
+
+/** 批量启停定时任务 */
+export function batchToggleCronJobs(statusData) {
+  return useApi().post('/jao/api/jao/cron/start-stop', statusData)
+}
+
+/** 立即执行定时任务一次 */
+export function executeCronJob(id) {
+  return useApi().get(`/jao/api/jao/cron/execute/${id}`)
+}
+
+/** 复制定时任务 */
+export function copyCronJob(id) {
+  return useApi().get(`/jao/api/jao/cron/copy/${id}`)
+}
+
+/** 查询Cron表达式的下次执行时间 */
+export function queryNextExecutionTime(scheduleConf) {
+  return useApi().get('/jao/api/jao/cron/nextTriggerTime', {
+    params: {
+      scheduleConf,
+      cacheBuster: Date.now()
+    }
+  })
+}
+
+/** 根据ID获取定时任务详情 */
+export function fetchCronJobById(id) {
+  return useApi().get(`/jao/api/jao/cron/${id}`)
+}
+
+/** 根据类型获取作业列表(script/rest) */
+export function fetchJobsByType(type) {
+  return useApi().get(`/jao/api/jao/jobs?type=${type}`)
+}
+
+/** 获取CAC巡检任务列表 */
+export function fetchCacJobs() {
+  return useApi().get('/cac/api/cac/v2/templates')
+}
+
+/** 获取CMD命令任务列表 */
+export function fetchCmdJobs() {
+  return useApi().get('/jao/api/jao/command/tenantId/user')
+}
+
+/** 获取已审批的命令列表 */
+export function fetchApprovedCommands() {
+  return useApi().get('/jao/api/jao/command/approve')
+}
+
+/** 获取Flow流程任务列表 */
+export function fetchFlowJobs() {
+  return useApi().get('/jao/api/jao/flows')
+}
+
+/** 根据ID获取作业详情 */
+export function fetchJobById(id) {
+  return useApi().get(`/jao/api/jao/jobs/${id}`)
 }
 
 /** 流程列表 */
