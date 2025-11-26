@@ -111,6 +111,8 @@ const activeComponent = computed(() => componentMap[activeView.value] || JobList
 
 .jao-module__content {
   min-height: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 1024px) {

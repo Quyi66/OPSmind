@@ -20,10 +20,10 @@
           style="width: 140px"
         >
           <el-option label="全部状态" :value="null" />
-          <el-option label="待审批" :value="0" />
-          <el-option label="已通过" :value="1" />
-          <el-option label="已拒绝" :value="2" />
-          <el-option label="已取消" :value="3" />
+          <el-option label="审批中" :value="0" />
+          <el-option label="审批通过" :value="1" />
+          <el-option label="审批未通过" :value="2" />
+          <el-option label="审批作废" :value="3" />
         </el-select>
       </div>
     </header>
@@ -54,7 +54,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="审批模式" width="130">
+        <el-table-column label="执行策略" width="130">
           <template #default="{ row }">
             {{ getApproveModeLabel(row.approveMode) }}
           </template>
@@ -168,15 +168,15 @@ const jobTypeMap = {
 }
 
 const approveModeMap = {
-  limitParams: '限定参数',
-  noLimitParams: '不限定参数'
+  limitParams: '限定参数执行',
+  noLimitParams: '不限定参数执行'
 }
 
 const statusMap = {
-  0: { label: '待审批', type: 'warning' },
-  1: { label: '已通过', type: 'success' },
-  2: { label: '已拒绝', type: 'danger' },
-  3: { label: '已取消', type: 'info' }
+  0: { label: '审批中', type: 'primary' },
+  1: { label: '审批通过', type: 'success' },
+  2: { label: '审批未通过', type: 'danger' },
+  3: { label: '审批作废', type: 'info' }
 }
 
 onMounted(() => {

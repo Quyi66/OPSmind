@@ -141,18 +141,18 @@
               </div>
             </fieldset>
 
-            <!-- 全局参数 -->
+            <!-- 运行参数 -->
             <fieldset class="form-fieldset">
               <legend>
-                全局参数
-                <el-tooltip content="定义可在脚本中使用的变量，格式为 {{变量名}}" placement="top">
+                运行参数
+                <el-tooltip content="运行参数会替换脚本命令行中 ${变量名} 形式的变量，以及主机的参数名" placement="top">
                   <i class="fa fa-question-circle text-muted ms-1" />
                 </el-tooltip>
               </legend>
               <div class="form-group">
                 <div class="param-toolbar">
-                  <el-button size="small" title="从脚本中自动解析参数" @click="handleParseParams">
-                    <i class="fa fa-brackets-curly text-primary me-1" />自动解析参数
+                  <el-button size="small" title="解析作业定义中的变量，自动添加为参数" @click="handleParseParams">
+                    <span class="text-primary me-1">{}</span>解析参数
                   </el-button>
                   <el-button size="small" class="ms-auto" title="添加参数" @click="addParam">
                     <i class="fa fa-plus" />
@@ -162,8 +162,8 @@
                 <table v-if="flow.globalParams.length" class="op-param-table table">
                   <thead>
                     <tr>
-                      <th>参数名</th>
-                      <th>展示名称</th>
+                      <th>运行参数</th>
+                      <th>显示名称</th>
                       <th>描述</th>
                       <th>
                         默认值

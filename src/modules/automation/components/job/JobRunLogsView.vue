@@ -1,7 +1,7 @@
 <template>
   <div class="run-logs-view">
     <header class="page-header">
-      <h3 class="page-title">运行记录</h3>
+      <h3 class="page-title">作业运行记录</h3>
       <div class="header-filters">
         <el-select
           v-model="filters.day"
@@ -22,12 +22,12 @@
         >
           <el-option label="全部状态" value="all" />
           <el-option label="等待中" value="WAITING" />
-          <el-option label="运行中" value="RUNNING" />
-          <el-option label="回调中" value="CALLBACK" />
-          <el-option label="错误" value="ERROR" />
-          <el-option label="失败" value="FAILED" />
-          <el-option label="已完成" value="COMPLETED" />
-          <el-option label="已中断" value="INTERRUPTED" />
+          <el-option label="正在运行" value="RUNNING" />
+          <el-option label="回调" value="CALLBACK" />
+          <el-option label="运行错误" value="ERROR" />
+          <el-option label="运行失败" value="FAILED" />
+          <el-option label="完成" value="COMPLETED" />
+          <el-option label="运行终止" value="INTERRUPTED" />
         </el-select>
         <el-input
           v-model="filters.search"
@@ -51,7 +51,7 @@
         v-loading="loading"
         :data="tableData"
         stripe
-        height="calc(100vh - 320px)"
+        height="100%"
       >
         <el-table-column label="开始时间" width="170" sortable>
           <template #default="{ row }">
@@ -59,25 +59,25 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="作业标题" min-width="250">
+        <el-table-column label="作业" min-width="250">
           <template #default="{ row }">
             <div class="job-title">{{ row.job_title }}</div>
           </template>
         </el-table-column>
 
-        <el-table-column label="作业类型" width="120">
+        <el-table-column label="类型" width="120">
           <template #default="{ row }">
             {{ getJobTypeLabel(row.job_type) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="执行人" width="120">
+        <el-table-column label="用户" width="120">
           <template #default="{ row }">
             {{ row.username || '-' }}
           </template>
         </el-table-column>
 
-        <el-table-column label="审批人" width="120">
+        <el-table-column label="审核" width="120">
           <template #default="{ row }">
             {{ row.review_user || '-' }}
           </template>
@@ -128,7 +128,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="canRerun(row)"
@@ -137,7 +137,7 @@
               size="small"
               @click="handleRerun(row)"
             >
-              <i class="fa fa-rocket me-1" />重跑
+              <i class="fa fa-rocket me-1" />重新启动作业
             </el-button>
           </template>
         </el-table-column>
@@ -200,12 +200,12 @@ const jobTypeMap = {
 
 const statusMap = {
   WAITING: { label: '等待中', type: 'info' },
-  RUNNING: { label: '运行中', type: 'primary' },
-  CALLBACK: { label: '回调中', type: 'primary' },
-  ERROR: { label: '错误', type: 'warning' },
-  FAILED: { label: '失败', type: 'danger' },
-  COMPLETED: { label: '已完成', type: 'success' },
-  INTERRUPTED: { label: '已中断', type: 'info' }
+  RUNNING: { label: '正在运行', type: 'primary' },
+  CALLBACK: { label: '回调', type: 'primary' },
+  ERROR: { label: '运行错误', type: 'warning' },
+  FAILED: { label: '运行失败', type: 'danger' },
+  COMPLETED: { label: '完成', type: 'success' },
+  INTERRUPTED: { label: '运行终止', type: 'info' }
 }
 
 onMounted(() => {
@@ -335,12 +335,12 @@ function handleViewResult(row) {
 async function handleRerun(row) {
   try {
     await ElMessageBox.confirm(
-      `确定要重新运行作业 "${row.job_title}" 吗？`,
-      '重跑作业',
+      `确定要重新启动作业 "${row.job_title}" 吗？`,
+      '重新启动作业',
       { type: 'warning' }
     )
 
-    ElMessage.info('重跑功能开发中')
+    ElMessage.info('重新启动作业功能开发中')
   } catch (error) {
     // 用户取消
   }
@@ -351,13 +351,18 @@ async function handleRerun(row) {
 .run-logs-view {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
 }
 
 .page-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -375,10 +380,13 @@ async function handleRerun(row) {
 .header-filters {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .table-container {
   flex: 1;
+  min-height: 0;
+  min-width: 0;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -387,6 +395,7 @@ async function handleRerun(row) {
 
 .table-container :deep(.el-table) {
   flex: 1;
+  min-height: 0;
 }
 
 .job-title {
