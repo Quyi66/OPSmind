@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-const{is}=require("bpmnlint-utils");function disallowNodeType(e){return function(){return{check:function(i,o){is(i,e)&&o.report(i.id,"Element has disallowed type <"+e+">")}}}}module.exports.disallowNodeType=disallowNodeType;

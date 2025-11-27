@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function n(n){this.evaluateRules=function(a,r,t,u){var i=angular.isArray(r)?r:[r],o=function(){var r=[];if(a)for(var t=0;t<a.length;t++){var u=n.strToFunc(a[t].expr);r.push(u)}return r}();a&&a.length>0&&i.forEach(function(r,i){for(var e=[n,r].concat(_.values(t)),c=0;c<o.length;c++){var l=o[c];if(angular.isFunction(l)&&!0===l.apply(this,e))return void u(i,a[c])}})}}angular.module("oplus.udp").service("conditionalFormat",n),n.$inject=["dataEx"]}();

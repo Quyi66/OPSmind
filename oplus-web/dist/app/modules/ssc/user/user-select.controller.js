@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){function e(e,s){var c=this;c.views={onUserSelected:function(e,s){c.params.onUserSelected&&c.params.onUserSelected(e,s)},registerSelectedUserHook:function(e){n=e},cancel:function(){e.close({action:"cancel"})},save:function(){var s=n();e.close({action:"confirm",users:s.users,ids:s.ids,selectedUser:s.selectedUser})}},c.params=s;var n=null}angular.module("oplus.ssc").controller("OpUserSelectDialogCtrl",e),e.$inject=["$uibModalInstance","params"]}();

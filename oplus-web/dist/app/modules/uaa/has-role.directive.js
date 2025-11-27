@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,a){return{restrict:"A",link:function(t,i,n){if(a.isDisabled())return;var r=n.uaaHasRole.replace(/\s+/g,""),u=void 0!==i.attr("uaa-deny-disable"),s=function(){u?i.removeAttr("disabled"):i.removeClass("hidden")},d=function(a){a&&s(),e.hasRole(r)?s():u?i.attr("disabled","disabled"):i.addClass("hidden")};r.length>0&&(d(!0),t.$watch(function(){return e.isAuthenticated},function(){d(!0)}))}}}angular.module("oplus.uaa").directive("uaaHasRole",e),e.$inject=["currentUser","uaaService"]}();

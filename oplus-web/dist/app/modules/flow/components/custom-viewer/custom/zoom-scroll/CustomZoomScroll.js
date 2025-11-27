@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import ZoomScrollModule from"diagram-js/lib/navigation/zoomscroll/ZoomScroll";ZoomScrollModule.prototype.scroll=()=>{};export default{__init__:["ZoomScroll"],ZoomScroll:["type",ZoomScrollModule]};

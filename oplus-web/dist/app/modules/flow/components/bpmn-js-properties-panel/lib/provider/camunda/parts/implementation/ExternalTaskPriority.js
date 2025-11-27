@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var entryFactory=require("../../../../factory/EntryFactory"),cmdHelper=require("../../../../helper/CmdHelper");module.exports=function(r,t,e,i){var a=e.getBusinessObject,o=entryFactory.textField(i,{id:"externalTaskPriority",label:i("Task Priority"),modelProperty:"taskPriority",get:function(r,t){return{taskPriority:a(r).get("camunda:taskPriority")}},set:function(r,t){var e=a(r);return cmdHelper.updateBusinessObject(r,e,{"camunda:taskPriority":t.taskPriority||void 0})}});return[o]};

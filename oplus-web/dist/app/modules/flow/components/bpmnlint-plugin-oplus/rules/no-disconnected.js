@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import{isAny}from"bpmnlint-utils";import translate from"../../i18n-bpmn/customTranslate";export default function(){return{check:function(n,t){if(!isAny(n,["bpmn:Task","bpmn:Gateway"])||n.triggeredByEvent)return;const e=n.incoming||[],i=n.outgoing||[];e.length&&i.length||t.report(n.id,translate("Lint-No Disconnected"))}}}

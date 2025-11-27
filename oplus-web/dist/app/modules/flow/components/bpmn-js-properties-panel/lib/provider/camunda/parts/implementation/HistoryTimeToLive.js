@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var entryFactory=require("../../../../factory/EntryFactory"),cmdHelper=require("../../../../helper/CmdHelper");module.exports=function(e,r,t,i){var o=t.getBusinessObject,s=entryFactory.textField(i,{id:"historyTimeToLive",label:i("History Time To Live"),modelProperty:"historyTimeToLive",get:function(e,r){var t=o(e).get("camunda:historyTimeToLive");return{historyTimeToLive:t||""}},set:function(e,r){var t=o(e);return cmdHelper.updateBusinessObject(e,t,{"camunda:historyTimeToLive":r.historyTimeToLive||void 0})}});return[s]};

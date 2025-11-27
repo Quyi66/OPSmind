@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,t,r,u){var a=e("api/userHabits/:id",{},{query:{method:"GET",isArray:!0},update:{method:"PUT"}});return{query:a.query,get:a.get,save:a.save,update:a.update,getUserHabit:function(e,a){var i=t.defer();return r.get("api/userHabits/"+u.loginId+"?module="+e+"&function="+a).then(function(e){i.resolve(e)}),i.promise}}}angular.module("oplus.uaa").factory("UserHabit",e),e.$inject=["$resource","$q","$http","currentUser"]}();

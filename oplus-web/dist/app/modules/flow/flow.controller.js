@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-flowController.$inject=["$scope","$state"];export default function flowController(o,t){this.$onInit=function(){t.current&&"app.flow"===t.current.name&&t.go("app.flow.list")}}

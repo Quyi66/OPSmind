@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t){t.state("jhi-configuration",{parent:"admin",url:"/configuration",data:{authorities:["ROLE_ADMIN"],pageTitle:"configuration.title"},views:{"content@":{templateUrl:"app/modules/adm/configuration/configuration.html",controller:"JhiConfigurationController",controllerAs:"vm"}},resolve:{}})}angular.module("oplus.adm").config(t),t.$inject=["$stateProvider"]}();

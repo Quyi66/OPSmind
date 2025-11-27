@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import inherits from"inherits";import{is}from"../../../util/ModelUtil";import CommandInterceptor from"diagram-js/lib/command/CommandInterceptor";import{getParent}from"../util/ModelingUtil";export default function CreateBehavior(e){e.invoke(CommandInterceptor,this),this.preExecute("shape.create",1500,function(e){var t=e.context,r=t.parent,i=t.shape;is(r,"bpmn:Lane")&&!is(i,"bpmn:Lane")&&(t.parent=getParent(r,"bpmn:Participant"))})}CreateBehavior.$inject=["injector"],inherits(CreateBehavior,CommandInterceptor);

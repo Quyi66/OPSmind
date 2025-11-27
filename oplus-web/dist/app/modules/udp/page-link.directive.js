@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function n(n){return{restrict:"A",scope:{udpPageLink:"<"},link:function(e,t,i){var c=e.udpPageLink;t.on("click.pagelink",function(e){n.openPage(c,{},{current:e.currentTarget}),e.preventDefault()}),e.$on("$destroy",function(){t.off("click.pagelink")})}}}angular.module("oplus.udp").directive("udpPageLink",n),n.$inject=["widgetInteraction"]}();

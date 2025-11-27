@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-const allRules=["conditional-flows","end-event-required","event-sub-process-typed-start-event","fake-join","label-required","no-complex-gateway","no-disconnected","no-duplicate-sequence-flows","no-gateway-join-fork","no-implicit-split","no-inclusive-gateway","single-blank-start-event","single-event-definition","start-event-required","sub-process-blank-start-event"];export const rules=allRules.reduce(function(e,n){return e[n]="error",e},{});

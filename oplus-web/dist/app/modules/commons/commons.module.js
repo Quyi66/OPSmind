@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.commons",["toaster","ui.bootstrap","vs-repeat","angularFileUpload"]).provider("commonsConfig",function(){var t;this.setDataExDefaultUnresolvedVar=function(n){t=n},this.$get=[function(){return{getDataExDefaultUnresolvedVar:function(){return t}}}]})}();

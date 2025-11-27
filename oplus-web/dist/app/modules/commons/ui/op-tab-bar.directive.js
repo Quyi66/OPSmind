@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t,n,i,o){setTimeout(function(){n.responsiveTabs()})}angular.module("oplus.commons").directive("opTabBar",["$timeout",function(n){return{restrict:"A",link:t}}])}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import inherits from"inherits";import OrderingProvider from"diagram-js/lib/features/ordering/OrderingProvider";import eleConst from"./custom-element.constants";export default function CustomOrderingProvider(e,r){OrderingProvider.call(this,e),this.getOrdering=function(e,i){if(eleConst.getElementsByType("connection").indexOf(e.type)>-1)return{parent:r.getRootElement(),index:-1}}}CustomOrderingProvider.$inject=["eventBus","canvas"],inherits(CustomOrderingProvider,OrderingProvider);

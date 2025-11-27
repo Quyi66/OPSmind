@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t){var c="cac";this.getCheckResultsByJobId=function(e,i,l){return t.callApi(c,"GET","/api/cac/v3/check-item-result/map/{logId}?start="+i+"&length="+l,{logId:e})},this.getBylogIdAllData=function(e){return t.callApi(c,"GET","/api/cac/v3/check-item-result/v3/{logId}",{logId:e})},this.getByIdCheckResult=function(e){return t.callApi(c,"GET","/api/cac/v3/check-item-result/{id}",{id:e})}}angular.module("oplus.cac").service("CheckResultService",t),t.$inject=["restUtils"]}();

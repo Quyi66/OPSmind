@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-const{is,isAny}=require("bpmnlint-utils"),find=require("lodash/find");module.exports=function(){return{check:function(n,e){if(isAny(n,["bpmn:Process"])&&!function(n){return(n.flowElements||[]).some(n=>{if(is(n,"bpmn:ServiceTask")&&"external"===n.type&&n.topic)return!0})}(n)){const i="Process";e.report(n.id,i+" 缺少任务节点")}}}};

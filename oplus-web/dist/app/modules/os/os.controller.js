@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){function o(o,t,n,e){var l=e.path();l.length-l.indexOf("os")<=4&&o.go("app.os.list")}angular.module("oplus.os").controller("osCtrl",o),o.$inject=["$state","$element","$timeout","$location"]}();

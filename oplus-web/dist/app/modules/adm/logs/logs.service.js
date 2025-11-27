@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e){return e("management/logs",{},{findAll:{method:"GET",isArray:!0},changeLevel:{method:"PUT"}})}angular.module("oplus.adm").factory("LogsService",e),e.$inject=["$resource"]}();

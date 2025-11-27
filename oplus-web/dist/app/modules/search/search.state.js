@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.search").config(["$stateProvider",function(e){!function(e){e.state("app.search",{url:"/search",useAsApplet:{type:"PrivateTool",code:"search",title:"System Search Center",icon:"fa-search",color:"#333"},views:{mainView:{templateUrl:"app/modules/search/search-index.html",controller:"SearchCtrl",controllerAs:"$ctrl"}}})}(e)}])}();

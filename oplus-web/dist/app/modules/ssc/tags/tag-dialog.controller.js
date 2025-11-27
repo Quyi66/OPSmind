@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function n(n,t,a,i,c,o){var e=this;e.clear=function(){i.close({action:"cancel"}),i.dismiss({action:"cancel"})},e.tag=o;o.id;function s(){e.isSaving=!1}e.save=function(){e.isSaving=!0,c.saveTag(e.tag).then(function(n){i.close({action:"save"}),e.isSaving=!1,s()}).catch(function(n){throw s(),n})},n(function(){angular.element(".form-group:eq(0)>input").focus()})}angular.module("oplus.ssc").controller("udpTagDialogController",n),n.$inject=["$timeout","$scope","$stateParams","$uibModalInstance","udpTagsService","entity"]}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var entryFactory=require("../../../../factory/EntryFactory");module.exports=function(e,t,r){var o=(t=t||{}).id||"name",a=t.label||r("Name"),y=t.modelProperty||"name";return[entryFactory.textBox(r,{id:o,label:a,modelProperty:y,get:t.get,set:t.set})]};

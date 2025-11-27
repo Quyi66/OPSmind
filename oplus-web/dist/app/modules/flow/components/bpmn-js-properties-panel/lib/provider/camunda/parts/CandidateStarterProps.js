@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var is=require("bpmn-js/lib/util/ModelUtil").is,getBusinessObject=require("bpmn-js/lib/util/ModelUtil").getBusinessObject,candidateStarter=require("./implementation/CandidateStarter");module.exports=function(e,t,i,s){var r=getBusinessObject(t);(is(t,"camunda:Process")||is(t,"bpmn:Participant")&&r.get("processRef"))&&(e.entries=e.entries.concat(candidateStarter(t,i,{getBusinessObject:function(e){var t=getBusinessObject(e);return is(t,"bpmn:Participant")?t.get("processRef"):t}},s)))};

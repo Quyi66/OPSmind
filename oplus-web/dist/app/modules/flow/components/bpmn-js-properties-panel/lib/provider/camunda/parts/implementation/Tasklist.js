@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var entryFactory=require("../../../../factory/EntryFactory"),cmdHelper=require("../../../../helper/CmdHelper");module.exports=function(t,e,r,a){var s=r.getBusinessObject,n=entryFactory.checkbox(a,{id:"isStartableInTasklist",label:a("Startable"),modelProperty:"isStartableInTasklist",get:function(t,e){var r=s(t).get("camunda:isStartableInTasklist");return{isStartableInTasklist:r||""}},set:function(t,e){var r=s(t);return cmdHelper.updateBusinessObject(t,r,{"camunda:isStartableInTasklist":!!e.isStartableInTasklist})}});return[n]};

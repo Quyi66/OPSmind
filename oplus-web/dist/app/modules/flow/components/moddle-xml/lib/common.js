@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-export function hasLowerCaseAlias(e){return e.xml&&"lowerCase"===e.xml.tagAlias}export var DEFAULT_NS_MAP={xsi:"http://www.w3.org/2001/XMLSchema-instance"};export var XSI_TYPE="xsi:type";function serializeFormat(e){return e.xml&&e.xml.serialize}export function serializeAsType(e){return serializeFormat(e)===XSI_TYPE}export function serializeAsProperty(e){return"property"===serializeFormat(e)}

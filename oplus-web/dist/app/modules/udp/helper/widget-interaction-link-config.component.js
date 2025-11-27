@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.udp").component("udpWidgetInteractionLinkConfig",{bindings:{props:"="},templateUrl:"app/modules/udp/helper/widget-interaction-link-config.html",controller:["$scope",function(n){}]})}(jQuery);

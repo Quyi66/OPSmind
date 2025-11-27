@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import constants from"../components/custom-modeler/custom/custom-element.constants";export default{name:"OPlus-flow",uri:"http://famessoft.com/schema/1.0/bpmn",prefix:"oplus",xml:{tagAlias:"lowerCase"},types:[{name:"Process",isAbstract:!0,extends:["bpmn:Process"],properties:[{name:"singleton",isAttr:!0,type:"String"}]},{name:"ServiceTaskLike",extends:["bpmn:ServiceTask"],properties:[{name:"javaDelegate",isAttr:!0,type:"String"},{name:"forceJob",isAttr:!0,type:"String"}]}],emumerations:[],associations:[]};

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import{is}from"bpmnlint-utils";export default function(){return{check:function(t,e){is(t,"bpmn:Definitions")&&!t.targetNamespace&&e.report(t.id,"Element is missing targetNamespace")}}}

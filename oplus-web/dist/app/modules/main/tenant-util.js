@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function n(){function n(){return window.$oplus.appConfig.useMultiTenant}function i(){return this.useMultiTenantEnv()&&!!window.location.href.match(/\/oplus-admin(\/|#|$)/)}function t(){return!!window.location.href.match(/\/oplus-admin(\/|#|$)/)||!window.location.href.match(/\/oplus\//)}var u={useMultiTenantEnv:n,isTenantAdminUI:i,isOplusAdminUI:t};this.useMultiTenantEnv=n,this.isTenantAdminUI=i,this.isOplusAdminUI=t,this.$get=function(){return u}}angular.module("oplus.main").provider("tenantUtil",n),n.$inject=[]}();

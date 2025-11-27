@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t){return t("api/activate",{},{get:{method:"GET",params:{},isArray:!1}})}angular.module("oplus.uaa").factory("Activate",t),t.$inject=["$resource"]}();

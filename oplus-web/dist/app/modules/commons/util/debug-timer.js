@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-angular.module("oplus.commons").service("debugTimer",function(){var n={},t={},i={};this.add=function(i,e){n[i]=(n[i]||0)+Date.now()-e,t[i]=(t[i]||0)+1},this.reset=function(){n={},t={}},this.print=function(n){return this},this.newDebugVar=function(n,t){i[n]=t},this.getDebugVar=function(n,t){var e=i[n];return angular.isUndefined(e)&&(i[n]=t),i[n]}});

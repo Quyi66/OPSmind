@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,s,t,a){this.fetchNewMessagesCount=t.fetchNewMessagesCount,this.fetchMessages=t.fetchMessages,this.handleMessage=t.handleMessage,this.convertToZhTWP=a.translateTwp}angular.module("oplus.mac").service("macService",e),e.$inject=["currentUser","$uibModal","messageApi","i18nService"]}();

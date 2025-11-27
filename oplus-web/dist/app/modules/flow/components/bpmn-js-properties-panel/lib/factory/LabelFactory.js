@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-"use strict";var label=function(e){return{id:e.id,html:'<label data-value="label" data-show="showLabel" class="entry-label'+(e.divider?" divider":"")+'"></label>',get:function(l,t){return"function"==typeof e.get?e.get(l,t):{label:e.labelText}},showLabel:function(l,t){return"function"!=typeof e.showLabel||e.showLabel(l,t)}}};module.exports=label;

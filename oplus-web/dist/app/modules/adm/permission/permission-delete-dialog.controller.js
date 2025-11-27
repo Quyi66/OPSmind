@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function e(e,n,i,t){var o=this;o.permission=n,o.clear=function(){e.dismiss("cancel")},o.confirmDelete=function(n){i.delete({id:n},function(){e.close(!0)},function(){t.alertWarning("警告","该权限正在被角色使用,无法删除!")})}}angular.module("oplus.adm").controller("PermissionDeleteController",e),e.$inject=["$uibModalInstance","entity","Permission","messageService"]}();

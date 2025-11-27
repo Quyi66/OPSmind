@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-import{getBusinessObject}from"../../../util/ModelUtil";import{isExpanded}from"../../../util/DiUtil";export function isDifferentType(e){return function(t){var i=t.target,n=getBusinessObject(e),r=n.eventDefinitions&&n.eventDefinitions[0],s=n.$type===i.type,d=(r&&r.$type)===i.eventDefinitionType,o=n.triggeredByEvent===i.triggeredByEvent,p=void 0===i.isExpanded||i.isExpanded===isExpanded(n);return!(s&&d&&o&&p)}}

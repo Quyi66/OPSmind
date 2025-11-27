@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t,e,i){var n=echarts5.init(e[0],i.theme);t.$watch(i.ecData,function(){var e=t.$eval(i.ecData);angular.isObject(e)&&n.setOption(e)},!0),t.getDom=function(){return{height:e[0].offsetHeight,width:e[0].offsetWidth}},t.$watch(t.getDom,function(){n.resize()},!0)}angular.module("oplus.cac").directive("eEchart",function(){return{restrict:"A",link:t}})}();

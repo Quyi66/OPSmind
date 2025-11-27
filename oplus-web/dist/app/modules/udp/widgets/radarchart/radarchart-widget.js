@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.udp").run(["echartsWidgetBuilder","widgetFactory",function(e,t){t.defineWidget({type:"radarchart",name:"雷达图",group:"data",resizable:"h",configController:function(e){e.axisOptions={xAxis:{allowType:!1,customizable:""},yAxis:{multiple:!0,allowType:!1,allowPosition:!1,customizable:"lineStyle,pointStyle"}}},controlRenderer:e.getControlRenderer("radar")})}])}();

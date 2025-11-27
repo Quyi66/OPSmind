@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function n(n,e,o){return{get:function(t){var i=n.getObject(t);_.find(o,{code:i})||(e.info('Resetting invalid cookie language "'+i+'" to preferred language "'+window.$oplus.appConfig.i18n.defaultLanguage+'"'),n.putObject(t,window.$oplus.appConfig.i18n.defaultLanguage));return i},put:function(e,o){n.putObject(e,o)}}}angular.module("oplus.commons").factory("translationStorageProvider",n),n.$inject=["$cookies","$log","LANGUAGES"]}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";angular.module("oplus.main").config(["$httpProvider",function(n){n.interceptors.push(["$q",function(n){return{request:function(i){var o=i.url;return 0===o.indexOf("management/")||0===o.indexOf("api/")&&0!==o.indexOf("api/data")?i||n.when(i):i}}}])}]).config(["cfpLoadingBarProvider",function(n){n.includeSpinner=!1}]).config(["$uibModalProvider",function(n){n.options.animation=!1}])}();

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-const{is}=require("bpmnlint-utils");module.exports=function(){return{check:function(n,e){is(n,"bpmn:ManualTask")&&e.report(n.id,"Element has disallowed type bpmn:ManualTask")}}};

@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){"use strict";function t(t){return t("api/account/reset-password/init",{},{})}angular.module("oplus.uaa").factory("PasswordResetInit",t),t.$inject=["$resource"]}();

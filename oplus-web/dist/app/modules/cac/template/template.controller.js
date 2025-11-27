@@ -1,2 +1,0 @@
-/*! oplus-modules v1.0.0 */
-!function(){function e(e,c,t,a,l,i,o,r,n,m){}angular.module("oplus.cac").controller("CacTemplateIndexCtrl",e),e.$inject=["$scope","$timeout","$state","cacService","cacTemplateService","$compile","messageService","$filter","$http","$stateParams"]}();
