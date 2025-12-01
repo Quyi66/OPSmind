@@ -17,7 +17,8 @@ export interface ModuleRegistryEntry {
 const moduleComponentLoaders: Partial<Record<string, AsyncComponentLoader>> = {
   jao: () => import('@/modules/automation/views/JobOrchestrationModule.vue'),
   gfs: () => import('@/modules/automation/views/ScriptLibraryModule.vue'),
-  cmd: () => import('@/modules/automation/views/CommandCenterModule.vue')
+  cmd: () => import('@/modules/automation/views/CommandCenterModule.vue'),
+  patches: () => import('@/modules/patches/views/PatchManagementModule.vue')
   // 其余模块将逐步补充 Vue 实现
 }
 
