@@ -182,10 +182,13 @@ const allowedAngularOrigins = (() => {
 let angularAuthLogoutPending = false
 window.addEventListener('message', event => {
   const message = event?.data
-  if (!message || message.source !== 'oplus-angular') {
+
+  // 检查消息来源是否为 Angular iframe
+  if (!message || message.source !== 'angular-iframe') {
     return
   }
 
+  // 验证消息来源 origin（安全检查）
   const origin = event.origin || window.location.origin
   if (origin && !allowedAngularOrigins.has(origin)) {
     console.warn('⚠️ Ignoring Angular iframe message from unexpected origin', {
@@ -195,12 +198,20 @@ window.addEventListener('message', event => {
     return
   }
 
-  console.debug('📬 Message from Angular iframe', { origin, message })
+  console.debug('📬 Message from Angular iframe', { origin, type: message.type, message })
 
-  if (message.type === 'ANGULAR_AUTH_EXPIRED') {
+  // 处理 Angular 登录页跳转通知（认证过期或需要重新登录）
+  if (message.type === 'OPLUS_AUTH_REQUIRED') {
     if (angularAuthLogoutPending) return
     angularAuthLogoutPending = true
-    console.warn('🔐 AngularJS iframe reported expired authentication', message.payload)
+
+    console.warn('🔐 AngularJS iframe reported login required', {
+      type: message.type,
+      url: message.url,
+      timestamp: message.timestamp
+    })
+
+    // 执行 Vue 端的登出操作
     authService.logout()
   }
 })
