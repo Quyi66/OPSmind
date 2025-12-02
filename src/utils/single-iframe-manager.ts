@@ -429,6 +429,15 @@ export class SingleIframeManager {
         const targetEntryUrl = initialUrl || fallbackEntryUrl
         const authUrl = this.buildAuthUrl(targetEntryUrl)
 
+        // 检查 sessionStorage 中是否有 oplus-base-uaa（Angular 认证信息）
+        // 如果没有，说明是首次登录，需要等待 Vue 端同步认证信息到 sessionStorage
+        const hasAngularAuth = !!sessionStorage.getItem('oplus-base-uaa')
+        if (!hasAngularAuth) {
+          console.log('⏳ No oplus-base-uaa found, waiting 2.5s for auth sync...')
+          await new Promise(resolve => setTimeout(resolve, 2500))
+          console.log('✅ Auth sync delay completed, proceeding with iframe load')
+        }
+
         this.iframe.src = authUrl.toString()
         this.lastUrl = authUrl.toString()
         this.currentModule = initialModuleCode ?? 'dashboard'
