@@ -1,6 +1,6 @@
 <template>
-  <div class="module-page">
-    <header class="module-page__header">
+  <div class="module-page" :class="{ 'no-header': hideHeader }">
+    <header v-if="!hideHeader" class="module-page__header">
       <div class="module-page__title">
         <h1>{{ title }}</h1>
         <!-- <p v-if="description" class="module-page__description">{{ description }}</p> -->
@@ -10,11 +10,11 @@
       </div>
     </header>
 
-    <section class="module-page__toolbar">
+    <section v-if="!hideHeader" class="module-page__toolbar">
       <slot name="toolbar" />
     </section>
 
-    <main class="module-page__body">
+    <main class="module-page__body" :class="{ 'full-height': hideHeader }">
       <slot />
     </main>
   </div>
@@ -29,6 +29,10 @@ const props = defineProps({
   description: {
     type: String,
     default: ''
+  },
+  hideHeader: {
+    type: Boolean,
+    default: false
   }
 })
 </script>
@@ -84,6 +88,17 @@ const props = defineProps({
   overflow: auto;
   background: linear-gradient(180deg, rgba(241, 245, 249, 0.6) 0%, rgba(248, 250, 252, 0.6) 100%);
   font-size: 13px;
+
+  &.full-height {
+    padding: 0;
+  }
+}
+
+.module-page.no-header {
+  .module-page__body {
+    padding: 0;
+    background: #fff;
+  }
 }
 
 @media (max-width: 1024px) {

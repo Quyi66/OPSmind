@@ -18,7 +18,10 @@ const moduleComponentLoaders: Partial<Record<string, AsyncComponentLoader>> = {
   jao: () => import('@/modules/automation/views/JobOrchestrationModule.vue'),
   gfs: () => import('@/modules/automation/views/ScriptLibraryModule.vue'),
   cmd: () => import('@/modules/automation/views/CommandCenterModule.vue'),
-  patches: () => import('@/modules/patches/views/PatchManagementModule.vue')
+  patches: () => import('@/modules/patches/views/PatchManagementModule.vue'),
+  software: () => import('@/modules/software/views/SoftwareIndex.vue'),
+  cac: () => import('@/modules/inspection/views/InspectionIndex.vue'),
+  acm: () => import('@/modules/asset/views/AssetIndex.vue')
   // 其余模块将逐步补充 Vue 实现
 }
 
