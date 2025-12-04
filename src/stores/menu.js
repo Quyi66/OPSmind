@@ -150,30 +150,67 @@ export const useMenuStore = defineStore('menu', () => {
     }
 
     const parts = clean.split('/').filter(Boolean)
-    const moduleCode = parts.length >= 2 ? parts[1] : parts[0]
-    const groupAlias = parts.length >= 2 ? parts[0] : null
-    const groupCode = groupAlias ? resolveGroupCode(groupAlias) : null
+    // 第一部分可能是分组别名或模块代码
+    const firstPart = parts[0]
+    // 第二部分可能是模块代码或子路由
+    const secondPart = parts.length >= 2 ? parts[1] : null
 
-    // 查找对应的菜单项
-    const info = getMenuItemInfo(moduleCode)
+    // 首先尝试用第一部分查找菜单项（如 /cac）
+    let info = getMenuItemInfo(firstPart)
+
+    // 如果第一部分匹配到菜单项，使用它
     if (info) {
-      // 直接设置状态，不触发自动选择逻辑
-      activeGroup.value = groupCode || info.group.code
-      activeMenuItem.value = moduleCode
+      activeGroup.value = info.group.code
+      activeMenuItem.value = firstPart
       showSideMenu.value = true
-      //console.log(
-      //   '🧭 Menu state set from route:',
-      //   routePath,
-      //   '-> Group:',
-      //   info.group.code,
-      //   'Item:',
-      //   moduleCode
-      // )
-      // 记录最近使用
-      recordRecent(moduleCode)
-    } else {
-      console.warn('⚠️ No menu item found for route:', routePath)
+      recordRecent(firstPart)
+      return
     }
+
+    // 如果第一部分没匹配，尝试用第二部分（如 /cac/email 中的 email）
+    if (secondPart) {
+      info = getMenuItemInfo(secondPart)
+      if (info) {
+        const groupCode = resolveGroupCode(firstPart) || info.group.code
+        activeGroup.value = groupCode
+        activeMenuItem.value = secondPart
+        showSideMenu.value = true
+        recordRecent(secondPart)
+        return
+      }
+
+      // 如果第二部分也没匹配，说明是子路由（如 /cac/email），使用第一部分作为模块
+      info = getMenuItemInfo(firstPart)
+      if (!info) {
+        // 尝试解析第一部分为分组别名，获取其第一个子菜单
+        const groupCode = resolveGroupCode(firstPart)
+        if (groupCode) {
+          const group = getMenuGroup(groupCode)
+          if (group && group.children && group.children.length > 0) {
+            activeGroup.value = groupCode
+            activeMenuItem.value = group.children[0].code
+            showSideMenu.value = true
+            recordRecent(group.children[0].code)
+            return
+          }
+        }
+      }
+    }
+
+    // 最后尝试将第一部分作为分组别名
+    const groupCode = resolveGroupCode(firstPart)
+    if (groupCode) {
+      const group = getMenuGroup(groupCode)
+      if (group && group.children && group.children.length > 0) {
+        activeGroup.value = groupCode
+        activeMenuItem.value = group.children[0].code
+        showSideMenu.value = true
+        recordRecent(group.children[0].code)
+        return
+      }
+    }
+
+    console.warn('⚠️ No menu item found for route:', routePath)
   }
 
   // 获取面包屑导航
