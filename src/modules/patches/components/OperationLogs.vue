@@ -1,269 +1,807 @@
 <template>
-  <div class="patch-logs">
-    <div class="page-header">
-      <div class="header-left">
-        <h2>操作日志</h2>
-        <span class="subtitle">补丁管理操作记录和报告</span>
-      </div>
+  <div class="operation-logs">
+    <!-- Tab 导航 -->
+    <div class="tab-nav">
+      <el-tabs v-model="activeTab" type="card">
+        <el-tab-pane label="操作记录" name="operation" />
+        <el-tab-pane label="漏洞报表" name="vulnerability" />
+        <el-tab-pane label="补丁报表" name="patch" />
+      </el-tabs>
     </div>
 
-    <!-- 筛选条件 -->
-    <div class="filter-bar">
-      <el-input
-        v-model="filterText"
-        placeholder="搜索..."
-        prefix-icon="Search"
-        style="width: 200px"
-        clearable
-        @input="handleFilter"
-      />
-      <el-select v-model="typeFilter" placeholder="操作类型" clearable style="width: 120px" @change="handleFilter">
-        <el-option label="补丁扫描" value="scan" />
-        <el-option label="补丁安装" value="install" />
-        <el-option label="补丁回退" value="rollback" />
-        <el-option label="漏洞扫描" value="vulnerability_scan" />
-      </el-select>
-      <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 120px" @change="handleFilter">
-        <el-option label="已完成" value="COMPLETED" />
-        <el-option label="失败" value="FAILED" />
-        <el-option label="运行中" value="RUNNING" />
-      </el-select>
-      <el-select v-model="dayFilter" placeholder="时间范围" style="width: 120px" @change="handleFilter">
-        <el-option label="今天" :value="1" />
-        <el-option label="近3天" :value="3" />
-        <el-option label="近7天" :value="7" />
-        <el-option label="近30天" :value="30" />
-      </el-select>
-      <el-button :loading="loading" @click="refresh">
-        <i class="fas fa-sync-alt" />
-        刷新
-      </el-button>
-    </div>
+    <!-- 操作记录 Tab -->
+    <div v-show="activeTab === 'operation'" class="tab-content">
+      <div class="page-content">
+        <!-- 时间范围 -->
+        <div class="time-range-section">
+          <span class="time-range-label">时间范围:</span>
+          <el-select v-model="dayFilter" style="width: 120px" @change="handleFilterChange">
+            <el-option label="Today" :value="1" />
+            <el-option label="近3天" :value="3" />
+            <el-option label="近7天" :value="7" />
+            <el-option label="近30天" :value="30" />
+          </el-select>
+        </div>
 
-    <!-- 日志表格 -->
-    <div class="table-container">
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        stripe
-        style="width: 100%"
-      >
-        <el-table-column prop="startTime" label="开始时间" width="160">
-          <template #default="{ row }">
-            {{ formatDateTime(row.startTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="type" label="操作类型" width="120">
-          <template #default="{ row }">
-            <el-tag :type="getTypeStyle(row.type)" size="small">
-              {{ getTypeLabel(row.type) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="target" label="目标" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="user" label="操作用户" width="120" />
-        <el-table-column prop="duration" label="耗时" width="100">
-          <template #default="{ row }">
-            {{ formatDuration(row.duration) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="endTime" label="结束时间" width="160">
-          <template #default="{ row }">
-            {{ formatDateTime(row.endTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusStyle(row.status)" size="small">
-              {{ getStatusLabel(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" size="small" link @click="handleViewDetail(row)">
-              详情
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+          <div class="filter-left">
+            <el-select v-model="engineFilter" placeholder="执行引擎节点" style="width: 140px" clearable @change="handleFilterChange">
+              <el-option label="全部" value="" />
+            </el-select>
+            <el-select v-model="statusFilter" placeholder="状态" style="width: 100px" clearable @change="handleFilterChange">
+              <el-option label="全部" value="all" />
+              <el-option label="完成" value="COMPLETED" />
+              <el-option label="失败" value="FAILED" />
+              <el-option label="运行中" value="RUNNING" />
+            </el-select>
+            <el-select v-model="actionFilter" placeholder="操作类型" style="width: 150px" clearable @change="handleFilterChange">
+              <el-option label="全部" value="all" />
+              <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
+              <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
+              <el-option label="补丁回退" value="#{app_vap.menu.patch_rollback.title}" />
+              <el-option label="Windows漏洞扫描" value="#{app_vap.menu.win_patch_scan.title}" />
+              <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
+            </el-select>
+            <el-input
+              v-model="searchText"
+              placeholder="搜索"
+              style="width: 180px"
+              clearable
+              @input="handleSearchInput"
+            >
+              <template #prefix>
+                <i class="fa fa-search" />
+              </template>
+            </el-input>
+            <el-button link @click="handleFilterChange">
+              <i class="fa fa-sync" />
             </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
+          </div>
+        </div>
 
-    <!-- 分页 -->
-    <div class="pagination-bar">
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="pagination.total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handlePageChange"
-      />
-    </div>
+        <!-- 表格区域 -->
+        <div class="table-section">
+          <el-table
+            v-loading="loading"
+            :data="tableData"
+            stripe
+            style="width: 100%"
+            size="small"
+          >
+            <el-table-column prop="start_time" label="开始时间" width="160" sortable>
+              <template #default="{ row }">
+                {{ formatTimestamp(row.start_time) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="action" label="操作" width="140" sortable>
+              <template #default="{ row }">
+                {{ translateAction(row.action) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="80" sortable>
+              <template #default="{ row }">
+                <el-tag
+                  :type="getStatusType(row.status)"
+                  size="small"
+                  :style="{ cursor: row.run_record ? 'pointer' : 'default' }"
+                  @click="row.run_record && handleViewRunResult(row)"
+                >
+                  {{ getStatusLabel(row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="ata_node" label="执行引擎节点" width="120" sortable />
+            <el-table-column prop="message" label="结果" min-width="300" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ translateMessage(row.message) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="username" label="用户" width="100" sortable />
+            <el-table-column prop="end_time" label="结束时间" width="160" sortable>
+              <template #default="{ row }">
+                {{ formatTimestamp(row.end_time) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="耗时" width="100">
+              <template #default="{ row }">
+                {{ calculateDuration(row.start_time, row.end_time) }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
 
-    <!-- 日志详情对话框 -->
-    <el-dialog
-      v-model="detailDialogVisible"
-      title="操作日志详情"
-      width="800px"
-    >
-      <div class="log-detail" v-if="selectedLog">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="操作类型">
-            <el-tag :type="getTypeStyle(selectedLog.type)" size="small">
-              {{ getTypeLabel(selectedLog.type) }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="getStatusStyle(selectedLog.status)" size="small">
-              {{ getStatusLabel(selectedLog.status) }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="操作用户">{{ selectedLog.user }}</el-descriptions-item>
-          <el-descriptions-item label="耗时">{{ formatDuration(selectedLog.duration) }}</el-descriptions-item>
-          <el-descriptions-item label="开始时间">{{ formatDateTime(selectedLog.startTime) }}</el-descriptions-item>
-          <el-descriptions-item label="结束时间">{{ formatDateTime(selectedLog.endTime) }}</el-descriptions-item>
-          <el-descriptions-item label="目标" :span="2">{{ selectedLog.target }}</el-descriptions-item>
-          <el-descriptions-item label="详细日志" :span="2">
-            <pre class="log-content">{{ selectedLog.logContent || '无详细日志' }}</pre>
-          </el-descriptions-item>
-        </el-descriptions>
+        <!-- 分页区域 -->
+        <div class="pagination-section">
+          <div class="pagination-left">
+            <el-select v-model="pagination.pageSize" style="width: 80px" @change="handleSizeChange">
+              <el-option :value="10" label="10" />
+              <el-option :value="25" label="25" />
+              <el-option :value="50" label="50" />
+              <el-option :value="100" label="100" />
+            </el-select>
+            <span class="pagination-info">{{ paginationInfo }}</span>
+          </div>
+          <div class="pagination-right">
+            <span class="page-info">Page {{ pagination.page }} of {{ totalPages }}</span>
+            <el-button-group>
+              <el-button size="small" :disabled="pagination.page <= 1" @click="handlePageChange(1)">
+                <i class="fa fa-angle-double-left" />
+              </el-button>
+              <el-button size="small" :disabled="pagination.page <= 1" @click="handlePageChange(pagination.page - 1)">
+                <i class="fa fa-angle-left" />
+              </el-button>
+              <el-button size="small" :disabled="pagination.page >= totalPages" @click="handlePageChange(pagination.page + 1)">
+                <i class="fa fa-angle-right" />
+              </el-button>
+              <el-button size="small" :disabled="pagination.page >= totalPages" @click="handlePageChange(totalPages)">
+                <i class="fa fa-angle-double-right" />
+              </el-button>
+            </el-button-group>
+          </div>
+        </div>
       </div>
-      <template #footer>
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
+    </div>
+
+    <!-- 漏洞报表 Tab -->
+    <div v-show="activeTab === 'vulnerability'" class="tab-content">
+      <div class="page-content">
+        <!-- 筛选区域 -->
+        <div class="filter-section simple-filter">
+          <el-input
+            v-model="vulFilterText"
+            placeholder="主机/KB编号"
+            style="width: 200px"
+            clearable
+            @keyup.enter="handleVulSearch"
+            @clear="handleVulSearch"
+          >
+            <template #prefix>
+              <i class="fa fa-search" />
+            </template>
+          </el-input>
+          <el-button link @click="loadVulData">
+            <i class="fa fa-sync" />
+          </el-button>
+        </div>
+
+        <!-- 表格区域 -->
+        <div class="table-section">
+          <el-table
+            v-loading="vulLoading"
+            :data="vulTableData"
+            stripe
+            style="width: 100%"
+            size="small"
+          >
+            <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="os" label="OS" width="100" />
+            <el-table-column prop="os_version" label="OS版本" width="150" />
+            <el-table-column prop="vul_id" label="KB编号" width="120" />
+            <el-table-column prop="scan_time" label="扫描时间" width="160">
+              <template #default="{ row }">
+                {{ formatTimestamp(row.scan_time) }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- 分页区域 -->
+        <div class="pagination-section">
+          <div class="pagination-left">
+            <el-select v-model="vulPagination.pageSize" style="width: 80px" @change="handleVulSizeChange">
+              <el-option :value="10" label="10" />
+              <el-option :value="25" label="25" />
+              <el-option :value="50" label="50" />
+              <el-option :value="100" label="100" />
+            </el-select>
+            <span class="pagination-info">{{ vulPaginationInfo }}</span>
+          </div>
+          <div class="pagination-right">
+            <span class="page-info">Page {{ vulPagination.page }} of {{ vulTotalPages }}</span>
+            <el-button-group>
+              <el-button size="small" :disabled="vulPagination.page <= 1" @click="handleVulPageChange(1)">
+                <i class="fa fa-angle-double-left" />
+              </el-button>
+              <el-button size="small" :disabled="vulPagination.page <= 1" @click="handleVulPageChange(vulPagination.page - 1)">
+                <i class="fa fa-angle-left" />
+              </el-button>
+              <el-button size="small" :disabled="vulPagination.page >= vulTotalPages" @click="handleVulPageChange(vulPagination.page + 1)">
+                <i class="fa fa-angle-right" />
+              </el-button>
+              <el-button size="small" :disabled="vulPagination.page >= vulTotalPages" @click="handleVulPageChange(vulTotalPages)">
+                <i class="fa fa-angle-double-right" />
+              </el-button>
+            </el-button-group>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 补丁报表 Tab -->
+    <div v-show="activeTab === 'patch'" class="tab-content">
+      <div class="page-content">
+        <!-- 筛选区域 -->
+        <div class="filter-section simple-filter">
+          <el-input
+            v-model="patchFilterText"
+            placeholder="主机/补丁编号/严重性"
+            style="width: 220px"
+            clearable
+            @keyup.enter="handlePatchSearch"
+            @clear="handlePatchSearch"
+          >
+            <template #prefix>
+              <i class="fa fa-search" />
+            </template>
+          </el-input>
+          <el-button link @click="loadPatchData">
+            <i class="fa fa-sync" />
+          </el-button>
+        </div>
+
+        <!-- 表格区域 -->
+        <div class="table-section">
+          <el-table
+            v-loading="patchLoading"
+            :data="patchTableData"
+            stripe
+            style="width: 100%"
+            size="small"
+          >
+            <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="os" label="OS" width="100" />
+            <el-table-column prop="os_version" label="OS版本" width="150" />
+            <el-table-column prop="patch_id" label="补丁编号" width="120" />
+            <el-table-column prop="summary" label="概要" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="severity" label="严重性" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getSeverityType(row.severity)" size="small">
+                  {{ row.severity }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="scan_time" label="扫描时间" width="160">
+              <template #default="{ row }">
+                {{ formatTimestamp(row.scan_time) }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- 分页区域 -->
+        <div class="pagination-section">
+          <div class="pagination-left">
+            <el-select v-model="patchPagination.pageSize" style="width: 80px" @change="handlePatchSizeChange">
+              <el-option :value="10" label="10" />
+              <el-option :value="25" label="25" />
+              <el-option :value="50" label="50" />
+              <el-option :value="100" label="100" />
+            </el-select>
+            <span class="pagination-info">{{ patchPaginationInfo }}</span>
+          </div>
+          <div class="pagination-right">
+            <span class="page-info">Page {{ patchPagination.page }} of {{ patchTotalPages }}</span>
+            <el-button-group>
+              <el-button size="small" :disabled="patchPagination.page <= 1" @click="handlePatchPageChange(1)">
+                <i class="fa fa-angle-double-left" />
+              </el-button>
+              <el-button size="small" :disabled="patchPagination.page <= 1" @click="handlePatchPageChange(patchPagination.page - 1)">
+                <i class="fa fa-angle-left" />
+              </el-button>
+              <el-button size="small" :disabled="patchPagination.page >= patchTotalPages" @click="handlePatchPageChange(patchPagination.page + 1)">
+                <i class="fa fa-angle-right" />
+              </el-button>
+              <el-button size="small" :disabled="patchPagination.page >= patchTotalPages" @click="handlePatchPageChange(patchTotalPages)">
+                <i class="fa fa-angle-double-right" />
+              </el-button>
+            </el-button-group>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 运行结果对话框 -->
+    <ExecuteResultDialog
+      v-model:visible="runResultDialogVisible"
+      :run-id="selectedRunId"
+      :title="selectedJobTitle"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { patchLogsApi } from '../api'
-import { OPERATION_TYPE_LABELS, TASK_STATUS_LABELS, TASK_STATUS_STYLES } from '../constants'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import { patchLogsApi, operationReportApi } from '../api'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
+// Tab 状态
+const activeTab = ref('operation')
+
+// ========== 操作记录 Tab ==========
 const loading = ref(false)
-const filterText = ref('')
-const typeFilter = ref('')
-const statusFilter = ref('')
-const dayFilter = ref(7)
-const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+const allTableData = ref([]) // 原始数据，用于前端筛选
+const pagination = reactive({
+  page: 1,
+  pageSize: 10,
+  total: 0
+})
 
-const detailDialogVisible = ref(false)
-const selectedLog = ref(null)
-
-function getTypeLabel(t) { return OPERATION_TYPE_LABELS[t] || t }
-function getTypeStyle(t) {
-  const map = { scan: 'primary', install: 'success', rollback: 'warning', vulnerability_scan: 'info' }
-  return map[t] || ''
-}
-function getStatusLabel(s) { return TASK_STATUS_LABELS[s] || s }
-function getStatusStyle(s) { return TASK_STATUS_STYLES[s] || '' }
-function formatDateTime(d) {
-  if (!d) return '-'
-  return new Date(d).toLocaleString('zh-CN', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
+// 前端筛选后的数据
+const filteredTableData = computed(() => {
+  if (!searchText.value) {
+    return allTableData.value
+  }
+  const keyword = searchText.value.toLowerCase()
+  return allTableData.value.filter(row => {
+    // 搜索多个字段：操作、执行引擎节点、结果、用户
+    const action = translateAction(row.action || '').toLowerCase()
+    const ataNode = (row.ata_node || '').toLowerCase()
+    const message = translateMessage(row.message || '').toLowerCase()
+    const username = (row.username || '').toLowerCase()
+    return action.includes(keyword) ||
+           ataNode.includes(keyword) ||
+           message.includes(keyword) ||
+           username.includes(keyword)
   })
-}
-function formatDuration(seconds) {
-  if (!seconds) return '-'
-  if (seconds < 60) return `${seconds}秒`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}分${seconds % 60}秒`
-  return `${Math.floor(seconds / 3600)}时${Math.floor((seconds % 3600) / 60)}分`
+})
+
+// 当前页展示的数据
+const tableData = computed(() => {
+  const start = (pagination.page - 1) * pagination.pageSize
+  const end = start + pagination.pageSize
+  return filteredTableData.value.slice(start, end)
+})
+
+// 总页数
+const totalPages = computed(() => {
+  return Math.ceil(filteredTableData.value.length / pagination.pageSize) || 1
+})
+
+// 筛选状态
+const actionFilter = ref('all')
+const statusFilter = ref('all')
+const dayFilter = ref(1)
+const engineFilter = ref('')
+const searchText = ref('')
+
+// 分页信息（基于筛选后的数据）
+const paginationInfo = computed(() => {
+  const total = filteredTableData.value.length
+  if (total === 0) return '0-0/0'
+  const start = (pagination.page - 1) * pagination.pageSize + 1
+  const end = Math.min(pagination.page * pagination.pageSize, total)
+  return `${start}-${end}/${total}`
+})
+
+// 运行结果对话框状态
+const runResultDialogVisible = ref(false)
+const selectedRunId = ref('')
+const selectedJobTitle = ref('')
+
+// ========== 漏洞报告 Tab ==========
+const vulLoading = ref(false)
+const vulFilterText = ref('')
+const vulTableData = ref([])
+const vulPagination = reactive({
+  page: 1,
+  pageSize: 10,
+  total: 0
+})
+
+// 漏洞报表分页信息
+const vulPaginationInfo = computed(() => {
+  const total = vulPagination.total
+  if (total === 0) return '0 - 0 / 0'
+  const start = (vulPagination.page - 1) * vulPagination.pageSize + 1
+  const end = Math.min(vulPagination.page * vulPagination.pageSize, total)
+  return `${start} - ${end} / ${total.toLocaleString()}`
+})
+
+const vulTotalPages = computed(() => {
+  return Math.ceil(vulPagination.total / vulPagination.pageSize) || 1
+})
+
+// ========== 补丁报表 Tab ==========
+const patchLoading = ref(false)
+const patchFilterText = ref('')
+const patchTableData = ref([])
+const patchPagination = reactive({
+  page: 1,
+  pageSize: 10,
+  total: 0
+})
+
+// 补丁报表分页信息
+const patchPaginationInfo = computed(() => {
+  const total = patchPagination.total
+  if (total === 0) return '0 - 0 / 0'
+  const start = (patchPagination.page - 1) * patchPagination.pageSize + 1
+  const end = Math.min(patchPagination.page * patchPagination.pageSize, total)
+  return `${start} - ${end} / ${total.toLocaleString()}`
+})
+
+const patchTotalPages = computed(() => {
+  return Math.ceil(patchPagination.total / patchPagination.pageSize) || 1
+})
+
+// 状态映射
+function getStatusType(status) {
+  const map = {
+    COMPLETED: 'success',
+    FAILED: 'danger',
+    RUNNING: 'primary',
+    PENDING: 'info'
+  }
+  return map[status] || 'info'
 }
 
+function getStatusLabel(status) {
+  const map = {
+    COMPLETED: '完成',
+    FAILED: '失败',
+    RUNNING: '运行中',
+    PENDING: '等待中'
+  }
+  return map[status] || status
+}
+
+function getSeverityType(severity) {
+  const map = {
+    Critical: 'danger',
+    Important: 'warning',
+    Moderate: 'info',
+    Low: 'success'
+  }
+  return map[severity] || 'info'
+}
+
+// 时间格式化
+function formatTimestamp(timestamp) {
+  if (!timestamp) return '-'
+  const date = new Date(timestamp)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+// 翻译操作类型（硬编码）
+function translateAction(action) {
+  switch (action) {
+    case '#{app_vap.menu.patch_scan.title}':
+      return '补丁扫描'
+    case '#{app_vap.menu.patch_install.title}':
+      return '补丁安装'
+    case '#{app_vap.menu.patch_rollback.title}':
+      return '补丁回退'
+    case '#{app_vap.menu.win_patch_scan.title}':
+      return 'Windows漏洞扫描'
+    case '#{app_vap.menu.import_patch_library_time}':
+      return '定时导入补丁库'
+    case '#{app_vap.menu.import_patch_library.title}':
+      return '导入补丁库'
+    default:
+      return action
+  }
+}
+
+// 翻译消息（硬编码）
+function translateMessage(messageStr) {
+  if (!messageStr) return ''
+  try {
+    const msg = JSON.parse(messageStr)
+    const msgId = msg.msg_id
+    if (!msgId) return messageStr
+
+    switch (msgId) {
+      case 'app_vap.log.scan_complete':
+        return `扫描完成，共${msg.machine_count || 0}台机器`
+      case 'app_vap.log.scan_fail':
+        return msg.msg_info ? `扫描失败：${msg.msg_info}` : '扫描失败'
+      case 'app_vap.log.install_complete':
+        return `安装完成，共${msg.machine_count || 0}台机器`
+      case 'app_vap.log.install_fail':
+        return msg.msg_info ? `安装失败：${msg.msg_info}` : '安装失败'
+      case 'app_vap.log.rollback_complete':
+        return `回退完成，共${msg.machine_count || 0}台机器`
+      case 'app_vap.log.rollback_fail':
+        return msg.msg_info ? `回退失败：${msg.msg_info}` : '回退失败'
+      case 'app_vap.log.import_success':
+        return `成功导入${msg.patch_count || 0}个补丁`
+      case 'app_vap.log.import_fail':
+        return msg.msg_info ? `导入失败：${msg.msg_info}` : '导入失败'
+      case 'app_vap.log.import_path_fail':
+        return msg.msg_info ? `导入补丁库失败：${msg.msg_info}` : '导入补丁库失败'
+      case 'app_vap.log.deal_file_fail':
+        return msg.server ? `文件处理失败，请检查Oplus更新服务器${msg.server}` : '文件处理失败'
+      case 'app_vap.log.install_fail_check_report':
+        return '补丁安装执行升级失败，请查看安装报告'
+      case 'app_vap.log.exec_install_fail':
+        return msg.msg_info ? `执行补丁安装出现错误，原因是${msg.msg_info}` : '执行补丁安装出现错误'
+      case 'app_vap.log.exec_rollback_fail':
+        return msg.msg_info ? `执行补丁回滚出现错误，原因是${msg.msg_info}` : '执行补丁回滚出现错误'
+      case 'app_vap.log.install_success_rescan_fail':
+        return '补丁安装执行完成，再次运行补丁扫描执行错误'
+      case 'app_vap.log.rollback_success_rescan_fail':
+        return '补丁回退执行成功，再次运行补丁扫描执行错误'
+      case 'app_vap.log.machine_count':
+        return `机器数量：${msg.machine_count || 0}`
+      default:
+        return msgId
+    }
+  } catch (e) {
+    return messageStr
+  }
+}
+
+// 计算耗时（格式化为 H:mm:ss）
+function calculateDuration(startTime, endTime) {
+  if (!startTime || !endTime) return '-'
+  const start = new Date(startTime).getTime()
+  const end = new Date(endTime).getTime()
+  const totalSeconds = Math.floor((end - start) / 1000)
+
+  const hours = Math.floor(totalSeconds / 3600)
+  const mins = Math.floor((totalSeconds % 3600) / 60)
+  const secs = totalSeconds % 60
+
+  return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
+
+// ========== 操作记录相关方法 ==========
 async function loadData() {
   loading.value = true
   try {
     const response = await patchLogsApi.getLogs({
-      page: pagination.page,
-      size: pagination.pageSize,
-      filter: filterText.value,
-      type: typeFilter.value,
+      page: 1,
+      size: 9999, // 获取所有数据用于前端筛选
+      action: actionFilter.value,
       status: statusFilter.value,
       day: dayFilter.value
     })
-    if (response?.data) {
-      tableData.value = response.data.records || []
-      pagination.total = response.data.total || 0
-    }
+    const data = response?.data || response
+    allTableData.value = data?.records || []
+    pagination.total = allTableData.value.length
+    pagination.page = 1 // 重置到第一页
   } catch (error) {
     console.error('Failed to load logs:', error)
-    tableData.value = [
-      { id: 1, type: 'scan', target: 'server01, server02, server03', user: 'admin', status: 'COMPLETED', startTime: new Date(Date.now() - 3600000).toISOString(), endTime: new Date().toISOString(), duration: 180 },
-      { id: 2, type: 'install', target: '5 个补丁 → 3 台主机', user: 'admin', status: 'COMPLETED', startTime: new Date(Date.now() - 7200000).toISOString(), endTime: new Date(Date.now() - 3600000).toISOString(), duration: 3600 },
-      { id: 3, type: 'rollback', target: 'kernel-4.18.0-305 → server03', user: 'operator', status: 'FAILED', startTime: new Date(Date.now() - 10800000).toISOString(), endTime: new Date(Date.now() - 10000000).toISOString(), duration: 800 }
-    ]
-    pagination.total = 3
+    ElMessage.error('加载数据失败')
   } finally {
     loading.value = false
   }
 }
 
-function handleFilter() { pagination.page = 1; loadData() }
-function refresh() { loadData() }
-function handlePageChange(p) { pagination.page = p; loadData() }
-function handleSizeChange(s) { pagination.pageSize = s; pagination.page = 1; loadData() }
-function handleViewDetail(row) {
-  selectedLog.value = {
-    ...row,
-    logContent: `[${formatDateTime(row.startTime)}] 开始执行${getTypeLabel(row.type)}任务\n[INFO] 目标: ${row.target}\n[INFO] 操作用户: ${row.user}\n...\n[${formatDateTime(row.endTime)}] 任务${row.status === 'COMPLETED' ? '完成' : '失败'}`
-  }
-  detailDialogVisible.value = true
+function handleFilterChange() {
+  pagination.page = 1
+  loadData()
 }
 
-onMounted(() => { loadData() })
-defineExpose({ refresh })
+// 搜索文本改变时仅前端过滤（实时搜索）
+function handleSearchInput() {
+  pagination.page = 1
+  // filteredTableData 是 computed，会自动响应 searchText 的变化
+}
+
+// 监听筛选后数据变化，确保页码有效
+watch(filteredTableData, () => {
+  const maxPage = Math.ceil(filteredTableData.value.length / pagination.pageSize) || 1
+  if (pagination.page > maxPage) {
+    pagination.page = 1
+  }
+})
+
+function handlePageChange(page) {
+  pagination.page = page
+  // 前端分页，不需要调用API
+}
+
+function handleSizeChange(size) {
+  pagination.pageSize = size
+  pagination.page = 1
+  // 前端分页，不需要调用API
+}
+
+// 查看运行结果
+function handleViewRunResult(row) {
+  if (!row.run_id) {
+    ElMessage.warning('无运行记录')
+    return
+  }
+  selectedRunId.value = row.run_id
+  selectedJobTitle.value = translateAction(row.action)
+  runResultDialogVisible.value = true
+}
+
+// ========== 漏洞报表相关方法 ==========
+async function loadVulData() {
+  vulLoading.value = true
+  try {
+    const response = await operationReportApi.getVulnerabilityReport({
+      page: vulPagination.page,
+      size: vulPagination.pageSize,
+      filter: vulFilterText.value ? `host_key|vul_id:*${vulFilterText.value}*` : ''
+    })
+    const data = response?.data || response
+    vulTableData.value = data?.records || []
+    vulPagination.total = data?.total || 0
+  } catch (error) {
+    console.error('Failed to load vulnerability data:', error)
+    ElMessage.error('加载漏洞报表失败')
+  } finally {
+    vulLoading.value = false
+  }
+}
+
+function handleVulSearch() {
+  vulPagination.page = 1
+  loadVulData()
+}
+
+function handleVulPageChange(page) {
+  vulPagination.page = page
+  loadVulData()
+}
+
+function handleVulSizeChange(size) {
+  vulPagination.pageSize = size
+  vulPagination.page = 1
+  loadVulData()
+}
+
+// ========== 补丁报表相关方法 ==========
+async function loadPatchData() {
+  patchLoading.value = true
+  try {
+    const response = await operationReportApi.getPatchReport({
+      page: patchPagination.page,
+      size: patchPagination.pageSize,
+      filter: patchFilterText.value ? `host_key|patch_id|severity:*${patchFilterText.value}*` : ''
+    })
+    const data = response?.data || response
+    patchTableData.value = data?.records || []
+    patchPagination.total = data?.total || 0
+  } catch (error) {
+    console.error('Failed to load patch data:', error)
+    ElMessage.error('加载补丁报表失败')
+  } finally {
+    patchLoading.value = false
+  }
+}
+
+function handlePatchSearch() {
+  patchPagination.page = 1
+  loadPatchData()
+}
+
+function handlePatchPageChange(page) {
+  patchPagination.page = page
+  loadPatchData()
+}
+
+function handlePatchSizeChange(size) {
+  patchPagination.pageSize = size
+  patchPagination.page = 1
+  loadPatchData()
+}
+
+// Tab 切换时加载数据
+watch(activeTab, (newTab) => {
+  if (newTab === 'vulnerability' && vulTableData.value.length === 0) {
+    loadVulData()
+  } else if (newTab === 'patch' && patchTableData.value.length === 0) {
+    loadPatchData()
+  }
+})
+
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style scoped lang="scss">
-.patch-logs {
+.operation-logs {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 20px;
+  background: #fff;
 }
-.page-header {
+
+.tab-nav {
+  padding: 0 16px;
+  border-bottom: 1px solid #e4e7ed;
+
+  :deep(.el-tabs__header) {
+    margin-bottom: 0;
+  }
+
+  :deep(.el-tabs__nav-wrap::after) {
+    display: none;
+  }
+}
+
+.tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.time-range-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  .time-range-label {
+    font-size: 14px;
+    color: #606266;
+  }
+}
+
+.filter-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+
+  &.simple-filter {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .filter-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 }
-.header-left {
-  h2 { margin: 0; font-size: 18px; font-weight: 600; color: #1e293b; }
-  .subtitle { font-size: 13px; color: #64748b; }
-}
-.filter-bar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-.table-container {
+
+.table-section {
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  overflow: auto;
 }
-.pagination-bar {
+
+.pagination-section {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
-}
-.log-content {
-  background: #1e293b;
-  color: #10b981;
-  padding: 12px;
-  border-radius: 6px;
-  font-family: 'Monaco', 'Consolas', monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  max-height: 300px;
-  overflow-y: auto;
-  margin: 0;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #e4e7ed;
+  margin-top: 12px;
+
+  .pagination-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .pagination-info {
+      font-size: 13px;
+      color: #606266;
+    }
+  }
+
+  .pagination-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .page-info {
+      font-size: 13px;
+      color: #606266;
+    }
+  }
 }
 </style>

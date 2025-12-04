@@ -390,27 +390,28 @@ export const vulnerabilityApi = {
 export const patchLogsApi = {
   /**
    * 获取操作日志列表
+   * POST /dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码
    * @param {number} params.size - 每页大小
-   * @param {string} params.type - 操作类型筛选 (scan/install/rollback)
-   * @param {string} params.status - 状态筛选
+   * @param {string} params.action - 操作类型筛选 (all 或具体类型)
+   * @param {string} params.status - 状态筛选 (all/COMPLETED/FAILED/RUNNING)
    * @param {number} params.day - 时间范围（天数）
    * @returns {Promise}
    */
   getLogs(params = {}) {
+    const cacheBuster = Date.now()
     const requestBody = {
       params: {
-        type: params.type || '',
-        day: params.day || 7,
-        status: params.status || ''
+        module: 'vap2',
+        action: params.action || 'all',
+        status: params.status || 'all',
+        day: params.day || 7
       },
       page: params.page || 1,
-      size: params.size || 20,
-      orderBy: params.orderBy || 'start_time desc',
-      filter: params.filter || ''
+      size: params.size || 20
     }
-    return apiService.post('/dts/api/dts/q/data/VAP_LIST_RUN_LOGS/', requestBody)
+    return apiService.post(`/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${cacheBuster}`, requestBody)
   },
 
   /**
@@ -758,6 +759,140 @@ export const windowsUpdateApi = {
   }
 }
 
+/**
+ * Windows 概览相关 API
+ */
+export const windowsViewApi = {
+  /**
+   * 获取 Windows 当前统计数据（柱状图）
+   * POST /dts/api/dts/q/data/VAP2_CURRENT_STATS_WIN/
+   * 返回: { records: [{ num_critical, num_rollups, num_security }] }
+   * @returns {Promise}
+   */
+  getCurrentStatsWin() {
+    return apiService.post('/dts/api/dts/q/data/VAP2_CURRENT_STATS_WIN/', {
+      params: {}
+    })
+  },
+
+  /**
+   * 获取 Windows 补丁趋势数据（折线图）
+   * POST /dts/api/dts/q/data/VAP2_PATCH_TREND_WINDOWS/
+   * 返回: { records: [{ scan_date, patch_count }] }
+   * @returns {Promise}
+   */
+  getPatchTrendWindows() {
+    return apiService.post('/dts/api/dts/q/data/VAP2_PATCH_TREND_WINDOWS/', {
+      params: {}
+    })
+  }
+}
+
+/**
+ * Windows 更新回滚相关 API
+ */
+export const windowsRollbackApi = {
+  /**
+   * 获取 Windows 更新历史记录
+   * POST /dts/api/dts/q/data/VAP_HIST_UPDATE_KBS_WIN/
+   * @param {Object} params - 查询参数
+   * @returns {Promise}
+   */
+  getHistUpdateKbsWin(params = {}) {
+    return apiService.post('/dts/api/dts/q/data/VAP_HIST_UPDATE_KBS_WIN/', {
+      params: {
+        host_key: params.host_key || '',
+        update_kb_numbers: params.update_kb_numbers || ''
+      },
+      page: params.page || 1,
+      size: params.size || 20
+    })
+  },
+
+  /**
+   * 执行回滚操作
+   * Job Code: S9eC0m
+   * @param {Object} params - 回滚参数
+   * @returns {Promise}
+   */
+  rollback(params) {
+    return apiService.post('/jao/api/jao/jobs/S9eC0m/run', {
+      params: {
+        update_kbs: params.update_kbs,
+        hosts: params.hosts,
+        func: 'rollback',
+        reboot: params.reboot || 'no'
+      }
+    })
+  },
+
+  /**
+   * 批量回滚操作
+   * Job Code: HiuT3F
+   * @param {Object} params - 回滚参数
+   * @returns {Promise}
+   */
+  batchRollback(params) {
+    return apiService.post('/jao/api/jao/jobs/HiuT3F/run', {
+      params: {
+        histUpdatePkgsWinIds: params.histUpdatePkgsWinIds,
+        reboot: params.reboot || 'no'
+      }
+    })
+  },
+
+  /**
+   * 删除更新记录
+   * Job Code: aJlha6
+   * @param {Array<string>} ids - 记录ID列表
+   * @returns {Promise}
+   */
+  deleteHistUpdateKbs(ids) {
+    return apiService.post('/jao/api/jao/jobs/aJlha6/run', {
+      params: {
+        histUpdatePkgsWinIds: ids
+      }
+    })
+  }
+}
+
+/**
+ * 操作报告相关 API
+ */
+export const operationReportApi = {
+  /**
+   * 获取漏洞报告列表
+   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_VUL_OTO/
+   * 字段: host_key, os_distro, os_version, vul_id, scan_timestamp
+   * @param {Object} params - 查询参数
+   * @returns {Promise}
+   */
+  getVulnerabilityReport(params = {}) {
+    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_MACHINE_VUL_OTO/', {
+      params: {},
+      page: params.page || 1,
+      size: params.size || 20,
+      filter: params.filter || ''
+    })
+  },
+
+  /**
+   * 获取补丁报告列表
+   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_PATCH_OTO/
+   * 字段: host_key, os_distro, os_version, patch_id, title, severity, scan_timestamp
+   * @param {Object} params - 查询参数
+   * @returns {Promise}
+   */
+  getPatchReport(params = {}) {
+    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_MACHINE_PATCH_OTO/', {
+      params: {},
+      page: params.page || 1,
+      size: params.size || 20,
+      filter: params.filter || ''
+    })
+  }
+}
+
 // 导出所有 API
 export default {
   scan: patchScanApi,
@@ -770,5 +905,8 @@ export default {
   windows: windowsPatchApi,
   windowsVulnerability: windowsVulnerabilityApi,
   windowsUpdate: windowsUpdateApi,
-  yum: yumManageApi
+  windowsView: windowsViewApi,
+  windowsRollback: windowsRollbackApi,
+  yum: yumManageApi,
+  operationReport: operationReportApi
 }

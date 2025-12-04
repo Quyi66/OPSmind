@@ -1,282 +1,243 @@
 <template>
   <div class="windows-view">
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="page-header__actions">
-        <el-button plain @click="handleRefresh">
-          <i class="fa fa-sync" />
-          刷新
+    <!-- 漏洞概览 - 柱状图 -->
+    <div class="chart-card">
+      <div class="chart-card__header">
+        <span class="chart-card__title">漏洞概览</span>
+        <el-button link @click="toggleBarFullscreen">
+          <i :class="barFullscreen ? 'fa fa-compress' : 'fa fa-expand'" />
         </el-button>
-        <el-button plain @click="handleExport">
-          <i class="fa fa-download" />
-          导出
+      </div>
+      <div class="chart-card__body" :class="{ 'chart-card__body--fullscreen': barFullscreen }">
+        <el-button v-if="barFullscreen" class="fullscreen-close-btn" link @click="toggleBarFullscreen">
+          <i class="fa fa-times" /> 关闭全屏
         </el-button>
+        <div ref="barChartRef" class="chart-container"></div>
       </div>
     </div>
 
-    <!-- 内容区域 -->
-    <div class="page-content">
-      <!-- 统计卡片 -->
-      <div class="stats-cards">
-        <div class="stats-card stats-card--primary">
-          <div class="stats-card__icon">
-            <i class="fab fa-windows" />
-          </div>
-          <div class="stats-card__content">
-            <div class="stats-card__value">{{ stats.totalHosts }}</div>
-            <div class="stats-card__label">Windows主机总数</div>
-          </div>
-        </div>
-        <div class="stats-card stats-card--success">
-          <div class="stats-card__icon">
-            <i class="fa fa-check-circle" />
-          </div>
-          <div class="stats-card__content">
-            <div class="stats-card__value">{{ stats.upToDate }}</div>
-            <div class="stats-card__label">已更新</div>
-          </div>
-        </div>
-        <div class="stats-card stats-card--warning">
-          <div class="stats-card__icon">
-            <i class="fa fa-exclamation-triangle" />
-          </div>
-          <div class="stats-card__content">
-            <div class="stats-card__value">{{ stats.pendingUpdates }}</div>
-            <div class="stats-card__label">待更新</div>
-          </div>
-        </div>
-        <div class="stats-card stats-card--danger">
-          <div class="stats-card__icon">
-            <i class="fa fa-times-circle" />
-          </div>
-          <div class="stats-card__content">
-            <div class="stats-card__value">{{ stats.offline }}</div>
-            <div class="stats-card__label">离线</div>
-          </div>
-        </div>
+    <!-- 漏洞趋势 - 折线图 -->
+    <div class="chart-card">
+      <div class="chart-card__header">
+        <span class="chart-card__title">漏洞趋势</span>
+        <el-button link @click="toggleLineFullscreen">
+          <i :class="lineFullscreen ? 'fa fa-compress' : 'fa fa-expand'" />
+        </el-button>
       </div>
-
-      <!-- 筛选区域 -->
-      <div class="filter-section">
-        <el-input
-          v-model="filterText"
-          placeholder="搜索主机名..."
-          prefix-icon="Search"
-          style="width: 300px"
-          clearable
-          @input="handleFilter"
-        />
-        <el-select v-model="osFilter" placeholder="操作系统" clearable style="width: 180px" @change="handleFilter">
-          <el-option label="Windows Server 2019" value="2019" />
-          <el-option label="Windows Server 2016" value="2016" />
-          <el-option label="Windows Server 2012 R2" value="2012r2" />
-          <el-option label="Windows 10" value="win10" />
-          <el-option label="Windows 11" value="win11" />
-        </el-select>
-        <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 120px" @change="handleFilter">
-          <el-option label="在线" value="online" />
-          <el-option label="离线" value="offline" />
-        </el-select>
-      </div>
-
-      <!-- 主机表格 -->
-      <div class="table-section">
-        <div class="table-header">
-          <h3>Windows主机列表</h3>
-        </div>
-
-        <el-table
-          v-loading="loading"
-          :data="tableData"
-          stripe
-          style="width: 100%"
-          size="small"
-        >
-          <el-table-column prop="hostname" label="主机名" min-width="150">
-            <template #default="{ row }">
-              <el-button type="primary" link size="small" @click="handleViewDetail(row)">
-                {{ row.hostname }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column prop="ip" label="IP地址" width="140" />
-          <el-table-column prop="os_version" label="操作系统" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="status" label="状态" width="100">
-            <template #default="{ row }">
-              <el-tag :type="row.status === 'online' ? 'success' : 'danger'" size="small">
-                {{ row.status === 'online' ? '在线' : '离线' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="pending_updates" label="待更新数" width="100">
-            <template #default="{ row }">
-              <span :class="{ 'text-warning font-bold': row.pending_updates > 0 }">
-                {{ row.pending_updates }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="installed_updates" label="已安装更新" width="100" />
-          <el-table-column prop="last_scan" label="最后扫描" width="160" />
-          <el-table-column label="操作" width="150" fixed="right">
-            <template #default="{ row }">
-              <el-button type="primary" size="small" link @click="handleScan(row)">
-                扫描
-              </el-button>
-              <el-button type="primary" size="small" link @click="handleUpdate(row)">
-                更新
-              </el-button>
-              <el-button type="info" size="small" link @click="handleViewDetail(row)">
-                详情
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-
-        <!-- 分页 -->
-        <div class="table-footer">
-          <el-pagination
-            v-model:current-page="pagination.page"
-            v-model:page-size="pagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            size="small"
-            @size-change="handleSizeChange"
-            @current-change="handlePageChange"
-          />
-        </div>
+      <div class="chart-card__body" :class="{ 'chart-card__body--fullscreen': lineFullscreen }">
+        <el-button v-if="lineFullscreen" class="fullscreen-close-btn" link @click="toggleLineFullscreen">
+          <i class="fa fa-times" /> 关闭全屏
+        </el-button>
+        <div ref="lineChartRef" class="chart-container"></div>
       </div>
     </div>
-
-    <!-- 主机详情对话框 -->
-    <el-dialog
-      v-model="detailDialogVisible"
-      :title="selectedHost?.hostname"
-      width="800px"
-    >
-      <div class="host-detail" v-if="selectedHost">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="主机名">{{ selectedHost.hostname }}</el-descriptions-item>
-          <el-descriptions-item label="IP地址">{{ selectedHost.ip }}</el-descriptions-item>
-          <el-descriptions-item label="操作系统" :span="2">{{ selectedHost.os_version }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="selectedHost.status === 'online' ? 'success' : 'danger'" size="small">
-              {{ selectedHost.status === 'online' ? '在线' : '离线' }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="最后扫描">{{ selectedHost.last_scan }}</el-descriptions-item>
-          <el-descriptions-item label="待更新数">{{ selectedHost.pending_updates }}</el-descriptions-item>
-          <el-descriptions-item label="已安装更新">{{ selectedHost.installed_updates }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
-      <template #footer>
-        <el-button @click="detailDialogVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import * as echarts from 'echarts'
+import { windowsViewApi } from '../api'
 
-// 加载状态
-const loading = ref(false)
+// 图表引用
+const barChartRef = ref(null)
+const lineChartRef = ref(null)
+let barChart = null
+let lineChart = null
 
-// 统计数据
-const stats = reactive({
-  totalHosts: 0,
-  upToDate: 0,
-  pendingUpdates: 0,
-  offline: 0
-})
+// 全屏状态
+const barFullscreen = ref(false)
+const lineFullscreen = ref(false)
 
-// 筛选
-const filterText = ref('')
-const osFilter = ref('')
-const statusFilter = ref('')
+// 切换柱状图全屏
+function toggleBarFullscreen() {
+  barFullscreen.value = !barFullscreen.value
+  nextTick(() => {
+    barChart?.resize()
+  })
+}
 
-// 表格数据
-const tableData = ref([])
-const pagination = reactive({
-  page: 1,
-  pageSize: 20,
-  total: 0
-})
+// 切换折线图全屏
+function toggleLineFullscreen() {
+  lineFullscreen.value = !lineFullscreen.value
+  nextTick(() => {
+    lineChart?.resize()
+  })
+}
 
-// 详情对话框
-const detailDialogVisible = ref(false)
-const selectedHost = ref(null)
+// 初始化柱状图 - VAP2_CURRENT_STATS_WIN
+async function initBarChart() {
+  if (!barChartRef.value) return
 
-// 加载数据
-async function loadData() {
-  loading.value = true
+  barChart = echarts.init(barChartRef.value)
+
   try {
-    // TODO: 调用实际 API
-    // 模拟数据
-    stats.totalHosts = 45
-    stats.upToDate = 30
-    stats.pendingUpdates = 12
-    stats.offline = 3
+    const response = await windowsViewApi.getCurrentStatsWin()
+    const records = response?.records || []
 
-    tableData.value = [
-      { hostname: 'WIN-SERVER01', ip: '192.168.1.101', os_version: 'Windows Server 2019 Datacenter', status: 'online', pending_updates: 5, installed_updates: 120, last_scan: '2024-01-15 10:30:00' },
-      { hostname: 'WIN-SERVER02', ip: '192.168.1.102', os_version: 'Windows Server 2019 Standard', status: 'online', pending_updates: 3, installed_updates: 118, last_scan: '2024-01-15 10:25:00' },
-      { hostname: 'WIN-SERVER03', ip: '192.168.1.103', os_version: 'Windows Server 2016 Datacenter', status: 'online', pending_updates: 0, installed_updates: 95, last_scan: '2024-01-15 10:20:00' },
-      { hostname: 'WIN-DC01', ip: '192.168.1.10', os_version: 'Windows Server 2019 Datacenter', status: 'online', pending_updates: 2, installed_updates: 122, last_scan: '2024-01-15 10:15:00' },
-      { hostname: 'WIN-WEB01', ip: '192.168.1.201', os_version: 'Windows Server 2012 R2 Standard', status: 'offline', pending_updates: 15, installed_updates: 80, last_scan: '2024-01-10 09:00:00' }
-    ]
-    pagination.total = tableData.value.length
+    // 处理数据
+    const chartData = []
+    if (records.length > 0) {
+      const rec = records[0]
+      chartData.push({ name: '重要更新', value: rec.num_critical || 0 })
+      chartData.push({ name: '安全更新', value: rec.num_rollups || 0 })
+      chartData.push({ name: '更新汇总', value: rec.num_security || 0 })
+    }
+
+    const option = {
+      color: ['#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5'],
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        top: '10%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        data: chartData.map(d => d.name),
+        axisLine: {
+          lineStyle: { color: '#ccc' }
+        },
+        axisLabel: {
+          color: '#666'
+        }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: {
+          show: false
+        },
+        splitLine: {
+          lineStyle: { color: '#eee' }
+        }
+      },
+      series: [{
+        name: '漏洞分布',
+        type: 'bar',
+        barWidth: 50,
+        data: chartData.map(d => d.value),
+        label: {
+          show: true,
+          position: 'top',
+          color: '#666'
+        },
+        itemStyle: {
+          borderRadius: [4, 4, 0, 0]
+        }
+      }]
+    }
+
+    barChart.setOption(option)
   } catch (error) {
-    console.error('Failed to load data:', error)
-  } finally {
-    loading.value = false
+    console.error('Failed to load bar chart data:', error)
   }
 }
 
-function handleFilter() {
-  pagination.page = 1
-  loadData()
+// 初始化折线图 - VAP2_PATCH_TREND_WINDOWS
+async function initLineChart() {
+  if (!lineChartRef.value) return
+
+  lineChart = echarts.init(lineChartRef.value)
+
+  try {
+    const response = await windowsViewApi.getPatchTrendWindows()
+    const records = response?.records || []
+
+    const dates = records.map(r => r.scan_date)
+    const values = records.map(r => r.patch_count || 0)
+
+    const option = {
+      color: ['#28a745'],
+      tooltip: {
+        trigger: 'axis'
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        top: '10%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: dates,
+        axisLine: {
+          lineStyle: { color: '#ccc' }
+        },
+        axisLabel: {
+          color: '#666',
+          formatter: function(value) {
+            if (!value) return ''
+            const date = new Date(value)
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            return `${month}-${day}`
+          }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: {
+          show: false
+        },
+        splitLine: {
+          lineStyle: { color: '#eee' }
+        }
+      },
+      series: [{
+        name: '漏洞',
+        type: 'line',
+        smooth: true,
+        data: values,
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(40, 167, 69, 0.3)' },
+            { offset: 1, color: 'rgba(40, 167, 69, 0.05)' }
+          ])
+        },
+        label: {
+          show: true,
+          position: 'top',
+          color: '#28a745'
+        }
+      }]
+    }
+
+    lineChart.setOption(option)
+  } catch (error) {
+    console.error('Failed to load line chart data:', error)
+  }
 }
 
-function handleRefresh() {
-  loadData()
-}
-
-function handleExport() {
-  ElMessage.info('导出功能开发中...')
-}
-
-function handlePageChange(page) {
-  pagination.page = page
-  loadData()
-}
-
-function handleSizeChange(size) {
-  pagination.pageSize = size
-  pagination.page = 1
-  loadData()
-}
-
-function handleScan(row) {
-  ElMessage.info(`扫描主机: ${row.hostname}`)
-}
-
-function handleUpdate(row) {
-  ElMessage.info(`更新主机: ${row.hostname}`)
-}
-
-function handleViewDetail(row) {
-  selectedHost.value = row
-  detailDialogVisible.value = true
+// 窗口大小变化时重绘图表
+function handleResize() {
+  barChart?.resize()
+  lineChart?.resize()
 }
 
 function refresh() {
-  loadData()
+  initBarChart()
+  initLineChart()
 }
 
 onMounted(() => {
-  loadData()
+  initBarChart()
+  initLineChart()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  barChart?.dispose()
+  lineChart?.dispose()
 })
 
 defineExpose({ refresh })
@@ -287,164 +248,71 @@ defineExpose({ refresh })
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f8f9fa;
-}
-
-.page-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e9ecef;
-
-  &__actions {
-    display: flex;
-    gap: 8px;
-  }
-}
-
-.page-content {
-  flex: 1;
   padding: 16px;
+  gap: 16px;
+  background: #f5f7fa;
   overflow-y: auto;
 }
 
-// 统计卡片
-.stats-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.stats-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
+.chart-card {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 4px;
   border: 1px solid #e9ecef;
+  flex: 1;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
 
-  &--primary {
-    border-left: 4px solid #0d6efd;
-  }
-
-  &--success {
-    border-left: 4px solid #198754;
-  }
-
-  &--warning {
-    border-left: 4px solid #ffc107;
-  }
-
-  &--danger {
-    border-left: 4px solid #dc3545;
-  }
-
-  &__icon {
-    width: 48px;
-    height: 48px;
+  &__header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: #6c757d;
-    background: #f8f9fa;
-    border-radius: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e9ecef;
   }
 
-  &--primary &__icon {
-    color: #0d6efd;
-    background: #e7f1ff;
-  }
-
-  &--success &__icon {
-    color: #198754;
-    background: #d1e7dd;
-  }
-
-  &--warning &__icon {
-    color: #ffc107;
-    background: #fff3cd;
-  }
-
-  &--danger &__icon {
-    color: #dc3545;
-    background: #f8d7da;
-  }
-
-  &__content {
-    flex: 1;
-  }
-
-  &__value {
-    font-size: 28px;
-    font-weight: 700;
-    color: #212529;
-    line-height: 1;
-  }
-
-  &__label {
-    font-size: 13px;
-    color: #6c757d;
-    margin-top: 4px;
-  }
-}
-
-.filter-section {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.table-section {
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-  overflow: hidden;
-}
-
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e9ecef;
-
-  h3 {
-    margin: 0;
+  &__title {
     font-size: 14px;
     font-weight: 600;
-    color: #212529;
+    color: #303133;
+  }
+
+  &__body {
+    flex: 1;
+    padding: 8px;
+    min-height: 240px;
+    position: relative;
+
+    &--fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1000;
+      background: #fff;
+      padding: 16px;
+      min-height: 100vh;
+    }
   }
 }
 
-.table-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px 16px;
-  border-top: 1px solid #e9ecef;
+.chart-container {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
 }
 
-.text-warning {
-  color: #ffc107;
-}
+.fullscreen-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  font-size: 14px;
+  color: #666;
 
-.font-bold {
-  font-weight: 600;
-}
-
-@media (max-width: 1200px) {
-  .stats-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .stats-cards {
-    grid-template-columns: 1fr;
+  &:hover {
+    color: #409eff;
   }
 }
 </style>
