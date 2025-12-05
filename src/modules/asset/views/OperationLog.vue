@@ -1,20 +1,367 @@
 <template>
   <div class="operation-log">
-    <nav class="navbar">
-      <div class="navbar-title">操作记录</div>
-    </nav>
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <span class="page-title">操作记录</span>
+    </div>
 
-    <div class="content-wrapper">
-      <div class="placeholder-content">
-        <i class="fas fa-history placeholder-icon"></i>
-        <p>操作记录页面开发中...</p>
+    <!-- 表格区域 -->
+    <div class="table-section">
+      <!-- 筛选栏 -->
+      <div class="filter-bar">
+        <div class="filter-right">
+          <span class="filter-label">时间范围:</span>
+          <el-select v-model="filters.day" style="width: 100px" @change="handleFilterChange">
+            <el-option label="Today" :value="1" />
+            <el-option label="3 Days" :value="3" />
+            <el-option label="7 Days" :value="7" />
+            <el-option label="30 Days" :value="30" />
+          </el-select>
+
+          <el-select v-model="filters.ataNode" placeholder="执行引擎节点" style="width: 130px" clearable @change="handleFilterChange">
+            <el-option label="全部" value="all" />
+            <el-option v-for="node in ataNodes" :key="node" :label="node" :value="node" />
+          </el-select>
+
+          <el-select v-model="filters.status" placeholder="状态" style="width: 100px" @change="handleFilterChange">
+            <el-option label="全部" value="all" />
+            <el-option label="完成" value="COMPLETED" />
+            <el-option label="运行错误" value="ERROR" />
+            <el-option label="运行中" value="RUNNING" />
+          </el-select>
+
+          <el-select v-model="filters.action" placeholder="操作" style="width: 120px" @change="handleFilterChange">
+            <el-option label="全部" value="all" />
+            <el-option v-for="action in actionTypes" :key="action.value" :label="action.label" :value="action.value" />
+          </el-select>
+
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索"
+            clearable
+            :prefix-icon="Search"
+            style="width: 180px"
+            @input="handleSearch"
+          />
+
+          <el-button :icon="Refresh" @click="loadData" />
+        </div>
+      </div>
+
+      <!-- 表格 -->
+      <el-table
+        :data="filteredData"
+        v-loading="loading"
+        border
+        style="width: 100%"
+        :max-height="tableMaxHeight"
+        row-key="run_id"
+      >
+        <el-table-column prop="start_time" label="开始时间" width="180" sortable>
+          <template #default="{ row }">
+            {{ formatDateTime(row.start_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="action" label="操作" width="160" sortable>
+          <template #default="{ row }">
+            {{ getActionLabel(row.action) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100" align="center" sortable>
+          <template #default="{ row }">
+            <el-tag
+              :type="getStatusType(row.status)"
+              size="small"
+              class="status-tag clickable"
+              @click="showRunResult(row)"
+            >
+              {{ getStatusLabel(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="ata_node" label="执行引擎节点" width="140" align="center">
+          <template #default="{ row }">
+            <el-tag v-if="row.ata_node" type="primary" size="small">
+              {{ row.ata_node }}
+            </el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="message" label="结果" min-width="400" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span
+              class="message-text"
+              :class="{ 'error-text': row.status === 'ERROR' }"
+            >
+              {{ formatMessage(row.message) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="username" label="用户" width="100" align="center" />
+        <el-table-column prop="end_time" label="结束时间" width="180" sortable>
+          <template #default="{ row }">
+            {{ formatDateTime(row.end_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="耗时" width="100" align="center" sortable>
+          <template #default="{ row }">
+            {{ calculateDuration(row.start_time, row.end_time) }}
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <span class="total-info">共 {{ total }} 条记录</span>
+        <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          layout="prev, pager, next"
+          @current-change="handlePageChange"
+        />
       </div>
     </div>
+
+    <!-- 作业运行结果弹窗 -->
+    <ExecuteResultDialog
+      v-model:visible="runResultDialogVisible"
+      :run-id="currentRunId"
+      :job-title="currentJobTitle"
+    />
   </div>
 </template>
 
 <script setup>
-// TODO: 实现操作记录页面
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Search, Refresh } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { dtsApi } from '../api'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+
+// 筛选条件
+const filters = ref({
+  day: 1,
+  ataNode: 'all',
+  status: 'all',
+  action: 'all'
+})
+
+// 搜索关键词
+const searchKeyword = ref('')
+
+// 表格数据
+const loading = ref(false)
+const tableData = ref([])
+const ataNodes = ref([])
+const actionTypes = ref([
+  { label: '设备连通性检测', value: '#{acm.job.check_conn}' },
+  { label: '采集信息', value: '#{acm.job.collect_assert_info}' }
+])
+
+// 分页
+const currentPage = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
+
+// 表格高度
+const tableMaxHeight = ref(500)
+
+// 运行结果弹窗
+const runResultDialogVisible = ref(false)
+const currentRunId = ref('')
+const currentJobTitle = ref('')
+
+// 过滤后的数据
+const filteredData = computed(() => {
+  let data = tableData.value
+
+  // 按执行引擎节点筛选
+  if (filters.value.ataNode && filters.value.ataNode !== 'all') {
+    data = data.filter(item => item.ata_node === filters.value.ataNode)
+  }
+
+  // 按搜索关键词筛选
+  if (searchKeyword.value) {
+    const keyword = searchKeyword.value.toLowerCase()
+    data = data.filter(item =>
+      item.action?.toLowerCase().includes(keyword) ||
+      item.message?.toLowerCase().includes(keyword) ||
+      item.username?.toLowerCase().includes(keyword) ||
+      item.ata_node?.toLowerCase().includes(keyword)
+    )
+  }
+
+  // 更新总数
+  total.value = data.length
+
+  // 分页
+  const start = (currentPage.value - 1) * pageSize.value
+  return data.slice(start, start + pageSize.value)
+})
+
+onMounted(() => {
+  loadData()
+  updateTableHeight()
+  window.addEventListener('resize', updateTableHeight)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTableHeight)
+})
+
+// 更新表格高度
+function updateTableHeight() {
+  tableMaxHeight.value = window.innerHeight - 280
+}
+
+// 加载数据
+async function loadData() {
+  loading.value = true
+  try {
+    const response = await dtsApi.queryData('JAO_LIST_OPERATION_LOG', {
+      module: 'acm',
+      action: filters.value.action,
+      status: filters.value.status,
+      day: filters.value.day
+    })
+
+    const data = response?.records || []
+    tableData.value = data
+
+    // 提取所有的 ata_node
+    const nodes = new Set()
+    data.forEach(item => {
+      if (item.ata_node) {
+        nodes.add(item.ata_node)
+      }
+    })
+    ataNodes.value = Array.from(nodes)
+
+    total.value = data.length
+    console.log('操作记录数据:', data)
+  } catch (error) {
+    console.error('加载操作记录失败:', error)
+    ElMessage.error('加载操作记录失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 筛选变化
+function handleFilterChange() {
+  currentPage.value = 1
+  loadData()
+}
+
+// 搜索
+function handleSearch() {
+  currentPage.value = 1
+}
+
+// 分页变化
+function handlePageChange() {
+  // 分页由 computed 处理
+}
+
+// 显示运行结果弹窗
+function showRunResult(row) {
+  if (!row.run_id) {
+    ElMessage.warning('无法获取运行记录')
+    return
+  }
+  currentRunId.value = row.run_id
+  currentJobTitle.value = getActionLabel(row.action)
+  runResultDialogVisible.value = true
+}
+
+// 格式化日期时间
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
+}
+
+// 获取操作标签
+function getActionLabel(action) {
+  if (!action) return '-'
+  const actionMap = {
+    '#{acm.job.check_conn}': '设备连通性检测',
+    '#{acm.job.collect_assert_info}': '采集信息'
+  }
+  return actionMap[action] || action
+}
+
+// 获取状态标签
+function getStatusLabel(status) {
+  const statusMap = {
+    'COMPLETED': '完成',
+    'ERROR': '运行错误',
+    'RUNNING': '运行中',
+    'WAITING': '等待中',
+    'FAILED': '失败'
+  }
+  return statusMap[status] || status || '-'
+}
+
+// 获取状态类型
+function getStatusType(status) {
+  const typeMap = {
+    'COMPLETED': 'success',
+    'ERROR': 'danger',
+    'RUNNING': 'primary',
+    'WAITING': 'info',
+    'FAILED': 'warning'
+  }
+  return typeMap[status] || 'info'
+}
+
+// 格式化消息
+function formatMessage(message) {
+  if (!message) return '-'
+  try {
+    const msgObj = typeof message === 'string' ? JSON.parse(message) : message
+    // 优先显示异常消息
+    if (msgObj.exception?.message) {
+      return msgObj.exception.message
+    }
+    if (msgObj.message) {
+      return msgObj.message
+    }
+    if (msgObj.msg_id) {
+      // 国际化消息 ID 转换
+      const msgIdMap = {
+        'acm.common.log.conn_failed': '设备信息采集回调失败',
+        'acm.common.log.conn_success': '设备连通性检测成功',
+        'acm.common.log.collect_success': '设备信息采集成功',
+        'acm.common.log.collect_failed': '设备信息采集失败'
+      }
+      return msgIdMap[msgObj.msg_id] || msgObj.msg_id
+    }
+    return JSON.stringify(msgObj)
+  } catch {
+    return message
+  }
+}
+
+// 计算耗时
+function calculateDuration(startTime, endTime) {
+  if (!startTime || !endTime) return '-'
+  const start = new Date(startTime).getTime()
+  const end = new Date(endTime).getTime()
+  const diff = Math.floor((end - start) / 1000)
+
+  if (diff < 0) return '-'
+
+  const hours = Math.floor(diff / 3600)
+  const minutes = Math.floor((diff % 3600) / 60)
+  const seconds = diff % 60
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  }
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
 </script>
 
 <style scoped lang="scss">
@@ -25,44 +372,81 @@
   background: #f5f7fa;
 }
 
-.navbar {
+.page-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 20px;
   background: #fff;
   border-bottom: 1px solid #ebeef5;
 
-  .navbar-title {
+  .page-title {
     font-size: 16px;
     font-weight: 600;
     color: #303133;
   }
 }
 
-.content-wrapper {
+.table-section {
   flex: 1;
-  padding: 20px;
-  overflow: auto;
-}
-
-.placeholder-content {
+  margin: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 300px;
-  background: #fff;
-  border-radius: 8px;
-  color: #909399;
+}
 
-  .placeholder-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    color: #c0c4cc;
+.filter-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+
+  .filter-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  p {
-    font-size: 14px;
+  .filter-label {
+    color: #606266;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}
+
+.message-text {
+  font-size: 12px;
+  color: #606266;
+
+  &.error-text {
+    color: #f56c6c;
+  }
+}
+
+.status-tag {
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  }
+}
+
+.pagination-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
+
+  .total-info {
+    color: #606266;
+    font-size: 13px;
   }
 }
 </style>

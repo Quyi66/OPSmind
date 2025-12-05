@@ -336,6 +336,37 @@
       :asset-id="currentAssetId"
       :asset-ip="currentAssetIp"
     />
+
+    <!-- 自动化资产录入弹窗 -->
+    <AutoEntryDialog
+      v-model="autoEntryDialogVisible"
+      :asset-type="currentType"
+      @saved="handleAutoEntrySaved"
+    />
+
+    <!-- 批量编辑弹窗 -->
+    <BatchEditDialog
+      v-model="batchEditDialogVisible"
+      :ci-ids="selectedRows.map(row => row.id)"
+      :asset-type="currentType"
+      @saved="handleBatchEditSaved"
+    />
+
+    <!-- 添加标签弹窗 -->
+    <AddTagDialog
+      v-model="addTagDialogVisible"
+      :ci-ids="selectedRows.map(row => row.id)"
+      :asset-type="currentType"
+      @saved="handleAddTagSaved"
+    />
+
+    <!-- 添加分组弹窗 -->
+    <AddGroupDialog
+      v-model="addGroupDialogVisible"
+      :ci-ids="selectedRows.map(row => row.id)"
+      :asset-type="currentType"
+      @saved="handleAddGroupSaved"
+    />
   </div>
 </template>
 
@@ -351,14 +382,23 @@ import {
   Refresh
 } from '@element-plus/icons-vue'
 import { assetApi } from '../api'
+import { apiService } from '@/core/api'
 import AssetDetailDialog from '../components/AssetDetailDialog.vue'
 import AssetEditDialog from '../components/AssetEditDialog.vue'
 import AssetHistoryDialog from '../components/AssetHistoryDialog.vue'
+import AutoEntryDialog from '../components/AutoEntryDialog.vue'
+import BatchEditDialog from '../components/BatchEditDialog.vue'
+import AddTagDialog from '../components/AddTagDialog.vue'
+import AddGroupDialog from '../components/AddGroupDialog.vue'
 
 // 资产详情弹窗
 const detailDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 const historyDialogVisible = ref(false)
+const autoEntryDialogVisible = ref(false)
+const batchEditDialogVisible = ref(false)
+const addTagDialogVisible = ref(false)
+const addGroupDialogVisible = ref(false)
 const currentAssetId = ref('')
 const currentAssetIp = ref('')
 
@@ -547,7 +587,7 @@ const handleGroupNodeClick = (data) => {
 const handleSelectTag = (tag) => {
   selectedTag.value = tag.name
   selectedGroup.value = ''
-  filters.value.hostKeys = `tag:${tag.name}`
+  filters.value.hostKeys = `,#${tag.name}`
   hostSelectorVisible.value = false
 }
 
@@ -666,43 +706,133 @@ const handleExport = () => {
 }
 
 const handleEdit = () => {
-  ElMessage.info('批量修改功能待实现')
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要修改的资产')
+    return
+  }
+  batchEditDialogVisible.value = true
+}
+
+const handleBatchEditSaved = () => {
+  loadAssetList()
 }
 
 const handleAddTag = () => {
-  ElMessage.info('添加标签功能待实现')
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要添加标签的资产')
+    return
+  }
+  addTagDialogVisible.value = true
+}
+
+const handleAddTagSaved = () => {
+  loadAssetList()
+  loadTagList()
 }
 
 const handleAddGroup = () => {
-  ElMessage.info('添加分组功能待实现')
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要添加分组的资产')
+    return
+  }
+  addGroupDialogVisible.value = true
+}
+
+const handleAddGroupSaved = () => {
+  loadAssetList()
+  loadGroupTree()
 }
 
 const handleOnline = () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要上线的资产')
+    return
+  }
   ElMessageBox.confirm('是否将选中的资产设置为在线状态？', '上线确认', {
     type: 'warning'
-  }).then(() => {
-    ElMessage.info('上线功能待实现')
+  }).then(async () => {
+    try {
+      const ids = selectedRows.value.map(row => row.id).join(',')
+      await apiService.post(
+        `/jao/api/jao/jobs/QqUnBG/run?cacheBuster=${Date.now()}`,
+        {
+          params: {
+            status: 1,
+            id: ids
+          }
+        }
+      )
+      ElMessage.success('上线成功')
+      loadAssetList()
+    } catch (error) {
+      console.error('上线失败:', error)
+      ElMessage.error('上线失败: ' + (error.response?.data?.message || error.message))
+    }
   }).catch(() => {})
 }
 
 const handleOffline = () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要下线的资产')
+    return
+  }
   ElMessageBox.confirm('是否将选中的资产设置为下线状态？', '下线确认', {
     type: 'warning'
-  }).then(() => {
-    ElMessage.info('下线功能待实现')
+  }).then(async () => {
+    try {
+      const ids = selectedRows.value.map(row => row.id).join(',')
+      await apiService.post(
+        `/jao/api/jao/jobs/QqUnBG/run?cacheBuster=${Date.now()}`,
+        {
+          params: {
+            status: 0,
+            id: ids
+          }
+        }
+      )
+      ElMessage.success('下线成功')
+      loadAssetList()
+    } catch (error) {
+      console.error('下线失败:', error)
+      ElMessage.error('下线失败: ' + (error.response?.data?.message || error.message))
+    }
   }).catch(() => {})
 }
 
 const handleDelete = () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要删除的资产')
+    return
+  }
   ElMessageBox.confirm('是否确认删除选中的资产？此操作不可恢复！', '删除确认', {
     type: 'warning'
-  }).then(() => {
-    ElMessage.info('删除功能待实现')
+  }).then(async () => {
+    try {
+      const ids = selectedRows.value.map(row => row.id).join(',')
+      await apiService.post(
+        `/jao/api/jao/jobs/CdPKGF/run?cacheBuster=${Date.now()}`,
+        {
+          params: {
+            id: ids
+          }
+        }
+      )
+      ElMessage.success('删除成功')
+      loadAssetList()
+    } catch (error) {
+      console.error('删除失败:', error)
+      ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+    }
   }).catch(() => {})
 }
 
 const handleAutoEntry = () => {
-  ElMessage.info('自动化资产录入功能待实现')
+  autoEntryDialogVisible.value = true
+}
+
+const handleAutoEntrySaved = () => {
+  // 刷新列表
+  loadAssetList()
 }
 
 // 初始化

@@ -121,48 +121,52 @@ async function doSearch() {
     .filter(Boolean)
 
   try {
-    const response = await jaoApi.searchAcmByAttr({
-      ciType: props.ciType,
-      attr: attrCode.value,
+    // 调用 ACM 按属性搜索接口
+    const response = await jaoApi.searchAcmByAttr(
+      props.ciType,
+      attrCode.value,
       keywords
-    })
+    )
 
     const data = response?.data || response
-    const founds = Array.isArray(data?.found) ? data.found : []
-    const notFound = Array.isArray(data?.notFound) ? data.notFound : []
+
+    // 处理返回结果 - 根据API响应格式调整
+    let founds = []
+    let notFound = []
+
+    if (Array.isArray(data)) {
+      // 如果直接返回数组，那就是找到的记录
+      founds = data
+      // 计算未找到的
+      const foundValues = data.map(item => item[attrCode.value] || item.IP || item.ip)
+      notFound = keywords.filter(k => !foundValues.includes(k))
+    } else if (data?.found) {
+      founds = data.found
+      notFound = data.notFound || []
+    } else if (data?.records) {
+      founds = data.records
+      const foundValues = data.records.map(item => item[attrCode.value] || item.IP || item.ip)
+      notFound = keywords.filter(k => !foundValues.includes(k))
+    }
 
     searchResult.value = founds.map(item => ({
-      id: item.id,
+      id: item.id || item.ci_id,
       IP: item.IP || item.ip,
-      name: item.name || item.hostname,
+      name: item.name || item.hostname || item.ci_name,
       assetType: props.ciType
     }))
     notFounds.value = notFound
     showResult.value = true
   } catch (error) {
     console.error('Failed to search ACM by attr:', error)
-    // 如果API失败,使用模拟数据
-    const founds = []
-    const notFound = []
-
-    keywords.forEach(keyword => {
-      if (Math.random() > 0.3) {
-        founds.push({
-          id: `host-${keyword}`,
-          IP: keyword,
-          name: `server-${keyword}`,
-          assetType: props.ciType
-        })
-      } else {
-        notFound.push(keyword)
-      }
-    })
-
-    searchResult.value = founds
-    notFounds.value = notFound
+    ElMessage.error('搜索失败，请重试')
+    searchResult.value = []
+    notFounds.value = keywords
     showResult.value = true
   }
-}function handleSelectionChange(selection) {
+}
+
+function handleSelectionChange(selection) {
   const selected = selection.map(row => ({
     key: row.id,
     value: row.IP,

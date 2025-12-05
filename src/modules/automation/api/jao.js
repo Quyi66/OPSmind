@@ -258,15 +258,26 @@ export const checkGfsFiles = (filePaths) => {
 
 /** 查询主机实例列表 (使用 UDP Dataset) */
 export const queryAcmInstances = (params) => {
-  const { ciType, page = 1, pageSize = 20, groups = '@@', tags = '@@', dynamicTags = '@@' } = params;
+  const {
+    ciType,
+    page = 1,
+    pageSize = 20,
+    groups = '@@',
+    tags = '@@',
+    dynamicTags = '@@',
+    dataType = 'auto'
+  } = params;
   // UDP Dataset ID: ACM_GET_CI_BY_SELECTOR
   return useApi().post('/dts/api/dts/q/data/ACM_GET_CI_BY_SELECTOR/', {
-    assetType: ciType,
-    groups,
-    tags,
-    dynamicTags,
+    params: {
+      assetType: ciType,
+      groups,
+      tags,
+      dynamicTags,
+      dataType
+    },
     page,
-    pageSize
+    size: pageSize
   });
 }
 
@@ -290,14 +301,11 @@ export const searchAcmByAttr = (assetType, attrCode, attrValues) => {
 }
 
 /** 查询最近使用的主机 (使用 JAO 接口) */
-export const queryAcmRecentlyUsed = (params) => {
-  const { ciType, lim = 1, jobType = ['command', 'script', 'process'], page = 1, pageSize = 20 } = params;
+export const queryAcmRecentlyUsed = (params = {}) => {
+  const { jobTypes = 'script,command', limit = 100 } = params;
   return useApi().post('/jao/api/jao/jobs/recently', {
-    ciType,
-    lim,
-    jobType,
-    page,
-    pageSize
+    jobTypes,
+    limit
   });
 }
 

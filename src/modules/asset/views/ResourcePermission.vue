@@ -1,20 +1,285 @@
 <template>
   <div class="resource-permission">
-    <nav class="navbar">
-      <div class="navbar-title">资源权限</div>
-    </nav>
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <span class="page-title">资源权限</span>
+    </div>
 
-    <div class="content-wrapper">
-      <div class="placeholder-content">
-        <i class="fas fa-user-lock placeholder-icon"></i>
-        <p>资源权限页面开发中...</p>
+    <!-- 表格区域 -->
+    <div class="table-section">
+      <!-- 搜索栏 -->
+      <div class="search-bar">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索"
+          clearable
+          :prefix-icon="Search"
+          style="width: 200px"
+          @input="handleSearch"
+        />
+      </div>
+
+      <!-- 权限表格 -->
+      <el-table
+        :data="filteredData"
+        v-loading="loading"
+        border
+        style="width: 100%"
+        :max-height="tableMaxHeight"
+      >
+        <el-table-column prop="groupInfo" label="info" min-width="350" show-overflow-tooltip sortable />
+        <el-table-column prop="assets_type" label="assets_type" width="120" align="center" sortable />
+
+        <!-- 动态团队权限列 -->
+        <el-table-column
+          v-for="teamName in teamNames"
+          :key="teamName"
+          :label="teamName"
+          width="160"
+          align="center"
+        >
+          <template #default="{ row }">
+            <div class="permission-buttons">
+              <el-button
+                v-for="perm in ['r', 'w', 'x']"
+                :key="perm"
+                :type="hasPermission(row, teamName, perm) ? 'primary' : 'default'"
+                size="small"
+                class="perm-btn"
+                @click="togglePermission(row, teamName, perm)"
+              >
+                {{ perm.toUpperCase() }}
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <span class="page-size-selector">
+          <el-select v-model="pageSize" style="width: 80px" @change="handlePageSizeChange">
+            <el-option :value="10" label="10" />
+            <el-option :value="25" label="25" />
+            <el-option :value="50" label="50" />
+            <el-option :value="100" label="100" />
+          </el-select>
+        </span>
+        <span class="page-info">{{ pageInfo }}</span>
+        <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          layout="prev, pager, next"
+          @current-change="handlePageChange"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-// TODO: 实现资源权限页面
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { apiService } from '@/core/api'
+import _ from 'lodash'
+
+// 表格数据
+const loading = ref(false)
+const tableData = ref([])
+const permissionData = ref([]) // 用于保存的原始数据
+const searchKeyword = ref('')
+const teamNames = ref([])
+
+// 分页
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+
+// 表格高度
+const tableMaxHeight = ref(500)
+
+// 计算分页信息
+const pageInfo = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value + 1
+  const end = Math.min(currentPage.value * pageSize.value, total.value)
+  return `${start} - ${end} / ${total.value}`
+})
+
+// 过滤后的数据
+const filteredData = computed(() => {
+  let data = tableData.value
+
+  if (searchKeyword.value) {
+    const keyword = searchKeyword.value.toLowerCase()
+    data = data.filter(item =>
+      item.groupInfo?.toLowerCase().includes(keyword) ||
+      item.assets_type?.toLowerCase().includes(keyword)
+    )
+  }
+
+  // 更新总数
+  total.value = data.length
+
+  // 分页
+  const start = (currentPage.value - 1) * pageSize.value
+  return data.slice(start, start + pageSize.value)
+})
+
+onMounted(() => {
+  loadData()
+  updateTableHeight()
+  window.addEventListener('resize', updateTableHeight)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTableHeight)
+})
+
+// 更新表格高度
+function updateTableHeight() {
+  tableMaxHeight.value = window.innerHeight - 280
+}
+
+// 加载数据
+async function loadData() {
+  loading.value = true
+  try {
+    const cacheBuster = Date.now()
+    const response = await apiService.get(`/acm/api/acm/permission/team/table?cacheBuster=${cacheBuster}`)
+
+    const data = Array.isArray(response) ? response : (response?.data || [])
+    permissionData.value = _.cloneDeep(data)
+
+    // 处理数据，提取 extra_param 和 teamInfo
+    const teams = new Set()
+    tableData.value = data.map(item => {
+      const row = {
+        id: item.id,
+        groupInfo: item.groupInfo,
+        teamInfo: item.teamInfo || []
+      }
+
+      // 提取 extra_param
+      if (item.extra_param && Array.isArray(item.extra_param)) {
+        item.extra_param.forEach(param => {
+          row[param.name] = param.data
+        })
+      }
+
+      // 提取团队名称
+      if (item.teamInfo && Array.isArray(item.teamInfo)) {
+        item.teamInfo.forEach(team => {
+          teams.add(team.teamName)
+          row[team.teamName] = team.permission || []
+        })
+      }
+
+      return row
+    })
+
+    teamNames.value = Array.from(teams)
+    total.value = tableData.value.length
+
+    console.log('资源权限数据:', tableData.value)
+    console.log('团队列表:', teamNames.value)
+  } catch (error) {
+    console.error('加载权限数据失败:', error)
+    ElMessage.error('加载权限数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 检查是否有权限
+function hasPermission(row, teamName, perm) {
+  const teamPermissions = row[teamName]
+  return Array.isArray(teamPermissions) && teamPermissions.includes(perm)
+}
+
+// 切换权限
+function togglePermission(row, teamName, perm) {
+  const rowData = permissionData.value.find(item => item.id === row.id)
+  if (!rowData) return
+
+  // 找到或创建团队权限
+  let teamInfo = rowData.teamInfo.find(t => t.teamName === teamName)
+  if (!teamInfo) {
+    teamInfo = { teamName, permission: [] }
+    rowData.teamInfo.push(teamInfo)
+  }
+
+  const currentlyHas = hasPermission(row, teamName, perm)
+
+  if (currentlyHas) {
+    // 取消权限
+    if (perm === 'r') {
+      // 取消 R 时，同时取消 W 和 X
+      teamInfo.permission = teamInfo.permission.filter(p => !['r', 'w', 'x'].includes(p))
+    } else if (perm === 'w') {
+      // 取消 W
+      teamInfo.permission = teamInfo.permission.filter(p => p !== 'w')
+    } else {
+      // 取消 X
+      teamInfo.permission = teamInfo.permission.filter(p => p !== 'x')
+    }
+  } else {
+    // 添加权限
+    if (perm === 'r') {
+      if (!teamInfo.permission.includes('r')) {
+        teamInfo.permission.push('r')
+      }
+    } else if (perm === 'w') {
+      // 添加 W 时，自动添加 R
+      if (!teamInfo.permission.includes('r')) {
+        teamInfo.permission.push('r')
+      }
+      if (!teamInfo.permission.includes('w')) {
+        teamInfo.permission.push('w')
+      }
+    } else {
+      // 添加 X 时，自动添加 R
+      if (!teamInfo.permission.includes('r')) {
+        teamInfo.permission.push('r')
+      }
+      if (!teamInfo.permission.includes('x')) {
+        teamInfo.permission.push('x')
+      }
+    }
+  }
+
+  // 更新表格显示
+  row[teamName] = [...teamInfo.permission]
+
+  // 防抖保存
+  debouncedSave()
+}
+
+// 防抖保存
+const debouncedSave = _.debounce(async () => {
+  try {
+    await apiService.post('/api/team/permission/table/permission/ACM', permissionData.value)
+    // 静默保存，不显示成功消息
+  } catch (error) {
+    console.error('保存权限失败:', error)
+    ElMessage.error('保存权限失败')
+  }
+}, 2000)
+
+// 搜索
+function handleSearch() {
+  currentPage.value = 1
+}
+
+// 分页变化
+function handlePageChange() {
+  // 分页由 computed 处理
+}
+
+function handlePageSizeChange() {
+  currentPage.value = 1
+}
 </script>
 
 <style scoped lang="scss">
@@ -25,44 +290,83 @@
   background: #f5f7fa;
 }
 
-.navbar {
+.page-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 20px;
   background: #fff;
   border-bottom: 1px solid #ebeef5;
 
-  .navbar-title {
+  .page-title {
     font-size: 16px;
     font-weight: 600;
     color: #303133;
   }
 }
 
-.content-wrapper {
+.table-section {
   flex: 1;
-  padding: 20px;
-  overflow: auto;
-}
-
-.placeholder-content {
+  margin: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 300px;
-  background: #fff;
-  border-radius: 8px;
-  color: #909399;
+}
 
-  .placeholder-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    color: #c0c4cc;
+.search-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.permission-buttons {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+
+  .perm-btn {
+    min-width: 32px;
+    padding: 4px 8px;
+
+    &.el-button--default {
+      background: #f5f7fa;
+      border-color: #dcdfe6;
+      color: #606266;
+
+      &:hover {
+        background: #e6f0ff;
+        border-color: #409eff;
+        color: #409eff;
+      }
+    }
+
+    &.el-button--primary {
+      background: #409eff;
+      border-color: #409eff;
+      color: #fff;
+    }
+  }
+}
+
+.pagination-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
+
+  .page-info {
+    color: #606266;
+    font-size: 13px;
   }
 
-  p {
-    font-size: 14px;
+  :deep(.el-pagination) {
+    margin-left: auto;
   }
 }
 </style>

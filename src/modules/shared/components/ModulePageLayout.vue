@@ -88,9 +88,12 @@ const props = defineProps({
   overflow: auto;
   background: linear-gradient(180deg, rgba(241, 245, 249, 0.6) 0%, rgba(248, 250, 252, 0.6) 100%);
   font-size: 13px;
+  display: flex;
+  flex-direction: column;
 
   &.full-height {
     padding: 0;
+    overflow: hidden;
   }
 }
 
@@ -98,6 +101,7 @@ const props = defineProps({
   .module-page__body {
     padding: 0;
     background: #fff;
+    overflow: hidden;
   }
 }
 

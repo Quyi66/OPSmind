@@ -173,6 +173,33 @@ export const assetApi = {
   async updateAssetAttrs(id, attrs) {
     const res = await apiService.put(`${ACM_BASE}/ci/attr/${id}`, attrs)
     return res.data
+  },
+
+  /**
+   * 获取资产模型属性列表
+   * POST /dts/api/dts/q/data/ACM_GET_MODEL/
+   * @param {string} ciType - 资产类型
+   */
+  getModel(ciType) {
+    return dtsApi.queryData('ACM_GET_MODEL', { ciType })
+  },
+
+  /**
+   * 获取资产类型的标签列表（用于添加标签弹窗）
+   * POST /dts/api/dts/q/data/ACM_GET_CI_TAGS_BY_CIT/
+   * @param {string} ciType - 资产类型
+   */
+  getCiTagsByCit(ciType) {
+    return dtsApi.queryData('ACM_GET_CI_TAGS_BY_CIT', { ciType })
+  },
+
+  /**
+   * 获取资产类型的分组列表（用于添加分组弹窗）
+   * POST /dts/api/dts/q/data/ACM_GET_GROUP_BY_CIT/
+   * @param {string} ciType - 资产类型
+   */
+  getGroupByCit(ciType) {
+    return dtsApi.queryData('ACM_GET_GROUP_BY_CIT', { ciType })
   }
 }
 
@@ -180,7 +207,64 @@ export const assetApi = {
  * 数据管理 API
  */
 export const dataManageApi = {
-  // TODO: 待实现
+  /**
+   * 获取当前租户ID
+   * POST /dts/api/dts/q/data/TENANT_GET_CURRENT_TENANT_ID/
+   */
+  async getCurrentTenantId() {
+    const res = await dtsApi.queryData('TENANT_GET_CURRENT_TENANT_ID', null)
+    return res?.records?.[0]?.currentTenantId || ''
+  },
+
+  /**
+   * 获取资源类型列表
+   * POST /dts/api/dts/q/data/ACM_GET_RESOURCE_TYPE/
+   */
+  getResourceTypes() {
+    return dtsApi.queryData('ACM_GET_RESOURCE_TYPE', null)
+  },
+
+  /**
+   * 获取所有分组列表
+   * POST /dts/api/dts/q/data/ACM_GET_ALL_GROUP/
+   * @param {string} ciType - 资产类型，oplus_all 表示全部
+   */
+  getAllGroups(ciType = 'oplus_all') {
+    return dtsApi.queryData('ACM_GET_ALL_GROUP', { ciType, param: 'r' })
+  },
+
+  /**
+   * 获取所有标签列表
+   * POST /dts/api/dts/q/data/ACM_GET_CI_TAGS/
+   * @param {string} ciType - 资产类型，oplus_all 表示全部
+   */
+  getAllTags(ciType = 'oplus_all') {
+    return dtsApi.queryData('ACM_GET_CI_TAGS', { ciType })
+  },
+
+  /**
+   * 删除分组
+   * POST /jao/api/jao/jobs/r08zUN/run
+   * @param {string} id - 分组ID
+   */
+  async deleteGroup(id) {
+    const res = await apiService.post(`/jao/api/jao/jobs/r08zUN/run?cacheBuster=${Date.now()}`, {
+      params: { id }
+    })
+    return res.data
+  },
+
+  /**
+   * 删除标签
+   * POST /jao/api/jao/jobs/sKaBlB/run
+   * @param {string} id - 标签ID
+   */
+  async deleteTag(id) {
+    const res = await apiService.post(`/jao/api/jao/jobs/sKaBlB/run?cacheBuster=${Date.now()}`, {
+      params: { id }
+    })
+    return res.data
+  }
 }
 
 /**
@@ -208,14 +292,40 @@ export const automationApi = {
  * 资源权限 API
  */
 export const permissionApi = {
-  // TODO: 待实现
+  /**
+   * 获取团队表格权限
+   */
+  getTablePermission: () => {
+    const cacheBuster = Date.now()
+    return apiService.get(`/acm/api/acm/permission/team/table?cacheBuster=${cacheBuster}`)
+  },
+
+  /**
+   * 保存团队表格权限
+   * @param {string} module - 模块名称 (ACM)
+   * @param {Array} data - 权限数据
+   */
+  saveTablePermission: (module, data) => {
+    return apiService.post(`/api/team/permission/table/permission/${module}`, data)
+  }
 }
 
 /**
  * 操作记录 API
  */
 export const operationLogApi = {
-  // TODO: 待实现
+  /**
+   * 获取操作日志列表
+   * POST /dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/
+   * @param {object} params - 查询参数
+   * @param {string} params.module - 模块名称 (acm)
+   * @param {string} params.action - 操作类型 (all 或具体操作)
+   * @param {string} params.status - 状态 (all, COMPLETED, ERROR, RUNNING)
+   * @param {number} params.day - 时间范围（天数）
+   */
+  getOperationLogs: (params) => {
+    return dtsApi.queryData('JAO_LIST_OPERATION_LOG', params)
+  }
 }
 
 export default {

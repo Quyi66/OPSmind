@@ -1,28 +1,77 @@
 <template>
   <div class="recently-selector">
+    <!-- 搜索栏 -->
+    <div class="search-toolbar">
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索作业名称"
+        clearable
+        :prefix-icon="Search"
+        @input="handleSearch"
+      />
+      <el-button :icon="Refresh" @click="fetchData" />
+    </div>
+
+    <!-- 作业列表 -->
     <el-table
-      :data="tableData"
+      ref="tableRef"
+      :data="filteredData"
       v-loading="loading"
       border
       height="350"
+      row-key="id"
       @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="55" />
-      <el-table-column prop="IP" label="IP地址" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="name" label="主机名" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="lastUsedAt" label="最近使用" min-width="180">
+      <el-table-column type="selection" width="50" reserve-selection />
+      <el-table-column prop="jobTitle" label="作业" min-width="280" show-overflow-tooltip sortable />
+      <el-table-column label="执行主机" width="120" show-overflow-tooltip sortable>
         <template #default="{ row }">
-          {{ formatDateTime(row.lastUsedAt) }}
+          <span v-if="row.run_result_hosts?.length">
+            {{ row.run_result_hosts[0]?.value || '-' }}
+          </span>
+          <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column prop="useCount" label="使用次数" width="100" align="center" />
+      <el-table-column prop="jobType" label="类型" width="80" align="center" sortable>
+        <template #default="{ row }">
+          {{ row.jobType || '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="结束时间" width="160" sortable>
+        <template #default="{ row }">
+          {{ formatDateTime(row.endTime || row.startTime) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="Ansible Node" width="150" align="center">
+        <template #default="{ row }">
+          <el-tag v-if="row.ata_node" type="primary" size="small">
+            {{ parseAnsibleNode(row.ata_node) }}
+          </el-tag>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" width="90" align="center" sortable>
+        <template #default="{ row }">
+          <el-tag :type="getStatusStyle(row.status)" size="small">
+            {{ getStatusLabel(row.status) }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="详情" width="60" align="center">
+        <template #default="{ row }">
+          <span class="detail-count" v-if="row.statsJson">
+            {{ getHostCount(row.statsJson) }}
+          </span>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
     </el-table>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, watch, onMounted, computed } from 'vue'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
@@ -33,8 +82,19 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
+const tableRef = ref(null)
 const loading = ref(false)
 const tableData = ref([])
+const searchKeyword = ref('')
+
+// 过滤后的数据
+const filteredData = computed(() => {
+  if (!searchKeyword.value) return tableData.value
+  const keyword = searchKeyword.value.toLowerCase()
+  return tableData.value.filter(item =>
+    item.jobTitle?.toLowerCase().includes(keyword)
+  )
+})
 
 watch(() => props.ciType, () => {
   fetchData()
@@ -47,67 +107,108 @@ onMounted(() => {
 async function fetchData() {
   loading.value = true
   try {
-    const response = await jaoApi.queryAcmRecentlyUsed(props.ciType)
+    const response = await jaoApi.queryAcmRecentlyUsed({
+      jobTypes: 'script,command',
+      limit: 100
+    })
+
     const data = response?.data || response
-    tableData.value = Array.isArray(data) ? data.map(item => ({
-      id: item.id,
-      IP: item.IP || item.ip,
-      name: item.name || item.hostname,
-      lastUsedAt: item.lastUsedAt || item.lastAccessTime,
-      useCount: item.useCount || item.accessCount || 0
-    })) : []
+    console.log('最近作业 API 响应:', data)
+    // API 返回的是作业记录列表
+    tableData.value = Array.isArray(data) ? data : (data?.records || [])
+
   } catch (error) {
     console.error('Failed to fetch recently used:', error)
-    // 如果API失败,使用模拟数据
-    tableData.value = [
-      {
-        id: 'host-1',
-        IP: '192.168.1.100',
-        name: 'server-01',
-        lastUsedAt: new Date(Date.now() - 3600000).toISOString(),
-        useCount: 15
-      },
-      {
-        id: 'host-2',
-        IP: '192.168.1.101',
-        name: 'server-02',
-        lastUsedAt: new Date(Date.now() - 7200000).toISOString(),
-        useCount: 10
-      },
-      {
-        id: 'host-3',
-        IP: '192.168.1.102',
-        name: 'server-03',
-        lastUsedAt: new Date(Date.now() - 86400000).toISOString(),
-        useCount: 5
-      }
-    ]
+    tableData.value = []
   } finally {
     loading.value = false
   }
-}function handleSelectionChange(selection) {
-  const selected = selection.map(row => ({
-    key: row.id,
-    value: row.IP,
-    assetType: props.ciType
-  }))
-  emit('update:modelValue', selected)
+}
+
+function handleSearch() {
+  // 搜索是实时过滤，不需要额外操作
+}
+
+function handleSelectionChange(selection) {
+  // 选择作业记录时，将其关联的主机添加到已选列表
+  const selectedHosts = []
+
+  selection.forEach(job => {
+    if (job.run_result_hosts && Array.isArray(job.run_result_hosts)) {
+      job.run_result_hosts.forEach(host => {
+        // 避免重复添加
+        if (!selectedHosts.some(h => h.key === host.key || h.value === host.value)) {
+          selectedHosts.push({
+            key: host.key || host.id,
+            value: host.value || host.IP,
+            assetType: host.assetType || props.ciType
+          })
+        }
+      })
+    }
+  })
+
+  emit('update:modelValue', selectedHosts)
 }
 
 function formatDateTime(dateStr) {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
-  const now = Date.now()
-  const diff = now - date.getTime()
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
+}
 
-  if (diff < 3600000) {
-    return `${Math.floor(diff / 60000)}分钟前`
-  } else if (diff < 86400000) {
-    return `${Math.floor(diff / 3600000)}小时前`
-  } else if (diff < 604800000) {
-    return `${Math.floor(diff / 86400000)}天前`
-  } else {
-    return date.toLocaleDateString()
+function parseAnsibleNode(nodeValue) {
+  if (!nodeValue) return '-'
+  try {
+    // 如果是 JSON 数组字符串，解析它
+    if (typeof nodeValue === 'string' && nodeValue.startsWith('[')) {
+      const arr = JSON.parse(nodeValue)
+      return Array.isArray(arr) ? arr.join(', ') : nodeValue
+    }
+    // 如果已经是数组
+    if (Array.isArray(nodeValue)) {
+      return nodeValue.join(', ')
+    }
+    return nodeValue
+  } catch {
+    return nodeValue
+  }
+}
+
+function getStatusLabel(status) {
+  if (!status) return '-'
+  const statusUpper = status.toUpperCase()
+  const labels = {
+    'SUCCESS': '完成',
+    'COMPLETED': '完成',
+    'FAILED': '运行失败',
+    'ERROR': '运行错误',
+    'RUNNING': '执行中',
+    'PENDING': '等待中'
+  }
+  return labels[statusUpper] || status
+}
+
+function getStatusStyle(status) {
+  if (!status) return 'info'
+  const statusUpper = status.toUpperCase()
+  const styles = {
+    'SUCCESS': 'success',
+    'COMPLETED': 'success',
+    'FAILED': 'warning',
+    'ERROR': 'danger',
+    'RUNNING': 'primary',
+    'PENDING': 'info'
+  }
+  return styles[statusUpper] || 'info'
+}
+
+function getHostCount(statsJson) {
+  try {
+    const stats = typeof statsJson === 'string' ? JSON.parse(statsJson) : statsJson
+    return stats?.totalHosts || stats?.total || '-'
+  } catch {
+    return '-'
   }
 }
 </script>
@@ -115,5 +216,25 @@ function formatDateTime(dateStr) {
 <style scoped>
 .recently-selector {
   padding: 10px;
+}
+
+.search-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.search-toolbar .el-input {
+  width: 200px;
+}
+
+.detail-count {
+  color: #409eff;
+  cursor: pointer;
+}
+
+.detail-count:hover {
+  text-decoration: underline;
 }
 </style>

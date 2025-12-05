@@ -7,12 +7,12 @@
       :class="getThemeClass(item)"
       @click="handleClick(item)"
     >
+      <div class="kpi-main">
+        <div class="kpi-label">{{ item.name }}</div>
+        <div class="kpi-value">{{ item.value }}</div>
+      </div>
       <div class="kpi-icon">
         <i :class="['fa', item.icon]"></i>
-      </div>
-      <div class="kpi-content">
-        <div class="kpi-value">{{ item.value }}</div>
-        <div class="kpi-name">{{ item.name }}</div>
       </div>
     </div>
   </div>
@@ -37,34 +37,34 @@ const emit = defineEmits(['click'])
 // KPI 定义映射
 const kpiDefs = {
   'recently_ok': {
-    title: '最近正常',
+    title: '最近一次连通成功设备',
     icon: 'fa-check',
     order: 0,
     theme: 'success'
   },
   'oplus_all': {
-    title: '异常总计',
+    title: '所有连通异常设备',
     icon: 'fa-exclamation',
     order: 1,
     theme: 'warning'
   },
   'today': {
-    title: '今日异常',
+    title: '当日异常设备',
     icon: 'fa-exclamation-triangle',
     order: 2,
-    theme: 'warning'
+    theme: 'orange'
   },
   'recently': {
-    title: '最近异常',
+    title: '最近一次连通失败设备',
     icon: 'fa-times',
     order: 3,
-    theme: 'warning'
+    theme: 'danger'
   },
   'low': {
-    title: '低频访问',
-    icon: 'fa-bomb',
+    title: '连通率小于50%设备',
+    icon: 'fa-sync',
     order: 4,
-    theme: 'danger'
+    theme: 'info'
   }
 }
 
@@ -111,72 +111,65 @@ function handleClick(item) {
 .kpi-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
   padding: 16px 20px;
-  background: #fff;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s;
-  min-width: 160px;
+  min-width: 180px;
   flex: 1;
+  color: #fff;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   &.theme-success {
-    border-left: 4px solid #67c23a;
-
-    .kpi-icon {
-      color: #67c23a;
-      background: rgba(103, 194, 58, 0.1);
-    }
+    background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
   }
 
   &.theme-warning {
-    border-left: 4px solid #e6a23c;
+    background: linear-gradient(135deg, #e6a23c 0%, #ebb563 100%);
+  }
 
-    .kpi-icon {
-      color: #e6a23c;
-      background: rgba(230, 162, 60, 0.1);
-    }
+  &.theme-orange {
+    background: linear-gradient(135deg, #f5a623 0%, #f8c261 100%);
   }
 
   &.theme-danger {
-    border-left: 4px solid #f56c6c;
+    background: linear-gradient(135deg, #909399 0%, #a6a9ad 100%);
+  }
 
-    .kpi-icon {
-      color: #f56c6c;
-      background: rgba(245, 108, 108, 0.1);
-    }
+  &.theme-info {
+    background: linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%);
   }
 }
 
-.kpi-icon {
-  width: 40px;
-  height: 40px;
+.kpi-main {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  font-size: 18px;
+  flex-direction: column;
 }
 
-.kpi-content {
-  flex: 1;
+.kpi-label {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 8px;
 }
 
 .kpi-value {
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 600;
-  color: #303133;
-  line-height: 1.2;
+  line-height: 1;
 }
 
-.kpi-name {
-  font-size: 13px;
-  color: #909399;
-  margin-top: 4px;
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  opacity: 0.8;
 }
 </style>

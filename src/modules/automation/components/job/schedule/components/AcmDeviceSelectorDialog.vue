@@ -336,8 +336,8 @@ function handleCancel() {
 
 <style scoped>
 .acm-device-selector-dialog .selector-container {
-  min-height: 500px;
-  max-height: 600px;
+  min-height: 600px;
+  max-height: 700px;
 }
 
 .acm-device-selector-dialog .ci-type-selector {
@@ -364,8 +364,7 @@ function handleCancel() {
 
 .acm-device-selector-dialog .selector-tabs :deep(.el-tabs__content) {
   min-height: 350px;
-  max-height: 400px;
-  overflow-y: auto;
+  max-height: 450px;
 }
 
 .acm-device-selector-dialog .selector-tabs :deep(.el-tabs__header) {

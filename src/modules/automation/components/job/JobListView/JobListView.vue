@@ -604,6 +604,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import '@/modules/automation/styles/common.scss';
+@use '../../../styles/common.scss' as *;
 
 </style>

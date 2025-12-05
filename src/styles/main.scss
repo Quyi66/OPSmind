@@ -489,3 +489,47 @@ body {
     display: none !important;
   }
 }
+
+// ========================================
+// Element Plus Dialog 全局居中样式
+// ========================================
+.el-overlay {
+  // Dialog 容器使用 flex 布局实现垂直居中
+  .el-overlay-dialog {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .el-dialog {
+      // 重置默认的 margin-top，使用 flex 居中
+      margin: 0 auto !important;
+
+      // 限制最大高度，确保在小屏幕上也能正常显示
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+
+      .el-dialog__header {
+        flex-shrink: 0;
+      }
+
+      .el-dialog__body {
+        flex: 1;
+        overflow: auto;
+      }
+
+      .el-dialog__footer {
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+// 全屏 Dialog 样式（保持原有行为）
+.el-dialog--fullscreen {
+  .el-dialog {
+    margin: 0 !important;
+    max-height: 100vh;
+  }
+}
+

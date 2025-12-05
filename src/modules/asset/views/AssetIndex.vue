@@ -2,8 +2,19 @@
   <ModulePageLayout
     :title="moduleTitle"
     :description="moduleDescription"
+    :hide-header="isModelEditorView"
   >
-    <div class="asset-module">
+    <!-- 模型编辑器全屏显示 -->
+    <div v-if="isModelEditorView" class="model-editor-container">
+      <ModelEditor
+        :model-id="modelEditorId"
+        @back="handleEditorBack"
+        @saved="handleEditorSaved"
+      />
+    </div>
+
+    <!-- 常规模块视图 -->
+    <div v-else class="asset-module">
       <aside class="asset-module__nav">
         <div
           v-for="item in navItems"
@@ -42,7 +53,7 @@
         <!-- 资产模型 -->
         <div v-else-if="activeView === 'model'" class="view-container">
           <div class="view-card">
-            <AssetModel ref="modelRef" />
+            <AssetModel ref="modelRef" @edit-model="handleEditModel" />
           </div>
         </div>
 
@@ -79,7 +90,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
 import AssetOverview from './AssetOverview.vue'
@@ -90,6 +101,7 @@ import ExceptionDevice from './ExceptionDevice.vue'
 import AutomationConfig from './AutomationConfig.vue'
 import ResourcePermission from './ResourcePermission.vue'
 import OperationLog from './OperationLog.vue'
+import ModelEditor from './ModelEditor.vue'
 
 // 模块信息
 const moduleTitle = '资产管理'
@@ -100,6 +112,15 @@ const router = useRouter()
 
 // 当前视图
 const activeView = ref('overview')
+
+// 模型编辑器状态
+const isModelEditorView = computed(() => {
+  return route.query.editor === 'model' && route.query.modelId
+})
+
+const modelEditorId = computed(() => {
+  return route.query.modelId || null
+})
 
 // 导航项（与源系统左侧菜单一致）
 const navItems = [
@@ -172,6 +193,31 @@ function handleNavClick(item) {
   const basePath = getBasePath()
   const targetPath = item.key === 'overview' ? basePath : `${basePath}/${item.key}`
   router.push(targetPath)
+}
+
+// 处理编辑模型（从 AssetModel 子组件发出）
+function handleEditModel(modelId) {
+  const basePath = getBasePath()
+  router.push({
+    path: `${basePath}/model`,
+    query: { editor: 'model', modelId }
+  })
+}
+
+// 模型编辑器返回
+function handleEditorBack() {
+  const basePath = getBasePath()
+  router.push(`${basePath}/model`)
+}
+
+// 模型编辑器保存成功
+function handleEditorSaved() {
+  const basePath = getBasePath()
+  router.push(`${basePath}/model`)
+  // 刷新模型列表
+  if (modelRef.value?.loadModelList) {
+    modelRef.value.loadModelList()
+  }
 }
 
 // 监听路由变化
@@ -268,5 +314,11 @@ onMounted(() => {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+}
+
+.model-editor-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 </style>
