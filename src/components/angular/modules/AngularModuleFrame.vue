@@ -172,17 +172,17 @@ const loadModule = async () => {
     if (iframeContainer.value) {
       const rect = iframeContainer.value.getBoundingClientRect()
       //console.log(`📏 Container dimensions:`, {
-        width: rect.width,
-        height: rect.height,
-        top: rect.top,
-        left: rect.left,
-        visible: rect.width > 0 && rect.height > 0
-      })
+      //   width: rect.width,
+      //   height: rect.height,
+      //   top: rect.top,
+      //   left: rect.left,
+      //   visible: rect.width > 0 && rect.height > 0
+      // })
       //console.log(`🎨 Container styles:`, {
-        display: getComputedStyle(iframeContainer.value).display,
-        position: getComputedStyle(iframeContainer.value).position,
-        zIndex: getComputedStyle(iframeContainer.value).zIndex
-      })
+      //   display: getComputedStyle(iframeContainer.value).display,
+      //   position: getComputedStyle(iframeContainer.value).position,
+      //   zIndex: getComputedStyle(iframeContainer.value).zIndex
+      // })
     }
 
     // 使用单 iframe 管理器 - 路由切换，真正秒开！
@@ -197,19 +197,19 @@ const loadModule = async () => {
     status.value = '已加载'
 
     //console.log(
-      `✅ Module ${props.moduleCode} switched in ${switchTime.toFixed(2)}ms (ROUTE CHANGE)`
-    )
+    //   `✅ Module ${props.moduleCode} switched in ${switchTime.toFixed(2)}ms (ROUTE CHANGE)`
+    // )
 
     // 验证 iframe 是否正确显示
     const iframe = iframeContainer.value.querySelector('iframe')
     if (iframe) {
       //console.log(`🎯 Iframe found in container:`, {
-        src: iframe.src,
-        display: iframe.style.display,
-        width: iframe.style.width,
-        height: iframe.style.height,
-        parentNode: iframe.parentNode === iframeContainer.value
-      })
+      //   src: iframe.src,
+      //   display: iframe.style.display,
+      //   width: iframe.style.width,
+      //   height: iframe.style.height,
+      //   parentNode: iframe.parentNode === iframeContainer.value
+      // })
     } else {
       console.warn(`⚠️ No iframe found in container`)
     }
