@@ -226,39 +226,11 @@ export default defineConfig(({ command, mode }): UserConfig => {
           main: resolve(__dirname, 'index.html')
         },
         output: {
-          // 更细粒度的分包（避免循环依赖造成的执行顺序问题）
-          manualChunks: (id: string) => {
-            // 第三方库
-            if (id.includes('node_modules')) {
-              // 将 Vue 生态 + Element Plus 合并到同一块，避免互相引用导致的 TDZ 问题
-              if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router') || id.includes('element-plus') || id.includes('@element-plus')) {
-                return 'vue-stack'
-              }
-              if (id.includes('axios')) return 'http'
-              if (id.includes('crypto-js')) return 'crypto'
-              return 'vendor'
-            }
-
-            // 核心模块
-            if (id.includes('/src/core/')) return 'core'
-            // 共享模块
-            if (id.includes('/src/shared/')) return 'shared'
-
-            // 业务模块
-            if (id.includes('/src/modules/')) {
-              const match = id.match(/\/src\/modules\/([^\/]+)\//)
-              if (match) return `module-${match[1]}`
-            }
-          },
+          // 移除 manualChunks，让 Rollup 自动处理分包，避免循环依赖问题
+          // manualChunks 容易导致模块初始化顺序问题
 
           // 文件命名
-          chunkFileNames: (chunkInfo) => {
-            const facadeModuleId = chunkInfo.facadeModuleId
-            if (facadeModuleId && facadeModuleId.includes('/src/modules/')) {
-              return 'js/modules/[name]-[hash].js'
-            }
-            return 'js/[name]-[hash].js'
-          },
+          chunkFileNames: 'js/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',
           assetFileNames: (assetInfo) => {
             // 使用 names 数组的第一个元素，如果不存在则使用默认名称
