@@ -330,17 +330,10 @@
     </el-dialog>
 
     <!-- 设备纳管弹窗 -->
-    <el-dialog
+    <DeviceManageDialog
       v-model="deviceManageDialogVisible"
-      title="设备纳管"
-      width="800px"
-      destroy-on-close
-    >
-      <p>设备纳管功能开发中...</p>
-      <template #footer>
-        <el-button @click="deviceManageDialogVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
+      @success="handleDeviceManageSuccess"
+    />
   </div>
 </template>
 
@@ -350,6 +343,7 @@ import { Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
+import DeviceManageDialog from '../components/DeviceManageDialog.vue'
 
 // Tab
 const activeTab = ref('automation')
@@ -651,6 +645,13 @@ async function saveAnsibleConfig() {
 // 设备纳管
 function handleDeviceManage() {
   deviceManageDialogVisible.value = true
+}
+
+// 设备纳管成功回调
+function handleDeviceManageSuccess() {
+  ElMessage.success('设备纳管任务已提交，请在操作记录中查看执行状态')
+  // 刷新自动化配置数据
+  loadAutomationData()
 }
 </script>
 

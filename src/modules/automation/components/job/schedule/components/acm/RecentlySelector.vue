@@ -52,20 +52,32 @@
       </el-table-column>
       <el-table-column label="状态" width="90" align="center" sortable>
         <template #default="{ row }">
-          <el-tag :type="getStatusStyle(row.status)" size="small">
+          <el-tag
+            :type="getStatusStyle(row.status)"
+            size="small"
+            class="clickable-status"
+            @click="handleViewResult(row)"
+          >
             {{ getStatusLabel(row.status) }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column label="详情" width="60" align="center">
         <template #default="{ row }">
-          <span class="detail-count" v-if="row.statsJson">
+          <span class="detail-count" v-if="row.statsJson" @click="handleViewResult(row)">
             {{ getHostCount(row.statsJson) }}
           </span>
           <span v-else>-</span>
         </template>
       </el-table-column>
     </el-table>
+
+    <!-- 作业运行结果弹窗 -->
+    <ExecuteResultDialog
+      v-model:visible="resultDialogVisible"
+      :run-id="currentRunId"
+      :job-title="currentJobTitle"
+    />
   </div>
 </template>
 
@@ -73,6 +85,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 const props = defineProps({
   ciType: { type: String, required: true },
@@ -86,6 +99,11 @@ const tableRef = ref(null)
 const loading = ref(false)
 const tableData = ref([])
 const searchKeyword = ref('')
+
+// 运行结果弹窗状态
+const resultDialogVisible = ref(false)
+const currentRunId = ref('')
+const currentJobTitle = ref('')
 
 // 过滤后的数据
 const filteredData = computed(() => {
@@ -149,6 +167,17 @@ function handleSelectionChange(selection) {
   })
 
   emit('update:modelValue', selectedHosts)
+}
+
+/**
+ * 查看作业运行结果
+ */
+function handleViewResult(row) {
+  if (!row.runId && !row.id) return
+
+  currentRunId.value = row.runId || row.id
+  currentJobTitle.value = row.jobTitle || ''
+  resultDialogVisible.value = true
 }
 
 function formatDateTime(dateStr) {
@@ -237,4 +266,14 @@ function getHostCount(statsJson) {
 .detail-count:hover {
   text-decoration: underline;
 }
+
+.clickable-status {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.clickable-status:hover {
+  transform: scale(1.05);
+}
 </style>
+
