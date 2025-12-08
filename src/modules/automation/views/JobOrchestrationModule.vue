@@ -69,7 +69,8 @@ const activeComponent = computed(() => componentMap[activeView.value] || JobList
   display: grid;
   grid-template-columns: 150px 1fr;
   // gap: 20px;
-  min-height: 720px;
+  // min-height: 720px;
+  height: 100%;
 }
 
 .jao-module__nav {
@@ -78,7 +79,7 @@ const activeComponent = computed(() => componentMap[activeView.value] || JobList
   gap: 8px;
   padding: 16px 8px;
   background: #f8fafc;
-  border-radius: 12px;
+  //border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.3);
 }
 

@@ -79,12 +79,12 @@ const props = defineProps({
 }
 
 .module-page__toolbar {
-  padding: 0 32px 20px;
+  padding: 0;
 }
 
 .module-page__body {
   flex: 1;
-  padding: 0 32px 32px 0;
+  padding: 0;
   overflow: auto;
   background: linear-gradient(180deg, rgba(241, 245, 249, 0.6) 0%, rgba(248, 250, 252, 0.6) 100%);
   font-size: 13px;

@@ -125,7 +125,6 @@
         :data="displayedJobs"
         @selection-change="handleSelectionChange"
         class="job-table"
-        max-height="calc(100vh - 420px)"
       >
         <el-table-column type="selection" width="48" />
         <el-table-column prop="title" label="作业" min-width="220" show-overflow-tooltip>

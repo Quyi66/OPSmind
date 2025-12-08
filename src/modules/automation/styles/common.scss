@@ -1,9 +1,10 @@
 .job-workbench {
   display: flex;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid #94a3b859;
   border-radius: 12px;
   background-color: #fff;
-  min-height: 660px;
+  // min-height: 660px;
+  height: 100%;
 }
 
 .job-workbench__sidebar {
