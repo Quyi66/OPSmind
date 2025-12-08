@@ -21,7 +21,8 @@ const moduleComponentLoaders: Partial<Record<string, AsyncComponentLoader>> = {
   patches: () => import('@/modules/patches/views/PatchManagementModule.vue'),
   software: () => import('@/modules/software/views/SoftwareIndex.vue'),
   cac: () => import('@/modules/inspection/views/InspectionIndex.vue'),
-  acm: () => import('@/modules/asset/views/AssetIndex.vue')
+  acm: () => import('@/modules/asset/views/AssetIndex.vue'),
+  users: () => import('@/modules/user/views/UserManagementModule.vue')
   // 其余模块将逐步补充 Vue 实现
 }
 

@@ -1,0 +1,258 @@
+.user-module {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  height: 100%;
+}
+
+.user-module__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 8px;
+  background: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px;
+  border-radius: 10px;
+  color: #334155;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-item i {
+  width: 18px;
+  text-align: center;
+}
+
+.nav-item:hover {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+.nav-item.is-active {
+  background-color: rgba(173, 181, 189, .25);
+  border-left-color: rgba(173, 181, 189, .5);
+}
+
+.user-module__content {
+  min-height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 20px;
+  background: #fff;
+}
+
+// 统计卡片区域
+.stat-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+// 统计卡片
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 8px;
+  color: #fff;
+  min-width: 160px;
+  flex: 1;
+
+  &__icon {
+    font-size: 28px;
+    opacity: 0.9;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__value {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  &__label {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+
+  // 颜色变体
+  &--blue {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  }
+
+  &--gray {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  }
+
+  &--orange {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+
+  &--green {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  &--red {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  }
+
+  // 可点击卡片样式
+  &--clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+// 图表区域
+.chart-section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+      content: '';
+      width: 4px;
+      height: 18px;
+      background: #3b82f6;
+      border-radius: 2px;
+    }
+  }
+
+  &__content {
+    min-height: 200px;
+  }
+}
+
+// 表格区域
+.table-section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+      content: '';
+      width: 4px;
+      height: 18px;
+      background: #3b82f6;
+      border-radius: 2px;
+    }
+  }
+
+  &__filters {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+
+    .el-select {
+      min-width: 120px;
+    }
+
+    .el-input {
+      min-width: 150px;
+    }
+
+    // 垂直堆叠布局（匹配原系统）
+    &--vertical {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      min-width: 180px;
+
+      .el-select,
+      .el-input {
+        width: 100%;
+      }
+
+      .search-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        .el-input {
+          flex: 1;
+        }
+
+        .el-button {
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .user-module {
+    grid-template-columns: 1fr;
+  }
+
+  .user-module__nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav-item {
+    flex: 1 0 140px;
+  }
+
+  .stat-cards {
+    flex-direction: column;
+  }
+
+  .stat-card {
+    min-width: 100%;
+  }
+}
