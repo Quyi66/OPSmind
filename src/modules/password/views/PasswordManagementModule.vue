@@ -1,0 +1,133 @@
+<template>
+  <ModulePageLayout
+    :title="moduleTitle"
+    :description="moduleDescription"
+  >
+    <!-- 管理员面板模式 -->
+    <AdminPanelView v-if="showAdminPanel" @back="showAdminPanel = false" />
+
+    <!-- 普通模式 -->
+    <div v-else class="password-module">
+      <aside class="password-module__nav">
+        <div
+          v-for="item in navItems"
+          :key="item.key"
+          class="nav-item"
+          :class="{ 'is-active': activeView === item.key }"
+          @click="setActiveView(item.key)"
+        >
+          <i :class="item.icon"></i>
+          <span>{{ item.label }}</span>
+        </div>
+      </aside>
+
+      <section class="password-module__content">
+        <ApplicationApprovalList
+          v-if="activeView === 'application'"
+          @go-to-admin-panel="showAdminPanel = true"
+        />
+        <PasswordSettings v-else-if="activeView === 'settings'" />
+        <PasswordOperationLog v-else-if="activeView === 'logs'" />
+      </section>
+    </div>
+  </ModulePageLayout>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
+import ApplicationApprovalList from '../components/ApplicationApprovalList.vue'
+import PasswordSettings from '../components/PasswordSettings.vue'
+import PasswordOperationLog from '../components/PasswordOperationLog.vue'
+import AdminPanelView from '../components/AdminPanelView.vue'
+
+const moduleTitle = '密码管理'
+const moduleDescription = ''
+
+const activeView = ref('application')
+const showAdminPanel = ref(false)
+
+const navItems = [
+  { key: 'application', label: '申请审批', icon: 'fa fa-clipboard-check' },
+  { key: 'settings', label: '参数配置', icon: 'fa fa-cog' },
+  { key: 'logs', label: '操作记录', icon: 'fa fa-history' }
+]
+
+function setActiveView(viewKey) {
+  activeView.value = viewKey
+}
+</script>
+
+<style scoped lang="scss">
+.password-module {
+  height: 100%;
+  display: flex;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.password-module__nav {
+  width: 160px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #e2e8f0;
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    color: #333;
+    font-size: 13px;
+    transition: all 0.2s;
+    position: relative;
+
+    i {
+      width: 16px;
+      text-align: center;
+      color: #666;
+    }
+
+    &:hover {
+      background: #f5f7fa;
+    }
+
+    &.is-active {
+      background: #e6f7ff;
+      color: #1890ff;
+
+      i {
+        color: #1890ff;
+      }
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: #1890ff;
+      }
+    }
+  }
+}
+
+.password-module__content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fa;
+  padding: 16px;
+
+  > * {
+    flex: 1;
+    min-height: 0;
+  }
+}
+</style>

@@ -22,7 +22,11 @@ const moduleComponentLoaders: Partial<Record<string, AsyncComponentLoader>> = {
   software: () => import('@/modules/software/views/SoftwareIndex.vue'),
   cac: () => import('@/modules/inspection/views/InspectionIndex.vue'),
   acm: () => import('@/modules/asset/views/AssetIndex.vue'),
-  users: () => import('@/modules/user/views/UserManagementModule.vue')
+  users: () => import('@/modules/user/views/UserManagementModule.vue'),
+  flow: () => import('@/modules/flow/views/FlowManagementModule.vue'),
+  workflow: () => import('@/modules/flow/views/FlowManagementModule.vue'),
+  sudo: () => import('@/modules/sudo/views/SudoManagementModule.vue'),
+  password: () => import('@/modules/password/views/PasswordManagementModule.vue')
   // 其余模块将逐步补充 Vue 实现
 }
 
