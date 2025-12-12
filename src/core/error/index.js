@@ -50,13 +50,16 @@ class ErrorHandler {
    * 标准化错误信息
    */
   normalizeError(error, context) {
+    // 处理 null 或 undefined 的 error
+    const safeError = error || {}
+
     const errorInfo = {
       id: this.generateErrorId(),
       timestamp: new Date().toISOString(),
-      message: error.message || '未知错误',
-      stack: error.stack,
-      type: this.detectErrorType(error),
-      level: this.detectErrorLevel(error),
+      message: safeError.message || (typeof error === 'string' ? error : '未知错误'),
+      stack: safeError.stack,
+      type: this.detectErrorType(safeError),
+      level: this.detectErrorLevel(safeError),
       context: {
         url: window.location.href,
         userAgent: navigator.userAgent,
@@ -72,19 +75,21 @@ class ErrorHandler {
    * 检测错误类型
    */
   detectErrorType(error) {
-    if (error.name === 'NetworkError' || error.code === 'NETWORK_ERROR') {
+    const message = error?.message || ''
+
+    if (error?.name === 'NetworkError' || error?.code === 'NETWORK_ERROR') {
       return ERROR_TYPES.NETWORK
     }
 
-    if (error.status === 401 || error.message.includes('Authentication')) {
+    if (error?.status === 401 || message.includes('Authentication')) {
       return ERROR_TYPES.AUTH
     }
 
-    if (error.status === 403 || error.message.includes('Permission')) {
+    if (error?.status === 403 || message.includes('Permission')) {
       return ERROR_TYPES.PERMISSION
     }
 
-    if (error.name === 'ValidationError') {
+    if (error?.name === 'ValidationError') {
       return ERROR_TYPES.VALIDATION
     }
 

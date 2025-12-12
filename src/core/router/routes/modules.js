@@ -60,6 +60,18 @@ export function buildModuleRoutes() {
     }
   })
 
+  // 手动添加 ssc（系统设置）路由，因为它不在 MENU_CONFIG 中
+  const sscEntry = {
+    code: 'ssc',
+    name: '系统设置',
+    title: '系统设置',
+    groupCode: 'system',
+    path: 'ssc',
+    moduleType: 'vue-native',
+    status: 'ready'
+  }
+  routes.push(createModuleRoute(sscEntry, '/ssc', 'main', { showModuleToolbar: true }))
+
   return routes
 }
 

@@ -98,7 +98,11 @@
 
           <!-- Settings Button -->
           <el-tooltip content="设置" placement="bottom">
-            <button @click="handleSettingsClick" class="menu-action-btn">
+            <button
+              @click="handleSettingsClick"
+              class="menu-action-btn"
+              :class="{ 'is-settings-active': isSettingsActive }"
+            >
               <el-icon>
                 <Setting />
               </el-icon>
@@ -248,6 +252,7 @@ const props = defineProps({
 const homeMenu = computed(() => menuStore.homeMenu)
 const menuGroups = computed(() => menuStore.menuGroups)
 const activeGroup = computed(() => menuStore.activeGroup)
+const isSettingsActive = computed(() => menuStore.activeMenuItem === 'ssc')
 
 const accountFullName = ref('')
 const displayUserName = computed(() => {
@@ -963,6 +968,11 @@ onUnmounted(() => {
   &:hover {
     color: #6b7280;
     background: #f9fafb;
+  }
+
+  &.is-settings-active {
+    color: #f97316;
+    background: #fff7ed;
   }
 
   .el-icon {

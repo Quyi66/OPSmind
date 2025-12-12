@@ -11,17 +11,31 @@ export interface JdbcDriver {
 
 export interface Datasource {
   id?: string
+  tenantId?: string
   name?: string
+  type?: 'jdbc' | 'rest' | 'join' | 'es' | 'file' | 'mongo' | 'hbase' | 'orientdb'
+  config?: DatasourceConfig | null
+  status?: string
   description?: string | null
-  driverClassName?: string
+  createdBy?: string
+  creatorName?: string
+  createdAt?: string
+  modifiedBy?: string | null
+  modifierName?: string
+  modifiedAt?: string
+  datasetDTOList?: any[] | null
+  accessControl?: any | null
+  action?: string
+  [key: string]: any
+}
+
+export interface DatasourceConfig {
+  driver?: string
   url?: string
+  validationQuery?: string
   username?: string
   password?: string
-  validationQuery?: string
-  options?: Record<string, any>
-  /**
-   * Allow extra backend-specific fields
-   */
+  manager?: string
   [key: string]: any
 }
 

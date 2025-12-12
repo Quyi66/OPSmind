@@ -92,14 +92,11 @@ async function findDatasource(id: string): Promise<Datasource | null> {
 async function saveDatasource(ds: Datasource): Promise<Datasource> {
   if (!ds) throw new Error('Empty argument `datasource`')
 
-  if (ds.id) {
-    const safeId = encodeURIComponent(ds.id)
-    const res = await apiService.put(`${DTS_PREFIX}/datasources/${safeId}`, ds)
-    return res?.data ?? ds
-  } else {
-    const res = await apiService.post(`${DTS_PREFIX}/datasources`, ds)
-    return res?.data ?? ds
-  }
+  // 使用 PUT 方法保存
+  const res = await apiService.put(`${DTS_PREFIX}/datasources`, ds, {
+    params: { cacheBuster: Date.now() }
+  })
+  return res?.data ?? ds
 }
 
 async function deleteDatasource(id: string): Promise<void> {
@@ -116,7 +113,9 @@ async function testConnectivity(datasource: string | Datasource): Promise<Connec
     const res = await apiService.get(`${DTS_PREFIX}/datasources/test/${safeId}`)
     return res?.data ?? { success: false }
   } else {
-    const res = await apiService.post(`${DTS_PREFIX}/datasources/test`, datasource)
+    const res = await apiService.post(`${DTS_PREFIX}/datasources/test`, datasource, {
+      params: { cacheBuster: Date.now() }
+    })
     return res?.data ?? { success: false }
   }
 }

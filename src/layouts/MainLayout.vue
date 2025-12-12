@@ -104,11 +104,16 @@ const closeMobileMenu = () => {
   }
 }
 
-// 关闭当前内嵌模块（返回首页）
+// 关闭当前内嵌模块（返回上一页）
 const handleCloseModule = () => {
   try {
     menuStore.clearActiveMenu()
-    router.push('/home')
+    // 使用 router.back() 返回上一页，保留导航历史
+    if (window.history.length > 1) {
+      router.back()
+    } else {
+      router.push('/home')
+    }
   } catch (e) {}
 }
 

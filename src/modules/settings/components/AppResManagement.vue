@@ -1,0 +1,787 @@
+<template>
+  <div class="appres-management">
+    <!-- 标签页导航 -->
+    <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+      <el-tab-pane name="landing">
+        <template #label>
+          <span><i class="fa fa-home"></i> 概览</span>
+        </template>
+
+        <!-- 着陆页 -->
+        <div class="landing-page">
+          <div class="landing-desc">
+            对页面、数据集、作业等资源进行管理，在这里可以对资源进行分类管理，不能创建和修改资源。<br/>
+            如果要创建资源，需要到相应的应用中完成。
+          </div>
+          <div class="feature-cards">
+            <div class="feature-card" @click="activeTab = 'page'">
+              <div class="feature-card__icon">
+                <i class="fa fa-file-alt"></i>
+              </div>
+              <div class="feature-card__body">
+                <h3>页面</h3>
+                <p>管理系统中的所有页面资源</p>
+              </div>
+            </div>
+            <div class="feature-card" @click="activeTab = 'dataset'">
+              <div class="feature-card__icon">
+                <i class="fa fa-database"></i>
+              </div>
+              <div class="feature-card__body">
+                <h3>数据集</h3>
+                <p>管理数据模板和数据集资源</p>
+              </div>
+            </div>
+            <div class="feature-card" @click="activeTab = 'job'">
+              <div class="feature-card__icon">
+                <i class="fa fa-tasks"></i>
+              </div>
+              <div class="feature-card__body">
+                <h3>作业</h3>
+                <p>管理自动化作业资源</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane name="page">
+        <template #label>
+          <span><i class="fa fa-file-alt"></i> 页面</span>
+        </template>
+
+        <!-- 页面列表 -->
+        <div class="resource-section with-sidebar">
+          <!-- 应用选择器侧边栏 -->
+          <div class="sidebar">
+            <div class="sidebar__title">所属应用</div>
+            <div class="sidebar__list">
+              <div
+                class="sidebar__item"
+                :class="{ active: selectedPageApplet === '' }"
+                @click="selectPageApplet('')"
+              >
+                全部应用
+              </div>
+              <div
+                v-for="app in applets"
+                :key="app.id"
+                class="sidebar__item"
+                :class="{ active: selectedPageApplet === app.name }"
+                @click="selectPageApplet(app.name)"
+              >
+                {{ translateTitle(app.title) || app.name }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 主内容 -->
+          <div class="main-content">
+            <div class="toolbar">
+              <div class="toolbar__left">
+                <el-button size="small" @click="loadPages" :loading="pageLoading">
+                  <i class="fa fa-refresh"></i> 刷新
+                </el-button>
+                <el-button size="small" :disabled="selectedPages.length < 1" @click="openMoveDialog('page')">
+                  <i class="fa fa-sign-in"></i> 移动页面
+                </el-button>
+              </div>
+              <div class="toolbar__right">
+                <el-input v-model="pageSearch" size="small" placeholder="搜索页面" clearable style="width: 200px">
+                  <template #prefix><i class="fa fa-search"></i></template>
+                </el-input>
+              </div>
+            </div>
+            <el-table
+              v-loading="pageLoading"
+              :data="paginatedPages"
+              border
+              stripe
+              @selection-change="handlePageSelectionChange"
+            >
+              <el-table-column type="selection" width="55" />
+              <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip>
+                <template #default="{ row }">
+                  {{ translateTitle(row.title) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="id" label="Code" width="120" show-overflow-tooltip />
+              <el-table-column prop="appletCode" label="所属应用" width="120" />
+              <el-table-column prop="createdBy" label="创建人" width="100" />
+              <el-table-column prop="createdAt" label="创建时间" width="160" />
+            </el-table>
+            <div class="pagination-wrapper">
+              <el-pagination
+                v-model:current-page="pageCurrentPage"
+                v-model:page-size="pagePageSize"
+                :total="filteredPages.length"
+                :page-sizes="[10, 20, 50, 100]"
+                layout="total, sizes, prev, pager, next"
+                background
+              />
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane name="dataset">
+        <template #label>
+          <span><i class="fa fa-database"></i> 数据集</span>
+        </template>
+
+        <!-- 数据集列表 -->
+        <div class="resource-section with-sidebar">
+          <!-- 应用选择器侧边栏 -->
+          <div class="sidebar">
+            <div class="sidebar__title">所属应用</div>
+            <div class="sidebar__list">
+              <div
+                class="sidebar__item"
+                :class="{ active: selectedDatasetApplet === '' }"
+                @click="selectDatasetApplet('')"
+              >
+                全部应用
+              </div>
+              <div
+                v-for="app in applets"
+                :key="app.id"
+                class="sidebar__item"
+                :class="{ active: selectedDatasetApplet === app.name }"
+                @click="selectDatasetApplet(app.name)"
+              >
+                {{ translateTitle(app.title) || app.name }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 主内容 -->
+          <div class="main-content">
+            <div class="toolbar">
+              <div class="toolbar__left">
+                <el-button size="small" @click="loadDatasets" :loading="datasetLoading">
+                  <i class="fa fa-refresh"></i> 刷新
+                </el-button>
+                <el-button size="small" :disabled="selectedDatasets.length < 1" @click="openMoveDialog('dataset')">
+                  <i class="fa fa-sign-in"></i> 移动数据集
+                </el-button>
+              </div>
+              <div class="toolbar__right">
+                <el-input v-model="datasetSearch" size="small" placeholder="搜索数据集" clearable style="width: 200px">
+                  <template #prefix><i class="fa fa-search"></i></template>
+                </el-input>
+              </div>
+            </div>
+            <el-table
+              v-loading="datasetLoading"
+              :data="paginatedDatasets"
+              border
+              stripe
+              @selection-change="handleDatasetSelectionChange"
+            >
+              <el-table-column type="selection" width="55" />
+              <el-table-column prop="name" label="标题" min-width="180" show-overflow-tooltip />
+              <el-table-column prop="code" label="Code" width="150" show-overflow-tooltip />
+              <el-table-column prop="appletCode" label="所属应用" width="120" />
+              <el-table-column prop="datasource" label="数据源" width="140" />
+              <el-table-column prop="createdBy" label="创建人" width="100" />
+              <el-table-column prop="createdAt" label="创建时间" width="160" />
+            </el-table>
+            <div class="pagination-wrapper">
+              <el-pagination
+                v-model:current-page="datasetCurrentPage"
+                v-model:page-size="datasetPageSize"
+                :total="filteredDatasets.length"
+                :page-sizes="[10, 20, 50, 100]"
+                layout="total, sizes, prev, pager, next"
+                background
+              />
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane name="job">
+        <template #label>
+          <span><i class="fa fa-tasks"></i> 作业</span>
+        </template>
+
+        <!-- 作业列表 -->
+        <div class="resource-section with-sidebar">
+          <!-- 应用选择器侧边栏 -->
+          <div class="sidebar">
+            <div class="sidebar__title">所属应用</div>
+            <div class="sidebar__list">
+              <div
+                class="sidebar__item"
+                :class="{ active: selectedJobApplet === '' }"
+                @click="selectJobApplet('')"
+              >
+                全部应用
+              </div>
+              <div
+                v-for="app in applets"
+                :key="app.id"
+                class="sidebar__item"
+                :class="{ active: selectedJobApplet === app.name }"
+                @click="selectJobApplet(app.name)"
+              >
+                {{ translateTitle(app.title) || app.name }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 主内容 -->
+          <div class="main-content">
+            <div class="toolbar">
+              <div class="toolbar__left">
+                <el-button size="small" @click="loadJobs" :loading="jobLoading">
+                  <i class="fa fa-refresh"></i> 刷新
+                </el-button>
+                <el-button size="small" :disabled="selectedJobs.length < 1" @click="openMoveDialog('job')">
+                  <i class="fa fa-sign-in"></i> 移动作业
+                </el-button>
+              </div>
+              <div class="toolbar__right">
+                <el-input v-model="jobSearch" size="small" placeholder="搜索作业" clearable style="width: 200px">
+                  <template #prefix><i class="fa fa-search"></i></template>
+                </el-input>
+              </div>
+            </div>
+            <el-table
+              v-loading="jobLoading"
+              :data="paginatedJobs"
+              border
+              stripe
+              @selection-change="handleJobSelectionChange"
+            >
+              <el-table-column type="selection" width="55" />
+              <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip>
+                <template #default="{ row }">
+                  {{ translateTitle(row.title) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="id" label="Code" width="120" show-overflow-tooltip />
+              <el-table-column prop="appletCode" label="所属应用" width="120" />
+              <el-table-column prop="type" label="类型" width="100" />
+              <el-table-column prop="createdBy" label="创建人" width="100" />
+              <el-table-column prop="lastRunTime" label="最后运行" width="160" />
+            </el-table>
+            <div class="pagination-wrapper">
+              <el-pagination
+                v-model:current-page="jobCurrentPage"
+                v-model:page-size="jobPageSize"
+                :total="filteredJobs.length"
+                :page-sizes="[10, 20, 50, 100]"
+                layout="total, sizes, prev, pager, next"
+                background
+              />
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+    </el-tabs>
+
+    <!-- 移动对话框 -->
+    <el-dialog
+      v-model="moveDialogVisible"
+      :title="moveDialogTitle"
+      width="400px"
+      destroy-on-close
+    >
+      <div class="move-dialog-content">
+        <p>请选择目标应用：</p>
+        <el-select v-model="targetAppletCode" placeholder="选择应用" style="width: 100%">
+          <el-option
+            v-for="app in applets"
+            :key="app.id"
+            :label="translateTitle(app.title) || app.name"
+            :value="app.name"
+          />
+        </el-select>
+        <p class="move-tip" v-if="moveResourceCount > 0">
+          将选定的 <strong>{{ moveResourceCount }}</strong> 个资源移动到应用
+          <strong class="text-primary">{{ targetAppletTitle }}</strong>
+        </p>
+      </div>
+      <template #footer>
+        <el-button @click="moveDialogVisible = false">取消</el-button>
+        <el-button type="primary" :disabled="!targetAppletCode" :loading="moveLoading" @click="handleMove">
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { apiService } from '@/core/api'
+
+const activeTab = ref('landing')
+
+// 应用列表
+const applets = ref([])
+const selectedPageApplet = ref('')
+const selectedDatasetApplet = ref('')
+const selectedJobApplet = ref('')
+
+// 页面数据
+const pageLoading = ref(false)
+const pages = ref([])
+const pageSearch = ref('')
+const pageCurrentPage = ref(1)
+const pagePageSize = ref(10)
+const selectedPages = ref([])
+
+// 数据集数据
+const datasetLoading = ref(false)
+const datasets = ref([])
+const datasetSearch = ref('')
+const datasetCurrentPage = ref(1)
+const datasetPageSize = ref(10)
+const selectedDatasets = ref([])
+
+// 作业数据
+const jobLoading = ref(false)
+const jobs = ref([])
+const jobSearch = ref('')
+const jobCurrentPage = ref(1)
+const jobPageSize = ref(10)
+const selectedJobs = ref([])
+
+// 移动对话框
+const moveDialogVisible = ref(false)
+const moveDialogTitle = ref('')
+const moveResourceType = ref('')
+const targetAppletCode = ref('')
+const moveLoading = ref(false)
+
+// 翻译标题
+function translateTitle(title) {
+  if (!title) return ''
+  // 处理 #{key} 格式
+  if (title.startsWith('#{') && title.endsWith('}')) {
+    return title.replace(/^#\{|\}$/g, '').split('.').pop()
+  }
+  return title
+}
+
+// 过滤
+const filteredPages = computed(() => {
+  let result = pages.value
+  if (selectedPageApplet.value) {
+    result = result.filter(p => p.appletCode === selectedPageApplet.value)
+  }
+  if (pageSearch.value) {
+    const keyword = pageSearch.value.toLowerCase()
+    result = result.filter(p =>
+      p.title?.toLowerCase().includes(keyword) ||
+      p.id?.toLowerCase().includes(keyword)
+    )
+  }
+  return result
+})
+
+const filteredDatasets = computed(() => {
+  let result = datasets.value
+  if (selectedDatasetApplet.value) {
+    result = result.filter(d => d.appletCode === selectedDatasetApplet.value)
+  }
+  if (datasetSearch.value) {
+    const keyword = datasetSearch.value.toLowerCase()
+    result = result.filter(d =>
+      d.name?.toLowerCase().includes(keyword) ||
+      d.code?.toLowerCase().includes(keyword)
+    )
+  }
+  return result
+})
+
+const filteredJobs = computed(() => {
+  let result = jobs.value
+  if (selectedJobApplet.value) {
+    result = result.filter(j => j.appletCode === selectedJobApplet.value)
+  }
+  if (jobSearch.value) {
+    const keyword = jobSearch.value.toLowerCase()
+    result = result.filter(j =>
+      j.title?.toLowerCase().includes(keyword) ||
+      j.id?.toLowerCase().includes(keyword)
+    )
+  }
+  return result
+})
+
+// 分页
+const paginatedPages = computed(() => {
+  const start = (pageCurrentPage.value - 1) * pagePageSize.value
+  return filteredPages.value.slice(start, start + pagePageSize.value)
+})
+
+const paginatedDatasets = computed(() => {
+  const start = (datasetCurrentPage.value - 1) * datasetPageSize.value
+  return filteredDatasets.value.slice(start, start + datasetPageSize.value)
+})
+
+const paginatedJobs = computed(() => {
+  const start = (jobCurrentPage.value - 1) * jobPageSize.value
+  return filteredJobs.value.slice(start, start + jobPageSize.value)
+})
+
+// 计算移动资源数量
+const moveResourceCount = computed(() => {
+  if (moveResourceType.value === 'page') return selectedPages.value.length
+  if (moveResourceType.value === 'dataset') return selectedDatasets.value.length
+  if (moveResourceType.value === 'job') return selectedJobs.value.length
+  return 0
+})
+
+// 目标应用标题
+const targetAppletTitle = computed(() => {
+  const app = applets.value.find(a => a.name === targetAppletCode.value)
+  return app ? (translateTitle(app.title) || app.name) : ''
+})
+
+// 加载应用列表
+async function loadApplets() {
+  try {
+    const response = await apiService.get(`/udp/api/udp/applets?isPaging=true&cacheBuster=${Date.now()}`)
+    applets.value = response?.data || response || []
+  } catch (error) {
+    console.error('Failed to load applets:', error)
+  }
+}
+
+// 选择应用过滤
+function selectPageApplet(appName) {
+  selectedPageApplet.value = appName
+  pageCurrentPage.value = 1
+}
+
+function selectDatasetApplet(appName) {
+  selectedDatasetApplet.value = appName
+  datasetCurrentPage.value = 1
+}
+
+function selectJobApplet(appName) {
+  selectedJobApplet.value = appName
+  jobCurrentPage.value = 1
+}
+
+// 表格选择变化
+function handlePageSelectionChange(selection) {
+  selectedPages.value = selection
+}
+
+function handleDatasetSelectionChange(selection) {
+  selectedDatasets.value = selection
+}
+
+function handleJobSelectionChange(selection) {
+  selectedJobs.value = selection
+}
+
+// 加载页面
+async function loadPages() {
+  pageLoading.value = true
+  try {
+    const response = await apiService.get(`/udp/api/udp/pages?isPaging=true&page=0&size=1000&cacheBuster=${Date.now()}`)
+    pages.value = response?.data?.content || response?.content || response?.data || []
+  } catch (error) {
+    console.error('Failed to load pages:', error)
+    ElMessage.error('加载页面列表失败')
+  } finally {
+    pageLoading.value = false
+  }
+}
+
+// 加载数据集
+async function loadDatasets() {
+  datasetLoading.value = true
+  try {
+    const response = await apiService.get(`/dts/api/dts/datasets?cacheBuster=${Date.now()}`)
+    datasets.value = response?.data || response || []
+  } catch (error) {
+    console.error('Failed to load datasets:', error)
+    ElMessage.error('加载数据集列表失败')
+  } finally {
+    datasetLoading.value = false
+  }
+}
+
+// 加载作业
+async function loadJobs() {
+  jobLoading.value = true
+  try {
+    const response = await apiService.get(`/jao/api/jao/jobs/app?cacheBuster=${Date.now()}`)
+    jobs.value = response?.data || response || []
+  } catch (error) {
+    console.error('Failed to load jobs:', error)
+    ElMessage.error('加载作业列表失败')
+  } finally {
+    jobLoading.value = false
+  }
+}
+
+// 打开移动对话框
+function openMoveDialog(type) {
+  moveResourceType.value = type
+  targetAppletCode.value = ''
+
+  if (type === 'page') {
+    moveDialogTitle.value = '移动页面'
+  } else if (type === 'dataset') {
+    moveDialogTitle.value = '移动数据集'
+  } else if (type === 'job') {
+    moveDialogTitle.value = '移动作业'
+  }
+
+  moveDialogVisible.value = true
+}
+
+// 执行移动
+async function handleMove() {
+  if (!targetAppletCode.value) {
+    ElMessage.warning('请选择目标应用')
+    return
+  }
+
+  const type = moveResourceType.value
+  let ids = []
+  let apiUrl = ''
+  let resourceName = ''
+  let loadFn = null
+
+  if (type === 'page') {
+    ids = selectedPages.value.map(p => p.id)
+    apiUrl = `/udp/api/udp/pages/move/${targetAppletCode.value}`
+    resourceName = '页面'
+    loadFn = loadPages
+  } else if (type === 'dataset') {
+    ids = selectedDatasets.value.map(d => d.id)
+    apiUrl = `/dts/api/dts/datasets/move/${targetAppletCode.value}`
+    resourceName = '数据集'
+    loadFn = loadDatasets
+  } else if (type === 'job') {
+    ids = selectedJobs.value.map(j => j.id)
+    apiUrl = `/jao/api/jao/jobs/move/${targetAppletCode.value}`
+    resourceName = '作业'
+    loadFn = loadJobs
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定将选定的 ${ids.length} 个${resourceName}移动到应用 "${targetAppletTitle.value}"？`,
+      `移动${resourceName}`,
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    )
+  } catch {
+    return
+  }
+
+  moveLoading.value = true
+  try {
+    await apiService.put(apiUrl, ids)
+    ElMessage.success(`${resourceName}移动成功`)
+    moveDialogVisible.value = false
+
+    // 清空选择并刷新列表
+    if (type === 'page') selectedPages.value = []
+    if (type === 'dataset') selectedDatasets.value = []
+    if (type === 'job') selectedJobs.value = []
+
+    if (loadFn) loadFn()
+  } catch (error) {
+    console.error('Failed to move:', error)
+    ElMessage.error(`${resourceName}移动失败`)
+  } finally {
+    moveLoading.value = false
+  }
+}
+
+// 标签页切换
+function handleTabChange(tab) {
+  if (applets.value.length === 0) loadApplets()
+
+  if (tab === 'page' && pages.value.length === 0) {
+    loadPages()
+  } else if (tab === 'dataset' && datasets.value.length === 0) {
+    loadDatasets()
+  } else if (tab === 'job' && jobs.value.length === 0) {
+    loadJobs()
+  }
+}
+
+onMounted(() => {
+  // 不自动加载，进入具体标签页时再加载
+})
+</script>
+
+<style scoped lang="scss">
+.appres-management {
+  height: 100%;
+  padding: 16px;
+}
+
+.landing-page {
+  padding: 40px 20px;
+}
+
+.landing-desc {
+  text-align: center;
+  color: #606266;
+  font-size: 14px;
+  margin-bottom: 40px;
+  line-height: 1.8;
+}
+
+.feature-cards {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+}
+
+.feature-card {
+  width: 220px;
+  padding: 32px 24px;
+  background: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+
+  &:hover {
+    border-color: #409eff;
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
+    transform: translateY(-4px);
+  }
+
+  &__icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      font-size: 28px;
+      color: #fff;
+    }
+  }
+
+  &__body {
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      margin: 0 0 8px;
+    }
+
+    p {
+      font-size: 13px;
+      color: #909399;
+      margin: 0;
+    }
+  }
+}
+
+.resource-section {
+  &.with-sidebar {
+    display: flex;
+    gap: 16px;
+  }
+}
+
+.sidebar {
+  width: 180px;
+  flex-shrink: 0;
+  background: #f5f7fa;
+  border-radius: 4px;
+  padding: 12px 0;
+  max-height: 500px;
+  overflow-y: auto;
+
+  &__title {
+    padding: 8px 16px;
+    font-weight: 600;
+    color: #303133;
+    font-size: 14px;
+    border-bottom: 1px solid #e4e7ed;
+    margin-bottom: 8px;
+  }
+
+  &__list {
+    padding: 0;
+  }
+
+  &__item {
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #606266;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #e9ecef;
+    }
+
+    &.active {
+      background: #409eff;
+      color: #fff;
+    }
+  }
+}
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  &__left, &__right {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+.pagination-wrapper {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.move-dialog-content {
+  p {
+    margin: 0 0 12px;
+    color: #606266;
+  }
+
+  .move-tip {
+    margin-top: 16px;
+    padding: 12px;
+    background: #f4f4f5;
+    border-radius: 4px;
+
+    strong {
+      color: #303133;
+    }
+
+    .text-primary {
+      color: #409eff;
+    }
+  }
+}
+</style>

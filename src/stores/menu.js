@@ -86,10 +86,18 @@ export const useMenuStore = defineStore('menu', () => {
     //console.log('🎯 Setting active menu item:', menuCode)
     activeMenuItem.value = menuCode
 
-    // 独立页面：隐藏左侧菜单，避免与之前分组的菜单混淆
+    // 独立页面：隐藏左侧菜单，但仍需推送路由
     if (STANDALONE_ITEMS.includes(menuCode)) {
       showSideMenu.value = false
-      // 不记录最近使用，且不改变当前激活分组
+      // 推送路由到独立页面
+      try {
+        const r = getRouter()
+        if (r) {
+          r.push(`/${menuCode}`)
+        }
+      } catch (e) {
+        console.warn('Failed to push route for standalone item:', menuCode, e)
+      }
       return
     }
 
@@ -146,6 +154,13 @@ export const useMenuStore = defineStore('menu', () => {
 
     if (!clean || clean === 'home') {
       setHomeActive()
+      return
+    }
+
+    // 处理独立页面（ssc, settings 等）
+    if (STANDALONE_ITEMS.includes(clean)) {
+      activeMenuItem.value = clean
+      showSideMenu.value = false
       return
     }
 

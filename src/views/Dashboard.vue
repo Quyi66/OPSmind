@@ -76,6 +76,32 @@ import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
 const dashboardStore = useDashboardStore()
 const route = useRoute()
 
+// 函数定义必须在 watch 之前，因为 watch 使用 immediate: true
+const loadDashboardData = async () => {
+  //console.log('🔄 Starting to load dashboard data...')
+  try {
+    await dashboardStore.loadDashboardData()
+    //console.log('✅ Dashboard data loaded in component')
+
+    // 启动模块预加载（延迟执行，避免影响主要加载）
+    setTimeout(() => {
+      //console.log('🚀 Starting module preloading...')
+      ModulePreloadManager.preloadCommonModules()
+    }, 2000) // 2秒后开始预加载
+
+    // 登录成功后（首页）获取 AI OPS URL 参数并打印
+    await dashboardStore.fetchAiOpsUrl()
+  } catch (error) {
+    console.error('❌ Failed to load dashboard data:', error)
+    ElMessage.error('加载仪表盘数据失败')
+  }
+}
+
+const handleRefresh = async () => {
+  await loadDashboardData()
+  ElMessage.success('数据已刷新')
+}
+
 // 监听路由变化，自动显示对应的iframe
 watch(
   () => route.path,
@@ -116,31 +142,6 @@ onMounted(async () => {
     //console.log('⏭️ Skip dashboard data load (not on /home):', route.path)
   }
 })
-
-const loadDashboardData = async () => {
-  //console.log('🔄 Starting to load dashboard data...')
-  try {
-    await dashboardStore.loadDashboardData()
-    //console.log('✅ Dashboard data loaded in component')
-
-    // 启动模块预加载（延迟执行，避免影响主要加载）
-    setTimeout(() => {
-      //console.log('🚀 Starting module preloading...')
-      ModulePreloadManager.preloadCommonModules()
-    }, 2000) // 2秒后开始预加载
-
-    // 登录成功后（首页）获取 AI OPS URL 参数并打印
-    await dashboardStore.fetchAiOpsUrl()
-  } catch (error) {
-    console.error('❌ Failed to load dashboard data:', error)
-    ElMessage.error('加载仪表盘数据失败')
-  }
-}
-
-const handleRefresh = async () => {
-  await loadDashboardData()
-  ElMessage.success('数据已刷新')
-}
 </script>
 
 <style scoped>
