@@ -5,7 +5,7 @@
 @use "tailwindcss";
 
 // 导入字体
-@import './font/font.scss';
+@use './font/font.scss';
 
 /* 应用主容器最大宽度（可配置） */
 :root {

@@ -204,7 +204,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
         '@views': fileURLToPath(new URL('./src/views', import.meta.url)),
         '@config': fileURLToPath(new URL('./src/config', import.meta.url)),
         '@assets': fileURLToPath(new URL('./src/assets', import.meta.url)),
-        '@styles': fileURLToPath(new URL('./src/styles', import.meta.url))
+        '@styles': fileURLToPath(new URL('./src/styles', import.meta.url)),
+        // Fix vue-demi resolution for Element Plus nested dependencies
+        'vue-demi': fileURLToPath(new URL('./node_modules/vue-demi/lib/index.mjs', import.meta.url))
       }
     },
 
