@@ -130,8 +130,8 @@
         <el-table-column prop="title" label="作业" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">
             <div class="job-title">
-              <span class="job-title__text">{{ row.title || '-' }}</span>
-              <span v-if="row.description" class="job-title__desc">{{ row.description }}</span>
+              <span class="job-title__text">{{ translateText(row.title) || '-' }}</span>
+              <span v-if="row.description" class="job-title__desc">{{ translateText(row.description) }}</span>
             </div>
           </template>
         </el-table-column>
@@ -235,6 +235,7 @@ import { useAutomationJobStore, JOB_TYPE_OPTIONS } from '@/modules/automation/st
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
 import { Plus, Delete, RefreshRight, Search, ArrowDown } from '@element-plus/icons-vue'
+import { translateText } from '@/utils/i18n'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteJobDialog from './ExecuteJobDialog.vue'
 import ExecuteHistoryDialog from './ExecuteHistoryDialog.vue'

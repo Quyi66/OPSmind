@@ -26,7 +26,8 @@ const moduleComponentLoaders: Partial<Record<string, AsyncComponentLoader>> = {
   flow: () => import('@/modules/flow/views/FlowManagementModule.vue'),
   workflow: () => import('@/modules/flow/views/FlowManagementModule.vue'),
   sudo: () => import('@/modules/sudo/views/SudoManagementModule.vue'),
-  password: () => import('@/modules/password/views/PasswordManagementModule.vue')
+  password: () => import('@/modules/password/views/PasswordManagementModule.vue'),
+  ssc: () => import('@/modules/settings/views/SystemSettingsModule.vue')
   // 其余模块将逐步补充 Vue 实现
 }
 
@@ -55,6 +56,23 @@ MENU_CONFIG.groups.forEach(group => {
     moduleRegistry[child.code] = entry
   })
 })
+
+// 手动添加 ssc（系统设置）模块，因为它不在 MENU_CONFIG 中
+const sscLoader = moduleComponentLoaders['ssc']
+if (sscLoader) {
+  moduleRegistry['ssc'] = {
+    code: 'ssc',
+    name: '系统设置',
+    title: '系统设置',
+    groupCode: 'system',
+    description: '系统设置中心',
+    icon: 'fa-cog',
+    path: 'ssc',
+    loader: sscLoader,
+    moduleType: 'vue-native',
+    status: 'ready'
+  }
+}
 
 export const moduleRegistryEntries: ModuleRegistryEntry[] = Object.values(moduleRegistry)
 
