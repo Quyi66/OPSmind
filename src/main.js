@@ -18,6 +18,9 @@ import angularJSBridge from '@/services/angularjs-bridge'
 
 // 导入全局样式
 import '@/styles/main.scss'
+// 确保 Element UI 和通用样式覆盖生效
+import '@/styles/element-ui.scss'
+import '@/styles/common.scss'
 
 // 统一设置浏览器 Tab 图标（favicon）为 src/assets/icons/logo-opsmind@2x.png
 try {
@@ -30,7 +33,7 @@ try {
     link.setAttribute('href', faviconHref)
     if (!link.parentNode) doc.head.appendChild(link)
   }
-} catch {}
+} catch { }
 
 // 创建应用实例
 const app = createApp(App)
@@ -84,7 +87,7 @@ async function bootstrapAuthFromUrl() {
       const base = import.meta.env.BASE_URL || '/'
       const cleanUrl = `${pathname.startsWith(base) ? pathname : base}${hash || ''}`
       window.history.replaceState(null, '', cleanUrl)
-    } catch {}
+    } catch { }
   } catch (e) {
     if (import.meta.env.DEV) console.warn('bootstrapAuthFromUrl failed:', e)
   }
@@ -138,12 +141,12 @@ try {
   if ((pathname === base || pathname === noSlash) && (!hash || hash === '#')) {
     router.replace('/home')
   }
-} catch {}
+} catch { }
 
 // 暴露路由实例，供菜单等非组件模块访问（生产/开发环境均生效）
 try {
   window.__VUE_ROUTER__ = router
-} catch {}
+} catch { }
 
 // 开发环境下额外暴露调试对象
 if (import.meta.env.DEV) {

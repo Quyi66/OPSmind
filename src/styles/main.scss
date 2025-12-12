@@ -4,6 +4,9 @@
 // Tailwind CSS - 使用 @use 替代 @import
 @use "tailwindcss";
 
+// 导入字体
+@import './font/font.scss';
+
 /* 应用主容器最大宽度（可配置） */
 :root {
   /* 全局主容器最大宽度（可按需调整） */
@@ -22,8 +25,8 @@ html,
 body {
   height: 100%;
   height: 100dvh; // 动态视口高度支持
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-size: $font-size-md;
+  font-family: 'PingFang-Regular', 'PingFang', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
   color: $text-color;
   background-color: $background-color;
   line-height: 1.6;
@@ -494,6 +497,7 @@ body {
 // Element Plus Dialog 全局居中样式
 // ========================================
 .el-overlay {
+
   // Dialog 容器使用 flex 布局实现垂直居中
   .el-overlay-dialog {
     display: flex;
@@ -533,3 +537,4 @@ body {
   }
 }
 
+// element-ui.scss 和 common.scss 已在 main.js 中单独引入
