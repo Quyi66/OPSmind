@@ -2,7 +2,6 @@
   <div class="patch-library">
     <!-- 页面头部 -->
     <div class="page-header">
-      <div class="header-title">补丁仓库</div>
       <div class="header-actions">
         <el-button type="primary" link @click="handleCheckPatchUpdate">
           <i class="fa fa-chevron-right" /> 检查补丁库更新

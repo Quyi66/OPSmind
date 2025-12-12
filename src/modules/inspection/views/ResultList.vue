@@ -152,14 +152,17 @@
         </el-table>
 
         <!-- 分页 -->
-        <div class="table-footer">
-          <el-select v-model="pagination.size" style="width: 80px" @change="handlePageSizeChange">
-            <el-option :value="10" label="10" />
-            <el-option :value="20" label="20" />
-            <el-option :value="50" label="50" />
-            <el-option :value="100" label="100" />
-          </el-select>
-          <span class="pagination-info">{{ paginationInfo }}</span>
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="pagination.page"
+            v-model:page-size="pagination.size"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="pagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="handlePageSizeChange"
+            @current-change="handlePageChange"
+          />
         </div>
       </div>
     </main>
@@ -433,6 +436,14 @@ function handleSearch() {
  */
 function handlePageSizeChange() {
   pagination.value.page = 1
+  loadResults()
+}
+
+/**
+ * 页码变更
+ */
+function handlePageChange(page) {
+  pagination.value.page = page
   loadResults()
 }
 

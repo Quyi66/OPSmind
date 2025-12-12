@@ -1,16 +1,37 @@
 <template>
-  <div class="team-management">
-    <!-- 顶部操作栏 -->
-    <div class="toolbar">
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-input
+        v-model="searchText"
+        placeholder="搜索团队名称/编码"
+        clearable
+        style="width: 200px"
+        @input="handleSearch"
+      >
+        <template #prefix>
+          <i class="fa fa-search"></i>
+        </template>
+      </el-input>
+      <el-button type="primary" @click="handleSearch">
+        <i class="fa fa-search"></i> 搜索
+      </el-button>
+      <el-button @click="handleReset">
+        <i class="fa fa-undo"></i> 重置
+      </el-button>
+    </div>
+
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
       <el-button type="primary" @click="handleCreateTeam">
         <i class="fa fa-plus"></i> 创建团队
       </el-button>
     </div>
 
     <!-- 团队列表表格 -->
-    <div class="table-container" v-loading="loading">
+    <div class="ops-table-wrapper" v-loading="loading">
       <el-table
-        :data="tableData"
+        :data="filteredData"
         border
         stripe
         style="width: 100%"
@@ -56,6 +77,18 @@
       </el-table>
     </div>
 
+    <!-- 分页器 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+      />
+    </div>
+
     <!-- 团队编辑对话框 -->
     <TeamEditDialog
       v-model="dialogVisible"
@@ -67,13 +100,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as teamApi from '@/modules/settings/api/team'
 import TeamEditDialog from './TeamEditDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])
+const searchText = ref('')
+
+const pagination = ref({
+  page: 1,
+  pageSize: 20,
+  total: 0
+})
+
+// 过滤后的数据
+const filteredData = computed(() => {
+  let result = tableData.value
+
+  if (searchText.value) {
+    const keyword = searchText.value.toLowerCase()
+    result = result.filter(item =>
+      item.name?.toLowerCase().includes(keyword) ||
+      item.code?.toLowerCase().includes(keyword)
+    )
+  }
+
+  pagination.value.total = result.length
+
+  const start = (pagination.value.page - 1) * pagination.value.pageSize
+  const end = start + pagination.value.pageSize
+  return result.slice(start, end)
+})
 
 // 对话框相关
 const dialogVisible = ref(false)
@@ -99,6 +158,15 @@ async function loadData() {
   } finally {
     loading.value = false
   }
+}
+
+function handleSearch() {
+  pagination.value.page = 1
+}
+
+function handleReset() {
+  searchText.value = ''
+  pagination.value.page = 1
 }
 
 function formatTime(time) {
@@ -152,20 +220,6 @@ async function handleDelete(row) {
 </script>
 
 <style scoped lang="scss">
-.team-management {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.toolbar {
-  padding: 16px 0;
-  display: flex;
-  gap: 12px;
-}
-
-.table-container {
-  flex: 1;
-  overflow: auto;
-}
+// 使用全局布局类，无需额外样式
 </style>
+

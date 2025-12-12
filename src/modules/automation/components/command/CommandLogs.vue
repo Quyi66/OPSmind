@@ -2,7 +2,6 @@
   <div class="command-logs">
     <!-- 标题栏 -->
     <div class="logs-header">
-      <div class="header-title">运行记录</div>
     </div>
 
     <!-- 筛选工具栏 -->

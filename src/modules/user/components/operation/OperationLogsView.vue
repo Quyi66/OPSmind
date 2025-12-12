@@ -1,97 +1,99 @@
 <template>
-  <div class="operation-logs-view">
-    <!-- 筛选区 - 水平排列，右对齐 -->
-    <div class="filter-bar">
-      <div class="filter-bar__left">
-        <!-- 可以放其他操作按钮 -->
-      </div>
-      <div class="filter-bar__right">
-        <el-select v-model="filters.ata_node" size="small" placeholder="执行引擎节点" clearable style="width: 130px" @change="loadData">
-          <el-option label="全部" value="" />
-        </el-select>
-        <el-select v-model="filters.status" size="small" placeholder="状态" style="width: 100px" @change="loadData">
-          <el-option label="全部" value="all" />
-          <el-option label="成功" value="SUCCESS" />
-          <el-option label="失败" value="FAILED" />
-          <el-option label="运行中" value="RUNNING" />
-        </el-select>
-        <el-select v-model="filters.action" size="small" placeholder="操作" style="width: 120px" @change="loadData">
-          <el-option label="全部" value="all" />
-        </el-select>
-        <el-input
-          v-model="filters.keyword"
-          size="small"
-          placeholder=""
-          clearable
-          style="width: 150px"
-          @keyup.enter="loadData"
-        />
-        <el-button size="small" @click="loadData">
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-select v-model="filters.ata_node" placeholder="执行引擎节点" clearable style="width: 130px" @change="loadData">
+        <el-option label="全部" value="" />
+      </el-select>
+      <el-select v-model="filters.status" placeholder="状态" style="width: 100px" @change="loadData">
+        <el-option label="全部" value="all" />
+        <el-option label="成功" value="SUCCESS" />
+        <el-option label="失败" value="FAILED" />
+        <el-option label="运行中" value="RUNNING" />
+      </el-select>
+      <el-select v-model="filters.action" placeholder="操作" style="width: 120px" @change="loadData">
+        <el-option label="全部" value="all" />
+      </el-select>
+      <span class="time-range-label">时间范围:</span>
+      <el-select v-model="filters.day" style="width: 110px" @change="loadData">
+        <el-option label="Last Year" value="365" />
+        <el-option label="Last Month" value="30" />
+        <el-option label="Last Week" value="7" />
+        <el-option label="Last 3 Days" value="3" />
+      </el-select>
+      <el-input
+        v-model="filters.keyword"
+        placeholder="搜索"
+        clearable
+        style="width: 150px"
+        @keyup.enter="loadData"
+      >
+        <template #prefix>
           <i class="fa fa-search"></i>
-        </el-button>
-        <el-button size="small" @click="loadData">
-          <i class="fa fa-sync"></i>
-        </el-button>
-        <span class="time-range-label">时间范围:</span>
-        <el-select v-model="filters.day" size="small" style="width: 110px" @change="loadData">
-          <el-option label="Last Year" value="365" />
-          <el-option label="Last Month" value="30" />
-          <el-option label="Last Week" value="7" />
-          <el-option label="Last 3 Days" value="3" />
-        </el-select>
-      </div>
+        </template>
+      </el-input>
+      <el-button type="primary" @click="loadData">
+        <i class="fa fa-search"></i> 搜索
+      </el-button>
+      <el-button @click="loadData" title="刷新">
+        <i class="fa fa-sync"></i>
+      </el-button>
     </div>
 
-    <!-- 表头行 -->
-    <div class="table-header">
-      <div class="th-cell" style="width: 160px">开始时间 <i class="fa fa-sort"></i></div>
-      <div class="th-cell" style="width: 220px">操作 <i class="fa fa-sort"></i></div>
-      <div class="th-cell" style="width: 90px">状态</div>
-      <div class="th-cell" style="width: 120px">执行引擎节点 <i class="fa fa-sort"></i></div>
-      <div class="th-cell" style="flex: 1">结果</div>
-      <div class="th-cell" style="width: 80px">用户 <i class="fa fa-sort"></i></div>
-      <div class="th-cell" style="width: 160px">结束时间</div>
-      <div class="th-cell" style="width: 80px">耗时 <i class="fa fa-sort"></i></div>
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table :data="tableData" v-loading="loading" border stripe style="width: 100%">
+        <el-table-column prop="start_time" label="开始时间" width="180" sortable>
+          <template #default="{ row }">
+            {{ formatDateTime(row.start_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="action" label="操作" min-width="200" sortable show-overflow-tooltip />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.status)" size="small">
+              {{ getStatusLabel(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="ata_node" label="执行引擎节点" width="140" sortable />
+        <el-table-column prop="message" label="结果" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.message || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="username" label="用户" width="100" sortable />
+        <el-table-column prop="end_time" label="结束时间" width="180">
+          <template #default="{ row }">
+            {{ formatDateTime(row.end_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="耗时" width="100" sortable>
+          <template #default="{ row }">
+            {{ calcDuration(row.start_time, row.end_time) }}
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
 
-    <!-- 表格内容 -->
-    <div class="table-body" v-loading="loading">
-      <div class="table-row" v-for="(row, index) in tableData" :key="index">
-        <div class="td-cell" style="width: 160px">{{ formatDateTime(row.start_time) }}</div>
-        <div class="td-cell" style="width: 220px">{{ row.action }}</div>
-        <div class="td-cell" style="width: 90px">
-          <span :class="['status-badge', getStatusClass(row.status)]">
-            {{ getStatusLabel(row.status) }}
-          </span>
-        </div>
-        <div class="td-cell" style="width: 120px">{{ row.ata_node }}</div>
-        <div class="td-cell result-cell" style="flex: 1">{{ row.message || '-' }}</div>
-        <div class="td-cell" style="width: 80px">{{ row.username }}</div>
-        <div class="td-cell" style="width: 160px">{{ formatDateTime(row.end_time) }}</div>
-        <div class="td-cell" style="width: 80px">{{ calcDuration(row.start_time, row.end_time) }}</div>
-      </div>
-      <div class="table-empty" v-if="!loading && !tableData.length">
-        暂无数据
-      </div>
-    </div>
-
-    <!-- 分页 - 左对齐 -->
-    <div class="table-footer">
-      <div class="pagination-left">
-        <el-select v-model="pageSize" size="small" style="width: 70px" @change="loadData">
-          <el-option :value="10" label="10" />
-          <el-option :value="20" label="20" />
-          <el-option :value="50" label="50" />
-          <el-option :value="100" label="100" />
-        </el-select>
-        <span class="page-info">{{ paginationInfo }}</span>
-      </div>
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="loadData"
+        @current-change="loadData"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import * as userApi from '@/modules/user/api'
 
 const props = defineProps({
@@ -115,14 +117,6 @@ const tableData = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
-
-// 分页信息
-const paginationInfo = computed(() => {
-  if (!tableData.value.length) return '0 / 0'
-  const start = (currentPage.value - 1) * pageSize.value + 1
-  const end = Math.min(currentPage.value * pageSize.value, total.value)
-  return `${start} - ${end} / ${total.value}`
-})
 
 // 格式化日期时间
 function formatDateTime(isoString) {
@@ -164,14 +158,14 @@ function calcDuration(startTime, endTime) {
   }
 }
 
-// 获取状态样式类
-function getStatusClass(status) {
-  const classes = {
-    SUCCESS: 'status-success',
-    FAILED: 'status-failed',
-    RUNNING: 'status-running'
+// 获取状态类型
+function getStatusType(status) {
+  const types = {
+    SUCCESS: 'success',
+    FAILED: 'danger',
+    RUNNING: 'warning'
   }
-  return classes[status] || 'status-default'
+  return types[status] || 'info'
 }
 
 // 获取状态标签
@@ -210,139 +204,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.operation-logs-view {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-}
-
-.filter-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
-
-  &__right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-}
-
 .time-range-label {
   font-size: 13px;
   color: #6b7280;
   margin-left: 16px;
-}
-
-// 自定义表格样式
-.table-header {
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  height: 40px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.th-cell {
-  font-size: 13px;
-  font-weight: 500;
-  color: #6b7280;
-  padding: 0 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  i {
-    font-size: 10px;
-    color: #9ca3af;
-  }
-}
-
-.table-body {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.table-row {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.15s;
-
-  &:hover {
-    background: #f9fafb;
-  }
-}
-
-.td-cell {
-  font-size: 13px;
-  color: #374151;
-  padding: 0 8px;
-  word-break: break-word;
-}
-
-.result-cell {
-  color: #6b7280;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.table-empty {
-  padding: 40px;
-  text-align: center;
-  color: #9ca3af;
-}
-
-// 状态徽章
-.status-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-success {
-  background: #d1fae5;
-  color: #059669;
-}
-
-.status-failed {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.status-running {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-default {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-// 分页
-.table-footer {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.pagination-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.page-info {
-  font-size: 13px;
-  color: #6b7280;
 }
 </style>

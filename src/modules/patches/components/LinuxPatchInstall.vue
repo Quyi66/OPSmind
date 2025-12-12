@@ -2,7 +2,6 @@
   <div class="patch-install">
     <!-- 页面头部 -->
     <div class="page-header">
-      <div class="page-header__title">补丁安装</div>
       <div class="page-header__actions">
         <el-button
           type="primary"

@@ -1,8 +1,5 @@
 <template>
   <div class="software-home">
-    <!-- 页面标题 -->
-    <div class="page-title">软件包</div>
-
     <!-- KPI 卡片区域 -->
     <div class="kpi-section">
       <div

@@ -1,24 +1,44 @@
 <template>
-  <div class="user-management-container">
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <h3 class="page-title">用户</h3>
-      <div class="toolbar-actions">
-        <el-button @click="handleAllocateRole">
-          <i class="fa fa-user-tag"></i>
-          分配角色
-        </el-button>
-        <el-button type="primary" @click="handleCreateUser">
-          <i class="fa fa-plus"></i>
-          添加用户
-        </el-button>
-      </div>
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-input
+        v-model="searchText"
+        placeholder="搜索用户名/姓名"
+        clearable
+        style="width: 200px"
+        @input="handleSearch"
+      >
+        <template #prefix>
+          <i class="fa fa-search"></i>
+        </template>
+      </el-input>
+      <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 120px" @change="handleSearch">
+        <el-option label="已激活" value="activated" />
+        <el-option label="已禁用" value="disabled" />
+      </el-select>
+      <el-button type="primary" @click="handleSearch">
+        <i class="fa fa-search"></i> 搜索
+      </el-button>
+      <el-button @click="handleReset">
+        <i class="fa fa-undo"></i> 重置
+      </el-button>
+    </div>
+
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" @click="handleCreateUser">
+        <i class="fa fa-plus"></i> 添加用户
+      </el-button>
+      <el-button @click="handleAllocateRole">
+        <i class="fa fa-user-tag"></i> 分配角色
+      </el-button>
     </div>
 
     <!-- 数据表格 -->
-    <div class="table-container">
+    <div class="ops-table-wrapper">
       <el-table
-        :data="tableData"
+        :data="filteredData"
         v-loading="loading"
         border
         style="width: 100%"
@@ -93,14 +113,15 @@
       </el-table>
     </div>
 
-    <!-- 分页 -->
-    <div class="pagination-container">
+    <!-- 分页器 -->
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="pagination.total"
-        layout="total, sizes, prev, pager, next"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
       />
     </div>
 
@@ -138,10 +159,43 @@ import LinkTenantUserDialog from './LinkTenantUserDialog.vue'
 const loading = ref(false)
 const tableData = ref([])
 
+// 搜索和筛选
+const searchText = ref('')
+const statusFilter = ref('')
+
 const pagination = ref({
   page: 1,
   pageSize: 20,
   total: 0
+})
+
+// 过滤后的数据
+const filteredData = computed(() => {
+  let result = tableData.value
+
+  // 关键词搜索
+  if (searchText.value) {
+    const keyword = searchText.value.toLowerCase()
+    result = result.filter(item =>
+      item.login?.toLowerCase().includes(keyword) ||
+      item.fullName?.toLowerCase().includes(keyword)
+    )
+  }
+
+  // 状态筛选
+  if (statusFilter.value === 'activated') {
+    result = result.filter(item => item.activated)
+  } else if (statusFilter.value === 'disabled') {
+    result = result.filter(item => !item.activated)
+  }
+
+  // 更新分页总数
+  pagination.value.total = result.length
+
+  // 分页
+  const start = (pagination.value.page - 1) * pagination.value.pageSize
+  const end = start + pagination.value.pageSize
+  return result.slice(start, end)
 })
 
 // 对话框相关
@@ -182,6 +236,18 @@ async function loadData() {
   } finally {
     loading.value = false
   }
+}
+
+// 搜索
+function handleSearch() {
+  pagination.value.page = 1
+}
+
+// 重置
+function handleReset() {
+  searchText.value = ''
+  statusFilter.value = ''
+  pagination.value.page = 1
 }
 
 function getAuthModeType(authMode) {
@@ -318,47 +384,7 @@ async function handleDelete(row) {
 </script>
 
 <style scoped lang="scss">
-.user-management-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  padding: 16px;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.page-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-.toolbar-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.table-container {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
-  margin-top: 12px;
-}
-
+// 仅保留组件特定样式，布局类由全局 element-ui.scss 提供
 .roles-cell {
   display: flex;
   flex-wrap: wrap;

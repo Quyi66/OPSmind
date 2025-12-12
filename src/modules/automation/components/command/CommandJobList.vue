@@ -2,7 +2,6 @@
   <div class="command-job-list">
     <!-- 标题栏 -->
     <div class="job-list__header">
-      <div class="header-title">命令作业</div>
     </div>
 
     <!-- 主体区域 -->

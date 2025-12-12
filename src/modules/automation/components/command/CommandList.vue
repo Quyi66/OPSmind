@@ -2,7 +2,6 @@
   <div class="command-list">
     <!-- 标题栏 -->
     <div class="command-list__header">
-      <div class="header-title">命令管理</div>
       <div class="header-actions">
         <el-button type="primary" @click="handleCreate">
           <i class="fas fa-plus"></i>

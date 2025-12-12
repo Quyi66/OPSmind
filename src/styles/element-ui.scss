@@ -227,3 +227,82 @@
     color: #303133;
   }
 }
+
+// ========================================
+// 分页器全局样式
+// ========================================
+.el-pagination {
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding: 8px 0;
+
+  // 调小下拉框和输入框
+  .el-select {
+    width: 100px !important;
+
+    .el-input__wrapper {
+      height: 28px !important;
+    }
+  }
+
+  .el-pagination__goto,
+  .el-pagination__classifier {
+    font-size: 13px;
+  }
+
+  .el-input {
+    width: 50px !important;
+
+    .el-input__wrapper {
+      height: 28px !important;
+      padding: 0 8px !important;
+    }
+  }
+}
+
+// ========================================
+// 标准表格页面布局类
+// ========================================
+
+// 页面容器
+.ops-page-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+// 筛选栏
+.ops-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  // padding: 8px 16px;
+  // background: #fafafa;
+  border-radius: 6px;
+  // border: 1px solid #ebeef5;
+}
+
+// 功能按钮栏
+.ops-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+// 表格区域
+.ops-table-wrapper {
+  flex: 1;
+  min-height: 0;
+}
+
+// 分页器区域
+.ops-pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 0;
+}

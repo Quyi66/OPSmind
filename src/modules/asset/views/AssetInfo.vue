@@ -1,10 +1,5 @@
 <template>
   <div class="asset-info">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <span class="page-title">资产信息</span>
-    </div>
-
     <!-- 资产类型标签页 -->
     <div class="type-tabs-wrapper">
       <div class="type-tabs">

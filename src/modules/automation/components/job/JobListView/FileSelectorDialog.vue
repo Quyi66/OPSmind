@@ -21,9 +21,8 @@
         </el-breadcrumb-item>
       </el-breadcrumb>
       <div class="breadcrumb-actions">
-        <el-button size="small" @click="refresh" :loading="loading">
+        <el-button size="small" @click="refresh" :loading="loading" title="刷新">
           <el-icon><RefreshRight /></el-icon>
-          刷新
         </el-button>
       </div>
     </div>

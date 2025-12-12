@@ -2,6 +2,7 @@
   <ModulePageLayout
     :title="moduleTitle"
     :description="moduleDescription"
+    :hide-header="true"
   >
     <div class="cmd-module">
       <aside class="cmd-module__nav">

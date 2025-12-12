@@ -2,7 +2,7 @@
   <ModulePageLayout
     :title="moduleTitle"
     :description="moduleDescription"
-    :hide-header="isModelEditorView"
+    :hide-header="true"
   >
     <!-- 模型编辑器全屏显示 -->
     <div v-if="isModelEditorView" class="model-editor-container">

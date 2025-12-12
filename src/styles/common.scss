@@ -83,22 +83,24 @@
 .main-container .app-main {
   background-color: #f0f2f5;
   padding: 20px;
-  >.main-box  {
-    padding: 20px!important;
-    background: #fff!important;
+
+  >.main-box {
+    padding: 20px !important;
+    background: #fff !important;
     height: 100%;
-    margin: 0!important;
-    border-radius: 0!important;
+    margin: 0 !important;
+    border-radius: 0 !important;
     position: relative;
 
-    .el-card__body{
+    .el-card__body {
       padding: 0 0 20px 0;
     }
 
-    .search-card{
+    .search-card {
       margin-bottom: 20px;
     }
   }
+
   .panel-group .card-panel {
     box-shadow: none !important;
     border-radius: 5px;
@@ -237,7 +239,7 @@
   }
 }
 
-.from-content{
+.from-content {
   max-height: 650px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -264,7 +266,7 @@
 }
 
 .el-table table.el-table__header th {
-  background-color: #fafafa;
+  background-color: #fafafa !important;
   //border-bottom: 1px solid #f0f0f0 !important;
   transition: background 0.2s ease;
 }
@@ -599,8 +601,8 @@
 .padding_20 {
   padding: 0 20px;
 
-  .el-divider--horizontal{
-    margin: 0 0 20px 0!important
+  .el-divider--horizontal {
+    margin: 0 0 20px 0 !important
   }
 }
 
@@ -668,32 +670,38 @@ input[type="number"] {
   color: #fff !important;
 }
 
-.el_title_ca{
+.el_title_ca {
   background-color: #fafafa;
   padding: 10px;
   border: 1px solid #EBEEF5;
   min-height: 42px;
 }
-.el_content_ca{
+
+.el_content_ca {
   padding: 10px;
   border-right: 1px solid #EBEEF5;
   border-left: 1px solid #EBEEF5;
   background-color: #fff;
   min-height: 42px;
 }
-.border-t{
+
+.border-t {
   border-top: 1px solid #EBEEF5;
 }
-.h3title{
+
+.h3title {
   font-weight: bold;
   margin: 0 0 10px 0;
 }
-.pointer{
+
+.pointer {
   cursor: pointer;
 }
-.bigscreen-dialog{
+
+.bigscreen-dialog {
   // max-width: 85% !important;
 }
-.bigscreen-dialog .el-table tr{
+
+.bigscreen-dialog .el-table tr {
   height: 43px !important;
 }

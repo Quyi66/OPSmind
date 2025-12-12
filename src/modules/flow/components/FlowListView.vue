@@ -1,92 +1,96 @@
 <template>
-  <div class="flow-list-view">
-    <!-- 标题栏 -->
-    <div class="view-header">
-      <h2 class="view-title">流程列表</h2>
-      <el-button type="primary" size="small" @click="handleCreate">
-        <i class="fa fa-plus"></i> 新建
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索流程名称"
+        clearable
+        style="width: 250px"
+        @keyup.enter="loadData"
+      >
+        <template #prefix>
+          <i class="fa fa-search"></i>
+        </template>
+      </el-input>
+      <el-button @click="handleReset">
+        <i class="fa fa-undo"></i> 重置
       </el-button>
     </div>
 
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <div class="toolbar__left">
-        <el-button size="small" :disabled="!selectedRows.length" @click="handleBatchDelete">
-          <i class="fa fa-trash"></i> 删除
-        </el-button>
-        <el-button size="small" @click="handleExport">
-          <i class="fa fa-download"></i> 导出
-        </el-button>
-      </div>
-      <div class="toolbar__right">
-        <el-input
-          v-model="searchKeyword"
-          size="small"
-          placeholder=""
-          clearable
-          style="width: 200px"
-          @keyup.enter="loadData"
-        />
-        <el-button size="small" @click="loadData">
-          <i class="fa fa-search"></i>
-        </el-button>
-        <el-button size="small" @click="loadData">
-          <i class="fa fa-sync"></i>
-        </el-button>
-      </div>
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" @click="handleCreate">
+        <i class="fa fa-plus"></i> 新建
+      </el-button>
+      <el-button :disabled="!selectedRows.length" @click="handleBatchDelete">
+        <i class="fa fa-trash"></i> 删除
+      </el-button>
+      <el-button @click="handleExport">
+        <i class="fa fa-download"></i> 导出
+      </el-button>
+      <el-button @click="loadData">
+        <i class="fa fa-refresh"></i> 刷新
+      </el-button>
     </div>
 
-    <!-- 表格 -->
-    <el-table
-      :data="filteredData"
-      v-loading="loading"
-      border
-      @selection-change="handleSelectionChange"
-      style="width: 100%"
-    >
-      <el-table-column type="selection" width="40" />
-      <el-table-column prop="processName" label="流程名称" min-width="150" />
-      <el-table-column prop="processAbbr" label="流程简称" min-width="120" />
-      <el-table-column prop="remarks" label="备注" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="createTime" label="创建时间" width="160" />
-      <el-table-column label="历史版本" width="100">
-        <template #default="{ row }">
-          <el-button type="primary" link size="small" @click="handleViewHistory(row)">
-            历史版本
-          </el-button>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="300" fixed="right">
-        <template #default="{ row }">
-          <div class="action-buttons">
-            <el-button type="primary" plain size="small" @click="handleEdit(row)">
-              <i class="fa fa-edit"></i> 编辑
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table
+        :data="paginatedData"
+        v-loading="loading"
+        border
+        @selection-change="handleSelectionChange"
+        style="width: 100%"
+      >
+        <el-table-column type="selection" width="40" />
+        <el-table-column prop="processName" label="流程名称" min-width="150" />
+        <el-table-column prop="processAbbr" label="流程简称" min-width="120" />
+        <el-table-column prop="remarks" label="备注" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="createTime" label="创建时间" width="160" />
+        <el-table-column label="历史版本" width="100">
+          <template #default="{ row }">
+            <el-button type="primary" link size="small" @click="handleViewHistory(row)">
+              历史版本
             </el-button>
-            <el-button type="warning" plain size="small" @click="handleDesign(row)">
-              <i class="fa fa-cogs"></i> 设计
-            </el-button>
-            <el-button type="success" plain size="small" @click="handleExecute(row)">
-              <i class="fa fa-play"></i> 执行
-            </el-button>
-            <el-button type="info" plain size="small" @click="handleClone(row)">
-              <i class="fa fa-copy"></i> 克隆
-            </el-button>
-            <el-button type="danger" plain size="small" @click="handleDelete(row)">
-              <i class="fa fa-trash"></i> 删除
-            </el-button>
-          </div>
-        </template>
-      </el-table-column>
-    </el-table>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="300" fixed="right">
+          <template #default="{ row }">
+            <div class="action-buttons">
+              <el-button type="primary" plain size="small" @click="handleEdit(row)">
+                <i class="fa fa-edit"></i> 编辑
+              </el-button>
+              <el-button type="warning" plain size="small" @click="handleDesign(row)">
+                <i class="fa fa-cogs"></i> 设计
+              </el-button>
+              <el-button type="success" plain size="small" @click="handleExecute(row)">
+                <i class="fa fa-play"></i> 执行
+              </el-button>
+              <el-button type="info" plain size="small" @click="handleClone(row)">
+                <i class="fa fa-copy"></i> 克隆
+              </el-button>
+              <el-button type="danger" plain size="small" @click="handleDelete(row)">
+                <i class="fa fa-trash"></i> 删除
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
-    <!-- 分页 -->
-    <div class="pagination-wrapper">
-      <el-select v-model="pageSize" size="small" style="width: 70px" @change="updatePagination">
-        <el-option :value="10" label="10" />
-        <el-option :value="20" label="20" />
-        <el-option :value="50" label="50" />
-      </el-select>
-      <span class="page-info">{{ paginationInfo }}</span>
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="filteredData.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="updatePagination"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 历史版本对话框 -->
@@ -152,18 +156,14 @@ const filteredData = computed(() => {
       item.remarks?.toLowerCase().includes(keyword)
     )
   }
-  // 分页
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return data.slice(start, end)
+  return data
 })
 
-const paginationInfo = computed(() => {
-  const total = tableData.value.length
-  if (!total) return '0 / 0'
-  const start = (currentPage.value - 1) * pageSize.value + 1
-  const end = Math.min(currentPage.value * pageSize.value, total)
-  return `${start} - ${end} / ${total}`
+// 分页后的数据
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredData.value.slice(start, end)
 })
 
 async function loadData() {
@@ -180,6 +180,15 @@ async function loadData() {
 }
 
 function updatePagination() {
+  currentPage.value = 1
+}
+
+function handlePageChange(page) {
+  currentPage.value = page
+}
+
+function handleReset() {
+  searchKeyword.value = ''
   currentPage.value = 1
 }
 

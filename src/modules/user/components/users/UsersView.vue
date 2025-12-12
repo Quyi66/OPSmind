@@ -1,25 +1,7 @@
 <template>
-  <div class="users-view">
-    <!-- 操作按钮区 -->
-    <div class="view-header">
-      <div class="view-header__left">
-        <el-button type="primary" plain size="small" @click="handleScanHost">
-          <i class="fa fa-redo-alt"></i> 扫描主机
-        </el-button>
-        <el-button type="default" plain size="small" @click="handleCreateUser">
-          <i class="fa fa-user-plus"></i> 创建用户
-        </el-button>
-        <el-button type="default" plain size="small" @click="handleModifyUser">
-          <i class="fa fa-user-edit"></i> 修改用户
-        </el-button>
-      </div>
-      <div class="view-header__right">
-        <el-button size="small" :icon="Refresh" @click="loadData" />
-      </div>
-    </div>
-
+  <div class="ops-page-layout">
     <!-- 筛选区 -->
-    <div class="filter-bar">
+    <div class="ops-filter-bar">
       <div class="filter-bar__item">
         <span class="filter-label">用户类型:</span>
         <el-checkbox-group v-model="filters.types" size="small" @change="loadData">
@@ -65,11 +47,29 @@
         />
       </div>
       <el-button type="primary" size="small" @click="loadData">
-        <i class="fa fa-search"></i> 查询
+        <i class="fa fa-search"></i> 搜索
+      </el-button>
+      <el-button size="small" @click="handleReset">
+        <i class="fa fa-undo"></i> 重置
       </el-button>
     </div>
 
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" plain size="small" @click="handleScanHost">
+        <i class="fa fa-redo-alt"></i> 扫描主机
+      </el-button>
+      <el-button type="default" plain size="small" @click="handleCreateUser">
+        <i class="fa fa-user-plus"></i> 创建用户
+      </el-button>
+      <el-button type="default" plain size="small" @click="handleModifyUser">
+        <i class="fa fa-user-edit"></i> 修改用户
+      </el-button>
+      <el-button size="small" :icon="Refresh" @click="loadData" title="刷新" />
+    </div>
+
     <!-- 用户列表表格 -->
+    <div class="ops-table-wrapper">
     <el-table
       :data="tableData"
       v-loading="loading"
@@ -139,9 +139,10 @@
         </template>
       </el-table-column>
     </el-table>
+    </div>
 
     <!-- 分页 -->
-    <div class="view-footer">
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -295,6 +296,17 @@ function handleUserDetail(row) {
 
 function handleCrontabDetail(row) {
   console.log('定时任务详情:', row)
+}
+
+function handleReset() {
+  filters.value = {
+    types: ['0', '1'],
+    lockStatus: ['2'],
+    host_key: '',
+    username: ''
+  }
+  currentPage.value = 1
+  loadData()
 }
 
 onMounted(() => {

@@ -32,8 +32,8 @@
         <el-button type="warning" :loading="repairing" @click="handleRepair">
           <i class="fa fa-tools" /> 修复
         </el-button>
-        <el-button type="primary" :loading="refreshing" @click="handleRefresh">
-          <i class="fa fa-sync-alt" /> 刷新
+        <el-button type="primary" :loading="refreshing" @click="handleRefresh" title="刷新">
+          <i class="fa fa-sync-alt" />
         </el-button>
       </div>
     </template>

@@ -1,8 +1,7 @@
 <template>
   <div class="data-manage">
-    <!-- 页面标题 -->
+    <!-- 功能按钮区 -->
     <div class="page-header">
-      <span class="page-title">数据管理</span>
       <div class="page-actions">
         <el-button @click="handleDownloadTemplate">
           <i class="fa fa-download" style="margin-right: 4px"></i>

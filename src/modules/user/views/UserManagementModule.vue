@@ -2,6 +2,7 @@
   <ModulePageLayout
     :title="moduleTitle"
     :description="moduleDescription"
+    :hide-header="true"
   >
     <div class="user-module">
       <aside class="user-module__nav">

@@ -2,6 +2,7 @@
   <ModulePageLayout
     :title="moduleTitle"
     :description="moduleDescription"
+    :hide-header="true"
   >
     <div class="sudo-module">
       <aside class="sudo-module__nav">

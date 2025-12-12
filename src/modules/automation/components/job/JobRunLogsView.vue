@@ -1,52 +1,57 @@
 <template>
-  <div class="run-logs-view">
-    <header class="page-header">
-      <h3 class="page-title">作业运行记录</h3>
-      <div class="header-filters">
-        <el-select
-          v-model="filters.day"
-          style="width: 140px"
-          @change="handleSearch"
-        >
-          <el-option label="全部" value="3650" />
-          <el-option label="今天" value="0" />
-          <el-option label="最近7天" value="7" />
-          <el-option label="最近30天" value="30" />
-          <el-option label="最近一年" value="365" />
-        </el-select>
-        <el-select
-          v-model="filters.status"
-          placeholder="状态筛选"
-          style="width: 140px"
-          @change="handleSearch"
-        >
-          <el-option label="全部状态" value="all" />
-          <el-option label="等待中" value="WAITING" />
-          <el-option label="正在运行" value="RUNNING" />
-          <el-option label="回调" value="CALLBACK" />
-          <el-option label="运行错误" value="ERROR" />
-          <el-option label="运行失败" value="FAILED" />
-          <el-option label="完成" value="COMPLETED" />
-          <el-option label="运行终止" value="INTERRUPTED" />
-        </el-select>
-        <el-input
-          v-model="filters.search"
-          placeholder="搜索作业标题"
-          clearable
-          style="width: 240px"
-          @input="handleSearchDebounced"
-        >
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
-        <el-button @click="handleRefresh">
-          <i class="fa fa-sync-alt" />
-        </el-button>
-      </div>
-    </header>
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-select
+        v-model="filters.day"
+        style="width: 140px"
+        @change="handleSearch"
+      >
+        <el-option label="全部" value="3650" />
+        <el-option label="今天" value="0" />
+        <el-option label="最近7天" value="7" />
+        <el-option label="最近30天" value="30" />
+        <el-option label="最近一年" value="365" />
+      </el-select>
+      <el-select
+        v-model="filters.status"
+        placeholder="状态筛选"
+        style="width: 140px"
+        @change="handleSearch"
+      >
+        <el-option label="全部状态" value="all" />
+        <el-option label="等待中" value="WAITING" />
+        <el-option label="正在运行" value="RUNNING" />
+        <el-option label="回调" value="CALLBACK" />
+        <el-option label="运行错误" value="ERROR" />
+        <el-option label="运行失败" value="FAILED" />
+        <el-option label="完成" value="COMPLETED" />
+        <el-option label="运行终止" value="INTERRUPTED" />
+      </el-select>
+      <el-input
+        v-model="filters.search"
+        placeholder="搜索作业标题"
+        clearable
+        style="width: 240px"
+        @input="handleSearchDebounced"
+      >
+        <template #prefix>
+          <i class="fa fa-search" />
+        </template>
+      </el-input>
+      <el-button @click="handleReset">
+        <i class="fa fa-undo" /> 重置
+      </el-button>
+    </div>
 
-    <div class="table-container">
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button @click="handleRefresh" title="刷新">
+        <i class="fa fa-refresh" />
+      </el-button>
+    </div>
+
+    <!-- 表格区域 -->
       <el-table
         v-loading="loading"
         :data="tableData"
@@ -162,7 +167,6 @@
       :run-id="resultMeta.runId"
       :job-title="resultMeta.jobTitle"
     />
-  </div>
 </template>
 
 <script setup>
@@ -253,6 +257,14 @@ function handleSearchDebounced() {
 }
 
 function handleRefresh() {
+  fetchData()
+}
+
+function handleReset() {
+  filters.value.day = '0'
+  filters.value.status = 'all'
+  filters.value.search = ''
+  pagination.value.page = 1
   fetchData()
 }
 

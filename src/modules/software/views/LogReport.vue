@@ -1,10 +1,5 @@
 <template>
   <div class="log-report">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h4 class="page-title">日志报告</h4>
-    </div>
-
     <!-- 主内容区域 -->
     <div class="main-content">
       <!-- 顶部工具栏 -->
@@ -132,23 +127,17 @@
       </el-table>
 
       <!-- 底部分页 -->
-      <div class="table-footer">
-        <div class="footer-right">
-          <span class="total-text">Total {{ pagination.total }}</span>
-          <el-select v-model="pagination.size" style="width: 100px" @change="handlePageSizeChange">
-            <el-option :value="10" label="10/page" />
-            <el-option :value="20" label="20/page" />
-            <el-option :value="50" label="50/page" />
-            <el-option :value="100" label="100/page" />
-          </el-select>
-          <el-pagination
-            v-model:current-page="pagination.page"
-            :page-size="pagination.size"
-            :total="pagination.total"
-            layout="prev, pager, next"
-            @current-change="handlePageChange"
-          />
-        </div>
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePageSizeChange"
+          @current-change="handlePageChange"
+        />
       </div>
     </div>
 

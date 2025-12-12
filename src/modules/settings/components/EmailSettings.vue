@@ -1,9 +1,5 @@
 <template>
   <div class="email-config">
-    <div class="page-header">
-      <h3>电子邮件配置</h3>
-    </div>
-
     <el-card class="config-card">
       <el-form
         ref="formRef"

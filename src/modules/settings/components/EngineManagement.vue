@@ -1,9 +1,5 @@
 <template>
   <div class="engine-management">
-    <div class="page-header">
-      <h3>引擎管理</h3>
-    </div>
-
     <el-card class="config-card" v-loading="loading">
       <el-form label-width="200px" label-position="left">
         <!-- 引擎类型选择 -->

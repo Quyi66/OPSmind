@@ -2,6 +2,7 @@
   <ModulePageLayout
     :title="moduleTitle"
     :description="moduleDescription"
+    :hide-header="true"
   >
     <div class="gfs-module">
       <aside class="gfs-module__nav">

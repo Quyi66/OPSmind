@@ -2,7 +2,7 @@
   <ModulePageLayout
     :title="moduleTitle"
     :description="moduleDescription"
-    :hide-header="isDesignMode || isHistoryMode"
+    :hide-header="true"
   >
     <!-- 设计器视图（全屏） -->
     <div v-if="isDesignMode" class="design-container">

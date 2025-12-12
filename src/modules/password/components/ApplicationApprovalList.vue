@@ -1,65 +1,54 @@
 <template>
-  <div class="application-approval-container">
-    <!-- 页面标题和操作按钮 -->
-    <div class="page-header">
-      <h3 class="page-title">临时密码申请首页</h3>
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-select v-model="filters.status" placeholder="全部" style="width: 140px" @change="loadData">
+        <el-option label="全部" value="all" />
+        <el-option label="待提交" value="new" />
+        <el-option label="待审批" value="approving" />
+        <el-option label="已拒绝" value="reject" />
+        <el-option label="密码生成中" value="processing" />
+        <el-option label="密码生成失败" value="failed" />
+        <el-option label="密码已生成" value="success" />
+        <el-option label="密码生成异常" value="exception" />
+        <el-option label="密码已回收" value="recovered" />
+        <el-option label="密码回收异常" value="fail_recovered" />
+      </el-select>
+      <el-input
+        v-model="filters.keyword"
+        placeholder="搜索"
+        clearable
+        style="width: 200px"
+        @keyup.enter="loadData"
+        @clear="loadData"
+      >
+        <template #prefix>
+          <i class="fa fa-search"></i>
+        </template>
+      </el-input>
+      <el-button @click="loadData" :loading="loading" title="刷新">
+        <i class="fa fa-refresh"></i>
+      </el-button>
     </div>
 
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <el-button type="primary" @click="handleApply">
-          <i class="fa fa-fist-raised"></i>
-          申请临时密码
-        </el-button>
-        <el-button type="info" @click="handleBatchImport">
-          <i class="fa fa-upload"></i>
-          批量申请临时密码
-        </el-button>
-        <el-button type="info" plain @click="handleAdminPanel" v-if="hasAdminRole">
-          <i class="fa fa-sign-in-alt"></i>
-          进入管理员面板
-        </el-button>
-      </div>
-    </div>
-
-    <!-- 筛选工具栏 -->
-    <div class="filter-bar">
-      <div class="filter-left">
-        <el-select v-model="filters.status" placeholder="全部" style="width: 120px" @change="loadData">
-          <el-option label="全部" value="all" />
-          <el-option label="待提交" value="new" />
-          <el-option label="待审批" value="approving" />
-          <el-option label="已拒绝" value="reject" />
-          <el-option label="密码生成中" value="processing" />
-          <el-option label="密码生成失败" value="failed" />
-          <el-option label="密码已生成" value="success" />
-          <el-option label="密码生成异常" value="exception" />
-          <el-option label="密码已回收" value="recovered" />
-          <el-option label="密码回收异常" value="fail_recovered" />
-        </el-select>
-        <el-button @click="loadData" :loading="loading" circle>
-          <i class="fa fa-refresh"></i>
-        </el-button>
-      </div>
-      <div class="filter-right">
-        <el-input
-          v-model="filters.keyword"
-          placeholder="搜索"
-          clearable
-          style="width: 200px"
-          @keyup.enter="loadData"
-          @clear="loadData"
-        >
-          <template #prefix>
-            <i class="fa fa-search"></i>
-          </template>
-        </el-input>
-      </div>
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" @click="handleApply">
+        <i class="fa fa-fist-raised"></i>
+        申请临时密码
+      </el-button>
+      <el-button type="info" @click="handleBatchImport">
+        <i class="fa fa-upload"></i>
+        批量申请临时密码
+      </el-button>
+      <el-button type="info" plain @click="handleAdminPanel" v-if="hasAdminRole">
+        <i class="fa fa-sign-in-alt"></i>
+        进入管理员面板
+      </el-button>
     </div>
 
     <!-- 数据表格 -->
-    <div class="table-container">
+    <div class="ops-table-wrapper">
       <el-table
         :data="tableData"
         v-loading="loading"
@@ -69,14 +58,14 @@
       >
         <el-table-column prop="intention" label="用途" min-width="180" show-overflow-tooltip />
         <el-table-column prop="applicant_name" label="申请人" width="100" />
-        <el-table-column prop="username" label="账号" width="100">
+        <el-table-column prop="username" label="账号" width="100" show-overflow-tooltip>
           <template #default="{ row }">
-            <div class="multi-line-cell">{{ formatMultiLine(row.username) }}</div>
+            {{ row.username }}
           </template>
         </el-table-column>
-        <el-table-column prop="hostKeys" label="主机" min-width="150">
+        <el-table-column prop="hostKeys" label="主机" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            <div class="multi-line-cell">{{ formatMultiLine(row.hostKeys) }}</div>
+            {{ row.hostKeys }}
           </template>
         </el-table-column>
         <el-table-column prop="effective_hours" label="时长" width="80">
@@ -185,14 +174,15 @@
       </el-table>
     </div>
 
-    <!-- 分页 -->
-    <div class="pagination-container">
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="pagination.total"
         layout="total, sizes, prev, pager, next, jumper"
+        background
         @size-change="loadData"
         @current-change="loadData"
       />

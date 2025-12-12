@@ -1,37 +1,46 @@
 <template>
-  <div class="approvals-view">
-    <header class="page-header">
-      <h3 class="page-title">作业审批</h3>
-      <div class="header-actions">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索作业名称"
-          clearable
-          style="width: 240px"
-        >
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
-        <el-select
-          v-model="statusFilter"
-          placeholder="状态筛选"
-          clearable
-          style="width: 140px"
-        >
-          <el-option label="全部状态" :value="null" />
-          <el-option label="审批中" :value="0" />
-          <el-option label="审批通过" :value="1" />
-          <el-option label="审批未通过" :value="2" />
-          <el-option label="审批作废" :value="3" />
-        </el-select>
-      </div>
-    </header>
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索作业名称"
+        clearable
+        style="width: 240px"
+      >
+        <template #prefix>
+          <i class="fa fa-search" />
+        </template>
+      </el-input>
+      <el-select
+        v-model="statusFilter"
+        placeholder="状态筛选"
+        clearable
+        style="width: 140px"
+      >
+        <el-option label="全部状态" :value="null" />
+        <el-option label="审批中" :value="0" />
+        <el-option label="审批通过" :value="1" />
+        <el-option label="审批未通过" :value="2" />
+        <el-option label="审批作废" :value="3" />
+      </el-select>
+      <el-button @click="handleReset">
+        <i class="fa fa-undo" /> 重置
+      </el-button>
+    </div>
 
-    <div class="table-container">
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button @click="fetchData" title="刷新">
+        <i class="fa fa-refresh" />
+      </el-button>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
-        :data="filteredData"
+        :data="paginatedData"
         stripe
       >
         <el-table-column label="作业" min-width="250">
@@ -127,6 +136,20 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="filteredData.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
+    </div>
   </div>
 </template>
 
@@ -139,6 +162,8 @@ const loading = ref(false)
 const tableData = ref([])
 const searchKeyword = ref('')
 const statusFilter = ref(null)
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const filteredData = computed(() => {
   let data = tableData.value
@@ -159,6 +184,13 @@ const filteredData = computed(() => {
   }
 
   return data
+})
+
+// 分页后的数据
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredData.value.slice(start, end)
 })
 
 const jobTypeMap = {
@@ -193,6 +225,20 @@ async function fetchData() {
   } finally {
     loading.value = false
   }
+}
+
+function handleReset() {
+  searchKeyword.value = ''
+  statusFilter.value = null
+  currentPage.value = 1
+}
+
+function handlePageChange(page) {
+  currentPage.value = page
+}
+
+function handlePageSizeChange() {
+  currentPage.value = 1
 }
 
 function getJobTypeIcon(type) {

@@ -1,60 +1,56 @@
 <template>
-  <div class="admin-panel-container">
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <el-button type="info" plain @click="handleBack">
-          <i class="fa fa-arrow-circle-left"></i>
-          返回
-        </el-button>
-        <el-button @click="handleBatchModify">
-          <i class="fa fa-wrench"></i>
-          批量修改
-        </el-button>
-        <el-button :disabled="!selectedRows.length" @click="handleSelectModify">
-          <i class="fa fa-keyboard"></i>
-          选择修改
-        </el-button>
-        <el-button @click="handleCheckPasswordState">
-          <i class="fa fa-check-double"></i>
-          检查密码状态
-        </el-button>
-        <el-button @click="handleRevertPassword">
-          <i class="fa fa-recycle"></i>
-          回收密码
-        </el-button>
-        <el-button @click="handleExportPassword">
-          <i class="fa fa-file-export"></i>
-          导出密码
-        </el-button>
-        <el-button plain @click="handleImportInitPassword">
-          <i class="fa fa-arrow-up"></i>
-          导入初始密码
-        </el-button>
-        <el-button type="info" plain @click="handleDownloadTemplate">
-          <i class="fa fa-file-excel"></i>
-          模板下载
-        </el-button>
-      </div>
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <AcmDeviceSelector
+        v-model="selectedHosts"
+        ci-types="linux"
+        :options="{ label: '筛选主机' }"
+        @change="loadData"
+      />
+      <el-button @click="loadData" :loading="loading" title="刷新">
+        <i class="fa fa-refresh"></i>
+      </el-button>
     </div>
 
-    <!-- 筛选和设备选择 -->
-    <div class="filter-bar">
-      <div class="filter-left">
-        <AcmDeviceSelector
-          v-model="selectedHosts"
-          ci-types="linux"
-          :options="{ label: '筛选主机' }"
-          @change="loadData"
-        />
-        <el-button @click="loadData" :loading="loading" circle>
-          <i class="fa fa-refresh"></i>
-        </el-button>
-      </div>
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button type="info" plain @click="handleBack">
+        <i class="fa fa-arrow-circle-left"></i>
+        返回
+      </el-button>
+      <el-button @click="handleBatchModify">
+        <i class="fa fa-wrench"></i>
+        批量修改
+      </el-button>
+      <el-button :disabled="!selectedRows.length" @click="handleSelectModify">
+        <i class="fa fa-keyboard"></i>
+        选择修改
+      </el-button>
+      <el-button @click="handleCheckPasswordState">
+        <i class="fa fa-check-double"></i>
+        检查密码状态
+      </el-button>
+      <el-button @click="handleRevertPassword">
+        <i class="fa fa-recycle"></i>
+        回收密码
+      </el-button>
+      <el-button @click="handleExportPassword">
+        <i class="fa fa-file-export"></i>
+        导出密码
+      </el-button>
+      <el-button plain @click="handleImportInitPassword">
+        <i class="fa fa-arrow-up"></i>
+        导入初始密码
+      </el-button>
+      <el-button type="info" plain @click="handleDownloadTemplate">
+        <i class="fa fa-file-excel"></i>
+        模板下载
+      </el-button>
     </div>
 
     <!-- 数据表格 -->
-    <div class="table-container">
+    <div class="ops-table-wrapper">
       <el-table
         ref="tableRef"
         :data="tableData"
@@ -65,8 +61,8 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="host_key" label="IP" width="150" />
-        <el-table-column prop="hostname" label="主机名" min-width="150" />
+        <el-table-column prop="host_key" label="IP" width="150" show-overflow-tooltip />
+        <el-table-column prop="hostname" label="主机名" min-width="150" show-overflow-tooltip />
         <el-table-column prop="username" label="用户名" width="100" />
         <el-table-column prop="check_status" label="密码状态" width="120">
           <template #default="{ row }">
@@ -137,14 +133,15 @@
       </el-table>
     </div>
 
-    <!-- 分页 -->
-    <div class="pagination-container">
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="pagination.total"
         layout="total, sizes, prev, pager, next, jumper"
+        background
         @size-change="loadData"
         @current-change="loadData"
       />

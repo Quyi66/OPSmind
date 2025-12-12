@@ -2,7 +2,6 @@
   <div class="patch-rollback">
     <!-- 页面头部 -->
     <div class="page-header">
-      <div class="page-header__title">补丁回退</div>
       <div class="page-header__actions">
         <el-button
           type="danger"

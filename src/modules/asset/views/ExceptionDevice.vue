@@ -1,8 +1,7 @@
 <template>
   <div class="exception-device">
-    <!-- 页面标题 -->
+    <!-- 功能按钮区 -->
     <div class="page-header">
-      <span class="page-title">异常设备</span>
       <div class="page-actions">
         <el-button @click="handleCheckConnectivity">
           <i class="fa fa-plug" style="margin-right: 4px"></i>

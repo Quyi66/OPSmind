@@ -1,35 +1,38 @@
 <template>
-  <div class="template-list">
-    <!-- 顶部导航栏 -->
-    <nav class="navbar">
-      <div class="navbar-title">巡检模板</div>
-      <div class="navbar-actions">
-        <el-button type="primary" @click="goToAdd">
-          <i class="fa fa-plus"></i> 新建模板
-        </el-button>
-      </div>
-    </nav>
-
-    <!-- 搜索栏 -->
-    <div class="search-bar">
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
       <el-input
         v-model="searchKeyword"
-        placeholder=""
+        placeholder="搜索模板名称"
         clearable
-        class="search-input"
+        style="width: 250px"
         @input="handleSearch"
       >
         <template #prefix>
           <i class="fa fa-search"></i>
         </template>
       </el-input>
+      <el-button @click="handleReset">
+        <i class="fa fa-undo"></i> 重置
+      </el-button>
+    </div>
+
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" @click="goToAdd">
+        <i class="fa fa-plus"></i> 新建模板
+      </el-button>
+      <el-button @click="loadTemplates">
+        <i class="fa fa-refresh"></i> 刷新
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
-    <div class="table-wrapper">
+    <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
-        :data="filteredData"
+        :data="paginatedData"
         style="width: 100%"
         row-key="id"
         :default-sort="{ prop: 'executedAt', order: 'descending' }"
@@ -110,14 +113,17 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="table-footer">
-        <el-select v-model="pageSize" class="page-size-select" @change="handlePageSizeChange">
-          <el-option :value="10" label="10" />
-          <el-option :value="20" label="20" />
-          <el-option :value="50" label="50" />
-          <el-option :value="100" label="100" />
-        </el-select>
-        <span class="pagination-info">{{ paginationInfo }}</span>
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="filteredData.length"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePageSizeChange"
+          @current-change="handlePageChange"
+        />
       </div>
     </div>
 
@@ -167,14 +173,12 @@ const filteredData = computed(() => {
 })
 
 /**
- * 分页信息
+ * 分页后的数据
  */
-const paginationInfo = computed(() => {
-  const total = filteredData.value.length
-  if (total === 0) return '0 - 0 / 0'
-  const start = 1
-  const end = Math.min(pageSize.value, total)
-  return `${start} - ${end} / ${total}`
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredData.value.slice(start, end)
 })
 
 /**
@@ -270,6 +274,21 @@ function handleSearch() {
  */
 function handlePageSizeChange() {
   currentPage.value = 1
+}
+
+/**
+ * 重置筛选
+ */
+function handleReset() {
+  searchKeyword.value = ''
+  currentPage.value = 1
+}
+
+/**
+ * 页码变化
+ */
+function handlePageChange(page) {
+  currentPage.value = page
 }
 
 /**

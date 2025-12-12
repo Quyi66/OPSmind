@@ -1,22 +1,7 @@
 <template>
-  <div class="groups-view">
-    <!-- 操作按钮区 -->
-    <div class="view-header">
-      <div class="view-header__left">
-        <el-button type="primary" plain size="small" @click="handleCreateGroup">
-          <i class="fa fa-plus-circle"></i> 创建用户组
-        </el-button>
-        <el-button type="danger" plain size="small" @click="handleDeleteGroup">
-          <i class="fa fa-minus-circle"></i> 删除用户组
-        </el-button>
-      </div>
-      <div class="view-header__right">
-        <el-button size="small" :icon="Refresh" @click="loadData" />
-      </div>
-    </div>
-
+  <div class="ops-page-layout">
     <!-- 筛选区 -->
-    <div class="filter-bar">
+    <div class="ops-filter-bar">
       <div class="filter-bar__item">
         <span class="filter-label">IP:</span>
         <el-input
@@ -40,45 +25,61 @@
         />
       </div>
       <el-button type="primary" size="small" @click="loadData">
-        <i class="fa fa-search"></i> 查询
+        <i class="fa fa-search"></i> 搜索
+      </el-button>
+      <el-button size="small" @click="handleReset">
+        <i class="fa fa-undo"></i> 重置
       </el-button>
     </div>
 
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" plain size="small" @click="handleCreateGroup">
+        <i class="fa fa-plus-circle"></i> 创建用户组
+      </el-button>
+      <el-button type="danger" plain size="small" @click="handleDeleteGroup">
+        <i class="fa fa-minus-circle"></i> 删除用户组
+      </el-button>
+      <el-button size="small" :icon="Refresh" @click="loadData" title="刷新" />
+    </div>
+
     <!-- 用户组列表表格 -->
-    <el-table
-      :data="tableData"
-      v-loading="loading"
-      border
-      stripe
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="50" />
-      <el-table-column prop="host_key" label="IP" width="130" />
-      <el-table-column prop="hostname" label="主机名" width="150" show-overflow-tooltip />
-      <el-table-column prop="group_name" label="组名" width="140" />
-      <el-table-column prop="gid" label="GID" width="80" />
-      <el-table-column prop="users" label="用户" min-width="200" show-overflow-tooltip />
-      <el-table-column prop="created_at" label="创建时间" width="160">
-        <template #default="{ row }">
-          {{ formatDateTime(row.created_at) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="100" fixed="right">
-        <template #default="{ row }">
-          <el-button
-            type="danger"
-            plain
-            size="small"
-            @click="handleDeleteSingleGroup(row)"
-          >
-            <i class="fa fa-minus-circle"></i> 删除
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="ops-table-wrapper">
+      <el-table
+        :data="tableData"
+        v-loading="loading"
+        border
+        stripe
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="host_key" label="IP" width="130" />
+        <el-table-column prop="hostname" label="主机名" width="150" show-overflow-tooltip />
+        <el-table-column prop="group_name" label="组名" width="140" />
+        <el-table-column prop="gid" label="GID" width="80" />
+        <el-table-column prop="users" label="用户" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="created_at" label="创建时间" width="160">
+          <template #default="{ row }">
+            {{ formatDateTime(row.created_at) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              type="danger"
+              plain
+              size="small"
+              @click="handleDeleteSingleGroup(row)"
+            >
+              <i class="fa fa-minus-circle"></i> 删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <!-- 分页 -->
-    <div class="view-footer">
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -194,6 +195,15 @@ function handleDeleteSingleGroup(row) {
     hostname: row.hostname
   }
   showDeleteGroupDialog.value = true
+}
+
+function handleReset() {
+  filters.value = {
+    host_key: '',
+    group_name: ''
+  }
+  currentPage.value = 1
+  loadData()
 }
 
 onMounted(() => {

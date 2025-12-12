@@ -2,6 +2,7 @@
   <ModulePageLayout
     :title="moduleTitle"
     :description="moduleDescription"
+    :hide-header="true"
   >
     <!-- 管理员面板模式 -->
     <AdminPanelView v-if="showAdminPanel" @back="showAdminPanel = false" />

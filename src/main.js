@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
@@ -103,7 +104,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 // 设置插件
 app.use(createPinia())
-app.use(ElementPlus)
+app.use(ElementPlus, { locale: zhCn })
 
 // 规范化基础路径：将 /ops 重写为 /ops/（保留查询与 hash）
 function normalizeBaseTrailingSlash() {

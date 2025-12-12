@@ -1,12 +1,34 @@
 <template>
-  <div class="operation-log-container">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h3 class="page-title">操作记录</h3>
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-select v-model="filters.status" placeholder="状态" style="width: 120px" @change="loadData">
+        <el-option label="全部状态" value="all" />
+        <el-option label="成功" value="SUCCESS" />
+        <el-option label="失败" value="FAILED" />
+      </el-select>
+      <el-input
+        v-model="filters.keyword"
+        placeholder="搜索"
+        clearable
+        style="width: 180px"
+        @keyup.enter="loadData"
+        @clear="loadData"
+      >
+        <template #prefix>
+          <i class="fa fa-search"></i>
+        </template>
+      </el-input>
+      <el-button type="primary" @click="loadData">
+        <i class="fa fa-search"></i> 搜索
+      </el-button>
+      <el-button @click="loadData" :loading="loading" title="刷新">
+        <i class="fa fa-refresh"></i>
+      </el-button>
     </div>
 
     <!-- 数据表格 -->
-    <div class="table-container">
+    <div class="ops-table-wrapper">
       <el-table
         :data="tableData"
         v-loading="loading"
@@ -55,14 +77,14 @@
     </div>
 
     <!-- 分页 -->
-    <div class="pagination-container">
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="pagination.total"
-        layout="sizes, prev, pager, next"
-        small
+        layout="total, sizes, prev, pager, next, jumper"
+        background
       />
     </div>
   </div>
@@ -75,6 +97,11 @@ import * as pmsApi from '@/modules/password/api'
 
 const loading = ref(false)
 const tableData = ref([])
+
+const filters = ref({
+  status: 'all',
+  keyword: ''
+})
 
 const pagination = ref({
   page: 1,

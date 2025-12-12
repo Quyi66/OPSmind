@@ -1,8 +1,7 @@
 <template>
   <div class="automation-config">
-    <!-- 页面标题 -->
+    <!-- 功能按钮区 -->
     <div class="page-header">
-      <span class="page-title">自动化配置</span>
       <div class="page-actions">
         <el-button type="primary" @click="handleAddAnsibleConfig">
           <i class="fa fa-plus" style="margin-right: 4px"></i>

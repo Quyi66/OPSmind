@@ -54,9 +54,8 @@
             <el-icon><Delete /></el-icon>
             删除
           </el-button>
-          <el-button size="small" text :loading="loading" @click="reloadJobs">
+          <el-button size="small" text :loading="loading" @click="reloadJobs" title="刷新">
             <el-icon><RefreshRight /></el-icon>
-            刷新
           </el-button>
         </div>
 

@@ -1,9 +1,5 @@
 <template>
   <div class="asset-overview">
-    <nav class="navbar">
-      <div class="navbar-title">资产总览</div>
-    </nav>
-
     <div class="content-wrapper">
       <!-- 图表区域 - 第一行：资产类型 + 操作系统分布 -->
       <div class="charts-row">

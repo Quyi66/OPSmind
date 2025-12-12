@@ -1,58 +1,60 @@
 <template>
-  <div class="sudo-permission-list">
-    <!-- 头部工具栏 -->
-    <div class="list-header">
-      <h3 class="list-title">sudo权限列表</h3>
-      <div class="header-actions">
-        <el-input
-          v-model="searchKeyword"
-          size="small"
-          placeholder="搜索"
-          clearable
-          style="width: 200px"
-        >
-          <template #suffix>
-            <i class="fa fa-search"></i>
-          </template>
-        </el-input>
-        <el-button size="small" @click="loadData">
-          <i class="fa fa-refresh"></i>
-        </el-button>
-        <el-button type="primary" size="small" plain @click="handleScanHosts">
-          <i class="fa fa-redo"></i> 扫描主机
-        </el-button>
-      </div>
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索"
+        clearable
+        style="width: 200px"
+        @input="handleSearch"
+      >
+        <template #prefix>
+          <i class="fa fa-search"></i>
+        </template>
+      </el-input>
+      <el-button @click="handleReset">
+        <i class="fa fa-undo"></i> 重置
+      </el-button>
+    </div>
+
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button @click="loadData">
+        <i class="fa fa-refresh"></i> 刷新
+      </el-button>
+      <el-button type="primary" @click="handleScanHosts">
+        <i class="fa fa-redo"></i> 扫描主机
+      </el-button>
     </div>
 
     <!-- 数据表格 -->
-    <div class="list-table">
+    <div class="ops-table-wrapper">
       <el-table
-        :data="filteredData"
+        :data="paginatedData"
         v-loading="loading"
         style="width: 100%"
         border
         stripe
       >
-        <el-table-column label="主机" prop="$data_owner" min-width="150" sortable>
+        <el-table-column label="主机" prop="$data_owner" min-width="150" sortable show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.$data_owner || row.host || '-----' }}
           </template>
         </el-table-column>
-        <el-table-column label="用户/用户组" prop="user" min-width="120">
+        <el-table-column label="用户/用户组" prop="user" min-width="120" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.user || '-----' }}
           </template>
         </el-table-column>
-        <el-table-column label="sudo文件" prop="file" min-width="150">
+        <el-table-column label="sudo文件" prop="file" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.file || '-----' }}
           </template>
         </el-table-column>
-        <el-table-column label="sudo配置" prop="user_spec" min-width="200">
+        <el-table-column label="sudo配置" prop="user_spec" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
-            <div class="cell-ellipsis" :title="row.user_spec">
-              {{ row.user_spec || '-----' }}
-            </div>
+            {{ row.user_spec || '-----' }}
           </template>
         </el-table-column>
         <el-table-column label="更新时间" prop="$update_time" width="180" sortable>
@@ -63,15 +65,17 @@
       </el-table>
     </div>
 
-    <!-- 分页 -->
-    <div class="list-footer">
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
-        :total="total"
+        :total="filteredData.length"
         :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next"
-        small
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
       />
     </div>
 
@@ -111,6 +115,33 @@ const filteredData = computed(() => {
   }
   return data
 })
+
+// 分页后的数据
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredData.value.slice(start, end)
+})
+
+// 搜索处理
+function handleSearch() {
+  currentPage.value = 1
+}
+
+// 重置处理
+function handleReset() {
+  searchKeyword.value = ''
+  currentPage.value = 1
+}
+
+// 分页处理
+function handlePageChange(page) {
+  currentPage.value = page
+}
+
+function handlePageSizeChange() {
+  currentPage.value = 1
+}
 
 async function loadData() {
   loading.value = true

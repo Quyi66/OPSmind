@@ -1,8 +1,7 @@
 <template>
   <div class="asset-model">
-    <!-- 页面标题 -->
+    <!-- 功能按钮区 -->
     <div class="page-header">
-      <span class="page-title">资产模型</span>
       <div class="page-actions">
         <el-button type="primary" @click="handleAddModel">
           <i class="fa fa-plus" style="margin-right: 4px"></i>

@@ -1,8 +1,7 @@
 <template>
   <div class="settings-container">
-    <!-- 页面标题和搜索 -->
+    <!-- 筛选区 -->
     <div class="page-header">
-      <h3 class="page-title">系统参数</h3>
       <div class="header-right">
         <el-input
           v-model="searchKeyword"

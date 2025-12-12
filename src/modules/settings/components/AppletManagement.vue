@@ -1,10 +1,5 @@
 <template>
   <div class="applet-management">
-    <!-- 标题 -->
-    <div class="page-header">
-      <h3>应用管理</h3>
-    </div>
-
     <!-- Tab 页 -->
     <el-tabs v-model="activeTab" class="applet-tabs">
       <!-- 应用管理 Tab -->
@@ -20,9 +15,7 @@
           <el-button @click="handleImport">
             <i class="fa fa-caret-square-right"></i> 导入
           </el-button>
-          <el-button :icon="Refresh" @click="loadApplets" :loading="loading">
-            刷新
-          </el-button>
+          <el-button :icon="Refresh" @click="loadApplets" :loading="loading" title="刷新" />
         </div>
 
         <el-table

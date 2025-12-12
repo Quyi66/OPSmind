@@ -2,7 +2,6 @@
   <div class="command-approve-list">
     <!-- 标题栏 -->
     <div class="approve-list__header">
-      <div class="header-title">命令审核</div>
     </div>
 
     <!-- 内容区域 -->

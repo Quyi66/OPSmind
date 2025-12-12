@@ -1,10 +1,5 @@
 <template>
   <div class="resource-permission">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <span class="page-title">资源权限</span>
-    </div>
-
     <!-- 表格区域 -->
     <div class="table-section">
       <!-- 搜索栏 -->
