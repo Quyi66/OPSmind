@@ -49,13 +49,14 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-bar">
+      <div class="ops-pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
           :page-sizes="[10, 20, 50, 100]"
           :total="pagination.total"
-          layout="sizes, prev, pager, next, ->, total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
           @size-change="loadAssetList"
           @current-change="loadAssetList"
         />

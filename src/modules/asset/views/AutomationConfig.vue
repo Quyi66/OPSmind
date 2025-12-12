@@ -75,7 +75,7 @@
         <el-table
           :data="filteredAutomationData"
           v-loading="automationLoading"
-          border
+          stripe
           style="width: 100%"
           :max-height="tableMaxHeight"
         >
@@ -126,18 +126,15 @@
         </el-table>
 
         <!-- 分页 -->
-        <div class="pagination-wrapper">
-          <el-select v-model="automationPageSize" style="width: 80px" @change="loadAutomationData">
-            <el-option :value="10" label="10" />
-            <el-option :value="50" label="50" />
-            <el-option :value="100" label="100" />
-          </el-select>
-          <span class="page-info">{{ automationPageInfo }}</span>
+        <div class="ops-pagination-wrapper">
           <el-pagination
             v-model:current-page="automationPage"
-            :page-size="automationPageSize"
+            v-model:page-size="automationPageSize"
+            :page-sizes="[10, 50, 100]"
             :total="automationTotal"
-            layout="prev, pager, next"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="loadAutomationData"
             @current-change="loadAutomationData"
           />
         </div>
@@ -149,7 +146,7 @@
         <el-table
           :data="filteredAnsibleData"
           v-loading="ansibleLoading"
-          border
+          stripe
           style="width: 100%"
           :max-height="tableMaxHeight"
         >

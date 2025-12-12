@@ -116,13 +116,14 @@
         </el-table>
 
         <!-- 分页 -->
-        <div class="pagination-bar">
+        <div class="ops-pagination-wrapper">
           <el-pagination
             v-model:current-page="groupPagination.page"
             v-model:page-size="groupPagination.size"
             :page-sizes="[10, 20, 50, 100]"
             :total="groupPagination.total"
-            layout="sizes, prev, pager, next, jumper, ->, total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
             @size-change="loadGroupList"
             @current-change="loadGroupList"
           />
@@ -196,13 +197,14 @@
         </el-table>
 
         <!-- 分页 -->
-        <div class="pagination-bar">
+        <div class="ops-pagination-wrapper">
           <el-pagination
             v-model:current-page="tagPagination.page"
             v-model:page-size="tagPagination.size"
             :page-sizes="[10, 20, 50, 100]"
             :total="tagPagination.total"
-            layout="sizes, prev, pager, next, jumper, ->, total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
             @size-change="loadTagList"
             @current-change="loadTagList"
           />

@@ -76,7 +76,7 @@
         </div>
       </div>
 
-      <el-table :data="logList" v-loading="logsLoading" border stripe>
+      <el-table :data="logList" v-loading="logsLoading" stripe>
         <el-table-column prop="start_time" label="开始时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}

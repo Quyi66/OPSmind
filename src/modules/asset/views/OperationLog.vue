@@ -48,7 +48,7 @@
       <el-table
         :data="filteredData"
         v-loading="loading"
-        border
+        stripe
         style="width: 100%"
         :max-height="tableMaxHeight"
         row-key="run_id"

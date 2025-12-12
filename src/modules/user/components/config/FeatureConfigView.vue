@@ -176,7 +176,7 @@
               <i class="fa fa-plus"></i> 添加命令
             </el-button>
           </div>
-          <el-table :data="templateCommands" border size="small">
+          <el-table :data="templateCommands" stripe size="small">
             <el-table-column prop="command" label="命令" min-width="200" />
             <el-table-column prop="description" label="描述" min-width="150" />
             <el-table-column prop="createdAt" label="创建时间" width="150" />

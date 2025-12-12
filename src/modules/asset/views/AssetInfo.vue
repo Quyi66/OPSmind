@@ -219,7 +219,6 @@
           v-loading="loading"
           :data="tableData"
           stripe
-          border
           height="100%"
           @selection-change="handleSelectionChange"
         >
@@ -300,15 +299,17 @@
       </div>
 
       <!-- 分页 -->
-      <div class="pagination-container">
-        <div class="page-size-select">
-          <el-select v-model="pageSize" size="small" style="width: 80px" @change="handlePageSizeChange">
-            <el-option :value="10" label="10" />
-            <el-option :value="50" label="50" />
-            <el-option :value="100" label="100" />
-          </el-select>
-        </div>
-        <span class="pagination-info">{{ paginationInfo }}</span>
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePageSizeChange"
+          @current-change="loadAssetList"
+        />
       </div>
     </div>
 
@@ -903,7 +904,7 @@ onMounted(() => {
 // 操作按钮栏
 .action-bar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin-bottom: 12px;
 
   .action-buttons {

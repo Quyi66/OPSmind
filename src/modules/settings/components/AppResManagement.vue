@@ -95,7 +95,6 @@
             <el-table
               v-loading="pageLoading"
               :data="paginatedPages"
-              border
               stripe
               @selection-change="handlePageSelectionChange"
             >
@@ -116,7 +115,7 @@
                 v-model:page-size="pagePageSize"
                 :total="filteredPages.length"
                 :page-sizes="[10, 20, 50, 100]"
-                layout="total, sizes, prev, pager, next"
+                layout="total, sizes, prev, pager, next, jumper"
                 background
               />
             </div>
@@ -174,7 +173,6 @@
             <el-table
               v-loading="datasetLoading"
               :data="paginatedDatasets"
-              border
               stripe
               @selection-change="handleDatasetSelectionChange"
             >
@@ -192,7 +190,7 @@
                 v-model:page-size="datasetPageSize"
                 :total="filteredDatasets.length"
                 :page-sizes="[10, 20, 50, 100]"
-                layout="total, sizes, prev, pager, next"
+                layout="total, sizes, prev, pager, next, jumper"
                 background
               />
             </div>
@@ -250,7 +248,6 @@
             <el-table
               v-loading="jobLoading"
               :data="paginatedJobs"
-              border
               stripe
               @selection-change="handleJobSelectionChange"
             >
@@ -272,7 +269,7 @@
                 v-model:page-size="jobPageSize"
                 :total="filteredJobs.length"
                 :page-sizes="[10, 20, 50, 100]"
-                layout="total, sizes, prev, pager, next"
+                layout="total, sizes, prev, pager, next, jumper"
                 background
               />
             </div>

@@ -83,16 +83,15 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-bar">
+      <div class="ops-pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
           :page-sizes="[10, 20, 50, 100]"
           :total="pagination.total"
-          layout="sizes, slot, prev, pager, next"
-        >
-          <span class="pagination-info">{{ paginationInfo }}</span>
-        </el-pagination>
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+        />
       </div>
     </div>
 

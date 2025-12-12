@@ -114,7 +114,7 @@
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="repoList.length"
-        layout="sizes, slot, prev, pager, next"
+        layout="total, sizes, prev, pager, next, jumper"
         small
       >
         <span class="pagination-info">{{ paginationInfo }}</span>

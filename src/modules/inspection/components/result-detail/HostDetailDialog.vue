@@ -31,7 +31,7 @@
           />
         </el-select>
       </div>
-      <el-table v-loading="loading" :data="checkItems" border stripe max-height="400">
+      <el-table v-loading="loading" :data="checkItems" stripe max-height="400">
         <el-table-column prop="name" label="检查项" min-width="200" />
         <el-table-column label="状态" width="120" align="center">
           <template #default="{ row }">

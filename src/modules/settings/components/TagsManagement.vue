@@ -101,7 +101,7 @@
 
         <div class="mt-4" v-if="tagApplets?.length">
           <h4>关联应用列表</h4>
-          <el-table :data="tagApplets" border size="small" max-height="300">
+          <el-table :data="tagApplets" stripe size="small" max-height="300">
             <el-table-column prop="name" label="Code" width="120" />
             <el-table-column prop="title" label="标题" min-width="150" />
             <el-table-column prop="status" label="状态" width="80" align="center">

@@ -173,7 +173,7 @@
       </div>
 
       <!-- 分页 -->
-      <div class="pagination-bar">
+      <div class="ops-pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"

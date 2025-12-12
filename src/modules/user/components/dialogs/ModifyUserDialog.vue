@@ -142,7 +142,7 @@
           </el-select>
         </el-form-item>
         <el-form-item v-if="sudoCommands.length" label="sudo命令">
-          <el-table :data="sudoCommands" border size="small" max-height="200">
+          <el-table :data="sudoCommands" stripe size="small" max-height="200">
             <el-table-column type="selection" width="50" />
             <el-table-column prop="command" label="命令" min-width="200" show-overflow-tooltip />
             <el-table-column prop="description" label="描述" width="150" show-overflow-tooltip />

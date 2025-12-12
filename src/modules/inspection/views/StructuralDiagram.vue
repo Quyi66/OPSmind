@@ -54,7 +54,7 @@
         <span class="stat-item">检查项: <strong>{{ primaryStats.itemTotal }}</strong></span>
         <span class="stat-item">主机: <strong>{{ primaryStats.hostTotal }}</strong></span>
       </div>
-      <el-table :data="primaryData" border stripe max-height="400">
+      <el-table :data="primaryData" stripe max-height="400">
         <el-table-column prop="name" label="二级业务名称" />
         <el-table-column prop="contItem" label="检查项失败数" width="120" align="center" />
         <el-table-column prop="contHost" label="主机数" width="100" align="center" />
@@ -71,7 +71,7 @@
       <el-tabs v-model="secondaryActiveTab">
         <el-tab-pane label="按检查项" name="item">
           <div class="tab-stats">共 {{ itemData.length }} 个检查项</div>
-          <el-table :data="itemData" border stripe max-height="400">
+          <el-table :data="itemData" stripe max-height="400">
             <el-table-column prop="item" label="检查项名称" />
             <el-table-column label="失败主机数" width="120" align="center">
               <template #default="{ row }">
@@ -84,7 +84,7 @@
         </el-tab-pane>
         <el-tab-pane label="按主机" name="host">
           <div class="tab-stats">共 {{ hostData.length }} 台主机</div>
-          <el-table :data="hostData" border stripe max-height="400">
+          <el-table :data="hostData" stripe max-height="400">
             <el-table-column prop="host" label="主机名" />
             <el-table-column label="失败检查项数" width="120" align="center">
               <template #default="{ row }">
@@ -105,7 +105,7 @@
       width="500px"
       destroy-on-close
     >
-      <el-table :data="listData" border stripe max-height="400">
+      <el-table :data="listData" stripe max-height="400">
         <el-table-column prop="name" :label="listDialogTitle" />
       </el-table>
     </el-dialog>
@@ -120,7 +120,6 @@
       <el-table
         v-loading="kpiDialogLoading"
         :data="kpiDialogData"
-        border
         stripe
         max-height="400"
       >

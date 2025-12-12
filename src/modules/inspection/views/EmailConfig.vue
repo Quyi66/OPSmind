@@ -68,7 +68,7 @@
         </div>
 
         <!-- 收件人表格 -->
-        <el-table :data="recipientTableData" border stripe max-height="400">
+        <el-table :data="recipientTableData" stripe max-height="400">
           <el-table-column prop="name" label="姓名" min-width="120" />
           <el-table-column prop="email" label="邮箱" min-width="180" />
           <el-table-column prop="status" label="状态" width="100" align="center">

@@ -1,17 +1,62 @@
 <template>
-  <div class="exception-device">
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-select
+        v-model="filters.cit"
+        placeholder="全部"
+        style="width: 120px"
+        @change="handleFilterChange"
+      >
+        <el-option label="全部" value="oplus_all" />
+        <el-option
+          v-for="item in resourceTypes"
+          :key="item.code"
+          :label="item.title"
+          :value="item.code"
+        />
+      </el-select>
+      <el-select
+        v-model="filters.conditions"
+        placeholder="筛选条件"
+        style="width: 140px"
+        @change="handleFilterChange"
+      >
+        <el-option label="全部" value="oplus_all" />
+        <el-option label="今日异常" value="today" />
+        <el-option label="连通率小于50%设备" value="low" />
+        <el-option label="最近一次连通失败" value="recently" />
+        <el-option label="最近一次连通成功设备" value="recently_ok" />
+      </el-select>
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索"
+        prefix-icon="Search"
+        style="width: 200px"
+        clearable
+        @input="handleSearch"
+      />
+      <el-button type="primary" @click="loadTableData">
+        <i class="fa fa-search"></i> 搜索
+      </el-button>
+      <el-tooltip content="导出" placement="top">
+        <el-button :icon="Download" circle @click="handleExport" />
+      </el-tooltip>
+      <el-tooltip content="刷新" placement="top">
+        <el-button :icon="Refresh" circle @click="loadTableData" />
+      </el-tooltip>
+    </div>
+
     <!-- 功能按钮区 -->
-    <div class="page-header">
-      <div class="page-actions">
-        <el-button @click="handleCheckConnectivity">
-          <i class="fa fa-plug" style="margin-right: 4px"></i>
-          检查连通性
-        </el-button>
-        <el-button @click="handleCollectInfo">
-          <i class="fa fa-download" style="margin-right: 4px"></i>
-          采集信息
-        </el-button>
-      </div>
+    <div class="ops-action-bar">
+      <el-button @click="handleCheckConnectivity">
+        <i class="fa fa-plug" style="margin-right: 4px"></i>
+        检查连通性
+      </el-button>
+      <el-button @click="handleCollectInfo">
+        <i class="fa fa-download" style="margin-right: 4px"></i>
+        采集信息
+      </el-button>
     </div>
 
     <!-- KPI 卡片区域 -->
@@ -23,63 +68,14 @@
       />
     </div>
 
-    <!-- 筛选和表格区域 -->
-    <div class="table-section">
-      <!-- 筛选条件 -->
-      <div class="filter-bar">
-        <div class="filter-left">
-          <el-select
-            v-model="filters.cit"
-            placeholder="全部"
-            style="width: 120px"
-            @change="handleFilterChange"
-          >
-            <el-option label="全部" value="oplus_all" />
-            <el-option
-              v-for="item in resourceTypes"
-              :key="item.code"
-              :label="item.title"
-              :value="item.code"
-            />
-          </el-select>
-          <el-select
-            v-model="filters.conditions"
-            placeholder="筛选条件"
-            style="width: 140px"
-            @change="handleFilterChange"
-          >
-            <el-option label="全部" value="oplus_all" />
-            <el-option label="今日异常" value="today" />
-            <el-option label="连通率小于50%设备" value="low" />
-            <el-option label="最近一次连通失败" value="recently" />
-            <el-option label="最近一次连通成功设备" value="recently_ok" />
-          </el-select>
-        </div>
-        <div class="filter-right">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="搜索"
-            prefix-icon="Search"
-            style="width: 200px"
-            clearable
-            @input="handleSearch"
-          />
-          <el-tooltip content="导出" placement="top">
-            <el-button :icon="Download" circle @click="handleExport" />
-          </el-tooltip>
-          <el-tooltip content="刷新" placement="top">
-            <el-button :icon="Refresh" circle @click="loadTableData" />
-          </el-tooltip>
-        </div>
-      </div>
-
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
       <!-- 数据表格 -->
       <el-table
         v-loading="tableLoading"
         :data="tableData"
         style="width: 100%"
         stripe
-        border
       >
         <el-table-column prop="IP" label="IP" min-width="120" sortable />
         <el-table-column prop="ci_name" label="资产代码" min-width="120" />
@@ -105,19 +101,17 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-wrapper">
-        <el-select
-          v-model="pageSize"
-          style="width: 80px"
-          @change="handlePageSizeChange"
-        >
-          <el-option :value="10" label="10" />
-          <el-option :value="50" label="50" />
-          <el-option :value="100" label="100" />
-        </el-select>
-        <span class="pagination-info">
-          {{ currentPage }} · {{ Math.ceil(total / pageSize) || 1 }} / {{ total }}
-        </span>
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePageSizeChange"
+          @current-change="loadTableData"
+        />
       </div>
     </div>
 

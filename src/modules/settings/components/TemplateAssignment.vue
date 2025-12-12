@@ -29,7 +29,7 @@
 
     <!-- 模版列表 -->
     <div class="ops-table-wrapper" v-loading="loading">
-      <el-table :data="paginatedTemplates" border style="width: 100%">
+      <el-table :data="paginatedTemplates" stripe style="width: 100%">
         <el-table-column label="名称" min-width="200">
           <template #default="{ row }">
             <div class="template-name">

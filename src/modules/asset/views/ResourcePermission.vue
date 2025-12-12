@@ -18,7 +18,7 @@
       <el-table
         :data="filteredData"
         v-loading="loading"
-        border
+        stripe
         style="width: 100%"
         :max-height="tableMaxHeight"
       >
@@ -51,21 +51,15 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-wrapper">
-        <span class="page-size-selector">
-          <el-select v-model="pageSize" style="width: 80px" @change="handlePageSizeChange">
-            <el-option :value="10" label="10" />
-            <el-option :value="25" label="25" />
-            <el-option :value="50" label="50" />
-            <el-option :value="100" label="100" />
-          </el-select>
-        </span>
-        <span class="page-info">{{ pageInfo }}</span>
+      <div class="ops-pagination-wrapper">
         <el-pagination
           v-model:current-page="currentPage"
-          :page-size="pageSize"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 25, 50, 100]"
           :total="total"
-          layout="prev, pager, next"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePageSizeChange"
           @current-change="handlePageChange"
         />
       </div>

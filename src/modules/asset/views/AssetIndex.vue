@@ -256,7 +256,7 @@ onMounted(() => {
     padding: 10px 16px;
     cursor: pointer;
     color: #333;
-    font-size: 13px;
+    font-size: 14px;
     transition: all 0.2s;
     position: relative;
 

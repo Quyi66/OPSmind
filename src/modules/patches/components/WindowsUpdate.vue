@@ -138,7 +138,7 @@
       destroy-on-close
     >
       <div v-loading="affectedMachinesLoading">
-        <el-table :data="affectedMachinesList" size="small" border max-height="400">
+        <el-table :data="affectedMachinesList" size="small" stripe max-height="400">
           <el-table-column prop="host_key" label="主机" min-width="140" />
           <el-table-column prop="os_distro" label="操作系统" min-width="120" />
           <el-table-column prop="os_version" label="版本" min-width="100" />

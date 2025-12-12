@@ -118,12 +118,15 @@
               <el-table-column prop="ci_type" label="类型" width="100" />
             </el-table>
           </div>
-          <div class="pagination-bar">
+          <div class="ops-pagination-wrapper">
             <el-pagination
               v-model:current-page="hostPage"
-              :page-size="hostPageSize"
+              v-model:page-size="hostPageSize"
+              :page-sizes="[10, 50, 100]"
               :total="hostTotal"
-              layout="prev, pager, next"
+              layout="total, sizes, prev, pager, next, jumper"
+              background
+              @size-change="loadHostList"
               @current-change="loadHostList"
             />
           </div>
