@@ -3,16 +3,11 @@ set -euo pipefail
 
 MAIN_TEMPLATE="/etc/nginx/templates/default.conf.template"
 MAIN_TARGET="/etc/nginx/conf.d/default.conf"
-OPLUS_TEMPLATE="/etc/nginx/templates/oplus.conf.template"
-OPLUS_TARGET="/etc/nginx/conf.d/oplus.conf"
 
-echo "[entrypoint] Rendering nginx config with env: BACKEND_URL=${BACKEND_URL:-}, OPLUS_PORT=${OPLUS_PORT:-}"
+echo "[entrypoint] Rendering nginx config with env: BACKEND_URL=${BACKEND_URL:-}"
 
 # Render main server
-envsubst '${BACKEND_URL} ${OPLUS_PORT}' < "$MAIN_TEMPLATE" > "$MAIN_TARGET"
-
-# Render internal oplus server
-envsubst '${BACKEND_URL} ${OPLUS_PORT}' < "$OPLUS_TEMPLATE" > "$OPLUS_TARGET"
+envsubst '${BACKEND_URL}' < "$MAIN_TEMPLATE" > "$MAIN_TARGET"
 
 # Render runtime config for frontend (Dify bot)
 RUNTIME_TEMPLATE="/etc/nginx/templates/runtime-config.js.template"

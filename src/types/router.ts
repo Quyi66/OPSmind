@@ -23,8 +23,6 @@ export interface CustomRouteRecord extends Omit<RouteRecordRaw, 'meta'> {
 
 export enum ModuleType {
   VUE_NATIVE = 'vue-native',
-  LEGACY_ANGULAR = 'legacy-angular',
-  ANGULAR_IFRAME = 'angular-iframe',
   EXTERNAL_LINK = 'external-link',
   HYBRID = 'hybrid'
 }

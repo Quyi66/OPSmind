@@ -4,8 +4,6 @@
 
 export enum MODULE_TYPES {
   VUE_NATIVE = 'vue-native',
-  LEGACY_ANGULAR = 'legacy-angular',
-  ANGULAR_IFRAME = 'angular-iframe',
   EXTERNAL_LINK = 'external-link',
   HYBRID = 'hybrid'
 }

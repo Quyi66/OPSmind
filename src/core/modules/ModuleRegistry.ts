@@ -1,6 +1,6 @@
 /**
  * 现代化模块注册表 - TypeScript版本
- * 支持 Vue 原生模块和 Legacy Angular 模块的统一管理
+ * 支持 Vue 原生模块的统一管理
  */
 
 import { ref, reactive, computed, type Ref } from 'vue'
@@ -71,7 +71,6 @@ class ModuleRegistry implements IModuleRegistry {
     }
 
     this.state.modules.set(code, moduleInstance)
-    //console.log(`📦 Module registered: ${code} (${type})`)
   }
 
   /**
@@ -82,7 +81,6 @@ class ModuleRegistry implements IModuleRegistry {
       this.state.modules.delete(code)
       this.state.loadingModules.delete(code)
       this.state.errorModules.delete(code)
-      //console.log(`🗑️ Module unregistered: ${code}`)
     }
   }
 
@@ -93,7 +91,6 @@ class ModuleRegistry implements IModuleRegistry {
     const moduleInstance = this.state.modules.get(code)
     if (moduleInstance) {
       Object.assign(moduleInstance.config, config)
-      //console.log(`🔄 Module updated: ${code}`)
     }
   }
 
@@ -138,8 +135,6 @@ class ModuleRegistry implements IModuleRegistry {
       throw new Error(`Module not found: ${code}`)
     }
 
-    // 简化处理，直接加载
-
     if (this.state.loadingModules.has(code)) {
       // 等待正在加载的模块
       return new Promise((resolve, reject) => {
@@ -164,23 +159,12 @@ class ModuleRegistry implements IModuleRegistry {
       const startTime = Date.now()
       let component: any = null
 
-      switch (moduleInstance.config.type) {
-        case MODULE_TYPES.VUE_NATIVE:
-          component = await this.loadVueModule(moduleInstance)
-          break
-        case MODULE_TYPES.LEGACY_ANGULAR:
-        case MODULE_TYPES.ANGULAR_IFRAME:
-          component = await this.loadLegacyModule(moduleInstance)
-          break
-        default:
-          throw new Error(`Unsupported module type: ${moduleInstance.config.type}`)
-      }
+      // 只处理 Vue 原生模块
+      component = await this.loadVueModule(moduleInstance)
 
       moduleInstance.component = component
       moduleInstance.loadTime = Date.now() - startTime
       moduleInstance.status = MODULE_STATUS.AVAILABLE
-
-      //console.log(`✅ Module loaded: ${code} (${moduleInstance.loadTime}ms)`)
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
@@ -207,7 +191,6 @@ class ModuleRegistry implements IModuleRegistry {
       delete moduleInstance.loadTime
       delete moduleInstance.errorMessage
       moduleInstance.status = MODULE_STATUS.AVAILABLE
-      //console.log(`🗑️ Module unloaded: ${code}`)
     }
   }
 
@@ -295,17 +278,6 @@ class ModuleRegistry implements IModuleRegistry {
   }
 
   /**
-   * 加载遗留 Angular 模块
-   */
-  private async loadLegacyModule(_moduleInstance: ModuleInstance): Promise<any> {
-    // 返回 iframe 容器组件
-    const { default: AngularModuleFrame } = await import('@/components/angular/modules/AngularModuleFrame.vue')
-    return AngularModuleFrame
-  }
-
-
-
-  /**
    * 检查模块依赖
    */
   checkDependencies(code: string): { satisfied: boolean; missing: string[] } {
@@ -331,7 +303,6 @@ export const useModuleRegistry = () => {
     modules: computed(() => moduleRegistry.getAll()),
     availableModules: computed(() => moduleRegistry.getAvailable()),
     vueModules: computed(() => moduleRegistry.getByType(MODULE_TYPES.VUE_NATIVE)),
-    legacyModules: computed(() => moduleRegistry.getByType(MODULE_TYPES.LEGACY_ANGULAR)),
     loadingModules: moduleRegistry.loadingModules,
     errorModules: moduleRegistry.errorModules,
     stats: computed(() => moduleRegistry.getStats())

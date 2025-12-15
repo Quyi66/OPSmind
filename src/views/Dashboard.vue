@@ -51,9 +51,6 @@
         </div>
       </main>
     </div>
-
-    <!-- AngularJS 模块容器 -->
-    <AngularModuleContainerModal />
   </div>
 </template>
 
@@ -70,7 +67,6 @@ import InspectionOverview from '@/components/dashboard/InspectionOverview.vue'
 import AssetOverview from '@/components/dashboard/AssetOverview.vue'
 import VulnerabilityOverview from '@/components/dashboard/VulnerabilityOverview.vue'
 import AIAssistant from '@/components/ai/AIAssistant.vue'
-import AngularModuleContainerModal from '@/components/angular/AngularModuleContainerModal.vue'
 import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
 
 const dashboardStore = useDashboardStore()
@@ -102,24 +98,11 @@ const handleRefresh = async () => {
   ElMessage.success('数据已刷新')
 }
 
-// 监听路由变化，自动显示对应的iframe
+// 监听路由变化
 watch(
   () => route.path,
   async newPath => {
     //console.log('🧭 Route changed to:', newPath)
-
-    // 如果是功能模块路由，自动显示iframe
-    const moduleCode = newPath.substring(1) // 移除开头的 '/'
-    const allMenuItems = getAllMenuItems()
-    const moduleList = allMenuItems.map(item => item.code)
-
-    if (moduleList.includes(moduleCode)) {
-      //console.log('🎯 Module route detected:', moduleCode)
-
-      // 注意：不再在这里触发弹窗模式的iframe
-      // iframe现在由MainLayout中的AngularModuleInlineFrame组件处理
-      // 这里只是记录路由变化
-    }
 
     // 返回首页时，确保加载仪表盘数据（修复偶现返回首页后全是0的问题）
     if (newPath === '/home' || route.name === 'home') {

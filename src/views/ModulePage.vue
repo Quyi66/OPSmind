@@ -66,54 +66,36 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElButton, ElResult, ElMessage } from 'element-plus'
 import { ArrowLeft, Refresh, FullScreen, Minus } from '@element-plus/icons-vue'
-import { singleIframeManager } from '@/utils/single-iframe-manager'
-import { getModuleConfig } from '@/config/angular-modules.config'
 import SkeletonLoader from '@/components/shared/SkeletonLoader.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const moduleCode = computed(() => String(route.params.moduleCode || ''))
-const moduleConfig = computed(() => getModuleConfig(moduleCode.value))
-const moduleTitle = computed(() => moduleConfig.value?.title || moduleCode.value)
+const moduleTitle = computed(() => moduleCode.value.toUpperCase())
 
 const moduleContainer = ref(null)
-const loading = ref(true)
+const loading = ref(false)
 const error = ref('')
 const isRefreshing = ref(false)
 const isFullscreen = ref(false)
 
 onMounted(async () => {
-  //console.log(`📱 Module page mounted for: ${moduleCode.value}`)
-  await loadModule()
+  // TODO: 实现 Vue 原生模块加载逻辑
 })
 
 onUnmounted(() => {
-  // 清理：将 iframe 移回隐藏容器
-  // singleIframeManager 会自动处理
+  // 清理逻辑
 })
 
 const loadModule = async () => {
-  if (!moduleContainer.value) {
-    error.value = '模块容器未准备好'
-    return
-  }
-
   loading.value = true
   error.value = ''
 
   try {
-    //console.log(`⚡ Loading module: ${moduleCode.value}`)
-
-    const startTime = performance.now()
-    await singleIframeManager.switchToModule(moduleCode.value, moduleContainer.value)
-    const loadTime = performance.now() - startTime
-
+    // TODO: 实现模块加载逻辑
     loading.value = false
-    //console.log(`✅ Module ${moduleCode.value} loaded in ${loadTime.toFixed(2)}ms`)
-
     ElMessage.success(`${moduleTitle.value} 加载完成`)
-
   } catch (err) {
     console.error('❌ Failed to load module:', err)
     loading.value = false
@@ -128,10 +110,8 @@ const retryLoad = () => {
 
 const refreshModule = async () => {
   isRefreshing.value = true
-
   try {
-    // 重新切换到当前模块
-    await singleIframeManager.switchToModule(moduleCode.value, moduleContainer.value)
+    // TODO: 实现刷新逻辑
     ElMessage.success('刷新完成')
   } catch (err) {
     console.error('Failed to refresh module:', err)

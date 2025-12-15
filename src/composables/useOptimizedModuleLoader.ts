@@ -1,146 +1,33 @@
 /**
- * 优化的模块加载 Composable
- * 提供预加载、缓存、性能监控等功能
+ * 优化的模块加载 Composable (存根版本)
+ * Angular iframe 模块已移除，此文件保留接口但返回空操作
  */
 
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { IframePreloader, ModuleLoadMonitor, optimizeForNetworkCondition } from '@/utils/performance-optimizer'
-import { angularModuleManager } from '@/services/AngularModuleManager.js'
+import { ref, computed, onUnmounted } from 'vue'
 
-export function useOptimizedModuleLoader(moduleCode: string) {
-  const loading = ref(true)
+export function useOptimizedModuleLoader(_moduleCode: string) {
+  const loading = ref(false)
   const error = ref('')
   const loadTime = ref(0)
-  const networkConfig = ref(optimizeForNetworkCondition())
+  const networkConfig = ref({ enablePreload: false, timeout: 30000 })
 
-  // 计算基础模块 URL
-  const baseModuleUrl = computed(() => {
-    return angularModuleManager.getModuleUrl(moduleCode)
-  })
+  // 计算基础模块 URL - 始终返回空
+  const baseModuleUrl = computed(() => '')
 
-  // 构建带token的模块URL
-  async function buildModuleUrlWithToken(baseUrl: string): Promise<string> {
-    try {
-      const [{ authService }, { appUrlManager }] = await Promise.all([
-        import('@/core/auth'),
-        import('@/config/module-urls.config')
-      ])
-
-      const token = authService.getToken()
-
-      if (token) {
-        const tokenParam = appUrlManager.getTokenParam()
-        const separator = baseUrl.includes('?') ? '&' : '?'
-        return `${baseUrl}${separator}${tokenParam}=${token}&vue_auth=true&module=${moduleCode}&t=${Date.now()}`
-      }
-    } catch (error) {
-      console.warn('Failed to add token to module URL:', error)
-    }
-
-    return baseUrl
-  }
-
-  // 预加载模块
+  // 预加载模块 - 空操作
   const preloadModule = async () => {
-    if (!networkConfig.value.enablePreload) {
-      //console.log('⚠️ Preload disabled due to network conditions')
-      return
-    }
-
-    try {
-      //console.log(`🔄 Preloading module: ${moduleCode}`)
-      const url = baseModuleUrl.value
-      if (url) {
-        await IframePreloader.preload(url)
-        //console.log(`✅ Module preloaded: ${moduleCode}`)
-      } else {
-        console.warn(`⚠️ No URL found for module: ${moduleCode}`)
-      }
-    } catch (error) {
-      console.warn(`⚠️ Preload failed for ${moduleCode}:`, error)
-    }
+    // Stub - no longer needed after Angular removal
   }
 
-  // 快速加载模块
-  const loadModule = async (targetIframe: HTMLIFrameElement) => {
-    ModuleLoadMonitor.startTiming(moduleCode)
-    loading.value = true
-    error.value = ''
-
-    try {
-      const url = baseModuleUrl.value
-      if (!url) {
-        throw new Error(`No URL found for module: ${moduleCode}`)
-      }
-
-      // 构建带token的URL
-      const urlWithToken = await buildModuleUrlWithToken(url)
-
-      // 尝试使用预加载的 iframe
-      const preloadedIframe = IframePreloader.getPreloaded(url)
-
-      if (preloadedIframe) {
-        //console.log(`⚡ Using preloaded iframe for: ${moduleCode}`)
-
-        // 将预加载的内容复制到目标 iframe
-        targetIframe.src = urlWithToken
-
-        // 模拟快速加载
-        setTimeout(() => {
-          loading.value = false
-          ModuleLoadMonitor.endTiming(moduleCode)
-          loadTime.value = ModuleLoadMonitor.getMetrics(moduleCode)?.loadTime || 0
-        }, 100)
-      } else {
-        //console.log(`🔄 Loading iframe normally for: ${moduleCode}`)
-
-        // 正常加载
-        targetIframe.src = urlWithToken
-
-        // 设置超时
-        const timeout = setTimeout(() => {
-          if (loading.value) {
-            error.value = '加载超时'
-            loading.value = false
-            ModuleLoadMonitor.endTiming(moduleCode)
-          }
-        }, networkConfig.value.timeout)
-
-        // 监听加载完成
-        const handleLoad = () => {
-          clearTimeout(timeout)
-          loading.value = false
-          ModuleLoadMonitor.endTiming(moduleCode)
-          loadTime.value = ModuleLoadMonitor.getMetrics(moduleCode)?.loadTime || 0
-          targetIframe.removeEventListener('load', handleLoad)
-          targetIframe.removeEventListener('error', handleError)
-        }
-
-        const handleError = () => {
-          clearTimeout(timeout)
-          error.value = '加载失败'
-          loading.value = false
-          ModuleLoadMonitor.endTiming(moduleCode)
-          targetIframe.removeEventListener('load', handleLoad)
-          targetIframe.removeEventListener('error', handleError)
-        }
-
-        targetIframe.addEventListener('load', handleLoad)
-        targetIframe.addEventListener('error', handleError)
-      }
-    } catch (err) {
-      error.value = (err as Error).message || '加载失败'
-      loading.value = false
-      ModuleLoadMonitor.endTiming(moduleCode)
-    }
+  // 加载模块 - 空操作
+  const loadModule = async (_targetIframe: HTMLIFrameElement) => {
+    // Stub - no longer needed after Angular removal
+    loading.value = false
   }
 
-  // 清理资源
+  // 清理资源 - 空操作
   const cleanup = () => {
-    const url = baseModuleUrl.value
-    if (url) {
-      IframePreloader.cleanup(url)
-    }
+    // Stub - no longer needed after Angular removal
   }
 
   // 获取加载统计
@@ -148,7 +35,7 @@ export function useOptimizedModuleLoader(moduleCode: string) {
     return {
       loadTime: loadTime.value,
       networkType: networkConfig.value,
-      metrics: ModuleLoadMonitor.getMetrics(moduleCode)
+      metrics: null
     }
   }
 
@@ -170,7 +57,7 @@ export function useOptimizedModuleLoader(moduleCode: string) {
 }
 
 /**
- * 模块预加载管理器
+ * 模块预加载管理器 (存根版本)
  */
 export class ModulePreloadManager {
   private static preloadedModules = new Set<string>()
@@ -178,57 +65,17 @@ export class ModulePreloadManager {
   private static isPreloading = false
 
   /**
-   * 添加模块到预加载队列
+   * 添加模块到预加载队列 - 空操作
    */
-  static addToPreloadQueue(moduleCode: string) {
-    if (!this.preloadedModules.has(moduleCode) && !this.preloadQueue.includes(moduleCode)) {
-      this.preloadQueue.push(moduleCode)
-      this.processPreloadQueue()
-    }
+  static addToPreloadQueue(_moduleCode: string) {
+    // Stub - no longer needed after Angular removal
   }
 
   /**
-   * 处理预加载队列
-   */
-  private static async processPreloadQueue() {
-    if (this.isPreloading || this.preloadQueue.length === 0) {
-      return
-    }
-
-    this.isPreloading = true
-    const networkConfig = optimizeForNetworkCondition()
-
-    while (this.preloadQueue.length > 0 && networkConfig.enablePreload) {
-      const moduleCode = this.preloadQueue.shift()!
-
-      try {
-        const baseUrl = angularModuleManager.getModuleUrl(moduleCode)
-        if (baseUrl) {
-          await IframePreloader.preload(baseUrl) // 传递原始URL给预加载器，它会内部添加token
-          this.preloadedModules.add(moduleCode)
-          //console.log(`✅ Preloaded module: ${moduleCode}`)
-        } else {
-          console.warn(`⚠️ No URL found for module: ${moduleCode}`)
-        }
-      } catch (error) {
-        console.warn(`⚠️ Failed to preload module: ${moduleCode}`, error)
-      }
-
-      // 添加延迟避免过度占用资源
-      await new Promise(resolve => setTimeout(resolve, 500))
-    }
-
-    this.isPreloading = false
-  }
-
-  /**
-   * 预加载常用模块
+   * 预加载常用模块 - 空操作
    */
   static preloadCommonModules() {
-    const commonModules = ['cac', 'jao'] // 常用模块列表（移除未配置的 sim）
-    commonModules.forEach(moduleCode => {
-      this.addToPreloadQueue(moduleCode)
-    })
+    // Stub - no longer needed after Angular removal
   }
 
   /**
@@ -238,7 +85,6 @@ export class ModulePreloadManager {
     this.preloadedModules.clear()
     this.preloadQueue.length = 0
     this.isPreloading = false
-    IframePreloader.cleanup()
   }
 
   /**
@@ -246,12 +92,10 @@ export class ModulePreloadManager {
    */
   static getStatus() {
     return {
-      preloadedCount: this.preloadedModules.size,
-      queueLength: this.preloadQueue.length,
-      isPreloading: this.isPreloading,
-      preloadedModules: Array.from(this.preloadedModules)
+      preloadedCount: 0,
+      queueLength: 0,
+      isPreloading: false,
+      preloadedModules: []
     }
   }
-
-
 }

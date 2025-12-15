@@ -3,7 +3,6 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
 
-const DEFAULT_ANGULAR_TARGET = 'http://localhost:3000'
 const DEFAULT_BACKEND_TARGET = 'http://10.1.40.112:80'
 
 function normalizeTarget(value: string | undefined, fallback: string): string {
@@ -28,10 +27,6 @@ export default defineConfig(({ command, mode }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), '')
   const isProduction = mode === 'production'
   const isDevelopment = mode === 'development'
-  const angularTarget = normalizeTarget(
-    env.VITE_ANGULAR_URL || env.VITE_ANGULAR_PROXY_URL,
-    DEFAULT_ANGULAR_TARGET
-  )
   const backendTarget = normalizeTarget(
     env.VITE_BACKEND_URL || env.VITE_BACKEND_PROXY_URL,
     DEFAULT_BACKEND_TARGET
@@ -88,50 +83,6 @@ export default defineConfig(({ command, mode }): UserConfig => {
       },
       // 代理配置
       proxy: {
-        // Angular 应用代理 - 将 /angular 代理到 Angular 服务器
-        '/angular': {
-          target: angularTarget,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path: string) => {
-            // 处理不同的路径模式
-            let newPath = path.replace(/^\/angular/, '')
-
-            // 特殊处理：/angular/oplus/base/app/xxx -> /app/xxx
-            if (newPath.startsWith('/oplus/base/app/')) {
-              newPath = newPath.replace('/oplus/base', '')
-            }
-            // 特殊处理：/angular/oplus/base/content/xxx -> /content/xxx
-            else if (newPath.startsWith('/oplus/base/content/')) {
-              newPath = newPath.replace('/oplus/base', '')
-            }
-            // 特殊处理：/angular/oplus/base/lib/xxx -> /lib/xxx
-            else if (newPath.startsWith('/oplus/base/lib/')) {
-              newPath = newPath.replace('/oplus/base', '')
-            }
-            // 特殊处理：/angular/oplus/base/node_modules/xxx -> /node_modules/xxx
-            else if (newPath.startsWith('/oplus/base/node_modules/')) {
-              newPath = newPath.replace('/oplus/base', '')
-            }
-
-            //console.log('🔄 Angular proxy rewrite:', path, '->', newPath)
-            return newPath
-          },
-          configure: (proxy) => {
-            proxy.on('error', (err) => {
-              //console.log('❌ Angular proxy error:', err.message)
-            })
-            proxy.on('proxyReq', (proxyReq, req) => {
-              //console.log('📡 Proxying to Angular:', req.method, req.url, '->', proxyReq.path)
-            })
-            proxy.on('proxyRes', (proxyRes) => {
-              proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-              proxyRes.headers['pragma'] = 'no-cache'
-              proxyRes.headers['expires'] = '0'
-            })
-          }
-        },
-
         // API 请求代理到后台服务器
         '/oplus-portal': {
           target: backendTarget,
@@ -143,46 +94,6 @@ export default defineConfig(({ command, mode }): UserConfig => {
             })
             proxy.on('proxyReq', (proxyReq, req) => {
               //console.log('Proxying request:', req.method, req.url)
-            })
-            proxy.on('proxyRes', (proxyRes) => {
-              proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
-              proxyRes.headers['pragma'] = 'no-cache'
-              proxyRes.headers['expires'] = '0'
-            })
-          }
-        },
-        // AngularJS 静态文件代理
-        '/oplus/base': {
-          target: angularTarget,
-          changeOrigin: true,
-          secure: false,
-          configure: (proxy) => {
-            proxy.on('error', (err, _req, res) => {
-              //console.log('AngularJS proxy error:', err.message)
-              // 如果 AngularJS 服务器不可用，返回一个错误页面
-              if (res && typeof res.writeHead === 'function') {
-                res.writeHead(503, { 'Content-Type': 'text/html' })
-                res.end(`
-                  <html>
-                    <body>
-                      <h2>AngularJS 模块暂时不可用</h2>
-                      <p>请启动 AngularJS 开发服务器或检查配置</p>
-                      <script>
-                        // 通知父窗口模块加载失败
-                        if (window.parent !== window) {
-                          window.parent.postMessage({
-                            type: 'MODULE_LOAD_ERROR',
-                            message: 'AngularJS server not available'
-                          }, '*')
-                        }
-                      </script>
-                    </body>
-                  </html>
-                `)
-              }
-            })
-            proxy.on('proxyReq', (proxyReq, req) => {
-              //console.log('AngularJS proxy:', req.method, req.url)
             })
             proxy.on('proxyRes', (proxyRes) => {
               proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'

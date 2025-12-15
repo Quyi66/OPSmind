@@ -152,10 +152,7 @@ try {
 
 // 开发环境下额外暴露调试对象
 if (import.meta.env.DEV) {
-  import('@/utils/single-iframe-manager').then(({ singleIframeManager }) => {
-    window.singleIframeManager = singleIframeManager
-    //console.log('🔧 singleIframeManager and router exposed to window for debugging')
-  })
+  // Debug exposure removed - no longer needed after Angular removal
 }
 
 // 设置全局组件和指令
@@ -164,51 +161,6 @@ setupGlobalDirectives(app)
 
 // 挂载应用
 app.mount('#app')
-
-const allowedAngularOrigins = (() => {
-  const origins = new Set()
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    origins.add(window.location.origin)
-  }
-  try {
-    const angularBase = appUrlManager.getAngularBaseUrl?.()
-    if (angularBase) {
-      const resolved = new URL(angularBase, window.location.origin)
-      origins.add(resolved.origin)
-    }
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.warn('Failed to resolve Angular base origin for message validation', error)
-    }
-  }
-  return origins
-})()
-
-let angularAuthLogoutPending = false
-window.addEventListener('message', event => {
-  const message = event?.data
-  if (!message || message.source !== 'oplus-angular') {
-    return
-  }
-
-  const origin = event.origin || window.location.origin
-  if (origin && !allowedAngularOrigins.has(origin)) {
-    console.warn('⚠️ Ignoring Angular iframe message from unexpected origin', {
-      origin,
-      expected: Array.from(allowedAngularOrigins)
-    })
-    return
-  }
-
-  console.debug('📬 Message from Angular iframe', { origin, message })
-
-  if (message.type === 'ANGULAR_AUTH_EXPIRED') {
-    if (angularAuthLogoutPending) return
-    angularAuthLogoutPending = true
-    console.warn('🔐 AngularJS iframe reported expired authentication', message.payload)
-    authService.logout()
-  }
-})
 
 // 开发环境下的调试信息
 if (import.meta.env.DEV) {
@@ -219,4 +171,4 @@ if (import.meta.env.DEV) {
 
 // Vue Dashboard 作为主应用运行
 //console.log('🎯 Vue Dashboard initialized as main application')
-//console.log('🔗 Ready to integrate AngularJS modules')
+

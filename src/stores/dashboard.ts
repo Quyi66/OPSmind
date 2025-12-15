@@ -31,14 +31,7 @@ interface SystemStat {
 interface ModuleStats {
   total: number
   vue: number
-  angular: number
   hybrid: number
-  migrationProgress: {
-    percentage: number
-    completed: number
-    inProgress: number
-    remaining: number
-  }
 }
 
 interface DashboardState {
@@ -89,15 +82,13 @@ export const useDashboardStore = defineStore('dashboard', () => {
       .sort((a, b) => (a.showIn?.dock || 0) - (b.showIn?.dock || 0))
   })
 
-  // 混合模块统计
+  // 模块统计
   const moduleStats: ComputedRef<ModuleStats> = computed(() => {
-    const stats = hybridModuleManager.getMigrationStats()
+    const stats = hybridModuleManager.getStats()
     return {
       total: availableModules.value.length,
       vue: stats.vue,
-      angular: stats.angular,
-      hybrid: stats.hybrid,
-      migrationProgress: stats.migrationProgress
+      hybrid: stats.hybrid
     }
   })
 
