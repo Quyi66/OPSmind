@@ -7,8 +7,8 @@
     <!-- 主体区域 -->
     <div class="job-list__body">
       <!-- 侧边栏 -->
-      <aside class="job-sidebar">
-        <div class="sidebar-header">
+      <aside class="ops-sidebar-nav ops-sidebar-nav--wide">
+        <div class="ops-sidebar-header">
           <el-input
             v-model="searchKeyword"
             placeholder="搜索"
@@ -37,7 +37,7 @@
           </el-button>
         </div>
 
-        <div class="sidebar-body">
+        <div class="ops-sidebar-content">
           <div v-if="loading" class="loading-state">
             <i class="fas fa-spinner fa-spin"></i>
           </div>
@@ -45,7 +45,7 @@
             <a
               v-for="job in filteredJobs"
               :key="job.id"
-              class="job-item"
+              class="ops-sidebar-item job-item"
               :class="{ active: activeJobId === job.id }"
               @click="selectJob(job)"
               :title="job.title"

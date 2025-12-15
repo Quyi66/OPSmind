@@ -97,19 +97,15 @@
           </el-table-column>
           <el-table-column prop="ci_type" label="资产代码" width="150" sortable />
           <el-table-column prop="total" label="总计" width="100" align="center" sortable />
-          <el-table-column label="操作" width="100" align="center">
+          <el-table-column label="操作" width="88" align="center" fixed="right">
             <template #default="{ row }">
               <template v-if="row.path !== '/'">
-                <el-tooltip content="编辑" placement="top">
-                  <el-button link type="primary" @click="handleEditGroup(row)">
-                    <i class="fa fa-pen"></i>
-                  </el-button>
-                </el-tooltip>
-                <el-tooltip content="删除" placement="top">
-                  <el-button link type="danger" @click="handleDeleteGroup(row)">
-                    <i class="fa fa-trash-alt"></i>
-                  </el-button>
-                </el-tooltip>
+                <el-button text type="primary" size="small" @click="handleEditGroup(row)">
+                  编辑
+                </el-button>
+                <el-button text type="danger" size="small" @click="handleDeleteGroup(row)">
+                  删除
+                </el-button>
               </template>
             </template>
           </el-table-column>
@@ -180,18 +176,14 @@
           </el-table-column>
           <el-table-column prop="ci_type" label="资产代码" width="150" sortable />
           <el-table-column prop="total" label="总计" width="100" align="center" sortable />
-          <el-table-column label="操作" width="100" align="center">
+          <el-table-column label="操作" width="100" align="center" fixed="right">
             <template #default="{ row }">
-              <el-tooltip content="编辑" placement="top">
-                <el-button link type="primary" @click="handleEditTag(row)">
-                  <i class="fa fa-pen"></i>
-                </el-button>
-              </el-tooltip>
-              <el-tooltip content="删除" placement="top">
-                <el-button link type="danger" @click="handleDeleteTag(row)">
-                  <i class="fa fa-trash-alt"></i>
-                </el-button>
-              </el-tooltip>
+              <el-button text type="primary" size="small" @click="handleEditTag(row)">
+                编辑
+              </el-button>
+              <el-button text type="danger" size="small" @click="handleDeleteTag(row)">
+                删除
+              </el-button>
             </template>
           </el-table-column>
         </el-table>

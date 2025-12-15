@@ -53,11 +53,11 @@
         <!-- 页面列表 -->
         <div class="resource-section with-sidebar">
           <!-- 应用选择器侧边栏 -->
-          <div class="sidebar">
-            <div class="sidebar__title">所属应用</div>
-            <div class="sidebar__list">
+          <div class="ops-sidebar">
+            <div class="ops-sidebar__title">所属应用</div>
+            <div class="ops-sidebar__list">
               <div
-                class="sidebar__item"
+                class="ops-sidebar__item"
                 :class="{ active: selectedPageApplet === '' }"
                 @click="selectPageApplet('')"
               >
@@ -66,7 +66,7 @@
               <div
                 v-for="app in applets"
                 :key="app.id"
-                class="sidebar__item"
+                class="ops-sidebar__item"
                 :class="{ active: selectedPageApplet === app.name }"
                 @click="selectPageApplet(app.name)"
               >
@@ -131,11 +131,11 @@
         <!-- 数据集列表 -->
         <div class="resource-section with-sidebar">
           <!-- 应用选择器侧边栏 -->
-          <div class="sidebar">
-            <div class="sidebar__title">所属应用</div>
-            <div class="sidebar__list">
+          <div class="ops-sidebar">
+            <div class="ops-sidebar__title">所属应用</div>
+            <div class="ops-sidebar__list">
               <div
-                class="sidebar__item"
+                class="ops-sidebar__item"
                 :class="{ active: selectedDatasetApplet === '' }"
                 @click="selectDatasetApplet('')"
               >
@@ -144,7 +144,7 @@
               <div
                 v-for="app in applets"
                 :key="app.id"
-                class="sidebar__item"
+                class="ops-sidebar__item"
                 :class="{ active: selectedDatasetApplet === app.name }"
                 @click="selectDatasetApplet(app.name)"
               >
@@ -206,11 +206,11 @@
         <!-- 作业列表 -->
         <div class="resource-section with-sidebar">
           <!-- 应用选择器侧边栏 -->
-          <div class="sidebar">
-            <div class="sidebar__title">所属应用</div>
-            <div class="sidebar__list">
+          <div class="ops-sidebar">
+            <div class="ops-sidebar__title">所属应用</div>
+            <div class="ops-sidebar__list">
               <div
-                class="sidebar__item"
+                class="ops-sidebar__item"
                 :class="{ active: selectedJobApplet === '' }"
                 @click="selectJobApplet('')"
               >
@@ -219,7 +219,7 @@
               <div
                 v-for="app in applets"
                 :key="app.id"
-                class="sidebar__item"
+                class="ops-sidebar__item"
                 :class="{ active: selectedJobApplet === app.name }"
                 @click="selectJobApplet(app.name)"
               >
@@ -691,49 +691,6 @@ onMounted(() => {
   &.with-sidebar {
     display: flex;
     gap: 16px;
-  }
-}
-
-.sidebar {
-  width: 180px;
-  flex-shrink: 0;
-  background: #f5f7fa;
-  border-radius: 4px;
-  padding: 12px 0;
-  max-height: 500px;
-  overflow-y: auto;
-
-  &__title {
-    padding: 8px 16px;
-    font-weight: 600;
-    color: #303133;
-    font-size: 14px;
-    border-bottom: 1px solid #e4e7ed;
-    margin-bottom: 8px;
-  }
-
-  &__list {
-    padding: 0;
-  }
-
-  &__item {
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #606266;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: all 0.2s;
-
-    &:hover {
-      background: #e9ecef;
-    }
-
-    &.active {
-      background: #409eff;
-      color: #fff;
-    }
   }
 }
 

@@ -1,16 +1,16 @@
 <template>
   <div class="system-settings-container">
     <!-- 左侧导航 -->
-    <aside class="settings-sidebar">
-      <h3 class="sidebar-title">
-        <i class="fa fa-cog"></i>
+    <aside class="ops-sidebar-nav" style="width: 190px;">
+      <h3 class="ops-sidebar-title" style="padding: 12px; margin: 0; border-bottom: 1px solid #e2e8f0;">
+        <i class="fa fa-cog" style="color: #f97316;"></i>
         System Settings Center
       </h3>
-      <nav class="settings-nav">
+      <nav class="ops-sidebar-content">
         <div
           v-for="item in navItems"
           :key="item.key"
-          class="nav-item"
+          class="ops-sidebar-item"
           :class="{ 'is-active': activeView === item.key }"
           @click="setActiveView(item.key)"
         >

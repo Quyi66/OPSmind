@@ -129,14 +129,17 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <el-tooltip v-if="canRerun(row)" content="重新执行">
-              <el-button link type="primary" size="small" @click="handleRerun(row)">
-                <i class="fa fa-rocket" />
-                <span class="ml-1">重跑</span>
-              </el-button>
-            </el-tooltip>
+            <el-button
+              v-if="canRerun(row)"
+              text
+              type="primary"
+              size="small"
+              @click="handleRerun(row)"
+            >
+              重跑
+            </el-button>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>

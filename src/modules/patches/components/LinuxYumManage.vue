@@ -64,16 +64,16 @@
             <el-table-column prop="description" label="描述" min-width="120" sortable />
             <el-table-column prop="baseurl" label="YUM源地址" min-width="280" sortable show-overflow-tooltip />
             <el-table-column prop="file" label="YUM源文件" min-width="180" sortable show-overflow-tooltip />
-            <el-table-column label="操作" width="260" fixed="right" align="center">
+            <el-table-column label="操作" width="132" fixed="right" align="center">
               <template #default="{ row }">
-                <el-button type="primary" size="small" @click="handleEdit(row)">
-                  <i class="fa fa-edit" /> 编辑
+                <el-button text type="primary" size="small" @click="handleEdit(row)">
+                  编辑
                 </el-button>
-                <el-button type="danger" size="small" @click="handleDelete(row)">
-                  <i class="fa fa-trash" /> 删除
+                <el-button text type="danger" size="small" @click="handleDelete(row)">
+                  删除
                 </el-button>
-                <el-button type="info" size="small" @click="handleConfig(row)">
-                  <i class="fa fa-cog" /> 配置
+                <el-button text type="primary" size="small" @click="handleConfig(row)">
+                  配置
                 </el-button>
               </template>
             </el-table-column>
@@ -311,30 +311,33 @@
               {{ formatDate(row['repo-updated']) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right" align="center">
+          <el-table-column label="操作" width="88" fixed="right" align="center">
             <template #default="{ row }">
               <el-button
                 v-if="row['repo-status'] === 'disabled'"
+                text
                 type="primary"
                 size="small"
                 @click="handleEnableRepo(row)"
               >
-                <i class="fa fa-check-circle" /> 启用
+                启用
               </el-button>
               <el-button
                 v-if="row['repo-status'] === 'enabled'"
+                text
                 type="warning"
                 size="small"
                 @click="handleDisableRepo(row)"
               >
-                <i class="fa fa-times-circle" /> 禁用
+                禁用
               </el-button>
               <el-button
+                text
                 type="danger"
                 size="small"
                 @click="handleDeleteRepo(row)"
               >
-                <i class="fa fa-trash-alt" /> 删除
+                删除
               </el-button>
             </template>
           </el-table-column>
@@ -1100,34 +1103,6 @@ defineExpose({ refresh })
   }
 }
 
-:deep(.el-button--primary) {
-
-  &.el-button--small {
-    padding: 5px 10px;
-    font-size: 12px;
-  }
-}
-
-:deep(.el-button--danger) {
-  background-color: #dc3545;
-  border-color: #dc3545;
-
-  &.el-button--small {
-    padding: 5px 10px;
-    font-size: 12px;
-  }
-}
-
-:deep(.el-button--info) {
-  background-color: #6c757d;
-  border-color: #6c757d;
-
-  &.el-button--small {
-    padding: 5px 10px;
-    font-size: 12px;
-  }
-}
-
 // 作业确认对话框样式
 .job-confirm-content {
   .config-info {
@@ -1251,22 +1226,6 @@ defineExpose({ refresh })
       overflow: hidden;
       text-overflow: ellipsis;
     }
-  }
-}
-
-:deep(.el-button--warning) {
-  background-color: #ffc107;
-  border-color: #ffc107;
-  color: #212529;
-
-  &:hover {
-    background-color: #e0a800;
-    border-color: #d39e00;
-  }
-
-  &.el-button--small {
-    padding: 5px 10px;
-    font-size: 12px;
   }
 }
 </style>

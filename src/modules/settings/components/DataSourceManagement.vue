@@ -2,14 +2,14 @@
   <div class="datasource-management">
     <div class="layout-container">
       <!-- 左侧边栏 - 数据源树 -->
-      <div class="sidebar">
-        <div class="sidebar-header">
-          <span class="sidebar-title">数据源</span>
+      <div class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 280px;">
+        <div class="ops-sidebar-header">
+          <span class="ops-sidebar-title" style="padding: 0;">数据源</span>
           <el-button type="primary" size="small" @click="handleCreate">
             <i class="fa fa-plus"></i>
           </el-button>
         </div>
-        <div class="sidebar-body">
+        <div class="ops-sidebar-content">
           <el-tree
             ref="treeRef"
             :data="treeData"
@@ -617,37 +617,6 @@ watch(() => form.name, (newVal, oldVal) => {
   display: flex;
   height: 100%;
   gap: 16px;
-}
-
-.sidebar {
-  width: 280px;
-  flex-shrink: 0;
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e4e7ed;
-  background: #f5f7fa;
-}
-
-.sidebar-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.sidebar-body {
-  flex: 1;
-  overflow: auto;
-  padding: 8px;
 }
 
 .tree-node {

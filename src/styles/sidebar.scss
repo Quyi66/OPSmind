@@ -1,0 +1,165 @@
+// ========================================
+// 通用侧边导航栏样式
+// ========================================
+
+// 页面侧边导航容器
+.ops-sidebar-nav {
+  width: 160px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #e2e8f0;
+  padding: 8px 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+
+  // 宽度变体
+  &.ops-sidebar-nav--narrow {
+    width: 140px;
+  }
+
+  &.ops-sidebar-nav--wide {
+    width: 200px;
+  }
+}
+
+// 侧边栏头部区域（可选，用于搜索/排序等）
+.ops-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid #e4e7ed;
+
+  .ops-sidebar-search {
+    flex: 1;
+  }
+}
+
+// 侧边栏标题
+.ops-sidebar-title {
+  padding: 12px 16px 8px;
+  font-weight: 600;
+  color: #303133;
+  font-size: 14px;
+}
+
+// 侧边栏内容区域
+.ops-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+// 导航项目
+.ops-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #333;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.2s;
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+
+  i {
+    width: 16px;
+    text-align: center;
+    color: #666;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: #f5f7fa;
+    color: #1890ff;
+  }
+
+  &.is-active,
+  &.active {
+    background: #e6f7ff;
+    color: #1890ff;
+
+    i {
+      color: #1890ff;
+    }
+
+    // 左侧指示条
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #1890ff;
+    }
+  }
+}
+
+// ========================================
+// 带侧边栏的页面布局
+// ========================================
+
+// 带侧边栏的资源管理布局
+.ops-layout-with-sidebar {
+  display: flex;
+  height: 100%;
+  gap: 0;
+
+  .ops-main-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
+
+// 独立侧边栏组件（可在任意布局中使用）
+.ops-sidebar {
+  width: 180px;
+  flex-shrink: 0;
+  background: #f5f7fa;
+  border-radius: 4px;
+  padding: 12px 0;
+  max-height: 500px;
+  overflow-y: auto;
+
+  &__title {
+    padding: 8px 16px;
+    font-weight: 600;
+    color: #303133;
+    font-size: 14px;
+    border-bottom: 1px solid #e4e7ed;
+    margin-bottom: 8px;
+  }
+
+  &__list {
+    padding: 0;
+  }
+
+  &__item {
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #606266;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #e9ecef;
+    }
+
+    &.active {
+      background: #409eff;
+      color: #fff;
+    }
+  }
+}

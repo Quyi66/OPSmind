@@ -116,10 +116,10 @@
               <el-link type="primary">{{ formatDateTime(row.updated_at) }}</el-link>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="80" align="center" fixed="right">
+          <el-table-column label="操作" width="60" align="center" fixed="right">
             <template #default="{ row }">
-              <el-button link type="primary" @click="handleEditAutomation(row)">
-                <i class="fa fa-pen"></i>
+              <el-button text type="primary" size="small" @click="handleEditAutomation(row)">
+                编辑
               </el-button>
             </template>
           </el-table-column>
@@ -189,13 +189,13 @@
               {{ formatDateTime(row.updatedAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="100" align="center" fixed="right">
+          <el-table-column label="操作" width="88" align="center" fixed="right">
             <template #default="{ row }">
-              <el-button link type="primary" @click="handleEditAnsible(row)">
-                <i class="fa fa-pen"></i>
+              <el-button text type="primary" size="small" @click="handleEditAnsible(row)">
+                编辑
               </el-button>
-              <el-button link type="danger" @click="handleDeleteAnsible(row)">
-                <i class="fa fa-trash-alt"></i>
+              <el-button text type="danger" size="small" @click="handleDeleteAnsible(row)">
+                删除
               </el-button>
             </template>
           </el-table-column>

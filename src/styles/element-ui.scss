@@ -14,7 +14,7 @@
 }
 
 .el-select-dropdown__item {
-  color: rgba(255, 255, 255, .75);
+  //color: rgba(255, 255, 255, .75);
 }
 
 .el-select__popper {
@@ -166,12 +166,18 @@
   background-color: #0077EE !important;
   border-color: #0077EE !important;
 
-  &:not(.is-link):hover {
-    border-color: #2994FF !important;
-    background-color: #2994FF !important;
-  }
+  // &:not(.is-text):hover {
+  //   border-color: #2994FF !important;
+  //   background-color: #2994FF !important;
+  // }
+
+  // &:not(.is-link):hover {
+  //   border-color: #2994FF !important;
+  //   background-color: #2994FF !important;
+  // }
 }
 
+.is-text,
 .is-link {
   background-color: transparent !important;
   border-color: transparent !important;
@@ -305,4 +311,25 @@
   display: flex;
   justify-content: flex-end;
   padding: 8px 0;
+}
+
+.el-input--small .el-input__inner {
+  height: 32px !important;
+  line-height: 32px !important;
+}
+
+// 表格操作列按钮样式
+.el-table .el-button.is-text {
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: 10px;
+  font-size: 14px;
+
+  &:first-child {
+    margin-left: 0;
+  }
+
+  &:hover {
+    background-color: transparent !important;
+  }
 }

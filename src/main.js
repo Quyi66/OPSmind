@@ -21,6 +21,7 @@ import angularJSBridge from '@/services/angularjs-bridge'
 import '@/styles/main.scss'
 // 确保 Element UI 和通用样式覆盖生效
 import '@/styles/element-ui.scss'
+import '@/styles/sidebar.scss'
 import '@/styles/common.scss'
 
 // 统一设置浏览器 Tab 图标（favicon）为 src/assets/icons/logo-opsmind@2x.png

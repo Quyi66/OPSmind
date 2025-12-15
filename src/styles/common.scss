@@ -698,10 +698,8 @@ input[type="number"] {
   cursor: pointer;
 }
 
-.bigscreen-dialog {
-  // max-width: 85% !important;
-}
-
-.bigscreen-dialog .el-table tr {
-  height: 43px !important;
+.el-table .fixed-width .el-button--mini {
+  padding-left: 0;
+  padding-right: 0;
+  width: inherit;
 }

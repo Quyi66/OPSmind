@@ -33,14 +33,12 @@
             {{ formatDateTime(row.executed_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" align="center">
+        <el-table-column label="操作" width="220" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="showRecipientDialog(row)">
-              <i class="fa fa-envelope"></i>
+            <el-button text type="primary" @click="showRecipientDialog(row)">
               收件人列表
             </el-button>
-            <el-button type="info" link @click="showCustomContentDialog(row)">
-              <i class="fa fa-hand-pointer"></i>
+            <el-button text type="primary" @click="showCustomContentDialog(row)">
               自定义内容
             </el-button>
           </template>
@@ -78,13 +76,13 @@
             </template>
           </el-table-column>
           <el-table-column prop="remarks" label="备注" min-width="150" />
-          <el-table-column label="操作" width="140" align="center">
+          <el-table-column label="操作" width="88" align="center" fixed="right">
             <template #default="{ row }">
-              <el-button type="primary" link size="small" @click="editRecipient(row)">
-                <i class="fa fa-edit"></i> 编辑
+              <el-button text type="primary" size="small" @click="editRecipient(row)">
+                编辑
               </el-button>
-              <el-button type="danger" link size="small" @click="deleteRecipient(row)">
-                <i class="fa fa-trash-alt"></i> 删除
+              <el-button text type="danger" size="small" @click="deleteRecipient(row)">
+                删除
               </el-button>
             </template>
           </el-table-column>

@@ -2,7 +2,7 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-select v-model="filters.status" placeholder="全部" style="width: 140px" @change="loadData">
+      <el-select v-model="filters.status" placeholder="全部" size="small" style="width: 140px" @change="loadData">
         <el-option label="全部" value="all" />
         <el-option label="待提交" value="new" />
         <el-option label="待审批" value="approving" />
@@ -18,6 +18,7 @@
         v-model="filters.keyword"
         placeholder="搜索"
         clearable
+        size="small"
         style="width: 200px"
         @keyup.enter="loadData"
         @clear="loadData"
@@ -26,22 +27,22 @@
           <i class="fa fa-search"></i>
         </template>
       </el-input>
-      <el-button @click="loadData" :loading="loading" title="刷新">
+      <el-button size="small" @click="loadData" :loading="loading" title="刷新">
         <i class="fa fa-refresh"></i>
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" @click="handleApply">
+      <el-button type="primary" size="small" @click="handleApply">
         <i class="fa fa-fist-raised"></i>
         申请临时密码
       </el-button>
-      <el-button type="info" @click="handleBatchImport">
+      <el-button type="info" size="small" @click="handleBatchImport">
         <i class="fa fa-upload"></i>
         批量申请临时密码
       </el-button>
-      <el-button type="info" plain @click="handleAdminPanel" v-if="hasAdminRole">
+      <el-button type="info" plain size="small" @click="handleAdminPanel" v-if="hasAdminRole">
         <i class="fa fa-sign-in-alt"></i>
         进入管理员面板
       </el-button>
@@ -99,74 +100,68 @@
             <div v-if="row.approver_name" class="text-muted">{{ row.approver_name }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
               <!-- 编辑 -->
               <el-button
                 v-if="canEdit(row)"
-                type="info"
+                text
+                type="primary"
                 size="small"
-                circle
-                title="编辑"
                 @click="handleEdit(row)"
               >
-                <i class="fa fa-edit"></i>
+                编辑
               </el-button>
               <!-- 提交 -->
               <el-button
                 v-if="canSubmit(row)"
-                type="info"
+                text
+                type="primary"
                 size="small"
-                circle
-                title="提交"
                 @click="handleSubmit(row)"
               >
-                <i class="fa fa-check"></i>
+                提交
               </el-button>
               <!-- 审批 -->
               <el-button
                 v-if="canApprove(row)"
+                text
                 type="primary"
                 size="small"
-                circle
-                title="审批"
                 @click="handleApprove(row)"
               >
-                <i class="fa fa-chalkboard-teacher"></i>
+                审批
               </el-button>
               <!-- 查看密码 -->
               <el-button
                 v-if="canViewPassword(row)"
+                text
                 type="primary"
                 size="small"
-                circle
-                title="查看密码"
                 @click="handleViewPassword(row)"
               >
-                <i class="fa fa-eye"></i>
+                查看密码
               </el-button>
               <!-- 再次申请 -->
               <el-button
                 v-if="canReapply(row)"
+                text
                 type="primary"
                 size="small"
-                circle
-                title="再次申请"
                 @click="handleReapply(row)"
               >
-                <i class="fa fa-copy"></i>
+                再次申请
               </el-button>
               <!-- 删除 -->
               <el-button
                 v-if="canDelete(row)"
+                text
                 type="danger"
                 size="small"
-                circle
-                title="删除"
                 @click="handleDelete(row)"
               >
-                <i class="fa fa-trash-alt"></i>
+                删除
               </el-button>
             </div>
           </template>

@@ -15,11 +15,11 @@
 
     <!-- 常规模块视图 -->
     <div v-else class="asset-module">
-      <aside class="asset-module__nav">
+      <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
         <div
           v-for="item in navItems"
           :key="item.key"
-          class="nav-item"
+          class="ops-sidebar-item"
           :class="{ 'is-active': activeView === item.key }"
           @click="handleNavClick(item)"
         >
@@ -239,56 +239,6 @@ onMounted(() => {
   display: flex;
   height: 100%;
   min-height: 0;
-}
-
-.asset-module__nav {
-  width: 140px;
-  flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
-  padding: 8px 0;
-  overflow-y: auto;
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    cursor: pointer;
-    color: #333;
-    font-size: 14px;
-    transition: all 0.2s;
-    position: relative;
-
-    i {
-      width: 16px;
-      text-align: center;
-      color: #666;
-    }
-
-    &:hover {
-      background: #f5f7fa;
-    }
-
-    &.is-active {
-      background: #e6f7ff;
-      color: #1890ff;
-
-      i {
-        color: #1890ff;
-      }
-
-      &::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 3px;
-        background: #1890ff;
-      }
-    }
-  }
 }
 
 .asset-module__content {

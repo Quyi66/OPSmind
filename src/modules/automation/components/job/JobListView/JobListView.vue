@@ -1,14 +1,14 @@
 <template>
   <div class="job-workbench">
-    <aside class="job-workbench__sidebar">
-      <div class="sidebar-header">
+    <aside class="ops-sidebar-nav">
+      <div class="ops-sidebar-header">
         <el-input v-model="appStr" style="width: 100%" placeholder="请输入" :prefix-icon="'Search'" @input="filterApplets()" />
       </div>
-      <el-scrollbar class="sidebar-list">
+      <el-scrollbar class="ops-sidebar-content">
         <button
           v-for="applet in appOptions"
           :key="applet.name || 'all'"
-          class="sidebar-item"
+          class="ops-sidebar-item"
           :class="{ 'is-active': currentApp.name === applet.name }"
           @click="selectApplet(applet)"
           v-show="applet.show"
@@ -164,28 +164,18 @@
             {{ formatDate(row.lastRunTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="150">
+        <el-table-column label="操作" fixed="right" width="132">
           <template #default="{ row }">
             <div class="table-actions">
-              <el-tooltip content="执行">
-                <el-button link class="action-button" @click="handleViewJob(row)">
-                  <el-icon><VideoPlay /></el-icon>
-                </el-button>
-              </el-tooltip>
-              <el-tooltip content="复制">
-                <el-button link class="action-button" @click="handleCopy(row)">
-                  <i class="fa fa-copy"></i>
-                </el-button>
-              </el-tooltip>
-              <el-tooltip content="执行历史">
-                <el-button
-                  link
-                  class="action-button action-button--history"
-                  @click="handleViewHistory(row)"
-                >
-                  <i class="fa fa-history"></i>
-                </el-button>
-              </el-tooltip>
+              <el-button text type="primary" size="small" @click="handleViewJob(row)">
+                执行
+              </el-button>
+              <el-button text type="primary" size="small" @click="handleCopy(row)">
+                复制
+              </el-button>
+              <el-button text type="primary" size="small" @click="handleViewHistory(row)">
+                历史
+              </el-button>
             </div>
           </template>
         </el-table-column>

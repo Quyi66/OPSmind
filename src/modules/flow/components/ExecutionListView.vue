@@ -1,8 +1,8 @@
 <template>
   <div class="execution-list-view">
     <!-- 左侧流程列表 -->
-    <aside class="process-sidebar">
-      <div class="sidebar-header">
+    <aside class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 240px;">
+      <div class="ops-sidebar-header">
         <el-input
           v-model="searchKeyword"
           size="small"
@@ -22,11 +22,11 @@
           <i class="fa fa-ban"></i>
         </el-button>
       </div>
-      <div class="sidebar-body">
+      <div class="ops-sidebar-content">
         <div
           v-for="process in filteredProcessList"
           :key="process.id"
-          class="process-item"
+          class="ops-sidebar-item"
           :class="{ 'is-active': activeProcessId === process.id }"
           @click="handleSelectProcess(process)"
         >
@@ -309,59 +309,22 @@ onMounted(() => {
   background: #fff;
 }
 
-.process-sidebar {
-  width: 240px;
-  flex-shrink: 0;
-  border-right: 1px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
-  background: #f8fafc;
+// 进程项特定样式
+.process-name {
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.sidebar-header {
-  padding: 12px;
-  display: flex;
-  gap: 8px;
-  border-bottom: 1px solid #e2e8f0;
-  flex-shrink: 0;
-}
-
-.sidebar-body {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.process-item {
-  padding: 12px 16px;
-  cursor: pointer;
-  border-bottom: 1px solid #e2e8f0;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #eef2ff;
-  }
-
-  &.is-active {
-    background: #dbeafe;
-    border-left: 3px solid #3b82f6;
-  }
-
-  .process-name {
-    font-weight: 500;
-    color: #1e293b;
-    margin-bottom: 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .process-desc {
-    font-size: 12px;
-    color: #94a3b8;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.process-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .execution-content {

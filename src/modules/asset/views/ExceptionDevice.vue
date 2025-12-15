@@ -5,6 +5,7 @@
       <el-select
         v-model="filters.cit"
         placeholder="全部"
+        size="small"
         style="width: 120px"
         @change="handleFilterChange"
       >
@@ -19,6 +20,7 @@
       <el-select
         v-model="filters.conditions"
         placeholder="筛选条件"
+        size="small"
         style="width: 140px"
         @change="handleFilterChange"
       >
@@ -32,28 +34,29 @@
         v-model="searchKeyword"
         placeholder="搜索"
         prefix-icon="Search"
+        size="small"
         style="width: 200px"
         clearable
         @input="handleSearch"
       />
-      <el-button type="primary" @click="loadTableData">
+      <el-button type="primary" size="small" @click="loadTableData">
         <i class="fa fa-search"></i> 搜索
       </el-button>
       <el-tooltip content="导出" placement="top">
-        <el-button :icon="Download" circle @click="handleExport" />
+        <el-button size="small" :icon="Download" circle @click="handleExport" />
       </el-tooltip>
       <el-tooltip content="刷新" placement="top">
-        <el-button :icon="Refresh" circle @click="loadTableData" />
+        <el-button size="small" :icon="Refresh" circle @click="loadTableData" />
       </el-tooltip>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button @click="handleCheckConnectivity">
+      <el-button size="small" @click="handleCheckConnectivity">
         <i class="fa fa-plug" style="margin-right: 4px"></i>
         检查连通性
       </el-button>
-      <el-button @click="handleCollectInfo">
+      <el-button size="small" @click="handleCollectInfo">
         <i class="fa fa-download" style="margin-right: 4px"></i>
         采集信息
       </el-button>

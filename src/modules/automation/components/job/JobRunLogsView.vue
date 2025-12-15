@@ -4,6 +4,7 @@
     <div class="ops-filter-bar">
       <el-select
         v-model="filters.day"
+        size="small"
         style="width: 140px"
         @change="handleSearch"
       >
@@ -16,6 +17,7 @@
       <el-select
         v-model="filters.status"
         placeholder="状态筛选"
+        size="small"
         style="width: 140px"
         @change="handleSearch"
       >
@@ -32,6 +34,7 @@
         v-model="filters.search"
         placeholder="搜索作业标题"
         clearable
+        size="small"
         style="width: 240px"
         @input="handleSearchDebounced"
       >
@@ -39,14 +42,14 @@
           <i class="fa fa-search" />
         </template>
       </el-input>
-      <el-button @click="handleReset">
+      <el-button size="small" @click="handleReset">
         <i class="fa fa-undo" /> 重置
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button @click="handleRefresh" title="刷新">
+      <el-button size="small" @click="handleRefresh" title="刷新">
         <i class="fa fa-refresh" />
       </el-button>
     </div>
@@ -142,7 +145,7 @@
               size="small"
               @click="handleRerun(row)"
             >
-              <i class="fa fa-rocket me-1" />重新启动作业
+              重新启动
             </el-button>
           </template>
         </el-table-column>

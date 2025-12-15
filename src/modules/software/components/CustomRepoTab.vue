@@ -26,13 +26,13 @@
       <el-table-column prop="repo_file" label="仓库文件" min-width="150" />
       <el-table-column prop="repo_desc" label="描述" min-width="200" show-overflow-tooltip />
       <el-table-column prop="repo_url" label="地址" min-width="250" show-overflow-tooltip />
-      <el-table-column label="操作" width="150" fixed="right">
+      <el-table-column label="操作" width="88" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link size="small" @click="handleEdit(row)">
-            <i class="fa fa-edit" /> 编辑
+          <el-button text type="primary" size="small" @click="handleEdit(row)">
+            编辑
           </el-button>
-          <el-button type="danger" link size="small" @click="handleDelete(row)">
-            <i class="fa fa-trash" /> 删除
+          <el-button text type="danger" size="small" @click="handleDelete(row)">
+            删除
           </el-button>
         </template>
       </el-table-column>

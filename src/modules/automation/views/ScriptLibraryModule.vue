@@ -5,11 +5,11 @@
     :hide-header="true"
   >
     <div class="gfs-module">
-      <aside class="gfs-module__nav">
+      <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
         <div
           v-for="item in navItems"
           :key="item.key"
-          class="nav-item"
+          class="ops-sidebar-item"
           :class="{ 'is-active': activeView === item.key }"
           @click="activeView = item.key"
         >

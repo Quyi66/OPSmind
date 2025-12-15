@@ -6,23 +6,24 @@
         v-model="searchText"
         placeholder="搜索模版"
         clearable
+        size="small"
         style="width: 250px"
       >
         <template #prefix>
           <i class="fa fa-search"></i>
         </template>
       </el-input>
-      <el-button type="primary" @click="loadData">
+      <el-button type="primary" size="small" @click="loadData">
         <i class="fa fa-search"></i> 搜索
       </el-button>
-      <el-button @click="handleReset">
+      <el-button size="small" @click="handleReset">
         <i class="fa fa-undo"></i> 重置
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button @click="loadData" :loading="loading">
+      <el-button size="small" @click="loadData" :loading="loading">
         <i class="fas fa-sync"></i> 刷新
       </el-button>
     </div>

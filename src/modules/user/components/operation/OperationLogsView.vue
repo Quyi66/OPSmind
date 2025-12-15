@@ -2,20 +2,20 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-select v-model="filters.ata_node" placeholder="执行引擎节点" clearable style="width: 130px" @change="loadData">
+      <el-select v-model="filters.ata_node" placeholder="执行引擎节点" clearable size="small" style="width: 130px" @change="loadData">
         <el-option label="全部" value="" />
       </el-select>
-      <el-select v-model="filters.status" placeholder="状态" style="width: 100px" @change="loadData">
+      <el-select v-model="filters.status" placeholder="状态" size="small" style="width: 100px" @change="loadData">
         <el-option label="全部" value="all" />
         <el-option label="成功" value="SUCCESS" />
         <el-option label="失败" value="FAILED" />
         <el-option label="运行中" value="RUNNING" />
       </el-select>
-      <el-select v-model="filters.action" placeholder="操作" style="width: 120px" @change="loadData">
+      <el-select v-model="filters.action" placeholder="操作" size="small" style="width: 120px" @change="loadData">
         <el-option label="全部" value="all" />
       </el-select>
       <span class="time-range-label">时间范围:</span>
-      <el-select v-model="filters.day" style="width: 110px" @change="loadData">
+      <el-select v-model="filters.day" size="small" style="width: 110px" @change="loadData">
         <el-option label="Last Year" value="365" />
         <el-option label="Last Month" value="30" />
         <el-option label="Last Week" value="7" />
@@ -25,6 +25,7 @@
         v-model="filters.keyword"
         placeholder="搜索"
         clearable
+        size="small"
         style="width: 150px"
         @keyup.enter="loadData"
       >
@@ -32,10 +33,10 @@
           <i class="fa fa-search"></i>
         </template>
       </el-input>
-      <el-button type="primary" @click="loadData">
+      <el-button type="primary" size="small" @click="loadData">
         <i class="fa fa-search"></i> 搜索
       </el-button>
-      <el-button @click="loadData" title="刷新">
+      <el-button size="small" @click="loadData" title="刷新">
         <i class="fa fa-sync"></i>
       </el-button>
     </div>

@@ -70,11 +70,12 @@
           <el-table-column label="操作" width="80" fixed="right" align="center">
             <template #default="{ row }">
               <el-button
-                link
+                text
+                type="primary"
+                size="small"
                 @click="handleApprove(row)"
-                title="审核"
               >
-                <i class="fas fa-arrow-right"></i>
+                审核
               </el-button>
             </template>
           </el-table-column>

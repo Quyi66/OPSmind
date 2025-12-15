@@ -6,6 +6,7 @@
         v-model="searchKeyword"
         placeholder="搜索"
         clearable
+        size="small"
         style="width: 200px"
         @input="handleSearch"
       >
@@ -13,17 +14,17 @@
           <i class="fa fa-search"></i>
         </template>
       </el-input>
-      <el-button @click="handleReset">
+      <el-button size="small" @click="handleReset">
         <i class="fa fa-undo"></i> 重置
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button @click="loadData">
+      <el-button size="small" @click="loadData">
         <i class="fa fa-refresh"></i> 刷新
       </el-button>
-      <el-button type="primary" @click="handleScanHosts">
+      <el-button type="primary" size="small" @click="handleScanHosts">
         <i class="fa fa-redo"></i> 扫描主机
       </el-button>
     </div>

@@ -6,6 +6,7 @@
         v-model="searchKeyword"
         placeholder="搜索模板名称"
         clearable
+        size="small"
         style="width: 250px"
         @input="handleSearch"
       >
@@ -13,17 +14,17 @@
           <i class="fa fa-search"></i>
         </template>
       </el-input>
-      <el-button @click="handleReset">
+      <el-button size="small" @click="handleReset">
         <i class="fa fa-undo"></i> 重置
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" @click="goToAdd">
+      <el-button type="primary" size="small" @click="goToAdd">
         <i class="fa fa-plus"></i> 新建模板
       </el-button>
-      <el-button @click="loadTemplates">
+      <el-button size="small" @click="loadTemplates">
         <i class="fa fa-refresh"></i> 刷新
       </el-button>
     </div>
@@ -79,35 +80,17 @@
         <el-table-column prop="executedBy" label="执行人" width="120" sortable show-overflow-tooltip />
 
         <!-- 操作 -->
-        <el-table-column label="操作" width="160" align="right">
+        <el-table-column label="操作" width="132" align="center" fixed="right">
           <template #default="{ row }">
-            <el-tooltip content="执行" placement="top">
-              <el-button
-                class="action-btn"
-                link
-                @click="runTemplate(row)"
-              >
-                <i class="fa fa-caret-square-right"></i>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="编辑" placement="top">
-              <el-button
-                class="action-btn"
-                link
-                @click="editTemplate(row)"
-              >
-                <i class="fa fa-pencil"></i>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="删除" placement="top">
-              <el-button
-                class="action-btn"
-                link
-                @click="deleteTemplate(row)"
-              >
-                <i class="fa fa-trash-alt"></i>
-              </el-button>
-            </el-tooltip>
+            <el-button text type="primary" size="small" @click="runTemplate(row)">
+              执行
+            </el-button>
+            <el-button text type="primary" size="small" @click="editTemplate(row)">
+              编辑
+            </el-button>
+            <el-button text type="danger" size="small" @click="deleteTemplate(row)">
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>

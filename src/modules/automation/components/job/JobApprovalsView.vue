@@ -6,6 +6,7 @@
         v-model="searchKeyword"
         placeholder="搜索作业名称"
         clearable
+        size="small"
         style="width: 240px"
       >
         <template #prefix>
@@ -16,6 +17,7 @@
         v-model="statusFilter"
         placeholder="状态筛选"
         clearable
+        size="small"
         style="width: 140px"
       >
         <el-option label="全部状态" :value="null" />
@@ -24,14 +26,14 @@
         <el-option label="审批未通过" :value="2" />
         <el-option label="审批作废" :value="3" />
       </el-select>
-      <el-button @click="handleReset">
+      <el-button size="small" @click="handleReset">
         <i class="fa fa-undo" /> 重置
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button @click="fetchData" title="刷新">
+      <el-button size="small" @click="fetchData" title="刷新">
         <i class="fa fa-refresh" />
       </el-button>
     </div>

@@ -92,7 +92,7 @@
             size="small"
             @click="handleEditRepo(row)"
           >
-            <i class="fa fa-pencil" />
+            编辑
           </el-button>
           <el-button
             v-if="row.externalRepo"
@@ -101,7 +101,7 @@
             size="small"
             @click="handleDeleteRepo(row)"
           >
-            <i class="fa fa-trash-alt" />
+            删除
           </el-button>
         </template>
       </el-table-column>

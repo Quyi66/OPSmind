@@ -1,13 +1,13 @@
 <template>
   <div class="result-list-page">
     <!-- 左侧模板列表 -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
+    <aside class="ops-sidebar-nav ops-sidebar-nav--wide">
+      <div class="ops-sidebar-header">
         <el-input
           v-model="templateSearchText"
           placeholder="搜索模板"
           clearable
-          class="template-filter"
+          class="ops-sidebar-search"
         >
           <template #prefix>
             <i class="fa fa-search"></i>
@@ -39,26 +39,24 @@
           </template>
         </el-dropdown>
       </div>
-      <div class="sidebar-content">
-        <div class="template-nav">
-          <a
-            class="template-nav-item"
-            :class="{ active: selectedTemplateId === '' }"
-            @click="selectTemplate('')"
-          >
-            <i class="fa fa-list-alt"></i>
-            全部
-          </a>
-          <a
-            v-for="item in filteredTemplates"
-            :key="item.id"
-            class="template-nav-item"
-            :class="{ active: selectedTemplateId === item.id }"
-            @click="selectTemplate(item.id)"
-          >
-            {{ item.templateName }}
-          </a>
-        </div>
+      <div class="ops-sidebar-content">
+        <a
+          class="ops-sidebar-item"
+          :class="{ active: selectedTemplateId === '' }"
+          @click="selectTemplate('')"
+        >
+          <i class="fa fa-list-alt"></i>
+          全部
+        </a>
+        <a
+          v-for="item in filteredTemplates"
+          :key="item.id"
+          class="ops-sidebar-item"
+          :class="{ active: selectedTemplateId === item.id }"
+          @click="selectTemplate(item.id)"
+        >
+          {{ item.templateName }}
+        </a>
         <div v-if="templateLoading" class="loading-placeholder">
           <i class="fa fa-cog fa-spin"></i> 正在加载...
         </div>
@@ -91,23 +89,22 @@
         <el-table
           v-loading="loading"
           :data="tableData"
-          border
           stripe
           style="width: 100%"
           row-key="id"
         >
-          <el-table-column prop="templateName" label="模板" min-width="180" show-overflow-tooltip sortable />
-          <el-table-column label="检查项" min-width="160">
+          <el-table-column prop="templateName" label="模板" show-overflow-tooltip sortable />
+          <el-table-column label="检查项">
             <template #default="{ row }">
               <div v-html="formatAuditParams(row.auditParams)"></div>
             </template>
           </el-table-column>
-          <el-table-column label="开始时间" width="170" sortable>
+          <el-table-column label="开始时间" width="200" sortable>
             <template #default="{ row }">
               {{ formatDateTime(row.createdAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="结束时间" width="170" sortable>
+          <el-table-column label="结束时间" width="200" sortable>
             <template #default="{ row }">
               {{ formatDateTime(row.endedAt) }}
             </template>
@@ -125,28 +122,26 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="120" align="center" fixed="right">
+          <el-table-column label="操作" width="90" align="center" fixed="right">
             <template #default="{ row }">
-              <el-tooltip content="架构图" placement="top">
-                <el-button
-                  text
-                  size="small"
-                  :disabled="row.jobStatus === 'WAITING'"
-                  @click="viewStructuralDiagram(row)"
-                >
-                  <i class="fa fa-sitemap"></i>
-                </el-button>
-              </el-tooltip>
-              <el-tooltip content="检查结果" placement="top">
-                <el-button
-                  text
-                  size="small"
-                  :disabled="row.jobStatus === 'WAITING'"
-                  @click="viewResult(row)"
-                >
-                  <i class="fa fa-grip-horizontal"></i>
-                </el-button>
-              </el-tooltip>
+              <el-button
+                text
+                type="primary"
+                size="small"
+                :disabled="row.jobStatus === 'WAITING'"
+                @click="viewStructuralDiagram(row)"
+              >
+                架构
+              </el-button>
+              <el-button
+                text
+                type="primary"
+                size="small"
+                :disabled="row.jobStatus === 'WAITING'"
+                @click="viewResult(row)"
+              >
+                结果
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -513,65 +508,9 @@ onMounted(() => {
   background: #fff;
 }
 
-// 左侧边栏
-.sidebar {
-  width: 200px;
-  min-width: 200px;
-  border-right: 1px solid #dee2e6;
-  background: #f8f9fa;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border-bottom: 1px solid #dee2e6;
-
-  .template-filter {
-    flex: 1;
-  }
-
-  .sort-btn {
-    padding: 8px 10px;
-  }
-}
-
-.sidebar-content {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.template-nav {
-  padding: 8px 0;
-}
-
-.template-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  color: #495057;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #e9ecef;
-    color: #0d6efd;
-  }
-
-  &.active {
-    background: #0d6efd;
-    color: #fff;
-  }
-
-  i {
-    width: 16px;
-    text-align: center;
-  }
+// 侧边栏排序按钮样式
+.sort-btn {
+  padding: 8px 10px;
 }
 
 .loading-placeholder {

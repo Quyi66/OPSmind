@@ -61,38 +61,40 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="180" align="center" fixed="right">
+      <el-table-column label="操作" width="176" align="center" fixed="right">
         <template #default="{ row }">
           <el-button
+            text
             type="primary"
-            link
             size="small"
-            :icon="VideoPlay"
-            title="立即执行一次"
             @click="$emit('execute', row)"
-          />
+          >
+            执行
+          </el-button>
           <el-button
+            text
             type="primary"
-            link
             size="small"
-            :icon="Edit"
             @click="$emit('edit', row)"
-          />
+          >
+            编辑
+          </el-button>
           <el-button
+            text
             type="primary"
-            link
             size="small"
-            :icon="CopyDocument"
-            title="复制"
             @click="$emit('copy', row)"
-          />
+          >
+            复制
+          </el-button>
           <el-button
+            text
             type="danger"
-            link
             size="small"
-            :icon="Delete"
             @click="$emit('delete', row)"
-          />
+          >
+            删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>

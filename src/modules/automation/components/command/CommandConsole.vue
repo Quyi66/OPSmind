@@ -115,8 +115,8 @@
         <el-table-column prop="runNumber" label="执行次数" width="90" />
         <el-table-column label="操作" width="80" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button link @click="handleUseHistory(row)" title="数据回填">
-              <i class="fas fa-reply"></i>
+            <el-button text type="primary" size="small" @click="handleUseHistory(row)">
+              回填
             </el-button>
           </template>
         </el-table-column>

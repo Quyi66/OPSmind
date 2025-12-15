@@ -3,26 +3,26 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <span class="filter-label">时间范围:</span>
-      <el-select v-model="filters.day" style="width: 100px" @change="handleFilterChange">
+      <el-select v-model="filters.day" size="small" style="width: 100px" @change="handleFilterChange">
         <el-option label="Today" :value="1" />
         <el-option label="3 Days" :value="3" />
         <el-option label="7 Days" :value="7" />
         <el-option label="30 Days" :value="30" />
       </el-select>
 
-      <el-select v-model="filters.ataNode" placeholder="执行引擎节点" style="width: 130px" clearable @change="handleFilterChange">
+      <el-select v-model="filters.ataNode" placeholder="执行引擎节点" size="small" style="width: 130px" clearable @change="handleFilterChange">
         <el-option label="全部" value="all" />
         <el-option v-for="node in ataNodes" :key="node" :label="node" :value="node" />
       </el-select>
 
-      <el-select v-model="filters.status" placeholder="状态" style="width: 100px" @change="handleFilterChange">
+      <el-select v-model="filters.status" placeholder="状态" size="small" style="width: 100px" @change="handleFilterChange">
         <el-option label="全部" value="all" />
         <el-option label="完成" value="COMPLETED" />
         <el-option label="运行错误" value="ERROR" />
         <el-option label="运行中" value="RUNNING" />
       </el-select>
 
-      <el-select v-model="filters.action" placeholder="操作" style="width: 120px" @change="handleFilterChange">
+      <el-select v-model="filters.action" placeholder="操作" size="small" style="width: 120px" @change="handleFilterChange">
         <el-option label="全部" value="all" />
         <el-option v-for="action in actionTypes" :key="action.value" :label="action.label" :value="action.value" />
       </el-select>
@@ -31,15 +31,16 @@
         v-model="searchKeyword"
         placeholder="搜索"
         clearable
+        size="small"
         :prefix-icon="Search"
         style="width: 180px"
         @input="handleSearch"
       />
 
-      <el-button type="primary" @click="loadData">
+      <el-button type="primary" size="small" @click="loadData">
         <i class="fa fa-search"></i> 搜索
       </el-button>
-      <el-button :icon="Refresh" @click="loadData" title="刷新" />
+      <el-button size="small" :icon="Refresh" @click="loadData" title="刷新" />
     </div>
 
     <!-- 表格区域 -->

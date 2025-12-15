@@ -114,16 +114,16 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="80" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="row.job_type === 'script' && !['WAITING', 'RUNNING', 'CALLBACK'].includes(row.status)"
-              link
+              text
+              type="primary"
+              size="small"
               @click="handleRerun(row)"
-              title="重新运行"
             >
-              <i class="fas fa-rocket"></i>
-              <span class="ml-1">重运行</span>
+              重运行
             </el-button>
           </template>
         </el-table-column>

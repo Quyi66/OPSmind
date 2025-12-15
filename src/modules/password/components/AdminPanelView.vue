@@ -8,42 +8,42 @@
         :options="{ label: '筛选主机' }"
         @change="loadData"
       />
-      <el-button @click="loadData" :loading="loading" title="刷新">
+      <el-button size="small" @click="loadData" :loading="loading" title="刷新">
         <i class="fa fa-refresh"></i>
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="info" plain @click="handleBack">
+      <el-button type="info" plain size="small" @click="handleBack">
         <i class="fa fa-arrow-circle-left"></i>
         返回
       </el-button>
-      <el-button @click="handleBatchModify">
+      <el-button size="small" @click="handleBatchModify">
         <i class="fa fa-wrench"></i>
         批量修改
       </el-button>
-      <el-button :disabled="!selectedRows.length" @click="handleSelectModify">
+      <el-button size="small" :disabled="!selectedRows.length" @click="handleSelectModify">
         <i class="fa fa-keyboard"></i>
         选择修改
       </el-button>
-      <el-button @click="handleCheckPasswordState">
+      <el-button size="small" @click="handleCheckPasswordState">
         <i class="fa fa-check-double"></i>
         检查密码状态
       </el-button>
-      <el-button @click="handleRevertPassword">
+      <el-button size="small" @click="handleRevertPassword">
         <i class="fa fa-recycle"></i>
         回收密码
       </el-button>
-      <el-button @click="handleExportPassword">
+      <el-button size="small" @click="handleExportPassword">
         <i class="fa fa-file-export"></i>
         导出密码
       </el-button>
-      <el-button plain @click="handleImportInitPassword">
+      <el-button plain size="small" @click="handleImportInitPassword">
         <i class="fa fa-arrow-up"></i>
         导入初始密码
       </el-button>
-      <el-button type="info" plain @click="handleDownloadTemplate">
+      <el-button type="info" plain size="small" @click="handleDownloadTemplate">
         <i class="fa fa-file-excel"></i>
         模板下载
       </el-button>
@@ -88,43 +88,43 @@
           </template>
         </el-table-column>
         <el-table-column prop="operator_name" label="操作人" width="100" />
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="176" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button
+                text
+                type="primary"
                 size="small"
-                plain
                 :disabled="row.setup_status === 'PROCESS' || row.setup_status === 'RESET'"
                 @click="handleViewPassword(row)"
               >
-                <i class="fa fa-eye"></i>
                 查看密码
               </el-button>
               <el-button
+                text
+                type="primary"
                 size="small"
-                plain
                 :disabled="row.setup_status === 'PROCESS' || row.setup_status === 'RESET'"
                 @click="handleViewHistory(row)"
               >
-                <i class="fa fa-grip-horizontal"></i>
                 操作历史
               </el-button>
               <el-button
                 v-if="row.setup_status === 'PROCESS'"
-                type="primary"
+                text
+                type="info"
                 size="small"
                 disabled
               >
-                <i class="fa fa-recycle"></i>
                 修改中
               </el-button>
               <el-button
                 v-if="row.setup_status === 'RESET'"
-                type="primary"
+                text
+                type="info"
                 size="small"
                 disabled
               >
-                <i class="fa fa-recycle"></i>
                 重置中
               </el-button>
             </div>

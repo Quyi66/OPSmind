@@ -106,39 +106,43 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="160" fixed="right" align="center">
+        <el-table-column label="操作" width="176" fixed="right" align="center">
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button
-                link
+                text
+                type="primary"
+                size="small"
                 :disabled="row.status === 3"
                 @click="handleEdit(row)"
-                title="编辑"
               >
-                <i class="fas fa-pencil-alt"></i>
+                编辑
               </el-button>
               <el-button
-                link
+                text
+                :type="row.status === 3 ? 'success' : 'warning'"
+                size="small"
                 :disabled="row.status === 1 || row.status === 2"
                 @click="handleToggleStatus(row)"
-                :title="row.status === 3 ? '启用' : '停用'"
               >
-                <i :class="row.status === 3 ? 'fas fa-check-circle' : 'fas fa-minus-circle'"></i>
+                {{ row.status === 3 ? '启用' : '停用' }}
               </el-button>
               <el-button
-                link
+                text
+                type="danger"
+                size="small"
                 @click="handleDelete(row)"
-                title="删除"
               >
-                <i class="fas fa-trash-alt"></i>
+                删除
               </el-button>
               <el-button
-                link
+                text
+                type="primary"
+                size="small"
                 :disabled="row.status !== 0"
                 @click="handleRun(row)"
-                title="执行"
               >
-                <i class="fas fa-play-circle"></i>
+                执行
               </el-button>
             </div>
           </template>

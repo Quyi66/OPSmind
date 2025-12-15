@@ -6,6 +6,7 @@
         v-model="filters.keyword"
         placeholder="搜索"
         clearable
+        size="small"
         style="width: 180px"
         @keyup.enter="loadData"
         @clear="loadData"
@@ -14,27 +15,27 @@
           <i class="fa fa-search"></i>
         </template>
       </el-input>
-      <el-select v-model="filters.action" placeholder="操作类型" clearable style="width: 150px" @change="loadData">
+      <el-select v-model="filters.action" placeholder="操作类型" clearable size="small" style="width: 150px" @change="loadData">
         <el-option label="全部操作" value="all" />
         <el-option label="设置密码复杂度" value="设置密码复杂度" />
         <el-option label="新增sudo配置" value="新增sudo配置" />
         <el-option label="扫描sudo配置" value="扫描sudo配置" />
         <el-option label="重置密码" value="重置密码" />
       </el-select>
-      <el-select v-model="filters.status" placeholder="状态" clearable style="width: 120px" @change="loadData">
+      <el-select v-model="filters.status" placeholder="状态" clearable size="small" style="width: 120px" @change="loadData">
         <el-option label="全部状态" value="all" />
         <el-option label="成功" value="COMPLETED" />
         <el-option label="失败" value="ERROR" />
       </el-select>
-      <el-select v-model="filters.day" placeholder="时间范围" style="width: 120px" @change="loadData">
+      <el-select v-model="filters.day" placeholder="时间范围" size="small" style="width: 120px" @change="loadData">
         <el-option label="最近1天" :value="1" />
         <el-option label="最近7天" :value="7" />
         <el-option label="最近30天" :value="30" />
       </el-select>
-      <el-button type="primary" @click="loadData">
+      <el-button type="primary" size="small" @click="loadData">
         <i class="fa fa-search"></i> 搜索
       </el-button>
-      <el-button @click="loadData" :loading="loading" title="刷新">
+      <el-button size="small" @click="loadData" :loading="loading" title="刷新">
         <i class="fa fa-refresh"></i>
       </el-button>
     </div>

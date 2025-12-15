@@ -6,6 +6,7 @@
         v-model="searchText"
         placeholder="搜索团队名称/编码"
         clearable
+        size="small"
         style="width: 200px"
         @input="handleSearch"
       >
@@ -13,17 +14,17 @@
           <i class="fa fa-search"></i>
         </template>
       </el-input>
-      <el-button type="primary" @click="handleSearch">
+      <el-button type="primary" size="small" @click="handleSearch">
         <i class="fa fa-search"></i> 搜索
       </el-button>
-      <el-button @click="handleReset">
+      <el-button size="small" @click="handleReset">
         <i class="fa fa-undo"></i> 重置
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" @click="handleCreateTeam">
+      <el-button type="primary" size="small" @click="handleCreateTeam">
         <i class="fa fa-plus"></i> 创建团队
       </el-button>
     </div>

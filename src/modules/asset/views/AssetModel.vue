@@ -66,18 +66,14 @@
             {{ formatDateTime(row.updated_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" align="center">
+        <el-table-column label="操作" width="88" align="center" fixed="right">
           <template #default="{ row }">
-            <el-tooltip content="编辑" placement="top">
-              <el-button link type="primary" @click="handleEditModel(row)">
-                <i class="fa fa-pencil-alt"></i>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="删除" placement="top">
-              <el-button link type="danger" @click="handleDeleteModel(row)">
-                <i class="fa fa-trash-alt"></i>
-              </el-button>
-            </el-tooltip>
+            <el-button text type="primary" size="small" @click="handleEditModel(row)">
+              编辑
+            </el-button>
+            <el-button text type="danger" size="small" @click="handleDeleteModel(row)">
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>

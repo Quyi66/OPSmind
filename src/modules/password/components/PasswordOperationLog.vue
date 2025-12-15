@@ -2,7 +2,7 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-select v-model="filters.status" placeholder="状态" style="width: 120px" @change="loadData">
+      <el-select v-model="filters.status" placeholder="状态" size="small" style="width: 120px" @change="loadData">
         <el-option label="全部状态" value="all" />
         <el-option label="成功" value="SUCCESS" />
         <el-option label="失败" value="FAILED" />
@@ -11,6 +11,7 @@
         v-model="filters.keyword"
         placeholder="搜索"
         clearable
+        size="small"
         style="width: 180px"
         @keyup.enter="loadData"
         @clear="loadData"
@@ -19,10 +20,10 @@
           <i class="fa fa-search"></i>
         </template>
       </el-input>
-      <el-button type="primary" @click="loadData">
+      <el-button type="primary" size="small" @click="loadData">
         <i class="fa fa-search"></i> 搜索
       </el-button>
-      <el-button @click="loadData" :loading="loading" title="刷新">
+      <el-button size="small" @click="loadData" :loading="loading" title="刷新">
         <i class="fa fa-refresh"></i>
       </el-button>
     </div>

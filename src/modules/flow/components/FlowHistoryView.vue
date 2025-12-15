@@ -51,24 +51,24 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="132" fixed="right">
           <template #default="{ row }">
             <el-button
-              type="success"
+              text
+              type="primary"
               size="small"
-              plain
               :disabled="row.version === row.currentVersion"
               @click="handleChangeVersion(row)"
             >
-              <i class="fa fa-edit"></i> 切换版本
+              切换版本
             </el-button>
             <el-button
+              text
               type="primary"
               size="small"
-              plain
               @click="handleDesign(row)"
             >
-              <i class="fa fa-pencil-ruler"></i> 设计
+              设计
             </el-button>
           </template>
         </el-table-column>

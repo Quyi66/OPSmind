@@ -276,23 +276,17 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" width="120" fixed="right">
+          <el-table-column label="操作" width="132" fixed="right">
             <template #default="{ row }">
-              <el-tooltip content="查看" placement="top">
-                <el-button link type="primary" size="small" @click="handleView(row)">
-                  <i class="fa fa-eye"></i>
-                </el-button>
-              </el-tooltip>
-              <el-tooltip content="编辑" placement="top">
-                <el-button link type="primary" size="small" @click="handleEditRow(row)">
-                  <i class="fa fa-pencil-alt"></i>
-                </el-button>
-              </el-tooltip>
-              <el-tooltip content="历史" placement="top">
-                <el-button link type="primary" size="small" @click="handleHistory(row)">
-                  <i class="fa fa-chart-bar"></i>
-                </el-button>
-              </el-tooltip>
+              <el-button text type="primary" size="small" @click="handleView(row)">
+                查看
+              </el-button>
+              <el-button text type="primary" size="small" @click="handleEditRow(row)">
+                编辑
+              </el-button>
+              <el-button text type="primary" size="small" @click="handleHistory(row)">
+                历史
+              </el-button>
             </template>
           </el-table-column>
         </el-table>

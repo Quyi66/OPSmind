@@ -6,6 +6,7 @@
         v-model="searchText"
         placeholder="搜索用户名/姓名"
         clearable
+        size="small"
         style="width: 200px"
         @input="handleSearch"
       >
@@ -13,24 +14,24 @@
           <i class="fa fa-search"></i>
         </template>
       </el-input>
-      <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 120px" @change="handleSearch">
+      <el-select v-model="statusFilter" placeholder="状态" clearable size="small" style="width: 120px" @change="handleSearch">
         <el-option label="已激活" value="activated" />
         <el-option label="已禁用" value="disabled" />
       </el-select>
-      <el-button type="primary" @click="handleSearch">
+      <el-button type="primary" size="small" @click="handleSearch">
         <i class="fa fa-search"></i> 搜索
       </el-button>
-      <el-button @click="handleReset">
+      <el-button size="small" @click="handleReset">
         <i class="fa fa-undo"></i> 重置
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" @click="handleCreateUser">
+      <el-button type="primary" size="small" @click="handleCreateUser">
         <i class="fa fa-plus"></i> 添加用户
       </el-button>
-      <el-button @click="handleAllocateRole">
+      <el-button size="small" @click="handleAllocateRole">
         <i class="fa fa-user-tag"></i> 分配角色
       </el-button>
     </div>

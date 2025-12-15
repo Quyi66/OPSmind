@@ -17,10 +17,10 @@
           {{ formatDate(row.update_time) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="100" fixed="right">
+      <el-table-column label="操作" width="44" fixed="right">
         <template #default="{ row }">
-          <el-button type="danger" link size="small" @click="handleDelete(row)">
-            <i class="fa fa-trash" /> 删除
+          <el-button text type="danger" size="small" @click="handleDelete(row)">
+            删除
           </el-button>
         </template>
       </el-table-column>

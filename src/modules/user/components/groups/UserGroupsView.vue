@@ -63,15 +63,15 @@
             {{ formatDateTime(row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" width="44" fixed="right">
           <template #default="{ row }">
             <el-button
+              text
               type="danger"
-              plain
               size="small"
               @click="handleDeleteSingleGroup(row)"
             >
-              <i class="fa fa-minus-circle"></i> 删除
+              删除
             </el-button>
           </template>
         </el-table-column>

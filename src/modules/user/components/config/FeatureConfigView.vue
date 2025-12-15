@@ -132,15 +132,15 @@
           </el-table-column>
           <el-table-column prop="created_by" label="创建者" width="100" />
           <el-table-column prop="updated_by" label="修改者" width="100" />
-          <el-table-column label="操作" width="100" fixed="right">
+          <el-table-column label="操作" width="44" fixed="right">
             <template #default="{ row }">
               <el-popconfirm
                 title="确定要删除该模板吗？"
                 @confirm="handleDeleteTemplate(row)"
               >
                 <template #reference>
-                  <el-button type="danger" plain size="small">
-                    <i class="fa fa-minus-square"></i> 删除
+                  <el-button text type="danger" size="small">
+                    删除
                   </el-button>
                 </template>
               </el-popconfirm>

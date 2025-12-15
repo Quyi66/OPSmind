@@ -6,6 +6,7 @@
         v-model="searchKeyword"
         placeholder="搜索流程名称"
         clearable
+        size="small"
         style="width: 250px"
         @keyup.enter="loadData"
       >
@@ -13,23 +14,23 @@
           <i class="fa fa-search"></i>
         </template>
       </el-input>
-      <el-button @click="handleReset">
+      <el-button size="small" @click="handleReset">
         <i class="fa fa-undo"></i> 重置
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" @click="handleCreate">
+      <el-button type="primary" size="small" @click="handleCreate">
         <i class="fa fa-plus"></i> 新建
       </el-button>
-      <el-button :disabled="!selectedRows.length" @click="handleBatchDelete">
+      <el-button size="small" :disabled="!selectedRows.length" @click="handleBatchDelete">
         <i class="fa fa-trash"></i> 删除
       </el-button>
-      <el-button @click="handleExport">
+      <el-button size="small" @click="handleExport">
         <i class="fa fa-download"></i> 导出
       </el-button>
-      <el-button @click="loadData">
+      <el-button size="small" @click="loadData">
         <i class="fa fa-refresh"></i> 刷新
       </el-button>
     </div>
@@ -55,23 +56,23 @@
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="300" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button type="primary" plain size="small" @click="handleEdit(row)">
-                <i class="fa fa-edit"></i> 编辑
+              <el-button text type="primary" size="small" @click="handleEdit(row)">
+                编辑
               </el-button>
-              <el-button type="warning" plain size="small" @click="handleDesign(row)">
-                <i class="fa fa-cogs"></i> 设计
+              <el-button text type="primary" size="small" @click="handleDesign(row)">
+                设计
               </el-button>
-              <el-button type="success" plain size="small" @click="handleExecute(row)">
-                <i class="fa fa-play"></i> 执行
+              <el-button text type="primary" size="small" @click="handleExecute(row)">
+                执行
               </el-button>
-              <el-button type="info" plain size="small" @click="handleClone(row)">
-                <i class="fa fa-copy"></i> 克隆
+              <el-button text type="primary" size="small" @click="handleClone(row)">
+                克隆
               </el-button>
-              <el-button type="danger" plain size="small" @click="handleDelete(row)">
-                <i class="fa fa-trash"></i> 删除
+              <el-button text type="danger" size="small" @click="handleDelete(row)">
+                删除
               </el-button>
             </div>
           </template>
