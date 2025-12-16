@@ -98,7 +98,7 @@
                       />
                     </template>
                   </el-table-column>
-                  <el-table-column width="60" align="center">
+                  <el-table-column width="60" align="left">
                     <template #default="{ $index }">
                       <el-button
                         type="danger"

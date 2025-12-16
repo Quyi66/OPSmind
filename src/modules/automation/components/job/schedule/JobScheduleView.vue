@@ -38,7 +38,7 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <el-button type="primary" size="small" plain @click="handleCreateFlow">
+        <el-button type="primary" size="small" @click="handleCreateFlow">
           <i class="fa fa-plus me-1" />新建
         </el-button>
       </header>
@@ -95,29 +95,30 @@
               <i class="fa fa-search" />
             </template>
           </el-input>
-          <el-button circle size="small" @click="refreshInstances" :disabled="instancesLoading">
-            <i class="fa fa-sync" />
-          </el-button>
+          <el-button size="small" @click="refreshInstances" :disabled="instancesLoading">
+            <!-- <i class="fa fa-sync" /> -->
+             <el-icon><RefreshRight /></el-icon>
+              刷新
+            </el-button>
         </div>
 
         <el-table
           :data="filteredInstances"
           v-loading="instancesLoading"
-          border
           height="100%"
           class="instance-table"
           empty-text="暂无实例"
         >
           <el-table-column prop="name" label="名称" min-width="220" show-overflow-tooltip />
-          <el-table-column prop="hostCount" label="主机数" width="90" align="center" />
-          <el-table-column prop="stepCount" label="步骤数" width="90" align="center" />
+          <el-table-column prop="hostCount" label="主机数" width="90" align="left" />
+          <el-table-column prop="stepCount" label="步骤数" width="90" align="left" />
           <el-table-column label="流程开始时间" min-width="180">
             <template #default="{ row }">
               {{ formatDateTime(row.createdAt) }}
             </template>
           </el-table-column>
           <el-table-column prop="createdBy" label="执行人" width="140" show-overflow-tooltip />
-          <el-table-column label="操作" width="120" fixed="right" align="center">
+          <el-table-column label="操作" width="120" fixed="right" align="left">
             <template #default="{ row }">
               <el-button type="primary" text size="small" @click="handleViewInstance(row)">
                 查看
@@ -408,6 +409,7 @@ function pad(value) {
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   overflow: hidden;
+  height: 99%;
 }
 
 .flow-list-panel {

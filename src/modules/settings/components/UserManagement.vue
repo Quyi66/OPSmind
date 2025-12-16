@@ -51,7 +51,7 @@
             {{ row.department || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="activated" label="状态" width="100" align="center">
+        <el-table-column prop="activated" label="状态" width="100" align="left">
           <template #default="{ row }">
             <el-tag
               :type="row.activated ? 'success' : 'danger'"
@@ -64,7 +64,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="authMode" label="认证方式" width="120" align="center">
+        <el-table-column prop="authMode" label="认证方式" width="120" align="left">
           <template #default="{ row }">
             <el-tag :type="getAuthModeType(row.authMode)" size="small">
               {{ getAuthModeLabel(row.authMode) }}

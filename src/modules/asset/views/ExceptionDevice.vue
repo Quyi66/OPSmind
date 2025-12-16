@@ -89,7 +89,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="CONN_LATEST_STATUS" label="最近连通状态" min-width="120" align="center">
+        <el-table-column prop="CONN_LATEST_STATUS" label="最近连通状态" min-width="120" align="left">
           <template #default="{ row }">
             <span :class="getConnStatusClass(row.CONN_LATEST_STATUS)">
               <i :class="getConnStatusIcon(row.CONN_LATEST_STATUS)"></i>

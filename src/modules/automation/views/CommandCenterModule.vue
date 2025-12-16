@@ -19,8 +19,8 @@
       </aside>
 
       <section class="cmd-module__content">
-        <!-- 命令列表 -->
-        <div v-if="activeView === 'commandList'" class="view-container">
+        <!-- 命令列表（默认页面） -->
+        <div v-if="activeView === 'list'" class="view-container">
           <div class="view-card">
             <CommandList
               ref="commandListRef"
@@ -31,64 +31,30 @@
         </div>
 
         <!-- 命令作业 -->
-        <div v-else-if="activeView === 'commandJob'" class="view-container">
+        <div v-else-if="activeView === 'job'" class="view-container">
           <div class="view-card">
-            <CommandJobList
-              ref="commandJobRef"
-              job-type="command"
-            />
+            <CommandJobList ref="commandJobRef" job-type="command" />
           </div>
         </div>
 
         <!-- 命令审核 -->
-        <div v-else-if="activeView === 'commandReview'" class="view-container">
+        <div v-else-if="activeView === 'review'" class="view-container">
           <div class="view-card">
             <CommandApproveList ref="commandApproveRef" />
           </div>
         </div>
 
-        <!-- 日志 -->
+        <!-- 运行记录 -->
         <div v-else-if="activeView === 'logs'" class="view-container">
           <div class="view-card">
             <CommandLogs ref="commandLogsRef" />
           </div>
         </div>
 
-        <!-- Console（仅管理员） -->
+        <!-- Console -->
         <div v-else-if="activeView === 'console'" class="view-container">
           <div class="view-card">
-            <CommandConsole ref="commandConsoleRef" @back="activeView = 'commandList'" />
-          </div>
-        </div>
-
-        <!-- 欢迎页 -->
-        <div v-else class="welcome-view">
-          <div class="feature-cards">
-            <div
-              class="feature-card"
-              @click="activeView = 'commandList'"
-            >
-              <div class="feature-card__icon">
-                <i class="fas fa-terminal fa-3x" />
-              </div>
-              <div class="feature-card__body">
-                <h3>命令列表</h3>
-                <p>管理和维护可复用的命令模板，支持多种脚本类型。</p>
-              </div>
-            </div>
-
-            <div
-              class="feature-card"
-              @click="activeView = 'commandJob'"
-            >
-              <div class="feature-card__icon">
-                <i class="fas fa-tasks fa-3x" />
-              </div>
-              <div class="feature-card__body">
-                <h3>命令作业</h3>
-                <p>将命令组织成可重复执行的作业，支持批量主机操作。</p>
-              </div>
-            </div>
+            <CommandConsole ref="commandConsoleRef" />
           </div>
         </div>
       </section>
@@ -105,7 +71,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
 import CommandList from '@/modules/automation/components/command/CommandList.vue'
 import CommandJobList from '@/modules/automation/components/command/CommandJobList.vue'
@@ -114,35 +81,81 @@ import CommandLogs from '@/modules/automation/components/command/CommandLogs.vue
 import CommandConsole from '@/modules/automation/components/command/CommandConsole.vue'
 import RunCommandDialog from '@/modules/automation/components/command/dialogs/RunCommandDialog.vue'
 
+// 模块信息
+const moduleTitle = '命令管理'
+const moduleDescription = '管理和执行命令，支持作业编排'
+
+const route = useRoute()
+const router = useRouter()
+
+// 当前视图
+const activeView = ref('list')
+
 // 导航项配置
 const navItems = [
-  { key: 'commandList', label: '命令列表', icon: 'fas fa-list' },
-  { key: 'commandJob', label: '命令作业', icon: 'fas fa-tasks' },
-  { key: 'commandReview', label: '命令审核', icon: 'fas fa-clipboard-check' },
-  { key: 'logs', label: '日志', icon: 'fas fa-file-alt' },
+  { key: 'list', label: '命令列表', icon: 'fas fa-list' },
+  { key: 'job', label: '命令作业', icon: 'fas fa-tasks' },
+  { key: 'review', label: '命令审核', icon: 'fas fa-clipboard-check' },
+  { key: 'logs', label: '运行记录', icon: 'fas fa-file-alt' },
   { key: 'console', label: 'Console', icon: 'fas fa-terminal', adminOnly: true }
 ]
 
-// 当前激活的视图
-const activeView = ref('commandList')
-
-// 组件引用
+// 子组件引用
 const commandListRef = ref(null)
 const commandJobRef = ref(null)
 const commandApproveRef = ref(null)
 const commandLogsRef = ref(null)
 const commandConsoleRef = ref(null)
 
+// 获取当前模块的基础路径
+function getBasePath() {
+  const path = route.path
+  const match = path.match(/^\/([^/]+)/)
+  return match ? `/${match[1]}` : '/cmd'
+}
+
+/**
+ * 解析路由路径，确定当前视图
+ */
+function parseRouteView() {
+  const path = route.path
+  const params = route.params
+  const pathMatch = Array.isArray(params.pathMatch)
+    ? params.pathMatch.join('/')
+    : params.pathMatch || ''
+
+  // 检查各种子路由
+  if (path.includes('/job') || pathMatch.includes('job')) {
+    return 'job'
+  }
+  if (path.includes('/review') || pathMatch.includes('review')) {
+    return 'review'
+  }
+  if (path.includes('/logs') || pathMatch.includes('logs')) {
+    return 'logs'
+  }
+  if (path.includes('/console') || pathMatch.includes('console')) {
+    return 'console'
+  }
+  if (path.includes('/list') || pathMatch.includes('list')) {
+    return 'list'
+  }
+
+  return 'list'
+}
+
+// 导航点击
+function handleNavClick(item) {
+  activeView.value = item.key
+  const basePath = getBasePath()
+  const targetPath = item.key === 'list' ? basePath : `${basePath}/${item.key}`
+  router.push(targetPath)
+}
+
 // 执行命令对话框状态
 const runCommandDialogVisible = ref(false)
 const selectedCommand = ref(null)
-const runCommandMode = ref('run') // 'run' 或 'createJob'
-
-// 处理导航点击
-function handleNavClick(item) {
-  // TODO: 检查 adminOnly 权限
-  activeView.value = item.key
-}
+const runCommandMode = ref('run')
 
 // 执行命令
 function handleRunCommand(command) {
@@ -163,21 +176,29 @@ function handleRunSuccess(result) {
   if (runCommandMode.value === 'createJob' && commandJobRef.value?.refresh) {
     commandJobRef.value.refresh()
   }
-  // 如果是执行命令，可以跳转到日志页面
   if (runCommandMode.value === 'run') {
-    activeView.value = 'logs'
+    const basePath = getBasePath()
+    router.push(`${basePath}/logs`)
   }
 }
 
-// 模块信息
-const moduleTitle = '命令管理'
-const moduleDescription = '管理和执行命令，支持作业编排'
+// 监听路由变化
+watch(
+  () => route.path,
+  () => {
+    activeView.value = parseRouteView()
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  activeView.value = parseRouteView()
+})
 
 // 暴露方法供外部调用
 defineExpose({
-  activeView,
-  commandListRef,
-  commandJobRef
+  handleRunCommand,
+  handleCreateJob
 })
 </script>
 

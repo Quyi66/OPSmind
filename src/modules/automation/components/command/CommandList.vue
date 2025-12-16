@@ -1,56 +1,53 @@
 <template>
-  <div class="command-list">
-    <!-- 标题栏 -->
-    <div class="command-list__header">
-      <div class="header-actions">
-        <el-button type="primary" @click="handleCreate">
-          <i class="fas fa-plus"></i>
-          创建命令
-        </el-button>
-      </div>
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索"
+        size="small"
+        style="width: 200px"
+        clearable
+        @clear="handleSearch"
+        @keyup.enter="handleSearch"
+      />
+      <el-button size="small" @click="loadData">
+        <el-icon><RefreshRight /></el-icon>
+        刷新
+      </el-button>
     </div>
 
-    <!-- 工具栏 -->
-    <div class="command-list__toolbar">
-      <div class="toolbar-left">
-        <el-button
-          type="primary"
-          :disabled="selectedCommands.length === 0"
-          @click="handleBatchRun('run')"
-        >
-          <i class="fas fa-play"></i>
-          执行命令
-        </el-button>
-        <el-button
-          :disabled="selectedCommands.length === 0"
-          @click="handleBatchRun('createJob')"
-        >
-          创建作业
-        </el-button>
-      </div>
-      <div class="toolbar-right">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索"
-          style="width: 200px"
-          clearable
-          @clear="handleSearch"
-          @keyup.enter="handleSearch"
-        >
-          <template #suffix>
-            <i class="fas fa-times" v-if="searchKeyword" @click="searchKeyword = ''" style="cursor: pointer;"></i>
-          </template>
-        </el-input>
-      </div>
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" size="small" @click="handleCreate">
+        <i class="fas fa-plus" />
+        创建命令
+      </el-button>
+      <el-button
+        type="default"
+        size="small"
+        :disabled="selectedCommands.length === 0"
+        @click="handleBatchRun('run')"
+      >
+        <i class="fas fa-play" />
+        执行命令
+      </el-button>
+      <el-button
+        size="small"
+        :disabled="selectedCommands.length === 0"
+        @click="handleBatchRun('createJob')"
+      >
+        创建作业
+      </el-button>
     </div>
 
-    <!-- 命令表格 -->
-    <div class="command-list__table">
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
       <el-table
         ref="tableRef"
         v-loading="loading"
         :data="filteredCommands"
-        border
+        stripe
         height="100%"
         @selection-change="handleSelectionChange"
       >
@@ -72,93 +69,95 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="type" label="类型" width="100" align="center" sortable />
+        <el-table-column prop="type" label="类型" width="100" align="left" sortable />
 
-        <el-table-column prop="createdAt" label="创建时间" width="170" align="center" sortable>
+        <el-table-column prop="createdAt" label="创建时间" width="180" align="left" sortable>
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="updatedAt" label="修改时间" width="170" align="center" sortable>
+        <el-table-column prop="updatedAt" label="修改时间" width="180" align="left" sortable>
           <template #default="{ row }">
             {{ formatDate(row.updatedAt) }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="createdBy" label="创建人" width="100" align="center" sortable />
+        <el-table-column prop="createdBy" label="创建人" width="100" align="left" sortable />
 
-        <el-table-column prop="checkBy" label="审核人" width="100" align="center" sortable>
+        <el-table-column prop="checkBy" label="审核人" width="100" align="left" sortable>
           <template #default="{ row }">
             {{ row.checkBy || '' }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="status" label="状态" width="100" align="center" sortable>
+        <el-table-column prop="status" label="状态" width="100" align="left" sortable>
           <template #default="{ row }">
-            <span
-              class="status-badge"
-              :class="getStatusClass(row.status)"
+            <el-tag
+              :type="getStatusTagType(row.status)"
+              size="small"
+              style="cursor: pointer;"
               @click="handleStatusClick(row)"
             >
               {{ getStatusText(row.status) }}
-            </span>
+            </el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="176" fixed="right" align="center">
+        <el-table-column label="操作" width="176" fixed="right" align="left">
           <template #default="{ row }">
-            <div class="action-buttons">
-              <el-button
-                text
-                type="primary"
-                size="small"
-                :disabled="row.status === 3"
-                @click="handleEdit(row)"
-              >
-                编辑
-              </el-button>
-              <el-button
-                text
-                :type="row.status === 3 ? 'success' : 'warning'"
-                size="small"
-                :disabled="row.status === 1 || row.status === 2"
-                @click="handleToggleStatus(row)"
-              >
-                {{ row.status === 3 ? '启用' : '停用' }}
-              </el-button>
-              <el-button
-                text
-                type="danger"
-                size="small"
-                @click="handleDelete(row)"
-              >
-                删除
-              </el-button>
-              <el-button
-                text
-                type="primary"
-                size="small"
-                :disabled="row.status !== 0"
-                @click="handleRun(row)"
-              >
-                执行
-              </el-button>
-            </div>
+            <el-button
+              text
+              type="primary"
+              size="small"
+              :disabled="row.status === 3"
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              text
+              type="primary"
+              size="small"
+              :disabled="row.status === 1 || row.status === 2"
+              @click="handleToggleStatus(row)"
+            >
+              {{ row.status === 3 ? '启用' : '停用' }}
+            </el-button>
+            <el-button
+              text
+              type="primary"
+              size="small"
+              :disabled="row.status !== 0"
+              @click="handleRun(row)"
+            >
+              执行
+            </el-button>
+            <el-button
+              text
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
 
-    <!-- 分页 -->
-    <div class="command-list__pagination">
-      <el-select v-model="pageSize" style="width: 70px" @change="handlePageSizeChange">
-        <el-option :value="10" label="10" />
-        <el-option :value="25" label="25" />
-        <el-option :value="50" label="50" />
-        <el-option :value="100" label="100" />
-      </el-select>
-      <span class="pagination-info">{{ paginationInfo }}</span>
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 25, 50, 100]"
+        :total="filteredCommands.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 编辑命令对话框 -->
@@ -180,6 +179,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { RefreshRight } from '@element-plus/icons-vue'
 import {
   findByTenantIdAndCreatedBy,
   deleteCommand as apiDeleteCommand,
@@ -197,6 +197,7 @@ const commands = ref([])
 const selectedCommands = ref([])
 const searchKeyword = ref('')
 const tableRef = ref(null)
+const currentPage = ref(1)
 const pageSize = ref(10)
 
 // 编辑对话框状态
@@ -389,6 +390,22 @@ function getStatusClass(status) {
     case 3: return 'status-danger'
     default: return ''
   }
+}
+
+// 获取状态 Tag 类型
+function getStatusTagType(status) {
+  switch (status) {
+    case 0: return 'success'
+    case 1: return 'warning'
+    case 2: return 'danger'
+    case 3: return 'danger'
+    default: return 'info'
+  }
+}
+
+// 页码变化
+function handlePageChange(page) {
+  currentPage.value = page
 }
 
 // 获取状态文本

@@ -25,6 +25,11 @@ export const getJobDetail = (id) => {
   return useApi().get(`/jao/api/jao/jobs/${id}`);
 }
 
+/** 更新作业 */
+export const updateJob = (id, data) => {
+  return useApi().put(`/jao/api/jao/jobs/${id}`, data);
+}
+
 // ==================== 作业申请相关 API ====================
 
 /** 获取我的申请列表 */

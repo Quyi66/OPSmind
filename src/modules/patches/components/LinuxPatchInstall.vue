@@ -1,134 +1,125 @@
 <template>
-  <div class="patch-install">
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="page-header__actions">
-        <el-button
-          type="primary"
-          :disabled="selectedPatchIds.length === 0"
-          @click="handleInstallSelected"
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <div class="severity-filters">
+        <el-checkbox
+          v-model="severityFilters.Critical"
+          @change="handleFilter"
         >
-          安装选中的补丁
-          <i class="fa fa-chevron-right" />
-        </el-button>
+          <span class="badge badge-danger">严重</span>
+        </el-checkbox>
+        <el-checkbox
+          v-model="severityFilters.Important"
+          @change="handleFilter"
+        >
+          <span class="badge badge-warning">重要</span>
+        </el-checkbox>
+        <el-checkbox
+          v-model="severityFilters.Moderate"
+          @change="handleFilter"
+        >
+          <span class="badge badge-dark">中等</span>
+        </el-checkbox>
+        <el-checkbox
+          v-model="severityFilters.Low"
+          @change="handleFilter"
+        >
+          <span class="badge badge-secondary">低级</span>
+        </el-checkbox>
       </div>
+      <el-input
+        v-model="searchText"
+        placeholder="搜索..."
+        prefix-icon="Search"
+        style="width: 200px"
+        clearable
+        size="small"
+        @input="handleSearch"
+      />
     </div>
 
-    <!-- 内容区域 -->
-    <div class="page-content">
-      <!-- 筛选工具栏 -->
-      <div class="filter-toolbar">
-        <div class="severity-filters">
-          <el-checkbox
-            v-model="severityFilters.Critical"
-            @change="handleFilter"
-          >
-            <span class="badge badge-danger">严重</span>
-          </el-checkbox>
-          <el-checkbox
-            v-model="severityFilters.Important"
-            @change="handleFilter"
-          >
-            <span class="badge badge-warning">重要</span>
-          </el-checkbox>
-          <el-checkbox
-            v-model="severityFilters.Moderate"
-            @change="handleFilter"
-          >
-            <span class="badge badge-dark">中等</span>
-          </el-checkbox>
-          <el-checkbox
-            v-model="severityFilters.Low"
-            @change="handleFilter"
-          >
-            <span class="badge badge-secondary">低级</span>
-          </el-checkbox>
-        </div>
-        <div class="search-box">
-          <el-input
-            v-model="searchText"
-            placeholder="搜索..."
-            prefix-icon="Search"
-            style="width: 200px"
-            clearable
-            size="small"
-            @input="handleSearch"
-          />
-        </div>
-      </div>
+    <!-- 操作区 -->
+    <div class="ops-action-bar">
+      <el-button
+        type="primary"
+        size="small"
+        :disabled="selectedPatchIds.length === 0"
+        @click="handleInstallSelected"
+      >
+        安装选中的补丁
+      </el-button>
+    </div>
 
-      <!-- 补丁表格 -->
-      <div class="table-section">
-        <el-table
-          ref="tableRef"
-          v-loading="loading"
-          :data="filteredTableData"
-          stripe
-          style="width: 100%"
-          size="small"
-          height="100%"
-          @selection-change="handleSelectionChange"
-        >
-          <el-table-column type="selection" width="50" />
-          <el-table-column prop="patch_id" label="补丁编号" min-width="140" sortable>
-            <template #default="{ row }">
-              <el-button type="primary" link size="small" @click="handleViewPatchDetail(row)">
-                {{ row.patch_id }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column prop="title" label="概要" min-width="220" show-overflow-tooltip />
-          <el-table-column prop="severity" label="严重性" width="110" sortable>
-            <template #default="{ row }">
-              <span :class="['badge', getSeverityBadgeClass(row.severity)]">
-                {{ row.severity }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="publish_date" label="发布时间" width="120" sortable>
-            <template #default="{ row }">
-              {{ formatDate(row.publish_date) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="related_vuls" label="关联CVE" min-width="320">
-            <template #default="{ row }">
-              <div class="cve-grid" :class="{ 'cve-grid--scrollable': row._cveList?.length > 9 }">
-                <a
-                  v-for="cve in row._cveList"
-                  :key="cve"
-                  :href="`https://access.redhat.com/security/cve/${cve}`"
-                  target="_blank"
-                  class="badge badge-secondary cve-link"
-                  @click.stop
-                >
-                  {{ cve }}
-                </a>
-              </div>
-            </template>
-          </el-table-column>
-          <el-table-column prop="effect_host_count" label="受影响的软件包" width="130" align="center">
-            <template #default="{ row }">
-              <el-button type="primary" link size="small" @click="handleViewAffectedHosts(row)">
-                {{ row.effect_host_count }}
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table
+        ref="tableRef"
+        v-loading="loading"
+        :data="filteredTableData"
+        stripe
+        height="calc(100vh - 300px)"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="patch_id" label="补丁编号" min-width="140" sortable>
+          <template #default="{ row }">
+            <el-button type="primary" link size="small" @click="handleViewPatchDetail(row)">
+              {{ row.patch_id }}
+            </el-button>
+          </template>
+        </el-table-column>
+        <el-table-column prop="title" label="概要" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="severity" label="严重性" width="110" sortable>
+          <template #default="{ row }">
+            <span :class="['badge', getSeverityBadgeClass(row.severity)]">
+              {{ row.severity }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="publish_date" label="发布时间" width="120" sortable>
+          <template #default="{ row }">
+            {{ formatDate(row.publish_date) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="related_vuls" label="关联CVE" min-width="320">
+          <template #default="{ row }">
+            <div class="cve-grid" :class="{ 'cve-grid--scrollable': row._cveList?.length > 9 }">
+              <a
+                v-for="cve in row._cveList"
+                :key="cve"
+                :href="`https://access.redhat.com/security/cve/${cve}`"
+                target="_blank"
+                class="badge badge-secondary cve-link"
+                @click.stop
+              >
+                {{ cve }}
+              </a>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="effect_host_count" label="受影响的软件包" width="130" align="left">
+          <template #default="{ row }">
+            <el-button type="primary" link size="small" @click="handleViewAffectedHosts(row)">
+              {{ row.effect_host_count }}
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
-        <!-- 分页 -->
-        <div class="table-footer">
-          <el-pagination
-            v-model:current-page="pagination.page"
-            v-model:page-size="pagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            size="small"
-            @size-change="handleSizeChange"
-            @current-change="handlePageChange"
-          />
-        </div>
-      </div>
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 补丁详情对话框 -->
@@ -651,52 +642,7 @@ defineExpose({ refresh })
 </script>
 
 <style scoped lang="scss">
-.patch-install {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e9ecef;
-
-  &__title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #212529;
-  }
-
-  &__actions {
-    display: flex;
-    gap: 8px;
-  }
-}
-
-.page-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  overflow: hidden;
-  min-height: 0; // 重要：允许flex子元素收缩
-}
-
-.filter-toolbar {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 4px;
-}
-
+// 严重程度筛选
 .severity-filters {
   display: flex;
   gap: 16px;
@@ -706,6 +652,7 @@ defineExpose({ refresh })
   }
 }
 
+// 徽章样式
 .badge {
   display: inline-block;
   padding: 4px 8px;
@@ -730,30 +677,6 @@ defineExpose({ refresh })
   &-secondary {
     background-color: #6c757d;
   }
-}
-
-.table-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border: 1px solid #e9ecef;
-  border-radius: 4px;
-  overflow: hidden;
-  min-height: 0; // 重要：允许flex子元素收缩
-
-  :deep(.el-table) {
-    flex: 1;
-  }
-}
-
-.table-footer {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px 16px;
-  border-top: 1px solid #e9ecef;
-  background: #fff;
 }
 
 .cve-grid {

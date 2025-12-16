@@ -64,7 +64,7 @@
             {{ getActionLabel(row.action) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100" align="center" sortable>
+        <el-table-column prop="status" label="状态" width="100" align="left" sortable>
           <template #default="{ row }">
             <el-tag
               :type="getStatusType(row.status)"
@@ -76,7 +76,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="ata_node" label="执行引擎节点" width="140" align="center">
+        <el-table-column prop="ata_node" label="执行引擎节点" width="140" align="left">
           <template #default="{ row }">
             <el-tag v-if="row.ata_node" type="primary" size="small">
               {{ row.ata_node }}
@@ -94,13 +94,13 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="username" label="用户" width="100" align="center" />
+        <el-table-column prop="username" label="用户" width="100" align="left" />
         <el-table-column prop="end_time" label="结束时间" width="180" sortable>
           <template #default="{ row }">
             {{ formatDateTime(row.end_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="耗时" width="100" align="center" sortable>
+        <el-table-column label="耗时" width="100" align="left" sortable>
           <template #default="{ row }">
             {{ calculateDuration(row.start_time, row.end_time) }}
           </template>

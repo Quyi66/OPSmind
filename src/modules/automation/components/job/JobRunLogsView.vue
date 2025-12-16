@@ -45,12 +45,9 @@
       <el-button size="small" @click="handleReset">
         <i class="fa fa-undo" /> 重置
       </el-button>
-    </div>
-
-    <!-- 功能按钮区 -->
-    <div class="ops-action-bar">
-      <el-button size="small" @click="handleRefresh" title="刷新">
-        <i class="fa fa-refresh" />
+      <el-button size="small" @click="handleRefresh">
+        <el-icon><RefreshRight /></el-icon>
+        刷新
       </el-button>
     </div>
 
@@ -61,31 +58,31 @@
         stripe
         height="100%"
       >
-        <el-table-column label="开始时间" width="170" sortable>
+        <el-table-column label="开始时间" width="180" sortable>
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="作业" min-width="250">
+        <el-table-column label="作业" show-overflow-tooltip>
           <template #default="{ row }">
             <div class="job-title">{{ row.job_title }}</div>
           </template>
         </el-table-column>
 
-        <el-table-column label="类型" width="120">
+        <el-table-column label="类型" width="100">
           <template #default="{ row }">
             {{ getJobTypeLabel(row.job_type) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="用户" width="120">
+        <el-table-column label="用户" width="100">
           <template #default="{ row }">
             {{ row.username || '-' }}
           </template>
         </el-table-column>
 
-        <el-table-column label="审核" width="120">
+        <el-table-column label="审核" width="100">
           <template #default="{ row }">
             {{ row.review_user || '-' }}
           </template>
@@ -97,13 +94,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="结束时间" width="170" sortable>
+        <el-table-column label="结束时间" width="180" sortable>
           <template #default="{ row }">
             {{ formatDateTime(row.end_time) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="Ansible Node" width="180">
+        <el-table-column label="Ansible Node" width="150">
           <template #default="{ row }">
             <div class="node-list">
               <el-tag
@@ -130,13 +127,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="详情" width="200">
+        <el-table-column label="详情" width="150">
           <template #default="{ row }">
             <div class="stats-info">{{ formatStats(row.stats_json) }}</div>
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="canRerun(row)"

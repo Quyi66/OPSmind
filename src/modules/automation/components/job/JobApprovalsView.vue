@@ -29,12 +29,9 @@
       <el-button size="small" @click="handleReset">
         <i class="fa fa-undo" /> 重置
       </el-button>
-    </div>
-
-    <!-- 功能按钮区 -->
-    <div class="ops-action-bar">
-      <el-button size="small" @click="fetchData" title="刷新">
-        <i class="fa fa-refresh" />
+      <el-button size="small" @click="fetchData">
+        <el-icon><RefreshRight /></el-icon>
+        刷新
       </el-button>
     </div>
 

@@ -11,7 +11,7 @@
           :key="item.key"
           class="ops-sidebar-item"
           :class="{ 'is-active': activeView === item.key }"
-          @click="activeView = item.key"
+          @click="handleNavClick(item)"
         >
           <i :class="item.icon" />
           <span>{{ item.label }}</span>
@@ -52,7 +52,7 @@
           <div class="feature-cards">
             <div
               class="feature-card"
-              @click="activeView = 'scriptLibrary'"
+              @click="handleNavClick({ key: 'scriptLibrary' })"
             >
               <div class="feature-card__icon">
                 <i class="fa fa-code-merge fa-3x" />
@@ -65,7 +65,7 @@
 
             <div
               class="feature-card"
-              @click="activeView = 'fileLibrary'"
+              @click="handleNavClick({ key: 'fileLibrary' })"
             >
               <div class="feature-card__icon">
                 <i class="fa fa-archive fa-3x" />
@@ -83,9 +83,13 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
 import ScriptFileList from '@/modules/automation/components/script/ScriptFileList.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 const navItems = [
   { key: 'scriptLibrary', label: '脚本库', icon: 'fas fa-code-branch' },
@@ -97,10 +101,50 @@ const activeView = ref('scriptLibrary')
 const scriptLibraryInitialDir = ref('')
 const scriptLibraryRef = ref(null)
 
+// 获取当前模块的基础路径
+function getBasePath() {
+  const path = route.path
+  const match = path.match(/^\/([^/]+)/)
+  return match ? `/${match[1]}` : '/gfs'
+}
+
+/**
+ * 解析路由路径，确定当前视图
+ */
+function parseRouteView() {
+  const path = route.path
+  const params = route.params
+  const pathMatch = Array.isArray(params.pathMatch)
+    ? params.pathMatch.join('/')
+    : params.pathMatch || ''
+
+  if (path.includes('/fileLibrary') || pathMatch.includes('fileLibrary')) {
+    return 'fileLibrary'
+  }
+  if (path.includes('/scriptReview') || pathMatch.includes('scriptReview')) {
+    return 'scriptReview'
+  }
+  if (path.includes('/scriptLibrary') || pathMatch.includes('scriptLibrary')) {
+    return 'scriptLibrary'
+  }
+
+  return 'scriptLibrary'
+}
+
+// 导航点击
+function handleNavClick(item) {
+  activeView.value = item.key
+  const basePath = getBasePath()
+  const targetPath = item.key === 'scriptLibrary' ? basePath : `${basePath}/${item.key}`
+  router.push(targetPath)
+}
+
 // 从审批历史跳转到脚本库
 function handleNavigateToScriptLibrary(dir) {
   scriptLibraryInitialDir.value = dir || ''
   activeView.value = 'scriptLibrary'
+  const basePath = getBasePath()
+  router.push(basePath)
 
   // 如果脚本库组件已存在，需要手动刷新目录
   nextTick(() => {
@@ -109,6 +153,19 @@ function handleNavigateToScriptLibrary(dir) {
     }
   })
 }
+
+// 监听路由变化
+watch(
+  () => route.path,
+  () => {
+    activeView.value = parseRouteView()
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  activeView.value = parseRouteView()
+})
 
 const moduleTitle = '文件服务'
 const moduleDescription = '管理脚本、配置文件及静态资源'

@@ -76,7 +76,7 @@
       <el-table-column prop="hostname" label="主机名" min-width="140" show-overflow-tooltip />
       <el-table-column prop="os_distro" label="系统版本" min-width="120" show-overflow-tooltip />
       <el-table-column prop="os_version" label="系统内核" min-width="120" show-overflow-tooltip />
-      <el-table-column label="连通状态" width="100" align="center">
+      <el-table-column label="连通状态" width="100" align="left">
         <template #default="{ row }">
           <el-tag
             :type="row.CONN_LATEST_STATUS === 'OK' ? 'success' : row.CONN_LATEST_STATUS === 'FAIL' ? 'danger' : 'info'"
@@ -86,7 +86,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="CONN_RATE" label="连通率" width="80" align="center">
+      <el-table-column prop="CONN_RATE" label="连通率" width="80" align="left">
         <template #default="{ row }">
           {{ row.CONN_RATE ? `${row.CONN_RATE}%` : '-' }}
         </template>

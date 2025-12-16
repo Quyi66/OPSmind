@@ -56,8 +56,8 @@
       </div>
       <el-table :data="primaryData" stripe max-height="400">
         <el-table-column prop="name" label="二级业务名称" />
-        <el-table-column prop="contItem" label="检查项失败数" width="120" align="center" />
-        <el-table-column prop="contHost" label="主机数" width="100" align="center" />
+        <el-table-column prop="contItem" label="检查项失败数" width="120" align="left" />
+        <el-table-column prop="contHost" label="主机数" width="100" align="left" />
       </el-table>
     </el-dialog>
 
@@ -73,7 +73,7 @@
           <div class="tab-stats">共 {{ itemData.length }} 个检查项</div>
           <el-table :data="itemData" stripe max-height="400">
             <el-table-column prop="item" label="检查项名称" />
-            <el-table-column label="失败主机数" width="120" align="center">
+            <el-table-column label="失败主机数" width="120" align="left">
               <template #default="{ row }">
                 <el-button type="danger" size="small" @click="showHostList(row.host)">
                   {{ row.count }}
@@ -86,7 +86,7 @@
           <div class="tab-stats">共 {{ hostData.length }} 台主机</div>
           <el-table :data="hostData" stripe max-height="400">
             <el-table-column prop="host" label="主机名" />
-            <el-table-column label="失败检查项数" width="120" align="center">
+            <el-table-column label="失败检查项数" width="120" align="left">
               <template #default="{ row }">
                 <el-button type="danger" size="small" @click="showItemList(row.item)">
                   {{ row.count }}
@@ -131,7 +131,7 @@
         <!-- 主机总数类型 (hostAll): 主机 + 成功/失败检查项数 -->
         <template v-else-if="kpiDialogType === 'hostAll'">
           <el-table-column prop="host_key" label="主机" min-width="180" />
-          <el-table-column label="成功检查项" width="140" align="center">
+          <el-table-column label="成功检查项" width="140" align="left">
             <template #default="{ row }">
               <el-tag type="success" effect="dark" round>
                 <i class="fa fa-check" style="margin-right: 5px;"></i>
@@ -139,7 +139,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="失败检查项" width="140" align="center">
+          <el-table-column label="失败检查项" width="140" align="left">
             <template #default="{ row }">
               <el-tag type="danger" effect="dark" round>
                 <i class="fa fa-times" style="margin-right: 5px;"></i>
@@ -152,7 +152,7 @@
         <!-- 主机成功/失败/待检 类型 (hostOkAll, hostFailedAll, hostCheckAll): 主机 + 状态 -->
         <template v-else-if="['hostOkAll', 'hostFailedAll', 'hostCheckAll'].includes(kpiDialogType)">
           <el-table-column prop="host_key" label="主机" min-width="180" />
-          <el-table-column label="检查状态" width="140" align="center">
+          <el-table-column label="检查状态" width="140" align="left">
             <template #default="{ row }">
               <el-tag :type="getStatusTagType(row.status)" effect="dark" round>
                 <i :class="['fa', getStatusIcon(row.status)]" style="margin-right: 5px;"></i>
@@ -166,7 +166,7 @@
         <template v-else>
           <el-table-column prop="host_key" label="主机" min-width="150" />
           <el-table-column prop="name" label="检查项" min-width="200" />
-          <el-table-column label="检查状态" width="120" align="center">
+          <el-table-column label="检查状态" width="120" align="left">
             <template #default="{ row }">
               <el-tag :type="getStatusTagType(row.status)" effect="dark" round>
                 <i :class="['fa', getStatusIcon(row.status)]" style="margin-right: 5px;"></i>
@@ -174,7 +174,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="44" align="center" fixed="right">
+          <el-table-column label="操作" width="44" align="left" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="showCheckItemDetail(row)">
                 详情

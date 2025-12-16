@@ -5,21 +5,9 @@
       <div class="flow-editor__panel" @click.stop>
         <header class="flow-editor__header">
           <span class="header-title">{{ headerTitle }}</span>
-          <div class="header-actions">
-            <el-button
-              v-if="!isInstance"
-              type="primary"
-              :loading="loading"
-              @click="handleSave"
-            >保存</el-button>
-            <el-button
-              v-else
-              type="primary"
-              :loading="loading"
-              @click="handleRun"
-            >执行</el-button>
-            <el-button @click="handleCancel">取消</el-button>
-          </div>
+          <el-button class="header-close" text circle @click="handleCancel">
+            <i class="fa fa-times" />
+          </el-button>
         </header>
 
         <el-scrollbar class="flow-editor__body">
@@ -197,6 +185,22 @@
             </fieldset>
           </form>
         </el-scrollbar>
+
+        <footer class="flow-editor__footer">
+          <el-button @click="handleCancel">取消</el-button>
+          <el-button
+            v-if="!isInstance"
+            type="primary"
+            :loading="loading"
+            @click="handleSave"
+          >保存</el-button>
+          <el-button
+            v-else
+            type="primary"
+            :loading="loading"
+            @click="handleRun"
+          >执行</el-button>
+        </footer>
       </div>
     </div>
   </transition>
@@ -588,7 +592,7 @@ function generateId() {
 .flow-editor {
   position: fixed;
   inset: 0;
-  z-index: 2048;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -628,6 +632,15 @@ function generateId() {
   font-weight: 600;
 }
 
+.header-close {
+  font-size: 18px;
+  color: #909399;
+}
+
+.header-close:hover {
+  color: #606266;
+}
+
 .header-actions {
   display: flex;
   gap: 12px;
@@ -641,6 +654,16 @@ function generateId() {
 
 .flow-editor__body :deep(.el-scrollbar__view) {
   padding: 20px 28px 40px;
+}
+
+.flow-editor__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  flex-shrink: 0;
 }
 
 /* 表单样式 - 模拟 op-smartform */

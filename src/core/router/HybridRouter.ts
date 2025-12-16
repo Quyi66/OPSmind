@@ -39,6 +39,66 @@ const baseRoutes: CustomRouteRecord[] = [
       requiresAuth: true,
       moduleType: ModuleType.VUE_NATIVE
     }
+  },
+  // 命令模块 - 使用 pathMatch 通配符支持子路径导航
+  {
+    path: '/cmd/:pathMatch(.*)*',
+    name: 'cmd',
+    component: () => import('@/modules/automation/views/CommandCenterModule.vue'),
+    meta: {
+      title: '命令管理',
+      requiresAuth: true,
+      moduleType: ModuleType.VUE_NATIVE,
+      moduleCode: 'cmd'
+    }
+  },
+  // 作业模块 - 使用 pathMatch 通配符支持子路径导航
+  {
+    path: '/jao/:pathMatch(.*)*',
+    name: 'jao',
+    component: () => import('@/modules/automation/views/JobOrchestrationModule.vue'),
+    meta: {
+      title: '作业编排',
+      requiresAuth: true,
+      moduleType: ModuleType.VUE_NATIVE,
+      moduleCode: 'jao'
+    }
+  },
+  // 脚本模块 - 使用 pathMatch 通配符支持子路径导航
+  {
+    path: '/gfs/:pathMatch(.*)*',
+    name: 'gfs',
+    component: () => import('@/modules/automation/views/ScriptLibraryModule.vue'),
+    meta: {
+      title: '文件服务',
+      requiresAuth: true,
+      moduleType: ModuleType.VUE_NATIVE,
+      moduleCode: 'gfs'
+    }
+  },
+  // 补丁模块 - 使用 pathMatch 通配符支持子路径导航
+  {
+    path: '/patches/:pathMatch(.*)*',
+    name: 'patches',
+    component: () => import('@/modules/patches/views/PatchManagementModule.vue'),
+    meta: {
+      title: '补丁管理',
+      requiresAuth: true,
+      moduleType: ModuleType.VUE_NATIVE,
+      moduleCode: 'patches'
+    }
+  },
+  // 软件模块 - 使用 pathMatch 通配符支持子路径导航
+  {
+    path: '/software/:pathMatch(.*)*',
+    name: 'software',
+    component: () => import('@/modules/software/views/SoftwareIndex.vue'),
+    meta: {
+      title: '软件管理',
+      requiresAuth: true,
+      moduleType: ModuleType.VUE_NATIVE,
+      moduleCode: 'software'
+    }
   }
 ]
 
@@ -64,7 +124,7 @@ class HybridRouter implements IHybridRouter {
   private createRouter(): Router {
     return createRouter({
       history: createWebHashHistory(import.meta.env.BASE_URL),
-      routes: []
+      routes: baseRoutes as RouteRecordRaw[]
     })
   }
 
@@ -72,12 +132,11 @@ class HybridRouter implements IHybridRouter {
    * 初始化路由器
    */
   private init(): void {
-    // 生成动态路由
+    // 生成动态路由（baseRoutes 已在 createRouter 时包含）
     const dynamicRoutes = this.generateDynamicRoutes()
-    const allRoutes = [...baseRoutes, ...dynamicRoutes]
 
-    // 添加所有路由
-    allRoutes.forEach(route => {
+    // 只添加动态生成的路由
+    dynamicRoutes.forEach(route => {
       this.router.addRoute(route as RouteRecordRaw)
     })
 
@@ -110,6 +169,11 @@ class HybridRouter implements IHybridRouter {
    */
   private createVueModuleRoutes(module: ModuleConfig): RouteRecordRaw[] {
     const routes: RouteRecordRaw[] = []
+
+    // cmd、jao、gfs、patches、software 模块已在 baseRoutes 中静态定义，跳过动态生成
+    if (['cmd', 'jao', 'gfs', 'patches', 'software'].includes(module.code)) {
+      return routes
+    }
 
     // 主路由
     routes.push({

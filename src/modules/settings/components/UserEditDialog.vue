@@ -146,7 +146,7 @@
               {{ formatTime(row.expireTime) }}
             </template>
           </el-table-column>
-          <el-table-column prop="enabled" label="状态" width="80" align="center">
+          <el-table-column prop="enabled" label="状态" width="80" align="left">
             <template #default="{ row }">
               <el-tag :type="row.enabled ? 'success' : 'danger'" size="small">
                 {{ row.enabled ? '启用' : '禁用' }}

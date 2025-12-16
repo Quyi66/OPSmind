@@ -121,7 +121,7 @@
           </el-table-column>
           <el-table-column prop="os_distro" label="操作系统" min-width="180" />
           <el-table-column prop="os_version" label="系统版本" width="100" />
-          <el-table-column label="白名单" width="80" align="center">
+          <el-table-column label="白名单" width="80" align="left">
             <template #default="{ row }">
               <el-tag v-if="row.black_count > 0" type="primary" size="small" round>
                 <i class="fa fa-check"></i> 是
@@ -131,7 +131,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="检查通过" width="90" align="center">
+          <el-table-column label="检查通过" width="90" align="left">
             <template #header>
               <span><i class="fa fa-check"></i> 检查通过</span>
             </template>
@@ -141,7 +141,7 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="检查失败" width="90" align="center">
+          <el-table-column label="检查失败" width="90" align="left">
             <template #header>
               <span><i class="fa fa-times"></i> 检查失败</span>
             </template>
@@ -151,7 +151,7 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="人工检查" width="90" align="center">
+          <el-table-column label="人工检查" width="90" align="left">
             <template #header>
               <span><i class="fa fa-user-md"></i> 人工检查</span>
             </template>
@@ -161,7 +161,7 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="白名单" width="80" align="center">
+          <el-table-column label="白名单" width="80" align="left">
             <template #header>
               <span><i class="fa fa-adjust"></i> 白名单</span>
             </template>
@@ -171,7 +171,7 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="数据缺失" width="90" align="center">
+          <el-table-column label="数据缺失" width="90" align="left">
             <template #header>
               <span><i class="fa fa-question"></i> 数据缺失</span>
             </template>
@@ -181,7 +181,7 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column prop="check_item_count" label="巡检项" width="80" align="center">
+          <el-table-column prop="check_item_count" label="巡检项" width="80" align="left">
             <template #default="{ row }">
               <el-button type="info" link @click="dialogs.showHostDetail(row)">
                 {{ row.check_item_count }}
@@ -221,7 +221,7 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column prop="check_host_count" label="关联主机" width="120" align="center">
+          <el-table-column prop="check_host_count" label="关联主机" width="120" align="left">
             <template #default="{ row }">
               <el-button type="info" link @click="dialogs.showCheckItemHostsDialog(row)">
                 {{ row.check_host_count }}

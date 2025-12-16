@@ -37,13 +37,18 @@
 
       <el-form-item label="命令内容" prop="command">
         <div class="code-editor-wrapper">
-          <el-input
-            v-model="formData.command"
-            type="textarea"
-            :rows="8"
-            placeholder="请输入命令内容"
-            class="code-textarea"
-          />
+          <div class="code-editor">
+            <div class="line-numbers">
+              <div v-for="n in commandLineCount" :key="n" class="line-number">{{ n }}</div>
+            </div>
+            <textarea
+              v-model="formData.command"
+              class="code-textarea"
+              :disabled="isViewMode"
+              placeholder="请输入命令内容"
+              @input="updateLineNumbers"
+            />
+          </div>
         </div>
       </el-form-item>
 
@@ -151,6 +156,17 @@ const dialogTitle = computed(() => {
     default: return '命令'
   }
 })
+
+// 计算命令行数
+const commandLineCount = computed(() => {
+  if (!formData.value.command) return 8
+  return Math.max(formData.value.command.split('\n').length + 1, 8)
+})
+
+// 更新行号
+function updateLineNumbers() {
+  // 行号会自动通过 computed 更新
+}
 
 // 命令类型
 const commandTypes = COMMAND_TYPES
@@ -305,27 +321,56 @@ function getStatusText(status) {
 <style scoped lang="scss">
 .code-editor-wrapper {
   width: 100%;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
+}
 
-  &:hover {
-    border-color: #c0c4cc;
-  }
+.code-editor {
+  display: flex;
+  background: #282c34;
+  border-radius: 6px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow: hidden;
+}
 
-  &:focus-within {
-    border-color: #409eff;
-  }
+.line-numbers {
+  padding: 12px 8px;
+  background: #21252b;
+  color: #636d83;
+  text-align: right;
+  user-select: none;
+  min-width: 40px;
+  border-right: 1px solid #181a1f;
+}
+
+.line-number {
+  height: 20.8px;
 }
 
 .code-textarea {
-  :deep(.el-textarea__inner) {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-    font-size: 13px;
-    line-height: 1.5;
-    border: none;
-    resize: vertical;
-    background: #f8f9fa;
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  color: #abb2bf;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  min-height: 200px;
+  white-space: pre;
+  overflow-x: auto;
+
+  &::placeholder {
+    color: #636d83;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
   }
 }
 

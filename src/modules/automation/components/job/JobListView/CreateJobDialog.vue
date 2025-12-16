@@ -447,12 +447,12 @@
                   </el-select>
                 </template>
               </el-table-column>
-              <el-table-column label="加密" width="70" align="center">
+              <el-table-column label="加密" width="70" align="left">
                 <template #default="{ row }">
                   <el-checkbox v-model="row.secret" />
                 </template>
               </el-table-column>
-              <el-table-column label="" width="50" align="center">
+              <el-table-column label="" width="50" align="left">
                 <template #default="{ row }">
                   <el-button
                     size="small"
@@ -599,11 +599,9 @@
               <div class="ms-auto">
                 <el-button
                   type="primary"
-                  plain
                   :loading="testJobRunning"
                   :disabled="testJobRunning || !canRunTest"
                   @click="runTestJob"
-                  style="width: 10rem;"
                 >
                   <i class="fa fa-fw fa-chevron-right"></i>
                   运行测试
@@ -683,6 +681,11 @@ const props = defineProps({
   appletsList: {
     type: Array,
     default: () => []
+  },
+  // 编辑模式：传入作业ID
+  jobId: {
+    type: String,
+    default: ''
   }
 })
 
@@ -693,8 +696,17 @@ const visible = computed({
   set: (val) => emit('update:modelValue', val)
 })
 
+// 是否为编辑模式
+const isEditMode = computed(() => !!props.jobId)
+
+// 加载中状态
+const loading = ref(false)
+
 const dialogTitle = computed(() => {
   const typeOption = CREATE_JOB_TYPE_OPTIONS.find((opt) => opt.value === job.type)
+  if (isEditMode.value) {
+    return typeOption ? `编辑${typeOption.label}` : '编辑作业'
+  }
   return typeOption ? `新建${typeOption.label}` : '新建作业'
 })
 
@@ -1159,12 +1171,20 @@ async function save() {
       configJson: toConfigJson()
     }
 
-    await jaoApi.createJob(payload)
-    ElMessage.success('创建成功')
+    if (isEditMode.value) {
+      // 编辑模式：更新作业
+      payload.id = props.jobId
+      await jaoApi.updateJob(props.jobId, payload)
+      ElMessage.success('保存成功')
+    } else {
+      // 新建模式
+      await jaoApi.createJob(payload)
+      ElMessage.success('创建成功')
+    }
     emit('success')
     handleClose()
   } catch (error) {
-    ElMessage.error(error?.message || '创建失败')
+    ElMessage.error(error?.message || (isEditMode.value ? '保存失败' : '创建失败'))
   } finally {
     submitting.value = false
   }
@@ -1320,18 +1340,93 @@ function viewTestResult() {
   }
 }
 
+/**
+ * 加载作业详情（编辑模式）
+ */
+async function loadJobDetail(jobId) {
+  if (!jobId) return
+
+  loading.value = true
+  try {
+    const response = await jaoApi.getJobDetail(jobId)
+    const jobData = response.data
+
+    // 填充基本信息
+    job.title = jobData.title || ''
+    job.type = jobData.type || ''
+    job.appletCode = jobData.appletCode || ''
+    job.description = jobData.description || ''
+    job.params = jobData.params || []
+    job.needApprove = jobData.needApprove || false
+    job.needReview = jobData.needReview || false
+    job.needDelayed = jobData.needDelayed || false
+
+    // 解析 configJson
+    const config = JSON.parse(jobData.configJson || '{}')
+
+    // 填充审计配置
+    if (config.audit) {
+      jobConfig.audit.enabled = config.audit.enabled || false
+      jobConfig.audit.module = config.audit.module || ''
+      jobConfig.audit.action = config.audit.action || ''
+    }
+
+    if (jobData.type === 'script') {
+      // 填充脚本作业配置
+      jobConfig.scriptType = config.scriptType || 'playbook'
+      jobConfig.callback = config.callback || ''
+      jobConfig.taskTimeout = config.taskTimeout ?? -1
+      jobConfig.verbosity = config.verbosity || 0
+
+      if (config.tasks && config.tasks.length > 0) {
+        jobConfig.tasks = config.tasks.map(task => ({
+          scripts: task.scripts || [],
+          hosts: task.hosts || [],
+          hostsMode: task.hostsMode || (task.hostsParam ? 'param' : ''),
+          hostsParam: task.hostsParam || 'hosts',
+          hostsText: Array.isArray(task.hosts) ? task.hosts.join('\n') : ''
+        }))
+      }
+    } else if (jobData.type === 'rest') {
+      // 填充 REST 作业配置
+      restConfig.curl = config.curl || ''
+    } else if (jobData.type === 'command') {
+      // 填充命令作业配置
+      if (config.tasks && config.tasks.length > 0) {
+        commandConfig.tasks = config.tasks.map(task => ({
+          commands: task.commands || [],
+          hosts: task.hosts || [],
+          hostsMode: task.hostsMode || 'param',
+          commandFilter: ''
+        }))
+      }
+    }
+  } catch (error) {
+    console.error('加载作业详情失败:', error)
+    ElMessage.error('加载作业详情失败')
+  } finally {
+    loading.value = false
+  }
+}
+
 // 监听对话框打开，初始化数据
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     resetForm()
-    job.type = props.jobType || ''
-    job.appletCode = props.appletCode || ''
+    if (props.jobId) {
+      // 编辑模式：加载作业详情
+      loadJobDetail(props.jobId)
+    } else {
+      // 新建模式
+      job.type = props.jobType || ''
+      job.appletCode = props.appletCode || ''
+    }
   }
 }, { immediate: true })
 
 // 监听 jobType prop 变化
 watch(() => props.jobType, (newVal) => {
-  if (props.modelValue) {
+  if (props.modelValue && !isEditMode.value) {
     job.type = newVal || ''
   }
 })

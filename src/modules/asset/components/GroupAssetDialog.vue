@@ -56,7 +56,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="40" fixed="left" />
-        <el-table-column label="资产状态" width="80" align="center" fixed="left">
+        <el-table-column label="资产状态" width="80" align="left" fixed="left">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
               {{ row.status === 1 ? '在线' : '下线' }}
@@ -64,13 +64,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="IP" label="纳管IP" width="130" fixed="left" />
-        <el-table-column label="连通状态" width="80" align="center">
+        <el-table-column label="连通状态" width="80" align="left">
           <template #default="{ row }">
             <i v-if="row.CONN_LATEST_STATUS === 1" class="fa fa-check-circle" style="color: #67c23a"></i>
             <i v-else class="fa fa-times-circle" style="color: #f56c6c"></i>
           </template>
         </el-table-column>
-        <el-table-column label="连通率" width="70" align="center">
+        <el-table-column label="连通率" width="70" align="left">
           <template #default="{ row }">
             {{ row.CONN_RATE || '未测试' }}
           </template>
@@ -80,12 +80,12 @@
         <el-table-column prop="os_distro" label="操作系统" width="80" />
         <el-table-column prop="hostname" label="主机名" width="100" show-overflow-tooltip />
         <el-table-column prop="arch" label="系统架构" width="80" />
-        <el-table-column prop="cpu_vcpus" label="cpu个数" width="70" align="center" />
+        <el-table-column prop="cpu_vcpus" label="cpu个数" width="70" align="left" />
         <el-table-column prop="kernel" label="内核" width="180" show-overflow-tooltip />
-        <el-table-column prop="memtotal_mb" label="总内存" width="80" align="center" />
+        <el-table-column prop="memtotal_mb" label="总内存" width="80" align="left" />
         <el-table-column prop="系统名称" label="系统名称" width="80" show-overflow-tooltip />
         <el-table-column prop="负责人" label="负责人" width="80" show-overflow-tooltip />
-        <el-table-column prop="memfree_mb" label="可用内存" width="80" align="center" />
+        <el-table-column prop="memfree_mb" label="可用内存" width="80" align="left" />
         <el-table-column prop="jdk_version" label="Java版本" width="120" show-overflow-tooltip />
         <el-table-column prop="系统模块" label="系统模块" width="80" show-overflow-tooltip />
       </el-table>

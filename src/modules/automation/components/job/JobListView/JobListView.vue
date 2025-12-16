@@ -18,97 +18,72 @@
       </el-scrollbar>
     </aside>
 
-    <section class="job-workbench__content">
-      <div class="content-header">
-        <div class="header-left">
-          <el-select
-            v-model="moveTarget"
-            size="small"
-            placeholder="移动到"
-            clearable
-            filterable
-            class="header-select"
-            :disabled="!selectedIds.length"
-          >
-            <el-option
-              v-for="option in moveTargetOptions"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
-          </el-select>
-          <el-button
-            size="small"
-            type="primary"
-            plain
-            :disabled="!canMove"
-            @click="handleMoveJobs"
-          >
-            移动
-          </el-button>
-          <el-button
-            size="small"
-            :disabled="!selectedIds.length"
-            @click="handleDeleteJobs"
-          >
-            <el-icon><Delete /></el-icon>
-            删除
-          </el-button>
-          <el-button size="small" text :loading="loading" @click="reloadJobs" title="刷新">
-            <el-icon><RefreshRight /></el-icon>
-          </el-button>
-        </div>
+    <section class="job-workbench__content ops-page-layout">
+      <!-- 筛选栏 -->
+      <div class="ops-filter-bar">
+        <span>类型</span>
+        <el-select
+          v-model="jobTypeValue"
+          size="small"
+          style="width: 120px;"
+          @change="filterList"
+        >
+          <el-option label="全部类型" value="all" />
+          <el-option
+            v-for="option in jobTypeOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </el-select>
+        <el-input
+          v-model="keyword"
+          size="small"
+          placeholder="输入字符搜索"
+          clearable
+          style="width: 200px;"
+          @input="filterList"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+      </div>
 
-        <div class="header-right">
-          <div class="header-filter">
-            <span class="header-label">类型</span>
-            <el-select
-              v-model="jobTypeValue"
-              size="small"
-              class="header-select--narrow"
-              @change="filterList"
-            >
-              <el-option label="全部" value="all" />
-              <el-option
-                v-for="option in jobTypeOptions"
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-dropdown @command="handleCreateJob">
+          <el-button type="primary" size="small">
+            <el-icon><Plus /></el-icon>
+            新建作业
+            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item
+                v-for="option in createJobOptions"
                 :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
-            </el-select>
-          </div>
-          <el-input
-            v-model="keyword"
-            size="small"
-            placeholder="输入字符搜索"
-            clearable
-            class="header-search"
-            @input="filterList"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-          <el-dropdown @command="handleCreateJob">
-            <el-button type="primary" size="small">
-              <el-icon><Plus /></el-icon>
-              新建作业
-              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item
-                  v-for="option in createJobOptions"
-                  :key="option.value"
-                  :command="option.value"
-                >
-                  <i :class="['fa', option.icon, 'dropdown-icon']"></i>
-                  {{ option.label }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
+                :command="option.value"
+              >
+                <i :class="['fa', option.icon, 'dropdown-icon']"></i>
+                {{ option.label }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-button
+          size="small"
+          :disabled="!selectedIds.length"
+          @click="handleDeleteJobs"
+          type="danger"
+        >
+          <el-icon><Delete /></el-icon>
+          删除
+        </el-button>
+        <el-button size="small" :loading="loading" @click="reloadJobs" title="刷新">
+          <el-icon><RefreshRight /></el-icon>
+          刷新
+        </el-button>
       </div>
 
       <el-alert
@@ -116,57 +91,59 @@
         :title="error"
         type="error"
         :closable="false"
-        class="mb-3"
+        style="margin-bottom: 12px;"
       />
 
-      <el-table
-        v-loading="loading"
-        :data="displayedJobs"
-        @selection-change="handleSelectionChange"
-        class="job-table"
-      >
-        <el-table-column type="selection" width="48" />
-        <el-table-column prop="title" label="作业" min-width="220" show-overflow-tooltip>
-          <template #default="{ row }">
-            <div class="job-title">
-              <span class="job-title__text">{{ translateText(row.title) || '-' }}</span>
-              <span v-if="row.description" class="job-title__desc">{{ translateText(row.description) }}</span>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="类型" width="130">
-          <template #default="{ row }">
-            <el-tag
-              v-if="row.type"
-              size="small"
-              effect="plain"
-              class="job-type-tag"
-            >
-              <i :class="['fa', typeIcon(row.type)]" />
-              <span>{{ typeLabel(row.type) }}</span>
-            </el-tag>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="appletCode" label="所属应用" min-width="140">
-          <template #default="{ row }">
-            {{ row.appletCode || '未分类' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="updatedBy" label="修改人" width="140" />
-        <el-table-column prop="updatedAt" label="修改时间" width="180">
-          <template #default="{ row }">
-            {{ formatDate(row.updatedAt) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="lastRunTime" label="上次运行时间" width="180">
-          <template #default="{ row }">
-            {{ formatDate(row.lastRunTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" fixed="right" width="132">
-          <template #default="{ row }">
-            <div class="table-actions">
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
+        <el-table
+          v-loading="loading"
+          :data="displayedJobs"
+          @selection-change="handleSelectionChange"
+          max-height="calc(100vh - 300px)"
+        >
+          <el-table-column type="selection" width="48" />
+          <el-table-column prop="title" label="作业" min-width="180" show-overflow-tooltip>
+            <template #default="{ row }">
+              <div class="job-title" @click="handleEditJob(row)" style="cursor: pointer;">
+                <span class="job-title__text" style="color: #0077EE;">{{ translateText(row.title) || '-' }}</span>
+                <span v-if="row.description" class="job-title__desc">{{ translateText(row.description) }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="类型" width="120">
+            <template #default="{ row }">
+              <el-tag
+                v-if="row.type"
+                size="small"
+                :type="typeTagType(row.type)"
+                effect="plain"
+                class="job-type-tag"
+              >
+                <i :class="['fa', typeIcon(row.type)]" />
+                <span>{{ typeLabel(row.type) }}</span>
+              </el-tag>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="appletCode" label="所属应用" min-width="100">
+            <template #default="{ row }">
+              {{ row.appletCode || '未分类' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="updatedBy" label="修改人" width="100" />
+          <el-table-column prop="updatedAt" label="修改时间" width="180">
+            <template #default="{ row }">
+              {{ formatDate(row.updatedAt) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="lastRunTime" label="上次运行时间" width="180">
+            <template #default="{ row }">
+              {{ formatDate(row.lastRunTime) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" fixed="right" width="130">
+            <template #default="{ row }">
               <el-button text type="primary" size="small" @click="handleViewJob(row)">
                 执行
               </el-button>
@@ -176,12 +153,13 @@
               <el-button text type="primary" size="small" @click="handleViewHistory(row)">
                 历史
               </el-button>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
-      <div class="table-footer">
+      <!-- 分页器区域 -->
+      <div class="ops-pagination-wrapper">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
@@ -207,9 +185,10 @@
       :job-title="historyJobMeta?.title || ''"
     />
     <CreateJobDialog
-      v-if="createDialogVisible"
-      v-model="createDialogVisible"
+      v-if="jobDialogVisible"
+      v-model="jobDialogVisible"
       :job-type="createJobType"
+      :job-id="editJobId"
       :applet-code="currentApp.name"
       :applets-list="appOptions"
       @success="handleCreateSuccess"
@@ -251,6 +230,10 @@ const historyDialogVisible = ref(false)
 const historyJobMeta = ref(null)
 const createDialogVisible = ref(false)
 const createJobType = ref('')
+const editJobId = ref('')
+
+// 统一的弹窗可见性（新建或编辑都使用同一个弹窗）
+const jobDialogVisible = ref(false)
 
 /** 过滤app */
 function filterApplets() {
@@ -333,9 +316,9 @@ watch(historyDialogVisible, (visible) => {
 })
 
 const jobTypeOptions = computed(() =>
-  JOB_TYPE_OPTIONS.map((option) => ({
+  JOB_TYPE_OPTIONS.filter((option) => option.value !== '').map((option) => ({
     label: option.label,
-    value: option.value || 'all',  // 把空字符串映射为 'all' 用于筛选
+    value: option.value,
     icon: option.icon
   }))
 )
@@ -403,8 +386,9 @@ function getAppTableList(appletCode) {
   loading.value = true
   paginatedJobs.value = []
   jaoApi.appTableList({ appletCode }).then((response) => {
-    paginatedJobs.value = response.data
     originalJobs.value = response.data
+    // 应用当前筛选条件
+    filterList()
     loading.value = false
   }).catch((error) => {
     loading.value = false
@@ -495,14 +479,29 @@ function handleViewHistory(row) {
 }
 
 function handleCreateJob(type) {
+  editJobId.value = '' // 清空编辑ID，表示新建模式
   createJobType.value = type || ''
-  createDialogVisible.value = true
+  jobDialogVisible.value = true
 }
 
 /**
- * 创建作业成功后刷新列表
+ * 编辑作业
+ */
+function handleEditJob(row) {
+  if (!row?.id) {
+    ElMessage.warning('无法获取作业信息')
+    return
+  }
+  editJobId.value = row.id
+  createJobType.value = '' // 编辑模式不需要预设类型
+  jobDialogVisible.value = true
+}
+
+/**
+ * 创建/编辑作业成功后刷新列表
  */
 function handleCreateSuccess() {
+  jobDialogVisible.value = false
   getAppTableList(currentApp.value.name)
 }
 
@@ -536,6 +535,18 @@ function typeLabel(type) {
 function typeIcon(type) {
   const item = JOB_TYPE_OPTIONS.find((option) => option.value === type)
   return item?.icon ?? 'fa-question-circle'
+}
+
+/**
+ * 根据作业类型返回标签颜色
+ */
+function typeTagType(type) {
+  const colorMap = {
+    'script': 'success',   // 脚本作业 - 绿色
+    'command': 'warning',  // 命令作业 - 橙色
+    'rest': ''             // REST 作业 - 蓝色（默认）
+  }
+  return colorMap[type] || 'info'
 }
 
 /**

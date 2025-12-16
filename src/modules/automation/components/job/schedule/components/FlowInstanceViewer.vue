@@ -12,7 +12,9 @@
               <span><strong>开始时间：</strong>{{ formatDateTime(instanceData?.createdAt) }}</span>
             </div>
           </div>
-          <el-button @click="handleClose">关闭</el-button>
+          <el-button class="header-close" text circle @click="handleClose">
+            <i class="fa fa-times" />
+          </el-button>
         </header>
 
         <el-scrollbar class="viewer__body">
@@ -229,7 +231,7 @@ function formatDateTime(value) {
 .flow-instance-viewer {
   position: fixed;
   inset: 0;
-  z-index: 2048;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -355,11 +357,21 @@ function formatDateTime(value) {
 
 .status-cell-clickable {
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
 .status-cell-clickable:hover {
-  background-color: #f1f5f9;
+  background-color: #e0f2fe;
+  transform: scale(1.1);
+}
+
+.header-close {
+  font-size: 18px;
+  color: #909399;
+}
+
+.header-close:hover {
+  color: #606266;
 }
 
 .status-icon {

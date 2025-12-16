@@ -58,7 +58,7 @@
             </el-select>
           </template>
         </el-table-column>
-        <el-table-column label="是否发送告警通知" width="150" align="center">
+        <el-table-column label="是否发送告警通知" width="150" align="left">
           <template #default="{ row }">
             <el-switch
               v-model="row.sendAlert"

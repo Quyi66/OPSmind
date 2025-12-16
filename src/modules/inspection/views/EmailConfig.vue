@@ -1,9 +1,9 @@
 <template>
-  <div class="email-config">
-    <!-- 顶部导航栏 -->
-    <nav class="navbar">
-      <div class="navbar-title">邮件配置</div>
-      <div class="navbar-actions">
+  <div class="ops-page-layout">
+    <!-- 操作区 -->
+    <div class="ops-action-bar">
+      <!-- <div style="font-size: 16px; font-weight: 600; color: #303133">邮件配置</div> -->
+      <div>
         <el-switch
           v-model="emailEnabled"
           :loading="switchLoading"
@@ -11,17 +11,15 @@
           @change="handleSwitchChange"
         />
       </div>
-    </nav>
+    </div>
 
-    <!-- 内容区域 -->
-    <div class="config-wrapper">
-      <!-- 模板列表 -->
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
         :data="templateList"
-        border
         stripe
-        style="width: 100%"
+        height="calc(100vh - 240px)"
       >
         <el-table-column prop="template_name" label="模板名称" min-width="200">
           <template #default="{ row }">
@@ -33,7 +31,7 @@
             {{ formatDateTime(row.executed_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" align="center" fixed="right">
+        <el-table-column label="操作" width="220" align="left" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" @click="showRecipientDialog(row)">
               收件人列表
@@ -69,14 +67,14 @@
         <el-table :data="recipientTableData" stripe max-height="400">
           <el-table-column prop="name" label="姓名" min-width="120" />
           <el-table-column prop="email" label="邮箱" min-width="180" />
-          <el-table-column prop="status" label="状态" width="100" align="center">
+          <el-table-column prop="status" label="状态" width="100" align="left">
             <template #default="{ row }">
               <el-tag v-if="row.status === '0'" type="success" size="small">启用</el-tag>
               <el-tag v-else type="danger" size="small">禁用</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="remarks" label="备注" min-width="150" />
-          <el-table-column label="操作" width="88" align="center" fixed="right">
+          <el-table-column label="操作" width="88" align="left" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="editRecipient(row)">
                 编辑
@@ -529,53 +527,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.email-config {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #f5f7fa;
-}
-
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
-
-  .navbar-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #303133;
-  }
-
-  .navbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-}
-
-.config-wrapper {
-  flex: 1;
-  padding: 20px;
-  overflow: auto;
-}
-
 .template-name {
   font-weight: 500;
   color: #303133;
-}
-
-:deep(.el-table) {
-  font-size: 13px;
-
-  .el-table__header th {
-    background-color: #f8f9fa !important;
-    color: #495057;
-    font-weight: 500;
-  }
 }
 
 .recipient-dialog {

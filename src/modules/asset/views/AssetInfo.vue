@@ -234,7 +234,7 @@
 
           <el-table-column prop="IP" label="纳管IP" width="130" />
 
-          <el-table-column label="连通状态" width="80" align="center">
+          <el-table-column label="连通状态" width="80" align="left">
             <template #default="{ row }">
               <i
                 v-if="row.CONN_LATEST_STATUS === 1"

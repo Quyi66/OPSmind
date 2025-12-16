@@ -1,68 +1,55 @@
 <template>
-  <div class="command-logs">
-    <!-- 标题栏 -->
-    <div class="logs-header">
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-select v-model="filterDay" size="small" style="width: 120px" @change="loadData">
+        <el-option label="全部" value="3650" />
+        <el-option label="今天" value="0" />
+        <el-option label="最近7天" value="7" />
+        <el-option label="最近30天" value="30" />
+        <el-option label="最近一年" value="365" />
+      </el-select>
+      <el-select v-model="filterStatus" size="small" style="width: 120px" @change="loadData">
+        <el-option label="全部状态" value="all" />
+        <el-option label="等待中" value="WAITING" />
+        <el-option label="运行中" value="RUNNING" />
+        <el-option label="回调中" value="CALLBACK" />
+        <el-option label="运行错误" value="ERROR" />
+        <el-option label="运行失败" value="FAILED" />
+        <el-option label="完成" value="COMPLETED" />
+        <el-option label="运行终止" value="INTERRUPTED" />
+      </el-select>
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索"
+        size="small"
+        style="width: 200px"
+        clearable
+        @keyup.enter="loadData"
+      />
+      <el-button size="small" @click="loadData">
+        <el-icon><RefreshRight /></el-icon>
+        刷新
+      </el-button>
     </div>
 
-    <!-- 筛选工具栏 -->
-    <div class="logs-toolbar">
-      <div class="toolbar-left">
-        <div class="filter-item">
-          <span class="filter-label">时间范围:</span>
-          <el-select v-model="filterDay" style="width: 120px" @change="loadData">
-            <el-option label="All" value="3650" />
-            <el-option label="Today" value="0" />
-            <el-option label="Last 7 Days" value="7" />
-            <el-option label="Last 30 Days" value="30" />
-            <el-option label="Last year" value="365" />
-          </el-select>
-        </div>
-        <div class="filter-item">
-          <span class="filter-label">状态:</span>
-          <el-select v-model="filterStatus" style="width: 120px" @change="loadData">
-            <el-option label="ALL" value="all" />
-            <el-option label="等待中" value="WAITING" />
-            <el-option label="运行中" value="RUNNING" />
-            <el-option label="回调中" value="CALLBACK" />
-            <el-option label="运行错误" value="ERROR" />
-            <el-option label="运行失败" value="FAILED" />
-            <el-option label="完成" value="COMPLETED" />
-            <el-option label="运行终止" value="INTERRUPTED" />
-          </el-select>
-        </div>
-      </div>
-      <div class="toolbar-right">
-        <el-input
-          v-model="searchKeyword"
-          placeholder=""
-          style="width: 200px"
-          clearable
-        >
-          <template #prefix>
-            <i class="fas fa-search"></i>
-          </template>
-        </el-input>
-        <el-button :icon="Refresh" @click="loadData" title="刷新" />
-      </div>
-    </div>
-
-    <!-- 日志表格 -->
-    <div class="logs-table">
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
       <el-table
         ref="tableRef"
         v-loading="loading"
         :data="filteredLogs"
-        border
+        stripe
         height="100%"
         :default-sort="{ prop: 'start_time', order: 'descending' }"
       >
-        <el-table-column prop="start_time" label="开始时间" width="170" sortable>
+        <el-table-column prop="start_time" label="开始时间" width="180" sortable>
           <template #default="{ row }">
             {{ formatDate(row.start_time) }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="job_title" label="作业" min-width="180">
+        <el-table-column prop="job_title" label="作业" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.job_title || '-' }}
           </template>
@@ -74,13 +61,13 @@
 
         <el-table-column prop="review_user" label="审核" width="80" />
 
-        <el-table-column label="耗时" width="90" align="center">
+        <el-table-column label="耗时" width="100" align="left">
           <template #default="{ row }">
             {{ formatTimeDiff(row.start_time, row.end_time) }}
           </template>
         </el-table-column>
 
-        <el-table-column prop="end_time" label="结束时间" width="170" sortable>
+        <el-table-column prop="end_time" label="结束时间" width="180" sortable>
           <template #default="{ row }">
             {{ formatDate(row.end_time) }}
           </template>
@@ -89,22 +76,24 @@
         <el-table-column prop="ata_url" label="Ansible Node" width="140">
           <template #default="{ row }">
             <div class="ata-node-cell">
-              <span
+              <el-tag
                 v-for="(node, idx) in parseAtaUrl(row.ata_url)"
                 :key="idx"
-                class="badge badge-secondary"
-              >{{ node }}</span>
+                type="info"
+                size="small"
+              >{{ node }}</el-tag>
             </div>
           </template>
         </el-table-column>
 
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <span
-              :class="['status-badge', getStatusClass(row.status)]"
-              @click="handleViewResult(row)"
+            <el-tag
+              :type="getStatusTagType(row.status)"
+              size="small"
               style="cursor: pointer"
-            >{{ getStatusText(row.status) }}</span>
+              @click="handleViewResult(row)"
+            >{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
 
@@ -130,15 +119,18 @@
       </el-table>
     </div>
 
-    <!-- 分页 -->
-    <div class="logs-pagination">
-      <el-select v-model="pageSize" style="width: 70px" @change="handlePageSizeChange">
-        <el-option :value="10" label="10" />
-        <el-option :value="25" label="25" />
-        <el-option :value="50" label="50" />
-        <el-option :value="100" label="100" />
-      </el-select>
-      <span class="pagination-info">{{ paginationInfo }}</span>
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 25, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="loadData"
+      />
     </div>
 
     <!-- 运行结果对话框 -->
@@ -179,7 +171,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { RefreshRight } from '@element-plus/icons-vue'
 import { useApi } from '@/core/api'
 
 // 筛选条件
@@ -301,6 +293,20 @@ function getStatusClass(status) {
     'INTERRUPTED': 'status-dark'
   }
   return statusMap[status] || 'status-secondary'
+}
+
+// 获取状态 Tag 类型
+function getStatusTagType(status) {
+  const statusMap = {
+    'WAITING': 'info',
+    'RUNNING': 'primary',
+    'CALLBACK': 'primary',
+    'ERROR': 'warning',
+    'FAILED': 'danger',
+    'COMPLETED': 'success',
+    'INTERRUPTED': 'info'
+  }
+  return statusMap[status] || 'info'
 }
 
 // 获取状态文本

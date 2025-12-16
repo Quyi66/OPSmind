@@ -1,70 +1,69 @@
 <template>
-  <div class="windows-rollback">
-    <!-- 内容区域 -->
-    <div class="page-content">
-      <!-- 筛选区域 -->
-      <div class="filter-section">
-        <el-input
-          v-model="filterText"
-          placeholder="搜索..."
-          style="width: 200px"
-          clearable
-          @keyup.enter="handleSearch"
-          @clear="handleSearch"
-        >
-          <template #suffix>
-            <i class="fa fa-search" style="cursor: pointer" @click="handleSearch" />
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-input
+        v-model="filterText"
+        placeholder="搜索..."
+        size="small"
+        style="width: 200px"
+        clearable
+        @keyup.enter="handleSearch"
+        @clear="handleSearch"
+      >
+        <template #prefix>
+          <i class="fa fa-search" />
+        </template>
+      </el-input>
+    </div>
+
+    <!-- 操作区 -->
+    <div class="ops-action-bar">
+      <el-button type="warning" size="small" :disabled="selectedRows.length === 0" @click="handleBatchRollback">
+        批量回滚
+      </el-button>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table
+        ref="tableRef"
+        v-loading="loading"
+        :data="tableData"
+        stripe
+        height="calc(100vh - 280px)"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="hosts" label="主机" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="update_kb_numbers" label="KB编号" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="update_time" label="更新时间" width="180" />
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button type="warning" size="small" text @click="handleRollback(row)">
+              回滚
+            </el-button>
+            <el-button type="danger" size="small" text @click="handleDelete(row)">
+              删除
+            </el-button>
           </template>
-        </el-input>
-        <div class="filter-right">
-          <el-button type="warning" :disabled="selectedRows.length === 0" @click="handleBatchRollback">
-            批量回滚
-          </el-button>
-        </div>
-      </div>
+        </el-table-column>
+      </el-table>
+    </div>
 
-      <!-- 回滚记录表格 -->
-      <div class="table-section">
-        <el-table
-          ref="tableRef"
-          v-loading="loading"
-          :data="tableData"
-          stripe
-          style="width: 100%"
-          size="small"
-          @selection-change="handleSelectionChange"
-        >
-          <el-table-column type="selection" width="50" />
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="hosts" label="主机" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="update_kb_numbers" label="KB编号" min-width="120" show-overflow-tooltip />
-          <el-table-column prop="update_time" label="更新时间" width="180" />
-          <el-table-column label="操作" width="150" fixed="right">
-            <template #default="{ row }">
-              <el-button type="warning" size="small" link @click="handleRollback(row)">
-                回滚
-              </el-button>
-              <el-button type="danger" size="small" link @click="handleDelete(row)">
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-
-        <!-- 分页 -->
-        <div class="table-footer">
-          <el-pagination
-            v-model:current-page="pagination.page"
-            v-model:page-size="pagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            size="small"
-            @size-change="handleSizeChange"
-            @current-change="handlePageChange"
-          />
-        </div>
-      </div>
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 回滚确认对话框 -->
@@ -271,46 +270,6 @@ defineExpose({ refresh })
 </script>
 
 <style scoped lang="scss">
-.windows-rollback {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #f5f5f5;
-}
-
-.page-content {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-.filter-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  .filter-right {
-    display: flex;
-    gap: 8px;
-  }
-}
-
-.table-section {
-  background: #fff;
-  border-radius: 4px;
-  border: 1px solid #e9ecef;
-  overflow: hidden;
-}
-
-.table-footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 12px 16px;
-  border-top: 1px solid #e9ecef;
-}
-
 .rollback-confirm {
   .rollback-list {
     margin-top: 16px;
@@ -339,3 +298,4 @@ defineExpose({ refresh })
   }
 }
 </style>
+

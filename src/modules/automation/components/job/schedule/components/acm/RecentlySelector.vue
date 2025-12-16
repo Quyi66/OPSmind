@@ -32,7 +32,7 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column prop="jobType" label="类型" width="80" align="center" sortable>
+      <el-table-column prop="jobType" label="类型" width="80" align="left" sortable>
         <template #default="{ row }">
           {{ row.jobType || '-' }}
         </template>
@@ -42,7 +42,7 @@
           {{ formatDateTime(row.endTime || row.startTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="Ansible Node" width="150" align="center">
+      <el-table-column label="Ansible Node" width="150" align="left">
         <template #default="{ row }">
           <el-tag v-if="row.ata_node" type="primary" size="small">
             {{ parseAnsibleNode(row.ata_node) }}
@@ -50,7 +50,7 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="90" align="center" sortable>
+      <el-table-column label="状态" width="90" align="left" sortable>
         <template #default="{ row }">
           <el-tag
             :type="getStatusStyle(row.status)"
@@ -62,7 +62,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="详情" width="60" align="center">
+      <el-table-column label="详情" width="60" align="left">
         <template #default="{ row }">
           <span class="detail-count" v-if="row.statsJson" @click="handleViewResult(row)">
             {{ getHostCount(row.statsJson) }}

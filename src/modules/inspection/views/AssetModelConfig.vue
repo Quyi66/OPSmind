@@ -1,9 +1,9 @@
 <template>
   <div class="asset-model-config">
     <!-- 顶部导航栏 -->
-    <nav class="navbar">
+    <!-- <nav class="navbar">
       <div class="navbar-title">巡检配置</div>
-    </nav>
+    </nav> -->
 
     <!-- 提示信息 -->
     <div class="config-wrapper">

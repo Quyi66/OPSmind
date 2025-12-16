@@ -1,51 +1,52 @@
 <template>
-  <div class="scheduler-view">
-    <!-- DataTable 工具栏 -->
-    <div class="datatable-toolbar">
-      <div class="toolbar-left">
-        <el-button type="primary" plain :icon="Plus" @click="handleCreate">
-          新增任务
-        </el-button>
-        <el-button
-          type="primary"
-          plain
-          :disabled="!selectedRows.length"
-          @click="() => handleBatchToggle(selectedRows)"
-        >
-          <el-icon><Grid /></el-icon>
-          批量启停CRON
-        </el-button>
-      </div>
-
-      <div class="toolbar-right">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索..."
-          clearable
-          class="search-input"
-          @input="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-        <el-button :icon="RefreshRight" @click="handleRefresh" />
-      </div>
+  <div class="ops-page-layout">
+    <!-- 筛选栏 -->
+    <div class="ops-filter-bar">
+      <el-input
+        v-model="searchKeyword"
+        size="small"
+        placeholder="搜索..."
+        clearable
+        style="width: 240px;"
+        @input="handleSearch"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+      <el-button size="small" :icon="RefreshRight" @click="handleRefresh">刷新</el-button>
     </div>
 
-    <!-- 表格组件 -->
-    <CronJobTable
-      :data="filteredTableData"
-      :loading="loading"
-      :applet-map="appletMap"
-      @selection-change="handleSelectionChange"
-      @edit="handleEdit"
-      @delete="handleDelete"
-      @copy="handleCopy"
-      @execute="handleExecuteOnce"
-      @toggle-status="handleToggleStatus"
-      @query-next-time="handleQueryNextTime"
-    />
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" size="small" :icon="Plus" @click="handleCreate">
+        新增任务
+      </el-button>
+      <el-button
+        size="small"
+        :disabled="!selectedRows.length"
+        @click="() => handleBatchToggle(selectedRows)"
+      >
+        <el-icon><Grid /></el-icon>
+        批量启停CRON
+      </el-button>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <CronJobTable
+        :data="filteredTableData"
+        :loading="loading"
+        :applet-map="appletMap"
+        @selection-change="handleSelectionChange"
+        @edit="handleEdit"
+        @delete="handleDelete"
+        @copy="handleCopy"
+        @execute="handleExecuteOnce"
+        @toggle-status="handleToggleStatus"
+        @query-next-time="handleQueryNextTime"
+      />
+    </div>
 
     <!-- 编辑表单对话框（按需加载） -->
     <CronJobFormDialog
@@ -148,37 +149,5 @@ function handleFormSuccess() {
 </script>
 
 <style scoped>
-.scheduler-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-}
-
-.datatable-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  gap: 16px;
-}
-
-.toolbar-left {
-  display: flex;
-  gap: 12px;
-  flex: 0 0 auto;
-}
-
-.toolbar-right {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex: 0 0 auto;
-}
-
-.search-input {
-  width: 240px;
-}
+/* 使用全局 ops-page-layout 样式 */
 </style>

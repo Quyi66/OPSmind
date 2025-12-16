@@ -23,7 +23,7 @@
         :max-height="tableMaxHeight"
       >
         <el-table-column prop="groupInfo" label="info" min-width="350" show-overflow-tooltip sortable />
-        <el-table-column prop="assets_type" label="assets_type" width="120" align="center" sortable />
+        <el-table-column prop="assets_type" label="assets_type" width="120" align="left" sortable />
 
         <!-- 动态团队权限列 -->
         <el-table-column
@@ -31,7 +31,7 @@
           :key="teamName"
           :label="teamName"
           width="160"
-          align="center"
+          align="left"
         >
           <template #default="{ row }">
             <div class="permission-buttons">

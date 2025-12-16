@@ -34,7 +34,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column label="资产状态" width="90" align="center">
+        <el-table-column label="资产状态" width="90" align="left">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small" round>
               {{ row.status === 1 ? '在线' : '下线' }}

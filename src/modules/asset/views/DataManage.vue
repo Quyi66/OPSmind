@@ -96,8 +96,8 @@
             </template>
           </el-table-column>
           <el-table-column prop="ci_type" label="资产代码" width="150" sortable />
-          <el-table-column prop="total" label="总计" width="100" align="center" sortable />
-          <el-table-column label="操作" width="88" align="center" fixed="right">
+          <el-table-column prop="total" label="总计" width="100" align="left" sortable />
+          <el-table-column label="操作" width="88" align="left" fixed="right">
             <template #default="{ row }">
               <template v-if="row.path !== '/'">
                 <el-button text type="primary" size="small" @click="handleEditGroup(row)">
@@ -175,8 +175,8 @@
             </template>
           </el-table-column>
           <el-table-column prop="ci_type" label="资产代码" width="150" sortable />
-          <el-table-column prop="total" label="总计" width="100" align="center" sortable />
-          <el-table-column label="操作" width="100" align="center" fixed="right">
+          <el-table-column prop="total" label="总计" width="100" align="left" sortable />
+          <el-table-column label="操作" width="100" align="left" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="handleEditTag(row)">
                 编辑

@@ -108,7 +108,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
 import { NAV_ITEMS } from '../constants'
 
@@ -125,6 +126,9 @@ import WindowsRollback from '../components/WindowsRollback.vue'
 import WindowsView from '../components/WindowsView.vue'
 import OperationLogs from '../components/OperationLogs.vue'
 import InstallPatchDialog from '../components/dialogs/InstallPatchDialog.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 // 导航配置
 const navItems = NAV_ITEMS
@@ -149,9 +153,67 @@ const operationLogsRef = ref(null)
 const installDialogVisible = ref(false)
 const selectedPatches = ref([])
 
+// 获取当前模块的基础路径
+function getBasePath() {
+  const path = route.path
+  const match = path.match(/^\/([^/]+)/)
+  return match ? `/${match[1]}` : '/patches'
+}
+
+/**
+ * 解析路由路径，确定当前视图
+ */
+function parseRouteView() {
+  const path = route.path
+  const params = route.params
+  const pathMatch = Array.isArray(params.pathMatch)
+    ? params.pathMatch.join('/')
+    : params.pathMatch || ''
+
+  // 检查各种子路由
+  if (path.includes('/linuxPatchInstall') || pathMatch.includes('linuxPatchInstall')) {
+    return 'linuxPatchInstall'
+  }
+  if (path.includes('/linuxPatchRollback') || pathMatch.includes('linuxPatchRollback')) {
+    return 'linuxPatchRollback'
+  }
+  if (path.includes('/linuxYumManage') || pathMatch.includes('linuxYumManage')) {
+    return 'linuxYumManage'
+  }
+  if (path.includes('/linuxPatchLibrary') || pathMatch.includes('linuxPatchLibrary')) {
+    return 'linuxPatchLibrary'
+  }
+  if (path.includes('/linuxVulnerability') || pathMatch.includes('linuxVulnerability')) {
+    return 'linuxVulnerability'
+  }
+  if (path.includes('/windowsVulnerability') || pathMatch.includes('windowsVulnerability')) {
+    return 'windowsVulnerability'
+  }
+  if (path.includes('/windowsUpdate') || pathMatch.includes('windowsUpdate')) {
+    return 'windowsUpdate'
+  }
+  if (path.includes('/windowsRollback') || pathMatch.includes('windowsRollback')) {
+    return 'windowsRollback'
+  }
+  if (path.includes('/windowsView') || pathMatch.includes('windowsView')) {
+    return 'windowsView'
+  }
+  if (path.includes('/logs') || pathMatch.includes('logs')) {
+    return 'logs'
+  }
+  if (path.includes('/linuxPatchScan') || pathMatch.includes('linuxPatchScan')) {
+    return 'linuxPatchScan'
+  }
+
+  return 'linuxPatchScan'
+}
+
 // 处理导航点击
 function handleNavClick(item) {
   activeView.value = item.key
+  const basePath = getBasePath()
+  const targetPath = item.key === 'linuxPatchScan' ? basePath : `${basePath}/${item.key}`
+  router.push(targetPath)
 }
 
 // 处理子组件内的导航事件
@@ -175,7 +237,22 @@ function handleInstallSuccess() {
   }
   // 跳转到日志页面
   activeView.value = 'logs'
+  const basePath = getBasePath()
+  router.push(`${basePath}/logs`)
 }
+
+// 监听路由变化
+watch(
+  () => route.path,
+  () => {
+    activeView.value = parseRouteView()
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  activeView.value = parseRouteView()
+})
 
 // 模块信息
 const moduleTitle = '补丁管理'

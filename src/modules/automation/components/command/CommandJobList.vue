@@ -1,13 +1,13 @@
 <template>
   <div class="command-job-list">
     <!-- 标题栏 -->
-    <div class="job-list__header">
-    </div>
+    <!-- <div class="job-list__header">
+    </div> -->
 
     <!-- 主体区域 -->
     <div class="job-list__body">
       <!-- 侧边栏 -->
-      <aside class="ops-sidebar-nav ops-sidebar-nav--wide">
+      <aside class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 280px">
         <div class="ops-sidebar-header">
           <el-input
             v-model="searchKeyword"
@@ -324,6 +324,11 @@ async function loadJobs() {
   try {
     const response = await findAllJobs(props.jobType)
     jobs.value = response.data || response || []
+
+    // 自动选中第一条数据
+    if (jobs.value.length > 0 && !activeJobId.value) {
+      selectJob(jobs.value[0])
+    }
   } catch (error) {
     console.error('加载作业列表失败:', error)
     ElMessage.error('加载作业列表失败')

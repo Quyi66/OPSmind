@@ -17,15 +17,15 @@
       <el-button size="small" @click="handleReset">
         <i class="fa fa-undo"></i> 重置
       </el-button>
+      <el-button size="small" @click="loadTemplates">
+        <el-icon><Refresh /></el-icon> 刷新
+      </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="goToAdd">
         <i class="fa fa-plus"></i> 新建模板
-      </el-button>
-      <el-button size="small" @click="loadTemplates">
-        <i class="fa fa-refresh"></i> 刷新
       </el-button>
     </div>
 
@@ -80,7 +80,7 @@
         <el-table-column prop="executedBy" label="执行人" width="120" sortable show-overflow-tooltip />
 
         <!-- 操作 -->
-        <el-table-column label="操作" width="132" align="center" fixed="right">
+        <el-table-column label="操作" width="132" align="left" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="runTemplate(row)">
               执行

@@ -64,33 +64,34 @@
     </aside>
 
     <!-- 右侧检查结果列表 -->
-    <main class="main-content">
-      <nav class="content-navbar">
-        <div class="navbar-title">检查结果</div>
-        <div class="navbar-actions">
-          <el-input
-            v-model="searchText"
-            placeholder="搜索"
-            clearable
-            style="width: 200px"
-            @input="handleSearch"
-          >
-            <template #prefix>
-              <i class="fa fa-search"></i>
-            </template>
-          </el-input>
-          <el-button @click="refreshTable">
-            <i class="fa fa-sync"></i>
-          </el-button>
-        </div>
-      </nav>
+    <main class="ops-main-content">
+      <!-- 筛选区 -->
+      <div class="ops-filter-bar">
+        <!-- <div style="font-size: 16px; font-weight: 600; color: #303133">检查结果</div> -->
+        <el-input
+          v-model="searchText"
+          placeholder="搜索"
+          clearable
+          size="small"
+          style="width: 200px;"
+          @input="handleSearch"
+        >
+          <template #prefix>
+            <i class="fa fa-search"></i>
+          </template>
+        </el-input>
+        <el-button size="small" @click="refreshTable">
+          刷新
+        </el-button>
+      </div>
 
-      <div class="table-wrapper">
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
         <el-table
           v-loading="loading"
           :data="tableData"
           stripe
-          style="width: 100%"
+          height="calc(100vh - 260px)"
           row-key="id"
         >
           <el-table-column prop="templateName" label="模板" show-overflow-tooltip sortable />
@@ -110,7 +111,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="createdBy" label="执行人" width="100" />
-          <el-table-column label="执行状态" width="100" align="center">
+          <el-table-column label="执行状态" width="100" align="left">
             <template #default="{ row }">
               <el-button
                 :type="getStatusType(row.jobStatus)"
@@ -122,7 +123,7 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="90" align="center" fixed="right">
+          <el-table-column label="操作" width="90" align="left" fixed="right">
             <template #default="{ row }">
               <el-button
                 text
@@ -145,20 +146,20 @@
             </template>
           </el-table-column>
         </el-table>
+      </div>
 
-        <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
-          <el-pagination
-            v-model:current-page="pagination.page"
-            v-model:page-size="pagination.size"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            background
-            @size-change="handlePageSizeChange"
-            @current-change="handlePageChange"
-          />
-        </div>
+      <!-- 分页 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePageSizeChange"
+          @current-change="handlePageChange"
+        />
       </div>
     </main>
 
@@ -508,6 +509,14 @@ onMounted(() => {
   background: #fff;
 }
 
+// 右侧主内容区
+.ops-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 // 侧边栏排序按钮样式
 .sort-btn {
   padding: 8px 10px;
@@ -519,67 +528,10 @@ onMounted(() => {
   color: #6c757d;
 }
 
-// 右侧主内容区
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.content-navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #ebeef5;
-  background: #fff;
-
-  .navbar-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #303133;
-  }
-
-  .navbar-actions {
-    display: flex;
-    gap: 8px;
-  }
-}
-
-.table-wrapper {
-  flex: 1;
-  padding: 16px;
-  overflow: auto;
-}
-
-.table-footer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-top: 12px;
-
-  .pagination-info {
-    color: #6c757d;
-    font-size: 13px;
-  }
-}
-
 // 浮动右对齐
 .float-end {
   float: right;
   margin-left: 12px;
-}
-
-// 表格样式
-:deep(.el-table) {
-  font-size: 13px;
-
-  .el-table__header th {
-    background-color: #f8f9fa !important;
-    color: #495057;
-    font-weight: 500;
-  }
 }
 
 // 按钮样式

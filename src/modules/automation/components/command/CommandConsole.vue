@@ -1,11 +1,11 @@
 <template>
   <div class="command-console">
     <!-- 标题栏 -->
-    <div class="console-header">
+    <!-- <div class="console-header">
       <nav class="navbar navbar-light">
         <div class="navbar-title">Console</div>
       </nav>
-    </div>
+    </div> -->
 
     <div class="console-body">
       <!-- 运行记录按钮 -->
@@ -91,32 +91,31 @@
     <el-dialog
       v-model="historyDialogVisible"
       title="运行记录"
-      width="1000px"
+      width="1200px"
     >
       <el-table
         :data="historyData"
-        border
-        max-height="400"
+        max-height="calc(100vh - 400px)"
       >
-        <el-table-column prop="cmd" label="命令" min-width="120">
+        <el-table-column prop="cmd" label="命令" show-overflow-tooltip>
           <template #default="{ row }">
-            <span class="text-ellipsis" :title="row.cmd">{{ row.cmd }}</span>
+            <span class="text-ellipsis">{{ row.cmd }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="type" label="语法" width="100" />
-        <el-table-column prop="hostname" label="主机" min-width="120">
+        <el-table-column prop="type" label="语法" width="80" />
+        <el-table-column prop="hostname" label="主机" show-overflow-tooltip>
           <template #default="{ row }">
-            <span class="text-ellipsis" :title="row.hostname?.join(',')">{{ row.hostname?.join(',') }}</span>
+            <span class="text-ellipsis">{{ row.hostname?.join(',') }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="160" />
+        <el-table-column prop="createdAt" label="创建时间" width="180" />
         <el-table-column prop="createdBy" label="创建人" width="100" />
-        <el-table-column prop="lastRunTime" label="最后执行时间" width="160" />
+        <el-table-column prop="lastRunTime" label="最后执行时间" width="180" />
         <el-table-column prop="runNumber" label="执行次数" width="90" />
-        <el-table-column label="操作" width="80" fixed="right" align="center">
+        <el-table-column label="操作" width="100" fixed="right" align="left">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleUseHistory(row)">
-              回填
+              数据回滚
             </el-button>
           </template>
         </el-table-column>

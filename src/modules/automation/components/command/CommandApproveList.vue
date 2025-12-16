@@ -1,8 +1,8 @@
 <template>
   <div class="command-approve-list">
     <!-- 标题栏 -->
-    <div class="approve-list__header">
-    </div>
+    <!-- <div class="approve-list__header">
+    </div> -->
 
     <!-- 内容区域 -->
     <div class="approve-list__content">
@@ -59,15 +59,15 @@
             </template>
           </el-table-column>
 
-          <el-table-column prop="createdAt" label="创建时间" width="170" align="center" sortable>
+          <el-table-column prop="createdAt" label="创建时间" width="170" align="left" sortable>
             <template #default="{ row }">
               {{ formatDate(row.createdAt) }}
             </template>
           </el-table-column>
 
-          <el-table-column prop="createdBy" label="创建人" width="100" align="center" sortable />
+          <el-table-column prop="createdBy" label="创建人" width="100" align="left" sortable />
 
-          <el-table-column label="操作" width="80" fixed="right" align="center">
+          <el-table-column label="操作" width="80" fixed="right" align="left">
             <template #default="{ row }">
               <el-button
                 text

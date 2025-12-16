@@ -33,7 +33,7 @@
       </div>
       <el-table v-loading="loading" :data="checkItems" stripe max-height="400">
         <el-table-column prop="name" label="检查项" min-width="200" />
-        <el-table-column label="状态" width="120" align="center">
+        <el-table-column label="状态" width="120" align="left">
           <template #default="{ row }">
             <el-tag :type="getKpiStatusTagType(row.status)" effect="dark" round size="small">
               <i :class="['fa', getKpiStatusIcon(row.status)]" style="margin-right: 5px;"></i>
@@ -41,7 +41,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="80" align="center">
+        <el-table-column label="操作" width="80" align="left">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="$emit('show-detail', row)">
               详情

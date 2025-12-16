@@ -22,7 +22,7 @@
           v-for="role in roles"
           :key="role.id"
           :label="role.description"
-          align="center"
+          align="left"
         >
           <template #default="{ row }">
             <el-checkbox

@@ -57,7 +57,7 @@
               {{ getAttrTypeName(row.type) }}
             </template>
           </el-table-column>
-          <el-table-column prop="required" label="必填" width="80" align="center">
+          <el-table-column prop="required" label="必填" width="80" align="left">
             <template #default="{ row }">
               <el-tag v-if="row.required" type="danger" size="small">是</el-tag>
               <span v-else class="text-secondary">否</span>

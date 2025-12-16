@@ -32,27 +32,29 @@
           </el-select>
         </div>
 
+        <el-input
+          v-model.trim="keyword"
+          size="small"
+          placeholder="输入作业名称搜索"
+          clearable
+          @clear="handleSearch"
+          @keyup.enter="handleSearch"
+          style="width: 250px"
+        >
+          <template #suffix>
+            <el-icon class="search-icon" @click="handleSearch"><Search /></el-icon>
+          </template>
+        </el-input>
+
         <div class="toolbar-group toolbar-search">
-          <el-input
-            v-model.trim="keyword"
-            size="small"
-            placeholder="输入作业名称搜索"
-            clearable
-            @clear="handleSearch"
-            @keyup.enter="handleSearch"
-          >
-            <template #suffix>
-              <el-icon class="search-icon" @click="handleSearch"><Search /></el-icon>
-            </template>
-          </el-input>
-          <el-button size="small" :icon="RefreshRight" @click="handleRefresh" />
+          <el-button size="small" :icon="RefreshRight" @click="handleRefresh">刷新</el-button>
         </div>
       </section>
 
       <el-table
         v-loading="tableLoading"
         :data="tableData"
-        height="420px"
+        max-height="calc(100vh - 400px)"
         class="history-table"
         @sort-change="handleSortChange"
         :empty-text="tableLoading ? ' ' : '暂无数据'"
@@ -60,23 +62,23 @@
         <el-table-column
           prop="startTime"
           label="开始时间"
-          width="170"
+          width="180"
           sortable="custom"
           column-key="start_time"
         />
-        <el-table-column prop="jobTitle" label="作业" min-width="200" show-overflow-tooltip />
-        <el-table-column label="类型" width="120">
+        <el-table-column prop="jobTitle" label="作业" min-width="150" show-overflow-tooltip />
+        <el-table-column label="类型" width="80">
           <template #default="{ row }">
             <span>{{ jobTypeLabel(row.jobTypeKey, row.jobType) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="username" label="执行人" width="110" />
-        <el-table-column prop="reviewUser" label="审核人" width="110" />
+        <el-table-column prop="username" label="执行人" width="100" />
+        <el-table-column prop="reviewUser" label="审核人" width="100" />
         <el-table-column prop="duration" label="耗时" width="100" />
         <el-table-column
           prop="endTime"
           label="结束时间"
-          width="170"
+          width="180"
           sortable="custom"
           column-key="end_time"
         />
@@ -112,7 +114,7 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="详情" min-width="220">
+        <el-table-column label="详情" min-width="150">
           <template #default="{ row }">
             <div v-if="row.statsBadges.length" class="stats-badges">
               <el-tag
@@ -129,7 +131,7 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="canRerun(row)"

@@ -1,189 +1,179 @@
 <template>
-  <div class="patch-library">
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="header-actions">
-        <el-button type="primary" link @click="handleCheckPatchUpdate">
-          <i class="fa fa-chevron-right" /> 检查补丁库更新
-        </el-button>
+  <div class="ops-page-layout">
+    <!-- 操作区 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" size="small" @click="handleCheckPatchUpdate">
+        检查补丁库更新
+      </el-button>
+    </div>
+
+    <!-- 厂商统计 KPI 卡片 -->
+    <div class="vendor-kpi-section">
+      <div
+        v-for="vendor in vendorStats"
+        :key="vendor.vendor"
+        class="vendor-kpi-card"
+        :class="getVendorClass(vendor.vendor)"
+        @click="handleVendorClick(vendor.vendor)"
+      >
+        <div class="kpi-left">
+          <div class="kpi-header">
+            <span class="kpi-vendor">{{ vendor.vendor.toUpperCase() }}</span>
+            <span class="kpi-date">{{ vendor.latest_date }}</span>
+          </div>
+          <div class="kpi-value">{{ vendor.count }}</div>
+        </div>
+        <div class="kpi-icon">
+          <i :class="getVendorIcon(vendor.vendor)" />
+        </div>
       </div>
     </div>
 
-    <div class="page-content">
-      <!-- 厂商统计 KPI 卡片 -->
-      <div class="vendor-kpi-section">
-        <div
-          v-for="vendor in vendorStats"
-          :key="vendor.vendor"
-          class="vendor-kpi-card"
-          :class="getVendorClass(vendor.vendor)"
-          @click="handleVendorClick(vendor.vendor)"
-        >
-          <div class="kpi-left">
-            <div class="kpi-header">
-              <span class="kpi-vendor">{{ vendor.vendor.toUpperCase() }}</span>
-              <span class="kpi-date">{{ vendor.latest_date }}</span>
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <!-- 严重程度多选 -->
+      <el-checkbox-group v-model="severityFilter" @change="handleFilter">
+        <el-checkbox value="Critical">
+          <span class="severity-tag severity-critical">严重</span>
+        </el-checkbox>
+        <el-checkbox value="Important">
+          <span class="severity-tag severity-important">重要</span>
+        </el-checkbox>
+        <el-checkbox value="Moderate">
+          <span class="severity-tag severity-moderate">中等</span>
+        </el-checkbox>
+        <el-checkbox value="Low">
+          <span class="severity-tag severity-low">低级</span>
+        </el-checkbox>
+      </el-checkbox-group>
+
+      <!-- 状态筛选 -->
+      <span>状态</span>
+      <el-select v-model="ignoreFilter" size="small" style="width: 100px;" @change="handleFilter">
+        <el-option label="全部" value="0,1" />
+        <el-option label="白名单" value="1" />
+        <el-option label="非白名单" value="0" />
+      </el-select>
+
+      <el-input
+        v-model="filterText"
+        placeholder="搜索补丁编号、概要、CVE..."
+        size="small"
+        style="width: 280px; margin-left: auto"
+        clearable
+        @input="handleFilter"
+      >
+        <template #prefix>
+          <i class="fa fa-search" />
+        </template>
+      </el-input>
+      <el-button size="small" @click="handleRefresh">
+        刷新
+      </el-button>
+    </div>
+
+    <!-- 批量操作按钮 - 选中时显示 -->
+    <div class="ops-action-bar" v-if="selectedPatches.length > 0">
+      <el-button type="primary" size="small" @click="handleBatchAddWhitelist">
+        添加白名单
+      </el-button>
+      <el-button type="danger" size="small" @click="handleBatchRemoveWhitelist">
+        移除白名单
+      </el-button>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table
+        ref="tableRef"
+        v-loading="loading"
+        :data="paginatedTableData"
+        stripe
+        height="calc(100vh - 480px)"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="patch_id" label="补丁编号" min-width="140">
+          <template #default="{ row }">
+            <el-button type="primary" link size="small" @click="handleViewDetail(row)">
+              {{ row.patch_id }}
+            </el-button>
+          </template>
+        </el-table-column>
+        <el-table-column prop="title" label="概要" min-width="250" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="wrap-text">{{ row.title }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="severity" label="严重级别" width="100" align="left">
+          <template #default="{ row }">
+            <el-tag :type="getSeverityStyle(row.severity)" size="small">
+              {{ row.severity }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="publish_date" label="发布时间" width="120" sortable>
+          <template #default="{ row }">
+            {{ formatDate(row.publish_date) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="related_vuls" label="关联CVE" min-width="180">
+          <template #default="{ row }">
+            <div class="cve-tags" v-if="row.related_vuls">
+              <a
+                v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)"
+                :key="idx"
+                :href="`https://access.redhat.com/security/cve/${cve}`"
+                target="_blank"
+                class="cve-link"
+              >
+                {{ cve }}
+              </a>
+              <span v-if="parseCVEs(row.related_vuls).length > 3" class="cve-more">
+                +{{ parseCVEs(row.related_vuls).length - 3 }}
+              </span>
             </div>
-            <div class="kpi-value">{{ vendor.count }}</div>
-          </div>
-          <div class="kpi-icon">
-            <i :class="getVendorIcon(vendor.vendor)" />
-          </div>
-        </div>
-      </div>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="vendor" label="厂商" width="100" />
+        <el-table-column prop="is_ignore" label="Ignore" width="88" align="left">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.is_ignore === 1"
+              text
+              type="success"
+              size="small"
+              @click="handleRemoveFromWhitelist(row)"
+            >
+              Yes
+            </el-button>
+            <el-button
+              v-else
+              text
+              type="info"
+              size="small"
+              @click="handleAddToWhitelist(row)"
+            >
+              No
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
-      <!-- 筛选条件 -->
-      <div class="filter-bar">
-        <div class="filter-left">
-          <!-- 严重程度多选 -->
-          <el-checkbox-group v-model="severityFilter" @change="handleFilter">
-            <el-checkbox value="Critical">
-              <span class="severity-tag severity-critical">严重</span>
-            </el-checkbox>
-            <el-checkbox value="Important">
-              <span class="severity-tag severity-important">重要</span>
-            </el-checkbox>
-            <el-checkbox value="Moderate">
-              <span class="severity-tag severity-moderate">中等</span>
-            </el-checkbox>
-            <el-checkbox value="Low">
-              <span class="severity-tag severity-low">低级</span>
-            </el-checkbox>
-          </el-checkbox-group>
-
-          <!-- 状态筛选 -->
-          <span class="filter-label">状态：</span>
-          <el-select v-model="ignoreFilter" style="width: 100px;" @change="handleFilter">
-            <el-option label="全部" value="0,1" />
-            <el-option label="白名单" value="1" />
-            <el-option label="非白名单" value="0" />
-          </el-select>
-        </div>
-
-        <div class="filter-right">
-          <el-input
-            v-model="filterText"
-            placeholder="搜索补丁编号、概要、CVE..."
-            style="width: 280px"
-            clearable
-            @input="handleFilter"
-          >
-            <template #prefix>
-              <i class="fa fa-search" />
-            </template>
-          </el-input>
-          <el-button @click="handleRefresh">
-            <i class="fa fa-sync" />
-          </el-button>
-        </div>
-      </div>
-
-      <!-- 补丁列表表格 -->
-      <div class="table-section">
-        <el-table
-          ref="tableRef"
-          v-loading="loading"
-          :data="tableData"
-          style="width: 100%"
-          size="small"
-          @selection-change="handleSelectionChange"
-        >
-          <el-table-column type="selection" width="50" />
-          <el-table-column prop="patch_id" label="补丁编号" min-width="140">
-            <template #default="{ row }">
-              <el-button type="primary" link size="small" @click="handleViewDetail(row)">
-                {{ row.patch_id }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column prop="title" label="概要" min-width="250" show-overflow-tooltip>
-            <template #default="{ row }">
-              <span class="wrap-text">{{ row.title }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="severity" label="严重级别" width="100" align="center">
-            <template #default="{ row }">
-              <el-tag :type="getSeverityStyle(row.severity)" size="small">
-                {{ row.severity }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="publish_date" label="发布时间" width="120" sortable>
-            <template #default="{ row }">
-              {{ formatDate(row.publish_date) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="related_vuls" label="关联CVE" min-width="180">
-            <template #default="{ row }">
-              <div class="cve-tags" v-if="row.related_vuls">
-                <a
-                  v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)"
-                  :key="idx"
-                  :href="`https://access.redhat.com/security/cve/${cve}`"
-                  target="_blank"
-                  class="cve-link"
-                >
-                  {{ cve }}
-                </a>
-                <span v-if="parseCVEs(row.related_vuls).length > 3" class="cve-more">
-                  +{{ parseCVEs(row.related_vuls).length - 3 }}
-                </span>
-              </div>
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="vendor" label="厂商" width="100" />
-          <el-table-column prop="is_ignore" label="Ignore" width="140" align="center">
-            <template #default="{ row }">
-              <el-button
-                v-if="row.is_ignore === 1"
-                type="success"
-                size="small"
-                @click="handleRemoveFromWhitelist(row)"
-              >
-                Yes
-              </el-button>
-              <el-button
-                v-else
-                type="info"
-                size="small"
-                @click="handleAddToWhitelist(row)"
-              >
-                No
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-
-      <!-- 批量操作按钮 - 选中时显示 -->
-      <div class="batch-actions" v-if="selectedPatches.length > 0">
-        <el-button
-          type="primary"
-          @click="handleBatchAddWhitelist"
-        >
-          <i class="fa fa-plus" /> 添加白名单
-        </el-button>
-        <el-button
-          type="danger"
-          @click="handleBatchRemoveWhitelist"
-        >
-          <i class="fa fa-minus" /> 移除白名单
-        </el-button>
-      </div>
-
-      <!-- 分页 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handlePageChange"
-        />
-      </div>
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 补丁详情对话框 -->
@@ -245,7 +235,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { patchLibraryApi } from '../api'
 import { runJob } from '@/modules/automation/api/command'
@@ -277,6 +267,13 @@ const pagination = reactive({
   page: 1,
   pageSize: 20,
   total: 0
+})
+
+// 前端分页：计算当前页显示的数据
+const paginatedTableData = computed(() => {
+  const start = (pagination.page - 1) * pagination.pageSize
+  const end = start + pagination.pageSize
+  return tableData.value.slice(start, end)
 })
 
 // 详情对话框
@@ -364,7 +361,8 @@ async function loadData() {
     const response = await patchLibraryApi.getPatchList(params)
     // 源系统返回格式: { total: number, records: [] }
     tableData.value = response?.records || response?.data?.records || []
-    pagination.total = response?.total || response?.data?.total || 0
+    // 前端分页：使用数据长度作为 total
+    pagination.total = tableData.value.length
   } catch (error) {
     console.error('Failed to load patches:', error)
     tableData.value = []
@@ -386,16 +384,14 @@ function handleRefresh() {
   loadVendorStats()
 }
 
-// 分页变化
+// 分页变化 - 前端分页不需要重新加载数据
 function handlePageChange(page) {
   pagination.page = page
-  loadData()
 }
 
 function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
-  loadData()
 }
 
 // 选择变化
@@ -559,55 +555,21 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-.patch-library {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-}
-
-// 页面头部
-.page-header {
-  padding: 12px 24px;
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  .header-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: #333;
-  }
-
-  .header-actions {
-    :deep(.el-button) {
-      color: #0d6efd;
-    }
-  }
-}
-
-.page-content {
-  flex: 1;
-  padding: 16px 24px;
-  overflow-y: auto;
-}
-
-// 厂商KPI卡片区域 - 一行3个（根据截图）
+// 厂商KPI卡片区域 - 一行4个
 .vendor-kpi-section {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .vendor-kpi-card {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-radius: 6px;
-  min-height: 90px;
+  min-height: 70px;
   cursor: pointer;
   transition: all 0.3s ease;
   color: #fff;
@@ -627,28 +589,28 @@ defineExpose({
   .kpi-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 4px;
   }
 
   .kpi-vendor {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
   }
 
   .kpi-date {
-    font-size: 12px;
+    font-size: 11px;
     opacity: 0.85;
   }
 
   .kpi-value {
-    font-size: 36px;
+    font-size: 26px;
     font-weight: 700;
     line-height: 1;
   }
 
   .kpi-icon {
-    font-size: 48px;
+    font-size: 32px;
     opacity: 0.3;
     align-self: center;
   }
@@ -687,36 +649,6 @@ defineExpose({
   background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
 }
 
-// 筛选条件栏
-.filter-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 8px 0;
-  flex-wrap: wrap;
-  gap: 12px;
-
-  .filter-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .filter-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .filter-label {
-    font-size: 14px;
-    color: #606266;
-    margin-left: 16px;
-  }
-}
-
 // 严重程度标签
 .severity-tag {
   display: inline-block;
@@ -744,17 +676,6 @@ defineExpose({
 .severity-low {
   background-color: #6c757d;
   color: #fff;
-}
-
-// 表格区域
-.table-section {
-  margin-bottom: 16px;
-
-  .wrap-text {
-    word-break: break-word;
-    white-space: normal;
-    line-height: 1.4;
-  }
 }
 
 // CVE标签
@@ -786,21 +707,6 @@ defineExpose({
     border-radius: 4px;
     font-size: 12px;
   }
-}
-
-// 分页栏
-.pagination-bar {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid #e9ecef;
-}
-
-// 批量操作按钮
-.batch-actions {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
 }
 
 // 补丁详情对话框样式

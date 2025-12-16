@@ -4,28 +4,27 @@
       v-loading="loading"
       :data="data"
       stripe
-      border
       :default-sort="{ prop: 'id', order: 'descending' }"
       @selection-change="$emit('selection-change', $event)"
     >
-      <el-table-column type="selection" width="50" align="center" />
-      <el-table-column prop="id" label="任务ID" width="80" align="center" sortable />
+      <el-table-column type="selection" width="50" align="left" />
+      <el-table-column prop="id" label="任务ID" width="90" align="left" sortable />
 
-      <el-table-column prop="jobDesc" label="任务描述" min-width="180" show-overflow-tooltip />
+      <el-table-column prop="jobDesc" label="任务描述" show-overflow-tooltip />
 
-      <el-table-column prop="scheduleConf" label="CRON表达式" width="140" align="center">
+      <el-table-column prop="scheduleConf" label="CRON表达式" width="140" align="left">
         <template #default="{ row }">
           <el-tag size="small" type="info">{{ row.scheduleConf }}</el-tag>
         </template>
       </el-table-column>
 
-      <el-table-column prop="appCode" label="应用资源" width="120" align="center">
+      <el-table-column prop="appCode" label="应用资源" width="120" align="left">
         <template #default="{ row }">
           {{ getAppName(row.appCode) }}
         </template>
       </el-table-column>
 
-      <el-table-column label="作业类型" width="120" align="center">
+      <el-table-column label="作业类型" width="110" align="left">
         <template #default="{ row }">
           <el-tag :type="getJobTypeTag(row.jobType)" size="small">
             {{ getJobTypeName(row.jobType) }}
@@ -33,22 +32,22 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="当前状态" width="100" align="center">
+      <el-table-column label="当前状态" width="100" align="left">
         <template #default="{ row }">
-          <el-button
+          <el-tag
             :type="row.triggerStatus === '1' ? 'success' : 'danger'"
             size="small"
-            :loading="row._switching"
+            style="cursor: pointer;"
             @click="$emit('toggle-status', row)"
           >
             {{ row.triggerStatus === '1' ? '已启用' : '已停用' }}
-          </el-button>
+          </el-tag>
         </template>
       </el-table-column>
 
-      <el-table-column prop="author" label="创建者" width="100" align="center" />
+      <el-table-column prop="author" label="创建者" width="100" align="left" />
 
-      <el-table-column label="查看" width="80" align="center">
+      <el-table-column label="查看" width="80" align="left">
         <template #default="{ row }">
           <el-button
             type="default"
@@ -61,7 +60,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="176" align="center" fixed="right">
+      <el-table-column label="操作" width="176" align="left" fixed="right">
         <template #default="{ row }">
           <el-button
             text

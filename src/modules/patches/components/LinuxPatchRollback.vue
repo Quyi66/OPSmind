@@ -1,171 +1,140 @@
 <template>
-  <div class="patch-rollback">
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="page-header__actions">
-        <el-button
-          type="danger"
-          plain
-          :disabled="selectedIds.length === 0"
-          @click="handleBatchDelete"
-        >
-          <i class="fa fa-trash-alt" />
-          删除
-        </el-button>
-      </div>
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <span>IP</span>
+      <el-input
+        v-model="filters.host_key"
+        placeholder="请输入IP"
+        style="width: 200px"
+        clearable
+        size="small"
+      />
+      <span>CVE</span>
+      <el-input
+        v-model="filters.vul_id"
+        placeholder="请输入CVE"
+        style="width: 200px"
+        clearable
+        size="small"
+      />
+      <el-button type="primary" size="small" @click="handleSearch">
+        查询
+      </el-button>
+      <el-button size="small" @click="handleReset">
+        重置
+      </el-button>
     </div>
 
-    <!-- 内容区域 -->
-    <div class="page-content">
-      <!-- 筛选工具栏 -->
-      <div class="filter-toolbar">
-        <div class="filter-item">
-          <span class="filter-label">IP</span>
-          <el-input
-            v-model="filters.host_key"
-            placeholder="请输入IP"
-            style="width: 200px"
-            clearable
-            size="small"
-          />
-        </div>
-        <div class="filter-item">
-          <span class="filter-label">CVE</span>
-          <el-input
-            v-model="filters.vul_id"
-            placeholder="请输入CVE"
-            style="width: 200px"
-            clearable
-            size="small"
-          />
-        </div>
-        <el-button type="primary" size="small" @click="handleSearch">
-          <i class="fa fa-search" />
-          查询
-        </el-button>
-        <el-button size="small" @click="handleReset">
-          <i class="fa fa-redo" />
-          重置
-        </el-button>
-      </div>
+    <!-- 操作区 -->
+    <div class="ops-action-bar">
+      <el-button
+        type="primary"
+        size="small"
+        :disabled="selectedIds.length === 0"
+        @click="handleBatchRollback"
+      >
+        批量回退
+      </el-button>
+      <el-button
+        type="danger"
+        size="small"
+        :disabled="selectedIds.length === 0"
+        @click="handleBatchDelete"
+      >
+        删除
+      </el-button>
+    </div>
 
-      <!-- 更新记录表格 -->
-      <div class="table-section">
-        <el-table
-          ref="tableRef"
-          v-loading="loading"
-          :data="tableData"
-          stripe
-          style="width: 100%"
-          size="small"
-          height="100%"
-          @selection-change="handleSelectionChange"
-        >
-          <el-table-column type="selection" width="40" />
-          <el-table-column prop="hosts" label="主机" min-width="150">
-            <template #default="{ row }">
-              <div class="hosts-cell">
-                <div v-for="(host, idx) in parseHosts(row.hosts).slice(0, 2)" :key="idx">
-                  {{ host }}
-                </div>
-                <el-popover
-                  v-if="parseHosts(row.hosts).length > 2"
-                  placement="top"
-                  trigger="hover"
-                  :width="200"
-                >
-                  <template #reference>
-                    <span class="more-link">+{{ parseHosts(row.hosts).length - 2 }} 更多</span>
-                  </template>
-                  <div class="hosts-popover">
-                    <div v-for="(host, idx) in parseHosts(row.hosts)" :key="idx">{{ host }}</div>
-                  </div>
-                </el-popover>
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table
+        ref="tableRef"
+        v-loading="loading"
+        :data="tableData"
+        stripe
+        height="calc(100vh - 300px)"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="40" />
+        <el-table-column prop="hosts" label="主机" min-width="120">
+          <template #default="{ row }">
+            <div class="hosts-cell">
+              <div v-for="(host, idx) in parseHosts(row.hosts).slice(0, 2)" :key="idx">
+                {{ host }}
               </div>
-            </template>
-          </el-table-column>
-          <el-table-column prop="update_id" label="更新维度（CVE/PKG）" min-width="160" show-overflow-tooltip />
-          <el-table-column prop="patch_id" label="修复补丁编号" min-width="140" show-overflow-tooltip />
-          <el-table-column prop="update_pkgs" label="更新软件" min-width="280">
-            <template #default="{ row }">
-              <div class="update-pkgs-cell">
-                <div v-for="(pkg, idx) in parseUpdatePkgs(row.update_pkgs).slice(0, 2)" :key="idx" class="pkg-update">
-                  {{ pkg.old_pkg }} <span class="arrow">→</span> {{ pkg.new_pkg }}
+              <el-popover
+                v-if="parseHosts(row.hosts).length > 2"
+                placement="top"
+                trigger="hover"
+                :width="200"
+              >
+                <template #reference>
+                  <span class="more-link">+{{ parseHosts(row.hosts).length - 2 }} 更多</span>
+                </template>
+                <div class="hosts-popover">
+                  <div v-for="(host, idx) in parseHosts(row.hosts)" :key="idx">{{ host }}</div>
                 </div>
-                <el-popover
-                  v-if="parseUpdatePkgs(row.update_pkgs).length > 2"
-                  placement="top"
-                  trigger="hover"
-                  :width="400"
-                >
-                  <template #reference>
-                    <span class="more-link">+{{ parseUpdatePkgs(row.update_pkgs).length - 2 }} 更多</span>
-                  </template>
-                  <div class="pkgs-popover">
-                    <div v-for="(pkg, idx) in parseUpdatePkgs(row.update_pkgs)" :key="idx" class="pkg-update">
-                      {{ pkg.old_pkg }} <span class="arrow">→</span> {{ pkg.new_pkg }}
-                    </div>
-                  </div>
-                </el-popover>
+              </el-popover>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="update_id" label="更新维度（CVE/PKG）" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="patch_id" label="修复补丁编号" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="update_pkgs" label="更新软件" min-width="280">
+          <template #default="{ row }">
+            <div class="update-pkgs-cell">
+              <div v-for="(pkg, idx) in parseUpdatePkgs(row.update_pkgs).slice(0, 2)" :key="idx" class="pkg-update">
+                {{ pkg.old_pkg }} <span class="arrow">→</span> {{ pkg.new_pkg }}
               </div>
-            </template>
-          </el-table-column>
-          <el-table-column prop="update_time" label="更新时间" width="160" sortable>
-            <template #default="{ row }">
-              {{ formatDateTime(row.update_time) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="160" fixed="right">
-            <template #default="{ row }">
-              <el-button
-                type="info"
-                size="small"
-                round
-                @click="handleRollback(row)"
+              <el-popover
+                v-if="parseUpdatePkgs(row.update_pkgs).length > 2"
+                placement="top"
+                trigger="hover"
+                :width="400"
               >
-                <i class="fa fa-history" />
-                回退
-              </el-button>
-              <el-button
-                type="danger"
-                size="small"
-                round
-                @click="handleDelete(row)"
-              >
-                <i class="fa fa-trash-alt" />
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+                <template #reference>
+                  <span class="more-link">+{{ parseUpdatePkgs(row.update_pkgs).length - 2 }} 更多</span>
+                </template>
+                <div class="pkgs-popover">
+                  <div v-for="(pkg, idx) in parseUpdatePkgs(row.update_pkgs)" :key="idx" class="pkg-update">
+                    {{ pkg.old_pkg }} <span class="arrow">→</span> {{ pkg.new_pkg }}
+                  </div>
+                </div>
+              </el-popover>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="update_time" label="更新时间" width="180" sortable>
+          <template #default="{ row }">
+            {{ formatDateTime(row.update_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-button text type="primary" size="small" @click="handleRollback(row)">
+              回退
+            </el-button>
+            <el-button text type="danger" size="small" @click="handleDelete(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
-        <!-- 分页 -->
-        <div class="table-footer">
-          <el-pagination
-            v-model:current-page="pagination.page"
-            v-model:page-size="pagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            size="small"
-            @size-change="handleSizeChange"
-            @current-change="handlePageChange"
-          />
-        </div>
-      </div>
-
-      <!-- 批量回退按钮 -->
-      <div class="batch-actions">
-        <el-button
-          type="primary"
-          plain
-          :disabled="selectedIds.length === 0"
-          @click="handleBatchRollback"
-        >
-          <i class="fa fa-history" />
-          批量回退
-        </el-button>
-      </div>
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 回退确认对话框 -->
@@ -410,93 +379,7 @@ defineExpose({ refresh })
 </script>
 
 <style scoped lang="scss">
-.patch-rollback {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e9ecef;
-
-  &__title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #212529;
-  }
-
-  &__actions {
-    display: flex;
-    gap: 8px;
-  }
-}
-
-.page-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  overflow: hidden;
-  min-height: 0;
-}
-
-.filter-toolbar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  flex-wrap: wrap;
-
-  .filter-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .filter-label {
-    font-size: 13px;
-    color: #495057;
-    white-space: nowrap;
-  }
-}
-
-.table-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border: 1px solid #e9ecef;
-  border-radius: 4px;
-  overflow: hidden;
-  min-height: 0;
-
-  :deep(.el-table) {
-    flex: 1;
-  }
-}
-
-.table-footer {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px 16px;
-  border-top: 1px solid #e9ecef;
-  background: #fff;
-}
-
-.batch-actions {
-  flex-shrink: 0;
-  margin-top: 16px;
-}
+// 组件特定样式
 
 .hosts-cell {
   font-size: 13px;

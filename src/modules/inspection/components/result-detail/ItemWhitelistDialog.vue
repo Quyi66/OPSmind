@@ -20,7 +20,7 @@
           {{ formatDateTime(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="80" align="center">
+      <el-table-column label="操作" width="80" align="left">
         <template #default="{ row }">
           <el-button type="danger" link size="small" @click="$emit('delete', row)">
             删除

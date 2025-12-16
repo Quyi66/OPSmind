@@ -53,20 +53,20 @@
           </template>
         </el-table-column>
         <el-table-column prop="code" label="资产代码" width="150" />
-        <el-table-column prop="is_auto" label="是否自动化" width="120" align="center">
+        <el-table-column prop="is_auto" label="是否自动化" width="120" align="left">
           <template #default="{ row }">
             <span :class="row.is_auto === 1 ? 'text-success' : 'text-secondary'">
               {{ row.is_auto === 1 ? '是' : '否' }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="count" label="资产数量" width="100" align="center" />
+        <el-table-column prop="count" label="资产数量" width="100" align="left" />
         <el-table-column prop="updated_at" label="更新时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.updated_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="88" align="center" fixed="right">
+        <el-table-column label="操作" width="88" align="left" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleEditModel(row)">
               编辑

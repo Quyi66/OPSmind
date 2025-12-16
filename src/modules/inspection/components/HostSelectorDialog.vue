@@ -132,7 +132,7 @@
           >
             <el-table-column type="selection" width="45" />
             <el-table-column prop="ip" label="纳管IP" min-width="130" />
-            <el-table-column prop="status" label="连通状态" width="90" align="center">
+            <el-table-column prop="status" label="连通状态" width="90" align="left">
               <template #default="{ row }">
                 <i v-if="row.status === 'online'" class="fas fa-check-circle text-success"></i>
                 <i v-else class="fas fa-times-circle text-danger"></i>

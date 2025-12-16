@@ -57,7 +57,7 @@
               :key="date"
               :label="date"
               width="80"
-              align="center"
+              align="left"
             >
               <template #default="{ row }">
                 <div
@@ -281,7 +281,7 @@ const filteredSummary = computed(() => {
 .stats-view {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 200px);
+  height: calc(100vh - 100px);
   max-width: 100%;
   background: #fff;
   border-radius: 12px;

@@ -204,6 +204,7 @@ function handleClosed() {
 
 .dialog-footer {
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
 }
 </style>

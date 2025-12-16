@@ -167,17 +167,20 @@
             :disabled="!hasSelection"
             title="审核已选择的文件"
             @click="fileApproveDialogVisible = true"
+            size="small"
           >
-            <i class="fa fa-fw fa-comment-alt-edit" /> 审核
+            <!-- <i class="fa fa-fw fa-comment-alt-edit" />  -->
+            审核
           </el-button>
 
           <!-- 审批历史按钮 -->
           <el-button
-            type="primary"
             title="查看审批历史"
             @click="approvalHistoryDialogVisible = true"
+            size="small"
           >
-            <i class="fa fa-history" /> 审批历史
+            <!-- <i class="fa fa-history" />  -->
+            审批历史
           </el-button>
         </template>
       </div>
@@ -275,7 +278,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column v-if="repoType === 'git' || repoType === 'stage'" label="状态" width="80" align="center">
+        <el-table-column v-if="repoType === 'git' || repoType === 'stage'" label="状态" width="80" align="left">
           <template #default="{ row }">
             <span
               v-if="row._statusCss && !row.directory && !row._isParentDir"
@@ -887,7 +890,7 @@ defineExpose({
   border-radius: 3px;
   outline: none;
   font-size: 12px;
-  width: 120px;
+  width: 200px;
   height: 28px;
 }
 

@@ -35,12 +35,12 @@
       style="width: 100%"
     >
       <el-table-column prop="name" label="标签名称" min-width="200" />
-      <el-table-column prop="count" label="应用数量" width="120" align="center">
+      <el-table-column prop="count" label="应用数量" width="120" align="left">
         <template #default="{ row }">
           <el-tag type="info" size="small">{{ row.count || 0 }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right" align="center">
+      <el-table-column label="操作" width="200" fixed="right" align="left">
         <template #default="{ row }">
           <el-button link type="primary" size="small" @click="handleView(row)">
             查看
@@ -104,7 +104,7 @@
           <el-table :data="tagApplets" stripe size="small" max-height="300">
             <el-table-column prop="name" label="Code" width="120" />
             <el-table-column prop="title" label="标题" min-width="150" />
-            <el-table-column prop="status" label="状态" width="80" align="center">
+            <el-table-column prop="status" label="状态" width="80" align="left">
               <template #default="{ row }">
                 <el-tag :type="row.status === 'P' ? 'success' : 'danger'" size="small">
                   {{ row.status === 'P' ? '启用' : '禁用' }}

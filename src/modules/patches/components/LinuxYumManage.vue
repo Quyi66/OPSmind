@@ -1,168 +1,145 @@
 <template>
-  <div class="linux-yum-manage">
-    <!-- 描述区域 -->
-    <div class="desc-section">
-      <p class="desc-text">用于管理YUM源，进行统一的YUM源配置和变更。</p>
-    </div>
-
+  <div class="ops-page-layout">
     <!-- Tab 导航 -->
     <el-tabs v-model="activeTab" class="yum-tabs">
-        <el-tab-pane name="custom_repo">
-          <template #label>
-            <span><i class="fa fa-user-cog" /> YUM源配置</span>
-          </template>
-        </el-tab-pane>
-        <el-tab-pane name="repo_list">
-          <template #label>
-            <span><i class="fa fa-tools" /> YUM源清单</span>
-          </template>
-        </el-tab-pane>
-      </el-tabs>
+      <el-tab-pane name="custom_repo">
+        <template #label>
+          <span><i class="fa fa-user-cog" /> YUM源配置</span>
+        </template>
+      </el-tab-pane>
+      <el-tab-pane name="repo_list">
+        <template #label>
+          <span><i class="fa fa-tools" /> YUM源清单</span>
+        </template>
+      </el-tab-pane>
+    </el-tabs>
 
     <!-- YUM源配置 Tab -->
-    <div v-if="activeTab === 'custom_repo'" class="tab-content">
-      <div class="card-section">
-        <div class="card-header">
-          <span class="card-title">配置</span>
-        </div>
-        <div class="card-body">
-          <!-- 操作按钮和搜索 -->
-          <div class="toolbar-row">
-            <div class="toolbar-left">
-              <el-button type="primary" plain size="small" @click="handleAddRepo">
-                <i class="fa fa-plus" /> YUM源配置录入
-              </el-button>
-            </div>
-            <div class="toolbar-right">
-              <el-input
-                v-model="filterText"
-                placeholder="搜索..."
-                size="small"
-                style="width: 200px"
-                clearable
-                @input="handleFilter"
-              >
-                <template #prefix>
-                  <i class="fa fa-search" />
-                </template>
-              </el-input>
-              <el-button size="small" @click="handleRefresh">
-                <i class="fa fa-sync" />
-              </el-button>
-            </div>
-          </div>
-
-          <!-- YUM源配置表格 -->
-          <el-table
-            v-loading="loading"
-            :data="customRepoData"
-            border
-            style="width: 100%"
-            size="small"
-          >
-            <el-table-column prop="name" label="YUM源名称" min-width="120" sortable />
-            <el-table-column prop="description" label="描述" min-width="120" sortable />
-            <el-table-column prop="baseurl" label="YUM源地址" min-width="280" sortable show-overflow-tooltip />
-            <el-table-column prop="file" label="YUM源文件" min-width="180" sortable show-overflow-tooltip />
-            <el-table-column label="操作" width="132" fixed="right" align="center">
-              <template #default="{ row }">
-                <el-button text type="primary" size="small" @click="handleEdit(row)">
-                  编辑
-                </el-button>
-                <el-button text type="danger" size="small" @click="handleDelete(row)">
-                  删除
-                </el-button>
-                <el-button text type="primary" size="small" @click="handleConfig(row)">
-                  配置
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-
-          <!-- 分页 -->
-          <div class="table-footer">
-            <div class="pagination-info">
-              <el-select v-model="pagination.pageSize" size="small" style="width: 70px" @change="handleSizeChange">
-                <el-option :value="10" label="10" />
-                <el-option :value="20" label="20" />
-                <el-option :value="50" label="50" />
-                <el-option :value="100" label="100" />
-              </el-select>
-              <span class="page-info">{{ paginationInfo }}</span>
-            </div>
-          </div>
-        </div>
+    <template v-if="activeTab === 'custom_repo'">
+      <!-- 操作区 -->
+      <div class="ops-action-bar">
+        <el-button type="primary" size="small" @click="handleAddRepo">
+          YUM源配置录入
+        </el-button>
+        <el-input
+          v-model="filterText"
+          placeholder="搜索..."
+          size="small"
+          style="width: 200px; margin-left: auto"
+          clearable
+          @input="handleFilter"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+        <el-button size="small" @click="handleRefresh">
+          刷新
+        </el-button>
       </div>
-    </div>
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
+        <el-table
+          v-loading="loading"
+          :data="customRepoData"
+          stripe
+          height="100%"
+        >
+          <el-table-column prop="name" label="YUM源名称" min-width="120" sortable />
+          <el-table-column prop="description" label="描述" min-width="120" sortable />
+          <el-table-column prop="baseurl" label="YUM源地址" min-width="280" sortable show-overflow-tooltip />
+          <el-table-column prop="file" label="YUM源文件" min-width="180" sortable show-overflow-tooltip />
+          <el-table-column label="操作" width="132" fixed="right" align="left">
+            <template #default="{ row }">
+              <el-button text type="primary" size="small" @click="handleEdit(row)">
+                编辑
+              </el-button>
+              <el-button text type="danger" size="small" @click="handleDelete(row)">
+                删除
+              </el-button>
+              <el-button text type="primary" size="small" @click="handleConfig(row)">
+                配置
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 分页区域 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
+    </template>
 
     <!-- YUM源清单 Tab -->
-    <div v-if="activeTab === 'repo_list'" class="tab-content">
-      <div class="card-section">
-        <div class="card-header">
-          <span class="card-title">清单</span>
-        </div>
-        <div class="card-body">
-          <!-- 操作按钮和搜索 -->
-          <div class="toolbar-row">
-            <div class="toolbar-left">
-              <el-button type="primary" plain size="small" @click="handleScanRepoList">
-                <i class="fa fa-th-list" /> YUM源清单扫描
-              </el-button>
-            </div>
-            <div class="toolbar-right">
-              <el-input
-                v-model="hostFilterText"
-                placeholder="搜索..."
-                size="small"
-                style="width: 200px"
-                clearable
-                @input="handleHostFilter"
-              >
-                <template #prefix>
-                  <i class="fa fa-search" />
-                </template>
-              </el-input>
-              <el-button size="small" @click="loadHostData">
-                <i class="fa fa-sync" />
-              </el-button>
-            </div>
-          </div>
-
-          <!-- 主机列表表格 -->
-          <el-table
-            v-loading="hostLoading"
-            :data="hostTableData"
-            border
-            style="width: 100%"
-            size="small"
-          >
-            <el-table-column prop="$data_owner" label="主机" min-width="150">
-              <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="handleViewHostDetail(row)">
-                  {{ row.$data_owner }}
-                </el-button>
-              </template>
-            </el-table-column>
-            <el-table-column prop="os_distro" label="操作系统" min-width="200" sortable />
-            <el-table-column prop="os_version" label="操作系统版本" min-width="150" sortable />
-            <el-table-column prop="yum_count" label="已配置yum源数量" min-width="130" sortable />
-          </el-table>
-
-          <!-- 分页 -->
-          <div class="table-footer">
-            <div class="pagination-info">
-              <el-select v-model="hostPagination.pageSize" size="small" style="width: 70px" @change="handleHostSizeChange">
-                <el-option :value="10" label="10" />
-                <el-option :value="20" label="20" />
-                <el-option :value="50" label="50" />
-                <el-option :value="500" label="500" />
-              </el-select>
-              <span class="page-info">{{ hostPaginationInfo }}</span>
-            </div>
-          </div>
-        </div>
+    <template v-if="activeTab === 'repo_list'">
+      <!-- 操作区 -->
+      <div class="ops-action-bar">
+        <el-button type="primary" size="small" @click="handleScanRepoList">
+          YUM源清单扫描
+        </el-button>
+        <el-input
+          v-model="hostFilterText"
+          placeholder="搜索..."
+          size="small"
+          style="width: 200px; margin-left: auto"
+          clearable
+          @input="handleHostFilter"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+        <el-button size="small" @click="loadHostData">
+          刷新
+        </el-button>
       </div>
-    </div>
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
+        <el-table
+          v-loading="hostLoading"
+          :data="hostTableData"
+          stripe
+          height="100%"
+        >
+          <el-table-column prop="$data_owner" label="主机" min-width="150">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="handleViewHostDetail(row)">
+                {{ row.$data_owner }}
+              </el-button>
+            </template>
+          </el-table-column>
+          <el-table-column prop="os_distro" label="操作系统" min-width="200" sortable />
+          <el-table-column prop="os_version" label="操作系统版本" min-width="150" sortable />
+          <el-table-column prop="yum_count" label="已配置yum源数量" min-width="130" sortable />
+        </el-table>
+      </div>
+
+      <!-- 分页区域 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="hostPagination.page"
+          v-model:page-size="hostPagination.pageSize"
+          :page-sizes="[10, 20, 50, 500]"
+          :total="hostPagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleHostSizeChange"
+          @current-change="handleHostPageChange"
+        />
+      </div>
+    </template>
 
     <!-- 添加/编辑YUM源对话框 -->
     <el-dialog
@@ -298,7 +275,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="repo-file" label="YUM文件" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="repo-status" label="状态" width="90" align="center">
+          <el-table-column prop="repo-status" label="状态" width="90" align="left">
             <template #default="{ row }">
               <el-tag :type="row['repo-status'] === 'enabled' ? 'success' : 'info'" size="small">
                 {{ row['repo-status'] === 'enabled' ? 'Enabled' : 'Disabled' }}
@@ -311,7 +288,7 @@
               {{ formatDate(row['repo-updated']) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="88" fixed="right" align="center">
+          <el-table-column label="操作" width="88" fixed="right" align="left">
             <template #default="{ row }">
               <el-button
                 v-if="row['repo-status'] === 'disabled'"
@@ -591,6 +568,16 @@ function handleHostFilter() {
 function handleHostSizeChange(size) {
   hostPagination.pageSize = size
   hostPagination.page = 1
+  loadHostData()
+}
+
+function handlePageChange(page) {
+  pagination.page = page
+  loadCustomRepoData()
+}
+
+function handleHostPageChange(page) {
+  hostPagination.page = page
   loadHostData()
 }
 
@@ -941,165 +928,16 @@ defineExpose({ refresh })
 </script>
 
 <style scoped lang="scss">
-.linux-yum-manage {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-}
-
-// 描述区域
-.desc-section {
-  padding: 40px 24px;
-  background: #fff;
-
-  .desc-text {
-    color: #17a2b8;
-    font-size: 14px;
-    margin: 0;
-    font-style: italic;
-  }
-}
-
 // Tab样式
 .yum-tabs {
+  margin-bottom: 16px;
+
   :deep(.el-tabs__header) {
     margin: 0;
-    padding: 0 16px;
-    background: #fff;
-    border-bottom: 2px solid #e9ecef;
-  }
-
-  :deep(.el-tabs__nav-wrap::after) {
-    display: none;
-  }
-
-  :deep(.el-tabs__item) {
-    height: 44px;
-    line-height: 44px;
-    font-size: 14px;
-    color: #495057;
-
-    &.is-active {
-      color: #0d6efd;
-      font-weight: 500;
-    }
-
-    i {
-      margin-right: 6px;
-    }
-  }
-
-  :deep(.el-tabs__active-bar) {
-    background-color: #0d6efd;
-    height: 3px;
   }
 
   :deep(.el-tabs__content) {
     display: none;
-  }
-}
-
-// Tab内容区
-.tab-content {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-// 卡片区域
-.card-section {
-  background: #fff;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-
-  .card-header {
-    padding: 10px 16px;
-    border-bottom: 1px solid #dee2e6;
-    background: #f8f9fa;
-
-    .card-title {
-      font-size: 14px;
-      font-weight: 500;
-      color: #212529;
-    }
-  }
-
-  .card-body {
-    padding: 16px;
-  }
-}
-
-// 工具栏 - 左右布局
-.toolbar-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  .toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-}
-
-// 操作按钮换行显示
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: center;
-}
-
-// 表格底部
-.table-footer {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 12px 0;
-  margin-top: 12px;
-
-  .pagination-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: #6c757d;
-  }
-
-  .page-info {
-    margin-left: 8px;
-  }
-}
-
-// 表格样式
-:deep(.el-table) {
-  font-size: 13px;
-
-  .el-table__header th {
-    background-color: #f8f9fa !important;
-    color: #495057;
-    font-weight: 500;
-  }
-
-  .el-table__cell {
-    padding: 8px 0;
-  }
-}
-
-// 按钮样式
-:deep(.el-button--primary.is-plain) {
-
-  &:hover {
-    background: #0d6efd;
-    color: #fff;
   }
 }
 

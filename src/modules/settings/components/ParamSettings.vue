@@ -40,7 +40,7 @@
           <el-table-column prop="name" label="参数名称" min-width="180" show-overflow-tooltip />
           <el-table-column prop="value" label="参数值" min-width="300" show-overflow-tooltip />
           <el-table-column prop="description" label="描述" min-width="250" show-overflow-tooltip />
-          <el-table-column label="操作" width="180" fixed="right" align="center">
+          <el-table-column label="操作" width="180" fixed="right" align="left">
             <template #default="{ row }">
               <el-button link type="primary" size="small" @click="handleViewSysParam(row)">
                 查看
@@ -111,7 +111,7 @@
           <el-table-column prop="name" label="参数名称" min-width="180" show-overflow-tooltip />
           <el-table-column prop="value" label="参数值" min-width="350" show-overflow-tooltip />
           <el-table-column prop="description" label="描述" min-width="300" show-overflow-tooltip />
-          <el-table-column label="操作" width="180" fixed="right" align="center">
+          <el-table-column label="操作" width="180" fixed="right" align="left">
             <template #default="{ row }">
               <el-button link type="primary" size="small" @click="handleViewAppParam(row)">
                 查看

@@ -52,12 +52,16 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
 import SoftwareHome from './SoftwareHome.vue'
 import RepoManagement from './RepoManagement.vue'
 import LocalInstall from './LocalInstall.vue'
 import LogReport from './LogReport.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 // 模块信息
 const moduleTitle = '软件管理'
@@ -80,10 +84,59 @@ const repoManagementRef = ref(null)
 const localInstallRef = ref(null)
 const logReportRef = ref(null)
 
+// 获取当前模块的基础路径
+function getBasePath() {
+  const path = route.path
+  const match = path.match(/^\/([^/]+)/)
+  return match ? `/${match[1]}` : '/software'
+}
+
+/**
+ * 解析路由路径，确定当前视图
+ */
+function parseRouteView() {
+  const path = route.path
+  const params = route.params
+  const pathMatch = Array.isArray(params.pathMatch)
+    ? params.pathMatch.join('/')
+    : params.pathMatch || ''
+
+  if (path.includes('/repos') || pathMatch.includes('repos')) {
+    return 'repos'
+  }
+  if (path.includes('/localInstall') || pathMatch.includes('localInstall')) {
+    return 'localInstall'
+  }
+  if (path.includes('/logs') || pathMatch.includes('logs')) {
+    return 'logs'
+  }
+  if (path.includes('/packages') || pathMatch.includes('packages')) {
+    return 'packages'
+  }
+
+  return 'packages'
+}
+
 // 导航点击
 function handleNavClick(item) {
   activeView.value = item.key
+  const basePath = getBasePath()
+  const targetPath = item.key === 'packages' ? basePath : `${basePath}/${item.key}`
+  router.push(targetPath)
 }
+
+// 监听路由变化
+watch(
+  () => route.path,
+  () => {
+    activeView.value = parseRouteView()
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  activeView.value = parseRouteView()
+})
 </script>
 
 <style scoped lang="scss">

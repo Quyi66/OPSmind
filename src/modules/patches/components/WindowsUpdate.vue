@@ -1,133 +1,127 @@
 <template>
-  <div class="windows-update">
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="page-header__actions">
-        <el-button
-          type="primary"
-          plain
-          :disabled="selectedKbNumbers.length === 0"
-          @click="handleFixSelected"
-        >
-          <i class="fa fa-tools" style="margin-right: 6px" />
-          修复选中漏洞
-        </el-button>
-      </div>
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar filter-wrap">
+      <el-checkbox-group v-model="categoryFilter" @change="handleFilter">
+        <el-checkbox value="Security Updates">
+          <el-tag type="danger" size="small" effect="dark">安全</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Critical Updates">
+          <el-tag type="danger" size="small" effect="dark">重要</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Update Rollups">
+          <el-tag type="success" size="small" effect="dark">更新汇总</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Application">
+          <el-tag type="success" size="small" effect="dark">应用程序</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Connectors">
+          <el-tag type="success" size="small" effect="dark">连接器</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Definition Updates">
+          <el-tag type="success" size="small" effect="dark">定义更新</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Developer Kits">
+          <el-tag type="success" size="small" effect="dark">开发工具包</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Feature Packs">
+          <el-tag type="success" size="small" effect="dark">功能包</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Guidance">
+          <el-tag type="success" size="small" effect="dark">说明性更新</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Service Packs">
+          <el-tag type="success" size="small" effect="dark">服务包</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Tools">
+          <el-tag type="success" size="small" effect="dark">工具</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Updates">
+          <el-tag type="success" size="small" effect="dark">常规</el-tag>
+        </el-checkbox>
+        <el-checkbox value="Upgrades">
+          <el-tag size="small" effect="dark">升级</el-tag>
+        </el-checkbox>
+      </el-checkbox-group>
+      <el-input
+        v-model="filterText"
+        placeholder="搜索..."
+        size="small"
+        style="width: 180px; margin-left: auto"
+        clearable
+        @input="handleFilter"
+      >
+        <template #prefix>
+          <i class="fa fa-search" />
+        </template>
+      </el-input>
     </div>
 
-    <!-- 内容区域 -->
-    <div class="page-content">
-      <!-- 筛选区域 -->
-      <div class="filter-section">
-        <!-- 类型多选筛选和搜索框在同一行 -->
-        <div class="filter-row">
-          <el-checkbox-group v-model="categoryFilter" @change="handleFilter">
-            <el-checkbox value="Security Updates">
-              <el-tag type="danger" size="small" effect="dark">安全</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Critical Updates">
-              <el-tag type="danger" size="small" effect="dark">重要</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Update Rollups">
-              <el-tag type="success" size="small" effect="dark">更新汇总</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Application">
-              <el-tag type="success" size="small" effect="dark">应用程序</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Connectors">
-              <el-tag type="success" size="small" effect="dark">连接器</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Definition Updates">
-              <el-tag type="success" size="small" effect="dark">定义更新</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Developer Kits">
-              <el-tag type="success" size="small" effect="dark">开发工具包</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Feature Packs">
-              <el-tag type="success" size="small" effect="dark">功能包</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Guidance">
-              <el-tag type="success" size="small" effect="dark">说明性更新</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Service Packs">
-              <el-tag type="success" size="small" effect="dark">服务包</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Tools">
-              <el-tag type="success" size="small" effect="dark">工具</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Updates">
-              <el-tag type="success" size="small" effect="dark">常规</el-tag>
-            </el-checkbox>
-            <el-checkbox value="Upgrades">
-              <el-tag size="small" effect="dark">升级</el-tag>
-            </el-checkbox>
-          </el-checkbox-group>
-          <div class="filter-spacer"></div>
-          <el-input
-            v-model="filterText"
-            placeholder=""
-            style="width: 180px"
-            clearable
-            @input="handleFilter"
-          >
-            <template #prefix>
-              <i class="fa fa-search" style="color: #c0c4cc" />
-            </template>
-          </el-input>
-        </div>
-      </div>
+    <!-- 操作区 -->
+    <div class="ops-action-bar">
+      <el-button
+        type="primary"
+        size="small"
+        :disabled="selectedKbNumbers.length === 0"
+        @click="handleFixSelected"
+      >
+        修复选中漏洞
+      </el-button>
+    </div>
 
-      <!-- 更新表格 -->
-      <div class="table-section">
-        <el-table
-          ref="tableRef"
-          v-loading="loading"
-          :data="tableData"
-          style="width: 100%"
-          size="small"
-          border
-          @selection-change="handleSelectionChange"
-        >
-          <el-table-column type="selection" width="50" />
-          <el-table-column prop="kb_number" label="KB编号" min-width="120">
-            <template #default="{ row }">
-              <a
-                v-if="row.kb_number"
-                :href="`https://support.microsoft.com/zh-cn/help/${row.kb_number?.replace('KB', '')}`"
-                target="_blank"
-                class="kb-link"
-              >
-                {{ row.kb_number }}
-              </a>
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="category_name" label="类型" min-width="100" />
-          <el-table-column prop="title" label="描述" min-width="300" show-overflow-tooltip />
-          <el-table-column prop="affect_machines" label="受影响主机" min-width="120">
-            <template #default="{ row }">
-              <el-button
-                type="primary"
-                link
-                size="small"
-                @click="handleViewAffectedMachines(row)"
-              >
-                {{ row.affect_machines || 0 }}
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table
+        ref="tableRef"
+        v-loading="loading"
+        :data="tableData"
+        stripe
+        height="calc(100vh - 320px)"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="kb_number" label="KB编号" min-width="120">
+          <template #default="{ row }">
+            <a
+              v-if="row.kb_number"
+              :href="`https://support.microsoft.com/zh-cn/help/${row.kb_number?.replace('KB', '')}`"
+              target="_blank"
+              class="kb-link"
+            >
+              {{ row.kb_number }}
+            </a>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="category_name" label="类型" min-width="100" />
+        <el-table-column prop="title" label="描述" min-width="300" show-overflow-tooltip />
+        <el-table-column prop="affect_machines" label="受影响主机" min-width="120">
+          <template #default="{ row }">
+            <el-button
+              type="primary"
+              link
+              size="small"
+              @click="handleViewAffectedMachines(row)"
+            >
+              {{ row.affect_machines || 0 }}
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
-      <!-- 表格底部分页 -->
-      <div class="table-footer">
-        <el-select v-model="pagination.pageSize" style="width: 80px" @change="handleSizeChange">
-          <el-option :value="10" label="10" />
-          <el-option :value="20" label="20" />
-          <el-option :value="50" label="50" />
-          <el-option :value="100" label="100" />
-        </el-select>
-      </div>
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 受影响主机对话框 -->
@@ -233,6 +227,11 @@ function handleSizeChange(size) {
   loadData()
 }
 
+function handlePageChange(page) {
+  pagination.page = page
+  loadData()
+}
+
 function handleSelectionChange(selection) {
   selectedRows.value = selection
 }
@@ -285,52 +284,9 @@ defineExpose({ refresh })
 </script>
 
 <style scoped lang="scss">
-.windows-update {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #f5f7fa;
-}
-
-.page-header {
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e9ecef;
-
-  &__actions {
-    display: flex;
-    gap: 8px;
-  }
-}
-
-.page-content {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-.filter-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-}
-
-.filter-row {
-  display: flex;
+// 筛选区允许换行
+.filter-wrap {
   flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-
-  &--right {
-    justify-content: flex-end;
-  }
 
   :deep(.el-checkbox-group) {
     display: flex;
@@ -345,21 +301,6 @@ defineExpose({ refresh })
   :deep(.el-checkbox__label) {
     padding-left: 4px;
   }
-}
-
-.filter-spacer {
-  flex: 1;
-}
-
-.table-section {
-  background: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.table-footer {
-  margin-top: 12px;
 }
 
 .kb-link {

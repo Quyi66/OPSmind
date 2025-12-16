@@ -3,7 +3,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="page-header__actions">
-        <el-button type="primary" plain @click="handleRescan">
+        <el-button type="primary" @click="handleRescan">
           <i class="fa fa-bug" />
           重新扫描补丁
         </el-button>
@@ -78,7 +78,7 @@
             :data="hostTableData"
             stripe
             style="width: 100%"
-            size="small"
+            height="calc(100vh - 490px)"
           >
             <el-table-column prop="host_key" label="主机" min-width="140">
               <template #default="{ row }">
@@ -120,7 +120,7 @@
                 低 <i class="fa fa-circle text-info" />
               </template>
             </el-table-column>
-            <el-table-column prop="scan_timestamp" label="最后扫描时间" width="160" sortable>
+            <el-table-column prop="scan_timestamp" label="最后扫描时间" width="180" sortable>
               <template #default="{ row }">
                 {{ formatDateTime(row.scan_timestamp) }}
               </template>
@@ -128,26 +128,18 @@
           </el-table>
 
           <!-- 分页 -->
-          <div class="table-footer">
+          <div class="ops-pagination-wrapper">
             <el-pagination
               v-model:current-page="pagination.page"
               v-model:page-size="pagination.pageSize"
               :page-sizes="[10, 20, 50, 100]"
               :total="pagination.total"
               layout="total, sizes, prev, pager, next, jumper"
-              size="small"
+              background
               @size-change="handleSizeChange"
               @current-change="handlePageChange"
             />
           </div>
-        </div>
-
-        <!-- 重新扫描补丁按钮 -->
-        <div class="action-section">
-          <el-button type="primary" plain class="btn-action" @click="handleRescan">
-            重新扫描补丁
-            <i class="fa fa-chevron-right" />
-          </el-button>
         </div>
       </div>
 
@@ -174,7 +166,7 @@
             :data="vulnTableData"
             stripe
             style="width: 100%"
-            size="small"
+            height="calc(100vh - 490px)"
           >
             <el-table-column prop="advisory" label="漏洞编号" min-width="140">
               <template #default="{ row }">
@@ -183,26 +175,26 @@
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column prop="severity" label="严重程度" width="100">
+            <el-table-column prop="severity" label="严重程度" width="130">
               <template #default="{ row }">
                 <span :class="getSeverityClass(row.severity)">
                   <i class="fa fa-circle" /> {{ row.severity }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="synopsis" label="描述" min-width="250" show-overflow-tooltip />
-            <el-table-column prop="affected_hosts" label="影响主机数" width="100" />
+            <el-table-column prop="synopsis" label="描述" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="affected_hosts" label="影响主机数" width="110" />
             <el-table-column prop="issue_date" label="发布日期" width="120" />
           </el-table>
 
-          <div class="table-footer">
+          <div class="ops-pagination-wrapper">
             <el-pagination
               v-model:current-page="vulnPagination.page"
               v-model:page-size="vulnPagination.pageSize"
               :page-sizes="[10, 20, 50, 100]"
               :total="vulnPagination.total"
               layout="total, sizes, prev, pager, next, jumper"
-              size="small"
+              background
               @size-change="handleVulnSizeChange"
               @current-change="handleVulnPageChange"
             />

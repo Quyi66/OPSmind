@@ -1,305 +1,243 @@
 <template>
-  <div class="operation-logs">
+  <div class="ops-page-layout">
     <!-- Tab 导航 -->
-    <div class="tab-nav">
-      <el-tabs v-model="activeTab" type="card">
-        <el-tab-pane label="操作记录" name="operation" />
-        <el-tab-pane label="漏洞报表" name="vulnerability" />
-        <el-tab-pane label="补丁报表" name="patch" />
-      </el-tabs>
-    </div>
+    <el-tabs v-model="activeTab">
+      <el-tab-pane label="操作记录" name="operation" />
+      <el-tab-pane label="漏洞报表" name="vulnerability" />
+      <el-tab-pane label="补丁报表" name="patch" />
+    </el-tabs>
 
     <!-- 操作记录 Tab -->
-    <div v-show="activeTab === 'operation'" class="tab-content">
-      <div class="page-content">
-        <!-- 时间范围 -->
-        <div class="time-range-section">
-          <span class="time-range-label">时间范围:</span>
-          <el-select v-model="dayFilter" style="width: 120px" @change="handleFilterChange">
-            <el-option label="Today" :value="1" />
-            <el-option label="近3天" :value="3" />
-            <el-option label="近7天" :value="7" />
-            <el-option label="近30天" :value="30" />
-          </el-select>
-        </div>
-
-        <!-- 筛选区域 -->
-        <div class="filter-section">
-          <div class="filter-left">
-            <el-select v-model="engineFilter" placeholder="执行引擎节点" style="width: 140px" clearable @change="handleFilterChange">
-              <el-option label="全部" value="" />
-            </el-select>
-            <el-select v-model="statusFilter" placeholder="状态" style="width: 100px" clearable @change="handleFilterChange">
-              <el-option label="全部" value="all" />
-              <el-option label="完成" value="COMPLETED" />
-              <el-option label="失败" value="FAILED" />
-              <el-option label="运行中" value="RUNNING" />
-            </el-select>
-            <el-select v-model="actionFilter" placeholder="操作类型" style="width: 150px" clearable @change="handleFilterChange">
-              <el-option label="全部" value="all" />
-              <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
-              <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
-              <el-option label="补丁回退" value="#{app_vap.menu.patch_rollback.title}" />
-              <el-option label="Windows漏洞扫描" value="#{app_vap.menu.win_patch_scan.title}" />
-              <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
-            </el-select>
-            <el-input
-              v-model="searchText"
-              placeholder="搜索"
-              style="width: 180px"
-              clearable
-              @input="handleSearchInput"
-            >
-              <template #prefix>
-                <i class="fa fa-search" />
-              </template>
-            </el-input>
-            <el-button link @click="handleFilterChange">
-              <i class="fa fa-sync" />
-            </el-button>
-          </div>
-        </div>
-
-        <!-- 表格区域 -->
-        <div class="table-section">
-          <el-table
-            v-loading="loading"
-            :data="tableData"
-            stripe
-            style="width: 100%"
-            size="small"
-          >
-            <el-table-column prop="start_time" label="开始时间" width="160" sortable>
-              <template #default="{ row }">
-                {{ formatTimestamp(row.start_time) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="action" label="操作" width="140" sortable>
-              <template #default="{ row }">
-                {{ translateAction(row.action) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态" width="80" sortable>
-              <template #default="{ row }">
-                <el-tag
-                  :type="getStatusType(row.status)"
-                  size="small"
-                  :style="{ cursor: row.run_record ? 'pointer' : 'default' }"
-                  @click="row.run_record && handleViewRunResult(row)"
-                >
-                  {{ getStatusLabel(row.status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="ata_node" label="执行引擎节点" width="120" sortable />
-            <el-table-column prop="message" label="结果" min-width="300" show-overflow-tooltip>
-              <template #default="{ row }">
-                {{ translateMessage(row.message) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="username" label="用户" width="100" sortable />
-            <el-table-column prop="end_time" label="结束时间" width="160" sortable>
-              <template #default="{ row }">
-                {{ formatTimestamp(row.end_time) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="耗时" width="100">
-              <template #default="{ row }">
-                {{ calculateDuration(row.start_time, row.end_time) }}
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <!-- 分页区域 -->
-        <div class="pagination-section">
-          <div class="pagination-left">
-            <el-select v-model="pagination.pageSize" style="width: 80px" @change="handleSizeChange">
-              <el-option :value="10" label="10" />
-              <el-option :value="25" label="25" />
-              <el-option :value="50" label="50" />
-              <el-option :value="100" label="100" />
-            </el-select>
-            <span class="pagination-info">{{ paginationInfo }}</span>
-          </div>
-          <div class="pagination-right">
-            <span class="page-info">Page {{ pagination.page }} of {{ totalPages }}</span>
-            <el-button-group>
-              <el-button size="small" :disabled="pagination.page <= 1" @click="handlePageChange(1)">
-                <i class="fa fa-angle-double-left" />
-              </el-button>
-              <el-button size="small" :disabled="pagination.page <= 1" @click="handlePageChange(pagination.page - 1)">
-                <i class="fa fa-angle-left" />
-              </el-button>
-              <el-button size="small" :disabled="pagination.page >= totalPages" @click="handlePageChange(pagination.page + 1)">
-                <i class="fa fa-angle-right" />
-              </el-button>
-              <el-button size="small" :disabled="pagination.page >= totalPages" @click="handlePageChange(totalPages)">
-                <i class="fa fa-angle-double-right" />
-              </el-button>
-            </el-button-group>
-          </div>
-        </div>
+    <template v-if="activeTab === 'operation'">
+      <!-- 筛选区 -->
+      <div class="ops-filter-bar">
+        <span>时间范围</span>
+        <el-select v-model="dayFilter" size="small" style="width: 100px" @change="handleFilterChange">
+          <el-option label="Today" :value="1" />
+          <el-option label="近3天" :value="3" />
+          <el-option label="近7天" :value="7" />
+          <el-option label="近30天" :value="30" />
+        </el-select>
+        <el-select v-model="engineFilter" placeholder="执行引擎节点" size="small" style="width: 120px" clearable @change="handleFilterChange">
+          <el-option label="全部" value="" />
+        </el-select>
+        <el-select v-model="statusFilter" placeholder="状态" size="small" style="width: 80px" clearable @change="handleFilterChange">
+          <el-option label="全部" value="all" />
+          <el-option label="完成" value="COMPLETED" />
+          <el-option label="失败" value="FAILED" />
+          <el-option label="运行中" value="RUNNING" />
+        </el-select>
+        <el-select v-model="actionFilter" placeholder="操作类型" size="small" style="width: 120px" clearable @change="handleFilterChange">
+          <el-option label="全部" value="all" />
+          <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
+          <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
+          <el-option label="补丁回退" value="#{app_vap.menu.patch_rollback.title}" />
+          <el-option label="Windows漏洞扫描" value="#{app_vap.menu.win_patch_scan.title}" />
+          <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
+        </el-select>
+        <el-input
+          v-model="searchText"
+          placeholder="搜索"
+          size="small"
+          style="width: 150px; margin-left: auto"
+          clearable
+          @input="handleSearchInput"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+        <el-button size="small" @click="handleFilterChange">
+          刷新
+        </el-button>
       </div>
-    </div>
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
+        <el-table
+          v-loading="loading"
+          :data="tableData"
+          stripe
+          height="calc(100vh - 320px)"
+        >
+          <el-table-column prop="start_time" label="开始时间" width="180" sortable>
+            <template #default="{ row }">
+              {{ formatTimestamp(row.start_time) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="action" label="操作" width="140" sortable>
+            <template #default="{ row }">
+              {{ translateAction(row.action) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="status" label="状态" width="80" sortable>
+            <template #default="{ row }">
+              <el-tag
+                :type="getStatusType(row.status)"
+                size="small"
+                :style="{ cursor: row.run_record ? 'pointer' : 'default' }"
+                @click="row.run_record && handleViewRunResult(row)"
+              >
+                {{ getStatusLabel(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="ata_node" label="执行引擎节点" width="150" sortable />
+          <el-table-column prop="message" label="结果" min-width="300" show-overflow-tooltip>
+            <template #default="{ row }">
+              {{ translateMessage(row.message) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="username" label="用户" width="100" sortable />
+          <el-table-column prop="end_time" label="结束时间" width="180" sortable>
+            <template #default="{ row }">
+              {{ formatTimestamp(row.end_time) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="耗时" width="100">
+            <template #default="{ row }">
+              {{ calculateDuration(row.start_time, row.end_time) }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 分页区域 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 25, 50, 100]"
+          :total="filteredTableData.length"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
+    </template>
 
     <!-- 漏洞报表 Tab -->
-    <div v-show="activeTab === 'vulnerability'" class="tab-content">
-      <div class="page-content">
-        <!-- 筛选区域 -->
-        <div class="filter-section simple-filter">
-          <el-input
-            v-model="vulFilterText"
-            placeholder="主机/KB编号"
-            style="width: 200px"
-            clearable
-            @keyup.enter="handleVulSearch"
-            @clear="handleVulSearch"
-          >
-            <template #prefix>
-              <i class="fa fa-search" />
-            </template>
-          </el-input>
-          <el-button link @click="loadVulData">
-            <i class="fa fa-sync" />
-          </el-button>
-        </div>
-
-        <!-- 表格区域 -->
-        <div class="table-section">
-          <el-table
-            v-loading="vulLoading"
-            :data="vulTableData"
-            stripe
-            style="width: 100%"
-            size="small"
-          >
-            <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
-            <el-table-column prop="os" label="OS" width="100" />
-            <el-table-column prop="os_version" label="OS版本" width="150" />
-            <el-table-column prop="vul_id" label="KB编号" width="120" />
-            <el-table-column prop="scan_time" label="扫描时间" width="160">
-              <template #default="{ row }">
-                {{ formatTimestamp(row.scan_time) }}
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <!-- 分页区域 -->
-        <div class="pagination-section">
-          <div class="pagination-left">
-            <el-select v-model="vulPagination.pageSize" style="width: 80px" @change="handleVulSizeChange">
-              <el-option :value="10" label="10" />
-              <el-option :value="25" label="25" />
-              <el-option :value="50" label="50" />
-              <el-option :value="100" label="100" />
-            </el-select>
-            <span class="pagination-info">{{ vulPaginationInfo }}</span>
-          </div>
-          <div class="pagination-right">
-            <span class="page-info">Page {{ vulPagination.page }} of {{ vulTotalPages }}</span>
-            <el-button-group>
-              <el-button size="small" :disabled="vulPagination.page <= 1" @click="handleVulPageChange(1)">
-                <i class="fa fa-angle-double-left" />
-              </el-button>
-              <el-button size="small" :disabled="vulPagination.page <= 1" @click="handleVulPageChange(vulPagination.page - 1)">
-                <i class="fa fa-angle-left" />
-              </el-button>
-              <el-button size="small" :disabled="vulPagination.page >= vulTotalPages" @click="handleVulPageChange(vulPagination.page + 1)">
-                <i class="fa fa-angle-right" />
-              </el-button>
-              <el-button size="small" :disabled="vulPagination.page >= vulTotalPages" @click="handleVulPageChange(vulTotalPages)">
-                <i class="fa fa-angle-double-right" />
-              </el-button>
-            </el-button-group>
-          </div>
-        </div>
+    <template v-if="activeTab === 'vulnerability'">
+      <!-- 筛选区 -->
+      <div class="ops-filter-bar">
+        <el-input
+          v-model="vulFilterText"
+          placeholder="主机/KB编号"
+          size="small"
+          style="width: 200px"
+          clearable
+          @keyup.enter="handleVulSearch"
+          @clear="handleVulSearch"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+        <el-button size="small" @click="loadVulData">
+          刷新
+        </el-button>
       </div>
-    </div>
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
+        <el-table
+          v-loading="vulLoading"
+          :data="vulTableData"
+          stripe
+          height="calc(100vh - 320px)"
+        >
+          <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="os" label="OS" width="100" />
+          <el-table-column prop="os_version" label="OS版本" width="150" />
+          <el-table-column prop="vul_id" label="KB编号" width="120" />
+          <el-table-column prop="scan_time" label="扫描时间" width="160">
+            <template #default="{ row }">
+              {{ formatTimestamp(row.scan_time) }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 分页区域 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="vulPagination.page"
+          v-model:page-size="vulPagination.pageSize"
+          :page-sizes="[10, 25, 50, 100]"
+          :total="vulPagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleVulSizeChange"
+          @current-change="handleVulPageChange"
+        />
+      </div>
+    </template>
 
     <!-- 补丁报表 Tab -->
-    <div v-show="activeTab === 'patch'" class="tab-content">
-      <div class="page-content">
-        <!-- 筛选区域 -->
-        <div class="filter-section simple-filter">
-          <el-input
-            v-model="patchFilterText"
-            placeholder="主机/补丁编号/严重性"
-            style="width: 220px"
-            clearable
-            @keyup.enter="handlePatchSearch"
-            @clear="handlePatchSearch"
-          >
-            <template #prefix>
-              <i class="fa fa-search" />
-            </template>
-          </el-input>
-          <el-button link @click="loadPatchData">
-            <i class="fa fa-sync" />
-          </el-button>
-        </div>
-
-        <!-- 表格区域 -->
-        <div class="table-section">
-          <el-table
-            v-loading="patchLoading"
-            :data="patchTableData"
-            stripe
-            style="width: 100%"
-            size="small"
-          >
-            <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
-            <el-table-column prop="os" label="OS" width="100" />
-            <el-table-column prop="os_version" label="OS版本" width="150" />
-            <el-table-column prop="patch_id" label="补丁编号" width="120" />
-            <el-table-column prop="summary" label="概要" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="severity" label="严重性" width="100">
-              <template #default="{ row }">
-                <el-tag :type="getSeverityType(row.severity)" size="small">
-                  {{ row.severity }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="scan_time" label="扫描时间" width="160">
-              <template #default="{ row }">
-                {{ formatTimestamp(row.scan_time) }}
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <!-- 分页区域 -->
-        <div class="pagination-section">
-          <div class="pagination-left">
-            <el-select v-model="patchPagination.pageSize" style="width: 80px" @change="handlePatchSizeChange">
-              <el-option :value="10" label="10" />
-              <el-option :value="25" label="25" />
-              <el-option :value="50" label="50" />
-              <el-option :value="100" label="100" />
-            </el-select>
-            <span class="pagination-info">{{ patchPaginationInfo }}</span>
-          </div>
-          <div class="pagination-right">
-            <span class="page-info">Page {{ patchPagination.page }} of {{ patchTotalPages }}</span>
-            <el-button-group>
-              <el-button size="small" :disabled="patchPagination.page <= 1" @click="handlePatchPageChange(1)">
-                <i class="fa fa-angle-double-left" />
-              </el-button>
-              <el-button size="small" :disabled="patchPagination.page <= 1" @click="handlePatchPageChange(patchPagination.page - 1)">
-                <i class="fa fa-angle-left" />
-              </el-button>
-              <el-button size="small" :disabled="patchPagination.page >= patchTotalPages" @click="handlePatchPageChange(patchPagination.page + 1)">
-                <i class="fa fa-angle-right" />
-              </el-button>
-              <el-button size="small" :disabled="patchPagination.page >= patchTotalPages" @click="handlePatchPageChange(patchTotalPages)">
-                <i class="fa fa-angle-double-right" />
-              </el-button>
-            </el-button-group>
-          </div>
-        </div>
+    <template v-if="activeTab === 'patch'">
+      <!-- 筛选区 -->
+      <div class="ops-filter-bar">
+        <el-input
+          v-model="patchFilterText"
+          placeholder="主机/补丁编号/严重性"
+          size="small"
+          style="width: 220px"
+          clearable
+          @keyup.enter="handlePatchSearch"
+          @clear="handlePatchSearch"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+        <el-button size="small" @click="loadPatchData">
+          刷新
+        </el-button>
       </div>
-    </div>
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
+        <el-table
+          v-loading="patchLoading"
+          :data="patchTableData"
+          stripe
+          height="calc(100vh - 320px)"
+        >
+          <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="os" label="OS" width="100" />
+          <el-table-column prop="os_version" label="OS版本" width="150" />
+          <el-table-column prop="patch_id" label="补丁编号" width="120" />
+          <el-table-column prop="summary" label="概要" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="severity" label="严重性" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getSeverityType(row.severity)" size="small">
+                {{ row.severity }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="scan_time" label="扫描时间" width="160">
+            <template #default="{ row }">
+              {{ formatTimestamp(row.scan_time) }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 分页区域 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="patchPagination.page"
+          v-model:page-size="patchPagination.pageSize"
+          :page-sizes="[10, 25, 50, 100]"
+          :total="patchPagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePatchSizeChange"
+          @current-change="handlePatchPageChange"
+        />
+      </div>
+    </template>
 
     <!-- 运行结果对话框 -->
     <ExecuteResultDialog
@@ -704,104 +642,5 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.operation-logs {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-}
-
-.tab-nav {
-  padding: 0 16px;
-  border-bottom: 1px solid #e4e7ed;
-
-  :deep(.el-tabs__header) {
-    margin-bottom: 0;
-  }
-
-  :deep(.el-tabs__nav-wrap::after) {
-    display: none;
-  }
-}
-
-.tab-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.page-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  overflow: hidden;
-}
-
-.time-range-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-
-  .time-range-label {
-    font-size: 14px;
-    color: #606266;
-  }
-}
-
-.filter-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-
-  &.simple-filter {
-    justify-content: flex-start;
-    gap: 8px;
-  }
-
-  .filter-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-}
-
-.table-section {
-  flex: 1;
-  overflow: auto;
-}
-
-.pagination-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #e4e7ed;
-  margin-top: 12px;
-
-  .pagination-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .pagination-info {
-      font-size: 13px;
-      color: #606266;
-    }
-  }
-
-  .pagination-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .page-info {
-      font-size: 13px;
-      color: #606266;
-    }
-  }
-}
+/* 此组件现在使用全局的 ops-page-layout 样式 */
 </style>

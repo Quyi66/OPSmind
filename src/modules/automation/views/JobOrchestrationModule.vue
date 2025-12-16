@@ -11,7 +11,7 @@
           :key="item.key"
           class="ops-sidebar-item"
           :class="{ 'is-active': activeView === item.key }"
-          @click="activeView = item.key"
+          @click="handleNavClick(item)"
         >
           <i :class="['fa', item.icon]"></i>
           <span>{{ item.label }}</span>
@@ -26,7 +26,8 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
 import JobListView from '@/modules/automation/components/job/JobListView/JobListView.vue'
 import JobScheduleView from '@/modules/automation/components/job/schedule/JobScheduleView.vue'
@@ -35,6 +36,9 @@ import JobApprovalsView from '@/modules/automation/components/job/JobApprovalsVi
 import JobRunLogsView from '@/modules/automation/components/job/JobRunLogsView.vue'
 import JobStatisticsView from '@/modules/automation/components/job/JobStatisticsView.vue'
 import JobTaskSchedulerView from '@/modules/automation/components/job/JobTaskSchedulerView.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 const navItems = [
   { key: 'jobs', label: '作业列表', icon: 'fa-list-alt' },
@@ -63,6 +67,69 @@ const moduleDescription =
   '集中管理批量作业、模板与执行计划，逐步完成对旧版 Angular 模块的替换。'
 
 const activeComponent = computed(() => componentMap[activeView.value] || JobListView)
+
+// 获取当前模块的基础路径
+function getBasePath() {
+  const path = route.path
+  const match = path.match(/^\/([^/]+)/)
+  return match ? `/${match[1]}` : '/jao'
+}
+
+/**
+ * 解析路由路径，确定当前视图
+ */
+function parseRouteView() {
+  const path = route.path
+  const params = route.params
+  const pathMatch = Array.isArray(params.pathMatch)
+    ? params.pathMatch.join('/')
+    : params.pathMatch || ''
+
+  if (path.includes('/schedule') || pathMatch.includes('schedule')) {
+    return 'schedule'
+  }
+  if (path.includes('/requests') || pathMatch.includes('requests')) {
+    return 'requests'
+  }
+  if (path.includes('/approvals') || pathMatch.includes('approvals')) {
+    return 'approvals'
+  }
+  if (path.includes('/runLogs') || pathMatch.includes('runLogs')) {
+    return 'runLogs'
+  }
+  if (path.includes('/statistics') || pathMatch.includes('statistics')) {
+    return 'statistics'
+  }
+  if (path.includes('/taskScheduler') || pathMatch.includes('taskScheduler')) {
+    return 'taskScheduler'
+  }
+  if (path.includes('/jobs') || pathMatch.includes('jobs')) {
+    return 'jobs'
+  }
+
+  return 'jobs'
+}
+
+// 导航点击
+function handleNavClick(item) {
+  activeView.value = item.key
+  const basePath = getBasePath()
+  const targetPath = item.key === 'jobs' ? basePath : `${basePath}/${item.key}`
+  router.push(targetPath)
+}
+
+// 监听路由变化
+watch(
+  () => route.path,
+  () => {
+    activeView.value = parseRouteView()
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  activeView.value = parseRouteView()
+})
 </script>
 
 <style scoped lang="scss">

@@ -33,7 +33,7 @@
               {{ formatTitle(row.title) }}
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="100" align="center">
+          <el-table-column prop="status" label="状态" width="100" align="left">
             <template #default="{ row }">
               <el-tag :type="row.status === 'P' ? 'success' : 'danger'" size="small">
                 {{ row.status === 'P' ? '已启用' : '已禁用' }}

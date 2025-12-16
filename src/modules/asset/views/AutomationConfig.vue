@@ -116,7 +116,7 @@
               <el-link type="primary">{{ formatDateTime(row.updated_at) }}</el-link>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="60" align="center" fixed="right">
+          <el-table-column label="操作" width="60" align="left" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="handleEditAutomation(row)">
                 编辑
@@ -189,7 +189,7 @@
               {{ formatDateTime(row.updatedAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="88" align="center" fixed="right">
+          <el-table-column label="操作" width="88" align="left" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="handleEditAnsible(row)">
                 编辑

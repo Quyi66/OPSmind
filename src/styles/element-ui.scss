@@ -249,6 +249,12 @@
     .el-input__wrapper {
       height: 28px !important;
     }
+
+    .el-select__wrapper {
+      height: 28px !important;
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+    }
   }
 
   .el-pagination__goto,
@@ -313,15 +319,34 @@
   padding: 8px 0;
 }
 
+// ========================================
+// Small 尺寸组件高度统一为 32px
+// ========================================
 .el-input--small .el-input__inner {
   height: 32px !important;
   line-height: 32px !important;
 }
 
+.el-input--small .el-input__wrapper {
+  height: 32px !important;
+  padding: 0 11px !important;
+}
+
+.el-select--small .el-select__wrapper {
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 11px !important;
+}
+
+.el-button--small {
+  height: 32px !important;
+  padding: 8px 15px !important;
+}
+
 // 表格操作列按钮样式
 .el-table .el-button.is-text {
-  padding-left: 0;
-  padding-right: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
   margin-left: 10px;
   font-size: 14px;
 
