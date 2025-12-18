@@ -15,13 +15,13 @@
             <!-- 基础信息 -->
             <fieldset class="form-fieldset">
               <legend>基础信息</legend>
-              <div class="form-group">
+              <div class="form-group form-horizontal">
                 <label class="control-label">名称 <span class="required">*</span></label>
                 <div class="form-control-wrapper">
                   <el-input v-model="flow.name" placeholder="请输入流程名称" />
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group form-horizontal">
                 <label class="control-label">描述</label>
                 <div class="form-control-wrapper">
                   <el-input v-model="flow.description" type="textarea" :rows="3" />
@@ -274,7 +274,8 @@ function createEmptyFlow() {
     description: '',
     hosts: [],
     steps: [createStep()],
-    globalParams: []
+    globalParams: [],
+    extraData: {}
   }
 }
 
@@ -288,7 +289,8 @@ function createStep() {
       verbosity: 0,
       taskTimeout: 60,
       tasks: [{ scripts: [] }]
-    }
+    },
+    extraData: {}
   }
 }
 
@@ -313,6 +315,12 @@ function applyFlowDetail(data) {
   flow.id = data.id || data.flowId || ''
   flow.name = data.name || ''
   flow.description = data.description || ''
+  flow.extraData = { ...data }
+  // 移除已处理字段以免覆盖
+  delete flow.extraData.hosts
+  delete flow.extraData.steps
+  delete flow.extraData.globalParams
+  delete flow.extraData.globalParamsJson
 
   // hosts 保留完整对象（包含 assetType）
   if (Array.isArray(data.hosts)) {
@@ -362,6 +370,16 @@ function normalizeStep(raw) {
   }
 
   const scripts = extractScripts(raw, config)
+
+  const stepExtra = { ...raw }
+  delete stepExtra.config
+  delete stepExtra.configJson
+  // 移除已显式映射的字段
+  delete stepExtra.id
+  delete stepExtra.name
+  delete stepExtra.autoNext
+  delete stepExtra.type
+
   return {
     id: raw.id || generateId(),
     name: raw.name || '',
@@ -375,7 +393,8 @@ function normalizeStep(raw) {
           scripts
         }
       ]
-    }
+    },
+    extraData: stepExtra
   }
 }
 
@@ -499,6 +518,7 @@ function handleSave() {
 
   // 将 steps 的 config 转换为 configJson 字符串
   const stepsPayload = flow.steps.map(step => ({
+    ...step.extraData, // 合并额外步骤数据
     id: step.id,
     name: step.name,
     autoNext: step.autoNext,
@@ -516,6 +536,7 @@ function handleSave() {
   }))
 
   const payload = {
+    ...flow.extraData, // 合并额外流程数据
     id: flow.id || undefined,
     name: flow.name,
     description: flow.description || null,

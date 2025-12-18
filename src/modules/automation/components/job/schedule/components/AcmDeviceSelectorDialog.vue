@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     title="选择设备"
-    width="900px"
+    width="1200px"
     :close-on-click-modal="false"
     :z-index="3000"
     append-to-body
@@ -175,7 +175,7 @@ const visible = computed({
 })
 
 const selectModeDefaults = {
-  host: { title: '主机', icon: 'fa-server' },
+  host: { title: '设备', icon: 'fa-server' },
   group: { title: '分组', icon: 'fa-sitemap' },
   tag: { title: '标签', icon: 'fa-tag' },
   input: { title: '输入', icon: 'fa-keyboard' },

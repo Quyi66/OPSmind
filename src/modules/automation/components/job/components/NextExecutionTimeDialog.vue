@@ -65,12 +65,13 @@ async function fetchNextExecutionTimes() {
 }
 
 // 监听对话框打开时加载数据
+// 监听对话框打开时加载数据
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     times.value = []
     fetchNextExecutionTimes()
   }
-})
+}, { immediate: true })
 </script>
 
 <style scoped>

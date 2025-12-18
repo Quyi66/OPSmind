@@ -119,7 +119,6 @@
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
         <el-button type="primary" @click="handleConfirm">
-          <el-icon><Check /></el-icon>
           确认
         </el-button>
       </div>

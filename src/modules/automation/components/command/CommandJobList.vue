@@ -129,75 +129,94 @@
                 </el-form-item>
 
                 <el-form-item label="目标主机">
-                  <div v-if="isEditMode" class="host-editor">
-                    <el-input
-                      v-model="hostInput"
-                      placeholder="输入主机IP，多个用逗号分隔"
-                      @keyup.enter="addHosts"
-                    >
-                      <template #append>
-                        <el-button @click="addHosts">添加</el-button>
-                      </template>
-                    </el-input>
-                    <div v-if="jobHosts.length > 0" class="host-list">
-                      <el-tag
-                        v-for="(host, index) in jobHosts"
-                        :key="index"
-                        closable
-                        type="success"
-                        @close="removeHost(index)"
-                      >
-                        {{ host.value || host }}
-                      </el-tag>
+                  <div class="host-selector-wrapper">
+                    <!-- 编辑模式或查看模式都显示相同的 UI -->
+                    <div v-if="jobHosts.length > 0" class="host-display">
+                      <div class="host-summary">
+                        <el-button
+                          v-if="isEditMode"
+                          type="default"
+                          size="small"
+                          class="host-count-btn"
+                          @click="deviceSelectorVisible = true"
+                        >
+                          共<strong>{{ jobHosts.length }}</strong>项
+                        </el-button>
+                        <span v-else class="host-count-text">
+                          共<strong>{{ jobHosts.length }}</strong>项
+                        </span>
+                        <el-button
+                          v-if="isEditMode"
+                          type="danger"
+                          text
+                          size="small"
+                          @click="clearAllHosts"
+                        >
+                          <i class="fa fa-times"></i>
+                        </el-button>
+                      </div>
+                      <div class="host-list-wrapper">
+                        <el-tag
+                          v-for="(host, index) in jobHosts"
+                          :key="index"
+                          :closable="isEditMode"
+                          type="info"
+                          class="host-tag"
+                          @close="removeHost(index)"
+                        >
+                          {{ host.value || host }}
+                        </el-tag>
+                      </div>
                     </div>
-                  </div>
-                  <div v-else class="host-tags">
-                    <el-tag
-                      v-for="(host, index) in jobHosts"
-                      :key="index"
-                      type="success"
-                    >
-                      {{ host.value || host }}
-                    </el-tag>
-                    <span v-if="jobHosts.length === 0" class="text-muted">未配置主机</span>
+                    <div v-else>
+                      <el-button
+                        v-if="isEditMode"
+                        type="default"
+                        @click="deviceSelectorVisible = true"
+                      >
+                        <i class="fa fa-server"></i>
+                        选择主机
+                      </el-button>
+                      <span v-else class="text-muted">未配置主机</span>
+                    </div>
                   </div>
                 </el-form-item>
               </fieldset>
+            </el-form>
 
-              <!-- 运行作业 -->
-              <fieldset v-if="!isEditMode">
-                <legend>运行作业</legend>
-                <div class="run-actions">
-                  <el-button type="primary" :loading="running" @click="handleRunJob">
-                    <i class="fas fa-play"></i>
-                    执行作业
-                  </el-button>
-                  <el-button @click="isEditMode = true">
-                    <i class="fas fa-edit"></i>
-                    编辑作业
-                  </el-button>
-                  <el-button type="danger" plain @click="handleDeleteJob">
-                    <i class="fas fa-trash"></i>
-                    删除作业
-                  </el-button>
-                </div>
-
-                <!-- 运行结果 -->
-                <div v-if="runResult" class="run-result">
-                  <pre>{{ JSON.stringify(runResult, null, 2) }}</pre>
-                </div>
-              </fieldset>
-
-              <!-- 编辑模式按钮 -->
-              <div v-if="isEditMode" class="edit-actions">
-                <el-button type="primary" :loading="saving" @click="handleSaveJob">
-                  保存作业
+            <!-- 运行作业 - 移到表单外部避免被 disabled 影响 -->
+            <fieldset v-if="!isEditMode" class="action-fieldset">
+              <legend>运行作业</legend>
+              <div class="run-actions">
+                <el-button type="primary" :loading="running" @click="handleRunJob">
+                  <i class="fas fa-play"></i>
+                  执行作业
                 </el-button>
-                <el-button @click="handleCancelEdit">
-                  取消
+                <el-button @click="isEditMode = true">
+                  <i class="fas fa-edit"></i>
+                  编辑作业
+                </el-button>
+                <el-button type="danger" plain @click="handleDeleteJob">
+                  <i class="fas fa-trash"></i>
+                  删除作业
                 </el-button>
               </div>
-            </el-form>
+
+              <!-- 运行结果 -->
+              <div v-if="runResult" class="run-result">
+                <pre>{{ JSON.stringify(runResult, null, 2) }}</pre>
+              </div>
+            </fieldset>
+
+            <!-- 编辑模式按钮 - 移到表单外部 -->
+            <div v-if="isEditMode" class="edit-actions">
+              <el-button type="primary" :loading="saving" @click="handleSaveJob">
+                保存作业
+              </el-button>
+              <el-button @click="handleCancelEdit">
+                取消
+              </el-button>
+            </div>
           </div>
         </template>
       </main>
@@ -207,6 +226,18 @@
     <CreateJobDialog
       v-model:visible="createDialogVisible"
       @success="handleCreateSuccess"
+    />
+
+    <!-- 设备选择器弹窗 -->
+    <AcmDeviceSelectorDialog
+      v-model="deviceSelectorVisible"
+      ci-types="[auto]"
+      :initial-selection="jobHosts"
+      :options="{
+        selectMode: 'host,group,tag,input,recently',
+        selector: 'multiple'
+      }"
+      @confirm="handleDeviceSelected"
     />
   </div>
 </template>
@@ -219,10 +250,11 @@ import {
   findJobById,
   saveJob,
   deleteJob,
-  runJob,
+  runJobByRequest,
   findAllApproveCommand
 } from '@/modules/automation/api/command'
 import CreateJobDialog from './dialogs/CreateJobDialog.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 
 const props = defineProps({
   jobType: {
@@ -256,7 +288,6 @@ const jobForm = ref({
 // 作业配置
 const selectedCommandIds = ref([])
 const jobHosts = ref([])
-const hostInput = ref('')
 
 // 可用命令列表
 const availableCommands = ref([])
@@ -270,6 +301,9 @@ const saving = ref(false)
 
 // 创建对话框
 const createDialogVisible = ref(false)
+
+// 设备选择器对话框
+const deviceSelectorVisible = ref(false)
 
 // 表单验证规则
 const formRules = {
@@ -325,9 +359,14 @@ async function loadJobs() {
     const response = await findAllJobs(props.jobType)
     jobs.value = response.data || response || []
 
-    // 自动选中第一条数据
+    // 自动选中排序后的第一条数据
     if (jobs.value.length > 0 && !activeJobId.value) {
-      selectJob(jobs.value[0])
+      // 需要等待 filteredJobs 计算完成后再选择
+      setTimeout(() => {
+        if (filteredJobs.value.length > 0) {
+          selectJob(filteredJobs.value[0])
+        }
+      }, 0)
     }
   } catch (error) {
     console.error('加载作业列表失败:', error)
@@ -396,21 +435,14 @@ function handleCreateSuccess() {
   loadJobs()
 }
 
-// 添加主机
-function addHosts() {
-  if (!hostInput.value.trim()) return
+// 设备选择器确认回调
+function handleDeviceSelected(selectedHosts) {
+  jobHosts.value = [...selectedHosts]
+}
 
-  const hosts = hostInput.value.split(',').map(h => h.trim()).filter(h => h)
-  hosts.forEach(host => {
-    if (!jobHosts.value.some(h => (h.value || h) === host)) {
-      jobHosts.value.push({
-        key: host,
-        value: host,
-        assetType: 'host'
-      })
-    }
-  })
-  hostInput.value = ''
+// 清空所有主机
+function clearAllHosts() {
+  jobHosts.value = []
 }
 
 // 移除主机
@@ -488,14 +520,23 @@ async function handleRunJob() {
   running.value = true
   runResult.value = null
   try {
-    const response = await runJob(selectedJob.value.id, {
-      params: {}
-    })
+    // 构建作业请求对象，与原系统保持一致
+    const jobRequest = {
+      jobId: selectedJob.value.id,
+      type: selectedJob.value.type,
+      configJson: selectedJob.value.configJson,
+      options: {
+        secretParams: [],
+        params: {}
+      }
+    }
+
+    const response = await runJobByRequest(jobRequest)
     runResult.value = response.data || response
     ElMessage.success('作业已提交执行')
   } catch (error) {
     console.error('运行作业失败:', error)
-    ElMessage.error('运行作业失败')
+    ElMessage.error('运行作业失败: ' + (error?.message || '未知错误'))
   } finally {
     running.value = false
   }
@@ -698,6 +739,23 @@ defineExpose({
   }
 }
 
+// 表单外部的 fieldset 样式
+.action-fieldset {
+  max-width: 800px;
+  border: none;
+  padding: 0;
+  margin: 0 0 24px;
+
+  legend {
+    font-size: 14px;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #dee2e6;
+  }
+}
+
 .command-tags,
 .host-tags {
   display: flex;
@@ -710,16 +768,49 @@ defineExpose({
   }
 }
 
-.host-editor {
-  .el-input {
-    margin-bottom: 12px;
+// 主机选择器样式
+.host-selector-wrapper {
+  width: 100%;
+}
+
+.host-display {
+  width: 100%;
+}
+
+.host-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  strong {
+    color: #409eff;
+    margin: 0 2px;
   }
 }
 
-.host-list {
+.host-count-btn {
+  cursor: pointer;
+}
+
+.host-count-text {
+  font-size: 13px;
+  color: #606266;
+}
+
+.host-list-wrapper {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.host-tag {
+  font-size: 13px;
 }
 
 .run-actions {

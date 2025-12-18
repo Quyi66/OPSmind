@@ -51,7 +51,7 @@
               {{ formatDate(row.modifiedAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right" align="right">
+          <el-table-column label="操作" width="200" fixed="right" align="left">
             <template #default="{ row }">
               <el-button link type="primary" size="small" @click="handleView(row)">
                 查看
@@ -115,7 +115,7 @@
               {{ formatDate(row.createTime) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="160" fixed="right" align="right">
+          <el-table-column label="操作" width="160" fixed="right" align="left">
             <template #default="{ row }">
               <el-button link type="warning" size="small" @click="handleRecoverRecycle(row)">
                 恢复

@@ -46,30 +46,15 @@
       <!-- 主机选择 -->
       <el-form-item label="目标主机" prop="hosts" required>
         <div class="host-selector">
-          <el-alert
-            type="info"
-            :closable="false"
-            show-icon
-            class="mb-3"
-          >
-            <template #title>
-              请选择要执行命令的目标主机
-            </template>
-          </el-alert>
-
-          <!-- 简化版主机选择器 -->
-          <div class="host-input-group">
-            <el-input
-              v-model="hostInput"
-              placeholder="输入主机IP或主机名，多个用逗号分隔"
-              @keyup.enter="addHosts"
-            >
-              <template #append>
-                <el-button @click="addHosts">添加</el-button>
-              </template>
-            </el-input>
+          <!-- 选择设备按钮 -->
+          <div class="select-device-btn">
+            <el-button type="primary" link @click="deviceSelectorVisible = true">
+              <i class="fa fa-server me-1"></i>
+              选择主机
+            </el-button>
           </div>
 
+          <!-- 已选主机列表 -->
           <div v-if="formData.hosts.length > 0" class="host-list">
             <el-tag
               v-for="(host, index) in formData.hosts"
@@ -83,7 +68,7 @@
             </el-tag>
           </div>
           <div v-else class="no-hosts">
-            <span class="text-muted">暂未选择主机</span>
+            <span class="text-muted">hosts is required</span>
           </div>
         </div>
       </el-form-item>
@@ -109,12 +94,25 @@
       </el-button>
     </template>
   </el-dialog>
+
+  <!-- 设备选择器弹窗 -->
+  <AcmDeviceSelectorDialog
+    v-model="deviceSelectorVisible"
+    ci-types="linux"
+    :initial-selection="formData.hosts"
+    :options="{
+      selectMode: 'host,group,tag,input,recently',
+      selector: 'multiple'
+    }"
+    @confirm="handleDeviceSelected"
+  />
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { runCommands, saveJob } from '@/modules/automation/api/command'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 
 const props = defineProps({
   visible: {
@@ -140,6 +138,9 @@ const dialogVisible = computed({
   set: (val) => emit('update:visible', val)
 })
 
+// 设备选择器可见性
+const deviceSelectorVisible = ref(false)
+
 // 是否创建作业模式
 const isCreateJobMode = computed(() => props.mode === 'createJob')
 
@@ -156,9 +157,6 @@ const commandList = computed(() => {
 
 // 表单引用
 const formRef = ref(null)
-
-// 主机输入
-const hostInput = ref('')
 
 // 表单数据
 const formData = ref({
@@ -207,30 +205,18 @@ function resetForm() {
     description: '',
     hosts: []
   }
-  hostInput.value = ''
   formRef.value?.clearValidate()
-}
-
-// 添加主机
-function addHosts() {
-  if (!hostInput.value.trim()) return
-
-  const hosts = hostInput.value.split(',').map(h => h.trim()).filter(h => h)
-  hosts.forEach(host => {
-    if (!formData.value.hosts.some(h => (h.value || h) === host)) {
-      formData.value.hosts.push({
-        key: host,
-        value: host,
-        assetType: 'host'
-      })
-    }
-  })
-  hostInput.value = ''
 }
 
 // 移除主机
 function removeHost(index) {
   formData.value.hosts.splice(index, 1)
+}
+
+// 处理设备选择器确认
+function handleDeviceSelected(selectedHosts) {
+  // 使用选中的主机替换当前列表
+  formData.value.hosts = [...selectedHosts]
 }
 
 // 执行命令
@@ -323,8 +309,12 @@ function handleClose() {
   width: 100%;
 }
 
-.host-input-group {
+.select-device-btn {
   margin-bottom: 12px;
+
+  .el-button {
+    padding: 0;
+  }
 }
 
 .host-list {
@@ -353,7 +343,7 @@ function handleClose() {
   }
 }
 
-.mb-3 {
-  margin-bottom: 12px;
+.me-1 {
+  margin-right: 4px;
 }
 </style>

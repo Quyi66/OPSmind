@@ -17,13 +17,16 @@
       ref="tableRef"
       :data="filteredData"
       v-loading="loading"
-      border
       height="350"
       row-key="id"
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="50" reserve-selection />
-      <el-table-column prop="jobTitle" label="作业" min-width="280" show-overflow-tooltip sortable />
+      <el-table-column prop="jobTitle" label="作业" min-width="280" show-overflow-tooltip sortable>
+        <template #default="{ row }">
+          {{ translateText(row.jobTitle) || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column label="执行主机" width="120" show-overflow-tooltip sortable>
         <template #default="{ row }">
           <span v-if="row.run_result_hosts?.length">
@@ -34,18 +37,18 @@
       </el-table-column>
       <el-table-column prop="jobType" label="类型" width="80" align="left" sortable>
         <template #default="{ row }">
-          {{ row.jobType || '-' }}
+          {{ getJobTypeLabel(row.jobType) }}
         </template>
       </el-table-column>
-      <el-table-column label="结束时间" width="160" sortable>
+      <el-table-column label="结束时间" width="180" sortable>
         <template #default="{ row }">
           {{ formatDateTime(row.endTime || row.startTime) }}
         </template>
       </el-table-column>
       <el-table-column label="Ansible Node" width="150" align="left">
         <template #default="{ row }">
-          <el-tag v-if="row.ata_node" type="primary" size="small">
-            {{ parseAnsibleNode(row.ata_node) }}
+          <el-tag v-if="getAnsibleNodeLabel(row.ata_node)" type="primary" size="small">
+            {{ getAnsibleNodeLabel(row.ata_node) }}
           </el-tag>
           <span v-else>-</span>
         </template>
@@ -86,6 +89,8 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
+import { translateText } from '@/utils/i18n'
 
 const props = defineProps({
   ciType: { type: String, required: true },
@@ -186,21 +191,21 @@ function formatDateTime(dateStr) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
 }
 
-function parseAnsibleNode(nodeValue) {
-  if (!nodeValue) return '-'
+function getAnsibleNodeLabel(nodeValue) {
+  if (!nodeValue) return ''
   try {
+    let val = nodeValue
     // 如果是 JSON 数组字符串，解析它
-    if (typeof nodeValue === 'string' && nodeValue.startsWith('[')) {
-      const arr = JSON.parse(nodeValue)
-      return Array.isArray(arr) ? arr.join(', ') : nodeValue
+    if (typeof nodeValue === 'string' && nodeValue.trim().startsWith('[')) {
+      val = JSON.parse(nodeValue)
     }
-    // 如果已经是数组
-    if (Array.isArray(nodeValue)) {
-      return nodeValue.join(', ')
+    
+    if (Array.isArray(val)) {
+      return val.filter(Boolean).join(', ')
     }
-    return nodeValue
+    return String(val)
   } catch {
-    return nodeValue
+    return String(nodeValue)
   }
 }
 
@@ -239,6 +244,12 @@ function getHostCount(statsJson) {
   } catch {
     return '-'
   }
+}
+
+function getJobTypeLabel(type) {
+  if (!type) return '-'
+  const option = JOB_TYPE_OPTIONS.find(opt => opt.value === type)
+  return option ? option.label : type
 }
 </script>
 

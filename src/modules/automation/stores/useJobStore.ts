@@ -112,7 +112,7 @@ export const useAutomationJobStore = defineStore('automation/jobs', () => {
   async function duplicateJob(jobId: string) {
     if (!jobId) return
     await apiCopyJob(jobId)
-    await loadJobs()
+    // await loadJobs()
   }
 
   async function moveSelected(jobIds: string[], targetApplet: string) {

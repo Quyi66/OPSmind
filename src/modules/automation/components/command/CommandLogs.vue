@@ -27,14 +27,16 @@
         clearable
         @keyup.enter="loadData"
       />
-      <el-button size="small" @click="loadData">
-        <el-icon><RefreshRight /></el-icon>
-        刷新
-      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
+      <!-- 刷新按钮 -->
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
@@ -171,7 +173,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { RefreshRight } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
 import { useApi } from '@/core/api'
 
 // 筛选条件

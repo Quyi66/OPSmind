@@ -98,13 +98,11 @@
           v-if="formData.jobId || ['cmd', 'cac'].includes(formData.jobType)"
           @click="paramsDialogVisible = true"
         >
-          <el-icon><Operation /></el-icon>
           运行参数
         </el-button>
         <div style="flex: 1"></div>
         <el-button @click="visible = false">
-          <el-icon><Back /></el-icon>
-          返回
+          取消
         </el-button>
         <el-button
           type="primary"
@@ -112,7 +110,6 @@
           :disabled="!isFormValid"
           @click="handleSubmit"
         >
-          <el-icon><Check /></el-icon>
           保存
         </el-button>
       </div>

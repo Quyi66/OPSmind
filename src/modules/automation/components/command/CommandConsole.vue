@@ -1,12 +1,5 @@
 <template>
   <div class="command-console">
-    <!-- 标题栏 -->
-    <!-- <div class="console-header">
-      <nav class="navbar navbar-light">
-        <div class="navbar-title">Console</div>
-      </nav>
-    </div> -->
-
     <div class="console-body">
       <!-- 运行记录按钮 -->
       <div class="history-btn-wrapper">
@@ -19,21 +12,44 @@
       <!-- 主机选择 -->
       <div class="form-group">
         <label class="control-label">主机</label>
-        <div class="host-selector">
-          <el-button @click="showHostSelector = true">
-            <i class="fas fa-list"></i>
-            选择
-          </el-button>
-          <div v-if="hosts.length > 0" class="host-tags">
-            <el-tag
-              v-for="(host, index) in hosts"
-              :key="index"
-              closable
-              type="success"
-              @close="removeHost(index)"
-            >
-              {{ host.value || host }}
-            </el-tag>
+        <div class="host-selector-wrapper">
+          <div v-if="hosts.length > 0" class="host-display">
+            <div class="host-summary">
+              <el-button
+                type="default"
+                size="small"
+                class="host-count-btn"
+                @click="showHostSelector = true"
+              >
+                共<strong>{{ hosts.length }}</strong>项
+              </el-button>
+              <el-button
+                type="danger"
+                text
+                size="small"
+                @click="hosts = []"
+              >
+                <i class="fa fa-times"></i>
+              </el-button>
+            </div>
+            <div class="host-list-wrapper">
+              <el-tag
+                v-for="(host, index) in hosts"
+                :key="index"
+                closable
+                type="info"
+                class="host-tag"
+                @close="removeHost(index)"
+              >
+                {{ host.value || host }}
+              </el-tag>
+            </div>
+          </div>
+          <div v-else>
+            <el-button type="default" @click="showHostSelector = true">
+              <i class="fa fa-server"></i>
+              选择
+            </el-button>
           </div>
         </div>
       </div>
@@ -80,10 +96,15 @@
       </div>
     </div>
 
-    <!-- 主机选择对话框 -->
-    <HostSelectorDialog
-      v-model:visible="showHostSelector"
-      v-model="hosts"
+    <!-- 设备选择器对话框 -->
+    <AcmDeviceSelectorDialog
+      v-model="showHostSelector"
+      ci-types="[auto]"
+      :initial-selection="hosts"
+      :options="{
+        selectMode: 'host,group,tag,input,recently',
+        selector: 'multiple'
+      }"
       @confirm="handleHostsSelected"
     />
 
@@ -93,9 +114,22 @@
       title="运行记录"
       width="1200px"
     >
+      <!-- 搜索框 -->
+      <div class="history-search">
+        <el-input
+          v-model="historySearchKeyword"
+          placeholder="搜索命令、主机、创建人..."
+          style="width: 300px"
+          clearable
+          @clear="historyCurrentPage = 1"
+          @keyup.enter="historyCurrentPage = 1"
+        />
+      </div>
+
       <el-table
-        :data="historyData"
-        max-height="calc(100vh - 400px)"
+        :data="paginatedHistoryData"
+        max-height="calc(100vh - 450px)"
+        stripe
       >
         <el-table-column prop="cmd" label="命令" show-overflow-tooltip>
           <template #default="{ row }">
@@ -108,10 +142,10 @@
             <span class="text-ellipsis">{{ row.hostname?.join(',') }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
+        <el-table-column prop="createdAt" label="创建时间" width="180" sortable />
         <el-table-column prop="createdBy" label="创建人" width="100" />
-        <el-table-column prop="lastRunTime" label="最后执行时间" width="180" />
-        <el-table-column prop="runNumber" label="执行次数" width="90" />
+        <el-table-column prop="lastRunTime" label="最后执行时间" width="180" sortable />
+        <el-table-column prop="runNumber" label="执行次数" width="110" sortable />
         <el-table-column label="操作" width="100" fixed="right" align="left">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleUseHistory(row)">
@@ -120,24 +154,68 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div class="history-pagination">
+        <el-pagination
+          v-model:current-page="historyCurrentPage"
+          v-model:page-size="historyPageSize"
+          :page-sizes="[10, 25, 50, 100]"
+          :total="filteredHistoryData.length"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleHistoryPageSizeChange"
+          @current-change="handleHistoryPageChange"
+        />
+      </div>
+
       <template #footer>
         <el-button @click="historyDialogVisible = false">返回</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 日志查看器对话框 -->
+    <el-dialog
+      v-model="logViewerVisible"
+      title="执行日志"
+      width="900px"
+      class="log-viewer-dialog"
+      :close-on-click-modal="false"
+      @close="closeLogViewer"
+    >
+      <div class="log-viewer-header">
+        <div class="log-status">
+          <el-tag :type="logStatus === 'RUNNING' ? 'warning' : (logStatus === 'COMPLETED' ? 'success' : 'info')" size="small">
+            {{ logStatus === 'RUNNING' ? '运行中' : (logStatus === 'COMPLETED' ? '完成' : logStatus) }}
+          </el-tag>
+          <el-switch
+            v-model="autoScroll"
+            active-text="自动滚动"
+            size="small"
+            style="margin-left: 16px"
+          />
+        </div>
+      </div>
+      <div class="log-viewer-content">
+        <pre ref="logContentRef" class="log-output">{{ logContent || '等待输出...' }}</pre>
+      </div>
+      <template #footer>
+        <el-button @click="closeLogViewer">关闭</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useApi } from '@/core/api'
-import HostSelectorDialog from './dialogs/HostSelectorDialog.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 
 const emit = defineEmits(['back'])
 
 // 状态
 const commandType = ref('')
-const hostInput = ref('')
 const hosts = ref([])
 const command = ref('')
 const executing = ref(false)
@@ -149,29 +227,43 @@ const showHostSelector = ref(false)
 // 运行记录
 const historyDialogVisible = ref(false)
 const historyData = ref([])
+const historyCurrentPage = ref(1)
+const historyPageSize = ref(10)
+const historySearchKeyword = ref('')
+
+// 日志查看器
+const logViewerVisible = ref(false)
+const logContent = ref('')
+const logStatus = ref('')
+const logContentRef = ref(null)
+const autoScroll = ref(true)
+let websocket = null
+
+// 过滤后的历史数据
+const filteredHistoryData = computed(() => {
+  if (!historySearchKeyword.value) {
+    return historyData.value
+  }
+  const keyword = historySearchKeyword.value.toLowerCase()
+  return historyData.value.filter(item =>
+    (item.cmd && item.cmd.toLowerCase().includes(keyword)) ||
+    (item.type && item.type.toLowerCase().includes(keyword)) ||
+    (item.hostname && item.hostname.join(',').toLowerCase().includes(keyword)) ||
+    (item.createdBy && item.createdBy.toLowerCase().includes(keyword))
+  )
+})
+
+// 分页后的历史数据
+const paginatedHistoryData = computed(() => {
+  const start = (historyCurrentPage.value - 1) * historyPageSize.value
+  const end = start + historyPageSize.value
+  return filteredHistoryData.value.slice(start, end)
+})
 
 // 更新行号
 function updateLineCount() {
   const lines = command.value.split('\n').length
   lineCount.value = Math.max(lines, 1)
-}
-
-// 添加主机
-function addHostsFromInput() {
-  if (!hostInput.value.trim()) return
-
-  const newHosts = hostInput.value.split(',').map(h => h.trim()).filter(h => h)
-  newHosts.forEach(host => {
-    const exists = hosts.value.some(h => (h.value || h) === host)
-    if (!exists) {
-      hosts.value.push({
-        key: host,
-        value: host,
-        assetType: 'host'
-      })
-    }
-  })
-  hostInput.value = ''
 }
 
 // 移除主机
@@ -207,11 +299,18 @@ async function executeCommand() {
       hosts: hosts.value
     }
 
-    await useApi().post('/jao/api/jao/job/run-console-command', request)
+    const response = await useApi().post('/jao/api/jao/console-log/run', request)
+    const result = response.data || response
+
     ElMessage.success('命令已提交执行')
+
+    // 如果有 runId，打开日志查看器
+    if (result.runId) {
+      openLogViewer(result.runId)
+    }
   } catch (error) {
     console.error('执行命令失败:', error)
-    ElMessage.error('执行命令失败')
+    ElMessage.error('执行命令失败: ' + (error?.message || '未知错误'))
   } finally {
     executing.value = false
   }
@@ -246,6 +345,7 @@ async function handleHistory() {
       }
     })
 
+    historyCurrentPage.value = 1
     historyDialogVisible.value = true
   } catch (error) {
     console.error('加载运行记录失败:', error)
@@ -264,7 +364,16 @@ function handleUseHistory(row) {
 
 // 处理主机选择
 function handleHostsSelected(selectedHosts) {
-  hosts.value = selectedHosts
+  hosts.value = [...selectedHosts]
+}
+
+// 分页变化
+function handleHistoryPageSizeChange() {
+  historyCurrentPage.value = 1
+}
+
+function handleHistoryPageChange(page) {
+  historyCurrentPage.value = page
 }
 
 // 格式化日期
@@ -280,6 +389,73 @@ function formatDate(dateStr) {
     second: '2-digit'
   }).replace(/\//g, '-')
 }
+
+// 获取 WebSocket URL
+function getWebsocketUrl(runId) {
+  // 根据当前页面协议判断使用 ws 还是 wss
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const host = window.location.host
+  return `${protocol}//${host}/oplus-ws/log/${runId}`
+}
+
+// 打开日志查看器
+function openLogViewer(runId) {
+  logContent.value = ''
+  logStatus.value = 'RUNNING'
+  logViewerVisible.value = true
+
+  // 连接 WebSocket
+  const wsUrl = getWebsocketUrl(runId)
+  console.log('Connecting to WebSocket:', wsUrl)
+
+  websocket = new WebSocket(wsUrl)
+
+  websocket.onopen = () => {
+    console.log('WebSocket connected')
+  }
+
+  websocket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data)
+      const message = data.message || event.data
+      logContent.value += message
+
+      // 自动滚动到底部
+      if (autoScroll.value && logContentRef.value) {
+        setTimeout(() => {
+          logContentRef.value.scrollTop = logContentRef.value.scrollHeight
+        }, 50)
+      }
+    } catch {
+      // 如果不是 JSON，直接追加
+      logContent.value += event.data
+    }
+  }
+
+  websocket.onclose = () => {
+    console.log('WebSocket closed')
+    logStatus.value = 'COMPLETED'
+  }
+
+  websocket.onerror = (error) => {
+    console.error('WebSocket error:', error)
+    logStatus.value = 'ERROR'
+  }
+}
+
+// 关闭日志查看器
+function closeLogViewer() {
+  if (websocket && websocket.readyState === WebSocket.OPEN) {
+    websocket.close()
+  }
+  websocket = null
+  logViewerVisible.value = false
+}
+
+// 组件卸载时清理
+onUnmounted(() => {
+  closeLogViewer()
+})
 </script>
 
 <style scoped lang="scss">
@@ -288,24 +464,6 @@ function formatDate(dateStr) {
   display: flex;
   flex-direction: column;
   background: #fff;
-}
-
-.console-header {
-  border-bottom: 1px solid #dee2e6;
-
-  .navbar {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    background: #f8f9fa;
-    margin: 0;
-  }
-
-  .navbar-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #212529;
-  }
 }
 
 .console-body {
@@ -333,17 +491,44 @@ function formatDate(dateStr) {
   }
 }
 
-.host-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: flex-start;
+// 主机选择器样式
+.host-selector-wrapper {
+  width: 100%;
 }
 
-.host-tags {
+.host-display {
+  width: 100%;
+}
+
+.host-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  strong {
+    color: #409eff;
+    margin: 0 2px;
+  }
+}
+
+.host-count-btn {
+  cursor: pointer;
+}
+
+.host-list-wrapper {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.host-tag {
+  font-size: 13px;
 }
 
 .grammar-select {
@@ -401,21 +586,51 @@ function formatDate(dateStr) {
   margin-top: 16px;
 }
 
-.host-input-dialog {
-  display: flex;
-  gap: 12px;
-
-  .el-input {
-    flex: 1;
-  }
-}
-
 .text-ellipsis {
   display: block;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   max-width: 100px;
+}
+
+.history-search {
+  margin-bottom: 16px;
+}
+
+.history-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0 0;
+}
+
+// 日志查看器样式
+.log-viewer-header {
+  margin-bottom: 16px;
+}
+
+.log-status {
+  display: flex;
+  align-items: center;
+}
+
+.log-viewer-content {
+  background: #1e1e2e;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.log-output {
+  height: 400px;
+  overflow: auto;
+  padding: 16px;
+  margin: 0;
+  color: #cdd6f4;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 :deep(.el-button) {

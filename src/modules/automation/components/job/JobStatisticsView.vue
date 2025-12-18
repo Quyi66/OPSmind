@@ -43,6 +43,7 @@
           <el-table
             :data="tableData"
             stripe
+            height="100%"
           >
             <el-table-column label="作业标题" min-width="240" fixed>
               <template #default="{ row }">
@@ -97,7 +98,7 @@
               ref="summaryTableRef"
               :data="filteredSummary"
               stripe
-              :height="summaryTableHeight"
+              height="100%"
               class="summary-table"
             >
               <el-table-column prop="job_title" label="作业" min-width="240" show-overflow-tooltip>
@@ -109,7 +110,7 @@
                 prop="run_count"
                 label="次数"
                 width="120"
-                align="right"
+                align="left"
                 sortable
                 :sort-orders="['descending', 'ascending']"
                 :default-sort="{ prop: 'run_count', order: 'descending' }"
@@ -147,7 +148,6 @@ const summaryQuery = ref('')
 const summaryFetched = ref(false)
 const summaryRows = ref([])
 const summaryTableRef = ref(null)
-const summaryTableHeight = ref('800px')
 
 onMounted(() => {
   fetchStats()
@@ -281,7 +281,7 @@ const filteredSummary = computed(() => {
 .stats-view {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 100px);
+  height: 100%;
   max-width: 100%;
   background: #fff;
   border-radius: 12px;
@@ -367,7 +367,7 @@ const filteredSummary = computed(() => {
 
 .stats-table-wrapper {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   min-height: 0;
 }
 
@@ -409,27 +409,27 @@ const filteredSummary = computed(() => {
 }
 
 .heat-1 {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: #fee2e2;
+  color: #991b1b;
 }
 
 .heat-2 {
-  background-color: #93c5fd;
-  color: #1e3a8a;
+  background-color: #fca5a5;
+  color: #7f1d1d;
 }
 
 .heat-3 {
-  background-color: #60a5fa;
-  color: #1e3a8a;
+  background-color: #f87171;
+  color: #fff;
 }
 
 .heat-4 {
-  background-color: #3b82f6;
+  background-color: #ef4444;
   color: #fff;
 }
 
 .heat-5 {
-  background-color: #1d4ed8;
+  background-color: #dc2626;
   color: #fff;
 }
 

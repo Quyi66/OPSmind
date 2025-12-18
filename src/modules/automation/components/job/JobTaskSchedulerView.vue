@@ -14,7 +14,6 @@
           <el-icon><Search /></el-icon>
         </template>
       </el-input>
-      <el-button size="small" :icon="RefreshRight" @click="handleRefresh">刷新</el-button>
     </div>
 
     <!-- 功能按钮区 -->
@@ -34,6 +33,11 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle @click="handleRefresh" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <CronJobTable
         :data="filteredTableData"
         :loading="loading"
@@ -68,7 +72,7 @@
 
 <script setup>
 import { ref, defineAsyncComponent } from 'vue'
-import { Plus, RefreshRight, Grid, Search } from '@element-plus/icons-vue'
+import { Plus, Refresh, Grid, Search } from '@element-plus/icons-vue'
 import CronJobTable from './components/CronJobTable.vue'
 import { useCronJobList } from './composables/useCronJobList'
 import { useCronJobActions } from './composables/useCronJobActions'
@@ -148,6 +152,6 @@ function handleFormSuccess() {
 }
 </script>
 
-<style scoped>
-/* 使用全局 ops-page-layout 样式 */
+<style scoped lang="scss">
+@use '@/styles/common.scss' as *;
 </style>

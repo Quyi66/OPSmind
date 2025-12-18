@@ -29,7 +29,7 @@
             multiple
             :show-file-list="false"
           >
-            <el-button type="primary" plain>
+            <el-button type="primary">
               <i class="fa fa-folder-open me-1" /> 选择文件
             </el-button>
           </el-upload>

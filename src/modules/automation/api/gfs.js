@@ -15,7 +15,7 @@ function getRepo(repo) {
 
 /**
  * 获取目录文件列表
- * @param {string} repo - 仓库名称
+ * @param {string} repo - 仓库名称（可选，默认使用租户仓库）
  * @param {string} dir - 目录路径，空字符串表示根目录
  * @param {string} repoType - 仓库类型: 'git', 'stage', 'staticfs'
  * @param {object} options - 选项
@@ -23,9 +23,14 @@ function getRepo(repo) {
  */
 export const listFiles = async (repo, dir = '', repoType = 'git', options = {}) => {
   const includeStage = options.includeStage !== false && repoType === 'git';
-  const apiPath = includeStage
-    ? `/gfs/api/gfs/v2/${repoType}/r/${getRepo(repo)}/dir/${encodeURIComponent(dir)}?useStage=true`
-    : `/gfs/api/gfs/v2/${repoType}/r/${getRepo(repo)}/dir/${encodeURIComponent(dir)}`;
+  const dirPath = dir ? encodeURIComponent(dir) : '';
+  const cacheBuster = Date.now();
+
+  let apiPath = `/gfs/api/gfs/v2/${repoType}/r/${getRepo(repo)}/dir/${dirPath}`;
+  const params = [];
+  if (includeStage) params.push('useStage=true');
+  params.push(`cacheBuster=${cacheBuster}`);
+  apiPath += '?' + params.join('&');
 
   const response = await useApi().get(apiPath);
   const files = response?.data || response || [];
@@ -137,8 +142,9 @@ function parseFileCss(file) {
  * @param {boolean} withContent - 是否获取文件内容
  */
 export const getFileInfo = (repoType, repo, path, withContent = false) => {
-  return useApi().get(`/gfs/api/gfs/v2/${repoType}/f/${getRepo(repo)}/file/${encodeURIComponent(path)}`, {
-    params: { isContent: withContent }
+  const cacheBuster = Date.now();
+  return useApi().get(`/gfs/api/gfs/v2/${repoType.toUpperCase()}/f/${getRepo(repo)}/file/${path}`, {
+    params: { isContent: withContent, cacheBuster }
   });
 }
 
@@ -146,7 +152,8 @@ export const getFileInfo = (repoType, repo, path, withContent = false) => {
  * 更新文件信息
  */
 export const updateFileInfo = (repoType, repo, path, fileInfo) => {
-  return useApi().put(`/gfs/api/gfs/v2/${repoType}/f/${getRepo(repo)}/file/${encodeURIComponent(path)}`, fileInfo);
+  const cacheBuster = Date.now();
+  return useApi().put(`/gfs/api/gfs/v2/${repoType.toUpperCase()}/f/${getRepo(repo)}/file/${path}?cacheBuster=${cacheBuster}`, fileInfo);
 }
 
 /**
@@ -267,10 +274,21 @@ export const getPlaybookInfo = (path) => {
 
 /**
  * 获取文件修订历史
+ * @param {string} repo - 仓库名称
  * @param {string} path - 文件路径
  */
 export const getFileRevisions = (repo, path) => {
   return useApi().get(`/gfs/api/gfs/v2/git/r/${getRepo(repo)}/rev/${encodeURIComponent(path)}`);
+}
+
+/**
+ * 回退到指定版本
+ * @param {string} repo - 仓库名称
+ * @param {string} commitName - 提交名称
+ * @param {string} path - 文件路径
+ */
+export const rollbackFileRevision = (repo, commitName, path) => {
+  return useApi().post(`/gfs/api/gfs/v2/git/r/${getRepo(repo)}/rev/${encodeURIComponent(path)}/${commitName}`);
 }
 
 /**
@@ -313,7 +331,8 @@ export const getApprovalDetail = (repo, approvalId) => {
  */
 export const changeFileStatus = (repoType, repo, files, status, comment) => {
   const filePaths = files.map((f) => f.path);
-  return useApi().put(`/gfs/api/gfs/v2/${repoType}/f/${getRepo(repo)}/attr`, {
+  const cacheBuster = Date.now();
+  return useApi().put(`/gfs/api/gfs/v2/${repoType}/f/${getRepo(repo)}/attr?cacheBuster=${cacheBuster}`, {
     onlineStatus: status,
     comment,
     srcPaths: filePaths
@@ -377,21 +396,22 @@ export const getGitRepoList = () => {
  * 修复 JGit 存储区
  */
 export const repairJgit = (repo) => {
-  return useApi().post(`/gfs/api/gfs/v2/git/f/${getRepo(repo)}/repair`);
+  return useApi().get(`/gfs/api/gfs/v2/jgit/${getRepo(repo)}/status/repair`);
 }
 
 /**
  * 获取 JGit 信息
  */
-export const getJgitInfo = (repoType, repo) => {
-  return useApi().get(`/gfs/api/gfs/v2/${repoType}/f/${getRepo(repo)}/jgit/info`);
+export const getJgitInfo = async (repoType, repo) => {
+  const res = await useApi().get(`/gfs/api/gfs/v2/jgit/${getRepo(repo)}/status`);
+  return res?.data || res;
 }
 
 /**
  * 重置 JGit
  */
 export const resetJgit = (repoType, repo) => {
-  return useApi().post(`/gfs/api/gfs/v2/${repoType}/f/${getRepo(repo)}/jgit/reset`);
+  return useApi().get(`/gfs/api/gfs/v2/jgit/${getRepo(repo)}/reset`);
 }
 
 /**

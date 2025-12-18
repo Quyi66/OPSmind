@@ -301,7 +301,7 @@
     <AddScriptDialog
       v-model="scriptDialogVisible"
       :repo-type="repoType"
-      :repo="repo"
+      :repo="currentRepo"
       :dir="currentDir"
       @success="loadFiles"
     />
@@ -309,7 +309,7 @@
     <AddFolderDialog
       v-model="folderDialogVisible"
       :repo-type="repoType"
-      :repo="repo"
+      :repo="currentRepo"
       :dir="currentDir"
       :edit-data="editFolderData"
       @success="loadFiles"
@@ -319,7 +319,7 @@
     <UploadFileDialog
       v-model="uploadDialogVisible"
       :repo-type="repoType"
-      :repo="repo"
+      :repo="currentRepo"
       :dir="currentDir"
       @success="loadFiles"
     />
@@ -327,7 +327,7 @@
     <SyncFileDialog
       v-model="syncDialogVisible"
       :repo-type="repoType"
-      :repo="repo"
+      :repo="currentRepo"
       :dir="currentDir"
       @success="loadFiles"
     />
@@ -335,21 +335,21 @@
     <FileContentDialog
       v-model="contentDialogVisible"
       :repo-type="repoType"
-      :repo="repo"
+      :repo="currentRepo"
       :file="currentFile"
     />
 
     <GitRepoListDialog
       v-model="gitRepoListDialogVisible"
       :repo-type="repoType"
-      :repo="repo"
+      :repo="currentRepo"
       @success="loadFiles"
     />
 
     <JgitManageDialog
       v-model="jgitManageDialogVisible"
       :repo-type="repoType"
-      :repo="repo"
+      :repo="currentRepo"
       @success="loadFiles"
     />
 
@@ -357,7 +357,7 @@
     <FileApproveDialog
       v-model="fileApproveDialogVisible"
       :repo-type="repoType"
-      :repo="repo"
+      :repo="currentRepo"
       :files="selectedFiles"
       @success="loadFiles"
     />
@@ -365,9 +365,24 @@
     <ApprovalHistoryDialog
       v-model="approvalHistoryDialogVisible"
       :repo-type="repoType"
-      :repo="repo"
+      :repo="currentRepo"
       mode="all"
       @go-file="goToFile"
+    />
+
+    <FileChangeStatusDialog
+      v-model="fileChangeStatusDialogVisible"
+      :repo-type="repoType"
+      :repo="currentRepo"
+      :files="selectedFiles"
+      @success="loadFiles"
+    />
+
+    <FileRevisionDialog
+      v-model="fileRevisionDialogVisible"
+      :repo="currentRepo"
+      :path="revisionFile?.path || ''"
+      @rollback="loadFiles"
     />
   </div>
 </template>
@@ -385,7 +400,9 @@ import {
   GitRepoListDialog,
   JgitManageDialog,
   FileApproveDialog,
-  ApprovalHistoryDialog
+  ApprovalHistoryDialog,
+  FileChangeStatusDialog,
+  FileRevisionDialog
 } from './dialogs'
 
 const props = defineProps({
@@ -425,8 +442,46 @@ const gitRepoListDialogVisible = ref(false)
 const jgitManageDialogVisible = ref(false)
 const fileApproveDialogVisible = ref(false)
 const approvalHistoryDialogVisible = ref(false)
+const fileChangeStatusDialogVisible = ref(false)
+const fileRevisionDialogVisible = ref(false)
+const revisionFile = ref(null)
 const currentFile = ref(null)
 const editFolderData = ref(null)
+
+const currentRepo = ref(props.repo)
+
+async function resolveRepoId() {
+  if (props.repo !== '$tnt') {
+    currentRepo.value = props.repo
+    return
+  }
+
+  // Try to load current repo info first
+  try {
+    const res = await gfsApi.loadCurrentRepo('git', '$tnt')
+    const repoInfo = res?.data || res
+    if (repoInfo?.id) {
+      currentRepo.value = repoInfo.id
+      return
+    }
+  } catch (e) {
+    // ignore and try next method
+  }
+
+  try {
+    const res = await gfsApi.getGitRepoList()
+    const repos = res?.data || res || []
+    const defaultRepo = repos.find(r => r.isTenantDefault || r.type === 'TENANT') || repos[0]
+    if (defaultRepo?.id) {
+       currentRepo.value = defaultRepo.id
+    }
+  } catch (e) {
+    console.warn('Failed to resolve repo id', e)
+  }
+}
+
+watch(() => props.repo, resolveRepoId, { immediate: true })
+
 
 // 面包屑
 const breadcrumbs = computed(() => {
@@ -488,7 +543,12 @@ watch(currentDir, (newDir) => {
 async function loadFiles() {
   loading.value = true
   try {
-    const files = await gfsApi.listFiles(props.repo, currentDir.value, props.repoType)
+    const files = await gfsApi.listFiles(currentRepo.value, currentDir.value, props.repoType)
+
+    // Attempt to extract real repo ID from the file list if we are using $tnt
+    if (files.length > 0 && files[0].repo && files[0].repo !== '$tnt' && currentRepo.value === '$tnt') {
+       currentRepo.value = files[0].repo
+    }
 
     const processed = files.map((f) => ({
       ...f,
@@ -595,7 +655,7 @@ function handleAddFolder() {
 function handleFileAction(command, file) {
   switch (command) {
     case 'download':
-      gfsApi.downloadFile(props.repoType, props.repo, file.path, file.name)
+      gfsApi.downloadFile(props.repoType, currentRepo.value, file.path, file.name)
       break
     case 'edit':
       ElMessage.info('编辑文件信息功能开发中')
@@ -614,7 +674,7 @@ function handleFileAction(command, file) {
       ElMessage.info('审批历史功能开发中')
       break
     case 'downloadDir':
-      gfsApi.downloadFiles(props.repoType, props.repo, [file.path], file.name)
+      gfsApi.downloadFiles(props.repoType, currentRepo.value, [file.path], file.name)
       break
   }
 }
@@ -632,7 +692,7 @@ async function handlePaste() {
   if (!canPaste.value) return
   try {
     const paths = clipboard.value.map((f) => f.path)
-    await gfsApi.moveFiles(props.repoType, props.repo, currentDir.value, paths)
+    await gfsApi.moveFiles(props.repoType, currentRepo.value, currentDir.value, paths)
     clipboard.value = []
     clipboardDir.value = ''
     ElMessage.success('移动成功')
@@ -648,7 +708,7 @@ async function handleDelete() {
   try {
     await ElMessageBox.confirm('确定删除选中的文件吗？', '删除确认', { type: 'warning' })
     const paths = selectedFiles.value.map((f) => f.path)
-    await gfsApi.deleteFiles(props.repoType, props.repo, paths)
+    await gfsApi.deleteFiles(props.repoType, currentRepo.value, paths)
     ElMessage.success('删除成功')
     selectedFiles.value = []
     loadFiles()
@@ -663,7 +723,7 @@ async function handleDelete() {
 async function handleDeleteSingle(file) {
   try {
     await ElMessageBox.confirm(`确定删除 "${file.name}" 吗？`, '删除确认', { type: 'warning' })
-    await gfsApi.deleteFiles(props.repoType, props.repo, [file.path])
+    await gfsApi.deleteFiles(props.repoType, currentRepo.value, [file.path])
     ElMessage.success('删除成功')
     loadFiles()
   } catch (error) {
@@ -677,12 +737,23 @@ async function handleDeleteSingle(file) {
 function handleDownload() {
   if (!hasSelection.value) return
   const paths = selectedFiles.value.map((f) => f.path)
-  gfsApi.downloadFiles(props.repoType, props.repo, paths)
+  gfsApi.downloadFiles(props.repoType, currentRepo.value, paths)
 }
 
 // 更改文件状态
-function handleChangeStatus() {
-  ElMessage.info('文件状态变更功能开发中')
+async function handleChangeStatus() {
+  if (!hasSelection.value) return
+
+  if (currentRepo.value === '$tnt') {
+    await resolveRepoId()
+  }
+
+  if (currentRepo.value === '$tnt') {
+    ElMessage.error('无法获取有效仓库信息')
+    return
+  }
+
+  fileChangeStatusDialogVisible.value = true
 }
 
 // 修复工具
@@ -693,7 +764,7 @@ function handleRepair() {
 // Git拉取
 async function handleGitPull() {
   try {
-    await gfsApi.gitPull(props.repo)
+    await gfsApi.gitPull(currentRepo.value)
     ElMessage.success('拉取最新Git库数据成功')
     loadFiles()
   } catch (error) {
@@ -704,7 +775,7 @@ async function handleGitPull() {
 // Git推送
 async function handleGitPush() {
   try {
-    await gfsApi.gitPush(props.repo)
+    await gfsApi.gitPush(currentRepo.value)
     ElMessage.success('推送最新本地数据到远程Git库成功')
   } catch (error) {
     ElMessage.error(error?.message || '推送最新本地数据到远程Git库失败')
@@ -718,7 +789,8 @@ function handleGitList() {
 
 // 显示历史版本
 function handleShowRevList(file) {
-  ElMessage.info('历史版本功能开发中')
+  revisionFile.value = file
+  fileRevisionDialogVisible.value = true
 }
 
 // 搜索

@@ -42,16 +42,20 @@
           <i class="fa fa-search" />
         </template>
       </el-input>
-      <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo" /> 重置
-      </el-button>
-      <el-button size="small" @click="handleRefresh">
-        <el-icon><RefreshRight /></el-icon>
-        刷新
-      </el-button>
+      <div class="ops-filter-actions">
+        <el-button size="small" @click="handleReset">
+          <i class="fa fa-undo" /> 重置
+        </el-button>
+      </div>
     </div>
 
     <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle @click="handleRefresh" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <el-table
         v-loading="loading"
         :data="tableData"
@@ -148,13 +152,14 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination-container">
+      <div class="ops-pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
           :total="pagination.total"
           :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next, jumper"
+          background
           @size-change="handleSearch"
           @current-change="handleSearch"
         />
@@ -167,11 +172,13 @@
       :run-id="resultMeta.runId"
       :job-title="resultMeta.jobTitle"
     />
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from './JobListView/ExecuteResultDialog.vue'
 
@@ -359,7 +366,9 @@ async function handleRerun(row) {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/styles/common.scss' as *;
+
 .run-logs-view {
   display: flex;
   flex-direction: column;

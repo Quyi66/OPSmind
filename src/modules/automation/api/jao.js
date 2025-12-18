@@ -164,8 +164,7 @@ export function copyCronJob(id) {
 export function queryNextExecutionTime(scheduleConf) {
   return useApi().get('/jao/api/jao/cron/nextTriggerTime', {
     params: {
-      scheduleConf,
-      cacheBuster: Date.now()
+      scheduleConf
     }
   })
 }
@@ -207,7 +206,9 @@ export function fetchJobById(id) {
 
 /** 流程列表 */
 export const fetchFlows = () => {
-  return useApi().get('/jao/api/jao/flows');
+  return useApi().get('/jao/api/jao/flows', {
+    params: { cacheBuster: Date.now() }
+  });
 }
 
 /** 流程实例列表 */
@@ -223,7 +224,9 @@ export const fetchFlowDetail = (flowId) => {
 /** 保存流程(新建或更新) */
 export const saveFlow = (data) => {
   if (data.id) {
-    return useApi().put(`/jao/api/jao/flows/${data.id}`, data);
+    return useApi().put('/jao/api/jao/flows', data, {
+      params: { cacheBuster: Date.now() }
+    });
   }
   return useApi().post('/jao/api/jao/flows', data);
 }

@@ -28,13 +28,11 @@
         <el-option label="审批未通过" :value="2" />
         <el-option label="审批作废" :value="3" />
       </el-select>
-      <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo" /> 重置
-      </el-button>
-      <el-button size="small" @click="fetchData">
-        <el-icon><RefreshRight /></el-icon>
-        刷新
-      </el-button>
+      <div class="ops-filter-actions">
+        <el-button size="small" @click="handleReset">
+          <i class="fa fa-undo" /> 重置
+        </el-button>
+      </div>
     </div>
 
     <!-- 功能按钮区 -->
@@ -51,6 +49,11 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle @click="fetchData" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <el-table
         v-loading="loading"
         :data="paginatedData"
@@ -149,6 +152,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const loading = ref(false)
@@ -326,7 +330,9 @@ async function handleBatchDelete() {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/styles/common.scss' as *;
+
 .my-requests-view {
   display: flex;
   flex-direction: column;

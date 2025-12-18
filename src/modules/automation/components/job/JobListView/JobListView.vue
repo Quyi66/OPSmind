@@ -80,10 +80,6 @@
           <el-icon><Delete /></el-icon>
           删除
         </el-button>
-        <el-button size="small" :loading="loading" @click="reloadJobs" title="刷新">
-          <el-icon><RefreshRight /></el-icon>
-          刷新
-        </el-button>
       </div>
 
       <el-alert
@@ -96,11 +92,18 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
+        <div class="table-toolbar-icons">
+          <el-button class="toolbar-icon-btn" circle :loading="loading" @click="reloadJobs" title="刷新">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
         <el-table
           v-loading="loading"
           :data="displayedJobs"
           @selection-change="handleSelectionChange"
+          @sort-change="handleSortChange"
           max-height="calc(100vh - 300px)"
+          :default-sort="{ prop: 'updatedAt', order: 'descending' }"
         >
           <el-table-column type="selection" width="48" />
           <el-table-column prop="title" label="作业" min-width="180" show-overflow-tooltip>
@@ -132,12 +135,12 @@
             </template>
           </el-table-column>
           <el-table-column prop="updatedBy" label="修改人" width="100" />
-          <el-table-column prop="updatedAt" label="修改时间" width="180">
+          <el-table-column prop="updatedAt" label="修改时间" width="180" sortable="custom">
             <template #default="{ row }">
               {{ formatDate(row.updatedAt) }}
             </template>
           </el-table-column>
-          <el-table-column prop="lastRunTime" label="上次运行时间" width="180">
+          <el-table-column prop="lastRunTime" label="上次运行时间" width="180" sortable="custom">
             <template #default="{ row }">
               {{ formatDate(row.lastRunTime) }}
             </template>
@@ -202,7 +205,7 @@ import { storeToRefs } from 'pinia'
 import { useAutomationJobStore, JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
-import { Plus, Delete, RefreshRight, Search, ArrowDown } from '@element-plus/icons-vue'
+import { Plus, Delete, Refresh, Search, ArrowDown } from '@element-plus/icons-vue'
 import { translateText } from '@/utils/i18n'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteJobDialog from './ExecuteJobDialog.vue'
@@ -216,6 +219,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const selectedRows = ref([])
 const moveTarget = ref('')
+const currentSort = ref({ prop: 'updatedAt', order: 'descending' })
 
 const appStr = ref('')
 const appOptions = ref([])
@@ -265,6 +269,34 @@ function filterList() {
   }
 
   paginatedJobs.value = filtered
+  sortJobs()
+}
+
+/** 排序 */
+function sortJobs() {
+  const { prop, order } = currentSort.value
+  if (!prop || !order) return
+
+  paginatedJobs.value.sort((a, b) => {
+    let valA = a[prop]
+    let valB = b[prop]
+
+    // 处理日期
+    if (prop === 'updatedAt' || prop === 'lastRunTime') {
+      valA = valA ? new Date(valA).getTime() : 0
+      valB = valB ? new Date(valB).getTime() : 0
+    }
+
+    if (valA === valB) return 0
+    
+    const result = valA > valB ? 1 : -1
+    return order === 'ascending' ? result : -result
+  })
+}
+
+function handleSortChange({ prop, order }) {
+  currentSort.value = { prop, order }
+  sortJobs()
 }
 
 /**删除作业 */
@@ -456,13 +488,26 @@ async function handleMoveJobs() {
 
 async function handleCopy(row) {
   if (!row?.id) return
+  
   try {
+    await ElMessageBox.confirm(
+      `确定要复制作业「${row.title}」吗？`,
+      '复制确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }
+    )
+    
     await store.duplicateJob(row.id)
     ElMessage.success('复制成功')
     // 刷新当前列表
     getAppTableList(currentApp.value.name)
   } catch (error) {
-    ElMessage.error('复制失败')
+    if (error !== 'cancel') {
+      ElMessage.error(error?.message || '复制失败')
+    }
   }
 }
 

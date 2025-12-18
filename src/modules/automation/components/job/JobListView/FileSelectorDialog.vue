@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     title="选择脚本文件"
-    width="800px"
+    width="900px"
     destroy-on-close
     :close-on-click-modal="false"
     class="file-selector-dialog"
@@ -21,8 +21,8 @@
         </el-breadcrumb-item>
       </el-breadcrumb>
       <div class="breadcrumb-actions">
-        <el-button size="small" @click="refresh" :loading="loading" title="刷新">
-          <el-icon><RefreshRight /></el-icon>
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="refresh" title="刷新">
+          <el-icon><Refresh /></el-icon>
         </el-button>
       </div>
     </div>
@@ -41,7 +41,7 @@
           v-if="multipleSelect"
           type="selection"
           width="50"
-          :selectable="(row) => !row.directory"
+          :selectable="(row) => !row.directory && !row._excluded"
         />
         <el-table-column
           v-else
@@ -49,42 +49,48 @@
         >
           <template #default="{ row }">
             <el-radio
-              v-if="!row.directory"
+              v-if="!row.directory && !row._excluded"
               v-model="selectedFile"
               :value="row.path"
               @click.stop
             />
           </template>
         </el-table-column>
-        <el-table-column label="名称" min-width="300">
+        <el-table-column label="名称" min-width="280">
           <template #default="{ row }">
-            <div class="file-name">
+            <div class="file-name" :class="{ 'is-excluded': row._excluded }">
               <i :class="getFileIcon(row)" class="file-icon"></i>
-              <span>{{ row.name }}</span>
-              <el-tag
-                v-if="row._stageExists"
-                size="small"
-                type="warning"
-                class="stage-tag"
-              >
-                待审批
-              </el-tag>
+              <span class="file-name-text">{{ row.name }}</span>
+              <i v-if="row._stageExists && !row._stageIsThis" class="fa fa-circle text-primary stage-indicator" title="有新版本，等待审核"></i>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="大小" width="100">
+        <el-table-column label="说明" min-width="180">
+          <template #default="{ row }">
+            <span class="file-desc" :title="row.description">{{ row.description || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="大小" width="90">
           <template #default="{ row }">
             {{ row.directory ? '-' : formatFileSize(row.size) }}
           </template>
         </el-table-column>
-        <el-table-column label="修改时间" width="180">
+        <el-table-column label="修改日期" width="160">
           <template #default="{ row }">
-            {{ formatDate(row.lastModified) }}
+            {{ formatDate(row.lastModified || row.updatedAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="80">
+          <template #default="{ row }">
+            <template v-if="!row.directory && !row._isParentDir">
+              <span v-if="row._stageExists" :class="'text-' + (row._stageStatusColor || 'primary')" class="status-dot" :title="row._stageStatusText || '待审核'"></span>
+              <span v-else-if="row._statusText" :class="'text-' + (row._statusCss || 'success')" class="status-dot" :title="row._statusText"></span>
+            </template>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-empty v-if="!loading && fileList.length === 0" description="此目录为空" />
+      <el-empty v-if="!loading && fileList.length === 0" description="没有文件" />
     </div>
 
     <!-- 已选文件 -->
@@ -117,13 +123,37 @@
       </el-button>
     </template>
   </el-dialog>
+
+  <!-- 文件内容预览弹窗 -->
+  <el-dialog
+    v-model="previewVisible"
+    :title="previewFile?.path || '文件预览'"
+    width="900px"
+    destroy-on-close
+    :close-on-click-modal="false"
+    class="file-preview-dialog"
+    append-to-body
+  >
+    <FileContentViewer
+      v-if="previewVisible && previewFile"
+      :path="previewFile.path"
+      :repo-type="previewFile.repoType || 'git'"
+      :repo="previewFile.repo"
+      :show-extra-info="true"
+      height="450px"
+    />
+    <template #footer>
+      <el-button @click="closeFilePreview">关闭</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { RefreshRight } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
 import * as gfsApi from '@/modules/automation/api/gfs'
+import FileContentViewer from './FileContentViewer.vue'
 
 const props = defineProps({
   modelValue: {
@@ -161,6 +191,10 @@ const fileList = ref([])
 const selectedFiles = ref([])
 const selectedFile = ref('')
 
+// 文件预览相关
+const previewVisible = ref(false)
+const previewFile = ref(null)
+
 // 面包屑
 const breadcrumbs = computed(() => {
   const crumbs = [{ name: '~', path: '' }]
@@ -181,17 +215,13 @@ const breadcrumbs = computed(() => {
 async function loadFiles() {
   loading.value = true
   try {
-    const response = await gfsApi.listFiles(currentDir.value, 'git', true)
-    let files = response.data || []
-
-    // 解析暂存区文件
-    files = parseStageFiles(files)
-
-    // 排序：目录在前，文件在后
+    const files = await gfsApi.listFiles(null, currentDir.value, 'git', { includeStage: true })
+    
+    // 排序：目录在前，文件在后，按名称排序
     files.sort((a, b) => {
       if (a.directory && !b.directory) return -1
       if (!a.directory && b.directory) return 1
-      return a.name.localeCompare(b.name)
+      return (a.name || '').localeCompare(b.name || '')
     })
 
     // 添加返回上级目录
@@ -207,8 +237,12 @@ async function loadFiles() {
 
     // 文件过滤
     if (props.fileFilter) {
-      const regex = new RegExp(props.fileFilter)
-      files = files.filter((f) => f.directory || regex.test(f.name))
+      const regex = new RegExp(props.fileFilter.replace(/\s*,\s*/g, ')|(').replace(/^/, '(').replace(/$/, ')').replace(/\*/g, '.*'))
+      files.forEach((f) => {
+        if (!f.directory && !regex.test(f.name)) {
+          f._excluded = true
+        }
+      })
     }
 
     fileList.value = files
@@ -220,38 +254,13 @@ async function loadFiles() {
 }
 
 /**
- * 解析暂存区文件
- */
-function parseStageFiles(files) {
-  const stageFiles = files.filter((f) => f.repoType === 'STAGE')
-  const mainFiles = files.filter((f) => f.repoType !== 'STAGE')
-
-  stageFiles.forEach((sfile) => {
-    const main = mainFiles.find((f) => f.path === sfile.path)
-    if (main) {
-      main._stageExists = true
-      main._stageStatus = sfile.onlineStatus
-      if (sfile.onlineStatus !== 'REJECTED') {
-        main._stageNeedApprove = true
-      }
-    } else {
-      sfile._stageIsThis = true
-      sfile._stageExists = true
-      mainFiles.push(sfile)
-    }
-  })
-
-  return mainFiles
-}
-
-/**
  * 获取文件图标
  */
 function getFileIcon(file) {
-  if (file._isParentDir) return 'fa fa-level-up-alt'
+  if (file._isParentDir) return 'fa fa-level-up-alt text-muted'
   if (file.directory) return 'fa fa-folder text-warning'
 
-  const ext = file.name.split('.').pop()?.toLowerCase()
+  const ext = file.name?.split('.').pop()?.toLowerCase()
   const iconMap = {
     yml: 'fa fa-file-code text-info',
     yaml: 'fa fa-file-code text-info',
@@ -259,20 +268,30 @@ function getFileIcon(file) {
     py: 'fa fa-file-code text-primary',
     js: 'fa fa-file-code text-warning',
     json: 'fa fa-file-code text-info',
-    txt: 'fa fa-file-alt',
-    md: 'fa fa-file-alt',
-    conf: 'fa fa-cog',
-    ini: 'fa fa-cog'
+    txt: 'fa fa-file-alt text-muted',
+    md: 'fa fa-file-alt text-muted',
+    conf: 'fa fa-cog text-muted',
+    ini: 'fa fa-cog text-muted',
+    xml: 'fa fa-file-code text-info',
+    sql: 'fa fa-database text-primary',
+    php: 'fa fa-file-code text-purple',
+    java: 'fa fa-file-code text-danger',
+    go: 'fa fa-file-code text-info',
+    rb: 'fa fa-file-code text-danger',
+    ts: 'fa fa-file-code text-primary',
+    css: 'fa fa-file-code text-info',
+    html: 'fa fa-file-code text-warning',
+    vue: 'fa fa-file-code text-success'
   }
 
-  return iconMap[ext] || 'fa fa-file'
+  return iconMap[ext] || 'fal fa-file text-muted'
 }
 
 /**
  * 格式化文件大小
  */
 function formatFileSize(size) {
-  if (!size) return '-'
+  if (!size || size < 0) return '-'
   if (size < 1024) return size + ' B'
   if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB'
   return (size / 1024 / 1024).toFixed(1) + ' MB'
@@ -285,7 +304,13 @@ function formatDate(value) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString('zh-CN')
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 /**
@@ -297,29 +322,17 @@ function navigateTo(path) {
 }
 
 /**
- * 行点击处理
+ * 行点击处理 - 目录进入，文件打开内容预览
+ * 文件选择通过 checkbox/radio 完成
  */
 function handleRowClick(row) {
   if (row.directory) {
-    if (row._isParentDir) {
-      currentDir.value = row.path
-    } else {
-      currentDir.value = row.path
-    }
+    // 目录：进入该目录
+    currentDir.value = row.path
     loadFiles()
-  } else {
-    if (props.multipleSelect) {
-      // 多选模式：切换选中状态
-      const index = selectedFiles.value.findIndex((f) => f.path === row.path)
-      if (index === -1) {
-        selectedFiles.value.push(row)
-      } else {
-        selectedFiles.value.splice(index, 1)
-      }
-    } else {
-      // 单选模式
-      selectedFile.value = row.path
-    }
+  } else if (!row._excluded && row.conflict !== 'FileNotFound') {
+    // 文件：打开内容预览（与源系统行为一致）
+    openFilePreview(row)
   }
 }
 
@@ -328,7 +341,7 @@ function handleRowClick(row) {
  */
 function handleSelectionChange(selection) {
   if (props.multipleSelect) {
-    selectedFiles.value = selection.filter((f) => !f.directory)
+    selectedFiles.value = selection.filter((f) => !f.directory && !f._excluded)
   }
 }
 
@@ -358,6 +371,23 @@ function refresh() {
 }
 
 /**
+ * 打开文件内容预览
+ * FileContentViewer 组件会自动加载文件内容
+ */
+function openFilePreview(file) {
+  previewFile.value = file
+  previewVisible.value = true
+}
+
+/**
+ * 关闭文件预览
+ */
+function closeFilePreview() {
+  previewVisible.value = false
+  previewFile.value = null
+}
+
+/**
  * 确认选择
  */
 function handleConfirm() {
@@ -366,7 +396,7 @@ function handleConfirm() {
     result = selectedFiles.value.map((f) => ({
       path: f.path,
       name: f.name,
-      config: '',
+      config: f.config || '',
       tag: ''
     }))
   } else if (selectedFile.value) {
@@ -374,7 +404,7 @@ function handleConfirm() {
     result = [{
       path: selectedFile.value,
       name: file?.name || '',
-      config: '',
+      config: file?.config || '',
       tag: ''
     }]
   }
@@ -434,15 +464,54 @@ watch(visible, (newVal) => {
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+
+  &:hover {
+    .file-name-text {
+      color: var(--el-color-primary);
+      text-decoration: underline;
+    }
+  }
+
+  &.is-excluded {
+    opacity: 0.5;
+    cursor: not-allowed;
+
+    &:hover {
+      .file-name-text {
+        color: inherit;
+        text-decoration: none;
+      }
+    }
+  }
 
   .file-icon {
     width: 16px;
+    min-width: 16px;
     text-align: center;
+    font-size: 14px;
+  }
+
+  .file-name-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .stage-tag {
-    margin-left: 8px;
+    margin-left: 4px;
+    flex-shrink: 0;
   }
+}
+
+.file-desc {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
 
 .selected-files {
@@ -470,6 +539,45 @@ watch(visible, (newVal) => {
     max-width: 300px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+}
+
+// 状态点样式
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+// 名称中的状态指示器
+.stage-indicator {
+  font-size: 8px;
+  margin-left: 6px;
+}
+
+// 状态颜色
+.text-primary {
+  color: #409eff;
+}
+
+.text-success {
+  color: #67c23a;
+}
+
+.text-warning {
+  color: #e6a23c;
+}
+
+.text-secondary {
+  color: #909399;
+}
+
+// 文件预览弹窗样式
+.file-preview-dialog {
+  :deep(.el-dialog__body) {
+    padding: 0;
   }
 }
 </style>

@@ -81,51 +81,65 @@
       </div>
     </section>
 
-    <section class="flow-detail-panel">
+    <section class="flow-detail-panel ops-page-layout">
       <template v-if="activeFlow">
-        <div class="instance-toolbar">
+        <div class="ops-filter-bar">
           <el-input
             v-model="instanceKeyword"
             placeholder="搜索流程实例"
             size="small"
             clearable
             class="instance-search"
+            style="width: 240px;"
           >
             <template #prefix>
               <i class="fa fa-search" />
             </template>
           </el-input>
-          <el-button size="small" @click="refreshInstances" :disabled="instancesLoading">
-            <!-- <i class="fa fa-sync" /> -->
-             <el-icon><RefreshRight /></el-icon>
-              刷新
-            </el-button>
         </div>
 
-        <el-table
-          :data="filteredInstances"
-          v-loading="instancesLoading"
-          height="100%"
-          class="instance-table"
-          empty-text="暂无实例"
-        >
-          <el-table-column prop="name" label="名称" min-width="220" show-overflow-tooltip />
-          <el-table-column prop="hostCount" label="主机数" width="90" align="left" />
-          <el-table-column prop="stepCount" label="步骤数" width="90" align="left" />
-          <el-table-column label="流程开始时间" min-width="180">
-            <template #default="{ row }">
-              {{ formatDateTime(row.createdAt) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="createdBy" label="执行人" width="140" show-overflow-tooltip />
-          <el-table-column label="操作" width="120" fixed="right" align="left">
-            <template #default="{ row }">
-              <el-button type="primary" text size="small" @click="handleViewInstance(row)">
-                查看
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <div class="ops-table-wrapper">
+          <div class="table-toolbar-icons">
+            <el-button class="toolbar-icon-btn" circle @click="refreshInstances" :disabled="instancesLoading" title="刷新">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+          </div>
+          <el-table
+            :data="paginatedInstances"
+            v-loading="instancesLoading"
+            height="100%"
+            class="instance-table"
+            empty-text="暂无实例"
+          >
+            <el-table-column prop="name" label="名称" min-width="220" show-overflow-tooltip />
+            <el-table-column prop="hostCount" label="主机数" width="90" align="left" />
+            <el-table-column prop="stepCount" label="步骤数" width="90" align="left" />
+            <el-table-column label="流程开始时间" min-width="180">
+              <template #default="{ row }">
+                {{ formatDateTime(row.createdAt) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="createdBy" label="执行人" width="140" show-overflow-tooltip />
+            <el-table-column label="操作" width="120" fixed="right" align="left">
+              <template #default="{ row }">
+                <el-button type="primary" text size="small" @click="handleViewInstance(row)">
+                  查看
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :total="filteredInstances.length"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+          />
+        </div>
       </template>
       <div v-else class="detail-blank">
         <i class="fa fa-inbox detail-blank__icon" />
@@ -150,6 +164,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import { appUrlManager } from '@/config/module-urls.config'
 import * as jaoApi from '@/modules/automation/api/jao'
 import FlowEditor from './components/FlowEditor.vue'
@@ -164,6 +179,8 @@ const activeFlowId = ref('')
 const instanceRows = ref([])
 const instancesLoading = ref(false)
 const instanceKeyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(20)
 const legacyBase = computed(() => appUrlManager.getAppUrl('jao').replace(/#.*$/, ''))
 const collator = new Intl.Collator('zh-Hans-CN', { sensitivity: 'base', numeric: true })
 const flowEditorVisible = ref(false)
@@ -194,6 +211,12 @@ const filteredInstances = computed(() => {
   })
 })
 
+const paginatedInstances = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredInstances.value.slice(start, end)
+})
+
 watch(flowList, (list) => {
   if (!list.length) {
     activeFlowId.value = ''
@@ -206,11 +229,16 @@ watch(flowList, (list) => {
 
 watch(activeFlowId, (id) => {
   instanceKeyword.value = ''
+  currentPage.value = 1
   if (!id) {
     instanceRows.value = []
     return
   }
   fetchFlowInstances(id)
+})
+
+watch(instanceKeyword, () => {
+  currentPage.value = 1
 })
 
 onMounted(() => {
@@ -401,7 +429,9 @@ function pad(value) {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '../../../styles/common.scss' as *;
+
 .schedule-shell {
   display: flex;
   min-height: 560px;
@@ -510,17 +540,7 @@ function pad(value) {
   display: flex;
   flex-direction: column;
   padding: 16px;
-}
-
-.instance-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.instance-search {
-  width: 240px;
+  overflow: hidden; // Fix scrollbar issues
 }
 
 .instance-table {

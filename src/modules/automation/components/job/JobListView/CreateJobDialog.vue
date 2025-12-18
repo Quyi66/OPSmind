@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     :title="dialogTitle"
-    width="1100px"
+    width="1200px"
     destroy-on-close
     @close="handleClose"
     :close-on-click-modal="false"
@@ -97,7 +97,7 @@
               <div class="task-card-body">
                 <!-- 脚本选择 -->
                 <div class="form-group op-align-horizontal">
-                  <label class="control-label font-weight-bold text-left" style="width: 4rem;">脚本</label>
+                  <label class="control-label font-weight-bold text-left" style="width: 4rem;">脚本 <span class="required-mark">*</span></label>
                   <div class="form-control-wrapper">
                     <!-- 已选脚本列表 -->
                     <div v-if="task.scripts && task.scripts.length > 0" class="selected-scripts">
@@ -120,21 +120,21 @@
                                 <span v-else>{{ script.location }}</span>
                               </div>
                             </td>
-                            <td style="width: 200px;">
+                            <td style="width: 240px;">
                               <el-input
                                 v-model="script.argline"
                                 size="small"
                                 placeholder="ansible-playbook 额外参数"
                               />
                             </td>
-                            <td style="width: 120px;">
+                            <td style="width: 150px;">
                               <el-input
                                 v-model="script.tag"
                                 size="small"
                                 placeholder="tag标签"
                               />
                             </td>
-                            <td style="width: 50px;" class="text-center">
+                            <td style="width: 60px;" class="text-center">
                               <el-button
                                 size="small"
                                 link
@@ -212,11 +212,9 @@
 
                       <!-- 预定义主机 -->
                       <div v-if="task.hostsMode !== 'param'" class="mt-3">
-                        <el-input
-                          v-model="task.hostsText"
-                          type="textarea"
-                          :rows="4"
-                          placeholder="请输入主机列表，每行一个主机IP或主机名&#10;例如：&#10;192.168.1.1&#10;192.168.1.2&#10;web-server-01"
+                        <AcmDeviceSelector
+                          v-model="task.hosts"
+                          ci-types="[auto]"
                         />
                       </div>
 
@@ -328,7 +326,7 @@
               <div class="task-card-body">
                 <!-- 命令选择 -->
                 <div class="form-group op-align-horizontal">
-                  <label class="control-label font-weight-bold text-left" style="width: 4rem;">命令</label>
+                  <label class="control-label font-weight-bold text-left" style="width: 4rem;">命令 <span class="required-mark">*</span></label>
                   <div class="form-control-wrapper">
                     <!-- 已选命令列表 -->
                     <div v-if="task.commands && task.commands.length > 0" class="selected-commands">
@@ -371,7 +369,7 @@
                 <!-- 主机配置 -->
                 <div class="form-group op-align-horizontal">
                   <label class="control-label font-weight-bold text-left" style="width: 4rem;">
-                    主机
+                    主机 <span class="required-mark">*</span>
                     <el-tooltip content="指定命令执行的目标主机" placement="top">
                       <i class="fa fa-question-circle text-muted"></i>
                     </el-tooltip>
@@ -1074,11 +1072,8 @@ function toConfigJson() {
         taskConfig.hostsParam = task.hostsParam || 'hosts'
         taskConfig.hosts = []
       } else {
-        // 将文本框内容转换为主机数组
-        taskConfig.hosts = (task.hostsText || '')
-          .split('\n')
-          .map((h) => h.trim())
-          .filter(Boolean)
+        // 使用 AcmDeviceSelector 选择的主机
+        taskConfig.hosts = task.hosts || []
       }
 
       return taskConfig

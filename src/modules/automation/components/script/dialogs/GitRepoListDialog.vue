@@ -5,120 +5,136 @@
     width="900px"
     :close-on-click-modal="false"
     @closed="handleClosed"
+    class="git-repo-dialog"
   >
-    <!-- 顶部操作栏 -->
-    <div class="repo-list-header">
-      <div class="header-actions">
-        <el-button type="danger" text @click="handleReset">
+    <div class="ops-page-layout dialog-layout">
+      <!-- 筛选栏 -->
+      <div class="ops-filter-bar">
+        <el-input
+          v-model="searchText"
+          placeholder="搜索"
+          clearable
+          size="small"
+          style="width: 240px"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+      </div>
+
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-button type="danger" size="small" @click="handleReset">
           <i class="fa fa-fw fa-undo" /> 初始化
         </el-button>
-        <el-button type="primary" text @click="handleAddRepo">
+        <el-button type="primary" size="small" @click="handleAddRepo">
           <i class="fa fa-cogs" /> 新增
         </el-button>
-        <el-button :disabled="!selectedRepos.length" text @click="handleBatchDelete">
+        <el-button
+          size="small"
+          :disabled="!selectedRepos.length"
+          @click="handleBatchDelete"
+        >
           <i class="fa fa-trash" /> 删除
         </el-button>
       </div>
-    </div>
 
-    <!-- 搜索栏 -->
-    <div class="search-bar">
-      <el-input
-        v-model="searchText"
-        placeholder="搜索"
-        clearable
-        style="width: 300px"
-      >
-        <template #prefix>
-          <i class="fa fa-search" />
-        </template>
-      </el-input>
-      <el-button @click="loadRepoList">
-        <i class="fa fa-sync-alt" />
-      </el-button>
-    </div>
-
-    <el-table
-      v-loading="loading"
-      :data="filteredRepoList"
-      stripe
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="40" />
-      <el-table-column label="仓库类型" prop="repoType" width="120" sortable>
-        <template #default="{ row }">
-          <span
-            v-if="row.externalRepo"
-            class="repo-type-badge external"
-            @click="handleGoRepo(row.repoName)"
-          >
-            <i class="fab fa-gitlab" /> 外部Git库
-          </span>
-          <span
-            v-else
-            class="repo-type-badge builtin"
-            @click="handleGoRepo('')"
-          >
-            <i class="fa fa-code-branch" /> 内置Git库
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column label="仓库名" prop="repoName" min-width="100" sortable>
-        <template #default="{ row }">
-          <span class="repo-name">{{ row.repoName || '-' }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="仓库地址" prop="repoUrl" min-width="300">
-        <template #default="{ row }">
-          <span class="repo-url" :title="row.repoUrl">{{ row.repoUrl || '-' }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="修改人" prop="updatedBy" width="100" sortable>
-        <template #default="{ row }">
-          {{ row.updatedBy || '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column label="修改时间" prop="updatedAt" width="160" sortable>
-        <template #default="{ row }">
-          {{ formatDate(row.updatedAt) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="100" fixed="right">
-        <template #default="{ row }">
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
+        <!-- 刷新按钮在表格右上角 -->
+        <div class="table-toolbar-icons">
           <el-button
-            v-if="row.externalRepo"
-            type="primary"
-            text
-            size="small"
-            @click="handleEditRepo(row)"
+            class="toolbar-icon-btn"
+            circle
+            :loading="loading"
+            @click="loadRepoList"
+            title="刷新"
           >
-            编辑
+            <i class="fa fa-sync-alt" />
           </el-button>
-          <el-button
-            v-if="row.externalRepo"
-            type="danger"
-            text
-            size="small"
-            @click="handleDeleteRepo(row)"
-          >
-            删除
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+        </div>
+        <el-table
+          v-loading="loading"
+          :data="paginatedRepoList"
+          @selection-change="handleSelectionChange"
+          max-height="400px"
+        >
+          <el-table-column type="selection" width="48" />
+          <el-table-column label="仓库类型" prop="repoType" width="130">
+            <template #default="{ row }">
+              <span
+                v-if="row.externalRepo"
+                class="repo-type-badge external"
+                @click="handleGoRepo(row.repoName)"
+              >
+                <i class="fab fa-gitlab" /> 外部Git库
+              </span>
+              <span
+                v-else
+                class="repo-type-badge builtin"
+                @click="handleGoRepo('')"
+              >
+                <i class="fa fa-code-branch" /> 内置Git库
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="仓库名" prop="repoName" min-width="100" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span class="repo-name">{{ row.repoName || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="仓库地址" prop="repoUrl" min-width="200" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span class="repo-url">{{ row.repoUrl || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="修改人" prop="updatedBy" width="100">
+            <template #default="{ row }">
+              {{ row.updatedBy || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="修改时间" prop="updatedAt" width="120">
+            <template #default="{ row }">
+              {{ formatDate(row.updatedAt) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="110" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                v-if="row.externalRepo"
+                type="primary"
+                text
+                size="small"
+                @click="handleEditRepo(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="row.externalRepo"
+                type="danger"
+                text
+                size="small"
+                @click="handleDeleteRepo(row)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
-    <!-- 分页 -->
-    <div class="pagination-wrapper">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="repoList.length"
-        layout="total, sizes, prev, pager, next, jumper"
-        small
-      >
-        <span class="pagination-info">{{ paginationInfo }}</span>
-      </el-pagination>
+      <!-- 分页器 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="filteredTotal"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+        />
+      </div>
     </div>
 
     <!-- 仓库设置弹窗 -->
@@ -189,17 +205,16 @@ const filteredRepoList = computed(() => {
       r.updatedBy?.toLowerCase().includes(search)
     )
   }
-  // 分页
-  const start = (currentPage.value - 1) * pageSize.value
-  return list.slice(start, start + pageSize.value)
+  return list
 })
 
-// 分页信息
-const paginationInfo = computed(() => {
-  const total = repoList.value.length
-  const start = (currentPage.value - 1) * pageSize.value + 1
-  const end = Math.min(currentPage.value * pageSize.value, total)
-  return `${start} - ${end} / ${total}`
+// 过滤后的总数
+const filteredTotal = computed(() => filteredRepoList.value.length)
+
+// 分页后的列表
+const paginatedRepoList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredRepoList.value.slice(start, start + pageSize.value)
 })
 
 // 加载仓库列表
@@ -207,7 +222,6 @@ async function loadRepoList() {
   loading.value = true
   try {
     const response = await gfsApi.loadCurrentRepo(props.repoType, props.repo)
-    // API 返回的是 axios response，需要从 data 中获取实际数据
     const data = response?.data || response || []
     repoList.value = Array.isArray(data) ? data : []
   } catch (error) {
@@ -319,44 +333,25 @@ function formatDate(dateStr) {
 function handleClosed() {
   selectedRepos.value = []
   searchText.value = ''
+  currentPage.value = 1
 }
 </script>
 
-<style scoped>
-.repo-list-header {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
+<style scoped lang="scss">
+.git-repo-dialog {
+  :deep(.el-dialog__body) {
+    padding: 0 !important;
+  }
 }
 
-.header-actions {
-  display: flex;
-  gap: 16px;
+.dialog-layout {
+  padding: 16px 20px !important;
+  gap: 12px !important;
 }
 
-.header-actions :deep(.el-button) {
-  font-size: 14px;
-}
-
-.header-actions :deep(.el-button.is-text) {
-  color: #606266;
-}
-
-.header-actions :deep(.el-button--danger.is-text) {
-  color: #f56c6c;
-}
-
-.header-actions :deep(.el-button--primary.is-text) {
-  color: #409eff;
-}
-
-.search-bar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-bottom: 12px;
+// 表格区域需要相对定位，用于刷新按钮
+.ops-table-wrapper {
+  position: relative;
 }
 
 .repo-type-badge {
@@ -390,25 +385,5 @@ function handleClosed() {
 
 .repo-url {
   color: #64748b;
-  max-width: 280px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: inline-block;
-}
-
-.pagination-wrapper {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #eee;
-}
-
-.pagination-info {
-  color: #606266;
-  font-size: 13px;
-  margin: 0 12px;
 }
 </style>

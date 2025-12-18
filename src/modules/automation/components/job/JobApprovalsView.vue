@@ -26,17 +26,20 @@
         <el-option label="审批未通过" :value="2" />
         <el-option label="审批作废" :value="3" />
       </el-select>
-      <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo" /> 重置
-      </el-button>
-      <el-button size="small" @click="fetchData">
-        <el-icon><RefreshRight /></el-icon>
-        刷新
-      </el-button>
+      <div class="ops-filter-actions">
+        <el-button size="small" @click="handleReset">
+          <i class="fa fa-undo" /> 重置
+        </el-button>
+      </div>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle @click="fetchData" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <el-table
         v-loading="loading"
         :data="paginatedData"
@@ -155,6 +158,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const loading = ref(false)
@@ -350,81 +354,48 @@ async function handleDiscard(row) {
 }
 </script>
 
-<style scoped>
-.approvals-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.table-container {
-  flex: 1;
-  padding: 24px;
-  overflow: auto;
-}
+<style scoped lang="scss">
+@use '@/styles/common.scss' as *;
 
 .job-cell {
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
 
-.job-name {
-  font-weight: 500;
-  color: #3b82f6;
-  cursor: pointer;
-  text-decoration: none;
-}
+  .job-name {
+    font-weight: 500;
+    color: #3b82f6;
+    cursor: pointer;
+    text-decoration: none;
 
-.job-name:hover {
-  text-decoration: underline;
-}
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 
-.job-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
+  .job-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
 
-.job-type {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #64748b;
-}
+    .job-type {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #64748b;
 
-.job-type i {
-  font-size: 13px;
-}
+      i {
+        font-size: 13px;
+      }
+    }
+  }
 
-.job-description {
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.5;
+  .job-description {
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+  }
 }
 
 .action-buttons {

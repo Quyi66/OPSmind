@@ -8,3 +8,6 @@ export { default as GitRepoSettingsDialog } from './GitRepoSettingsDialog.vue'
 export { default as JgitManageDialog } from './JgitManageDialog.vue'
 export { default as FileApproveDialog } from './FileApproveDialog.vue'
 export { default as ApprovalHistoryDialog } from './ApprovalHistoryDialog.vue'
+export { default as FileChangeStatusDialog } from './FileChangeStatusDialog.vue'
+export { default as FileRevisionDialog } from './FileRevisionDialog.vue'
+

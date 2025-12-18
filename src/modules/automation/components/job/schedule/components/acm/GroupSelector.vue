@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, computed, nextTick } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
@@ -101,11 +101,30 @@ async function fetchGroups() {
       treeData.value = []
     }
     console.log('处理后的分组数据:', treeData.value)
+    
+    // 数据加载完成后同步选中状态
+    await nextTick()
+    syncTreeSelection()
   } catch (error) {
     console.error('Failed to fetch ACM groups:', error)
     treeData.value = []
   }
 }
+
+// 同步选中状态
+function syncTreeSelection() {
+  if (!treeRef.value || !props.modelValue) return
+  
+  const groupKeys = props.modelValue
+    .filter(item => item.runType === 'group')
+    .map(item => item.key)
+    
+  treeRef.value.setCheckedKeys(groupKeys)
+}
+
+watch(() => props.modelValue, () => {
+  syncTreeSelection()
+}, { deep: true })
 
 // 从平铺的路径列表构建树形结构
 function buildTreeFromPaths(paths) {
@@ -165,7 +184,11 @@ function handleCheck(data, { checkedNodes }) {
     total_hosts: node.count || 0,
     assetType: props.ciType
   }))
-  emit('update:modelValue', selectedGroups)
+
+  // 保留非分组类型的已选项 (如 specific hosts, tags 等)
+  const otherSelections = (props.modelValue || []).filter(item => item.runType !== 'group')
+  
+  emit('update:modelValue', [...otherSelections, ...selectedGroups])
 }
 
 function selectAll() {

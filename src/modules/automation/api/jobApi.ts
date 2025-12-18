@@ -74,7 +74,7 @@ export async function deleteJobs(jobIds: string[]): Promise<void> {
 
 export async function copyJob(jobId: string): Promise<void> {
   if (!jobId) return
-  await apiService.get(`/api/jao/jobs/clone/${encodeURIComponent(jobId)}`)
+  await apiService.get(`/jao/api/jao/jobs/clone/${encodeURIComponent(jobId)}`)
 }
 
 export async function moveJobs(jobIds: string[], targetApplet: string): Promise<void> {
