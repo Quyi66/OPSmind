@@ -32,9 +32,14 @@
     </div>
 
     <!-- 复用主机选择器弹窗 -->
-    <HostSelectorDialog
-      v-model:visible="hostSelectorVisible"
-      v-model="selectedHosts"
+    <AcmDeviceSelectorDialog
+      v-model="hostSelectorVisible"
+      ci-types="[auto]"
+      :initial-selection="selectedHosts"
+      :options="{
+        selectMode: 'host,group,tag,input,recently',
+        selector: 'multiple'
+      }"
       @confirm="handleHostsConfirm"
     />
   </el-dialog>
@@ -44,7 +49,7 @@
 import { ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { repoApi } from '../api'
-import HostSelectorDialog from '@/modules/automation/components/command/dialogs/HostSelectorDialog.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 
 const props = defineProps({
   modelValue: {
@@ -102,14 +107,15 @@ async function handleSubmit() {
 
     submitting.value = true
 
-    // 构建 hosts 参数（Map 格式）
-    const hostsMap = selectedHosts.value.map(h => ({
-      host_id: h.key || h.id,
-      host_key: h.value || h.ip || h.host_key
+    // 构建 hosts 参数 [{key, value, assetType}] 格式
+    const hostsArray = selectedHosts.value.map(h => ({
+      key: h.key || h.id,
+      value: h.value || h.ip || h.host_key,
+      assetType: h.assetType || 'linux'
     }))
 
     await repoApi.setBaseRepoHosts({
-      hosts: JSON.stringify(hostsMap)
+      hosts: hostsArray
     })
 
     ElMessage.success('设置成功')

@@ -54,6 +54,117 @@ export const hostOverviewApi = {
   },
 
   /**
+   * 获取主机软件包信息（概要）
+   * 对应数据集: SPM_GET_PKG_MACHINE_INFO
+   */
+  getMachineInfo(hostId) {
+    return apiService.post(`${DTS_BASE}/SPM_GET_PKG_MACHINE_INFO/`, {
+      params: { host_id: hostId }
+    })
+  },
+
+  /**
+   * 获取主机仓库列表
+   * 对应数据集: SPM_LIST_YUM_OF_ONE_MACHIN
+   */
+  getMachineRepos(params = {}) {
+    return apiService.post(`${DTS_BASE}/SPM_LIST_YUM_OF_ONE_MACHIN/`, {
+      params: {
+        host_id: params.hostId,
+        repoStatus: params.repoStatus || 'enabled'
+      },
+      page: params.page || 1,
+      size: params.size || 10,
+      orderBy: params.orderBy || '',
+      filter: params.filter || ''
+    })
+  },
+
+  /**
+   * 获取主机可用软件包列表
+   * 对应数据集: SPM_LIST_YUM_PKG_OF_ONE_MACHIN
+   */
+  getMachineAvailablePackages(params = {}) {
+    return apiService.post(`${DTS_BASE}/SPM_LIST_YUM_PKG_OF_ONE_MACHIN/`, {
+      params: { host_id: params.hostId },
+      page: params.page || 1,
+      size: params.size || 10,
+      orderBy: params.orderBy || '',
+      filter: params.filter || ''
+    })
+  },
+
+  /**
+   * 获取主机已安装软件包列表
+   * 对应数据集: SPM_CURRENT_INSTALLEND_PKGS
+   */
+  getMachineInstalledPackages(params = {}) {
+    return apiService.post(`${DTS_BASE}/SPM_CURRENT_INSTALLEND_PKGS/`, {
+      params: { host_id: params.hostId },
+      page: params.page || 1,
+      size: params.size || 10,
+      orderBy: params.orderBy || '',
+      filter: params.filter || ''
+    })
+  },
+
+  /**
+   * 安装软件包
+   * 对应作业: 3hSAVR
+   */
+  installPackages(params = {}) {
+    return apiService.post('/api/jao/jobs/run', {
+      jobCode: '3hSAVR',
+      params: {
+        install_pkgs: params.installPkgs,
+        hosts: params.hostId
+      }
+    })
+  },
+
+  /**
+   * 卸载软件包
+   * 对应作业: 1RR26y
+   */
+  uninstallPackages(params = {}) {
+    return apiService.post('/api/jao/jobs/run', {
+      jobCode: '1RR26y',
+      params: {
+        hosts: params.hostId,
+        pkg_list: params.pkgList
+      }
+    })
+  },
+
+  /**
+   * 升级软件包
+   * 对应作业: aXEihQ
+   */
+  upgradePackages(params = {}) {
+    return apiService.post('/api/jao/jobs/run', {
+      jobCode: 'aXEihQ',
+      params: {
+        update_pkgs: params.updatePkgs,
+        hosts: params.hostId
+      }
+    })
+  },
+
+  /**
+   * 回退软件包
+   * 对应作业: B5KDp0
+   */
+  rollbackPackages(params = {}) {
+    return apiService.post('/api/jao/jobs/run', {
+      jobCode: 'B5KDp0',
+      params: {
+        update_pkgs: params.updatePkgs,
+        hosts: params.hostId
+      }
+    })
+  },
+
+  /**
    * 获取主机已安装软件包
    */
   getHostInstalledPackages(params = {}) {
@@ -62,6 +173,39 @@ export const hostOverviewApi = {
       page: params.page || 1,
       size: params.size || 10,
       filter: params.filter || ''
+    })
+  },
+
+  /**
+   * 启用/禁用仓库
+   * 对应作业: gnLGFi
+   */
+  toggleRepoStatus(params = {}) {
+    return apiService.post('/api/jao/jobs/run', {
+      jobCode: 'gnLGFi',
+      params: {
+        repo_name: params.repoName,
+        repo_status: params.repoStatus, // 'yes' or 'no'
+        hosts: params.hostId,
+        repo_url: params.repoUrl,
+        repo_desc: params.repoDesc,
+        repo_file: params.repoFile
+      }
+    })
+  },
+
+  /**
+   * 删除仓库
+   * 对应作业: foInBU
+   */
+  deleteHostRepo(params = {}) {
+    return apiService.post('/api/jao/jobs/run', {
+      jobCode: 'foInBU',
+      params: {
+        repo_name: params.repoName,
+        hosts: params.hostId,
+        repo_file: params.repoFile
+      }
     })
   }
 }
@@ -184,9 +328,11 @@ export const repoApi = {
   /**
    * 从 Excel 导入仓库配置
    * 对应作业: wBFwHn
+   * POST: /jao/api/jao/jobs/wBFwHn/upload-to-run
+   * Form Data: file (binary)
    */
   importRepoFromExcel(formData) {
-    return apiService.post('/api/jao/jobs/run/wBFwHn', formData, {
+    return apiService.post('/jao/api/jao/jobs/wBFwHn/upload-to-run', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -196,10 +342,10 @@ export const repoApi = {
   /**
    * 保存自定义仓库 (新增/编辑)
    * 对应作业: dfApaC
+   * POST: /jao/api/jao/jobs/dfApaC/run
    */
   saveCustomRepo(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
-      jobCode: 'dfApaC',
+    return apiService.post('/jao/api/jao/jobs/dfApaC/run', {
       params: {
         id: params.id,
         repoName: params.repoName,
@@ -212,10 +358,11 @@ export const repoApi = {
 
   /**
    * 删除自定义仓库
+   * 对应作业: K6zNCC
+   * POST: /jao/api/jao/jobs/K6zNCC/run
    */
   deleteCustomRepo(id) {
-    return apiService.post('/api/jao/jobs/run', {
-      jobCode: 'SPM_DELETE_CUSTOM_REPO',
+    return apiService.post('/jao/api/jao/jobs/K6zNCC/run', {
       params: { id }
     })
   },
@@ -223,10 +370,10 @@ export const repoApi = {
   /**
    * 设置基准仓库主机
    * 对应作业: FB8oVl
+   * POST: /jao/api/jao/jobs/FB8oVl/run
    */
   setBaseRepoHosts(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
-      jobCode: 'FB8oVl',
+    return apiService.post('/jao/api/jao/jobs/FB8oVl/run', {
       params: {
         hosts: params.hosts
       }
@@ -235,11 +382,14 @@ export const repoApi = {
 
   /**
    * 删除基准主机
+   * 对应作业: puc46x
+   * POST: /jao/api/jao/jobs/puc46x/run
    */
-  deleteBaseHost(hostKey) {
-    return apiService.post('/api/jao/jobs/run', {
-      jobCode: 'SPM_DELETE_BASE_HOST',
-      params: { host_key: hostKey }
+  deleteBaseHost(ids) {
+    // ids 可以是单个 id 字符串或 id 数组
+    const idsArray = Array.isArray(ids) ? ids : [ids]
+    return apiService.post('/jao/api/jao/jobs/puc46x/run', {
+      params: { ids: idsArray }
     })
   }
 }
@@ -434,12 +584,26 @@ export const localInstallApi = {
    * 对应作业: EKjwO7
    */
   startInstall(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
-      jobCode: 'EKjwO7',
+    const cacheBuster = Date.now()
+    return apiService.post('/jao/api/jao/jobs/EKjwO7/run', {
       params: {
         hosts: params.hosts,
         file_list: params.file_list
       }
+    }, {
+      params: { cacheBuster }
+    })
+  },
+
+  /**
+   * 获取安装结果
+   * @param {string} runId
+   */
+  getInstallResult(runId) {
+    // 根据用户提供的示例："/jao/api/jao/runlogs/c633f22e799b43db95d1c1403a3702d4/result?cacheBuster=1766050551531"
+    const cacheBuster = Date.now()
+    return apiService.get(`/api/jao/runlogs/${runId}/result`, {
+      params: { cacheBuster }
     })
   }
 }

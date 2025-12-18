@@ -1,66 +1,65 @@
 <template>
-  <div class="local-install">
-    <div class="content-wrapper">
-      <!-- 卡片容器 -->
-      <div class="install-card">
-        <!-- 标题区域 -->
-        <div class="card-header">
-          <i class="fa fa-box" />
-          <span class="title">本地安装</span>
-        </div>
+  <div class="ops-page-layout local-install-page">
+    <!-- 卡片容器 -->
+    <div class="install-card">
+      <!-- 标题区域 -->
+      <div class="card-header">
+        <i class="fa fa-box" />
+        <span class="title">本地安装</span>
+      </div>
 
-        <!-- 说明文字 -->
-        <div class="card-description">
-          <p>选择本地RPM安装包，将其安装到指定的目标主机上。支持多文件选择和批量安装。</p>
-        </div>
+      <!-- 说明文字 -->
+      <div class="card-description">
+        <p>选择本地RPM安装包，将其安装到指定的目标主机上。支持多文件选择和批量安装。</p>
+      </div>
 
-        <!-- 选择安装包 -->
-        <div class="form-section">
-          <div class="form-label">选择安装包</div>
-          <div class="form-control">
-            <el-button plain @click="openFileSelector">
-              <i class="fa fa-folder-open" /> 选择文件
-            </el-button>
-            <span v-if="selectedFiles.length > 0" class="selected-info">
-              已选择 {{ selectedFiles.length }} 个文件
-            </span>
-          </div>
-          <!-- 已选文件列表 -->
-          <div v-if="selectedFiles.length > 0" class="selected-files">
-            <div v-for="(file, index) in selectedFiles" :key="index" class="file-item">
-              <i class="fa fa-file-archive" />
-              <span class="file-name">{{ file.name || file }}</span>
-              <el-button type="danger" link size="small" @click="removeFile(index)">
-                <i class="fa fa-times" />
-              </el-button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 选择目标主机 -->
-        <div class="form-section">
-          <div class="form-label">安装目标主机</div>
-          <div class="form-control">
-            <el-button plain @click="openHostSelector">
-              <i class="fa fa-server" /> 选择主机
-            </el-button>
-            <span v-if="selectedHosts.length > 0" class="selected-info">
-              已选择 {{ selectedHosts.length }} 台主机
-            </span>
-          </div>
-        </div>
-
-        <!-- 开始安装按钮 -->
-        <div class="form-section">
-          <el-button
-            type="primary"
-            :loading="installing"
-            :disabled="selectedFiles.length === 0 || selectedHosts.length === 0"
-            @click="handleStartInstall"
-          >
-            <i class="fa fa-chevron-right" /> 开始安装
+      <!-- 选择安装包 -->
+      <div class="form-section">
+        <div class="form-label">选择安装包</div>
+        <div class="form-control">
+          <el-button plain size="small" @click="openFileSelector">
+            <i class="fa fa-folder-open" /> 选择文件
           </el-button>
+          <span v-if="selectedFiles.length > 0" class="selected-info">
+            已选择 {{ selectedFiles.length }} 个文件
+          </span>
         </div>
+        <!-- 已选文件列表 -->
+        <div v-if="selectedFiles.length > 0" class="selected-files">
+          <div v-for="(file, index) in selectedFiles" :key="index" class="file-item">
+            <i class="fa fa-file-archive" />
+            <span class="file-name">{{ file.name || file }}</span>
+            <el-button type="danger" link size="small" @click="removeFile(index)">
+              <i class="fa fa-times" />
+            </el-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 选择目标主机 -->
+      <div class="form-section">
+        <div class="form-label">安装目标主机</div>
+        <div class="form-control">
+          <el-button plain size="small" @click="openHostSelector">
+            <i class="fa fa-server" /> 选择主机
+          </el-button>
+          <span v-if="selectedHosts.length > 0" class="selected-info">
+            已选择 {{ selectedHosts.length }} 台主机
+          </span>
+        </div>
+      </div>
+
+      <!-- 开始安装按钮 -->
+      <div class="form-section">
+        <el-button
+          type="primary"
+          size="small"
+          :loading="installing"
+          :disabled="selectedFiles.length === 0 || selectedHosts.length === 0"
+          @click="handleStartInstall"
+        >
+          <i class="fa fa-chevron-right" /> 开始安装
+        </el-button>
       </div>
     </div>
 
@@ -73,9 +72,14 @@
     />
 
     <!-- 主机选择器弹窗 -->
-    <HostSelectorDialog
-      v-model:visible="hostSelectorVisible"
-      v-model="selectedHosts"
+    <AcmDeviceSelectorDialog
+      v-model="hostSelectorVisible"
+      ci-types="[auto]"
+      :initial-selection="selectedHosts"
+      :options="{
+        selectMode: 'host,group,tag,input,recently',
+        selector: 'multiple'
+      }"
       @confirm="handleHostsConfirm"
     />
   </div>
@@ -85,7 +89,7 @@
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { localInstallApi } from '../api'
-import HostSelectorDialog from '@/modules/automation/components/command/dialogs/HostSelectorDialog.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 import FileSelectorDialog from '../components/FileSelectorDialog.vue'
 
 const installing = ref(false)
@@ -148,13 +152,20 @@ async function handleStartInstall() {
     }))
 
     const fileList = selectedFiles.value.map(f => f.path || f.name || f)
+    const fileListParam = fileList.length === 1 ? fileList[0] : JSON.stringify(fileList)
 
-    await localInstallApi.startInstall({
+    const response = await localInstallApi.startInstall({
       hosts: JSON.stringify(hostsMap),
-      file_list: JSON.stringify(fileList)
+      file_list: fileListParam
     })
 
-    ElMessage.success('安装任务已提交')
+    if (response && response[0] && response[0].runId) {
+      const runId = response[0].runId
+      pollInstallResult(runId)
+    } else {
+      ElMessage.success('安装任务已提交')
+      installing.value = false
+    }
 
     // 清空选择
     selectedFiles.value = []
@@ -164,26 +175,44 @@ async function handleStartInstall() {
       console.error('Failed to start install:', error)
       ElMessage.error('安装任务提交失败')
     }
-  } finally {
+    installing.value = false
+  }
+}
+
+async function pollInstallResult(runId) {
+  try {
+    const result = await localInstallApi.getInstallResult(runId)
+    const status = result.status
+
+    if (status === 'WAITING' || status === 'RUNNING') {
+      setTimeout(() => {
+        pollInstallResult(runId)
+      }, 5000)
+    } else {
+      installing.value = false
+      if (status === 'SUCCESS' || status === 'Finished') {
+        ElMessage.success('安装任务执行成功')
+      } else {
+        ElMessage.error(`安装任务执行失败: ${status}`)
+      }
+    }
+  } catch (error) {
+    console.error('Polling error:', error)
     installing.value = false
   }
 }
 </script>
 
 <style scoped lang="scss">
-.local-install {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  padding: 24px;
-  background: #f5f7fa;
-}
+/* 此组件使用全局的 ops-page-layout 样式 */
 
-.content-wrapper {
+.local-install-page {
   display: flex;
-  justify-content: center;
-  width: 100%;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100%;
+  height: 100%;
+  background: #f5f7fa;
 }
 
 .install-card {

@@ -7,49 +7,55 @@
     @close="handleClose"
   >
     <div class="repo-detail-dialog">
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        stripe
-        style="width: 100%"
-        size="small"
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="host_key" label="主机" min-width="200">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleViewHost(row)">
-              {{ row.host_key }}
-            </el-button>
-          </template>
-        </el-table-column>
-        <el-table-column prop="os_distro" label="OS" width="120" />
-        <el-table-column prop="os_version" label="OS版本" width="120" />
-        <el-table-column prop="scan_date" label="最后扫描时间" width="180">
-          <template #default="{ row }">
-            {{ formatDate(row.scan_date) }}
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <div class="action-bar">
-        <el-button
-          type="danger"
-          plain
-          :disabled="selectedRows.length === 0"
-          @click="handleRemoveRepoFromHost"
-        >
-          <i class="fa fa-calendar-minus" /> 移除主机配置
-        </el-button>
+      <!-- 操作按钮在表格上方 -->
+      <div class="ops-action-bar">
+        <div class="action-left">
+          <el-button
+            type="danger"
+            plain
+            :disabled="selectedRows.length === 0"
+            @click="handleRemoveRepoFromHost"
+          >
+            <i class="fa fa-calendar-minus" /> 移除主机配置
+          </el-button>
+        </div>
       </div>
 
-      <div class="pagination-section">
+      <div class="ops-table-wrapper">
+        <el-table
+          v-loading="loading"
+          :data="tableData"
+          stripe
+          style="width: 100%"
+          size="small"
+          @selection-change="handleSelectionChange"
+        >
+          <el-table-column type="selection" width="50" />
+          <el-table-column prop="host_key" label="主机" min-width="200">
+            <template #default="{ row }">
+              <el-link type="primary" @click="handleViewHost(row)">
+                {{ row.host_key }}
+              </el-link>
+            </template>
+          </el-table-column>
+          <el-table-column prop="os_distro" label="OS" width="120" />
+          <el-table-column prop="os_version" label="OS版本" width="120" />
+          <el-table-column prop="scan_date" label="最后扫描时间" width="180">
+            <template #default="{ row }">
+              {{ formatDate(row.scan_date) }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <div class="ops-pagination-wrapper">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
           :page-sizes="[10, 20, 50, 100]"
           :total="total"
           layout="total, sizes, prev, pager, next, jumper"
+          background
           @size-change="loadData"
           @current-change="loadData"
         />
@@ -181,17 +187,6 @@ function handleClose() {
 
 <style scoped lang="scss">
 .repo-detail-dialog {
-  .action-bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 16px;
-  }
-
-  .pagination-section {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 16px;
-  }
+  /* 使用全局的 ops-action-bar, ops-table-wrapper, ops-pagination-wrapper 样式 */
 }
 </style>

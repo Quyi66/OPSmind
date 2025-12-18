@@ -173,10 +173,14 @@
     />
 
     <!-- 主机选择弹窗 -->
-    <HostSelectorDialog
-      :visible="hostSelectorVisible"
-      :selected="formData.hosts"
-      @update:visible="hostSelectorVisible = $event"
+    <AcmDeviceSelectorDialog
+      v-model="hostSelectorVisible"
+      ci-types="[auto]"
+      :initial-selection="formData.hosts"
+      :options="{
+        selectMode: 'host,group,tag,input,recently',
+        selector: 'multiple'
+      }"
       @confirm="handleHostConfirm"
     />
   </el-dialog>
@@ -187,7 +191,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { templateApi } from '../api'
 import ScriptSelectorDialog from './ScriptSelectorDialog.vue'
-import HostSelectorDialog from './HostSelectorDialog.vue'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 
 const props = defineProps({
   visible: {

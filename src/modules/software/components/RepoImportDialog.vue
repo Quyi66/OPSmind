@@ -20,7 +20,7 @@
               :on-change="handleFileChange"
               :on-exceed="handleExceed"
             >
-              <el-button type="primary" plain>选择文件上传</el-button>
+              <el-button type="primary">选择文件上传</el-button>
             </el-upload>
             <span v-if="fileList.length > 0" class="file-name">{{ fileList[0].name }}</span>
           </div>

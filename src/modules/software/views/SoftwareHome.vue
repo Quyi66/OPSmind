@@ -42,38 +42,18 @@
           <span>可用软件包</span>
         </div>
       </div>
-      <div class="tab-actions">
-        <el-input
-          v-model="searchText"
-          placeholder=""
-          style="width: 200px"
-          size="small"
-          clearable
-          @keyup.enter="handleSearch"
-        >
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
-        <el-button link size="small" @click="handleExport">
-          <i class="fa fa-download" />
-        </el-button>
-        <el-button link size="small" @click="handleRefresh">
-          <i class="fa fa-sync" />
-        </el-button>
-      </div>
     </div>
 
     <!-- 内容区域 -->
     <div class="content-section">
       <!-- 主机概览 -->
       <div v-if="activeTab === 'hosts'" class="tab-content">
-        <HostOverviewTable ref="hostTableRef" :search-text="searchText" @rescan="handleRescan" />
+        <HostOverviewTable ref="hostTableRef" @rescan="handleRescan" />
       </div>
 
       <!-- 可用软件包 -->
       <div v-if="activeTab === 'packages'" class="tab-content">
-        <AvailablePackagesTable ref="pkgTableRef" :search-text="searchText" />
+        <AvailablePackagesTable ref="pkgTableRef" />
       </div>
     </div>
   </div>
@@ -89,7 +69,6 @@ import AvailablePackagesTable from '../components/AvailablePackagesTable.vue'
 // KPI 统计数据
 const statsData = ref([])
 const loading = ref(false)
-const searchText = ref('')
 
 // 当前激活的 Tab
 const activeTab = ref('hosts')
@@ -109,26 +88,6 @@ function formatDate(timestamp) {
   const minutes = String(date.getMinutes()).padStart(2, '0')
   const seconds = String(date.getSeconds()).padStart(2, '0')
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-}
-
-// 处理搜索
-const handleSearch = () => {
-  // 搜索会通过 props 传递给子组件
-}
-
-// 处理导出
-const handleExport = () => {
-  ElMessage.info('导出功能开发中')
-}
-
-// 处理刷新
-const handleRefresh = () => {
-  loadStatsData()
-  if (activeTab.value === 'hosts' && hostTableRef.value?.refresh) {
-    hostTableRef.value.refresh()
-  } else if (activeTab.value === 'packages' && pkgTableRef.value?.refresh) {
-    pkgTableRef.value.refresh()
-  }
 }
 
 // KPI 定义（与源系统一致）

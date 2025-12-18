@@ -1,42 +1,48 @@
 <template>
   <div class="ops-page-layout">
-    <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <div class="severity-filters">
-        <el-checkbox
-          v-model="severityFilters.Critical"
-          @change="handleFilter"
-        >
-          <span class="badge badge-danger">严重</span>
-        </el-checkbox>
-        <el-checkbox
-          v-model="severityFilters.Important"
-          @change="handleFilter"
-        >
-          <span class="badge badge-warning">重要</span>
-        </el-checkbox>
-        <el-checkbox
-          v-model="severityFilters.Moderate"
-          @change="handleFilter"
-        >
-          <span class="badge badge-dark">中等</span>
-        </el-checkbox>
-        <el-checkbox
-          v-model="severityFilters.Low"
-          @change="handleFilter"
-        >
-          <span class="badge badge-secondary">低级</span>
-        </el-checkbox>
+      <div class="filter-group">
+        <div class="severity-filters">
+          <el-checkbox
+            v-model="severityFilters.Critical"
+            @change="handleFilter"
+          >
+            <span class="badge badge-danger">严重</span>
+          </el-checkbox>
+          <el-checkbox
+            v-model="severityFilters.Important"
+            @change="handleFilter"
+          >
+            <span class="badge badge-warning">重要</span>
+          </el-checkbox>
+          <el-checkbox
+            v-model="severityFilters.Moderate"
+            @change="handleFilter"
+          >
+            <span class="badge badge-dark">中等</span>
+          </el-checkbox>
+          <el-checkbox
+            v-model="severityFilters.Low"
+            @change="handleFilter"
+          >
+            <span class="badge badge-secondary">低级</span>
+          </el-checkbox>
+        </div>
       </div>
-      <el-input
-        v-model="searchText"
-        placeholder="搜索..."
-        prefix-icon="Search"
-        style="width: 200px"
-        clearable
-        size="small"
-        @input="handleSearch"
-      />
+      <div class="filter-group">
+        <el-input
+          v-model="searchText"
+          placeholder="搜索..."
+          size="small"
+          style="width: 200px"
+          clearable
+          @input="handleSearch"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+      </div>
     </div>
 
     <!-- 操作区 -->
@@ -53,20 +59,25 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
         :data="filteredTableData"
         stripe
-        height="calc(100vh - 300px)"
+        max-height="calc(100vh - 500px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
         <el-table-column prop="patch_id" label="补丁编号" min-width="140" sortable>
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleViewPatchDetail(row)">
+            <el-link type="primary" :underline="false" @click="handleViewPatchDetail(row)">
               {{ row.patch_id }}
-            </el-button>
+            </el-link>
           </template>
         </el-table-column>
         <el-table-column prop="title" label="概要" min-width="220" show-overflow-tooltip />
@@ -100,9 +111,9 @@
         </el-table-column>
         <el-table-column prop="effect_host_count" label="受影响的软件包" width="130" align="left">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleViewAffectedHosts(row)">
+            <el-link type="primary" :underline="false" @click="handleViewAffectedHosts(row)">
               {{ row.effect_host_count }}
-            </el-button>
+            </el-link>
           </template>
         </el-table-column>
       </el-table>
@@ -249,16 +260,19 @@
                 </template>
               </el-table-column>
             </el-table>
-            <!-- 分页信息 -->
+            <!-- 分页 -->
             <div class="host-pagination">
-              <el-select v-model="hostPageSize" size="small" style="width: 60px">
-                <el-option :value="10" label="10" />
-                <el-option :value="20" label="20" />
-                <el-option :value="50" label="50" />
-              </el-select>
-              <span class="pagination-info">
-                {{ hostPaginationInfo }}
-              </span>
+              <el-pagination
+                v-model:current-page="hostPagination.page"
+                v-model:page-size="hostPagination.pageSize"
+                :page-sizes="[10, 20, 50]"
+                :total="hostPagination.total"
+                layout="total, sizes, prev, pager, next, jumper"
+                size="small"
+                background
+                @size-change="handleHostSizeChange"
+                @current-change="handleHostPageChange"
+              />
             </div>
           </div>
         </div>
@@ -281,7 +295,8 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import { patchInstallApi } from '../api'
 
 // 加载状态
@@ -330,7 +345,11 @@ const selectedHosts = ref([])
 const hostTableRef = ref(null)
 const hostFilter = ref('@@(linux)')
 const hostSearchText = ref('')
-const hostPageSize = ref(10)
+const hostPagination = reactive({
+  page: 1,
+  pageSize: 10,
+  total: 0
+})
 
 // 过滤后的主机列表
 const filteredHosts = computed(() => {
@@ -342,15 +361,23 @@ const filteredHosts = computed(() => {
       h.os_distro?.toLowerCase().includes(keyword)
     )
   }
-  return hosts.slice(0, hostPageSize.value)
+  // 更新总数
+  hostPagination.total = hosts.length
+  // 分页
+  const start = (hostPagination.page - 1) * hostPagination.pageSize
+  const end = start + hostPagination.pageSize
+  return hosts.slice(start, end)
 })
 
-// 分页信息
-const hostPaginationInfo = computed(() => {
-  const total = affectedHosts.value.length
-  const showing = Math.min(hostPageSize.value, total)
-  return `1 - ${showing} / ${total}`
-})
+// 主机分页处理
+function handleHostPageChange(page) {
+  hostPagination.page = page
+}
+
+function handleHostSizeChange(size) {
+  hostPagination.pageSize = size
+  hostPagination.page = 1
+}
 
 // 计算过滤后的数据 - 客户端筛选
 const filteredTableData = computed(() => {
@@ -717,6 +744,18 @@ defineExpose({ refresh })
   }
 }
 
+.patch-link {
+  color: #409eff;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: text;
+
+  &:hover {
+    color: #66b1ff;
+    text-decoration: underline;
+  }
+}
+
 .install-content {
   display: flex;
   flex-direction: column;
@@ -791,16 +830,11 @@ defineExpose({ refresh })
 
 .host-pagination {
   display: flex;
+  justify-content: flex-end;
   align-items: center;
-  gap: 12px;
   padding: 8px 12px;
   border-top: 1px solid #e9ecef;
   background: #fff;
-  font-size: 13px;
-
-  .pagination-info {
-    color: #6c757d;
-  }
 }
 
 .patch-detail {

@@ -21,15 +21,29 @@ export const patchScanApi = {
   },
 
   /**
-   * 获取扫描结果列表
+   * 获取扫描结果列表（主机概览）
+   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_WITH_PATCH/
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码
    * @param {number} params.size - 每页大小
-   * @param {string} params.filter - 筛选条件
+   * @param {string} params.filter - 筛选关键词
    * @returns {Promise}
    */
   getScanResults(params = {}) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/scan/results`, params)
+    const cacheBuster = Date.now()
+    // 构建筛选条件：host_key|os_distro|os_version|num_critical|num_important|num_moderate|num_low:*keyword*
+    let filter = ''
+    if (params.filter && params.filter.trim()) {
+      const keyword = params.filter.trim()
+      filter = `host_key|os_distro|os_version|num_critical|num_important|num_moderate|num_low:*${keyword}*`
+    }
+    const requestBody = {
+      params: {},
+      size: params.size || 20,
+      page: params.page || 1,
+      filter: filter
+    }
+    return apiService.post(`/dts/api/dts/q/data/VAP2_LIST_MACHINE_WITH_PATCH/?cacheBuster=${cacheBuster}`, requestBody)
   },
 
   /**
@@ -252,13 +266,15 @@ export const patchLibraryApi = {
    * @returns {Promise}
    */
   getPatchList(params = {}) {
-    // 源系统只传 params 对象
+    // 源系统传 params 对象 + 分页参数
     const requestBody = {
       params: {
         severity: params.severity || 'Critical',
         vendor: params.vendor || 'redhat',
         is_ignore: params.is_ignore || '0,1'
-      }
+      },
+      page: params.page || 1,
+      size: params.size || 20
     }
     return apiService.post('/dts/api/dts/q/data/VAP2_LIST_PATCH_DATE/', requestBody)
   },
@@ -357,12 +373,120 @@ export const vulnerabilityApi = {
   },
 
   /**
+   * 获取漏洞概览列表
+   * POST /dts/api/dts/q/data/VAP2_LIST_PATCH_BY_CVES/
+   * @param {Object} params - 查询参数
+   * @param {number} params.page - 页码
+   * @param {number} params.size - 每页大小
+   * @param {string} params.filter - 筛选关键词
+   * @param {string} params.severity - 严重程度筛选 (all/Critical/Important/Moderate/Low)
+   * @param {string} params.os_distro - 操作系统筛选 (all 或具体值)
+   * @param {string} params.patch_status - 补丁状态筛选 (all/未修复/已修复)
+   * @returns {Promise}
+   */
+  getVulnerabilityList(params = {}) {
+    const cacheBuster = Date.now()
+    const requestBody = {
+      params: {
+        reboot_status: params.reboot_status || 'all',
+        os_distro: params.os_distro || 'all',
+        os_major_version: params.os_major_version || 'all',
+        host_key: params.host_key || '',
+        vul_id: params.vul_id || null,
+        severity: params.severity || 'all',
+        patch_status: params.patch_status || 'all',
+        is_kernel: params.is_kernel || 'all'
+      },
+      size: params.size || 20,
+      page: params.page || 1,
+      filter: params.filter || ''
+    }
+    return apiService.post(`/dts/api/dts/q/data/VAP2_LIST_PATCH_BY_CVES/?cacheBuster=${cacheBuster}`, requestBody)
+  },
+
+  /**
+   * 获取操作系统列表
+   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_INFO/
+   * @returns {Promise}
+   */
+  getOsDistroList() {
+    const cacheBuster = Date.now()
+    return apiService.post(`/dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_INFO/?cacheBuster=${cacheBuster}`, {
+      params: null
+    })
+  },
+
+  /**
+   * 获取操作系统版本列表
+   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_VERSION_INFO/
+   * @returns {Promise}
+   */
+  getOsVersionList() {
+    const cacheBuster = Date.now()
+    return apiService.post(`/dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_VERSION_INFO/?cacheBuster=${cacheBuster}`, {
+      params: null
+    })
+  },
+
+  /**
    * 获取漏洞列表
    * @param {Object} params - 查询参数
    * @returns {Promise}
    */
   getVulnerabilities(params = {}) {
     return apiService.post(`${VAP_API_PREFIX}/v2/vulnerabilities`, params)
+  },
+
+  /**
+   * 根据补丁状态ID获取主机列表
+   * POST /dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO/
+   * @param {Array} ids - 补丁状态ID数组
+   * @returns {Promise}
+   */
+  getPatchStatusHosts(ids) {
+    const cacheBuster = Date.now()
+    return apiService.post(`/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO/?cacheBuster=${cacheBuster}`, {
+      params: { ids }
+    })
+  },
+
+  /**
+   * 根据补丁状态ID获取CVE列表
+   * POST /dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_CVE/
+   * @param {Array} ids - 补丁状态ID数组
+   * @returns {Promise}
+   */
+  getPatchStatusCves(ids) {
+    const cacheBuster = Date.now()
+    return apiService.post(`/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_CVE/?cacheBuster=${cacheBuster}`, {
+      params: { ids }
+    })
+  },
+
+  /**
+   * 根据补丁状态ID获取补丁列表
+   * POST /dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PATCH/
+   * @param {Array} ids - 补丁状态ID数组
+   * @returns {Promise}
+   */
+  getPatchStatusPatches(ids) {
+    const cacheBuster = Date.now()
+    return apiService.post(`/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PATCH/?cacheBuster=${cacheBuster}`, {
+      params: { ids }
+    })
+  },
+
+  /**
+   * 根据补丁状态ID获取软件包列表
+   * POST /dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PKGS/
+   * @param {Array} ids - 补丁状态ID数组
+   * @returns {Promise}
+   */
+  getPatchStatusPackages(ids) {
+    const cacheBuster = Date.now()
+    return apiService.post(`/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PKGS/?cacheBuster=${cacheBuster}`, {
+      params: { ids }
+    })
   },
 
   /**
@@ -651,14 +775,18 @@ export const yumManageApi = {
   },
 
   /**
-   * 创建YUM源配置
+   * 创建/更新YUM源配置
    * @param {Object} data - YUM源配置数据
    * @returns {Promise}
    */
   createYumConfig(data) {
     return apiService.post('/jao/api/jao/dc/data', {
-      code: 'yum_configs',
+      dataModel: 'yum_configs',
       dataJson: JSON.stringify(data)
+    }, {
+      params: {
+        cacheBuster: Date.now()
+      }
     })
   },
 
@@ -669,9 +797,14 @@ export const yumManageApi = {
    * @returns {Promise}
    */
   updateYumConfig(id, data) {
-    return apiService.put(`/jao/api/jao/dc/data/${id}`, {
-      code: 'yum_configs',
+    return apiService.post('/jao/api/jao/dc/data', {
+      id: id,
+      dataModel: 'yum_configs',
       dataJson: JSON.stringify(data)
+    }, {
+      params: {
+        cacheBuster: Date.now()
+      }
     })
   },
 

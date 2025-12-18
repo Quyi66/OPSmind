@@ -52,44 +52,54 @@
       </div>
 
       <!-- 主机概览视图 -->
-      <div v-if="activeTab === 'host'" class="tab-content">
-        <div class="table-section">
-          <div class="table-header">
-            <h3>有可用补丁的主机</h3>
-            <div class="table-toolbar">
-              <el-input
-                v-model="filterText"
-                placeholder="搜索..."
-                prefix-icon="Search"
-                style="width: 200px"
-                clearable
-                size="small"
-                @input="handleFilter"
-              />
-              <el-button size="small" @click="handleExport">
-                <i class="fa fa-download" />
-                导出
-              </el-button>
-            </div>
-          </div>
+      <div v-if="activeTab === 'host'" class="tab-content ops-page-layout">
+        <!-- 筛选栏 -->
+        <div class="ops-filter-bar">
+          <el-input
+            v-model="filterText"
+            placeholder="输入字符搜索"
+            style="width: 200px"
+            clearable
+            size="small"
+            @input="handleFilter"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
 
+        <!-- 操作栏 -->
+        <div class="ops-action-bar">
+          <el-button size="small" @click="handleExport">
+            <i class="fa fa-download" /> 导出
+          </el-button>
+        </div>
+
+        <!-- 表格 -->
+        <div class="ops-table-wrapper">
+          <div class="table-toolbar-icons">
+            <el-button class="toolbar-icon-btn" circle :loading="loading" @click="refresh" title="刷新">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+          </div>
           <el-table
             v-loading="loading"
             :data="hostTableData"
             stripe
             style="width: 100%"
-            height="calc(100vh - 490px)"
+            max-height="calc(100vh - 500px)"
           >
             <el-table-column prop="host_key" label="主机" min-width="140">
               <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="handleHostClick(row)">
+                <a href="javascript:void(0)" class="host-link" @click="handleHostClick(row)">
                   {{ row.host_key }}
-                </el-button>
+                </a>
               </template>
             </el-table-column>
             <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
             <el-table-column prop="os_distro" label="操作系统" width="100" />
-            <el-table-column prop="os_version" label="OS版本" width="100" />
+            <el-table-column prop="os_version" label="OS版本" width="120" />
             <el-table-column prop="num_critical" width="90">
               <template #header>
                 严重 <i class="fa fa-circle text-danger" />
@@ -120,85 +130,213 @@
                 低 <i class="fa fa-circle text-info" />
               </template>
             </el-table-column>
-            <el-table-column prop="scan_timestamp" label="最后扫描时间" width="180" sortable>
+            <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
               <template #default="{ row }">
                 {{ formatDateTime(row.scan_timestamp) }}
               </template>
             </el-table-column>
           </el-table>
+        </div>
 
-          <!-- 分页 -->
-          <div class="ops-pagination-wrapper">
-            <el-pagination
-              v-model:current-page="pagination.page"
-              v-model:page-size="pagination.pageSize"
-              :page-sizes="[10, 20, 50, 100]"
-              :total="pagination.total"
-              layout="total, sizes, prev, pager, next, jumper"
-              background
-              @size-change="handleSizeChange"
-              @current-change="handlePageChange"
-            />
-          </div>
+        <!-- 分页 -->
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="pagination.page"
+            v-model:page-size="pagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="pagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="handleSizeChange"
+            @current-change="handlePageChange"
+          />
         </div>
       </div>
 
       <!-- 漏洞概览视图 -->
-      <div v-else-if="activeTab === 'vulnerability'" class="tab-content">
-        <div class="table-section">
-          <div class="table-header">
-            <h3>漏洞列表</h3>
-            <div class="table-toolbar">
-              <el-input
-                v-model="vulnFilterText"
-                placeholder="搜索..."
-                prefix-icon="Search"
-                style="width: 200px"
-                clearable
-                size="small"
-                @input="handleVulnFilter"
-              />
-            </div>
-          </div>
+      <div v-else-if="activeTab === 'vulnerability'" class="tab-content ops-page-layout">
+        <!-- 筛选栏 -->
+        <div class="ops-filter-bar">
+          <span>主机</span>
+          <el-input
+            v-model="vulnFilters.host_key"
+            placeholder="输入主机IP"
+            style="width: 120px"
+            clearable
+            size="small"
+            @change="handleVulnFilterChange"
+          />
+          <span>CVE</span>
+          <el-input
+            v-model="vulnFilters.vul_id"
+            placeholder="输入CVE编号"
+            style="width: 140px"
+            clearable
+            size="small"
+            @change="handleVulnFilterChange"
+          />
+          <span>严重程度</span>
+          <el-select v-model="vulnFilters.severity" size="small" style="width: 100px" @change="handleVulnFilterChange">
+            <el-option label="所有" value="all" />
+            <el-option label="严重" value="Critical" />
+            <el-option label="重要" value="Important" />
+            <el-option label="中等" value="Moderate" />
+            <el-option label="低" value="Low" />
+          </el-select>
+          <span>补丁状态</span>
+          <el-select v-model="vulnFilters.patch_status" size="small" style="width: 100px" @change="handleVulnFilterChange">
+            <el-option label="所有" value="all" />
+            <el-option label="未修复" value="no_repair" />
+            <el-option label="已修复" value="is_repair" />
+            <el-option label="已修复(手动)" value="is_repair_artificial" />
+            <el-option label="修复中" value="repairing" />
+            <el-option label="修复失败" value="repair_faild" />
+            <el-option label="回滚中" value="rolling_back" />
+            <el-option label="回滚失败" value="rolling_back_faild" />
+            <el-option label="回滚成功" value="rolling_back_success" />
+          </el-select>
+          <span>内核漏洞</span>
+          <el-select v-model="vulnFilters.is_kernel" size="small" style="width: 80px" @change="handleVulnFilterChange">
+            <el-option label="所有" value="all" />
+            <el-option label="是" value="is_kernel" />
+            <el-option label="否" value="no_kernel" />
+          </el-select>
+          <span>操作系统</span>
+          <el-select v-model="vulnFilters.os_distro" size="small" style="width: 100px" @change="handleVulnFilterChange">
+            <el-option label="所有" value="all" />
+            <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
+          </el-select>
+          <span>系统版本</span>
+          <el-select v-model="vulnFilters.os_major_version" size="small" style="width: 100px" @change="handleVulnFilterChange">
+            <el-option label="所有" value="all" />
+            <el-option v-for="item in osVersionList" :key="item" :label="item" :value="item" />
+          </el-select>
+        </div>
 
+        <!-- 操作栏 -->
+        <div class="ops-action-bar">
+          <el-button type="primary" size="small" :disabled="selectedVulns.length === 0" @click="handleFixSelected">
+            <i class="fa fa-tools" /> 修复选定的漏洞
+          </el-button>
+          <el-button size="small" @click="handleVulnExport">
+            <i class="fa fa-download" /> 导出
+          </el-button>
+        </div>
+
+        <!-- 表格 -->
+        <div class="ops-table-wrapper">
+          <div class="table-toolbar-icons">
+            <el-button class="toolbar-icon-btn" circle :loading="vulnLoading" @click="loadVulnData" title="刷新">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+          </div>
           <el-table
+            ref="vulnTableRef"
             v-loading="vulnLoading"
             :data="vulnTableData"
             stripe
             style="width: 100%"
-            height="calc(100vh - 490px)"
+            max-height="calc(100vh - 500px)"
+            @selection-change="handleVulnSelectionChange"
           >
-            <el-table-column prop="advisory" label="漏洞编号" min-width="140">
+            <el-table-column type="selection" width="45" />
+            <el-table-column prop="host_key" label="主机" width="130">
               <template #default="{ row }">
-                <el-button type="primary" link size="small" @click="handleVulnClick(row)">
-                  {{ row.advisory }}
+                <a href="javascript:void(0)" class="host-link" @click="handleHostClick(row)">
+                  {{ row.host_key }}
+                </a>
+              </template>
+            </el-table-column>
+            <el-table-column prop="os_distro" label="操作系统" width="90" />
+            <el-table-column prop="os_major_version" label="系统版本" width="90" />
+            <el-table-column prop="patch_id" label="补丁编号" min-width="150" show-overflow-tooltip>
+              <template #default="{ row }">
+                <a href="javascript:void(0)" class="patch-link" @click="handlePatchClick(row)">
+                  {{ row.patch_id }}
+                </a>
+              </template>
+            </el-table-column>
+            <el-table-column prop="affected_pkgs" label="影响的软件包" min-width="180" show-overflow-tooltip>
+              <template #default="{ row }">
+                <div class="pkg-list">{{ row.affected_pkgs }}</div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="vul_id" label="CVE" width="150">
+              <template #default="{ row }">
+                <a :href="`https://access.redhat.com/security/cve/${row.vul_id}`" target="_blank" class="cve-badge">
+                  {{ row.vul_id }}
+                </a>
+              </template>
+            </el-table-column>
+            <el-table-column prop="severity" label="严重程度" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getSeverityType(row.severity)" size="small">
+                  {{ row.severity }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="reboot_status" label="重启要求" width="100">
+              <template #default="{ row }">
+                <el-tag v-if="row.reboot_status" :type="row.reboot_status === '系统重启' ? 'danger' : 'warning'" size="small" round>
+                  <i :class="row.reboot_status === '系统重启' ? 'fa fa-power-off' : 'fa fa-server'" style="margin-right: 4px" />
+                  {{ row.reboot_status === '系统重启' ? '系统' : '服务' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="is_kernel" label="内核" width="70">
+              <template #default="{ row }">
+                <el-tag :type="row.is_kernel === '是' ? 'primary' : 'info'" size="small" round>
+                  <i :class="row.is_kernel === '是' ? 'fa fa-check' : 'fa fa-times'" />
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="patch_status" label="状态" width="110">
+              <template #default="{ row }">
+                <el-tag
+                  :type="getPatchStatusType(row.patch_status)"
+                  size="small"
+                  round
+                  :class="{ 'clickable-status': row.run_id }"
+                  @click="row.run_id && handleViewRunResult(row)"
+                >
+                  <i :class="getPatchStatusIcon(row.patch_status)" style="margin-right: 4px" />
+                  {{ row.patch_status }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="scan_date" label="扫描时间" width="110">
+              <template #default="{ row }">
+                {{ formatDate(row.scan_date) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="80" fixed="right">
+              <template #default="{ row }">
+                <el-button
+                  text
+                  type="primary"
+                  size="small"
+                  :disabled="row.patch_status !== '已修复' && row.patch_status !== '回滚失败'"
+                  @click="handleRollback(row)"
+                >
+                  回滚
                 </el-button>
               </template>
             </el-table-column>
-            <el-table-column prop="severity" label="严重程度" width="130">
-              <template #default="{ row }">
-                <span :class="getSeverityClass(row.severity)">
-                  <i class="fa fa-circle" /> {{ row.severity }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="synopsis" label="描述" min-width="150" show-overflow-tooltip />
-            <el-table-column prop="affected_hosts" label="影响主机数" width="110" />
-            <el-table-column prop="issue_date" label="发布日期" width="120" />
           </el-table>
+        </div>
 
-          <div class="ops-pagination-wrapper">
-            <el-pagination
-              v-model:current-page="vulnPagination.page"
-              v-model:page-size="vulnPagination.pageSize"
-              :page-sizes="[10, 20, 50, 100]"
-              :total="vulnPagination.total"
-              layout="total, sizes, prev, pager, next, jumper"
-              background
-              @size-change="handleVulnSizeChange"
-              @current-change="handleVulnPageChange"
-            />
-          </div>
+        <!-- 分页 -->
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="vulnPagination.page"
+            v-model:page-size="vulnPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="vulnPagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="handleVulnSizeChange"
+            @current-change="handleVulnPageChange"
+          />
         </div>
       </div>
     </div>
@@ -217,8 +355,9 @@
               type="textarea"
               :rows="4"
               placeholder="请输入主机名或IP，每行一个"
+              readonly
             />
-            <el-button class="select-host-btn" @click="showHostSelector">
+            <el-button class="select-host-btn" @click="hostSelectorVisible = true">
               <i class="fa fa-server" />
               选择主机
             </el-button>
@@ -234,18 +373,79 @@
     </el-dialog>
 
     <!-- 主机选择器对话框 -->
-    <HostSelectorDialog
-      v-model:visible="hostSelectorVisible"
+    <AcmDeviceSelectorDialog
+      v-model="hostSelectorVisible"
+      ci-types="[auto]"
+      :initial-selection="selectedHosts"
+      :options="{
+        selectMode: 'host,group,tag,input,recently',
+        selector: 'multiple'
+      }"
       @confirm="handleHostSelected"
     />
+
+    <!-- 作业运行结果对话框 -->
+    <ExecuteResultDialog
+      v-if="runResultDialogVisible"
+      v-model:visible="runResultDialogVisible"
+      :run-id="runResultRunId"
+    />
+
+    <!-- 修复漏洞确认对话框 -->
+    <el-dialog
+      v-model="fixDialogVisible"
+      title="修复选定的漏洞"
+      width="700px"
+      destroy-on-close
+    >
+      <div v-loading="fixDialogLoading" class="fix-dialog-content">
+        <div class="fix-info-card">
+          <div class="fix-info-header">
+            <i class="fa fa-desktop text-muted" /> 待更新的主机
+          </div>
+          <div class="fix-info-body" v-html="fixDialogData.hosts || '-'"></div>
+        </div>
+        <div class="fix-info-card">
+          <div class="fix-info-header">
+            <i class="fa fa-briefcase-medical text-muted" /> 待更新的补丁
+          </div>
+          <div class="fix-info-body" v-html="fixDialogData.patches || '-'"></div>
+        </div>
+        <div class="fix-info-card">
+          <div class="fix-info-header">
+            <i class="fa fa-suitcase text-muted" /> 待更新的 CVE
+          </div>
+          <div class="fix-info-body" v-html="fixDialogData.cves || '-'"></div>
+        </div>
+        <div class="fix-info-card">
+          <div class="fix-info-header">
+            <i class="fa fa-cube text-muted" /> 待更新的软件包
+          </div>
+          <div class="fix-info-body" v-html="fixDialogData.packages || '-'"></div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="fixDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="fixSubmitting"
+          :disabled="!fixDialogData.hosts"
+          @click="handleConfirmFix"
+        >
+          <i class="fa fa-chevron-right" /> 开始更新
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { patchScanApi, patchOverviewApi } from '../api'
-import HostSelectorDialog from '@/modules/automation/components/command/dialogs/HostSelectorDialog.vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
+import { patchScanApi, patchOverviewApi, vulnerabilityApi } from '../api'
+import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 // Emits
 const emit = defineEmits(['install', 'navigate'])
@@ -283,6 +483,26 @@ const vulnPagination = reactive({
   total: 0
 })
 
+// 漏洞筛选器
+const vulnFilters = reactive({
+  host_key: '',
+  vul_id: '',
+  severity: 'all',
+  patch_status: 'all',
+  is_kernel: 'all',
+  os_distro: 'all',
+  os_major_version: 'all',
+  reboot_status: 'all'
+})
+
+// 操作系统列表
+const osDistroList = ref([])
+const osVersionList = ref([])
+
+// 漏洞表格选择
+const vulnTableRef = ref(null)
+const selectedVulns = ref([])
+
 // 重新扫描对话框
 const rescanDialogVisible = ref(false)
 const rescanLoading = ref(false)
@@ -291,6 +511,23 @@ const rescanForm = reactive({
   hostsInput: ''
 })
 const hostSelectorVisible = ref(false)
+const selectedHosts = ref([])
+
+// 作业运行结果对话框
+const runResultDialogVisible = ref(false)
+const runResultRunId = ref('')
+
+// 修复漏洞对话框
+const fixDialogVisible = ref(false)
+const fixDialogLoading = ref(false)
+const fixSubmitting = ref(false)
+const fixDialogData = reactive({
+  hosts: '',
+  patches: '',
+  cves: '',
+  packages: '',
+  patchStatusIds: []
+})
 
 // 获取严重程度样式类
 function getSeverityClass(severity) {
@@ -372,9 +609,8 @@ async function loadHostData() {
     }
   } catch (error) {
     console.error('Failed to load host data:', error)
-    // 模拟数据
-    hostTableData.value = generateMockHostData()
-    pagination.total = 100
+    hostTableData.value = []
+    pagination.total = 0
   } finally {
     loading.value = false
   }
@@ -387,57 +623,46 @@ async function loadVulnData() {
     const params = {
       page: vulnPagination.page,
       size: vulnPagination.pageSize,
-      filter: vulnFilterText.value
+      filter: vulnFilterText.value,
+      host_key: vulnFilters.host_key || '',
+      vul_id: vulnFilters.vul_id || null,
+      severity: vulnFilters.severity,
+      patch_status: vulnFilters.patch_status,
+      is_kernel: vulnFilters.is_kernel,
+      os_distro: vulnFilters.os_distro,
+      os_major_version: vulnFilters.os_major_version,
+      reboot_status: vulnFilters.reboot_status
     }
-    // TODO: 调用实际 API
-    // const response = await vulnerabilityApi.getList(params)
-    vulnTableData.value = generateMockVulnData()
-    vulnPagination.total = 50
+    const response = await vulnerabilityApi.getVulnerabilityList(params)
+    if (response?.data) {
+      vulnTableData.value = response.data.records || []
+      vulnPagination.total = response.data.total || 0
+    }
   } catch (error) {
     console.error('Failed to load vulnerability data:', error)
-    vulnTableData.value = generateMockVulnData()
-    vulnPagination.total = 50
+    vulnTableData.value = []
+    vulnPagination.total = 0
   } finally {
     vulnLoading.value = false
   }
 }
 
-// 生成模拟主机数据
-function generateMockHostData() {
-  const osVersions = ['RHEL 7.1', 'RHEL 7.4', 'RHEL 7.6', 'RHEL 6.6', 'RHEL 6.2', 'CentOS 7.9', 'CentOS 8.4']
-  const result = []
-  for (let i = 0; i < 20; i++) {
-    const ip = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
-    result.push({
-      host_id: `host-${i}`,
-      host_key: ip,
-      hostname: `server${String(i + 1).padStart(2, '0')}.example.com`,
-      os_distro: osVersions[i % osVersions.length].split(' ')[0],
-      os_version: osVersions[i % osVersions.length],
-      num_critical: Math.floor(Math.random() * 10),
-      num_important: Math.floor(Math.random() * 20),
-      num_moderate: Math.floor(Math.random() * 30),
-      num_low: Math.floor(Math.random() * 50),
-      scan_timestamp: Date.now() - Math.floor(Math.random() * 86400000 * 7)
-    })
+// 加载操作系统列表
+async function loadOsLists() {
+  try {
+    const [osDistroRes, osVersionRes] = await Promise.all([
+      vulnerabilityApi.getOsDistroList(),
+      vulnerabilityApi.getOsVersionList()
+    ])
+    if (osDistroRes?.data?.records) {
+      osDistroList.value = osDistroRes.data.records.map(item => item.os_distro)
+    }
+    if (osVersionRes?.data?.records) {
+      osVersionList.value = osVersionRes.data.records.map(item => item.os_major_version)
+    }
+  } catch (error) {
+    console.error('Failed to load OS lists:', error)
   }
-  return result
-}
-
-// 生成模拟漏洞数据
-function generateMockVulnData() {
-  const severities = ['Critical', 'Important', 'Moderate', 'Low']
-  const result = []
-  for (let i = 0; i < 20; i++) {
-    result.push({
-      advisory: `RHSA-2024:${String(1000 + i).padStart(4, '0')}`,
-      severity: severities[i % 4],
-      synopsis: `Security Advisory ${i + 1} - 重要安全更新`,
-      affected_hosts: Math.floor(Math.random() * 50) + 1,
-      issue_date: '2024-01-15'
-    })
-  }
-  return result
 }
 
 // 事件处理
@@ -499,21 +724,182 @@ function handleVulnClick(row) {
   ElMessage.info(`查看漏洞详情: ${row.advisory}`)
 }
 
+function handleVulnFilterChange() {
+  vulnPagination.page = 1
+  loadVulnData()
+}
+
+function handleVulnExport() {
+  ElMessage.info('导出功能开发中...')
+}
+
+function handlePatchClick(row) {
+  ElMessage.info(`查看补丁详情: ${row.patch_id}`)
+}
+
+function handleRollback(row) {
+  ElMessage.info(`回滚补丁: ${row.id}`)
+}
+
+// 格式化日期
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// 获取严重程度类型
+function getSeverityType(severity) {
+  const typeMap = {
+    'Critical': 'danger',
+    'Important': 'warning',
+    'Moderate': '',
+    'Low': 'info'
+  }
+  return typeMap[severity] || 'info'
+}
+
+// 获取补丁状态类型
+function getPatchStatusType(status) {
+  const typeMap = {
+    '未修复': 'info',
+    '已修复': 'success',
+    '已修复(手动)': 'success',
+    '修复中': '',
+    '修复失败': 'warning',
+    '回滚中': '',
+    '回滚失败': 'warning',
+    '回滚成功': 'info'
+  }
+  return typeMap[status] || 'info'
+}
+
+// 获取补丁状态图标
+function getPatchStatusIcon(status) {
+  const iconMap = {
+    '未修复': 'fa fa-times',
+    '已修复': 'fa fa-check',
+    '已修复(手动)': 'fa fa-check',
+    '修复中': 'fa fa-cog fa-spin',
+    '修复失败': 'fa fa-exclamation-triangle',
+    '回滚中': 'fa fa-cog fa-spin',
+    '回滚失败': 'fa fa-exclamation-triangle',
+    '回滚成功': 'fa fa-check'
+  }
+  return iconMap[status] || 'fa fa-circle'
+}
+
 function handleExport() {
   ElMessage.info('导出功能开发中...')
 }
 
+// 查看作业运行结果
+function handleViewRunResult(row) {
+  if (!row.run_id) return
+  runResultRunId.value = row.run_id
+  runResultDialogVisible.value = true
+}
+
+// 漏洞选择变化
+function handleVulnSelectionChange(selection) {
+  selectedVulns.value = selection
+}
+
+// 修复选定的漏洞
+async function handleFixSelected() {
+  if (selectedVulns.value.length === 0) {
+    ElMessage.warning('请先选择要修复的漏洞')
+    return
+  }
+
+  const ids = selectedVulns.value.map(item => item.id)
+  fixDialogData.patchStatusIds = ids
+  fixDialogData.hosts = ''
+  fixDialogData.patches = ''
+  fixDialogData.cves = ''
+  fixDialogData.packages = ''
+  fixDialogVisible.value = true
+  fixDialogLoading.value = true
+
+  try {
+    // 并行获取所有信息
+    const [hostsRes, patchesRes, cvesRes, pkgsRes] = await Promise.all([
+      vulnerabilityApi.getPatchStatusHosts(ids),
+      vulnerabilityApi.getPatchStatusPatches(ids),
+      vulnerabilityApi.getPatchStatusCves(ids),
+      vulnerabilityApi.getPatchStatusPackages(ids)
+    ])
+
+    // 处理主机列表
+    if (hostsRes?.data?.records) {
+      fixDialogData.hosts = hostsRes.data.records.map(r => r.host_key).join('<br>')
+    }
+
+    // 处理补丁列表（去重）
+    if (patchesRes?.data?.records) {
+      const patches = [...new Set(patchesRes.data.records.map(r => r.patch_id))]
+      fixDialogData.patches = patches.join('<br>')
+    }
+
+    // 处理 CVE 列表
+    if (cvesRes?.data?.records) {
+      fixDialogData.cves = cvesRes.data.records.map(r => r.vul_id).join('<br>')
+    }
+
+    // 处理软件包列表（去重）
+    if (pkgsRes?.data?.records) {
+      const allPkgs = pkgsRes.data.records.flatMap(r => (r.affected_pkgs || '').split(','))
+      const uniquePkgs = [...new Set(allPkgs.filter(p => p.trim()))]
+      fixDialogData.packages = uniquePkgs.join('<br>')
+    }
+  } catch (error) {
+    ElMessage.error('获取补丁信息失败: ' + (error.message || '未知错误'))
+  } finally {
+    fixDialogLoading.value = false
+  }
+}
+
+// 确认开始修复
+async function handleConfirmFix() {
+  if (!fixDialogData.patchStatusIds.length) return
+
+  fixSubmitting.value = true
+  try {
+    // 调用作业执行 API
+    const { executeJob } = await import('@/modules/automation/api/jao')
+    await executeJob('s1r8Hp', {
+      patchStatusIds: fixDialogData.patchStatusIds
+    })
+    ElMessage.success('修复任务已提交')
+    fixDialogVisible.value = false
+    // 刷新数据
+    loadVulnData()
+  } catch (error) {
+    ElMessage.error('提交修复任务失败: ' + (error.message || '未知错误'))
+  } finally {
+    fixSubmitting.value = false
+  }
+}
+
 function handleRescan() {
   rescanForm.hostsInput = ''
+  selectedHosts.value = []
   rescanDialogVisible.value = true
 }
 
-function showHostSelector() {
-  hostSelectorVisible.value = true
-}
-
 function handleHostSelected(hosts) {
-  const hostList = hosts.map(h => h.hostname || h.name || h)
+  selectedHosts.value = hosts
+  // 从选中的主机中提取主机名显示在文本框中
+  // AcmDeviceSelectorDialog 返回的数据结构: { value: 'hostname', assetType: 'linux', ... }
+  const hostList = hosts.map(h => {
+    if (typeof h === 'object') {
+      return h.value || h.hostname || h.name || h.host_key || ''
+    }
+    return String(h)
+  }).filter(Boolean)
   rescanForm.hostsInput = hostList.join('\n')
 }
 
@@ -559,6 +945,7 @@ watch(activeTab, (newTab) => {
 onMounted(() => {
   loadKpiData()
   loadHostData()
+  loadOsLists()
 })
 
 // 暴露方法
@@ -572,7 +959,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f8f9fa;
+  background: #fff;
 }
 
 .page-header {
@@ -591,8 +978,9 @@ defineExpose({
 
 .page-content {
   flex: 1;
-  padding: 16px;
+  padding: 0 16px;
   overflow-y: auto;
+  background: #fff;
 }
 
 // KPI 卡片
@@ -606,48 +994,62 @@ defineExpose({
 .kpi-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
+  border: none;
 
   &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    opacity: 0.9;
+    transform: translateY(-1px);
   }
 
+  // 危险/严重 - 红色背景
   &--danger {
-    border-left: 3px solid #dc3545;
-    background: #fff5f5;
+    background: linear-gradient(135deg, #dc3545, #c82333);
+
+    .kpi-card__icon,
+    .kpi-card__value,
+    .kpi-card__label {
+      color: #fff;
+    }
   }
 
+  // 警告/重要 - 黄色背景
   &--warning {
-    border-left: 3px solid #ffc107;
-    background: #fffbeb;
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+
+    .kpi-card__icon,
+    .kpi-card__value,
+    .kpi-card__label {
+      color: #fff;
+    }
   }
 
+  // 普通 - 灰色背景
   &--secondary {
-    border-left: 3px solid #6c757d;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+
+    .kpi-card__value {
+      color: #212529;
+    }
+
+    .kpi-card__label {
+      color: #6c757d;
+    }
   }
 
   &__icon {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    color: #6c757d;
-  }
-
-  &--danger &__icon {
-    color: #dc3545;
-  }
-
-  &--warning &__icon {
-    color: #ffc107;
+    font-size: 20px;
+    color: #fff;
   }
 
   &__content {
@@ -655,53 +1057,47 @@ defineExpose({
   }
 
   &__value {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
-    color: #212529;
     line-height: 1;
   }
 
   &__label {
     font-size: 12px;
-    color: #6c757d;
-    margin-top: 4px;
+    margin-top: 6px;
   }
 }
 
-// 导航标签
+// 导航标签 - 简洁样式
 .nav-tabs {
   display: flex;
   gap: 0;
   margin-bottom: 16px;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #e9ecef;
+  border-bottom: 1px solid #dee2e6;
+  background: transparent;
 }
 
 .nav-tab {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 10px 20px;
   font-size: 14px;
   color: #495057;
   cursor: pointer;
   transition: all 0.2s;
-  border-right: 1px solid #e9ecef;
-
-  &:last-child {
-    border-right: none;
-  }
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
 
   &:hover {
-    background: #f8f9fa;
+    color: #0d6efd;
   }
 
   &--active {
-    background: #e7f1ff;
     color: #0d6efd;
     font-weight: 500;
+    border-bottom-color: #0d6efd;
   }
 
   i {
@@ -714,6 +1110,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 0 !important;
 }
 
 // 表格区域
@@ -744,6 +1141,12 @@ defineExpose({
   gap: 8px;
 }
 
+.table-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .table-footer {
   display: flex;
   justify-content: flex-end;
@@ -751,21 +1154,148 @@ defineExpose({
   border-top: 1px solid #e9ecef;
 }
 
-// 文字颜色
+// 主机链接样式
+.host-link {
+  color: #409eff;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: text;
+
+  &:hover {
+    color: #66b1ff;
+    text-decoration: underline;
+  }
+}
+
+// 补丁链接样式
+.patch-link {
+  color: #6c757d;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: text;
+
+  &:hover {
+    color: #495057;
+    text-decoration: underline;
+  }
+}
+
+// CVE 徽章样式
+.cve-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 12px;
+  background: #6c757d;
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+
+  &:hover {
+    background: #495057;
+    color: #fff;
+  }
+}
+
+// 筛选器栏
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  label {
+    font-size: 12px;
+    color: #6c757d;
+  }
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+// 软件包列表
+.pkg-list {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 可点击的状态标签
+.clickable-status {
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+// 修复漏洞对话框
+.fix-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 200px;
+}
+
+.fix-info-card {
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.fix-info-header {
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #ebeef5;
+  font-weight: 500;
+  font-size: 14px;
+  color: #303133;
+
+  i {
+    margin-right: 8px;
+  }
+}
+
+.fix-info-body {
+  padding: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #606266;
+}
+
+// 文字颜色 - Element UI 色值
+// 严重 - 红色 (danger)
 .text-danger {
-  color: #dc3545;
+  color: #F56C6C;
 }
 
+// 重要 - 橙色 (warning)
 .text-warning {
-  color: #ffc107;
+  color: #E6A23C;
 }
 
+// 中等 - 黄绿色
 .text-dark {
-  color: #343a40;
+   color: #C9A66B;
 }
 
+// 低 - 蓝色 (primary)
 .text-info {
-  color: #17a2b8;
+  color: #409EFF;
 }
 
 .font-bold {

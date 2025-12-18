@@ -2,28 +2,38 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <span>IP</span>
-      <el-input
-        v-model="filters.host_key"
-        placeholder="请输入IP"
-        style="width: 200px"
-        clearable
-        size="small"
-      />
-      <span>CVE</span>
-      <el-input
-        v-model="filters.vul_id"
-        placeholder="请输入CVE"
-        style="width: 200px"
-        clearable
-        size="small"
-      />
-      <el-button type="primary" size="small" @click="handleSearch">
-        查询
-      </el-button>
-      <el-button size="small" @click="handleReset">
-        重置
-      </el-button>
+      <div class="filter-group">
+        <span class="filter-label">IP</span>
+        <el-input
+          v-model="filters.host_key"
+          placeholder="请输入IP"
+          style="width: 200px"
+          clearable
+          size="small"
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">CVE</span>
+        <el-input
+          v-model="filters.vul_id"
+          placeholder="请输入CVE"
+          style="width: 200px"
+          clearable
+          size="small"
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+      </div>
     </div>
 
     <!-- 操作区 -->
@@ -48,12 +58,17 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
         stripe
-        height="calc(100vh - 300px)"
+        height="100%"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="40" />
@@ -166,6 +181,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import { patchRollbackApi } from '../api'
 
 // 加载状态
@@ -432,5 +448,22 @@ defineExpose({ refresh })
 
 .rollback-confirm {
   padding: 8px 0;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 24px;
+
+  &:last-child {
+    margin-right: 0;
+  }
+}
+
+.filter-label {
+  font-size: 13px;
+  color: #606266;
+  white-space: nowrap;
 }
 </style>

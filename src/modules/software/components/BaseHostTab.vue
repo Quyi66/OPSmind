@@ -1,48 +1,53 @@
 <template>
   <div class="base-host-tab">
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      stripe
-      style="width: 100%"
-      size="small"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="50" />
-      <el-table-column prop="host_key" label="主机" min-width="200" />
-      <el-table-column prop="os_distro" label="OS" width="120" />
-      <el-table-column prop="os_version" label="OS版本" width="120" />
-      <el-table-column prop="update_time" label="更新时间" width="180">
-        <template #default="{ row }">
-          {{ formatDate(row.update_time) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="44" fixed="right">
-        <template #default="{ row }">
-          <el-button text type="danger" size="small" @click="handleDelete(row)">
-            删除
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
     <!-- 操作按钮 -->
-    <div class="action-bar">
-      <el-button type="danger" plain :disabled="selectedRows.length === 0" @click="handleBatchDelete">
-        <i class="fa fa-trash-alt" /> 批量删除
-      </el-button>
-      <el-button type="primary" plain @click="handleChooseBaseHost">
-        <i class="fa fa-mouse-pointer" /> 选择基准主机
-      </el-button>
+    <div class="ops-action-bar">
+      <div class="action-left">
+        <el-button type="danger" plain :disabled="selectedRows.length === 0" @click="handleBatchDelete">
+          <i class="fa fa-trash-alt" /> 批量删除
+        </el-button>
+        <el-button type="primary" @click="handleChooseBaseHost">
+          <i class="fa fa-mouse-pointer" /> 选择基准主机
+        </el-button>
+      </div>
     </div>
 
-    <div class="pagination-section">
+    <div class="ops-table-wrapper">
+      <el-table
+        v-loading="loading"
+        :data="tableData"
+        stripe
+        style="width: 100%"
+        size="small"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="host_key" label="主机" min-width="200" />
+        <el-table-column prop="os_distro" label="OS" width="120" />
+        <el-table-column prop="os_version" label="OS版本" width="120" />
+        <el-table-column prop="update_time" label="更新时间" width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.update_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="44" fixed="right">
+          <template #default="{ row }">
+            <el-button text type="danger" size="small" @click="handleDelete(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="total"
         layout="total, sizes, prev, pager, next, jumper"
+        background
         @size-change="loadData"
         @current-change="loadData"
       />
@@ -105,16 +110,15 @@ function handleChooseBaseHost() {
 }
 
 async function handleBatchDelete() {
-  const hostKeys = selectedRows.value.map(item => item.host_key)
+  // 使用 id 作为删除参数
+  const ids = selectedRows.value.map(item => item.id)
   try {
     await ElMessageBox.confirm('确定要批量删除选中的基准主机吗？', '确认删除', {
       type: 'warning'
     })
 
-    // 批量删除
-    for (const hostKey of hostKeys) {
-      await repoApi.deleteBaseHost(hostKey)
-    }
+    // 批量删除 - 一次 API 调用
+    await repoApi.deleteBaseHost(ids)
     ElMessage.success('删除成功')
     loadData()
   } catch (error) {
@@ -131,7 +135,8 @@ async function handleDelete(row) {
       type: 'warning'
     })
 
-    await repoApi.deleteBaseHost(row.host_key)
+    // 使用 id 作为删除参数
+    await repoApi.deleteBaseHost(row.id)
     ElMessage.success('删除成功')
     loadData()
   } catch (error) {
@@ -152,16 +157,5 @@ onMounted(() => {
   height: 100%;
 }
 
-.action-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.pagination-section {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
+/* 使用全局的 ops-action-bar 和 ops-pagination-wrapper 样式 */
 </style>

@@ -686,7 +686,8 @@ function handleConfirm() {
     id: file.id,
     path: file.path,
     name: file.name,
-    config: file.config
+    config: file.config,
+    directory: file.directory || file.isDir
   }))
   emit('confirm', files)
   handleClose()

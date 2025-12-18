@@ -19,16 +19,16 @@
       style="width: 100%"
       size="small"
     >
-      <el-table-column prop="refid" label="仓库ID" min-width="120">
+      <el-table-column prop="refid" label="仓库ID" min-width="150" show-overflow-tooltip>
         <template #default="{ row }">
-          <el-button type="primary" link size="small" @click="handleViewDetail(row)">
+          <el-link type="primary" @click="handleViewDetail(row)">
             {{ row.refid }}
-          </el-button>
+          </el-link>
         </template>
       </el-table-column>
-      <el-table-column prop="repo_id" label="仓库" min-width="120" />
-      <el-table-column prop="repo_name" label="名称" min-width="150" />
-      <el-table-column prop="repo_file" label="配置文件" min-width="150" />
+      <el-table-column prop="repo_id" label="仓库" min-width="120" show-overflow-tooltip   />
+      <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
+      <el-table-column prop="repo_file" label="配置文件" min-width="150" show-overflow-tooltip />
       <el-table-column prop="repo_baseurl" label="地址" min-width="250">
         <template #default="{ row }">
           <div class="baseurl-tags">
@@ -69,13 +69,14 @@
       </el-table-column>
     </el-table>
 
-    <div class="pagination-section">
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="total"
         layout="total, sizes, prev, pager, next, jumper"
+        background
         @size-change="loadData"
         @current-change="loadData"
       />
@@ -166,11 +167,7 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
-.pagination-section {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
+/* 使用全局的 ops-pagination-wrapper 样式 */
 
 .baseurl-tags {
   display: flex;

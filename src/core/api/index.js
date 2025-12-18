@@ -54,7 +54,7 @@ class ApiService {
               delete config.headers['Content-Type']
             }
           }
-        } catch {}
+        } catch { }
 
         // 添加缓存破坏参数（后端约定使用 cacheBuster）
         if (config.method === 'get' && config.cache !== false) {

@@ -1,90 +1,94 @@
 <template>
-  <div class="log-report">
-    <!-- 主内容区域 -->
-    <div class="main-content">
-      <!-- 顶部工具栏 -->
-      <div class="toolbar">
-        <!-- 时间范围筛选（右侧） -->
-        <div class="toolbar-right">
-          <span class="filter-label">时间范围：</span>
-          <el-select v-model="filterDay" style="width: 120px" @change="handleDayChange">
-            <el-option label="All" value="all" />
-            <el-option label="Today" value="1" />
-            <el-option label="Last 7 Days" value="7" />
-            <el-option label="Last 30 Days" value="30" />
-            <el-option label="Last Year" value="365" />
-          </el-select>
-        </div>
-      </div>
+  <div class="ops-page-layout">
+    <!-- 筛选栏 -->
+    <div class="ops-filter-bar">
+      <span class="filter-label">时间范围：</span>
+      <el-select v-model="filterDay" size="small" style="width: 120px" @change="handleDayChange">
+        <el-option label="All" value="all" />
+        <el-option label="Today" value="1" />
+        <el-option label="Last 7 Days" value="7" />
+        <el-option label="Last 30 Days" value="30" />
+        <el-option label="Last Year" value="365" />
+      </el-select>
+      <el-select
+        v-model="engineFilter"
+        placeholder="执行引擎节点"
+        size="small"
+        clearable
+        style="width: 130px"
+        @change="handleFilterChange"
+      >
+        <el-option
+          v-for="node in engineOptions"
+          :key="node"
+          :label="node"
+          :value="node"
+        />
+      </el-select>
+      <el-select
+        v-model="statusFilter"
+        placeholder="状态"
+        size="small"
+        clearable
+        style="width: 100px"
+        @change="handleFilterChange"
+      >
+        <el-option
+          v-for="status in statusOptions"
+          :key="status.value"
+          :label="status.label"
+          :value="status.value"
+        />
+      </el-select>
+      <el-select
+        v-model="actionFilter"
+        placeholder="操作"
+        size="small"
+        clearable
+        style="width: 100px"
+        @change="handleFilterChange"
+      >
+        <el-option
+          v-for="action in actionOptions"
+          :key="action"
+          :label="action"
+          :value="action"
+        />
+      </el-select>
+      <el-input
+        v-model="searchText"
+        placeholder="搜索..."
+        size="small"
+        clearable
+        style="width: 180px"
+        @input="handleFilterChange"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+    </div>
 
-      <!-- 筛选器行 -->
-      <div class="filter-bar">
-        <div class="filter-bar-right">
-          <el-select
-            v-model="engineFilter"
-            placeholder="执行引擎节点"
-            clearable
-            style="width: 130px"
-            @change="handleFilterChange"
-          >
-            <el-option
-              v-for="node in engineOptions"
-              :key="node"
-              :label="node"
-              :value="node"
-            />
-          </el-select>
-          <el-select
-            v-model="statusFilter"
-            placeholder="状态"
-            clearable
-            style="width: 100px"
-            @change="handleFilterChange"
-          >
-            <el-option
-              v-for="status in statusOptions"
-              :key="status.value"
-              :label="status.label"
-              :value="status.value"
-            />
-          </el-select>
-          <el-select
-            v-model="actionFilter"
-            placeholder="操作"
-            clearable
-            style="width: 100px"
-            @change="handleFilterChange"
-          >
-            <el-option
-              v-for="action in actionOptions"
-              :key="action"
-              :label="action"
-              :value="action"
-            />
-          </el-select>
-          <el-input
-            v-model="searchText"
-            placeholder="搜索..."
-            clearable
-            style="width: 180px"
-            @input="handleFilterChange"
-          >
-            <template #prefix>
-              <i class="fa fa-search" />
-            </template>
-          </el-input>
-          <el-button :icon="Refresh" @click="loadLogs" />
-        </div>
-      </div>
+    <!-- 操作栏 -->
+    <!-- <div class="ops-action-bar"> -->
+      <!-- 暂无操作按钮 -->
+    <!-- </div> -->
 
-      <!-- 日志表格 -->
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadLogs" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <el-table
         v-loading="loading"
         :data="tableData"
         stripe
         style="width: 100%"
-        size="default"
+        size="small"
         row-key="run_id"
+        height="calc(100vh - 260px)"
         :default-sort="{ prop: 'start_time', order: 'descending' }"
         empty-text="没有数据"
       >
@@ -125,20 +129,20 @@
           </template>
         </el-table-column>
       </el-table>
+    </div>
 
-      <!-- 底部分页 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.size"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handlePageSizeChange"
-          @current-change="handlePageChange"
-        />
-      </div>
+    <!-- 分页器区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.size"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 执行结果详情弹窗 - 复用 automation 模块的组件 -->
@@ -152,7 +156,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import { softwareLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
@@ -410,62 +414,11 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.log-report {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-}
+/* 此组件使用全局的 ops-page-layout 样式 */
 
-.page-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #ebeef5;
-
-  .page-title {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e293b;
-  }
-}
-
-.main-content {
-  flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 16px;
-
-  .toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .filter-label {
-      color: #409eff;
-      font-size: 14px;
-    }
-  }
-}
-
-.filter-bar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 12px;
-
-  .filter-bar-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+.filter-label {
+  color: #409eff;
+  font-size: 14px;
 }
 
 .status-badge {
@@ -483,44 +436,5 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.table-footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #ebeef5;
-
-  .footer-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .total-text {
-      color: #606266;
-      font-size: 14px;
-    }
-  }
-}
-
-// 表格样式优化
-:deep(.el-table) {
-  .el-table__header-wrapper {
-    th {
-      background: #f8fafc;
-      color: #475569;
-      font-weight: 500;
-    }
-  }
-
-  .el-table__empty-block {
-    min-height: 200px;
-  }
-
-  .el-table__empty-text {
-    color: #909399;
-  }
 }
 </style>

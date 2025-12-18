@@ -1,57 +1,58 @@
 <template>
   <div class="custom-repo-tab">
     <!-- 操作按钮 -->
-    <div class="action-bar">
-      <el-button type="secondary" plain @click="handleDownloadTemplate">
-        <i class="fa fa-arrow-down" /> 模板下载
-      </el-button>
-      <el-button type="primary" plain @click="handleImportRepo">
-        <i class="fa fa-file-import" /> 仓库导入
-      </el-button>
-      <el-button type="primary" plain @click="handleAddRepo">
-        <i class="fa fa-plus" /> 添加仓库
-      </el-button>
+    <div class="ops-action-bar">
+      <div class="action-left">
+        <el-button @click="handleDownloadTemplate">
+          <i class="fa fa-arrow-down" /> 模板下载
+        </el-button>
+        <el-button type="primary" @click="handleImportRepo">
+          <i class="fa fa-file-import" /> 仓库导入
+        </el-button>
+        <el-button type="primary" @click="handleAddRepo">
+          <i class="fa fa-plus" /> 添加仓库
+        </el-button>
+        <el-button type="primary" :disabled="selectedRows.length === 0" @click="handleConfigToHost">
+          <i class="fa fa-angle-right" /> 配置到主机
+        </el-button>
+      </div>
     </div>
 
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      stripe
-      style="width: 100%"
-      size="small"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="50" />
-      <el-table-column prop="repo_name" label="仓库名" min-width="150" />
-      <el-table-column prop="repo_file" label="仓库文件" min-width="150" />
-      <el-table-column prop="repo_desc" label="描述" min-width="200" show-overflow-tooltip />
-      <el-table-column prop="repo_url" label="地址" min-width="250" show-overflow-tooltip />
-      <el-table-column label="操作" width="88" fixed="right">
-        <template #default="{ row }">
-          <el-button text type="primary" size="small" @click="handleEdit(row)">
-            编辑
-          </el-button>
-          <el-button text type="danger" size="small" @click="handleDelete(row)">
-            删除
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <!-- 底部操作按钮 -->
-    <div class="bottom-action-bar">
-      <el-button type="primary" plain :disabled="selectedRows.length === 0" @click="handleConfigToHost">
-        <i class="fa fa-angle-right" /> 配置到主机
-      </el-button>
+    <div class="ops-table-wrapper">
+      <el-table
+        v-loading="loading"
+        :data="tableData"
+        stripe
+        style="width: 100%"
+        size="small"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="repo_name" label="仓库名" min-width="150" />
+        <el-table-column prop="repo_file" label="仓库文件" min-width="150" />
+        <el-table-column prop="repo_desc" label="描述" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="repo_url" label="地址" min-width="250" show-overflow-tooltip />
+        <el-table-column label="操作" width="88" fixed="right">
+          <template #default="{ row }">
+            <el-button text type="primary" size="small" @click="handleEdit(row)">
+              编辑
+            </el-button>
+            <el-button text type="danger" size="small" @click="handleDelete(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
 
-    <div class="pagination-section">
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="total"
         layout="total, sizes, prev, pager, next, jumper"
+        background
         @size-change="loadData"
         @current-change="loadData"
       />
@@ -167,24 +168,5 @@ onMounted(() => {
   height: 100%;
 }
 
-.action-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.bottom-action-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  padding: 12px 0;
-}
-
-.pagination-section {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
+/* 使用全局的 ops-action-bar 和 ops-pagination-wrapper 样式 */
 </style>

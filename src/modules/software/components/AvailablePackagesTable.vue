@@ -1,81 +1,91 @@
 <template>
   <div class="available-packages-table">
-    <!-- 表格区域 -->
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      stripe
-      style="width: 100%"
-      size="small"
-    >
-      <el-table-column prop="pkg_name" label="名称" min-width="180" show-overflow-tooltip>
-        <template #default="{ row }">
-          <el-button type="primary" link @click="handlePackageClick(row)">
-            {{ row.pkg_name }}
-          </el-button>
-        </template>
-      </el-table-column>
-      <el-table-column prop="pkg_envra" label="软件包" min-width="200" show-overflow-tooltip />
-      <el-table-column prop="pkg_arch" label="架构" width="100" />
-      <el-table-column prop="pkg_release" label="发行号" width="120" />
-      <el-table-column prop="pkg_version" label="版本号" width="120" />
-      <el-table-column prop="pkg_yumstate" label="软件状态" width="100">
-        <template #default="{ row }">
-          <el-tag v-if="row.pkg_yumstate" :type="row.pkg_yumstate === '可用' ? 'success' : 'info'" size="small">
-            {{ row.pkg_yumstate }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="repo_id" label="仓库ID" width="120" />
-      <el-table-column prop="scan_date" label="扫描时间" width="180">
-        <template #default="{ row }">
-          {{ formatDate(row.scan_date) }}
-        </template>
-      </el-table-column>
-    </el-table>
+    <!-- 操作栏 - 左右分布 -->
+    <div class="ops-action-bar">
+      <div class="action-left">
+        <el-button size="small" @click="handleExport">
+          <i class="fa fa-download" />
+          导出
+        </el-button>
+      </div>
+      <div class="action-right">
+        <el-input
+          v-model="filterText"
+          placeholder=""
+          style="width: 200px"
+          size="small"
+          clearable
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
+    </div>
 
-    <!-- 分页区域 -->
-    <div class="pagination-section">
-      <div class="pagination-left">
-        <el-select v-model="pagination.pageSize" style="width: 80px" @change="handleSizeChange">
-          <el-option :value="10" label="10" />
-          <el-option :value="25" label="25" />
-          <el-option :value="50" label="50" />
-          <el-option :value="100" label="100" />
-        </el-select>
-        <span class="pagination-info">{{ paginationInfo }}</span>
-      </div>
-      <div class="pagination-right">
-        <span class="page-info">Page {{ pagination.page }} of {{ totalPages }}</span>
-        <el-button-group>
-          <el-button size="small" :disabled="pagination.page <= 1" @click="handlePageChange(1)">
-            <i class="fa fa-angle-double-left" />
-          </el-button>
-          <el-button size="small" :disabled="pagination.page <= 1" @click="handlePageChange(pagination.page - 1)">
-            <i class="fa fa-angle-left" />
-          </el-button>
-          <el-button size="small" :disabled="pagination.page >= totalPages" @click="handlePageChange(pagination.page + 1)">
-            <i class="fa fa-angle-right" />
-          </el-button>
-          <el-button size="small" :disabled="pagination.page >= totalPages" @click="handlePageChange(totalPages)">
-            <i class="fa fa-angle-double-right" />
-          </el-button>
-        </el-button-group>
-      </div>
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table
+        v-loading="loading"
+        :data="tableData"
+        stripe
+        style="width: 100%"
+        size="small"
+        max-height="calc(100vh - 380px)"
+      >
+        <el-table-column prop="pkg_name" label="名称" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            <el-button type="primary" link @click="handlePackageClick(row)">
+              {{ row.pkg_name }}
+            </el-button>
+          </template>
+        </el-table-column>
+        <el-table-column prop="pkg_envra" label="软件包" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="pkg_arch" label="架构" width="100" />
+        <el-table-column prop="pkg_release" label="发行号" width="120" />
+        <el-table-column prop="pkg_version" label="版本号" width="120" />
+        <el-table-column prop="pkg_yumstate" label="软件状态" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.pkg_yumstate" :type="row.pkg_yumstate === '可用' ? 'success' : 'info'" size="small">
+              {{ row.pkg_yumstate }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="repo_id" label="仓库ID" width="120" />
+        <el-table-column prop="scan_date" label="扫描时间" width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.scan_date) }}
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <!-- 分页器区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import { packageApi } from '../api'
-
-const props = defineProps({
-  searchText: {
-    type: String,
-    default: ''
-  }
-})
 
 const loading = ref(false)
 const filterText = ref('')
@@ -86,33 +96,6 @@ const pagination = reactive({
   total: 0
 })
 
-// 监听外部搜索文本变化（只在有实际变化时触发，跳过初始化）
-let isFirstWatch = true
-watch(() => props.searchText, (newVal, oldVal) => {
-  if (isFirstWatch) {
-    isFirstWatch = false
-    return
-  }
-  if (newVal !== oldVal) {
-    filterText.value = newVal
-    pagination.page = 1
-    loadData()
-  }
-})
-
-// 分页信息
-const paginationInfo = computed(() => {
-  const total = pagination.total
-  if (total === 0) return '0-0/0'
-  const start = (pagination.page - 1) * pagination.pageSize + 1
-  const end = Math.min(pagination.page * pagination.pageSize, total)
-  return `${start}-${end}/${total.toLocaleString()}`
-})
-
-const totalPages = computed(() => {
-  return Math.ceil(pagination.total / pagination.pageSize) || 1
-})
-
 // 加载数据
 async function loadData() {
   loading.value = true
@@ -120,7 +103,7 @@ async function loadData() {
     const response = await packageApi.getAvailableList({
       page: pagination.page,
       size: pagination.pageSize,
-      filter: filterText.value ? `pkg_name:*${filterText.value}*` : ''
+      filter: filterText.value || ''
     })
     const data = response?.data || response
     tableData.value = data?.records || []
@@ -159,6 +142,11 @@ function handleSearch() {
   loadData()
 }
 
+// 导出
+function handleExport() {
+  ElMessage.info('导出功能开发中')
+}
+
 // 分页
 function handlePageChange(page) {
   pagination.page = page
@@ -184,41 +172,31 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+/* 此组件使用全局的 ops-* 样式 */
+
 .available-packages-table {
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 16px;
+  gap: 16px;
 }
 
-.pagination-section {
+.ops-action-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #e4e7ed;
-  margin-top: 12px;
+}
 
-  .pagination-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.action-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-    .pagination-info {
-      font-size: 13px;
-      color: #606266;
-    }
-  }
-
-  .pagination-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .page-info {
-      font-size: 13px;
-      color: #606266;
-    }
-  }
+.action-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

@@ -42,11 +42,11 @@
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
         <el-button
-          type="success"
+          type="primary"
           :loading="submitting"
           @click="handleSubmit"
         >
-          <i class="fa fa-check" /> 确定
+          确定
         </el-button>
       </div>
     </template>

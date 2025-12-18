@@ -9,56 +9,66 @@
 
     <!-- 操作记录 Tab -->
     <template v-if="activeTab === 'operation'">
-      <!-- 筛选区 -->
       <div class="ops-filter-bar">
-        <span>时间范围</span>
-        <el-select v-model="dayFilter" size="small" style="width: 100px" @change="handleFilterChange">
-          <el-option label="Today" :value="1" />
-          <el-option label="近3天" :value="3" />
-          <el-option label="近7天" :value="7" />
-          <el-option label="近30天" :value="30" />
-        </el-select>
-        <el-select v-model="engineFilter" placeholder="执行引擎节点" size="small" style="width: 120px" clearable @change="handleFilterChange">
-          <el-option label="全部" value="" />
-        </el-select>
-        <el-select v-model="statusFilter" placeholder="状态" size="small" style="width: 80px" clearable @change="handleFilterChange">
-          <el-option label="全部" value="all" />
-          <el-option label="完成" value="COMPLETED" />
-          <el-option label="失败" value="FAILED" />
-          <el-option label="运行中" value="RUNNING" />
-        </el-select>
-        <el-select v-model="actionFilter" placeholder="操作类型" size="small" style="width: 120px" clearable @change="handleFilterChange">
-          <el-option label="全部" value="all" />
-          <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
-          <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
-          <el-option label="补丁回退" value="#{app_vap.menu.patch_rollback.title}" />
-          <el-option label="Windows漏洞扫描" value="#{app_vap.menu.win_patch_scan.title}" />
-          <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
-        </el-select>
-        <el-input
-          v-model="searchText"
-          placeholder="搜索"
-          size="small"
-          style="width: 150px; margin-left: auto"
-          clearable
-          @input="handleSearchInput"
-        >
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
-        <el-button size="small" @click="handleFilterChange">
-          刷新
-        </el-button>
+        <div class="filter-group">
+          <span class="filter-label">时间范围</span>
+          <el-select v-model="dayFilter" size="small" style="width: 100px" @change="handleFilterChange">
+            <el-option label="Today" :value="1" />
+            <el-option label="近3天" :value="3" />
+            <el-option label="近7天" :value="7" />
+            <el-option label="近30天" :value="30" />
+          </el-select>
+        </div>
+        <div class="filter-group">
+          <el-select v-model="engineFilter" placeholder="执行引擎节点" size="small" style="width: 120px" clearable @change="handleFilterChange">
+            <el-option label="全部" value="" />
+          </el-select>
+        </div>
+        <div class="filter-group">
+          <el-select v-model="statusFilter" placeholder="状态" size="small" style="width: 80px" clearable @change="handleFilterChange">
+            <el-option label="全部" value="all" />
+            <el-option label="完成" value="COMPLETED" />
+            <el-option label="失败" value="FAILED" />
+            <el-option label="运行中" value="RUNNING" />
+          </el-select>
+        </div>
+        <div class="filter-group">
+          <el-select v-model="actionFilter" placeholder="操作类型" size="small" style="width: 120px" clearable @change="handleFilterChange">
+            <el-option label="全部" value="all" />
+            <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
+            <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
+            <el-option label="补丁回退" value="#{app_vap.menu.patch_rollback.title}" />
+            <el-option label="Windows漏洞扫描" value="#{app_vap.menu.win_patch_scan.title}" />
+            <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
+          </el-select>
+        </div>
+        <div class="filter-group">
+          <el-input
+            v-model="searchText"
+            placeholder="搜索"
+            size="small"
+            style="width: 150px"
+            clearable
+            @input="handleSearchInput"
+          >
+            <template #prefix>
+              <i class="fa fa-search" />
+            </template>
+          </el-input>
+        </div>
       </div>
 
-      <!-- 表格区域 -->
       <div class="ops-table-wrapper">
+        <div class="table-toolbar-icons">
+          <el-button class="toolbar-icon-btn" circle :loading="loading" @click="handleFilterChange" title="刷新">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
         <el-table
           v-loading="loading"
           :data="tableData"
           stripe
-          height="calc(100vh - 320px)"
+          max-height="calc(100vh - 320px)"
         >
           <el-table-column prop="start_time" label="开始时间" width="180" sortable>
             <template #default="{ row }">
@@ -119,7 +129,6 @@
 
     <!-- 漏洞报表 Tab -->
     <template v-if="activeTab === 'vulnerability'">
-      <!-- 筛选区 -->
       <div class="ops-filter-bar">
         <el-input
           v-model="vulFilterText"
@@ -134,18 +143,20 @@
             <i class="fa fa-search" />
           </template>
         </el-input>
-        <el-button size="small" @click="loadVulData">
-          刷新
-        </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
+        <div class="table-toolbar-icons">
+          <el-button class="toolbar-icon-btn" circle :loading="vulLoading" @click="loadVulData" title="刷新">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
         <el-table
           v-loading="vulLoading"
           :data="vulTableData"
           stripe
-          height="calc(100vh - 320px)"
+          max-height="calc(100vh - 320px)"
         >
           <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
           <el-table-column prop="os" label="OS" width="100" />
@@ -176,7 +187,6 @@
 
     <!-- 补丁报表 Tab -->
     <template v-if="activeTab === 'patch'">
-      <!-- 筛选区 -->
       <div class="ops-filter-bar">
         <el-input
           v-model="patchFilterText"
@@ -191,24 +201,26 @@
             <i class="fa fa-search" />
           </template>
         </el-input>
-        <el-button size="small" @click="loadPatchData">
-          刷新
-        </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
+        <div class="table-toolbar-icons">
+          <el-button class="toolbar-icon-btn" circle :loading="patchLoading" @click="loadPatchData" title="刷新">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
         <el-table
           v-loading="patchLoading"
           :data="patchTableData"
           stripe
-          height="calc(100vh - 320px)"
+          max-height="calc(100vh - 320px)"
         >
-          <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="os" label="OS" width="100" />
-          <el-table-column prop="os_version" label="OS版本" width="150" />
-          <el-table-column prop="patch_id" label="补丁编号" width="120" />
-          <el-table-column prop="summary" label="概要" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="host_key" label="主机" min-width="100" show-overflow-tooltip />
+          <el-table-column prop="os_distro" label="OS" width="100" />
+          <el-table-column prop="os_version" label="OS版本" width="100" />
+          <el-table-column prop="patch_id" label="补丁编号" min-width="120" />
+          <el-table-column prop="title" label="概要" min-width="300" show-overflow-tooltip />
           <el-table-column prop="severity" label="严重性" width="100">
             <template #default="{ row }">
               <el-tag :type="getSeverityType(row.severity)" size="small">
@@ -216,9 +228,9 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="scan_time" label="扫描时间" width="160">
+          <el-table-column prop="scan_timestamp" label="扫描时间" width="180">
             <template #default="{ row }">
-              {{ formatTimestamp(row.scan_time) }}
+              {{ formatTimestamp(row.scan_timestamp) }}
             </template>
           </el-table-column>
         </el-table>
@@ -251,8 +263,10 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import { patchLogsApi, operationReportApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { translateText } from '@/utils/i18n'
 
 // Tab 状态
 const activeTab = ref('operation')
@@ -408,24 +422,38 @@ function formatTimestamp(timestamp) {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-// 翻译操作类型（硬编码）
+// 翻译操作类型（使用 i18n 工具）
 function translateAction(action) {
-  switch (action) {
-    case '#{app_vap.menu.patch_scan.title}':
-      return '补丁扫描'
-    case '#{app_vap.menu.patch_install.title}':
-      return '补丁安装'
-    case '#{app_vap.menu.patch_rollback.title}':
-      return '补丁回退'
-    case '#{app_vap.menu.win_patch_scan.title}':
-      return 'Windows漏洞扫描'
-    case '#{app_vap.menu.import_patch_library_time}':
-      return '定时导入补丁库'
-    case '#{app_vap.menu.import_patch_library.title}':
-      return '导入补丁库'
-    default:
-      return action
+  if (!action) return ''
+
+  // 先尝试使用 i18n 翻译工具
+  const translated = translateText(action)
+
+  // 如果翻译结果与原文相同，可能是没有找到翻译，尝试使用硬编码映射
+  if (translated === action && action.startsWith('#{')) {
+    // 硬编码的常用翻译映射
+    const staticMap = {
+      '#{app_vap.menu.patch_scan.title}': '补丁扫描',
+      '#{app_vap.menu.patch_install.title}': '补丁安装',
+      '#{app_vap.menu.patch_rollback.title}': '补丁回退',
+      '#{app_vap.menu.win_patch_scan.title}': 'Windows漏洞扫描',
+      '#{app_vap.menu.import_patch_library_time}': '定时导入补丁库',
+      '#{app_vap.menu.import_patch_library.title}': '导入补丁库',
+      '#{app_vap.common.tab.repo_list_scan}': 'YUM源列表扫描',
+      '#{app_vap.common.tab.custom_repo}': '自定义YUM源'
+    }
+
+    if (staticMap[action]) {
+      return staticMap[action]
+    }
+
+    // 如果静态映射也没有，提取 key 的最后一部分作为显示文本
+    const key = action.slice(2, -1)
+    const parts = key.split('.')
+    return parts[parts.length - 1] || action
   }
+
+  return translated
 }
 
 // 翻译消息（硬编码）
@@ -643,4 +671,20 @@ onMounted(() => {
 
 <style scoped lang="scss">
 /* 此组件现在使用全局的 ops-page-layout 样式 */
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 24px;
+
+  &:last-child {
+    margin-right: 0;
+  }
+}
+
+.filter-label {
+  font-size: 13px;
+  color: #606266;
+  white-space: nowrap;
+}
 </style>

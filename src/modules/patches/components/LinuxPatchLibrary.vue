@@ -31,45 +31,47 @@
 
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <!-- 严重程度多选 -->
-      <el-checkbox-group v-model="severityFilter" @change="handleFilter">
-        <el-checkbox value="Critical">
-          <span class="severity-tag severity-critical">严重</span>
-        </el-checkbox>
-        <el-checkbox value="Important">
-          <span class="severity-tag severity-important">重要</span>
-        </el-checkbox>
-        <el-checkbox value="Moderate">
-          <span class="severity-tag severity-moderate">中等</span>
-        </el-checkbox>
-        <el-checkbox value="Low">
-          <span class="severity-tag severity-low">低级</span>
-        </el-checkbox>
-      </el-checkbox-group>
+      <!-- 严重程度多选题 -->
+      <div class="filter-group">
+        <el-checkbox-group v-model="severityFilter" @change="handleFilter">
+          <el-checkbox value="Critical">
+            <span class="severity-tag severity-critical">严重</span>
+          </el-checkbox>
+          <el-checkbox value="Important">
+            <span class="severity-tag severity-important">重要</span>
+          </el-checkbox>
+          <el-checkbox value="Moderate">
+            <span class="severity-tag severity-moderate">中等</span>
+          </el-checkbox>
+          <el-checkbox value="Low">
+            <span class="severity-tag severity-low">低级</span>
+          </el-checkbox>
+        </el-checkbox-group>
+      </div>
 
-      <!-- 状态筛选 -->
-      <span>状态</span>
-      <el-select v-model="ignoreFilter" size="small" style="width: 100px;" @change="handleFilter">
-        <el-option label="全部" value="0,1" />
-        <el-option label="白名单" value="1" />
-        <el-option label="非白名单" value="0" />
-      </el-select>
+      <div class="filter-group">
+        <span class="filter-label">状态</span>
+        <el-select v-model="ignoreFilter" size="small" style="width: 100px;" @change="handleFilter">
+          <el-option label="全部" value="0,1" />
+          <el-option label="白名单" value="1" />
+          <el-option label="非白名单" value="0" />
+        </el-select>
+      </div>
 
-      <el-input
-        v-model="filterText"
-        placeholder="搜索补丁编号、概要、CVE..."
-        size="small"
-        style="width: 280px; margin-left: auto"
-        clearable
-        @input="handleFilter"
-      >
-        <template #prefix>
-          <i class="fa fa-search" />
-        </template>
-      </el-input>
-      <el-button size="small" @click="handleRefresh">
-        刷新
-      </el-button>
+      <div class="filter-group">
+        <el-input
+          v-model="filterText"
+          placeholder="搜索补丁编号、概要、CVE..."
+          size="small"
+          style="width: 280px"
+          clearable
+          @input="handleFilter"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+      </div>
     </div>
 
     <!-- 批量操作按钮 - 选中时显示 -->
@@ -84,12 +86,17 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="handleRefresh" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="paginatedTableData"
+        :data="tableData"
         stripe
-        height="calc(100vh - 480px)"
+        max-height="calc(100vh - 500px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
@@ -237,6 +244,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import { patchLibraryApi } from '../api'
 import { runJob } from '@/modules/automation/api/command'
 
@@ -254,7 +262,7 @@ const vendorStats = ref([])
 
 // 筛选条件
 const filterText = ref('')
-const severityFilter = ref(['Critical'])  // 默认选中 Critical
+const severityFilter = ref(['Critical', 'Important'])  // 默认选中 Critical, Important
 const ignoreFilter = ref('0,1')           // 默认全部
 const currentVendor = ref('redhat')       // 默认 redhat
 
@@ -269,12 +277,7 @@ const pagination = reactive({
   total: 0
 })
 
-// 前端分页：计算当前页显示的数据
-const paginatedTableData = computed(() => {
-  const start = (pagination.page - 1) * pagination.pageSize
-  const end = start + pagination.pageSize
-  return tableData.value.slice(start, end)
-})
+// 后端分页：直接使用 tableData，不需要前端分页计算
 
 // 详情对话框
 const detailDialogVisible = ref(false)
@@ -356,13 +359,15 @@ async function loadData() {
     const params = {
       severity: severityFilter.value.join(','),
       vendor: currentVendor.value,
-      is_ignore: ignoreFilter.value
+      is_ignore: ignoreFilter.value,
+      page: pagination.page,
+      size: pagination.pageSize
     }
     const response = await patchLibraryApi.getPatchList(params)
     // 源系统返回格式: { total: number, records: [] }
     tableData.value = response?.records || response?.data?.records || []
-    // 前端分页：使用数据长度作为 total
-    pagination.total = tableData.value.length
+    // 后端分页：使用接口返回的 total
+    pagination.total = response?.total || response?.data?.total || tableData.value.length
   } catch (error) {
     console.error('Failed to load patches:', error)
     tableData.value = []
@@ -384,14 +389,16 @@ function handleRefresh() {
   loadVendorStats()
 }
 
-// 分页变化 - 前端分页不需要重新加载数据
+// 分页变化 - 后端分页需要重新加载数据
 function handlePageChange(page) {
   pagination.page = page
+  loadData()
 }
 
 function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
+  loadData()
 }
 
 // 选择变化
@@ -614,6 +621,24 @@ defineExpose({
     opacity: 0.3;
     align-self: center;
   }
+}
+
+// 筛选区样式
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 24px;
+
+  &:last-child {
+    margin-right: 0;
+  }
+}
+
+.filter-label {
+  font-size: 13px;
+  color: #606266;
+  white-space: nowrap;
 }
 
 // 厂商颜色

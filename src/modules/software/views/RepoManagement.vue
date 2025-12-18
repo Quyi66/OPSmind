@@ -1,21 +1,20 @@
 <template>
-  <div class="repo-management">
+  <div class="ops-page-layout">
     <!-- 页面描述 -->
-    <div class="description-section">
-      <div class="desc-content">
-        <p class="description">
-          软件仓库（Yum源）用于管理软件包，仓库中存放各种rpm的软件包以及软件包之间的依赖关系。
-          每台主机上都可以配置自己的仓库，为避免仓库混乱，建议使用统一的基准仓库。
-        </p>
-      </div>
-      <div class="desc-icon">
-        <i class="fad fa-laptop-house fa-5x" />
-      </div>
-    </div>
+    <el-alert type="info" :closable="false" class="page-description">
+      <template #title>
+        <div class="desc-content">
+          <p class="description">
+            软件仓库（Yum源）用于管理软件包，仓库中存放各种rpm的软件包以及软件包之间的依赖关系。
+            每台主机上都可以配置自己的仓库，为避免仓库混乱，建议使用统一的基准仓库。
+          </p>
+        </div>
+      </template>
+    </el-alert>
 
     <!-- Tab 导航 -->
     <div class="tab-section">
-      <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
+      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
         <el-tab-pane name="baseRepo">
           <template #label>
             <i class="fa fa-home" /> 基准仓库
@@ -39,28 +38,44 @@
       </el-tabs>
     </div>
 
-    <!-- 内容区域 -->
-    <div class="content-section">
-      <!-- 基准仓库 -->
-      <div v-if="activeTab === 'baseRepo'" class="tab-content">
-        <!-- 状态筛选 -->
-        <div class="filter-bar">
-          <el-checkbox-group v-model="baseRepoStatus" @change="loadBaseRepos">
-            <el-checkbox value="enabled">
-              <el-tag type="success" size="small">启用</el-tag>
-            </el-checkbox>
-            <el-checkbox value="disabled">
-              <el-tag type="warning" size="small">未启用</el-tag>
-            </el-checkbox>
-          </el-checkbox-group>
-        </div>
+    <!-- 基准仓库 Tab 内容 -->
+    <template v-if="activeTab === 'baseRepo'">
+      <!-- 筛选栏 -->
+      <div class="ops-filter-bar">
+        <el-checkbox-group v-model="baseRepoStatus" @change="loadBaseRepos">
+          <el-checkbox value="enabled">
+            <el-tag type="success" size="small">启用</el-tag>
+          </el-checkbox>
+          <el-checkbox value="disabled">
+            <el-tag type="warning" size="small">未启用</el-tag>
+          </el-checkbox>
+        </el-checkbox-group>
+      </div>
 
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-button type="primary" size="small" :disabled="selectedBaseRepos.length === 0" @click="handleConfigRepoToHost">
+          <i class="fa fa-cogs" /> 配置到主机
+        </el-button>
+        <el-button size="small" :disabled="!repoDefaultHosts" @click="handleRescanRepoInfo">
+          <i class="fa fa-undo-alt" /> 重新扫描仓库信息
+        </el-button>
+      </div>
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
+        <div class="table-toolbar-icons">
+          <el-button class="toolbar-icon-btn" circle :loading="baseRepoLoading" @click="loadBaseRepos" title="刷新">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
         <el-table
           v-loading="baseRepoLoading"
           :data="baseRepoData"
           stripe
           style="width: 100%"
           size="small"
+          max-height="calc(100vh - 380px)"
           @selection-change="handleBaseRepoSelectionChange"
         >
           <el-table-column type="selection" width="50" />
@@ -113,45 +128,37 @@
             </template>
           </el-table-column>
         </el-table>
-
-        <!-- 操作按钮 -->
-        <div class="action-bar">
-          <el-button type="primary" plain :disabled="selectedBaseRepos.length === 0" @click="handleConfigRepoToHost">
-            <i class="fa fa-cogs" /> 配置到主机
-          </el-button>
-          <el-button plain :disabled="!repoDefaultHosts" @click="handleRescanRepoInfo">
-            <i class="fa fa-undo-alt" /> 重新扫描仓库信息
-          </el-button>
-        </div>
-
-        <div class="pagination-section">
-          <el-pagination
-            v-model:current-page="baseRepoPage"
-            v-model:page-size="baseRepoPageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="baseRepoTotal"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="loadBaseRepos"
-            @current-change="loadBaseRepos"
-          />
-        </div>
       </div>
 
-      <!-- 基准主机 -->
-      <div v-if="activeTab === 'baseHost'" class="tab-content">
-        <base-host-tab />
+      <!-- 分页器区域 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="baseRepoPage"
+          v-model:page-size="baseRepoPageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="baseRepoTotal"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="loadBaseRepos"
+          @current-change="loadBaseRepos"
+        />
       </div>
+    </template>
 
-      <!-- 自定义仓库 -->
-      <div v-if="activeTab === 'customRepo'" class="tab-content">
-        <custom-repo-tab />
-      </div>
+    <!-- 基准主机 -->
+    <template v-if="activeTab === 'baseHost'">
+      <base-host-tab />
+    </template>
 
-      <!-- 已配置仓库 -->
-      <div v-if="activeTab === 'configuredRepo'" class="tab-content">
-        <configured-repo-tab />
-      </div>
-    </div>
+    <!-- 自定义仓库 -->
+    <template v-if="activeTab === 'customRepo'">
+      <custom-repo-tab />
+    </template>
+
+    <!-- 已配置仓库 -->
+    <template v-if="activeTab === 'configuredRepo'">
+      <configured-repo-tab />
+    </template>
 
     <!-- 仓库详情弹窗 -->
     <RepoDetailDialog
@@ -166,6 +173,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import { repoApi } from '../api'
 import BaseHostTab from '../components/BaseHostTab.vue'
 import CustomRepoTab from '../components/CustomRepoTab.vue'
@@ -277,26 +285,10 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.repo-management {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 16px;
-  background: #f5f7fa;
-}
+/* 此组件使用全局的 ops-page-layout 样式 */
 
-.description-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-
-  .desc-content {
-    flex: 1;
-  }
+.page-description {
+  margin-bottom: 0;
 
   .description {
     margin: 0;
@@ -304,18 +296,9 @@ onMounted(() => {
     color: #64748b;
     line-height: 1.6;
   }
-
-  .desc-icon {
-    color: #94a3b8;
-    margin-left: 24px;
-  }
 }
 
 .tab-section {
-  background: #fff;
-  border-radius: 8px 8px 0 0;
-  padding: 0 16px;
-
   :deep(.el-tabs__header) {
     margin-bottom: 0;
   }
@@ -325,35 +308,6 @@ onMounted(() => {
       margin-right: 6px;
     }
   }
-}
-
-.content-section {
-  flex: 1;
-  background: #fff;
-  border-radius: 0 0 8px 8px;
-  padding: 16px;
-  overflow: auto;
-}
-
-.action-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.pagination-section {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-top: 16px;
 }
 
 .baseurl-tags {
