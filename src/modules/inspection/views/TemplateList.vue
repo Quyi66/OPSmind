@@ -37,6 +37,7 @@
         style="width: 100%"
         row-key="id"
         :default-sort="{ prop: 'executedAt', order: 'descending' }"
+        heigth="calc(100vh - 300px)"
       >
         <!-- 名称 -->
         <el-table-column prop="templateName" label="名称" min-width="250" sortable>
@@ -64,14 +65,9 @@
         <!-- 上次检查时间 -->
         <el-table-column prop="executedAt" label="上次检查时间" width="180" sortable>
           <template #default="{ row }">
-            <a
-              v-if="row.executedAt"
-              href="javascript:void(0)"
-              class="execution-link"
-              @click="goToResult(row)"
-            >
+            <span v-if="row.executedAt" class="execution-time">
               {{ formatDateTime(row.executedAt) }}
-            </a>
+            </span>
             <span v-else class="not-executed">未执行</span>
           </template>
         </el-table-column>
@@ -116,6 +112,13 @@
       :template-id="editTemplateId"
       @success="handleEditSuccess"
     />
+
+    <!-- 执行巡检弹窗 -->
+    <RunTemplateDialog
+      v-model:visible="runDialogVisible"
+      :template-id="runTemplateId"
+      @success="handleRunSuccess"
+    />
   </div>
 </template>
 
@@ -124,6 +127,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { templateApi, paramApi } from '../api'
 import TemplateEditDialog from '../components/TemplateEditDialog.vue'
+import RunTemplateDialog from '../components/RunTemplateDialog.vue'
 
 const emit = defineEmits(['navigate'])
 
@@ -138,6 +142,10 @@ const teamsEnabled = ref(false)
 // 编辑弹窗状态
 const editDialogVisible = ref(false)
 const editTemplateId = ref('')
+
+// 执行弹窗状态
+const runDialogVisible = ref(false)
+const runTemplateId = ref('')
 
 /**
  * 过滤后的数据
@@ -283,26 +291,18 @@ function goToAdd() {
 }
 
 /**
- * 跳转到执行历史列表
+ * 跳转到检查结果页面，并选中当前模板
  */
 function goToJobList(template) {
   emit('navigate', { view: 'results', params: { templateId: template.id } })
 }
 
 /**
- * 跳转到执行结果
- */
-function goToResult(template) {
-  if (template.jobId) {
-    emit('navigate', { view: 'result-detail', params: { jobId: template.jobId } })
-  }
-}
-
-/**
- * 执行模板
+ * 执行模板 - 打开执行弹窗
  */
 function runTemplate(template) {
-  emit('navigate', { view: 'job-add', params: { templateId: template.id } })
+  runTemplateId.value = template.id
+  runDialogVisible.value = true
 }
 
 /**
@@ -317,6 +317,13 @@ function editTemplate(template) {
  * 编辑成功回调
  */
 function handleEditSuccess() {
+  loadTemplates()
+}
+
+/**
+ * 执行成功回调
+ */
+function handleRunSuccess() {
   loadTemplates()
 }
 
@@ -417,17 +424,13 @@ defineExpose({
   color: #606266;
 
   strong {
-    color: #409eff;
+    color: #303133;
+    font-weight: 600;
   }
 }
 
-.execution-link {
-  color: #409eff;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
+.execution-time {
+  color: #606266;
 }
 
 .not-executed {

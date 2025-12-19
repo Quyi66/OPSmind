@@ -22,21 +22,21 @@
         <!-- 巡检总览（默认页面） -->
         <div v-if="activeView === 'overview'" class="view-container">
           <div class="view-card">
-            <InspectionOverview ref="overviewRef" />
+            <InspectionOverview ref="overviewRef" @navigate="handleNavigate" />
           </div>
         </div>
 
         <!-- 巡检模板 -->
         <div v-else-if="activeView === 'templates'" class="view-container">
           <div class="view-card">
-            <TemplateList ref="templateListRef" />
+            <TemplateList ref="templateListRef" @navigate="handleNavigate" />
           </div>
         </div>
 
         <!-- 检查结果（包含架构图） -->
         <div v-else-if="activeView === 'results'" class="view-container">
           <div class="view-card">
-            <ResultList ref="resultListRef" />
+            <ResultList ref="resultListRef" @navigate="handleNavigate" />
           </div>
         </div>
 
@@ -160,6 +160,30 @@ function handleNavClick(item) {
   const targetPath =
     item.key === 'overview' ? basePath.value : `${basePath.value}/${item.key}`
   router.push(targetPath)
+}
+
+/**
+ * 处理子组件的导航请求
+ */
+function handleNavigate(payload) {
+  const { view, params } = payload
+
+  if (view === 'results' && params?.templateId) {
+    // 跳转到检查结果页面，并选中指定模板
+    activeView.value = 'results'
+    router.push({ path: `${basePath.value}/results`, query: { templateId: params.templateId } })
+  } else if (view === 'structural-diagram' && params?.jobId) {
+    // 跳转到架构图页面
+    activeView.value = 'structural-diagram'
+    router.push(`${basePath.value}/structural-diagram/${params.jobId}`)
+  } else if (view === 'result-detail' && params?.jobId) {
+    // 跳转到结果详情页面
+    activeView.value = 'result-detail'
+    router.push(`${basePath.value}/results/${params.jobId}`)
+  } else if (view === 'job-add' && params?.templateId) {
+    // 跳转到执行巡检页面（待实现）
+    console.log('Navigate to job-add with templateId:', params.templateId)
+  }
 }
 
 // 监听路由变化

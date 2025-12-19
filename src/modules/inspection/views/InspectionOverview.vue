@@ -35,8 +35,8 @@
             </div>
             <span class="host-count">{{ template.hostLength }} 设备</span>
           </div>
-          <div class="footer-right">
-            <el-dropdown trigger="click" @command="handleCommand($event, template)" @click.stop>
+          <div class="footer-right" @click.stop>
+            <el-dropdown trigger="click" @command="handleCommand($event, template)">
               <el-button class="more-btn" text circle size="small">
                 <i class="fa fa-ellipsis-v"></i>
               </el-button>
@@ -74,6 +74,20 @@
         <i class="fa fa-plus"></i> 新增模板
       </el-button>
     </el-empty>
+
+    <!-- 编辑模板弹窗 -->
+    <TemplateEditDialog
+      v-model:visible="editDialogVisible"
+      :template-id="editTemplateId"
+      @success="handleEditSuccess"
+    />
+
+    <!-- 执行巡检弹窗 -->
+    <RunTemplateDialog
+      v-model:visible="runDialogVisible"
+      :template-id="runTemplateId"
+      @success="handleRunSuccess"
+    />
   </div>
 </template>
 
@@ -81,6 +95,8 @@
 import { ref, onMounted, defineEmits } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { templateApi, paramApi } from '../api'
+import TemplateEditDialog from '../components/TemplateEditDialog.vue'
+import RunTemplateDialog from '../components/RunTemplateDialog.vue'
 
 const emit = defineEmits(['navigate'])
 
@@ -88,6 +104,14 @@ const loading = ref(true)
 const templateList = ref([])
 const dashboardEnabled = ref(false)
 const teamsEnabled = ref(false)
+
+// 编辑弹窗状态
+const editDialogVisible = ref(false)
+const editTemplateId = ref('')
+
+// 执行弹窗状态
+const runDialogVisible = ref(false)
+const runTemplateId = ref('')
 
 /**
  * 格式化相对时间
@@ -192,11 +216,15 @@ async function loadParams() {
 }
 
 /**
- * 点击卡片
+ * 点击卡片 - 跳转到检查结果详情页面
  */
 function handleCardClick(template) {
   if (template.jobId) {
-    emit('navigate', { view: 'results', params: { jobId: template.jobId } })
+    // 有执行记录，跳转到检查结果详情页面
+    emit('navigate', { view: 'result-detail', params: { jobId: template.jobId } })
+  } else {
+    // 没有执行记录，提示用户
+    ElMessage.warning('该模板尚未执行巡检，请先点击右侧菜单执行巡检')
   }
 }
 
@@ -209,7 +237,7 @@ function handleCommand(command, template) {
       runTemplate(template)
       break
     case 'edit':
-      emit('navigate', { view: 'templates', params: { templateId: template.id, action: 'edit' } })
+      editTemplate(template)
       break
     case 'dashboard':
       ElMessage.info('仪表盘功能待实现')
@@ -224,10 +252,33 @@ function handleCommand(command, template) {
 }
 
 /**
- * 执行模板
+ * 执行模板 - 打开执行弹窗
  */
 function runTemplate(template) {
-  emit('navigate', { view: 'results', params: { templateId: template.id, action: 'run' } })
+  runTemplateId.value = template.id
+  runDialogVisible.value = true
+}
+
+/**
+ * 执行成功回调
+ */
+function handleRunSuccess() {
+  loadTemplates()
+}
+
+/**
+ * 编辑模板 - 打开弹窗
+ */
+function editTemplate(template) {
+  editTemplateId.value = template.id
+  editDialogVisible.value = true
+}
+
+/**
+ * 编辑成功回调
+ */
+function handleEditSuccess() {
+  loadTemplates()
 }
 
 /**
@@ -321,14 +372,16 @@ onMounted(() => {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: all 0.3s;
+  cursor: pointer;
 
-  &.has-job {
-    cursor: pointer;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
 
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    }
+  &.has-job:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   }
 
   .card-body {

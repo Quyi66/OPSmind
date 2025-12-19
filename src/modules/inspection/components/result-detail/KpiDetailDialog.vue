@@ -9,13 +9,12 @@
     <el-table
       v-loading="loading"
       :data="data"
-      border
       stripe
       max-height="400"
     >
       <el-table-column prop="host_key" label="主机" min-width="150" />
       <el-table-column prop="name" label="检查项" min-width="200" />
-      <el-table-column label="检查状态" width="120" align="left">
+      <el-table-column label="检查状态" width="120">
         <template #default="{ row }">
           <el-tag :type="getKpiStatusTagType(row.status)" effect="dark" round>
             <i :class="['fa', getKpiStatusIcon(row.status)]" style="margin-right: 5px;"></i>
@@ -23,7 +22,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="80" align="left" fixed="right">
+      <el-table-column label="操作" width="100" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link size="small" @click="$emit('show-detail', row)">
             详情

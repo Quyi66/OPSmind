@@ -143,11 +143,15 @@ export const jobApi = {
    * 分页获取任务列表
    * 对应 API: POST /api/cac/v2/jobs/page/{templateId}
    * @param {string} templateId - 模板ID，如果为空则传 'all'
-   * @param {object} params - DataTables 格式的查询参数
+   * @param {URLSearchParams} formData - DataTables 格式的表单数据
+   * @param {object} query - URL查询参数（如 cacheBuster）
    */
-  getJobsPage(templateId, params) {
+  getJobsPage(templateId, formData, query = {}) {
     const id = templateId || 'all'
-    return apiService.post(`${CAC_BASE}/v2/jobs/page/${id}`, params, {
+    // 确保 formData 转换为字符串
+    const data = formData instanceof URLSearchParams ? formData.toString() : formData
+    return apiService.post(`${CAC_BASE}/v2/jobs/page/${id}`, data, {
+      params: query,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
@@ -187,6 +191,16 @@ export const jobApi = {
   },
 
   /**
+   * 获取指定主机的巡检项详情
+   * 对应 API: GET /api/cac/v2/jobs/result-v2/{jobId},{templateId}
+   * @param {string} jobId - 任务ID
+   * @param {string} templateId - 模板ID
+   */
+  getHostCheckItems(jobId, templateId) {
+    return apiService.get(`${CAC_BASE}/v2/jobs/result-v2/${jobId},${templateId}?cacheBuster=${Date.now()}`)
+  },
+
+  /**
    * 获取结构图
    */
   getStructuralDiagram(id) {
@@ -207,6 +221,34 @@ export const jobApi = {
    */
   getStructuralDiagramHostItemInfo(data) {
     return apiService.post(`${CAC_BASE}/v2/jobs/structural-diagram/host-item-info`, data)
+  },
+
+  /**
+   * 添加主机到白名单
+   * 对应 API: POST /jao/api/jao/jobs/DbnJiF/run
+   * @param {string[]} hostIds - 主机ID数组
+   */
+  addHostToWhitelist(hostIds) {
+    return apiService.post(`/jao/api/jao/jobs/DbnJiF/run?cacheBuster=${Date.now()}`, {
+      params: {
+        module: 'cac',
+        blackHost: hostIds
+      }
+    })
+  },
+
+  /**
+   * 从白名单移除主机
+   * 对应 API: POST /jao/api/jao/jobs/3x6mlL/run
+   * @param {string[]} hostIds - 主机ID数组
+   */
+  removeHostFromWhitelist(hostIds) {
+    return apiService.post(`/jao/api/jao/jobs/3x6mlL/run?cacheBuster=${Date.now()}`, {
+      params: {
+        module: 'cac',
+        blackHost: hostIds
+      }
+    })
   }
 }
 
@@ -345,24 +387,29 @@ export const whitelistApi = {
 
   /**
    * 移除黑名单主机（从白名单中移除）
-   * 对应 job code: 3x6mlL
+   * 对应 API: POST /jao/api/jao/jobs/3x6mlL/run
    * @param {Array<string>} hostIds - 主机ID数组
    */
   removeBlackHost(hostIds) {
-    return apiService.post(`${CAC_BASE}/v2/black-list/remove`, {
-      module: 'cac',
-      blackHost: hostIds
+    return apiService.post(`/jao/api/jao/jobs/3x6mlL/run?cacheBuster=${Date.now()}`, {
+      params: {
+        module: 'cac',
+        blackHost: hostIds
+      }
     })
   },
 
   /**
    * 添加黑名单主机（添加到白名单）
+   * 对应 API: POST /jao/api/jao/jobs/DbnJiF/run
    * @param {Array<string>} hostIds - 主机ID数组
    */
   addBlackHost(hostIds) {
-    return apiService.post(`${CAC_BASE}/v2/black-list/add`, {
-      module: 'cac',
-      blackHost: hostIds
+    return apiService.post(`/jao/api/jao/jobs/DbnJiF/run?cacheBuster=${Date.now()}`, {
+      params: {
+        module: 'cac',
+        blackHost: hostIds
+      }
     })
   }
 }

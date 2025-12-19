@@ -74,7 +74,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="remarks" label="备注" min-width="150" />
-          <el-table-column label="操作" width="88" align="left" fixed="right">
+          <el-table-column label="操作" width="100" align="left" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="editRecipient(row)">
                 编辑

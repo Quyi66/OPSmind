@@ -1,73 +1,47 @@
 <template>
   <div class="result-list-page">
     <!-- 左侧模板列表 -->
-    <aside class="ops-sidebar-nav ops-sidebar-nav--wide">
+    <aside class="ops-sidebar-nav">
       <div class="ops-sidebar-header">
         <el-input
           v-model="templateSearchText"
           placeholder="搜索模板"
           clearable
-          class="ops-sidebar-search"
+          style="width: 100%"
         >
           <template #prefix>
             <i class="fa fa-search"></i>
           </template>
         </el-input>
-        <el-dropdown trigger="click" @command="handleSortChange">
-          <el-button class="sort-btn">
-            <i class="fa fa-sort"></i>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="-templateName">
-                模板名称倒序
-                <i v-if="templateOrder === '-templateName'" class="fa fa-check float-end"></i>
-              </el-dropdown-item>
-              <el-dropdown-item command="templateName">
-                模板名称升序
-                <i v-if="templateOrder === 'templateName'" class="fa fa-check float-end"></i>
-              </el-dropdown-item>
-              <el-dropdown-item command="executedAt">
-                执行时间升序
-                <i v-if="templateOrder === 'executedAt'" class="fa fa-check float-end"></i>
-              </el-dropdown-item>
-              <el-dropdown-item command="-executedAt">
-                执行时间倒序
-                <i v-if="templateOrder === '-executedAt'" class="fa fa-check float-end"></i>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
       </div>
-      <div class="ops-sidebar-content">
-        <a
+      <el-scrollbar class="ops-sidebar-content">
+        <button
           class="ops-sidebar-item"
-          :class="{ active: selectedTemplateId === '' }"
+          :class="{ 'is-active': selectedTemplateId === '' }"
           @click="selectTemplate('')"
         >
           <i class="fa fa-list-alt"></i>
-          全部
-        </a>
-        <a
+          <span>全部</span>
+        </button>
+        <button
           v-for="item in filteredTemplates"
           :key="item.id"
           class="ops-sidebar-item"
-          :class="{ active: selectedTemplateId === item.id }"
+          :class="{ 'is-active': selectedTemplateId === item.id }"
           @click="selectTemplate(item.id)"
         >
-          {{ item.templateName }}
-        </a>
+          <span>{{ item.templateName }}</span>
+        </button>
         <div v-if="templateLoading" class="loading-placeholder">
           <i class="fa fa-cog fa-spin"></i> 正在加载...
         </div>
-      </div>
+      </el-scrollbar>
     </aside>
 
     <!-- 右侧检查结果列表 -->
-    <main class="ops-main-content">
+    <section class="result-list-content ops-page-layout">
       <!-- 筛选区 -->
       <div class="ops-filter-bar">
-        <!-- <div style="font-size: 16px; font-weight: 600; color: #303133">检查结果</div> -->
         <el-input
           v-model="searchText"
           placeholder="搜索"
@@ -80,13 +54,15 @@
             <i class="fa fa-search"></i>
           </template>
         </el-input>
-        <el-button size="small" @click="refreshTable">
-          刷新
-        </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
+        <div class="table-toolbar-icons">
+          <el-button class="toolbar-icon-btn" circle :loading="loading" @click="refreshTable" title="刷新">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
         <el-table
           v-loading="loading"
           :data="tableData"
@@ -161,7 +137,7 @@
           @current-change="handlePageChange"
         />
       </div>
-    </main>
+    </section>
 
     <!-- 执行状态弹窗 -->
     <ExecuteResultDialog
@@ -173,9 +149,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { apiService } from '@/core/api'
 import { authService } from '@/core/auth'
@@ -194,7 +171,6 @@ const templateList = ref([])
 const selectedTemplateId = ref('')
 const templateSearchText = ref('')
 const searchText = ref('')
-const templateOrder = ref('-templateName')
 const structuralSwitch = ref('no')
 
 // 分页
@@ -209,7 +185,7 @@ const executeResultVisible = ref(false)
 const currentRunId = ref('')
 const currentJobTitle = ref('')
 
-// 过滤后的模板列表
+// 过滤后的模板列表（按名称排序）
 const filteredTemplates = computed(() => {
   let list = [...templateList.value]
 
@@ -219,34 +195,14 @@ const filteredTemplates = computed(() => {
     list = list.filter(t => t.templateName?.toLowerCase().includes(keyword))
   }
 
-  // 排序
+  // 按名称升序排序
   list.sort((a, b) => {
-    const order = templateOrder.value
-    const desc = order.startsWith('-')
-    const field = desc ? order.substring(1) : order
-
-    let valueA = a[field] || ''
-    let valueB = b[field] || ''
-
-    if (field === 'executedAt') {
-      valueA = valueA ? new Date(valueA).getTime() : 0
-      valueB = valueB ? new Date(valueB).getTime() : 0
-    }
-
-    if (valueA < valueB) return desc ? 1 : -1
-    if (valueA > valueB) return desc ? -1 : 1
-    return 0
+    const nameA = (a.templateName || '').toLowerCase()
+    const nameB = (b.templateName || '').toLowerCase()
+    return nameA.localeCompare(nameB)
   })
 
   return list
-})
-
-// 分页信息
-const paginationInfo = computed(() => {
-  const total = pagination.value.total
-  const start = Math.min((pagination.value.page - 1) * pagination.value.size + 1, total)
-  const end = Math.min(pagination.value.page * pagination.value.size, total)
-  return `${start} - ${end} / ${total}`
 })
 
 /**
@@ -500,6 +456,18 @@ onMounted(() => {
   loadTemplates()
   loadResults()
 })
+
+// 监听路由 query 参数变化（从模板列表跳转时）
+watch(
+  () => route.query.templateId,
+  (newTemplateId) => {
+    if (newTemplateId) {
+      selectedTemplateId.value = newTemplateId
+      pagination.value.page = 1
+      loadResults()
+    }
+  }
+)
 </script>
 
 <style scoped lang="scss">
@@ -510,28 +478,17 @@ onMounted(() => {
 }
 
 // 右侧主内容区
-.ops-main-content {
+.result-list-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  min-width: 0;
   overflow: hidden;
 }
 
-// 侧边栏排序按钮样式
-.sort-btn {
-  padding: 8px 10px;
-}
-
+// 加载占位
 .loading-placeholder {
   padding: 20px;
   text-align: center;
   color: #6c757d;
-}
-
-// 浮动右对齐
-.float-end {
-  float: right;
-  margin-left: 12px;
 }
 
 // 按钮样式

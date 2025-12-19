@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    :title="isEdit ? '编辑模板' : '新建模板'"
+    title="执行巡检"
     width="800px"
     :close-on-click-modal="false"
     @update:model-value="handleVisibleChange"
@@ -21,45 +21,6 @@
           :rows="3"
           placeholder="请输入描述"
         />
-      </el-form-item>
-
-      <!-- 图标 -->
-      <el-form-item label="图标" prop="icon">
-        <div class="icon-selector">
-          <div class="icon-preview" @click="showIconPicker = !showIconPicker">
-            <i :class="getIconClass(formData.icon)" />
-          </div>
-          <el-popover
-            v-model:visible="showIconPicker"
-            placement="bottom-start"
-            :width="400"
-            trigger="click"
-          >
-            <template #reference>
-              <el-button size="small" class="ml-2">选择图标</el-button>
-            </template>
-            <div class="icon-picker-content">
-              <el-input
-                v-model="iconSearch"
-                placeholder="搜索图标"
-                prefix-icon="Search"
-                size="small"
-                class="mb-2"
-              />
-              <div class="icon-grid">
-                <div
-                  v-for="icon in filteredIcons"
-                  :key="icon"
-                  class="icon-item"
-                  :class="{ active: formData.icon === icon }"
-                  @click="selectIcon(icon)"
-                >
-                  <i :class="'fas ' + icon" />
-                </div>
-              </div>
-            </div>
-          </el-popover>
-        </div>
       </el-form-item>
 
       <!-- 巡检参数区域 -->
@@ -159,8 +120,8 @@
       <el-button @click="handleClose">
         取消
       </el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">
-        保存
+      <el-button type="primary" :loading="running" @click="handleRun">
+        <i class="fa fa-play"></i> 执行
       </el-button>
     </template>
 
@@ -187,9 +148,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { templateApi } from '../api'
+import { templateApi, jobApi } from '../api'
 import ScriptSelectorDialog from './ScriptSelectorDialog.vue'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 
@@ -210,24 +171,18 @@ const emit = defineEmits(['update:visible', 'success'])
 const formRef = ref(null)
 
 // 状态
-const saving = ref(false)
-const showIconPicker = ref(false)
-const iconSearch = ref('')
+const running = ref(false)
 const hostFilter = ref('')
 const scriptSelectorVisible = ref(false)
 const hostSelectorVisible = ref(false)
 
-// 原始模板数据（用于编辑时保留所有属性）
+// 原始模板数据
 const originalTemplate = ref(null)
-
-// 是否编辑模式
-const isEdit = computed(() => !!props.templateId)
 
 // 表单数据
 const formData = ref({
   templateName: '',
   description: '',
-  icon: 'fa-server',
   scripts: [],
   hosts: []
 })
@@ -238,24 +193,6 @@ const rules = {
     { required: true, message: '请输入模板名称', trigger: 'blur' }
   ]
 }
-
-// 常用图标列表
-const commonIcons = [
-  'fa-server', 'fa-laptop', 'fa-desktop', 'fa-database', 'fa-cloud',
-  'fa-network-wired', 'fa-hdd', 'fa-microchip', 'fa-memory', 'fa-ethernet',
-  'fa-cog', 'fa-cogs', 'fa-tools', 'fa-wrench', 'fa-shield-alt',
-  'fa-check-circle', 'fa-chart-line', 'fa-tasks', 'fa-clipboard-list', 'fa-file-alt',
-  'fa-folder', 'fa-archive', 'fa-box', 'fa-cube', 'fa-cubes',
-  'fa-address-book', 'fa-address-card', 'fa-apple-alt', 'fa-file-video', 'fa-list-alt'
-]
-
-// 过滤后的图标
-const filteredIcons = computed(() => {
-  if (!iconSearch.value) return commonIcons
-  return commonIcons.filter(icon =>
-    icon.toLowerCase().includes(iconSearch.value.toLowerCase())
-  )
-})
 
 // 过滤后的主机
 const filteredHosts = computed(() => {
@@ -271,25 +208,6 @@ const totalHosts = computed(() => formData.value.hosts.length)
 
 // 计算脚本总数
 const totalScripts = computed(() => formData.value.scripts.length)
-
-/**
- * 获取图标类名
- */
-function getIconClass(icon) {
-  if (!icon) return 'fas fa-server'
-  if (icon.startsWith('fas ') || icon.startsWith('far ') || icon.startsWith('fad ')) {
-    return icon
-  }
-  return `fas ${icon}`
-}
-
-/**
- * 选择图标
- */
-function selectIcon(icon) {
-  formData.value.icon = icon
-  showIconPicker.value = false
-}
 
 /**
  * 打开脚本选择器
@@ -361,7 +279,6 @@ async function loadTemplate() {
 
     formData.value.templateName = template.templateName || ''
     formData.value.description = template.description || ''
-    formData.value.icon = template.icon || 'fa-server'
 
     // 解析 auditParams
     let auditParams = []
@@ -385,16 +302,26 @@ async function loadTemplate() {
 }
 
 /**
- * 保存模板
+ * 执行巡检
  */
-async function handleSave() {
+async function handleRun() {
   try {
     await formRef.value?.validate()
   } catch {
     return
   }
 
-  saving.value = true
+  // 验证
+  if (formData.value.hosts.length === 0) {
+    ElMessage.error('请先选择主机')
+    return
+  }
+  if (formData.value.scripts.length === 0) {
+    ElMessage.error('请先选择脚本')
+    return
+  }
+
+  running.value = true
   try {
     // 构建 auditParams
     const auditParams = JSON.stringify([{
@@ -407,36 +334,31 @@ async function handleSave() {
       ruleExpressions: []
     }])
 
-    let payload
-    if (isEdit.value && originalTemplate.value) {
-      // 编辑模式：合并原始模板的所有属性
-      payload = {
-        ...originalTemplate.value,
-        templateName: formData.value.templateName,
-        description: formData.value.description,
-        icon: formData.value.icon,
-        auditParams
-      }
-    } else {
-      // 新建模式
-      payload = {
-        templateName: formData.value.templateName,
-        description: formData.value.description,
-        icon: formData.value.icon,
-        auditParams
-      }
+    // 构建执行参数
+    const runData = {
+      templateId: originalTemplate.value?.id || props.templateId,
+      templateName: formData.value.templateName,
+      auditParams
     }
 
-    await templateApi.createTemplate(payload)
-    ElMessage.success(isEdit.value ? '模板更新成功' : '模板创建成功')
+    const response = await jobApi.runJob(runData)
+    const result = response?.data || response
 
-    emit('success')
-    handleClose()
+    // 检查 runId 或 status 来判断是否成功
+    if (result && (result.runId || result.status === 'WAITING' || result.status === 'RUNNING')) {
+      ElMessage.success('巡检任务已启动')
+      emit('success', result)
+      handleClose()
+    } else if (result && result.error) {
+      ElMessage.error(result.error)
+    } else {
+      ElMessage.error('执行失败')
+    }
   } catch (error) {
-    console.error('Failed to save template:', error)
-    ElMessage.error(isEdit.value ? '更新失败' : '创建失败')
+    console.error('执行巡检失败:', error)
+    ElMessage.error(error?.message || '执行巡检失败')
   } finally {
-    saving.value = false
+    running.value = false
   }
 }
 
@@ -462,95 +384,23 @@ function resetForm() {
   formData.value = {
     templateName: '',
     description: '',
-    icon: 'fa-server',
     scripts: [],
     hosts: []
   }
   originalTemplate.value = null
   formRef.value?.resetFields()
-  iconSearch.value = ''
   hostFilter.value = ''
 }
 
 // 监听 visible 变化
 watch(() => props.visible, (val) => {
-  if (val) {
-    if (props.templateId) {
-      loadTemplate()
-    } else {
-      resetForm()
-    }
+  if (val && props.templateId) {
+    loadTemplate()
   }
 })
 </script>
 
 <style scoped lang="scss">
-.icon-selector {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.icon-preview {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-
-  i {
-    font-size: 20px;
-    color: #606266;
-  }
-
-  &:hover {
-    border-color: #409eff;
-  }
-}
-
-.icon-picker-content {
-  .icon-grid {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-  }
-
-  .icon-item {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #ebeef5;
-    border-radius: 4px;
-    cursor: pointer;
-
-    i {
-      font-size: 16px;
-      color: #606266;
-    }
-
-    &:hover {
-      border-color: #409eff;
-      background: #ecf5ff;
-    }
-
-    &.active {
-      border-color: #409eff;
-      background: #409eff;
-
-      i {
-        color: #fff;
-      }
-    }
-  }
-}
-
 .audit-params-section {
   border: 1px solid #ebeef5;
   border-radius: 4px;
@@ -645,13 +495,5 @@ watch(() => props.visible, (val) => {
       margin: 2px 4px 2px 0;
     }
   }
-}
-
-.ml-2 {
-  margin-left: 8px;
-}
-
-.mb-2 {
-  margin-bottom: 8px;
 }
 </style>
