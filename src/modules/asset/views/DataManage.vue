@@ -3,28 +3,28 @@
     <!-- 功能按钮区 -->
     <div class="page-header">
       <div class="page-actions">
-        <el-button @click="handleDownloadTemplate">
+        <el-button @click="handleDownloadTemplate" size="small">
           <i class="fa fa-download" style="margin-right: 4px"></i>
           资产信息导入模板下载
         </el-button>
-        <el-button type="primary" @click="handleImport">
+        <el-button type="primary" @click="handleImport" size="small">
           <i class="fa fa-file-import" style="margin-right: 4px"></i>
           导入资产
         </el-button>
-        <el-button type="success" @click="handleExport">
+        <el-button type="success" @click="handleExport" size="small">
           <i class="fa fa-cloud-download-alt" style="margin-right: 4px"></i>
           资产信息导出
         </el-button>
-        <el-button type="primary" @click="handleAddGroup">
+        <el-button type="primary" @click="handleAddGroup" size="small">
           添加分组
         </el-button>
-        <el-button type="primary" @click="handleAddTag">
+        <el-button type="primary" @click="handleAddTag" size="small">
           添加标签
         </el-button>
-        <el-button @click="handleDownloadDeleteTemplate">
+        <el-button @click="handleDownloadDeleteTemplate" size="small">
           资产批量删除模版下载
         </el-button>
-        <el-button type="danger" @click="handleDeleteImport">
+        <el-button type="danger" @click="handleDeleteImport" size="small">
           <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
           资产删除导入
         </el-button>
@@ -57,6 +57,7 @@
               placeholder="全部"
               style="width: 120px"
               @change="loadGroupList"
+              size="small"
             >
               <el-option label="全部" value="oplus_all" />
               <el-option
@@ -74,6 +75,7 @@
               style="width: 200px"
               clearable
               @keyup.enter="loadGroupList"
+              size="small"
             >
               <template #suffix>
                 <i class="fa fa-search" style="cursor: pointer" @click="loadGroupList"></i>
@@ -87,6 +89,7 @@
           v-loading="groupLoading"
           :data="groupList"
           stripe
+          max-height="calc(100vh - 300px)"
         >
           <el-table-column prop="path" label="分组路径" min-width="200" sortable>
             <template #default="{ row }">
@@ -97,7 +100,7 @@
           </el-table-column>
           <el-table-column prop="ci_type" label="资产代码" width="150" sortable />
           <el-table-column prop="total" label="总计" width="100" align="left" sortable />
-          <el-table-column label="操作" width="88" align="left" fixed="right">
+          <el-table-column label="操作" width="100" align="left" fixed="right">
             <template #default="{ row }">
               <template v-if="row.path !== '/'">
                 <el-button text type="primary" size="small" @click="handleEditGroup(row)">
@@ -166,6 +169,7 @@
           v-loading="tagLoading"
           :data="tagList"
           stripe
+          max-height="calc(100vh - 300px)"
         >
           <el-table-column prop="name" label="标签名称" min-width="200" sortable>
             <template #default="{ row }">
@@ -259,6 +263,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dataManageApi } from '../api'
+import { apiService } from '@/core/api'
 import DataAddGroupDialog from '../components/DataAddGroupDialog.vue'
 import DataAddTagDialog from '../components/DataAddTagDialog.vue'
 import DataEditGroupDialog from '../components/DataEditGroupDialog.vue'
@@ -388,14 +393,91 @@ const handleDownloadTemplate = () => {
 
 // 下载删除模板
 const handleDownloadDeleteTemplate = () => {
-  // TODO: 实现下载删除模板逻辑
-  ElMessage.info('功能待实现')
+  // 下载静态模板文件
+  const link = document.createElement('a')
+  link.href = '/templates/batch-delete-template.xlsx'
+  link.download = '批量删除资产模板.xlsx'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 // 资产删除导入
 const handleDeleteImport = () => {
-  // TODO: 实现资产删除导入逻辑
-  ElMessage.info('功能待实现')
+  // 创建文件选择器
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.xlsx,.xls'
+  input.onchange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 创建 FormData
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await apiService.post(
+        `/acm/api/acm/ci/batch-delete-by-excel?cacheBuster=${Date.now()}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      )
+
+      const result = response.data
+
+      if (result) {
+        // 显示删除结果
+        const successCount = result.successCount || 0
+        const failedCount = result.failedCount || 0
+        const totalCount = result.totalCount || 0
+        const successIps = result.successIps || []
+        const failedIps = result.failedIps || []
+        const errorMessages = result.errorMessages || []
+
+        let message = `处理完成：共 ${totalCount} 条记录`
+        if (successCount > 0) {
+          message += `\n成功删除 ${successCount} 条`
+        }
+        if (failedCount > 0) {
+          message += `\n删除失败 ${failedCount} 条`
+        }
+
+        if (failedCount > 0 && errorMessages.length > 0) {
+          ElMessageBox.alert(
+            `<div style="max-height: 300px; overflow-y: auto;">
+              <p><strong>成功删除:</strong> ${successCount} 条</p>
+              ${successIps.length > 0 ? `<p style="color: #67c23a;">${successIps.join(', ')}</p>` : ''}
+              <p><strong>删除失败:</strong> ${failedCount} 条</p>
+              ${failedIps.length > 0 ? `<p style="color: #f56c6c;">${failedIps.join(', ')}</p>` : ''}
+              <p><strong>错误信息:</strong></p>
+              <ul style="color: #f56c6c; margin-left: 20px;">
+                ${errorMessages.map(msg => `<li>${msg}</li>`).join('')}
+              </ul>
+            </div>`,
+            '删除结果',
+            {
+              dangerouslyUseHTMLString: true,
+              confirmButtonText: '确定'
+            }
+          )
+        } else {
+          ElMessage.success(message)
+        }
+
+        // 刷新列表
+        loadGroupList()
+        loadTagList()
+      }
+    } catch (error) {
+      console.error('删除导入失败:', error)
+      ElMessage.error('删除导入失败: ' + error.message)
+    }
+  }
+  input.click()
 }
 
 // 导入资产
@@ -542,7 +624,6 @@ onMounted(() => {
 
 .filter-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 12px 0;
   margin-bottom: 12px;
@@ -557,6 +638,7 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-left: 12px;
   }
 }
 

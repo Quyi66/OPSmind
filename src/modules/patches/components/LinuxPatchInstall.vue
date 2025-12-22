@@ -69,7 +69,7 @@
         v-loading="loading"
         :data="filteredTableData"
         stripe
-        max-height="calc(100vh - 500px)"
+        max-height="calc(100vh - 320px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />

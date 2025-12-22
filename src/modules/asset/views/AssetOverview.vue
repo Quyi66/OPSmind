@@ -185,6 +185,7 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
   background: #f5f7fa;
+  overflow: hidden;
 }
 
 .navbar {
@@ -203,21 +204,25 @@ onMounted(() => {
 
 .content-wrapper {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   padding: 16px;
-  overflow: auto;
+  overflow: hidden;
+  gap: 16px;
 }
 
 .charts-row {
+  flex: 1;
   display: flex;
   gap: 16px;
-  margin-bottom: 16px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
+  min-height: 0;
 }
 
 .chart-item {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
   &.half {
     flex: 0 0 calc(50% - 8px);
     min-width: 0;
@@ -226,6 +231,20 @@ onMounted(() => {
   &.full {
     flex: 1;
     width: 100%;
+  }
+
+  // 确保图表组件撑满容器
+  :deep(.el-card),
+  :deep(.chart-container) {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :deep(.el-card__body) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 }
 </style>

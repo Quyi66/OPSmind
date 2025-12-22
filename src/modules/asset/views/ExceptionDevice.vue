@@ -1,5 +1,14 @@
 <template>
   <div class="ops-page-layout">
+    <!-- KPI 卡片区域 -->
+    <div class="kpi-section">
+      <KpiCards
+        :data="kpiData"
+        :loading="kpiLoading"
+        @click="handleKpiClick"
+      />
+    </div>
+
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-select
@@ -21,7 +30,7 @@
         v-model="filters.conditions"
         placeholder="筛选条件"
         size="small"
-        style="width: 140px"
+        style="width: 180px"
         @change="handleFilterChange"
       >
         <el-option label="全部" value="oplus_all" />
@@ -42,12 +51,6 @@
       <el-button type="primary" size="small" @click="loadTableData">
         <i class="fa fa-search"></i> 搜索
       </el-button>
-      <el-tooltip content="导出" placement="top">
-        <el-button size="small" :icon="Download" circle @click="handleExport" />
-      </el-tooltip>
-      <el-tooltip content="刷新" placement="top">
-        <el-button size="small" :icon="Refresh" circle @click="loadTableData" />
-      </el-tooltip>
     </div>
 
     <!-- 功能按钮区 -->
@@ -60,19 +63,18 @@
         <i class="fa fa-download" style="margin-right: 4px"></i>
         采集信息
       </el-button>
-    </div>
-
-    <!-- KPI 卡片区域 -->
-    <div class="kpi-section">
-      <KpiCards
-        :data="kpiData"
-        :loading="kpiLoading"
-        @click="handleKpiClick"
-      />
+      <el-button size="small" @click="handleExport">
+        <el-icon><Download /></el-icon>
+        导出</el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="handleRefresh" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <!-- 数据表格 -->
       <el-table
         v-loading="tableLoading"
@@ -102,20 +104,20 @@
           </template>
         </el-table-column>
       </el-table>
+    </div>
 
-      <!-- 分页 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handlePageSizeChange"
-          @current-change="loadTableData"
-        />
-      </div>
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="loadTableData"
+      />
     </div>
 
     <!-- 检查连通性一级弹窗 -->
@@ -141,7 +143,7 @@
               v-for="(host, index) in checkConnHosts"
               :key="index"
               closable
-              type="info"
+              type="primary"
               class="host-tag"
               @close="removeCheckConnHost(index)"
             >
@@ -345,6 +347,12 @@ const handlePageSizeChange = () => {
 // 导出
 const handleExport = () => {
   ElMessage.info('导出功能开发中...')
+}
+
+// 刷新
+const handleRefresh = () => {
+  loadKpiData()
+  loadTableData()
 }
 
 // 检查连通性
@@ -580,11 +588,11 @@ const confirmCollectInfo = async () => {
 
     // 调用启动采集接口
     const cacheBuster = Date.now()
-    const response = await apiService.post(`/jao/api/jao/jobs/mjedwe/run?cacheBuster=${cacheBuster}`, {
+    const { data } = await apiService.post(`/jao/api/jao/jobs/mjedwe/run?cacheBuster=${cacheBuster}`, {
       params: { hosts }
     })
 
-    const result = Array.isArray(response) ? response[0] : response
+    const result = Array.isArray(data) ? data[0] : data
     console.log('采集信息启动结果:', result)
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
@@ -624,7 +632,7 @@ async function pollCollectResult(runId, loadingInstance) {
     attempts++
     try {
       const cacheBuster = Date.now()
-      const result = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+      const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
       console.log(`采集轮询结果 (第${attempts}次):`, result)
 
       if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
@@ -779,7 +787,7 @@ onMounted(() => {
 }
 
 .kpi-section {
-  padding: 16px 0;
+  padding: 12px 0;
 }
 
 .table-section {

@@ -111,10 +111,3 @@ watch(visible, (val) => {
   }
 })
 </script>
-
-<style scoped lang="scss">
-:deep(.el-form-item__label) {
-  color: #409eff;
-  font-weight: 500;
-}
-</style>

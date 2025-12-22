@@ -6,7 +6,7 @@
         <el-button link @click="handleBack">
           <i class="fa fa-arrow-left"></i>
         </el-button>
-        <span class="page-title">{{ props.modelId ? '编辑资产模型' : '添加资产模型' }}</span>
+        <span class="page-title">{{ isNewMode ? '添加资产模型' : '编辑资产模型' }}</span>
         <span v-if="formData.title" class="model-name">- {{ formData.title }}</span>
       </div>
       <div class="header-right">
@@ -20,7 +20,7 @@
 
     <!-- 内容区 -->
     <div v-loading="loading" class="page-content">
-      <el-tabs v-model="activeTab" type="border-card" class="editor-tabs">
+      <el-tabs v-model="activeTab" class="editor-tabs">
         <!-- 基本信息 -->
         <el-tab-pane label="基本信息" name="basic">
           <div class="tab-content">
@@ -31,22 +31,32 @@
               label-width="120px"
               style="max-width: 600px"
             >
+              <el-form-item label="资产代码" prop="code">
+                <el-input v-model="formData.code" placeholder="请输入资产代码" :disabled="!isNewMode" />
+                <div class="form-tip">资产代码不能为空且仅支持英文大小写字母、数字和下划线</div>
+              </el-form-item>
               <el-form-item label="模型名称" prop="title">
                 <el-input v-model="formData.title" placeholder="请输入模型名称" />
-              </el-form-item>
-              <el-form-item label="资产代码" prop="code">
-                <el-input v-model="formData.code" placeholder="请输入资产代码" :disabled="!!props.modelId" />
-                <div class="form-tip">资产代码创建后不可修改</div>
               </el-form-item>
               <el-form-item label="图标" prop="icon">
                 <IconPicker v-model="formData.icon" />
               </el-form-item>
               <el-form-item label="是否自动化" prop="isAuto">
-                <el-switch
-                  v-model="formData.isAuto"
-                  :active-value="1"
-                  :inactive-value="0"
-                />
+                <el-select v-model="formData.isAuto" placeholder="请选择" style="width: 200px">
+                  <el-option label="不支持" :value="0" />
+                  <el-option label="支持" :value="1" />
+                </el-select>
+              </el-form-item>
+              <el-form-item v-if="isNewMode" label="资产模板">
+                <el-select v-model="formData.templateId" placeholder="不使用模板" clearable style="width: 200px">
+                  <el-option
+                    v-for="tpl in templateList"
+                    :key="tpl.id"
+                    :label="tpl.title"
+                    :value="tpl.id"
+                  />
+                </el-select>
+                <div class="form-tip">选择一个已有模型作为模板</div>
               </el-form-item>
             </el-form>
           </div>
@@ -354,26 +364,96 @@
 
         <!-- 视图配置 -->
         <el-tab-pane label="视图定义" name="views">
-          <div class="tab-content">
-            <el-collapse v-model="activeViews">
-              <!-- 选择器视图 -->
-              <el-collapse-item title="选择器视图 (Selector)" name="selector">
-                <div class="view-desc">资产选择器中显示的列</div>
-                <ViewColumnConfig
-                  v-model="selectorColumns"
-                  :attrs="availableAttrs"
-                />
-              </el-collapse-item>
+          <div class="tab-content views-tab">
+            <!-- 视图类型按钮组 -->
+            <div class="views-toolbar">
+              <div class="view-btn-group">
+                <el-button
+                  :type="activeViewType === 'list' ? 'primary' : 'default'"
+                  @click="activeViewType = 'list'"
+                >
+                  <i class="fa fa-list" style="margin-right: 4px"></i>
+                  概要列表
+                </el-button>
+                <el-button class="view-config-btn" @click="openViewConfig('list')">
+                  <i class="fa fa-cog"></i>
+                </el-button>
+              </div>
+              <div class="view-btn-group">
+                <el-button
+                  :type="activeViewType === 'selector' ? 'primary' : 'default'"
+                  @click="activeViewType = 'selector'"
+                >
+                  <i class="fa fa-th-list" style="margin-right: 4px"></i>
+                  选择器列表
+                </el-button>
+                <el-button class="view-config-btn" @click="openViewConfig('selector')">
+                  <i class="fa fa-cog"></i>
+                </el-button>
+              </div>
+              <div class="view-btn-group">
+                <el-button
+                  :type="activeViewType === 'detail' ? 'primary' : 'default'"
+                  @click="activeViewType = 'detail'"
+                >
+                  <i class="fa fa-file-alt" style="margin-right: 4px"></i>
+                  详情
+                </el-button>
+                <el-button class="view-config-btn" @click="openViewConfig('detail')">
+                  <i class="fa fa-cog"></i>
+                </el-button>
+              </div>
+              <div class="view-btn-group">
+                <el-button
+                  :type="activeViewType === 'editor' ? 'primary' : 'default'"
+                  @click="activeViewType = 'editor'"
+                >
+                  <i class="fa fa-edit" style="margin-right: 4px"></i>
+                  编辑表单
+                </el-button>
+                <el-button class="view-config-btn" @click="openViewConfig('editor')">
+                  <i class="fa fa-cog"></i>
+                </el-button>
+              </div>
+            </div>
 
-              <!-- 列表视图 -->
-              <el-collapse-item title="列表视图 (List)" name="list">
-                <div class="view-desc">资产列表页面显示的列</div>
-                <ViewColumnConfig
-                  v-model="listColumns"
-                  :attrs="availableAttrs"
+            <!-- 视图列配置区域 -->
+            <div v-if="activeViewType === 'list' || activeViewType === 'selector'" class="view-columns-config">
+              <div class="view-config-header">
+                <span class="view-config-title">
+                  {{ activeViewType === 'list' ? '概要列表 - 列配置' : '选择器列表 - 列配置' }}
+                </span>
+              </div>
+              <ViewColumnConfig
+                v-if="activeViewType === 'list'"
+                v-model="listColumns"
+                :attrs="availableAttrs"
+              />
+              <ViewColumnConfig
+                v-if="activeViewType === 'selector'"
+                v-model="selectorColumns"
+                :attrs="availableAttrs"
+              />
+            </div>
+            <!-- 详情视图配置 -->
+            <div v-else-if="activeViewType === 'detail'" class="view-data-config">
+              <div class="view-config-header">
+                <span class="view-config-title">详情视图 - 数据转换</span>
+                <span class="view-config-tip">可选，配置数据转换脚本</span>
+              </div>
+              <div class="data-converter-wrapper">
+                <DataConverterInput
+                  v-model="detailViewData"
+                  :kinds="'js,yaml,json'"
+                  placeholder="例如: js:console.log(123)"
                 />
-              </el-collapse-item>
-            </el-collapse>
+              </div>
+            </div>
+            <!-- 编辑表单视图配置 -->
+            <div v-else class="view-no-config">
+              <i class="fa fa-info-circle"></i>
+              <span>编辑表单暂无可配置项</span>
+            </div>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -402,6 +482,12 @@ const loading = ref(false)
 const saving = ref(false)
 const activeTab = ref('basic')
 const activeViews = ref(['selector', 'list'])
+const activeViewType = ref('list') // 当前选中的视图类型
+
+// 打开视图配置（目前只是切换到对应视图）
+const openViewConfig = (viewType) => {
+  activeViewType.value = viewType
+}
 
 // 原始模型数据
 const originalData = ref(null)
@@ -412,8 +498,12 @@ const formData = ref({
   code: '',
   icon: '',
   isAuto: 0,
+  templateId: '', // 资产模板 ID
   attrs: []
 })
+
+// 模板列表（新建模式使用）
+const templateList = ref([])
 
 // 表单验证规则
 const formRules = {
@@ -429,6 +519,7 @@ const formRules = {
 // 视图列配置
 const selectorColumns = ref([])
 const listColumns = ref([])
+const detailViewData = ref('') // 详情视图数据转换脚本
 
 // 可用属性（排除分组）
 const availableAttrs = computed(() => {
@@ -632,21 +723,56 @@ const syncAttrToFormData = () => {
   }
 }
 
+// 是否为新建模式
+const isNewMode = computed(() => !props.modelId || props.modelId === 'new')
+
+// 加载模板列表（获取所有模型作为模板选项）
+const loadTemplateList = async () => {
+  try {
+    const url = `/acm/api/acm/cit?cacheBuster=${Date.now()}`
+    const response = await apiService.get(url)
+    const list = response.data || response || []
+    templateList.value = list
+  } catch (error) {
+    console.error('加载模板列表失败:', error)
+    templateList.value = []
+  }
+}
+
 // 加载模型详情
 const loadModelDetail = async () => {
-  if (!props.modelId) {
-    // 新增模式
+  if (isNewMode.value) {
+    // 新增模式 - 初始化一个默认分组
     formData.value = {
       title: '',
       code: '',
       icon: '',
       isAuto: 0,
-      attrs: []
+      templateId: '',
+      attrs: [
+        {
+          code: null,
+          title: 'Default',
+          type: 'group',
+          unique: false,
+          required: false,
+          editable: true,
+          importable: true,
+          display: {},
+          input: {}
+        }
+      ]
     }
     selectorColumns.value = []
     listColumns.value = []
+    detailViewData.value = ''
     selectedAttr.value = null
-    expandedGroups.value = []
+    // 默认展开第一个分组
+    setTimeout(() => {
+      expandedGroups.value = groupedAttrs.value.map(g => g._id)
+    }, 100)
+    // 加载模板列表
+    loadTemplateList()
     return
   }
 
@@ -691,28 +817,37 @@ const parseViews = (views) => {
       selectorColumns.value = (view.config?.columns || []).map(col => col.attr)
     } else if (view.type === 'list') {
       listColumns.value = (view.config?.columns || []).map(col => col.attr)
+    } else if (view.type === 'detail') {
+      detailViewData.value = view.data || ''
     }
   })
 }
 
 // 构建视图配置
 const buildViews = () => {
-  return [
-    {
-      type: 'selector',
-      config: {
-        columns: selectorColumns.value.map(attr => ({ attr }))
-      }
-    },
+  const views = [
     {
       type: 'list',
       config: {
         columns: listColumns.value.map(attr => ({ attr }))
       }
     },
+    {
+      type: 'selector',
+      config: {
+        columns: selectorColumns.value.map(attr => ({ attr }))
+      }
+    },
     { type: 'detail', config: {} },
     { type: 'editor', config: {} }
   ]
+
+  // 如果有详情视图的数据转换脚本，添加 data 字段
+  if (detailViewData.value) {
+    views[2].data = detailViewData.value
+  }
+
+  return views
 }
 
 // 添加分组
@@ -755,7 +890,10 @@ const handleAddAttrToGroup = (groupIndex) => {
     editable: true,
     importable: true,
     display: {},
-    input: {}
+    input: {
+      control: 'input',
+      datatype: ''
+    }
   }
   formData.value.attrs.splice(insertIndex, 0, newAttr)
 }
@@ -807,26 +945,45 @@ const handleDeleteAttrInGroup = (groupIndex, attrIndex) => {
 const handleSave = async () => {
   saving.value = true
   try {
+    // 构建保存数据 - 确保 attrs 结构完整
+    const processedAttrs = formData.value.attrs.map(attr => {
+      const { _id, ...rest } = attr
+      // 确保所有必需字段存在
+      return {
+        code: rest.code || null,
+        title: rest.title || '',
+        type: rest.type || null,
+        unique: rest.unique ?? false,
+        required: rest.required ?? false,
+        editable: rest.editable ?? true,
+        importable: rest.importable ?? true,
+        display: rest.display || {},
+        input: rest.input || {}
+      }
+    })
+
+    // 构建保存数据
     const saveData = {
-      id: props.modelId || null,
       code: formData.value.code,
       title: formData.value.title,
-      icon: formData.value.icon,
+      icon: formData.value.icon || '',
       isAuto: formData.value.isAuto,
-      tenantId: originalData.value?.tenantId || null,
-      attrs: formData.value.attrs.map(attr => {
-        const { _id, ...rest } = attr
-        return rest
-      }),
+      attrs: processedAttrs,
       views: buildViews(),
-      actions: originalData.value?.actions || [],
-      template_id: originalData.value?.template_id || null
+      template_id: isNewMode.value
+        ? (formData.value.templateId || '0')
+        : (originalData.value?.template_id || '0')
     }
 
-    // 编辑使用 modify/batch 接口，新增使用 cit 接口
-    const url = props.modelId
-      ? `/acm/api/acm/cit/modify/batch?cacheBuster=${Date.now()}`
-      : `/acm/api/acm/cit?cacheBuster=${Date.now()}`
+    // 编辑模式下添加 id 和其他字段
+    if (!isNewMode.value) {
+      saveData.id = props.modelId
+      saveData.tenantId = originalData.value?.tenantId || null
+      saveData.actions = originalData.value?.actions || []
+    }
+
+    // 新增和编辑都使用同一个接口
+    const url = `/acm/api/acm/cit/modify/batch?cacheBuster=${Date.now()}`
 
     await apiService.post(url, saveData)
     ElMessage.success('保存成功')
@@ -1208,5 +1365,80 @@ onMounted(() => {
   font-size: 13px;
   color: #909399;
   margin-bottom: 12px;
+}
+
+// 视图定义样式
+.views-tab {
+  .views-toolbar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .view-btn-group {
+    display: flex;
+
+    .el-button:first-child {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .view-config-btn {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      margin-left: -1px;
+      padding: 8px 10px;
+    }
+  }
+
+  .view-columns-config,
+  .view-data-config {
+    border: 1px solid #ebeef5;
+    border-radius: 4px;
+    padding: 16px;
+    background: #fafafa;
+  }
+
+  .view-config-header {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .view-config-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #303133;
+    }
+
+    .view-config-tip {
+      font-size: 12px;
+      color: #909399;
+    }
+  }
+
+  .data-converter-wrapper {
+    background: #fff;
+    border: 1px solid #ebeef5;
+    border-radius: 4px;
+    padding: 12px;
+  }
+
+  .view-no-config {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 60px 20px;
+    background: #fafafa;
+    border: 1px dashed #dcdfe6;
+    border-radius: 4px;
+    color: #909399;
+
+    i {
+      font-size: 16px;
+    }
+  }
 }
 </style>

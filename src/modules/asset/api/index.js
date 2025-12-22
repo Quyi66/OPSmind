@@ -165,13 +165,14 @@ export const assetApi = {
   },
 
   /**
-   * 更新资产属性
-   * PUT /acm/api/acm/ci/attr/{id}
+   * 更新资产属性（批量修改接口）
+   * POST /acm/api/acm/ci/modify/batch
    * @param {string} id - 资产ID
-   * @param {object} attrs - 属性键值对
+   * @param {object} attrs - 所有属性键值对（包含 id）
    */
   async updateAssetAttrs(id, attrs) {
-    const res = await apiService.put(`${ACM_BASE}/ci/attr/${id}`, attrs)
+    const data = { ...attrs, id }
+    const res = await apiService.post(`${ACM_BASE}/ci/modify/batch?cacheBuster=${Date.now()}`, data)
     return res.data
   },
 

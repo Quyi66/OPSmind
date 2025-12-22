@@ -74,7 +74,8 @@ function updateChart() {
     },
     legend: {
       data: ['总数', 'CentOS', 'Anolis', 'RedHat', 'Debian'],
-      bottom: 0,
+      right: 10,
+      top: 0,
       icon: 'circle',
       itemWidth: 8,
       itemHeight: 8
@@ -82,15 +83,14 @@ function updateChart() {
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '15%',
-      top: '10%',
+      bottom: '10%',
+      top: '15%',
       containLabel: true
     },
     xAxis: {
       type: 'category',
       data: xData,
       axisLabel: {
-        rotate: 20,
         color: '#666'
       },
       axisLine: {
@@ -206,6 +206,6 @@ onUnmounted(() => {
 
 .chart-container {
   flex: 1;
-  min-height: 250px;
+  min-height: 0;
 }
 </style>

@@ -84,7 +84,7 @@ const originalData = ref({})
 const activeTab = ref('')
 
 // 特殊处理：这些字段即使 editable 为 false 也允许编辑
-const specialEditableFields = ['ip']
+const specialEditableFields = ['IP']
 
 // 判断字段是否可编辑
 const isFieldEditable = (attr) => {
@@ -159,7 +159,6 @@ const loadAssetDetail = async () => {
       assetApi.getAssetAttrs(props.assetId),
       assetApi.getAssetTypeByAssetId(props.assetId)
     ])
-    debugger
     originalData.value = { ...attrs } || {}
     formData.value = { ...attrs } || {}
     assetType.value = typeInfo
@@ -175,22 +174,22 @@ const loadAssetDetail = async () => {
 const handleSave = async () => {
   saving.value = true
   try {
-    // 只提交可编辑且有变化的字段
-    const changedData = {}
-    for (const group of groupedAttrs.value) {
-      for (const attr of group.attrs) {
-        if (attr.editable && formData.value[attr.code] !== originalData.value[attr.code]) {
-          changedData[attr.code] = formData.value[attr.code] || ''
-        }
+    // 检查是否有变化
+    let hasChanges = false
+    for (const key in formData.value) {
+      if (formData.value[key] !== originalData.value[key]) {
+        hasChanges = true
+        break
       }
     }
 
-    if (Object.keys(changedData).length === 0) {
+    if (!hasChanges) {
       ElMessage.info('没有修改任何数据')
       return
     }
 
-    await assetApi.updateAssetAttrs(props.assetId, changedData)
+    // 提交所有属性数据（包含 null 值）
+    await assetApi.updateAssetAttrs(props.assetId, formData.value)
     ElMessage.success('保存成功')
     emit('saved')
     handleClose()

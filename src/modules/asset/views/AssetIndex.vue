@@ -53,7 +53,7 @@
         <!-- 资产模型 -->
         <div v-else-if="activeView === 'model'" class="view-container">
           <div class="view-card">
-            <AssetModel ref="modelRef" @edit-model="handleEditModel" />
+            <AssetModel ref="modelRef" @edit-model="handleEditModel" @view-asset-type="handleViewAssetType" />
           </div>
         </div>
 
@@ -201,6 +201,15 @@ function handleEditModel(modelId) {
   router.push({
     path: `${basePath}/model`,
     query: { editor: 'model', modelId }
+  })
+}
+
+// 处理查看资产类型（从 AssetModel 子组件发出）
+function handleViewAssetType(assetTypeCode) {
+  const basePath = getBasePath()
+  router.push({
+    path: `${basePath}/info`,
+    query: { type: assetTypeCode }
   })
 }
 

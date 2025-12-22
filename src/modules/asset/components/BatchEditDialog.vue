@@ -167,9 +167,4 @@ watch(visible, (val) => {
 :deep(.el-dialog__body) {
   padding: 20px;
 }
-
-:deep(.el-form-item__label) {
-  color: #409eff;
-  font-weight: 500;
-}
 </style>

@@ -66,25 +66,17 @@ function updateChart() {
         type: 'shadow'
       }
     },
-    legend: {
-      data: ['主机数量'],
-      bottom: 0,
-      icon: 'circle',
-      itemWidth: 8,
-      itemHeight: 8
-    },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '15%',
-      top: '10%',
+      bottom: '10%',
+      top: '14%',
       containLabel: true
     },
     xAxis: {
       type: 'category',
       data: xData,
       axisLabel: {
-        rotate: 20,
         color: '#666'
       },
       axisLine: {
@@ -95,6 +87,12 @@ function updateChart() {
     },
     yAxis: {
       type: 'value',
+      name: '主机数量',
+      nameLocation: 'end',
+      nameTextStyle: {
+        color: '#666',
+        fontSize: 12
+      },
       axisLabel: {
         color: '#666'
       },
@@ -110,7 +108,20 @@ function updateChart() {
         type: 'bar',
         data: yData,
         itemStyle: {
-          color: '#409EFF'
+          // 为每个柱条使用不同颜色
+          color: (params) => {
+            const colors = [
+              '#409EFF', // 蓝色
+              '#67C23A', // 绿色
+              '#E6A23C', // 橙色
+              '#F56C6C', // 红色
+              '#909399', // 灰色
+              '#00B0F0', // 浅蓝
+              '#00B050', // 深绿
+              '#7030A0'  // 紫色
+            ]
+            return colors[params.dataIndex % colors.length]
+          }
         },
         barMaxWidth: 40
       }
@@ -168,6 +179,6 @@ onUnmounted(() => {
 
 .chart-container {
   flex: 1;
-  min-height: 250px;
+  min-height: 0;
 }
 </style>

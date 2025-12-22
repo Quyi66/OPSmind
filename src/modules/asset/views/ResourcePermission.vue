@@ -20,17 +20,17 @@
         v-loading="loading"
         stripe
         style="width: 100%"
-        :max-height="tableMaxHeight"
+        max-height="calc(100vh - 300px)"
       >
-        <el-table-column prop="groupInfo" label="info" min-width="350" show-overflow-tooltip sortable />
-        <el-table-column prop="assets_type" label="assets_type" width="120" align="left" sortable />
+        <el-table-column prop="groupInfo" label="info" min-width="250" show-overflow-tooltip sortable />
+        <el-table-column prop="assets_type" label="assets_type" width="150" align="left" sortable />
 
         <!-- 动态团队权限列 -->
         <el-table-column
           v-for="teamName in teamNames"
           :key="teamName"
           :label="teamName"
-          width="160"
+          width="180"
           align="left"
         >
           <template #default="{ row }">
@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
@@ -85,9 +85,6 @@ const teamNames = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
-
-// 表格高度
-const tableMaxHeight = ref(500)
 
 // 计算分页信息
 const pageInfo = computed(() => {
@@ -118,18 +115,9 @@ const filteredData = computed(() => {
 
 onMounted(() => {
   loadData()
-  updateTableHeight()
-  window.addEventListener('resize', updateTableHeight)
 })
 
-onUnmounted(() => {
-  window.removeEventListener('resize', updateTableHeight)
-})
 
-// 更新表格高度
-function updateTableHeight() {
-  tableMaxHeight.value = window.innerHeight - 280
-}
 
 // 加载数据
 async function loadData() {

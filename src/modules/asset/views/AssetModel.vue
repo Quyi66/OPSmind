@@ -1,29 +1,14 @@
 <template>
   <div class="asset-model">
-    <!-- 功能按钮区 -->
-    <div class="page-header">
-      <div class="page-actions">
-        <el-button type="primary" @click="handleAddModel">
-          <i class="fa fa-plus" style="margin-right: 4px"></i>
-          添加模型
-        </el-button>
-        <el-button @click="handleImportModel">
-          <i class="fa fa-file-excel" style="margin-right: 4px"></i>
-          导入模型
-        </el-button>
-      </div>
-    </div>
-
-    <!-- 内容区 -->
-    <div class="model-content">
-      <!-- 工具栏 -->
-      <div class="toolbar">
-        <div class="toolbar-left"></div>
-        <div class="toolbar-right">
+    <div class="ops-page-layout">
+      <!-- 筛选区域 -->
+      <div class="ops-filter-bar">
+        <div class="filter-left">
           <el-input
             v-model="keyword"
             placeholder="搜索"
             style="width: 200px"
+            size="small"
             clearable
             @keyup.enter="handleSearch"
           >
@@ -31,52 +16,68 @@
               <i class="fa fa-search"></i>
             </template>
           </el-input>
-          <el-tooltip content="刷新" placement="top">
-            <el-button link @click="loadModelList">
-              <i class="fa fa-sync"></i>
-            </el-button>
-          </el-tooltip>
         </div>
       </div>
 
-      <!-- 模型表格 -->
-      <el-table
-        v-loading="loading"
-        :data="filteredModelList"
-        stripe
-      >
-        <el-table-column prop="title" label="模型名称" min-width="150">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="handleViewModel(row)">
-              {{ row.title }}
-            </el-button>
-          </template>
-        </el-table-column>
-        <el-table-column prop="code" label="资产代码" width="150" />
-        <el-table-column prop="is_auto" label="是否自动化" width="120" align="left">
-          <template #default="{ row }">
-            <span :class="row.is_auto === 1 ? 'text-success' : 'text-secondary'">
-              {{ row.is_auto === 1 ? '是' : '否' }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="count" label="资产数量" width="100" align="left" />
-        <el-table-column prop="updated_at" label="更新时间" width="180">
-          <template #default="{ row }">
-            {{ formatDateTime(row.updated_at) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="88" align="left" fixed="right">
-          <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="handleEditModel(row)">
-              编辑
-            </el-button>
-            <el-button text type="danger" size="small" @click="handleDeleteModel(row)">
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 操作按钮区域 -->
+      <div class="ops-action-bar">
+        <el-button type="primary" size="small" @click="handleAddModel">
+          <i class="fa fa-plus" style="margin-right: 4px"></i>
+          添加模型
+        </el-button>
+        <el-button size="small" @click="handleImportModel">
+          <i class="fa fa-file-excel" style="margin-right: 4px"></i>
+          导入模型
+        </el-button>
+      </div>
+
+      <!-- 数据表格 -->
+      <div class="ops-table-wrapper">
+        <!-- 表格右上角工具栏 -->
+        <div class="table-toolbar-icons">
+          <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadModelList" title="刷新">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
+        <el-table
+          v-loading="loading"
+          :data="filteredModelList"
+          stripe
+          max-height="calc(100vh - 300px)"
+        >
+          <el-table-column prop="title" label="模型名称" min-width="150">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="handleViewModel(row)">
+                {{ row.title }}
+              </el-button>
+            </template>
+          </el-table-column>
+          <el-table-column prop="code" label="资产代码" width="150" />
+          <el-table-column prop="is_auto" label="是否自动化" width="120" align="left">
+            <template #default="{ row }">
+              <span :class="row.is_auto === 1 ? 'text-success' : 'text-secondary'">
+                {{ row.is_auto === 1 ? '是' : '否' }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="count" label="资产数量" width="100" align="left" />
+          <el-table-column prop="updated_at" label="更新时间" width="180">
+            <template #default="{ row }">
+              {{ formatDateTime(row.updated_at) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="100" align="left" fixed="right">
+            <template #default="{ row }">
+              <el-button text type="primary" size="small" @click="handleEditModel(row)">
+                编辑
+              </el-button>
+              <el-button text type="danger" size="small" @click="handleDeleteModel(row)">
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <!-- 分页 -->
       <div class="ops-pagination-wrapper">
@@ -115,13 +116,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh } from '@element-plus/icons-vue'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
 import ModelFormDialog from '../components/ModelFormDialog.vue'
 import ImportModelDialog from '../components/ImportModelDialog.vue'
 import ModelDetailDialog from '../components/ModelDetailDialog.vue'
 
-const emit = defineEmits(['edit-model'])
+const emit = defineEmits(['edit-model', 'view-asset-type'])
 
 const loading = ref(false)
 const keyword = ref('')
@@ -188,10 +190,9 @@ const handleSearch = () => {
   pagination.value.page = 1
 }
 
-// 添加模型
+// 添加模型 - 打开编辑器（新建模式）
 const handleAddModel = () => {
-  currentModel.value = null
-  modelFormDialogVisible.value = true
+  emit('edit-model', 'new')
 }
 
 // 模型表单保存后（新增）跳转到编辑页面
@@ -208,10 +209,10 @@ const handleImportModel = () => {
   importModelDialogVisible.value = true
 }
 
-// 查看模型详情
+// 查看模型详情 - 跳转到资产信息页面
 const handleViewModel = (row) => {
-  currentModel.value = row
-  modelDetailDialogVisible.value = true
+  // 通知父组件跳转到资产信息页面，传递资产类型代码
+  emit('view-asset-type', row.code)
 }
 
 // 编辑模型 - 通知父组件打开编辑器
@@ -260,44 +261,19 @@ defineExpose({
   background: #fff;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #ebeef5;
-
-  .page-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #303133;
-  }
-
-  .page-actions {
-    display: flex;
-    gap: 8px;
-  }
-}
-
-.model-content {
+// 覆盖全局样式以适应此页面
+.ops-page-layout {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 12px;
   padding: 16px 20px;
+  background: #fff;
   overflow: hidden;
 }
 
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  .toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+.ops-table-wrapper {
+  position: relative;
 }
 
 .text-success {
@@ -306,17 +282,5 @@ defineExpose({
 
 .text-secondary {
   color: #909399;
-}
-
-.pagination-bar {
-  display: flex;
-  justify-content: flex-start;
-  padding: 16px 0 0;
-
-  .pagination-info {
-    margin: 0 8px;
-    font-size: 13px;
-    color: #606266;
-  }
 }
 </style>

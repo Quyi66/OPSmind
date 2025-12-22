@@ -80,9 +80,9 @@
           :max-height="tableMaxHeight"
         >
           <el-table-column prop="ci_type" label="资产代码" width="100">
-            <template #default="{ row }">
+            <!-- <template #default="{ row }">
               <el-link type="primary">{{ row.ci_type }}</el-link>
-            </template>
+            </template> -->
           </el-table-column>
           <el-table-column prop="hostKey" label="IP" width="140" />
           <el-table-column prop="ansibleConfigName" label="自动化配置名称" width="160">
@@ -91,10 +91,10 @@
             </template>
           </el-table-column>
           <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)">
-            <template #default="{ row }">
+            <!-- <template #default="{ row }">
               <el-link v-if="row.instanceGroup" type="primary">{{ row.instanceGroup }}</el-link>
               <span v-else>-</span>
-            </template>
+            </template> -->
           </el-table-column>
           <el-table-column prop="aapInstanceGroup" label="AAP instance group" width="160">
             <template #default="{ row }">
@@ -113,7 +113,7 @@
           </el-table-column>
           <el-table-column prop="updated_at" label="更新时间" width="180">
             <template #default="{ row }">
-              <el-link type="primary">{{ formatDateTime(row.updated_at) }}</el-link>
+              <span>{{ formatDateTime(row.updated_at) }}</span>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="60" align="left" fixed="right">
@@ -144,14 +144,14 @@
       <div v-show="activeTab === 'ansible'" class="tab-content">
         <!-- Ansible配置表格 -->
         <el-table
-          :data="filteredAnsibleData"
+          :data="paginatedAnsibleData"
           v-loading="ansibleLoading"
           stripe
           style="width: 100%"
           :max-height="tableMaxHeight"
         >
-          <el-table-column prop="name" label="Ansible配置名称" width="160" />
-          <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)" width="200">
+          <el-table-column prop="name" label="配置名称" width="120" />
+          <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)" width="250">
             <template #default="{ row }">
               {{ row.instanceGroup || '-' }}
             </template>
@@ -171,7 +171,7 @@
               {{ row.runUser || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="group_paths" label="分组路径" min-width="200">
+          <el-table-column prop="group_paths" label="分组路径" min-width="120">
             <template #default="{ row }">
               <div v-if="row.group_paths">
                 <p v-for="(path, idx) in row.group_paths.split(',')" :key="idx">{{ path }}</p>
@@ -189,7 +189,7 @@
               {{ formatDateTime(row.updatedAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="88" align="left" fixed="right">
+          <el-table-column label="操作" width="100" align="left" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="handleEditAnsible(row)">
                 编辑
@@ -200,6 +200,20 @@
             </template>
           </el-table-column>
         </el-table>
+
+        <!-- 分页 -->
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="ansiblePage"
+            v-model:page-size="ansiblePageSize"
+            :page-sizes="[10, 50, 100]"
+            :total="ansibleTotal"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="handleAnsiblePageSizeChange"
+            @current-change="handleAnsiblePageChange"
+          />
+        </div>
       </div>
     </div>
 
@@ -210,12 +224,34 @@
       width="600px"
       destroy-on-close
     >
-      <el-form :model="automationForm" label-width="140px">
+      <el-form :model="automationForm" label-width="150px" v-loading="automationFormLoading">
         <el-form-item label="IP">
-          <el-input v-model="automationForm.hostKey" disabled />
+          <el-input v-model="automationForm.ip" disabled />
+        </el-form-item>
+        <!-- (instance group) -->
+        <el-form-item label="执行引擎节点" v-if="scriptEngine !== 'aap'">
+          <el-select v-model="automationForm.instanceGroup" placeholder="请选择" style="width: 100%" clearable>
+            <el-option label="none" value="" />
+            <el-option
+              v-for="item in instanceGroupOptions"
+              :key="item"
+              :label="item"
+              :value="item"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="AAP instance_group" v-if="scriptEngine === 'aap'">
+          <el-select v-model="automationForm.aapInstanceGroup" placeholder="请选择" style="width: 100%" clearable>
+            <el-option
+              v-for="item in aapInstanceGroupOptions"
+              :key="item.name"
+              :label="item.name"
+              :value="item.name"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="自动化配置名称">
-          <el-select v-model="automationForm.ansibleVarsSetId" clearable placeholder="选择配置模板" style="width: 100%">
+          <el-select v-model="automationForm.ansibleConfigId" clearable placeholder="选择配置模板" style="width: 100%">
             <el-option
               v-for="item in ansibleConfigOptions"
               :key="item.id"
@@ -223,12 +259,6 @@
               :value="item.id"
             />
           </el-select>
-        </el-form-item>
-        <el-form-item label="执行引擎节点">
-          <el-input v-model="automationForm.instanceGroup" placeholder="default" />
-        </el-form-item>
-        <el-form-item label="AAP instance group">
-          <el-input v-model="automationForm.aapInstanceGroup" />
         </el-form-item>
         <el-form-item label="登录用户">
           <el-input v-model="automationForm.loginUser" />
@@ -245,7 +275,7 @@
       </el-form>
       <template #footer>
         <el-button @click="editAutomationDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveAutomationConfig">保存</el-button>
+        <el-button type="primary" :loading="automationSaving" @click="saveAutomationConfig">保存</el-button>
       </template>
     </el-dialog>
 
@@ -339,6 +369,7 @@ import { Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
+import { authService } from '@/core/auth'
 import DeviceManageDialog from '../components/DeviceManageDialog.vue'
 
 // Tab
@@ -364,6 +395,9 @@ const automationTotal = ref(0)
 const ansibleLoading = ref(false)
 const ansibleData = ref([])
 const ansibleConfigOptions = ref([])
+const ansiblePage = ref(1)
+const ansiblePageSize = ref(100)
+const ansibleTotal = ref(0)
 
 // 弹窗下拉选项
 const scriptEngine = ref('ansible')
@@ -381,6 +415,8 @@ const deviceManageDialogVisible = ref(false)
 
 // 表单
 const automationForm = ref({})
+const automationFormLoading = ref(false)
+const automationSaving = ref(false)
 const ansibleForm = ref({})
 
 // 计算属性
@@ -397,6 +433,12 @@ const filteredAutomationData = computed(() => {
 
 const filteredAnsibleData = computed(() => {
   return ansibleData.value
+})
+
+// Ansible 分页后的数据
+const paginatedAnsibleData = computed(() => {
+  const start = (ansiblePage.value - 1) * ansiblePageSize.value
+  return filteredAnsibleData.value.slice(start, start + ansiblePageSize.value)
 })
 
 const automationPageInfo = computed(() => {
@@ -461,6 +503,7 @@ async function loadAnsibleData() {
     const response = await dtsApi.queryData('ACM_GET_ALL_ANSIBLE_SET_REST', {})
     ansibleData.value = response?.records || []
     ansibleConfigOptions.value = response?.records || []
+    ansibleTotal.value = ansibleData.value.length
     console.log('Ansible配置数据:', ansibleData.value)
   } catch (error) {
     console.error('加载Ansible配置失败:', error)
@@ -468,6 +511,15 @@ async function loadAnsibleData() {
   } finally {
     ansibleLoading.value = false
   }
+}
+
+// Ansible 分页变化
+function handleAnsiblePageChange() {
+  // 分页由 computed 处理
+}
+
+function handleAnsiblePageSizeChange() {
+  ansiblePage.value = 1
 }
 
 // Tab切换
@@ -522,32 +574,96 @@ function formatDateTime(dateStr) {
 }
 
 // 编辑自动化配置
-function handleEditAutomation(row) {
+async function handleEditAutomation(row) {
+  // 先打开弹窗，显示loading
+  editAutomationDialogVisible.value = true
+  automationFormLoading.value = true
+
+  // 初始化表单数据
   automationForm.value = {
     id: row.id,
-    cid: row.cid,
-    hostKey: row.hostKey,
-    ansibleVarsSetId: row.ansibleVarsSetId,
-    instanceGroup: row.instanceGroup,
-    aapInstanceGroup: row.aapInstanceGroup,
-    loginUser: row.loginUser,
+    ciId: row.cid,
+    ip: row.hostKey,
+    ansibleConfigId: row.ansibleVarsSetId,
+    instanceGroup: row.instanceGroup || '',
+    aapInstanceGroup: row.aapInstanceGroup || '',
+    loginUser: row.loginUser || '',
     loginPasswd: '',
-    runUser: row.runUser,
+    runUser: row.runUser || '',
     runPasswd: ''
   }
-  editAutomationDialogVisible.value = true
+
+  try {
+    // 加载表单选项
+    await loadAutomationFormOptions()
+  } finally {
+    automationFormLoading.value = false
+  }
+}
+
+// 加载自动化配置表单选项
+async function loadAutomationFormOptions() {
+  try {
+    // 加载脚本引擎类型
+    const engineRes = await dtsApi.queryData('ACM_GET_SCRIPT_ENGINE', null)
+    scriptEngine.value = engineRes?.records?.[0]?.result || 'ansible'
+
+    // 加载执行引擎节点列表（非AAP引擎）
+    if (scriptEngine.value !== 'aap') {
+      const instanceRes = await dtsApi.queryData('GET_TAT_URL_AS_STRING_LIST', null)
+      if (instanceRes?.records?.[0]?.value) {
+        try {
+          instanceGroupOptions.value = JSON.parse(instanceRes.records[0].value)
+        } catch {
+          instanceGroupOptions.value = []
+        }
+      }
+    }
+
+    // 加载AAP instance group（AAP引擎）
+    if (scriptEngine.value === 'aap') {
+      const aapRes = await dtsApi.queryData('AAP_QUERY_INSTANCE_GROUP', null)
+      aapInstanceGroupOptions.value = aapRes?.records || []
+    }
+
+    // 加载自动化配置名称列表
+    const configRes = await dtsApi.queryData('GET_ALL_ASSET_AUTO_CONFIG', null)
+    ansibleConfigOptions.value = configRes?.records || []
+  } catch (error) {
+    console.error('加载自动化配置表单选项失败:', error)
+  }
 }
 
 // 保存自动化配置
 async function saveAutomationConfig() {
+  automationSaving.value = true
   try {
-    // TODO: 调用保存接口
+    // 调用作业 3TRE7d 保存配置
+    const params = {
+      id: automationForm.value.id,
+      ciId: automationForm.value.ciId,
+      ansibleConfigId: automationForm.value.ansibleConfigId || '',
+      instanceGroup: automationForm.value.instanceGroup || '',
+      aapInstanceGroup: automationForm.value.aapInstanceGroup || '',
+      loginUser: automationForm.value.loginUser || '',
+      loginPasswd: automationForm.value.loginPasswd || '',
+      runUser: automationForm.value.runUser || '',
+      runPasswd: automationForm.value.runPasswd || ''
+    }
+
+    const cacheBuster = Date.now()
+    await apiService.post(`/jao/api/jao/jobs/3TRE7d/run?cacheBuster=${cacheBuster}`, {
+      params
+    })
+
     ElMessage.success('保存成功')
     editAutomationDialogVisible.value = false
     loadAutomationData()
   } catch (error) {
     console.error('保存失败:', error)
     ElMessage.error('保存失败')
+  } finally {
+    automationSaving.value = false
   }
 }
 
@@ -597,7 +713,18 @@ async function handleDeleteAnsible(row) {
     await ElMessageBox.confirm('该ansible配置可能被多个主机引用，是否确定删除？', '确认删除', {
       type: 'warning'
     })
-    await apiService.post(`/cm/api/cm/v2/host/ansible/remove/${row.id}`)
+
+    // 获取 token
+    const token = authService.getToken() || ''
+
+    const cacheBuster = Date.now()
+    await apiService.post(`/jao/api/jao/jobs/OApRjl/run?cacheBuster=${cacheBuster}`, {
+      params: {
+        token,
+        id: row.id
+      }
+    })
+
     ElMessage.success('删除成功')
     loadAnsibleData()
   } catch (error) {
@@ -615,20 +742,29 @@ async function saveAnsibleConfig() {
     return
   }
   try {
-    const data = {
-      id: ansibleForm.value.id || null,
-      varSetName: ansibleForm.value.name,
-      varSetValue: ansibleForm.value.param,
-      autoType: scriptEngine.value,
-      instanceGroup: ansibleForm.value.instanceGroup,
-      aapInstanceGroup: ansibleForm.value.aapInstanceGroup,
+    // 构造参数
+    const params = {
+      name: ansibleForm.value.name,
+      param: ansibleForm.value.param || '',
+      instanceGroup: ansibleForm.value.instanceGroup || '',
+      aapInstanceGroup: ansibleForm.value.aapInstanceGroup || '',
       groupIds: ansibleForm.value.groupIds?.join(',') || '',
-      loginUser: ansibleForm.value.loginUser,
-      loginPasswd: ansibleForm.value.loginPasswd,
-      runUser: ansibleForm.value.runUser,
-      runPasswd: ansibleForm.value.runPasswd
+      loginUser: ansibleForm.value.loginUser || '',
+      loginPasswd: ansibleForm.value.loginPasswd || '',
+      runUser: ansibleForm.value.runUser || '',
+      runPasswd: ansibleForm.value.runPasswd || ''
     }
-    await apiService.post('/cm/api/cm/v2/host/ansible/save', data)
+
+    // 如果是编辑模式，添加 id
+    if (ansibleForm.value.id) {
+      params.id = ansibleForm.value.id
+    }
+
+    const cacheBuster = Date.now()
+    await apiService.post(`/jao/api/jao/jobs/c7WN62/run?cacheBuster=${cacheBuster}`, {
+      params
+    })
+
     ElMessage.success('保存成功')
     editAnsibleDialogVisible.value = false
     loadAnsibleData()

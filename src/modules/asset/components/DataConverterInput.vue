@@ -29,42 +29,43 @@
       width="700px"
       :close-on-click-modal="false"
       class="data-editor-dialog"
+      append-to-body
     >
       <div class="editor-content">
-        <!-- 类型切换按钮 -->
+        <!-- 类型切换标签页 -->
         <div class="type-tabs">
-          <el-button
+          <div
             v-if="enabledKinds.includes('js')"
-            :type="editKind === 'js' ? 'default' : 'default'"
+            class="type-tab"
             :class="{ active: editKind === 'js' }"
             @click="editKind = 'js'"
           >
             函数
-          </el-button>
-          <el-button
+          </div>
+          <div
+            v-if="enabledKinds.includes('yaml')"
+            class="type-tab"
+            :class="{ active: editKind === 'yaml' }"
+            @click="editKind = 'yaml'"
+          >
+            <i class="fa fa-list-alt"></i> YAML
+          </div>
+          <div
+            v-if="enabledKinds.includes('json')"
+            class="type-tab"
+            :class="{ active: editKind === 'json' }"
+            @click="editKind = 'json'"
+          >
+            {} JSON
+          </div>
+          <div
             v-if="enabledKinds.includes('str')"
-            :type="editKind === 'str' ? 'default' : 'default'"
+            class="type-tab"
             :class="{ active: editKind === 'str' }"
             @click="editKind = 'str'"
           >
             <i class="fa fa-font"></i> 字符串
-          </el-button>
-          <el-button
-            v-if="enabledKinds.includes('yaml')"
-            :type="editKind === 'yaml' ? 'default' : 'default'"
-            :class="{ active: editKind === 'yaml' }"
-            @click="editKind = 'yaml'"
-          >
-            YAML
-          </el-button>
-          <el-button
-            v-if="enabledKinds.includes('json')"
-            :type="editKind === 'json' ? 'default' : 'default'"
-            :class="{ active: editKind === 'json' }"
-            @click="editKind = 'json'"
-          >
-            JSON
-          </el-button>
+          </div>
         </div>
 
         <!-- 类型说明 -->
@@ -82,31 +83,6 @@
             返回JSON格式数据。
           </template>
         </p>
-
-        <!-- 变量支持说明 -->
-        <details class="var-support">
-          <summary>
-            <i class="fa fa-code"></i> 变量支持
-          </summary>
-          <div class="var-content">
-            <p>支持<code>${}</code>形式的变量：</p>
-            <ul>
-              <li>
-                <code class="var-tag page-var">${@.页面控件或参数名称}</code>：引用页面控件的值。
-              </li>
-              <li>
-                <code class="var-tag global-var">${#.全局参数名}</code>：引用全局参数值，支持的全局参数有
-                <ul class="global-vars">
-                  <li><code>${#.user.loginId}</code>: 当前用户ID</li>
-                  <li><code>${#.user.displayName}</code>: 当前用户名</li>
-                  <li><code>${#.user.department}</code>: 用户所在单位</li>
-                  <li><code>${#.user.authToken}</code>: 用户Token</li>
-                  <li><code>${#.tenantId}</code>: 租户ID</li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-        </details>
 
         <!-- 代码编辑区 -->
         <div class="code-editor">
@@ -130,6 +106,7 @@
             placeholder=""
             style="width: 200px"
             filterable
+            size="small"
           >
             <el-option
               v-for="func in builtinFunctions"
@@ -138,7 +115,7 @@
               :value="func.name"
             />
           </el-select>
-          <el-button @click="insertFunction">
+          <el-button size="small" @click="insertFunction">
             <i class="fa fa-plus"></i>
           </el-button>
         </div>
@@ -146,10 +123,10 @@
 
       <template #footer>
         <el-button type="primary" @click="handleSave">
-          <i class="fa fa-check"></i> 确认
+          <i class="fa fa-check" style="margin-right: 4px"></i> 确认
         </el-button>
         <el-button @click="dialogVisible = false">
-          <i class="fa fa-undo"></i> 取消
+          <i class="fa fa-undo" style="margin-right: 4px"></i> 取消
         </el-button>
       </template>
     </el-dialog>
@@ -172,13 +149,17 @@ const props = defineProps({
   kinds: {
     type: String,
     default: 'js,str'
+  },
+  placeholder: {
+    type: String,
+    default: ''
   }
 })
 
 const emit = defineEmits(['update:modelValue'])
 
 const dialogVisible = ref(false)
-const editKind = ref('str')
+const editKind = ref('js') // 默认为函数模式
 const editBody = ref('')
 const lineCount = ref(1)
 const selectedFunc = ref('')
@@ -202,7 +183,7 @@ const enabledKinds = computed(() => {
 const kindDefs = {
   str: { label: '字符串', icon: 'fa fa-font' },
   js: { label: 'JavaScript', icon: 'fa fa-code' },
-  yaml: { label: 'YAML', icon: 'fa fa-list' },
+  yaml: { label: 'YAML', icon: 'fa fa-list-alt' },
   json: { label: 'JSON', icon: 'fa fa-brackets-curly' }
 }
 
@@ -352,13 +333,31 @@ watch(editBody, updateLineCount)
 /* Dialog内容样式 */
 .editor-content {
   .type-tabs {
+    display: flex;
+    gap: 0;
     margin-bottom: 12px;
+    border-bottom: 1px solid #ebeef5;
 
-    .el-button {
+    .type-tab {
+      padding: 10px 16px;
+      font-size: 14px;
+      color: #606266;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+
+      &:hover {
+        color: #409eff;
+      }
+
       &.active {
-        background-color: #409eff;
-        border-color: #409eff;
-        color: #fff;
+        color: #409eff;
+        border-bottom-color: #409eff;
+        font-weight: 500;
+      }
+
+      i {
+        margin-right: 4px;
       }
     }
   }
@@ -378,84 +377,19 @@ watch(editBody, updateLineCount)
     }
   }
 
-  .var-support {
-    margin-bottom: 12px;
-    border: 1px solid #ebeef5;
-    border-radius: 4px;
-
-    summary {
-      padding: 8px 12px;
-      background: #f5f7fa;
-      cursor: pointer;
-      font-size: 13px;
-      color: #606266;
-      user-select: none;
-
-      &::-webkit-details-marker {
-        display: none;
-      }
-
-      i {
-        margin-right: 6px;
-      }
-    }
-
-    .var-content {
-      padding: 12px;
-      font-size: 13px;
-      color: #606266;
-
-      p {
-        margin: 0 0 8px;
-      }
-
-      ul {
-        margin: 0;
-        padding-left: 20px;
-
-        li {
-          margin-bottom: 6px;
-        }
-
-        &.global-vars {
-          margin-top: 4px;
-        }
-      }
-
-      code {
-        background: #f5f7fa;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-family: Monaco, Menlo, monospace;
-        font-size: 12px;
-      }
-
-      .var-tag {
-        font-weight: 500;
-
-        &.page-var {
-          color: #67c23a;
-        }
-
-        &.global-var {
-          color: #409eff;
-        }
-      }
-    }
-  }
-
   .code-editor {
     display: flex;
-    border: 1px solid #dcdfe6;
+    border: 1px solid #3d3d3d;
     border-radius: 4px;
     overflow: hidden;
     min-height: 200px;
     margin-bottom: 12px;
+    background: #1e1e1e;
 
     .line-numbers {
       width: 40px;
-      background: #f5f7fa;
-      border-right: 1px solid #dcdfe6;
+      background: #252526;
+      border-right: 1px solid #3d3d3d;
       padding: 10px 0;
       text-align: right;
       user-select: none;
@@ -467,7 +401,7 @@ watch(editBody, updateLineCount)
         line-height: 21px;
         padding-right: 8px;
         font-size: 12px;
-        color: #909399;
+        color: #858585;
         font-family: Monaco, Menlo, 'Courier New', monospace;
       }
     }
@@ -481,11 +415,12 @@ watch(editBody, updateLineCount)
       font-size: 13px;
       font-family: Monaco, Menlo, 'Courier New', monospace;
       line-height: 21px;
-      background: #fff;
+      background: #1e1e1e;
+      color: #d4d4d4;
       min-height: 200px;
 
       &::placeholder {
-        color: #c0c4cc;
+        color: #6a6a6a;
       }
     }
   }

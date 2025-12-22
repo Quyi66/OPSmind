@@ -51,7 +51,7 @@
         v-loading="loading"
         stripe
         style="width: 100%"
-        :max-height="tableMaxHeight"
+        max-height="calc(100vh - 250px)"
         row-key="run_id"
       >
         <el-table-column prop="start_time" label="开始时间" width="180" sortable>
@@ -59,7 +59,7 @@
             {{ formatDateTime(row.start_time) }}
           </template>
         </el-table-column>
-        <el-table-column prop="action" label="操作" width="160" sortable>
+        <el-table-column prop="action" label="操作" width="250" sortable>
           <template #default="{ row }">
             {{ getActionLabel(row.action) }}
           </template>
@@ -84,7 +84,7 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="message" label="结果" min-width="400" show-overflow-tooltip>
+        <el-table-column prop="message" label="结果" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             <span
               class="message-text"
@@ -111,11 +111,12 @@
       <div class="ops-pagination-wrapper">
         <el-pagination
           v-model:current-page="currentPage"
-          :page-size="pageSize"
+          v-model:page-size="pageSize"
           :page-sizes="[10, 20, 50, 100]"
           :total="total"
           layout="total, sizes, prev, pager, next, jumper"
           background
+          @size-change="handlePageSizeChange"
           @current-change="handlePageChange"
         />
       </div>
@@ -131,10 +132,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { dtsApi } from '../api'
+import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 // 筛选条件
@@ -161,9 +163,6 @@ const actionTypes = ref([
 const currentPage = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
-
-// 表格高度
-const tableMaxHeight = ref(500)
 
 // 运行结果弹窗
 const runResultDialogVisible = ref(false)
@@ -200,18 +199,7 @@ const filteredData = computed(() => {
 
 onMounted(() => {
   loadData()
-  updateTableHeight()
-  window.addEventListener('resize', updateTableHeight)
 })
-
-onUnmounted(() => {
-  window.removeEventListener('resize', updateTableHeight)
-})
-
-// 更新表格高度
-function updateTableHeight() {
-  tableMaxHeight.value = window.innerHeight - 280
-}
 
 // 加载数据
 async function loadData() {
@@ -262,6 +250,10 @@ function handlePageChange() {
   // 分页由 computed 处理
 }
 
+function handlePageSizeChange() {
+  currentPage.value = 1
+}
+
 // 显示运行结果弹窗
 function showRunResult(row) {
   if (!row.run_id) {
@@ -283,11 +275,8 @@ function formatDateTime(dateStr) {
 // 获取操作标签
 function getActionLabel(action) {
   if (!action) return '-'
-  const actionMap = {
-    '#{acm.job.check_conn}': '设备连通性检测',
-    '#{acm.job.collect_assert_info}': '采集信息'
-  }
-  return actionMap[action] || action
+  // 使用 i18n 翻译
+  return translateI18nKey(action)
 }
 
 // 获取状态标签

@@ -16,45 +16,10 @@
     </div>
 
     <!-- 内容区 -->
-    <div class="asset-content">
-      <!-- 操作按钮区域 -->
-      <div class="action-bar">
-        <div class="action-buttons">
-          <el-tooltip content="导出" placement="top">
-            <el-button :icon="Download" circle @click="handleExport" />
-          </el-tooltip>
-          <el-tooltip content="修改" placement="top">
-            <el-button :icon="Edit" circle :disabled="!hasSelection" @click="handleEdit" />
-          </el-tooltip>
-          <el-tooltip content="添加标签" placement="top">
-            <el-button circle :disabled="!hasSelection" @click="handleAddTag">
-              <i class="fa fa-tag"></i>
-            </el-button>
-          </el-tooltip>
-          <el-tooltip content="添加分组" placement="top">
-            <el-button circle :disabled="!hasSelection" @click="handleAddGroup">
-              <i class="fa fa-code"></i>
-            </el-button>
-          </el-tooltip>
-          <el-tooltip content="上线" placement="top">
-            <el-button :icon="Top" circle :disabled="!hasSelection" @click="handleOnline" />
-          </el-tooltip>
-          <el-tooltip content="下线" placement="top">
-            <el-button :icon="Bottom" circle :disabled="!hasSelection" @click="handleOffline" />
-          </el-tooltip>
-          <el-tooltip content="删除" placement="top">
-            <el-button :icon="Delete" circle :disabled="!hasSelection" @click="handleDelete" />
-          </el-tooltip>
-          <el-button type="primary" @click="handleAutoEntry">
-            <i class="fa fa-plus" style="margin-right: 4px"></i>
-            自动化资产录入
-          </el-button>
-        </div>
-      </div>
-
+    <div class="ops-page-layout">
       <!-- 筛选区域 -->
-      <div class="filter-bar">
-        <div class="filter-section">
+      <div class="ops-filter-bar">
+        <div class="filter-left">
           <div class="filter-item">
             <span class="filter-label">数据过滤</span>
             <el-popover
@@ -64,7 +29,7 @@
               v-model:visible="hostSelectorVisible"
             >
               <template #reference>
-                <el-button size="default">
+                <el-button size="small">
                   <i class="fa fa-list-ul" style="margin-right: 4px"></i>
                   @@
                   <i class="fa fa-caret-down" style="margin-left: 4px"></i>
@@ -135,7 +100,7 @@
             <el-select
               v-model="filters.permission"
               placeholder="请选择"
-              size="default"
+              size="small"
               style="width: 80px"
             >
               <el-option label="可读" value="r" />
@@ -149,7 +114,7 @@
             <el-select
               v-model="filters.status"
               placeholder="请选择"
-              size="default"
+              size="small"
               style="width: 80px"
             >
               <el-option label="全部" value="all" />
@@ -163,13 +128,13 @@
             <el-select
               v-model="filters.connLatestStatus"
               placeholder="请选择"
-              size="default"
-              style="width: 160px"
+              size="small"
+              style="width: 100px"
             >
               <el-option label="所有" value="" />
-              <el-option label="最近一次连通成功设备" value="1" />
-              <el-option label="最近一次连通失败设备" value="0" />
-              <el-option label="未测试设备" value="null" />
+              <el-option label="连通成功" value="1" />
+              <el-option label="连通失败" value="0" />
+              <el-option label="未测试" value="null" />
             </el-select>
           </div>
 
@@ -182,7 +147,7 @@
               collapse-tags
               collapse-tags-tooltip
               clearable
-              size="default"
+              size="small"
               style="width: 120px"
             >
               <el-option
@@ -195,12 +160,12 @@
           </div>
         </div>
 
-        <div class="search-section">
+        <div class="filter-right">
           <el-input
             v-model="searchText"
             placeholder="搜索"
             clearable
-            size="default"
+            size="small"
             style="width: 200px"
             @keyup.enter="handleSearch"
           >
@@ -208,18 +173,38 @@
               <i class="fa fa-search"></i>
             </template>
           </el-input>
-          <el-button :icon="Refresh" circle size="small" @click="loadAssetList" />
+        </div>
+      </div>
+
+      <!-- 操作按钮区域 -->
+      <div class="ops-action-bar">
+        <div class="action-left">
+          <el-button type="primary" @click="handleAutoEntry" size="small" >
+            <i class="fa fa-plus" style="margin-right: 4px"></i>
+            自动化资产录入
+          </el-button>
+          <el-button :icon="Download" @click="handleExport" size="small">导出</el-button>
+          <el-button :icon="Edit" :disabled="!hasSelection" @click="handleEdit" size="small">修改</el-button>
+          <el-button :disabled="!hasSelection" @click="handleAddTag" size="small">
+            <i class="fa fa-tag" style="margin-right: 4px"></i>添加标签
+          </el-button>
+          <el-button :disabled="!hasSelection" @click="handleAddGroup" size="small">
+            <i class="fa fa-code" style="margin-right: 4px"></i>添加分组
+          </el-button>
+          <el-button :icon="Top" :disabled="!hasSelection" @click="handleOnline" size="small">上线</el-button>
+          <el-button :icon="Bottom" :disabled="!hasSelection" @click="handleOffline" size="small">下线</el-button>
+          <el-button type="danger" :icon="Delete" :disabled="!hasSelection" @click="handleDelete" size="small">删除</el-button>
         </div>
       </div>
 
       <!-- 数据表格 -->
-      <div class="table-container">
+      <div class="ops-table-wrapper">
         <el-table
           ref="tableRef"
           v-loading="loading"
           :data="tableData"
           stripe
-          height="100%"
+          max-height="calc(100vh - 380px)"
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="40" fixed="left" />
@@ -270,7 +255,7 @@
           <el-table-column prop="jdk_version" label="Java版本" width="150" show-overflow-tooltip />
           <el-table-column prop="系统模块" label="系统模块" width="100" show-overflow-tooltip />
 
-          <el-table-column label="更新时间" width="160">
+          <el-table-column label="更新时间" width="180">
             <template #default="{ row }">
               {{ formatDateTime(row.updated_at) }}
             </template>
@@ -362,6 +347,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Download,
@@ -380,6 +366,9 @@ import AutoEntryDialog from '../components/AutoEntryDialog.vue'
 import BatchEditDialog from '../components/BatchEditDialog.vue'
 import AddTagDialog from '../components/AddTagDialog.vue'
 import AddGroupDialog from '../components/AddGroupDialog.vue'
+
+// 路由
+const route = useRoute()
 
 // 资产详情弹窗
 const detailDialogVisible = ref(false)
@@ -588,8 +577,12 @@ const loadAssetTypes = async () => {
     console.log('资产类型列表:', res)
     if (res.records && res.records.length > 0) {
       assetTypes.value = res.records
-      // 默认选中第一个
-      if (!currentType.value) {
+      // 检查 URL 参数中是否有指定的资产类型
+      const typeFromQuery = route.query.type
+      if (typeFromQuery && res.records.some(r => r.code === typeFromQuery)) {
+        currentType.value = typeFromQuery
+      } else if (!currentType.value) {
+        // 默认选中第一个
         currentType.value = res.records[0].code
       }
     }
@@ -885,86 +878,70 @@ onMounted(() => {
   }
 }
 
-// 内容区
-.asset-content {
+// 内容区 - 覆盖全局样式以适应此页面
+.ops-page-layout {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 12px;
   padding: 16px 20px;
+  background: #fff;
+  border-radius: 0;
   overflow: hidden;
-  background: #f5f7fa;
 }
 
-// 操作按钮栏
-.action-bar {
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 12px;
-
-  .action-buttons {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-}
-
-// 筛选栏
-.filter-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: #f0f2f5;
-  border-radius: 4px;
-  margin-bottom: 12px;
-}
-
-.filter-section {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-
-  .filter-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .filter-label {
-      font-size: 13px;
-      color: #606266;
-      white-space: nowrap;
-    }
-  }
-}
-
-.search-section {
+.ops-action-bar {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-bottom: 0;
+
+  .action-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 }
 
-// 表格容器
-.table-container {
+.ops-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+
+  .filter-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+
+      .filter-label {
+        font-size: 13px;
+        color: #606266;
+      }
+    }
+  }
+
+  .filter-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+}
+
+.ops-table-wrapper {
   flex: 1;
+  min-height: 0;
   background: #fff;
   border-radius: 4px;
   overflow: hidden;
-}
-
-// 分页
-.pagination-container {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 8px;
-  background: #ffffcc;
-  margin-top: 8px;
-
-  .pagination-info {
-    font-size: 13px;
-    color: #606266;
-  }
 }
 
 // 文本颜色

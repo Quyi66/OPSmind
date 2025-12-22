@@ -63,18 +63,11 @@ function updateChart() {
     tooltip: {
       trigger: 'axis'
     },
-    legend: {
-      data: ['总数'],
-      bottom: 0,
-      icon: 'circle',
-      itemWidth: 8,
-      itemHeight: 8
-    },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '15%',
-      top: '10%',
+      bottom: '10%',
+      top: '14%',
       containLabel: true
     },
     xAxis: {
@@ -92,6 +85,12 @@ function updateChart() {
     },
     yAxis: {
       type: 'value',
+      name: '总数',
+      nameLocation: 'end',
+      nameTextStyle: {
+        color: '#666',
+        fontSize: 12
+      },
       axisLabel: {
         color: '#666'
       },
@@ -174,6 +173,6 @@ onUnmounted(() => {
 
 .chart-container {
   flex: 1;
-  min-height: 250px;
+  min-height: 0;
 }
 </style>
