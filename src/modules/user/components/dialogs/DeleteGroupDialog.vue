@@ -34,13 +34,13 @@
             </div>
             <div class="selected-hosts" v-if="selectedHosts.length">
               <el-tag
-                v-for="host in selectedHosts"
-                :key="host.id || host.host_key"
+                v-for="(host, index) in selectedHosts"
+                :key="host.key || index"
                 closable
                 size="small"
-                @close="removeHost(host)"
+                @close="removeHost(index)"
               >
-                {{ host.host_key || host.ip }}
+                {{ host.value || host.ip || host.host_key }}
               </el-tag>
             </div>
           </el-form-item>
@@ -73,8 +73,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, watch, onUnmounted } from 'vue'
+import { ElMessage, ElLoading } from 'element-plus'
+import { apiService } from '@/core/api'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 
 const props = defineProps({
@@ -94,6 +95,9 @@ const selectedHosts = ref([])
 const groupName = ref('')
 const submitting = ref(false)
 
+// 轮询定时器
+let pollingTimer = null
+
 watch(() => props.groupData, (val) => {
   if (val) {
     groupName.value = val.group_name || ''
@@ -105,18 +109,15 @@ function handleDeviceConfirm(hosts) {
   showDeviceSelector.value = false
 }
 
-function removeHost(host) {
-  const index = selectedHosts.value.findIndex(
-    h => (h.id || h.host_key) === (host.id || host.host_key)
-  )
-  if (index > -1) selectedHosts.value.splice(index, 1)
+function removeHost(index) {
+  selectedHosts.value.splice(index, 1)
 }
 
 async function handleSubmit() {
-  let hosts, gName
+  let hostId, gName
 
   if (props.groupData) {
-    hosts = props.groupData.host_key
+    hostId = props.groupData.hostId || props.groupData.host_id
     gName = props.groupData.group_name
   } else {
     if (!selectedHosts.value.length) {
@@ -127,31 +128,125 @@ async function handleSubmit() {
       ElMessage.warning('请输入组名')
       return
     }
-    hosts = selectedHosts.value.map(h => h.host_key || h.ip).join(',')
+    // 批量删除时，获取第一个主机的 ID（或者需要遍历处理）
+    hostId = selectedHosts.value.map(h => h.key || h.id).join(',')
     gName = groupName.value
   }
 
+  const loadingInstance = ElLoading.service({
+    lock: true,
+    text: '正在删除用户组...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+
   submitting.value = true
   try {
-    console.log('删除用户组:', { hosts, group_name: gName })
+    // 调用作业执行接口
+    const cacheBuster = Date.now()
+    const { data } = await apiService.post(`/jao/api/jao/jobs/J0PRi7/run?cacheBuster=${cacheBuster}`, {
+      params: {
+        group_name: gName,
+        hosts: hostId
+      }
+    })
 
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const result = Array.isArray(data) ? data[0] : data
+    console.log('删除用户组作业启动结果:', result)
 
-    ElMessage.success('用户组删除任务已提交')
-    emit('success')
-    handleClose()
+    if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
+      await pollResult(result.runId, loadingInstance)
+    } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
+      loadingInstance.close()
+      ElMessage.success('用户组删除成功')
+      emit('success')
+      handleClose()
+    } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
+      loadingInstance.close()
+      ElMessage.error(result?.error || '删除失败')
+    } else {
+      loadingInstance.close()
+      ElMessage.success('用户组删除任务已提交')
+      emit('success')
+      handleClose()
+    }
   } catch (error) {
+    loadingInstance?.close()
+    console.error('删除用户组失败:', error)
     ElMessage.error('删除失败: ' + (error?.message || '未知错误'))
   } finally {
     submitting.value = false
   }
 }
 
+// 轮询结果
+async function pollResult(runId, loadingInstance) {
+  const maxAttempts = 60
+  let attempts = 0
+
+  const poll = async () => {
+    attempts++
+    try {
+      const cacheBuster = Date.now()
+      const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+
+      if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
+        if (attempts < maxAttempts) {
+          pollingTimer = setTimeout(poll, 5000)
+        } else {
+          loadingInstance.close()
+          ElMessage.warning('删除超时，请稍后查看结果')
+          emit('success')
+          handleClose()
+        }
+      } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
+        loadingInstance.close()
+        ElMessage.success('用户组删除成功')
+        emit('success')
+        handleClose()
+      } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
+        loadingInstance.close()
+        ElMessage.error(result?.error || '删除失败')
+        emit('success')
+        handleClose()
+      } else {
+        if (attempts < maxAttempts) {
+          pollingTimer = setTimeout(poll, 5000)
+        } else {
+          loadingInstance.close()
+          emit('success')
+          handleClose()
+        }
+      }
+    } catch (error) {
+      console.error('轮询失败:', error)
+      if (attempts < maxAttempts) {
+        pollingTimer = setTimeout(poll, 5000)
+      } else {
+        loadingInstance.close()
+        ElMessage.error('状态查询失败')
+      }
+    }
+  }
+
+  pollingTimer = setTimeout(poll, 5000)
+}
+
 function handleClose() {
+  if (pollingTimer) {
+    clearTimeout(pollingTimer)
+    pollingTimer = null
+  }
   visible.value = false
   selectedHosts.value = []
   groupName.value = ''
 }
+
+onUnmounted(() => {
+  if (pollingTimer) {
+    clearTimeout(pollingTimer)
+    pollingTimer = null
+  }
+})
 </script>
 
 <style scoped lang="scss">

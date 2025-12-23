@@ -2,7 +2,6 @@
   <div class="ops-page-layout">
     <!-- 操作区 -->
     <div class="ops-action-bar">
-      <!-- <div style="font-size: 16px; font-weight: 600; color: #303133">邮件配置</div> -->
       <div>
         <el-switch
           v-model="emailEnabled"
@@ -10,6 +9,22 @@
           active-text="启用邮件通知"
           @change="handleSwitchChange"
         />
+      </div>
+      <div class="search-box">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索模板名称"
+          clearable
+          size="small"
+          style="width: 200px"
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        >
+          <template #prefix>
+            <i class="fa fa-search"></i>
+          </template>
+        </el-input>
+        <el-button type="primary" size="small" @click="handleSearch">搜索</el-button>
       </div>
     </div>
 
@@ -198,6 +213,7 @@ const switchLoading = ref(false)
 const emailEnabled = ref(false)
 const emailConfig = ref({})
 const templateList = ref([])
+const searchKeyword = ref('')
 
 // 收件人列表弹窗
 const recipientDialogVisible = ref(false)
@@ -261,7 +277,9 @@ async function loadTemplates() {
   loading.value = true
   try {
     const tenantId = getTenantId()
-    const response = await emailConfigApi.getTemplates(tenantId)
+    // 构建 filter 参数
+    const filter = searchKeyword.value ? `template_name:*${searchKeyword.value}*` : ''
+    const response = await emailConfigApi.getTemplates(tenantId, filter)
     const data = response?.data || response || {}
     templateList.value = data.records || []
   } catch (error) {
@@ -270,6 +288,13 @@ async function loadTemplates() {
   } finally {
     loading.value = false
   }
+}
+
+/**
+ * 搜索处理
+ */
+function handleSearch() {
+  loadTemplates()
 }
 
 /**
@@ -527,6 +552,18 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+.ops-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .template-name {
   font-weight: 500;
   color: #303133;

@@ -56,15 +56,15 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" plain size="small" @click="handleScanHost">
+      <el-button type="primary" size="small" @click="handleScanHost">
         <i class="fa fa-redo-alt"></i> 扫描主机
       </el-button>
-      <el-button type="default" plain size="small" @click="handleCreateUser">
+      <el-button type="default" size="small" @click="handleCreateUser">
         <i class="fa fa-user-plus"></i> 创建用户
       </el-button>
-      <el-button type="default" plain size="small" @click="handleModifyUser">
+      <!-- <el-button type="default" size="small" @click="handleModifyUser">
         <i class="fa fa-user-edit"></i> 修改用户
-      </el-button>
+      </el-button> -->
       <el-button size="small" :icon="Refresh" @click="loadData" title="刷新" />
     </div>
 
@@ -73,20 +73,19 @@
     <el-table
       :data="tableData"
       v-loading="loading"
-      border
       stripe
       @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="50" />
+      <!-- <el-table-column type="selection" width="50" /> -->
       <el-table-column prop="host_key" label="IP" width="130" />
-      <el-table-column prop="hostname" label="主机名" width="140" show-overflow-tooltip />
-      <el-table-column prop="username" label="用户名" width="140">
+      <el-table-column prop="hostname" label="主机名" width="100" show-overflow-tooltip />
+      <el-table-column prop="username" label="用户名" width="100">
         <template #default="{ row }">
           <el-tag
             :type="getUserBadgeType(row.uid)"
             size="small"
             class="clickable-tag"
-            @click="handleUserDetail(row)"
+            @click="handleEditUser(row)"
           >
             <i :class="['fa', getUserIcon(row.uid)]"></i>
             {{ row.username }}
@@ -108,9 +107,14 @@
       <el-table-column prop="comment" label="备注" width="100" show-overflow-tooltip />
       <el-table-column prop="shell" label="Shell" width="120" show-overflow-tooltip />
       <el-table-column prop="home" label="主目录" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="password_last_modify_time" label="密码修改时间" width="160">
+      <el-table-column prop="password_last_modify_time" label="密码修改时间" width="180">
         <template #default="{ row }">
           {{ formatDateTime(row.password_last_modify_time) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="updated_at" label="更新时间" width="180" sortable>
+        <template #default="{ row }">
+          {{ formatDateTime(row.updated_at) }}
         </template>
       </el-table-column>
       <el-table-column prop="expired_date" label="过期时间" width="100" />
@@ -133,9 +137,29 @@
           {{ row.home_size ? row.home_size + 'M' : '' }}
         </template>
       </el-table-column>
-      <el-table-column prop="last_login_time" label="最后登录" width="160">
+      <el-table-column prop="login_fail_message" label="登录错误" width="90">
+        <template #default="{ row }">
+          <el-tag
+            v-if="row.login_fail_message"
+            type="primary"
+            size="small"
+            class="clickable-tag"
+            @click="handleLoginErrorDetail(row)"
+          >
+            <i class="fa fa-list-alt"></i> 详情
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="last_login_time" label="最后登录" width="180">
         <template #default="{ row }">
           {{ formatDateTime(row.last_login_time) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="66" align="left" fixed="right">
+        <template #default="{ row }">
+          <el-button text type="primary" size="small" @click="handleEditUser(row)">
+            修改
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -172,6 +196,19 @@
       v-model:visible="showModifyUserDialog"
       @success="loadData"
     />
+
+    <!-- 编辑单个用户对话框 -->
+    <EditUserDialog
+      v-model:visible="showEditUserDialog"
+      :user="editingUser"
+      @success="loadData"
+    />
+
+    <!-- 登录错误详情弹窗 -->
+    <LoginErrorDialog
+      v-model:visible="showLoginErrorDialog"
+      :user-id="loginErrorUserId"
+    />
   </div>
 </template>
 
@@ -182,6 +219,8 @@ import * as userApi from '@/modules/user/api'
 import ScanHostDialog from '@/modules/user/components/dialogs/ScanHostDialog.vue'
 import CreateUserDialog from '@/modules/user/components/dialogs/CreateUserDialog.vue'
 import ModifyUserDialog from '@/modules/user/components/dialogs/ModifyUserDialog.vue'
+import EditUserDialog from '@/modules/user/components/dialogs/EditUserDialog.vue'
+import LoginErrorDialog from '@/modules/user/components/dialogs/LoginErrorDialog.vue'
 
 // 筛选条件
 const filters = ref({
@@ -202,6 +241,10 @@ const total = ref(0)
 const showScanHostDialog = ref(false)
 const showCreateUserDialog = ref(false)
 const showModifyUserDialog = ref(false)
+const showEditUserDialog = ref(false)
+const editingUser = ref({})
+const showLoginErrorDialog = ref(false)
+const loginErrorUserId = ref('')
 
 // 获取用户徽章类型 (根据UID判断用户类型)
 function getUserBadgeType(uid) {
@@ -290,12 +333,22 @@ function handleModifyUser() {
   showModifyUserDialog.value = true
 }
 
+function handleEditUser(row) {
+  editingUser.value = { ...row }
+  showEditUserDialog.value = true
+}
+
 function handleUserDetail(row) {
   console.log('用户详情:', row)
 }
 
 function handleCrontabDetail(row) {
   console.log('定时任务详情:', row)
+}
+
+function handleLoginErrorDetail(row) {
+  loginErrorUserId.value = row.id || ''
+  showLoginErrorDialog.value = true
 }
 
 function handleReset() {

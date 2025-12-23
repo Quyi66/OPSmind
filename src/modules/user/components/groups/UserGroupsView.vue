@@ -25,45 +25,49 @@
         />
       </div>
       <el-button type="primary" size="small" @click="loadData">
-        <i class="fa fa-search"></i> 搜索
+        <el-icon><Search /></el-icon> 搜索
       </el-button>
       <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo"></i> 重置
+        <el-icon><Refresh /></el-icon> 重置
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" plain size="small" @click="handleCreateGroup">
-        <i class="fa fa-plus-circle"></i> 创建用户组
+      <el-button type="primary" size="small" @click="handleCreateGroup">
+        <el-icon><Plus /></el-icon> 创建用户组
       </el-button>
-      <el-button type="danger" plain size="small" @click="handleDeleteGroup">
-        <i class="fa fa-minus-circle"></i> 删除用户组
-      </el-button>
-      <el-button size="small" :icon="Refresh" @click="loadData" title="刷新" />
+      <!-- <el-button type="danger" size="small" @click="handleDeleteGroup">
+        <el-icon><Delete /></el-icon> 删除用户组
+      </el-button> -->
     </div>
 
     <!-- 用户组列表表格 -->
     <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <el-table
         :data="tableData"
         v-loading="loading"
-        border
         stripe
         @selection-change="handleSelectionChange"
+        max-height="calc(100vh - 330px)"
       >
-        <el-table-column type="selection" width="50" />
+        <!-- <el-table-column type="selection" width="50" /> -->
         <el-table-column prop="host_key" label="IP" width="130" />
         <el-table-column prop="hostname" label="主机名" width="150" show-overflow-tooltip />
         <el-table-column prop="group_name" label="组名" width="140" />
         <el-table-column prop="gid" label="GID" width="80" />
         <el-table-column prop="users" label="用户" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="created_at" label="创建时间" width="160">
+        <el-table-column prop="created_at" label="创建时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="44" fixed="right">
+        <el-table-column label="操作" width="60" fixed="right">
           <template #default="{ row }">
             <el-button
               text
@@ -81,14 +85,14 @@
     <!-- 分页 -->
     <div class="ops-pagination-wrapper">
       <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
+        :current-page="currentPage"
+        :page-size="pageSize"
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
         background
-        @size-change="loadData"
-        @current-change="loadData"
+        @update:current-page="handleCurrentPageChange"
+        @update:page-size="handlePageSizeChange"
       />
     </div>
 
@@ -110,6 +114,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import * as userApi from '@/modules/user/api'
 import CreateGroupDialog from '@/modules/user/components/dialogs/CreateGroupDialog.vue'
 import DeleteGroupDialog from '@/modules/user/components/dialogs/DeleteGroupDialog.vue'
@@ -149,30 +154,69 @@ function formatDateTime(isoString) {
   }
 }
 
-// 加载数据
+// 加载数据 - 使用标志防止分页事件导致的重复加载
+let isLoadingData = false
 async function loadData() {
+  if (isLoadingData) return
+  isLoadingData = true
   loading.value = true
+
+  const page = currentPage.value
+  const size = pageSize.value
+
   try {
     const response = await userApi.getUserGroups({
       host_key: filters.value.host_key || null,
       group_name: filters.value.group_name || null,
       hostObject: '@@(linux)',
-      page: currentPage.value,
-      size: pageSize.value
+      page,
+      size
     })
     tableData.value = response?.records || response?.data?.records || []
-    total.value = response?.total || response?.data?.total || 0
+
+    // 获取返回的 total 值
+    const newTotal = response?.total || response?.data?.total || 0
+
+    // API bug workaround:
+    // 只有当返回的 total 看起来合理时才更新
+    // 如果当前页有数据，但 total 比 (page-1)*size 还小，说明 API 返回的 total 有问题
+    const minExpectedTotal = (page - 1) * size + tableData.value.length
+    if (newTotal >= minExpectedTotal || page === 1) {
+      total.value = newTotal
+    }
+    // 如果 total 不合理，保持原来的 total 值不变
   } catch (error) {
     console.error('Failed to load groups:', error)
     tableData.value = []
   } finally {
     loading.value = false
+    // 延迟重置标志，确保分页组件的事件已处理完毕
+    setTimeout(() => {
+      isLoadingData = false
+    }, 0)
   }
 }
 
 // 表格选择变化
 function handleSelectionChange(selection) {
   selectedRows.value = selection
+}
+
+// 分页大小变化
+function handlePageSizeChange(val) {
+  if (isLoadingData) return  // 加载期间忽略
+  if (pageSize.value === val) return
+  pageSize.value = val
+  currentPage.value = 1
+  loadData()
+}
+
+// 当前页变化
+function handleCurrentPageChange(val) {
+  if (isLoadingData) return  // 加载期间忽略，这是关键
+  if (currentPage.value === val) return
+  currentPage.value = val
+  loadData()
 }
 
 // 创建用户组
@@ -182,6 +226,10 @@ function handleCreateGroup() {
 
 // 批量删除用户组
 function handleDeleteGroup() {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请先选择要删除的用户组')
+    return
+  }
   currentGroupData.value = null
   showDeleteGroupDialog.value = true
 }

@@ -14,7 +14,7 @@
         </div>
         <div class="section__content">
           <div class="host-selector">
-            <el-button type="primary" plain size="small" @click="showDeviceSelector = true">
+            <el-button type="primary" size="small" @click="showDeviceSelector = true">
               <i class="fa fa-plus"></i> 选择设备
             </el-button>
             <span class="host-count" v-if="selectedHosts.length">
@@ -25,13 +25,13 @@
           <!-- 已选主机预览 -->
           <div class="selected-hosts" v-if="selectedHosts.length">
             <el-tag
-              v-for="host in selectedHosts"
-              :key="host.id || host.host_key"
+              v-for="(host, index) in selectedHosts"
+              :key="host.key || index"
               closable
               size="small"
-              @close="removeHost(host)"
+              @close="removeHost(index)"
             >
-              {{ host.host_key || host.ip }}
+              {{ host.value || host.ip || host.host_key }}
             </el-tag>
           </div>
           <div class="empty-tip" v-else>
@@ -67,7 +67,6 @@
           :disabled="!selectedHosts.length"
           @click="handleExecute"
         >
-          <i class="fa fa-running" v-if="!executing"></i>
           {{ executing ? '执行中...' : '开始扫描' }}
         </el-button>
       </div>
@@ -84,8 +83,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onUnmounted } from 'vue'
+import { ElMessage, ElLoading } from 'element-plus'
+import { apiService } from '@/core/api'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 
 const props = defineProps({
@@ -106,6 +106,9 @@ const showDeviceSelector = ref(false)
 const selectedHosts = ref([])
 const executing = ref(false)
 
+// 轮询定时器
+let pollingTimer = null
+
 // 处理设备选择确认
 function handleDeviceConfirm(hosts) {
   selectedHosts.value = hosts || []
@@ -113,13 +116,8 @@ function handleDeviceConfirm(hosts) {
 }
 
 // 移除主机
-function removeHost(host) {
-  const index = selectedHosts.value.findIndex(
-    h => (h.id || h.host_key) === (host.id || host.host_key)
-  )
-  if (index > -1) {
-    selectedHosts.value.splice(index, 1)
-  }
+function removeHost(index) {
+  selectedHosts.value.splice(index, 1)
 }
 
 // 执行扫描
@@ -129,32 +127,140 @@ async function handleExecute() {
     return
   }
 
+  // 显示加载状态
+  const loadingInstance = ElLoading.service({
+    lock: true,
+    text: '正在扫描主机...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+
   executing.value = true
   try {
-    // TODO: 调用作业执行接口
-    // 作业ID: hTzJfM
-    const hostKeys = selectedHosts.value.map(h => h.host_key || h.ip).join(',')
-    console.log('执行扫描作业，主机:', hostKeys)
+    // 构造主机参数
+    const hosts = selectedHosts.value.map(h => ({
+      key: h.key || h.id,
+      value: h.value || h.ip || h.host_key,
+      assetType: h.assetType || h.ciType || 'linux'
+    }))
 
-    // 模拟执行
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 调用作业执行接口
+    const cacheBuster = Date.now()
+    const { data } = await apiService.post(`/jao/api/jao/jobs/hTzJfM/run?cacheBuster=${cacheBuster}`, {
+      params: { hosts }
+    })
 
-    ElMessage.success('扫描任务已提交')
-    emit('success')
-    handleClose()
+    const result = Array.isArray(data) ? data[0] : data
+    console.log('扫描作业启动结果:', result)
+
+    if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
+      // 开始轮询
+      const runId = result.runId
+      await pollScanResult(runId, loadingInstance)
+    } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
+      loadingInstance.close()
+      ElMessage.success('扫描完成')
+      emit('success')
+      handleClose()
+    } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
+      loadingInstance.close()
+      ElMessage.error(result?.error || '扫描失败')
+    } else {
+      loadingInstance.close()
+      ElMessage.success('扫描任务已提交')
+      emit('success')
+      handleClose()
+    }
   } catch (error) {
+    loadingInstance?.close()
+    console.error('执行扫描失败:', error)
     ElMessage.error('执行失败: ' + (error?.message || '未知错误'))
   } finally {
     executing.value = false
   }
 }
 
+// 轮询扫描结果
+async function pollScanResult(runId, loadingInstance) {
+  const maxAttempts = 120 // 最多轮询 10 分钟 (120 * 5秒)
+  let attempts = 0
+
+  const poll = async () => {
+    attempts++
+    try {
+      const cacheBuster = Date.now()
+      const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+      console.log(`扫描轮询结果 (第${attempts}次):`, result)
+
+      if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
+        // 更新加载提示
+        const batchInfo = result?.detail?.batches?.[0]
+        if (batchInfo) {
+          loadingInstance.setText(`正在扫描主机... (状态: ${batchInfo.status || result.status})`)
+        }
+
+        if (attempts < maxAttempts) {
+          // 5秒后继续轮询
+          pollingTimer = setTimeout(poll, 5000)
+        } else {
+          loadingInstance.close()
+          ElMessage.warning('扫描超时，请稍后查看结果')
+          emit('success')
+          handleClose()
+        }
+      } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
+        loadingInstance.close()
+        ElMessage.success('扫描完成')
+        emit('success')
+        handleClose()
+      } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
+        loadingInstance.close()
+        ElMessage.error(result?.error || '扫描失败')
+        emit('success') // 仍然触发刷新
+        handleClose()
+      } else {
+        // 其他状态，继续轮询
+        if (attempts < maxAttempts) {
+          pollingTimer = setTimeout(poll, 5000)
+        } else {
+          loadingInstance.close()
+          emit('success')
+          handleClose()
+        }
+      }
+    } catch (error) {
+      console.error('扫描轮询失败:', error)
+      if (attempts < maxAttempts) {
+        // 出错后继续轮询
+        pollingTimer = setTimeout(poll, 5000)
+      } else {
+        loadingInstance.close()
+        ElMessage.error('扫描状态查询失败')
+      }
+    }
+  }
+
+  // 开始轮询
+  pollingTimer = setTimeout(poll, 5000)
+}
+
 // 关闭对话框
 function handleClose() {
+  if (pollingTimer) {
+    clearTimeout(pollingTimer)
+    pollingTimer = null
+  }
   visible.value = false
   selectedHosts.value = []
   executing.value = false
 }
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  if (pollingTimer) {
+    clearTimeout(pollingTimer)
+    pollingTimer = null
+  }
+})
 </script>
 
 <style scoped lang="scss">

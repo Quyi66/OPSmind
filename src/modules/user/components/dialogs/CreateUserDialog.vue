@@ -14,9 +14,9 @@
       class="create-user-form"
     >
       <!-- 选择主机 -->
-      <el-form-item label="选择主机" prop="hosts" required>
+      <el-form-item label="选择主机">
         <div class="host-selector-row">
-          <el-button type="primary" plain size="small" @click="showDeviceSelector = true">
+          <el-button type="primary" size="small" @click="showDeviceSelector = true">
             <i class="fa fa-plus"></i> 选择设备
           </el-button>
           <span class="host-count" v-if="selectedHosts.length">
@@ -25,13 +25,13 @@
         </div>
         <div class="selected-hosts" v-if="selectedHosts.length">
           <el-tag
-            v-for="host in selectedHosts"
-            :key="host.id || host.host_key"
+            v-for="(host, index) in selectedHosts"
+            :key="host.key || index"
             closable
             size="small"
-            @close="removeHost(host)"
+            @close="removeHost(index)"
           >
-            {{ host.host_key || host.ip }}
+            {{ host.value || host.ip || host.host_key }}
           </el-tag>
         </div>
       </el-form-item>
@@ -119,14 +119,15 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">
-          <i class="fa fa-times"></i> 取消
+          <!-- <i class="fa fa-times"></i>  -->
+          取消
         </el-button>
         <el-button
           type="primary"
           :loading="submitting"
           @click="handleSubmit"
         >
-          <i class="fa fa-plus" v-if="!submitting"></i>
+          <!-- <i class="fa fa-plus" v-if="!submitting"></i> -->
           {{ submitting ? '创建中...' : '创建用户' }}
         </el-button>
       </div>
@@ -143,8 +144,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ElMessage, ElLoading } from 'element-plus'
+import { apiService } from '@/core/api'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 import * as userApi from '@/modules/user/api'
 
@@ -222,14 +224,12 @@ function handleDeviceConfirm(hosts) {
 }
 
 // 移除主机
-function removeHost(host) {
-  const index = selectedHosts.value.findIndex(
-    h => (h.id || h.host_key) === (host.id || host.host_key)
-  )
-  if (index > -1) {
-    selectedHosts.value.splice(index, 1)
-  }
+function removeHost(index) {
+  selectedHosts.value.splice(index, 1)
 }
+
+// 轮询定时器
+let pollingTimer = null
 
 // 提交表单
 async function handleSubmit() {
@@ -244,42 +244,133 @@ async function handleSubmit() {
     return
   }
 
+  // 显示加载状态
+  const loadingInstance = ElLoading.service({
+    lock: true,
+    text: '正在创建用户...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+
   submitting.value = true
   try {
-    const hostKeys = selectedHosts.value.map(h => h.host_key || h.ip).join(',')
+    // 构造主机参数（JSON 字符串格式）
+    const hosts = selectedHosts.value.map(h => ({
+      key: h.key || h.id,
+      value: h.value || h.ip || h.host_key,
+      assetType: h.assetType || h.ciType || 'linux'
+    }))
+    const hostsJson = JSON.stringify(hosts)
+
     const sudoCommandStr = sudoCommands.value.map(c => c.command).join(',')
 
-    // TODO: 调用作业执行接口
-    // 作业代码: 6snZO9
-    const jobParams = {
-      user_name: formData.username,
-      user_password: formData.password,
-      user_group: formData.group,
-      groups: formData.groups,
-      user_home: formData.home,
-      user_shell: formData.shell,
-      user_expires: formData.expiredDate,
-      user_sudo_command: sudoCommandStr,
-      user_comment: formData.comment,
-      hosts: hostKeys
+    // 调用作业执行接口
+    const cacheBuster = Date.now()
+    const { data } = await apiService.post(`/jao/api/jao/jobs/6snZO9/run?cacheBuster=${cacheBuster}`, {
+      params: {
+        user_name: formData.username,
+        user_password: formData.password,
+        user_group: formData.group || '',
+        groups: formData.groups || '',
+        user_home: formData.home || '',
+        user_shell: formData.shell || '',
+        user_expires: formData.expiredDate || '',
+        user_sudo_command: sudoCommandStr,
+        user_comment: formData.comment || '',
+        hosts: hostsJson
+      }
+    })
+
+    const result = Array.isArray(data) ? data[0] : data
+    console.log('创建用户作业启动结果:', result)
+
+    if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
+      // 开始轮询
+      const runId = result.runId
+      await pollCreateResult(runId, loadingInstance)
+    } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
+      loadingInstance.close()
+      ElMessage.success('用户创建成功')
+      emit('success')
+      handleClose()
+    } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
+      loadingInstance.close()
+      ElMessage.error(result?.error || '创建失败')
+    } else {
+      loadingInstance.close()
+      ElMessage.success('用户创建任务已提交')
+      emit('success')
+      handleClose()
     }
-    console.log('执行创建用户作业:', jobParams)
-
-    // 模拟执行
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    ElMessage.success('用户创建任务已提交')
-    emit('success')
-    handleClose()
   } catch (error) {
+    loadingInstance?.close()
+    console.error('创建用户失败:', error)
     ElMessage.error('创建失败: ' + (error?.message || '未知错误'))
   } finally {
     submitting.value = false
   }
 }
 
+// 轮询创建结果
+async function pollCreateResult(runId, loadingInstance) {
+  const maxAttempts = 120 // 最多轮询 10 分钟
+  let attempts = 0
+
+  const poll = async () => {
+    attempts++
+    try {
+      const cacheBuster = Date.now()
+      const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+      console.log(`创建用户轮询结果 (第${attempts}次):`, result)
+
+      if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
+        loadingInstance.setText(`正在创建用户... (状态: ${result.status})`)
+        if (attempts < maxAttempts) {
+          pollingTimer = setTimeout(poll, 5000)
+        } else {
+          loadingInstance.close()
+          ElMessage.warning('创建超时，请稍后查看结果')
+          emit('success')
+          handleClose()
+        }
+      } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
+        loadingInstance.close()
+        ElMessage.success('用户创建成功')
+        emit('success')
+        handleClose()
+      } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
+        loadingInstance.close()
+        ElMessage.error(result?.error || '创建失败')
+        emit('success')
+        handleClose()
+      } else {
+        if (attempts < maxAttempts) {
+          pollingTimer = setTimeout(poll, 5000)
+        } else {
+          loadingInstance.close()
+          emit('success')
+          handleClose()
+        }
+      }
+    } catch (error) {
+      console.error('轮询创建结果失败:', error)
+      if (attempts < maxAttempts) {
+        pollingTimer = setTimeout(poll, 5000)
+      } else {
+        loadingInstance.close()
+        ElMessage.error('创建状态查询失败')
+      }
+    }
+  }
+
+  pollingTimer = setTimeout(poll, 5000)
+}
+
 // 关闭对话框
 function handleClose() {
+  if (pollingTimer) {
+    clearTimeout(pollingTimer)
+    pollingTimer = null
+  }
   visible.value = false
   formRef.value?.resetFields()
   selectedHosts.value = []
@@ -299,6 +390,14 @@ function handleClose() {
 
 onMounted(() => {
   loadSudoTemplates()
+})
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  if (pollingTimer) {
+    clearTimeout(pollingTimer)
+    pollingTimer = null
+  }
 })
 </script>
 

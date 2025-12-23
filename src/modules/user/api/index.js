@@ -111,10 +111,14 @@ export function getSudoTemplates() {
  * 根据模板ID获取sudo命令列表
  * API: LUPM_LIST_SUDO_COMMAND_BY_TEMPLATE_ID
  * @param {string} templateId 模板ID
+ * @param {object} options 分页参数 { page, size }
  */
-export function getSudoCommandsByTemplate(templateId) {
+export function getSudoCommandsByTemplate(templateId, options = {}) {
+    const { page = 1, size = 10 } = options
     return apiService.post(`${DTS_BASE}/LUPM_LIST_SUDO_COMMAND_BY_TEMPLATE_ID/?cacheBuster=${Date.now()}`, {
-        params: { templateId }
+        params: { templateId },
+        page,
+        size
     })
 }
 
@@ -144,6 +148,33 @@ export function deleteSudoTemplate(id) {
     })
 }
 
+/**
+ * 添加sudo命令
+ * Job: c06cQz
+ * @param {Object} data 命令数据 {templateId, command, description}
+ */
+export function createSudoCommand(data) {
+    return apiService.post(`/jao/api/jao/jobs/c06cQz/run?cacheBuster=${Date.now()}`, {
+        params: {
+            id: null,
+            templateId: data.templateId,
+            command: data.command,
+            description: data.description || ''
+        }
+    })
+}
+
+/**
+ * 删除sudo命令
+ * Job: xr6PHd
+ * @param {string} id 命令ID
+ */
+export function deleteSudoCommand(id) {
+    return apiService.post(`/jao/api/jao/jobs/xr6PHd/run?cacheBuster=${Date.now()}`, {
+        params: { id }
+    })
+}
+
 export default {
     getOverviewStats,
     getAuditLogStats,
@@ -155,5 +186,7 @@ export default {
     getSudoTemplates,
     getSudoCommandsByTemplate,
     createSudoTemplate,
-    deleteSudoTemplate
+    deleteSudoTemplate,
+    createSudoCommand,
+    deleteSudoCommand
 }

@@ -489,11 +489,17 @@ export const emailConfigApi = {
   /**
    * 获取模板列表（用于邮件配置）
    * 对应 API: POST /dts/api/dts/q/data/CAC_QUERY_TEMPLATE/
+   * @param {string} tenantId - 租户ID
+   * @param {string} filter - 过滤条件，格式如 "template_name:*keyword*"
    */
-  getTemplates(tenantId) {
-    return apiService.post(`${DTS_BASE}/CAC_QUERY_TEMPLATE/`, {
+  getTemplates(tenantId, filter = '') {
+    const body = {
       params: { tenantId }
-    })
+    }
+    if (filter) {
+      body.filter = filter
+    }
+    return apiService.post(`${DTS_BASE}/CAC_QUERY_TEMPLATE/`, body)
   },
 
   /**

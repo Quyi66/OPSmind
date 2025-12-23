@@ -257,6 +257,19 @@ export function setupErrorHandler(app) {
 
   // 全局未捕获错误
   window.addEventListener('error', (event) => {
+    // 忽略某些无害的错误
+    const message = event.message || event.error?.message || ''
+
+    // 过滤 ResizeObserver 循环限制错误
+    if (message.includes('ResizeObserver loop')) {
+      return
+    }
+
+    // 过滤没有有效信息的错误（通常是跨域脚本或浏览器扩展）
+    if (!event.error && event.lineno === 0 && event.colno === 0) {
+      return
+    }
+
     errorHandler.handle(event.error, {
       filename: event.filename,
       lineno: event.lineno,

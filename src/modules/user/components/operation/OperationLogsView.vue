@@ -49,10 +49,19 @@
             {{ formatDateTime(row.start_time) }}
           </template>
         </el-table-column>
-        <el-table-column prop="action" label="操作" min-width="200" sortable show-overflow-tooltip />
+        <el-table-column prop="action" label="操作" min-width="200" sortable show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ translateAction(row.action) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
+            <el-tag
+              :type="getStatusType(row.status)"
+              size="small"
+              :class="{ 'clickable-tag': row.run_id }"
+              @click="row.run_id && handleViewRunResult(row)"
+            >
               {{ getStatusLabel(row.status) }}
             </el-tag>
           </template>
@@ -90,12 +99,20 @@
         @current-change="loadData"
       />
     </div>
+
+    <!-- 作业运行结果弹窗 -->
+    <ExecuteResultDialog
+      v-model:visible="showRunResultDialog"
+      :run-id="currentRunId"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import * as userApi from '@/modules/user/api'
+import { translateI18nKey } from '@/utils/i18n'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 const props = defineProps({
   initialFilters: {
@@ -118,6 +135,10 @@ const tableData = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+
+// 作业结果弹窗
+const showRunResultDialog = ref(false)
+const currentRunId = ref('')
 
 // 格式化日期时间
 function formatDateTime(isoString) {
@@ -179,6 +200,20 @@ function getStatusLabel(status) {
   return labels[status] || status
 }
 
+// 翻译操作名称
+function translateAction(action) {
+  if (!action) return '-'
+  return translateI18nKey(action)
+}
+
+// 查看作业运行结果
+function handleViewRunResult(row) {
+  if (row.run_id) {
+    currentRunId.value = row.run_id
+    showRunResultDialog.value = true
+  }
+}
+
 // 加载数据
 async function loadData() {
   loading.value = true
@@ -209,5 +244,15 @@ onMounted(() => {
   font-size: 13px;
   color: #6b7280;
   margin-left: 16px;
+}
+
+.clickable-tag {
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
 }
 </style>
