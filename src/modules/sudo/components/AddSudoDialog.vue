@@ -102,7 +102,6 @@
           :disabled="!canSubmit"
           @click="handleSubmit"
         >
-          <i class="fa fa-running" v-if="!submitting"></i>
           开始执行
         </el-button>
       </div>

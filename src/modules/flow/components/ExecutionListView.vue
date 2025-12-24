@@ -10,7 +10,7 @@
           clearable
         >
           <template #prefix>
-            <i class="fa fa-search"></i>
+            <el-icon><Search /></el-icon>
           </template>
         </el-input>
         <el-button
@@ -19,7 +19,7 @@
           title="终止所有"
           @click="handleTerminateAll"
         >
-          <i class="fa fa-ban"></i>
+          <el-icon><CircleClose /></el-icon>
         </el-button>
       </div>
       <div class="ops-sidebar-content">
@@ -44,15 +44,17 @@
       <div v-if="!activeProcessId" class="no-process-hint">
         <el-empty description="请选择左侧流程查看执行记录" />
       </div>
-      <div v-else class="execution-table-wrapper">
-        <div class="table-toolbar">
+
+      <div v-else class="ops-page-layout">
+        <!-- 操作栏 -->
+        <div class="ops-action-bar">
           <el-button
             type="danger"
             size="small"
             :disabled="!hasRunningInstance"
             @click="handleTerminateProcess"
           >
-            <i class="fa fa-stop"></i> 终止所有运行
+            <el-icon><VideoPause /></el-icon> 终止所有运行
           </el-button>
           <el-button
             type="danger"
@@ -60,77 +62,94 @@
             :disabled="selectedRows.length === 0"
             @click="handleBatchDelete"
           >
-            <i class="fa fa-trash"></i> 删除
+            <el-icon><Delete /></el-icon> 删除
           </el-button>
           <el-button size="small" @click="loadExecutionList">
-            <i class="fa fa-refresh"></i> 刷新
+            <el-icon><Refresh /></el-icon> 刷新
           </el-button>
         </div>
 
-        <el-table
-          :data="executionList"
-          v-loading="loading"
-          style="width: 100%"
-          border
-          @selection-change="handleSelectionChange"
-        >
-          <el-table-column type="selection" width="55" />
-          <el-table-column label="版本备注" prop="versionRemarks">
-            <template #default="{ row }">
-              {{ row.versionRemarks || '-----' }}
-            </template>
-          </el-table-column>
-          <el-table-column label="运行备注" prop="runRemarks">
-            <template #default="{ row }">
-              {{ row.runRemarks || '-----' }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作人" prop="operator" width="120" />
-          <el-table-column label="开始时间" width="170">
-            <template #default="{ row }">
-              {{ formatDateTime(row.startTime) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="结束时间" width="170">
-            <template #default="{ row }">
-              {{ formatDateTime(row.endTime) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="版本" width="120">
-            <template #default="{ row }">
-              <el-tag
-                :type="row.version === row.currentVersion ? 'success' : 'primary'"
-                size="small"
-              >
-                {{ row.version }}
-                <span v-if="row.version === row.currentVersion">(当前)</span>
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="状态" width="100">
-            <template #default="{ row }">
-              <el-tag :type="getStatusType(row.runStatus)" size="small">
-                {{ getStatusText(row.runStatus) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="160" fixed="right">
-            <template #default="{ row }">
-              <el-button type="primary" size="small" link @click="handleView(row)">
-                查看
-              </el-button>
-              <el-button
-                type="danger"
-                size="small"
-                link
-                v-if="row.runStatus !== 1"
-                @click="handleDelete(row)"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <!-- 表格区域 -->
+        <div class="ops-table-wrapper">
+          <el-table
+            :data="paginatedList"
+            v-loading="loading"
+            stripe
+            style="width: 100%"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" width="55" />
+            <el-table-column label="版本备注" prop="versionRemarks" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ row.versionRemarks || '-----' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="运行备注" prop="runRemarks" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ row.runRemarks || '-----' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作人" prop="operator" width="120" />
+            <el-table-column label="开始时间" width="170">
+              <template #default="{ row }">
+                {{ formatDateTime(row.startTime) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="结束时间" width="170">
+              <template #default="{ row }">
+                {{ formatDateTime(row.endTime) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="版本" width="120">
+              <template #default="{ row }">
+                <el-tag
+                  :type="row.version === row.currentVersion ? 'success' : 'primary'"
+                  size="small"
+                >
+                  {{ row.version }}
+                  <span v-if="row.version === row.currentVersion">(当前)</span>
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="getStatusType(row.runStatus)" size="small">
+                  {{ getStatusText(row.runStatus) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-button text type="primary" size="small" @click="handleView(row)">
+                  查看
+                </el-button>
+                <el-button
+                  text
+                  type="danger"
+                  size="small"
+                  v-if="row.runStatus !== 1"
+                  @click="handleDelete(row)"
+                >
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- 分页器 -->
+        <div class="ops-pagination-wrapper" v-if="executionList.length > 0">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :total="executionList.length"
+            :page-sizes="[10, 20, 50]"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="handlePageChange"
+            @current-change="handlePageChange"
+          />
+        </div>
       </div>
     </main>
   </div>
@@ -139,6 +158,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, CircleClose, VideoPause, Delete, Refresh } from '@element-plus/icons-vue'
 import * as flowApi from '@/modules/flow/api'
 
 const emit = defineEmits(['view-detail'])
@@ -149,6 +169,8 @@ const executionList = ref([])
 const selectedRows = ref([])
 const activeProcessId = ref('')
 const searchKeyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const filteredProcessList = computed(() => {
   if (!searchKeyword.value) return processList.value
@@ -163,6 +185,17 @@ const filteredProcessList = computed(() => {
 const hasRunningInstance = computed(() => {
   return executionList.value.some(e => e.runStatus === 1)
 })
+
+// 分页后的列表
+const paginatedList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return executionList.value.slice(start, end)
+})
+
+function handlePageChange() {
+  // 分页变化时自动更新显示
+}
 
 async function loadProcessList() {
   try {
@@ -179,6 +212,7 @@ async function loadExecutionList() {
   if (!activeProcessId.value) return
 
   loading.value = true
+  currentPage.value = 1
   try {
     const response = await flowApi.getExecutionList({ processId: activeProcessId.value })
     const data = response?.data || response
@@ -343,20 +377,31 @@ onMounted(() => {
   justify-content: center;
 }
 
-.execution-table-wrapper {
+.ops-page-layout {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-.table-toolbar {
-  margin-bottom: 12px;
+.ops-action-bar {
+  flex-shrink: 0;
   display: flex;
   gap: 8px;
+  margin-bottom: 12px;
 }
 
-:deep(.el-table) {
+.ops-table-wrapper {
   flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ops-pagination-wrapper {
+  flex-shrink: 0;
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
+

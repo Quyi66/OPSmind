@@ -45,7 +45,7 @@
         v-model="tagFilter"
         placeholder="全部标签"
         clearable
-        size="default"
+        size="small"
         :loading="tagLoading"
         :teleported="false"
         @change="handleTagFilter"

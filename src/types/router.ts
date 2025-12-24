@@ -2,8 +2,11 @@
  * 路由相关类型定义
  */
 
-import type { RouteRecordRaw, Router } from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
 
+/**
+ * 自定义路由元信息
+ */
 export interface RouteMetaCustom {
   title?: string
   requiresAuth?: boolean
@@ -17,16 +20,25 @@ export interface RouteMetaCustom {
   keepAlive?: boolean
 }
 
+/**
+ * 自定义路由记录
+ */
 export interface CustomRouteRecord extends Omit<RouteRecordRaw, 'meta'> {
   meta?: RouteMetaCustom
 }
 
+/**
+ * 模块类型枚举
+ */
 export enum ModuleType {
   VUE_NATIVE = 'vue-native',
   EXTERNAL_LINK = 'external-link',
   HYBRID = 'hybrid'
 }
 
+/**
+ * 模块路由配置
+ */
 export interface ModuleRoute {
   code: string
   name: string
@@ -39,35 +51,9 @@ export interface ModuleRoute {
   meta?: RouteMetaCustom
 }
 
-export interface HybridRouterConfig {
-  baseRoutes: CustomRouteRecord[]
-  moduleRoutes: ModuleRoute[]
-  fallbackRoute?: CustomRouteRecord
-}
-
+/**
+ * 导航守卫类型
+ */
 export interface NavigationGuard {
   (to: any, from: any, next: Function): void | Promise<void>
-}
-
-export interface HybridRouter {
-  router: Router
-
-  // 路由管理
-  addModuleRoute(moduleRoute: ModuleRoute): void
-  removeModuleRoute(code: string): void
-  updateModuleRoute(code: string, moduleRoute: Partial<ModuleRoute>): void
-
-  // 导航方法
-  navigateToModule(moduleCode: string, params?: Record<string, any>): Promise<void>
-  navigateToVueRoute(name: string, params?: Record<string, any>): Promise<void>
-
-  // 权限检查
-  checkModulePermission(moduleCode: string): Promise<boolean>
-
-  // 守卫设置
-  setupGuards(): void
-
-  // 工具方法
-  isModuleRoute(path: string): boolean
-  getModuleFromPath(path: string): ModuleRoute | null
 }

@@ -44,7 +44,11 @@
         <div class="canvas-header">
           <div class="header-left">
             <span class="header-title">流程模拟</span>
-            <i class="fa fa-eye"></i>
+            <el-switch
+              v-model="isSimulationMode"
+              size="small"
+              @change="toggleSimulation"
+            />
           </div>
           <div class="header-center">
             <el-tag type="success" size="small">
@@ -112,8 +116,8 @@
     <!-- 保存对话框 -->
     <FlowEditDialog
       v-model="showSaveDialog"
-      mode="processDetail"
-      title="编辑"
+      :mode="saveDialogMode"
+      :title="saveDialogMode === 'process' ? '新建流程' : '保存版本'"
       :flow-data="saveDialogData"
       @confirm="handleSaveConfirm"
     />
@@ -124,6 +128,8 @@
 import { ref, reactive, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import BpmnModeler from 'bpmn-js/lib/Modeler'
+import TokenSimulationModule from 'bpmn-js-token-simulation'
+import minimapModule from 'diagram-js-minimap'
 import * as flowApi from '@/modules/flow/api'
 import FlowEditDialog from './FlowEditDialog.vue'
 
@@ -131,6 +137,10 @@ import FlowEditDialog from './FlowEditDialog.vue'
 import 'bpmn-js/dist/assets/diagram-js.css'
 import 'bpmn-js/dist/assets/bpmn-js.css'
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
+// 导入 token simulation 样式
+import 'bpmn-js-token-simulation/assets/css/bpmn-js-token-simulation.css'
+// 导入 minimap 样式
+import 'diagram-js-minimap/assets/diagram-js-minimap.css'
 
 const props = defineProps({
   flowId: {
@@ -151,6 +161,7 @@ const activeTab = ref('modeler')
 const currentXml = ref('')
 const errorCount = ref(0)
 const warningCount = ref(0)
+const isSimulationMode = ref(false)
 
 let bpmnModeler = null
 
@@ -225,7 +236,11 @@ async function initBpmnModeler() {
   }
 
   bpmnModeler = new BpmnModeler({
-    container: bpmnContainer.value
+    container: bpmnContainer.value,
+    additionalModules: [
+      TokenSimulationModule,
+      minimapModule
+    ]
   })
 
   // 监听选择事件
@@ -348,12 +363,25 @@ function handleBack() {
 // 保存对话框状态
 const showSaveDialog = ref(false)
 const saveDialogData = ref(null)
+const saveDialogMode = ref('processDetail')
 
 async function handleSave() {
-  // 打开保存对话框
-  saveDialogData.value = {
-    remark: '',
-    copyScenes: false
+  // 判断是新建还是编辑模式
+  if (!props.flowId) {
+    // 新建流程 - 使用 process 模式弹窗
+    saveDialogMode.value = 'process'
+    saveDialogData.value = {
+      processName: '',
+      processAbbr: '',
+      remarks: ''
+    }
+  } else {
+    // 编辑已有流程 - 使用 processDetail 模式弹窗
+    saveDialogMode.value = 'processDetail'
+    saveDialogData.value = {
+      remark: '',
+      copyScenes: false
+    }
   }
   showSaveDialog.value = true
 }
@@ -361,22 +389,62 @@ async function handleSave() {
 async function handleSaveConfirm(data) {
   try {
     const xml = await getCurrentXml()
-    await flowApi.saveFlowDesign({
-      id: flowInfo.processDetailId || flowInfo.id,
-      processXml: xml,
-      remarks: data.remark || '',
-      copyScenes: data.copyScenes || false
-    })
-    ElMessage.success('保存成功')
+
+    if (!props.flowId) {
+      // 新建流程
+      // 生成 processKey
+      const processId = `Process_${Math.random().toString(36).substring(2, 9)}`
+      await flowApi.createFlow({
+        processKey: `opflow-${processId.toLowerCase().replace('_', '-')}`,
+        processName: data.processName,
+        processAbbr: data.processAbbr,
+        remarks: data.remarks || '',
+        bpmnXml: xml
+      })
+      ElMessage.success('创建成功')
+    } else {
+      // 编辑已有流程
+      await flowApi.saveFlowDesign({
+        id: flowInfo.processDetailId || flowInfo.id,
+        processXml: xml,
+        remarks: data.remark || '',
+        copyScenes: data.copyScenes || false
+      })
+      ElMessage.success('保存成功')
+    }
     emit('saved')
   } catch (error) {
     console.error('Failed to save:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(props.flowId ? '保存失败' : '创建失败')
   }
 }
 
 function toggleMinimap() {
-  ElMessage.info('小地图功能待实现')
+  if (!bpmnModeler) return
+
+  try {
+    const minimap = bpmnModeler.get('minimap')
+    if (minimap) {
+      minimap.toggle()
+    }
+  } catch (error) {
+    console.warn('Minimap toggle failed:', error)
+  }
+}
+
+// 切换流程模拟模式
+function toggleSimulation(enabled) {
+  if (!bpmnModeler) return
+
+  try {
+    const toggleMode = bpmnModeler.get('toggleMode')
+    if (toggleMode) {
+      toggleMode.toggleMode(enabled)
+    }
+  } catch (error) {
+    console.warn('Token simulation toggle failed:', error)
+    isSimulationMode.value = !enabled
+  }
 }
 
 function updateProcessName() {
@@ -634,5 +702,20 @@ onBeforeUnmount(() => {
   width: 48px;
   background: #fff;
   border-right: 1px solid #e2e8f0;
+}
+
+// 隐藏库自带的 Token Simulation 按钮（使用自定义开关替代）
+:deep(.bts-toggle-mode) {
+  display: none !important;
+}
+
+// 隐藏 bpmn.io logo
+:deep(.bjs-powered-by) {
+  display: none !important;
+}
+
+// 隐藏库自带的小地图开关按钮（使用自定义按钮替代）
+:deep(.djs-minimap-toggle) {
+  display: none !important;
 }
 </style>

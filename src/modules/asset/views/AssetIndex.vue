@@ -4,243 +4,72 @@
     :description="moduleDescription"
     :hide-header="true"
   >
-    <!-- 模型编辑器全屏显示 -->
-    <div v-if="isModelEditorView" class="model-editor-container">
-      <ModelEditor
-        :model-id="modelEditorId"
-        @back="handleEditorBack"
-        @saved="handleEditorSaved"
-      />
-    </div>
-
-    <!-- 常规模块视图 -->
-    <div v-else class="asset-module">
+    <div class="asset-module">
       <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
-        <div
+        <router-link
           v-for="item in navItems"
           :key="item.key"
+          :to="item.path"
           class="ops-sidebar-item"
-          :class="{ 'is-active': activeView === item.key }"
-          @click="handleNavClick(item)"
+          :class="{ 'is-active': isActiveRoute(item.key) }"
         >
           <i :class="item.icon" />
           <span>{{ item.label }}</span>
-        </div>
+        </router-link>
       </aside>
 
       <section class="asset-module__content">
-        <!-- 资产总览（默认页面） -->
-        <div v-if="activeView === 'overview'" class="view-container">
-          <div class="view-card">
-            <AssetOverview ref="overviewRef" />
-          </div>
-        </div>
-
-        <!-- 资产信息 -->
-        <div v-else-if="activeView === 'info'" class="view-container">
-          <div class="view-card">
-            <AssetInfo ref="infoRef" />
-          </div>
-        </div>
-
-        <!-- 数据管理 -->
-        <div v-else-if="activeView === 'data'" class="view-container">
-          <div class="view-card">
-            <DataManage ref="dataRef" />
-          </div>
-        </div>
-
-        <!-- 资产模型 -->
-        <div v-else-if="activeView === 'model'" class="view-container">
-          <div class="view-card">
-            <AssetModel ref="modelRef" @edit-model="handleEditModel" @view-asset-type="handleViewAssetType" />
-          </div>
-        </div>
-
-        <!-- 异常设备 -->
-        <div v-else-if="activeView === 'exception'" class="view-container">
-          <div class="view-card">
-            <ExceptionDevice ref="exceptionRef" />
-          </div>
-        </div>
-
-        <!-- 自动化配置 -->
-        <div v-else-if="activeView === 'automation'" class="view-container">
-          <div class="view-card">
-            <AutomationConfig ref="automationRef" />
-          </div>
-        </div>
-
-        <!-- 资源权限 -->
-        <div v-else-if="activeView === 'permission'" class="view-container">
-          <div class="view-card">
-            <ResourcePermission ref="permissionRef" />
-          </div>
-        </div>
-
-        <!-- 操作记录 -->
-        <div v-else-if="activeView === 'log'" class="view-container">
-          <div class="view-card">
-            <OperationLog ref="logRef" />
-          </div>
-        </div>
+        <router-view />
       </section>
     </div>
   </ModulePageLayout>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
-import AssetOverview from './AssetOverview.vue'
-import AssetInfo from './AssetInfo.vue'
-import DataManage from './DataManage.vue'
-import AssetModel from './AssetModel.vue'
-import ExceptionDevice from './ExceptionDevice.vue'
-import AutomationConfig from './AutomationConfig.vue'
-import ResourcePermission from './ResourcePermission.vue'
-import OperationLog from './OperationLog.vue'
-import ModelEditor from './ModelEditor.vue'
-
-// 模块信息
-const moduleTitle = '资产管理'
-const moduleDescription = ''
 
 const route = useRoute()
 const router = useRouter()
 
-// 当前视图
-const activeView = ref('overview')
+const moduleTitle = '资产管理'
+const moduleDescription = ''
 
-// 模型编辑器状态
-const isModelEditorView = computed(() => {
-  return route.query.editor === 'model' && route.query.modelId
-})
-
-const modelEditorId = computed(() => {
-  return route.query.modelId || null
-})
-
-// 导航项（与源系统左侧菜单一致）
 const navItems = [
-  { key: 'overview', label: '资产总览', icon: 'fad fa-fw fa-chart-pie' },
-  { key: 'info', label: '资产信息', icon: 'fad fa-fw fa-server' },
-  { key: 'data', label: '数据管理', icon: 'fad fa-fw fa-database' },
-  { key: 'model', label: '资产模型', icon: 'fad fa-fw fa-project-diagram' },
-  { key: 'exception', label: '异常设备', icon: 'fad fa-fw fa-exclamation-triangle' },
-  { key: 'automation', label: '自动化配置', icon: 'fad fa-fw fa-cogs' },
-  { key: 'permission', label: '资源权限', icon: 'fad fa-fw fa-user-lock' },
-  { key: 'log', label: '操作记录', icon: 'fad fa-fw fa-history' }
+  { key: 'overview', label: '资产总览', icon: 'fad fa-fw fa-chart-pie', path: '/acm/overview' },
+  { key: 'info', label: '资产信息', icon: 'fad fa-fw fa-server', path: '/acm/info' },
+  { key: 'data', label: '数据管理', icon: 'fad fa-fw fa-database', path: '/acm/data' },
+  { key: 'model', label: '资产模型', icon: 'fad fa-fw fa-project-diagram', path: '/acm/model' },
+  { key: 'exception', label: '异常设备', icon: 'fad fa-fw fa-exclamation-triangle', path: '/acm/exception' },
+  { key: 'automation', label: '自动化配置', icon: 'fad fa-fw fa-cogs', path: '/acm/automation' },
+  { key: 'permission', label: '资源权限', icon: 'fad fa-fw fa-user-lock', path: '/acm/permission' },
+  { key: 'log', label: '操作记录', icon: 'fad fa-fw fa-history', path: '/acm/log' }
 ]
 
-// 子组件引用
-const overviewRef = ref(null)
-const infoRef = ref(null)
-const dataRef = ref(null)
-const modelRef = ref(null)
-const exceptionRef = ref(null)
-const automationRef = ref(null)
-const permissionRef = ref(null)
-const logRef = ref(null)
-
-// 获取当前模块的基础路径
-function getBasePath() {
-  const path = route.path
-  const match = path.match(/^\/([^/]+)/)
-  return match ? `/${match[1]}` : '/acm'
+function isActiveRoute(key) {
+  return route.path.includes(`/acm/${key}`)
 }
 
-/**
- * 解析路由路径，确定当前视图
- */
-function parseRouteView() {
-  const path = route.path
-  const params = route.params
-  const pathMatch = Array.isArray(params.pathMatch)
-    ? params.pathMatch.join('/')
-    : params.pathMatch || ''
-
-  // 检查各种子路由
-  if (path.includes('/info') || pathMatch.includes('info')) {
-    return 'info'
-  }
-  if (path.includes('/data') || pathMatch.includes('data')) {
-    return 'data'
-  }
-  if (path.includes('/model') || pathMatch.includes('model')) {
-    return 'model'
-  }
-  if (path.includes('/exception') || pathMatch.includes('exception')) {
-    return 'exception'
-  }
-  if (path.includes('/automation') || pathMatch.includes('automation')) {
-    return 'automation'
-  }
-  if (path.includes('/permission') || pathMatch.includes('permission')) {
-    return 'permission'
-  }
-  if (path.includes('/log') || pathMatch.includes('log')) {
-    return 'log'
-  }
-
-  return 'overview'
-}
-
-// 导航点击
-function handleNavClick(item) {
-  activeView.value = item.key
-  const basePath = getBasePath()
-  const targetPath = item.key === 'overview' ? basePath : `${basePath}/${item.key}`
-  router.push(targetPath)
-}
-
-// 处理编辑模型（从 AssetModel 子组件发出）
+// 处理编辑模型
 function handleEditModel(modelId) {
-  const basePath = getBasePath()
   router.push({
-    path: `${basePath}/model`,
+    path: '/acm/model',
     query: { editor: 'model', modelId }
   })
 }
 
-// 处理查看资产类型（从 AssetModel 子组件发出）
+// 处理查看资产类型
 function handleViewAssetType(assetTypeCode) {
-  const basePath = getBasePath()
   router.push({
-    path: `${basePath}/info`,
+    path: '/acm/info',
     query: { type: assetTypeCode }
   })
 }
 
-// 模型编辑器返回
-function handleEditorBack() {
-  const basePath = getBasePath()
-  router.push(`${basePath}/model`)
-}
-
-// 模型编辑器保存成功
-function handleEditorSaved() {
-  const basePath = getBasePath()
-  router.push(`${basePath}/model`)
-  // 刷新模型列表
-  if (modelRef.value?.loadModelList) {
-    modelRef.value.loadModelList()
-  }
-}
-
-// 监听路由变化
-watch(
-  () => route.path,
-  () => {
-    activeView.value = parseRouteView()
-  },
-  { immediate: true }
-)
-
-onMounted(() => {
-  activeView.value = parseRouteView()
-})
+// 提供给子组件使用
+provide('handleEditModel', handleEditModel)
+provide('handleViewAssetType', handleViewAssetType)
 </script>
 
 <style scoped lang="scss">
@@ -248,36 +77,36 @@ onMounted(() => {
   display: flex;
   height: 100%;
   min-height: 0;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .asset-module__content {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   background: #f5f7fa;
+  padding: 16px;
+
+  :deep(> *) {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+  }
 }
 
-.view-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
+a.ops-sidebar-item {
+  text-decoration: none;
+  color: inherit;
 }
 
-.view-card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.model-editor-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+@media (max-width: 1024px) {
+  .asset-module {
+    flex-direction: column;
+  }
 }
 </style>

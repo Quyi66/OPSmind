@@ -24,11 +24,15 @@
         @clear="loadData"
       >
         <template #prefix>
-          <i class="fa fa-search"></i>
+          <el-icon>
+            <Search />
+          </el-icon>
         </template>
       </el-input>
       <el-button size="small" @click="loadData" :loading="loading" title="刷新">
-        <i class="fa fa-refresh"></i>
+        <el-icon>
+          <Refresh />
+        </el-icon>
       </el-button>
     </div>
 
@@ -38,11 +42,11 @@
         <i class="fa fa-fist-raised"></i>
         申请临时密码
       </el-button>
-      <el-button type="info" size="small" @click="handleBatchImport">
+      <el-button size="small" @click="handleBatchImport">
         <i class="fa fa-upload"></i>
         批量申请临时密码
       </el-button>
-      <el-button type="info" plain size="small" @click="handleAdminPanel" v-if="hasAdminRole">
+      <el-button plain size="small" @click="handleAdminPanel" v-if="hasAdminRole">
         <i class="fa fa-sign-in-alt"></i>
         进入管理员面板
       </el-button>
@@ -53,7 +57,6 @@
       <el-table
         :data="tableData"
         v-loading="loading"
-        border
         stripe
         style="width: 100%"
       >
@@ -199,13 +202,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import * as pmsApi from '@/modules/password/api'
 import ApplyPasswordDialog from './ApplyPasswordDialog.vue'
 import BatchImportDialog from './BatchImportDialog.vue'
 
-const emit = defineEmits(['goToAdminPanel'])
+// 从父组件注入 goToAdminPanel 函数
+const goToAdminPanel = inject('goToAdminPanel', null)
 
 const loading = ref(false)
 const tableData = ref([])
@@ -332,7 +337,9 @@ function handleBatchImport() {
 }
 
 function handleAdminPanel() {
-  emit('goToAdminPanel')
+  if (goToAdminPanel) {
+    goToAdminPanel()
+  }
 }
 
 function handleEdit(row) {

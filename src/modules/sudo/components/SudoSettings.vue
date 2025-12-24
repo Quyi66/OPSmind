@@ -10,7 +10,6 @@
             :disabled="!canSave"
             @click="handleSave"
           >
-            <i class="fa fa-cog" v-if="!saving"></i>
             保存
           </el-button>
         </div>

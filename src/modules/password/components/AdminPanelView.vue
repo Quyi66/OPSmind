@@ -1,66 +1,77 @@
 <template>
   <div class="ops-page-layout">
+    <el-button size="small" type="primary" @click="handleBack" style="width: 60px">
+      <i class="fa fa-arrow-left"></i> 返回
+    </el-button>
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <AcmDeviceSelector
-        v-model="selectedHosts"
-        ci-types="linux"
-        :options="{ label: '筛选主机' }"
-        @change="loadData"
-      />
-      <el-button size="small" @click="loadData" :loading="loading" title="刷新">
-        <i class="fa fa-refresh"></i>
-      </el-button>
+      <el-row>
+        <el-col :span="12">
+          <AcmDeviceSelector
+            v-model="selectedHosts"
+            ci-types="linux"
+            :options="{ label: '筛选主机' }"
+            @change="loadData"
+          />
+        </el-col>
+        <el-col :span="6">
+          <el-input
+            v-model="searchKeyword"
+            size="small"
+            placeholder="搜索"
+            clearable
+            style="width: 200px;"
+            @input="handleSearch"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-col>
+      </el-row>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="info" plain size="small" @click="handleBack">
-        <i class="fa fa-arrow-circle-left"></i>
-        返回
-      </el-button>
-      <el-button size="small" @click="handleBatchModify">
-        <i class="fa fa-wrench"></i>
+      <el-button type="primary" size="small" @click="handleBatchModify">
         批量修改
       </el-button>
       <el-button size="small" :disabled="!selectedRows.length" @click="handleSelectModify">
-        <i class="fa fa-keyboard"></i>
         选择修改
       </el-button>
       <el-button size="small" @click="handleCheckPasswordState">
-        <i class="fa fa-check-double"></i>
         检查密码状态
       </el-button>
       <el-button size="small" @click="handleRevertPassword">
-        <i class="fa fa-recycle"></i>
-        回收密码
+        重置密码
       </el-button>
       <el-button size="small" @click="handleExportPassword">
-        <i class="fa fa-file-export"></i>
         导出密码
       </el-button>
-      <el-button plain size="small" @click="handleImportInitPassword">
-        <i class="fa fa-arrow-up"></i>
+      <el-button size="small" @click="handleImportInitPassword">
         导入初始密码
       </el-button>
-      <el-button type="info" plain size="small" @click="handleDownloadTemplate">
-        <i class="fa fa-file-excel"></i>
+      <el-button size="small" @click="handleDownloadTemplate">
         模板下载
       </el-button>
     </div>
 
     <!-- 数据表格 -->
     <div class="ops-table-wrapper">
+      <div class="table-toolbar-icons">
+        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
+          <el-icon><Refresh /></el-icon>
+        </el-button>
+      </div>
       <el-table
         ref="tableRef"
-        :data="tableData"
+        :data="filteredTableData"
         v-loading="loading"
-        border
         stripe
         style="width: 100%"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="50" />
+        <el-table-column type="selection" width="50" :selectable="isRowSelectable" />
         <el-table-column prop="host_key" label="IP" width="150" show-overflow-tooltip />
         <el-table-column prop="hostname" label="主机名" min-width="150" show-overflow-tooltip />
         <el-table-column prop="username" label="用户名" width="100" />
@@ -146,14 +157,65 @@
         @current-change="loadData"
       />
     </div>
+
+    <!-- 对话框组件 -->
+    <ViewPasswordDialog
+      v-model="viewPasswordDialogVisible"
+      :server-id="currentServerId"
+    />
+
+    <OperationHistoryDialog
+      v-model="operationHistoryDialogVisible"
+      :assests-id="currentAssetsId"
+      :username="currentUsername"
+      :host-key="currentHostKey"
+    />
+
+    <BatchModifyDialog
+      v-model="batchModifyDialogVisible"
+      @success="handleDialogSuccess"
+    />
+
+    <SelectModifyDialog
+      v-model="selectModifyDialogVisible"
+      :comma-ip-str="selectedCommaIpStr"
+      @success="handleDialogSuccess"
+    />
+
+    <CheckPasswordStateDialog
+      v-model="checkPasswordStateDialogVisible"
+      :comma-ip-str="selectedCommaIpStr"
+      @success="handleDialogSuccess"
+    />
+
+    <RevertPasswordDialog
+      v-model="revertPasswordDialogVisible"
+      :comma-ip-str="selectedCommaIpStr"
+      @success="handleDialogSuccess"
+    />
+
+    <ImportInitPasswordDialog
+      v-model="importInitPasswordDialogVisible"
+      @imported="handleDialogSuccess"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search, Refresh } from '@element-plus/icons-vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import * as pmsApi from '@/modules/password/api'
+
+// 对话框组件
+import ViewPasswordDialog from './ViewPasswordDialog.vue'
+import OperationHistoryDialog from './OperationHistoryDialog.vue'
+import BatchModifyDialog from './BatchModifyDialog.vue'
+import SelectModifyDialog from './SelectModifyDialog.vue'
+import CheckPasswordStateDialog from './CheckPasswordStateDialog.vue'
+import RevertPasswordDialog from './RevertPasswordDialog.vue'
+import ImportInitPasswordDialog from './ImportInitPasswordDialog.vue'
 
 const emit = defineEmits(['back'])
 
@@ -162,6 +224,50 @@ const tableData = ref([])
 const tableRef = ref(null)
 const selectedRows = ref([])
 const selectedHosts = ref([])
+const searchKeyword = ref('')
+
+// 对话框可见状态
+const viewPasswordDialogVisible = ref(false)
+const operationHistoryDialogVisible = ref(false)
+const batchModifyDialogVisible = ref(false)
+const selectModifyDialogVisible = ref(false)
+const checkPasswordStateDialogVisible = ref(false)
+const revertPasswordDialogVisible = ref(false)
+const importInitPasswordDialogVisible = ref(false)
+
+// 当前选中行的相关信息
+const currentServerId = ref('')
+const currentAssetsId = ref('')
+const currentUsername = ref('')
+const currentHostKey = ref('')
+
+// 选中的服务器逗号分隔字符串，格式: assests_id@@host_key@@username
+const selectedCommaIpStr = computed(() => {
+  if (!selectedRows.value.length) return ''
+  return selectedRows.value.map(row => {
+    return `${row.assests_id || row.id}@@${row.host_key}@@${row.username}`
+  }).join(',')
+})
+
+// 过滤后的表格数据
+const filteredTableData = computed(() => {
+  if (!searchKeyword.value) {
+    return tableData.value
+  }
+  const keyword = searchKeyword.value.toLowerCase()
+  return tableData.value.filter(row => {
+    return (
+      (row.host_key && row.host_key.toLowerCase().includes(keyword)) ||
+      (row.hostname && row.hostname.toLowerCase().includes(keyword)) ||
+      (row.username && row.username.toLowerCase().includes(keyword))
+    )
+  })
+})
+
+function handleSearch() {
+  // 搜索时重置分页
+  pagination.page = 1
+}
 
 const pagination = reactive({
   page: 1,
@@ -206,6 +312,11 @@ function handleSelectionChange(selection) {
   selectedRows.value = selection
 }
 
+// 行是否可选（处理中或重置中的行不可选）
+function isRowSelectable(row) {
+  return row.setup_status !== 'PROCESS' && row.setup_status !== 'RESET'
+}
+
 function getCheckStatusType(status) {
   return checkStatusConfig[status]?.type || 'info'
 }
@@ -241,7 +352,7 @@ function handleBack() {
 }
 
 function handleBatchModify() {
-  ElMessage.info('批量修改弹窗待实现')
+  batchModifyDialogVisible.value = true
 }
 
 function handleSelectModify() {
@@ -249,15 +360,15 @@ function handleSelectModify() {
     ElMessage.warning('请先选择要修改的服务器')
     return
   }
-  ElMessage.info('选择修改弹窗待实现')
+  selectModifyDialogVisible.value = true
 }
 
 function handleCheckPasswordState() {
-  ElMessage.info('检查密码状态弹窗待实现')
+  checkPasswordStateDialogVisible.value = true
 }
 
 function handleRevertPassword() {
-  ElMessage.info('回收密码弹窗待实现')
+  revertPasswordDialogVisible.value = true
 }
 
 function handleExportPassword() {
@@ -265,7 +376,7 @@ function handleExportPassword() {
 }
 
 function handleImportInitPassword() {
-  ElMessage.info('导入初始密码弹窗待实现')
+  importInitPasswordDialogVisible.value = true
 }
 
 function handleDownloadTemplate() {
@@ -274,76 +385,27 @@ function handleDownloadTemplate() {
 }
 
 function handleViewPassword(row) {
-  ElMessage.info('查看密码弹窗待实现')
+  currentServerId.value = row.id
+  viewPasswordDialogVisible.value = true
 }
 
 function handleViewHistory(row) {
-  ElMessage.info('操作历史弹窗待实现')
+  currentAssetsId.value = row.assests_id || row.id
+  currentUsername.value = row.username
+  currentHostKey.value = row.host_key
+  operationHistoryDialogVisible.value = true
+}
+
+function handleDialogSuccess() {
+  loadData()
 }
 </script>
 
 <style scoped lang="scss">
-.admin-panel-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  background: #f8fafc;
-}
-
-.toolbar {
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-  .toolbar-left {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-}
-
-.filter-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-  .filter-left {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-}
-
-.table-container {
-  flex: 1;
-  min-height: 0;
-  background: #fff;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-  padding: 12px 16px;
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
+// 组件特有样式，全局样式已在 element-ui.scss 中定义
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 </style>

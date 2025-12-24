@@ -158,6 +158,98 @@ export function getOperationLog(params = {}) {
     })
 }
 
+/**
+ * 获取服务器密码信息
+ * POST /dts/api/dts/q/data/PMS_GET_PASSWORD/
+ */
+export function getServerPassword(serverId) {
+    return apiService.post(`/dts/api/dts/q/data/PMS_GET_PASSWORD/?cacheBuster=${Date.now()}`, {
+        params: { serverId }
+    })
+}
+
+/**
+ * 获取服务器操作历史
+ * POST /dts/api/dts/q/data/PMS_GET_SERVER_HISTORY/
+ */
+export function getServerHistory(params = {}) {
+    return apiService.post(`/dts/api/dts/q/data/PMS_GET_SERVER_HISTORY/?cacheBuster=${Date.now()}`, {
+        params: {
+            assestsId: params.assestsId,
+            username: params.username,
+            module: params.module || 'pms'
+        }
+    })
+}
+
+/**
+ * 批量修改密码 - 全部服务器
+ * 调用作业进行批量密码修改
+ */
+export function batchModifyPassword(params = {}) {
+    return apiService.post(`/jao/api/jao/jobs/PMS_BATCH_MODIFY/run?cacheBuster=${Date.now()}`, {
+        params: {
+            username: params.username,
+            passwordType: params.passwordType, // 'random' 或 'manual'
+            password: params.password,
+            expireHours: params.expireHours,
+            scope: params.scope // 'all' 或 'selected'
+        }
+    })
+}
+
+/**
+ * 选择修改密码 - 选中服务器
+ * 调用作业进行选择性密码修改
+ */
+export function selectModifyPassword(params = {}) {
+    return apiService.post(`/jao/api/jao/jobs/PMS_SELECT_MODIFY/run?cacheBuster=${Date.now()}`, {
+        params: {
+            commaIpStr: params.commaIpStr,
+            username: params.username,
+            passwordType: params.passwordType,
+            password: params.password,
+            expireHours: params.expireHours
+        }
+    })
+}
+
+/**
+ * 检查密码状态
+ * 调用作业检查密码状态
+ */
+export function checkPasswordState(params = {}) {
+    return apiService.post(`/jao/api/jao/jobs/PMS_CHECK_PASSWORD/run?cacheBuster=${Date.now()}`, {
+        params: {
+            scope: params.scope, // 'all' 或 'selected'
+            commaIpStr: params.commaIpStr
+        }
+    })
+}
+
+/**
+ * 重置密码
+ * 调用作业重置密码
+ */
+export function revertPassword(params = {}) {
+    return apiService.post(`/jao/api/jao/jobs/PMS_REVERT_PASSWORD/run?cacheBuster=${Date.now()}`, {
+        params: {
+            commaIpStr: params.commaIpStr
+        }
+    })
+}
+
+/**
+ * 导入初始化密码
+ */
+export function importInitPassword(formData) {
+    return apiService.post('/oplus-portal/upm/api/upm/pms/v2/password-job/import', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+}
+
 export default {
     getApplicationList,
     getDefaultUsername,
@@ -172,5 +264,12 @@ export default {
     reapplyApplication,
     deleteApplication,
     getJobResult,
-    getOperationLog
+    getOperationLog,
+    getServerPassword,
+    getServerHistory,
+    batchModifyPassword,
+    selectModifyPassword,
+    checkPasswordState,
+    revertPassword,
+    importInitPassword
 }

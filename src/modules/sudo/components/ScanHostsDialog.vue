@@ -22,7 +22,6 @@
         </div>
       </div>
 
-      <!-- 执行状态 -->
       <div v-if="jobStatus" class="job-status">
         <div class="status-header">
           <i class="fa fa-spinner fa-spin" v-if="isRunning"></i>
@@ -31,8 +30,8 @@
           <span>{{ statusText }}</span>
         </div>
         <div v-if="jobResult" class="status-detail">
-          <div v-if="jobResult.startTime">开始时间：{{ jobResult.startTime }}</div>
-          <div v-if="jobResult.endTime">结束时间：{{ jobResult.endTime }}</div>
+          <div v-if="jobResult.startTime">开始时间：{{ formatDateTime(jobResult.startTime) }}</div>
+          <div v-if="jobResult.endTime">结束时间：{{ formatDateTime(jobResult.endTime) }}</div>
         </div>
       </div>
     </div>
@@ -45,12 +44,11 @@
         <el-button
           v-if="!isSuccess && !isFailed"
           type="primary"
-          size="large"
+          size="small"
           :loading="submitting"
           :disabled="selectedHosts.length === 0"
           @click="handleStartScan"
         >
-          <i class="fa fa-search" v-if="!submitting"></i>
           开始扫描
         </el-button>
       </div>
@@ -96,6 +94,21 @@ const statusText = computed(() => {
     default: return jobStatus.value
   }
 })
+
+// 格式化日期时间
+function formatDateTime(dateStr) {
+  if (!dateStr) return '-----'
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return dateStr
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  })
+}
 
 watch(() => props.modelValue, (val) => {
   visible.value = val

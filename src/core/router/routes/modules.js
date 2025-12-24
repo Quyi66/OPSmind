@@ -47,7 +47,15 @@ function createModuleRoute(entry, path, nameSuffix, extraMeta = {}) {
 export function buildModuleRoutes() {
   const routes = []
 
+  // 这些模块已在 base.js 中使用子路由方式定义，需要从动态生成中排除
+  const skipModules = ['sudo', 'jao', 'cmd', 'gfs', 'patches', 'cac', 'acm', 'ssc', 'users', 'flow', 'password']
+
   moduleRegistryEntries.forEach(entry => {
+    // 跳过已在 baseRoutes 中定义的模块
+    if (skipModules.includes(entry.code)) {
+      return
+    }
+
     routes.push(createModuleRoute(entry, `/${entry.path}`, 'main'))
 
     const alias = GROUP_ALIAS_MAP?.[entry.groupCode]

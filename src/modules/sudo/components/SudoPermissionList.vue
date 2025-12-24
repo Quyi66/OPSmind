@@ -21,11 +21,11 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button size="small" @click="loadData">
-        <i class="fa fa-refresh"></i> 刷新
-      </el-button>
       <el-button type="primary" size="small" @click="handleScanHosts">
         <i class="fa fa-redo"></i> 扫描主机
+      </el-button>
+      <el-button size="small" @click="loadData">
+        <i class="fa fa-refresh"></i> 刷新
       </el-button>
     </div>
 
@@ -187,7 +187,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.sudo-permission-list {
+.ops-page-layout {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -196,46 +196,31 @@ onMounted(() => {
   overflow: hidden;
 }
 
-.list-header {
+.ops-filter-bar {
+  flex-shrink: 0;
   display: flex;
-  justify-content: space-between;
+  gap: 8px;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #e2e8f0;
-
-  .list-title {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+  margin-bottom: 12px;
 }
 
-.list-table {
+.ops-action-bar {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ops-table-wrapper {
   flex: 1;
   min-height: 0;
-  padding: 0 16px;
   overflow: auto;
-
-  .cell-ellipsis {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
 }
 
-.list-footer {
-  padding: 12px 16px;
-  border-top: 1px solid #e2e8f0;
+.ops-pagination-wrapper {
+  flex-shrink: 0;
+  margin-top: 12px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
 }
 </style>

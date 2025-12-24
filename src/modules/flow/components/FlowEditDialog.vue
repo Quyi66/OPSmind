@@ -266,8 +266,8 @@ async function handleConfirm() {
   try {
     const resultData = { ...formData }
 
-    if (props.mode === 'process') {
-      // 更新流程基本信息 - 传递完整对象
+    if (props.mode === 'process' && formData.id) {
+      // 编辑已有流程基本信息 - 调用 API
       await flowApi.updateFlow({
         id: formData.id,
         processKey: formData.processKey,
@@ -281,7 +281,7 @@ async function handleConfirm() {
       ElMessage.success('更新成功')
       emit('saved')
     } else {
-      // 其他模式直接返回数据，由调用方处理
+      // 其他模式（包括新建流程）直接返回数据，由调用方处理
       emit('confirm', resultData)
     }
 

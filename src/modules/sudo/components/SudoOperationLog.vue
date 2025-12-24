@@ -28,15 +28,17 @@
         <el-option label="失败" value="ERROR" />
       </el-select>
       <el-select v-model="filters.day" placeholder="时间范围" size="small" style="width: 120px" @change="loadData">
-        <el-option label="最近1天" :value="1" />
-        <el-option label="最近7天" :value="7" />
-        <el-option label="最近30天" :value="30" />
+        <el-option label="全部时间" value="all" />
+        <el-option label="最近1天" value="1" />
+        <el-option label="最近7天" value="7" />
+        <el-option label="最近30天" value="30" />
+        <el-option label="最近一年" value="365" />
       </el-select>
       <el-button type="primary" size="small" @click="loadData">
         <i class="fa fa-search"></i> 搜索
       </el-button>
       <el-button size="small" @click="loadData" :loading="loading" title="刷新">
-        <i class="fa fa-refresh"></i>
+        <el-icon><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -45,7 +47,6 @@
       <el-table
         :data="tableData"
         v-loading="loading"
-        border
         stripe
         style="width: 100%"
       >
@@ -140,7 +141,7 @@ const filters = reactive({
   keyword: '',
   action: 'all',
   status: 'all',
-  day: 1
+  day: '1'
 })
 
 const pagination = reactive({
@@ -257,52 +258,35 @@ function formatDuration(startTime, endTime) {
 </script>
 
 <style scoped lang="scss">
-.operation-log-container {
+.ops-page-layout {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  background: #f8fafc;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-  .toolbar-left {
-    display: flex;
-    gap: 12px;
-  }
-
-  .toolbar-right {
-    display: flex;
-    gap: 10px;
-  }
-}
-
-.table-container {
-  flex: 1;
-  min-height: 0;
   background: #fff;
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.pagination-container {
+.ops-filter-bar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ops-table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ops-pagination-wrapper {
+  flex-shrink: 0;
+  margin-top: 12px;
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
-  padding: 12px 16px;
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .text-danger {

@@ -127,42 +127,42 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
 // 应用 URL 配置 - 只配置入口 URL，不关心内部路由
 const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
   gfs: {
-    entryUrl: '#/gfs',
+    entryUrl: '#/gfs/scriptLibrary',
     description: '脚本',
     enabled: true
   },
   jao: {
-    entryUrl: '#/jao',
+    entryUrl: '#/jao/jobs',
     description: '作业',
     enabled: true
   },
   cmd: {
-    entryUrl: '#/cmd',
+    entryUrl: '#/cmd/list',
     description: '命令',
     enabled: true
   },
   cac: {
-    entryUrl: '#/cac',
+    entryUrl: '#/cac/overview',
     description: '系统巡检',
     enabled: true
   },
   password: {
-    entryUrl: '#/apw/pmsv2',
+    entryUrl: '#/password/application',
     description: '密码管理',
     enabled: true
   },
   sudo: {
-    entryUrl: '#/apw/sudo',
+    entryUrl: '#/sudo/permission',
     description: 'sudo权限管理',
     enabled: true
   },
   acm: {
-    entryUrl: '#/apw/acm',
+    entryUrl: '#/acm/overview',
     description: '资产管理',
     enabled: true
   },
   patches: {
-    entryUrl: '#/apw/vap',
+    entryUrl: '#/patches/linuxPatchScan',
     description: '补丁管理',
     enabled: true
   },
@@ -185,23 +185,23 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
   },
   // 系统设置中心（自定义 ssc 页面）
   ssc: {
-    entryUrl: '#/ssc',
+    entryUrl: '#/ssc/user',
     description: '系统设置中心',
     enabled: true
   },
   // 新增流程（二级功能：#/flow）。保留 workflow 作为别名以兼容
   flow: {
-    entryUrl: '#/flow',
+    entryUrl: '#/flow/list',
     description: '流程管理',
     enabled: true
   },
   workflow: {
-    entryUrl: '#/flow',
+    entryUrl: '#/flow/list',
     description: '流程管理（别名）',
     enabled: true
   },
   users: {
-    entryUrl: '#/apw/uim',
+    entryUrl: '#/users/overview',
     description: '用户管理',
     enabled: true
   }

@@ -52,14 +52,14 @@
         </div>
 
         <!-- 执行按钮 -->
-        <div class="form-section">
+        <div class="form-section" style="text-align: end;">
           <el-button
             type="primary"
             :loading="submitting"
             :disabled="!canSubmit"
             @click="handleSubmit"
           >
-            <i class="fa fa-redo-alt" v-if="!submitting"></i>
+            <el-icon v-if="!submitting"><Refresh /></el-icon>
             开始重置
           </el-button>
         </div>

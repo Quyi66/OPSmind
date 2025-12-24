@@ -3,16 +3,29 @@
     <!-- 顶部工具栏 -->
     <div class="history-toolbar">
       <div class="toolbar-left">
-        <el-button type="primary" plain size="small" @click="handleBack">
-          <i class="fa fa-arrow-left"></i> 返回
+        <el-button type="primary" size="small" @click="handleBack">
+          <el-icon><ArrowLeft /></el-icon> 返回
         </el-button>
       </div>
       <div class="toolbar-center">
         <span class="process-name">{{ processInfo.processName }} 历史版本</span>
       </div>
       <div class="toolbar-right">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索版本备注"
+          size="small"
+          clearable
+          style="width: 200px"
+          @clear="handleSearch"
+          @keyup.enter="handleSearch"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
         <el-button size="small" @click="loadHistory">
-          <i class="fa fa-refresh"></i> 刷新
+          <el-icon><Refresh /></el-icon> 刷新
         </el-button>
       </div>
     </div>
@@ -20,10 +33,10 @@
     <!-- 历史版本列表 -->
     <div class="history-content">
       <el-table
-        :data="historyList"
+        :data="paginatedList"
         v-loading="loading"
+        stripe
         style="width: 100%"
-        border
       >
         <el-table-column label="版本" width="150">
           <template #default="{ row }">
@@ -36,7 +49,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="版本备注" prop="versionRemarks">
+        <el-table-column label="版本备注" prop="versionRemarks" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.versionRemarks || row.remark || '-----' }}
           </template>
@@ -73,13 +86,28 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页器 -->
+      <div class="history-pagination" v-if="filteredList.length > 0">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total="filteredList.length"
+          :page-sizes="[10, 20, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePageChange"
+          @current-change="handlePageChange"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowLeft, Search, Refresh } from '@element-plus/icons-vue'
 import * as flowApi from '@/modules/flow/api'
 
 const props = defineProps({
@@ -96,6 +124,36 @@ const historyList = ref([])
 const processInfo = ref({
   processName: ''
 })
+const searchKeyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+// 过滤后的列表
+const filteredList = computed(() => {
+  if (!searchKeyword.value) {
+    return historyList.value
+  }
+  const keyword = searchKeyword.value.toLowerCase()
+  return historyList.value.filter(item => {
+    const remark = (item.versionRemarks || item.remark || '').toLowerCase()
+    return remark.includes(keyword)
+  })
+})
+
+// 分页后的列表
+const paginatedList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredList.value.slice(start, end)
+})
+
+function handleSearch() {
+  currentPage.value = 1
+}
+
+function handlePageChange() {
+  // 分页变化时自动更新显示
+}
 
 async function loadHistory() {
   if (!props.processId) return
@@ -212,6 +270,15 @@ onMounted(() => {
   flex: 1;
   padding: 20px;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 :deep(.el-table) {
@@ -220,3 +287,4 @@ onMounted(() => {
   }
 }
 </style>
+

@@ -21,11 +21,11 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button size="small" @click="loadData">
-        <i class="fa fa-refresh"></i> 刷新
-      </el-button>
       <el-button type="primary" size="small" @click="handleAddSudo">
-        <i class="fa fa-edit"></i> 添加sudo
+        <el-icon><Plus /></el-icon> 添加sudo
+      </el-button>
+      <el-button size="small" @click="loadData">
+        <el-icon><Refresh /></el-icon> 刷新
       </el-button>
     </div>
 
@@ -35,10 +35,9 @@
         :data="paginatedData"
         v-loading="loading"
         style="width: 100%"
-        border
         stripe
       >
-        <el-table-column label="主机" prop="$data_owner" min-width="150" show-overflow-tooltip>
+        <el-table-column label="主机" prop="$data_owner" min-width="120" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.$data_owner || row.host || '-----' }}
           </template>
@@ -48,7 +47,7 @@
             {{ row.user || '-----' }}
           </template>
         </el-table-column>
-        <el-table-column label="权限" prop="user_spec" min-width="200" show-overflow-tooltip>
+        <el-table-column label="权限" prop="user_spec" min-width="250" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.user_spec || '-----' }}
           </template>
@@ -60,7 +59,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="恢复时间" width="170">
+        <el-table-column label="回收时间" width="170">
           <template #default="{ row }">
             {{ getRecoveryTime(row) }}
           </template>
@@ -77,7 +76,7 @@
         </el-table-column>
         <el-table-column label="消息" prop="result_msg" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ row.result_msg || '-----' }}
+            {{ row.result_msg || '-' }}
           </template>
         </el-table-column>
       </el-table>
@@ -204,7 +203,7 @@ function getStatusText(row) {
   return '生效中'
 }
 
-// 计算恢复时间
+// 计算回收时间
 function getRecoveryTime(row) {
   if (!row.exec_time) return '-----'
   const validPeriod = row.valid_period || 0
@@ -250,7 +249,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.sudo-apply-list {
+.ops-page-layout {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -259,46 +258,31 @@ onMounted(() => {
   overflow: hidden;
 }
 
-.list-header {
+.ops-filter-bar {
+  flex-shrink: 0;
   display: flex;
-  justify-content: space-between;
+  gap: 8px;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #e2e8f0;
-
-  .list-title {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+  margin-bottom: 12px;
 }
 
-.list-table {
+.ops-action-bar {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ops-table-wrapper {
   flex: 1;
   min-height: 0;
-  padding: 0 16px;
   overflow: auto;
-
-  .cell-ellipsis {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
 }
 
-.list-footer {
-  padding: 12px 16px;
-  border-top: 1px solid #e2e8f0;
+.ops-pagination-wrapper {
+  flex-shrink: 0;
+  margin-top: 12px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
 }
 </style>

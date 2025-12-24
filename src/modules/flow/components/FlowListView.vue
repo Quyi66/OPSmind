@@ -15,23 +15,23 @@
         </template>
       </el-input>
       <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo"></i> 重置
+        <el-icon><Refresh /></el-icon> 重置
       </el-button>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreate">
-        <i class="fa fa-plus"></i> 新建
+        <el-icon><Plus /></el-icon> 新建
       </el-button>
-      <el-button size="small" :disabled="!selectedRows.length" @click="handleBatchDelete">
-        <i class="fa fa-trash"></i> 删除
+      <el-button size="small" type="danger" :disabled="!selectedRows.length" @click="handleBatchDelete">
+        <el-icon><Delete /></el-icon> 删除
       </el-button>
       <el-button size="small" @click="handleExport">
-        <i class="fa fa-download"></i> 导出
+        <el-icon><Download /></el-icon> 导出
       </el-button>
       <el-button size="small" @click="loadData">
-        <i class="fa fa-refresh"></i> 刷新
+        <el-icon><Refresh /></el-icon> 刷新
       </el-button>
     </div>
 
@@ -40,7 +40,6 @@
       <el-table
         :data="paginatedData"
         v-loading="loading"
-        border
         @selection-change="handleSelectionChange"
         style="width: 100%"
       >
@@ -48,15 +47,8 @@
         <el-table-column prop="processName" label="流程名称" min-width="150" />
         <el-table-column prop="processAbbr" label="流程简称" min-width="120" />
         <el-table-column prop="remarks" label="备注" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="创建时间" width="160" />
-        <el-table-column label="历史版本" width="100">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleViewHistory(row)">
-              历史版本
-            </el-button>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column prop="createTime" label="创建时间" width="200" />
+        <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button text type="primary" size="small" @click="handleEdit(row)">
@@ -70,6 +62,9 @@
               </el-button>
               <el-button text type="primary" size="small" @click="handleClone(row)">
                 克隆
+              </el-button>
+              <el-button type="primary" text size="small" @click="handleViewHistory(row)">
+                历史版本
               </el-button>
               <el-button text type="danger" size="small" @click="handleDelete(row)">
                 删除

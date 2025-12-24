@@ -10,53 +10,54 @@
     <!-- 普通模式 -->
     <div v-else class="password-module">
       <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
-        <div
+        <router-link
           v-for="item in navItems"
           :key="item.key"
+          :to="item.path"
           class="ops-sidebar-item"
-          :class="{ 'is-active': activeView === item.key }"
-          @click="setActiveView(item.key)"
+          :class="{ 'is-active': isActiveRoute(item.key) }"
         >
           <i :class="item.icon"></i>
           <span>{{ item.label }}</span>
-        </div>
+        </router-link>
       </aside>
 
       <section class="password-module__content">
-        <ApplicationApprovalList
-          v-if="activeView === 'application'"
-          @go-to-admin-panel="showAdminPanel = true"
-        />
-        <PasswordSettings v-else-if="activeView === 'settings'" />
-        <PasswordOperationLog v-else-if="activeView === 'logs'" />
+        <router-view />
       </section>
     </div>
   </ModulePageLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, provide } from 'vue'
+import { useRoute } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
-import ApplicationApprovalList from '../components/ApplicationApprovalList.vue'
-import PasswordSettings from '../components/PasswordSettings.vue'
-import PasswordOperationLog from '../components/PasswordOperationLog.vue'
 import AdminPanelView from '../components/AdminPanelView.vue'
+
+const route = useRoute()
 
 const moduleTitle = '密码管理'
 const moduleDescription = ''
 
-const activeView = ref('application')
 const showAdminPanel = ref(false)
 
 const navItems = [
-  { key: 'application', label: '申请审批', icon: 'fa fa-clipboard-check' },
-  { key: 'settings', label: '参数配置', icon: 'fa fa-cog' },
-  { key: 'logs', label: '操作记录', icon: 'fa fa-history' }
+  { key: 'application', label: '申请审批', icon: 'fa fa-clipboard-check', path: '/password/application' },
+  { key: 'settings', label: '参数配置', icon: 'fa fa-cog', path: '/password/settings' },
+  { key: 'logs', label: '操作记录', icon: 'fa fa-history', path: '/password/logs' }
 ]
 
-function setActiveView(viewKey) {
-  activeView.value = viewKey
+function isActiveRoute(key) {
+  return route.path.includes(`/password/${key}`)
 }
+
+// 提供打开管理员面板方法给子组件使用
+function goToAdminPanel() {
+  showAdminPanel.value = true
+}
+
+provide('goToAdminPanel', goToAdminPanel)
 </script>
 
 <style scoped lang="scss">
@@ -66,54 +67,6 @@ function setActiveView(viewKey) {
   background: #fff;
   border-radius: 8px;
   overflow: hidden;
-}
-
-.password-module__nav {
-  width: 160px;
-  flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    cursor: pointer;
-    color: #333;
-    font-size: 13px;
-    transition: all 0.2s;
-    position: relative;
-
-    i {
-      width: 16px;
-      text-align: center;
-      color: #666;
-    }
-
-    &:hover {
-      background: #f5f7fa;
-    }
-
-    &.is-active {
-      background: #e6f7ff;
-      color: #1890ff;
-
-      i {
-        color: #1890ff;
-      }
-
-      &::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 3px;
-        background: #1890ff;
-      }
-    }
-  }
 }
 
 .password-module__content {
@@ -126,9 +79,14 @@ function setActiveView(viewKey) {
   background: #f5f7fa;
   padding: 16px;
 
-  > * {
+  :deep(> *) {
     flex: 1;
     min-height: 0;
   }
+}
+
+a.ops-sidebar-item {
+  text-decoration: none;
+  color: inherit;
 }
 </style>

@@ -105,25 +105,32 @@ export function batchDeleteExecution(ids) {
 
 /**
  * 终止流程所有运行实例
- * POST /flow/api/flow/process/:id/terminate
+ * POST /flow/api/flow/execution/terminate
+ * @param {string} processId 流程ID，传 'all' 终止所有
  */
 export function terminateProcess(processId) {
-    return apiService.post(`/flow/api/flow/process/${processId}/terminate`)
+    return apiService.post(`/flow/api/flow/execution/terminate?cacheBuster=${Date.now()}`, {
+        processId
+    })
 }
 
 /**
  * 终止所有流程
- * POST /flow/api/flow/process/terminate-all
+ * POST /flow/api/flow/execution/terminate
  */
 export function terminateAllProcesses() {
-    return apiService.post('/flow/api/flow/process/terminate-all')
+    return apiService.post(`/flow/api/flow/execution/terminate?cacheBuster=${Date.now()}`, {
+        processId: 'all'
+    })
 }
 
 /**
  * 创建流程
+ * POST /flow/api/flow/process
+ * @param {Object} data 包含 processKey, processName, processAbbr, remarks, bpmnXml
  */
 export function createFlow(data) {
-    return apiService.post('/flow/api/flow/process/create', data)
+    return apiService.post(`/flow/api/flow/process?cacheBuster=${Date.now()}`, data)
 }
 
 /**

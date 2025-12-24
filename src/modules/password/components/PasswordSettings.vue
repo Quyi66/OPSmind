@@ -1,54 +1,63 @@
 <template>
-  <div class="settings-container">
+  <div class="ops-page-layout">
     <!-- 筛选区 -->
-    <div class="page-header">
-      <div class="header-right">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索"
-          clearable
-          style="width: 200px"
-          @keyup.enter="loadData"
-          @clear="loadData"
-        >
-          <template #prefix>
-            <i class="fa fa-search"></i>
-          </template>
-        </el-input>
-      </div>
+    <div class="ops-filter-bar">
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索"
+        clearable
+        size="small"
+        style="width: 200px"
+        @keyup.enter="loadData"
+        @clear="loadData"
+      >
+        <template #prefix>
+          <i class="fa fa-search"></i>
+        </template>
+      </el-input>
+      <el-button size="small" @click="handleReset">
+        <i class="fa fa-undo"></i> 重置
+      </el-button>
     </div>
 
-    <!-- 数据表格 -->
-    <div class="table-container">
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button size="small" @click="loadData" :loading="loading">
+        <i class="fa fa-refresh"></i> 刷新
+      </el-button>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
       <el-table
         :data="filteredData"
         v-loading="loading"
-        border
+        stripe
         style="width: 100%"
       >
-        <el-table-column prop="type" label="类型" width="100">
+        <el-table-column prop="type" label="类型" width="100" show-overflow-tooltip>
           <template #default>
             密码策略
           </template>
         </el-table-column>
-        <el-table-column prop="param_name" label="名称" width="120">
+        <el-table-column prop="param_name" label="名称" width="120" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getParamNameText(row.param_name) }}
           </template>
         </el-table-column>
-        <el-table-column prop="expression" label="参数值" min-width="350">
+        <el-table-column prop="expression" label="参数值" min-width="300" show-overflow-tooltip>
           <template #default="{ row }">
-            <div class="expression-cell">{{ row.expression }}</div>
+            {{ row.expression }}
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="备注" min-width="350">
+        <el-table-column prop="description" label="备注" min-width="300" show-overflow-tooltip>
           <template #default="{ row }">
-            <div class="description-cell">{{ row.description }}</div>
+            {{ row.description || '-' }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" link type="primary" @click="handleEdit(row)">
+            <el-button size="small" text type="primary" @click="handleEdit(row)">
               编辑
             </el-button>
           </template>
@@ -56,15 +65,15 @@
       </el-table>
     </div>
 
-    <!-- 分页 -->
-    <div class="pagination-container">
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :page-sizes="[10, 20, 50, 100]"
         :total="pagination.total"
         layout="total, sizes, prev, pager, next, jumper"
-        small
+        background
       />
     </div>
 
@@ -170,6 +179,11 @@ async function loadData() {
   }
 }
 
+function handleReset() {
+  searchKeyword.value = ''
+  loadData()
+}
+
 function getParamNameText(paramName) {
   return paramNameMap[paramName] || paramName
 }
@@ -204,49 +218,40 @@ async function handleSave() {
 </script>
 
 <style scoped lang="scss">
-.settings-container {
+.ops-page-layout {
   height: 100%;
   display: flex;
   flex-direction: column;
   background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-.page-header {
+.ops-filter-bar {
+  flex-shrink: 0;
   display: flex;
-  justify-content: space-between;
+  gap: 8px;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e2e8f0;
-
-  .page-title {
-    font-size: 16px;
-    font-weight: 500;
-    color: #1e293b;
-    margin: 0;
-  }
+  margin-bottom: 12px;
 }
 
-.table-container {
+.ops-action-bar {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ops-table-wrapper {
   flex: 1;
   min-height: 0;
   overflow: auto;
 }
 
-.pagination-container {
+.ops-pagination-wrapper {
+  flex-shrink: 0;
+  margin-top: 12px;
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 12px 20px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.expression-cell {
-  word-break: break-all;
-  line-height: 1.5;
-}
-
-.description-cell {
-  line-height: 1.5;
-  color: #64748b;
+  justify-content: flex-end;
 }
 </style>
