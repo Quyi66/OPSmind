@@ -2,37 +2,44 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索作业名称"
-        clearable
-        size="small"
-        style="width: 240px"
-        @input="handleSearch"
-      >
-        <template #prefix>
-          <i class="fa fa-search" />
-        </template>
-      </el-input>
-      <el-select
-        v-model="statusFilter"
-        placeholder="状态筛选"
-        clearable
-        size="small"
-        style="width: 140px"
-        @change="handleSearch"
-      >
-        <el-option label="全部状态" :value="null" />
-        <el-option label="审批中" :value="0" />
-        <el-option label="审批通过" :value="1" />
-        <el-option label="审批未通过" :value="2" />
-        <el-option label="审批作废" :value="3" />
-      </el-select>
-      <div class="ops-filter-actions">
-        <el-button size="small" @click="handleReset">
-          <i class="fa fa-undo" /> 重置
-        </el-button>
-      </div>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索作业名称"
+            clearable
+            style="width: 240px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="filters.status"
+            placeholder="状态筛选"
+            clearable
+            style="width: 140px"
+          >
+            <el-option label="全部状态" :value="null" />
+            <el-option label="审批中" :value="0" />
+            <el-option label="审批通过" :value="1" />
+            <el-option label="审批未通过" :value="2" />
+            <el-option label="审批作废" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -45,15 +52,14 @@
       >
         <i class="fa fa-trash" /> 删除
       </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="fetchData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle @click="fetchData" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         v-loading="loading"
         :data="paginatedData"
@@ -150,16 +156,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const loading = ref(false)
 const tableData = ref([])
 const selectedIds = ref([])
-const searchKeyword = ref('')
-const statusFilter = ref(null)
+const filters = reactive({
+  keyword: '',
+  status: null
+})
 const currentPage = ref(1)
 const pageSize = ref(10)
 
@@ -167,8 +175,8 @@ const filteredData = computed(() => {
   let data = tableData.value
 
   // 文本筛选
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
+  if (filters.keyword) {
+    const keyword = filters.keyword.toLowerCase()
     data = data.filter(item =>
       item.jobName?.toLowerCase().includes(keyword) ||
       item.jobId?.toLowerCase().includes(keyword) ||
@@ -177,8 +185,8 @@ const filteredData = computed(() => {
   }
 
   // 状态筛选
-  if (statusFilter.value !== null && statusFilter.value !== undefined) {
-    data = data.filter(item => item.status === statusFilter.value)
+  if (filters.status !== null && filters.status !== undefined) {
+    data = data.filter(item => item.status === filters.status)
   }
 
   return data
@@ -234,9 +242,10 @@ function handleSearch() {
 }
 
 function handleReset() {
-  searchKeyword.value = ''
-  statusFilter.value = null
+  filters.keyword = ''
+  filters.status = null
   currentPage.value = 1
+  pageSize.value = 10
 }
 
 function handlePageChange(page) {

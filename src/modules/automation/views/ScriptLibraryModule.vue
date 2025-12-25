@@ -4,7 +4,7 @@
     :description="moduleDescription"
     :hide-header="true"
   >
-    <div class="gfs-module">
+    <div class="ops-module">
       <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
         <router-link
           v-for="item in navItems"
@@ -18,7 +18,7 @@
         </router-link>
       </aside>
 
-      <section class="gfs-module__content">
+      <section class="ops-module__content">
         <router-view />
       </section>
     </div>
@@ -46,40 +46,6 @@ function isActiveRoute(key) {
 </script>
 
 <style scoped lang="scss">
-.gfs-module {
-  display: flex;
-  height: 100%;
-  min-height: 0;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.gfs-module__content {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background: #f5f7fa;
-  padding: 16px;
-
-  :deep(> *) {
-    flex: 1;
-    min-height: 0;
-    height: 100%;
-  }
-}
-
-a.ops-sidebar-item {
-  text-decoration: none;
-  color: inherit;
-}
-
-@media (max-width: 1024px) {
-  .gfs-module {
-    flex-direction: column;
-  }
-}
+// 样式已统一至 opsmind.scss
 </style>
+

@@ -1,0 +1,400 @@
+// ========================================
+// OPSmind 统一页面布局样式
+// 此文件集中管理所有模块通用的布局和组件样式
+// ========================================
+
+// ========================================
+// 标准表格页面布局类
+// ========================================
+
+// 页面容器（无边框设计）
+.ops-page-layout {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+
+  // 紧凑变体（减少内边距）
+  &--compact {
+    padding: 16px;
+    gap: 12px;
+  }
+}
+
+// 筛选栏（统一使用 el-form inline 模式）
+.ops-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  border-radius: 6px;
+  //margin-bottom: 12px;
+
+  // 使用 el-form 时的样式
+  :deep(.el-form) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+  }
+
+  :deep(.el-form-item) {
+    margin-right: 0;
+    margin-bottom: 0;
+
+    .el-form-item__label {
+      font-size: 14px;
+      // color: #606266;
+      padding-right: 8px;
+    }
+  }
+
+  // 复选框组样式
+  :deep(.el-checkbox-group) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  :deep(.el-checkbox) {
+    margin-right: 0;
+    height: auto;
+
+    .el-checkbox__label {
+      padding-left: 6px;
+    }
+  }
+
+  // 按钮组样式
+  .filter-buttons {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+// 功能按钮栏
+.ops-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+// 表格区域
+.ops-table-wrapper {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: auto;
+}
+
+// 分页器区域
+.ops-pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+
+// ========================================
+// 表格右上角工具栏图标按钮样式
+// ========================================
+.table-toolbar-icons {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.toolbar-icon-btn {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  padding: 0 !important;
+  border: 1px solid #dcdfe6;
+  background-color: #fff;
+  color: #606266;
+
+  &:hover {
+    border-color: #409eff;
+    color: #409eff;
+  }
+
+  .el-icon {
+    font-size: 14px;
+  }
+
+  // 修复 loading 状态图标溢出问题
+  &.is-loading {
+    .el-icon {
+      font-size: 12px;
+    }
+  }
+}
+
+// ========================================
+// 统一模块页面布局类
+// 用于替代各模块分散的 xxx-module 类
+// ========================================
+
+// 模块容器（带侧边栏布局）
+.ops-module {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+// 模块内容区域
+.ops-module__content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fa;
+
+  // 确保子元素填充容器
+  >* {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+// 模块容器（Grid 布局，适用于需要固定侧边栏宽度的场景）
+.ops-module--grid {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  height: 100%;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+// 侧边栏导航（统一样式）
+.ops-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 8px;
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+  min-width: 120px;
+}
+
+// 窄侧边栏
+.ops-sidebar-nav--narrow {
+  min-width: 100px;
+  max-width: 160px;
+}
+
+// 侧边栏项
+.ops-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #606266;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+
+  i {
+    width: 16px;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  &:hover {
+    background: rgba(64, 158, 255, 0.1);
+    color: #409eff;
+  }
+
+  &.is-active {
+    background: rgba(64, 158, 255, 0.15);
+    color: #409eff;
+    font-weight: 600;
+  }
+}
+
+// 链接样式的侧边栏项（用于 router-link）
+a.ops-sidebar-item {
+  text-decoration: none;
+  color: inherit;
+}
+
+// ========================================
+// 统计卡片样式
+// ========================================
+.ops-stat-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.ops-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 8px;
+  color: #fff;
+  min-width: 180px;
+  flex: 1;
+  max-width: 280px;
+
+  &__icon {
+    font-size: 28px;
+    opacity: 0.9;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  &__label {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-top: 4px;
+  }
+
+  // 颜色变体
+  &--primary {
+    background: linear-gradient(135deg, #409eff 0%, #337ecc 100%);
+  }
+
+  &--success {
+    background: linear-gradient(135deg, #67c23a 0%, #529b2e 100%);
+  }
+
+  &--warning {
+    background: linear-gradient(135deg, #e6a23c 0%, #cf9236 100%);
+  }
+
+  &--danger {
+    background: linear-gradient(135deg, #f56c6c 0%, #c45656 100%);
+  }
+
+  &--info {
+    background: linear-gradient(135deg, #909399 0%, #73767a 100%);
+  }
+
+  // 可点击
+  &--clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+// ========================================
+// 区块/卡片样式
+// ========================================
+.ops-section {
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #303133;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+      content: '';
+      width: 4px;
+      height: 18px;
+      background: #409eff;
+      border-radius: 2px;
+    }
+  }
+
+  &__content {
+    min-height: 100px;
+  }
+}
+
+// ========================================
+// 响应式布局
+// ========================================
+@media (max-width: 1024px) {
+  .ops-module {
+    flex-direction: column;
+  }
+
+  .ops-module--grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    border-right: none;
+    border-bottom: 1px solid #ebeef5;
+    padding: 8px;
+    min-width: 100%;
+  }
+
+  .ops-sidebar-nav--narrow {
+    max-width: 100%;
+  }
+
+  .ops-sidebar-item {
+    flex: 0 0 auto;
+  }
+
+  .ops-stat-cards {
+    flex-direction: column;
+  }
+
+  .ops-stat-card {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}

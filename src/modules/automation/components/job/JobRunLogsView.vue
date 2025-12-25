@@ -2,60 +2,63 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-select
-        v-model="filters.day"
-        size="small"
-        style="width: 140px"
-        @change="handleSearch"
-      >
-        <el-option label="全部" value="3650" />
-        <el-option label="今天" value="0" />
-        <el-option label="最近7天" value="7" />
-        <el-option label="最近30天" value="30" />
-        <el-option label="最近一年" value="365" />
-      </el-select>
-      <el-select
-        v-model="filters.status"
-        placeholder="状态筛选"
-        size="small"
-        style="width: 140px"
-        @change="handleSearch"
-      >
-        <el-option label="全部状态" value="all" />
-        <el-option label="等待中" value="WAITING" />
-        <el-option label="正在运行" value="RUNNING" />
-        <el-option label="回调" value="CALLBACK" />
-        <el-option label="运行错误" value="ERROR" />
-        <el-option label="运行失败" value="FAILED" />
-        <el-option label="完成" value="COMPLETED" />
-        <el-option label="运行终止" value="INTERRUPTED" />
-      </el-select>
-      <el-input
-        v-model="filters.search"
-        placeholder="搜索作业标题"
-        clearable
-        size="small"
-        style="width: 240px"
-        @input="handleSearchDebounced"
-      >
-        <template #prefix>
-          <i class="fa fa-search" />
-        </template>
-      </el-input>
-      <div class="ops-filter-actions">
-        <el-button size="small" @click="handleReset">
-          <i class="fa fa-undo" /> 重置
-        </el-button>
-      </div>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="时间范围">
+          <el-select v-model="filters.day" style="width: 140px">
+            <el-option label="全部" value="3650" />
+            <el-option label="今天" value="0" />
+            <el-option label="最近7天" value="7" />
+            <el-option label="最近30天" value="30" />
+            <el-option label="最近一年" value="365" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="filters.status" placeholder="状态筛选" style="width: 140px">
+            <el-option label="全部状态" value="all" />
+            <el-option label="等待中" value="WAITING" />
+            <el-option label="正在运行" value="RUNNING" />
+            <el-option label="回调" value="CALLBACK" />
+            <el-option label="运行错误" value="ERROR" />
+            <el-option label="运行失败" value="FAILED" />
+            <el-option label="完成" value="COMPLETED" />
+            <el-option label="运行终止" value="INTERRUPTED" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.search"
+            placeholder="搜索作业标题"
+            clearable
+            style="width: 240px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle @click="handleRefresh" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         v-loading="loading"
         :data="tableData"
@@ -151,19 +154,19 @@
           </template>
         </el-table-column>
       </el-table>
+    </div>
 
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.size"
-          :total="pagination.total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handleSearch"
-          @current-change="handleSearch"
-        />
-      </div>
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.size"
+        :total="pagination.total"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handleSearch"
+        @current-change="handleSearch"
+      />
     </div>
 
     <ExecuteResultDialog
@@ -176,9 +179,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from './JobListView/ExecuteResultDialog.vue'
 

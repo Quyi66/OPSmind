@@ -1,5 +1,5 @@
 <template>
-  <div class="inspection-overview">
+  <div class="ops-page-layout" style="background: #6c757d; overflow: auto;">
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <i class="fa fa-cog fa-spin fa-4x"></i>

@@ -4,7 +4,7 @@
     :description="moduleDescription"
     :hide-header="true"
   >
-    <div class="sudo-module">
+    <div class="ops-module">
       <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
         <router-link
           v-for="item in navItems"
@@ -18,7 +18,7 @@
         </router-link>
       </aside>
 
-      <section class="sudo-module__content">
+      <section class="ops-module__content">
         <router-view />
       </section>
     </div>
@@ -50,36 +50,7 @@ function isActiveRoute(key) {
 </script>
 
 <style scoped lang="scss">
-.sudo-module {
-  height: 100%;
-  display: flex;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.sudo-module__content {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background: #f5f7fa;
-  padding: 16px;
-
-  // 确保子路由组件能正确填满空间
-  :deep(> *) {
-    flex: 1;
-    min-height: 0;
-    height: 100%;
-  }
-}
-
-// router-link 样式重置
-a.ops-sidebar-item {
-  text-decoration: none;
-  color: inherit;
-}
+// 样式已统一至 opsmind.scss
 </style>
+
 

@@ -10,60 +10,66 @@
     <!-- 操作记录 Tab -->
     <template v-if="activeTab === 'operation'">
       <div class="ops-filter-bar">
-        <div class="filter-group">
-          <span class="filter-label">时间范围</span>
-          <el-select v-model="dayFilter" size="small" style="width: 100px" @change="handleFilterChange">
-            <el-option label="Today" :value="1" />
-            <el-option label="近3天" :value="3" />
-            <el-option label="近7天" :value="7" />
-            <el-option label="近30天" :value="30" />
-          </el-select>
-        </div>
-        <div class="filter-group">
-          <el-select v-model="engineFilter" placeholder="执行引擎节点" size="small" style="width: 120px" clearable @change="handleFilterChange">
-            <el-option label="全部" value="" />
-          </el-select>
-        </div>
-        <div class="filter-group">
-          <el-select v-model="statusFilter" placeholder="状态" size="small" style="width: 80px" clearable @change="handleFilterChange">
-            <el-option label="全部" value="all" />
-            <el-option label="完成" value="COMPLETED" />
-            <el-option label="失败" value="FAILED" />
-            <el-option label="运行中" value="RUNNING" />
-          </el-select>
-        </div>
-        <div class="filter-group">
-          <el-select v-model="actionFilter" placeholder="操作类型" size="small" style="width: 120px" clearable @change="handleFilterChange">
-            <el-option label="全部" value="all" />
-            <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
-            <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
-            <el-option label="补丁回退" value="#{app_vap.menu.patch_rollback.title}" />
-            <el-option label="Windows漏洞扫描" value="#{app_vap.menu.win_patch_scan.title}" />
-            <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
-          </el-select>
-        </div>
-        <div class="filter-group">
-          <el-input
-            v-model="searchText"
-            placeholder="搜索"
-            size="small"
-            style="width: 150px"
-            clearable
-            @input="handleSearchInput"
-          >
-            <template #prefix>
-              <i class="fa fa-search" />
-            </template>
-          </el-input>
-        </div>
+        <el-form :model="filters" inline size="small">
+          <el-form-item label="时间范围">
+            <el-select v-model="dayFilter" style="width: 100px">
+              <el-option label="Today" :value="1" />
+              <el-option label="近3天" :value="3" />
+              <el-option label="近7天" :value="7" />
+              <el-option label="近30天" :value="30" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="statusFilter" placeholder="状态" style="width: 80px" clearable>
+              <el-option label="全部" value="all" />
+              <el-option label="完成" value="COMPLETED" />
+              <el-option label="失败" value="FAILED" />
+              <el-option label="运行中" value="RUNNING" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="操作类型">
+            <el-select v-model="actionFilter" placeholder="操作类型" style="width: 120px" clearable>
+              <el-option label="全部" value="all" />
+              <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
+              <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
+              <el-option label="补丁回退" value="#{app_vap.menu.patch_rollback.title}" />
+              <el-option label="Windows漏洞扫描" value="#{app_vap.menu.win_patch_scan.title}" />
+              <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="关键词">
+            <el-input
+              v-model="searchText"
+              placeholder="搜索"
+              style="width: 150px"
+              clearable
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="loading" @click="handleFilterChange">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <div class="ops-action-bar">
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleFilterChange" title="刷新">
+          <el-icon v-show="!loading"><Refresh /></el-icon>
+        </el-button>
       </div>
 
       <div class="ops-table-wrapper">
-        <div class="table-toolbar-icons">
-          <el-button class="toolbar-icon-btn" circle :loading="loading" @click="handleFilterChange" title="刷新">
-            <el-icon><Refresh /></el-icon>
-          </el-button>
-        </div>
         <el-table
           v-loading="loading"
           :data="tableData"
@@ -149,7 +155,7 @@
       <div class="ops-table-wrapper">
         <div class="table-toolbar-icons">
           <el-button class="toolbar-icon-btn" circle :loading="vulLoading" @click="loadVulData" title="刷新">
-            <el-icon><Refresh /></el-icon>
+            <el-icon v-show="!vulLoading"><Refresh /></el-icon>
           </el-button>
         </div>
         <el-table
@@ -207,7 +213,7 @@
       <div class="ops-table-wrapper">
         <div class="table-toolbar-icons">
           <el-button class="toolbar-icon-btn" circle :loading="patchLoading" @click="loadPatchData" title="刷新">
-            <el-icon><Refresh /></el-icon>
+            <el-icon v-show="!patchLoading"><Refresh /></el-icon>
           </el-button>
         </div>
         <el-table
@@ -263,7 +269,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchLogsApi, operationReportApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n'
@@ -544,6 +550,16 @@ async function loadData() {
 
 function handleFilterChange() {
   pagination.page = 1
+  loadData()
+}
+
+function handleReset() {
+  dayFilter.value = 1
+  statusFilter.value = 'all'
+  actionFilter.value = 'all'
+  searchText.value = ''
+  pagination.page = 1
+  pagination.pageSize = 10
   loadData()
 }
 

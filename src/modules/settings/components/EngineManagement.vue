@@ -1,5 +1,5 @@
 <template>
-  <div class="engine-management">
+  <div class="ops-page-layout">
     <el-card class="config-card" v-loading="loading">
       <el-form label-width="200px" label-position="left">
         <!-- 引擎类型选择 -->

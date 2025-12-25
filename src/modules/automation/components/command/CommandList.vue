@@ -2,15 +2,30 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索"
-        size="small"
-        style="width: 200px"
-        clearable
-        @clear="handleSearch"
-        @keyup.enter="handleSearch"
-      />
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索"
+            clearable
+            style="width: 200px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -35,16 +50,14 @@
       >
         创建作业
       </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <!-- 刷新按钮 -->
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
@@ -179,9 +192,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import {
   findByTenantIdAndCreatedBy,
   deleteCommand as apiDeleteCommand,
@@ -197,7 +210,9 @@ const emit = defineEmits(['run-command', 'create-job'])
 const loading = ref(false)
 const commands = ref([])
 const selectedCommands = ref([])
-const searchKeyword = ref('')
+const filters = reactive({
+  keyword: ''
+})
 const tableRef = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -212,10 +227,10 @@ const approveInfoDialogVisible = ref(false)
 
 // 过滤后的命令列表
 const filteredCommands = computed(() => {
-  if (!searchKeyword.value) {
+  if (!filters.keyword) {
     return commands.value
   }
-  const keyword = searchKeyword.value.toLowerCase()
+  const keyword = filters.keyword.toLowerCase()
   return commands.value.filter(cmd =>
     (cmd.name && cmd.name.toLowerCase().includes(keyword)) ||
     (cmd.description && cmd.description.toLowerCase().includes(keyword)) ||
@@ -261,7 +276,14 @@ async function loadData() {
 
 // 搜索
 function handleSearch() {
-  // 搜索通过 computed 自动处理
+  currentPage.value = 1
+}
+
+// 重置
+function handleReset() {
+  filters.keyword = ''
+  currentPage.value = 1
+  pageSize.value = 10
 }
 
 // 选择变化

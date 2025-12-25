@@ -110,7 +110,7 @@ watch(() => props.activeGroup, (newGroup) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fafafa;
+  background: #fff;
 
   .group-info {
     display: flex;

@@ -2,18 +2,30 @@
   <div class="ops-page-layout">
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchKeyword"
-        size="small"
-        placeholder="搜索..."
-        clearable
-        style="width: 240px;"
-        @input="handleSearch"
-      >
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-      </el-input>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索..."
+            clearable
+            style="width: 240px;"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -29,15 +41,14 @@
         <el-icon><Grid /></el-icon>
         批量启停CRON
       </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle @click="handleRefresh" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <CronJobTable
         :data="filteredTableData"
         :loading="loading"
@@ -71,8 +82,8 @@
 </template>
 
 <script setup>
-import { ref, defineAsyncComponent } from 'vue'
-import { Plus, Refresh, Grid, Search } from '@element-plus/icons-vue'
+import { ref, reactive, defineAsyncComponent } from 'vue'
+import { Plus, Refresh, Grid, Search, RefreshRight } from '@element-plus/icons-vue'
 import CronJobTable from './components/CronJobTable.vue'
 import { useCronJobList } from './composables/useCronJobList'
 import { useCronJobActions } from './composables/useCronJobActions'
@@ -149,6 +160,14 @@ function handleQueryNextTime(row) {
  */
 function handleFormSuccess() {
   fetchData()
+}
+
+/**
+ * 重置搜索
+ */
+function handleReset() {
+  searchKeyword.value = ''
+  handleSearch()
 }
 </script>
 

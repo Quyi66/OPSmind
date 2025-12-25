@@ -154,7 +154,7 @@
   color: var(--el-color-primary) !important;
 }
 
-.el-button--primary {
+.el-button--primary:not(.is-plain, .is-text, .is-link) {
   background-color: #0077EE !important;
   border-color: #0077EE !important;
 
@@ -265,55 +265,6 @@
 }
 
 // ========================================
-// 标准表格页面布局类
-// ========================================
-
-// 页面容器
-.ops-page-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-  background: #fff;
-  border-radius: 8px;
-}
-
-// 筛选栏
-.ops-filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  // padding: 8px 16px;
-  // background: #fafafa;
-  border-radius: 6px;
-  // border: 1px solid #ebeef5;
-}
-
-// 功能按钮栏
-.ops-action-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-// 表格区域
-.ops-table-wrapper {
-  flex: 1;
-  min-height: 0;
-  position: relative;
-}
-
-// 分页器区域
-.ops-pagination-wrapper {
-  display: flex;
-  justify-content: flex-end;
-  padding: 8px 0;
-}
-
-// ========================================
 // Small 尺寸组件高度统一为 32px
 // ========================================
 .el-input--small .el-input__inner {
@@ -350,44 +301,5 @@
 
   &:hover {
     background-color: transparent !important;
-  }
-}
-
-// ========================================
-// 表格右上角工具栏图标按钮样式
-// ========================================
-.table-toolbar-icons {
-  position: absolute;
-  top: -40px;
-  right: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 1;
-}
-
-.toolbar-icon-btn {
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  padding: 0 !important;
-  border: 1px solid #dcdfe6;
-  background-color: #fff;
-  color: #606266;
-
-  &:hover {
-    border-color: #409eff;
-    color: #409eff;
-  }
-
-  .el-icon {
-    font-size: 14px;
-  }
-
-  // 修复 loading 状态图标溢出问题
-  &.is-loading {
-    .el-icon {
-      font-size: 12px;
-    }
   }
 }

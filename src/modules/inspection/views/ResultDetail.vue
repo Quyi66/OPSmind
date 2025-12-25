@@ -1,5 +1,5 @@
 <template>
-  <div class="result-detail-page">
+  <div class="ops-page-layout">
     <!-- 顶部导航栏 -->
     <nav class="page-navbar">
       <div class="navbar-left">

@@ -2,34 +2,34 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <div class="filter-bar__item">
-        <span class="filter-label">IP:</span>
-        <el-input
-          v-model="filters.host_key"
-          size="small"
-          placeholder="输入IP地址"
-          clearable
-          style="width: 150px"
-          @keyup.enter="loadData"
-        />
-      </div>
-      <div class="filter-bar__item">
-        <span class="filter-label">组名:</span>
-        <el-input
-          v-model="filters.group_name"
-          size="small"
-          placeholder="输入组名"
-          clearable
-          style="width: 150px"
-          @keyup.enter="loadData"
-        />
-      </div>
-      <el-button type="primary" size="small" @click="loadData">
-        <el-icon><Search /></el-icon> 搜索
-      </el-button>
-      <el-button size="small" @click="handleReset">
-        <el-icon><Refresh /></el-icon> 重置
-      </el-button>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="IP">
+          <el-input
+            v-model="filters.host_key"
+            placeholder="输入IP地址"
+            clearable
+            style="width: 150px"
+          />
+        </el-form-item>
+        <el-form-item label="组名">
+          <el-input
+            v-model="filters.group_name"
+            placeholder="输入组名"
+            clearable
+            style="width: 150px"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -37,18 +37,14 @@
       <el-button type="primary" size="small" @click="handleCreateGroup">
         <el-icon><Plus /></el-icon> 创建用户组
       </el-button>
-      <!-- <el-button type="danger" size="small" @click="handleDeleteGroup">
-        <el-icon><Delete /></el-icon> 删除用户组
-      </el-button> -->
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 用户组列表表格 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         :data="tableData"
         v-loading="loading"
@@ -113,7 +109,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import * as userApi from '@/modules/user/api'
 import CreateGroupDialog from '@/modules/user/components/dialogs/CreateGroupDialog.vue'
@@ -245,12 +241,18 @@ function handleDeleteSingleGroup(row) {
   showDeleteGroupDialog.value = true
 }
 
+function handleSearch() {
+  currentPage.value = 1
+  loadData()
+}
+
 function handleReset() {
   filters.value = {
     host_key: '',
     group_name: ''
   }
   currentPage.value = 1
+  pageSize.value = 10
   loadData()
 }
 

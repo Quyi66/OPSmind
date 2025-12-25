@@ -2,30 +2,40 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchText"
-        placeholder="搜索团队名称/编码"
-        clearable
-        size="small"
-        style="width: 200px"
-        @input="handleSearch"
-      >
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-      <el-button type="primary" size="small" @click="handleSearch">
-        <i class="fa fa-search"></i> 搜索
-      </el-button>
-      <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo"></i> 重置
-      </el-button>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索团队名称/编码"
+            clearable
+            style="width: 200px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreateTeam">
         <i class="fa fa-plus"></i> 创建团队
+      </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -101,14 +111,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as teamApi from '@/modules/settings/api/team'
 import TeamEditDialog from './TeamEditDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])
-const searchText = ref('')
+const filters = reactive({
+  keyword: ''
+})
 
 const pagination = ref({
   page: 1,
@@ -120,8 +133,8 @@ const pagination = ref({
 const filteredData = computed(() => {
   let result = tableData.value
 
-  if (searchText.value) {
-    const keyword = searchText.value.toLowerCase()
+  if (filters.keyword) {
+    const keyword = filters.keyword.toLowerCase()
     result = result.filter(item =>
       item.name?.toLowerCase().includes(keyword) ||
       item.code?.toLowerCase().includes(keyword)
@@ -166,8 +179,9 @@ function handleSearch() {
 }
 
 function handleReset() {
-  searchText.value = ''
+  filters.keyword = ''
   pagination.value.page = 1
+  pagination.value.pageSize = 20
 }
 
 function formatTime(time) {

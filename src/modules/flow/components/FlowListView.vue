@@ -2,21 +2,30 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索流程名称"
-        clearable
-        size="small"
-        style="width: 250px"
-        @keyup.enter="loadData"
-      >
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-      <el-button size="small" @click="handleReset">
-        <el-icon><Refresh /></el-icon> 重置
-      </el-button>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="流程名称">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索流程名称"
+            clearable
+            style="width: 250px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -30,8 +39,9 @@
       <el-button size="small" @click="handleExport">
         <el-icon><Download /></el-icon> 导出
       </el-button>
-      <el-button size="small" @click="loadData">
-        <el-icon><Refresh /></el-icon> 刷新
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -114,18 +124,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh, RefreshRight, Plus, Delete, Download } from '@element-plus/icons-vue'
 import * as flowApi from '@/modules/flow/api'
 import FlowHistoryDialog from './FlowHistoryDialog.vue'
 import FlowEditDialog from './FlowEditDialog.vue'
 
-const emit = defineEmits(['create', 'design', 'execute', 'history'])
+// 从父组件注入方法
+const handleCreateInjected = inject('handleCreate', null)
+const handleDesignInjected = inject('handleDesign', null)
+const handleExecuteInjected = inject('handleExecute', null)
+const handleHistoryInjected = inject('handleHistory', null)
 
 const loading = ref(false)
 const tableData = ref([])
 const selectedRows = ref([])
-const searchKeyword = ref('')
+const filters = reactive({
+  keyword: ''
+})
 const currentPage = ref(1)
 const pageSize = ref(10)
 
@@ -144,8 +161,8 @@ const cloneFlowData = ref(null)
 // 过滤后的数据
 const filteredData = computed(() => {
   let data = tableData.value
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
+  if (filters.keyword) {
+    const keyword = filters.keyword.toLowerCase()
     data = data.filter(item =>
       item.processName?.toLowerCase().includes(keyword) ||
       item.processAbbr?.toLowerCase().includes(keyword) ||
@@ -183,9 +200,14 @@ function handlePageChange(page) {
   currentPage.value = page
 }
 
-function handleReset() {
-  searchKeyword.value = ''
+function handleSearch() {
   currentPage.value = 1
+}
+
+function handleReset() {
+  filters.keyword = ''
+  currentPage.value = 1
+  pageSize.value = 10
 }
 
 function handleSelectionChange(rows) {
@@ -193,7 +215,11 @@ function handleSelectionChange(rows) {
 }
 
 function handleCreate() {
-  emit('create')
+  if (handleCreateInjected) {
+    handleCreateInjected()
+  } else {
+    console.warn('handleCreate not provided')
+  }
 }
 
 function handleBatchDelete() {
@@ -217,12 +243,20 @@ function handleExport() {
 }
 
 function handleViewHistory(row) {
-  // 发出事件，跳转到历史版本页面
-  emit('history', row.id)
+  // 调用父组件方法，跳转到历史版本页面
+  if (handleHistoryInjected) {
+    handleHistoryInjected(row.id)
+  } else {
+    console.warn('handleHistory not provided')
+  }
 }
 
 function handleViewVersion(processDetailId) {
-  emit('design', processDetailId)
+  if (handleDesignInjected) {
+    handleDesignInjected(processDetailId)
+  } else {
+    console.warn('handleDesign not provided')
+  }
 }
 
 function handleEdit(row) {
@@ -236,11 +270,19 @@ function handleEditSaved() {
 
 function handleDesign(row) {
   // 使用流程 ID，两个 API 都使用相同的 ID
-  emit('design', row.id)
+  if (handleDesignInjected) {
+    handleDesignInjected(row.id)
+  } else {
+    console.warn('handleDesign not provided')
+  }
 }
 
 function handleExecute(row) {
-  emit('execute', row.id)
+  if (handleExecuteInjected) {
+    handleExecuteInjected(row.id)
+  } else {
+    console.warn('handleExecute not provided')
+  }
 }
 
 function handleClone(row) {

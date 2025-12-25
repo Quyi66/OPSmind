@@ -1,5 +1,5 @@
 <template>
-  <div class="feature-config-view">
+  <div class="ops-page-layout" style="padding: 0; gap: 0;">
     <!-- 简洁标签页导航 -->
     <el-tabs v-model="activeTab" class="simple-tabs">
       <el-tab-pane
@@ -44,7 +44,7 @@
         <div class="ops-table-wrapper">
           <div class="table-toolbar-icons">
             <el-button class="toolbar-icon-btn" circle :loading="loadingTasks" @click="loadScheduleTasks" title="刷新">
-              <el-icon><Refresh /></el-icon>
+              <el-icon v-show="!loadingTasks"><Refresh /></el-icon>
             </el-button>
           </div>
           <el-table
@@ -90,7 +90,7 @@
         <div class="ops-table-wrapper">
           <div class="table-toolbar-icons">
             <el-button class="toolbar-icon-btn" circle :loading="loadingTemplates" @click="loadSudoTemplates" title="刷新">
-              <el-icon><Refresh /></el-icon>
+              <el-icon v-show="!loadingTemplates"><Refresh /></el-icon>
             </el-button>
           </div>
           <el-table

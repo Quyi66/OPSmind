@@ -1,5 +1,5 @@
 <template>
-  <div class="datasource-management">
+  <div class="ops-page-layout">
     <div class="layout-container">
       <!-- 左侧边栏 - 数据源树 -->
       <div class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 280px;">

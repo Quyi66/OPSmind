@@ -33,7 +33,7 @@
     </div>
 
     <!-- 常规视图 -->
-    <div v-else class="flow-module">
+    <div v-else class="ops-module">
       <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
         <router-link
           v-for="item in navItems"
@@ -47,7 +47,7 @@
         </router-link>
       </aside>
 
-      <section class="flow-module__content">
+      <section class="ops-module__content">
         <router-view />
       </section>
     </div>
@@ -172,40 +172,14 @@ provide('handleHistory', handleHistory)
 </script>
 
 <style scoped lang="scss">
-.flow-module {
-  display: flex;
-  height: 100%;
-  min-height: 0;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-}
+// 样式已统一至 opsmind.scss
 
-.flow-module__content {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-
-  :deep(> *) {
-    flex: 1;
-    min-height: 0;
-  }
-}
-
+// 特定于流程模块的全屏视图容器
 .design-container,
 .exec-container,
 .history-container {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-a.ops-sidebar-item {
-  text-decoration: none;
-  color: inherit;
 }
 </style>

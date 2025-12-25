@@ -1,5 +1,5 @@
 <template>
-  <div class="job-workbench">
+  <div class="ops-page-layout" style="flex-direction: row; padding: 0; gap: 0;">
     <aside class="ops-sidebar-nav">
       <div class="ops-sidebar-header">
         <el-input v-model="appStr" style="width: 100%" placeholder="请输入" :prefix-icon="'Search'" @input="filterApplets()" />
@@ -18,36 +18,44 @@
       </el-scrollbar>
     </aside>
 
-    <section class="job-workbench__content ops-page-layout">
+    <section class="ops-page-layout" style="border-radius: 0; flex: 1;">
       <!-- 筛选栏 -->
       <div class="ops-filter-bar">
-        <span>类型</span>
-        <el-select
-          v-model="jobTypeValue"
-          size="small"
-          style="width: 120px;"
-          @change="filterList"
-        >
-          <el-option label="全部类型" value="all" />
-          <el-option
-            v-for="option in jobTypeOptions"
-            :key="option.value"
-            :label="option.label"
-            :value="option.value"
-          />
-        </el-select>
-        <el-input
-          v-model="keyword"
-          size="small"
-          placeholder="输入字符搜索"
-          clearable
-          style="width: 200px;"
-          @input="filterList"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
+        <el-form :model="filters" inline size="small">
+          <el-form-item label="类型">
+            <el-select v-model="filters.jobType" style="width: 120px;" placeholder="全部类型">
+              <el-option label="全部类型" value="all" />
+              <el-option
+                v-for="option in jobTypeOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="关键词">
+            <el-input
+              v-model="filters.keyword"
+              placeholder="搜索作业标题、描述..."
+              clearable
+              style="width: 200px;"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="loading" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
       </div>
 
       <!-- 操作栏 -->
@@ -80,6 +88,10 @@
           <el-icon><Delete /></el-icon>
           删除
         </el-button>
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="reloadJobs" title="刷新">
+          <el-icon v-show="!loading"><Refresh /></el-icon>
+        </el-button>
       </div>
 
       <el-alert
@@ -92,11 +104,6 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <div class="table-toolbar-icons">
-          <el-button class="toolbar-icon-btn" circle :loading="loading" @click="reloadJobs" title="刷新">
-            <el-icon><Refresh /></el-icon>
-          </el-button>
-        </div>
         <el-table
           v-loading="loading"
           :data="displayedJobs"
@@ -200,12 +207,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAutomationJobStore, JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { appUrlManager } from '@/config/module-urls.config'
-import { Plus, Delete, Refresh, Search, ArrowDown } from '@element-plus/icons-vue'
+import { Plus, Delete, Refresh, Search, ArrowDown, RefreshRight } from '@element-plus/icons-vue'
 import { translateText } from '@/utils/i18n'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteJobDialog from './ExecuteJobDialog.vue'
@@ -227,7 +234,13 @@ const loading = ref(false)
 const paginatedJobs = ref([])
 const currentApp = ref({ title: '' })
 const originalJobs = ref([])
-const keyword = ref('')
+
+// 统一筛选条件
+const filters = reactive({
+  jobType: 'all',
+  keyword: ''
+})
+
 const executeDialogVisible = ref(false)
 const executeJobMeta = ref(null)
 const historyDialogVisible = ref(false)
@@ -247,20 +260,18 @@ function filterApplets() {
   })
 }
 
-const jobTypeValue = ref('all')
-
 /** 过滤列表 - 支持关键词和类型筛选 */
 function filterList() {
   let filtered = originalJobs.value
 
   // 按类型筛选
-  if (jobTypeValue.value && jobTypeValue.value !== 'all') {
-    filtered = filtered.filter(job => job.type === jobTypeValue.value)
+  if (filters.jobType && filters.jobType !== 'all') {
+    filtered = filtered.filter(job => job.type === filters.jobType)
   }
 
   // 按关键词搜索（搜索标题、描述、ID）
-  if (keyword.value && keyword.value.trim()) {
-    const kw = keyword.value.trim().toLowerCase()
+  if (filters.keyword && filters.keyword.trim()) {
+    const kw = filters.keyword.trim().toLowerCase()
     filtered = filtered.filter(job => {
       return (job.title && job.title.toLowerCase().includes(kw)) ||
              (job.description && job.description.toLowerCase().includes(kw)) ||
@@ -270,6 +281,21 @@ function filterList() {
 
   paginatedJobs.value = filtered
   sortJobs()
+}
+
+/** 搜索处理 */
+function handleSearch() {
+  currentPage.value = 1
+  filterList()
+}
+
+/** 重置处理 */
+function handleReset() {
+  filters.jobType = 'all'
+  filters.keyword = ''
+  currentPage.value = 1
+  pageSize.value = 10
+  filterList()
 }
 
 /** 排序 */
@@ -288,7 +314,7 @@ function sortJobs() {
     }
 
     if (valA === valB) return 0
-    
+
     const result = valA > valB ? 1 : -1
     return order === 'ascending' ? result : -result
   })
@@ -488,7 +514,7 @@ async function handleMoveJobs() {
 
 async function handleCopy(row) {
   if (!row?.id) return
-  
+
   try {
     await ElMessageBox.confirm(
       `确定要复制作业「${row.title}」吗？`,
@@ -499,7 +525,7 @@ async function handleCopy(row) {
         type: 'info'
       }
     )
-    
+
     await store.duplicateJob(row.id)
     ElMessage.success('复制成功')
     // 刷新当前列表

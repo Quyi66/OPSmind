@@ -2,38 +2,42 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <div class="filter-group">
-        <span class="filter-label">IP</span>
-        <el-input
-          v-model="filters.host_key"
-          placeholder="请输入IP"
-          style="width: 200px"
-          clearable
-          size="small"
-          @keyup.enter="handleSearch"
-          @clear="handleSearch"
-        >
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">CVE</span>
-        <el-input
-          v-model="filters.vul_id"
-          placeholder="请输入CVE"
-          style="width: 200px"
-          clearable
-          size="small"
-          @keyup.enter="handleSearch"
-          @clear="handleSearch"
-        >
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
-      </div>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="IP">
+          <el-input
+            v-model="filters.host_key"
+            placeholder="请输入IP"
+            style="width: 200px"
+            clearable
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="CVE">
+          <el-input
+            v-model="filters.vul_id"
+            placeholder="请输入CVE"
+            style="width: 200px"
+            clearable
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 操作区 -->
@@ -54,15 +58,14 @@
       >
         删除
       </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
@@ -181,7 +184,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchRollbackApi } from '../api'
 
 // 加载状态

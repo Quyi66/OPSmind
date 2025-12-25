@@ -2,21 +2,30 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索"
-        clearable
-        size="small"
-        style="width: 200px"
-        @input="handleSearch"
-      >
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-      <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo"></i> 重置
-      </el-button>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索主机、用户..."
+            clearable
+            style="width: 200px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -24,8 +33,9 @@
       <el-button type="primary" size="small" @click="handleAddSudo">
         <el-icon><Plus /></el-icon> 添加sudo
       </el-button>
-      <el-button size="small" @click="loadData">
-        <el-icon><Refresh /></el-icon> 刷新
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -105,14 +115,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search, Refresh, RefreshRight, Plus } from '@element-plus/icons-vue'
 import * as sudoApi from '@/modules/sudo/api'
 import AddSudoDialog from './AddSudoDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])
-const searchKeyword = ref('')
+const filters = reactive({
+  keyword: ''
+})
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -120,8 +133,8 @@ const showAddDialog = ref(false)
 
 const filteredData = computed(() => {
   let data = tableData.value
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
+  if (filters.keyword) {
+    const keyword = filters.keyword.toLowerCase()
     data = data.filter(row =>
       row.$data_owner?.toLowerCase().includes(keyword) ||
       row.host?.toLowerCase().includes(keyword) ||
@@ -146,8 +159,9 @@ function handleSearch() {
 
 // 重置处理
 function handleReset() {
-  searchKeyword.value = ''
+  filters.keyword = ''
   currentPage.value = 1
+  pageSize.value = 10
 }
 
 // 分页处理

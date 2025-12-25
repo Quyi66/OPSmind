@@ -2,56 +2,58 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <div class="filter-bar__item">
-        <span class="filter-label">用户类型:</span>
-        <el-checkbox-group v-model="filters.types" size="small" @change="loadData">
-          <el-checkbox label="0">
-            <el-tag type="info" size="small">系统用户</el-tag>
-          </el-checkbox>
-          <el-checkbox label="1">
-            <el-tag size="small">普通用户</el-tag>
-          </el-checkbox>
-        </el-checkbox-group>
-      </div>
-      <div class="filter-bar__item">
-        <span class="filter-label">锁定状态:</span>
-        <el-checkbox-group v-model="filters.lockStatus" size="small" @change="loadData">
-          <el-checkbox label="1">
-            <el-tag type="danger" size="small"><i class="fa fa-lock"></i> 锁定</el-tag>
-          </el-checkbox>
-          <el-checkbox label="2">
-            <el-tag type="success" size="small"><i class="fa fa-unlock-alt"></i> 未锁定</el-tag>
-          </el-checkbox>
-        </el-checkbox-group>
-      </div>
-      <div class="filter-bar__item">
-        <span class="filter-label">IP:</span>
-        <el-input
-          v-model="filters.host_key"
-          size="small"
-          placeholder="输入IP地址"
-          clearable
-          style="width: 150px"
-          @keyup.enter="loadData"
-        />
-      </div>
-      <div class="filter-bar__item">
-        <span class="filter-label">用户名:</span>
-        <el-input
-          v-model="filters.username"
-          size="small"
-          placeholder="输入用户名"
-          clearable
-          style="width: 150px"
-          @keyup.enter="loadData"
-        />
-      </div>
-      <el-button type="primary" size="small" @click="loadData">
-        <i class="fa fa-search"></i> 搜索
-      </el-button>
-      <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo"></i> 重置
-      </el-button>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="用户类型">
+          <el-select
+            v-model="filters.types"
+            multiple
+            collapse-tags
+            placeholder="请选择"
+            style="width: 160px"
+          >
+            <el-option label="系统用户" value="0" />
+            <el-option label="普通用户" value="1" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="锁定状态">
+          <el-select
+            v-model="filters.lockStatus"
+            multiple
+            collapse-tags
+            placeholder="请选择"
+            style="width: 140px"
+          >
+            <el-option label="锁定" value="1" />
+            <el-option label="未锁定" value="2" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="IP">
+          <el-input
+            v-model="filters.host_key"
+            placeholder="输入IP地址"
+            clearable
+            style="width: 150px"
+          />
+        </el-form-item>
+        <el-form-item label="用户名">
+          <el-input
+            v-model="filters.username"
+            placeholder="输入用户名"
+            clearable
+            style="width: 150px"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -62,10 +64,10 @@
       <el-button type="default" size="small" @click="handleCreateUser">
         <i class="fa fa-user-plus"></i> 创建用户
       </el-button>
-      <!-- <el-button type="default" size="small" @click="handleModifyUser">
-        <i class="fa fa-user-edit"></i> 修改用户
-      </el-button> -->
-      <el-button size="small" :icon="Refresh" @click="loadData" title="刷新" />
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 用户列表表格 -->
@@ -214,7 +216,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as userApi from '@/modules/user/api'
 import ScanHostDialog from '@/modules/user/components/dialogs/ScanHostDialog.vue'
 import CreateUserDialog from '@/modules/user/components/dialogs/CreateUserDialog.vue'
@@ -351,6 +353,11 @@ function handleLoginErrorDetail(row) {
   showLoginErrorDialog.value = true
 }
 
+function handleSearch() {
+  currentPage.value = 1
+  loadData()
+}
+
 function handleReset() {
   filters.value = {
     types: ['0', '1'],
@@ -359,6 +366,7 @@ function handleReset() {
     username: ''
   }
   currentPage.value = 1
+  pageSize.value = 15
   loadData()
 }
 

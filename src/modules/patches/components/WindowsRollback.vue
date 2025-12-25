@@ -17,38 +17,42 @@
 
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <div class="filter-group">
-        <i class="fa fa-power-off text-muted" />
-        <span class="filter-label">重启机器</span>
-        <el-radio-group v-model="rebootOption" size="small">
-          <el-radio value="yes">YES</el-radio>
-          <el-radio value="no">NO</el-radio>
-        </el-radio-group>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">IP</span>
-        <el-input
-          v-model="filterParams.host_key"
-          placeholder=""
-          size="small"
-          style="width: 140px"
-          clearable
-          @keyup.enter="handleFilter"
-          @clear="handleFilter"
-        />
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">KB Numbers</span>
-        <el-input
-          v-model="filterParams.update_kb_numbers"
-          placeholder=""
-          size="small"
-          style="width: 140px"
-          clearable
-          @keyup.enter="handleFilter"
-          @clear="handleFilter"
-        />
-      </div>
+      <el-form :model="filterParams" inline size="small">
+        <el-form-item>
+          <i class="fa fa-power-off text-muted" />
+          <span class="filter-label" style="margin-left: 4px; margin-right: 8px;">重启机器</span>
+          <el-radio-group v-model="rebootOption">
+            <el-radio value="yes">YES</el-radio>
+            <el-radio value="no">NO</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="IP">
+          <el-input
+            v-model="filterParams.host_key"
+            placeholder=""
+            style="width: 140px"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="KB Numbers">
+          <el-input
+            v-model="filterParams.update_kb_numbers"
+            placeholder=""
+            style="width: 140px"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleFilter">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 操作区 -->
@@ -72,15 +76,14 @@
       >
         删除
       </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="handleRefresh" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
@@ -150,7 +153,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { windowsRollbackApi } from '../api'
 
 // 加载状态
@@ -220,6 +223,15 @@ function formatDate(dateStr) {
 
 function handleFilter() {
   pagination.page = 1
+  loadData()
+}
+
+function handleReset() {
+  filterParams.host_key = ''
+  filterParams.update_kb_numbers = ''
+  rebootOption.value = 'no'
+  pagination.page = 1
+  pagination.pageSize = 20
   loadData()
 }
 

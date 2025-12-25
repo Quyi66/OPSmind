@@ -249,15 +249,29 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  background: transparent;
-  border-bottom: none;
-  padding: 8px 0;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 24px;
+  margin: 0 -16px 0 -16px;
+  margin-bottom: 12px;
 }
 
 .module-toolbar-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
-  color: #374151;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  // &::before {
+  //   content: '';
+  //   display: inline-block;
+  //   width: 4px;
+  //   height: 18px;
+  //   background: linear-gradient(180deg, #3b82f6 0%, #0ea5e9 100%);
+  //   border-radius: 2px;
+  // }
 }
 
 .module-toolbar-close {

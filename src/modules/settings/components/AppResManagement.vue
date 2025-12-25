@@ -1,5 +1,5 @@
 <template>
-  <div class="appres-management">
+  <div class="ops-page-layout">
     <!-- 标签页导航 -->
     <el-tabs v-model="activeTab" @tab-change="handleTabChange">
       <el-tab-pane name="landing">

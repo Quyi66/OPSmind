@@ -66,7 +66,7 @@
       <div class="ops-table-wrapper">
         <div class="table-toolbar-icons">
           <el-button class="toolbar-icon-btn" circle :loading="baseRepoLoading" @click="loadBaseRepos" title="刷新">
-            <el-icon><Refresh /></el-icon>
+            <el-icon v-show="!baseRepoLoading"><Refresh /></el-icon>
           </el-button>
         </div>
         <el-table

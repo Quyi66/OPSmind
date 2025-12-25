@@ -2,28 +2,36 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchText"
-        placeholder="搜索用户名/姓名"
-        clearable
-        size="small"
-        style="width: 200px"
-        @input="handleSearch"
-      >
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-      <el-select v-model="statusFilter" placeholder="状态" clearable size="small" style="width: 120px" @change="handleSearch">
-        <el-option label="已激活" value="activated" />
-        <el-option label="已禁用" value="disabled" />
-      </el-select>
-      <el-button type="primary" size="small" @click="handleSearch">
-        <i class="fa fa-search"></i> 搜索
-      </el-button>
-      <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo"></i> 重置
-      </el-button>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索用户名/姓名"
+            clearable
+            style="width: 200px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="filters.status" placeholder="状态" clearable style="width: 120px">
+            <el-option label="已激活" value="activated" />
+            <el-option label="已禁用" value="disabled" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -33,6 +41,10 @@
       </el-button>
       <el-button size="small" @click="handleAllocateRole">
         <i class="fa fa-user-tag"></i> 分配角色
+      </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -149,8 +161,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as settingsApi from '@/modules/settings/api'
 import { authService } from '@/core/auth'
 import UserEditDialog from './UserEditDialog.vue'
@@ -161,8 +174,10 @@ const loading = ref(false)
 const tableData = ref([])
 
 // 搜索和筛选
-const searchText = ref('')
-const statusFilter = ref('')
+const filters = reactive({
+  keyword: '',
+  status: ''
+})
 
 const pagination = ref({
   page: 1,
@@ -175,8 +190,8 @@ const filteredData = computed(() => {
   let result = tableData.value
 
   // 关键词搜索
-  if (searchText.value) {
-    const keyword = searchText.value.toLowerCase()
+  if (filters.keyword) {
+    const keyword = filters.keyword.toLowerCase()
     result = result.filter(item =>
       item.login?.toLowerCase().includes(keyword) ||
       item.fullName?.toLowerCase().includes(keyword)
@@ -184,9 +199,9 @@ const filteredData = computed(() => {
   }
 
   // 状态筛选
-  if (statusFilter.value === 'activated') {
+  if (filters.status === 'activated') {
     result = result.filter(item => item.activated)
-  } else if (statusFilter.value === 'disabled') {
+  } else if (filters.status === 'disabled') {
     result = result.filter(item => !item.activated)
   }
 
@@ -246,9 +261,10 @@ function handleSearch() {
 
 // 重置
 function handleReset() {
-  searchText.value = ''
-  statusFilter.value = ''
+  filters.keyword = ''
+  filters.status = ''
   pagination.value.page = 1
+  pagination.value.pageSize = 20
 }
 
 function getAuthModeType(authMode) {

@@ -2,42 +2,63 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-select v-model="filters.ata_node" placeholder="执行引擎节点" clearable size="small" style="width: 130px" @change="loadData">
-        <el-option label="全部" value="" />
-      </el-select>
-      <el-select v-model="filters.status" placeholder="状态" size="small" style="width: 100px" @change="loadData">
-        <el-option label="全部" value="all" />
-        <el-option label="成功" value="SUCCESS" />
-        <el-option label="失败" value="FAILED" />
-        <el-option label="运行中" value="RUNNING" />
-      </el-select>
-      <el-select v-model="filters.action" placeholder="操作" size="small" style="width: 120px" @change="loadData">
-        <el-option label="全部" value="all" />
-      </el-select>
-      <span class="time-range-label">时间范围:</span>
-      <el-select v-model="filters.day" size="small" style="width: 110px" @change="loadData">
-        <el-option label="Last Year" value="365" />
-        <el-option label="Last Month" value="30" />
-        <el-option label="Last Week" value="7" />
-        <el-option label="Last 3 Days" value="3" />
-      </el-select>
-      <el-input
-        v-model="filters.keyword"
-        placeholder="搜索"
-        clearable
-        size="small"
-        style="width: 150px"
-        @keyup.enter="loadData"
-      >
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-      <el-button type="primary" size="small" @click="loadData">
-        <i class="fa fa-search"></i> 搜索
-      </el-button>
-      <el-button size="small" @click="loadData" title="刷新">
-        <i class="fa fa-sync"></i>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="执行引擎">
+          <el-select v-model="filters.ata_node" placeholder="全部" clearable style="width: 130px">
+            <el-option label="全部" value="" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="filters.status" placeholder="全部" style="width: 100px">
+            <el-option label="全部" value="all" />
+            <el-option label="成功" value="SUCCESS" />
+            <el-option label="失败" value="FAILED" />
+            <el-option label="运行中" value="RUNNING" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="操作">
+          <el-select v-model="filters.action" placeholder="全部" style="width: 120px">
+            <el-option label="全部" value="all" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="时间范围">
+          <el-select v-model="filters.day" style="width: 120px">
+            <el-option label="最近一年" value="365" />
+            <el-option label="最近一月" value="30" />
+            <el-option label="最近一周" value="7" />
+            <el-option label="最近三天" value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索"
+            clearable
+            style="width: 150px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -110,6 +131,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as userApi from '@/modules/user/api'
 import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
@@ -222,7 +244,9 @@ async function loadData() {
       module: 'uim',
       action: filters.value.action,
       status: filters.value.status,
-      day: filters.value.day
+      day: filters.value.day,
+      page: currentPage.value,
+      size: pageSize.value
     })
     tableData.value = response?.records || response?.data?.records || []
     total.value = response?.total || response?.data?.total || tableData.value.length
@@ -232,6 +256,24 @@ async function loadData() {
   } finally {
     loading.value = false
   }
+}
+
+function handleSearch() {
+  currentPage.value = 1
+  loadData()
+}
+
+function handleReset() {
+  filters.value = {
+    day: '365',
+    action: 'all',
+    status: 'all',
+    ata_node: '',
+    keyword: ''
+  }
+  currentPage.value = 1
+  pageSize.value = 10
+  loadData()
 }
 
 onMounted(() => {

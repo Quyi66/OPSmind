@@ -11,46 +11,58 @@
 
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-select
-        v-model="filters.cit"
-        placeholder="全部"
-        size="small"
-        style="width: 120px"
-        @change="handleFilterChange"
-      >
-        <el-option label="全部" value="oplus_all" />
-        <el-option
-          v-for="item in resourceTypes"
-          :key="item.code"
-          :label="item.title"
-          :value="item.code"
-        />
-      </el-select>
-      <el-select
-        v-model="filters.conditions"
-        placeholder="筛选条件"
-        size="small"
-        style="width: 180px"
-        @change="handleFilterChange"
-      >
-        <el-option label="全部" value="oplus_all" />
-        <el-option label="今日异常" value="today" />
-        <el-option label="连通率小于50%设备" value="low" />
-        <el-option label="最近一次连通失败" value="recently" />
-        <el-option label="最近一次连通成功设备" value="recently_ok" />
-      </el-select>
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索"
-        prefix-icon="Search"
-        size="small"
-        style="width: 200px"
-        clearable
-        @input="handleSearch"
-      />
-      <el-button type="primary" size="small" @click="loadTableData">
-        <i class="fa fa-search"></i> 搜索
-      </el-button>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="类型">
+          <el-select
+            v-model="filters.cit"
+            placeholder="全部"
+            style="width: 120px"
+          >
+            <el-option label="全部" value="oplus_all" />
+            <el-option
+              v-for="item in resourceTypes"
+              :key="item.code"
+              :label="item.title"
+              :value="item.code"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="条件">
+          <el-select
+            v-model="filters.conditions"
+            placeholder="筛选条件"
+            style="width: 180px"
+          >
+            <el-option label="全部" value="oplus_all" />
+            <el-option label="今日异常" value="today" />
+            <el-option label="连通率小于50%设备" value="low" />
+            <el-option label="最近一次连通失败" value="recently" />
+            <el-option label="最近一次连通成功设备" value="recently_ok" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索"
+            clearable
+            style="width: 200px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="tableLoading" @click="loadTableData">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -66,15 +78,14 @@
       <el-button size="small" @click="handleExport">
         <el-icon><Download /></el-icon>
         导出</el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="handleRefresh" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <!-- 数据表格 -->
       <el-table
         v-loading="tableLoading"
@@ -225,8 +236,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Download, Refresh } from '@element-plus/icons-vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { Download, Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import KpiCards from '../components/KpiCards.vue'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
@@ -241,13 +252,14 @@ const kpiLoading = ref(false)
 const resourceTypes = ref([])
 
 // 筛选条件
-const filters = ref({
+const filters = reactive({
   cit: 'oplus_all',
   conditions: 'recently'
 })
 
 // 搜索关键词
 const searchKeyword = ref('')
+const loading = ref(false)
 
 // 表格数据
 const tableData = ref([])
@@ -298,8 +310,8 @@ const loadTableData = async () => {
   tableLoading.value = true
   try {
     const res = await dtsApi.queryData('ACM_LIST_CONNECT_EXCEPTION', {
-      cit: filters.value.cit,
-      conditions: filters.value.conditions,
+      cit: filters.cit,
+      conditions: filters.conditions,
       param: 'rwx'
     }, {
       size: pageSize.value,
@@ -318,7 +330,7 @@ const loadTableData = async () => {
 
 // 处理 KPI 卡片点击
 const handleKpiClick = (params) => {
-  filters.value.conditions = params.conditions
+  filters.conditions = params.conditions
   loadTableData()
 }
 
@@ -336,6 +348,16 @@ const handleSearch = () => {
     currentPage.value = 1
     loadTableData()
   }, 300)
+}
+
+// 重置
+const handleReset = () => {
+  filters.cit = 'oplus_all'
+  filters.conditions = 'recently'
+  searchKeyword.value = ''
+  currentPage.value = 1
+  pageSize.value = 100
+  loadTableData()
 }
 
 // 处理分页大小变化

@@ -1,5 +1,5 @@
 <template>
-  <div class="asset-model">
+  <div class="ops-page-layout">
     <div class="ops-page-layout">
       <!-- 筛选区域 -->
       <div class="ops-filter-bar">
@@ -36,7 +36,7 @@
         <!-- 表格右上角工具栏 -->
         <div class="table-toolbar-icons">
           <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadModelList" title="刷新">
-            <el-icon><Refresh /></el-icon>
+            <el-icon v-show="!loading"><Refresh /></el-icon>
           </el-button>
         </div>
         <el-table

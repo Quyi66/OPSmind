@@ -1,11 +1,7 @@
 <template>
-  <div class="system-settings-container">
+  <div class="settings-module">
     <!-- 左侧导航 -->
-    <aside class="ops-sidebar-nav" style="width: 190px;">
-      <h3 class="ops-sidebar-title" style="padding: 12px; margin: 0; border-bottom: 1px solid #e2e8f0;">
-        <i class="fa fa-cog" style="color: #f97316;"></i>
-        System Settings Center
-      </h3>
+    <aside class="ops-sidebar-nav settings-sidebar">
       <nav class="ops-sidebar-content">
         <router-link
           v-for="item in navItems"
@@ -51,19 +47,28 @@ function isActiveRoute(key) {
 </script>
 
 <style scoped lang="scss">
-.system-settings-container {
+.settings-module {
   display: flex;
   height: 100%;
   background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
+// 左侧导航栏 - 覆盖背景色
+.settings-sidebar {
+  width: 160px;
+  background: #fff !important;
+}
+
+// 右侧内容区
 .settings-content {
   flex: 1;
   min-width: 0;
   min-height: 0;
   overflow: auto;
   background: #f8fafc;
-  padding: 16px;
+  // padding: 16px;
 
   :deep(> *) {
     height: 100%;

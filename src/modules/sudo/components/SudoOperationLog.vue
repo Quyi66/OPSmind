@@ -2,43 +2,62 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="filters.keyword"
-        placeholder="搜索"
-        clearable
-        size="small"
-        style="width: 180px"
-        @keyup.enter="loadData"
-        @clear="loadData"
-      >
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-      <el-select v-model="filters.action" placeholder="操作类型" clearable size="small" style="width: 150px" @change="loadData">
-        <el-option label="全部操作" value="all" />
-        <el-option label="设置密码复杂度" value="设置密码复杂度" />
-        <el-option label="新增sudo配置" value="新增sudo配置" />
-        <el-option label="扫描sudo配置" value="扫描sudo配置" />
-        <el-option label="重置密码" value="重置密码" />
-      </el-select>
-      <el-select v-model="filters.status" placeholder="状态" clearable size="small" style="width: 120px" @change="loadData">
-        <el-option label="全部状态" value="all" />
-        <el-option label="成功" value="COMPLETED" />
-        <el-option label="失败" value="ERROR" />
-      </el-select>
-      <el-select v-model="filters.day" placeholder="时间范围" size="small" style="width: 120px" @change="loadData">
-        <el-option label="全部时间" value="all" />
-        <el-option label="最近1天" value="1" />
-        <el-option label="最近7天" value="7" />
-        <el-option label="最近30天" value="30" />
-        <el-option label="最近一年" value="365" />
-      </el-select>
-      <el-button type="primary" size="small" @click="loadData">
-        <i class="fa fa-search"></i> 搜索
-      </el-button>
-      <el-button size="small" @click="loadData" :loading="loading" title="刷新">
-        <el-icon><Refresh /></el-icon>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索"
+            clearable
+            style="width: 180px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="操作类型">
+          <el-select v-model="filters.action" placeholder="全部" clearable style="width: 150px">
+            <el-option label="全部操作" value="all" />
+            <el-option label="设置密码复杂度" value="设置密码复杂度" />
+            <el-option label="新增sudo配置" value="新增sudo配置" />
+            <el-option label="扫描sudo配置" value="扫描sudo配置" />
+            <el-option label="重置密码" value="重置密码" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="filters.status" placeholder="全部" clearable style="width: 120px">
+            <el-option label="全部状态" value="all" />
+            <el-option label="成功" value="COMPLETED" />
+            <el-option label="失败" value="ERROR" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="时间范围">
+          <el-select v-model="filters.day" placeholder="全部" style="width: 120px">
+            <el-option label="全部时间" value="all" />
+            <el-option label="最近1天" value="1" />
+            <el-option label="最近7天" value="7" />
+            <el-option label="最近30天" value="30" />
+            <el-option label="最近一年" value="365" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -128,6 +147,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as sudoApi from '@/modules/sudo/api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
@@ -149,6 +169,21 @@ const pagination = reactive({
   pageSize: 20,
   total: 0
 })
+
+function handleSearch() {
+  pagination.page = 1
+  loadData()
+}
+
+function handleReset() {
+  filters.keyword = ''
+  filters.action = 'all'
+  filters.status = 'all'
+  filters.day = '1'
+  pagination.page = 1
+  pagination.pageSize = 20
+  loadData()
+}
 
 onMounted(() => {
   loadData()

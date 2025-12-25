@@ -2,30 +2,40 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索模板名称"
-        clearable
-        size="small"
-        style="width: 250px"
-        @input="handleSearch"
-      >
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-      <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo"></i> 重置
-      </el-button>
-      <el-button size="small" @click="loadTemplates">
-        <el-icon><Refresh /></el-icon> 刷新
-      </el-button>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="模板名称">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索模板名称"
+            clearable
+            style="width: 250px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="goToAdd">
         <i class="fa fa-plus"></i> 新建模板
+      </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadTemplates" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -90,20 +100,20 @@
           </template>
         </el-table-column>
       </el-table>
+    </div>
 
-      <!-- 分页 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="filteredData.length"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handlePageSizeChange"
-          @current-change="handlePageChange"
-        />
-      </div>
+    <!-- 分页 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="filteredData.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 新建/编辑模板弹窗 -->
@@ -123,8 +133,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { templateApi, paramApi } from '../api'
 import TemplateEditDialog from '../components/TemplateEditDialog.vue'
 import RunTemplateDialog from '../components/RunTemplateDialog.vue'
@@ -133,7 +144,9 @@ const emit = defineEmits(['navigate'])
 
 const loading = ref(false)
 const tableData = ref([])
-const searchKeyword = ref('')
+const filters = reactive({
+  keyword: ''
+})
 const pageSize = ref(10)
 const currentPage = ref(1)
 const dashboardEnabled = ref(false)
@@ -152,8 +165,8 @@ const runTemplateId = ref('')
  */
 const filteredData = computed(() => {
   let data = tableData.value
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
+  if (filters.keyword) {
+    const keyword = filters.keyword.toLowerCase()
     data = data.filter(item =>
       item.templateName?.toLowerCase().includes(keyword) ||
       item.description?.toLowerCase().includes(keyword) ||
@@ -271,8 +284,9 @@ function handlePageSizeChange() {
  * 重置筛选
  */
 function handleReset() {
-  searchKeyword.value = ''
+  filters.keyword = ''
   currentPage.value = 1
+  pageSize.value = 10
 }
 
 /**

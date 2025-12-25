@@ -4,7 +4,7 @@
     :description="moduleDescription"
     :hide-header="true"
   >
-    <div class="user-module">
+    <div class="ops-module">
       <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
         <router-link
           v-for="item in navItems"
@@ -18,7 +18,7 @@
         </router-link>
       </aside>
 
-      <section class="user-module__content">
+      <section class="ops-module__content">
         <router-view />
       </section>
     </div>
@@ -59,5 +59,6 @@ provide('handleNavigate', handleNavigate)
 </script>
 
 <style scoped lang="scss">
-@use '../styles/common.scss' as *;
+// 样式已统一至 element-ui.scss，此处无需重复定义
 </style>
+

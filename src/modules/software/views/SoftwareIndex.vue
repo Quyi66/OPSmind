@@ -4,7 +4,7 @@
     :description="moduleDescription"
     :hide-header="true"
   >
-    <div class="software-module">
+    <div class="ops-module">
       <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
         <div
           v-for="item in navItems"
@@ -18,7 +18,7 @@
         </div>
       </aside>
 
-      <section class="software-module__content">
+      <section class="ops-module__content">
         <!-- 软件包（默认页面） -->
         <div v-if="activeView === 'packages'" class="view-container">
           <div class="view-card">
@@ -140,71 +140,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.software-module {
-  display: flex;
-  height: 100%;
-  min-height: 0;
-}
+// 样式已统一至 opsmind.scss
 
-.software-module__nav {
-  width: 140px;
-  flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
-  padding: 8px 0;
-  overflow-y: auto;
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    cursor: pointer;
-    color: #333;
-    font-size: 13px;
-    transition: all 0.2s;
-    position: relative;
-
-    i {
-      width: 16px;
-      text-align: center;
-      color: #666;
-    }
-
-    &:hover {
-      background: #f5f7fa;
-    }
-
-    &.is-active {
-      background: #e6f7ff;
-      color: #1890ff;
-
-      i {
-        color: #1890ff;
-      }
-
-      &::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 3px;
-        background: #1890ff;
-      }
-    }
-  }
-}
-
-.software-module__content {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background: #f5f7fa;
-}
-
+// 软件模块特定样式
 .view-container {
   flex: 1;
   display: flex;
@@ -221,3 +159,4 @@ onMounted(() => {
   overflow: hidden;
 }
 </style>
+

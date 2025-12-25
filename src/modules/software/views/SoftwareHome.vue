@@ -1,5 +1,5 @@
 <template>
-  <div class="software-home">
+  <div class="ops-page-layout" style="padding: 0; gap: 0; background: #f5f7fa;">
     <!-- KPI 卡片区域 -->
     <div class="kpi-section">
       <div

@@ -2,28 +2,37 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索"
-        clearable
-        size="small"
-        style="width: 200px"
-        @keyup.enter="loadData"
-        @clear="loadData"
-      >
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-      <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo"></i> 重置
-      </el-button>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索"
+            clearable
+            style="width: 200px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button size="small" @click="loadData" :loading="loading">
-        <i class="fa fa-refresh"></i> 刷新
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -117,8 +126,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as pmsApi from '@/modules/password/api'
 
 const loading = ref(false)
@@ -126,7 +136,9 @@ const saving = ref(false)
 const tableData = ref([])
 const editDialogVisible = ref(false)
 const editForm = ref(null)
-const searchKeyword = ref('')
+const filters = reactive({
+  keyword: ''
+})
 
 const pagination = ref({
   page: 1,
@@ -144,11 +156,11 @@ const paramNameMap = {
 
 // 过滤后的数据
 const filteredData = computed(() => {
-  if (!searchKeyword.value) {
+  if (!filters.keyword) {
     pagination.value.total = tableData.value.length
     return tableData.value
   }
-  const keyword = searchKeyword.value.toLowerCase()
+  const keyword = filters.keyword.toLowerCase()
   const filtered = tableData.value.filter(item => {
     return (
       (item.param_name && getParamNameText(item.param_name).toLowerCase().includes(keyword)) ||
@@ -179,8 +191,14 @@ async function loadData() {
   }
 }
 
+function handleSearch() {
+  pagination.value.page = 1
+}
+
 function handleReset() {
-  searchKeyword.value = ''
+  filters.keyword = ''
+  pagination.value.page = 1
+  pagination.value.pageSize = 10
   loadData()
 }
 

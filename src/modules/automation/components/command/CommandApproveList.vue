@@ -2,14 +2,24 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索"
-        style="width: 200px"
-        clearable
-        @clear="handleSearch"
-        @keyup.enter="handleSearch"
-      />
+      <el-form :inline="true" size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="名称/命令"
+            style="width: 200px"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon> 搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon> 重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -23,16 +33,14 @@
         <i class="fas fa-check"></i>
         批量审核
       </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <!-- 刷新按钮 -->
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
@@ -111,7 +119,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { findAllUnapprovedCommand } from '@/modules/automation/api/command'
 import CommandApproveDialog from './dialogs/CommandApproveDialog.vue'
 
@@ -168,7 +176,15 @@ async function loadData() {
 
 // 搜索
 function handleSearch() {
+  currentPage.value = 1
   // 搜索通过 computed 自动处理
+}
+
+// 重置
+function handleReset() {
+  searchKeyword.value = ''
+  currentPage.value = 1
+  pageSize.value = 10
 }
 
 // 选择变化

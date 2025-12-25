@@ -1,5 +1,5 @@
 <template>
-  <div class="applet-management">
+  <div class="ops-page-layout">
     <!-- Tab 页 -->
     <el-tabs v-model="activeTab" class="applet-tabs">
       <!-- 应用管理 Tab -->

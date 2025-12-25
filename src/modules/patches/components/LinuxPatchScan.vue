@@ -1,5 +1,5 @@
 <template>
-  <div class="patch-scan">
+  <div class="ops-page-layout">
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="page-header__actions">
@@ -55,18 +55,30 @@
       <div v-if="activeTab === 'host'" class="tab-content ops-page-layout">
         <!-- 筛选栏 -->
         <div class="ops-filter-bar">
-          <el-input
-            v-model="filterText"
-            placeholder="输入字符搜索"
-            style="width: 200px"
-            clearable
-            size="small"
-            @input="handleFilter"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
+          <el-form :model="hostFilters" inline size="small">
+            <el-form-item label="关键词">
+              <el-input
+                v-model="filterText"
+                placeholder="输入字符搜索"
+                style="width: 200px"
+                clearable
+              >
+                <template #prefix>
+                  <el-icon><Search /></el-icon>
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :loading="loading" @click="handleFilter">
+                <el-icon><Search /></el-icon>
+                搜索
+              </el-button>
+              <el-button @click="handleHostReset">
+                <el-icon><RefreshRight /></el-icon>
+                重置
+              </el-button>
+            </el-form-item>
+          </el-form>
         </div>
 
         <!-- 操作栏 -->
@@ -74,15 +86,14 @@
           <el-button size="small" @click="handleExport">
             <i class="fa fa-download" /> 导出
           </el-button>
+          <span style="flex: 1;"></span>
+          <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="refresh" title="刷新">
+            <el-icon v-show="!loading"><Refresh /></el-icon>
+          </el-button>
         </div>
 
         <!-- 表格 -->
         <div class="ops-table-wrapper">
-          <div class="table-toolbar-icons">
-            <el-button class="toolbar-icon-btn" circle :loading="loading" @click="refresh" title="刷新">
-              <el-icon><Refresh /></el-icon>
-            </el-button>
-          </div>
           <el-table
             v-loading="loading"
             :data="hostTableData"
@@ -157,60 +168,75 @@
       <div v-else-if="activeTab === 'vulnerability'" class="tab-content ops-page-layout">
         <!-- 筛选栏 -->
         <div class="ops-filter-bar">
-          <span>主机</span>
-          <el-input
-            v-model="vulnFilters.host_key"
-            placeholder="输入主机IP"
-            style="width: 120px"
-            clearable
-            size="small"
-            @change="handleVulnFilterChange"
-          />
-          <span>CVE</span>
-          <el-input
-            v-model="vulnFilters.vul_id"
-            placeholder="输入CVE编号"
-            style="width: 140px"
-            clearable
-            size="small"
-            @change="handleVulnFilterChange"
-          />
-          <span>严重程度</span>
-          <el-select v-model="vulnFilters.severity" size="small" style="width: 100px" @change="handleVulnFilterChange">
-            <el-option label="所有" value="all" />
-            <el-option label="严重" value="Critical" />
-            <el-option label="重要" value="Important" />
-            <el-option label="中等" value="Moderate" />
-            <el-option label="低" value="Low" />
-          </el-select>
-          <span>补丁状态</span>
-          <el-select v-model="vulnFilters.patch_status" size="small" style="width: 100px" @change="handleVulnFilterChange">
-            <el-option label="所有" value="all" />
-            <el-option label="未修复" value="no_repair" />
-            <el-option label="已修复" value="is_repair" />
-            <el-option label="已修复(手动)" value="is_repair_artificial" />
-            <el-option label="修复中" value="repairing" />
-            <el-option label="修复失败" value="repair_faild" />
-            <el-option label="回滚中" value="rolling_back" />
-            <el-option label="回滚失败" value="rolling_back_faild" />
-            <el-option label="回滚成功" value="rolling_back_success" />
-          </el-select>
-          <span>内核漏洞</span>
-          <el-select v-model="vulnFilters.is_kernel" size="small" style="width: 80px" @change="handleVulnFilterChange">
-            <el-option label="所有" value="all" />
-            <el-option label="是" value="is_kernel" />
-            <el-option label="否" value="no_kernel" />
-          </el-select>
-          <span>操作系统</span>
-          <el-select v-model="vulnFilters.os_distro" size="small" style="width: 100px" @change="handleVulnFilterChange">
-            <el-option label="所有" value="all" />
-            <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
-          </el-select>
-          <span>系统版本</span>
-          <el-select v-model="vulnFilters.os_major_version" size="small" style="width: 100px" @change="handleVulnFilterChange">
-            <el-option label="所有" value="all" />
-            <el-option v-for="item in osVersionList" :key="item" :label="item" :value="item" />
-          </el-select>
+          <el-form :model="vulnFilters" inline size="small">
+            <el-form-item label="主机">
+              <el-input
+                v-model="vulnFilters.host_key"
+                placeholder="输入主机IP"
+                style="width: 120px"
+                clearable
+              />
+            </el-form-item>
+            <el-form-item label="CVE">
+              <el-input
+                v-model="vulnFilters.vul_id"
+                placeholder="输入CVE编号"
+                style="width: 140px"
+                clearable
+              />
+            </el-form-item>
+            <el-form-item label="严重程度">
+              <el-select v-model="vulnFilters.severity" style="width: 100px">
+                <el-option label="所有" value="all" />
+                <el-option label="严重" value="Critical" />
+                <el-option label="重要" value="Important" />
+                <el-option label="中等" value="Moderate" />
+                <el-option label="低" value="Low" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="补丁状态">
+              <el-select v-model="vulnFilters.patch_status" style="width: 120px">
+                <el-option label="所有" value="all" />
+                <el-option label="未修复" value="no_repair" />
+                <el-option label="已修复" value="is_repair" />
+                <el-option label="已修复(手动)" value="is_repair_artificial" />
+                <el-option label="修复中" value="repairing" />
+                <el-option label="修复失败" value="repair_faild" />
+                <el-option label="回滚中" value="rolling_back" />
+                <el-option label="回滚失败" value="rolling_back_faild" />
+                <el-option label="回滚成功" value="rolling_back_success" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="内核漏洞">
+              <el-select v-model="vulnFilters.is_kernel" style="width: 80px">
+                <el-option label="所有" value="all" />
+                <el-option label="是" value="is_kernel" />
+                <el-option label="否" value="no_kernel" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="操作系统">
+              <el-select v-model="vulnFilters.os_distro" style="width: 100px">
+                <el-option label="所有" value="all" />
+                <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="系统版本">
+              <el-select v-model="vulnFilters.os_major_version" style="width: 100px">
+                <el-option label="所有" value="all" />
+                <el-option v-for="item in osVersionList" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :loading="vulnLoading" @click="handleVulnFilterChange">
+                <el-icon><Search /></el-icon>
+                搜索
+              </el-button>
+              <el-button @click="handleVulnReset">
+                <el-icon><RefreshRight /></el-icon>
+                重置
+              </el-button>
+            </el-form-item>
+          </el-form>
         </div>
 
         <!-- 操作栏 -->
@@ -221,15 +247,14 @@
           <el-button size="small" @click="handleVulnExport">
             <i class="fa fa-download" /> 导出
           </el-button>
+          <span style="flex: 1;"></span>
+          <el-button class="toolbar-icon-btn" circle size="small" :loading="vulnLoading" @click="loadVulnData" title="刷新">
+            <el-icon v-show="!vulnLoading"><Refresh /></el-icon>
+          </el-button>
         </div>
 
         <!-- 表格 -->
         <div class="ops-table-wrapper">
-          <div class="table-toolbar-icons">
-            <el-button class="toolbar-icon-btn" circle :loading="vulnLoading" @click="loadVulnData" title="刷新">
-              <el-icon><Refresh /></el-icon>
-            </el-button>
-          </div>
           <el-table
             ref="vulnTableRef"
             v-loading="vulnLoading"
@@ -442,7 +467,7 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh, Search } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, vulnerabilityApi } from '../api'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
@@ -671,8 +696,28 @@ function handleFilter() {
   loadHostData()
 }
 
+function handleHostReset() {
+  filterText.value = ''
+  pagination.page = 1
+  pagination.pageSize = 20
+  loadHostData()
+}
+
 function handleVulnFilter() {
   vulnPagination.page = 1
+  loadVulnData()
+}
+
+function handleVulnReset() {
+  vulnFilters.host_key = ''
+  vulnFilters.vul_id = ''
+  vulnFilters.severity = 'all'
+  vulnFilters.patch_status = 'all'
+  vulnFilters.is_kernel = 'all'
+  vulnFilters.os_distro = 'all'
+  vulnFilters.os_major_version = 'all'
+  vulnPagination.page = 1
+  vulnPagination.pageSize = 20
   loadVulnData()
 }
 
@@ -966,7 +1011,7 @@ defineExpose({
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 12px 16px;
+  padding: 0 16px 8px 16px;
   background: #fff;
   border-bottom: 1px solid #e9ecef;
 
@@ -978,7 +1023,7 @@ defineExpose({
 
 .page-content {
   flex: 1;
-  padding: 0 16px;
+  // padding: 0 16px;
   overflow-y: auto;
   background: #fff;
 }

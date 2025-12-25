@@ -1,5 +1,5 @@
 <template>
-  <div class="overview-view">
+  <div class="ops-page-layout" style="overflow-y: auto;">
     <!-- 统计卡片 (KPI) -->
     <div class="stat-cards">
       <div

@@ -22,7 +22,7 @@
       </el-breadcrumb>
       <div class="breadcrumb-actions">
         <el-button class="toolbar-icon-btn" circle :loading="loading" @click="refresh" title="刷新">
-          <el-icon><Refresh /></el-icon>
+          <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
     </div>
@@ -216,7 +216,7 @@ async function loadFiles() {
   loading.value = true
   try {
     const files = await gfsApi.listFiles(null, currentDir.value, 'git', { includeStage: true })
-    
+
     // 排序：目录在前，文件在后，按名称排序
     files.sort((a, b) => {
       if (a.directory && !b.directory) return -1

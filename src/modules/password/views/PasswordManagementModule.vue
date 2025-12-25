@@ -8,7 +8,7 @@
     <AdminPanelView v-if="showAdminPanel" @back="showAdminPanel = false" />
 
     <!-- 普通模式 -->
-    <div v-else class="password-module">
+    <div v-else class="ops-module">
       <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
         <router-link
           v-for="item in navItems"
@@ -22,7 +22,7 @@
         </router-link>
       </aside>
 
-      <section class="password-module__content">
+      <section class="ops-module__content">
         <router-view />
       </section>
     </div>
@@ -61,32 +61,6 @@ provide('goToAdminPanel', goToAdminPanel)
 </script>
 
 <style scoped lang="scss">
-.password-module {
-  height: 100%;
-  display: flex;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.password-module__content {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background: #f5f7fa;
-  padding: 16px;
-
-  :deep(> *) {
-    flex: 1;
-    min-height: 0;
-  }
-}
-
-a.ops-sidebar-item {
-  text-decoration: none;
-  color: inherit;
-}
+// 样式已统一至 element-ui.scss，此处无需重复定义
 </style>
+

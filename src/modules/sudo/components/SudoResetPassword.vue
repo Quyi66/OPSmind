@@ -1,5 +1,5 @@
 <template>
-  <div class="reset-password-container">
+  <div class="ops-page-layout" style="background: #f1f5f9; overflow: auto;">
     <div class="page-content">
       <div class="form-card">
         <div class="card-title">重置密码</div>

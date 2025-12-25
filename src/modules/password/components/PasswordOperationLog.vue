@@ -2,33 +2,37 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <!-- <el-select v-model="filters.status" placeholder="状态" size="small" style="width: 120px" @change="loadData">
-        <el-option label="全部状态" value="all" />
-        <el-option label="成功" value="SUCCESS" />
-        <el-option label="失败" value="FAILED" />
-      </el-select> -->
-      <el-input
-        v-model="filters.keyword"
-        placeholder="搜索"
-        clearable
-        size="small"
-        style="width: 180px"
-        @keyup.enter="loadData"
-        @clear="loadData"
-      >
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-      <el-button type="primary" size="small" @click="loadData">
-        <el-icon>
-          <Search />
-        </el-icon> 搜索
-      </el-button>
-      <el-button size="small" @click="loadData" :loading="loading" title="刷新">
-        <el-icon>
-          <Refresh />
-        </el-icon>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索"
+            clearable
+            style="width: 180px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -95,14 +99,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as pmsApi from '@/modules/password/api'
 
 const loading = ref(false)
 const tableData = ref([])
 
-const filters = ref({
+const filters = reactive({
   status: 'all',
   keyword: ''
 })
@@ -112,6 +117,19 @@ const pagination = ref({
   pageSize: 10,
   total: 0
 })
+
+function handleSearch() {
+  pagination.value.page = 1
+  loadData()
+}
+
+function handleReset() {
+  filters.keyword = ''
+  filters.status = 'all'
+  pagination.value.page = 1
+  pagination.value.pageSize = 10
+  loadData()
+}
 
 onMounted(() => {
   loadData()

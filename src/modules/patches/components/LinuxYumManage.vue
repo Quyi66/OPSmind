@@ -18,18 +18,30 @@
     <template v-if="activeTab === 'custom_repo'">
       <!-- 筛选区 -->
       <div class="ops-filter-bar">
-        <el-input
-          v-model="filterText"
-          placeholder="搜索..."
-          size="small"
-          style="width: 200px"
-          clearable
-          @input="handleFilter"
-        >
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
+        <el-form :model="filters" inline size="small">
+          <el-form-item label="关键词">
+            <el-input
+              v-model="filterText"
+              placeholder="搜索..."
+              style="width: 200px"
+              clearable
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="loading" @click="handleFilter">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
       </div>
 
       <!-- 操作区 -->
@@ -37,15 +49,14 @@
         <el-button type="primary" size="small" @click="handleAddRepo">
           YUM源配置录入
         </el-button>
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+          <el-icon v-show="!loading"><Refresh /></el-icon>
+        </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <div class="table-toolbar-icons">
-          <el-button class="toolbar-icon-btn" circle :loading="loading" @click="handleRefresh" title="刷新">
-            <el-icon><Refresh /></el-icon>
-          </el-button>
-        </div>
         <el-table
           v-loading="loading"
           :data="customRepoData"
@@ -91,18 +102,30 @@
     <template v-if="activeTab === 'repo_list'">
       <!-- 筛选区 -->
       <div class="ops-filter-bar">
-        <el-input
-          v-model="hostFilterText"
-          placeholder="搜索..."
-          size="small"
-          style="width: 200px"
-          clearable
-          @input="handleHostFilter"
-        >
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
+        <el-form :model="hostFilters" inline size="small">
+          <el-form-item label="关键词">
+            <el-input
+              v-model="hostFilterText"
+              placeholder="搜索..."
+              style="width: 200px"
+              clearable
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="hostLoading" @click="handleHostFilter">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleHostReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
       </div>
 
       <!-- 操作区 -->
@@ -110,15 +133,14 @@
         <el-button type="primary" size="small" @click="handleScanRepoList">
           YUM源清单扫描
         </el-button>
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="hostLoading" @click="loadHostData" title="刷新">
+          <el-icon v-show="!hostLoading"><Refresh /></el-icon>
+        </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <div class="table-toolbar-icons">
-          <el-button class="toolbar-icon-btn" circle :loading="hostLoading" @click="loadHostData" title="刷新">
-            <el-icon><Refresh /></el-icon>
-          </el-button>
-        </div>
         <el-table
           v-loading="hostLoading"
           :data="hostTableData"
@@ -267,7 +289,7 @@
               </template>
             </el-input>
             <el-button class="toolbar-icon-btn" circle :loading="hostDetailLoading" @click="loadHostRepoDetail" title="刷新" size="small">
-              <el-icon><Refresh /></el-icon>
+              <el-icon v-show="!hostDetailLoading"><Refresh /></el-icon>
             </el-button>
           </div>
         </div>
@@ -425,7 +447,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { yumManageApi } from '../api'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 import { runJob, getRunResult } from '@/modules/automation/api/command'
@@ -616,6 +638,13 @@ function handleFilter() {
   loadCustomRepoData()
 }
 
+function handleReset() {
+  filterText.value = ''
+  pagination.page = 1
+  pagination.pageSize = 10
+  loadCustomRepoData()
+}
+
 function handleRefresh() {
   loadCustomRepoData()
 }
@@ -628,6 +657,13 @@ function handleSizeChange(size) {
 
 function handleHostFilter() {
   hostPagination.page = 1
+  loadHostData()
+}
+
+function handleHostReset() {
+  hostFilterText.value = ''
+  hostPagination.page = 1
+  hostPagination.pageSize = 500
   loadHostData()
 }
 

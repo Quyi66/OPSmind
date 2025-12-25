@@ -2,41 +2,63 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-select v-model="filterDay" size="small" style="width: 120px" @change="loadData">
-        <el-option label="全部" value="3650" />
-        <el-option label="今天" value="0" />
-        <el-option label="最近7天" value="7" />
-        <el-option label="最近30天" value="30" />
-        <el-option label="最近一年" value="365" />
-      </el-select>
-      <el-select v-model="filterStatus" size="small" style="width: 120px" @change="loadData">
-        <el-option label="全部状态" value="all" />
-        <el-option label="等待中" value="WAITING" />
-        <el-option label="运行中" value="RUNNING" />
-        <el-option label="回调中" value="CALLBACK" />
-        <el-option label="运行错误" value="ERROR" />
-        <el-option label="运行失败" value="FAILED" />
-        <el-option label="完成" value="COMPLETED" />
-        <el-option label="运行终止" value="INTERRUPTED" />
-      </el-select>
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索"
-        size="small"
-        style="width: 200px"
-        clearable
-        @keyup.enter="loadData"
-      />
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="时间范围">
+          <el-select v-model="filters.day" style="width: 120px">
+            <el-option label="全部" value="3650" />
+            <el-option label="今天" value="0" />
+            <el-option label="最近7天" value="7" />
+            <el-option label="最近30天" value="30" />
+            <el-option label="最近一年" value="365" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="filters.status" style="width: 120px">
+            <el-option label="全部状态" value="all" />
+            <el-option label="等待中" value="WAITING" />
+            <el-option label="运行中" value="RUNNING" />
+            <el-option label="回调中" value="CALLBACK" />
+            <el-option label="运行错误" value="ERROR" />
+            <el-option label="运行失败" value="FAILED" />
+            <el-option label="完成" value="COMPLETED" />
+            <el-option label="运行终止" value="INTERRUPTED" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索"
+            clearable
+            style="width: 200px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <!-- 刷新按钮 -->
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
@@ -171,15 +193,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { useApi } from '@/core/api'
 
 // 筛选条件
-const filterDay = ref('0')
-const filterStatus = ref('all')
-const searchKeyword = ref('')
+const filters = reactive({
+  day: '0',
+  status: 'all',
+  keyword: ''
+})
 
 // 状态
 const loading = ref(false)
@@ -195,10 +219,10 @@ const currentLog = ref(null)
 
 // 过滤后的日志列表（本地搜索）
 const filteredLogs = computed(() => {
-  if (!searchKeyword.value) {
+  if (!filters.keyword) {
     return logs.value
   }
-  const keyword = searchKeyword.value.toLowerCase()
+  const keyword = filters.keyword.toLowerCase()
   return logs.value.filter(log =>
     (log.job_title && log.job_title.toLowerCase().includes(keyword)) ||
     (log.job_type && log.job_type.toLowerCase().includes(keyword)) ||
@@ -221,6 +245,22 @@ function handlePageSizeChange() {
   loadData()
 }
 
+// 搜索
+function handleSearch() {
+  currentPage.value = 1
+  loadData()
+}
+
+// 重置
+function handleReset() {
+  filters.day = '0'
+  filters.status = 'all'
+  filters.keyword = ''
+  currentPage.value = 1
+  pageSize.value = 10
+  loadData()
+}
+
 // 加载数据
 async function loadData() {
   loading.value = true
@@ -228,15 +268,15 @@ async function loadData() {
     const response = await useApi().post('/dts/api/dts/q/data/JAO_LIST_RUN_LOGS/', {
       params: {
         type: 'command',
-        day: filterDay.value,
+        day: filters.day,
         job_id: '',
         run_ids: '',
-        status: filterStatus.value
+        status: filters.status
       },
       size: pageSize.value,
       page: currentPage.value,
       orderBy: 'start_time desc',
-      filter: searchKeyword.value || ''
+      filter: filters.keyword || ''
     })
     const data = response.data || response || {}
     logs.value = data.records || data || []

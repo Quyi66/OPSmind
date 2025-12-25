@@ -1,5 +1,5 @@
 <template>
-  <div class="inspection-config">
+  <div class="ops-page-layout">
     <!-- 顶部导航栏 -->
     <nav class="navbar">
       <div class="navbar-title">巡检配置</div>

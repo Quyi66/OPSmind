@@ -108,7 +108,7 @@ export const MENU_CONFIG = {
           description: '用户账户和权限管理'
         },
         {
-          code: 'workflow',
+          code: 'flow',
           name: '流程',
           icon: 'fas fa-project-diagram',
           description: '流程管理'

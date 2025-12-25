@@ -1,5 +1,5 @@
 <template>
-  <div class="tags-management">
+  <div class="ops-page-layout">
     <!-- 工具栏 -->
     <div class="toolbar">
       <div class="toolbar__left">

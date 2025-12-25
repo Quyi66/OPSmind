@@ -1,5 +1,5 @@
 <template>
-  <div class="email-config">
+  <div class="ops-page-layout">
     <el-card class="config-card">
       <el-form
         ref="formRef"

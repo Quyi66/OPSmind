@@ -1,5 +1,5 @@
 <template>
-  <div class="host-detail">
+  <div class="ops-page-layout">
     <div class="page-header">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item @click.prevent="handleBack" style="cursor: pointer">

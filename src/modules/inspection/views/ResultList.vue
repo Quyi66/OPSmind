@@ -1,5 +1,5 @@
 <template>
-  <div class="result-list-page">
+  <div class="ops-page-layout" style="flex-direction: row; padding: 0; gap: 0;">
     <!-- 左侧模板列表 -->
     <aside class="ops-sidebar-nav">
       <div class="ops-sidebar-header">
@@ -42,32 +42,52 @@
     <section class="result-list-content ops-page-layout">
       <!-- 筛选区 -->
       <div class="ops-filter-bar">
-        <el-input
-          v-model="searchText"
-          placeholder="搜索"
-          clearable
-          size="small"
-          style="width: 200px;"
-          @input="handleSearch"
-        >
-          <template #prefix>
-            <i class="fa fa-search"></i>
-          </template>
-        </el-input>
+        <el-form :model="filters" inline size="small">
+          <el-form-item label="关键词">
+            <el-input
+              v-model="filters.keyword"
+              placeholder="搜索"
+              clearable
+              style="width: 200px;"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="loading" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadResults" title="刷新">
+          <el-icon v-show="!loading"><Refresh /></el-icon>
+        </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
         <div class="table-toolbar-icons">
           <el-button class="toolbar-icon-btn" circle :loading="loading" @click="refreshTable" title="刷新">
-            <el-icon><Refresh /></el-icon>
+            <el-icon v-show="!loading"><Refresh /></el-icon>
           </el-button>
         </div>
         <el-table
           v-loading="loading"
           :data="tableData"
           stripe
-          height="calc(100vh - 260px)"
+          max-height="calc(100vh - 360px)"
           row-key="id"
         >
           <el-table-column prop="templateName" label="模板" show-overflow-tooltip sortable />
@@ -149,10 +169,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { apiService } from '@/core/api'
 import { authService } from '@/core/auth'
@@ -170,7 +190,9 @@ const allResults = ref([])
 const templateList = ref([])
 const selectedTemplateId = ref('')
 const templateSearchText = ref('')
-const searchText = ref('')
+const filters = reactive({
+  keyword: ''
+})
 const structuralSwitch = ref('no')
 
 // 分页
@@ -329,7 +351,7 @@ async function loadResults() {
     params.append('order[0][column]', '2')
     params.append('order[0][dir]', 'desc')
     params.append('search[regex]', 'false')
-    params.append('search[value]', searchText.value)
+    params.append('search[value]', filters.keyword)
     params.append('start', String((pagination.value.page - 1) * pagination.value.size))
 
     // 使用 axios 直接发送，确保作为 Form Data 发送
@@ -380,6 +402,16 @@ function handleSortChange(order) {
  */
 function handleSearch() {
   pagination.value.page = 1
+  loadResults()
+}
+
+/**
+ * 重置
+ */
+function handleReset() {
+  filters.keyword = ''
+  pagination.value.page = 1
+  pagination.value.size = 10
   loadResults()
 }
 

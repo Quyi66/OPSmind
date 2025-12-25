@@ -1,5 +1,5 @@
 <template>
-  <div class="param-settings">
+  <div class="ops-page-layout">
     <!-- 标签页 -->
     <el-tabs v-model="activeTab" @tab-change="handleTabChange">
       <el-tab-pane label="系统参数配置" name="sysParams">

@@ -1,5 +1,5 @@
 <template>
-  <div class="asset-info">
+  <div class="ops-page-layout" style="padding: 0; gap: 0;">
     <!-- 资产类型标签页 -->
     <div class="type-tabs-wrapper">
       <div class="type-tabs">

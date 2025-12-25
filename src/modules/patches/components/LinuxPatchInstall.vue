@@ -1,48 +1,46 @@
 <template>
   <div class="ops-page-layout">
+    <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <div class="filter-group">
-        <div class="severity-filters">
-          <el-checkbox
-            v-model="severityFilters.Critical"
-            @change="handleFilter"
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="严重程度">
+          <el-select
+            v-model="filters.severity"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="请选择"
+            style="width: 200px"
           >
-            <span class="badge badge-danger">严重</span>
-          </el-checkbox>
-          <el-checkbox
-            v-model="severityFilters.Important"
-            @change="handleFilter"
+            <el-option label="严重" value="Critical" />
+            <el-option label="重要" value="Important" />
+            <el-option label="中等" value="Moderate" />
+            <el-option label="低级" value="Low" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索补丁编号、概要、CVE..."
+            style="width: 240px"
+            clearable
           >
-            <span class="badge badge-warning">重要</span>
-          </el-checkbox>
-          <el-checkbox
-            v-model="severityFilters.Moderate"
-            @change="handleFilter"
-          >
-            <span class="badge badge-dark">中等</span>
-          </el-checkbox>
-          <el-checkbox
-            v-model="severityFilters.Low"
-            @change="handleFilter"
-          >
-            <span class="badge badge-secondary">低级</span>
-          </el-checkbox>
-        </div>
-      </div>
-      <div class="filter-group">
-        <el-input
-          v-model="searchText"
-          placeholder="搜索..."
-          size="small"
-          style="width: 200px"
-          clearable
-          @input="handleSearch"
-        >
-          <template #prefix>
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-      </div>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 操作区 -->
@@ -55,19 +53,18 @@
       >
         安装选中的补丁
       </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
-          <el-icon><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="filteredTableData"
+        :data="tableData"
         stripe
         max-height="calc(100vh - 320px)"
         @selection-change="handleSelectionChange"
@@ -296,23 +293,18 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { patchInstallApi } from '../api'
 
 // 加载状态
 const loading = ref(false)
 const installLoading = ref(false)
 
-// 严重程度筛选 - 默认勾选 Critical 和 Important
-const severityFilters = reactive({
-  Critical: true,
-  Important: true,
-  Moderate: false,
-  Low: false
+// 统一筛选条件
+const filters = reactive({
+  severity: ['Critical', 'Important'], // 默认勾选严重和重要
+  keyword: ''
 })
-
-// 搜索文本
-const searchText = ref('')
 
 // 表格数据
 const tableRef = ref(null)
@@ -325,7 +317,7 @@ const selectedPatchIds = computed(() => selectedRows.value.map(r => r.patch_id))
 // 分页
 const pagination = reactive({
   page: 1,
-  pageSize: 20,
+  pageSize: 10,
   total: 0
 })
 
@@ -379,38 +371,6 @@ function handleHostSizeChange(size) {
   hostPagination.page = 1
 }
 
-// 计算过滤后的数据 - 客户端筛选
-const filteredTableData = computed(() => {
-  let data = tableData.value
-
-  // 按严重程度筛选
-  const activeSeverities = Object.entries(severityFilters)
-    .filter(([_, checked]) => checked)
-    .map(([severity]) => severity)
-
-  if (activeSeverities.length > 0 && activeSeverities.length < 4) {
-    data = data.filter(item => activeSeverities.includes(item.severity))
-  }
-
-  // 按搜索文本筛选
-  if (searchText.value) {
-    const keyword = searchText.value.toLowerCase()
-    data = data.filter(item =>
-      item.patch_id?.toLowerCase().includes(keyword) ||
-      item.title?.toLowerCase().includes(keyword) ||
-      item.related_vuls?.toLowerCase().includes(keyword)
-    )
-  }
-
-  // 更新筛选后的总数
-  pagination.total = data.length
-
-  // 客户端分页
-  const start = (pagination.page - 1) * pagination.pageSize
-  const end = start + pagination.pageSize
-  return data.slice(start, end)
-})
-
 // 获取严重程度徽章样式
 function getSeverityBadgeClass(severity) {
   const map = {
@@ -447,22 +407,36 @@ function preprocessData(records) {
   }))
 }
 
-// 加载数据 - 一次性加载所有数据，客户端筛选
+// 加载数据 - 服务端筛选
 async function loadData() {
   loading.value = true
   try {
     const params = {
-      page: 1,
-      size: 1000, // 加载更多数据用于客户端筛选
+      page: pagination.page,
+      size: pagination.pageSize,
     }
+
+    // 添加严重程度筛选条件
+    if (filters.severity.length > 0 && filters.severity.length < 4) {
+      params.severity = filters.severity.join(',')
+    }
+
+    // 添加关键词筛选条件
+    if (filters.keyword) {
+      params.keyword = filters.keyword.trim()
+    }
+
     const response = await patchInstallApi.getAvailablePatches(params)
     if (response?.data) {
       tableData.value = preprocessData(response.data.records || [])
+      pagination.total = response.data.total || 0
     }
   } catch (error) {
     console.error('Failed to load patches:', error)
     // 模拟数据
-    tableData.value = preprocessData(generateMockData())
+    const mockData = generateMockData()
+    tableData.value = preprocessData(mockData.slice(0, pagination.pageSize))
+    pagination.total = mockData.length
   } finally {
     loading.value = false
   }
@@ -487,15 +461,21 @@ function generateMockData() {
   return data
 }
 
-// 事件处理
-function handleFilter() {
-  // 客户端筛选，重置到第一页
+// 搜索处理
+function handleSearch() {
   pagination.page = 1
+  loadData()
 }
 
-function handleSearch() {
-  // 客户端搜索，重置到第一页
+// 重置处理
+function handleReset() {
+  // 重置筛选条件为默认值
+  filters.severity = ['Critical', 'Important']
+  filters.keyword = ''
+  // 重置分页
   pagination.page = 1
+  pagination.pageSize = 10
+  loadData()
 }
 
 function handleSelectionChange(selection) {
@@ -504,11 +484,13 @@ function handleSelectionChange(selection) {
 
 function handlePageChange(page) {
   pagination.page = page
+  loadData()
 }
 
 function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
+  loadData()
 }
 
 function handleViewPatchDetail(row) {
@@ -669,16 +651,6 @@ defineExpose({ refresh })
 </script>
 
 <style scoped lang="scss">
-// 严重程度筛选
-.severity-filters {
-  display: flex;
-  gap: 16px;
-
-  :deep(.el-checkbox__label) {
-    padding-left: 6px;
-  }
-}
-
 // 徽章样式
 .badge {
   display: inline-block;

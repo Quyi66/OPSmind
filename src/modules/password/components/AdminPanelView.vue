@@ -60,7 +60,7 @@
     <div class="ops-table-wrapper">
       <div class="table-toolbar-icons">
         <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
-          <el-icon><Refresh /></el-icon>
+          <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
       <el-table

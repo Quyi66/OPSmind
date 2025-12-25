@@ -2,38 +2,44 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-select v-model="filters.status" placeholder="全部" size="small" style="width: 140px" @change="loadData">
-        <el-option label="全部" value="all" />
-        <el-option label="待提交" value="new" />
-        <el-option label="待审批" value="approving" />
-        <el-option label="已拒绝" value="reject" />
-        <el-option label="密码生成中" value="processing" />
-        <el-option label="密码生成失败" value="failed" />
-        <el-option label="密码已生成" value="success" />
-        <el-option label="密码生成异常" value="exception" />
-        <el-option label="密码已回收" value="recovered" />
-        <el-option label="密码回收异常" value="fail_recovered" />
-      </el-select>
-      <el-input
-        v-model="filters.keyword"
-        placeholder="搜索"
-        clearable
-        size="small"
-        style="width: 200px"
-        @keyup.enter="loadData"
-        @clear="loadData"
-      >
-        <template #prefix>
-          <el-icon>
-            <Search />
-          </el-icon>
-        </template>
-      </el-input>
-      <el-button size="small" @click="loadData" :loading="loading" title="刷新">
-        <el-icon>
-          <Refresh />
-        </el-icon>
-      </el-button>
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="状态">
+          <el-select v-model="filters.status" placeholder="全部" style="width: 140px">
+            <el-option label="全部" value="all" />
+            <el-option label="待提交" value="new" />
+            <el-option label="待审批" value="approving" />
+            <el-option label="已拒绝" value="reject" />
+            <el-option label="密码生成中" value="processing" />
+            <el-option label="密码生成失败" value="failed" />
+            <el-option label="密码已生成" value="success" />
+            <el-option label="密码生成异常" value="exception" />
+            <el-option label="密码已回收" value="recovered" />
+            <el-option label="密码回收异常" value="fail_recovered" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索"
+            clearable
+            style="width: 200px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -49,6 +55,10 @@
       <el-button plain size="small" @click="handleAdminPanel" v-if="hasAdminRole">
         <i class="fa fa-sign-in-alt"></i>
         进入管理员面板
+      </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
@@ -204,7 +214,7 @@
 <script setup>
 import { ref, reactive, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as pmsApi from '@/modules/password/api'
 import ApplyPasswordDialog from './ApplyPasswordDialog.vue'
 import BatchImportDialog from './BatchImportDialog.vue'
@@ -244,6 +254,19 @@ const statusConfig = {
   exception: { text: '密码生成异常', type: 'danger' },
   recovered: { text: '密码已回收', type: 'info' },
   fail_recovered: { text: '密码回收异常', type: 'danger' }
+}
+
+function handleSearch() {
+  pagination.page = 1
+  loadData()
+}
+
+function handleReset() {
+  filters.status = 'all'
+  filters.keyword = ''
+  pagination.page = 1
+  pagination.pageSize = 10
+  loadData()
 }
 
 onMounted(() => {
