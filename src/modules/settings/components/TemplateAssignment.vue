@@ -2,35 +2,43 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <el-input
-        v-model="searchText"
-        placeholder="搜索模版"
-        clearable
-        size="small"
-        style="width: 250px"
-      >
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-      <el-button type="primary" size="small" @click="loadData">
-        <i class="fa fa-search"></i> 搜索
-      </el-button>
-      <el-button size="small" @click="handleReset">
-        <i class="fa fa-undo"></i> 重置
-      </el-button>
+      <el-form :inline="true" size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchText"
+            placeholder="模版名称/描述"
+            clearable
+            style="width: 200px"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon> 搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon> 重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button size="small" @click="loadData" :loading="loading">
-        <i class="fas fa-sync"></i> 刷新
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
     <!-- 模版列表 -->
-    <div class="ops-table-wrapper" v-loading="loading">
-      <el-table :data="paginatedTemplates" stripe style="width: 100%">
+    <div class="ops-table-wrapper">
+      <el-table
+        :data="paginatedTemplates"
+        v-loading="loading"
+        stripe
+        style="width: 100%"
+        max-height="calc(100vh - 360px)"
+      >
         <el-table-column label="名称" min-width="200">
           <template #default="{ row }">
             <div class="template-name">
@@ -62,6 +70,7 @@
           <template #default="{ row }">
             <el-switch
               v-model="row.sendAlert"
+              :disabled="!row.groupId"
               @change="handleAlertChange(row)"
             />
           </template>
@@ -89,8 +98,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'
 
 const loading = ref(false)
@@ -104,9 +114,12 @@ const pagination = ref({
   total: 0
 })
 
+// 已应用的筛选条件
+const appliedSearchText = ref('')
+
 const filteredTemplates = computed(() => {
-  if (!searchText.value) return templates.value
-  const keyword = searchText.value.toLowerCase()
+  if (!appliedSearchText.value) return templates.value
+  const keyword = appliedSearchText.value.toLowerCase()
   return templates.value.filter(t =>
     t.templateName?.toLowerCase().includes(keyword) ||
     t.description?.toLowerCase().includes(keyword)
@@ -124,8 +137,14 @@ onMounted(() => {
   loadTeams()
 })
 
+function handleSearch() {
+  appliedSearchText.value = searchText.value
+  pagination.value.page = 1
+}
+
 function handleReset() {
   searchText.value = ''
+  appliedSearchText.value = ''
   pagination.value.page = 1
 }
 
@@ -218,4 +237,3 @@ async function handleAlertChange(row) {
   margin-top: 4px;
 }
 </style>
-

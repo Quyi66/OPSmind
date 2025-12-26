@@ -1,19 +1,12 @@
 <template>
   <div class="ops-page-layout">
-    <!-- 操作区 -->
-    <div class="ops-action-bar">
-      <el-button type="primary" size="small" @click="handleCheckPatchUpdate">
-        检查补丁库更新
-      </el-button>
-    </div>
-
     <!-- 厂商统计 KPI 卡片 -->
     <div class="vendor-kpi-section">
       <div
         v-for="vendor in vendorStats"
         :key="vendor.vendor"
         class="vendor-kpi-card"
-        :class="getVendorClass(vendor.vendor)"
+        :class="[getVendorClass(vendor.vendor), { 'is-active': currentVendor === vendor.vendor }]"
         @click="handleVendorClick(vendor.vendor)"
       >
         <div class="kpi-left">
@@ -31,87 +24,94 @@
 
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <!-- 严重程度多选题 -->
-      <div class="filter-group">
-        <el-checkbox-group v-model="severityFilter" @change="handleFilter">
-          <el-checkbox value="Critical">
-            <span class="severity-tag severity-critical">严重</span>
-          </el-checkbox>
-          <el-checkbox value="Important">
-            <span class="severity-tag severity-important">重要</span>
-          </el-checkbox>
-          <el-checkbox value="Moderate">
-            <span class="severity-tag severity-moderate">中等</span>
-          </el-checkbox>
-          <el-checkbox value="Low">
-            <span class="severity-tag severity-low">低级</span>
-          </el-checkbox>
-        </el-checkbox-group>
-      </div>
-
-      <div class="filter-group">
-        <span class="filter-label">状态</span>
-        <el-select v-model="ignoreFilter" size="small" style="width: 100px;" @change="handleFilter">
-          <el-option label="全部" value="0,1" />
-          <el-option label="白名单" value="1" />
-          <el-option label="非白名单" value="0" />
-        </el-select>
-      </div>
-
-      <div class="filter-group">
-        <el-input
-          v-model="filterText"
-          placeholder="搜索补丁编号、概要、CVE..."
-          size="small"
-          style="width: 280px"
-          clearable
-          @input="handleFilter"
-        >
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
-      </div>
+      <el-form :inline="true" size="small">
+        <el-form-item>
+          <el-checkbox-group v-model="severityFilter">
+            <el-checkbox value="Critical">
+              <span class="severity-tag severity-critical">严重</span>
+            </el-checkbox>
+            <el-checkbox value="Important">
+              <span class="severity-tag severity-important">重要</span>
+            </el-checkbox>
+            <el-checkbox value="Moderate">
+              <span class="severity-tag severity-moderate">中等</span>
+            </el-checkbox>
+            <el-checkbox value="Low">
+              <span class="severity-tag severity-low">低级</span>
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="ignoreFilter" style="width: 100px;">
+            <el-option label="全部" value="0,1" />
+            <el-option label="白名单" value="1" />
+            <el-option label="非白名单" value="0" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filterText"
+            placeholder="搜索补丁编号、概要、CVE..."
+            style="width: 240px"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon> 搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon> 重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
-    <!-- 批量操作按钮 - 选中时显示 -->
-    <div class="ops-action-bar" v-if="selectedPatches.length > 0">
-      <el-button type="primary" size="small" @click="handleBatchAddWhitelist">
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" size="small" @click="handleCheckPatchUpdate">
+        检查补丁库更新
+      </el-button>
+      <el-button
+        v-if="selectedPatches.length > 0"
+        size="small"
+        @click="handleBatchAddWhitelist"
+      >
         添加白名单
       </el-button>
-      <el-button type="danger" size="small" @click="handleBatchRemoveWhitelist">
+      <el-button
+        v-if="selectedPatches.length > 0"
+        type="danger"
+        size="small"
+        @click="handleBatchRemoveWhitelist"
+      >
         移除白名单
+      </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="handleRefresh" title="刷新">
-          <el-icon v-show="!loading"><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
         stripe
-        max-height="calc(100vh - 500px)"
+        max-height="calc(100vh - 480px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
         <el-table-column prop="patch_id" label="补丁编号" min-width="140">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="handleViewDetail(row)">
+            <el-link type="primary" :underline="false" @click="handleViewDetail(row)">
               {{ row.patch_id }}
-            </el-button>
+            </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="概要" min-width="250" show-overflow-tooltip>
-          <template #default="{ row }">
-            <span class="wrap-text">{{ row.title }}</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="title" label="概要" min-width="250" show-overflow-tooltip />
         <el-table-column prop="severity" label="严重级别" width="100" align="left">
           <template #default="{ row }">
             <el-tag :type="getSeverityStyle(row.severity)" size="small">
@@ -244,7 +244,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchLibraryApi } from '../api'
 import { runJob } from '@/modules/automation/api/command'
 
@@ -379,6 +379,21 @@ async function loadData() {
 
 // 筛选
 function handleFilter() {
+  pagination.page = 1
+  loadData()
+}
+
+// 搜索
+function handleSearch() {
+  pagination.page = 1
+  loadData()
+}
+
+// 重置
+function handleReset() {
+  severityFilter.value = ['Critical', 'Important']
+  ignoreFilter.value = '0,1'
+  filterText.value = ''
   pagination.page = 1
   loadData()
 }

@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     title="分配角色"
-    width="1200px"
+    width="1150px"
     destroy-on-close
     @close="handleClose"
   >
@@ -13,7 +13,7 @@
         style="width: 100%"
         max-height="500"
       >
-        <el-table-column prop="fullName" label="用户" width="120" fixed>
+        <el-table-column prop="fullName" label="用户" min-width="150" fixed>
           <template #default="{ row }">
             {{ row.fullName || row.login }}
           </template>
@@ -22,7 +22,8 @@
           v-for="role in roles"
           :key="role.id"
           :label="role.description"
-          align="left"
+          align="center"
+          :width="role.description.length * 22"
         >
           <template #default="{ row }">
             <el-checkbox

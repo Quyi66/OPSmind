@@ -1,137 +1,175 @@
 <template>
   <div class="ops-page-layout">
-    <!-- Tab 页 -->
-    <el-tabs v-model="activeTab" class="applet-tabs">
+    <!-- Tab 切换 -->
+    <el-tabs v-model="activeTab" class="ops-tabs">
       <!-- 应用管理 Tab -->
       <el-tab-pane label="应用" name="app">
-        <div class="toolbar">
+        <!-- 操作栏 -->
+        <div class="ops-action-bar">
           <el-button
             type="primary"
+            size="small"
             :disabled="selectedApplets.length === 0"
             @click="handleExport"
           >
-            <i class="fa fa-caret-square-right"></i> 导出
+            <i class="fa fa-download"></i> 导出
           </el-button>
-          <el-button @click="handleImport">
-            <i class="fa fa-caret-square-right"></i> 导入
+          <el-button size="small" @click="handleImport">
+            <i class="fa fa-upload"></i> 导入
           </el-button>
-          <el-button :icon="Refresh" @click="loadApplets" :loading="loading" title="刷新" />
+          <span style="flex: 1;"></span>
+          <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadApplets" title="刷新">
+            <el-icon v-show="!loading"><Refresh /></el-icon>
+          </el-button>
         </div>
 
-        <el-table
-          v-loading="loading"
-          :data="applets"
-          border
-          stripe
-          style="width: 100%"
-          @selection-change="handleSelectionChange"
-        >
-          <el-table-column type="selection" width="55" />
-          <el-table-column prop="name" label="Code" width="120" />
-          <el-table-column prop="title" label="标题" min-width="150">
-            <template #default="{ row }">
-              {{ formatTitle(row.title) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="status" label="状态" width="100" align="left">
-            <template #default="{ row }">
-              <el-tag :type="row.status === 'P' ? 'success' : 'danger'" size="small">
-                {{ row.status === 'P' ? '已启用' : '已禁用' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="createdBy" label="创建人" width="100" />
-          <el-table-column prop="createdAt" label="创建时间" width="180">
-            <template #default="{ row }">
-              {{ formatDate(row.createdAt) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="modifiedAt" label="更新时间" width="180">
-            <template #default="{ row }">
-              {{ formatDate(row.modifiedAt) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right" align="left">
-            <template #default="{ row }">
-              <el-button link type="primary" size="small" @click="handleView(row)">
-                查看
-              </el-button>
-              <el-button link type="warning" size="small" @click="handleCopy(row)">
-                复制
-              </el-button>
-              <el-button
-                link
-                type="danger"
-                size="small"
-                @click="handleDelete(row)"
-                :loading="deletingId === row.id"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <!-- 表格 -->
+        <div class="ops-table-wrapper">
+          <el-table
+            v-loading="loading"
+            :data="paginatedApplets"
+            stripe
+            style="width: 100%"
+            max-height="calc(100vh - 360px)"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" width="55" />
+            <el-table-column prop="name" label="Code" width="120" />
+            <el-table-column prop="title" label="标题" min-width="150">
+              <template #default="{ row }">
+                {{ formatTitle(row.title) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="100" align="left">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 'P' ? 'success' : 'danger'" size="small">
+                  {{ row.status === 'P' ? '已启用' : '已禁用' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createdBy" label="创建人" width="100" />
+            <el-table-column prop="createdAt" label="创建时间" width="180">
+              <template #default="{ row }">
+                {{ formatDate(row.createdAt) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="modifiedAt" label="更新时间" width="180">
+              <template #default="{ row }">
+                {{ formatDate(row.modifiedAt) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="150" fixed="right" align="left">
+              <template #default="{ row }">
+                <el-button text type="primary" size="small" @click="handleView(row)">
+                  查看
+                </el-button>
+                <el-button text type="primary" size="small" @click="handleCopy(row)">
+                  复制
+                </el-button>
+                <el-button
+                  text
+                  type="danger"
+                  size="small"
+                  @click="handleDelete(row)"
+                  :loading="deletingId === row.id"
+                >
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- 分页器 -->
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="appPagination.page"
+            v-model:page-size="appPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="applets.length"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+          />
+        </div>
       </el-tab-pane>
 
       <!-- 回收站 Tab -->
       <el-tab-pane label="回收站" name="can">
-        <div class="toolbar">
-          <el-button type="danger" @click="handleClearRecycle" :loading="clearingRecycle">
+        <!-- 操作栏 -->
+        <div class="ops-action-bar">
+          <el-button type="danger" size="small" @click="handleClearRecycle" :loading="clearingRecycle">
             <i class="fa fa-trash-alt"></i> 清空回收站
           </el-button>
           <el-button
             type="danger"
+            size="small"
             :disabled="selectedRecycled.length === 0"
             @click="handleDeleteSelectedRecycle"
           >
             <i class="fa fa-trash-alt"></i> 删除选中
           </el-button>
           <el-button
-            type="warning"
+            size="small"
             :disabled="selectedRecycled.length === 0"
             @click="handleRecoverSelectedRecycle"
           >
             <i class="fa fa-redo"></i> 恢复选中
           </el-button>
-          <el-button :icon="Refresh" @click="loadRecycledApplets" :loading="recycleLoading">
-            刷新
+          <span style="flex: 1;"></span>
+          <el-button class="toolbar-icon-btn" circle size="small" :loading="recycleLoading" @click="loadRecycledApplets" title="刷新">
+            <el-icon v-show="!recycleLoading"><Refresh /></el-icon>
           </el-button>
         </div>
 
-        <el-table
-          v-loading="recycleLoading"
-          :data="recycledApplets"
-          border
-          stripe
-          style="width: 100%"
-          @selection-change="handleRecycleSelectionChange"
-        >
-          <el-table-column type="selection" width="55" />
-          <el-table-column prop="appletCode" label="Code" width="120" />
-          <el-table-column prop="title" label="标题" min-width="150" />
-          <el-table-column prop="createBy" label="创建人" width="100" />
-          <el-table-column prop="createTime" label="创建时间" width="180">
-            <template #default="{ row }">
-              {{ formatDate(row.createTime) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="160" fixed="right" align="left">
-            <template #default="{ row }">
-              <el-button link type="warning" size="small" @click="handleRecoverRecycle(row)">
-                恢复
-              </el-button>
-              <el-button
-                link
-                type="danger"
-                size="small"
-                @click="handleDeleteRecycle(row)"
-                :loading="deletingRecycleId === row.appletCode"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <!-- 表格 -->
+        <div class="ops-table-wrapper">
+          <el-table
+            v-loading="recycleLoading"
+            :data="paginatedRecycledApplets"
+            stripe
+            style="width: 100%"
+            max-height="calc(100vh - 360px)"
+            @selection-change="handleRecycleSelectionChange"
+          >
+            <el-table-column type="selection" width="55" />
+            <el-table-column prop="appletCode" label="Code" width="120" />
+            <el-table-column prop="title" label="标题" min-width="150" />
+            <el-table-column prop="createBy" label="创建人" width="100" />
+            <el-table-column prop="createTime" label="创建时间" width="180">
+              <template #default="{ row }">
+                {{ formatDate(row.createTime) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" fixed="right" align="left">
+              <template #default="{ row }">
+                <el-button text type="primary" size="small" @click="handleRecoverRecycle(row)">
+                  恢复
+                </el-button>
+                <el-button
+                  text
+                  type="danger"
+                  size="small"
+                  @click="handleDeleteRecycle(row)"
+                  :loading="deletingRecycleId === row.appletCode"
+                >
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- 分页器 -->
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="recyclePagination.page"
+            v-model:page-size="recyclePagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="recycledApplets.length"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+          />
+        </div>
       </el-tab-pane>
     </el-tabs>
 
@@ -152,7 +190,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import * as appletApi from '@/modules/settings/api/applet'
@@ -173,6 +211,30 @@ const clearingRecycle = ref(false)
 const detailDialogVisible = ref(false)
 const copyDialogVisible = ref(false)
 const currentApplet = ref(null)
+
+// 分页状态
+const appPagination = ref({
+  page: 1,
+  pageSize: 20
+})
+
+const recyclePagination = ref({
+  page: 1,
+  pageSize: 20
+})
+
+// 分页后的数据
+const paginatedApplets = computed(() => {
+  const start = (appPagination.value.page - 1) * appPagination.value.pageSize
+  const end = start + appPagination.value.pageSize
+  return applets.value.slice(start, end)
+})
+
+const paginatedRecycledApplets = computed(() => {
+  const start = (recyclePagination.value.page - 1) * recyclePagination.value.pageSize
+  const end = start + recyclePagination.value.pageSize
+  return recycledApplets.value.slice(start, end)
+})
 
 onMounted(() => {
   loadApplets()
@@ -396,33 +458,13 @@ function handleSaved() {
 </script>
 
 <style scoped lang="scss">
-.applet-management {
-  padding: 16px;
-}
-
-.page-header {
-  margin-bottom: 16px;
-
-  h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 500;
-  }
-}
-
-.applet-tabs {
+.ops-tabs {
   :deep(.el-tabs__content) {
     padding: 0;
   }
-}
 
-.toolbar {
-  margin-bottom: 16px;
-  display: flex;
-  gap: 12px;
-
-  i {
-    margin-right: 4px;
+  :deep(.el-tabs__header) {
+    margin-bottom: 12px;
   }
 }
 </style>

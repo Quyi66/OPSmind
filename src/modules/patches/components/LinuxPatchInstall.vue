@@ -64,7 +64,7 @@
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="tableData"
+        :data="paginatedData"
         stripe
         max-height="calc(100vh - 320px)"
         @selection-change="handleSelectionChange"
@@ -122,7 +122,7 @@
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :page-sizes="[10, 20, 50, 100]"
-        :total="pagination.total"
+        :total="totalCount"
         layout="total, sizes, prev, pager, next, jumper"
         background
         @size-change="handleSizeChange"
@@ -308,7 +308,7 @@ const filters = reactive({
 
 // 表格数据
 const tableRef = ref(null)
-const tableData = ref([])
+const allData = ref([]) // 存储所有数据
 const selectedRows = ref([])
 
 // 选中的补丁ID列表
@@ -317,9 +317,35 @@ const selectedPatchIds = computed(() => selectedRows.value.map(r => r.patch_id))
 // 分页
 const pagination = reactive({
   page: 1,
-  pageSize: 10,
-  total: 0
+  pageSize: 10
 })
+
+// 筛选后的数据（仅关键词筛选，严重程度已由后端筛选）
+const filteredData = computed(() => {
+  let data = allData.value
+
+  // 根据关键词筛选
+  if (filters.keyword) {
+    const keyword = filters.keyword.toLowerCase().trim()
+    data = data.filter(item =>
+      item.patch_id?.toLowerCase().includes(keyword) ||
+      item.title?.toLowerCase().includes(keyword) ||
+      item.related_vuls?.toLowerCase().includes(keyword)
+    )
+  }
+
+  return data
+})
+
+// 分页后的数据
+const paginatedData = computed(() => {
+  const start = (pagination.page - 1) * pagination.pageSize
+  const end = start + pagination.pageSize
+  return filteredData.value.slice(start, end)
+})
+
+// 总数
+const totalCount = computed(() => filteredData.value.length)
 
 // 补丁详情对话框
 const patchDetailVisible = ref(false)
@@ -407,36 +433,24 @@ function preprocessData(records) {
   }))
 }
 
-// 加载数据 - 服务端筛选
+// 加载数据 - 一次性获取所有数据
 async function loadData() {
   loading.value = true
   try {
-    const params = {
-      page: pagination.page,
-      size: pagination.pageSize,
-    }
-
-    // 添加严重程度筛选条件
-    if (filters.severity.length > 0 && filters.severity.length < 4) {
+    // 构建 params 参数
+    const params = {}
+    if (filters.severity.length > 0) {
       params.severity = filters.severity.join(',')
-    }
-
-    // 添加关键词筛选条件
-    if (filters.keyword) {
-      params.keyword = filters.keyword.trim()
     }
 
     const response = await patchInstallApi.getAvailablePatches(params)
     if (response?.data) {
-      tableData.value = preprocessData(response.data.records || [])
-      pagination.total = response.data.total || 0
+      allData.value = preprocessData(response.data.records || response.data || [])
     }
   } catch (error) {
     console.error('Failed to load patches:', error)
     // 模拟数据
-    const mockData = generateMockData()
-    tableData.value = preprocessData(mockData.slice(0, pagination.pageSize))
-    pagination.total = mockData.length
+    allData.value = preprocessData(generateMockData())
   } finally {
     loading.value = false
   }
@@ -461,7 +475,7 @@ function generateMockData() {
   return data
 }
 
-// 搜索处理
+// 搜索处理（严重程度改变时需要重新加载）
 function handleSearch() {
   pagination.page = 1
   loadData()
@@ -484,13 +498,11 @@ function handleSelectionChange(selection) {
 
 function handlePageChange(page) {
   pagination.page = page
-  loadData()
 }
 
 function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
-  loadData()
 }
 
 function handleViewPatchDetail(row) {

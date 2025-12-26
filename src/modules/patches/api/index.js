@@ -90,13 +90,7 @@ export const patchInstallApi = {
    */
   getAvailablePatches(params = {}) {
     const requestBody = {
-      params: {
-        severity: params.severity || ''
-      },
-      page: params.page || 1,
-      size: params.size || 20,
-      orderBy: params.orderBy || 'publish_date desc',
-      filter: params.filter || ''
+      params: params
     }
     return apiService.post('/dts/api/dts/q/data/VAP2_LIST_EFFECTED_PATCH_REST/', requestBody)
   },

@@ -53,12 +53,12 @@
       <el-table
         :data="filteredData"
         v-loading="loading"
-        border
         style="width: 100%"
+        max-height="calc(100vh - 360px)"
       >
         <el-table-column prop="login" label="用户名" width="120" />
-        <el-table-column prop="fullName" label="姓名" width="100" />
-        <el-table-column prop="department" label="部门" width="100">
+        <el-table-column prop="fullName" label="姓名" min-width="120" />
+        <el-table-column prop="department" label="部门" min-width="120">
           <template #default="{ row }">
             {{ row.department || '-' }}
           </template>
@@ -68,11 +68,8 @@
             <el-tag
               :type="row.activated ? 'success' : 'danger'"
               size="small"
-              @click="handleToggleActivation(row)"
-              style="cursor: pointer"
-              :class="{ 'is-loading': togglingUserId === row.tenantUserId }"
             >
-              {{ togglingUserId === row.tenantUserId ? '切换中...' : (row.activated ? '已激活' : '已禁用') }}
+              {{ row.activated ? '已激活' : '已禁用' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -83,7 +80,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="roles" label="角色" min-width="200">
+        <el-table-column prop="roles" label="角色" min-width="250">
           <template #default="{ row }">
             <div class="roles-cell">
               <el-tag
@@ -103,17 +100,27 @@
             {{ formatTime(row.lastModifiedDate) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" link type="primary" @click="handleView(row)">
+            <el-button size="small" text type="primary" @click="handleView(row)">
               查看
             </el-button>
-            <el-button size="small" link type="primary" @click="handleEdit(row)">
+            <el-button size="small" text type="primary" @click="handleEdit(row)">
               编辑
             </el-button>
             <el-button
               size="small"
-              link
+              text
+              type="primary"
+              @click="handleToggleActivation(row)"
+              :disabled="isCurrentUser(row) || togglingUserId === row.tenantUserId"
+              :loading="togglingUserId === row.tenantUserId"
+            >
+              {{ row.activated ? '禁用' : '启用' }}
+            </el-button>
+            <el-button
+              size="small"
+              text
               type="danger"
               @click="handleDelete(row)"
               :disabled="isCurrentUser(row) || deletingUserId === row.tenantUserId"
@@ -185,13 +192,19 @@ const pagination = ref({
   total: 0
 })
 
-// 过滤后的数据
+// 已应用的筛选条件（只在点击搜索按钮时更新）
+const appliedFilters = reactive({
+  keyword: '',
+  status: ''
+})
+
+// 过滤后的数据（使用已应用的筛选条件）
 const filteredData = computed(() => {
   let result = tableData.value
 
   // 关键词搜索
-  if (filters.keyword) {
-    const keyword = filters.keyword.toLowerCase()
+  if (appliedFilters.keyword) {
+    const keyword = appliedFilters.keyword.toLowerCase()
     result = result.filter(item =>
       item.login?.toLowerCase().includes(keyword) ||
       item.fullName?.toLowerCase().includes(keyword)
@@ -199,9 +212,9 @@ const filteredData = computed(() => {
   }
 
   // 状态筛选
-  if (filters.status === 'activated') {
+  if (appliedFilters.status === 'activated') {
     result = result.filter(item => item.activated)
-  } else if (filters.status === 'disabled') {
+  } else if (appliedFilters.status === 'disabled') {
     result = result.filter(item => !item.activated)
   }
 
@@ -254,8 +267,10 @@ async function loadData() {
   }
 }
 
-// 搜索
+// 搜索 - 将筛选条件应用到 appliedFilters
 function handleSearch() {
+  appliedFilters.keyword = filters.keyword
+  appliedFilters.status = filters.status
   pagination.value.page = 1
 }
 
@@ -263,6 +278,8 @@ function handleSearch() {
 function handleReset() {
   filters.keyword = ''
   filters.status = ''
+  appliedFilters.keyword = ''
+  appliedFilters.status = ''
   pagination.value.page = 1
   pagination.value.pageSize = 20
 }

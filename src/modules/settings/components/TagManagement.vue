@@ -1,65 +1,86 @@
 <template>
   <div class="ops-page-layout">
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <div class="toolbar__left">
-        <el-button type="primary" size="small" @click="handleCreate">
-          <i class="fa fa-plus"></i> 新建标签
-        </el-button>
-        <el-button size="small" @click="loadTags" :loading="loading">
-          <i class="fa fa-refresh"></i> 刷新
-        </el-button>
-      </div>
-      <div class="toolbar__right">
-        <el-input
-          v-model="searchKeyword"
-          size="small"
-          placeholder="搜索标签名称"
-          clearable
-          style="width: 200px"
-          @input="handleSearch"
-        >
-          <template #prefix>
-            <i class="fa fa-search"></i>
-          </template>
-        </el-input>
-      </div>
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-form :inline="true" size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="标签名称"
+            clearable
+            style="width: 200px"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon> 搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon> 重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" size="small" @click="handleCreate">
+        <i class="fa fa-plus"></i> 新建标签
+      </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadTags" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格 -->
-    <el-table
-      v-loading="loading"
-      :data="filteredTags"
-      border
-      stripe
-      style="width: 100%"
-    >
-      <el-table-column prop="name" label="标签名称" min-width="200" />
-      <el-table-column prop="count" label="应用数量" width="120" align="left">
-        <template #default="{ row }">
-          <el-tag type="info" size="small">{{ row.count || 0 }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right" align="left">
-        <template #default="{ row }">
-          <el-button link type="primary" size="small" @click="handleView(row)">
-            查看
-          </el-button>
-          <el-button link type="primary" size="small" @click="handleEdit(row)">
-            编辑
-          </el-button>
-          <el-button
-            link
-            type="danger"
-            size="small"
-            @click="handleDelete(row)"
-            :loading="deletingId === row.id"
-          >
-            删除
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="ops-table-wrapper">
+      <el-table
+        v-loading="loading"
+        :data="paginatedTags"
+        stripe
+        style="width: 100%"
+        max-height="calc(100vh - 360px)"
+      >
+        <el-table-column prop="name" label="标签名称" min-width="200" />
+        <el-table-column prop="count" label="应用数量" width="120" align="left">
+          <template #default="{ row }">
+            <el-tag type="info" size="small">{{ row.count || 0 }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="150" fixed="right" align="left">
+          <template #default="{ row }">
+            <el-button text type="primary" size="small" @click="handleView(row)">
+              查看
+            </el-button>
+            <el-button text type="primary" size="small" @click="handleEdit(row)">
+              编辑
+            </el-button>
+            <el-button
+              text
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+              :loading="deletingId === row.id"
+            >
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <!-- 分页器 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="filteredTags.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+      />
+    </div>
 
     <!-- 新建/编辑对话框 -->
     <el-dialog
@@ -101,7 +122,7 @@
             :disabled="!selectedAppletIds.length"
             @click="handleRemoveApplets"
           >
-            <i class="fa fa-caret-square-right"></i>
+            <i class="fa fa-minus-circle"></i>
             移除选中应用
           </el-button>
         </div>
@@ -109,7 +130,7 @@
         <el-table
           v-if="tagApplets?.length"
           :data="tagApplets"
-          border
+          stripe
           size="small"
           max-height="400"
           @selection-change="handleAppletSelectionChange"
@@ -142,14 +163,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as tagsApi from '@/modules/settings/api/tags'
 
 const loading = ref(false)
 const tags = ref([])
 const searchKeyword = ref('')
+const appliedSearchKeyword = ref('')
 const deletingId = ref(null)
+
+// 分页
+const pagination = ref({
+  page: 1,
+  pageSize: 20
+})
 
 // 对话框相关
 const dialogVisible = ref(false)
@@ -176,12 +205,32 @@ const selectedAppletIds = ref([])
 
 // 过滤后的标签列表
 const filteredTags = computed(() => {
-  if (!searchKeyword.value) return tags.value
-  const keyword = searchKeyword.value.toLowerCase()
+  if (!appliedSearchKeyword.value) return tags.value
+  const keyword = appliedSearchKeyword.value.toLowerCase()
   return tags.value.filter(tag =>
     tag.name?.toLowerCase().includes(keyword)
   )
 })
+
+// 分页后的数据
+const paginatedTags = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.pageSize
+  const end = start + pagination.value.pageSize
+  return filteredTags.value.slice(start, end)
+})
+
+// 搜索
+function handleSearch() {
+  appliedSearchKeyword.value = searchKeyword.value
+  pagination.value.page = 1
+}
+
+// 重置
+function handleReset() {
+  searchKeyword.value = ''
+  appliedSearchKeyword.value = ''
+  pagination.value.page = 1
+}
 
 // 加载标签列表
 async function loadTags() {
@@ -195,11 +244,6 @@ async function loadTags() {
   } finally {
     loading.value = false
   }
-}
-
-// 搜索
-function handleSearch() {
-  // 直接通过 computed 过滤
 }
 
 // 新建
@@ -294,7 +338,6 @@ function translateTagTitle(title) {
   return title
 }
 
-
 // 保存
 async function handleSave() {
   if (!formRef.value) return
@@ -371,41 +414,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.tags-management {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  &__left {
-    display: flex;
-    gap: 8px;
-  }
-
-  &__right {
-    display: flex;
-    gap: 8px;
-  }
-}
-
-.mt-4 {
-  margin-top: 16px;
-}
-
-h4 {
-  margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #303133;
-}
-
 .detail-toolbar {
   margin-bottom: 12px;
 }

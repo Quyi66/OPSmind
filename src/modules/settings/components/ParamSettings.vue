@@ -1,68 +1,78 @@
 <template>
   <div class="ops-page-layout">
     <!-- 标签页 -->
-    <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+    <el-tabs v-model="activeTab" class="ops-tabs" @tab-change="handleTabChange">
       <el-tab-pane label="系统参数配置" name="sysParams">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="toolbar__left">
-            <el-button type="primary" size="small" @click="handleCreateSysParam">
-              <i class="fa fa-plus"></i> 新建
-            </el-button>
-            <el-button size="small" @click="loadSysParams" :loading="sysLoading">
-              <i class="fa fa-refresh"></i> 刷新
-            </el-button>
-          </div>
-          <div class="toolbar__right">
-            <el-input
-              v-model="sysSearchKeyword"
-              size="small"
-              placeholder="搜索参数名称"
-              clearable
-              style="width: 200px"
-            >
-              <template #prefix>
-                <i class="fa fa-search"></i>
-              </template>
-            </el-input>
-          </div>
+        <!-- 筛选区 -->
+        <div class="ops-filter-bar">
+          <el-form :inline="true" size="small">
+            <el-form-item label="关键词">
+              <el-input
+                v-model="sysSearchKeyword"
+                placeholder="参数名称/域"
+                clearable
+                style="width: 200px"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSysSearch">
+                <el-icon><Search /></el-icon> 搜索
+              </el-button>
+              <el-button @click="handleSysReset">
+                <el-icon><RefreshRight /></el-icon> 重置
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 操作栏 -->
+        <div class="ops-action-bar">
+          <el-button type="primary" size="small" @click="handleCreateSysParam">
+            <i class="fa fa-plus"></i> 新建
+          </el-button>
+          <span style="flex: 1;"></span>
+          <el-button class="toolbar-icon-btn" circle size="small" :loading="sysLoading" @click="loadSysParams" title="刷新">
+            <el-icon v-show="!sysLoading"><Refresh /></el-icon>
+          </el-button>
         </div>
 
         <!-- 系统参数表格 -->
-        <el-table
-          v-loading="sysLoading"
-          :data="paginatedSysParams"
-          border
-          stripe
-          style="width: 100%"
-        >
-          <el-table-column prop="domain" label="域" width="100" />
-          <el-table-column prop="name" label="参数名称" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="value" label="参数值" min-width="300" show-overflow-tooltip />
-          <el-table-column prop="description" label="描述" min-width="250" show-overflow-tooltip />
-          <el-table-column label="操作" width="180" fixed="right" align="left">
-            <template #default="{ row }">
-              <el-button link type="primary" size="small" @click="handleViewSysParam(row)">
-                查看
-              </el-button>
-              <el-button link type="primary" size="small" @click="handleEditSysParam(row)">
-                编辑
-              </el-button>
-              <el-button
-                v-if="!row.cannotDelete"
-                link
-                type="danger"
-                size="small"
-                @click="handleDeleteSysParam(row)"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <div class="ops-table-wrapper">
+          <el-table
+            v-loading="sysLoading"
+            :data="paginatedSysParams"
+            stripe
+            style="width: 100%"
+            max-height="calc(100vh - 400px)"
+          >
+            <el-table-column prop="domain" label="域" width="100" />
+            <el-table-column prop="name" label="参数名称" min-width="180" show-overflow-tooltip />
+            <el-table-column prop="value" label="参数值" min-width="300" show-overflow-tooltip />
+            <el-table-column prop="description" label="描述" min-width="250" show-overflow-tooltip />
+            <el-table-column label="操作" width="150" fixed="right" align="left">
+              <template #default="{ row }">
+                <el-button text type="primary" size="small" @click="handleViewSysParam(row)">
+                  查看
+                </el-button>
+                <el-button text type="primary" size="small" @click="handleEditSysParam(row)">
+                  编辑
+                </el-button>
+                <el-button
+                  v-if="!row.cannotDelete"
+                  text
+                  type="danger"
+                  size="small"
+                  @click="handleDeleteSysParam(row)"
+                >
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
 
         <!-- 系统参数分页 -->
-        <div class="pagination-wrapper">
+        <div class="ops-pagination-wrapper">
           <el-pagination
             v-model:current-page="sysCurrentPage"
             v-model:page-size="sysPageSize"
@@ -75,64 +85,74 @@
       </el-tab-pane>
 
       <el-tab-pane label="应用参数配置" name="appParams">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="toolbar__left">
-            <el-button type="primary" size="small" @click="handleCreateAppParam">
-              <i class="fa fa-plus"></i> 新建
-            </el-button>
-            <el-button size="small" @click="loadAppParams" :loading="appLoading">
-              <i class="fa fa-refresh"></i> 刷新
-            </el-button>
-          </div>
-          <div class="toolbar__right">
-            <el-input
-              v-model="appSearchKeyword"
-              size="small"
-              placeholder="搜索参数名称"
-              clearable
-              style="width: 200px"
-            >
-              <template #prefix>
-                <i class="fa fa-search"></i>
-              </template>
-            </el-input>
-          </div>
+        <!-- 筛选区 -->
+        <div class="ops-filter-bar">
+          <el-form :inline="true" size="small">
+            <el-form-item label="关键词">
+              <el-input
+                v-model="appSearchKeyword"
+                placeholder="参数名称"
+                clearable
+                style="width: 200px"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleAppSearch">
+                <el-icon><Search /></el-icon> 搜索
+              </el-button>
+              <el-button @click="handleAppReset">
+                <el-icon><RefreshRight /></el-icon> 重置
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 操作栏 -->
+        <div class="ops-action-bar">
+          <el-button type="primary" size="small" @click="handleCreateAppParam">
+            <i class="fa fa-plus"></i> 新建
+          </el-button>
+          <span style="flex: 1;"></span>
+          <el-button class="toolbar-icon-btn" circle size="small" :loading="appLoading" @click="loadAppParams" title="刷新">
+            <el-icon v-show="!appLoading"><Refresh /></el-icon>
+          </el-button>
         </div>
 
         <!-- 应用参数表格 -->
-        <el-table
-          v-loading="appLoading"
-          :data="paginatedAppParams"
-          border
-          stripe
-          style="width: 100%"
-        >
-          <el-table-column prop="name" label="参数名称" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="value" label="参数值" min-width="350" show-overflow-tooltip />
-          <el-table-column prop="description" label="描述" min-width="300" show-overflow-tooltip />
-          <el-table-column label="操作" width="180" fixed="right" align="left">
-            <template #default="{ row }">
-              <el-button link type="primary" size="small" @click="handleViewAppParam(row)">
-                查看
-              </el-button>
-              <el-button link type="primary" size="small" @click="handleEditAppParam(row)">
-                编辑
-              </el-button>
-              <el-button
-                link
-                type="danger"
-                size="small"
-                @click="handleDeleteAppParam(row)"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <div class="ops-table-wrapper">
+          <el-table
+            v-loading="appLoading"
+            :data="paginatedAppParams"
+            stripe
+            style="width: 100%"
+            max-height="calc(100vh - 400px)"
+          >
+            <el-table-column prop="name" label="参数名称" min-width="180" show-overflow-tooltip />
+            <el-table-column prop="value" label="参数值" min-width="350" show-overflow-tooltip />
+            <el-table-column prop="description" label="描述" min-width="300" show-overflow-tooltip />
+            <el-table-column label="操作" width="150" fixed="right" align="left">
+              <template #default="{ row }">
+                <el-button text type="primary" size="small" @click="handleViewAppParam(row)">
+                  查看
+                </el-button>
+                <el-button text type="primary" size="small" @click="handleEditAppParam(row)">
+                  编辑
+                </el-button>
+                <el-button
+                  text
+                  type="danger"
+                  size="small"
+                  @click="handleDeleteAppParam(row)"
+                >
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
 
         <!-- 应用参数分页 -->
-        <div class="pagination-wrapper">
+        <div class="ops-pagination-wrapper">
           <el-pagination
             v-model:current-page="appCurrentPage"
             v-model:page-size="appPageSize"
@@ -275,6 +295,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as paramsApi from '@/modules/settings/api/params'
 
 const activeTab = ref('sysParams')
@@ -283,6 +304,7 @@ const activeTab = ref('sysParams')
 const sysLoading = ref(false)
 const sysParams = ref([])
 const sysSearchKeyword = ref('')
+const sysAppliedSearchKeyword = ref('')
 const sysCurrentPage = ref(1)
 const sysPageSize = ref(10)
 const sysDialogVisible = ref(false)
@@ -301,6 +323,7 @@ const sysForm = ref({
 const appLoading = ref(false)
 const appParams = ref([])
 const appSearchKeyword = ref('')
+const appAppliedSearchKeyword = ref('')
 const appCurrentPage = ref(1)
 const appPageSize = ref(10)
 const appDialogVisible = ref(false)
@@ -331,8 +354,8 @@ const appFormRules = {
 
 // 过滤后的系统参数
 const filteredSysParams = computed(() => {
-  if (!sysSearchKeyword.value) return sysParams.value
-  const keyword = sysSearchKeyword.value.toLowerCase()
+  if (!sysAppliedSearchKeyword.value) return sysParams.value
+  const keyword = sysAppliedSearchKeyword.value.toLowerCase()
   return sysParams.value.filter(p =>
     p.name?.toLowerCase().includes(keyword) ||
     p.domain?.toLowerCase().includes(keyword)
@@ -341,8 +364,8 @@ const filteredSysParams = computed(() => {
 
 // 过滤后的应用参数
 const filteredAppParams = computed(() => {
-  if (!appSearchKeyword.value) return appParams.value
-  const keyword = appSearchKeyword.value.toLowerCase()
+  if (!appAppliedSearchKeyword.value) return appParams.value
+  const keyword = appAppliedSearchKeyword.value.toLowerCase()
   return appParams.value.filter(p =>
     p.name?.toLowerCase().includes(keyword)
   )
@@ -361,6 +384,29 @@ const paginatedAppParams = computed(() => {
   const end = start + appPageSize.value
   return filteredAppParams.value.slice(start, end)
 })
+
+// 搜索
+function handleSysSearch() {
+  sysAppliedSearchKeyword.value = sysSearchKeyword.value
+  sysCurrentPage.value = 1
+}
+
+function handleSysReset() {
+  sysSearchKeyword.value = ''
+  sysAppliedSearchKeyword.value = ''
+  sysCurrentPage.value = 1
+}
+
+function handleAppSearch() {
+  appAppliedSearchKeyword.value = appSearchKeyword.value
+  appCurrentPage.value = 1
+}
+
+function handleAppReset() {
+  appSearchKeyword.value = ''
+  appAppliedSearchKeyword.value = ''
+  appCurrentPage.value = 1
+}
 
 // 获取对话框标题
 function getDialogTitle(type) {
@@ -551,25 +597,13 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.param-settings {
-  height: 100%;
-  padding: 16px;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  &__left {
-    display: flex;
-    gap: 8px;
+.ops-tabs {
+  :deep(.el-tabs__content) {
+    padding: 0;
   }
 
-  &__right {
-    display: flex;
-    gap: 8px;
+  :deep(.el-tabs__header) {
+    margin-bottom: 12px;
   }
 }
 
@@ -584,12 +618,6 @@ onMounted(() => {
   word-break: break-all;
   max-height: 200px;
   overflow: auto;
-}
-
-.pagination-wrapper {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
 }
 
 .help-text {

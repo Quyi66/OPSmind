@@ -52,11 +52,11 @@
         </div>
 
         <el-form-item class="form-actions">
-          <el-button type="primary" @click="handleSave" :loading="saving">
-            <i class="fa fa-save"></i> 保存
-          </el-button>
           <el-button @click="handleTest">
             <i class="fa fa-paper-plane"></i> 测试发送
+          </el-button>
+          <el-button type="primary" @click="handleSave" :loading="saving">
+            <i class="fa fa-save"></i> 保存
           </el-button>
         </el-form-item>
       </el-form>
@@ -291,6 +291,10 @@ onMounted(() => {
 .form-actions {
   margin-top: 24px;
   margin-bottom: 0;
+
+  :deep(.el-form-item__content) {
+    justify-content: flex-end !important;
+  }
 
   .el-button {
     i {

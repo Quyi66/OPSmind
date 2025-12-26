@@ -1,7 +1,7 @@
 <template>
   <div class="ops-page-layout">
     <!-- 标签页导航 -->
-    <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+    <el-tabs v-model="activeTab" class="ops-tabs" @tab-change="handleTabChange">
       <el-tab-pane name="landing">
         <template #label>
           <span><i class="fa fa-home"></i> 概览</span>
@@ -53,63 +53,78 @@
         <!-- 页面列表 -->
         <div class="resource-section with-sidebar">
           <!-- 应用选择器侧边栏 -->
-          <div class="ops-sidebar">
-            <div class="ops-sidebar__title">所属应用</div>
-            <div class="ops-sidebar__list">
-              <div
-                class="ops-sidebar__item"
-                :class="{ active: selectedPageApplet === '' }"
-                @click="selectPageApplet('')"
-              >
-                全部应用
-              </div>
-              <div
-                v-for="app in applets"
-                :key="app.id"
-                class="ops-sidebar__item"
-                :class="{ active: selectedPageApplet === app.name }"
-                @click="selectPageApplet(app.name)"
-              >
-                {{ translateTitle(app.title) || app.name }}
-              </div>
+          <div class="ops-sidebar-nav">
+            <div class="sidebar-title">所属应用</div>
+            <div
+              class="ops-sidebar-item"
+              :class="{ 'is-active': selectedPageApplet === '' }"
+              @click="selectPageApplet('')"
+            >
+              全部应用
+            </div>
+            <div
+              v-for="app in applets"
+              :key="app.id"
+              class="ops-sidebar-item"
+              :class="{ 'is-active': selectedPageApplet === app.name }"
+              @click="selectPageApplet(app.name)"
+            >
+              {{ translateTitle(app.title) || app.name }}
             </div>
           </div>
 
           <!-- 主内容 -->
           <div class="main-content">
-            <div class="toolbar">
-              <div class="toolbar__left">
-                <el-button size="small" @click="loadPages" :loading="pageLoading">
-                  <i class="fa fa-refresh"></i> 刷新
-                </el-button>
-                <el-button size="small" :disabled="selectedPages.length < 1" @click="openMoveDialog('page')">
-                  <i class="fa fa-sign-in"></i> 移动页面
-                </el-button>
-              </div>
-              <div class="toolbar__right">
-                <el-input v-model="pageSearch" size="small" placeholder="搜索页面" clearable style="width: 200px">
-                  <template #prefix><i class="fa fa-search"></i></template>
-                </el-input>
-              </div>
+            <!-- 筛选区 -->
+            <div class="ops-filter-bar">
+              <el-form :inline="true" size="small">
+                <el-form-item label="关键词">
+                  <el-input v-model="pageSearch" placeholder="页面标题/Code" clearable style="width: 200px" />
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="handlePageSearch">
+                    <el-icon><Search /></el-icon> 搜索
+                  </el-button>
+                  <el-button @click="handlePageReset">
+                    <el-icon><RefreshRight /></el-icon> 重置
+                  </el-button>
+                </el-form-item>
+              </el-form>
             </div>
-            <el-table
-              v-loading="pageLoading"
-              :data="paginatedPages"
-              stripe
-              @selection-change="handlePageSelectionChange"
-            >
-              <el-table-column type="selection" width="55" />
-              <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip>
-                <template #default="{ row }">
-                  {{ translateTitle(row.title) }}
-                </template>
-              </el-table-column>
-              <el-table-column prop="id" label="Code" width="120" show-overflow-tooltip />
-              <el-table-column prop="appletCode" label="所属应用" width="120" />
-              <el-table-column prop="createdBy" label="创建人" width="100" />
-              <el-table-column prop="createdAt" label="创建时间" width="160" />
-            </el-table>
-            <div class="pagination-wrapper">
+
+            <!-- 操作栏 -->
+            <div class="ops-action-bar">
+              <el-button size="small" :disabled="selectedPages.length < 1" @click="openMoveDialog('page')">
+                <i class="fa fa-sign-in-alt"></i> 移动页面
+              </el-button>
+              <span style="flex: 1;"></span>
+              <el-button class="toolbar-icon-btn" circle size="small" :loading="pageLoading" @click="loadPages" title="刷新">
+                <el-icon v-show="!pageLoading"><Refresh /></el-icon>
+              </el-button>
+            </div>
+
+            <div class="ops-table-wrapper">
+              <el-table
+                v-loading="pageLoading"
+                :data="paginatedPages"
+                stripe
+                style="width: 100%"
+                max-height="calc(100vh - 400px)"
+                @selection-change="handlePageSelectionChange"
+              >
+                <el-table-column type="selection" width="55" />
+                <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    {{ translateTitle(row.title) }}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="id" label="Code" width="120" show-overflow-tooltip />
+                <el-table-column prop="appletCode" label="所属应用" width="120" />
+                <el-table-column prop="createdBy" label="创建人" width="100" />
+                <el-table-column prop="createdAt" label="创建时间" width="160" />
+              </el-table>
+            </div>
+            <div class="ops-pagination-wrapper">
               <el-pagination
                 v-model:current-page="pageCurrentPage"
                 v-model:page-size="pagePageSize"
@@ -131,60 +146,75 @@
         <!-- 数据集列表 -->
         <div class="resource-section with-sidebar">
           <!-- 应用选择器侧边栏 -->
-          <div class="ops-sidebar">
-            <div class="ops-sidebar__title">所属应用</div>
-            <div class="ops-sidebar__list">
-              <div
-                class="ops-sidebar__item"
-                :class="{ active: selectedDatasetApplet === '' }"
-                @click="selectDatasetApplet('')"
-              >
-                全部应用
-              </div>
-              <div
-                v-for="app in applets"
-                :key="app.id"
-                class="ops-sidebar__item"
-                :class="{ active: selectedDatasetApplet === app.name }"
-                @click="selectDatasetApplet(app.name)"
-              >
-                {{ translateTitle(app.title) || app.name }}
-              </div>
+          <div class="ops-sidebar-nav">
+            <div class="sidebar-title">所属应用</div>
+            <div
+              class="ops-sidebar-item"
+              :class="{ 'is-active': selectedDatasetApplet === '' }"
+              @click="selectDatasetApplet('')"
+            >
+              全部应用
+            </div>
+            <div
+              v-for="app in applets"
+              :key="app.id"
+              class="ops-sidebar-item"
+              :class="{ 'is-active': selectedDatasetApplet === app.name }"
+              @click="selectDatasetApplet(app.name)"
+            >
+              {{ translateTitle(app.title) || app.name }}
             </div>
           </div>
 
           <!-- 主内容 -->
           <div class="main-content">
-            <div class="toolbar">
-              <div class="toolbar__left">
-                <el-button size="small" @click="loadDatasets" :loading="datasetLoading">
-                  <i class="fa fa-refresh"></i> 刷新
-                </el-button>
-                <el-button size="small" :disabled="selectedDatasets.length < 1" @click="openMoveDialog('dataset')">
-                  <i class="fa fa-sign-in"></i> 移动数据集
-                </el-button>
-              </div>
-              <div class="toolbar__right">
-                <el-input v-model="datasetSearch" size="small" placeholder="搜索数据集" clearable style="width: 200px">
-                  <template #prefix><i class="fa fa-search"></i></template>
-                </el-input>
-              </div>
+            <!-- 筛选区 -->
+            <div class="ops-filter-bar">
+              <el-form :inline="true" size="small">
+                <el-form-item label="关键词">
+                  <el-input v-model="datasetSearch" placeholder="数据集名称/Code" clearable style="width: 200px" />
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="handleDatasetSearch">
+                    <el-icon><Search /></el-icon> 搜索
+                  </el-button>
+                  <el-button @click="handleDatasetReset">
+                    <el-icon><RefreshRight /></el-icon> 重置
+                  </el-button>
+                </el-form-item>
+              </el-form>
             </div>
-            <el-table
-              v-loading="datasetLoading"
-              :data="paginatedDatasets"
-              stripe
-              @selection-change="handleDatasetSelectionChange"
-            >
-              <el-table-column type="selection" width="55" />
-              <el-table-column prop="name" label="标题" min-width="180" show-overflow-tooltip />
-              <el-table-column prop="code" label="Code" width="150" show-overflow-tooltip />
-              <el-table-column prop="appletCode" label="所属应用" width="120" />
-              <el-table-column prop="datasource" label="数据源" width="140" />
-              <el-table-column prop="createdBy" label="创建人" width="100" />
-              <el-table-column prop="createdAt" label="创建时间" width="160" />
-            </el-table>
-            <div class="pagination-wrapper">
+
+            <!-- 操作栏 -->
+            <div class="ops-action-bar">
+              <el-button size="small" :disabled="selectedDatasets.length < 1" @click="openMoveDialog('dataset')">
+                <i class="fa fa-sign-in-alt"></i> 移动数据集
+              </el-button>
+              <span style="flex: 1;"></span>
+              <el-button class="toolbar-icon-btn" circle size="small" :loading="datasetLoading" @click="loadDatasets" title="刷新">
+                <el-icon v-show="!datasetLoading"><Refresh /></el-icon>
+              </el-button>
+            </div>
+
+            <div class="ops-table-wrapper">
+              <el-table
+                v-loading="datasetLoading"
+                :data="paginatedDatasets"
+                stripe
+                style="width: 100%"
+                max-height="calc(100vh - 400px)"
+                @selection-change="handleDatasetSelectionChange"
+              >
+                <el-table-column type="selection" width="55" />
+                <el-table-column prop="name" label="标题" min-width="180" show-overflow-tooltip />
+                <el-table-column prop="code" label="Code" width="150" show-overflow-tooltip />
+                <el-table-column prop="appletCode" label="所属应用" width="120" />
+                <el-table-column prop="datasource" label="数据源" width="140" />
+                <el-table-column prop="createdBy" label="创建人" width="100" />
+                <el-table-column prop="createdAt" label="创建时间" width="160" />
+              </el-table>
+            </div>
+            <div class="ops-pagination-wrapper">
               <el-pagination
                 v-model:current-page="datasetCurrentPage"
                 v-model:page-size="datasetPageSize"
@@ -206,64 +236,79 @@
         <!-- 作业列表 -->
         <div class="resource-section with-sidebar">
           <!-- 应用选择器侧边栏 -->
-          <div class="ops-sidebar">
-            <div class="ops-sidebar__title">所属应用</div>
-            <div class="ops-sidebar__list">
-              <div
-                class="ops-sidebar__item"
-                :class="{ active: selectedJobApplet === '' }"
-                @click="selectJobApplet('')"
-              >
-                全部应用
-              </div>
-              <div
-                v-for="app in applets"
-                :key="app.id"
-                class="ops-sidebar__item"
-                :class="{ active: selectedJobApplet === app.name }"
-                @click="selectJobApplet(app.name)"
-              >
-                {{ translateTitle(app.title) || app.name }}
-              </div>
+          <div class="ops-sidebar-nav">
+            <div class="sidebar-title">所属应用</div>
+            <div
+              class="ops-sidebar-item"
+              :class="{ 'is-active': selectedJobApplet === '' }"
+              @click="selectJobApplet('')"
+            >
+              全部应用
+            </div>
+            <div
+              v-for="app in applets"
+              :key="app.id"
+              class="ops-sidebar-item"
+              :class="{ 'is-active': selectedJobApplet === app.name }"
+              @click="selectJobApplet(app.name)"
+            >
+              {{ translateTitle(app.title) || app.name }}
             </div>
           </div>
 
           <!-- 主内容 -->
           <div class="main-content">
-            <div class="toolbar">
-              <div class="toolbar__left">
-                <el-button size="small" @click="loadJobs" :loading="jobLoading">
-                  <i class="fa fa-refresh"></i> 刷新
-                </el-button>
-                <el-button size="small" :disabled="selectedJobs.length < 1" @click="openMoveDialog('job')">
-                  <i class="fa fa-sign-in"></i> 移动作业
-                </el-button>
-              </div>
-              <div class="toolbar__right">
-                <el-input v-model="jobSearch" size="small" placeholder="搜索作业" clearable style="width: 200px">
-                  <template #prefix><i class="fa fa-search"></i></template>
-                </el-input>
-              </div>
+            <!-- 筛选区 -->
+            <div class="ops-filter-bar">
+              <el-form :inline="true" size="small">
+                <el-form-item label="关键词">
+                  <el-input v-model="jobSearch" placeholder="作业标题/Code" clearable style="width: 200px" />
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="handleJobSearch">
+                    <el-icon><Search /></el-icon> 搜索
+                  </el-button>
+                  <el-button @click="handleJobReset">
+                    <el-icon><RefreshRight /></el-icon> 重置
+                  </el-button>
+                </el-form-item>
+              </el-form>
             </div>
-            <el-table
-              v-loading="jobLoading"
-              :data="paginatedJobs"
-              stripe
-              @selection-change="handleJobSelectionChange"
-            >
-              <el-table-column type="selection" width="55" />
-              <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip>
-                <template #default="{ row }">
-                  {{ translateTitle(row.title) }}
-                </template>
-              </el-table-column>
-              <el-table-column prop="id" label="Code" width="120" show-overflow-tooltip />
-              <el-table-column prop="appletCode" label="所属应用" width="120" />
-              <el-table-column prop="type" label="类型" width="100" />
-              <el-table-column prop="createdBy" label="创建人" width="100" />
-              <el-table-column prop="lastRunTime" label="最后运行" width="160" />
-            </el-table>
-            <div class="pagination-wrapper">
+
+            <!-- 操作栏 -->
+            <div class="ops-action-bar">
+              <el-button size="small" :disabled="selectedJobs.length < 1" @click="openMoveDialog('job')">
+                <i class="fa fa-sign-in-alt"></i> 移动作业
+              </el-button>
+              <span style="flex: 1;"></span>
+              <el-button class="toolbar-icon-btn" circle size="small" :loading="jobLoading" @click="loadJobs" title="刷新">
+                <el-icon v-show="!jobLoading"><Refresh /></el-icon>
+              </el-button>
+            </div>
+
+            <div class="ops-table-wrapper">
+              <el-table
+                v-loading="jobLoading"
+                :data="paginatedJobs"
+                stripe
+                style="width: 100%"
+                max-height="calc(100vh - 400px)"
+                @selection-change="handleJobSelectionChange"
+              >
+                <el-table-column type="selection" width="55" />
+                <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    {{ translateTitle(row.title) }}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="id" label="Code" width="120" show-overflow-tooltip />
+                <el-table-column prop="appletCode" label="所属应用" width="120" />
+                <el-table-column prop="type" label="类型" width="100" />
+                <el-table-column prop="createdBy" label="创建人" width="100" />
+                <el-table-column prop="lastRunTime" label="最后运行" width="160" />
+              </el-table>
+            </div>
+            <div class="ops-pagination-wrapper">
               <el-pagination
                 v-model:current-page="jobCurrentPage"
                 v-model:page-size="jobPageSize"
@@ -313,7 +358,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'
+import { translateText } from '@/utils/i18n'
 
 const activeTab = ref('landing')
 
@@ -327,6 +374,7 @@ const selectedJobApplet = ref('')
 const pageLoading = ref(false)
 const pages = ref([])
 const pageSearch = ref('')
+const pageAppliedSearch = ref('')
 const pageCurrentPage = ref(1)
 const pagePageSize = ref(10)
 const selectedPages = ref([])
@@ -335,6 +383,7 @@ const selectedPages = ref([])
 const datasetLoading = ref(false)
 const datasets = ref([])
 const datasetSearch = ref('')
+const datasetAppliedSearch = ref('')
 const datasetCurrentPage = ref(1)
 const datasetPageSize = ref(10)
 const selectedDatasets = ref([])
@@ -343,6 +392,7 @@ const selectedDatasets = ref([])
 const jobLoading = ref(false)
 const jobs = ref([])
 const jobSearch = ref('')
+const jobAppliedSearch = ref('')
 const jobCurrentPage = ref(1)
 const jobPageSize = ref(10)
 const selectedJobs = ref([])
@@ -356,12 +406,41 @@ const moveLoading = ref(false)
 
 // 翻译标题
 function translateTitle(title) {
-  if (!title) return ''
-  // 处理 #{key} 格式
-  if (title.startsWith('#{') && title.endsWith('}')) {
-    return title.replace(/^#\{|\}$/g, '').split('.').pop()
-  }
-  return title
+  return translateText(title)
+}
+
+// 搜索
+function handlePageSearch() {
+  pageAppliedSearch.value = pageSearch.value
+  pageCurrentPage.value = 1
+}
+
+function handlePageReset() {
+  pageSearch.value = ''
+  pageAppliedSearch.value = ''
+  pageCurrentPage.value = 1
+}
+
+function handleDatasetSearch() {
+  datasetAppliedSearch.value = datasetSearch.value
+  datasetCurrentPage.value = 1
+}
+
+function handleDatasetReset() {
+  datasetSearch.value = ''
+  datasetAppliedSearch.value = ''
+  datasetCurrentPage.value = 1
+}
+
+function handleJobSearch() {
+  jobAppliedSearch.value = jobSearch.value
+  jobCurrentPage.value = 1
+}
+
+function handleJobReset() {
+  jobSearch.value = ''
+  jobAppliedSearch.value = ''
+  jobCurrentPage.value = 1
 }
 
 // 过滤
@@ -370,8 +449,8 @@ const filteredPages = computed(() => {
   if (selectedPageApplet.value) {
     result = result.filter(p => p.appletCode === selectedPageApplet.value)
   }
-  if (pageSearch.value) {
-    const keyword = pageSearch.value.toLowerCase()
+  if (pageAppliedSearch.value) {
+    const keyword = pageAppliedSearch.value.toLowerCase()
     result = result.filter(p =>
       p.title?.toLowerCase().includes(keyword) ||
       p.id?.toLowerCase().includes(keyword)
@@ -385,8 +464,8 @@ const filteredDatasets = computed(() => {
   if (selectedDatasetApplet.value) {
     result = result.filter(d => d.appletCode === selectedDatasetApplet.value)
   }
-  if (datasetSearch.value) {
-    const keyword = datasetSearch.value.toLowerCase()
+  if (datasetAppliedSearch.value) {
+    const keyword = datasetAppliedSearch.value.toLowerCase()
     result = result.filter(d =>
       d.name?.toLowerCase().includes(keyword) ||
       d.code?.toLowerCase().includes(keyword)
@@ -400,8 +479,8 @@ const filteredJobs = computed(() => {
   if (selectedJobApplet.value) {
     result = result.filter(j => j.appletCode === selectedJobApplet.value)
   }
-  if (jobSearch.value) {
-    const keyword = jobSearch.value.toLowerCase()
+  if (jobAppliedSearch.value) {
+    const keyword = jobAppliedSearch.value.toLowerCase()
     result = result.filter(j =>
       j.title?.toLowerCase().includes(keyword) ||
       j.id?.toLowerCase().includes(keyword)
@@ -483,7 +562,7 @@ function handleJobSelectionChange(selection) {
 async function loadPages() {
   pageLoading.value = true
   try {
-    const response = await apiService.get(`/udp/api/udp/pages?isPaging=true&page=0&size=1000&cacheBuster=${Date.now()}`)
+    const response = await apiService.get(`/udp/api/udp/pages?isPaging=true&page=0&size=1000&appletCode=&cacheBuster=${Date.now()}`)
     pages.value = response?.data?.content || response?.content || response?.data || []
   } catch (error) {
     console.error('Failed to load pages:', error)
@@ -611,14 +690,20 @@ function handleTabChange(tab) {
 }
 
 onMounted(() => {
-  // 不自动加载，进入具体标签页时再加载
+  // 根据当前激活的 tab 加载对应数据
+  handleTabChange(activeTab.value)
 })
 </script>
 
 <style scoped lang="scss">
-.appres-management {
-  height: 100%;
-  padding: 16px;
+.ops-tabs {
+  :deep(.el-tabs__content) {
+    padding: 0;
+  }
+
+  :deep(.el-tabs__header) {
+    margin-bottom: 12px;
+  }
 }
 
 .landing-page {
@@ -694,27 +779,18 @@ onMounted(() => {
   }
 }
 
+.sidebar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
 .main-content {
   flex: 1;
   min-width: 0;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  &__left, &__right {
-    display: flex;
-    gap: 8px;
-  }
-}
-
-.pagination-wrapper {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
 }
 
 .move-dialog-content {

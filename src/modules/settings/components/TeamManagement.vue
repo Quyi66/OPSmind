@@ -43,9 +43,9 @@
     <div class="ops-table-wrapper" v-loading="loading">
       <el-table
         :data="filteredData"
-        border
         stripe
         style="width: 100%"
+        max-height="calc(100vh - 360px)"
       >
         <el-table-column prop="name" label="名称" min-width="150" />
         <el-table-column prop="code" label="编码" min-width="120">
@@ -68,14 +68,14 @@
             {{ formatTime(row.updatedAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right" align="left">
+        <el-table-column label="操作" width="100" fixed="right" align="left">
           <template #default="{ row }">
-            <el-button size="small" link type="primary" @click="handleEdit(row)">
+            <el-button size="small" text type="primary" @click="handleEdit(row)">
               编辑
             </el-button>
             <el-button
               size="small"
-              link
+              text
               type="danger"
               @click="handleDelete(row)"
               :loading="deletingTeamId === row.id"
@@ -129,12 +129,17 @@ const pagination = ref({
   total: 0
 })
 
-// 过滤后的数据
+// 已应用的筛选条件（只在点击搜索按钮时更新）
+const appliedFilters = reactive({
+  keyword: ''
+})
+
+// 过滤后的数据（使用已应用的筛选条件）
 const filteredData = computed(() => {
   let result = tableData.value
 
-  if (filters.keyword) {
-    const keyword = filters.keyword.toLowerCase()
+  if (appliedFilters.keyword) {
+    const keyword = appliedFilters.keyword.toLowerCase()
     result = result.filter(item =>
       item.name?.toLowerCase().includes(keyword) ||
       item.code?.toLowerCase().includes(keyword)
@@ -174,12 +179,15 @@ async function loadData() {
   }
 }
 
+// 搜索 - 将筛选条件应用到 appliedFilters
 function handleSearch() {
+  appliedFilters.keyword = filters.keyword
   pagination.value.page = 1
 }
 
 function handleReset() {
   filters.keyword = ''
+  appliedFilters.keyword = ''
   pagination.value.page = 1
   pagination.value.pageSize = 20
 }

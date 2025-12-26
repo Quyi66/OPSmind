@@ -751,6 +751,10 @@ watch(() => form.name, (newVal, oldVal) => {
   margin-top: 24px;
   padding-top: 16px;
   border-top: 1px solid #ebeef5;
+
+  :deep(.el-form-item__content) {
+    justify-content: flex-end !important;
+  }
 }
 
 .test-result-card {

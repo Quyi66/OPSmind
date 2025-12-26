@@ -11,7 +11,7 @@
       <div class="top-bar">
         <div class="hint-section">
           <span class="hint-text">用户不存在? 请点击</span>
-          <el-button type="info" size="small" @click="handleCreateNewUser">
+          <el-button type="primary" plain size="small" @click="handleCreateNewUser">
             创建用户
           </el-button>
         </div>
@@ -34,9 +34,9 @@
 
       <!-- 用户表格 -->
       <el-table
-        :data="filteredData"
-        border
+        :data="paginatedData"
         style="width: 100%"
+        max-height="400px"
         @selection-change="handleSelectionChange"
         :default-sort="{ prop: 'login', order: 'descending' }"
       >
@@ -49,6 +49,21 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="filteredData.length"
+          layout="total, sizes, prev, pager, next"
+          background
+          small
+          @size-change="handlePageSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
     </div>
 
     <template #footer>
@@ -95,6 +110,8 @@ const userData = ref([])
 const selectedUsers = ref([])
 const createUserVisible = ref(false)
 const searchKeyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 // 过滤后的数据
 const filteredData = computed(() => {
@@ -107,6 +124,13 @@ const filteredData = computed(() => {
     (user.fullName || '').toLowerCase().includes(keyword) ||
     (user.department || '').toLowerCase().includes(keyword)
   )
+})
+
+// 分页后的数据
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredData.value.slice(start, end)
 })
 
 watch(() => props.modelValue, (val) => {
@@ -134,7 +158,16 @@ async function loadData() {
 }
 
 function handleSearch() {
+  currentPage.value = 1
   // 搜索由 computed 自动处理
+}
+
+function handlePageChange(page) {
+  currentPage.value = page
+}
+
+function handlePageSizeChange() {
+  currentPage.value = 1
 }
 
 function handleSelectionChange(selection) {
@@ -209,6 +242,12 @@ function handleClose() {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 0;
 }
 
 :deep(.el-table th) {

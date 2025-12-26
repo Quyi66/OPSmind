@@ -1,101 +1,104 @@
 <template>
-  <div class="automation-config">
-    <!-- 功能按钮区 -->
-    <div class="page-header">
-      <div class="page-actions">
-        <el-button type="primary" @click="handleAddAnsibleConfig">
-          <i class="fa fa-plus" style="margin-right: 4px"></i>
-          新增Ansible连接配置
-        </el-button>
-        <el-button @click="handleDeviceManage">
-          <i class="fa fa-cogs" style="margin-right: 4px"></i>
-          设备纳管
-        </el-button>
-      </div>
-    </div>
-
+  <div class="ops-page-layout">
     <!-- Tab 页签 -->
-    <div class="tab-section">
-      <el-tabs v-model="activeTab" @tab-click="handleTabClick">
-        <el-tab-pane name="automation">
-          <template #label>
-            <span><i class="fa fa-code-branch"></i> 自动化配置信息</span>
-          </template>
-        </el-tab-pane>
-        <el-tab-pane name="ansible">
-          <template #label>
-            <span><i class="fa fa-wifi"></i> Ansible连接配置</span>
-          </template>
-        </el-tab-pane>
-      </el-tabs>
+    <el-tabs v-model="activeTab" @tab-click="handleTabClick" class="ops-tabs">
+      <el-tab-pane name="automation">
+        <template #label>
+          <span><i class="fa fa-code-branch"></i> 自动化配置信息</span>
+        </template>
+      </el-tab-pane>
+      <el-tab-pane name="ansible">
+        <template #label>
+          <span><i class="fa fa-wifi"></i> Ansible连接配置</span>
+        </template>
+      </el-tab-pane>
+    </el-tabs>
 
-      <!-- 提示信息 -->
-      <el-alert
-        v-if="activeTab === 'automation'"
-        title="注意：自动化配置是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：执行用户/密码、登录用户/密码、执行引擎节点配置等"
-        type="success"
-        :closable="false"
-        show-icon
-        class="tip-alert"
-      />
-      <el-alert
-        v-else
-        title="注意：Ansible连接配置是针对Ansible连接参数的配置模板，可以在自动化配置中引用"
-        type="success"
-        :closable="false"
-        show-icon
-        class="tip-alert"
-      />
+    <!-- 提示信息 -->
+    <el-alert
+      v-if="activeTab === 'automation'"
+      title="注意：自动化配置是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：执行用户/密码、登录用户/密码、执行引擎节点配置等"
+      type="success"
+      :closable="false"
+      show-icon
+      style="margin-bottom: 12px"
+    />
+    <el-alert
+      v-else
+      title="注意：Ansible连接配置是针对Ansible连接参数的配置模板，可以在自动化配置中引用"
+      type="success"
+      :closable="false"
+      show-icon
+      style="margin-bottom: 12px"
+    />
 
-      <!-- 自动化配置信息 Tab 内容 -->
-      <div v-show="activeTab === 'automation'" class="tab-content">
-        <!-- 筛选栏 -->
-        <div class="filter-bar">
-          <el-select v-model="filters.cit" style="width: 120px" @change="loadAutomationData">
-            <el-option label="全部" value="oplus_all" />
-            <el-option
-              v-for="item in resourceTypes"
-              :key="item.code"
-              :label="item.title"
-              :value="item.code"
-            />
-          </el-select>
-          <div class="filter-right">
+    <!-- 自动化配置信息 Tab 内容 -->
+    <template v-if="activeTab === 'automation'">
+      <!-- 筛选区 -->
+      <div class="ops-filter-bar">
+        <el-form :inline="true" size="small">
+          <el-form-item label="资产类型">
+            <el-select v-model="filters.cit" style="width: 120px">
+              <el-option label="全部" value="oplus_all" />
+              <el-option
+                v-for="item in resourceTypes"
+                :key="item.code"
+                :label="item.title"
+                :value="item.code"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="关键词">
             <el-input
               v-model="automationSearch"
               placeholder="搜索"
               clearable
-              :prefix-icon="Search"
-              style="width: 200px"
+              style="width: 180px"
             />
-          </div>
-        </div>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleAutomationSearch">
+              <el-icon><Search /></el-icon> 搜索
+            </el-button>
+            <el-button @click="handleAutomationReset">
+              <el-icon><RefreshRight /></el-icon> 重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-        <!-- 自动化配置表格 -->
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-button type="primary" size="small" @click="handleAddAnsibleConfig">
+          <i class="fa fa-plus" style="margin-right: 4px"></i>
+          新增Ansible连接配置
+        </el-button>
+        <el-button size="small" @click="handleDeviceManage">
+          <i class="fa fa-cogs" style="margin-right: 4px"></i>
+          设备纳管
+        </el-button>
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="automationLoading" @click="loadAutomationData" title="刷新">
+          <el-icon v-show="!automationLoading"><Refresh /></el-icon>
+        </el-button>
+      </div>
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
         <el-table
           :data="filteredAutomationData"
           v-loading="automationLoading"
           stripe
-          style="width: 100%"
           :max-height="tableMaxHeight"
         >
-          <el-table-column prop="ci_type" label="资产代码" width="100">
-            <!-- <template #default="{ row }">
-              <el-link type="primary">{{ row.ci_type }}</el-link>
-            </template> -->
-          </el-table-column>
+          <el-table-column prop="ci_type" label="资产代码" width="100" />
           <el-table-column prop="hostKey" label="IP" width="140" />
           <el-table-column prop="ansibleConfigName" label="自动化配置名称" width="160">
             <template #default="{ row }">
               {{ row.ansibleConfigName || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)">
-            <!-- <template #default="{ row }">
-              <el-link v-if="row.instanceGroup" type="primary">{{ row.instanceGroup }}</el-link>
-              <span v-else>-</span>
-            </template> -->
-          </el-table-column>
+          <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)" />
           <el-table-column prop="aapInstanceGroup" label="AAP instance group" width="160">
             <template #default="{ row }">
               {{ row.aapInstanceGroup || '-' }}
@@ -124,30 +127,43 @@
             </template>
           </el-table-column>
         </el-table>
-
-        <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
-          <el-pagination
-            v-model:current-page="automationPage"
-            v-model:page-size="automationPageSize"
-            :page-sizes="[10, 50, 100]"
-            :total="automationTotal"
-            layout="total, sizes, prev, pager, next, jumper"
-            background
-            @size-change="loadAutomationData"
-            @current-change="loadAutomationData"
-          />
-        </div>
       </div>
 
-      <!-- Ansible连接配置 Tab 内容 -->
-      <div v-show="activeTab === 'ansible'" class="tab-content">
-        <!-- Ansible配置表格 -->
+      <!-- 分页 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="automationPage"
+          v-model:page-size="automationPageSize"
+          :page-sizes="[10, 50, 100]"
+          :total="automationTotal"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="loadAutomationData"
+          @current-change="loadAutomationData"
+        />
+      </div>
+    </template>
+
+    <!-- Ansible连接配置 Tab 内容 -->
+    <template v-if="activeTab === 'ansible'">
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-button type="primary" size="small" @click="handleAddAnsibleConfig">
+          <i class="fa fa-plus" style="margin-right: 4px"></i>
+          新增Ansible连接配置
+        </el-button>
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="ansibleLoading" @click="loadAnsibleData" title="刷新">
+          <el-icon v-show="!ansibleLoading"><Refresh /></el-icon>
+        </el-button>
+      </div>
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
         <el-table
           :data="paginatedAnsibleData"
           v-loading="ansibleLoading"
           stripe
-          style="width: 100%"
           :max-height="tableMaxHeight"
         >
           <el-table-column prop="name" label="配置名称" width="120" />
@@ -200,22 +216,22 @@
             </template>
           </el-table-column>
         </el-table>
-
-        <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
-          <el-pagination
-            v-model:current-page="ansiblePage"
-            v-model:page-size="ansiblePageSize"
-            :page-sizes="[10, 50, 100]"
-            :total="ansibleTotal"
-            layout="total, sizes, prev, pager, next, jumper"
-            background
-            @size-change="handleAnsiblePageSizeChange"
-            @current-change="handleAnsiblePageChange"
-          />
-        </div>
       </div>
-    </div>
+
+      <!-- 分页 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="ansiblePage"
+          v-model:page-size="ansiblePageSize"
+          :page-sizes="[10, 50, 100]"
+          :total="ansibleTotal"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleAnsiblePageSizeChange"
+          @current-change="handleAnsiblePageChange"
+        />
+      </div>
+    </template>
 
     <!-- 编辑自动化配置弹窗 -->
     <el-dialog
@@ -365,7 +381,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
@@ -419,16 +435,9 @@ const automationFormLoading = ref(false)
 const automationSaving = ref(false)
 const ansibleForm = ref({})
 
-// 计算属性
+// 计算属性 - 直接使用后端返回的数据（后端已筛选）
 const filteredAutomationData = computed(() => {
-  if (!automationSearch.value) return automationData.value
-  const keyword = automationSearch.value.toLowerCase()
-  return automationData.value.filter(item =>
-    item.hostKey?.toLowerCase().includes(keyword) ||
-    item.ci_type?.toLowerCase().includes(keyword) ||
-    item.loginUser?.toLowerCase().includes(keyword) ||
-    item.instanceGroup?.toLowerCase().includes(keyword)
-  )
+  return automationData.value
 })
 
 const filteredAnsibleData = computed(() => {
@@ -483,7 +492,7 @@ async function loadAutomationData() {
     }, {
       size: automationPageSize.value,
       page: automationPage.value,
-      filter: ''
+      filter: automationSearch.value ? `hostKey|ci_type|loginUser|instanceGroup:*${automationSearch.value}*` : ''
     })
     automationData.value = response?.records || []
     automationTotal.value = response?.total || 0
@@ -529,6 +538,20 @@ function handleTabClick() {
   } else {
     loadAnsibleData()
   }
+}
+
+// 自动化配置搜索
+function handleAutomationSearch() {
+  automationPage.value = 1
+  loadAutomationData()
+}
+
+// 自动化配置重置
+function handleAutomationReset() {
+  filters.value.cit = 'oplus_all'
+  automationSearch.value = ''
+  automationPage.value = 1
+  loadAutomationData()
 }
 
 // 加载Ansible表单选项数据

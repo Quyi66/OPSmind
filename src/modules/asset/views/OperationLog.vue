@@ -2,45 +2,65 @@
   <div class="ops-page-layout">
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
-      <span class="filter-label">时间范围:</span>
-      <el-select v-model="filters.day" size="small" style="width: 100px" @change="handleFilterChange">
-        <el-option label="Today" :value="1" />
-        <el-option label="3 Days" :value="3" />
-        <el-option label="7 Days" :value="7" />
-        <el-option label="30 Days" :value="30" />
-      </el-select>
+      <el-form :inline="true" size="small">
+        <el-form-item label="时间范围">
+          <el-select v-model="filters.day" style="width: 100px">
+            <el-option label="Today" :value="1" />
+            <el-option label="3 Days" :value="3" />
+            <el-option label="7 Days" :value="7" />
+            <el-option label="30 Days" :value="30" />
+          </el-select>
+        </el-form-item>
 
-      <el-select v-model="filters.ataNode" placeholder="执行引擎节点" size="small" style="width: 130px" clearable @change="handleFilterChange">
-        <el-option label="全部" value="all" />
-        <el-option v-for="node in ataNodes" :key="node" :label="node" :value="node" />
-      </el-select>
+        <el-form-item label="执行引擎">
+          <el-select v-model="filters.ataNode" placeholder="全部" style="width: 130px" clearable>
+            <el-option label="全部" value="all" />
+            <el-option v-for="node in ataNodes" :key="node" :label="node" :value="node" />
+          </el-select>
+        </el-form-item>
 
-      <el-select v-model="filters.status" placeholder="状态" size="small" style="width: 100px" @change="handleFilterChange">
-        <el-option label="全部" value="all" />
-        <el-option label="完成" value="COMPLETED" />
-        <el-option label="运行错误" value="ERROR" />
-        <el-option label="运行中" value="RUNNING" />
-      </el-select>
+        <el-form-item label="状态">
+          <el-select v-model="filters.status" style="width: 100px">
+            <el-option label="全部" value="all" />
+            <el-option label="完成" value="COMPLETED" />
+            <el-option label="运行错误" value="ERROR" />
+            <el-option label="运行中" value="RUNNING" />
+          </el-select>
+        </el-form-item>
 
-      <el-select v-model="filters.action" placeholder="操作" size="small" style="width: 120px" @change="handleFilterChange">
-        <el-option label="全部" value="all" />
-        <el-option v-for="action in actionTypes" :key="action.value" :label="action.label" :value="action.value" />
-      </el-select>
+        <el-form-item label="操作">
+          <el-select v-model="filters.action" style="width: 120px">
+            <el-option label="全部" value="all" />
+            <el-option v-for="action in actionTypes" :key="action.value" :label="action.label" :value="action.value" />
+          </el-select>
+        </el-form-item>
 
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索"
-        clearable
-        size="small"
-        :prefix-icon="Search"
-        style="width: 180px"
-        @input="handleSearch"
-      />
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索"
+            clearable
+            style="width: 150px"
+          />
+        </el-form-item>
 
-      <el-button type="primary" size="small" @click="loadData">
-        <i class="fa fa-search"></i> 搜索
+        <el-form-item>
+          <el-button type="primary" @click="handleFilterChange">
+            <el-icon><Search /></el-icon> 搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon> 重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
-      <el-button size="small" :icon="Refresh" @click="loadData" title="刷新" />
     </div>
 
     <!-- 表格区域 -->
@@ -133,7 +153,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { dtsApi } from '../api'
 import { translateI18nKey } from '@/utils/i18n'
@@ -243,6 +263,19 @@ function handleFilterChange() {
 // 搜索
 function handleSearch() {
   currentPage.value = 1
+}
+
+// 重置
+function handleReset() {
+  filters.value = {
+    day: 1,
+    ataNode: 'all',
+    status: 'all',
+    action: 'all'
+  }
+  searchKeyword.value = ''
+  currentPage.value = 1
+  loadData()
 }
 
 // 分页变化

@@ -1,64 +1,26 @@
 <template>
-  <div class="data-manage">
-    <!-- 功能按钮区 -->
-    <div class="page-header">
-      <div class="page-actions">
-        <el-button @click="handleDownloadTemplate" size="small">
-          <i class="fa fa-download" style="margin-right: 4px"></i>
-          资产信息导入模板下载
-        </el-button>
-        <el-button type="primary" @click="handleImport" size="small">
-          <i class="fa fa-file-import" style="margin-right: 4px"></i>
-          导入资产
-        </el-button>
-        <el-button type="success" @click="handleExport" size="small">
-          <i class="fa fa-cloud-download-alt" style="margin-right: 4px"></i>
-          资产信息导出
-        </el-button>
-        <el-button type="primary" @click="handleAddGroup" size="small">
-          添加分组
-        </el-button>
-        <el-button type="primary" @click="handleAddTag" size="small">
-          添加标签
-        </el-button>
-        <el-button @click="handleDownloadDeleteTemplate" size="small">
-          资产批量删除模版下载
-        </el-button>
-        <el-button type="danger" @click="handleDeleteImport" size="small">
-          <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
-          资产删除导入
-        </el-button>
-      </div>
-    </div>
+  <div class="ops-page-layout">
+    <!-- 导航标签页 -->
+    <el-tabs v-model="activeTab" class="ops-tabs" @tab-change="handleTabChange">
+      <el-tab-pane name="group">
+        <template #label>
+          <span><i class="fa fa-code-branch" style="margin-right: 4px"></i>分组</span>
+        </template>
+      </el-tab-pane>
+      <el-tab-pane name="tag">
+        <template #label>
+          <span><i class="fa fa-tags" style="margin-right: 4px"></i>标签</span>
+        </template>
+      </el-tab-pane>
+    </el-tabs>
 
-    <!-- 内容区 -->
-    <div class="data-content">
-      <!-- 导航标签页 -->
-      <el-tabs v-model="activeTab" class="nav-tabs">
-        <el-tab-pane name="group">
-          <template #label>
-            <span><i class="fa fa-code-branch" style="margin-right: 4px"></i>分组</span>
-          </template>
-        </el-tab-pane>
-        <el-tab-pane name="tag">
-          <template #label>
-            <span><i class="fa fa-tags" style="margin-right: 4px"></i>标签</span>
-          </template>
-        </el-tab-pane>
-      </el-tabs>
-
-      <!-- 分组列表 -->
-      <div v-if="activeTab === 'group'" class="tab-content">
-        <!-- 筛选 -->
-        <div class="filter-bar">
-          <div class="filter-left">
-            <el-select
-              v-model="groupFilter.ciType"
-              placeholder="全部"
-              style="width: 120px"
-              @change="loadGroupList"
-              size="small"
-            >
+    <!-- 分组列表 -->
+    <template v-if="activeTab === 'group'">
+      <!-- 筛选区 -->
+      <div class="ops-filter-bar">
+        <el-form :inline="true" size="small">
+          <el-form-item label="资产类型">
+            <el-select v-model="groupFilter.ciType" style="width: 120px">
               <el-option label="全部" value="oplus_all" />
               <el-option
                 v-for="item in resourceTypes"
@@ -67,35 +29,72 @@
                 :value="item.code"
               />
             </el-select>
-          </div>
-          <div class="filter-right">
+          </el-form-item>
+          <el-form-item label="关键词">
             <el-input
               v-model="groupFilter.keyword"
               placeholder="搜索"
-              style="width: 200px"
+              style="width: 180px"
               clearable
-              @keyup.enter="loadGroupList"
-              size="small"
-            >
-              <template #suffix>
-                <i class="fa fa-search" style="cursor: pointer" @click="loadGroupList"></i>
-              </template>
-            </el-input>
-          </div>
-        </div>
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleGroupSearch">
+              <el-icon><Search /></el-icon> 搜索
+            </el-button>
+            <el-button @click="handleGroupReset">
+              <el-icon><RefreshRight /></el-icon> 重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-        <!-- 分组表格 -->
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-button size="small" @click="handleDownloadTemplate">
+          <i class="fa fa-download" style="margin-right: 4px"></i>
+          资产信息导入模板下载
+        </el-button>
+        <el-button type="primary" size="small" @click="handleImport">
+          <i class="fa fa-file-import" style="margin-right: 4px"></i>
+          导入资产
+        </el-button>
+        <el-button type="success" size="small" @click="handleExport">
+          <i class="fa fa-cloud-download-alt" style="margin-right: 4px"></i>
+          资产信息导出
+        </el-button>
+        <el-button type="primary" size="small" @click="handleAddGroup">
+          添加分组
+        </el-button>
+        <el-button type="primary" size="small" @click="handleAddTag">
+          添加标签
+        </el-button>
+        <el-button size="small" @click="handleDownloadDeleteTemplate">
+          资产批量删除模版下载
+        </el-button>
+        <el-button type="danger" size="small" @click="handleDeleteImport">
+          <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
+          资产删除导入
+        </el-button>
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="groupLoading" @click="loadGroupList" title="刷新">
+          <el-icon v-show="!groupLoading"><Refresh /></el-icon>
+        </el-button>
+      </div>
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
         <el-table
           v-loading="groupLoading"
           :data="groupList"
           stripe
-          max-height="calc(100vh - 300px)"
+          max-height="calc(100vh - 360px)"
         >
           <el-table-column prop="path" label="分组路径" min-width="200" sortable>
             <template #default="{ row }">
-              <el-button link type="primary" @click="handleViewGroup(row)">
+              <el-link type="primary" :underline="false" @click="handleViewGroup(row)">
                 {{ row.path }}
-              </el-button>
+              </el-link>
             </template>
           </el-table-column>
           <el-table-column prop="ci_type" label="资产代码" width="150" sortable />
@@ -113,33 +112,30 @@
             </template>
           </el-table-column>
         </el-table>
-
-        <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
-          <el-pagination
-            v-model:current-page="groupPagination.page"
-            v-model:page-size="groupPagination.size"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="groupPagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            background
-            @size-change="loadGroupList"
-            @current-change="loadGroupList"
-          />
-        </div>
       </div>
 
-      <!-- 标签列表 -->
-      <div v-if="activeTab === 'tag'" class="tab-content">
-        <!-- 筛选 -->
-        <div class="filter-bar">
-          <div class="filter-left">
-            <el-select
-              v-model="tagFilter.ciType"
-              placeholder="全部"
-              style="width: 120px"
-              @change="loadTagList"
-            >
+      <!-- 分页 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="groupPagination.page"
+          v-model:page-size="groupPagination.size"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="groupPagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleGroupPageSizeChange"
+          @current-change="handleGroupPageChange"
+        />
+      </div>
+    </template>
+
+    <!-- 标签列表 -->
+    <template v-if="activeTab === 'tag'">
+      <!-- 筛选区 -->
+      <div class="ops-filter-bar">
+        <el-form :inline="true" size="small">
+          <el-form-item label="资产类型">
+            <el-select v-model="tagFilter.ciType" style="width: 120px">
               <el-option label="全部" value="oplus_all" />
               <el-option
                 v-for="item in resourceTypes"
@@ -148,34 +144,50 @@
                 :value="item.code"
               />
             </el-select>
-          </div>
-          <div class="filter-right">
+          </el-form-item>
+          <el-form-item label="关键词">
             <el-input
               v-model="tagFilter.keyword"
               placeholder="搜索"
-              style="width: 200px"
+              style="width: 180px"
               clearable
-              @keyup.enter="loadTagList"
-            >
-              <template #suffix>
-                <i class="fa fa-search" style="cursor: pointer" @click="loadTagList"></i>
-              </template>
-            </el-input>
-          </div>
-        </div>
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleTagSearch">
+              <el-icon><Search /></el-icon> 搜索
+            </el-button>
+            <el-button @click="handleTagReset">
+              <el-icon><RefreshRight /></el-icon> 重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-        <!-- 标签表格 -->
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-button type="primary" size="small" @click="handleAddTag">
+          添加标签
+        </el-button>
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="tagLoading" @click="loadTagList" title="刷新">
+          <el-icon v-show="!tagLoading"><Refresh /></el-icon>
+        </el-button>
+      </div>
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
         <el-table
           v-loading="tagLoading"
           :data="tagList"
           stripe
-          max-height="calc(100vh - 300px)"
+          max-height="calc(100vh - 360px)"
         >
           <el-table-column prop="name" label="标签名称" min-width="200" sortable>
             <template #default="{ row }">
-              <el-button link type="primary" @click="handleViewTag(row)">
+              <el-link type="primary" :underline="false" @click="handleViewTag(row)">
                 {{ row.name }}
-              </el-button>
+              </el-link>
             </template>
           </el-table-column>
           <el-table-column prop="ci_type" label="资产代码" width="150" sortable />
@@ -191,22 +203,22 @@
             </template>
           </el-table-column>
         </el-table>
-
-        <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
-          <el-pagination
-            v-model:current-page="tagPagination.page"
-            v-model:page-size="tagPagination.size"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="tagPagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            background
-            @size-change="loadTagList"
-            @current-change="loadTagList"
-          />
-        </div>
       </div>
-    </div>
+
+      <!-- 分页 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="tagPagination.page"
+          v-model:page-size="tagPagination.size"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="tagPagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleTagPageSizeChange"
+          @current-change="handleTagPageChange"
+        />
+      </div>
+    </template>
 
     <!-- 添加分组弹窗 -->
     <DataAddGroupDialog
@@ -262,6 +274,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { dataManageApi } from '../api'
 import { apiService } from '@/core/api'
 import DataAddGroupDialog from '../components/DataAddGroupDialog.vue'
@@ -379,6 +392,61 @@ const loadTagList = async () => {
   } finally {
     tagLoading.value = false
   }
+}
+
+// Tab 切换
+const handleTabChange = (tab) => {
+  if (tab === 'group') {
+    loadGroupList()
+  } else {
+    loadTagList()
+  }
+}
+
+// 分组搜索
+const handleGroupSearch = () => {
+  groupPagination.value.page = 1
+  loadGroupList()
+}
+
+// 分组重置
+const handleGroupReset = () => {
+  groupFilter.value = { ciType: 'oplus_all', keyword: '' }
+  groupPagination.value.page = 1
+  loadGroupList()
+}
+
+// 分组分页变化
+const handleGroupPageChange = () => {
+  loadGroupList()
+}
+
+const handleGroupPageSizeChange = () => {
+  groupPagination.value.page = 1
+  loadGroupList()
+}
+
+// 标签搜索
+const handleTagSearch = () => {
+  tagPagination.value.page = 1
+  loadTagList()
+}
+
+// 标签重置
+const handleTagReset = () => {
+  tagFilter.value = { ciType: 'oplus_all', keyword: '' }
+  tagPagination.value.page = 1
+  loadTagList()
+}
+
+// 标签分页变化
+const handleTagPageChange = () => {
+  loadTagList()
+}
+
+const handleTagPageSizeChange = () => {
+  tagPagination.value.page = 1
+  loadTagList()
 }
 
 // 下载模板

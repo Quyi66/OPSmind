@@ -1,7 +1,7 @@
 <template>
   <div class="ops-page-layout">
     <el-card class="config-card" v-loading="loading">
-      <el-form label-width="200px" label-position="left">
+      <el-form label-width="260px" label-position="left">
         <!-- 引擎类型选择 -->
         <el-form-item label="OPlus Execute Engine">
           <div class="engine-hint">Ansible or Ansible Automation Platform</div>
@@ -32,7 +32,7 @@
             <el-switch v-model="jaoParamMap.sync_script_git" />
           </el-form-item>
 
-          <el-form-item>
+          <el-form-item class="form-actions">
             <el-button type="primary" @click="saveAnsibleConfig" :loading="saving">
               保存
             </el-button>
@@ -234,7 +234,7 @@
             </el-form-item>
           </template>
 
-          <el-form-item>
+          <el-form-item class="form-actions">
             <el-button type="primary" @click="saveAapConfig" :loading="saving">
               保存
             </el-button>
@@ -588,6 +588,7 @@ async function saveAapConfig() {
   font-size: 12px;
   color: #909399;
   margin-bottom: 8px;
+  margin-right: 8px;
 }
 
 .nested-card {
@@ -607,4 +608,11 @@ async function saveAapConfig() {
 .mb-2 {
   margin-bottom: 8px;
 }
+
+.form-actions {
+  :deep(.el-form-item__content) {
+    justify-content: flex-end !important;
+  }
+}
+
 </style>

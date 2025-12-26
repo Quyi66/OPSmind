@@ -19,9 +19,8 @@
     <div class="ops-page-layout">
       <!-- 筛选区域 -->
       <div class="ops-filter-bar">
-        <div class="filter-left">
-          <div class="filter-item">
-            <span class="filter-label">数据过滤</span>
+        <el-form :inline="true" size="small">
+          <el-form-item label="数据过滤">
             <el-popover
               placement="bottom-start"
               :width="360"
@@ -93,53 +92,34 @@
                 </el-tabs>
               </div>
             </el-popover>
-          </div>
+          </el-form-item>
 
-          <div class="filter-item">
-            <span class="filter-label">权限过滤</span>
-            <el-select
-              v-model="filters.permission"
-              placeholder="请选择"
-              size="small"
-              style="width: 80px"
-            >
+          <el-form-item label="权限过滤">
+            <el-select v-model="filters.permission" style="width: 80px">
               <el-option label="可读" value="r" />
               <el-option label="可写" value="rw" />
               <el-option label="可执行" value="rwx" />
             </el-select>
-          </div>
+          </el-form-item>
 
-          <div class="filter-item">
-            <span class="filter-label">状态过滤</span>
-            <el-select
-              v-model="filters.status"
-              placeholder="请选择"
-              size="small"
-              style="width: 80px"
-            >
+          <el-form-item label="状态过滤">
+            <el-select v-model="filters.status" style="width: 80px">
               <el-option label="全部" value="all" />
               <el-option label="在线" value="1" />
               <el-option label="下线" value="0" />
             </el-select>
-          </div>
+          </el-form-item>
 
-          <div class="filter-item">
-            <span class="filter-label">最近连通状态</span>
-            <el-select
-              v-model="filters.connLatestStatus"
-              placeholder="请选择"
-              size="small"
-              style="width: 100px"
-            >
+          <el-form-item label="最近连通状态">
+            <el-select v-model="filters.connLatestStatus" style="width: 100px">
               <el-option label="所有" value="" />
               <el-option label="连通成功" value="1" />
               <el-option label="连通失败" value="0" />
               <el-option label="未测试" value="null" />
             </el-select>
-          </div>
+          </el-form-item>
 
-          <div class="filter-item">
-            <span class="filter-label">系统版本</span>
+          <el-form-item label="系统版本">
             <el-select
               v-model="filters.osVersion"
               placeholder="所有"
@@ -147,8 +127,7 @@
               collapse-tags
               collapse-tags-tooltip
               clearable
-              size="small"
-              style="width: 120px"
+              style="width: 100px"
             >
               <el-option
                 v-for="item in osVersionOptions"
@@ -157,44 +136,49 @@
                 :value="item.value"
               />
             </el-select>
-          </div>
-        </div>
+          </el-form-item>
 
-        <div class="filter-right">
-          <el-input
-            v-model="searchText"
-            placeholder="搜索"
-            clearable
-            size="small"
-            style="width: 200px"
-            @keyup.enter="handleSearch"
-          >
-            <template #prefix>
-              <i class="fa fa-search"></i>
-            </template>
-          </el-input>
-        </div>
+          <el-form-item label="关键词">
+            <el-input
+              v-model="searchText"
+              placeholder="搜索"
+              clearable
+              style="width: 180px"
+            />
+          </el-form-item>
+
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon> 搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><RefreshRight /></el-icon> 重置
+            </el-button>
+          </el-form-item>
+        </el-form>
       </div>
 
       <!-- 操作按钮区域 -->
       <div class="ops-action-bar">
-        <div class="action-left">
-          <el-button type="primary" @click="handleAutoEntry" size="small" >
-            <i class="fa fa-plus" style="margin-right: 4px"></i>
-            自动化资产录入
-          </el-button>
-          <el-button :icon="Download" @click="handleExport" size="small">导出</el-button>
-          <el-button :icon="Edit" :disabled="!hasSelection" @click="handleEdit" size="small">修改</el-button>
-          <el-button :disabled="!hasSelection" @click="handleAddTag" size="small">
-            <i class="fa fa-tag" style="margin-right: 4px"></i>添加标签
-          </el-button>
-          <el-button :disabled="!hasSelection" @click="handleAddGroup" size="small">
-            <i class="fa fa-code" style="margin-right: 4px"></i>添加分组
-          </el-button>
-          <el-button :icon="Top" :disabled="!hasSelection" @click="handleOnline" size="small">上线</el-button>
-          <el-button :icon="Bottom" :disabled="!hasSelection" @click="handleOffline" size="small">下线</el-button>
-          <el-button type="danger" :icon="Delete" :disabled="!hasSelection" @click="handleDelete" size="small">删除</el-button>
-        </div>
+        <el-button type="primary" @click="handleAutoEntry" size="small" >
+          <i class="fa fa-plus" style="margin-right: 4px"></i>
+          自动化资产录入
+        </el-button>
+        <el-button :icon="Download" @click="handleExport" size="small">导出</el-button>
+        <el-button :icon="Edit" :disabled="!hasSelection" @click="handleEdit" size="small">修改</el-button>
+        <el-button :disabled="!hasSelection" @click="handleAddTag" size="small">
+          <i class="fa fa-tag" style="margin-right: 4px"></i>添加标签
+        </el-button>
+        <el-button :disabled="!hasSelection" @click="handleAddGroup" size="small">
+          <i class="fa fa-code" style="margin-right: 4px"></i>添加分组
+        </el-button>
+        <el-button :icon="Top" :disabled="!hasSelection" @click="handleOnline" size="small">上线</el-button>
+        <el-button :icon="Bottom" :disabled="!hasSelection" @click="handleOffline" size="small">下线</el-button>
+        <el-button type="danger" :icon="Delete" :disabled="!hasSelection" @click="handleDelete" size="small">删除</el-button>
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+          <el-icon v-show="!loading"><Refresh /></el-icon>
+        </el-button>
       </div>
 
       <!-- 数据表格 -->
@@ -355,7 +339,9 @@ import {
   Delete,
   Top,
   Bottom,
-  Refresh
+  Refresh,
+  Search,
+  RefreshRight
 } from '@element-plus/icons-vue'
 import { assetApi } from '../api'
 import { apiService } from '@/core/api'
@@ -652,19 +638,32 @@ watch(currentType, () => {
   loadAssetList()
 })
 
-// 监听筛选条件变化 - 添加防抖
-let filterTimer = null
-watch(filters, () => {
-  if (filterTimer) clearTimeout(filterTimer)
-  filterTimer = setTimeout(() => {
-    currentPage.value = 1
-    loadAssetList()
-  }, 300)
-}, { deep: true })
+
 
 // 搜索
 const handleSearch = () => {
   currentPage.value = 1
+  loadAssetList()
+}
+
+// 重置
+const handleReset = () => {
+  filters.value = {
+    hostKeys: '@@',
+    permission: 'r',
+    status: '1',
+    connLatestStatus: '',
+    osVersion: []
+  }
+  searchText.value = ''
+  selectedGroup.value = 'all'
+  selectedTag.value = ''
+  currentPage.value = 1
+  loadAssetList()
+}
+
+// 刷新
+const handleRefresh = () => {
   loadAssetList()
 }
 
