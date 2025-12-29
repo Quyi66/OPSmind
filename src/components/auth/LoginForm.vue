@@ -216,6 +216,10 @@ const handleLogin = async () => {
     })
 
     //console.log('✅ Login successful:', result)
+    if (result.success !== true) {
+      ElMessage.error("用户名或密码错误")
+      return
+    }
     ElMessage.success('登录成功')
 
     // 确保认证状态已更新，然后跳转到仪表盘

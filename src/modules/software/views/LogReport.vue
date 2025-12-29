@@ -2,85 +2,96 @@
   <div class="ops-page-layout">
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
-      <span class="filter-label">时间范围：</span>
-      <el-select v-model="filterDay" size="small" style="width: 120px" @change="handleDayChange">
-        <el-option label="All" value="all" />
-        <el-option label="Today" value="1" />
-        <el-option label="Last 7 Days" value="7" />
-        <el-option label="Last 30 Days" value="30" />
-        <el-option label="Last Year" value="365" />
-      </el-select>
-      <el-select
-        v-model="engineFilter"
-        placeholder="执行引擎节点"
-        size="small"
-        clearable
-        style="width: 130px"
-        @change="handleFilterChange"
-      >
-        <el-option
-          v-for="node in engineOptions"
-          :key="node"
-          :label="node"
-          :value="node"
-        />
-      </el-select>
-      <el-select
-        v-model="statusFilter"
-        placeholder="状态"
-        size="small"
-        clearable
-        style="width: 100px"
-        @change="handleFilterChange"
-      >
-        <el-option
-          v-for="status in statusOptions"
-          :key="status.value"
-          :label="status.label"
-          :value="status.value"
-        />
-      </el-select>
-      <el-select
-        v-model="actionFilter"
-        placeholder="操作"
-        size="small"
-        clearable
-        style="width: 100px"
-        @change="handleFilterChange"
-      >
-        <el-option
-          v-for="action in actionOptions"
-          :key="action"
-          :label="action"
-          :value="action"
-        />
-      </el-select>
-      <el-input
-        v-model="searchText"
-        placeholder="搜索..."
-        size="small"
-        clearable
-        style="width: 180px"
-        @input="handleFilterChange"
-      >
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-      </el-input>
+      <el-form inline size="small">
+        <el-form-item label="时间范围">
+          <el-select v-model="filterDay" style="width: 120px">
+            <el-option label="All" value="all" />
+            <el-option label="Today" value="1" />
+            <el-option label="Last 7 Days" value="7" />
+            <el-option label="Last 30 Days" value="30" />
+            <el-option label="Last Year" value="365" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="执行引擎">
+          <el-select
+            v-model="engineFilter"
+            placeholder="全部"
+            clearable
+            style="width: 130px"
+          >
+            <el-option
+              v-for="node in engineOptions"
+              :key="node"
+              :label="node"
+              :value="node"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="statusFilter"
+            placeholder="全部"
+            clearable
+            style="width: 100px"
+          >
+            <el-option
+              v-for="status in statusOptions"
+              :key="status.value"
+              :label="status.label"
+              :value="status.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="操作">
+          <el-select
+            v-model="actionFilter"
+            placeholder="全部"
+            clearable
+            style="width: 100px"
+          >
+            <el-option
+              v-for="action in actionOptions"
+              :key="action"
+              :label="action"
+              :value="action"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchText"
+            placeholder="搜索..."
+            clearable
+            style="width: 180px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 操作栏 -->
-    <!-- <div class="ops-action-bar"> -->
-      <!-- 暂无操作按钮 -->
-    <!-- </div> -->
+    <div class="ops-action-bar">
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadLogs" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
+    </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadLogs" title="刷新">
-          <el-icon v-show="!loading"><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         v-loading="loading"
         :data="tableData"
@@ -88,7 +99,7 @@
         style="width: 100%"
         size="small"
         row-key="run_id"
-        height="calc(100vh - 260px)"
+        height="calc(100vh - 300px)"
         :default-sort="{ prop: 'start_time', order: 'descending' }"
         empty-text="没有数据"
       >
@@ -112,9 +123,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="ata_node" label="执行引擎节点" min-width="130" sortable />
-        <el-table-column prop="message" label="结果" min-width="200" sortable>
+        <el-table-column prop="message" label="结果" min-width="200" sortable show-overflow-tooltip>
           <template #default="{ row }">
-            <span class="message-text">{{ formatMessage(row.message) }}</span>
+            {{ formatMessage(row.message) }}
           </template>
         </el-table-column>
         <el-table-column prop="username" label="用户" min-width="100" sortable />
@@ -156,7 +167,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { softwareLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
@@ -291,19 +302,24 @@ function formatMessage(message) {
 }
 
 /**
- * 时间范围变更
+ * 搜索处理
  */
-function handleDayChange() {
+function handleSearch() {
   pagination.value.page = 1
   loadLogs()
 }
 
 /**
- * 筛选变更
+ * 重置处理
  */
-function handleFilterChange() {
+function handleReset() {
+  filterDay.value = '1'
+  actionFilter.value = ''
+  statusFilter.value = ''
+  engineFilter.value = ''
+  searchText.value = ''
   pagination.value.page = 1
-  applyFilters()
+  loadLogs()
 }
 
 /**
@@ -351,8 +367,8 @@ async function loadLogs() {
   try {
     const params = {
       module: 'spm',
-      action: 'all',
-      status: 'all',
+      action: actionFilter.value || 'all',
+      status: statusFilter.value || 'all',
       day: filterDay.value
     }
     const response = await softwareLogsApi.getOperationLogs(params)
@@ -363,12 +379,6 @@ async function loadLogs() {
 
     // 设置总数（服务端返回）
     pagination.value.total = data.total || allData.value.length
-
-    // 重置筛选
-    actionFilter.value = ''
-    statusFilter.value = ''
-    engineFilter.value = ''
-    searchText.value = ''
 
     applyFilters()
   } catch (error) {
@@ -416,11 +426,6 @@ onMounted(() => {
 <style scoped lang="scss">
 /* 此组件使用全局的 ops-page-layout 样式 */
 
-.filter-label {
-  color: #409eff;
-  font-size: 14px;
-}
-
 .status-badge {
   &.clickable {
     cursor: pointer;
@@ -429,12 +434,5 @@ onMounted(() => {
       opacity: 0.8;
     }
   }
-}
-
-.message-text {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 </style>

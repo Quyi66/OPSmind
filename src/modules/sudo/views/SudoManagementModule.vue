@@ -4,19 +4,11 @@
     :description="moduleDescription"
     :hide-header="true"
   >
-    <div class="ops-module">
-      <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
-        <router-link
-          v-for="item in navItems"
-          :key="item.key"
-          :to="item.path"
-          class="ops-sidebar-item"
-          :class="{ 'is-active': isActiveRoute(item.key) }"
-        >
-          <i :class="item.icon"></i>
-          <span>{{ item.label }}</span>
-        </router-link>
-      </aside>
+    <div class="ops-module ops-module--with-sidebar">
+      <ModuleSideMenu
+        :menu-groups="menuGroups"
+        :default-openeds="defaultOpeneds"
+      />
 
       <section class="ops-module__content">
         <router-view />
@@ -27,30 +19,21 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
-
-const route = useRoute()
+import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
+import { MENU_CONFIG } from '@/config/menu.config.js'
+import { getGroupMenuConfig } from '@/config/module-nav.config.js'
 
 const moduleTitle = 'sudo权限管理'
 const moduleDescription = ''
 
-const navItems = [
-  { key: 'permission', label: 'sudo列表', icon: 'fa fa-list', path: '/sudo/permission' },
-  { key: 'apply', label: 'sudo申请', icon: 'fa fa-file-alt', path: '/sudo/apply' },
-  { key: 'reset', label: '重置密码', icon: 'fa fa-key', path: '/sudo/reset' },
-  { key: 'settings', label: '功能设置', icon: 'fa fa-cog', path: '/sudo/settings' },
-  { key: 'log', label: '操作记录', icon: 'fa fa-history', path: '/sudo/log' }
-]
+// 获取"用户管理"分组下的所有模块菜单（用户、流程、sudo权限、密码）
+const menuGroups = computed(() => getGroupMenuConfig('user-management', MENU_CONFIG))
 
-// 判断当前路由是否激活
-function isActiveRoute(key) {
-  return route.path.includes(`/sudo/${key}`)
-}
+// 默认展开sudo菜单
+const defaultOpeneds = ['sudo']
 </script>
 
 <style scoped lang="scss">
-// 样式已统一至 opsmind.scss
+// 样式已统一至公共样式文件
 </style>
-
-

@@ -55,8 +55,6 @@ export const useMenuStore = defineStore('menu', () => {
 
   // 动作
   const setActiveGroup = groupCode => {
-    //console.log('🎯 Setting active group:', groupCode)
-
     // 先清除当前选中的菜单项，避免冲突
     activeMenuItem.value = ''
 
@@ -72,7 +70,6 @@ export const useMenuStore = defineStore('menu', () => {
         const group = getMenuGroup(groupCode)
         if (group && group.children && group.children.length > 0) {
           const firstMenuItem = group.children[0]
-          //console.log('🎯 Auto-selecting first menu item:', firstMenuItem.code)
           setActiveMenuItem(firstMenuItem.code)
         }
       }, 100) // 100ms延迟，确保状态更新完成
@@ -83,7 +80,6 @@ export const useMenuStore = defineStore('menu', () => {
   }
 
   const setActiveMenuItem = menuCode => {
-    //console.log('🎯 Setting active menu item:', menuCode)
     activeMenuItem.value = menuCode
 
     // 独立页面：隐藏左侧菜单，但仍需推送路由

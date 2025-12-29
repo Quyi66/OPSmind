@@ -225,7 +225,7 @@
           />
         </el-form-item>
       </el-form>
-      <el-descriptions v-else :column="1" border>
+      <el-descriptions v-else :column="1" border label-width="100">
         <el-descriptions-item label="域">{{ sysForm.domain }}</el-descriptions-item>
         <el-descriptions-item label="参数名称">{{ sysForm.name }}</el-descriptions-item>
         <el-descriptions-item label="参数值">

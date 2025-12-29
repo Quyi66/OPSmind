@@ -4,19 +4,12 @@
     :description="moduleDescription"
     :hide-header="true"
   >
-    <div class="ops-module">
-      <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
-        <div
-          v-for="item in navItems"
-          :key="item.key"
-          class="ops-sidebar-item"
-          :class="{ 'is-active': activeView === item.key }"
-          @click="handleNavClick(item)"
-        >
-          <i :class="item.icon" />
-          <span>{{ item.label }}</span>
-        </div>
-      </aside>
+    <div class="ops-module ops-module--with-sidebar">
+      <ModuleSideMenu
+        :menu-groups="menuGroups"
+        :default-openeds="defaultOpeneds"
+        @select="handleMenuSelect"
+      />
 
       <section class="ops-module__content">
         <!-- 软件包（默认页面） -->
@@ -52,13 +45,16 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
+import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
 import SoftwareHome from './SoftwareHome.vue'
 import RepoManagement from './RepoManagement.vue'
 import LocalInstall from './LocalInstall.vue'
 import LogReport from './LogReport.vue'
+import { MENU_CONFIG } from '@/config/menu.config.js'
+import { getGroupMenuConfig } from '@/config/module-nav.config.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -67,29 +63,20 @@ const router = useRouter()
 const moduleTitle = '软件管理'
 const moduleDescription = ''
 
+// 获取"补丁漏洞"分组下的所有模块菜单（补丁、软件）
+const menuGroups = computed(() => getGroupMenuConfig('patch-testing', MENU_CONFIG))
+
+// 默认展开软件菜单
+const defaultOpeneds = ['software']
+
 // 当前视图
 const activeView = ref('packages')
-
-// 导航项（与源系统一致）
-const navItems = [
-  { key: 'packages', label: '软件包', icon: 'fa fa-cube' },
-  { key: 'repos', label: '仓库', icon: 'fa fa-database' },
-  { key: 'localInstall', label: '本地安装', icon: 'fa fa-map-marker' },
-  { key: 'logs', label: '日志报告', icon: 'fa fa-file-text-o' }
-]
 
 // 子组件引用
 const softwareHomeRef = ref(null)
 const repoManagementRef = ref(null)
 const localInstallRef = ref(null)
 const logReportRef = ref(null)
-
-// 获取当前模块的基础路径
-function getBasePath() {
-  const path = route.path
-  const match = path.match(/^\/([^/]+)/)
-  return match ? `/${match[1]}` : '/software'
-}
 
 /**
  * 解析路由路径，确定当前视图
@@ -117,12 +104,9 @@ function parseRouteView() {
   return 'packages'
 }
 
-// 导航点击
-function handleNavClick(item) {
+// 菜单选择处理
+function handleMenuSelect(item) {
   activeView.value = item.key
-  const basePath = getBasePath()
-  const targetPath = item.key === 'packages' ? basePath : `${basePath}/${item.key}`
-  router.push(targetPath)
 }
 
 // 监听路由变化
@@ -140,8 +124,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-// 样式已统一至 opsmind.scss
-
 // 软件模块特定样式
 .view-container {
   flex: 1;
@@ -159,4 +141,3 @@ onMounted(() => {
   overflow: hidden;
 }
 </style>
-

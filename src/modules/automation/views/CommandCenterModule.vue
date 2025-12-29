@@ -4,19 +4,11 @@
     :description="moduleDescription"
     :hide-header="true"
   >
-    <div class="ops-module">
-      <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
-        <router-link
-          v-for="item in navItems"
-          :key="item.key"
-          :to="item.path"
-          class="ops-sidebar-item"
-          :class="{ 'is-active': isActiveRoute(item.key) }"
-        >
-          <i :class="item.icon" />
-          <span>{{ item.label }}</span>
-        </router-link>
-      </aside>
+    <div class="ops-module ops-module--with-sidebar">
+      <ModuleSideMenu
+        :menu-groups="menuGroups"
+        :default-openeds="defaultOpeneds"
+      />
 
       <section class="ops-module__content">
         <router-view />
@@ -34,28 +26,24 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, provide, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
+import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
 import RunCommandDialog from '@/modules/automation/components/command/dialogs/RunCommandDialog.vue'
+import { MENU_CONFIG } from '@/config/menu.config.js'
+import { getGroupMenuConfig } from '@/config/module-nav.config.js'
 
-const route = useRoute()
 const router = useRouter()
 
 const moduleTitle = '命令管理'
 const moduleDescription = ''
 
-const navItems = [
-  { key: 'list', label: '命令列表', icon: 'fas fa-list', path: '/cmd/list' },
-  { key: 'job', label: '命令作业', icon: 'fas fa-tasks', path: '/cmd/job' },
-  { key: 'review', label: '命令审核', icon: 'fas fa-clipboard-check', path: '/cmd/review' },
-  { key: 'logs', label: '运行记录', icon: 'fas fa-file-alt', path: '/cmd/logs' },
-  { key: 'console', label: 'Console', icon: 'fas fa-terminal', path: '/cmd/console' }
-]
+// 获取"自动化管理"分组下的所有模块菜单（作业、脚本、命令）
+const menuGroups = computed(() => getGroupMenuConfig('automation', MENU_CONFIG))
 
-function isActiveRoute(key) {
-  return route.path.includes(`/cmd/${key}`)
-}
+// 默认展开命令菜单
+const defaultOpeneds = ['cmd']
 
 // 执行命令对话框状态
 const runCommandDialogVisible = ref(false)
@@ -94,6 +82,5 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-// 样式已统一至 opsmind.scss
+// 样式已统一至公共样式文件
 </style>
-

@@ -173,7 +173,7 @@
               <el-input
                 v-model="vulnFilters.host_key"
                 placeholder="输入主机IP"
-                style="width: 120px"
+                style="width: 130px"
                 clearable
               />
             </el-form-item>
@@ -186,7 +186,7 @@
               />
             </el-form-item>
             <el-form-item label="严重程度">
-              <el-select v-model="vulnFilters.severity" style="width: 100px">
+              <el-select v-model="vulnFilters.severity" style="width: 80px">
                 <el-option label="所有" value="all" />
                 <el-option label="严重" value="Critical" />
                 <el-option label="重要" value="Important" />
@@ -195,7 +195,7 @@
               </el-select>
             </el-form-item>
             <el-form-item label="补丁状态">
-              <el-select v-model="vulnFilters.patch_status" style="width: 120px">
+              <el-select v-model="vulnFilters.patch_status" style="width: 110px">
                 <el-option label="所有" value="all" />
                 <el-option label="未修复" value="no_repair" />
                 <el-option label="已修复" value="is_repair" />
@@ -215,13 +215,13 @@
               </el-select>
             </el-form-item>
             <el-form-item label="操作系统">
-              <el-select v-model="vulnFilters.os_distro" style="width: 100px">
+              <el-select v-model="vulnFilters.os_distro" style="width: 80px">
                 <el-option label="所有" value="all" />
                 <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
               </el-select>
             </el-form-item>
             <el-form-item label="系统版本">
-              <el-select v-model="vulnFilters.os_major_version" style="width: 100px">
+              <el-select v-model="vulnFilters.os_major_version" style="width: 80px">
                 <el-option label="所有" value="all" />
                 <el-option v-for="item in osVersionList" :key="item" :label="item" :value="item" />
               </el-select>
@@ -261,7 +261,7 @@
             :data="vulnTableData"
             stripe
             style="width: 100%"
-            max-height="calc(100vh - 500px)"
+            max-height="calc(100vh - 600px)"
             @selection-change="handleVulnSelectionChange"
           >
             <el-table-column type="selection" width="45" />
@@ -1013,7 +1013,7 @@ defineExpose({
   align-items: center;
   padding: 0 16px 8px 16px;
   background: #fff;
-  border-bottom: 1px solid #e9ecef;
+  //border-bottom: 1px solid #e9ecef;
 
   &__actions {
     display: flex;
@@ -1156,6 +1156,7 @@ defineExpose({
   flex-direction: column;
   gap: 16px;
   padding: 0 !important;
+  height: auto;
 }
 
 // 表格区域

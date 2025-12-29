@@ -4,19 +4,11 @@
     :description="moduleDescription"
     :hide-header="true"
   >
-    <div class="ops-module">
-      <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
-        <router-link
-          v-for="item in navItems"
-          :key="item.key"
-          :to="item.path"
-          class="ops-sidebar-item"
-          :class="{ 'is-active': isActiveRoute(item.key) }"
-        >
-          <i :class="item.icon" />
-          <span>{{ item.label }}</span>
-        </router-link>
-      </aside>
+    <div class="ops-module ops-module--with-sidebar">
+      <ModuleSideMenu
+        :menu-groups="menuGroups"
+        :default-openeds="defaultOpeneds"
+      />
 
       <section class="ops-module__content">
         <router-view />
@@ -26,31 +18,23 @@
 </template>
 
 <script setup>
-import { provide } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { provide, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
+import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
+import { MENU_CONFIG } from '@/config/menu.config.js'
+import { getGroupMenuConfig } from '@/config/module-nav.config.js'
 
-const route = useRoute()
 const router = useRouter()
 
 const moduleTitle = '系统巡检'
 const moduleDescription = ''
 
-const navItems = [
-  { key: 'overview', label: '巡检总览', icon: 'fad fa-fw fa-th-large', path: '/cac/overview' },
-  { key: 'templates', label: '巡检模板', icon: 'fad fa-fw fa-list-alt', path: '/cac/templates' },
-  { key: 'results', label: '检查结果', icon: 'fad fa-fw fa-history', path: '/cac/results' },
-  { key: 'config', label: '巡检配置', icon: 'fad fa-fw fa-cog', path: '/cac/config' },
-  { key: 'email', label: '邮件配置', icon: 'fad fa-fw fa-envelope', path: '/cac/email' }
-]
+// 获取"系统巡检"分组下的所有模块菜单（当前只有巡检一个模块）
+const menuGroups = computed(() => getGroupMenuConfig('system-inspection', MENU_CONFIG))
 
-function isActiveRoute(key) {
-  // 特殊处理 results 因为有子路由
-  if (key === 'results') {
-    return route.path.includes('/cac/results') || route.path.includes('/cac/structural-diagram')
-  }
-  return route.path.includes(`/cac/${key}`)
-}
+// 默认展开巡检菜单
+const defaultOpeneds = ['cac']
 
 /**
  * 处理子组件的导航请求
@@ -72,6 +56,5 @@ provide('handleNavigate', handleNavigate)
 </script>
 
 <style scoped lang="scss">
-// 样式已统一至 opsmind.scss
+// 样式已统一至公共样式文件
 </style>
-

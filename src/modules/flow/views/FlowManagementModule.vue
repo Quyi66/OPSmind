@@ -33,19 +33,11 @@
     </div>
 
     <!-- 常规视图 -->
-    <div v-else class="ops-module">
-      <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
-        <router-link
-          v-for="item in navItems"
-          :key="item.key"
-          :to="item.path"
-          class="ops-sidebar-item"
-          :class="{ 'is-active': isActiveRoute(item.key) }"
-        >
-          <i :class="item.icon"></i>
-          <span>{{ item.label }}</span>
-        </router-link>
-      </aside>
+    <div v-else class="ops-module ops-module--with-sidebar">
+      <ModuleSideMenu
+        :menu-groups="menuGroups"
+        :default-openeds="defaultOpeneds"
+      />
 
       <section class="ops-module__content">
         <router-view />
@@ -55,27 +47,23 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, provide, computed } from 'vue'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
+import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
 import FlowDesignView from '@/modules/flow/components/FlowDesignView.vue'
 import FlowExecView from '@/modules/flow/components/FlowExecView.vue'
 import FlowHistoryView from '@/modules/flow/components/FlowHistoryView.vue'
-
-const route = useRoute()
-const router = useRouter()
+import { MENU_CONFIG } from '@/config/menu.config.js'
+import { getGroupMenuConfig } from '@/config/module-nav.config.js'
 
 const moduleTitle = '流程管理'
 const moduleDescription = ''
 
-const navItems = [
-  { key: 'list', label: '流程列表', icon: 'fa fa-list-alt', path: '/flow/list' },
-  { key: 'execution', label: '执行列表', icon: 'fa fa-play-circle', path: '/flow/execution' }
-]
+// 获取"用户管理"分组下的所有模块菜单（用户、流程、sudo权限、密码）
+const menuGroups = computed(() => getGroupMenuConfig('user-management', MENU_CONFIG))
 
-function isActiveRoute(key) {
-  return route.path.includes(`/flow/${key}`)
-}
+// 默认展开流程菜单
+const defaultOpeneds = ['flow']
 
 // 设计器模式
 const isDesignMode = ref(false)
@@ -172,8 +160,6 @@ provide('handleHistory', handleHistory)
 </script>
 
 <style scoped lang="scss">
-// 样式已统一至 opsmind.scss
-
 // 特定于流程模块的全屏视图容器
 .design-container,
 .exec-container,

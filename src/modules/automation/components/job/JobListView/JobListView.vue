@@ -2,7 +2,7 @@
   <div class="ops-page-layout" style="flex-direction: row; padding: 0; gap: 0;">
     <aside class="ops-sidebar-nav">
       <div class="ops-sidebar-header">
-        <el-input v-model="appStr" style="width: 100%" placeholder="请输入" :prefix-icon="'Search'" @input="filterApplets()" />
+        <el-input v-model="appStr" style="width: 140px" placeholder="请输入" :prefix-icon="'Search'" @input="filterApplets()" />
       </div>
       <el-scrollbar class="ops-sidebar-content">
         <button

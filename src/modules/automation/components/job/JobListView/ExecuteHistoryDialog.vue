@@ -7,147 +7,145 @@
     @close="handleClose"
   >
     <div class="history-dialog">
-      <section class="history-toolbar">
-        <div class="toolbar-group">
-          <span class="toolbar-label">时间范围</span>
-          <el-select v-model="timeRange" size="small" class="toolbar-select">
-            <el-option
-              v-for="option in timeRangeOptions"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
-          </el-select>
-        </div>
-
-        <div class="toolbar-group">
-          <span class="toolbar-label">状态</span>
-          <el-select v-model="statusValue" size="small" class="toolbar-select">
-            <el-option
-              v-for="option in statusOptions"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
-          </el-select>
-        </div>
-
-        <el-input
-          v-model.trim="keyword"
-          size="small"
-          placeholder="输入作业名称搜索"
-          clearable
-          @clear="handleSearch"
-          @keyup.enter="handleSearch"
-          style="width: 250px"
-        >
-          <template #suffix>
-            <el-icon class="search-icon" @click="handleSearch"><Search /></el-icon>
-          </template>
-        </el-input>
-
-        <div class="toolbar-group toolbar-search">
-          <el-button size="small" :icon="RefreshRight" @click="handleRefresh">刷新</el-button>
-        </div>
-      </section>
-
-      <el-table
-        v-loading="tableLoading"
-        :data="tableData"
-        max-height="calc(100vh - 400px)"
-        class="history-table"
-        @sort-change="handleSortChange"
-        :empty-text="tableLoading ? ' ' : '暂无数据'"
-      >
-        <el-table-column
-          prop="startTime"
-          label="开始时间"
-          width="180"
-          sortable="custom"
-          column-key="start_time"
-        />
-        <el-table-column prop="jobTitle" label="作业" min-width="150" show-overflow-tooltip />
-        <el-table-column label="类型" width="80">
-          <template #default="{ row }">
-            <span>{{ jobTypeLabel(row.jobTypeKey, row.jobType) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="username" label="执行人" width="100" />
-        <el-table-column prop="reviewUser" label="审核人" width="100" />
-        <el-table-column prop="duration" label="耗时" width="100" />
-        <el-table-column
-          prop="endTime"
-          label="结束时间"
-          width="180"
-          sortable="custom"
-          column-key="end_time"
-        />
-        <el-table-column label="Ansible Node" min-width="180">
-          <template #default="{ row }">
-            <div v-if="row.ansibleNodes.length" class="node-badges">
-              <el-tag
-                v-for="node in row.ansibleNodes"
-                :key="node"
-                type="info"
-                size="small"
-                class="node-badge"
-              >
-                {{ node }}
-              </el-tag>
-            </div>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="120" sortable="custom" column-key="status">
-          <template #default="{ row }">
-            <el-tag
-              v-if="row.status"
-              :type="statusTagType(row.status)"
-              effect="dark"
-              size="small"
-              class="history-status-tag"
-              :class="{ 'is-clickable': !!row.id }"
-              @click.stop="row.id && handleStatusClick(row)"
+      <!-- 筛选栏 -->
+      <div class="ops-filter-bar">
+        <el-form inline size="small">
+          <el-form-item label="时间范围">
+            <el-select v-model="timeRange" style="width: 120px;">
+              <el-option
+                v-for="option in timeRangeOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="statusValue" style="width: 120px;">
+              <el-option
+                v-for="option in statusOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="关键词">
+            <el-input
+              v-model.trim="keyword"
+              placeholder="输入作业名称搜索"
+              clearable
+              style="width: 200px;"
             >
-              {{ statusLabel(row.status) }}
-            </el-tag>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="详情" min-width="150">
-          <template #default="{ row }">
-            <div v-if="row.statsBadges.length" class="stats-badges">
-              <el-tag
-                v-for="badge in row.statsBadges"
-                :key="badge.key"
-                :type="badge.type"
-                size="small"
-                effect="plain"
-              >
-                <i :class="badge.icon" class="badge-icon" />
-                <span>{{ badge.count }}</span>
-              </el-tag>
-            </div>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="80" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              v-if="canRerun(row)"
-              text
-              type="primary"
-              size="small"
-              @click="handleRerun(row)"
-            >
-              重跑
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
             </el-button>
-            <span v-else class="text-muted">-</span>
-          </template>
-        </el-table-column>
-      </el-table>
+            <el-button @click="handleReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-      <div class="history-footer">
+      <!-- 操作栏 -->
+      <!-- <div class="ops-action-bar">
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="tableLoading" @click="handleRefresh" title="刷新">
+          <el-icon v-show="!tableLoading"><Refresh /></el-icon>
+        </el-button>
+      </div> -->
+
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper">
+        <el-table
+          v-loading="tableLoading"
+          :data="tableData"
+          max-height="calc(100vh - 400px)"
+          @sort-change="handleSortChange"
+          :empty-text="tableLoading ? ' ' : '暂无数据'"
+        >
+          <el-table-column
+            prop="startTime"
+            label="开始时间"
+            width="180"
+            sortable="custom"
+            column-key="start_time"
+          />
+          <el-table-column prop="jobTitle" label="作业" min-width="150" show-overflow-tooltip />
+          <el-table-column label="类型" width="80">
+            <template #default="{ row }">
+              <span>{{ jobTypeLabel(row.jobTypeKey, row.jobType) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="username" label="执行人" width="100" />
+          <el-table-column prop="reviewUser" label="审核人" width="100" />
+          <el-table-column prop="duration" label="耗时" width="100" />
+          <el-table-column
+            prop="endTime"
+            label="结束时间"
+            width="180"
+            sortable="custom"
+            column-key="end_time"
+          />
+          <el-table-column label="Ansible Node" min-width="180">
+            <template #default="{ row }">
+              <div v-if="row.ansibleNodes.length" class="node-badges">
+                <el-tag
+                  v-for="node in row.ansibleNodes"
+                  :key="node"
+                  type="info"
+                  size="small"
+                  class="node-badge"
+                >
+                  {{ node }}
+                </el-tag>
+              </div>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="120" sortable="custom" column-key="status">
+            <template #default="{ row }">
+              <el-tag
+                v-if="row.status"
+                :type="statusTagType(row.status)"
+                effect="dark"
+                size="small"
+                class="history-status-tag"
+                :class="{ 'is-clickable': !!row.id }"
+                @click.stop="row.id && handleStatusClick(row)"
+              >
+                {{ statusLabel(row.status) }}
+              </el-tag>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                v-if="canRerun(row)"
+                text
+                type="primary"
+                size="small"
+                @click="handleRerun(row)"
+              >
+                重跑
+              </el-button>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 分页器区域 -->
+      <div class="ops-pagination-wrapper">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
@@ -173,7 +171,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, RefreshRight } from '@element-plus/icons-vue'
+import { Search, RefreshRight, Refresh } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from './ExecuteResultDialog.vue'
 import {
@@ -245,11 +243,7 @@ watch(
   { immediate: true }
 )
 
-watch([timeRange, statusValue], () => {
-  if (!props.visible || !props.jobId) return
-  currentPage.value = 1
-  fetchRunLogs()
-})
+// 不自动搜索，需要点击搜索按钮
 
 watch(
   () => props.visible,
@@ -277,6 +271,14 @@ function resetState() {
 
 function handleSearch() {
   if (!props.visible || !props.jobId) return
+  currentPage.value = 1
+  fetchRunLogs()
+}
+
+function handleReset() {
+  timeRange.value = 'today'
+  statusValue.value = 'all'
+  keyword.value = ''
   currentPage.value = 1
   fetchRunLogs()
 }
@@ -505,43 +507,11 @@ function formatDuration(startValue, endValue) {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .history-dialog {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.history-toolbar {
-  display: flex;
-  gap: 16px;
-  align-items: flex-end;
-}
-
-.toolbar-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.toolbar-label {
-  font-size: 12px;
-  color: #909399;
-}
-
-.toolbar-select {
-  width: 160px;
-}
-
-.toolbar-search {
-  margin-left: auto;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
-.history-table {
-  width: 100%;
 }
 
 .history-status-tag.is-clickable {
@@ -555,34 +525,7 @@ function formatDuration(startValue, endValue) {
   gap: 4px;
 }
 
-.node-badge {
-  margin-right: 0;
-}
-
-.stats-badges {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.badge-icon {
-  margin-right: 4px;
-}
-
-.history-footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.ml-1 {
-  margin-left: 4px;
-}
-
 .text-muted {
   color: #c0c4cc;
-}
-
-.search-icon {
-  cursor: pointer;
 }
 </style>

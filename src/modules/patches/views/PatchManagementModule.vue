@@ -4,19 +4,11 @@
     :description="moduleDescription"
     :hide-header="true"
   >
-    <div class="ops-module">
-      <aside class="ops-sidebar-nav ops-sidebar-nav--narrow">
-        <router-link
-          v-for="item in navItems"
-          :key="item.key"
-          :to="item.path"
-          class="ops-sidebar-item"
-          :class="{ 'is-active': isActiveRoute(item.key) }"
-        >
-          <i :class="item.icon" />
-          <span>{{ item.label }}</span>
-        </router-link>
-      </aside>
+    <div class="ops-module ops-module--with-sidebar">
+      <ModuleSideMenu
+        :menu-groups="menuGroups"
+        :default-openeds="defaultOpeneds"
+      />
 
       <section class="ops-module__content">
         <router-view />
@@ -33,34 +25,24 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, provide, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
+import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
 import InstallPatchDialog from '../components/dialogs/InstallPatchDialog.vue'
+import { MENU_CONFIG } from '@/config/menu.config.js'
+import { getGroupMenuConfig } from '@/config/module-nav.config.js'
 
-const route = useRoute()
 const router = useRouter()
 
 const moduleTitle = '补丁管理'
 const moduleDescription = ''
 
-const navItems = [
-  { key: 'linuxPatchScan', label: 'Linux补丁扫描', icon: 'fas fa-search', path: '/patches/linuxPatchScan' },
-  { key: 'linuxPatchInstall', label: 'Linux补丁安装', icon: 'fas fa-download', path: '/patches/linuxPatchInstall' },
-  { key: 'linuxPatchRollback', label: 'Linux补丁回退', icon: 'fas fa-undo', path: '/patches/linuxPatchRollback' },
-  { key: 'linuxYumManage', label: 'LinuxYUM管理', icon: 'fas fa-cogs', path: '/patches/linuxYumManage' },
-  { key: 'linuxPatchLibrary', label: 'Linux补丁仓库', icon: 'fas fa-database', path: '/patches/linuxPatchLibrary' },
-  { key: 'linuxVulnerability', label: 'Linux漏洞概览', icon: 'fas fa-shield-alt', path: '/patches/linuxVulnerability' },
-  { key: 'windowsVulnerability', label: 'Windows漏洞', icon: 'fab fa-windows', path: '/patches/windowsVulnerability' },
-  { key: 'windowsUpdate', label: 'Windows更新', icon: 'fas fa-sync', path: '/patches/windowsUpdate' },
-  { key: 'windowsRollback', label: 'Windows回滚', icon: 'fas fa-history', path: '/patches/windowsRollback' },
-  { key: 'windowsView', label: 'Windows View', icon: 'fas fa-desktop', path: '/patches/windowsView' },
-  { key: 'logs', label: '操作日志报告', icon: 'fas fa-file-alt', path: '/patches/logs' }
-]
+// 获取"补丁漏洞"分组下的所有模块菜单（补丁、软件）
+const menuGroups = computed(() => getGroupMenuConfig('patch-testing', MENU_CONFIG))
 
-function isActiveRoute(key) {
-  return route.path.includes(`/patches/${key}`)
-}
+// 默认展开补丁菜单
+const defaultOpeneds = ['patches']
 
 // 安装对话框状态
 const installDialogVisible = ref(false)
@@ -92,6 +74,5 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-// 样式已统一至 opsmind.scss
+// 样式已统一至公共样式文件
 </style>
-

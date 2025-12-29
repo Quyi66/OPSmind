@@ -121,7 +121,11 @@
                 <el-table-column prop="id" label="Code" width="120" show-overflow-tooltip />
                 <el-table-column prop="appletCode" label="所属应用" width="120" />
                 <el-table-column prop="createdBy" label="创建人" width="100" />
-                <el-table-column prop="createdAt" label="创建时间" width="160" />
+                <el-table-column prop="createdAt" label="创建时间" width="180">
+                  <template #default="{ row }">
+                    {{ formatDateTime(row.createdAt) }}
+                  </template>
+                </el-table-column>
               </el-table>
             </div>
             <div class="ops-pagination-wrapper">
@@ -206,12 +210,16 @@
                 @selection-change="handleDatasetSelectionChange"
               >
                 <el-table-column type="selection" width="55" />
-                <el-table-column prop="name" label="标题" min-width="180" show-overflow-tooltip />
-                <el-table-column prop="code" label="Code" width="150" show-overflow-tooltip />
+                <el-table-column prop="name" label="标题" min-width="150" show-overflow-tooltip />
+                <el-table-column prop="code" label="Code" min-width="150" show-overflow-tooltip />
                 <el-table-column prop="appletCode" label="所属应用" width="120" />
                 <el-table-column prop="datasource" label="数据源" width="140" />
                 <el-table-column prop="createdBy" label="创建人" width="100" />
-                <el-table-column prop="createdAt" label="创建时间" width="160" />
+                <el-table-column prop="createdAt" label="创建时间" width="180">
+                  <template #default="{ row }">
+                    {{ formatDateTime(row.createdAt) }}
+                  </template>
+                </el-table-column>
               </el-table>
             </div>
             <div class="ops-pagination-wrapper">
@@ -305,7 +313,11 @@
                 <el-table-column prop="appletCode" label="所属应用" width="120" />
                 <el-table-column prop="type" label="类型" width="100" />
                 <el-table-column prop="createdBy" label="创建人" width="100" />
-                <el-table-column prop="lastRunTime" label="最后运行" width="160" />
+                <el-table-column prop="lastRunTime" label="最后运行" width="180">
+                  <template #default="{ row }">
+                    {{ formatDateTime(row.lastRunTime) }}
+                  </template>
+                </el-table-column>
               </el-table>
             </div>
             <div class="ops-pagination-wrapper">
@@ -360,7 +372,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'
-import { translateText } from '@/utils/i18n'
+import { translateText, formatDateTime } from '@/utils/i18n'
 
 const activeTab = ref('landing')
 

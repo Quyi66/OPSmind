@@ -9,14 +9,7 @@
     <!-- 主体区域 -->
     <div class="main-body">
       <div class="main-container">
-      <!-- 左侧菜单 -->
-      <SideMenu
-        v-if="showSideMenu"
-        :active-group="activeGroup"
-        :active-menu-item="activeMenuItem"
-        @menu-item-click="handleMenuItemClick"
-        class="side-menu-container"
-      />
+      <!-- 主内容区域（SideMenu已移至模块内部，使用Element-UI风格） -->
 
       <!-- 主内容区域 -->
       <div class="main-content" :class="{ 'with-side-menu': showSideMenu }">
@@ -43,7 +36,7 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import TopNavMenu from '@/components/layout/TopNavMenu.vue'
-import SideMenu from '@/components/layout/SideMenu.vue'
+// SideMenu已移至各模块内部，使用Element-UI风格的ModuleSideMenu
 import { useDashboardStore } from '@/stores/dashboard'
 import { useMenuStore } from '@/stores/menu.js'
 
@@ -253,7 +246,7 @@ onUnmounted(() => {
   border-bottom: 1px solid #e5e7eb;
   padding: 12px 24px;
   margin: 0 -16px 0 -16px;
-  margin-bottom: 12px;
+  // margin-bottom: 12px;
 }
 
 .module-toolbar-title {

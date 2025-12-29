@@ -4,7 +4,7 @@
 
 // 页面侧边导航容器
 .ops-sidebar-nav {
-  width: 160px;
+  width: 180px;
   flex-shrink: 0;
   background: #fff;
   border-right: 1px solid #e2e8f0;
@@ -26,7 +26,8 @@
   padding: 12px;
   border-bottom: 1px solid #e4e7ed;
 
-  .ops-sidebar-search {
+  .ops-sidebar-search,
+  .el-input.el-input--prefix {
     flex: 1;
   }
 }
@@ -84,15 +85,15 @@
     }
 
     // 左侧指示条
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: #1890ff;
-    }
+    // &::before {
+    //   content: '';
+    //   position: absolute;
+    //   left: 0;
+    //   top: 0;
+    //   bottom: 0;
+    //   width: 3px;
+    //   background: #1890ff;
+    // }
   }
 }
 
