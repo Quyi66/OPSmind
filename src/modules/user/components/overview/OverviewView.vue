@@ -29,35 +29,28 @@
           <span class="legend-item"><span class="dot dot--failed"></span> 失败</span>
           <span class="legend-item"><span class="dot dot--running"></span> 正在运行</span>
         </div>
-        <div ref="chartRef" class="chart-container">
-          <div v-if="chartLoading" class="chart-loading">
-            <i class="fa fa-spinner fa-spin"></i> 加载中...
-          </div>
-          <div v-else-if="!chartData.length" class="chart-empty">
-            <i class="fa fa-chart-line"></i> 暂无图表数据
-          </div>
-          <!-- ECharts 图表将在这里渲染 -->
+        <div ref="chartRef" class="chart-container" v-loading="chartLoading">
         </div>
       </div>
     </div>
 
-    <!-- 三天内操作记录 (Log View) -->
+    <!-- 操作记录 (Log View) -->
     <div class="table-section">
       <div class="table-section__header">
-        <div class="table-section__title">三天内操作记录</div>
+        <div class="table-section__title">操作记录</div>
         <div class="table-section__filters">
-          <el-select v-model="filters.day" size="small" placeholder="时间范围" @change="loadLogs">
+          <el-select v-model="filters.day" size="small" placeholder="时间范围" @change="handleFilterChange">
             <el-option label="今天" value="1" />
             <el-option label="3天内" value="3" />
             <el-option label="7天内" value="7" />
             <el-option label="30天内" value="30" />
           </el-select>
-          <el-select v-model="filters.status" size="small" placeholder="状态" clearable @change="loadLogs">
+          <el-select v-model="filters.status" size="small" placeholder="状态" clearable @change="handleFilterChange">
             <el-option label="全部" value="all" />
             <el-option label="成功" value="COMPLETED" />
             <el-option label="失败" value="ERROR,FAILED" />
           </el-select>
-          <el-select v-model="filters.action" size="small" placeholder="操作" clearable @change="loadLogs">
+          <el-select v-model="filters.action" size="small" placeholder="操作" clearable @change="handleFilterChange">
             <el-option label="全部" value="all" />
           </el-select>
           <el-input
@@ -66,7 +59,7 @@
             placeholder="搜索"
             clearable
             style="width: 140px"
-            @keyup.enter="loadLogs"
+            @keyup.enter="handleFilterChange"
           >
             <template #prefix>
               <i class="fa fa-search"></i>
@@ -76,7 +69,7 @@
         </div>
       </div>
 
-      <el-table :data="logList" v-loading="logsLoading" stripe>
+      <el-table :data="logList" v-loading="logsLoading" stripe max-height="400">
         <el-table-column prop="start_time" label="开始时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}
@@ -105,6 +98,20 @@
         </el-table-column>
       </el-table>
 
+      <!-- 分页器 -->
+      <div class="ops-pagination-wrapper" v-if="logList.length > 0 || pagination.total > 0">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePageSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
+
       <div v-if="!logList.length && !logsLoading" class="empty-data">
         <i class="fa fa-database"></i>
         <span>没有数据</span>
@@ -114,16 +121,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
+import * as echarts from 'echarts'
 import * as userApi from '@/modules/user/api'
 
 // 定义 emit 用于通知父组件切换视图
 const emit = defineEmits(['navigate'])
 
 // 统计卡片数据 (mapping from LUPM_STATISTICS)
-// linkView: 对应 Angular 源码中的 linkPage，映射到我们的子视图
-// pageParams: 跳转时带的参数
 const statCards = ref([
   { key: 'hostTotal', label: '主机', value: 0, icon: 'fab fa-linux', color: 'blue', linkView: 'users', pageParams: {} },
   { key: 'userTotal', label: '用户', value: 0, icon: 'fa fa-user-alt', color: 'gray', linkView: 'users', pageParams: {} },
@@ -140,11 +146,20 @@ function handleCardClick(stat) {
   }
 }
 
+// 图表相关
 const chartRef = ref(null)
 const chartData = ref([])
 const chartLoading = ref(false)
+let chartInstance = null
+
+// 日志表格相关
 const logList = ref([])
 const logsLoading = ref(false)
+const pagination = reactive({
+  page: 1,
+  size: 10,
+  total: 0
+})
 
 const filters = ref({
   day: '3',
@@ -153,6 +168,7 @@ const filters = ref({
   keyword: ''
 })
 
+// 状态类型映射
 function getStatusType(status) {
   const types = {
     COMPLETED: 'success',
@@ -177,21 +193,15 @@ function getStatusLabel(status) {
   return labels[status?.toUpperCase()] || status || '-'
 }
 
-function formatDuration(ms) {
-  if (!ms) return '-'
-  if (ms < 1000) return `${ms}ms`
-  const seconds = Math.floor(ms / 1000)
-  if (seconds < 60) return `${seconds}s`
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return `${minutes}m ${remainingSeconds}s`
-}
-
-// 格式化日期时间（从 ISO 格式转为可读格式）
+// 格式化日期时间
 function formatDateTime(isoString) {
   if (!isoString) return '-'
   try {
+    if (typeof isoString === 'string' && isoString.includes('T')) {
+      return isoString.replace('T', ' ').split('.')[0]
+    }
     const date = new Date(isoString)
+    if (isNaN(date.getTime())) return isoString
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
@@ -204,7 +214,7 @@ function formatDateTime(isoString) {
   }
 }
 
-// 计算两个时间戳之间的耗时
+// 计算耗时
 function calcDuration(startTime, endTime) {
   if (!startTime || !endTime) return '-'
   try {
@@ -223,13 +233,13 @@ function calcDuration(startTime, endTime) {
   }
 }
 
+// 加载统计数据
 async function loadStats() {
   try {
     const response = await userApi.getOverviewStats()
     const records = response?.records || response?.data?.records || []
     const data = records[0] || {}
 
-    // Map API response to stat cards
     statCards.value[0].value = data.hostTotal ?? 0
     statCards.value[1].value = data.userTotal ?? 0
     statCards.value[2].value = data.errorUserTotal ?? 0
@@ -241,12 +251,14 @@ async function loadStats() {
   }
 }
 
+// 加载图表数据
 async function loadChartData() {
   chartLoading.value = true
   try {
     const response = await userApi.getAuditLogStats(15)
     chartData.value = response?.records || response?.data?.records || []
-    // TODO: Initialize ECharts with chartData
+    await nextTick()
+    initChart()
   } catch (error) {
     console.error('Failed to load chart data:', error)
     chartData.value = []
@@ -255,6 +267,153 @@ async function loadChartData() {
   }
 }
 
+// 初始化ECharts图表
+function initChart() {
+  if (!chartRef.value) return
+
+  // 销毁旧实例
+  if (chartInstance) {
+    chartInstance.dispose()
+  }
+
+  chartInstance = echarts.init(chartRef.value)
+
+  // 生成完整的15天日期范围
+  const days = 15
+  const dateMap = new Map()
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // 初始化15天的数据（倒序，从15天前到今天）
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0] // YYYY-MM-DD
+    dateMap.set(dateStr, {
+      total: 0,
+      completedCount: 0,
+      failedCount: 0,
+      runningCount: 0
+    })
+  }
+
+  // 填入实际数据
+  chartData.value.forEach(item => {
+    const dateStr = item.auditDate
+    if (dateMap.has(dateStr)) {
+      dateMap.set(dateStr, {
+        total: item.total || 0,
+        completedCount: item.completedCount || 0,
+        failedCount: item.failedCount || 0,
+        runningCount: item.runningCount || 0
+      })
+    }
+  })
+
+  // 提取数据用于图表
+  const xData = []
+  const totalData = []
+  const completedData = []
+  const failedData = []
+  const runningData = []
+
+  dateMap.forEach((value, key) => {
+    const date = new Date(key)
+    xData.push(`${date.getMonth() + 1}-${date.getDate()}`)
+    totalData.push(value.total)
+    completedData.push(value.completedCount)
+    failedData.push(value.failedCount)
+    runningData.push(value.runningCount)
+  })
+
+  const option = {
+    tooltip: {
+      trigger: 'axis'
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '10%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: xData,
+      axisLabel: {
+        color: '#666'
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#e0e0e0'
+        }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        color: '#666'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#f0f0f0'
+        }
+      }
+    },
+    series: [
+      {
+        name: '总数',
+        type: 'line',
+        data: totalData,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: { color: 'rgb(68, 84, 106)', width: 2 },
+        itemStyle: { color: 'rgb(68, 84, 106)' }
+      },
+      {
+        name: '已完成',
+        type: 'line',
+        data: completedData,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: { color: 'rgb(112, 173, 71)', width: 2 },
+        itemStyle: { color: 'rgb(112, 173, 71)' }
+      },
+      {
+        name: '失败',
+        type: 'line',
+        data: failedData,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: { color: 'rgb(255, 0, 0)', width: 2 },
+        itemStyle: { color: 'rgb(255, 0, 0)' }
+      },
+      {
+        name: '正在运行',
+        type: 'line',
+        data: runningData,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: { color: 'rgb(68, 114, 196)', width: 2 },
+        itemStyle: { color: 'rgb(68, 114, 196)' }
+      }
+    ]
+  }
+
+  chartInstance.setOption(option)
+}
+
+// 窗口大小变化时调整图表
+function handleResize() {
+  chartInstance?.resize()
+}
+
+// 加载操作日志
 async function loadLogs() {
   logsLoading.value = true
   try {
@@ -262,9 +421,12 @@ async function loadLogs() {
       module: 'uim',
       action: filters.value.action,
       status: filters.value.status,
-      day: filters.value.day
+      day: filters.value.day,
+      page: pagination.page,
+      size: pagination.size
     })
     logList.value = response?.records || response?.data?.records || []
+    pagination.total = response?.total || response?.data?.total || logList.value.length
   } catch (error) {
     console.error('Failed to load logs:', error)
     logList.value = []
@@ -273,10 +435,35 @@ async function loadLogs() {
   }
 }
 
+// 筛选条件改变
+function handleFilterChange() {
+  pagination.page = 1
+  loadLogs()
+}
+
+// 分页改变
+function handlePageChange() {
+  loadLogs()
+}
+
+function handlePageSizeChange() {
+  pagination.page = 1
+  loadLogs()
+}
+
 onMounted(() => {
   loadStats()
   loadChartData()
   loadLogs()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+  }
 })
 </script>
 
@@ -329,9 +516,6 @@ onMounted(() => {
   height: 250px;
   background: #f8fafc;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .chart-loading,
@@ -339,6 +523,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  height: 100%;
   gap: 8px;
   color: #94a3b8;
   font-size: 14px;
@@ -360,5 +546,9 @@ onMounted(() => {
   i {
     font-size: 32px;
   }
+}
+
+.ops-pagination-wrapper {
+  margin-top: 16px;
 }
 </style>

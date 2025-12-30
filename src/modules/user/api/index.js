@@ -10,9 +10,9 @@ const DTS_BASE = '/dts/api/dts/q/data'
  * API: LUPM_STATISTICS
  */
 export function getOverviewStats() {
-    return apiService.post(`${DTS_BASE}/LUPM_STATISTICS/?cacheBuster=${Date.now()}`, {
-        params: {}
-    })
+  return apiService.post(`${DTS_BASE}/LUPM_STATISTICS/?cacheBuster=${Date.now()}`, {
+    params: {}
+  })
 }
 
 /**
@@ -21,9 +21,9 @@ export function getOverviewStats() {
  * @param {number} diffDay 天数，默认15天
  */
 export function getAuditLogStats(diffDay = 15) {
-    return apiService.post(`${DTS_BASE}/LUPM_AUDIT_LOG_STATISTICS/?cacheBuster=${Date.now()}`, {
-        params: { diffDay: String(diffDay) }
-    })
+  return apiService.post(`${DTS_BASE}/LUPM_AUDIT_LOG_STATISTICS/?cacheBuster=${Date.now()}`, {
+    params: { diffDay: String(diffDay) }
+  })
 }
 
 /**
@@ -32,15 +32,15 @@ export function getAuditLogStats(diffDay = 15) {
  * @param {Object} params 查询参数
  */
 export function getOperationLogs(params = {}) {
-    const defaultParams = {
-        module: 'uim',
-        action: 'all',
-        status: 'all',
-        day: '3'
-    }
-    return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, {
-        params: { ...defaultParams, ...params }
-    })
+  const defaultParams = {
+    module: 'uim',
+    action: 'all',
+    status: 'all',
+    day: '3'
+  }
+  return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, {
+    params: { ...defaultParams, ...params }
+  })
 }
 
 /**
@@ -49,18 +49,18 @@ export function getOperationLogs(params = {}) {
  * @param {Object} options 查询参数
  */
 export function getUsers(options = {}) {
-    const { page = 1, size = 15, filter = '', ...params } = options
-    return apiService.post(`${DTS_BASE}/LUPM_LIST_USERS/?cacheBuster=${Date.now()}`, {
-        params: {
-            host_key: params.host_key || '',
-            username: params.username || '',
-            types: params.types || '0,1',
-            lockStatus: params.lockStatus || '2'
-        },
-        page,
-        size,
-        filter
-    })
+  const { page = 1, size = 15, filter = '', ...params } = options
+  return apiService.post(`${DTS_BASE}/LUPM_LIST_USERS/?cacheBuster=${Date.now()}`, {
+    params: {
+      host_key: params.host_key || '',
+      username: params.username || '',
+      types: params.types || '0,1',
+      lockStatus: params.lockStatus || '2'
+    },
+    page,
+    size,
+    filter
+  })
 }
 
 /**
@@ -69,24 +69,24 @@ export function getUsers(options = {}) {
  * @param {Object} options 查询参数
  */
 export function getUserGroups(options = {}) {
-    const { page = 1, size = 10, filter = '', ...params } = options
-    return apiService.post(`${DTS_BASE}/LUPM_LIST_GROUPS/?cacheBuster=${Date.now()}`, {
-        params: {
-            host_key: params.host_key || null,
-            group_name: params.group_name || null,
-            hostObject: params.hostObject || '@@(linux)'
-        },
-        page,
-        size,
-        filter
-    })
+  const { page = 1, size = 10, filter = '', ...params } = options
+  return apiService.post(`${DTS_BASE}/LUPM_LIST_GROUPS/?cacheBuster=${Date.now()}`, {
+    params: {
+      host_key: params.host_key || null,
+      group_name: params.group_name || null,
+      hostObject: params.hostObject || '@@(linux)'
+    },
+    page,
+    size,
+    filter
+  })
 }
 
 /**
  * 获取功能配置
  */
 export function getFeatureConfig() {
-    return apiService.get(`/uim/api/uim/config?cacheBuster=${Date.now()}`)
+  return apiService.get(`/uim/api/uim/config?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -94,7 +94,7 @@ export function getFeatureConfig() {
  * @param {Object} config 配置数据
  */
 export function saveFeatureConfig(config) {
-    return apiService.post(`/uim/api/uim/config/save?cacheBuster=${Date.now()}`, config)
+  return apiService.post(`/uim/api/uim/config/save?cacheBuster=${Date.now()}`, config)
 }
 
 /**
@@ -102,9 +102,9 @@ export function saveFeatureConfig(config) {
  * API: LUPM_LIST_SUDO_TEMPLATES
  */
 export function getSudoTemplates() {
-    return apiService.post(`${DTS_BASE}/LUPM_LIST_SUDO_TEMPLATES/?cacheBuster=${Date.now()}`, {
-        params: {}
-    })
+  return apiService.post(`${DTS_BASE}/LUPM_LIST_SUDO_TEMPLATES/?cacheBuster=${Date.now()}`, {
+    params: {}
+  })
 }
 
 /**
@@ -114,12 +114,12 @@ export function getSudoTemplates() {
  * @param {object} options 分页参数 { page, size }
  */
 export function getSudoCommandsByTemplate(templateId, options = {}) {
-    const { page = 1, size = 10 } = options
-    return apiService.post(`${DTS_BASE}/LUPM_LIST_SUDO_COMMAND_BY_TEMPLATE_ID/?cacheBuster=${Date.now()}`, {
-        params: { templateId },
-        page,
-        size
-    })
+  const { page = 1, size = 10 } = options
+  return apiService.post(`${DTS_BASE}/LUPM_LIST_SUDO_COMMAND_BY_TEMPLATE_ID/?cacheBuster=${Date.now()}`, {
+    params: { templateId },
+    page,
+    size
+  })
 }
 
 /**
@@ -128,13 +128,13 @@ export function getSudoCommandsByTemplate(templateId, options = {}) {
  * @param {Object} data 模板数据 {id, name, description}
  */
 export function createSudoTemplate(data) {
-    return apiService.post(`/jao/api/jao/jobs/kJym3M/run?cacheBuster=${Date.now()}`, {
-        params: {
-            id: data.id || null,
-            name: data.name,
-            description: data.description || ''
-        }
-    })
+  return apiService.post(`/jao/api/jao/jobs/kJym3M/run?cacheBuster=${Date.now()}`, {
+    params: {
+      id: data.id || null,
+      name: data.name,
+      description: data.description || ''
+    }
+  })
 }
 
 /**
@@ -143,9 +143,9 @@ export function createSudoTemplate(data) {
  * @param {string} id 模板ID
  */
 export function deleteSudoTemplate(id) {
-    return apiService.post(`/jao/api/jao/jobs/yW3mhs/run?cacheBuster=${Date.now()}`, {
-        params: { id }
-    })
+  return apiService.post(`/jao/api/jao/jobs/yW3mhs/run?cacheBuster=${Date.now()}`, {
+    params: { id }
+  })
 }
 
 /**
@@ -154,14 +154,14 @@ export function deleteSudoTemplate(id) {
  * @param {Object} data 命令数据 {templateId, command, description}
  */
 export function createSudoCommand(data) {
-    return apiService.post(`/jao/api/jao/jobs/c06cQz/run?cacheBuster=${Date.now()}`, {
-        params: {
-            id: null,
-            templateId: data.templateId,
-            command: data.command,
-            description: data.description || ''
-        }
-    })
+  return apiService.post(`/jao/api/jao/jobs/c06cQz/run?cacheBuster=${Date.now()}`, {
+    params: {
+      id: null,
+      templateId: data.templateId,
+      command: data.command,
+      description: data.description || ''
+    }
+  })
 }
 
 /**
@@ -170,23 +170,23 @@ export function createSudoCommand(data) {
  * @param {string} id 命令ID
  */
 export function deleteSudoCommand(id) {
-    return apiService.post(`/jao/api/jao/jobs/xr6PHd/run?cacheBuster=${Date.now()}`, {
-        params: { id }
-    })
+  return apiService.post(`/jao/api/jao/jobs/xr6PHd/run?cacheBuster=${Date.now()}`, {
+    params: { id }
+  })
 }
 
 export default {
-    getOverviewStats,
-    getAuditLogStats,
-    getOperationLogs,
-    getUsers,
-    getUserGroups,
-    getFeatureConfig,
-    saveFeatureConfig,
-    getSudoTemplates,
-    getSudoCommandsByTemplate,
-    createSudoTemplate,
-    deleteSudoTemplate,
-    createSudoCommand,
-    deleteSudoCommand
+  getOverviewStats,
+  getAuditLogStats,
+  getOperationLogs,
+  getUsers,
+  getUserGroups,
+  getFeatureConfig,
+  saveFeatureConfig,
+  getSudoTemplates,
+  getSudoCommandsByTemplate,
+  createSudoTemplate,
+  deleteSudoTemplate,
+  createSudoCommand,
+  deleteSudoCommand
 }

@@ -71,7 +71,7 @@
         v-loading="loading"
         stripe
         style="width: 100%"
-        max-height="calc(100vh - 250px)"
+        max-height="calc(100vh - 300px)"
         row-key="run_id"
       >
         <el-table-column prop="start_time" label="开始时间" width="180" sortable>
@@ -437,8 +437,6 @@ function calculateDuration(startTime, endTime) {
 }
 
 .message-text {
-  font-size: 12px;
-  color: #606266;
 
   &.error-text {
     color: #f56c6c;

@@ -1,34 +1,43 @@
 <template>
   <div class="ops-page-layout">
-    <el-button size="small" type="primary" @click="handleBack" style="width: 60px">
-      <i class="fa fa-arrow-left"></i> 返回
-    </el-button>
-    <!-- 筛选区 -->
+    <!-- 顶部操作栏：返回按钮和筛选 -->
     <div class="ops-filter-bar">
-      <el-row>
-        <el-col :span="12">
+      <el-form :inline="true" size="small">
+        <el-form-item>
+          <el-button type="primary" @click="handleBack">
+            <i class="fa fa-arrow-left" style="margin-right: 4px"></i> 返回
+          </el-button>
+        </el-form-item>
+        <el-form-item label="选择主机">
           <AcmDeviceSelector
             v-model="selectedHosts"
             ci-types="linux"
-            :options="{ label: '筛选主机' }"
+            :options="{ label: '' }"
             @change="loadData"
           />
-        </el-col>
-        <el-col :span="6">
+        </el-form-item>
+        <el-form-item label="关键词">
           <el-input
             v-model="searchKeyword"
-            size="small"
-            placeholder="搜索"
+            placeholder="搜索 IP/主机名/用户名"
             clearable
             style="width: 200px;"
-            @input="handleSearch"
+            @keyup.enter="handleSearch"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
-        </el-col>
-      </el-row>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon> 搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon> 重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 功能按钮区 -->
@@ -54,21 +63,21 @@
       <el-button size="small" @click="handleDownloadTemplate">
         模板下载
       </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 数据表格 -->
     <div class="ops-table-wrapper">
-      <div class="table-toolbar-icons">
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
-          <el-icon v-show="!loading"><Refresh /></el-icon>
-        </el-button>
-      </div>
       <el-table
         ref="tableRef"
         :data="filteredTableData"
         v-loading="loading"
         stripe
         style="width: 100%"
+        max-height="calc(100vh - 350px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" :selectable="isRowSelectable" />
@@ -204,7 +213,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import * as pmsApi from '@/modules/password/api'
 
@@ -225,6 +234,7 @@ const tableRef = ref(null)
 const selectedRows = ref([])
 const selectedHosts = ref([])
 const searchKeyword = ref('')
+const appliedSearch = ref('')
 
 // 对话框可见状态
 const viewPasswordDialogVisible = ref(false)
@@ -251,10 +261,10 @@ const selectedCommaIpStr = computed(() => {
 
 // 过滤后的表格数据
 const filteredTableData = computed(() => {
-  if (!searchKeyword.value) {
+  if (!appliedSearch.value) {
     return tableData.value
   }
-  const keyword = searchKeyword.value.toLowerCase()
+  const keyword = appliedSearch.value.toLowerCase()
   return tableData.value.filter(row => {
     return (
       (row.host_key && row.host_key.toLowerCase().includes(keyword)) ||
@@ -265,8 +275,16 @@ const filteredTableData = computed(() => {
 })
 
 function handleSearch() {
-  // 搜索时重置分页
+  appliedSearch.value = searchKeyword.value
   pagination.page = 1
+}
+
+function handleReset() {
+  searchKeyword.value = ''
+  appliedSearch.value = ''
+  selectedHosts.value = []
+  pagination.page = 1
+  loadData()
 }
 
 const pagination = reactive({
@@ -330,17 +348,20 @@ function getCheckStatusIcon(status) {
 }
 
 function formatTime(time) {
-  if (!time) return ''
+  if (!time) return '-'
   try {
+    if (typeof time === 'string' && time.includes('T')) {
+      return time.replace('T', ' ').split('.')[0]
+    }
     const date = new Date(time)
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
+    if (isNaN(date.getTime())) return time
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   } catch {
     return time
   }
@@ -402,7 +423,7 @@ function handleDialogSuccess() {
 </script>
 
 <style scoped lang="scss">
-// 组件特有样式，全局样式已在 element-ui.scss 中定义
+// 组件特有样式
 .action-buttons {
   display: flex;
   gap: 4px;

@@ -1,23 +1,27 @@
 <template>
-  <div class="chart-card">
+  <div class="chart-card" ref="cardRef">
     <div class="chart-header">
       <span class="chart-title">资产类型</span>
-      <el-dropdown v-if="showControls" trigger="click">
-        <el-button :icon="MoreFilled" text />
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item @click="handleRefresh">刷新</el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+      <el-button v-if="showControls" :icon="FullScreen" text @click="toggleFullscreen" title="全屏" />
     </div>
     <div ref="chartRef" class="chart-container" v-loading="loading"></div>
+
+    <!-- 全屏弹窗 -->
+    <el-dialog
+      v-model="fullscreenVisible"
+      title="资产类型"
+      width="90%"
+      top="5vh"
+      destroy-on-close
+    >
+      <div ref="fullscreenChartRef" class="fullscreen-chart"></div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { MoreFilled } from '@element-plus/icons-vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { FullScreen } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 
 const props = defineProps({
@@ -37,31 +41,18 @@ const props = defineProps({
 
 const emit = defineEmits(['refresh', 'click'])
 
+const cardRef = ref(null)
 const chartRef = ref(null)
+const fullscreenChartRef = ref(null)
+const fullscreenVisible = ref(false)
 let chartInstance = null
+let fullscreenChartInstance = null
 
-function initChart() {
-  if (!chartRef.value) return
-
-  chartInstance = echarts.init(chartRef.value)
-  updateChart()
-
-  // 监听点击事件
-  chartInstance.on('click', (params) => {
-    emit('click', {
-      code: props.data[params.dataIndex]?.code,
-      is_auto: props.data[params.dataIndex]?.is_auto
-    })
-  })
-}
-
-function updateChart() {
-  if (!chartInstance) return
-
+function getChartOption() {
   const xData = props.data.map(item => item.title)
   const yData = props.data.map(item => item.count)
 
-  const option = {
+  return {
     tooltip: {
       trigger: 'axis',
       axisPointer: {
@@ -116,13 +107,44 @@ function updateChart() {
       }
     ]
   }
-
-  chartInstance.setOption(option)
 }
 
-function handleRefresh() {
-  emit('refresh')
+function initChart() {
+  if (!chartRef.value) return
+
+  chartInstance = echarts.init(chartRef.value)
+  updateChart()
+
+  // 监听点击事件
+  chartInstance.on('click', (params) => {
+    emit('click', {
+      code: props.data[params.dataIndex]?.code,
+      is_auto: props.data[params.dataIndex]?.is_auto
+    })
+  })
 }
+
+function updateChart() {
+  if (!chartInstance) return
+  chartInstance.setOption(getChartOption())
+}
+
+function toggleFullscreen() {
+  fullscreenVisible.value = true
+  nextTick(() => {
+    if (fullscreenChartRef.value) {
+      fullscreenChartInstance = echarts.init(fullscreenChartRef.value)
+      fullscreenChartInstance.setOption(getChartOption())
+    }
+  })
+}
+
+watch(fullscreenVisible, (val) => {
+  if (!val && fullscreenChartInstance) {
+    fullscreenChartInstance.dispose()
+    fullscreenChartInstance = null
+  }
+})
 
 function handleResize() {
   chartInstance?.resize()
@@ -130,6 +152,9 @@ function handleResize() {
 
 watch(() => props.data, () => {
   updateChart()
+  if (fullscreenChartInstance) {
+    fullscreenChartInstance.setOption(getChartOption())
+  }
 }, { deep: true })
 
 onMounted(() => {
@@ -140,6 +165,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   chartInstance?.dispose()
+  fullscreenChartInstance?.dispose()
 })
 </script>
 
@@ -169,5 +195,10 @@ onUnmounted(() => {
 .chart-container {
   flex: 1;
   min-height: 0;
+}
+
+.fullscreen-chart {
+  width: 100%;
+  height: 70vh;
 }
 </style>

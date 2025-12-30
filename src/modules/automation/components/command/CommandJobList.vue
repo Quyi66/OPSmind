@@ -42,19 +42,19 @@
             <i class="fas fa-spinner fa-spin"></i>
           </div>
           <div v-else class="job-list">
-            <a
+            <button
               v-for="job in filteredJobs"
               :key="job.id"
               class="ops-sidebar-item job-item"
-              :class="{ active: activeJobId === job.id }"
+              :class="{ 'is-active': activeJobId === job.id }"
               @click="selectJob(job)"
               :title="job.title"
             >
-              <h5 class="job-title">{{ job.title }}</h5>
-              <div class="job-meta">
-                {{ formatDate(job.updatedAt || job.createdAt) }}
+              <div class="job-item-content">
+                <span class="job-title">{{ job.title }}</span>
+                <span class="job-meta">{{ formatDate(job.updatedAt || job.createdAt) }}</span>
               </div>
-            </a>
+            </button>
           </div>
         </div>
       </aside>
@@ -661,43 +661,58 @@ defineExpose({
 }
 
 .job-item {
-  display: block;
-  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 10px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  border-bottom: 1px solid #f1f3f5;
-  position: relative;
-  text-decoration: none;
-  color: inherit;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: #f8f9fa;
+    background: rgba(64, 158, 255, 0.1);
   }
 
-  &.active {
-    background: #e9ecef;
-    border-left: 3px solid #0d6efd;
+  &.is-active {
+    background: rgba(64, 158, 255, 0.15);
+
+    .job-title {
+      color: #409eff;
+      font-weight: 600;
+    }
+  }
+
+  .job-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
   }
 
   .job-title {
-    margin: 0 0 4px;
     font-size: 14px;
     font-weight: 500;
-    color: #212529;
+    color: #303133;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
   }
 
   .job-meta {
     font-size: 12px;
-    color: #6c757d;
+    color: #909399;
   }
 }
 
 .job-detail {
   flex: 1;
   overflow-y: auto;
-  background: #f8f9fa;
+  // background: #f8f9fa;
 }
 
 .blank-state {

@@ -632,10 +632,6 @@ defineExpose({
   border-radius: 4px;
 }
 
-:deep(.el-button) {
-  border-radius: 4px;
-}
-
 :deep(.el-button.is-link) {
   color: #6c757d;
   padding: 4px 8px;

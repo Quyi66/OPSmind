@@ -1,57 +1,66 @@
 <template>
   <div class="ops-page-layout" style="padding: 0; gap: 0;">
-    <!-- 简洁标签页导航 -->
-    <el-tabs v-model="activeTab" class="simple-tabs">
-      <el-tab-pane
-        v-for="tab in tabs"
-        :key="tab.key"
-        :label="tab.label"
-        :name="tab.key"
-      >
-        <template #label>
-          <span class="tab-label">
-            <i :class="tab.icon"></i>
-            {{ tab.label }}
-          </span>
-        </template>
-      </el-tab-pane>
-    </el-tabs>
+    <!-- 标签页导航 -->
+    <div class="type-tabs-wrapper">
+      <div class="type-tabs">
+        <div
+          v-for="tab in tabs"
+          :key="tab.key"
+          :class="['type-tab', { active: activeTab === tab.key }]"
+          @click="activeTab = tab.key"
+        >
+          <i :class="tab.icon"></i>
+          <span>{{ tab.label }}</span>
+        </div>
+      </div>
+    </div>
 
-    <!-- 标签页内容 -->
-    <div class="config-content ops-page-layout">
+    <!-- 内容区 -->
+    <div class="ops-page-layout">
       <!-- 计划任务 -->
       <template v-if="activeTab === 'schedule'">
-        <!-- 筛选栏 -->
+        <!-- 筛选区域 -->
         <div class="ops-filter-bar">
-          <el-input
-            v-model="taskKeyword"
-            size="small"
-            placeholder="搜索任务"
-            clearable
-            style="width: 200px"
-            @keyup.enter="loadScheduleTasks"
-          >
-            <template #prefix>
-              <i class="fa fa-search"></i>
-            </template>
-          </el-input>
-          <el-button type="primary" size="small" @click="loadScheduleTasks">
-            搜索
+          <el-form :inline="true" size="small">
+            <el-form-item label="关键词">
+              <el-input
+                v-model="taskKeyword"
+                placeholder="搜索任务"
+                clearable
+                style="width: 200px"
+                @keyup.enter="loadScheduleTasks"
+              >
+                <template #prefix>
+                  <i class="fa fa-search"></i>
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="loadScheduleTasks">
+                <el-icon><Search /></el-icon> 搜索
+              </el-button>
+              <el-button @click="handleResetTaskFilter">
+                <el-icon><RefreshRight /></el-icon> 重置
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 操作按钮区域 -->
+        <div class="ops-action-bar">
+          <span style="flex: 1;"></span>
+          <el-button class="toolbar-icon-btn" circle size="small" :loading="loadingTasks" @click="loadScheduleTasks" title="刷新">
+            <el-icon v-show="!loadingTasks"><Refresh /></el-icon>
           </el-button>
         </div>
 
-        <!-- 表格区域 -->
+        <!-- 数据表格 -->
         <div class="ops-table-wrapper">
-          <div class="table-toolbar-icons">
-            <el-button class="toolbar-icon-btn" circle :loading="loadingTasks" @click="loadScheduleTasks" title="刷新">
-              <el-icon v-show="!loadingTasks"><Refresh /></el-icon>
-            </el-button>
-          </div>
           <el-table
             :data="scheduleTasks"
             v-loading="loadingTasks"
             stripe
-            max-height="calc(100vh - 280px)"
+            max-height="calc(100vh - 350px)"
           >
             <el-table-column prop="id" label="任务ID" width="120" />
             <el-table-column prop="description" label="任务备注" min-width="150" show-overflow-tooltip />
@@ -67,7 +76,7 @@
             </el-table-column>
             <el-table-column prop="createdBy" label="创建者" width="100" />
             <el-table-column prop="remark" label="查看" width="100" />
-            <el-table-column label="操作" width="100" fixed="right">
+            <el-table-column label="操作" width="110" fixed="right">
               <template #default="{ row }">
                 <el-button text type="primary" size="small" @click="handleEditTask(row)">编辑</el-button>
                 <el-button text type="danger" size="small" @click="handleDeleteTask(row)">删除</el-button>
@@ -75,29 +84,42 @@
             </el-table-column>
           </el-table>
         </div>
+
+        <!-- 分页 -->
+        <div class="ops-pagination-wrapper" v-if="taskTotal > 0">
+          <el-pagination
+            v-model:current-page="taskPage"
+            v-model:page-size="taskPageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="taskTotal"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="loadScheduleTasks"
+            @current-change="loadScheduleTasks"
+          />
+        </div>
       </template>
 
       <!-- sudo模板 -->
       <template v-if="activeTab === 'sudo'">
-        <!-- 操作栏 -->
+        <!-- 操作按钮区域 -->
         <div class="ops-action-bar">
           <el-button type="primary" size="small" @click="showCreateTemplateDialog = true">
             <el-icon><Plus /></el-icon> 新建模板
           </el-button>
+          <span style="flex: 1;"></span>
+          <el-button class="toolbar-icon-btn" circle size="small" :loading="loadingTemplates" @click="loadSudoTemplates" title="刷新">
+            <el-icon v-show="!loadingTemplates"><Refresh /></el-icon>
+          </el-button>
         </div>
 
-        <!-- 表格区域 -->
+        <!-- 数据表格 -->
         <div class="ops-table-wrapper">
-          <div class="table-toolbar-icons">
-            <el-button class="toolbar-icon-btn" circle :loading="loadingTemplates" @click="loadSudoTemplates" title="刷新">
-              <el-icon v-show="!loadingTemplates"><Refresh /></el-icon>
-            </el-button>
-          </div>
           <el-table
             :data="sudoTemplates"
             v-loading="loadingTemplates"
             stripe
-            max-height="calc(100vh - 280px)"
+            max-height="calc(100vh - 300px)"
           >
             <el-table-column prop="name" label="模板名称" min-width="150" />
             <el-table-column prop="description" label="备注" min-width="150" show-overflow-tooltip />
@@ -248,7 +270,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, Plus } from '@element-plus/icons-vue'
+import { Refresh, Plus, Search, RefreshRight } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'
 import * as userApi from '@/modules/user/api'
 
@@ -264,6 +286,10 @@ const scheduleTasks = ref([])
 const sudoTemplates = ref([])
 const taskKeyword = ref('')
 
+// 计划任务分页
+const taskPage = ref(1)
+const taskPageSize = ref(10)
+const taskTotal = ref(0)
 
 // 创建模板表单
 const newTemplate = reactive({
@@ -302,7 +328,11 @@ const commandFormRules = {
 function formatDateTime(isoString) {
   if (!isoString) return '-'
   try {
+    if (typeof isoString === 'string' && isoString.includes('T')) {
+      return isoString.replace('T', ' ').split('.')[0]
+    }
     const date = new Date(isoString)
+    if (isNaN(date.getTime())) return isoString
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
@@ -322,13 +352,32 @@ async function loadScheduleTasks() {
     const response = await apiService.get('/jao/api/jao/cron/app', {
       params: { appCode: 'uim' }
     })
-    scheduleTasks.value = response || []
+    const allTasks = response || []
+    // 客户端筛选
+    if (taskKeyword.value) {
+      const kw = taskKeyword.value.toLowerCase()
+      scheduleTasks.value = allTasks.filter(task =>
+        task.id?.toLowerCase().includes(kw) ||
+        task.description?.toLowerCase().includes(kw) ||
+        task.cronExpression?.toLowerCase().includes(kw)
+      )
+    } else {
+      scheduleTasks.value = allTasks
+    }
+    taskTotal.value = scheduleTasks.value.length
   } catch (error) {
     console.error('Failed to load schedule tasks:', error)
     scheduleTasks.value = []
   } finally {
     loadingTasks.value = false
   }
+}
+
+// 重置任务筛选
+function handleResetTaskFilter() {
+  taskKeyword.value = ''
+  taskPage.value = 1
+  loadScheduleTasks()
 }
 
 // 加载sudo模板
@@ -500,65 +549,42 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.feature-config-view {
-  height: 100%;
+// 标签页样式 - 与 AssetInfo.vue 保持一致
+.type-tabs-wrapper {
+  background: #fff;
+  border-bottom: 1px solid #e4e7ed;
+  padding: 0 16px;
+}
+
+.type-tabs {
   display: flex;
-  flex-direction: column;
+  gap: 4px;
 }
 
-// 简洁的标签页样式
-.simple-tabs {
-  :deep(.el-tabs__header) {
-    margin: 0;
-    border-bottom: 1px solid #e4e7ed;
-    background: transparent;
-  }
-
-  :deep(.el-tabs__nav-wrap::after) {
-    display: none;
-  }
-
-  :deep(.el-tabs__item) {
-    height: 40px;
-    line-height: 40px;
-    color: #606266;
-    font-weight: normal;
-
-    &:hover {
-      color: #409eff;
-    }
-
-    &.is-active {
-      color: #409eff;
-      font-weight: 500;
-    }
-  }
-
-  :deep(.el-tabs__active-bar) {
-    background-color: #409eff;
-  }
-
-  .tab-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    i {
-      font-size: 14px;
-    }
-  }
-}
-
-.config-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 0;
-}
-
-.filter-label {
-  font-size: 13px;
+.type-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
   color: #606266;
-  margin-left: 16px;
+  font-size: 14px;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #409eff;
+  }
+
+  &.active {
+    color: #409eff;
+    border-bottom-color: #409eff;
+    font-weight: 500;
+  }
+
+  i {
+    font-size: 14px;
+  }
 }
 
 // 模板详情

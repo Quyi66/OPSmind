@@ -47,7 +47,7 @@
 
       <el-table-column prop="author" label="创建者" width="100" align="left" />
 
-      <el-table-column label="查看" width="80" align="left">
+      <!-- <el-table-column label="查看" width="80" align="left">
         <template #default="{ row }">
           <el-button
             type="default"
@@ -58,9 +58,9 @@
             @click="$emit('query-next-time', row)"
           />
         </template>
-      </el-table-column>
+      </el-table-column> -->
 
-      <el-table-column label="操作" width="176" align="left" fixed="right">
+      <el-table-column label="操作" width="260" align="left" fixed="right">
         <template #default="{ row }">
           <el-button
             text
@@ -86,6 +86,13 @@
           >
             复制
           </el-button>
+          <el-button
+            type="primary"
+            size="small"
+            text
+            title="查询下次执行时间"
+            @click="$emit('query-next-time', row)"
+          >下次执行时间</el-button>
           <el-button
             text
             type="danger"

@@ -1,129 +1,148 @@
 <template>
   <div class="ops-page-layout">
-    <div class="ops-page-layout">
-      <!-- 筛选区域 -->
-      <div class="ops-filter-bar">
-        <div class="filter-left">
-          <el-input
-            v-model="keyword"
-            placeholder="搜索"
-            style="width: 200px"
-            size="small"
-            clearable
-            @keyup.enter="handleSearch"
-          >
-            <template #prefix>
-              <i class="fa fa-search"></i>
-            </template>
-          </el-input>
+    <!-- 编辑器视图 -->
+    <ModelEditor
+      v-if="showEditor"
+      :model-id="editorModelId"
+      @back="handleEditorBack"
+      @saved="handleEditorSaved"
+    />
+
+    <!-- 列表视图 -->
+    <template v-else>
+      <div class="ops-page-layout">
+        <!-- 筛选区域 -->
+        <div class="ops-filter-bar">
+          <div class="filter-left">
+            <el-input
+              v-model="keyword"
+              placeholder="搜索"
+              style="width: 200px"
+              size="small"
+              clearable
+              @keyup.enter="handleSearch"
+            >
+              <template #prefix>
+                <i class="fa fa-search"></i>
+              </template>
+            </el-input>
+          </div>
         </div>
-      </div>
 
-      <!-- 操作按钮区域 -->
-      <div class="ops-action-bar">
-        <el-button type="primary" size="small" @click="handleAddModel">
-          <i class="fa fa-plus" style="margin-right: 4px"></i>
-          添加模型
-        </el-button>
-        <el-button size="small" @click="handleImportModel">
-          <i class="fa fa-file-excel" style="margin-right: 4px"></i>
-          导入模型
-        </el-button>
-      </div>
-
-      <!-- 数据表格 -->
-      <div class="ops-table-wrapper">
-        <!-- 表格右上角工具栏 -->
-        <div class="table-toolbar-icons">
-          <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadModelList" title="刷新">
-            <el-icon v-show="!loading"><Refresh /></el-icon>
+        <!-- 操作按钮区域 -->
+        <div class="ops-action-bar">
+          <el-button type="primary" size="small" @click="handleAddModel">
+            <i class="fa fa-plus" style="margin-right: 4px"></i>
+            添加模型
+          </el-button>
+          <el-button size="small" @click="handleImportModel">
+            <i class="fa fa-file-excel" style="margin-right: 4px"></i>
+            导入模型
           </el-button>
         </div>
-        <el-table
-          v-loading="loading"
-          :data="filteredModelList"
-          stripe
-          max-height="calc(100vh - 300px)"
-        >
-          <el-table-column prop="title" label="模型名称" min-width="150">
-            <template #default="{ row }">
-              <el-button link type="primary" @click="handleViewModel(row)">
-                {{ row.title }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column prop="code" label="资产代码" width="150" />
-          <el-table-column prop="is_auto" label="是否自动化" width="120" align="left">
-            <template #default="{ row }">
-              <span :class="row.is_auto === 1 ? 'text-success' : 'text-secondary'">
-                {{ row.is_auto === 1 ? '是' : '否' }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="count" label="资产数量" width="100" align="left" />
-          <el-table-column prop="updated_at" label="更新时间" width="180">
-            <template #default="{ row }">
-              {{ formatDateTime(row.updated_at) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="100" align="left" fixed="right">
-            <template #default="{ row }">
-              <el-button text type="primary" size="small" @click="handleEditModel(row)">
-                编辑
-              </el-button>
-              <el-button text type="danger" size="small" @click="handleDeleteModel(row)">
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+
+        <!-- 数据表格 -->
+        <div class="ops-table-wrapper">
+          <!-- 表格右上角工具栏 -->
+          <div class="table-toolbar-icons">
+            <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadModelList" title="刷新">
+              <el-icon v-show="!loading"><Refresh /></el-icon>
+            </el-button>
+          </div>
+          <el-table
+            v-loading="loading"
+            :data="filteredModelList"
+            stripe
+            max-height="calc(100vh - 300px)"
+          >
+            <el-table-column prop="title" label="模型名称" min-width="150">
+              <template #default="{ row }">
+                <el-button link type="primary" @click="handleViewModel(row)">
+                  {{ row.title }}
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column prop="code" label="资产代码" width="150" />
+            <el-table-column prop="is_auto" label="是否自动化" width="120" align="left">
+              <template #default="{ row }">
+                <span :class="row.is_auto === 1 ? 'text-success' : 'text-secondary'">
+                  {{ row.is_auto === 1 ? '是' : '否' }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="count" label="资产数量" width="100" align="left" />
+            <el-table-column prop="updated_at" label="更新时间" width="180">
+              <template #default="{ row }">
+                {{ formatDateTime(row.updated_at) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="100" align="left" fixed="right">
+              <template #default="{ row }">
+                <el-button text type="primary" size="small" @click="handleEditModel(row)">
+                  编辑
+                </el-button>
+                <el-button text type="danger" size="small" @click="handleDeleteModel(row)">
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- 分页 -->
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="pagination.page"
+            v-model:page-size="pagination.size"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="pagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+          />
+        </div>
       </div>
 
-      <!-- 分页 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.size"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-        />
-      </div>
-    </div>
+      <!-- 导入模型弹窗 -->
+      <ImportModelDialog
+        v-model="importModelDialogVisible"
+        @saved="loadModelList"
+      />
 
-    <!-- 添加模型弹窗（简单表单） -->
-    <ModelFormDialog
-      v-model="modelFormDialogVisible"
-      :model-data="null"
-      @saved="handleModelFormSaved"
-    />
-
-    <!-- 导入模型弹窗 -->
-    <ImportModelDialog
-      v-model="importModelDialogVisible"
-      @saved="loadModelList"
-    />
-
-    <!-- 模型详情弹窗 -->
-    <ModelDetailDialog
-      v-model="modelDetailDialogVisible"
-      :model-data="currentModel"
-    />
+      <!-- 模型详情弹窗 -->
+      <ModelDetailDialog
+        v-model="modelDetailDialogVisible"
+        :model-data="currentModel"
+      />
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, inject } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
-import ModelFormDialog from '../components/ModelFormDialog.vue'
 import ImportModelDialog from '../components/ImportModelDialog.vue'
 import ModelDetailDialog from '../components/ModelDetailDialog.vue'
+import ModelEditor from './ModelEditor.vue'
 
-const emit = defineEmits(['edit-model', 'view-asset-type'])
+const route = useRoute()
+const router = useRouter()
+
+// 从父组件注入方法
+const handleViewAssetTypeFn = inject('handleViewAssetType', null)
+
+// 是否显示编辑器
+const showEditor = computed(() => {
+  return route.query.editor === 'model'
+})
+
+// 编辑器的模型ID
+const editorModelId = computed(() => {
+  return route.query.modelId || 'new'
+})
 
 const loading = ref(false)
 const keyword = ref('')
@@ -131,7 +150,6 @@ const modelList = ref([])
 const pagination = ref({ page: 1, size: 10, total: 0 })
 
 // 弹窗状态
-const modelFormDialogVisible = ref(false)
 const importModelDialogVisible = ref(false)
 const modelDetailDialogVisible = ref(false)
 const currentModel = ref(null)
@@ -190,18 +208,12 @@ const handleSearch = () => {
   pagination.value.page = 1
 }
 
-// 添加模型 - 打开编辑器（新建模式）
+// 添加模型 - 打开编辑器页面（新建模式）
 const handleAddModel = () => {
-  emit('edit-model', 'new')
-}
-
-// 模型表单保存后（新增）跳转到编辑页面
-const handleModelFormSaved = (savedModel) => {
-  loadModelList()
-  // 如果返回了模型 ID，通知父组件打开编辑器
-  if (savedModel?.id) {
-    emit('edit-model', savedModel.id)
-  }
+  router.push({
+    path: '/acm/model',
+    query: { editor: 'model', modelId: 'new' }
+  })
 }
 
 // 导入模型
@@ -211,14 +223,29 @@ const handleImportModel = () => {
 
 // 查看模型详情 - 跳转到资产信息页面
 const handleViewModel = (row) => {
-  // 通知父组件跳转到资产信息页面，传递资产类型代码
-  emit('view-asset-type', row.code)
+  if (handleViewAssetTypeFn) {
+    handleViewAssetTypeFn(row.code)
+  }
 }
 
-// 编辑模型 - 通知父组件打开编辑器
+// 编辑模型 - 打开编辑器页面
 const handleEditModel = (row) => {
   const modelId = row.id || row.cit_id || row.citId
-  emit('edit-model', modelId)
+  router.push({
+    path: '/acm/model',
+    query: { editor: 'model', modelId }
+  })
+}
+
+// 编辑器返回
+const handleEditorBack = () => {
+  router.push({ path: '/acm/model' })
+}
+
+// 编辑器保存后
+const handleEditorSaved = () => {
+  router.push({ path: '/acm/model' })
+  loadModelList()
 }
 
 // 删除模型
@@ -244,7 +271,18 @@ const handleDeleteModel = (row) => {
 
 // 初始化
 onMounted(() => {
-  loadModelList()
+  // 只有在列表模式才加载
+  if (!showEditor.value) {
+    loadModelList()
+  }
+})
+
+// 监听路由变化，当从编辑器返回时刷新列表
+watch(showEditor, (newVal, oldVal) => {
+  if (!newVal && oldVal) {
+    // 从编辑器返回到列表
+    loadModelList()
+  }
 })
 
 // 暴露方法供父组件调用

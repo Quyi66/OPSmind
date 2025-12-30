@@ -73,7 +73,7 @@
 
         <el-table-column label="作业" show-overflow-tooltip>
           <template #default="{ row }">
-            <div class="job-title">{{ row.job_title }}</div>
+            {{ translateText(row.job_title) }}
           </template>
         </el-table-column>
 
@@ -184,6 +184,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from './JobListView/ExecuteResultDialog.vue'
+import { translateText } from '@/utils/i18n.js'
 
 const loading = ref(false)
 const tableData = ref([])

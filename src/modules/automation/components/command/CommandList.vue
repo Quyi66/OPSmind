@@ -192,7 +192,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import {
@@ -205,6 +205,10 @@ import CommandEditDialog from './dialogs/CommandEditDialog.vue'
 import CommandApproveInfoDialog from './dialogs/CommandApproveInfoDialog.vue'
 
 const emit = defineEmits(['run-command', 'create-job'])
+
+// 注入父组件提供的函数
+const handleRunCommandFn = inject('handleRunCommand', null)
+const handleCreateJobFn = inject('handleCreateJob', null)
 
 // 状态
 const loading = ref(false)
@@ -319,7 +323,11 @@ function handleEdit(row) {
 
 // 执行单个命令
 function handleRun(row) {
-  emit('run-command', row)
+  if (handleRunCommandFn) {
+    handleRunCommandFn(row)
+  } else {
+    emit('run-command', row)
+  }
 }
 
 // 批量执行/创建作业
@@ -328,11 +336,18 @@ function handleBatchRun(type) {
     ElMessage.warning('请选择要操作的命令')
     return
   }
-  const commandIds = selectedCommands.value.map(cmd => cmd.id)
   if (type === 'run') {
-    emit('run-command', selectedCommands.value)
+    if (handleRunCommandFn) {
+      handleRunCommandFn(selectedCommands.value)
+    } else {
+      emit('run-command', selectedCommands.value)
+    }
   } else {
-    emit('create-job', selectedCommands.value)
+    if (handleCreateJobFn) {
+      handleCreateJobFn(selectedCommands.value)
+    } else {
+      emit('create-job', selectedCommands.value)
+    }
   }
 }
 

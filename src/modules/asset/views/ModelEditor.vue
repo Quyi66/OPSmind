@@ -10,9 +10,8 @@
         <span v-if="formData.title" class="model-name">- {{ formData.title }}</span>
       </div>
       <div class="header-right">
-        <el-button @click="handleBack">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">
-          <i class="fa fa-save" style="margin-right: 4px"></i>
+        <el-button @click="handleBack" size="small">取消</el-button>
+        <el-button type="primary" :loading="saving" size="small" @click="handleSave">
           保存
         </el-button>
       </div>
@@ -1026,6 +1025,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
+  padding-top: 0;
   background: #fff;
   border-bottom: 1px solid #ebeef5;
   flex-shrink: 0;
@@ -1055,7 +1055,6 @@ onMounted(() => {
 
 .page-content {
   flex: 1;
-  padding: 16px 20px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1076,7 +1075,6 @@ onMounted(() => {
 
   :deep(.el-tabs__content) {
     flex: 1;
-    overflow-y: auto;
     padding: 0;
   }
 

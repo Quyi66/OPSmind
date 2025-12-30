@@ -1,29 +1,47 @@
 <template>
-  <div class="resource-permission">
-    <!-- 表格区域 -->
-    <div class="table-section">
-      <!-- 搜索栏 -->
-      <div class="search-bar">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索"
-          clearable
-          :prefix-icon="Search"
-          style="width: 200px"
-          @input="handleSearch"
-        />
-      </div>
+  <div class="ops-page-layout">
+    <!-- 筛选区域 -->
+    <div class="ops-filter-bar">
+      <el-form :inline="true" size="small">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="请输入"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon> 搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon> 重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
 
-      <!-- 权限表格 -->
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
       <el-table
         :data="filteredData"
         v-loading="loading"
         stripe
         style="width: 100%"
-        max-height="calc(100vh - 300px)"
+        max-height="calc(100vh - 350px)"
       >
-        <el-table-column prop="groupInfo" label="info" min-width="250" show-overflow-tooltip sortable />
-        <el-table-column prop="assets_type" label="assets_type" width="150" align="left" sortable />
+        <el-table-column prop="groupInfo" label="资源信息" min-width="250" show-overflow-tooltip sortable />
+        <el-table-column prop="assets_type" label="资产类型" min-width="150" align="left" sortable />
 
         <!-- 动态团队权限列 -->
         <el-table-column
@@ -31,7 +49,7 @@
           :key="teamName"
           :label="teamName"
           width="180"
-          align="left"
+          align="center"
         >
           <template #default="{ row }">
             <div class="permission-buttons">
@@ -49,27 +67,27 @@
           </template>
         </el-table-column>
       </el-table>
+    </div>
 
-      <!-- 分页 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 25, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handlePageSizeChange"
-          @current-change="handlePageChange"
-        />
-      </div>
+    <!-- 分页 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 25, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
 import _ from 'lodash'
@@ -79,6 +97,7 @@ const loading = ref(false)
 const tableData = ref([])
 const permissionData = ref([]) // 用于保存的原始数据
 const searchKeyword = ref('')
+const appliedSearch = ref('')
 const teamNames = ref([])
 
 // 分页
@@ -97,8 +116,8 @@ const pageInfo = computed(() => {
 const filteredData = computed(() => {
   let data = tableData.value
 
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
+  if (appliedSearch.value) {
+    const keyword = appliedSearch.value.toLowerCase()
     data = data.filter(item =>
       item.groupInfo?.toLowerCase().includes(keyword) ||
       item.assets_type?.toLowerCase().includes(keyword)
@@ -246,6 +265,14 @@ const debouncedSave = _.debounce(async () => {
 
 // 搜索
 function handleSearch() {
+  appliedSearch.value = searchKeyword.value
+  currentPage.value = 1
+}
+
+// 重置
+function handleReset() {
+  searchKeyword.value = ''
+  appliedSearch.value = ''
   currentPage.value = 1
 }
 
@@ -260,45 +287,6 @@ function handlePageSizeChange() {
 </script>
 
 <style scoped lang="scss">
-.resource-permission {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #f5f7fa;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
-
-  .page-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #303133;
-  }
-}
-
-.table-section {
-  flex: 1;
-  margin: 16px;
-  padding: 16px;
-  background: #fff;
-  border-radius: 4px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.search-bar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-}
-
 .permission-buttons {
   display: flex;
   gap: 4px;
@@ -325,25 +313,6 @@ function handlePageSizeChange() {
       border-color: #409eff;
       color: #fff;
     }
-  }
-}
-
-.pagination-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 16px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #ebeef5;
-
-  .page-info {
-    color: #606266;
-    font-size: 13px;
-  }
-
-  :deep(.el-pagination) {
-    margin-left: auto;
   }
 }
 </style>

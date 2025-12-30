@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     title="查看资产详情"
-    width="800px"
+    width="600px"
     :close-on-click-modal="false"
     @close="handleClose"
   >
