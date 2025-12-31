@@ -102,6 +102,33 @@
 
       <!-- sudo模板 -->
       <template v-if="activeTab === 'sudo'">
+        <!-- 筛选区域 -->
+        <div class="ops-filter-bar">
+          <el-form :inline="true" size="small">
+            <el-form-item label="关键词">
+              <el-input
+                v-model="templateKeyword"
+                placeholder="模板名称/备注"
+                clearable
+                style="width: 200px"
+                @keyup.enter="handleSearchTemplates"
+              >
+                <template #prefix>
+                  <el-icon><Search /></el-icon>
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearchTemplates">
+                <el-icon><Search /></el-icon> 搜索
+              </el-button>
+              <el-button @click="handleResetTemplateFilter">
+                <el-icon><RefreshRight /></el-icon> 重置
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+
         <!-- 操作按钮区域 -->
         <div class="ops-action-bar">
           <el-button type="primary" size="small" @click="showCreateTemplateDialog = true">
@@ -142,6 +169,20 @@
               </template>
             </el-table-column>
           </el-table>
+        </div>
+
+        <!-- 分页 -->
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="templatePage"
+            v-model:page-size="templatePageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="templateTotal"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="loadSudoTemplates"
+            @current-change="loadSudoTemplates"
+          />
         </div>
       </template>
     </div>
@@ -291,6 +332,14 @@ const taskPage = ref(1)
 const taskPageSize = ref(10)
 const taskTotal = ref(0)
 
+// Sudo模板分页
+const templatePage = ref(1)
+const templatePageSize = ref(10)
+const templateTotal = ref(0)
+
+// Sudo模板筛选
+const templateKeyword = ref('')
+
 // 创建模板表单
 const newTemplate = reactive({
   name: '',
@@ -384,14 +433,32 @@ function handleResetTaskFilter() {
 async function loadSudoTemplates() {
   loadingTemplates.value = true
   try {
-    const response = await userApi.getSudoTemplates()
+    const response = await userApi.getSudoTemplates({
+      page: templatePage.value,
+      size: templatePageSize.value,
+      keyword: templateKeyword.value
+    })
     sudoTemplates.value = response?.records || response?.data?.records || []
+    templateTotal.value = response?.total || response?.data?.total || 0
   } catch (error) {
     console.error('Failed to load sudo templates:', error)
     sudoTemplates.value = []
   } finally {
     loadingTemplates.value = false
   }
+}
+
+// 搜索模板
+function handleSearchTemplates() {
+  templatePage.value = 1
+  loadSudoTemplates()
+}
+
+// 重置模板筛选
+function handleResetTemplateFilter() {
+  templateKeyword.value = ''
+  templatePage.value = 1
+  loadSudoTemplates()
 }
 
 // 计划任务操作

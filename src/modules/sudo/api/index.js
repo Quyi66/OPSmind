@@ -74,16 +74,20 @@ export function getSudoApplyList(params = {}) {
 /**
  * 获取操作记录
  * POST /dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/
+ * @param {Object} options 包含 params(筛选参数), page, size(分页参数), keyword(关键词)
  */
-export function getOperationLog(params = {}) {
+export function getOperationLog(options = {}) {
+    const { page = 1, size = 10, keyword = '', ...filterParams } = options
     return apiService.post(`/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, {
         params: {
             module: 'sudo',
-            action: params.action || 'all',
-            status: params.status || 'all',
-            day: params.day || 1,
-            ...params
-        }
+            action: filterParams.action || 'all',
+            status: filterParams.status || 'all',
+            day: filterParams.day || 1
+        },
+        page,
+        size,
+        filter: keyword ? `ata_node|message:*${keyword}*` : ''
     })
 }
 

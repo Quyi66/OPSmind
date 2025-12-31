@@ -43,6 +43,15 @@
             style="width: 150px"
           />
         </el-form-item>
+        <!-- <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="请输入"
+            clearable
+            style="width: 140px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item> -->
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
@@ -77,11 +86,12 @@
       v-loading="loading"
       stripe
       @selection-change="handleSelectionChange"
+      max-height="calc(100vh - 300px)"
     >
       <!-- <el-table-column type="selection" width="50" /> -->
       <el-table-column prop="host_key" label="IP" width="130" />
       <el-table-column prop="hostname" label="主机名" width="100" show-overflow-tooltip />
-      <el-table-column prop="username" label="用户名" width="100">
+      <el-table-column prop="username" label="用户名" width="120">
         <template #default="{ row }">
           <el-tag
             :type="getUserBadgeType(row.uid)"
@@ -229,7 +239,8 @@ const filters = ref({
   types: ['0', '1'],       // 用户类型: 0=系统用户, 1=普通用户
   lockStatus: ['2'],       // 锁定状态: 1=锁定, 2=未锁定
   host_key: '',            // IP地址
-  username: ''             // 用户名
+  username: '',            // 用户名
+  keyword: ''              // 关键词搜索
 })
 
 const loading = ref(false)
@@ -305,7 +316,8 @@ async function loadData() {
       types: filters.value.types.join(','),
       lockStatus: filters.value.lockStatus.join(','),
       page: currentPage.value,
-      size: pageSize.value
+      size: pageSize.value,
+      filter: filters.value.keyword
     })
     tableData.value = response?.records || response?.data?.records || []
     total.value = response?.total || response?.data?.total || 0
@@ -363,7 +375,8 @@ function handleReset() {
     types: ['0', '1'],
     lockStatus: ['2'],
     host_key: '',
-    username: ''
+    username: '',
+    keyword: ''
   }
   currentPage.value = 1
   pageSize.value = 15

@@ -8,12 +8,13 @@
 // 翻译缓存
 let translationsCache = null
 let loadingPromise = null
+let isLoaded = false
 
 /**
  * 加载所有翻译资源
  */
 async function loadTranslations() {
-  if (translationsCache) {
+  if (translationsCache && isLoaded) {
     return translationsCache
   }
 
@@ -51,11 +52,16 @@ async function loadTranslations() {
     }
 
     translationsCache = translations
+    isLoaded = true
+    console.log('[i18n] Translations loaded, total keys:', Object.keys(translations).length)
     return translations
   })()
 
   return loadingPromise
 }
+
+// 模块加载时自动触发翻译资源的预加载
+loadTranslations()
 
 /**
  * 硬编码的常用翻译映射（备用，用于翻译文件加载失败时）
@@ -63,6 +69,8 @@ async function loadTranslations() {
 const STATIC_TRANSLATIONS = {
   // 应用标题
   'cac.index.square': '系统巡检',
+  'cac.index.template': '巡检模板',
+  'cac.index.job': '检查结果',
   'acm.title': '资产管理',
   'app_pms.title': '密码管理',
   'app_sudo.title': 'sudo权限管理',
@@ -70,6 +78,26 @@ const STATIC_TRANSLATIONS = {
   'app_spm.title': '软件管理',
   'app_uim.name': '用户管理',
   'app_vcm.title': '虚拟化管理',
+
+  // CAC 巡检相关
+  'cac.common.custom_content': '自定义内容',
+  'cac.common.custom_title': '自定义标题',
+  'cac.common.recipient_list': '收件人列表',
+  'cac.common.save_recipient': '保存收件人',
+  'cac.profile.inspection_results_profile': '巡检结果概览',
+  'cac.profile.machine_profile': '主机概览',
+  'cac.profile.host_details': '主机详情',
+  'cac.profile.inspection_items': '巡检项',
+  'cac.profile.inspection_items_profile': '巡检项概览',
+  'cac.profile.inspection_items_details': '巡检项详情',
+  'cac.profile.status_profile': '状态概览',
+  'cac.profile.whitelist_list': '白名单列表',
+  'cac.profile.host_key': '主机',
+  'cac.profile.manual_inspection': '人工检查',
+  'cac.result.status.error': '失败',
+  'cac.job.inspect': '巡检任务',
+  'cac3.navigation.inspection_results': '巡检结果',
+  'dts.datasource.success': '成功',
 
   // ACM 作业相关
   'acm.job.assert_into': '主机录入',
@@ -131,9 +159,6 @@ const STATIC_TRANSLATIONS = {
 
   // 流程
   'flow.index.list': '流程列表',
-
-  // 巡检
-  'cac.job.inspect': '巡检任务',
 }
 
 /**
@@ -191,20 +216,29 @@ export function translateI18nKey(text) {
 
 /**
  * 翻译文本（支持 #{key} 格式和普通文本）
- * 如果文本包含 [prefix]#{key} 格式，会保留前缀
+ * 如果文本包含 #{key} 格式，会替换所有匹配项
+ * 例如: "【CAC】template__#{cac.common.custom_content}" -> "【CAC】template__自定义内容"
  */
 export function translateText(text) {
   if (!text) return ''
 
-  // 检查是否包含 #{...} 格式
-  const i18nMatch = text.match(/^(.*?)(#\{[^}]+\})(.*)$/)
-  if (i18nMatch) {
-    const [, prefix, i18nKey, suffix] = i18nMatch
-    const translated = translateI18nKey(i18nKey)
-    return prefix + translated + suffix
-  }
+  // 使用正则替换所有 #{...} 格式
+  // 匹配 #{key} 格式，key 可以包含字母、数字、点和下划线
+  return text.replace(/#\{([^}]+)\}/g, (match, key) => {
+    // 首先从缓存中查找
+    if (translationsCache && translationsCache[key]) {
+      return translationsCache[key]
+    }
 
-  return text
+    // 然后从静态映射中查找
+    if (STATIC_TRANSLATIONS[key]) {
+      return STATIC_TRANSLATIONS[key]
+    }
+
+    // 如果没找到，提取 key 的最后一部分作为显示文本
+    const parts = key.split('.')
+    return parts[parts.length - 1] || match
+  })
 }
 
 /**

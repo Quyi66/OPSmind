@@ -5,7 +5,7 @@ import { apiService } from '@/core/api'
  * GET /flow/api/flow/process/list
  */
 export function getFlowList() {
-    return apiService.get(`/flow/api/flow/process/list?cacheBuster=${Date.now()}`)
+  return apiService.get(`/flow/api/flow/process/list?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -14,9 +14,9 @@ export function getFlowList() {
  * @param {string} id 流程ID
  */
 export function getFlowInfo(id) {
-    return apiService.get('/flow/api/flow/process', {
-        params: { id, cacheBuster: Date.now() }
-    })
+  return apiService.get('/flow/api/flow/process', {
+    params: { id, cacheBuster: Date.now() }
+  })
 }
 
 /**
@@ -26,11 +26,11 @@ export function getFlowInfo(id) {
  * @param {string} detailId 流程详情ID (可选，不传则使用当前版本)
  */
 export function getFlowDetail(processId, detailId = '') {
-    const params = { processId, cacheBuster: Date.now() }
-    if (detailId) {
-        params.detailId = detailId
-    }
-    return apiService.get('/flow/api/flow/process/detail', { params })
+  const params = { processId, cacheBuster: Date.now() }
+  if (detailId) {
+    params.detailId = detailId
+  }
+  return apiService.get('/flow/api/flow/process/detail', { params })
 }
 
 /**
@@ -39,9 +39,9 @@ export function getFlowDetail(processId, detailId = '') {
  * @param {string} processId 流程ID
  */
 export function getFlowVersionHistory(processId) {
-    return apiService.get('/flow/api/flow/process/version', {
-        params: { processId, cacheBuster: Date.now() }
-    })
+  return apiService.get('/flow/api/flow/process/version', {
+    params: { processId, cacheBuster: Date.now() }
+  })
 }
 
 /**
@@ -50,7 +50,7 @@ export function getFlowVersionHistory(processId) {
  * @param {Object} data 包含 processId 和 detailId
  */
 export function changeFlowVersion(data) {
-    return apiService.put(`/flow/api/flow/process/version?cacheBuster=${Date.now()}`, data)
+  return apiService.put(`/flow/api/flow/process/version?cacheBuster=${Date.now()}`, data)
 }
 
 /**
@@ -59,9 +59,9 @@ export function changeFlowVersion(data) {
  * @param {string} processId 流程ID
  */
 export function getFlowParams(processId) {
-    return apiService.get('/flow/api/flow/process/params', {
-        params: { processId, cacheBuster: Date.now() }
-    })
+  return apiService.get('/flow/api/flow/process/params', {
+    params: { processId, cacheBuster: Date.now() }
+  })
 }
 
 /**
@@ -70,7 +70,7 @@ export function getFlowParams(processId) {
  * @param {Object} data 执行参数
  */
 export function runFlow(data) {
-    return apiService.post('/flow/api/flow/process/run', data)
+  return apiService.post('/flow/api/flow/process/run', data)
 }
 
 /**
@@ -79,12 +79,12 @@ export function runFlow(data) {
  * @param {Object} params 包含 processId
  */
 export function getExecutionList(params = {}) {
-    return apiService.get('/flow/api/flow/execution/list', {
-        params: {
-            ...params,
-            cacheBuster: Date.now()
-        }
-    })
+  return apiService.get('/flow/api/flow/execution/list', {
+    params: {
+      ...params,
+      cacheBuster: Date.now()
+    }
+  })
 }
 
 /**
@@ -92,7 +92,7 @@ export function getExecutionList(params = {}) {
  * DELETE /flow/api/flow/execution/:id
  */
 export function deleteExecution(id) {
-    return apiService.delete(`/flow/api/flow/execution/${id}`)
+  return apiService.delete(`/flow/api/flow/execution/${id}`)
 }
 
 /**
@@ -100,7 +100,7 @@ export function deleteExecution(id) {
  * POST /flow/api/flow/execution/batch-delete
  */
 export function batchDeleteExecution(ids) {
-    return apiService.post('/flow/api/flow/execution/batch-delete', { ids })
+  return apiService.post('/flow/api/flow/execution/batch-delete', { ids })
 }
 
 /**
@@ -109,9 +109,9 @@ export function batchDeleteExecution(ids) {
  * @param {string} processId 流程ID，传 'all' 终止所有
  */
 export function terminateProcess(processId) {
-    return apiService.post(`/flow/api/flow/execution/terminate?cacheBuster=${Date.now()}`, {
-        processId
-    })
+  return apiService.post(`/flow/api/flow/execution/terminate?cacheBuster=${Date.now()}`, {
+    processId
+  })
 }
 
 /**
@@ -119,9 +119,9 @@ export function terminateProcess(processId) {
  * POST /flow/api/flow/execution/terminate
  */
 export function terminateAllProcesses() {
-    return apiService.post(`/flow/api/flow/execution/terminate?cacheBuster=${Date.now()}`, {
-        processId: 'all'
-    })
+  return apiService.post(`/flow/api/flow/execution/terminate?cacheBuster=${Date.now()}`, {
+    processId: 'all'
+  })
 }
 
 /**
@@ -130,7 +130,7 @@ export function terminateAllProcesses() {
  * @param {Object} data 包含 processKey, processName, processAbbr, remarks, bpmnXml
  */
 export function createFlow(data) {
-    return apiService.post(`/flow/api/flow/process?cacheBuster=${Date.now()}`, data)
+  return apiService.post(`/flow/api/flow/process?cacheBuster=${Date.now()}`, data)
 }
 
 /**
@@ -139,7 +139,7 @@ export function createFlow(data) {
  * @param {Object} data 包含 id, processXml, remarks, copyScenes
  */
 export function saveFlowDesign(data) {
-    return apiService.put(`/flow/api/flow/process/detail?cacheBuster=${Date.now()}`, data)
+  return apiService.put(`/flow/api/flow/process/detail?cacheBuster=${Date.now()}`, data)
 }
 
 /**
@@ -148,7 +148,7 @@ export function saveFlowDesign(data) {
  * @param {Object} data 完整的流程对象
  */
 export function updateFlow(data) {
-    return apiService.put(`/flow/api/flow/process?cacheBuster=${Date.now()}`, data)
+  return apiService.put(`/flow/api/flow/process?cacheBuster=${Date.now()}`, data)
 }
 
 /**
@@ -156,7 +156,7 @@ export function updateFlow(data) {
  * @param {string} id 流程ID
  */
 export function deleteFlow(id) {
-    return apiService.delete(`/flow/api/flow/process/${id}`)
+  return apiService.delete(`/flow/api/flow/process/${id}`)
 }
 
 /**
@@ -164,7 +164,7 @@ export function deleteFlow(id) {
  * @param {string[]} ids 流程ID数组
  */
 export function batchDeleteFlow(ids) {
-    return apiService.post('/flow/api/flow/process/batch-delete', { ids })
+  return apiService.post('/flow/api/flow/process/batch-delete', { ids })
 }
 
 /**
@@ -172,7 +172,7 @@ export function batchDeleteFlow(ids) {
  * @param {string} id 流程ID
  */
 export function executeFlow(id, params = {}) {
-    return apiService.post(`/flow/api/flow/process/${id}/execute`, params)
+  return apiService.post(`/flow/api/flow/process/${id}/execute`, params)
 }
 
 /**
@@ -181,23 +181,23 @@ export function executeFlow(id, params = {}) {
  * @param {Object} data 完整的流程对象 + copyScenes
  */
 export function cloneFlow(data) {
-    return apiService.post(`/flow/api/flow/process/clone?cacheBuster=${Date.now()}`, data)
+  return apiService.post(`/flow/api/flow/process/clone?cacheBuster=${Date.now()}`, data)
 }
 
 export default {
-    getFlowList,
-    getFlowInfo,
-    getFlowDetail,
-    getFlowVersionHistory,
-    changeFlowVersion,
-    getFlowParams,
-    getExecutionList,
-    createFlow,
-    updateFlow,
-    saveFlowDesign,
-    runFlow,
-    deleteFlow,
-    batchDeleteFlow,
-    executeFlow,
-    cloneFlow
+  getFlowList,
+  getFlowInfo,
+  getFlowDetail,
+  getFlowVersionHistory,
+  changeFlowVersion,
+  getFlowParams,
+  getExecutionList,
+  createFlow,
+  updateFlow,
+  saveFlowDesign,
+  runFlow,
+  deleteFlow,
+  batchDeleteFlow,
+  executeFlow,
+  cloneFlow
 }

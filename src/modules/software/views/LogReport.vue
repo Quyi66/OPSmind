@@ -5,11 +5,11 @@
       <el-form inline size="small">
         <el-form-item label="时间范围">
           <el-select v-model="filterDay" style="width: 120px">
-            <el-option label="All" value="all" />
-            <el-option label="Today" value="1" />
-            <el-option label="Last 7 Days" value="7" />
-            <el-option label="Last 30 Days" value="30" />
-            <el-option label="Last Year" value="365" />
+            <el-option label="全部" value="all" />
+            <el-option label="今天" value="1" />
+            <el-option label="最近7天" value="7" />
+            <el-option label="最近30天" value="30" />
+            <el-option label="最近一年" value="365" />
           </el-select>
         </el-form-item>
         <el-form-item label="执行引擎">

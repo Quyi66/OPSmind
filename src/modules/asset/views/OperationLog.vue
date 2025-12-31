@@ -5,10 +5,10 @@
       <el-form :inline="true" size="small">
         <el-form-item label="时间范围">
           <el-select v-model="filters.day" style="width: 100px">
-            <el-option label="Today" :value="1" />
-            <el-option label="3 Days" :value="3" />
-            <el-option label="7 Days" :value="7" />
-            <el-option label="30 Days" :value="30" />
+            <el-option label="今天" :value="1" />
+            <el-option label="近3天" :value="3" />
+            <el-option label="近7天" :value="7" />
+            <el-option label="近30天" :value="30" />
           </el-select>
         </el-form-item>
 
@@ -159,7 +159,7 @@ import { dtsApi } from '../api'
 import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
-// 筛选条件
+// 筛选条件（用户输入，但未应用）
 const filters = ref({
   day: 1,
   ataNode: 'all',
@@ -169,6 +169,12 @@ const filters = ref({
 
 // 搜索关键词
 const searchKeyword = ref('')
+
+// 已应用的筛选条件（点击搜索后才更新）
+const appliedFilters = ref({
+  ataNode: 'all',
+  keyword: ''
+})
 
 // 表格数据
 const loading = ref(false)
@@ -189,18 +195,18 @@ const runResultDialogVisible = ref(false)
 const currentRunId = ref('')
 const currentJobTitle = ref('')
 
-// 过滤后的数据
+// 过滤后的数据（使用已应用的筛选条件）
 const filteredData = computed(() => {
   let data = tableData.value
 
-  // 按执行引擎节点筛选
-  if (filters.value.ataNode && filters.value.ataNode !== 'all') {
-    data = data.filter(item => item.ata_node === filters.value.ataNode)
+  // 按执行引擎节点筛选（使用已应用的条件）
+  if (appliedFilters.value.ataNode && appliedFilters.value.ataNode !== 'all') {
+    data = data.filter(item => item.ata_node === appliedFilters.value.ataNode)
   }
 
-  // 按搜索关键词筛选
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
+  // 按搜索关键词筛选（使用已应用的条件）
+  if (appliedFilters.value.keyword) {
+    const keyword = appliedFilters.value.keyword.toLowerCase()
     data = data.filter(item =>
       item.action?.toLowerCase().includes(keyword) ||
       item.message?.toLowerCase().includes(keyword) ||
@@ -254,9 +260,15 @@ async function loadData() {
   }
 }
 
-// 筛选变化
+// 筛选变化（点击搜索按钮时触发）
 function handleFilterChange() {
   currentPage.value = 1
+  // 应用前端筛选条件
+  appliedFilters.value = {
+    ataNode: filters.value.ataNode,
+    keyword: searchKeyword.value
+  }
+  // 调用API加载数据（时间范围、状态、操作类型由API筛选）
   loadData()
 }
 
@@ -274,6 +286,10 @@ function handleReset() {
     action: 'all'
   }
   searchKeyword.value = ''
+  appliedFilters.value = {
+    ataNode: 'all',
+    keyword: ''
+  }
   currentPage.value = 1
   loadData()
 }

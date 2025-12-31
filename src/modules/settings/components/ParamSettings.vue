@@ -46,7 +46,7 @@
             max-height="calc(100vh - 400px)"
           >
             <el-table-column prop="domain" label="域" width="100" />
-            <el-table-column prop="name" label="参数名称" min-width="180" show-overflow-tooltip />
+            <el-table-column prop="name" label="参数名称" min-width="120" show-overflow-tooltip />
             <el-table-column prop="value" label="参数值" min-width="300" show-overflow-tooltip />
             <el-table-column prop="description" label="描述" min-width="250" show-overflow-tooltip />
             <el-table-column label="操作" width="150" fixed="right" align="left">
@@ -127,7 +127,7 @@
             style="width: 100%"
             max-height="calc(100vh - 400px)"
           >
-            <el-table-column prop="name" label="参数名称" min-width="180" show-overflow-tooltip />
+            <el-table-column prop="name" label="参数名称" min-width="120" show-overflow-tooltip />
             <el-table-column prop="value" label="参数值" min-width="350" show-overflow-tooltip />
             <el-table-column prop="description" label="描述" min-width="300" show-overflow-tooltip />
             <el-table-column label="操作" width="150" fixed="right" align="left">

@@ -154,15 +154,15 @@ export const useMenuStore = defineStore('menu', () => {
     }
 
     // 处理独立页面（ssc, settings 等）
-    if (STANDALONE_ITEMS.includes(clean)) {
-      activeMenuItem.value = clean
+    // 支持子路径如 /ssc/user
+    const firstPart = clean.split('/')[0]
+    if (STANDALONE_ITEMS.includes(firstPart)) {
+      activeMenuItem.value = firstPart
       showSideMenu.value = false
       return
     }
 
     const parts = clean.split('/').filter(Boolean)
-    // 第一部分可能是分组别名或模块代码
-    const firstPart = parts[0]
     // 第二部分可能是模块代码或子路由
     const secondPart = parts.length >= 2 ? parts[1] : null
 

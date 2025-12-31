@@ -38,44 +38,53 @@
     <div class="table-section">
       <div class="table-section__header">
         <div class="table-section__title">操作记录</div>
-        <div class="table-section__filters">
-          <el-select v-model="filters.day" size="small" placeholder="时间范围" @change="handleFilterChange">
-            <el-option label="今天" value="1" />
-            <el-option label="3天内" value="3" />
-            <el-option label="7天内" value="7" />
-            <el-option label="30天内" value="30" />
-          </el-select>
-          <el-select v-model="filters.status" size="small" placeholder="状态" clearable @change="handleFilterChange">
-            <el-option label="全部" value="all" />
-            <el-option label="成功" value="COMPLETED" />
-            <el-option label="失败" value="ERROR,FAILED" />
-          </el-select>
-          <el-select v-model="filters.action" size="small" placeholder="操作" clearable @change="handleFilterChange">
-            <el-option label="全部" value="all" />
-          </el-select>
-          <el-input
-            v-model="filters.keyword"
-            size="small"
-            placeholder="搜索"
-            clearable
-            style="width: 140px"
-            @keyup.enter="handleFilterChange"
-          >
-            <template #prefix>
-              <i class="fa fa-search"></i>
-            </template>
-          </el-input>
-          <el-button size="small" :icon="Refresh" @click="loadLogs" />
-        </div>
+        <el-form :model="filters" inline size="small" class="table-section__filters">
+          <el-form-item label="时间范围">
+            <el-select v-model="filters.day" style="width: 100px">
+              <el-option label="今天" value="1" />
+              <el-option label="3天内" value="3" />
+              <el-option label="7天内" value="7" />
+              <el-option label="30天内" value="30" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="filters.status" style="width: 80px" clearable>
+              <el-option label="全部" value="all" />
+              <el-option label="成功" value="COMPLETED" />
+              <el-option label="失败" value="ERROR,FAILED" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="结果">
+            <el-input
+              v-model="filters.keyword"
+              placeholder="请输入"
+              clearable
+              style="width: 120px"
+              @keyup.enter="handleFilterChange"
+            >
+              <template #prefix>
+                <i class="fa fa-search"></i>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleFilterChange">搜索</el-button>
+            <el-button @click="handleResetFilters">重置</el-button>
+          </el-form-item>
+        </el-form>
       </div>
 
-      <el-table :data="logList" v-loading="logsLoading" stripe max-height="400">
+      <el-table :data="logList" v-loading="logsLoading" stripe max-height="calc(100vh - 740px)">
         <el-table-column prop="start_time" label="开始时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}
           </template>
         </el-table-column>
-        <el-table-column prop="action" label="操作" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="action" label="操作" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ translateText(row.action) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="90">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" size="small">
@@ -125,6 +134,7 @@ import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import * as userApi from '@/modules/user/api'
+import { translateText } from '@/utils/i18n'
 
 // 定义 emit 用于通知父组件切换视图
 const emit = defineEmits(['navigate'])
@@ -424,7 +434,7 @@ async function loadLogs() {
       day: filters.value.day,
       page: pagination.page,
       size: pagination.size
-    })
+    }, filters.value.keyword ? `message:*${filters.value.keyword}*` : undefined)
     logList.value = response?.records || response?.data?.records || []
     pagination.total = response?.total || response?.data?.total || logList.value.length
   } catch (error) {
@@ -437,6 +447,18 @@ async function loadLogs() {
 
 // 筛选条件改变
 function handleFilterChange() {
+  pagination.page = 1
+  loadLogs()
+}
+
+// 重置筛选条件
+function handleResetFilters() {
+  filters.value = {
+    day: '3',
+    status: 'all',
+    action: 'all',
+    keyword: ''
+  }
   pagination.page = 1
   loadLogs()
 }
@@ -479,7 +501,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   gap: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .legend-item {
@@ -548,7 +570,15 @@ onUnmounted(() => {
   }
 }
 
-.ops-pagination-wrapper {
-  margin-top: 16px;
+.filter-label {
+  font-size: 13px;
+  color: #606266;
+  white-space: nowrap;
+}
+
+.table-section__filters {
+  :deep(.el-form-item--small) {
+    margin-bottom: 0 !important;
+  }
 }
 </style>

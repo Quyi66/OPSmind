@@ -93,11 +93,13 @@
 
 <script setup>
 import { ref, onMounted, defineEmits } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { templateApi, paramApi } from '../api'
 import TemplateEditDialog from '../components/TemplateEditDialog.vue'
 import RunTemplateDialog from '../components/RunTemplateDialog.vue'
 
+const router = useRouter()
 const emit = defineEmits(['navigate'])
 
 const loading = ref(true)
@@ -221,7 +223,7 @@ async function loadParams() {
 function handleCardClick(template) {
   if (template.jobId) {
     // 有执行记录，跳转到检查结果详情页面
-    emit('navigate', { view: 'result-detail', params: { jobId: template.jobId } })
+    router.push(`/cac/results/${template.jobId}`)
   } else {
     // 没有执行记录，提示用户
     ElMessage.warning('该模板尚未执行巡检，请先点击右侧菜单执行巡检')
@@ -311,7 +313,7 @@ async function deleteTemplate(template) {
  * 跳转到新增模板
  */
 function goToAddTemplate() {
-  emit('navigate', { view: 'templates', params: { action: 'add' } })
+  router.push('/cac/templates?action=add')
 }
 
 onMounted(() => {

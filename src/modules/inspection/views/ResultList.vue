@@ -109,14 +109,14 @@
           <el-table-column prop="createdBy" label="执行人" width="100" />
           <el-table-column label="执行状态" width="100" align="left">
             <template #default="{ row }">
-              <el-button
+              <el-tag
                 :type="getStatusType(row.jobStatus)"
                 size="small"
-                round
+                style="cursor: pointer;"
                 @click="showJobLog(row)"
               >
                 {{ getStatusText(row.jobStatus) }}
-              </el-button>
+              </el-tag>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="90" align="left" fixed="right">
@@ -521,26 +521,5 @@ watch(
   padding: 20px;
   text-align: center;
   color: #6c757d;
-}
-
-// 按钮样式
-:deep(.el-button--success.is-round) {
-  background-color: #28a745;
-  border-color: #28a745;
-}
-
-:deep(.el-button--danger.is-round) {
-  background-color: #dc3545;
-  border-color: #dc3545;
-}
-
-:deep(.el-button--primary.is-round) {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
-}
-
-:deep(.el-button--info.is-round) {
-  background-color: #6c757d;
-  border-color: #6c757d;
 }
 </style>

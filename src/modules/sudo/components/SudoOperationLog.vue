@@ -166,7 +166,7 @@ const filters = reactive({
 
 const pagination = reactive({
   page: 1,
-  pageSize: 20,
+  pageSize: 10,
   total: 0
 })
 
@@ -181,7 +181,7 @@ function handleReset() {
   filters.status = 'all'
   filters.day = '1'
   pagination.page = 1
-  pagination.pageSize = 20
+  pagination.pageSize = 10
   loadData()
 }
 
@@ -193,10 +193,12 @@ async function loadData() {
   loading.value = true
   try {
     const response = await sudoApi.getOperationLog({
-      keyword: filters.keyword,
       action: filters.action,
       status: filters.status,
-      day: filters.day
+      day: filters.day,
+      keyword: filters.keyword,
+      page: pagination.page,
+      size: pagination.pageSize
     })
 
     const result = response?.data || response

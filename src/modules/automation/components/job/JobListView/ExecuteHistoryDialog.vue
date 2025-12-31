@@ -2,7 +2,7 @@
   <el-dialog
     v-model="dialogVisible"
     :title="`作业运行记录${jobTitle ? ` · ${jobTitle}` : ''}`"
-    width="1260px"
+    width="1460px"
     destroy-on-close
     @close="handleClose"
   >
@@ -181,11 +181,11 @@ import {
 } from '@/modules/automation/constants/jobStatus'
 
 const timeRangeOptions = [
-  { label: 'All', value: 'all' },
-  { label: 'Today', value: 'today' },
-  { label: 'Last 7 Days', value: 'last7' },
-  { label: 'Last 30 Days', value: 'last30' },
-  { label: 'Last year', value: 'lastYear' }
+  { label: '全部', value: 'all' },
+  { label: '今天', value: 'today' },
+  { label: '最近7天', value: 'last7' },
+  { label: '最近30天', value: 'last30' },
+  { label: '最近一年', value: 'lastYear' }
 ]
 
 const timeRangeMap = {

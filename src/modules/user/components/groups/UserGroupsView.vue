@@ -19,6 +19,15 @@
             style="width: 150px"
           />
         </el-form-item>
+        <el-form-item label="主机名">
+          <el-input
+            v-model="filters.hostname"
+            placeholder="输入主机名"
+            clearable
+            style="width: 150px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
@@ -118,7 +127,8 @@ import DeleteGroupDialog from '@/modules/user/components/dialogs/DeleteGroupDial
 // 筛选条件
 const filters = ref({
   host_key: '',
-  group_name: ''
+  group_name: '',
+  hostname: ''     // 主机名搜索
 })
 
 const loading = ref(false)
@@ -166,7 +176,8 @@ async function loadData() {
       group_name: filters.value.group_name || null,
       hostObject: '@@(linux)',
       page,
-      size
+      size,
+      filter: filters.value.hostname ? `hostname:*${filters.value.hostname}*` : ''
     })
     tableData.value = response?.records || response?.data?.records || []
 
@@ -249,7 +260,8 @@ function handleSearch() {
 function handleReset() {
   filters.value = {
     host_key: '',
-    group_name: ''
+    group_name: '',
+    hostname: ''
   }
   currentPage.value = 1
   pageSize.value = 10

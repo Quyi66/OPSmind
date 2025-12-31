@@ -186,25 +186,23 @@ const filters = reactive({
   status: ''
 })
 
-const pagination = ref({
+const pagination = reactive({
   page: 1,
-  pageSize: 20,
+  pageSize: 10,
   total: 0
 })
 
 // 已应用的筛选条件（只在点击搜索按钮时更新）
-const appliedFilters = reactive({
-  keyword: '',
-  status: ''
-})
+const appliedKeyword = ref('')
+const appliedStatus = ref('')
 
 // 过滤后的数据（使用已应用的筛选条件）
 const filteredData = computed(() => {
   let result = tableData.value
 
   // 关键词搜索
-  if (appliedFilters.keyword) {
-    const keyword = appliedFilters.keyword.toLowerCase()
+  if (appliedKeyword.value) {
+    const keyword = appliedKeyword.value.toLowerCase()
     result = result.filter(item =>
       item.login?.toLowerCase().includes(keyword) ||
       item.fullName?.toLowerCase().includes(keyword)
@@ -212,18 +210,18 @@ const filteredData = computed(() => {
   }
 
   // 状态筛选
-  if (appliedFilters.status === 'activated') {
+  if (appliedStatus.value === 'activated') {
     result = result.filter(item => item.activated)
-  } else if (appliedFilters.status === 'disabled') {
+  } else if (appliedStatus.value === 'disabled') {
     result = result.filter(item => !item.activated)
   }
 
   // 更新分页总数
-  pagination.value.total = result.length
+  pagination.total = result.length
 
   // 分页
-  const start = (pagination.value.page - 1) * pagination.value.pageSize
-  const end = start + pagination.value.pageSize
+  const start = (pagination.page - 1) * pagination.pageSize
+  const end = start + pagination.pageSize
   return result.slice(start, end)
 })
 
@@ -258,7 +256,7 @@ async function loadData() {
     const response = await settingsApi.getUsers(tenantId)
     const result = response?.data || response
     tableData.value = Array.isArray(result) ? result : []
-    pagination.value.total = tableData.value.length
+    pagination.total = tableData.value.length
   } catch (error) {
     console.error('Failed to load users:', error)
     ElMessage.error('加载用户列表失败')
@@ -269,19 +267,19 @@ async function loadData() {
 
 // 搜索 - 将筛选条件应用到 appliedFilters
 function handleSearch() {
-  appliedFilters.keyword = filters.keyword
-  appliedFilters.status = filters.status
-  pagination.value.page = 1
+  appliedKeyword.value = filters.keyword
+  appliedStatus.value = filters.status
+  pagination.page = 1
 }
 
 // 重置
 function handleReset() {
   filters.keyword = ''
   filters.status = ''
-  appliedFilters.keyword = ''
-  appliedFilters.status = ''
-  pagination.value.page = 1
-  pagination.value.pageSize = 20
+  appliedKeyword.value = ''
+  appliedStatus.value = ''
+  pagination.page = 1
+  pagination.pageSize = 10
 }
 
 function getAuthModeType(authMode) {

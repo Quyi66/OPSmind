@@ -12,8 +12,8 @@
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
           <el-form-item label="时间范围">
-            <el-select v-model="dayFilter" style="width: 100px">
-              <el-option label="Today" :value="1" />
+          <el-select v-model="dayFilter" style="width: 100px">
+              <el-option label="今天" :value="1" />
               <el-option label="近3天" :value="3" />
               <el-option label="近7天" :value="7" />
               <el-option label="近30天" :value="30" />

@@ -32,15 +32,7 @@ export function getAuditLogStats(diffDay = 15) {
  * @param {Object} params 查询参数
  */
 export function getOperationLogs(params = {}) {
-  const defaultParams = {
-    module: 'uim',
-    action: 'all',
-    status: 'all',
-    day: '3'
-  }
-  return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, {
-    params: { ...defaultParams, ...params }
-  })
+  return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, params)
 }
 
 /**
@@ -100,10 +92,16 @@ export function saveFeatureConfig(config) {
 /**
  * 获取sudo模板列表
  * API: LUPM_LIST_SUDO_TEMPLATES
+ * @param {object} options 分页和筛选参数 { page, size, keyword }
  */
-export function getSudoTemplates() {
+export function getSudoTemplates(options = {}) {
+  const { page = 1, size = 10, keyword = '' } = options
   return apiService.post(`${DTS_BASE}/LUPM_LIST_SUDO_TEMPLATES/?cacheBuster=${Date.now()}`, {
-    params: {}
+    params: {},
+    page,
+    size,
+    orderBy: 'created_at desc',
+    filter: keyword ? `name|description:*${keyword}*` : ''
   })
 }
 

@@ -5,7 +5,7 @@
       <el-form :model="filters" inline size="small">
         <el-form-item label="流程名称">
           <el-input
-            v-model="filters.keyword"
+            v-model="filters.processName"
             placeholder="搜索流程名称"
             clearable
             style="width: 250px"
@@ -141,8 +141,10 @@ const loading = ref(false)
 const tableData = ref([])
 const selectedRows = ref([])
 const filters = reactive({
-  keyword: ''
+  processName: ''
 })
+// 已应用的筛选条件（点击搜索后才更新）
+const appliedKeyword = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
 
@@ -158,11 +160,11 @@ const editFlowData = ref(null)
 const showCloneDialog = ref(false)
 const cloneFlowData = ref(null)
 
-// 过滤后的数据
+// 过滤后的数据（使用已应用的筛选条件）
 const filteredData = computed(() => {
   let data = tableData.value
-  if (filters.keyword) {
-    const keyword = filters.keyword.toLowerCase()
+  if (appliedKeyword.value) {
+    const keyword = appliedKeyword.value.toLowerCase()
     data = data.filter(item =>
       item.processName?.toLowerCase().includes(keyword) ||
       item.processAbbr?.toLowerCase().includes(keyword) ||
@@ -201,11 +203,14 @@ function handlePageChange(page) {
 }
 
 function handleSearch() {
+  // 点击搜索时才应用筛选条件
+  appliedKeyword.value = filters.processName
   currentPage.value = 1
 }
 
 function handleReset() {
-  filters.keyword = ''
+  filters.processName = ''
+  appliedKeyword.value = ''
   currentPage.value = 1
   pageSize.value = 10
 }

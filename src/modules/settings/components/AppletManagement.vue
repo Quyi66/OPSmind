@@ -37,7 +37,7 @@
             <el-table-column prop="name" label="Code" width="120" />
             <el-table-column prop="title" label="标题" min-width="150">
               <template #default="{ row }">
-                {{ formatTitle(row.title) }}
+                {{ translateText(row.title) }}
               </template>
             </el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="left">
@@ -133,7 +133,11 @@
           >
             <el-table-column type="selection" width="55" />
             <el-table-column prop="appletCode" label="Code" width="120" />
-            <el-table-column prop="title" label="标题" min-width="150" />
+            <el-table-column prop="title" label="标题" min-width="150">
+              <template #default="{ row }">
+                {{ translateText(row.title) }}
+              </template>
+            </el-table-column>
             <el-table-column prop="createBy" label="创建人" width="100" />
             <el-table-column prop="createTime" label="创建时间" width="180">
               <template #default="{ row }">
@@ -196,6 +200,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import * as appletApi from '@/modules/settings/api/applet'
 import AppletDetailDialog from './AppletDetailDialog.vue'
 import AppletCopyDialog from './AppletCopyDialog.vue'
+import { translateText } from '@/utils/i18n'
 
 const activeTab = ref('app')
 const loading = ref(false)
@@ -272,16 +277,6 @@ async function loadRecycledApplets() {
   }
 }
 
-function formatTitle(title) {
-  if (!title) return ''
-  if (title.startsWith('#{') && title.endsWith('}')) {
-    const key = title.slice(2, -1)
-    const parts = key.split('.')
-    return parts[parts.length - 1] || title
-  }
-  return title
-}
-
 function formatDate(dateStr) {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
@@ -326,7 +321,7 @@ function handleImport() {
 async function handleDelete(row) {
   try {
     await ElMessageBox.confirm(
-      `确定要删除应用 "${formatTitle(row.title)}" 吗？删除后将移至回收站。`,
+      `确定要删除应用 "${translateText(row.title)}" 吗？删除后将移至回收站。`,
       '确认删除',
       { type: 'warning' }
     )

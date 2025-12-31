@@ -134,12 +134,14 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { templateApi, paramApi } from '../api'
 import TemplateEditDialog from '../components/TemplateEditDialog.vue'
 import RunTemplateDialog from '../components/RunTemplateDialog.vue'
 
+const router = useRouter()
 const emit = defineEmits(['navigate'])
 
 const loading = ref(false)
@@ -308,7 +310,7 @@ function goToAdd() {
  * 跳转到检查结果页面，并选中当前模板
  */
 function goToJobList(template) {
-  emit('navigate', { view: 'results', params: { templateId: template.id } })
+  router.push(`/cac/results?templateId=${template.id}`)
 }
 
 /**

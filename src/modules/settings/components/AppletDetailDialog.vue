@@ -147,28 +147,28 @@
           max-height="calc(100vh - 480px)"
         >
           <!-- <el-table-column type="selection" width="40" /> -->
-          <el-table-column prop="title" label="作业" min-width="150">
+          <el-table-column prop="title" label="作业" min-width="120">
             <template #default="{ row }">
               <div>{{ translateJobText(row.title) }}</div>
               <div class="job-desc" v-if="row.description">{{ translateJobText(row.description) }}</div>
             </template>
           </el-table-column>
-          <el-table-column prop="type" label="类型" width="130">
+          <el-table-column prop="type" label="类型" width="100">
             <template #default="{ row }">
               <span class="job-type">
-                <i :class="getJobTypeIcon(row.type)"></i>
+                <!-- <i :class="getJobTypeIcon(row.type)"></i> -->
                 {{ getJobTypeLabel(row.type) }}
               </span>
             </template>
           </el-table-column>
           <el-table-column prop="appletCode" label="所属应用" width="100" />
           <el-table-column prop="updatedBy" label="修改人" width="80" />
-          <el-table-column prop="updatedAt" label="修改时间" width="160">
+          <el-table-column prop="updatedAt" label="修改时间" width="180">
             <template #default="{ row }">
               {{ formatDateTime(row.updatedAt) }}
             </template>
           </el-table-column>
-          <el-table-column prop="lastRunTime" label="上次运行时间" width="160">
+          <el-table-column prop="lastRunTime" label="上次运行时间" width="180">
             <template #default="{ row }">
               {{ formatDateTime(row.lastRunTime) }}
             </template>

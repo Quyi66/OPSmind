@@ -3,11 +3,6 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
-        <el-form-item label="执行引擎">
-          <el-select v-model="filters.ata_node" placeholder="全部" clearable style="width: 130px">
-            <el-option label="全部" value="" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="filters.status" placeholder="全部" style="width: 100px">
             <el-option label="全部" value="all" />
@@ -16,17 +11,13 @@
             <el-option label="运行中" value="RUNNING" />
           </el-select>
         </el-form-item>
-        <el-form-item label="操作">
-          <el-select v-model="filters.action" placeholder="全部" style="width: 120px">
-            <el-option label="全部" value="all" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="时间范围">
           <el-select v-model="filters.day" style="width: 120px">
-            <el-option label="最近一年" value="365" />
-            <el-option label="最近一月" value="30" />
+            <el-option label="全部" value="3650" />
+            <el-option label="今天" value="1" />
             <el-option label="最近一周" value="7" />
-            <el-option label="最近三天" value="3" />
+            <el-option label="最近一月" value="30" />
+            <el-option label="最近一年" value="365" />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -34,7 +25,7 @@
             v-model="filters.keyword"
             placeholder="搜索"
             clearable
-            style="width: 150px"
+            style="width: 200px"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -145,10 +136,8 @@ const props = defineProps({
 
 // 筛选条件
 const filters = ref({
-  day: props.initialFilters.day || '365',
-  action: props.initialFilters.action || 'all',
+  day: props.initialFilters.day || '3650',
   status: props.initialFilters.status || 'all',
-  ata_node: '',
   keyword: ''
 })
 
@@ -206,6 +195,7 @@ function calcDuration(startTime, endTime) {
 function getStatusType(status) {
   const types = {
     SUCCESS: 'success',
+    COMPLETED: 'success',
     FAILED: 'danger',
     RUNNING: 'warning'
   }
@@ -216,6 +206,7 @@ function getStatusType(status) {
 function getStatusLabel(status) {
   const labels = {
     SUCCESS: '运行成功',
+    COMPLETED: '已完成',
     FAILED: '运行失败',
     RUNNING: '运行中'
   }
@@ -241,10 +232,13 @@ async function loadData() {
   loading.value = true
   try {
     const response = await userApi.getOperationLogs({
-      module: 'uim',
-      action: filters.value.action,
-      status: filters.value.status,
-      day: filters.value.day,
+      params:{
+        module: 'uim',
+        action: 'all',
+        status: filters.value.status,
+        day: filters.value.day,
+      },
+      filter: filters.value.keyword ? `username|ata_node|message:*${filters.value.keyword}*` : '',
       page: currentPage.value,
       size: pageSize.value
     })
@@ -265,10 +259,8 @@ function handleSearch() {
 
 function handleReset() {
   filters.value = {
-    day: '365',
-    action: 'all',
+    day: '3650',
     status: 'all',
-    ata_node: '',
     keyword: ''
   }
   currentPage.value = 1
