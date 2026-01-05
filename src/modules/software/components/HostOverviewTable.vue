@@ -7,10 +7,10 @@
           <i class="fas fa-chevron-right" />
           重新进行软件包扫描
         </el-button>
-        <el-button size="small" @click="handleExport">
+        <!-- <el-button size="small" @click="handleExport">
           <i class="fa fa-download" />
           导出
-        </el-button>
+        </el-button> -->
       </div>
       <div class="action-right">
         <el-input
@@ -87,6 +87,33 @@
       :host-id="selectedHostId"
       :host-key="selectedHostKey"
     />
+
+    <!-- 扫描目标主机对话框 -->
+    <el-dialog
+      v-model="scanDialogVisible"
+      title="选择目标主机"
+      width="600px"
+      destroy-on-close
+    >
+      <div class="scan-dialog-content">
+        <!-- 使用 AcmDeviceSelector 组件 -->
+        <AcmDeviceSelector
+          v-model="selectedScanHosts"
+          ci-types="linux"
+          :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择'
+          }"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="scanDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="scanLoading" :disabled="selectedScanHosts.length === 0" @click="executeScan">
+          开始扫描
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -94,8 +121,13 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
-import { hostOverviewApi } from '../api'
+import { hostOverviewApi, softwareScanApi } from '../api'
 import HostDetailDialog from './HostDetailDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { useJobPolling } from '@/composables/useJobPolling'
+
+// 使用作业轮询 composable
+const { isPolling, startPolling } = useJobPolling()
 
 const emit = defineEmits(['rescan', 'view-host', 'view-installed'])
 
@@ -112,6 +144,11 @@ const pagination = reactive({
 const detailDialogVisible = ref(false)
 const selectedHostId = ref('')
 const selectedHostKey = ref('')
+
+// 扫描对话框
+const scanDialogVisible = ref(false)
+const selectedScanHosts = ref([])
+const scanLoading = ref(false)
 
 // 加载数据
 async function loadData() {
@@ -198,9 +235,57 @@ function handleExport() {
   ElMessage.info('导出功能开发中')
 }
 
-// 重新扫描
+// 重新扫描 - 打开对话框
 function handleRescan() {
-  emit('rescan')
+  selectedScanHosts.value = []
+  scanDialogVisible.value = true
+}
+
+// 执行扫描
+async function executeScan() {
+  if (selectedScanHosts.value.length === 0) {
+    ElMessage.warning('请选择要扫描的主机')
+    return
+  }
+
+  scanLoading.value = true
+  try {
+    // 构造主机列表，格式: [{ key, value, assetType }]
+    const hosts = selectedScanHosts.value.map(host => ({
+      key: host.key || host.id || host.host_key,
+      value: host.value || host.ip || host.host_key,
+      assetType: host.assetType || host.ci_type || 'linux'
+    }))
+
+    // 调用扫描 API
+    const response = await softwareScanApi.scan({ hosts })
+    const runResult = (response?.data || response || [])[0]
+
+    if (runResult && runResult.runId) {
+      ElMessage.success('软件包扫描任务已提交')
+      scanDialogVisible.value = false
+      selectedScanHosts.value = []
+
+      // 使用 composable 开始轮询任务状态
+      startPolling(runResult.runId, {
+        successMessage: '软件包扫描完成',
+        errorMessage: '软件包扫描失败',
+        onSuccess: () => {
+          loadData()
+          emit('rescan')
+        },
+        onComplete: () => {
+          scanLoading.value = false
+        }
+      })
+    } else {
+      throw new Error('未获取到任务运行ID')
+    }
+  } catch (error) {
+    console.error('Scan failed:', error)
+    ElMessage.error('扫描失败: ' + (error.message || '未知错误'))
+    scanLoading.value = false
+  }
 }
 
 onMounted(() => {

@@ -40,12 +40,16 @@
       <div class="form-section">
         <div class="form-label">安装目标主机</div>
         <div class="form-control">
-          <el-button plain size="small" @click="openHostSelector">
-            <i class="fa fa-server" /> 选择主机
-          </el-button>
-          <span v-if="selectedHosts.length > 0" class="selected-info">
-            已选择 {{ selectedHosts.length }} 台主机
-          </span>
+          <AcmDeviceSelector
+            v-model="selectedHosts"
+            ci-types="[auto]"
+            :options="{
+              selectMode: 'host,group,tag,input,recently',
+              selector: 'multiple',
+              label: '选择主机'
+            }"
+            :disabled="installing"
+          />
         </div>
       </div>
 
@@ -70,18 +74,6 @@
       repo-type="staticfs"
       @confirm="handleFilesConfirm"
     />
-
-    <!-- 主机选择器弹窗 -->
-    <AcmDeviceSelectorDialog
-      v-model="hostSelectorVisible"
-      ci-types="[auto]"
-      :initial-selection="selectedHosts"
-      :options="{
-        selectMode: 'host,group,tag,input,recently',
-        selector: 'multiple'
-      }"
-      @confirm="handleHostsConfirm"
-    />
   </div>
 </template>
 
@@ -89,8 +81,12 @@
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { localInstallApi } from '../api'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import FileSelectorDialog from '../components/FileSelectorDialog.vue'
+import { useJobPolling } from '@/composables/useJobPolling'
+
+// 使用作业轮询 composable
+const { startPolling } = useJobPolling()
 
 const installing = ref(false)
 
@@ -99,23 +95,14 @@ const fileSelectorVisible = ref(false)
 const selectedFiles = ref([])
 
 // 主机选择器
-const hostSelectorVisible = ref(false)
 const selectedHosts = ref([])
 
 function openFileSelector() {
   fileSelectorVisible.value = true
 }
 
-function openHostSelector() {
-  hostSelectorVisible.value = true
-}
-
 function handleFilesConfirm(files) {
   selectedFiles.value = files
-}
-
-function handleHostsConfirm(hosts) {
-  selectedHosts.value = hosts
 }
 
 function removeFile(index) {
@@ -161,7 +148,15 @@ async function handleStartInstall() {
 
     if (response && response[0] && response[0].runId) {
       const runId = response[0].runId
-      pollInstallResult(runId)
+      // 使用 composable 开始轮询
+      startPolling(runId, {
+        interval: 5000,
+        successMessage: '安装任务执行成功',
+        errorMessage: '安装任务执行失败',
+        onComplete: () => {
+          installing.value = false
+        }
+      })
     } else {
       ElMessage.success('安装任务已提交')
       installing.value = false
@@ -175,29 +170,6 @@ async function handleStartInstall() {
       console.error('Failed to start install:', error)
       ElMessage.error('安装任务提交失败')
     }
-    installing.value = false
-  }
-}
-
-async function pollInstallResult(runId) {
-  try {
-    const result = await localInstallApi.getInstallResult(runId)
-    const status = result.status
-
-    if (status === 'WAITING' || status === 'RUNNING') {
-      setTimeout(() => {
-        pollInstallResult(runId)
-      }, 5000)
-    } else {
-      installing.value = false
-      if (status === 'SUCCESS' || status === 'Finished') {
-        ElMessage.success('安装任务执行成功')
-      } else {
-        ElMessage.error(`安装任务执行失败: ${status}`)
-      }
-    }
-  } catch (error) {
-    console.error('Polling error:', error)
     installing.value = false
   }
 }

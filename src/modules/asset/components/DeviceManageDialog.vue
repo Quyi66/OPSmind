@@ -44,6 +44,7 @@
               <el-tag
                 v-for="(host, index) in passwordForm.hosts.slice(0, 5)"
                 :key="index"
+                type="primary"
                 closable
                 class="me-1 mb-1"
                 @close="removePasswordHost(index)"
@@ -178,6 +179,7 @@
               <el-tag
                 v-for="(host, index) in sshForm.hosts.slice(0, 5)"
                 :key="index"
+                type="primary"
                 closable
                 class="me-1 mb-1"
                 @close="removeSshHost(index)"

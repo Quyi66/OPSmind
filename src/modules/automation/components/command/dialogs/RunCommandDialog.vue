@@ -45,32 +45,15 @@
 
       <!-- 主机选择 -->
       <el-form-item label="目标主机" prop="hosts" required>
-        <div class="host-selector">
-          <!-- 选择设备按钮 -->
-          <div class="select-device-btn">
-            <el-button type="primary" link @click="deviceSelectorVisible = true">
-              <i class="fa fa-server me-1"></i>
-              选择主机
-            </el-button>
-          </div>
-
-          <!-- 已选主机列表 -->
-          <div v-if="formData.hosts.length > 0" class="host-list">
-            <el-tag
-              v-for="(host, index) in formData.hosts"
-              :key="index"
-              closable
-              type="success"
-              class="host-tag"
-              @close="removeHost(index)"
-            >
-              {{ host.value || host }}
-            </el-tag>
-          </div>
-          <div v-else class="no-hosts">
-            <span class="text-muted">hosts is required</span>
-          </div>
-        </div>
+        <AcmDeviceSelector
+          v-model="formData.hosts"
+          ci-types="linux"
+          :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择主机'
+          }"
+        />
       </el-form-item>
     </el-form>
 
@@ -80,6 +63,7 @@
         v-if="isCreateJobMode"
         type="primary"
         :loading="submitting"
+        :disabled="formData.hosts.length === 0"
         @click="handleSaveJob"
       >
         保存作业
@@ -88,31 +72,20 @@
         v-else
         type="primary"
         :loading="submitting"
+        :disabled="formData.hosts.length === 0"
         @click="handleRunCommand"
       >
         执行命令
       </el-button>
     </template>
   </el-dialog>
-
-  <!-- 设备选择器弹窗 -->
-  <AcmDeviceSelectorDialog
-    v-model="deviceSelectorVisible"
-    ci-types="linux"
-    :initial-selection="formData.hosts"
-    :options="{
-      selectMode: 'host,group,tag,input,recently',
-      selector: 'multiple'
-    }"
-    @confirm="handleDeviceSelected"
-  />
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { runCommands, saveJob } from '@/modules/automation/api/command'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 
 const props = defineProps({
   visible: {
@@ -318,17 +291,31 @@ function handleClose() {
 }
 
 .host-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 12px;
   background: #f8f9fa;
   border-radius: 6px;
+  padding: 12px;
   min-height: 60px;
 }
 
-.host-tag {
-  font-size: 13px;
+.host-list-header {
+  margin-bottom: 8px;
+
+  .host-count {
+    font-size: 13px;
+    color: #606266;
+
+    strong {
+      color: #409eff;
+    }
+  }
+}
+
+.host-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 120px;
+  overflow-y: auto;
 }
 
 .no-hosts {

@@ -50,7 +50,7 @@
         heigth="calc(100vh - 300px)"
       >
         <!-- 名称 -->
-        <el-table-column prop="templateName" label="名称" min-width="250" sortable>
+        <el-table-column prop="templateName" label="名称" min-width="180" sortable show-overflow-tooltip>
           <template #default="{ row }">
             <a
               href="javascript:void(0)"
@@ -59,7 +59,14 @@
             >
               {{ row.templateName }}
             </a>
-            <p v-if="row.description" class="template-desc">{{ row.description }}</p>
+          </template>
+        </el-table-column>
+
+        <!-- 描述 -->
+        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span v-if="row.description" class="template-desc">{{ row.description }}</span>
+            <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
 
@@ -430,10 +437,13 @@ defineExpose({
 }
 
 .template-desc {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: #909399;
+  font-size: 13px;
+  color: #606266;
   line-height: 1.4;
+}
+
+.text-muted {
+  color: #909399;
 }
 
 .check-item {

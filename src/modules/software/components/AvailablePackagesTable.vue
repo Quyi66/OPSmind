@@ -3,10 +3,10 @@
     <!-- 操作栏 - 左右分布 -->
     <div class="ops-action-bar">
       <div class="action-left">
-        <el-button size="small" @click="handleExport">
+        <!-- <el-button size="small" @click="handleExport">
           <i class="fa fa-download" />
           导出
-        </el-button>
+        </el-button> -->
       </div>
       <div class="action-right">
         <el-input

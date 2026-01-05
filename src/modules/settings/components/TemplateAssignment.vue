@@ -39,13 +39,11 @@
         style="width: 100%"
         max-height="calc(100vh - 360px)"
       >
-        <el-table-column label="名称" min-width="200">
+        <el-table-column prop="templateName" label="名称" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
-            <div class="template-name">
-              <i v-if="row.icon" :class="['fa', row.icon]" style="margin-right: 8px; color: #409eff;"></i>
-              {{ row.templateName }}
-            </div>
-            <div class="sub-text">{{ row.description }}</div>
+            <span v-if="row.description">{{ row.description }}</span>
+            <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
         <el-table-column label="关联团队" min-width="200">
@@ -56,6 +54,7 @@
               clearable
               style="width: 100%"
               @change="handleTeamChange(row)"
+              size="small"
             >
               <el-option
                 v-for="team in teams"
@@ -226,14 +225,7 @@ async function handleAlertChange(row) {
 </script>
 
 <style scoped lang="scss">
-.template-name {
-  display: flex;
-  align-items: center;
-}
-
-.sub-text {
-  font-size: 12px;
+.text-muted {
   color: #909399;
-  margin-top: 4px;
 }
 </style>

@@ -75,9 +75,9 @@
         <i class="fa fa-download" style="margin-right: 4px"></i>
         采集信息
       </el-button>
-      <el-button size="small" @click="handleExport">
+      <!-- <el-button size="small" @click="handleExport">
         <el-icon><Download /></el-icon>
-        导出</el-button>
+        导出</el-button> -->
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
         <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -139,30 +139,16 @@
       :close-on-click-modal="false"
     >
       <div class="dialog-content">
-        <!-- 已选设备显示 -->
-        <div class="selected-hosts-section">
-          <div class="section-header">
-            <span class="section-label">已选设备</span>
-            <el-tag type="primary" size="small">{{ checkConnHosts.length }}</el-tag>
-            <el-button type="primary" link class="select-btn" @click="openCheckConnDeviceSelector">
-              <i class="fa fa-server" style="margin-right: 4px"></i>
-              选择设备
-            </el-button>
-          </div>
-          <div v-if="checkConnHosts.length > 0" class="hosts-list">
-            <el-tag
-              v-for="(host, index) in checkConnHosts"
-              :key="index"
-              closable
-              type="primary"
-              class="host-tag"
-              @close="removeCheckConnHost(index)"
-            >
-              {{ host.value || host.ip }}
-            </el-tag>
-          </div>
-          <div v-else class="empty-tip">请点击"选择设备"按钮添加设备</div>
-        </div>
+        <!-- 使用 AcmDeviceSelector 组件 -->
+        <AcmDeviceSelector
+          v-model="checkConnHosts"
+          ci-types="[auto]"
+          :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择设备'
+          }"
+        />
       </div>
       <template #footer>
         <el-button type="primary" :disabled="checkConnHosts.length === 0" @click="confirmCheckConnectivity">
@@ -173,15 +159,6 @@
       </template>
     </el-dialog>
 
-    <!-- 检查连通性设备选择二级弹窗 -->
-    <AcmDeviceSelectorDialog
-      v-model="checkConnDeviceSelectorVisible"
-      ci-types="[auto]"
-      :initial-selection="checkConnHosts"
-      :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
-      @confirm="handleCheckConnDeviceConfirm"
-    />
-
     <!-- 采集信息一级弹窗 -->
     <el-dialog
       v-model="collectInfoDialogVisible"
@@ -190,30 +167,16 @@
       :close-on-click-modal="false"
     >
       <div class="dialog-content">
-        <!-- 已选设备显示 -->
-        <div class="selected-hosts-section">
-          <div class="section-header">
-            <span class="section-label">已选设备</span>
-            <el-tag type="primary" size="small">{{ collectInfoHosts.length }}</el-tag>
-            <el-button type="primary" link class="select-btn" @click="openCollectInfoDeviceSelector">
-              <i class="fa fa-server" style="margin-right: 4px"></i>
-              选择设备
-            </el-button>
-          </div>
-          <div v-if="collectInfoHosts.length > 0" class="hosts-list">
-            <el-tag
-              v-for="(host, index) in collectInfoHosts"
-              :key="index"
-              closable
-              type="info"
-              class="host-tag"
-              @close="removeCollectInfoHost(index)"
-            >
-              {{ host.value || host.ip }}
-            </el-tag>
-          </div>
-          <div v-else class="empty-tip">请点击"选择设备"按钮添加设备</div>
-        </div>
+        <!-- 使用 AcmDeviceSelector 组件 -->
+        <AcmDeviceSelector
+          v-model="collectInfoHosts"
+          ci-types="[auto]"
+          :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择设备'
+          }"
+        />
       </div>
       <template #footer>
         <el-button type="primary" :disabled="collectInfoHosts.length === 0" @click="confirmCollectInfo">
@@ -223,15 +186,6 @@
         <el-button @click="collectInfoDialogVisible = false">取消</el-button>
       </template>
     </el-dialog>
-
-    <!-- 采集信息设备选择二级弹窗 -->
-    <AcmDeviceSelectorDialog
-      v-model="collectInfoDeviceSelectorVisible"
-      ci-types="[auto]"
-      :initial-selection="collectInfoHosts"
-      :options="{ selectMode: 'host,group,tag,input,recently', selector: 'multiple' }"
-      @confirm="handleCollectInfoDeviceConfirm"
-    />
   </div>
 </template>
 
@@ -240,7 +194,7 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { Download, Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import KpiCards from '../components/KpiCards.vue'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
 
@@ -906,10 +860,6 @@ onMounted(() => {
       padding: 12px;
       background: #f5f7fa;
       border-radius: 4px;
-
-      .host-tag {
-        margin: 0;
-      }
     }
 
     .empty-tip {

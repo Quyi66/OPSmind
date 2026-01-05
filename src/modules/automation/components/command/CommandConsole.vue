@@ -3,7 +3,7 @@
     <div class="console-body">
       <!-- 运行记录按钮 -->
       <div class="history-btn-wrapper">
-        <el-button type="primary" @click="handleHistory">
+        <el-button type="primary" @click="handleHistory" size="small">
           <i class="fas fa-history"></i>
           运行记录
         </el-button>
@@ -12,46 +12,15 @@
       <!-- 主机选择 -->
       <div class="form-group">
         <label class="control-label">主机</label>
-        <div class="host-selector-wrapper">
-          <div v-if="hosts.length > 0" class="host-display">
-            <div class="host-summary">
-              <el-button
-                type="default"
-                size="small"
-                class="host-count-btn"
-                @click="showHostSelector = true"
-              >
-                共<strong>{{ hosts.length }}</strong>项
-              </el-button>
-              <el-button
-                type="danger"
-                text
-                size="small"
-                @click="hosts = []"
-              >
-                <i class="fa fa-times"></i>
-              </el-button>
-            </div>
-            <div class="host-list-wrapper">
-              <el-tag
-                v-for="(host, index) in hosts"
-                :key="index"
-                closable
-                type="info"
-                class="host-tag"
-                @close="removeHost(index)"
-              >
-                {{ host.value || host }}
-              </el-tag>
-            </div>
-          </div>
-          <div v-else>
-            <el-button type="default" @click="showHostSelector = true">
-              <i class="fa fa-server"></i>
-              选择
-            </el-button>
-          </div>
-        </div>
+        <AcmDeviceSelector
+          v-model="hosts"
+          ci-types="[auto]"
+          :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择主机'
+          }"
+        />
       </div>
 
       <!-- 语法选择 -->
@@ -96,17 +65,7 @@
       </div>
     </div>
 
-    <!-- 设备选择器对话框 -->
-    <AcmDeviceSelectorDialog
-      v-model="showHostSelector"
-      ci-types="[auto]"
-      :initial-selection="hosts"
-      :options="{
-        selectMode: 'host,group,tag,input,recently',
-        selector: 'multiple'
-      }"
-      @confirm="handleHostsSelected"
-    />
+    <!-- 注：设备选择器对话框已集成在 AcmDeviceSelector 组件内部 -->
 
     <!-- 运行记录对话框 -->
     <el-dialog
@@ -210,7 +169,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useApi } from '@/core/api'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 
 const emit = defineEmits(['back'])
 
@@ -221,8 +180,7 @@ const command = ref('')
 const executing = ref(false)
 const lineCount = ref(1)
 
-// 主机选择对话框
-const showHostSelector = ref(false)
+// 主机选择已由 AcmDeviceSelector 组件管理
 
 // 运行记录
 const historyDialogVisible = ref(false)
@@ -266,10 +224,7 @@ function updateLineCount() {
   lineCount.value = Math.max(lines, 1)
 }
 
-// 移除主机
-function removeHost(index) {
-  hosts.value.splice(index, 1)
-}
+// 移除主机 - 已由 AcmDeviceSelector 组件管理
 
 // 执行命令
 async function executeCommand() {
@@ -362,10 +317,7 @@ function handleUseHistory(row) {
   historyDialogVisible.value = false
 }
 
-// 处理主机选择
-function handleHostsSelected(selectedHosts) {
-  hosts.value = [...selectedHosts]
-}
+// 处理主机选择 - 已由 AcmDeviceSelector 组件管理
 
 // 分页变化
 function handleHistoryPageSizeChange() {
@@ -475,7 +427,7 @@ onUnmounted(() => {
 
 .history-btn-wrapper {
   position: absolute;
-  top: 16px;
+  top: 8px;
   right: 16px;
 }
 
@@ -489,46 +441,6 @@ onUnmounted(() => {
     color: #212529;
     font-size: 14px;
   }
-}
-
-// 主机选择器样式
-.host-selector-wrapper {
-  width: 100%;
-}
-
-.host-display {
-  width: 100%;
-}
-
-.host-summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-
-  strong {
-    color: #409eff;
-    margin: 0 2px;
-  }
-}
-
-.host-count-btn {
-  cursor: pointer;
-}
-
-.host-list-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-height: 160px;
-  overflow-y: auto;
-  padding: 8px;
-  background: #f8f9fa;
-  border-radius: 6px;
-}
-
-.host-tag {
-  font-size: 13px;
 }
 
 .grammar-select {

@@ -48,7 +48,7 @@
             <el-table-column label="作业标题" min-width="240" fixed>
               <template #default="{ row }">
                 <div class="job-title-cell">
-                  {{ row.job_title || '-' }}
+                  {{ translateText(row.job_title) || '-' }}
                 </div>
               </template>
             </el-table-column>
@@ -103,7 +103,7 @@
             >
               <el-table-column prop="job_title" label="作业" min-width="240" show-overflow-tooltip>
                 <template #default="{ row }">
-                  <span class="summary-job-title">{{ row.job_title || '-' }}</span>
+                  <span class="summary-job-title">{{ translateText(row.job_title) || '-' }}</span>
                 </template>
               </el-table-column>
               <el-table-column
@@ -137,6 +137,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { RefreshRight, Search } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
+import { translateText } from '@/utils/i18n'
 
 const statsLoading = ref(false)
 const summaryLoading = ref(false)

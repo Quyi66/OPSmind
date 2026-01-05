@@ -36,7 +36,7 @@
       <el-button size="small" type="danger" :disabled="!selectedRows.length" @click="handleBatchDelete">
         <el-icon><Delete /></el-icon> 删除
       </el-button>
-      <el-button size="small" @click="handleExport">
+      <el-button size="small" :disabled="!selectedRows.length" @click="handleExport">
         <el-icon><Download /></el-icon> 导出
       </el-button>
       <span style="flex: 1;"></span>
@@ -242,9 +242,46 @@ function handleBatchDelete() {
   }).catch(() => {})
 }
 
-function handleExport() {
-  console.log('导出流程')
-  ElMessage.info('导出功能待实现')
+async function handleExport() {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要导出的流程')
+    return
+  }
+
+  try {
+    const ids = selectedRows.value.map(row => row.id)
+    const response = await flowApi.exportFlow(ids)
+
+    // 处理文件下载
+    const blob = new Blob([response.data], {
+      type: response.headers?.['content-type'] || 'application/octet-stream'
+    })
+
+    // 尝试从响应头获取文件名
+    const contentDisposition = response.headers?.['content-disposition']
+    let filename = 'flow_export.zip'
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+      if (filenameMatch && filenameMatch[1]) {
+        filename = decodeURIComponent(filenameMatch[1].replace(/['"]/g, ''))
+      }
+    }
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  }
 }
 
 function handleViewHistory(row) {

@@ -129,57 +129,16 @@
                 </el-form-item>
 
                 <el-form-item label="目标主机">
-                  <div class="host-selector-wrapper">
-                    <!-- 编辑模式或查看模式都显示相同的 UI -->
-                    <div v-if="jobHosts.length > 0" class="host-display">
-                      <div class="host-summary">
-                        <el-button
-                          v-if="isEditMode"
-                          type="default"
-                          size="small"
-                          class="host-count-btn"
-                          @click="deviceSelectorVisible = true"
-                        >
-                          共<strong>{{ jobHosts.length }}</strong>项
-                        </el-button>
-                        <span v-else class="host-count-text">
-                          共<strong>{{ jobHosts.length }}</strong>项
-                        </span>
-                        <el-button
-                          v-if="isEditMode"
-                          type="danger"
-                          text
-                          size="small"
-                          @click="clearAllHosts"
-                        >
-                          <i class="fa fa-times"></i>
-                        </el-button>
-                      </div>
-                      <div class="host-list-wrapper">
-                        <el-tag
-                          v-for="(host, index) in jobHosts"
-                          :key="index"
-                          :closable="isEditMode"
-                          type="info"
-                          class="host-tag"
-                          @close="removeHost(index)"
-                        >
-                          {{ host.value || host }}
-                        </el-tag>
-                      </div>
-                    </div>
-                    <div v-else>
-                      <el-button
-                        v-if="isEditMode"
-                        type="default"
-                        @click="deviceSelectorVisible = true"
-                      >
-                        <i class="fa fa-server"></i>
-                        选择主机
-                      </el-button>
-                      <span v-else class="text-muted">未配置主机</span>
-                    </div>
-                  </div>
+                  <AcmDeviceSelector
+                    v-model="jobHosts"
+                    ci-types="[auto]"
+                    :disabled="!isEditMode"
+                    :options="{
+                      selectMode: 'host,group,tag,input,recently',
+                      selector: 'multiple',
+                      label: '选择主机'
+                    }"
+                  />
                 </el-form-item>
               </fieldset>
             </el-form>
@@ -227,18 +186,6 @@
       v-model:visible="createDialogVisible"
       @success="handleCreateSuccess"
     />
-
-    <!-- 设备选择器弹窗 -->
-    <AcmDeviceSelectorDialog
-      v-model="deviceSelectorVisible"
-      ci-types="[auto]"
-      :initial-selection="jobHosts"
-      :options="{
-        selectMode: 'host,group,tag,input,recently',
-        selector: 'multiple'
-      }"
-      @confirm="handleDeviceSelected"
-    />
   </div>
 </template>
 
@@ -254,7 +201,7 @@ import {
   findAllApproveCommand
 } from '@/modules/automation/api/command'
 import CreateJobDialog from './dialogs/CreateJobDialog.vue'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 
 const props = defineProps({
   jobType: {
@@ -822,10 +769,6 @@ defineExpose({
   padding: 8px;
   background: #f8f9fa;
   border-radius: 6px;
-}
-
-.host-tag {
-  font-size: 13px;
 }
 
 .run-actions {

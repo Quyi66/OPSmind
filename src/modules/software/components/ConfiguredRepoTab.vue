@@ -16,8 +16,7 @@
       v-loading="loading"
       :data="tableData"
       stripe
-      style="width: 100%"
-      size="small"
+      max-height="calc(100vh - 300px)"
     >
       <el-table-column prop="refid" label="仓库ID" min-width="150" show-overflow-tooltip>
         <template #default="{ row }">
@@ -29,10 +28,10 @@
       <el-table-column prop="repo_id" label="仓库" min-width="120" show-overflow-tooltip   />
       <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
       <el-table-column prop="repo_file" label="配置文件" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="repo_baseurl" label="地址" min-width="250">
-        <template #default="{ row }">
+      <el-table-column prop="repo_baseurl" label="地址" min-width="250" show-overflow-tooltip>
+        <!-- <template #default="{ row }">
           <div class="baseurl-tags">
-            <el-tag
+            <div
               v-for="(url, index) in parseBaseUrl(row.repo_baseurl)"
               :key="index"
               type="info"
@@ -40,9 +39,9 @@
               class="url-tag"
             >
               {{ url }}
-            </el-tag>
+            </div>
           </div>
-        </template>
+        </template> -->
       </el-table-column>
       <el-table-column prop="repo_pkgs" label="软件包数量" width="100">
         <template #default="{ row }">
@@ -154,30 +153,3 @@ onMounted(() => {
   loadData()
 })
 </script>
-
-<style scoped lang="scss">
-.configured-repo-tab {
-  height: 100%;
-}
-
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-/* 使用全局的 ops-pagination-wrapper 样式 */
-
-.baseurl-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.url-tag {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-</style>

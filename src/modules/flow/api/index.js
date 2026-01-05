@@ -184,6 +184,18 @@ export function cloneFlow(data) {
   return apiService.post(`/flow/api/flow/process/clone?cacheBuster=${Date.now()}`, data)
 }
 
+/**
+ * 导出流程
+ * POST /flow/api/flow/process/export
+ * @param {string[]} ids 流程ID数组
+ * @returns {Promise} 返回文件流响应
+ */
+export function exportFlow(ids) {
+  return apiService.post(`/flow/api/flow/process/export?cacheBuster=${Date.now()}`, ids, {
+    responseType: 'blob'
+  })
+}
+
 export default {
   getFlowList,
   getFlowInfo,
@@ -199,5 +211,6 @@ export default {
   deleteFlow,
   batchDeleteFlow,
   executeFlow,
-  cloneFlow
+  cloneFlow,
+  exportFlow
 }

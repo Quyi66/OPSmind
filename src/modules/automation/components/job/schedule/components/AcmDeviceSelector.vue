@@ -35,18 +35,18 @@
         <li
           v-for="(device, index) in filteredDevices"
           :key="index"
-          class="device-chip-item op-hover-trigger"
+          class="device-chip-item"
         >
-          <span class="badge bg-secondary">
+          <el-tag
+            type="primary"
+            :closable="!disabled"
+            @close="handleRemove(device.originalIndex)"
+            size="default"
+          >
             {{ device.display }}
             <span v-if="device.runType" class="run-type"> [{{ device.runType }}]</span>
             <span v-if="device.totalHosts" class="total-hosts">({{ device.totalHosts }})</span>
-            <a
-              v-if="!disabled"
-              class="remove-btn"
-              @click="handleRemove(device.originalIndex)"
-            >&times;</a>
-          </span>
+          </el-tag>
         </li>
       </ul>
     </div>
@@ -155,7 +155,7 @@ function handleConfirm(selectedHosts) {
 }
 
 .device-list-container {
-  margin-top: 8px;
+  display: block;
 }
 
 .device-header {
@@ -167,10 +167,13 @@ function handleConfirm(selectedHosts) {
 }
 
 .device-summary {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   position: relative;
-  min-width: 10em;
-  padding: 6px 12px;
+  min-width: 80px;
+  height: 32px;
+  padding: 0 24px 0 12px;
+  font-size: 12px;
   border: 1px solid #dcdfe6;
   border-radius: 4px;
   background: #fff;
@@ -232,44 +235,18 @@ function handleConfirm(selectedHosts) {
   display: inline-block;
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  font-size: 13px;
-  font-weight: normal;
-  border-radius: 4px;
-  background: #f1f5f9;
-  color: #334155;
-}
-
-.bg-secondary {
-  background: #e2e8f0;
-}
-
 .run-type {
   color: #64748b;
+  font-size: 12px;
 }
 
 .total-hosts {
   color: #10d070;
-}
-
-.remove-btn {
-  margin-left: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #94a3b8;
-  text-decoration: none;
-}
-
-.remove-btn:hover {
-  color: #f56c6c;
+  font-size: 12px;
 }
 
 .empty-state {
-  padding: 12px 0;
+  display: block;
 }
 
 .me-1 {

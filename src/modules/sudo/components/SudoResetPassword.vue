@@ -83,10 +83,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import * as sudoApi from '@/modules/sudo/api'
+import { useJobPolling } from '@/composables/useJobPolling'
+
+// 使用作业轮询 composable
+const { startPolling } = useJobPolling()
 
 const formData = reactive({
   hosts: [],
@@ -98,7 +102,6 @@ const passwordConfig = ref(null)
 const submitting = ref(false)
 const jobStatus = ref('')
 const jobResult = ref(null)
-let pollTimer = null
 
 // 状态判断
 const isRunning = computed(() => jobStatus.value === 'WAITING' || jobStatus.value === 'RUNNING')
@@ -127,10 +130,6 @@ const canSubmit = computed(() => {
 
 onMounted(() => {
   loadPasswordConfig()
-})
-
-onUnmounted(() => {
-  stopPolling()
 })
 
 async function loadPasswordConfig() {
@@ -204,38 +203,6 @@ function generateRandomPassword() {
   formData.password = password
 }
 
-function stopPolling() {
-  if (pollTimer) {
-    clearTimeout(pollTimer)
-    pollTimer = null
-  }
-}
-
-async function pollJobResult(runId) {
-  try {
-    const response = await sudoApi.getJobResult(runId)
-    const result = response?.data || response
-    jobResult.value = result
-    jobStatus.value = result.status
-
-    if (result.status === 'WAITING' || result.status === 'RUNNING') {
-      pollTimer = setTimeout(() => pollJobResult(runId), 5000)
-    } else {
-      submitting.value = false
-      if (result.status === 'SUCCESS' || result.status === 'COMPLETED') {
-        ElMessage.success('密码重置成功')
-      } else {
-        ElMessage.error('密码重置失败')
-      }
-    }
-  } catch (error) {
-    console.error('Failed to poll job result:', error)
-    submitting.value = false
-    jobStatus.value = 'ERROR'
-    ElMessage.error('获取执行结果失败')
-  }
-}
-
 async function handleSubmit() {
   if (!canSubmit.value) {
     ElMessage.warning('请填写完整信息，密码长度需在8-16位之间')
@@ -263,7 +230,22 @@ async function handleSubmit() {
 
     if (runResult?.runId) {
       jobStatus.value = runResult.status || 'WAITING'
-      pollJobResult(runResult.runId)
+      // 使用 composable 轮询
+      startPolling(runResult.runId, {
+        interval: 5000,
+        successMessage: '密码重置成功',
+        errorMessage: '密码重置失败',
+        onSuccess: (res) => {
+          jobResult.value = res
+          jobStatus.value = 'COMPLETED'
+          submitting.value = false
+        },
+        onError: (res) => {
+          jobResult.value = res
+          jobStatus.value = 'FAILED'
+          submitting.value = false
+        }
+      })
     } else {
       throw new Error('未获取到执行ID')
     }

@@ -152,10 +152,9 @@ function handleKpiClick(item) {
   ElMessage.info(`${item.name}: ${item.value}`)
 }
 
-// 重新扫描
+// 扫描完成后刷新统计数据
 function handleRescan() {
-  ElMessage.info('正在启动软件包扫描...')
-  // TODO: 调用扫描 API
+  loadStatsData()
 }
 
 onMounted(() => {

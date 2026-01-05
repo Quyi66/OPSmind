@@ -113,12 +113,17 @@
           :default-sort="{ prop: 'updatedAt', order: 'descending' }"
         >
           <el-table-column type="selection" width="48" />
-          <el-table-column prop="title" label="作业" min-width="180" show-overflow-tooltip>
+          <el-table-column prop="title" label="作业" min-width="160" show-overflow-tooltip>
             <template #default="{ row }">
-              <div class="job-title" @click="handleEditJob(row)" style="cursor: pointer;">
-                <span class="job-title__text" style="color: #0077EE;">{{ translateText(row.title) || '-' }}</span>
-                <span v-if="row.description" class="job-title__desc">{{ translateText(row.description) }}</span>
-              </div>
+              <span class="job-title__text" style="color: #0077EE; cursor: pointer;" @click="handleEditJob(row)">
+                {{ translateText(row.title) || '-' }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span v-if="row.description" class="job-desc">{{ translateText(row.description) }}</span>
+              <span v-else class="text-muted">-</span>
             </template>
           </el-table-column>
           <el-table-column label="类型" width="120">

@@ -110,10 +110,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import * as sudoApi from '@/modules/sudo/api'
+import { useJobPolling } from '@/composables/useJobPolling'
+
+// 使用作业轮询 composable
+const { startPolling, stopPolling } = useJobPolling()
 
 const props = defineProps({
   modelValue: {
@@ -128,7 +132,6 @@ const visible = ref(props.modelValue)
 const submitting = ref(false)
 const jobStatus = ref('')
 const jobResult = ref(null)
-let pollTimer = null
 
 const formData = reactive({
   hosts: [],
@@ -179,10 +182,6 @@ watch(visible, (val) => {
   }
 })
 
-onUnmounted(() => {
-  stopPolling()
-})
-
 function resetForm() {
   formData.hosts = []
   formData.days = 0
@@ -191,41 +190,6 @@ function resetForm() {
   formData.users = ''
   jobStatus.value = ''
   jobResult.value = null
-}
-
-function stopPolling() {
-  if (pollTimer) {
-    clearTimeout(pollTimer)
-    pollTimer = null
-  }
-}
-
-async function pollJobResult(runId) {
-  try {
-    const response = await sudoApi.getJobResult(runId)
-    const result = response?.data || response
-    jobResult.value = result
-    jobStatus.value = result.status
-
-    // 如果还在运行中，继续轮询
-    if (result.status === 'WAITING' || result.status === 'RUNNING') {
-      pollTimer = setTimeout(() => pollJobResult(runId), 5000)
-    } else {
-      // 执行完成
-      submitting.value = false
-      if (result.status === 'SUCCESS' || result.status === 'COMPLETED') {
-        ElMessage.success('执行成功')
-        emit('saved')
-      } else {
-        ElMessage.error('执行失败')
-      }
-    }
-  } catch (error) {
-    console.error('Failed to poll job result:', error)
-    submitting.value = false
-    jobStatus.value = 'ERROR'
-    ElMessage.error('获取执行结果失败')
-  }
 }
 
 async function handleSubmit() {
@@ -238,7 +202,6 @@ async function handleSubmit() {
   jobStatus.value = 'WAITING'
 
   try {
-    // 提取主机信息
     const hosts = formData.hosts.map(h => ({
       key: h.key || h.value || h,
       value: h.value || h.key || h,
@@ -255,9 +218,24 @@ async function handleSubmit() {
     const runResult = Array.isArray(result) ? result[0] : result
 
     if (runResult?.runId) {
-      // 开始轮询
       jobStatus.value = runResult.status || 'WAITING'
-      pollJobResult(runResult.runId)
+      // 使用 composable 轮询
+      startPolling(runResult.runId, {
+        interval: 5000,
+        successMessage: '执行成功',
+        errorMessage: '执行失败',
+        onSuccess: (res) => {
+          jobResult.value = res
+          jobStatus.value = 'COMPLETED'
+          submitting.value = false
+          emit('saved')
+        },
+        onError: (res) => {
+          jobResult.value = res
+          jobStatus.value = 'FAILED'
+          submitting.value = false
+        }
+      })
     } else {
       throw new Error('未获取到执行ID')
     }
@@ -271,7 +249,7 @@ async function handleSubmit() {
 
 function handleClose() {
   if (submitting.value && isRunning.value) {
-    return // 执行中不允许关闭
+    return
   }
   visible.value = false
   stopPolling()

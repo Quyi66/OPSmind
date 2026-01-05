@@ -97,15 +97,18 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as sudoApi from '@/modules/sudo/api'
+import { useJobPolling } from '@/composables/useJobPolling'
+
+// 使用作业轮询 composable
+const { startPolling, stopPolling } = useJobPolling()
 
 const loading = ref(false)
 const saving = ref(false)
 const jobStatus = ref('')
 const jobResult = ref(null)
-let pollTimer = null
 
 const formData = reactive({
   passwd_length: 8,
@@ -145,10 +148,6 @@ onMounted(() => {
   loadConfig()
 })
 
-onUnmounted(() => {
-  stopPolling()
-})
-
 async function loadConfig() {
   loading.value = true
   try {
@@ -170,38 +169,6 @@ async function loadConfig() {
     ElMessage.error('加载配置失败')
   } finally {
     loading.value = false
-  }
-}
-
-function stopPolling() {
-  if (pollTimer) {
-    clearTimeout(pollTimer)
-    pollTimer = null
-  }
-}
-
-async function pollJobResult(runId) {
-  try {
-    const response = await sudoApi.getJobResult(runId)
-    const result = response?.data || response
-    jobResult.value = result
-    jobStatus.value = result.status
-
-    if (result.status === 'WAITING' || result.status === 'RUNNING') {
-      pollTimer = setTimeout(() => pollJobResult(runId), 5000)
-    } else {
-      saving.value = false
-      if (result.status === 'SUCCESS' || result.status === 'COMPLETED') {
-        ElMessage.success('配置保存成功')
-      } else {
-        ElMessage.error('配置保存失败')
-      }
-    }
-  } catch (error) {
-    console.error('Failed to poll job result:', error)
-    saving.value = false
-    jobStatus.value = 'ERROR'
-    ElMessage.error('获取执行结果失败')
   }
 }
 
@@ -236,9 +203,24 @@ async function handleSave() {
       saving.value = false
       ElMessage.error(runResult?.error || '配置保存失败')
     } else if (runResult?.runId) {
-      // 如果返回 runId，需要轮询
+      // 如果返回 runId，使用 composable 轮询
       jobStatus.value = runResult.status || 'WAITING'
-      pollJobResult(runResult.runId)
+      startPolling(runResult.runId, {
+        interval: 5000,
+        successMessage: '配置保存成功',
+        errorMessage: '配置保存失败',
+        onSuccess: () => {
+          jobStatus.value = 'COMPLETED'
+          saving.value = false
+        },
+        onError: () => {
+          jobStatus.value = 'FAILED'
+          saving.value = false
+        },
+        onComplete: (res) => {
+          jobResult.value = res
+        }
+      })
     } else {
       // 无法识别的响应格式
       jobStatus.value = 'COMPLETED'

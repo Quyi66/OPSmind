@@ -117,39 +117,15 @@
 
           <!-- 主机选择 -->
           <el-form-item label="主机" prop="hosts">
-            <div class="host-selector">
-              <div v-if="formData.hosts.length === 0" class="empty-host">
-                <el-button @click="openHostSelector">
-                  <i class="fal fa-server"></i> 选择
-                </el-button>
-              </div>
-              <div v-else class="selected-hosts">
-                <div class="host-header">
-                  <el-button size="small" class="host-count-btn" @click="openHostSelector">
-                    共 <strong>{{ formData.hosts.length }}</strong> 项
-                  </el-button>
-                  <el-input
-                    v-model="hostFilter"
-                    placeholder="搜索"
-                    size="small"
-                    class="host-search"
-                    clearable
-                  />
-                </div>
-                <div class="host-list">
-                  <el-tag
-                    v-for="(host, index) in filteredHosts"
-                    :key="host.key"
-                    closable
-                    size="small"
-                    class="host-tag"
-                    @close="removeHost(index)"
-                  >
-                    {{ host.value }}
-                  </el-tag>
-                </div>
-              </div>
-            </div>
+            <AcmDeviceSelector
+              v-model="formData.hosts"
+              ci-types="[auto]"
+              :options="{
+                selectMode: 'host,group,tag,input,recently',
+                selector: 'multiple',
+                label: '选择'
+              }"
+            />
           </el-form-item>
         </div>
       </div>
@@ -171,18 +147,6 @@
       @update:visible="scriptSelectorVisible = $event"
       @confirm="handleScriptConfirm"
     />
-
-    <!-- 主机选择弹窗 -->
-    <AcmDeviceSelectorDialog
-      v-model="hostSelectorVisible"
-      ci-types="[auto]"
-      :initial-selection="formData.hosts"
-      :options="{
-        selectMode: 'host,group,tag,input,recently',
-        selector: 'multiple'
-      }"
-      @confirm="handleHostConfirm"
-    />
   </el-dialog>
 </template>
 
@@ -191,7 +155,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { templateApi } from '../api'
 import ScriptSelectorDialog from './ScriptSelectorDialog.vue'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 
 const props = defineProps({
   visible: {
@@ -640,10 +604,9 @@ watch(() => props.visible, (val) => {
   .host-list {
     max-height: 120px;
     overflow-y: auto;
-
-    .host-tag {
-      margin: 2px 4px 2px 0;
-    }
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }
 

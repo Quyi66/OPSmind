@@ -205,6 +205,26 @@
   .cell {
     font-family: 'PingFang-Medium', 'PingFang', -apple-system, sans-serif !important;
   }
+
+  // 统一所有表格行的最小高度
+  .el-table__row {
+    td.el-table__cell {
+      height: 40px !important;
+      padding: 8px 0 !important;
+
+      .cell {
+        min-height: 24px;
+        display: flex;
+        align-items: center;
+      }
+    }
+  }
+
+  // 表头高度统一
+  th.el-table__cell {
+    height: 46px !important;
+    padding: 8px 0 !important;
+  }
 }
 
 // Table 表头样式（使用 Bold 更醒目）

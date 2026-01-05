@@ -13,30 +13,15 @@
           <i class="fa fa-server"></i> 选择主机
         </div>
         <div class="section__content">
-          <div class="host-selector">
-            <el-button type="primary" size="small" @click="showDeviceSelector = true">
-              <i class="fa fa-plus"></i> 选择设备
-            </el-button>
-            <span class="host-count" v-if="selectedHosts.length">
-              已选择 <strong>{{ selectedHosts.length }}</strong> 台主机
-            </span>
-          </div>
-
-          <!-- 已选主机预览 -->
-          <div class="selected-hosts" v-if="selectedHosts.length">
-            <el-tag
-              v-for="(host, index) in selectedHosts"
-              :key="host.key || index"
-              closable
-              size="small"
-              @close="removeHost(index)"
-            >
-              {{ host.value || host.ip || host.host_key }}
-            </el-tag>
-          </div>
-          <div class="empty-tip" v-else>
-            <i class="fa fa-info-circle"></i> 请选择要扫描的主机
-          </div>
+          <AcmDeviceSelector
+            v-model="selectedHosts"
+            ci-types="linux"
+            :options="{
+              selectMode: 'host,group,tag,input,recently',
+              selector: 'multiple',
+              label: '选择设备'
+            }"
+          />
         </div>
       </div>
 
@@ -71,22 +56,18 @@
         </el-button>
       </div>
     </template>
-
-    <!-- 设备选择器对话框 -->
-    <AcmDeviceSelectorDialog
-      v-model="showDeviceSelector"
-      :ci-types="'linux'"
-      :initial-selection="selectedHosts"
-      @confirm="handleDeviceConfirm"
-    />
   </el-dialog>
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage, ElLoading } from 'element-plus'
 import { apiService } from '@/core/api'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { useJobPolling } from '@/composables/useJobPolling'
+
+// 使用作业轮询 composable
+const { startPolling, stopPolling } = useJobPolling()
 
 const props = defineProps({
   visible: {
@@ -105,9 +86,6 @@ const visible = computed({
 const showDeviceSelector = ref(false)
 const selectedHosts = ref([])
 const executing = ref(false)
-
-// 轮询定时器
-let pollingTimer = null
 
 // 处理设备选择确认
 function handleDeviceConfirm(hosts) {
@@ -153,9 +131,39 @@ async function handleExecute() {
     console.log('扫描作业启动结果:', result)
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      // 开始轮询
-      const runId = result.runId
-      await pollScanResult(runId, loadingInstance)
+      // 使用 composable 开始轮询
+      startPolling(result.runId, {
+        interval: 5000,
+        maxAttempts: 120,
+        successMessage: '扫描完成',
+        errorMessage: '扫描失败',
+        timeoutMessage: '扫描超时，请稍后查看结果',
+        showMessage: false,
+        onProgress: (res) => {
+          const batchInfo = res?.detail?.batches?.[0]
+          if (batchInfo) {
+            loadingInstance.setText(`正在扫描主机... (状态: ${batchInfo.status || res.status})`)
+          }
+        },
+        onSuccess: () => {
+          loadingInstance.close()
+          ElMessage.success('扫描完成')
+          emit('success')
+          handleClose()
+        },
+        onError: (res) => {
+          loadingInstance.close()
+          ElMessage.error(res?.error || '扫描失败')
+          emit('success')
+          handleClose()
+        },
+        onTimeout: () => {
+          loadingInstance.close()
+          ElMessage.warning('扫描超时，请稍后查看结果')
+          emit('success')
+          handleClose()
+        }
+      })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
       loadingInstance.close()
       ElMessage.success('扫描完成')
@@ -179,88 +187,15 @@ async function handleExecute() {
   }
 }
 
-// 轮询扫描结果
-async function pollScanResult(runId, loadingInstance) {
-  const maxAttempts = 120 // 最多轮询 10 分钟 (120 * 5秒)
-  let attempts = 0
-
-  const poll = async () => {
-    attempts++
-    try {
-      const cacheBuster = Date.now()
-      const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
-      console.log(`扫描轮询结果 (第${attempts}次):`, result)
-
-      if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-        // 更新加载提示
-        const batchInfo = result?.detail?.batches?.[0]
-        if (batchInfo) {
-          loadingInstance.setText(`正在扫描主机... (状态: ${batchInfo.status || result.status})`)
-        }
-
-        if (attempts < maxAttempts) {
-          // 5秒后继续轮询
-          pollingTimer = setTimeout(poll, 5000)
-        } else {
-          loadingInstance.close()
-          ElMessage.warning('扫描超时，请稍后查看结果')
-          emit('success')
-          handleClose()
-        }
-      } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-        loadingInstance.close()
-        ElMessage.success('扫描完成')
-        emit('success')
-        handleClose()
-      } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-        loadingInstance.close()
-        ElMessage.error(result?.error || '扫描失败')
-        emit('success') // 仍然触发刷新
-        handleClose()
-      } else {
-        // 其他状态，继续轮询
-        if (attempts < maxAttempts) {
-          pollingTimer = setTimeout(poll, 5000)
-        } else {
-          loadingInstance.close()
-          emit('success')
-          handleClose()
-        }
-      }
-    } catch (error) {
-      console.error('扫描轮询失败:', error)
-      if (attempts < maxAttempts) {
-        // 出错后继续轮询
-        pollingTimer = setTimeout(poll, 5000)
-      } else {
-        loadingInstance.close()
-        ElMessage.error('扫描状态查询失败')
-      }
-    }
-  }
-
-  // 开始轮询
-  pollingTimer = setTimeout(poll, 5000)
-}
-
 // 关闭对话框
 function handleClose() {
-  if (pollingTimer) {
-    clearTimeout(pollingTimer)
-    pollingTimer = null
-  }
+  stopPolling()
   visible.value = false
   selectedHosts.value = []
   executing.value = false
 }
 
-// 组件卸载时清理定时器
-onUnmounted(() => {
-  if (pollingTimer) {
-    clearTimeout(pollingTimer)
-    pollingTimer = null
-  }
-})
+// composable 会自动在 onUnmounted 时停止轮询
 </script>
 
 <style scoped lang="scss">

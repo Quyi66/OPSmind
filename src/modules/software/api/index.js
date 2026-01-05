@@ -576,6 +576,35 @@ export const scanApi = {
 }
 
 /**
+ * 软件包扫描 API
+ * 作业代码: ccZagK
+ */
+export const softwareScanApi = {
+  /**
+   * 执行软件包扫描
+   * POST: /jao/api/jao/jobs/ccZagK/run
+   * 参数格式: { params: { hosts: [{ key, value, assetType }] } }
+   */
+  scan(params = {}) {
+    const cacheBuster = Date.now()
+    return apiService.post(`/jao/api/jao/jobs/ccZagK/run?cacheBuster=${cacheBuster}`, {
+      params: {
+        hosts: params.hosts
+      }
+    })
+  },
+
+  /**
+   * 获取扫描运行结果
+   * GET: /jao/api/jao/runlogs/{runId}/result
+   */
+  getRunResult(runId) {
+    const cacheBuster = Date.now()
+    return apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+  }
+}
+
+/**
  * 本地安装 API
  */
 export const localInstallApi = {
@@ -617,5 +646,6 @@ export default {
   logApi,
   softwareLogsApi,
   scanApi,
+  softwareScanApi,
   localInstallApi
 }

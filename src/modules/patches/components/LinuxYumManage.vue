@@ -223,39 +223,23 @@
       :close-on-click-modal="false"
     >
       <div class="select-host-dialog-content">
-        <!-- 选择按钮 -->
-        <div class="select-btn-row">
-          <el-button @click="openHostSelector">
-            <i class="fa fa-list" /> 选择
-          </el-button>
-        </div>
-
-        <!-- 执行按钮 -->
-        <div class="execute-btn-row">
-          <el-button type="primary" :loading="jobExecuting" @click="executeJob">
-            <i class="fa fa-play-circle" /> {{ currentOperation === 'config' ? '开始配置' : '开始扫描' }}
-          </el-button>
-        </div>
-
-        <!-- 已选主机展示区域 -->
-        <div v-if="selectedDevices.length > 0" class="selected-hosts-area">
-          <div class="hosts-header">
-            <span>已选主机 ({{ selectedDevices.length }})</span>
-          </div>
-          <div class="hosts-body">
-            <el-tag
-              v-for="(host, index) in selectedDevices"
-              :key="index"
-              closable
-              type="info"
-              class="host-tag"
-              @close="removeSelectedHost(index)"
-            >
-              {{ host.value || host.hostname || host }}
-            </el-tag>
-          </div>
-        </div>
+        <!-- 使用 AcmDeviceSelector 组件 -->
+        <AcmDeviceSelector
+          v-model="selectedDevices"
+          ci-types="[auto]"
+          :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择设备'
+          }"
+        />
       </div>
+      <template #footer>
+        <el-button @click="selectHostDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="jobExecuting" :disabled="selectedDevices.length === 0" @click="executeJob">
+          {{ currentOperation === 'config' ? '开始配置' : '开始扫描' }}
+        </el-button>
+      </template>
     </el-dialog>
 
     <!-- 主机YUM源详情对话框 -->
@@ -420,14 +404,13 @@
         <!-- 已选主机列表 -->
         <div class="selected-hosts-list">
           <div class="list-header">
-            <span><i class="fa fa-server me-2" />已选主机 ({{ selectedDevices.length }})</span>
+            <span><i class="fa fa-server me-2" />已选主机（<strong>{{ selectedDevices.length }}</strong>）</span>
           </div>
           <div class="list-body">
             <el-tag
               v-for="(host, index) in selectedDevices"
               :key="index"
-              type="info"
-              class="host-tag"
+              type="primary"
             >
               {{ host.value || host.hostname || host }}
             </el-tag>
@@ -450,7 +433,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { yumManageApi } from '../api'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
-import { runJob, getRunResult } from '@/modules/automation/api/command'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { runJob } from '@/modules/automation/api/command'
+import { useJobPolling } from '@/composables/useJobPolling'
+
+// 使用作业轮询 composable
+const { startPolling } = useJobPolling()
 
 // 常量定义
 const YUM_JOB_ID = 'IxL8nr'  // YUM操作作业ID
@@ -794,42 +782,26 @@ async function executeJob() {
       ElMessage.success(currentOperation.value === 'scan' ? '扫描任务已提交' : '配置任务已提交')
       jobConfirmDialogVisible.value = false // 修正：关闭确认弹窗
 
-      // 开始轮询任务状态
-      pollJobStatus(runResult.runId)
+      // 使用 composable 开始轮询任务状态
+      startPolling(runResult.runId, {
+        successMessage: '任务执行成功',
+        errorMessage: '任务执行失败',
+        onSuccess: () => {
+          // 如果是扫描任务，刷新数据
+          if (currentOperation.value === 'scan') {
+            loadHostData()
+          }
+        },
+        onComplete: () => {
+          jobExecuting.value = false
+        }
+      })
     } else {
       throw new Error('未获取到任务运行ID')
     }
   } catch (error) {
     console.error('Job execution failed:', error)
     ElMessage.error('任务执行失败: ' + (error.message || '未知错误'))
-    jobExecuting.value = false
-  }
-}
-
-// 轮询任务状态
-async function pollJobStatus(runId) {
-  try {
-    const response = await getRunResult(runId)
-    const result = response?.data || response
-    const status = result?.status
-
-    if (status === 'WAITING' || status === 'RUNNING') {
-      setTimeout(() => pollJobStatus(runId), 4000)
-    } else {
-      // 任务结束
-      jobExecuting.value = false
-      if (status === 'COMPLETED') {
-        ElMessage.success('任务执行成功')
-        // 如果是扫描任务，刷新数据
-        if (currentOperation.value === 'scan') {
-          loadHostData()
-        }
-      } else {
-        ElMessage.error('任务执行失败')
-      }
-    }
-  } catch (error) {
-    console.error('Failed to poll job status:', error)
     jobExecuting.value = false
   }
 }
@@ -1105,10 +1077,6 @@ defineExpose({ refresh })
       flex-wrap: wrap;
       gap: 8px;
     }
-
-    .host-tag {
-      margin: 0;
-    }
   }
 }
 
@@ -1146,10 +1114,6 @@ defineExpose({ refresh })
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-    }
-
-    .host-tag {
-      margin: 0;
     }
   }
 }

@@ -14,25 +14,15 @@
     >
       <!-- 选择主机 -->
       <el-form-item label="选择主机" required>
-        <div class="host-selector-row">
-          <el-button type="primary" plain size="small" @click="showDeviceSelector = true">
-            <i class="fa fa-plus"></i> 选择设备
-          </el-button>
-          <span class="host-count" v-if="selectedHosts.length">
-            已选择 <strong>{{ selectedHosts.length }}</strong> 台主机
-          </span>
-        </div>
-        <div class="selected-hosts" v-if="selectedHosts.length">
-          <el-tag
-            v-for="host in selectedHosts"
-            :key="host.id || host.host_key"
-            closable
-            size="small"
-            @close="removeHost(host)"
-          >
-            {{ host.host_key || host.ip }}
-          </el-tag>
-        </div>
+        <AcmDeviceSelector
+          v-model="selectedHosts"
+          ci-types="linux"
+          :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择设备'
+          }"
+        />
       </el-form-item>
 
       <!-- 操作类型选择 -->
@@ -166,21 +156,13 @@
         </el-button>
       </div>
     </template>
-
-    <!-- 设备选择器对话框 -->
-    <AcmDeviceSelectorDialog
-      v-model="showDeviceSelector"
-      :ci-types="'linux'"
-      :initial-selection="selectedHosts"
-      @confirm="handleDeviceConfirm"
-    />
   </el-dialog>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import * as userApi from '@/modules/user/api'
 
 const props = defineProps({

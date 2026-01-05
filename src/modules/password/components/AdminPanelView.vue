@@ -54,9 +54,9 @@
       <el-button size="small" @click="handleRevertPassword">
         重置密码
       </el-button>
-      <el-button size="small" @click="handleExportPassword">
+      <!-- <el-button size="small" @click="handleExportPassword">
         导出密码
-      </el-button>
+      </el-button> -->
       <el-button size="small" @click="handleImportInitPassword">
         导入初始密码
       </el-button>
@@ -401,8 +401,13 @@ function handleImportInitPassword() {
 }
 
 function handleDownloadTemplate() {
-  const templateUrl = `${window.location.origin}/oplus/base/content/template/pms/host_password_template.xlsx`
-  window.open(templateUrl, '_blank')
+  // 下载模板文件（位于 public/templates/pms/ 目录）
+  const link = document.createElement('a')
+  link.href = '/templates/pms/host_password_template.xlsx'
+  link.download = 'host_password_template.xlsx'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 function handleViewPassword(row) {

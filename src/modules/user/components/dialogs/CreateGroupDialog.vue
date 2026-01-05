@@ -14,25 +14,15 @@
     >
       <!-- 选择主机 -->
       <el-form-item label="选择主机" required>
-        <div class="host-selector-row">
-          <el-button type="primary" size="small" @click="showDeviceSelector = true">
-            <el-icon><Plus /></el-icon> 选择设备
-          </el-button>
-          <span class="host-count" v-if="selectedHosts.length">
-            已选择 <strong>{{ selectedHosts.length }}</strong> 台主机
-          </span>
-        </div>
-        <div class="selected-hosts" v-if="selectedHosts.length">
-          <el-tag
-            v-for="(host, index) in selectedHosts"
-            :key="host.key || index"
-            closable
-            size="small"
-            @close="removeHost(index)"
-          >
-            {{ host.value || host.ip || host.host_key }}
-          </el-tag>
-        </div>
+        <AcmDeviceSelector
+          v-model="selectedHosts"
+          ci-types="linux"
+          :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择设备'
+          }"
+        />
       </el-form-item>
 
       <!-- 组名 -->
@@ -49,14 +39,6 @@
         </el-button>
       </div>
     </template>
-
-    <!-- 设备选择器 -->
-    <AcmDeviceSelectorDialog
-      v-model="showDeviceSelector"
-      :ci-types="'linux'"
-      :initial-selection="selectedHosts"
-      @confirm="handleDeviceConfirm"
-    />
   </el-dialog>
 </template>
 
@@ -64,7 +46,11 @@
 import { ref, reactive, computed, onUnmounted } from 'vue'
 import { ElMessage, ElLoading } from 'element-plus'
 import { apiService } from '@/core/api'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { useJobPolling } from '@/composables/useJobPolling'
+
+// 使用作业轮询 composable
+const { startPolling, stopPolling } = useJobPolling()
 
 const props = defineProps({
   visible: { type: Boolean, default: false }
@@ -142,7 +128,33 @@ async function handleSubmit() {
     console.log('创建用户组作业启动结果:', result)
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      await pollResult(result.runId, loadingInstance)
+      // 使用 composable 开始轮询
+      startPolling(result.runId, {
+        interval: 5000,
+        maxAttempts: 60,
+        successMessage: '用户组创建成功',
+        errorMessage: '创建失败',
+        timeoutMessage: '创建超时，请稍后查看结果',
+        showMessage: false, // 我们自己处理消息
+        onSuccess: () => {
+          loadingInstance.close()
+          ElMessage.success('用户组创建成功')
+          emit('success')
+          handleClose()
+        },
+        onError: (res) => {
+          loadingInstance.close()
+          ElMessage.error(res?.error || '创建失败')
+          emit('success')
+          handleClose()
+        },
+        onTimeout: () => {
+          loadingInstance.close()
+          ElMessage.warning('创建超时，请稍后查看结果')
+          emit('success')
+          handleClose()
+        }
+      })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
       loadingInstance.close()
       ElMessage.success('用户组创建成功')
@@ -166,76 +178,15 @@ async function handleSubmit() {
   }
 }
 
-// 轮询结果
-async function pollResult(runId, loadingInstance) {
-  const maxAttempts = 60
-  let attempts = 0
-
-  const poll = async () => {
-    attempts++
-    try {
-      const cacheBuster = Date.now()
-      const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
-
-      if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-        if (attempts < maxAttempts) {
-          pollingTimer = setTimeout(poll, 5000)
-        } else {
-          loadingInstance.close()
-          ElMessage.warning('创建超时，请稍后查看结果')
-          emit('success')
-          handleClose()
-        }
-      } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-        loadingInstance.close()
-        ElMessage.success('用户组创建成功')
-        emit('success')
-        handleClose()
-      } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-        loadingInstance.close()
-        ElMessage.error(result?.error || '创建失败')
-        emit('success')
-        handleClose()
-      } else {
-        if (attempts < maxAttempts) {
-          pollingTimer = setTimeout(poll, 5000)
-        } else {
-          loadingInstance.close()
-          emit('success')
-          handleClose()
-        }
-      }
-    } catch (error) {
-      console.error('轮询失败:', error)
-      if (attempts < maxAttempts) {
-        pollingTimer = setTimeout(poll, 5000)
-      } else {
-        loadingInstance.close()
-        ElMessage.error('状态查询失败')
-      }
-    }
-  }
-
-  pollingTimer = setTimeout(poll, 5000)
-}
-
 function handleClose() {
-  if (pollingTimer) {
-    clearTimeout(pollingTimer)
-    pollingTimer = null
-  }
+  stopPolling()
   visible.value = false
   formRef.value?.resetFields()
   selectedHosts.value = []
   formData.group_name = ''
 }
 
-onUnmounted(() => {
-  if (pollingTimer) {
-    clearTimeout(pollingTimer)
-    pollingTimer = null
-  }
-})
+// composable 会自动在 onUnmounted 时停止轮询
 </script>
 
 <style scoped lang="scss">

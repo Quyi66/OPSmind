@@ -158,6 +158,7 @@ export const useMenuStore = defineStore('menu', () => {
     const firstPart = clean.split('/')[0]
     if (STANDALONE_ITEMS.includes(firstPart)) {
       activeMenuItem.value = firstPart
+      activeGroup.value = '' // 清除分组高亮，避免之前选中的分组继续显示高亮
       showSideMenu.value = false
       return
     }

@@ -190,6 +190,18 @@
       :applet="currentApplet"
       @saved="handleSaved"
     />
+
+    <!-- 导出对话框 -->
+    <AppletExportDialog
+      v-model="exportDialogVisible"
+      :applet-ids="selectedAppletNames"
+    />
+
+    <!-- 导入对话框 -->
+    <AppletImportDialog
+      v-model="importDialogVisible"
+      @success="handleImportSuccess"
+    />
   </div>
 </template>
 
@@ -200,6 +212,8 @@ import { Refresh } from '@element-plus/icons-vue'
 import * as appletApi from '@/modules/settings/api/applet'
 import AppletDetailDialog from './AppletDetailDialog.vue'
 import AppletCopyDialog from './AppletCopyDialog.vue'
+import AppletExportDialog from './AppletExportDialog.vue'
+import AppletImportDialog from './AppletImportDialog.vue'
 import { translateText } from '@/utils/i18n'
 
 const activeTab = ref('app')
@@ -215,6 +229,8 @@ const clearingRecycle = ref(false)
 
 const detailDialogVisible = ref(false)
 const copyDialogVisible = ref(false)
+const exportDialogVisible = ref(false)
+const importDialogVisible = ref(false)
 const currentApplet = ref(null)
 
 // 分页状态
@@ -292,7 +308,12 @@ function formatDate(dateStr) {
 
 function handleSelectionChange(selection) {
   selectedApplets.value = selection.map(item => item.id)
+  // 保存 name 用于导出
+  selectedAppletNames.value = selection.map(item => item.name)
 }
+
+// 选中的应用 name 列表（用于导出）
+const selectedAppletNames = ref([])
 
 function handleRecycleSelectionChange(selection) {
   selectedRecycled.value = selection.map(item => item.appletCode)
@@ -309,13 +330,19 @@ function handleCopy(row) {
 }
 
 function handleExport() {
-  // TODO: 实现导出功能
-  ElMessage.info('导出功能开发中')
+  if (selectedApplets.value.length === 0) {
+    ElMessage.warning('请先选择要导出的应用')
+    return
+  }
+  exportDialogVisible.value = true
 }
 
 function handleImport() {
-  // TODO: 实现导入功能
-  ElMessage.info('导入功能开发中')
+  importDialogVisible.value = true
+}
+
+function handleImportSuccess() {
+  loadApplets()
 }
 
 async function handleDelete(row) {

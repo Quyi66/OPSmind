@@ -9,7 +9,7 @@
           :class="['type-tab', { active: currentType === item.code }]"
           @click="handleTypeChange(item.code)"
         >
-          <i :class="['fa', item.icon || 'fa-server']"></i>
+          <!-- <i :class="['fa', item.icon || 'fa-server']"></i> -->
           <span>{{ item.title }}</span>
         </div>
       </div>
@@ -164,7 +164,7 @@
           <i class="fa fa-plus" style="margin-right: 4px"></i>
           自动化资产录入
         </el-button>
-        <el-button :icon="Download" @click="handleExport" size="small">导出</el-button>
+        <!-- <el-button :icon="Download" @click="handleExport" size="small">导出</el-button> -->
         <el-button :icon="Edit" :disabled="!hasSelection" @click="handleEdit" size="small">修改</el-button>
         <el-button :disabled="!hasSelection" @click="handleAddTag" size="small">
           <i class="fa fa-tag" style="margin-right: 4px"></i>添加标签
@@ -856,10 +856,11 @@ onMounted(() => {
     align-items: center;
     padding: 12px 0;
     cursor: pointer;
-    color: #409eff;
+    color: #606266; // 未激活状态使用灰色
     font-size: 14px;
     border-bottom: 2px solid transparent;
     transition: all 0.2s;
+    text-align: center;
 
     i {
       margin-right: 6px;
@@ -867,11 +868,12 @@ onMounted(() => {
     }
 
     &:hover {
-      color: #66b1ff;
+      color: #409eff;
     }
 
     &.active {
-      color: #409eff;
+      color: #409eff; // 激活状态使用蓝色
+      font-weight: 500;
       border-bottom-color: #409eff;
     }
   }

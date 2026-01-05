@@ -83,9 +83,9 @@
 
         <!-- 操作栏 -->
         <div class="ops-action-bar">
-          <el-button size="small" @click="handleExport">
+          <!-- <el-button size="small" @click="handleExport">
             <i class="fa fa-download" /> 导出
-          </el-button>
+          </el-button> -->
           <span style="flex: 1;"></span>
           <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="refresh" title="刷新">
             <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -244,9 +244,9 @@
           <el-button type="primary" size="small" :disabled="selectedVulns.length === 0" @click="handleFixSelected">
             <i class="fa fa-tools" /> 修复选定的漏洞
           </el-button>
-          <el-button size="small" @click="handleVulnExport">
+          <!-- <el-button size="small" @click="handleVulnExport">
             <i class="fa fa-download" /> 导出
-          </el-button>
+          </el-button> -->
           <span style="flex: 1;"></span>
           <el-button class="toolbar-icon-btn" circle size="small" :loading="vulnLoading" @click="loadVulnData" title="刷新">
             <el-icon v-show="!vulnLoading"><Refresh /></el-icon>
@@ -374,40 +374,24 @@
     >
       <el-form ref="rescanFormRef" :model="rescanForm" label-width="100px">
         <el-form-item label="选择主机">
-          <div class="host-input-container">
-            <el-input
-              v-model="rescanForm.hostsInput"
-              type="textarea"
-              :rows="4"
-              placeholder="请输入主机名或IP，每行一个"
-              readonly
-            />
-            <el-button class="select-host-btn" @click="hostSelectorVisible = true">
-              <i class="fa fa-server" />
-              选择主机
-            </el-button>
-          </div>
+          <AcmDeviceSelector
+            v-model="selectedHosts"
+            ci-types="[auto]"
+            :options="{
+              selectMode: 'host,group,tag,input,recently',
+              selector: 'multiple',
+              label: '选择主机'
+            }"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="rescanDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="rescanLoading" @click="executeRescan">
+        <el-button type="primary" :loading="rescanLoading" :disabled="selectedHosts.length === 0" @click="executeRescan">
           开始扫描
         </el-button>
       </template>
     </el-dialog>
-
-    <!-- 主机选择器对话框 -->
-    <AcmDeviceSelectorDialog
-      v-model="hostSelectorVisible"
-      ci-types="[auto]"
-      :initial-selection="selectedHosts"
-      :options="{
-        selectMode: 'host,group,tag,input,recently',
-        selector: 'multiple'
-      }"
-      @confirm="handleHostSelected"
-    />
 
     <!-- 作业运行结果对话框 -->
     <ExecuteResultDialog
@@ -469,7 +453,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, vulnerabilityApi } from '../api'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 // Emits
@@ -937,9 +921,19 @@ function handleRescan() {
 
 function handleHostSelected(hosts) {
   selectedHosts.value = hosts
-  // 从选中的主机中提取主机名显示在文本框中
-  // AcmDeviceSelectorDialog 返回的数据结构: { value: 'hostname', assetType: 'linux', ... }
-  const hostList = hosts.map(h => {
+  updateHostsInput()
+}
+
+// 移除单个已选主机
+function removeSelectedHost(index) {
+  selectedHosts.value.splice(index, 1)
+  updateHostsInput()
+}
+
+// 更新主机输入框内容
+function updateHostsInput() {
+  // 从选中的主机中提取主机名
+  const hostList = selectedHosts.value.map(h => {
     if (typeof h === 'object') {
       return h.value || h.hostname || h.name || h.host_key || ''
     }
@@ -1357,16 +1351,44 @@ defineExpose({
   min-width: 160px;
 }
 
-// 主机输入区
-.host-input-container {
+// 主机选择器区域
+.host-selector-area {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
-.select-host-btn {
-  align-self: flex-start;
+.host-selector-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .host-count {
+    font-size: 13px;
+    color: #606266;
+
+    strong {
+      color: #409eff;
+    }
+  }
+}
+
+.host-tags-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.empty-host-tip {
+  padding: 24px;
+  text-align: center;
+  color: #909399;
+  background: #f5f7fa;
+  border-radius: 4px;
 }
 
 // 响应式

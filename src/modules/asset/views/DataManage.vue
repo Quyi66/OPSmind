@@ -59,17 +59,20 @@
           <i class="fa fa-file-import" style="margin-right: 4px"></i>
           导入资产
         </el-button>
-        <el-button type="success" size="small" @click="handleExport">
-          <i class="fa fa-cloud-download-alt" style="margin-right: 4px"></i>
+        <el-button size="small" @click="handleExport">
+          <i class="fa fa-file-export" style="margin-right: 4px"></i>
           资产信息导出
         </el-button>
-        <el-button type="primary" size="small" @click="handleAddGroup">
+        <el-button size="small" @click="handleAddGroup">
+          <i class="fa fa-folder-plus" style="margin-right: 4px"></i>
           添加分组
         </el-button>
-        <el-button type="primary" size="small" @click="handleAddTag">
+        <el-button size="small" @click="handleAddTag">
+          <i class="fa fa-tag" style="margin-right: 4px"></i>
           添加标签
         </el-button>
         <el-button size="small" @click="handleDownloadDeleteTemplate">
+          <i class="fa fa-file-download" style="margin-right: 4px"></i>
           资产批量删除模版下载
         </el-button>
         <el-button type="danger" size="small" @click="handleDeleteImport">
@@ -167,6 +170,7 @@
       <!-- 操作栏 -->
       <div class="ops-action-bar">
         <el-button type="primary" size="small" @click="handleAddTag">
+          <i class="fa fa-plus" style="margin-right: 4px"></i>
           添加标签
         </el-button>
         <span style="flex: 1;"></span>

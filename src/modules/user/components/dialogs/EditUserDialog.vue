@@ -146,6 +146,10 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
 import { dtsApi } from '@/modules/asset/api'
+import { useJobPolling } from '@/composables/useJobPolling'
+
+// 使用作业轮询 composable
+const { startPolling, stopPolling } = useJobPolling()
 
 const props = defineProps({
   visible: {
@@ -170,9 +174,6 @@ const submitting = ref(false)
 const userData = ref({})
 const sudoTemplates = ref([])
 const sudoCommands = ref([])
-
-// 轮询定时器
-let pollingTimer = null
 
 const formData = reactive({
   operate: 'modify_base',
@@ -308,7 +309,33 @@ async function handleSubmit() {
     console.log('操作结果:', result)
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      await pollResult(result.runId, loadingInstance)
+      // 使用 composable 开始轮询
+      startPolling(result.runId, {
+        interval: 5000,
+        maxAttempts: 60,
+        successMessage: '操作成功',
+        errorMessage: '操作失败',
+        timeoutMessage: '操作超时，请稍后查看结果',
+        showMessage: false,
+        onSuccess: () => {
+          loadingInstance.close()
+          ElMessage.success('操作成功')
+          emit('success')
+          handleClose()
+        },
+        onError: (res) => {
+          loadingInstance.close()
+          ElMessage.error(res?.error || '操作失败')
+          emit('success')
+          handleClose()
+        },
+        onTimeout: () => {
+          loadingInstance.close()
+          ElMessage.warning('操作超时，请稍后查看结果')
+          emit('success')
+          handleClose()
+        }
+      })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
       loadingInstance.close()
       ElMessage.success('操作成功')
@@ -379,65 +406,9 @@ function buildParams(hostId) {
   }
 }
 
-// 轮询结果
-async function pollResult(runId, loadingInstance) {
-  const maxAttempts = 60
-  let attempts = 0
-
-  const poll = async () => {
-    attempts++
-    try {
-      const cacheBuster = Date.now()
-      const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
-
-      if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-        if (attempts < maxAttempts) {
-          pollingTimer = setTimeout(poll, 5000)
-        } else {
-          loadingInstance.close()
-          ElMessage.warning('操作超时，请稍后查看结果')
-          emit('success')
-          handleClose()
-        }
-      } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-        loadingInstance.close()
-        ElMessage.success('操作成功')
-        emit('success')
-        handleClose()
-      } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-        loadingInstance.close()
-        ElMessage.error(result?.error || '操作失败')
-        emit('success')
-        handleClose()
-      } else {
-        if (attempts < maxAttempts) {
-          pollingTimer = setTimeout(poll, 5000)
-        } else {
-          loadingInstance.close()
-          emit('success')
-          handleClose()
-        }
-      }
-    } catch (error) {
-      console.error('轮询失败:', error)
-      if (attempts < maxAttempts) {
-        pollingTimer = setTimeout(poll, 5000)
-      } else {
-        loadingInstance.close()
-        ElMessage.error('状态查询失败')
-      }
-    }
-  }
-
-  pollingTimer = setTimeout(poll, 5000)
-}
-
 // 关闭弹窗
 function handleClose() {
-  if (pollingTimer) {
-    clearTimeout(pollingTimer)
-    pollingTimer = null
-  }
+  stopPolling()
   visible.value = false
   formData.operate = 'modify_base'
   formData.user_password = ''

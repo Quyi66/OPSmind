@@ -24,7 +24,6 @@
         :data="tableData"
         stripe
         style="width: 100%"
-        size="small"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
@@ -116,9 +115,13 @@ function handleSelectionChange(selection) {
 }
 
 function handleDownloadTemplate() {
-  // 下载模板文件
-  const url = `${window.location.origin}/oplus/base/content/template/vap/vap_repo_template.xlsx`
-  window.open(url, '_blank')
+  // 下载模板文件（位于 public/templates/vap/ 目录）
+  const link = document.createElement('a')
+  link.href = '/templates/vap/vap_repo_template.xlsx'
+  link.download = 'vap_repo_template.xlsx'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 function handleImportRepo() {
