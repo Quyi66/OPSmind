@@ -41,10 +41,11 @@
         <el-form :model="filters" inline size="small" class="table-section__filters">
           <el-form-item label="时间范围">
             <el-select v-model="filters.day" style="width: 100px">
+              <el-option label="所有" value="all" />
               <el-option label="今天" value="1" />
-              <el-option label="3天内" value="3" />
-              <el-option label="7天内" value="7" />
-              <el-option label="30天内" value="30" />
+              <el-option label="最近一周" value="7" />
+              <el-option label="最近一个月" value="30" />
+              <el-option label="最近一年" value="365" />
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
@@ -100,7 +101,7 @@
             {{ formatDateTime(row.end_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="耗时" width="80">
+        <el-table-column label="耗时" min-width="80">
           <template #default="{ row }">
             {{ calcDuration(row.start_time, row.end_time) }}
           </template>
@@ -172,7 +173,7 @@ const pagination = reactive({
 })
 
 const filters = ref({
-  day: '3',
+  day: '1',
   status: 'all',
   action: 'all',
   keyword: ''
@@ -454,7 +455,7 @@ function handleFilterChange() {
 // 重置筛选条件
 function handleResetFilters() {
   filters.value = {
-    day: '3',
+    day: '1',
     status: 'all',
     action: 'all',
     keyword: ''

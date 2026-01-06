@@ -32,12 +32,12 @@ export const CMD_NAV_ITEMS = [
 
 // 补丁漏洞 - 补丁模块的页面导航
 export const PATCHES_NAV_ITEMS = [
-  { key: 'linuxPatchScan', label: 'Linux补丁扫描', icon: 'fas fa-search', path: '/patches/linuxPatchScan' },
-  { key: 'linuxPatchInstall', label: 'Linux补丁安装', icon: 'fas fa-download', path: '/patches/linuxPatchInstall' },
-  { key: 'linuxPatchRollback', label: 'Linux补丁回退', icon: 'fas fa-undo', path: '/patches/linuxPatchRollback' },
+  { key: 'machineScan', label: '机器扫描', icon: 'fas fa-search', path: '/patches/machineScan' },
+  { key: 'patchInstall', label: '补丁安装', icon: 'fas fa-download', path: '/patches/patchInstall' },
+  { key: 'changeRollback', label: '变更回滚', icon: 'fas fa-undo', path: '/patches/changeRollback' },
   { key: 'linuxYumManage', label: 'LinuxYUM管理', icon: 'fas fa-cogs', path: '/patches/linuxYumManage' },
-  { key: 'linuxPatchLibrary', label: 'Linux补丁仓库', icon: 'fas fa-database', path: '/patches/linuxPatchLibrary' },
-  { key: 'linuxVulnerability', label: 'Linux漏洞概览', icon: 'fas fa-shield-alt', path: '/patches/linuxVulnerability' },
+  { key: 'patchLibrary', label: '补丁仓库', icon: 'fas fa-database', path: '/patches/patchLibrary' },
+  { key: 'vulnerability', label: '漏洞概览', icon: 'fas fa-shield-alt', path: '/patches/vulnerability' },
   { key: 'windowsVulnerability', label: 'Windows漏洞', icon: 'fab fa-windows', path: '/patches/windowsVulnerability' },
   { key: 'windowsUpdate', label: 'Windows更新', icon: 'fas fa-sync', path: '/patches/windowsUpdate' },
   { key: 'windowsRollback', label: 'Windows回滚', icon: 'fas fa-history', path: '/patches/windowsRollback' },

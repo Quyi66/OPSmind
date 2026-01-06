@@ -149,22 +149,22 @@ export const DEFAULT_PAGINATION = {
  */
 export const NAV_ITEMS = [
   {
-    key: 'linuxPatchScan',
-    label: 'Linux补丁扫描',
+    key: 'machineScan',
+    label: '机器扫描',
     icon: 'fas fa-search',
-    description: '扫描Linux主机上的可用补丁'
+    description: '扫描机器上的可用补丁'
   },
   {
-    key: 'linuxPatchInstall',
-    label: 'Linux补丁安装',
+    key: 'patchInstall',
+    label: '补丁安装',
     icon: 'fas fa-download',
-    description: '安装Linux补丁包'
+    description: '安装补丁包'
   },
   {
-    key: 'linuxPatchRollback',
-    label: 'Linux补丁回退',
+    key: 'changeRollback',
+    label: '变更回滚',
     icon: 'fas fa-undo',
-    description: '回退已安装的Linux补丁'
+    description: '回滚已安装的补丁'
   },
   {
     key: 'linuxYumManage',
@@ -173,16 +173,16 @@ export const NAV_ITEMS = [
     description: '管理YUM源和仓库配置'
   },
   {
-    key: 'linuxPatchLibrary',
-    label: 'Linux补丁仓库',
+    key: 'patchLibrary',
+    label: '补丁仓库',
     icon: 'fas fa-database',
-    description: '查看和管理Linux补丁仓库'
+    description: '查看和管理补丁仓库'
   },
   {
-    key: 'linuxVulnerability',
-    label: 'Linux漏洞概览',
+    key: 'vulnerability',
+    label: '漏洞概览',
     icon: 'fas fa-shield-alt',
-    description: 'Linux系统漏洞概览和分析'
+    description: '系统漏洞概览和分析'
   },
   {
     key: 'windowsVulnerability',

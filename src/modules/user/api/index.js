@@ -32,7 +32,7 @@ export function getAuditLogStats(diffDay = 15) {
  * @param {Object} params 查询参数
  */
 export function getOperationLogs(params = {}) {
-  return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, params)
+  return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, { params })
 }
 
 /**
