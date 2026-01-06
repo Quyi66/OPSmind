@@ -101,6 +101,12 @@ export default defineConfig(({ command, mode }): UserConfig => {
               proxyRes.headers['expires'] = '0'
             })
           }
+        },
+        // 文件上传服务代理
+        '/oplus-upload': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false
         }
       }
     },

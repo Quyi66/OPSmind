@@ -34,10 +34,10 @@
 
           <template v-if="showPasswordEdit || !form.id">
             <el-form-item label="密码" prop="password">
-              <el-input v-model="form.password" type="password" show-password />
+              <el-input v-model="form.password" type="password" show-password autocomplete="new-password" />
             </el-form-item>
             <el-form-item label="确认密码" prop="confirmPassword">
-              <el-input v-model="form.confirmPassword" type="password" show-password />
+              <el-input v-model="form.confirmPassword" type="password" show-password autocomplete="new-password" />
             </el-form-item>
           </template>
 

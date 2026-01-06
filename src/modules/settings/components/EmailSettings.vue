@@ -19,6 +19,7 @@
             type="password"
             placeholder="输入邮箱密码或授权码"
             show-password
+            autocomplete="new-password"
           />
         </el-form-item>
 

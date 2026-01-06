@@ -109,6 +109,7 @@
               type="password"
               placeholder="请输入密码"
               show-password
+              autocomplete="new-password"
             />
           </el-tooltip>
         </el-form-item>

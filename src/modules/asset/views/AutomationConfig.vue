@@ -280,13 +280,13 @@
           <el-input v-model="automationForm.loginUser" />
         </el-form-item>
         <el-form-item label="登录密码">
-          <el-input v-model="automationForm.loginPasswd" type="password" show-password />
+          <el-input v-model="automationForm.loginPasswd" type="password" show-password autocomplete="new-password" />
         </el-form-item>
         <el-form-item label="执行用户">
           <el-input v-model="automationForm.runUser" />
         </el-form-item>
         <el-form-item label="执行密码">
-          <el-input v-model="automationForm.runPasswd" type="password" show-password />
+          <el-input v-model="automationForm.runPasswd" type="password" show-password autocomplete="new-password" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -347,13 +347,13 @@
           <el-input v-model="ansibleForm.loginUser" />
         </el-form-item>
         <el-form-item label="登录密码">
-          <el-input v-model="ansibleForm.loginPasswd" type="password" show-password />
+          <el-input v-model="ansibleForm.loginPasswd" type="password" show-password autocomplete="new-password" />
         </el-form-item>
         <el-form-item label="执行用户">
           <el-input v-model="ansibleForm.runUser" />
         </el-form-item>
         <el-form-item label="执行密码">
-          <el-input v-model="ansibleForm.runPasswd" type="password" show-password />
+          <el-input v-model="ansibleForm.runPasswd" type="password" show-password autocomplete="new-password" />
         </el-form-item>
         <el-form-item label="Ansible配置信息">
           <el-input

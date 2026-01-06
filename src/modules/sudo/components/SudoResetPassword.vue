@@ -25,6 +25,8 @@
               v-model="formData.user"
               placeholder="请输入用户名"
               :disabled="submitting"
+              autocomplete="new-password"
+              name="sudo_user_field"
             />
           </div>
         </div>
@@ -35,9 +37,12 @@
           <div class="section-content password-row">
             <el-input
               v-model="formData.password"
+              type="password"
               placeholder="请输入密码（8-16位）"
               :disabled="submitting"
               show-password
+              autocomplete="new-password"
+              name="sudo_password_field"
               class="password-input"
             />
             <el-button

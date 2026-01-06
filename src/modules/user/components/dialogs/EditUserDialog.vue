@@ -94,6 +94,7 @@
               type="password"
               show-password
               placeholder="请输入新密码"
+              autocomplete="new-password"
             />
           </el-form-item>
         </template>

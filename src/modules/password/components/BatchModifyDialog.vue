@@ -42,6 +42,8 @@
             placeholder="请输入用户名"
             style="width: 100%"
             :disabled="submitting"
+            autocomplete="username"
+            name="batch_modify_username"
           />
         </el-form-item>
 
@@ -52,6 +54,8 @@
             type="password"
             placeholder="请输入密码"
             show-password
+            autocomplete="new-password"
+            name="batch_modify_password"
             :disabled="submitting"
           />
           <div class="hint-text">密码默认长度为8～16位，由数字、大小写字母、~!@$%&_组成</div>

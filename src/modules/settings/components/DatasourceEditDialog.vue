@@ -81,6 +81,7 @@
             v-model="form.config.password"
             type="password"
             show-password
+            autocomplete="new-password"
             :placeholder="isEditing ? '不修改请留空' : '输入密码'"
           />
         </el-form-item>

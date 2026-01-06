@@ -38,6 +38,7 @@
           type="password"
           show-password
           placeholder="密码复杂度需满足功能配置中的规则"
+          autocomplete="new-password"
         />
       </el-form-item>
 

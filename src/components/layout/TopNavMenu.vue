@@ -338,10 +338,8 @@ const toggleMobileMenu = () => {
 const handleUserCommand = command => {
   switch (command) {
     case 'profile':
-      // 通过 Inline Iframe 打开 Angular 基座的 /#/settings
-      try {
-        menuStore.setActiveMenuItem('settings')
-      } catch (e) {}
+      // 跳转到个人资料页面
+      router.push('/settings')
       break
     case 'admin': {
       // 新开页签进入管理后台 /ops/#/admin，并自动携带 token（便于新 Tab 自动登录）

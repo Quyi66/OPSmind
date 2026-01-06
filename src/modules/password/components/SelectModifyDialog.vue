@@ -65,6 +65,7 @@
             type="password"
             placeholder="请输入新密码"
             show-password
+            autocomplete="new-password"
             :disabled="submitting"
           />
           <div class="hint-text">密码长度8-16位，由数字、大小写字母、~!@$%&_组成</div>

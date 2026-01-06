@@ -141,6 +141,7 @@
                     v-model="form.config.password"
                     type="password"
                     show-password
+                    autocomplete="new-password"
                     class="form-input-md"
                   />
                 </el-form-item>

@@ -65,6 +65,7 @@
                   v-model="loginConfig.web_login_pwd"
                   type="password"
                   show-password
+                  autocomplete="new-password"
                   style="width: 300px"
                 />
                 <div class="form-help">AAP 登录密码</div>
@@ -94,7 +95,7 @@
                 </el-table-column>
                 <el-table-column label="Password" min-width="150">
                   <template #default="{ row }">
-                    <el-input v-model="row.password" type="password" size="small" />
+                    <el-input v-model="row.password" type="password" size="small" autocomplete="new-password" />
                   </template>
                 </el-table-column>
                 <el-table-column label="操作" width="150">

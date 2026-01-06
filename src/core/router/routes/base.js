@@ -44,6 +44,23 @@ export const baseRoutes = [
       moduleCode: 'dashboard'
     }
   },
+  // 个人资料页面
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/layouts/MainLayout.vue'),
+    meta: {
+      title: '个人资料 - OPSmind',
+      requiresAuth: true
+    },
+    children: [
+      {
+        path: '',
+        name: 'settings-index',
+        component: () => import('@/views/ProfileSettings.vue')
+      }
+    ]
+  },
   {
     path: '/about',
     name: 'about',

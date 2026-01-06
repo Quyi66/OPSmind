@@ -155,7 +155,7 @@ const goHome = () => router.push('/home')
 const handleUserCommand = (command) => {
   switch (command) {
     case 'profile':
-      router.push('/home')
+      router.push('/settings')
       break
     case 'admin': {
       try {

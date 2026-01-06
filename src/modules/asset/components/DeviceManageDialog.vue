@@ -129,6 +129,7 @@
             v-model="passwordForm.loginPasswd"
             type="password"
             show-password
+            autocomplete="new-password"
             placeholder="请输入登录密码"
           />
         </el-form-item>
@@ -144,6 +145,7 @@
             v-model="passwordForm.runPasswd"
             type="password"
             show-password
+            autocomplete="new-password"
             placeholder="请输入执行密码"
           />
         </el-form-item>
@@ -213,6 +215,7 @@
             v-model="sshForm.ansible_ssh_pass"
             type="password"
             show-password
+            autocomplete="new-password"
             placeholder="请输入密码"
           />
         </el-form-item>
