@@ -12,7 +12,7 @@ export default {
       path: '/software',
       name: 'Software',
       component: () => import('./views/SoftwareIndex.vue'),
-      meta: { title: '软件包', icon: 'fa-cube' },
+      meta: { title: '软件概览', icon: 'fa-cube' },
       children: [
         {
           path: '',
@@ -60,7 +60,7 @@ export default {
           path: 'logs',
           name: 'SoftwareLogs',
           component: () => import('./views/LogReport.vue'),
-          meta: { title: '日志报告' }
+          meta: { title: '操作日志' }
         }
       ]
     }

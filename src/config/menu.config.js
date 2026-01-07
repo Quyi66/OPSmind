@@ -23,19 +23,19 @@ export const MENU_CONFIG = {
       children: [
         {
           code: 'jao',
-          name: '作业',
+          name: '作业中心',
           icon: 'fas fa-tasks',
           description: '自动化作业编排和调度管理'
         },
         {
           code: 'gfs',
-          name: '脚本',
+          name: '脚本中心',
           icon: 'fas fa-file-code',
           description: '脚本文件管理和版本控制'
         },
         {
           code: 'cmd',
-          name: '命令',
+          name: '命令中心',
           icon: 'fas fa-terminal',
           description: '系统命令管理和执行'
         }
@@ -61,7 +61,7 @@ export const MENU_CONFIG = {
         // },
         {
           code: 'software',
-          name: '软件',
+          name: '软件管理',
           icon: 'fas fa-box',
           description: '软件包安装和管理'
         }
@@ -75,7 +75,7 @@ export const MENU_CONFIG = {
       children: [
         {
           code: 'cac',
-          name: '巡检',
+          name: '巡检中心',
           icon: 'fas fa-search',
           description: '系统配置审计与合规性检查'
         }
@@ -103,13 +103,13 @@ export const MENU_CONFIG = {
       children: [
         {
           code: 'users',
-          name: '用户',
+          name: '用户中心',
           icon: 'fas fa-users',
           description: '用户账户和权限管理'
         },
         {
           code: 'flow',
-          name: '流程',
+          name: '流程管理',
           icon: 'fas fa-project-diagram',
           description: '流程管理'
         },
@@ -121,7 +121,7 @@ export const MENU_CONFIG = {
         },
         {
           code: 'password',
-          name: '密码',
+          name: '密码管理',
           icon: 'fas fa-key',
           description: '密码策略和安全管理'
         }

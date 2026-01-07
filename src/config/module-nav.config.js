@@ -6,12 +6,12 @@
 // 自动化管理 - 作业模块的页面导航
 export const JAO_NAV_ITEMS = [
   { key: 'jobs', label: '作业列表', icon: 'fas fa-list-alt', path: '/jao/jobs' },
-  { key: 'schedule', label: '作业编排', icon: 'fas fa-network-wired', path: '/jao/schedule' },
+  { key: 'schedule', label: '流程编排', icon: 'fas fa-network-wired', path: '/jao/schedule' },
   { key: 'requests', label: '我的申请', icon: 'fas fa-inbox', path: '/jao/requests' },
   { key: 'approvals', label: '作业审批', icon: 'fas fa-user-check', path: '/jao/approvals' },
   { key: 'runLogs', label: '运行记录', icon: 'fas fa-history', path: '/jao/runLogs' },
   { key: 'statistics', label: '数据统计', icon: 'fas fa-chart-line', path: '/jao/statistics' },
-  { key: 'taskScheduler', label: '任务调度', icon: 'fas fa-clock', path: '/jao/taskScheduler' }
+  { key: 'taskScheduler', label: '定时任务', icon: 'fas fa-clock', path: '/jao/taskScheduler' }
 ]
 
 // 自动化管理 - 脚本模块的页面导航
@@ -26,8 +26,8 @@ export const CMD_NAV_ITEMS = [
   { key: 'list', label: '命令列表', icon: 'fas fa-list', path: '/cmd/list' },
   { key: 'job', label: '命令作业', icon: 'fas fa-tasks', path: '/cmd/job' },
   { key: 'review', label: '命令审核', icon: 'fas fa-clipboard-check', path: '/cmd/review' },
-  { key: 'logs', label: '运行记录', icon: 'fas fa-file-alt', path: '/cmd/logs' },
-  { key: 'console', label: 'Console', icon: 'fas fa-terminal', path: '/cmd/console' }
+  { key: 'logs', label: '执行日志', icon: 'fas fa-file-alt', path: '/cmd/logs' },
+  { key: 'console', label: '控制台', icon: 'fas fa-terminal', path: '/cmd/console' }
 ]
 
 // 补丁漏洞 - 补丁模块的页面导航
@@ -47,62 +47,62 @@ export const PATCHES_NAV_ITEMS = [
 
 // 补丁漏洞 - 软件模块的页面导航
 export const SOFTWARE_NAV_ITEMS = [
-  { key: 'packages', label: '软件包', icon: 'fas fa-cube', path: '/software/packages' },
-  { key: 'repos', label: '仓库', icon: 'fas fa-database', path: '/software/repos' },
+  { key: 'packages', label: '软件概览', icon: 'fas fa-cube', path: '/software/packages' },
+  { key: 'repos', label: '仓库管理', icon: 'fas fa-database', path: '/software/repos' },
   { key: 'localInstall', label: '本地安装', icon: 'fas fa-map-marker', path: '/software/localInstall' },
-  { key: 'logs', label: '日志报告', icon: 'fa fa-history', path: '/software/logs' }
+  { key: 'logs', label: '操作日志', icon: 'fa fa-history', path: '/software/logs' }
 ]
 
 // 系统巡检 - 巡检模块的页面导航
 export const CAC_NAV_ITEMS = [
   { key: 'overview', label: '巡检总览', icon: 'fad fa-fw fa-th-large', path: '/cac/overview' },
   { key: 'templates', label: '巡检模板', icon: 'fad fa-fw fa-list-alt', path: '/cac/templates' },
-  { key: 'results', label: '检查结果', icon: 'fad fa-fw fa-history', path: '/cac/results' },
-  { key: 'config', label: '巡检配置', icon: 'fad fa-fw fa-cog', path: '/cac/config' },
+  { key: 'results', label: '执行记录', icon: 'fad fa-fw fa-history', path: '/cac/results' },
+  { key: 'config', label: '导出配置', icon: 'fad fa-fw fa-cog', path: '/cac/config' },
   { key: 'email', label: '邮件配置', icon: 'fad fa-fw fa-envelope', path: '/cac/email' }
 ]
 
 // 资产管理 - 资产模块的页面导航
 export const ACM_NAV_ITEMS = [
   { key: 'overview', label: '资产总览', icon: 'fad fa-fw fa-chart-pie', path: '/acm/overview' },
-  { key: 'info', label: '资产信息', icon: 'fad fa-fw fa-server', path: '/acm/info' },
+  { key: 'info', label: '资产列表', icon: 'fad fa-fw fa-server', path: '/acm/info' },
   { key: 'data', label: '数据管理', icon: 'fad fa-fw fa-database', path: '/acm/data' },
   { key: 'model', label: '资产模型', icon: 'fad fa-fw fa-project-diagram', path: '/acm/model' },
   { key: 'exception', label: '异常设备', icon: 'fad fa-fw fa-exclamation-triangle', path: '/acm/exception' },
   { key: 'automation', label: '自动化配置', icon: 'fad fa-fw fa-cogs', path: '/acm/automation' },
   { key: 'permission', label: '资源权限', icon: 'fad fa-fw fa-user-lock', path: '/acm/permission' },
-  { key: 'log', label: '操作记录', icon: 'fad fa-fw fa-history', path: '/acm/log' }
+  { key: 'log', label: '操作日志', icon: 'fad fa-fw fa-history', path: '/acm/log' }
 ]
 
 // 用户管理模块的页面导航
 export const USERS_NAV_ITEMS = [
-  { key: 'overview', label: '总览', icon: 'fas fa-tachometer-alt', path: '/users/overview' },
-  { key: 'users', label: '用户', icon: 'fas fa-user', path: '/users/users' },
+  { key: 'overview', label: '用户总览', icon: 'fas fa-tachometer-alt', path: '/users/overview' },
+  { key: 'users', label: '用户列表', icon: 'fas fa-user', path: '/users/users' },
   { key: 'groups', label: '用户组', icon: 'fas fa-users', path: '/users/groups' },
-  { key: 'logs', label: '操作记录', icon: 'fas fa-history', path: '/users/logs' },
+  { key: 'logs', label: '操作日志', icon: 'fas fa-history', path: '/users/logs' },
   { key: 'config', label: '功能配置', icon: 'fas fa-cog', path: '/users/config' }
 ]
 
 // 流程管理模块的页面导航
 export const FLOW_NAV_ITEMS = [
-  { key: 'list', label: '流程列表', icon: 'fas fa-list-alt', path: '/flow/list' },
-  { key: 'execution', label: '执行列表', icon: 'fas fa-play-circle', path: '/flow/execution' }
+  { key: 'list', label: '流程定义', icon: 'fas fa-list-alt', path: '/flow/list' },
+  { key: 'execution', label: '执行记录', icon: 'fas fa-play-circle', path: '/flow/execution' }
 ]
 
 // sudo权限管理模块的页面导航
 export const SUDO_NAV_ITEMS = [
   { key: 'permission', label: 'sudo列表', icon: 'fas fa-list', path: '/sudo/permission' },
-  { key: 'apply', label: 'sudo申请', icon: 'fas fa-file-alt', path: '/sudo/apply' },
+  { key: 'apply', label: '权限申请', icon: 'fas fa-file-alt', path: '/sudo/apply' },
   { key: 'reset', label: '重置密码', icon: 'fas fa-key', path: '/sudo/reset' },
   { key: 'settings', label: '功能设置', icon: 'fas fa-cog', path: '/sudo/settings' },
-  { key: 'log', label: '操作记录', icon: 'fas fa-history', path: '/sudo/log' }
+  { key: 'log', label: '操作日志', icon: 'fas fa-history', path: '/sudo/log' }
 ]
 
 // 密码管理模块的页面导航
 export const PASSWORD_NAV_ITEMS = [
   { key: 'application', label: '申请审批', icon: 'fas fa-clipboard-check', path: '/password/application' },
   { key: 'settings', label: '参数配置', icon: 'fas fa-cog', path: '/password/settings' },
-  { key: 'logs', label: '操作记录', icon: 'fas fa-history', path: '/password/logs' }
+  { key: 'logs', label: '操作日志', icon: 'fas fa-history', path: '/password/logs' }
 ]
 
 // 系统设置模块的页面导航
@@ -114,8 +114,8 @@ export const SSC_NAV_ITEMS = [
   { key: 'tag', label: '应用标签', icon: 'fas fa-tags', path: '/ssc/tag' },
   { key: 'param', label: '参数配置', icon: 'fas fa-brackets-curly', path: '/ssc/param' },
   { key: 'appres', label: '应用资源', icon: 'fas fa-boxes', path: '/ssc/appres' },
-  { key: 'email', label: '电子邮件', icon: 'fas fa-mail-bulk', path: '/ssc/email' },
-  { key: 'datasource', label: '数据源', icon: 'fas fa-code-merge', path: '/ssc/datasource' },
+  { key: 'email', label: '邮件设置', icon: 'fas fa-mail-bulk', path: '/ssc/email' },
+  { key: 'datasource', label: '数据源管理', icon: 'fas fa-code-merge', path: '/ssc/datasource' },
   { key: 'engine', label: '引擎管理', icon: 'fas fa-car-battery', path: '/ssc/engine' }
 ]
 
