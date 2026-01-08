@@ -14,7 +14,7 @@
     >
       <el-table-column prop="host_key" label="主机" min-width="150" />
       <el-table-column prop="name" label="检查项" min-width="200" />
-      <el-table-column label="检查状态" width="120">
+      <el-table-column label="检查状态" width="150">
         <template #default="{ row }">
           <el-tag :type="getKpiStatusTagType(row.status)" effect="dark" round>
             <i :class="['fa', getKpiStatusIcon(row.status)]" style="margin-right: 5px;"></i>
@@ -24,7 +24,7 @@
       </el-table-column>
       <el-table-column label="操作" width="100" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link size="small" @click="$emit('show-detail', row)">
+          <el-button type="primary" text size="small" @click="$emit('show-detail', row)">
             详情
           </el-button>
         </template>

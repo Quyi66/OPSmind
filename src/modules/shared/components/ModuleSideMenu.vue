@@ -1,5 +1,8 @@
 <template>
   <div class="module-side-menu-wrapper" :class="{ 'is-collapsed': isCollapsed }">
+    <!-- 头部插槽区域 -->
+    <slot name="header" />
+
     <el-menu
       :default-active="activeIndex"
       :default-openeds="defaultOpeneds"

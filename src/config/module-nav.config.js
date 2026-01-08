@@ -31,18 +31,18 @@ export const CMD_NAV_ITEMS = [
 ]
 
 // 补丁漏洞 - 补丁模块的页面导航
+// platform: 'linux' - 仅Linux设备显示, 'windows' - 仅Windows设备显示, 'common' - 所有设备显示
 export const PATCHES_NAV_ITEMS = [
-  { key: 'machineScan', label: '机器扫描', icon: 'fas fa-search', path: '/patches/machineScan' },
-  { key: 'patchInstall', label: '补丁安装', icon: 'fas fa-download', path: '/patches/patchInstall' },
-  { key: 'changeRollback', label: '变更回滚', icon: 'fas fa-undo', path: '/patches/changeRollback' },
-  { key: 'linuxYumManage', label: 'LinuxYUM管理', icon: 'fas fa-cogs', path: '/patches/linuxYumManage' },
-  { key: 'patchLibrary', label: '补丁仓库', icon: 'fas fa-database', path: '/patches/patchLibrary' },
-  { key: 'vulnerability', label: '漏洞概览', icon: 'fas fa-shield-alt', path: '/patches/vulnerability' },
-  { key: 'windowsVulnerability', label: 'Windows漏洞', icon: 'fab fa-windows', path: '/patches/windowsVulnerability' },
-  { key: 'windowsUpdate', label: 'Windows更新', icon: 'fas fa-sync', path: '/patches/windowsUpdate' },
-  { key: 'windowsRollback', label: 'Windows回滚', icon: 'fas fa-history', path: '/patches/windowsRollback' },
-  { key: 'windowsView', label: 'Windows View', icon: 'fas fa-desktop', path: '/patches/windowsView' },
-  { key: 'logs', label: '操作日志报告', icon: 'fas fa-file-alt', path: '/patches/logs' }
+  { key: 'machineScan', label: '机器扫描', icon: 'fas fa-search', path: '/patches/machineScan', platform: 'linux' },
+  { key: 'patchInstall', label: '补丁安装', icon: 'fas fa-download', path: '/patches/patchInstall', platform: 'linux' },
+  { key: 'changeRollback', label: '变更回滚', icon: 'fas fa-undo', path: '/patches/changeRollback', platform: 'linux' },
+  { key: 'patchLibrary', label: '补丁仓库', icon: 'fas fa-database', path: '/patches/patchLibrary', platform: 'linux' },
+  { key: 'vulnerability', label: '漏洞概览', icon: 'fas fa-shield-alt', path: '/patches/vulnerability', platform: 'linux' },
+  { key: 'windowsVulnerability', label: '漏洞扫描', icon: 'fas fa-search', path: '/patches/windowsVulnerability', platform: 'windows' },
+  { key: 'windowsUpdate', label: '补丁安装', icon: 'fas fa-download', path: '/patches/windowsUpdate', platform: 'windows' },
+  { key: 'windowsRollback', label: '变更回滚', icon: 'fas fa-history', path: '/patches/windowsRollback', platform: 'windows' },
+  { key: 'windowsView', label: '漏洞统计', icon: 'fas fa-chart-bar', path: '/patches/windowsView', platform: 'windows' },
+  { key: 'logs', label: '变更日志查询', icon: 'fas fa-file-alt', path: '/patches/logs', platform: 'common' }
 ]
 
 // 补丁漏洞 - 软件模块的页面导航
@@ -50,6 +50,7 @@ export const SOFTWARE_NAV_ITEMS = [
   { key: 'packages', label: '软件概览', icon: 'fas fa-cube', path: '/software/packages' },
   { key: 'repos', label: '仓库管理', icon: 'fas fa-database', path: '/software/repos' },
   { key: 'localInstall', label: '本地安装', icon: 'fas fa-map-marker', path: '/software/localInstall' },
+  { key: 'yumManage', label: '软件源管理', icon: 'fas fa-cogs', path: '/software/yumManage' },
   { key: 'logs', label: '操作日志', icon: 'fa fa-history', path: '/software/logs' }
 ]
 

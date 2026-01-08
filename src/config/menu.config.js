@@ -49,7 +49,7 @@ export const MENU_CONFIG = {
       children: [
         {
           code: 'patches',
-          name: '补丁',
+          name: '补丁管理',
           icon: 'fas fa-download',
           description: '系统补丁和更新管理'
         },

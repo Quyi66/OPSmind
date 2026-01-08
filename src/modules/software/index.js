@@ -57,6 +57,12 @@ export default {
           meta: { title: '本地安装' }
         },
         {
+          path: 'yumManage',
+          name: 'YumManage',
+          component: () => import('@/modules/patches/components/LinuxYumManage.vue'),
+          meta: { title: '软件源管理' }
+        },
+        {
           path: 'logs',
           name: 'SoftwareLogs',
           component: () => import('./views/LogReport.vue'),

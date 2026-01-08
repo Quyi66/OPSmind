@@ -233,52 +233,51 @@
               "
               class="list-view"
             >
-              <div class="list-toolbar">
-                <div class="toolbar-group" v-if="listPlayOptions.length">
-                  <span class="toolbar-label">Play</span>
-                  <el-select
-                    v-model="selectedPlayFilter"
-                    placeholder="全部 Play"
-                    size="small"
-                    clearable
-                    class="toolbar-select"
-                  >
-                    <el-option
-                      v-for="play in listPlayOptions"
-                      :key="play"
-                      :label="play"
-                      :value="play"
-                    />
-                  </el-select>
-                </div>
-                <div class="toolbar-group" v-if="listHostOptions.length">
-                  <span class="toolbar-label">目标主机</span>
-                  <el-select
-                    v-model="selectedHostFilter"
-                    placeholder="全部主机"
-                    size="small"
-                    clearable
-                    class="toolbar-select"
-                  >
-                    <el-option
-                      v-for="host in listHostOptions"
-                      :key="host"
-                      :label="host"
-                      :value="host"
-                    />
-                  </el-select>
-                </div>
-                <el-input
-                  v-model="listKeyword"
-                  size="small"
-                  placeholder="搜索主机 / 任务 / 输出"
-                  clearable
-                  class="toolbar-search"
-                >
-                  <template #prefix>
-                    <i class="fa fa-search" />
-                  </template>
-                </el-input>
+              <div class="ops-filter-bar">
+                <el-form :inline="true" size="small">
+                  <el-form-item label="Play" v-if="listPlayOptions.length">
+                    <el-select
+                      v-model="selectedPlayFilter"
+                      placeholder="全部主机"
+                      clearable
+                      style="width: 180px"
+                    >
+                      <el-option
+                        v-for="play in listPlayOptions"
+                        :key="play"
+                        :label="play"
+                        :value="play"
+                      />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="目标主机" v-if="listHostOptions.length">
+                    <el-select
+                      v-model="selectedHostFilter"
+                      placeholder="全部主机"
+                      clearable
+                      style="width: 180px"
+                    >
+                      <el-option
+                        v-for="host in listHostOptions"
+                        :key="host"
+                        :label="host"
+                        :value="host"
+                      />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item>
+                    <el-input
+                      v-model="listKeyword"
+                      placeholder="搜索主机 / 任务 / 输出"
+                      clearable
+                      style="width: 240px"
+                    >
+                      <template #prefix>
+                        <i class="fa fa-search" />
+                      </template>
+                    </el-input>
+                  </el-form-item>
+                </el-form>
               </div>
               <el-table :data="filteredListRows" height="420" class="result-table">
                 <el-table-column prop="host" label="主机" width="180" show-overflow-tooltip />
@@ -300,6 +299,18 @@
 
           <template v-else-if="tab.name === 'raw'">
             <div v-if="ansibleRawOutput" class="raw-output">
+              <div class="raw-toolbar">
+                <el-button
+                  size="small"
+                  type="primary"
+                  plain
+                  :disabled="!downloadUrl"
+                  @click="openDownload"
+                >
+                  <i class="fa fa-file-export mr-1" />
+                  下载 Ansible 原始输出
+                </el-button>
+              </div>
               <el-scrollbar class="raw-scroll">
                 <pre>{{ ansibleRawOutput }}</pre>
               </el-scrollbar>
@@ -309,7 +320,7 @@
 
           <template v-else-if="tab.name === 'output'">
             <div class="output-tab">
-              <div class="output-toolbar">
+              <!-- <div class="output-toolbar">
                 <el-button
                   size="small"
                   type="primary"
@@ -320,7 +331,7 @@
                   <i class="fa fa-file-export mr-1" />
                   下载 Ansible 输出
                 </el-button>
-              </div>
+              </div> -->
               <div v-if="ansibleRawOutput" class="output-log">
                 <pre>{{ ansibleRawOutput }}</pre>
               </div>
@@ -357,6 +368,7 @@ import { computed, ref, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/constants/jobStatus'
+import { authService } from '@/core/auth'
 
 const ANSIBLE_JOB_TYPES = ['script', 'command', 'process']
 const TASK_STATUS_LABELS = {
@@ -431,7 +443,7 @@ const filteredListRows = computed(() => filterListRows(ansibleHostRows.value, {
   keyword: listKeyword.value
 }))
 const restDetail = computed(() => buildRestDetail(result.value))
-const downloadUrl = computed(() => (props.runId ? `/jao/api/jao/runlogs/ansible/${props.runId}` : ''))
+const downloadUrl = computed(() => (props.runId ? `/oplus-portal/jao/api/jao/runlogs/ansible/${props.runId}` : ''))
 const visibleTabs = computed(() => {
   const tabs = [{ name: 'overview', label: '概要' }]
   if (isProcessJob.value) {
@@ -620,9 +632,32 @@ function taskStatusTag(status) {
   return TASK_STATUS_TAGS[status] || 'info'
 }
 
-function openDownload() {
+async function openDownload() {
   if (!downloadUrl.value) return
-  window.open(downloadUrl.value, '_blank')
+  try {
+    const authHeaders = authService.getAuthHeaders()
+    const response = await fetch(downloadUrl.value, {
+      method: 'GET',
+      headers: authHeaders
+    })
+
+    if (!response.ok) throw new Error('下载失败')
+
+    const blob = await response.blob()
+    const blobUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download = `ansible-output-${props.runId || Date.now()}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(blobUrl)
+
+    ElMessage.success('下载成功')
+  } catch (error) {
+    console.error('下载失败:', error)
+    ElMessage.error('下载失败')
+  }
 }
 
 function handleHostAction(command) {
@@ -1442,37 +1477,25 @@ function safeJsonParse(input, fallback = {}) {
   gap: 12px;
 }
 
-.list-toolbar {
+.list-view .ops-filter-bar {
+  margin-bottom: 0;
+}
+
+.list-view :deep(.el-form) {
   display: flex;
-  align-items: center;
-  gap: 12px;
   flex-wrap: wrap;
-  padding: 8px 12px;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  background: #fafafa;
+  align-items: flex-start;
+  gap: 12px;
 }
 
-.toolbar-label {
-  font-size: 13px;
-  color: #909399;
-  white-space: nowrap;
+.list-view :deep(.el-form-item) {
+  margin-right: 0;
+  margin-bottom: 0;
 }
 
-.toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 220px;
-}
-
-.toolbar-select {
-  min-width: 180px;
-}
-
-.toolbar-search {
-  flex: 1;
-  min-width: 260px;
+.list-view :deep(.el-form-item__label) {
+  font-size: 14px;
+  padding-right: 8px;
 }
 
 .result-table :deep(.el-table__body-wrapper) {
@@ -1480,7 +1503,14 @@ function safeJsonParse(input, fallback = {}) {
 }
 
 .raw-output {
-  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.raw-toolbar {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .raw-scroll {
