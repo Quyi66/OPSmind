@@ -57,7 +57,7 @@ export function generateNavMenu() {
         {
             path: '/jao',
             title: '作业中心',
-            icon: 'Document',
+            faIcon: 'fas fa-tasks',
             children: JAO_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -67,7 +67,7 @@ export function generateNavMenu() {
         {
             path: '/gfs',
             title: '脚本中心',
-            icon: 'Document',
+            faIcon: 'fas fa-file-code',
             children: GFS_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -77,7 +77,7 @@ export function generateNavMenu() {
         {
             path: '/cmd',
             title: '命令中心',
-            icon: 'Monitor',
+            faIcon: 'fas fa-terminal',
             children: CMD_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -87,7 +87,7 @@ export function generateNavMenu() {
         {
             path: '/patches',
             title: '补丁管理',
-            icon: 'Download',
+            faIcon: 'fas fa-download',
             children: PATCHES_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -97,7 +97,7 @@ export function generateNavMenu() {
         {
             path: '/software',
             title: '软件管理',
-            icon: 'Box',
+            faIcon: 'fas fa-box',
             children: SOFTWARE_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -107,7 +107,7 @@ export function generateNavMenu() {
         {
             path: '/cac',
             title: '系统巡检',
-            icon: 'Search',
+            faIcon: 'fas fa-search',
             children: CAC_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -117,7 +117,7 @@ export function generateNavMenu() {
         {
             path: '/acm',
             title: '资产管理',
-            icon: 'Monitor',
+            faIcon: 'fas fa-server',
             children: ACM_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -127,7 +127,7 @@ export function generateNavMenu() {
         {
             path: '/users',
             title: '用户管理',
-            icon: 'User',
+            faIcon: 'fas fa-users',
             children: USERS_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -137,7 +137,7 @@ export function generateNavMenu() {
         {
             path: '/flow',
             title: '流程管理',
-            icon: 'Connection',
+            faIcon: 'fas fa-project-diagram',
             children: FLOW_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -147,7 +147,7 @@ export function generateNavMenu() {
         {
             path: '/sudo',
             title: 'sudo权限',
-            icon: 'Key',
+            faIcon: 'fas fa-user-shield',
             children: SUDO_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -157,7 +157,7 @@ export function generateNavMenu() {
         {
             path: '/password',
             title: '密码管理',
-            icon: 'Lock',
+            faIcon: 'fas fa-key',
             children: PASSWORD_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label
@@ -167,7 +167,7 @@ export function generateNavMenu() {
         {
             path: '/ssc',
             title: '系统设置',
-            icon: 'Setting',
+            faIcon: 'fas fa-cog',
             children: SSC_NAV_ITEMS.map(item => ({
                 path: item.path,
                 title: item.label

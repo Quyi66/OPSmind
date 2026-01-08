@@ -66,7 +66,7 @@
               >
                 <!-- 首页 -->
                 <el-menu-item index="/home" class="menu-item-home">
-                  <el-icon><HomeFilled /></el-icon>
+                  <i class="fas fa-home menu-fa-icon"></i>
                   <template #title>首页</template>
                 </el-menu-item>
 
@@ -74,7 +74,7 @@
                 <template v-for="menu in menuList" :key="menu.path">
                   <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="menu.path">
                     <template #title>
-                      <el-icon><component :is="menu.icon" /></el-icon>
+                      <i :class="menu.faIcon" class="menu-fa-icon"></i>
                       <span>{{ menu.title }}</span>
                     </template>
                     <el-menu-item
@@ -87,7 +87,7 @@
                     </el-menu-item>
                   </el-sub-menu>
                   <el-menu-item v-else :index="menu.path">
-                    <el-icon><component :is="menu.icon" /></el-icon>
+                    <i :class="menu.faIcon" class="menu-fa-icon"></i>
                     <template #title>{{ menu.title }}</template>
                   </el-menu-item>
                 </template>
@@ -131,23 +131,13 @@ import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  HomeFilled,
   Bell,
   User,
   Setting,
   SwitchButton,
   ArrowDown,
   ArrowLeft,
-  ArrowRight,
-  Document,
-  Monitor,
-  UserFilled,
-  Lock,
-  Key,
-  Connection,
-  Download,
-  Box,
-  Search
+  ArrowRight
 } from '@element-plus/icons-vue'
 
 import TagsView from '@/components/layout/TagsView/index.vue'
@@ -230,7 +220,7 @@ watch(
 
 <style scoped lang="scss">
 // 变量定义
-$sidebar-width: 180px;
+$sidebar-width: 200px;
 $sidebar-collapsed-width: 64px;
 $header-height: 56px;
 $divider-width: 8px;
@@ -515,5 +505,14 @@ $header-bg: #1C64F2;
   .el-scrollbar__bar.is-horizontal {
     display: none !important;
   }
+}
+
+// Font Awesome 菜单图标样式
+.menu-fa-icon {
+  font-size: 16px;
+  width: 24px;
+  margin-right: 8px;
+  text-align: center;
+  color: inherit;
 }
 </style>
