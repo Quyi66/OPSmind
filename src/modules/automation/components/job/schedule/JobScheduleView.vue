@@ -436,7 +436,7 @@ function pad(value) {
   display: flex;
   min-height: 560px;
   background: #fff;
-  border-radius: 12px;
+  // border-radius: 12px;
   border: 1px solid #e5e7eb;
   overflow: hidden;
   height: 99%;
@@ -447,7 +447,7 @@ function pad(value) {
   border-right: 1px solid #ebeef5;
   display: flex;
   flex-direction: column;
-  background: #f7f9fc;
+  // background: #f7f9fc;
 }
 
 .flow-list-header {

@@ -1,39 +1,18 @@
 <template>
-  <ModulePageLayout
-    :title="moduleTitle"
-    :description="moduleDescription"
-    :hide-header="true"
-  >
-    <div class="ops-module ops-module--with-sidebar">
-      <ModuleSideMenu
-        :menu-groups="menuGroups"
-        :default-openeds="defaultOpeneds"
-      />
-
-      <section class="ops-module__content">
-        <router-view />
-      </section>
-    </div>
-  </ModulePageLayout>
+  <!-- 新布局下，侧边栏已由 OpsLayout 提供，模块只需输出内容 -->
+  <div class="ops-module-content">
+    <router-view />
+  </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
-import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
-import { MENU_CONFIG } from '@/config/menu.config.js'
-import { getGroupMenuConfig } from '@/config/module-nav.config.js'
-
-const moduleTitle = '自动化作业编排'
-const moduleDescription = ''
-
-// 获取"自动化管理"分组下的所有模块菜单（作业、脚本、命令）
-const menuGroups = computed(() => getGroupMenuConfig('automation', MENU_CONFIG))
-
-// 默认展开作业菜单
-const defaultOpeneds = ['jao']
+// 模块组件 - 作业中心
+// 侧边栏导航已移至 OpsLayout，此组件仅作为路由容器
 </script>
 
 <style scoped lang="scss">
-// 样式已统一至公共样式文件
+.ops-module-content {
+  height: 100%;
+  overflow: auto;
+}
 </style>

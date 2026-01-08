@@ -14,42 +14,34 @@
       <el-button @click="handleRefresh" type="primary" class="mt-3">重新加载</el-button>
     </div>
 
-    <!-- 主体布局 -->
-    <div v-else class="dashboard-layout">
-      <!-- 左侧边栏 -->
-      <DashboardSidebar />
-
-      <!-- 主内容区 -->
-      <main class="dashboard-content">
-        <div class="dashboard-main">
-          <!-- 第一行：操作提示区域 -->
-          <div class="dashboard-row">
-            <div class="dashboard-card full-width">
-              <AIAssistant />
-            </div>
-          </div>
-
-          <!-- 第二行：作业概览 & 巡检概览 -->
-          <div class="dashboard-row">
-            <div class="dashboard-card half-width">
-              <JobOverview />
-            </div>
-            <div class="dashboard-card half-width">
-              <InspectionOverview />
-            </div>
-          </div>
-
-          <!-- 第三行：资产概览 & 漏洞概览 -->
-          <div class="dashboard-row">
-            <div class="dashboard-card half-width">
-              <AssetOverview />
-            </div>
-            <div class="dashboard-card half-width">
-              <VulnerabilityOverview />
-            </div>
-          </div>
+    <!-- 主体布局 - 移除内部侧边栏 -->
+    <div v-else class="dashboard-main">
+      <!-- 第一行：操作提示区域 -->
+      <div class="dashboard-row">
+        <div class="dashboard-card full-width">
+          <AIAssistant />
         </div>
-      </main>
+      </div>
+
+      <!-- 第二行：作业概览 & 巡检概览 -->
+      <div class="dashboard-row">
+        <div class="dashboard-card half-width">
+          <JobOverview />
+        </div>
+        <div class="dashboard-card half-width">
+          <InspectionOverview />
+        </div>
+      </div>
+
+      <!-- 第三行：资产概览 & 漏洞概览 -->
+      <div class="dashboard-row">
+        <div class="dashboard-card half-width">
+          <AssetOverview />
+        </div>
+        <div class="dashboard-card half-width">
+          <VulnerabilityOverview />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -60,8 +52,6 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
 
-import { getAllMenuItems } from '@/config/menu.config.js'
-import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
 import JobOverview from '@/components/dashboard/JobOverview.vue'
 import InspectionOverview from '@/components/dashboard/InspectionOverview.vue'
 import AssetOverview from '@/components/dashboard/AssetOverview.vue'
@@ -129,51 +119,23 @@ onMounted(async () => {
 
 <style scoped>
 .dashboard {
-  flex: 1;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #f5f6fa 0%, #f0f2f5 100%);
-  min-height: 0;
-}
-
-/* Dashboard主布局 */
-.dashboard-layout {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  font-family:
-    'PingFang SC',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
-  background: transparent;
-}
-
-/* 主内容区域 */
-.dashboard-content {
-  flex: 1;
-  overflow: hidden;
-  /* 更紧凑顶部间距：24px -> 16px；底部保持 16px；左侧 5px 保持 */
-  padding: 16px 16px 16px 0;
   background: transparent;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  overflow: auto;
 }
 
 /* Dashboard主容器 */
 .dashboard-main {
-  max-width: var(--app-max-width);
-  margin: 0 auto;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 0;
 }
 
 /* Dashboard行布局 */

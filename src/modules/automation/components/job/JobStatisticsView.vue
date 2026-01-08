@@ -285,7 +285,7 @@ const filteredSummary = computed(() => {
   height: 100%;
   max-width: 100%;
   background: #fff;
-  border-radius: 12px;
+  /* border-radius: 12px; */
   overflow: hidden;
 }
 

@@ -1,51 +1,18 @@
 <template>
-  <ModulePageLayout
-    :title="moduleTitle"
-    :description="moduleDescription"
-    :hide-header="true"
-  >
-    <div class="ops-module ops-module--with-sidebar">
-      <ModuleSideMenu
-        :menu-groups="menuGroups"
-        :default-openeds="defaultOpeneds"
-      />
-
-      <section class="ops-module__content">
-        <router-view />
-      </section>
-    </div>
-  </ModulePageLayout>
+  <!-- 新布局下，侧边栏已由 OpsLayout 提供，模块只需输出内容 -->
+  <div class="ops-module-content">
+    <router-view />
+  </div>
 </template>
 
 <script setup>
-import { provide, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
-import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
-import { MENU_CONFIG } from '@/config/menu.config.js'
-import { getGroupMenuConfig } from '@/config/module-nav.config.js'
-
-const router = useRouter()
-
-const moduleTitle = '用户管理'
-const moduleDescription = ''
-
-// 获取"用户管理"分组下的所有模块菜单（用户、流程、sudo权限、密码）
-const menuGroups = computed(() => getGroupMenuConfig('user-management', MENU_CONFIG))
-
-// 默认展开用户菜单
-const defaultOpeneds = ['users']
-
-// 提供导航方法给子组件使用
-function handleNavigate({ view }) {
-  if (view) {
-    router.push(`/users/${view}`)
-  }
-}
-
-provide('handleNavigate', handleNavigate)
+// 模块组件 - 用户管理
+// 侧边栏导航已移至 OpsLayout，此组件仅作为路由容器
 </script>
 
 <style scoped lang="scss">
-// 样式已统一至公共样式文件
+.ops-module-content {
+  height: 100%;
+  overflow: auto;
+}
 </style>

@@ -205,7 +205,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-radius: 6px;
+  // border-radius: 6px;
   overflow: hidden;
 }
 
