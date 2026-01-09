@@ -1,7 +1,14 @@
+/**
+ * 模块路由配置
+ *
+ * 注意：大部分模块路由已迁移到 base.js 中，按一级菜单分组组织
+ * 此文件仅处理需要动态生成的模块路由（如软件管理等非核心模块）
+ */
+
 import { moduleRegistryEntries } from '@/modules/registry'
 import { GROUP_ALIAS_MAP } from '@/config/menu.config.js'
+import MainLayout from '@/layouts/MainLayout.vue'
 
-const ModuleLayout = () => import('@/layouts/MainLayout.vue')
 const ModuleHost = () => import('@/views/modules/ModuleRouterView.vue')
 
 function createModuleRoute(entry, path, nameSuffix, extraMeta = {}) {
@@ -18,7 +25,7 @@ function createModuleRoute(entry, path, nameSuffix, extraMeta = {}) {
   return {
     path,
     name: `${entry.code}-${nameSuffix}`,
-    component: ModuleLayout,
+    component: MainLayout,
     meta: { ...baseMeta },
     children: [
       {
@@ -47,8 +54,15 @@ function createModuleRoute(entry, path, nameSuffix, extraMeta = {}) {
 export function buildModuleRoutes() {
   const routes = []
 
-  // 这些模块已在 base.js 中使用子路由方式定义，需要从动态生成中排除
-  const skipModules = ['sudo', 'jao', 'cmd', 'gfs', 'patches', 'cac', 'acm', 'ssc', 'users', 'flow', 'password']
+  // 这些模块已在 base.js 中使用分组布局定义，需要从动态生成中排除
+  const skipModules = [
+    'sudo', 'jao', 'cmd', 'gfs',   // 自动化管理分组
+    'patches', 'software',          // 补丁漏洞分组
+    'cac',                          // 系统巡检分组
+    'acm',                          // 资产管理分组
+    'users', 'flow', 'password',    // 用户管理分组
+    'ssc'                           // 系统设置
+  ]
 
   moduleRegistryEntries.forEach(entry => {
     // 跳过已在 baseRoutes 中定义的模块
@@ -67,18 +81,6 @@ export function buildModuleRoutes() {
       )
     }
   })
-
-  // 手动添加 ssc（系统设置）路由，因为它不在 MENU_CONFIG 中
-  const sscEntry = {
-    code: 'ssc',
-    name: '系统设置',
-    title: '系统设置',
-    groupCode: 'system',
-    path: 'ssc',
-    moduleType: 'vue-native',
-    status: 'ready'
-  }
-  routes.push(createModuleRoute(sscEntry, '/ssc', 'main', { showModuleToolbar: true }))
 
   return routes
 }

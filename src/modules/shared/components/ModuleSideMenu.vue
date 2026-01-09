@@ -5,8 +5,9 @@
 
     <el-menu
       :default-active="activeIndex"
-      :default-openeds="defaultOpeneds"
+      :default-openeds="computedDefaultOpeneds"
       :collapse="isCollapsed"
+      unique-opened
       class="module-side-menu"
       background-color="#ffffff"
       text-color="#333333"
@@ -136,6 +137,18 @@ const activeIndex = computed(() => {
     }
   }
   return ''
+})
+
+// 计算默认展开的菜单组 - 只展开当前激活项所在的分组
+const computedDefaultOpeneds = computed(() => {
+  const active = activeIndex.value
+  if (!active) {
+    // 如果没有激活项，使用传入的 defaultOpeneds 中的第一个
+    return props.defaultOpeneds.length > 0 ? [props.defaultOpeneds[0]] : []
+  }
+  // 从 activeIndex 中提取 groupCode（格式为 "groupCode-itemKey"）
+  const groupCode = active.split('-')[0]
+  return groupCode ? [groupCode] : []
 })
 
 // 菜单选择处理

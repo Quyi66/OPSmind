@@ -9,23 +9,25 @@
     <!-- 主体区域 -->
     <div class="main-body">
       <div class="main-container">
-      <!-- 主内容区域（SideMenu已移至模块内部，使用Element-UI风格） -->
+        <!-- 主内容区域 -->
+        <div class="main-content">
+          <div v-if="moduleToolbarTitle" class="module-toolbar">
+            <div class="module-toolbar-title">{{ moduleToolbarTitle }}</div>
+            <button class="module-toolbar-close" @click="handleCloseModule" aria-label="关闭">×</button>
+          </div>
 
-      <!-- 主内容区域 -->
-      <div class="main-content" :class="{ 'with-side-menu': showSideMenu }">
-        <div v-if="moduleToolbarTitle" class="module-toolbar">
-          <div class="module-toolbar-title">{{ moduleToolbarTitle }}</div>
-          <button class="module-toolbar-close" @click="handleCloseModule" aria-label="关闭">×</button>
+          <router-view v-slot="{ Component, route }">
+            <transition name="fade-slide" mode="out-in">
+              <component :is="Component" :key="getRouterViewKey(route)" />
+            </transition>
+          </router-view>
         </div>
-
-        <router-view class="router-view" />
-      </div>
       </div>
     </div>
 
     <!-- 移动端侧边栏遮罩 -->
     <div
-      v-if="showSideMenu && isMobile"
+      v-if="isMobile"
       class="mobile-overlay"
       @click="closeMobileMenu"
     ></div>
@@ -36,7 +38,6 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import TopNavMenu from '@/components/layout/TopNavMenu.vue'
-// SideMenu已移至各模块内部，使用Element-UI风格的ModuleSideMenu
 import { useDashboardStore } from '@/stores/dashboard'
 import { useMenuStore } from '@/stores/menu.js'
 
@@ -50,8 +51,6 @@ const isMobile = ref(false)
 
 // 计算属性
 const currentUser = computed(() => dashboardStore.currentUser)
-const showSideMenu = computed(() => menuStore.showSideMenu)
-const activeGroup = computed(() => menuStore.activeGroup)
 const activeMenuItem = computed(() => menuStore.activeMenuItem)
 const currentMenuItemTitle = computed(() => {
   const menuItem = menuStore.currentMenuItem
@@ -84,13 +83,6 @@ const moduleToolbarTitle = computed(() => {
   return currentMenuItemTitle.value
 })
 
-// 方法
-const handleMenuItemClick = menuItem => {
-  //console.log('🎯 Main layout received menu item click:', menuItem.name)
-  menuStore.setActiveMenuItem(menuItem.code)
-  try { router.push(`/${menuItem.code}`) } catch {}
-}
-
 const closeMobileMenu = () => {
   if (isMobile.value) {
     menuStore.hideSideMenu()
@@ -101,7 +93,6 @@ const closeMobileMenu = () => {
 const handleCloseModule = () => {
   try {
     menuStore.clearActiveMenu()
-    // 使用 router.back() 返回上一页，保留导航历史
     if (window.history.length > 1) {
       router.back()
     } else {
@@ -110,7 +101,24 @@ const handleCloseModule = () => {
   } catch (e) {}
 }
 
-// 仅保留标题显示，不提供标签切换
+/**
+ * 获取 router-view 的 key
+ * 对于有 groupCode 的路由（同一分组内的模块），使用 groupCode 作为 key
+ * 这样同一分组内切换时，GroupLayout 组件不会被重新挂载
+ * @param {object} routeObj - 路由对象
+ * @returns {string} key
+ */
+const getRouterViewKey = (routeObj) => {
+  // 如果路由有 groupCode，使用 groupCode 作为 key
+  // 这样同一分组内的模块（如 jao、gfs、cmd）共享相同的 key
+  // GroupLayout 组件不会被卸载重新挂载
+  const groupCode = routeObj.meta?.groupCode
+  if (groupCode) {
+    return `group-${groupCode}`
+  }
+  // 否则使用原来的逻辑
+  return routeObj.matched[1]?.path || routeObj.path
+}
 
 // 检查是否为移动端
 const checkMobile = () => {
@@ -129,25 +137,30 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 路由切换过渡动画
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(8px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
 // 主布局容器
 .main-layout {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  height: 100dvh; // 动态视口高度，更好地处理移动端地址栏
+  height: 100dvh;
   background-color: #f5f6fa;
   overflow: hidden;
-}
-
-/* 首页（仪表盘）去除左侧纵向分割线 */
-.main-layout.is-home :deep(.side-menu) {
-  border-right: none !important;
-  box-shadow: none !important;
-}
-
-/* 首页隐藏侧边菜单容器，避免出现可交互的细条区域 */
-.main-layout.is-home .side-menu-container {
-  display: none !important;
 }
 
 // 顶部导航
@@ -178,29 +191,7 @@ onUnmounted(() => {
 
 @media (min-width: 1600px) {
   .main-container {
-    /* 仅在大屏（27寸等）为底部预留留白 */
     padding-bottom: 24px;
-  }
-}
-
-// 侧边菜单容器
-.side-menu-container {
-  /* 根据业务状态控制显示，取消全局隐藏以恢复二级左侧菜单 */
-  flex-shrink: 0;
-  z-index: 200;
-  transition: transform 0.3s ease-in-out;
-
-  @media (max-width: 768px) {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
-    transform: translateX(0);
-
-    &.hidden {
-      transform: translateX(-100%);
-    }
   }
 }
 
@@ -212,28 +203,6 @@ onUnmounted(() => {
   min-height: 0;
   overflow: hidden;
   background: #fff;
-  transition: all 0.3s ease-in-out;
-  /* 底部留白由 .main-container 控制 */
-
-  &.with-side-menu {
-    background: #fff;
-
-    @media (min-width: 769px) {
-      // 桌面端时，主内容区域不需要额外处理
-    }
-
-    @media (max-width: 768px) {
-      // 移动端时，主内容区域保持原位，侧边栏为浮层
-      position: relative;
-    }
-  }
-}
-
-// 路由视图
-.router-view {
-  flex: 1;
-  overflow: auto;
-  min-height: 0;
 }
 
 /* 内嵌模块顶部工具栏 */
@@ -246,7 +215,6 @@ onUnmounted(() => {
   border-bottom: 1px solid #e5e7eb;
   padding: 12px 24px;
   margin: 0 -16px 0 -16px;
-  // margin-bottom: 12px;
 }
 
 .module-toolbar-title {
@@ -256,15 +224,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-
-  // &::before {
-  //   content: '';
-  //   display: inline-block;
-  //   width: 4px;
-  //   height: 18px;
-  //   background: linear-gradient(180deg, #3b82f6 0%, #0ea5e9 100%);
-  //   border-radius: 2px;
-  // }
 }
 
 .module-toolbar-close {
@@ -305,39 +264,11 @@ onUnmounted(() => {
 // 响应式优化
 @media (max-width: 768px) {
   .main-layout {
-    height: 100vh; // 移动端使用标准视口高度
+    height: 100vh;
   }
 
   .main-body {
     overflow: hidden;
-  }
-}
-
-// 平板端优化
-@media (min-width: 769px) and (max-width: 1024px) {
-  .main-content {
-    padding: 0;
-  }
-}
-
-// 大屏幕优化
-@media (min-width: 1200px) {
-  .main-content {
-    max-width: none;
-  }
-}
-
-// 高度优化
-@media (max-height: 600px) {
-  .main-layout {
-    height: 100vh;
-  }
-}
-
-// 横屏移动端优化
-@media (max-width: 768px) and (orientation: landscape) {
-  .main-layout {
-    height: 100vh;
   }
 }
 </style>

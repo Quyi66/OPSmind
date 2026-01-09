@@ -770,12 +770,12 @@ defineExpose({ refresh })
     padding: 10px 12px;
     background: #fff;
     font-size: 13px;
-    color: #0d6efd;
+    color: #495057;
 
     &--scroll {
       max-height: 140px;
       overflow-y: auto;
-      color: #0d6efd;
+      color: #495057;
     }
   }
 
@@ -789,7 +789,7 @@ defineExpose({ refresh })
 
 .package-item {
   padding: 2px 0;
-  color: #0d6efd;
+  color: #495057;
   font-size: 13px;
 }
 
@@ -809,7 +809,7 @@ defineExpose({ refresh })
 }
 
 .host-link {
-  color: #0d6efd;
+  color: #495057;
 }
 
 .host-pagination {

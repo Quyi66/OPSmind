@@ -320,22 +320,7 @@
 
           <template v-else-if="tab.name === 'output'">
             <div class="output-tab">
-              <!-- <div class="output-toolbar">
-                <el-button
-                  size="small"
-                  type="primary"
-                  plain
-                  :disabled="!downloadUrl"
-                  @click="openDownload"
-                >
-                  <i class="fa fa-file-export mr-1" />
-                  下载 Ansible 输出
-                </el-button>
-              </div> -->
-              <div v-if="ansibleRawOutput" class="output-log">
-                <pre>{{ ansibleRawOutput }}</pre>
-              </div>
-              <el-empty v-else description="暂无输出" />
+              <AnsibleLogViewer :run-id="props.runId" :active="activeTab === 'output'" />
             </div>
           </template>
 
@@ -369,6 +354,7 @@ import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/constants/jobStatus'
 import { authService } from '@/core/auth'
+import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 
 const ANSIBLE_JOB_TYPES = ['script', 'command', 'process']
 const TASK_STATUS_LABELS = {
@@ -1515,6 +1501,7 @@ function safeJsonParse(input, fallback = {}) {
 
 .raw-scroll {
   max-height: 420px;
+  overflow-y: scroll;
 }
 
 .raw-scroll pre {
@@ -1523,28 +1510,7 @@ function safeJsonParse(input, fallback = {}) {
 }
 
 .output-tab {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.output-toolbar {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.output-log {
-  max-height: 420px;
-  overflow: auto;
-  padding: 12px;
-  background: #1e1e1e;
-  color: #f2f2f2;
-  border-radius: 6px;
-}
-
-.output-log pre {
-  margin: 0;
-  font-size: 12px;
+  height: 500px;
 }
 
 .rest-tab {

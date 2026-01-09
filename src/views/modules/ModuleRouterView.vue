@@ -50,6 +50,8 @@ const resolvedComponent = computed(() => {
       defineAsyncComponent({
         loader,
         suspensible: false,
+        delay: 0, // 立即显示，减少闪烁
+        timeout: 30000, // 30秒超时
         onError(_error, retry, fail, attempts) {
           if (attempts <= 2) {
             retry()

@@ -26,7 +26,7 @@
       <!-- 图标 -->
       <el-form-item label="图标" prop="icon">
         <div class="icon-selector">
-          <div class="icon-preview" @click="showIconPicker = !showIconPicker">
+          <div class="icon-preview">
             <i :class="getIconClass(formData.icon)" />
           </div>
           <el-popover
@@ -463,15 +463,10 @@ watch(() => props.visible, (val) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
 
   i {
     font-size: 20px;
     color: #606266;
-  }
-
-  &:hover {
-    border-color: #409eff;
   }
 }
 

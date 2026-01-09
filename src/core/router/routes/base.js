@@ -1,6 +1,19 @@
 /**
  * 基础路由配置
+ * 按一级菜单分组组织路由，使用动态路由参数让同一分组内的模块共享布局组件
+ * 这样在同一分组内切换模块时，侧边菜单不会重新加载
  */
+
+// 同步导入布局组件
+import MainLayout from '@/layouts/MainLayout.vue'
+
+// 分组布局组件（懒加载）
+const AutomationGroupLayout = () => import('@/layouts/groups/AutomationGroupLayout.vue')
+const PatchGroupLayout = () => import('@/layouts/groups/PatchGroupLayout.vue')
+const InspectionGroupLayout = () => import('@/layouts/groups/InspectionGroupLayout.vue')
+const AssetGroupLayout = () => import('@/layouts/groups/AssetGroupLayout.vue')
+const UserGroupLayout = () => import('@/layouts/groups/UserGroupLayout.vue')
+const SettingsGroupLayout = () => import('@/layouts/groups/SettingsGroupLayout.vue')
 
 export const baseRoutes = [
   {
@@ -29,7 +42,7 @@ export const baseRoutes = [
   {
     path: '/home',
     name: 'home',
-    component: () => import('@/layouts/MainLayout.vue'),
+    component: MainLayout,
     children: [
       {
         path: '',
@@ -48,7 +61,7 @@ export const baseRoutes = [
   {
     path: '/settings',
     name: 'settings',
-    component: () => import('@/layouts/MainLayout.vue'),
+    component: MainLayout,
     meta: {
       title: '个人资料 - OPSmind',
       requiresAuth: true
@@ -91,7 +104,6 @@ export const baseRoutes = [
   {
     path: '/migration',
     name: 'migration-dashboard',
-    // 回退到仪表盘，原 MigrationDashboard.vue 缺失
     component: () => import('@/views/Dashboard.vue'),
     meta: {
       title: '迁移管理 - OPSmind',
@@ -99,194 +111,104 @@ export const baseRoutes = [
       requiresPermission: 'admin'
     }
   },
-  // sudo模块 - 使用子路由方式
+
+  // ========== 自动化管理分组 (jao, gfs, cmd) ==========
+  // 使用动态路由参数，让同一分组内的模块共享 AutomationGroupLayout
   {
-    path: '/sudo',
-    name: 'sudo',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/sudo/permission',
-    meta: {
-      title: 'sudo权限管理',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'sudo'
-    },
+    path: '/:moduleCode(jao|gfs|cmd)',
+    component: MainLayout,
+    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'automation' },
     children: [
       {
         path: '',
-        name: 'sudo-index',
-        component: () => import('@/modules/sudo/views/SudoManagementModule.vue'),
-        redirect: '/sudo/permission',
+        component: AutomationGroupLayout,
         children: [
+          // jao 模块路由
           {
-            path: 'permission',
-            name: 'sudo-permission',
-            component: () => import('@/modules/sudo/components/SudoPermissionList.vue'),
-            meta: { title: 'sudo列表' }
+            path: '', redirect: to => {
+              const defaults = { jao: '/jao/jobs', gfs: '/gfs/scriptLibrary', cmd: '/cmd/list' }
+              return defaults[to.params.moduleCode] || '/jao/jobs'
+            }
           },
+          { path: 'jobs', name: 'jao-jobs', component: () => import('@/modules/automation/components/job/JobListView/JobListView.vue'), meta: { title: '作业列表', moduleCode: 'jao' } },
+          { path: 'schedule', name: 'jao-schedule', component: () => import('@/modules/automation/components/job/schedule/JobScheduleView.vue'), meta: { title: '流程编排', moduleCode: 'jao' } },
+          { path: 'requests', name: 'jao-requests', component: () => import('@/modules/automation/components/job/JobMyRequestsView.vue'), meta: { title: '我的申请', moduleCode: 'jao' } },
+          { path: 'approvals', name: 'jao-approvals', component: () => import('@/modules/automation/components/job/JobApprovalsView.vue'), meta: { title: '作业审批', moduleCode: 'jao' } },
+          { path: 'runLogs', name: 'jao-runLogs', component: () => import('@/modules/automation/components/job/JobRunLogsView.vue'), meta: { title: '运行记录', moduleCode: 'jao' } },
+          { path: 'statistics', name: 'jao-statistics', component: () => import('@/modules/automation/components/job/JobStatisticsView.vue'), meta: { title: '数据统计', moduleCode: 'jao' } },
+          { path: 'taskScheduler', name: 'jao-taskScheduler', component: () => import('@/modules/automation/components/job/JobTaskSchedulerView.vue'), meta: { title: '定时任务', moduleCode: 'jao' } },
+          // gfs 模块路由
+          { path: 'scriptLibrary', name: 'gfs-scriptLibrary', component: () => import('@/modules/automation/components/script/ScriptFileList.vue'), props: { repoType: 'git' }, meta: { title: '脚本库', moduleCode: 'gfs' } },
+          { path: 'fileLibrary', name: 'gfs-fileLibrary', component: () => import('@/modules/automation/components/script/ScriptFileList.vue'), props: { repoType: 'staticfs' }, meta: { title: '文件库', moduleCode: 'gfs' } },
+          { path: 'scriptReview', name: 'gfs-scriptReview', component: () => import('@/modules/automation/components/script/ScriptFileList.vue'), props: { repoType: 'stage' }, meta: { title: '脚本审核', moduleCode: 'gfs' } },
+          // cmd 模块路由 - 需要通过 CommandCenterModule 包裹以支持执行命令对话框
           {
-            path: 'apply',
-            name: 'sudo-apply',
-            component: () => import('@/modules/sudo/components/SudoApplyList.vue'),
-            meta: { title: '权限申请' }
+            path: 'list',
+            name: 'cmd-list',
+            component: () => import('@/modules/automation/views/CommandCenterModule.vue'),
+            meta: { title: '命令列表', moduleCode: 'cmd' },
+            children: [
+              { path: '', component: () => import('@/modules/automation/components/command/CommandList.vue') }
+            ]
           },
+          { path: 'job', name: 'cmd-job', component: () => import('@/modules/automation/components/command/CommandJobList.vue'), meta: { title: '命令作业', moduleCode: 'cmd' } },
+          { path: 'review', name: 'cmd-review', component: () => import('@/modules/automation/components/command/CommandApproveList.vue'), meta: { title: '命令审核', moduleCode: 'cmd' } },
+          { path: 'logs', name: 'cmd-logs', component: () => import('@/modules/automation/components/command/CommandLogs.vue'), meta: { title: '执行日志', moduleCode: 'cmd' } },
+          { path: 'console', name: 'cmd-console', component: () => import('@/modules/automation/components/command/CommandConsole.vue'), meta: { title: '控制台', moduleCode: 'cmd' } }
+        ]
+      }
+    ]
+  },
+
+  // ========== 补丁漏洞分组 (patches, software) ==========
+  {
+    path: '/:moduleCode(patches|software)',
+    component: MainLayout,
+    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'patch-testing' },
+    children: [
+      {
+        path: '',
+        component: PatchGroupLayout,
+        children: [
+          // 动态重定向
           {
-            path: 'reset',
-            name: 'sudo-reset',
-            component: () => import('@/modules/sudo/components/SudoResetPassword.vue'),
-            meta: { title: '重置密码' }
+            path: '', redirect: to => {
+              const defaults = { patches: '/patches/machineScan', software: '/software/packages' }
+              return defaults[to.params.moduleCode] || '/patches/machineScan'
+            }
           },
-          {
-            path: 'settings',
-            name: 'sudo-settings',
-            component: () => import('@/modules/sudo/components/SudoSettings.vue'),
-            meta: { title: '功能设置' }
-          },
-          {
-            path: 'log',
-            name: 'sudo-log',
-            component: () => import('@/modules/sudo/components/SudoOperationLog.vue'),
-            meta: { title: '操作日志' }
-          }
+          // patches 模块路由
+          { path: 'machineScan', name: 'patches-machineScan', component: () => import('@/modules/patches/components/LinuxPatchScan.vue'), meta: { title: '机器扫描', moduleCode: 'patches' } },
+          { path: 'patchInstall', name: 'patches-patchInstall', component: () => import('@/modules/patches/components/LinuxPatchInstall.vue'), meta: { title: '补丁安装', moduleCode: 'patches' } },
+          { path: 'changeRollback', name: 'patches-changeRollback', component: () => import('@/modules/patches/components/LinuxPatchRollback.vue'), meta: { title: '变更回滚', moduleCode: 'patches' } },
+          { path: 'linuxYumManage', name: 'patches-linuxYumManage', component: () => import('@/modules/patches/components/LinuxYumManage.vue'), meta: { title: 'Linux YUM管理', moduleCode: 'patches' } },
+          { path: 'patchLibrary', name: 'patches-patchLibrary', component: () => import('@/modules/patches/components/LinuxPatchLibrary.vue'), meta: { title: '补丁仓库', moduleCode: 'patches' } },
+          { path: 'vulnerability', name: 'patches-vulnerability', component: () => import('@/modules/patches/components/LinuxVulnerability.vue'), meta: { title: '漏洞概览', moduleCode: 'patches' } },
+          { path: 'windowsVulnerability', name: 'patches-windowsVulnerability', component: () => import('@/modules/patches/components/WindowsVulnerability.vue'), meta: { title: 'Windows漏洞', moduleCode: 'patches' } },
+          { path: 'windowsUpdate', name: 'patches-windowsUpdate', component: () => import('@/modules/patches/components/WindowsUpdate.vue'), meta: { title: 'Windows更新', moduleCode: 'patches' } },
+          { path: 'windowsRollback', name: 'patches-windowsRollback', component: () => import('@/modules/patches/components/WindowsRollback.vue'), meta: { title: 'Windows回滚', moduleCode: 'patches' } },
+          { path: 'windowsView', name: 'patches-windowsView', component: () => import('@/modules/patches/components/WindowsView.vue'), meta: { title: 'Windows View', moduleCode: 'patches' } },
+          { path: 'logs', name: 'patches-logs', component: () => import('@/modules/patches/components/OperationLogs.vue'), meta: { title: '操作日志', moduleCode: 'patches' } },
+          // software 模块路由
+          { path: 'packages', name: 'software-packages', component: () => import('@/modules/software/views/SoftwareHome.vue'), meta: { title: '软件概览', moduleCode: 'software' } },
+          { path: 'repos', name: 'software-repos', component: () => import('@/modules/software/views/RepoManagement.vue'), meta: { title: '仓库管理', moduleCode: 'software' } },
+          { path: 'localInstall', name: 'software-localInstall', component: () => import('@/modules/software/views/LocalInstall.vue'), meta: { title: '本地安装', moduleCode: 'software' } },
+          { path: 'yumManage', name: 'software-yumManage', component: () => import('@/modules/patches/components/LinuxYumManage.vue'), meta: { title: '软件源管理', moduleCode: 'software' } },
+          { path: 'logs', name: 'software-logs', component: () => import('@/modules/software/views/LogReport.vue'), meta: { title: '操作日志', moduleCode: 'software' } }
         ]
       }
     ]
   },
-  // jao模块 - 自动化作业编排
-  {
-    path: '/jao',
-    name: 'jao',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/jao/jobs',
-    meta: {
-      title: '自动化作业编排',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'jao'
-    },
-    children: [
-      {
-        path: '',
-        name: 'jao-index',
-        component: () => import('@/modules/automation/views/JobOrchestrationModule.vue'),
-        redirect: '/jao/jobs',
-        children: [
-          { path: 'jobs', name: 'jao-jobs', component: () => import('@/modules/automation/components/job/JobListView/JobListView.vue'), meta: { title: '作业列表' } },
-          { path: 'schedule', name: 'jao-schedule', component: () => import('@/modules/automation/components/job/schedule/JobScheduleView.vue'), meta: { title: '流程编排' } },
-          { path: 'requests', name: 'jao-requests', component: () => import('@/modules/automation/components/job/JobMyRequestsView.vue'), meta: { title: '我的申请' } },
-          { path: 'approvals', name: 'jao-approvals', component: () => import('@/modules/automation/components/job/JobApprovalsView.vue'), meta: { title: '作业审批' } },
-          { path: 'runLogs', name: 'jao-runLogs', component: () => import('@/modules/automation/components/job/JobRunLogsView.vue'), meta: { title: '运行记录' } },
-          { path: 'statistics', name: 'jao-statistics', component: () => import('@/modules/automation/components/job/JobStatisticsView.vue'), meta: { title: '数据统计' } },
-          { path: 'taskScheduler', name: 'jao-taskScheduler', component: () => import('@/modules/automation/components/job/JobTaskSchedulerView.vue'), meta: { title: '定时任务' } }
-        ]
-      }
-    ]
-  },
-  // cmd模块 - 命令管理
-  {
-    path: '/cmd',
-    name: 'cmd',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/cmd/list',
-    meta: {
-      title: '命令管理',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'cmd'
-    },
-    children: [
-      {
-        path: '',
-        name: 'cmd-index',
-        component: () => import('@/modules/automation/views/CommandCenterModule.vue'),
-        redirect: '/cmd/list',
-        children: [
-          { path: 'list', name: 'cmd-list', component: () => import('@/modules/automation/components/command/CommandList.vue'), meta: { title: '命令列表' } },
-          { path: 'job', name: 'cmd-job', component: () => import('@/modules/automation/components/command/CommandJobList.vue'), meta: { title: '命令作业' } },
-          { path: 'review', name: 'cmd-review', component: () => import('@/modules/automation/components/command/CommandApproveList.vue'), meta: { title: '命令审核' } },
-          { path: 'logs', name: 'cmd-logs', component: () => import('@/modules/automation/components/command/CommandLogs.vue'), meta: { title: '执行日志' } },
-          { path: 'console', name: 'cmd-console', component: () => import('@/modules/automation/components/command/CommandConsole.vue'), meta: { title: '控制台' } }
-        ]
-      }
-    ]
-  },
-  // gfs模块 - 文件服务
-  {
-    path: '/gfs',
-    name: 'gfs',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/gfs/scriptLibrary',
-    meta: {
-      title: '文件服务',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'gfs'
-    },
-    children: [
-      {
-        path: '',
-        name: 'gfs-index',
-        component: () => import('@/modules/automation/views/ScriptLibraryModule.vue'),
-        redirect: '/gfs/scriptLibrary',
-        children: [
-          { path: 'scriptLibrary', name: 'gfs-scriptLibrary', component: () => import('@/modules/automation/components/script/ScriptFileList.vue'), props: { repoType: 'git' }, meta: { title: '脚本库' } },
-          { path: 'fileLibrary', name: 'gfs-fileLibrary', component: () => import('@/modules/automation/components/script/ScriptFileList.vue'), props: { repoType: 'staticfs' }, meta: { title: '文件库' } },
-          { path: 'scriptReview', name: 'gfs-scriptReview', component: () => import('@/modules/automation/components/script/ScriptFileList.vue'), props: { repoType: 'stage' }, meta: { title: '脚本审核' } }
-        ]
-      }
-    ]
-  },
-  // patches模块 - 补丁管理
-  {
-    path: '/patches',
-    name: 'patches',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/patches/machineScan',
-    meta: {
-      title: '补丁管理',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'patches'
-    },
-    children: [
-      {
-        path: '',
-        name: 'patches-index',
-        component: () => import('@/modules/patches/views/PatchManagementModule.vue'),
-        redirect: '/patches/machineScan',
-        children: [
-          { path: 'machineScan', name: 'patches-machineScan', component: () => import('@/modules/patches/components/LinuxPatchScan.vue'), meta: { title: '机器扫描' } },
-          { path: 'patchInstall', name: 'patches-patchInstall', component: () => import('@/modules/patches/components/LinuxPatchInstall.vue'), meta: { title: '补丁安装' } },
-          { path: 'changeRollback', name: 'patches-changeRollback', component: () => import('@/modules/patches/components/LinuxPatchRollback.vue'), meta: { title: '变更回滚' } },
-          { path: 'linuxYumManage', name: 'patches-linuxYumManage', component: () => import('@/modules/patches/components/LinuxYumManage.vue'), meta: { title: 'Linux YUM管理' } },
-          { path: 'patchLibrary', name: 'patches-patchLibrary', component: () => import('@/modules/patches/components/LinuxPatchLibrary.vue'), meta: { title: '补丁仓库' } },
-          { path: 'vulnerability', name: 'patches-vulnerability', component: () => import('@/modules/patches/components/LinuxVulnerability.vue'), meta: { title: '漏洞概览' } },
-          { path: 'windowsVulnerability', name: 'patches-windowsVulnerability', component: () => import('@/modules/patches/components/WindowsVulnerability.vue'), meta: { title: 'Windows漏洞' } },
-          { path: 'windowsUpdate', name: 'patches-windowsUpdate', component: () => import('@/modules/patches/components/WindowsUpdate.vue'), meta: { title: 'Windows更新' } },
-          { path: 'windowsRollback', name: 'patches-windowsRollback', component: () => import('@/modules/patches/components/WindowsRollback.vue'), meta: { title: 'Windows回滚' } },
-          { path: 'windowsView', name: 'patches-windowsView', component: () => import('@/modules/patches/components/WindowsView.vue'), meta: { title: 'Windows View' } },
-          { path: 'logs', name: 'patches-logs', component: () => import('@/modules/patches/components/OperationLogs.vue'), meta: { title: '操作日志' } }
-        ]
-      }
-    ]
-  },
-  // cac模块 - 系统巡检
+
+  // ========== 系统巡检分组 (cac) - 单模块分组 ==========
   {
     path: '/cac',
-    name: 'cac',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/cac/overview',
-    meta: {
-      title: '系统巡检',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'cac'
-    },
+    component: MainLayout,
+    meta: { requiresAuth: true, moduleType: 'vue-native', moduleCode: 'cac', groupCode: 'system-inspection' },
     children: [
       {
         path: '',
-        name: 'cac-index',
-        component: () => import('@/modules/inspection/views/InspectionIndex.vue'),
+        component: InspectionGroupLayout,
         redirect: '/cac/overview',
         children: [
           { path: 'overview', name: 'cac-overview', component: () => import('@/modules/inspection/views/InspectionOverview.vue'), meta: { title: '巡检总览' } },
@@ -300,23 +222,16 @@ export const baseRoutes = [
       }
     ]
   },
-  // acm模块 - 资产管理
+
+  // ========== 资产管理分组 (acm) - 单模块分组 ==========
   {
     path: '/acm',
-    name: 'acm',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/acm/overview',
-    meta: {
-      title: '资产管理',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'acm'
-    },
+    component: MainLayout,
+    meta: { requiresAuth: true, moduleType: 'vue-native', moduleCode: 'acm', groupCode: 'asset-management' },
     children: [
       {
         path: '',
-        name: 'acm-index',
-        component: () => import('@/modules/asset/views/AssetIndex.vue'),
+        component: AssetGroupLayout,
         redirect: '/acm/overview',
         children: [
           { path: 'overview', name: 'acm-overview', component: () => import('@/modules/asset/views/AssetOverview.vue'), meta: { title: '资产总览' } },
@@ -331,23 +246,73 @@ export const baseRoutes = [
       }
     ]
   },
-  // ssc模块 - 系统设置
+
+  // ========== 用户管理分组 (users, flow, sudo, password) ==========
   {
-    path: '/ssc',
-    name: 'ssc',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/ssc/user',
-    meta: {
-      title: '系统设置',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'ssc'
-    },
+    path: '/:moduleCode(users|flow|sudo|password)',
+    component: MainLayout,
+    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'user-management' },
     children: [
       {
         path: '',
-        name: 'ssc-index',
-        component: () => import('@/modules/settings/views/SystemSettingsModule.vue'),
+        component: UserGroupLayout,
+        children: [
+          // 动态重定向
+          {
+            path: '', redirect: to => {
+              const defaults = { users: '/users/overview', flow: '/flow/list', sudo: '/sudo/permission', password: '/password/application' }
+              return defaults[to.params.moduleCode] || '/users/overview'
+            }
+          },
+          // users 模块路由
+          { path: 'overview', name: 'users-overview', component: () => import('@/modules/user/components/overview/OverviewView.vue'), meta: { title: '用户总览', moduleCode: 'users' } },
+          { path: 'users', name: 'users-list', component: () => import('@/modules/user/components/users/UsersView.vue'), meta: { title: '用户列表', moduleCode: 'users' } },
+          { path: 'groups', name: 'users-groups', component: () => import('@/modules/user/components/groups/UserGroupsView.vue'), meta: { title: '用户组', moduleCode: 'users' } },
+          { path: 'logs', name: 'users-logs', component: () => import('@/modules/user/components/operation/OperationLogsView.vue'), meta: { title: '操作日志', moduleCode: 'users' } },
+          { path: 'config', name: 'users-config', component: () => import('@/modules/user/components/config/FeatureConfigView.vue'), meta: { title: '功能配置', moduleCode: 'users' } },
+          // flow 模块路由 - 需要通过 FlowManagementModule 包裹以支持设计器/执行器等全屏视图
+          {
+            path: 'list',
+            name: 'flow-list',
+            component: () => import('@/modules/flow/views/FlowManagementModule.vue'),
+            meta: { title: '流程定义', moduleCode: 'flow' },
+            children: [
+              { path: '', component: () => import('@/modules/flow/components/FlowListView.vue') }
+            ]
+          },
+          { path: 'execution', name: 'flow-execution', component: () => import('@/modules/flow/components/ExecutionListView.vue'), meta: { title: '执行记录', moduleCode: 'flow' } },
+          // sudo 模块路由
+          { path: 'permission', name: 'sudo-permission', component: () => import('@/modules/sudo/components/SudoPermissionList.vue'), meta: { title: 'sudo列表', moduleCode: 'sudo' } },
+          { path: 'apply', name: 'sudo-apply', component: () => import('@/modules/sudo/components/SudoApplyList.vue'), meta: { title: '权限申请', moduleCode: 'sudo' } },
+          { path: 'reset', name: 'sudo-reset', component: () => import('@/modules/sudo/components/SudoResetPassword.vue'), meta: { title: '重置密码', moduleCode: 'sudo' } },
+          { path: 'settings', name: 'sudo-settings', component: () => import('@/modules/sudo/components/SudoSettings.vue'), meta: { title: '功能设置', moduleCode: 'sudo' } },
+          { path: 'log', name: 'sudo-log', component: () => import('@/modules/sudo/components/SudoOperationLog.vue'), meta: { title: '操作日志', moduleCode: 'sudo' } },
+          // password 模块路由 - 需要通过 PasswordManagementModule 包裹以支持管理员面板
+          {
+            path: 'application',
+            name: 'password-application',
+            component: () => import('@/modules/password/views/PasswordManagementModule.vue'),
+            meta: { title: '申请审批', moduleCode: 'password' },
+            children: [
+              { path: '', component: () => import('@/modules/password/components/ApplicationApprovalList.vue') }
+            ]
+          },
+          { path: 'settings', name: 'password-settings', component: () => import('@/modules/password/components/PasswordSettings.vue'), meta: { title: '参数配置', moduleCode: 'password' } },
+          { path: 'logs', name: 'password-logs', component: () => import('@/modules/password/components/PasswordOperationLog.vue'), meta: { title: '操作日志', moduleCode: 'password' } }
+        ]
+      }
+    ]
+  },
+
+  // ========== 系统设置（独立分组） ==========
+  {
+    path: '/ssc',
+    component: MainLayout,
+    meta: { requiresAuth: true, moduleType: 'vue-native', moduleCode: 'ssc', showModuleToolbar: true },
+    children: [
+      {
+        path: '',
+        component: SettingsGroupLayout,
         redirect: '/ssc/user',
         children: [
           { path: 'user', name: 'ssc-user', component: () => import('@/modules/settings/components/UserManagement.vue'), meta: { title: '用户管理' } },
@@ -364,85 +329,7 @@ export const baseRoutes = [
       }
     ]
   },
-  // users模块 - 用户管理
-  {
-    path: '/users',
-    name: 'users',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/users/overview',
-    meta: {
-      title: '用户管理',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'users'
-    },
-    children: [
-      {
-        path: '',
-        name: 'users-index',
-        component: () => import('@/modules/user/views/UserManagementModule.vue'),
-        redirect: '/users/overview',
-        children: [
-          { path: 'overview', name: 'users-overview', component: () => import('@/modules/user/components/overview/OverviewView.vue'), meta: { title: '用户总览' } },
-          { path: 'users', name: 'users-list', component: () => import('@/modules/user/components/users/UsersView.vue'), meta: { title: '用户列表' } },
-          { path: 'groups', name: 'users-groups', component: () => import('@/modules/user/components/groups/UserGroupsView.vue'), meta: { title: '用户组' } },
-          { path: 'logs', name: 'users-logs', component: () => import('@/modules/user/components/operation/OperationLogsView.vue'), meta: { title: '操作日志' } },
-          { path: 'config', name: 'users-config', component: () => import('@/modules/user/components/config/FeatureConfigView.vue'), meta: { title: '功能配置' } }
-        ]
-      }
-    ]
-  },
-  // flow模块 - 流程管理
-  {
-    path: '/flow',
-    name: 'flow',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/flow/list',
-    meta: {
-      title: '流程管理',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'flow'
-    },
-    children: [
-      {
-        path: '',
-        name: 'flow-index',
-        component: () => import('@/modules/flow/views/FlowManagementModule.vue'),
-        redirect: '/flow/list',
-        children: [
-          { path: 'list', name: 'flow-list', component: () => import('@/modules/flow/components/FlowListView.vue'), meta: { title: '流程定义' } },
-          { path: 'execution', name: 'flow-execution', component: () => import('@/modules/flow/components/ExecutionListView.vue'), meta: { title: '执行记录' } }
-        ]
-      }
-    ]
-  },
-  // password模块 - 密码管理
-  {
-    path: '/password',
-    name: 'password',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/password/application',
-    meta: {
-      title: '密码管理',
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'password'
-    },
-    children: [
-      {
-        path: '',
-        name: 'password-index',
-        component: () => import('@/modules/password/views/PasswordManagementModule.vue'),
-        redirect: '/password/application',
-        children: [
-          { path: 'application', name: 'password-application', component: () => import('@/modules/password/components/ApplicationApprovalList.vue'), meta: { title: '申请审批' } },
-          { path: 'settings', name: 'password-settings', component: () => import('@/modules/password/components/PasswordSettings.vue'), meta: { title: '参数配置' } },
-          { path: 'logs', name: 'password-logs', component: () => import('@/modules/password/components/PasswordOperationLog.vue'), meta: { title: '操作日志' } }
-        ]
-      }
-    ]
-  },
+
   // 通配符路由 - 必须放在最后
   {
     path: '/:pathMatch(.*)*',

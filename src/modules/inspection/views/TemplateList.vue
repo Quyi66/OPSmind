@@ -90,7 +90,7 @@
         </el-table-column>
 
         <!-- 执行人 -->
-        <el-table-column prop="executedBy" label="执行人" width="120" sortable show-overflow-tooltip />
+        <el-table-column prop="executedBy" label="执行人" min-width="120" show-overflow-tooltip />
 
         <!-- 操作 -->
         <el-table-column label="操作" width="132" align="left" fixed="right">

@@ -174,7 +174,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="44" align="left" fixed="right">
+          <el-table-column label="操作" width="60" align="left" fixed="right">
             <template #default="{ row }">
               <el-button text type="primary" size="small" @click="showCheckItemDetail(row)">
                 详情

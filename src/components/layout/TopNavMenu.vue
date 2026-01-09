@@ -46,25 +46,24 @@
           </el-tooltip>
 
           <!-- Notification Button -->
-          <div class="notification-wrapper">
+          <!-- <div class="notification-wrapper">
             <el-tooltip content="通知" placement="bottom">
               <button @click="handleNotificationClick" class="notification-btn" aria-label="通知">
                 <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
                 </svg>
-                <!-- Notification Badge -->
                 <span v-if="notificationCount > 0" class="notification-badge">
                   {{ notificationCount > 99 ? '99+' : notificationCount }}
                 </span>
               </button>
             </el-tooltip>
-          </div>
+          </div> -->
 
           <!-- User Dropdown -->
           <el-dropdown @command="handleUserCommand" class="user-dropdown">
             <div class="user-dropdown-trigger">
-              <el-avatar :size="24" class="user-avatar" :src="avatarImage"></el-avatar>
+              <el-avatar :size="24" class="user-avatar" :src="displayAvatarUrl"></el-avatar>
               <span class="user-name">{{ displayUserName }}</span>
               <svg class="dropdown-arrow" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd"
@@ -80,12 +79,12 @@
                   </el-icon>
                   个人资料
                 </el-dropdown-item>
-                <el-dropdown-item command="admin">
+                <!-- <el-dropdown-item command="admin">
                   <el-icon>
                     <Setting />
                   </el-icon>
                   管理后台
-                </el-dropdown-item>
+                </el-dropdown-item> -->
                 <el-dropdown-item divided command="logout">
                   <el-icon>
                     <SwitchButton />
@@ -131,7 +130,7 @@
           </el-dropdown>
 
           <!-- Language Dropdown: 三个选项，全部置灰禁用 -->
-          <el-dropdown trigger="hover" class="language-dropdown">
+          <!-- <el-dropdown trigger="hover" class="language-dropdown">
             <button class="menu-action-btn" aria-label="语言">
               <el-icon>
                 <svg
@@ -164,7 +163,7 @@
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
-          </el-dropdown>
+          </el-dropdown> -->
         </div>
       </div>
 
@@ -255,11 +254,19 @@ const activeGroup = computed(() => menuStore.activeGroup)
 const isSettingsActive = computed(() => menuStore.activeMenuItem === 'ssc')
 
 const accountFullName = ref('')
+const userAvatarUrl = ref('')
+
 const displayUserName = computed(() => {
   if (accountFullName.value) return accountFullName.value
   const u = props.user || authService.getCurrentUser() || null
   if (!u) return '未登录'
   return u.fullName || u.firstName || u.name || u.login || '用户'
+})
+
+// 计算头像URL：优先使用用户上传的头像，否则使用默认头像
+const displayAvatarUrl = computed(() => {
+  if (!userAvatarUrl.value) return avatarImage
+  return '/oplus-upload' + userAvatarUrl.value
 })
 
 // 通知相关状态 - 默认无未读
@@ -272,11 +279,15 @@ const showMobileMenu = ref(false)
 const currentLanguage = ref('zh-cn')
 
 
-// 加载账号信息（优先缓存，再请求；用于显示 fullName）
+// 加载账号信息（优先缓存，再请求；用于显示 fullName 和头像）
 onMounted(async () => {
   try {
     const acc = (accountService.getCached()) || (await accountService.getAccount().catch(() => null))
-    if (acc && (acc.fullName || acc.login)) accountFullName.value = acc.fullName || ''
+    if (acc) {
+      if (acc.fullName || acc.login) accountFullName.value = acc.fullName || ''
+      // 设置用户头像（如果有）
+      if (acc.imageUrl) userAvatarUrl.value = acc.imageUrl
+    }
   } catch (e) {
     // 忽略错误，保持旧回退逻辑
   }
@@ -297,6 +308,15 @@ const handleHomeClick = () => {
   router.push('/home')
 }
 
+// 分组对应的默认路由
+const GROUP_DEFAULT_ROUTES = {
+  'automation': '/jao/jobs',
+  'patch-testing': '/patches/machineScan',
+  'system-inspection': '/cac/overview',
+  'asset-management': '/acm/overview',
+  'user-management': '/users/overview'
+}
+
 // 处理分组菜单点击
 const handleGroupClick = group => {
   //console.log('🚀 Group clicked:', group.name, 'with code:', group.code)
@@ -305,8 +325,14 @@ const handleGroupClick = group => {
   if (activeGroup.value === group.code) {
     menuStore.toggleSideMenu()
   } else {
-    // 否则激活新的分组
+    // 激活新的分组并导航到默认页面
     menuStore.setActiveGroup(group.code)
+
+    // 导航到分组的默认页面
+    const defaultRoute = GROUP_DEFAULT_ROUTES[group.code]
+    if (defaultRoute) {
+      router.push(defaultRoute)
+    }
   }
 }
 
@@ -823,10 +849,6 @@ onUnmounted(() => {
   border-radius: 0.25rem;
   flex-shrink: 0;
   object-fit: contain;
-
-  &.nav-icon-home {
-    // 首页图标特殊样式可以在这里添加
-  }
 }
 
 .nav-text {
@@ -1089,10 +1111,6 @@ onUnmounted(() => {
   border-radius: 0.25rem;
   flex-shrink: 0;
   object-fit: contain;
-
-  &.mobile-nav-icon-home {
-    // 首页图标特殊样式可以在这里添加
-  }
 }
 
 .mobile-nav-text {

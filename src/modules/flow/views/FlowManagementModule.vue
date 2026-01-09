@@ -1,9 +1,5 @@
 <template>
-  <ModulePageLayout
-    :title="moduleTitle"
-    :description="moduleDescription"
-    :hide-header="true"
-  >
+  <div class="ops-module__content">
     <!-- 设计器视图（全屏） -->
     <div v-if="isDesignMode" class="design-container">
       <FlowDesignView
@@ -33,37 +29,15 @@
     </div>
 
     <!-- 常规视图 -->
-    <div v-else class="ops-module ops-module--with-sidebar">
-      <ModuleSideMenu
-        :menu-groups="menuGroups"
-        :default-openeds="defaultOpeneds"
-      />
-
-      <section class="ops-module__content">
-        <router-view />
-      </section>
-    </div>
-  </ModulePageLayout>
+    <router-view v-else />
+  </div>
 </template>
 
 <script setup>
-import { ref, provide, computed } from 'vue'
-import ModulePageLayout from '@/modules/shared/components/ModulePageLayout.vue'
-import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
+import { ref, provide } from 'vue'
 import FlowDesignView from '@/modules/flow/components/FlowDesignView.vue'
 import FlowExecView from '@/modules/flow/components/FlowExecView.vue'
 import FlowHistoryView from '@/modules/flow/components/FlowHistoryView.vue'
-import { MENU_CONFIG } from '@/config/menu.config.js'
-import { getGroupMenuConfig } from '@/config/module-nav.config.js'
-
-const moduleTitle = '流程管理'
-const moduleDescription = ''
-
-// 获取"用户管理"分组下的所有模块菜单（用户、流程、sudo权限、密码）
-const menuGroups = computed(() => getGroupMenuConfig('user-management', MENU_CONFIG))
-
-// 默认展开流程菜单
-const defaultOpeneds = ['flow']
 
 // 设计器模式
 const isDesignMode = ref(false)
@@ -160,6 +134,12 @@ provide('handleHistory', handleHistory)
 </script>
 
 <style scoped lang="scss">
+.ops-module__content {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
 // 特定于流程模块的全屏视图容器
 .design-container,
 .exec-container,
