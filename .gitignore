@@ -15,7 +15,6 @@ dist
 dist-ssr
 *.local
 oplus-web
-oplus-modules
 
 # Editor directories and files
 .vscode/*

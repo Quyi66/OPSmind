@@ -85,6 +85,11 @@ export default defineConfig(({ command, mode }): UserConfig => {
           target: backendTarget,
           changeOrigin: true,
           secure: false
+        },
+        '/mac': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false
         }
       }
     },
@@ -154,8 +159,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
 
     esbuild: isProduction
       ? {
-          drop: env.VITE_DEBUG ? ['debugger'] : ['console', 'debugger']
-        }
+        drop: env.VITE_DEBUG ? ['debugger'] : ['console', 'debugger']
+      }
       : undefined,
 
     define: {

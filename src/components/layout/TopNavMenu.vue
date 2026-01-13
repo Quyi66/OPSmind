@@ -46,19 +46,24 @@
           </el-tooltip>
 
           <!-- Notification Button -->
-          <!-- <div class="notification-wrapper">
-            <el-tooltip content="通知" placement="bottom">
-              <button @click="handleNotificationClick" class="notification-btn" aria-label="通知">
-                <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-                </svg>
-                <span v-if="notificationCount > 0" class="notification-badge">
-                  {{ notificationCount > 99 ? '99+' : notificationCount }}
-                </span>
-              </button>
-            </el-tooltip>
-          </div> -->
+          <NotificationPopover
+            v-model:visible="notificationPopoverVisible"
+            @count-change="handleNotificationCountChange"
+          >
+            <div class="notification-wrapper">
+              <el-tooltip content="通知" placement="bottom" :disabled="notificationPopoverVisible">
+                <button class="notification-btn" aria-label="通知">
+                  <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                  </svg>
+                  <span v-if="notificationCount > 0" class="notification-badge">
+                    {{ notificationCount > 99 ? '99+' : notificationCount }}
+                  </span>
+                </button>
+              </el-tooltip>
+            </div>
+          </NotificationPopover>
 
           <!-- User Dropdown -->
           <el-dropdown @command="handleUserCommand" class="user-dropdown">
@@ -220,6 +225,7 @@ import { accountService } from '@/core/account'
 import { useMenuStore } from '@/stores/menu.js'
 import { useDashboardStore } from '@/stores/dashboard'
 import { User, Setting, SwitchButton, InfoFilled, Check, QuestionFilled } from '@element-plus/icons-vue'
+import NotificationPopover from '@/components/layout/NotificationPopover.vue'
 
 // 导入菜单图标
 import iconHome from '@/assets/icons/menu/icon-home@2x.png'
@@ -269,8 +275,14 @@ const displayAvatarUrl = computed(() => {
   return '/oplus-upload' + userAvatarUrl.value
 })
 
-// 通知相关状态 - 默认无未读
+// 通知相关状态
 const notificationCount = ref(0)
+const notificationPopoverVisible = ref(false)
+
+// 处理通知数量变化
+const handleNotificationCountChange = (count) => {
+  notificationCount.value = count
+}
 
 // 移动菜单状态
 const showMobileMenu = ref(false)
@@ -348,12 +360,10 @@ const getMenuIcon = groupCode => {
   return iconMap[groupCode] || iconHome
 }
 
-// 处理通知点击
-const handleNotificationClick = () => {
-  //console.log('🔔 Notification clicked')
-  ElMessage.info('通知功能开发中...')
-  // 这里可以打开通知面板或跳转到通知页面
-}
+// 处理通知点击 - 现由 NotificationPopover 组件处理
+// const handleNotificationClick = () => {
+//   notificationPopoverVisible.value = !notificationPopoverVisible.value
+// }
 
 // 切换移动菜单
 const toggleMobileMenu = () => {
