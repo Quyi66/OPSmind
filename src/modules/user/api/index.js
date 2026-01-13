@@ -31,8 +31,8 @@ export function getAuditLogStats(diffDay = 15) {
  * API: JAO_LIST_OPERATION_LOG
  * @param {Object} params 查询参数
  */
-export function getOperationLogs(params = {}) {
-  return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, { params })
+export function getOperationLogs(params = {}, filter) {
+  return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, { params, filter })
 }
 
 /**

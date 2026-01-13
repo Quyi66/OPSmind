@@ -65,28 +65,27 @@
       ref="tableRef"
       :data="tableData"
       v-loading="loading"
-      border
       height="350"
       style="width: 100%"
       row-key="id"
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" reserve-selection />
-      <el-table-column prop="IP" label="IP地址" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="hostname" label="主机名" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="os_distro" label="系统版本" min-width="120" show-overflow-tooltip />
-      <el-table-column prop="os_version" label="系统内核" min-width="120" show-overflow-tooltip />
-      <el-table-column label="连通状态" width="100" align="left">
+      <el-table-column prop="IP" label="IP地址" min-width="120" show-overflow-tooltip />
+      <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
+      <el-table-column prop="os_distro" label="操作系统" min-width="120" show-overflow-tooltip />
+      <el-table-column prop="os_version" label="系统版本" width="120" show-overflow-tooltip />
+      <el-table-column label="连通状态" width="120" align="left">
         <template #default="{ row }">
           <el-tag
-            :type="row.CONN_LATEST_STATUS === 'OK' ? 'success' : row.CONN_LATEST_STATUS === 'FAIL' ? 'danger' : 'info'"
+            :type="[1, '1'].includes(row.CONN_LATEST_STATUS) ? 'success' : [0, '0'].includes(row.CONN_LATEST_STATUS) ? 'danger' : 'info'"
             size="small"
           >
-            {{ row.CONN_LATEST_STATUS || '-' }}
+            {{ [1, '1'].includes(row.CONN_LATEST_STATUS) ? '在线' : [0, '0'].includes(row.CONN_LATEST_STATUS) ? '离线' : '未知' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="CONN_RATE" label="连通率" width="80" align="left">
+      <el-table-column prop="CONN_RATE" label="连通率" width="100" align="left">
         <template #default="{ row }">
           {{ row.CONN_RATE ? `${row.CONN_RATE}%` : '-' }}
         </template>
