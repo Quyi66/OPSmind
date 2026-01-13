@@ -19,7 +19,6 @@ class PerformanceMonitor {
     this.setupObservers()
     this.startMetricsCollection()
 
-    //console.log('📊 Performance monitoring enabled')
   }
 
   /**
@@ -32,7 +31,6 @@ class PerformanceMonitor {
     this.observers.forEach(observer => observer.disconnect())
     this.observers = []
 
-    //console.log('📊 Performance monitoring disabled')
   }
 
   /**
@@ -91,7 +89,6 @@ class PerformanceMonitor {
     }
 
     this.metrics.set('navigation', metrics)
-    //console.log('📊 Navigation metrics:', metrics)
   }
 
   /**
@@ -198,7 +195,6 @@ class PerformanceMonitor {
 
     if (lastHideTime) {
       const hideDuration = showTime - lastHideTime
-      //console.log('📊 Page was hidden for:', hideDuration + 'ms')
     }
   }
 
@@ -209,7 +205,6 @@ class PerformanceMonitor {
     const unloadTime = Date.now()
     const sessionDuration = unloadTime - (this.metrics.get('sessionStart') || unloadTime)
 
-    //console.log('📊 Session duration:', sessionDuration + 'ms')
   }
 
   /**
@@ -252,7 +247,6 @@ class PerformanceMonitor {
    */
   clearMetrics() {
     this.metrics.clear()
-    //console.log('📊 Performance metrics cleared')
   }
 }
 
@@ -270,7 +264,6 @@ export function setupPerformanceMonitor(app) {
     // 添加全局方法
     window.__PERFORMANCE_MONITOR__ = performanceMonitor
 
-    //console.log('📊 Performance monitor setup completed')
   }
 }
 

@@ -507,7 +507,6 @@ const loadGroupTree = async () => {
   if (!currentType.value) return
   try {
     const res = await assetApi.getGroupList(currentType.value)
-    console.log('分组列表原始数据:', res)
     // 接口返回的是路径字符串数组，如 ["/", "/21", "/dev"]
     const paths = Array.isArray(res) ? res : []
     groupTreeData.value = buildGroupTreeFromPaths(paths)
@@ -522,7 +521,6 @@ const loadTagList = async () => {
   if (!currentType.value) return
   try {
     const res = await assetApi.getTagList(currentType.value)
-    console.log('标签列表原始数据:', res)
     // 接口返回的是标签数组，格式如 [{name: "xxx", ...}]
     tagList.value = Array.isArray(res) ? res : []
   } catch (error) {
@@ -560,7 +558,6 @@ const handleSelectTag = (tag) => {
 const loadAssetTypes = async () => {
   try {
     const res = await assetApi.getAssetTypes()
-    console.log('资产类型列表:', res)
     if (res.records && res.records.length > 0) {
       assetTypes.value = res.records
       // 检查 URL 参数中是否有指定的资产类型
@@ -583,7 +580,6 @@ const loadOsVersionOptions = async () => {
   if (!currentType.value) return
   try {
     const res = await assetApi.getAttrValues(currentType.value, 'os_version')
-    console.log('系统版本选项:', res)
     osVersionOptions.value = res.records || []
   } catch (error) {
     console.error('加载系统版本选项失败:', error)
@@ -604,13 +600,11 @@ const loadAssetList = async () => {
       system_name: ' ',
       os_version: filters.value.osVersion.length > 0 ? filters.value.osVersion.join(',') : ' '
     }
-    console.log('请求参数:', params)
     const res = await assetApi.getAssetList(params, {
       size: pageSize.value,
       page: currentPage.value,
       filter: searchText.value
     })
-    console.log('资产列表响应:', res)
     tableData.value = res.records || []
     total.value = res.total || 0
   } catch (error) {

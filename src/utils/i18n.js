@@ -53,7 +53,6 @@ async function loadTranslations() {
 
     translationsCache = translations
     isLoaded = true
-    console.log('[i18n] Translations loaded, total keys:', Object.keys(translations).length)
     return translations
   })()
 

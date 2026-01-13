@@ -90,7 +90,6 @@ async function fetchGroups() {
   try {
     const response = await jaoApi.queryAcmGroups(props.ciType)
     const data = response?.data || response
-    console.log('分组API返回:', data)
 
     // API 返回的是平铺的路径列表，如 ["/21", "/测试机器", "/测试机器/test1111"]
     if (Array.isArray(data)) {
@@ -100,7 +99,6 @@ async function fetchGroups() {
     } else {
       treeData.value = []
     }
-    console.log('处理后的分组数据:', treeData.value)
     
     // 数据加载完成后同步选中状态
     await nextTick()

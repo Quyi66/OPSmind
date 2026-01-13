@@ -85,7 +85,6 @@ async function fetchTags() {
   try {
     const response = await jaoApi.queryAcmTags(props.ciType)
     const data = response?.data || response
-    console.log('标签数据:', data)
     tags.value = Array.isArray(data) ? data.map(tag => ({
       name: tag.name || tag.tagName || tag,
       hostCount: tag.hostCount || tag.count || 0

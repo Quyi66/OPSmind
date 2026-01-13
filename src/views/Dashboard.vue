@@ -74,14 +74,11 @@ const route = useRoute()
 
 // 函数定义必须在 watch 之前，因为 watch 使用 immediate: true
 const loadDashboardData = async () => {
-  //console.log('🔄 Starting to load dashboard data...')
   try {
     await dashboardStore.loadDashboardData()
-    //console.log('✅ Dashboard data loaded in component')
 
     // 启动模块预加载（延迟执行，避免影响主要加载）
     setTimeout(() => {
-      //console.log('🚀 Starting module preloading...')
       ModulePreloadManager.preloadCommonModules()
     }, 2000) // 2秒后开始预加载
 
@@ -102,14 +99,12 @@ const handleRefresh = async () => {
 watch(
   () => route.path,
   async newPath => {
-    //console.log('🧭 Route changed to:', newPath)
 
     // 返回首页时，确保加载仪表盘数据（修复偶现返回首页后全是0的问题）
     if (newPath === '/home' || route.name === 'home') {
       // 避免重复请求：仅在未加载或需要刷新时触发
       const shouldLoad = !dashboardStore.loading && (!dashboardStore.dashboardFullData || dashboardStore.needsRefresh)
       if (shouldLoad) {
-        //console.log('🏠 Home route detected, loading dashboard data...')
         await loadDashboardData()
       }
     }
@@ -122,7 +117,6 @@ onMounted(async () => {
   if (route.name === 'home' || route.path === '/home') {
     await loadDashboardData()
   } else {
-    //console.log('⏭️ Skip dashboard data load (not on /home):', route.path)
   }
 })
 </script>

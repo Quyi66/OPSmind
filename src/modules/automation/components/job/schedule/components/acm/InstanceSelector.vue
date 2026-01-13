@@ -173,11 +173,8 @@ async function fetchGroupList() {
   }
   groupLoading.value = true
   try {
-    console.log('正在获取分组列表, ciType:', props.ciType)
     const response = await jaoApi.queryAcmGroups(props.ciType)
-    console.log('分组 API 响应:', response)
     const data = response?.data || response || []
-    console.log('分组数据:', data)
     // 将分组路径转换为可用的选项
     if (Array.isArray(data)) {
       groupList.value = data.map(path => {
@@ -190,7 +187,6 @@ async function fetchGroupList() {
       groupList.value = []
       groupTreeData.value = []
     }
-    console.log('处理后的分组树:', groupTreeData.value)
   } catch (error) {
     console.error('Failed to fetch group list:', error)
     groupList.value = []
@@ -253,11 +249,8 @@ async function fetchTagList() {
   }
   tagLoading.value = true
   try {
-    console.log('正在获取标签列表, ciType:', props.ciType)
     const response = await jaoApi.queryAcmTags(props.ciType)
-    console.log('标签 API 响应:', response)
     const data = response?.data || response || []
-    console.log('标签数据:', data)
     if (Array.isArray(data)) {
       tagList.value = data.map(tag => ({
         name: tag.name || tag.tagName || tag,
@@ -365,7 +358,6 @@ function handleSelectionChange(selection) {
     return
   }
 
-  console.log('InstanceSelector: selection changed', selection)
 
   // 将选中的行转换为标准格式
   const selectedHosts = selection.map(row => ({
@@ -382,7 +374,6 @@ function handleSelectionChange(selection) {
 
   const mergedSelection = [...otherPageSelections, ...selectedHosts]
 
-  console.log('InstanceSelector: emitting update:modelValue', mergedSelection)
 
   isInternalUpdate = true
   emit('update:modelValue', mergedSelection)

@@ -133,7 +133,6 @@ function formatDate(timestamp) {
 // 点击软件包名称
 function handlePackageClick(row) {
   // TODO: 跳转到软件包详情或安装页面
-  console.log('Package clicked:', row)
 }
 
 // 搜索

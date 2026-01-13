@@ -65,7 +65,6 @@ class ApiService {
         }
 
         // 记录请求
-        //console.log(`📡 API Request: ${config.method?.toUpperCase()} ${config.url}`)
 
         return config
       },
@@ -78,7 +77,6 @@ class ApiService {
     // 响应拦截器
     this.client.interceptors.response.use(
       (response) => {
-        //console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`)
         return response
       },
       async (error) => {
@@ -91,7 +89,6 @@ class ApiService {
 
         // 处理认证错误
         if (response?.status === 401) {
-          //console.log('🔒 Authentication expired, logging out')
           await authService.logout()
           window.location.href = '/login'
           return Promise.reject(new Error('Authentication expired'))
@@ -99,7 +96,6 @@ class ApiService {
 
         // 处理权限错误
         if (response?.status === 403) {
-          //console.log('🚫 Access denied')
           return Promise.reject(new Error('Access denied'))
         }
 
@@ -136,7 +132,6 @@ class ApiService {
     config.__retryCount = (config.__retryCount || 0) + 1
 
     const delay = API_CONFIG.retryDelay * config.__retryCount
-    //console.log(`🔄 Retrying request (${config.__retryCount}/${API_CONFIG.retryAttempts}) after ${delay}ms`)
 
     await new Promise(resolve => setTimeout(resolve, delay))
     return this.client(config)
@@ -262,7 +257,6 @@ class ApiService {
    */
   async getSystemStats() {
     // 直接返回模拟数据，避免404错误
-    //console.log('📊 Using mock system stats data')
     return this.getMockStats()
   }
 

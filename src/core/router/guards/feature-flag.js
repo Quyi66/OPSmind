@@ -15,7 +15,6 @@ export function setupFeatureFlagGuard(router) {
       const isEnabled = evaluator.isEnabled(to.meta.featureFlag)
 
       if (!isEnabled) {
-        //console.log(`🚩 Feature disabled: ${to.meta.featureFlag}`)
         // 重定向到首页或显示功能不可用页面
         next('/home')
         return
@@ -34,7 +33,6 @@ export function setupFeatureFlagGuard(router) {
 
       if (shouldUseVue && to.meta.vueComponent) {
         // 重定向到 Vue 版本
-        //console.log(`🔄 Redirecting to Vue version: ${to.meta.moduleCode}.${to.meta.feature}`)
         // 这里可以动态修改组件或重定向到 Vue 路由
       }
     }

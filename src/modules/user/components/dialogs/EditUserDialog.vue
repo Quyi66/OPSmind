@@ -308,7 +308,6 @@ async function handleSubmit() {
     })
 
     const result = Array.isArray(data) ? data[0] : data
-    console.log('操作结果:', result)
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
       // 使用 composable 开始轮询

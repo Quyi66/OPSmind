@@ -419,7 +419,6 @@ const currentAttrIndex = ref(-1)
 
 // 加载模型详情
 const loadModelDetail = async () => {
-  console.log('loadModelDetail called, modelData:', props.modelData, 'modelId:', modelId.value)
 
   if (!modelId.value) {
     // 新增模式
@@ -440,11 +439,9 @@ const loadModelDetail = async () => {
   loading.value = true
   try {
     const url = `/acm/api/acm/cit/vo/citid/${modelId.value}?cacheBuster=${Date.now()}`
-    console.log('Fetching model detail from:', url)
     const response = await apiService.get(url)
     // API 返回的数据在 response.data 中
     const res = response.data || response
-    console.log('Model detail data:', res)
     originalData.value = res
 
     // 填充表单数据
@@ -458,7 +455,6 @@ const loadModelDetail = async () => {
         _id: `attr_${index}` // 用于表格 row-key
       }))
     }
-    console.log('Form data filled:', formData.value)
 
     // 解析视图配置
     parseViews(res.views || [])

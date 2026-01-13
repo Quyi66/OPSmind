@@ -12,7 +12,6 @@ export function setupPermissionGuard(router: Router): void {
       const hasPermission = authService.hasPermission(to.meta.requiresPermission as string)
 
       if (!hasPermission) {
-        //console.log(`🚫 Permission denied: ${to.meta.requiresPermission}`)
         next('/error/403')
         return
       }

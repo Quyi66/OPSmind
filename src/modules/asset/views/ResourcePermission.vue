@@ -178,8 +178,6 @@ async function loadData() {
     teamNames.value = Array.from(teams)
     total.value = tableData.value.length
 
-    console.log('资源权限数据:', tableData.value)
-    console.log('团队列表:', teamNames.value)
   } catch (error) {
     console.error('加载权限数据失败:', error)
     ElMessage.error('加载权限数据失败')

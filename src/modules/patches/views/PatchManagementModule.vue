@@ -65,12 +65,10 @@ function handleInstallSuccess() {
 
 // 处理导航事件
 function handleNavigate(nav) {
-  console.log('Navigate to:', nav)
 }
 
 // 日志输出当前检测到的平台
 onMounted(() => {
-  console.log('[PatchManagementModule] 检测到的操作系统:', currentPlatform.value)
 })
 
 // 提供给子组件使用

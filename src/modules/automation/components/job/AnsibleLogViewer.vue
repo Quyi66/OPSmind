@@ -188,7 +188,6 @@ function connectWebsocket() {
     websocket = new WebSocket(url)
 
     websocket.onopen = () => {
-      console.log('WebSocket connected:', url)
       wsStatus.value = 'connected'
     }
 
@@ -233,7 +232,6 @@ function connectWebsocket() {
     }
 
     websocket.onclose = () => {
-      console.log('WebSocket closed')
       wsStatus.value = 'closed'
       websocket = null
     }

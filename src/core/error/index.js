@@ -198,7 +198,6 @@ class ErrorHandler {
     // 只上报严重错误
     if (errorInfo.level === ERROR_LEVELS.CRITICAL) {
       // 这里可以集成错误监控服务
-      //console.log('📊 Reporting critical error:', errorInfo.id)
     }
   }
 
@@ -284,7 +283,6 @@ export function setupErrorHandler(app) {
     })
   })
 
-  //console.log('🛡️ Global error handler setup completed')
 }
 
 // 导出 Composition API

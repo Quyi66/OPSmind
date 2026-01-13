@@ -303,7 +303,7 @@
       width="700px"
       destroy-on-close
     >
-      <el-form :model="ansibleForm" label-width="240px">
+      <el-form :model="ansibleForm" label-width="240px" v-loading="ansibleFormLoading">
         <el-form-item label="执行引擎节点(instance group)" v-if="scriptEngine !== 'aap'">
           <el-select v-model="ansibleForm.instanceGroup" placeholder="请选择" style="width: 100%" clearable>
             <el-option label="none" value=" " />
@@ -435,6 +435,7 @@ const automationForm = ref({})
 const automationFormLoading = ref(false)
 const automationSaving = ref(false)
 const ansibleForm = ref({})
+const ansibleFormLoading = ref(false)
 
 // 计算属性 - 直接使用后端返回的数据（后端已筛选）
 const filteredAutomationData = computed(() => {
@@ -497,7 +498,6 @@ async function loadAutomationData() {
     })
     automationData.value = response?.records || []
     automationTotal.value = response?.total || 0
-    console.log('自动化配置数据:', automationData.value)
   } catch (error) {
     console.error('加载自动化配置失败:', error)
     ElMessage.error('加载自动化配置失败')
@@ -514,7 +514,6 @@ async function loadAnsibleData() {
     ansibleData.value = response?.records || []
     ansibleConfigOptions.value = response?.records || []
     ansibleTotal.value = ansibleData.value.length
-    console.log('Ansible配置数据:', ansibleData.value)
   } catch (error) {
     console.error('加载Ansible配置失败:', error)
     ElMessage.error('加载Ansible配置失败')
@@ -693,9 +692,7 @@ async function saveAutomationConfig() {
 
 // 新增Ansible配置
 async function handleAddAnsibleConfig() {
-  // 先加载表单选项
-  await loadAnsibleFormOptions()
-
+  // 先初始化表单并打开弹窗
   ansibleForm.value = {
     id: '',
     name: '',
@@ -709,13 +706,19 @@ async function handleAddAnsibleConfig() {
     param: ''
   }
   editAnsibleDialogVisible.value = true
+  ansibleFormLoading.value = true
+
+  try {
+    // 异步加载表单选项
+    await loadAnsibleFormOptions()
+  } finally {
+    ansibleFormLoading.value = false
+  }
 }
 
 // 编辑Ansible配置
 async function handleEditAnsible(row) {
-  // 先加载表单选项
-  await loadAnsibleFormOptions()
-
+  // 先初始化表单并打开弹窗
   ansibleForm.value = {
     id: row.id,
     name: row.name,
@@ -729,6 +732,14 @@ async function handleEditAnsible(row) {
     param: row.param
   }
   editAnsibleDialogVisible.value = true
+  ansibleFormLoading.value = true
+
+  try {
+    // 异步加载表单选项
+    await loadAnsibleFormOptions()
+  } finally {
+    ansibleFormLoading.value = false
+  }
 }
 
 // 删除Ansible配置

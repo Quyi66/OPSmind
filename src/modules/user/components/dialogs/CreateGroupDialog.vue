@@ -125,7 +125,6 @@ async function handleSubmit() {
     })
 
     const result = Array.isArray(data) ? data[0] : data
-    console.log('创建用户组作业启动结果:', result)
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
       // 使用 composable 开始轮询

@@ -251,7 +251,6 @@ async function loadData() {
     ataNodes.value = Array.from(nodes)
 
     total.value = data.length
-    console.log('操作记录数据:', data)
   } catch (error) {
     console.error('加载操作记录失败:', error)
     ElMessage.error('加载操作记录失败')

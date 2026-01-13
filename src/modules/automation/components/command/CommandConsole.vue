@@ -358,12 +358,10 @@ function openLogViewer(runId) {
 
   // 连接 WebSocket
   const wsUrl = getWebsocketUrl(runId)
-  console.log('Connecting to WebSocket:', wsUrl)
 
   websocket = new WebSocket(wsUrl)
 
   websocket.onopen = () => {
-    console.log('WebSocket connected')
   }
 
   websocket.onmessage = (event) => {
@@ -385,7 +383,6 @@ function openLogViewer(runId) {
   }
 
   websocket.onclose = () => {
-    console.log('WebSocket closed')
     logStatus.value = 'COMPLETED'
   }
 

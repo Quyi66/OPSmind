@@ -307,7 +307,6 @@ onMounted(async () => {
 
 // 处理首页菜单点击
 const handleHomeClick = () => {
-  //console.log('🏠 Home clicked')
 
   // 设置首页为激活状态
   menuStore.setHomeActive()
@@ -331,7 +330,6 @@ const GROUP_DEFAULT_ROUTES = {
 
 // 处理分组菜单点击
 const handleGroupClick = group => {
-  //console.log('🚀 Group clicked:', group.name, 'with code:', group.code)
 
   // 如果点击的是当前激活的分组，则切换显示/隐藏左侧菜单
   if (activeGroup.value === group.code) {
@@ -368,7 +366,6 @@ const getMenuIcon = groupCode => {
 // 切换移动菜单
 const toggleMobileMenu = () => {
   showMobileMenu.value = !showMobileMenu.value
-  //console.log('📱 Mobile menu toggled:', showMobileMenu.value)
 }
 
 const handleUserCommand = command => {
@@ -413,7 +410,6 @@ const handleLogout = async () => {
 
 const handleClearHighlight = () => {
   menuStore.clearActiveMenu()
-  //console.log('🧭 Menu highlight cleared')
 }
 
 // 处理设置按钮点击
@@ -638,7 +634,6 @@ const versionRows = ref([])
 const aboutActiveTab = ref('versions')
 
 const handleAboutCommand = async (command) => {
-  //console.log('ℹ️ About command:', command)
   switch (command) {
     case 'help':
       // 当前不提供帮助入口，提示开发中
@@ -707,7 +702,6 @@ const handleLanguageCommand = (_language) => {
 watch(
   () => route.path,
   newPath => {
-    //console.log('🧭 Route changed to:', newPath)
     menuStore.setMenuFromRoute(newPath)
   },
   { immediate: true }
@@ -716,7 +710,6 @@ watch(
 // 生命周期
 onMounted(() => {
   window.addEventListener('clearMenuHighlight', handleClearHighlight)
-  //console.log('🧭 TopNavMenu mounted')
   // 预热 AI OPS 资源，提升首次打开速度
   try {
     if ('requestIdleCallback' in window) {
@@ -730,7 +723,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('clearMenuHighlight', handleClearHighlight)
-  //console.log('🧭 TopNavMenu unmounted')
 })
 </script>
 

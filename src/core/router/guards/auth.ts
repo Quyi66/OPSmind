@@ -15,7 +15,6 @@ export function setupAuthGuard(router: Router): void {
     const isAuthenticated = authService.isAuthenticated()
     const currentUser = authService.getCurrentUser()
 
-    //console.log('🛡️ Auth Guard:', {
     //   from: from.path,
     //   to: to.path,
     //   isAuthenticated,
@@ -27,14 +26,12 @@ export function setupAuthGuard(router: Router): void {
 
     // 需要认证但未登录
     if (to.meta?.requiresAuth && !isAuthenticated) {
-      //console.log('🔒 Redirecting to login - authentication required')
       next('/login')
       return
     }
 
     // 已登录用户访问登录页
     if (to.meta?.requiresGuest && isAuthenticated) {
-      //console.log('✅ Already authenticated, redirecting to home')
       next('/home')
       return
     }

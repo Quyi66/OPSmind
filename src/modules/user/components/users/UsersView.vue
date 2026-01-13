@@ -353,11 +353,9 @@ function handleEditUser(row) {
 }
 
 function handleUserDetail(row) {
-  console.log('用户详情:', row)
 }
 
 function handleCrontabDetail(row) {
-  console.log('定时任务详情:', row)
 }
 
 function handleLoginErrorDetail(row) {

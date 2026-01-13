@@ -350,7 +350,6 @@ async function handleSubmit() {
         break
     }
 
-    console.log(`执行作业 ${jobId}:`, jobParams)
 
     // 模拟执行
     await new Promise(resolve => setTimeout(resolve, 1000))

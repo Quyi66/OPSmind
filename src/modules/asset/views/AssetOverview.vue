@@ -142,7 +142,6 @@ async function loadGroupAsset() {
  * 处理资产类型点击
  */
 function handleAssetTypeClick(params) {
-  console.log('Asset type clicked:', params)
   ElMessage.info(`跳转到资产类型: ${params.code}`)
 }
 
@@ -150,7 +149,6 @@ function handleAssetTypeClick(params) {
  * 处理操作系统点击
  */
 function handleOsClick(params) {
-  console.log('OS clicked:', params)
   ElMessage.info(`查看操作系统: ${params.os_distro}`)
 }
 
@@ -158,7 +156,6 @@ function handleOsClick(params) {
  * 处理分组点击
  */
 function handleGroupClick(params) {
-  console.log('Group clicked:', params)
   ElMessage.info(`跳转到分组: ${params.groupName}`)
 }
 

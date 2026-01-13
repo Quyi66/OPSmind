@@ -17,12 +17,10 @@ export function useModuleNavigation() {
       // 清理模块代码
       const cleanModuleCode = moduleCode.replace(/^__/, '')
 
-      //console.log(`🧭 Navigating to module: ${cleanModuleCode}`)
 
       // 检查当前路由，避免重复导航
       const currentPath = router.currentRoute.value.path
       if (currentPath === `/${cleanModuleCode}` || currentPath === `/module/${cleanModuleCode}`) {
-        //console.log('⚠️ Already on target route, skipping navigation')
         return true
       }
 
@@ -32,10 +30,8 @@ export function useModuleNavigation() {
         await router.push({
           name: `${cleanModuleCode}-main`
         })
-        //console.log(`✅ Successfully navigated to module using specific route: ${cleanModuleCode}-main`)
         return true
       } catch (specificRouteError) {
-        //console.log(`⚠️ Specific route ${cleanModuleCode}-main not found, trying generic route`)
 
         // 如果具体路由不存在，尝试使用通用模块路由
         try {
@@ -43,14 +39,11 @@ export function useModuleNavigation() {
             name: 'module',
             params: { moduleCode: cleanModuleCode }
           })
-          //console.log(`✅ Successfully navigated to module using generic route: ${cleanModuleCode}`)
           return true
         } catch (genericRouteError) {
-          //console.log(`⚠️ Generic route also failed, trying direct path navigation`)
 
           // 最后尝试直接路径导航
           await router.push(`/${cleanModuleCode}`)
-          //console.log(`✅ Successfully navigated to module using direct path: /${cleanModuleCode}`)
           return true
         }
       }

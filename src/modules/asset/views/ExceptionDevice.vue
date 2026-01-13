@@ -239,7 +239,6 @@ const loadKpiData = async () => {
   kpiLoading.value = true
   try {
     const res = await dtsApi.queryData('ACM_CONNECTION_COUNT', {})
-    console.log('KPI数据:', res)
     kpiData.value = res.records || []
   } catch (error) {
     console.error('加载KPI数据失败:', error)
@@ -252,7 +251,6 @@ const loadKpiData = async () => {
 const loadResourceTypes = async () => {
   try {
     const res = await dtsApi.queryData('ACM_GET_RESOURCE_TYPE', null)
-    console.log('资源类型:', res)
     resourceTypes.value = res.records || []
   } catch (error) {
     console.error('加载资源类型失败:', error)
@@ -272,7 +270,6 @@ const loadTableData = async () => {
       page: currentPage.value,
       filter: searchKeyword.value
     })
-    console.log('表格数据:', res)
     tableData.value = res.records || []
     total.value = res.total || 0
   } catch (error) {
@@ -399,7 +396,6 @@ const confirmCheckConnectivity = async () => {
     })
 
     const result = Array.isArray(data) ? data[0] : data
-    console.log('检查连通性启动结果:', result)
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
       // 开始轮询
@@ -439,7 +435,6 @@ async function pollCheckResult(runId, loadingInstance) {
     try {
       const cacheBuster = Date.now()
       const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
-      console.log(`轮询结果 (第${attempts}次):`, result)
 
       if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
         // 更新加载提示
@@ -569,7 +564,6 @@ const confirmCollectInfo = async () => {
     })
 
     const result = Array.isArray(data) ? data[0] : data
-    console.log('采集信息启动结果:', result)
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
       // 开始轮询
@@ -609,7 +603,6 @@ async function pollCollectResult(runId, loadingInstance) {
     try {
       const cacheBuster = Date.now()
       const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
-      console.log(`采集轮询结果 (第${attempts}次):`, result)
 
       if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
         // 更新加载提示

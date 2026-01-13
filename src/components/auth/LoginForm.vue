@@ -206,7 +206,6 @@ const handleLogin = async () => {
     loading.value = true
     authError.value = false
 
-    //console.log('🔐 Attempting login:', loginForm.username)
 
     const result = await authService.login({
       username: loginForm.username,
@@ -215,7 +214,6 @@ const handleLogin = async () => {
       rememberMe: loginForm.rememberMe
     })
 
-    //console.log('✅ Login successful:', result)
     if (result.success !== true) {
       ElMessage.error("用户名或密码错误")
       return
@@ -228,7 +226,6 @@ const handleLogin = async () => {
     // 验证认证状态
     const isAuthenticated = authService.isAuthenticated()
     const currentUser = authService.getCurrentUser()
-    //console.log('🔍 Auth status before navigation:', {
     //   isAuthenticated,
     //   hasUser: !!currentUser,
     //   userLogin: currentUser?.login
@@ -252,12 +249,10 @@ const handleLogin = async () => {
     // 登录成功后获取并缓存账户信息（优先 fullName 展示）
     try {
       await accountService.getAccount({ forceRefresh: true })
-      //console.log('✅ Account info fetched and cached after login')
     } catch (e) {
       console.warn('⚠️ Failed to fetch account info after login:', e)
     }
 
-    //console.log('🔄 Navigating to home...')
     await router.push('/home')
   } catch (error) {
     console.error('❌ Login failed:', error)
@@ -280,12 +275,10 @@ const handleLogin = async () => {
 // 通知所有iframe模块认证状态更新
 const notifyIframeModulesAuthUpdate = async () => {
   try {
-    //console.log('🚀 [Login] Starting iframe modules auth update notification...')
 
     // 使用单iframe管理器发送认证更新
     try {
       const { singleIframeManager } = await import('@/utils/single-iframe-manager')
-      //console.log('🔗 [Login] Using SingleIframeManager for auth broadcast')
       singleIframeManager.sendAuthData()
     } catch (error) {
       console.warn('⚠️ [Login] Failed to load iframe manager:', error)
@@ -293,14 +286,12 @@ const notifyIframeModulesAuthUpdate = async () => {
 
     // 认证数据已通过URL参数传递给iframe，无需postMessage
     const iframes = document.querySelectorAll('iframe')
-    //console.log(`🔗 [Login] Found ${iframes.length} iframes - auth data passed via URL`)
 
     if (iframes.length > 0) {
       const token = authService.getToken()
       const user = authService.getCurrentUser()
 
       if (token && user) {
-        //console.log('✅ [Login] Auth data available and passed via URL to iframes:', {
         //   hasToken: !!token,
         //   userLogin: user.login,
         //   tenantId: user.tenantId,
@@ -314,7 +305,6 @@ const notifyIframeModulesAuthUpdate = async () => {
       }
     }
 
-    //console.log('✅ [Login] Auth update notification completed successfully')
   } catch (error) {
     console.error('❌ [Login] Failed to notify iframe modules:', error)
   }
@@ -323,7 +313,6 @@ const notifyIframeModulesAuthUpdate = async () => {
 const initializeLoginPage = async () => {
   try {
     initializing.value = true
-    //console.log('🔄 Initializing login page...')
 
     const result = await authService.initializeLogin()
 
@@ -331,7 +320,6 @@ const initializeLoginPage = async () => {
     licenseInfo.value = result.license
     showOTP.value = result.otpEnabled || false
 
-    //console.log('✅ Login page initialized successfully')
   } catch (error) {
     console.error('❌ Failed to initialize login page:', error)
     // 即使初始化失败，也允许用户尝试登录

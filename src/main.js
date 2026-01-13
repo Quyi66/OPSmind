@@ -166,11 +166,7 @@ app.mount('#app')
 
 // 开发环境下的调试信息
 if (import.meta.env.DEV) {
-  //console.log('🚀 OPSmind Vue Dashboard started in development mode')
-  //console.log('📍 Base URL:', import.meta.env.BASE_URL)
-  //console.log('🔧 Environment:', import.meta.env.MODE)
 }
 
 // Vue Dashboard 作为主应用运行
-//console.log('🎯 Vue Dashboard initialized as main application')
 

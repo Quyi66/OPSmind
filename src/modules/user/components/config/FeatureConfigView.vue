@@ -465,11 +465,9 @@ function handleResetTemplateFilter() {
 
 // 计划任务操作
 function handleEditTask(task) {
-  console.log('编辑计划任务:', task)
 }
 
 function handleDeleteTask(task) {
-  console.log('删除计划任务:', task)
 }
 
 // sudo模板操作

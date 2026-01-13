@@ -126,13 +126,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
       dashboardFullData.value = fullData
       lastUpdated.value = Date.now()
 
-      //console.log('✅ Dashboard data loaded successfully')
     } catch (err) {
       console.error('❌ Failed to load dashboard data:', err)
 
       // 如果是认证错误，触发重新认证
       if (err instanceof Error && err.message === 'AUTHENTICATION_REQUIRED') {
-        //console.log('🔒 Authentication required, redirecting to login')
         // 清除可能存在的无效认证信息
         try {
           await authService.logout()
@@ -156,7 +154,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const openModule = async (moduleCode: string): Promise<void> => {
     // 这个方法现在只是一个占位符
     // 实际的导航逻辑在 Dashboard 组件中处理
-    //console.log('🚀 openModule called for:', moduleCode)
   }
 
   // 获取模块标题的辅助函数
@@ -215,7 +212,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
         if (typeof maybe === 'string') url = maybe
       }
       aiOpsUrl.value = url
-      //console.log('🔗 AI OPS URL param (store):', aiOpsUrl.value)
       return aiOpsUrl.value
     } catch (e) {
       console.warn('⚠️ Failed to fetch AI OPS URL param (store):', e)

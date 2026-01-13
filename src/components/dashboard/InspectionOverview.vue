@@ -102,7 +102,6 @@ const inspectionStats = computed(() => {
 
 // 处理统计卡片点击事件
 const handleStatClick = statId => {
-  //console.log('Clicked stat:', statId)
   // 这里可以添加具体的点击处理逻辑
 }
 

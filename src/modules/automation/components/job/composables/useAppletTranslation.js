@@ -49,7 +49,6 @@ export function useAppletTranslation() {
     try {
       const response = await jaoApi.fetchApplets()
       const applets = response.data || response || []
-      console.log('应用资源列表:', applets)
 
       // 处理翻译 key，移除 #{} 包裹并提取实际文本
       appletsList.value = applets.map(app => ({
@@ -62,7 +61,6 @@ export function useAppletTranslation() {
         return map
       }, {})
 
-      console.log('应用资源映射:', appletMap.value)
     } catch (error) {
       console.warn('获取应用列表失败:', error)
     }

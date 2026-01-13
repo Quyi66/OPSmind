@@ -136,7 +136,6 @@ async function fetchData() {
     })
 
     const data = response?.data || response
-    console.log('最近作业 API 响应:', data)
     // API 返回的是作业记录列表
     tableData.value = Array.isArray(data) ? data : (data?.records || [])
 

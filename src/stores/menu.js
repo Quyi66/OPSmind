@@ -120,14 +120,12 @@ export const useMenuStore = defineStore('menu', () => {
   }
 
   const clearActiveMenu = () => {
-    //console.log('🧹 Clearing active menu')
     activeGroup.value = ''
     activeMenuItem.value = ''
     showSideMenu.value = false
   }
 
   const setHomeActive = () => {
-    //console.log('🏠 Setting home active')
     activeGroup.value = 'home'
     activeMenuItem.value = ''
     showSideMenu.value = false
@@ -135,12 +133,10 @@ export const useMenuStore = defineStore('menu', () => {
 
   const toggleSideMenu = () => {
     showSideMenu.value = !showSideMenu.value
-    //console.log('📱 Side menu visibility toggled:', showSideMenu.value)
   }
 
   const setSideMenuCollapsed = collapsed => {
     sideMenuCollapsed.value = collapsed
-    //console.log('📱 Side menu collapsed state changed:', collapsed)
   }
 
   // 根据当前路由自动设置菜单状态

@@ -1331,7 +1331,6 @@ async function pollTestResult() {
 function viewTestResult() {
   if (testRunId.value) {
     // TODO: 可以打开执行结果详情对话框
-    console.log('查看执行结果:', testRunId.value)
   }
 }
 

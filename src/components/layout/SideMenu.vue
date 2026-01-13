@@ -44,7 +44,6 @@ const currentGroup = computed(() => {
 
 // 方法
 const handleMenuItemClick = (menuItem, event) => {
-  //console.log('🚀 Side menu item clicked:', menuItem.name, 'with code:', menuItem.code)
 
   // 创建水波纹效果
   createRippleEffect(event)
@@ -88,7 +87,6 @@ const createRippleEffect = event => {
 
 // 监听activeGroup变化
 watch(() => props.activeGroup, (newGroup) => {
-  //console.log('📱 Side menu group changed:', newGroup)
 })
 </script>
 

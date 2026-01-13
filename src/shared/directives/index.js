@@ -204,7 +204,6 @@ const copy = {
     const handler = async () => {
       try {
         await navigator.clipboard.writeText(value)
-        //console.log('📋 Text copied to clipboard')
 
         // 可以添加成功提示
         el.classList.add('copy-success')
@@ -275,5 +274,4 @@ export function setupGlobalDirectives(app) {
   app.directive('copy', copy)
   app.directive('lazy', lazy)
 
-  //console.log('📝 Global directives registered')
 }
