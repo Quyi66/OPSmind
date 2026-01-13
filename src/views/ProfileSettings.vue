@@ -32,15 +32,15 @@
               </div>
               <div class="info-row">
                 <span class="info-label"><el-icon><Phone /></el-icon> 手机号码</span>
-                <span class="info-value">{{ form.mobile || '-' }}</span>
+                <span class="info-value">{{ originalData.mobile || '-' }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label"><el-icon><Message /></el-icon> 用户邮箱</span>
-                <span class="info-value">{{ form.email || '-' }}</span>
+                <span class="info-value">{{ originalData.email || '-' }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label"><el-icon><OfficeBuilding /></el-icon> 所属部门</span>
-                <span class="info-value">{{ form.department || '-' }}</span>
+                <span class="info-value">{{ originalData.department || '-' }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label"><el-icon><Medal /></el-icon> 拥有角色</span>
@@ -209,6 +209,14 @@ const form = reactive({
   imageUrl: ''
 })
 
+// 原始数据（用于左侧信息卡片显示）
+const originalData = reactive({
+  fullName: '',
+  department: '',
+  email: '',
+  mobile: ''
+})
+
 const passwordForm = reactive({
   password: '',
   confirmPassword: ''
@@ -291,6 +299,12 @@ async function loadAccount() {
     form.mobile = data.mobile || ''
     form.langKey = data.langKey || 'zh-cn'
     form.imageUrl = data.imageUrl || ''
+
+    // 保存原始数据用于左侧卡片显示
+    originalData.fullName = data.fullName || ''
+    originalData.department = data.department || ''
+    originalData.email = data.email || ''
+    originalData.mobile = data.mobile || ''
 
     if (data.imageUrl) {
       avatarUrl.value = getUploadBaseUrl() + data.imageUrl

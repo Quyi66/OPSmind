@@ -98,8 +98,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
         '@views': fileURLToPath(new URL('./src/views', import.meta.url)),
         '@config': fileURLToPath(new URL('./src/config', import.meta.url)),
         '@assets': fileURLToPath(new URL('./src/assets', import.meta.url)),
-        '@styles': fileURLToPath(new URL('./src/styles', import.meta.url)),
-        'vue-demi': fileURLToPath(new URL('./node_modules/vue-demi/lib/index.mjs', import.meta.url))
+        '@styles': fileURLToPath(new URL('./src/styles', import.meta.url))
       }
     },
 
@@ -122,8 +121,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
             if (/codemirror|@codemirror|vue-codemirror/.test(id)) return 'vendor-codemirror'
             if (/bpmn-js|diagram-js/.test(id)) return 'vendor-bpmn'
             if (/xlsx|mammoth/.test(id)) return 'vendor-doc'
-            if (/diff2html/.test(id)) return 'vendor-diff'
-            if (/vue-router|pinia|vue-demi|@vue\//.test(id)) return 'vendor-vue'
+            if (/vue-router|pinia|@vue\//.test(id)) return 'vendor-vue'
             return 'vendor'
           },
           chunkFileNames: 'js/[name]-[hash].js',

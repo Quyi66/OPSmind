@@ -109,7 +109,7 @@
           </el-tooltip>
 
           <!-- About Dropdown: hover/click 展开，包含“帮助”和“关于” -->
-          <el-dropdown trigger="hover" @command="handleAboutCommand" class="about-dropdown">
+          <!-- <el-dropdown trigger="hover" @command="handleAboutCommand" class="about-dropdown">
             <button class="menu-action-btn" aria-label="关于">
               <el-icon>
                 <InfoFilled />
@@ -127,7 +127,7 @@
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
-          </el-dropdown>
+          </el-dropdown> -->
 
           <!-- Language Dropdown: 三个选项，全部置灰禁用 -->
           <!-- <el-dropdown trigger="hover" class="language-dropdown">

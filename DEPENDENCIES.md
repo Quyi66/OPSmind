@@ -16,13 +16,7 @@ npm install --save-dev vitest @vue/test-utils jsdom @vitest/ui happy-dom
 npm install --save-dev @vue/eslint-config-prettier prettier
 ```
 
-### 3. 构建优化工具
-
-```bash
-npm install --save-dev terser rollup-plugin-visualizer
-```
-
-### 4. TypeScript 支持（可选）
+### 3. TypeScript 支持（可选）
 
 如果需要 TypeScript 支持：
 
@@ -36,24 +30,31 @@ npm install --save-dev typescript vue-tsc @types/node
 
 ```json
 {
-  "devDependencies": {
-    "@rushstack/eslint-patch": "^1.6.1",
-    "@vitejs/plugin-vue": "^4.5.2",
-    "@vue/eslint-config-prettier": "^8.0.0",
-    "@vue/test-utils": "^2.4.0",
-    "@vitest/ui": "^1.0.0",
-    "eslint": "^8.56.0",
-    "eslint-plugin-vue": "^9.19.2",
-    "happy-dom": "^12.0.0",
-    "jsdom": "^23.0.0",
-    "prettier": "^3.1.0",
-    "rollup-plugin-visualizer": "^5.9.0",
-    "terser": "^5.24.0",
-    "typescript": "^5.3.0",
-    "vite": "^5.0.8",
-    "vitest": "^1.0.0",
-    "vue-tsc": "^1.8.0"
-  }
+   "devDependencies": {
+      "@tailwindcss/postcss": "^4.1.18",
+      "@types/crypto-js": "^4.2.2",
+      "@types/node": "^24.3.0",
+      "@vitejs/plugin-vue": "^6.0.1",
+      "@vitest/ui": "^4.0.15",
+      "@vue/eslint-config-prettier": "^10.2.0",
+      "@vue/test-utils": "^2.4.6",
+      "autoprefixer": "^10.4.21",
+      "eslint": "^9.39.1",
+      "eslint-plugin-vue": "^9.19.2",
+      "happy-dom": "^18.0.1",
+      "husky": "^9.1.7",
+      "jsdom": "^26.1.0",
+      "lint-staged": "^16.1.5",
+      "postcss": "^8.5.6",
+      "prettier": "^3.6.2",
+      "rimraf": "^6.0.1",
+      "sass-embedded": "^1.90.0",
+      "tailwindcss": "^4.1.18",
+      "typescript": "^5.9.3",
+      "vite": "^7.1.2",
+      "vitest": "^4.0.15",
+      "vue-tsc": "^3.1.8"
+   }
 }
 ```
 
@@ -62,7 +63,7 @@ npm install --save-dev typescript vue-tsc @types/node
 ### 一次性安装所有依赖
 
 ```bash
-npm install --save-dev @vue/eslint-config-prettier @vue/test-utils @vitest/ui happy-dom jsdom prettier rollup-plugin-visualizer terser typescript vue-tsc vitest
+npm install --save-dev @vue/eslint-config-prettier @vue/test-utils @vitest/ui happy-dom jsdom prettier typescript vue-tsc vitest
 ```
 
 ### 分步安装
@@ -82,12 +83,7 @@ npm install --save-dev @vue/eslint-config-prettier @vue/test-utils @vitest/ui ha
    npm install --save-dev @vue/eslint-config-prettier prettier
    ```
 
-4. **构建优化**：
-   ```bash
-   npm install --save-dev terser rollup-plugin-visualizer
-   ```
-
-5. **TypeScript 支持**（可选）：
+4. **TypeScript 支持**（可选）：
    ```bash
    npm install --save-dev typescript vue-tsc @types/node
    ```
