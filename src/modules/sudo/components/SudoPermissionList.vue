@@ -9,6 +9,7 @@
             placeholder="搜索主机、用户..."
             clearable
             style="width: 200px"
+            maxlength="50"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>

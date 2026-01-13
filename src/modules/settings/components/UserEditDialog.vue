@@ -17,10 +17,10 @@
           :disabled="isViewMode"
         >
           <el-form-item label="用户名" prop="login">
-            <el-input v-model="form.login" :disabled="!!form.id" />
+            <el-input v-model="form.login" :disabled="!!form.id" maxlength="50" />
           </el-form-item>
           <el-form-item label="姓名" prop="fullName">
-            <el-input v-model="form.fullName" />
+            <el-input v-model="form.fullName" maxlength="50" />
           </el-form-item>
 
           <!-- 修改密码 -->
@@ -34,10 +34,10 @@
 
           <template v-if="showPasswordEdit || !form.id">
             <el-form-item label="密码" prop="password">
-              <el-input v-model="form.password" type="password" show-password autocomplete="new-password" />
+              <el-input v-model="form.password" type="password" show-password autocomplete="new-password" maxlength="32" />
             </el-form-item>
             <el-form-item label="确认密码" prop="confirmPassword">
-              <el-input v-model="form.confirmPassword" type="password" show-password autocomplete="new-password" />
+              <el-input v-model="form.confirmPassword" type="password" show-password autocomplete="new-password" maxlength="32" />
             </el-form-item>
           </template>
 
@@ -45,16 +45,16 @@
           <el-collapse v-model="expandedInfo">
             <el-collapse-item title="其他信息" name="other">
               <el-form-item label="邮箱" prop="email">
-                <el-input v-model="form.email" type="email" />
+                <el-input v-model="form.email" type="email" maxlength="100" />
               </el-form-item>
               <el-form-item label="部门">
-                <el-input v-model="form.department" />
+                <el-input v-model="form.department" maxlength="100" />
               </el-form-item>
               <el-form-item label="手机">
-                <el-input v-model="form.mobile" />
+                <el-input v-model="form.mobile" maxlength="20" />
               </el-form-item>
               <el-form-item label="电话">
-                <el-input v-model="form.telephoneNumber" />
+                <el-input v-model="form.telephoneNumber" maxlength="30" />
               </el-form-item>
               <el-form-item label="状态">
                 <el-switch

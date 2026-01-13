@@ -21,9 +21,10 @@
             <div class="form-control">
               <el-input-number
                 v-model="formData.passwd_length"
-                :min="0"
+                :min="minPasswordLength"
                 :max="32"
                 :disabled="saving"
+                @change="onPasswordLengthChange"
               />
             </div>
           </div>
@@ -35,8 +36,9 @@
               <el-input-number
                 v-model="formData.lcredit"
                 :min="0"
-                :max="16"
+                :max="maxCharTypeValue"
                 :disabled="saving"
+                @change="validateCharRequirements"
               />
             </div>
           </div>
@@ -48,8 +50,9 @@
               <el-input-number
                 v-model="formData.ucredit"
                 :min="0"
-                :max="16"
+                :max="maxCharTypeValue"
                 :disabled="saving"
+                @change="validateCharRequirements"
               />
             </div>
           </div>
@@ -61,8 +64,9 @@
               <el-input-number
                 v-model="formData.dcredit"
                 :min="0"
-                :max="16"
+                :max="maxCharTypeValue"
                 :disabled="saving"
+                @change="validateCharRequirements"
               />
             </div>
           </div>
@@ -74,11 +78,22 @@
               <el-input-number
                 v-model="formData.ocredit"
                 :min="0"
-                :max="16"
+                :max="maxCharTypeValue"
                 :disabled="saving"
+                @change="validateCharRequirements"
               />
               <div class="form-hint">特殊符号：~!@#$%^&*?</div>
             </div>
+          </div>
+
+          <!-- 验证提示 -->
+          <div v-if="validationError" class="validation-error">
+            <i class="fa fa-exclamation-triangle"></i>
+            {{ validationError }}
+          </div>
+          <div v-else class="validation-info">
+            <i class="fa fa-info-circle"></i>
+            当前字符要求总和：{{ totalCharRequirements }} / {{ formData.passwd_length }}
           </div>
         </div>
 
@@ -135,14 +150,55 @@ const statusText = computed(() => {
   }
 })
 
+// 计算各字符类型要求的最大值（不能超过密码长度）
+const maxCharTypeValue = computed(() => {
+  return Math.max(0, formData.passwd_length)
+})
+
+// 计算所有字符要求的总和
+const totalCharRequirements = computed(() => {
+  return formData.lcredit + formData.ucredit + formData.dcredit + formData.ocredit
+})
+
+// 密码长度的最小值（不能小于字符要求总和）
+const minPasswordLength = computed(() => {
+  return Math.max(1, totalCharRequirements.value)
+})
+
+// 验证错误信息
+const validationError = computed(() => {
+  if (formData.passwd_length < 1) {
+    return '密码长度必须至少为1'
+  }
+  if (totalCharRequirements.value > formData.passwd_length) {
+    return `字符要求总和(${totalCharRequirements.value})不能超过密码长度(${formData.passwd_length})`
+  }
+  return ''
+})
+
 // 是否可以保存
 const canSave = computed(() => {
   return formData.ocredit >= 0 &&
          formData.dcredit >= 0 &&
          formData.ucredit >= 0 &&
          formData.lcredit >= 0 &&
-         formData.passwd_length >= 0
+         formData.passwd_length >= 1 &&
+         !validationError.value
 })
+
+// 当密码长度改变时，调整各字符要求不超过新的密码长度
+function onPasswordLengthChange(newLength) {
+  if (formData.lcredit > newLength) formData.lcredit = newLength
+  if (formData.ucredit > newLength) formData.ucredit = newLength
+  if (formData.dcredit > newLength) formData.dcredit = newLength
+  if (formData.ocredit > newLength) formData.ocredit = newLength
+}
+
+// 验证字符要求（当任意字符要求改变时）
+function validateCharRequirements() {
+  // 自动调整，确保总和不超过密码长度
+  // 这里只做提示，不自动调整
+}
 
 onMounted(() => {
   loadConfig()
@@ -322,6 +378,40 @@ async function handleSave() {
     .text-danger {
       color: #ef4444;
     }
+  }
+}
+
+.validation-error {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  i {
+    color: #ef4444;
+  }
+}
+
+.validation-info {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  color: #1d4ed8;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  i {
+    color: #3b82f6;
   }
 }
 </style>

@@ -25,6 +25,7 @@
               placeholder="搜索..."
               style="width: 200px"
               clearable
+              maxlength="50"
             >
               <template #prefix>
                 <el-icon><Search /></el-icon>
@@ -109,6 +110,7 @@
               placeholder="搜索..."
               style="width: 200px"
               clearable
+              maxlength="50"
             >
               <template #prefix>
                 <el-icon><Search /></el-icon>
@@ -183,16 +185,16 @@
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="YUM源名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入YUM源名称" />
+          <el-input v-model="formData.name" placeholder="请输入YUM源名称" maxlength="50" />
         </el-form-item>
         <el-form-item label="描述" prop="description">
-          <el-input v-model="formData.description" placeholder="请输入描述" />
+          <el-input v-model="formData.description" placeholder="请输入描述" maxlength="200" />
         </el-form-item>
         <el-form-item label="YUM源地址" prop="baseurl">
-          <el-input v-model="formData.baseurl" placeholder="请输入YUM源地址" />
+          <el-input v-model="formData.baseurl" placeholder="请输入YUM源地址" maxlength="500" />
         </el-form-item>
         <el-form-item label="YUM源文件" prop="file">
-          <el-input v-model="formData.file" placeholder="如：/etc/yum.repos.d/local.repo" />
+          <el-input v-model="formData.file" placeholder="如：/etc/yum.repos.d/local.repo" maxlength="256" />
         </el-form-item>
       </el-form>
       <template #footer>

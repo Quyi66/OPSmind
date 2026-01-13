@@ -33,16 +33,16 @@
         <!-- 修改基本信息 -->
         <template v-if="formData.operate === 'modify_base'">
           <el-form-item label="附加用户组">
-            <el-input v-model="formData.user_groups" placeholder="多个组名用逗号隔开" />
+            <el-input v-model="formData.user_groups" placeholder="多个组名用逗号隔开" maxlength="100" />
           </el-form-item>
           <el-form-item label="主目录">
-            <el-input v-model="formData.user_home" />
+            <el-input v-model="formData.user_home" maxlength="256" />
           </el-form-item>
           <el-form-item label="Shell">
-            <el-input v-model="formData.user_shell" />
+            <el-input v-model="formData.user_shell" maxlength="100" />
           </el-form-item>
           <el-form-item label="备注">
-            <el-input v-model="formData.user_comment" />
+            <el-input v-model="formData.user_comment" maxlength="200" />
           </el-form-item>
           <el-form-item label="过期时间">
             <el-date-picker
@@ -95,6 +95,7 @@
               show-password
               placeholder="请输入新密码"
               autocomplete="new-password"
+              maxlength="32"
             />
           </el-form-item>
         </template>

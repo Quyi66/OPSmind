@@ -54,6 +54,7 @@
               placeholder="搜索"
               clearable
               style="width: 180px"
+              maxlength="50"
             />
           </el-form-item>
           <el-form-item>
@@ -277,16 +278,16 @@
           </el-select>
         </el-form-item>
         <el-form-item label="登录用户">
-          <el-input v-model="automationForm.loginUser" />
+          <el-input v-model="automationForm.loginUser" maxlength="32" />
         </el-form-item>
         <el-form-item label="登录密码">
-          <el-input v-model="automationForm.loginPasswd" type="password" show-password autocomplete="new-password" />
+          <el-input v-model="automationForm.loginPasswd" type="password" show-password autocomplete="new-password" maxlength="32" />
         </el-form-item>
         <el-form-item label="执行用户">
-          <el-input v-model="automationForm.runUser" />
+          <el-input v-model="automationForm.runUser" maxlength="32" />
         </el-form-item>
         <el-form-item label="执行密码">
-          <el-input v-model="automationForm.runPasswd" type="password" show-password autocomplete="new-password" />
+          <el-input v-model="automationForm.runPasswd" type="password" show-password autocomplete="new-password" maxlength="32" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -325,7 +326,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="Ansible配置名称" required>
-          <el-input v-model="ansibleForm.name" placeholder="设备纳管时，根据已有配置名称设置设备的自动化连接配置" />
+          <el-input v-model="ansibleForm.name" placeholder="设备纳管时，根据已有配置名称设置设备的自动化连接配置" maxlength="50" />
         </el-form-item>
         <el-form-item label="分组">
           <el-select
@@ -344,16 +345,16 @@
           </el-select>
         </el-form-item>
         <el-form-item label="登录用户">
-          <el-input v-model="ansibleForm.loginUser" />
+          <el-input v-model="ansibleForm.loginUser" maxlength="32" />
         </el-form-item>
         <el-form-item label="登录密码">
-          <el-input v-model="ansibleForm.loginPasswd" type="password" show-password autocomplete="new-password" />
+          <el-input v-model="ansibleForm.loginPasswd" type="password" show-password autocomplete="new-password" maxlength="32" />
         </el-form-item>
         <el-form-item label="执行用户">
-          <el-input v-model="ansibleForm.runUser" />
+          <el-input v-model="ansibleForm.runUser" maxlength="32" />
         </el-form-item>
         <el-form-item label="执行密码">
-          <el-input v-model="ansibleForm.runPasswd" type="password" show-password autocomplete="new-password" />
+          <el-input v-model="ansibleForm.runPasswd" type="password" show-password autocomplete="new-password" maxlength="32" />
         </el-form-item>
         <el-form-item label="Ansible配置信息">
           <el-input

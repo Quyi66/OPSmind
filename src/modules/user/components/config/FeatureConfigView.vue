@@ -28,6 +28,7 @@
                 placeholder="搜索任务"
                 clearable
                 style="width: 200px"
+                maxlength="50"
                 @keyup.enter="loadScheduleTasks"
               >
                 <template #prefix>
@@ -111,6 +112,7 @@
                 placeholder="模板名称/备注"
                 clearable
                 style="width: 200px"
+                maxlength="50"
                 @keyup.enter="handleSearchTemplates"
               >
                 <template #prefix>
@@ -258,7 +260,7 @@
         label-width="80px"
       >
         <el-form-item label="命令" prop="command">
-          <el-input v-model="newCommand.command" placeholder="请输入命令" />
+          <el-input v-model="newCommand.command" placeholder="请输入命令" maxlength="500" />
         </el-form-item>
         <el-form-item label="备注" prop="description">
           <el-input
@@ -289,7 +291,7 @@
         label-width="100px"
       >
         <el-form-item label="模板名称" prop="name">
-          <el-input v-model="newTemplate.name" placeholder="请输入模板名称" />
+          <el-input v-model="newTemplate.name" placeholder="请输入模板名称" maxlength="50" />
         </el-form-item>
         <el-form-item label="备注" prop="description">
           <el-input

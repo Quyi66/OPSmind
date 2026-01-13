@@ -27,7 +27,7 @@
 
       <!-- 组名 -->
       <el-form-item label="组名" prop="group_name" required>
-        <el-input v-model="formData.group_name" placeholder="输入用户组名称" />
+        <el-input v-model="formData.group_name" placeholder="输入用户组名称" maxlength="32" />
       </el-form-item>
     </el-form>
 

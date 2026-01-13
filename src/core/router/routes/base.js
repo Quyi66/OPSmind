@@ -247,9 +247,9 @@ export const baseRoutes = [
     ]
   },
 
-  // ========== 用户管理分组 (users, flow, sudo, password) ==========
+  // ========== 用户管理分组 (users, flow) ==========
   {
-    path: '/:moduleCode(users|flow|sudo|password)',
+    path: '/:moduleCode(users|flow)',
     component: MainLayout,
     meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'user-management' },
     children: [
@@ -260,7 +260,7 @@ export const baseRoutes = [
           // 动态重定向
           {
             path: '', redirect: to => {
-              const defaults = { users: '/users/overview', flow: '/flow/list', sudo: '/sudo/permission', password: '/password/application' }
+              const defaults = { users: '/users/overview', flow: '/flow/list' }
               return defaults[to.params.moduleCode] || '/users/overview'
             }
           },
@@ -280,13 +280,44 @@ export const baseRoutes = [
               { path: '', component: () => import('@/modules/flow/components/FlowListView.vue') }
             ]
           },
-          { path: 'execution', name: 'flow-execution', component: () => import('@/modules/flow/components/ExecutionListView.vue'), meta: { title: '执行记录', moduleCode: 'flow' } },
-          // sudo 模块路由
+          { path: 'execution', name: 'flow-execution', component: () => import('@/modules/flow/components/ExecutionListView.vue'), meta: { title: '执行记录', moduleCode: 'flow' } }
+        ]
+      }
+    ]
+  },
+
+  // ========== sudo权限管理 ==========
+  {
+    path: '/sudo',
+    component: MainLayout,
+    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'user-management' },
+    children: [
+      {
+        path: '',
+        component: UserGroupLayout,
+        redirect: '/sudo/permission',
+        children: [
           { path: 'permission', name: 'sudo-permission', component: () => import('@/modules/sudo/components/SudoPermissionList.vue'), meta: { title: 'sudo列表', moduleCode: 'sudo' } },
           { path: 'apply', name: 'sudo-apply', component: () => import('@/modules/sudo/components/SudoApplyList.vue'), meta: { title: '权限申请', moduleCode: 'sudo' } },
           { path: 'reset', name: 'sudo-reset', component: () => import('@/modules/sudo/components/SudoResetPassword.vue'), meta: { title: '重置密码', moduleCode: 'sudo' } },
           { path: 'settings', name: 'sudo-settings', component: () => import('@/modules/sudo/components/SudoSettings.vue'), meta: { title: '功能设置', moduleCode: 'sudo' } },
-          { path: 'log', name: 'sudo-log', component: () => import('@/modules/sudo/components/SudoOperationLog.vue'), meta: { title: '操作日志', moduleCode: 'sudo' } },
+          { path: 'log', name: 'sudo-log', component: () => import('@/modules/sudo/components/SudoOperationLog.vue'), meta: { title: '操作日志', moduleCode: 'sudo' } }
+        ]
+      }
+    ]
+  },
+
+  // ========== 密码管理 ==========
+  {
+    path: '/password',
+    component: MainLayout,
+    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'user-management' },
+    children: [
+      {
+        path: '',
+        component: UserGroupLayout,
+        redirect: '/password/application',
+        children: [
           // password 模块路由 - 需要通过 PasswordManagementModule 包裹以支持管理员面板
           {
             path: 'application',

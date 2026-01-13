@@ -39,22 +39,22 @@
 
       <!-- 用户名 -->
       <el-form-item label="用户名" required>
-        <el-input v-model="formData.username" placeholder="要修改的用户名" />
+        <el-input v-model="formData.username" placeholder="要修改的用户名" maxlength="32" />
       </el-form-item>
 
       <!-- ========== 修改基本信息 ========== -->
       <template v-if="formData.operate === 'modify_base'">
         <el-form-item label="附加用户组">
-          <el-input v-model="formData.user_groups" placeholder="多个组名用逗号隔开" />
+          <el-input v-model="formData.user_groups" placeholder="多个组名用逗号隔开" maxlength="100" />
         </el-form-item>
         <el-form-item label="主目录">
-          <el-input v-model="formData.user_home" placeholder="用户主目录" />
+          <el-input v-model="formData.user_home" placeholder="用户主目录" maxlength="256" />
         </el-form-item>
         <el-form-item label="Shell">
-          <el-input v-model="formData.user_shell" placeholder="默认Shell" />
+          <el-input v-model="formData.user_shell" placeholder="默认Shell" maxlength="100" />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="formData.user_comment" placeholder="用户备注" />
+          <el-input v-model="formData.user_comment" placeholder="用户备注" maxlength="200" />
         </el-form-item>
         <el-form-item label="过期时间">
           <el-date-picker
@@ -110,6 +110,7 @@
             show-password
             placeholder="输入新密码"
             autocomplete="new-password"
+            maxlength="32"
           />
         </el-form-item>
       </template>

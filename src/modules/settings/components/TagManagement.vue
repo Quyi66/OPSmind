@@ -9,6 +9,7 @@
             placeholder="标签名称"
             clearable
             style="width: 200px"
+            maxlength="50"
           />
         </el-form-item>
         <el-form-item>
@@ -96,7 +97,7 @@
         label-width="100px"
       >
         <el-form-item label="标签名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入标签名称" />
+          <el-input v-model="form.name" placeholder="请输入标签名称" maxlength="50" />
         </el-form-item>
       </el-form>
       <template #footer>

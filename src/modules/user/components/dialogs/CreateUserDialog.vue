@@ -28,7 +28,7 @@
 
       <!-- 用户名 -->
       <el-form-item label="用户名" prop="username" required>
-        <el-input v-model="formData.username" placeholder="在主机上创建的用户名称" />
+        <el-input v-model="formData.username" placeholder="在主机上创建的用户名称" maxlength="32" />
       </el-form-item>
 
       <!-- 密码 -->
@@ -39,32 +39,33 @@
           show-password
           placeholder="密码复杂度需满足功能配置中的规则"
           autocomplete="new-password"
+          maxlength="32"
         />
       </el-form-item>
 
       <!-- 主用户组 -->
       <el-form-item label="主用户组" prop="group">
-        <el-input v-model="formData.group" placeholder="选填，默认与用户名同名" />
+        <el-input v-model="formData.group" placeholder="选填，默认与用户名同名" maxlength="32" />
       </el-form-item>
 
       <!-- 附加用户组 -->
       <el-form-item label="附加用户组" prop="groups">
-        <el-input v-model="formData.groups" placeholder="选填，多个组名用逗号隔开" />
+        <el-input v-model="formData.groups" placeholder="选填，多个组名用逗号隔开" maxlength="100" />
       </el-form-item>
 
       <!-- 主目录 -->
       <el-form-item label="主目录" prop="home">
-        <el-input v-model="formData.home" placeholder="选填，一般情况无需指定" />
+        <el-input v-model="formData.home" placeholder="选填，一般情况无需指定" maxlength="256" />
       </el-form-item>
 
       <!-- Shell -->
       <el-form-item label="Shell" prop="shell">
-        <el-input v-model="formData.shell" placeholder="选填，一般情况无需指定" />
+        <el-input v-model="formData.shell" placeholder="选填，一般情况无需指定" maxlength="100" />
       </el-form-item>
 
       <!-- 备注 -->
       <el-form-item label="备注" prop="comment">
-        <el-input v-model="formData.comment" placeholder="选填，用户注释信息" />
+        <el-input v-model="formData.comment" placeholder="选填，用户注释信息" maxlength="200" />
       </el-form-item>
 
       <!-- 过期时间 -->

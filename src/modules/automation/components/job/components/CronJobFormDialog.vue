@@ -12,7 +12,7 @@
       label-width="120px"
     >
       <el-form-item label="任务描述" prop="jobDesc">
-        <el-input v-model="formData.jobDesc" placeholder="请输入任务描述" />
+        <el-input v-model="formData.jobDesc" placeholder="请输入任务描述" maxlength="200" />
       </el-form-item>
 
       <el-form-item label="是否输出日志" prop="logOutput">
@@ -30,7 +30,7 @@
       </el-form-item>
 
       <el-form-item label="CRON表达式" prop="scheduleConf">
-        <el-input v-model="formData.scheduleConf" placeholder="例: 0 0 12 * * ?">
+        <el-input v-model="formData.scheduleConf" placeholder="例: 0 0 12 * * ?" maxlength="100">
           <template #append>
             <el-button @click="cronGeneratorVisible = true" :icon="Calendar">生成器</el-button>
           </template>

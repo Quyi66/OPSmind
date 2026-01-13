@@ -17,6 +17,7 @@
           clearable
           size="small"
           style="width: 200px"
+          maxlength="50"
           @keyup.enter="handleSearch"
           @clear="handleSearch"
         >
@@ -122,10 +123,10 @@
         label-width="80px"
       >
         <el-form-item label="姓名" prop="name">
-          <el-input v-model="recipientFormData.name" placeholder="请输入姓名" />
+          <el-input v-model="recipientFormData.name" placeholder="请输入姓名" maxlength="50" />
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
-          <el-input v-model="recipientFormData.email" placeholder="请输入邮箱地址" />
+          <el-input v-model="recipientFormData.email" placeholder="请输入邮箱地址" maxlength="100" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="recipientFormData.status">

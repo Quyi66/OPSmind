@@ -10,7 +10,7 @@
         v-loading="loading"
       >
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" type="email" placeholder="输入邮箱用户名" />
+          <el-input v-model="form.username" type="email" placeholder="输入邮箱用户名" maxlength="100" />
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
@@ -20,11 +20,12 @@
             placeholder="输入邮箱密码或授权码"
             show-password
             autocomplete="new-password"
+            maxlength="100"
           />
         </el-form-item>
 
         <el-form-item label="邮件服务器" prop="host">
-          <el-input v-model="form.host" placeholder="如：smtp.163.com" />
+          <el-input v-model="form.host" placeholder="如：smtp.163.com" maxlength="100" />
         </el-form-item>
 
         <el-form-item label="服务器端口" prop="port">
@@ -32,7 +33,7 @@
         </el-form-item>
 
         <el-form-item label="发件人" prop="from">
-          <el-input v-model="form.from" type="email" placeholder="发件人邮箱地址（通常与用户名相同）" />
+          <el-input v-model="form.from" type="email" placeholder="发件人邮箱地址（通常与用户名相同）" maxlength="100" />
         </el-form-item>
 
         <el-form-item label="收件人类型" prop="recipient_type">
@@ -72,7 +73,7 @@
     >
       <el-form @submit.prevent="handleSendTest">
         <el-form-item label="收件人邮箱">
-          <el-input v-model="testRecipient" type="email" placeholder="输入收件人邮箱地址" />
+          <el-input v-model="testRecipient" type="email" placeholder="输入收件人邮箱地址" maxlength="100" />
         </el-form-item>
       </el-form>
       <template #footer>

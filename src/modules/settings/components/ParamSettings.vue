@@ -12,6 +12,7 @@
                 placeholder="参数名称/域"
                 clearable
                 style="width: 200px"
+                maxlength="50"
               />
             </el-form-item>
             <el-form-item>
@@ -94,6 +95,7 @@
                 placeholder="参数名称"
                 clearable
                 style="width: 200px"
+                maxlength="50"
               />
             </el-form-item>
             <el-form-item>
@@ -194,11 +196,11 @@
         </el-alert>
 
         <el-form-item label="域" prop="domain">
-          <el-input v-model="sysForm.domain" placeholder="请输入域，如: jao, acm, oplus" :disabled="sysForm.editValueOnly" />
+          <el-input v-model="sysForm.domain" placeholder="请输入域，如: jao, acm, oplus" :disabled="sysForm.editValueOnly" maxlength="30" />
           <div class="help-text">域用于区分不同模块，如 jao（作业自动化）、acm（资产管理）等</div>
         </el-form-item>
         <el-form-item label="参数名称" prop="name">
-          <el-input v-model="sysForm.name" placeholder="请输入参数名称" :disabled="sysForm.editValueOnly" />
+          <el-input v-model="sysForm.name" placeholder="请输入参数名称" :disabled="sysForm.editValueOnly" maxlength="50" />
           <div class="help-text">参数名称需唯一，建议使用下划线命名法</div>
         </el-form-item>
         <el-form-item label="参数值" prop="value">
@@ -256,7 +258,7 @@
         label-width="100px"
       >
         <el-form-item label="参数名称" prop="name">
-          <el-input v-model="appForm.name" placeholder="请输入参数名称" />
+          <el-input v-model="appForm.name" placeholder="请输入参数名称" maxlength="50" />
         </el-form-item>
         <el-form-item label="参数值" prop="value">
           <el-input

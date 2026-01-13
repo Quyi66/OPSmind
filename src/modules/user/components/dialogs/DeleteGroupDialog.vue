@@ -36,7 +36,7 @@
           </el-form-item>
 
           <el-form-item label="组名" required>
-            <el-input v-model="groupName" placeholder="输入要删除的用户组名称" />
+            <el-input v-model="groupName" placeholder="输入要删除的用户组名称" maxlength="32" />
           </el-form-item>
         </el-form>
       </template>

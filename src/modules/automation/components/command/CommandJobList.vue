@@ -14,6 +14,7 @@
             placeholder="搜索"
             style="width: 140px"
             clearable
+            maxlength="50"
           />
           <el-dropdown trigger="click" @command="handleSortChange">
             <el-button class="sort-btn">
@@ -81,7 +82,7 @@
                 <legend>作业设置</legend>
 
                 <el-form-item label="作业标题" prop="title">
-                  <el-input v-model="jobForm.title" placeholder="请输入作业标题" />
+                  <el-input v-model="jobForm.title" placeholder="请输入作业标题" maxlength="100" />
                 </el-form-item>
 
                 <el-form-item label="描述">

@@ -10,7 +10,7 @@
     <el-form ref="formRef" :model="formData" :rules="rules" label-position="top">
       <!-- 名称 -->
       <el-form-item label="名称" prop="templateName">
-        <el-input v-model="formData.templateName" placeholder="请输入模板名称" />
+        <el-input v-model="formData.templateName" placeholder="请输入模板名称" maxlength="100" />
       </el-form-item>
 
       <!-- 描述 -->

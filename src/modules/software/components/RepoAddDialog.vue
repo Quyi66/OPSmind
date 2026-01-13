@@ -14,10 +14,10 @@
         label-width="100px"
       >
         <el-form-item label="仓库名称" prop="repoName">
-          <el-input v-model="formData.repoName" placeholder="请输入仓库名称" />
+          <el-input v-model="formData.repoName" placeholder="请输入仓库名称" maxlength="50" />
         </el-form-item>
         <el-form-item label="配置文件" prop="repoFile">
-          <el-input v-model="formData.repoFile" placeholder="请输入配置文件名，如 custom.repo" />
+          <el-input v-model="formData.repoFile" placeholder="请输入配置文件名，如 custom.repo" maxlength="100" />
         </el-form-item>
         <el-form-item label="仓库描述" prop="repoDesc">
           <el-input

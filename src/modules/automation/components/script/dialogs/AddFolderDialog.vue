@@ -14,13 +14,14 @@
             v-model="form.name"
             :disabled="isEdit"
             class="code-input"
+            maxlength="100"
           />
         </div>
       </div>
       <div class="form-group">
         <label class="control-label">描述</label>
         <div class="form-control-wrapper">
-          <el-input v-model="form.description" />
+          <el-input v-model="form.description" maxlength="200" />
         </div>
       </div>
     </div>

@@ -11,7 +11,7 @@
       <div class="form-group">
         <label class="control-label">脚本名称</label>
         <div class="form-control-wrapper">
-          <el-input v-model="form.name" placeholder="例如: deploy.sh" class="code-input" />
+          <el-input v-model="form.name" placeholder="例如: deploy.sh" class="code-input" maxlength="100" />
         </div>
       </div>
       <div class="form-group">
@@ -40,7 +40,7 @@
           </el-tooltip>
         </label>
         <div class="form-control-wrapper">
-          <el-input v-model="form.config" class="code-input" />
+          <el-input v-model="form.config" class="code-input" maxlength="500" />
         </div>
       </div>
       <div v-if="repoType === 'git'" class="form-group">

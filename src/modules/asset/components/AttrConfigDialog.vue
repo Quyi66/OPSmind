@@ -12,10 +12,10 @@
       label-width="100px"
     >
       <el-form-item label="属性名称">
-        <el-input v-model="formData.title" placeholder="请输入属性名称" />
+        <el-input v-model="formData.title" placeholder="请输入属性名称" maxlength="50" />
       </el-form-item>
       <el-form-item label="属性代码">
-        <el-input v-model="formData.code" placeholder="请输入属性代码" />
+        <el-input v-model="formData.code" placeholder="请输入属性代码" maxlength="50" />
       </el-form-item>
 
       <el-divider content-position="left">输入配置</el-divider>
