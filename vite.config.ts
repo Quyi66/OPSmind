@@ -97,12 +97,12 @@ export default defineConfig(({ command, mode }): UserConfig => {
       // 生产环境启用 gzip 和 brotli 压缩
       ...(isProduction ? [
         compression({
-          algorithm: 'gzip',
+          algorithms: ['gzip'],
           exclude: [/\.(br)$/, /\.(gz)$/],
           threshold: 1024, // 只压缩大于 1KB 的文件
         }),
         compression({
-          algorithm: 'brotliCompress',
+          algorithms: ['brotliCompress'],
           exclude: [/\.(br)$/, /\.(gz)$/],
           threshold: 1024,
         }),

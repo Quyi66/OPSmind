@@ -6,10 +6,13 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "vite.config.ts",
-    "build/**/*"
+    "build/**/*",
+    "src/types/unplugin-icons.d.ts"
   ]
 }
