@@ -144,11 +144,10 @@ export const baseRoutes = [
           // cmd 模块路由 - 需要通过 CommandCenterModule 包裹以支持执行命令对话框
           {
             path: 'list',
-            name: 'cmd-list',
             component: () => import('@/modules/automation/views/CommandCenterModule.vue'),
             meta: { title: '命令列表', moduleCode: 'cmd' },
             children: [
-              { path: '', component: () => import('@/modules/automation/components/command/CommandList.vue') }
+              { path: '', name: 'cmd-list', component: () => import('@/modules/automation/components/command/CommandList.vue') }
             ]
           },
           { path: 'job', name: 'cmd-job', component: () => import('@/modules/automation/components/command/CommandJobList.vue'), meta: { title: '命令作业', moduleCode: 'cmd' } },
@@ -160,24 +159,17 @@ export const baseRoutes = [
     ]
   },
 
-  // ========== 补丁漏洞分组 (patches, software) ==========
+  // ========== 补丁管理 (patches) ==========
   {
-    path: '/:moduleCode(patches|software)',
+    path: '/patches',
     component: MainLayout,
     meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'patch-testing' },
     children: [
       {
         path: '',
         component: PatchGroupLayout,
+        redirect: '/patches/machineScan',
         children: [
-          // 动态重定向
-          {
-            path: '', redirect: to => {
-              const defaults = { patches: '/patches/machineScan', software: '/software/packages' }
-              return defaults[to.params.moduleCode] || '/patches/machineScan'
-            }
-          },
-          // patches 模块路由
           { path: 'machineScan', name: 'patches-machineScan', component: () => import('@/modules/patches/components/LinuxPatchScan.vue'), meta: { title: '机器扫描', moduleCode: 'patches' } },
           { path: 'patchInstall', name: 'patches-patchInstall', component: () => import('@/modules/patches/components/LinuxPatchInstall.vue'), meta: { title: '补丁安装', moduleCode: 'patches' } },
           { path: 'changeRollback', name: 'patches-changeRollback', component: () => import('@/modules/patches/components/LinuxPatchRollback.vue'), meta: { title: '变更回滚', moduleCode: 'patches' } },
@@ -188,8 +180,23 @@ export const baseRoutes = [
           { path: 'windowsUpdate', name: 'patches-windowsUpdate', component: () => import('@/modules/patches/components/WindowsUpdate.vue'), meta: { title: 'Windows更新', moduleCode: 'patches' } },
           { path: 'windowsRollback', name: 'patches-windowsRollback', component: () => import('@/modules/patches/components/WindowsRollback.vue'), meta: { title: 'Windows回滚', moduleCode: 'patches' } },
           { path: 'windowsView', name: 'patches-windowsView', component: () => import('@/modules/patches/components/WindowsView.vue'), meta: { title: 'Windows View', moduleCode: 'patches' } },
-          { path: 'logs', name: 'patches-logs', component: () => import('@/modules/patches/components/OperationLogs.vue'), meta: { title: '操作日志', moduleCode: 'patches' } },
-          // software 模块路由
+          { path: 'logs', name: 'patches-logs', component: () => import('@/modules/patches/components/OperationLogs.vue'), meta: { title: '变更日志查询', moduleCode: 'patches' } }
+        ]
+      }
+    ]
+  },
+
+  // ========== 软件管理 (software) ==========
+  {
+    path: '/software',
+    component: MainLayout,
+    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'patch-testing' },
+    children: [
+      {
+        path: '',
+        component: PatchGroupLayout,
+        redirect: '/software/packages',
+        children: [
           { path: 'packages', name: 'software-packages', component: () => import('@/modules/software/views/SoftwareHome.vue'), meta: { title: '软件概览', moduleCode: 'software' } },
           { path: 'repos', name: 'software-repos', component: () => import('@/modules/software/views/RepoManagement.vue'), meta: { title: '仓库管理', moduleCode: 'software' } },
           { path: 'localInstall', name: 'software-localInstall', component: () => import('@/modules/software/views/LocalInstall.vue'), meta: { title: '本地安装', moduleCode: 'software' } },
@@ -273,11 +280,10 @@ export const baseRoutes = [
           // flow 模块路由 - 需要通过 FlowManagementModule 包裹以支持设计器/执行器等全屏视图
           {
             path: 'list',
-            name: 'flow-list',
             component: () => import('@/modules/flow/views/FlowManagementModule.vue'),
             meta: { title: '流程定义', moduleCode: 'flow' },
             children: [
-              { path: '', component: () => import('@/modules/flow/components/FlowListView.vue') }
+              { path: '', name: 'flow-list', component: () => import('@/modules/flow/components/FlowListView.vue') }
             ]
           },
           { path: 'execution', name: 'flow-execution', component: () => import('@/modules/flow/components/ExecutionListView.vue'), meta: { title: '执行记录', moduleCode: 'flow' } }
@@ -321,11 +327,10 @@ export const baseRoutes = [
           // password 模块路由 - 需要通过 PasswordManagementModule 包裹以支持管理员面板
           {
             path: 'application',
-            name: 'password-application',
             component: () => import('@/modules/password/views/PasswordManagementModule.vue'),
             meta: { title: '申请审批', moduleCode: 'password' },
             children: [
-              { path: '', component: () => import('@/modules/password/components/ApplicationApprovalList.vue') }
+              { path: '', name: 'password-application', component: () => import('@/modules/password/components/ApplicationApprovalList.vue') }
             ]
           },
           { path: 'settings', name: 'password-settings', component: () => import('@/modules/password/components/PasswordSettings.vue'), meta: { title: '参数配置', moduleCode: 'password' } },

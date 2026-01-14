@@ -264,14 +264,13 @@ const lazy = {
 
 /**
  * 注册全局指令
+ * 注意：不注册 loading 指令，因为 Element Plus 已提供更完善的 v-loading
  */
 export function setupGlobalDirectives(app) {
   app.directive('permission', permission)
   app.directive('role', role)
-  app.directive('loading', loading)
   app.directive('debounce', debounce)
   app.directive('throttle', throttle)
   app.directive('copy', copy)
   app.directive('lazy', lazy)
-
 }

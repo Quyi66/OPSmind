@@ -162,7 +162,6 @@ const chartOption = computed(() => ({
     right: 20,
     bottom: 50,
     top: 20,
-    containLabel: true
   },
   xAxis: {
     type: 'category',

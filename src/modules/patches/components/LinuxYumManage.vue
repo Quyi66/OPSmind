@@ -20,25 +20,25 @@
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
           <el-form-item label="关键词">
-            <el-input
-              v-model="filterText"
-              placeholder="搜索..."
-              style="width: 200px"
-              clearable
-              maxlength="50"
-            >
+            <el-input v-model="filterText" placeholder="搜索..." style="width: 200px" clearable maxlength="50">
               <template #prefix>
-                <el-icon><Search /></el-icon>
+                <el-icon>
+                  <Search />
+                </el-icon>
               </template>
             </el-input>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" :loading="loading" @click="handleFilter">
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
               搜索
             </el-button>
             <el-button @click="handleReset">
-              <el-icon><RefreshRight /></el-icon>
+              <el-icon>
+                <RefreshRight />
+              </el-icon>
               重置
             </el-button>
           </el-form-item>
@@ -52,18 +52,15 @@
         </el-button>
         <span style="flex: 1;"></span>
         <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
-          <el-icon v-show="!loading"><Refresh /></el-icon>
+          <el-icon v-show="!loading">
+            <Refresh />
+          </el-icon>
         </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="customRepoData"
-          stripe
-          height="100%"
-        >
+        <el-table v-loading="loading" :data="customRepoData" stripe height="100%">
           <el-table-column prop="name" label="YUM源名称" min-width="120" sortable />
           <el-table-column prop="description" label="描述" min-width="120" sortable />
           <el-table-column prop="baseurl" label="YUM源地址" min-width="280" sortable show-overflow-tooltip />
@@ -86,16 +83,9 @@
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handleSizeChange"
-          @current-change="handlePageChange"
-        />
+        <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
+          background @size-change="handleSizeChange" @current-change="handlePageChange" />
       </div>
     </template>
 
@@ -105,25 +95,25 @@
       <div class="ops-filter-bar">
         <el-form :model="hostFilters" inline size="small">
           <el-form-item label="关键词">
-            <el-input
-              v-model="hostFilterText"
-              placeholder="搜索..."
-              style="width: 200px"
-              clearable
-              maxlength="50"
-            >
+            <el-input v-model="hostFilterText" placeholder="搜索..." style="width: 200px" clearable maxlength="50">
               <template #prefix>
-                <el-icon><Search /></el-icon>
+                <el-icon>
+                  <Search />
+                </el-icon>
               </template>
             </el-input>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" :loading="hostLoading" @click="handleHostFilter">
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
               搜索
             </el-button>
             <el-button @click="handleHostReset">
-              <el-icon><RefreshRight /></el-icon>
+              <el-icon>
+                <RefreshRight />
+              </el-icon>
               重置
             </el-button>
           </el-form-item>
@@ -137,18 +127,15 @@
         </el-button>
         <span style="flex: 1;"></span>
         <el-button class="toolbar-icon-btn" circle size="small" :loading="hostLoading" @click="loadHostData" title="刷新">
-          <el-icon v-show="!hostLoading"><Refresh /></el-icon>
+          <el-icon v-show="!hostLoading">
+            <Refresh />
+          </el-icon>
         </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table
-          v-loading="hostLoading"
-          :data="hostTableData"
-          stripe
-          height="100%"
-        >
+        <el-table v-loading="hostLoading" :data="hostTableData" stripe height="100%">
           <el-table-column prop="$data_owner" label="主机" min-width="150">
             <template #default="{ row }">
               <el-link type="primary" :underline="false" @click="handleViewHostDetail(row)">
@@ -164,25 +151,14 @@
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="hostPagination.page"
-          v-model:page-size="hostPagination.pageSize"
-          :page-sizes="[10, 20, 50, 500]"
-          :total="hostPagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handleHostSizeChange"
-          @current-change="handleHostPageChange"
-        />
+        <el-pagination v-model:current-page="hostPagination.page" v-model:page-size="hostPagination.pageSize"
+          :page-sizes="[10, 20, 50, 500]" :total="hostPagination.total" layout="total, sizes, prev, pager, next, jumper"
+          background @size-change="handleHostSizeChange" @current-change="handleHostPageChange" />
       </div>
     </template>
 
     <!-- 添加/编辑YUM源对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="editingRepo ? '编辑YUM源' : 'YUM源配置录入'"
-      width="600px"
-    >
+    <el-dialog v-model="dialogVisible" :title="editingRepo ? '编辑YUM源' : 'YUM源配置录入'" width="600px">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="YUM源名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入YUM源名称" maxlength="50" />
@@ -206,35 +182,21 @@
     </el-dialog>
 
     <!-- 设备选择器对话框 (用于配置和扫描) -->
-    <AcmDeviceSelectorDialog
-      v-model="deviceSelectorVisible"
-      ci-types="[auto]"
-      :initial-selection="selectedDevices"
+    <AcmDeviceSelectorDialog v-model="deviceSelectorVisible" ci-types="[auto]" :initial-selection="selectedDevices"
       :options="{
         selectMode: 'host,group,tag,input,recently',
         selector: 'multiple'
-      }"
-      @confirm="handleDeviceSelected"
-    />
+      }" @confirm="handleDeviceSelected" />
 
     <!-- 选择目标主机对话框 -->
-    <el-dialog
-      v-model="selectHostDialogVisible"
-      title="选择目标主机"
-      width="800px"
-      :close-on-click-modal="false"
-    >
+    <el-dialog v-model="selectHostDialogVisible" title="选择目标主机" width="800px" :close-on-click-modal="false">
       <div class="select-host-dialog-content">
         <!-- 使用 AcmDeviceSelector 组件 -->
-        <AcmDeviceSelector
-          v-model="selectedDevices"
-          ci-types="[auto]"
-          :options="{
-            selectMode: 'host,group,tag,input,recently',
-            selector: 'multiple',
-            label: '选择设备'
-          }"
-        />
+        <AcmDeviceSelector v-model="selectedDevices" ci-types="[auto]" :options="{
+          selectMode: 'host,group,tag,input,recently',
+          selector: 'multiple',
+          label: '选择设备'
+        }" />
       </div>
       <template #footer>
         <el-button @click="selectHostDialogVisible = false">取消</el-button>
@@ -245,63 +207,46 @@
     </el-dialog>
 
     <!-- 主机YUM源详情对话框 -->
-    <el-dialog
-      v-model="hostDetailDialogVisible"
-      :title="`${currentHostDetail?.$data_owner || ''} - YUM源详情`"
-      width="1400px"
-      :close-on-click-modal="false"
-    >
+    <el-dialog v-model="hostDetailDialogVisible" :title="`${currentHostDetail?.$data_owner || ''} - YUM源详情`"
+      width="1400px" :close-on-click-modal="false">
       <div class="host-detail-dialog-content">
         <!-- 工具栏 -->
         <div class="toolbar-row">
           <div class="toolbar-left">
             <span>状态</span>
-            <el-select v-model="detailRepoStatus" placeholder="请选择" size="small" style="width: 100px" @change="handleDetailFilterChange">
+            <el-select v-model="detailRepoStatus" placeholder="请选择" size="small" style="width: 100px"
+              @change="handleDetailFilterChange">
               <el-option value="enabled" label="启用" />
               <el-option value="disabled" label="禁用" />
             </el-select>
           </div>
           <div class="toolbar-right">
-            <el-input
-              v-model="detailFilterText"
-              placeholder="搜索"
-              size="small"
-              style="width: 150px"
-              clearable
-              @input="handleDetailFilterChange"
-            >
+            <el-input v-model="detailFilterText" placeholder="搜索" size="small" style="width: 150px" clearable
+              @input="handleDetailFilterChange">
               <template #prefix>
                 <i class="fa fa-search" />
               </template>
             </el-input>
-            <el-button class="toolbar-icon-btn" circle :loading="hostDetailLoading" @click="loadHostRepoDetail" title="刷新" size="small">
-              <el-icon v-show="!hostDetailLoading"><Refresh /></el-icon>
+            <el-button class="toolbar-icon-btn" circle :loading="hostDetailLoading" @click="loadHostRepoDetail"
+              title="刷新" size="small">
+              <el-icon v-show="!hostDetailLoading">
+                <Refresh />
+              </el-icon>
             </el-button>
           </div>
         </div>
 
         <!-- YUM源详情表格 -->
-        <el-table
-          v-loading="hostDetailLoading"
-          :data="paginatedRepoDetailData"
-          stripe
-          style="width: 100%"
-          size="small"
-          max-height="350"
-        >
+        <el-table v-loading="hostDetailLoading" :data="paginatedRepoDetailData" stripe style="width: 100%" size="small"
+          max-height="350">
           <el-table-column prop="$data_owner" label="主机" min-width="100" />
           <el-table-column prop="repo-name" label="名称" min-width="100" />
           <el-table-column prop="repo-pkgs" label="软件包数" min-width="80" />
           <el-table-column prop="repo-baseurl" label="Base URL" min-width="250" show-overflow-tooltip>
             <template #default="{ row }">
               <div class="url-badges">
-                <el-tag
-                  v-for="(url, idx) in parseUrls(row['repo-baseurl'])"
-                  :key="idx"
-                  type="info"
-                  size="small"
-                  class="url-tag"
-                >
+                <el-tag v-for="(url, idx) in parseUrls(row['repo-baseurl'])" :key="idx" type="info" size="small"
+                  class="url-tag">
                   {{ url }}
                 </el-tag>
               </div>
@@ -323,30 +268,15 @@
           </el-table-column>
           <el-table-column label="操作" width="88" fixed="right" align="left">
             <template #default="{ row }">
-              <el-button
-                v-if="row['repo-status'] === 'disabled'"
-                text
-                type="primary"
-                size="small"
-                @click="handleEnableRepo(row)"
-              >
+              <el-button v-if="row['repo-status'] === 'disabled'" text type="primary" size="small"
+                @click="handleEnableRepo(row)">
                 启用
               </el-button>
-              <el-button
-                v-if="row['repo-status'] === 'enabled'"
-                text
-                type="warning"
-                size="small"
-                @click="handleDisableRepo(row)"
-              >
+              <el-button v-if="row['repo-status'] === 'enabled'" text type="warning" size="small"
+                @click="handleDisableRepo(row)">
                 禁用
               </el-button>
-              <el-button
-                text
-                type="danger"
-                size="small"
-                @click="handleDeleteRepo(row)"
-              >
+              <el-button text type="danger" size="small" @click="handleDeleteRepo(row)">
                 删除
               </el-button>
             </template>
@@ -355,33 +285,18 @@
 
         <!-- 分页 -->
         <div class="dialog-pagination">
-          <el-pagination
-            v-model:current-page="detailPagination.page"
-            v-model:page-size="detailPagination.pageSize"
-            :page-sizes="[10, 20, 50]"
-            :total="filteredRepoDetailData.length"
-            layout="total, sizes, prev, pager, next, jumper"
-            size="small"
-            background
-          />
+          <el-pagination v-model:current-page="detailPagination.page" v-model:page-size="detailPagination.pageSize"
+            :page-sizes="[10, 20, 50]" :total="filteredRepoDetailData.length"
+            layout="total, sizes, prev, pager, next, jumper" size="small" background />
         </div>
       </div>
     </el-dialog>
 
     <!-- 作业执行确认对话框 -->
-    <el-dialog
-      v-model="jobConfirmDialogVisible"
-      :title="jobConfirmTitle"
-      width="600px"
-    >
+    <el-dialog v-model="jobConfirmDialogVisible" :title="jobConfirmTitle" width="600px">
       <div class="job-confirm-content">
-        <el-alert
-          :title="`即将对 ${selectedDevices.length} 台主机执行操作`"
-          type="info"
-          show-icon
-          :closable="false"
-          class="mb-3"
-        />
+        <el-alert :title="`即将对 ${selectedDevices.length} 台主机执行操作`" type="info" show-icon :closable="false"
+          class="mb-3" />
 
         <!-- YUM源配置信息 (配置操作时显示) -->
         <div v-if="currentOperation === 'config' && configRepo" class="config-info mb-3">
@@ -409,11 +324,7 @@
             <span><i class="fa fa-server me-2" />已选主机（<strong>{{ selectedDevices.length }}</strong>）</span>
           </div>
           <div class="list-body">
-            <el-tag
-              v-for="(host, index) in selectedDevices"
-              :key="index"
-              type="primary"
-            >
+            <el-tag v-for="(host, index) in selectedDevices" :key="index" type="primary">
               {{ host.value || host.hostname || host }}
             </el-tag>
           </div>
@@ -460,6 +371,9 @@ const loading = ref(false)
 const submitting = ref(false)
 const filterText = ref('')
 const customRepoData = ref([])
+const filters = reactive({
+  keyword: ''
+})
 const pagination = reactive({
   page: 1,
   pageSize: 10,
@@ -526,6 +440,9 @@ const jobConfirmButtonText = computed(() => {
 const hostLoading = ref(false)
 const hostFilterText = ref('')
 const hostTableData = ref([])
+const hostFilters = reactive({
+  keyword: ''
+})
 const hostPagination = reactive({
   page: 1,
   pageSize: 500,
@@ -550,8 +467,8 @@ const filteredRepoDetailData = computed(() => {
   const keyword = detailFilterText.value.toLowerCase()
   return hostRepoDetailData.value.filter(row => {
     return (row['repo-name']?.toLowerCase().includes(keyword)) ||
-           (row['repo-baseurl']?.toLowerCase().includes(keyword)) ||
-           (row['repo-file']?.toLowerCase().includes(keyword))
+      (row['repo-baseurl']?.toLowerCase().includes(keyword)) ||
+      (row['repo-file']?.toLowerCase().includes(keyword))
   })
 })
 

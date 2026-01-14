@@ -80,7 +80,6 @@ function getChartOption() {
       right: '4%',
       bottom: '10%',
       top: '15%',
-      containLabel: true
     },
     xAxis: {
       type: 'category',

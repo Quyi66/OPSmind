@@ -49,15 +49,9 @@ class AngularJSBridgeStub {
   }
 
   async getMenus(): Promise<Menu[]> {
-    try {
-      const { apiService } = await import('@/core/api')
-      // Use getApplets as getMenus doesn't exist on ApiService
-      const applets = await apiService.getApplets()
-      return applets || []
-    } catch (error) {
-      console.warn('Failed to get menus:', error)
-      return []
-    }
+    // 模块菜单现在由静态配置提供，不再需要从 API 获取
+    // 返回空数组，让调用方使用静态配置或默认模块
+    return []
   }
 
   /**

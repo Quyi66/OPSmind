@@ -4,25 +4,17 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input
-            v-model="filters.keyword"
-            placeholder="搜索作业名称"
-            clearable
-            style="width: 240px"
-          >
+          <el-input v-model="filters.keyword" placeholder="搜索作业名称" clearable style="width: 240px">
             <template #prefix>
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select
-            v-model="filters.status"
-            placeholder="状态筛选"
-            clearable
-            style="width: 140px"
-          >
-            <el-option label="全部状态" :value="null" />
+          <el-select v-model="filters.status" placeholder="状态筛选" clearable style="width: 140px">
+            <el-option label="全部状态" value="" />
             <el-option label="审批中" :value="0" />
             <el-option label="审批通过" :value="1" />
             <el-option label="审批未通过" :value="2" />
@@ -31,11 +23,15 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
-            <el-icon><Search /></el-icon>
+            <el-icon>
+              <Search />
+            </el-icon>
             搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon>
+            <el-icon>
+              <RefreshRight />
+            </el-icon>
             重置
           </el-button>
         </el-form-item>
@@ -46,17 +42,15 @@
     <div class="ops-action-bar">
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="fetchData" title="刷新">
-        <el-icon v-show="!loading"><Refresh /></el-icon>
+        <el-icon v-show="!loading">
+          <Refresh />
+        </el-icon>
       </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table
-        v-loading="loading"
-        :data="paginatedData"
-        stripe
-      >
+      <el-table v-loading="loading" :data="paginatedData" stripe>
         <el-table-column label="作业" min-width="250">
           <template #default="{ row }">
             <div class="job-cell">
@@ -118,31 +112,14 @@
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button
-                v-if="row.status === 0"
-                type="success"
-                text
-                size="small"
-                @click="handlePass(row)"
-              >
+              <el-button v-if="row.status === 0" type="success" text size="small" @click="handlePass(row)">
                 通过
               </el-button>
-              <el-button
-                v-if="row.status === 0"
-                type="danger"
-                text
-                size="small"
-                @click="handleRefuse(row)"
-              >
+              <el-button v-if="row.status === 0" type="danger" text size="small" @click="handleRefuse(row)">
                 拒绝
               </el-button>
-              <el-button
-                v-if="row.status === 1 && row.canCanceled"
-                type="warning"
-                text
-                size="small"
-                @click="handleDiscard(row)"
-              >
+              <el-button v-if="row.status === 1 && row.canCanceled" type="warning" text size="small"
+                @click="handleDiscard(row)">
                 作废
               </el-button>
             </div>
@@ -153,16 +130,9 @@
 
     <!-- 分页区域 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="filteredData.length"
-        layout="total, sizes, prev, pager, next, jumper"
-        background
-        @size-change="handlePageSizeChange"
-        @current-change="handlePageChange"
-      />
+      <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
+        :total="filteredData.length" layout="total, sizes, prev, pager, next, jumper" background
+        @size-change="handlePageSizeChange" @current-change="handlePageChange" />
     </div>
   </div>
 </template>
@@ -177,7 +147,7 @@ const loading = ref(false)
 const tableData = ref([])
 const filters = reactive({
   keyword: '',
-  status: null
+  status: ''  // 空字符串表示"全部状态"
 })
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -195,8 +165,8 @@ const filteredData = computed(() => {
     )
   }
 
-  // 状态筛选
-  if (filters.status !== null && filters.status !== undefined) {
+  // 状态筛选 (空字符串表示全部)
+  if (filters.status !== '') {
     data = data.filter(item => item.status === filters.status)
   }
 
@@ -250,7 +220,7 @@ function handleSearch() {
 
 function handleReset() {
   filters.keyword = ''
-  filters.status = null
+  filters.status = ''  // 重置为空字符串
   currentPage.value = 1
   pageSize.value = 10
 }

@@ -14,13 +14,8 @@
     <div class="page-content">
       <!-- KPI 统计卡片 -->
       <div class="kpi-cards">
-        <div
-          v-for="kpi in kpiList"
-          :key="kpi.name"
-          class="kpi-card"
-          :class="[`kpi-card--${kpi.theme}`]"
-          @click="handleKpiClick(kpi)"
-        >
+        <div v-for="kpi in kpiList" :key="kpi.name" class="kpi-card" :class="[`kpi-card--${kpi.theme}`]"
+          @click="handleKpiClick(kpi)">
           <div class="kpi-card__icon" v-if="kpi.icon">
             <i :class="['fa', kpi.icon]" />
           </div>
@@ -33,19 +28,12 @@
 
       <!-- 导航标签 -->
       <div class="nav-tabs">
-        <div
-          class="nav-tab"
-          :class="{ 'nav-tab--active': activeTab === 'host' }"
-          @click="activeTab = 'host'"
-        >
+        <div class="nav-tab" :class="{ 'nav-tab--active': activeTab === 'host' }" @click="activeTab = 'host'">
           <i class="fa fa-laptop" />
           主机概览
         </div>
-        <div
-          class="nav-tab"
-          :class="{ 'nav-tab--active': activeTab === 'vulnerability' }"
-          @click="activeTab = 'vulnerability'"
-        >
+        <div class="nav-tab" :class="{ 'nav-tab--active': activeTab === 'vulnerability' }"
+          @click="activeTab = 'vulnerability'">
           <i class="fa fa-bug" />
           漏洞概览
         </div>
@@ -57,24 +45,25 @@
         <div class="ops-filter-bar">
           <el-form :model="hostFilters" inline size="small">
             <el-form-item label="关键词">
-              <el-input
-                v-model="filterText"
-                placeholder="输入字符搜索"
-                style="width: 200px"
-                clearable
-              >
+              <el-input v-model="filterText" placeholder="输入字符搜索" style="width: 200px" clearable>
                 <template #prefix>
-                  <el-icon><Search /></el-icon>
+                  <el-icon>
+                    <Search />
+                  </el-icon>
                 </template>
               </el-input>
             </el-form-item>
             <el-form-item>
               <el-button type="primary" :loading="loading" @click="handleFilter">
-                <el-icon><Search /></el-icon>
+                <el-icon>
+                  <Search />
+                </el-icon>
                 搜索
               </el-button>
               <el-button @click="handleHostReset">
-                <el-icon><RefreshRight /></el-icon>
+                <el-icon>
+                  <RefreshRight />
+                </el-icon>
                 重置
               </el-button>
             </el-form-item>
@@ -88,19 +77,16 @@
           </el-button> -->
           <span style="flex: 1;"></span>
           <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="refresh" title="刷新">
-            <el-icon v-show="!loading"><Refresh /></el-icon>
+            <el-icon v-show="!loading">
+              <Refresh />
+            </el-icon>
           </el-button>
         </div>
 
         <!-- 表格 -->
         <div class="ops-table-wrapper">
-          <el-table
-            v-loading="loading"
-            :data="hostTableData"
-            stripe
-            style="width: 100%"
-            max-height="calc(100vh - 500px)"
-          >
+          <el-table v-loading="loading" :data="hostTableData" stripe style="width: 100%"
+            max-height="calc(100vh - 500px)">
             <el-table-column prop="host_key" label="主机" min-width="140">
               <template #default="{ row }">
                 <a href="javascript:void(0)" class="host-link" @click="handleHostClick(row)">
@@ -151,16 +137,9 @@
 
         <!-- 分页 -->
         <div class="ops-pagination-wrapper">
-          <el-pagination
-            v-model:current-page="pagination.page"
-            v-model:page-size="pagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            background
-            @size-change="handleSizeChange"
-            @current-change="handlePageChange"
-          />
+          <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
+            background @size-change="handleSizeChange" @current-change="handlePageChange" />
         </div>
       </div>
 
@@ -170,20 +149,10 @@
         <div class="ops-filter-bar">
           <el-form :model="vulnFilters" inline size="small">
             <el-form-item label="主机" label-width="40">
-              <el-input
-                v-model="vulnFilters.host_key"
-                placeholder="输入主机IP"
-                style="width: 130px"
-                clearable
-              />
+              <el-input v-model="vulnFilters.host_key" placeholder="输入主机IP" style="width: 130px" clearable />
             </el-form-item>
             <el-form-item label="CVE" label-width="40">
-              <el-input
-                v-model="vulnFilters.vul_id"
-                placeholder="输入CVE编号"
-                style="width: 130px"
-                clearable
-              />
+              <el-input v-model="vulnFilters.vul_id" placeholder="输入CVE编号" style="width: 130px" clearable />
             </el-form-item>
             <el-form-item label="严重程度" label-width="70">
               <el-select v-model="vulnFilters.severity" style="width: 80px">
@@ -228,11 +197,15 @@
             </el-form-item>
             <el-form-item style="margin-right: 0">
               <el-button type="primary" :loading="vulnLoading" @click="handleVulnFilterChange">
-                <el-icon><Search /></el-icon>
+                <el-icon>
+                  <Search />
+                </el-icon>
                 搜索
               </el-button>
               <el-button @click="handleVulnReset">
-                <el-icon><RefreshRight /></el-icon>
+                <el-icon>
+                  <RefreshRight />
+                </el-icon>
                 重置
               </el-button>
             </el-form-item>
@@ -248,22 +221,18 @@
             <i class="fa fa-download" /> 导出
           </el-button> -->
           <span style="flex: 1;"></span>
-          <el-button class="toolbar-icon-btn" circle size="small" :loading="vulnLoading" @click="loadVulnData" title="刷新">
-            <el-icon v-show="!vulnLoading"><Refresh /></el-icon>
+          <el-button class="toolbar-icon-btn" circle size="small" :loading="vulnLoading" @click="loadVulnData"
+            title="刷新">
+            <el-icon v-show="!vulnLoading">
+              <Refresh />
+            </el-icon>
           </el-button>
         </div>
 
         <!-- 表格 -->
         <div class="ops-table-wrapper">
-          <el-table
-            ref="vulnTableRef"
-            v-loading="vulnLoading"
-            :data="vulnTableData"
-            stripe
-            style="width: 100%"
-            max-height="calc(100vh - 500px)"
-            @selection-change="handleVulnSelectionChange"
-          >
+          <el-table ref="vulnTableRef" v-loading="vulnLoading" :data="vulnTableData" stripe style="width: 100%"
+            max-height="calc(100vh - 500px)" @selection-change="handleVulnSelectionChange">
             <el-table-column type="selection" width="45" />
             <el-table-column prop="host_key" label="主机" width="130">
               <template #default="{ row }">
@@ -302,8 +271,10 @@
             </el-table-column>
             <el-table-column prop="reboot_status" label="重启要求" width="100">
               <template #default="{ row }">
-                <el-tag v-if="row.reboot_status" :type="row.reboot_status === '系统重启' ? 'danger' : 'warning'" size="small" round>
-                  <i :class="row.reboot_status === '系统重启' ? 'fa fa-power-off' : 'fa fa-server'" style="margin-right: 4px" />
+                <el-tag v-if="row.reboot_status" :type="row.reboot_status === '系统重启' ? 'danger' : 'warning'"
+                  size="small" round>
+                  <i :class="row.reboot_status === '系统重启' ? 'fa fa-power-off' : 'fa fa-server'"
+                    style="margin-right: 4px" />
                   {{ row.reboot_status === '系统重启' ? '系统' : '服务' }}
                 </el-tag>
               </template>
@@ -317,13 +288,8 @@
             </el-table-column>
             <el-table-column prop="patch_status" label="状态" width="110">
               <template #default="{ row }">
-                <el-tag
-                  :type="getPatchStatusType(row.patch_status)"
-                  size="small"
-                  round
-                  :class="{ 'clickable-status': row.run_id }"
-                  @click="row.run_id && handleViewRunResult(row)"
-                >
+                <el-tag :type="getPatchStatusType(row.patch_status)" size="small" round
+                  :class="{ 'clickable-status': row.run_id }" @click="row.run_id && handleViewRunResult(row)">
                   <i :class="getPatchStatusIcon(row.patch_status)" style="margin-right: 4px" />
                   {{ row.patch_status }}
                 </el-tag>
@@ -336,13 +302,8 @@
             </el-table-column>
             <el-table-column label="操作" width="80" fixed="right">
               <template #default="{ row }">
-                <el-button
-                  text
-                  type="primary"
-                  size="small"
-                  :disabled="row.patch_status !== '已修复' && row.patch_status !== '回滚失败'"
-                  @click="handleRollback(row)"
-                >
+                <el-button text type="primary" size="small"
+                  :disabled="row.patch_status !== '已修复' && row.patch_status !== '回滚失败'" @click="handleRollback(row)">
                   回滚
                 </el-button>
               </template>
@@ -352,61 +313,40 @@
 
         <!-- 分页 -->
         <div class="ops-pagination-wrapper">
-          <el-pagination
-            v-model:current-page="vulnPagination.page"
-            v-model:page-size="vulnPagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="vulnPagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            background
-            @size-change="handleVulnSizeChange"
-            @current-change="handleVulnPageChange"
-          />
+          <el-pagination v-model:current-page="vulnPagination.page" v-model:page-size="vulnPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]" :total="vulnPagination.total"
+            layout="total, sizes, prev, pager, next, jumper" background @size-change="handleVulnSizeChange"
+            @current-change="handleVulnPageChange" />
         </div>
       </div>
     </div>
 
     <!-- 重新扫描对话框 -->
-    <el-dialog
-      v-model="rescanDialogVisible"
-      title="重新扫描补丁"
-      width="600px"
-    >
+    <el-dialog v-model="rescanDialogVisible" title="重新扫描补丁" width="600px">
       <el-form ref="rescanFormRef" :model="rescanForm" label-width="100px">
         <el-form-item label="选择主机">
-          <AcmDeviceSelector
-            v-model="selectedHosts"
-            ci-types="[auto]"
-            :options="{
-              selectMode: 'host,group,tag,input,recently',
-              selector: 'multiple',
-              label: '选择主机'
-            }"
-          />
+          <AcmDeviceSelector v-model="selectedHosts" ci-types="[auto]" :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择主机'
+          }" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="rescanDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="rescanLoading" :disabled="selectedHosts.length === 0" @click="executeRescan">
+        <el-button type="primary" :loading="rescanLoading" :disabled="selectedHosts.length === 0"
+          @click="executeRescan">
           开始扫描
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 作业运行结果对话框 -->
-    <ExecuteResultDialog
-      v-if="runResultDialogVisible"
-      v-model:visible="runResultDialogVisible"
-      :run-id="runResultRunId"
-    />
+    <ExecuteResultDialog v-if="runResultDialogVisible" v-model:visible="runResultDialogVisible"
+      :run-id="runResultRunId" />
 
     <!-- 修复漏洞确认对话框 -->
-    <el-dialog
-      v-model="fixDialogVisible"
-      title="修复选定的漏洞"
-      width="700px"
-      destroy-on-close
-    >
+    <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="700px" destroy-on-close>
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
         <div class="fix-info-card">
           <div class="fix-info-header">
@@ -435,12 +375,7 @@
       </div>
       <template #footer>
         <el-button @click="fixDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="fixSubmitting"
-          :disabled="!fixDialogData.hosts"
-          @click="handleConfirmFix"
-        >
+        <el-button type="primary" :loading="fixSubmitting" :disabled="!fixDialogData.hosts" @click="handleConfirmFix">
           <i class="fa fa-chevron-right" /> 开始更新
         </el-button>
       </template>
@@ -476,6 +411,9 @@ const kpiList = ref([
 const loading = ref(false)
 const filterText = ref('')
 const hostTableData = ref([])
+const hostFilters = reactive({
+  keyword: ''
+})
 const pagination = reactive({
   page: 1,
   pageSize: 20,
@@ -1329,7 +1267,7 @@ defineExpose({
 
 // 中等 - 黄绿色
 .text-dark {
-   color: #C9A66B;
+  color: #C9A66B;
 }
 
 // 低 - 蓝色 (primary)

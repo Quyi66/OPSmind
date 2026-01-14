@@ -10,9 +10,7 @@ import { setupRouter } from '@/core/router'
 import { setupGlobalComponents } from '@/shared/components'
 import { setupGlobalDirectives } from '@/shared/directives'
 import { setupErrorHandler } from '@/core/error'
-import { setupPerformanceMonitor } from '@/core/performance'
 import { initPerformanceOptimizations } from '@/utils/performance-optimizer'
-import { applyIframeResourceFix } from '@/utils/iframe-resource-fix'
 import { appUrlManager } from '@/config/module-urls.config'
 import { authService } from '@/core/auth'
 import angularJSBridge from '@/services/angularjs-bridge'
@@ -45,19 +43,14 @@ const app = createApp(App)
 // 设置错误处理
 setupErrorHandler(app)
 
-// 设置性能监控
+// 开发环境调试工具
 if (import.meta.env.DEV) {
-  setupPerformanceMonitor(app)
-
   // 引入认证调试工具
   import('./utils/auth-debug.js')
 }
 
 // 初始化性能优化
 initPerformanceOptimizations()
-
-// 应用iframe资源修复
-applyIframeResourceFix()
 
 // 从 URL 中引导认证（用于新开 Tab 通过 ?token=... 免登录）
 async function bootstrapAuthFromUrl() {

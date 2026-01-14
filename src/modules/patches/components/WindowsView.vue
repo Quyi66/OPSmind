@@ -97,7 +97,6 @@ async function initBarChart() {
         right: '4%',
         bottom: '3%',
         top: '10%',
-        containLabel: true
       },
       xAxis: {
         type: 'category',
@@ -163,7 +162,6 @@ async function initLineChart() {
         right: '4%',
         bottom: '3%',
         top: '10%',
-        containLabel: true
       },
       xAxis: {
         type: 'category',

@@ -13,15 +13,8 @@
 
     <!-- 作业统计 -->
     <div class="job-stats">
-      <TypeCountCard
-        v-for="stat in jobStats"
-        :key="stat.id"
-        :type-name="stat.label"
-        :count="stat.value"
-        :icon="stat.icon"
-        :icon-type="stat.iconType"
-        @click="handleStatClick(stat.id)"
-      />
+      <TypeCountCard v-for="stat in jobStats" :key="stat.id" :type-name="stat.label" :count="stat.value"
+        :icon="stat.icon" :icon-type="stat.iconType" @click="handleStatClick(stat.id)" />
     </div>
 
     <!-- 图表标题和图例 -->
@@ -164,8 +157,7 @@ const chartOption = computed(() => ({
     left: 50,
     right: 20,
     bottom: 50,
-    top: 20,
-    containLabel: true
+    top: 20
   },
   xAxis: {
     type: 'category',

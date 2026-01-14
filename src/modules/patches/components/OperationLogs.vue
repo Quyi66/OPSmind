@@ -12,7 +12,7 @@
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
           <el-form-item label="时间范围">
-          <el-select v-model="dayFilter" style="width: 100px">
+            <el-select v-model="dayFilter" style="width: 100px">
               <el-option label="今天" :value="1" />
               <el-option label="近3天" :value="3" />
               <el-option label="近7天" :value="7" />
@@ -38,24 +38,25 @@
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
-            <el-input
-              v-model="searchText"
-              placeholder="搜索"
-              style="width: 150px"
-              clearable
-            >
+            <el-input v-model="searchText" placeholder="搜索" style="width: 150px" clearable>
               <template #prefix>
-                <el-icon><Search /></el-icon>
+                <el-icon>
+                  <Search />
+                </el-icon>
               </template>
             </el-input>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" :loading="loading" @click="handleFilterChange">
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
               搜索
             </el-button>
             <el-button @click="handleReset">
-              <el-icon><RefreshRight /></el-icon>
+              <el-icon>
+                <RefreshRight />
+              </el-icon>
               重置
             </el-button>
           </el-form-item>
@@ -64,18 +65,16 @@
 
       <div class="ops-action-bar">
         <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleFilterChange" title="刷新">
-          <el-icon v-show="!loading"><Refresh /></el-icon>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleFilterChange"
+          title="刷新">
+          <el-icon v-show="!loading">
+            <Refresh />
+          </el-icon>
         </el-button>
       </div>
 
       <div class="ops-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="tableData"
-          stripe
-          max-height="calc(100vh - 350px)"
-        >
+        <el-table v-loading="loading" :data="tableData" stripe max-height="calc(100vh - 350px)">
           <el-table-column prop="start_time" label="开始时间" width="180" sortable>
             <template #default="{ row }">
               {{ formatTimestamp(row.start_time) }}
@@ -88,12 +87,9 @@
           </el-table-column>
           <el-table-column prop="status" label="状态" width="80" sortable>
             <template #default="{ row }">
-              <el-tag
-                :type="getStatusType(row.status)"
-                size="small"
+              <el-tag :type="getStatusType(row.status)" size="small"
                 :style="{ cursor: row.run_record ? 'pointer' : 'default' }"
-                @click="row.run_record && handleViewRunResult(row)"
-              >
+                @click="row.run_record && handleViewRunResult(row)">
                 {{ getStatusLabel(row.status) }}
               </el-tag>
             </template>
@@ -120,31 +116,18 @@
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 25, 50, 100]"
-          :total="filteredTableData.length"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handleSizeChange"
-          @current-change="handlePageChange"
-        />
+        <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 25, 50, 100]" :total="filteredTableData.length"
+          layout="total, sizes, prev, pager, next, jumper" background @size-change="handleSizeChange"
+          @current-change="handlePageChange" />
       </div>
     </template>
 
     <!-- 漏洞报表 Tab -->
     <template v-if="activeTab === 'vulnerability'">
       <div class="ops-filter-bar">
-        <el-input
-          v-model="vulFilterText"
-          placeholder="主机/KB编号"
-          size="small"
-          style="width: 200px"
-          clearable
-          @keyup.enter="handleVulSearch"
-          @clear="handleVulSearch"
-        >
+        <el-input v-model="vulFilterText" placeholder="主机/KB编号" size="small" style="width: 200px" clearable
+          @keyup.enter="handleVulSearch" @clear="handleVulSearch">
           <template #prefix>
             <i class="fa fa-search" />
           </template>
@@ -155,15 +138,12 @@
       <div class="ops-table-wrapper">
         <div class="table-toolbar-icons">
           <el-button class="toolbar-icon-btn" circle :loading="vulLoading" @click="loadVulData" title="刷新">
-            <el-icon v-show="!vulLoading"><Refresh /></el-icon>
+            <el-icon v-show="!vulLoading">
+              <Refresh />
+            </el-icon>
           </el-button>
         </div>
-        <el-table
-          v-loading="vulLoading"
-          :data="vulTableData"
-          stripe
-          max-height="calc(100vh - 320px)"
-        >
+        <el-table v-loading="vulLoading" :data="vulTableData" stripe max-height="calc(100vh - 320px)">
           <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
           <el-table-column prop="os" label="OS" width="100" />
           <el-table-column prop="os_version" label="OS版本" width="150" />
@@ -178,31 +158,17 @@
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="vulPagination.page"
-          v-model:page-size="vulPagination.pageSize"
-          :page-sizes="[10, 25, 50, 100]"
-          :total="vulPagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handleVulSizeChange"
-          @current-change="handleVulPageChange"
-        />
+        <el-pagination v-model:current-page="vulPagination.page" v-model:page-size="vulPagination.pageSize"
+          :page-sizes="[10, 25, 50, 100]" :total="vulPagination.total" layout="total, sizes, prev, pager, next, jumper"
+          background @size-change="handleVulSizeChange" @current-change="handleVulPageChange" />
       </div>
     </template>
 
     <!-- 补丁报表 Tab -->
     <template v-if="activeTab === 'patch'">
       <div class="ops-filter-bar">
-        <el-input
-          v-model="patchFilterText"
-          placeholder="主机/补丁编号/严重性"
-          size="small"
-          style="width: 220px"
-          clearable
-          @keyup.enter="handlePatchSearch"
-          @clear="handlePatchSearch"
-        >
+        <el-input v-model="patchFilterText" placeholder="主机/补丁编号/严重性" size="small" style="width: 220px" clearable
+          @keyup.enter="handlePatchSearch" @clear="handlePatchSearch">
           <template #prefix>
             <i class="fa fa-search" />
           </template>
@@ -213,15 +179,12 @@
       <div class="ops-table-wrapper">
         <div class="table-toolbar-icons">
           <el-button class="toolbar-icon-btn" circle :loading="patchLoading" @click="loadPatchData" title="刷新">
-            <el-icon v-show="!patchLoading"><Refresh /></el-icon>
+            <el-icon v-show="!patchLoading">
+              <Refresh />
+            </el-icon>
           </el-button>
         </div>
-        <el-table
-          v-loading="patchLoading"
-          :data="patchTableData"
-          stripe
-          max-height="calc(100vh - 320px)"
-        >
+        <el-table v-loading="patchLoading" :data="patchTableData" stripe max-height="calc(100vh - 320px)">
           <el-table-column prop="host_key" label="主机" min-width="100" show-overflow-tooltip />
           <el-table-column prop="os_distro" label="OS" width="100" />
           <el-table-column prop="os_version" label="OS版本" width="100" />
@@ -244,25 +207,15 @@
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="patchPagination.page"
-          v-model:page-size="patchPagination.pageSize"
-          :page-sizes="[10, 25, 50, 100]"
-          :total="patchPagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handlePatchSizeChange"
-          @current-change="handlePatchPageChange"
-        />
+        <el-pagination v-model:current-page="patchPagination.page" v-model:page-size="patchPagination.pageSize"
+          :page-sizes="[10, 25, 50, 100]" :total="patchPagination.total"
+          layout="total, sizes, prev, pager, next, jumper" background @size-change="handlePatchSizeChange"
+          @current-change="handlePatchPageChange" />
       </div>
     </template>
 
     <!-- 运行结果对话框 -->
-    <ExecuteResultDialog
-      v-model:visible="runResultDialogVisible"
-      :run-id="selectedRunId"
-      :title="selectedJobTitle"
-    />
+    <ExecuteResultDialog v-model:visible="runResultDialogVisible" :run-id="selectedRunId" :title="selectedJobTitle" />
   </div>
 </template>
 
@@ -299,9 +252,9 @@ const filteredTableData = computed(() => {
     const message = translateMessage(row.message || '').toLowerCase()
     const username = (row.username || '').toLowerCase()
     return action.includes(keyword) ||
-           ataNode.includes(keyword) ||
-           message.includes(keyword) ||
-           username.includes(keyword)
+      ataNode.includes(keyword) ||
+      message.includes(keyword) ||
+      username.includes(keyword)
   })
 })
 
@@ -323,6 +276,9 @@ const statusFilter = ref('all')
 const dayFilter = ref(1)
 const engineFilter = ref('')
 const searchText = ref('')
+const filters = reactive({
+  keyword: ''
+})
 
 // 分页信息（基于筛选后的数据）
 const paginationInfo = computed(() => {

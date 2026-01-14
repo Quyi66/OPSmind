@@ -4,24 +4,25 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="搜索..."
-            clearable
-            style="width: 240px;"
-          >
+          <el-input v-model="searchKeyword" placeholder="搜索..." clearable style="width: 240px;">
             <template #prefix>
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
-            <el-icon><Search /></el-icon>
+            <el-icon>
+              <Search />
+            </el-icon>
             搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon>
+            <el-icon>
+              <RefreshRight />
+            </el-icon>
             重置
           </el-button>
         </el-form-item>
@@ -33,51 +34,33 @@
       <el-button type="primary" size="small" :icon="Plus" @click="handleCreate">
         新增任务
       </el-button>
-      <el-button
-        size="small"
-        :disabled="!selectedRows.length"
-        @click="() => handleBatchToggle(selectedRows)"
-      >
-        <el-icon><Grid /></el-icon>
+      <el-button size="small" :disabled="!selectedRows.length" @click="() => handleBatchToggle(selectedRows)">
+        <el-icon>
+          <Grid />
+        </el-icon>
         批量启停CRON
       </el-button>
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
-        <el-icon v-show="!loading"><Refresh /></el-icon>
+        <el-icon v-show="!loading">
+          <Refresh />
+        </el-icon>
       </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <CronJobTable
-        :data="filteredTableData"
-        :loading="loading"
-        :applet-map="appletMap"
-        @selection-change="handleSelectionChange"
-        @edit="handleEdit"
-        @delete="handleDelete"
-        @copy="handleCopy"
-        @execute="handleExecuteOnce"
-        @toggle-status="handleToggleStatus"
-        @query-next-time="handleQueryNextTime"
-      />
+      <CronJobTable :data="filteredTableData" :loading="loading" :applet-map="appletMap"
+        @selection-change="handleSelectionChange" @edit="handleEdit" @delete="handleDelete" @copy="handleCopy"
+        @execute="handleExecuteOnce" @toggle-status="handleToggleStatus" @query-next-time="handleQueryNextTime" />
     </div>
 
     <!-- 编辑表单对话框（按需加载） -->
-    <CronJobFormDialog
-      v-if="formDialogVisible"
-      v-model="formDialogVisible"
-      :editing-id="editingId"
-      :applets-list="appletsList"
-      @success="handleFormSuccess"
-    />
+    <CronJobFormDialog v-if="formDialogVisible" v-model="formDialogVisible" :editing-id="editingId"
+      :applets-list="appletsList" @success="handleFormSuccess" />
 
     <!-- 下次执行时间对话框（按需加载） -->
-    <NextExecutionTimeDialog
-      v-if="nextTimeVisible"
-      v-model="nextTimeVisible"
-      :schedule-conf="currentScheduleConf"
-    />
+    <NextExecutionTimeDialog v-if="nextTimeVisible" v-model="nextTimeVisible" :schedule-conf="currentScheduleConf" />
   </div>
 </template>
 
@@ -124,6 +107,11 @@ const {
   handleCopy,
   handleDelete
 } = useCronJobActions(fetchData)
+
+// 筛选表单对象
+const filters = reactive({
+  keyword: ''
+})
 
 // 对话框状态
 const formDialogVisible = ref(false)
