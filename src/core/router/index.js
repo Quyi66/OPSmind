@@ -17,6 +17,7 @@ import { testRoutes } from './routes/test.js'
 import { setupAuthGuard } from './guards/auth.js'
 import { setupPermissionGuard } from './guards/permission.js'
 import { setupFeatureFlagGuard } from './guards/feature-flag.js'
+import { startRouteLoading, finishRouteLoading } from './loading.js'
 
 /**
  * 设置路由器
@@ -47,14 +48,23 @@ export function setupRouter() {
   setupPermissionGuard(router)
   setupFeatureFlagGuard(router)
 
-  // 全局前置守卫
+  // 全局前置守卫 - 开始加载
   router.beforeEach(async (to, from, next) => {
-    // 固定页面标题，避免被各路由覆盖
+    // 固定页面标题
     document.title = 'OPSmind'
 
-    // 记录路由跳转
+    // 如果路由发生变化，开始显示加载状态
+    if (to.path !== from.path) {
+      startRouteLoading()
+    }
 
     next()
+  })
+
+  // beforeResolve - 组件加载完成后触发（异步组件已下载完成）
+  router.beforeResolve(async () => {
+    // 此时异步组件已加载完成，结束加载状态
+    finishRouteLoading()
   })
 
   // 全局后置钩子
@@ -64,6 +74,11 @@ export function setupRouter() {
       detail: { to, from }
     })
     window.dispatchEvent(event)
+  })
+
+  // 导航失败时也要结束加载
+  router.onError(() => {
+    finishRouteLoading()
   })
 
   return router

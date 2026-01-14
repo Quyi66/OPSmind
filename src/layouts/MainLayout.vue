@@ -1,10 +1,7 @@
 <template>
   <div class="main-layout" :class="{ 'is-home': isHomeRoute }">
     <!-- 顶部菜单 -->
-    <TopNavMenu
-      :user="currentUser"
-      class="main-header"
-    />
+    <TopNavMenu :user="currentUser" class="main-header" />
 
     <!-- 主体区域 -->
     <div class="main-body">
@@ -26,11 +23,7 @@
     </div>
 
     <!-- 移动端侧边栏遮罩 -->
-    <div
-      v-if="isMobile"
-      class="mobile-overlay"
-      @click="closeMobileMenu"
-    ></div>
+    <div v-if="isMobile" class="mobile-overlay" @click="closeMobileMenu"></div>
   </div>
 </template>
 
@@ -98,7 +91,7 @@ const handleCloseModule = () => {
     } else {
       router.push('/home')
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 /**
