@@ -3,6 +3,16 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
 
+// Element Plus 按需导入插件
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import Icons from 'unplugin-icons/vite'
+import IconsResolver from 'unplugin-icons/resolver'
+
+// 生产环境压缩插件
+import { compression } from 'vite-plugin-compression2'
+
 const DEFAULT_BACKEND_TARGET = 'http://10.1.40.112:80'
 
 function normalizeTarget(value: string | undefined, fallback: string): string {
@@ -31,6 +41,38 @@ export default defineConfig(({ command, mode }): UserConfig => {
           propsDestructure: true
         }
       }),
+
+      // 自动导入 Vue/Element Plus API（如 ref, ElMessage 等）
+      AutoImport({
+        imports: ['vue', 'vue-router'],
+        resolvers: [
+          ElementPlusResolver(),
+          // 自动导入图标
+          IconsResolver({
+            prefix: 'Icon',
+          }),
+        ],
+        dts: 'src/auto-imports.d.ts',
+      }),
+
+      // 自动注册 Element Plus 组件（无需手动 import）
+      Components({
+        resolvers: [
+          // Element Plus 组件解析器
+          ElementPlusResolver(),
+          // 图标解析器（使用 i-ep-xxx 语法）
+          IconsResolver({
+            enabledCollections: ['ep'],
+          }),
+        ],
+        dts: 'src/components.d.ts',
+      }),
+
+      // 图标支持（按需加载）
+      Icons({
+        autoInstall: true,
+      }),
+
       // 在开发环境下，将 /ops 重定向为 /ops/，避免 Vite base 提示
       {
         name: 'ops-trailing-slash-redirect',
@@ -50,7 +92,21 @@ export default defineConfig(({ command, mode }): UserConfig => {
             next()
           })
         }
-      }
+      },
+
+      // 生产环境启用 gzip 和 brotli 压缩
+      ...(isProduction ? [
+        compression({
+          algorithm: 'gzip',
+          exclude: [/\.(br)$/, /\.(gz)$/],
+          threshold: 1024, // 只压缩大于 1KB 的文件
+        }),
+        compression({
+          algorithm: 'brotliCompress',
+          exclude: [/\.(br)$/, /\.(gz)$/],
+          threshold: 1024,
+        }),
+      ] : []),
     ],
 
     base: mode === 'production' ? '/ops/' : '/ops/',

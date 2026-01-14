@@ -3,11 +3,13 @@
   src: url(./PingFang.ttf) format('truetype');
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'PingFang-Bold';
   src: url(./PingFang-Bold.ttf) format('truetype');
+  font-display: swap;
 }
 
 // @font-face {
@@ -28,9 +30,11 @@
 @font-face {
   font-family: 'PingFang-Medium';
   src: url(./PingFang-Medium.ttf) format('truetype');
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'PingFang-Regular';
   src: url(./PingFang-Regular.ttf) format('truetype');
+  font-display: swap;
 }

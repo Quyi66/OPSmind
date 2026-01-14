@@ -4,10 +4,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="OPSmind 智能运维管理平台">
   <title>OPSmind</title>
 
-  <!-- 引入 FontAwesome Pro 图标库（包含 Duotone 图标），与 AngularJS 应用保持一致 -->
-  <link rel="stylesheet" href="/fontawesome-pro/css/all.min.css">
+
+  <!-- 预加载 FontAwesome Pro 图标库（避免阻塞渲染） -->
+  <link rel="preload" href="/fontawesome-pro/css/all.min.css" as="style"
+    onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="/fontawesome-pro/css/all.min.css">
+  </noscript>
 
   <!-- Runtime config for Dify base/token (used by bubble embed) -->
   <script src="/runtime-config.js" defer></script>

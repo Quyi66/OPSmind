@@ -1,9 +1,9 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
+// Element Plus - JS 按需导入（通过 unplugin 自动完成），CSS 全量导入保持样式稳定
+import { ElMessage, ElMessageBox, ElLoading, ElNotification } from 'element-plus'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import 'element-plus/dist/index.css'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 import App from './App.vue'
 import { setupRouter } from '@/core/router'
@@ -93,14 +93,17 @@ async function bootstrapAuthFromUrl() {
 // 等待 URL 认证引导完成，避免首跳触发登录页
 await bootstrapAuthFromUrl()
 
-// 注册 Element Plus 图标
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component)
-}
-
 // 设置插件
 app.use(createPinia())
-app.use(ElementPlus, { locale: zhCn })
+
+// Element Plus 全局配置（用于 ElMessage 等命令式组件）
+app.config.globalProperties.$message = ElMessage
+app.config.globalProperties.$msgbox = ElMessageBox
+app.config.globalProperties.$loading = ElLoading
+app.config.globalProperties.$notify = ElNotification
+
+// 配置 Element Plus 语言
+app.provide('elLocale', zhCn)
 
 // 规范化基础路径：将 /ops 重写为 /ops/（保留查询与 hash）
 function normalizeBaseTrailingSlash() {
