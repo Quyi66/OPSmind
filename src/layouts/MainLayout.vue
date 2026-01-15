@@ -82,15 +82,12 @@ const closeMobileMenu = () => {
   }
 }
 
-// 关闭当前内嵌模块（返回上一页）
+// 关闭当前内嵌模块（返回到打开前的页面，避免堆栈式切换）
 const handleCloseModule = () => {
   try {
+    const targetPath = menuStore.previousPath || '/home'
     menuStore.clearActiveMenu()
-    if (window.history.length > 1) {
-      router.back()
-    } else {
-      router.push('/home')
-    }
+    router.replace(targetPath)
   } catch (e) { }
 }
 

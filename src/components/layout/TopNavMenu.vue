@@ -46,10 +46,8 @@
           </el-tooltip>
 
           <!-- Notification Button -->
-          <NotificationPopover
-            v-model:visible="notificationPopoverVisible"
-            @count-change="handleNotificationCountChange"
-          >
+          <NotificationPopover v-model:visible="notificationPopoverVisible"
+            @count-change="handleNotificationCountChange">
             <div class="notification-wrapper">
               <el-tooltip content="通知" placement="bottom" :disabled="notificationPopoverVisible">
                 <button class="notification-btn" aria-label="通知">
@@ -102,11 +100,8 @@
 
           <!-- Settings Button -->
           <el-tooltip content="设置" placement="bottom">
-            <button
-              @click="handleSettingsClick"
-              class="menu-action-btn"
-              :class="{ 'is-settings-active': isSettingsActive }"
-            >
+            <button @click="handleSettingsClick" class="menu-action-btn"
+              :class="{ 'is-settings-active': isSettingsActive }">
               <el-icon>
                 <Setting />
               </el-icon>
@@ -371,8 +366,8 @@ const toggleMobileMenu = () => {
 const handleUserCommand = command => {
   switch (command) {
     case 'profile':
-      // 跳转到个人资料页面
-      router.push('/settings')
+      // 通过 menuStore 打开个人资料页面，自动记录当前路径以便关闭时返回
+      menuStore.setActiveMenuItem('settings')
       break
     case 'admin': {
       // 新开页签进入管理后台 /ops/#/admin，并自动携带 token（便于新 Tab 自动登录）
@@ -400,7 +395,7 @@ const handleLogout = async () => {
   try {
     ElMessage.success('正在安全登出...')
     // 清理账户缓存
-    try { accountService.clear() } catch {}
+    try { accountService.clear() } catch { }
     await authService.logout()
   } catch (error) {
     console.error('Logout error:', error)
@@ -417,7 +412,7 @@ const handleSettingsClick = () => {
   // 顶部“设置”按钮：通过 Inline Iframe 打开 /#/ssc
   try {
     menuStore.setActiveMenuItem('ssc')
-  } catch (e) {}
+  } catch (e) { }
 }
 
 // Dify runtime token: prefer URL param, then runtime-config.js, then env; no hardcoded fallback
@@ -427,7 +422,7 @@ function getDifyToken() {
   try {
     const urlToken = new URLSearchParams(location.search).get('token')
     if (urlToken) return urlToken
-  } catch {}
+  } catch { }
   // 2) LocalStorage (dev convenience)
   try {
     const ls = window.localStorage
@@ -436,12 +431,12 @@ function getDifyToken() {
       const v = ls.getItem(k)
       if (v) return v
     }
-  } catch {}
+  } catch { }
   // 3) Runtime config
   try {
     const rt = (window).__OPS_RUNTIME__ || {}
     if (rt.DIFY_TOKEN) return rt.DIFY_TOKEN
-  } catch {}
+  } catch { }
   // 4) Env var
   try {
     return import.meta.env.VITE_DIFY_TOKEN || DEFAULT_DIFY_TOKEN
@@ -580,7 +575,7 @@ function ensureOpsBubble() {
         // 额外预留 8px 间距
         const top = Math.max(0, Math.round(h + 8))
         panel.style.top = top + 'px'
-      } catch {}
+      } catch { }
     }
     setPanelTopOffset()
     window.addEventListener('resize', setPanelTopOffset)
@@ -624,7 +619,7 @@ function prewarmAiOps() {
       dns.href = difyBase
       document.head.appendChild(dns)
     }
-  } catch {}
+  } catch { }
 }
 
 // 处理关于下拉菜单命令
@@ -654,7 +649,7 @@ async function openVersionDialog() {
     try {
       const angularBase = appUrlManager.getAngularBaseUrl() || '/oplus/base'
       candidates.push(`${angularBase}/app/modules/VERSION.json`)
-    } catch {}
+    } catch { }
     candidates.push(`${window.location.origin}/oplus/base/app/modules/VERSION.json`)
     candidates.push('http://localhost:18080/oplus/base/app/modules/VERSION.json')
 
@@ -718,7 +713,7 @@ onMounted(() => {
     } else {
       setTimeout(() => prewarmAiOps(), 0)
     }
-  } catch {}
+  } catch { }
 })
 
 onUnmounted(() => {
@@ -752,6 +747,7 @@ onUnmounted(() => {
 .about-table :deep(.el-table__inner-wrapper::before) {
   display: none;
 }
+
 // 顶部导航包装器
 .top-nav-wrapper {
   position: sticky;
@@ -777,7 +773,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   /* 与内容区对齐：左右内边距与主容器一致；进一步减小高度 */
-  padding: 0.25rem 1rem; /* 再次收紧垂直间距 */
+  padding: 0.25rem 1rem;
+  /* 再次收紧垂直间距 */
   /* 顶部菜单与内容区使用相同的定宽容器 */
   max-width: var(--app-max-width);
   margin: 0 auto;
@@ -805,7 +802,8 @@ onUnmounted(() => {
 }
 
 .brand-logo {
-  height: 1.5rem; /* shrink logo to reduce header height */
+  height: 1.5rem;
+  /* shrink logo to reduce header height */
   width: auto;
   object-fit: contain;
   object-position: center;
@@ -826,7 +824,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.3rem 0.5rem; /* 进一步收紧内边距 */
+  padding: 0.3rem 0.5rem;
+  /* 进一步收紧内边距 */
   margin: 0 0.25rem;
   border-radius: 0.5rem;
   text-decoration: none;
@@ -846,7 +845,8 @@ onUnmounted(() => {
 }
 
 .nav-icon {
-  width: 1.25rem; /* 放大图标尺寸 */
+  width: 1.25rem;
+  /* 放大图标尺寸 */
   height: 1.25rem;
   border-radius: 0.25rem;
   flex-shrink: 0;
@@ -854,7 +854,8 @@ onUnmounted(() => {
 }
 
 .nav-text {
-  font-size: 1rem; /* 字体放大一档 */
+  font-size: 1rem;
+  /* 字体放大一档 */
   font-weight: 500;
 }
 
@@ -922,7 +923,8 @@ onUnmounted(() => {
 }
 
 .ai-ops-simple {
-  height: 1.5rem; /* 按要求放大到 1.5rem */
+  height: 1.5rem;
+  /* 按要求放大到 1.5rem */
   width: auto;
   object-fit: contain;
   object-position: center;
@@ -952,7 +954,8 @@ onUnmounted(() => {
 }
 
 .notification-icon {
-  width: 1.25rem; /* 放大图标尺寸 */
+  width: 1.25rem;
+  /* 放大图标尺寸 */
   height: 1.25rem;
 }
 
@@ -984,7 +987,8 @@ onUnmounted(() => {
   border-radius: 0.375rem;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
-  width: 2rem;   /* 放大触控目标 */
+  width: 2rem;
+  /* 放大触控目标 */
   height: 2rem;
 
   &:hover {
@@ -998,7 +1002,8 @@ onUnmounted(() => {
   }
 
   .el-icon {
-    font-size: 1.25rem; /* 放大内部图标 */
+    font-size: 1.25rem;
+    /* 放大内部图标 */
   }
 }
 
@@ -1042,7 +1047,8 @@ onUnmounted(() => {
 
 .user-name {
   display: none;
-  font-size: 1rem; /* 放大用户名字号 */
+  font-size: 1rem;
+  /* 放大用户名字号 */
   color: #374151;
 
   @media (min-width: 768px) {
@@ -1052,7 +1058,8 @@ onUnmounted(() => {
 
 .dropdown-arrow {
   display: none;
-  width: 1.25rem;  /* 放大下拉箭头 */
+  width: 1.25rem;
+  /* 放大下拉箭头 */
   height: 1.25rem;
   color: #9ca3af;
 
@@ -1063,7 +1070,8 @@ onUnmounted(() => {
 
 // Language icon sizing within el-icon
 .language-icon {
-  width: 1.25rem;  /* 放大语言图标 */
+  width: 1.25rem;
+  /* 放大语言图标 */
   height: 1.25rem;
   display: block;
 }
@@ -1108,7 +1116,8 @@ onUnmounted(() => {
 }
 
 .mobile-nav-icon {
-  width: 1.25rem; /* 移动端图标同步放大 */
+  width: 1.25rem;
+  /* 移动端图标同步放大 */
   height: 1.25rem;
   border-radius: 0.25rem;
   flex-shrink: 0;
@@ -1116,7 +1125,8 @@ onUnmounted(() => {
 }
 
 .mobile-nav-text {
-  font-size: 1rem; /* 移动端字体同步放大 */
+  font-size: 1rem;
+  /* 移动端字体同步放大 */
   font-weight: 500;
 }
 

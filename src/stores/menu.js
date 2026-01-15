@@ -27,6 +27,7 @@ export const useMenuStore = defineStore('menu', () => {
   const sideMenuCollapsed = ref(false) // 左侧菜单是否折叠
   const showSideMenu = ref(false) // 是否显示左侧菜单
   const recentItems = ref(loadRecent()) // 最近使用功能
+  const previousPath = ref('') // 打开独立页面前的路径，用于关闭时返回
   // 独立页面（不属于任何分组的内嵌页），打开时隐藏左侧二级菜单
   const STANDALONE_ITEMS = ['settings', 'ssc']
 
@@ -85,11 +86,17 @@ export const useMenuStore = defineStore('menu', () => {
     // 独立页面：隐藏左侧菜单，但仍需推送路由
     if (STANDALONE_ITEMS.includes(menuCode)) {
       showSideMenu.value = false
-      // 推送路由到独立页面
+      // 记录当前路径（如果不是独立页面），用于关闭时返回
       try {
         const r = getRouter()
         if (r) {
-          r.push(`/${menuCode}`)
+          const currentPath = r.currentRoute.value.path
+          // 只有当前不是独立页面时才记录
+          if (!STANDALONE_ITEMS.some(item => currentPath.startsWith(`/${item}`))) {
+            previousPath.value = currentPath
+          }
+          // 使用 replace 推送路由到独立页面，避免累积历史记录
+          r.replace(`/${menuCode}`)
         }
       } catch (e) {
         console.warn('Failed to push route for standalone item:', menuCode, e)
@@ -251,6 +258,7 @@ export const useMenuStore = defineStore('menu', () => {
     sideMenuCollapsed,
     showSideMenu,
     recentItems,
+    previousPath,
 
     // 计算属性
     currentGroup,
