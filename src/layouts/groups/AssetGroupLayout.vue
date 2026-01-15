@@ -8,9 +8,7 @@
       <!-- 实际内容（始终渲染） -->
       <router-view v-slot="{ Component, route }">
         <transition name="fade-content" mode="out-in">
-          <keep-alive :max="5">
-            <component :is="Component" :key="route.path" />
-          </keep-alive>
+          <component :is="Component" :key="route.path" />
         </transition>
       </router-view>
 

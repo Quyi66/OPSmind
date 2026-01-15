@@ -14,8 +14,13 @@
     <div class="page-content">
       <!-- KPI 统计卡片 -->
       <div class="kpi-cards">
-        <div v-for="kpi in kpiList" :key="kpi.name" class="kpi-card" :class="[`kpi-card--${kpi.theme}`]"
-          @click="handleKpiClick(kpi)">
+        <div
+          v-for="kpi in kpiList"
+          :key="kpi.name"
+          class="kpi-card"
+          :class="[`kpi-card--${kpi.theme}`]"
+          @click="handleKpiClick(kpi)"
+        >
           <div class="kpi-card__icon" v-if="kpi.icon">
             <i :class="['fa', kpi.icon]" />
           </div>
@@ -28,12 +33,19 @@
 
       <!-- 导航标签 -->
       <div class="nav-tabs">
-        <div class="nav-tab" :class="{ 'nav-tab--active': activeTab === 'host' }" @click="activeTab = 'host'">
+        <div
+          class="nav-tab"
+          :class="{ 'nav-tab--active': activeTab === 'host' }"
+          @click="activeTab = 'host'"
+        >
           <i class="fa fa-laptop" />
           主机概览
         </div>
-        <div class="nav-tab" :class="{ 'nav-tab--active': activeTab === 'vulnerability' }"
-          @click="activeTab = 'vulnerability'">
+        <div
+          class="nav-tab"
+          :class="{ 'nav-tab--active': activeTab === 'vulnerability' }"
+          @click="activeTab = 'vulnerability'"
+        >
           <i class="fa fa-bug" />
           漏洞概览
         </div>
@@ -45,7 +57,12 @@
         <div class="ops-filter-bar">
           <el-form :model="hostFilters" inline size="small">
             <el-form-item label="关键词">
-              <el-input v-model="filterText" placeholder="输入字符搜索" style="width: 200px" clearable>
+              <el-input
+                v-model="filterText"
+                placeholder="输入字符搜索"
+                style="width: 200px"
+                clearable
+              >
                 <template #prefix>
                   <el-icon>
                     <Search />
@@ -75,8 +92,15 @@
           <!-- <el-button size="small" @click="handleExport">
             <i class="fa fa-download" /> 导出
           </el-button> -->
-          <span style="flex: 1;"></span>
-          <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="refresh" title="刷新">
+          <span style="flex: 1"></span>
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            size="small"
+            :loading="loading"
+            @click="refresh"
+            title="刷新"
+          >
             <el-icon v-show="!loading">
               <Refresh />
             </el-icon>
@@ -85,8 +109,13 @@
 
         <!-- 表格 -->
         <div class="ops-table-wrapper">
-          <el-table v-loading="loading" :data="hostTableData" stripe style="width: 100%"
-            max-height="calc(100vh - 500px)">
+          <el-table
+            v-loading="loading"
+            :data="hostTableData"
+            stripe
+            style="width: 100%"
+            max-height="calc(100vh - 500px)"
+          >
             <el-table-column prop="host_key" label="主机" min-width="140">
               <template #default="{ row }">
                 <a href="javascript:void(0)" class="host-link" @click="handleHostClick(row)">
@@ -99,7 +128,8 @@
             <el-table-column prop="os_version" label="OS版本" width="120" />
             <el-table-column prop="num_critical" width="90">
               <template #header>
-                严重 <i class="fa fa-circle text-danger" />
+                严重
+                <i class="fa fa-circle text-danger" />
               </template>
               <template #default="{ row }">
                 <span :class="{ 'text-danger font-bold': row.num_critical > 0 }">
@@ -109,7 +139,8 @@
             </el-table-column>
             <el-table-column prop="num_important" width="90">
               <template #header>
-                重要 <i class="fa fa-circle text-warning" />
+                重要
+                <i class="fa fa-circle text-warning" />
               </template>
               <template #default="{ row }">
                 <span :class="{ 'text-warning font-bold': row.num_important > 0 }">
@@ -119,12 +150,14 @@
             </el-table-column>
             <el-table-column prop="num_moderate" width="90">
               <template #header>
-                中等 <i class="fa fa-circle text-dark" />
+                中等
+                <i class="fa fa-circle text-dark" />
               </template>
             </el-table-column>
             <el-table-column prop="num_low" width="80">
               <template #header>
-                低 <i class="fa fa-circle text-info" />
+                低
+                <i class="fa fa-circle text-info" />
               </template>
             </el-table-column>
             <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
@@ -137,9 +170,16 @@
 
         <!-- 分页 -->
         <div class="ops-pagination-wrapper">
-          <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
-            background @size-change="handleSizeChange" @current-change="handlePageChange" />
+          <el-pagination
+            v-model:current-page="pagination.page"
+            v-model:page-size="pagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="pagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="handleSizeChange"
+            @current-change="handlePageChange"
+          />
         </div>
       </div>
 
@@ -149,10 +189,20 @@
         <div class="ops-filter-bar">
           <el-form :model="vulnFilters" inline size="small">
             <el-form-item label="主机" label-width="40">
-              <el-input v-model="vulnFilters.host_key" placeholder="输入主机IP" style="width: 130px" clearable />
+              <el-input
+                v-model="vulnFilters.host_key"
+                placeholder="输入主机IP"
+                style="width: 130px"
+                clearable
+              />
             </el-form-item>
             <el-form-item label="CVE" label-width="40">
-              <el-input v-model="vulnFilters.vul_id" placeholder="输入CVE编号" style="width: 130px" clearable />
+              <el-input
+                v-model="vulnFilters.vul_id"
+                placeholder="输入CVE编号"
+                style="width: 130px"
+                clearable
+              />
             </el-form-item>
             <el-form-item label="严重程度" label-width="70">
               <el-select v-model="vulnFilters.severity" style="width: 80px">
@@ -214,15 +264,27 @@
 
         <!-- 操作栏 -->
         <div class="ops-action-bar">
-          <el-button type="primary" size="small" :disabled="selectedVulns.length === 0" @click="handleFixSelected">
-            <i class="fa fa-tools" /> 修复选定的漏洞
+          <el-button
+            type="primary"
+            size="small"
+            :disabled="selectedVulns.length === 0"
+            @click="handleFixSelected"
+          >
+            <i class="fa fa-tools" />
+            修复选定的漏洞
           </el-button>
           <!-- <el-button size="small" @click="handleVulnExport">
             <i class="fa fa-download" /> 导出
           </el-button> -->
-          <span style="flex: 1;"></span>
-          <el-button class="toolbar-icon-btn" circle size="small" :loading="vulnLoading" @click="loadVulnData"
-            title="刷新">
+          <span style="flex: 1"></span>
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            size="small"
+            :loading="vulnLoading"
+            @click="loadVulnData"
+            title="刷新"
+          >
             <el-icon v-show="!vulnLoading">
               <Refresh />
             </el-icon>
@@ -231,8 +293,15 @@
 
         <!-- 表格 -->
         <div class="ops-table-wrapper">
-          <el-table ref="vulnTableRef" v-loading="vulnLoading" :data="vulnTableData" stripe style="width: 100%"
-            max-height="calc(100vh - 500px)" @selection-change="handleVulnSelectionChange">
+          <el-table
+            ref="vulnTableRef"
+            v-loading="vulnLoading"
+            :data="vulnTableData"
+            stripe
+            style="width: 100%"
+            max-height="calc(100vh - 500px)"
+            @selection-change="handleVulnSelectionChange"
+          >
             <el-table-column type="selection" width="45" />
             <el-table-column prop="host_key" label="主机" width="130">
               <template #default="{ row }">
@@ -250,14 +319,23 @@
                 </a>
               </template>
             </el-table-column>
-            <el-table-column prop="affected_pkgs" label="影响的软件包" min-width="180" show-overflow-tooltip>
+            <el-table-column
+              prop="affected_pkgs"
+              label="影响的软件包"
+              min-width="180"
+              show-overflow-tooltip
+            >
               <template #default="{ row }">
                 <div class="pkg-list">{{ row.affected_pkgs }}</div>
               </template>
             </el-table-column>
             <el-table-column prop="vul_id" label="CVE" width="150">
               <template #default="{ row }">
-                <a :href="`https://access.redhat.com/security/cve/${row.vul_id}`" target="_blank" class="cve-badge">
+                <a
+                  :href="`https://access.redhat.com/security/cve/${row.vul_id}`"
+                  target="_blank"
+                  class="cve-badge"
+                >
                   {{ row.vul_id }}
                 </a>
               </template>
@@ -271,10 +349,16 @@
             </el-table-column>
             <el-table-column prop="reboot_status" label="重启要求" width="100">
               <template #default="{ row }">
-                <el-tag v-if="row.reboot_status" :type="row.reboot_status === '系统重启' ? 'danger' : 'warning'"
-                  size="small" round>
-                  <i :class="row.reboot_status === '系统重启' ? 'fa fa-power-off' : 'fa fa-server'"
-                    style="margin-right: 4px" />
+                <el-tag
+                  v-if="row.reboot_status"
+                  :type="row.reboot_status === '系统重启' ? 'danger' : 'warning'"
+                  size="small"
+                  round
+                >
+                  <i
+                    :class="row.reboot_status === '系统重启' ? 'fa fa-power-off' : 'fa fa-server'"
+                    style="margin-right: 4px"
+                  />
                   {{ row.reboot_status === '系统重启' ? '系统' : '服务' }}
                 </el-tag>
               </template>
@@ -288,8 +372,13 @@
             </el-table-column>
             <el-table-column prop="patch_status" label="状态" width="110">
               <template #default="{ row }">
-                <el-tag :type="getPatchStatusType(row.patch_status)" size="small" round
-                  :class="{ 'clickable-status': row.run_id }" @click="row.run_id && handleViewRunResult(row)">
+                <el-tag
+                  :type="getPatchStatusType(row.patch_status)"
+                  size="small"
+                  round
+                  :class="{ 'clickable-status': row.run_id }"
+                  @click="row.run_id && handleViewRunResult(row)"
+                >
                   <i :class="getPatchStatusIcon(row.patch_status)" style="margin-right: 4px" />
                   {{ row.patch_status }}
                 </el-tag>
@@ -302,8 +391,13 @@
             </el-table-column>
             <el-table-column label="操作" width="80" fixed="right">
               <template #default="{ row }">
-                <el-button text type="primary" size="small"
-                  :disabled="row.patch_status !== '已修复' && row.patch_status !== '回滚失败'" @click="handleRollback(row)">
+                <el-button
+                  text
+                  type="primary"
+                  size="small"
+                  :disabled="row.patch_status !== '已修复' && row.patch_status !== '回滚失败'"
+                  @click="handleRollback(row)"
+                >
                   回滚
                 </el-button>
               </template>
@@ -313,10 +407,16 @@
 
         <!-- 分页 -->
         <div class="ops-pagination-wrapper">
-          <el-pagination v-model:current-page="vulnPagination.page" v-model:page-size="vulnPagination.pageSize"
-            :page-sizes="[10, 20, 50, 100]" :total="vulnPagination.total"
-            layout="total, sizes, prev, pager, next, jumper" background @size-change="handleVulnSizeChange"
-            @current-change="handleVulnPageChange" />
+          <el-pagination
+            v-model:current-page="vulnPagination.page"
+            v-model:page-size="vulnPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="vulnPagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="handleVulnSizeChange"
+            @current-change="handleVulnPageChange"
+          />
         </div>
       </div>
     </div>
@@ -325,58 +425,79 @@
     <el-dialog v-model="rescanDialogVisible" title="重新扫描补丁" width="600px">
       <el-form ref="rescanFormRef" :model="rescanForm" label-width="100px">
         <el-form-item label="选择主机">
-          <AcmDeviceSelector v-model="selectedHosts" ci-types="[auto]" :options="{
-            selectMode: 'host,group,tag,input,recently',
-            selector: 'multiple',
-            label: '选择主机'
-          }" />
+          <AcmDeviceSelector
+            v-model="selectedHosts"
+            ci-types="[auto]"
+            :options="{
+              selectMode: 'host,group,tag,input,recently',
+              selector: 'multiple',
+              label: '选择主机'
+            }"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="rescanDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="rescanLoading" :disabled="selectedHosts.length === 0"
-          @click="executeRescan">
+        <el-button
+          type="primary"
+          :loading="rescanLoading"
+          :disabled="selectedHosts.length === 0"
+          @click="executeRescan"
+        >
           开始扫描
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 作业运行结果对话框 -->
-    <ExecuteResultDialog v-if="runResultDialogVisible" v-model:visible="runResultDialogVisible"
-      :run-id="runResultRunId" />
+    <ExecuteResultDialog
+      v-if="runResultDialogVisible"
+      v-model:visible="runResultDialogVisible"
+      :run-id="runResultRunId"
+    />
 
     <!-- 修复漏洞确认对话框 -->
     <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="700px" destroy-on-close>
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
         <div class="fix-info-card">
           <div class="fix-info-header">
-            <i class="fa fa-desktop text-muted" /> 待更新的主机
+            <i class="fa fa-desktop text-muted" />
+            待更新的主机
           </div>
           <div class="fix-info-body" v-html="fixDialogData.hosts || '-'"></div>
         </div>
         <div class="fix-info-card">
           <div class="fix-info-header">
-            <i class="fa fa-briefcase-medical text-muted" /> 待更新的补丁
+            <i class="fa fa-briefcase-medical text-muted" />
+            待更新的补丁
           </div>
           <div class="fix-info-body" v-html="fixDialogData.patches || '-'"></div>
         </div>
         <div class="fix-info-card">
           <div class="fix-info-header">
-            <i class="fa fa-suitcase text-muted" /> 待更新的 CVE
+            <i class="fa fa-suitcase text-muted" />
+            待更新的 CVE
           </div>
           <div class="fix-info-body" v-html="fixDialogData.cves || '-'"></div>
         </div>
         <div class="fix-info-card">
           <div class="fix-info-header">
-            <i class="fa fa-cube text-muted" /> 待更新的软件包
+            <i class="fa fa-cube text-muted" />
+            待更新的软件包
           </div>
           <div class="fix-info-body" v-html="fixDialogData.packages || '-'"></div>
         </div>
       </div>
       <template #footer>
         <el-button @click="fixDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="fixSubmitting" :disabled="!fixDialogData.hosts" @click="handleConfirmFix">
-          <i class="fa fa-chevron-right" /> 开始更新
+        <el-button
+          type="primary"
+          :loading="fixSubmitting"
+          :disabled="!fixDialogData.hosts"
+          @click="handleConfirmFix"
+        >
+          <i class="fa fa-chevron-right" />
+          开始更新
         </el-button>
       </template>
     </el-dialog>
@@ -399,9 +520,30 @@ const activeTab = ref('host')
 
 // KPI 数据
 const kpiList = ref([
-  { name: '严重补丁数', value: 0, icon: 'fa-exclamation-triangle', theme: 'danger', linkPage: 'Ol37gK', pageParam: 'Critical' },
-  { name: '重要补丁数', value: 0, icon: 'fa-exclamation-circle', theme: 'warning', linkPage: 'Ol37gK', pageParam: 'Important' },
-  { name: '漏洞数量', value: 0, icon: 'fa-virus', theme: 'secondary', linkPage: 'JrJ8lz', pageParam: '' },
+  {
+    name: '严重补丁数',
+    value: 0,
+    icon: 'fa-exclamation-triangle',
+    theme: 'danger',
+    linkPage: 'Ol37gK',
+    pageParam: 'Critical'
+  },
+  {
+    name: '重要补丁数',
+    value: 0,
+    icon: 'fa-exclamation-circle',
+    theme: 'warning',
+    linkPage: 'Ol37gK',
+    pageParam: 'Important'
+  },
+  {
+    name: '漏洞数量',
+    value: 0,
+    icon: 'fa-virus',
+    theme: 'secondary',
+    linkPage: 'JrJ8lz',
+    pageParam: ''
+  },
   { name: '严重漏洞主机', value: 0, icon: '', theme: 'secondary', linkPage: '', pageParam: '' },
   { name: '重要漏洞主机', value: 0, icon: '', theme: 'secondary', linkPage: '', pageParam: '' },
   { name: '扫描主机数', value: 0, icon: '', theme: 'secondary', linkPage: '', pageParam: '' }
@@ -530,13 +672,6 @@ async function loadKpiData() {
     }
   } catch (error) {
     console.error('Failed to load KPI data:', error)
-    // 模拟数据
-    kpiList.value[0].value = 12
-    kpiList.value[1].value = 45
-    kpiList.value[2].value = 23
-    kpiList.value[3].value = 8
-    kpiList.value[4].value = 15
-    kpiList.value[5].value = 89
   }
 }
 
@@ -721,10 +856,10 @@ function formatDate(dateStr) {
 // 获取严重程度类型
 function getSeverityType(severity) {
   const typeMap = {
-    'Critical': 'danger',
-    'Important': 'warning',
-    'Moderate': '',
-    'Low': 'info'
+    Critical: 'danger',
+    Important: 'warning',
+    Moderate: '',
+    Low: 'info'
   }
   return typeMap[severity] || 'info'
 }
@@ -732,14 +867,14 @@ function getSeverityType(severity) {
 // 获取补丁状态类型
 function getPatchStatusType(status) {
   const typeMap = {
-    '未修复': 'info',
-    '已修复': 'success',
+    未修复: 'info',
+    已修复: 'success',
     '已修复(手动)': 'success',
-    '修复中': '',
-    '修复失败': 'warning',
-    '回滚中': '',
-    '回滚失败': 'warning',
-    '回滚成功': 'info'
+    修复中: '',
+    修复失败: 'warning',
+    回滚中: '',
+    回滚失败: 'warning',
+    回滚成功: 'info'
   }
   return typeMap[status] || 'info'
 }
@@ -747,14 +882,14 @@ function getPatchStatusType(status) {
 // 获取补丁状态图标
 function getPatchStatusIcon(status) {
   const iconMap = {
-    '未修复': 'fa fa-times',
-    '已修复': 'fa fa-check',
+    未修复: 'fa fa-times',
+    已修复: 'fa fa-check',
     '已修复(手动)': 'fa fa-check',
-    '修复中': 'fa fa-cog fa-spin',
-    '修复失败': 'fa fa-exclamation-triangle',
-    '回滚中': 'fa fa-cog fa-spin',
-    '回滚失败': 'fa fa-exclamation-triangle',
-    '回滚成功': 'fa fa-check'
+    修复中: 'fa fa-cog fa-spin',
+    修复失败: 'fa fa-exclamation-triangle',
+    回滚中: 'fa fa-cog fa-spin',
+    回滚失败: 'fa fa-exclamation-triangle',
+    回滚成功: 'fa fa-check'
   }
   return iconMap[status] || 'fa fa-circle'
 }
@@ -871,12 +1006,14 @@ function removeSelectedHost(index) {
 // 更新主机输入框内容
 function updateHostsInput() {
   // 从选中的主机中提取主机名
-  const hostList = selectedHosts.value.map(h => {
-    if (typeof h === 'object') {
-      return h.value || h.hostname || h.name || h.host_key || ''
-    }
-    return String(h)
-  }).filter(Boolean)
+  const hostList = selectedHosts.value
+    .map(h => {
+      if (typeof h === 'object') {
+        return h.value || h.hostname || h.name || h.host_key || ''
+      }
+      return String(h)
+    })
+    .filter(Boolean)
   rescanForm.hostsInput = hostList.join('\n')
 }
 
@@ -913,7 +1050,7 @@ function refresh() {
 }
 
 // 监听 tab 切换
-watch(activeTab, (newTab) => {
+watch(activeTab, newTab => {
   if (newTab === 'vulnerability' && vulnTableData.value.length === 0) {
     loadVulnData()
   }
@@ -941,9 +1078,9 @@ defineExpose({
 
 .page-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
-  padding: 0 16px 8px 16px;
+  padding: 0 16px 8px 0;
   background: #fff;
   //border-bottom: 1px solid #e9ecef;
 
@@ -1257,22 +1394,22 @@ defineExpose({
 // 文字颜色 - Element UI 色值
 // 严重 - 红色 (danger)
 .text-danger {
-  color: #F56C6C;
+  color: #f56c6c;
 }
 
 // 重要 - 橙色 (warning)
 .text-warning {
-  color: #E6A23C;
+  color: #e6a23c;
 }
 
 // 中等 - 黄绿色
 .text-dark {
-  color: #C9A66B;
+  color: #c9a66b;
 }
 
 // 低 - 蓝色 (primary)
 .text-info {
-  color: #409EFF;
+  color: #409eff;
 }
 
 .font-bold {

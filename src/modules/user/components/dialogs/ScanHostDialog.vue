@@ -10,7 +10,8 @@
       <!-- 设备选择器 -->
       <div class="section">
         <div class="section__title">
-          <i class="fa fa-server"></i> 选择主机
+          <i class="fa fa-server"></i>
+          选择主机
         </div>
         <div class="section__content">
           <AcmDeviceSelector
@@ -28,7 +29,8 @@
       <!-- 扫描说明 -->
       <div class="section">
         <div class="section__title">
-          <i class="fa fa-info-circle"></i> 说明
+          <i class="fa fa-info-circle"></i>
+          说明
         </div>
         <div class="section__content scan-info">
           <p>扫描主机将收集以下信息：</p>
@@ -52,7 +54,7 @@
           :disabled="!selectedHosts.length"
           @click="handleExecute"
         >
-          {{ executing ? '执行中...' : '开始扫描' }}
+          {{ buttonText }}
         </el-button>
       </div>
     </template>
@@ -61,7 +63,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { ElMessage, ElLoading } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { useJobPolling } from '@/composables/useJobPolling'
@@ -80,23 +82,30 @@ const emit = defineEmits(['update:visible', 'success'])
 
 const visible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
-const showDeviceSelector = ref(false)
 const selectedHosts = ref([])
 const executing = ref(false)
+const currentStatus = ref('')
 
-// 处理设备选择确认
-function handleDeviceConfirm(hosts) {
-  selectedHosts.value = hosts || []
-  showDeviceSelector.value = false
+// 状态中文映射
+const STATUS_MAP = {
+  WAITING: '等待中',
+  RUNNING: '扫描中',
+  COMPLETED: '已完成',
+  SUCCESS: '已完成',
+  FAILED: '失败',
+  ERROR: '错误'
 }
 
-// 移除主机
-function removeHost(index) {
-  selectedHosts.value.splice(index, 1)
-}
+// 按钮文字
+const buttonText = computed(() => {
+  if (executing.value && currentStatus.value) {
+    return STATUS_MAP[currentStatus.value] || currentStatus.value
+  }
+  return '开始扫描'
+})
 
 // 执行扫描
 async function handleExecute() {
@@ -105,14 +114,9 @@ async function handleExecute() {
     return
   }
 
-  // 显示加载状态
-  const loadingInstance = ElLoading.service({
-    lock: true,
-    text: '正在扫描主机...',
-    background: 'rgba(0, 0, 0, 0.7)'
-  })
-
   executing.value = true
+  currentStatus.value = ''
+
   try {
     // 构造主机参数
     const hosts = selectedHosts.value.map(h => ({
@@ -123,66 +127,70 @@ async function handleExecute() {
 
     // 调用作业执行接口
     const cacheBuster = Date.now()
-    const { data } = await apiService.post(`/jao/api/jao/jobs/hTzJfM/run?cacheBuster=${cacheBuster}`, {
-      params: { hosts }
-    })
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/hTzJfM/run?cacheBuster=${cacheBuster}`,
+      {
+        params: { hosts }
+      }
+    )
 
     const result = Array.isArray(data) ? data[0] : data
+    currentStatus.value = result?.status || ''
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
       // 使用 composable 开始轮询
       startPolling(result.runId, {
         interval: 5000,
         maxAttempts: 120,
-        successMessage: '扫描完成',
-        errorMessage: '扫描失败',
-        timeoutMessage: '扫描超时，请稍后查看结果',
         showMessage: false,
-        onProgress: (res) => {
+        onProgress: res => {
           const batchInfo = res?.detail?.batches?.[0]
-          if (batchInfo) {
-            loadingInstance.setText(`正在扫描主机... (状态: ${batchInfo.status || res.status})`)
-          }
+          currentStatus.value = batchInfo?.status || res.status || currentStatus.value
         },
         onSuccess: () => {
-          loadingInstance.close()
+          executing.value = false
+          currentStatus.value = ''
           ElMessage.success('扫描完成')
           emit('success')
           handleClose()
         },
-        onError: (res) => {
-          loadingInstance.close()
+        onError: res => {
+          executing.value = false
+          currentStatus.value = ''
           ElMessage.error(res?.error || '扫描失败')
           emit('success')
           handleClose()
         },
         onTimeout: () => {
-          loadingInstance.close()
+          executing.value = false
+          currentStatus.value = ''
           ElMessage.warning('扫描超时，请稍后查看结果')
           emit('success')
           handleClose()
         }
       })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      loadingInstance.close()
+      executing.value = false
+      currentStatus.value = ''
       ElMessage.success('扫描完成')
       emit('success')
       handleClose()
     } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-      loadingInstance.close()
+      executing.value = false
+      currentStatus.value = ''
       ElMessage.error(result?.error || '扫描失败')
     } else {
-      loadingInstance.close()
+      executing.value = false
+      currentStatus.value = ''
       ElMessage.success('扫描任务已提交')
       emit('success')
       handleClose()
     }
   } catch (error) {
-    loadingInstance?.close()
+    executing.value = false
+    currentStatus.value = ''
     console.error('执行扫描失败:', error)
     ElMessage.error('执行失败: ' + (error?.message || '未知错误'))
-  } finally {
-    executing.value = false
   }
 }
 
@@ -192,9 +200,8 @@ function handleClose() {
   visible.value = false
   selectedHosts.value = []
   executing.value = false
+  currentStatus.value = ''
 }
-
-// composable 会自动在 onUnmounted 时停止轮询
 </script>
 
 <style scoped lang="scss">
@@ -221,48 +228,6 @@ function handleClose() {
 
   &__content {
     padding-left: 20px;
-  }
-}
-
-.host-selector {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.host-count {
-  font-size: 13px;
-  color: #64748b;
-
-  strong {
-    color: #3b82f6;
-  }
-}
-
-.selected-hosts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-height: 150px;
-  overflow-y: auto;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.empty-tip {
-  color: #94a3b8;
-  font-size: 13px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px dashed #cbd5e1;
-  text-align: center;
-
-  i {
-    margin-right: 6px;
   }
 }
 

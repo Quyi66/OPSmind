@@ -43,7 +43,10 @@ export const patchScanApi = {
       page: params.page || 1,
       filter: filter
     }
-    return apiService.post(`/dts/api/dts/q/data/VAP2_LIST_MACHINE_WITH_PATCH/?cacheBuster=${cacheBuster}`, requestBody)
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_LIST_MACHINE_WITH_PATCH/?cacheBuster=${cacheBuster}`,
+      requestBody
+    )
   },
 
   /**
@@ -122,7 +125,10 @@ export const patchInstallApi = {
         patch_ids: params.patch_ids
       }
     }
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_AFFECTED_PKG_OF_PATCH_DETAIL/', requestBody)
+    return apiService.post(
+      '/dts/api/dts/q/data/VAP2_LIST_AFFECTED_PKG_OF_PATCH_DETAIL/',
+      requestBody
+    )
   },
 
   /**
@@ -293,19 +299,21 @@ export const patchLibraryApi = {
    * @returns {Promise}
    */
   getPatchDetail(patchId) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/', {
-      params: {
-        patch_id: patchId
-      },
-      page: 1,
-      size: 1
-    }).then(res => {
-      // 返回第一条记录
-      if (res?.data?.records?.[0]) {
-        return { data: res.data.records[0] }
-      }
-      return res
-    })
+    return apiService
+      .post('/dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/', {
+        params: {
+          patch_id: patchId
+        },
+        page: 1,
+        size: 1
+      })
+      .then(res => {
+        // 返回第一条记录
+        if (res?.data?.records?.[0]) {
+          return { data: res.data.records[0] }
+        }
+        return res
+      })
   },
 
   /**
@@ -395,7 +403,10 @@ export const vulnerabilityApi = {
       page: params.page || 1,
       filter: params.filter || ''
     }
-    return apiService.post(`/dts/api/dts/q/data/VAP2_LIST_PATCH_BY_CVES/?cacheBuster=${cacheBuster}`, requestBody)
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_LIST_PATCH_BY_CVES/?cacheBuster=${cacheBuster}`,
+      requestBody
+    )
   },
 
   /**
@@ -405,9 +416,12 @@ export const vulnerabilityApi = {
    */
   getOsDistroList() {
     const cacheBuster = Date.now()
-    return apiService.post(`/dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_INFO/?cacheBuster=${cacheBuster}`, {
-      params: null
-    })
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_INFO/?cacheBuster=${cacheBuster}`,
+      {
+        params: null
+      }
+    )
   },
 
   /**
@@ -417,9 +431,12 @@ export const vulnerabilityApi = {
    */
   getOsVersionList() {
     const cacheBuster = Date.now()
-    return apiService.post(`/dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_VERSION_INFO/?cacheBuster=${cacheBuster}`, {
-      params: null
-    })
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_VERSION_INFO/?cacheBuster=${cacheBuster}`,
+      {
+        params: null
+      }
+    )
   },
 
   /**
@@ -439,9 +456,12 @@ export const vulnerabilityApi = {
    */
   getPatchStatusHosts(ids) {
     const cacheBuster = Date.now()
-    return apiService.post(`/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO/?cacheBuster=${cacheBuster}`, {
-      params: { ids }
-    })
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO/?cacheBuster=${cacheBuster}`,
+      {
+        params: { ids }
+      }
+    )
   },
 
   /**
@@ -452,9 +472,12 @@ export const vulnerabilityApi = {
    */
   getPatchStatusCves(ids) {
     const cacheBuster = Date.now()
-    return apiService.post(`/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_CVE/?cacheBuster=${cacheBuster}`, {
-      params: { ids }
-    })
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_CVE/?cacheBuster=${cacheBuster}`,
+      {
+        params: { ids }
+      }
+    )
   },
 
   /**
@@ -465,9 +488,12 @@ export const vulnerabilityApi = {
    */
   getPatchStatusPatches(ids) {
     const cacheBuster = Date.now()
-    return apiService.post(`/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PATCH/?cacheBuster=${cacheBuster}`, {
-      params: { ids }
-    })
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PATCH/?cacheBuster=${cacheBuster}`,
+      {
+        params: { ids }
+      }
+    )
   },
 
   /**
@@ -478,9 +504,12 @@ export const vulnerabilityApi = {
    */
   getPatchStatusPackages(ids) {
     const cacheBuster = Date.now()
-    return apiService.post(`/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PKGS/?cacheBuster=${cacheBuster}`, {
-      params: { ids }
-    })
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PKGS/?cacheBuster=${cacheBuster}`,
+      {
+        params: { ids }
+      }
+    )
   },
 
   /**
@@ -529,7 +558,10 @@ export const patchLogsApi = {
       page: params.page || 1,
       size: params.size || 20
     }
-    return apiService.post(`/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${cacheBuster}`, requestBody)
+    return apiService.post(
+      `/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${cacheBuster}`,
+      requestBody
+    )
   },
 
   /**
@@ -559,7 +591,9 @@ export const patchOverviewApi = {
    * @returns {Promise}
    */
   getIndexStats() {
-    return apiService.get(`${VAP_API_PREFIX}/v2/stats`)
+    return apiService.post(`/dts/api/dts/q/data/VAP2_CURRENT_STATS/?cacheBuster=${Date.now()}`, {
+      params: {}
+    })
   }
 }
 
@@ -774,14 +808,18 @@ export const yumManageApi = {
    * @returns {Promise}
    */
   createYumConfig(data) {
-    return apiService.post('/jao/api/jao/dc/data', {
-      dataModel: 'yum_configs',
-      dataJson: JSON.stringify(data)
-    }, {
-      params: {
-        cacheBuster: Date.now()
+    return apiService.post(
+      '/jao/api/jao/dc/data',
+      {
+        dataModel: 'yum_configs',
+        dataJson: JSON.stringify(data)
+      },
+      {
+        params: {
+          cacheBuster: Date.now()
+        }
       }
-    })
+    )
   },
 
   /**
@@ -791,15 +829,19 @@ export const yumManageApi = {
    * @returns {Promise}
    */
   updateYumConfig(id, data) {
-    return apiService.post('/jao/api/jao/dc/data', {
-      id: id,
-      dataModel: 'yum_configs',
-      dataJson: JSON.stringify(data)
-    }, {
-      params: {
-        cacheBuster: Date.now()
+    return apiService.post(
+      '/jao/api/jao/dc/data',
+      {
+        id: id,
+        dataModel: 'yum_configs',
+        dataJson: JSON.stringify(data)
+      },
+      {
+        params: {
+          cacheBuster: Date.now()
+        }
       }
-    })
+    )
   },
 
   /**

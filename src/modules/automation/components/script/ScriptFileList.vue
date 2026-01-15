@@ -10,11 +10,9 @@
           class="breadcrumb-item"
           :class="{ active: crumb.path === currentDir }"
         >
-          <a
-            v-if="crumb.path !== currentDir"
-            class="dir-link"
-            @click="goDir(crumb.path)"
-          >{{ crumb.name || '~' }}</a>
+          <a v-if="crumb.path !== currentDir" class="dir-link" @click="goDir(crumb.path)">
+            {{ crumb.name || '~' }}
+          </a>
           <span v-else>{{ crumb.name || '~' }}</span>
         </li>
       </ol>
@@ -24,11 +22,7 @@
         <template v-if="repoType !== 'stage'">
           <!-- 批量操作按钮组 (git 和 staticfs 都有) -->
           <div class="btn-group">
-            <el-button
-              :disabled="!hasSelection"
-              title="剪切已选择文件夹和文件"
-              @click="handleCut"
-            >
+            <el-button :disabled="!hasSelection" title="剪切已选择文件夹和文件" @click="handleCut">
               <i class="fa fa-fw fa-cut" />
               <span v-if="clipboard.length" class="badge bg-primary">{{ clipboard.length }}</span>
             </el-button>
@@ -90,37 +84,44 @@
           <!-- 新增操作按钮组 -->
           <div class="btn-group">
             <el-button title="在当前文件夹下新建子文件夹" @click="handleAddFolder">
-              <i class="fa fa-fw fa-folder-plus" /> 文件夹
+              <i class="fa fa-fw fa-folder-plus" />
+              文件夹
             </el-button>
             <el-button
               v-if="repoType === 'git'"
               title="在当前文件夹下新建子文件"
               @click="scriptDialogVisible = true"
             >
-              <i class="fa fa-file-code" /> 脚本
+              <i class="fa fa-file-code" />
+              脚本
             </el-button>
             <el-button title="上传文件到当前文件夹" @click="uploadDialogVisible = true">
-              <i class="fa fa-fw fa-file-upload" /> 文件
+              <i class="fa fa-fw fa-file-upload" />
+              文件
             </el-button>
             <el-button
               v-if="repoType === 'git'"
               title="从远程服务器同步文件"
               @click="syncDialogVisible = true"
             >
-              <i class="fa fa-cloud" /> 同步文件
+              <i class="fa fa-cloud" />
+              同步文件
             </el-button>
           </div>
 
           <!-- Git操作按钮组（仅git） -->
           <div v-if="repoType === 'git'" class="btn-group git-actions">
             <el-button title="从远程Git服务器拉取文件到本地目录" @click="handleGitPull">
-              <i class="fa fa-cloud-download-alt" /> 拉取
+              <i class="fa fa-cloud-download-alt" />
+              拉取
             </el-button>
             <el-button title="将本地目录文件同步到远程Git服务器" @click="handleGitPush">
-              <i class="fa fa-cloud-upload-alt" /> 推送
+              <i class="fa fa-cloud-upload-alt" />
+              推送
             </el-button>
             <el-button title="Git库列表" @click="handleGitList">
-              <i class="fa fa-list-alt" /> Git库
+              <i class="fa fa-list-alt" />
+              Git库
             </el-button>
           </div>
 
@@ -132,7 +133,7 @@
               class="form-control"
               placeholder="请输入搜索内容"
               @keyup.enter="handleSearch"
-            >
+            />
           </div>
 
           <!-- 文件状态帮助图标（仅git） -->
@@ -150,9 +151,19 @@
                 <dd>新版本被拒绝</dd>
                 <dt><span class="status-indicator master-disabled">filename</span></dt>
                 <dd>文件被停用</dd>
-                <dt><span class="status-indicator missing-file">filename <i class="fa fa-exclamation-triangle" /></span></dt>
+                <dt>
+                  <span class="status-indicator missing-file">
+                    filename
+                    <i class="fa fa-exclamation-triangle" />
+                  </span>
+                </dt>
                 <dd>找不到文件</dd>
-                <dt><span class="status-indicator missing-rec">filename <i class="fa fa-exclamation-triangle" /></span></dt>
+                <dt>
+                  <span class="status-indicator missing-rec">
+                    filename
+                    <i class="fa fa-exclamation-triangle" />
+                  </span>
+                </dt>
                 <dd>找不到记录</dd>
               </dl>
             </div>
@@ -174,11 +185,7 @@
           </el-button>
 
           <!-- 审批历史按钮 -->
-          <el-button
-            title="查看审批历史"
-            @click="approvalHistoryDialogVisible = true"
-            size="small"
-          >
+          <el-button title="查看审批历史" @click="approvalHistoryDialogVisible = true" size="small">
             <!-- <i class="fa fa-history" />  -->
             审批历史
           </el-button>
@@ -203,7 +210,11 @@
               <i :class="getFileIcon(row)" class="file-icon" />
               <a class="file-name" @click="handleFileClick(row)">
                 <span>{{ row.name }}</span>
-                <i v-if="row._warnText" class="fa fa-exclamation-triangle text-warning ms-2" :title="row._warnText" />
+                <i
+                  v-if="row._warnText"
+                  class="fa fa-exclamation-triangle text-warning ms-2"
+                  :title="row._warnText"
+                />
                 <el-tag v-if="row._stageIndicator" size="small" type="primary" class="ms-2">
                   {{ row._stageIndicator.text }}
                 </el-tag>
@@ -214,7 +225,7 @@
                 v-if="!row._isParentDir && showActions(row)"
                 class="file-actions"
                 trigger="click"
-                @command="(cmd) => handleFileAction(cmd, row)"
+                @command="cmd => handleFileAction(cmd, row)"
               >
                 <el-button type="primary" text size="small">
                   <i class="fa fa-ellipsis-v" />
@@ -222,25 +233,32 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item v-if="!row.directory" command="download">
-                      <i class="fa fa-file-download fa-fw" /> 下载文件
+                      <i class="fa fa-file-download fa-fw" />
+                      下载文件
                     </el-dropdown-item>
                     <el-dropdown-item v-if="!row.directory" command="edit">
-                      <i class="fa fa-pencil fa-fw" /> 修改信息
+                      <i class="fa fa-pencil fa-fw" />
+                      修改信息
                     </el-dropdown-item>
                     <el-dropdown-item v-if="row.canDelete" command="delete">
-                      <i class="fa fa-trash-alt fa-fw" /> 删除文件
+                      <i class="fa fa-trash-alt fa-fw" />
+                      删除文件
                     </el-dropdown-item>
                     <el-dropdown-item v-if="row.directory && repoType === 'git'" command="editDir">
-                      <i class="fa fa-pencil fa-fw" /> 修改信息
+                      <i class="fa fa-pencil fa-fw" />
+                      修改信息
                     </el-dropdown-item>
                     <el-dropdown-item v-if="!row.directory && repoType === 'git'" command="testRun">
-                      <i class="fa fa-chevron-right fa-fw" /> 测试运行
+                      <i class="fa fa-chevron-right fa-fw" />
+                      测试运行
                     </el-dropdown-item>
                     <el-dropdown-item v-if="!row.directory && repoType === 'git'" command="history">
-                      <i class="fa fa-comment-alt-dots fa-fw" /> 审批历史
+                      <i class="fa fa-comment-alt-dots fa-fw" />
+                      审批历史
                     </el-dropdown-item>
                     <el-dropdown-item v-if="row.directory" command="downloadDir">
-                      <i class="fa fa-file-download fa-fw" /> 下载文件夹
+                      <i class="fa fa-file-download fa-fw" />
+                      下载文件夹
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -249,7 +267,12 @@
           </template>
         </el-table-column>
 
-        <el-table-column v-if="repoType === 'git' || repoType === 'stage'" label="说明" prop="description" min-width="200">
+        <el-table-column
+          v-if="repoType === 'git' || repoType === 'stage'"
+          label="说明"
+          prop="description"
+          min-width="200"
+        >
           <template #default="{ row }">
             <div class="description-cell" :title="row.description">
               {{ row.description || '-' }}
@@ -278,7 +301,12 @@
           </template>
         </el-table-column>
 
-        <el-table-column v-if="repoType === 'git' || repoType === 'stage'" label="状态" width="80" align="left">
+        <el-table-column
+          v-if="repoType === 'git' || repoType === 'stage'"
+          label="状态"
+          width="80"
+          align="left"
+        >
           <template #default="{ row }">
             <span
               v-if="row._statusCss && !row.directory && !row._isParentDir"
@@ -366,8 +394,10 @@
       v-model="approvalHistoryDialogVisible"
       :repo-type="repoType"
       :repo="currentRepo"
-      mode="all"
+      :mode="historyFile ? 'singleFile' : 'all'"
+      :file="historyFile"
       @go-file="goToFile"
+      @closed="historyFile = null"
     />
 
     <FileChangeStatusDialog
@@ -447,6 +477,7 @@ const fileRevisionDialogVisible = ref(false)
 const revisionFile = ref(null)
 const currentFile = ref(null)
 const editFolderData = ref(null)
+const historyFile = ref(null)
 
 const currentRepo = ref(props.repo)
 
@@ -456,7 +487,7 @@ async function resolveRepoId() {
     return
   }
 
-  // Try to load current repo info first
+  // Try to load current repo info
   try {
     const res = await gfsApi.loadCurrentRepo('git', '$tnt')
     const repoInfo = res?.data || res
@@ -465,23 +496,12 @@ async function resolveRepoId() {
       return
     }
   } catch (e) {
-    // ignore and try next method
-  }
-
-  try {
-    const res = await gfsApi.getGitRepoList()
-    const repos = res?.data || res || []
-    const defaultRepo = repos.find(r => r.isTenantDefault || r.type === 'TENANT') || repos[0]
-    if (defaultRepo?.id) {
-       currentRepo.value = defaultRepo.id
-    }
-  } catch (e) {
-    console.warn('Failed to resolve repo id', e)
+    // If failed, just use $tnt as default
+    console.warn('Failed to resolve repo id, using $tnt as default', e)
   }
 }
 
 watch(() => props.repo, resolveRepoId, { immediate: true })
-
 
 // 面包屑
 const breadcrumbs = computed(() => {
@@ -489,7 +509,7 @@ const breadcrumbs = computed(() => {
   if (currentDir.value) {
     const dirs = currentDir.value.split('/')
     let path = ''
-    dirs.forEach((dir) => {
+    dirs.forEach(dir => {
       path = path ? `${path}/${dir}` : dir
       crumbs.push({ name: dir, path })
     })
@@ -503,15 +523,16 @@ const filteredFiles = computed(() => {
 
   // 在根目录且 hideOplus 为 true 时，隐藏 oplus 文件夹（内置应用脚本目录）
   if (!currentDir.value && hideOplus.value) {
-    list = list.filter((f) => f.path !== 'oplus')
+    list = list.filter(f => f.path !== 'oplus')
   }
 
   // 搜索过滤
   if (searchText.value) {
     const search = searchText.value.toLowerCase()
-    list = list.filter((f) =>
-      f.name.toLowerCase().includes(search) ||
-      (f.description && f.description.toLowerCase().includes(search))
+    list = list.filter(
+      f =>
+        f.name.toLowerCase().includes(search) ||
+        (f.description && f.description.toLowerCase().includes(search))
     )
   }
 
@@ -524,7 +545,7 @@ const hasSelection = computed(() => selectedFiles.value.length > 0)
 // 是否可以粘贴
 const canPaste = computed(() => {
   if (!clipboard.value.length) return false
-  const isPasteInCut = clipboard.value.some((f) => currentDir.value.startsWith(f.path))
+  const isPasteInCut = clipboard.value.some(f => currentDir.value.startsWith(f.path))
   return !isPasteInCut && clipboardDir.value !== currentDir.value
 })
 
@@ -535,7 +556,7 @@ onMounted(() => {
 })
 
 // 监听目录变化
-watch(currentDir, (newDir) => {
+watch(currentDir, newDir => {
   emit('dir-change', newDir)
 })
 
@@ -546,11 +567,16 @@ async function loadFiles() {
     const files = await gfsApi.listFiles(currentRepo.value, currentDir.value, props.repoType)
 
     // Attempt to extract real repo ID from the file list if we are using $tnt
-    if (files.length > 0 && files[0].repo && files[0].repo !== '$tnt' && currentRepo.value === '$tnt') {
-       currentRepo.value = files[0].repo
+    if (
+      files.length > 0 &&
+      files[0].repo &&
+      files[0].repo !== '$tnt' &&
+      currentRepo.value === '$tnt'
+    ) {
+      currentRepo.value = files[0].repo
     }
 
-    const processed = files.map((f) => ({
+    const processed = files.map(f => ({
       ...f,
       _key: f.path,
       canUpdate: true,
@@ -632,7 +658,7 @@ function handleFileClick(file) {
 
 // 选择变化
 function handleSelectionChange(selection) {
-  selectedFiles.value = selection.filter((f) => !f._isParentDir)
+  selectedFiles.value = selection.filter(f => !f._isParentDir)
 }
 
 // 是否可选
@@ -671,7 +697,8 @@ function handleFileAction(command, file) {
       ElMessage.info('测试运行功能开发中')
       break
     case 'history':
-      ElMessage.info('审批历史功能开发中')
+      historyFile.value = file
+      approvalHistoryDialogVisible.value = true
       break
     case 'downloadDir':
       gfsApi.downloadFiles(props.repoType, currentRepo.value, [file.path], file.name)
@@ -691,7 +718,7 @@ function handleCut() {
 async function handlePaste() {
   if (!canPaste.value) return
   try {
-    const paths = clipboard.value.map((f) => f.path)
+    const paths = clipboard.value.map(f => f.path)
     await gfsApi.moveFiles(props.repoType, currentRepo.value, currentDir.value, paths)
     clipboard.value = []
     clipboardDir.value = ''
@@ -707,7 +734,7 @@ async function handleDelete() {
   if (!hasSelection.value) return
   try {
     await ElMessageBox.confirm('确定删除选中的文件吗？', '删除确认', { type: 'warning' })
-    const paths = selectedFiles.value.map((f) => f.path)
+    const paths = selectedFiles.value.map(f => f.path)
     await gfsApi.deleteFiles(props.repoType, currentRepo.value, paths)
     ElMessage.success('删除成功')
     selectedFiles.value = []
@@ -736,7 +763,7 @@ async function handleDeleteSingle(file) {
 // 下载
 function handleDownload() {
   if (!hasSelection.value) return
-  const paths = selectedFiles.value.map((f) => f.path)
+  const paths = selectedFiles.value.map(f => f.path)
   gfsApi.downloadFiles(props.repoType, currentRepo.value, paths)
 }
 
@@ -842,7 +869,7 @@ function formatDate(dateStr) {
   if (diff < 2592000000) return `${Math.floor(diff / 86400000)} 天前`
   if (diff < 31536000000) return `${Math.floor(diff / 2592000000)} 个月前`
 
-  const pad = (n) => n < 10 ? `0${n}` : String(n)
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
@@ -1073,6 +1100,7 @@ defineExpose({
 .file-actions {
   opacity: 0;
   transition: opacity 0.2s;
+  margin-left: 12px;
 }
 
 .el-table__row:hover .file-actions {

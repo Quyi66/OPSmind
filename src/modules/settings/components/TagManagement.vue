@@ -4,20 +4,18 @@
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
         <el-form-item label="关键词">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="标签名称"
-            clearable
-            style="width: 200px"
-            maxlength="50"
-          />
+          <el-input v-model="searchKeyword" placeholder="标签名称" clearable style="width: 200px" maxlength="50" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon> 搜索
+            <el-icon>
+              <Search />
+            </el-icon> 搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon> 重置
+            <el-icon>
+              <RefreshRight />
+            </el-icon> 重置
           </el-button>
         </el-form-item>
       </el-form>
@@ -30,19 +28,15 @@
       </el-button>
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadTags" title="刷新">
-        <el-icon v-show="!loading"><Refresh /></el-icon>
+        <el-icon v-show="!loading">
+          <Refresh />
+        </el-icon>
       </el-button>
     </div>
 
     <!-- 表格 -->
     <div class="ops-table-wrapper">
-      <el-table
-        v-loading="loading"
-        :data="paginatedTags"
-        stripe
-        style="width: 100%"
-        max-height="calc(100vh - 360px)"
-      >
+      <el-table v-loading="loading" :data="paginatedTags" stripe style="width: 100%" max-height="calc(100vh - 360px)">
         <el-table-column prop="name" label="标签名称" min-width="200" />
         <el-table-column prop="count" label="应用数量" width="120" align="left">
           <template #default="{ row }">
@@ -57,13 +51,7 @@
             <el-button text type="primary" size="small" @click="handleEdit(row)">
               编辑
             </el-button>
-            <el-button
-              text
-              type="danger"
-              size="small"
-              @click="handleDelete(row)"
-              :loading="deletingId === row.id"
-            >
+            <el-button text type="danger" size="small" @click="handleDelete(row)" :loading="deletingId === row.id">
               删除
             </el-button>
           </template>
@@ -73,29 +61,15 @@
 
     <!-- 分页器 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="filteredTags.length"
-        layout="total, sizes, prev, pager, next, jumper"
-        background
-      />
+      <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]" :total="filteredTags.length" layout="total, sizes, prev, pager, next, jumper"
+        background />
     </div>
 
     <!-- 新建/编辑对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="dialogMode === 'create' ? '新建标签' : '编辑标签'"
-      width="500px"
-      destroy-on-close
-    >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="formRules"
-        label-width="100px"
-      >
+    <el-dialog v-model="dialogVisible" :title="dialogMode === 'create' ? '新建标签' : '编辑标签'" width="500px"
+      destroy-on-close>
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="标签名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入标签名称" maxlength="50" />
         </el-form-item>
@@ -109,33 +83,17 @@
     </el-dialog>
 
     <!-- 查看详情对话框 -->
-    <el-dialog
-      v-model="detailDialogVisible"
-      :title="`标签详情: ${currentTag?.name || ''}`"
-      width="900px"
-      destroy-on-close
-    >
+    <el-dialog v-model="detailDialogVisible" :title="`标签详情: ${currentTag?.name || ''}`" width="900px" destroy-on-close>
       <div v-loading="loadingDetail">
         <div class="detail-toolbar" v-if="tagApplets?.length">
-          <el-button
-            type="primary"
-            size="small"
-            :disabled="!selectedAppletIds.length"
-            @click="handleRemoveApplets"
-          >
+          <el-button type="primary" size="small" :disabled="!selectedAppletIds.length" @click="handleRemoveApplets">
             <i class="fa fa-minus-circle"></i>
             移除选中应用
           </el-button>
         </div>
 
-        <el-table
-          v-if="tagApplets?.length"
-          :data="tagApplets"
-          stripe
-          size="small"
-          max-height="400"
-          @selection-change="handleAppletSelectionChange"
-        >
+        <el-table v-if="tagApplets?.length" :data="tagApplets" stripe size="small" max-height="400"
+          @selection-change="handleAppletSelectionChange">
           <el-table-column type="selection" width="48" />
           <el-table-column prop="title" label="标题" min-width="150">
             <template #default="{ row }">

@@ -50,7 +50,11 @@
 
       <!-- 附加用户组 -->
       <el-form-item label="附加用户组" prop="groups">
-        <el-input v-model="formData.groups" placeholder="选填，多个组名用逗号隔开" maxlength="100" />
+        <el-input
+          v-model="formData.groups"
+          placeholder="选填，多个组名用逗号隔开"
+          maxlength="100"
+        />
       </el-form-item>
 
       <!-- 主目录 -->
@@ -89,12 +93,7 @@
           @change="handleTemplateChange"
         >
           <el-option label="N/A" value="N/A" />
-          <el-option
-            v-for="tpl in sudoTemplates"
-            :key="tpl.id"
-            :label="tpl.name"
-            :value="tpl.id"
-          />
+          <el-option v-for="tpl in sudoTemplates" :key="tpl.id" :label="tpl.name" :value="tpl.id" />
         </el-select>
       </el-form-item>
 
@@ -110,17 +109,14 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">
-          <!-- <i class="fa fa-times"></i>  -->
-          取消
-        </el-button>
+        <el-button @click="handleClose">取消</el-button>
         <el-button
           type="primary"
           :loading="submitting"
+          :disabled="!selectedHosts.length"
           @click="handleSubmit"
         >
-          <!-- <i class="fa fa-plus" v-if="!submitting"></i> -->
-          {{ submitting ? '创建中...' : '创建用户' }}
+          {{ buttonText }}
         </el-button>
       </div>
     </template>
@@ -129,7 +125,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElLoading } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import * as userApi from '@/modules/user/api'
@@ -149,13 +145,13 @@ const emit = defineEmits(['update:visible', 'success'])
 
 const visible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 const formRef = ref(null)
-const showDeviceSelector = ref(false)
 const selectedHosts = ref([])
 const submitting = ref(false)
+const currentStatus = ref('')
 const sudoTemplates = ref([])
 const sudoCommands = ref([])
 
@@ -172,13 +168,30 @@ const formData = reactive({
 })
 
 const formRules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
-  ]
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
+
+// 状态中文映射
+const STATUS_MAP = {
+  WAITING: '等待中',
+  RUNNING: '执行中',
+  COMPLETED: '已完成',
+  SUCCESS: '已完成',
+  FAILED: '失败',
+  ERROR: '错误'
+}
+
+// 按钮文字
+const buttonText = computed(() => {
+  if (submitting.value && currentStatus.value) {
+    return STATUS_MAP[currentStatus.value] || currentStatus.value
+  }
+  if (submitting.value) {
+    return '提交中...'
+  }
+  return '创建用户'
+})
 
 // 加载sudo模板列表
 async function loadSudoTemplates() {
@@ -205,20 +218,6 @@ async function handleTemplateChange(templateId) {
   }
 }
 
-// 处理设备选择确认
-function handleDeviceConfirm(hosts) {
-  selectedHosts.value = hosts || []
-  showDeviceSelector.value = false
-}
-
-// 移除主机
-function removeHost(index) {
-  selectedHosts.value.splice(index, 1)
-}
-
-// 轮询定时器
-let pollingTimer = null
-
 // 提交表单
 async function handleSubmit() {
   if (!selectedHosts.value.length) {
@@ -232,14 +231,9 @@ async function handleSubmit() {
     return
   }
 
-  // 显示加载状态
-  const loadingInstance = ElLoading.service({
-    lock: true,
-    text: '正在创建用户...',
-    background: 'rgba(0, 0, 0, 0.7)'
-  })
-
   submitting.value = true
+  currentStatus.value = ''
+
   try {
     // 构造主机参数（JSON 字符串格式）
     const hosts = selectedHosts.value.map(h => ({
@@ -253,74 +247,75 @@ async function handleSubmit() {
 
     // 调用作业执行接口
     const cacheBuster = Date.now()
-    const { data } = await apiService.post(`/jao/api/jao/jobs/6snZO9/run?cacheBuster=${cacheBuster}`, {
-      params: {
-        user_name: formData.username,
-        user_password: formData.password,
-        user_group: formData.group || '',
-        groups: formData.groups || '',
-        user_home: formData.home || '',
-        user_shell: formData.shell || '',
-        user_expires: formData.expiredDate || '',
-        user_sudo_command: sudoCommandStr,
-        user_comment: formData.comment || '',
-        hosts: hostsJson
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/6snZO9/run?cacheBuster=${cacheBuster}`,
+      {
+        params: {
+          user_name: formData.username,
+          user_password: formData.password,
+          user_group: formData.group || '',
+          groups: formData.groups || '',
+          user_home: formData.home || '',
+          user_shell: formData.shell || '',
+          user_expires: formData.expiredDate || '',
+          user_sudo_command: sudoCommandStr,
+          user_comment: formData.comment || '',
+          hosts: hostsJson
+        }
       }
-    })
+    )
 
     const result = Array.isArray(data) ? data[0] : data
+    currentStatus.value = result?.status || ''
+
+    // 提交成功，提示用户可以关闭
+    ElMessage.success('任务已提交，后台正在执行，可关闭此窗口')
+    emit('success')
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      // 使用 composable 开始轮询
+      // 使用 composable 开始轮询，状态显示在按钮上
       startPolling(result.runId, {
         interval: 5000,
         maxAttempts: 120,
-        successMessage: '用户创建成功',
-        errorMessage: '创建失败',
-        timeoutMessage: '创建超时，请稍后查看结果',
         showMessage: false,
-        onProgress: (res) => {
-          loadingInstance.setText(`正在创建用户... (状态: ${res?.status || 'RUNNING'})`)
+        onProgress: res => {
+          const batchInfo = res?.detail?.batches?.[0]
+          currentStatus.value = batchInfo?.status || res.status || currentStatus.value
         },
         onSuccess: () => {
-          loadingInstance.close()
+          submitting.value = false
+          currentStatus.value = ''
           ElMessage.success('用户创建成功')
-          emit('success')
-          handleClose()
         },
-        onError: (res) => {
-          loadingInstance.close()
+        onError: res => {
+          submitting.value = false
+          currentStatus.value = ''
           ElMessage.error(res?.error || '创建失败')
-          emit('success')
-          handleClose()
         },
         onTimeout: () => {
-          loadingInstance.close()
-          ElMessage.warning('创建超时，请稍后查看结果')
-          emit('success')
-          handleClose()
+          submitting.value = false
+          currentStatus.value = ''
+          ElMessage.warning('执行超时，请稍后查看结果')
         }
       })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      loadingInstance.close()
+      submitting.value = false
+      currentStatus.value = ''
       ElMessage.success('用户创建成功')
-      emit('success')
-      handleClose()
     } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-      loadingInstance.close()
+      submitting.value = false
+      currentStatus.value = ''
       ElMessage.error(result?.error || '创建失败')
     } else {
-      loadingInstance.close()
-      ElMessage.success('用户创建任务已提交')
-      emit('success')
-      handleClose()
+      // 其他情况，停止加载状态
+      submitting.value = false
+      currentStatus.value = ''
     }
   } catch (error) {
-    loadingInstance?.close()
-    console.error('创建用户失败:', error)
-    ElMessage.error('创建失败: ' + (error?.message || '未知错误'))
-  } finally {
     submitting.value = false
+    currentStatus.value = ''
+    console.error('创建用户失败:', error)
+    ElMessage.error('提交失败: ' + (error?.message || '未知错误'))
   }
 }
 
@@ -328,6 +323,8 @@ async function handleSubmit() {
 function handleClose() {
   stopPolling()
   visible.value = false
+  submitting.value = false
+  currentStatus.value = ''
   formRef.value?.resetFields()
   selectedHosts.value = []
   sudoCommands.value = []
@@ -347,8 +344,6 @@ function handleClose() {
 onMounted(() => {
   loadSudoTemplates()
 })
-
-// composable 会自动在 onUnmounted 时停止轮询
 </script>
 
 <style scoped lang="scss">

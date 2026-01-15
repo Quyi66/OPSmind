@@ -2,83 +2,53 @@
   <el-dialog
     :model-value="modelValue"
     :title="dialogTitle"
-    width="800px"
+    width="1000px"
     @update:model-value="emit('update:modelValue', $event)"
     @open="loadHistory"
+    @closed="handleClosed"
   >
     <div v-loading="loading" class="history-container">
-      <!-- 全部审批历史列表 -->
-      <template v-if="viewMode === 'all'">
+      <!-- 单个文件的审批历史 (singleFile) -->
+      <template v-if="viewMode === 'singleFile'">
         <el-table :data="historyList" stripe height="400">
-          <el-table-column label="时间" prop="actionDate" width="160" />
-          <el-table-column label="文件数" width="100">
-            <template #default="{ row }">
-              <el-button
-                type="primary"
-                link
-                @click="showApprovalDetail(row)"
-              >
-                {{ row.approvalFileCount || row.paths?.length || '-' }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column label="审批人" prop="approvalBy" width="120" />
-          <el-table-column label="审批结果" prop="action" width="100">
-            <template #default="{ row }">
-              <el-tag
-                :type="getActionTagType(row.action)"
-                size="small"
-              >
-                {{ getActionText(row.action) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="备注" prop="comment" show-overflow-tooltip />
-        </el-table>
-      </template>
-
-      <!-- 单个文件的审批历史 -->
-      <template v-else-if="viewMode === 'singleFile'">
-        <div class="file-info">
-          <el-tag type="info">{{ file?.name }}</el-tag>
-        </div>
-        <el-table :data="historyList" stripe height="350">
           <el-table-column label="时间" prop="actionDate" width="160" />
           <el-table-column label="备注" prop="comment" show-overflow-tooltip />
           <el-table-column label="审批结果" width="150">
             <template #default="{ row }">
-              <el-tag
-                :type="getActionTagType(row.action)"
-                size="small"
-              >
-                {{ getActionText(row.action) }}
-              </el-tag>
+              <span>{{ row.action }}</span>
             </template>
           </el-table-column>
         </el-table>
       </template>
 
-      <!-- 审批详情（某次审批涉及的文件列表） -->
+      <!-- 全部审批历史列表 (all) -->
+      <template v-else-if="viewMode === 'all'">
+        <el-table :data="historyList" stripe height="400">
+          <el-table-column label="时间" prop="actionDate" width="160" />
+          <el-table-column label="文件数" width="100">
+            <template #default="{ row }">
+              <el-button type="primary" link @click="showApprovalDetail(row.id)">
+                {{ row.approvalFileCount || '-' }}
+              </el-button>
+            </template>
+          </el-table-column>
+          <el-table-column label="审批人" prop="approvalBy" width="120" />
+          <el-table-column label="审批结果" width="100">
+            <template #default="{ row }">
+              <span>{{ row.action }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="备注" prop="comment" show-overflow-tooltip />
+        </el-table>
+      </template>
+
+      <!-- 审批详情（某次审批涉及的文件列表）(approvalDetail) -->
       <template v-else-if="viewMode === 'approvalDetail'">
-        <div class="detail-header">
-          <el-button
-            type="primary"
-            link
-            @click="backToList"
-          >
-            <i class="fa fa-arrow-left" /> 返回列表
-          </el-button>
-          <span class="detail-info">
-            审批人：{{ currentDetail?.approverBy || currentDetail?.approvalBy }}
-            | 时间：{{ currentDetail?.actionDate }}
-            | 结果：{{ getActionText(currentDetail?.action) }}
-          </span>
-        </div>
-        <el-table :data="detailPaths" stripe height="350">
-          <el-table-column label="文件路径" prop="path">
+        <el-table :data="detailPaths" stripe height="400">
+          <el-table-column label="文件路径" min-width="200">
             <template #default="{ row }">
               <el-button type="primary" link @click="goFile(row)">
-                {{ typeof row === 'string' ? row : row.path }}
+                {{ row }}
               </el-button>
             </template>
           </el-table-column>
@@ -89,7 +59,12 @@
           </el-table-column>
           <el-table-column label="审批人" width="120">
             <template #default>
-              {{ currentDetail?.approverBy || currentDetail?.approvalBy }}
+              {{ currentDetail?.approverBy }}
+            </template>
+          </el-table-column>
+          <el-table-column label="审批结果" width="100">
+            <template #default>
+              {{ currentDetail?.action }}
             </template>
           </el-table-column>
           <el-table-column label="备注" width="200">
@@ -99,12 +74,13 @@
           </el-table-column>
         </el-table>
       </template>
-
-      <!-- 空状态 -->
-      <el-empty v-if="!loading && historyList.length === 0 && viewMode !== 'approvalDetail'" description="暂无审批记录" />
     </div>
 
     <template #footer>
+      <el-button v-if="viewMode === 'approvalDetail'" @click="backToList">
+        <i class="fa fa-arrow-left" />
+        返回列表
+      </el-button>
       <el-button @click="emit('update:modelValue', false)">关闭</el-button>
     </template>
   </el-dialog>
@@ -122,7 +98,7 @@ const props = defineProps({
   },
   repoType: {
     type: String,
-    default: 'stage'
+    default: 'git'
   },
   repo: {
     type: String,
@@ -140,7 +116,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'go-file'])
+const emit = defineEmits(['update:modelValue', 'go-file', 'closed'])
 
 const loading = ref(false)
 const historyList = ref([])
@@ -163,16 +139,20 @@ const dialogTitle = computed(() => {
 async function loadHistory() {
   viewMode.value = props.mode
   historyList.value = []
+  currentDetail.value = null
+  detailPaths.value = []
 
   loading.value = true
   try {
     let response
     if (props.mode === 'singleFile' && props.file) {
       // 加载单个文件的审批历史
-      response = await gfsApi.getFileApprovalHistory(props.repoType, props.repo, props.file.path)
+      // 接口示例: /gfs/api/gfs/v2/git/f/{repo}/history/{filePath}
+      response = await gfsApi.getFileApproveHistory(props.repo, props.file.path)
     } else {
       // 加载全部审批历史
-      response = await gfsApi.getApprovalHistory(props.repo)
+      // 接口示例: /gfs/api/gfs/v2/git/f/{repo}/history
+      response = await gfsApi.getAllApproveHistory(props.repo)
     }
 
     // API 返回格式: { _status: "ok", result: [...] } 或 axios response
@@ -197,13 +177,27 @@ function parseHistories(records) {
   }))
 }
 
-// 检测审批动作
+// 解析单条详情
+function parseDetail(detail) {
+  return {
+    ...detail,
+    actionDate: formatDateTime(detail.approverAt || detail.updatedAt || detail.actionDate),
+    action: detectActionOfApprove(detail)
+  }
+}
+
+// 检测审批动作 (与源代码 detectActionOfApprove 逻辑一致)
 function detectActionOfApprove(record) {
-  const status = record.onlineStatus || record.status
-  if (status === 'PUBLISHED') return 'APPROVED'
-  if (status === 'REJECTED') return 'REJECTED'
-  if (status === 'DISABLED') return 'DISABLED'
-  return record.action || status || ''
+  const ACTION_DEFS = [
+    { name: 'APPROVE', text: '通过', status: 'PUBLISHED' },
+    { name: 'REJECT', text: '拒绝', status: 'REJECTED' },
+    { name: 'DISABLE', text: '停用', status: 'DISABLED' },
+    { name: 'REVERT', text: '撤销', status: 'REVERT' }
+  ]
+
+  const fileStatus = record.onlineStatus || record.approverStatus || ''
+  const action = ACTION_DEFS.find(o => o.status === fileStatus && o.name !== 'PUBLISH')
+  return action?.text || fileStatus || '-'
 }
 
 // 格式化日期时间
@@ -220,36 +214,26 @@ function formatDateTime(timestamp) {
   })
 }
 
-// 显示审批详情
-async function showApprovalDetail(record) {
-  currentDetail.value = record
-  viewMode.value = 'approvalDetail'
+// 显示审批详情 (与源代码 showApprovalDetail 逻辑一致)
+async function showApprovalDetail(approvalId) {
+  if (!approvalId) return
 
-  // 如果记录中已有 paths，直接使用
-  if (record.paths && record.paths.length > 0) {
-    detailPaths.value = record.paths.map(p => typeof p === 'string' ? { path: p } : p)
-    return
-  }
-
-  // 否则根据 ID 获取详情
-  if (record.id) {
-    loading.value = true
-    try {
-      const response = await gfsApi.getApprovalDetail(props.repo, record.id)
-      // API 返回格式: { _status: "ok", result: {...} }
-      const data = response?.data || response
-      const detail = data?.result || data
-      currentDetail.value = {
-        ...detail,
-        actionDate: formatDateTime(detail.updatedAt || detail.actionDate),
-        action: detectActionOfApprove(detail)
-      }
-      detailPaths.value = (detail.paths || []).map(p => typeof p === 'string' ? { path: p } : p)
-    } catch (error) {
-      ElMessage.error(error?.message || '加载详情失败')
-    } finally {
-      loading.value = false
+  loading.value = true
+  try {
+    // 接口示例: /gfs/api/gfs/v2/git/f/{repo}/history/{approvalId}
+    const response = await gfsApi.getApprovalDetail(props.repo, approvalId)
+    // API 返回格式: { _status: "ok", result: {...} }
+    const data = response?.data || response
+    if (data?._status === 'ok' || data?.result) {
+      const detail = data.result || data
+      currentDetail.value = parseDetail(detail)
+      detailPaths.value = detail.paths || []
+      viewMode.value = 'approvalDetail'
     }
+  } catch (error) {
+    ElMessage.error(error?.message || '加载详情失败')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -260,65 +244,36 @@ function backToList() {
   detailPaths.value = []
 }
 
-// 跳转到文件
-function goFile(file) {
-  const path = typeof file === 'string' ? file : file.path
-  emit('go-file', path)
+// 跳转到文件 (与源代码 goFile 逻辑一致)
+function goFile(filePath) {
+  if (!filePath) return
+  // 提取目录部分
+  const dir = filePath.substring(0, filePath.lastIndexOf('/'))
+  emit('go-file', dir)
+  emit('update:modelValue', false)
 }
 
-// 获取操作标签类型
-function getActionTagType(action) {
-  const typeMap = {
-    'APPROVE': 'success',
-    'APPROVED': 'success',
-    'REJECT': 'danger',
-    'REJECTED': 'danger',
-    'REVERT': 'warning',
-    'REVERTED': 'warning'
-  }
-  return typeMap[action?.toUpperCase()] || 'info'
-}
-
-// 获取操作文本
-function getActionText(action) {
-  const textMap = {
-    'APPROVE': '通过',
-    'APPROVED': '已通过',
-    'REJECT': '拒绝',
-    'REJECTED': '已拒绝',
-    'REVERT': '撤销',
-    'REVERTED': '已撤销'
-  }
-  return textMap[action?.toUpperCase()] || action || '-'
+// 弹窗关闭时重置状态
+function handleClosed() {
+  viewMode.value = props.mode
+  historyList.value = []
+  currentDetail.value = null
+  detailPaths.value = []
+  emit('closed')
 }
 
 // 监听模式变化
-watch(() => props.mode, (val) => {
-  viewMode.value = val
-})
+watch(
+  () => props.mode,
+  val => {
+    viewMode.value = val
+  }
+)
 </script>
 
 <style scoped lang="scss">
 .history-container {
   min-height: 300px;
-}
-
-.file-info {
-  margin-bottom: 12px;
-}
-
-.detail-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.detail-info {
-  color: #606266;
-  font-size: 13px;
 }
 
 /* 表头浅灰色样式 */

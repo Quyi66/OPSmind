@@ -7,9 +7,7 @@
     @closed="handleClosed"
   >
     <div v-if="selectedFiles.length === 0" class="empty-notice">
-      <el-alert type="warning" :closable="false" show-icon>
-        请先选择要审核的文件
-      </el-alert>
+      <el-alert type="warning" :closable="false" show-icon>请先选择要审核的文件</el-alert>
     </div>
 
     <template v-else>
@@ -20,16 +18,30 @@
 
       <!-- 审核操作选择 -->
       <div class="action-group">
-        <el-radio-group v-model="form.action" class="action-radio-group">
-          <el-radio-button
-            v-for="action in availableActions"
-            :key="action.value"
-            :value="action.value"
-            :disabled="!action.hasPermission"
-          >
-            <i :class="action.icon" /> {{ action.text }}
-          </el-radio-button>
-        </el-radio-group>
+        <el-button
+          :type="form.action === 'PUBLISHED' ? 'success' : ''"
+          :plain="form.action !== 'PUBLISHED'"
+          @click="form.action = 'PUBLISHED'"
+        >
+          <!-- <i class="fa fa-check" /> -->
+          通过
+        </el-button>
+        <el-button
+          :type="form.action === 'REJECTED' ? 'danger' : ''"
+          :plain="form.action !== 'REJECTED'"
+          @click="form.action = 'REJECTED'"
+        >
+          <!-- <i class="fa fa-times" /> -->
+          拒绝
+        </el-button>
+        <el-button
+          :type="form.action === 'REVERT' ? 'warning' : ''"
+          :plain="form.action !== 'REVERT'"
+          @click="form.action = 'REVERT'"
+        >
+          <!-- <i class="fa fa-undo" /> -->
+          撤销
+        </el-button>
       </div>
 
       <!-- 备注 -->
@@ -95,17 +107,6 @@ const submitting = ref(false)
 // 已选择的文件
 const selectedFiles = computed(() => props.files || [])
 
-// 可用的审核动作
-const availableActions = computed(() => {
-  // stage 类型的文件审核动作
-  // 注意: 'APPROVE' action 发送的 status 是 'PUBLISHED'
-  return [
-    { value: 'PUBLISHED', text: '通过', icon: 'fa fa-check', hasPermission: true },
-    { value: 'REJECTED', text: '拒绝', icon: 'fa fa-times', hasPermission: true },
-    { value: 'REVERT', text: '撤销', icon: 'fa fa-undo', hasPermission: true }
-  ]
-})
-
 // 提交审核
 async function handleSubmit() {
   if (!form.value.action) {
@@ -127,7 +128,13 @@ async function handleSubmit() {
       await gfsApi.deleteFiles('stage', props.repo, filePaths)
     } else {
       // 通过或拒绝
-      await gfsApi.changeFileStatus('stage', props.repo, selectedFiles.value, form.value.action, form.value.comment)
+      await gfsApi.changeFileStatus(
+        'stage',
+        props.repo,
+        selectedFiles.value,
+        form.value.action,
+        form.value.comment
+      )
     }
 
     ElMessage.success('操作成功')
@@ -149,14 +156,17 @@ function handleClosed() {
 }
 
 // 监听打开
-watch(() => props.modelValue, (val) => {
-  if (val) {
-    form.value = {
-      action: '',
-      comment: ''
+watch(
+  () => props.modelValue,
+  val => {
+    if (val) {
+      form.value = {
+        action: '',
+        comment: ''
+      }
     }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">
@@ -169,19 +179,9 @@ watch(() => props.modelValue, (val) => {
 }
 
 .action-group {
-  margin-bottom: 20px;
-}
-
-.action-radio-group {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  :deep(.el-radio-button__inner) {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .comment-section {

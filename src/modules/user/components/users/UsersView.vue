@@ -4,22 +4,44 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="用户类型">
-          <el-select v-model="filters.types" multiple collapse-tags placeholder="请选择" style="width: 160px">
+          <el-select
+            v-model="filters.types"
+            multiple
+            collapse-tags
+            placeholder="请选择"
+            style="width: 160px"
+          >
             <el-option label="系统用户" value="0" />
             <el-option label="普通用户" value="1" />
           </el-select>
         </el-form-item>
         <el-form-item label="锁定状态">
-          <el-select v-model="filters.lockStatus" multiple collapse-tags placeholder="请选择" style="width: 140px">
+          <el-select
+            v-model="filters.lockStatus"
+            multiple
+            collapse-tags
+            placeholder="请选择"
+            style="width: 140px"
+          >
             <el-option label="锁定" value="1" />
             <el-option label="未锁定" value="2" />
           </el-select>
         </el-form-item>
         <el-form-item label="IP">
-          <el-input v-model="filters.host_key" placeholder="输入IP地址" clearable style="width: 150px" />
+          <el-input
+            v-model="filters.host_key"
+            placeholder="输入IP地址"
+            clearable
+            style="width: 150px"
+          />
         </el-form-item>
         <el-form-item label="用户名">
-          <el-input v-model="filters.username" placeholder="输入用户名" clearable style="width: 150px" />
+          <el-input
+            v-model="filters.username"
+            placeholder="输入用户名"
+            clearable
+            style="width: 150px"
+          />
         </el-form-item>
         <!-- <el-form-item label="关键词">
           <el-input
@@ -50,13 +72,22 @@
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleScanHost">
-        <i class="fa fa-redo-alt"></i> 扫描主机
+        <i class="fa fa-redo-alt"></i>
+        扫描主机
       </el-button>
       <el-button type="default" size="small" @click="handleCreateUser">
-        <i class="fa fa-user-plus"></i> 创建用户
+        <i class="fa fa-user-plus"></i>
+        创建用户
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading">
           <Refresh />
         </el-icon>
@@ -65,14 +96,24 @@
 
     <!-- 用户列表表格 -->
     <div class="ops-table-wrapper">
-      <el-table :data="tableData" v-loading="loading" stripe @selection-change="handleSelectionChange"
-        max-height="calc(100vh - 300px)">
+      <el-table
+        :data="tableData"
+        v-loading="loading"
+        stripe
+        @selection-change="handleSelectionChange"
+        max-height="calc(100vh - 300px)"
+      >
         <!-- <el-table-column type="selection" width="50" /> -->
         <el-table-column prop="host_key" label="IP" width="130" />
         <el-table-column prop="hostname" label="主机名" width="100" show-overflow-tooltip />
         <el-table-column prop="username" label="用户名" width="120">
           <template #default="{ row }">
-            <el-tag :type="getUserBadgeType(row.uid)" size="small" class="clickable-tag" @click="handleEditUser(row)">
+            <el-tag
+              :type="getUserBadgeType(row.uid)"
+              size="small"
+              class="clickable-tag"
+              @click="handleEditUser(row)"
+            >
               <i :class="['fa', getUserIcon(row.uid)]"></i>
               {{ row.username }}
             </el-tag>
@@ -89,7 +130,12 @@
         <el-table-column prop="uid" label="UID" width="70" />
         <el-table-column prop="gid" label="GID" width="70" />
         <el-table-column prop="primary_group" label="主用户组" width="100" show-overflow-tooltip />
-        <el-table-column prop="secondary_group" label="附加用户组" min-width="120" show-overflow-tooltip />
+        <el-table-column
+          prop="secondary_group"
+          label="附加用户组"
+          min-width="120"
+          show-overflow-tooltip
+        />
         <el-table-column prop="comment" label="备注" width="100" show-overflow-tooltip />
         <el-table-column prop="shell" label="Shell" width="120" show-overflow-tooltip />
         <el-table-column prop="home" label="主目录" min-width="150" show-overflow-tooltip />
@@ -104,11 +150,23 @@
           </template>
         </el-table-column>
         <el-table-column prop="expired_date" label="过期时间" width="100" />
-        <el-table-column prop="sudo_command" label="sudo权限" min-width="150" show-overflow-tooltip />
+        <el-table-column
+          prop="sudo_command"
+          label="sudo权限"
+          min-width="150"
+          show-overflow-tooltip
+        />
         <el-table-column prop="crontab" label="定时任务" width="90">
           <template #default="{ row }">
-            <el-tag v-if="row.crontab" type="info" size="small" class="clickable-tag" @click="handleCrontabDetail(row)">
-              <i class="fa fa-list-alt"></i> 详情
+            <el-tag
+              v-if="row.crontab"
+              type="info"
+              size="small"
+              class="clickable-tag"
+              @click="handleCrontabDetail(row)"
+            >
+              <i class="fa fa-list-alt"></i>
+              详情
             </el-tag>
           </template>
         </el-table-column>
@@ -119,9 +177,15 @@
         </el-table-column>
         <el-table-column prop="login_fail_message" label="登录错误" width="90">
           <template #default="{ row }">
-            <el-tag v-if="row.login_fail_message" type="primary" size="small" class="clickable-tag"
-              @click="handleLoginErrorDetail(row)">
-              <i class="fa fa-list-alt"></i> 详情
+            <el-tag
+              v-if="row.login_fail_message"
+              type="primary"
+              size="small"
+              class="clickable-tag"
+              @click="handleLoginErrorDetail(row)"
+            >
+              <i class="fa fa-list-alt"></i>
+              详情
             </el-tag>
           </template>
         </el-table-column>
@@ -142,9 +206,16 @@
 
     <!-- 分页 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total"
-        :page-sizes="[15, 30, 50, 100]" layout="total, sizes, prev, pager, next, jumper" background
-        @size-change="loadData" @current-change="loadData" />
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :total="total"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="loadData"
+        @current-change="loadData"
+      />
     </div>
 
     <!-- 扫描主机对话框 -->
@@ -176,18 +247,18 @@ import LoginErrorDialog from '@/modules/user/components/dialogs/LoginErrorDialog
 
 // 筛选条件
 const filters = ref({
-  types: ['0', '1'],       // 用户类型: 0=系统用户, 1=普通用户
-  lockStatus: ['2'],       // 锁定状态: 1=锁定, 2=未锁定
-  host_key: '',            // IP地址
-  username: '',            // 用户名
-  keyword: ''              // 关键词搜索
+  types: ['0', '1'], // 用户类型: 0=系统用户, 1=普通用户
+  lockStatus: ['2'], // 锁定状态: 1=锁定, 2=未锁定
+  host_key: '', // IP地址
+  username: '', // 用户名
+  keyword: '' // 关键词搜索
 })
 
 const loading = ref(false)
 const tableData = ref([])
 const selectedRows = ref([])
 const currentPage = ref(1)
-const pageSize = ref(15)
+const pageSize = ref(10)
 const total = ref(0)
 
 // 对话框显示状态
@@ -201,9 +272,9 @@ const loginErrorUserId = ref('')
 
 // 获取用户徽章类型 (根据UID判断用户类型)
 function getUserBadgeType(uid) {
-  if (uid === 0) return 'primary'      // admin (root)
-  if (uid > 0 && uid < 1000) return 'info'  // 系统用户
-  return 'info'  // 普通用户 - 使用 info 而不是空字符串
+  if (uid === 0) return 'primary' // admin (root)
+  if (uid > 0 && uid < 1000) return 'info' // 系统用户
+  return 'info' // 普通用户 - 使用 info 而不是空字符串
 }
 
 // 获取用户图标
@@ -292,11 +363,9 @@ function handleEditUser(row) {
   showEditUserDialog.value = true
 }
 
-function handleUserDetail(row) {
-}
+function handleUserDetail(row) {}
 
-function handleCrontabDetail(row) {
-}
+function handleCrontabDetail(row) {}
 
 function handleLoginErrorDetail(row) {
   loginErrorUserId.value = row.id || ''
@@ -317,7 +386,7 @@ function handleReset() {
     keyword: ''
   }
   currentPage.value = 1
-  pageSize.value = 15
+  pageSize.value = 10
   loadData()
 }
 
