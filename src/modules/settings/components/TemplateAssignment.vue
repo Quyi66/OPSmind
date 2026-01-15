@@ -4,19 +4,18 @@
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
         <el-form-item label="关键词">
-          <el-input
-            v-model="searchText"
-            placeholder="模版名称/描述"
-            clearable
-            style="width: 200px"
-          />
+          <el-input v-model="searchText" placeholder="模版名称/描述" clearable style="width: 200px" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon> 搜索
+            <el-icon>
+              <Search />
+            </el-icon> 搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon> 重置
+            <el-icon>
+              <RefreshRight />
+            </el-icon> 重置
           </el-button>
         </el-form-item>
       </el-form>
@@ -26,52 +25,29 @@
     <div class="ops-action-bar">
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
-        <el-icon v-show="!loading"><Refresh /></el-icon>
+        <el-icon v-show="!loading">
+          <Refresh />
+        </el-icon>
       </el-button>
     </div>
 
     <!-- 模版列表 -->
     <div class="ops-table-wrapper">
-      <el-table
-        :data="paginatedTemplates"
-        v-loading="loading"
-        stripe
-        style="width: 100%"
-        max-height="calc(100vh - 360px)"
-      >
+      <el-table :data="paginatedTemplates" v-loading="loading" stripe style="width: 100%"
+        max-height="calc(100vh - 360px)">
         <el-table-column prop="templateName" label="名称" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip>
-          <template #default="{ row }">
-            <span v-if="row.description">{{ row.description }}</span>
-            <span v-else class="text-muted">-</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
         <el-table-column label="关联团队" min-width="200">
           <template #default="{ row }">
-            <el-select
-              v-model="row.groupId"
-              placeholder="选择团队"
-              clearable
-              style="width: 100%"
-              @change="handleTeamChange(row)"
-              size="small"
-            >
-              <el-option
-                v-for="team in teams"
-                :key="team.id"
-                :label="team.name"
-                :value="team.id"
-              />
+            <el-select v-model="row.groupId" placeholder="选择团队" clearable style="width: 100%"
+              @change="handleTeamChange(row)" size="small">
+              <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
             </el-select>
           </template>
         </el-table-column>
         <el-table-column label="是否发送告警通知" width="150" align="left">
           <template #default="{ row }">
-            <el-switch
-              v-model="row.sendAlert"
-              :disabled="!row.groupId"
-              @change="handleAlertChange(row)"
-            />
+            <el-switch v-model="row.sendAlert" :disabled="!row.groupId" @change="handleAlertChange(row)" />
           </template>
         </el-table-column>
         <el-table-column prop="updatedAt" label="更新时间" width="180">
@@ -84,14 +60,9 @@
 
     <!-- 分页器 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="filteredTemplates.length"
-        layout="total, sizes, prev, pager, next, jumper"
-        background
-      />
+      <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]" :total="filteredTemplates.length"
+        layout="total, sizes, prev, pager, next, jumper" background />
     </div>
   </div>
 </template>

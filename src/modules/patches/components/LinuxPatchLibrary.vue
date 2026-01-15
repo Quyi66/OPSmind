@@ -2,13 +2,9 @@
   <div class="ops-page-layout">
     <!-- 厂商统计 KPI 卡片 -->
     <div class="vendor-kpi-section">
-      <div
-        v-for="vendor in vendorStats"
-        :key="vendor.vendor"
-        class="vendor-kpi-card"
+      <div v-for="vendor in vendorStats" :key="vendor.vendor" class="vendor-kpi-card"
         :class="[getVendorClass(vendor.vendor), { 'is-active': currentVendor === vendor.vendor }]"
-        @click="handleVendorClick(vendor.vendor)"
-      >
+        @click="handleVendorClick(vendor.vendor)">
         <div class="kpi-left">
           <div class="kpi-header">
             <span class="kpi-vendor">{{ vendor.vendor.toUpperCase() }}</span>
@@ -49,19 +45,18 @@
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
-          <el-input
-            v-model="filterText"
-            placeholder="搜索补丁编号、概要、CVE..."
-            style="width: 240px"
-            clearable
-          />
+          <el-input v-model="filterText" placeholder="搜索补丁编号、概要、CVE..." style="width: 240px" clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon> 搜索
+            <el-icon>
+              <Search />
+            </el-icon> 搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon> 重置
+            <el-icon>
+              <RefreshRight />
+            </el-icon> 重置
           </el-button>
         </el-form-item>
       </el-form>
@@ -72,37 +67,24 @@
       <el-button type="primary" size="small" @click="handleCheckPatchUpdate">
         检查补丁库更新
       </el-button>
-      <el-button
-        v-if="selectedPatches.length > 0"
-        size="small"
-        @click="handleBatchAddWhitelist"
-      >
+      <el-button v-if="selectedPatches.length > 0" size="small" @click="handleBatchAddWhitelist">
         添加白名单
       </el-button>
-      <el-button
-        v-if="selectedPatches.length > 0"
-        type="danger"
-        size="small"
-        @click="handleBatchRemoveWhitelist"
-      >
+      <el-button v-if="selectedPatches.length > 0" type="danger" size="small" @click="handleBatchRemoveWhitelist">
         移除白名单
       </el-button>
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
-        <el-icon v-show="!loading"><Refresh /></el-icon>
+        <el-icon v-show="!loading">
+          <Refresh />
+        </el-icon>
       </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table
-        ref="tableRef"
-        v-loading="loading"
-        :data="tableData"
-        stripe
-        max-height="calc(100vh - 480px)"
-        @selection-change="handleSelectionChange"
-      >
+      <el-table ref="tableRef" v-loading="loading" :data="tableData" stripe max-height="calc(100vh - 480px)"
+        @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50" />
         <el-table-column prop="patch_id" label="补丁编号" min-width="140">
           <template #default="{ row }">
@@ -127,13 +109,8 @@
         <el-table-column prop="related_vuls" label="关联CVE" min-width="180">
           <template #default="{ row }">
             <div class="cve-tags" v-if="row.related_vuls">
-              <a
-                v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)"
-                :key="idx"
-                :href="`https://access.redhat.com/security/cve/${cve}`"
-                target="_blank"
-                class="cve-link"
-              >
+              <a v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)" :key="idx"
+                :href="`https://access.redhat.com/security/cve/${cve}`" target="_blank" class="cve-link">
                 {{ cve }}
               </a>
               <span v-if="parseCVEs(row.related_vuls).length > 3" class="cve-more">
@@ -146,22 +123,11 @@
         <el-table-column prop="vendor" label="厂商" width="100" />
         <el-table-column prop="is_ignore" label="Ignore" width="88" align="left">
           <template #default="{ row }">
-            <el-button
-              v-if="row.is_ignore === 1"
-              text
-              type="success"
-              size="small"
-              @click="handleRemoveFromWhitelist(row)"
-            >
+            <el-button v-if="row.is_ignore === 1" text type="success" size="small"
+              @click="handleRemoveFromWhitelist(row)">
               Yes
             </el-button>
-            <el-button
-              v-else
-              text
-              type="info"
-              size="small"
-              @click="handleAddToWhitelist(row)"
-            >
+            <el-button v-else text type="info" size="small" @click="handleAddToWhitelist(row)">
               No
             </el-button>
           </template>
@@ -171,25 +137,13 @@
 
     <!-- 分页区域 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="pagination.total"
-        layout="total, sizes, prev, pager, next, jumper"
-        background
-        @size-change="handleSizeChange"
-        @current-change="handlePageChange"
-      />
+      <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
+        background @size-change="handleSizeChange" @current-change="handlePageChange" />
     </div>
 
     <!-- 补丁详情对话框 -->
-    <el-dialog
-      v-model="detailDialogVisible"
-      title="补丁详情"
-      width="700px"
-      destroy-on-close
-    >
+    <el-dialog v-model="detailDialogVisible" title="补丁详情" width="700px" destroy-on-close>
       <div v-loading="detailLoading" class="patch-detail">
         <template v-if="patchDetail">
           <!-- 补丁编号 - 大号加粗 -->
@@ -218,18 +172,11 @@
             <div class="patch-detail-label">关联CVE</div>
             <div class="patch-detail-cves">
               <template v-if="patchDetail.related_vuls">
-                <span
-                  v-for="(cve, idx) in parseCVEs(patchDetail.related_vuls)"
-                  :key="idx"
-                  class="cve-item"
-                >
-                  <a
-                    :href="`https://access.redhat.com/security/cve/${cve}`"
-                    target="_blank"
-                  >{{ cve }}</a>
+                <span v-for="(cve, idx) in parseCVEs(patchDetail.related_vuls)" :key="idx" class="cve-item">
+                  <a :href="`https://access.redhat.com/security/cve/${cve}`" target="_blank">{{ cve }}</a>
                 </span>
               </template>
-              <span v-else class="text-muted">-</span>
+              <span v-else>-</span>
             </div>
           </div>
         </template>

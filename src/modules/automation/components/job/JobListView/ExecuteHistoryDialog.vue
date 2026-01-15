@@ -1,54 +1,42 @@
 <template>
-  <el-dialog
-    v-model="dialogVisible"
-    :title="`作业运行记录${jobTitle ? ` · ${jobTitle}` : ''}`"
-    width="1460px"
-    destroy-on-close
-    @close="handleClose"
-  >
+  <el-dialog v-model="dialogVisible" :title="`作业运行记录${jobTitle ? ` · ${jobTitle}` : ''}`" width="1460px"
+    destroy-on-close @close="handleClose">
     <div class="history-dialog">
       <!-- 筛选栏 -->
       <div class="ops-filter-bar">
         <el-form inline size="small">
           <el-form-item label="时间范围">
             <el-select v-model="timeRange" style="width: 120px;">
-              <el-option
-                v-for="option in timeRangeOptions"
-                :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
+              <el-option v-for="option in timeRangeOptions" :key="option.value" :label="option.label"
+                :value="option.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
             <el-select v-model="statusValue" style="width: 120px;">
-              <el-option
-                v-for="option in statusOptions"
-                :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
+              <el-option v-for="option in statusOptions" :key="option.value" :label="option.label"
+                :value="option.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
-            <el-input
-              v-model.trim="keyword"
-              placeholder="输入作业名称搜索"
-              clearable
-              style="width: 200px;"
-            >
+            <el-input v-model.trim="keyword" placeholder="输入作业名称搜索" clearable style="width: 200px;">
               <template #prefix>
-                <el-icon><Search /></el-icon>
+                <el-icon>
+                  <Search />
+                </el-icon>
               </template>
             </el-input>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleSearch">
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
               搜索
             </el-button>
             <el-button @click="handleReset">
-              <el-icon><RefreshRight /></el-icon>
+              <el-icon>
+                <RefreshRight />
+              </el-icon>
               重置
             </el-button>
           </el-form-item>
@@ -65,20 +53,9 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table
-          v-loading="tableLoading"
-          :data="tableData"
-          max-height="calc(100vh - 400px)"
-          @sort-change="handleSortChange"
-          :empty-text="tableLoading ? ' ' : '暂无数据'"
-        >
-          <el-table-column
-            prop="startTime"
-            label="开始时间"
-            width="180"
-            sortable="custom"
-            column-key="start_time"
-          />
+        <el-table v-loading="tableLoading" :data="tableData" max-height="calc(100vh - 400px)"
+          @sort-change="handleSortChange" :empty-text="tableLoading ? ' ' : '暂无数据'">
+          <el-table-column prop="startTime" label="开始时间" width="180" sortable="custom" column-key="start_time" />
           <el-table-column prop="jobTitle" label="作业" min-width="150" show-overflow-tooltip />
           <el-table-column label="类型" width="80">
             <template #default="{ row }">
@@ -88,23 +65,11 @@
           <el-table-column prop="username" label="执行人" width="100" />
           <el-table-column prop="reviewUser" label="审核人" width="100" />
           <el-table-column prop="duration" label="耗时" width="100" />
-          <el-table-column
-            prop="endTime"
-            label="结束时间"
-            width="180"
-            sortable="custom"
-            column-key="end_time"
-          />
+          <el-table-column prop="endTime" label="结束时间" width="180" sortable="custom" column-key="end_time" />
           <el-table-column label="Ansible Node" min-width="180">
             <template #default="{ row }">
               <div v-if="row.ansibleNodes.length" class="node-badges">
-                <el-tag
-                  v-for="node in row.ansibleNodes"
-                  :key="node"
-                  type="info"
-                  size="small"
-                  class="node-badge"
-                >
+                <el-tag v-for="node in row.ansibleNodes" :key="node" type="info" size="small" class="node-badge">
                   {{ node }}
                 </el-tag>
               </div>
@@ -113,15 +78,9 @@
           </el-table-column>
           <el-table-column label="状态" width="120" sortable="custom" column-key="status">
             <template #default="{ row }">
-              <el-tag
-                v-if="row.status"
-                :type="statusTagType(row.status)"
-                effect="dark"
-                size="small"
-                class="history-status-tag"
-                :class="{ 'is-clickable': !!row.id }"
-                @click.stop="row.id && handleStatusClick(row)"
-              >
+              <el-tag v-if="row.status" :type="statusTagType(row.status)" effect="dark" size="small"
+                class="history-status-tag" :class="{ 'is-clickable': !!row.id }"
+                @click.stop="row.id && handleStatusClick(row)">
                 {{ statusLabel(row.status) }}
               </el-tag>
               <span v-else>-</span>
@@ -129,16 +88,10 @@
           </el-table-column>
           <el-table-column label="操作" width="80" fixed="right">
             <template #default="{ row }">
-              <el-button
-                v-if="canRerun(row)"
-                text
-                type="primary"
-                size="small"
-                @click="handleRerun(row)"
-              >
+              <el-button v-if="canRerun(row)" text type="primary" size="small" @click="handleRerun(row)">
                 重跑
               </el-button>
-              <span v-else class="text-muted">-</span>
+              <span v-else>-</span>
             </template>
           </el-table-column>
         </el-table>
@@ -146,24 +99,13 @@
 
       <!-- 分页器区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :total="total"
-          :page-sizes="[10, 20, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handlePageSizeChange"
-          @current-change="handlePageChange"
-        />
+        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total"
+          :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next, jumper" background
+          @size-change="handlePageSizeChange" @current-change="handlePageChange" />
       </div>
 
-      <ExecuteResultDialog
-        v-if="resultDialogVisible"
-        v-model:visible="resultDialogVisible"
-        :run-id="resultMeta.runId"
-        :job-title="resultMeta.jobTitle"
-      />
+      <ExecuteResultDialog v-if="resultDialogVisible" v-model:visible="resultDialogVisible" :run-id="resultMeta.runId"
+        :job-title="resultMeta.jobTitle" />
     </div>
   </el-dialog>
 </template>

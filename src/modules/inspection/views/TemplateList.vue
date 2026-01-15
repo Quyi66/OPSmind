@@ -4,24 +4,25 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="模板名称">
-          <el-input
-            v-model="filters.keyword"
-            placeholder="搜索模板名称"
-            clearable
-            style="width: 250px"
-          >
+          <el-input v-model="filters.keyword" placeholder="搜索模板名称" clearable style="width: 250px">
             <template #prefix>
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
-            <el-icon><Search /></el-icon>
+            <el-icon>
+              <Search />
+            </el-icon>
             搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon>
+            <el-icon>
+              <RefreshRight />
+            </el-icon>
             重置
           </el-button>
         </el-form-item>
@@ -35,57 +36,39 @@
       </el-button>
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadTemplates" title="刷新">
-        <el-icon v-show="!loading"><Refresh /></el-icon>
+        <el-icon v-show="!loading">
+          <Refresh />
+        </el-icon>
       </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table
-        v-loading="loading"
-        :data="paginatedData"
-        style="width: 100%"
-        row-key="id"
-        :default-sort="{ prop: 'executedAt', order: 'descending' }"
-        heigth="calc(100vh - 300px)"
-      >
+      <el-table v-loading="loading" :data="paginatedData" style="width: 100%" row-key="id"
+        :default-sort="{ prop: 'executedAt', order: 'descending' }" heigth="calc(100vh - 300px)">
         <!-- 名称 -->
         <el-table-column prop="templateName" label="名称" min-width="180" sortable show-overflow-tooltip>
           <template #default="{ row }">
-            <a
-              href="javascript:void(0)"
-              class="template-name-link"
-              @click="goToJobList(row)"
-            >
+            <a href="javascript:void(0)" class="template-name-link" @click="goToJobList(row)">
               {{ row.templateName }}
             </a>
           </template>
         </el-table-column>
 
         <!-- 描述 -->
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip>
-          <template #default="{ row }">
-            <span v-if="row.description" class="template-desc">{{ row.description }}</span>
-            <span v-else class="text-muted">-</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
 
         <!-- 检查项 -->
         <el-table-column label="检查项" min-width="150" sortable>
           <template #default="{ row }">
-            <span class="check-item">
-              主机: <strong>{{ row.hostCount }}</strong>, 脚本: <strong>{{ row.scriptCount }}</strong>
-            </span>
+            主机: {{ row.hostCount }}, 脚本: {{ row.scriptCount }}
           </template>
         </el-table-column>
 
         <!-- 上次检查时间 -->
         <el-table-column prop="executedAt" label="上次检查时间" width="180" sortable>
           <template #default="{ row }">
-            <span v-if="row.executedAt" class="execution-time">
-              {{ formatDateTime(row.executedAt) }}
-            </span>
-            <span v-else class="not-executed">未执行</span>
+            {{ row.executedAt ? formatDateTime(row.executedAt) : '-' }}
           </template>
         </el-table-column>
 
@@ -111,31 +94,17 @@
 
     <!-- 分页 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="filteredData.length"
-        layout="total, sizes, prev, pager, next, jumper"
-        background
-        @size-change="handlePageSizeChange"
-        @current-change="handlePageChange"
-      />
+      <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
+        :total="filteredData.length" layout="total, sizes, prev, pager, next, jumper" background
+        @size-change="handlePageSizeChange" @current-change="handlePageChange" />
     </div>
 
     <!-- 新建/编辑模板弹窗 -->
-    <TemplateEditDialog
-      v-model:visible="editDialogVisible"
-      :template-id="editTemplateId"
-      @success="handleEditSuccess"
-    />
+    <TemplateEditDialog v-model:visible="editDialogVisible" :template-id="editTemplateId"
+      @success="handleEditSuccess" />
 
     <!-- 执行巡检弹窗 -->
-    <RunTemplateDialog
-      v-model:visible="runDialogVisible"
-      :template-id="runTemplateId"
-      @success="handleRunSuccess"
-    />
+    <RunTemplateDialog v-model:visible="runDialogVisible" :template-id="runTemplateId" @success="handleRunSuccess" />
   </div>
 </template>
 

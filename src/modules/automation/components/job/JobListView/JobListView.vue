@@ -2,17 +2,12 @@
   <div class="ops-page-layout" style="flex-direction: row; padding: 0; gap: 0;">
     <aside class="ops-sidebar-nav">
       <div class="ops-sidebar-header">
-        <el-input v-model="appStr" style="width: 140px" placeholder="请输入" :prefix-icon="'Search'" @input="filterApplets()" />
+        <el-input v-model="appStr" style="width: 140px" placeholder="请输入" :prefix-icon="'Search'"
+          @input="filterApplets()" />
       </div>
       <el-scrollbar class="ops-sidebar-content">
-        <button
-          v-for="applet in appOptions"
-          :key="applet.name || 'all'"
-          class="ops-sidebar-item"
-          :class="{ 'is-active': currentApp.name === applet.name }"
-          @click="selectApplet(applet)"
-          v-show="applet.show"
-        >
+        <button v-for="applet in appOptions" :key="applet.name || 'all'" class="ops-sidebar-item"
+          :class="{ 'is-active': currentApp.name === applet.name }" @click="selectApplet(applet)" v-show="applet.show">
           <span>{{ applet.title }}</span>
         </button>
       </el-scrollbar>
@@ -25,33 +20,30 @@
           <el-form-item label="类型">
             <el-select v-model="filters.jobType" style="width: 120px;" placeholder="全部类型">
               <el-option label="全部类型" value="all" />
-              <el-option
-                v-for="option in jobTypeOptions"
-                :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
+              <el-option v-for="option in jobTypeOptions" :key="option.value" :label="option.label"
+                :value="option.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
-            <el-input
-              v-model="filters.keyword"
-              placeholder="搜索作业标题、描述..."
-              clearable
-              style="width: 200px;"
-            >
+            <el-input v-model="filters.keyword" placeholder="搜索作业标题、描述..." clearable style="width: 200px;">
               <template #prefix>
-                <el-icon><Search /></el-icon>
+                <el-icon>
+                  <Search />
+                </el-icon>
               </template>
             </el-input>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" :loading="loading" @click="handleSearch">
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
               搜索
             </el-button>
             <el-button @click="handleReset">
-              <el-icon><RefreshRight /></el-icon>
+              <el-icon>
+                <RefreshRight />
+              </el-icon>
               重置
             </el-button>
           </el-form-item>
@@ -62,56 +54,44 @@
       <div class="ops-action-bar">
         <el-dropdown @command="handleCreateJob">
           <el-button type="primary" size="small">
-            <el-icon><Plus /></el-icon>
+            <el-icon>
+              <Plus />
+            </el-icon>
             新建作业
-            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            <el-icon class="el-icon--right">
+              <ArrowDown />
+            </el-icon>
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item
-                v-for="option in createJobOptions"
-                :key="option.value"
-                :command="option.value"
-              >
+              <el-dropdown-item v-for="option in createJobOptions" :key="option.value" :command="option.value">
                 <i :class="['fa', option.icon, 'dropdown-icon']"></i>
                 {{ option.label }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <el-button
-          size="small"
-          :disabled="!selectedIds.length"
-          @click="handleDeleteJobs"
-          type="danger"
-        >
-          <el-icon><Delete /></el-icon>
+        <el-button size="small" :disabled="!selectedIds.length" @click="handleDeleteJobs" type="danger">
+          <el-icon>
+            <Delete />
+          </el-icon>
           删除
         </el-button>
         <span style="flex: 1;"></span>
         <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="reloadJobs" title="刷新">
-          <el-icon v-show="!loading"><Refresh /></el-icon>
+          <el-icon v-show="!loading">
+            <Refresh />
+          </el-icon>
         </el-button>
       </div>
 
-      <el-alert
-        v-if="error"
-        :title="error"
-        type="error"
-        :closable="false"
-        style="margin-bottom: 12px;"
-      />
+      <el-alert v-if="error" :title="error" type="error" :closable="false" style="margin-bottom: 12px;" />
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="displayedJobs"
-          @selection-change="handleSelectionChange"
-          @sort-change="handleSortChange"
-          max-height="calc(100vh - 300px)"
-          :default-sort="{ prop: 'updatedAt', order: 'descending' }"
-        >
+        <el-table v-loading="loading" :data="displayedJobs" @selection-change="handleSelectionChange"
+          @sort-change="handleSortChange" max-height="calc(100vh - 300px)"
+          :default-sort="{ prop: 'updatedAt', order: 'descending' }">
           <el-table-column type="selection" width="48" />
           <el-table-column prop="title" label="作业" min-width="160" show-overflow-tooltip>
             <template #default="{ row }">
@@ -122,19 +102,12 @@
           </el-table-column>
           <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip>
             <template #default="{ row }">
-              <span v-if="row.description" class="job-desc">{{ translateText(row.description) }}</span>
-              <span v-else class="text-muted">-</span>
+              {{ translateText(row.description) || '-' }}
             </template>
           </el-table-column>
           <el-table-column label="类型" width="120">
             <template #default="{ row }">
-              <el-tag
-                v-if="row.type"
-                size="small"
-                :type="typeTagType(row.type)"
-                effect="plain"
-                class="job-type-tag"
-              >
+              <el-tag v-if="row.type" size="small" :type="typeTagType(row.type)" effect="plain" class="job-type-tag">
                 <i :class="['fa', typeIcon(row.type)]" />
                 <span>{{ typeLabel(row.type) }}</span>
               </el-tag>
@@ -175,39 +148,18 @@
 
       <!-- 分页器区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :total="filteredJobsCount"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-        />
+        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredJobsCount"
+          :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next, jumper" background />
       </div>
     </section>
 
-    <ExecuteJobDialog
-      v-if="executeDialogVisible"
-      v-model:visible="executeDialogVisible"
-      :job-id="executeJobMeta?.id || ''"
-      :job-type="executeJobMeta?.type || ''"
-      :fallback-config-json="executeJobMeta?.configJson || ''"
-    />
-    <ExecuteHistoryDialog
-      v-if="historyDialogVisible"
-      v-model:visible="historyDialogVisible"
-      :job-id="historyJobMeta?.id || ''"
-      :job-title="historyJobMeta?.title || ''"
-    />
-    <CreateJobDialog
-      v-if="jobDialogVisible"
-      v-model="jobDialogVisible"
-      :job-type="createJobType"
-      :job-id="editJobId"
-      :applet-code="currentApp.name"
-      :applets-list="appOptions"
-      @success="handleCreateSuccess"
-    />
+    <ExecuteJobDialog v-if="executeDialogVisible" v-model:visible="executeDialogVisible"
+      :job-id="executeJobMeta?.id || ''" :job-type="executeJobMeta?.type || ''"
+      :fallback-config-json="executeJobMeta?.configJson || ''" />
+    <ExecuteHistoryDialog v-if="historyDialogVisible" v-model:visible="historyDialogVisible"
+      :job-id="historyJobMeta?.id || ''" :job-title="historyJobMeta?.title || ''" />
+    <CreateJobDialog v-if="jobDialogVisible" v-model="jobDialogVisible" :job-type="createJobType" :job-id="editJobId"
+      :applet-code="currentApp.name" :applets-list="appOptions" @success="handleCreateSuccess" />
   </div>
 </template>
 
@@ -279,8 +231,8 @@ function filterList() {
     const kw = filters.keyword.trim().toLowerCase()
     filtered = filtered.filter(job => {
       return (job.title && job.title.toLowerCase().includes(kw)) ||
-             (job.description && job.description.toLowerCase().includes(kw)) ||
-             (job.id && job.id.toLowerCase().includes(kw))
+        (job.description && job.description.toLowerCase().includes(kw)) ||
+        (job.id && job.id.toLowerCase().includes(kw))
     })
   }
 
@@ -334,20 +286,20 @@ function handleSortChange({ prop, order }) {
 function handleDeleteJobs() {
   const jobIds = selectedIds.value
   ElMessageBox.confirm(
-      `确定要删除选中的 ${jobIds.length} 个作业吗？`,
-      '删除确认',
-      {
-        type: 'warning',
-        confirmButtonText: '删除',
-        cancelButtonText: '取消'
-      }
+    `确定要删除选中的 ${jobIds.length} 个作业吗？`,
+    '删除确认',
+    {
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消'
+    }
   ).then(() => {
-      ElMessage.success('删除成功')
-      jaoApi.deleteJobs(JSON.stringify(jobIds)).then(() => {
-        getAppTableList(currentApp.value.name)
-      })
+    ElMessage.success('删除成功')
+    jaoApi.deleteJobs(JSON.stringify(jobIds)).then(() => {
+      getAppTableList(currentApp.value.name)
+    })
   }).catch(() => {
-      // 取消删除
+    // 取消删除
   })
 }
 
@@ -681,5 +633,4 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use '../../../styles/common.scss' as *;
-
 </style>

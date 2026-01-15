@@ -3,24 +3,11 @@
     <!-- 操作区 -->
     <div class="ops-action-bar">
       <div>
-        <el-switch
-          v-model="emailEnabled"
-          :loading="switchLoading"
-          active-text="启用邮件通知"
-          @change="handleSwitchChange"
-        />
+        <el-switch v-model="emailEnabled" :loading="switchLoading" active-text="启用邮件通知" @change="handleSwitchChange" />
       </div>
       <div class="search-box">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索模板名称"
-          clearable
-          size="small"
-          style="width: 200px"
-          maxlength="50"
-          @keyup.enter="handleSearch"
-          @clear="handleSearch"
-        >
+        <el-input v-model="searchKeyword" placeholder="搜索模板名称" clearable size="small" style="width: 200px"
+          maxlength="50" @keyup.enter="handleSearch" @clear="handleSearch">
           <template #prefix>
             <i class="fa fa-search"></i>
           </template>
@@ -31,17 +18,8 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table
-        v-loading="loading"
-        :data="templateList"
-        stripe
-        height="calc(100vh - 240px)"
-      >
-        <el-table-column prop="template_name" label="模板名称" min-width="200">
-          <template #default="{ row }">
-            <span class="template-name">{{ row.template_name }}</span>
-          </template>
-        </el-table-column>
+      <el-table v-loading="loading" :data="templateList" stripe height="calc(100vh - 240px)">
+        <el-table-column prop="template_name" label="模板名称" min-width="200" show-overflow-tooltip />
         <el-table-column prop="executed_at" label="最后执行时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.executed_at) }}
@@ -61,13 +39,8 @@
     </div>
 
     <!-- 收件人列表弹窗 -->
-    <el-dialog
-      :model-value="recipientDialogVisible"
-      title="收件人列表"
-      width="800px"
-      destroy-on-close
-      @close="recipientDialogVisible = false"
-    >
+    <el-dialog :model-value="recipientDialogVisible" title="收件人列表" width="800px" destroy-on-close
+      @close="recipientDialogVisible = false">
       <div v-loading="recipientLoading" class="recipient-dialog">
         <div class="dialog-header">
           <div class="template-info">
@@ -109,19 +82,9 @@
     </el-dialog>
 
     <!-- 新增/编辑收件人弹窗 -->
-    <el-dialog
-      :model-value="recipientFormVisible"
-      :title="recipientFormData.id ? '编辑收件人' : '新增收件人'"
-      width="500px"
-      destroy-on-close
-      @close="recipientFormVisible = false"
-    >
-      <el-form
-        ref="recipientFormRef"
-        :model="recipientFormData"
-        :rules="recipientFormRules"
-        label-width="80px"
-      >
+    <el-dialog :model-value="recipientFormVisible" :title="recipientFormData.id ? '编辑收件人' : '新增收件人'" width="500px"
+      destroy-on-close @close="recipientFormVisible = false">
+      <el-form ref="recipientFormRef" :model="recipientFormData" :rules="recipientFormRules" label-width="80px">
         <el-form-item label="姓名" prop="name">
           <el-input v-model="recipientFormData.name" placeholder="请输入姓名" maxlength="50" />
         </el-form-item>
@@ -135,12 +98,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="recipientFormData.remarks"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注"
-          />
+          <el-input v-model="recipientFormData.remarks" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
 
@@ -153,13 +111,8 @@
     </el-dialog>
 
     <!-- 自定义内容弹窗 -->
-    <el-dialog
-      :model-value="customContentDialogVisible"
-      title="自定义内容"
-      width="600px"
-      destroy-on-close
-      @close="customContentDialogVisible = false"
-    >
+    <el-dialog :model-value="customContentDialogVisible" title="自定义内容" width="600px" destroy-on-close
+      @close="customContentDialogVisible = false">
       <div v-loading="customContentLoading" class="custom-content-dialog">
         <div class="template-info">
           <span class="label">模板名称：</span>
@@ -168,19 +121,10 @@
 
         <el-form label-width="100px">
           <el-form-item label="自定义标题">
-            <el-input
-              v-model="customContentData.title"
-              placeholder="请输入自定义邮件标题"
-              clearable
-            />
+            <el-input v-model="customContentData.title" placeholder="请输入自定义邮件标题" clearable />
           </el-form-item>
           <el-form-item label="自定义内容">
-            <el-input
-              v-model="customContentData.content"
-              type="textarea"
-              :rows="4"
-              placeholder="请输入自定义邮件内容"
-            />
+            <el-input v-model="customContentData.content" type="textarea" :rows="4" placeholder="请输入自定义邮件内容" />
           </el-form-item>
           <el-form-item label="状态">
             <el-radio-group v-model="customContentData.state">
