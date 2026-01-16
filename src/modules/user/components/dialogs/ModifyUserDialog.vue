@@ -164,8 +164,13 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { apiService } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import * as userApi from '@/modules/user/api'
+import { useJobPolling } from '@/composables/useJobPolling'
+
+// 使用作业轮询 composable
+const { startPolling, stopPolling } = useJobPolling()
 
 const props = defineProps({
   visible: {
@@ -185,8 +190,19 @@ const formRef = ref(null)
 const showDeviceSelector = ref(false)
 const selectedHosts = ref([])
 const submitting = ref(false)
+const currentStatus = ref('')
 const sudoTemplates = ref([])
 const sudoCommands = ref([])
+
+// 状态中文映射
+const STATUS_MAP = {
+  WAITING: '等待中',
+  RUNNING: '执行中',
+  COMPLETED: '已完成',
+  SUCCESS: '已完成',
+  FAILED: '失败',
+  ERROR: '错误'
+}
 
 const formData = reactive({
   operate: 'modify_base',
@@ -221,6 +237,12 @@ const jobIdMap = {
 
 // 获取提交按钮标签
 function getSubmitLabel() {
+  if (submitting.value && currentStatus.value) {
+    return STATUS_MAP[currentStatus.value] || currentStatus.value
+  }
+  if (submitting.value) {
+    return '提交中...'
+  }
   const labels = {
     modify_base: '修改基本信息',
     delete: '删除用户',
@@ -312,14 +334,21 @@ async function handleSubmit() {
   }
 
   submitting.value = true
+  currentStatus.value = ''
+
   try {
-    const hostKeys = selectedHosts.value.map(h => h.host_key || h.ip).join(',')
+    const hosts = selectedHosts.value.map(h => ({
+      key: h.key || h.id,
+      value: h.value || h.ip || h.host_key,
+      assetType: h.assetType || h.ciType || 'linux'
+    }))
+    const hostsJson = JSON.stringify(hosts)
     const jobId = jobIdMap[formData.operate]
 
     // 构建作业参数
     let jobParams = {
       user_name: formData.username,
-      hosts: hostKeys
+      hosts: hostsJson
     }
 
     switch (formData.operate) {
@@ -350,23 +379,81 @@ async function handleSubmit() {
         break
     }
 
+    // 调用作业执行接口
+    const cacheBuster = Date.now()
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/${jobId}/run?cacheBuster=${cacheBuster}`,
+      { params: jobParams }
+    )
 
-    // 模拟执行
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const result = Array.isArray(data) ? data[0] : data
+    currentStatus.value = result?.status || ''
 
-    ElMessage.success('操作任务已提交')
-    emit('success')
-    handleClose()
+    // 提交成功，提示用户可以关闭
+    ElMessage.success('任务已提交，后台正在执行，可关闭此窗口')
+
+    if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
+      // 使用 composable 开始轮询，状态显示在按钮上
+      startPolling(result.runId, {
+        interval: 5000,
+        maxAttempts: 120,
+        showMessage: false,
+        onProgress: res => {
+          const batchInfo = res?.detail?.batches?.[0]
+          currentStatus.value = batchInfo?.status || res.status || currentStatus.value
+        },
+        onSuccess: () => {
+          submitting.value = false
+          currentStatus.value = ''
+          ElMessage.success('操作成功')
+          emit('success')
+          handleClose()
+        },
+        onError: res => {
+          submitting.value = false
+          currentStatus.value = ''
+          ElMessage.error(res?.error || '操作失败')
+          emit('success')
+          handleClose()
+        },
+        onTimeout: () => {
+          submitting.value = false
+          currentStatus.value = ''
+          ElMessage.warning('执行超时，请稍后查看结果')
+          emit('success')
+          handleClose()
+        }
+      })
+    } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
+      submitting.value = false
+      currentStatus.value = ''
+      ElMessage.success('操作成功')
+      emit('success')
+      handleClose()
+    } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
+      submitting.value = false
+      currentStatus.value = ''
+      ElMessage.error(result?.error || '操作失败')
+      emit('success')
+      handleClose()
+    } else {
+      submitting.value = false
+      currentStatus.value = ''
+    }
   } catch (error) {
-    ElMessage.error('执行失败: ' + (error?.message || '未知错误'))
-  } finally {
     submitting.value = false
+    currentStatus.value = ''
+    console.error('操作失败:', error)
+    ElMessage.error('执行失败: ' + (error?.message || '未知错误'))
   }
 }
 
 // 关闭对话框
 function handleClose() {
+  stopPolling()
   visible.value = false
+  submitting.value = false
+  currentStatus.value = ''
   selectedHosts.value = []
   sudoCommands.value = []
   Object.assign(formData, {

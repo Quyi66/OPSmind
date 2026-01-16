@@ -270,7 +270,6 @@ async function handleSubmit() {
 
     // 提交成功，提示用户可以关闭
     ElMessage.success('任务已提交，后台正在执行，可关闭此窗口')
-    emit('success')
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
       // 使用 composable 开始轮询，状态显示在按钮上
@@ -286,26 +285,36 @@ async function handleSubmit() {
           submitting.value = false
           currentStatus.value = ''
           ElMessage.success('用户创建成功')
+          emit('success')
+          handleClose()
         },
         onError: res => {
           submitting.value = false
           currentStatus.value = ''
           ElMessage.error(res?.error || '创建失败')
+          emit('success')
+          handleClose()
         },
         onTimeout: () => {
           submitting.value = false
           currentStatus.value = ''
           ElMessage.warning('执行超时，请稍后查看结果')
+          emit('success')
+          handleClose()
         }
       })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
       submitting.value = false
       currentStatus.value = ''
       ElMessage.success('用户创建成功')
+      emit('success')
+      handleClose()
     } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
       submitting.value = false
       currentStatus.value = ''
       ElMessage.error(result?.error || '创建失败')
+      emit('success')
+      handleClose()
     } else {
       // 其他情况，停止加载状态
       submitting.value = false

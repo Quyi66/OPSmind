@@ -300,7 +300,7 @@ async function handleRerun(row) {
     )
 
     await jaoApi.executeJob({
-      code: 'OKPacN',
+      jobId: 'OKPacN',
       params: { runId: row.id }
     })
     ElMessage.success('作业已提交执行')

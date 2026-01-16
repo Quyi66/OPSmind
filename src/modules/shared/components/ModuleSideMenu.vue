@@ -191,6 +191,7 @@ function handleHomeClick() {
   transition: width 0.3s ease, min-width 0.3s ease;
   position: relative;
   border-right: 1px solid #e8e8e8;
+  margin-right: 12px;
 
   // 右侧灰色隔断条
   &::after {

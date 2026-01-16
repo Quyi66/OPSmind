@@ -35,7 +35,7 @@
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
         <el-button type="primary" :loading="submitting" @click="handleSubmit">
-          {{ submitting ? '创建中...' : '创建用户组' }}
+          {{ buttonText }}
         </el-button>
       </div>
     </template>
@@ -43,8 +43,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onUnmounted } from 'vue'
-import { ElMessage, ElLoading } from 'element-plus'
+import { ref, reactive, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { useJobPolling } from '@/composables/useJobPolling'
@@ -67,9 +67,28 @@ const formRef = ref(null)
 const showDeviceSelector = ref(false)
 const selectedHosts = ref([])
 const submitting = ref(false)
+const currentStatus = ref('')
 
-// 轮询定时器
-let pollingTimer = null
+// 状态中文映射
+const STATUS_MAP = {
+  WAITING: '等待中',
+  RUNNING: '创建中',
+  COMPLETED: '已完成',
+  SUCCESS: '已完成',
+  FAILED: '失败',
+  ERROR: '错误'
+}
+
+// 按钮文字
+const buttonText = computed(() => {
+  if (submitting.value && currentStatus.value) {
+    return STATUS_MAP[currentStatus.value] || currentStatus.value
+  }
+  if (submitting.value) {
+    return '提交中...'
+  }
+  return '创建用户组'
+})
 
 const formData = reactive({
   group_name: ''
@@ -100,13 +119,9 @@ async function handleSubmit() {
     return
   }
 
-  const loadingInstance = ElLoading.service({
-    lock: true,
-    text: '正在创建用户组...',
-    background: 'rgba(0, 0, 0, 0.7)'
-  })
-
   submitting.value = true
+  currentStatus.value = ''
+
   try {
     // 构造主机参数（对象数组格式）
     const hosts = selectedHosts.value.map(h => ({
@@ -125,67 +140,77 @@ async function handleSubmit() {
     })
 
     const result = Array.isArray(data) ? data[0] : data
+    currentStatus.value = result?.status || ''
+
+    // 提交成功，提示用户可以关闭
+    ElMessage.success('任务已提交，后台正在执行，可关闭此窗口')
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
       // 使用 composable 开始轮询
       startPolling(result.runId, {
         interval: 5000,
         maxAttempts: 60,
-        successMessage: '用户组创建成功',
-        errorMessage: '创建失败',
-        timeoutMessage: '创建超时，请稍后查看结果',
-        showMessage: false, // 我们自己处理消息
+        showMessage: false,
+        onProgress: res => {
+          const batchInfo = res?.detail?.batches?.[0]
+          currentStatus.value = batchInfo?.status || res.status || currentStatus.value
+        },
         onSuccess: () => {
-          loadingInstance.close()
+          submitting.value = false
+          currentStatus.value = ''
           ElMessage.success('用户组创建成功')
           emit('success')
           handleClose()
         },
         onError: (res) => {
-          loadingInstance.close()
+          submitting.value = false
+          currentStatus.value = ''
           ElMessage.error(res?.error || '创建失败')
           emit('success')
           handleClose()
         },
         onTimeout: () => {
-          loadingInstance.close()
+          submitting.value = false
+          currentStatus.value = ''
           ElMessage.warning('创建超时，请稍后查看结果')
           emit('success')
           handleClose()
         }
       })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      loadingInstance.close()
+      submitting.value = false
+      currentStatus.value = ''
       ElMessage.success('用户组创建成功')
       emit('success')
       handleClose()
     } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-      loadingInstance.close()
+      submitting.value = false
+      currentStatus.value = ''
       ElMessage.error(result?.error || '创建失败')
-    } else {
-      loadingInstance.close()
-      ElMessage.success('用户组创建任务已提交')
       emit('success')
       handleClose()
+    } else {
+      submitting.value = false
+      currentStatus.value = ''
+      ElMessage.success('用户组创建任务已提交')
     }
   } catch (error) {
-    loadingInstance?.close()
+    submitting.value = false
+    currentStatus.value = ''
     console.error('创建用户组失败:', error)
     ElMessage.error('创建失败: ' + (error?.message || '未知错误'))
-  } finally {
-    submitting.value = false
   }
 }
 
 function handleClose() {
   stopPolling()
   visible.value = false
+  submitting.value = false
+  currentStatus.value = ''
   formRef.value?.resetFields()
   selectedHosts.value = []
   formData.group_name = ''
 }
-
-// composable 会自动在 onUnmounted 时停止轮询
 </script>
 
 <style scoped lang="scss">

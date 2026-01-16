@@ -64,6 +64,118 @@ export const patchScanApi = {
    */
   getScanStats() {
     return apiService.get(`${VAP_API_PREFIX}/v2/scan/stats`)
+  },
+
+  /**
+   * 获取单个主机信息
+   * POST /dts/api/dts/q/data/VAP2_GET_MACHINE_INFO/
+   * @param {Object} params - 查询参数
+   * @param {string} params.host_id - 主机ID
+   * @returns {Promise}
+   */
+  getMachineInfo(params) {
+    const cacheBuster = Date.now()
+    const requestBody = {
+      params: {
+        host_id: params.host_id
+      }
+    }
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_GET_MACHINE_INFO/?cacheBuster=${cacheBuster}`,
+      requestBody
+    )
+  },
+
+  /**
+   * 获取单个主机的可用补丁列表
+   * POST /dts/api/dts/q/data/VAP2_LIST_PATCH_OF_ONE_MACHINE/
+   * @param {Object} params - 查询参数
+   * @param {string} params.host_id - 主机ID
+   * @param {string} params.severity - 严重程度筛选（逗号分隔：Critical,Important,Moderate,Low）
+   * @param {number} params.page - 页码
+   * @param {number} params.size - 每页大小
+   * @returns {Promise}
+   */
+  getPatchesOfMachine(params = {}) {
+    const cacheBuster = Date.now()
+    const requestBody = {
+      params: {
+        host_id: params.host_id,
+        severity: params.severity || ''
+      },
+      size: params.size || 20,
+      page: params.page || 1
+    }
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_LIST_PATCH_OF_ONE_MACHINE/?cacheBuster=${cacheBuster}`,
+      requestBody
+    )
+  },
+
+  /**
+   * 获取指定主机的软件包列表
+   * POST /dts/api/dts/q/data/VAP2_GET_MACHINE_PKGS/
+   * @param {Object} params - 查询参数
+   * @param {string} params.host_id - 主机ID
+   * @returns {Promise}
+   */
+  getMachinePackages(params) {
+    const cacheBuster = Date.now()
+    const requestBody = {
+      params: {
+        host_id: params.host_id
+      }
+    }
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_GET_MACHINE_PKGS/?cacheBuster=${cacheBuster}`,
+      requestBody
+    )
+  },
+
+  /**
+   * 获取指定主机的CVE漏洞列表
+   * POST /dts/api/dts/q/data/VAP2_MACHINE_CVE_LIST/
+   * @param {Object} params - 查询参数
+   * @param {string} params.host_id - 主机ID
+   * @param {string} params.severity - 严重程度筛选（逗号分隔：Critical,Important,Moderate,Low）
+   * @param {number} params.page - 页码
+   * @param {number} params.pageSize - 每页大小
+   * @returns {Promise}
+   */
+  getMachineCVEList(params) {
+    const cacheBuster = Date.now()
+    const requestBody = {
+      params: {
+        host_id: params.host_id,
+        severity: params.severity || ''
+      },
+      page: params.page || 1,
+      size: params.pageSize || 20
+    }
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_MACHINE_CVE_LIST/?cacheBuster=${cacheBuster}`,
+      requestBody
+    )
+  },
+
+  /**
+   * 获取补丁详情
+   * POST /dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/
+   * @param {Object} params - 查询参数
+   * @param {string} params.patch_id - 补丁ID
+   * @returns {Promise}
+   */
+  getPatchDetail(params) {
+    const cacheBuster = Date.now()
+    const requestBody = {
+      params: {
+        patch_id: params.patch_id
+      }
+    }
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/?cacheBuster=${cacheBuster}`,
+      requestBody
+    )
   }
 }
 

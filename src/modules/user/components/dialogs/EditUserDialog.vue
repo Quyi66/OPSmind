@@ -145,7 +145,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
 import { dtsApi } from '@/modules/asset/api'
 import { useJobPolling } from '@/composables/useJobPolling'
@@ -173,9 +173,20 @@ const visible = computed({
 
 const loading = ref(false)
 const submitting = ref(false)
+const currentStatus = ref('')
 const userData = ref({})
 const sudoTemplates = ref([])
 const sudoCommands = ref([])
+
+// 状态中文映射
+const STATUS_MAP = {
+  WAITING: '等待中',
+  RUNNING: '执行中',
+  COMPLETED: '已完成',
+  SUCCESS: '已完成',
+  FAILED: '失败',
+  ERROR: '错误'
+}
 
 const formData = reactive({
   operate: 'modify_base',
@@ -231,6 +242,12 @@ function handleOperateChange() {
 
 // 获取提交按钮文字
 function getSubmitButtonText() {
+  if (submitting.value && currentStatus.value) {
+    return STATUS_MAP[currentStatus.value] || currentStatus.value
+  }
+  if (submitting.value) {
+    return '提交中...'
+  }
   const textMap = {
     modify_base: '保存修改',
     delete: '删除用户',
@@ -290,13 +307,9 @@ async function handleSubmit() {
     return
   }
 
-  const loadingInstance = ElLoading.service({
-    lock: true,
-    text: '正在执行...',
-    background: 'rgba(0, 0, 0, 0.7)'
-  })
-
   submitting.value = true
+  currentStatus.value = ''
+
   try {
     const jobId = jobIdMap[formData.operate]
     const hostId = userData.value.host_id || userData.value.id
@@ -308,55 +321,65 @@ async function handleSubmit() {
     })
 
     const result = Array.isArray(data) ? data[0] : data
+    currentStatus.value = result?.status || ''
+
+    // 提交成功，提示用户可以关闭
+    ElMessage.success('任务已提交，后台正在执行，可关闭此窗口')
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
       // 使用 composable 开始轮询
       startPolling(result.runId, {
         interval: 5000,
         maxAttempts: 60,
-        successMessage: '操作成功',
-        errorMessage: '操作失败',
-        timeoutMessage: '操作超时，请稍后查看结果',
         showMessage: false,
+        onProgress: res => {
+          const batchInfo = res?.detail?.batches?.[0]
+          currentStatus.value = batchInfo?.status || res.status || currentStatus.value
+        },
         onSuccess: () => {
-          loadingInstance.close()
+          submitting.value = false
+          currentStatus.value = ''
           ElMessage.success('操作成功')
           emit('success')
           handleClose()
         },
         onError: (res) => {
-          loadingInstance.close()
+          submitting.value = false
+          currentStatus.value = ''
           ElMessage.error(res?.error || '操作失败')
           emit('success')
           handleClose()
         },
         onTimeout: () => {
-          loadingInstance.close()
+          submitting.value = false
+          currentStatus.value = ''
           ElMessage.warning('操作超时，请稍后查看结果')
           emit('success')
           handleClose()
         }
       })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      loadingInstance.close()
+      submitting.value = false
+      currentStatus.value = ''
       ElMessage.success('操作成功')
       emit('success')
       handleClose()
     } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-      loadingInstance.close()
+      submitting.value = false
+      currentStatus.value = ''
       ElMessage.error(result?.error || '操作失败')
-    } else {
-      loadingInstance.close()
-      ElMessage.success('操作已提交')
       emit('success')
       handleClose()
+    } else {
+      submitting.value = false
+      currentStatus.value = ''
+      ElMessage.success('操作已提交')
     }
   } catch (error) {
-    loadingInstance?.close()
-    console.error('操作失败:', error)
-    ElMessage.error('操作失败: ' + (error?.message || '未知错误'))
-  } finally {
     submitting.value = false
+    currentStatus.value = ''
+    console.error('执行失败:', error)
+    ElMessage.error('执行失败: ' + (error?.message || '未知错误'))
   }
 }
 

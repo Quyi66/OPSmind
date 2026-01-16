@@ -1,0 +1,1177 @@
+<template>
+  <el-dialog
+    v-model="dialogVisible"
+    :title="`主机详情 - ${hostKey}`"
+    width="85%"
+    destroy-on-close
+    class="host-detail-dialog"
+    @close="handleClose"
+  >
+    <!-- 主机信息卡片 -->
+    <div class="host-info-card" v-loading="machineLoading">
+      <div class="host-info-body">
+        <div class="info-item" v-if="machineInfo.hostname">
+          <span class="label">主机名：</span>
+          <span class="value">{{ machineInfo.hostname }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">OS：</span>
+          <span class="value">{{ machineInfo.os_distro }} {{ machineInfo.os_version }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">最后扫描：</span>
+          <span class="value">{{ formatDateTime(machineInfo.scan_timestamp) }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">已安装软件包：</span>
+          <span class="value">{{ getInstalledPkgsCount(machineInfo.installed_pkgs) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 导航 -->
+    <el-tabs v-model="activeTab" class="host-tabs">
+      <el-tab-pane label="可用补丁" name="patches">
+        <template #label>
+          <i class="far fa-briefcase-medical"></i> 可用补丁
+        </template>
+      </el-tab-pane>
+      <el-tab-pane label="软件包" name="packages">
+        <template #label>
+          <i class="far fa-cube"></i> 软件包
+        </template>
+      </el-tab-pane>
+      <el-tab-pane label="漏洞" name="vulnerabilities">
+        <template #label>
+          <i class="far fa-virus"></i> 漏洞
+        </template>
+      </el-tab-pane>
+    </el-tabs>
+
+    <!-- 可用补丁 Tab -->
+    <div v-show="activeTab === 'patches'" class="tab-content">
+      <!-- 筛选栏 -->
+      <div class="ops-filter-bar">
+        <el-checkbox-group v-model="selectedSeverities" size="small" @change="handleFilterChange">
+          <el-checkbox label="Critical">
+            <el-tag type="danger" size="small">严重</el-tag>
+          </el-checkbox>
+          <el-checkbox label="Important">
+            <el-tag type="warning" size="small">重要</el-tag>
+          </el-checkbox>
+          <el-checkbox label="Moderate">
+            <el-tag type="" size="small">中等</el-tag>
+          </el-checkbox>
+          <el-checkbox label="Low">
+            <el-tag type="info" size="small">低</el-tag>
+          </el-checkbox>
+        </el-checkbox-group>
+      </div>
+
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="selectedPatches.length === 0"
+          @click="handleFixPatches"
+        >
+          <i class="fa fa-chevron-circle-right" />
+          安装选定的补丁 ({{ selectedPatches.length }})
+        </el-button>
+      </div>
+
+      <!-- 表格 -->
+      <el-table
+        ref="patchTableRef"
+        v-loading="patchLoading"
+        :data="patchTableData"
+        stripe
+        size="small"
+        max-height="calc(100vh - 560px)"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="patch_id" label="补丁编号" min-width="150">
+          <template #default="{ row }">
+            <a href="javascript:void(0)" class="patch-link" @click="handlePatchClick(row)">
+              {{ row.patch_id }}
+            </a>
+          </template>
+        </el-table-column>
+        <el-table-column prop="title" label="摘要" min-width="300" show-overflow-tooltip />
+        <el-table-column prop="severity" label="严重程度" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getSeverityType(row.severity)" size="small">
+              {{ row.severity }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="publish_date" label="发布时间" width="110" sortable>
+          <template #default="{ row }">
+            {{ formatDate(row.publish_date) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="affected_pkgs" label="影响的软件包" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatPackages(row.affected_pkgs) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="related_vuls" label="关联CVE" width="160">
+          <template #default="{ row }">
+            <div class="cve-cell">
+              <a
+                v-for="cve in getCVEList(row.related_vuls)"
+                :key="cve"
+                :href="`https://access.redhat.com/security/cve/${cve}`"
+                target="_blank"
+                class="cve-badge"
+              >
+                {{ cve }}
+              </a>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="patchPagination.page"
+          v-model:page-size="patchPagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="patchPagination.total"
+          layout="total, sizes, prev, pager, next"
+          small
+          background
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
+    </div>
+
+    <!-- 软件包 Tab -->
+    <div v-show="activeTab === 'packages'" class="tab-content">
+      <!-- 筛选栏 -->
+      <div class="ops-filter-bar">
+        <el-form inline size="small">
+          <el-form-item label="漏洞范围" label-width="70">
+            <el-select v-model="packageFilter.showHistory" style="width: 100px" @change="handlePackageFilterChange">
+              <el-option label="最新漏洞" value="no" />
+              <el-option label="历史漏洞" value="yes" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="软件包范围" label-width="85">
+            <el-select v-model="packageFilter.showAll" style="width: 130px" @change="handlePackageFilterChange">
+              <el-option label="有漏洞的软件包" value="no" />
+              <el-option label="所有软件包" value="yes" />
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="selectedPackages.length === 0"
+          @click="handleUpdatePackages"
+        >
+          <i class="fa fa-chevron-circle-right" />
+          更新选定的软件包 ({{ selectedPackages.length }})
+        </el-button>
+      </div>
+
+      <!-- 表格 -->
+      <el-table
+        ref="packageTableRef"
+        v-loading="packageLoading"
+        :data="packageTableData"
+        stripe
+        size="small"
+        max-height="calc(100vh - 580px)"
+        @selection-change="handlePackageSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="installedPkg" label="当前安装版本" min-width="250" show-overflow-tooltip />
+        <el-table-column prop="updatePkg" label="需更新版本" min-width="250" show-overflow-tooltip />
+        <el-table-column prop="patchId" label="补丁编号" width="150">
+          <template #default="{ row }">
+            <a v-if="row.patchId" href="javascript:void(0)" class="patch-link" @click="handlePatchClick({patch_id: row.patchId})">
+              {{ row.patchId }}
+            </a>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="severity" label="严重程度" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.severity" :type="getSeverityType(row.severity)" size="small">
+              {{ row.severity }}
+            </el-tag>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="packagePagination.page"
+          v-model:page-size="packagePagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="packagePagination.total"
+          layout="total, sizes, prev, pager, next"
+          small
+          background
+          @size-change="handlePackageSizeChange"
+          @current-change="handlePackagePageChange"
+        />
+      </div>
+    </div>
+
+    <!-- 漏洞 Tab -->
+    <div v-show="activeTab === 'vulnerabilities'" class="tab-content">
+      <!-- 筛选栏 -->
+      <div class="ops-filter-bar">
+        <el-checkbox-group v-model="selectedVulSeverities" size="small" @change="handleVulFilterChange">
+          <el-checkbox label="Critical">
+            <el-tag type="danger" size="small">严重</el-tag>
+          </el-checkbox>
+          <el-checkbox label="Important">
+            <el-tag type="warning" size="small">重要</el-tag>
+          </el-checkbox>
+          <el-checkbox label="Moderate">
+            <el-tag type="" size="small">中等</el-tag>
+          </el-checkbox>
+          <el-checkbox label="Low">
+            <el-tag type="info" size="small">低</el-tag>
+          </el-checkbox>
+        </el-checkbox-group>
+      </div>
+
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="selectedVuls.length === 0"
+          @click="handleFixVulnerabilities"
+        >
+          <i class="fa fa-tools" />
+          修复选中的漏洞 ({{ selectedVuls.length }})
+        </el-button>
+      </div>
+
+      <!-- 表格 -->
+      <el-table
+        ref="vulTableRef"
+        v-loading="vulLoading"
+        :data="vulTableData"
+        stripe
+        size="small"
+        max-height="calc(100vh - 560px)"
+        @selection-change="handleVulSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="vul_id" label="CVE" width="160">
+          <template #default="{ row }">
+            <div class="cve-cell">
+              <a
+                :href="`https://access.redhat.com/security/cve/${row.vul_id}`"
+                target="_blank"
+                class="cve-badge"
+              >
+                {{ row.vul_id }}
+              </a>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="patch_id" label="补丁编号" width="150">
+          <template #default="{ row }">
+            <a href="javascript:void(0)" class="patch-link" @click="handlePatchClick({patch_id: row.patch_id})">
+              {{ row.patch_id }}
+            </a>
+          </template>
+        </el-table-column>
+        <el-table-column prop="affected_pkgs" label="受影响的软件包" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatPackages(row.affected_pkgs) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="severity" label="严重程度" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getSeverityType(row.severity)" size="small">
+              {{ row.severity }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="reboot_status" label="重启要求" width="120">
+          <template #default="{ row }">
+            <el-tag v-if="row.reboot_status === '系统重启'" type="danger" size="small">
+              <i class="fa fa-power-off"></i> 系统重启
+            </el-tag>
+            <el-tag v-else-if="row.reboot_status === '服务重启'" type="warning" size="small">
+              <i class="fa fa-server"></i> 服务重启
+            </el-tag>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="is_kernel" label="内核漏洞" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.is_kernel === '是'" type="primary" size="small">
+              <i class="fa fa-check"></i> 是
+            </el-tag>
+            <el-tag v-else type="info" size="small">
+              <i class="fa fa-times"></i> 否
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="patch_status" label="修复状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getPatchStatusType(row.patch_status)" size="small">
+              {{ getPatchStatusText(row.patch_status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="scan_date" label="扫描时间" width="110">
+          <template #default="{ row }">
+            {{ formatDate(row.scan_date) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="update_time" label="更新时间" width="110">
+          <template #default="{ row }">
+            {{ formatDate(row.update_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.patch_status === '已修复' || row.patch_status === '回滚失败'"
+              type="info"
+              size="small"
+              circle
+              @click="handleRollback(row)"
+            >
+              <i class="fa fa-history"></i>
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="vulPagination.page"
+          v-model:page-size="vulPagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="vulPagination.total"
+          layout="total, sizes, prev, pager, next"
+          small
+          background
+          @size-change="handleVulSizeChange"
+          @current-change="handleVulPageChange"
+        />
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="handleClose">关闭</el-button>
+      </div>
+    </template>
+  </el-dialog>
+
+  <!-- 补丁详情弹窗 -->
+  <el-dialog
+    v-model="patchDetailVisible"
+    :title="patchDetailData.patch_id || '补丁详情'"
+    width="700px"
+    destroy-on-close
+    class="patch-detail-dialog"
+  >
+    <div v-loading="patchDetailLoading" class="patch-detail-content">
+      <div v-if="patchDetailData.patch_id" class="detail-section">
+        <div class="detail-item">
+          <div class="detail-label">摘要：</div>
+          <div class="detail-value">{{ patchDetailData.title }}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">严重程度：</div>
+          <div class="detail-value">
+            <el-tag :type="getSeverityType(patchDetailData.severity)" size="small">
+              {{ patchDetailData.severity }}
+            </el-tag>
+          </div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">发布日期：</div>
+          <div class="detail-value">{{ formatDate(patchDetailData.publish_date) }}</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">关联CVE：</div>
+          <div class="detail-value">
+            <div class="cve-list">
+              <a
+                v-for="cve in getCVEList(patchDetailData.related_vuls)"
+                :key="cve"
+                :href="`https://access.redhat.com/security/cve/${cve}`"
+                target="_blank"
+                class="cve-badge"
+              >
+                {{ cve }}
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">描述：</div>
+          <div class="detail-value description-text">{{ patchDetailData.description }}</div>
+        </div>
+      </div>
+    </div>
+  </el-dialog>
+</template>
+
+<script setup>
+import { ref, reactive, watch, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { patchScanApi } from '../api'
+
+const props = defineProps({
+  modelValue: {
+    type: Boolean,
+    default: false
+  },
+  hostInfo: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
+const emit = defineEmits(['update:modelValue', 'fix-patches'])
+
+const dialogVisible = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val)
+})
+
+const hostKey = computed(() => props.hostInfo.host_key || '')
+const hostId = computed(() => props.hostInfo.host_id || '')
+
+// Tab 状态
+const activeTab = ref('patches')
+
+// 主机信息
+const machineLoading = ref(false)
+const machineInfo = ref({
+  hostKey: '',
+  hostname: '',
+  os_distro: '',
+  os_version: '',
+  scan_timestamp: '',
+  installed_pkgs: ''
+})
+
+// 补丁列表
+const patchLoading = ref(false)
+const patchTableRef = ref(null)
+const patchTableData = ref([])
+const selectedPatches = ref([])
+const selectedSeverities = ref([])
+const patchPagination = reactive({
+  page: 1,
+  pageSize: 20,
+  total: 0
+})
+
+// 软件包列表
+const packageLoading = ref(false)
+const packageTableRef = ref(null)
+const packageTableData = ref([])
+const packageTableDataAll = ref([]) // 存储所有软件包数据用于前端分页
+const selectedPackages = ref([])
+const packageFilter = reactive({
+  showHistory: 'no',
+  showAll: 'no'
+})
+const packagePagination = reactive({
+  page: 1,
+  pageSize: 20,
+  total: 0
+})
+
+// 漏洞列表
+const vulLoading = ref(false)
+const vulTableRef = ref(null)
+const vulTableData = ref([])
+const selectedVuls = ref([])
+const selectedVulSeverities = ref([])
+const vulPagination = reactive({
+  page: 1,
+  pageSize: 20,
+  total: 0
+})
+
+// 补丁详情弹窗
+const patchDetailVisible = ref(false)
+const patchDetailLoading = ref(false)
+const patchDetailData = ref({})
+
+// 监听Tab切换
+watch(activeTab, (newTab) => {
+  if (newTab === 'packages' && packageTableData.value.length === 0) {
+    loadPackageList()
+  } else if (newTab === 'vulnerabilities' && vulTableData.value.length === 0) {
+    loadVulnerabilityList()
+  }
+})
+
+// 监听对话框打开
+watch(() => props.modelValue, (val) => {
+  if (val) {
+    // 重置状态
+    activeTab.value = 'patches'
+    selectedPatches.value = []
+    selectedSeverities.value = []
+    selectedPackages.value = []
+    selectedVuls.value = []
+    selectedVulSeverities.value = []
+    patchPagination.page = 1
+    packagePagination.page = 1
+    vulPagination.page = 1
+    packageFilter.showHistory = 'no'
+    packageFilter.showAll = 'no'
+    // 加载数据
+    loadMachineInfo()
+    loadPatchList()
+  }
+})
+
+// 加载主机信息
+async function loadMachineInfo() {
+  if (!hostId.value) {
+    // 使用传入的主机信息
+    machineInfo.value = props.hostInfo
+    return
+  }
+
+  machineLoading.value = true
+  try {
+    const response = await patchScanApi.getMachineInfo({ host_id: hostId.value })
+    const records = response?.data?.records || response?.records || []
+    if (records.length > 0) {
+      machineInfo.value = records[0]
+    } else {
+      machineInfo.value = props.hostInfo
+    }
+  } catch (error) {
+    console.error('Failed to load machine info:', error)
+    machineInfo.value = props.hostInfo
+  } finally {
+    machineLoading.value = false
+  }
+}
+
+// 加载补丁列表
+async function loadPatchList() {
+  if (!hostId.value) {
+    return
+  }
+
+  patchLoading.value = true
+  try {
+    const severityFilter = selectedSeverities.value.join(',')
+    const response = await patchScanApi.getPatchesOfMachine({
+      host_id: hostId.value,
+      severity: severityFilter,
+      page: patchPagination.page,
+      size: patchPagination.pageSize
+    })
+
+    const data = response?.data || response
+    patchTableData.value = data?.records || []
+    patchPagination.total = data?.total || 0
+  } catch (error) {
+    console.error('Failed to load patch list:', error)
+    ElMessage.error('获取补丁列表失败')
+    patchTableData.value = []
+    patchPagination.total = 0
+  } finally {
+    patchLoading.value = false
+  }
+}
+
+// 加载软件包列表
+async function loadPackageList() {
+  if (!hostId.value) {
+    return
+  }
+
+  packageLoading.value = true
+  try {
+    const response = await patchScanApi.getMachinePackages({
+      host_id: hostId.value
+    })
+
+    const data = response?.data || response
+    const records = data?.records || []
+
+    if (records.length > 0) {
+      const rec = records[0]
+      const installedPkgs = JSON.parse(rec.installed_pkgs || '[]')
+      const affectedPkgs = JSON.parse(rec.affected_pkgs || '[]')
+
+      // 处理软件包数据并存储所有数据
+      packageTableDataAll.value = processPackageData(installedPkgs, affectedPkgs)
+      packagePagination.total = packageTableDataAll.value.length
+
+      // 应用前端分页
+      applyPackagePagination()
+    } else {
+      packageTableDataAll.value = []
+      packageTableData.value = []
+      packagePagination.total = 0
+    }
+  } catch (error) {
+    console.error('Failed to load package list:', error)
+    ElMessage.error('获取软件包列表失败')
+    packageTableDataAll.value = []
+    packageTableData.value = []
+    packagePagination.total = 0
+  } finally {
+    packageLoading.value = false
+  }
+}
+
+// 应用软件包前端分页
+function applyPackagePagination() {
+  const start = (packagePagination.page - 1) * packagePagination.pageSize
+  const end = start + packagePagination.pageSize
+  packageTableData.value = packageTableDataAll.value.slice(start, end)
+}
+
+// 处理软件包数据（根据Angular源代码逻辑）
+function processPackageData(installedPkgs, affectedPkgs) {
+  const pkgMap = {}
+  const showAll = packageFilter.showAll === 'yes'
+  const showHistoryPatch = packageFilter.showHistory === 'yes'
+
+  installedPkgs.forEach(pkgId => {
+    const item = {
+      pkgName: '',
+      installedPkg: pkgId,
+      updatePkg: null,
+      severity: '',
+      patchId: '',
+      packages: ''
+    }
+
+    // 匹配所有的漏洞（包括历史漏洞）
+    const matchingItems = affectedPkgs.filter(ap => ap.installedPkg === pkgId)
+
+    if (showAll && matchingItems.length === 0) {
+      pkgMap[pkgId] = item
+    }
+
+    matchingItems.forEach(ap => {
+      const newItem = {
+        pkgName: ap.pkgName,
+        installedPkg: pkgId,
+        updatePkg: ap.updatePkg,
+        severity: ap.severity,
+        patchId: ap.patchId,
+        packages: `${ap.pkgName}#${ap.updatePkg}#${ap.patchId}`
+      }
+
+      let key = ap.installedPkg
+      if (showHistoryPatch) {
+        key = `${ap.installedPkg}_${ap.updatePkg}_${ap.patchId}`
+      }
+
+      const existing = pkgMap[key]
+      if (!existing) {
+        pkgMap[key] = newItem
+      } else if (!showHistoryPatch && existing.patchId < ap.patchId) {
+        // Only keep latest pkg according to patch id
+        pkgMap[key] = newItem
+      }
+    })
+  })
+
+  return Object.values(pkgMap)
+}
+
+// 加载漏洞列表
+async function loadVulnerabilityList() {
+  if (!hostId.value) {
+    return
+  }
+
+  vulLoading.value = true
+  try {
+    const severityFilter = selectedVulSeverities.value.join(',')
+    const response = await patchScanApi.getMachineCVEList({
+      host_id: hostId.value,
+      severity: severityFilter,
+      page: vulPagination.page,
+      pageSize: vulPagination.pageSize
+    })
+
+    const data = response?.data || response
+    vulTableData.value = data?.records || []
+    vulPagination.total = data?.total || 0
+  } catch (error) {
+    console.error('Failed to load vulnerability list:', error)
+    ElMessage.error('获取漏洞列表失败')
+    vulTableData.value = []
+    vulPagination.total = 0
+  } finally {
+    vulLoading.value = false
+  }
+}
+
+// 格式化日期
+function formatDate(dateStr) {
+  if (!dateStr) return '-'
+  try {
+    const date = new Date(dateStr)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  } catch (error) {
+    return dateStr
+  }
+}
+
+// 格式化日期时间
+function formatDateTime(timestamp) {
+  if (!timestamp) return '-'
+  try {
+    const date = new Date(timestamp)
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  } catch (error) {
+    return timestamp
+  }
+}
+
+// 获取已安装软件包数量
+function getInstalledPkgsCount(pkgsStr) {
+  if (!pkgsStr) return 0
+  try {
+    const pkgs = JSON.parse(pkgsStr)
+    return Array.isArray(pkgs) ? pkgs.length : 0
+  } catch (error) {
+    return 0
+  }
+}
+
+// 格式化软件包列表
+function formatPackages(pkgsStr) {
+  if (!pkgsStr) return ''
+  const pkgs = pkgsStr.split(',')
+  if (pkgs.length > 3) {
+    return pkgs.slice(0, 3).join(', ') + '...'
+  }
+  return pkgs.join(', ')
+}
+
+// 获取CVE列表
+function getCVEList(vulsStr) {
+  if (!vulsStr) return []
+  return vulsStr.split(',').filter(v => v.trim())
+}
+
+// 获取严重程度类型
+function getSeverityType(severity) {
+  const typeMap = {
+    Critical: 'danger',
+    Important: 'warning',
+    Moderate: '',
+    Low: 'info'
+  }
+  return typeMap[severity] || 'info'
+}
+
+// 获取补丁状态类型
+function getPatchStatusType(status) {
+  const typeMap = {
+    '未修复': 'info',
+    '已修复': 'success',
+    '已修复(手动)': 'success',
+    '修复中': '',
+    '修复失败': 'warning',
+    '回滚中': '',
+    '回滚失败': 'warning',
+    '回滚成功': 'info'
+  }
+  return typeMap[status] || 'info'
+}
+
+// 获取补丁状态文本
+function getPatchStatusText(status) {
+  const textMap = {
+    '已修复': '已修复',
+    '未修复': '未修复',
+    '修复中': '修复中',
+    '修复失败': '修复失败',
+    '回滚中': '回滚中',
+    '回滚失败': '回滚失败',
+    '回滚成功': '回滚成功',
+    '已修复(手动)': '已修复(手动)'
+  }
+  return textMap[status] || status
+}
+
+// 软件包筛选变化
+function handlePackageFilterChange() {
+  packagePagination.page = 1
+  packageTableData.value = []
+  loadPackageList()
+}
+
+// 软件包分页变化
+function handlePackagePageChange(page) {
+  packagePagination.page = page
+  applyPackagePagination()
+}
+
+function handlePackageSizeChange(size) {
+  packagePagination.pageSize = size
+  packagePagination.page = 1
+  applyPackagePagination()
+}
+
+// 漏洞筛选变化
+function handleVulFilterChange() {
+  vulPagination.page = 1
+  loadVulnerabilityList()
+}
+
+// 漏洞分页变化
+function handleVulPageChange(page) {
+  vulPagination.page = page
+  loadVulnerabilityList()
+}
+
+function handleVulSizeChange(size) {
+  vulPagination.pageSize = size
+  vulPagination.page = 1
+  loadVulnerabilityList()
+}
+
+// 补丁筛选变化
+function handleFilterChange() {
+  patchPagination.page = 1
+  loadPatchList()
+}
+
+// 补丁选择变化
+function handleSelectionChange(selection) {
+  selectedPatches.value = selection
+}
+
+// 软件包选择变化
+function handlePackageSelectionChange(selection) {
+  selectedPackages.value = selection
+}
+
+// 漏洞选择变化
+function handleVulSelectionChange(selection) {
+  selectedVuls.value = selection
+}
+
+// 点击补丁
+function handlePatchClick(row) {
+  if (!row.patch_id) return
+  loadPatchDetail(row.patch_id)
+}
+
+// 加载补丁详情
+async function loadPatchDetail(patchId) {
+  patchDetailVisible.value = true
+  patchDetailLoading.value = true
+  patchDetailData.value = {}
+  
+  try {
+    const response = await patchScanApi.getPatchDetail({ patch_id: patchId })
+    const records = response?.data?.records || response?.records || []
+    if (records.length > 0) {
+      patchDetailData.value = records[0]
+    } else {
+      ElMessage.warning('未找到补丁详情')
+      patchDetailVisible.value = false
+    }
+  } catch (error) {
+    console.error('Failed to load patch detail:', error)
+    ElMessage.error('获取补丁详情失败')
+    patchDetailVisible.value = false
+  } finally {
+    patchDetailLoading.value = false
+  }
+}
+
+// 修复补丁
+function handleFixPatches() {
+  if (selectedPatches.value.length === 0) {
+    ElMessage.warning('请选择要修复的补丁')
+    return
+  }
+  emit('fix-patches', {
+    patches: selectedPatches.value,
+    hostInfo: props.hostInfo
+  })
+}
+
+// 更新软件包
+function handleUpdatePackages() {
+  if (selectedPackages.value.length === 0) {
+    ElMessage.warning('请选择要更新的软件包')
+    return
+  }
+
+  ElMessageBox.confirm(
+    `确认要更新选中的 ${selectedPackages.value.length} 个软件包吗？`,
+    '确认更新',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(() => {
+    // TODO: 调用更新软件包的API
+    ElMessage.success('软件包更新任务已提交')
+  }).catch(() => {
+    // 用户取消
+  })
+}
+
+// 修复漏洞
+function handleFixVulnerabilities() {
+  if (selectedVuls.value.length === 0) {
+    ElMessage.warning('请选择要修复的漏洞')
+    return
+  }
+
+  // TODO: 调用修复漏洞的API
+  ElMessage.info('漏洞修复功能开发中...')
+}
+
+// 回滚补丁
+function handleRollback(row) {
+  ElMessageBox.confirm(
+    `确认要回滚补丁 ${row.patch_id} 吗？`,
+    '确认回滚',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(() => {
+    // TODO: 调用回滚API
+    ElMessage.success('回滚任务已提交')
+  }).catch(() => {
+    // 用户取消
+  })
+}
+
+// 分页变化
+function handlePageChange(page) {
+  patchPagination.page = page
+  loadPatchList()
+}
+
+function handleSizeChange(size) {
+  patchPagination.pageSize = size
+  patchPagination.page = 1
+  loadPatchList()
+}
+
+function handleClose() {
+  dialogVisible.value = false
+}
+</script>
+
+<style scoped lang="scss">
+.host-detail-dialog {
+  :deep(.el-dialog__body) {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}
+
+.host-info-card {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e9ecef;
+}
+
+.host-info-body {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+
+  .label {
+    color: #64748b;
+    margin-right: 8px;
+  }
+
+  .value {
+    color: #1e293b;
+    font-weight: 500;
+  }
+}
+
+.host-tabs {
+  margin-bottom: 16px;
+
+  :deep(.el-tabs__item) {
+    i {
+      margin-right: 6px;
+    }
+  }
+}
+
+.tab-content {
+  min-height: 300px;
+}
+
+.patch-link {
+  color: #409eff;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    color: #66b1ff;
+    text-decoration: underline;
+  }
+}
+
+.cve-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.cve-cell {
+  max-height: 80px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #dcdfe6;
+    border-radius: 2px;
+
+    &:hover {
+      background: #c0c4cc;
+    }
+  }
+}
+
+.cve-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 11px;
+  background: #6c757d;
+  color: #fff;
+  border-radius: 3px;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #495057;
+  }
+}
+
+.text-muted {
+  color: #6c757d;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e4e7ed;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+:deep(.el-pagination) {
+  margin-top: 0 !important;
+}
+
+.patch-detail-dialog {
+  :deep(.el-dialog__body) {
+    padding: 20px;
+  }
+}
+
+.patch-detail-content {
+  min-height: 200px;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  gap: 12px;
+
+  .detail-label {
+    min-width: 80px;
+    color: #64748b;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .detail-value {
+    flex: 1;
+    color: #1e293b;
+    word-break: break-word;
+  }
+}
+
+.description-text {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.cve-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+</style>

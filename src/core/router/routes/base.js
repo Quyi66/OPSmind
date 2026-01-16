@@ -171,6 +171,7 @@ export const baseRoutes = [
         redirect: '/patches/machineScan',
         children: [
           { path: 'machineScan', name: 'patches-machineScan', component: () => import('@/modules/patches/components/LinuxPatchScan.vue'), meta: { title: '机器扫描', moduleCode: 'patches' } },
+          { path: 'hostDetail', name: 'patches-hostDetail', component: () => import('@/modules/patches/components/LinuxHostDetail.vue'), meta: { title: '主机详情', moduleCode: 'patches' } },
           { path: 'patchInstall', name: 'patches-patchInstall', component: () => import('@/modules/patches/components/LinuxPatchInstall.vue'), meta: { title: '补丁安装', moduleCode: 'patches' } },
           { path: 'changeRollback', name: 'patches-changeRollback', component: () => import('@/modules/patches/components/LinuxPatchRollback.vue'), meta: { title: '变更回滚', moduleCode: 'patches' } },
           { path: 'linuxYumManage', name: 'patches-linuxYumManage', component: () => import('@/modules/patches/components/LinuxYumManage.vue'), meta: { title: 'Linux YUM管理', moduleCode: 'patches' } },

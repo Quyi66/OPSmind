@@ -456,6 +456,19 @@
       :run-id="runResultRunId"
     />
 
+    <!-- 操作记录对话框 -->
+    <OperationLogsDialog
+      v-model="operationLogsVisible"
+      :highlight-run-id="lastSubmittedRunId"
+    />
+
+    <!-- 主机详情对话框 -->
+    <LinuxHostDetail
+      v-model="hostDetailVisible"
+      :host-info="selectedHostInfo"
+      @fix-patches="handleFixPatchesFromDetail"
+    />
+
     <!-- 修复漏洞确认对话框 -->
     <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="700px" destroy-on-close>
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
@@ -506,14 +519,20 @@
 
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, vulnerabilityApi } from '../api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'
+import LinuxHostDetail from './LinuxHostDetail.vue'
 
 // Emits
 const emit = defineEmits(['install', 'navigate'])
+
+// Router
+const router = useRouter()
 
 // 当前标签页
 const activeTab = ref('host')
@@ -605,6 +624,14 @@ const selectedHosts = ref([])
 // 作业运行结果对话框
 const runResultDialogVisible = ref(false)
 const runResultRunId = ref('')
+
+// 操作记录对话框
+const operationLogsVisible = ref(false)
+const lastSubmittedRunId = ref('')
+
+// 主机详情对话框
+const hostDetailVisible = ref(false)
+const selectedHostInfo = ref({})
 
 // 修复漏洞对话框
 const fixDialogVisible = ref(false)
@@ -808,17 +835,15 @@ function handleKpiClick(kpi) {
 }
 
 function handleHostClick(row) {
-  // 导航到主机详情
-  emit('navigate', {
-    pageId: 'CI8CIB',
-    params: {
-      host_key: row.host_key,
-      host_id: row.host_id,
-      os_distro: row.os_distro,
-      os_version: row.os_version,
-      hostname: row.hostname
-    }
-  })
+  // 打开主机详情对话框
+  selectedHostInfo.value = {
+    host_key: row.host_key,
+    host_id: row.host_id,
+    os_distro: row.os_distro,
+    os_version: row.os_version,
+    hostname: row.hostname
+  }
+  hostDetailVisible.value = true
 }
 
 function handleVulnClick(row) {
@@ -972,8 +997,11 @@ async function handleConfirmFix() {
   try {
     // 调用作业执行 API
     const { executeJob } = await import('@/modules/automation/api/jao')
-    await executeJob('s1r8Hp', {
-      patchStatusIds: fixDialogData.patchStatusIds
+    await executeJob({
+      jobId: 's1r8Hp',
+      params: {
+        patchStatusIds: fixDialogData.patchStatusIds
+      }
     })
     ElMessage.success('修复任务已提交')
     fixDialogVisible.value = false
@@ -981,6 +1009,14 @@ async function handleConfirmFix() {
     loadVulnData()
   } catch (error) {
     ElMessage.error('提交修复任务失败: ' + (error.message || '未知错误'))
+// 从主机详情对话框修复补丁
+function handleFixPatchesFromDetail(data) {
+  const { patches, hostInfo } = data
+  ElMessage.info(`准备修复 ${patches.length} 个补丁`)
+  // TODO: 实现补丁修复逻辑
+  hostDetailVisible.value = false
+}
+
   } finally {
     fixSubmitting.value = false
   }
@@ -1018,24 +1054,79 @@ function updateHostsInput() {
 }
 
 async function executeRescan() {
-  const hostLines = rescanForm.hostsInput.split('\n').filter(line => line.trim())
-  if (hostLines.length === 0) {
+  // 先更新主机输入框（处理通过选择器选择的主机）
+  if (selectedHosts.value.length > 0) {
+    updateHostsInput()
+  }
+
+  // 准备主机参数
+  let hosts = []
+  if (selectedHosts.value.length > 0) {
+    // 从选择器选择的主机
+    hosts = selectedHosts.value.map(h => {
+      if (typeof h === 'object') {
+        return {
+          key: h.key || h.id || '',
+          value: h.value || h.hostname || h.name || h.host_key || '',
+          assetType: h.assetType || 'linux'
+        }
+      }
+      return {
+        key: '',
+        value: String(h),
+        assetType: 'linux'
+      }
+    })
+  } else {
+    // 从输入框输入的主机
+    const hostLines = rescanForm.hostsInput.split('\n').filter(line => line.trim())
+    if (hostLines.length === 0) {
+      ElMessage.warning('请输入或选择至少一个主机')
+      return
+    }
+    hosts = hostLines.map(line => ({
+      key: '',
+      value: line.trim(),
+      assetType: 'linux'
+    }))
+  }
+
+  if (hosts.length === 0) {
     ElMessage.warning('请输入或选择至少一个主机')
     return
   }
 
   rescanLoading.value = true
   try {
-    await patchScanApi.scan({ hosts: hostLines })
-    ElMessage.success('扫描任务已提交')
-    rescanDialogVisible.value = false
-    setTimeout(() => {
-      loadKpiData()
-      loadHostData()
-    }, 2000)
+    // 调用作业执行API
+    const { executeJob } = await import('@/modules/automation/api/jao')
+    const jobId = '0g3GfW' // 补丁扫描作业ID
+    const response = await executeJob({
+      jobId,
+      params: { hosts }
+    })
+
+    // 获取runId
+    const runId = response?.data?.[0]?.runId || response?.[0]?.runId
+    if (runId) {
+      ElMessage.success('扫描任务已提交')
+      rescanDialogVisible.value = false
+
+      // 打开操作记录对话框
+      lastSubmittedRunId.value = runId
+      operationLogsVisible.value = true
+
+      // 刷新数据
+      setTimeout(() => {
+        loadKpiData()
+        loadHostData()
+      }, 2000)
+    } else {
+      ElMessage.error('扫描任务提交失败：未返回运行ID')
+    }
   } catch (error) {
     console.error('Scan failed:', error)
-    ElMessage.error('扫描任务提交失败')
+    ElMessage.error('扫描任务提交失败: ' + (error.message || '未知错误'))
   } finally {
     rescanLoading.value = false
   }
@@ -1055,6 +1146,11 @@ watch(activeTab, newTab => {
     loadVulnData()
   }
 })
+
+// 监听主机选择变化，自动更新输入框
+watch(selectedHosts, () => {
+  updateHostsInput()
+}, { deep: true })
 
 onMounted(() => {
   loadKpiData()
@@ -1489,6 +1585,12 @@ defineExpose({
     &:last-child {
       border-bottom: none;
     }
+  }
+}
+
+.ops-filter-bar {
+  :deep(.el-form-item) {
+    margin-right: 24px !important;
   }
 }
 </style>

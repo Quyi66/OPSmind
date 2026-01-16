@@ -231,17 +231,17 @@ function handleViewRunResult(row) {
 async function loadData() {
   loading.value = true
   try {
-    const response = await userApi.getOperationLogs({
-      params:{
+    const response = await userApi.getOperationLogs(
+      {
         module: 'uim',
         action: 'all',
         status: filters.value.status,
-        day: filters.value.day,
+        day: filters.value.day
       },
-      filter: filters.value.keyword ? `username|ata_node|message:*${filters.value.keyword}*` : '',
-      page: currentPage.value,
-      size: pageSize.value
-    })
+      filters.value.keyword ? `username|ata_node|message:*${filters.value.keyword}*` : '',
+      currentPage.value,
+      pageSize.value
+    )
     tableData.value = response?.records || response?.data?.records || []
     total.value = response?.total || response?.data?.total || tableData.value.length
   } catch (error) {

@@ -149,7 +149,7 @@
             {{ formatDateTime(row.updated_at) }}
           </template>
         </el-table-column>
-        <el-table-column prop="expired_date" label="过期时间" width="100" />
+        <el-table-column prop="expired_date" label="过期时间" width="120" />
         <el-table-column
           prop="sudo_command"
           label="sudo权限"

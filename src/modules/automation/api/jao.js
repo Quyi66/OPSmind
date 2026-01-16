@@ -71,7 +71,9 @@ export function discardApprove(approveId) {
 
 /** 执行作业 */
 export const executeJob = (data) => {
-  return useApi().post(`/jao/api/jao/run`, data);
+  const { jobId, params } = data
+  const cacheBuster = Date.now()
+  return useApi().post(`/jao/api/jao/jobs/${jobId}/run?cacheBuster=${cacheBuster}`, { params });
 }
 
 /** 获取执行作业接口结果 */

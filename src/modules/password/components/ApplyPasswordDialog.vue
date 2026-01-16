@@ -8,60 +8,56 @@
     :show-close="!submitting"
     @close="handleClose"
   >
-    <div class="apply-form" v-loading="loading">
+    <el-form
+      ref="formRef"
+      :model="formData"
+      :rules="formRules"
+      label-width="120px"
+      v-loading="loading"
+    >
       <!-- 主机选择 -->
-      <div class="form-section">
-        <div class="section-title">主机</div>
-        <div class="section-content">
-          <AcmDeviceSelector
-            v-model="formData.hosts"
-            ci-types="linux"
-            :options="{ label: '选择主机' }"
-            :disabled="submitting"
-          />
-        </div>
-      </div>
+      <el-form-item label="主机" prop="hosts">
+        <AcmDeviceSelector
+          v-model="formData.hosts"
+          ci-types="linux"
+          :options="{ label: '选择主机' }"
+          :disabled="submitting"
+        />
+      </el-form-item>
 
       <!-- 用途 -->
-      <div class="form-section">
-        <div class="section-title">用途</div>
-        <div class="section-content">
-          <el-input
-            v-model="formData.intention"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入申请用途"
-            :disabled="submitting"
-          />
-        </div>
-      </div>
+      <el-form-item label="用途" prop="intention">
+        <el-input
+          v-model="formData.intention"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入申请用途"
+          :disabled="submitting"
+        />
+      </el-form-item>
 
       <!-- 申请用户 -->
-      <div class="form-section">
-        <div class="section-title">申请用户</div>
-        <div class="section-content">
-          <el-select
-            v-model="formData.username"
-            placeholder="请选择用户"
-            style="width: 100%"
-            :disabled="submitting"
-            filterable
-            allow-create
-          >
-            <el-option
-              v-for="item in usernameOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </div>
-      </div>
+      <el-form-item label="申请用户" prop="username">
+        <el-select
+          v-model="formData.username"
+          placeholder="请选择用户"
+          style="width: 100%"
+          :disabled="submitting"
+          filterable
+          allow-create
+        >
+          <el-option
+            v-for="item in usernameOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
 
       <!-- 申请时长 -->
-      <div class="form-section">
-        <div class="section-title">申请时长（小时）</div>
-        <div class="section-content">
+      <el-form-item label="申请时长(小时)" prop="effectiveHours">
+        <div style="width: 100%">
           <el-input-number
             v-model="formData.effectiveHours"
             :min="0"
@@ -71,8 +67,8 @@
           />
           <div class="input-hint">设置为0表示永久有效</div>
         </div>
-      </div>
-    </div>
+      </el-form-item>
+    </el-form>
 
     <template #footer>
       <div class="dialog-footer">
@@ -82,7 +78,6 @@
         <el-button
           type="primary"
           :loading="submitting"
-          :disabled="!canSubmit"
           @click="handleSubmit"
         >
           <i class="fa fa-check" v-if="!submitting"></i>
@@ -116,6 +111,7 @@ const visible = ref(props.modelValue)
 const loading = ref(false)
 const submitting = ref(false)
 const usernameOptions = ref([])
+const formRef = ref(null)
 
 const formData = reactive({
   hosts: [],
@@ -125,14 +121,44 @@ const formData = reactive({
   id: ''
 })
 
+// 表单验证规则
+const formRules = {
+  hosts: [
+    {
+      type: 'array',
+      required: true,
+      message: '请选择主机',
+      trigger: ['change', 'blur'],
+      validator: (rule, value, callback) => {
+        if (!value || value.length === 0) {
+          callback(new Error('请选择主机'))
+        } else {
+          callback()
+        }
+      }
+    }
+  ],
+  intention: [
+    { required: true, message: '请输入申请用途', trigger: 'blur' },
+    { min: 1, max: 500, message: '用途长度在1到500个字符之间', trigger: 'blur' }
+  ],
+  username: [
+    { required: true, message: '请选择用户', trigger: 'change' }
+  ],
+  effectiveHours: [
+    { required: true, message: '请输入申请时长', trigger: 'blur' }
+  ]
+}
+
 const isEdit = computed(() => !!props.editData?.id)
 
-// 是否可以提交
-const canSubmit = computed(() => {
-  return formData.hosts.length > 0 &&
-         formData.intention.trim() !== '' &&
-         formData.username !== ''
-})
+// 监听主机变化，自动清除验证错误
+watch(() => formData.hosts, (newVal) => {
+  if (newVal && newVal.length > 0 && formRef.value) {
+    // 清除主机字段的验证错误
+    formRef.value.clearValidate('hosts')
+  }
+}, { deep: true })
 
 watch(() => props.modelValue, (val) => {
   visible.value = val
@@ -187,7 +213,12 @@ async function loadUsernameList() {
 }
 
 async function handleSubmit() {
-  if (!canSubmit.value) {
+  // 先进行表单验证
+  if (!formRef.value) return
+
+  try {
+    await formRef.value.validate()
+  } catch (error) {
     ElMessage.warning('请填写完整信息')
     return
   }
@@ -237,35 +268,15 @@ async function handleSubmit() {
 
 function handleClose() {
   visible.value = false
+  // 重置表单验证状态
+  if (formRef.value) {
+    formRef.value.resetFields()
+  }
   resetForm()
 }
 </script>
 
 <style scoped lang="scss">
-.apply-form {
-  padding: 10px 0;
-  min-height: 200px;
-}
-
-.form-section {
-  margin-bottom: 20px;
-  background: #f8fafc;
-  border-radius: 6px;
-  overflow: hidden;
-
-  .section-title {
-    padding: 10px 16px;
-    font-weight: 500;
-    color: #1e293b;
-    background: #e2e8f0;
-    font-size: 14px;
-  }
-
-  .section-content {
-    padding: 16px;
-  }
-}
-
 .input-hint {
   margin-top: 8px;
   font-size: 12px;
