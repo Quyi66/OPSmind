@@ -11,139 +11,146 @@
         </header>
 
         <el-scrollbar class="flow-editor__body">
-          <form class="op-smartform">
+          <el-form ref="formRef" :model="flow" label-width="120px" class="flow-form">
             <!-- 基础信息 -->
-            <fieldset class="form-fieldset">
-              <legend>基础信息</legend>
-              <div class="form-group form-horizontal">
-                <label class="control-label">名称 <span class="required">*</span></label>
-                <div class="form-control-wrapper">
-                  <el-input v-model="flow.name" placeholder="请输入流程名称" />
-                </div>
-              </div>
-              <div class="form-group form-horizontal">
-                <label class="control-label">描述</label>
-                <div class="form-control-wrapper">
-                  <el-input v-model="flow.description" type="textarea" :rows="3" />
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="control-label">
-                  目标主机
+            <div class="form-section">
+              <div class="section-title">基础信息</div>
+
+              <el-form-item label="名称" required>
+                <el-input v-model="flow.name" placeholder="请输入流程名称" style="width: 100%;" />
+              </el-form-item>
+
+              <el-form-item label="描述">
+                <el-input v-model="flow.description" type="textarea" :rows="3" />
+              </el-form-item>
+
+              <el-form-item label="目标主机">
+                <template #label>
+                  <span>目标主机</span>
                   <el-tooltip content="设置流程执行的目标主机，支持选择单台主机、主机组或标签" placement="top">
                     <i class="fa fa-question-circle text-muted ms-1" />
                   </el-tooltip>
-                </label>
-                <div class="form-control-wrapper">
-                  <AcmDeviceSelector v-model="flow.hosts" ci-types="[auto]" mcheck-type="map" />
-                </div>
-              </div>
-            </fieldset>
+                </template>
+                <AcmDeviceSelector v-model="flow.hosts" ci-types="[auto]" mcheck-type="map" />
+              </el-form-item>
+            </div>
 
             <!-- 步骤设置 -->
-            <fieldset class="form-fieldset" :class="{ 'fieldset-disabled': isInstance }">
-              <legend>步骤设置</legend>
-              <div class="form-group">
-                <div class="step-toolbar">
-                  <label class="control-label step-label" @click="toggleFoldAll">
-                    步骤
-                    <i class="fa" :class="isFoldAllSteps ? 'fa-angle-double-left' : 'fa-angle-double-down'" />
-                  </label>
-                  <el-button class="ms-3" size="small" @click="addStep">
-                    <i class="fa fa-plus-circle text-primary me-1" />新增步骤
+            <div class="form-section" :class="{ 'section-disabled': isInstance }">
+              <div class="section-header">
+                <div class="section-title">步骤设置</div>
+                <div class="section-actions">
+                  <el-button class="fold-btn" text size="small" @click="toggleFoldAll">
+                    <i class="fa" :class="isFoldAllSteps ? 'fa-angle-double-right' : 'fa-angle-double-down'" />
+                    {{ isFoldAllSteps ? '展开全部' : '折叠全部' }}
+                  </el-button>
+                  <el-button size="small" @click="addStep">
+                    <i class="fa fa-plus me-1" />新增步骤
                   </el-button>
                 </div>
+              </div>
 
-                <div class="step-list">
-                  <div
-                    v-for="(step, index) in flow.steps"
-                    :key="step.id"
-                    class="step-card card"
-                  >
-                    <div class="card-header" @click="toggleStepFold(index)">
-                      <h4 class="card-title">
-                        步骤 {{ index + 1 }}
-                        <span v-if="stepFoldList[index]"> : {{ step.name || '未命名' }}</span>
-                      </h4>
+              <div class="step-list">
+                <div
+                  v-for="(step, index) in flow.steps"
+                  :key="step.id"
+                  class="step-card"
+                >
+                  <div class="step-header" @click="toggleStepFold(index)">
+                    <div class="step-title">
+                      <span class="step-number">{{ index + 1 }}</span>
+                      <span class="step-name">{{ step.name || '未命名' }}</span>
+                    </div>
+                    <div class="step-actions">
                       <el-button
-                        class="pull-right"
+                        text
                         size="small"
+                        type="danger"
                         :disabled="flow.steps.length === 1"
                         @click.stop="removeStep(index)"
-                      >删除步骤</el-button>
+                      >
+                        <i class="fa fa-trash-alt me-1" />删除
+                      </el-button>
+                      <i class="fa toggle-icon" :class="stepFoldList[index] ? 'fa-chevron-down' : 'fa-chevron-up'" />
                     </div>
+                  </div>
 
-                    <div v-if="!stepFoldList[index]" class="card-body">
-                      <div class="form-group form-horizontal">
-                        <label class="control-label">步骤名称</label>
-                        <div class="form-control-wrapper">
-                          <el-input v-model="step.name" placeholder="请输入" class="w-sm" />
-                        </div>
-                      </div>
-                      <div class="form-group form-horizontal">
-                        <label class="control-label">自动执行下一步骤</label>
-                        <div class="form-control-wrapper">
-                          <el-checkbox v-model="step.autoNext" :disabled="isInstance" />
-                        </div>
-                      </div>
-                      <div class="form-group form-horizontal">
-                        <label class="control-label">脚本</label>
-                        <div class="form-control-wrapper w-full">
-                          <GfsFileSelector v-model="step.config.tasks[0].scripts" :disabled="isInstance" />
-                        </div>
-                      </div>
-                      <div class="form-group form-horizontal">
-                        <label class="control-label">
-                          输出等级
-                          <el-tooltip content="控制脚本执行时的输出详细程度，调试问题时可选择更高等级" placement="top">
-                            <i class="fa fa-question-circle text-muted ms-1" />
-                          </el-tooltip>
-                        </label>
-                        <div class="form-control-wrapper">
-                          <el-select v-model="step.config.verbosity" class="w-auto">
+                  <div v-show="!stepFoldList[index]" class="step-body">
+                    <el-row class="form-row">
+                      <el-col :span="12">
+                        <el-form-item label="步骤名称">
+                          <el-input v-model="step.name" placeholder="请输入" style="width: 100%;" />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="12">
+                        <el-form-item label="自动执行">
+                          <el-checkbox v-model="step.autoNext" :disabled="isInstance">自动执行下一步骤</el-checkbox>
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <el-row class="form-row">
+                      <el-col :span="24">
+                        <el-form-item label="脚本">
+                          <GfsFileSelector
+                            v-model="step.config.tasks[0].scripts"
+                            :disabled="isInstance"
+                            :multiple-select="false"
+
+                          />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
+                    <el-row class="form-row">
+                      <el-col :span="12">
+                        <el-form-item>
+                          <template #label>
+                            <span>输出等级</span>
+                            <el-tooltip content="控制脚本执行时的输出详细程度，调试问题时可选择更高等级" placement="top">
+                              <i class="fa fa-question-circle text-muted ms-1" style="cursor: help;" />
+                            </el-tooltip>
+                          </template>
+                          <el-select v-model="step.config.verbosity" style="width: 100%;">
                             <el-option :value="0" label="普通" />
                             <el-option :value="1" label="详细" />
                             <el-option :value="2" label="更多" />
                             <el-option :value="3" label="调试" />
                             <el-option :value="4" label="连接调试" />
                           </el-select>
-                        </div>
-                      </div>
-                      <div class="form-group form-horizontal">
-                        <label class="control-label">
-                          任务超时
-                          <el-tooltip content="任务执行超时时间，-1 表示无限制" placement="top">
-                            <i class="fa fa-question-circle text-muted ms-1" />
-                          </el-tooltip>
-                        </label>
-                        <div class="form-control-wrapper">
-                          <div class="input-group w-sm">
-                            <el-input-number v-model="step.config.taskTimeout" :min="-1" :max="86400" controls-position="right" />
-                            <span class="input-group-text">秒</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="12">
+                        <el-form-item>
+                          <template #label>
+                            <span>任务超时(秒)</span>
+                            <el-tooltip content="任务执行超时时间，-1 表示无限制" placement="top">
+                              <i class="fa fa-question-circle text-muted ms-1" style="cursor: help;" />
+                            </el-tooltip>
+                          </template>
+                          <el-input-number v-model="step.config.taskTimeout" :min="-1" :max="86400" controls-position="right" style="width: 100%;" />
+                        </el-form-item>
+                      </el-col>
+                    </el-row>
                   </div>
                 </div>
               </div>
-            </fieldset>
+            </div>
 
             <!-- 运行参数 -->
-            <fieldset class="form-fieldset">
-              <legend>
+            <div class="form-section">
+              <div class="section-title">
                 运行参数
                 <el-tooltip content="运行参数会替换脚本命令行中 ${变量名} 形式的变量，以及主机的参数名" placement="top">
                   <i class="fa fa-question-circle text-muted ms-1" />
                 </el-tooltip>
-              </legend>
-              <div class="form-group">
+              </div>
+
+              <el-form-item>
                 <div class="param-toolbar">
-                  <el-button size="small" title="解析作业定义中的变量，自动添加为参数" @click="handleParseParams">
-                    <span class="text-primary me-1">{}</span>解析参数
+                  <el-button size="small" class="ms-auto" @click="addParam">
+                    <i class="fa fa-plus" />添加参数
                   </el-button>
-                  <el-button size="small" class="ms-auto" title="添加参数" @click="addParam">
-                    <i class="fa fa-plus" />
+                  <el-button size="small" @click="handleParseParams">
+                    <span class="text-primary me-1">{}</span>解析参数
                   </el-button>
                 </div>
 
@@ -173,17 +180,17 @@
                         <el-checkbox v-model="param.secret" />
                       </td>
                       <td class="text-right">
-                        <el-button size="small" title="删除参数" @click="deleteParam(index)">
-                          <i class="fa fa-minus" />
+                        <el-button text title="删除参数" @click="deleteParam(index)" type="danger">
+                          <el-icon><Delete /></el-icon>
                         </el-button>
                       </td>
                     </tr>
                   </tbody>
                 </table>
-                <el-empty v-else description="暂无参数" :image-size="60" />
-              </div>
-            </fieldset>
-          </form>
+                <el-empty v-else description="暂无参数" :image-size="60" style="width: 100%" />
+              </el-form-item>
+            </div>
+          </el-form>
         </el-scrollbar>
 
         <footer class="flow-editor__footer">
@@ -212,6 +219,7 @@ import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import GfsFileSelector from './GfsFileSelector.vue'
 import AcmDeviceSelector from './AcmDeviceSelector.vue'
+import { Delete } from '@element-plus/icons-vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -228,6 +236,7 @@ const visible = computed({
 
 const isInstance = computed(() => props.mode === 'run')
 const loading = ref(false)
+const formRef = ref(null)
 const flow = reactive(createEmptyFlow())
 const stepFoldList = ref([false])
 const isFoldAllSteps = ref(false)
@@ -245,13 +254,6 @@ watch(
     } else {
       resetEditor()
     }
-  }
-)
-
-watch(
-  () => flow.steps.length,
-  () => {
-    stepFoldList.value = flow.steps.map(() => false)
   }
 )
 
@@ -426,6 +428,8 @@ function normalizeParam(raw) {
 
 function addStep() {
   flow.steps.push(createStep())
+  // 新增的步骤展开，其他步骤保持当前状态
+  stepFoldList.value.push(false)
 }
 
 function removeStep(index) {
@@ -571,13 +575,55 @@ function handleRun() {
   }
 
   loading.value = true
+
+  // 将 hosts 转换为后端期望的对象格式
+  const hostsPayload = flow.hosts.map(host => {
+    if (typeof host === 'object' && host.value) {
+      return host
+    }
+    return {
+      key: host,
+      value: host,
+      assetType: 'linux'
+    }
+  })
+
+  // 将 steps 的 config 转换为 configJson 字符串，同时保留 config 对象
+  const stepsPayload = flow.steps.map(step => ({
+    ...step.extraData, // 合并额外步骤数据（包含flowId、runLogIds、status、appletCode等）
+    name: step.name,
+    type: step.type,
+    autoNext: step.autoNext,
+    configJson: JSON.stringify({
+      tasks: step.config.tasks.map(task => ({
+        scripts: task.scripts.map(script => ({
+          location: script.path,
+          argline: script.config || null
+        }))
+      })),
+      verbosity: String(step.config.verbosity || 0),
+      taskTimeout: Number(step.config.taskTimeout || 60)
+    }),
+    config: {
+      tasks: step.config.tasks.map(task => ({
+        scripts: task.scripts.map(script => ({
+          location: script.path,
+          argline: script.config || null
+        }))
+      })),
+      verbosity: String(step.config.verbosity || 0),
+      taskTimeout: Number(step.config.taskTimeout || 60)
+    }
+  }))
+
   const payload = {
-    flowId: flow.id,
+    ...flow.extraData, // 合并额外流程数据（包含appletCode、engine、createdAt、createdBy、tenantId、updatedBy、updatedAt等）
     name: flow.name,
-    description: flow.description || '',
-    hosts: flow.hosts,
-    steps: flow.steps,
-    globalParams: flow.globalParams
+    description: flow.description || null,
+    hosts: hostsPayload,
+    steps: stepsPayload,
+    globalParamsJson: JSON.stringify(flow.globalParams || []),
+    jobFlowId: flow.id
   }
 
   jaoApi.createFlowInstance(payload)
@@ -588,8 +634,7 @@ function handleRun() {
       visible.value = false
       // 可选:打开实例查看页面
       if (instanceId) {
-        const legacyBase = window.location.origin + window.location.pathname.replace(/\/#.*$/, '')
-        window.open(`${legacyBase}#/jao/flows/instance/${instanceId}/view`, '_blank', 'noopener')
+
       }
     })
     .catch(error => {
@@ -609,7 +654,7 @@ function generateId() {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .flow-editor {
   position: fixed;
   inset: 0;
@@ -674,7 +719,7 @@ function generateId() {
 }
 
 .flow-editor__body :deep(.el-scrollbar__view) {
-  padding: 20px 28px 40px;
+  padding: 24px;
 }
 
 .flow-editor__footer {
@@ -687,81 +732,55 @@ function generateId() {
   flex-shrink: 0;
 }
 
-/* 表单样式 - 模拟 op-smartform */
-.op-smartform {
-  background: #fff;
+/* 表单样式 */
+.flow-form {
+  :deep(.el-form-item__label) {
+    font-weight: 500;
+    color: var(--el-text-color-primary);
+  }
+
+  :deep(.el-form-item__content) {
+    flex-wrap: wrap;
+  }
 }
 
-.form-fieldset {
-  border: none;
-  padding: 0;
-  margin-bottom: 24px;
+.form-section {
+  margin-bottom: 32px;
+  border-radius: 4px;
+  background-color: var(--el-fill-color-blank);
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    display: flex;
+    align-items: center;
+  }
+
+  .el-form-item {
+    margin-bottom: 18px;
+  }
 }
 
-.form-fieldset legend {
-  font-size: 16px;
-  font-weight: 600;
-  color: #334155;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
-  width: 100%;
-}
-
-.form-fieldset.fieldset-disabled {
+.section-disabled {
   opacity: 0.7;
   pointer-events: none;
-}
 
-.form-fieldset.fieldset-disabled .acm-device-selector {
-  pointer-events: auto;
-  opacity: 1;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group .control-label {
-  display: block;
-  font-weight: 600;
-  color: #475569;
-  margin-bottom: 8px;
-}
-
-.form-control-wrapper {
-  width: 100%;
-}
-
-/* 水平表单布局 - 模拟 op-align-horizontal */
-.form-horizontal {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.form-horizontal .control-label {
-  flex-shrink: 0;
-  width: 120px;
-  padding-top: 8px;
-  margin-bottom: 0;
-  text-align: right;
-}
-
-.form-horizontal .form-control-wrapper {
-  flex: 1;
-}
-
-.required {
-  color: #f97316;
+  :deep(.acm-device-selector) {
+    pointer-events: auto;
+    opacity: 1;
+  }
 }
 
 .text-muted {
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
 }
 
 .text-primary {
-  color: #3b82f6;
+  color: var(--el-color-primary);
 }
 
 .text-right {
@@ -788,78 +807,132 @@ function generateId() {
   float: right;
 }
 
-/* 宽度工具类 */
-.w-full {
-  width: 100%;
-}
 
-.w-sm {
-  width: 200px;
-}
-
-.w-auto {
-  width: auto;
-  min-width: 120px;
-}
 
 /* 步骤区域 */
-.step-toolbar {
+.section-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-}
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 
-.step-label {
-  cursor: pointer;
-  user-select: none;
-}
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
 
-.step-label i {
-  margin-left: 8px;
-  transition: transform 0.2s;
+  .section-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .fold-btn {
+    color: var(--el-color-primary);
+
+    &:hover {
+      background: var(--el-color-primary-light-9);
+    }
+  }
 }
 
 .step-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
-/* 卡片样式 - 模拟 Bootstrap card */
-.card {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+.step-card {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
   background: #fff;
+  overflow: hidden;
+  transition: all 0.2s;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
 }
 
-.card-header {
+.step-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--el-fill-color-light);
   cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--el-fill-color);
+  }
+
+  .step-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--el-color-primary);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .step-name {
+    color: var(--el-text-color-regular);
+    font-weight: 500;
+  }
+
+  .step-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .toggle-icon {
+      color: var(--el-text-color-secondary);
+      font-size: 14px;
+      transition: transform 0.2s;
+    }
+  }
 }
 
-.card-title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-}
+.step-body {
+  padding: 20px;
+  background: #fafafa;
 
-.card-body {
-  padding: 16px;
+  .el-form-item {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 }
 
 /* 参数区域 */
 .param-toolbar {
-  display: flex;
-  align-items: center;
   margin-bottom: 12px;
 }
 
-/* 参数表格 - 模拟 op-param-table */
+/* 参数表格 */
 .op-param-table {
   width: 100%;
   border-collapse: collapse;
@@ -868,16 +941,17 @@ function generateId() {
 
 .op-param-table th,
 .op-param-table td {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--el-border-color-lighter);
   padding: 8px 10px;
   vertical-align: middle;
 }
 
 .op-param-table th {
-  background: #f1f5f9;
+  background: var(--el-fill-color-light);
   font-weight: 600;
   text-align: left;
   white-space: nowrap;
+  color: var(--el-text-color-primary);
 }
 
 .op-param-table :deep(.el-input) {
@@ -886,32 +960,6 @@ function generateId() {
 
 .op-param-table :deep(.el-checkbox) {
   height: auto;
-}
-
-/* 输入组 - 模拟 Bootstrap input-group */
-.input-group {
-  display: flex;
-  align-items: center;
-}
-
-.input-group .input-group-text {
-  padding: 0 12px;
-  background: #f1f5f9;
-  border: 1px solid #dcdfe6;
-  border-left: none;
-  border-radius: 0 4px 4px 0;
-  height: 32px;
-  line-height: 32px;
-  font-size: 13px;
-  color: #606266;
-}
-
-.input-group :deep(.el-input-number) {
-  width: 140px;
-}
-
-.input-group :deep(.el-input-number .el-input__wrapper) {
-  border-radius: 4px 0 0 4px;
 }
 
 /* 过渡动画 */
@@ -923,5 +971,19 @@ function generateId() {
 .flow-editor-fade-enter-from,
 .flow-editor-fade-leave-to {
   opacity: 0;
+}
+
+.form-row {
+  margin-bottom: 16px;
+}
+
+.tooltip-icon {
+  display: inline-block !important;
+  cursor: help !important;
+  line-height: 1;
+}
+
+.tooltip-icon:hover {
+  cursor: help !important;
 }
 </style>

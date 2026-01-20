@@ -98,12 +98,14 @@
           </el-input>
         </div>
 
+        <div class="ops-action-bar">
+          <span style="flex: 1;"></span>
+          <el-button class="toolbar-icon-btn" circle size="small" :loading="instancesLoading" @click="refreshInstances" title="刷新">
+            <el-icon v-show="!instancesLoading"><Refresh /></el-icon>
+          </el-button>
+        </div>
+
         <div class="ops-table-wrapper">
-          <div class="table-toolbar-icons">
-            <el-button class="toolbar-icon-btn" circle @click="refreshInstances" :disabled="instancesLoading" title="刷新">
-              <el-icon><Refresh /></el-icon>
-            </el-button>
-          </div>
           <el-table
             :data="paginatedInstances"
             v-loading="instancesLoading"
@@ -437,7 +439,7 @@ function pad(value) {
   min-height: 560px;
   background: #fff;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  // border: 1px solid #e5e7eb;
   overflow: hidden;
   height: 99%;
 }
@@ -447,7 +449,7 @@ function pad(value) {
   border-right: 1px solid #ebeef5;
   display: flex;
   flex-direction: column;
-  background: #f7f9fc;
+  // background: #f7f9fc;
 }
 
 .flow-list-header {
@@ -524,7 +526,6 @@ function pad(value) {
   right: 10px;
   bottom: 6px;
   display: flex;
-  gap: 6px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;

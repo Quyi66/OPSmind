@@ -383,7 +383,7 @@ function formatDateTime(value) {
 
 .status-running {
   color: #3b82f6;
-  animation: rotating 1.2s linear infinite;
+  /* animation: rotating 1.2s linear infinite; */
 }
 
 .status-success {

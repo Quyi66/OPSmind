@@ -1,6 +1,6 @@
 <template>
   <div class="icon-picker">
-    <div class="icon-preview" @click="togglePicker">
+    <div class="icon-preview">
       <i :class="getIconClass(modelValue)" />
     </div>
     <el-popover

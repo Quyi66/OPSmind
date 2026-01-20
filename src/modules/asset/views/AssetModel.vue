@@ -12,7 +12,7 @@
     <template v-else>
       <div class="ops-page-layout">
         <!-- 筛选区域 -->
-        <div class="ops-filter-bar">
+        <!-- <div class="ops-filter-bar">
           <div class="filter-left">
             <el-input
               v-model="keyword"
@@ -27,7 +27,7 @@
               </template>
             </el-input>
           </div>
-        </div>
+        </div> -->
 
         <!-- 操作按钮区域 -->
         <div class="ops-action-bar">

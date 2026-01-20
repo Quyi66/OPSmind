@@ -30,7 +30,7 @@
               <template #reference>
                 <el-button size="small">
                   <i class="fa fa-list-ul" style="margin-right: 4px"></i>
-                  @@
+                  {{ selectedFilterText }}
                   <i class="fa fa-caret-down" style="margin-left: 4px"></i>
                 </el-button>
               </template>
@@ -112,7 +112,7 @@
 
           <el-form-item label="最近连通状态">
             <el-select v-model="filters.connLatestStatus" style="width: 100px">
-              <el-option label="所有" value="" />
+              <el-option label="所有" value="all" />
               <el-option label="连通成功" value="1" />
               <el-option label="连通失败" value="0" />
               <el-option label="未测试" value="null" />
@@ -143,7 +143,7 @@
               v-model="searchText"
               placeholder="搜索"
               clearable
-              style="width: 180px"
+              style="width: 150px"
             />
           </el-form-item>
 
@@ -378,8 +378,17 @@ const groupTreeRef = ref(null)
 const groupTreeData = ref([])
 const tagList = ref([])
 const selectedGroup = ref('all')
+const selectedGroupName = ref('所有')
 const selectedTag = ref('')
 const selectedHostCount = computed(() => selectedRows.value.length)
+
+// 计算选中的过滤文本
+const selectedFilterText = computed(() => {
+  if (selectedTag.value) {
+    return `#${selectedTag.value}`
+  }
+  return selectedGroupName.value || '@@'
+})
 
 // 树形组件配置
 const treeProps = {
@@ -425,7 +434,7 @@ const filters = ref({
   hostKeys: '@@',
   permission: 'r',
   status: '1',
-  connLatestStatus: '',
+  connLatestStatus: 'all',
   osVersion: []
 })
 
@@ -530,8 +539,9 @@ const loadTagList = async () => {
 }
 
 // 选择分组
-const handleSelectGroup = (groupId) => {
+const handleSelectGroup = (groupId, groupName = '所有') => {
   selectedGroup.value = groupId
+  selectedGroupName.value = groupName
   selectedTag.value = ''
   if (groupId === 'all') {
     filters.value.hostKeys = '@@'
@@ -543,7 +553,7 @@ const handleSelectGroup = (groupId) => {
 
 // 分组树节点点击
 const handleGroupNodeClick = (data) => {
-  handleSelectGroup(data.path)
+  handleSelectGroup(data.path, data.name)
 }
 
 // 选择标签
@@ -596,7 +606,7 @@ const loadAssetList = async () => {
       assetType: currentType.value,
       permission: filters.value.permission,
       status: filters.value.status,
-      CONN_LATEST_STATUS: filters.value.connLatestStatus,
+      CONN_LATEST_STATUS: filters.value.connLatestStatus === 'all' ? '' : filters.value.connLatestStatus,
       system_name: ' ',
       os_version: filters.value.osVersion.length > 0 ? filters.value.osVersion.join(',') : ' '
     }
@@ -624,6 +634,7 @@ const handleTypeChange = (code) => {
 watch(currentType, () => {
   currentPage.value = 1
   selectedGroup.value = 'all'
+  selectedGroupName.value = '所有'
   selectedTag.value = ''
   filters.value.hostKeys = '@@'
   loadOsVersionOptions()
@@ -646,11 +657,12 @@ const handleReset = () => {
     hostKeys: '@@',
     permission: 'r',
     status: '1',
-    connLatestStatus: '',
+    connLatestStatus: 'all',
     osVersion: []
   }
   searchText.value = ''
   selectedGroup.value = 'all'
+  selectedGroupName.value = '所有'
   selectedTag.value = ''
   currentPage.value = 1
   loadAssetList()

@@ -195,7 +195,7 @@ watch(visible, (val) => {
 
 .attr-value {
   flex: 1;
-  color: #409eff;
+  // color: #409eff;
   font-size: 14px;
   word-break: break-all;
 }

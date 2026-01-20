@@ -240,7 +240,7 @@ export const deleteFlow = (flowId) => {
 
 /** 创建流程实例(执行流程) */
 export const createFlowInstance = (data) => {
-  return useApi().post('/jao/api/jao/flows/instances', data);
+  return useApi().put('/jao/api/jao/flow-instances', data);
 }
 
 /** 获取流程实例详情（用于查看） */

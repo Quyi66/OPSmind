@@ -18,7 +18,7 @@
           </span>
           <span>共 <strong>{{ devices.length }}</strong> 项</span>
         </div>
-        <el-input
+        <!-- <el-input
           v-model="filterText"
           class="device-filter autohide"
           placeholder="搜索..."
@@ -28,7 +28,7 @@
           <template #prefix>
             <i class="fa fa-search" />
           </template>
-        </el-input>
+        </el-input> -->
       </div>
 
       <ul class="device-chip-list">

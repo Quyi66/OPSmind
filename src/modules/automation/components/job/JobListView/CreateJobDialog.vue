@@ -2,623 +2,362 @@
   <el-dialog
     v-model="visible"
     :title="dialogTitle"
-    width="1200px"
+    width="1080px"
     destroy-on-close
     @close="handleClose"
     :close-on-click-modal="false"
     class="create-job-dialog"
   >
-    <div class="dialog-body-wrapper">
-      <!-- 左侧导航 -->
-      <nav class="section-nav">
-        <ul class="nav-list">
-          <li
-            v-for="section in navSections"
-            :key="section.id"
-            class="nav-item"
-            :class="{ 'is-active': activeSection === section.id }"
-            @click="scrollToSection(section.id)"
-          >
-            {{ section.label }}
-          </li>
-        </ul>
-      </nav>
+    <el-form
+      ref="formRef"
+      :model="job"
+      label-width="100px"
+      class="job-form"
+    >
+      <!-- 基本设置 -->
+      <div class="form-section">
+        <div class="section-title">基本设置</div>
 
-      <!-- 右侧表单内容 -->
-      <el-scrollbar class="form-content" ref="scrollbarRef">
-        <form class="op-smartform form-vertical op-bold-label" id="js-job-edit-new">
-          <!-- 基本设置 -->
-          <fieldset id="section-base" class="form-fieldset">
-            <legend class="form-legend">基本设置</legend>
+        <el-form-item label="标题" required>
+          <el-input v-model="job.title" placeholder="请输入作业标题" />
+        </el-form-item>
 
-            <div class="form-group">
-              <label class="control-label">标题 <span class="required-mark">*</span></label>
-              <div class="form-control-wrapper">
-                <el-input v-model="job.title" placeholder="请输入作业标题" />
-              </div>
-            </div>
+        <el-form-item label="描述">
+          <el-input
+            v-model="job.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入作业描述"
+          />
+        </el-form-item>
+      </div>
 
-            <div class="form-group">
-              <label class="control-label">描述</label>
-              <div class="form-control-wrapper">
-                <el-input
-                  v-model="job.description"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="请输入作业描述"
-                />
-              </div>
-            </div>
-          </fieldset>
+      <!-- 脚本作业配置 -->
+      <div v-if="job.type === 'script'" class="form-section">
+        <div class="section-title">脚本设置</div>
 
-          <!-- 脚本作业配置 (Script类型) -->
-          <fieldset v-if="job.type === 'script'" id="section-script" class="form-fieldset">
-            <legend class="form-legend">脚本设置</legend>
+        <el-form-item label="脚本类型">
+          <el-radio-group v-model="jobConfig.scriptType">
+            <el-radio-button value="playbook">Ansible Playbook</el-radio-button>
+            <el-radio-button value="adhoc">普通脚本</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
 
-          <!-- 脚本类型 -->
-          <div class="form-group">
-            <label class="control-label">脚本类型</label>
-            <div class="form-control-wrapper d-inline-block">
-              <div class="opx-check-group opx-secondary btn-group">
-                <input
-                  type="radio"
-                  name="job_scriptType"
-                  value="playbook"
-                  v-model="jobConfig.scriptType"
-                  id="job_scriptType_playbook"
-                >
-                <label for="job_scriptType_playbook">Ansible Playbook</label>
-                <input
-                  type="radio"
-                  name="job_scriptType"
-                  value="adhoc"
-                  v-model="jobConfig.scriptType"
-                  id="job_scriptType_adhoc"
-                >
-                <label for="job_scriptType_adhoc">普通脚本</label>
-              </div>
-            </div>
-          </div>
-
-          <!-- 脚本任务步骤 -->
-          <div class="form-group">
+        <el-form-item label="脚本任务" required>
+          <div class="task-list">
             <div
               v-for="(task, taskIndex) in jobConfig.tasks"
               :key="taskIndex"
-              class="task-card"
+              class="task-item"
             >
-              <div v-if="jobConfig.tasks.length > 1" class="task-card-header">
-                <h4 class="task-title">
-                  <span class="task-badge">{{ taskIndex + 1 }}</span>
-                </h4>
-                <el-button size="small" @click="removeTask(taskIndex)">删除步骤</el-button>
-              </div>
-
-              <div class="task-card-body">
-                <!-- 脚本选择 -->
-                <div class="form-group op-align-horizontal">
-                  <label class="control-label font-weight-bold text-left" style="width: 4rem;">脚本 <span class="required-mark">*</span></label>
-                  <div class="form-control-wrapper">
-                    <!-- 已选脚本列表 -->
-                    <div v-if="task.scripts && task.scripts.length > 0" class="selected-scripts">
-                      <el-button size="small" @click="openFileSelector(taskIndex)">
-                        共 <strong>{{ task.scripts.length }}</strong> 个文件
+              <!-- 已选脚本列表 -->
+              <div v-if="task.scripts && task.scripts.length > 0" class="selected-scripts">
+                <el-button size="small" @click="openFileSelector(taskIndex)">
+                  共 <strong>{{ task.scripts.length }}</strong> 个文件
+                </el-button>
+                <el-table :data="task.scripts" size="small" class="mt-2">
+                  <el-table-column label="脚本路径" min-width="200">
+                    <template #default="{ row }">
+                      <span v-if="fileStatusMap[row.location]" class="text-danger">
+                        {{ row.location }}
+                        <i class="fa fa-exclamation-triangle"></i>
+                      </span>
+                      <span v-else>{{ row.location }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="额外参数" width="200">
+                    <template #default="{ row }">
+                      <el-input v-model="row.argline" size="small" placeholder="参数" />
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="标签" width="120">
+                    <template #default="{ row }">
+                      <el-input v-model="row.tag" size="small" placeholder="tag" />
+                    </template>
+                  </el-table-column>
+                  <el-table-column width="60" align="center">
+                    <template #default="{ $index }">
+                      <el-button link type="danger" @click="removeScript(task, $index)">
+                        <el-icon><Delete /></el-icon>
                       </el-button>
-                      <table class="scripts-table">
-                        <tbody>
-                          <tr v-for="(script, scriptIndex) in task.scripts" :key="scriptIndex">
-                            <td style="max-width: 300px;">
-                              <div class="script-path">
-                                <span
-                                  v-if="fileStatusMap[script.location]"
-                                  class="gfs-missing-file"
-                                  title="文件不存在"
-                                >
-                                  {{ script.location }}
-                                  <i class="fa fa-exclamation-triangle text-warning"></i>
-                                </span>
-                                <span v-else>{{ script.location }}</span>
-                              </div>
-                            </td>
-                            <td style="width: 240px;">
-                              <el-input
-                                v-model="script.argline"
-                                size="small"
-                                placeholder="ansible-playbook 额外参数"
-                              />
-                            </td>
-                            <td style="width: 150px;">
-                              <el-input
-                                v-model="script.tag"
-                                size="small"
-                                placeholder="tag标签"
-                              />
-                            </td>
-                            <td style="width: 60px;" class="text-center">
-                              <el-button
-                                size="small"
-                                link
-                                type="danger"
-                                @click="removeScript(task, scriptIndex)"
-                              >
-                                <i class="fa fa-minus"></i>
-                              </el-button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <!-- 空状态 - 选择文件按钮 -->
-                    <div v-else class="op-blank-slate bg-light p-3">
-                      <div class="op-blank-slate-icon">
-                        <i class="fa fa-file-alt" style="font-size: 3rem; color: #909399;"></i>
-                      </div>
-                      <div style="margin-top: 12px;">
-                        <el-button @click="openFileSelector(taskIndex)">
-                          选择文件
-                        </el-button>
-                      </div>
-                    </div>
-
-                    <!-- 脚本参数提示 -->
-                    <details class="help-block">
-                      <summary>脚本参数</summary>
-                      <div>支持使用参数变量，格式：&#123;&#123;param_name&#125;&#125;</div>
-                      <div v-if="jobConfig.scriptType === 'playbook'">
-                        使用 Ansible Playbook 时，参数会传入 extra_vars:
-                        <ul>
-                          <li>字符串、数字：直接传入</li>
-                          <li>数组：转换为 JSON 字符串</li>
-                        </ul>
-                      </div>
-                    </details>
-                  </div>
-                </div>
-
-                <!-- 主机配置 -->
-                <div class="form-group op-align-horizontal">
-                  <label class="control-label font-weight-bold text-left" style="width: 4rem;">
-                    主机
-                    <el-tooltip content="指定脚本执行的目标主机" placement="top">
-                      <i class="fa fa-question-circle text-muted"></i>
-                    </el-tooltip>
-                  </label>
-                  <div class="form-control-wrapper">
-                    <div class="w-full">
-                      <!-- 主机模式选择 -->
-                      <div class="opx-check-group opx-secondary btn-group">
-                        <input
-                          type="radio"
-                          :name="'hostsMode_' + taskIndex"
-                          v-model="task.hostsMode"
-                          :id="'hosts_by_param_' + taskIndex"
-                          value="param"
-                        >
-                        <label :for="'hosts_by_param_' + taskIndex">
-                          <i class="fa fa-brackets-curly"></i> 参数传入
-                        </label>
-                        <input
-                          type="radio"
-                          :name="'hostsMode_' + taskIndex"
-                          v-model="task.hostsMode"
-                          :id="'hosts_defined_' + taskIndex"
-                          value=""
-                        >
-                        <label :for="'hosts_defined_' + taskIndex">
-                          <i class="fa fa-list-ul"></i> 预定义
-                        </label>
-                      </div>
-
-                      <!-- 预定义主机 -->
-                      <div v-if="task.hostsMode !== 'param'" class="mt-3">
-                        <AcmDeviceSelector
-                          v-model="task.hosts"
-                          ci-types="[auto]"
-                        />
-                      </div>
-
-                      <!-- 参数传入 -->
-                      <div v-if="task.hostsMode === 'param'" class="mt-3 d-flex align-items-center">
-                        <label class="control-label w-auto ms-3">变量名</label>
-                        <el-input
-                          v-model="task.hostsParam"
-                          placeholder="主机参数名称"
-                          style="width: 200px; margin-left: 12px;"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+              <div v-else class="empty-state">
+                <el-button @click="openFileSelector(taskIndex)">选择文件</el-button>
               </div>
             </div>
           </div>
+        </el-form-item>
 
-          <!-- 回调API -->
-          <div class="form-group">
-            <label class="control-label">
-              回调API
-              <el-tooltip content="作业执行完成后回调的URL地址" placement="top">
-                <i class="fa fa-question-circle text-muted"></i>
-              </el-tooltip>
-            </label>
-            <div class="form-control-wrapper">
-              <el-input v-model="jobConfig.callback" placeholder="执行完成后回调的URL" />
-            </div>
+        <el-form-item label="目标主机">
+          <div v-for="(task, taskIndex) in jobConfig.tasks" :key="taskIndex">
+            <el-radio-group v-model="task.hostsMode" class="mb-2">
+              <el-radio-button value="param">参数传入</el-radio-button>
+              <el-radio-button value="">预定义</el-radio-button>
+            </el-radio-group>
+            <el-input
+              v-if="task.hostsMode === 'param'"
+              v-model="task.hostsParam"
+              placeholder="主机参数名称"
+              style="width: 200px; margin-top: 8px; display: block;"
+            />
+            <AcmDeviceSelector
+              v-else
+              v-model="task.hosts"
+              ci-types="[auto]"
+              style="margin-top: 8px;"
+            />
           </div>
+        </el-form-item>
 
-          <!-- 任务超时 -->
-          <div class="form-group">
-            <label class="control-label">
-              任务超时
-              <el-tooltip content="任务执行超时时间，-1表示不限制" placement="top">
-                <i class="fa fa-question-circle text-muted"></i>
-              </el-tooltip>
-            </label>
-            <div class="form-control-wrapper">
-              <div class="input-group w-sm">
-                <el-input-number
-                  v-model="jobConfig.taskTimeout"
-                  :min="-1"
-                  :step="60"
-                  controls-position="right"
-                  style="width: 150px;"
+        <el-form-item label="回调API">
+          <el-input v-model="jobConfig.callback" placeholder="执行完成后回调的URL" />
+        </el-form-item>
+
+        <el-form-item label="任务超时">
+          <el-input-number v-model="jobConfig.taskTimeout" :min="-1" :step="60" />
+          <span style="margin-left: 8px;">秒</span>
+        </el-form-item>
+
+        <el-form-item label="详细输出">
+          <el-select v-model="jobConfig.verbosity" style="width: 200px;">
+            <el-option label="正常" :value="0" />
+            <el-option label="详细 (-v)" :value="1" />
+            <el-option label="更详细 (-vv)" :value="2" />
+            <el-option label="调试 (-vvv)" :value="3" />
+            <el-option label="连接调试 (-vvvv)" :value="4" />
+          </el-select>
+        </el-form-item>
+      </div>
+
+      <!-- REST 作业配置 -->
+      <div v-if="job.type === 'rest'" class="form-section">
+        <div class="section-title">REST设置</div>
+
+        <el-form-item label="CURL" required>
+          <el-input
+            v-model="restConfig.curl"
+            type="textarea"
+            :rows="8"
+            :placeholder="curlPlaceholder"
+            style="font-family: 'Consolas', 'Monaco', monospace;"
+          />
+          <div class="help-text">支持使用参数变量，格式：<code v-pre>{{param_name}}</code></div>
+        </el-form-item>
+      </div>
+
+      <!-- 命令作业配置 -->
+      <div v-if="job.type === 'command'" class="form-section">
+        <div class="section-title">命令设置</div>
+
+        <el-form-item label="执行命令" required>
+          <div
+            v-for="(task, taskIndex) in commandConfig.tasks"
+            :key="taskIndex"
+            class="w-full"
+          >
+            <!-- 已选命令列表 -->
+            <div v-if="task.commands && task.commands.length > 0">
+              <div class="d-flex mb-2">
+                <el-button size="small" @click="openCommandSelector(taskIndex)">
+                  共 <strong>{{ task.commands.length }}</strong> 条命令
+                </el-button>
+                <el-input
+                  v-model="task.commandFilter"
+                  placeholder="搜索命令"
+                  clearable
+                  size="small"
+                  style="width: 200px; margin-left: auto;"
                 />
-                <span class="input-group-text">秒</span>
+              </div>
+              <div class="command-list">
+                <pre
+                  v-for="(cmd, cmdIndex) in filteredTaskCommands(task)"
+                  :key="cmdIndex"
+                  class="command-item"
+                >{{ cmd.cmd || cmd.command }}</pre>
               </div>
             </div>
-          </div>
-
-          <!-- 详细输出 -->
-          <div class="form-group">
-            <label class="control-label">
-              详细输出
-              <el-tooltip content="控制ansible执行时的输出详细程度" placement="top">
-                <i class="fa fa-question-circle text-muted"></i>
-              </el-tooltip>
-            </label>
-            <div class="form-control-wrapper">
-              <el-select v-model="jobConfig.verbosity" style="width: 200px;">
-                <el-option label="正常" :value="0" />
-                <el-option label="详细 (-v)" :value="1" />
-                <el-option label="更详细 (-vv)" :value="2" />
-                <el-option label="调试 (-vvv)" :value="3" />
-                <el-option label="连接调试 (-vvvv)" :value="4" />
-              </el-select>
+            <!-- 空状态 -->
+            <div v-else class="empty-state">
+              <el-button @click="openCommandSelector(taskIndex)">选择命令</el-button>
             </div>
           </div>
-        </fieldset>
+        </el-form-item>
 
-        <!-- REST 作业配置 -->
-        <fieldset v-if="job.type === 'rest'" id="section-rest" class="form-fieldset">
-          <legend class="form-legend">REST设置</legend>
-
-          <div class="form-group">
-            <label class="control-label">CURL <span class="required-mark">*</span></label>
-            <div class="form-control-wrapper">
-              <el-input
-                v-model="restConfig.curl"
-                type="textarea"
-                :rows="8"
-                :placeholder="curlPlaceholder"
-                style="font-family: 'Consolas', 'Monaco', monospace;"
-              />
-            </div>
-            <div class="help-block">
-              支持使用参数变量，格式：<code v-pre>{{param_name}}</code>
-            </div>
+        <el-form-item label="目标主机" required>
+          <div v-for="(task, taskIndex) in commandConfig.tasks" :key="taskIndex">
+            <AcmDeviceSelector
+              v-model="task.hosts"
+              ci-types="[auto]"
+            />
           </div>
-        </fieldset>
+        </el-form-item>
+      </div>
 
-        <!-- 命令作业配置 -->
-        <fieldset v-if="job.type === 'command'" id="section-command" class="form-fieldset">
-          <legend class="form-legend">命令设置</legend>
+      <!-- 运行参数 -->
+      <div v-if="job.type !== 'command'" class="form-section">
+        <div class="section-title">运行参数</div>
 
-          <div class="form-group">
-            <div class="d-flex mb-3">
-              <label class="control-label">执行步骤</label>
-            </div>
-            <div
-              v-for="(task, taskIndex) in commandConfig.tasks"
-              :key="taskIndex"
-              class="task-card"
-            >
-              <div class="task-card-body">
-                <!-- 命令选择 -->
-                <div class="form-group op-align-horizontal">
-                  <label class="control-label font-weight-bold text-left" style="width: 4rem;">命令 <span class="required-mark">*</span></label>
-                  <div class="form-control-wrapper">
-                    <!-- 已选命令列表 -->
-                    <div v-if="task.commands && task.commands.length > 0" class="selected-commands">
-                      <div class="d-flex flex-nowrap align-items-center">
-                        <el-button size="small" @click="openCommandSelector(taskIndex)">
-                          共 <strong>{{ task.commands.length }}</strong> 条命令
-                        </el-button>
-                        <el-input
-                          v-model="task.commandFilter"
-                          placeholder="搜索命令"
-                          clearable
-                          size="small"
-                          class="ms-auto"
-                          style="width: 200px;"
-                        />
-                      </div>
-                      <div class="command-preview-list">
-                        <pre
-                          v-for="(cmd, cmdIndex) in filteredTaskCommands(task)"
-                          :key="cmdIndex"
-                          class="command-preview-item"
-                        >{{ cmd.cmd || cmd.command }}</pre>
-                      </div>
-                    </div>
-
-                    <!-- 空状态 - 选择命令按钮 -->
-                    <div v-else class="op-blank-slate bg-light p-3">
-                      <div class="op-blank-slate-icon">
-                        <i class="fa fa-terminal" style="font-size: 3rem; color: #909399;"></i>
-                      </div>
-                      <div style="margin-top: 12px;">
-                        <el-button @click="openCommandSelector(taskIndex)">
-                          选择命令
-                        </el-button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 主机配置 -->
-                <div class="form-group op-align-horizontal">
-                  <label class="control-label font-weight-bold text-left" style="width: 4rem;">
-                    主机 <span class="required-mark">*</span>
-                    <el-tooltip content="指定命令执行的目标主机" placement="top">
-                      <i class="fa fa-question-circle text-muted"></i>
-                    </el-tooltip>
-                  </label>
-                  <div class="form-control-wrapper">
-                    <AcmDeviceSelector
-                      v-model="task.hosts"
-                      ci-types="[auto]"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+        <el-form-item>
+          <div>
+            <el-button class="ms-auto" @click="addParam">
+              <i class="fa fa-plus"></i>
+              添加参数
+            </el-button>
+            <el-button @click="addParamAuto">
+              <i class="fa fa-brackets-curly"></i>
+              解析参数
+            </el-button>
           </div>
-        </fieldset>
 
-        <!-- 运行参数 -->
-        <fieldset v-if="job.type !== 'command'" id="section-params" class="form-fieldset">
-          <legend class="form-legend">
-            运行参数
-            <el-tooltip content="定义作业执行时需要传入的参数" placement="top">
-              <i class="fa fa-question-circle text-muted" style="margin-left: 4px;"></i>
-            </el-tooltip>
-          </legend>
+          <el-table
+            v-if="job.params && job.params.length > 0"
+            :data="job.params"
+            border
+            size="small"
+            class="mt-2"
+          >
+            <el-table-column label="参数" width="130">
+              <template #default="{ row }">
+                <el-input v-model="row.name" size="small" placeholder="参数名" />
+              </template>
+            </el-table-column>
+            <el-table-column label="显示名称" width="130">
+              <template #default="{ row }">
+                <el-input v-model="row.label" size="small" placeholder="显示名称" />
+              </template>
+            </el-table-column>
+            <el-table-column label="描述" min-width="150">
+              <template #default="{ row }">
+                <el-input v-model="row.description" size="small" placeholder="参数描述" />
+              </template>
+            </el-table-column>
+            <el-table-column label="默认值" width="120">
+              <template #default="{ row }">
+                <el-input v-model="row.defaultValue" size="small" placeholder="默认值" />
+              </template>
+            </el-table-column>
+            <el-table-column label="类型" width="120">
+              <template #default="{ row }">
+                <el-select v-model="row.type" size="small">
+                  <el-option
+                    v-for="pt in paramTypeList"
+                    :key="pt.type"
+                    :label="pt.title"
+                    :value="pt.type"
+                  />
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="加密" width="50">
+              <template #default="{ row }">
+                <el-checkbox v-model="row.secret" />
+              </template>
+            </el-table-column>
+            <el-table-column width="50">
+              <template #default="{ row }">
+                <el-button
+                  size="small"
+                  link
+                  type="danger"
+                  @click="deleteParam(row)"
+                >
+                  <!-- <i class="fa fa-minus"></i> -->
+                   <el-icon><Delete /></el-icon>
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-form-item>
+      </div>
 
-          <div class="form-group">
-            <div class="d-flex">
-              <el-button @click="addParamAuto" title="自动从脚本或CURL中解析变量参数">
-                <i class="fa fa-brackets-curly"></i>
-                解析参数
-              </el-button>
-              <el-button class="ms-auto" @click="addParam" title="添加参数">
-                <i class="fa fa-plus"></i>
+      <!-- 日志和审核 -->
+      <div class="form-section">
+        <div class="section-title">日志和审核</div>
+
+        <el-form-item label="操作审批">
+          <el-checkbox v-model="job.needApprove" :disabled="job.needReview">
+            需要审批
+          </el-checkbox>
+          <el-checkbox v-model="job.needReview" :disabled="job.needApprove" class="ms-3">
+            双人复核
+          </el-checkbox>
+        </el-form-item>
+
+        <el-form-item v-if="job.type !== 'command'" label="操作日志">
+          <el-checkbox v-model="jobConfig.audit.enabled">
+            记录操作日志
+          </el-checkbox>
+        </el-form-item>
+
+        <el-form-item v-if="jobConfig.audit.enabled" label="模块">
+          <el-input
+            v-model="jobConfig.audit.module"
+            maxlength="50"
+            style="width: 300px;"
+            placeholder="日志所属的功能模块"
+          />
+        </el-form-item>
+
+        <el-form-item v-if="jobConfig.audit.enabled" label="操作">
+          <el-input
+            v-model="jobConfig.audit.action"
+            maxlength="100"
+            style="width: 300px;"
+            placeholder="具体的操作类型"
+          />
+        </el-form-item>
+
+        <el-form-item label="操作延时">
+          <el-checkbox v-model="job.needDelayed">
+            延时执行
+          </el-checkbox>
+        </el-form-item>
+      </div>
+
+      <!-- 测试作业 -->
+      <div class="form-section">
+        <div class="section-title">测试作业</div>
+
+        <el-form-item>
+          <div class="test-controls d-flex w-full align-items-center">
+            <!-- 运行状态 -->
+            <div v-if="testJobStatus">
+              <el-button
+                :type="testJobStatus.type"
+                @click="viewTestResult"
+              >
+                <i :class="['fa', 'fa-fw', testJobStatus.icon]"></i>
+                <span>{{ testJobStatus.title }}</span>
               </el-button>
             </div>
 
-            <el-table
-              v-if="job.params && job.params.length > 0"
-              :data="job.params"
-              border
-              size="small"
-              class="param-table mt-3"
+            <!-- 运行按钮 -->
+            <el-button
+              type="primary"
+              :loading="testJobRunning"
+              :disabled="testJobRunning || !canRunTest"
+              @click="runTestJob"
             >
-              <el-table-column label="参数" width="130">
-                <template #default="{ row }">
-                  <el-input v-model="row.name" size="small" placeholder="参数名" />
-                </template>
-              </el-table-column>
-              <el-table-column label="显示名称" width="130">
-                <template #default="{ row }">
-                  <el-input v-model="row.label" size="small" placeholder="显示名称" />
-                </template>
-              </el-table-column>
-              <el-table-column label="描述" min-width="150">
-                <template #default="{ row }">
-                  <el-input v-model="row.description" size="small" placeholder="参数描述" />
-                </template>
-              </el-table-column>
-              <el-table-column label="默认值" width="120">
-                <template #default="{ row }">
-                  <el-input v-model="row.defaultValue" size="small" placeholder="默认值" />
-                </template>
-              </el-table-column>
-              <el-table-column label="类型" width="120">
-                <template #default="{ row }">
-                  <el-select v-model="row.type" size="small" placeholder="类型">
-                    <el-option
-                      v-for="pt in paramTypeList"
-                      :key="pt.type"
-                      :label="pt.title"
-                      :value="pt.type"
-                    />
-                  </el-select>
-                </template>
-              </el-table-column>
-              <el-table-column label="加密" width="70" align="left">
-                <template #default="{ row }">
-                  <el-checkbox v-model="row.secret" />
-                </template>
-              </el-table-column>
-              <el-table-column label="" width="50" align="left">
-                <template #default="{ row }">
-                  <el-button
-                    size="small"
-                    link
-                    type="danger"
-                    @click="deleteParam(row)"
-                    title="删除参数"
-                  >
-                    <i class="fa fa-minus"></i>
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </fieldset>
-
-        <!-- 日志和审核 -->
-        <fieldset id="section-audit" class="form-fieldset">
-          <legend class="form-legend">日志和审核</legend>
-
-          <!-- 审批与复核 -->
-          <div class="form-group">
-            <label class="control-label">操作审批</label>
-            <div class="form-control-wrapper op-combo">
-              <div class="checkbox checkbox-secondary">
-                <input
-                  type="checkbox"
-                  v-model="job.needApprove"
-                  id="je_needApprove"
-                  :disabled="job.needReview"
-                >
-                <label for="je_needApprove">
-                  需要审批
-                  <el-tooltip content="执行前需要审批人员批准" placement="top">
-                    <i class="fa fa-question-circle text-muted"></i>
-                  </el-tooltip>
-                </label>
-              </div>
-              <div class="checkbox checkbox-secondary">
-                <input
-                  type="checkbox"
-                  v-model="job.needReview"
-                  id="je_needReview"
-                  :disabled="job.needApprove"
-                >
-                <label for="je_needReview">
-                  双人复核
-                  <el-tooltip content="执行结果需要复核人员确认" placement="top">
-                    <i class="fa fa-question-circle text-muted"></i>
-                  </el-tooltip>
-                </label>
-              </div>
-            </div>
+              <i class="fa fa-fw fa-chevron-right"></i>
+              运行测试
+            </el-button>
           </div>
 
-          <!-- 操作日志 -->
-          <div v-if="job.type !== 'command'" class="form-group">
-            <label class="control-label">操作日志</label>
-            <div class="form-control-wrapper">
-              <div class="checkbox checkbox-secondary">
-                <input
-                  type="checkbox"
-                  v-model="jobConfig.audit.enabled"
-                  id="je_auditenabled"
-                >
-                <label for="je_auditenabled">
-                  记录操作日志
-                  <el-tooltip content="记录作业执行的详细日志" placement="top">
-                    <i class="fa fa-question-circle text-muted"></i>
-                  </el-tooltip>
-                </label>
-              </div>
-            </div>
-
-            <!-- 日志详细配置 -->
-            <div v-if="jobConfig.audit.enabled" class="op-form-subgroup d-flex mt-2">
-              <div class="form-control-wrapper op-combo">
-                <label class="control-label">
-                  模块
-                  <el-tooltip content="日志所属的功能模块" placement="top">
-                    <i class="fa fa-question-circle text-muted"></i>
-                  </el-tooltip>
-                </label>
-                <el-input
-                  v-model="jobConfig.audit.module"
-                  maxlength="50"
-                  style="width: 150px; margin-left: 8px;"
-                />
-                <label class="control-label" style="margin-left: 16px;">
-                  操作
-                  <el-tooltip content="具体的操作类型" placement="top">
-                    <i class="fa fa-question-circle text-muted"></i>
-                  </el-tooltip>
-                </label>
-                <el-input
-                  v-model="jobConfig.audit.action"
-                  maxlength="100"
-                  style="width: 150px; margin-left: 8px;"
-                />
-              </div>
-            </div>
+          <!-- 运行结果预览 -->
+          <div
+            v-if="testJobResult"
+            class="test-result-preview"
+            style="margin-top: 16px;"
+          >
+            <pre>{{ JSON.stringify(testJobResult, null, 2) }}</pre>
           </div>
-
-          <!-- 操作延时 -->
-          <div class="form-group">
-            <label class="control-label">操作延时</label>
-            <div class="form-control-wrapper op-combo">
-              <div class="checkbox checkbox-secondary">
-                <input
-                  type="checkbox"
-                  v-model="job.needDelayed"
-                  id="je_needDelayed"
-                >
-                <label for="je_needDelayed">
-                  延时执行
-                  <el-tooltip content="执行时可以设置延迟时间" placement="top">
-                    <i class="fa fa-question-circle text-muted"></i>
-                  </el-tooltip>
-                </label>
-              </div>
-            </div>
-          </div>
-        </fieldset>
-
-        <!-- 测试作业 -->
-        <fieldset id="section-test" class="form-fieldset">
-          <legend class="form-legend">测试作业</legend>
-
-          <div class="test-job-section">
-            <div class="d-flex align-items-center justify-content-between">
-              <!-- 运行状态 -->
-              <div v-if="testJobStatus" class="test-status">
-                <el-button
-                  :type="testJobStatus.type"
-                  :class="['status-btn', `status-${testJobStatus.name}`]"
-                  @click="viewTestResult"
-                >
-                  <i :class="['fa', 'fa-fw', testJobStatus.icon]"></i>
-                  <span>{{ testJobStatus.title }}</span>
-                </el-button>
-              </div>
-
-              <!-- 运行按钮 -->
-              <div class="ms-auto">
-                <el-button
-                  type="primary"
-                  :loading="testJobRunning"
-                  :disabled="testJobRunning || !canRunTest"
-                  @click="runTestJob"
-                >
-                  <i class="fa fa-fw fa-chevron-right"></i>
-                  运行测试
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 运行结果预览 -->
-            <div
-              v-if="testJobResult"
-              class="test-result-preview"
-            >
-              <pre>{{ JSON.stringify(testJobResult, null, 2) }}</pre>
-            </div>
-          </div>
-        </fieldset>
-        </form>
-      </el-scrollbar>
-    </div>
+        </el-form-item>
+      </div>
+    </el-form>
 
     <template #footer>
       <div class="dialog-footer">
@@ -628,7 +367,7 @@
           :loading="submitting"
           @click="save"
         >
-          保存并关闭
+          保存
         </el-button>
       </div>
     </template>
@@ -659,6 +398,7 @@ import FileSelectorDialog from './FileSelectorDialog.vue'
 import CommandSelectorDialog from './CommandSelectorDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
+import { Delete } from '@element-plus/icons-vue'
 
 // 过滤掉"全部类型"选项，只保留实际的作业类型
 const CREATE_JOB_TYPE_OPTIONS = JOB_TYPE_OPTIONS.filter(opt => opt.value !== '')
@@ -1429,267 +1169,104 @@ watch(() => props.jobType, (newVal) => {
 <style scoped lang="scss">
 .create-job-dialog {
   :deep(.el-dialog__body) {
-    padding: 0;
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
   }
 }
 
-// 对话框主体容器
-.dialog-body-wrapper {
-  display: flex;
-  height: 70vh;
-  overflow: hidden;
-}
-
-// 左侧导航
-.section-nav {
-  width: 140px;
-  min-width: 140px;
-  background-color: var(--el-fill-color-light);
-  border-right: 1px solid var(--el-border-color-lighter);
-  padding: 16px 0;
-
-  .nav-list {
-    list-style: none;
-    margin: 0;
-    padding: 0 12px;
+// 表单容器
+.job-form {
+  :deep(.el-form-item__label) {
+    font-weight: 500;
+    color: var(--el-text-color-primary);
   }
 
-  .nav-item {
-    padding: 10px 12px;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 14px;
-    color: var(--el-text-color-regular);
-    transition: all 0.2s;
-    margin-bottom: 4px;
-
-    &:hover {
-      background-color: var(--el-fill-color);
-      color: var(--el-color-primary);
-    }
-
-    &.is-active {
-      background-color: var(--el-color-primary-light-9);
-      color: var(--el-color-primary);
-      font-weight: 500;
-    }
+  :deep(.el-form-item__content) {
+    flex-wrap: wrap;
   }
 }
 
-// 右侧表单内容区
-.form-content {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.op-smartform {
-  .form-fieldset {
-    border: 1px solid var(--el-border-color-lighter);
-    border-radius: 4px;
-    padding: 16px 20px;
-    margin-bottom: 24px;
-    background-color: var(--el-fill-color-blank);
-
-    .form-legend {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--el-text-color-primary);
-      padding: 0 8px;
-      margin-bottom: 0;
-      width: auto;
-      border: none;
-    }
-  }
-
-  .form-group {
-    margin-bottom: 18px;
-
-    .control-label {
-      font-weight: 500;
-      color: var(--el-text-color-primary);
-      margin-bottom: 8px;
-      display: inline-block;
-    }
-
-    .required-mark {
-      color: var(--el-color-danger);
-    }
-  }
-
-  .op-align-horizontal {
-    display: flex;
-    align-items: flex-start;
-
-    .control-label {
-      flex-shrink: 0;
-      padding-top: 8px;
-    }
-
-    .form-control-wrapper {
-      flex: 1;
-    }
-  }
-}
-
-// 复选框组样式（模拟原Angular项目样式）
-.opx-check-group.btn-group {
-  display: inline-flex;
-
-  input[type="radio"] {
-    display: none;
-
-    &:checked + label {
-      background-color: var(--el-color-primary);
-      color: #fff;
-      border-color: var(--el-color-primary);
-    }
-  }
-
-  label {
-    padding: 6px 16px;
-    border: 1px solid var(--el-border-color);
-    background-color: #fff;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.2s;
-
-    &:first-of-type {
-      border-radius: 4px 0 0 4px;
-    }
-
-    &:last-of-type {
-      border-radius: 0 4px 4px 0;
-    }
-
-    &:not(:first-of-type) {
-      margin-left: -1px;
-    }
-
-    &:hover {
-      color: var(--el-color-primary);
-    }
-
-    i {
-      margin-right: 4px;
-    }
-  }
-}
-
-// 复选框样式
-.checkbox {
-  display: flex;
-  align-items: center;
-  margin-right: 20px;
-  margin-bottom: 8px;
-
-  input[type="checkbox"] {
-    margin-right: 8px;
-    width: 16px;
-    height: 16px;
-  }
-
-  label {
-    cursor: pointer;
-    user-select: none;
-  }
-}
-
-.op-combo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-// 任务卡片
-.task-card {
-  border: 1px solid var(--el-border-color-lighter);
+// 表单分组
+.form-section {
+  // margin-bottom: 32px;
+  // border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
-  margin-bottom: 16px;
-  background-color: #fafafa;
+  // padding: 20px;
+  background-color: var(--el-fill-color-blank);
 
-  .task-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 16px;
-    background-color: var(--el-fill-color-light);
-    border-bottom: 1px solid var(--el-border-color-lighter);
-
-    .task-title {
-      margin: 0;
-      font-size: 14px;
-    }
-
-    .task-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      background-color: var(--el-color-primary);
-      color: #fff;
-      border-radius: 50%;
-      font-size: 12px;
-    }
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+    margin-bottom: 20px;
+    // padding-bottom: 12px;
+    // border-bottom: 1px solid var(--el-border-color-lighter);
   }
 
-  .task-card-body {
-    padding: 16px;
+  .el-form-item {
+    margin-bottom: 18px;
   }
 }
 
-// 脚本列表
-.selected-scripts {
-  .scripts-table {
-    margin-top: 12px;
-    width: 100%;
-    border-collapse: collapse;
+// 帮助文本
+.help-text {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.5;
 
-    td {
-      padding: 8px 12px;
-      vertical-align: middle;
-      border: 1px solid var(--el-border-color-lighter);
+  code {
+    padding: 2px 6px;
+    background-color: var(--el-fill-color-light);
+    border-radius: 2px;
+    font-family: 'Consolas', 'Monaco', monospace;
+  }
+}
+
+// 任务列表
+.task-list {
+  width: 100%;
+
+  .task-item {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
     }
   }
+}
 
-  .script-path {
-    word-break: break-all;
+// 选中脚本
+.selected-scripts {
+  width: 100%;
+
+  .el-table {
+    margin-top: 8px;
   }
+}
 
-  .gfs-missing-file {
-    color: var(--el-color-danger);
+// 空状态
+.empty-state {
+  :deep(.el-empty) {
+    padding: 24px 0;
   }
 }
 
 // 命令列表
-.selected-commands {
-  .command-preview-list {
-    max-height: 200px;
-    overflow-y: auto;
-    margin-top: 12px;
-    background: #f8f9fa;
-    border-radius: 4px;
+.command-list {
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: var(--el-fill-color-light);
+  border-radius: 4px;
+  padding: 8px;
+  margin-top: 8px;
 
-    &::-webkit-scrollbar {
-      width: 5px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background-color: #f8f9fa;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      border-radius: 5px;
-      background-color: #e9ecef;
-    }
-  }
-
-  .command-preview-item {
+  .command-item {
     margin: 0;
     padding: 8px 12px;
-    border: none;
-    background: transparent;
+    background: #fff;
+    border-radius: 4px;
     line-height: 1.6;
     font-size: 13px;
     font-family: 'Consolas', 'Monaco', monospace;
@@ -1697,86 +1274,43 @@ watch(() => props.jobType, (newVal) => {
     word-break: break-all;
 
     &:not(:last-child) {
-      border-bottom: 1px solid #e9ecef;
+      margin-bottom: 8px;
     }
   }
 }
 
-// 空状态
-.op-blank-slate {
-  text-align: center;
-  padding: 24px;
-  border: 2px dashed var(--el-border-color);
+// 测试控件
+.test-controls {
+  :deep(.el-button) {
+    &[type="success"] {
+      box-shadow: 0 0 0 3px rgba(103, 194, 58, 0.2);
+    }
+
+    &[type="danger"] {
+      box-shadow: 0 0 0 3px rgba(245, 108, 108, 0.2);
+    }
+
+    &[type="warning"] {
+      box-shadow: 0 0 0 3px rgba(230, 162, 60, 0.2);
+    }
+  }
+}
+
+// 测试结果预览
+.test-result-preview {
+  padding: 12px;
+  background-color: #2d3748;
+  color: #e2e8f0;
   border-radius: 4px;
-}
+  max-height: 300px;
+  overflow: auto;
 
-// 帮助文本
-.help-block {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-
-  summary {
-    cursor: pointer;
-    color: var(--el-color-primary);
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
-  ul {
-    margin: 8px 0 0 20px;
-    padding: 0;
-  }
-}
-
-// 输入组
-.input-group {
-  display: inline-flex;
-  align-items: center;
-
-  &.w-sm {
-    width: auto;
-  }
-
-  .input-group-text {
-    padding: 0 12px;
-    background-color: var(--el-fill-color-light);
-    border: 1px solid var(--el-border-color);
-    border-left: none;
-    border-radius: 0 4px 4px 0;
-    height: 32px;
-    line-height: 32px;
-    font-size: 14px;
-  }
-
-  :deep(.el-input-number) {
-    .el-input__wrapper {
-      border-radius: 4px 0 0 4px;
-    }
-  }
-}
-
-// 子表单组
-.op-form-subgroup {
-  padding-left: 20px;
-  border-left: 3px solid var(--el-border-color-light);
-  margin-left: 20px;
-}
-
-// 参数表格
-.param-table {
-  :deep(.el-table__header) {
-    th {
-      background-color: var(--el-fill-color-light);
-      font-weight: 600;
-    }
-  }
-
-  :deep(.el-input),
-  :deep(.el-select) {
-    width: 100%;
+  pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
   }
 }
 
@@ -1787,84 +1321,9 @@ watch(() => props.jobType, (newVal) => {
   gap: 12px;
 }
 
-// 测试作业区域
-.test-job-section {
-  .test-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .test-status {
-    .status-btn {
-      border-radius: 50px;
-      padding: 8px 20px;
-      font-size: 14px;
-      min-width: 8rem;
-      transition: all 0.2s;
-
-      &.status-running {
-        animation: ani-glow-primary 2s infinite;
-      }
-
-      &.status-success {
-        box-shadow: 0 0 0 3px rgba(103, 194, 58, 0.2);
-      }
-
-      &.status-error {
-        box-shadow: 0 0 0 3px rgba(245, 108, 108, 0.2);
-      }
-
-      &.status-timeout {
-        box-shadow: 0 0 0 3px rgba(230, 162, 60, 0.2);
-      }
-    }
-  }
-
-  .test-result-preview {
-    margin-top: 16px;
-    padding: 12px;
-    background-color: #2d3748;
-    color: #e2e8f0;
-    border-radius: 4px;
-    max-height: 20rem;
-    overflow: auto;
-
-    pre {
-      margin: 0;
-      white-space: pre-wrap;
-      word-break: break-all;
-      font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 13px;
-    }
-  }
-
-  .test-hint {
-    color: var(--el-text-color-secondary);
-    font-size: 12px;
-  }
-}
-
-@keyframes ani-glow-primary {
-  0% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(64, 158, 255, 0.3);
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
 // 工具类
 .d-flex {
   display: flex;
-}
-
-.d-inline-block {
-  display: inline-block;
 }
 
 .align-items-center {
@@ -1875,16 +1334,12 @@ watch(() => props.jobType, (newVal) => {
   justify-content: space-between;
 }
 
-.justify-content-start {
-  justify-content: flex-start;
-}
-
 .mt-2 {
   margin-top: 8px;
 }
 
-.mt-3 {
-  margin-top: 12px;
+.mb-2 {
+  margin-bottom: 8px;
 }
 
 .ms-auto {
@@ -1897,37 +1352,5 @@ watch(() => props.jobType, (newVal) => {
 
 .w-full {
   width: 100%;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.text-muted {
-  color: var(--el-text-color-secondary);
-}
-
-.font-weight-bold {
-  font-weight: 600;
-}
-
-.bg-light {
-  background-color: var(--el-fill-color-light);
-}
-
-.p-3 {
-  padding: 12px;
-}
-
-.mb-3 {
-  margin-bottom: 12px;
-}
-
-.flex-nowrap {
-  flex-wrap: nowrap;
-}
-
-.text-warning {
-  color: var(--el-color-warning);
 }
 </style>

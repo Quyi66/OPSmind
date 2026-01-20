@@ -43,7 +43,7 @@
                 v-for="(host, index) in selectedHostsByCiType"
                 :key="index"
                 closable
-                type="info"
+                type="primary"
                 size="large"
                 @close="removeHost(host, index)"
               >

@@ -88,14 +88,25 @@
                       @click="toggleGroup(group._id)"
                     >
                       <i :class="expandedGroups.includes(group._id) ? 'fa fa-chevron-down' : 'fa fa-chevron-right'" />
-                      <span class="group-title">{{ group.title }}</span>
+                      <span v-if="editingGroupIndex !== groupIndex" class="group-title">{{ group.title }}</span>
                       <el-input
-                        v-model="group.title"
+                        v-if="editingGroupIndex === groupIndex"
+                        v-model="editingGroupTitle"
                         size="small"
-                        class="group-title-input"
+                        class="group-title-input editing"
                         @click.stop
-                        @change="updateGroupTitle(groupIndex, group.title)"
+                        @blur="finishEditGroupTitle"
+                        @keyup.enter="finishEditGroupTitle"
                       />
+                      <el-button
+                        v-if="editingGroupIndex !== groupIndex"
+                        link
+                        size="small"
+                        class="group-edit"
+                        @click.stop="startEditGroupTitle(groupIndex, group.title)"
+                      >
+                        <i class="fa fa-edit"></i>
+                      </el-button>
                       <el-button
                         link
                         size="small"
@@ -532,6 +543,10 @@ const selectedGroupIndex = ref(-1)
 const selectedAttrIndex = ref(-1)
 const settingPanels = ref(['basic', 'input', 'display'])
 
+// 分组标题编辑状态
+const editingGroupIndex = ref(-1)
+const editingGroupTitle = ref('')
+
 // 属性输入设置
 const inputControl = ref('input')
 const inputDatatype = ref('')
@@ -605,6 +620,21 @@ const updateGroupTitle = (groupIndex, newTitle) => {
   }
   if (formData.value.attrs[flatIndex]) {
     formData.value.attrs[flatIndex].title = newTitle
+  }
+}
+
+// 开始编辑分组标题
+const startEditGroupTitle = (groupIndex, currentTitle) => {
+  editingGroupIndex.value = groupIndex
+  editingGroupTitle.value = currentTitle
+}
+
+// 完成编辑分组标题
+const finishEditGroupTitle = () => {
+  if (editingGroupIndex.value !== -1) {
+    updateGroupTitle(editingGroupIndex.value, editingGroupTitle.value)
+    editingGroupIndex.value = -1
+    editingGroupTitle.value = ''
   }
 }
 
@@ -1186,17 +1216,23 @@ onMounted(() => {
   }
 
   .group-title-input {
-    display: none;
     width: 200px;
+    margin-left: 8px;
+
+    &.editing {
+      display: block;
+    }
+  }
+
+  .group-edit {
+    opacity: 0;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
     margin-left: 8px;
   }
 
-  &:hover .group-title {
-    display: none;
-  }
-
-  &:hover .group-title-input {
-    display: block;
+  &:hover .group-edit {
+    opacity: 1;
   }
 
   .group-delete {

@@ -30,6 +30,7 @@
     <!-- 文件列表 -->
     <div class="file-list-container" v-loading="loading">
       <el-table
+        ref="tableRef"
         :data="fileList"
         :height="400"
         @row-click="handleRowClick"
@@ -149,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -190,6 +191,7 @@ const currentDir = ref('')
 const fileList = ref([])
 const selectedFiles = ref([])
 const selectedFile = ref('')
+const tableRef = ref(null)
 
 // 文件预览相关
 const previewVisible = ref(false)
@@ -246,11 +248,35 @@ async function loadFiles() {
     }
 
     fileList.value = files
+
+    // 恢复之前的选中状态
+    await nextTick()
+    restoreSelection()
   } catch (error) {
     ElMessage.error('加载文件列表失败: ' + (error.message || '未知错误'))
   } finally {
     loading.value = false
   }
+}
+
+/**
+ * 恢复选中状态
+ */
+function restoreSelection() {
+  if (!tableRef.value || !props.multipleSelect) return
+
+  // 清除当前选中
+  tableRef.value.clearSelection()
+
+  // 根据selectedFiles恢复选中状态
+  nextTick(() => {
+    selectedFiles.value.forEach(selectedFile => {
+      const row = fileList.value.find(f => f.path === selectedFile.path)
+      if (row && !row.directory && !row._excluded) {
+        tableRef.value.toggleRowSelection(row, true)
+      }
+    })
+  })
 }
 
 /**

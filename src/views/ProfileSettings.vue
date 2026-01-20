@@ -146,7 +146,7 @@
                     <el-button type="primary" @click="handleChangePassword" :loading="changingPassword">
                       保存
                     </el-button>
-                    <el-button @click="resetPasswordForm">
+                    <el-button @click="handleReset">
                       关闭
                     </el-button>
                   </el-form-item>

@@ -95,9 +95,12 @@
           <el-table-column type="selection" width="48" />
           <el-table-column prop="title" label="作业" min-width="160" show-overflow-tooltip>
             <template #default="{ row }">
-              <span class="job-title__text" style="color: #0077EE; cursor: pointer;" @click="handleEditJob(row)">
+              <!-- <span class="job-title__text" style="color: #0077EE; cursor: pointer;" @click="handleEditJob(row)">
                 {{ translateText(row.title) || '-' }}
-              </span>
+              </span> -->
+              <el-button text type="primary" @click="handleEditJob(row)">
+                {{ translateText(row.title) || '-' }}
+              </el-button>
             </template>
           </el-table-column>
           <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip>
