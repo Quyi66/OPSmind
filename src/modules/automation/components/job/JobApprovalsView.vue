@@ -22,12 +22,12 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSearch">
+          <!-- <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon>
               <Search />
             </el-icon>
             搜索
-          </el-button>
+          </el-button> -->
           <el-button @click="handleReset">
             <el-icon>
               <RefreshRight />
@@ -51,23 +51,21 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="paginatedData" stripe>
-        <el-table-column label="作业" min-width="250">
+        <el-table-column label="作业" min-width="150">
           <template #default="{ row }">
-            <div class="job-cell">
-              <a class="job-name" @click="handleViewDetail(row)">
-                {{ row.jobName }}
-              </a>
-              <div class="job-meta">
-                <span class="job-type">
-                  <i :class="getJobTypeIcon(row.jobType)" />
-                  {{ getJobTypeLabel(row.jobType) }}
-                </span>
-                <el-tag size="small" type="info">{{ row.jobId }}</el-tag>
-              </div>
-              <div v-if="row.description" class="job-description">
-                {{ row.description }}
-              </div>
-            </div>
+            <el-button type="primary" text @click="handleViewDetail(row)">{{ row.jobName }}</el-button>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="作业类型" width="100">
+          <template #default="{ row }">
+            {{ getJobTypeLabel(row.jobType) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="申请说明" min-width="200">
+          <template #default="{ row }">
+            <span>{{ row.description || '-' }}</span>
           </template>
         </el-table-column>
 
@@ -89,7 +87,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="申请时间" width="170">
+        <el-table-column label="申请时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.applyTime) }}
           </template>
@@ -103,7 +101,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="过期时间" width="170">
+        <el-table-column label="过期时间" width="180">
           <template #default="{ row }">
             {{ formatExpirationTime(row.expirationTime) }}
           </template>
@@ -134,6 +132,13 @@
         :total="filteredData.length" layout="total, sizes, prev, pager, next, jumper" background
         @size-change="handlePageSizeChange" @current-change="handlePageChange" />
     </div>
+
+    <!-- 审批详情弹窗 -->
+    <JobApprovalDetailDialog
+      v-if="detailDialogVisible"
+      v-model:visible="detailDialogVisible"
+      :approve-data="currentApprovalData"
+    />
   </div>
 </template>
 
@@ -142,6 +147,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
+import JobApprovalDetailDialog from './JobApprovalDetailDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -151,6 +157,8 @@ const filters = reactive({
 })
 const currentPage = ref(1)
 const pageSize = ref(10)
+const detailDialogVisible = ref(false)
+const currentApprovalData = ref(null)
 
 const filteredData = computed(() => {
   let data = tableData.value
@@ -271,7 +279,8 @@ function formatExpirationTime(value) {
 }
 
 function handleViewDetail(row) {
-  ElMessage.info('查看详情功能开发中')
+  currentApprovalData.value = { ...row }
+  detailDialogVisible.value = true
 }
 
 async function handlePass(row) {
@@ -323,14 +332,19 @@ async function handleRefuse(row) {
 
 async function handleDiscard(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定要作废作业 "${row.jobName}" 的审批吗？`,
+    const { value: reason } = await ElMessageBox.prompt(
+      '确定要作废该审批吗？可选填写作废原因',
       '作废审批',
-      { type: 'warning' }
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputType: 'textarea',
+        inputPlaceholder: '请输入作废原因（可选）'
+      }
     )
 
     loading.value = true
-    await jaoApi.discardApprove(row.id)
+    await jaoApi.discardApprove(row.id, reason || null)
     ElMessage.success('审批已作废')
     await fetchData()
   } catch (error) {

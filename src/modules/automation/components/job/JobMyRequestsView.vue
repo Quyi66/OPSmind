@@ -22,12 +22,12 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSearch">
+          <!-- <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon>
               <Search />
             </el-icon>
             搜索
-          </el-button>
+          </el-button> -->
           <el-button @click="handleReset">
             <el-icon>
               <RefreshRight />
@@ -40,9 +40,6 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="danger" size="small" :disabled="!selectedIds.length" @click="handleBatchDelete">
-        <i class="fa fa-trash" /> 删除
-      </el-button>
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="fetchData" title="刷新">
         <el-icon v-show="!loading">
@@ -53,23 +50,24 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="paginatedData" stripe @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" />
-
-        <el-table-column label="作业" min-width="250">
+      <el-table v-loading="loading" :data="paginatedData" stripe>
+        <el-table-column label="作业" min-width="150">
           <template #default="{ row }">
-            <div class="job-cell">
-              <a class="job-name" @click="handleViewDetail(row)">
-                {{ row.jobName }}
-              </a>
-              <div class="job-meta">
-                <span class="job-type">
-                  <i :class="getJobTypeIcon(row.jobType)" />
-                  {{ getJobTypeLabel(row.jobType) }}
-                </span>
-                <el-tag size="small" type="info">{{ row.jobId }}</el-tag>
-              </div>
-            </div>
+            <el-button text type="primary" @click="handleViewDetail(row)">
+              {{ row.jobName }}
+            </el-button>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="作业类型" width="150">
+          <template #default="{ row }">
+            {{ getJobTypeLabel(row.jobType) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="作业ID" width="150">
+          <template #default="{ row }">
+            {{ row.jobId }}
           </template>
         </el-table-column>
 
@@ -127,6 +125,14 @@
         :total="filteredData.length" layout="total, sizes, prev, pager, next, jumper" background
         @size-change="handlePageSizeChange" @current-change="handlePageChange" />
     </div>
+
+    <!-- 申请详情弹窗 -->
+    <JobApproveDetailDialog
+      v-if="detailDialogVisible"
+      v-model:visible="detailDialogVisible"
+      :approve-data="currentApprove"
+      @success="handleDetailSuccess"
+    />
   </div>
 </template>
 
@@ -135,16 +141,20 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
+import JobApproveDetailDialog from './JobApproveDetailDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])
-const selectedIds = ref([])
 const filters = reactive({
   keyword: '',
   status: ''  // 空字符串表示"全部状态"
 })
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+// 详情弹窗相关
+const detailDialogVisible = ref(false)
+const currentApprove = ref({})
 
 const filteredData = computed(() => {
   let data = tableData.value
@@ -208,10 +218,6 @@ async function fetchData() {
   }
 }
 
-function handleSelectionChange(selection) {
-  selectedIds.value = selection.map(item => item.id)
-}
-
 function handleSearch() {
   currentPage.value = 1
 }
@@ -269,7 +275,13 @@ function formatExpirationTime(value) {
 }
 
 function handleViewDetail(row) {
-  ElMessage.info('查看详情功能开发中')
+  currentApprove.value = { ...row }
+  detailDialogVisible.value = true
+}
+
+function handleDetailSuccess() {
+  detailDialogVisible.value = false
+  fetchData()
 }
 
 async function handleCancel(row) {
@@ -279,7 +291,7 @@ async function handleCancel(row) {
     })
 
     loading.value = true
-    await jaoApi.cancelApprove(row.id)
+    await jaoApi.cancelApprove(row.id, null)
     ElMessage.success('操作成功')
     await fetchData()
   } catch (error) {
@@ -290,100 +302,8 @@ async function handleCancel(row) {
     loading.value = false
   }
 }
-
-async function handleBatchDelete() {
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedIds.value.length} 条申请吗？`,
-      '批量删除',
-      { type: 'warning' }
-    )
-
-    loading.value = true
-    await jaoApi.deleteApprove(selectedIds.value.join(','))
-    ElMessage.success('删除成功')
-    selectedIds.value = []
-    await fetchData()
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error(error?.message || '删除失败')
-    }
-  } finally {
-    loading.value = false
-  }
-}
 </script>
 
 <style scoped lang="scss">
 @use '@/styles/common.scss' as *;
-
-.my-requests-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.table-container {
-  flex: 1;
-  padding: 24px;
-  overflow: auto;
-}
-
-.job-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.job-name {
-  font-weight: 500;
-  color: #3b82f6;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.job-name:hover {
-  text-decoration: underline;
-}
-
-.job-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-
-.job-type {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #64748b;
-}
-
-.job-type i {
-  font-size: 13px;
-}
 </style>

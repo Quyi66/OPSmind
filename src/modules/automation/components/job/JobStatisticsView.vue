@@ -45,11 +45,9 @@
             stripe
             height="100%"
           >
-            <el-table-column label="作业标题" min-width="240" fixed>
+            <el-table-column label="作业标题" min-width="240" show-overflow-tooltip fixed>
               <template #default="{ row }">
-                <div class="job-title-cell">
-                  {{ translateText(row.job_title) || '-' }}
-                </div>
+                {{ translateText(row.job_title) || '-' }}
               </template>
             </el-table-column>
 
@@ -103,7 +101,7 @@
             >
               <el-table-column prop="job_title" label="作业" min-width="240" show-overflow-tooltip>
                 <template #default="{ row }">
-                  <span class="summary-job-title">{{ translateText(row.job_title) || '-' }}</span>
+                  <span>{{ translateText(row.job_title) || '-' }}</span>
                 </template>
               </el-table-column>
               <el-table-column
@@ -116,7 +114,7 @@
                 :default-sort="{ prop: 'run_count', order: 'descending' }"
               >
                 <template #default="{ row }">
-                  <span class="summary-count">{{ row.run_count }}</span>
+                  <span>{{ row.run_count }}</span>
                 </template>
               </el-table-column>
             </el-table>
@@ -389,14 +387,6 @@ const filteredSummary = computed(() => {
   padding: 0 8px;
 }
 
-.job-title-cell {
-  font-weight: 500;
-  color: #1e293b;
-  word-break: break-all;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
 .count-cell {
   padding: 6px;
   border-radius: 3px;
@@ -463,16 +453,8 @@ const filteredSummary = computed(() => {
   overflow: hidden;
 }
 
-.summary-table {
-  font-size: 13px;
-}
-
 .summary-table :deep(.el-table__header) {
   font-weight: 600;
-}
-
-.summary-table :deep(.el-table__body) {
-  font-size: 13px;
 }
 
 .summary-table :deep(.el-table td),
@@ -482,16 +464,5 @@ const filteredSummary = computed(() => {
 
 .summary-table :deep(.el-table__row:hover) {
   background-color: #f5f7fa;
-}
-
-.summary-job-title {
-  color: #1e293b;
-  line-height: 1.5;
-}
-
-.summary-count {
-  font-weight: 600;
-  color: #1e40af;
-  font-size: 14px;
 }
 </style>

@@ -38,13 +38,35 @@ export function fetchMyApproveList() {
 }
 
 /** 取消申请 */
-export function cancelApprove(approveId) {
-  return useApi().post('/jao/api/jao/approve/cancel', { approveId })
+export function cancelApprove(approveId, remark = null) {
+  return useApi().put('/jao/api/jao/jobs/approve/cancel', {
+    approveId,
+    remark
+  }, {
+    params: { cacheBuster: Date.now() }
+  })
 }
 
 /** 删除申请 */
 export function deleteApprove(ids) {
   return useApi().delete('/jao/api/jao/approve/delete-batch', { params: { ids } })
+}
+
+/** 提交审批申请 */
+export function submitApprove(data) {
+  return useApi().post('/jao/api/jao/jobs/approve/submit', data, {
+    params: { cacheBuster: Date.now() }
+  })
+}
+
+/** 获取作业脚本路径 */
+export function getScriptPath(jobId) {
+  return useApi().get(`/jao/api/jao/jobs/approve/get-script-path/${jobId}`)
+}
+
+/** 检查作业是否需要审批 */
+export function checkNeedApprove(jobId) {
+  return useApi().get(`/jao/api/jao/jobs/approve/check/${jobId}`)
 }
 
 /** 获取审批列表 */
@@ -54,17 +76,23 @@ export function fetchApproveList() {
 
 /** 通过审批 */
 export function passApprove(approveId, remark) {
-  return useApi().post('/jao/api/jao/approve/approve', { approveId, remark })
+  return useApi().put('/jao/api/jao/jobs/approve', { approveId, remark }, {
+    params: { cacheBuster: Date.now() }
+  })
 }
 
 /** 拒绝审批 */
 export function refuseApprove(approveId, remark) {
-  return useApi().post('/jao/api/jao/approve/refuse', { approveId, remark })
+  return useApi().put('/jao/api/jao/jobs/approve/refuse', { approveId, remark }, {
+    params: { cacheBuster: Date.now() }
+  })
 }
 
 /** 作废审批 */
-export function discardApprove(approveId) {
-  return useApi().post('/jao/api/jao/approve/discard', { approveId })
+export function discardApprove(approveId, remark = null) {
+  return useApi().put('/jao/api/jao/jobs/approve/discard', { approveId, remark }, {
+    params: { cacheBuster: Date.now() }
+  })
 }
 
 // ==================== 作业执行相关 API ====================
@@ -84,6 +112,15 @@ export const getExecuteResult = (runId) => {
 /** 查询作业运行记录 */
 export const fetchJobRunLogs = (payload) => {
   return useApi().post('/dts/api/dts/q/data/JAO_LIST_RUN_LOGS/', payload, {
+    params: { cacheBuster: Date.now() }
+  });
+}
+
+/** 重新启动作业 */
+export const rerunJob = (jobId, runId) => {
+  return useApi().post(`/jao/api/jao/jobs/OKPacN/run`, {
+    params: { runId }
+  }, {
     params: { cacheBuster: Date.now() }
   });
 }

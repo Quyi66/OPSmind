@@ -14,6 +14,7 @@ import { initPerformanceOptimizations } from '@/utils/performance-optimizer'
 import { appUrlManager } from '@/config/module-urls.config'
 import { authService } from '@/core/auth'
 import angularJSBridge from '@/services/angularjs-bridge'
+import ElementPlus from 'element-plus'
 
 // 导入全局样式
 import '@/styles/main.scss'
@@ -156,6 +157,12 @@ if (import.meta.env.DEV) {
 // 设置全局组件和指令
 setupGlobalComponents(app)
 setupGlobalDirectives(app)
+
+// 使用element-plus 并且设置全局的大小
+app.use(ElementPlus)
+
+// 修改 el-dialog 默认点击遮照为不关闭
+app._context.components.ElDialog.props.closeOnClickModal.default = false
 
 // 挂载应用
 app.mount('#app')

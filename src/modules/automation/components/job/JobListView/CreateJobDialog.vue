@@ -12,6 +12,7 @@
       ref="formRef"
       :model="job"
       label-width="100px"
+      :disabled="formDisabled"
       class="job-form"
     >
       <!-- 基本设置 -->
@@ -319,7 +320,7 @@
       </div>
 
       <!-- 测试作业 -->
-      <div class="form-section">
+      <div v-if="!viewMode" class="form-section">
         <div class="section-title">测试作业</div>
 
         <el-form-item>
@@ -360,7 +361,10 @@
     </el-form>
 
     <template #footer>
-      <div class="dialog-footer">
+      <div v-if="viewMode" class="dialog-footer">
+        <el-button @click="handleClose">关闭</el-button>
+      </div>
+      <div v-else class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
         <el-button
           type="primary"
@@ -424,6 +428,11 @@ const props = defineProps({
   jobId: {
     type: String,
     default: ''
+  },
+  // 查看模式（只读，不可编辑）
+  viewMode: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -442,6 +451,9 @@ const loading = ref(false)
 
 const dialogTitle = computed(() => {
   const typeOption = CREATE_JOB_TYPE_OPTIONS.find((opt) => opt.value === job.type)
+  if (props.viewMode) {
+    return typeOption ? `查看${typeOption.label}` : '查看作业'
+  }
   if (isEditMode.value) {
     return typeOption ? `编辑${typeOption.label}` : '编辑作业'
   }
@@ -493,10 +505,15 @@ const navSections = computed(() => {
   }
 
   sections.push({ id: 'section-audit', label: '日志和审核' })
-  sections.push({ id: 'section-test', label: '测试作业' })
+  if (!props.viewMode) {
+    sections.push({ id: 'section-test', label: '测试作业' })
+  }
 
   return sections
 })
+
+// 表单是否禁用（查看模式下禁用所有表单元素）
+const formDisabled = computed(() => props.viewMode)
 
 // 是否可以运行测试
 const canRunTest = computed(() => {

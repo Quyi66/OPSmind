@@ -163,6 +163,15 @@
       :job-id="historyJobMeta?.id || ''" :job-title="historyJobMeta?.title || ''" />
     <CreateJobDialog v-if="jobDialogVisible" v-model="jobDialogVisible" :job-type="createJobType" :job-id="editJobId"
       :applet-code="currentApp.name" :applets-list="appOptions" @success="handleCreateSuccess" />
+    <JobApproveDialog
+      v-if="approveDialogVisible"
+      v-model:visible="approveDialogVisible"
+      :job-id="approveJobMeta?.id || ''"
+      :job-title="approveJobMeta?.title || ''"
+      :applet-code="approveJobMeta?.appletCode || ''"
+      :params="approveJobMeta?.params || {}"
+      @success="handleApproveSuccess"
+    />
   </div>
 </template>
 
@@ -178,6 +187,7 @@ import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteJobDialog from './ExecuteJobDialog.vue'
 import ExecuteHistoryDialog from './ExecuteHistoryDialog.vue'
 import CreateJobDialog from './CreateJobDialog.vue'
+import JobApproveDialog from './JobApproveDialog.vue'
 
 const store = useAutomationJobStore()
 const { error, filteredJobs, jobs } = storeToRefs(store)
@@ -208,6 +218,10 @@ const historyJobMeta = ref(null)
 const createDialogVisible = ref(false)
 const createJobType = ref('')
 const editJobId = ref('')
+
+// 审批弹窗相关
+const approveDialogVisible = ref(false)
+const approveJobMeta = ref(null)
 
 // 统一的弹窗可见性（新建或编辑都使用同一个弹窗）
 const jobDialogVisible = ref(false)
@@ -308,17 +322,48 @@ function handleDeleteJobs() {
 
 
 /** 执行作业 */
-function handleViewJob(row) {
+async function handleViewJob(row) {
   if (!row?.id) {
     ElMessage.warning('无法获取作业信息')
     return
   }
-  executeJobMeta.value = {
-    id: row.id,
-    type: row.type ?? '',
-    configJson: row.configJson ?? ''
+
+  try {
+    // 检查是否需要审批
+    const needApprove = row?.needApprove || false
+    if (needApprove) {
+      const checkResult = await jaoApi.checkNeedApprove(row.id)
+      if (checkResult?.data?.isApproving) {
+        ElMessage.info('该作业审批申请已提交，请等待审批')
+        return
+      }
+    }
+    const isApproving = row?.isApproving || false
+
+    if (needApprove && !isApproving) {
+      // 需要审批，打开审批申请弹窗
+      approveJobMeta.value = {
+        id: row.id,
+        title: row.title || '',
+        appletCode: row.appletCode || '',
+        params: {} // 默认无参数，如需要可从 row 中获取
+      }
+      approveDialogVisible.value = true
+    } else if (isApproving) {
+      // 审批中，提示用户
+      ElMessage.info('该作业审批申请已提交，请等待审批')
+    } else {
+      // 不需要审批，直接执行
+      executeJobMeta.value = {
+        id: row.id,
+        type: row.type ?? '',
+        configJson: row.configJson ?? ''
+      }
+      executeDialogVisible.value = true
+    }
+  } catch (error) {
+    ElMessage.error(error?.message || '检查审批状态失败')
   }
-  executeDialogVisible.value = true
 }
 
 watch(executeDialogVisible, (visible) => {
@@ -534,6 +579,14 @@ function handleEditJob(row) {
 function handleCreateSuccess() {
   jobDialogVisible.value = false
   getAppTableList(currentApp.value.name)
+}
+
+/**
+ * 审批申请成功后的回调
+ */
+function handleApproveSuccess() {
+  approveDialogVisible.value = false
+  ElMessage.success('审批申请已提交，请等待审批')
 }
 
 function reloadJobs() {

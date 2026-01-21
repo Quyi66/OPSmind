@@ -363,7 +363,16 @@ async function handleRerun(row) {
       { type: 'warning' }
     )
 
-    ElMessage.info('重新启动作业功能开发中')
+    loading.value = true
+    try {
+      await jaoApi.rerunJob(row.job_id, row.id)
+      ElMessage.success('作业已重新启动')
+      fetchData()
+    } catch (error) {
+      ElMessage.error(error?.message || '重新启动作业失败')
+    } finally {
+      loading.value = false
+    }
   } catch (error) {
     // 用户取消
   }
