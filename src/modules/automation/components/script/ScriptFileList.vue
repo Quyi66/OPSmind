@@ -362,8 +362,8 @@
 
     <FileContentDialog
       v-model="contentDialogVisible"
-      :repo-type="repoType"
-      :repo="currentRepo"
+      :repo-type="contentRepoType"
+      :repo="contentRepo || currentRepo"
       :file="currentFile"
     />
 
@@ -396,7 +396,7 @@
       :repo="currentRepo"
       :mode="historyFile ? 'singleFile' : 'all'"
       :file="historyFile"
-      @go-file="goToFile"
+      @open-file="handleHistoryFileOpen"
       @closed="historyFile = null"
     />
 
@@ -461,6 +461,8 @@ const searchText = ref('')
 const clipboard = ref([])
 const clipboardDir = ref('')
 const hideOplus = ref(true) // 是否隐藏内置应用脚本目录(oplus)
+const contentRepo = ref('') // 用于文件内容弹窗的 repo（审批历史可返回真实 repo）
+const contentRepoType = ref(props.repoType) // 用于文件内容弹窗的仓库类型（审批历史需要强制用 git）
 
 // 弹窗状态
 const scriptDialogVisible = ref(false)
@@ -620,23 +622,19 @@ function goDir(dir) {
   loadFiles()
 }
 
-// 跳转到文件（从审批历史跳转到脚本库）
-function goToFile(filePath) {
-  if (!filePath) return
-  // 提取目录部分
-  const lastSlash = filePath.lastIndexOf('/')
-  const dir = lastSlash > 0 ? filePath.substring(0, lastSlash) : ''
+// 审批历史中点击文件路径，直接打开文件内容弹窗
+function handleHistoryFileOpen(payload) {
+  const path = typeof payload === 'string' ? payload : payload?.path
+  if (!path) return
 
-  // 关闭弹窗
-  approvalHistoryDialogVisible.value = false
-
-  // 如果是 stage 类型，需要跳转到脚本库
-  if (props.repoType === 'stage') {
-    emit('navigate-to-script-library', dir)
-  } else {
-    currentDir.value = dir
-    loadFiles()
+  const repoFromPayload = typeof payload === 'object' ? payload.repo : ''
+  contentRepoType.value = 'git'
+  contentRepo.value = repoFromPayload || currentRepo.value
+  currentFile.value = {
+    path,
+    name: path.split('/').pop()
   }
+  contentDialogVisible.value = true
 }
 
 // 进入内置应用脚本目录
@@ -651,6 +649,8 @@ function handleFileClick(file) {
   if (file.directory) {
     goDir(file.path)
   } else if (file.conflict !== 'FileNotFound') {
+    contentRepoType.value = props.repoType
+    contentRepo.value = currentRepo.value
     currentFile.value = file
     contentDialogVisible.value = true
   }
@@ -828,7 +828,7 @@ function handleSearch() {
 // 工具函数
 function getFileIcon(file) {
   if (file._isParentDir) return 'fa fa-level-up fa-fw text-muted'
-  if (file.directory) return 'fa fa-folder fa-fw text-warning'
+  if (file.directory) return 'fa fa-folder fa-fw folder-icon'
 
   const ext = file.name.split('.').pop()?.toLowerCase()
   const iconMap = {
@@ -843,7 +843,7 @@ function getFileIcon(file) {
     zip: 'fa fa-file-archive fa-fw text-warning',
     tar: 'fa fa-file-archive fa-fw text-warning'
   }
-  return iconMap[ext] || 'fa fa-file fa-fw text-muted'
+  return iconMap[ext] || 'fa fa-file-code fa-fw text-muted'
 }
 
 function formatFileSize(file) {
@@ -1082,6 +1082,11 @@ defineExpose({
   width: 20px;
   text-align: center;
   flex-shrink: 0;
+}
+
+/* 文件夹图标特殊颜色 */
+.folder-icon {
+  color: #f59e0b !important; /* 黄色，与GfsFileSelector一致 */
 }
 
 .file-name {

@@ -1,198 +1,189 @@
 <template>
-  <div class="command-job-list">
-    <!-- 标题栏 -->
-    <!-- <div class="job-list__header">
-    </div> -->
-
-    <!-- 主体区域 -->
-    <div class="job-list__body">
-      <!-- 侧边栏 -->
-      <aside class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 280px">
-        <div class="ops-sidebar-header">
+  <div class="ops-page-layout">
+    <!-- 筛选区 -->
+    <div class="ops-filter-bar">
+      <el-form inline size="small">
+        <el-form-item label="关键词">
           <el-input
             v-model="searchKeyword"
             placeholder="搜索"
-            style="width: 140px"
             clearable
-            maxlength="50"
-          />
-          <el-dropdown trigger="click" @command="handleSortChange">
-            <el-button class="sort-btn">
-              <i class="fas fa-line-height"></i>
-            </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="title">
-                  名称
-                  <i v-if="sortField === 'title'" :class="sortOrder === 'asc' ? 'fas fa-sort-alpha-up' : 'fas fa-sort-alpha-down-alt'" style="float: right; padding-top: 4px;"></i>
-                </el-dropdown-item>
-                <el-dropdown-item command="updatedAt">
-                  修改时间
-                  <i v-if="sortField === 'updatedAt'" :class="sortOrder === 'asc' ? 'fas fa-sort-alpha-up' : 'fas fa-sort-alpha-down-alt'" style="float: right; padding-top: 4px;"></i>
-                </el-dropdown-item>
-              </el-dropdown-menu>
+            style="width: 200px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
             </template>
-          </el-dropdown>
-          <el-button class="add-btn" @click="handleCreateJob" title="创建作业">
-            <i class="fas fa-plus"></i>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button @click="handleReset">
+            <el-icon><Refresh /></el-icon>
+            重置
           </el-button>
-        </div>
-
-        <div class="ops-sidebar-content">
-          <div v-if="loading" class="loading-state">
-            <i class="fas fa-spinner fa-spin"></i>
-          </div>
-          <div v-else class="job-list">
-            <button
-              v-for="job in filteredJobs"
-              :key="job.id"
-              class="ops-sidebar-item job-item"
-              :class="{ 'is-active': activeJobId === job.id }"
-              @click="selectJob(job)"
-              :title="job.title"
-            >
-              <div class="job-item-content">
-                <span class="job-title">{{ job.title }}</span>
-                <span class="job-meta">{{ formatDate(job.updatedAt || job.createdAt) }}</span>
-              </div>
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      <!-- 作业详情区域 -->
-      <main class="job-detail">
-        <div v-if="!selectedJob" class="blank-state">
-          <div class="blank-icon">
-            <i class="fas fa-inbox"></i>
-          </div>
-        </div>
-
-        <template v-else>
-          <div class="detail-body">
-            <el-form
-              ref="formRef"
-              :model="jobForm"
-              :rules="formRules"
-              :disabled="!isEditMode"
-              label-width="100px"
-              class="job-form"
-            >
-              <fieldset>
-                <legend>作业设置</legend>
-
-                <el-form-item label="作业标题" prop="title">
-                  <el-input v-model="jobForm.title" placeholder="请输入作业标题" maxlength="100" />
-                </el-form-item>
-
-                <el-form-item label="描述">
-                  <el-input
-                    v-model="jobForm.description"
-                    type="textarea"
-                    :rows="3"
-                    placeholder="请输入作业描述"
-                  />
-                </el-form-item>
-              </fieldset>
-
-              <fieldset>
-                <legend>命令配置</legend>
-
-                <el-form-item label="命令列表">
-                  <div class="command-selector">
-                    <el-select
-                      v-if="isEditMode"
-                      v-model="selectedCommandIds"
-                      multiple
-                      filterable
-                      placeholder="选择要执行的命令"
-                      style="width: 100%"
-                    >
-                      <el-option
-                        v-for="cmd in availableCommands"
-                        :key="cmd.id"
-                        :label="cmd.name"
-                        :value="cmd.id"
-                      />
-                    </el-select>
-                    <div v-else class="command-tags">
-                      <el-tag
-                        v-for="cmd in jobCommands"
-                        :key="cmd.id"
-                        type="info"
-                        class="command-tag"
-                      >
-                        {{ cmd.name || cmd.id }}
-                      </el-tag>
-                      <span v-if="jobCommands.length === 0" class="text-muted">未配置命令</span>
-                    </div>
-                  </div>
-                </el-form-item>
-
-                <el-form-item label="目标主机">
-                  <AcmDeviceSelector
-                    v-model="jobHosts"
-                    ci-types="[auto]"
-                    :disabled="!isEditMode"
-                    :options="{
-                      selectMode: 'host,group,tag,input,recently',
-                      selector: 'multiple',
-                      label: '选择主机'
-                    }"
-                  />
-                </el-form-item>
-              </fieldset>
-            </el-form>
-
-            <!-- 运行作业 - 移到表单外部避免被 disabled 影响 -->
-            <fieldset v-if="!isEditMode" class="action-fieldset">
-              <legend>运行作业</legend>
-              <div class="run-actions">
-                <el-button type="primary" :loading="running" @click="handleRunJob">
-                  <i class="fas fa-play"></i>
-                  执行作业
-                </el-button>
-                <el-button @click="isEditMode = true">
-                  <i class="fas fa-edit"></i>
-                  编辑作业
-                </el-button>
-                <el-button type="danger" plain @click="handleDeleteJob">
-                  <i class="fas fa-trash"></i>
-                  删除作业
-                </el-button>
-              </div>
-
-              <!-- 运行结果 -->
-              <div v-if="runResult" class="run-result">
-                <pre>{{ JSON.stringify(runResult, null, 2) }}</pre>
-              </div>
-            </fieldset>
-
-            <!-- 编辑模式按钮 - 移到表单外部 -->
-            <div v-if="isEditMode" class="edit-actions">
-              <el-button type="primary" :loading="saving" @click="handleSaveJob">
-                保存作业
-              </el-button>
-              <el-button @click="handleCancelEdit">
-                取消
-              </el-button>
-            </div>
-          </div>
-        </template>
-      </main>
+        </el-form-item>
+      </el-form>
     </div>
 
+    <!-- 功能按钮区 -->
+    <div class="ops-action-bar">
+      <el-button type="primary" size="small" @click="handleCreateJob">
+        <i class="fas fa-plus" />
+        创建作业
+      </el-button>
+      <span style="flex: 1;"></span>
+      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadJobs" title="刷新">
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table
+        v-loading="loading"
+        :data="filteredJobs"
+        stripe
+        height="100%"
+        row-key="id"
+        :default-sort="{ prop: sortField, order: sortOrder }"
+        @sort-change="handleSortChange"
+      >
+        <el-table-column prop="title" label="作业标题" min-width="200" sortable="custom">
+          <template #default="{ row }">
+            <el-button text type="primary" @click="openDetail(row)">{{ row.title }}</el-button>
+          </template>
+        </el-table-column>
+        <el-table-column prop="description" label="描述" min-width="220" show-overflow-tooltip />
+        <el-table-column label="命令数" width="90">
+          <template #default="{ row }">{{ getCommandCount(row) }}</template>
+        </el-table-column>
+        <el-table-column label="主机数" width="90">
+          <template #default="{ row }">{{ getHostCount(row) }}</template>
+        </el-table-column>
+        <el-table-column prop="updatedAt" label="修改时间" min-width="160" sortable="custom">
+          <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
+        </el-table-column>
+        <el-table-column prop="lastRunTime" label="最近执行" min-width="160" sortable="custom">
+          <template #default="{ row }">{{ formatDateTime(row.lastRunTime) || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="{ row }">
+            <el-button text type="primary" size="small" @click="openDetail(row)">查看</el-button>
+            <el-button text type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+            <el-button text type="primary" size="small" :loading="running && runningJobId === row.id" @click="handleRunJob(row)">执行</el-button>
+            <el-button text type="danger" size="small" @click="handleDeleteJob(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <el-dialog
+      v-model="detailDialogVisible"
+      width="780px"
+      title="作业详情"
+      :close-on-click-modal="false"
+    >
+      <div v-if="detailJob" class="detail-dialog-body">
+        <el-descriptions :column="2" border size="small">
+          <el-descriptions-item label="标题">{{ detailJob.title }}</el-descriptions-item>
+          <el-descriptions-item label="类型">{{ detailJob.type || 'command' }}</el-descriptions-item>
+          <el-descriptions-item label="最近修改">{{ formatDateTime(detailJob.updatedAt) }}</el-descriptions-item>
+          <el-descriptions-item label="最近执行">{{ formatDateTime(detailJob.lastRunTime) || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="描述" :span="2">{{ detailJob.description || '-' }}</el-descriptions-item>
+        </el-descriptions>
+
+        <div class="subsection">
+          <h4>命令</h4>
+          <div class="chip-list" v-if="detailCommands.length">
+            <el-tag v-for="cmd in detailCommands" :key="cmd.id || cmd.name" type="info" class="chip">
+              <span class="cmd-name">{{ cmd.name || cmd.id }}</span>
+              <span class="cmd-type">{{ cmd.type || '-' }}</span>
+            </el-tag>
+          </div>
+          <div v-else class="text-muted">未配置命令</div>
+        </div>
+
+        <div class="subsection">
+          <h4>目标主机</h4>
+          <div class="chip-list" v-if="detailHosts.length">
+            <el-tag v-for="host in detailHosts" :key="host.key || host.value" class="chip" type="success">
+              <span class="host-name">{{ host.value || host.key }}</span>
+              <span class="host-type">{{ host.assetType || '-' }}</span>
+            </el-tag>
+          </div>
+          <div v-else class="text-muted">未配置主机</div>
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 编辑弹窗 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      width="820px"
+      title="编辑作业"
+      :close-on-click-modal="false"
+      destroy-on-close
+    >
+      <el-form ref="formRef" :model="jobForm" :rules="formRules" label-width="100px">
+        <el-form-item label="作业标题" prop="title">
+          <el-input v-model="jobForm.title" placeholder="请输入作业标题" maxlength="100" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="jobForm.description" type="textarea" :rows="3" placeholder="请输入作业描述" />
+        </el-form-item>
+        <el-form-item label="命令列表" required>
+          <el-select
+            v-model="selectedCommandIds"
+            multiple
+            filterable
+            placeholder="选择要执行的命令"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="cmd in availableCommands"
+              :key="cmd.id"
+              :label="cmd.name"
+              :value="cmd.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="目标主机" required>
+          <AcmDeviceSelector
+            v-model="jobHosts"
+            ci-types="[auto]"
+            :options="{
+              selectMode: 'host,group,tag,input,recently',
+              selector: 'multiple',
+              label: '选择主机'
+            }"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSaveJob">保存</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 创建作业对话框 -->
-    <CreateJobDialog
-      v-model:visible="createDialogVisible"
-      @success="handleCreateSuccess"
+    <CreateJobDialog v-model:visible="createDialogVisible" @success="handleCreateSuccess" />
+
+    <JobApproveDialog
+      v-if="approveDialogVisible"
+      v-model:visible="approveDialogVisible"
+      :job-id="approveJobMeta?.id || ''"
+      :job-title="approveJobMeta?.title || ''"
+      :applet-code="approveJobMeta?.appletCode || ''"
+      :params="approveJobMeta?.params || {}"
+      @success="handleApproveSuccess"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import {
   findAllJobs,
   findJobById,
@@ -201,8 +192,10 @@ import {
   runJobByRequest,
   findAllApproveCommand
 } from '@/modules/automation/api/command'
+import * as jaoApi from '@/modules/automation/api/jao'
 import CreateJobDialog from './dialogs/CreateJobDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import JobApproveDialog from '@/modules/automation/components/job/JobListView/JobApproveDialog.vue'
 
 const props = defineProps({
   jobType: {
@@ -211,19 +204,15 @@ const props = defineProps({
   }
 })
 
-// 状态
 const loading = ref(false)
 const jobs = ref([])
 const searchKeyword = ref('')
 const sortField = ref('updatedAt')
-const sortOrder = ref('desc')
+const sortOrder = ref('descending')
 
-// 选中的作业
-const activeJobId = ref(null)
 const selectedJob = ref(null)
-const isEditMode = ref(false)
+const detailJob = ref(null)
 
-// 表单
 const formRef = ref(null)
 const jobForm = ref({
   id: null,
@@ -233,89 +222,88 @@ const jobForm = ref({
   configJson: ''
 })
 
-// 作业配置
 const selectedCommandIds = ref([])
 const jobHosts = ref([])
-
-// 可用命令列表
 const availableCommands = ref([])
 
-// 运行状态
 const running = ref(false)
-const runResult = ref(null)
-
-// 保存状态
+const runningJobId = ref('')
 const saving = ref(false)
 
-// 创建对话框
+const approveDialogVisible = ref(false)
+const approveJobMeta = ref(null)
+
+const detailDialogVisible = ref(false)
+const editDialogVisible = ref(false)
 const createDialogVisible = ref(false)
 
-// 设备选择器对话框
-const deviceSelectorVisible = ref(false)
-
-// 表单验证规则
 const formRules = {
-  title: [
-    { required: true, message: '请输入作业标题', trigger: 'blur' }
-  ]
+  title: [{ required: true, message: '请输入作业标题', trigger: 'blur' }]
 }
 
-// 过滤和排序后的作业列表
 const filteredJobs = computed(() => {
   let result = [...jobs.value]
-
-  // 搜索过滤
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase()
-    result = result.filter(job =>
-      job.title?.toLowerCase().includes(keyword)
-    )
+    result = result.filter(job => job.title?.toLowerCase().includes(keyword))
   }
 
-  // 排序
+  if (!sortField.value || !sortOrder.value) {
+    return result
+  }
+
   result.sort((a, b) => {
     let aVal = a[sortField.value] || ''
     let bVal = b[sortField.value] || ''
-    if (sortField.value === 'updatedAt' || sortField.value === 'createdAt') {
+    const isDateField = ['updatedAt', 'createdAt', 'lastRunTime'].includes(sortField.value)
+    if (isDateField) {
       aVal = new Date(aVal).getTime() || 0
       bVal = new Date(bVal).getTime() || 0
     }
-    if (sortOrder.value === 'asc') {
-      return aVal > bVal ? 1 : -1
-    } else {
-      return aVal < bVal ? 1 : -1
-    }
+    if (sortOrder.value === 'ascending') return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
+    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
   })
 
   return result
 })
 
-// 作业中的命令
-const jobCommands = computed(() => {
-  try {
-    const config = JSON.parse(selectedJob.value?.configJson || '{}')
-    return config.tasks?.[0]?.commands || []
-  } catch {
-    return []
-  }
-})
+const detailCommands = computed(() => parseJobConfig(detailJob.value).commands)
+const detailHosts = computed(() => parseJobConfig(detailJob.value).hosts)
 
-// 加载作业列表
+function parseJobConfig(job) {
+  if (!job) return { commands: [], hosts: [] }
+  try {
+    const cfg = JSON.parse(job.configJson || '{}')
+    const task = cfg.tasks?.[0] || {}
+    return {
+      commands: task.commands || [],
+      hosts: task.hosts || []
+    }
+  } catch (e) {
+    return { commands: [], hosts: [] }
+  }
+}
+
+function getCommandCount(job) {
+  return parseJobConfig(job).commands.length
+}
+
+function getHostCount(job) {
+  return parseJobConfig(job).hosts.length
+}
+
+function formatDateTime(val) {
+  if (!val) return ''
+  const date = new Date(val)
+  if (Number.isNaN(date.getTime())) return val
+  return date.toLocaleString('zh-CN')
+}
+
 async function loadJobs() {
   loading.value = true
   try {
     const response = await findAllJobs(props.jobType)
     jobs.value = response.data || response || []
-
-    // 自动选中排序后的第一条数据
-    if (jobs.value.length > 0 && !activeJobId.value) {
-      // 需要等待 filteredJobs 计算完成后再选择
-      setTimeout(() => {
-        if (filteredJobs.value.length > 0) {
-          selectJob(filteredJobs.value[0])
-        }
-      }, 0)
-    }
   } catch (error) {
     console.error('加载作业列表失败:', error)
     ElMessage.error('加载作业列表失败')
@@ -324,7 +312,6 @@ async function loadJobs() {
   }
 }
 
-// 加载可用命令
 async function loadAvailableCommands() {
   try {
     const response = await findAllApproveCommand()
@@ -334,74 +321,72 @@ async function loadAvailableCommands() {
   }
 }
 
-// 选择作业
-async function selectJob(job) {
-  activeJobId.value = job.id
-  isEditMode.value = false
-  runResult.value = null
-
+async function loadJobDetail(job) {
   try {
     const response = await findJobById(job.id)
-    selectedJob.value = response.data || response
-
-    // 解析配置
-    jobForm.value = {
-      id: selectedJob.value.id,
-      title: selectedJob.value.title,
-      description: selectedJob.value.description,
-      type: selectedJob.value.type,
-      configJson: selectedJob.value.configJson
-    }
-
-    const config = JSON.parse(selectedJob.value.configJson || '{}')
-    const task = config.tasks?.[0] || {}
-    selectedCommandIds.value = (task.commands || []).map(c => c.id)
-    jobHosts.value = task.hosts || []
+    const data = response.data || response
+    selectedJob.value = data
+    return data
   } catch (error) {
     console.error('加载作业详情失败:', error)
     ElMessage.error('加载作业详情失败')
+    return null
   }
 }
 
-// 排序变化
-function handleSortChange(field) {
-  if (sortField.value === field) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortField.value = field
-    sortOrder.value = 'desc'
-  }
+async function openDetail(job) {
+  const detail = await loadJobDetail(job)
+  if (!detail) return
+  detailJob.value = detail
+  detailDialogVisible.value = true
 }
 
-// 创建作业
+async function openEdit(job) {
+  const detail = await loadJobDetail(job)
+  if (!detail) return
+  detailJob.value = detail
+  fillEditForm(detail)
+  editDialogVisible.value = true
+}
+
+function fillEditForm(job) {
+  jobForm.value = {
+    id: job.id,
+    title: job.title,
+    description: job.description,
+    type: job.type,
+    configJson: job.configJson
+  }
+  const cfg = parseJobConfig(job)
+  selectedCommandIds.value = (cfg.commands || []).map(c => c.id)
+  jobHosts.value = cfg.hosts || []
+}
+
+function handleSortChange({ prop, order }) {
+  if (!prop || !order) {
+    sortField.value = 'updatedAt'
+    sortOrder.value = 'descending'
+    return
+  }
+  sortField.value = prop
+  sortOrder.value = order
+}
+
 function handleCreateJob() {
   createDialogVisible.value = true
 }
 
-// 创建成功
 function handleCreateSuccess() {
   loadJobs()
 }
 
-// 设备选择器确认回调
-function handleDeviceSelected(selectedHosts) {
-  jobHosts.value = [...selectedHosts]
+function handleReset() {
+  searchKeyword.value = ''
 }
 
-// 清空所有主机
-function clearAllHosts() {
-  jobHosts.value = []
-}
-
-// 移除主机
-function removeHost(index) {
-  jobHosts.value.splice(index, 1)
-}
-
-// 保存作业
 async function handleSaveJob() {
   try {
-    await formRef.value.validate()
+    await formRef.value?.validate()
   } catch {
     return
   }
@@ -419,10 +404,7 @@ async function handleSaveJob() {
   try {
     const commands = selectedCommandIds.value.map(id => ({ id }))
     const configJson = JSON.stringify({
-      tasks: [{
-        commands,
-        hosts: jobHosts.value
-      }]
+      tasks: [{ commands, hosts: jobHosts.value }]
     })
 
     const job = {
@@ -432,15 +414,10 @@ async function handleSaveJob() {
 
     await saveJob(job)
     ElMessage.success('作业保存成功')
-    isEditMode.value = false
-    loadJobs()
-
-    // 刷新当前作业详情
-    if (activeJobId.value) {
-      const currentJob = jobs.value.find(j => j.id === activeJobId.value)
-      if (currentJob) {
-        selectJob(currentJob)
-      }
+    editDialogVisible.value = false
+    await loadJobs()
+    if (detailDialogVisible.value && detailJob.value?.id === job.id) {
+      detailJob.value = await findJobById(job.id).then(r => r.data || r).catch(() => detailJob.value)
     }
   } catch (error) {
     console.error('保存作业失败:', error)
@@ -450,60 +427,84 @@ async function handleSaveJob() {
   }
 }
 
-// 取消编辑
-function handleCancelEdit() {
-  isEditMode.value = false
-  if (selectedJob.value) {
-    selectJob(selectedJob.value)
-  }
-}
+async function handleRunJob(job) {
+  const detail = await loadJobDetail(job)
+  if (!detail) return
 
-// 运行作业
-async function handleRunJob() {
-  if (jobCommands.value.length === 0) {
+  const cfg = parseJobConfig(detail)
+  if (!cfg.commands.length) {
     ElMessage.warning('作业未配置命令')
     return
   }
 
+  const needApproveFlag = detail?.needApprove || job?.needApprove
+  if (needApproveFlag) {
+    try {
+      const checkResult = await jaoApi.checkNeedApprove(detail.id)
+      const resData = checkResult?.data || checkResult || {}
+      if (resData.isApproving) {
+        ElMessage.info('该作业审批申请已提交，请等待审批')
+        return
+      }
+      if (resData.needApprove) {
+        approveJobMeta.value = {
+          id: detail.id,
+          title: detail.title || '',
+          appletCode: detail.appletCode || '',
+          params: {}
+        }
+        approveDialogVisible.value = true
+        return
+      }
+    } catch (error) {
+      ElMessage.error(error?.message || '检查审批状态失败')
+      return
+    }
+  }
+
   running.value = true
-  runResult.value = null
+  runningJobId.value = job.id
   try {
-    // 构建作业请求对象，与原系统保持一致
     const jobRequest = {
-      jobId: selectedJob.value.id,
-      type: selectedJob.value.type,
-      configJson: selectedJob.value.configJson,
+      jobId: detail.id,
+      type: detail.type,
+      configJson: detail.configJson,
       options: {
         secretParams: [],
         params: {}
       }
     }
-
-    const response = await runJobByRequest(jobRequest)
-    runResult.value = response.data || response
+    await runJobByRequest(jobRequest)
     ElMessage.success('作业已提交执行')
   } catch (error) {
     console.error('运行作业失败:', error)
     ElMessage.error('运行作业失败: ' + (error?.message || '未知错误'))
   } finally {
     running.value = false
+    runningJobId.value = ''
+  }
+
+  function handleApproveSuccess() {
+    ElMessage.success('审批申请已提交')
+    approveDialogVisible.value = false
   }
 }
 
-// 删除作业
-async function handleDeleteJob() {
+async function handleDeleteJob(job) {
   try {
     await ElMessageBox.confirm(
-      `确定要删除作业 "${selectedJob.value.title}" 吗？`,
+      `确定要删除作业 "${job.title}" 吗？`,
       '确认删除',
       { type: 'error', confirmButtonClass: 'el-button--danger' }
     )
-
-    await deleteJob(selectedJob.value.id)
+    await deleteJob(job.id)
     ElMessage.success('作业已删除')
-    selectedJob.value = null
-    activeJobId.value = null
-    loadJobs()
+    if (detailJob.value?.id === job.id) {
+      detailDialogVisible.value = false
+      detailJob.value = null
+    }
+    editDialogVisible.value = false
+    await loadJobs()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除作业失败:', error)
@@ -512,27 +513,13 @@ async function handleDeleteJob() {
   }
 }
 
-// 格式化日期
-function formatDate(dateStr) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('zh-CN')
-}
-
-// 刷新
-function refresh() {
-  loadJobs()
-}
-
-// 初始化
 onMounted(() => {
   loadJobs()
   loadAvailableCommands()
 })
 
-// 暴露方法
 defineExpose({
-  refresh,
+  refresh: loadJobs,
   loadJobs
 })
 </script>
@@ -543,262 +530,87 @@ defineExpose({
   flex-direction: column;
   height: 100%;
   background: #fff;
+  padding: 12px;
+  box-sizing: border-box;
 }
 
-.job-list__header {
+.toolbar {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #dee2e6;
-  background: #f8f9fa;
-
-  .header-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #212529;
-  }
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.job-list__body {
-  flex: 1;
+.toolbar-left {
   display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolbar-icon-btn {
+  padding: 6px 8px;
+}
+
+.w-220 {
+  width: 220px;
+}
+
+.table-wrapper {
+  flex: 1;
   min-height: 0;
 }
 
-.job-sidebar {
-  width: 15rem;
-  background: #fff;
-  border-right: 1px solid #dee2e6;
+.detail-dialog-body {
   display: flex;
   flex-direction: column;
+  gap: 16px;
 }
 
-.sidebar-header {
-  display: flex;
-  gap: 8px;
-  padding: 12px;
-  border-bottom: 1px solid #dee2e6;
-  background: #f8f9fa;
-
-  .el-input {
-    flex: 1;
-  }
-
-  .sort-btn,
-  .add-btn {
-    flex-shrink: 0;
-    padding: 8px 10px;
-  }
-}
-
-.sidebar-body {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100px;
-  color: #6c757d;
-}
-
-.job-list {
-  padding: 0;
-}
-
-.job-item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
-  text-align: left;
-  border: none;
-  background: transparent;
-  padding: 10px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(64, 158, 255, 0.1);
-  }
-
-  &.is-active {
-    background: rgba(64, 158, 255, 0.15);
-
-    .job-title {
-      color: #409eff;
-      font-weight: 600;
-    }
-  }
-
-  .job-item-content {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    width: 100%;
-  }
-
-  .job-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: #303133;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-
-  .job-meta {
-    font-size: 12px;
-    color: #909399;
-  }
-}
-
-.job-detail {
-  flex: 1;
-  overflow-y: auto;
-  // background: #f8f9fa;
-}
-
-.blank-state {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #adb5bd;
-  background: #f8f9fa;
-
-  .blank-icon {
-    i {
-      font-size: 64px;
-    }
-  }
-}
-
-.detail-body {
-  padding: 24px;
-}
-
-.job-form {
-  max-width: 800px;
-
-  fieldset {
-    border: none;
-    padding: 0;
-    margin: 0 0 24px;
-
-    legend {
-      font-size: 14px;
-      font-weight: 600;
-      color: #212529;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #dee2e6;
-    }
-  }
-}
-
-// 表单外部的 fieldset 样式
-.action-fieldset {
-  max-width: 800px;
-  border: none;
-  padding: 0;
-  margin: 0 0 24px;
-
-  legend {
+.subsection {
+  h4 {
+    margin: 0 0 8px;
     font-size: 14px;
     font-weight: 600;
-    color: #212529;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #dee2e6;
+    color: #1f2937;
   }
 }
 
-.command-tags,
-.host-tags {
+.chip-list {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
-
-  .text-muted {
-    color: #6c757d;
-    font-size: 13px;
-  }
+  flex-wrap: wrap;
 }
 
-// 主机选择器样式
-.host-selector-wrapper {
-  width: 100%;
-}
-
-.host-display {
-  width: 100%;
-}
-
-.host-summary {
-  display: flex;
+.chip {
+  display: inline-flex;
+  gap: 6px;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-
-  strong {
-    color: #409eff;
-    margin: 0 2px;
-  }
 }
 
-.host-count-btn {
-  cursor: pointer;
+.cmd-type,
+.host-type {
+  color: #6b7280;
+  font-size: 12px;
 }
 
-.host-count-text {
+.text-muted {
+  color: #9ca3af;
   font-size: 13px;
-  color: #606266;
 }
 
-.host-list-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-height: 160px;
-  overflow-y: auto;
-  padding: 8px;
-  background: #f8f9fa;
-  border-radius: 6px;
+:deep(.el-dialog__body) {
+  padding-top: 10px;
 }
 
-.run-actions {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.run-result {
-  background: #212529;
-  color: #e9ecef;
-  padding: 16px;
-  border-radius: 4px;
-  overflow-x: auto;
-  max-height: 300px;
-
-  pre {
-    margin: 0;
-    font-family: monospace;
-    font-size: 12px;
-    white-space: pre-wrap;
-  }
-}
-
-.edit-actions {
-  display: flex;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid #dee2e6;
+:deep(.el-table) {
+  font-size: 13px;
 }
 
 :deep(.el-button) {

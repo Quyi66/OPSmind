@@ -16,10 +16,10 @@
           </el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSearch">
+          <!-- <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
             搜索
-          </el-button>
+          </el-button> -->
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
             重置
@@ -72,15 +72,26 @@
           :selectable="checkSelectable"
         />
 
-        <el-table-column prop="name" label="名称" min-width="280" sortable>
+        <el-table-column prop="name" label="名称" min-width="180" sortable>
           <template #default="{ row }">
-            <div class="command-name-cell">
+            <!-- <div class="command-name-cell">
               <a class="name-link" @click="handleView(row)">
                 <span class="name">{{ row.name }}</span>
                 <p v-if="row.description" class="description">{{ row.description }}</p>
                 <p class="command-preview" v-if="getDisplayCommand(row)">{{ truncateCommand(getDisplayCommand(row)) }}</p>
               </a>
-            </div>
+            </div> -->
+            <el-button text type="primary" @click="handleView(row)">
+              {{ row.name }}
+            </el-button>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="description" label="描述" min-width="100" />
+
+        <el-table-column prop="command" label="命令内容" min-width="200">
+          <template #default="{ row }">
+            <span>{{ getDisplayCommand(row) || '-' }}</span>
           </template>
         </el-table-column>
 

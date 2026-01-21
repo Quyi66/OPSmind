@@ -19,6 +19,7 @@
             size="small"
             :disabled="selectedType !== 'range'"
             @change="handleRangeChange"
+            :controls="false"
           />
           到
           <el-input-number
@@ -28,6 +29,7 @@
             size="small"
             :disabled="selectedType !== 'range'"
             @change="handleRangeChange"
+            :controls="false"
           />
         </el-radio>
       </div>
@@ -43,6 +45,7 @@
             size="small"
             :disabled="selectedType !== 'interval'"
             @change="handleIntervalChange"
+            :controls="false"
           />
           开始，每
           <el-input-number
@@ -52,6 +55,7 @@
             size="small"
             :disabled="selectedType !== 'interval'"
             @change="handleIntervalChange"
+            :controls="false"
           />
           {{ getFieldUnit() }}执行一次
         </el-radio>

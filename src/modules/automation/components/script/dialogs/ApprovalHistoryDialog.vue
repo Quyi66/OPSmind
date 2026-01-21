@@ -47,7 +47,7 @@
         <el-table :data="detailPaths" stripe height="400">
           <el-table-column label="文件路径" min-width="200">
             <template #default="{ row }">
-              <el-button type="primary" link @click="goFile(row)">
+              <el-button type="primary" link @click="openFile(row)">
                 {{ row }}
               </el-button>
             </template>
@@ -77,7 +77,7 @@
     </div>
 
     <template #footer>
-      <el-button v-if="viewMode === 'approvalDetail'" @click="backToList">
+      <el-button v-if="viewMode === 'approvalDetail'" @click="backToList" type="primary">
         <i class="fa fa-arrow-left" />
         返回列表
       </el-button>
@@ -116,7 +116,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'go-file', 'closed'])
+const emit = defineEmits(['update:modelValue', 'open-file', 'closed'])
 
 const loading = ref(false)
 const historyList = ref([])
@@ -227,7 +227,7 @@ async function showApprovalDetail(approvalId) {
     if (data?._status === 'ok' || data?.result) {
       const detail = data.result || data
       currentDetail.value = parseDetail(detail)
-      detailPaths.value = detail.paths || []
+      detailPaths.value = normalizePaths(detail)
       viewMode.value = 'approvalDetail'
     }
   } catch (error) {
@@ -244,13 +244,31 @@ function backToList() {
   detailPaths.value = []
 }
 
-// 跳转到文件 (与源代码 goFile 逻辑一致)
-function goFile(filePath) {
+// 打开文件内容弹窗（直接预览，不再跳转目录）
+function openFile(filePath) {
   if (!filePath) return
-  // 提取目录部分
-  const dir = filePath.substring(0, filePath.lastIndexOf('/'))
-  emit('go-file', dir)
-  emit('update:modelValue', false)
+  const repo = currentDetail.value?.repo || props.repo
+  emit('open-file', { path: filePath, repo })
+}
+
+// 解析 paths 字段（兼容字符串与数组）
+function normalizePaths(detail) {
+  if (Array.isArray(detail?.paths)) return detail.paths
+
+  const rawPath = detail?.path
+  if (Array.isArray(rawPath)) return rawPath
+
+  if (typeof rawPath === 'string') {
+    try {
+      const parsed = JSON.parse(rawPath)
+      if (Array.isArray(parsed)) return parsed
+    } catch (e) {
+      // ignore JSON parse error
+    }
+    return [rawPath]
+  }
+
+  return []
 }
 
 // 弹窗关闭时重置状态

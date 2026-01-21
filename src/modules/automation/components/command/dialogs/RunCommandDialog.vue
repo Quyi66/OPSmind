@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { runCommands, saveJob } from '@/modules/automation/api/command'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
@@ -132,7 +132,7 @@ const commandList = computed(() => {
 const formRef = ref(null)
 
 // 表单数据
-const formData = ref({
+const formData = reactive({
   title: '',
   description: '',
   hosts: []
@@ -140,19 +140,20 @@ const formData = ref({
 
 // 表单验证规则
 const formRules = computed(() => ({
-  title: isCreateJobMode.value ? [
-    { required: true, message: '请输入作业标题', trigger: 'blur' }
-  ] : [],
+  title: isCreateJobMode.value
+    ? [{ required: true, message: '请输入作业标题', trigger: 'blur' }]
+    : [],
   hosts: [
     {
       validator: (rule, value, callback) => {
-        if (!value || value.length === 0) {
+        const hostList = Array.isArray(value) ? value.filter(Boolean) : []
+        if (hostList.length === 0) {
           callback(new Error('请至少选择一个目标主机'))
         } else {
           callback()
         }
       },
-      trigger: 'change'
+      trigger: ['change', 'blur']
     }
   ]
 }))
@@ -160,36 +161,41 @@ const formRules = computed(() => ({
 // 提交状态
 const submitting = ref(false)
 
+// 选择主机后清除校验错误
+watch(
+  () => formData.hosts,
+  () => formRef.value?.clearValidate('hosts'),
+  { deep: true }
+)
+
 // 监听对话框打开
 watch(() => props.visible, (val) => {
   if (val) {
     resetForm()
     // 如果是创建作业模式，默认使用命令名称作为标题
     if (isCreateJobMode.value && commandList.value.length === 1) {
-      formData.value.title = commandList.value[0].name + ' 作业'
+      formData.title = commandList.value[0].name + ' 作业'
     }
   }
 })
 
 // 重置表单
 function resetForm() {
-  formData.value = {
-    title: '',
-    description: '',
-    hosts: []
-  }
+  formData.title = ''
+  formData.description = ''
+  formData.hosts = []
   formRef.value?.clearValidate()
 }
 
 // 移除主机
 function removeHost(index) {
-  formData.value.hosts.splice(index, 1)
+  formData.hosts.splice(index, 1)
 }
 
 // 处理设备选择器确认
 function handleDeviceSelected(selectedHosts) {
   // 使用选中的主机替换当前列表
-  formData.value.hosts = [...selectedHosts]
+  formData.hosts = [...selectedHosts]
 }
 
 // 执行命令
@@ -204,7 +210,7 @@ async function handleRunCommand() {
   try {
     const request = {
       commands: commandList.value.map(cmd => cmd.id),
-      hosts: formData.value.hosts
+      hosts: formData.hosts
     }
 
     const response = await runCommands(request)
@@ -235,13 +241,13 @@ async function handleSaveJob() {
     const configJson = JSON.stringify({
       tasks: [{
         commands: commands,
-        hosts: formData.value.hosts
+        hosts: formData.hosts
       }]
     })
 
     const job = {
-      title: formData.value.title,
-      description: formData.value.description,
+      title: formData.title,
+      description: formData.description,
       type: 'command',
       configJson: configJson
     }
