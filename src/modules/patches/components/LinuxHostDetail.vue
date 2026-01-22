@@ -245,7 +245,6 @@ function handleClose() {
 }
 
 .host-tabs {
-  margin-bottom: 16px;
 
   :deep(.el-tabs__item) {
     i {

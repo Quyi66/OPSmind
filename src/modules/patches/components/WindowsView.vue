@@ -73,15 +73,15 @@ async function initBarChart() {
 
   try {
     const response = await windowsViewApi.getCurrentStatsWin()
-    const records = response?.records || []
+    const records = response?.records || response?.data?.records || []
 
     // 处理数据
     const chartData = []
     if (records.length > 0) {
       const rec = records[0]
       chartData.push({ name: '重要更新', value: rec.num_critical || 0 })
-      chartData.push({ name: '安全更新', value: rec.num_rollups || 0 })
-      chartData.push({ name: '更新汇总', value: rec.num_security || 0 })
+      chartData.push({ name: '安全更新', value: rec.num_security || 0 })
+      chartData.push({ name: '更新汇总', value: rec.num_rollups || 0 })
     }
 
     const option = {
@@ -147,7 +147,9 @@ async function initLineChart() {
 
   try {
     const response = await windowsViewApi.getPatchTrendWindows()
-    const records = response?.records || []
+    const records = (response?.records || response?.data?.records || [])
+      .slice()
+      .sort((a, b) => new Date(a.scan_date) - new Date(b.scan_date))
 
     const dates = records.map(r => r.scan_date)
     const values = records.map(r => r.patch_count || 0)

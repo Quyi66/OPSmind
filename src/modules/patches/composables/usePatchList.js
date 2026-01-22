@@ -8,13 +8,40 @@ import { patchScanApi } from '../api'
 export function usePatchList(hostId) {
   const patchLoading = ref(false)
   const patchTableData = ref([])
+  const patchAllData = ref([])
   const selectedPatches = ref([])
   const selectedSeverities = ref([])
+  const patchKeyword = ref('')
   const patchPagination = reactive({
     page: 1,
     pageSize: 20,
     total: 0
   })
+
+  function applyClientPaging() {
+    const keyword = patchKeyword.value.trim().toLowerCase()
+    const filtered = !keyword
+      ? patchAllData.value
+      : patchAllData.value.filter(item => {
+          const parts = [
+            item.patch_id,
+            item.title,
+            item.severity,
+            item.publish_date,
+            item.affected_pkgs,
+            Array.isArray(item.related_vuls) ? item.related_vuls.join(',') : item.related_vuls
+          ]
+          return parts
+            .filter(Boolean)
+            .map(v => String(v).toLowerCase())
+            .some(text => text.includes(keyword))
+        })
+
+    const start = (patchPagination.page - 1) * patchPagination.pageSize
+    const end = start + patchPagination.pageSize
+    patchPagination.total = filtered.length
+    patchTableData.value = filtered.slice(start, end)
+  }
 
   // 加载补丁列表
   async function loadPatchList() {
@@ -27,17 +54,17 @@ export function usePatchList(hostId) {
       const severityFilter = selectedSeverities.value.join(',')
       const response = await patchScanApi.getPatchesOfMachine({
         host_id: hostId.value,
-        severity: severityFilter,
-        page: patchPagination.page,
-        size: patchPagination.pageSize
+        severity: severityFilter
       })
 
       const data = response?.data || response
-      patchTableData.value = data?.records || []
-      patchPagination.total = data?.total || 0
+      const records = Array.isArray(data?.records) ? data.records : Array.isArray(data) ? data : []
+      patchAllData.value = records
+      applyClientPaging()
     } catch (error) {
       console.error('Failed to load patch list:', error)
       ElMessage.error('获取补丁列表失败')
+      patchAllData.value = []
       patchTableData.value = []
       patchPagination.total = 0
     } finally {
@@ -51,6 +78,11 @@ export function usePatchList(hostId) {
     loadPatchList()
   }
 
+  function handlePatchKeywordChange() {
+    patchPagination.page = 1
+    applyClientPaging()
+  }
+
   // 补丁选择变化
   function handleSelectionChange(selection) {
     selectedPatches.value = selection
@@ -59,13 +91,13 @@ export function usePatchList(hostId) {
   // 分页变化
   function handlePageChange(page) {
     patchPagination.page = page
-    loadPatchList()
+    applyClientPaging()
   }
 
   function handleSizeChange(size) {
     patchPagination.pageSize = size
     patchPagination.page = 1
-    loadPatchList()
+    applyClientPaging()
   }
 
   return {
@@ -73,9 +105,11 @@ export function usePatchList(hostId) {
     patchTableData,
     selectedPatches,
     selectedSeverities,
+    patchKeyword,
     patchPagination,
     loadPatchList,
     handleFilterChange,
+    handlePatchKeywordChange,
     handleSelectionChange,
     handlePageChange,
     handleSizeChange

@@ -83,15 +83,15 @@
             {{ calculateDuration(row.start_time, row.end_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="60" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
               size="small"
-              link
+              text
               @click="handleViewDetail(row)"
             >
-              <i class="fa fa-info-circle"></i> 详情
+              详情
             </el-button>
           </template>
         </el-table-column>

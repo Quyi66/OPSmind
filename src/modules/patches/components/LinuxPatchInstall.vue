@@ -565,7 +565,6 @@ async function loadInstallData(patchIds) {
   affectedPackages.value = []
   affectedHosts.value = []
   selectedHosts.value = []
-
   try {
     // 并行加载软件包和主机数据
     const [pkgResponse, hostResponse] = await Promise.all([

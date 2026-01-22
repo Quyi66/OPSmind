@@ -45,7 +45,12 @@
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
-          <el-input v-model="filterText" placeholder="搜索补丁编号、概要、CVE..." style="width: 240px" clearable />
+          <el-input
+            v-model="filterText"
+            placeholder="请输入关键词"
+            style="width: 240px"
+            clearable
+          />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
@@ -67,10 +72,10 @@
       <el-button type="primary" size="small" @click="handleCheckPatchUpdate">
         检查补丁库更新
       </el-button>
-      <el-button v-if="selectedPatches.length > 0" size="small" @click="handleBatchAddWhitelist">
+      <el-button :disabled="selectedPatches.length === 0" size="small" @click="handleBatchAddWhitelist">
         添加白名单
       </el-button>
-      <el-button v-if="selectedPatches.length > 0" type="danger" size="small" @click="handleBatchRemoveWhitelist">
+      <el-button :disabled="selectedPatches.length === 0" type="danger" size="small" @click="handleBatchRemoveWhitelist">
         移除白名单
       </el-button>
       <span style="flex: 1;"></span>
@@ -83,10 +88,16 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table ref="tableRef" v-loading="loading" :data="tableData" stripe max-height="calc(100vh - 480px)"
-        @selection-change="handleSelectionChange">
+      <el-table
+        ref="tableRef"
+        v-loading="loading"
+        :data="tableData"
+        stripe
+        max-height="calc(100vh - 480px)"
+        @selection-change="handleSelectionChange"
+      >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="patch_id" label="补丁编号" min-width="140">
+        <el-table-column prop="patch_id" label="补丁编号" min-width="120">
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="handleViewDetail(row)">
               {{ row.patch_id }}
@@ -121,14 +132,14 @@
           </template>
         </el-table-column>
         <el-table-column prop="vendor" label="厂商" width="100" />
-        <el-table-column prop="is_ignore" label="Ignore" width="88" align="left">
+        <el-table-column prop="is_ignore" label="是否在白名单" width="110" align="left">
           <template #default="{ row }">
-            <el-button v-if="row.is_ignore === 1" text type="success" size="small"
+            <el-button v-if="row.is_ignore" text type="primary" size="small"
               @click="handleRemoveFromWhitelist(row)">
-              Yes
+              是
             </el-button>
-            <el-button v-else text type="info" size="small" @click="handleAddToWhitelist(row)">
-              No
+            <el-button v-else text type="primary" size="small" @click="handleAddToWhitelist(row)">
+              否
             </el-button>
           </template>
         </el-table-column>
@@ -137,9 +148,16 @@
 
     <!-- 分页区域 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
-        background @size-change="handleSizeChange" @current-change="handlePageChange" />
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 补丁详情对话框 -->
@@ -189,7 +207,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchLibraryApi } from '../api'
@@ -217,14 +235,12 @@ const currentVendor = ref('redhat')       // 默认 redhat
 const tableData = ref([])
 const selectedPatches = ref([])
 
-// 分页
+// 分页（后端）
 const pagination = reactive({
   page: 1,
   pageSize: 20,
   total: 0
 })
-
-// 后端分页：直接使用 tableData，不需要前端分页计算
 
 // 详情对话框
 const detailDialogVisible = ref(false)
@@ -292,7 +308,8 @@ async function loadVendorStats() {
   try {
     const response = await patchLibraryApi.getVendorStats()
     // 源系统返回格式: { total: number, records: [] }
-    vendorStats.value = response?.records || response?.data?.records || []
+    vendorStats.value =
+      response?.records || response?.data?.records || response?.data?.data?.records || []
   } catch (error) {
     console.error('Failed to load vendor stats:', error)
     vendorStats.value = []
@@ -308,13 +325,21 @@ async function loadData() {
       vendor: currentVendor.value,
       is_ignore: ignoreFilter.value,
       page: pagination.page,
-      size: pagination.pageSize
+      size: pagination.pageSize,
+      filter: filterText.value.trim()
     }
     const response = await patchLibraryApi.getPatchList(params)
-    // 源系统返回格式: { total: number, records: [] }
-    tableData.value = response?.records || response?.data?.records || []
-    // 后端分页：使用接口返回的 total
-    pagination.total = response?.total || response?.data?.total || tableData.value.length
+    const records =
+      response?.records ||
+      response?.data?.records ||
+      response?.data?.data?.records ||
+      []
+    tableData.value = records
+    pagination.total =
+      response?.total ||
+      response?.data?.total ||
+      response?.data?.data?.total ||
+      records.length
   } catch (error) {
     console.error('Failed to load patches:', error)
     tableData.value = []
@@ -433,6 +458,7 @@ function renderMarkdown(text) {
 // 添加到白名单
 async function handleAddToWhitelist(row) {
   try {
+    await ElMessageBox.confirm('确认要将该补丁加入白名单吗？', '确认', { type: 'warning' })
     await runJob(ADD_WHITELIST_JOB_ID, {
       params: {
         patchIdList: [row.patch_id]
@@ -441,6 +467,7 @@ async function handleAddToWhitelist(row) {
     ElMessage.success('已添加到白名单')
     loadData()
   } catch (error) {
+    if (error === 'cancel') return
     console.error('Add to whitelist failed:', error)
     ElMessage.error('操作失败')
   }
@@ -449,6 +476,7 @@ async function handleAddToWhitelist(row) {
 // 从白名单移除
 async function handleRemoveFromWhitelist(row) {
   try {
+    await ElMessageBox.confirm('确认要将该补丁移出白名单吗？', '确认', { type: 'warning' })
     await runJob(REMOVE_WHITELIST_JOB_ID, {
       params: {
         patchIdList: [row.patch_id]
@@ -457,6 +485,7 @@ async function handleRemoveFromWhitelist(row) {
     ElMessage.success('已从白名单移除')
     loadData()
   } catch (error) {
+    if (error === 'cancel') return
     console.error('Remove from whitelist failed:', error)
     ElMessage.error('操作失败')
   }

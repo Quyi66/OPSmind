@@ -28,10 +28,10 @@
           </el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSearch">
+          <!-- <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
             搜索
-          </el-button>
+          </el-button> -->
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
             重置
@@ -48,7 +48,7 @@
         :disabled="selectedIds.length === 0"
         @click="handleBatchRollback"
       >
-        批量回退
+        批量回滚
       </el-button>
       <el-button
         type="danger"
@@ -69,13 +69,15 @@
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="tableData"
+        :data="pagedData"
         stripe
         height="calc(100vh - 320px)"
         @selection-change="handleSelectionChange"
+        @sort-change="handleSortChange"
+        :default-sort="sortState"
       >
         <el-table-column type="selection" width="40" />
-        <el-table-column prop="hosts" label="主机" min-width="120">
+        <el-table-column prop="hosts" label="主机" min-width="120" sortable="custom">
           <template #default="{ row }">
             <div class="hosts-cell">
               <div v-for="(host, idx) in parseHosts(row.hosts).slice(0, 2)" :key="idx">
@@ -123,7 +125,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="update_time" label="更新时间" width="180" sortable>
+        <el-table-column prop="update_time" label="更新时间" width="180" sortable="custom">
           <template #default="{ row }">
             {{ formatDateTime(row.update_time) }}
           </template>
@@ -131,7 +133,7 @@
         <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleRollback(row)">
-              回退
+              回滚
             </el-button>
             <el-button text type="danger" size="small" @click="handleDelete(row)">
               删除
@@ -147,7 +149,7 @@
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :page-sizes="[10, 20, 50, 100]"
-        :total="pagination.total"
+        :total="totalCount"
         layout="total, sizes, prev, pager, next, jumper"
         background
         @size-change="handleSizeChange"
@@ -155,26 +157,26 @@
       />
     </div>
 
-    <!-- 回退确认对话框 -->
+    <!-- 回滚确认对话框 -->
     <el-dialog
       v-model="rollbackDialogVisible"
-      title="确认回退"
+      title="确认回滚"
       width="500px"
     >
       <div class="rollback-confirm">
         <el-alert type="warning" :closable="false" show-icon>
           <template #title>
-            确定要回退选中的 {{ rollbackIds.length }} 条更新记录吗？
+            确定要回滚选中的 {{ rollbackIds.length }} 条更新记录吗？
           </template>
           <template #default>
-            回退操作将把软件包恢复到更新前的版本，此操作不可撤销。
+            回滚操作将把软件包恢复到更新前的版本，此操作不可撤销。
           </template>
         </el-alert>
       </div>
       <template #footer>
         <el-button @click="rollbackDialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="rollbackLoading" @click="executeRollback">
-          确认回退
+          确认回滚
         </el-button>
       </template>
     </el-dialog>
@@ -199,8 +201,11 @@ const filters = reactive({
 
 // 表格数据
 const tableRef = ref(null)
-const tableData = ref([])
+const allData = ref([])
 const selectedRows = ref([])
+
+// 排序状态（默认按更新时间倒序）
+const sortState = reactive({ prop: 'update_time', order: 'descending' })
 
 // 选中的ID列表
 const selectedIds = computed(() => selectedRows.value.map(r => r.id))
@@ -212,7 +217,59 @@ const pagination = reactive({
   total: 0
 })
 
-// 回退对话框
+// 先按排序状态排序再做过滤
+const sortedData = computed(() => {
+  const data = [...allData.value]
+  const { prop, order } = sortState
+
+  if (!prop || !order) return data
+
+  const direction = order === 'ascending' ? 1 : -1
+
+  const getValue = item => {
+    if (prop === 'update_time') return new Date(item.update_time || 0).getTime()
+    if (prop === 'hosts') return parseHosts(item.hosts)[0] || ''
+    if (prop === 'update_pkgs') return parseUpdatePkgs(item.update_pkgs).length
+    const val = item[prop]
+    return typeof val === 'string' ? val.toLowerCase() : val ?? ''
+  }
+
+  return data.sort((a, b) => {
+    const va = getValue(a)
+    const vb = getValue(b)
+    if (va === vb) return 0
+    return va > vb ? direction : -direction
+  })
+})
+
+// 过滤后的数据
+const filteredData = computed(() => {
+  let data = sortedData.value || []
+
+  if (filters.host_key) {
+    const keyword = filters.host_key.toLowerCase().trim()
+    data = data.filter(item => parseHosts(item.hosts).some(h => h.toLowerCase().includes(keyword)))
+  }
+
+  if (filters.vul_id) {
+    const keyword = filters.vul_id.toLowerCase().trim()
+    data = data.filter(item => item.update_id?.toLowerCase().includes(keyword))
+  }
+
+  return data
+})
+
+// 分页后的数据
+const pagedData = computed(() => {
+  const start = (pagination.page - 1) * pagination.pageSize
+  const end = start + pagination.pageSize
+  return filteredData.value.slice(start, end)
+})
+
+// 总数（基于前端过滤）
+const totalCount = computed(() => filteredData.value.length)
+
+// 回滚对话框
 const rollbackDialogVisible = ref(false)
 const rollbackIds = ref([])
 
@@ -251,21 +308,19 @@ async function loadData() {
   loading.value = true
   try {
     const params = {
-      page: pagination.page,
-      size: pagination.pageSize,
-      host_key: filters.host_key,
-      vul_id: filters.vul_id
+      page: 1,
+      size: 1000,
+      host_key: '',
+      vul_id: ''
     }
     const response = await patchRollbackApi.getHistUpdatePkgs(params)
     if (response?.data) {
-      tableData.value = response.data.records || []
-      pagination.total = response.data.total || 0
+      allData.value = response.data.records || []
     }
   } catch (error) {
     console.error('Failed to load rollback history:', error)
     // 模拟数据
-    tableData.value = generateMockData()
-    pagination.total = tableData.value.length
+    allData.value = generateMockData()
   } finally {
     loading.value = false
   }
@@ -297,56 +352,64 @@ function handleSelectionChange(selection) {
 
 function handleSearch() {
   pagination.page = 1
-  loadData()
 }
 
 function handleReset() {
   filters.host_key = ''
   filters.vul_id = ''
   pagination.page = 1
-  loadData()
 }
 
 function handlePageChange(page) {
   pagination.page = page
-  loadData()
 }
 
 function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
-  loadData()
 }
 
-// 单条回退
+function handleSortChange({ prop, order }) {
+  // Element Plus 传入 order 为 ascending / descending / null
+  if (!order) {
+    sortState.prop = 'update_time'
+    sortState.order = 'descending'
+  } else {
+    sortState.prop = prop
+    sortState.order = order
+  }
+  pagination.page = 1
+}
+
+// 单条回滚
 function handleRollback(row) {
   rollbackIds.value = [row.id]
   rollbackDialogVisible.value = true
 }
 
-// 批量回退
+// 批量回滚
 function handleBatchRollback() {
   if (selectedIds.value.length === 0) {
-    ElMessage.warning('请先选择要回退的记录')
+    ElMessage.warning('请先选择要回滚的记录')
     return
   }
   rollbackIds.value = [...selectedIds.value]
   rollbackDialogVisible.value = true
 }
 
-// 执行回退
+// 执行回滚
 async function executeRollback() {
   rollbackLoading.value = true
   try {
     await patchRollbackApi.rollback({
       histUpdateIds: rollbackIds.value
     })
-    ElMessage.success('回退任务已提交')
+    ElMessage.success('回滚任务已提交')
     rollbackDialogVisible.value = false
     loadData()
   } catch (error) {
     console.error('Rollback failed:', error)
-    ElMessage.error('回退任务提交失败')
+    ElMessage.error('回滚任务提交失败')
   } finally {
     rollbackLoading.value = false
   }
@@ -401,7 +464,7 @@ defineExpose({ refresh })
 // 组件特定样式
 
 .hosts-cell {
-  font-size: 13px;
+  // font-size: 13px;
   line-height: 1.5;
 }
 
@@ -418,7 +481,7 @@ defineExpose({ refresh })
 .hosts-popover {
   max-height: 200px;
   overflow-y: auto;
-  font-size: 13px;
+  // font-size: 13px;
   line-height: 1.6;
 }
 

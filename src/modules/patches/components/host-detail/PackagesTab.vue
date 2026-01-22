@@ -15,6 +15,22 @@
             <el-option label="所有软件包" value="yes" />
           </el-select>
         </el-form-item>
+
+        <el-form-item label="关键词" label-width="60">
+          <el-input
+            v-model="packageKeyword"
+            size="small"
+            placeholder="搜索包名/版本/补丁"
+            clearable
+            style="width: 220px"
+            @input="handlePackageKeywordChange"
+            @clear="handlePackageKeywordChange"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
       </el-form>
     </div>
 
@@ -82,6 +98,7 @@
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { getSeverityType } from '../../composables/useFormatters'
 import { usePackageList } from '../../composables/usePackageList'
+import { Search } from '@element-plus/icons-vue'
 
 const props = defineProps({
   hostId: {
@@ -97,10 +114,12 @@ const {
   packageLoading,
   packageTableData,
   selectedPackages,
+  packageKeyword,
   packageFilter,
   packagePagination,
   loadPackageList,
   handlePackageFilterChange,
+  handlePackageKeywordChange,
   handlePackageSelectionChange,
   handlePackagePageChange,
   handlePackageSizeChange

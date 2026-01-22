@@ -1,7 +1,7 @@
 <template>
   <div class="tab-content">
     <!-- 筛选栏 -->
-    <div class="ops-filter-bar">
+    <div class="ops-filter-bar" style="margin-bottom: 8px;">
       <el-checkbox-group v-model="selectedSeverities" size="small" @change="handleFilterChange">
         <el-checkbox label="Critical">
           <el-tag type="danger" size="small">严重</el-tag>
@@ -16,6 +16,20 @@
           <el-tag type="info" size="small">低</el-tag>
         </el-checkbox>
       </el-checkbox-group>
+
+      <el-input
+        v-model="patchKeyword"
+        size="small"
+        placeholder="搜索补丁编号/摘要/CVE等"
+        clearable
+        style="width: 260px; margin-left: 12px;"
+        @input="handlePatchKeywordChange"
+        @clear="handlePatchKeywordChange"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
     </div>
 
     <!-- 操作栏 -->
@@ -103,6 +117,7 @@
 <script setup>
 import { formatDate, formatPackages, getCVEList, getSeverityType } from '../../composables/useFormatters'
 import { usePatchList } from '../../composables/usePatchList'
+import { Search } from '@element-plus/icons-vue'
 
 const props = defineProps({
   hostId: {
@@ -119,9 +134,11 @@ const {
   patchTableData,
   selectedPatches,
   selectedSeverities,
+  patchKeyword,
   patchPagination,
   loadPatchList,
   handleFilterChange,
+  handlePatchKeywordChange,
   handleSelectionChange,
   handlePageChange,
   handleSizeChange

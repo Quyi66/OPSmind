@@ -10,6 +10,7 @@ export function usePackageList(hostId) {
   const packageTableData = ref([])
   const packageTableDataAll = ref([])
   const selectedPackages = ref([])
+  const packageKeyword = ref('')
   const packageFilter = reactive({
     showHistory: 'no',
     showAll: 'no'
@@ -73,9 +74,27 @@ export function usePackageList(hostId) {
 
   // 应用软件包前端分页
   function applyPackagePagination() {
+    const keyword = packageKeyword.value.trim().toLowerCase()
+    const filtered = !keyword
+      ? packageTableDataAll.value
+      : packageTableDataAll.value.filter(item => {
+          const parts = [
+            item.installedPkg,
+            item.updatePkg,
+            item.patchId,
+            item.severity,
+            item.pkgName
+          ]
+          return parts
+            .filter(Boolean)
+            .map(v => String(v).toLowerCase())
+            .some(text => text.includes(keyword))
+        })
+
     const start = (packagePagination.page - 1) * packagePagination.pageSize
     const end = start + packagePagination.pageSize
-    packageTableData.value = packageTableDataAll.value.slice(start, end)
+    packagePagination.total = filtered.length
+    packageTableData.value = filtered.slice(start, end)
   }
 
   // 加载软件包列表
@@ -127,6 +146,11 @@ export function usePackageList(hostId) {
     loadPackageList()
   }
 
+  function handlePackageKeywordChange() {
+    packagePagination.page = 1
+    applyPackagePagination()
+  }
+
   // 软件包选择变化
   function handlePackageSelectionChange(selection) {
     selectedPackages.value = selection
@@ -148,11 +172,13 @@ export function usePackageList(hostId) {
     packageLoading,
     packageTableData,
     packageTableDataAll,
+    packageKeyword,
     selectedPackages,
     packageFilter,
     packagePagination,
     loadPackageList,
     handlePackageFilterChange,
+    handlePackageKeywordChange,
     handlePackageSelectionChange,
     handlePackagePageChange,
     handlePackageSizeChange

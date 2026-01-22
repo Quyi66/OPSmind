@@ -18,14 +18,6 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filterParams" inline size="small">
-        <el-form-item>
-          <i class="fa fa-power-off text-muted" />
-          <span class="filter-label" style="margin-left: 4px; margin-right: 8px;">重启机器</span>
-          <el-radio-group v-model="rebootOption">
-            <el-radio value="yes">YES</el-radio>
-            <el-radio value="no">NO</el-radio>
-          </el-radio-group>
-        </el-form-item>
         <el-form-item label="IP">
           <el-input
             v-model="filterParams.host_key"
@@ -34,7 +26,7 @@
             clearable
           />
         </el-form-item>
-        <el-form-item label="KB Numbers">
+        <el-form-item label="KB编号">
           <el-input
             v-model="filterParams.update_kb_numbers"
             placeholder=""
@@ -59,7 +51,6 @@
     <div class="ops-action-bar">
       <el-button
         type="primary"
-        plain
         size="small"
         :disabled="selectedRows.length === 0"
         @click="handleBatchRollback"
@@ -69,7 +60,6 @@
       </el-button>
       <el-button
         type="danger"
-        plain
         size="small"
         :disabled="selectedRows.length === 0"
         @click="handleBatchDelete"
@@ -147,11 +137,47 @@
         @current-change="handlePageChange"
       />
     </div>
+
+    <!-- 回滚确认弹窗 -->
+    <el-dialog
+      v-model="confirmRollbackVisible"
+      :title="confirmRollbackTitle"
+      width="480px"
+      destroy-on-close
+    >
+      <div class="confirm-body">
+        <div class="confirm-tip">
+          确定执行回滚？请选择回滚完成后是否自动重启主机。
+        </div>
+        <div class="confirm-section">
+          <span class="confirm-label">重启机器</span>
+          <el-radio-group v-model="rebootOption" size="small">
+            <el-radio value="yes">YES</el-radio>
+            <el-radio value="no">NO</el-radio>
+          </el-radio-group>
+        </div>
+        <div class="confirm-section" v-if="confirmRollbackRows.length">
+          <span class="confirm-label">目标</span>
+          <div class="confirm-targets">
+            <div v-for="item in confirmRollbackRows" :key="item.id" class="confirm-target">
+              <span class="confirm-host">{{ parseHosts(item.hosts)[0] || '-' }}</span>
+              <span class="confirm-kb">{{ item.update_kb_numbers }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="handleConfirmCancel">取消</el-button>
+        <el-button type="primary" :loading="confirmRollbackLoading" @click="handleConfirmSubmit">
+          确认回滚
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { windowsRollbackApi } from '../api'
@@ -161,6 +187,18 @@ const loading = ref(false)
 
 // 重启选项
 const rebootOption = ref('no')
+
+// 回滚确认
+const confirmRollbackVisible = ref(false)
+const confirmRollbackRows = ref([])
+const confirmRollbackMode = ref('single')
+const confirmRollbackLoading = ref(false)
+
+const confirmRollbackTitle = computed(() =>
+  confirmRollbackMode.value === 'batch'
+    ? `确认回滚选中的 ${confirmRollbackRows.value.length} 条记录`
+    : '确认回滚'
+)
 
 // 筛选参数
 const filterParams = reactive({
@@ -229,7 +267,6 @@ function handleFilter() {
 function handleReset() {
   filterParams.host_key = ''
   filterParams.update_kb_numbers = ''
-  rebootOption.value = 'no'
   pagination.page = 1
   pagination.pageSize = 20
   loadData()
@@ -255,70 +292,69 @@ function handleSelectionChange(selection) {
 }
 
 // 单个回滚 - 作业代码 S9eC0m
-async function handleRollback(row) {
-  try {
-    await ElMessageBox.confirm(
-      '确定要回滚此更新吗？',
-      '确认回滚',
-      { type: 'warning' }
-    )
-
-    // 从 KB 编号中提取数字
-    const kbNumber = row.update_kb_numbers
-    const match = kbNumber?.match(/\d+/)
-    const updateKbs = match ? match[0] : kbNumber
-
-    // 构建 hosts 参数
-    const hosts = [{
-      key: row.hosts_id || row.id,
-      value: row.hosts,
-      assetType: 'windows'
-    }]
-
-    await windowsRollbackApi.rollback({
-      update_kbs: updateKbs,
-      hosts: hosts,
-      reboot: rebootOption.value
-    })
-
-    ElMessage.success('回滚任务已提交')
-    loadData()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Rollback failed:', error)
-      ElMessage.error('回滚失败')
-    }
-  }
+function handleRollback(row) {
+  rebootOption.value = 'no'
+  confirmRollbackMode.value = 'single'
+  confirmRollbackRows.value = [row]
+  confirmRollbackVisible.value = true
 }
 
 // 批量回滚 - 作业代码 HiuT3F
-async function handleBatchRollback() {
+function handleBatchRollback() {
   if (selectedRows.value.length === 0) {
     ElMessage.warning('请选择要回滚的记录')
     return
   }
+  rebootOption.value = 'no'
+  confirmRollbackMode.value = 'batch'
+  confirmRollbackRows.value = [...selectedRows.value]
+  confirmRollbackVisible.value = true
+}
 
+async function handleConfirmSubmit() {
+  if (!confirmRollbackRows.value.length) {
+    confirmRollbackVisible.value = false
+    return
+  }
+  confirmRollbackLoading.value = true
   try {
-    await ElMessageBox.confirm(
-      `确定要批量回滚选中的 ${selectedRows.value.length} 条记录吗？`,
-      '确认批量回滚',
-      { type: 'warning' }
-    )
-
-    const ids = selectedRows.value.map(item => item.id)
-    await windowsRollbackApi.batchRollback({
-      histUpdatePkgsWinIds: ids,
-      reboot: rebootOption.value
-    })
-
-    ElMessage.success('批量回滚任务已提交')
+    if (confirmRollbackMode.value === 'single') {
+      const row = confirmRollbackRows.value[0]
+      const kbNumber = row.update_kb_numbers
+      const match = kbNumber?.match(/\d+/)
+      const updateKbs = match ? match[0] : kbNumber
+      const hosts = [{
+        key: row.hosts_id || row.id,
+        value: row.hosts,
+        assetType: 'windows'
+      }]
+      await windowsRollbackApi.rollback({
+        update_kbs: updateKbs,
+        hosts: hosts,
+        reboot: rebootOption.value
+      })
+    } else {
+      const ids = confirmRollbackRows.value.map(item => item.id)
+      await windowsRollbackApi.batchRollback({
+        histUpdatePkgsWinIds: ids,
+        reboot: rebootOption.value
+      })
+    }
+    ElMessage.success('回滚任务已提交')
+    handleConfirmCancel()
     loadData()
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Batch rollback failed:', error)
-      ElMessage.error('批量回滚失败')
-    }
+    console.error('Rollback failed:', error)
+    ElMessage.error('回滚失败')
+  } finally {
+    confirmRollbackLoading.value = false
   }
+}
+
+function handleConfirmCancel() {
+  confirmRollbackVisible.value = false
+  confirmRollbackRows.value = []
+  confirmRollbackMode.value = 'single'
 }
 
 // 单个删除 - 作业代码 aJlha6
@@ -395,20 +431,17 @@ defineExpose({ refresh })
 }
 
 .filter-label {
-  font-size: 13px;
   color: #606266;
   white-space: nowrap;
 }
 
 .hosts-cell {
-  font-size: 13px;
   line-height: 1.5;
 }
 
 .more-link {
   color: #0d6efd;
   cursor: pointer;
-  font-size: 12px;
 
   &:hover {
     text-decoration: underline;
@@ -418,7 +451,49 @@ defineExpose({ refresh })
 .hosts-popover {
   max-height: 200px;
   overflow-y: auto;
-  font-size: 13px;
   line-height: 1.6;
+}
+
+.confirm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confirm-tip {
+  color: #606266;
+  line-height: 1.6;
+}
+
+.confirm-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.confirm-label {
+  width: 70px;
+  color: #606266;
+  flex-shrink: 0;
+}
+
+.confirm-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.confirm-target {
+  display: flex;
+  gap: 8px;
+  color: #303133;
+}
+
+.confirm-host {
+  min-width: 120px;
+}
+
+.confirm-kb {
+  color: #909399;
 }
 </style>

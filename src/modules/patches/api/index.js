@@ -103,8 +103,8 @@ export const patchScanApi = {
         host_id: params.host_id,
         severity: params.severity || ''
       },
-      size: params.size || 20,
-      page: params.page || 1
+      // size: params.size || 20,
+      // page: params.page || 1
     }
     return apiService.post(
       `/dts/api/dts/q/data/VAP2_LIST_PATCH_OF_ONE_MACHINE/?cacheBuster=${cacheBuster}`,
@@ -148,9 +148,7 @@ export const patchScanApi = {
       params: {
         host_id: params.host_id,
         severity: params.severity || ''
-      },
-      page: params.page || 1,
-      size: params.pageSize || 20
+      }
     }
     return apiService.post(
       `/dts/api/dts/q/data/VAP2_MACHINE_CVE_LIST/?cacheBuster=${cacheBuster}`,
@@ -192,7 +190,15 @@ export const patchInstallApi = {
    * @returns {Promise}
    */
   install(params) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/install`, params)
+    // 使用作业方式执行安装，后端期望参数形如 { params: { hosts, patchIds, hostIds, packages } }
+    return apiService.post('/jao/api/jao/jobs/QJb6B8/run', {
+      params: {
+        hosts: params.hosts || null,
+        patchIds: params.patchIds || [],
+        hostIds: params.hostIds || [],
+        packages: null
+      }
+    })
   },
 
   /**
@@ -314,7 +320,10 @@ export const patchRollbackApi = {
   rollback(params) {
     return apiService.post('/jao/api/jao/jobs/Uu3eb1/run', {
       params: {
-        histUpdateIds: params.histUpdateIds
+        histUpdateIds: params.histUpdateIds,
+        hostIds: null,
+        hosts: null,
+        patchIds: null
       }
     })
   },
@@ -375,18 +384,22 @@ export const patchLibraryApi = {
    * @param {string} params.severity - 严重程度筛选 (逗号分隔: Critical,Important,Moderate,Low)
    * @param {string} params.vendor - 厂商筛选
    * @param {string} params.is_ignore - 白名单状态 (0,1 全部 / 1 白名单 / 0 非白名单)
+   * @param {string} params.filter - 按补丁编号、概要、厂商筛选
+   * @param {number} params.page - 页码
+   * @param {number} params.size - 每页大小
    * @returns {Promise}
    */
   getPatchList(params = {}) {
     // 源系统传 params 对象 + 分页参数
     const requestBody = {
       params: {
-        severity: params.severity || 'Critical',
-        vendor: params.vendor || 'redhat',
-        is_ignore: params.is_ignore || '0,1'
+        severity: params.severity,
+        vendor: params.vendor,
+        is_ignore: params.is_ignore
       },
-      page: params.page || 1,
-      size: params.size || 20
+      page: params.page,
+      size: params.size,
+      filter: `patch_id|title|vendor:*${params.patch_id || ''}*`
     }
     return apiService.post('/dts/api/dts/q/data/VAP2_LIST_PATCH_DATE/', requestBody)
   },
@@ -668,7 +681,8 @@ export const patchLogsApi = {
         day: params.day || 7
       },
       page: params.page || 1,
-      size: params.size || 20
+      size: params.size || 20,
+      filter: params.filter || ''
     }
     return apiService.post(
       `/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${cacheBuster}`,
@@ -722,9 +736,9 @@ export const windowsVulnerabilityApi = {
   getWinMachines(params = {}) {
     return apiService.post('/dts/api/dts/q/data/VAP2_WIN_MACHINE/', {
       params: {},
-      page: params.page || 1,
-      size: params.size || 20,
-      filter: params.filter || ''
+      page: params.page,
+      size: params.size,
+      filter: `host_key|os_distro|os_version|os_arch:*${params.filter || ''}*`
     })
   },
 
@@ -744,8 +758,44 @@ export const windowsVulnerabilityApi = {
         os_arch: params.os_arch || '',
         patch_status: params.patch_status || ''
       },
+      page: params.page,
+      size: params.size
+    })
+  },
+
+  /**
+   * 获取单台 Windows 主机信息
+   * POST /dts/api/dts/q/data/VAP2_GET_WIN_MACHINE_INFO/
+   * @param {Object} params
+   * @param {string} params.host_id - 主机 ID
+   * @param {string} params.host_key - 主机 IP
+   * @returns {Promise}
+   */
+  getWinMachineInfo(params = {}) {
+    return apiService.post('/dts/api/dts/q/data/VAP2_GET_WIN_MACHINE_INFO/', {
+      params: {
+        host_id: params.host_id || '',
+        host_key: params.host_key || ''
+      }
+    })
+  },
+
+  /**
+   * 获取单台 Windows 主机的补丁列表
+   * POST /dts/api/dts/q/data/VAP2_GET_WIN_MACHINE_PATCH_INFO/
+   * @param {Object} params
+   * @param {string} params.host_id - 主机 ID
+   * @param {string} params.host_key - 主机 IP
+   * @returns {Promise}
+   */
+  getWinMachinePatchInfo(params = {}) {
+    return apiService.post('/dts/api/dts/q/data/VAP2_GET_WIN_MACHINE_PATCH_INFO/', {
+      params: {
+        host_id: params.host_id || '',
+        host_key: params.host_key || ''
+      },
       page: params.page || 1,
-      size: params.size || 20
+      size: params.size || 10
     })
   },
 
@@ -850,6 +900,40 @@ export const windowsVulnerabilityApi = {
     return apiService.post('/jao/api/jao/jobs/Fteqeo/run', {
       params: {
         host_ids: params.host_ids
+      }
+    })
+  },
+
+  /**
+   * 获取选择的补丁对应主机
+   */
+  getWinPatchStatusInfo(ids = []) {
+    return apiService.post('/dts/api/dts/q/data/VAP2_PATCH_WIN_STATUS_INFO/', {
+      params: {
+        ids
+      }
+    })
+  },
+
+  /**
+   * 获取选择的补丁 KB 列表
+   */
+  getWinPatchPatchInfo(ids = []) {
+    return apiService.post('/dts/api/dts/q/data/VAP2_PATCH_WIN_PATCH_INFO/', {
+      params: {
+        ids
+      }
+    })
+  },
+
+  /**
+   * 执行补丁修复
+   */
+  executeWinPatchFix(params = {}) {
+    return apiService.post('/jao/api/jao/jobs/EAsxlK/run', {
+      params: {
+        winPatchStatusIds: params.winPatchStatusIds || [],
+        reboot: params.reboot || 'no'
       }
     })
   }
@@ -1037,6 +1121,27 @@ export const windowsUpdateApi = {
       page: 1,
       size: 500
     })
+  },
+
+  /**
+   * 获取选中 KB 的受影响主机列表
+   * POST /dts/api/dts/q/data/VAP2_PATCH_AFFECTED_MACHINES/
+   * @param {Object} params - 查询参数
+   * @param {Array<string>} params.kb_numbers - KB 编号列表
+   * @returns {Promise}
+   */
+  getAffectedMachinesByKbNumbers(params = {}) {
+    const cacheBuster = Date.now()
+    return apiService.post(
+      `/dts/api/dts/q/data/VAP2_PATCH_AFFECTED_MACHINES/?cacheBuster=${cacheBuster}`,
+      {
+        params: {
+          kb_numbers: params.kb_numbers || []
+        },
+        page: 1,
+        size: 500
+      }
+    )
   }
 }
 

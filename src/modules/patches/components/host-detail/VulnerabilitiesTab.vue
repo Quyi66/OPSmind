@@ -1,7 +1,7 @@
 <template>
   <div class="tab-content">
     <!-- 筛选栏 -->
-    <div class="ops-filter-bar">
+    <!-- <div class="ops-filter-bar" style="margin-bottom: 8px;">
       <el-checkbox-group v-model="selectedVulSeverities" size="small" @change="handleVulFilterChange">
         <el-checkbox label="Critical">
           <el-tag type="danger" size="small">严重</el-tag>
@@ -16,6 +16,22 @@
           <el-tag type="info" size="small">低</el-tag>
         </el-checkbox>
       </el-checkbox-group>
+    </div> -->
+    <div class="ops-filter-bar" style="margin-bottom: 8px;">
+      <div style="line-height: 32px;">关键词</div>
+      <el-input
+        v-model="vulKeyword"
+        size="small"
+        placeholder="搜索CVE/补丁/包名/状态等"
+        clearable
+        style="width: 260px; margin-left: 12px;"
+        @input="handleVulKeywordChange"
+        @clear="handleVulKeywordChange"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
     </div>
 
     <!-- 操作栏 -->
@@ -147,6 +163,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate, formatPackages, getSeverityType, getPatchStatusType, getPatchStatusText } from '../../composables/useFormatters'
 import { useVulnerabilityList } from '../../composables/useVulnerabilityList'
+import { Search } from '@element-plus/icons-vue'
 
 const props = defineProps({
   hostId: {
@@ -166,6 +183,8 @@ const {
   vulPagination,
   loadVulnerabilityList,
   handleVulFilterChange,
+  vulKeyword,
+  handleVulKeywordChange,
   handleVulSelectionChange,
   handleVulPageChange,
   handleVulSizeChange

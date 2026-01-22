@@ -28,7 +28,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="操作类型">
-            <el-select v-model="actionFilter" placeholder="操作类型" style="width: 120px" clearable>
+            <el-select v-model="actionFilter" placeholder="操作类型" style="width: 150px" clearable>
               <el-option label="全部" value="all" />
               <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
               <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
@@ -38,7 +38,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
-            <el-input v-model="searchText" placeholder="搜索" style="width: 150px" clearable>
+            <el-input v-model="searchText" placeholder="搜索" style="width: 200px" clearable>
               <template #prefix>
                 <el-icon>
                   <Search />
@@ -111,13 +111,20 @@
               {{ calculateDuration(row.start_time, row.end_time) }}
             </template>
           </el-table-column>
+          <el-table-column label="操作" width="100">
+            <template #default="{ row }">
+              <el-button text type="primary" @click="handleViewRunResult(row)">
+                查看
+              </el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
         <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 25, 50, 100]" :total="filteredTableData.length"
+          :page-sizes="[10, 25, 50, 100]" :total="pagination.total"
           layout="total, sizes, prev, pager, next, jumper" background @size-change="handleSizeChange"
           @current-change="handlePageChange" />
       </div>
@@ -126,28 +133,51 @@
     <!-- 漏洞报表 Tab -->
     <template v-if="activeTab === 'vulnerability'">
       <div class="ops-filter-bar">
-        <el-input v-model="vulFilterText" placeholder="主机/KB编号" size="small" style="width: 200px" clearable
-          @keyup.enter="handleVulSearch" @clear="handleVulSearch">
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
+        <el-form inline size="small">
+          <el-form-item label="搜索">
+            <el-input
+              v-model="vulFilterText"
+              placeholder="主机/KB编号"
+              size="small"
+              style="width: 220px"
+              clearable
+              @keyup.enter="handleVulSearch"
+              @clear="handleVulSearch"
+            >
+              <template #prefix>
+                <i class="fa fa-search" />
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="vulLoading" @click="handleVulSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleVulReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <div class="ops-action-bar">
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="vulLoading" @click="loadVulData" title="刷新">
+          <el-icon v-show="!vulLoading">
+            <Refresh />
+          </el-icon>
+        </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <div class="table-toolbar-icons">
-          <el-button class="toolbar-icon-btn" circle :loading="vulLoading" @click="loadVulData" title="刷新">
-            <el-icon v-show="!vulLoading">
-              <Refresh />
-            </el-icon>
-          </el-button>
-        </div>
         <el-table v-loading="vulLoading" :data="vulTableData" stripe max-height="calc(100vh - 320px)">
           <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
           <el-table-column prop="os" label="OS" width="100" />
           <el-table-column prop="os_version" label="OS版本" width="150" />
-          <el-table-column prop="vul_id" label="KB编号" width="120" />
+          <el-table-column prop="vul_id" label="KB编号" min-width="120" />
           <el-table-column prop="scan_time" label="扫描时间" width="160">
             <template #default="{ row }">
               {{ formatTimestamp(row.scan_time) }}
@@ -167,23 +197,46 @@
     <!-- 补丁报表 Tab -->
     <template v-if="activeTab === 'patch'">
       <div class="ops-filter-bar">
-        <el-input v-model="patchFilterText" placeholder="主机/补丁编号/严重性" size="small" style="width: 220px" clearable
-          @keyup.enter="handlePatchSearch" @clear="handlePatchSearch">
-          <template #prefix>
-            <i class="fa fa-search" />
-          </template>
-        </el-input>
+        <el-form inline size="small">
+          <el-form-item label="搜索">
+            <el-input
+              v-model="patchFilterText"
+              placeholder="主机/补丁编号/严重性"
+              size="small"
+              style="width: 240px"
+              clearable
+              @keyup.enter="handlePatchSearch"
+              @clear="handlePatchSearch"
+            >
+              <template #prefix>
+                <i class="fa fa-search" />
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="patchLoading" @click="handlePatchSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handlePatchReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <div class="ops-action-bar">
+        <span style="flex: 1;"></span>
+        <el-button class="toolbar-icon-btn" circle size="small" :loading="patchLoading" @click="loadPatchData" title="刷新">
+          <el-icon v-show="!patchLoading">
+            <Refresh />
+          </el-icon>
+        </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <div class="table-toolbar-icons">
-          <el-button class="toolbar-icon-btn" circle :loading="patchLoading" @click="loadPatchData" title="刷新">
-            <el-icon v-show="!patchLoading">
-              <Refresh />
-            </el-icon>
-          </el-button>
-        </div>
         <el-table v-loading="patchLoading" :data="patchTableData" stripe max-height="calc(100vh - 320px)">
           <el-table-column prop="host_key" label="主机" min-width="100" show-overflow-tooltip />
           <el-table-column prop="os_distro" label="OS" width="100" />
@@ -232,42 +285,11 @@ const activeTab = ref('operation')
 
 // ========== 操作记录 Tab ==========
 const loading = ref(false)
-const allTableData = ref([]) // 原始数据，用于前端筛选
+const tableData = ref([])
 const pagination = reactive({
   page: 1,
   pageSize: 10,
   total: 0
-})
-
-// 前端筛选后的数据
-const filteredTableData = computed(() => {
-  if (!searchText.value) {
-    return allTableData.value
-  }
-  const keyword = searchText.value.toLowerCase()
-  return allTableData.value.filter(row => {
-    // 搜索多个字段：操作、执行引擎节点、结果、用户
-    const action = translateAction(row.action || '').toLowerCase()
-    const ataNode = (row.ata_node || '').toLowerCase()
-    const message = translateMessage(row.message || '').toLowerCase()
-    const username = (row.username || '').toLowerCase()
-    return action.includes(keyword) ||
-      ataNode.includes(keyword) ||
-      message.includes(keyword) ||
-      username.includes(keyword)
-  })
-})
-
-// 当前页展示的数据
-const tableData = computed(() => {
-  const start = (pagination.page - 1) * pagination.pageSize
-  const end = start + pagination.pageSize
-  return filteredTableData.value.slice(start, end)
-})
-
-// 总页数
-const totalPages = computed(() => {
-  return Math.ceil(filteredTableData.value.length / pagination.pageSize) || 1
 })
 
 // 筛选状态
@@ -278,15 +300,6 @@ const engineFilter = ref('')
 const searchText = ref('')
 const filters = reactive({
   keyword: ''
-})
-
-// 分页信息（基于筛选后的数据）
-const paginationInfo = computed(() => {
-  const total = filteredTableData.value.length
-  if (total === 0) return '0-0/0'
-  const start = (pagination.page - 1) * pagination.pageSize + 1
-  const end = Math.min(pagination.page * pagination.pageSize, total)
-  return `${start}-${end}/${total}`
 })
 
 // 运行结果对话框状态
@@ -485,17 +498,20 @@ function calculateDuration(startTime, endTime) {
 async function loadData() {
   loading.value = true
   try {
+    const keywordFilter = searchText.value
+      ? `message|username:*${searchText.value}*`
+      : ''
     const response = await patchLogsApi.getLogs({
-      page: 1,
-      size: 9999, // 获取所有数据用于前端筛选
+      page: pagination.page,
+      size: pagination.pageSize,
       action: actionFilter.value,
       status: statusFilter.value,
-      day: dayFilter.value
+      day: dayFilter.value,
+      filter: keywordFilter
     })
     const data = response?.data || response
-    allTableData.value = data?.records || []
-    pagination.total = allTableData.value.length
-    pagination.page = 1 // 重置到第一页
+    tableData.value = data?.records || []
+    pagination.total = data?.total || 0
   } catch (error) {
     console.error('Failed to load logs:', error)
     ElMessage.error('加载数据失败')
@@ -519,29 +535,15 @@ function handleReset() {
   loadData()
 }
 
-// 搜索文本改变时仅前端过滤（实时搜索）
-function handleSearchInput() {
-  pagination.page = 1
-  // filteredTableData 是 computed，会自动响应 searchText 的变化
-}
-
-// 监听筛选后数据变化，确保页码有效
-watch(filteredTableData, () => {
-  const maxPage = Math.ceil(filteredTableData.value.length / pagination.pageSize) || 1
-  if (pagination.page > maxPage) {
-    pagination.page = 1
-  }
-})
-
 function handlePageChange(page) {
   pagination.page = page
-  // 前端分页，不需要调用API
+  loadData()
 }
 
 function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
-  // 前端分页，不需要调用API
+  loadData()
 }
 
 // 查看运行结果
@@ -580,6 +582,13 @@ function handleVulSearch() {
   loadVulData()
 }
 
+function handleVulReset() {
+  vulFilterText.value = ''
+  vulPagination.page = 1
+  vulPagination.pageSize = 10
+  loadVulData()
+}
+
 function handleVulPageChange(page) {
   vulPagination.page = page
   loadVulData()
@@ -613,6 +622,13 @@ async function loadPatchData() {
 
 function handlePatchSearch() {
   patchPagination.page = 1
+  loadPatchData()
+}
+
+function handlePatchReset() {
+  patchFilterText.value = ''
+  patchPagination.page = 1
+  patchPagination.pageSize = 10
   loadPatchData()
 }
 

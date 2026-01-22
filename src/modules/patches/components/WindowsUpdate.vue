@@ -1,7 +1,7 @@
 <template>
   <div class="ops-page-layout">
     <!-- 筛选区 -->
-    <div class="ops-filter-bar filter-wrap">
+    <div class="ops-filter-bar filter-wrap" style="margin-bottom: 8px;">
       <el-checkbox-group v-model="categoryFilter" @change="handleFilter">
         <el-checkbox value="Security Updates">
           <el-tag type="danger" size="small" effect="dark">安全</el-tag>
@@ -80,22 +80,21 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="kb_number" label="KB编号" min-width="120">
+        <el-table-column prop="kb_number" label="KB编号" width="150">
           <template #default="{ row }">
-            <a
+            <el-button
               v-if="row.kb_number"
-              :href="`https://support.microsoft.com/zh-cn/help/${row.kb_number?.replace('KB', '')}`"
-              target="_blank"
-              class="kb-link"
-            >
+              text
+              type="primary"
+              @click="openKb(row.kb_number)">
               {{ row.kb_number }}
-            </a>
+            </el-button>
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="category_name" label="类型" min-width="100" />
-        <el-table-column prop="title" label="描述" min-width="300" show-overflow-tooltip />
-        <el-table-column prop="affect_machines" label="受影响主机" min-width="120">
+        <el-table-column prop="category_name" label="类型" min-width="120" />
+        <el-table-column prop="title" label="描述" min-width="400" show-overflow-tooltip />
+        <el-table-column prop="affect_machines" label="受影响主机" width="120">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -149,6 +148,95 @@
         <el-button @click="affectedMachinesVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 批量修复选择主机对话框 -->
+    <el-dialog
+      v-model="fixSelectionVisible"
+      title="修复选中漏洞"
+      width="920px"
+      destroy-on-close
+    >
+      <div v-loading="fixSelectionLoading" class="fix-selection">
+        <div class="fix-selection__card">
+          <div class="fix-selection__card-header">
+            <i class="fa fa-briefcase-medical text-muted" />
+            <span class="fix-selection__card-title">更新漏洞</span>
+          </div>
+          <div class="fix-selection__card-body">
+            <div v-if="selectedKbNumbers.length" class="fix-selection__kb-list">
+              <el-tag v-for="kb in selectedKbNumbers" :key="kb" type="info" effect="plain" size="small">
+                {{ kb }}
+              </el-tag>
+            </div>
+            <el-empty v-else description="暂无选中的漏洞" />
+          </div>
+        </div>
+
+        <div class="fix-selection__card">
+          <div class="fix-selection__card-header">
+            <i class="fa fa-server text-muted" />
+            <span class="fix-selection__card-title">更新主机</span>
+            <div class="fix-selection__spacer" />
+            <el-input
+              v-model="fixSelectionFilter"
+              placeholder="搜索主机..."
+              size="small"
+              style="width: 200px"
+              clearable
+            >
+              <template #prefix>
+                <i class="fa fa-search" />
+              </template>
+            </el-input>
+          </div>
+          <div class="fix-selection__card-body">
+            <el-table
+              ref="fixSelectionTableRef"
+              :data="filteredFixSelection"
+              size="small"
+              stripe
+              max-height="420"
+              @selection-change="handleFixSelectionChange"
+            >
+              <el-table-column type="selection" width="50" />
+              <el-table-column prop="host_key" label="主机" min-width="140" />
+              <el-table-column prop="os_distro" label="OS" min-width="250" show-overflow-tooltip />
+              <el-table-column prop="os_version" label="OS版本" min-width="110" />
+              <el-table-column prop="os_arch" label="OS架构" min-width="90" />
+              <el-table-column prop="scan_date" label="扫描时间" min-width="130">
+                <template #default="{ row }">
+                  {{ formatDateShort(row.scan_date) }}
+                </template>
+              </el-table-column>
+              <!-- <el-table-column prop="patch_status" label="状态" min-width="110">
+                <template #default="{ row }">
+                  <el-tag :type="getPatchStatusType(row.patch_status)" size="small">
+                    {{ row.patch_status || '-' }}
+                  </el-tag>
+                </template>
+              </el-table-column> -->
+            </el-table>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="fixSelectionVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="fixSelectionSelectedIds.length === 0"
+          @click="openFixConfirm"
+        >
+          开始修复
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 修复确认对话框 -->
+    <FixSelectedVulnsDialog
+      v-model="fixDialogVisible"
+      :ids="fixDialogIds"
+      @submitted="handleFixSubmitted"
+    />
   </div>
 </template>
 
@@ -156,6 +244,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { windowsUpdateApi } from '../api'
+import FixSelectedVulnsDialog from './dialogs/FixSelectedVulnsDialog.vue'
 
 // 加载状态
 const loading = ref(false)
@@ -184,6 +273,16 @@ const affectedMachinesVisible = ref(false)
 const affectedMachinesLoading = ref(false)
 const affectedMachinesList = ref([])
 const selectedPatch = ref(null)
+
+// 批量修复
+const fixSelectionVisible = ref(false)
+const fixSelectionLoading = ref(false)
+const fixSelectionList = ref([])
+const fixSelectionFilter = ref('')
+const fixSelectionTableRef = ref(null)
+const fixSelectionSelectedIds = ref([])
+const fixDialogVisible = ref(false)
+const fixDialogIds = ref([])
 
 // 补丁状态样式
 function getPatchStatusType(status) {
@@ -237,15 +336,63 @@ function handleSelectionChange(selection) {
 }
 
 // 修复选中漏洞
-function handleFixSelected() {
+async function handleFixSelected() {
   if (selectedKbNumbers.value.length === 0) {
     ElMessage.warning('请先选择要修复的漏洞')
     return
   }
-  // 跳转到修复页面，传递 kb_numbers 参数
-  const kbNumbers = selectedKbNumbers.value.join(',')
-  ElMessage.info(`修复漏洞: ${kbNumbers}`)
-  // TODO: 跳转到页面 05pYMf
+
+  fixSelectionVisible.value = true
+  fixSelectionLoading.value = true
+  fixSelectionFilter.value = ''
+  fixSelectionSelectedIds.value = []
+
+  try {
+    const response = await windowsUpdateApi.getAffectedMachinesByKbNumbers({
+      kb_numbers: selectedKbNumbers.value
+    })
+    const records = response?.records || response?.data?.records || []
+    fixSelectionList.value = records
+    if (!records.length) {
+      ElMessage.info('所选漏洞暂无可修复的主机')
+    }
+  } catch (error) {
+    console.error('Failed to load affected machines for fix:', error)
+    ElMessage.error('加载受影响主机失败')
+  } finally {
+    fixSelectionLoading.value = false
+  }
+}
+
+const filteredFixSelection = computed(() => {
+  if (!fixSelectionFilter.value) return fixSelectionList.value
+  const keyword = fixSelectionFilter.value.toLowerCase()
+  return fixSelectionList.value.filter(item => {
+    return (
+      (item.host_key || '').toLowerCase().includes(keyword) ||
+      (item.os_distro || '').toLowerCase().includes(keyword) ||
+      (item.kb_number || '').toLowerCase().includes(keyword)
+    )
+  })
+})
+
+function handleFixSelectionChange(selection) {
+  fixSelectionSelectedIds.value = selection.map(row => row.id).filter(Boolean)
+}
+
+function openFixConfirm() {
+  if (fixSelectionSelectedIds.value.length === 0) {
+    ElMessage.warning('请先选择要修复的主机')
+    return
+  }
+  fixDialogIds.value = [...fixSelectionSelectedIds.value]
+  fixDialogVisible.value = true
+}
+
+function handleFixSubmitted() {
+  fixDialogVisible.value = false
+  fixSelectionVisible.value = false
+  loadData()
 }
 
 // 查看受影响主机
@@ -270,6 +417,22 @@ async function handleViewAffectedMachines(row) {
 // 导出
 function handleExport() {
   ElMessage.info('导出功能开发中...')
+}
+
+function openKb(kbNumber) {
+  if (!kbNumber) return
+  const num = kbNumber.replace('KB', '')
+  window.open(`https://support.microsoft.com/zh-cn/help/${num}`, '_blank')
+}
+
+function formatDateShort(dateStr) {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return '-'
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function refresh() {
@@ -316,5 +479,44 @@ defineExpose({ refresh })
     background: #5a6268;
     color: #fff;
   }
+}
+
+.fix-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fix-selection__card {
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.fix-selection__card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 0;
+  font-weight: 600;
+  color: #303133;
+}
+
+.fix-selection__card-title {
+  font-size: 14px;
+}
+
+.fix-selection__card-body {
+  padding: 8px 16px 14px;
+}
+
+.fix-selection__kb-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fix-selection__spacer {
+  flex: 1;
 }
 </style>
