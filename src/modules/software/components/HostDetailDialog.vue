@@ -71,13 +71,14 @@
             </template>
           </el-table-column>
           <el-table-column label="操作" width="176" fixed="right">
-            <template #default="{ row }">
+            <template #default="{ row, $index }">
               <el-button
                 v-if="row.repo_status === '未启用'"
                 text
                 type="success"
                 size="small"
-                @click="handleEnableRepo(row)"
+                :loading="isRepoActionLoading(row, $index)"
+                @click="handleEnableRepo(row, $index)"
               >
                 启用
               </el-button>
@@ -86,7 +87,8 @@
                 text
                 type="warning"
                 size="small"
-                @click="handleDisableRepo(row)"
+                :loading="isRepoActionLoading(row, $index)"
+                @click="handleDisableRepo(row, $index)"
               >
                 禁用
               </el-button>
@@ -167,6 +169,7 @@
             type="primary"
             size="small"
             :disabled="selectedInstalledPackages.length === 0"
+            :loading="uninstallSelectedLoading"
             @click="handleUninstallSelected"
           >
             <i class="fa fa-chevron-circle-right" /> 卸载选中的软件包
@@ -175,6 +178,7 @@
             type="primary"
             size="small"
             :disabled="selectedInstalledPackages.length === 0"
+            :loading="upgradeSelectedLoading"
             @click="handleUpgradeSelected"
           >
             <i class="fa fa-upload" /> 升级选中的软件包
@@ -183,9 +187,10 @@
             type="primary"
             size="small"
             :disabled="selectedInstalledPackages.length === 0"
+            :loading="rollbackSelectedLoading"
             @click="handleRollbackSelected"
           >
-            <i class="fa fa-undo-alt" /> 回退选中的软件包
+            <i class="fa fa-undo-alt" /> 回滚选中的软件包
           </el-button>
         </div>
         <el-table
@@ -215,7 +220,7 @@
             </template>
           </el-table-column>
           <el-table-column label="操作" width="102" fixed="right">
-            <template #default="{ row }">
+            <template #default="{ row, $index }">
               <el-button
                 v-if="row.available_pkg_version !== '无'"
                 text
@@ -230,9 +235,10 @@
                 text
                 type="primary"
                 size="small"
-                @click="handleRollbackPackage(row)"
+                :loading="isInstalledActionLoading(row, $index)"
+                @click="handleRollbackPackage(row, $index)"
               >
-                回退
+                回滚
               </el-button>
             </template>
           </el-table-column>
@@ -258,6 +264,7 @@
 import { ref, reactive, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { hostOverviewApi } from '../api'
+import { useJobPolling } from '@/composables/useJobPolling'
 
 const props = defineProps({
   modelValue: {
@@ -278,6 +285,8 @@ const emit = defineEmits(['update:modelValue', 'refresh'])
 
 const dialogVisible = ref(false)
 const activeTab = ref('repos')
+const repoActionLoading = ref({})
+const { startPolling } = useJobPolling()
 
 // 主机信息
 const machineInfo = ref({
@@ -297,6 +306,30 @@ const reposPagination = reactive({
   size: 10,
   total: 0
 })
+
+function resolveRepoKeys(row, index = 0) {
+  const repoId = row?.refid || row?.repo_id || row?.repo_name || row?.repo_file
+  const loadingKey = repoId || [
+    'row',
+    index,
+    row?.repo_status || 'unknown-status'
+  ].join('|')
+  return { repoId, loadingKey }
+}
+
+function setRepoActionLoading(loadingKey, status) {
+  if (!loadingKey) return
+  repoActionLoading.value = {
+    ...repoActionLoading.value,
+    [loadingKey]: status
+  }
+}
+
+function isRepoActionLoading(row, index) {
+  const { loadingKey } = resolveRepoKeys(row, index)
+  if (!loadingKey) return false
+  return !!repoActionLoading.value[loadingKey]
+}
 
 // 可用软件包
 const availableTableRef = ref(null)
@@ -319,6 +352,30 @@ const installedPagination = reactive({
   size: 10,
   total: 0
 })
+const uninstallSelectedLoading = ref(false)
+const upgradeSelectedLoading = ref(false)
+const rollbackSelectedLoading = ref(false)
+const installedActionLoading = ref({})
+
+function resolveInstalledKeys(row, index = 0) {
+  const pkgId = row?.pkg_id || row?.pkg_name
+  const loadingKey = pkgId || ['installed-row', index, row?.pkg_version || ''].join('|')
+  return { pkgId, loadingKey }
+}
+
+function setInstalledActionLoading(loadingKey, status) {
+  if (!loadingKey) return
+  installedActionLoading.value = {
+    ...installedActionLoading.value,
+    [loadingKey]: status
+  }
+}
+
+function isInstalledActionLoading(row, index) {
+  const { loadingKey } = resolveInstalledKeys(row, index)
+  if (!loadingKey) return false
+  return !!installedActionLoading.value[loadingKey]
+}
 
 // 格式化日期
 function formatDate(timestamp) {
@@ -426,20 +483,43 @@ function handleTabChange(tabName) {
 }
 
 // 启用仓库
-async function handleEnableRepo(row) {
+async function handleEnableRepo(row, index) {
+  const { repoId, loadingKey } = resolveRepoKeys(row, index)
   try {
     await ElMessageBox.confirm('确认启用该镜像源？', '确认', { type: 'info' })
-    await hostOverviewApi.toggleRepoStatus({
-      repoName: row.refid,
+    setRepoActionLoading(loadingKey, true)
+
+    const response = await hostOverviewApi.toggleRepoStatus({
+      repoName: repoId,
       repoStatus: 'yes',
       hostId: props.hostId,
       repoUrl: row.repo_baseurl,
       repoDesc: row.repo_name,
       repoFile: row.repo_file
     })
-    ElMessage.success('启用成功')
-    loadRepos()
+
+    const data = response?.data ?? response
+    const runResult = Array.isArray(data) ? data[0] : data
+
+    if (runResult?.runId) {
+      startPolling(runResult.runId, {
+        interval: 1000,
+        successMessage: '启用成功',
+        errorMessage: '启用失败',
+        onSuccess: () => {
+          loadRepos()
+        },
+        onComplete: () => {
+          setRepoActionLoading(loadingKey, false)
+        }
+      })
+    } else {
+      ElMessage.success('启用成功')
+      loadRepos()
+      setRepoActionLoading(loadingKey, false)
+    }
   } catch (error) {
+    setRepoActionLoading(loadingKey, false)
     if (error !== 'cancel') {
       ElMessage.error('启用失败')
     }
@@ -447,20 +527,43 @@ async function handleEnableRepo(row) {
 }
 
 // 禁用仓库
-async function handleDisableRepo(row) {
+async function handleDisableRepo(row, index) {
+  const { repoId, loadingKey } = resolveRepoKeys(row, index)
   try {
     await ElMessageBox.confirm('确认禁用该镜像源？', '确认', { type: 'warning' })
-    await hostOverviewApi.toggleRepoStatus({
-      repoName: row.refid,
+    setRepoActionLoading(loadingKey, true)
+
+    const response = await hostOverviewApi.toggleRepoStatus({
+      repoName: repoId,
       repoStatus: 'no',
       hostId: props.hostId,
       repoUrl: row.repo_baseurl,
       repoDesc: row.repo_name,
       repoFile: row.repo_file
     })
-    ElMessage.success('禁用成功')
-    loadRepos()
+
+    const data = response?.data ?? response
+    const runResult = Array.isArray(data) ? data[0] : data
+
+    if (runResult?.runId) {
+      startPolling(runResult.runId, {
+        interval: 1000,
+        successMessage: '禁用成功',
+        errorMessage: '禁用失败',
+        onSuccess: () => {
+          loadRepos()
+        },
+        onComplete: () => {
+          setRepoActionLoading(loadingKey, false)
+        }
+      })
+    } else {
+      ElMessage.success('禁用成功')
+      loadRepos()
+      setRepoActionLoading(loadingKey, false)
+    }
   } catch (error) {
+    setRepoActionLoading(loadingKey, false)
     if (error !== 'cancel') {
       ElMessage.error('禁用失败')
     }
@@ -537,13 +640,35 @@ async function handleUninstallSelected() {
   const pkgNames = selectedInstalledPackages.value.map(pkg => pkg.pkg_name).join(',')
   try {
     await ElMessageBox.confirm('确认卸载选中的软件包？', '确认', { type: 'warning' })
-    await hostOverviewApi.uninstallPackages({
+    uninstallSelectedLoading.value = true
+
+    const response = await hostOverviewApi.uninstallPackages({
       pkgList: pkgNames,
       hostId: props.hostId
     })
-    ElMessage.success('卸载任务已提交')
-    loadInstalledPackages()
+
+    const data = response?.data ?? response
+    const runResult = Array.isArray(data) ? data[0] : data
+
+    if (runResult?.runId) {
+      startPolling(runResult.runId, {
+        interval: 2000,
+        successMessage: '卸载成功',
+        errorMessage: '卸载失败',
+        onSuccess: () => {
+          loadInstalledPackages()
+        },
+        onComplete: () => {
+          uninstallSelectedLoading.value = false
+        }
+      })
+    } else {
+      ElMessage.success('卸载任务已提交')
+      loadInstalledPackages()
+      uninstallSelectedLoading.value = false
+    }
   } catch (error) {
+    uninstallSelectedLoading.value = false
     if (error !== 'cancel') {
       ElMessage.error('卸载失败')
     }
@@ -555,34 +680,59 @@ async function handleUpgradeSelected() {
   const pkgNames = selectedInstalledPackages.value.map(pkg => pkg.pkg_name).join(',')
   try {
     await ElMessageBox.confirm('确认升级选中的软件包？', '确认', { type: 'info' })
-    await hostOverviewApi.upgradePackages({
+    upgradeSelectedLoading.value = true
+
+    const response = await hostOverviewApi.upgradePackages({
       updatePkgs: pkgNames,
       hostId: props.hostId
     })
-    ElMessage.success('升级任务已提交')
-    loadInstalledPackages()
+
+    const data = response?.data ?? response
+    const runResult = Array.isArray(data) ? data[0] : data
+
+    if (runResult?.runId) {
+      startPolling(runResult.runId, {
+        interval: 2000,
+        successMessage: '升级成功',
+        errorMessage: '升级失败',
+        onSuccess: () => {
+          loadInstalledPackages()
+        },
+        onComplete: () => {
+          upgradeSelectedLoading.value = false
+        }
+      })
+    } else {
+      ElMessage.success('升级任务已提交')
+      loadInstalledPackages()
+      upgradeSelectedLoading.value = false
+    }
   } catch (error) {
+    upgradeSelectedLoading.value = false
     if (error !== 'cancel') {
       ElMessage.error('升级失败')
     }
   }
 }
 
-// 回退选中的软件包
+// 回滚选中的软件包
 async function handleRollbackSelected() {
   const pkgNames = selectedInstalledPackages.value.map(pkg => pkg.pkg_name).join(',')
   try {
-    await ElMessageBox.confirm('确认回退选中的软件包？', '确认', { type: 'warning' })
+    await ElMessageBox.confirm('确认回滚选中的软件包？', '确认', { type: 'warning' })
+    rollbackSelectedLoading.value = true
     await hostOverviewApi.rollbackPackages({
       updatePkgs: pkgNames,
       hostId: props.hostId
     })
-    ElMessage.success('回退任务已提交')
+    ElMessage.success('回滚任务已提交')
     loadInstalledPackages()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('回退失败')
+      ElMessage.error('回滚失败')
     }
+  } finally {
+    rollbackSelectedLoading.value = false
   }
 }
 
@@ -603,20 +753,24 @@ async function handleUpgradePackage(row) {
   }
 }
 
-// 回退单个软件包
-async function handleRollbackPackage(row) {
+// 回滚单个软件包
+async function handleRollbackPackage(row, index) {
+  const { loadingKey } = resolveInstalledKeys(row, index)
   try {
-    await ElMessageBox.confirm('确认回退该软件包？', '确认', { type: 'warning' })
+    await ElMessageBox.confirm('确认回滚该软件包？', '确认', { type: 'warning' })
+    setInstalledActionLoading(loadingKey, true)
     await hostOverviewApi.rollbackPackages({
       updatePkgs: row.pkg_name,
       hostId: props.hostId
     })
-    ElMessage.success('回退任务已提交')
+    ElMessage.success('回滚任务已提交')
     loadInstalledPackages()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('回退失败')
+      ElMessage.error('回滚失败')
     }
+  } finally {
+    setInstalledActionLoading(loadingKey, false)
   }
 }
 </script>

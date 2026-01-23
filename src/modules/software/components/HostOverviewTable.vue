@@ -49,14 +49,15 @@
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column prop="os_distro" label="OS" width="100" />
+        <el-table-column prop="os_distro" label="OS" min-width="120" />
         <el-table-column prop="os_version" label="OS版本" width="150" />
         <el-table-column prop="repo_count" label="已配置仓库" width="120" />
         <el-table-column prop="installed_pkgs_count" label="已安装软件包" width="140">
           <template #default="{ row }">
-            <el-button type="info" link @click="handleInstalledClick(row)">
+            {{ row.installed_pkgs_count }}
+            <!-- <el-button type="primary" text @click="handleInstalledClick(row)">
               {{ row.installed_pkgs_count }}
-            </el-button>
+            </el-button> -->
           </template>
         </el-table-column>
         <el-table-column prop="scan_date" label="上一次扫描时间" width="180">

@@ -127,8 +127,8 @@ export const hostOverviewApi = {
    * 对应作业: 1RR26y
    */
   uninstallPackages(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
-      jobCode: '1RR26y',
+    return apiService.post('/jao/api/jao/jobs/1RR26y/run', {
+      // jobCode: '1RR26y',
       params: {
         hosts: params.hostId,
         pkg_list: params.pkgList
@@ -141,8 +141,7 @@ export const hostOverviewApi = {
    * 对应作业: aXEihQ
    */
   upgradePackages(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
-      jobCode: 'aXEihQ',
+    return apiService.post('/jao/api/jao/jobs/aXEihQ/run', {
       params: {
         update_pkgs: params.updatePkgs,
         hosts: params.hostId
@@ -155,8 +154,7 @@ export const hostOverviewApi = {
    * 对应作业: B5KDp0
    */
   rollbackPackages(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
-      jobCode: 'B5KDp0',
+    return apiService.post('/jao/api/jao/jobs/B5KDp0/run', {
       params: {
         update_pkgs: params.updatePkgs,
         hosts: params.hostId
@@ -181,8 +179,7 @@ export const hostOverviewApi = {
    * 对应作业: gnLGFi
    */
   toggleRepoStatus(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
-      jobCode: 'gnLGFi',
+    return apiService.post('/jao/api/jao/jobs/gnLGFi/run', {
       params: {
         repo_name: params.repoName,
         repo_status: params.repoStatus, // 'yes' or 'no'
