@@ -4,12 +4,18 @@
     <el-tabs v-model="activeTab" class="ops-tabs" @tab-change="handleTabChange">
       <el-tab-pane name="group">
         <template #label>
-          <span><i class="fa fa-code-branch" style="margin-right: 4px"></i>分组</span>
+          <span>
+            <i class="fa fa-code-branch" style="margin-right: 4px"></i>
+            分组
+          </span>
         </template>
       </el-tab-pane>
       <el-tab-pane name="tag">
         <template #label>
-          <span><i class="fa fa-tags" style="margin-right: 4px"></i>标签</span>
+          <span>
+            <i class="fa fa-tags" style="margin-right: 4px"></i>
+            标签
+          </span>
         </template>
       </el-tab-pane>
     </el-tabs>
@@ -20,7 +26,7 @@
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small">
           <el-form-item label="资产类型">
-            <el-select v-model="groupFilter.ciType" style="width: 120px">
+            <el-select v-model="groupFilter.ciType" style="width: 150px">
               <el-option label="全部" value="oplus_all" />
               <el-option
                 v-for="item in resourceTypes"
@@ -40,10 +46,12 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleGroupSearch">
-              <el-icon><Search /></el-icon> 搜索
+              <el-icon><Search /></el-icon>
+              搜索
             </el-button>
             <el-button @click="handleGroupReset">
-              <el-icon><RefreshRight /></el-icon> 重置
+              <el-icon><RefreshRight /></el-icon>
+              重置
             </el-button>
           </el-form-item>
         </el-form>
@@ -67,10 +75,10 @@
           <i class="fa fa-folder-plus" style="margin-right: 4px"></i>
           添加分组
         </el-button>
-        <el-button size="small" @click="handleAddTag">
+        <!-- <el-button size="small" @click="handleAddTag">
           <i class="fa fa-tag" style="margin-right: 4px"></i>
           添加标签
-        </el-button>
+        </el-button> -->
         <el-button size="small" @click="handleDownloadDeleteTemplate">
           <i class="fa fa-file-download" style="margin-right: 4px"></i>
           资产批量删除模版下载
@@ -79,8 +87,15 @@
           <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
           资产删除导入
         </el-button>
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="groupLoading" @click="loadGroupList" title="刷新">
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="groupLoading"
+          @click="loadGroupList"
+          title="刷新"
+        >
           <el-icon v-show="!groupLoading"><Refresh /></el-icon>
         </el-button>
       </div>
@@ -138,7 +153,7 @@
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small">
           <el-form-item label="资产类型">
-            <el-select v-model="tagFilter.ciType" style="width: 120px">
+            <el-select v-model="tagFilter.ciType" style="width: 150px">
               <el-option label="全部" value="oplus_all" />
               <el-option
                 v-for="item in resourceTypes"
@@ -158,10 +173,12 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleTagSearch">
-              <el-icon><Search /></el-icon> 搜索
+              <el-icon><Search /></el-icon>
+              搜索
             </el-button>
             <el-button @click="handleTagReset">
-              <el-icon><RefreshRight /></el-icon> 重置
+              <el-icon><RefreshRight /></el-icon>
+              重置
             </el-button>
           </el-form-item>
         </el-form>
@@ -173,20 +190,22 @@
           <i class="fa fa-plus" style="margin-right: 4px"></i>
           添加标签
         </el-button>
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="tagLoading" @click="loadTagList" title="刷新">
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="tagLoading"
+          @click="loadTagList"
+          title="刷新"
+        >
           <el-icon v-show="!tagLoading"><Refresh /></el-icon>
         </el-button>
       </div>
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table
-          v-loading="tagLoading"
-          :data="tagList"
-          stripe
-          max-height="calc(100vh - 360px)"
-        >
+        <el-table v-loading="tagLoading" :data="tagList" stripe max-height="calc(100vh - 360px)">
           <el-table-column prop="name" label="标签名称" min-width="200" sortable>
             <template #default="{ row }">
               <el-link type="primary" :underline="false" @click="handleViewTag(row)">
@@ -225,16 +244,10 @@
     </template>
 
     <!-- 添加分组弹窗 -->
-    <DataAddGroupDialog
-      v-model="addGroupDialogVisible"
-      @saved="loadGroupList"
-    />
+    <DataAddGroupDialog v-model="addGroupDialogVisible" @saved="loadGroupList" />
 
     <!-- 添加标签弹窗 -->
-    <DataAddTagDialog
-      v-model="addTagDialogVisible"
-      @saved="loadTagList"
-    />
+    <DataAddTagDialog v-model="addTagDialogVisible" @saved="loadTagList" />
 
     <!-- 编辑分组弹窗 -->
     <DataEditGroupDialog
@@ -244,34 +257,19 @@
     />
 
     <!-- 编辑标签弹窗 -->
-    <DataEditTagDialog
-      v-model="editTagDialogVisible"
-      :tag-data="currentTag"
-      @saved="loadTagList"
-    />
+    <DataEditTagDialog v-model="editTagDialogVisible" :tag-data="currentTag" @saved="loadTagList" />
 
     <!-- 查看分组资产弹窗 -->
-    <GroupAssetDialog
-      v-model="viewGroupDialogVisible"
-      :group-data="currentGroup"
-    />
+    <GroupAssetDialog v-model="viewGroupDialogVisible" :group-data="currentGroup" />
 
     <!-- 查看标签资产弹窗 -->
-    <TagAssetDialog
-      v-model="viewTagDialogVisible"
-      :tag-data="currentTag"
-    />
+    <TagAssetDialog v-model="viewTagDialogVisible" :tag-data="currentTag" />
 
     <!-- 导入资产弹窗 -->
-    <ImportAssetDialog
-      v-model="importDialogVisible"
-      @saved="handleImportSaved"
-    />
+    <ImportAssetDialog v-model="importDialogVisible" @saved="handleImportSaved" />
 
     <!-- 导出资产弹窗 -->
-    <ExportAssetDialog
-      v-model="exportDialogVisible"
-    />
+    <ExportAssetDialog v-model="exportDialogVisible" />
   </div>
 </template>
 
@@ -353,9 +351,10 @@ const loadGroupList = async () => {
     // 关键字筛选
     if (groupFilter.value.keyword) {
       const keyword = groupFilter.value.keyword.toLowerCase()
-      records = records.filter(item =>
-        item.path?.toLowerCase().includes(keyword) ||
-        item.ci_type?.toLowerCase().includes(keyword)
+      records = records.filter(
+        item =>
+          item.path?.toLowerCase().includes(keyword) ||
+          item.ci_type?.toLowerCase().includes(keyword)
       )
     }
     groupPagination.value.total = records.length
@@ -380,9 +379,10 @@ const loadTagList = async () => {
     // 关键字筛选
     if (tagFilter.value.keyword) {
       const keyword = tagFilter.value.keyword.toLowerCase()
-      records = records.filter(item =>
-        item.name?.toLowerCase().includes(keyword) ||
-        item.ci_type?.toLowerCase().includes(keyword)
+      records = records.filter(
+        item =>
+          item.name?.toLowerCase().includes(keyword) ||
+          item.ci_type?.toLowerCase().includes(keyword)
       )
     }
     tagPagination.value.total = records.length
@@ -399,7 +399,7 @@ const loadTagList = async () => {
 }
 
 // Tab 切换
-const handleTabChange = (tab) => {
+const handleTabChange = tab => {
   if (tab === 'group') {
     loadGroupList()
   } else {
@@ -480,7 +480,7 @@ const handleDeleteImport = () => {
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = '.xlsx,.xls'
-  input.onchange = async (e) => {
+  input.onchange = async e => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -579,59 +579,63 @@ const handleAddTag = () => {
 }
 
 // 查看分组
-const handleViewGroup = (row) => {
+const handleViewGroup = row => {
   currentGroup.value = row
   viewGroupDialogVisible.value = true
 }
 
 // 编辑分组
-const handleEditGroup = (row) => {
+const handleEditGroup = row => {
   currentGroup.value = row
   editGroupDialogVisible.value = true
 }
 
 // 删除分组
-const handleDeleteGroup = (row) => {
+const handleDeleteGroup = row => {
   ElMessageBox.confirm('确定要删除该分组吗？删除分组会将分组内的资产移动到根分组。', '删除确认', {
     type: 'warning'
-  }).then(async () => {
-    try {
-      await dataManageApi.deleteGroup(row.id)
-      ElMessage.success('删除成功')
-      loadGroupList()
-    } catch (error) {
-      console.error('删除分组失败:', error)
-      ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
-    }
-  }).catch(() => {})
+  })
+    .then(async () => {
+      try {
+        await dataManageApi.deleteGroup(row.id)
+        ElMessage.success('删除成功')
+        loadGroupList()
+      } catch (error) {
+        console.error('删除分组失败:', error)
+        ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+      }
+    })
+    .catch(() => {})
 }
 
 // 查看标签
-const handleViewTag = (row) => {
+const handleViewTag = row => {
   currentTag.value = row
   viewTagDialogVisible.value = true
 }
 
 // 编辑标签
-const handleEditTag = (row) => {
+const handleEditTag = row => {
   currentTag.value = row
   editTagDialogVisible.value = true
 }
 
 // 删除标签
-const handleDeleteTag = (row) => {
+const handleDeleteTag = row => {
   ElMessageBox.confirm('确定要删除该标签吗？', '删除确认', {
     type: 'warning'
-  }).then(async () => {
-    try {
-      await dataManageApi.deleteTag(row.id)
-      ElMessage.success('删除成功')
-      loadTagList()
-    } catch (error) {
-      console.error('删除标签失败:', error)
-      ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
-    }
-  }).catch(() => {})
+  })
+    .then(async () => {
+      try {
+        await dataManageApi.deleteTag(row.id)
+        ElMessage.success('删除成功')
+        loadTagList()
+      } catch (error) {
+        console.error('删除标签失败:', error)
+        ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+      }
+    })
+    .catch(() => {})
 }
 
 // 初始化

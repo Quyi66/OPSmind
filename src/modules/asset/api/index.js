@@ -70,6 +70,15 @@ export const overviewApi = {
    */
   getGroupAssetCount(os = 'CentOS,Windows,Anolis,Debian,RedHat,Debian') {
     return dtsApi.queryData('ACM_PARENT_GROUP_ASSET_COUNT', { os })
+  },
+
+  /**
+   * 获取操作系统版本分布
+   * POST /dts/api/dts/q/data/ACM_GET_OS_VIESON/
+   * @param {string} osDistro - 操作系统发行版
+   */
+  getOsVersionDistribution(osDistro) {
+    return dtsApi.queryData('ACM_GET_OS_VIESON', { os_distro: osDistro })
   }
 }
 
@@ -141,7 +150,9 @@ export const assetApi = {
    * @param {string} citCode - 资产类型代码
    */
   async getGroupList(citCode) {
-    const res = await apiService.get(`${ACM_BASE}/query/group/view/${citCode}?cacheBuster=${Date.now()}`)
+    const res = await apiService.get(
+      `${ACM_BASE}/query/group/view/${citCode}?cacheBuster=${Date.now()}`
+    )
     return res.data
   },
 
@@ -151,7 +162,9 @@ export const assetApi = {
    * @param {string} citCode - 资产类型代码
    */
   async getTagList(citCode) {
-    const res = await apiService.get(`${ACM_BASE}/query/tag/view/${citCode}?cacheBuster=${Date.now()}`)
+    const res = await apiService.get(
+      `${ACM_BASE}/query/tag/view/${citCode}?cacheBuster=${Date.now()}`
+    )
     return res.data
   },
 
@@ -324,7 +337,7 @@ export const operationLogApi = {
    * @param {string} params.status - 状态 (all, COMPLETED, ERROR, RUNNING)
    * @param {number} params.day - 时间范围（天数）
    */
-  getOperationLogs: (params) => {
+  getOperationLogs: params => {
     return dtsApi.queryData('JAO_LIST_OPERATION_LOG', params)
   }
 }

@@ -31,7 +31,11 @@
               style="max-width: 600px"
             >
               <el-form-item label="资产代码" prop="code">
-                <el-input v-model="formData.code" placeholder="请输入资产代码" :disabled="!isNewMode" />
+                <el-input
+                  v-model="formData.code"
+                  placeholder="请输入资产代码"
+                  :disabled="!isNewMode"
+                />
                 <div class="form-tip">资产代码不能为空且仅支持英文大小写字母、数字和下划线</div>
               </el-form-item>
               <el-form-item label="模型名称" prop="title">
@@ -47,7 +51,12 @@
                 </el-select>
               </el-form-item>
               <el-form-item v-if="isNewMode" label="资产模板">
-                <el-select v-model="formData.templateId" placeholder="不使用模板" clearable style="width: 200px">
+                <el-select
+                  v-model="formData.templateId"
+                  placeholder="不使用模板"
+                  clearable
+                  style="width: 200px"
+                >
                   <el-option
                     v-for="tpl in templateList"
                     :key="tpl.id"
@@ -87,8 +96,16 @@
                       :class="{ expanded: expandedGroups.includes(group._id) }"
                       @click="toggleGroup(group._id)"
                     >
-                      <i :class="expandedGroups.includes(group._id) ? 'fa fa-chevron-down' : 'fa fa-chevron-right'" />
-                      <span v-if="editingGroupIndex !== groupIndex" class="group-title">{{ group.title }}</span>
+                      <i
+                        :class="
+                          expandedGroups.includes(group._id)
+                            ? 'fa fa-chevron-down'
+                            : 'fa fa-chevron-right'
+                        "
+                      />
+                      <span v-if="editingGroupIndex !== groupIndex" class="group-title">
+                        {{ group.title }}
+                      </span>
                       <el-input
                         v-if="editingGroupIndex === groupIndex"
                         v-model="editingGroupTitle"
@@ -124,7 +141,10 @@
                         v-for="(attr, attrIndex) in group.children"
                         :key="attr._id"
                         class="attr-item"
-                        :class="{ selected: selectedAttr?._id === attr._id, required: attr.required }"
+                        :class="{
+                          selected: selectedAttr?._id === attr._id,
+                          required: attr.required
+                        }"
                         @click="selectAttr(attr, groupIndex, attrIndex)"
                       >
                         <i class="fa fa-grip-vertical drag-handle"></i>
@@ -197,9 +217,16 @@
                           <el-form-item>
                             <template #label>
                               <span>控件类型</span>
-                              <i class="fa fa-keyboard" style="margin-left: 4px; color: #909399;"></i>
+                              <i
+                                class="fa fa-keyboard"
+                                style="margin-left: 4px; color: #909399"
+                              ></i>
                             </template>
-                            <el-select v-model="inputControl" placeholder="选择控件类型" style="width: 120px">
+                            <el-select
+                              v-model="inputControl"
+                              placeholder="选择控件类型"
+                              style="width: 120px"
+                            >
                               <el-option label="单行输入" value="input" />
                               <el-option label="密码" value="password" />
                               <el-option label="下拉选择" value="select" />
@@ -244,8 +271,14 @@
                             <el-form-item>
                               <template #label>
                                 <span>选项数据</span>
-                                <el-tooltip content="定义选项列表，支持 YAML 或 JS 格式" placement="top">
-                                  <i class="fa fa-info-circle" style="margin-left: 4px; color: #909399;"></i>
+                                <el-tooltip
+                                  content="定义选项列表，支持 YAML 或 JS 格式"
+                                  placement="top"
+                                >
+                                  <i
+                                    class="fa fa-info-circle"
+                                    style="margin-left: 4px; color: #909399"
+                                  ></i>
                                 </el-tooltip>
                               </template>
                               <DataConverterInput v-model="inputSourcedef" :kinds="'js,yaml'" />
@@ -262,12 +295,20 @@
                           </template>
 
                           <!-- select/typeahead 特有选项 -->
-                          <template v-if="inputControl === 'select' || inputControl === 'typeahead'">
+                          <template
+                            v-if="inputControl === 'select' || inputControl === 'typeahead'"
+                          >
                             <el-form-item>
                               <template #label>
                                 <span>选项数据</span>
-                                <el-tooltip content="定义下拉选项，支持 YAML 或 JS 格式" placement="top">
-                                  <i class="fa fa-info-circle" style="margin-left: 4px; color: #909399;"></i>
+                                <el-tooltip
+                                  content="定义下拉选项，支持 YAML 或 JS 格式"
+                                  placement="top"
+                                >
+                                  <i
+                                    class="fa fa-info-circle"
+                                    style="margin-left: 4px; color: #909399"
+                                  ></i>
                                 </el-tooltip>
                               </template>
                               <DataConverterInput v-model="inputSourcedef" :kinds="'js,yaml'" />
@@ -296,7 +337,10 @@
                             <el-form-item label="日期格式">
                               <el-select v-model="inputFormatter" style="width: 180px">
                                 <el-option label="YYYY-MM-DD" value="YYYY-MM-DD" />
-                                <el-option label="YYYY-MM-DD HH:mm:ss" value="YYYY-MM-DD HH:mm:ss" />
+                                <el-option
+                                  label="YYYY-MM-DD HH:mm:ss"
+                                  value="YYYY-MM-DD HH:mm:ss"
+                                />
                               </el-select>
                             </el-form-item>
                           </template>
@@ -308,20 +352,49 @@
                               <template #label>
                                 <span>数据类型</span>
                                 <el-tooltip content="指定属性值的数据类型" placement="top">
-                                  <i class="fa fa-info-circle" style="margin-left: 4px; color: #909399;"></i>
+                                  <i
+                                    class="fa fa-info-circle"
+                                    style="margin-left: 4px; color: #909399"
+                                  ></i>
                                 </el-tooltip>
                               </template>
                               <div class="datatype-row">
-                                <el-select v-model="inputDatatype" placeholder="选择数据类型" style="width: 120px">
+                                <el-select
+                                  v-model="inputDatatype"
+                                  placeholder="选择数据类型"
+                                  style="width: 120px"
+                                >
                                   <el-option label="默认" value="" />
                                   <el-option label="字符串" value="string" />
                                   <el-option label="JSON" value="json" />
-                                  <el-option v-if="inputControl === 'input'" label="数字" value="number" />
-                                  <el-option v-if="inputControl === 'input' || inputControl === 'datepicker'" label="日期" value="date" />
-                                  <el-option v-if="inputControl === 'input' || inputControl === 'device' || inputControl === 'checkbox' || inputIsmultiple" label="数组" value="array" />
+                                  <el-option
+                                    v-if="inputControl === 'input'"
+                                    label="数字"
+                                    value="number"
+                                  />
+                                  <el-option
+                                    v-if="inputControl === 'input' || inputControl === 'datepicker'"
+                                    label="日期"
+                                    value="date"
+                                  />
+                                  <el-option
+                                    v-if="
+                                      inputControl === 'input' ||
+                                      inputControl === 'device' ||
+                                      inputControl === 'checkbox' ||
+                                      inputIsmultiple
+                                    "
+                                    label="数组"
+                                    value="array"
+                                  />
                                 </el-select>
                                 <!-- 分隔符选项 -->
-                                <template v-if="inputDatatype === 'string' && (inputIsmultiple || inputControl === 'checkbox')">
+                                <template
+                                  v-if="
+                                    inputDatatype === 'string' &&
+                                    (inputIsmultiple || inputControl === 'checkbox')
+                                  "
+                                >
                                   <span class="delim-label">分隔符</span>
                                   <el-select v-model="inputFormatdsv" style="width: 80px">
                                     <el-option label="逗号" value="comma" />
@@ -338,7 +411,13 @@
 
                             <!-- 宽度 -->
                             <el-form-item label="宽度（字符）">
-                              <el-input-number v-model="inputWidth" :min="2" :max="20" controls-position="right" style="width: 100%" />
+                              <el-input-number
+                                v-model="inputWidth"
+                                :min="2"
+                                :max="20"
+                                controls-position="right"
+                                style="width: 100%"
+                              />
                             </el-form-item>
                           </template>
                         </el-form>
@@ -352,7 +431,11 @@
                           </el-form-item>
 
                           <el-form-item label="Click">
-                            <el-select v-model="displayClick" placeholder="None" style="width: 100%">
+                            <el-select
+                              v-model="displayClick"
+                              placeholder="None"
+                              style="width: 100%"
+                            >
                               <el-option label="None" value="" />
                               <el-option label="复制到剪贴板" value="copy" />
                               <el-option label="打开链接" value="link" />
@@ -428,7 +511,10 @@
             </div>
 
             <!-- 视图列配置区域 -->
-            <div v-if="activeViewType === 'list' || activeViewType === 'selector'" class="view-columns-config">
+            <div
+              v-if="activeViewType === 'list' || activeViewType === 'selector'"
+              class="view-columns-config"
+            >
               <div class="view-config-header">
                 <span class="view-config-title">
                   {{ activeViewType === 'list' ? '概要列表 - 列配置' : '选择器列表 - 列配置' }}
@@ -495,7 +581,7 @@ const activeViews = ref(['selector', 'list'])
 const activeViewType = ref('list') // 当前选中的视图类型
 
 // 打开视图配置（目前只是切换到对应视图）
-const openViewConfig = (viewType) => {
+const openViewConfig = viewType => {
   activeViewType.value = viewType
 }
 
@@ -517,12 +603,14 @@ const templateList = ref([])
 
 // 表单验证规则
 const formRules = {
-  title: [
-    { required: true, message: '请输入模型名称', trigger: 'blur' }
-  ],
+  title: [{ required: true, message: '请输入模型名称', trigger: 'blur' }],
   code: [
     { required: true, message: '请输入资产代码', trigger: 'blur' },
-    { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '代码必须以字母开头，只能包含字母、数字和下划线', trigger: 'blur' }
+    {
+      pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
+      message: '代码必须以字母开头，只能包含字母、数字和下划线',
+      trigger: 'blur'
+    }
   ]
 }
 
@@ -601,7 +689,7 @@ const groupedAttrs = computed(() => {
 })
 
 // 切换分组展开
-const toggleGroup = (groupId) => {
+const toggleGroup = groupId => {
   const index = expandedGroups.value.indexOf(groupId)
   if (index === -1) {
     expandedGroups.value.push(groupId)
@@ -667,72 +755,94 @@ const selectAttr = (attr, groupIndex, attrIndex) => {
 }
 
 // 同步属性设置到选中的属性
-watch([
-  inputControl, inputDatatype, inputDefaultValue, inputWidth,
-  inputViewas, inputDevicetype, inputSourcedef, inputLayout,
-  inputKeepHistory, inputIsmultiple, inputIstags, inputFormatter, inputFormatdsv,
-  displayConverter, displayClick
-], () => {
-  if (selectedAttr.value) {
-    // 构建 input 对象
-    const inputObj = {
-      control: inputControl.value
-    }
+watch(
+  [
+    inputControl,
+    inputDatatype,
+    inputDefaultValue,
+    inputWidth,
+    inputViewas,
+    inputDevicetype,
+    inputSourcedef,
+    inputLayout,
+    inputKeepHistory,
+    inputIsmultiple,
+    inputIstags,
+    inputFormatter,
+    inputFormatdsv,
+    displayConverter,
+    displayClick
+  ],
+  () => {
+    if (selectedAttr.value) {
+      // 构建 input 对象
+      const inputObj = {
+        control: inputControl.value
+      }
 
-    // 通用字段
-    if (inputDatatype.value) inputObj.datatype = inputDatatype.value
-    if (inputDefaultValue.value) inputObj.initval = inputDefaultValue.value
-    if (inputWidth.value) inputObj.width = inputWidth.value
+      // 通用字段
+      if (inputDatatype.value) inputObj.datatype = inputDatatype.value
+      if (inputDefaultValue.value) inputObj.initval = inputDefaultValue.value
+      if (inputWidth.value) inputObj.width = inputWidth.value
 
-    // 控件特有字段
-    if (inputControl.value === 'textarea' || inputControl.value === 'device') {
-      if (inputViewas.value) inputObj.viewas = inputViewas.value
-    }
-    if (inputControl.value === 'device' && inputDevicetype.value) {
-      inputObj.devicetype = inputDevicetype.value
-    }
-    if (['radio', 'checkbox', 'select', 'typeahead'].includes(inputControl.value)) {
-      if (inputSourcedef.value) inputObj.sourcedef = inputSourcedef.value
-    }
-    if (['radio', 'checkbox'].includes(inputControl.value)) {
-      if (inputLayout.value && inputLayout.value !== 'inline') inputObj.layout = inputLayout.value
-    }
-    if (inputControl.value === 'typeahead' && inputKeepHistory.value) {
-      inputObj.options = { history: true }
-    }
-    if (inputControl.value === 'select') {
-      if (inputIsmultiple.value) inputObj.ismultiple = true
-      if (inputIstags.value) inputObj.istags = true
-    }
-    if (inputControl.value === 'datepicker' && inputFormatter.value !== 'YYYY-MM-DD') {
-      inputObj.formatter = inputFormatter.value
-    }
-    if ((inputDatatype.value === 'string' && (inputIsmultiple.value || inputControl.value === 'checkbox')) && inputFormatdsv.value !== 'comma') {
-      inputObj.formatdsv = inputFormatdsv.value
-    }
+      // 控件特有字段
+      if (inputControl.value === 'textarea' || inputControl.value === 'device') {
+        if (inputViewas.value) inputObj.viewas = inputViewas.value
+      }
+      if (inputControl.value === 'device' && inputDevicetype.value) {
+        inputObj.devicetype = inputDevicetype.value
+      }
+      if (['radio', 'checkbox', 'select', 'typeahead'].includes(inputControl.value)) {
+        if (inputSourcedef.value) inputObj.sourcedef = inputSourcedef.value
+      }
+      if (['radio', 'checkbox'].includes(inputControl.value)) {
+        if (inputLayout.value && inputLayout.value !== 'inline') inputObj.layout = inputLayout.value
+      }
+      if (inputControl.value === 'typeahead' && inputKeepHistory.value) {
+        inputObj.options = { history: true }
+      }
+      if (inputControl.value === 'select') {
+        if (inputIsmultiple.value) inputObj.ismultiple = true
+        if (inputIstags.value) inputObj.istags = true
+      }
+      if (inputControl.value === 'datepicker' && inputFormatter.value !== 'YYYY-MM-DD') {
+        inputObj.formatter = inputFormatter.value
+      }
+      if (
+        inputDatatype.value === 'string' &&
+        (inputIsmultiple.value || inputControl.value === 'checkbox') &&
+        inputFormatdsv.value !== 'comma'
+      ) {
+        inputObj.formatdsv = inputFormatdsv.value
+      }
 
-    selectedAttr.value.input = inputObj
+      selectedAttr.value.input = inputObj
 
-    // 构建 display 对象
-    selectedAttr.value.display = {}
-    if (displayConverter.value) {
-      selectedAttr.value.display.converter = displayConverter.value
-    }
-    if (displayClick.value) {
-      selectedAttr.value.display.click = displayClick.value
-    }
+      // 构建 display 对象
+      selectedAttr.value.display = {}
+      if (displayConverter.value) {
+        selectedAttr.value.display.converter = displayConverter.value
+      }
+      if (displayClick.value) {
+        selectedAttr.value.display.click = displayClick.value
+      }
 
-    // 同步到 formData
-    syncAttrToFormData()
+      // 同步到 formData
+      syncAttrToFormData()
+    }
   }
-})
+)
 
 // 同步选中的属性变化到 formData
-watch(() => selectedAttr.value, (newVal) => {
-  if (newVal) {
-    syncAttrToFormData()
-  }
-}, { deep: true })
+watch(
+  () => selectedAttr.value,
+  newVal => {
+    if (newVal) {
+      syncAttrToFormData()
+    }
+  },
+  { deep: true }
+)
 
 // 同步属性到 formData
 const syncAttrToFormData = () => {
@@ -840,7 +950,7 @@ const loadModelDetail = async () => {
 }
 
 // 解析视图配置
-const parseViews = (views) => {
+const parseViews = views => {
   views.forEach(view => {
     if (view.type === 'selector') {
       selectorColumns.value = (view.config?.columns || []).map(col => col.attr)
@@ -898,7 +1008,7 @@ const handleAddGroup = () => {
 }
 
 // 添加属性到分组
-const handleAddAttrToGroup = (groupIndex) => {
+const handleAddAttrToGroup = groupIndex => {
   let insertIndex = 0
   for (let i = 0; i <= groupIndex; i++) {
     insertIndex++
@@ -928,46 +1038,46 @@ const handleAddAttrToGroup = (groupIndex) => {
 }
 
 // 删除分组
-const handleDeleteGroup = (groupIndex) => {
+const handleDeleteGroup = groupIndex => {
   const group = groupedAttrs.value[groupIndex]
-  ElMessageBox.confirm(
-    `确定要删除分组"${group.title}"及其所有属性吗？`,
-    '删除确认',
-    { type: 'warning' }
-  ).then(() => {
-    let startIndex = 0
-    for (let i = 0; i < groupIndex; i++) {
-      startIndex++
-      startIndex += groupedAttrs.value[i].children.length
-    }
-    const deleteCount = 1 + group.children.length
+  ElMessageBox.confirm(`确定要删除分组"${group.title}"及其所有属性吗？`, '删除确认', {
+    type: 'warning'
+  })
+    .then(() => {
+      let startIndex = 0
+      for (let i = 0; i < groupIndex; i++) {
+        startIndex++
+        startIndex += groupedAttrs.value[i].children.length
+      }
+      const deleteCount = 1 + group.children.length
 
-    formData.value.attrs.splice(startIndex, deleteCount)
-    selectedAttr.value = null
-  }).catch(() => {})
+      formData.value.attrs.splice(startIndex, deleteCount)
+      selectedAttr.value = null
+    })
+    .catch(() => {})
 }
 
 // 删除分组内的属性
 const handleDeleteAttrInGroup = (groupIndex, attrIndex) => {
   const attr = groupedAttrs.value[groupIndex].children[attrIndex]
-  ElMessageBox.confirm(
-    `确定要删除属性"${attr.title || '未命名'}"吗？`,
-    '删除确认',
-    { type: 'warning' }
-  ).then(() => {
-    let flatIndex = 0
-    for (let i = 0; i < groupIndex; i++) {
+  ElMessageBox.confirm(`确定要删除属性"${attr.title || '未命名'}"吗？`, '删除确认', {
+    type: 'warning'
+  })
+    .then(() => {
+      let flatIndex = 0
+      for (let i = 0; i < groupIndex; i++) {
+        flatIndex++
+        flatIndex += groupedAttrs.value[i].children.length
+      }
       flatIndex++
-      flatIndex += groupedAttrs.value[i].children.length
-    }
-    flatIndex++
-    flatIndex += attrIndex
+      flatIndex += attrIndex
 
-    formData.value.attrs.splice(flatIndex, 1)
-    if (selectedAttr.value?._id === attr._id) {
-      selectedAttr.value = null
-    }
-  }).catch(() => {})
+      formData.value.attrs.splice(flatIndex, 1)
+      if (selectedAttr.value?._id === attr._id) {
+        selectedAttr.value = null
+      }
+    })
+    .catch(() => {})
 }
 
 // 保存
@@ -1000,8 +1110,8 @@ const handleSave = async () => {
       attrs: processedAttrs,
       views: buildViews(),
       template_id: isNewMode.value
-        ? (formData.value.templateId || '0')
-        : (originalData.value?.template_id || '0')
+        ? formData.value.templateId || '0'
+        : originalData.value?.template_id || '0'
     }
 
     // 编辑模式下添加 id 和其他字段
@@ -1031,9 +1141,12 @@ const handleBack = () => {
 }
 
 // 监听 modelId 变化重新加载
-watch(() => props.modelId, () => {
-  loadModelDetail()
-})
+watch(
+  () => props.modelId,
+  () => {
+    loadModelDetail()
+  }
+)
 
 // 初始化
 onMounted(() => {
@@ -1054,7 +1167,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
+  padding: 12px 0;
   padding-top: 0;
   background: #fff;
   border-bottom: 1px solid #ebeef5;

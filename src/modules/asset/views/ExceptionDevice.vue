@@ -2,22 +2,14 @@
   <div class="ops-page-layout">
     <!-- KPI 卡片区域 -->
     <div class="kpi-section">
-      <KpiCards
-        :data="kpiData"
-        :loading="kpiLoading"
-        @click="handleKpiClick"
-      />
+      <KpiCards :data="kpiData" :loading="kpiLoading" @click="handleKpiClick" />
     </div>
 
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="类型">
-          <el-select
-            v-model="filters.cit"
-            placeholder="全部"
-            style="width: 120px"
-          >
+          <el-select v-model="filters.cit" placeholder="全部" style="width: 120px">
             <el-option label="全部" value="oplus_all" />
             <el-option
               v-for="item in resourceTypes"
@@ -28,11 +20,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="条件">
-          <el-select
-            v-model="filters.conditions"
-            placeholder="筛选条件"
-            style="width: 180px"
-          >
+          <el-select v-model="filters.conditions" placeholder="筛选条件" style="width: 180px">
             <el-option label="全部" value="oplus_all" />
             <el-option label="今日异常" value="today" />
             <el-option label="连通率小于50%设备" value="low" />
@@ -40,13 +28,8 @@
             <el-option label="最近一次连通成功设备" value="recently_ok" />
           </el-select>
         </el-form-item>
-        <el-form-item label="关键词">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="搜索"
-            clearable
-            style="width: 200px"
-          >
+        <el-form-item label="IP">
+          <el-input v-model="searchKeyword" placeholder="搜索" clearable style="width: 200px">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -78,8 +61,15 @@
       <!-- <el-button size="small" @click="handleExport">
         <el-icon><Download /></el-icon>
         导出</el-button> -->
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="handleRefresh"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -87,12 +77,7 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <!-- 数据表格 -->
-      <el-table
-        v-loading="tableLoading"
-        :data="tableData"
-        style="width: 100%"
-        stripe
-      >
+      <el-table v-loading="tableLoading" :data="tableData" style="width: 100%" stripe>
         <el-table-column prop="IP" label="IP" min-width="120" sortable />
         <el-table-column prop="ci_name" label="资产代码" min-width="120" />
         <el-table-column prop="CONN_RATE" label="连通率" min-width="100">
@@ -102,7 +87,12 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="CONN_LATEST_STATUS" label="最近连通状态" min-width="120" align="left">
+        <el-table-column
+          prop="CONN_LATEST_STATUS"
+          label="最近连通状态"
+          min-width="120"
+          align="left"
+        >
           <template #default="{ row }">
             <span :class="getConnStatusClass(row.CONN_LATEST_STATUS)">
               <i :class="getConnStatusIcon(row.CONN_LATEST_STATUS)"></i>
@@ -151,11 +141,15 @@
         />
       </div>
       <template #footer>
-        <el-button type="primary" :disabled="checkConnHosts.length === 0" @click="confirmCheckConnectivity">
-          <i class="fa fa-angle-double-right" style="margin-right: 4px"></i>
+        <el-button @click="checkConnDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="checkConnHosts.length === 0"
+          :loading="checkConnLoading"
+          @click="confirmCheckConnectivity"
+        >
           检查连通性
         </el-button>
-        <el-button @click="checkConnDialogVisible = false">取消</el-button>
       </template>
     </el-dialog>
 
@@ -179,11 +173,15 @@
         />
       </div>
       <template #footer>
-        <el-button type="primary" :disabled="collectInfoHosts.length === 0" @click="confirmCollectInfo">
-          <i class="fa fa-angle-double-right" style="margin-right: 4px"></i>
+        <el-button @click="collectInfoDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="collectInfoHosts.length === 0"
+          :loading="collectInfoLoading"
+          @click="confirmCollectInfo"
+        >
           采集信息
         </el-button>
-        <el-button @click="collectInfoDialogVisible = false">取消</el-button>
       </template>
     </el-dialog>
   </div>
@@ -220,7 +218,7 @@ const tableData = ref([])
 const tableLoading = ref(false)
 const total = ref(0)
 const currentPage = ref(1)
-const pageSize = ref(100)
+const pageSize = ref(10)
 
 // 弹窗
 const checkConnDialogVisible = ref(false)
@@ -233,6 +231,10 @@ const collectInfoDeviceSelectorVisible = ref(false)
 // 选中的设备
 const checkConnHosts = ref([])
 const collectInfoHosts = ref([])
+
+// 任务执行状态
+const checkConnLoading = ref(false)
+const collectInfoLoading = ref(false)
 
 // 加载 KPI 数据
 const loadKpiData = async () => {
@@ -261,15 +263,19 @@ const loadResourceTypes = async () => {
 const loadTableData = async () => {
   tableLoading.value = true
   try {
-    const res = await dtsApi.queryData('ACM_LIST_CONNECT_EXCEPTION', {
-      cit: filters.cit,
-      conditions: filters.conditions,
-      param: 'rwx'
-    }, {
-      size: pageSize.value,
-      page: currentPage.value,
-      filter: searchKeyword.value
-    })
+    const res = await dtsApi.queryData(
+      'ACM_LIST_CONNECT_EXCEPTION',
+      {
+        cit: filters.cit,
+        conditions: filters.conditions,
+        param: 'rwx'
+      },
+      {
+        size: pageSize.value,
+        page: currentPage.value,
+        filter: searchKeyword.value ? `IP:*${searchKeyword.value}*` : undefined
+      }
+    )
     tableData.value = res.records || []
     total.value = res.total || 0
   } catch (error) {
@@ -280,7 +286,7 @@ const loadTableData = async () => {
 }
 
 // 处理 KPI 卡片点击
-const handleKpiClick = (params) => {
+const handleKpiClick = params => {
   filters.conditions = params.conditions
   loadTableData()
 }
@@ -307,7 +313,7 @@ const handleReset = () => {
   filters.conditions = 'recently'
   searchKeyword.value = ''
   currentPage.value = 1
-  pageSize.value = 100
+  pageSize.value = 10
   loadTableData()
 }
 
@@ -340,12 +346,12 @@ const openCheckConnDeviceSelector = () => {
 }
 
 // 检查连通性设备选择确认回调
-const handleCheckConnDeviceConfirm = (selectedHosts) => {
+const handleCheckConnDeviceConfirm = selectedHosts => {
   checkConnHosts.value = selectedHosts || []
 }
 
 // 移除检查连通性已选设备
-const removeCheckConnHost = (index) => {
+const removeCheckConnHost = index => {
   checkConnHosts.value.splice(index, 1)
 }
 
@@ -371,16 +377,10 @@ const confirmCheckConnectivity = async () => {
       }
     )
   } catch {
-    // 用户取消
     return
   }
 
-  // 显示加载状态
-  const loadingInstance = ElLoading.service({
-    lock: true,
-    text: '正在检查连通性...',
-    background: 'rgba(0, 0, 0, 0.7)'
-  })
+  checkConnLoading.value = true
 
   try {
     const hosts = checkConnHosts.value.map(h => ({
@@ -391,42 +391,45 @@ const confirmCheckConnectivity = async () => {
 
     // 调用启动检查接口
     const cacheBuster = Date.now()
-    const { data } = await apiService.post(`/jao/api/jao/jobs/M1x855/run?cacheBuster=${cacheBuster}`, {
-      params: { hosts }
-    })
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/M1x855/run?cacheBuster=${cacheBuster}`,
+      {
+        params: { hosts }
+      }
+    )
 
     const result = Array.isArray(data) ? data[0] : data
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      // 开始轮询
+      ElMessage.success('任务已发起，可以关闭当前弹窗')
       const runId = result.runId
-      await pollCheckResult(runId, loadingInstance)
+      // 开启后台轮询
+      pollCheckResult(runId)
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      loadingInstance.close()
       ElMessage.success('连通性检查完成')
+      checkConnLoading.value = false
       checkConnDialogVisible.value = false
       checkConnHosts.value = []
-      // 刷新表格数据
       loadTableData()
       loadKpiData()
     } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-      loadingInstance.close()
+      checkConnLoading.value = false
       ElMessage.error(result?.error || '连通性检查失败')
     } else {
-      loadingInstance.close()
       ElMessage.success('连通性检查任务已启动')
+      checkConnLoading.value = false
       checkConnDialogVisible.value = false
       checkConnHosts.value = []
     }
   } catch (error) {
-    loadingInstance.close()
+    checkConnLoading.value = false
     console.error('启动检查任务失败:', error)
     ElMessage.error('启动检查任务失败')
   }
 }
 
 // 轮询检查结果
-async function pollCheckResult(runId, loadingInstance) {
+async function pollCheckResult(runId) {
   const maxAttempts = 360 // 最多轮询 30 分钟 (360 * 5秒)
   let attempts = 0
 
@@ -434,60 +437,43 @@ async function pollCheckResult(runId, loadingInstance) {
     attempts++
     try {
       const cacheBuster = Date.now()
-      const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+      const { data: result } = await apiService.get(
+        `/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`
+      )
 
       if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-        // 更新加载提示
-        const batchInfo = result?.detail?.batches?.[0]
-        if (batchInfo) {
-          loadingInstance.setText(`正在检查连通性... (状态: ${batchInfo.status || result.status})`)
-        }
-
         if (attempts < maxAttempts) {
-          // 5秒后继续轮询
           pollingTimer = setTimeout(poll, 5000)
         } else {
-          loadingInstance.close()
-          ElMessage.warning('检查超时，请稍后查看结果')
-          checkConnDialogVisible.value = false
-          checkConnHosts.value = []
+          checkConnLoading.value = false
+          ElMessage.warning('检查超时，请稍后在后台查看结果')
         }
       } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-        loadingInstance.close()
+        checkConnLoading.value = false
         ElMessage.success('连通性检查完成')
-        checkConnDialogVisible.value = false
-        checkConnHosts.value = []
-        // 刷新表格数据
+        // 刷新列表
         loadTableData()
         loadKpiData()
       } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-        loadingInstance.close()
+        checkConnLoading.value = false
         ElMessage.error(result?.error || '连通性检查失败')
-        checkConnDialogVisible.value = false
-        checkConnHosts.value = []
       } else {
-        // 其他状态，继续轮询
         if (attempts < maxAttempts) {
           pollingTimer = setTimeout(poll, 5000)
         } else {
-          loadingInstance.close()
-          checkConnDialogVisible.value = false
-          checkConnHosts.value = []
+          checkConnLoading.value = false
         }
       }
     } catch (error) {
       console.error('轮询失败:', error)
       if (attempts < maxAttempts) {
-        // 出错后继续轮询
         pollingTimer = setTimeout(poll, 5000)
       } else {
-        loadingInstance.close()
-        ElMessage.error('检查状态查询失败')
+        checkConnLoading.value = false
       }
     }
   }
 
-  // 开始轮询
   pollingTimer = setTimeout(poll, 5000)
 }
 
@@ -511,12 +497,12 @@ const openCollectInfoDeviceSelector = () => {
 }
 
 // 采集信息设备选择确认回调
-const handleCollectInfoDeviceConfirm = (selectedHosts) => {
+const handleCollectInfoDeviceConfirm = selectedHosts => {
   collectInfoHosts.value = selectedHosts || []
 }
 
 // 移除采集信息已选设备
-const removeCollectInfoHost = (index) => {
+const removeCollectInfoHost = index => {
   collectInfoHosts.value.splice(index, 1)
 }
 
@@ -529,26 +515,16 @@ const confirmCollectInfo = async () => {
 
   // 显示确认弹窗
   try {
-    await ElMessageBox.confirm(
-      '连通性检查将花费几分钟到半小时不等的时间，点击确定开始',
-      '执行作业',
-      {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
+    await ElMessageBox.confirm('信息采集将花费几分钟到半小时不等的时间，点击确定开始', '执行作业', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
   } catch {
-    // 用户取消
     return
   }
 
-  // 显示加载状态
-  const loadingInstance = ElLoading.service({
-    lock: true,
-    text: '正在采集信息...',
-    background: 'rgba(0, 0, 0, 0.7)'
-  })
+  collectInfoLoading.value = true
 
   try {
     const hosts = collectInfoHosts.value.map(h => ({
@@ -559,42 +535,45 @@ const confirmCollectInfo = async () => {
 
     // 调用启动采集接口
     const cacheBuster = Date.now()
-    const { data } = await apiService.post(`/jao/api/jao/jobs/mjedwe/run?cacheBuster=${cacheBuster}`, {
-      params: { hosts }
-    })
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/mjedwe/run?cacheBuster=${cacheBuster}`,
+      {
+        params: { hosts }
+      }
+    )
 
     const result = Array.isArray(data) ? data[0] : data
 
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      // 开始轮询
+      ElMessage.success('任务已发起，可以关闭当前弹窗')
       const runId = result.runId
-      await pollCollectResult(runId, loadingInstance)
+      // 开启后台轮询
+      pollCollectResult(runId)
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      loadingInstance.close()
       ElMessage.success('信息采集完成')
+      collectInfoLoading.value = false
       collectInfoDialogVisible.value = false
       collectInfoHosts.value = []
-      // 刷新表格数据
       loadTableData()
       loadKpiData()
     } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-      loadingInstance.close()
+      collectInfoLoading.value = false
       ElMessage.error(result?.error || '信息采集失败')
     } else {
-      loadingInstance.close()
       ElMessage.success('信息采集任务已启动')
+      collectInfoLoading.value = false
       collectInfoDialogVisible.value = false
       collectInfoHosts.value = []
     }
   } catch (error) {
-    loadingInstance.close()
+    collectInfoLoading.value = false
     console.error('启动采集任务失败:', error)
     ElMessage.error('启动采集任务失败')
   }
 }
 
 // 轮询采集结果
-async function pollCollectResult(runId, loadingInstance) {
+async function pollCollectResult(runId) {
   const maxAttempts = 360 // 最多轮询 30 分钟 (360 * 5秒)
   let attempts = 0
 
@@ -602,65 +581,48 @@ async function pollCollectResult(runId, loadingInstance) {
     attempts++
     try {
       const cacheBuster = Date.now()
-      const { data: result } = await apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+      const { data: result } = await apiService.get(
+        `/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`
+      )
 
       if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-        // 更新加载提示
-        const batchInfo = result?.detail?.batches?.[0]
-        if (batchInfo) {
-          loadingInstance.setText(`正在采集信息... (状态: ${batchInfo.status || result.status})`)
-        }
-
         if (attempts < maxAttempts) {
-          // 5秒后继续轮询
           pollingTimer = setTimeout(poll, 5000)
         } else {
-          loadingInstance.close()
-          ElMessage.warning('采集超时，请稍后查看结果')
-          collectInfoDialogVisible.value = false
-          collectInfoHosts.value = []
+          collectInfoLoading.value = false
+          ElMessage.warning('采集超时，请稍后在后台查看结果')
         }
       } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-        loadingInstance.close()
+        collectInfoLoading.value = false
         ElMessage.success('信息采集完成')
-        collectInfoDialogVisible.value = false
-        collectInfoHosts.value = []
-        // 刷新表格数据
+        // 刷新列表
         loadTableData()
         loadKpiData()
       } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-        loadingInstance.close()
+        collectInfoLoading.value = false
         ElMessage.error(result?.error || '信息采集失败')
-        collectInfoDialogVisible.value = false
-        collectInfoHosts.value = []
       } else {
-        // 其他状态，继续轮询
         if (attempts < maxAttempts) {
           pollingTimer = setTimeout(poll, 5000)
         } else {
-          loadingInstance.close()
-          collectInfoDialogVisible.value = false
-          collectInfoHosts.value = []
+          collectInfoLoading.value = false
         }
       }
     } catch (error) {
       console.error('采集轮询失败:', error)
       if (attempts < maxAttempts) {
-        // 出错后继续轮询
         pollingTimer = setTimeout(poll, 5000)
       } else {
-        loadingInstance.close()
-        ElMessage.error('采集状态查询失败')
+        collectInfoLoading.value = false
       }
     }
   }
 
-  // 开始轮询
   pollingTimer = setTimeout(poll, 5000)
 }
 
 // 格式化连通率
-const formatConnRate = (rate) => {
+const formatConnRate = rate => {
   if (rate === null || rate === 'null' || rate === undefined) {
     return '未测试'
   }
@@ -668,7 +630,7 @@ const formatConnRate = (rate) => {
 }
 
 // 获取连通率样式类
-const getConnRateClass = (rate) => {
+const getConnRateClass = rate => {
   if (rate === null || rate === 'null' || rate === undefined) {
     return 'text-secondary'
   }
@@ -680,11 +642,11 @@ const getConnRateClass = (rate) => {
 }
 
 // 获取连通状态图标
-const getConnStatusIcon = (status) => {
+const getConnStatusIcon = status => {
   if (status === null || status === 'null' || status === undefined) {
     return 'fa fa-question-circle'
   }
-  if (status === 0 || status === '0') {
+  if (status === 0 || status === '0' || status === '0.0') {
     return 'fa fa-times-circle'
   }
   if (status === 1 || status === '1') {
@@ -694,11 +656,11 @@ const getConnStatusIcon = (status) => {
 }
 
 // 获取连通状态样式类
-const getConnStatusClass = (status) => {
+const getConnStatusClass = status => {
   if (status === null || status === 'null' || status === undefined) {
     return 'text-secondary'
   }
-  if (status === 0 || status === '0') {
+  if (status === 0 || status === '0' || status === '0.0') {
     return 'text-danger'
   }
   if (status === 1 || status === '1') {
@@ -708,7 +670,7 @@ const getConnStatusClass = (status) => {
 }
 
 // 格式化日期时间
-const formatDateTime = (dateStr) => {
+const formatDateTime = dateStr => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   const year = date.getFullYear()

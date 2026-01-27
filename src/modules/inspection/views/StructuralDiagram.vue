@@ -1,11 +1,11 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout" style="padding: 0">
     <!-- 顶部导航栏 -->
     <nav class="page-navbar">
       <div class="navbar-left">
         <el-breadcrumb separator=">">
           <el-breadcrumb-item>
-            <a @click="goBack">检查结果</a>
+            <a @click="goBack">执行记录</a>
           </el-breadcrumb-item>
           <el-breadcrumb-item>{{ jobInfo.templateName || '架构图' }}</el-breadcrumb-item>
         </el-breadcrumb>
@@ -49,16 +49,39 @@
       width="800px"
       destroy-on-close
     >
-      <div class="primary-stats">
-        <span class="stat-item">二级业务: <strong>{{ primaryStats.count }}</strong></span>
-        <span class="stat-item">检查项: <strong>{{ primaryStats.itemTotal }}</strong></span>
-        <span class="stat-item">主机: <strong>{{ primaryStats.hostTotal }}</strong></span>
+      <div class="primary-detail-content">
+        <div class="filter-bar" style="margin-bottom: 12px">
+          <el-input
+            v-model="primaryFilterText"
+            placeholder="搜索二级业务名称..."
+            clearable
+            style="width: 260px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
+        <div class="primary-stats">
+          <span class="stat-item">
+            二级业务:
+            <strong>{{ primaryStats.count }}</strong>
+          </span>
+          <span class="stat-item">
+            检查项:
+            <strong>{{ primaryStats.itemTotal }}</strong>
+          </span>
+          <span class="stat-item">
+            主机:
+            <strong>{{ primaryStats.hostTotal }}</strong>
+          </span>
+        </div>
+        <el-table :data="filteredPrimaryData" stripe max-height="450">
+          <el-table-column prop="name" label="二级业务名称" />
+          <el-table-column prop="contItem" label="检查项失败数" width="120" align="left" />
+          <el-table-column prop="contHost" label="主机数" width="100" align="left" />
+        </el-table>
       </div>
-      <el-table :data="primaryData" stripe max-height="400">
-        <el-table-column prop="name" label="二级业务名称" />
-        <el-table-column prop="contItem" label="检查项失败数" width="120" align="left" />
-        <el-table-column prop="contHost" label="主机数" width="100" align="left" />
-      </el-table>
     </el-dialog>
 
     <!-- 二级业务详情弹窗 -->
@@ -70,8 +93,29 @@
     >
       <el-tabs v-model="secondaryActiveTab">
         <el-tab-pane label="按检查项" name="item">
-          <div class="tab-stats">共 {{ itemData.length }} 个检查项</div>
-          <el-table :data="itemData" stripe max-height="400">
+          <div
+            class="tab-header"
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 10px;
+            "
+          >
+            <div class="tab-stats">共 {{ itemData.length }} 个检查项</div>
+            <el-input
+              v-model="secondaryItemFilterText"
+              placeholder="搜索检查项名称..."
+              clearable
+              style="width: 220px"
+              size="small"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </div>
+          <el-table :data="filteredItemData" stripe max-height="400">
             <el-table-column prop="item" label="检查项名称" />
             <el-table-column label="失败主机数" width="120" align="left">
               <template #default="{ row }">
@@ -83,8 +127,29 @@
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="按主机" name="host">
-          <div class="tab-stats">共 {{ hostData.length }} 台主机</div>
-          <el-table :data="hostData" stripe max-height="400">
+          <div
+            class="tab-header"
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 10px;
+            "
+          >
+            <div class="tab-stats">共 {{ hostData.length }} 台主机</div>
+            <el-input
+              v-model="secondaryHostFilterText"
+              placeholder="搜索主机名称..."
+              clearable
+              style="width: 220px"
+              size="small"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </div>
+          <el-table :data="filteredHostData" stripe max-height="400">
             <el-table-column prop="host" label="主机名" />
             <el-table-column label="失败检查项数" width="120" align="left">
               <template #default="{ row }">
@@ -99,103 +164,114 @@
     </el-dialog>
 
     <!-- 列表详情弹窗 -->
-    <el-dialog
-      v-model="listDialogVisible"
-      :title="listDialogTitle"
-      width="500px"
-      destroy-on-close
-    >
+    <el-dialog v-model="listDialogVisible" :title="listDialogTitle" width="500px" destroy-on-close>
       <el-table :data="listData" stripe max-height="400">
         <el-table-column prop="name" :label="listDialogTitle" />
       </el-table>
     </el-dialog>
 
     <!-- KPI 详情弹窗 -->
-    <el-dialog
-      v-model="kpiDialogVisible"
-      :title="kpiDialogTitle"
-      width="800px"
-      destroy-on-close
-    >
-      <el-table
-        v-loading="kpiDialogLoading"
-        :data="kpiDialogData"
-        stripe
-        max-height="400"
-      >
-        <!-- 检查项总数类型 (itemAll): 只显示检查项名称 -->
-        <template v-if="kpiDialogType === 'itemAll'">
-          <el-table-column prop="name" label="检查项" min-width="200" />
-        </template>
+    <el-dialog v-model="kpiDialogVisible" :title="kpiDialogTitle" width="800px" destroy-on-close>
+      <div class="kpi-detail-content">
+        <!-- 搜索筛选 -->
+        <div class="kpi-filter-bar" style="margin-bottom: 12px">
+          <el-form inline size="small">
+            <el-form-item :label="kpiSearchLabel">
+              <el-input
+                v-model="kpiFilterText"
+                :placeholder="kpiSearchPlaceholder"
+                clearable
+                style="width: 320px"
+              >
+                <template #prefix>
+                  <el-icon><Search /></el-icon>
+                </template>
+              </el-input>
+            </el-form-item>
+          </el-form>
+        </div>
 
-        <!-- 主机总数类型 (hostAll): 主机 + 成功/失败检查项数 -->
-        <template v-else-if="kpiDialogType === 'hostAll'">
-          <el-table-column prop="host_key" label="主机" min-width="180" />
-          <el-table-column label="成功检查项" width="140" align="left">
-            <template #default="{ row }">
-              <el-tag type="success" effect="dark" round>
-                <i class="fa fa-check" style="margin-right: 5px;"></i>
-                {{ row.success_count }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="失败检查项" width="140" align="left">
-            <template #default="{ row }">
-              <el-tag type="danger" effect="dark" round>
-                <i class="fa fa-times" style="margin-right: 5px;"></i>
-                {{ row.failed_count }}
-              </el-tag>
-            </template>
-          </el-table-column>
-        </template>
+        <el-table
+          v-loading="kpiDialogLoading"
+          :data="filteredKpiDialogData"
+          stripe
+          max-height="calc(100vh - 300px)"
+        >
+          <!-- 检查项总数类型 (itemAll): 只显示检查项名称 -->
+          <template v-if="kpiDialogType === 'itemAll'">
+            <el-table-column prop="name" label="检查项" min-width="200" />
+          </template>
 
-        <!-- 主机成功/失败/待检 类型 (hostOkAll, hostFailedAll, hostCheckAll): 主机 + 状态 -->
-        <template v-else-if="['hostOkAll', 'hostFailedAll', 'hostCheckAll'].includes(kpiDialogType)">
-          <el-table-column prop="host_key" label="主机" min-width="180" />
-          <el-table-column label="检查状态" width="140" align="left">
-            <template #default="{ row }">
-              <el-tag :type="getStatusTagType(row.status)" effect="dark" round>
-                <i :class="['fa', getStatusIcon(row.status)]" style="margin-right: 5px;"></i>
-                {{ getStatusLabel(row.status) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-        </template>
+          <!-- 主机总数类型 (hostAll): 主机 + 成功/失败检查项数 -->
+          <template v-else-if="kpiDialogType === 'hostAll'">
+            <el-table-column prop="host_key" label="主机" min-width="180" />
+            <el-table-column label="成功检查项" width="140" align="left">
+              <template #default="{ row }">
+                <el-tag type="success" effect="dark" round>
+                  <i class="fa fa-check" style="margin-right: 5px"></i>
+                  {{ row.success_count }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="失败检查项" width="140" align="left">
+              <template #default="{ row }">
+                <el-tag type="danger" effect="dark" round>
+                  <i class="fa fa-times" style="margin-right: 5px"></i>
+                  {{ row.failed_count }}
+                </el-tag>
+              </template>
+            </el-table-column>
+          </template>
 
-        <!-- 检查通过/失败/人工检查 类型 (OK, FAILED, CHECK): 主机 + 检查项 + 状态 + 详情 -->
-        <template v-else>
-          <el-table-column prop="host_key" label="主机" min-width="150" />
-          <el-table-column prop="name" label="检查项" min-width="200" />
-          <el-table-column label="检查状态" width="120" align="left">
-            <template #default="{ row }">
-              <el-tag :type="getStatusTagType(row.status)" effect="dark" round>
-                <i :class="['fa', getStatusIcon(row.status)]" style="margin-right: 5px;"></i>
-                {{ getStatusLabel(row.status) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="60" align="left" fixed="right">
-            <template #default="{ row }">
-              <el-button text type="primary" size="small" @click="showCheckItemDetail(row)">
-                详情
-              </el-button>
-            </template>
-          </el-table-column>
-        </template>
-      </el-table>
+          <!-- 主机成功/失败/待检 类型 (hostOkAll, hostFailedAll, hostCheckAll): 主机 + 状态 -->
+          <template
+            v-else-if="['hostOkAll', 'hostFailedAll', 'hostCheckAll'].includes(kpiDialogType)"
+          >
+            <el-table-column prop="host_key" label="主机" min-width="180" />
+            <el-table-column label="检查状态" width="140" align="left">
+              <template #default="{ row }">
+                <el-tag :type="getStatusTagType(row.status)" effect="dark" round>
+                  <i :class="['fa', getStatusIcon(row.status)]" style="margin-right: 5px"></i>
+                  {{ getStatusLabel(row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+          </template>
+
+          <!-- 检查通过/失败/人工检查 类型 (OK, FAILED, CHECK): 主机 + 检查项 + 状态 + 详情 -->
+          <template v-else>
+            <el-table-column prop="host_key" label="主机" min-width="150" />
+            <el-table-column prop="name" label="检查项" min-width="200" />
+            <el-table-column label="检查状态" width="120" align="left">
+              <template #default="{ row }">
+                <el-tag :type="getStatusTagType(row.status)" effect="dark" round>
+                  <i :class="['fa', getStatusIcon(row.status)]" style="margin-right: 5px"></i>
+                  {{ getStatusLabel(row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="60" align="left" fixed="right">
+              <template #default="{ row }">
+                <el-button text type="primary" size="small" @click="showCheckItemDetail(row)">
+                  详情
+                </el-button>
+              </template>
+            </el-table-column>
+          </template>
+        </el-table>
+      </div>
     </el-dialog>
 
     <!-- 巡检结果详情弹窗 -->
-    <el-dialog
-      v-model="checkItemDetailVisible"
-      title="巡检结果"
-      width="700px"
-      destroy-on-close
-    >
+    <el-dialog v-model="checkItemDetailVisible" title="巡检结果" width="700px" destroy-on-close>
       <div v-loading="checkItemDetailLoading" class="check-item-detail-dialog">
         <div class="result-item">
           <span class="result-label">结果：</span>
-          <el-tag v-if="currentCheckItem" :type="getStatusTagType(currentCheckItem.status)" size="small">
+          <el-tag
+            v-if="currentCheckItem"
+            :type="getStatusTagType(currentCheckItem.status)"
+            size="small"
+          >
             {{ getStatusLabel(currentCheckItem.status) }}
           </el-tag>
         </div>
@@ -218,9 +294,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { authService } from '@/core/auth'
 import { jobApi, dtsApi } from '../api'
@@ -256,6 +333,16 @@ const primaryDialogVisible = ref(false)
 const primaryDialogTitle = ref('')
 const primaryData = ref([])
 const primaryStats = ref({ count: 0, itemTotal: 0, hostTotal: 0 })
+const primaryFilterText = ref('')
+
+/**
+ * 一级业务过滤数据
+ */
+const filteredPrimaryData = computed(() => {
+  if (!primaryFilterText.value) return primaryData.value
+  const keyword = primaryFilterText.value.toLowerCase()
+  return primaryData.value.filter(item => item.name?.toLowerCase().includes(keyword))
+})
 
 // 二级业务弹窗
 const secondaryDialogVisible = ref(false)
@@ -263,6 +350,26 @@ const secondaryDialogTitle = ref('')
 const secondaryActiveTab = ref('item')
 const itemData = ref([])
 const hostData = ref([])
+const secondaryItemFilterText = ref('')
+const secondaryHostFilterText = ref('')
+
+/**
+ * 二级业务项过滤数据
+ */
+const filteredItemData = computed(() => {
+  if (!secondaryItemFilterText.value) return itemData.value
+  const keyword = secondaryItemFilterText.value.toLowerCase()
+  return itemData.value.filter(item => item.item?.toLowerCase().includes(keyword))
+})
+
+/**
+ * 二级业务主机过滤数据
+ */
+const filteredHostData = computed(() => {
+  if (!secondaryHostFilterText.value) return hostData.value
+  const keyword = secondaryHostFilterText.value.toLowerCase()
+  return hostData.value.filter(item => item.host?.toLowerCase().includes(keyword))
+})
 
 // 列表弹窗
 const listDialogVisible = ref(false)
@@ -275,6 +382,55 @@ const kpiDialogTitle = ref('')
 const kpiDialogData = ref([])
 const kpiDialogLoading = ref(false)
 const kpiDialogType = ref('') // KPI 类型，用于动态显示不同列
+const kpiFilterText = ref('')
+
+/**
+ * KPI 详情过滤数据
+ */
+const filteredKpiDialogData = computed(() => {
+  const data = kpiDialogData.value || []
+  if (!kpiFilterText.value) return data
+
+  const keyword = kpiFilterText.value.toLowerCase()
+  return data.filter(item => {
+    // 根据当前类型决定匹配哪些字段
+    if (kpiDialogType.value === 'itemAll') {
+      return item.name?.toLowerCase()?.includes(keyword)
+    }
+
+    const hostMatch = item.host_key?.toLowerCase()?.includes(keyword)
+    const nameMatch = item.name?.toLowerCase()?.includes(keyword)
+    return hostMatch || nameMatch
+  })
+})
+
+/**
+ * 动态搜索占位符
+ */
+const kpiSearchPlaceholder = computed(() => {
+  switch (kpiDialogType.value) {
+    case 'itemAll':
+      return '输入检查项名称...'
+    case 'hostAll':
+    case 'hostOkAll':
+    case 'hostFailedAll':
+    case 'hostCheckAll':
+      return '输入主机 IP 或名称...'
+    default:
+      return '输入主机 IP 或 检查项名称...'
+  }
+})
+
+/**
+ * 动态搜索标签
+ */
+const kpiSearchLabel = computed(() => {
+  if (kpiDialogType.value === 'itemAll') return '检查项'
+  if (['hostAll', 'hostOkAll', 'hostFailedAll', 'hostCheckAll'].includes(kpiDialogType.value)) {
+    return '主机'
+  }
+  return '关键词'
+})
 
 // 巡检结果详情弹窗
 const checkItemDetailVisible = ref(false)
@@ -312,11 +468,11 @@ function getKpiTheme(item) {
  */
 function getStatusTagType(status) {
   const typeMap = {
-    'OK': 'success',
-    'FAILED': 'danger',
-    'CHECK': 'warning',
-    'SKIPPING': 'info',
-    'UNREACHABLE': 'info'
+    OK: 'success',
+    FAILED: 'danger',
+    CHECK: 'warning',
+    SKIPPING: 'info',
+    UNREACHABLE: 'info'
   }
   return typeMap[status] || 'info'
 }
@@ -326,11 +482,11 @@ function getStatusTagType(status) {
  */
 function getStatusIcon(status) {
   const iconMap = {
-    'OK': 'fa-check',
-    'FAILED': 'fa-times',
-    'CHECK': 'fa-user-md',
-    'SKIPPING': 'fa-adjust',
-    'UNREACHABLE': 'fa-question'
+    OK: 'fa-check',
+    FAILED: 'fa-times',
+    CHECK: 'fa-user-md',
+    SKIPPING: 'fa-adjust',
+    UNREACHABLE: 'fa-question'
   }
   return iconMap[status] || 'fa-question'
 }
@@ -340,11 +496,11 @@ function getStatusIcon(status) {
  */
 function getStatusLabel(status) {
   const labelMap = {
-    'OK': '检查通过',
-    'FAILED': '检查失败',
-    'CHECK': '人工检查',
-    'SKIPPING': '白名单',
-    'UNREACHABLE': '无数据'
+    OK: '检查通过',
+    FAILED: '检查失败',
+    CHECK: '人工检查',
+    SKIPPING: '白名单',
+    UNREACHABLE: '无数据'
   }
   return labelMap[status] || status || '-'
 }
@@ -458,99 +614,109 @@ function renderChart() {
         saveAsImage: { show: true }
       }
     },
-    series: [{
-      type: 'tree',
-      data: diagramData.value,
-      top: '2%',
-      left: '33%',
-      bottom: '2%',
-      right: '40%',
-      itemStyle: {
-        borderColor: '#99512F',
-        borderWidth: 2,
-        backgroundColor: '#ffffff'
-      },
-      lineStyle: {
-        color: '#99512F',
-        width: 2,
-        curveness: 0.3
-      },
-      symbolSize: 7,
-      label: {
-        position: 'left',
-        formatter: (params) => {
-          if (params.data.type === 'root') {
-            return [`{root_name|${params.data.name}}`, ' ', `{root_count|${params.data.count}}`].join('')
-          }
-          if (params.data.type === 'sub') {
-            return [`{sub_name|${params.data.name}}`, ' ', `{sub_count|${params.data.count}}`].join('')
-          }
-          return params.data.name
+    series: [
+      {
+        type: 'tree',
+        data: diagramData.value,
+        top: '2%',
+        left: '33%',
+        bottom: '2%',
+        right: '40%',
+        itemStyle: {
+          borderColor: '#99512F',
+          borderWidth: 2,
+          backgroundColor: '#ffffff'
         },
-        rich: {
-          root_name: {
-            verticalAlign: 'middle',
-            align: 'right',
-            borderRadius: 6,
-            padding: [5, 10, 5, 10],
-            backgroundColor: '#ff5e63',
-            color: '#ffffff'
-          },
-          root_count: {
-            padding: [7, 10, 4, 8],
-            color: '#ffffff',
-            backgroundColor: '#dc3545',
-            fontWeight: 'bold',
-            borderRadius: 50
-          },
-          sub_count: {
-            padding: [7, 10, 4, 8],
-            color: '#ffffff',
-            backgroundColor: '#dc3545',
-            fontWeight: 'bold',
-            borderRadius: 50
-          },
-          sub_name: {
-            verticalAlign: 'middle',
-            align: 'right',
-            borderRadius: 6,
-            padding: [5, 10, 5, 10],
-            backgroundColor: '#ff5e63',
-            color: '#ffffff'
-          }
-        }
-      },
-      leaves: {
+        lineStyle: {
+          color: '#99512F',
+          width: 2,
+          curveness: 0.3
+        },
+        symbolSize: 7,
         label: {
-          position: 'right',
-          formatter: (params) => {
-            return [`{count|${params.data.count}}`, ' ', `{name|${params.data.name}}`].join('')
+          position: 'left',
+          formatter: params => {
+            if (params.data.type === 'root') {
+              return [
+                `{root_name|${params.data.name}}`,
+                ' ',
+                `{root_count|${params.data.count}}`
+              ].join('')
+            }
+            if (params.data.type === 'sub') {
+              return [
+                `{sub_name|${params.data.name}}`,
+                ' ',
+                `{sub_count|${params.data.count}}`
+              ].join('')
+            }
+            return params.data.name
           },
           rich: {
-            count: {
+            root_name: {
+              verticalAlign: 'middle',
+              align: 'right',
+              borderRadius: 6,
+              padding: [5, 10, 5, 10],
+              backgroundColor: '#ff5e63',
+              color: '#ffffff'
+            },
+            root_count: {
               padding: [7, 10, 4, 8],
               color: '#ffffff',
               backgroundColor: '#dc3545',
               fontWeight: 'bold',
               borderRadius: 50
             },
-            name: {
+            sub_count: {
+              padding: [7, 10, 4, 8],
+              color: '#ffffff',
+              backgroundColor: '#dc3545',
+              fontWeight: 'bold',
+              borderRadius: 50
+            },
+            sub_name: {
               verticalAlign: 'middle',
-              align: 'left',
-              fontSize: 10,
-              fontWeight: 400,
-              borderColor: '#99512F',
-              borderWidth: 1,
+              align: 'right',
               borderRadius: 6,
               padding: [5, 10, 5, 10],
-              backgroundColor: '#ffffff',
-              color: 'black'
+              backgroundColor: '#ff5e63',
+              color: '#ffffff'
             }
           }
-        }
-      },
-      animationDurationUpdate: 750
-    }]
+        },
+        leaves: {
+          label: {
+            position: 'right',
+            formatter: params => {
+              return [`{count|${params.data.count}}`, ' ', `{name|${params.data.name}}`].join('')
+            },
+            rich: {
+              count: {
+                padding: [7, 10, 4, 8],
+                color: '#ffffff',
+                backgroundColor: '#dc3545',
+                fontWeight: 'bold',
+                borderRadius: 50
+              },
+              name: {
+                verticalAlign: 'middle',
+                align: 'left',
+                fontSize: 10,
+                fontWeight: 400,
+                borderColor: '#99512F',
+                borderWidth: 1,
+                borderRadius: 6,
+                padding: [5, 10, 5, 10],
+                backgroundColor: '#ffffff',
+                color: 'black'
+              }
+            }
+          }
+        },
+        animationDurationUpdate: 750
+      }
+    ]
   }
 
   chartInstance.setOption(option)
@@ -560,14 +726,14 @@ function renderChart() {
   chartInstance.off('dblclick')
 
   // 双击一级业务节点
-  chartInstance.on('dblclick', (params) => {
+  chartInstance.on('dblclick', params => {
     if (params.data?.type === 'sub') {
       showPrimaryDialog(params.data.name)
     }
   })
 
   // 单击二级业务节点
-  chartInstance.on('click', (params) => {
+  chartInstance.on('click', params => {
     if (params.data?.type === 'item') {
       const value = params.data.value || ''
       const [primaryService, secondaryService] = value.split('::')
@@ -580,6 +746,8 @@ function renderChart() {
  * 显示一级业务详情弹窗
  */
 async function showPrimaryDialog(primaryService) {
+  // 重置搜索
+  primaryFilterText.value = ''
   primaryDialogTitle.value = `${primaryService} - 二级业务列表`
   primaryDialogVisible.value = true
 
@@ -605,6 +773,9 @@ async function showPrimaryDialog(primaryService) {
  * 显示二级业务详情弹窗
  */
 async function showSecondaryDialog(primaryService, secondaryService) {
+  // 重置搜索
+  secondaryItemFilterText.value = ''
+  secondaryHostFilterText.value = ''
   secondaryDialogTitle.value = `${secondaryService} - 详情`
   secondaryActiveTab.value = 'item'
   secondaryDialogVisible.value = true
@@ -650,17 +821,19 @@ function showItemList(itemStr) {
  * KPI 卡片点击 - 打开详情弹窗
  */
 async function handleKpiClick(item) {
+  // 重置搜索
+  kpiFilterText.value = ''
   // 根据 KPI 类型确定数据集 ID 和查询参数
   const datasetMap = {
-    'hostAll': 'CAC_STRUCTURAL_KPI_HOSTALL',
-    'hostOkAll': 'CAC_STRUCTURAL_KPI_HOSTOK',
-    'hostFailedAll': 'CAC_STRUCTURAL_KPI_HOSTFAILED',
-    'hostCheckAll': 'CAC_STRUCTURAL_KPI_HOSTCHECK',
-    'itemAll': 'CAC_STRUCTURAL_KPI_ITEMALL',
+    hostAll: 'CAC_STRUCTURAL_KPI_HOSTALL',
+    hostOkAll: 'CAC_STRUCTURAL_KPI_HOSTOK',
+    hostFailedAll: 'CAC_STRUCTURAL_KPI_HOSTFAILED',
+    hostCheckAll: 'CAC_STRUCTURAL_KPI_HOSTCHECK',
+    itemAll: 'CAC_STRUCTURAL_KPI_ITEMALL',
     // OK/FAILED/CHECK 使用同一个数据集，通过 status 参数区分
-    'OK': 'CAC_GET_CHECK_ITEM_BY_STATUS',
-    'FAILED': 'CAC_GET_CHECK_ITEM_BY_STATUS',
-    'CHECK': 'CAC_GET_CHECK_ITEM_BY_STATUS'
+    OK: 'CAC_GET_CHECK_ITEM_BY_STATUS',
+    FAILED: 'CAC_GET_CHECK_ITEM_BY_STATUS',
+    CHECK: 'CAC_GET_CHECK_ITEM_BY_STATUS'
   }
 
   const datasetId = datasetMap[item.pageParam]
@@ -876,7 +1049,7 @@ function initData() {
 // 监听 props.jobId 变化
 watch(
   () => props.jobId,
-  (newJobId) => {
+  newJobId => {
     if (newJobId) {
       currentJobId.value = newJobId
       initData()
@@ -1041,7 +1214,7 @@ onUnmounted(() => {
 .diagram-container {
   flex: 1;
   padding: 16px;
-  overflow: auto;
+  // overflow: auto;
   background: #fff;
   margin: 16px;
   border-radius: 8px;

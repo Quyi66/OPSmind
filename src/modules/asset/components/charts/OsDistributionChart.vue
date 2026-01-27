@@ -2,7 +2,13 @@
   <div class="chart-card" ref="cardRef">
     <div class="chart-header">
       <span class="chart-title">操作系统分布</span>
-      <el-button v-if="showControls" :icon="FullScreen" text @click="toggleFullscreen" title="全屏" />
+      <el-button
+        v-if="showControls"
+        :icon="FullScreen"
+        text
+        @click="toggleFullscreen"
+        title="全屏"
+      />
     </div>
     <div ref="chartRef" class="chart-container" v-loading="loading"></div>
 
@@ -63,13 +69,23 @@ function getChartOption() {
       left: '3%',
       right: '4%',
       bottom: '10%',
-      top: '14%',
+      top: '14%'
     },
     xAxis: {
       type: 'category',
       data: xData,
       axisLabel: {
-        color: '#666'
+        rotate: 0,
+        color: '#666',
+        formatter: value => {
+          const count = props.data.length
+          // 动态计算最大长度：数量越少显示越长，最小保留 5 个字符
+          const maxLen = count <= 3 ? 15 : count <= 6 ? 10 : count <= 10 ? 7 : 5
+          if (value && value.length > maxLen) {
+            return value.substring(0, maxLen) + '...'
+          }
+          return value
+        }
       },
       axisLine: {
         lineStyle: {
@@ -101,7 +117,7 @@ function getChartOption() {
         data: yData,
         itemStyle: {
           // 为每个柱条使用不同颜色
-          color: (params) => {
+          color: params => {
             const colors = [
               '#409EFF', // 蓝色
               '#67C23A', // 绿色
@@ -110,7 +126,7 @@ function getChartOption() {
               '#909399', // 灰色
               '#00B0F0', // 浅蓝
               '#00B050', // 深绿
-              '#7030A0'  // 紫色
+              '#7030A0' // 紫色
             ]
             return colors[params.dataIndex % colors.length]
           }
@@ -127,7 +143,7 @@ function initChart() {
   chartInstance = echarts.init(chartRef.value)
   updateChart()
 
-  chartInstance.on('click', (params) => {
+  chartInstance.on('click', params => {
     emit('click', {
       os_distro: props.data[params.dataIndex]?.os_distro
     })
@@ -149,7 +165,7 @@ function toggleFullscreen() {
   })
 }
 
-watch(fullscreenVisible, (val) => {
+watch(fullscreenVisible, val => {
   if (!val && fullscreenChartInstance) {
     fullscreenChartInstance.dispose()
     fullscreenChartInstance = null
@@ -160,12 +176,16 @@ function handleResize() {
   chartInstance?.resize()
 }
 
-watch(() => props.data, () => {
-  updateChart()
-  if (fullscreenChartInstance) {
-    fullscreenChartInstance.setOption(getChartOption())
-  }
-}, { deep: true })
+watch(
+  () => props.data,
+  () => {
+    updateChart()
+    if (fullscreenChartInstance) {
+      fullscreenChartInstance.setOption(getChartOption())
+    }
+  },
+  { deep: true }
+)
 
 onMounted(() => {
   initChart()

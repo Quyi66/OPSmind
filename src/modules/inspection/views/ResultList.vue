@@ -1,14 +1,9 @@
 <template>
-  <div class="ops-page-layout" style="flex-direction: row; padding: 0; gap: 0;">
+  <div class="ops-page-layout" style="flex-direction: row; padding: 0; gap: 0">
     <!-- 左侧模板列表 -->
     <aside class="ops-sidebar-nav">
       <div class="ops-sidebar-header">
-        <el-input
-          v-model="templateSearchText"
-          placeholder="搜索模板"
-          clearable
-          style="width: 100%"
-        >
+        <el-input v-model="templateSearchText" placeholder="搜索模板" clearable style="width: 100%">
           <template #prefix>
             <i class="fa fa-search"></i>
           </template>
@@ -33,7 +28,8 @@
           <span>{{ item.templateName }}</span>
         </button>
         <div v-if="templateLoading" class="loading-placeholder">
-          <i class="fa fa-cog fa-spin"></i> 正在加载...
+          <i class="fa fa-cog fa-spin"></i>
+          正在加载...
         </div>
       </el-scrollbar>
     </aside>
@@ -43,13 +39,8 @@
       <!-- 筛选区 -->
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
-          <el-form-item label="关键词">
-            <el-input
-              v-model="filters.keyword"
-              placeholder="搜索"
-              clearable
-              style="width: 200px;"
-            >
+          <el-form-item label="模版名称">
+            <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 200px">
               <template #prefix>
                 <el-icon><Search /></el-icon>
               </template>
@@ -70,8 +61,15 @@
 
       <!-- 操作栏 -->
       <div class="ops-action-bar">
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadResults" title="刷新">
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          @click="loadResults"
+          title="刷新"
+        >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
@@ -79,7 +77,13 @@
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
         <div class="table-toolbar-icons">
-          <el-button class="toolbar-icon-btn" circle :loading="loading" @click="refreshTable" title="刷新">
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            :loading="loading"
+            @click="refreshTable"
+            title="刷新"
+          >
             <el-icon v-show="!loading"><Refresh /></el-icon>
           </el-button>
         </div>
@@ -112,7 +116,7 @@
               <el-tag
                 :type="getStatusType(row.jobStatus)"
                 size="small"
-                style="cursor: pointer;"
+                style="cursor: pointer"
                 @click="showJobLog(row)"
               >
                 {{ getStatusText(row.jobStatus) }}
@@ -214,7 +218,7 @@ const filteredTemplates = computed(() => {
   // 搜索过滤
   if (templateSearchText.value) {
     const keyword = templateSearchText.value.toLowerCase()
-    list = list.filter(t => t.templateName?.toLowerCase().includes(keyword))
+    list = list.filter(t => t.templateName?.toLowerCase()?.includes(keyword))
   }
 
   // 按名称升序排序
@@ -266,10 +270,10 @@ function formatAuditParams(auditParamsStr) {
  */
 function getStatusType(status) {
   const statusMap = {
-    'OK': 'success',
-    'ERROR': 'danger',
-    'WAITING': 'info',
-    'RUNNING': 'primary'
+    OK: 'success',
+    ERROR: 'danger',
+    WAITING: 'info',
+    RUNNING: 'primary'
   }
   return statusMap[status] || 'info'
 }
@@ -279,10 +283,10 @@ function getStatusType(status) {
  */
 function getStatusText(status) {
   const statusMap = {
-    'OK': '完成',
-    'ERROR': '失败',
-    'WAITING': '等待中',
-    'RUNNING': '运行中'
+    OK: '完成',
+    ERROR: '失败',
+    WAITING: '等待中',
+    RUNNING: '运行中'
   }
   return statusMap[status] || status || '-'
 }
@@ -357,16 +361,12 @@ async function loadResults() {
     // 使用 axios 直接发送，确保作为 Form Data 发送
     const baseURL = import.meta.env.VITE_API_BASE_URL || '/oplus-portal'
     const authHeaders = authService.getAuthHeaders()
-    const response = await axios.post(
-      `${baseURL}/cac/api/cac/v2/jobs/page/${templateId}`,
-      params,
-      {
-        headers: {
-          ...authHeaders,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }
+    const response = await axios.post(`${baseURL}/cac/api/cac/v2/jobs/page/${templateId}`, params, {
+      headers: {
+        ...authHeaders,
+        'Content-Type': 'application/x-www-form-urlencoded'
       }
-    )
+    })
 
     const data = response?.data || response || {}
     tableData.value = data.data || []
@@ -388,13 +388,6 @@ function selectTemplate(templateId) {
   selectedTemplateId.value = templateId
   pagination.value.page = 1
   loadResults()
-}
-
-/**
- * 排序变更
- */
-function handleSortChange(order) {
-  templateOrder.value = order
 }
 
 /**
@@ -492,7 +485,7 @@ onMounted(() => {
 // 监听路由 query 参数变化（从模板列表跳转时）
 watch(
   () => route.query.templateId,
-  (newTemplateId) => {
+  newTemplateId => {
     if (newTemplateId) {
       selectedTemplateId.value = newTemplateId
       pagination.value.page = 1

@@ -102,7 +102,7 @@ export const patchScanApi = {
       params: {
         host_id: params.host_id,
         severity: params.severity || ''
-      },
+      }
       // size: params.size || 20,
       // page: params.page || 1
     }
@@ -1058,10 +1058,11 @@ export const yumManageApi = {
   getHostYumList(params = {}) {
     return apiService.post('/dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/', {
       params: {
-        model: 'yum_host_info'
+        model: 'yum_host_info',
+        filter: params.filter
       },
-      page: params.page || 1,
-      size: params.size || 500
+      page: params.page,
+      size: params.size
     })
   },
 
@@ -1077,9 +1078,7 @@ export const yumManageApi = {
         model: 'yum_list',
         data_owner: params.data_owner || '',
         repo_status: params.repo_status || 'enabled'
-      },
-      page: params.page || 1,
-      size: params.size || 500
+      }
     })
   }
 }

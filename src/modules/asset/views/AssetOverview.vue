@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout" style="padding: 0;">
+  <div class="ops-page-layout" style="padding: 0">
     <div class="content-wrapper">
       <!-- 图表区域 - 第一行：资产类型 + 操作系统分布 -->
       <div class="charts-row">
@@ -44,11 +44,20 @@
         </div>
       </div>
     </div>
+
+    <!-- 操作系统版本分布弹窗 -->
+    <OsVersionDialog
+      v-model="osVersionVisible"
+      :title="osVersionTitle"
+      :data="osVersionData"
+      :loading="osVersionLoading"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { overviewApi } from '../api'
 import { processOsDistribution } from '../utils/helpers'
@@ -56,6 +65,9 @@ import AssetTypeChart from '../components/charts/AssetTypeChart.vue'
 import OsDistributionChart from '../components/charts/OsDistributionChart.vue'
 import AssetTrendChart from '../components/charts/AssetTrendChart.vue'
 import GroupAssetChart from '../components/charts/GroupAssetChart.vue'
+import OsVersionDialog from '../components/OsVersionDialog.vue'
+
+const router = useRouter()
 
 // 资产类型数据
 const assetTypeData = ref([])
@@ -72,6 +84,12 @@ const newAssetLoading = ref(false)
 // 分组资产分布数据
 const groupAssetData = ref([])
 const groupAssetLoading = ref(false)
+
+// 操作系统版本分布弹窗逻辑
+const osVersionVisible = ref(false)
+const osVersionLoading = ref(false)
+const osVersionData = ref([])
+const osVersionTitle = ref('')
 
 /**
  * 加载资产类型统计
@@ -142,14 +160,35 @@ async function loadGroupAsset() {
  * 处理资产类型点击
  */
 function handleAssetTypeClick(params) {
-  ElMessage.info(`跳转到资产类型: ${params.code}`)
+  if (!params.code) return
+  router.push({
+    path: '/acm/info',
+    query: { type: params.code }
+  })
 }
 
 /**
  * 处理操作系统点击
  */
-function handleOsClick(params) {
-  ElMessage.info(`查看操作系统: ${params.os_distro}`)
+async function handleOsClick(params) {
+  const osDistro = params.os_distro
+  if (!osDistro) return
+
+  osVersionTitle.value = `${osDistro} 版本分布`
+  osVersionVisible.value = true
+  osVersionLoading.value = true
+  osVersionData.value = []
+
+  try {
+    const response = await overviewApi.getOsVersionDistribution(osDistro)
+    const data = response?.data || response || {}
+    osVersionData.value = data.records || []
+  } catch (error) {
+    console.error('获取操作系统版本分布失败:', error)
+    ElMessage.error('获取版本分布失败')
+  } finally {
+    osVersionLoading.value = false
+  }
 }
 
 /**
@@ -163,12 +202,7 @@ function handleGroupClick(params) {
  * 加载所有数据
  */
 async function loadAllData() {
-  await Promise.all([
-    loadAssetType(),
-    loadOsDistribution(),
-    loadNewAsset(),
-    loadGroupAsset()
-  ])
+  await Promise.all([loadAssetType(), loadOsDistribution(), loadNewAsset(), loadGroupAsset()])
 }
 
 onMounted(() => {

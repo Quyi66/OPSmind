@@ -9,16 +9,14 @@
     <div class="script-selector-content">
       <!-- 面包屑导航 -->
       <div class="breadcrumb-nav">
-        <span
-          v-for="(crumb, index) in breadcrumbs"
-          :key="index"
-          class="breadcrumb-item"
-        >
+        <span v-for="(crumb, index) in breadcrumbs" :key="index" class="breadcrumb-item">
           <a
             v-if="index < breadcrumbs.length - 1"
             href="javascript:void(0)"
             @click="navigateTo(index)"
-          >{{ crumb || '~' }}</a>
+          >
+            {{ crumb || '~' }}
+          </a>
           <span v-else class="current">{{ crumb || '~' }}</span>
           <span v-if="index < breadcrumbs.length - 1" class="separator">›</span>
         </span>
@@ -38,11 +36,7 @@
           </thead>
           <tbody>
             <!-- 返回上级 -->
-            <tr
-              v-if="currentPath"
-              class="file-row parent-row"
-              @click="goParent"
-            >
+            <tr v-if="currentPath" class="file-row parent-row" @click="goParent">
               <td></td>
               <td class="name-cell">
                 <i class="fa fa-level-up-alt text-muted" />
@@ -84,14 +78,17 @@
             </tr>
           </tbody>
         </table>
-        <el-empty v-if="!loading && filteredFiles.length === 0 && !currentPath" description="暂无文件" />
+        <el-empty
+          v-if="!loading && filteredFiles.length === 0 && !currentPath"
+          description="暂无文件"
+        />
       </div>
     </div>
 
     <template #footer>
       <el-button @click="dialogVisible = false">取消</el-button>
       <el-button type="primary" :disabled="selectedFiles.length === 0" @click="handleConfirm">
-        <i class="fa fa-check" /> 确定
+        确定
       </el-button>
     </template>
   </el-dialog>
@@ -116,7 +113,7 @@ const emit = defineEmits(['update:visible', 'confirm'])
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 const loading = ref(false)
@@ -195,11 +192,13 @@ function toggleSelect(file) {
     selectedFiles.value.splice(index, 1)
   } else {
     // 单选模式
-    selectedFiles.value = [{
-      ...file,
-      scriptPath: file.path,
-      scriptName: file.name
-    }]
+    selectedFiles.value = [
+      {
+        ...file,
+        scriptPath: file.path,
+        scriptName: file.name
+      }
+    ]
   }
 }
 
@@ -317,19 +316,22 @@ function handleConfirm() {
 }
 
 // 监听弹窗显示
-watch(() => props.visible, (val) => {
-  if (val) {
-    // 初始化已选文件
-    selectedFiles.value = props.selected.map(s => ({
-      name: s.scriptName || s.scriptPath?.split('/').pop() || '',
-      path: s.scriptPath || s.path,
-      scriptPath: s.scriptPath || s.path,
-      scriptName: s.scriptName || s.scriptPath?.split('/').pop() || ''
-    }))
-    currentPath.value = ''
-    loadFiles()
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      // 初始化已选文件
+      selectedFiles.value = props.selected.map(s => ({
+        name: s.scriptName || s.scriptPath?.split('/').pop() || '',
+        path: s.scriptPath || s.path,
+        scriptPath: s.scriptPath || s.path,
+        scriptName: s.scriptName || s.scriptPath?.split('/').pop() || ''
+      }))
+      currentPath.value = ''
+      loadFiles()
+    }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">
@@ -427,7 +429,7 @@ watch(() => props.visible, (val) => {
         text-align: center;
         width: 40px;
 
-        input[type="radio"] {
+        input[type='radio'] {
           appearance: none;
           -webkit-appearance: none;
           width: 18px;

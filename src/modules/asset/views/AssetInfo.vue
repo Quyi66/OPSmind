@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout" style="padding: 0; gap: 0;">
+  <div class="ops-page-layout" style="padding: 0; gap: 0">
     <!-- 资产类型标签页 -->
     <div class="type-tabs-wrapper">
       <div class="type-tabs">
@@ -45,10 +45,17 @@
                 <el-tabs v-model="hostSelectorTab">
                   <el-tab-pane label="按分组" name="group">
                     <template #label>
-                      <span><i class="fa fa-code-branch" style="margin-right: 4px"></i>按分组</span>
+                      <span>
+                        <i class="fa fa-code-branch" style="margin-right: 4px"></i>
+                        按分组
+                      </span>
                     </template>
                     <div class="group-tree-container">
-                      <div class="group-item all-item" :class="{ active: selectedGroup === 'all' }" @click="handleSelectGroup('all')">
+                      <div
+                        class="group-item all-item"
+                        :class="{ active: selectedGroup === 'all' }"
+                        @click="handleSelectGroup('all')"
+                      >
                         所有
                       </div>
                       <el-tree
@@ -72,10 +79,17 @@
                   </el-tab-pane>
                   <el-tab-pane label="按标签" name="tag">
                     <template #label>
-                      <span><i class="fa fa-tag" style="margin-right: 4px"></i>按标签</span>
+                      <span>
+                        <i class="fa fa-tag" style="margin-right: 4px"></i>
+                        按标签
+                      </span>
                     </template>
                     <div class="tag-list-container">
-                      <el-empty v-if="tagList.length === 0" description="没有数据" :image-size="60" />
+                      <el-empty
+                        v-if="tagList.length === 0"
+                        description="没有数据"
+                        :image-size="60"
+                      />
                       <div v-else class="tag-list">
                         <div
                           v-for="tag in tagList"
@@ -127,7 +141,7 @@
               collapse-tags
               collapse-tags-tooltip
               clearable
-              style="width: 100px"
+              style="width: 120px"
             >
               <el-option
                 v-for="item in osVersionOptions"
@@ -139,20 +153,17 @@
           </el-form-item>
 
           <el-form-item label="关键词">
-            <el-input
-              v-model="searchText"
-              placeholder="搜索"
-              clearable
-              style="width: 150px"
-            />
+            <el-input v-model="searchText" placeholder="搜索" clearable style="width: 150px" />
           </el-form-item>
 
           <el-form-item>
             <el-button type="primary" @click="handleSearch">
-              <el-icon><Search /></el-icon> 搜索
+              <el-icon><Search /></el-icon>
+              搜索
             </el-button>
             <el-button @click="handleReset">
-              <el-icon><RefreshRight /></el-icon> 重置
+              <el-icon><RefreshRight /></el-icon>
+              重置
             </el-button>
           </el-form-item>
         </el-form>
@@ -160,23 +171,46 @@
 
       <!-- 操作按钮区域 -->
       <div class="ops-action-bar">
-        <el-button type="primary" @click="handleAutoEntry" size="small" >
+        <el-button type="primary" @click="handleAutoEntry" size="small">
           <i class="fa fa-plus" style="margin-right: 4px"></i>
           自动化资产录入
         </el-button>
         <!-- <el-button :icon="Download" @click="handleExport" size="small">导出</el-button> -->
-        <el-button :icon="Edit" :disabled="!hasSelection" @click="handleEdit" size="small">修改</el-button>
+        <el-button :icon="Edit" :disabled="!hasSelection" @click="handleEdit" size="small">
+          修改
+        </el-button>
         <el-button :disabled="!hasSelection" @click="handleAddTag" size="small">
-          <i class="fa fa-tag" style="margin-right: 4px"></i>添加标签
+          <i class="fa fa-tag" style="margin-right: 4px"></i>
+          添加标签
         </el-button>
         <el-button :disabled="!hasSelection" @click="handleAddGroup" size="small">
-          <i class="fa fa-code" style="margin-right: 4px"></i>添加分组
+          <i class="fa fa-code" style="margin-right: 4px"></i>
+          添加分组
         </el-button>
-        <el-button :icon="Top" :disabled="!hasSelection" @click="handleOnline" size="small">上线</el-button>
-        <el-button :icon="Bottom" :disabled="!hasSelection" @click="handleOffline" size="small">下线</el-button>
-        <el-button type="danger" :icon="Delete" :disabled="!hasSelection" @click="handleDelete" size="small">删除</el-button>
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+        <el-button :icon="Top" :disabled="!hasSelection" @click="handleOnline" size="small">
+          上线
+        </el-button>
+        <el-button :icon="Bottom" :disabled="!hasSelection" @click="handleOffline" size="small">
+          下线
+        </el-button>
+        <el-button
+          type="danger"
+          :icon="Delete"
+          :disabled="!hasSelection"
+          @click="handleDelete"
+          size="small"
+        >
+          删除
+        </el-button>
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          @click="handleRefresh"
+          title="刷新"
+        >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
@@ -205,10 +239,7 @@
 
           <el-table-column label="连通状态" width="80" align="left">
             <template #default="{ row }">
-              <i
-                v-if="row.CONN_LATEST_STATUS === 1"
-                class="fa fa-check-circle text-success"
-              ></i>
+              <i v-if="row.CONN_LATEST_STATUS === 1" class="fa fa-check-circle text-success"></i>
               <i
                 v-else-if="row.CONN_LATEST_STATUS === 0"
                 class="fa fa-times-circle text-danger"
@@ -247,9 +278,7 @@
 
           <el-table-column label="操作" width="132" fixed="right">
             <template #default="{ row }">
-              <el-button text type="primary" size="small" @click="handleView(row)">
-                查看
-              </el-button>
+              <el-button text type="primary" size="small" @click="handleView(row)">查看</el-button>
               <el-button text type="primary" size="small" @click="handleEditRow(row)">
                 编辑
               </el-button>
@@ -277,10 +306,7 @@
     </div>
 
     <!-- 资产详情弹窗 -->
-    <AssetDetailDialog
-      v-model="detailDialogVisible"
-      :asset-id="currentAssetId"
-    />
+    <AssetDetailDialog v-model="detailDialogVisible" :asset-id="currentAssetId" />
 
     <!-- 资产编辑弹窗 -->
     <AssetEditDialog
@@ -397,7 +423,7 @@ const treeProps = {
 }
 
 // 将路径数组转换为树形结构
-const buildGroupTreeFromPaths = (paths) => {
+const buildGroupTreeFromPaths = paths => {
   if (!paths || paths.length === 0) return []
 
   const root = { path: '/', name: '~', children: [] }
@@ -451,7 +477,7 @@ const loading = ref(false)
 const selectedRows = ref([])
 
 // 分页
-const pageSize = ref(100)
+const pageSize = ref(10)
 const currentPage = ref(1)
 const total = ref(0)
 
@@ -466,14 +492,14 @@ const paginationInfo = computed(() => {
 })
 
 // 获取连通率样式
-const getConnRateClass = (rate) => {
+const getConnRateClass = rate => {
   if (!rate) return 'text-secondary'
   if (rate >= 50) return 'text-primary'
   return 'text-warning'
 }
 
 // 格式化日期时间
-const formatDateTime = (dateStr) => {
+const formatDateTime = dateStr => {
   if (!dateStr) return ''
   try {
     const date = new Date(dateStr)
@@ -490,12 +516,12 @@ const formatDateTime = (dateStr) => {
 }
 
 // 行操作
-const handleView = (row) => {
+const handleView = row => {
   currentAssetId.value = row.id
   detailDialogVisible.value = true
 }
 
-const handleEditRow = (row) => {
+const handleEditRow = row => {
   currentAssetId.value = row.id
   editDialogVisible.value = true
 }
@@ -505,7 +531,7 @@ const handleEditSaved = () => {
   loadAssetList()
 }
 
-const handleHistory = (row) => {
+const handleHistory = row => {
   currentAssetId.value = row.id
   currentAssetIp.value = row.IP || ''
   historyDialogVisible.value = true
@@ -552,12 +578,12 @@ const handleSelectGroup = (groupId, groupName = '所有') => {
 }
 
 // 分组树节点点击
-const handleGroupNodeClick = (data) => {
+const handleGroupNodeClick = data => {
   handleSelectGroup(data.path, data.name)
 }
 
 // 选择标签
-const handleSelectTag = (tag) => {
+const handleSelectTag = tag => {
   selectedTag.value = tag.name
   selectedGroup.value = ''
   filters.value.hostKeys = `,#${tag.name}`
@@ -606,7 +632,8 @@ const loadAssetList = async () => {
       assetType: currentType.value,
       permission: filters.value.permission,
       status: filters.value.status,
-      CONN_LATEST_STATUS: filters.value.connLatestStatus === 'all' ? '' : filters.value.connLatestStatus,
+      CONN_LATEST_STATUS:
+        filters.value.connLatestStatus === 'all' ? '' : filters.value.connLatestStatus,
       system_name: ' ',
       os_version: filters.value.osVersion.length > 0 ? filters.value.osVersion.join(',') : ' '
     }
@@ -626,7 +653,7 @@ const loadAssetList = async () => {
 }
 
 // 资产类型切换
-const handleTypeChange = (code) => {
+const handleTypeChange = code => {
   currentType.value = code
 }
 
@@ -642,8 +669,6 @@ watch(currentType, () => {
   loadTagList()
   loadAssetList()
 })
-
-
 
 // 搜索
 const handleSearch = () => {
@@ -680,7 +705,7 @@ const handlePageSizeChange = () => {
 }
 
 // 选择变化
-const handleSelectionChange = (rows) => {
+const handleSelectionChange = rows => {
   selectedRows.value = rows
 }
 
@@ -688,9 +713,11 @@ const handleSelectionChange = (rows) => {
 const handleExport = () => {
   ElMessageBox.confirm('是否确认导出数据？', '导出确认', {
     type: 'warning'
-  }).then(() => {
-    ElMessage.info('导出功能待实现')
-  }).catch(() => {})
+  })
+    .then(() => {
+      ElMessage.info('导出功能待实现')
+    })
+    .catch(() => {})
 }
 
 const handleEdit = () => {
@@ -738,25 +765,24 @@ const handleOnline = () => {
   }
   ElMessageBox.confirm('是否将选中的资产设置为在线状态？', '上线确认', {
     type: 'warning'
-  }).then(async () => {
-    try {
-      const ids = selectedRows.value.map(row => row.id).join(',')
-      await apiService.post(
-        `/jao/api/jao/jobs/QqUnBG/run?cacheBuster=${Date.now()}`,
-        {
+  })
+    .then(async () => {
+      try {
+        const ids = selectedRows.value.map(row => row.id).join(',')
+        await apiService.post(`/jao/api/jao/jobs/QqUnBG/run?cacheBuster=${Date.now()}`, {
           params: {
             status: 1,
             id: ids
           }
-        }
-      )
-      ElMessage.success('上线成功')
-      loadAssetList()
-    } catch (error) {
-      console.error('上线失败:', error)
-      ElMessage.error('上线失败: ' + (error.response?.data?.message || error.message))
-    }
-  }).catch(() => {})
+        })
+        ElMessage.success('上线成功')
+        loadAssetList()
+      } catch (error) {
+        console.error('上线失败:', error)
+        ElMessage.error('上线失败: ' + (error.response?.data?.message || error.message))
+      }
+    })
+    .catch(() => {})
 }
 
 const handleOffline = () => {
@@ -766,25 +792,24 @@ const handleOffline = () => {
   }
   ElMessageBox.confirm('是否将选中的资产设置为下线状态？', '下线确认', {
     type: 'warning'
-  }).then(async () => {
-    try {
-      const ids = selectedRows.value.map(row => row.id).join(',')
-      await apiService.post(
-        `/jao/api/jao/jobs/QqUnBG/run?cacheBuster=${Date.now()}`,
-        {
+  })
+    .then(async () => {
+      try {
+        const ids = selectedRows.value.map(row => row.id).join(',')
+        await apiService.post(`/jao/api/jao/jobs/QqUnBG/run?cacheBuster=${Date.now()}`, {
           params: {
             status: 0,
             id: ids
           }
-        }
-      )
-      ElMessage.success('下线成功')
-      loadAssetList()
-    } catch (error) {
-      console.error('下线失败:', error)
-      ElMessage.error('下线失败: ' + (error.response?.data?.message || error.message))
-    }
-  }).catch(() => {})
+        })
+        ElMessage.success('下线成功')
+        loadAssetList()
+      } catch (error) {
+        console.error('下线失败:', error)
+        ElMessage.error('下线失败: ' + (error.response?.data?.message || error.message))
+      }
+    })
+    .catch(() => {})
 }
 
 const handleDelete = () => {
@@ -794,24 +819,23 @@ const handleDelete = () => {
   }
   ElMessageBox.confirm('是否确认删除选中的资产？此操作不可恢复！', '删除确认', {
     type: 'warning'
-  }).then(async () => {
-    try {
-      const ids = selectedRows.value.map(row => row.id).join(',')
-      await apiService.post(
-        `/jao/api/jao/jobs/CdPKGF/run?cacheBuster=${Date.now()}`,
-        {
+  })
+    .then(async () => {
+      try {
+        const ids = selectedRows.value.map(row => row.id).join(',')
+        await apiService.post(`/jao/api/jao/jobs/CdPKGF/run?cacheBuster=${Date.now()}`, {
           params: {
             id: ids
           }
-        }
-      )
-      ElMessage.success('删除成功')
-      loadAssetList()
-    } catch (error) {
-      console.error('删除失败:', error)
-      ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
-    }
-  }).catch(() => {})
+        })
+        ElMessage.success('删除成功')
+        loadAssetList()
+      } catch (error) {
+        console.error('删除失败:', error)
+        ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+      }
+    })
+    .catch(() => {})
 }
 
 const handleAutoEntry = () => {

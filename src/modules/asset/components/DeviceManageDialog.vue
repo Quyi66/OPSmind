@@ -11,12 +11,18 @@
     <el-tabs v-model="activeTab" class="device-manage-tabs">
       <el-tab-pane name="password">
         <template #label>
-          <span><i class="fa fa-unlock-alt"></i> 用户名密码纳管</span>
+          <span>
+            <i class="fa fa-unlock-alt"></i>
+            用户名密码纳管
+          </span>
         </template>
       </el-tab-pane>
       <el-tab-pane name="ssh">
         <template #label>
-          <span><i class="fa fa-key"></i> SSH公钥纳管</span>
+          <span>
+            <i class="fa fa-key"></i>
+            SSH公钥纳管
+          </span>
         </template>
       </el-tab-pane>
     </el-tabs>
@@ -31,42 +37,18 @@
         class="tip-alert"
       />
 
-      <el-form :model="passwordForm" label-position="top" class="manage-form">
+      <el-form :model="passwordForm" class="manage-form" label-width="120px">
         <!-- 设备选择器 -->
         <el-form-item label="选择设备">
-          <div class="device-selector-trigger">
-            <el-button @click="showPasswordDeviceSelector = true">
-              <i class="fa fa-server me-1"></i>
-              <span v-if="passwordForm.hosts.length === 0">选择设备</span>
-              <span v-else>已选择 <strong class="text-primary">{{ passwordForm.hosts.length }}</strong> 台设备</span>
-            </el-button>
-            <div v-if="passwordForm.hosts.length > 0" class="selected-hosts-preview">
-              <el-tag
-                v-for="(host, index) in passwordForm.hosts.slice(0, 5)"
-                :key="index"
-                type="primary"
-                closable
-                class="me-1 mb-1"
-                @close="removePasswordHost(index)"
-              >
-                {{ host.value || host.key }}
-              </el-tag>
-              <span v-if="passwordForm.hosts.length > 5" class="text-muted">...等{{ passwordForm.hosts.length - 5 }}台</span>
-            </div>
-          </div>
-          <AcmDeviceSelectorDialog
-            v-model="showPasswordDeviceSelector"
+          <AcmDeviceSelector
+            v-model="passwordForm.hosts"
             ci-types="[auto]"
-            :initial-selection="passwordForm.hosts"
-            @confirm="handlePasswordDeviceConfirm"
+            :options="{ label: '选择设备' }"
           />
         </el-form-item>
 
         <!-- 执行引擎节点 (非 AAP) -->
-        <el-form-item
-          v-if="scriptEngine !== 'aap'"
-          label="执行引擎节点(instance group)"
-        >
+        <el-form-item v-if="scriptEngine !== 'aap'" label="执行引擎节点">
           <el-select
             v-model="passwordForm.instanceGroup"
             placeholder="请选择"
@@ -149,12 +131,6 @@
             placeholder="请输入执行密码"
           />
         </el-form-item>
-
-        <el-form-item>
-          <el-button type="primary" @click="handlePasswordSubmit" :loading="submitting">
-            保存
-          </el-button>
-        </el-form-item>
       </el-form>
     </div>
 
@@ -171,31 +147,10 @@
       <el-form :model="sshForm" label-position="top" class="manage-form">
         <!-- 设备选择器 -->
         <el-form-item label="选择设备">
-          <div class="device-selector-trigger">
-            <el-button @click="showSshDeviceSelector = true">
-              <i class="fa fa-server me-1"></i>
-              <span v-if="sshForm.hosts.length === 0">选择设备</span>
-              <span v-else>已选择 <strong class="text-primary">{{ sshForm.hosts.length }}</strong> 台设备</span>
-            </el-button>
-            <div v-if="sshForm.hosts.length > 0" class="selected-hosts-preview">
-              <el-tag
-                v-for="(host, index) in sshForm.hosts.slice(0, 5)"
-                :key="index"
-                type="primary"
-                closable
-                class="me-1 mb-1"
-                @close="removeSshHost(index)"
-              >
-                {{ host.value || host.key }}
-              </el-tag>
-              <span v-if="sshForm.hosts.length > 5" class="text-muted">...等{{ sshForm.hosts.length - 5 }}台</span>
-            </div>
-          </div>
-          <AcmDeviceSelectorDialog
-            v-model="showSshDeviceSelector"
+          <AcmDeviceSelector
+            v-model="sshForm.hosts"
             ci-types="[auto]"
-            :initial-selection="sshForm.hosts"
-            @confirm="handleSshDeviceConfirm"
+            :options="{ label: '选择设备' }"
           />
         </el-form-item>
 
@@ -230,15 +185,26 @@
           />
           <div class="form-desc">文件默认路径为 ~/.ssh/id_rsa.pub</div>
         </el-form-item>
-
-        <el-form-item>
-          <el-button type="primary" @click="handleSSHSubmit" :loading="submitting">
-            <i class="fa fa-plus" style="margin-right: 4px"></i>
-            开始执行
-          </el-button>
-        </el-form-item>
       </el-form>
     </div>
+
+    <!-- 底部按钮区 -->
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="visible = false">取消</el-button>
+        <el-button
+          v-if="activeTab === 'password'"
+          type="primary"
+          :loading="submitting"
+          @click="handlePasswordSubmit"
+        >
+          保存
+        </el-button>
+        <el-button v-else type="primary" :loading="submitting" @click="handleSSHSubmit">
+          开始执行
+        </el-button>
+      </div>
+    </template>
   </el-dialog>
 </template>
 
@@ -247,7 +213,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
-import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 
 const props = defineProps({
   modelValue: {
@@ -261,7 +227,7 @@ const emit = defineEmits(['update:modelValue', 'success'])
 // 弹窗可见性
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 // Tab状态
@@ -278,10 +244,6 @@ const assetTypes = ref([])
 const instanceGroupOptions = ref([])
 const aapInstanceGroupOptions = ref([])
 const autoConfigOptions = ref([])
-
-// 设备选择器弹窗状态
-const showPasswordDeviceSelector = ref(false)
-const showSshDeviceSelector = ref(false)
 
 // 密码表单
 const passwordForm = ref({
@@ -301,33 +263,19 @@ const sshForm = ref({
   oplus_ansible_ssh_user: 'ansible',
   ansible_ssh_user: 'demo',
   ansible_ssh_pass: 'demo@@',
-  oplus_ssh_pub_key: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCay5dWq/syZ0gXBS5Q8jk5wQs4A62E33Y4SPD0u0Z/hhsVyk8Go3vhl4TX+t62poplu9DIvJpAPVNYUFeUIJzya+yDsTgfkgvuQksRKMqza/Ya+RNYCzm/yc/kNA7pe8uSccK4fVLf0SuhO3LbhvgGfUC1cHaEpp3V4MDMMfHTvtTvbvwTYwbt4r0vB2v6t7urB00h3c5GQvyaJeryszjFlVG92LOXwVkIPx7lULwZoT7V47lsBlTamktuw+tn2UNgYEplUiHouar33tEHIiFHwATePtb1xVz/sRZEIDuO2P9TYqRXQd7eW3dcwzWl5jVQ5wyTCsr8VA6kt5qLr3hD demo@oplus-dev'
+  oplus_ssh_pub_key:
+    'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCay5dWq/syZ0gXBS5Q8jk5wQs4A62E33Y4SPD0u0Z/hhsVyk8Go3vhl4TX+t62poplu9DIvJpAPVNYUFeUIJzya+yDsTgfkgvuQksRKMqza/Ya+RNYCzm/yc/kNA7pe8uSccK4fVLf0SuhO3LbhvgGfUC1cHaEpp3V4MDMMfHTvtTvbvwTYwbt4r0vB2v6t7urB00h3c5GQvyaJeryszjFlVG92LOXwVkIPx7lULwZoT7V47lsBlTamktuw+tn2UNgYEplUiHouar33tEHIiFHwATePtb1xVz/sRZEIDuO2P9TYqRXQd7eW3dcwzWl5jVQ5wyTCsr8VA6kt5qLr3hD demo@oplus-dev'
 })
-
-// 设备选择确认处理
-function handlePasswordDeviceConfirm(selection) {
-  passwordForm.value.hosts = selection
-}
-
-function handleSshDeviceConfirm(selection) {
-  sshForm.value.hosts = selection
-}
-
-// 移除已选设备
-function removePasswordHost(index) {
-  passwordForm.value.hosts.splice(index, 1)
-}
-
-function removeSshHost(index) {
-  sshForm.value.hosts.splice(index, 1)
-}
 
 // 监听弹窗打开，加载数据
-watch(() => props.modelValue, (val) => {
-  if (val) {
-    loadFormOptions()
+watch(
+  () => props.modelValue,
+  val => {
+    if (val) {
+      loadFormOptions()
+    }
   }
-})
+)
 
 // 加载表单选项
 async function loadFormOptions() {
@@ -357,7 +305,9 @@ async function loadFormOptions() {
     autoConfigOptions.value = (configRes?.records || []).filter(item => item.id)
 
     // 获取资产类型
-    const typeRes = await apiService.get(`/acm/api/acm/cit/get/all/select?cacheBuster=${Date.now()}`)
+    const typeRes = await apiService.get(
+      `/acm/api/acm/cit/get/all/select?cacheBuster=${Date.now()}`
+    )
     assetTypes.value = typeRes.data || []
   } catch (error) {
     console.error('加载表单选项失败:', error)
@@ -490,32 +440,5 @@ function handleClose() {
   color: #909399;
   margin-top: 4px;
   line-height: 1.4;
-}
-
-.device-selector-trigger {
-  width: 100%;
-
-  .el-button {
-    width: 100%;
-    justify-content: flex-start;
-    text-align: left;
-  }
-
-  .text-primary {
-    color: #409eff;
-    font-weight: 600;
-  }
-}
-
-.selected-hosts-preview {
-  margin-top: 8px;
-  padding: 8px;
-  background: #f5f7fa;
-  border-radius: 4px;
-
-  .text-muted {
-    color: #909399;
-    font-size: 12px;
-  }
 }
 </style>

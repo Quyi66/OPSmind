@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    title="标签内设备信息"
-    width="1200px"
-    :close-on-click-modal="false"
-  >
+  <el-dialog v-model="visible" title="标签内设备信息" width="1280px" :close-on-click-modal="false">
     <div class="tag-asset-content">
       <!-- 操作按钮和工具栏 -->
       <div class="toolbar">
@@ -20,7 +15,9 @@
         </div>
         <div class="toolbar-right">
           <span v-if="selectedRows.length > 0" class="selected-info">
-            选中<span class="selected-count">{{ selectedRows.length }}</span>项
+            选中
+            <span class="selected-count">{{ selectedRows.length }}</span>
+            项
           </span>
           <el-input
             v-model="keyword"
@@ -52,7 +49,7 @@
         v-loading="loading"
         :data="assetList"
         stripe
-        max-height="400"
+        max-height="calc(100vh - 400px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="40" fixed="left" />
@@ -66,8 +63,16 @@
         <el-table-column prop="IP" label="纳管IP" width="130" fixed="left" />
         <el-table-column label="连通状态" width="80" align="left">
           <template #default="{ row }">
-            <i v-if="row.CONN_LATEST_STATUS === 1" class="fa fa-check-circle" style="color: #67c23a"></i>
-            <i v-else-if="row.CONN_LATEST_STATUS === 0" class="fa fa-times-circle" style="color: #f56c6c"></i>
+            <i
+              v-if="row.CONN_LATEST_STATUS === 1"
+              class="fa fa-check-circle"
+              style="color: #67c23a"
+            ></i>
+            <i
+              v-else-if="row.CONN_LATEST_STATUS === 0"
+              class="fa fa-times-circle"
+              style="color: #f56c6c"
+            ></i>
             <i v-else class="fa fa-question-circle" style="color: #e6a23c"></i>
           </template>
         </el-table-column>
@@ -81,8 +86,8 @@
         <el-table-column prop="os_distro" label="操作系统" width="80" />
         <el-table-column prop="hostname" label="主机名" width="100" show-overflow-tooltip />
         <el-table-column prop="arch" label="系统架构" width="80" />
-        <el-table-column prop="cpu_vcpus" label="cpu个数" width="70" align="left" />
-        <el-table-column prop="kernel" label="内核" width="180" show-overflow-tooltip />
+        <el-table-column prop="cpu_vcpus" label="cpu个数" width="80" align="left" />
+        <el-table-column prop="kernel" label="内核" width="100" show-overflow-tooltip />
         <el-table-column prop="memtotal_mb" label="总内存" width="80" align="left" />
         <el-table-column prop="系统名称" label="系统名称" width="80" show-overflow-tooltip />
         <el-table-column prop="负责人" label="负责人" width="80" show-overflow-tooltip />
@@ -129,7 +134,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const tableRef = ref()
@@ -153,13 +158,17 @@ const loadAssetList = async () => {
   loading.value = true
   try {
     // 使用 ACM_GET_ATTRS_BY_TAGID 数据集
-    const res = await dtsApi.queryData('ACM_GET_ATTRS_BY_TAGID', {
-      tagId: props.tagData.id
-    }, {
-      size: pagination.value.size,
-      page: pagination.value.page,
-      filter: keyword.value || ''
-    })
+    const res = await dtsApi.queryData(
+      'ACM_GET_ATTRS_BY_TAGID',
+      {
+        tagId: props.tagData.id
+      },
+      {
+        size: pagination.value.size,
+        page: pagination.value.page,
+        filter: keyword.value || ''
+      }
+    )
     assetList.value = res?.records || []
     pagination.value.total = res?.total || 0
   } catch (error) {
@@ -171,7 +180,7 @@ const loadAssetList = async () => {
 }
 
 // 选择变化
-const handleSelectionChange = (rows) => {
+const handleSelectionChange = rows => {
   selectedRows.value = rows
 }
 
@@ -182,27 +191,25 @@ const handleRemoveAsset = () => {
     return
   }
 
-  ElMessageBox.confirm(
-    '确定要从当前标签中移除选中的资产吗？',
-    '移除确认',
-    { type: 'warning' }
-  ).then(async () => {
-    try {
-      const ciIds = selectedRows.value.map(row => row.id).join(',')
-      // Job: dosxGT - 从标签移除资产
-      await apiService.post(`/jao/api/jao/jobs/dosxGT/run?cacheBuster=${Date.now()}`, {
-        params: {
-          tagId: props.tagData.id,
-          ciId: ciIds
-        }
-      })
-      ElMessage.success('移除成功')
-      loadAssetList()
-    } catch (error) {
-      console.error('移除失败:', error)
-      ElMessage.error('移除失败: ' + (error.response?.data?.message || error.message))
-    }
-  }).catch(() => {})
+  ElMessageBox.confirm('确定要从当前标签中移除选中的资产吗？', '移除确认', { type: 'warning' })
+    .then(async () => {
+      try {
+        const ciIds = selectedRows.value.map(row => row.id).join(',')
+        // Job: dosxGT - 从标签移除资产
+        await apiService.post(`/jao/api/jao/jobs/dosxGT/run?cacheBuster=${Date.now()}`, {
+          params: {
+            tagId: props.tagData.id,
+            ciId: ciIds
+          }
+        })
+        ElMessage.success('移除成功')
+        loadAssetList()
+      } catch (error) {
+        console.error('移除失败:', error)
+        ElMessage.error('移除失败: ' + (error.response?.data?.message || error.message))
+      }
+    })
+    .catch(() => {})
 }
 
 // 导出
@@ -212,7 +219,7 @@ const handleExport = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     keyword.value = ''
     pagination.value.page = 1

@@ -32,7 +32,7 @@ export const dtsApi = {
     const body = { params }
     if (options.size) body.size = options.size
     if (options.page) body.page = options.page
-    if (options.filter !== undefined) body.filter = options.filter
+    if (options.filter !== undefined) body.filter = `name:*${options.filter}*`
     return apiService.post(`${DTS_BASE}/${datasetId}/`, body)
   },
 
@@ -55,7 +55,7 @@ export const dtsApi = {
       params: { job_id: jobId },
       size,
       page,
-      filter
+      filter: filter ? `host_key:*${filter}*` : ''
     })
   }
 }
@@ -197,7 +197,9 @@ export const jobApi = {
    * @param {string} templateId - 模板ID
    */
   getHostCheckItems(jobId, templateId) {
-    return apiService.get(`${CAC_BASE}/v2/jobs/result-v2/${jobId},${templateId}?cacheBuster=${Date.now()}`)
+    return apiService.get(
+      `${CAC_BASE}/v2/jobs/result-v2/${jobId},${templateId}?cacheBuster=${Date.now()}`
+    )
   },
 
   /**

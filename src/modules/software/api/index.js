@@ -276,7 +276,7 @@ export const repoApi = {
       params: params.repoStatus ? { repoStatus: params.repoStatus } : {},
       page: params.page || 1,
       size: params.size || 10,
-      orderBy: params.orderBy || '',
+      orderBy: params.orderBy || 'scan_date',
       filter: params.filter || ''
     })
   },
@@ -387,6 +387,34 @@ export const repoApi = {
     const idsArray = Array.isArray(ids) ? ids : [ids]
     return apiService.post('/jao/api/jao/jobs/puc46x/run', {
       params: { ids: idsArray }
+    })
+  },
+
+  /**
+   * 配置仓库到主机
+   * 对应作业: 3m2kbd
+   * POST: /jao/api/jao/jobs/3m2kbd/run
+   * 参数格式:
+   * {
+   *   params: {
+   *     repoConfigIds: '4028c0849ba1827f019be8b85e223da1',  // 选中的仓库配置IDs，逗号分隔
+   *     hosts: [{ key, value, assetType }],                 // 目标主机列表
+   *     repoIds: null,
+   *     repoInfoJobId: 'zYn2Is',                           // 仓库信息作业ID
+   *     configJobId: 'dchUqi'                              // 配置作业ID
+   *   }
+   * }
+   */
+  configRepoToHosts(params = {}) {
+    const cacheBuster = Date.now()
+    return apiService.post(`/jao/api/jao/jobs/3m2kbd/run?cacheBuster=${cacheBuster}`, {
+      params: {
+        repoConfigIds: params.repoConfigIds,
+        hosts: params.hosts,
+        repoIds: params.repoIds || null,
+        repoInfoJobId: params.repoInfoJobId || 'zYn2Is',
+        configJobId: params.configJobId || 'dchUqi'
+      }
     })
   }
 }
@@ -611,14 +639,18 @@ export const localInstallApi = {
    */
   startInstall(params = {}) {
     const cacheBuster = Date.now()
-    return apiService.post('/jao/api/jao/jobs/EKjwO7/run', {
-      params: {
-        hosts: params.hosts,
-        file_list: params.file_list
+    return apiService.post(
+      '/jao/api/jao/jobs/EKjwO7/run',
+      {
+        params: {
+          hosts: params.hosts,
+          file_list: params.file_list
+        }
+      },
+      {
+        params: { cacheBuster }
       }
-    }, {
-      params: { cacheBuster }
-    })
+    )
   },
 
   /**

@@ -1,11 +1,11 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout result-detail-page">
     <!-- 顶部导航栏 -->
     <nav class="page-navbar">
       <div class="navbar-left">
         <el-breadcrumb separator=">">
           <el-breadcrumb-item>
-            <a @click="goBack">检查结果</a>
+            <a @click="goBack">执行记录</a>
           </el-breadcrumb-item>
           <el-breadcrumb-item>{{ jobInfo.templateName || '结果详情' }}</el-breadcrumb-item>
         </el-breadcrumb>
@@ -25,8 +25,10 @@
           {{ getJobStatusText(jobInfo.jobStatus) }}
         </el-tag>
         <span class="time-info">
-          <strong>开始时间：</strong>{{ formatDateTime(jobInfo.createdAt) }}
-          <strong style="margin-left: 16px;">结束时间：</strong>{{ formatDateTime(jobInfo.endedAt) }}
+          <strong>开始时间：</strong>
+          {{ formatDateTime(jobInfo.createdAt) }}
+          <strong style="margin-left: 16px">结束时间：</strong>
+          {{ formatDateTime(jobInfo.endedAt) }}
         </span>
       </div>
 
@@ -52,18 +54,17 @@
     </div>
 
     <!-- 统计卡片 -->
-    <StatisticsCards
-      v-loading="statsLoading"
-      :statistics="statistics"
-      @click="handleStatClick"
-    />
+    <StatisticsCards v-loading="statsLoading" :statistics="statistics" @click="handleStatClick" />
 
     <!-- 标签页 -->
     <div class="tabs-container">
       <el-tabs v-model="activeTab">
         <el-tab-pane name="host">
           <template #label>
-            <span>主机概览 <i class="fa fa-external-link-alt" style="font-size: 10px; margin-left: 4px;"></i></span>
+            <span>
+              主机概览
+              <i class="fa fa-external-link-alt" style="font-size: 10px; margin-left: 4px"></i>
+            </span>
           </template>
         </el-tab-pane>
         <el-tab-pane label="巡检概览" name="overview" />
@@ -71,31 +72,52 @@
 
       <!-- 工具栏 -->
       <div class="toolbar">
-        <el-button :disabled="selectedHostIds.length === 0" @click="addToWhitelist">
-          <i class="fa fa-plus"></i> 添加白名单
-        </el-button>
-        <el-button :disabled="selectedHostIds.length === 0" @click="removeFromWhitelist">
-          <i class="fa fa-trash-alt"></i> 移除白名单
-        </el-button>
-        <el-button @click="dialogs.showWhitelistDialog()">
-          <i class="fa fa-list"></i> 白名单列表
-        </el-button>
+        <template v-if="activeTab === 'host'">
+          <el-button :disabled="selectedHostIds.length === 0" @click="addToWhitelist">
+            <i class="fa fa-plus"></i>
+            添加白名单
+          </el-button>
+          <el-button :disabled="selectedHostIds.length === 0" @click="removeFromWhitelist">
+            <i class="fa fa-trash-alt"></i>
+            移除白名单
+          </el-button>
+          <el-button @click="dialogs.showWhitelistDialog()">
+            <i class="fa fa-list"></i>
+            白名单列表
+          </el-button>
+        </template>
         <div class="toolbar-right">
           <el-input
-            v-model="searchText"
-            placeholder="搜索"
+            v-if="activeTab === 'host'"
+            v-model="hostSearchText"
+            placeholder="输入主机名搜索"
             clearable
-            style="width: 200px"
-            @input="handleSearch"
+            style="width: 180px"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
           >
             <template #prefix>
               <i class="fa fa-search"></i>
             </template>
           </el-input>
-          <el-button @click="exportTable">
+          <el-input
+            v-else
+            v-model="overviewSearchText"
+            placeholder="输入检查项名称搜索"
+            clearable
+            style="width: 180px"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
+            <template #prefix>
+              <i class="fa fa-search"></i>
+            </template>
+          </el-input>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <!-- <el-button @click="exportTable">
             <i class="fa fa-file-export"></i>
-          </el-button>
-          <el-button @click="refreshData">
+          </el-button> -->
+          <el-button @click="refreshData" circle>
             <i class="fa fa-sync"></i>
           </el-button>
         </div>
@@ -123,16 +145,21 @@
           <el-table-column label="白名单" width="80" align="left">
             <template #default="{ row }">
               <el-tag v-if="row.black_count > 0" type="primary" size="small" round>
-                <i class="fa fa-check"></i> 是
+                <i class="fa fa-check"></i>
+                是
               </el-tag>
               <el-tag v-else type="info" size="small" round>
-                <i class="fa fa-times"></i> 否
+                <i class="fa fa-times"></i>
+                否
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column label="检查通过" width="100" align="left">
             <template #header>
-              <span><i class="fa fa-check"></i> 检查通过</span>
+              <span>
+                <!-- <i class="fa fa-check"></i> -->
+                检查通过
+              </span>
             </template>
             <template #default="{ row }">
               <el-button type="primary" link @click="dialogs.showItemsByStatus(row, 'OK')">
@@ -142,47 +169,59 @@
           </el-table-column>
           <el-table-column label="检查失败" width="100" align="left">
             <template #header>
-              <span><i class="fa fa-times"></i> 检查失败</span>
+              <span>
+                <!-- <i class="fa fa-times"></i> -->
+                检查失败
+              </span>
             </template>
             <template #default="{ row }">
-              <el-button type="danger" link @click="dialogs.showItemsByStatus(row, 'FAILED')">
+              <el-button type="primary" link @click="dialogs.showItemsByStatus(row, 'FAILED')">
                 {{ row.failed_count }}
               </el-button>
             </template>
           </el-table-column>
           <el-table-column label="人工检查" width="100" align="left">
             <template #header>
-              <span><i class="fa fa-user-md"></i> 人工检查</span>
+              <span>
+                <!-- <i class="fa fa-user-md"></i> -->
+                人工检查
+              </span>
             </template>
             <template #default="{ row }">
-              <el-button type="warning" link @click="dialogs.showItemsByStatus(row, 'CHECK')">
+              <el-button type="primary" link @click="dialogs.showItemsByStatus(row, 'CHECK')">
                 {{ row.check_count }}
               </el-button>
             </template>
           </el-table-column>
           <el-table-column label="白名单" width="100" align="left">
             <template #header>
-              <span><i class="fa fa-adjust"></i> 白名单</span>
+              <span>
+                <!-- <i class="fa fa-adjust"></i> -->
+                白名单
+              </span>
             </template>
             <template #default="{ row }">
-              <el-button type="info" link @click="dialogs.showItemsByStatus(row, 'SKIPPING')">
+              <el-button type="primary" link @click="dialogs.showItemsByStatus(row, 'SKIPPING')">
                 {{ row.skipping_count }}
               </el-button>
             </template>
           </el-table-column>
           <el-table-column label="数据缺失" width="100" align="left">
             <template #header>
-              <span><i class="fa fa-question"></i> 数据缺失</span>
+              <span>
+                <!-- <i class="fa fa-question"></i> -->
+                数据缺失
+              </span>
             </template>
             <template #default="{ row }">
-              <el-button type="info" link @click="dialogs.showItemsByStatus(row, 'UNREACHABLE')">
+              <el-button type="primary" link @click="dialogs.showItemsByStatus(row, 'UNREACHABLE')">
                 {{ row.unreachable_count }}
               </el-button>
             </template>
           </el-table-column>
           <el-table-column prop="check_item_count" label="巡检项" width="80" align="left">
             <template #default="{ row }">
-              <el-button type="info" link @click="dialogs.showHostDetail(row)">
+              <el-button type="primary" link @click="dialogs.showHostDetail(row)">
                 {{ row.check_item_count }}
               </el-button>
             </template>
@@ -206,13 +245,7 @@
 
       <!-- 巡检概览表格 -->
       <div v-else-if="activeTab === 'overview'" class="table-container">
-        <el-table
-          v-loading="overviewLoading"
-          :data="overviewData"
-          border
-          stripe
-          style="width: 100%"
-        >
+        <el-table v-loading="overviewLoading" :data="overviewData" stripe style="width: 100%">
           <el-table-column prop="name" label="检查项" min-width="300">
             <template #default="{ row }">
               <el-button type="primary" link @click="dialogs.showCheckItemHostsDialog(row)">
@@ -250,13 +283,12 @@
       <div class="section-header">
         <span class="section-title">
           巡检项详情
-          <template v-if="selectedHost">
-            - {{ selectedHost.host_key }}
-          </template>
+          <template v-if="selectedHost">- {{ selectedHost.host_key }}</template>
         </span>
         <div class="section-actions">
           <el-button size="small" @click="dialogs.showItemWhitelist()">
-            <i class="fa fa-adjust"></i> 白名单列表
+            <i class="fa fa-adjust"></i>
+            白名单列表
           </el-button>
         </div>
       </div>
@@ -278,20 +310,20 @@
               <template #default="{ row }">
                 <el-tag v-if="row.status === 'OK'" type="success" size="small">通过</el-tag>
                 <el-tag v-else-if="row.status === 'FAILED'" type="danger" size="small">失败</el-tag>
-                <el-tag v-else-if="row.status === 'CHECK'" type="warning" size="small">人工检查</el-tag>
-                <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">白名单</el-tag>
+                <el-tag v-else-if="row.status === 'CHECK'" type="warning" size="small">
+                  人工检查
+                </el-tag>
+                <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">
+                  白名单
+                </el-tag>
                 <el-tag v-else type="info" size="small">无数据</el-tag>
               </template>
             </el-table-column>
             <el-table-column label="输出" min-width="300">
               <template #default="{ row }">
-                <el-button
-                  v-if="row.output"
-                  type="primary"
-                  link
-                  @click="showOutputDetail(row)"
-                >
-                  {{ (row.output || '').substring(0, 100) }}{{ row.output && row.output.length > 100 ? '...' : '' }}
+                <el-button v-if="row.output" type="primary" link @click="showOutputDetail(row)">
+                  {{ (row.output || '').substring(0, 100)
+                  }}{{ row.output && row.output.length > 100 ? '...' : '' }}
                 </el-button>
                 <span v-else class="no-data">无</span>
               </template>
@@ -352,7 +384,7 @@
       :loading="dialogs.whitelistLoading.value"
       @close="dialogs.whitelistVisible.value = false"
       @remove-selected="dialogs.removeSelectedWhitelist"
-      @update:selected-ids="ids => dialogs.selectedWhitelistIds.value = ids"
+      @update:selected-ids="ids => (dialogs.selectedWhitelistIds.value = ids)"
     />
 
     <ItemWhitelistDialog
@@ -416,7 +448,8 @@ const dialogs = useResultDetailDialogs(jobId, jobInfo)
 
 // 本地状态
 const activeTab = ref('host')
-const searchText = ref('')
+const hostSearchText = ref('')
+const overviewSearchText = ref('')
 const selectedHostIds = ref([])
 
 // 巡检项详情状态
@@ -518,39 +551,41 @@ async function handleItemWhitelistDelete(item) {
 }
 
 function handleSearch() {
-  pagination.value.page = 1
-  overviewPagination.value.page = 1
-  loadMachineData(searchText.value)
-  if (activeTab.value === 'overview') {
-    loadOverviewData(searchText.value)
+  if (activeTab.value === 'host') {
+    pagination.value.page = 1
+    loadMachineData(hostSearchText.value)
+  } else {
+    overviewPagination.value.page = 1
+    loadOverviewData(overviewSearchText.value)
   }
 }
 
 function handlePageSizeChange() {
   pagination.value.page = 1
-  loadMachineData(searchText.value)
+  loadMachineData(hostSearchText.value)
 }
 
 function handlePageChange(page) {
   pagination.value.page = page
-  loadMachineData(searchText.value)
+  loadMachineData(hostSearchText.value)
 }
 
 function handleOverviewPageSizeChange() {
   overviewPagination.value.page = 1
-  loadOverviewData(searchText.value)
+  loadOverviewData(overviewSearchText.value)
 }
 
 function handleOverviewPageChange(page) {
   overviewPagination.value.page = page
-  loadOverviewData(searchText.value)
+  loadOverviewData(overviewSearchText.value)
 }
 
 function refreshData() {
   loadStatistics()
-  loadMachineData(searchText.value)
-  if (activeTab.value === 'overview') {
-    loadOverviewData(searchText.value)
+  if (activeTab.value === 'host') {
+    loadMachineData(hostSearchText.value)
+  } else {
+    loadOverviewData(overviewSearchText.value)
   }
 }
 
@@ -576,13 +611,20 @@ async function addToWhitelist() {
     return
   }
   try {
-    await ElMessageBox.confirm(`确定要将选中的 ${selectedHostIds.value.length} 台主机添加到白名单吗？`, '确认')
+    await ElMessageBox.confirm(
+      `确定要将选中的 ${selectedHostIds.value.length} 台主机添加到白名单吗？`,
+      '确认'
+    )
 
     const response = await jobApi.addHostToWhitelist(selectedHostIds.value)
     const result = response?.data || response
 
     // 检查返回结果
-    if (Array.isArray(result) && result[0]?.status === 'COMPLETED' && result[0]?.data?.result === 'ok') {
+    if (
+      Array.isArray(result) &&
+      result[0]?.status === 'COMPLETED' &&
+      result[0]?.data?.result === 'ok'
+    ) {
       ElMessage.success('添加白名单成功')
       refreshData()
     } else {
@@ -602,13 +644,20 @@ async function removeFromWhitelist() {
     return
   }
   try {
-    await ElMessageBox.confirm(`确定要将选中的 ${selectedHostIds.value.length} 台主机从白名单移除吗？`, '确认')
+    await ElMessageBox.confirm(
+      `确定要将选中的 ${selectedHostIds.value.length} 台主机从白名单移除吗？`,
+      '确认'
+    )
 
     const response = await jobApi.removeHostFromWhitelist(selectedHostIds.value)
     const result = response?.data || response
 
     // 检查返回结果
-    if (Array.isArray(result) && result[0]?.status === 'COMPLETED' && result[0]?.data?.result === 'ok') {
+    if (
+      Array.isArray(result) &&
+      result[0]?.status === 'COMPLETED' &&
+      result[0]?.data?.result === 'ok'
+    ) {
       ElMessage.success('移除白名单成功')
       refreshData()
     } else {
@@ -670,7 +719,6 @@ function goBack() {
 }
 
 function extractJobId() {
-
   // 优先从 URL 路径解析
   const path = route.path
 
@@ -700,9 +748,9 @@ function extractJobId() {
 }
 
 // 监听标签页切换
-watch(activeTab, (newTab) => {
+watch(activeTab, newTab => {
   if (newTab === 'overview' && overviewData.value.length === 0) {
-    loadOverviewData(searchText.value)
+    loadOverviewData(overviewSearchText.value)
   }
 })
 
@@ -714,16 +762,12 @@ onMounted(() => {
       return
     }
     initData(id)
-  }, 100);
+  }, 100)
 })
 </script>
 
 <style scoped lang="scss">
 .result-detail-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #f5f7fa;
   overflow: auto;
 }
 
@@ -741,7 +785,9 @@ onMounted(() => {
       a {
         color: #409eff;
         cursor: pointer;
-        &:hover { color: #66b1ff; }
+        &:hover {
+          color: #66b1ff;
+        }
       }
     }
   }
@@ -757,7 +803,10 @@ onMounted(() => {
     align-items: center;
     gap: 16px;
     margin-bottom: 12px;
-    .time-info { font-size: 13px; color: #606266; }
+    .time-info {
+      font-size: 13px;
+      color: #606266;
+    }
   }
 
   .job-info-row {
@@ -766,14 +815,25 @@ onMounted(() => {
     gap: 12px;
     margin-top: 8px;
 
-    .info-label { color: #909399; font-size: 13px; min-width: 40px; }
+    .info-label {
+      color: #909399;
+      font-size: 13px;
+      min-width: 40px;
+    }
     .info-value {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
       gap: 8px;
-      .host-tag, .script-tag { max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
-      .more-hosts { color: #909399; }
+      .host-tag,
+      .script-tag {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .more-hosts {
+        color: #909399;
+      }
     }
   }
 }
@@ -797,17 +857,26 @@ onMounted(() => {
   gap: 8px;
   padding: 12px 16px;
   border-bottom: 1px solid #ebeef5;
-  .toolbar-right { margin-left: auto; display: flex; gap: 8px; }
+  .toolbar-right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
 }
 
-.table-container { padding: 16px; }
+.table-container {
+  padding: 16px;
+}
 
 .table-footer {
   display: flex;
   align-items: center;
   gap: 12px;
   padding-top: 12px;
-  .pagination-info { color: #6c757d; font-size: 13px; }
+  .pagination-info {
+    color: #6c757d;
+    font-size: 13px;
+  }
 }
 
 .inspection-detail-section {
@@ -822,11 +891,21 @@ onMounted(() => {
     align-items: center;
     padding: 12px 16px;
     border-bottom: 1px solid #e2e8f0;
-    .section-title { font-size: 14px; font-weight: 600; color: #303133; }
-    .section-actions { display: flex; gap: 8px; }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #303133;
+    }
+    .section-actions {
+      display: flex;
+      gap: 8px;
+    }
   }
 
-  .section-content { min-height: 200px; padding: 16px; }
+  .section-content {
+    min-height: 200px;
+    padding: 16px;
+  }
 }
 
 :deep(.el-table) {

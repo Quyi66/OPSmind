@@ -12,12 +12,12 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="执行引擎">
+        <!-- <el-form-item label="执行引擎">
           <el-select v-model="filters.ataNode" placeholder="全部" style="width: 130px" clearable>
             <el-option label="全部" value="all" />
             <el-option v-for="node in ataNodes" :key="node" :label="node" :value="node" />
           </el-select>
-        </el-form-item>
+        </el-form-item> -->
 
         <el-form-item label="状态">
           <el-select v-model="filters.status" style="width: 100px">
@@ -35,7 +35,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="关键词">
+        <el-form-item label="执行引擎节点">
           <el-input
             v-model="searchKeyword"
             placeholder="搜索"
@@ -195,32 +195,9 @@ const runResultDialogVisible = ref(false)
 const currentRunId = ref('')
 const currentJobTitle = ref('')
 
-// 过滤后的数据（使用已应用的筛选条件）
+// 表格数据（后端分页）
 const filteredData = computed(() => {
-  let data = tableData.value
-
-  // 按执行引擎节点筛选（使用已应用的条件）
-  if (appliedFilters.value.ataNode && appliedFilters.value.ataNode !== 'all') {
-    data = data.filter(item => item.ata_node === appliedFilters.value.ataNode)
-  }
-
-  // 按搜索关键词筛选（使用已应用的条件）
-  if (appliedFilters.value.keyword) {
-    const keyword = appliedFilters.value.keyword.toLowerCase()
-    data = data.filter(item =>
-      item.action?.toLowerCase().includes(keyword) ||
-      item.message?.toLowerCase().includes(keyword) ||
-      item.username?.toLowerCase().includes(keyword) ||
-      item.ata_node?.toLowerCase().includes(keyword)
-    )
-  }
-
-  // 更新总数
-  total.value = data.length
-
-  // 分页
-  const start = (currentPage.value - 1) * pageSize.value
-  return data.slice(start, start + pageSize.value)
+  return tableData.value
 })
 
 onMounted(() => {
@@ -236,6 +213,10 @@ async function loadData() {
       action: filters.value.action,
       status: filters.value.status,
       day: filters.value.day
+    }, {
+      page: currentPage.value,
+      size: pageSize.value,
+      filter: searchKeyword.value.trim() ? `ata_node:*${searchKeyword.value.trim()}*` : undefined
     })
 
     const data = response?.records || []
@@ -250,7 +231,8 @@ async function loadData() {
     })
     ataNodes.value = Array.from(nodes)
 
-    total.value = data.length
+    // 使用后端返回的总数
+    total.value = response?.total || 0
   } catch (error) {
     console.error('加载操作记录失败:', error)
     ElMessage.error('加载操作记录失败')
@@ -262,12 +244,6 @@ async function loadData() {
 // 筛选变化（点击搜索按钮时触发）
 function handleFilterChange() {
   currentPage.value = 1
-  // 应用前端筛选条件
-  appliedFilters.value = {
-    ataNode: filters.value.ataNode,
-    keyword: searchKeyword.value
-  }
-  // 调用API加载数据（时间范围、状态、操作类型由API筛选）
   loadData()
 }
 
@@ -285,21 +261,18 @@ function handleReset() {
     action: 'all'
   }
   searchKeyword.value = ''
-  appliedFilters.value = {
-    ataNode: 'all',
-    keyword: ''
-  }
   currentPage.value = 1
   loadData()
 }
 
 // 分页变化
 function handlePageChange() {
-  // 分页由 computed 处理
+  loadData()
 }
 
 function handlePageSizeChange() {
   currentPage.value = 1
+  loadData()
 }
 
 // 显示运行结果弹窗

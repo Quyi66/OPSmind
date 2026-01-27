@@ -26,22 +26,36 @@
       <!-- 巡检参数区域 -->
       <div class="audit-params-section">
         <div class="params-header">
-          <span><i class="fa fa-laptop"></i> 主机 <strong>{{ totalHosts }}</strong></span>
-          <span class="ml-4"><i class="fa fa-file-code"></i> 脚本 <strong>{{ totalScripts }}</strong></span>
+          <span>
+            <i class="fa fa-laptop"></i>
+            主机
+            <strong>{{ totalHosts }}</strong>
+          </span>
+          <span class="ml-4">
+            <i class="fa fa-file-code"></i>
+            脚本
+            <strong>{{ totalScripts }}</strong>
+          </span>
         </div>
 
         <div class="params-body">
           <!-- 脚本选择 -->
           <el-form-item label="脚本" prop="scripts">
             <div class="script-selector">
-              <div v-if="formData.scripts.length === 0" class="empty-placeholder" @click="openScriptSelector">
+              <div
+                v-if="formData.scripts.length === 0"
+                class="empty-placeholder"
+                @click="openScriptSelector"
+              >
                 <i class="fal fa-file-alt empty-icon" />
                 <el-button size="small">选择文件</el-button>
               </div>
               <div v-else class="selected-scripts">
                 <div class="script-header">
                   <el-button size="small" @click="openScriptSelector">
-                    共 <strong>{{ formData.scripts.length }}</strong> 个文件
+                    共
+                    <strong>{{ formData.scripts.length }}</strong>
+                    个文件
                   </el-button>
                 </div>
                 <el-table :data="formData.scripts" size="small" class="script-table">
@@ -52,21 +66,12 @@
                   </el-table-column>
                   <el-table-column label="脚本参数" min-width="150">
                     <template #default="{ row }">
-                      <el-input
-                        v-model="row.scriptParams"
-                        size="small"
-                        placeholder="脚本参数"
-                      />
+                      <el-input v-model="row.scriptParams" size="small" placeholder="脚本参数" />
                     </template>
                   </el-table-column>
                   <el-table-column width="60" align="left">
                     <template #default="{ $index }">
-                      <el-button
-                        type="danger"
-                        link
-                        size="small"
-                        @click="removeScript($index)"
-                      >
+                      <el-button type="danger" link size="small" @click="removeScript($index)">
                         <i class="fa fa-minus"></i>
                       </el-button>
                     </template>
@@ -93,12 +98,8 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="handleClose">
-        取消
-      </el-button>
-      <el-button type="primary" :loading="running" @click="handleRun">
-        <i class="fa fa-play"></i> 执行
-      </el-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" :loading="running" @click="handleRun">执行</el-button>
     </template>
 
     <!-- 脚本选择弹窗 -->
@@ -153,18 +154,14 @@ const formData = ref({
 
 // 表单验证规则
 const rules = {
-  templateName: [
-    { required: true, message: '请输入模板名称', trigger: 'blur' }
-  ]
+  templateName: [{ required: true, message: '请输入模板名称', trigger: 'blur' }]
 }
 
 // 过滤后的主机
 const filteredHosts = computed(() => {
   if (!hostFilter.value) return formData.value.hosts
   const keyword = hostFilter.value.toLowerCase()
-  return formData.value.hosts.filter(host =>
-    host.value?.toLowerCase().includes(keyword)
-  )
+  return formData.value.hosts.filter(host => host.value?.toLowerCase().includes(keyword))
 })
 
 // 计算主机总数
@@ -220,9 +217,7 @@ function removeScript(index) {
  * 移除主机
  */
 function removeHost(index) {
-  const realIndex = formData.value.hosts.findIndex(
-    h => h.key === filteredHosts.value[index].key
-  )
+  const realIndex = formData.value.hosts.findIndex(h => h.key === filteredHosts.value[index].key)
   if (realIndex > -1) {
     formData.value.hosts.splice(realIndex, 1)
   }
@@ -247,9 +242,10 @@ async function loadTemplate() {
     // 解析 auditParams
     let auditParams = []
     try {
-      auditParams = typeof template.auditParams === 'string'
-        ? JSON.parse(template.auditParams)
-        : (template.auditParams || [])
+      auditParams =
+        typeof template.auditParams === 'string'
+          ? JSON.parse(template.auditParams)
+          : template.auditParams || []
     } catch {
       auditParams = []
     }
@@ -288,15 +284,17 @@ async function handleRun() {
   running.value = true
   try {
     // 构建 auditParams
-    const auditParams = JSON.stringify([{
-      scripts: formData.value.scripts.map(s => ({
-        scriptPath: s.scriptPath,
-        scriptParams: s.scriptParams || '',
-        scriptName: s.scriptName || s.scriptPath
-      })),
-      hosts: formData.value.hosts,
-      ruleExpressions: []
-    }])
+    const auditParams = JSON.stringify([
+      {
+        scripts: formData.value.scripts.map(s => ({
+          scriptPath: s.scriptPath,
+          scriptParams: s.scriptParams || '',
+          scriptName: s.scriptName || s.scriptPath
+        })),
+        hosts: formData.value.hosts,
+        ruleExpressions: []
+      }
+    ])
 
     // 构建执行参数
     const runData = {
@@ -357,11 +355,14 @@ function resetForm() {
 }
 
 // 监听 visible 变化
-watch(() => props.visible, (val) => {
-  if (val && props.templateId) {
-    loadTemplate()
+watch(
+  () => props.visible,
+  val => {
+    if (val && props.templateId) {
+      loadTemplate()
+    }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">

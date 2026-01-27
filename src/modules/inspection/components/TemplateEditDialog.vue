@@ -62,82 +62,65 @@
         </div>
       </el-form-item>
 
-      <!-- 巡检参数区域 -->
-      <div class="audit-params-section">
-        <div class="params-header">
-          <span><i class="fa fa-laptop"></i> 主机 <strong>{{ totalHosts }}</strong></span>
-          <span class="ml-4"><i class="fa fa-file-code"></i> 脚本 <strong>{{ totalScripts }}</strong></span>
-        </div>
-
-        <div class="params-body">
-          <!-- 脚本选择 -->
-          <el-form-item label="脚本" prop="scripts">
-            <div class="script-selector">
-              <div v-if="formData.scripts.length === 0" class="empty-placeholder" @click="openScriptSelector">
-                <i class="fal fa-file-alt empty-icon" />
-                <el-button size="small">选择文件</el-button>
-              </div>
-              <div v-else class="selected-scripts">
-                <div class="script-header">
-                  <el-button size="small" @click="openScriptSelector">
-                    共 <strong>{{ formData.scripts.length }}</strong> 个文件
-                  </el-button>
-                </div>
-                <el-table :data="formData.scripts" size="small" class="script-table">
-                  <el-table-column prop="scriptPath" label="脚本路径" min-width="200">
-                    <template #default="{ row }">
-                      <span>{{ row.scriptPath }}</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column label="脚本参数" min-width="150">
-                    <template #default="{ row }">
-                      <el-input
-                        v-model="row.scriptParams"
-                        size="small"
-                        placeholder="脚本参数"
-                      />
-                    </template>
-                  </el-table-column>
-                  <el-table-column width="60" align="left">
-                    <template #default="{ $index }">
-                      <el-button
-                        type="danger"
-                        link
-                        size="small"
-                        @click="removeScript($index)"
-                      >
-                        <i class="fa fa-minus"></i>
-                      </el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </div>
+      <!-- 脚本选择 -->
+      <el-form-item label="脚本" prop="scripts">
+        <div class="script-selector">
+          <div
+            v-if="formData.scripts.length === 0"
+            class="empty-placeholder"
+            @click="openScriptSelector"
+          >
+            <i class="fal fa-file-alt empty-icon" />
+            <el-button size="small">选择文件</el-button>
+          </div>
+          <div v-else class="selected-scripts">
+            <div class="script-header">
+              <el-button size="small" @click="openScriptSelector">
+                共
+                <strong>{{ formData.scripts.length }}</strong>
+                个文件
+              </el-button>
             </div>
-          </el-form-item>
-
-          <!-- 主机选择 -->
-          <el-form-item label="主机" prop="hosts">
-            <AcmDeviceSelector
-              v-model="formData.hosts"
-              ci-types="[auto]"
-              :options="{
-                selectMode: 'host,group,tag,input,recently',
-                selector: 'multiple',
-                label: '选择'
-              }"
-            />
-          </el-form-item>
+            <el-table :data="formData.scripts" size="small" class="script-table">
+              <el-table-column prop="scriptPath" label="脚本路径" min-width="200">
+                <template #default="{ row }">
+                  <span>{{ row.scriptPath }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="脚本参数" min-width="150">
+                <template #default="{ row }">
+                  <el-input v-model="row.scriptParams" size="small" placeholder="脚本参数" />
+                </template>
+              </el-table-column>
+              <el-table-column width="60" align="left">
+                <template #default="{ $index }">
+                  <el-button type="danger" link size="small" @click="removeScript($index)">
+                    <i class="fa fa-minus"></i>
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </div>
-      </div>
+      </el-form-item>
+
+      <!-- 主机选择 -->
+      <el-form-item label="主机" prop="hosts">
+        <AcmDeviceSelector
+          v-model="formData.hosts"
+          ci-types="[auto]"
+          :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择'
+          }"
+        />
+      </el-form-item>
     </el-form>
 
     <template #footer>
-      <el-button @click="handleClose">
-        取消
-      </el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">
-        保存
-      </el-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
     </template>
 
     <!-- 脚本选择弹窗 -->
@@ -198,43 +181,55 @@ const formData = ref({
 
 // 表单验证规则
 const rules = {
-  templateName: [
-    { required: true, message: '请输入模板名称', trigger: 'blur' }
-  ]
+  templateName: [{ required: true, message: '请输入模板名称', trigger: 'blur' }]
 }
 
 // 常用图标列表
 const commonIcons = [
-  'fa-server', 'fa-laptop', 'fa-desktop', 'fa-database', 'fa-cloud',
-  'fa-network-wired', 'fa-hdd', 'fa-microchip', 'fa-memory', 'fa-ethernet',
-  'fa-cog', 'fa-cogs', 'fa-tools', 'fa-wrench', 'fa-shield-alt',
-  'fa-check-circle', 'fa-chart-line', 'fa-tasks', 'fa-clipboard-list', 'fa-file-alt',
-  'fa-folder', 'fa-archive', 'fa-box', 'fa-cube', 'fa-cubes',
-  'fa-address-book', 'fa-address-card', 'fa-apple-alt', 'fa-file-video', 'fa-list-alt'
+  'fa-server',
+  'fa-laptop',
+  'fa-desktop',
+  'fa-database',
+  'fa-cloud',
+  'fa-network-wired',
+  'fa-hdd',
+  'fa-microchip',
+  'fa-memory',
+  'fa-ethernet',
+  'fa-cog',
+  'fa-cogs',
+  'fa-tools',
+  'fa-wrench',
+  'fa-shield-alt',
+  'fa-check-circle',
+  'fa-chart-line',
+  'fa-tasks',
+  'fa-clipboard-list',
+  'fa-file-alt',
+  'fa-folder',
+  'fa-archive',
+  'fa-box',
+  'fa-cube',
+  'fa-cubes',
+  'fa-address-book',
+  'fa-address-card',
+  'fa-apple-alt',
+  'fa-file-video',
+  'fa-list-alt'
 ]
 
 // 过滤后的图标
 const filteredIcons = computed(() => {
   if (!iconSearch.value) return commonIcons
-  return commonIcons.filter(icon =>
-    icon.toLowerCase().includes(iconSearch.value.toLowerCase())
-  )
+  return commonIcons.filter(icon => icon.toLowerCase().includes(iconSearch.value.toLowerCase()))
 })
 
 // 过滤后的主机
 const filteredHosts = computed(() => {
   if (!hostFilter.value) return formData.value.hosts
   const keyword = hostFilter.value.toLowerCase()
-  return formData.value.hosts.filter(host =>
-    host.value?.toLowerCase().includes(keyword)
-  )
+  return formData.value.hosts.filter(host => host.value?.toLowerCase().includes(keyword))
 })
-
-// 计算主机总数
-const totalHosts = computed(() => formData.value.hosts.length)
-
-// 计算脚本总数
-const totalScripts = computed(() => formData.value.scripts.length)
 
 /**
  * 获取图标类名
@@ -302,9 +297,7 @@ function removeScript(index) {
  * 移除主机
  */
 function removeHost(index) {
-  const realIndex = formData.value.hosts.findIndex(
-    h => h.key === filteredHosts.value[index].key
-  )
+  const realIndex = formData.value.hosts.findIndex(h => h.key === filteredHosts.value[index].key)
   if (realIndex > -1) {
     formData.value.hosts.splice(realIndex, 1)
   }
@@ -330,9 +323,10 @@ async function loadTemplate() {
     // 解析 auditParams
     let auditParams = []
     try {
-      auditParams = typeof template.auditParams === 'string'
-        ? JSON.parse(template.auditParams)
-        : (template.auditParams || [])
+      auditParams =
+        typeof template.auditParams === 'string'
+          ? JSON.parse(template.auditParams)
+          : template.auditParams || []
     } catch {
       auditParams = []
     }
@@ -361,15 +355,17 @@ async function handleSave() {
   saving.value = true
   try {
     // 构建 auditParams
-    const auditParams = JSON.stringify([{
-      scripts: formData.value.scripts.map(s => ({
-        scriptPath: s.scriptPath,
-        scriptParams: s.scriptParams || '',
-        scriptName: s.scriptName || s.scriptPath
-      })),
-      hosts: formData.value.hosts,
-      ruleExpressions: []
-    }])
+    const auditParams = JSON.stringify([
+      {
+        scripts: formData.value.scripts.map(s => ({
+          scriptPath: s.scriptPath,
+          scriptParams: s.scriptParams || '',
+          scriptName: s.scriptName || s.scriptPath
+        })),
+        hosts: formData.value.hosts,
+        ruleExpressions: []
+      }
+    ])
 
     let payload
     if (isEdit.value && originalTemplate.value) {
@@ -437,15 +433,18 @@ function resetForm() {
 }
 
 // 监听 visible 变化
-watch(() => props.visible, (val) => {
-  if (val) {
-    if (props.templateId) {
-      loadTemplate()
-    } else {
-      resetForm()
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      if (props.templateId) {
+        loadTemplate()
+      } else {
+        resetForm()
+      }
     }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">
@@ -508,38 +507,6 @@ watch(() => props.visible, (val) => {
       }
     }
   }
-}
-
-.audit-params-section {
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.params-header {
-  background: #f5f7fa;
-  padding: 12px 16px;
-  border-bottom: 1px solid #ebeef5;
-  font-size: 14px;
-
-  i {
-    margin-right: 4px;
-    color: #909399;
-  }
-
-  strong {
-    font-size: 16px;
-    color: #303133;
-    margin-left: 4px;
-  }
-
-  .ml-4 {
-    margin-left: 24px;
-  }
-}
-
-.params-body {
-  padding: 16px;
 }
 
 .script-selector {

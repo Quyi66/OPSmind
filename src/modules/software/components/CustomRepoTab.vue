@@ -3,17 +3,21 @@
     <!-- 操作按钮 -->
     <div class="ops-action-bar">
       <div class="action-left">
-        <el-button @click="handleDownloadTemplate">
-          <i class="fa fa-arrow-down" /> 模板下载
-        </el-button>
-        <el-button type="primary" @click="handleImportRepo">
-          <i class="fa fa-file-import" /> 仓库导入
-        </el-button>
         <el-button type="primary" @click="handleAddRepo">
-          <i class="fa fa-plus" /> 添加仓库
+          <i class="fa fa-plus" />
+          添加仓库
         </el-button>
-        <el-button type="primary" :disabled="selectedRows.length === 0" @click="handleConfigToHost">
-          <i class="fa fa-angle-right" /> 配置到主机
+        <el-button :disabled="selectedRows.length === 0" @click="handleConfigToHost">
+          <i class="fa fa-angle-right" />
+          配置到主机
+        </el-button>
+        <el-button @click="handleDownloadTemplate">
+          <i class="fa fa-arrow-down" />
+          模板下载
+        </el-button>
+        <el-button @click="handleImportRepo">
+          <i class="fa fa-file-import" />
+          仓库导入
         </el-button>
       </div>
     </div>
@@ -33,12 +37,8 @@
         <el-table-column prop="repo_url" label="地址" min-width="250" show-overflow-tooltip />
         <el-table-column label="操作" width="88" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button text type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <el-button text type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -58,16 +58,16 @@
     </div>
 
     <!-- 仓库导入弹窗 -->
-    <RepoImportDialog
-      v-model="importDialogVisible"
-      @success="loadData"
-    />
+    <RepoImportDialog v-model="importDialogVisible" @success="loadData" />
 
     <!-- 添加/编辑仓库弹窗 -->
-    <RepoAddDialog
-      v-model="addDialogVisible"
-      :repo-data="editingRepo"
-      @success="loadData"
+    <RepoAddDialog v-model="addDialogVisible" :repo-data="editingRepo" @success="loadData" />
+
+    <!-- 配置到主机弹窗 -->
+    <ConfigRepoToHostDialog
+      v-model="configDialogVisible"
+      :selected-repos="selectedRows"
+      @success="handleConfigSuccess"
     />
   </div>
 </template>
@@ -78,6 +78,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { repoApi } from '../api'
 import RepoImportDialog from './RepoImportDialog.vue'
 import RepoAddDialog from './RepoAddDialog.vue'
+import ConfigRepoToHostDialog from './ConfigRepoToHostDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -90,6 +91,7 @@ const selectedRows = ref([])
 const importDialogVisible = ref(false)
 const addDialogVisible = ref(false)
 const editingRepo = ref(null)
+const configDialogVisible = ref(false)
 
 async function loadData() {
   loading.value = true
@@ -156,9 +158,18 @@ async function handleDelete(row) {
 }
 
 function handleConfigToHost() {
-  const repoConfigIds = selectedRows.value.map(item => item.id).join(',')
-  ElMessage.info('配置到主机')
-  // TODO: 打开配置到主机对话框
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请先选择要配置的仓库')
+    return
+  }
+  configDialogVisible.value = true
+}
+
+function handleConfigSuccess() {
+  // 配置成功后刷新列表
+  loadData()
+  // 清空选择
+  selectedRows.value = []
 }
 
 onMounted(() => {

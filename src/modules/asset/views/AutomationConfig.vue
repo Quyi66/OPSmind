@@ -4,12 +4,18 @@
     <el-tabs v-model="activeTab" @tab-click="handleTabClick" class="ops-tabs">
       <el-tab-pane name="automation">
         <template #label>
-          <span><i class="fa fa-code-branch"></i> 自动化配置信息</span>
+          <span>
+            <i class="fa fa-code-branch"></i>
+            自动化配置信息
+          </span>
         </template>
       </el-tab-pane>
       <el-tab-pane name="ansible">
         <template #label>
-          <span><i class="fa fa-wifi"></i> Ansible连接配置</span>
+          <span>
+            <i class="fa fa-wifi"></i>
+            Ansible连接配置
+          </span>
         </template>
       </el-tab-pane>
     </el-tabs>
@@ -38,7 +44,7 @@
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small">
           <el-form-item label="资产类型">
-            <el-select v-model="filters.cit" style="width: 120px">
+            <el-select v-model="filters.cit" style="width: 150px">
               <el-option label="全部" value="oplus_all" />
               <el-option
                 v-for="item in resourceTypes"
@@ -59,10 +65,12 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleAutomationSearch">
-              <el-icon><Search /></el-icon> 搜索
+              <el-icon><Search /></el-icon>
+              搜索
             </el-button>
             <el-button @click="handleAutomationReset">
-              <el-icon><RefreshRight /></el-icon> 重置
+              <el-icon><RefreshRight /></el-icon>
+              重置
             </el-button>
           </el-form-item>
         </el-form>
@@ -78,8 +86,15 @@
           <i class="fa fa-cogs" style="margin-right: 4px"></i>
           设备纳管
         </el-button>
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="automationLoading" @click="loadAutomationData" title="刷新">
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="automationLoading"
+          @click="loadAutomationData"
+          title="刷新"
+        >
           <el-icon v-show="!automationLoading"><Refresh /></el-icon>
         </el-button>
       </div>
@@ -147,14 +162,50 @@
 
     <!-- Ansible连接配置 Tab 内容 -->
     <template v-if="activeTab === 'ansible'">
+      <!-- 筛选区 -->
+      <div class="ops-filter-bar">
+        <el-form :inline="true" size="small">
+          <el-form-item label="关键词">
+            <el-input
+              v-model="ansibleSearch"
+              placeholder="搜索"
+              clearable
+              style="width: 180px"
+              maxlength="50"
+            />
+          </el-form-item>
+          <!-- <el-form-item>
+            <el-button type="primary" @click="handleAnsibleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleAnsibleReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item> -->
+        </el-form>
+      </div>
+
       <!-- 操作栏 -->
       <div class="ops-action-bar">
         <el-button type="primary" size="small" @click="handleAddAnsibleConfig">
           <i class="fa fa-plus" style="margin-right: 4px"></i>
           新增Ansible连接配置
         </el-button>
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="ansibleLoading" @click="loadAnsibleData" title="刷新">
+        <el-button size="small" @click="handleDeviceManage">
+          <i class="fa fa-cogs" style="margin-right: 4px"></i>
+          设备纳管
+        </el-button>
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="ansibleLoading"
+          @click="loadAnsibleData"
+          title="刷新"
+        >
           <el-icon v-show="!ansibleLoading"><Refresh /></el-icon>
         </el-button>
       </div>
@@ -247,7 +298,12 @@
         </el-form-item>
         <!-- (instance group) -->
         <el-form-item label="执行引擎节点" v-if="scriptEngine !== 'aap'">
-          <el-select v-model="automationForm.instanceGroup" placeholder="请选择" style="width: 100%" clearable>
+          <el-select
+            v-model="automationForm.instanceGroup"
+            placeholder="请选择"
+            style="width: 100%"
+            clearable
+          >
             <el-option label="none" value="" />
             <el-option
               v-for="item in instanceGroupOptions"
@@ -258,7 +314,12 @@
           </el-select>
         </el-form-item>
         <el-form-item label="AAP instance_group" v-if="scriptEngine === 'aap'">
-          <el-select v-model="automationForm.aapInstanceGroup" placeholder="请选择" style="width: 100%" clearable>
+          <el-select
+            v-model="automationForm.aapInstanceGroup"
+            placeholder="请选择"
+            style="width: 100%"
+            clearable
+          >
             <el-option
               v-for="item in aapInstanceGroupOptions"
               :key="item.name"
@@ -268,7 +329,12 @@
           </el-select>
         </el-form-item>
         <el-form-item label="自动化配置名称">
-          <el-select v-model="automationForm.ansibleConfigId" clearable placeholder="选择配置模板" style="width: 100%">
+          <el-select
+            v-model="automationForm.ansibleConfigId"
+            clearable
+            placeholder="选择配置模板"
+            style="width: 100%"
+          >
             <el-option
               v-for="item in ansibleConfigOptions"
               :key="item.id"
@@ -281,18 +347,32 @@
           <el-input v-model="automationForm.loginUser" maxlength="32" />
         </el-form-item>
         <el-form-item label="登录密码">
-          <el-input v-model="automationForm.loginPasswd" type="password" show-password autocomplete="new-password" maxlength="32" />
+          <el-input
+            v-model="automationForm.loginPasswd"
+            type="password"
+            show-password
+            autocomplete="new-password"
+            maxlength="32"
+          />
         </el-form-item>
         <el-form-item label="执行用户">
           <el-input v-model="automationForm.runUser" maxlength="32" />
         </el-form-item>
         <el-form-item label="执行密码">
-          <el-input v-model="automationForm.runPasswd" type="password" show-password autocomplete="new-password" maxlength="32" />
+          <el-input
+            v-model="automationForm.runPasswd"
+            type="password"
+            show-password
+            autocomplete="new-password"
+            maxlength="32"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="editAutomationDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="automationSaving" @click="saveAutomationConfig">保存</el-button>
+        <el-button type="primary" :loading="automationSaving" @click="saveAutomationConfig">
+          保存
+        </el-button>
       </template>
     </el-dialog>
 
@@ -303,9 +383,14 @@
       width="700px"
       destroy-on-close
     >
-      <el-form :model="ansibleForm" label-width="240px" v-loading="ansibleFormLoading">
-        <el-form-item label="执行引擎节点(instance group)" v-if="scriptEngine !== 'aap'">
-          <el-select v-model="ansibleForm.instanceGroup" placeholder="请选择" style="width: 100%" clearable>
+      <el-form :model="ansibleForm" label-width="130px" v-loading="ansibleFormLoading">
+        <el-form-item label="执行引擎节点" v-if="scriptEngine !== 'aap'">
+          <el-select
+            v-model="ansibleForm.instanceGroup"
+            placeholder="请选择"
+            style="width: 100%"
+            clearable
+          >
             <el-option label="none" value=" " />
             <el-option
               v-for="item in instanceGroupOptions"
@@ -316,7 +401,12 @@
           </el-select>
         </el-form-item>
         <el-form-item label="AAP instance_group" v-if="scriptEngine === 'aap'">
-          <el-select v-model="ansibleForm.aapInstanceGroup" placeholder="请选择" style="width: 100%" clearable>
+          <el-select
+            v-model="ansibleForm.aapInstanceGroup"
+            placeholder="请选择"
+            style="width: 100%"
+            clearable
+          >
             <el-option
               v-for="item in aapInstanceGroupOptions"
               :key="item.name"
@@ -326,7 +416,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="Ansible配置名称" required>
-          <el-input v-model="ansibleForm.name" placeholder="设备纳管时，根据已有配置名称设置设备的自动化连接配置" maxlength="50" />
+          <el-input
+            v-model="ansibleForm.name"
+            placeholder="设备纳管时，根据已有配置名称设置设备的自动化连接配置"
+            maxlength="50"
+          />
         </el-form-item>
         <el-form-item label="分组">
           <el-select
@@ -348,13 +442,25 @@
           <el-input v-model="ansibleForm.loginUser" maxlength="32" />
         </el-form-item>
         <el-form-item label="登录密码">
-          <el-input v-model="ansibleForm.loginPasswd" type="password" show-password autocomplete="new-password" maxlength="32" />
+          <el-input
+            v-model="ansibleForm.loginPasswd"
+            type="password"
+            show-password
+            autocomplete="new-password"
+            maxlength="32"
+          />
         </el-form-item>
         <el-form-item label="执行用户">
           <el-input v-model="ansibleForm.runUser" maxlength="32" />
         </el-form-item>
         <el-form-item label="执行密码">
-          <el-input v-model="ansibleForm.runPasswd" type="password" show-password autocomplete="new-password" maxlength="32" />
+          <el-input
+            v-model="ansibleForm.runPasswd"
+            type="password"
+            show-password
+            autocomplete="new-password"
+            maxlength="32"
+          />
         </el-form-item>
         <el-form-item label="Ansible配置信息">
           <el-input
@@ -373,10 +479,7 @@
     </el-dialog>
 
     <!-- 设备纳管弹窗 -->
-    <DeviceManageDialog
-      v-model="deviceManageDialogVisible"
-      @success="handleDeviceManageSuccess"
-    />
+    <DeviceManageDialog v-model="deviceManageDialogVisible" @success="handleDeviceManageSuccess" />
   </div>
 </template>
 
@@ -411,10 +514,10 @@ const automationTotal = ref(0)
 // Ansible配置数据
 const ansibleLoading = ref(false)
 const ansibleData = ref([])
+const ansibleSearch = ref('')
 const ansibleConfigOptions = ref([])
 const ansiblePage = ref(1)
 const ansiblePageSize = ref(100)
-const ansibleTotal = ref(0)
 
 // 弹窗下拉选项
 const scriptEngine = ref('ansible')
@@ -443,13 +546,32 @@ const filteredAutomationData = computed(() => {
 })
 
 const filteredAnsibleData = computed(() => {
-  return ansibleData.value
+  if (!ansibleSearch.value) {
+    return ansibleData.value
+  }
+  const keyword = ansibleSearch.value.toLowerCase()
+  return ansibleData.value.filter(item => {
+    return (
+      item.name?.toLowerCase().includes(keyword) ||
+      item.instanceGroup?.toLowerCase().includes(keyword) ||
+      item.aapInstanceGroup?.toLowerCase().includes(keyword) ||
+      item.loginUser?.toLowerCase().includes(keyword) ||
+      item.runUser?.toLowerCase().includes(keyword) ||
+      item.param?.toLowerCase().includes(keyword)
+    )
+  })
 })
 
 // Ansible 分页后的数据
 const paginatedAnsibleData = computed(() => {
   const start = (ansiblePage.value - 1) * ansiblePageSize.value
-  return filteredAnsibleData.value.slice(start, start + ansiblePageSize.value)
+  const end = start + ansiblePageSize.value
+  return filteredAnsibleData.value.slice(start, end)
+})
+
+// Ansible 配置总数（筛选后）
+const ansibleTotal = computed(() => {
+  return filteredAnsibleData.value.length
 })
 
 const automationPageInfo = computed(() => {
@@ -488,14 +610,20 @@ async function loadResourceTypes() {
 async function loadAutomationData() {
   automationLoading.value = true
   try {
-    const response = await dtsApi.queryData('ACM_AUTOMATION_GET', {
-      cit: filters.value.cit,
-      param: 'x'
-    }, {
-      size: automationPageSize.value,
-      page: automationPage.value,
-      filter: automationSearch.value ? `hostKey|ci_type|loginUser|instanceGroup:*${automationSearch.value}*` : ''
-    })
+    const response = await dtsApi.queryData(
+      'ACM_AUTOMATION_GET',
+      {
+        cit: filters.value.cit,
+        param: 'x'
+      },
+      {
+        size: automationPageSize.value,
+        page: automationPage.value,
+        filter: automationSearch.value
+          ? `hostKey|ci_type|loginUser|instanceGroup:*${automationSearch.value}*`
+          : ''
+      }
+    )
     automationData.value = response?.records || []
     automationTotal.value = response?.total || 0
   } catch (error) {
@@ -510,16 +638,34 @@ async function loadAutomationData() {
 async function loadAnsibleData() {
   ansibleLoading.value = true
   try {
-    const response = await dtsApi.queryData('ACM_GET_ALL_ANSIBLE_SET_REST', {})
+    const response = await dtsApi.queryData(
+      'ACM_GET_ALL_ANSIBLE_SET_REST',
+      null,
+      {
+        size: 9999,
+        page: 1
+      }
+    )
     ansibleData.value = response?.records || []
+    // 更新配置选项（供其它下拉使用）
     ansibleConfigOptions.value = response?.records || []
-    ansibleTotal.value = ansibleData.value.length
   } catch (error) {
     console.error('加载Ansible配置失败:', error)
     ElMessage.error('加载Ansible配置失败')
   } finally {
     ansibleLoading.value = false
   }
+}
+
+// Ansible配置搜索
+function handleAnsibleSearch() {
+  ansiblePage.value = 1
+}
+
+// Ansible配置重置
+function handleAnsibleReset() {
+  ansibleSearch.value = ''
+  ansiblePage.value = 1
 }
 
 // Ansible 分页变化

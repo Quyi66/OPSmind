@@ -10,7 +10,10 @@
       <div class="host-info">
         <div class="host-info-main">
           <span class="host-name">{{ host.host_key }}</span>
-          <span class="host-os">OS：{{ machineInfo.os_distro || host.os_distro }} {{ machineInfo.os_version || host.os_version }}</span>
+          <span class="host-os">
+            OS：{{ machineInfo.os_distro || host.os_distro }}
+            {{ machineInfo.os_version || host.os_version }}
+          </span>
         </div>
         <div class="host-icon">
           <i class="fa fa-desktop"></i>
@@ -36,16 +39,14 @@
         <el-table-column label="状态" width="120" align="left">
           <template #default="{ row }">
             <el-tag :type="getKpiStatusTagType(row.status)" effect="dark" round size="small">
-              <i :class="['fa', getKpiStatusIcon(row.status)]" style="margin-right: 5px;"></i>
+              <i :class="['fa', getKpiStatusIcon(row.status)]" style="margin-right: 5px"></i>
               {{ getKpiStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="80" align="left">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="$emit('show-detail', row)">
-              详情
-            </el-button>
+            <el-button type="primary" text @click="$emit('show-detail', row)">详情</el-button>
           </template>
         </el-table-column>
       </el-table>

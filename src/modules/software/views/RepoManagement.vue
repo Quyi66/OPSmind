@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout" style="padding: 0; gap: 0;">
+  <div class="ops-page-layout" style="padding: 0; gap: 0">
     <!-- 页面描述 -->
     <el-alert type="info" :closable="false" class="page-description">
       <template #title>
@@ -49,14 +49,28 @@
 
         <!-- 操作按钮区域 -->
         <div class="ops-action-bar">
-          <el-button type="primary" size="small" :disabled="selectedBaseRepos.length === 0" @click="handleConfigRepoToHost">
-            <i class="fa fa-cogs" style="margin-right: 4px"></i> 配置到主机
+          <el-button
+            type="primary"
+            size="small"
+            :disabled="selectedBaseRepos.length === 0"
+            @click="handleConfigRepoToHost"
+          >
+            <i class="fa fa-cogs" style="margin-right: 4px"></i>
+            配置到主机
           </el-button>
           <el-button size="small" :disabled="!repoDefaultHosts" @click="handleRescanRepoInfo">
-            <i class="fa fa-undo-alt" style="margin-right: 4px"></i> 重新扫描仓库信息
+            <i class="fa fa-undo-alt" style="margin-right: 4px"></i>
+            重新扫描仓库信息
           </el-button>
-          <span style="flex: 1;"></span>
-          <el-button class="toolbar-icon-btn" circle size="small" :loading="baseRepoLoading" @click="loadBaseRepos" title="刷新">
+          <span style="flex: 1"></span>
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            size="small"
+            :loading="baseRepoLoading"
+            @click="loadBaseRepos"
+            title="刷新"
+          >
             <el-icon v-show="!baseRepoLoading"><Refresh /></el-icon>
           </el-button>
         </div>
@@ -161,6 +175,14 @@
       :refid="selectedRefid"
       @refresh="loadBaseRepos"
     />
+
+    <!-- 配置到主机弹窗 -->
+    <ConfigRepoToHostDialog
+      v-model="configDialogVisible"
+      :selected-repos="selectedBaseRepos"
+      repo-type="base"
+      @success="handleConfigSuccess"
+    />
   </div>
 </template>
 
@@ -173,6 +195,7 @@ import BaseHostTab from '../components/BaseHostTab.vue'
 import CustomRepoTab from '../components/CustomRepoTab.vue'
 import ConfiguredRepoTab from '../components/ConfiguredRepoTab.vue'
 import RepoDetailDialog from '../components/RepoDetailDialog.vue'
+import ConfigRepoToHostDialog from '../components/ConfigRepoToHostDialog.vue'
 
 const tabs = [
   { key: 'baseRepo', label: '基准仓库', icon: 'fa fa-home' },
@@ -197,6 +220,9 @@ const repoDefaultHosts = ref('')
 const repoDetailVisible = ref(false)
 const selectedRepoId = ref('')
 const selectedRefid = ref('')
+
+// 配置到主机弹窗
+const configDialogVisible = ref(false)
 
 // 格式化日期
 function formatDate(timestamp) {
@@ -280,18 +306,29 @@ function handleViewRepoDetail(row) {
 }
 
 function handleConfigRepoToHost() {
-  const repoIds = selectedBaseRepos.value.map(item => item.id).join(',')
-  ElMessage.info('配置到主机')
-  // TODO: 打开配置到主机对话框
+  if (selectedBaseRepos.value.length === 0) {
+    ElMessage.warning('请先选择要配置的仓库')
+    return
+  }
+  configDialogVisible.value = true
+}
+
+function handleConfigSuccess() {
+  // 配置成功后刷新列表
+  loadBaseRepos()
+  // 清空选择
+  selectedBaseRepos.value = []
 }
 
 function handleRescanRepoInfo() {
   ElMessageBox.confirm('确定要重新扫描仓库信息吗？', '确认', {
     type: 'warning'
-  }).then(() => {
-    // TODO: 调用重新扫描 API
-    ElMessage.success('已提交扫描任务')
-  }).catch(() => {})
+  })
+    .then(() => {
+      // TODO: 调用重新扫描 API
+      ElMessage.success('已提交扫描任务')
+    })
+    .catch(() => {})
 }
 
 onMounted(() => {

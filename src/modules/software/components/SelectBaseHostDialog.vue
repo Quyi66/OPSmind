@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     title="选择基准主机"
-    width="900px"
+    width="600px"
     :close-on-click-modal="false"
     destroy-on-close
     @close="handleClose"
@@ -11,7 +11,8 @@
       <!-- 选择按钮 -->
       <div class="selector-row">
         <el-button plain @click="openHostSelector">
-          <i class="fa fa-list" /> 选择
+          <i class="fa fa-list" />
+          选择
         </el-button>
         <span v-if="selectedHosts.length > 0" class="selected-text">
           已选择 {{ selectedHosts.length }} 台主机
@@ -26,7 +27,8 @@
           :disabled="selectedHosts.length === 0"
           @click="handleSubmit"
         >
-          <i class="far fa-play-circle" /> 将所选主机设为基准仓库
+          <i class="far fa-play-circle" />
+          将所选主机设为基准仓库
         </el-button>
       </div>
     </div>
@@ -70,13 +72,13 @@ const selectedHosts = ref([])
 // 监听 modelValue
 watch(
   () => props.modelValue,
-  (val) => {
+  val => {
     visible.value = val
   }
 )
 
 // 监听 visible
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 
@@ -95,15 +97,11 @@ async function handleSubmit() {
   }
 
   try {
-    await ElMessageBox.confirm(
-      '确定将选中的主机设置为基准仓库主机吗？',
-      '执行作业',
-      {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-        type: 'info'
-      }
-    )
+    await ElMessageBox.confirm('确定将选中的主机设置为基准仓库主机吗？', '执行作业', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'info'
+    })
 
     submitting.value = true
 

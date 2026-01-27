@@ -1,69 +1,90 @@
 <template>
   <div class="ops-page-layout local-install-page">
-    <!-- 卡片容器 -->
-    <div class="install-card">
-      <!-- 标题区域 -->
-      <div class="card-header">
-        <i class="fa fa-box" />
-        <span class="title">本地安装</span>
-      </div>
-
-      <!-- 说明文字 -->
-      <div class="card-description">
-        <p>选择本地RPM安装包，将其安装到指定的目标主机上。支持多文件选择和批量安装。</p>
-      </div>
-
-      <!-- 选择安装包 -->
-      <div class="form-section">
-        <div class="form-label">选择安装包</div>
-        <div class="form-control">
-          <el-button plain size="small" @click="openFileSelector">
-            <i class="fa fa-folder-open" /> 选择文件
+    <div class="install-container">
+      <!-- 左侧：安装包选择区 -->
+      <div class="panel left-panel">
+        <div class="panel-header">
+          <i class="fa fa-box-open" />
+          <span class="title">1. 选择安装包</span>
+          <el-button type="primary" size="small" link @click="openFileSelector">
+            <i class="fa fa-plus" />
+            添加文件
           </el-button>
-          <span v-if="selectedFiles.length > 0" class="selected-info">
-            已选择 {{ selectedFiles.length }} 个文件
-          </span>
         </div>
-        <!-- 已选文件列表 -->
-        <div v-if="selectedFiles.length > 0" class="selected-files">
-          <div v-for="(file, index) in selectedFiles" :key="index" class="file-item">
-            <i class="fa fa-file-archive" />
-            <span class="file-name">{{ file.name || file }}</span>
-            <el-button type="danger" link size="small" @click="removeFile(index)">
-              <i class="fa fa-times" />
-            </el-button>
+
+        <div class="panel-body">
+          <div v-if="selectedFiles.length === 0" class="empty-files" @click="openFileSelector">
+            <i class="fa fa-folder-open" />
+            <p>点击此处或上方按钮选择本地安装包</p>
+          </div>
+          <div v-else class="selected-files-list scroll-y">
+            <div v-for="(file, index) in selectedFiles" :key="index" class="install-file-item">
+              <div class="file-info">
+                <i class="fa fa-cube" />
+                <span class="file-name" :title="file.path">{{ file.name || file }}</span>
+              </div>
+              <el-button
+                type="danger"
+                link
+                size="small"
+                class="remove-btn"
+                @click="removeFile(index)"
+              >
+                <i class="fa fa-trash-alt" />
+              </el-button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 选择目标主机 -->
-      <div class="form-section">
-        <div class="form-label">安装目标主机</div>
-        <div class="form-control">
-          <AcmDeviceSelector
-            v-model="selectedHosts"
-            ci-types="[auto]"
-            :options="{
-              selectMode: 'host,group,tag,input,recently',
-              selector: 'multiple',
-              label: '选择主机'
-            }"
-            :disabled="installing"
-          />
+        <div class="panel-footer">
+          <span>共选择 {{ selectedFiles.length }} 个文件</span>
         </div>
       </div>
 
-      <!-- 开始安装按钮 -->
-      <div class="form-section">
-        <el-button
-          type="primary"
-          size="small"
-          :loading="installing"
-          :disabled="selectedFiles.length === 0 || selectedHosts.length === 0"
-          @click="handleStartInstall"
-        >
-          <i class="fa fa-chevron-right" /> 开始安装
-        </el-button>
+      <!-- 右侧：主机与操作区 -->
+      <div class="panel right-panel">
+        <div class="panel-header">
+          <i class="fa fa-server" />
+          <span class="title">2. 设置目标主机</span>
+        </div>
+
+        <div class="panel-body">
+          <div class="host-selector-container">
+            <AcmDeviceSelector
+              v-model="selectedHosts"
+              ci-types="[auto]"
+              :options="{
+                selectMode: 'host,group,tag,input,recently',
+                selector: 'multiple',
+                label: '选择目标主机'
+              }"
+              :disabled="installing"
+            />
+          </div>
+
+          <div class="install-desc">
+            <h4>本地安装说明</h4>
+            <ul>
+              <li>支持 RPM 格式的安装包</li>
+              <li>勾选多个文件将进行批量并行安装</li>
+              <li>安装过程中请勿刷新页面</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel-footer actions-footer">
+          <el-button
+            type="primary"
+            size="large"
+            class="submit-btn"
+            :loading="installing"
+            :disabled="selectedFiles.length === 0 || selectedHosts.length === 0"
+            @click="handleStartInstall"
+          >
+            <i class="fa fa-play-circle" />
+            立即开始安装
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -71,6 +92,7 @@
     <FileSelectorDialog
       v-model="fileSelectorVisible"
       :multiple="true"
+      :pre-selected="selectedFiles"
       repo-type="staticfs"
       @confirm="handleFilesConfirm"
     />
@@ -179,110 +201,209 @@ async function handleStartInstall() {
 /* 此组件使用全局的 ops-page-layout 样式 */
 
 .local-install-page {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 100%;
+  // background: #f0f2f5;
+  padding: 20px;
   height: 100%;
-  background: #f5f7fa;
+  display: flex;
+  justify-content: center;
 }
 
-.install-card {
-  width: 40rem;
-  max-width: 100%;
+.install-container {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  max-width: 1400px;
+  height: calc(100vh - 120px);
+}
+
+.panel {
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  padding: 24px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #e6ebf5;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &.left-panel {
+    flex: 3;
+    min-width: 0;
+  }
+
+  &.right-panel {
+    flex: 2;
+    min-width: 350px;
+  }
 }
 
-.card-header {
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  background: #343a40;
-  border-radius: 4px;
-  color: #efefef;
+  background: #fdfdfd;
 
   i {
-    font-size: 24px;
+    font-size: 18px;
+    color: #409eff;
   }
 
   .title {
-    font-size: 24px;
+    font-size: 16px;
     font-weight: 600;
-  }
-}
-
-.card-description {
-  margin-bottom: 24px;
-
-  p {
-    margin: 0;
-    color: #606266;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-}
-
-.form-section {
-  margin-bottom: 20px;
-
-  .form-label {
-    margin-bottom: 8px;
-    font-size: 14px;
-    font-weight: 500;
     color: #303133;
-  }
-
-  .form-control {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .selected-info {
-    color: #606266;
-    font-size: 14px;
+    flex: 1;
   }
 }
 
-.selected-files {
-  margin-top: 12px;
-  padding: 12px;
-  background: #f5f7fa;
-  border-radius: 4px;
-  max-height: 200px;
+.panel-body {
+  flex: 1;
+  padding: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-footer {
+  padding: 12px 20px;
+  background: #fafafa;
+  border-top: 1px solid #ebeef5;
+  color: #909399;
+  font-size: 13px;
+
+  &.actions-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px;
+    background: #fff;
+  }
+}
+
+// 左侧文件列表
+.selected-files-list {
+  flex: 1;
   overflow-y: auto;
 
-  .file-item {
+  .install-file-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
+    justify-content: space-between;
+    padding: 12px 15px;
     background: #fff;
-    border-radius: 4px;
-    margin-bottom: 6px;
+    border: 1px solid #e4e7ed;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
 
-    &:last-child {
-      margin-bottom: 0;
+    &:hover {
+      border-color: #409eff;
+      background: #f0f7ff;
+      .remove-btn {
+        opacity: 1;
+      }
     }
 
-    i.fa-file-archive {
-      color: #909399;
-    }
-
-    .file-name {
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       flex: 1;
-      font-size: 13px;
-      color: #606266;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      min-width: 0;
+
+      i {
+        color: #909399;
+        font-size: 16px;
+      }
+
+      .file-name {
+        font-size: 14px;
+        color: #606266;
+        word-break: break-all;
+        line-height: 1.4;
+      }
     }
+
+    .remove-btn {
+      opacity: 0.5;
+      padding: 5px;
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.empty-files {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #e4e7ed;
+  border-radius: 8px;
+  color: #c0c4cc;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:hover {
+    border-color: #409eff;
+    color: #409eff;
+    background: #f0f7ff;
+  }
+
+  i {
+    font-size: 48px;
+    margin-bottom: 15px;
+  }
+  p {
+    font-size: 15px;
+    margin: 0;
+  }
+}
+
+// 右侧表单
+.host-selector-container {
+  margin-bottom: 30px;
+}
+
+.install-desc {
+  background: #fdf6ec;
+  border-radius: 6px;
+  padding: 15px 20px;
+  border-left: 4px solid #e6a23c;
+
+  h4 {
+    margin: 0 0 10px 0;
+    color: #e6a23c;
+    font-size: 15px;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #8a6d3b;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+}
+
+.submit-btn {
+  width: 100%;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.scroll-y {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #e4e7ed;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
   }
 }
 </style>

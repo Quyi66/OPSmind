@@ -10,9 +10,8 @@
 
     <!-- 列表视图 -->
     <template v-else>
-      <div class="ops-page-layout">
-        <!-- 筛选区域 -->
-        <!-- <div class="ops-filter-bar">
+      <!-- 筛选区域 -->
+      <!-- <div class="ops-filter-bar">
           <div class="filter-left">
             <el-input
               v-model="keyword"
@@ -29,90 +28,87 @@
           </div>
         </div> -->
 
-        <!-- 操作按钮区域 -->
-        <div class="ops-action-bar">
-          <el-button type="primary" size="small" @click="handleAddModel">
-            <i class="fa fa-plus" style="margin-right: 4px"></i>
-            添加模型
-          </el-button>
-          <el-button size="small" @click="handleImportModel">
-            <i class="fa fa-file-excel" style="margin-right: 4px"></i>
-            导入模型
-          </el-button>
-        </div>
+      <!-- 操作按钮区域 -->
+      <div class="ops-action-bar">
+        <el-button type="primary" size="small" @click="handleAddModel">
+          <i class="fa fa-plus" style="margin-right: 4px"></i>
+          添加模型
+        </el-button>
+        <el-button size="small" @click="handleImportModel">
+          <i class="fa fa-file-excel" style="margin-right: 4px"></i>
+          导入模型
+        </el-button>
+      </div>
 
-        <!-- 数据表格 -->
-        <div class="ops-table-wrapper">
-          <!-- 表格右上角工具栏 -->
-          <div class="table-toolbar-icons">
-            <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadModelList" title="刷新">
-              <el-icon v-show="!loading"><Refresh /></el-icon>
-            </el-button>
-          </div>
-          <el-table
-            v-loading="loading"
-            :data="filteredModelList"
-            stripe
-            max-height="calc(100vh - 300px)"
+      <!-- 数据表格 -->
+      <div class="ops-table-wrapper">
+        <!-- 表格右上角工具栏 -->
+        <div class="table-toolbar-icons">
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            :loading="loading"
+            @click="loadModelList"
+            title="刷新"
           >
-            <el-table-column prop="title" label="模型名称" min-width="150">
-              <template #default="{ row }">
-                <el-button link type="primary" @click="handleViewModel(row)">
-                  {{ row.title }}
-                </el-button>
-              </template>
-            </el-table-column>
-            <el-table-column prop="code" label="资产代码" width="150" />
-            <el-table-column prop="is_auto" label="是否自动化" width="120" align="left">
-              <template #default="{ row }">
-                <span :class="row.is_auto === 1 ? 'text-success' : 'text-secondary'">
-                  {{ row.is_auto === 1 ? '是' : '否' }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="count" label="资产数量" width="100" align="left" />
-            <el-table-column prop="updated_at" label="更新时间" width="180">
-              <template #default="{ row }">
-                {{ formatDateTime(row.updated_at) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="100" align="left" fixed="right">
-              <template #default="{ row }">
-                <el-button text type="primary" size="small" @click="handleEditModel(row)">
-                  编辑
-                </el-button>
-                <el-button text type="danger" size="small" @click="handleDeleteModel(row)">
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+            <el-icon v-show="!loading"><Refresh /></el-icon>
+          </el-button>
         </div>
+        <el-table
+          v-loading="loading"
+          :data="filteredModelList"
+          stripe
+          max-height="calc(100vh - 300px)"
+        >
+          <el-table-column prop="title" label="模型名称" min-width="150">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="handleViewModel(row)">
+                {{ row.title }}
+              </el-button>
+            </template>
+          </el-table-column>
+          <el-table-column prop="code" label="资产代码" width="150" />
+          <el-table-column prop="is_auto" label="是否自动化" width="120" align="left">
+            <template #default="{ row }">
+              {{ row.is_auto === 1 ? '是' : '否' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="count" label="资产数量" width="100" align="left" />
+          <el-table-column prop="updated_at" label="更新时间" width="180">
+            <template #default="{ row }">
+              {{ formatDateTime(row.updated_at) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="100" align="left" fixed="right">
+            <template #default="{ row }">
+              <el-button text type="primary" size="small" @click="handleEditModel(row)">
+                编辑
+              </el-button>
+              <el-button text type="danger" size="small" @click="handleDeleteModel(row)">
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
-        <!-- 分页 -->
-        <div class="ops-pagination-wrapper">
-          <el-pagination
-            v-model:current-page="pagination.page"
-            v-model:page-size="pagination.size"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="pagination.total"
-            layout="total, sizes, prev, pager, next, jumper"
-            background
-          />
-        </div>
+      <!-- 分页 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+        />
       </div>
 
       <!-- 导入模型弹窗 -->
-      <ImportModelDialog
-        v-model="importModelDialogVisible"
-        @saved="loadModelList"
-      />
+      <ImportModelDialog v-model="importModelDialogVisible" @saved="loadModelList" />
 
       <!-- 模型详情弹窗 -->
-      <ModelDetailDialog
-        v-model="modelDetailDialogVisible"
-        :model-data="currentModel"
-      />
+      <ModelDetailDialog v-model="modelDetailDialogVisible" :model-data="currentModel" />
     </template>
   </div>
 </template>
@@ -160,9 +156,8 @@ const filteredModelList = computed(() => {
     return modelList.value
   }
   const kw = keyword.value.toLowerCase()
-  return modelList.value.filter(item =>
-    item.title?.toLowerCase().includes(kw) ||
-    item.code?.toLowerCase().includes(kw)
+  return modelList.value.filter(
+    item => item.title?.toLowerCase().includes(kw) || item.code?.toLowerCase().includes(kw)
   )
 })
 
@@ -176,7 +171,7 @@ const paginationInfo = computed(() => {
 })
 
 // 格式化日期时间
-const formatDateTime = (dateStr) => {
+const formatDateTime = dateStr => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   const year = date.getFullYear()
@@ -222,14 +217,14 @@ const handleImportModel = () => {
 }
 
 // 查看模型详情 - 跳转到资产信息页面
-const handleViewModel = (row) => {
+const handleViewModel = row => {
   if (handleViewAssetTypeFn) {
     handleViewAssetTypeFn(row.code)
   }
 }
 
 // 编辑模型 - 打开编辑器页面
-const handleEditModel = (row) => {
+const handleEditModel = row => {
   const modelId = row.id || row.cit_id || row.citId
   router.push({
     path: '/acm/model',
@@ -249,24 +244,22 @@ const handleEditorSaved = () => {
 }
 
 // 删除模型
-const handleDeleteModel = (row) => {
-  ElMessageBox.confirm(
-    '确定要删除该资产模型吗？删除后不可恢复。',
-    '删除确认',
-    { type: 'warning' }
-  ).then(async () => {
-    try {
-      // Job: 8PJcRc - 删除资产模型
-      await apiService.post(`/jao/api/jao/jobs/8PJcRc/run?cacheBuster=${Date.now()}`, {
-        params: { id: row.id }
-      })
-      ElMessage.success('删除成功')
-      loadModelList()
-    } catch (error) {
-      console.error('删除失败:', error)
-      ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
-    }
-  }).catch(() => {})
+const handleDeleteModel = row => {
+  ElMessageBox.confirm('确定要删除该资产模型吗？删除后不可恢复。', '删除确认', { type: 'warning' })
+    .then(async () => {
+      try {
+        // Job: 8PJcRc - 删除资产模型
+        await apiService.post(`/jao/api/jao/jobs/8PJcRc/run?cacheBuster=${Date.now()}`, {
+          params: { id: row.id }
+        })
+        ElMessage.success('删除成功')
+        loadModelList()
+      } catch (error) {
+        console.error('删除失败:', error)
+        ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+      }
+    })
+    .catch(() => {})
 }
 
 // 初始化
@@ -312,13 +305,5 @@ defineExpose({
 
 .ops-table-wrapper {
   position: relative;
-}
-
-.text-success {
-  color: #67c23a;
-}
-
-.text-secondary {
-  color: #909399;
 }
 </style>

@@ -2,155 +2,149 @@
   <el-dialog
     v-model="visible"
     title="选择文件"
-    width="900px"
+    width="1320px"
     :close-on-click-modal="false"
     destroy-on-close
+    class="file-selector-custom-dialog"
     @close="handleClose"
   >
-    <div class="file-selector-dialog">
-      <!-- 工具栏：面包屑导航 + 操作按钮 -->
-      <div class="d-flex toolbar">
-        <!-- 面包屑导航 -->
-        <ol class="breadcrumb me-auto">
-          <li
-            v-for="(crumb, index) in breadcrumbs"
-            :key="index"
-            class="breadcrumb-item"
-            :class="{ active: crumb.path === currentDir }"
-          >
-            <a v-if="crumb.path !== currentDir" href="javascript:void(0)" @click="goDir(crumb.path)">
-              {{ crumb.name || '~' }}
-            </a>
-            <span v-else>{{ crumb.name || '~' }}</span>
-          </li>
-        </ol>
-
-        <!-- 操作按钮区域 -->
-        <div class="actions">
-          <!-- 刷新按钮 -->
-          <el-button class="btn-outline" title="刷新" @click="refresh">
-            <i class="fa fa-sync-alt" />
-          </el-button>
-          <!-- 下载按钮 -->
-          <el-button
-            v-if="showDownloadButton"
-            class="btn-outline"
-            title="下载"
-            :disabled="Object.keys(selectionMap).length === 0"
-            @click="downloadFiles"
-          >
-            <i class="fa fa-download" /> 下载
-          </el-button>
-          <!-- 搜索框 -->
-          <el-input
-            v-model="searchText"
-            class="search-input"
-            placeholder="搜索..."
-            clearable
-            @keyup.enter="search"
-          />
-        </div>
-      </div>
-
-      <!-- 文件列表表格 -->
-      <div class="repeater-container">
-        <div class="opx-table table-hover js-file-list" :class="'gfs-repo-' + repoType">
-          <!-- 表头 -->
-          <div class="opx-table-thead">
-            <div class="opx-table-tr">
-              <div v-if="multiSelect || singleSelect" class="opx-table-th" style="width: 2rem">
-                <el-checkbox
-                  v-if="multiSelect"
-                  v-model="allChecked"
-                  @change="selectAll"
-                />
-              </div>
-              <div class="opx-table-th sorting" style="flex: 1; width: 30rem" @click="sortBy('name')">
-                名称
-              </div>
-              <div class="opx-table-th sorting" style="width: 6rem" @click="sortBy('size')">
-                大小
-              </div>
-              <div class="opx-table-th sorting" style="width: 8rem" @click="sortBy('lastModified')">
-                修改时间
-              </div>
-            </div>
-          </div>
-          <!-- 表体 -->
-          <div v-loading="loading" class="opx-table-tbody scroll-y" style="max-height: 40rem; overflow: visible">
-            <div
-              v-for="(file, index) in displayFileList"
+    <div class="file-selector-main">
+      <!-- 左侧：浏览器区域 -->
+      <div class="browser-column">
+        <!-- 工具栏 -->
+        <div class="column-header">
+          <ol class="breadcrumb">
+            <li
+              v-for="(crumb, index) in breadcrumbs"
               :key="index"
-              class="opx-table-tr op-hover-trigger"
-              :class="{
-                'text-muted': file._excluded && !file.directory,
-                'table-primary': !file.directory && (selectionMap[file._key] || selectionMap._key === file._key)
-              }"
+              class="breadcrumb-item"
+              :class="{ active: crumb.path === currentDir }"
             >
-              <!-- 选择列 -->
-              <div v-if="multiSelect || singleSelect" class="opx-table-td" style="width: 2rem">
-                <template v-if="file._selectable">
-                  <el-checkbox
-                    v-if="multiSelect"
-                    :model-value="!!selectionMap[file._key]"
-                    @change="selectFile(file)"
-                  />
-                  <el-radio
-                    v-if="singleSelect"
-                    :model-value="!!selectionMap[file._key]"
-                    @change="selectFile(file)"
-                  />
-                </template>
+              <a
+                v-if="crumb.path !== currentDir"
+                href="javascript:void(0)"
+                @click="goDir(crumb.path)"
+              >
+                {{ crumb.name || '~' }}
+              </a>
+              <span v-else>{{ crumb.name || '~' }}</span>
+            </li>
+          </ol>
+          <div class="actions">
+            <el-button circle size="small" title="刷新" @click="refresh">
+              <i class="fa fa-sync-alt" />
+            </el-button>
+            <el-input
+              v-model="searchText"
+              size="small"
+              class="search-input"
+              placeholder="搜索..."
+              clearable
+            >
+              <template #prefix>
+                <i class="fa fa-search" />
+              </template>
+            </el-input>
+          </div>
+        </div>
+
+        <!-- 表格区域 -->
+        <div class="table-container">
+          <div class="opx-table">
+            <div class="opx-table-thead">
+              <div class="opx-table-tr">
+                <div v-if="multiSelect || singleSelect" class="opx-table-th checkbox-col">
+                  <el-checkbox v-if="multiSelect" v-model="allChecked" @change="selectAll" />
+                </div>
+                <div class="opx-table-th name-col sorting" @click="sortBy('name')">名称</div>
+                <div class="opx-table-th size-col sorting" @click="sortBy('size')">大小</div>
+                <div class="opx-table-th time-col sorting" @click="sortBy('lastModified')">
+                  修改时间
+                </div>
               </div>
-              <!-- 文件名列 -->
-              <div class="opx-table-td d-flex justify-content-between" style="flex: 1; width: 30rem; position: relative">
-                <i v-if="file._iconCss" :class="file._iconCss" class="me-2" style="width: 1.25rem; min-width: 1.25rem; padding-top: 0.25rem; font-size: 1rem" />
-                <a class="d-flex w-100">
-                  <div class="flex-fill text-ellipsis" @click="goFile(file)">
-                    <span class="gfs-ff-name" :title="file._statusDesc">{{ file.name }}</span>
-                  </div>
-                </a>
+            </div>
+
+            <div v-loading="loading" class="opx-table-tbody scroll-y">
+              <div
+                v-for="(file, index) in displayFileList"
+                :key="index"
+                class="opx-table-tr"
+                :class="{
+                  'is-selected': !file.directory && selectionMap[file._key]
+                }"
+              >
+                <div v-if="multiSelect || singleSelect" class="opx-table-td checkbox-col">
+                  <template v-if="file._selectable">
+                    <el-checkbox
+                      v-if="multiSelect"
+                      :model-value="!!selectionMap[file._key]"
+                      @change="selectFile(file)"
+                    />
+                    <el-radio
+                      v-if="singleSelect"
+                      :model-value="!!selectionMap[file._key]"
+                      @change="selectFile(file)"
+                    />
+                  </template>
+                </div>
+                <div class="opx-table-td name-col" @click="goFile(file)">
+                  <i v-if="file._iconCss" :class="file._iconCss" class="file-icon" />
+                  <span class="name-text" :title="file.name">{{ file.name }}</span>
+                </div>
+                <div class="opx-table-td size-col">{{ file._size }}</div>
+                <div class="opx-table-td time-col">{{ formatFromNow(file.lastModified) }}</div>
               </div>
-              <!-- 大小列 -->
-              <div class="opx-table-td" style="width: 6rem">
-                {{ file._size }}
-              </div>
-              <!-- 修改时间列 -->
-              <div class="opx-table-td" style="width: 8rem">
-                {{ formatFromNow(file.lastModified) }}
+
+              <div v-if="emptyFolder && !loading" class="empty-state">
+                <i class="fa fa-inbox fa-3x" />
+                <p>暂无文件</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 空目录提示 -->
-      <div v-if="emptyFolder" class="op-blank-slate">
-        <div class="op-blank-slate-icon"><i class="fa fa-inbox fa-5x" /></div>
-        <div>暂无文件</div>
-      </div>
-
-      <!-- 已选文件 -->
-      <div v-if="Object.keys(selectionMap).length > 0" class="selected-section">
-        <span class="label">已选择 {{ Object.keys(selectionMap).length }} 个文件:</span>
-        <div class="selected-tags">
-          <el-tag
-            v-for="(file, key) in selectionMap"
-            :key="key"
-            closable
+      <!-- 右侧：已选列表区域 -->
+      <div class="selected-column">
+        <div class="column-header">
+          <span class="title">已选择 ({{ Object.keys(selectionMap).length }})</span>
+          <el-button
+            v-if="Object.keys(selectionMap).length > 0"
+            link
+            type="primary"
             size="small"
-            @close="removeSelectedFile(key)"
+            @click="clearSelection"
           >
-            {{ file.name }}
-          </el-tag>
+            清空
+          </el-button>
+        </div>
+        <div class="selected-list scroll-y">
+          <div v-if="Object.keys(selectionMap).length === 0" class="empty-selection">
+            <p>请点击左侧文件进行选择</p>
+          </div>
+          <div v-for="(file, key) in selectionMap" :key="key" class="selected-item">
+            <div class="item-info">
+              <i :class="file._iconCss || 'fa fa-file'" class="item-icon" />
+              <div class="item-text">
+                <span class="item-name" :title="file.path">{{ file.name }}</span>
+              </div>
+            </div>
+            <div class="item-actions">
+              <i class="fa fa-times remove-btn" title="移除" @click="removeSelectedFile(key)" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :disabled="Object.keys(selectionMap).length === 0" @click="handleConfirm">
-        <i class="fa fa-check" /> 确定
+      <el-button
+        type="primary"
+        :disabled="Object.keys(selectionMap).length === 0"
+        @click="handleConfirm"
+      >
+        确定 ({{ Object.keys(selectionMap).length }})
       </el-button>
     </template>
   </el-dialog>
@@ -278,7 +272,11 @@ const displayFileList = computed(() => {
   const keyword = searchText.value.toLowerCase()
   return fileList.value.filter(file => {
     for (const key in file) {
-      if (file[key] !== null && file[key] !== '' && file[key].toString().toLowerCase().indexOf(keyword) > -1) {
+      if (
+        file[key] !== null &&
+        file[key] !== '' &&
+        file[key].toString().toLowerCase().indexOf(keyword) > -1
+      ) {
         return true
       }
     }
@@ -288,7 +286,7 @@ const displayFileList = computed(() => {
 
 watch(
   () => props.modelValue,
-  (val) => {
+  val => {
     visible.value = val
     if (val) {
       initComponent()
@@ -296,7 +294,7 @@ watch(
   }
 )
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 
@@ -398,7 +396,11 @@ async function listFiles(repo, dir) {
     // 处理文件过滤器
     let filterRegex = null
     if (props.filter) {
-      const regex = props.filter.replace(/\s*,\s*/g, ')|(').replace(/^/, '(').replace(/$/, ')').replace(/\*/g, '.*')
+      const regex = props.filter
+        .replace(/\s*,\s*/g, ')|(')
+        .replace(/^/, '(')
+        .replace(/$/, ')')
+        .replace(/\*/g, '.*')
       filterRegex = new RegExp(regex, 'i')
     }
 
@@ -446,7 +448,10 @@ async function listFiles(repo, dir) {
     })
 
     // 检查是否空目录
-    if (fileList.value.length === 0 || (fileList.value.length === 1 && fileList.value[0]._isParentDir)) {
+    if (
+      fileList.value.length === 0 ||
+      (fileList.value.length === 1 && fileList.value[0]._isParentDir)
+    ) {
       emptyFolder.value = true
     }
   } catch (error) {
@@ -603,6 +608,16 @@ function selectAll() {
  */
 function removeSelectedFile(key) {
   delete selectionMap[key]
+  allChecked.value = false
+  syncModelToCallback()
+}
+
+/**
+ * 清空所有选择
+ */
+function clearSelection() {
+  Object.keys(selectionMap).forEach(key => delete selectionMap[key])
+  allChecked.value = false
   syncModelToCallback()
 }
 
@@ -652,7 +667,7 @@ function sortBy(attr) {
     }
     const valA = a[attr]
     const valB = b[attr]
-    let result = valA < valB ? -1 : (valA > valB ? 1 : 0)
+    let result = valA < valB ? -1 : valA > valB ? 1 : 0
     if (order === 'desc') {
       result = -result
     }
@@ -695,52 +710,53 @@ function handleConfirm() {
 </script>
 
 <style scoped lang="scss">
-.file-selector-dialog {
-  .d-flex {
+.file-selector-main {
+  display: flex;
+  height: calc(100vh - 300px);
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  overflow: hidden;
+
+  .browser-column {
+    flex: 7;
     display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ebeef5;
+    background: #fff;
   }
 
-  .me-auto {
-    margin-right: auto;
-  }
-
-  .w-100 {
-    width: 100%;
-  }
-
-  .justify-content-between {
-    justify-content: space-between;
-  }
-
-  .flex-fill {
-    flex: 1;
-  }
-
-  .text-ellipsis {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .me-2 {
-    margin-right: 0.5rem;
-  }
-
-  .toolbar {
+  .selected-column {
+    flex: 3;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    background: #f8f9fa;
+  }
+
+  .column-header {
+    height: 48px;
+    padding: 0 16px;
+    display: flex;
     align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+    justify-content: space-between;
+    background: #fdfdfd;
     border-bottom: 1px solid #ebeef5;
+    flex-shrink: 0;
+
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #303133;
+    }
 
     .breadcrumb {
       display: flex;
-      flex-wrap: wrap;
       padding: 0;
       margin: 0;
       list-style: none;
-      gap: 4px;
+      font-size: 13px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
 
       .breadcrumb-item {
         display: flex;
@@ -748,8 +764,8 @@ function handleConfirm() {
 
         &::before {
           content: '/';
-          padding: 0 8px;
-          color: #909399;
+          margin: 0 6px;
+          color: #c0c4cc;
         }
 
         &:first-child::before {
@@ -759,57 +775,46 @@ function handleConfirm() {
         a {
           color: #409eff;
           text-decoration: none;
-          cursor: pointer;
-
           &:hover {
             text-decoration: underline;
           }
         }
 
         &.active span {
-          color: #606266;
+          color: #909399;
         }
       }
     }
 
     .actions {
       display: flex;
-      gap: 8px;
       align-items: center;
-
-      .btn-outline {
-        border: 1px solid #dcdfe6;
-        background: transparent;
-
-        &:hover {
-          border-color: #409eff;
-          color: #409eff;
-        }
-
-        &:disabled {
-          color: #c0c4cc;
-          border-color: #ebeef5;
-          cursor: not-allowed;
-        }
-      }
+      gap: 8px;
 
       .search-input {
-        width: 180px;
+        width: 140px;
       }
     }
   }
 
-  .repeater-container {
+  .table-container {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
     .opx-table {
-      width: 100%;
-      border: 1px solid #ebeef5;
-      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
 
       .opx-table-thead {
         background: #f5f7fa;
+        flex-shrink: 0;
 
         .opx-table-tr {
           display: flex;
+          border-bottom: 1px solid #ebeef5;
         }
 
         .opx-table-th {
@@ -817,12 +822,9 @@ function handleConfirm() {
           font-weight: 600;
           font-size: 13px;
           color: #606266;
-          border-bottom: 1px solid #ebeef5;
 
           &.sorting {
             cursor: pointer;
-            user-select: none;
-
             &:hover {
               background: #ecf5ff;
             }
@@ -831,102 +833,193 @@ function handleConfirm() {
       }
 
       .opx-table-tbody {
-        max-height: 400px;
+        flex: 1;
         overflow-y: auto;
 
         .opx-table-tr {
           display: flex;
-          border-bottom: 1px solid #ebeef5;
+          border-bottom: 1px solid #f2f6fc;
           transition: background 0.2s;
+          cursor: pointer;
 
           &:hover {
             background: #f5f7fa;
           }
-
-          &.table-primary {
+          &.is-selected {
             background: #ecf5ff;
-          }
-
-          &.text-muted {
-            opacity: 0.5;
           }
         }
 
         .opx-table-td {
           padding: 10px 12px;
           font-size: 13px;
-          color: #606266;
           display: flex;
           align-items: center;
+          color: #606266;
+        }
 
-          a {
-            color: inherit;
-            text-decoration: none;
-            cursor: pointer;
+        .file-icon {
+          width: 20px;
+          margin-right: 8px;
+          text-align: center;
+        }
 
-            &:hover .gfs-ff-name {
-              color: #409eff;
-            }
+        .name-text {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          &:hover {
+            color: #409eff;
           }
         }
       }
     }
   }
 
-  .op-blank-slate {
-    text-align: center;
-    padding: 40px 20px;
-    color: #909399;
-
-    .op-blank-slate-icon {
-      margin-bottom: 16px;
-      color: #c0c4cc;
-    }
+  // 列宽度定义
+  .checkbox-col {
+    width: 40px;
+    justify-content: center;
+  }
+  .name-col {
+    flex: 1;
+    overflow: hidden;
+  }
+  .size-col {
+    width: 80px;
+  }
+  .time-col {
+    width: 120px;
   }
 
-  .selected-section {
-    margin-top: 16px;
+  // 已选列表样式
+  .selected-list {
+    flex: 1;
+    overflow-y: auto;
     padding: 12px;
-    background: #f5f7fa;
-    border-radius: 4px;
 
-    .label {
-      font-size: 13px;
-      color: #606266;
-      margin-right: 8px;
-    }
-
-    .selected-tags {
+    .selected-item {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 8px;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #e4e7ed;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+      position: relative;
+
+      &:hover {
+        border-color: #409eff;
+        background-color: #f0f7ff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        .remove-btn {
+          opacity: 1;
+        }
+      }
+
+      .item-info {
+        display: flex;
+        align-items: flex-start;
+        overflow: hidden;
+        flex: 1;
+        min-width: 0;
+
+        .item-icon {
+          font-size: 14px;
+          margin-right: 8px;
+          margin-top: 3px;
+          color: #909399;
+          flex-shrink: 0;
+        }
+
+        .item-text {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .item-name {
+          font-size: 13px;
+          color: #606266;
+          line-height: 1.4;
+          word-break: break-all;
+          display: block;
+        }
+      }
+
+      .item-actions {
+        margin-left: 8px;
+        flex-shrink: 0;
+      }
+
+      .remove-btn {
+        color: #909399;
+        cursor: pointer;
+        font-size: 14px;
+        opacity: 0.4;
+        transition: all 0.2s;
+
+        &:hover {
+          color: #f56c6c;
+          opacity: 1;
+        }
+      }
+    }
+
+    .empty-selection {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c0c4cc;
+      font-size: 13px;
+      text-align: center;
     }
   }
 
-  // 文件图标颜色
-  .text-warning {
-    color: #e6a23c;
+  .empty-state {
+    padding: 60px 0;
+    text-align: center;
+    color: #c0c4cc;
+    p {
+      margin-top: 10px;
+      font-size: 14px;
+    }
   }
 
-  .text-danger {
-    color: #f56c6c;
+  // 独立滚动条美化
+  .scroll-y {
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #e4e7ed;
+      border-radius: 3px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
   }
+}
 
-  .text-info {
-    color: #909399;
-  }
-
-  .text-success {
-    color: #67c23a;
-  }
-
-  .text-primary {
-    color: #409eff;
-  }
-
-  .text-muted {
-    color: #909399;
-  }
+// 文件图标颜色
+.text-warning {
+  color: #e6a23c;
+}
+.text-danger {
+  color: #f56c6c;
+}
+.text-info {
+  color: #909399;
+}
+.text-success {
+  color: #67c23a;
+}
+.text-primary {
+  color: #409eff;
+}
+.text-muted {
+  color: #909399;
 }
 </style>

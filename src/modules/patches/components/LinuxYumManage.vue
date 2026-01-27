@@ -4,12 +4,18 @@
     <el-tabs v-model="activeTab" class="yum-tabs">
       <el-tab-pane name="custom_repo">
         <template #label>
-          <span><i class="fa fa-user-cog" /> YUM源配置</span>
+          <span>
+            <i class="fa fa-user-cog" />
+            YUM源配置
+          </span>
         </template>
       </el-tab-pane>
       <el-tab-pane name="repo_list">
         <template #label>
-          <span><i class="fa fa-tools" /> YUM源清单</span>
+          <span>
+            <i class="fa fa-tools" />
+            YUM源清单
+          </span>
         </template>
       </el-tab-pane>
     </el-tabs>
@@ -20,7 +26,13 @@
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
           <el-form-item label="关键词">
-            <el-input v-model="filterText" placeholder="搜索..." style="width: 200px" clearable maxlength="50">
+            <el-input
+              v-model="filterText"
+              placeholder="搜索..."
+              style="width: 200px"
+              clearable
+              maxlength="50"
+            >
               <template #prefix>
                 <el-icon>
                   <Search />
@@ -28,7 +40,7 @@
               </template>
             </el-input>
           </el-form-item>
-          <el-form-item>
+          <!-- <el-form-item>
             <el-button type="primary" :loading="loading" @click="handleFilter">
               <el-icon>
                 <Search />
@@ -41,17 +53,22 @@
               </el-icon>
               重置
             </el-button>
-          </el-form-item>
+          </el-form-item> -->
         </el-form>
       </div>
 
       <!-- 操作区 -->
       <div class="ops-action-bar">
-        <el-button type="primary" size="small" @click="handleAddRepo">
-          YUM源配置录入
-        </el-button>
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+        <el-button type="primary" size="small" @click="handleAddRepo">YUM源配置录入</el-button>
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          @click="handleRefresh"
+          title="刷新"
+        >
           <el-icon v-show="!loading">
             <Refresh />
           </el-icon>
@@ -60,22 +77,30 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="loading" :data="customRepoData" stripe height="100%">
+        <el-table v-loading="loading" :data="paginatedCustomRepoData" stripe height="100%">
           <el-table-column prop="name" label="YUM源名称" min-width="120" sortable />
           <el-table-column prop="description" label="描述" min-width="120" sortable />
-          <el-table-column prop="baseurl" label="YUM源地址" min-width="280" sortable show-overflow-tooltip />
-          <el-table-column prop="file" label="YUM源文件" min-width="180" sortable show-overflow-tooltip />
+          <el-table-column
+            prop="baseurl"
+            label="YUM源地址"
+            min-width="280"
+            sortable
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="file"
+            label="YUM源文件"
+            min-width="180"
+            sortable
+            show-overflow-tooltip
+          />
           <el-table-column label="操作" width="132" fixed="right" align="left">
             <template #default="{ row }">
-              <el-button text type="primary" size="small" @click="handleEdit(row)">
-                编辑
-              </el-button>
-              <el-button text type="danger" size="small" @click="handleDelete(row)">
-                删除
-              </el-button>
+              <el-button text type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
               <el-button text type="primary" size="small" @click="handleConfig(row)">
                 配置
               </el-button>
+              <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -83,9 +108,16 @@
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
-          background @size-change="handleSizeChange" @current-change="handlePageChange" />
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="filteredCustomRepoData.length"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
       </div>
     </template>
 
@@ -95,7 +127,13 @@
       <div class="ops-filter-bar">
         <el-form :model="hostFilters" inline size="small">
           <el-form-item label="关键词">
-            <el-input v-model="hostFilterText" placeholder="搜索..." style="width: 200px" clearable maxlength="50">
+            <el-input
+              v-model="hostFilterText"
+              placeholder="搜索..."
+              style="width: 200px"
+              clearable
+              maxlength="50"
+            >
               <template #prefix>
                 <el-icon>
                   <Search />
@@ -103,7 +141,7 @@
               </template>
             </el-input>
           </el-form-item>
-          <el-form-item>
+          <!-- <el-form-item>
             <el-button type="primary" :loading="hostLoading" @click="handleHostFilter">
               <el-icon>
                 <Search />
@@ -116,17 +154,22 @@
               </el-icon>
               重置
             </el-button>
-          </el-form-item>
+          </el-form-item> -->
         </el-form>
       </div>
 
       <!-- 操作区 -->
       <div class="ops-action-bar">
-        <el-button type="primary" size="small" @click="handleScanRepoList">
-          YUM源清单扫描
-        </el-button>
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="hostLoading" @click="loadHostData" title="刷新">
+        <el-button type="primary" size="small" @click="handleScanRepoList">YUM源清单扫描</el-button>
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="hostLoading"
+          @click="loadHostData"
+          title="刷新"
+        >
           <el-icon v-show="!hostLoading">
             <Refresh />
           </el-icon>
@@ -135,7 +178,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="hostLoading" :data="hostTableData" stripe height="100%">
+        <el-table v-loading="hostLoading" :data="paginatedHostTableData" stripe height="100%">
           <el-table-column prop="$data_owner" label="主机" min-width="150">
             <template #default="{ row }">
               <el-link type="primary" :underline="false" @click="handleViewHostDetail(row)">
@@ -151,14 +194,25 @@
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination v-model:current-page="hostPagination.page" v-model:page-size="hostPagination.pageSize"
-          :page-sizes="[10, 20, 50, 500]" :total="hostPagination.total" layout="total, sizes, prev, pager, next, jumper"
-          background @size-change="handleHostSizeChange" @current-change="handleHostPageChange" />
+        <el-pagination
+          v-model:current-page="hostPagination.page"
+          v-model:page-size="hostPagination.pageSize"
+          :page-sizes="[10, 20, 50, 500]"
+          :total="filteredHostTableData.length"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleHostSizeChange"
+          @current-change="handleHostPageChange"
+        />
       </div>
     </template>
 
     <!-- 添加/编辑YUM源对话框 -->
-    <el-dialog v-model="dialogVisible" :title="editingRepo ? '编辑YUM源' : 'YUM源配置录入'" width="600px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editingRepo ? '编辑YUM源' : 'YUM源配置录入'"
+      width="600px"
+    >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="YUM源名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入YUM源名称" maxlength="50" />
@@ -170,83 +224,136 @@
           <el-input v-model="formData.baseurl" placeholder="请输入YUM源地址" maxlength="500" />
         </el-form-item>
         <el-form-item label="YUM源文件" prop="file">
-          <el-input v-model="formData.file" placeholder="如：/etc/yum.repos.d/local.repo" maxlength="256" />
+          <el-input
+            v-model="formData.file"
+            placeholder="如：/etc/yum.repos.d/local.repo"
+            maxlength="256"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">
-          确定
-        </el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
 
     <!-- 设备选择器对话框 (用于配置和扫描) -->
-    <AcmDeviceSelectorDialog v-model="deviceSelectorVisible" ci-types="[auto]" :initial-selection="selectedDevices"
+    <AcmDeviceSelectorDialog
+      v-model="deviceSelectorVisible"
+      ci-types="[auto]"
+      :initial-selection="selectedDevices"
       :options="{
         selectMode: 'host,group,tag,input,recently',
         selector: 'multiple'
-      }" @confirm="handleDeviceSelected" />
+      }"
+      @confirm="handleDeviceSelected"
+    />
 
     <!-- 选择目标主机对话框 -->
-    <el-dialog v-model="selectHostDialogVisible" title="选择目标主机" width="800px" :close-on-click-modal="false">
+    <el-dialog
+      v-model="selectHostDialogVisible"
+      title="选择目标主机"
+      width="500px"
+      :close-on-click-modal="false"
+    >
       <div class="select-host-dialog-content">
         <!-- 使用 AcmDeviceSelector 组件 -->
-        <AcmDeviceSelector v-model="selectedDevices" ci-types="[auto]" :options="{
-          selectMode: 'host,group,tag,input,recently',
-          selector: 'multiple',
-          label: '选择设备'
-        }" />
+        <AcmDeviceSelector
+          v-model="selectedDevices"
+          ci-types="[auto]"
+          :options="{
+            selectMode: 'host,group,tag,input,recently',
+            selector: 'multiple',
+            label: '选择设备'
+          }"
+        />
       </div>
       <template #footer>
         <el-button @click="selectHostDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="jobExecuting" :disabled="selectedDevices.length === 0" @click="executeJob">
+        <el-button
+          type="primary"
+          :loading="jobExecuting"
+          :disabled="selectedDevices.length === 0"
+          @click="executeJob"
+        >
           {{ currentOperation === 'config' ? '开始配置' : '开始扫描' }}
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 主机YUM源详情对话框 -->
-    <el-dialog v-model="hostDetailDialogVisible" :title="`${currentHostDetail?.$data_owner || ''} - YUM源详情`"
-      width="1400px" :close-on-click-modal="false">
+    <el-dialog
+      v-model="hostDetailDialogVisible"
+      :title="`${currentHostDetail?.$data_owner || ''} - YUM源详情`"
+      width="1400px"
+      :close-on-click-modal="false"
+    >
       <div class="host-detail-dialog-content">
-        <!-- 工具栏 -->
-        <div class="toolbar-row">
-          <div class="toolbar-left">
-            <span>状态</span>
-            <el-select v-model="detailRepoStatus" placeholder="请选择" size="small" style="width: 100px"
-              @change="handleDetailFilterChange">
-              <el-option value="enabled" label="启用" />
-              <el-option value="disabled" label="禁用" />
-            </el-select>
-          </div>
-          <div class="toolbar-right">
-            <el-input v-model="detailFilterText" placeholder="搜索" size="small" style="width: 150px" clearable
-              @input="handleDetailFilterChange">
-              <template #prefix>
-                <i class="fa fa-search" />
-              </template>
-            </el-input>
-            <el-button class="toolbar-icon-btn" circle :loading="hostDetailLoading" @click="loadHostRepoDetail"
-              title="刷新" size="small">
-              <el-icon v-show="!hostDetailLoading">
-                <Refresh />
-              </el-icon>
-            </el-button>
-          </div>
+        <!-- 筛选区 -->
+        <div class="ops-filter-bar">
+          <el-form inline size="small">
+            <el-form-item label="状态">
+              <el-select v-model="detailRepoStatus" placeholder="请选择" style="width: 120px">
+                <el-option value="enabled" label="启用" />
+                <el-option value="disabled" label="禁用" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="关键词">
+              <el-input
+                v-model="detailFilterText"
+                placeholder="搜索名称、地址..."
+                style="width: 220px"
+                clearable
+              >
+                <template #prefix>
+                  <el-icon><Search /></el-icon>
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleDetailFilterChange">
+                <el-icon><Search /></el-icon>
+                搜索
+              </el-button>
+              <el-button @click="handleDetailReset">
+                <el-icon><RefreshRight /></el-icon>
+                重置
+              </el-button>
+              <el-button :loading="hostDetailLoading" @click="loadHostRepoDetail">
+                <el-icon><Refresh /></el-icon>
+                刷新
+              </el-button>
+            </el-form-item>
+          </el-form>
         </div>
 
         <!-- YUM源详情表格 -->
-        <el-table v-loading="hostDetailLoading" :data="paginatedRepoDetailData" stripe style="width: 100%" size="small"
-          max-height="350">
+        <el-table
+          v-loading="hostDetailLoading"
+          :data="paginatedRepoDetailData"
+          stripe
+          style="width: 100%"
+          size="small"
+          max-height="500"
+        >
           <el-table-column prop="$data_owner" label="主机" min-width="100" />
-          <el-table-column prop="repo-name" label="名称" min-width="100" />
+          <el-table-column prop="repo-name" label="名称" min-width="120" />
           <el-table-column prop="repo-pkgs" label="软件包数" min-width="80" />
-          <el-table-column prop="repo-baseurl" label="Base URL" min-width="250" show-overflow-tooltip>
+          <el-table-column
+            prop="repo-baseurl"
+            label="Base URL"
+            min-width="250"
+            show-overflow-tooltip
+          >
             <template #default="{ row }">
               <div class="url-badges">
-                <el-tag v-for="(url, idx) in parseUrls(row['repo-baseurl'])" :key="idx" type="info" size="small"
-                  class="url-tag">
+                <el-tag
+                  v-for="(url, idx) in parseUrls(row['repo-baseurl'])"
+                  :key="idx"
+                  type="info"
+                  size="small"
+                  class="url-tag"
+                >
                   {{ url }}
                 </el-tag>
               </div>
@@ -268,12 +375,22 @@
           </el-table-column>
           <el-table-column label="操作" width="88" fixed="right" align="left">
             <template #default="{ row }">
-              <el-button v-if="row['repo-status'] === 'disabled'" text type="primary" size="small"
-                @click="handleEnableRepo(row)">
+              <el-button
+                v-if="row['repo-status'] === 'disabled'"
+                text
+                type="primary"
+                size="small"
+                @click="handleEnableRepo(row)"
+              >
                 启用
               </el-button>
-              <el-button v-if="row['repo-status'] === 'enabled'" text type="warning" size="small"
-                @click="handleDisableRepo(row)">
+              <el-button
+                v-if="row['repo-status'] === 'enabled'"
+                text
+                type="warning"
+                size="small"
+                @click="handleDisableRepo(row)"
+              >
                 禁用
               </el-button>
               <el-button text type="danger" size="small" @click="handleDeleteRepo(row)">
@@ -285,9 +402,15 @@
 
         <!-- 分页 -->
         <div class="dialog-pagination">
-          <el-pagination v-model:current-page="detailPagination.page" v-model:page-size="detailPagination.pageSize"
-            :page-sizes="[10, 20, 50]" :total="filteredRepoDetailData.length"
-            layout="total, sizes, prev, pager, next, jumper" size="small" background />
+          <el-pagination
+            v-model:current-page="detailPagination.page"
+            v-model:page-size="detailPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="filteredRepoDetailData.length"
+            layout="total, sizes, prev, pager, next, jumper"
+            size="small"
+            background
+          />
         </div>
       </div>
     </el-dialog>
@@ -295,14 +418,21 @@
     <!-- 作业执行确认对话框 -->
     <el-dialog v-model="jobConfirmDialogVisible" :title="jobConfirmTitle" width="600px">
       <div class="job-confirm-content">
-        <el-alert :title="`即将对 ${selectedDevices.length} 台主机执行操作`" type="info" show-icon :closable="false"
-          class="mb-3" />
+        <el-alert
+          :title="`即将对 ${selectedDevices.length} 台主机执行操作`"
+          type="info"
+          show-icon
+          :closable="false"
+          class="mb-3"
+        />
 
         <!-- YUM源配置信息 (配置操作时显示) -->
         <div v-if="currentOperation === 'config' && configRepo" class="config-info mb-3">
           <el-descriptions :column="1" border size="small">
             <el-descriptions-item label="YUM源名称">{{ configRepo.name }}</el-descriptions-item>
-            <el-descriptions-item label="描述">{{ configRepo.description || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="描述">
+              {{ configRepo.description || '-' }}
+            </el-descriptions-item>
             <el-descriptions-item label="YUM源地址">{{ configRepo.baseurl }}</el-descriptions-item>
             <el-descriptions-item label="YUM源文件">{{ configRepo.file }}</el-descriptions-item>
           </el-descriptions>
@@ -321,7 +451,12 @@
         <!-- 已选主机列表 -->
         <div class="selected-hosts-list">
           <div class="list-header">
-            <span><i class="fa fa-server me-2" />已选主机（<strong>{{ selectedDevices.length }}</strong>）</span>
+            <span>
+              <i class="fa fa-server me-2" />
+              已选主机（
+              <strong>{{ selectedDevices.length }}</strong>
+              ）
+            </span>
           </div>
           <div class="list-body">
             <el-tag v-for="(host, index) in selectedDevices" :key="index" type="primary">
@@ -333,7 +468,8 @@
       <template #footer>
         <el-button @click="jobConfirmDialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="jobExecuting" @click="executeJob">
-          <i class="fa fa-play me-1" /> {{ jobConfirmButtonText }}
+          <i class="fa fa-play me-1" />
+          {{ jobConfirmButtonText }}
         </el-button>
       </template>
     </el-dialog>
@@ -354,13 +490,13 @@ import { useJobPolling } from '@/composables/useJobPolling'
 const { startPolling } = useJobPolling()
 
 // 常量定义
-const YUM_JOB_ID = 'IxL8nr'  // YUM操作作业ID
+const YUM_JOB_ID = 'IxL8nr' // YUM操作作业ID
 
 // Tab状态
 const activeTab = ref('custom_repo')
 
 // 监听Tab切换，自动加载对应数据
-watch(activeTab, (newTab) => {
+watch(activeTab, newTab => {
   if (newTab === 'repo_list' && hostTableData.value.length === 0) {
     loadHostData()
   }
@@ -383,8 +519,29 @@ const pagination = reactive({
 // 分页信息
 const paginationInfo = computed(() => {
   const start = (pagination.page - 1) * pagination.pageSize + 1
-  const end = Math.min(pagination.page * pagination.pageSize, pagination.total)
-  return `${start} - ${end} / ${pagination.total}`
+  const end = Math.min(pagination.page * pagination.pageSize, filteredCustomRepoData.value.length)
+  return `${start} - ${end} / ${filteredCustomRepoData.value.length}`
+})
+
+// 前端筛选数据
+const filteredCustomRepoData = computed(() => {
+  if (!filterText.value) return customRepoData.value
+  const keyword = filterText.value.toLowerCase()
+  return customRepoData.value.filter(item => {
+    return (
+      item.name?.toLowerCase().includes(keyword) ||
+      item.description?.toLowerCase().includes(keyword) ||
+      item.baseurl?.toLowerCase().includes(keyword) ||
+      item.file?.toLowerCase().includes(keyword)
+    )
+  })
+})
+
+// 前端分页数据
+const paginatedCustomRepoData = computed(() => {
+  const start = (pagination.page - 1) * pagination.pageSize
+  const end = start + pagination.pageSize
+  return filteredCustomRepoData.value.slice(start, end)
 })
 
 // 对话框
@@ -445,7 +602,7 @@ const hostFilters = reactive({
 })
 const hostPagination = reactive({
   page: 1,
-  pageSize: 500,
+  pageSize: 10,
   total: 0
 })
 
@@ -458,7 +615,8 @@ const detailRepoStatus = ref('enabled')
 const detailFilterText = ref('')
 const detailPagination = reactive({
   page: 1,
-  pageSize: 10
+  pageSize: 20,
+  total: 0
 })
 
 // 过滤后的数据
@@ -466,9 +624,11 @@ const filteredRepoDetailData = computed(() => {
   if (!detailFilterText.value) return hostRepoDetailData.value
   const keyword = detailFilterText.value.toLowerCase()
   return hostRepoDetailData.value.filter(row => {
-    return (row['repo-name']?.toLowerCase().includes(keyword)) ||
-      (row['repo-baseurl']?.toLowerCase().includes(keyword)) ||
-      (row['repo-file']?.toLowerCase().includes(keyword))
+    return (
+      row['repo-name']?.toLowerCase().includes(keyword) ||
+      row['repo-baseurl']?.toLowerCase().includes(keyword) ||
+      row['repo-file']?.toLowerCase().includes(keyword)
+    )
   })
 })
 
@@ -483,10 +643,42 @@ function handleDetailFilterChange() {
   detailPagination.page = 1
 }
 
+/**
+ * 重置详情筛选
+ */
+function handleDetailReset() {
+  detailFilterText.value = ''
+  detailRepoStatus.value = 'enabled'
+  handleDetailFilterChange()
+}
+
 const hostPaginationInfo = computed(() => {
   const start = (hostPagination.page - 1) * hostPagination.pageSize + 1
-  const end = Math.min(hostPagination.page * hostPagination.pageSize, hostPagination.total)
-  return `${start} - ${end} / ${hostPagination.total}`
+  const end = Math.min(
+    hostPagination.page * hostPagination.pageSize,
+    filteredHostTableData.value.length
+  )
+  return `${start} - ${end} / ${filteredHostTableData.value.length}`
+})
+
+// 前端筛选主机数据
+const filteredHostTableData = computed(() => {
+  if (!hostFilterText.value) return hostTableData.value
+  const keyword = hostFilterText.value.toLowerCase()
+  return hostTableData.value.filter(item => {
+    return (
+      item.$data_owner?.toLowerCase().includes(keyword) ||
+      item.os_distro?.toLowerCase().includes(keyword) ||
+      item.os_version?.toLowerCase().includes(keyword)
+    )
+  })
+})
+
+// 前端分页主机数据
+const paginatedHostTableData = computed(() => {
+  const start = (hostPagination.page - 1) * hostPagination.pageSize
+  const end = start + hostPagination.pageSize
+  return filteredHostTableData.value.slice(start, end)
 })
 
 // ============ 数据加载方法 ============
@@ -499,7 +691,8 @@ async function loadCustomRepoData() {
     const rawData = response?.data || response || []
     // 解析 dataJson 字段
     customRepoData.value = rawData.map(item => {
-      const dataJson = typeof item.dataJson === 'string' ? JSON.parse(item.dataJson) : (item.dataJson || {})
+      const dataJson =
+        typeof item.dataJson === 'string' ? JSON.parse(item.dataJson) : item.dataJson || {}
       return {
         id: item.id,
         name: dataJson.name || '',
@@ -510,11 +703,9 @@ async function loadCustomRepoData() {
         updateTime: item.updateTime
       }
     })
-    pagination.total = customRepoData.value.length
   } catch (error) {
     console.error('Failed to load custom repo data:', error)
     customRepoData.value = []
-    pagination.total = 0
   } finally {
     loading.value = false
   }
@@ -524,15 +715,17 @@ async function loadCustomRepoData() {
 async function loadHostData() {
   hostLoading.value = true
   try {
-    const response = await yumManageApi.getHostYumList()
+    // 改为全量加载，以便前端筛选
+    const response = await yumManageApi.getHostYumList({
+      page: 1,
+      size: 1000 // 获取足够多的数据
+    })
     if (response?.data) {
       hostTableData.value = response.data.records || response.data || []
-      hostPagination.total = response.data.total || hostTableData.value.length
     }
   } catch (error) {
     console.error('Failed to load host data:', error)
     hostTableData.value = []
-    hostPagination.total = 0
   } finally {
     hostLoading.value = false
   }
@@ -542,14 +735,12 @@ async function loadHostData() {
 
 function handleFilter() {
   pagination.page = 1
-  loadCustomRepoData()
 }
 
 function handleReset() {
   filterText.value = ''
   pagination.page = 1
   pagination.pageSize = 10
-  loadCustomRepoData()
 }
 
 function handleRefresh() {
@@ -559,35 +750,29 @@ function handleRefresh() {
 function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
-  loadCustomRepoData()
 }
 
 function handleHostFilter() {
   hostPagination.page = 1
-  loadHostData()
 }
 
 function handleHostReset() {
   hostFilterText.value = ''
   hostPagination.page = 1
-  hostPagination.pageSize = 500
-  loadHostData()
+  hostPagination.pageSize = 10
 }
 
 function handleHostSizeChange(size) {
   hostPagination.pageSize = size
   hostPagination.page = 1
-  loadHostData()
 }
 
 function handlePageChange(page) {
   pagination.page = page
-  loadCustomRepoData()
 }
 
 function handleHostPageChange(page) {
   hostPagination.page = page
-  loadHostData()
 }
 
 function handleAddRepo() {
@@ -614,11 +799,9 @@ function handleEdit(row) {
 
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除 "${row.name}" 吗？此操作不可恢复。`,
-      '警告',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm(`确定要删除 "${row.name}" 吗？此操作不可恢复。`, '警告', {
+      type: 'warning'
+    })
     await yumManageApi.deleteYumConfig(row.id)
     ElMessage.success('删除成功')
     loadCustomRepoData()
@@ -767,6 +950,7 @@ async function loadHostRepoDetail() {
       repo_status: detailRepoStatus.value
     })
     hostRepoDetailData.value = response?.data?.records || response?.data || []
+    detailPagination.page = 1 // 每次成功加载新状态时重置页码
   } catch (error) {
     console.error('Failed to load host repo detail:', error)
     hostRepoDetailData.value = []
@@ -809,18 +993,16 @@ function exportHostRepoDetail() {
 // 启用YUM源
 async function handleEnableRepo(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定要启用 "${row['repo-name']}" 吗？`,
-      '确认',
-      { type: 'info' }
-    )
+    await ElMessageBox.confirm(`确定要启用 "${row['repo-name']}" 吗？`, '确认', { type: 'info' })
 
     // 构建参数执行作业
-    const hosts = [{
-      key: currentHostDetail.value.$data_owner_id || currentHostDetail.value.$id,
-      value: currentHostDetail.value.$data_owner,
-      assetType: 'linux'
-    }]
+    const hosts = [
+      {
+        key: currentHostDetail.value.$data_owner_id || currentHostDetail.value.$id,
+        value: currentHostDetail.value.$data_owner,
+        assetType: 'linux'
+      }
+    ]
 
     const repoFile = extractRepoFileName(row['repo-file'])
 
@@ -850,17 +1032,15 @@ async function handleEnableRepo(row) {
 // 禁用YUM源
 async function handleDisableRepo(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定要禁用 "${row['repo-name']}" 吗？`,
-      '确认',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm(`确定要禁用 "${row['repo-name']}" 吗？`, '确认', { type: 'warning' })
 
-    const hosts = [{
-      key: currentHostDetail.value.$data_owner_id || currentHostDetail.value.$id,
-      value: currentHostDetail.value.$data_owner,
-      assetType: 'linux'
-    }]
+    const hosts = [
+      {
+        key: currentHostDetail.value.$data_owner_id || currentHostDetail.value.$id,
+        value: currentHostDetail.value.$data_owner,
+        assetType: 'linux'
+      }
+    ]
 
     const repoFile = extractRepoFileName(row['repo-file'])
 
@@ -890,17 +1070,17 @@ async function handleDisableRepo(row) {
 // 删除YUM源
 async function handleDeleteRepo(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除 "${row['repo-name']}" 吗？此操作不可恢复。`,
-      '警告',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm(`确定要删除 "${row['repo-name']}" 吗？此操作不可恢复。`, '警告', {
+      type: 'warning'
+    })
 
-    const hosts = [{
-      key: currentHostDetail.value.$data_owner_id || currentHostDetail.value.$id,
-      value: currentHostDetail.value.$data_owner,
-      assetType: 'linux'
-    }]
+    const hosts = [
+      {
+        key: currentHostDetail.value.$data_owner_id || currentHostDetail.value.$id,
+        value: currentHostDetail.value.$data_owner,
+        assetType: 'linux'
+      }
+    ]
 
     const repoFile = extractRepoFileName(row['repo-file'])
 
@@ -1051,25 +1231,6 @@ defineExpose({ refresh })
 
 // 主机详情对话框样式
 .host-detail-dialog-content {
-  .toolbar-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-
-    .toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-  }
-
   .url-badges {
     display: flex;
     flex-direction: column;
