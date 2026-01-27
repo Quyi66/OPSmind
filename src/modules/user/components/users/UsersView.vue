@@ -7,9 +7,8 @@
           <el-select
             v-model="filters.types"
             multiple
-            collapse-tags
             placeholder="请选择"
-            style="width: 160px"
+            style="width: 200px"
           >
             <el-option label="系统用户" value="0" />
             <el-option label="普通用户" value="1" />
@@ -19,31 +18,30 @@
           <el-select
             v-model="filters.lockStatus"
             multiple
-            collapse-tags
             placeholder="请选择"
-            style="width: 140px"
+            style="width: 160px"
           >
             <el-option label="锁定" value="1" />
             <el-option label="未锁定" value="2" />
           </el-select>
         </el-form-item>
-        <el-form-item label="IP">
+        <!-- <el-form-item label="IP">
           <el-input
             v-model="filters.host_key"
             placeholder="输入IP地址"
             clearable
-            style="width: 150px"
+            style="width: 135px"
           />
-        </el-form-item>
-        <el-form-item label="用户名">
+        </el-form-item> -->
+        <!-- <el-form-item label="用户名">
           <el-input
             v-model="filters.username"
             placeholder="输入用户名"
             clearable
             style="width: 150px"
           />
-        </el-form-item>
-        <!-- <el-form-item label="关键词">
+        </el-form-item> -->
+        <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
             placeholder="请输入"
@@ -51,7 +49,7 @@
             style="width: 140px"
             @keyup.enter="handleSearch"
           />
-        </el-form-item> -->
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon>
@@ -322,13 +320,13 @@ async function loadData() {
   loading.value = true
   try {
     const response = await userApi.getUsers({
-      host_key: filters.value.host_key,
-      username: filters.value.username,
+      // host_key: filters.value.host_key,
+      // username: filters.value.username,
       types: filters.value.types.join(','),
       lockStatus: filters.value.lockStatus.join(','),
       page: currentPage.value,
       size: pageSize.value,
-      filter: filters.value.keyword
+      filter: filters.value.keyword ? `host_key|hostname|primary_group|secondary_group|comment|shell|home|username:*${filters.value.keyword}*` : undefined
     })
     tableData.value = response?.records || response?.data?.records || []
     total.value = response?.total || response?.data?.total || 0

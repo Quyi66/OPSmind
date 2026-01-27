@@ -249,7 +249,7 @@ function getSubmitButtonText() {
     return '提交中...'
   }
   const textMap = {
-    modify_base: '保存修改',
+    modify_base: '保存',
     delete: '删除用户',
     lock: '确认',
     ssh: '确认',

@@ -190,7 +190,7 @@ const buttonText = computed(() => {
   if (submitting.value) {
     return '提交中...'
   }
-  return '创建用户'
+  return '确认'
 })
 
 // 加载sudo模板列表

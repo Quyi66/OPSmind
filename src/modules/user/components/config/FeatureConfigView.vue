@@ -304,7 +304,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showCreateTemplateDialog = false">取消</el-button>
-        <el-button type="primary" :loading="creatingTemplate" @click="handleCreateTemplate">创建</el-button>
+        <el-button type="primary" :loading="creatingTemplate" @click="handleCreateTemplate">确认</el-button>
       </template>
     </el-dialog>
   </div>

@@ -45,10 +45,13 @@ const menuGroups = computed(() => getGroupMenuConfig('user-management', MENU_CON
 const defaultOpeneds = ['users', 'flow', 'sudo', 'password']
 
 // 提供导航方法给子组件使用（使用当前模块代码）
-function handleNavigate({ view, moduleCode }) {
+function handleNavigate({ view, moduleCode, params = {} }) {
   const targetModule = moduleCode || currentModuleCode.value
   if (view) {
-    router.push(`/${targetModule}/${view}`)
+    router.push({
+      path: `/${targetModule}/${view}`,
+      query: params
+    })
   }
 }
 

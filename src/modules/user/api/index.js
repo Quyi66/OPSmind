@@ -44,8 +44,8 @@ export function getUsers(options = {}) {
   const { page = 1, size = 15, filter = '', ...params } = options
   return apiService.post(`${DTS_BASE}/LUPM_LIST_USERS/?cacheBuster=${Date.now()}`, {
     params: {
-      host_key: params.host_key || '',
-      username: params.username || '',
+      // host_key: params.host_key || '',
+      // username: params.username || '',
       types: params.types || '0,1',
       lockStatus: params.lockStatus || '2'
     },
@@ -64,8 +64,8 @@ export function getUserGroups(options = {}) {
   const { page = 1, size = 10, filter = '', ...params } = options
   return apiService.post(`${DTS_BASE}/LUPM_LIST_GROUPS/?cacheBuster=${Date.now()}`, {
     params: {
-      host_key: params.host_key || null,
-      group_name: params.group_name || null,
+      // host_key: params.host_key || null,
+      // group_name: params.group_name || null,
       hostObject: params.hostObject || '@@(linux)'
     },
     page,

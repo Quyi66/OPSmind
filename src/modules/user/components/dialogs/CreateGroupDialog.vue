@@ -87,7 +87,7 @@ const buttonText = computed(() => {
   if (submitting.value) {
     return '提交中...'
   }
-  return '创建用户组'
+  return '确认'
 })
 
 const formData = reactive({
@@ -242,6 +242,5 @@ function handleClose() {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
 }
 </style>

@@ -4,11 +4,18 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="全部" style="width: 100px">
-            <el-option label="全部" value="all" />
-            <el-option label="成功" value="SUCCESS" />
-            <el-option label="失败" value="FAILED" />
+          <el-select
+            v-model="filters.status"
+            placeholder="全部"
+            style="width: 180px"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+          >
+            <el-option label="已完成" value="COMPLETED" />
+            <el-option label="运行失败" value="FAILED" />
             <el-option label="运行中" value="RUNNING" />
+            <el-option label="运行错误" value="ERROR" />
           </el-select>
         </el-form-item>
         <el-form-item label="时间范围">
@@ -23,9 +30,9 @@
         <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索"
+            placeholder="用户名、执行引擎节点、结果"
             clearable
-            style="width: 200px"
+            style="width: 220px"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -122,10 +129,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as userApi from '@/modules/user/api'
 import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+
+const route = useRoute()
 
 const props = defineProps({
   initialFilters: {
@@ -134,10 +144,17 @@ const props = defineProps({
   }
 })
 
+// 合并props和route.query中的筛选条件
+const mergedFilters = { ...props.initialFilters, ...route.query }
+
 // 筛选条件
 const filters = ref({
-  day: props.initialFilters.day || '3650',
-  status: props.initialFilters.status || 'all',
+  day: mergedFilters.day || '3650',
+  status: mergedFilters.status
+    ? (typeof mergedFilters.status === 'string'
+        ? mergedFilters.status.split(',').filter(s => s)
+        : mergedFilters.status)
+    : [],
   keyword: ''
 })
 
@@ -208,7 +225,8 @@ function getStatusLabel(status) {
     SUCCESS: '运行成功',
     COMPLETED: '已完成',
     FAILED: '运行失败',
-    RUNNING: '运行中'
+    RUNNING: '运行中',
+    ERROR: '运行错误'
   }
   return labels[status] || status
 }
@@ -231,11 +249,16 @@ function handleViewRunResult(row) {
 async function loadData() {
   loading.value = true
   try {
+    // 将数组类型的status转换为逗号分隔的字符串
+    const statusParam = Array.isArray(filters.value.status) && filters.value.status.length > 0
+      ? filters.value.status.join(',')
+      : 'all'
+
     const response = await userApi.getOperationLogs(
       {
         module: 'uim',
         action: 'all',
-        status: filters.value.status,
+        status: statusParam,
         day: filters.value.day
       },
       filters.value.keyword ? `username|ata_node|message:*${filters.value.keyword}*` : '',
@@ -260,7 +283,7 @@ function handleSearch() {
 function handleReset() {
   filters.value = {
     day: '3650',
-    status: 'all',
+    status: [],
     keyword: ''
   }
   currentPage.value = 1

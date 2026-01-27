@@ -3,7 +3,7 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
-        <el-form-item label="IP">
+        <!-- <el-form-item label="IP">
           <el-input
             v-model="filters.host_key"
             placeholder="输入IP地址"
@@ -18,13 +18,13 @@
             clearable
             style="width: 150px"
           />
-        </el-form-item>
-        <el-form-item label="主机名">
+        </el-form-item> -->
+        <el-form-item label="关键词">
           <el-input
             v-model="filters.hostname"
-            placeholder="输入主机名"
+            placeholder="输入主机名/IP/组名"
             clearable
-            style="width: 150px"
+            style="width: 200px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
@@ -64,7 +64,7 @@
         <!-- <el-table-column type="selection" width="50" /> -->
         <el-table-column prop="host_key" label="IP" width="130" />
         <el-table-column prop="hostname" label="主机名" width="150" show-overflow-tooltip />
-        <el-table-column prop="group_name" label="组名" width="140" />
+        <el-table-column prop="group_name" label="组名" min-width="140" />
         <el-table-column prop="gid" label="GID" width="80" />
         <el-table-column prop="users" label="用户" min-width="200" show-overflow-tooltip />
         <el-table-column prop="created_at" label="创建时间" width="180">
@@ -172,12 +172,12 @@ async function loadData() {
 
   try {
     const response = await userApi.getUserGroups({
-      host_key: filters.value.host_key || null,
-      group_name: filters.value.group_name || null,
+      // host_key: filters.value.host_key || null,
+      // group_name: filters.value.group_name || null,
       hostObject: '@@(linux)',
       page,
       size,
-      filter: filters.value.hostname ? `hostname:*${filters.value.hostname}*` : ''
+      filter: filters.value.hostname ? `hostname|host_key|group_name:*${filters.value.hostname}*` : ''
     })
     tableData.value = response?.records || response?.data?.records || []
 

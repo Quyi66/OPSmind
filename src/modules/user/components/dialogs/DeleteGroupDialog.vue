@@ -46,7 +46,7 @@
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
         <el-button type="danger" :loading="submitting" @click="handleSubmit">
-          <i class="fa fa-minus-circle" v-if="!submitting"></i>
+          <!-- <i class="fa fa-minus-circle" v-if="!submitting"></i> -->
           {{ buttonText }}
         </el-button>
       </div>
@@ -100,7 +100,7 @@ const buttonText = computed(() => {
   if (submitting.value) {
     return '提交中...'
   }
-  return '确认删除'
+  return '确认'
 })
 
 watch(() => props.groupData, (val) => {
@@ -257,6 +257,5 @@ function handleClose() {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
 }
 </style>

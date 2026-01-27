@@ -131,14 +131,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick, watch, inject } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import * as userApi from '@/modules/user/api'
 import { translateText } from '@/utils/i18n'
 
-// 定义 emit 用于通知父组件切换视图
-const emit = defineEmits(['navigate'])
+// 注入父组件提供的导航方法
+const handleNavigate = inject('handleNavigate', null)
 
 // 统计卡片数据 (mapping from LUPM_STATISTICS)
 const statCards = ref([
@@ -146,14 +146,16 @@ const statCards = ref([
   { key: 'userTotal', label: '用户', value: 0, icon: 'fa fa-user-alt', color: 'gray', linkView: 'users', pageParams: {} },
   { key: 'errorUserTotal', label: '异常用户', value: 0, icon: 'fa fa-user-slash', color: 'orange', linkView: 'users', pageParams: { status: 'error' } },
   { key: 'groupTotal', label: '用户组', value: 0, icon: 'fa fa-user-friends', color: 'gray', linkView: 'groups', pageParams: {} },
-  { key: 'oneMonthTotal', label: '近一月操作', value: 0, icon: 'fa fa-running', color: 'gray', linkView: 'logs', pageParams: { logDay: '31' } },
-  { key: 'failedTotal', label: '操作失败数', value: 0, icon: 'fa fa-exclamation-triangle', color: 'red', linkView: 'logs', pageParams: { logDay: '31', logStatus: 'ERROR,FAILED' } }
+  { key: 'oneMonthTotal', label: '近一月操作', value: 0, icon: 'fa fa-running', color: 'gray', linkView: 'logs', pageParams: { day: '30' } },
+  { key: 'failedTotal', label: '操作失败数', value: 0, icon: 'fa fa-exclamation-triangle', color: 'red', linkView: 'logs', pageParams: { day: '365', status: 'ERROR,FAILED' } }
 ])
 
 // 处理卡片点击，跳转到对应视图
 function handleCardClick(stat) {
-  if (stat.linkView) {
-    emit('navigate', { view: stat.linkView, params: stat.pageParams })
+  if (stat.linkView && handleNavigate) {
+    handleNavigate({ view: stat.linkView, params: stat.pageParams })
+  } else {
+    console.error('OverviewView - handleNavigate not available or no linkView')
   }
 }
 
