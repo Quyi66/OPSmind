@@ -8,101 +8,85 @@
     :show-close="!submitting"
     @close="handleClose"
   >
-    <div class="add-sudo-content">
+    <el-form
+      ref="formRef"
+      :model="formData"
+      :rules="formRules"
+      label-width="100px"
+      label-position="top"
+      class="add-sudo-form"
+    >
       <!-- 主机选择 -->
-      <div class="form-section">
-        <div class="section-title">主机</div>
-        <div class="section-content">
-          <AcmDeviceSelector
-            v-model="formData.hosts"
-            ci-types="linux"
-            :options="{ label: '选择主机' }"
-            :disabled="submitting"
-          />
-        </div>
-      </div>
+      <el-form-item label="主机" prop="hosts" required>
+        <AcmDeviceSelector
+          v-model="formData.hosts"
+          ci-types="linux"
+          :options="{ label: '选择主机' }"
+          :disabled="submitting"
+          @change="() => formRef?.validateField('hosts')"
+        />
+      </el-form-item>
 
       <!-- 有效时长 -->
-      <div class="form-section">
-        <div class="section-title">有效时长</div>
-        <div class="section-content">
-          <div class="duration-inputs">
-            <div class="duration-item">
-              <el-input-number
-                v-model="formData.days"
-                :min="0"
-                :max="365"
-                size="default"
-                :disabled="submitting"
-              />
-              <span class="duration-label">天</span>
-            </div>
-            <div class="duration-item">
-              <el-input-number
-                v-model="formData.hours"
-                :min="0"
-                :max="23"
-                size="default"
-                :disabled="submitting"
-              />
-              <span class="duration-label">小时</span>
-            </div>
-            <div class="duration-item">
-              <el-input-number
-                v-model="formData.mins"
-                :min="0"
-                :max="59"
-                size="default"
-                :disabled="submitting"
-              />
-              <span class="duration-label">分钟</span>
-            </div>
+      <el-form-item label="有效时长">
+        <div class="duration-inputs">
+          <div class="duration-item">
+            <el-input-number
+              v-model="formData.days"
+              :min="0"
+              :max="365"
+              size="default"
+              :disabled="submitting"
+            />
+            <span class="duration-label">天</span>
           </div>
-          <div class="duration-hint">权限的有效期，设置为0表示永久有效</div>
+          <div class="duration-item">
+            <el-input-number
+              v-model="formData.hours"
+              :min="0"
+              :max="23"
+              size="default"
+              :disabled="submitting"
+            />
+            <span class="duration-label">小时</span>
+          </div>
+          <div class="duration-item">
+            <el-input-number
+              v-model="formData.mins"
+              :min="0"
+              :max="59"
+              size="default"
+              :disabled="submitting"
+            />
+            <span class="duration-label">分钟</span>
+          </div>
         </div>
-      </div>
+        <div class="form-item-hint">权限的有效期，设置为0表示永久有效</div>
+      </el-form-item>
 
       <!-- 用户 -->
-      <div class="form-section">
-        <div class="section-title">用户</div>
-        <div class="section-content">
-          <el-input
-            v-model="formData.users"
-            placeholder="请输入用户名"
-            :disabled="submitting"
-          />
-          <div class="input-hint">要添加权限的用户列表,多个用户之间采用逗号，空格，换行分隔</div>
-        </div>
-      </div>
-
-      <!-- 执行状态 -->
-      <div v-if="jobStatus" class="job-status">
-        <div class="status-header">
-          <i class="fa fa-spinner fa-spin" v-if="isRunning"></i>
-          <i class="fa fa-check-circle text-success" v-else-if="isSuccess"></i>
-          <i class="fa fa-times-circle text-danger" v-else-if="isFailed"></i>
-          <span>{{ statusText }}</span>
-        </div>
-        <div v-if="jobResult" class="status-detail">
-          <div v-if="jobResult.startTime">开始时间：{{ jobResult.startTime }}</div>
-          <div v-if="jobResult.endTime">结束时间：{{ jobResult.endTime }}</div>
-        </div>
-      </div>
-    </div>
+      <el-form-item label="用户" prop="users">
+        <el-input
+          v-model="formData.users"
+          placeholder="请输入用户名"
+          :disabled="submitting"
+        />
+        <div class="form-item-hint">要添加权限的用户列表，多个用户之间采用逗号、空格、换行分隔</div>
+      </el-form-item>
+    </el-form>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" :disabled="submitting && isRunning">
-          {{ isSuccess || isFailed ? '关闭' : '取消' }}
+        <el-button @click="handleClose" :disabled="submitting">
+          取消
         </el-button>
         <el-button
-          v-if="!isSuccess && !isFailed"
           type="primary"
           :loading="submitting"
           :disabled="!canSubmit"
           @click="handleSubmit"
         >
-          开始执行
+          确认
         </el-button>
       </div>
     </template>
@@ -128,10 +112,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'saved'])
 
+const formRef = ref(null)
 const visible = ref(props.modelValue)
 const submitting = ref(false)
-const jobStatus = ref('')
-const jobResult = ref(null)
 
 const formData = reactive({
   hosts: [],
@@ -141,6 +124,26 @@ const formData = reactive({
   users: ''
 })
 
+// 表单验证规则
+const formRules = {
+  hosts: [
+    {
+      required: true,
+      validator: (rule, value, callback) => {
+        if (!value || value.length === 0) {
+          callback(new Error('请选择主机'))
+        } else {
+          callback()
+        }
+      },
+      trigger: ['change', 'blur']
+    }
+  ],
+  users: [
+    { required: true, message: '请输入用户名', trigger: 'blur' }
+  ]
+}
+
 // 计算 valid_period（分钟数）
 const validPeriod = computed(() => {
   return formData.days * 24 * 60 + formData.hours * 60 + formData.mins
@@ -149,23 +152,6 @@ const validPeriod = computed(() => {
 // 是否可以提交
 const canSubmit = computed(() => {
   return formData.hosts.length > 0 && formData.users.trim() !== ''
-})
-
-// 状态判断
-const isRunning = computed(() => jobStatus.value === 'WAITING' || jobStatus.value === 'RUNNING')
-const isSuccess = computed(() => jobStatus.value === 'SUCCESS' || jobStatus.value === 'COMPLETED')
-const isFailed = computed(() => jobStatus.value === 'FAILED' || jobStatus.value === 'ERROR')
-
-const statusText = computed(() => {
-  switch (jobStatus.value) {
-    case 'WAITING': return '等待执行...'
-    case 'RUNNING': return '正在执行...'
-    case 'SUCCESS':
-    case 'COMPLETED': return '执行成功'
-    case 'FAILED':
-    case 'ERROR': return '执行失败'
-    default: return jobStatus.value
-  }
 })
 
 watch(() => props.modelValue, (val) => {
@@ -188,18 +174,18 @@ function resetForm() {
   formData.hours = 0
   formData.mins = 0
   formData.users = ''
-  jobStatus.value = ''
-  jobResult.value = null
+  // 重置表单验证状态
+  formRef.value?.resetFields()
 }
 
 async function handleSubmit() {
-  if (!canSubmit.value) {
-    ElMessage.warning('请填写必要信息')
+  // 表单验证
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) {
     return
   }
 
   submitting.value = true
-  jobStatus.value = 'WAITING'
 
   try {
     const hosts = formData.hosts.map(h => ({
@@ -218,22 +204,19 @@ async function handleSubmit() {
     const runResult = Array.isArray(result) ? result[0] : result
 
     if (runResult?.runId) {
-      jobStatus.value = runResult.status || 'WAITING'
-      // 使用 composable 轮询
+      ElMessage.success('任务已提交成功，正在查询执行结果')
+      // 使用 composable 轮询查询执行结果
       startPolling(runResult.runId, {
-        interval: 5000,
-        successMessage: '执行成功',
-        errorMessage: '执行失败',
-        onSuccess: (res) => {
-          jobResult.value = res
-          jobStatus.value = 'COMPLETED'
+        interval: 3000,
+        onSuccess: () => {
           submitting.value = false
+          ElMessage.success('添加成功')
           emit('saved')
+          visible.value = false
         },
-        onError: (res) => {
-          jobResult.value = res
-          jobStatus.value = 'FAILED'
+        onError: () => {
           submitting.value = false
+          ElMessage.error('添加失败')
         }
       })
     } else {
@@ -242,13 +225,12 @@ async function handleSubmit() {
   } catch (error) {
     console.error('Failed to add sudo permission:', error)
     submitting.value = false
-    jobStatus.value = 'ERROR'
-    ElMessage.error('执行失败')
+    ElMessage.error('添加失败')
   }
 }
 
 function handleClose() {
-  if (submitting.value && isRunning.value) {
+  if (submitting.value) {
     return
   }
   visible.value = false
@@ -257,26 +239,12 @@ function handleClose() {
 </script>
 
 <style scoped lang="scss">
-.add-sudo-content {
+.add-sudo-form {
   padding: 10px 0;
-}
 
-.form-section {
-  margin-bottom: 20px;
-  background: #f8fafc;
-  border-radius: 6px;
-  overflow: hidden;
-
-  .section-title {
-    padding: 10px 16px;
+  :deep(.el-form-item__label) {
     font-weight: 500;
     color: #1e293b;
-    background: #e2e8f0;
-    font-size: 14px;
-  }
-
-  .section-content {
-    padding: 16px;
   }
 }
 
@@ -297,39 +265,11 @@ function handleClose() {
   }
 }
 
-.duration-hint,
-.input-hint {
-  margin-top: 8px;
+.form-item-hint {
+  margin-top: 4px;
   font-size: 12px;
   color: #94a3b8;
-}
-
-.job-status {
-  margin-top: 20px;
-  padding: 16px;
-  background: #f1f5f9;
-  border-radius: 6px;
-
-  .status-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-
-    .text-success {
-      color: #22c55e;
-    }
-
-    .text-danger {
-      color: #ef4444;
-    }
-  }
-
-  .status-detail {
-    margin-top: 8px;
-    font-size: 12px;
-    color: #64748b;
-  }
+  line-height: 1.5;
 }
 
 .dialog-footer {

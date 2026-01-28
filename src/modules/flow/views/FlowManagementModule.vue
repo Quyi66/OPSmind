@@ -135,9 +135,10 @@ provide('handleHistory', handleHistory)
 
 <style scoped lang="scss">
 .ops-module__content {
-  flex: 1;
+  // flex: 1;
   overflow: auto;
   min-height: 0;
+  height: 100%;
 }
 
 // 特定于流程模块的全屏视图容器

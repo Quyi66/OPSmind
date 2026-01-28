@@ -31,7 +31,7 @@
         </el-input> -->
       </div>
 
-      <ul class="device-chip-list">
+      <ul class="device-chip-list" v-if="showTagList">
         <li
           v-for="(device, index) in filteredDevices"
           :key="index"
@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import AcmDeviceSelectorDialog from './AcmDeviceSelectorDialog.vue'
 
 const props = defineProps({
@@ -78,17 +78,28 @@ const props = defineProps({
   ciTypes: { type: [String, Array], default: '[auto]' },
   mcheckType: { type: String, default: 'map' },
   disabled: { type: Boolean, default: false },
-  options: { type: Object, default: () => ({}) }
+  options: { type: Object, default: () => ({}) },
+  showTagList: { type: Boolean, default: true }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'change', 'blur'])
 
 const dialogVisible = ref(false)
 const filterText = ref('')
 
+// 触发表单验证
+function triggerValidation(val) {
+  emit('update:modelValue', val)
+  // 使用 nextTick 确保值已更新后再触发事件
+  nextTick(() => {
+    emit('change', val)
+    emit('blur', val)
+  })
+}
+
 const devices = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: (val) => triggerValidation(val)
 })
 
 // 用于显示的设备列表（提取显示文本）

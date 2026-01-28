@@ -86,7 +86,7 @@ export const USERS_NAV_ITEMS = [
 
 // 流程管理模块的页面导航
 export const FLOW_NAV_ITEMS = [
-  { key: 'list', label: '流程定义', icon: 'fas fa-list-alt', path: '/flow/list' },
+  { key: 'list', label: '流程列表', icon: 'fas fa-list-alt', path: '/flow/list' },
   { key: 'execution', label: '执行记录', icon: 'fas fa-play-circle', path: '/flow/execution' }
 ]
 
@@ -94,8 +94,7 @@ export const FLOW_NAV_ITEMS = [
 export const SUDO_NAV_ITEMS = [
   { key: 'permission', label: 'sudo列表', icon: 'fas fa-list', path: '/sudo/permission' },
   { key: 'apply', label: '权限申请', icon: 'fas fa-file-alt', path: '/sudo/apply' },
-  { key: 'reset', label: '重置密码', icon: 'fas fa-key', path: '/sudo/reset' },
-  { key: 'settings', label: '功能设置', icon: 'fas fa-cog', path: '/sudo/settings' },
+  { key: 'password', label: '密码管理', icon: 'fas fa-key', path: '/sudo/password' },
   { key: 'log', label: '操作日志', icon: 'fas fa-history', path: '/sudo/log' }
 ]
 

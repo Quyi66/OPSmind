@@ -39,7 +39,7 @@
       </div>
 
       <div class="toolbar-right">
-        <el-button type="success" size="small" :loading="executing" @click="handleExecute">
+        <el-button type="primary" size="small" :loading="executing" @click="handleExecute">
           <i class="fa fa-play"></i> 执行
         </el-button>
       </div>
@@ -56,72 +56,121 @@
         <div ref="viewerCanvas" class="bpmn-canvas"></div>
       </div>
 
-      <!-- 右侧参数面板 -->
+      <!-- 右侧属性面板 -->
       <aside class="params-panel">
-        <div class="node-info-card" v-if="currentNode">
-          <h4>{{ currentNode.name || currentNode.id }}</h4>
-        </div>
+        <!-- 节点属性信息（只读） -->
+        <template v-if="currentNode">
+          <div class="panel-header">{{ elementProperties.id || 'Process' }}</div>
+          <div class="panel-tabs">
+            <div class="panel-tab is-active">基本属性</div>
+          </div>
+          <div class="panel-content">
+            <div class="section-title">基本属性</div>
 
-        <!-- 参数区域 -->
-        <div class="params-content" v-if="currentNode && currentNode.needParams">
-          <div class="params-card">
-            <div class="card-header">参数配置</div>
-            <div class="card-body">
-              <template v-for="(param, index) in currentNodeParams" :key="index">
-                <!-- 文本参数 -->
-                <div class="param-item" v-if="param.type === 'TEXT'">
-                  <label>{{ param.label || param.name }}</label>
-                  <el-input
-                    v-model="paramsValues[currentNode.id][param.name]"
-                    size="small"
-                    :placeholder="param.desc || ''"
-                  />
-                </div>
+            <div class="property-group">
+              <label>ID</label>
+              <el-input
+                v-model="elementProperties.id"
+                size="small"
+                disabled
+              />
+            </div>
 
-                <!-- 数字参数 -->
-                <div class="param-item" v-else-if="param.type === 'INTEGER'">
-                  <label>{{ param.label || param.name }}</label>
-                  <el-input-number
-                    v-model="paramsValues[currentNode.id][param.name]"
-                    size="small"
-                    :placeholder="param.desc || ''"
-                  />
-                </div>
+            <div class="property-group">
+              <label>名称</label>
+              <el-input
+                v-model="elementProperties.name"
+                size="small"
+                placeholder="未设置名称"
+                disabled
+              />
+            </div>
 
-                <!-- 开关参数 -->
-                <div class="param-item" v-else-if="param.type === 'SWITCH'">
-                  <label>{{ param.label || param.name }}</label>
-                  <el-switch v-model="paramsValues[currentNode.id][param.name]" />
-                </div>
+            <div class="property-group">
+              <label>类型</label>
+              <el-input
+                v-model="elementProperties.type"
+                size="small"
+                disabled
+              />
+            </div>
 
-                <!-- 日期参数 -->
-                <div class="param-item" v-else-if="param.type === 'DATE'">
-                  <label>{{ param.label || param.name }}</label>
-                  <el-date-picker
-                    v-model="paramsValues[currentNode.id][param.name]"
-                    type="datetime"
-                    size="small"
-                    placeholder="选择日期时间"
-                    format="YYYY-MM-DD HH:mm:ss"
-                    value-format="YYYY-MM-DD HH:mm:ss"
-                  />
-                </div>
+            <div class="section-title">备注</div>
 
-                <!-- 主机选择参数 -->
-                <div class="param-item" v-else-if="param.type === 'HOST'">
-                  <label>{{ param.label || '主机' }}</label>
-                  <el-input
-                    v-model="paramsValues[currentNode.id][param.name]"
-                    size="small"
-                    placeholder="选择主机"
-                  />
-                </div>
-              </template>
-
-              <el-empty description="无参数配置" v-if="!currentNodeParams.length" />
+            <div class="property-group">
+              <label>元素备注</label>
+              <el-input
+                v-model="elementProperties.documentation"
+                type="textarea"
+                :rows="3"
+                size="small"
+                placeholder="无备注"
+                disabled
+              />
             </div>
           </div>
-        </div>
+
+          <!-- 参数区域 -->
+          <div class="params-content" v-if="currentNode.needParams">
+            <div class="params-card">
+              <div class="card-header">参数配置</div>
+              <div class="card-body">
+                <template v-for="(param, index) in currentNodeParams" :key="index">
+                  <!-- 文本参数 -->
+                  <div class="param-item" v-if="param.type === 'TEXT'">
+                    <label>{{ param.label || param.name }}</label>
+                    <el-input
+                      v-model="paramsValues[currentNode.id][param.name]"
+                      size="small"
+                      :placeholder="param.desc || ''"
+                    />
+                  </div>
+
+                  <!-- 数字参数 -->
+                  <div class="param-item" v-else-if="param.type === 'INTEGER'">
+                    <label>{{ param.label || param.name }}</label>
+                    <el-input-number
+                      v-model="paramsValues[currentNode.id][param.name]"
+                      size="small"
+                      :placeholder="param.desc || ''"
+                    />
+                  </div>
+
+                  <!-- 开关参数 -->
+                  <div class="param-item" v-else-if="param.type === 'SWITCH'">
+                    <label>{{ param.label || param.name }}</label>
+                    <el-switch v-model="paramsValues[currentNode.id][param.name]" />
+                  </div>
+
+                  <!-- 日期参数 -->
+                  <div class="param-item" v-else-if="param.type === 'DATE'">
+                    <label>{{ param.label || param.name }}</label>
+                    <el-date-picker
+                      v-model="paramsValues[currentNode.id][param.name]"
+                      type="datetime"
+                      size="small"
+                      placeholder="选择日期时间"
+                      format="YYYY-MM-DD HH:mm:ss"
+                      value-format="YYYY-MM-DD HH:mm:ss"
+                    />
+                  </div>
+
+                  <!-- 主机选择参数 -->
+                  <div class="param-item" v-else-if="param.type === 'HOST'">
+                    <label>{{ param.label || '主机' }}</label>
+                    <el-input
+                      v-model="paramsValues[currentNode.id][param.name]"
+                      size="small"
+                      placeholder="选择主机"
+                    />
+                  </div>
+                </template>
+
+                <el-empty description="无参数配置" v-if="!currentNodeParams.length" />
+              </div>
+            </div>
+          </div>
+        </template>
 
         <el-empty description="请选择节点查看参数" v-else />
 
@@ -175,6 +224,14 @@ const currentNode = ref(null)
 const currentNodeParams = ref([])
 const paramsValues = reactive({})
 
+// 选中元素的属性（只读展示）
+const elementProperties = reactive({
+  id: '',
+  name: '',
+  type: '',
+  documentation: ''
+})
+
 // 初始化 BPMN 查看器
 async function initViewer() {
   await nextTick()
@@ -220,6 +277,14 @@ function selectNode(element) {
     needParams: element.type.includes('Task')
   }
 
+  // 更新元素属性（用于只读展示）
+  elementProperties.id = element.id
+  elementProperties.name = businessObject.name || ''
+  elementProperties.type = element.type
+  // 获取 documentation
+  const docs = businessObject.documentation || []
+  elementProperties.documentation = docs.length > 0 ? docs[0].text || '' : ''
+
   // 初始化该节点的参数值
   if (!paramsValues[element.id]) {
     paramsValues[element.id] = {}
@@ -262,7 +327,7 @@ function handleSceneChange() {
 }
 
 function handleAddScene() {
-  ElMessage.info('添加场景功能待实现')
+  // ElMessage.info('添加场景功能待实现')
 }
 
 function handleEditScene() {
@@ -383,23 +448,74 @@ onBeforeUnmount(() => {
 .params-panel {
   width: 300px;
   flex-shrink: 0;
-  padding: 16px;
   overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #e2e8f0;
+}
+
+.panel-header {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.panel-tabs {
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
   background: #fff;
 }
 
-.node-info-card {
-  padding: 12px 16px;
-  background: #f8fafc;
-  border-radius: 8px;
-  margin-bottom: 16px;
+.panel-tab {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
 
-  h4 {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: #1e293b;
+  &:hover {
+    color: #3b82f6;
   }
+
+  &.is-active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+  }
+}
+
+.panel-content {
+  padding: 16px;
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  margin-top: 16px;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.property-group {
+  margin-bottom: 12px;
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+}
+
+.params-content {
+  padding: 0 16px 16px;
 }
 
 .params-card {
@@ -410,6 +526,7 @@ onBeforeUnmount(() => {
   .card-header {
     padding: 10px 16px;
     font-weight: 600;
+    font-size: 13px;
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
     border-radius: 8px 8px 0 0;
@@ -422,6 +539,10 @@ onBeforeUnmount(() => {
 
 .param-item {
   margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 
   label {
     display: block;

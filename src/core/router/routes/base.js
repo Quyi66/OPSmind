@@ -282,7 +282,7 @@ export const baseRoutes = [
           {
             path: 'list',
             component: () => import('@/modules/flow/views/FlowManagementModule.vue'),
-            meta: { title: '流程定义', moduleCode: 'flow' },
+            meta: { title: '流程列表', moduleCode: 'flow' },
             children: [
               { path: '', name: 'flow-list', component: () => import('@/modules/flow/components/FlowListView.vue') }
             ]
@@ -306,8 +306,7 @@ export const baseRoutes = [
         children: [
           { path: 'permission', name: 'sudo-permission', component: () => import('@/modules/sudo/components/SudoPermissionList.vue'), meta: { title: 'sudo列表', moduleCode: 'sudo' } },
           { path: 'apply', name: 'sudo-apply', component: () => import('@/modules/sudo/components/SudoApplyList.vue'), meta: { title: '权限申请', moduleCode: 'sudo' } },
-          { path: 'reset', name: 'sudo-reset', component: () => import('@/modules/sudo/components/SudoResetPassword.vue'), meta: { title: '重置密码', moduleCode: 'sudo' } },
-          { path: 'settings', name: 'sudo-settings', component: () => import('@/modules/sudo/components/SudoSettings.vue'), meta: { title: '功能设置', moduleCode: 'sudo' } },
+          { path: 'password', name: 'sudo-password', component: () => import('@/modules/sudo/components/SudoPasswordManage.vue'), meta: { title: '密码管理', moduleCode: 'sudo' } },
           { path: 'log', name: 'sudo-log', component: () => import('@/modules/sudo/components/SudoOperationLog.vue'), meta: { title: '操作日志', moduleCode: 'sudo' } }
         ]
       }

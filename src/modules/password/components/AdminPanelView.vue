@@ -1,19 +1,25 @@
 <template>
   <div class="ops-page-layout">
-    <!-- 顶部操作栏：返回按钮和筛选 -->
+    <!-- 面包屑导航 -->
+    <div class="ops-breadcrumb-bar">
+      <el-breadcrumb separator="/">
+        <el-breadcrumb-item>
+          <a @click.prevent="handleBack">申请审批</a>
+        </el-breadcrumb-item>
+        <el-breadcrumb-item>管理员面板</el-breadcrumb-item>
+      </el-breadcrumb>
+    </div>
+
+    <!-- 顶部操作栏：筛选 -->
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
-        <el-form-item>
-          <el-button type="primary" @click="handleBack">
-            <i class="fa fa-arrow-left" style="margin-right: 4px"></i> 返回
-          </el-button>
-        </el-form-item>
         <el-form-item label="选择主机">
           <AcmDeviceSelector
             v-model="selectedHosts"
             ci-types="linux"
             :options="{ label: '' }"
             @change="loadData"
+            :showTagList="false"
           />
         </el-form-item>
         <el-form-item label="关键词">
@@ -428,6 +434,37 @@ function handleDialogSuccess() {
 </script>
 
 <style scoped lang="scss">
+// 面包屑导航栏
+.ops-breadcrumb-bar {
+  flex-shrink: 0;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #ebeef5;
+
+  :deep(.el-breadcrumb) {
+    font-size: 14px;
+
+    .el-breadcrumb__item {
+      .el-breadcrumb__inner {
+        a {
+          color: #409eff;
+          font-weight: normal;
+          cursor: pointer;
+
+          &:hover {
+            color: #66b1ff;
+          }
+        }
+      }
+
+      &:last-child .el-breadcrumb__inner {
+        color: #606266;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
 // 组件特有样式
 .action-buttons {
   display: flex;

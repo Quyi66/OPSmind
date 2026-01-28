@@ -5,7 +5,7 @@ import { apiService } from '@/core/api'
  * GET /flow/api/flow/process/list
  */
 export function getFlowList() {
-  return apiService.get(`/flow/api/flow/process/list?cacheBuster=${Date.now()}`)
+  return apiService.get(`/flow/api/flow/process/list`)
 }
 
 /**

@@ -175,15 +175,15 @@ onUnmounted(() => {
   min-width: 0;
   max-width: var(--app-max-width);
   margin: 0 auto;
-  padding-left: 16px;
-  padding-right: 16px;
+  // padding-left: 16px;
+  // padding-right: 16px;
 }
 
-@media (min-width: 1600px) {
-  .main-container {
-    padding-bottom: 24px;
-  }
-}
+// @media (min-width: 1600px) {
+//   .main-container {
+//     padding-bottom: 24px;
+//   }
+// }
 
 // 主内容区域
 .main-content {
