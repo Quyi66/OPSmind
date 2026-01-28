@@ -4,9 +4,9 @@
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
         <el-form-item label="关键词">
-          <el-input v-model="searchKeyword" placeholder="标签名称" clearable style="width: 200px" maxlength="50" />
+          <el-input v-model="searchKeyword" placeholder="标签名称" clearable style="width: 200px" maxlength="50" @input="handleSearch" />
         </el-form-item>
-        <el-form-item>
+        <!-- <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon>
               <Search />
@@ -17,7 +17,7 @@
               <RefreshRight />
             </el-icon> 重置
           </el-button>
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
     </div>
 
@@ -38,7 +38,7 @@
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="paginatedTags" stripe style="width: 100%" max-height="calc(100vh - 360px)">
         <el-table-column prop="name" label="标签名称" min-width="200" />
-        <el-table-column prop="count" label="应用数量" width="120" align="left">
+        <el-table-column prop="count" label="应用数量" min-width="120" align="left">
           <template #default="{ row }">
             <el-tag type="info" size="small">{{ row.count || 0 }}</el-tag>
           </template>

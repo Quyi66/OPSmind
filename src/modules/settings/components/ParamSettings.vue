@@ -9,20 +9,21 @@
             <el-form-item label="关键词">
               <el-input
                 v-model="sysSearchKeyword"
-                placeholder="参数名称/域"
+                placeholder="搜索域/名称/参数值/描述"
                 clearable
-                style="width: 200px"
+                style="width: 220px"
                 maxlength="50"
+                @input="handleSysSearch"
               />
             </el-form-item>
-            <el-form-item>
+            <!-- <el-form-item>
               <el-button type="primary" @click="handleSysSearch">
                 <el-icon><Search /></el-icon> 搜索
               </el-button>
               <el-button @click="handleSysReset">
                 <el-icon><RefreshRight /></el-icon> 重置
               </el-button>
-            </el-form-item>
+            </el-form-item> -->
           </el-form>
         </div>
 
@@ -92,20 +93,21 @@
             <el-form-item label="关键词">
               <el-input
                 v-model="appSearchKeyword"
-                placeholder="参数名称"
+                placeholder="搜索名称/参数值/描述"
                 clearable
-                style="width: 200px"
+                style="width: 220px"
                 maxlength="50"
+                @input="handleAppSearch"
               />
             </el-form-item>
-            <el-form-item>
+            <!-- <el-form-item>
               <el-button type="primary" @click="handleAppSearch">
                 <el-icon><Search /></el-icon> 搜索
               </el-button>
               <el-button @click="handleAppReset">
                 <el-icon><RefreshRight /></el-icon> 重置
               </el-button>
-            </el-form-item>
+            </el-form-item> -->
           </el-form>
         </div>
 
@@ -277,7 +279,7 @@
           />
         </el-form-item>
       </el-form>
-      <el-descriptions v-else :column="1" border>
+      <el-descriptions v-else :column="1" border label-width="100">
         <el-descriptions-item label="参数名称">{{ appForm.name }}</el-descriptions-item>
         <el-descriptions-item label="参数值">
           <pre class="param-value-pre">{{ appForm.value }}</pre>
@@ -359,8 +361,10 @@ const filteredSysParams = computed(() => {
   if (!sysAppliedSearchKeyword.value) return sysParams.value
   const keyword = sysAppliedSearchKeyword.value.toLowerCase()
   return sysParams.value.filter(p =>
+    p.domain?.toLowerCase().includes(keyword) ||
     p.name?.toLowerCase().includes(keyword) ||
-    p.domain?.toLowerCase().includes(keyword)
+    p.value?.toLowerCase().includes(keyword) ||
+    p.description?.toLowerCase().includes(keyword)
   )
 })
 
@@ -369,7 +373,9 @@ const filteredAppParams = computed(() => {
   if (!appAppliedSearchKeyword.value) return appParams.value
   const keyword = appAppliedSearchKeyword.value.toLowerCase()
   return appParams.value.filter(p =>
-    p.name?.toLowerCase().includes(keyword)
+    p.name?.toLowerCase().includes(keyword) ||
+    p.value?.toLowerCase().includes(keyword) ||
+    p.description?.toLowerCase().includes(keyword)
   )
 })
 

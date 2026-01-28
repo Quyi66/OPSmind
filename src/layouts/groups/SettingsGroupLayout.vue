@@ -59,9 +59,11 @@ const menuGroups = [
   flex: 1;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   background: #fff;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 // 加载遮罩层

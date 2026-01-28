@@ -4,6 +4,20 @@
     <el-tabs v-model="activeTab" class="ops-tabs">
       <!-- 应用管理 Tab -->
       <el-tab-pane label="应用" name="app">
+        <!-- 筛选区 -->
+        <div class="ops-filter-bar">
+          <el-input
+            v-model="appSearchKeyword"
+            placeholder="搜索Code/标题"
+            clearable
+            style="width: 220px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
+
         <!-- 操作栏 -->
         <div class="ops-action-bar">
           <el-button
@@ -86,7 +100,7 @@
             v-model:current-page="appPagination.page"
             v-model:page-size="appPagination.pageSize"
             :page-sizes="[10, 20, 50, 100]"
-            :total="applets.length"
+            :total="filteredApplets.length"
             layout="total, sizes, prev, pager, next, jumper"
             background
           />
@@ -95,6 +109,20 @@
 
       <!-- 回收站 Tab -->
       <el-tab-pane label="回收站" name="can">
+        <!-- 筛选区 -->
+        <div class="ops-filter-bar">
+          <el-input
+            v-model="recycleSearchKeyword"
+            placeholder="搜索Code/标题"
+            clearable
+            style="width: 220px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
+
         <!-- 操作栏 -->
         <div class="ops-action-bar">
           <el-button type="danger" size="small" @click="handleClearRecycle" :loading="clearingRecycle">
@@ -169,7 +197,7 @@
             v-model:current-page="recyclePagination.page"
             v-model:page-size="recyclePagination.pageSize"
             :page-sizes="[10, 20, 50, 100]"
-            :total="recycledApplets.length"
+            :total="filteredRecycledApplets.length"
             layout="total, sizes, prev, pager, next, jumper"
             background
           />
@@ -208,7 +236,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import * as appletApi from '@/modules/settings/api/applet'
 import AppletDetailDialog from './AppletDetailDialog.vue'
 import AppletCopyDialog from './AppletCopyDialog.vue'
@@ -221,6 +249,8 @@ const loading = ref(false)
 const recycleLoading = ref(false)
 const applets = ref([])
 const recycledApplets = ref([])
+const appSearchKeyword = ref('')
+const recycleSearchKeyword = ref('')
 const selectedApplets = ref([])
 const selectedRecycled = ref([])
 const deletingId = ref(null)
@@ -244,17 +274,37 @@ const recyclePagination = ref({
   pageSize: 20
 })
 
+// 过滤后的应用数据
+const filteredApplets = computed(() => {
+  if (!appSearchKeyword.value) return applets.value
+  const keyword = appSearchKeyword.value.toLowerCase()
+  return applets.value.filter(item =>
+    (item.name && item.name.toLowerCase().includes(keyword)) ||
+    (item.title && translateText(item.title).toLowerCase().includes(keyword))
+  )
+})
+
+// 过滤后的回收站数据
+const filteredRecycledApplets = computed(() => {
+  if (!recycleSearchKeyword.value) return recycledApplets.value
+  const keyword = recycleSearchKeyword.value.toLowerCase()
+  return recycledApplets.value.filter(item =>
+    (item.appletCode && item.appletCode.toLowerCase().includes(keyword)) ||
+    (item.title && translateText(item.title).toLowerCase().includes(keyword))
+  )
+})
+
 // 分页后的数据
 const paginatedApplets = computed(() => {
   const start = (appPagination.value.page - 1) * appPagination.value.pageSize
   const end = start + appPagination.value.pageSize
-  return applets.value.slice(start, end)
+  return filteredApplets.value.slice(start, end)
 })
 
 const paginatedRecycledApplets = computed(() => {
   const start = (recyclePagination.value.page - 1) * recyclePagination.value.pageSize
   const end = start + recyclePagination.value.pageSize
-  return recycledApplets.value.slice(start, end)
+  return filteredRecycledApplets.value.slice(start, end)
 })
 
 onMounted(() => {
@@ -481,12 +531,33 @@ function handleSaved() {
 
 <style scoped lang="scss">
 .ops-tabs {
-  :deep(.el-tabs__content) {
-    padding: 0;
-  }
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 
   :deep(.el-tabs__header) {
-    margin-bottom: 12px;
+    flex-shrink: 0;
+    margin-bottom: 0;
   }
+
+  :deep(.el-tabs__content) {
+    flex: 1;
+    padding: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :deep(.el-tab-pane) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+}
+
+.ops-filter-bar {
+  margin: 12px 0;
 }
 </style>

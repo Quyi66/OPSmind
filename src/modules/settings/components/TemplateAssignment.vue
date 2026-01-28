@@ -4,19 +4,11 @@
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
         <el-form-item label="关键词">
-          <el-input v-model="searchText" placeholder="模版名称/描述" clearable style="width: 200px" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon>
-              <Search />
-            </el-icon> 搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon>
-              <RefreshRight />
-            </el-icon> 重置
-          </el-button>
+          <el-input v-model="searchText" placeholder="模版名称/描述" clearable style="width: 200px" @input="handleSearch">
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
       </el-form>
     </div>

@@ -8,7 +8,7 @@ import { apiService } from '@/core/api'
  * GET /udp/api/udp/tags/total
  */
 export function getTags() {
-    return apiService.get(`/udp/api/udp/tags/total?cacheBuster=${Date.now()}`)
+    return apiService.get(`/udp/api/udp/tags/total`)
 }
 
 /**

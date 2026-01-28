@@ -2,49 +2,6 @@
   <div class="ops-page-layout">
     <!-- 标签页导航 -->
     <el-tabs v-model="activeTab" class="ops-tabs" @tab-change="handleTabChange">
-      <el-tab-pane name="landing">
-        <template #label>
-          <span><i class="fa fa-home"></i> 概览</span>
-        </template>
-
-        <!-- 着陆页 -->
-        <div class="landing-page">
-          <div class="landing-desc">
-            对页面、数据集、作业等资源进行管理，在这里可以对资源进行分类管理，不能创建和修改资源。<br/>
-            如果要创建资源，需要到相应的应用中完成。
-          </div>
-          <div class="feature-cards">
-            <div class="feature-card" @click="activeTab = 'page'">
-              <div class="feature-card__icon">
-                <i class="fa fa-file-alt"></i>
-              </div>
-              <div class="feature-card__body">
-                <h3>页面</h3>
-                <p>管理系统中的所有页面资源</p>
-              </div>
-            </div>
-            <div class="feature-card" @click="activeTab = 'dataset'">
-              <div class="feature-card__icon">
-                <i class="fa fa-database"></i>
-              </div>
-              <div class="feature-card__body">
-                <h3>数据集</h3>
-                <p>管理数据模板和数据集资源</p>
-              </div>
-            </div>
-            <div class="feature-card" @click="activeTab = 'job'">
-              <div class="feature-card__icon">
-                <i class="fa fa-tasks"></i>
-              </div>
-              <div class="feature-card__body">
-                <h3>作业</h3>
-                <p>管理自动化作业资源</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </el-tab-pane>
-
       <el-tab-pane name="page">
         <template #label>
           <span><i class="fa fa-file-alt"></i> 页面</span>
@@ -374,7 +331,7 @@ import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'
 import { translateText, formatDateTime } from '@/utils/i18n'
 
-const activeTab = ref('landing')
+const activeTab = ref('page')
 
 // 应用列表
 const applets = ref([])
@@ -690,8 +647,6 @@ async function handleMove() {
 
 // 标签页切换
 function handleTabChange(tab) {
-  if (applets.value.length === 0) loadApplets()
-
   if (tab === 'page' && pages.value.length === 0) {
     loadPages()
   } else if (tab === 'dataset' && datasets.value.length === 0) {
@@ -702,8 +657,8 @@ function handleTabChange(tab) {
 }
 
 onMounted(() => {
-  // 根据当前激活的 tab 加载对应数据
-  handleTabChange(activeTab.value)
+  loadApplets()
+  loadPages()
 })
 </script>
 
@@ -715,72 +670,6 @@ onMounted(() => {
 
   :deep(.el-tabs__header) {
     margin-bottom: 12px;
-  }
-}
-
-.landing-page {
-  padding: 40px 20px;
-}
-
-.landing-desc {
-  text-align: center;
-  color: #606266;
-  font-size: 14px;
-  margin-bottom: 40px;
-  line-height: 1.8;
-}
-
-.feature-cards {
-  display: flex;
-  justify-content: center;
-  gap: 32px;
-}
-
-.feature-card {
-  width: 220px;
-  padding: 32px 24px;
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  text-align: center;
-
-  &:hover {
-    border-color: #409eff;
-    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
-    transform: translateY(-4px);
-  }
-
-  &__icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 16px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    i {
-      font-size: 28px;
-      color: #fff;
-    }
-  }
-
-  &__body {
-    h3 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #303133;
-      margin: 0 0 8px;
-    }
-
-    p {
-      font-size: 13px;
-      color: #909399;
-      margin: 0;
-    }
   }
 }
 

@@ -156,23 +156,33 @@ async function loadUsers() {
     const usersResponse = await settingsApi.getBasicUsers(tenantId)
     const allUsersData = usersResponse?.data || usersResponse || []
 
-    // 获取团队成员（仅编辑模式）
-    let teamUserIds = []
+    // 获取团队详情（仅编辑模式），详情中包含 users 数组
+    let teamUsers = []
     if (props.team?.id) {
       try {
-        const teamUsersResponse = await teamApi.getTeamUsers(props.team.id)
-        const teamUsers = teamUsersResponse?.data || teamUsersResponse || []
-        teamUserIds = teamUsers.map(u => u.id || u.tenantUserId)
+        const teamDetailResponse = await teamApi.getTeamDetail(props.team.id)
+        const teamDetail = teamDetailResponse?.data || teamDetailResponse || {}
+        teamUsers = teamDetail.users || []
       } catch {
         // 团队可能没有成员
       }
     }
 
-    // 标记已选中的用户
-    allUsers.value = allUsersData.map(user => ({
-      ...user,
-      isChecked: teamUserIds.includes(user.id) || teamUserIds.includes(user.tenantUserId)
-    }))
+    // 标记已选中的用户 - 同时比对多个可能的ID字段和login
+    allUsers.value = allUsersData.map(user => {
+      const isChecked = teamUsers.some(teamUser => {
+        // 比对多种可能的ID字段
+        return (
+          (user.id && (user.id === teamUser.id || user.id === teamUser.tenantUserId || user.id === teamUser.userId)) ||
+          (user.tenantUserId && (user.tenantUserId === teamUser.id || user.tenantUserId === teamUser.tenantUserId || user.tenantUserId === teamUser.userId)) ||
+          (user.login && user.login === teamUser.login)
+        )
+      })
+      return {
+        ...user,
+        isChecked
+      }
+    })
   } catch (error) {
     console.error('Failed to load users:', error)
     allUsers.value = []

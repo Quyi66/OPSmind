@@ -4,10 +4,12 @@
       <!-- 左侧边栏 - 数据源树 -->
       <div class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 280px;">
         <div class="ops-sidebar-header">
-          <span class="ops-sidebar-title" style="padding: 0;">数据源</span>
-          <el-button type="primary" size="small" @click="handleCreate">
-            <i class="fa fa-plus"></i>
-          </el-button>
+          <el-row justify="space-between" align="middle" style="width: 100%">
+            <span class="ops-sidebar-title" style="padding: 0; font-size: 16px;">数据源</span>
+            <el-button type="primary" size="small" @click="handleCreate">
+              <i class="fa fa-plus"></i>
+            </el-button>
+          </el-row>
         </div>
         <div class="ops-sidebar-content">
           <el-tree
@@ -343,10 +345,21 @@ function getNodeIcon(node) {
   return 'fa fa-table'
 }
 
-async function loadDatasources() {
+async function loadDatasources(autoSelect = false) {
   loading.value = true
   try {
     datasources.value = await datasourceService.findAllDatasources()
+
+    // 自动选中第一条数据
+    if (autoSelect && datasources.value.length > 0) {
+      const firstDatasource = datasources.value[0]
+      await loadDatasourceDetail(firstDatasource.id)
+
+      // 高亮树节点
+      setTimeout(() => {
+        treeRef.value?.setCurrentKey(firstDatasource.id)
+      }, 0)
+    }
   } catch (error) {
     console.error('Failed to load datasources:', error)
     ElMessage.error('加载数据源列表失败')
@@ -589,7 +602,7 @@ function handleClickOutside() {
 }
 
 onMounted(() => {
-  loadDatasources()
+  loadDatasources(true) // 初次加载时自动选中第一条
   document.addEventListener('click', handleClickOutside)
 })
 

@@ -7,11 +7,25 @@
     @close="handleClose"
   >
     <div v-loading="loading" class="allocate-role-container">
+      <!-- 搜索栏 -->
+      <div class="search-bar">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索用户名/登录名"
+          clearable
+          style="width: 250px"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+      </div>
+
       <el-table
-        :data="userData"
+        :data="filteredUserData"
         border
         style="width: 100%"
-        max-height="500"
+        max-height="calc(100vh - 350px)"
       >
         <el-table-column prop="fullName" label="用户" min-width="150" fixed>
           <template #default="{ row }">
@@ -49,6 +63,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 import * as settingsApi from '@/modules/settings/api'
 import { authService } from '@/core/auth'
 
@@ -68,9 +83,25 @@ const saving = ref(false)
 const roles = ref([])
 const userData = ref([])
 const changedUserIds = ref(new Set())
+const searchKeyword = ref('')
+
+// 过滤后的用户数据
+const filteredUserData = computed(() => {
+  if (!searchKeyword.value) {
+    return userData.value
+  }
+  const keyword = searchKeyword.value.toLowerCase()
+  return userData.value.filter(user => {
+    return (
+      (user.fullName && user.fullName.toLowerCase().includes(keyword)) ||
+      (user.login && user.login.toLowerCase().includes(keyword))
+    )
+  })
+})
 
 watch(() => props.modelValue, (val) => {
   if (val) {
+    searchKeyword.value = ''
     loadData()
   }
 })
@@ -174,6 +205,10 @@ function handleClose() {
 <style scoped lang="scss">
 .allocate-role-container {
   min-height: 200px;
+}
+
+.search-bar {
+  margin-bottom: 12px;
 }
 
 :deep(.el-table .el-checkbox) {
