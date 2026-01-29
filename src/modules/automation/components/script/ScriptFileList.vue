@@ -320,10 +320,10 @@
     </div>
 
     <!-- 空状态 -->
-    <div v-if="!loading && filteredFiles.length === 0" class="empty-state">
+    <!-- <div v-if="!loading && filteredFiles.length === 0" class="empty-state">
       <i class="fa fa-inbox fa-5x" />
       <p>没有文件</p>
-    </div>
+    </div> -->
 
     <!-- 弹窗组件 -->
     <AddScriptDialog

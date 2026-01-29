@@ -188,19 +188,11 @@
         <!-- 筛选栏 -->
         <div class="ops-filter-bar">
           <el-form :model="vulnFilters" inline size="small">
-            <el-form-item label="主机" label-width="40">
+            <el-form-item label="关键词" label-width="60">
               <el-input
-                v-model="vulnFilters.host_key"
-                placeholder="输入主机IP"
-                style="width: 130px"
-                clearable
-              />
-            </el-form-item>
-            <el-form-item label="CVE" label-width="40">
-              <el-input
-                v-model="vulnFilters.vul_id"
-                placeholder="输入CVE编号"
-                style="width: 130px"
+                v-model="vulnFilters.filter"
+                placeholder="输入主机IP/补丁编号/CVE/软件包"
+                style="width: 230px"
                 clearable
               />
             </el-form-item>
@@ -593,8 +585,7 @@ const vulnPagination = reactive({
 
 // 漏洞筛选器
 const vulnFilters = reactive({
-  host_key: '',
-  vul_id: '',
+  filter: '',
   severity: 'all',
   patch_status: 'all',
   is_kernel: 'all',
@@ -740,7 +731,8 @@ async function loadVulnData() {
       is_kernel: vulnFilters.is_kernel,
       os_distro: vulnFilters.os_distro,
       os_major_version: vulnFilters.os_major_version,
-      reboot_status: vulnFilters.reboot_status
+      reboot_status: vulnFilters.reboot_status,
+      filter: vulnFilters.filter || ''
     }
     const response = await vulnerabilityApi.getVulnerabilityList(params)
     if (response?.data) {
@@ -793,13 +785,12 @@ function handleVulnFilter() {
 }
 
 function handleVulnReset() {
-  vulnFilters.host_key = ''
-  vulnFilters.vul_id = ''
   vulnFilters.severity = 'all'
   vulnFilters.patch_status = 'all'
   vulnFilters.is_kernel = 'all'
   vulnFilters.os_distro = 'all'
   vulnFilters.os_major_version = 'all'
+  vulnFilters.filter = ''
   vulnPagination.page = 1
   vulnPagination.pageSize = 20
   loadVulnData()
@@ -1249,6 +1240,10 @@ defineExpose({
 
     .kpi-card__label {
       color: #6c757d;
+    }
+
+    .kpi-card__icon {
+      color: #495057;
     }
   }
 

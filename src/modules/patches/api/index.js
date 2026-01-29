@@ -518,15 +518,13 @@ export const vulnerabilityApi = {
         reboot_status: params.reboot_status || 'all',
         os_distro: params.os_distro || 'all',
         os_major_version: params.os_major_version || 'all',
-        host_key: params.host_key || '',
-        vul_id: params.vul_id || null,
         severity: params.severity || 'all',
         patch_status: params.patch_status || 'all',
         is_kernel: params.is_kernel || 'all'
       },
       size: params.size || 20,
       page: params.page || 1,
-      filter: params.filter || ''
+      filter: params.filter ?`host_key|vul_id|patch_id|affected_pkgs:*${params.filter || ''}*` : undefined
     }
     return apiService.post(
       `/dts/api/dts/q/data/VAP2_LIST_PATCH_BY_CVES/?cacheBuster=${cacheBuster}`,
