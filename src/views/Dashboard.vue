@@ -55,19 +55,37 @@
 </template>
 
 <script setup>
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
 
 import { getAllMenuItems } from '@/config/menu.config.js'
+// 非图表组件保持同步加载（关键 UI）
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
-import JobOverview from '@/components/dashboard/JobOverview.vue'
-import InspectionOverview from '@/components/dashboard/InspectionOverview.vue'
-import AssetOverview from '@/components/dashboard/AssetOverview.vue'
-import VulnerabilityOverview from '@/components/dashboard/VulnerabilityOverview.vue'
 import AIAssistant from '@/components/ai/AIAssistant.vue'
 import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
+
+// 图表组件异步加载 - 延迟加载 ECharts 相关组件，优化首屏性能
+// 配置加载状态和超时处理
+const asyncComponentOptions = (loader) => ({
+  loader,
+  delay: 200, // 延迟 200ms 后才显示 loading
+  timeout: 10000 // 10 秒超时
+})
+
+const JobOverview = defineAsyncComponent(asyncComponentOptions(
+  () => import('@/components/dashboard/JobOverview.vue')
+))
+const InspectionOverview = defineAsyncComponent(asyncComponentOptions(
+  () => import('@/components/dashboard/InspectionOverview.vue')
+))
+const AssetOverview = defineAsyncComponent(asyncComponentOptions(
+  () => import('@/components/dashboard/AssetOverview.vue')
+))
+const VulnerabilityOverview = defineAsyncComponent(asyncComponentOptions(
+  () => import('@/components/dashboard/VulnerabilityOverview.vue')
+))
 
 const dashboardStore = useDashboardStore()
 const route = useRoute()

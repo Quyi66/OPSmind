@@ -46,7 +46,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
       AutoImport({
         imports: ['vue', 'vue-router'],
         resolvers: [
-          ElementPlusResolver(),
+          ElementPlusResolver({
+            importStyle: 'css'
+          }),
           // 自动导入图标
           IconsResolver({
             prefix: 'Icon',
@@ -58,8 +60,10 @@ export default defineConfig(({ command, mode }): UserConfig => {
       // 自动注册 Element Plus 组件（无需手动 import）
       Components({
         resolvers: [
-          // Element Plus 组件解析器
-          ElementPlusResolver(),
+          // Element Plus 组件解析器（启用 CSS 按需导入）
+          ElementPlusResolver({
+            importStyle: 'css'
+          }),
           // 图标解析器（使用 i-ep-xxx 语法）
           IconsResolver({
             enabledCollections: ['ep'],
@@ -169,20 +173,36 @@ export default defineConfig(({ command, mode }): UserConfig => {
       sourcemap: isDevelopment || env.VITE_BUILD_SOURCEMAP === 'true',
       target: 'es2022',
       assetsInlineLimit: 4096,
+      // 启用 CSS 代码分割
+      cssCodeSplit: true,
+      // 禁用模块预加载 - 让大型库真正按需加载
+      modulePreload: false,
 
       rollupOptions: {
         input: {
           main: resolve(__dirname, 'index.html')
         },
         output: {
+          // 优化代码分割，减少首屏加载体积
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined
-            if (/element-plus|@element-plus/.test(id)) return 'vendor-element'
+
+            // Element Plus 合并为一个 chunk（避免组件间循环依赖导致初始化错误）
+            if (/element-plus|@element-plus|@popperjs|@floating-ui/.test(id)) return 'vendor-element'
+
+            // 大型库单独分割（懒加载）
             if (/vue-echarts|echarts/.test(id)) return 'vendor-echarts'
             if (/codemirror|@codemirror|vue-codemirror/.test(id)) return 'vendor-codemirror'
             if (/bpmn-js|diagram-js/.test(id)) return 'vendor-bpmn'
             if (/xlsx|mammoth/.test(id)) return 'vendor-doc'
+
+            // Vue 核心（首屏必需）
             if (/vue-router|pinia|@vue\//.test(id)) return 'vendor-vue'
+            if (/^vue$|vue[\\/]dist/.test(id)) return 'vendor-vue'
+
+            // 工具类库（首屏必需，体积小）
+            if (/axios|crypto-js/.test(id)) return 'vendor-utils'
+
             return 'vendor'
           },
           chunkFileNames: 'js/[name]-[hash].js',
@@ -202,7 +222,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       minify: isProduction ? 'esbuild' : false,
 
       reportCompressedSize: isProduction,
-      chunkSizeWarningLimit: 1000
+      chunkSizeWarningLimit: 500  // 降低警告阈值，鼓励更细粒度分割
     },
 
     css: {

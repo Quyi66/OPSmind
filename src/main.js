@@ -1,9 +1,14 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-// Element Plus - JS 按需导入（通过 unplugin 自动完成），CSS 全量导入保持样式稳定
+// Element Plus - 按需导入命令式组件和样式
 import { ElMessage, ElMessageBox, ElLoading, ElNotification } from 'element-plus'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
-import 'element-plus/dist/index.css'
+// Element Plus 核心样式（按需导入，减少未使用 CSS）
+import 'element-plus/es/components/message/style/css'
+import 'element-plus/es/components/message-box/style/css'
+import 'element-plus/es/components/loading/style/css'
+import 'element-plus/es/components/notification/style/css'
+import 'element-plus/theme-chalk/el-overlay.css'
 
 import App from './App.vue'
 import { setupRouter } from '@/core/router'
@@ -14,7 +19,6 @@ import { initPerformanceOptimizations } from '@/utils/performance-optimizer'
 import { appUrlManager } from '@/config/module-urls.config'
 import { authService } from '@/core/auth'
 import angularJSBridge from '@/services/angularjs-bridge'
-import ElementPlus from 'element-plus'
 
 // 导入全局样式
 import '@/styles/main.scss'
@@ -158,11 +162,17 @@ if (import.meta.env.DEV) {
 setupGlobalComponents(app)
 setupGlobalDirectives(app)
 
-// 使用element-plus 并且设置全局的大小
-app.use(ElementPlus)
+// Element Plus 全局配置（通过 unplugin 按需自动导入组件）
+import { ElConfigProvider } from 'element-plus'
+import 'element-plus/es/components/config-provider/style/css'
+app.component('ElConfigProvider', ElConfigProvider)
 
-// 修改 el-dialog 默认点击遮照为不关闭
-app._context.components.ElDialog.props.closeOnClickModal.default = false
+// 延迟修改 el-dialog 默认值（确保组件已注册）
+setTimeout(() => {
+  if (app._context.components.ElDialog) {
+    app._context.components.ElDialog.props.closeOnClickModal.default = false
+  }
+}, 0)
 
 // 挂载应用
 app.mount('#app')

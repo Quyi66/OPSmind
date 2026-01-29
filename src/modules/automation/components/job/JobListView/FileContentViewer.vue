@@ -238,23 +238,64 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, shallowRef, defineAsyncComponent } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Codemirror } from 'vue-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { python } from '@codemirror/lang-python'
-import { json } from '@codemirror/lang-json'
-import { xml } from '@codemirror/lang-xml'
-import { yaml } from '@codemirror/lang-yaml'
-import { markdown } from '@codemirror/lang-markdown'
-import { html } from '@codemirror/lang-html'
-import { css } from '@codemirror/lang-css'
-import { sql } from '@codemirror/lang-sql'
-import { oneDark } from '@codemirror/theme-one-dark'
-import { EditorView } from '@codemirror/view'
-import * as XLSX from 'xlsx'
-import mammoth from 'mammoth'
 import * as gfsApi from '@/modules/automation/api/gfs'
+
+// 动态导入 Codemirror 组件 - 真正按需加载
+const Codemirror = defineAsyncComponent(() =>
+  import('vue-codemirror').then(m => m.Codemirror)
+)
+
+// CodeMirror 相关模块 - 延迟加载
+let codemirrorModules = null
+async function loadCodemirrorModules() {
+  if (codemirrorModules) return codemirrorModules
+  const [
+    { javascript },
+    { python },
+    { json },
+    { xml },
+    { yaml },
+    { markdown },
+    { html },
+    { css },
+    { sql },
+    { oneDark },
+    { EditorView }
+  ] = await Promise.all([
+    import('@codemirror/lang-javascript'),
+    import('@codemirror/lang-python'),
+    import('@codemirror/lang-json'),
+    import('@codemirror/lang-xml'),
+    import('@codemirror/lang-yaml'),
+    import('@codemirror/lang-markdown'),
+    import('@codemirror/lang-html'),
+    import('@codemirror/lang-css'),
+    import('@codemirror/lang-sql'),
+    import('@codemirror/theme-one-dark'),
+    import('@codemirror/view')
+  ])
+  codemirrorModules = { javascript, python, json, xml, yaml, markdown, html, css, sql, oneDark, EditorView }
+  return codemirrorModules
+}
+
+// xlsx 和 mammoth - 延迟加载
+let XLSX = null
+let mammoth = null
+async function loadXLSX() {
+  if (!XLSX) {
+    XLSX = await import('xlsx')
+  }
+  return XLSX
+}
+async function loadMammoth() {
+  if (!mammoth) {
+    const m = await import('mammoth')
+    mammoth = m.default || m
+  }
+  return mammoth
+}
 
 const props = defineProps({
   path: {
@@ -405,78 +446,67 @@ const isFileContentEditable = computed(() => {
   return supportMimes.some(pattern => mime.match(pattern))
 })
 
-// CodeMirror 扩展
-const cmExtensions = computed(() => {
-  const extensions = [
-    oneDark,
-    EditorView.lineWrapping,
-    EditorView.editable.of(false)
-  ]
+// CodeMirror 扩展 - 使用响应式引用存储动态加载的扩展
+const cmExtensions = shallowRef([])
+const editCmExtensions = shallowRef([])
+const cmModulesLoaded = ref(false)
 
-  // 根据文件扩展名添加语言支持
-  const langMap = {
-    js: javascript(),
-    jsx: javascript({ jsx: true }),
-    ts: javascript({ typescript: true }),
-    tsx: javascript({ jsx: true, typescript: true }),
-    py: python(),
-    json: json(),
-    xml: xml(),
-    yml: yaml(),
-    yaml: yaml(),
-    md: markdown(),
-    html: html(),
-    htm: html(),
-    vue: html(),
-    css: css(),
-    scss: css(),
-    less: css(),
-    sql: sql()
+// 加载 CodeMirror 扩展
+async function loadCmExtensions() {
+  if (cmModulesLoaded.value) return
+
+  try {
+    const modules = await loadCodemirrorModules()
+    const { javascript, python, json, xml, yaml, markdown, html, css, sql, oneDark, EditorView } = modules
+
+    // 构建只读扩展
+    const baseExtensions = [
+      oneDark,
+      EditorView.lineWrapping,
+      EditorView.editable.of(false)
+    ]
+
+    // 构建可编辑扩展
+    const editBaseExtensions = [
+      oneDark,
+      EditorView.lineWrapping
+    ]
+
+    // 根据文件扩展名添加语言支持
+    const langMap = {
+      js: javascript(),
+      jsx: javascript({ jsx: true }),
+      ts: javascript({ typescript: true }),
+      tsx: javascript({ jsx: true, typescript: true }),
+      py: python(),
+      json: json(),
+      xml: xml(),
+      yml: yaml(),
+      yaml: yaml(),
+      md: markdown(),
+      html: html(),
+      htm: html(),
+      vue: html(),
+      css: css(),
+      scss: css(),
+      less: css(),
+      sql: sql(),
+      sh: javascript() // shell 使用简单高亮
+    }
+
+    const lang = langMap[fileExtension.value]
+    if (lang) {
+      baseExtensions.push(lang)
+      editBaseExtensions.push(lang)
+    }
+
+    cmExtensions.value = baseExtensions
+    editCmExtensions.value = editBaseExtensions
+    cmModulesLoaded.value = true
+  } catch (error) {
+    console.error('Failed to load CodeMirror modules:', error)
   }
-
-  const lang = langMap[fileExtension.value]
-  if (lang) {
-    extensions.push(lang)
-  }
-
-  return extensions
-})
-
-// 编辑模式的 CodeMirror 扩展（可编辑）
-const editCmExtensions = computed(() => {
-  const extensions = [
-    oneDark,
-    EditorView.lineWrapping
-  ]
-
-  const langMap = {
-    js: javascript(),
-    jsx: javascript({ jsx: true }),
-    ts: javascript({ typescript: true }),
-    tsx: javascript({ jsx: true, typescript: true }),
-    py: python(),
-    json: json(),
-    xml: xml(),
-    yml: yaml(),
-    yaml: yaml(),
-    md: markdown(),
-    html: html(),
-    htm: html(),
-    vue: html(),
-    css: css(),
-    scss: css(),
-    less: css(),
-    sql: sql(),
-    sh: javascript() // shell 使用简单高亮
-  }
-
-  const lang = langMap[fileExtension.value]
-  if (lang) {
-    extensions.push(lang)
-  }
-
-  return extensions
-})
+}
 
 // 渲染后的 Markdown
 const renderedMarkdown = computed(() => {
@@ -523,6 +553,11 @@ async function loadContent() {
 
     // 检测渲染类型
     detectRenderType()
+
+    // 延迟加载 CodeMirror 模块（仅在需要代码视图时）
+    if (canShowCode.value) {
+      loadCmExtensions()
+    }
 
     emit('loaded', fileInfo.value)
   } catch (error) {
@@ -618,10 +653,13 @@ async function loadExcelFile() {
       return
     }
 
+    // 动态加载 xlsx 库
+    const xlsxModule = await loadXLSX()
+
     // Excel 文件需要下载二进制数据
     const response = await fetch(fileUrl.value)
     const arrayBuffer = await response.arrayBuffer()
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+    const workbook = xlsxModule.read(arrayBuffer, { type: 'array' })
 
     excelWorkbook.value = workbook
     excelSheets.value = workbook.SheetNames.map(name => ({ name }))
@@ -670,13 +708,15 @@ function parseCSV(csvContent) {
 /**
  * 加载 Sheet 数据
  */
-function loadSheetData(sheetName) {
+async function loadSheetData(sheetName) {
   if (!excelWorkbook.value) return
 
   const worksheet = excelWorkbook.value.Sheets[sheetName]
   if (!worksheet) return
 
-  const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' })
+  // 动态加载 xlsx 库
+  const xlsxModule = await loadXLSX()
+  const data = xlsxModule.utils.sheet_to_json(worksheet, { header: 1, defval: '' })
 
   // 限制显示的数据量（最多 1000 行）
   excelData.value = data.slice(0, 1000)
@@ -719,8 +759,9 @@ async function loadWordFile() {
     const response = await fetch(fileUrl.value)
     const arrayBuffer = await response.arrayBuffer()
 
-    // 使用 mammoth 转换为 HTML
-    const result = await mammoth.convertToHtml({ arrayBuffer })
+    // 动态加载 mammoth 并转换为 HTML
+    const mammothModule = await loadMammoth()
+    const result = await mammothModule.convertToHtml({ arrayBuffer })
     wordContent.value = result.value
 
     // 如果有警告信息，在控制台输出
