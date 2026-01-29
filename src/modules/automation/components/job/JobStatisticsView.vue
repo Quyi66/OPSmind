@@ -42,7 +42,7 @@
         <div v-if="tableData.length" class="stats-table-wrapper">
           <el-table
             :data="tableData"
-            stripe
+           
             height="100%"
           >
             <el-table-column label="作业标题" min-width="240" show-overflow-tooltip fixed>
@@ -95,7 +95,7 @@
             <el-table
               ref="summaryTableRef"
               :data="filteredSummary"
-              stripe
+             
               height="100%"
               class="summary-table"
             >

@@ -14,7 +14,7 @@
         show-icon
       />
 
-      <el-table :data="patches" stripe size="small" max-height="300" style="margin-top: 16px">
+      <el-table :data="patches"  size="small" max-height="300" style="margin-top: 16px">
         <el-table-column prop="hostname" label="主机" min-width="120" />
         <el-table-column prop="patchName" label="补丁名称" min-width="180" show-overflow-tooltip />
         <el-table-column prop="targetVersion" label="目标版本" width="120" />

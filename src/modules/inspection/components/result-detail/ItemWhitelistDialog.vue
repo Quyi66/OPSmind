@@ -25,7 +25,7 @@
     <el-table
       v-loading="loading"
       :data="paginatedData"
-      stripe
+     
       max-height="350"
     >
       <el-table-column prop="hostKey" label="主机" width="140" />

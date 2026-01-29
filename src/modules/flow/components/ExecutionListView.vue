@@ -74,7 +74,7 @@
           <el-table
             :data="paginatedList"
             v-loading="loading"
-            stripe
+           
             style="width: 100%"
             @selection-change="handleSelectionChange"
           >

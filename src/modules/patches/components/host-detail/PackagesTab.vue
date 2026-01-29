@@ -51,7 +51,7 @@
     <el-table
       v-loading="packageLoading"
       :data="packageTableData"
-      stripe
+     
       size="small"
       max-height="calc(100vh - 580px)"
       @selection-change="handlePackageSelectionChange"

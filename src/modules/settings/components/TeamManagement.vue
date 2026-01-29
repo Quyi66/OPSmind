@@ -44,7 +44,7 @@
     <div class="ops-table-wrapper" v-loading="loading">
       <el-table
         :data="filteredData"
-        stripe
+       
         style="width: 100%"
         max-height="calc(100vh - 360px)"
       >

@@ -64,7 +64,7 @@
               <el-table
                 v-loading="pageLoading"
                 :data="paginatedPages"
-                stripe
+               
                 style="width: 100%"
                 max-height="calc(100vh - 400px)"
                 @selection-change="handlePageSelectionChange"
@@ -161,7 +161,7 @@
               <el-table
                 v-loading="datasetLoading"
                 :data="paginatedDatasets"
-                stripe
+               
                 style="width: 100%"
                 max-height="calc(100vh - 400px)"
                 @selection-change="handleDatasetSelectionChange"
@@ -255,7 +255,7 @@
               <el-table
                 v-loading="jobLoading"
                 :data="paginatedJobs"
-                stripe
+               
                 style="width: 100%"
                 max-height="calc(100vh - 400px)"
                 @selection-change="handleJobSelectionChange"

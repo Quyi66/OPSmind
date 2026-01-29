@@ -55,7 +55,7 @@
         <el-table
           v-loading="reposLoading"
           :data="reposData"
-          stripe
+         
           size="small"
           max-height="350px"
         >
@@ -134,7 +134,7 @@
           ref="availableTableRef"
           v-loading="availableLoading"
           :data="availableData"
-          stripe
+         
           size="small"
           max-height="350px"
           @selection-change="handleAvailableSelectionChange"
@@ -197,7 +197,7 @@
           ref="installedTableRef"
           v-loading="installedLoading"
           :data="installedData"
-          stripe
+         
           size="small"
           max-height="350px"
           @selection-change="handleInstalledSelectionChange"

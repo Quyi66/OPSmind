@@ -50,7 +50,7 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="paginatedData" stripe>
+      <el-table v-loading="loading" :data="paginatedData" >
         <el-table-column label="作业" min-width="150">
           <template #default="{ row }">
             <el-button type="primary" text @click="handleViewDetail(row)">{{ row.jobName }}</el-button>

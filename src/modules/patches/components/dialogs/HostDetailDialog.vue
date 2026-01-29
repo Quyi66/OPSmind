@@ -35,7 +35,7 @@
           <el-table
             v-loading="hostDetailLoading"
             :data="hostDetailPatches"
-            stripe
+           
             height="420px"
             @selection-change="handleSelectionChange"
           >

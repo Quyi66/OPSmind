@@ -80,7 +80,7 @@
           <el-table
             v-loading="baseRepoLoading"
             :data="baseRepoData"
-            stripe
+           
             style="width: 100%"
             max-height="calc(100vh - 400px)"
             @selection-change="handleBaseRepoSelectionChange"

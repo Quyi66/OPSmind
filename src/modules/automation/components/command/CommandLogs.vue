@@ -63,7 +63,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="filteredLogs"
-        stripe
+       
         height="100%"
         :default-sort="{ prop: 'start_time', order: 'descending' }"
       >

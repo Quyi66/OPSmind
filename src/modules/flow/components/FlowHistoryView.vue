@@ -35,7 +35,7 @@
       <el-table
         :data="paginatedList"
         v-loading="loading"
-        stripe
+       
         style="width: 100%"
       >
         <el-table-column label="版本" width="150">

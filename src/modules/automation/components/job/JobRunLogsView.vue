@@ -62,7 +62,7 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-        stripe
+       
         height="100%"
       >
         <el-table-column label="开始时间" width="180" sortable>

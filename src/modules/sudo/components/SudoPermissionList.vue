@@ -46,7 +46,7 @@
         :data="paginatedData"
         v-loading="loading"
         style="width: 100%"
-        stripe
+       
       >
         <el-table-column label="主机" prop="$data_owner" min-width="150" sortable show-overflow-tooltip>
           <template #default="{ row }">

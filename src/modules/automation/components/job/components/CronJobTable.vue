@@ -3,7 +3,7 @@
     <el-table
       v-loading="loading"
       :data="data"
-      stripe
+     
       :default-sort="{ prop: 'id', order: 'descending' }"
       @selection-change="$emit('selection-change', $event)"
     >

@@ -36,7 +36,7 @@
 
     <!-- 表格 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="paginatedTags" stripe style="width: 100%" max-height="calc(100vh - 360px)">
+      <el-table v-loading="loading" :data="paginatedTags"  style="width: 100%" max-height="calc(100vh - 360px)">
         <el-table-column prop="name" label="标签名称" min-width="200" />
         <el-table-column prop="count" label="应用数量" min-width="120" align="left">
           <template #default="{ row }">
@@ -92,7 +92,7 @@
           </el-button>
         </div>
 
-        <el-table v-if="tagApplets?.length" :data="tagApplets" stripe size="small" max-height="400"
+        <el-table v-if="tagApplets?.length" :data="tagApplets"  size="small" max-height="400"
           @selection-change="handleAppletSelectionChange">
           <el-table-column type="selection" width="48" />
           <el-table-column prop="title" label="标题" min-width="150">

@@ -18,7 +18,7 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="templateList" stripe height="calc(100vh - 240px)">
+      <el-table v-loading="loading" :data="templateList"  height="calc(100vh - 240px)">
         <el-table-column prop="template_name" label="模板名称" min-width="200" show-overflow-tooltip />
         <el-table-column prop="executed_at" label="最后执行时间" width="180">
           <template #default="{ row }">
@@ -53,7 +53,7 @@
         </div>
 
         <!-- 收件人表格 -->
-        <el-table :data="recipientTableData" stripe max-height="400">
+        <el-table :data="recipientTableData"  max-height="400">
           <el-table-column prop="name" label="姓名" min-width="120" />
           <el-table-column prop="email" label="邮箱" min-width="180" />
           <el-table-column prop="status" label="状态" width="100" align="left">

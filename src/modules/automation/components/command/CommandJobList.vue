@@ -41,7 +41,7 @@
       <el-table
         v-loading="loading"
         :data="filteredJobs"
-        stripe
+       
         height="100%"
         row-key="id"
         :default-sort="{ prop: sortField, order: sortOrder }"

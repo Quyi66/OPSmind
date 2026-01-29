@@ -78,7 +78,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
-        stripe
+       
         height="100%"
         @selection-change="handleSelectionChange"
       >

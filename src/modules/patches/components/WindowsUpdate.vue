@@ -75,7 +75,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
-        stripe
+       
         height="calc(100vh - 320px)"
         @selection-change="handleSelectionChange"
       >
@@ -131,7 +131,7 @@
       destroy-on-close
     >
       <div v-loading="affectedMachinesLoading">
-        <el-table :data="affectedMachinesList" size="small" stripe max-height="400">
+        <el-table :data="affectedMachinesList" size="small"  max-height="400">
           <el-table-column prop="host_key" label="主机" min-width="140" />
           <el-table-column prop="os_distro" label="操作系统" min-width="120" />
           <el-table-column prop="os_version" label="版本" min-width="100" />
@@ -194,7 +194,7 @@
               ref="fixSelectionTableRef"
               :data="filteredFixSelection"
               size="small"
-              stripe
+             
               max-height="420"
               @selection-change="handleFixSelectionChange"
             >

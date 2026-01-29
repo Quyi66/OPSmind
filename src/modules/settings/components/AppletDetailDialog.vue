@@ -43,7 +43,7 @@
         <el-table
           v-loading="pagesLoading"
           :data="paginatedPages"
-          stripe
+         
           style="width: 100%"
           max-height="calc(100vh - 480px)"
         >
@@ -96,7 +96,7 @@
         <el-table
           v-loading="loading"
           :data="paginatedDatasets"
-          stripe
+         
           style="width: 100%"
           max-height="calc(100vh - 480px)"
         >
@@ -142,7 +142,7 @@
         <el-table
           v-loading="jobsLoading"
           :data="paginatedJobs"
-          stripe
+         
           style="width: 100%"
           max-height="calc(100vh - 480px)"
         >
@@ -218,7 +218,7 @@
         <el-table
           v-loading="loading"
           :data="paginatedDcModels"
-          stripe
+         
           style="width: 100%"
           max-height="calc(100vh - 480px)"
         >
@@ -263,7 +263,7 @@
         <el-table
           v-loading="loading"
           :data="paginatedFlows"
-          stripe
+         
           style="width: 100%"
           max-height="calc(100vh - 480px)"
         >

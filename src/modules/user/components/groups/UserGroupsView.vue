@@ -57,7 +57,7 @@
       <el-table
         :data="tableData"
         v-loading="loading"
-        stripe
+       
         @selection-change="handleSelectionChange"
         max-height="calc(100vh - 330px)"
       >

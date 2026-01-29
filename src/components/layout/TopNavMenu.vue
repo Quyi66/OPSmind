@@ -192,7 +192,7 @@
       <el-tabs v-model="aboutActiveTab" class="about-tabs">
         <el-tab-pane label="版本信息" name="versions">
           <div v-loading="versionLoading">
-            <el-table :data="versionRows" stripe size="small" class="about-table">
+            <el-table :data="versionRows"  size="small" class="about-table">
               <el-table-column prop="name" label="名称" width="180" />
               <el-table-column prop="version" label="版本" width="140" />
               <el-table-column prop="build" label="打包时间" />

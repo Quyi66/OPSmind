@@ -48,7 +48,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="assetList"
-        stripe
+       
         max-height="calc(100vh - 400px)"
         @selection-change="handleSelectionChange"
       >

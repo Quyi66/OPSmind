@@ -45,7 +45,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="filteredCommands"
-        stripe
+       
         height="100%"
         @selection-change="handleSelectionChange"
       >

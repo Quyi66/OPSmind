@@ -81,7 +81,7 @@
         ref="tableRef"
         :data="filteredTableData"
         v-loading="loading"
-        stripe
+       
         style="width: 100%"
         max-height="calc(100vh - 350px)"
         @selection-change="handleSelectionChange"

@@ -45,7 +45,7 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-        stripe
+       
         size="small"
         max-height="500px"
       >

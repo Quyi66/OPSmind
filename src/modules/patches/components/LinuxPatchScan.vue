@@ -112,7 +112,7 @@
           <el-table
             v-loading="loading"
             :data="hostTableData"
-            stripe
+           
             style="width: 100%"
             max-height="calc(100vh - 500px)"
           >
@@ -289,7 +289,7 @@
             ref="vulnTableRef"
             v-loading="vulnLoading"
             :data="vulnTableData"
-            stripe
+           
             style="width: 100%"
             max-height="calc(100vh - 500px)"
             @selection-change="handleVulnSelectionChange"

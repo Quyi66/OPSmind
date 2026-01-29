@@ -77,7 +77,7 @@
           <template v-if="isConnectAap">
             <el-form-item label="AAP Servers">
               <div class="form-help mb-2">AAP 集群服务器配置</div>
-              <el-table :data="clusterServers" stripe style="max-width: 800px">
+              <el-table :data="clusterServers"  style="max-width: 800px">
                 <el-table-column label="Host" min-width="150">
                   <template #default="{ row }">
                     <el-input v-model="row.host" size="small" />

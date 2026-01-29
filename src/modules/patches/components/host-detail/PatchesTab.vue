@@ -49,7 +49,7 @@
     <el-table
       v-loading="patchLoading"
       :data="patchTableData"
-      stripe
+     
       size="small"
       max-height="calc(100vh - 560px)"
       @selection-change="handleSelectionChange"

@@ -92,7 +92,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
-        stripe
+       
         max-height="calc(100vh - 480px)"
         @selection-change="handleSelectionChange"
       >

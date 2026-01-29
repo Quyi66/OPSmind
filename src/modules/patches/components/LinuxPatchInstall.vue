@@ -65,7 +65,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="paginatedData"
-        stripe
+       
         max-height="calc(100vh - 320px)"
         @selection-change="handleSelectionChange"
       >
@@ -238,7 +238,7 @@
             <el-table
               ref="hostTableRef"
               :data="filteredHosts"
-              stripe
+             
               size="small"
               height="220"
               @selection-change="handleHostSelectionChange"

@@ -104,7 +104,7 @@
         <el-table
           :data="filteredAutomationData"
           v-loading="automationLoading"
-          stripe
+         
           :max-height="tableMaxHeight"
         >
           <el-table-column prop="ci_type" label="资产代码" width="100" />
@@ -215,7 +215,7 @@
         <el-table
           :data="paginatedAnsibleData"
           v-loading="ansibleLoading"
-          stripe
+         
           :max-height="tableMaxHeight"
         >
           <el-table-column prop="name" label="配置名称" width="120" />

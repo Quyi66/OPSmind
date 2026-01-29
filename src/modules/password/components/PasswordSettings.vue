@@ -41,7 +41,7 @@
       <el-table
         :data="filteredData"
         v-loading="loading"
-        stripe
+       
         style="width: 100%"
       >
         <el-table-column prop="type" label="类型" width="100" show-overflow-tooltip>

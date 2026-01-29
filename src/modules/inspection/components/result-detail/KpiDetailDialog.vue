@@ -19,7 +19,7 @@
       </el-input>
     </div>
 
-    <el-table v-loading="loading" :data="filteredData" stripe max-height="calc(100vh - 300px)">
+    <el-table v-loading="loading" :data="filteredData"  max-height="calc(100vh - 300px)">
       <el-table-column prop="host_key" label="主机" min-width="120" />
       <el-table-column prop="name" label="检查项" min-width="200" />
       <el-table-column label="检查状态" width="120">

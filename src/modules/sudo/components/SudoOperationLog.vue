@@ -66,7 +66,7 @@
       <el-table
         :data="tableData"
         v-loading="loading"
-        stripe
+       
         style="width: 100%"
       >
         <!-- 开始时间 -->

@@ -15,7 +15,7 @@
     <el-table
       v-loading="loading"
       :data="tableData"
-      stripe
+     
       max-height="calc(100vh - 300px)"
     >
       <el-table-column prop="refid" label="仓库ID" min-width="150" show-overflow-tooltip>

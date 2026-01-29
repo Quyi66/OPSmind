@@ -36,7 +36,7 @@
       <el-table
         :data="filteredData"
         v-loading="loading"
-        stripe
+       
         style="width: 100%"
         max-height="calc(100vh - 350px)"
       >

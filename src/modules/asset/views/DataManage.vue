@@ -105,7 +105,7 @@
         <el-table
           v-loading="groupLoading"
           :data="groupList"
-          stripe
+         
           max-height="calc(100vh - 360px)"
         >
           <el-table-column prop="path" label="分组路径" min-width="200" sortable>
@@ -205,7 +205,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="tagLoading" :data="tagList" stripe max-height="calc(100vh - 360px)">
+        <el-table v-loading="tagLoading" :data="tagList"  max-height="calc(100vh - 360px)">
           <el-table-column prop="name" label="标签名称" min-width="200" sortable>
             <template #default="{ row }">
               <el-link type="primary" :underline="false" @click="handleViewTag(row)">

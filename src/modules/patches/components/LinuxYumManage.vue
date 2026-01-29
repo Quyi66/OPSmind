@@ -77,7 +77,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="loading" :data="paginatedCustomRepoData" stripe height="100%">
+        <el-table v-loading="loading" :data="paginatedCustomRepoData"  height="100%">
           <el-table-column prop="name" label="YUM源名称" min-width="120" sortable />
           <el-table-column prop="description" label="描述" min-width="120" sortable />
           <el-table-column
@@ -178,7 +178,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="hostLoading" :data="paginatedHostTableData" stripe height="100%">
+        <el-table v-loading="hostLoading" :data="paginatedHostTableData"  height="100%">
           <el-table-column prop="$data_owner" label="主机" min-width="150">
             <template #default="{ row }">
               <el-link type="primary" :underline="false" @click="handleViewHostDetail(row)">
@@ -331,7 +331,7 @@
         <el-table
           v-loading="hostDetailLoading"
           :data="paginatedRepoDetailData"
-          stripe
+         
           style="width: 100%"
           size="small"
           max-height="500"

@@ -33,7 +33,7 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-        stripe
+       
         style="width: 100%"
         size="small"
         max-height="calc(100vh - 380px)"

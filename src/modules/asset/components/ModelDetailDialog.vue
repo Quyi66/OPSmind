@@ -47,7 +47,7 @@
           v-loading="loadingAttrs"
           :data="attributes"
           max-height="300"
-          stripe
+         
           size="small"
         >
           <el-table-column prop="name" label="属性名称" min-width="120" />

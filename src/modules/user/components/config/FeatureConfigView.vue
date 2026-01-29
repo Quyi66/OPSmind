@@ -60,7 +60,7 @@
           <el-table
             :data="scheduleTasks"
             v-loading="loadingTasks"
-            stripe
+           
             max-height="calc(100vh - 350px)"
           >
             <el-table-column prop="id" label="任务ID" width="120" />
@@ -147,7 +147,7 @@
           <el-table
             :data="sudoTemplates"
             v-loading="loadingTemplates"
-            stripe
+           
             max-height="calc(100vh - 300px)"
           >
             <el-table-column prop="name" label="模板名称" min-width="150" />
@@ -210,7 +210,7 @@
               <el-icon><Plus /></el-icon> 添加命令
             </el-button>
           </div>
-          <el-table :data="templateCommands" stripe size="small" v-loading="loadingCommands">
+          <el-table :data="templateCommands"  size="small" v-loading="loadingCommands">
             <el-table-column prop="command" label="命令" min-width="150" />
             <el-table-column prop="description" label="备注" min-width="150" />
             <el-table-column prop="created_at" label="创建时间" width="190">

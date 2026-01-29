@@ -75,7 +75,7 @@
         </el-form>
       </div>
 
-      <el-table :data="logList" v-loading="logsLoading" stripe max-height="calc(100vh - 740px)">
+      <el-table :data="logList" v-loading="logsLoading"  max-height="calc(100vh - 740px)">
         <el-table-column prop="start_time" label="开始时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}

@@ -43,7 +43,7 @@
           <el-table
             v-loading="sysLoading"
             :data="paginatedSysParams"
-            stripe
+           
             style="width: 100%"
             max-height="calc(100vh - 400px)"
           >
@@ -127,7 +127,7 @@
           <el-table
             v-loading="appLoading"
             :data="paginatedAppParams"
-            stripe
+           
             style="width: 100%"
             max-height="calc(100vh - 400px)"
           >

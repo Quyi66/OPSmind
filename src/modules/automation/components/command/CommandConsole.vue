@@ -88,7 +88,7 @@
       <el-table
         :data="paginatedHistoryData"
         max-height="calc(100vh - 450px)"
-        stripe
+       
       >
         <el-table-column prop="cmd" label="命令" show-overflow-tooltip>
           <template #default="{ row }">

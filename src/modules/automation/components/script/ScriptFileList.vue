@@ -199,7 +199,7 @@
         v-loading="loading"
         :data="filteredFiles"
         height="100%"
-        stripe
+       
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="40" :selectable="isSelectable" />

@@ -57,7 +57,7 @@
         <el-table
           v-loading="loading"
           :data="filteredModelList"
-          stripe
+         
           max-height="calc(100vh - 300px)"
         >
           <el-table-column prop="title" label="模型名称" min-width="150">

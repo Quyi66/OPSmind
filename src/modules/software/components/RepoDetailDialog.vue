@@ -25,7 +25,7 @@
         <el-table
           v-loading="loading"
           :data="tableData"
-          stripe
+         
           style="width: 100%"
           size="small"
           @selection-change="handleSelectionChange"

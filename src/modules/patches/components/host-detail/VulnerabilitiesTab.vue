@@ -51,7 +51,7 @@
     <el-table
       v-loading="vulLoading"
       :data="vulTableData"
-      stripe
+     
       size="small"
       max-height="calc(100vh - 560px)"
       @selection-change="handleVulSelectionChange"

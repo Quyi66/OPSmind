@@ -36,7 +36,7 @@
         <el-table
           v-loading="packageLoading"
           :data="packageData"
-          stripe
+         
           style="width: 100%"
           size="small"
         >
@@ -70,7 +70,7 @@
         <el-table
           v-loading="repoLoading"
           :data="repoData"
-          stripe
+         
           style="width: 100%"
           size="small"
         >

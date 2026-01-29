@@ -90,7 +90,7 @@
         <el-table
           v-loading="loading"
           :data="tableData"
-          stripe
+         
           max-height="calc(100vh - 360px)"
           row-key="id"
         >

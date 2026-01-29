@@ -77,7 +77,7 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <!-- 数据表格 -->
-      <el-table v-loading="tableLoading" :data="tableData" style="width: 100%" stripe>
+      <el-table v-loading="tableLoading" :data="tableData" style="width: 100%" >
         <el-table-column prop="IP" label="IP" min-width="120" sortable />
         <el-table-column prop="ci_name" label="资产代码" min-width="120" />
         <el-table-column prop="CONN_RATE" label="连通率" min-width="100">

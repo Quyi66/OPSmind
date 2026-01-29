@@ -27,7 +27,7 @@
       v-loading="loading"
       :data="data"
       border
-      stripe
+     
       max-height="400"
       @selection-change="handleSelectionChange"
     >

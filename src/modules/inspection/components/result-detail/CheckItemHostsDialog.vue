@@ -36,7 +36,7 @@
       </div>
 
       <!-- 表格 -->
-      <el-table v-loading="loading" :data="data" stripe max-height="350">
+      <el-table v-loading="loading" :data="data"  max-height="350">
         <el-table-column prop="host_key" label="主机" min-width="200" />
         <el-table-column label="检查状态" width="120" align="left">
           <template #default="{ row }">

@@ -25,7 +25,7 @@
 
     <!-- 模版列表 -->
     <div class="ops-table-wrapper">
-      <el-table :data="paginatedTemplates" v-loading="loading" stripe style="width: 100%"
+      <el-table :data="paginatedTemplates" v-loading="loading"  style="width: 100%"
         max-height="calc(100vh - 360px)">
         <el-table-column prop="templateName" label="名称" min-width="150" show-overflow-tooltip />
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />

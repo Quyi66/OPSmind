@@ -76,7 +76,7 @@
             <strong>{{ primaryStats.hostTotal }}</strong>
           </span>
         </div>
-        <el-table :data="filteredPrimaryData" stripe max-height="450">
+        <el-table :data="filteredPrimaryData"  max-height="450">
           <el-table-column prop="name" label="二级业务名称" />
           <el-table-column prop="contItem" label="检查项失败数" width="120" align="left" />
           <el-table-column prop="contHost" label="主机数" width="100" align="left" />
@@ -115,7 +115,7 @@
               </template>
             </el-input>
           </div>
-          <el-table :data="filteredItemData" stripe max-height="400">
+          <el-table :data="filteredItemData"  max-height="400">
             <el-table-column prop="item" label="检查项名称" />
             <el-table-column label="失败主机数" width="120" align="left">
               <template #default="{ row }">
@@ -149,7 +149,7 @@
               </template>
             </el-input>
           </div>
-          <el-table :data="filteredHostData" stripe max-height="400">
+          <el-table :data="filteredHostData"  max-height="400">
             <el-table-column prop="host" label="主机名" />
             <el-table-column label="失败检查项数" width="120" align="left">
               <template #default="{ row }">
@@ -165,7 +165,7 @@
 
     <!-- 列表详情弹窗 -->
     <el-dialog v-model="listDialogVisible" :title="listDialogTitle" width="500px" destroy-on-close>
-      <el-table :data="listData" stripe max-height="400">
+      <el-table :data="listData"  max-height="400">
         <el-table-column prop="name" :label="listDialogTitle" />
       </el-table>
     </el-dialog>
@@ -194,7 +194,7 @@
         <el-table
           v-loading="kpiDialogLoading"
           :data="filteredKpiDialogData"
-          stripe
+         
           max-height="calc(100vh - 300px)"
         >
           <!-- 检查项总数类型 (itemAll): 只显示检查项名称 -->

@@ -70,7 +70,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="pagedData"
-        stripe
+       
         height="calc(100vh - 320px)"
         @selection-change="handleSelectionChange"
         @sort-change="handleSortChange"
