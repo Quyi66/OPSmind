@@ -12,21 +12,100 @@
 
     <!-- 内容区域 -->
     <div class="page-content">
-      <!-- KPI 统计卡片 -->
-      <div class="kpi-cards">
-        <div
-          v-for="kpi in kpiList"
-          :key="kpi.name"
-          class="kpi-card"
-          :class="[`kpi-card--${kpi.theme}`]"
-          @click="handleKpiClick(kpi)"
-        >
-          <div class="kpi-card__icon" v-if="kpi.icon">
-            <i :class="['fa', kpi.icon]" />
+      <!-- 新版统计面板 -->
+      <div class="stats-dashboard">
+        <!-- 1. 补丁统计卡片 -->
+        <div class="stat-card patch-card">
+          <div class="card-title">补丁统计</div>
+          <div class="patch-chart-container">
+            <div class="chart-wrapper">
+              <v-chart class="patch-pie-chart" :option="chartOption" autoresize />
+              <div class="chart-center-label">
+                <div class="label-title">总计</div>
+                <div class="label-value">{{ kpiStats.totalPatchCount }}</div>
+              </div>
+            </div>
           </div>
-          <div class="kpi-card__content">
-            <div class="kpi-card__value">{{ kpi.value }}</div>
-            <div class="kpi-card__label">{{ kpi.name }}</div>
+          <div class="patch-progress-section">
+            <div class="progress-bar-container">
+              <div
+                class="progress-segment critical"
+                :style="{ width: kpiStats.criticalPatchPercent + '%' }"
+              ></div>
+              <div
+                class="progress-segment important"
+                :style="{ width: kpiStats.importantPatchPercent + '%' }"
+              ></div>
+            </div>
+            <div class="progress-labels">
+              <div class="stat-label critical">
+                <i class="fa fa-circle"></i>
+                致命 {{ kpiStats.criticalPatchPercent }}%
+                <span class="count">({{ kpiStats.criticalPatchCount }})</span>
+              </div>
+              <div class="stat-label important">
+                <i class="fa fa-circle"></i>
+                严重 {{ kpiStats.importantPatchPercent }}%
+                <span class="count">({{ kpiStats.importantPatchCount }})</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 漏洞概览卡片 -->
+        <div class="stat-card vul-card">
+          <div class="card-title">漏洞概览</div>
+          <div class="vul-content">
+            <div class="vul-number">{{ kpiStats.vulCount.toLocaleString() }}</div>
+            <div class="vul-label">CVE漏洞总数</div>
+            <div class="vul-sub-metric">
+              <i class="fa fa-bug"></i>
+              平均每主机 {{ kpiStats.avgVulPerHost }} 个漏洞
+            </div>
+            <div class="vul-icon-bg">
+              <i class="fa fa-shield-alt"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 主机影响卡片 -->
+        <div class="stat-card host-card">
+          <div class="card-title">主机影响</div>
+          <div class="host-content">
+            <div class="host-total-row">
+              <span class="label">扫描主机</span>
+              <span class="value">{{ kpiStats.hostCount }} 台</span>
+            </div>
+
+            <div class="impact-item">
+              <div class="impact-header">
+                <span class="label-critical">致命影响</span>
+                <span class="value">
+                  {{ kpiStats.criticalHostCount }} 台 ({{ kpiStats.criticalHostPercent }}%)
+                </span>
+              </div>
+              <div class="progress-track">
+                <div
+                  class="progress-fill critical"
+                  :style="{ width: kpiStats.criticalHostPercent + '%' }"
+                ></div>
+              </div>
+            </div>
+
+            <div class="impact-item">
+              <div class="impact-header">
+                <span class="label-important">严重影响</span>
+                <span class="value">
+                  {{ kpiStats.importantHostCount }} 台 ({{ kpiStats.importantHostPercent }}%)
+                </span>
+              </div>
+              <div class="progress-track">
+                <div
+                  class="progress-fill important"
+                  :style="{ width: kpiStats.importantHostPercent + '%' }"
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -112,9 +191,8 @@
           <el-table
             v-loading="loading"
             :data="hostTableData"
-           
             style="width: 100%"
-            max-height="calc(100vh - 500px)"
+            max-height="calc(100vh - 620px)"
           >
             <el-table-column prop="host_key" label="主机" min-width="140">
               <template #default="{ row }">
@@ -289,9 +367,8 @@
             ref="vulnTableRef"
             v-loading="vulnLoading"
             :data="vulnTableData"
-           
             style="width: 100%"
-            max-height="calc(100vh - 500px)"
+            max-height="calc(100vh - 620px)"
             @selection-change="handleVulnSelectionChange"
           >
             <el-table-column type="selection" width="45" />
@@ -449,10 +526,7 @@
     />
 
     <!-- 操作记录对话框 -->
-    <OperationLogsDialog
-      v-model="operationLogsVisible"
-      :highlight-run-id="lastSubmittedRunId"
-    />
+    <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
 
     <!-- 主机详情对话框 -->
     <LinuxHostDetail
@@ -510,7 +584,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, computed, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
@@ -519,6 +593,28 @@ import AcmDeviceSelector from '@/modules/automation/components/job/schedule/comp
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'
 import LinuxHostDetail from './LinuxHostDetail.vue'
+
+// ECharts
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { PieChart, GaugeChart } from 'echarts/charts'
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+} from 'echarts/components'
+import VChart from 'vue-echarts'
+
+use([
+  CanvasRenderer,
+  PieChart,
+  GaugeChart,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+])
 
 // Emits
 const emit = defineEmits(['install', 'navigate'])
@@ -529,36 +625,54 @@ const router = useRouter()
 // 当前标签页
 const activeTab = ref('host')
 
-// KPI 数据
-const kpiList = ref([
-  {
-    name: '严重补丁数',
-    value: 0,
-    icon: 'fa-exclamation-triangle',
-    theme: 'danger',
-    linkPage: 'Ol37gK',
-    pageParam: 'Critical'
-  },
-  {
-    name: '重要补丁数',
-    value: 0,
-    icon: 'fa-exclamation-circle',
-    theme: 'warning',
-    linkPage: 'Ol37gK',
-    pageParam: 'Important'
-  },
-  {
-    name: '漏洞数量',
-    value: 0,
-    icon: 'fa-virus',
-    theme: 'secondary',
-    linkPage: 'JrJ8lz',
-    pageParam: ''
-  },
-  { name: '严重漏洞主机', value: 0, icon: '', theme: 'secondary', linkPage: '', pageParam: '' },
-  { name: '重要漏洞主机', value: 0, icon: '', theme: 'secondary', linkPage: '', pageParam: '' },
-  { name: '扫描主机数', value: 0, icon: '', theme: 'secondary', linkPage: '', pageParam: '' }
-])
+// KPI 数据统计
+const kpiStats = reactive({
+  criticalPatchCount: 0,
+  importantPatchCount: 0,
+  totalPatchCount: 0,
+  criticalPatchPercent: 0,
+  importantPatchPercent: 0,
+
+  vulCount: 0,
+  hostCount: 0,
+  avgVulPerHost: 0,
+
+  criticalHostCount: 0,
+  importantHostCount: 0,
+  criticalHostPercent: 0,
+  importantHostPercent: 0
+})
+
+// 图表配置 - 补丁统计半环图
+const chartOption = computed(() => {
+  return {
+    tooltip: {
+      trigger: 'item'
+    },
+    series: [
+      {
+        name: '补丁统计',
+        type: 'pie',
+        radius: ['60%', '80%'],
+        center: ['50%', '70%'],
+        // 调整起始角度，使其变成半圆
+        startAngle: 180,
+        endAngle: 0,
+        data: [
+          { value: kpiStats.criticalPatchCount, name: '致命', itemStyle: { color: '#f56c6c' } },
+          { value: kpiStats.importantPatchCount, name: '严重', itemStyle: { color: '#e6a23c' } }
+        ],
+        label: {
+          show: false
+        },
+        emphasis: {
+          scale: true,
+          scaleSize: 5
+        }
+      }
+    ]
+  }
+})
 
 // 主机表格
 const loading = ref(false)
@@ -666,27 +780,63 @@ async function loadKpiData() {
   try {
     const response = await patchOverviewApi.getIndexStats()
     if (response?.data?.records) {
-      const defs = {
-        scan_count_critical_patch: { index: 0, theme: 'danger' },
-        scan_count_important_patch: { index: 1, theme: 'warning' },
-        scan_count_vul: { index: 2, theme: 'secondary' },
-        scan_count_host_with_critical: { index: 3, theme: 'secondary' },
-        scan_count_host_with_important: { index: 4, theme: 'secondary' },
-        scan_count_host: { index: 5, theme: 'secondary' }
+      // 临时映射表
+      const dataMap = {
+        scan_count_critical_patch: 0,
+        scan_count_important_patch: 0,
+        scan_count_vul: 0,
+        scan_count_host_with_critical: 0,
+        scan_count_host_with_important: 0,
+        scan_count_host: 0
       }
+
       response.data.records.forEach(rec => {
-        const def = defs[rec.name]
-        if (def !== undefined) {
-          kpiList.value[def.index].value = rec.value || 0
-          // 动态设置 theme
-          if (def.index === 0 && rec.value > 0) {
-            kpiList.value[0].theme = 'danger'
-          }
-          if (def.index === 1 && rec.value > 0) {
-            kpiList.value[1].theme = 'warning'
-          }
+        if (dataMap.hasOwnProperty(rec.name)) {
+          dataMap[rec.name] = rec.value || 0
         }
       })
+
+      // 1. 补丁统计
+      kpiStats.criticalPatchCount = dataMap.scan_count_critical_patch
+      kpiStats.importantPatchCount = dataMap.scan_count_important_patch
+      kpiStats.totalPatchCount = kpiStats.criticalPatchCount + kpiStats.importantPatchCount
+
+      if (kpiStats.totalPatchCount > 0) {
+        kpiStats.criticalPatchPercent = Number(
+          ((kpiStats.criticalPatchCount / kpiStats.totalPatchCount) * 100).toFixed(1)
+        )
+        kpiStats.importantPatchPercent = Number(
+          ((kpiStats.importantPatchCount / kpiStats.totalPatchCount) * 100).toFixed(1)
+        )
+      } else {
+        kpiStats.criticalPatchPercent = 0
+        kpiStats.importantPatchPercent = 0
+      }
+
+      // 2. 漏洞概览
+      kpiStats.vulCount = dataMap.scan_count_vul
+      kpiStats.hostCount = dataMap.scan_count_host
+      if (kpiStats.hostCount > 0) {
+        kpiStats.avgVulPerHost = Math.round(kpiStats.vulCount / kpiStats.hostCount)
+      } else {
+        kpiStats.avgVulPerHost = 0
+      }
+
+      // 3. 主机影响
+      kpiStats.criticalHostCount = dataMap.scan_count_host_with_critical
+      kpiStats.importantHostCount = dataMap.scan_count_host_with_important
+
+      if (kpiStats.hostCount > 0) {
+        kpiStats.criticalHostPercent = Math.round(
+          (kpiStats.criticalHostCount / kpiStats.hostCount) * 100
+        )
+        kpiStats.importantHostPercent = Math.round(
+          (kpiStats.importantHostCount / kpiStats.hostCount) * 100
+        )
+      } else {
+        kpiStats.criticalHostPercent = 0
+        kpiStats.importantHostPercent = 0
+      }
     }
   } catch (error) {
     console.error('Failed to load KPI data:', error)
@@ -1000,14 +1150,13 @@ async function handleConfirmFix() {
     loadVulnData()
   } catch (error) {
     ElMessage.error('提交修复任务失败: ' + (error.message || '未知错误'))
-// 从主机详情对话框修复补丁
-function handleFixPatchesFromDetail(data) {
-  const { patches, hostInfo } = data
-  ElMessage.info(`准备修复 ${patches.length} 个补丁`)
-  // TODO: 实现补丁修复逻辑
-  hostDetailVisible.value = false
-}
-
+    // 从主机详情对话框修复补丁
+    function handleFixPatchesFromDetail(data) {
+      const { patches, hostInfo } = data
+      ElMessage.info(`准备修复 ${patches.length} 个补丁`)
+      // TODO: 实现补丁修复逻辑
+      hostDetailVisible.value = false
+    }
   } finally {
     fixSubmitting.value = false
   }
@@ -1139,9 +1288,13 @@ watch(activeTab, newTab => {
 })
 
 // 监听主机选择变化，自动更新输入框
-watch(selectedHosts, () => {
-  updateHostsInput()
-}, { deep: true })
+watch(
+  selectedHosts,
+  () => {
+    updateHostsInput()
+  },
+  { deep: true }
+)
 
 onMounted(() => {
   loadKpiData()
@@ -1184,92 +1337,279 @@ defineExpose({
   background: #fff;
 }
 
-// KPI 卡片
-.kpi-cards {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
+// 统计面板
+.stats-dashboard {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-.kpi-card {
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 16px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
+  flex-direction: column;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  border: 1px solid #e9ecef;
 
   &:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: #dcdfe6;
   }
 
-  // 危险/严重 - 红色背景
-  &--danger {
-    background: linear-gradient(135deg, #dc3545, #c82333);
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 12px;
+  }
+}
 
-    .kpi-card__icon,
-    .kpi-card__value,
-    .kpi-card__label {
-      color: #fff;
+// 1. 补丁统计卡片
+.patch-card {
+  flex: 4; // 40% width
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+
+  .patch-chart-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+
+    .chart-wrapper {
+      position: relative;
+      width: 200px;
+      height: 100px; // 半圆高度
+    }
+
+    .patch-pie-chart {
+      width: 100%;
+      height: 200px; // 实际渲染高度给大一点，通过 overflow 和 clip 控制半圆效果，或者 echoarts 本身设置
+      margin-top: -50px; // 调整位置
+    }
+
+    .chart-center-label {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+
+      .label-title {
+        font-size: 12px;
+        color: #868e96;
+      }
+      .label-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #212529;
+        line-height: 1.2;
+      }
     }
   }
 
-  // 警告/重要 - 黄色背景
-  &--warning {
-    background: linear-gradient(135deg, #ffc107, #e0a800);
+  .patch-progress-section {
+    padding: 0 16px;
 
-    .kpi-card__icon,
-    .kpi-card__value,
-    .kpi-card__label {
-      color: #fff;
+    .progress-bar-container {
+      height: 12px;
+      background-color: #f1f3f5;
+      border-radius: 6px;
+      display: flex;
+      overflow: hidden;
+      margin-bottom: 8px;
+
+      .progress-segment {
+        height: 100%;
+        transition: width 0.5s ease;
+
+        &.critical {
+          background-color: #f56c6c;
+        }
+        &.important {
+          background-color: #e6a23c;
+        }
+      }
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+
+      .stat-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #495057;
+
+        &.critical i {
+          color: #f56c6c;
+          font-size: 8px;
+        }
+        &.important i {
+          color: #e6a23c;
+          font-size: 8px;
+        }
+
+        .count {
+          color: #868e96;
+          margin-left: 2px;
+        }
+      }
     }
   }
+}
 
-  // 普通 - 灰色背景
-  &--secondary {
+// 2. 漏洞概览卡片
+.vul-card {
+  flex: 3; // 30% width
+  position: relative;
+  overflow: hidden;
+
+  .vul-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+  }
+
+  .vul-number {
+    font-size: 42px;
+    font-weight: 700;
+    color: #409eff; // OpsMind Blue
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .vul-label {
+    font-size: 13px;
+    color: #495057;
+    margin-bottom: 12px;
+  }
+
+  .vul-sub-metric {
+    font-size: 12px;
+    color: #868e96;
     background: #f8f9fa;
-    border: 1px solid #e9ecef;
-
-    .kpi-card__value {
-      color: #212529;
-    }
-
-    .kpi-card__label {
-      color: #6c757d;
-    }
-
-    .kpi-card__icon {
-      color: #495057;
-    }
-  }
-
-  &__icon {
-    width: 36px;
-    height: 36px;
+    padding: 4px 12px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    color: #fff;
+    gap: 6px;
+
+    i {
+      color: #adb5bd;
+    }
   }
 
-  &__content {
+  .vul-icon-bg {
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+    font-size: 120px;
+    color: rgba(64, 158, 255, 0.05);
+    z-index: 0;
+    transform: rotate(-15deg);
+  }
+}
+
+// 3. 主机影响卡片
+.host-card {
+  flex: 3; // 30% width
+
+  .host-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     flex: 1;
+    justify-content: center;
   }
 
-  &__value {
-    font-size: 28px;
-    font-weight: 700;
-    line-height: 1;
+  .host-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+
+    .label {
+      font-size: 13px;
+      color: #495057;
+    }
+    .value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #212529;
+    }
   }
 
-  &__label {
-    font-size: 12px;
-    margin-top: 6px;
+  .impact-item {
+    .impact-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 6px;
+
+      .label-critical {
+        color: #f56c6c;
+        font-weight: 500;
+      }
+      .label-important {
+        color: #e6a23c;
+        font-weight: 500;
+      }
+      .value {
+        color: #868e96;
+      }
+    }
+
+    .progress-track {
+      height: 8px;
+      background: #f1f3f5;
+      border-radius: 4px;
+      overflow: hidden;
+
+      .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+
+        &.critical {
+          background: #f56c6c;
+        }
+        &.important {
+          background: #e6a23c;
+        }
+      }
+    }
+  }
+}
+
+// 响应式调整
+@media (max-width: 1200px) {
+  .stats-dashboard {
+    flex-wrap: wrap;
+  }
+  .patch-card {
+    flex: 100%;
+    order: 1;
+  }
+  .vul-card {
+    flex: 48%;
+    order: 2;
+  }
+  .host-card {
+    flex: 48%;
+    order: 3;
   }
 }
 
@@ -1315,7 +1655,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   padding: 0 !important;
-  height: calc(100% - 156px);
+  height: calc(100% - 300px);
 }
 
 // 表格区域

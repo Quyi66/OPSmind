@@ -1,19 +1,42 @@
 <template>
   <div class="ops-page-layout">
     <!-- 厂商统计 KPI 卡片 -->
+    <!-- 厂商统计 KPI 卡片 -->
     <div class="vendor-kpi-section">
-      <div v-for="vendor in vendorStats" :key="vendor.vendor" class="vendor-kpi-card"
+      <div
+        v-for="vendor in vendorStats"
+        :key="vendor.vendor"
+        class="vendor-kpi-card"
         :class="[getVendorClass(vendor.vendor), { 'is-active': currentVendor === vendor.vendor }]"
-        @click="handleVendorClick(vendor.vendor)">
-        <div class="kpi-left">
-          <div class="kpi-header">
-            <span class="kpi-vendor">{{ vendor.vendor.toUpperCase() }}</span>
-            <span class="kpi-date">{{ vendor.latest_date }}</span>
-          </div>
-          <div class="kpi-value">{{ vendor.count }}</div>
-        </div>
-        <div class="kpi-icon">
+        @click="handleVendorClick(vendor.vendor)"
+      >
+        <!-- 背景装饰图标 -->
+        <div class="card-bg-icon">
           <i :class="getVendorIcon(vendor.vendor)" />
+        </div>
+
+        <div class="card-content">
+          <div class="card-header">
+            <div class="vendor-info">
+              <i :class="getVendorIcon(vendor.vendor)" class="vendor-icon-small" />
+              <span class="vendor-name">{{ vendor.vendor.toUpperCase() }}</span>
+            </div>
+            <div v-if="currentVendor === vendor.vendor" class="active-indicator">
+              <i class="fa fa-check-circle" />
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="count-value">{{ vendor.count.toLocaleString() }}</div>
+            <div class="count-label">补丁总数</div>
+          </div>
+
+          <div class="card-footer">
+            <div class="latest-date">
+              <i class="fa fa-clock-o" />
+              <span>更新: {{ vendor.latest_date }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -38,7 +61,7 @@
           </el-checkbox-group>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="ignoreFilter" style="width: 100px;">
+          <el-select v-model="ignoreFilter" style="width: 100px">
             <el-option label="全部" value="0,1" />
             <el-option label="白名单" value="1" />
             <el-option label="非白名单" value="0" />
@@ -56,12 +79,14 @@
           <el-button type="primary" @click="handleSearch">
             <el-icon>
               <Search />
-            </el-icon> 搜索
+            </el-icon>
+            搜索
           </el-button>
           <el-button @click="handleReset">
             <el-icon>
               <RefreshRight />
-            </el-icon> 重置
+            </el-icon>
+            重置
           </el-button>
         </el-form-item>
       </el-form>
@@ -72,14 +97,30 @@
       <el-button type="primary" size="small" @click="handleCheckPatchUpdate">
         检查补丁库更新
       </el-button>
-      <el-button :disabled="selectedPatches.length === 0" size="small" @click="handleBatchAddWhitelist">
+      <el-button
+        :disabled="selectedPatches.length === 0"
+        size="small"
+        @click="handleBatchAddWhitelist"
+      >
         添加白名单
       </el-button>
-      <el-button :disabled="selectedPatches.length === 0" type="danger" size="small" @click="handleBatchRemoveWhitelist">
+      <el-button
+        :disabled="selectedPatches.length === 0"
+        type="danger"
+        size="small"
+        @click="handleBatchRemoveWhitelist"
+      >
         移除白名单
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="handleRefresh"
+        title="刷新"
+      >
         <el-icon v-show="!loading">
           <Refresh />
         </el-icon>
@@ -92,19 +133,18 @@
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
-       
         max-height="calc(100vh - 480px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="patch_id" label="补丁编号" min-width="120">
+        <el-table-column prop="patch_id" label="补丁编号" width="150" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="handleViewDetail(row)">
               {{ row.patch_id }}
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="概要" min-width="250" show-overflow-tooltip />
+        <el-table-column prop="title" label="概要" min-width="180" show-overflow-tooltip />
         <el-table-column prop="severity" label="严重级别" width="100" align="left">
           <template #default="{ row }">
             <el-tag :type="getSeverityStyle(row.severity)" size="small">
@@ -117,11 +157,16 @@
             {{ formatDate(row.publish_date) }}
           </template>
         </el-table-column>
-        <el-table-column prop="related_vuls" label="关联CVE" min-width="180">
+        <el-table-column prop="related_vuls" label="关联CVE" min-width="200">
           <template #default="{ row }">
             <div class="cve-tags" v-if="row.related_vuls">
-              <a v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)" :key="idx"
-                :href="`https://access.redhat.com/security/cve/${cve}`" target="_blank" class="cve-link">
+              <a
+                v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)"
+                :key="idx"
+                :href="`https://access.redhat.com/security/cve/${cve}`"
+                target="_blank"
+                class="cve-link"
+              >
                 {{ cve }}
               </a>
               <span v-if="parseCVEs(row.related_vuls).length > 3" class="cve-more">
@@ -134,8 +179,13 @@
         <el-table-column prop="vendor" label="厂商" width="100" />
         <el-table-column prop="is_ignore" label="是否在白名单" width="110" align="left">
           <template #default="{ row }">
-            <el-button v-if="row.is_ignore" text type="primary" size="small"
-              @click="handleRemoveFromWhitelist(row)">
+            <el-button
+              v-if="row.is_ignore"
+              text
+              type="primary"
+              size="small"
+              @click="handleRemoveFromWhitelist(row)"
+            >
               是
             </el-button>
             <el-button v-else text type="primary" size="small" @click="handleAddToWhitelist(row)">
@@ -190,8 +240,14 @@
             <div class="patch-detail-label">关联CVE</div>
             <div class="patch-detail-cves">
               <template v-if="patchDetail.related_vuls">
-                <span v-for="(cve, idx) in parseCVEs(patchDetail.related_vuls)" :key="idx" class="cve-item">
-                  <a :href="`https://access.redhat.com/security/cve/${cve}`" target="_blank">{{ cve }}</a>
+                <span
+                  v-for="(cve, idx) in parseCVEs(patchDetail.related_vuls)"
+                  :key="idx"
+                  class="cve-item"
+                >
+                  <a :href="`https://access.redhat.com/security/cve/${cve}`" target="_blank">
+                    {{ cve }}
+                  </a>
                 </span>
               </template>
               <span v-else>-</span>
@@ -207,16 +263,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchLibraryApi } from '../api'
 import { runJob } from '@/modules/automation/api/command'
 
 // 常量定义
-const CHECK_PATCH_UPDATE_JOB_ID = '0QdW7u'  // 检查补丁更新作业ID
-const ADD_WHITELIST_JOB_ID = 'sosZAJ'        // 添加白名单作业ID
-const REMOVE_WHITELIST_JOB_ID = 'an2cRO'     // 移除白名单作业ID
+const CHECK_PATCH_UPDATE_JOB_ID = '0QdW7u' // 检查补丁更新作业ID
+const ADD_WHITELIST_JOB_ID = 'sosZAJ' // 添加白名单作业ID
+const REMOVE_WHITELIST_JOB_ID = 'an2cRO' // 移除白名单作业ID
 
 // 加载状态
 const loading = ref(false)
@@ -227,9 +283,9 @@ const vendorStats = ref([])
 
 // 筛选条件
 const filterText = ref('')
-const severityFilter = ref(['Critical', 'Important'])  // 默认选中 Critical, Important
-const ignoreFilter = ref('0,1')           // 默认全部
-const currentVendor = ref('redhat')       // 默认 redhat
+const severityFilter = ref(['Critical', 'Important']) // 默认选中 Critical, Important
+const ignoreFilter = ref('0,1') // 默认全部
+const currentVendor = ref('redhat') // 默认 redhat
 
 // 表格数据
 const tableData = ref([])
@@ -247,6 +303,17 @@ const detailDialogVisible = ref(false)
 const detailLoading = ref(false)
 const patchDetail = ref(null)
 
+// 计算补丁总数
+const totalPatches = computed(() => {
+  return vendorStats.value.reduce((acc, curr) => acc + (curr.count || 0), 0)
+})
+
+// 计算百分比
+function calculatePercent(count) {
+  if (!totalPatches.value) return 0
+  return ((count / totalPatches.value) * 100).toFixed(1)
+}
+
 // 获取厂商样式类
 function getVendorClass(vendor) {
   const classMap = {
@@ -255,6 +322,7 @@ function getVendorClass(vendor) {
     redhat: 'vendor-redhat',
     ubuntu: 'vendor-ubuntu',
     kylinos: 'vendor-kylinos',
+    kylin: 'vendor-kylin',
     anolis: 'vendor-anolis',
     uniontech: 'vendor-uniontech'
   }
@@ -267,6 +335,7 @@ function getVendorIcon(vendor) {
   if (v === 'kylinos') return 'fab fa-fedora'
   if (v === 'anolis') return 'fab fa-airbnb'
   if (v === 'uniontech') return 'fab fa-linux'
+  if (v === 'kylin') return 'fab fa-linux'
   return `fab fa-${v}`
 }
 
@@ -330,16 +399,10 @@ async function loadData() {
     }
     const response = await patchLibraryApi.getPatchList(params)
     const records =
-      response?.records ||
-      response?.data?.records ||
-      response?.data?.data?.records ||
-      []
+      response?.records || response?.data?.records || response?.data?.data?.records || []
     tableData.value = records
     pagination.total =
-      response?.total ||
-      response?.data?.total ||
-      response?.data?.data?.total ||
-      records.length
+      response?.total || response?.data?.total || response?.data?.data?.total || records.length
   } catch (error) {
     console.error('Failed to load patches:', error)
     tableData.value = []
@@ -403,11 +466,9 @@ function handleVendorClick(vendor) {
 // 检查补丁库更新
 async function handleCheckPatchUpdate() {
   try {
-    await ElMessageBox.confirm(
-      '执行导入最近补丁库将花费几分钟时间不等，点确定开始导入',
-      '确认',
-      { type: 'info' }
-    )
+    await ElMessageBox.confirm('执行导入最近补丁库将花费几分钟时间不等，点确定开始导入', '确认', {
+      type: 'info'
+    })
 
     await runJob(CHECK_PATCH_UPDATE_JOB_ID, { params: {} })
     ElMessage.success('补丁库更新任务已提交')
@@ -496,11 +557,7 @@ async function handleBatchAddWhitelist() {
   if (selectedPatches.value.length === 0) return
 
   try {
-    await ElMessageBox.confirm(
-      '确认要加入白名单！',
-      '确认',
-      { type: 'info' }
-    )
+    await ElMessageBox.confirm('确认要加入白名单！', '确认', { type: 'info' })
 
     const patchIdList = selectedPatches.value.map(p => p.patch_id)
     await runJob(ADD_WHITELIST_JOB_ID, {
@@ -521,11 +578,7 @@ async function handleBatchRemoveWhitelist() {
   if (selectedPatches.value.length === 0) return
 
   try {
-    await ElMessageBox.confirm(
-      '确认要移除白名单！',
-      '确认',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm('确认要移除白名单！', '确认', { type: 'warning' })
 
     const patchIdList = selectedPatches.value.map(p => p.patch_id)
     await runJob(REMOVE_WHITELIST_JOB_ID, {
@@ -553,116 +606,273 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-// 厂商KPI卡片区域 - 一行4个
+// 厂商KPI卡片区域
 .vendor-kpi-section {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 4px; /* Space for scrollbar if needed, though we try to fit */
+  flex-wrap: nowrap;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #e4e7ed;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #c0c4cc;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 .vendor-kpi-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 12px 16px;
-  border-radius: 6px;
-  min-height: 70px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  padding: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: #fff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 200px;
+  flex: 1;
+
+  // Default State (Inactive)
+  background: #fff;
+  border: 1px solid #e9ecef;
+  color: #606266;
 
   &:hover {
-    opacity: 0.9;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #dcdfe6;
+
+    .card-bg-icon {
+      opacity: 0.1;
+      transform: rotate(0deg) scale(1.1);
+    }
   }
 
-  .kpi-left {
+  // Active State
+  &.is-active {
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: transparent;
+    transform: scale(1.02);
+
+    .card-bg-icon {
+      color: #fff !important;
+      opacity: 0.2;
+    }
+
+    .vendor-name,
+    .count-value,
+    .count-label {
+      color: #fff !important;
+      opacity: 1;
+    }
+
+    .latest-date {
+      background: #fff;
+      color: #303133 !important;
+      opacity: 0.9;
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  // 背景图标
+  .card-bg-icon {
+    position: absolute;
+    right: -10px;
+    bottom: -10px;
+    font-size: 100px;
+    opacity: 0.05;
+    transform: rotate(-15deg);
+    pointer-events: none;
+    z-index: 0;
+    transition:
+      transform 0.3s ease,
+      opacity 0.3s ease;
+    color: currentColor; // Inherit text color (which will be set by vendor class on active, or default on inactive)
+  }
+
+  .card-content {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     height: 100%;
+    justify-content: space-between;
   }
 
-  .kpi-header {
+  .card-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
+    margin-bottom: 12px;
+
+    .vendor-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .vendor-icon-small {
+      font-size: 18px;
+      // Color handled by specific vendor classes below for inactive state
+    }
+
+    .vendor-name {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #303133;
+    }
+
+    .active-indicator {
+      font-size: 16px;
+      opacity: 0.9;
+    }
   }
 
-  .kpi-vendor {
-    font-size: 12px;
-    font-weight: 600;
+  .card-body {
+    margin-bottom: 12px;
+
+    .count-value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+      color: #303133;
+    }
+
+    .count-label {
+      font-size: 12px;
+      color: #909399;
+      font-weight: 500;
+    }
   }
 
-  .kpi-date {
-    font-size: 11px;
-    opacity: 0.85;
-  }
+  .card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 
-  .kpi-value {
-    font-size: 26px;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  .kpi-icon {
-    font-size: 32px;
-    opacity: 0.3;
-    align-self: center;
+    .latest-date {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #909399;
+      background: #f4f4f5;
+      padding: 4px 8px;
+      border-radius: 4px;
+      width: fit-content;
+      transition: all 0.3s ease;
+    }
   }
 }
 
-// 筛选区样式
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-right: 24px;
+// 厂商特定对应样式
+// Defines colors for text/icons in inactive state, and full gradient for active state
 
-  &:last-child {
-    margin-right: 0;
-  }
-}
-
-.filter-label {
-  font-size: 13px;
-  color: #606266;
-  white-space: nowrap;
-}
-
-// 厂商颜色
 .vendor-suse {
-  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  .vendor-icon-small,
+  .card-bg-icon {
+    color: #28a745;
+  }
+  &.is-active {
+    background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+    // Replacement Suse
+    background: linear-gradient(135deg, #73c6b6 0%, #117a65 100%);
+  }
 }
 
 .vendor-redhat {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  .vendor-icon-small,
+  .card-bg-icon {
+    color: #dc3545;
+  }
+  &.is-active {
+    background: linear-gradient(135deg, #ff6b6b 0%, #c0392b 100%);
+  }
 }
 
 .vendor-uniontech {
-  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+  .vendor-icon-small,
+  .card-bg-icon {
+    color: #2874a6;
+  }
+  &.is-active {
+    background: linear-gradient(135deg, #5dade2 0%, #2874a6 100%);
+  }
 }
 
 .vendor-kylinos {
-  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+  .vendor-icon-small,
+  .card-bg-icon {
+    color: #6c3483;
+  }
+  &.is-active {
+    background: linear-gradient(135deg, #a569bd 0%, #6c3483 100%);
+  }
 }
 
 .vendor-ubuntu {
-  background: linear-gradient(135deg, #e95420 0%, #c7411b 100%);
+  .vendor-icon-small,
+  .card-bg-icon {
+    color: #d35400;
+  }
+  &.is-active {
+    background: linear-gradient(135deg, #f39c12 0%, #d35400 100%);
+  }
 }
 
 .vendor-centos {
-  background: linear-gradient(135deg, #7030a0 0%, #5a2580 100%);
+  .vendor-icon-small,
+  .card-bg-icon {
+    color: #5b2c6f;
+  }
+  &.is-active {
+    background: linear-gradient(135deg, #8e44ad 0%, #5b2c6f 100%);
+  }
 }
 
 .vendor-anolis {
-  background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+  .vendor-icon-small,
+  .card-bg-icon {
+    color: #34495e;
+  }
+  &.is-active {
+    background: linear-gradient(135deg, #95a5a6 0%, #34495e 100%);
+  }
+}
+
+.vendor-kylin {
+  .vendor-icon-small,
+  .card-bg-icon {
+    color: #c0392b;
+  }
+  &.is-active {
+    background: linear-gradient(135deg, #e74c3c 0%, #922b21 100%);
+  }
 }
 
 .vendor-default {
-  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+  .vendor-icon-small,
+  .card-bg-icon {
+    color: #545b62;
+  }
+  &.is-active {
+    background: linear-gradient(135deg, #99a3a4 0%, #626567 100%);
+  }
 }
 
 // 严重程度标签
