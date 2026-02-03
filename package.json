@@ -69,6 +69,7 @@
     "rollup-plugin-visualizer": "^6.0.3",
     "sass-embedded": "^1.90.0",
     "tailwindcss": "^4.1.12",
+    "terser": "^5.46.0",
     "typescript": "^5.9.2",
     "vite": "^7.1.2",
     "vite-plugin-html": "^3.2.2",
