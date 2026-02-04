@@ -524,7 +524,9 @@ export const vulnerabilityApi = {
       },
       size: params.size || 20,
       page: params.page || 1,
-      filter: params.filter ?`host_key|vul_id|patch_id|affected_pkgs:*${params.filter || ''}*` : undefined
+      filter: params.filter
+        ? `host_key|vul_id|patch_id|affected_pkgs:*${params.filter || ''}*`
+        : undefined
     }
     return apiService.post(
       `/dts/api/dts/q/data/VAP2_LIST_PATCH_BY_CVES/?cacheBuster=${cacheBuster}`,
@@ -1276,6 +1278,75 @@ export const operationReportApi = {
   }
 }
 
+/**
+ * CVE 漏洞查询 API
+ * 参照 Angular vap.service.js 实现
+ */
+export const cveApi = {
+  /**
+   * 分页查询 CVE 列表
+   * GET /vap/api/vap/v2/cve/list
+   * @param {Object} params - 查询参数
+   * @param {string} params.source - 数据源: redhat / kylin
+   * @param {string} params.severity - 严重等级: critical / important / moderate / low
+   * @param {string} params.keyword - 关键字（搜索CVE ID或描述）
+   * @param {string} params.packageName - 包名
+   * @param {string} params.startDate - 开始日期（格式：yyyy-MM-dd）
+   * @param {string} params.endDate - 结束日期（格式：yyyy-MM-dd）
+   * @param {number} params.page - 页码（从0开始）
+   * @param {number} params.size - 每页数量
+   * @param {string} params.sortBy - 排序字段: publicDate / severity / cveId
+   * @param {string} params.sortDir - 排序方向: asc / desc
+   * @returns {Promise}
+   */
+  getCveList(params = {}) {
+    const queryParams = {}
+
+    // 只添加非空且非 'all' 的参数
+    if (params.source && params.source !== 'all') queryParams.source = params.source
+    if (params.severity && params.severity !== 'all') queryParams.severity = params.severity
+    if (params.keyword) queryParams.keyword = params.keyword
+    if (params.packageName) queryParams.packageName = params.packageName
+    if (params.startDate) queryParams.startDate = params.startDate
+    if (params.endDate) queryParams.endDate = params.endDate
+    if (params.page !== undefined) queryParams.page = params.page
+    if (params.size !== undefined) queryParams.size = params.size
+    if (params.sortBy) queryParams.sortBy = params.sortBy
+    if (params.sortDir) queryParams.sortDir = params.sortDir
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/list`, { params: queryParams })
+  },
+
+  /**
+   * 查询 CVE 详情
+   * GET /vap/api/vap/v2/cve/detail/{cveId}
+   * @param {string} cveId - CVE编号，如 CVE-2025-26597
+   * @returns {Promise}
+   */
+  getCveDetail(cveId) {
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/detail/${encodeURIComponent(cveId)}`)
+  },
+
+  /**
+   * 获取统计概览
+   * GET /vap/api/vap/v2/cve/statistics
+   * @returns {Promise}
+   */
+  getStatistics() {
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/statistics`)
+  },
+
+  /**
+   * 查询 CVE 受影响主机列表
+   * GET /vap/api/vap/v2/cve/affected-hosts/{cveId}
+   * @param {string} cveId - CVE编号
+   * @returns {Promise}
+   */
+  getAffectedHosts(cveId) {
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/affected-hosts/${encodeURIComponent(cveId)}`)
+  }
+}
+
 // 导出所有 API
 export default {
   scan: patchScanApi,
@@ -1291,5 +1362,6 @@ export default {
   windowsView: windowsViewApi,
   windowsRollback: windowsRollbackApi,
   yum: yumManageApi,
-  operationReport: operationReportApi
+  operationReport: operationReportApi,
+  cve: cveApi
 }

@@ -1,0 +1,96 @@
+/*
+ * 风险状态与标签样式 (Risk Status & Tags)
+ * 供全局复用 (CveDetail, CveList, etc.)
+ */
+@import './variables.scss';
+
+// ------------------------------
+// 1. 严重等级 (Severity)
+// ------------------------------
+.severity-tag {
+  border: none !important;
+  font-weight: 500;
+
+  &.is-critical {
+    background-color: $risk-severe !important;
+    color: white !important;
+  }
+  &.is-important {
+    background-color: $risk-high !important;
+    color: white !important;
+  }
+  &.is-moderate {
+    background-color: $risk-medium !important;
+    color: white !important;
+  }
+  &.is-low {
+    background-color: $risk-low !important;
+    color: white !important;
+  }
+}
+
+// 头部徽章样式（更厚重）
+.severity-badge {
+  @extend .severity-tag;
+  height: 24px;
+  padding: 0 12px;
+  border: none;
+  font-weight: 600;
+  font-size: 13px;
+
+  &.is-critical {
+    border-color: $risk-severe !important;
+  }
+  &.is-important {
+    border-color: $risk-high !important;
+  }
+  &.is-moderate {
+    border-color: $risk-medium !important;
+  }
+  &.is-low {
+    border-color: $risk-low !important;
+  }
+}
+
+// ------------------------------
+// 2. 补丁状态 (Patch Status)
+// ------------------------------
+.patch-status-tag {
+  border: 1px solid transparent;
+  background-color: transparent;
+
+  // 未修复 - 灰色
+  &.status-unfixed {
+    color: #595959 !important;
+    background-color: #F5F5F5 !important;
+    border-color: #D9D9D9 !important;
+  }
+
+  // 已修复 - 绿色
+  &.status-fixed {
+    color: #00B42A !important;
+    background-color: #E8FFEA !important;
+    border-color: #AFF0B5 !important;
+  }
+
+  // 进行中 - 蓝色
+  &.status-fixing {
+    color: #165DFF !important;
+    background-color: #E8F3FF !important;
+    border-color: #94BFFF !important;
+  }
+
+  // 失败 - 红色
+  &.status-failed {
+    color: #F53F3F !important;
+    background-color: #FFECE8 !important;
+    border-color: #FDCDC5 !important;
+  }
+
+  // 默认
+  &.status-default {
+    color: #909399 !important;
+    background-color: #F4F4F5 !important;
+    border-color: #E9E9EB !important;
+  }
+}

@@ -41,13 +41,19 @@ $font-size-xxl: 20px;
 // 模块卡片颜色
 $module-colors: (
   'jao': #212529,
-  'gfs': #607D8B,
+  'gfs': #607d8b,
   'cmd': #212529,
-  'acm': #4CAF50,
-  'dts': #FF9800,
-  'cac': #9C27B0,
-  'applet': #2196F3
+  'acm': #4caf50,
+  'dts': #ff9800,
+  'cac': #9c27b0,
+  'applet': #2196f3
 );
+
+// 风险等级颜色 (Premium Palette)
+$risk-severe: #f53f3f; // 严重 - Vibrant Red
+$risk-high: #ff7d00; // 高危 - Vibrant Orange
+$risk-medium: #ffc72e; // 中危 - Vibrant Gold
+$risk-low: #165dff; // 低危 - Vibrant Blue
 
 // 响应式断点
 $breakpoint-sm: 576px;
