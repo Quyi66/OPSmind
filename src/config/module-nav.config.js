@@ -176,7 +176,7 @@ export const SUDO_NAV_ITEMS = [
   { key: 'permission', label: 'sudo列表', icon: 'fas fa-list', path: '/sudo/permission' },
   { key: 'apply', label: '权限申请', icon: 'fas fa-file-alt', path: '/sudo/apply' },
   { key: 'templates', label: '模板管理', icon: 'fas fa-clipboard-list', path: '/sudo/templates' },
-  { key: 'password', label: '密码管理', icon: 'fas fa-key', path: '/sudo/password' },
+  { key: 'password', label: '主机密码', icon: 'fas fa-key', path: '/sudo/password' },
   { key: 'log', label: '操作日志', icon: 'fas fa-history', path: '/sudo/log' }
 ]
 

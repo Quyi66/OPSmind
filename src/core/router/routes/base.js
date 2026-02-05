@@ -631,7 +631,7 @@ export const baseRoutes = [
             path: 'password',
             name: 'sudo-password',
             component: () => import('@/modules/sudo/components/SudoPasswordManage.vue'),
-            meta: { title: '密码管理', moduleCode: 'sudo' }
+            meta: { title: '主机密码', moduleCode: 'sudo' }
           },
           {
             path: 'log',
