@@ -231,11 +231,21 @@
                 中等
                 <i class="fa fa-circle text-dark" />
               </template>
+              <template #default="{ row }">
+                <span :class="{ 'text-dark font-bold': row.num_moderate > 0 }">
+                  {{ row.num_moderate }}
+                </span>
+              </template>
             </el-table-column>
             <el-table-column prop="num_low" width="80">
               <template #header>
                 低
                 <i class="fa fa-circle text-info" />
+              </template>
+              <template #default="{ row }">
+                <span :class="{ 'text-info font-bold': row.num_low > 0 }">
+                  {{ row.num_low }}
+                </span>
               </template>
             </el-table-column>
             <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
@@ -411,8 +421,12 @@
             </el-table-column>
             <el-table-column prop="severity" label="严重程度" width="100">
               <template #default="{ row }">
-                <el-tag :type="getSeverityType(row.severity)" size="small">
-                  {{ row.severity }}
+                <el-tag
+                  effect="dark"
+                  class="severity-tag"
+                  :class="'is-' + (row.severity || '').toLowerCase()"
+                >
+                  {{ getSeverityLabel(row.severity) }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -659,8 +673,8 @@ const chartOption = computed(() => {
         startAngle: 180,
         endAngle: 0,
         data: [
-          { value: kpiStats.criticalPatchCount, name: '致命', itemStyle: { color: '#f56c6c' } },
-          { value: kpiStats.importantPatchCount, name: '严重', itemStyle: { color: '#e6a23c' } }
+          { value: kpiStats.criticalPatchCount, name: '严重', itemStyle: { color: '#F53F3F' } },
+          { value: kpiStats.importantPatchCount, name: '重要', itemStyle: { color: '#FF7D00' } }
         ],
         label: {
           show: false
@@ -740,7 +754,6 @@ const selectedHostInfo = ref({})
 
 // 修复漏洞对话框
 const fixDialogVisible = ref(false)
-const fixDialogLoading = ref(false)
 const fixSubmitting = ref(false)
 const fixDialogData = reactive({
   hosts: '',
@@ -749,6 +762,17 @@ const fixDialogData = reactive({
   packages: '',
   patchStatusIds: []
 })
+
+// 获取严重程度显示标签
+function getSeverityLabel(severity) {
+  const map = {
+    Critical: '严重',
+    Important: '重要',
+    Moderate: '中等',
+    Low: '低级'
+  }
+  return map[severity] || severity
+}
 
 // 获取严重程度样式类
 function getSeverityClass(severity) {
@@ -1432,10 +1456,10 @@ defineExpose({
         transition: width 0.5s ease;
 
         &.critical {
-          background-color: #f56c6c;
+          background-color: #f53f3f;
         }
         &.important {
-          background-color: #e6a23c;
+          background-color: #ff7d00;
         }
       }
     }
@@ -1452,11 +1476,11 @@ defineExpose({
         color: #495057;
 
         &.critical i {
-          color: #f56c6c;
+          color: #f53f3f;
           font-size: 8px;
         }
         &.important i {
-          color: #e6a23c;
+          color: #ff7d00;
           font-size: 8px;
         }
 
@@ -1561,11 +1585,11 @@ defineExpose({
       margin-bottom: 6px;
 
       .label-critical {
-        color: #f56c6c;
+        color: #f53f3f;
         font-weight: 500;
       }
       .label-important {
-        color: #e6a23c;
+        color: #ff7d00;
         font-weight: 500;
       }
       .value {
@@ -1584,10 +1608,10 @@ defineExpose({
         border-radius: 4px;
 
         &.critical {
-          background: #f56c6c;
+          background: #f53f3f;
         }
         &.important {
-          background: #e6a23c;
+          background: #ff7d00;
         }
       }
     }
@@ -1823,24 +1847,24 @@ defineExpose({
 }
 
 // 文字颜色 - Element UI 色值
-// 严重 - 红色 (danger)
+// 严重 - 红色 (Critical - Red)
 .text-danger {
-  color: #f56c6c;
+  color: #f53f3f;
 }
 
-// 重要 - 橙色 (warning)
+// 重要 - 橙色 (Important - Orange)
 .text-warning {
-  color: #e6a23c;
+  color: #ff7d00;
 }
 
-// 中等 - 黄绿色
+// 中等 - 金色
 .text-dark {
-  color: #c9a66b;
+  color: #ffc72e;
 }
 
 // 低 - 蓝色 (primary)
 .text-info {
-  color: #409eff;
+  color: #165dff;
 }
 
 .font-bold {

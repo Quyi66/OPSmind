@@ -19,7 +19,7 @@
           <div class="card-header">
             <div class="vendor-info">
               <i :class="getVendorIcon(vendor.vendor)" class="vendor-icon-small" />
-              <span class="vendor-name">{{ vendor.vendor.toUpperCase() }}</span>
+              <span class="vendor-name">{{ (vendor.vendor || 'Unknown').toUpperCase() }}</span>
             </div>
             <div v-if="currentVendor === vendor.vendor" class="active-indicator">
               <i class="fa fa-check-circle" />
@@ -44,21 +44,13 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
-        <el-form-item>
-          <el-checkbox-group v-model="severityFilter">
-            <el-checkbox value="Critical">
-              <span class="severity-tag severity-critical">严重</span>
-            </el-checkbox>
-            <el-checkbox value="Important">
-              <span class="severity-tag severity-important">重要</span>
-            </el-checkbox>
-            <el-checkbox value="Moderate">
-              <span class="severity-tag severity-moderate">中等</span>
-            </el-checkbox>
-            <el-checkbox value="Low">
-              <span class="severity-tag severity-low">低级</span>
-            </el-checkbox>
-          </el-checkbox-group>
+        <el-form-item label="严重级别">
+          <el-select v-model="severityFilter" multiple placeholder="请选择" style="width: auto">
+            <el-option label="严重" value="Critical" />
+            <el-option label="重要" value="Important" />
+            <el-option label="中等" value="Moderate" />
+            <el-option label="低级" value="Low" />
+          </el-select>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="ignoreFilter" style="width: 100px">
@@ -147,8 +139,12 @@
         <el-table-column prop="title" label="概要" min-width="180" show-overflow-tooltip />
         <el-table-column prop="severity" label="严重级别" width="100" align="left">
           <template #default="{ row }">
-            <el-tag :type="getSeverityStyle(row.severity)" size="small">
-              {{ row.severity }}
+            <el-tag
+              effect="dark"
+              class="severity-tag"
+              :class="'is-' + (row.severity || '').toLowerCase()"
+            >
+              {{ getSeverityLabel(row.severity) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -340,14 +336,15 @@ function getVendorIcon(vendor) {
 }
 
 // 获取严重程度样式
-function getSeverityStyle(severity) {
-  const styleMap = {
-    Critical: 'danger',
-    Important: 'warning',
-    Moderate: '',
-    Low: 'info'
+// 获取严重程度显示标签
+function getSeverityLabel(severity) {
+  const map = {
+    Critical: '严重',
+    Important: '重要',
+    Moderate: '中等',
+    Low: '低级'
   }
-  return styleMap[severity] || ''
+  return map[severity] || severity
 }
 
 // 格式化日期
@@ -873,15 +870,6 @@ defineExpose({
   &.is-active {
     background: linear-gradient(135deg, #99a3a4 0%, #626567 100%);
   }
-}
-
-// 严重程度标签
-.severity-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
 }
 
 .severity-critical {

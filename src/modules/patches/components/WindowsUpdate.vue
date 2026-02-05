@@ -1,72 +1,59 @@
 <template>
   <div class="ops-page-layout">
     <!-- 筛选区 -->
-    <div class="ops-filter-bar filter-wrap" style="margin-bottom: 8px;">
-      <el-checkbox-group v-model="categoryFilter" @change="handleFilter">
-        <el-checkbox value="Security Updates">
-          <el-tag type="danger" size="small" effect="dark">安全</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Critical Updates">
-          <el-tag type="danger" size="small" effect="dark">重要</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Update Rollups">
-          <el-tag type="success" size="small" effect="dark">更新汇总</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Application">
-          <el-tag type="success" size="small" effect="dark">应用程序</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Connectors">
-          <el-tag type="success" size="small" effect="dark">连接器</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Definition Updates">
-          <el-tag type="success" size="small" effect="dark">定义更新</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Developer Kits">
-          <el-tag type="success" size="small" effect="dark">开发工具包</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Feature Packs">
-          <el-tag type="success" size="small" effect="dark">功能包</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Guidance">
-          <el-tag type="success" size="small" effect="dark">说明性更新</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Service Packs">
-          <el-tag type="success" size="small" effect="dark">服务包</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Tools">
-          <el-tag type="success" size="small" effect="dark">工具</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Updates">
-          <el-tag type="success" size="small" effect="dark">常规</el-tag>
-        </el-checkbox>
-        <el-checkbox value="Upgrades">
-          <el-tag size="small" effect="dark">升级</el-tag>
-        </el-checkbox>
-      </el-checkbox-group>
-      <el-input
-        v-model="filterText"
-        placeholder="搜索..."
-        size="small"
-        style="width: 180px; margin-left: auto"
-        clearable
-        @input="handleFilter"
-      >
-        <template #prefix>
-          <i class="fa fa-search" />
-        </template>
-      </el-input>
-    </div>
+    <!-- 筛选与操作区 -->
+    <div class="ops-filter-bar">
+      <el-form :inline="true" size="small">
+        <el-form-item label="更新分类">
+          <el-select
+            v-model="categoryFilter"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="请选择"
+            style="width: 240px"
+            clearable
+            filterable
+          >
+            <el-option
+              v-for="item in classificationOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filterText"
+            placeholder="搜索 KB 编号 / 描述..."
+            style="width: 240px"
+            clearable
+            @keyup.enter="handleFilter"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleFilter">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
 
-    <!-- 操作区 -->
-    <div class="ops-action-bar">
-      <el-button
-        type="primary"
-        size="small"
-        :disabled="selectedKbNumbers.length === 0"
-        @click="handleFixSelected"
-      >
-        修复选中漏洞
-      </el-button>
+      <div style="margin-left: auto">
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="selectedKbNumbers.length === 0"
+          @click="handleFixSelected"
+        >
+          修复选中漏洞
+        </el-button>
+      </div>
     </div>
 
     <!-- 表格区域 -->
@@ -75,35 +62,36 @@
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
-       
         height="calc(100vh - 320px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
         <el-table-column prop="kb_number" label="KB编号" width="150">
           <template #default="{ row }">
-            <el-button
+            <el-link
               v-if="row.kb_number"
-              text
               type="primary"
-              @click="openKb(row.kb_number)">
+              :underline="false"
+              @click="openKb(row.kb_number)"
+            >
               {{ row.kb_number }}
-            </el-button>
+            </el-link>
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="category_name" label="类型" min-width="120" />
+        <el-table-column prop="category_name" label="类型" min-width="140">
+          <template #default="{ row }">
+            <el-tag :type="getCategoryType(row.category_name)" size="small" effect="plain">
+              {{ getCategoryLabel(row.category_name) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="title" label="描述" min-width="400" show-overflow-tooltip />
         <el-table-column prop="affect_machines" label="受影响主机" width="120">
           <template #default="{ row }">
-            <el-button
-              type="primary"
-              link
-              size="small"
-              @click="handleViewAffectedMachines(row)"
-            >
+            <el-link type="primary" :underline="false" @click="handleViewAffectedMachines(row)">
               {{ row.affect_machines || 0 }}
-            </el-button>
+            </el-link>
           </template>
         </el-table-column>
       </el-table>
@@ -123,39 +111,8 @@
       />
     </div>
 
-    <!-- 受影响主机对话框 -->
-    <el-dialog
-      v-model="affectedMachinesVisible"
-      :title="`受影响主机 - ${selectedPatch?.kb_number || ''}`"
-      width="800px"
-      destroy-on-close
-    >
-      <div v-loading="affectedMachinesLoading">
-        <el-table :data="affectedMachinesList" size="small"  max-height="400">
-          <el-table-column prop="host_key" label="主机" min-width="140" />
-          <el-table-column prop="os_distro" label="操作系统" min-width="120" />
-          <el-table-column prop="os_version" label="版本" min-width="100" />
-          <el-table-column prop="patch_status" label="状态" min-width="100">
-            <template #default="{ row }">
-              <el-tag :type="getPatchStatusType(row.patch_status)" size="small">
-                {{ row.patch_status }}
-              </el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <template #footer>
-        <el-button @click="affectedMachinesVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
-
     <!-- 批量修复选择主机对话框 -->
-    <el-dialog
-      v-model="fixSelectionVisible"
-      title="修复选中漏洞"
-      width="920px"
-      destroy-on-close
-    >
+    <el-dialog v-model="fixSelectionVisible" title="修复选中漏洞" width="920px" destroy-on-close>
       <div v-loading="fixSelectionLoading" class="fix-selection">
         <div class="fix-selection__card">
           <div class="fix-selection__card-header">
@@ -163,8 +120,8 @@
             <span class="fix-selection__card-title">更新漏洞</span>
           </div>
           <div class="fix-selection__card-body">
-            <div v-if="selectedKbNumbers.length" class="fix-selection__kb-list">
-              <el-tag v-for="kb in selectedKbNumbers" :key="kb" type="info" effect="plain" size="small">
+            <div v-if="currentFixKbs.length" class="fix-selection__kb-list">
+              <el-tag v-for="kb in currentFixKbs" :key="kb" type="info" effect="plain" size="small">
                 {{ kb }}
               </el-tag>
             </div>
@@ -194,7 +151,6 @@
               ref="fixSelectionTableRef"
               :data="filteredFixSelection"
               size="small"
-             
               max-height="420"
               @selection-change="handleFixSelectionChange"
             >
@@ -243,6 +199,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Search, RefreshRight } from '@element-plus/icons-vue'
 import { windowsUpdateApi } from '../api'
 import FixSelectedVulnsDialog from './dialogs/FixSelectedVulnsDialog.vue'
 
@@ -253,6 +210,45 @@ const tableRef = ref(null)
 // 筛选
 const filterText = ref('')
 const categoryFilter = ref(['Critical Updates', 'Security Updates'])
+
+const classificationOptions = [
+  { label: '安全', value: 'Security Updates' },
+  { label: '重要', value: 'Critical Updates' },
+  { label: '更新汇总', value: 'Update Rollups' },
+  { label: '应用程序', value: 'Application' },
+  { label: '连接器', value: 'Connectors' },
+  { label: '定义更新', value: 'Definition Updates' },
+  { label: '开发工具包', value: 'Developer Kits' },
+  { label: '功能包', value: 'Feature Packs' },
+  { label: '说明性更新', value: 'Guidance' },
+  { label: '服务包', value: 'Service Packs' },
+  { label: '工具', value: 'Tools' },
+  { label: '常规', value: 'Updates' },
+  { label: '升级', value: 'Upgrades' }
+]
+
+function getCategoryLabel(val) {
+  const item = classificationOptions.find(opt => opt.value === val)
+  return item ? item.label : val
+}
+
+function getCategoryType(val) {
+  // High Priority / Security
+  if (['Security Updates', 'Critical Updates'].includes(val)) return 'danger'
+
+  // Significant System Updates
+  if (['Update Rollups', 'Service Packs', 'Upgrades', 'Feature Packs'].includes(val))
+    return 'primary'
+
+  // Components & Tools
+  if (['Application', 'Connectors', 'Developer Kits', 'Tools'].includes(val)) return 'success'
+
+  // Definitions (Warning color implies attention but not critical error)
+  if (['Definition Updates'].includes(val)) return 'warning'
+
+  // Others (Guidance, Updates)
+  return 'info'
+}
 
 // 表格数据
 const tableData = ref([])
@@ -268,11 +264,7 @@ const selectedKbNumbers = computed(() => {
   return selectedRows.value.map(row => row.kb_number).filter(Boolean)
 })
 
-// 受影响主机对话框
-const affectedMachinesVisible = ref(false)
-const affectedMachinesLoading = ref(false)
-const affectedMachinesList = ref([])
-const selectedPatch = ref(null)
+// 已移除 affectedMachines 相关逻辑
 
 // 批量修复
 const fixSelectionVisible = ref(false)
@@ -283,14 +275,15 @@ const fixSelectionTableRef = ref(null)
 const fixSelectionSelectedIds = ref([])
 const fixDialogVisible = ref(false)
 const fixDialogIds = ref([])
+const currentFixKbs = ref([]) // 当前正在修复的 KB 列表
 
 // 补丁状态样式
 function getPatchStatusType(status) {
   const map = {
-    '未修复': 'info',
-    '已修复': 'success',
-    '修复中': '',
-    '修复失败': 'warning'
+    未修复: 'info',
+    已修复: 'success',
+    修复中: '',
+    修复失败: 'warning'
   }
   return map[status] || 'info'
 }
@@ -315,6 +308,13 @@ async function loadData() {
   }
 }
 
+function handleReset() {
+  categoryFilter.value = ['Critical Updates', 'Security Updates']
+  filterText.value = ''
+  pagination.page = 1
+  loadData()
+}
+
 function handleFilter() {
   pagination.page = 1
   loadData()
@@ -335,13 +335,14 @@ function handleSelectionChange(selection) {
   selectedRows.value = selection
 }
 
-// 修复选中漏洞
-async function handleFixSelected() {
-  if (selectedKbNumbers.value.length === 0) {
-    ElMessage.warning('请先选择要修复的漏洞')
+// 修复选中漏洞（或者指定漏洞）
+async function openFixDialog(kbNumbers) {
+  if (!kbNumbers || kbNumbers.length === 0) {
+    ElMessage.warning('请选择要修复的漏洞')
     return
   }
 
+  currentFixKbs.value = kbNumbers
   fixSelectionVisible.value = true
   fixSelectionLoading.value = true
   fixSelectionFilter.value = ''
@@ -349,11 +350,10 @@ async function handleFixSelected() {
 
   try {
     const response = await windowsUpdateApi.getAffectedMachinesByKbNumbers({
-      kb_numbers: selectedKbNumbers.value
+      kb_numbers: kbNumbers
     })
-    const records = response?.records || response?.data?.records || []
-    fixSelectionList.value = records
-    if (!records.length) {
+    fixSelectionList.value = response?.records || response?.data?.records || []
+    if (!fixSelectionList.value.length) {
       ElMessage.info('所选漏洞暂无可修复的主机')
     }
   } catch (error) {
@@ -362,6 +362,16 @@ async function handleFixSelected() {
   } finally {
     fixSelectionLoading.value = false
   }
+}
+
+// 按钮点击事件处理
+function handleFixSelected() {
+  openFixDialog(selectedKbNumbers.value)
+}
+
+// 单个点击事件处理（查看受影响主机 -> 直接打开修复对话框）
+function handleViewAffectedMachines(row) {
+  openFixDialog([row.kb_number])
 }
 
 const filteredFixSelection = computed(() => {
@@ -395,24 +405,7 @@ function handleFixSubmitted() {
   loadData()
 }
 
-// 查看受影响主机
-async function handleViewAffectedMachines(row) {
-  selectedPatch.value = row
-  affectedMachinesVisible.value = true
-  affectedMachinesLoading.value = true
-
-  try {
-    const response = await windowsUpdateApi.getAffectedMachines({
-      kb_number: row.kb_number
-    })
-    affectedMachinesList.value = response?.records || response?.data?.records || []
-  } catch (error) {
-    console.error('Failed to load affected machines:', error)
-    affectedMachinesList.value = []
-  } finally {
-    affectedMachinesLoading.value = false
-  }
-}
+// 查看受影响主机 logic removed, replaced by handleViewAffectedMachines reusing openFixDialog
 
 // 导出
 function handleExport() {
@@ -447,22 +440,14 @@ defineExpose({ refresh })
 </script>
 
 <style scoped lang="scss">
-// 筛选区允许换行
-.filter-wrap {
-  flex-wrap: wrap;
+.ops-filter-bar {
+  // Global class .ops-filter-bar handles layout.
+  // We use .filter-left and .filter-right for grouping.
 
-  :deep(.el-checkbox-group) {
+  .filter-right {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  :deep(.el-checkbox) {
-    margin-right: 0;
-  }
-
-  :deep(.el-checkbox__label) {
-    padding-left: 4px;
+    align-items: center;
+    gap: 12px;
   }
 }
 

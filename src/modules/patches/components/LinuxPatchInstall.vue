@@ -4,14 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="严重程度">
-          <el-select
-            v-model="filters.severity"
-            multiple
-            collapse-tags
-            collapse-tags-tooltip
-            placeholder="请选择"
-            style="width: 200px"
-          >
+          <el-select v-model="filters.severity" multiple placeholder="请选择" style="width: auto">
             <el-option label="严重" value="Critical" />
             <el-option label="重要" value="Important" />
             <el-option label="中等" value="Moderate" />
@@ -53,8 +46,15 @@
       >
         安装选中的补丁
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -65,7 +65,6 @@
         ref="tableRef"
         v-loading="loading"
         :data="paginatedData"
-       
         max-height="calc(100vh - 320px)"
         @selection-change="handleSelectionChange"
       >
@@ -80,9 +79,13 @@
         <el-table-column prop="title" label="概要" min-width="220" show-overflow-tooltip />
         <el-table-column prop="severity" label="严重性" width="110" sortable>
           <template #default="{ row }">
-            <span :class="['badge', getSeverityBadgeClass(row.severity)]">
-              {{ row.severity }}
-            </span>
+            <el-tag
+              effect="dark"
+              class="severity-tag"
+              :class="'is-' + (row.severity || '').toLowerCase()"
+            >
+              {{ getSeverityLabel(row.severity) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="publish_date" label="发布时间" width="120" sortable>
@@ -205,9 +208,7 @@
             <div v-for="pkg in affectedPackages" :key="pkg" class="package-item">
               {{ pkg }}
             </div>
-            <div v-if="affectedPackages.length === 0" class="no-data">
-              暂无数据
-            </div>
+            <div v-if="affectedPackages.length === 0" class="no-data">暂无数据</div>
           </div>
         </div>
 
@@ -222,7 +223,8 @@
             <div class="host-toolbar">
               <el-select v-model="hostFilter" size="small" style="width: 140px">
                 <el-option label="@@(linux)" value="@@(linux)">
-                  <i class="fa fa-server" /> @@(linux)
+                  <i class="fa fa-server" />
+                  @@(linux)
                 </el-option>
               </el-select>
               <el-input
@@ -238,7 +240,6 @@
             <el-table
               ref="hostTableRef"
               :data="filteredHosts"
-             
               size="small"
               height="220"
               @selection-change="handleHostSelectionChange"
@@ -327,10 +328,11 @@ const filteredData = computed(() => {
   // 根据关键词筛选
   if (filters.keyword) {
     const keyword = filters.keyword.toLowerCase().trim()
-    data = data.filter(item =>
-      item.patch_id?.toLowerCase().includes(keyword) ||
-      item.title?.toLowerCase().includes(keyword) ||
-      item.related_vuls?.toLowerCase().includes(keyword)
+    data = data.filter(
+      item =>
+        item.patch_id?.toLowerCase().includes(keyword) ||
+        item.title?.toLowerCase().includes(keyword) ||
+        item.related_vuls?.toLowerCase().includes(keyword)
     )
   }
 
@@ -374,9 +376,9 @@ const filteredHosts = computed(() => {
   let hosts = affectedHosts.value
   if (hostSearchText.value) {
     const keyword = hostSearchText.value.toLowerCase()
-    hosts = hosts.filter(h =>
-      h.hostKey?.toLowerCase().includes(keyword) ||
-      h.os_distro?.toLowerCase().includes(keyword)
+    hosts = hosts.filter(
+      h =>
+        h.hostKey?.toLowerCase().includes(keyword) || h.os_distro?.toLowerCase().includes(keyword)
     )
   }
   // 更新总数
@@ -397,32 +399,37 @@ function handleHostSizeChange(size) {
   hostPagination.page = 1
 }
 
-// 获取严重程度徽章样式
-function getSeverityBadgeClass(severity) {
+// 获取严重程度显示标签
+function getSeverityLabel(severity) {
   const map = {
-    Critical: 'badge-danger',
-    Important: 'badge-warning',
-    Moderate: 'badge-dark',
-    Low: 'badge-secondary'
+    Critical: '严重',
+    Important: '重要',
+    Moderate: '中等',
+    Low: '低级'
   }
-  return map[severity] || 'badge-secondary'
+  return map[severity] || severity
 }
 
 // 格式化日期
 function formatDate(dateStr) {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).replace(/\//g, '-')
+  return date
+    .toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    .replace(/\//g, '-')
 }
 
 // 解析CVE列表
 function parseCveList(cveStr) {
   if (!cveStr) return []
-  return cveStr.split(',').map(cve => cve.trim()).filter(cve => cve)
+  return cveStr
+    .split(',')
+    .map(cve => cve.trim())
+    .filter(cve => cve)
 }
 
 // 预处理数据 - 提前解析CVE列表
@@ -527,7 +534,8 @@ async function loadPatchDetail(patchId) {
       patch_id: patchId,
       title: selectedPatch.value?.title || 'Important: security update',
       severity: selectedPatch.value?.severity || 'Important',
-      description: 'The libtiff packages contain a library of functions for manipulating Tagged Image File Format (TIFF) files. Security Fix(es): libtiff: LibTIFF Use-After-Free Vulnerability (CVE-2025-8176) For more details about the security issue(s), including the impact, a CVSS score, acknowledgments, and other related information, refer to the CVE page(s) listed in the References section.',
+      description:
+        'The libtiff packages contain a library of functions for manipulating Tagged Image File Format (TIFF) files. Security Fix(es): libtiff: LibTIFF Use-After-Free Vulnerability (CVE-2025-8176) For more details about the security issue(s), including the impact, a CVSS score, acknowledgments, and other related information, refer to the CVE page(s) listed in the References section.',
       related_vuls: selectedPatch.value?.related_vuls || 'CVE-2025-8176'
     }
   } finally {
@@ -617,14 +625,16 @@ function handleHostSelectionChange(selection) {
 function formatDateTime(timestamp) {
   if (!timestamp) return '-'
   const date = new Date(timestamp)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).replace(/\//g, '-')
+  return date
+    .toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+    .replace(/\//g, '-')
 }
 
 async function executeInstall() {
