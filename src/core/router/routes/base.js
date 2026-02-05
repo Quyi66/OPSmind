@@ -14,6 +14,8 @@ const InspectionGroupLayout = () => import('@/layouts/groups/InspectionGroupLayo
 const AssetGroupLayout = () => import('@/layouts/groups/AssetGroupLayout.vue')
 const UserGroupLayout = () => import('@/layouts/groups/UserGroupLayout.vue')
 const SettingsGroupLayout = () => import('@/layouts/groups/SettingsGroupLayout.vue')
+const FlowGroupLayout = () => import('@/layouts/groups/FlowGroupLayout.vue')
+const SecurityGroupLayout = () => import('@/layouts/groups/SecurityGroupLayout.vue')
 
 export const baseRoutes = [
   {
@@ -512,9 +514,9 @@ export const baseRoutes = [
     ]
   },
 
-  // ========== 用户管理分组 (users, flow) ==========
+  // ========== 用户管理分组 (users) ==========
   {
-    path: '/:moduleCode(users|flow)',
+    path: '/:moduleCode(users)',
     component: MainLayout,
     meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'user-management' },
     children: [
@@ -525,10 +527,7 @@ export const baseRoutes = [
           // 动态重定向
           {
             path: '',
-            redirect: to => {
-              const defaults = { users: '/users/overview', flow: '/flow/list' }
-              return defaults[to.params.moduleCode] || '/users/overview'
-            }
+            redirect: to => '/users/overview'
           },
           // users 模块路由
           {
@@ -554,12 +553,26 @@ export const baseRoutes = [
             name: 'users-logs',
             component: () => import('@/modules/user/components/operation/OperationLogsView.vue'),
             meta: { title: '操作日志', moduleCode: 'users' }
-          },
+          }
+        ]
+      }
+    ]
+  },
+
+  // ========== 流程管理分组 (flow) ==========
+  {
+    path: '/:moduleCode(flow)',
+    component: MainLayout,
+    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'flow-management' },
+    children: [
+      {
+        path: '',
+        component: FlowGroupLayout,
+        children: [
+          // 动态重定向
           {
-            path: 'config',
-            name: 'users-config',
-            component: () => import('@/modules/user/components/config/FeatureConfigView.vue'),
-            meta: { title: '功能配置', moduleCode: 'users' }
+            path: '',
+            redirect: to => '/flow/list'
           },
           // flow 模块路由 - 需要通过 FlowManagementModule 包裹以支持设计器/执行器等全屏视图
           {
@@ -585,15 +598,15 @@ export const baseRoutes = [
     ]
   },
 
-  // ========== sudo权限管理 ==========
+  // ========== sudo权限管理 (安全中心) ==========
   {
     path: '/sudo',
     component: MainLayout,
-    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'user-management' },
+    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'security-management' },
     children: [
       {
         path: '',
-        component: UserGroupLayout,
+        component: SecurityGroupLayout,
         redirect: '/sudo/permission',
         children: [
           {
@@ -607,6 +620,12 @@ export const baseRoutes = [
             name: 'sudo-apply',
             component: () => import('@/modules/sudo/components/SudoApplyList.vue'),
             meta: { title: '权限申请', moduleCode: 'sudo' }
+          },
+          {
+            path: 'templates',
+            name: 'sudo-templates',
+            component: () => import('@/modules/sudo/components/SudoTemplateList.vue'),
+            meta: { title: '模板管理', moduleCode: 'sudo' }
           },
           {
             path: 'password',
@@ -625,15 +644,15 @@ export const baseRoutes = [
     ]
   },
 
-  // ========== 密码管理 ==========
+  // ========== 密码管理 (安全中心) ==========
   {
     path: '/password',
     component: MainLayout,
-    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'user-management' },
+    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'security-management' },
     children: [
       {
         path: '',
-        component: UserGroupLayout,
+        component: SecurityGroupLayout,
         redirect: '/password/application',
         children: [
           // password 模块路由 - 需要通过 PasswordManagementModule 包裹以支持管理员面板
@@ -741,6 +760,12 @@ export const baseRoutes = [
             name: 'ssc-engine',
             component: () => import('@/modules/settings/components/EngineManagement.vue'),
             meta: { title: '引擎管理' }
+          },
+          {
+            path: 'scheduler',
+            name: 'ssc-scheduler',
+            component: () => import('@/modules/settings/components/TaskScheduler.vue'),
+            meta: { title: '计划任务' }
           }
         ]
       }

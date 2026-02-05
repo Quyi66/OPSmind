@@ -162,8 +162,7 @@ export const USERS_NAV_ITEMS = [
   { key: 'overview', label: '用户总览', icon: 'fas fa-tachometer-alt', path: '/users/overview' },
   { key: 'users', label: '用户列表', icon: 'fas fa-user', path: '/users/users' },
   { key: 'groups', label: '用户组', icon: 'fas fa-users', path: '/users/groups' },
-  { key: 'logs', label: '操作日志', icon: 'fas fa-history', path: '/users/logs' },
-  { key: 'config', label: '功能配置', icon: 'fas fa-cog', path: '/users/config' }
+  { key: 'logs', label: '操作日志', icon: 'fas fa-history', path: '/users/logs' }
 ]
 
 // 流程管理模块的页面导航
@@ -176,6 +175,7 @@ export const FLOW_NAV_ITEMS = [
 export const SUDO_NAV_ITEMS = [
   { key: 'permission', label: 'sudo列表', icon: 'fas fa-list', path: '/sudo/permission' },
   { key: 'apply', label: '权限申请', icon: 'fas fa-file-alt', path: '/sudo/apply' },
+  { key: 'templates', label: '模板管理', icon: 'fas fa-clipboard-list', path: '/sudo/templates' },
   { key: 'password', label: '密码管理', icon: 'fas fa-key', path: '/sudo/password' },
   { key: 'log', label: '操作日志', icon: 'fas fa-history', path: '/sudo/log' }
 ]
@@ -203,7 +203,8 @@ export const SSC_NAV_ITEMS = [
   { key: 'appres', label: '应用资源', icon: 'fas fa-boxes', path: '/ssc/appres' },
   { key: 'email', label: '邮件设置', icon: 'fas fa-mail-bulk', path: '/ssc/email' },
   { key: 'datasource', label: '数据源管理', icon: 'fas fa-code-merge', path: '/ssc/datasource' },
-  { key: 'engine', label: '引擎管理', icon: 'fas fa-car-battery', path: '/ssc/engine' }
+  { key: 'engine', label: '引擎管理', icon: 'fas fa-car-battery', path: '/ssc/engine' },
+  { key: 'scheduler', label: '计划任务', icon: 'fas fa-clock', path: '/ssc/scheduler' }
 ]
 
 /**

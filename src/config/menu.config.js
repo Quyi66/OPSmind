@@ -96,26 +96,28 @@ export const MENU_CONFIG = {
       ]
     },
     {
-      code: 'user-management',
-      name: '用户管理',
-      icon: 'fas fa-users',
-      description: '用户账户和权限管理',
+      code: 'flow-management',
+      name: '流程管理',
+      icon: 'fas fa-project-diagram',
+      description: '业务流程设计与审批管理',
       children: [
         {
-          code: 'users',
-          name: '用户中心',
-          icon: 'fas fa-users',
-          description: '用户账户和权限管理'
-        },
-        {
           code: 'flow',
-          name: '流程管理',
+          name: '流程中心',
           icon: 'fas fa-project-diagram',
-          description: '流程管理'
-        },
+          description: '流程设计与任务管理'
+        }
+      ]
+    },
+    {
+      code: 'security-management',
+      name: '安全中心',
+      icon: 'fas fa-lock',
+      description: '系统安全与权限控制',
+      children: [
         {
           code: 'sudo',
-          name: 'sudo权限',
+          name: 'Sudo权限',
           icon: 'fas fa-user-shield',
           description: 'sudo权限分配和管理'
         },
@@ -126,16 +128,32 @@ export const MENU_CONFIG = {
           description: '密码策略和安全管理'
         }
       ]
+    },
+    {
+      code: 'user-management',
+      name: '用户管理',
+      icon: 'fas fa-users',
+      description: '用户账户和权限管理',
+      children: [
+        {
+          code: 'users',
+          name: '用户中心',
+          icon: 'fas fa-users',
+          description: '用户账户和权限管理'
+        }
+      ]
     }
   ]
 }
 
 // 一级分组简写（URL友好别名）
 export const GROUP_ALIAS_MAP = {
-  'automation': 'auto',
+  automation: 'auto',
   'patch-testing': 'pt',
   'system-inspection': 'si',
   'asset-management': 'am',
+  'flow-management': 'flow',
+  'security-management': 'sec',
   'user-management': 'um',
   home: 'home'
 }
