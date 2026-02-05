@@ -1,43 +1,79 @@
 <template>
   <div class="windows-view">
-    <!-- 漏洞概览 - 柱状图 -->
-    <div class="chart-card">
-      <div class="chart-card__header">
-        <span class="chart-card__title">漏洞概览</span>
-        <el-button link @click="toggleBarFullscreen">
-          <i :class="barFullscreen ? 'fa fa-compress' : 'fa fa-expand'" />
-        </el-button>
+    <!-- 顶部 KPI 卡片 -->
+    <div class="kpi-row" v-loading="loadingStats">
+      <div class="kpi-card kpi-card--critical">
+        <div class="kpi-icon">
+          <i class="fa fa-exclamation-circle" />
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">重要更新</div>
+          <div class="kpi-value">{{ stats.critical }}</div>
+        </div>
       </div>
-      <div class="chart-card__body" :class="{ 'chart-card__body--fullscreen': barFullscreen }">
-        <el-button v-if="barFullscreen" class="fullscreen-close-btn" link @click="toggleBarFullscreen">
-          <i class="fa fa-times" /> 关闭全屏
-        </el-button>
-        <div ref="barChartRef" class="chart-container"></div>
+      <div class="kpi-card kpi-card--security">
+        <div class="kpi-icon">
+          <i class="fa fa-shield-alt" />
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">安全更新</div>
+          <div class="kpi-value">{{ stats.security }}</div>
+        </div>
+      </div>
+      <div class="kpi-card kpi-card--rollups">
+        <div class="kpi-icon">
+          <i class="fa fa-layer-group" />
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">更新汇总</div>
+          <div class="kpi-value">{{ stats.rollups }}</div>
+        </div>
       </div>
     </div>
 
-    <!-- 漏洞趋势 - 折线图 -->
-    <div class="chart-card">
-      <div class="chart-card__header">
-        <span class="chart-card__title">漏洞趋势</span>
-        <el-button link @click="toggleLineFullscreen">
-          <i :class="lineFullscreen ? 'fa fa-compress' : 'fa fa-expand'" />
-        </el-button>
+    <!-- 图表区域 -->
+    <div class="charts-row">
+      <!-- 漏洞分布 - 柱状图 -->
+      <div class="chart-card">
+        <div class="chart-card__header">
+          <span class="chart-card__title">
+            <i class="fa fa-chart-bar" />
+            漏洞类型分布
+          </span>
+        </div>
+        <div class="chart-card__body">
+          <div ref="barChartRef" class="chart-container"></div>
+        </div>
       </div>
-      <div class="chart-card__body" :class="{ 'chart-card__body--fullscreen': lineFullscreen }">
-        <el-button v-if="lineFullscreen" class="fullscreen-close-btn" link @click="toggleLineFullscreen">
-          <i class="fa fa-times" /> 关闭全屏
-        </el-button>
-        <div ref="lineChartRef" class="chart-container"></div>
+
+      <!-- 漏洞趋势 - 折线图 -->
+      <div class="chart-card">
+        <div class="chart-card__header">
+          <span class="chart-card__title">
+            <i class="fa fa-chart-line" />
+            漏洞趋势 (近30天)
+          </span>
+        </div>
+        <div class="chart-card__body">
+          <div ref="lineChartRef" class="chart-container"></div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import { windowsViewApi } from '../api'
+
+// 状态数据
+const loadingStats = ref(false)
+const stats = reactive({
+  critical: 0,
+  security: 0,
+  rollups: 0
+})
 
 // 图表引用
 const barChartRef = ref(null)
@@ -45,192 +81,215 @@ const lineChartRef = ref(null)
 let barChart = null
 let lineChart = null
 
-// 全屏状态
-const barFullscreen = ref(false)
-const lineFullscreen = ref(false)
-
-// 切换柱状图全屏
-function toggleBarFullscreen() {
-  barFullscreen.value = !barFullscreen.value
-  nextTick(() => {
-    barChart?.resize()
-  })
-}
-
-// 切换折线图全屏
-function toggleLineFullscreen() {
-  lineFullscreen.value = !lineFullscreen.value
-  nextTick(() => {
-    lineChart?.resize()
-  })
-}
-
-// 初始化柱状图 - VAP2_CURRENT_STATS_WIN
-async function initBarChart() {
-  if (!barChartRef.value) return
-
-  barChart = echarts.init(barChartRef.value)
-
+// 初始化数据和图表
+async function initData() {
+  loadingStats.value = true
   try {
+    // 1. 获取概览统计数据
     const response = await windowsViewApi.getCurrentStatsWin()
     const records = response?.records || response?.data?.records || []
 
-    // 处理数据
-    const chartData = []
     if (records.length > 0) {
       const rec = records[0]
-      chartData.push({ name: '重要更新', value: rec.num_critical || 0 })
-      chartData.push({ name: '安全更新', value: rec.num_security || 0 })
-      chartData.push({ name: '更新汇总', value: rec.num_rollups || 0 })
-    }
+      stats.critical = rec.num_critical || 0
+      stats.security = rec.num_security || 0
+      stats.rollups = rec.num_rollups || 0
 
-    const option = {
-      color: ['#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5'],
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'shadow'
-        }
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        top: '10%',
-      },
-      xAxis: {
-        type: 'category',
-        data: chartData.map(d => d.name),
-        axisLine: {
-          lineStyle: { color: '#ccc' }
-        },
-        axisLabel: {
-          color: '#666'
-        }
-      },
-      yAxis: {
-        type: 'value',
-        axisLine: {
-          show: false
-        },
-        splitLine: {
-          lineStyle: { color: '#eee' }
-        }
-      },
-      series: [{
-        name: '漏洞分布',
-        type: 'bar',
-        barWidth: 50,
-        data: chartData.map(d => d.value),
-        label: {
-          show: true,
-          position: 'top',
-          color: '#666'
-        },
-        itemStyle: {
-          borderRadius: [4, 4, 0, 0]
-        }
-      }]
+      initBarChart([
+        { name: '重要更新', value: stats.critical, color: '#FF6B6B' },
+        { name: '安全更新', value: stats.security, color: '#FFA940' },
+        { name: '更新汇总', value: stats.rollups, color: '#409EFF' }
+      ])
+    } else {
+      initBarChart([])
     }
-
-    barChart.setOption(option)
   } catch (error) {
-    console.error('Failed to load bar chart data:', error)
+    console.error('Failed to load stats:', error)
+  } finally {
+    loadingStats.value = false
   }
-}
 
-// 初始化折线图 - VAP2_PATCH_TREND_WINDOWS
-async function initLineChart() {
-  if (!lineChartRef.value) return
-
-  lineChart = echarts.init(lineChartRef.value)
-
+  // 2. 获取趋势数据
   try {
     const response = await windowsViewApi.getPatchTrendWindows()
     const records = (response?.records || response?.data?.records || [])
       .slice()
       .sort((a, b) => new Date(a.scan_date) - new Date(b.scan_date))
 
-    const dates = records.map(r => r.scan_date)
-    const values = records.map(r => r.patch_count || 0)
-
-    const option = {
-      color: ['#28a745'],
-      tooltip: {
-        trigger: 'axis'
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        top: '10%',
-      },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: dates,
-        axisLine: {
-          lineStyle: { color: '#ccc' }
-        },
-        axisLabel: {
-          color: '#666',
-          formatter: function(value) {
-            if (!value) return ''
-            const date = new Date(value)
-            const month = String(date.getMonth() + 1).padStart(2, '0')
-            const day = String(date.getDate()).padStart(2, '0')
-            return `${month}-${day}`
-          }
-        }
-      },
-      yAxis: {
-        type: 'value',
-        axisLine: {
-          show: false
-        },
-        splitLine: {
-          lineStyle: { color: '#eee' }
-        }
-      },
-      series: [{
-        name: '漏洞',
-        type: 'line',
-        smooth: true,
-        data: values,
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(40, 167, 69, 0.3)' },
-            { offset: 1, color: 'rgba(40, 167, 69, 0.05)' }
-          ])
-        },
-        label: {
-          show: true,
-          position: 'top',
-          color: '#28a745'
-        }
-      }]
-    }
-
-    lineChart.setOption(option)
+    initLineChart(records)
   } catch (error) {
-    console.error('Failed to load line chart data:', error)
+    console.error('Failed to load trend:', error)
   }
 }
 
-// 窗口大小变化时重绘图表
+// 绘制柱状图
+function initBarChart(data) {
+  if (!barChartRef.value) return
+  if (barChart) barChart.dispose()
+
+  barChart = echarts.init(barChartRef.value)
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      borderColor: '#eee',
+      textStyle: { color: '#333' }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '10%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: data.map(d => d.name),
+      axisLine: { lineStyle: { color: '#E4E7ED' } },
+      axisLabel: { color: '#606266', fontSize: 12 },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: {
+        lineStyle: { type: 'dashed', color: '#E4E7ED' }
+      },
+      axisLabel: { color: '#909399' }
+    },
+    series: [
+      {
+        name: '数量',
+        type: 'bar',
+        barWidth: '40%',
+        data: data.map((d, index) => ({
+          value: d.value,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: d.color },
+              { offset: 1, color: adjustAlpha(d.color, 0.6) }
+            ]),
+            borderRadius: [6, 6, 0, 0]
+          }
+        })),
+        label: {
+          show: true,
+          position: 'top',
+          color: '#606266',
+          fontWeight: 'bold'
+        }
+      }
+    ]
+  }
+
+  barChart.setOption(option)
+}
+
+// 绘制折线图
+function initLineChart(data) {
+  if (!lineChartRef.value) return
+  if (lineChart) lineChart.dispose()
+
+  lineChart = echarts.init(lineChartRef.value)
+
+  const dates = data.map(r => r.scan_date)
+  const values = data.map(r => r.patch_count || 0)
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      borderColor: '#eee',
+      textStyle: { color: '#333' }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '10%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: dates,
+      axisLine: { lineStyle: { color: '#E4E7ED' } },
+      axisLabel: {
+        color: '#606266',
+        formatter: value => {
+          if (!value) return ''
+          const d = new Date(value)
+          return `${d.getMonth() + 1}-${d.getDate()}`
+        }
+      },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: {
+        lineStyle: { type: 'dashed', color: '#E4E7ED' }
+      },
+      axisLabel: { color: '#909399' }
+    },
+    series: [
+      {
+        name: '漏洞总数',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        itemStyle: { color: '#00B96B' }, // 主色调绿色
+        lineStyle: { width: 3, shadowColor: 'rgba(0,0,0,0.1)', shadowBlur: 10 },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(0, 185, 107, 0.4)' },
+            { offset: 1, color: 'rgba(0, 185, 107, 0.05)' }
+          ])
+        },
+        data: values
+      }
+    ]
+  }
+
+  lineChart.setOption(option)
+}
+
+// 辅助函数：调整颜色透明度
+function adjustAlpha(color, alpha) {
+  // 简单处理 hex -> rgba
+  let r = 0,
+    g = 0,
+    b = 0
+  if (color.startsWith('#')) {
+    if (color.length === 4) {
+      r = parseInt(color[1] + color[1], 16)
+      g = parseInt(color[2] + color[2], 16)
+      b = parseInt(color[3] + color[3], 16)
+    } else if (color.length === 7) {
+      r = parseInt(color.slice(1, 3), 16)
+      g = parseInt(color.slice(3, 5), 16)
+      b = parseInt(color.slice(5, 7), 16)
+    }
+  }
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 function handleResize() {
   barChart?.resize()
   lineChart?.resize()
 }
 
 function refresh() {
-  initBarChart()
-  initLineChart()
+  initData()
 }
 
 onMounted(() => {
-  initBarChart()
-  initLineChart()
+  initData()
   window.addEventListener('resize', handleResize)
 })
 
@@ -248,71 +307,131 @@ defineExpose({ refresh })
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 16px;
-  gap: 16px;
-  background: #f5f7fa;
+  padding: 20px;
+  gap: 20px;
+  background: #f0f2f5; // 更柔和的背景色
   overflow-y: auto;
 }
 
-.chart-card {
-  background: #fff;
-  border-radius: 4px;
-  border: 1px solid #e9ecef;
-  flex: 1;
-  min-height: 280px;
+// KPI 卡片样式
+.kpi-row {
   display: flex;
-  flex-direction: column;
+  gap: 20px;
+}
 
-  &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid #e9ecef;
+.kpi-card {
+  flex: 1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); // 轻微浮起
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   }
 
-  &__title {
+  .kpi-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-right: 20px;
+  }
+
+  .kpi-content {
+    flex: 1;
+  }
+
+  .kpi-label {
     font-size: 14px;
-    font-weight: 600;
+    color: #606266;
+    margin-bottom: 8px;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
     color: #303133;
+    font-family: 'Inter', sans-serif;
+  }
+
+  // 不同类型的配色
+  &--critical {
+    .kpi-icon {
+      background: #fff0f0;
+      color: #ff4d4f;
+    }
+  }
+
+  &--security {
+    .kpi-icon {
+      background: #fff7e6;
+      color: #fa8c16;
+    }
+  }
+
+  &--rollups {
+    .kpi-icon {
+      background: #e6f7ff;
+      color: #1890ff;
+    }
+  }
+}
+
+// 图表区域样式
+.charts-row {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  min-height: 400px;
+}
+
+.chart-card {
+  flex: 1;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .chart-card__title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #303133;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      i {
+        color: #909399;
+        font-size: 14px;
+      }
+    }
   }
 
   &__body {
     flex: 1;
-    padding: 8px;
-    min-height: 240px;
+    padding: 16px;
     position: relative;
-
-    &--fullscreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 1000;
-      background: #fff;
-      padding: 16px;
-      min-height: 100vh;
-    }
   }
 }
 
 .chart-container {
   width: 100%;
   height: 100%;
-  min-height: 220px;
-}
-
-.fullscreen-close-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 10;
-  font-size: 14px;
-  color: #666;
-
-  &:hover {
-    color: #409eff;
-  }
 }
 </style>

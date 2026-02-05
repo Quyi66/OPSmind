@@ -751,15 +751,13 @@ export const windowsVulnerabilityApi = {
   getWinMachinePatches(params = {}) {
     return apiService.post('/dts/api/dts/q/data/VAP2_WIN_MACHINE_PATCHS/', {
       params: {
-        host_key: params.host_key || '',
-        kb_number: params.kb_number || '',
-        os_distro: params.os_distro || '',
-        os_version: params.os_version || '',
-        os_arch: params.os_arch || '',
         patch_status: params.patch_status || ''
       },
       page: params.page,
-      size: params.size
+      size: params.size,
+      filter: params.keyword
+        ? `host_key|kb_number|os_distro|os_version|os_arch|category_name|title:*${params.keyword || ''}*`
+        : ''
     })
   },
 
