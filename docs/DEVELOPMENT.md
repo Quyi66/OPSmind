@@ -94,6 +94,42 @@ export const DEV_DEFAULTS = {
 🛡️ Auth Guard: { from: '/login', to: '/home', isAuthenticated: true }
 ```
 
+## 路由配置约定
+
+为避免菜单路径与路由不一致，模块路由采用“单一来源定义”的方式：
+
+1. 在模块目录下新增 `routes.js`，导出 `*_ROUTE_DEFS` 数组。
+2. 路由表从 `*_ROUTE_DEFS` 生成子路由（见 `base.js`）。
+3. 侧边栏菜单从同一份 `*_ROUTE_DEFS` 生成（见 `module-nav.config.js`）。
+
+### 约定字段
+
+- `key`: 作为菜单项与路由的唯一标识
+- `path`: 子路由路径（不带模块前缀）
+- `name`: 路由名称
+- `title`: 路由标题（用于页面标题）
+- `component`: 组件懒加载函数
+- `navLabel`/`icon`: 需要显示在侧边栏时填写
+- `platform`: 仅补丁模块使用（`linux`/`windows`/`common`）
+
+### 示例
+
+```javascript
+export const SOFTWARE_ROUTE_DEFS = [
+  {
+    key: 'packages',
+    path: 'packages',
+    name: 'software-packages',
+    title: '软件概览',
+    navLabel: '软件概览',
+    icon: 'fas fa-cube',
+    component: () => import('./views/SoftwareHome.vue')
+  }
+]
+```
+
+> 不在侧边栏展示的详情页路由不要填 `navLabel`，以免被菜单自动生成。
+
 ## 生产环境差异
 
 在生产环境中：

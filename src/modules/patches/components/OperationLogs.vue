@@ -17,6 +17,7 @@
               <el-option label="近3天" :value="3" />
               <el-option label="近7天" :value="7" />
               <el-option label="近30天" :value="30" />
+              <el-option label="近一年" :value="365" />
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
@@ -38,7 +39,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
-            <el-input v-model="searchText" placeholder="搜索" style="width: 200px" clearable>
+            <el-input v-model="searchText" placeholder="搜索" style="width: 300px" clearable>
               <template #prefix>
                 <el-icon>
                   <Search />
@@ -64,9 +65,15 @@
       </div>
 
       <div class="ops-action-bar">
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleFilterChange"
-          title="刷新">
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          @click="handleFilterChange"
+          title="刷新"
+        >
           <el-icon v-show="!loading">
             <Refresh />
           </el-icon>
@@ -74,7 +81,7 @@
       </div>
 
       <div class="ops-table-wrapper">
-        <el-table v-loading="loading" :data="tableData"  max-height="calc(100vh - 350px)">
+        <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 350px)">
           <el-table-column prop="start_time" label="开始时间" width="180" sortable>
             <template #default="{ row }">
               {{ formatTimestamp(row.start_time) }}
@@ -87,9 +94,12 @@
           </el-table-column>
           <el-table-column prop="status" label="状态" width="80" sortable>
             <template #default="{ row }">
-              <el-tag :type="getStatusType(row.status)" size="small"
+              <el-tag
+                :type="getStatusType(row.status)"
+                size="small"
                 :style="{ cursor: row.run_record ? 'pointer' : 'default' }"
-                @click="row.run_record && handleViewRunResult(row)">
+                @click="row.run_record && handleViewRunResult(row)"
+              >
                 {{ getStatusLabel(row.status) }}
               </el-tag>
             </template>
@@ -113,9 +123,7 @@
           </el-table-column>
           <el-table-column label="操作" width="100">
             <template #default="{ row }">
-              <el-button text type="primary" @click="handleViewRunResult(row)">
-                查看
-              </el-button>
+              <el-button text type="primary" @click="handleViewRunResult(row)">查看</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -123,10 +131,16 @@
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 25, 50, 100]" :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper" background @size-change="handleSizeChange"
-          @current-change="handlePageChange" />
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 25, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
       </div>
     </template>
 
@@ -163,8 +177,15 @@
       </div>
 
       <div class="ops-action-bar">
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="vulLoading" @click="loadVulData" title="刷新">
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="vulLoading"
+          @click="loadVulData"
+          title="刷新"
+        >
           <el-icon v-show="!vulLoading">
             <Refresh />
           </el-icon>
@@ -173,14 +194,14 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="vulLoading" :data="vulTableData"  max-height="calc(100vh - 320px)">
+        <el-table v-loading="vulLoading" :data="vulTableData" max-height="calc(100vh - 320px)">
           <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="os" label="OS" width="100" />
+          <el-table-column prop="os_distro" label="OS" width="100" />
           <el-table-column prop="os_version" label="OS版本" width="150" />
           <el-table-column prop="vul_id" label="KB编号" min-width="120" />
-          <el-table-column prop="scan_time" label="扫描时间" width="160">
+          <el-table-column prop="scan_timestamp" label="扫描时间" width="200">
             <template #default="{ row }">
-              {{ formatTimestamp(row.scan_time) }}
+              {{ formatTimestamp(row.scan_timestamp) }}
             </template>
           </el-table-column>
         </el-table>
@@ -188,9 +209,16 @@
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination v-model:current-page="vulPagination.page" v-model:page-size="vulPagination.pageSize"
-          :page-sizes="[10, 25, 50, 100]" :total="vulPagination.total" layout="total, sizes, prev, pager, next, jumper"
-          background @size-change="handleVulSizeChange" @current-change="handleVulPageChange" />
+        <el-pagination
+          v-model:current-page="vulPagination.page"
+          v-model:page-size="vulPagination.pageSize"
+          :page-sizes="[10, 25, 50, 100]"
+          :total="vulPagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleVulSizeChange"
+          @current-change="handleVulPageChange"
+        />
       </div>
     </template>
 
@@ -198,12 +226,26 @@
     <template v-if="activeTab === 'patch'">
       <div class="ops-filter-bar">
         <el-form inline size="small">
+          <el-form-item label="严重性">
+            <el-select
+              v-model="patchSeverityFilter"
+              placeholder="全部"
+              clearable
+              style="width: 100px"
+            >
+              <el-option label="全部" value="" />
+              <el-option label="严重" value="Critical" />
+              <el-option label="重要" value="Important" />
+              <el-option label="中等" value="Moderate" />
+              <el-option label="低" value="Low" />
+            </el-select>
+          </el-form-item>
           <el-form-item label="搜索">
             <el-input
               v-model="patchFilterText"
-              placeholder="主机/补丁编号/严重性"
+              placeholder="主机/补丁编号/标题"
               size="small"
-              style="width: 240px"
+              style="width: 300px"
               clearable
               @keyup.enter="handlePatchSearch"
               @clear="handlePatchSearch"
@@ -227,8 +269,15 @@
       </div>
 
       <div class="ops-action-bar">
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="patchLoading" @click="loadPatchData" title="刷新">
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="patchLoading"
+          @click="loadPatchData"
+          title="刷新"
+        >
           <el-icon v-show="!patchLoading">
             <Refresh />
           </el-icon>
@@ -237,7 +286,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="patchLoading" :data="patchTableData"  max-height="calc(100vh - 320px)">
+        <el-table v-loading="patchLoading" :data="patchTableData" max-height="calc(100vh - 320px)">
           <el-table-column prop="host_key" label="主机" min-width="100" show-overflow-tooltip />
           <el-table-column prop="os_distro" label="OS" width="100" />
           <el-table-column prop="os_version" label="OS版本" width="100" />
@@ -245,8 +294,13 @@
           <el-table-column prop="title" label="概要" min-width="300" show-overflow-tooltip />
           <el-table-column prop="severity" label="严重性" width="100">
             <template #default="{ row }">
-              <el-tag :type="getSeverityType(row.severity)" size="small">
-                {{ row.severity }}
+              <el-tag
+                class="severity-tag"
+                :class="getSeverityClass(row.severity)"
+                type="info"
+                size="small"
+              >
+                {{ translateSeverity(row.severity) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -260,15 +314,25 @@
 
       <!-- 分页区域 -->
       <div class="ops-pagination-wrapper">
-        <el-pagination v-model:current-page="patchPagination.page" v-model:page-size="patchPagination.pageSize"
-          :page-sizes="[10, 25, 50, 100]" :total="patchPagination.total"
-          layout="total, sizes, prev, pager, next, jumper" background @size-change="handlePatchSizeChange"
-          @current-change="handlePatchPageChange" />
+        <el-pagination
+          v-model:current-page="patchPagination.page"
+          v-model:page-size="patchPagination.pageSize"
+          :page-sizes="[10, 25, 50, 100]"
+          :total="patchPagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePatchSizeChange"
+          @current-change="handlePatchPageChange"
+        />
       </div>
     </template>
 
     <!-- 运行结果对话框 -->
-    <ExecuteResultDialog v-model:visible="runResultDialogVisible" :run-id="selectedRunId" :title="selectedJobTitle" />
+    <ExecuteResultDialog
+      v-model:visible="runResultDialogVisible"
+      :run-id="selectedRunId"
+      :title="selectedJobTitle"
+    />
   </div>
 </template>
 
@@ -279,6 +343,7 @@ import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchLogsApi, operationReportApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n'
+import { PATCH_SEVERITY_LABELS, PATCH_SEVERITY_STYLES } from '../constants'
 
 // Tab 状态
 const activeTab = ref('operation')
@@ -286,6 +351,25 @@ const activeTab = ref('operation')
 // ========== 操作记录 Tab ==========
 const loading = ref(false)
 const tableData = ref([])
+
+
+function getSeverityClass(severity) {
+  if (!severity) return ''
+  const key = severity.toUpperCase()
+  const map = {
+    CRITICAL: 'is-critical',
+    IMPORTANT: 'is-important',
+    MODERATE: 'is-moderate',
+    LOW: 'is-low'
+  }
+  return map[key] || ''
+}
+
+function translateSeverity(severity) {
+  if (!severity) return ''
+  const key = severity.toUpperCase()
+  return PATCH_SEVERITY_LABELS[key] || severity
+}
 const pagination = reactive({
   page: 1,
   pageSize: 10,
@@ -333,6 +417,7 @@ const vulTotalPages = computed(() => {
 // ========== 补丁报表 Tab ==========
 const patchLoading = ref(false)
 const patchFilterText = ref('')
+const patchSeverityFilter = ref('')
 const patchTableData = ref([])
 const patchPagination = reactive({
   page: 1,
@@ -374,15 +459,7 @@ function getStatusLabel(status) {
   return map[status] || status
 }
 
-function getSeverityType(severity) {
-  const map = {
-    Critical: 'danger',
-    Important: 'warning',
-    Moderate: 'info',
-    Low: 'success'
-  }
-  return map[severity] || 'info'
-}
+
 
 // 时间格式化
 function formatTimestamp(timestamp) {
@@ -604,10 +681,23 @@ function handleVulSizeChange(size) {
 async function loadPatchData() {
   patchLoading.value = true
   try {
+    let filter = ''
+    const conditions = []
+
+    if (patchFilterText.value) {
+      conditions.push(`host_key|patch_id|title:*${patchFilterText.value}*`)
+    }
+
+    if (patchSeverityFilter.value) {
+      conditions.push(`severity:${patchSeverityFilter.value}`)
+    }
+
+    filter = conditions.join('|')
+
     const response = await operationReportApi.getPatchReport({
       page: patchPagination.page,
       size: patchPagination.pageSize,
-      filter: patchFilterText.value ? `host_key|patch_id|severity:*${patchFilterText.value}*` : ''
+      filter: filter
     })
     const data = response?.data || response
     patchTableData.value = data?.records || []
@@ -627,6 +717,7 @@ function handlePatchSearch() {
 
 function handlePatchReset() {
   patchFilterText.value = ''
+  patchSeverityFilter.value = ''
   patchPagination.page = 1
   patchPagination.pageSize = 10
   loadPatchData()

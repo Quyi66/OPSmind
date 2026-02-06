@@ -6,6 +6,16 @@
 
 // 同步导入布局组件
 import MainLayout from '@/layouts/MainLayout.vue'
+import { PATCHES_ROUTE_DEFS } from '@/modules/patches/routes.js'
+import { SOFTWARE_ROUTE_DEFS } from '@/modules/software/routes.js'
+import { CAC_ROUTE_DEFS } from '@/modules/inspection/routes.js'
+import { ACM_ROUTE_DEFS } from '@/modules/asset/routes.js'
+import { USERS_ROUTE_DEFS } from '@/modules/user/routes.js'
+import { JAO_ROUTE_DEFS, GFS_ROUTE_DEFS, CMD_ROUTE_DEFS } from '@/modules/automation/routes.js'
+import { FLOW_ROUTE_DEFS } from '@/modules/flow/routes.js'
+import { SUDO_ROUTE_DEFS } from '@/modules/sudo/routes.js'
+import { PASSWORD_ROUTE_DEFS } from '@/modules/password/routes.js'
+import { SSC_ROUTE_DEFS } from '@/modules/settings/routes.js'
 
 // 分组布局组件（懒加载）
 const AutomationGroupLayout = () => import('@/layouts/groups/AutomationGroupLayout.vue')
@@ -16,6 +26,35 @@ const UserGroupLayout = () => import('@/layouts/groups/UserGroupLayout.vue')
 const SettingsGroupLayout = () => import('@/layouts/groups/SettingsGroupLayout.vue')
 const FlowGroupLayout = () => import('@/layouts/groups/FlowGroupLayout.vue')
 const SecurityGroupLayout = () => import('@/layouts/groups/SecurityGroupLayout.vue')
+
+const buildModuleChildren = (defs, moduleCode) =>
+  defs.map(def => {
+    const route = {
+      path: def.path,
+      component: def.component,
+      meta: { title: def.title, moduleCode }
+    }
+
+    if (def.name) route.name = def.name
+    if (def.props) route.props = def.props
+    if (def.redirect) route.redirect = def.redirect
+    if (def.children) route.children = def.children
+
+    return route
+  })
+
+const patchesChildren = buildModuleChildren(PATCHES_ROUTE_DEFS, 'patches')
+const cacChildren = buildModuleChildren(CAC_ROUTE_DEFS, 'cac')
+const acmChildren = buildModuleChildren(ACM_ROUTE_DEFS, 'acm')
+const usersChildren = buildModuleChildren(USERS_ROUTE_DEFS, 'users')
+const softwareChildren = buildModuleChildren(SOFTWARE_ROUTE_DEFS, 'software')
+const jaoChildren = buildModuleChildren(JAO_ROUTE_DEFS, 'jao')
+const gfsChildren = buildModuleChildren(GFS_ROUTE_DEFS, 'gfs')
+const cmdChildren = buildModuleChildren(CMD_ROUTE_DEFS, 'cmd')
+const flowChildren = buildModuleChildren(FLOW_ROUTE_DEFS, 'flow')
+const sudoChildren = buildModuleChildren(SUDO_ROUTE_DEFS, 'sudo')
+const passwordChildren = buildModuleChildren(PASSWORD_ROUTE_DEFS, 'password')
+const sscChildren = buildModuleChildren(SSC_ROUTE_DEFS, 'ssc')
 
 export const baseRoutes = [
   {
@@ -133,110 +172,9 @@ export const baseRoutes = [
               return defaults[to.params.moduleCode] || '/jao/jobs'
             }
           },
-          {
-            path: 'jobs',
-            name: 'jao-jobs',
-            component: () =>
-              import('@/modules/automation/components/job/JobListView/JobListView.vue'),
-            meta: { title: '作业列表', moduleCode: 'jao' }
-          },
-          {
-            path: 'schedule',
-            name: 'jao-schedule',
-            component: () =>
-              import('@/modules/automation/components/job/schedule/JobScheduleView.vue'),
-            meta: { title: '流程编排', moduleCode: 'jao' }
-          },
-          {
-            path: 'requests',
-            name: 'jao-requests',
-            component: () => import('@/modules/automation/components/job/JobMyRequestsView.vue'),
-            meta: { title: '我的申请', moduleCode: 'jao' }
-          },
-          {
-            path: 'approvals',
-            name: 'jao-approvals',
-            component: () => import('@/modules/automation/components/job/JobApprovalsView.vue'),
-            meta: { title: '作业审批', moduleCode: 'jao' }
-          },
-          {
-            path: 'runLogs',
-            name: 'jao-runLogs',
-            component: () => import('@/modules/automation/components/job/JobRunLogsView.vue'),
-            meta: { title: '运行记录', moduleCode: 'jao' }
-          },
-          {
-            path: 'statistics',
-            name: 'jao-statistics',
-            component: () => import('@/modules/automation/components/job/JobStatisticsView.vue'),
-            meta: { title: '数据统计', moduleCode: 'jao' }
-          },
-          {
-            path: 'taskScheduler',
-            name: 'jao-taskScheduler',
-            component: () => import('@/modules/automation/components/job/JobTaskSchedulerView.vue'),
-            meta: { title: '定时任务', moduleCode: 'jao' }
-          },
-          // gfs 模块路由
-          {
-            path: 'scriptLibrary',
-            name: 'gfs-scriptLibrary',
-            component: () => import('@/modules/automation/components/script/ScriptFileList.vue'),
-            props: { repoType: 'git' },
-            meta: { title: '脚本库', moduleCode: 'gfs' }
-          },
-          {
-            path: 'fileLibrary',
-            name: 'gfs-fileLibrary',
-            component: () => import('@/modules/automation/components/script/ScriptFileList.vue'),
-            props: { repoType: 'staticfs' },
-            meta: { title: '文件库', moduleCode: 'gfs' }
-          },
-          {
-            path: 'scriptReview',
-            name: 'gfs-scriptReview',
-            component: () => import('@/modules/automation/components/script/ScriptFileList.vue'),
-            props: { repoType: 'stage' },
-            meta: { title: '脚本审核', moduleCode: 'gfs' }
-          },
-          // cmd 模块路由 - 需要通过 CommandCenterModule 包裹以支持执行命令对话框
-          {
-            path: 'list',
-            component: () => import('@/modules/automation/views/CommandCenterModule.vue'),
-            meta: { title: '命令列表', moduleCode: 'cmd' },
-            children: [
-              {
-                path: '',
-                name: 'cmd-list',
-                component: () => import('@/modules/automation/components/command/CommandList.vue')
-              }
-            ]
-          },
-          {
-            path: 'job',
-            name: 'cmd-job',
-            component: () => import('@/modules/automation/components/command/CommandJobList.vue'),
-            meta: { title: '命令作业', moduleCode: 'cmd' }
-          },
-          {
-            path: 'review',
-            name: 'cmd-review',
-            component: () =>
-              import('@/modules/automation/components/command/CommandApproveList.vue'),
-            meta: { title: '命令审核', moduleCode: 'cmd' }
-          },
-          {
-            path: 'logs',
-            name: 'cmd-logs',
-            component: () => import('@/modules/automation/components/command/CommandLogs.vue'),
-            meta: { title: '执行日志', moduleCode: 'cmd' }
-          },
-          {
-            path: 'console',
-            name: 'cmd-console',
-            component: () => import('@/modules/automation/components/command/CommandConsole.vue'),
-            meta: { title: '控制台', moduleCode: 'cmd' }
-          }
+          ...jaoChildren,
+          ...gfsChildren,
+          ...cmdChildren
         ]
       }
     ]
@@ -252,86 +190,7 @@ export const baseRoutes = [
         path: '',
         component: PatchGroupLayout,
         redirect: '/patches/cveList',
-        children: [
-          {
-            path: 'cveList',
-            name: 'patches-cveList',
-            component: () => import('@/modules/patches/components/CveList.vue'),
-            meta: { title: 'CVE漏洞列表', moduleCode: 'patches' }
-          },
-          {
-            path: 'machineScan',
-            name: 'patches-machineScan',
-            component: () => import('@/modules/patches/components/LinuxPatchScan.vue'),
-            meta: { title: '机器扫描', moduleCode: 'patches' }
-          },
-          {
-            path: 'hostDetail',
-            name: 'patches-hostDetail',
-            component: () => import('@/modules/patches/components/LinuxHostDetail.vue'),
-            meta: { title: '主机详情', moduleCode: 'patches' }
-          },
-          {
-            path: 'patchInstall',
-            name: 'patches-patchInstall',
-            component: () => import('@/modules/patches/components/LinuxPatchInstall.vue'),
-            meta: { title: '补丁安装', moduleCode: 'patches' }
-          },
-          {
-            path: 'changeRollback',
-            name: 'patches-changeRollback',
-            component: () => import('@/modules/patches/components/LinuxPatchRollback.vue'),
-            meta: { title: '变更回滚', moduleCode: 'patches' }
-          },
-          {
-            path: 'linuxYumManage',
-            name: 'patches-linuxYumManage',
-            component: () => import('@/modules/patches/components/LinuxYumManage.vue'),
-            meta: { title: 'Linux YUM管理', moduleCode: 'patches' }
-          },
-          {
-            path: 'patchLibrary',
-            name: 'patches-patchLibrary',
-            component: () => import('@/modules/patches/components/LinuxPatchLibrary.vue'),
-            meta: { title: '补丁仓库', moduleCode: 'patches' }
-          },
-          {
-            path: 'vulnerability',
-            name: 'patches-vulnerability',
-            component: () => import('@/modules/patches/components/LinuxVulnerability.vue'),
-            meta: { title: '漏洞概览', moduleCode: 'patches' }
-          },
-          {
-            path: 'windowsVulnerability',
-            name: 'patches-windowsVulnerability',
-            component: () => import('@/modules/patches/components/WindowsVulnerability.vue'),
-            meta: { title: 'Windows漏洞', moduleCode: 'patches' }
-          },
-          {
-            path: 'windowsUpdate',
-            name: 'patches-windowsUpdate',
-            component: () => import('@/modules/patches/components/WindowsUpdate.vue'),
-            meta: { title: 'Windows更新', moduleCode: 'patches' }
-          },
-          {
-            path: 'windowsRollback',
-            name: 'patches-windowsRollback',
-            component: () => import('@/modules/patches/components/WindowsRollback.vue'),
-            meta: { title: 'Windows回滚', moduleCode: 'patches' }
-          },
-          {
-            path: 'windowsView',
-            name: 'patches-windowsView',
-            component: () => import('@/modules/patches/components/WindowsView.vue'),
-            meta: { title: 'Windows View', moduleCode: 'patches' }
-          },
-          {
-            path: 'logs',
-            name: 'patches-logs',
-            component: () => import('@/modules/patches/components/OperationLogs.vue'),
-            meta: { title: '变更日志查询', moduleCode: 'patches' }
-          }
-        ]
+        children: [...patchesChildren]
       }
     ]
   },
@@ -347,36 +206,7 @@ export const baseRoutes = [
         component: PatchGroupLayout,
         redirect: '/software/packages',
         children: [
-          {
-            path: 'packages',
-            name: 'software-packages',
-            component: () => import('@/modules/software/views/SoftwareHome.vue'),
-            meta: { title: '软件概览', moduleCode: 'software' }
-          },
-          {
-            path: 'repos',
-            name: 'software-repos',
-            component: () => import('@/modules/software/views/RepoManagement.vue'),
-            meta: { title: '仓库管理', moduleCode: 'software' }
-          },
-          {
-            path: 'localInstall',
-            name: 'software-localInstall',
-            component: () => import('@/modules/software/views/LocalInstall.vue'),
-            meta: { title: '本地安装', moduleCode: 'software' }
-          },
-          {
-            path: 'yumManage',
-            name: 'software-yumManage',
-            component: () => import('@/modules/patches/components/LinuxYumManage.vue'),
-            meta: { title: '软件源管理', moduleCode: 'software' }
-          },
-          {
-            path: 'logs',
-            name: 'software-logs',
-            component: () => import('@/modules/software/views/LogReport.vue'),
-            meta: { title: '操作日志', moduleCode: 'software' }
-          }
+          ...softwareChildren
         ]
       }
     ]
@@ -397,50 +227,7 @@ export const baseRoutes = [
         path: '',
         component: InspectionGroupLayout,
         redirect: '/cac/overview',
-        children: [
-          {
-            path: 'overview',
-            name: 'cac-overview',
-            component: () => import('@/modules/inspection/views/InspectionOverview.vue'),
-            meta: { title: '巡检总览' }
-          },
-          {
-            path: 'templates',
-            name: 'cac-templates',
-            component: () => import('@/modules/inspection/views/TemplateList.vue'),
-            meta: { title: '巡检模板' }
-          },
-          {
-            path: 'results',
-            name: 'cac-results',
-            component: () => import('@/modules/inspection/views/ResultList.vue'),
-            meta: { title: '执行记录' }
-          },
-          {
-            path: 'results/:jobId',
-            name: 'cac-result-detail',
-            component: () => import('@/modules/inspection/views/ResultDetail.vue'),
-            meta: { title: '结果详情' }
-          },
-          {
-            path: 'structural-diagram/:jobId',
-            name: 'cac-structural-diagram',
-            component: () => import('@/modules/inspection/views/StructuralDiagram.vue'),
-            meta: { title: '架构图' }
-          },
-          {
-            path: 'config',
-            name: 'cac-config',
-            component: () => import('@/modules/inspection/views/AssetModelConfig.vue'),
-            meta: { title: '导出配置' }
-          },
-          {
-            path: 'email',
-            name: 'cac-email',
-            component: () => import('@/modules/inspection/views/EmailConfig.vue'),
-            meta: { title: '邮件配置' }
-          }
-        ]
+        children: [...cacChildren]
       }
     ]
   },
@@ -460,56 +247,7 @@ export const baseRoutes = [
         path: '',
         component: AssetGroupLayout,
         redirect: '/acm/overview',
-        children: [
-          {
-            path: 'overview',
-            name: 'acm-overview',
-            component: () => import('@/modules/asset/views/AssetOverview.vue'),
-            meta: { title: '资产总览' }
-          },
-          {
-            path: 'info',
-            name: 'acm-info',
-            component: () => import('@/modules/asset/views/AssetInfo.vue'),
-            meta: { title: '资产列表' }
-          },
-          {
-            path: 'data',
-            name: 'acm-data',
-            component: () => import('@/modules/asset/views/DataManage.vue'),
-            meta: { title: '数据管理' }
-          },
-          {
-            path: 'model',
-            name: 'acm-model',
-            component: () => import('@/modules/asset/views/AssetModel.vue'),
-            meta: { title: '资产模型' }
-          },
-          {
-            path: 'exception',
-            name: 'acm-exception',
-            component: () => import('@/modules/asset/views/ExceptionDevice.vue'),
-            meta: { title: '异常设备' }
-          },
-          {
-            path: 'automation',
-            name: 'acm-automation',
-            component: () => import('@/modules/asset/views/AutomationConfig.vue'),
-            meta: { title: '自动化配置' }
-          },
-          {
-            path: 'permission',
-            name: 'acm-permission',
-            component: () => import('@/modules/asset/views/ResourcePermission.vue'),
-            meta: { title: '资源权限' }
-          },
-          {
-            path: 'log',
-            name: 'acm-log',
-            component: () => import('@/modules/asset/views/OperationLog.vue'),
-            meta: { title: '操作日志' }
-          }
-        ]
+        children: [...acmChildren]
       }
     ]
   },
@@ -530,30 +268,7 @@ export const baseRoutes = [
             redirect: to => '/users/overview'
           },
           // users 模块路由
-          {
-            path: 'overview',
-            name: 'users-overview',
-            component: () => import('@/modules/user/components/overview/OverviewView.vue'),
-            meta: { title: '用户总览', moduleCode: 'users' }
-          },
-          {
-            path: 'users',
-            name: 'users-list',
-            component: () => import('@/modules/user/components/users/UsersView.vue'),
-            meta: { title: '用户列表', moduleCode: 'users' }
-          },
-          {
-            path: 'groups',
-            name: 'users-groups',
-            component: () => import('@/modules/user/components/groups/UserGroupsView.vue'),
-            meta: { title: '用户组', moduleCode: 'users' }
-          },
-          {
-            path: 'logs',
-            name: 'users-logs',
-            component: () => import('@/modules/user/components/operation/OperationLogsView.vue'),
-            meta: { title: '操作日志', moduleCode: 'users' }
-          }
+          ...usersChildren
         ]
       }
     ]
@@ -574,25 +289,7 @@ export const baseRoutes = [
             path: '',
             redirect: to => '/flow/list'
           },
-          // flow 模块路由 - 需要通过 FlowManagementModule 包裹以支持设计器/执行器等全屏视图
-          {
-            path: 'list',
-            component: () => import('@/modules/flow/views/FlowManagementModule.vue'),
-            meta: { title: '流程列表', moduleCode: 'flow' },
-            children: [
-              {
-                path: '',
-                name: 'flow-list',
-                component: () => import('@/modules/flow/components/FlowListView.vue')
-              }
-            ]
-          },
-          {
-            path: 'execution',
-            name: 'flow-execution',
-            component: () => import('@/modules/flow/components/ExecutionListView.vue'),
-            meta: { title: '执行记录', moduleCode: 'flow' }
-          }
+          ...flowChildren
         ]
       }
     ]
@@ -608,38 +305,7 @@ export const baseRoutes = [
         path: '',
         component: SecurityGroupLayout,
         redirect: '/sudo/permission',
-        children: [
-          {
-            path: 'permission',
-            name: 'sudo-permission',
-            component: () => import('@/modules/sudo/components/SudoPermissionList.vue'),
-            meta: { title: 'sudo列表', moduleCode: 'sudo' }
-          },
-          {
-            path: 'apply',
-            name: 'sudo-apply',
-            component: () => import('@/modules/sudo/components/SudoApplyList.vue'),
-            meta: { title: '权限申请', moduleCode: 'sudo' }
-          },
-          {
-            path: 'templates',
-            name: 'sudo-templates',
-            component: () => import('@/modules/sudo/components/SudoTemplateList.vue'),
-            meta: { title: '模板管理', moduleCode: 'sudo' }
-          },
-          {
-            path: 'password',
-            name: 'sudo-password',
-            component: () => import('@/modules/sudo/components/SudoPasswordManage.vue'),
-            meta: { title: '主机密码', moduleCode: 'sudo' }
-          },
-          {
-            path: 'log',
-            name: 'sudo-log',
-            component: () => import('@/modules/sudo/components/SudoOperationLog.vue'),
-            meta: { title: '操作日志', moduleCode: 'sudo' }
-          }
-        ]
+        children: [...sudoChildren]
       }
     ]
   },
@@ -655,31 +321,7 @@ export const baseRoutes = [
         component: SecurityGroupLayout,
         redirect: '/password/application',
         children: [
-          // password 模块路由 - 需要通过 PasswordManagementModule 包裹以支持管理员面板
-          {
-            path: 'application',
-            component: () => import('@/modules/password/views/PasswordManagementModule.vue'),
-            meta: { title: '申请审批', moduleCode: 'password' },
-            children: [
-              {
-                path: '',
-                name: 'password-application',
-                component: () => import('@/modules/password/components/ApplicationApprovalList.vue')
-              }
-            ]
-          },
-          {
-            path: 'settings',
-            name: 'password-settings',
-            component: () => import('@/modules/password/components/PasswordSettings.vue'),
-            meta: { title: '参数配置', moduleCode: 'password' }
-          },
-          {
-            path: 'logs',
-            name: 'password-logs',
-            component: () => import('@/modules/password/components/PasswordOperationLog.vue'),
-            meta: { title: '操作日志', moduleCode: 'password' }
-          }
+          ...passwordChildren
         ]
       }
     ]
@@ -700,74 +342,7 @@ export const baseRoutes = [
         path: '',
         component: SettingsGroupLayout,
         redirect: '/ssc/user',
-        children: [
-          {
-            path: 'user',
-            name: 'ssc-user',
-            component: () => import('@/modules/settings/components/UserManagement.vue'),
-            meta: { title: '用户管理' }
-          },
-          {
-            path: 'team',
-            name: 'ssc-team',
-            component: () => import('@/modules/settings/components/TeamManagement.vue'),
-            meta: { title: '团队管理' }
-          },
-          {
-            path: 'template',
-            name: 'ssc-template',
-            component: () => import('@/modules/settings/components/TemplateAssignment.vue'),
-            meta: { title: '模版分配' }
-          },
-          {
-            path: 'applet',
-            name: 'ssc-applet',
-            component: () => import('@/modules/settings/components/AppletManagement.vue'),
-            meta: { title: '应用管理' }
-          },
-          {
-            path: 'tag',
-            name: 'ssc-tag',
-            component: () => import('@/modules/settings/components/TagManagement.vue'),
-            meta: { title: '应用标签' }
-          },
-          {
-            path: 'param',
-            name: 'ssc-param',
-            component: () => import('@/modules/settings/components/ParamSettings.vue'),
-            meta: { title: '参数配置' }
-          },
-          {
-            path: 'appres',
-            name: 'ssc-appres',
-            component: () => import('@/modules/settings/components/AppResManagement.vue'),
-            meta: { title: '应用资源' }
-          },
-          {
-            path: 'email',
-            name: 'ssc-email',
-            component: () => import('@/modules/settings/components/EmailSettings.vue'),
-            meta: { title: '邮件设置' }
-          },
-          {
-            path: 'datasource',
-            name: 'ssc-datasource',
-            component: () => import('@/modules/settings/components/DataSourceManagement.vue'),
-            meta: { title: '数据源管理' }
-          },
-          {
-            path: 'engine',
-            name: 'ssc-engine',
-            component: () => import('@/modules/settings/components/EngineManagement.vue'),
-            meta: { title: '引擎管理' }
-          },
-          {
-            path: 'scheduler',
-            name: 'ssc-scheduler',
-            component: () => import('@/modules/settings/components/TaskScheduler.vue'),
-            meta: { title: '计划任务' }
-          }
-        ]
+        children: [...sscChildren]
       }
     ]
   },

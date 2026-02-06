@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout" style="padding: 0; gap: 0; background: #f5f7fa;">
+  <div class="ops-page-layout">
     <!-- KPI 卡片区域 -->
     <div class="kpi-section">
       <div
@@ -9,14 +9,32 @@
         :class="'kpi-' + (item.theme || 'secondary')"
         @click="handleKpiClick(item)"
       >
-        <div class="kpi-label">{{ item.name }}</div>
-        <div class="kpi-value">{{ item.value?.toLocaleString() || 0 }}</div>
-        <div class="kpi-icon">
+        <!-- 头部：图标盒子 + 标题 -->
+        <div class="kpi-header">
+          <div class="kpi-icon-box">
+            <i :class="item.icon" />
+          </div>
+          <div class="kpi-label">{{ item.name }}</div>
+        </div>
+
+        <!-- 中部：数值 -->
+        <div class="kpi-body">
+          <div class="kpi-value">{{ item.value?.toLocaleString() || 0 }}</div>
+        </div>
+
+        <!-- 底部：时间 -->
+        <div v-if="item.date" class="kpi-footer">
+          <div class="kpi-date">{{ formatDate(item.date) }}</div>
+        </div>
+
+        <!-- 背景装饰大图标 -->
+        <div class="kpi-bg-icon">
           <i :class="item.icon" />
         </div>
-        <div v-if="item.date" class="kpi-date">{{ formatDate(item.date) }}</div>
-        <div class="kpi-info">
-          <i class="fa fa-info-circle" />
+
+        <!-- Info 按钮 -->
+        <div class="kpi-info-btn">
+          <i class="fa fa-ellipsis-h" />
         </div>
       </div>
     </div>
@@ -31,7 +49,9 @@
         >
           <i class="fa fa-laptop-house" />
           <span>主机概览</span>
-          <i class="fa fa-external-link-alt" style="margin-left: 4px; font-size: 10px;" />
+          <div class="external-link-icon">
+            <i class="fa fa-external-link-alt" />
+          </div>
         </div>
         <div
           class="tab-item"
@@ -61,10 +81,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { softwareStatsApi } from '../api'
 import HostOverviewTable from '../components/HostOverviewTable.vue'
 import AvailablePackagesTable from '../components/AvailablePackagesTable.vue'
+
+const router = useRouter()
 
 // KPI 统计数据
 const statsData = ref([])
@@ -107,7 +130,6 @@ async function loadStatsData() {
     const records = data?.records || []
 
     // 根据返回数据结构处理
-    // 如果返回的是 KPI 统计数据（包含 name, value 字段）
     if (records.length > 0 && records[0].name && records[0].value !== undefined) {
       const result = []
       records.forEach(rec => {
@@ -133,10 +155,10 @@ async function loadStatsData() {
       const installedCount = records.reduce((sum, r) => sum + (r.installed_pkgs_count || 0), 0)
 
       statsData.value = [
-        { name: '扫描主机数', value: data.total || hostCount, icon: 'fa fa-desktop', theme: 'secondary', _order: 1 },
-        { name: '仓库', value: repoCount, icon: 'fa fa-laptop-house', theme: 'primary', _order: 2 },
-        { name: '可用软件包数', value: 0, icon: 'fa fa-cube', theme: 'info', _order: 3 },
-        { name: '已安装软件包数', value: installedCount, icon: 'fa fa-check-circle', theme: 'success', _order: 4 }
+        { name: '扫描主机数', value: data.total || hostCount, icon: 'fa fa-desktop', theme: 'secondary', linkPage: 'hosts', _order: 1 },
+        { name: '仓库', value: repoCount, icon: 'fa fa-laptop-house', theme: 'primary', linkPage: 'repos', _order: 2 },
+        { name: '可用软件包数', value: 0, icon: 'fa fa-cube', theme: 'info', linkPage: 'packages', _order: 3 },
+        { name: '已安装软件包数', value: installedCount, icon: 'fa fa-check-circle', theme: 'success', linkPage: 'installed', _order: 4 }
       ]
     }
   } catch (error) {
@@ -149,7 +171,18 @@ async function loadStatsData() {
 
 // KPI 卡片点击
 function handleKpiClick(item) {
-  ElMessage.info(`${item.name}: ${item.value}`)
+  if (item.linkPage === 'hosts') {
+    activeTab.value = 'hosts'
+  } else if (item.linkPage === 'packages') {
+    activeTab.value = 'packages'
+  } else if (item.linkPage === 'repos') {
+    router.push('/software/repos')
+  } else if (item.linkPage === 'installed') {
+    // 跳转到已安装软件包列表页面
+    router.push('/software/installed')
+  } else {
+    ElMessage.info(`${item.name} 数据`)
+  }
 }
 
 // 扫描完成后刷新统计数据
@@ -163,104 +196,196 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.software-home {
+.ops-page-layout {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f5f7fa;
-}
-
-.page-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  padding: 16px 16px 8px;
 }
 
 .kpi-section {
   display: flex;
-  gap: 12px;
-  padding: 8px 16px 16px;
+  gap: 16px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
 .kpi-card {
   flex: 1;
-  min-width: 180px;
+  min-width: 240px;
   position: relative;
-  padding: 16px 20px;
-  border-radius: 6px;
-  color: #fff;
+  padding: 20px 24px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease-in-out;
+  border-left: 4px solid transparent;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+
+    .kpi-bg-icon {
+      transform: scale(1.1) rotate(0deg);
+      opacity: 0.15;
+    }
   }
 
-  // 源系统配色：secondary=灰色
-  &.kpi-secondary {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  // 头部布局
+  .kpi-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
   }
 
-  // 源系统配色：primary=蓝色
-  &.kpi-primary {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  // 图标盒子
+  .kpi-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
   }
 
-  // 源系统配色：info=绿色 (rgb(146, 208, 80))
-  &.kpi-info {
-    background: linear-gradient(135deg, #92d050 0%, #6fba2c 100%);
-  }
-
-  // 源系统配色：success=黄色 (rgb(255, 192, 0))
-  &.kpi-success {
-    background: linear-gradient(135deg, #ffc000 0%, #d9a300 100%);
-  }
-
+  // 标题
   .kpi-label {
-    font-size: 13px;
-    opacity: 0.9;
-    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    line-height: 1.4;
+  }
+
+  // 数值部分
+  .kpi-body {
+    position: relative;
+    z-index: 2;
   }
 
   .kpi-value {
-    font-size: 28px;
+    font-size: 36px;
     font-weight: 700;
-    line-height: 1.2;
+    line-height: 1;
+    font-family:
+      'Inter',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+
+  // 底部时间
+  .kpi-footer {
+    margin-top: 8px;
+    position: relative;
+    z-index: 2;
   }
 
   .kpi-date {
-    font-size: 11px;
-    opacity: 0.8;
-    margin-top: 4px;
+    font-size: 12px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
-  .kpi-icon {
+  // 背景大图标
+  .kpi-bg-icon {
     position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 48px;
-    opacity: 0.2;
+    right: -16px;
+    bottom: -16px;
+    font-size: 120px;
+    opacity: 0.08;
+    transform: rotate(-15deg);
+    transition: all 0.4s ease;
+    z-index: 0;
+    pointer-events: none;
   }
 
-  .kpi-info {
+  // 右上角菜单
+  .kpi-info-btn {
     position: absolute;
-    right: 8px;
-    top: 8px;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
+    top: 12px;
+    right: 12px;
+    color: #cbd5e1;
+    transition: color 0.2s;
 
     &:hover {
-      opacity: 1;
+      color: #94a3b8;
     }
+  }
 
-    i {
-      font-size: 14px;
+  // === 主题配色 ===
+
+  // 灰色 (Secondary)
+  &.kpi-secondary {
+    border-left-color: #64748b;
+    .kpi-icon-box {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .kpi-value {
+      color: #334155;
+    }
+    .kpi-bg-icon {
+      color: #64748b;
+    }
+  }
+
+  // 蓝色 (Primary)
+  &.kpi-primary {
+    border-left-color: #3b82f6;
+    .kpi-icon-box {
+      background: #eff6ff;
+      color: #2563eb;
+    }
+    .kpi-value {
+      color: #1e40af;
+    }
+    .kpi-bg-icon {
+      color: #3b82f6;
+    }
+  }
+
+  // 绿色 (Info)
+  &.kpi-info {
+    border-left-color: #10b981;
+    .kpi-icon-box {
+      background: #ecfdf5;
+      color: #059669;
+    }
+    .kpi-value {
+      color: #047857;
+    }
+    .kpi-bg-icon {
+      color: #10b981;
+    }
+  }
+
+  // 橙色 (Success)
+  &.kpi-success {
+    border-left-color: #f59e0b;
+    .kpi-icon-box {
+      background: #fffbeb;
+      color: #d97706;
+    }
+    .kpi-value {
+      color: #b45309;
+    }
+    .kpi-bg-icon {
+      color: #f59e0b;
     }
   }
 }
@@ -269,78 +394,51 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  padding: 0 16px;
   border-bottom: 1px solid #e4e7ed;
-  margin: 0 16px;
-  border-radius: 6px 6px 0 0;
+  margin-bottom: 16px;
 
   .tab-nav {
     display: flex;
-    gap: 4px;
+    gap: 24px;
   }
 
   .tab-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 12px 16px;
+    gap: 8px;
+    padding: 12px 0;
     font-size: 14px;
+    font-weight: 500;
     color: #64748b;
     cursor: pointer;
     border-bottom: 2px solid transparent;
     transition: all 0.2s;
+    position: relative;
+    top: 1px;
 
     &:hover {
-      color: #409eff;
+      color: #3b82f6;
     }
 
     &.active {
-      color: #409eff;
-      border-bottom-color: #409eff;
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
     }
 
-    i:first-child {
-      font-size: 14px;
-    }
-  }
-
-  .tab-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    :deep(.el-input) {
-      .el-input__wrapper {
-        border-radius: 4px;
-      }
-    }
-
-    :deep(.el-button) {
-      color: #64748b;
-      padding: 4px 8px;
-
-      &:hover {
-        color: #409eff;
-      }
-
-      i {
-        font-size: 14px;
-      }
+    .external-link-icon {
+      font-size: 10px;
+      margin-left: -2px;
+      opacity: 0.6;
     }
   }
 }
 
 .content-section {
   flex: 1;
-  margin: 0 16px 16px;
   background: #fff;
-  border-radius: 0 0 6px 6px;
-  overflow: hidden;
 }
 
 .tab-content {
   height: 100%;
-  overflow: auto;
 }
 </style>

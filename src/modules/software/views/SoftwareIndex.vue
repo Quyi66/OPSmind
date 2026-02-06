@@ -14,6 +14,13 @@
       </div>
     </div>
 
+    <!-- 已安装软件包 -->
+    <div v-else-if="activeView === 'installed'" class="view-container">
+      <div class="view-card">
+        <InstalledPackages ref="installedPackagesRef" />
+      </div>
+    </div>
+
     <!-- 本地安装 -->
     <div v-else-if="activeView === 'localInstall'" class="view-container">
       <div class="view-card">
@@ -35,6 +42,7 @@ import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import SoftwareHome from './SoftwareHome.vue'
 import RepoManagement from './RepoManagement.vue'
+import InstalledPackages from './InstalledPackages.vue'
 import LocalInstall from './LocalInstall.vue'
 import LogReport from './LogReport.vue'
 
@@ -46,6 +54,7 @@ const activeView = ref('packages')
 // 子组件引用
 const softwareHomeRef = ref(null)
 const repoManagementRef = ref(null)
+const installedPackagesRef = ref(null)
 const localInstallRef = ref(null)
 const logReportRef = ref(null)
 
@@ -61,6 +70,9 @@ function parseRouteView() {
 
   if (path.includes('/repos') || pathMatch.includes('repos')) {
     return 'repos'
+  }
+  if (path.includes('/installed') || pathMatch.includes('installed')) {
+    return 'installed'
   }
   if (path.includes('/localInstall') || pathMatch.includes('localInstall')) {
     return 'localInstall'

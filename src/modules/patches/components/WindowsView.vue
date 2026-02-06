@@ -33,8 +33,8 @@
 
     <!-- 图表区域 -->
     <div class="charts-row">
-      <!-- 漏洞分布 - 柱状图 -->
-      <div class="chart-card">
+      <!-- 漏洞分布 - 柱状图 (30% 宽度) -->
+      <div class="chart-card chart-card--bar">
         <div class="chart-card__header">
           <span class="chart-card__title">
             <i class="fa fa-chart-bar" />
@@ -46,8 +46,8 @@
         </div>
       </div>
 
-      <!-- 漏洞趋势 - 折线图 -->
-      <div class="chart-card">
+      <!-- 漏洞趋势 - 折线图 (剩余宽度) -->
+      <div class="chart-card chart-card--line">
         <div class="chart-card__header">
           <span class="chart-card__title">
             <i class="fa fa-chart-line" />
@@ -396,13 +396,25 @@ defineExpose({ refresh })
 }
 
 .chart-card {
-  flex: 1;
+  // flex: 1;  <-- Removed generic flex: 1
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  // 柱状图：精确对齐上方第1张卡片 ((100% - 2 * 20px gap) / 3)
+  &--bar {
+    flex: 0 0 calc((100% - 40px) / 3);
+    min-width: 0;
+  }
+
+  // 折线图：占据剩余空间
+  &--line {
+    flex: 1;
+    min-width: 0; // 关键：允许 flex item 内容区(echarts)正常收缩
+  }
 
   &__header {
     padding: 16px 20px;

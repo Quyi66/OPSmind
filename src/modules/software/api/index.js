@@ -450,6 +450,21 @@ export const packageApi = {
   },
 
   /**
+   * 获取所有已安装的软件包 (支持过滤可升级)
+   * 对应数据集: SPM_PACKAGES_INSTALLLED_ALL_LIST
+   */
+  getAllInstalledPackages(params = {}) {
+    return apiService.post(`${DTS_BASE}/SPM_PACKAGES_INSTALLLED_ALL_LIST/`, {
+      params: {
+        available_pkg: params.availablePkg || '可升级,all'
+      },
+      page: params.page || 1,
+      size: params.size || 10,
+      filter: params.filter || ''
+    })
+  },
+
+  /**
    * 获取本地上传的软件包列表
    */
   getLocalPackageList(params = {}) {
@@ -465,6 +480,23 @@ export const packageApi = {
    */
   deleteLocalPackage(id) {
     return apiService.delete(`/api/spm/packages/local/${id}`)
+  },
+
+  /**
+   * 获取安装了特定软件包的主机列表
+   * 对应数据集: SPM_INSTALLED_PKGS_MACHINE
+   */
+  getInstalledPkgMachines(params = {}) {
+    // 增加 cacheBuster 避免缓存
+    const url = `${DTS_BASE}/SPM_INSTALLED_PKGS_MACHINE/?cacheBuster=${Date.now()}`
+    return apiService.post(url, {
+      params: {
+        pkgs: params.pkgId
+      },
+      page: params.page || 1,
+      size: params.size || 10,
+      filter: params.filter || ''
+    })
   }
 }
 
