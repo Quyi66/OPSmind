@@ -1,24 +1,14 @@
 <template>
   <div class="execution-list-view">
     <!-- 左侧流程列表 -->
-    <aside class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 240px;">
+    <aside class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 240px">
       <div class="ops-sidebar-header">
-        <el-input
-          v-model="searchKeyword"
-          size="small"
-          placeholder="搜索流程"
-          clearable
-        >
+        <el-input v-model="searchKeyword" size="small" placeholder="搜索流程" clearable>
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        <el-button
-          size="small"
-          type="danger"
-          title="终止所有"
-          @click="handleTerminateAll"
-        >
+        <el-button size="small" type="danger" title="终止所有" @click="handleTerminateAll">
           <el-icon><CircleClose /></el-icon>
         </el-button>
       </div>
@@ -54,7 +44,8 @@
             :disabled="!hasRunningInstance"
             @click="handleTerminateProcess"
           >
-            <el-icon><VideoPause /></el-icon> 终止所有运行
+            <el-icon><VideoPause /></el-icon>
+            终止所有运行
           </el-button>
           <el-button
             type="danger"
@@ -62,10 +53,12 @@
             :disabled="selectedRows.length === 0"
             @click="handleBatchDelete"
           >
-            <el-icon><Delete /></el-icon> 删除
+            <el-icon><Delete /></el-icon>
+            删除
           </el-button>
           <el-button size="small" @click="loadExecutionList">
-            <el-icon><Refresh /></el-icon> 刷新
+            <el-icon><Refresh /></el-icon>
+            刷新
           </el-button>
         </div>
 
@@ -74,7 +67,6 @@
           <el-table
             :data="paginatedList"
             v-loading="loading"
-           
             style="width: 100%"
             @selection-change="handleSelectionChange"
           >
@@ -202,6 +194,11 @@ async function loadProcessList() {
     const response = await flowApi.getFlowList()
     const data = response?.data || response
     processList.value = Array.isArray(data) ? data : []
+
+    // 默认选中第一个
+    if (processList.value.length > 0 && !activeProcessId.value) {
+      handleSelectProcess(processList.value[0])
+    }
   } catch (error) {
     console.error('Failed to load process list:', error)
     ElMessage.error('加载流程列表失败')
@@ -404,4 +401,3 @@ onMounted(() => {
   justify-content: flex-end;
 }
 </style>
-

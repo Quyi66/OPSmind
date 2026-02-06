@@ -14,10 +14,12 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon> 搜索
+            <el-icon><Search /></el-icon>
+            搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon> 重置
+            <el-icon><RefreshRight /></el-icon>
+            重置
           </el-button>
         </el-form-item>
       </el-form>
@@ -25,8 +27,15 @@
 
     <!-- 操作栏 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -36,12 +45,23 @@
       <el-table
         :data="filteredData"
         v-loading="loading"
-       
         style="width: 100%"
-        max-height="calc(100vh - 350px)"
+        max-height="calc(100vh - 280px)"
       >
-        <el-table-column prop="groupInfo" label="资源信息" min-width="250" show-overflow-tooltip sortable />
-        <el-table-column prop="assets_type" label="资产类型" min-width="150" align="left" sortable />
+        <el-table-column
+          prop="groupInfo"
+          label="资源信息"
+          min-width="250"
+          show-overflow-tooltip
+          sortable
+        />
+        <el-table-column
+          prop="assets_type"
+          label="资产类型"
+          min-width="150"
+          align="left"
+          sortable
+        />
 
         <!-- 动态团队权限列 -->
         <el-table-column

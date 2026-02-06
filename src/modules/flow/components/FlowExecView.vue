@@ -1,49 +1,65 @@
 <template>
   <div class="flow-exec-view">
     <!-- 顶部导航栏 -->
-    <nav class="exec-toolbar">
-      <div class="toolbar-left">
-        <el-button size="small" @click="handleBack">
-          <i class="fa fa-arrow-left"></i> 返回
-        </el-button>
-
-        <el-select
-          v-model="currentSceneId"
-          size="small"
-          placeholder="选择场景"
-          clearable
-          style="width: 180px; margin-left: 12px"
-          @change="handleSceneChange"
-        >
-          <el-option
-            v-for="scene in sceneList"
-            :key="scene.id"
-            :label="scene.name"
-            :value="scene.id"
-          />
-        </el-select>
-
-        <el-button size="small" circle @click="handleAddScene">
-          <i class="fa fa-plus"></i>
-        </el-button>
-        <el-button size="small" circle type="success" v-if="currentSceneId" @click="handleEditScene">
-          <i class="fa fa-edit"></i>
-        </el-button>
-        <el-button size="small" circle type="danger" v-if="currentSceneId" @click="handleDeleteScene">
-          <i class="fa fa-trash"></i>
-        </el-button>
+    <div class="design-header">
+      <div class="header-left">
+        <el-breadcrumb separator="/">
+          <el-breadcrumb-item>
+            <a @click.prevent="handleBack">流程列表</a>
+          </el-breadcrumb-item>
+          <el-breadcrumb-item>{{ processInfo.processName || '流程执行' }}</el-breadcrumb-item>
+        </el-breadcrumb>
       </div>
 
-      <div class="toolbar-center">
-        <span class="process-name">{{ processInfo.processName }}</span>
+      <div class="header-center">
+        <div class="scene-selector-wrapper">
+          <el-select
+            v-model="currentSceneId"
+            size="small"
+            placeholder="选择场景"
+            clearable
+            style="width: 180px"
+            @change="handleSceneChange"
+          >
+            <el-option
+              v-for="scene in sceneList"
+              :key="scene.id"
+              :label="scene.name"
+              :value="scene.id"
+            />
+          </el-select>
+
+          <el-button size="small" circle @click="handleAddScene">
+            <i class="fa fa-plus"></i>
+          </el-button>
+          <el-button
+            size="small"
+            circle
+            type="success"
+            v-if="currentSceneId"
+            @click="handleEditScene"
+          >
+            <i class="fa fa-edit"></i>
+          </el-button>
+          <el-button
+            size="small"
+            circle
+            type="danger"
+            v-if="currentSceneId"
+            @click="handleDeleteScene"
+          >
+            <i class="fa fa-trash"></i>
+          </el-button>
+        </div>
       </div>
 
-      <div class="toolbar-right">
+      <div class="header-right">
         <el-button type="primary" size="small" :loading="executing" @click="handleExecute">
-          <i class="fa fa-play"></i> 执行
+          <i class="fa fa-play"></i>
+          执行
         </el-button>
       </div>
-    </nav>
+    </div>
 
     <!-- 主体区域 -->
     <div class="exec-body">
@@ -69,11 +85,7 @@
 
             <div class="property-group">
               <label>ID</label>
-              <el-input
-                v-model="elementProperties.id"
-                size="small"
-                disabled
-              />
+              <el-input v-model="elementProperties.id" size="small" disabled />
             </div>
 
             <div class="property-group">
@@ -88,11 +100,7 @@
 
             <div class="property-group">
               <label>类型</label>
-              <el-input
-                v-model="elementProperties.type"
-                size="small"
-                disabled
-              />
+              <el-input v-model="elementProperties.type" size="small" disabled />
             </div>
 
             <div class="section-title">备注</div>
@@ -380,35 +388,64 @@ onBeforeUnmount(() => {
   background: #fff;
 }
 
-.exec-toolbar {
+// 顶部导航栏
+.design-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  height: 56px;
+  padding: 0 20px;
+  background: #fff;
+  border-bottom: 1px solid #ebeef5;
   flex-shrink: 0;
-}
 
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+  .header-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
 
-.toolbar-center {
-  flex: 1;
-  text-align: center;
+    :deep(.el-breadcrumb) {
+      font-size: 14px;
 
-  .process-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
+      .el-breadcrumb__item {
+        .el-breadcrumb__inner {
+          a {
+            color: #409eff;
+            font-weight: normal;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s;
+
+            &:hover {
+              color: #66b1ff;
+            }
+          }
+        }
+
+        &:last-child .el-breadcrumb__inner {
+          color: #606266;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .header-center {
+    display: flex;
+    justify-content: center;
+  }
+
+  .header-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
   }
 }
 
-.toolbar-right {
+.scene-selector-wrapper {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 

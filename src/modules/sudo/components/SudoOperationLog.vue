@@ -4,12 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input
-            v-model="filters.keyword"
-            placeholder="搜索"
-            clearable
-            style="width: 180px"
-          >
+          <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 180px">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -55,20 +50,22 @@
 
     <!-- 操作栏 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
     <!-- 数据表格 -->
     <div class="ops-table-wrapper">
-      <el-table
-        :data="tableData"
-        v-loading="loading"
-       
-        style="width: 100%"
-      >
+      <el-table :data="tableData" v-loading="loading" style="width: 100%">
         <!-- 开始时间 -->
         <el-table-column prop="start_time" label="开始时间" width="170">
           <template #default="{ row }">
@@ -99,7 +96,7 @@
         <!-- 结果 -->
         <el-table-column prop="message" label="结果" min-width="140">
           <template #default="{ row }">
-            <span :class="{ 'text-danger': row.status === 'ERROR' }">
+            <span>
               {{ row.message || '' }}
             </span>
           </template>
@@ -286,7 +283,7 @@ function formatDuration(startTime, endTime) {
     const minutes = Math.floor((totalSeconds % 3600) / 60)
     const seconds = totalSeconds % 60
 
-    const pad = (n) => String(n).padStart(2, '0')
+    const pad = n => String(n).padStart(2, '0')
     return `${hours}:${pad(minutes)}:${pad(seconds)}`
   } catch {
     return ''

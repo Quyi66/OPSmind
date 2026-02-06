@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout" style="overflow-y: auto;">
+  <div class="ops-page-layout" style="overflow-y: auto">
     <!-- 统计卡片 (KPI) -->
     <div class="stat-cards">
       <div
@@ -24,13 +24,24 @@
       <div class="chart-section__title">十五天内操作统计</div>
       <div class="chart-section__content">
         <div class="chart-legend">
-          <span class="legend-item"><span class="dot dot--total"></span> 总数</span>
-          <span class="legend-item"><span class="dot dot--success"></span> 已完成</span>
-          <span class="legend-item"><span class="dot dot--failed"></span> 失败</span>
-          <span class="legend-item"><span class="dot dot--running"></span> 正在运行</span>
+          <span class="legend-item">
+            <span class="dot dot--total"></span>
+            总数
+          </span>
+          <span class="legend-item">
+            <span class="dot dot--success"></span>
+            已完成
+          </span>
+          <span class="legend-item">
+            <span class="dot dot--failed"></span>
+            失败
+          </span>
+          <span class="legend-item">
+            <span class="dot dot--running"></span>
+            正在运行
+          </span>
         </div>
-        <div ref="chartRef" class="chart-container" v-loading="chartLoading">
-        </div>
+        <div ref="chartRef" class="chart-container" v-loading="chartLoading"></div>
       </div>
     </div>
 
@@ -75,7 +86,7 @@
         </el-form>
       </div>
 
-      <el-table :data="logList" v-loading="logsLoading"  max-height="calc(100vh - 740px)">
+      <el-table :data="logList" v-loading="logsLoading" max-height="calc(100vh - 740px)">
         <el-table-column prop="start_time" label="开始时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}
@@ -341,37 +352,31 @@ function initChart() {
 
   const option = {
     tooltip: {
-      trigger: 'axis'
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e2e8f0',
+      textStyle: { color: '#1e293b' },
+      extraCssText: 'box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '10%',
-      top: '10%',
+      left: '10px',
+      right: '20px',
+      bottom: '10px',
+      top: '40px',
+      containLabel: true
     },
     xAxis: {
       type: 'category',
       boundaryGap: false,
       data: xData,
-      axisLabel: {
-        color: '#666'
-      },
-      axisLine: {
-        lineStyle: {
-          color: '#e0e0e0'
-        }
-      }
+      axisLabel: { color: '#64748b', margin: 12 },
+      axisLine: { lineStyle: { color: '#e2e8f0' } },
+      axisTick: { show: false }
     },
     yAxis: {
       type: 'value',
-      axisLabel: {
-        color: '#666'
-      },
-      splitLine: {
-        lineStyle: {
-          color: '#f0f0f0'
-        }
-      }
+      axisLabel: { color: '#64748b' },
+      splitLine: { lineStyle: { color: '#f1f5f9' } }
     },
     series: [
       {
@@ -379,40 +384,42 @@ function initChart() {
         type: 'line',
         data: totalData,
         smooth: true,
-        symbol: 'circle',
-        symbolSize: 6,
-        lineStyle: { color: 'rgb(68, 84, 106)', width: 2 },
-        itemStyle: { color: 'rgb(68, 84, 106)' }
+        symbol: 'none',
+        lineStyle: { color: '#3b82f6', width: 3 },
+        itemStyle: { color: '#3b82f6' },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(59, 130, 246, 0.15)' },
+            { offset: 1, color: 'rgba(59, 130, 246, 0)' }
+          ])
+        }
       },
       {
         name: '已完成',
         type: 'line',
         data: completedData,
         smooth: true,
-        symbol: 'circle',
-        symbolSize: 6,
-        lineStyle: { color: 'rgb(112, 173, 71)', width: 2 },
-        itemStyle: { color: 'rgb(112, 173, 71)' }
+        symbol: 'none',
+        lineStyle: { color: '#10b981', width: 2 },
+        itemStyle: { color: '#10b981' }
       },
       {
         name: '失败',
         type: 'line',
         data: failedData,
         smooth: true,
-        symbol: 'circle',
-        symbolSize: 6,
-        lineStyle: { color: 'rgb(255, 0, 0)', width: 2 },
-        itemStyle: { color: 'rgb(255, 0, 0)' }
+        symbol: 'none',
+        lineStyle: { color: '#ef4444', width: 2 },
+        itemStyle: { color: '#ef4444' }
       },
       {
         name: '正在运行',
         type: 'line',
         data: runningData,
         smooth: true,
-        symbol: 'circle',
-        symbolSize: 6,
-        lineStyle: { color: 'rgb(68, 114, 196)', width: 2 },
-        itemStyle: { color: 'rgb(68, 114, 196)' }
+        symbol: 'none',
+        lineStyle: { color: '#f59e0b', width: 2 },
+        itemStyle: { color: '#f59e0b' }
       }
     ]
   }
@@ -520,25 +527,24 @@ onUnmounted(() => {
   border-radius: 50%;
 
   &--total {
-    background: rgb(68, 84, 106);
+    background: #3b82f6;
   }
 
   &--success {
-    background: rgb(112, 173, 71);
+    background: #10b981;
   }
 
   &--failed {
-    background: rgb(255, 0, 0);
+    background: #ef4444;
   }
 
   &--running {
-    background: rgb(68, 114, 196);
+    background: #f59e0b;
   }
 }
 
 .chart-container {
-  height: 250px;
-  background: #f8fafc;
+  height: 320px;
   border-radius: 8px;
 }
 

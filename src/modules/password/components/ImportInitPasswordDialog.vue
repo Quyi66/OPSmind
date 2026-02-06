@@ -9,11 +9,7 @@
     @close="handleClose"
   >
     <div class="import-password-content">
-      <el-alert
-        type="success"
-        :closable="false"
-        class="info-alert"
-      >
+      <el-alert type="success" :closable="false" class="info-alert">
         <template #title>
           <div class="alert-text">
             将需要修改的密码信息，按模板填写并上传。系统将根据文件中的信息，批量修改对应主机的用户密码。修改后的密码作为初始密码
@@ -37,12 +33,11 @@
           >
             <el-icon class="el-icon--upload"><i class="fa fa-cloud-upload-alt fa-2x"></i></el-icon>
             <div class="el-upload__text">
-              将文件拖到此处，或<em>点击上传</em>
+              将文件拖到此处，或
+              <em>点击上传</em>
             </div>
             <template #tip>
-              <div class="el-upload__tip">
-                修改密码模板，仅支持 .xlsx 或 .xls 格式
-              </div>
+              <div class="el-upload__tip">修改密码模板，仅支持 .xlsx 或 .xls 格式</div>
             </template>
           </el-upload>
         </el-form-item>
@@ -51,16 +46,13 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" :disabled="uploading">
-          取消
-        </el-button>
+        <el-button @click="handleClose" :disabled="uploading">取消</el-button>
         <el-button
           type="primary"
           :loading="uploading"
           :disabled="!selectedFile"
           @click="handleUpload"
         >
-          <i class="fa fa-paper-plane" v-if="!uploading"></i>
           确定
         </el-button>
       </div>

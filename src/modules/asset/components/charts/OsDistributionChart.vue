@@ -19,6 +19,7 @@
       width="90%"
       top="5vh"
       destroy-on-close
+      append-to-body
     >
       <div ref="fullscreenChartRef" class="fullscreen-chart"></div>
     </el-dialog>
@@ -69,7 +70,8 @@ function getChartOption() {
       left: '3%',
       right: '4%',
       bottom: '10%',
-      top: '14%'
+      top: '18%',
+      containLabel: true
     },
     xAxis: {
       type: 'category',
@@ -97,6 +99,7 @@ function getChartOption() {
       type: 'value',
       name: '主机数量',
       nameLocation: 'end',
+      nameGap: 18,
       nameTextStyle: {
         color: '#666',
         fontSize: 12
@@ -116,19 +119,24 @@ function getChartOption() {
         type: 'bar',
         data: yData,
         itemStyle: {
+          borderRadius: [6, 6, 0, 0],
           // 为每个柱条使用不同颜色
           color: params => {
             const colors = [
-              '#409EFF', // 蓝色
-              '#67C23A', // 绿色
-              '#E6A23C', // 橙色
-              '#F56C6C', // 红色
-              '#909399', // 灰色
-              '#00B0F0', // 浅蓝
-              '#00B050', // 深绿
-              '#7030A0' // 紫色
+              ['#409EFF', '#8CC5FF'], // 蓝色
+              ['#67C23A', '#95D475'], // 绿色
+              ['#E6A23C', '#F3D19E'], // 橙色
+              ['#F56C6C', '#FAB6B6'], // 红色
+              ['#909399', '#C0C4CC'], // 灰色
+              ['#00B0F0', '#80D8F8'], // 浅蓝
+              ['#00B050', '#80D8A8'], // 深绿
+              ['#7030A0', '#B898D0']  // 紫色
             ]
-            return colors[params.dataIndex % colors.length]
+            const colorPair = colors[params.dataIndex % colors.length]
+            return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: colorPair[0] },
+              { offset: 1, color: colorPair[1] }
+            ])
           }
         },
         barMaxWidth: 40

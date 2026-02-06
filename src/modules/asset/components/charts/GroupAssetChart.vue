@@ -2,7 +2,13 @@
   <div class="chart-card" ref="cardRef">
     <div class="chart-header">
       <span class="chart-title">分组内资产分布</span>
-      <el-button v-if="showControls" :icon="FullScreen" text @click="toggleFullscreen" title="全屏" />
+      <el-button
+        v-if="showControls"
+        :icon="FullScreen"
+        text
+        @click="toggleFullscreen"
+        title="全屏"
+      />
     </div>
     <div ref="chartRef" class="chart-container" v-loading="loading"></div>
 
@@ -13,6 +19,7 @@
       width="90%"
       top="5vh"
       destroy-on-close
+      append-to-body
     >
       <div ref="fullscreenChartRef" class="fullscreen-chart"></div>
     </el-dialog>
@@ -80,6 +87,7 @@ function getChartOption() {
       right: '4%',
       bottom: '10%',
       top: '15%',
+      containLabel: true
     },
     xAxis: {
       type: 'category',
@@ -110,41 +118,53 @@ function getChartOption() {
         type: 'bar',
         data: props.data.map(item => item.count),
         itemStyle: {
-          color: osColors.count
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#FF9F43' },
+            { offset: 1, color: 'rgba(255, 159, 67, 0.2)' }
+          ]),
+          borderRadius: [4, 4, 0, 0]
         },
-        barMaxWidth: 40
+        barMaxWidth: 30
       },
       {
         name: 'CentOS',
         type: 'line',
         data: props.data.map(item => item.CentOS),
         smooth: true,
-        lineStyle: { color: osColors.CentOS },
-        itemStyle: { color: osColors.CentOS }
+        symbol: 'emptyCircle',
+        symbolSize: 6,
+        lineStyle: { width: 3, color: '#28C76F' },
+        itemStyle: { color: '#28C76F', borderWidth: 2, borderColor: '#fff' }
       },
       {
         name: 'Anolis',
         type: 'line',
         data: props.data.map(item => item.Anolis),
         smooth: true,
-        lineStyle: { color: osColors.Anolis },
-        itemStyle: { color: osColors.Anolis }
+        symbol: 'emptyCircle',
+        symbolSize: 6,
+        lineStyle: { width: 3, color: '#00CFE8' },
+        itemStyle: { color: '#00CFE8', borderWidth: 2, borderColor: '#fff' }
       },
       {
         name: 'RedHat',
         type: 'line',
         data: props.data.map(item => item.RedHat),
         smooth: true,
-        lineStyle: { color: osColors.RedHat },
-        itemStyle: { color: osColors.RedHat }
+        symbol: 'emptyCircle',
+        symbolSize: 6,
+        lineStyle: { width: 3, color: '#EA5455' },
+        itemStyle: { color: '#EA5455', borderWidth: 2, borderColor: '#fff' }
       },
       {
         name: 'Debian',
         type: 'line',
         data: props.data.map(item => item.Debian),
         smooth: true,
-        lineStyle: { color: osColors.Debian },
-        itemStyle: { color: osColors.Debian }
+        symbol: 'emptyCircle',
+        symbolSize: 6,
+        lineStyle: { width: 3, color: '#7367F0' },
+        itemStyle: { color: '#7367F0', borderWidth: 2, borderColor: '#fff' }
       }
     ]
   }

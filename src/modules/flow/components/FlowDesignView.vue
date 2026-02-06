@@ -1,35 +1,44 @@
 <template>
   <div class="flow-design-view">
-    <!-- 顶部标签栏 -->
-    <div class="design-tabs">
-      <div class="tabs-left">
-        <div
-          class="tab-item"
-          :class="{ 'is-active': activeTab === 'modeler' }"
-          @click="activeTab = 'modeler'"
-        >
-          Modeler
-        </div>
-        <div
-          class="tab-item"
-          :class="{ 'is-active': activeTab === 'xml' }"
-          @click="activeTab = 'xml'"
-        >
-          Bpmn Xml
-        </div>
+    <!-- 顶部导航栏 -->
+    <div class="design-header">
+      <!-- 左侧：面包屑 -->
+      <div class="header-left">
+        <el-breadcrumb separator="/">
+          <el-breadcrumb-item>
+            <a @click.prevent="handleBack">
+              {{ from === 'history' ? '历史版本列表' : '流程列表' }}
+            </a>
+          </el-breadcrumb-item>
+          <el-breadcrumb-item>{{ flowInfo.processName || '新建流程' }}</el-breadcrumb-item>
+        </el-breadcrumb>
       </div>
-    </div>
 
-    <!-- 工具栏 -->
-    <div class="design-toolbar">
-      <div class="toolbar-left">
-        <el-button type="primary" size="small" link @click="handleBack">
-          <i class="fa fa-arrow-left"></i> 返回
-        </el-button>
+      <!-- 中间：视图切换 -->
+      <div class="header-center">
+        <div class="view-tabs">
+          <div
+            class="tab-item"
+            :class="{ 'is-active': activeTab === 'modeler' }"
+            @click="activeTab = 'modeler'"
+          >
+            Modeler
+          </div>
+          <div
+            class="tab-item"
+            :class="{ 'is-active': activeTab === 'xml' }"
+            @click="activeTab = 'xml'"
+          >
+            Bpmn Xml
+          </div>
+        </div>
       </div>
-      <div class="toolbar-right">
+
+      <!-- 右侧：工具按钮 -->
+      <div class="header-right">
         <el-button type="primary" size="small" @click="handleSave">
-          <i class="fa fa-save"></i> 保存
+          <i class="fa fa-save"></i>
+          保存
         </el-button>
       </div>
     </div>
@@ -44,15 +53,12 @@
         <div class="canvas-header">
           <div class="header-left">
             <span class="header-title">流程模拟</span>
-            <el-switch
-              v-model="isSimulationMode"
-              size="small"
-              @change="toggleSimulation"
-            />
+            <el-switch v-model="isSimulationMode" size="small" @change="toggleSimulation" />
           </div>
           <div class="header-center">
             <el-tag type="success" size="small">
-              <i class="fa fa-check"></i> {{ errorCount }} Errors, {{ warningCount }} Warnings
+              <i class="fa fa-check"></i>
+              {{ errorCount }} Errors, {{ warningCount }} Warnings
             </el-tag>
           </div>
           <div class="header-right">
@@ -148,6 +154,10 @@ const props = defineProps({
     default: ''
   },
   detailId: {
+    type: String,
+    default: ''
+  },
+  from: {
     type: String,
     default: ''
   }
@@ -486,51 +496,88 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-// 顶部标签栏
-.design-tabs {
+// 顶部导航栏
+.design-header {
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #f8fafc;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 20px;
+  background: #fff;
+  border-bottom: 1px solid #ebeef5; /* 统一边框颜色 */
+  flex-shrink: 0;
 
-  .tabs-left {
+  .header-left {
+    flex: 1;
     display: flex;
+    align-items: center;
+
+    :deep(.el-breadcrumb) {
+      font-size: 14px;
+
+      .el-breadcrumb__item {
+        .el-breadcrumb__inner {
+          a {
+            color: #409eff;
+            font-weight: normal;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s;
+
+            &:hover {
+              color: #66b1ff;
+            }
+          }
+        }
+
+        &:last-child .el-breadcrumb__inner {
+          color: #606266;
+          font-weight: 500;
+        }
+      }
+    }
   }
 
+  .header-center {
+    display: flex;
+    justify-content: center;
+  }
+
+  .header-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}
+
+// 视图切换 Tab (Segmented Control 风格)
+.view-tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 6px;
+
   .tab-item {
-    padding: 12px 20px;
-    cursor: pointer;
+    padding: 6px 20px;
+    font-size: 13px;
     color: #64748b;
-    font-size: 14px;
-    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    border-radius: 4px;
     transition: all 0.2s;
+    font-weight: 500;
+    user-select: none;
 
     &:hover {
-      color: #1890ff;
+      color: #333;
     }
 
     &.is-active {
-      color: #1890ff;
-      border-bottom-color: #1890ff;
+      background: #fff;
+      color: #3b82f6;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
   }
-}
-
-// 工具栏
-.design-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #fff;
-  flex-shrink: 0;
-}
-
-.toolbar-left, .toolbar-right {
-  display: flex;
-  gap: 8px;
 }
 
 // 设计器主体
@@ -539,6 +586,7 @@ onBeforeUnmount(() => {
   display: flex;
   min-height: 0;
   overflow: hidden;
+  padding-bottom: 8px;
 }
 
 // 画布包装器

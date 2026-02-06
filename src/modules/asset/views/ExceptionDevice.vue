@@ -9,7 +9,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="类型">
-          <el-select v-model="filters.cit" placeholder="全部" style="width: 120px">
+          <el-select v-model="filters.cit" placeholder="全部" style="width: 150px">
             <el-option label="全部" value="oplus_all" />
             <el-option
               v-for="item in resourceTypes"
@@ -50,7 +50,7 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button size="small" @click="handleCheckConnectivity">
+      <el-button size="small" @click="handleCheckConnectivity" type="primary">
         <i class="fa fa-plug" style="margin-right: 4px"></i>
         检查连通性
       </el-button>
@@ -77,7 +77,7 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <!-- 数据表格 -->
-      <el-table v-loading="tableLoading" :data="tableData" style="width: 100%" >
+      <el-table v-loading="tableLoading" :data="tableData" style="width: 100%">
         <el-table-column prop="IP" label="IP" min-width="120" sortable />
         <el-table-column prop="ci_name" label="资产代码" min-width="120" />
         <el-table-column prop="CONN_RATE" label="连通率" min-width="100">
@@ -717,9 +717,9 @@ onMounted(() => {
   }
 }
 
-.kpi-section {
-  padding: 12px 0;
-}
+// .kpi-section {
+//   padding-bottom: 12px;
+// }
 
 .table-section {
   flex: 1;

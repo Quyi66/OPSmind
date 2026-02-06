@@ -9,32 +9,17 @@
     @close="handleClose"
   >
     <div class="check-password-content">
-      <el-alert
-        type="success"
-        :closable="false"
-        class="info-alert"
-      >
+      <el-alert type="success" :closable="false" class="info-alert">
         <template #title>
-          <div class="alert-text">
-            检查密码状态会验证数据库中的用户密码是否与服务器上的密码一致
-          </div>
+          <div class="alert-text">检查密码状态会验证数据库中的用户密码是否与服务器上的密码一致</div>
         </template>
       </el-alert>
     </div>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" :disabled="submitting">
-          取消
-        </el-button>
-        <el-button
-          type="primary"
-          :loading="submitting"
-          @click="handleCheck"
-        >
-          <i class="fa fa-chevron-right" v-if="!submitting"></i>
-          确认检查
-        </el-button>
+        <el-button @click="handleClose" :disabled="submitting">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleCheck">确认检查</el-button>
       </div>
     </template>
   </el-dialog>

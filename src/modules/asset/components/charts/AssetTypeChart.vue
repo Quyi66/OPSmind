@@ -2,7 +2,13 @@
   <div class="chart-card" ref="cardRef">
     <div class="chart-header">
       <span class="chart-title">资产类型</span>
-      <el-button v-if="showControls" :icon="FullScreen" text @click="toggleFullscreen" title="全屏" />
+      <el-button
+        v-if="showControls"
+        :icon="FullScreen"
+        text
+        @click="toggleFullscreen"
+        title="全屏"
+      />
     </div>
     <div ref="chartRef" class="chart-container" v-loading="loading"></div>
 
@@ -13,6 +19,7 @@
       width="90%"
       top="5vh"
       destroy-on-close
+      append-to-body
     >
       <div ref="fullscreenChartRef" class="fullscreen-chart"></div>
     </el-dialog>
@@ -63,7 +70,8 @@ function getChartOption() {
       left: '3%',
       right: '4%',
       bottom: '10%',
-      top: '14%',
+      top: '18%',
+      containLabel: true
     },
     xAxis: {
       type: 'category',
@@ -81,6 +89,7 @@ function getChartOption() {
       type: 'value',
       name: '主机数量',
       nameLocation: 'end',
+      nameGap: 18,
       nameTextStyle: {
         color: '#666',
         fontSize: 12
@@ -100,7 +109,11 @@ function getChartOption() {
         type: 'bar',
         data: yData,
         itemStyle: {
-          color: 'rgb(0, 32, 96)'
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#409EFF' },
+            { offset: 1, color: '#8CC5FF' }
+          ]),
+          borderRadius: [6, 6, 0, 0]
         },
         barMaxWidth: 40
       }

@@ -1,79 +1,111 @@
 <template>
-  <div class="ops-page-layout" style="background: #6c757d; overflow: auto;">
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading-state">
-      <i class="fa fa-cog fa-spin fa-4x"></i>
-      <p>加载中...</p>
+  <div class="ops-page-layout">
+    <!-- 头部搜索栏 -->
+    <div class="header-bar">
+      <el-input v-model="searchKeyword" placeholder="搜索模板名称" clearable style="width: 300px">
+        <template #prefix>
+          <i class="fa fa-search"></i>
+        </template>
+      </el-input>
+
+      <el-button type="primary" @click="goToAddTemplate">
+        <i class="fa fa-plus"></i>
+        新增模板
+      </el-button>
     </div>
 
-    <!-- 模板方格列表 -->
-    <div v-else class="template-grid">
-      <div
-        v-for="template in templateList"
-        :key="template.id"
-        class="template-card"
-        :class="{ 'has-job': template.jobId }"
-        @click="handleCardClick(template)"
-      >
-        <div class="card-body">
-          <h3 class="template-name" :title="template.templateName">
-            {{ template.templateName }}
-          </h3>
-          <div class="template-icon">
-            <i :class="getIconClass(template.icon)"></i>
-          </div>
-        </div>
-        <div class="card-footer">
-          <div class="footer-left">
-            <div class="status-info">
-              <span
-                class="status-dot"
-                :class="template.executedBy ? 'executed' : 'not-executed'"
-              ></span>
-              <span v-if="!template.executedBy" class="status-text">未执行</span>
-              <span v-else class="status-text">{{ template.executedTime }}执行</span>
+    <div class="content-scroll-area">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-state">
+        <el-skeleton animated :count="4" style="width: 100%">
+          <template #template>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px">
+              <el-skeleton-item variant="rect" style="height: 180px; border-radius: 12px" />
+              <el-skeleton-item variant="rect" style="height: 180px; border-radius: 12px" />
+              <el-skeleton-item variant="rect" style="height: 180px; border-radius: 12px" />
+              <el-skeleton-item variant="rect" style="height: 180px; border-radius: 12px" />
             </div>
-            <span class="host-count">{{ template.hostLength }} 设备</span>
+          </template>
+        </el-skeleton>
+      </div>
+
+      <!-- 模板方格列表 -->
+      <div v-else class="template-grid">
+        <div
+          v-for="template in filteredTemplateList"
+          :key="template.id"
+          class="template-card"
+          :class="{ 'has-job': template.jobId }"
+          @click="handleCardClick(template)"
+        >
+          <div class="card-body">
+            <div class="template-main">
+              <h3 class="template-name" :title="template.templateName">
+                {{ template.templateName }}
+              </h3>
+              <div class="template-meta">
+                <span class="host-badge">
+                  <i class="fa fa-desktop"></i>
+                  {{ template.hostLength }} 设备
+                </span>
+              </div>
+            </div>
+            <div class="template-icon-wrapper">
+              <i :class="getIconClass(template.icon)"></i>
+            </div>
           </div>
-          <div class="footer-right" @click.stop>
-            <el-dropdown trigger="click" @command="handleCommand($event, template)">
-              <el-button class="more-btn" text circle size="small">
-                <i class="fa fa-ellipsis-v"></i>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="run">
-                    <i class="fa fa-play-circle"></i> 执行
-                  </el-dropdown-item>
-                  <el-dropdown-item command="edit">
-                    <i class="fa fa-pencil"></i> 编辑
-                  </el-dropdown-item>
-                  <el-dropdown-item v-if="dashboardEnabled" command="dashboard">
-                    <i class="fa fa-tachometer-alt"></i> 仪表盘
-                  </el-dropdown-item>
-                  <el-dropdown-item v-if="teamsEnabled" command="teams">
-                    <i class="fa fa-users-cog"></i> 选择团队
-                  </el-dropdown-item>
-                  <el-dropdown-item command="delete" divided>
-                    <i class="fa fa-trash-alt"></i> 删除
-                  </el-dropdown-item>
-                </el-dropdown-menu>
+
+          <div class="card-footer">
+            <div class="status-section">
+              <template v-if="!template.executedBy">
+                <span class="status-tag pending">
+                  <span class="dot"></span>
+                  未执行
+                </span>
               </template>
-            </el-dropdown>
+              <template v-else>
+                <span class="status-tag executed">
+                  <span class="dot"></span>
+                  {{ template.executedTime }}执行
+                </span>
+              </template>
+            </div>
+
+            <div class="action-section" @click.stop>
+              <el-dropdown trigger="click" @command="handleCommand($event, template)">
+                <div class="more-btn">
+                  <i class="fa fa-ellipsis-h"></i>
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="run">
+                      <i class="fa fa-play-circle text-primary"></i>
+                      执行巡检
+                    </el-dropdown-item>
+                    <el-dropdown-item command="edit">
+                      <i class="fa fa-pencil-alt text-warning"></i>
+                      编辑模板
+                    </el-dropdown-item>
+                    <el-dropdown-item command="delete" divided class="text-danger">
+                      <i class="fa fa-trash-alt"></i>
+                      删除
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- 空状态 -->
-    <el-empty
-      v-if="!loading && templateList.length === 0"
-      description="暂无巡检模板"
-    >
-      <el-button type="primary" @click="goToAddTemplate">
-        <i class="fa fa-plus"></i> 新增模板
-      </el-button>
-    </el-empty>
+      <!-- 空状态 -->
+      <el-empty v-if="!loading && templateList.length === 0" description="暂无巡检模板">
+        <el-button type="primary" @click="goToAddTemplate">
+          <i class="fa fa-plus"></i>
+          新增模板
+        </el-button>
+      </el-empty>
+    </div>
 
     <!-- 编辑模板弹窗 -->
     <TemplateEditDialog
@@ -92,7 +124,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineEmits } from 'vue'
+import { ref, onMounted, defineEmits, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { templateApi, paramApi } from '../api'
@@ -104,8 +136,20 @@ const emit = defineEmits(['navigate'])
 
 const loading = ref(true)
 const templateList = ref([])
+const searchKeyword = ref('')
 const dashboardEnabled = ref(false)
 const teamsEnabled = ref(false)
+
+// 过滤后的列表
+const filteredTemplateList = computed(() => {
+  if (!searchKeyword.value) return templateList.value
+  const keyword = searchKeyword.value.toLowerCase()
+  return templateList.value.filter(item =>
+    item.templateName?.toLowerCase().includes(keyword)
+  )
+})
+
+// ... (retain rest of script)
 
 // 编辑弹窗状态
 const editDialogVisible = ref(false)
@@ -323,155 +367,199 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.inspection-overview {
+.ops-page-layout {
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  padding: 20px;
-  background: #6c757d;
-  overflow: auto;
+  padding: 24px;
+  // background: #f5f7fa; /* 浅色背景 */
+  overflow: hidden; /* 关键：防止最外层滚动 */
+}
+
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.content-scroll-area {
+  flex: 1;
+  overflow-y: auto; /* 仅此处滚动 */
+  min-height: 0; /* Flex item 滚动必需 */
+  padding: 4px; /* 防止 box-shadow 被裁剪 */
+  margin: -4px; /* 抵消 padding 带来的额外空间 */
 }
 
 .loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 300px;
-  color: #fff;
-
-  i {
-    margin-bottom: 16px;
-    opacity: 0.8;
-  }
-
-  p {
-    margin: 0;
-    font-size: 14px;
-    opacity: 0.8;
-  }
+  padding: 20px;
 }
 
 .template-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-
-  @media (max-width: 1400px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  @media (max-width: 1100px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
 }
 
 .template-card {
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: all 0.3s;
+  border-radius: 12px;
+  border: 1px solid #dcdfe6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* 柔和阴影 */
+  overflow: visible;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  }
-
-  &.has-job:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  }
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border-color: #c0c4cc;
 
-  .card-body {
-    padding: 20px;
-    position: relative;
-    min-height: 80px;
-
-    .template-name {
-      margin: 0 0 8px;
-      font-size: 18px;
-      font-weight: 600;
-      color: #303133;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      padding-right: 40px;
-    }
-
-    .template-icon {
-      position: absolute;
-      top: 0;
-      right: 8px;
-      font-size: 32px;
-      opacity: 0.25;
-      color: #606266;
-      transition: all 0.3s;
+    .template-icon-wrapper {
+      // transform: scale(1.1) rotate(5deg);
+      background: #eff6ff;
+      color: #3b82f6;
     }
   }
+}
 
-  &:hover .template-icon {
-    opacity: 0.4;
+.card-body {
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.template-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.template-name {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.template-meta {
+  display: flex;
+  align-items: center;
+}
+
+.host-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+
+  i {
+    font-size: 11px;
+    color: #94a3b8;
   }
+}
 
-  .card-footer {
+.template-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 12px;
+  color: #94a3b8;
+  font-size: 20px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.card-footer {
+  padding: 16px 24px;
+  background: #fff;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.status-section {
+  font-size: 13px;
+
+  .status-tag {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    background: #f8f9fa;
-    border-top: 1px solid #ebeef5;
+    gap: 8px;
+    font-weight: 500;
 
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
     }
 
-    .status-info {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-
-      .status-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-
-        &.not-executed {
-          background: #909399;
-        }
-
-        &.executed {
-          background: #e6a23c;
-        }
-      }
-
-      .status-text {
-        font-size: 12px;
-        color: #909399;
+    &.pending {
+      color: #94a3b8;
+      .dot {
+        background: #cbd5e1;
       }
     }
 
-    .host-count {
-      font-size: 12px;
-      color: #606266;
-    }
-
-    .footer-right {
-      .more-btn {
-        opacity: 0;
-        transition: opacity 0.2s;
+    &.executed {
+      color: #059669; /* 绿色 */
+      .dot {
+        background: #10b981;
       }
     }
   }
+}
 
-  &:hover .card-footer .more-btn {
-    opacity: 1;
+.action-section {
+  .more-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: #94a3b8;
+    transition: all 0.2s;
+    cursor: pointer;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #64748b;
+    }
   }
+}
+
+/* 辅助样式 */
+.text-primary {
+  color: #409eff;
+}
+.text-warning {
+  color: #e6a23c;
+}
+.text-danger {
+  color: #f56c6c;
 }
 
 :deep(.el-empty) {

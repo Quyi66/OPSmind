@@ -10,18 +10,18 @@
   >
     <div class="scan-hosts-content">
       <!-- 主机选择 -->
-      <div class="form-section">
+      <!-- <div class="form-section">
         <div class="section-title">选择主机</div>
         <div class="section-content">
-          <AcmDeviceSelector
-            v-model="selectedHosts"
-            ci-types="linux"
-            :options="{ label: '选择需要扫描的主机' }"
-            :disabled="submitting"
-          />
-        </div>
-      </div>
 
+        </div>
+      </div> -->
+      <AcmDeviceSelector
+        v-model="selectedHosts"
+        ci-types="linux"
+        :options="{ label: '选择主机' }"
+        :disabled="submitting"
+      />
       <div v-if="jobStatus" class="job-status">
         <div class="status-header">
           <i class="fa fa-spinner fa-spin" v-if="isRunning"></i>

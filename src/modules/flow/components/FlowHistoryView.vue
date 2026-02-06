@@ -1,16 +1,19 @@
 <template>
   <div class="flow-history-view">
-    <!-- 顶部工具栏 -->
-    <div class="history-toolbar">
-      <div class="toolbar-left">
-        <el-button type="primary" size="small" @click="handleBack">
-          <el-icon><ArrowLeft /></el-icon> 返回
-        </el-button>
+    <!-- 顶部导航栏 -->
+    <div class="design-header">
+      <div class="header-left">
+        <el-breadcrumb separator="/">
+          <el-breadcrumb-item>
+            <a @click.prevent="handleBack">流程列表</a>
+          </el-breadcrumb-item>
+          <el-breadcrumb-item>{{ processInfo.processName }} 历史版本</el-breadcrumb-item>
+        </el-breadcrumb>
       </div>
-      <div class="toolbar-center">
-        <span class="process-name">{{ processInfo.processName }} 历史版本</span>
-      </div>
-      <div class="toolbar-right">
+
+      <div class="header-center"></div>
+
+      <div class="header-right">
         <el-input
           v-model="searchKeyword"
           placeholder="搜索版本备注"
@@ -25,25 +28,18 @@
           </template>
         </el-input>
         <el-button size="small" @click="loadHistory">
-          <el-icon><Refresh /></el-icon> 刷新
+          <el-icon><Refresh /></el-icon>
+          刷新
         </el-button>
       </div>
     </div>
 
     <!-- 历史版本列表 -->
     <div class="history-content">
-      <el-table
-        :data="paginatedList"
-        v-loading="loading"
-       
-        style="width: 100%"
-      >
+      <el-table :data="paginatedList" v-loading="loading" style="width: 100%">
         <el-table-column label="版本" width="150">
           <template #default="{ row }">
-            <el-tag
-              :type="row.version === row.currentVersion ? 'success' : 'primary'"
-              size="small"
-            >
+            <el-tag :type="row.version === row.currentVersion ? 'success' : 'primary'" size="small">
               {{ row.version }}
               <span v-if="row.version === row.currentVersion">(当前版本)</span>
             </el-tag>
@@ -75,14 +71,7 @@
             >
               切换版本
             </el-button>
-            <el-button
-              text
-              type="primary"
-              size="small"
-              @click="handleDesign(row)"
-            >
-              设计
-            </el-button>
+            <el-button text type="primary" size="small" @click="handleDesign(row)">设计</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -239,30 +228,58 @@ onMounted(() => {
   background: #fff;
 }
 
-.history-toolbar {
+// 顶部导航栏
+.design-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  height: 56px;
+  padding: 0 20px;
+  background: #fff;
+  border-bottom: 1px solid #ebeef5;
   flex-shrink: 0;
-}
 
-.toolbar-left, .toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+  .header-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
 
-.toolbar-center {
-  flex: 1;
-  text-align: center;
+    :deep(.el-breadcrumb) {
+      font-size: 14px;
 
-  .process-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
+      .el-breadcrumb__item {
+        .el-breadcrumb__inner {
+          a {
+            color: #409eff;
+            font-weight: normal;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s;
+
+            &:hover {
+              color: #66b1ff;
+            }
+          }
+        }
+
+        &:last-child .el-breadcrumb__inner {
+          color: #606266;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .header-center {
+    display: flex;
+    justify-content: center;
+  }
+
+  .header-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
   }
 }
 
@@ -287,4 +304,3 @@ onMounted(() => {
   }
 }
 </style>
-

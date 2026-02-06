@@ -9,11 +9,7 @@
     @close="handleClose"
   >
     <div class="revert-password-content">
-      <el-alert
-        type="success"
-        :closable="false"
-        class="info-alert"
-      >
+      <el-alert type="success" :closable="false" class="info-alert">
         <template #title>
           <div class="alert-text">
             重置密码会根据密码重置策略，使用初始密码或者生成一个随机密码重新设置服务器上的用户密码
@@ -39,15 +35,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" :disabled="submitting">
-          取消
-        </el-button>
-        <el-button
-          type="danger"
-          :loading="submitting"
-          @click="handleRevert"
-        >
-          <i class="fa fa-play-circle" v-if="!submitting"></i>
+        <el-button @click="handleClose" :disabled="submitting">取消</el-button>
+        <el-button type="danger" :loading="submitting" @click="handleRevert">
           确认重置密码
         </el-button>
       </div>

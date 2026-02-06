@@ -31,25 +31,27 @@
         <el-form-item label="操作">
           <el-select v-model="filters.action" style="width: 120px">
             <el-option label="全部" value="all" />
-            <el-option v-for="action in actionTypes" :key="action.value" :label="action.label" :value="action.value" />
+            <el-option
+              v-for="action in actionTypes"
+              :key="action.value"
+              :label="action.label"
+              :value="action.value"
+            />
           </el-select>
         </el-form-item>
 
         <el-form-item label="执行引擎节点">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="搜索"
-            clearable
-            style="width: 150px"
-          />
+          <el-input v-model="searchKeyword" placeholder="搜索" clearable style="width: 150px" />
         </el-form-item>
 
         <el-form-item>
           <el-button type="primary" @click="handleFilterChange">
-            <el-icon><Search /></el-icon> 搜索
+            <el-icon><Search /></el-icon>
+            搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon> 重置
+            <el-icon><RefreshRight /></el-icon>
+            重置
           </el-button>
         </el-form-item>
       </el-form>
@@ -57,8 +59,15 @@
 
     <!-- 操作栏 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -69,9 +78,8 @@
       <el-table
         :data="filteredData"
         v-loading="loading"
-       
         style="width: 100%"
-        max-height="calc(100vh - 300px)"
+        max-height="calc(100vh - 280px)"
         row-key="run_id"
       >
         <el-table-column prop="start_time" label="开始时间" width="180" sortable>
@@ -106,10 +114,7 @@
         </el-table-column>
         <el-table-column prop="message" label="结果" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            <span
-              class="message-text"
-              :class="{ 'error-text': row.status === 'ERROR' }"
-            >
+            <span class="message-text" :class="{ 'error-text': row.status === 'ERROR' }">
               {{ formatMessage(row.message) }}
             </span>
           </template>
@@ -425,7 +430,6 @@ function calculateDuration(startTime, endTime) {
 }
 
 .message-text {
-
   &.error-text {
     color: #f56c6c;
   }

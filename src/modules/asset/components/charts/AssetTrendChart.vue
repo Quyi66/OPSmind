@@ -2,7 +2,13 @@
   <div class="chart-card" ref="cardRef">
     <div class="chart-header">
       <span class="chart-title">资产新增统计</span>
-      <el-button v-if="showControls" :icon="FullScreen" text @click="toggleFullscreen" title="全屏" />
+      <el-button
+        v-if="showControls"
+        :icon="FullScreen"
+        text
+        @click="toggleFullscreen"
+        title="全屏"
+      />
     </div>
     <div ref="chartRef" class="chart-container" v-loading="loading"></div>
 
@@ -13,6 +19,7 @@
       width="90%"
       top="5vh"
       destroy-on-close
+      append-to-body
     >
       <div ref="fullscreenChartRef" class="fullscreen-chart"></div>
     </el-dialog>
@@ -66,7 +73,8 @@ function getChartOption() {
       left: '3%',
       right: '4%',
       bottom: '10%',
-      top: '14%',
+      top: '18%',
+      containLabel: true
     },
     xAxis: {
       type: 'category',
@@ -85,6 +93,7 @@ function getChartOption() {
       type: 'value',
       name: '总数',
       nameLocation: 'end',
+      nameGap: 18,
       nameTextStyle: {
         color: '#666',
         fontSize: 12
@@ -104,17 +113,24 @@ function getChartOption() {
         type: 'line',
         data: yData,
         smooth: true,
-        symbol: 'circle',
-        symbolSize: 6,
+        symbol: 'emptyCircle',
+        symbolSize: 8,
         lineStyle: {
-          color: 'rgb(0, 176, 80)',
-          width: 2
+          color: '#2DD4BF', // 蓝绿色/青色
+          width: 3,
+          shadowColor: 'rgba(45, 212, 191, 0.3)',
+          shadowBlur: 10
         },
         itemStyle: {
-          color: 'rgb(0, 176, 80)'
+          color: '#2DD4BF',
+          borderWidth: 2,
+          borderColor: '#fff'
         },
         areaStyle: {
-          color: 'rgba(0, 176, 80, 0)'
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(45, 212, 191, 0.4)' },
+            { offset: 1, color: 'rgba(45, 212, 191, 0.05)' }
+          ])
         }
       }
     ]

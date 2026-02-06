@@ -71,24 +71,22 @@
             style="width: 200px"
             :disabled="submitting"
           />
-          <div class="hint-text">密码修改成功后的有效时间，单位为小时。超过此时间密码将被重置。如果永久有效，填写0</div>
+          <div class="hint-text">
+            密码修改成功后的有效时间，单位为小时。超过此时间密码将被重置。如果永久有效，填写0
+          </div>
         </el-form-item>
       </el-form>
     </div>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" :disabled="submitting">
-          <i class="fa fa-times"></i>
-          取消
-        </el-button>
+        <el-button @click="handleClose" :disabled="submitting">取消</el-button>
         <el-button
           type="primary"
           :loading="submitting"
           :disabled="!canSubmit"
           @click="handleSubmit"
         >
-          <i class="fa fa-check" v-if="!submitting"></i>
           保存
         </el-button>
       </div>

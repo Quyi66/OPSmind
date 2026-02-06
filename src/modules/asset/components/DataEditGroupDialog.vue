@@ -6,17 +6,9 @@
     :close-on-click-modal="false"
     @closed="handleClosed"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-position="top"
-    >
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
       <el-form-item label="分组名称" prop="name">
-        <el-input
-          v-model="formData.name"
-          placeholder="请输入分组名称"
-        />
+        <el-input v-model="formData.name" placeholder="请输入分组名称" />
       </el-form-item>
 
       <el-form-item label="上级分组" prop="parentId">
@@ -38,7 +30,7 @@
 
     <template #footer>
       <el-button type="primary" :loading="saving" @click="handleSave">
-        <i class="fa fa-check" style="margin-right: 4px"></i>
+        <!-- <i class="fa fa-check" style="margin-right: 4px"></i> -->
         保存
       </el-button>
     </template>

@@ -5,6 +5,7 @@
       <FlowDesignView
         :flow-id="designFlowId"
         :detail-id="designDetailId"
+        :from="previousMode"
         @back="handleDesignBack"
         @saved="handleDesignSaved"
       />
@@ -12,11 +13,7 @@
 
     <!-- 执行视图（全屏） -->
     <div v-else-if="isExecMode" class="exec-container">
-      <FlowExecView
-        :process-id="execFlowId"
-        @back="handleExecBack"
-        @executed="handleExecDone"
-      />
+      <FlowExecView :process-id="execFlowId" @back="handleExecBack" @executed="handleExecDone" />
     </div>
 
     <!-- 历史版本视图（全屏） -->
