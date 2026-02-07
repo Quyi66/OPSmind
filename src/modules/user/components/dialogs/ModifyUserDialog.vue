@@ -6,12 +6,7 @@
     :close-on-click-modal="false"
     @close="handleClose"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      label-width="120px"
-      class="modify-user-form"
-    >
+    <el-form ref="formRef" :model="formData" label-width="120px" class="modify-user-form">
       <!-- 选择主机 -->
       <el-form-item label="选择主机" required>
         <AcmDeviceSelector
@@ -45,7 +40,11 @@
       <!-- ========== 修改基本信息 ========== -->
       <template v-if="formData.operate === 'modify_base'">
         <el-form-item label="附加用户组">
-          <el-input v-model="formData.user_groups" placeholder="多个组名用逗号隔开" maxlength="100" />
+          <el-input
+            v-model="formData.user_groups"
+            placeholder="多个组名用逗号隔开"
+            maxlength="100"
+          />
         </el-form-item>
         <el-form-item label="主目录">
           <el-input v-model="formData.user_home" placeholder="用户主目录" maxlength="256" />
@@ -134,7 +133,7 @@
           </el-select>
         </el-form-item>
         <el-form-item v-if="sudoCommands.length" label="sudo命令">
-          <el-table :data="sudoCommands"  size="small" max-height="200">
+          <el-table :data="sudoCommands" size="small" max-height="200">
             <el-table-column type="selection" width="50" />
             <el-table-column prop="command" label="命令" min-width="200" show-overflow-tooltip />
             <el-table-column prop="description" label="描述" width="150" show-overflow-tooltip />
@@ -146,7 +145,8 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">
-          <i class="fa fa-times"></i> 取消
+          <i class="fa fa-times"></i>
+          取消
         </el-button>
         <el-button
           :type="formData.operate === 'delete' ? 'danger' : 'primary'"
@@ -183,7 +183,7 @@ const emit = defineEmits(['update:visible', 'success'])
 
 const visible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 const formRef = ref(null)

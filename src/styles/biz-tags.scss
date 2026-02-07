@@ -2,7 +2,7 @@
  * 风险状态与标签样式 (Risk Status & Tags)
  * 供全局复用 (CveDetail, CveList, etc.)
  */
-@import './variables.scss';
+@use './variables.scss' as *;
 
 // ------------------------------
 // 1. 严重等级 (Severity)
@@ -15,14 +15,17 @@
     background-color: $risk-severe !important;
     color: white !important;
   }
+
   &.is-important {
     background-color: $risk-high !important;
     color: white !important;
   }
+
   &.is-moderate {
     background-color: $risk-medium !important;
     color: white !important;
   }
+
   &.is-low {
     background-color: $risk-low !important;
     color: white !important;
@@ -41,12 +44,15 @@
   &.is-critical {
     border-color: $risk-severe !important;
   }
+
   &.is-important {
     border-color: $risk-high !important;
   }
+
   &.is-moderate {
     border-color: $risk-medium !important;
   }
+
   &.is-low {
     border-color: $risk-low !important;
   }

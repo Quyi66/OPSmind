@@ -8,7 +8,7 @@
 @use './font/font.scss';
 
 // 导入业务通用标签样式
-@import './biz-tags.scss';
+@use './biz-tags.scss';
 
 /* 应用主容器最大宽度（可配置） */
 :root {
