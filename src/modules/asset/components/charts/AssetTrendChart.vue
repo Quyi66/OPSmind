@@ -1,7 +1,10 @@
 <template>
   <div class="chart-card" ref="cardRef">
     <div class="chart-header">
-      <span class="chart-title">资产新增统计</span>
+      <div class="header-left">
+        <el-icon class="header-icon"><TrendCharts /></el-icon>
+        <span class="chart-title">资产新增统计</span>
+      </div>
       <el-button
         v-if="showControls"
         :icon="FullScreen"
@@ -28,7 +31,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { FullScreen } from '@element-plus/icons-vue'
+import { FullScreen, TrendCharts } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 
 const props = defineProps({
@@ -73,7 +76,7 @@ function getChartOption() {
       left: '3%',
       right: '4%',
       bottom: '10%',
-      top: '18%',
+      top: '15%',
       containLabel: true
     },
     xAxis: {
@@ -93,7 +96,7 @@ function getChartOption() {
       type: 'value',
       name: '总数',
       nameLocation: 'end',
-      nameGap: 18,
+      // nameGap: 18,
       nameTextStyle: {
         color: '#666',
         fontSize: 12
@@ -159,7 +162,7 @@ function toggleFullscreen() {
   })
 }
 
-watch(fullscreenVisible, (val) => {
+watch(fullscreenVisible, val => {
   if (!val && fullscreenChartInstance) {
     fullscreenChartInstance.dispose()
     fullscreenChartInstance = null
@@ -170,12 +173,16 @@ function handleResize() {
   chartInstance?.resize()
 }
 
-watch(() => props.data, () => {
-  updateChart()
-  if (fullscreenChartInstance) {
-    fullscreenChartInstance.setOption(getChartOption())
-  }
-}, { deep: true })
+watch(
+  () => props.data,
+  () => {
+    updateChart()
+    if (fullscreenChartInstance) {
+      fullscreenChartInstance.setOption(getChartOption())
+    }
+  },
+  { deep: true }
+)
 
 onMounted(() => {
   initChart()
@@ -203,7 +210,18 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-icon {
+  font-size: 18px;
+  color: #2dd4bf;
 }
 
 .chart-title {

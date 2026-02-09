@@ -66,7 +66,7 @@ export function getSeverityType(severity) {
   const typeMap = {
     Critical: 'danger',
     Important: 'warning',
-    Moderate: '',
+    Moderate: 'primary',
     Low: 'info'
   }
   return typeMap[severity] || 'info'
@@ -78,9 +78,9 @@ export function getPatchStatusType(status) {
     '未修复': 'info',
     '已修复': 'success',
     '已修复(手动)': 'success',
-    '修复中': '',
+    '修复中': 'primary',
     '修复失败': 'warning',
-    '回滚中': '',
+    '回滚中': 'primary',
     '回滚失败': 'warning',
     '回滚成功': 'info'
   }

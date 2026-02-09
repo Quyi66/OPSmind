@@ -192,7 +192,7 @@
             v-loading="loading"
             :data="hostTableData"
             style="width: 100%"
-            max-height="calc(100vh - 620px)"
+            height="calc(100vh - 600px)"
           >
             <el-table-column prop="host_key" label="主机" min-width="140">
               <template #default="{ row }">
@@ -378,7 +378,7 @@
             v-loading="vulnLoading"
             :data="vulnTableData"
             style="width: 100%"
-            max-height="calc(100vh - 620px)"
+            max-height="calc(100vh - 630px)"
             @selection-change="handleVulnSelectionChange"
           >
             <el-table-column type="selection" width="45" />
@@ -543,12 +543,6 @@
     <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
 
     <!-- 主机详情对话框 -->
-    <LinuxHostDetail
-      v-model="hostDetailVisible"
-      :host-info="selectedHostInfo"
-      @fix-patches="handleFixPatchesFromDetail"
-    />
-
     <!-- 修复漏洞确认对话框 -->
     <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="700px" destroy-on-close>
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
@@ -606,7 +600,6 @@ import { patchScanApi, patchOverviewApi, vulnerabilityApi } from '../api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'
-import LinuxHostDetail from './LinuxHostDetail.vue'
 
 // ECharts
 import { use } from 'echarts/core'
@@ -748,9 +741,6 @@ const runResultRunId = ref('')
 const operationLogsVisible = ref(false)
 const lastSubmittedRunId = ref('')
 
-// 主机详情对话框
-const hostDetailVisible = ref(false)
-const selectedHostInfo = ref({})
 
 // 修复漏洞对话框
 const fixDialogVisible = ref(false)
@@ -762,6 +752,7 @@ const fixDialogData = reactive({
   packages: '',
   patchStatusIds: []
 })
+
 
 // 获取严重程度显示标签
 function getSeverityLabel(severity) {
@@ -1000,15 +991,18 @@ function handleKpiClick(kpi) {
 }
 
 function handleHostClick(row) {
-  // 打开主机详情对话框
-  selectedHostInfo.value = {
-    host_key: row.host_key,
-    host_id: row.host_id,
-    os_distro: row.os_distro,
-    os_version: row.os_version,
-    hostname: row.hostname
-  }
-  hostDetailVisible.value = true
+  router.push({
+    name: 'patches-hostDetail',
+    query: {
+      host_key: row.host_key || row.hostKey || '',
+      host_id: row.host_id || row.hostId || row.id || '',
+      os_distro: row.os_distro,
+      os_version: row.os_version,
+      hostname: row.hostname,
+      fromLabel: '机器扫描',
+      fromRouteName: 'patches-machineScan'
+    }
+  })
 }
 
 function handleVulnClick(row) {
@@ -1174,17 +1168,11 @@ async function handleConfirmFix() {
     loadVulnData()
   } catch (error) {
     ElMessage.error('提交修复任务失败: ' + (error.message || '未知错误'))
-    // 从主机详情对话框修复补丁
-    function handleFixPatchesFromDetail(data) {
-      const { patches, hostInfo } = data
-      ElMessage.info(`准备修复 ${patches.length} 个补丁`)
-      // TODO: 实现补丁修复逻辑
-      hostDetailVisible.value = false
-    }
   } finally {
     fixSubmitting.value = false
   }
 }
+
 
 function handleRescan() {
   rescanForm.hostsInput = ''

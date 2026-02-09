@@ -320,16 +320,12 @@
       </el-empty>
     </div>
 
-    <LinuxHostDetail
-      v-model="hostDetailVisible"
-      :host-info="selectedHostInfo"
-      @fix-patches="handleFixPatchesFromDetail"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 import {
   TopRight,
@@ -344,7 +340,6 @@ import {
 } from '@element-plus/icons-vue'
 import { cveApi } from '../api'
 import { ElMessage } from 'element-plus'
-import LinuxHostDetail from './LinuxHostDetail.vue'
 
 // Props
 const props = defineProps({
@@ -390,8 +385,7 @@ const affectedHostsTotal = ref(0)
 const affectedHostsLoading = ref(false)
 const affectedHostsLoaded = ref(false)
 const affectedHostsError = ref('')
-const hostDetailVisible = ref(false)
-const selectedHostInfo = ref({})
+const router = useRouter()
 
 // 图表引用
 const impactChartRef = ref(null)
@@ -582,18 +576,22 @@ function viewHostDetail(host) {
   if (!host) return
   const hostKey = host.hostKey || host.hostId || host.host_key
   if (!hostKey) return
-  selectedHostInfo.value = {
-    host_key: hostKey,
-    host_id: host.hostId || host.host_id || '',
-    os_distro: host.osDistro || host.os_distro || '',
-    os_version: host.osVersion || host.os_version || '',
-    hostname: host.hostname || ''
-  }
-  hostDetailVisible.value = true
-}
-
-function handleFixPatchesFromDetail() {
-  ElMessage.info('补丁修复操作已触发')
+  router.push({
+    name: 'patches-hostDetail',
+    query: {
+      host_key: hostKey,
+      host_id: host.hostId || host.host_id || '',
+      os_distro: host.osDistro || host.os_distro || '',
+      os_version: host.osVersion || host.os_version || '',
+      hostname: host.hostname || '',
+      fromLabel: 'CVE详情',
+      fromRouteName: 'patches-cveList',
+      fromRouteQuery: JSON.stringify({
+        view: 'detail',
+        cveId: props.cveId
+      })
+    }
+  })
 }
 
 // 加载 CVE 详情
@@ -605,7 +603,7 @@ async function loadCveDetail() {
     sources.value = result.sources || []
 
     if (sources.value.length > 0) {
-      currentSourceId.value = sources.value[0].source
+      currentSourceId.value = sources.value[1].source
       selectSource(currentSourceId.value)
     }
 

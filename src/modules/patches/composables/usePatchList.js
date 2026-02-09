@@ -5,7 +5,11 @@ import { patchScanApi } from '../api'
 /**
  * 补丁列表逻辑 Composable
  */
-export function usePatchList(hostId) {
+export function usePatchList(hostContext) {
+  const hostIdRef = hostContext?.hostId ?? hostContext
+  const hostKeyRef = hostContext?.hostKey
+  const getHostId = () => (hostIdRef?.value ?? hostIdRef ?? '')
+  const getHostKey = () => (hostKeyRef?.value ?? hostKeyRef ?? '')
   const patchLoading = ref(false)
   const patchTableData = ref([])
   const patchAllData = ref([])
@@ -45,7 +49,9 @@ export function usePatchList(hostId) {
 
   // 加载补丁列表
   async function loadPatchList() {
-    if (!hostId.value) {
+    const hostId = getHostId()
+    const hostKey = getHostKey()
+    if (!hostId && !hostKey) {
       return
     }
 
@@ -53,7 +59,8 @@ export function usePatchList(hostId) {
     try {
       const severityFilter = selectedSeverities.value.join(',')
       const response = await patchScanApi.getPatchesOfMachine({
-        host_id: hostId.value,
+        host_id: hostId,
+        host_key: hostKey,
         severity: severityFilter
       })
 

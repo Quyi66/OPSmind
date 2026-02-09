@@ -12,26 +12,59 @@
           <!-- Navigation Menu -->
           <nav class="nav-menu">
             <!-- 首页菜单项 -->
-            <a href="#" class="nav-item" :class="{ 'nav-item-active': activeGroup === 'home' }"
-              @click.prevent="handleHomeClick">
+            <a
+              href="#"
+              class="nav-item"
+              :class="{ 'nav-item-active': activeGroup === 'home' }"
+              @click.prevent="handleHomeClick"
+            >
               <img :src="iconHome" alt="首页" class="nav-icon nav-icon-home" />
               <span class="nav-text">{{ homeMenu.name }}</span>
             </a>
 
             <!-- 分组菜单项 -->
-            <a v-for="group in menuGroups" :key="group.code" href="#" class="nav-item"
-              :class="{ 'nav-item-active': activeGroup === group.code }" @click.prevent="handleGroupClick(group)">
-              <img :src="getMenuIcon(group.code)" :alt="group.name" class="nav-icon" />
+            <a
+              v-for="group in menuGroups"
+              :key="group.code"
+              href="#"
+              class="nav-item"
+              :class="{ 'nav-item-active': activeGroup === group.code }"
+              @click.prevent="handleGroupClick(group)"
+            >
+              <img
+                v-if="getMenuIcon(group.code)"
+                :src="getMenuIcon(group.code)"
+                :alt="group.name"
+                class="nav-icon"
+              />
+              <i
+                v-else
+                :class="['nav-icon', group.icon]"
+                :style="{
+                  color: getMenuIconColor(group.code),
+                  fontSize: '1.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }"
+              ></i>
               <span class="nav-text">{{ group.name }}</span>
             </a>
           </nav>
 
           <!-- Mobile Menu Button -->
-          <button @click="toggleMobileMenu" class="mobile-menu-btn"
-            :class="{ 'mobile-menu-btn-active': showMobileMenu }">
+          <button
+            @click="toggleMobileMenu"
+            class="mobile-menu-btn"
+            :class="{ 'mobile-menu-btn-active': showMobileMenu }"
+          >
             <svg class="mobile-menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                :d="showMobileMenu ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'"></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                :d="showMobileMenu ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'"
+              ></path>
             </svg>
           </button>
         </div>
@@ -46,14 +79,17 @@
           </el-tooltip>
 
           <!-- Notification Button -->
-          <NotificationPopover v-model:visible="notificationPopoverVisible"
-            @count-change="handleNotificationCountChange">
+          <NotificationPopover
+            v-model:visible="notificationPopoverVisible"
+            @count-change="handleNotificationCountChange"
+          >
             <div class="notification-wrapper">
               <el-tooltip content="通知" placement="bottom" :disabled="notificationPopoverVisible">
                 <button class="notification-btn" aria-label="通知">
                   <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
                     <path
-                      d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                      d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"
+                    />
                   </svg>
                   <span v-if="notificationCount > 0" class="notification-badge">
                     {{ notificationCount > 99 ? '99+' : notificationCount }}
@@ -69,9 +105,11 @@
               <el-avatar :size="24" class="user-avatar" :src="displayAvatarUrl"></el-avatar>
               <span class="user-name">{{ displayUserName }}</span>
               <svg class="dropdown-arrow" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
+                <path
+                  fill-rule="evenodd"
                   d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd" />
+                  clip-rule="evenodd"
+                />
               </svg>
             </div>
             <template #dropdown>
@@ -100,8 +138,11 @@
 
           <!-- Settings Button -->
           <el-tooltip content="设置" placement="bottom">
-            <button @click="handleSettingsClick" class="menu-action-btn"
-              :class="{ 'is-settings-active': isSettingsActive }">
+            <button
+              @click="handleSettingsClick"
+              class="menu-action-btn"
+              :class="{ 'is-settings-active': isSettingsActive }"
+            >
               <el-icon>
                 <Setting />
               </el-icon>
@@ -171,16 +212,42 @@
       <div v-if="showMobileMenu" class="mobile-menu-dropdown">
         <nav class="mobile-nav">
           <!-- 首页菜单项 -->
-          <a href="#" class="mobile-nav-item" :class="{ 'mobile-nav-item-active': activeGroup === 'home' }"
-            @click.prevent="handleHomeClick">
+          <a
+            href="#"
+            class="mobile-nav-item"
+            :class="{ 'mobile-nav-item-active': activeGroup === 'home' }"
+            @click.prevent="handleHomeClick"
+          >
             <img :src="iconHome" alt="首页" class="mobile-nav-icon mobile-nav-icon-home" />
             <span class="mobile-nav-text">{{ homeMenu.name }}</span>
           </a>
 
           <!-- 分组菜单项 -->
-          <a v-for="group in menuGroups" :key="group.code" href="#" class="mobile-nav-item"
-            :class="{ 'mobile-nav-item-active': activeGroup === group.code }" @click.prevent="handleGroupClick(group)">
-            <img :src="getMenuIcon(group.code)" :alt="group.name" class="mobile-nav-icon" />
+          <a
+            v-for="group in menuGroups"
+            :key="group.code"
+            href="#"
+            class="mobile-nav-item"
+            :class="{ 'mobile-nav-item-active': activeGroup === group.code }"
+            @click.prevent="handleGroupClick(group)"
+          >
+            <img
+              v-if="getMenuIcon(group.code)"
+              :src="getMenuIcon(group.code)"
+              :alt="group.name"
+              class="mobile-nav-icon"
+            />
+            <i
+              v-else
+              :class="['mobile-nav-icon', group.icon]"
+              :style="{
+                color: getMenuIconColor(group.code),
+                fontSize: '1.2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }"
+            ></i>
             <span class="mobile-nav-text">{{ group.name }}</span>
           </a>
         </nav>
@@ -188,11 +255,17 @@
     </header>
 
     <!-- About 对话框 -->
-    <el-dialog v-model="versionDialogVisible" title="About" width="800px" append-to-body class="about-dialog">
+    <el-dialog
+      v-model="versionDialogVisible"
+      title="About"
+      width="800px"
+      append-to-body
+      class="about-dialog"
+    >
       <el-tabs v-model="aboutActiveTab" class="about-tabs">
         <el-tab-pane label="版本信息" name="versions">
           <div v-loading="versionLoading">
-            <el-table :data="versionRows"  size="small" class="about-table">
+            <el-table :data="versionRows" size="small" class="about-table">
               <el-table-column prop="name" label="名称" width="180" />
               <el-table-column prop="version" label="版本" width="140" />
               <el-table-column prop="build" label="打包时间" />
@@ -219,7 +292,14 @@ import { authService } from '@/core/auth'
 import { accountService } from '@/core/account'
 import { useMenuStore } from '@/stores/menu.js'
 import { useDashboardStore } from '@/stores/dashboard'
-import { User, Setting, SwitchButton, InfoFilled, Check, QuestionFilled } from '@element-plus/icons-vue'
+import {
+  User,
+  Setting,
+  SwitchButton,
+  InfoFilled,
+  Check,
+  QuestionFilled
+} from '@element-plus/icons-vue'
 import NotificationPopover from '@/components/layout/NotificationPopover.vue'
 
 // 导入菜单图标
@@ -275,7 +355,7 @@ const notificationCount = ref(0)
 const notificationPopoverVisible = ref(false)
 
 // 处理通知数量变化
-const handleNotificationCountChange = (count) => {
+const handleNotificationCountChange = count => {
   notificationCount.value = count
 }
 
@@ -285,11 +365,10 @@ const showMobileMenu = ref(false)
 // 语言切换状态（暂不真正切换，仅提示开发中）
 const currentLanguage = ref('zh-cn')
 
-
 // 加载账号信息（优先缓存，再请求；用于显示 fullName 和头像）
 onMounted(async () => {
   try {
-    const acc = (accountService.getCached()) || (await accountService.getAccount().catch(() => null))
+    const acc = accountService.getCached() || (await accountService.getAccount().catch(() => null))
     if (acc) {
       if (acc.fullName || acc.login) accountFullName.value = acc.fullName || ''
       // 设置用户头像（如果有）
@@ -302,7 +381,6 @@ onMounted(async () => {
 
 // 处理首页菜单点击
 const handleHomeClick = () => {
-
   // 设置首页为激活状态
   menuStore.setHomeActive()
 
@@ -316,7 +394,7 @@ const handleHomeClick = () => {
 
 // 分组对应的默认路由
 const GROUP_DEFAULT_ROUTES = {
-  'automation': '/jao/jobs',
+  automation: '/jao/jobs',
   'patch-testing': '/patches/machineScan',
   'system-inspection': '/cac/overview',
   'asset-management': '/acm/overview',
@@ -325,7 +403,6 @@ const GROUP_DEFAULT_ROUTES = {
 
 // 处理分组菜单点击
 const handleGroupClick = group => {
-
   // 如果点击的是当前激活的分组，则切换显示/隐藏左侧菜单
   if (activeGroup.value === group.code) {
     menuStore.toggleSideMenu()
@@ -350,7 +427,15 @@ const getMenuIcon = groupCode => {
     'asset-management': iconAsset,
     'user-management': iconUser
   }
-  return iconMap[groupCode] || iconHome
+  return iconMap[groupCode]
+}
+
+const getMenuIconColor = groupCode => {
+  const colorMap = {
+    'flow-management': '#8b5cf6', // Violet
+    'security-management': '#F56C6C' // Red
+  }
+  return colorMap[groupCode] || 'currentColor'
 }
 
 // 处理通知点击 - 现由 NotificationPopover 组件处理
@@ -395,7 +480,9 @@ const handleLogout = async () => {
   try {
     ElMessage.success('正在安全登出...')
     // 清理账户缓存
-    try { accountService.clear() } catch { }
+    try {
+      accountService.clear()
+    } catch {}
     await authService.logout()
   } catch (error) {
     console.error('Logout error:', error)
@@ -412,7 +499,7 @@ const handleSettingsClick = () => {
   // 顶部“设置”按钮：通过 Inline Iframe 打开 /#/ssc
   try {
     menuStore.setActiveMenuItem('ssc')
-  } catch (e) { }
+  } catch (e) {}
 }
 
 // Dify runtime token: prefer URL param, then runtime-config.js, then env; no hardcoded fallback
@@ -422,7 +509,7 @@ function getDifyToken() {
   try {
     const urlToken = new URLSearchParams(location.search).get('token')
     if (urlToken) return urlToken
-  } catch { }
+  } catch {}
   // 2) LocalStorage (dev convenience)
   try {
     const ls = window.localStorage
@@ -431,16 +518,18 @@ function getDifyToken() {
       const v = ls.getItem(k)
       if (v) return v
     }
-  } catch { }
+  } catch {}
   // 3) Runtime config
   try {
-    const rt = (window).__OPS_RUNTIME__ || {}
+    const rt = window.__OPS_RUNTIME__ || {}
     if (rt.DIFY_TOKEN) return rt.DIFY_TOKEN
-  } catch { }
+  } catch {}
   // 4) Env var
   try {
     return import.meta.env.VITE_DIFY_TOKEN || DEFAULT_DIFY_TOKEN
-  } catch { return DEFAULT_DIFY_TOKEN }
+  } catch {
+    return DEFAULT_DIFY_TOKEN
+  }
 }
 
 // 处理AI OPS按钮点击：显示/隐藏右下角面板（iframe 内为气泡方案页面）
@@ -498,7 +587,13 @@ function ensureOpsBubble() {
     // 仅本地加载，避免跨域与远端依赖
     const token = getDifyToken()
     const embedSrc = `${window.location.origin}${base}dify/embed.min.js`
-    const rt = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
+    const rt = (() => {
+      try {
+        return window.__OPS_RUNTIME__ || {}
+      } catch {
+        return {}
+      }
+    })()
     const difyBase = String(rt.DIFY_BASE_URL || '').replace(/\/$/, '')
     iframe.setAttribute('allow', 'fullscreen;microphone')
     // 使用 srcdoc 注入最小页面，确保聊天框在此 iframe 内创建
@@ -570,12 +665,13 @@ function ensureOpsBubble() {
     // 计算顶部菜单栏高度，令面板上边缘贴合菜单栏底部
     function setPanelTopOffset() {
       try {
-        const header = document.querySelector('.top-nav-header') || document.querySelector('.top-nav-wrapper')
-        const h = header ? (header.getBoundingClientRect().height || header.offsetHeight || 0) : 0
+        const header =
+          document.querySelector('.top-nav-header') || document.querySelector('.top-nav-wrapper')
+        const h = header ? header.getBoundingClientRect().height || header.offsetHeight || 0 : 0
         // 额外预留 8px 间距
         const top = Math.max(0, Math.round(h + 8))
         panel.style.top = top + 'px'
-      } catch { }
+      } catch {}
     }
     setPanelTopOffset()
     window.addEventListener('resize', setPanelTopOffset)
@@ -583,7 +679,7 @@ function ensureOpsBubble() {
 
     // 初始不显示；由菜单点击进行显隐切换
     // ESC 关闭面板（再次点击顶部菜单可重新显示）
-    window.addEventListener('keydown', (ev) => {
+    window.addEventListener('keydown', ev => {
       if (ev.key === 'Escape') panel.classList.remove('visible')
     })
   }
@@ -605,7 +701,13 @@ function prewarmAiOps() {
     document.head.appendChild(link)
 
     // Preconnect to Dify base (unified key)
-    const rt = (() => { try { return (window).__OPS_RUNTIME__ || {} } catch { return {} } })()
+    const rt = (() => {
+      try {
+        return window.__OPS_RUNTIME__ || {}
+      } catch {
+        return {}
+      }
+    })()
     const difyBase = String(rt.DIFY_BASE_URL || '').replace(/\/$/, '')
     if (difyBase) {
       const preconnect = document.createElement('link')
@@ -619,7 +721,7 @@ function prewarmAiOps() {
       dns.href = difyBase
       document.head.appendChild(dns)
     }
-  } catch { }
+  } catch {}
 }
 
 // 处理关于下拉菜单命令
@@ -628,7 +730,7 @@ const versionLoading = ref(false)
 const versionRows = ref([])
 const aboutActiveTab = ref('versions')
 
-const handleAboutCommand = async (command) => {
+const handleAboutCommand = async command => {
   switch (command) {
     case 'help':
       // 当前不提供帮助入口，提示开发中
@@ -649,7 +751,7 @@ async function openVersionDialog() {
     try {
       const angularBase = appUrlManager.getAngularBaseUrl() || '/oplus/base'
       candidates.push(`${angularBase}/app/modules/VERSION.json`)
-    } catch { }
+    } catch {}
     candidates.push(`${window.location.origin}/oplus/base/app/modules/VERSION.json`)
     candidates.push('http://localhost:18080/oplus/base/app/modules/VERSION.json')
 
@@ -689,7 +791,7 @@ async function openVersionDialog() {
 }
 
 // 处理语言切换（仅提示开发中）
-const handleLanguageCommand = (_language) => {
+const handleLanguageCommand = _language => {
   ElMessage.info('语言功能开发中...')
 }
 
@@ -713,15 +815,13 @@ onMounted(() => {
     } else {
       setTimeout(() => prewarmAiOps(), 0)
     }
-  } catch { }
+  } catch {}
 })
 
 onUnmounted(() => {
   window.removeEventListener('clearMenuHighlight', handleClearHighlight)
 })
 </script>
-
-
 
 <style scoped lang="scss">
 /* About 对话框尺寸与滚动 */

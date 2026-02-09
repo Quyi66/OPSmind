@@ -81,7 +81,7 @@
         ref="tableRef"
         :data="filteredTableData"
         v-loading="loading"
-       
+
         style="width: 100%"
         max-height="calc(100vh - 350px)"
         @selection-change="handleSelectionChange"
@@ -434,37 +434,6 @@ function handleDialogSuccess() {
 </script>
 
 <style scoped lang="scss">
-// 面包屑导航栏
-.ops-breadcrumb-bar {
-  flex-shrink: 0;
-  padding-bottom: 12px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
-
-  :deep(.el-breadcrumb) {
-    font-size: 14px;
-
-    .el-breadcrumb__item {
-      .el-breadcrumb__inner {
-        a {
-          color: #409eff;
-          font-weight: normal;
-          cursor: pointer;
-
-          &:hover {
-            color: #66b1ff;
-          }
-        }
-      }
-
-      &:last-child .el-breadcrumb__inner {
-        color: #606266;
-        font-weight: 500;
-      }
-    }
-  }
-}
-
 // 组件特有样式
 .action-buttons {
   display: flex;

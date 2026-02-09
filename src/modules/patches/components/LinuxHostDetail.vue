@@ -53,6 +53,7 @@
       v-show="activeTab === 'patches'"
       ref="patchesTabRef"
       :host-id="hostId"
+      :host-key="hostKey"
       @patch-click="handlePatchClick"
       @fix-patches="handleFixPatches"
     />
@@ -117,7 +118,7 @@ const dialogVisible = computed({
   set: (val) => emit('update:modelValue', val)
 })
 
-const hostKey = computed(() => props.hostInfo.host_key || '')
+const hostKey = computed(() => props.hostInfo.host_key || props.hostInfo.hostKey || '')
 const hostId = computed(() => props.hostInfo.host_id || '')
 const hostInfoRef = computed(() => props.hostInfo)
 

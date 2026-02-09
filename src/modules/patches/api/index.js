@@ -70,7 +70,8 @@ export const patchScanApi = {
    * 获取单个主机信息
    * POST /dts/api/dts/q/data/VAP2_GET_MACHINE_INFO/
    * @param {Object} params - 查询参数
-   * @param {string} params.host_id - 主机ID
+  * @param {string} params.host_id - 主机ID
+  * @param {string} params.host_key - 主机 IP
    * @returns {Promise}
    */
   getMachineInfo(params) {
@@ -101,6 +102,7 @@ export const patchScanApi = {
     const requestBody = {
       params: {
         host_id: params.host_id,
+        host_key: params.host_key || '',
         severity: params.severity || ''
       }
       // size: params.size || 20,

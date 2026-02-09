@@ -51,9 +51,9 @@
     <el-table
       v-loading="packageLoading"
       :data="packageTableData"
-     
+
       size="small"
-      max-height="calc(100vh - 580px)"
+      max-height="calc(100vh - 400px)"
       @selection-change="handlePackageSelectionChange"
     >
       <el-table-column type="selection" width="55" />
@@ -69,8 +69,13 @@
       </el-table-column>
       <el-table-column prop="severity" label="严重程度" width="100">
         <template #default="{ row }">
-          <el-tag v-if="row.severity" :type="getSeverityType(row.severity)" size="small">
-            {{ row.severity }}
+          <el-tag
+            v-if="row.severity"
+            :type="getSeverityType(row.severity)"
+            :class="['severity-tag', getSeverityClass(row.severity)]"
+            size="small"
+          >
+            {{ getSeverityLabel(row.severity) }}
           </el-tag>
           <span v-else class="text-muted">-</span>
         </template>
@@ -108,6 +113,25 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['patch-click'])
+
+function normalizeSeverity(severity) {
+  return String(severity || '').trim().toLowerCase()
+}
+
+function getSeverityClass(severity) {
+  const key = normalizeSeverity(severity)
+  return key ? `is-${key}` : ''
+}
+
+function getSeverityLabel(severity) {
+  const map = {
+    critical: '严重',
+    important: '重要',
+    moderate: '中等',
+    low: '低'
+  }
+  return map[normalizeSeverity(severity)] || severity || '-'
+}
 
 // 使用软件包列表逻辑
 const {

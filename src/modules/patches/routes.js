@@ -29,7 +29,7 @@ export const PATCHES_ROUTE_DEFS = [
     path: 'hostDetail',
     name: 'patches-hostDetail',
     title: '主机详情',
-    component: () => import('./components/LinuxHostDetail.vue')
+    component: () => import('./components/LinuxHostDetailPage.vue')
   },
   {
     key: 'patchInstall',

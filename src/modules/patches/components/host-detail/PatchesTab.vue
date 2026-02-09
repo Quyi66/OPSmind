@@ -2,7 +2,7 @@
   <div class="tab-content">
     <!-- 筛选栏 -->
     <div class="ops-filter-bar" style="margin-bottom: 8px;">
-      <el-checkbox-group v-model="selectedSeverities" size="small" @change="handleFilterChange">
+      <!-- <el-checkbox-group v-model="selectedSeverities" size="small" @change="handleFilterChange">
         <el-checkbox label="Critical">
           <el-tag type="danger" size="small">严重</el-tag>
         </el-checkbox>
@@ -10,12 +10,27 @@
           <el-tag type="warning" size="small">重要</el-tag>
         </el-checkbox>
         <el-checkbox label="Moderate">
-          <el-tag type="" size="small">中等</el-tag>
+          <el-tag type="primary" size="small">中等</el-tag>
         </el-checkbox>
         <el-checkbox label="Low">
           <el-tag type="info" size="small">低</el-tag>
         </el-checkbox>
-      </el-checkbox-group>
+      </el-checkbox-group> -->
+      <el-select v-model="selectedSeverities" multiple size="small" placeholder="选择严重程度" @change="handleFilterChange" style="min-width: 150px; max-width: 300px; width: auto;">
+        <el-option label="严重" value="Critical">
+          <el-tag type="danger" size="small">严重</el-tag>
+        </el-option>
+        <el-option label="重要" value="Important">
+          <el-tag type="warning" size="small">重要</el-tag>
+        </el-option>
+        <el-option label="中等" value="Moderate">
+          <el-tag type="primary" size="small">中等</el-tag>
+        </el-option>
+        <el-option label="低" value="Low">
+          <el-tag type="info" size="small">低</el-tag>
+        </el-option>
+      </el-select>
+
 
       <el-input
         v-model="patchKeyword"
@@ -49,9 +64,9 @@
     <el-table
       v-loading="patchLoading"
       :data="patchTableData"
-     
+
       size="small"
-      max-height="calc(100vh - 560px)"
+      max-height="calc(100vh - 400px)"
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" />
@@ -65,8 +80,8 @@
       <el-table-column prop="title" label="摘要" min-width="300" show-overflow-tooltip />
       <el-table-column prop="severity" label="严重程度" width="100">
         <template #default="{ row }">
-          <el-tag :type="getSeverityType(row.severity)" size="small">
-            {{ row.severity }}
+          <el-tag :type="getSeverityType(row.severity)" :class="['severity-tag', getSeverityClass(row.severity)]" size="small">
+            {{ getSeverityLabel(row.severity) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -115,6 +130,7 @@
 </template>
 
 <script setup>
+import { toRef, onMounted, watch } from 'vue'
 import { formatDate, formatPackages, getCVEList, getSeverityType } from '../../composables/useFormatters'
 import { usePatchList } from '../../composables/usePatchList'
 import { Search } from '@element-plus/icons-vue'
@@ -123,6 +139,10 @@ const props = defineProps({
   hostId: {
     type: String,
     required: true
+  },
+  hostKey: {
+    type: String,
+    default: ''
   }
 })
 
@@ -142,7 +162,45 @@ const {
   handleSelectionChange,
   handlePageChange,
   handleSizeChange
-} = usePatchList({ value: props.hostId })
+} = usePatchList({
+  hostId: toRef(props, 'hostId'),
+  hostKey: toRef(props, 'hostKey')
+})
+
+const defaultSeverities = ['Critical', 'Important', 'Moderate', 'Low']
+
+function normalizeSeverity(severity) {
+  return String(severity || '').trim().toLowerCase()
+}
+
+function getSeverityClass(severity) {
+  const key = normalizeSeverity(severity)
+  return key ? `is-${key}` : ''
+}
+
+function getSeverityLabel(severity) {
+  const map = {
+    critical: '严重',
+    important: '重要',
+    moderate: '中等',
+    low: '低'
+  }
+  return map[normalizeSeverity(severity)] || severity || '-'
+}
+
+onMounted(() => {
+  if (!selectedSeverities.value.length) {
+    selectedSeverities.value = [...defaultSeverities]
+  }
+  loadPatchList()
+})
+
+watch(
+  () => [props.hostId, props.hostKey],
+  () => {
+    loadPatchList()
+  }
+)
 
 // 修复补丁
 function handleFixPatches() {

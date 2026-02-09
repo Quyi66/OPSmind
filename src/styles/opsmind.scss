@@ -98,8 +98,12 @@
 .ops-pagination-wrapper {
   display: flex;
   justify-content: flex-end;
-  padding: 8px 0;
+  padding: 0;
   flex-shrink: 0;
+
+  .el-pagination {
+    margin-top: 8px;
+  }
 }
 
 // ========================================
@@ -408,5 +412,36 @@ a.ops-sidebar-item {
   .ops-stat-card {
     min-width: 100%;
     max-width: 100%;
+  }
+}
+
+// 面包屑导航栏
+.ops-breadcrumb-bar {
+  flex-shrink: 0;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #ebeef5;
+
+  .el-breadcrumb {
+    font-size: 14px;
+
+    .el-breadcrumb__item {
+      .el-breadcrumb__inner {
+        a {
+          color: #409eff;
+          font-weight: normal;
+          cursor: pointer;
+
+          &:hover {
+            color: #66b1ff;
+          }
+        }
+      }
+
+      &:last-child .el-breadcrumb__inner {
+        color: #606266;
+        font-weight: 500;
+      }
+    }
   }
 }

@@ -238,15 +238,15 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px;
+  gap: 10px;
+  padding: 8px;
   overflow: hidden; /* 禁止内容溢出 */
 }
 
 /* 布局行 */
 .charts-row {
   display: flex;
-  gap: 20px;
+  gap: 10px;
   flex: 1; /* 平分垂直空间 */
   min-height: 0; /* 允许压缩 */
   flex-shrink: 0;
@@ -299,7 +299,7 @@ onMounted(() => {
     border-radius: 12px;
     border: 1px solid #dcdfe6; /* 明显的边框 */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 明显的阴影 */
-    padding: 24px;
+    padding: 4px 12px;
     transition: all 0.3s ease;
     height: 100%; /* 确保撑满 */
 
@@ -310,29 +310,16 @@ onMounted(() => {
     }
   }
 
-  :deep(.chart-header) {
-    margin-bottom: 24px;
-    padding-bottom: 0;
-  }
+  // :deep(.chart-header) {
+  //   margin-bottom: 24px;
+  //   padding-bottom: 0;
+  // }
 
   :deep(.chart-title) {
     font-size: 16px;
     font-weight: 700;
     color: #1e293b;
-    position: relative;
-    padding-left: 12px;
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 4px;
-      height: 16px;
-      background: #3b82f6;
-      border-radius: 2px;
-    }
+    /* Removed padding-left and ::before pseudo-element to use component-specific icons */
   }
 }
 </style>

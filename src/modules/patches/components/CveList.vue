@@ -274,11 +274,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight, TopRight } from '@element-plus/icons-vue'
 import { cveApi } from '../api'
 import { ElMessage } from 'element-plus'
 import CveDetail from './CveDetail.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 // 视图状态管理
 const currentView = ref('list')
@@ -353,12 +357,12 @@ function getProgressWidth(severity) {
 // 获取严重等级样式
 function getSeverityType(severity) {
   const typeMap = {
-    critical: '',
-    important: '',
-    moderate: '',
-    low: ''
+    critical: 'danger',
+    important: 'warning',
+    moderate: 'primary',
+    low: 'info'
   }
-  return typeMap[severity] || ''
+  return typeMap[severity] || 'info'
 }
 
 // 获取严重等级标签
@@ -378,7 +382,7 @@ function getSourceType(source) {
     redhat: 'danger',
     kylin: 'primary'
   }
-  return typeMap[source] || ''
+  return typeMap[source] || 'info'
 }
 
 // 获取数据源标签
@@ -494,14 +498,26 @@ function handleSortChange({ prop, order }) {
 
 // 查看详情
 function viewDetail(cve) {
-  selectedCveId.value = cve.cveId
+  const cveId = cve.cveId
+  selectedCveId.value = cveId
   currentView.value = 'detail'
+  router.replace({
+    query: {
+      ...route.query,
+      view: 'detail',
+      cveId
+    }
+  })
 }
 
 // 返回列表
 function backToList() {
   currentView.value = 'list'
   selectedCveId.value = null
+  const nextQuery = { ...route.query }
+  delete nextQuery.view
+  delete nextQuery.cveId
+  router.replace({ query: nextQuery })
 }
 
 // 初始化
@@ -509,6 +525,20 @@ onMounted(() => {
   loadStatistics()
   search()
 })
+
+watch(
+  () => route.query,
+  (query) => {
+    if (query.view === 'detail' && query.cveId) {
+      selectedCveId.value = query.cveId
+      currentView.value = 'detail'
+      return
+    }
+    currentView.value = 'list'
+    selectedCveId.value = null
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped lang="scss">

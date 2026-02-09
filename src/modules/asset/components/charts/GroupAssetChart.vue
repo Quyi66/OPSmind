@@ -1,7 +1,10 @@
 <template>
   <div class="chart-card" ref="cardRef">
     <div class="chart-header">
-      <span class="chart-title">分组内资产分布</span>
+      <div class="header-left">
+        <el-icon class="header-icon"><Connection /></el-icon>
+        <span class="chart-title">分组内资产分布</span>
+      </div>
       <el-button
         v-if="showControls"
         :icon="FullScreen"
@@ -28,7 +31,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { FullScreen } from '@element-plus/icons-vue'
+import { FullScreen, Connection } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 
 const props = defineProps({
@@ -124,6 +127,12 @@ function getChartOption() {
           ]),
           borderRadius: [4, 4, 0, 0]
         },
+        label: {
+          show: true,
+          position: 'top',
+          color: '#666',
+          formatter: '{c}'
+        },
         barMaxWidth: 30
       },
       {
@@ -176,7 +185,7 @@ function initChart() {
   chartInstance = echarts.init(chartRef.value)
   updateChart()
 
-  chartInstance.on('click', (params) => {
+  chartInstance.on('click', params => {
     emit('click', props.data[params.dataIndex])
   })
 }
@@ -196,7 +205,7 @@ function toggleFullscreen() {
   })
 }
 
-watch(fullscreenVisible, (val) => {
+watch(fullscreenVisible, val => {
   if (!val && fullscreenChartInstance) {
     fullscreenChartInstance.dispose()
     fullscreenChartInstance = null
@@ -207,12 +216,16 @@ function handleResize() {
   chartInstance?.resize()
 }
 
-watch(() => props.data, () => {
-  updateChart()
-  if (fullscreenChartInstance) {
-    fullscreenChartInstance.setOption(getChartOption())
-  }
-}, { deep: true })
+watch(
+  () => props.data,
+  () => {
+    updateChart()
+    if (fullscreenChartInstance) {
+      fullscreenChartInstance.setOption(getChartOption())
+    }
+  },
+  { deep: true }
+)
 
 onMounted(() => {
   initChart()
@@ -241,6 +254,17 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-icon {
+  font-size: 18px;
+  color: #ff9f43;
 }
 
 .chart-title {

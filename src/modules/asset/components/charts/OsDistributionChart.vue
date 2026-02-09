@@ -1,7 +1,10 @@
 <template>
   <div class="chart-card" ref="cardRef">
     <div class="chart-header">
-      <span class="chart-title">操作系统分布</span>
+      <div class="header-left">
+        <el-icon class="header-icon"><Cpu /></el-icon>
+        <span class="chart-title">操作系统分布</span>
+      </div>
       <el-button
         v-if="showControls"
         :icon="FullScreen"
@@ -28,7 +31,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { FullScreen } from '@element-plus/icons-vue'
+import { FullScreen, Cpu } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 
 const props = defineProps({
@@ -70,7 +73,7 @@ function getChartOption() {
       left: '3%',
       right: '4%',
       bottom: '10%',
-      top: '18%',
+      top: '15%',
       containLabel: true
     },
     xAxis: {
@@ -99,7 +102,7 @@ function getChartOption() {
       type: 'value',
       name: '主机数量',
       nameLocation: 'end',
-      nameGap: 18,
+      // nameGap: 18,
       nameTextStyle: {
         color: '#666',
         fontSize: 12
@@ -130,7 +133,7 @@ function getChartOption() {
               ['#909399', '#C0C4CC'], // 灰色
               ['#00B0F0', '#80D8F8'], // 浅蓝
               ['#00B050', '#80D8A8'], // 深绿
-              ['#7030A0', '#B898D0']  // 紫色
+              ['#7030A0', '#B898D0'] // 紫色
             ]
             const colorPair = colors[params.dataIndex % colors.length]
             return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -138,6 +141,12 @@ function getChartOption() {
               { offset: 1, color: colorPair[1] }
             ])
           }
+        },
+        label: {
+          show: true,
+          position: 'top',
+          color: '#666',
+          formatter: '{c}'
         },
         barMaxWidth: 40
       }
@@ -221,7 +230,18 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-icon {
+  font-size: 18px;
+  color: #67c23a;
 }
 
 .chart-title {

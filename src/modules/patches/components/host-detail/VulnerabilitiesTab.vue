@@ -51,9 +51,9 @@
     <el-table
       v-loading="vulLoading"
       :data="vulTableData"
-     
+
       size="small"
-      max-height="calc(100vh - 560px)"
+      max-height="calc(100vh - 400px)"
       @selection-change="handleVulSelectionChange"
     >
       <el-table-column type="selection" width="55" />
@@ -84,8 +84,8 @@
       </el-table-column>
       <el-table-column prop="severity" label="严重程度" width="100">
         <template #default="{ row }">
-          <el-tag :type="getSeverityType(row.severity)" size="small">
-            {{ row.severity }}
+          <el-tag :type="getSeverityType(row.severity)" :class="['severity-tag', getSeverityClass(row.severity)]" size="small">
+            {{ getSeverityLabel(row.severity) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -156,14 +156,62 @@
         @current-change="handleVulPageChange"
       />
     </div>
+
+    <!-- 修复漏洞确认对话框 -->
+    <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="700px" destroy-on-close>
+      <div v-loading="fixDialogLoading" class="fix-dialog-content">
+        <div class="fix-info-card">
+          <div class="fix-info-header">
+            <i class="fa fa-desktop text-muted" />
+            待更新的主机
+          </div>
+          <div class="fix-info-body" v-html="fixDialogData.hosts || '-'" />
+        </div>
+        <div class="fix-info-card">
+          <div class="fix-info-header">
+            <i class="fa fa-briefcase-medical text-muted" />
+            待更新的补丁
+          </div>
+          <div class="fix-info-body" v-html="fixDialogData.patches || '-'" />
+        </div>
+        <div class="fix-info-card">
+          <div class="fix-info-header">
+            <i class="fa fa-suitcase text-muted" />
+            待更新的 CVE
+          </div>
+          <div class="fix-info-body" v-html="fixDialogData.cves || '-'" />
+        </div>
+        <div class="fix-info-card">
+          <div class="fix-info-header">
+            <i class="fa fa-cube text-muted" />
+            待更新的软件包
+          </div>
+          <div class="fix-info-body" v-html="fixDialogData.packages || '-'" />
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="fixDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="fixSubmitting"
+          :disabled="!fixDialogData.patchStatusIds.length"
+          @click="handleConfirmFix"
+        >
+          <i class="fa fa-chevron-right" />
+          开始修复
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate, formatPackages, getSeverityType, getPatchStatusType, getPatchStatusText } from '../../composables/useFormatters'
 import { useVulnerabilityList } from '../../composables/useVulnerabilityList'
 import { Search } from '@element-plus/icons-vue'
+import { vulnerabilityApi } from '../../api'
 
 const props = defineProps({
   hostId: {
@@ -173,6 +221,25 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['patch-click'])
+
+function normalizeSeverity(severity) {
+  return String(severity || '').trim().toLowerCase()
+}
+
+function getSeverityClass(severity) {
+  const key = normalizeSeverity(severity)
+  return key ? `is-${key}` : ''
+}
+
+function getSeverityLabel(severity) {
+  const map = {
+    critical: '严重',
+    important: '重要',
+    moderate: '中等',
+    low: '低'
+  }
+  return map[normalizeSeverity(severity)] || severity || '-'
+}
 
 // 使用漏洞列表逻辑
 const {
@@ -190,15 +257,118 @@ const {
   handleVulSizeChange
 } = useVulnerabilityList({ value: props.hostId })
 
+const fixDialogVisible = ref(false)
+const fixDialogLoading = ref(false)
+const fixSubmitting = ref(false)
+const fixDialogData = reactive({
+  hosts: '',
+  patches: '',
+  cves: '',
+  packages: '',
+  patchStatusIds: []
+})
+
+function resolvePatchStatusIds(selection) {
+  const ids = []
+  selection.forEach(row => {
+    const value = row.patch_status_id ?? row.patch_status_ids ?? row.id ?? row.patchStatusId ?? row.patchStatusIds
+    if (Array.isArray(value)) {
+      ids.push(...value)
+      return
+    }
+    if (typeof value === 'string') {
+      value.split(',').forEach(item => {
+        const trimmed = item.trim()
+        if (trimmed) ids.push(trimmed)
+      })
+      return
+    }
+    if (value) ids.push(value)
+  })
+  return Array.from(new Set(ids))
+}
+
 // 修复漏洞
-function handleFixVulnerabilities() {
+async function handleFixVulnerabilities() {
   if (selectedVuls.value.length === 0) {
     ElMessage.warning('请选择要修复的漏洞')
     return
   }
 
-  // TODO: 调用修复漏洞的API
-  ElMessage.info('漏洞修复功能开发中...')
+  const ids = resolvePatchStatusIds(selectedVuls.value)
+  if (ids.length === 0) {
+    ElMessage.warning('所选漏洞缺少补丁状态ID，无法修复')
+    return
+  }
+
+  fixDialogData.patchStatusIds = ids
+  fixDialogData.hosts = ''
+  fixDialogData.patches = ''
+  fixDialogData.cves = ''
+  fixDialogData.packages = ''
+  fixDialogVisible.value = true
+  fixDialogLoading.value = true
+
+  try {
+    const [hostsRes, patchesRes, cvesRes, pkgsRes] = await Promise.all([
+      vulnerabilityApi.getPatchStatusHosts(ids),
+      vulnerabilityApi.getPatchStatusPatches(ids),
+      vulnerabilityApi.getPatchStatusCves(ids),
+      vulnerabilityApi.getPatchStatusPackages(ids)
+    ])
+
+    if (hostsRes?.data?.records) {
+      fixDialogData.hosts = hostsRes.data.records.map(r => r.host_key).join('<br>')
+    }
+
+    if (patchesRes?.data?.records) {
+      const patches = [...new Set(patchesRes.data.records.map(r => r.patch_id))]
+      fixDialogData.patches = patches.join('<br>')
+    }
+
+    if (cvesRes?.data?.records) {
+      fixDialogData.cves = cvesRes.data.records.map(r => r.vul_id).join('<br>')
+    }
+
+    if (pkgsRes?.data?.records) {
+      const allPkgs = pkgsRes.data.records.flatMap(r => (r.affected_pkgs || '').split(','))
+      const uniquePkgs = [...new Set(allPkgs.filter(pkg => pkg.trim()))]
+      fixDialogData.packages = uniquePkgs.join('<br>')
+    }
+  } catch (error) {
+    ElMessage.error('获取补丁信息失败: ' + (error.message || '未知错误'))
+  } finally {
+    fixDialogLoading.value = false
+  }
+}
+
+// 确认开始修复
+async function handleConfirmFix() {
+  if (!fixDialogData.patchStatusIds.length) return
+
+  fixSubmitting.value = true
+  try {
+    const { executeJob } = await import('@/modules/automation/api/jao')
+    const response = await executeJob({
+      jobId: 's1r8Hp',
+      params: {
+        patchStatusIds: fixDialogData.patchStatusIds
+      }
+    })
+    const payload = response?.data ?? response
+    const result = Array.isArray(payload) ? payload[0] : null
+    const isSuccess = result?.status === 'COMPLETED' && result?.data?._status === 'ok'
+    if (!isSuccess) {
+      throw new Error('作业返回异常')
+    }
+    ElMessage.success('修复任务已提交成功')
+    fixDialogVisible.value = false
+    loadVulnerabilityList()
+  } catch (error) {
+    ElMessage.error('提交修复任务失败: ' + (error.message || '未知错误'))
+  } finally {
+    fixSubmitting.value = false
+  }
 }
 
 // 回滚补丁
@@ -288,6 +458,41 @@ defineExpose({
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid #e4e7ed;
+}
+
+.fix-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 200px;
+}
+
+.fix-info-card {
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.fix-info-header {
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #ebeef5;
+  font-weight: 500;
+  font-size: 14px;
+  color: #303133;
+
+  i {
+    margin-right: 8px;
+  }
+}
+
+.fix-info-body {
+  padding: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #606266;
 }
 
 :deep(.el-pagination) {
