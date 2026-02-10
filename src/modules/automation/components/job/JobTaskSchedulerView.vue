@@ -12,7 +12,7 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item>
+        <!-- <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon>
               <Search />
@@ -25,7 +25,7 @@
             </el-icon>
             重置
           </el-button>
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
     </div>
 

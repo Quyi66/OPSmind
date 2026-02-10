@@ -50,7 +50,7 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="paginatedData" >
+      <el-table v-loading="loading" :data="paginatedData" max-height="calc(100vh - 230px)">
         <el-table-column label="作业" min-width="150">
           <template #default="{ row }">
             <el-button text type="primary" @click="handleViewDetail(row)">
@@ -89,7 +89,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="审批时间" width="170">
+        <el-table-column label="审批时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.approveTime) }}
           </template>

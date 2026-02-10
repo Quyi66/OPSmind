@@ -26,7 +26,13 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          :loading="loading"
+          @click="loadData"
+          title="刷新"
+        >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
@@ -37,7 +43,6 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-       
         style="width: 100%"
         size="small"
         max-height="calc(100vh - 380px)"
@@ -90,12 +95,7 @@
     />
 
     <!-- 扫描目标主机对话框 -->
-    <el-dialog
-      v-model="scanDialogVisible"
-      title="选择目标主机"
-      width="600px"
-      destroy-on-close
-    >
+    <el-dialog v-model="scanDialogVisible" title="选择目标主机" width="600px" destroy-on-close>
       <div class="scan-dialog-content">
         <!-- 使用 AcmDeviceSelector 组件 -->
         <AcmDeviceSelector
@@ -110,7 +110,12 @@
       </div>
       <template #footer>
         <el-button @click="scanDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="scanLoading" :disabled="selectedScanHosts.length === 0" @click="executeScan">
+        <el-button
+          type="primary"
+          :loading="scanLoading"
+          :disabled="selectedScanHosts.length === 0"
+          @click="executeScan"
+        >
           开始扫描
         </el-button>
       </template>
@@ -301,8 +306,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 16px;
-  gap: 16px;
+  gap: 8px;
 }
 
 .ops-action-bar {

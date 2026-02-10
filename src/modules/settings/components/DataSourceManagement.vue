@@ -158,7 +158,7 @@
                 <el-input
                   v-model="form.description"
                   type="textarea"
-                  :rows="3"
+                  :rows="2"
                   placeholder="输入数据源描述"
                 />
               </el-form-item>
@@ -762,8 +762,9 @@ watch(() => form.name, (newVal, oldVal) => {
 }
 
 .form-actions {
-  margin-top: 24px;
-  padding-top: 16px;
+  margin-top: 16px;
+  margin-bottom: 0;
+  padding-top: 8px;
   border-top: 1px solid #ebeef5;
 
   :deep(.el-form-item__content) {
@@ -815,5 +816,10 @@ watch(() => form.name, (newVal, oldVal) => {
     width: 14px;
     text-align: center;
   }
+}
+
+.ops-page-layout {
+  padding-top: 0;
+  padding-left: 0;
 }
 </style>

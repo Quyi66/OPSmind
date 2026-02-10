@@ -57,9 +57,9 @@
       <el-table
         :data="tableData"
         v-loading="loading"
-       
+
         @selection-change="handleSelectionChange"
-        max-height="calc(100vh - 330px)"
+        max-height="calc(100vh - 230px)"
       >
         <!-- <el-table-column type="selection" width="50" /> -->
         <el-table-column prop="host_key" label="IP" width="130" />

@@ -11,14 +11,14 @@
             clearable
           />
         </el-form-item>
-        <el-form-item>
+        <!-- <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon> 搜索
           </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon> 重置
           </el-button>
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
     </div>
 
@@ -45,8 +45,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="filteredCommands"
-       
-        height="100%"
+        max-height="calc(100vh - 230px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="45" />

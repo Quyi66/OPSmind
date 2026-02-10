@@ -221,8 +221,8 @@
           ref="tableRef"
           v-loading="loading"
           :data="tableData"
-         
-          max-height="calc(100vh - 380px)"
+
+          max-height="calc(100vh - 340px)"
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="40" fixed="left" />

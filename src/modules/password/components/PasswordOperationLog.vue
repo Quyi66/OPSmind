@@ -42,6 +42,7 @@
         :data="tableData"
         v-loading="loading"
         style="width: 100%"
+        max-height="calc(100vh - 230px)"
       >
         <el-table-column prop="start_time" label="开始时间" width="180" sortable>
           <template #default="{ row }">

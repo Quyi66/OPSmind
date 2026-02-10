@@ -4,7 +4,7 @@
     <div class="ops-filter-bar">
       <el-form inline size="small">
         <el-form-item label="时间范围">
-          <el-select v-model="filterDay" style="width: 120px">
+          <el-select v-model="filterDay" style="width: 100px">
             <el-option label="全部" value="all" />
             <el-option label="今天" value="1" />
             <el-option label="最近7天" value="7" />
@@ -12,7 +12,7 @@
             <el-option label="最近一年" value="365" />
           </el-select>
         </el-form-item>
-        <el-form-item label="执行引擎">
+        <!-- <el-form-item label="执行引擎">
           <el-select
             v-model="engineFilter"
             placeholder="全部"
@@ -26,7 +26,7 @@
               :value="node"
             />
           </el-select>
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="状态">
           <el-select
             v-model="statusFilter"
@@ -95,11 +95,10 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-       
         style="width: 100%"
         size="small"
         row-key="run_id"
-        height="calc(100vh - 300px)"
+        max-height="calc(100vh - 230px)"
         :default-sort="{ prop: 'start_time', order: 'descending' }"
         empty-text="没有数据"
       >

@@ -43,9 +43,9 @@
           <el-table
             v-loading="sysLoading"
             :data="paginatedSysParams"
-           
+
             style="width: 100%"
-            max-height="calc(100vh - 400px)"
+            max-height="calc(100vh - 330px)"
           >
             <el-table-column prop="domain" label="域" width="100" />
             <el-table-column prop="name" label="参数名称" min-width="120" show-overflow-tooltip />
@@ -127,9 +127,9 @@
           <el-table
             v-loading="appLoading"
             :data="paginatedAppParams"
-           
+
             style="width: 100%"
-            max-height="calc(100vh - 400px)"
+            max-height="calc(100vh - 330px)"
           >
             <el-table-column prop="name" label="参数名称" min-width="120" show-overflow-tooltip />
             <el-table-column prop="value" label="参数值" min-width="350" show-overflow-tooltip />

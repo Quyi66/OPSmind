@@ -79,7 +79,7 @@
         :data="filteredData"
         v-loading="loading"
         style="width: 100%"
-        max-height="calc(100vh - 280px)"
+        max-height="calc(100vh - 220px)"
         row-key="run_id"
       >
         <el-table-column prop="start_time" label="开始时间" width="180" sortable>

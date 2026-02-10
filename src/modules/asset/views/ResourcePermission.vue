@@ -46,7 +46,7 @@
         :data="filteredData"
         v-loading="loading"
         style="width: 100%"
-        max-height="calc(100vh - 280px)"
+        max-height="calc(100vh - 230px)"
       >
         <el-table-column
           prop="groupInfo"

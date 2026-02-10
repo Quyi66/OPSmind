@@ -65,7 +65,7 @@
 
     <!-- 数据表格 -->
     <div class="ops-table-wrapper">
-      <el-table :data="tableData" v-loading="loading" style="width: 100%">
+      <el-table :data="tableData" v-loading="loading" style="width: 100%" max-height="calc(100vh - 230px)">
         <!-- 开始时间 -->
         <el-table-column prop="start_time" label="开始时间" width="170">
           <template #default="{ row }">
@@ -292,37 +292,6 @@ function formatDuration(startTime, endTime) {
 </script>
 
 <style scoped lang="scss">
-.ops-page-layout {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.ops-filter-bar {
-  flex-shrink: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.ops-table-wrapper {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-}
-
-.ops-pagination-wrapper {
-  flex-shrink: 0;
-  margin-top: 12px;
-  display: flex;
-  justify-content: flex-end;
-}
-
 .text-danger {
   color: #ef4444;
 }

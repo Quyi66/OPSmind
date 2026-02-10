@@ -64,9 +64,9 @@
               <el-table
                 v-loading="pageLoading"
                 :data="paginatedPages"
-               
+
                 style="width: 100%"
-                max-height="calc(100vh - 400px)"
+                max-height="calc(100vh - 320px)"
                 @selection-change="handlePageSelectionChange"
               >
                 <el-table-column type="selection" width="55" />
@@ -161,9 +161,9 @@
               <el-table
                 v-loading="datasetLoading"
                 :data="paginatedDatasets"
-               
+
                 style="width: 100%"
-                max-height="calc(100vh - 400px)"
+                max-height="calc(100vh - 320px)"
                 @selection-change="handleDatasetSelectionChange"
               >
                 <el-table-column type="selection" width="55" />
@@ -255,9 +255,9 @@
               <el-table
                 v-loading="jobLoading"
                 :data="paginatedJobs"
-               
+
                 style="width: 100%"
-                max-height="calc(100vh - 400px)"
+                max-height="calc(100vh - 320px)"
                 @selection-change="handleJobSelectionChange"
               >
                 <el-table-column type="selection" width="55" />
@@ -669,7 +669,7 @@ onMounted(() => {
   }
 
   :deep(.el-tabs__header) {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 }
 
@@ -714,5 +714,11 @@ onMounted(() => {
       color: #409eff;
     }
   }
+}
+
+.ops-sidebar-nav {
+  padding-top: 0;
+  padding-left: 0;
+  width: 150px;
 }
 </style>

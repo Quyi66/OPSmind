@@ -2,8 +2,8 @@
   <div class="table-container">
     <el-table
       v-loading="loading"
-      :data="data"
-     
+      :data="pagedData"
+      max-height="calc(100vh - 240px)"
       :default-sort="{ prop: 'id', order: 'descending' }"
       @selection-change="$emit('selection-change', $event)"
     >
@@ -104,11 +104,22 @@
         </template>
       </el-table-column>
     </el-table>
+    <div class="table-pagination">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="data.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { Edit, Delete, CopyDocument, VideoPlay, Clock } from '@element-plus/icons-vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
   data: {
@@ -134,6 +145,14 @@ defineEmits([
   'toggle-status',
   'query-next-time'
 ])
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+const pagedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return props.data.slice(start, start + pageSize.value)
+})
 
 /**
  * 获取应用名称
@@ -176,5 +195,11 @@ function getJobTypeTag(type) {
 .table-container {
   flex: 1;
   overflow: auto;
+}
+
+.table-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 0 0;
 }
 </style>

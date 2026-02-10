@@ -52,6 +52,7 @@
         v-loading="loading"
         @selection-change="handleSelectionChange"
         style="width: 100%"
+        max-height="calc(100vh - 230px)"
       >
         <el-table-column type="selection" width="40" />
         <el-table-column prop="processName" label="流程名称" min-width="150" />

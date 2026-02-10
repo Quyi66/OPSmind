@@ -15,19 +15,14 @@ import { setupRouter } from '@/core/router'
 import { setupGlobalComponents } from '@/shared/components'
 import { setupGlobalDirectives } from '@/shared/directives'
 import { setupErrorHandler } from '@/core/error'
-import { initPerformanceOptimizations } from '@/utils/performance-optimizer'
+import { deferStyleChunks, initPerformanceOptimizations } from '@/utils/performance-optimizer'
 import { appUrlManager } from '@/config/module-urls.config'
 import { authService } from '@/core/auth'
 import angularJSBridge from '@/services/angularjs-bridge'
 
 // 导入全局样式
 import '@/styles/main.scss'
-// 确保 Element UI 和通用样式覆盖生效
-import '@/styles/element-ui.scss'
-import '@/styles/sidebar.scss'
-import '@/styles/common.scss'
-// OPSmind 统一页面布局样式
-import '@/styles/opsmind.scss'
+// 延迟加载非关键样式，减少首屏阻塞
 
 // 统一设置浏览器 Tab 图标（favicon）为 src/assets/icons/logo-opsmind@2x.png
 try {
@@ -176,6 +171,13 @@ setTimeout(() => {
 
 // 挂载应用
 app.mount('#app')
+
+deferStyleChunks([
+  () => import('@/styles/element-ui.scss'),
+  () => import('@/styles/sidebar.scss'),
+  () => import('@/styles/common.scss'),
+  () => import('@/styles/opsmind.scss')
+])
 
 // 开发环境下的调试信息
 if (import.meta.env.DEV) {

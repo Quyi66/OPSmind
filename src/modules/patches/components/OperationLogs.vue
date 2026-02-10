@@ -39,7 +39,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
-            <el-input v-model="searchText" placeholder="搜索" style="width: 300px" clearable>
+            <el-input v-model="searchText" placeholder="搜索" style="width: 250px" clearable>
               <template #prefix>
                 <el-icon>
                   <Search />
@@ -81,7 +81,7 @@
       </div>
 
       <div class="ops-table-wrapper">
-        <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 350px)">
+        <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 280px)">
           <el-table-column prop="start_time" label="开始时间" width="180" sortable>
             <template #default="{ row }">
               {{ formatTimestamp(row.start_time) }}
@@ -194,7 +194,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="vulLoading" :data="vulTableData" max-height="calc(100vh - 320px)">
+        <el-table v-loading="vulLoading" :data="vulTableData" max-height="calc(100vh - 280px)">
           <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
           <el-table-column prop="os_distro" label="OS" width="100" />
           <el-table-column prop="os_version" label="OS版本" width="150" />
@@ -286,7 +286,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="patchLoading" :data="patchTableData" max-height="calc(100vh - 320px)">
+        <el-table v-loading="patchLoading" :data="patchTableData" max-height="calc(100vh - 280px)">
           <el-table-column prop="host_key" label="主机" min-width="100" show-overflow-tooltip />
           <el-table-column prop="os_distro" label="OS" width="100" />
           <el-table-column prop="os_version" label="OS版本" width="100" />

@@ -15,12 +15,12 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item>
+        <!-- <el-form-item>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
             重置
           </el-button>
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
     </div>
 
@@ -40,9 +40,8 @@
     <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
-        :data="filteredJobs"
-       
-        height="100%"
+        :data="pagedJobs"
+        max-height="calc(100vh - 230px)"
         row-key="id"
         :default-sort="{ prop: sortField, order: sortOrder }"
         @sort-change="handleSortChange"
@@ -74,6 +73,20 @@
           </template>
         </el-table-column>
       </el-table>
+    </div>
+
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 25, 50, 100]"
+        :total="filteredJobs.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 详情弹窗 -->
@@ -181,7 +194,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import {
@@ -209,6 +222,8 @@ const jobs = ref([])
 const searchKeyword = ref('')
 const sortField = ref('updatedAt')
 const sortOrder = ref('descending')
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const selectedJob = ref(null)
 const detailJob = ref(null)
@@ -265,6 +280,11 @@ const filteredJobs = computed(() => {
   })
 
   return result
+})
+
+const pagedJobs = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredJobs.value.slice(start, start + pageSize.value)
 })
 
 const detailCommands = computed(() => parseJobConfig(detailJob.value).commands)
@@ -372,6 +392,14 @@ function handleSortChange({ prop, order }) {
   sortOrder.value = order
 }
 
+function handlePageSizeChange() {
+  currentPage.value = 1
+}
+
+function handlePageChange(page) {
+  currentPage.value = page
+}
+
 function handleCreateJob() {
   createDialogVisible.value = true
 }
@@ -383,6 +411,17 @@ function handleCreateSuccess() {
 function handleReset() {
   searchKeyword.value = ''
 }
+
+watch([searchKeyword, sortField, sortOrder], () => {
+  currentPage.value = 1
+})
+
+watch(filteredJobs, () => {
+  const maxPage = Math.max(1, Math.ceil(filteredJobs.value.length / pageSize.value))
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage
+  }
+})
 
 async function handleSaveJob() {
   try {

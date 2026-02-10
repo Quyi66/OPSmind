@@ -1,7 +1,6 @@
 <template>
   <div class="ops-page-layout">
     <!-- 筛选区 -->
-    <!-- 筛选与操作区 -->
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
         <el-form-item label="更新分类">
@@ -44,16 +43,29 @@
         </el-form-item>
       </el-form>
 
-      <div style="margin-left: auto">
-        <el-button
-          type="primary"
-          size="small"
-          :disabled="selectedKbNumbers.length === 0"
-          @click="handleFixSelected"
-        >
-          修复选中漏洞
-        </el-button>
-      </div>
+    </div>
+
+    <!-- 操作区 -->
+    <div class="ops-action-bar">
+      <el-button
+        type="primary"
+        size="small"
+        :disabled="selectedKbNumbers.length === 0"
+        @click="handleFixSelected"
+      >
+        修复选中漏洞
+      </el-button>
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
+        <el-icon v-show="!loading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
@@ -62,7 +74,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
-        height="calc(100vh - 320px)"
+        max-height="calc(100vh - 230px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
@@ -199,7 +211,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search, RefreshRight } from '@element-plus/icons-vue'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { windowsUpdateApi } from '../api'
 import FixSelectedVulnsDialog from './dialogs/FixSelectedVulnsDialog.vue'
 

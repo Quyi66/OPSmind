@@ -125,7 +125,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
-        max-height="calc(100vh - 480px)"
+        max-height="calc(100vh - 400px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
@@ -634,10 +634,10 @@ defineExpose({
   position: relative;
   overflow: hidden;
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px; /* Reduced from 16px */
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 200px;
+  min-width: 180px; /* Reduced min-width slightly */
   flex: 1;
 
   // Default State (Inactive)
@@ -687,9 +687,9 @@ defineExpose({
   // 背景图标
   .card-bg-icon {
     position: absolute;
-    right: -10px;
-    bottom: -10px;
-    font-size: 100px;
+    right: -15px;
+    bottom: -20px;
+    font-size: 80px; /* Reduced from 100px */
     opacity: 0.05;
     transform: rotate(-15deg);
     pointer-events: none;
@@ -697,7 +697,7 @@ defineExpose({
     transition:
       transform 0.3s ease,
       opacity 0.3s ease;
-    color: currentColor; // Inherit text color (which will be set by vendor class on active, or default on inactive)
+    color: currentColor;
   }
 
   .card-content {
@@ -713,7 +713,7 @@ defineExpose({
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 4px; /* Reduced from 12px */
 
     .vendor-info {
       display: flex;
@@ -722,8 +722,7 @@ defineExpose({
     }
 
     .vendor-icon-small {
-      font-size: 18px;
-      // Color handled by specific vendor classes below for inactive state
+      font-size: 16px; /* Reduced from 18px */
     }
 
     .vendor-name {
@@ -734,19 +733,19 @@ defineExpose({
     }
 
     .active-indicator {
-      font-size: 16px;
+      font-size: 14px;
       opacity: 0.9;
     }
   }
 
   .card-body {
-    margin-bottom: 12px;
+    margin-bottom: 4px; /* Reduced from 12px */
 
     .count-value {
-      font-size: 28px;
+      font-size: 24px; /* Reduced from 28px */
       font-weight: 800;
-      line-height: 1;
-      margin-bottom: 4px;
+      line-height: 1.2;
+      margin-bottom: 0px;
       color: #303133;
     }
 

@@ -32,18 +32,22 @@
           <el-input-number v-model="formPort" :min="1" :max="65535" style="width: 200px" />
         </el-form-item>
 
-        <el-form-item label="发件人" prop="from">
-          <el-input v-model="form.from" type="email" placeholder="发件人邮箱地址（通常与用户名相同）" maxlength="100" />
-        </el-form-item>
-
-        <el-form-item label="收件人类型" prop="recipient_type">
-          <el-select v-model="form.recipient_type" style="width: 200px">
-            <el-option label="TO（主送）" value="to" />
-            <el-option label="CC（抄送）" value="cc" />
-            <el-option label="BCC（密送）" value="bcc" />
-          </el-select>
-        </el-form-item>
-
+        <el-row :gutter="24">
+          <el-col :span="12">
+            <el-form-item label="发件人" prop="from">
+              <el-input v-model="form.from" type="email" placeholder="发件人邮箱地址（通常与用户名相同）" maxlength="100" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="收件人类型" prop="recipient_type">
+              <el-select v-model="form.recipient_type" style="width: 200px">
+                <el-option label="TO（主送）" value="to" />
+                <el-option label="CC（抄送）" value="cc" />
+                <el-option label="BCC（密送）" value="bcc" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <div class="switch-group">
           <el-form-item label="调试模式">
             <el-switch v-model="debugOnOff" />

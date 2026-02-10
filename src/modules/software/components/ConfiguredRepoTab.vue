@@ -15,8 +15,7 @@
     <el-table
       v-loading="loading"
       :data="tableData"
-     
-      max-height="calc(100vh - 300px)"
+      max-height="calc(100vh - 240px)"
     >
       <el-table-column prop="refid" label="仓库ID" min-width="150" show-overflow-tooltip>
         <template #default="{ row }">

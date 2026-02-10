@@ -534,4 +534,8 @@ onUnmounted(() => {
 .policy-form {
   max-width: 500px;
 }
+
+:deep(.el-card__body) {
+  padding: 10px 16px;
+}
 </style>

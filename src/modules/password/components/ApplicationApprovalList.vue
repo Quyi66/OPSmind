@@ -67,7 +67,7 @@
       <el-table
         :data="tableData"
         v-loading="loading"
-       
+        max-height="calc(100vh - 230px)"
         style="width: 100%"
       >
         <el-table-column prop="intention" label="用途" min-width="180" show-overflow-tooltip />

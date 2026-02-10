@@ -603,7 +603,7 @@ async function loadCveDetail() {
     sources.value = result.sources || []
 
     if (sources.value.length > 0) {
-      currentSourceId.value = sources.value[1].source
+      currentSourceId.value = sources.value[1]?.source || sources.value[0].source
       selectSource(currentSourceId.value)
     }
 

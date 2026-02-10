@@ -2,7 +2,7 @@
   <div class="ops-page-layout" style="flex-direction: row; padding: 0; gap: 0;">
     <aside class="ops-sidebar-nav">
       <div class="ops-sidebar-header">
-        <el-input v-model="appStr" style="width: 140px" placeholder="请输入" :prefix-icon="'Search'"
+        <el-input v-model="appStr" style="width: 120px" placeholder="请输入" :prefix-icon="Search"
           @input="filterApplets()" />
       </div>
       <el-scrollbar class="ops-sidebar-content">
@@ -90,7 +90,7 @@
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
         <el-table v-loading="loading" :data="displayedJobs" @selection-change="handleSelectionChange"
-          @sort-change="handleSortChange" max-height="calc(100vh - 300px)"
+          @sort-change="handleSortChange" max-height="calc(100vh - 240px)"
           :default-sort="{ prop: 'updatedAt', order: 'descending' }">
           <el-table-column type="selection" width="48" />
           <el-table-column prop="title" label="作业" min-width="160" show-overflow-tooltip>

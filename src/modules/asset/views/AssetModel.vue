@@ -57,8 +57,7 @@
         <el-table
           v-loading="loading"
           :data="filteredModelList"
-         
-          max-height="calc(100vh - 300px)"
+          max-height="calc(100vh - 230px)"
         >
           <el-table-column prop="title" label="模型名称" min-width="150">
             <template #default="{ row }">

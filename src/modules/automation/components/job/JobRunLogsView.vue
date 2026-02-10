@@ -62,8 +62,7 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-       
-        height="100%"
+        max-height="calc(100vh - 230px)"
       >
         <el-table-column label="开始时间" width="180" sortable>
           <template #default="{ row }">

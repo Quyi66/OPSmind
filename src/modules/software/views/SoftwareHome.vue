@@ -115,10 +115,34 @@ function formatDate(timestamp) {
 
 // KPI 定义（与源系统一致）
 const kpiDefs = {
-  scan_count_host: { title: '扫描主机数', icon: 'fa fa-desktop', linkPage: 'hosts', order: 1, theme: 'secondary' },
-  scan_count_repos: { title: '仓库', icon: 'fa fa-laptop-house', linkPage: 'repos', order: 2, theme: 'primary' },
-  scan_count_pkgs: { title: '可用软件包数', icon: 'fa fa-cube', linkPage: 'packages', order: 3, theme: 'info' },
-  scan_count_installed_pkgs: { title: '已安装软件包数', icon: 'fa fa-check-circle', linkPage: 'installed', order: 4, theme: 'success' }
+  scan_count_host: {
+    title: '扫描主机数',
+    icon: 'fa fa-desktop',
+    linkPage: 'hosts',
+    order: 1,
+    theme: 'secondary'
+  },
+  scan_count_repos: {
+    title: '仓库',
+    icon: 'fa fa-laptop-house',
+    linkPage: 'repos',
+    order: 2,
+    theme: 'primary'
+  },
+  scan_count_pkgs: {
+    title: '可用软件包数',
+    icon: 'fa fa-cube',
+    linkPage: 'packages',
+    order: 3,
+    theme: 'info'
+  },
+  scan_count_installed_pkgs: {
+    title: '已安装软件包数',
+    icon: 'fa fa-check-circle',
+    linkPage: 'installed',
+    order: 4,
+    theme: 'success'
+  }
 }
 
 // 加载统计数据
@@ -155,10 +179,38 @@ async function loadStatsData() {
       const installedCount = records.reduce((sum, r) => sum + (r.installed_pkgs_count || 0), 0)
 
       statsData.value = [
-        { name: '扫描主机数', value: data.total || hostCount, icon: 'fa fa-desktop', theme: 'secondary', linkPage: 'hosts', _order: 1 },
-        { name: '仓库', value: repoCount, icon: 'fa fa-laptop-house', theme: 'primary', linkPage: 'repos', _order: 2 },
-        { name: '可用软件包数', value: 0, icon: 'fa fa-cube', theme: 'info', linkPage: 'packages', _order: 3 },
-        { name: '已安装软件包数', value: installedCount, icon: 'fa fa-check-circle', theme: 'success', linkPage: 'installed', _order: 4 }
+        {
+          name: '扫描主机数',
+          value: data.total || hostCount,
+          icon: 'fa fa-desktop',
+          theme: 'secondary',
+          linkPage: 'hosts',
+          _order: 1
+        },
+        {
+          name: '仓库',
+          value: repoCount,
+          icon: 'fa fa-laptop-house',
+          theme: 'primary',
+          linkPage: 'repos',
+          _order: 2
+        },
+        {
+          name: '可用软件包数',
+          value: 0,
+          icon: 'fa fa-cube',
+          theme: 'info',
+          linkPage: 'packages',
+          _order: 3
+        },
+        {
+          name: '已安装软件包数',
+          value: installedCount,
+          icon: 'fa fa-check-circle',
+          theme: 'success',
+          linkPage: 'installed',
+          _order: 4
+        }
       ]
     }
   } catch (error) {
@@ -211,9 +263,9 @@ onMounted(() => {
 
 .kpi-card {
   flex: 1;
-  min-width: 240px;
+  min-width: 200px; /* Reduced from 240px */
   position: relative;
-  padding: 20px 24px;
+  padding: 12px 16px; /* Reduced from 20px 24px */
   background: #fff;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
@@ -242,18 +294,18 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 4px; /* Reduced from 16px */
   }
 
   // 图标盒子
   .kpi-icon-box {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    width: 32px; /* Reduced from 40px */
+    height: 32px; /* Reduced from 40px */
+    border-radius: 6px; /* Reduced radius */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 14px; /* Reduced from 18px */
     flex-shrink: 0;
   }
 
@@ -272,9 +324,9 @@ onMounted(() => {
   }
 
   .kpi-value {
-    font-size: 36px;
+    font-size: 24px; /* Reduced from 36px */
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.2;
     font-family:
       'Inter',
       -apple-system,
@@ -282,13 +334,13 @@ onMounted(() => {
       'Segoe UI',
       Roboto,
       sans-serif;
-    letter-spacing: -1px;
-    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+    margin-bottom: 0; /* Reduced margin */
   }
 
   // 底部时间
   .kpi-footer {
-    margin-top: 8px;
+    margin-top: 4px; /* Reduced from 8px */
     position: relative;
     z-index: 2;
   }
@@ -304,9 +356,9 @@ onMounted(() => {
   // 背景大图标
   .kpi-bg-icon {
     position: absolute;
-    right: -16px;
-    bottom: -16px;
-    font-size: 120px;
+    right: -10px; /* Adjusted position */
+    bottom: -10px; /* Adjusted position */
+    font-size: 80px; /* Reduced from 120px */
     opacity: 0.08;
     transform: rotate(-15deg);
     transition: all 0.4s ease;

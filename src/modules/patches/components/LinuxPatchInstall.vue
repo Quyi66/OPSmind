@@ -65,11 +65,11 @@
         ref="tableRef"
         v-loading="loading"
         :data="paginatedData"
-        max-height="calc(100vh - 320px)"
+        max-height="calc(100vh - 230px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="patch_id" label="补丁编号" min-width="140" sortable>
+        <el-table-column prop="patch_id" label="补丁编号" min-width="160" sortable>
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="handleViewPatchDetail(row)">
               {{ row.patch_id }}
@@ -77,7 +77,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="title" label="概要" min-width="220" show-overflow-tooltip />
-        <el-table-column prop="severity" label="严重性" width="110" sortable>
+        <el-table-column prop="severity" label="严重性" width="100" sortable>
           <template #default="{ row }">
             <el-tag
               effect="dark"

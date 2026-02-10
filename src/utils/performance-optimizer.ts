@@ -308,3 +308,46 @@ export function initPerformanceOptimizations() {
 
   return networkConfig
 }
+
+type StyleLoader = () => Promise<unknown>
+
+/**
+ * 延迟加载非关键样式，减少首屏阻塞。
+ */
+export function deferStyleChunks(
+  loaders: StyleLoader[],
+  options: { timeout?: number; delay?: number } = {}
+) {
+  if (typeof window === 'undefined' || loaders.length === 0) return
+
+  const timeout = options.timeout ?? 2000
+  const delay = options.delay ?? 0
+
+  const runLoaders = () => {
+    let chain = Promise.resolve()
+
+    loaders.forEach(loader => {
+      chain = chain
+        .then(() => loader())
+        .catch(error => {
+          if (import.meta.env.DEV) {
+            console.warn('Deferred style load failed:', error)
+          }
+        })
+    })
+  }
+
+  const schedule = () => {
+    if (delay > 0) {
+      setTimeout(runLoaders, delay)
+    } else {
+      runLoaders()
+    }
+  }
+
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(schedule, { timeout })
+  } else {
+    setTimeout(schedule, 0)
+  }
+}

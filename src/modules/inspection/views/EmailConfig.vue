@@ -18,7 +18,7 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="templateList"  height="calc(100vh - 240px)">
+      <el-table v-loading="loading" :data="pagedTemplates" max-height="calc(100vh - 180px)">
         <el-table-column prop="template_name" label="模板名称" min-width="200" show-overflow-tooltip />
         <el-table-column prop="executed_at" label="最后执行时间" width="180">
           <template #default="{ row }">
@@ -36,6 +36,20 @@
           </template>
         </el-table-column>
       </el-table>
+    </div>
+
+    <!-- 分页区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 25, 50, 100]"
+        :total="templateList.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 收件人列表弹窗 -->
@@ -146,7 +160,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { emailConfigApi } from '../api'
 import { formatDateTime } from '../utils/helpers'
@@ -159,6 +173,8 @@ const emailEnabled = ref(false)
 const emailConfig = ref({})
 const templateList = ref([])
 const searchKeyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 // 收件人列表弹窗
 const recipientDialogVisible = ref(false)
@@ -200,6 +216,11 @@ const customContentData = ref({
   state: '0'
 })
 
+const pagedTemplates = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return templateList.value.slice(start, start + pageSize.value)
+})
+
 /**
  * 加载邮件开关状态
  */
@@ -239,7 +260,16 @@ async function loadTemplates() {
  * 搜索处理
  */
 function handleSearch() {
+  currentPage.value = 1
   loadTemplates()
+}
+
+function handlePageSizeChange() {
+  currentPage.value = 1
+}
+
+function handlePageChange(page) {
+  currentPage.value = page
 }
 
 /**
@@ -493,6 +523,13 @@ async function saveCustomContent() {
 onMounted(() => {
   loadEmailSwitch()
   loadTemplates()
+})
+
+watch(templateList, () => {
+  const maxPage = Math.max(1, Math.ceil(templateList.value.length / pageSize.value))
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage
+  }
 })
 </script>
 

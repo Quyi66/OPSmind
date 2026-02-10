@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="`作业运行记录${jobTitle ? ` · ${jobTitle}` : ''}`" width="1460px"
+  <el-dialog v-model="dialogVisible" :title="`作业运行记录${jobTitle ? ` · ${jobTitle}` : ''}`" width="1360px"
     destroy-on-close @close="handleClose">
     <div class="history-dialog">
       <!-- 筛选栏 -->

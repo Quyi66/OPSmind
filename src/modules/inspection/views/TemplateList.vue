@@ -63,7 +63,7 @@
         style="width: 100%"
         row-key="id"
         :default-sort="{ prop: 'executedAt', order: 'descending' }"
-        heigth="calc(100vh - 300px)"
+        max-heigth="calc(100vh - 260px)"
       >
         <!-- 名称 -->
         <el-table-column

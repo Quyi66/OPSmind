@@ -97,9 +97,9 @@
       <el-table
         :data="tableData"
         v-loading="loading"
-       
+
         @selection-change="handleSelectionChange"
-        max-height="calc(100vh - 300px)"
+        max-height="calc(100vh - 230px)"
       >
         <!-- <el-table-column type="selection" width="50" /> -->
         <el-table-column prop="host_key" label="IP" width="130" />
@@ -414,35 +414,6 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
   }
-}
-
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 12px 16px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-
-  &__item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-}
-
-.filter-label {
-  font-size: 13px;
-  color: #64748b;
-  white-space: nowrap;
-}
-
-.view-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: auto;
 }
 
 .clickable-tag {

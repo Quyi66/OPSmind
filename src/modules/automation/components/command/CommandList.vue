@@ -15,16 +15,16 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item>
-          <!-- <el-button type="primary" :loading="loading" @click="handleSearch">
+        <!-- <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon><Search /></el-icon>
             搜索
-          </el-button> -->
+          </el-button>
           <el-button @click="handleReset">
             <el-icon><RefreshRight /></el-icon>
             重置
           </el-button>
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
     </div>
 
@@ -62,8 +62,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="filteredCommands"
-       
-        height="100%"
+        max-height="calc(100vh - 230px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column
