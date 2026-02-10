@@ -36,7 +36,7 @@
 
     <!-- 历史版本列表 -->
     <div class="history-content">
-      <el-table :data="paginatedList" v-loading="loading" style="width: 100%">
+      <el-table :data="paginatedList" v-loading="loading" style="width: 100%" max-height="calc(100vh - 200px)">
         <el-table-column label="版本" width="150">
           <template #default="{ row }">
             <el-tag :type="row.version === row.currentVersion ? 'success' : 'primary'" size="small">

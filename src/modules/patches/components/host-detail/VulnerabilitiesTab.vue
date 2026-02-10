@@ -61,7 +61,7 @@
         <template #default="{ row }">
           <div class="cve-cell">
             <a
-              :href="`https://access.redhat.com/security/cve/${row.vul_id}`"
+              :href="getCveUrl(row.vul_id, osDistro)"
               target="_blank"
               class="cve-badge"
             >
@@ -72,9 +72,17 @@
       </el-table-column>
       <el-table-column prop="patch_id" label="补丁编号" width="150">
         <template #default="{ row }">
-          <a href="javascript:void(0)" class="patch-link" @click="$emit('patch-click', {patch_id: row.patch_id})">
-            {{ row.patch_id }}
-          </a>
+          <div class="patch-list">
+            <a
+              v-for="patchId in getPatchIdList(row.patch_id)"
+              :key="patchId"
+              href="javascript:void(0)"
+              class="patch-link"
+              @click="$emit('patch-click', { patch_id: patchId })"
+            >
+              {{ patchId }}
+            </a>
+          </div>
         </template>
       </el-table-column>
       <el-table-column prop="affected_pkgs" label="受影响的软件包" min-width="200" show-overflow-tooltip>
@@ -208,7 +216,14 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { formatDate, formatPackages, getSeverityType, getPatchStatusType, getPatchStatusText } from '../../composables/useFormatters'
+import {
+  formatDate,
+  formatPackages,
+  getCveUrl,
+  getSeverityType,
+  getPatchStatusType,
+  getPatchStatusText
+} from '../../composables/useFormatters'
 import { useVulnerabilityList } from '../../composables/useVulnerabilityList'
 import { Search } from '@element-plus/icons-vue'
 import { vulnerabilityApi } from '../../api'
@@ -217,6 +232,10 @@ const props = defineProps({
   hostId: {
     type: String,
     required: true
+  },
+  osDistro: {
+    type: String,
+    default: ''
   }
 })
 
@@ -239,6 +258,14 @@ function getSeverityLabel(severity) {
     low: '低'
   }
   return map[normalizeSeverity(severity)] || severity || '-'
+}
+
+function getPatchIdList(patchId) {
+  if (!patchId) return []
+  return String(patchId)
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
 }
 
 // 使用漏洞列表逻辑
@@ -497,5 +524,13 @@ defineExpose({
 
 :deep(.el-pagination) {
   margin-top: 0 !important;
+}
+
+.patch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 80px;
+  overflow-y: auto;
 }
 </style>

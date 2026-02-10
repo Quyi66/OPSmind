@@ -128,7 +128,7 @@
         <el-table
           v-loading="tableLoading"
           :data="machineData"
-         
+          max-height="700px"
           style="width: 100%"
           @selection-change="handleSelectionChange"
         >
@@ -245,7 +245,7 @@
 
       <!-- 巡检概览表格 -->
       <div v-else-if="activeTab === 'overview'" class="table-container">
-        <el-table v-loading="overviewLoading" :data="overviewData"  style="width: 100%">
+        <el-table v-loading="overviewLoading" :data="overviewData"  style="width: 100%" max-height="700px">
           <el-table-column prop="name" label="检查项" min-width="300">
             <template #default="{ row }">
               <el-button type="primary" link @click="dialogs.showCheckItemHostsDialog(row)">
@@ -300,7 +300,7 @@
           <el-table
             v-loading="inspectionDetailLoading"
             :data="inspectionDetailData"
-           
+
             style="width: 100%"
             max-height="300"
           >

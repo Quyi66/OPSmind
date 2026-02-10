@@ -121,7 +121,7 @@
               添加命令
             </el-button>
           </div>
-          <el-table :data="templateCommands" size="small" v-loading="loadingCommands">
+          <el-table :data="templateCommands" size="small" v-loading="loadingCommands" max-height="300px">
             <el-table-column prop="command" label="命令" min-width="150" />
             <el-table-column prop="description" label="备注" min-width="150" />
             <el-table-column prop="created_at" label="创建时间" width="190">

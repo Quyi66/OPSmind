@@ -81,7 +81,7 @@
                 个文件
               </el-button>
             </div>
-            <el-table :data="formData.scripts" size="small" class="script-table">
+            <el-table :data="formData.scripts" size="small" class="script-table" max-height="300px">
               <el-table-column prop="scriptPath" label="脚本路径" min-width="200">
                 <template #default="{ row }">
                   <span>{{ row.scriptPath }}</span>

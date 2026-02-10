@@ -159,7 +159,7 @@
               <a
                 v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)"
                 :key="idx"
-                :href="`https://access.redhat.com/security/cve/${cve}`"
+                :href="getCveUrl(cve, row.os_distro)"
                 target="_blank"
                 class="cve-link"
               >
@@ -241,7 +241,7 @@
                   :key="idx"
                   class="cve-item"
                 >
-                  <a :href="`https://access.redhat.com/security/cve/${cve}`" target="_blank">
+                  <a :href="getCveUrl(cve, patchDetail?.os_distro)" target="_blank">
                     {{ cve }}
                   </a>
                 </span>
@@ -264,6 +264,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchLibraryApi } from '../api'
 import { runJob } from '@/modules/automation/api/command'
+import { getCveUrl } from '../composables/useFormatters'
 
 // 常量定义
 const CHECK_PATCH_UPDATE_JOB_ID = '0QdW7u' // 检查补丁更新作业ID

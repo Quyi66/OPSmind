@@ -56,7 +56,7 @@
                 <el-button size="small" @click="openFileSelector(taskIndex)">
                   共 <strong>{{ task.scripts.length }}</strong> 个文件
                 </el-button>
-                <el-table :data="task.scripts" size="small" class="mt-2">
+                <el-table :data="task.scripts" size="small" class="mt-2" max-height="300px">
                   <el-table-column label="脚本路径" min-width="200">
                     <template #default="{ row }">
                       <span v-if="fileStatusMap[row.location]" class="text-danger">
@@ -220,6 +220,7 @@
             border
             size="small"
             class="mt-2"
+            max-height="300px"
           >
             <el-table-column label="参数" width="130">
               <template #default="{ row }">

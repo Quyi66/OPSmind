@@ -411,7 +411,7 @@
             <el-table-column prop="vul_id" label="CVE" width="150">
               <template #default="{ row }">
                 <a
-                  :href="`https://access.redhat.com/security/cve/${row.vul_id}`"
+                  :href="getCveUrl(row.vul_id, row.os_distro)"
                   target="_blank"
                   class="cve-badge"
                 >
@@ -597,6 +597,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, vulnerabilityApi } from '../api'
+import { getCveUrl } from '../composables/useFormatters'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'

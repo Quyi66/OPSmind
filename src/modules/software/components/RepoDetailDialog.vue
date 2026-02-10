@@ -25,7 +25,7 @@
         <el-table
           v-loading="loading"
           :data="tableData"
-         
+          max-height="450px"
           style="width: 100%"
           size="small"
           @selection-change="handleSelectionChange"

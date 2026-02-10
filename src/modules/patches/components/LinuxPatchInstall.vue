@@ -99,7 +99,7 @@
               <a
                 v-for="cve in row._cveList"
                 :key="cve"
-                :href="`https://access.redhat.com/security/cve/${cve}`"
+                :href="getCveUrl(cve, resolvePatchDistro(row))"
                 target="_blank"
                 class="badge badge-secondary cve-link"
                 @click.stop
@@ -163,7 +163,7 @@
         <ul class="patch-detail__cve-list">
           <li v-for="cve in parseCveList(patchDetail.related_vuls)" :key="cve">
             <a
-              :href="`https://access.redhat.com/security/cve/${cve}`"
+              :href="getCveUrl(cve, resolvePatchDistro(patchDetail))"
               target="_blank"
               class="cve-link"
             >
@@ -296,6 +296,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { patchInstallApi } from '../api'
+import { getCveUrl } from '../composables/useFormatters'
 
 // 加载状态
 const loading = ref(false)
@@ -430,6 +431,11 @@ function parseCveList(cveStr) {
     .split(',')
     .map(cve => cve.trim())
     .filter(cve => cve)
+}
+
+function resolvePatchDistro(patch) {
+  if (!patch) return ''
+  return patch.os_distro || patch.vendor || ''
 }
 
 // 预处理数据 - 提前解析CVE列表

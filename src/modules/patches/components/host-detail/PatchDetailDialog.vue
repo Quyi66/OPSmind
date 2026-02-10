@@ -31,7 +31,7 @@
               <a
                 v-for="cve in getCVEList(patchData.related_vuls)"
                 :key="cve"
-                :href="`https://access.redhat.com/security/cve/${cve}`"
+                :href="getCveUrl(cve, osDistro)"
                 target="_blank"
                 class="cve-badge"
               >
@@ -51,7 +51,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatDate, getCVEList, getSeverityType } from '../../composables/useFormatters'
+import { formatDate, getCVEList, getCveUrl, getSeverityType } from '../../composables/useFormatters'
 
 const props = defineProps({
   modelValue: {
@@ -61,6 +61,10 @@ const props = defineProps({
   patchData: {
     type: Object,
     default: () => ({})
+  },
+  osDistro: {
+    type: String,
+    default: ''
   },
   loading: {
     type: Boolean,

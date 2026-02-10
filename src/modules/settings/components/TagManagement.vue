@@ -36,7 +36,7 @@
 
     <!-- 表格 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="paginatedTags"  style="width: 100%" max-height="calc(100vh - 280px)">
+      <el-table v-loading="loading" :data="paginatedTags"  style="width: 100%" max-height="calc(100vh - 290px)">
         <el-table-column prop="name" label="标签名称" min-width="200" />
         <el-table-column prop="count" label="应用数量" min-width="120" align="left">
           <template #default="{ row }">

@@ -138,7 +138,7 @@
 
       <!-- API Keys (仅查看模式) -->
       <el-tab-pane v-if="isViewMode" label="ApiKey" name="apikeys">
-        <el-table :data="apiKeys"  size="small">
+        <el-table :data="apiKeys"  size="small" max-height="450px">
           <el-table-column prop="name" label="名称" />
           <el-table-column prop="targetApi" label="目标API" min-width="200" />
           <el-table-column prop="expireTime" label="过期时间" width="180">

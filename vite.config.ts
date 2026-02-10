@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv, type UserConfig } from 'vite'
+import { defineConfig, loadEnv, type Plugin, type UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
@@ -41,6 +41,30 @@ export default defineConfig(({ command, mode }): UserConfig => {
           propsDestructure: true
         }
       }),
+
+      // 生产环境将构建产物 CSS 设为非阻塞加载
+      ...(isProduction ? [
+        {
+          name: 'defer-build-css',
+          enforce: 'post' as const,
+          transformIndexHtml(html: string) {
+            const cssAssetRegex = /<link\s+rel=["']stylesheet["']([^>]*?)href=["']([^"']*\/assets\/[^"']+\.css)["']([^>]*)>/g
+
+            return html.replace(
+              cssAssetRegex,
+              (_match: string, preAttrs: string, href: string, postAttrs: string) => {
+              const mergedAttrs = `${preAttrs || ''} ${postAttrs || ''}`.replace(/\s+/g, ' ').trim()
+              const attrs = mergedAttrs ? ` ${mergedAttrs}` : ''
+
+              const preload = `<link rel="preload" as="style" href="${href}"${attrs} onload="this.onload=null;this.rel='stylesheet'">`
+              const noscript = `<noscript><link rel="stylesheet" href="${href}"${attrs}></noscript>`
+
+              return `${preload}\n    ${noscript}`
+              }
+            )
+          }
+        } satisfies Plugin
+      ] : []),
 
       // 自动导入 Vue/Element Plus API（如 ref, ElMessage 等）
       AutoImport({

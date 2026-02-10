@@ -60,6 +60,7 @@
       ref="patchesTabRef"
       :host-id="hostId"
       :host-key="hostKey"
+      :os-distro="hostOsDistro"
       @patch-click="handlePatchClick"
       @fix-patches="handleFixPatches"
     />
@@ -77,6 +78,7 @@
       v-show="activeTab === 'vulnerabilities'"
       ref="vulnerabilitiesTabRef"
       :host-id="hostId"
+      :os-distro="hostOsDistro"
       @patch-click="handlePatchClick"
     />
 
@@ -85,6 +87,7 @@
       v-model="patchDetailVisible"
       :patch-data="patchDetailData"
       :loading="patchDetailLoading"
+      :os-distro="hostOsDistro"
     />
 
     <!-- 安装补丁确认对话框 -->
@@ -146,6 +149,7 @@ const hostInfoRef = computed(() => ({
 
 const hostId = computed(() => hostInfoRef.value.host_id || '')
 const hostKey = computed(() => hostInfoRef.value.host_key || hostInfoRef.value.hostKey || '')
+const hostOsDistro = computed(() => machineInfo.value?.os_distro || hostInfoRef.value.os_distro || '')
 
 const fromLabel = computed(() => route.query.fromLabel || '机器扫描')
 const fromRouteName = computed(() => route.query.fromRouteName || 'patches-machineScan')

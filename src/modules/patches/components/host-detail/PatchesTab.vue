@@ -77,7 +77,7 @@
           </a>
         </template>
       </el-table-column>
-      <el-table-column prop="title" label="摘要" min-width="300" show-overflow-tooltip />
+      <el-table-column prop="title" label="摘要" min-width="200" show-overflow-tooltip />
       <el-table-column prop="severity" label="严重程度" width="100">
         <template #default="{ row }">
           <el-tag :type="getSeverityType(row.severity)" :class="['severity-tag', getSeverityClass(row.severity)]" size="small">
@@ -101,7 +101,7 @@
             <a
               v-for="cve in getCVEList(row.related_vuls)"
               :key="cve"
-              :href="`https://access.redhat.com/security/cve/${cve}`"
+              :href="getCveUrl(cve, osDistro)"
               target="_blank"
               class="cve-badge"
             >
@@ -131,7 +131,7 @@
 
 <script setup>
 import { toRef, onMounted, watch } from 'vue'
-import { formatDate, formatPackages, getCVEList, getSeverityType } from '../../composables/useFormatters'
+import { formatDate, formatPackages, getCVEList, getCveUrl, getSeverityType } from '../../composables/useFormatters'
 import { usePatchList } from '../../composables/usePatchList'
 import { Search } from '@element-plus/icons-vue'
 
@@ -141,6 +141,10 @@ const props = defineProps({
     required: true
   },
   hostKey: {
+    type: String,
+    default: ''
+  },
+  osDistro: {
     type: String,
     default: ''
   }
