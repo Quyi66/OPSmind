@@ -238,14 +238,22 @@ export const downloadFile = (repoType, repo, path, saveFilename) => {
  * 批量下载文件
  */
 export const downloadFiles = async (repoType, repo, filePaths, zipName) => {
-  const url = `/gfs/api/gfs/v2/${repoType}/r/${getRepo(repo)}/batch/download`;
-  const filename = zipName ? `${zipName}.zip` : `download_${Date.now()}.zip`;
+  const cacheBuster = Date.now();
+  const url = `/gfs/api/gfs/v2/${repoType}/r/${getRepo(repo)}/batch/download?cacheBuster=${cacheBuster}`;
+  const isSingleFile = Array.isArray(filePaths) && filePaths.length === 1;
+  let filename = zipName;
+  if (!filename) {
+    filename = isSingleFile ? String(filePaths[0]).split('/').pop() : `download_${Date.now()}.zip`;
+  }
+  if (!isSingleFile && filename && !String(filename).toLowerCase().endsWith('.zip')) {
+    filename = `${filename}.zip`;
+  }
 
   const response = await useApi().post(url, filePaths, {
     responseType: 'blob'
   });
 
-  const blob = new Blob([response.data || response], { type: 'application/zip' });
+  const blob = new Blob([response.data || response]);
   const downloadUrl = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = downloadUrl;

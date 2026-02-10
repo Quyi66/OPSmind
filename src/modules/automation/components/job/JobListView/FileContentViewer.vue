@@ -786,7 +786,12 @@ function toggleViewMode() {
  * 下载文件
  */
 function downloadFile() {
-  gfsApi.downloadFile(props.repoType, null, props.path, fileName.value)
+  const repo = fileInfo.value?.repo || props.repo
+  if (props.repoType === 'staticfs') {
+    gfsApi.downloadFiles(props.repoType, repo, [props.path], fileName.value)
+    return
+  }
+  gfsApi.downloadFile(props.repoType, repo, props.path, fileName.value)
 }
 
 /**
