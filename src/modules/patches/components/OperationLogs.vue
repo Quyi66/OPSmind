@@ -87,12 +87,12 @@
               {{ formatTimestamp(row.start_time) }}
             </template>
           </el-table-column>
-          <el-table-column prop="action" label="操作" width="140" sortable>
+          <el-table-column prop="action" label="操作" width="140" show-overflow-tooltip>
             <template #default="{ row }">
               {{ translateAction(row.action) }}
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="80" sortable>
+          <el-table-column prop="status" label="状态" width="80">
             <template #default="{ row }">
               <el-tag
                 :type="getStatusType(row.status)"
@@ -104,7 +104,34 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="ata_node" label="执行引擎节点" width="150" sortable />
+          <el-table-column prop="ata_node" label="执行引擎节点" width="120" />
+          <el-table-column prop="target_hosts" label="目标节点" width="180">
+            <template #default="{ row }">
+              <div v-if="row.target_hosts" class="host-tags">
+                <el-tag
+                  v-for="(host, idx) in getHostPreview(row.target_hosts).leading"
+                  :key="idx"
+                  type="info"
+                >
+                  {{ host }}
+                </el-tag>
+                <span v-if="getHostPreview(row.target_hosts).last" class="host-tag-group">
+                  <el-tag type="info">
+                    {{ getHostPreview(row.target_hosts).last }}
+                  </el-tag>
+                  <el-tag
+                    v-if="getHostPreview(row.target_hosts).extraCount > 0"
+                    @click="handleShowAllHosts(row)"
+                    style="cursor: pointer"
+                    type="info"
+                  >
+                    +{{ getHostPreview(row.target_hosts).extraCount }}
+                  </el-tag>
+                </span>
+              </div>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="message" label="结果" min-width="300" show-overflow-tooltip>
             <template #default="{ row }">
               {{ translateMessage(row.message) }}
@@ -333,12 +360,25 @@
       :run-id="selectedRunId"
       :title="selectedJobTitle"
     />
+
+    <!-- 目标节点列表对话框 -->
+    <el-dialog v-model="hostsDialogVisible" title="目标节点" width="520px" destroy-on-close>
+      <div v-if="hostsDialogList.length" style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <el-tag v-for="(host, idx) in hostsDialogList" :key="idx" type="info">
+          {{ host }}
+        </el-tag>
+      </div>
+      <span v-else>-</span>
+      <template #footer>
+        <el-button @click="hostsDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElSpace, ElTag } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchLogsApi, operationReportApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
@@ -390,6 +430,10 @@ const filters = reactive({
 const runResultDialogVisible = ref(false)
 const selectedRunId = ref('')
 const selectedJobTitle = ref('')
+
+// 目标节点对话框
+const hostsDialogVisible = ref(false)
+const hostsDialogList = ref([])
 
 // ========== 漏洞报告 Tab ==========
 const vulLoading = ref(false)
@@ -508,52 +552,62 @@ function translateAction(action) {
   return translated
 }
 
-// 翻译消息（硬编码）
+function applyTemplateParams(template, params = {}) {
+  if (!template) return ''
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    if (Object.prototype.hasOwnProperty.call(params, key)) {
+      const value = params[key]
+      return value === null || value === undefined ? '' : String(value)
+    }
+    return ''
+  })
+}
+
+// 翻译消息（基于 i18n 模板）
 function translateMessage(messageStr) {
   if (!messageStr) return ''
+
+  if (messageStr.includes('#{')) {
+    return translateText(messageStr)
+  }
+
   try {
     const msg = JSON.parse(messageStr)
     const msgId = msg.msg_id
     if (!msgId) return messageStr
 
-    switch (msgId) {
-      case 'app_vap.log.scan_complete':
-        return `扫描完成，共${msg.machine_count || 0}台机器`
-      case 'app_vap.log.scan_fail':
-        return msg.msg_info ? `扫描失败：${msg.msg_info}` : '扫描失败'
-      case 'app_vap.log.install_complete':
-        return `安装完成，共${msg.machine_count || 0}台机器`
-      case 'app_vap.log.install_fail':
-        return msg.msg_info ? `安装失败：${msg.msg_info}` : '安装失败'
-      case 'app_vap.log.rollback_complete':
-        return `回退完成，共${msg.machine_count || 0}台机器`
-      case 'app_vap.log.rollback_fail':
-        return msg.msg_info ? `回退失败：${msg.msg_info}` : '回退失败'
-      case 'app_vap.log.import_success':
-        return `成功导入${msg.patch_count || 0}个补丁`
-      case 'app_vap.log.import_fail':
-        return msg.msg_info ? `导入失败：${msg.msg_info}` : '导入失败'
-      case 'app_vap.log.import_path_fail':
-        return msg.msg_info ? `导入补丁库失败：${msg.msg_info}` : '导入补丁库失败'
-      case 'app_vap.log.deal_file_fail':
-        return msg.server ? `文件处理失败，请检查Oplus更新服务器${msg.server}` : '文件处理失败'
-      case 'app_vap.log.install_fail_check_report':
-        return '补丁安装执行升级失败，请查看安装报告'
-      case 'app_vap.log.exec_install_fail':
-        return msg.msg_info ? `执行补丁安装出现错误，原因是${msg.msg_info}` : '执行补丁安装出现错误'
-      case 'app_vap.log.exec_rollback_fail':
-        return msg.msg_info ? `执行补丁回滚出现错误，原因是${msg.msg_info}` : '执行补丁回滚出现错误'
-      case 'app_vap.log.install_success_rescan_fail':
-        return '补丁安装执行完成，再次运行补丁扫描执行错误'
-      case 'app_vap.log.rollback_success_rescan_fail':
-        return '补丁回退执行成功，再次运行补丁扫描执行错误'
-      case 'app_vap.log.machine_count':
-        return `机器数量：${msg.machine_count || 0}`
-      default:
-        return msgId
-    }
+    const template = translateText(`#{${msgId}}`)
+    return applyTemplateParams(template, msg) || msgId
   } catch (e) {
-    return messageStr
+    const translated = translateText(`#{${messageStr}}`)
+    return translated || messageStr
+  }
+}
+
+function parseHosts(hostsStr) {
+  if (!hostsStr) return []
+  return hostsStr.split(',').map(host => host.trim()).filter(Boolean)
+}
+
+function handleShowAllHosts(row) {
+  hostsDialogList.value = parseHosts(row.target_hosts)
+  hostsDialogVisible.value = true
+}
+
+function getHostPreview(hostsStr) {
+  const hosts = parseHosts(hostsStr)
+  if (hosts.length <= 3) {
+    return {
+      leading: hosts,
+      last: '',
+      extraCount: 0
+    }
+  }
+
+  return {
+    leading: hosts.slice(0, 2),
+    last: hosts[2],
+    extraCount: hosts.length - 3
   }
 }
 
@@ -766,4 +820,18 @@ onMounted(() => {
   color: #606266;
   white-space: nowrap;
 }
+
+.host-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.host-tag-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 </style>

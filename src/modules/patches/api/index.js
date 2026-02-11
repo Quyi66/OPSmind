@@ -393,6 +393,7 @@ export const patchLibraryApi = {
    */
   getPatchList(params = {}) {
     // 源系统传 params 对象 + 分页参数
+    const keyword = params.filter || ''
     const requestBody = {
       params: {
         severity: params.severity,
@@ -401,7 +402,7 @@ export const patchLibraryApi = {
       },
       page: params.page,
       size: params.size,
-      filter: `patch_id|title|vendor:*${params.patch_id || ''}*`
+      filter: keyword ? `patch_id|title|vendor|related_vuls:*${keyword}*` : undefined
     }
     return apiService.post('/dts/api/dts/q/data/VAP2_LIST_PATCH_DATE/', requestBody)
   },

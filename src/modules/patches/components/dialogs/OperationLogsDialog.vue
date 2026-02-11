@@ -45,7 +45,7 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-       
+
         size="small"
         max-height="500px"
       >
@@ -127,6 +127,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { translateText } from '@/utils/i18n'
 
 const props = defineProps({
   modelValue: {
@@ -212,14 +213,31 @@ function formatDateTime(timestamp) {
 
 // 格式化操作类型
 function formatAction(action) {
-  const actionMap = {
-    '#{app_vap.menu.patch_scan.title}': '补丁扫描',
-    '#{app_vap.menu.patch_install.title}': '补丁安装',
-    '#{app_vap.menu.patch_rollback.title}': '补丁回退',
-    '#{app_vap.menu.win_patch_scan.title}': 'Windows扫描',
-    '#{app_vap.menu.import_patch_library_time}': '定时导入补丁库'
+  if (!action) return ''
+
+  const translated = translateText(action)
+  if (translated === action && action.startsWith('#{')) {
+    const staticMap = {
+      '#{app_vap.menu.patch_scan.title}': '补丁扫描',
+      '#{app_vap.menu.patch_install.title}': '补丁安装',
+      '#{app_vap.menu.patch_rollback.title}': '补丁回退',
+      '#{app_vap.menu.win_patch_scan.title}': 'Windows漏洞扫描',
+      '#{app_vap.menu.import_patch_library_time}': '定时导入补丁库',
+      '#{app_vap.menu.import_patch_library.title}': '导入补丁库',
+      '#{app_vap.common.tab.repo_list_scan}': 'YUM源列表扫描',
+      '#{app_vap.common.tab.custom_repo}': '自定义YUM源'
+    }
+
+    if (staticMap[action]) {
+      return staticMap[action]
+    }
+
+    const key = action.slice(2, -1)
+    const parts = key.split('.')
+    return parts[parts.length - 1] || action
   }
-  return actionMap[action] || action
+
+  return translated
 }
 
 // 获取状态类型
@@ -227,8 +245,9 @@ function getStatusType(status) {
   const typeMap = {
     COMPLETED: 'success',
     FAILED: 'danger',
-    RUNNING: 'warning',
-    WAITING: 'info'
+    RUNNING: 'primary',
+    WAITING: 'info',
+    PENDING: 'info'
   }
   return typeMap[status] || 'info'
 }
@@ -237,21 +256,43 @@ function getStatusType(status) {
 function getStatusText(status) {
   const textMap = {
     COMPLETED: '完成',
-    FAILED: '运行失败',
-    RUNNING: '正在运行',
-    WAITING: '等待中'
+    FAILED: '失败',
+    RUNNING: '运行中',
+    WAITING: '等待中',
+    PENDING: '等待中'
   }
   return textMap[status] || status
 }
 
 // 格式化消息
+function applyTemplateParams(template, params = {}) {
+  if (!template) return ''
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    if (Object.prototype.hasOwnProperty.call(params, key)) {
+      const value = params[key]
+      return value === null || value === undefined ? '' : String(value)
+    }
+    return ''
+  })
+}
+
 function formatMessage(message) {
   if (!message) return '-'
+
+  if (message.includes('#{')) {
+    return translateText(message)
+  }
+
   try {
     const msg = JSON.parse(message)
-    return msg.msg_id || message
+    const msgId = msg.msg_id
+    if (!msgId) return message
+
+    const template = translateText(`#{${msgId}}`)
+    return applyTemplateParams(template, msg) || msgId
   } catch {
-    return message
+    const translated = translateText(`#{${message}}`)
+    return translated || message
   }
 }
 

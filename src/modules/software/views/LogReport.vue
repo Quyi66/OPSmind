@@ -169,6 +169,7 @@ import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { softwareLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { translateText } from '@/utils/i18n'
 
 const loading = ref(false)
 
@@ -288,15 +289,34 @@ function getStatusText(status) {
 /**
  * 格式化消息
  */
+function applyTemplateParams(template, params = {}) {
+  if (!template) return ''
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    if (Object.prototype.hasOwnProperty.call(params, key)) {
+      const value = params[key]
+      return value === null || value === undefined ? '' : String(value)
+    }
+    return ''
+  })
+}
+
 function formatMessage(message) {
   if (!message) return ''
+
+  if (message.includes('#{')) {
+    return translateText(message)
+  }
+
   try {
     const obj = JSON.parse(message)
     const msgId = obj.msg_id
     if (!msgId) return message
-    return message
+
+    const template = translateText(`#{${msgId}}`)
+    return applyTemplateParams(template, obj) || msgId
   } catch {
-    return message
+    const translated = translateText(`#{${message}}`)
+    return translated || message
   }
 }
 

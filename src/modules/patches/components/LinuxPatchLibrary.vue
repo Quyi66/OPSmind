@@ -165,9 +165,14 @@
               >
                 {{ cve }}
               </a>
-              <span v-if="parseCVEs(row.related_vuls).length > 3" class="cve-more">
+              <button
+                v-if="parseCVEs(row.related_vuls).length > 3"
+                type="button"
+                class="cve-more"
+                @click="handleShowAllCves(row)"
+              >
                 +{{ parseCVEs(row.related_vuls).length - 3 }}
-              </span>
+              </button>
             </div>
             <span v-else>-</span>
           </template>
@@ -255,6 +260,27 @@
         <el-button @click="detailDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 关联CVE 列表对话框 -->
+    <el-dialog v-model="cveDialogVisible" title="关联CVE" width="520px" destroy-on-close>
+      <div class="cve-dialog">
+        <template v-if="cveDialogList.length">
+          <a
+            v-for="(cve, idx) in cveDialogList"
+            :key="idx"
+            :href="getCveUrl(cve, cveDialogOsDistro)"
+            target="_blank"
+            class="cve-dialog-item"
+          >
+            {{ cve }}
+          </a>
+        </template>
+        <span v-else>-</span>
+      </div>
+      <template #footer>
+        <el-button @click="cveDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -280,7 +306,7 @@ const vendorStats = ref([])
 
 // 筛选条件
 const filterText = ref('')
-const severityFilter = ref(['Critical', 'Important']) // 默认选中 Critical, Important
+const severityFilter = ref(['Critical', 'Important', 'Moderate', 'Low']) // 默认选中 Critical, Important, Moderate, Low
 const ignoreFilter = ref('0,1') // 默认全部
 const currentVendor = ref('redhat') // 默认 redhat
 
@@ -299,6 +325,11 @@ const pagination = reactive({
 const detailDialogVisible = ref(false)
 const detailLoading = ref(false)
 const patchDetail = ref(null)
+
+// CVE 列表对话框
+const cveDialogVisible = ref(false)
+const cveDialogList = ref([])
+const cveDialogOsDistro = ref('')
 
 // 计算补丁总数
 const totalPatches = computed(() => {
@@ -370,6 +401,12 @@ function parseCVEs(vulsStr) {
   return vulsStr.split(',').filter(cve => cve.trim())
 }
 
+function handleShowAllCves(row) {
+  cveDialogList.value = parseCVEs(row.related_vuls)
+  cveDialogOsDistro.value = row.os_distro
+  cveDialogVisible.value = true
+}
+
 // 加载厂商统计数据
 async function loadVendorStats() {
   try {
@@ -424,7 +461,7 @@ function handleSearch() {
 
 // 重置
 function handleReset() {
-  severityFilter.value = ['Critical', 'Important']
+  severityFilter.value = ['Critical', 'Important', 'Moderate', 'Low'] // 重置为默认值
   ignoreFilter.value = '0,1'
   filterText.value = ''
   pagination.page = 1
@@ -914,12 +951,42 @@ defineExpose({
   }
 
   .cve-more {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 2px 8px;
     background: #e9ecef;
     color: #6c757d;
     border-radius: 4px;
     font-size: 12px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #dfe3e6;
+    }
+  }
+}
+
+.cve-dialog {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cve-dialog-item {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #6c757d;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #545b62;
   }
 }
 

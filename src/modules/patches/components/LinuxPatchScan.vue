@@ -194,16 +194,24 @@
             style="width: 100%"
             height="calc(100vh - 600px)"
           >
-            <el-table-column prop="host_key" label="主机" min-width="140">
+            <el-table-column prop="host_key" label="主机" width="150">
               <template #default="{ row }">
                 <a href="javascript:void(0)" class="host-link" @click="handleHostClick(row)">
                   {{ row.host_key }}
                 </a>
               </template>
             </el-table-column>
+            <el-table-column prop="need_reboot" label="是否需要重启" width="120">
+              <template #default="{ row }">
+                <el-tag :type="row.need_reboot === 1 ? 'danger' : 'success'" size="small" round>
+                  <!-- <i :class="row.need_reboot === 0 ? 'fa fa-power-off' : 'fa fa-check'" /> -->
+                  {{ row.need_reboot === 1 ? '是' : '否' }}
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="os_distro" label="操作系统" width="100" />
-            <el-table-column prop="os_version" label="OS版本" width="120" />
+            <el-table-column prop="os_distro" label="操作系统" width="120" />
+            <el-table-column prop="os_version" label="OS版本" width="140" />
             <el-table-column prop="num_critical" width="90">
               <template #header>
                 严重

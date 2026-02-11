@@ -7,8 +7,20 @@
       </h3>
       <div class="header-actions">
         <div class="filter-tabs">
-          <button class="filter-tab active">按类型</button>
-          <button class="filter-tab" disabled aria-disabled="true" title="暂不可用">按系统</button>
+          <button
+            class="filter-tab"
+            :class="{ active: activeTab === 'type' }"
+            @click="activeTab = 'type'"
+          >
+            按类型
+          </button>
+          <button
+            class="filter-tab"
+            :class="{ active: activeTab === 'system' }"
+            @click="activeTab = 'system'"
+          >
+            按系统
+          </button>
           <button class="more-btn">...</button>
         </div>
       </div>
@@ -22,7 +34,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
@@ -41,13 +53,17 @@ use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent
 const assetHeaderIcon = new URL('@/assets/icons/dashboard/icon-assetview@2x.png', import.meta.url).href
 
 const dashboardStore = useDashboardStore()
+const activeTab = ref('type')
 
 // 资产数据（来自 API 数据）
 const assetData = computed(() => {
   const a = dashboardStore.dashboardFullData?.assetOverview
+  const values = [a?.windowsServers ?? 0, a?.unixServers ?? 0, a?.linuxServers ?? 0]
+  const byType = ['Windows服务器', 'Unix服务器', 'Linux服务器']
+  const bySystem = ['Windows', 'Unix', 'Linux']
   return {
-    categories: ['Windows服务器', 'Unix服务器', 'Linux服务器'],
-    values: [a?.windowsServers ?? 0, a?.unixServers ?? 0, a?.linuxServers ?? 0]
+    categories: activeTab.value === 'system' ? bySystem : byType,
+    values
   }
 })
 

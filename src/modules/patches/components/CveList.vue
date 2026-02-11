@@ -196,7 +196,7 @@
               </el-link>
             </template> -->
           </el-table-column>
-          <el-table-column prop="severity" label="严重等级" width="100">
+          <el-table-column prop="severity" label="严重等级" width="90">
             <template #default="{ row }">
               <el-tag
                 :type="getSeverityType(row.severity)"
@@ -207,7 +207,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="cvss3Score" label="CVSS 评分" width="130" sortable="custom">
+          <el-table-column prop="cvss3Score" label="CVSS 评分" width="120" sortable="custom">
             <template #default="{ row }">
               <span v-if="row.cvss3Score" style="font-weight: 600">
                 {{ row.cvss3Score.toFixed(1) }}

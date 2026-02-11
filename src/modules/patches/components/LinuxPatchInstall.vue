@@ -304,7 +304,7 @@ const installLoading = ref(false)
 
 // 统一筛选条件
 const filters = reactive({
-  severity: ['Critical', 'Important'], // 默认勾选严重和重要
+  severity: ['Critical', 'Important', 'Moderate', 'Low' ], // 默认勾选严重和重要
   keyword: ''
 })
 
@@ -497,7 +497,7 @@ function handleSearch() {
 // 重置处理
 function handleReset() {
   // 重置筛选条件为默认值
-  filters.severity = ['Critical', 'Important']
+  filters.severity = ['Critical', 'Important', 'Moderate', 'Low' ]
   filters.keyword = ''
   // 重置分页
   pagination.page = 1
