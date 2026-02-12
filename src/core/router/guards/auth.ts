@@ -4,6 +4,7 @@
 
 import type { Router } from 'vue-router'
 import { authService } from '@/core/auth'
+import { LOGIN_REDIRECT_URL } from '@/config/route-paths'
 
 export function setupAuthGuard(router: Router): void {
   router.beforeEach(async (to, from, next) => {
@@ -26,7 +27,7 @@ export function setupAuthGuard(router: Router): void {
 
     // 需要认证但未登录
     if (to.meta?.requiresAuth && !isAuthenticated) {
-      next('/login')
+      window.location.href = LOGIN_REDIRECT_URL
       return
     }
 

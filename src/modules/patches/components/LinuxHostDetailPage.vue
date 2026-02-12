@@ -121,6 +121,9 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 操作记录对话框 -->
+    <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
   </div>
 </template>
 
@@ -135,6 +138,7 @@ import PatchesTab from './host-detail/PatchesTab.vue'
 import PackagesTab from './host-detail/PackagesTab.vue'
 import VulnerabilitiesTab from './host-detail/VulnerabilitiesTab.vue'
 import PatchDetailDialog from './host-detail/PatchDetailDialog.vue'
+import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -188,6 +192,9 @@ const installDialogData = reactive({
   packagesDetail: '',
   hostId: ''
 })
+
+const operationLogsVisible = ref(false)
+const lastSubmittedRunId = ref('')
 
 // 监听Tab切换
 watch(activeTab, newTab => {
@@ -299,6 +306,8 @@ async function handleConfirmInstall() {
       throw new Error('作业返回异常')
     }
     ElMessage.success('安装补丁任务已提交成功')
+    lastSubmittedRunId.value = result?.runId || ''
+    operationLogsVisible.value = true
     installDialogVisible.value = false
   } catch (error) {
     ElMessage.error('提交安装任务失败: ' + (error.message || '未知错误'))

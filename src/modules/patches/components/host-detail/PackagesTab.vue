@@ -53,7 +53,7 @@
       :data="packageTableData"
 
       size="small"
-      max-height="calc(100vh - 400px)"
+      max-height="calc(100vh - 410px)"
       @selection-change="handlePackageSelectionChange"
     >
       <el-table-column type="selection" width="55" />
@@ -96,14 +96,20 @@
         @current-change="handlePackagePageChange"
       />
     </div>
+
+    <!-- 操作记录对话框 -->
+    <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { getSeverityType } from '../../composables/useFormatters'
 import { usePackageList } from '../../composables/usePackageList'
+import { patchInstallApi } from '../../api'
 import { Search } from '@element-plus/icons-vue'
+import OperationLogsDialog from '../dialogs/OperationLogsDialog.vue'
 
 const props = defineProps({
   hostId: {
@@ -114,8 +120,20 @@ const props = defineProps({
 
 const emit = defineEmits(['patch-click'])
 
+const operationLogsVisible = ref(false)
+const lastSubmittedRunId = ref('')
+
 function normalizeSeverity(severity) {
-  return String(severity || '').trim().toLowerCase()
+  const raw = String(severity || '').trim()
+  if (!raw) return ''
+  const lower = raw.toLowerCase()
+
+  if (lower === 'critical' || raw === '严重' || raw === 'Critical') return 'critical'
+  if (lower === 'important' || raw === '重要' || raw === '高危' || raw === 'Important') return 'important'
+  if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'Moderate') return 'moderate'
+  if (lower === 'low' || raw === '低' || raw === '低危' || raw === 'Low') return 'low'
+
+  return ''
 }
 
 function getSeverityClass(severity) {
@@ -128,7 +146,7 @@ function getSeverityLabel(severity) {
     critical: '严重',
     important: '重要',
     moderate: '中等',
-    low: '低'
+    low: '低危'
   }
   return map[normalizeSeverity(severity)] || severity || '-'
 }
@@ -150,26 +168,59 @@ const {
 } = usePackageList({ value: props.hostId })
 
 // 更新软件包
-function handleUpdatePackages() {
+async function handleUpdatePackages() {
   if (selectedPackages.value.length === 0) {
     ElMessage.warning('请选择要更新的软件包')
     return
   }
 
-  ElMessageBox.confirm(
-    `确认要更新选中的 ${selectedPackages.value.length} 个软件包吗？`,
-    '确认更新',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
+  const packages = selectedPackages.value
+    .map(item => item.packages)
+    .filter(Boolean)
+
+  if (packages.length === 0) {
+    ElMessage.warning('所选软件包缺少更新信息')
+    return
+  }
+
+  if (!props.hostId) {
+    ElMessage.warning('主机信息缺失，无法更新软件包')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确认要更新选中的 ${selectedPackages.value.length} 个软件包吗？`,
+      '确认更新',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+  } catch {
+    return
+  }
+
+  try {
+    const response = await patchInstallApi.updatePackages({
+      hosts: [],
+      patchIds: [],
+      hostIds: [props.hostId],
+      packages
+    })
+    const payload = response?.data ?? response
+    const result = Array.isArray(payload) ? payload[0] : payload
+    const isSuccess = result?.status === 'COMPLETED' && result?.data?._status === 'ok'
+    if (!isSuccess) {
+      throw new Error('作业返回异常')
     }
-  ).then(() => {
-    // TODO: 调用更新软件包的API
-    ElMessage.success('软件包更新任务已提交')
-  }).catch(() => {
-    // 用户取消
-  })
+    ElMessage.success('任务提交成功')
+    lastSubmittedRunId.value = result?.runId || ''
+    operationLogsVisible.value = true
+  } catch (error) {
+    ElMessage.error('提交更新任务失败: ' + (error.message || '未知错误'))
+  }
 }
 
 // 暴露加载方法给父组件

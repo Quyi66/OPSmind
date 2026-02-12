@@ -83,13 +83,26 @@ export function getCveUrl(cveId, osDistro) {
 
 // 获取严重程度类型
 export function getSeverityType(severity) {
+  const raw = String(severity || '').trim()
+  if (!raw) return 'info'
+
+  const lower = raw.toLowerCase()
+  let key = ''
+  if (lower === 'critical' || raw === '严重' || raw === 'Critical') key = 'critical'
+  else if (lower === 'important' || raw === '重要' || raw === '高危' || raw === 'Important')
+    key = 'important'
+  else if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'Moderate')
+    key = 'moderate'
+  else if (lower === 'low' || raw === '低' || raw === '低危' || raw === 'Low') key = 'low'
+
   const typeMap = {
-    Critical: 'danger',
-    Important: 'warning',
-    Moderate: 'primary',
-    Low: 'info'
+    critical: 'danger',
+    important: 'warning',
+    moderate: 'primary',
+    low: 'info'
   }
-  return typeMap[severity] || 'info'
+
+  return typeMap[key] || 'info'
 }
 
 // 获取补丁状态类型

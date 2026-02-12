@@ -204,6 +204,27 @@ export const patchInstallApi = {
   },
 
   /**
+   * 执行软件包更新
+   * @param {Object} params - 更新参数
+   * @param {Array<string>} params.hosts - 目标主机列表
+   * @param {Array<string>} params.patchIds - 补丁编号列表
+   * @param {Array<string>} params.hostIds - 主机ID列表
+   * @param {Array<string>} params.packages - 待更新软件包列表
+   * @returns {Promise}
+   */
+  updatePackages(params) {
+    const cacheBuster = Date.now()
+    return apiService.post(`/jao/api/jao/jobs/QJb6B8/run?cacheBuster=${cacheBuster}`, {
+      params: {
+        hosts: params.hosts || [],
+        patchIds: params.patchIds || [],
+        hostIds: params.hostIds || [],
+        packages: params.packages || []
+      }
+    })
+  },
+
+  /**
    * 获取可安装的补丁列表
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码

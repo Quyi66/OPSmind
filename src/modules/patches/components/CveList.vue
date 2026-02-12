@@ -14,7 +14,7 @@
           </div>
           <div class="cve-stats-total" @click="filterBySeverity('all')" title="查看全部">
             <div class="cve-stats-total-number">{{ formatNumber(statistics.totalCves) }}</div>
-            <div class="cve-stats-total-label">检测到的漏洞总计</div>
+            <div class="cve-stats-total-label">CVE漏洞信息总计</div>
           </div>
         </div>
 
@@ -31,13 +31,13 @@
               class="cve-progress-segment cve-progress-important"
               :style="{ width: getProgressWidth('important') }"
               @click="filterBySeverity('important')"
-              title="高危"
+              title="重要"
             ></div>
             <div
               class="cve-progress-segment cve-progress-moderate"
               :style="{ width: getProgressWidth('moderate') }"
               @click="filterBySeverity('moderate')"
-              title="中危"
+              title="中等"
             ></div>
             <div
               class="cve-progress-segment cve-progress-low"
@@ -54,25 +54,25 @@
             <div class="cve-stats-content">
               <div class="cve-stats-label">严重</div>
               <div class="cve-stats-value cve-value-critical">
-                {{ formatNumber(statistics.bySeverity?.critical) }}
+                {{ formatNumber(getSeverityCount('critical')) }}
               </div>
               <div class="cve-stats-desc">需立即响应 →</div>
             </div>
           </div>
           <div class="cve-stats-item" @click="filterBySeverity('important')">
             <div class="cve-stats-content">
-              <div class="cve-stats-label">高危</div>
+              <div class="cve-stats-label">重要</div>
               <div class="cve-stats-value cve-value-important">
-                {{ formatNumber(statistics.bySeverity?.important) }}
+                {{ formatNumber(getSeverityCount('important')) }}
               </div>
               <div class="cve-stats-desc">24小时内修复</div>
             </div>
           </div>
           <div class="cve-stats-item" @click="filterBySeverity('moderate')">
             <div class="cve-stats-content">
-              <div class="cve-stats-label">中危</div>
+              <div class="cve-stats-label">中等</div>
               <div class="cve-stats-value cve-value-moderate">
-                {{ formatNumber(statistics.bySeverity?.moderate) }}
+                {{ formatNumber(getSeverityCount('moderate')) }}
               </div>
               <div class="cve-stats-desc">列入计划任务</div>
             </div>
@@ -81,7 +81,7 @@
             <div class="cve-stats-content">
               <div class="cve-stats-label">低危</div>
               <div class="cve-stats-value cve-value-low">
-                {{ formatNumber(statistics.bySeverity?.low) }}
+                {{ formatNumber(getSeverityCount('low')) }}
               </div>
               <div class="cve-stats-desc">建议定期审阅</div>
             </div>
@@ -112,8 +112,8 @@
             <el-select v-model="searchParams.severity" style="width: 100px">
               <el-option value="all" label="全部" />
               <el-option value="critical" label="严重" />
-              <el-option value="important" label="高危" />
-              <el-option value="moderate" label="中危" />
+              <el-option value="important" label="重要" />
+              <el-option value="moderate" label="中等" />
               <el-option value="low" label="低危" />
             </el-select>
           </el-form-item>
@@ -200,7 +200,7 @@
             <template #default="{ row }">
               <el-tag
                 :type="getSeverityType(row.severity)"
-                :class="['severity-tag', 'is-' + row.severity]"
+                :class="['severity-tag', getSeverityClass(row.severity)]"
                 size="small"
               >
                 {{ getSeverityLabel(row.severity) }}
@@ -350,30 +350,74 @@ function formatDate(dateStr) {
 // 获取进度条宽度
 function getProgressWidth(severity) {
   if (!statistics.value?.totalCves) return '0%'
-  const count = statistics.value.bySeverity?.[severity] || 0
+  const count = getSeverityCount(severity)
   return `${(count / statistics.value.totalCves) * 100}%`
+}
+
+function normalizeSeverityKey(severity) {
+  const raw = String(severity || '').trim()
+  if (!raw) return ''
+  const lower = raw.toLowerCase()
+
+  if (lower === 'critical' || raw === '严重' || raw === 'CRITICAL') return 'critical'
+  if (
+    lower === 'important' ||
+    raw === '重要' ||
+    raw === '高危' ||
+    raw === 'IMPORTANT'
+  )
+    return 'important'
+  if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'MODERATE')
+    return 'moderate'
+  if (lower === 'low' || raw === '低' || raw === '低危' || raw === 'LOW') return 'low'
+
+  if (raw === 'Critical') return 'critical'
+  if (raw === 'Important') return 'important'
+  if (raw === 'Moderate') return 'moderate'
+  if (raw === 'Low') return 'low'
+
+  return ''
+}
+
+function getSeverityClass(severity) {
+  const key = normalizeSeverityKey(severity)
+  return key ? `is-${key}` : ''
+}
+
+function getSeverityCount(severityKey) {
+  const bySeverity = statistics.value?.bySeverity || {}
+  const key = normalizeSeverityKey(severityKey) || severityKey
+  const labelMap = {
+    critical: '严重',
+    important: '重要',
+    moderate: '中等',
+    low: '低危'
+  }
+  return bySeverity[key] ?? bySeverity[labelMap[key]] ?? 0
 }
 
 // 获取严重等级样式
 function getSeverityType(severity) {
+  const key = normalizeSeverityKey(severity)
   const typeMap = {
     critical: 'danger',
     important: 'warning',
     moderate: 'primary',
     low: 'info'
   }
-  return typeMap[severity] || 'info'
+  return typeMap[key] || 'info'
 }
 
 // 获取严重等级标签
 function getSeverityLabel(severity) {
+  const key = normalizeSeverityKey(severity)
   const labelMap = {
     critical: '严重',
-    important: '高危',
-    moderate: '中危',
+    important: '重要',
+    moderate: '中等',
     low: '低危'
   }
-  return labelMap[severity] || severity
+  return labelMap[key] || severity
 }
 
 // 获取数据源样式

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, type Ref, type ComputedRef } from 'vue'
+import { LOGIN_REDIRECT_URL } from '@/config/route-paths'
 import { angularJSBridge } from '@/services/angularjs-bridge'
 import { hybridModuleManager } from '@/core/modules/HybridModuleManager.js'
 import { authService } from '@/core/auth'
@@ -141,8 +142,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
         // 不设置 error，让路由守卫处理跳转
         error.value = null
 
-        // 强制跳转到登录页
-        window.location.href = '/login'
+          window.location.href = LOGIN_REDIRECT_URL
       } else {
         error.value = err instanceof Error ? err.message : String(err)
       }

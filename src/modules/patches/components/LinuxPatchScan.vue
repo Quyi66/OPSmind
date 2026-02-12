@@ -769,7 +769,7 @@ function getSeverityLabel(severity) {
     Critical: '严重',
     Important: '重要',
     Moderate: '中等',
-    Low: '低级'
+    Low: '低危'
   }
   return map[severity] || severity
 }

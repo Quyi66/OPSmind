@@ -210,6 +210,9 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 操作记录对话框 -->
+    <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
   </div>
 </template>
 
@@ -227,6 +230,7 @@ import {
 import { useVulnerabilityList } from '../../composables/useVulnerabilityList'
 import { Search } from '@element-plus/icons-vue'
 import { vulnerabilityApi } from '../../api'
+import OperationLogsDialog from '../dialogs/OperationLogsDialog.vue'
 
 const props = defineProps({
   hostId: {
@@ -242,7 +246,16 @@ const props = defineProps({
 const emit = defineEmits(['patch-click'])
 
 function normalizeSeverity(severity) {
-  return String(severity || '').trim().toLowerCase()
+  const raw = String(severity || '').trim()
+  if (!raw) return ''
+  const lower = raw.toLowerCase()
+
+  if (lower === 'critical' || raw === '严重' || raw === 'Critical') return 'critical'
+  if (lower === 'important' || raw === '重要' || raw === '高危' || raw === 'Important') return 'important'
+  if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'Moderate') return 'moderate'
+  if (lower === 'low' || raw === '低' || raw === '低危' || raw === 'Low') return 'low'
+
+  return ''
 }
 
 function getSeverityClass(severity) {
@@ -255,7 +268,7 @@ function getSeverityLabel(severity) {
     critical: '严重',
     important: '重要',
     moderate: '中等',
-    low: '低'
+    low: '低危'
   }
   return map[normalizeSeverity(severity)] || severity || '-'
 }
@@ -294,6 +307,9 @@ const fixDialogData = reactive({
   packages: '',
   patchStatusIds: []
 })
+
+const operationLogsVisible = ref(false)
+const lastSubmittedRunId = ref('')
 
 function resolvePatchStatusIds(selection) {
   const ids = []
@@ -389,6 +405,8 @@ async function handleConfirmFix() {
       throw new Error('作业返回异常')
     }
     ElMessage.success('修复任务已提交成功')
+    lastSubmittedRunId.value = result?.runId || ''
+    operationLogsVisible.value = true
     fixDialogVisible.value = false
     loadVulnerabilityList()
   } catch (error) {

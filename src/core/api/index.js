@@ -5,6 +5,7 @@
 
 import axios from 'axios'
 import { authService } from '@/core/auth'
+import { LOGIN_REDIRECT_URL } from '@/config/route-paths'
 
 // API 配置
 const API_CONFIG = {
@@ -90,7 +91,7 @@ class ApiService {
         // 处理认证错误
         if (response?.status === 401) {
           await authService.logout()
-          window.location.href = '/login'
+          window.location.href = LOGIN_REDIRECT_URL
           return Promise.reject(new Error('Authentication expired'))
         }
 

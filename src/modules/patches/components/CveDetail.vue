@@ -25,7 +25,7 @@
                 <el-tag
                   :type="getSeverityType(cveDetail.severity)"
                   effect="dark"
-                  :class="['severity-badge', 'is-' + (cveDetail.severity || '').toLowerCase()]"
+                  :class="['severity-badge', getSeverityClass(cveDetail.severity)]"
                 >
                   {{ cveDetail.severityLabel || getSeverityLabel(cveDetail.severity) }}
                 </el-tag>
@@ -84,7 +84,7 @@
                       :type="getSeverityType(cveDetail.severity)"
                       effect="dark"
                       size="small"
-                      :class="['severity-badge', 'is-' + (cveDetail.severity || '').toLowerCase()]"
+                      :class="['severity-badge', getSeverityClass(cveDetail.severity)]"
                     >
                       {{ cveDetail.severityLabel || getSeverityLabel(cveDetail.severity) }}
                     </el-tag>
@@ -180,7 +180,13 @@
             <span class="ops-tab-count" v-if="allPackages.length">{{ allPackages.length }}</span>
           </template>
           <div class="tab-content-container">
-            <div class="ops-filter-bar compact">
+            <div class="ops-filter-bar compact packages-filter-bar">
+              <el-radio-group v-model="systemFilter" size="small">
+                <el-radio-button label="all">全部</el-radio-button>
+                <el-radio-button label="redhat">Red Hat</el-radio-button>
+                <el-radio-button label="kylin">麒麟</el-radio-button>
+              </el-radio-group>
+
               <el-radio-group v-model="packageFilter" size="small">
                 <el-radio-button label="all">全部</el-radio-button>
                 <el-radio-button label="affected">受影响</el-radio-button>
@@ -213,7 +219,7 @@
                     {{ row.packageName }}
                   </template>
                 </el-table-column>
-                <el-table-column prop="architecture" label="架构" width="100" />
+                <el-table-column prop="architecture" label="架构" width="150" />
                 <el-table-column prop="normalizedStatus" label="状态" width="120">
                   <template #default="{ row }">
                     <el-tag :type="getStatusType(row.normalizedStatus)" size="small">
@@ -252,14 +258,14 @@
           <div class="tab-content-container">
             <div class="ops-table-wrapper" v-loading="affectedHostsLoading">
               <el-table :data="affectedHosts" height="100%" stripe style="width: 100%">
-                <el-table-column prop="hostKey" label="主机标识" min-width="150">
+                <el-table-column prop="hostKey" label="主机标识" width="150">
                   <template #default="{ row }">
                     <a href="javascript:void(0)" class="host-link" @click="viewHostDetail(row)">
                       {{ row.hostKey || row.hostId || '-' }}
                     </a>
                   </template>
                 </el-table-column>
-                <el-table-column prop="osDistro" label="系统发行版" min-width="140">
+                <el-table-column prop="osDistro" label="系统发行版" width="120">
                   <template #default="{ row }">
                     <el-tag size="small" effect="plain" :type="getSourceType(row.osDistro)">
                       {{ getSourceLabel(row.osDistro) }}
@@ -276,7 +282,7 @@
                 <el-table-column
                   prop="affectedPkgs"
                   label="受影响包"
-                  min-width="180"
+                  min-width="250"
                   show-overflow-tooltip
                 />
                 <el-table-column prop="severity" label="严重等级" width="110">
@@ -301,7 +307,7 @@
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="scanDate" label="扫描时间" min-width="180">
+                <el-table-column prop="scanDate" label="扫描时间" width="180">
                   <template #default="{ row }">
                     <span class="text-muted">{{ formatDateTime(row.scanDate) }}</span>
                   </template>
@@ -380,6 +386,7 @@ const allPackages = ref([])
 const loading = ref(true)
 const activeTab = ref('basic')
 const packageFilter = ref('all')
+const systemFilter = ref('all')
 const affectedHosts = ref([])
 const affectedHostsTotal = ref(0)
 const affectedHostsLoading = ref(false)
@@ -393,10 +400,23 @@ let impactChart = null
 
 // 计算属性：过滤后的软件包
 const filteredPackages = computed(() => {
-  if (packageFilter.value === 'all') {
-    return allPackages.value
+  let list = allPackages.value
+
+  // 系统筛选：麒麟兼容 kylin/kylinos 两种来源值
+  if (systemFilter.value !== 'all') {
+    if (systemFilter.value === 'kylin') {
+      list = list.filter(pkg => ['kylin', 'kylinos'].includes(pkg.source))
+    } else {
+      list = list.filter(pkg => pkg.source === systemFilter.value)
+    }
   }
-  return allPackages.value.filter(pkg => pkg.normalizedStatus === packageFilter.value)
+
+  // 状态筛选
+  if (packageFilter.value !== 'all') {
+    list = list.filter(pkg => pkg.normalizedStatus === packageFilter.value)
+  }
+
+  return list
 })
 
 // 计算属性：影响统计图例项
@@ -463,24 +483,56 @@ function formatDateTime(dateStr) {
 
 // 获取严重等级样式
 function getSeverityType(severity) {
+  const key = normalizeSeverityKey(severity)
   const typeMap = {
-    critical: '',
-    important: '',
-    moderate: '',
-    low: ''
+    critical: 'danger',
+    important: 'warning',
+    moderate: 'primary',
+    low: 'info'
   }
-  return typeMap[severity] || ''
+  return typeMap[key] || 'info'
 }
 
 // 获取严重等级标签
 function getSeverityLabel(severity) {
+  const key = normalizeSeverityKey(severity)
   const labelMap = {
     critical: '严重',
-    important: '高危',
-    moderate: '中危',
+    important: '重要',
+    moderate: '中等',
     low: '低危'
   }
-  return labelMap[severity] || severity
+  return labelMap[key] || severity
+}
+
+function normalizeSeverityKey(severity) {
+  const raw = String(severity || '').trim()
+  if (!raw) return ''
+  const lower = raw.toLowerCase()
+
+  if (lower === 'critical' || raw === '严重' || raw === 'CRITICAL') return 'critical'
+  if (
+    lower === 'important' ||
+    raw === '重要' ||
+    raw === '高危' ||
+    raw === 'IMPORTANT'
+  )
+    return 'important'
+  if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'MODERATE')
+    return 'moderate'
+  if (lower === 'low' || raw === '低' || raw === '低危' || raw === 'LOW') return 'low'
+
+  if (raw === 'Critical') return 'critical'
+  if (raw === 'Important') return 'important'
+  if (raw === 'Moderate') return 'moderate'
+  if (raw === 'Low') return 'low'
+
+  return ''
+}
+
+function getSeverityClass(severity) {
+  const key = normalizeSeverityKey(severity)
+  return key ? `is-${key}` : ''
 }
 
 // 获取状态标签
@@ -514,12 +566,7 @@ function getSourceType(source) {
 }
 
 function getHostSeverityType(severity) {
-  const s = (severity || '').toString().toLowerCase()
-  if (s.includes('critical') || s.includes('严重')) return 'critical'
-  if (s.includes('important') || s.includes('高危')) return 'important'
-  if (s.includes('moderate') || s.includes('中')) return 'moderate'
-  if (s.includes('low') || s.includes('低')) return 'low'
-  return ''
+  return normalizeSeverityKey(severity)
 }
 
 function getPatchStatusType(status) {
@@ -648,19 +695,20 @@ function selectSource(sourceId) {
 // 构建CVE详情对象
 function buildCveDetail(source) {
   const apiSummary = source.summary || {}
+  const sourcePackages = extractPackagesFromSource(source)
   let summary = {
-    total: apiSummary.total || allPackages.value.length,
-    affected: apiSummary.affected || 0,
-    fixed: apiSummary.fixed || 0,
-    notAffected: apiSummary.notAffected || apiSummary.not_affected || 0,
-    willNotFix: apiSummary.willNotFix || apiSummary.will_not_fix || 0,
-    outOfSupport: apiSummary.outOfSupport || apiSummary.out_of_support || 0,
-    fixDeferred: apiSummary.deferred || apiSummary.fixDeferred || apiSummary.fix_deferred || 0
+    total: typeof apiSummary.total === 'number' ? apiSummary.total : sourcePackages.length,
+    affected: apiSummary.affected ?? 0,
+    fixed: apiSummary.fixed ?? 0,
+    notAffected: apiSummary.notAffected ?? apiSummary.not_affected ?? 0,
+    willNotFix: apiSummary.willNotFix ?? apiSummary.will_not_fix ?? 0,
+    outOfSupport: apiSummary.outOfSupport ?? apiSummary.out_of_support ?? 0,
+    fixDeferred: apiSummary.deferred ?? apiSummary.fixDeferred ?? apiSummary.fix_deferred ?? 0
   }
 
-  // 兜底逻辑：如果 API 没有返回 summary，则从 packages 计算
+  // 兜底逻辑：如果 API 没有返回 summary，则从该数据源的 packages 计算
   if (!source.summary || Object.keys(source.summary).length === 0) {
-    summary = calculateSummaryFromPackages()
+    summary = calculateSummaryFromPackages(sourcePackages)
   }
 
   cveDetail.value = {
@@ -687,9 +735,28 @@ function buildCveDetail(source) {
   }, 100)
 }
 
-function calculateSummaryFromPackages() {
+function extractPackagesFromSource(source) {
+  const list = []
+  if (!source || !source.packages) return list
+  Object.entries(source.packages).forEach(([status, pkgList]) => {
+    if (Array.isArray(pkgList)) {
+      pkgList.forEach(pkg => {
+        const rawStatus = pkg.status || status
+        list.push({
+          ...pkg,
+          source: source.source,
+          status: rawStatus,
+          normalizedStatus: normalizeStatusKey(rawStatus)
+        })
+      })
+    }
+  })
+  return list
+}
+
+function calculateSummaryFromPackages(packages) {
   const summary = {
-    total: allPackages.value.length,
+    total: packages.length,
     affected: 0,
     fixed: 0,
     notAffected: 0,
@@ -698,7 +765,7 @@ function calculateSummaryFromPackages() {
     fixDeferred: 0
   }
 
-  allPackages.value.forEach(pkg => {
+  packages.forEach(pkg => {
     const status = pkg.normalizedStatus || ''
     if (status === 'affected') summary.affected++
     else if (status === 'fixed') summary.fixed++
@@ -831,6 +898,7 @@ watch(
     if (newId) {
       affectedHostsLoaded.value = false
       packageFilter.value = 'all'
+      systemFilter.value = 'all'
       activeTab.value = 'basic'
       loadCveDetail()
       loadAffectedHosts()
@@ -975,10 +1043,6 @@ onUnmounted(() => {
       color: #1a1a1a;
       margin: 0;
       line-height: 1.2;
-    }
-
-    .severity-badge {
-      // 样式已移至 src/styles/biz-tags.scss
     }
   }
 
@@ -1273,5 +1337,12 @@ onUnmounted(() => {
 
 .compact {
   margin-bottom: 8px;
+}
+
+.packages-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
 }
 </style>

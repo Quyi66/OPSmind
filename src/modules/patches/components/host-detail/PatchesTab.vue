@@ -18,16 +18,20 @@
       </el-checkbox-group> -->
       <el-select v-model="selectedSeverities" multiple size="small" placeholder="选择严重程度" @change="handleFilterChange" style="min-width: 150px; max-width: 300px; width: auto;">
         <el-option label="严重" value="Critical">
-          <el-tag type="danger" size="small">严重</el-tag>
+          <!-- <el-tag type="danger" size="small">严重</el-tag> -->
+           严重
         </el-option>
         <el-option label="重要" value="Important">
-          <el-tag type="warning" size="small">重要</el-tag>
+          <!-- <el-tag type="warning" size="small">重要</el-tag> -->
+           重要
         </el-option>
         <el-option label="中等" value="Moderate">
-          <el-tag type="primary" size="small">中等</el-tag>
+          <!-- <el-tag type="primary" size="small">中等</el-tag> -->
+           中等
         </el-option>
-        <el-option label="低" value="Low">
-          <el-tag type="info" size="small">低</el-tag>
+        <el-option label="低危" value="Low">
+          <!-- <el-tag type="info" size="small">低危</el-tag> -->
+           低危
         </el-option>
       </el-select>
 
@@ -174,7 +178,16 @@ const {
 const defaultSeverities = ['Critical', 'Important', 'Moderate', 'Low']
 
 function normalizeSeverity(severity) {
-  return String(severity || '').trim().toLowerCase()
+  const raw = String(severity || '').trim()
+  if (!raw) return ''
+  const lower = raw.toLowerCase()
+
+  if (lower === 'critical' || raw === '严重' || raw === 'Critical') return 'critical'
+  if (lower === 'important' || raw === '重要' || raw === '高危' || raw === 'Important') return 'important'
+  if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'Moderate') return 'moderate'
+  if (lower === 'low' || raw === '低' || raw === '低危' || raw === 'Low') return 'low'
+
+  return ''
 }
 
 function getSeverityClass(severity) {
@@ -187,7 +200,7 @@ function getSeverityLabel(severity) {
     critical: '严重',
     important: '重要',
     moderate: '中等',
-    low: '低'
+    low: '低危'
   }
   return map[normalizeSeverity(severity)] || severity || '-'
 }

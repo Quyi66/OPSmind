@@ -49,7 +49,7 @@
             <el-option label="严重" value="Critical" />
             <el-option label="重要" value="Important" />
             <el-option label="中等" value="Moderate" />
-            <el-option label="低级" value="Low" />
+            <el-option label="低危" value="Low" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
@@ -374,7 +374,7 @@ function getSeverityLabel(severity) {
     Critical: '严重',
     Important: '重要',
     Moderate: '中等',
-    Low: '低级'
+    Low: '低危'
   }
   return map[severity] || severity
 }

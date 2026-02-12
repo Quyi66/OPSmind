@@ -83,16 +83,47 @@
             {{ calculateDuration(row.start_time, row.end_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="60" fixed="right">
+        <el-table-column :width="actionColumnWidth" fixed="right" label="操作">
           <template #default="{ row }">
-            <el-button
-              type="primary"
-              size="small"
-              text
-              @click="handleViewDetail(row)"
-            >
-              详情
-            </el-button>
+            <div class="action-buttons">
+              <el-button type="primary" size="small" text @click="handleViewDetail(row)">详情</el-button>
+              <el-button
+                v-if="canShowWindowsScanReport(row)"
+                size="small"
+                text
+                type="primary"
+                @click="handleWindowsScanReport(row)"
+              >
+                Windows扫描报告
+              </el-button>
+              <el-button
+                v-if="canShowScanReport(row)"
+                size="small"
+                text
+                type="primary"
+                @click="handleScanReport(row)"
+              >
+                扫描报告
+              </el-button>
+              <el-button
+                v-if="canShowInstallReport(row)"
+                size="small"
+                text
+                type="primary"
+                @click="handleInstallReport(row)"
+              >
+                安装报告
+              </el-button>
+              <el-button
+                v-if="canShowRollbackReport(row)"
+                size="small"
+                text
+                type="primary"
+                @click="handleRollbackReport(row)"
+              >
+                回退报告
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -120,6 +151,16 @@
     v-model:visible="detailDialogVisible"
     :run-id="selectedRunId"
   />
+
+  <ScanReportDialog
+    v-model="scanReportVisible"
+    :run-id="scanReportRunId"
+  />
+
+  <WindowsScanReportDialog
+    v-model="winScanReportVisible"
+    :run-id="winScanReportRunId"
+  />
 </template>
 
 <script setup>
@@ -128,6 +169,10 @@ import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n'
+import { useApi } from '@/core/api'
+import { authService } from '@/core/auth'
+import ScanReportDialog from './ScanReportDialog.vue'
+import WindowsScanReportDialog from './WindowsScanReportDialog.vue'
 
 const props = defineProps({
   modelValue: {
@@ -160,6 +205,28 @@ const pagination = ref({
 
 const detailDialogVisible = ref(false)
 const selectedRunId = ref('')
+
+const scanReportVisible = ref(false)
+const scanReportRunId = ref('')
+
+const winScanReportVisible = ref(false)
+const winScanReportRunId = ref('')
+
+const actionColumnWidth = computed(() => {
+  const hasWindows = tableData.value.some(row => canShowWindowsScanReport(row))
+  const hasOther = tableData.value.some(row =>
+    canShowScanReport(row) || canShowInstallReport(row) || canShowRollbackReport(row)
+  )
+  if (!hasWindows && !hasOther) return 80
+  return hasWindows ? 190 : 130
+})
+
+const ACTION_KEYS = {
+  patchScan: '#{app_vap.menu.patch_scan.title}',
+  patchInstall: '#{app_vap.menu.patch_install.title}',
+  patchRollback: '#{app_vap.menu.patch_rollback.title}',
+  winPatchScan: '#{app_vap.menu.win_patch_scan.title}'
+}
 
 let pollingTimer = null
 
@@ -319,6 +386,226 @@ function handleViewDetail(row) {
   detailDialogVisible.value = true
 }
 
+function isPatchScan(row) {
+  return row?.action === ACTION_KEYS.patchScan
+}
+
+function isWindowsScan(row) {
+  return row?.action === ACTION_KEYS.winPatchScan
+}
+
+function isPatchInstall(row) {
+  return row?.action === ACTION_KEYS.patchInstall
+}
+
+function isPatchRollback(row) {
+  return row?.action === ACTION_KEYS.patchRollback
+}
+
+function isCompleted(row) {
+  return row?.status === 'COMPLETED'
+}
+
+function isFinished(row) {
+  return row?.status === 'COMPLETED' || row?.status === 'FAILED'
+}
+
+function canShowWindowsScanReport(row) {
+  return isWindowsScan(row) && isCompleted(row)
+}
+
+function canShowScanReport(row) {
+  return isPatchScan(row) && isCompleted(row)
+}
+
+function canShowInstallReport(row) {
+  return isPatchInstall(row) && isFinished(row)
+}
+
+function canShowRollbackReport(row) {
+  return isPatchRollback(row) && isFinished(row)
+}
+
+function formatFilenameTimestamp(timestamp) {
+  if (!timestamp) return 'unknown'
+  const date = new Date(timestamp)
+  const parts = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+    String(date.getHours()).padStart(2, '0'),
+    String(date.getMinutes()).padStart(2, '0'),
+    String(date.getSeconds()).padStart(2, '0')
+  ]
+  return `${parts[0]}${parts[1]}${parts[2]}${parts[3]}${parts[4]}${parts[5]}`
+}
+
+async function fetchReportPath(runId, dir) {
+  const api = useApi()
+  const response = await api.get('/vap/api/vap/v2/download/filename', {
+    params: {
+      runId,
+      dir,
+      cacheBuster: Date.now()
+    }
+  })
+  return response?.data?.filePath || response?.filePath || response?.data?.path || response?.path
+}
+
+async function fetchReportFileInfo(path) {
+  const api = useApi()
+  const tenantId = authService.getTenantId()
+  const encodedPath = encodeURIComponent(path)
+  const response = await api.get(
+    `/gfs/api/gfs/v2/staticfs/f/${tenantId}/file/${encodedPath}`,
+    {
+      params: {
+        cacheBuster: Date.now(),
+        isContent: true
+      }
+    }
+  )
+  return response?.data || response
+}
+
+function normalizeDownloadUri(downloadUri) {
+  if (!downloadUri) return downloadUri
+  const tenantId = authService.getTenantId()
+  let uri = downloadUri
+  if (uri.includes('/api/gfs/')) {
+    uri = uri.replace('/api/gfs/', '/gfs/api/gfs/')
+  }
+  if (tenantId && uri.includes(`/r/${tenantId}/`)) {
+    uri = uri.replace(`/r/${tenantId}/`, '/r/$tnt/')
+  }
+  return uri
+}
+
+async function downloadFromUri(downloadUri, filename) {
+  if (!downloadUri) return
+  const api = useApi()
+  const normalizedUri = normalizeDownloadUri(downloadUri)
+  const response = await api.get(normalizedUri, {
+    responseType: 'blob',
+    cache: false
+  })
+  const blob = response?.data || response
+  if (!blob) {
+    throw new Error('下载文件失败')
+  }
+  const objectUrl = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(objectUrl)
+}
+
+async function downloadReport(row, dir, extension) {
+  if (!row.run_id) {
+    ElMessage.warning('无运行记录')
+    return
+  }
+  try {
+    const filePath = await fetchReportPath(row.run_id, dir)
+    if (!filePath) {
+      throw new Error('未找到报告文件')
+    }
+    const filename = `${dir}_${formatFilenameTimestamp(row.start_time)}.${extension}`
+    downloadFile('staticfs', null, `VAP_EXPORT_DATA/${dir}/${filePath}`, filename)
+  } catch (error) {
+    ElMessage.error('下载报告失败: ' + (error.message || '未知错误'))
+  }
+}
+
+function handleWindowsScanReport(row) {
+  if (!row.run_id) {
+    ElMessage.warning('无运行记录')
+    return
+  }
+  winScanReportRunId.value = row.run_id
+  winScanReportVisible.value = true
+}
+
+function handleScanReport(row) {
+  if (!row.run_id) {
+    ElMessage.warning('无运行记录')
+    return
+  }
+  scanReportRunId.value = row.run_id
+  scanReportVisible.value = true
+}
+
+function handleInstallReport(row) {
+  downloadInstallReport(row)
+}
+
+function handleRollbackReport(row) {
+  downloadRollbackReport(row)
+}
+
+async function downloadInstallReport(row) {
+  if (!row.run_id) {
+    ElMessage.warning('无运行记录')
+    return
+  }
+  try {
+    const filePath = await fetchReportPath(row.run_id, 'patch_install')
+    const reportPath = filePath
+      ? `VAP_EXPORT_DATA/patch_install/${filePath}`
+      : 'VAP_EXPORT_DATA/patch_install/'
+    const fileInfo = await fetchReportFileInfo(reportPath)
+    const downloadUri = fileInfo?.fileContent?.downloadUri || fileInfo?.downloadUri
+    const filename = fileInfo?.fileContent?.name
+      || `patch_install_${formatFilenameTimestamp(row.start_time)}.html`
+    if (!downloadUri) {
+      throw new Error('未找到下载地址')
+    }
+    await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
+  } catch (error) {
+    ElMessage.error('下载安装报告失败: ' + (error.message || '未知错误'))
+  }
+}
+
+function buildReportPath(dir, filePath) {
+  if (!filePath) return `VAP_EXPORT_DATA/${dir}/`
+  const normalized = filePath.startsWith(`${dir}/`)
+    ? `VAP_EXPORT_DATA/${filePath}`
+    : `VAP_EXPORT_DATA/${dir}/${filePath}`
+  return normalized
+}
+
+function resolveDownloadFilename(fileInfo, fallbackBase, timestamp) {
+  const name = fileInfo?.fileContent?.name || fileInfo?.name
+  if (name) return name
+  return `${fallbackBase}_${formatFilenameTimestamp(timestamp)}.xlsx`
+}
+
+async function downloadRollbackReport(row) {
+  if (!row.run_id) {
+    ElMessage.warning('无运行记录')
+    return
+  }
+  try {
+    const filePath = await fetchReportPath(row.run_id, 'patch_rollback')
+    const reportPath = buildReportPath('patch_rollback', filePath)
+    const fileInfo = await fetchReportFileInfo(reportPath)
+    if (fileInfo?.detail) {
+      throw new Error(fileInfo.message || '未找到报告文件')
+    }
+    const downloadUri = fileInfo?.fileContent?.downloadUri || fileInfo?.downloadUri
+    if (!downloadUri) {
+      throw new Error('未找到下载地址')
+    }
+    const filename = resolveDownloadFilename(fileInfo, 'patch_rollback', row.start_time)
+    await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
+  } catch (error) {
+    ElMessage.error('下载回退报告失败: ' + (error.message || '未知错误'))
+  }
+}
+
 // 筛选变化
 function handleFilterChange() {
   pagination.value.page = 1
@@ -404,5 +691,11 @@ onBeforeUnmount(() => {
   justify-content: flex-end;
   padding-top: 12px;
   border-top: 1px solid #e4e7ed;
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 </style>
