@@ -203,9 +203,15 @@
             </el-table-column>
             <el-table-column prop="need_reboot" label="是否需要重启" width="120">
               <template #default="{ row }">
-                <el-tag :type="row.need_reboot === 1 ? 'danger' : 'success'" size="small" round>
+                <el-tag
+                  :type="
+                    row.need_reboot === 1 ? 'danger' : row.need_reboot === 0 ? 'success' : 'warning'
+                  "
+                  size="small"
+                  round
+                >
                   <!-- <i :class="row.need_reboot === 0 ? 'fa fa-power-off' : 'fa fa-check'" /> -->
-                  {{ row.need_reboot === 1 ? '是' : '否' }}
+                  {{ row.need_reboot === 1 ? '是' : row.need_reboot === 0 ? '否' : '未知' }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -418,11 +424,7 @@
             </el-table-column>
             <el-table-column prop="vul_id" label="CVE" width="150">
               <template #default="{ row }">
-                <a
-                  :href="getCveUrl(row.vul_id, row.os_distro)"
-                  target="_blank"
-                  class="cve-badge"
-                >
+                <a :href="getCveUrl(row.vul_id, row.os_distro)" target="_blank" class="cve-badge">
                   {{ row.vul_id }}
                 </a>
               </template>
@@ -750,7 +752,6 @@ const runResultRunId = ref('')
 const operationLogsVisible = ref(false)
 const lastSubmittedRunId = ref('')
 
-
 // 修复漏洞对话框
 const fixDialogVisible = ref(false)
 const fixSubmitting = ref(false)
@@ -761,7 +762,6 @@ const fixDialogData = reactive({
   packages: '',
   patchStatusIds: []
 })
-
 
 // 获取严重程度显示标签
 function getSeverityLabel(severity) {
@@ -1181,7 +1181,6 @@ async function handleConfirmFix() {
     fixSubmitting.value = false
   }
 }
-
 
 function handleRescan() {
   rescanForm.hostsInput = ''

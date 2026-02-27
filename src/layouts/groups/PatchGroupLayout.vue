@@ -1,7 +1,11 @@
 <template>
   <div class="group-layout">
     <!-- 左侧菜单 -->
-    <ModuleSideMenu :menu-groups="filteredMenuGroups" :default-openeds="defaultOpeneds" class="group-side-menu" />
+    <ModuleSideMenu
+      :menu-groups="filteredMenuGroups"
+      :default-openeds="defaultOpeneds"
+      class="group-side-menu"
+    />
 
     <!-- 右侧内容区域 -->
     <section class="group-content">
@@ -93,11 +97,10 @@ const filteredMenuGroups = computed(() => {
 })
 
 // 默认展开的菜单
-const defaultOpeneds = ['patches', 'software']
+const defaultOpeneds = ['patches', 'windows-patches', 'software']
 
 // 日志输出当前检测到的平台
-onMounted(() => {
-})
+onMounted(() => {})
 
 // 提供给子组件使用
 provide('currentPlatform', currentPlatform)

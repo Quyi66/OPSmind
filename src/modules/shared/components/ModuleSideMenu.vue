@@ -25,7 +25,7 @@
         <el-menu-item
           v-for="item in singleGroupChildren"
           :key="item.key"
-          :index="`${menuGroups[0].code}-${item.key}`"
+          :index="`${menuGroups[0].code}::${item.key}`"
         >
           <el-icon><i :class="item.icon" /></el-icon>
           <template #title>{{ item.label }}</template>
@@ -35,20 +35,46 @@
       <!-- 多分组模式：使用折叠菜单 -->
       <template v-else>
         <template v-for="group in menuGroups" :key="group.code">
-          <!-- 有子菜单的情况：使用 el-sub-menu -->
-          <el-sub-menu v-if="group.children && group.children.length > 0" :index="group.code">
+          <!-- 有子菜单且有多个子项的情况：使用 el-sub-menu -->
+          <el-sub-menu v-if="group.children && group.children.length > 1" :index="group.code">
             <template #title>
               <el-icon><i :class="group.icon" /></el-icon>
               <span>{{ group.name }}</span>
             </template>
-            <el-menu-item
-              v-for="item in group.children"
-              :key="item.key"
-              :index="`${group.code}-${item.key}`"
-            >
-              <template #title>{{ item.label }}</template>
-            </el-menu-item>
+            <!-- 递归或者判断一层嵌套：如果有三级树 -->
+            <template v-for="item in group.children" :key="item.key">
+              <!-- 第三层子菜单 -->
+              <el-sub-menu
+                v-if="item.children && item.children.length > 0"
+                :index="`${group.code}::${item.key}`"
+              >
+                <template #title>
+                  <span>{{ item.label }}</span>
+                </template>
+                <el-menu-item
+                  v-for="sub in item.children"
+                  :key="sub.key"
+                  :index="`${group.code}::${item.key}::${sub.key}`"
+                >
+                  <template #title>{{ sub.label }}</template>
+                </el-menu-item>
+              </el-sub-menu>
+
+              <!-- 正常的二级菜单 -->
+              <el-menu-item v-else :index="`${group.code}::${item.key}`">
+                <template #title>{{ item.label }}</template>
+              </el-menu-item>
+            </template>
           </el-sub-menu>
+
+          <!-- 只有1个子菜单的情况：直接平铺为一个一级菜单项，但使用其子项用于路由 -->
+          <el-menu-item
+            v-else-if="group.children && group.children.length === 1"
+            :index="`${group.code}::${group.children[0].key}`"
+          >
+            <el-icon><i :class="group.icon || group.children[0].icon" /></el-icon>
+            <template #title>{{ group.name }}</template>
+          </el-menu-item>
 
           <!-- 没有子菜单的情况：直接使用 el-menu-item -->
           <el-menu-item v-else :index="group.code">
@@ -105,9 +131,11 @@ const isCollapsed = ref(false)
 
 // 判断是否只有一个分组
 const isSingleGroup = computed(() => {
-  return props.menuGroups.length === 1 &&
-         props.menuGroups[0].children &&
-         props.menuGroups[0].children.length > 0
+  return (
+    props.menuGroups.length === 1 &&
+    props.menuGroups[0].children &&
+    props.menuGroups[0].children.length > 0
+  )
 })
 
 // 单一分组时的子菜单
@@ -128,10 +156,19 @@ const activeIndex = computed(() => {
   for (const group of props.menuGroups) {
     if (group.children) {
       for (const item of group.children) {
-        const itemPath = item.path || `${props.basePath}/${item.key}`
-        // 检查路径是否匹配
-        if (path === itemPath || path.startsWith(itemPath + '/')) {
-          return `${group.code}-${item.key}`
+        if (item.children) {
+          for (const sub of item.children) {
+            const subPath = sub.path || `${props.basePath}/${sub.key}`
+            if (path === subPath || path.startsWith(subPath + '/')) {
+              return `${group.code}::${item.key}::${sub.key}`
+            }
+          }
+        } else {
+          const itemPath = item.path || `${props.basePath}/${item.key}`
+          // 检查路径是否匹配
+          if (path === itemPath || path.startsWith(itemPath + '/')) {
+            return `${group.code}::${item.key}`
+          }
         }
       }
     }
@@ -146,8 +183,8 @@ const computedDefaultOpeneds = computed(() => {
     // 如果没有激活项，使用传入的 defaultOpeneds 中的第一个
     return props.defaultOpeneds.length > 0 ? [props.defaultOpeneds[0]] : []
   }
-  // 从 activeIndex 中提取 groupCode（格式为 "groupCode-itemKey"）
-  const groupCode = active.split('-')[0]
+  // 从 activeIndex 中提取 groupCode（格式为 "groupCode::itemKey"）
+  const groupCode = active.split('::')[0]
   return groupCode ? [groupCode] : []
 })
 
@@ -155,19 +192,37 @@ const computedDefaultOpeneds = computed(() => {
 function handleSelect(index) {
   if (index === 'home') return
 
-  // 解析 index：格式为 "groupCode-itemKey"
-  const [groupCode, ...itemKeyParts] = index.split('-')
-  const itemKey = itemKeyParts.join('-') // 支持 item key 中包含 '-'
+  // 解析 index：格式为 "groupCode::itemKey::subKey"
+  const parts = index.split('::')
+  const groupCode = parts[0]
 
   // 查找对应的菜单项
   for (const group of props.menuGroups) {
     if (group.code === groupCode && group.children) {
-      const item = group.children.find(child => child.key === itemKey)
-      if (item) {
-        const targetPath = item.path || `${props.basePath}/${item.key}`
-        router.push(targetPath)
-        emit('select', item, group)
-        return
+      if (parts.length === 3) {
+        // 三级树导航
+        const itemKey = parts[1]
+        const subKey = parts[2]
+        const item = group.children.find(child => child.key === itemKey)
+        if (item && item.children) {
+          const sub = item.children.find(s => s.key === subKey)
+          if (sub) {
+            const targetPath = sub.path || `${props.basePath}/${sub.key}`
+            router.push(targetPath)
+            emit('select', sub, group)
+            return
+          }
+        }
+      } else {
+        // 普通两级导航
+        const itemKey = parts.slice(1).join('::')
+        const item = group.children.find(child => child.key === itemKey)
+        if (item) {
+          const targetPath = item.path || `${props.basePath}/${item.key}`
+          router.push(targetPath)
+          emit('select', item, group)
+          return
+        }
       }
     }
   }
@@ -188,7 +243,9 @@ function handleHomeClick() {
   width: 180px;
   min-width: 180px;
   background-color: #fff;
-  transition: width 0.3s ease, min-width 0.3s ease;
+  transition:
+    width 0.3s ease,
+    min-width 0.3s ease;
   position: relative;
   border-right: 1px solid #e8e8e8;
   margin-right: 12px;
@@ -280,7 +337,7 @@ function handleHomeClick() {
     .el-sub-menu__icon-arrow {
       color: #999;
       font-size: 12px;
-      right: 16px;
+      right: 12px;
     }
   }
 
@@ -310,7 +367,7 @@ function handleHomeClick() {
     }
   }
 
-  // 子菜单背景 - 白色
+  // 包含三级菜单嵌套的菜单背景
   :deep(.el-sub-menu .el-menu) {
     background-color: #fff !important;
   }
@@ -318,6 +375,55 @@ function handleHomeClick() {
   // 激活的子菜单标题
   :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
     color: #409eff;
+  }
+
+  // 二级菜单带有子菜单时的标题样式调整（即三级菜单的父节点）
+  :deep(.el-sub-menu .el-sub-menu > .el-sub-menu__title) {
+    padding-left: 52px !important;
+    height: 44px;
+    line-height: 44px;
+    font-size: 14px;
+    color: #333;
+    font-weight: normal;
+
+    // 防止被前面的 el-icon 样式污染导致拉扯
+    .el-sub-menu__icon-arrow {
+      position: absolute;
+      right: 16px;
+      width: auto;
+      margin: 0;
+      color: #999;
+      top: 50%;
+      transform: translateY(-50%) !important;
+    }
+  }
+
+  // 展开状态的三级父级标题高亮
+  :deep(.el-sub-menu .el-sub-menu.is-opened > .el-sub-menu__title) {
+    color: #409eff;
+    font-weight: 500;
+  }
+
+  // 新增：第三层级子菜单项样式，增加左侧内边距区分层级
+  :deep(.el-sub-menu .el-sub-menu .el-menu-item) {
+    padding-left: 60px !important; // 从68降到60，增加右侧呼吸感，配合更小的字号
+    height: 38px;
+    line-height: 38px;
+    color: #606266;
+    margin: 2px 0; // 增加上下微小间距
+
+    &:hover {
+      color: #409eff;
+      background-color: transparent !important; // 去掉hover背景，仅文字变色，更清爽
+    }
+
+    &.is-active {
+      background-color: transparent !important; // 三级子菜单也去掉背景色
+      color: #409eff !important;
+      border-right: none; // 三级不显示右border，维持主层级的标识感
+      font-weight: 600;
+      position: relative;
+    }
   }
 }
 

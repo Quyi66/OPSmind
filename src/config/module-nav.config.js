@@ -38,14 +38,37 @@ export const CMD_NAV_ITEMS = CMD_ROUTE_DEFS.filter(def => def.navLabel).map(def 
   path: `/cmd/${def.path}`
 }))
 
-// 补丁漏洞 - 补丁模块的页面导航
-// platform: 'linux' - 仅Linux设备显示, 'windows' - 仅Windows设备显示, 'common' - 所有设备显示
-export const PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+// 补丁漏洞 - 补丁模块(Linux/Common，不包含日志)的页面导航
+export const PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
+  def => def.navLabel && def.platform !== 'windows' && def.key !== 'logs'
+).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
   path: `/patches/${def.path}`,
   platform: def.platform || 'common'
+}))
+
+// 补丁漏洞 - 补丁模块(Win)的页面导航
+export const WINDOWS_PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
+  def => def.navLabel && def.platform === 'windows'
+).map(def => ({
+  key: def.key,
+  label: def.navLabel || def.title, // 取路由内的中文如“补丁安装”
+  icon: def.icon,
+  path: `/patches/${def.path}`,
+  platform: def.platform || 'windows'
+}))
+
+// 补丁漏洞 - 变更日志查询的导航
+export const PATCH_LOGS_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
+  def => def.navLabel && def.key === 'logs'
+).map(def => ({
+  key: def.key,
+  label: def.navLabel || def.title,
+  icon: def.icon,
+  path: `/patches/${def.path}`,
+  platform: 'common'
 }))
 
 // 补丁漏洞 - 软件模块的页面导航
@@ -121,6 +144,8 @@ export const MODULE_NAV_CONFIG = {
   gfs: GFS_NAV_ITEMS,
   cmd: CMD_NAV_ITEMS,
   patches: PATCHES_NAV_ITEMS,
+  'windows-patches': WINDOWS_PATCHES_NAV_ITEMS,
+  'patch-logs': PATCH_LOGS_NAV_ITEMS,
   software: SOFTWARE_NAV_ITEMS,
   cac: CAC_NAV_ITEMS,
   acm: ACM_NAV_ITEMS,

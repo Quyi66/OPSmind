@@ -50,15 +50,21 @@ export const MENU_CONFIG = {
         {
           code: 'patches',
           name: '补丁管理',
-          icon: 'fas fa-download',
+          icon: 'fab fa-linux',
           description: '系统补丁和更新管理'
         },
-        // {
-        //   code: 'vulnerability',
-        //   name: '漏洞',
-        //   icon: 'fas fa-bug',
-        //   description: '安全漏洞扫描和管理'
-        // },
+        {
+          code: 'windows-patches',
+          name: '补丁管理(win)',
+          icon: 'fab fa-windows',
+          description: 'Windows系统补丁和更新管理'
+        },
+        {
+          code: 'patch-logs',
+          name: '变更日志查询',
+          icon: 'fas fa-history',
+          description: '操作日志'
+        },
         {
           code: 'software',
           name: '软件管理',
