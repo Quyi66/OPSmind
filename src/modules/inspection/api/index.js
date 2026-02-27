@@ -197,9 +197,7 @@ export const jobApi = {
    * @param {string} templateId - 模板ID
    */
   getHostCheckItems(jobId, templateId) {
-    return apiService.get(
-      `${CAC_BASE}/v2/jobs/result-v2/${jobId},${templateId}?cacheBuster=${Date.now()}`
-    )
+    return apiService.get(`${CAC_BASE}/v2/jobs/result-v2/${jobId},${templateId}`)
   },
 
   /**

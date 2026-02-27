@@ -128,7 +128,7 @@
         <el-table
           v-loading="tableLoading"
           :data="machineData"
-          max-height="700px"
+          height="calc(100vh - 600px)"
           style="width: 100%"
           @selection-change="handleSelectionChange"
         >
@@ -245,7 +245,12 @@
 
       <!-- 巡检概览表格 -->
       <div v-else-if="activeTab === 'overview'" class="table-container">
-        <el-table v-loading="overviewLoading" :data="overviewData"  style="width: 100%" max-height="700px">
+        <el-table
+          v-loading="overviewLoading"
+          :data="overviewData"
+          style="width: 100%"
+          height="calc(100vh - 600px)"
+        >
           <el-table-column prop="name" label="检查项" min-width="300">
             <template #default="{ row }">
               <el-button type="primary" link @click="dialogs.showCheckItemHostsDialog(row)">
@@ -278,60 +283,77 @@
       </div>
     </div>
 
-    <!-- 巡检项详情区域 -->
-    <div class="inspection-detail-section">
-      <div class="section-header">
-        <span class="section-title">
-          巡检项详情
-          <template v-if="selectedHost">- {{ selectedHost.host_key }}</template>
-        </span>
-        <div class="section-actions">
-          <el-button size="small" @click="dialogs.showItemWhitelist()">
-            <i class="fa fa-adjust"></i>
-            白名单列表
-          </el-button>
-        </div>
+    <!-- 巡检项详情弹窗 -->
+    <el-dialog
+      v-model="inspectionDetailVisible"
+      :title="`巡检项详情${selectedHost ? ' - ' + selectedHost.host_key : ''}`"
+      width="1200px"
+      class="inspection-detail-dialog"
+      append-to-body
+      destroy-on-close
+    >
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 16px">
+        <el-button size="small" @click="dialogs.showItemWhitelist()">
+          <i class="fa fa-adjust"></i>
+          白名单列表
+        </el-button>
       </div>
-      <div class="section-content">
-        <template v-if="!selectedHost">
-          <el-empty description="点击上方表格中的主机查看巡检项详情" />
-        </template>
-        <template v-else>
-          <el-table
-            v-loading="inspectionDetailLoading"
-            :data="inspectionDetailData"
+      <el-table
+        v-loading="inspectionDetailLoading"
+        :data="pagedInspectionData"
+        style="width: 100%"
+        max-height="500"
+      >
+        <el-table-column prop="hostKey" label="主机" width="140" />
+        <el-table-column prop="name" label="检查项" min-width="150" show-overflow-tooltip />
+        <el-table-column label="结果" width="100" align="left">
+          <template #default="{ row }">
+            <el-tag v-if="row.status === 'OK'" type="success" size="small">通过</el-tag>
+            <el-tag v-else-if="row.status === 'FAILED'" type="danger" size="small">失败</el-tag>
+            <el-tag v-else-if="row.status === 'CHECK'" type="warning" size="small">人工检查</el-tag>
+            <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">白名单</el-tag>
+            <el-tag v-else type="info" size="small">无数据</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="output" label="输出" min-width="300" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span>{{ row.output || '无' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              v-if="!isInWhitelist(row)"
+              type="primary"
+              link
+              @click="handleAddToWhitelist(row)"
+            >
+              添加白名单
+            </el-button>
+            <el-button v-else type="danger" link @click="handleRemoveFromWhitelist(row)">
+              移出白名单
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-            style="width: 100%"
-            max-height="300"
-          >
-            <el-table-column prop="hostKey" label="主机" width="140" />
-            <el-table-column prop="name" label="检查项" min-width="200" show-overflow-tooltip />
-            <el-table-column label="结果" width="100" align="left">
-              <template #default="{ row }">
-                <el-tag v-if="row.status === 'OK'" type="success" size="small">通过</el-tag>
-                <el-tag v-else-if="row.status === 'FAILED'" type="danger" size="small">失败</el-tag>
-                <el-tag v-else-if="row.status === 'CHECK'" type="warning" size="small">
-                  人工检查
-                </el-tag>
-                <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">
-                  白名单
-                </el-tag>
-                <el-tag v-else type="info" size="small">无数据</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="输出" min-width="300">
-              <template #default="{ row }">
-                <el-button v-if="row.output" type="primary" link @click="showOutputDetail(row)">
-                  {{ (row.output || '').substring(0, 100)
-                  }}{{ row.output && row.output.length > 100 ? '...' : '' }}
-                </el-button>
-                <span v-else class="no-data">无</span>
-              </template>
-            </el-table-column>
-          </el-table>
-        </template>
+      <!-- 分页组件 -->
+      <div
+        class="ops-pagination-wrapper"
+        style="margin-top: 16px; display: flex; justify-content: flex-end"
+      >
+        <el-pagination
+          v-model:current-page="inspectionPage"
+          v-model:page-size="inspectionPageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="inspectionDetailData.length"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleInspectionSizeChange"
+          @current-change="handleInspectionPageChange"
+        />
       </div>
-    </div>
+    </el-dialog>
 
     <!-- 弹窗组件 -->
     <HostDetailDialog
@@ -402,7 +424,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { authService } from '@/core/auth'
-import { jobApi } from '../api'
+import { jobApi, whitelistApi } from '../api'
 
 // 导入拆分的模块
 import { formatDateTime } from '../utils/helpers'
@@ -454,9 +476,29 @@ const selectedHostIds = ref([])
 
 // 巡检项详情状态
 const selectedHost = ref(null)
+const inspectionDetailVisible = ref(false)
 const inspectionDetailLoading = ref(false)
 const inspectionDetailData = ref([])
 const showWhitelistButton = ref(true)
+
+// 前端分页状态
+const inspectionPage = ref(1)
+const inspectionPageSize = ref(10)
+
+const pagedInspectionData = computed(() => {
+  const start = (inspectionPage.value - 1) * inspectionPageSize.value
+  const end = start + inspectionPageSize.value
+  return inspectionDetailData.value.slice(start, end)
+})
+
+function handleInspectionPageChange(page) {
+  inspectionPage.value = page
+}
+
+function handleInspectionSizeChange(size) {
+  inspectionPageSize.value = size
+  inspectionPage.value = 1
+}
 
 // 计算属性
 const paginationInfo = computed(() => {
@@ -483,13 +525,17 @@ function handleSelectionChange(selection) {
  */
 async function handleHostClick(row) {
   selectedHost.value = row
+  inspectionDetailVisible.value = true
   inspectionDetailLoading.value = true
   inspectionDetailData.value = []
+  inspectionPage.value = 1 // 重置分页
 
   try {
     const response = await jobApi.getHostCheckItems(jobId.value, jobInfo.value.templateId)
     const data = response?.data || response
-    inspectionDetailData.value = Array.isArray(data) ? data : []
+    const allData = Array.isArray(data) ? data : []
+    // 前端根据点击的主机名进行筛选
+    inspectionDetailData.value = allData.filter(item => item.hostKey === row.host_key)
   } catch (error) {
     console.error('加载巡检项详情失败:', error)
     ElMessage.error('加载巡检项详情失败')
@@ -499,11 +545,68 @@ async function handleHostClick(row) {
 }
 
 /**
- * 显示输出详情弹窗（从巡检项详情，显示白名单按钮）
+ * 白名单操作
  */
-function showOutputDetail(row) {
-  showWhitelistButton.value = true
-  dialogs.showCheckItemDetail(row)
+const isInWhitelist = item => {
+  const value = item?.whetherWhiteList
+  return value && value.startsWith('y')
+}
+
+async function handleAddToWhitelist(item) {
+  if (!item) return
+
+  try {
+    await ElMessageBox.confirm('确定要将此检查项添加到白名单吗？', '确认')
+    inspectionDetailLoading.value = true
+
+    await whitelistApi.saveWhitelist({
+      templateId: jobInfo.value.templateId,
+      templateName: jobInfo.value.templateName,
+      scriptPath: getScriptPath(),
+      hostId: item.hostId,
+      hostKey: item.hostKey,
+      checkName: item.name
+    })
+
+    ElMessage.success('添加白名单成功')
+    handleWhitelistChanged()
+  } catch (e) {
+    if (e !== 'cancel') {
+      console.error('添加白名单失败:', e)
+      ElMessage.error('添加白名单失败')
+    }
+  } finally {
+    inspectionDetailLoading.value = false
+  }
+}
+
+async function handleRemoveFromWhitelist(item) {
+  if (!item) return
+
+  try {
+    await ElMessageBox.confirm('确定要将此检查项从白名单移除吗？', '确认')
+    inspectionDetailLoading.value = true
+
+    let whitelistId = ''
+    if (item.whetherWhiteList && item.whetherWhiteList.startsWith('y,')) {
+      whitelistId = item.whetherWhiteList.split(',')[1]
+    }
+
+    if (whitelistId) {
+      await whitelistApi.deleteWhitelist(whitelistId)
+      ElMessage.success('移除白名单成功')
+      handleWhitelistChanged()
+    } else {
+      ElMessage.error('无法获取白名单ID')
+    }
+  } catch (e) {
+    if (e !== 'cancel') {
+      console.error('移除白名单失败:', e)
+      ElMessage.error('移除白名单失败')
+    }
+  } finally {
+    inspectionDetailLoading.value = false
+  }
 }
 
 /**
@@ -843,6 +946,7 @@ onMounted(() => {
   margin: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  flex: 1;
 
   :deep(.el-tabs__header) {
     margin: 0;
@@ -865,7 +969,7 @@ onMounted(() => {
 }
 
 .table-container {
-  padding: 16px;
+  padding: 16px 16px 0 16px;
 }
 
 .table-footer {
@@ -876,35 +980,6 @@ onMounted(() => {
   .pagination-info {
     color: #6c757d;
     font-size: 13px;
-  }
-}
-
-.inspection-detail-section {
-  background: #fff;
-  margin: 0 16px 16px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid #e2e8f0;
-    .section-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #303133;
-    }
-    .section-actions {
-      display: flex;
-      gap: 8px;
-    }
-  }
-
-  .section-content {
-    min-height: 200px;
-    padding: 16px;
   }
 }
 

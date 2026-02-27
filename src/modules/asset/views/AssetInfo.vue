@@ -257,8 +257,8 @@
           </el-table-column>
 
           <el-table-column prop="业务系统" label="业务系统" width="100" show-overflow-tooltip />
-          <el-table-column prop="os_version" label="系统版本" width="80" />
-          <el-table-column prop="os_distro" label="操作系统" width="180" show-overflow-tooltip />
+          <el-table-column prop="os_version" label="系统版本" width="110" />
+          <el-table-column prop="os_distro" label="操作系统" min-width="200" show-overflow-tooltip />
           <el-table-column prop="hostname" label="主机名" width="120" show-overflow-tooltip />
           <el-table-column prop="arch" label="系统架构" width="80" />
           <el-table-column prop="cpu_vcpus" label="cpu个数" width="80" />

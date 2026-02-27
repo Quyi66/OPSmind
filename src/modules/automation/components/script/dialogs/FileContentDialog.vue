@@ -3,7 +3,6 @@
     v-model="visible"
     :title="file?.path || file?.name || '文件内容'"
     width="80%"
-    top="5vh"
     :close-on-click-modal="false"
     destroy-on-close
     class="file-content-dialog"
@@ -14,7 +13,7 @@
         :path="file.path"
         :repo-type="repoType"
         :repo="repo"
-        height="60vh"
+        height="100%"
       />
     </div>
     <template #footer>
@@ -47,7 +46,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 </script>
 
@@ -57,7 +56,7 @@ const visible = computed({
 }
 
 .content-wrapper {
-  height: 60vh;
+  height: calc(100vh - 280px);
   display: flex;
   flex-direction: column;
 }
