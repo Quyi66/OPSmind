@@ -223,7 +223,7 @@
     </div>
 
     <!-- 补丁详情对话框 -->
-    <el-dialog v-model="detailDialogVisible" title="补丁详情" width="700px" destroy-on-close>
+    <el-dialog v-model="detailDialogVisible" title="补丁详情" width="1000px" destroy-on-close>
       <div v-loading="detailLoading" class="patch-detail">
         <template v-if="patchDetail">
           <!-- 补丁编号 - 大号加粗 -->

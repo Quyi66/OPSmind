@@ -762,6 +762,7 @@ const fixDialogData = reactive({
   packages: '',
   patchStatusIds: []
 })
+const fixDialogLoading = ref(false)
 
 // 获取严重程度显示标签
 function getSeverityLabel(severity) {
