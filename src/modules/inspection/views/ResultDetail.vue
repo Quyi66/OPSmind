@@ -292,7 +292,33 @@
       append-to-body
       destroy-on-close
     >
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 16px">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 16px">
+        <div style="display: flex; gap: 12px">
+          <el-select
+            v-model="inspectionResultFilter"
+            placeholder="选择结果"
+            clearable
+            size="small"
+            style="width: 120px"
+          >
+            <el-option label="通过" value="OK" />
+            <el-option label="失败" value="FAILED" />
+            <el-option label="人工检查" value="CHECK" />
+            <el-option label="白名单" value="SKIPPING" />
+            <el-option label="无数据" value="UNREACHABLE" />
+          </el-select>
+          <el-input
+            v-model="inspectionSearchText"
+            placeholder="输入检查项或输出内容搜索"
+            clearable
+            size="small"
+            style="width: 220px"
+          >
+            <template #prefix>
+              <i class="fa fa-search"></i>
+            </template>
+          </el-input>
+        </div>
         <el-button size="small" @click="dialogs.showItemWhitelist()">
           <i class="fa fa-adjust"></i>
           白名单列表
@@ -302,7 +328,7 @@
         v-loading="inspectionDetailLoading"
         :data="pagedInspectionData"
         style="width: 100%"
-        max-height="500"
+        max-height="calc(100vh - 350px)"
       >
         <el-table-column prop="hostKey" label="主机" width="140" />
         <el-table-column prop="name" label="检查项" min-width="150" show-overflow-tooltip />
@@ -346,7 +372,7 @@
           v-model:current-page="inspectionPage"
           v-model:page-size="inspectionPageSize"
           :page-sizes="[10, 20, 50, 100]"
-          :total="inspectionDetailData.length"
+          :total="filteredInspectionData.length"
           layout="total, sizes, prev, pager, next, jumper"
           background
           @size-change="handleInspectionSizeChange"
@@ -480,15 +506,36 @@ const inspectionDetailVisible = ref(false)
 const inspectionDetailLoading = ref(false)
 const inspectionDetailData = ref([])
 const showWhitelistButton = ref(true)
+const inspectionSearchText = ref('')
+const inspectionResultFilter = ref('')
 
 // 前端分页状态
 const inspectionPage = ref(1)
 const inspectionPageSize = ref(10)
 
+const filteredInspectionData = computed(() => {
+  let data = inspectionDetailData.value
+  if (inspectionSearchText.value) {
+    const keyword = inspectionSearchText.value.toLowerCase()
+    data = data.filter(
+      item =>
+        item.name?.toLowerCase().includes(keyword) || item.output?.toLowerCase().includes(keyword)
+    )
+  }
+  if (inspectionResultFilter.value) {
+    data = data.filter(item => item.status === inspectionResultFilter.value)
+  }
+  return data
+})
+
 const pagedInspectionData = computed(() => {
   const start = (inspectionPage.value - 1) * inspectionPageSize.value
   const end = start + inspectionPageSize.value
-  return inspectionDetailData.value.slice(start, end)
+  return filteredInspectionData.value.slice(start, end)
+})
+
+watch([inspectionSearchText, inspectionResultFilter], () => {
+  inspectionPage.value = 1
 })
 
 function handleInspectionPageChange(page) {
@@ -529,6 +576,8 @@ async function handleHostClick(row) {
   inspectionDetailLoading.value = true
   inspectionDetailData.value = []
   inspectionPage.value = 1 // 重置分页
+  inspectionSearchText.value = ''
+  inspectionResultFilter.value = ''
 
   try {
     const response = await jobApi.getHostCheckItems(jobId.value, jobInfo.value.templateId)

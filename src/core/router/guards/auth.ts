@@ -28,6 +28,7 @@ export function setupAuthGuard(router: Router): void {
     // 需要认证但未登录
     if (to.meta?.requiresAuth && !isAuthenticated) {
       window.location.href = LOGIN_REDIRECT_URL
+      next(false)
       return
     }
 

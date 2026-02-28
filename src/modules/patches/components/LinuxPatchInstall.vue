@@ -158,7 +158,15 @@
         </div>
         <div class="patch-detail__item">
           <span class="patch-detail__label">严重性：</span>
-          <span class="patch-detail__value">{{ patchDetail.severity }}</span>
+          <span class="patch-detail__value">
+            <el-tag
+              effect="dark"
+              class="severity-tag"
+              :class="'is-' + (patchDetail.severity || '').toLowerCase()"
+            >
+              {{ getSeverityLabel(patchDetail.severity) }}
+            </el-tag>
+          </span>
         </div>
         <div class="patch-detail__item">
           <span class="patch-detail__label">描述</span>
@@ -334,7 +342,7 @@ const installLoading = ref(false)
 
 // 统一筛选条件
 const filters = reactive({
-  severity: ['Critical', 'Important', 'Moderate', 'Low' ], // 默认勾选严重和重要
+  severity: ['Critical', 'Important', 'Moderate', 'Low'], // 默认勾选严重和重要
   keyword: ''
 })
 
@@ -541,7 +549,7 @@ function handleSearch() {
 // 重置处理
 function handleReset() {
   // 重置筛选条件为默认值
-  filters.severity = ['Critical', 'Important', 'Moderate', 'Low' ]
+  filters.severity = ['Critical', 'Important', 'Moderate', 'Low']
   filters.keyword = ''
   // 重置分页
   pagination.page = 1

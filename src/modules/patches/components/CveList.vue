@@ -105,7 +105,7 @@
             <el-select v-model="searchParams.source" style="width: 100px">
               <el-option value="all" label="全部" />
               <el-option value="redhat" label="Red Hat" />
-              <el-option value="kylin" label="麒麟" />
+              <el-option value="kylinos" label="麒麟" />
             </el-select>
           </el-form-item>
           <el-form-item label="严重等级">
@@ -360,12 +360,7 @@ function normalizeSeverityKey(severity) {
   const lower = raw.toLowerCase()
 
   if (lower === 'critical' || raw === '严重' || raw === 'CRITICAL') return 'critical'
-  if (
-    lower === 'important' ||
-    raw === '重要' ||
-    raw === '高危' ||
-    raw === 'IMPORTANT'
-  )
+  if (lower === 'important' || raw === '重要' || raw === '高危' || raw === 'IMPORTANT')
     return 'important'
   if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'MODERATE')
     return 'moderate'
@@ -572,7 +567,7 @@ onMounted(() => {
 
 watch(
   () => route.query,
-  (query) => {
+  query => {
     if (query.view === 'detail' && query.cveId) {
       selectedCveId.value = query.cveId
       currentView.value = 'detail'

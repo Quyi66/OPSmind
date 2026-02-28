@@ -15,8 +15,12 @@
         <div class="detail-item">
           <div class="detail-label">严重程度：</div>
           <div class="detail-value">
-            <el-tag :type="getSeverityType(patchData.severity)" size="small">
-              {{ patchData.severity }}
+            <el-tag
+              :type="getSeverityType(patchData.severity)"
+              :class="['severity-tag', getSeverityClass(patchData.severity)]"
+              size="small"
+            >
+              {{ getSeverityLabel(patchData.severity) }}
             </el-tag>
           </div>
         </div>
@@ -76,8 +80,38 @@ const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
+
+function normalizeSeverity(severity) {
+  const raw = String(severity || '').trim()
+  if (!raw) return ''
+  const lower = raw.toLowerCase()
+
+  if (lower === 'critical' || raw === '严重' || raw === 'Critical') return 'critical'
+  if (lower === 'important' || raw === '重要' || raw === '高危' || raw === 'Important')
+    return 'important'
+  if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'Moderate')
+    return 'moderate'
+  if (lower === 'low' || raw === '低' || raw === '低危' || raw === 'Low') return 'low'
+
+  return ''
+}
+
+function getSeverityClass(severity) {
+  const key = normalizeSeverity(severity)
+  return key ? `is-${key}` : ''
+}
+
+function getSeverityLabel(severity) {
+  const map = {
+    critical: '严重',
+    important: '重要',
+    moderate: '中等',
+    low: '低危'
+  }
+  return map[normalizeSeverity(severity)] || severity || '-'
+}
 </script>
 
 <style scoped lang="scss">
