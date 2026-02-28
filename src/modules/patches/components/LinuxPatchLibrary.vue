@@ -392,12 +392,12 @@ function getVendorIcon(vendor) {
 // 获取严重程度显示标签
 function getSeverityLabel(severity) {
   const map = {
-    Critical: '严重',
-    Important: '重要',
-    Moderate: '中等',
-    Low: '低危'
+    critical: '严重',
+    important: '重要',
+    moderate: '中等',
+    low: '低危'
   }
-  return map[severity] || severity
+  return map[severity?.toLowerCase()] || severity
 }
 
 // 格式化日期
@@ -541,8 +541,15 @@ async function handleFileUpload(event) {
   const files = event.target.files
   if (!files || files.length === 0) return
 
+  const MAX_SIZE = 100 * 1024 * 1024 // 100MB
+
   const formData = new FormData()
   for (let i = 0; i < files.length; i++) {
+    if (files[i].size > MAX_SIZE) {
+      ElMessage.warning(`文件 ${files[i].name} 大小超过100MB限制！`)
+      event.target.value = ''
+      return
+    }
     formData.append('files', files[i])
   }
 

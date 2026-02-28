@@ -105,7 +105,7 @@
             <el-select v-model="searchParams.source" style="width: 100px">
               <el-option value="all" label="全部" />
               <el-option value="redhat" label="Red Hat" />
-              <el-option value="kylinos" label="麒麟" />
+              <el-option value="kylinos" label="kylinos" />
             </el-select>
           </el-form-item>
           <el-form-item label="严重等级">
