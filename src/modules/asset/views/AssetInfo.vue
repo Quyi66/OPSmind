@@ -221,7 +221,6 @@
           ref="tableRef"
           v-loading="loading"
           :data="tableData"
-
           max-height="calc(100vh - 340px)"
           @selection-change="handleSelectionChange"
         >
@@ -230,21 +229,34 @@
           <el-table-column label="资产状态" width="80" fixed="left">
             <template #default="{ row }">
               <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-                {{ row.status === 1 ? '在线' : '下线' }}
+                {{ row.status === 1 ? '在线' : '离线' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="IP" label="纳管IP" width="130" />
+          <el-table-column prop="needReboot" label="是否需要重启" width="120">
+            <template #default="{ row }">
+              <el-tag
+                :type="
+                  row.needReboot === 1 ? 'danger' : row.needReboot === 0 ? 'success' : 'warning'
+                "
+                size="small"
+                round
+              >
+                {{ row.needReboot === 1 ? '是' : row.needReboot === 0 ? '否' : '未知' }}
               </el-tag>
             </template>
           </el-table-column>
 
-          <el-table-column prop="IP" label="纳管IP" width="130" />
-
-          <el-table-column label="连通状态" width="80" align="left">
+          <el-table-column label="连通状态" width="90" align="left" prop="CONN_LATEST_STATUS">
             <template #default="{ row }">
-              <i v-if="row.CONN_LATEST_STATUS === 1" class="fa fa-check-circle text-success"></i>
-              <i
-                v-else-if="row.CONN_LATEST_STATUS === 0"
-                class="fa fa-times-circle text-danger"
-              ></i>
-              <i v-else class="fa fa-question-circle text-warning"></i>
+              <i v-if="row.CONN_LATEST_STATUS === '1'" class="fa fa-check-circle text-success">
+                已联通
+              </i>
+              <i v-else-if="row.CONN_LATEST_STATUS === '0'" class="fa fa-times-circle text-danger">
+                未联通
+              </i>
+              <i v-else class="fa fa-question-circle text-warning">未知</i>
             </template>
           </el-table-column>
 
@@ -258,7 +270,12 @@
 
           <el-table-column prop="业务系统" label="业务系统" width="100" show-overflow-tooltip />
           <el-table-column prop="os_version" label="系统版本" width="110" />
-          <el-table-column prop="os_distro" label="操作系统" min-width="200" show-overflow-tooltip />
+          <el-table-column
+            prop="os_distro"
+            label="操作系统"
+            min-width="200"
+            show-overflow-tooltip
+          />
           <el-table-column prop="hostname" label="主机名" width="120" show-overflow-tooltip />
           <el-table-column prop="arch" label="系统架构" width="80" />
           <el-table-column prop="cpu_vcpus" label="cpu个数" width="80" />
