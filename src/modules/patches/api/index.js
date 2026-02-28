@@ -70,8 +70,8 @@ export const patchScanApi = {
    * 获取单个主机信息
    * POST /dts/api/dts/q/data/VAP2_GET_MACHINE_INFO/
    * @param {Object} params - 查询参数
-  * @param {string} params.host_id - 主机ID
-  * @param {string} params.host_key - 主机 IP
+   * @param {string} params.host_id - 主机ID
+   * @param {string} params.host_key - 主机 IP
    * @returns {Promise}
    */
   getMachineInfo(params) {
@@ -480,6 +480,19 @@ export const patchLibraryApi = {
    */
   getLibraryStats() {
     return apiService.get(`${VAP_API_PREFIX}/v2/library/stats`)
+  },
+
+  /**
+   * 上传并导入补丁
+   * @param {FormData} formData - 包含 files 的表单数据
+   * @returns {Promise}
+   */
+  uploadAndImport(formData) {
+    return apiService.post('/vap/api/vap/v2/patch/upload-and-import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
   }
 }
 

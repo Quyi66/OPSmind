@@ -89,6 +89,17 @@
       <el-button type="primary" size="small" @click="handleCheckPatchUpdate">
         检查补丁库更新
       </el-button>
+      <el-button type="primary" size="small" :loading="uploadLoading" @click="fileInput.click()">
+        上传补丁文件
+      </el-button>
+      <input
+        type="file"
+        ref="fileInput"
+        accept=".json"
+        multiple
+        style="display: none"
+        @change="handleFileUpload"
+      />
       <el-button
         :disabled="selectedPatches.length === 0"
         size="small"
@@ -129,7 +140,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column prop="patch_id" label="补丁编号" width="150" show-overflow-tooltip>
+        <el-table-column prop="patch_id" label="补丁编号" width="180" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="handleViewDetail(row)">
               {{ row.patch_id }}
@@ -227,7 +238,15 @@
           <!-- 严重程度 -->
           <div class="patch-detail-row">
             <span class="patch-detail-label">严重程度：</span>
-            <span class="patch-detail-value">{{ patchDetail.severity }}</span>
+            <span class="patch-detail-value">
+              <el-tag
+                effect="dark"
+                class="severity-tag"
+                :class="'is-' + (patchDetail.severity || '').toLowerCase()"
+              >
+                {{ getSeverityLabel(patchDetail.severity) }}
+              </el-tag>
+            </span>
           </div>
 
           <!-- 描述 -->
@@ -299,7 +318,9 @@ const REMOVE_WHITELIST_JOB_ID = 'an2cRO' // 移除白名单作业ID
 
 // 加载状态
 const loading = ref(false)
+const uploadLoading = ref(false)
 const tableRef = ref(null)
+const fileInput = ref(null)
 
 // 厂商统计数据
 const vendorStats = ref([])
@@ -512,6 +533,57 @@ async function handleCheckPatchUpdate() {
       console.error('Check patch update failed:', error)
       ElMessage.error('操作失败')
     }
+  }
+}
+
+// 文件上传并导入
+async function handleFileUpload(event) {
+  const files = event.target.files
+  if (!files || files.length === 0) return
+
+  const formData = new FormData()
+  for (let i = 0; i < files.length; i++) {
+    formData.append('files', files[i])
+  }
+
+  // 每次选择完成后清空 input 的值，以便能够重复选择相同文件
+  event.target.value = ''
+
+  uploadLoading.value = true
+  try {
+    const res = await patchLibraryApi.uploadAndImport(formData)
+    const data = res?.data || res
+
+    if (data.status === 'RUNNING') {
+      let msg = data.message || '文件上传成功，补丁库导入任务已启动'
+      if (data.failed && data.failed.length > 0) {
+        msg += `<br>部分失败文件: ${data.failed.join(', ')}`
+        ElMessage.warning({
+          dangerouslyUseHTMLString: true,
+          message: msg,
+          showClose: true,
+          duration: 5000
+        })
+      } else {
+        ElMessage.success(msg)
+      }
+    } else {
+      let msg = data.message || '上传处理失败'
+      if (data.failed && data.failed.length > 0) {
+        msg += `<br>失败原因:<br>${data.failed.join('<br>')}`
+      }
+      ElMessage.error({
+        dangerouslyUseHTMLString: true,
+        message: msg,
+        showClose: true,
+        duration: 5000
+      })
+    }
+  } catch (error) {
+    console.error('Upload and import failed:', error)
+    ElMessage.error('上传失败，请检查网络或控制台日志')
+  } finally {
+    uploadLoading.value = false
   }
 }
 
