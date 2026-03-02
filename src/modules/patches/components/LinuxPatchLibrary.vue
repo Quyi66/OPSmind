@@ -90,7 +90,7 @@
         检查补丁库更新
       </el-button>
       <el-button type="primary" size="small" :loading="uploadLoading" @click="fileInput.click()">
-        上传补丁文件
+        上传补丁库文件
       </el-button>
       <input
         type="file"
