@@ -22,15 +22,15 @@ export const SSC_ROUTE_DEFS = [
     icon: 'fas fa-sitemap',
     component: () => import('./components/TeamManagement.vue')
   },
-  {
-    key: 'template',
-    path: 'template',
-    name: 'ssc-template',
-    title: '模版分配',
-    navLabel: '模版分配',
-    icon: 'fas fa-clipboard-list',
-    component: () => import('./components/TemplateAssignment.vue')
-  },
+  // {
+  //   key: 'template',
+  //   path: 'template',
+  //   name: 'ssc-template',
+  //   title: '模版分配',
+  //   navLabel: '模版分配',
+  //   icon: 'fas fa-clipboard-list',
+  //   component: () => import('./components/TemplateAssignment.vue')
+  // },
   {
     key: 'applet',
     path: 'applet',

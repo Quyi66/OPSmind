@@ -112,7 +112,6 @@ class AuthService implements IAuthService {
     authState.isLoading = true
 
     try {
-
       // 加密用户名、密码和 OTP 代码
       const encryptedData: Record<string, any> = {
         username: this.encrypt(credentials.username),
@@ -125,7 +124,6 @@ class AuthService implements IAuthService {
       if (credentials.otp) {
         encryptedData.otpCode = this.encrypt(credentials.otp)
       }
-
 
       const response = await fetch(`${this.baseURL}/oplus-portal/api/authenticate`, {
         method: 'POST',
@@ -186,7 +184,6 @@ class AuthService implements IAuthService {
         sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
       }
 
-
       // 返回与旧版兼容的格式
       return {
         success: true,
@@ -218,7 +215,7 @@ class AuthService implements IAuthService {
       // 跳转到登录页面
       if (typeof window !== 'undefined' && window.location) {
         // 使用 window.location 确保完全刷新页面状态
-        window.location.href = '/ops/'
+        window.location.href = '/opsMind/'
       }
     } catch (error) {
       console.error('❌ Logout error:', error)
@@ -422,7 +419,6 @@ class AuthService implements IAuthService {
     license: License
     otpEnabled: OTPStatus
   }> {
-
     try {
       // 1. 获取所有租户
       const tenants = await this.getTenants()
@@ -432,7 +428,6 @@ class AuthService implements IAuthService {
 
       // 3. 检查 OTP 状态
       const otpEnabled = await this.checkOTP()
-
 
       return {
         tenants,
@@ -606,7 +601,6 @@ class AuthService implements IAuthService {
       const userJson = JSON.stringify(user)
       sessionStorage.setItem(SESSION_CONFIG.tokenKey, token)
       sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
-
     } catch (error) {
       console.error('❌ Failed to set auth state:', error)
       throw error

@@ -31,7 +31,10 @@ export default defineConfig(({ command, mode }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), '')
   const isProduction = mode === 'production'
   const isDevelopment = mode === 'development'
-  const backendTarget = normalizeTarget(env.VITE_BACKEND_URL || env.VITE_BACKEND_PROXY_URL, DEFAULT_BACKEND_TARGET)
+  const backendTarget = normalizeTarget(
+    env.VITE_BACKEND_URL || env.VITE_BACKEND_PROXY_URL,
+    DEFAULT_BACKEND_TARGET
+  )
 
   return {
     plugins: [
@@ -43,28 +46,33 @@ export default defineConfig(({ command, mode }): UserConfig => {
       }),
 
       // 生产环境将构建产物 CSS 设为非阻塞加载
-      ...(isProduction ? [
-        {
-          name: 'defer-build-css',
-          enforce: 'post' as const,
-          transformIndexHtml(html: string) {
-            const cssAssetRegex = /<link\s+rel=["']stylesheet["']([^>]*?)href=["']([^"']*\/assets\/[^"']+\.css)["']([^>]*)>/g
+      ...(isProduction
+        ? [
+            {
+              name: 'defer-build-css',
+              enforce: 'post' as const,
+              transformIndexHtml(html: string) {
+                const cssAssetRegex =
+                  /<link\s+rel=["']stylesheet["']([^>]*?)href=["']([^"']*\/assets\/[^"']+\.css)["']([^>]*)>/g
 
-            return html.replace(
-              cssAssetRegex,
-              (_match: string, preAttrs: string, href: string, postAttrs: string) => {
-              const mergedAttrs = `${preAttrs || ''} ${postAttrs || ''}`.replace(/\s+/g, ' ').trim()
-              const attrs = mergedAttrs ? ` ${mergedAttrs}` : ''
+                return html.replace(
+                  cssAssetRegex,
+                  (_match: string, preAttrs: string, href: string, postAttrs: string) => {
+                    const mergedAttrs = `${preAttrs || ''} ${postAttrs || ''}`
+                      .replace(/\s+/g, ' ')
+                      .trim()
+                    const attrs = mergedAttrs ? ` ${mergedAttrs}` : ''
 
-              const preload = `<link rel="preload" as="style" href="${href}"${attrs} onload="this.onload=null;this.rel='stylesheet'">`
-              const noscript = `<noscript><link rel="stylesheet" href="${href}"${attrs}></noscript>`
+                    const preload = `<link rel="preload" as="style" href="${href}"${attrs} onload="this.onload=null;this.rel='stylesheet'">`
+                    const noscript = `<noscript><link rel="stylesheet" href="${href}"${attrs}></noscript>`
 
-              return `${preload}\n    ${noscript}`
+                    return `${preload}\n    ${noscript}`
+                  }
+                )
               }
-            )
-          }
-        } satisfies Plugin
-      ] : []),
+            } satisfies Plugin
+          ]
+        : []),
 
       // 自动导入 Vue/Element Plus API（如 ref, ElMessage 等）
       AutoImport({
@@ -75,10 +83,10 @@ export default defineConfig(({ command, mode }): UserConfig => {
           }),
           // 自动导入图标
           IconsResolver({
-            prefix: 'Icon',
-          }),
+            prefix: 'Icon'
+          })
         ],
-        dts: 'src/auto-imports.d.ts',
+        dts: 'src/auto-imports.d.ts'
       }),
 
       // 自动注册 Element Plus 组件（无需手动 import）
@@ -90,22 +98,22 @@ export default defineConfig(({ command, mode }): UserConfig => {
           }),
           // 图标解析器（使用 i-ep-xxx 语法）
           IconsResolver({
-            enabledCollections: ['ep'],
-          }),
+            enabledCollections: ['ep']
+          })
         ],
-        dts: 'src/components.d.ts',
+        dts: 'src/components.d.ts'
       }),
 
       // 图标支持（按需加载）
       Icons({
-        autoInstall: true,
+        autoInstall: true
       }),
 
-      // 在开发环境下，将 /ops 重定向为 /ops/，避免 Vite base 提示
+      // 在开发环境下，将 /opsMind 重定向为 /opsMind/，避免 Vite base 提示
       {
         name: 'ops-trailing-slash-redirect',
         configureServer(server) {
-          const base = mode === 'production' ? '/ops/' : '/ops/'
+          const base = mode === 'production' ? '/opsMind/' : '/opsMind/'
           const noSlash = base.endsWith('/') ? base.slice(0, -1) : base
           server.middlewares.use((req, res, next) => {
             const url = req.url || '/'
@@ -123,21 +131,23 @@ export default defineConfig(({ command, mode }): UserConfig => {
       },
 
       // 生产环境启用 gzip 和 brotli 压缩
-      ...(isProduction ? [
-        compression({
-          algorithms: ['gzip'],
-          exclude: [/\.(br)$/, /\.(gz)$/],
-          threshold: 1024, // 只压缩大于 1KB 的文件
-        }),
-        compression({
-          algorithms: ['brotliCompress'],
-          exclude: [/\.(br)$/, /\.(gz)$/],
-          threshold: 1024,
-        }),
-      ] : []),
+      ...(isProduction
+        ? [
+            compression({
+              algorithms: ['gzip'],
+              exclude: [/\.(br)$/, /\.(gz)$/],
+              threshold: 1024 // 只压缩大于 1KB 的文件
+            }),
+            compression({
+              algorithms: ['brotliCompress'],
+              exclude: [/\.(br)$/, /\.(gz)$/],
+              threshold: 1024
+            })
+          ]
+        : [])
     ],
 
-    base: mode === 'production' ? '/ops/' : '/ops/',
+    base: mode === 'production' ? '/opsMind/' : '/opsMind/',
 
     server: {
       port: parseInt(env.VITE_DEV_PORT) || 5173,
@@ -146,8 +156,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
       cors: env.VITE_DEV_CORS === 'true',
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+        Pragma: 'no-cache',
+        Expires: '0'
       },
       fs: {
         allow: ['..']
@@ -157,9 +167,10 @@ export default defineConfig(({ command, mode }): UserConfig => {
           target: backendTarget,
           changeOrigin: true,
           secure: false,
-          configure: (proxy) => {
-            proxy.on('proxyRes', (proxyRes) => {
-              proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+          configure: proxy => {
+            proxy.on('proxyRes', proxyRes => {
+              proxyRes.headers['cache-control'] =
+                'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
               proxyRes.headers['pragma'] = 'no-cache'
               proxyRes.headers['expires'] = '0'
             })
@@ -212,7 +223,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
             if (!id.includes('node_modules')) return undefined
 
             // Element Plus 合并为一个 chunk（避免组件间循环依赖导致初始化错误）
-            if (/element-plus|@element-plus|@popperjs|@floating-ui/.test(id)) return 'vendor-element'
+            if (/element-plus|@element-plus|@popperjs|@floating-ui/.test(id))
+              return 'vendor-element'
 
             // 大型库单独分割（懒加载）
             if (/vue-echarts|echarts/.test(id)) return 'vendor-echarts'
@@ -231,13 +243,16 @@ export default defineConfig(({ command, mode }): UserConfig => {
           },
           chunkFileNames: 'js/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',
-          assetFileNames: (assetInfo) => {
+          assetFileNames: assetInfo => {
             const fileName = assetInfo.names?.[0] || 'asset'
             const info = fileName.split('.')
             const ext = info[info.length - 1]
-            if (/(\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$)/i.test(fileName)) return `media/[name]-[hash].${ext}`
-            if (/(\.(png|jpe?g|gif|svg)(\?.*)?$)/i.test(fileName)) return `images/[name]-[hash].${ext}`
-            if (/(\.(woff2?|eot|ttf|otf)(\?.*)?$)/i.test(fileName)) return `fonts/[name]-[hash].${ext}`
+            if (/(\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$)/i.test(fileName))
+              return `media/[name]-[hash].${ext}`
+            if (/(\.(png|jpe?g|gif|svg)(\?.*)?$)/i.test(fileName))
+              return `images/[name]-[hash].${ext}`
+            if (/(\.(woff2?|eot|ttf|otf)(\?.*)?$)/i.test(fileName))
+              return `fonts/[name]-[hash].${ext}`
             return `assets/[name]-[hash].${ext}`
           }
         }
@@ -246,7 +261,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       minify: isProduction ? 'esbuild' : false,
 
       reportCompressedSize: isProduction,
-      chunkSizeWarningLimit: 500  // 降低警告阈值，鼓励更细粒度分割
+      chunkSizeWarningLimit: 500 // 降低警告阈值，鼓励更细粒度分割
     },
 
     css: {
@@ -259,8 +274,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
 
     esbuild: isProduction
       ? {
-        drop: env.VITE_DEBUG ? ['debugger'] : ['console', 'debugger']
-      }
+          drop: env.VITE_DEBUG ? ['debugger'] : ['console', 'debugger']
+        }
       : undefined,
 
     define: {
