@@ -1,12 +1,7 @@
 <template>
   <div class="ops-page-layout">
     <!-- 提示区域 -->
-    <el-alert
-      type="success"
-      :closable="false"
-      show-icon
-      class="tip-alert"
-    >
+    <el-alert type="success" :closable="false" show-icon class="tip-alert">
       <template #title>
         <strong>提示</strong>
       </template>
@@ -19,12 +14,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filterParams" inline size="small">
         <el-form-item label="IP">
-          <el-input
-            v-model="filterParams.host_key"
-            placeholder=""
-            style="width: 140px"
-            clearable
-          />
+          <el-input v-model="filterParams.host_key" placeholder="" style="width: 140px" clearable />
         </el-form-item>
         <el-form-item label="KB编号">
           <el-input
@@ -55,7 +45,7 @@
         :disabled="selectedRows.length === 0"
         @click="handleBatchRollback"
       >
-        <i class="fa fa-history" style="margin-right: 4px;" />
+        <i class="fa fa-history" style="margin-right: 4px" />
         批量回滚
       </el-button>
       <el-button
@@ -66,8 +56,15 @@
       >
         删除
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="handleRefresh"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -115,9 +112,7 @@
             <el-button text type="primary" size="small" @click="handleRollback(row)">
               回滚
             </el-button>
-            <el-button text type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -145,9 +140,7 @@
       destroy-on-close
     >
       <div class="confirm-body">
-        <div class="confirm-tip">
-          确定执行回滚？请选择回滚完成后是否自动重启主机。
-        </div>
+        <div class="confirm-tip">确定执行回滚？请选择回滚完成后是否自动重启主机。</div>
         <div class="confirm-section">
           <span class="confirm-label">重启机器</span>
           <el-radio-group v-model="rebootOption" size="small">
@@ -218,7 +211,10 @@ const pagination = reactive({
 // 解析主机列表
 function parseHosts(hostsStr) {
   if (!hostsStr) return []
-  return hostsStr.split(',').map(h => h.trim()).filter(h => h)
+  return hostsStr
+    .split(',')
+    .map(h => h.trim())
+    .filter(h => h)
 }
 
 // 加载数据
@@ -322,11 +318,13 @@ async function handleConfirmSubmit() {
       const kbNumber = row.update_kb_numbers
       const match = kbNumber?.match(/\d+/)
       const updateKbs = match ? match[0] : kbNumber
-      const hosts = [{
-        key: row.hosts_id || row.id,
-        value: row.hosts,
-        assetType: 'windows'
-      }]
+      const hosts = [
+        {
+          key: row.hosts_id || row.id,
+          value: row.hosts,
+          assetType: 'windows'
+        }
+      ]
       await windowsRollbackApi.rollback({
         update_kbs: updateKbs,
         hosts: hosts,
@@ -359,11 +357,7 @@ function handleConfirmCancel() {
 // 单个删除 - 作业代码 aJlha6
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm(
-      '确定要删除此记录吗？',
-      '确认删除',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm('确定要删除此记录吗？', '确认删除', { type: 'warning' })
 
     await windowsRollbackApi.deleteHistUpdateKbs([row.id])
     ElMessage.success('删除成功')
@@ -430,7 +424,7 @@ defineExpose({ refresh })
 }
 
 .filter-label {
-  color: #606266;
+  color: var(--el-text-color-regular);
   white-space: nowrap;
 }
 
@@ -439,7 +433,7 @@ defineExpose({ refresh })
 }
 
 .more-link {
-  color: #0d6efd;
+  color: var(--el-color-primary);
   cursor: pointer;
 
   &:hover {
@@ -460,7 +454,7 @@ defineExpose({ refresh })
 }
 
 .confirm-tip {
-  color: #606266;
+  color: var(--el-text-color-regular);
   line-height: 1.6;
 }
 
@@ -472,7 +466,7 @@ defineExpose({ refresh })
 
 .confirm-label {
   width: 70px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   flex-shrink: 0;
 }
 
@@ -485,7 +479,7 @@ defineExpose({ refresh })
 .confirm-target {
   display: flex;
   gap: 8px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .confirm-host {
@@ -493,6 +487,6 @@ defineExpose({ refresh })
 }
 
 .confirm-kb {
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 </style>

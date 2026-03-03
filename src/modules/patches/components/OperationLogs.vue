@@ -151,7 +151,9 @@
           <el-table-column :width="actionColumnWidth" fixed="right" label="操作">
             <template #default="{ row }">
               <div class="action-buttons">
-                <el-button text type="primary" size="small" @click="handleViewRunResult(row)">详情</el-button>
+                <el-button text type="primary" size="small" @click="handleViewRunResult(row)">
+                  详情
+                </el-button>
                 <el-button
                   v-if="canShowWindowsScanReport(row)"
                   text
@@ -399,19 +401,13 @@
       :title="selectedJobTitle"
     />
 
-    <ScanReportDialog
-      v-model="scanReportVisible"
-      :run-id="scanReportRunId"
-    />
+    <ScanReportDialog v-model="scanReportVisible" :run-id="scanReportRunId" />
 
-    <WindowsScanReportDialog
-      v-model="winScanReportVisible"
-      :run-id="winScanReportRunId"
-    />
+    <WindowsScanReportDialog v-model="winScanReportVisible" :run-id="winScanReportRunId" />
 
     <!-- 目标节点列表对话框 -->
     <el-dialog v-model="hostsDialogVisible" title="目标节点" width="520px" destroy-on-close>
-      <div v-if="hostsDialogList.length" style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <div v-if="hostsDialogList.length" style="display: flex; flex-wrap: wrap; gap: 8px">
         <el-tag v-for="(host, idx) in hostsDialogList" :key="idx" type="info">
           {{ host }}
         </el-tag>
@@ -443,7 +439,6 @@ const activeTab = ref('operation')
 // ========== 操作记录 Tab ==========
 const loading = ref(false)
 const tableData = ref([])
-
 
 function getSeverityClass(severity) {
   if (!severity) return ''
@@ -491,8 +486,8 @@ const winScanReportRunId = ref('')
 
 const actionColumnWidth = computed(() => {
   const hasWindows = tableData.value.some(row => canShowWindowsScanReport(row))
-  const hasOther = tableData.value.some(row =>
-    canShowScanReport(row) || canShowInstallReport(row) || canShowRollbackReport(row)
+  const hasOther = tableData.value.some(
+    row => canShowScanReport(row) || canShowInstallReport(row) || canShowRollbackReport(row)
   )
   if (!hasWindows && !hasOther) return 80
   return hasWindows ? 190 : 130
@@ -577,8 +572,6 @@ function getStatusLabel(status) {
   return map[status] || status
 }
 
-
-
 // 时间格式化
 function formatTimestamp(timestamp) {
   if (!timestamp) return '-'
@@ -660,7 +653,10 @@ function translateMessage(messageStr) {
 
 function parseHosts(hostsStr) {
   if (!hostsStr) return []
-  return hostsStr.split(',').map(host => host.trim()).filter(Boolean)
+  return hostsStr
+    .split(',')
+    .map(host => host.trim())
+    .filter(Boolean)
 }
 
 function handleShowAllHosts(row) {
@@ -703,9 +699,7 @@ function calculateDuration(startTime, endTime) {
 async function loadData() {
   loading.value = true
   try {
-    const keywordFilter = searchText.value
-      ? `message|username:*${searchText.value}*`
-      : ''
+    const keywordFilter = searchText.value ? `message|username:*${searchText.value}*` : ''
     const response = await patchLogsApi.getLogs({
       page: pagination.page,
       size: pagination.pageSize,
@@ -832,15 +826,12 @@ async function fetchReportFileInfo(path) {
   const api = useApi()
   const tenantId = authService.getTenantId()
   const encodedPath = encodeURIComponent(path)
-  const response = await api.get(
-    `/gfs/api/gfs/v2/staticfs/f/${tenantId}/file/${encodedPath}`,
-    {
-      params: {
-        cacheBuster: Date.now(),
-        isContent: true
-      }
+  const response = await api.get(`/gfs/api/gfs/v2/staticfs/f/${tenantId}/file/${encodedPath}`, {
+    params: {
+      cacheBuster: Date.now(),
+      isContent: true
     }
-  )
+  })
   return response?.data || response
 }
 
@@ -934,8 +925,8 @@ async function downloadInstallReport(row) {
       : 'VAP_EXPORT_DATA/patch_install/'
     const fileInfo = await fetchReportFileInfo(reportPath)
     const downloadUri = fileInfo?.fileContent?.downloadUri || fileInfo?.downloadUri
-    const filename = fileInfo?.fileContent?.name
-      || `patch_install_${formatFilenameTimestamp(row.start_time)}.html`
+    const filename =
+      fileInfo?.fileContent?.name || `patch_install_${formatFilenameTimestamp(row.start_time)}.html`
     if (!downloadUri) {
       throw new Error('未找到下载地址')
     }
@@ -1083,7 +1074,7 @@ function handlePatchSizeChange(size) {
 }
 
 // Tab 切换时加载数据
-watch(activeTab, (newTab) => {
+watch(activeTab, newTab => {
   if (newTab === 'vulnerability' && vulTableData.value.length === 0) {
     loadVulData()
   } else if (newTab === 'patch' && patchTableData.value.length === 0) {
@@ -1111,7 +1102,7 @@ onMounted(() => {
 
 .filter-label {
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   white-space: nowrap;
 }
 
@@ -1133,5 +1124,4 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 6px;
 }
-
 </style>

@@ -42,7 +42,6 @@
           </el-button>
         </el-form-item>
       </el-form>
-
     </div>
 
     <!-- 操作区 -->
@@ -466,14 +465,14 @@ defineExpose({ refresh })
 .kb-link {
   display: inline-block;
   padding: 2px 8px;
-  background: #6c757d;
+  background: var(--el-text-color-secondary);
   color: #fff;
   border-radius: 10px;
   font-size: 12px;
   text-decoration: none;
 
   &:hover {
-    background: #5a6268;
+    background: var(--el-text-color-regular);
     color: #fff;
   }
 }
@@ -496,7 +495,7 @@ defineExpose({ refresh })
   gap: 8px;
   padding: 12px 16px 0;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .fix-selection__card-title {

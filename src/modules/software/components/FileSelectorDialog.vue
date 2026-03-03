@@ -729,7 +729,7 @@ function handleConfirm() {
     flex: 3;
     display: flex;
     flex-direction: column;
-    background: #f8f9fa;
+    background: var(--el-bg-color-page);
   }
 
   .column-header {
@@ -738,14 +738,14 @@ function handleConfirm() {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #fdfdfd;
+    background: var(--el-fill-color-light);
     border-bottom: 1px solid var(--el-border-color-light);
     flex-shrink: 0;
 
     .title {
       font-size: 14px;
       font-weight: 600;
-      color: #303133;
+      color: var(--el-text-color-primary);
     }
 
     .breadcrumb {
@@ -765,7 +765,7 @@ function handleConfirm() {
         &::before {
           content: '/';
           margin: 0 6px;
-          color: #c0c4cc;
+          color: var(--el-text-color-placeholder);
         }
 
         &:first-child::before {
@@ -773,7 +773,7 @@ function handleConfirm() {
         }
 
         a {
-          color: #409eff;
+          color: var(--el-color-primary);
           text-decoration: none;
           &:hover {
             text-decoration: underline;
@@ -781,7 +781,7 @@ function handleConfirm() {
         }
 
         &.active span {
-          color: #909399;
+          color: var(--el-text-color-secondary);
         }
       }
     }

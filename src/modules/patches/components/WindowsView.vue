@@ -63,9 +63,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import * as echarts from 'echarts'
 import { windowsViewApi } from '../api'
+import { useTheme } from '@/composables/useTheme'
+
+const { isDark } = useTheme()
 
 // 状态数据
 const loadingStats = ref(false)
@@ -127,15 +130,12 @@ function initBarChart(data) {
   if (!barChartRef.value) return
   if (barChart) barChart.dispose()
 
-  barChart = echarts.init(barChartRef.value)
+  barChart = echarts.init(barChartRef.value, isDark.value ? 'dark' : '')
 
   const option = {
     tooltip: {
       trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      borderColor: '#eee',
-      textStyle: { color: '#333' }
+      axisPointer: { type: 'shadow' }
     },
     grid: {
       left: '3%',
@@ -147,8 +147,8 @@ function initBarChart(data) {
     xAxis: {
       type: 'category',
       data: data.map(d => d.name),
-      axisLine: { lineStyle: { color: '#E4E7ED' } },
-      axisLabel: { color: '#606266', fontSize: 12 },
+      axisLine: { lineStyle: {} },
+      axisLabel: { fontSize: 12 },
       axisTick: { show: false }
     },
     yAxis: {
@@ -156,9 +156,9 @@ function initBarChart(data) {
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: {
-        lineStyle: { type: 'dashed', color: '#E4E7ED' }
+        lineStyle: { type: 'dashed' }
       },
-      axisLabel: { color: '#909399' }
+      axisLabel: {}
     },
     series: [
       {
@@ -178,7 +178,6 @@ function initBarChart(data) {
         label: {
           show: true,
           position: 'top',
-          color: '#606266',
           fontWeight: 'bold'
         }
       }
@@ -193,17 +192,14 @@ function initLineChart(data) {
   if (!lineChartRef.value) return
   if (lineChart) lineChart.dispose()
 
-  lineChart = echarts.init(lineChartRef.value)
+  lineChart = echarts.init(lineChartRef.value, isDark.value ? 'dark' : '')
 
   const dates = data.map(r => r.scan_date)
   const values = data.map(r => r.patch_count || 0)
 
   const option = {
     tooltip: {
-      trigger: 'axis',
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      borderColor: '#eee',
-      textStyle: { color: '#333' }
+      trigger: 'axis'
     },
     grid: {
       left: '3%',
@@ -216,9 +212,8 @@ function initLineChart(data) {
       type: 'category',
       boundaryGap: false,
       data: dates,
-      axisLine: { lineStyle: { color: '#E4E7ED' } },
+      axisLine: { lineStyle: {} },
       axisLabel: {
-        color: '#606266',
         formatter: value => {
           if (!value) return ''
           const d = new Date(value)
@@ -232,9 +227,9 @@ function initLineChart(data) {
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: {
-        lineStyle: { type: 'dashed', color: '#E4E7ED' }
+        lineStyle: { type: 'dashed' }
       },
-      axisLabel: { color: '#909399' }
+      axisLabel: {}
     },
     series: [
       {
@@ -299,6 +294,12 @@ onUnmounted(() => {
   lineChart?.dispose()
 })
 
+// 监听主题切换
+watch(isDark, () => {
+  // 重建图表
+  initData()
+})
+
 defineExpose({ refresh })
 </script>
 
@@ -353,35 +354,35 @@ defineExpose({ refresh })
 
   .kpi-label {
     font-size: 14px;
-    color: #606266;
+    color: var(--el-text-color-regular);
     margin-bottom: 8px;
   }
 
   .kpi-value {
     font-size: 28px;
     font-weight: 700;
-    color: #303133;
+    color: var(--el-text-color-primary);
     font-family: 'Inter', sans-serif;
   }
 
   // 不同类型的配色
   &--critical {
     .kpi-icon {
-      background: #fff0f0;
+      background: rgba(255, 77, 79, 0.1);
       color: #ff4d4f;
     }
   }
 
   &--security {
     .kpi-icon {
-      background: #fff7e6;
+      background: rgba(250, 140, 22, 0.1);
       color: #fa8c16;
     }
   }
 
   &--rollups {
     .kpi-icon {
-      background: #e6f7ff;
+      background: rgba(24, 144, 255, 0.1);
       color: #1890ff;
     }
   }
@@ -423,13 +424,13 @@ defineExpose({ refresh })
     .chart-card__title {
       font-size: 16px;
       font-weight: 600;
-      color: #303133;
+      color: var(--el-text-color-primary);
       display: flex;
       align-items: center;
       gap: 8px;
 
       i {
-        color: #909399;
+        color: var(--el-text-color-secondary);
         font-size: 14px;
       }
     }

@@ -220,7 +220,7 @@ async function handleStartInstall() {
   background: var(--el-bg-color);
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  border: 1px solid #e6ebf5;
+  border: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -242,17 +242,17 @@ async function handleStartInstall() {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #fdfdfd;
+  background: var(--el-fill-color-light);
 
   i {
     font-size: 18px;
-    color: #409eff;
+    color: var(--el-color-primary);
   }
 
   .title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
     flex: 1;
   }
 }
@@ -269,7 +269,7 @@ async function handleStartInstall() {
   padding: 12px 20px;
   background: var(--el-bg-color-page);
   border-top: 1px solid var(--el-border-color-light);
-  color: #909399;
+  color: var(--el-text-color-secondary);
   font-size: 13px;
 
   &.actions-footer {
@@ -297,8 +297,8 @@ async function handleStartInstall() {
     transition: all 0.2s;
 
     &:hover {
-      border-color: #409eff;
-      background: #f0f7ff;
+      border-color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
       .remove-btn {
         opacity: 1;
       }
@@ -318,7 +318,7 @@ async function handleStartInstall() {
 
       .file-name {
         font-size: 14px;
-        color: #606266;
+        color: var(--el-text-color-regular);
         word-break: break-all;
         line-height: 1.4;
       }
@@ -342,14 +342,14 @@ async function handleStartInstall() {
   justify-content: center;
   border: 2px dashed var(--el-border-color-light);
   border-radius: 8px;
-  color: #c0c4cc;
+  color: var(--el-text-color-placeholder);
   cursor: pointer;
   transition: all 0.3s;
 
   &:hover {
-    border-color: #409eff;
-    color: #409eff;
-    background: #f0f7ff;
+    border-color: var(--el-color-primary);
+    color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
   }
 
   i {
@@ -368,21 +368,21 @@ async function handleStartInstall() {
 }
 
 .install-desc {
-  background: #fdf6ec;
+  background: var(--el-color-warning-light-9);
   border-radius: 6px;
   padding: 15px 20px;
-  border-left: 4px solid #e6a23c;
+  border-left: 4px solid var(--el-color-warning);
 
   h4 {
     margin: 0 0 10px 0;
-    color: #e6a23c;
+    color: var(--el-color-warning);
     font-size: 15px;
   }
 
   ul {
     margin: 0;
     padding-left: 20px;
-    color: #8a6d3b;
+    color: var(--el-text-color-regular);
     font-size: 13px;
     line-height: 1.8;
   }
@@ -399,7 +399,7 @@ async function handleStartInstall() {
     width: 6px;
   }
   &::-webkit-scrollbar-thumb {
-    background: #e4e7ed;
+    background: var(--el-border-color-lighter);
     border-radius: 3px;
   }
   &::-webkit-scrollbar-track {

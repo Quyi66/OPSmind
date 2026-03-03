@@ -77,7 +77,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="loading" :data="paginatedCustomRepoData"  height="100%">
+        <el-table v-loading="loading" :data="paginatedCustomRepoData" height="100%">
           <el-table-column prop="name" label="YUM源名称" min-width="120" sortable />
           <el-table-column prop="description" label="描述" min-width="120" sortable />
           <el-table-column
@@ -178,7 +178,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="hostLoading" :data="paginatedHostTableData"  height="100%">
+        <el-table v-loading="hostLoading" :data="paginatedHostTableData" height="100%">
           <el-table-column prop="$data_owner" label="主机" min-width="150">
             <template #default="{ row }">
               <el-link type="primary" :underline="false" @click="handleViewHostDetail(row)">
@@ -331,7 +331,6 @@
         <el-table
           v-loading="hostDetailLoading"
           :data="paginatedRepoDetailData"
-         
           style="width: 100%"
           size="small"
           max-height="500"
@@ -1156,16 +1155,16 @@ defineExpose({ refresh })
   }
 
   .selected-hosts-list {
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--el-border-color-light);
     border-radius: 4px;
 
     .list-header {
       padding: 10px 16px;
-      background: #f8f9fa;
-      border-bottom: 1px solid #e9ecef;
+      background: var(--el-fill-color-light);
+      border-bottom: 1px solid var(--el-border-color-light);
       font-size: 14px;
       font-weight: 500;
-      color: #495057;
+      color: var(--el-text-color-regular);
     }
 
     .list-body {
@@ -1192,17 +1191,17 @@ defineExpose({ refresh })
   }
 
   .selected-hosts-area {
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--el-border-color-light);
     border-radius: 4px;
     margin-top: 16px;
 
     .hosts-header {
       padding: 10px 16px;
-      background: #f8f9fa;
-      border-bottom: 1px solid #e9ecef;
+      background: var(--el-fill-color-light);
+      border-bottom: 1px solid var(--el-border-color-light);
       font-size: 14px;
       font-weight: 500;
-      color: #495057;
+      color: var(--el-text-color-regular);
     }
 
     .hosts-body {

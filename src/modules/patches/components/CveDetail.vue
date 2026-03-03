@@ -325,7 +325,6 @@
         <el-button type="primary" @click="goBack">返回列表</el-button>
       </el-empty>
     </div>
-
   </div>
 </template>
 
@@ -333,6 +332,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
+import { useTheme } from '@/composables/useTheme'
 import {
   TopRight,
   Box,
@@ -393,6 +393,7 @@ const affectedHostsLoading = ref(false)
 const affectedHostsLoaded = ref(false)
 const affectedHostsError = ref('')
 const router = useRouter()
+const { isDark } = useTheme()
 
 // 图表引用
 const impactChartRef = ref(null)
@@ -511,12 +512,7 @@ function normalizeSeverityKey(severity) {
   const lower = raw.toLowerCase()
 
   if (lower === 'critical' || raw === '严重' || raw === 'CRITICAL') return 'critical'
-  if (
-    lower === 'important' ||
-    raw === '重要' ||
-    raw === '高危' ||
-    raw === 'IMPORTANT'
-  )
+  if (lower === 'important' || raw === '重要' || raw === '高危' || raw === 'IMPORTANT')
     return 'important'
   if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'MODERATE')
     return 'moderate'
@@ -783,7 +779,7 @@ function initImpactChart() {
   if (!impactChartRef.value) return
   if (impactChart) impactChart.dispose()
 
-  impactChart = echarts.init(impactChartRef.value)
+  impactChart = echarts.init(impactChartRef.value, isDark.value ? 'dark' : '')
   const summary = cveDetail.value?.summary || {}
   const total = summary.total || 0
 
@@ -799,10 +795,14 @@ function initImpactChart() {
   if (summary.willNotFix > 0)
     data.push({ value: summary.willNotFix, name: '不修复', itemStyle: { color: '#e6a23c' } })
   if (summary.outOfSupport > 0)
-    data.push({ value: summary.outOfSupport, name: '超出支持', itemStyle: { color: '#303133' } })
+    data.push({ value: summary.outOfSupport, name: '超出支持', itemStyle: { color: '#8c8c8c' } })
 
   if (data.length === 0) {
-    data.push({ value: 1, name: '暂无数据', itemStyle: { color: '#ebeef5' } })
+    data.push({
+      value: 1,
+      name: '暂无数据',
+      itemStyle: { color: isDark.value ? '#4c4d4f' : '#ebeef5' }
+    })
   }
 
   const option = {
@@ -825,7 +825,7 @@ function initImpactChart() {
             style: {
               text: total.toString(),
               textAlign: 'center',
-              fill: '#212529',
+              fill: isDark.value ? '#e5eaf3' : '#212529',
               fontSize: 24,
               fontWeight: 'bold'
             },
@@ -837,7 +837,7 @@ function initImpactChart() {
             style: {
               text: '总计',
               textAlign: 'center',
-              fill: '#6c757d',
+              fill: isDark.value ? '#a3a6ad' : '#6c757d',
               fontSize: 12
             },
             left: 'center',
@@ -915,6 +915,17 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (impactChart) impactChart.dispose()
+})
+
+// 监听主题切换，重建图表
+watch(isDark, () => {
+  if (impactChart) {
+    impactChart.dispose()
+    impactChart = null
+  }
+  if (cveDetail.value) {
+    nextTick(() => initImpactChart())
+  }
 })
 </script>
 
@@ -1137,7 +1148,7 @@ onUnmounted(() => {
     background: var(--el-bg-color);
     box-shadow: var(--el-box-shadow); /* Lift effect */
     transform: translateY(-2px);
-    border-color: #dcdfe6;
+    border-color: var(--el-border-color);
   }
 
   /* Left Border Indicator */
@@ -1153,19 +1164,19 @@ onUnmounted(() => {
   }
 
   &.is-danger::before {
-    background-color: var(--el-fill-color-light);
+    background-color: #f53f3f;
   }
   &.is-success::before {
     background-color: #00b42a;
   }
   &.is-warning::before {
-    background-color: var(--el-fill-color-light);
+    background-color: #ff7d00;
   }
   &.is-primary::before {
     background-color: #165dff;
   }
   &.is-info::before {
-    background-color: var(--el-text-color-secondary);
+    background-color: #909399;
   }
   &.is-default::before {
     background-color: #c0c4cc;

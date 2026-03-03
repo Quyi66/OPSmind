@@ -16,12 +16,7 @@
           </el-input>
         </el-form-item>
         <el-form-item label="CVE">
-          <el-input
-            v-model="filters.vul_id"
-            placeholder="请输入CVE"
-            style="width: 200px"
-            clearable
-          >
+          <el-input v-model="filters.vul_id" placeholder="请输入CVE" style="width: 200px" clearable>
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -58,8 +53,15 @@
       >
         删除
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -98,13 +100,29 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="update_id" label="更新维度（CVE/PKG）" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="patch_id" label="修复补丁编号" min-width="140" show-overflow-tooltip />
+        <el-table-column
+          prop="update_id"
+          label="更新维度（CVE/PKG）"
+          min-width="160"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="patch_id"
+          label="修复补丁编号"
+          min-width="140"
+          show-overflow-tooltip
+        />
         <el-table-column prop="update_pkgs" label="更新软件" min-width="280">
           <template #default="{ row }">
             <div class="update-pkgs-cell">
-              <div v-for="(pkg, idx) in parseUpdatePkgs(row.update_pkgs).slice(0, 2)" :key="idx" class="pkg-update">
-                {{ pkg.old_pkg }} <span class="arrow">→</span> {{ pkg.new_pkg }}
+              <div
+                v-for="(pkg, idx) in parseUpdatePkgs(row.update_pkgs).slice(0, 2)"
+                :key="idx"
+                class="pkg-update"
+              >
+                {{ pkg.old_pkg }}
+                <span class="arrow">→</span>
+                {{ pkg.new_pkg }}
               </div>
               <el-popover
                 v-if="parseUpdatePkgs(row.update_pkgs).length > 2"
@@ -113,11 +131,19 @@
                 :width="400"
               >
                 <template #reference>
-                  <span class="more-link">+{{ parseUpdatePkgs(row.update_pkgs).length - 2 }} 更多</span>
+                  <span class="more-link">
+                    +{{ parseUpdatePkgs(row.update_pkgs).length - 2 }} 更多
+                  </span>
                 </template>
                 <div class="pkgs-popover">
-                  <div v-for="(pkg, idx) in parseUpdatePkgs(row.update_pkgs)" :key="idx" class="pkg-update">
-                    {{ pkg.old_pkg }} <span class="arrow">→</span> {{ pkg.new_pkg }}
+                  <div
+                    v-for="(pkg, idx) in parseUpdatePkgs(row.update_pkgs)"
+                    :key="idx"
+                    class="pkg-update"
+                  >
+                    {{ pkg.old_pkg }}
+                    <span class="arrow">→</span>
+                    {{ pkg.new_pkg }}
                   </div>
                 </div>
               </el-popover>
@@ -134,9 +160,7 @@
             <el-button text type="primary" size="small" @click="handleRollback(row)">
               回滚
             </el-button>
-            <el-button text type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -157,19 +181,11 @@
     </div>
 
     <!-- 回滚确认对话框 -->
-    <el-dialog
-      v-model="rollbackDialogVisible"
-      title="确认回滚"
-      width="500px"
-    >
+    <el-dialog v-model="rollbackDialogVisible" title="确认回滚" width="500px">
       <div class="rollback-confirm">
         <el-alert type="warning" :closable="false" show-icon>
-          <template #title>
-            确定要回滚选中的 {{ rollbackIds.length }} 条更新记录吗？
-          </template>
-          <template #default>
-            回滚操作将把软件包恢复到更新前的版本，此操作不可撤销。
-          </template>
+          <template #title>确定要回滚选中的 {{ rollbackIds.length }} 条更新记录吗？</template>
+          <template #default>回滚操作将把软件包恢复到更新前的版本，此操作不可撤销。</template>
         </el-alert>
       </div>
       <template #footer>
@@ -230,7 +246,7 @@ const sortedData = computed(() => {
     if (prop === 'hosts') return parseHosts(item.hosts)[0] || ''
     if (prop === 'update_pkgs') return parseUpdatePkgs(item.update_pkgs).length
     const val = item[prop]
-    return typeof val === 'string' ? val.toLowerCase() : val ?? ''
+    return typeof val === 'string' ? val.toLowerCase() : (val ?? '')
   }
 
   return data.sort((a, b) => {
@@ -275,7 +291,10 @@ const rollbackIds = ref([])
 // 解析主机列表
 function parseHosts(hostsStr) {
   if (!hostsStr) return []
-  return hostsStr.split(',').map(h => h.trim()).filter(h => h)
+  return hostsStr
+    .split(',')
+    .map(h => h.trim())
+    .filter(h => h)
 }
 
 // 解析更新软件包
@@ -292,14 +311,16 @@ function parseUpdatePkgs(pkgsStr) {
 function formatDateTime(dateStr) {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).replace(/\//g, '-')
+  return date
+    .toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+    .replace(/\//g, '-')
 }
 
 // 加载数据
@@ -418,15 +439,17 @@ async function executeRollback() {
 function handleDelete(row) {
   ElMessageBox.confirm('确定要删除这条更新记录吗？', '确认删除', {
     type: 'warning'
-  }).then(async () => {
-    try {
-      await patchRollbackApi.deleteHistUpdatePkgs([row.id])
-      ElMessage.success('删除成功')
-      loadData()
-    } catch (error) {
-      ElMessage.error('删除失败')
-    }
-  }).catch(() => {})
+  })
+    .then(async () => {
+      try {
+        await patchRollbackApi.deleteHistUpdatePkgs([row.id])
+        ElMessage.success('删除成功')
+        loadData()
+      } catch (error) {
+        ElMessage.error('删除失败')
+      }
+    })
+    .catch(() => {})
 }
 
 // 批量删除
@@ -437,15 +460,17 @@ function handleBatchDelete() {
   }
   ElMessageBox.confirm(`确定要删除选中的 ${selectedIds.value.length} 条记录吗？`, '确认删除', {
     type: 'warning'
-  }).then(async () => {
-    try {
-      await patchRollbackApi.deleteHistUpdatePkgs(selectedIds.value)
-      ElMessage.success('删除成功')
-      loadData()
-    } catch (error) {
-      ElMessage.error('删除失败')
-    }
-  }).catch(() => {})
+  })
+    .then(async () => {
+      try {
+        await patchRollbackApi.deleteHistUpdatePkgs(selectedIds.value)
+        ElMessage.success('删除成功')
+        loadData()
+      } catch (error) {
+        ElMessage.error('删除失败')
+      }
+    })
+    .catch(() => {})
 }
 
 function refresh() {
@@ -468,7 +493,7 @@ defineExpose({ refresh })
 }
 
 .more-link {
-  color: #0d6efd;
+  color: var(--el-color-primary);
   cursor: pointer;
   font-size: 12px;
 
@@ -491,7 +516,7 @@ defineExpose({ refresh })
 
 .pkg-update {
   .arrow {
-    color: #6c757d;
+    color: var(--el-text-color-secondary);
     margin: 0 4px;
   }
 }
@@ -502,7 +527,7 @@ defineExpose({ refresh })
 
   .pkg-update {
     padding: 4px 0;
-    border-bottom: 1px dashed #e9ecef;
+    border-bottom: 1px dashed var(--el-border-color-light);
     font-size: 12px;
 
     &:last-child {
@@ -528,7 +553,7 @@ defineExpose({ refresh })
 
 .filter-label {
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   white-space: nowrap;
 }
 </style>
