@@ -216,7 +216,7 @@ function handleClose() {
 }
 
 .host-info-card {
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
   padding: 16px;
   margin-bottom: 16px;

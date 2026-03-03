@@ -338,7 +338,7 @@ onMounted(() => {
 .execution-list-view {
   height: 100%;
   display: flex;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 // 进程项特定样式

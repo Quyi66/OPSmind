@@ -68,24 +68,24 @@ import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
 
 // 图表组件异步加载 - 延迟加载 ECharts 相关组件，优化首屏性能
 // 配置加载状态和超时处理
-const asyncComponentOptions = (loader) => ({
+const asyncComponentOptions = loader => ({
   loader,
   delay: 200, // 延迟 200ms 后才显示 loading
   timeout: 10000 // 10 秒超时
 })
 
-const JobOverview = defineAsyncComponent(asyncComponentOptions(
-  () => import('@/components/dashboard/JobOverview.vue')
-))
-const InspectionOverview = defineAsyncComponent(asyncComponentOptions(
-  () => import('@/components/dashboard/InspectionOverview.vue')
-))
-const AssetOverview = defineAsyncComponent(asyncComponentOptions(
-  () => import('@/components/dashboard/AssetOverview.vue')
-))
-const VulnerabilityOverview = defineAsyncComponent(asyncComponentOptions(
-  () => import('@/components/dashboard/VulnerabilityOverview.vue')
-))
+const JobOverview = defineAsyncComponent(
+  asyncComponentOptions(() => import('@/components/dashboard/JobOverview.vue'))
+)
+const InspectionOverview = defineAsyncComponent(
+  asyncComponentOptions(() => import('@/components/dashboard/InspectionOverview.vue'))
+)
+const AssetOverview = defineAsyncComponent(
+  asyncComponentOptions(() => import('@/components/dashboard/AssetOverview.vue'))
+)
+const VulnerabilityOverview = defineAsyncComponent(
+  asyncComponentOptions(() => import('@/components/dashboard/VulnerabilityOverview.vue'))
+)
 
 const dashboardStore = useDashboardStore()
 const route = useRoute()
@@ -117,11 +117,12 @@ const handleRefresh = async () => {
 watch(
   () => route.path,
   async newPath => {
-
     // 返回首页时，确保加载仪表盘数据（修复偶现返回首页后全是0的问题）
     if (newPath === '/home' || route.name === 'home') {
       // 避免重复请求：仅在未加载或需要刷新时触发
-      const shouldLoad = !dashboardStore.loading && (!dashboardStore.dashboardFullData || dashboardStore.needsRefresh)
+      const shouldLoad =
+        !dashboardStore.loading &&
+        (!dashboardStore.dashboardFullData || dashboardStore.needsRefresh)
       if (shouldLoad) {
         await loadDashboardData()
       }
@@ -144,7 +145,7 @@ onMounted(async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #f5f6fa 0%, #f0f2f5 100%);
+  background: var(--el-bg-color-page);
   min-height: 0;
 }
 
@@ -215,9 +216,9 @@ onMounted(async () => {
 
 /* Dashboard卡片 */
 .dashboard-card {
-  background: white;
+  background: var(--el-bg-color);
   border-radius: 4px; /* 进一步收窄圆角 */
-  border: 1px solid #e8eaed;
+  border: 1px solid var(--el-border-color-light);
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -253,7 +254,7 @@ onMounted(async () => {
   height: 100%;
   width: 100%;
   min-height: 400px;
-  background: white;
+  background: var(--el-bg-color);
   border-radius: 4px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
@@ -290,7 +291,7 @@ onMounted(async () => {
   .dashboard-sidebar {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid #e8eaed;
+    border-bottom: 1px solid var(--el-border-color-light);
   }
 
   .dashboard-content {

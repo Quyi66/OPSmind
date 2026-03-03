@@ -136,6 +136,16 @@
             </template>
           </el-dropdown>
 
+          <!-- Theme Switch Button -->
+          <el-tooltip :content="isDark ? '切换日间模式' : '切换夜间模式'" placement="bottom">
+            <button @click="toggleDark($event)" class="menu-action-btn">
+              <el-icon>
+                <Sunny v-if="isDark" />
+                <Moon v-else />
+              </el-icon>
+            </button>
+          </el-tooltip>
+
           <!-- Settings Button -->
           <el-tooltip content="设置" placement="bottom">
             <button
@@ -298,9 +308,12 @@ import {
   SwitchButton,
   InfoFilled,
   Check,
-  QuestionFilled
+  QuestionFilled,
+  Sunny,
+  Moon
 } from '@element-plus/icons-vue'
 import NotificationPopover from '@/components/layout/NotificationPopover.vue'
+import { useTheme } from '@/composables/useTheme'
 
 // 导入菜单图标
 import iconHome from '@/assets/icons/menu/icon-home@2x.png'
@@ -320,6 +333,7 @@ const router = useRouter()
 const route = useRoute()
 const menuStore = useMenuStore()
 const dashboardStore = useDashboardStore()
+const { isDark, toggleDark } = useTheme()
 
 const props = defineProps({
   user: {
@@ -564,12 +578,12 @@ function ensureOpsBubble() {
       #${C.panel} {
         position: fixed; right: 0; bottom: 16px; top: var(--ops-bubble-top, 64px);
         width: min(34vw, 30rem);
-        background: #fff; border: none; box-shadow: none; /* match full mode */
+        background: var(--el-bg-color); border: none; box-shadow: none; /* match full mode */
         border-radius: 12px 0 0 12px; overflow: hidden;
         z-index: 2147483647; display: none; pointer-events: auto;
       }
       #${C.panel}.visible { display: block; }
-      #${C.iframe} { width: 100%; height: 100%; border: 0; background: #fff; }
+      #${C.iframe} { width: 100%; height: 100%; border: 0; background: var(--el-bg-color); }
     `
     document.head.appendChild(style)
   }
@@ -603,7 +617,7 @@ function ensureOpsBubble() {
       <meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
       <link rel=\"preconnect\" href=\"${difyBase}\" crossorigin>
       <style>
-        html,body{height:100%;margin:0;background:#fff;}
+        html,body{height:100%;margin:0;background: var(--el-bg-color);}
         /* 按钮主色 */
         #dify-chatbot-bubble-button{ background-color:#1C64F2 !important; }
         /* 让聊天窗占满 iframe 可视区域 */
@@ -860,7 +874,7 @@ onUnmounted(() => {
 // 顶部导航头部
 .top-nav-header {
   /* 顶部菜单栏占满宽度（整条白底） */
-  background: #fff;
+  background: var(--el-bg-color);
   position: relative;
   box-shadow:
     0 1px 3px 0 rgba(0, 0, 0, 0.1),
@@ -929,18 +943,18 @@ onUnmounted(() => {
   margin: 0 0.25rem;
   border-radius: 0.5rem;
   text-decoration: none;
-  color: #6b7280;
+  color: var(--el-text-color-regular);
   transition: all 0.2s ease-in-out;
   white-space: nowrap;
 
   &:hover {
-    color: #111827;
-    background: #f9fafb;
+    color: var(--el-text-color-primary);
+    background: var(--el-fill-color-light);
   }
 
   &.nav-item-active {
     color: #ea580c;
-    background: #fff7ed;
+    background: var(--el-color-warning-light-9);
   }
 }
 
@@ -965,7 +979,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0.5rem;
-  color: #6b7280;
+  color: var(--el-text-color-regular);
   background: transparent;
   border: none;
   border-radius: 0.5rem;
@@ -977,13 +991,13 @@ onUnmounted(() => {
   }
 
   &:hover {
-    color: #111827;
-    background: #f9fafb;
+    color: var(--el-text-color-primary);
+    background: var(--el-fill-color-light);
   }
 
   &.mobile-menu-btn-active {
     color: #ea580c;
-    background: #fff7ed;
+    background: var(--el-color-warning-light-9);
   }
 }
 
@@ -1018,7 +1032,7 @@ onUnmounted(() => {
   transition: background 0.2s ease-in-out;
 
   &:hover {
-    background: #f9fafb;
+    background: var(--el-fill-color-light);
   }
 }
 
@@ -1040,7 +1054,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0.375rem;
-  color: #9ca3af;
+  color: var(--el-text-color-placeholder);
   background: transparent;
   border: none;
   border-radius: 0.375rem;
@@ -1049,7 +1063,7 @@ onUnmounted(() => {
   position: relative;
 
   &:hover {
-    color: #6b7280;
+    color: var(--el-text-color-regular);
   }
 }
 
@@ -1081,7 +1095,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0.375rem;
-  color: #9ca3af;
+  color: var(--el-text-color-placeholder);
   background: transparent;
   border: none;
   border-radius: 0.375rem;
@@ -1092,13 +1106,13 @@ onUnmounted(() => {
   height: 2rem;
 
   &:hover {
-    color: #6b7280;
-    background: #f9fafb;
+    color: var(--el-text-color-regular);
+    background: var(--el-fill-color-light);
   }
 
   &.is-settings-active {
     color: #f97316;
-    background: #fff7ed;
+    background: var(--el-color-warning-light-9);
   }
 
   .el-icon {
@@ -1132,7 +1146,7 @@ onUnmounted(() => {
   transition: background-color 0.2s ease-in-out;
 
   &:hover {
-    background: #f9fafb;
+    background: var(--el-fill-color-light);
   }
 }
 
@@ -1161,7 +1175,7 @@ onUnmounted(() => {
   width: 1.25rem;
   /* 放大下拉箭头 */
   height: 1.25rem;
-  color: #9ca3af;
+  color: var(--el-text-color-placeholder);
 
   @media (min-width: 640px) {
     display: inline;
@@ -1179,7 +1193,7 @@ onUnmounted(() => {
 // 移动端菜单下拉
 .mobile-menu-dropdown {
   display: block;
-  background: #fff;
+  background: var(--el-bg-color);
   border-top: 1px solid #e5e7eb;
   padding: 1rem 1.5rem;
 
@@ -1201,17 +1215,17 @@ onUnmounted(() => {
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   text-decoration: none;
-  color: #6b7280;
+  color: var(--el-text-color-regular);
   transition: all 0.2s ease-in-out;
 
   &:hover {
-    color: #111827;
-    background: #f9fafb;
+    color: var(--el-text-color-primary);
+    background: var(--el-fill-color-light);
   }
 
   &.mobile-nav-item-active {
     color: #ea580c;
-    background: #fff7ed;
+    background: var(--el-color-warning-light-9);
   }
 }
 

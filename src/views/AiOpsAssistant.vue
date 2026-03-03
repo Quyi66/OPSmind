@@ -308,7 +308,7 @@ function restoreFavicon() {
   inset: 0;
   width: 100vw;
   height: 100vh;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 .fallback {
   position: absolute;
@@ -322,7 +322,7 @@ function restoreFavicon() {
   margin-top: 12px;
   padding: 6px 12px;
   border: 1px solid #e5e7eb;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 6px;
   cursor: pointer;
 }

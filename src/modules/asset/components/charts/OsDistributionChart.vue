@@ -30,6 +30,8 @@
 </template>
 
 <script setup>
+import { useTheme } from '@/composables/useTheme'
+const { isDark } = useTheme()
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { FullScreen, Cpu } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
@@ -81,7 +83,7 @@ function getChartOption() {
       data: xData,
       axisLabel: {
         rotate: 0,
-        color: '#666',
+        
         formatter: value => {
           const count = props.data.length
           // 动态计算最大长度：数量越少显示越长，最小保留 5 个字符
@@ -94,7 +96,7 @@ function getChartOption() {
       },
       axisLine: {
         lineStyle: {
-          color: '#e0e0e0'
+          
         }
       }
     },
@@ -104,15 +106,15 @@ function getChartOption() {
       nameLocation: 'end',
       // nameGap: 18,
       nameTextStyle: {
-        color: '#666',
+        
         fontSize: 12
       },
       axisLabel: {
-        color: '#666'
+        
       },
       splitLine: {
         lineStyle: {
-          color: '#f0f0f0'
+          
         }
       }
     },
@@ -145,7 +147,7 @@ function getChartOption() {
         label: {
           show: true,
           position: 'top',
-          color: '#666',
+          
           formatter: '{c}'
         },
         barMaxWidth: 40
@@ -157,7 +159,7 @@ function getChartOption() {
 function initChart() {
   if (!chartRef.value) return
 
-  chartInstance = echarts.init(chartRef.value)
+  chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
   updateChart()
 
   chartInstance.on('click', params => {
@@ -176,7 +178,7 @@ function toggleFullscreen() {
   fullscreenVisible.value = true
   nextTick(() => {
     if (fullscreenChartRef.value) {
-      fullscreenChartInstance = echarts.init(fullscreenChartRef.value)
+      fullscreenChartInstance = echarts.init(fullscreenChartRef.value, isDark.value ? 'dark' : '')
       fullscreenChartInstance.setOption(getChartOption())
     }
   })
@@ -204,6 +206,19 @@ watch(
   { deep: true }
 )
 
+watch(isDark, () => {
+  if(chartInstance) {
+    chartInstance.dispose();
+    chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '');
+    updateChart();
+  }
+  if(fullscreenChartInstance && fullscreenVisible.value) {
+    fullscreenChartInstance.dispose();
+    fullscreenChartInstance = echarts.init(fullscreenChartRef.value, isDark.value ? 'dark' : '');
+    fullscreenChartInstance.setOption(getChartOption());
+  }
+});
+
 onMounted(() => {
   initChart()
   window.addEventListener('resize', handleResize)
@@ -218,7 +233,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .chart-card {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   padding: 16px;
   height: 100%;
@@ -247,7 +262,7 @@ onUnmounted(() => {
 .chart-title {
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .chart-container {

@@ -284,7 +284,7 @@ function handleSpecificChange() {
     transition: background-color 0.3s;
 
     &:hover {
-      background-color: #f5f7fa;
+      background-color: var(--el-bg-color-page);
     }
 
     :deep(.el-radio) {
@@ -304,7 +304,7 @@ function handleSpecificChange() {
     margin-bottom: 15px;
     margin-left: 24px;
     padding: 15px;
-    background-color: #f5f7fa;
+    background-color: var(--el-bg-color-page);
     border-radius: 4px;
     max-height: 400px;
     overflow-y: auto;

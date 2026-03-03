@@ -437,7 +437,7 @@ function pad(value) {
 .schedule-shell {
   display: flex;
   min-height: 560px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 12px;
   // border: 1px solid #e5e7eb;
   overflow: hidden;
@@ -446,7 +446,7 @@ function pad(value) {
 
 .flow-list-panel {
   width: 280px;
-  border-right: 1px solid #ebeef5;
+  border-right: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
   // background: #f7f9fc;
@@ -457,7 +457,7 @@ function pad(value) {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .flow-search :deep(.el-input__inner) {
@@ -480,7 +480,7 @@ function pad(value) {
   margin-bottom: 8px;
   border-radius: 10px;
   border: 1px solid transparent;
-  background: #fff;
+  background: var(--el-bg-color);
   cursor: pointer;
   transition: all 0.2s ease;
 }

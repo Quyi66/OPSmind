@@ -27,23 +27,38 @@
             <!-- 信息列表 -->
             <div class="info-list">
               <div class="info-row">
-                <span class="info-label"><el-icon><User /></el-icon> 用户名称</span>
+                <span class="info-label">
+                  <el-icon><User /></el-icon>
+                  用户名称
+                </span>
                 <span class="info-value">{{ account.login }}</span>
               </div>
               <div class="info-row">
-                <span class="info-label"><el-icon><Phone /></el-icon> 手机号码</span>
+                <span class="info-label">
+                  <el-icon><Phone /></el-icon>
+                  手机号码
+                </span>
                 <span class="info-value">{{ originalData.mobile || '-' }}</span>
               </div>
               <div class="info-row">
-                <span class="info-label"><el-icon><Message /></el-icon> 用户邮箱</span>
+                <span class="info-label">
+                  <el-icon><Message /></el-icon>
+                  用户邮箱
+                </span>
                 <span class="info-value">{{ originalData.email || '-' }}</span>
               </div>
               <div class="info-row">
-                <span class="info-label"><el-icon><OfficeBuilding /></el-icon> 所属部门</span>
+                <span class="info-label">
+                  <el-icon><OfficeBuilding /></el-icon>
+                  所属部门
+                </span>
                 <span class="info-value">{{ originalData.department || '-' }}</span>
               </div>
               <div class="info-row">
-                <span class="info-label"><el-icon><Medal /></el-icon> 拥有角色</span>
+                <span class="info-label">
+                  <el-icon><Medal /></el-icon>
+                  拥有角色
+                </span>
                 <span class="info-value">
                   <template v-if="roleNames.length > 0">
                     {{ roleNames.join('、') }}
@@ -52,7 +67,10 @@
                 </span>
               </div>
               <div class="info-row">
-                <span class="info-label"><el-icon><Calendar /></el-icon> 创建日期</span>
+                <span class="info-label">
+                  <el-icon><Calendar /></el-icon>
+                  创建日期
+                </span>
                 <span class="info-value">{{ formatDate(account.createdDate) }}</span>
               </div>
             </div>
@@ -99,12 +117,8 @@
                   </el-form-item> -->
 
                   <el-form-item>
-                    <el-button type="primary" @click="handleSave" :loading="saving">
-                      保存
-                    </el-button>
-                    <el-button @click="handleReset">
-                      关闭
-                    </el-button>
+                    <el-button type="primary" @click="handleSave" :loading="saving">保存</el-button>
+                    <el-button @click="handleReset">关闭</el-button>
                   </el-form-item>
                 </el-form>
               </el-tab-pane>
@@ -143,12 +157,14 @@
                   </el-form-item>
 
                   <el-form-item>
-                    <el-button type="primary" @click="handleChangePassword" :loading="changingPassword">
+                    <el-button
+                      type="primary"
+                      @click="handleChangePassword"
+                      :loading="changingPassword"
+                    >
                       保存
                     </el-button>
-                    <el-button @click="handleReset">
-                      关闭
-                    </el-button>
+                    <el-button @click="handleReset">关闭</el-button>
                   </el-form-item>
                 </el-form>
               </el-tab-pane>
@@ -157,7 +173,10 @@
               <el-tab-pane label="OTP二维码" name="qrcode" :disabled="authMode === 'AD'">
                 <div class="qrcode-section">
                   <div class="qrcode-info">
-                    <p>使用 Google Authenticator 或其他 OTP 验证器扫描此二维码，绑定您的账户进行两步验证。</p>
+                    <p>
+                      使用 Google Authenticator 或其他 OTP
+                      验证器扫描此二维码，绑定您的账户进行两步验证。
+                    </p>
                   </div>
                   <div class="qrcode-wrapper">
                     <img v-if="qrcodeUrl" :src="qrcodeUrl" class="qrcode-image" />
@@ -177,9 +196,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import {
-  User, Phone, Message, OfficeBuilding, Medal, Calendar
-} from '@element-plus/icons-vue'
+import { User, Phone, Message, OfficeBuilding, Medal, Calendar } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'
 
 const router = useRouter()
@@ -233,9 +250,7 @@ const rules = {
     { required: true, message: '请输入用户昵称', trigger: 'blur' },
     { min: 1, max: 50, message: '用户昵称长度为1-50个字符', trigger: 'blur' }
   ],
-  email: [
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
-  ]
+  email: [{ type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }]
 }
 
 const validateConfirmPassword = (rule, value, callback) => {
@@ -450,7 +465,7 @@ function resetPasswordForm() {
 <style scoped lang="scss">
 .profile-page {
   min-height: calc(100vh - 120px);
-  background: #fff;
+  background: var(--el-bg-color);
   padding: 20px;
 }
 
@@ -460,22 +475,22 @@ function resetPasswordForm() {
 }
 
 .profile-card {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   padding: 20px;
   // box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .1);
+  box-shadow: var(--el-box-shadow-light);
   height: 100%;
-  border: 1px solid #e6ebf5;
+  border: 1px solid var(--el-border-color-light);
 }
 
 .card-title {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin: 0 0 20px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 /* 左侧信息卡片 */
@@ -491,7 +506,7 @@ function resetPasswordForm() {
       border-radius: 50%;
       overflow: hidden;
       cursor: pointer;
-      border: 2px dashed #dcdfe6;
+      border: 2px dashed var(--el-border-color-light);
       transition: border-color 0.3s;
 
       &:hover {
@@ -514,8 +529,8 @@ function resetPasswordForm() {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f5f7fa;
-    color: #909399;
+    background: var(--el-bg-color-page);
+    color: var(--el-text-color-secondary);
   }
 }
 
@@ -525,7 +540,7 @@ function resetPasswordForm() {
     justify-content: space-between;
     align-items: flex-start;
     padding: 12px 0;
-    border-bottom: 1px solid #f5f7fa;
+    border-bottom: 1px solid var(--el-border-color-lighter);
 
     &:last-child {
       border-bottom: none;
@@ -548,7 +563,7 @@ function resetPasswordForm() {
 
   .info-value {
     font-size: 14px;
-    color: #303133;
+    color: var(--el-text-color-regular);
     text-align: right;
     word-break: break-all;
     max-width: 60%;
@@ -580,7 +595,7 @@ function resetPasswordForm() {
 
 .form-hint {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 
@@ -595,7 +610,7 @@ function resetPasswordForm() {
 
   p {
     font-size: 14px;
-    color: #606266;
+    color: var(--el-text-color-regular);
     margin: 0;
   }
 }
@@ -608,9 +623,9 @@ function resetPasswordForm() {
 .qrcode-image {
   max-width: 200px;
   max-height: 200px;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   padding: 10px;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 </style>

@@ -389,7 +389,7 @@ async function handleRerun(row) {
   min-width: 0;
   width: 100%;
   max-width: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 12px;
   overflow: hidden;
 }

@@ -288,7 +288,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 // 覆盖全局样式以适应此页面
@@ -298,7 +298,7 @@ defineExpose({
   flex-direction: column;
   gap: 12px;
   padding: 16px 20px;
-  background: #fff;
+  background: var(--el-bg-color);
   overflow: hidden;
 }
 

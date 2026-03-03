@@ -13,8 +13,15 @@
 
     <!-- 作业统计 -->
     <div class="job-stats">
-      <TypeCountCard v-for="stat in jobStats" :key="stat.id" :type-name="stat.label" :count="stat.value"
-        :icon="stat.icon" :icon-type="stat.iconType" @click="handleStatClick(stat.id)" />
+      <TypeCountCard
+        v-for="stat in jobStats"
+        :key="stat.id"
+        :type-name="stat.label"
+        :count="stat.value"
+        :icon="stat.icon"
+        :icon-type="stat.iconType"
+        @click="handleStatClick(stat.id)"
+      />
     </div>
 
     <!-- 图表标题和图例 -->
@@ -38,7 +45,7 @@
 
     <!-- ECharts图表容器 -->
     <div class="chart-container">
-      <v-chart class="chart" :option="chartOption" autoresize />
+      <v-chart class="chart" :option="chartOption" autoresize :theme="isDark ? 'dark' : ''" />
     </div>
   </div>
 </template>
@@ -57,6 +64,8 @@ import {
 import VChart from 'vue-echarts'
 
 import TypeCountCard from './TypeCountCard.vue'
+import { useTheme } from '@/composables/useTheme'
+const { isDark } = useTheme()
 import { useDashboardStore } from '@/stores/dashboard'
 
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
@@ -145,12 +154,6 @@ const chartOption = computed(() => ({
     trigger: 'axis',
     axisPointer: {
       type: 'shadow'
-    },
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: '#e8e8e8',
-    borderWidth: 1,
-    textStyle: {
-      color: '#333'
     }
   },
   grid: {
@@ -163,12 +166,9 @@ const chartOption = computed(() => ({
     type: 'category',
     data: chartData.value.dates,
     axisLine: {
-      lineStyle: {
-        color: '#e8e8e8'
-      }
+      lineStyle: {}
     },
     axisLabel: {
-      color: '#666',
       fontSize: 12,
       margin: 10,
       hideOverlap: true
@@ -190,12 +190,10 @@ const chartOption = computed(() => ({
       show: false
     },
     axisLabel: {
-      color: '#666',
       fontSize: 12
     },
     splitLine: {
       lineStyle: {
-        color: '#f0f0f0',
         type: 'dashed'
       }
     }
@@ -288,7 +286,7 @@ const chartOption = computed(() => ({
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #374151;
+  color: var(--el-text-color-primary);
   margin: 0;
   display: flex;
   align-items: center;
@@ -303,7 +301,7 @@ const chartOption = computed(() => ({
 .more-btn {
   background: transparent;
   border: none;
-  color: #6b7280;
+  color: var(--el-text-color-regular);
   font-size: 12px;
   cursor: pointer;
   padding: 6px 12px;
@@ -311,8 +309,8 @@ const chartOption = computed(() => ({
   transition: all 0.3s ease;
 
   &:hover {
-    background: #f8f9fa;
-    color: #374151;
+    background: var(--el-fill-color-light);
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -328,7 +326,7 @@ const chartOption = computed(() => ({
   gap: 16px;
   align-items: center;
   padding: 16px;
-  background: #fafbfc;
+  background: var(--el-fill-color-light);
   border-radius: 4px;
   margin: 0 16px;
 }
@@ -344,7 +342,7 @@ const chartOption = computed(() => ({
 .chart-title {
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--el-text-color-primary);
   margin: 0;
 }
 
@@ -358,7 +356,7 @@ const chartOption = computed(() => ({
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--el-text-color-regular);
 }
 
 .legend-color {
@@ -390,7 +388,7 @@ const chartOption = computed(() => ({
 .chart-title {
   font-size: 14px;
   font-weight: 600;
-  color: #262626;
+  color: var(--el-text-color-primary);
   margin: 0;
 }
 
@@ -404,7 +402,7 @@ const chartOption = computed(() => ({
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #666;
+  color: var(--el-text-color-regular);
 }
 
 .legend-color {

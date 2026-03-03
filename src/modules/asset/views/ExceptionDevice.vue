@@ -703,7 +703,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 0;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .page-title {
     font-size: 16px;
@@ -813,7 +813,7 @@ onMounted(() => {
       max-height: 200px;
       overflow-y: auto;
       padding: 12px;
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
       border-radius: 4px;
     }
 
@@ -821,7 +821,7 @@ onMounted(() => {
       padding: 24px;
       text-align: center;
       color: #909399;
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
       border-radius: 4px;
     }
   }

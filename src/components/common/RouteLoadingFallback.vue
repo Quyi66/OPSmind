@@ -31,7 +31,7 @@
   flex: 1;
   min-height: 200px;
   padding: 24px;
-  background: #fff;
+  background: var(--el-bg-color);
   width: 100%;
 }
 
@@ -45,7 +45,7 @@
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .skeleton-actions {

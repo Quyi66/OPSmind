@@ -216,7 +216,7 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
   padding: 24px;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   overflow: hidden; /* 防止页面级滚动 */
 }
 
@@ -224,8 +224,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 16px 24px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .navbar-title {
     font-size: 18px;
@@ -295,9 +295,9 @@ onMounted(() => {
 
   /* 统一卡片样式覆盖 */
   :deep(.chart-card) {
-    background: #fff;
+    background: var(--el-bg-color);
     border-radius: 12px;
-    border: 1px solid #dcdfe6; /* 明显的边框 */
+    border: 1px solid var(--el-border-color-light); /* 明显的边框 */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 明显的阴影 */
     padding: 4px 12px;
     transition: all 0.3s ease;
@@ -306,7 +306,7 @@ onMounted(() => {
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-      border-color: #c0c4cc;
+      border-color: var(--el-border-color-hover);
     }
   }
 
@@ -318,7 +318,7 @@ onMounted(() => {
   :deep(.chart-title) {
     font-size: 16px;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
     /* Removed padding-left and ::before pseudo-element to use component-specific icons */
   }
 }

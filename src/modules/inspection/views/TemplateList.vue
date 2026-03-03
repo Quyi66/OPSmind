@@ -391,7 +391,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .navbar {
@@ -399,7 +399,7 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .navbar-title {
     font-size: 16px;
@@ -412,7 +412,7 @@ defineExpose({
   display: flex;
   justify-content: flex-end;
   padding: 12px 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .search-input {
     width: 250px;
@@ -480,7 +480,7 @@ defineExpose({
   display: flex;
   align-items: center;
   padding: 12px 0;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--el-border-color-light);
 
   .page-size-select {
     width: 70px;

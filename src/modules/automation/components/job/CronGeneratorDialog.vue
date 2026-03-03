@@ -309,7 +309,7 @@ function handleConfirm() {
     .time-item {
       margin: 0;
       padding: 12px 15px;
-      background-color: #f5f7fa;
+      background-color: var(--el-bg-color-page);
       border-radius: 4px;
       font-size: 14px;
       font-weight: normal;

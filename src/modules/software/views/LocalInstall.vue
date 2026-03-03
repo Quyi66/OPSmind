@@ -201,7 +201,7 @@ async function handleStartInstall() {
 /* 此组件使用全局的 ops-page-layout 样式 */
 
 .local-install-page {
-  // background: #f0f2f5;
+  // background: var(--el-bg-color-page);
   padding: 20px;
   height: 100%;
   display: flex;
@@ -217,7 +217,7 @@ async function handleStartInstall() {
 }
 
 .panel {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   border: 1px solid #e6ebf5;
@@ -238,7 +238,7 @@ async function handleStartInstall() {
 
 .panel-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -267,8 +267,8 @@ async function handleStartInstall() {
 
 .panel-footer {
   padding: 12px 20px;
-  background: #fafafa;
-  border-top: 1px solid #ebeef5;
+  background: var(--el-bg-color-page);
+  border-top: 1px solid var(--el-border-color-light);
   color: #909399;
   font-size: 13px;
 
@@ -276,7 +276,7 @@ async function handleStartInstall() {
     display: flex;
     justify-content: flex-end;
     padding: 20px;
-    background: #fff;
+    background: var(--el-bg-color);
   }
 }
 
@@ -290,8 +290,8 @@ async function handleStartInstall() {
     align-items: center;
     justify-content: space-between;
     padding: 12px 15px;
-    background: #fff;
-    border: 1px solid #e4e7ed;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-light);
     border-radius: 6px;
     margin-bottom: 10px;
     transition: all 0.2s;
@@ -340,7 +340,7 @@ async function handleStartInstall() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 2px dashed #e4e7ed;
+  border: 2px dashed var(--el-border-color-light);
   border-radius: 8px;
   color: #c0c4cc;
   cursor: pointer;

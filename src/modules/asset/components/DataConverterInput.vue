@@ -299,8 +299,8 @@ watch(editBody, updateLineCount)
     justify-content: center;
     width: 32px;
     height: 32px;
-    background: #f5f7fa;
-    border: 1px solid #dcdfe6;
+    background: var(--el-bg-color-page);
+    border: 1px solid var(--el-border-color-light);
     border-right: none;
     border-radius: 4px 0 0 4px;
     color: #909399;
@@ -336,7 +336,7 @@ watch(editBody, updateLineCount)
     display: flex;
     gap: 0;
     margin-bottom: 12px;
-    border-bottom: 1px solid #ebeef5;
+    border-bottom: 1px solid var(--el-border-color-light);
 
     .type-tab {
       padding: 10px 16px;
@@ -368,7 +368,7 @@ watch(editBody, updateLineCount)
     margin: 0 0 12px;
 
     code {
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
       padding: 2px 6px;
       border-radius: 3px;
       font-family: Monaco, Menlo, monospace;

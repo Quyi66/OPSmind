@@ -1283,7 +1283,7 @@ watch(() => props.jobType, (newVal) => {
   .command-item {
     margin: 0;
     padding: 8px 12px;
-    background: #fff;
+    background: var(--el-bg-color);
     border-radius: 4px;
     line-height: 1.6;
     font-size: 13px;

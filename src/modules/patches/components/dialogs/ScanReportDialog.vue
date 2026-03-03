@@ -568,8 +568,8 @@ watch(
   align-items: center;
   gap: 24px;
   padding: 12px 16px;
-  background: #f5f7fa;
-  border: 1px solid #ebeef5;
+  background: var(--el-bg-color-page);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
 }
 
@@ -594,7 +594,7 @@ watch(
   display: flex;
   justify-content: flex-end;
   padding-top: 12px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--el-border-color-light);
 }
 
 .fix-dialog-content {
@@ -604,15 +604,15 @@ watch(
 }
 
 .fix-info-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
   overflow: hidden;
 }
 
 .fix-info-header {
   padding: 8px 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-bg-color-page);
+  border-bottom: 1px solid var(--el-border-color-light);
   font-weight: 500;
   font-size: 14px;
   color: #303133;

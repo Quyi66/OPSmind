@@ -180,9 +180,9 @@ async function handleRemoveFromWhitelist() {
     pre {
       max-height: 350px;
       padding: 12px;
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
       color: #303133;
-      border: 1px solid #e4e7ed;
+      border: 1px solid var(--el-border-color-light);
       border-radius: 4px;
       font-size: 13px;
       line-height: 1.6;

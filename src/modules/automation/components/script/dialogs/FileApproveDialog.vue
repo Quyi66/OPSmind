@@ -189,7 +189,7 @@ watch(
     display: block;
     margin-bottom: 8px;
     font-size: 14px;
-    color: #606266;
+    color: var(--el-text-color-regular);
   }
 }
 </style>

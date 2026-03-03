@@ -292,7 +292,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .navbar {
@@ -300,7 +300,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .navbar-left {
     display: flex;
@@ -335,7 +335,7 @@ onMounted(() => {
 }
 
 .audit-param-card {
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;

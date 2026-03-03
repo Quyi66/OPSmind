@@ -928,8 +928,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .navbar-left {
     :deep(.el-breadcrumb) {
@@ -946,9 +946,9 @@ onMounted(() => {
 }
 
 .job-header {
-  background: #fff;
+  background: var(--el-bg-color);
   padding: 16px 20px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .job-status {
     display: flex;
@@ -991,7 +991,7 @@ onMounted(() => {
 }
 
 .tabs-container {
-  background: #fff;
+  background: var(--el-bg-color);
   margin: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -1000,7 +1000,7 @@ onMounted(() => {
   :deep(.el-tabs__header) {
     margin: 0;
     padding: 0 16px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--el-border-color-light);
   }
 }
 
@@ -1009,7 +1009,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
   .toolbar-right {
     margin-left: auto;
     display: flex;

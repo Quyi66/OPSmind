@@ -618,7 +618,7 @@ onMounted(() => {
 .param-value-pre {
   margin: 0;
   padding: 8px;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   border-radius: 4px;
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 12px;

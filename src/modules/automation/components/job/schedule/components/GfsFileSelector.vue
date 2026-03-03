@@ -365,14 +365,14 @@ watch(dialogVisible, (visible) => {
 .file-table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
 }
 
 .file-table td {
   padding: 6px 8px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--el-border-color-light);
   vertical-align: middle;
 }
 
@@ -424,7 +424,7 @@ watch(dialogVisible, (visible) => {
 }
 
 .gfs-browser-body {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   min-height: 300px;
 }
@@ -433,8 +433,8 @@ watch(dialogVisible, (visible) => {
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--el-bg-color-page);
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .path-label {

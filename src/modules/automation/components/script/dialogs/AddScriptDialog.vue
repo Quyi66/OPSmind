@@ -191,7 +191,7 @@ function handleClosed() {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .script-form .control-label i {
@@ -212,7 +212,7 @@ function handleClosed() {
   position: relative;
   display: flex;
   height: 320px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   overflow: hidden;
   background-color: #282c34;

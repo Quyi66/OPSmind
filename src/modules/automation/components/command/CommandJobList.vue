@@ -568,7 +568,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
   padding: 12px;
   box-sizing: border-box;
 }
@@ -617,7 +617,7 @@ defineExpose({
     margin: 0 0 8px;
     font-size: 14px;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -635,12 +635,12 @@ defineExpose({
 
 .cmd-type,
 .host-type {
-  color: #6b7280;
+  color: var(--el-text-color-regular);
   font-size: 12px;
 }
 
 .text-muted {
-  color: #9ca3af;
+  color: var(--el-text-color-secondary);
   font-size: 13px;
 }
 

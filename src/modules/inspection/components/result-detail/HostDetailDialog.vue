@@ -80,7 +80,7 @@ const statusOptions = STATUS_FILTER_OPTIONS
     align-items: center;
     margin-bottom: 16px;
     padding: 16px;
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
     border-radius: 4px;
 
     .host-info-main {

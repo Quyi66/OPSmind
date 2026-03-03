@@ -43,8 +43,8 @@ const cards = computed(() =>
   display: flex;
   gap: 12px;
   padding: 16px 20px;
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .stat-card {

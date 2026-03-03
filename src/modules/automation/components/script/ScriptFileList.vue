@@ -199,7 +199,6 @@
         v-loading="loading"
         :data="filteredFiles"
         height="100%"
-
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="40" :selectable="isSelectable" />
@@ -888,7 +887,7 @@ defineExpose({
   height: 100%;
   min-height: 0;
   padding: 12px;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .toolbar {
@@ -973,7 +972,7 @@ defineExpose({
 
 .dir-link,
 .date-link {
-  color: #3b82f6;
+  color: var(--el-color-primary);
   cursor: pointer;
   text-decoration: none;
 }
@@ -985,16 +984,18 @@ defineExpose({
 
 .search-box .form-control {
   padding: 4px 8px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 3px;
   outline: none;
   font-size: 12px;
   width: 200px;
   height: 28px;
+  background-color: var(--el-bg-color);
+  color: var(--el-text-color-primary);
 }
 
 .search-box .form-control:focus {
-  border-color: #409eff;
+  border-color: var(--el-color-primary);
 }
 
 .info-btn {
@@ -1013,7 +1014,7 @@ defineExpose({
 }
 
 .bg-primary {
-  background-color: #409eff;
+  background-color: var(--el-color-primary);
   color: #fff;
 }
 
@@ -1044,19 +1045,19 @@ defineExpose({
 }
 
 .status-indicator.stage-exist {
-  background: #e6f7ff;
-  color: #1890ff;
-  border: 1px solid #91d5ff;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  border: 1px solid var(--el-color-primary-light-7);
 }
 
 .status-indicator.stage-rejected {
-  background: #fff2f0;
-  color: #ff4d4f;
-  border: 1px solid #ffccc7;
+  background: var(--el-color-danger-light-9);
+  color: var(--el-color-danger);
+  border: 1px solid var(--el-color-danger-light-7);
 }
 
 .status-indicator.master-disabled {
-  background: #f5f5f5;
+  background: var(--el-bg-color-page);
   color: #999;
   text-decoration: line-through;
 }
@@ -1092,14 +1093,14 @@ defineExpose({
 .file-name {
   flex: 1;
   cursor: pointer;
-  color: #1e293b;
+  color: var(--el-text-color-primary);
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
 .file-name:hover {
-  color: #3b82f6;
+  color: var(--el-color-primary);
 }
 
 .file-actions {
@@ -1113,7 +1114,7 @@ defineExpose({
 }
 
 .description-cell {
-  color: #64748b;
+  color: var(--el-text-color-regular);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1159,15 +1160,15 @@ defineExpose({
 .repo-stage {
   :deep(.el-table__header-wrapper) {
     th {
-      background-color: #e9ecef !important;
-      color: #495057 !important;
+      background-color: var(--el-fill-color-light) !important;
+      color: var(--el-text-color-regular) !important;
     }
   }
 
   :deep(.el-table__header) {
     th.el-table__cell {
-      background-color: #e9ecef !important;
-      color: #495057 !important;
+      background-color: var(--el-fill-color-light) !important;
+      color: var(--el-text-color-regular) !important;
     }
   }
 

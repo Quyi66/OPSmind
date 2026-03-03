@@ -598,7 +598,7 @@ function handleClose() {
 .qrcode-image {
   max-width: 200px;
   max-height: 200px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
 }
 

@@ -12,7 +12,7 @@
   display: flex;
   flex-direction: column;
   padding: 16px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   height: 100%;
   min-height: 0;
@@ -124,9 +124,9 @@
   height: 28px !important;
   min-width: 28px !important;
   padding: 0 !important;
-  border: 1px solid #dcdfe6;
-  background-color: #fff;
-  color: #606266;
+  border: 1px solid var(--el-border-color);
+  background-color: var(--el-bg-color);
+  color: var(--el-text-color-regular);
 
   &:hover {
     border-color: #409eff;
@@ -155,7 +155,7 @@
   display: flex;
   height: 100%;
   min-height: 0;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   overflow: hidden;
 
@@ -166,7 +166,7 @@
     overflow: hidden;
 
     .ops-module__content {
-      background: #fff;
+      background: var(--el-bg-color);
       border-radius: 0;
     }
   }
@@ -180,7 +180,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
 
   // 确保子元素填充容器
   >* {
@@ -194,7 +194,7 @@
   display: grid;
   grid-template-columns: 150px 1fr;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -205,8 +205,8 @@
   flex-direction: column;
   gap: 4px;
   padding: 12px 0 12px 8px;
-  background: #fff;
-  border-right: 1px solid #e5e7eb;
+  background: var(--el-bg-color);
+  border-right: 1px solid var(--el-border-color-light);
   min-width: 120px;
 }
 
@@ -223,7 +223,7 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 6px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -338,8 +338,8 @@ a.ops-sidebar-item {
 // 区块/卡片样式
 // ========================================
 .ops-section {
-  background: #fff;
-  border: 1px solid #ebeef5;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
@@ -356,7 +356,7 @@ a.ops-sidebar-item {
   &__title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -392,7 +392,7 @@ a.ops-sidebar-item {
     flex-wrap: wrap;
     justify-content: flex-start;
     border-right: none;
-    border-bottom: 1px solid #ebeef5;
+    border-bottom: 1px solid var(--el-border-color-light);
     padding: 8px;
     min-width: 100%;
   }
@@ -420,7 +420,7 @@ a.ops-sidebar-item {
   flex-shrink: 0;
   padding-bottom: 12px;
   margin-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .el-breadcrumb {
     font-size: 14px;
@@ -439,7 +439,7 @@ a.ops-sidebar-item {
       }
 
       &:last-child .el-breadcrumb__inner {
-        color: #606266;
+        color: var(--el-text-color-regular);
         font-weight: 500;
       }
     }

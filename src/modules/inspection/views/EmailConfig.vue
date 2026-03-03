@@ -564,7 +564,7 @@ watch(templateList, () => {
 .custom-content-dialog {
   .template-info {
     padding: 12px 16px;
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
     border-radius: 4px;
 
     .label {

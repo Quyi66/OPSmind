@@ -4,12 +4,7 @@
     <div class="filter-toolbar">
       <strong class="filter-label">筛选</strong>
       <!-- 分组树形选择器 -->
-      <el-popover
-        placement="bottom-start"
-        :width="300"
-        trigger="click"
-        :teleported="false"
-      >
+      <el-popover placement="bottom-start" :width="300" trigger="click" :teleported="false">
         <template #reference>
           <el-button class="group-select-btn">
             <i class="fa fa-sitemap me-1" />
@@ -78,10 +73,22 @@
       <el-table-column label="连通状态" width="120" align="left">
         <template #default="{ row }">
           <el-tag
-            :type="[1, '1'].includes(row.CONN_LATEST_STATUS) ? 'success' : [0, '0'].includes(row.CONN_LATEST_STATUS) ? 'danger' : 'info'"
+            :type="
+              [1, '1'].includes(row.CONN_LATEST_STATUS)
+                ? 'success'
+                : [0, '0'].includes(row.CONN_LATEST_STATUS)
+                  ? 'danger'
+                  : 'info'
+            "
             size="small"
           >
-            {{ [1, '1'].includes(row.CONN_LATEST_STATUS) ? '在线' : [0, '0'].includes(row.CONN_LATEST_STATUS) ? '离线' : '未知' }}
+            {{
+              [1, '1'].includes(row.CONN_LATEST_STATUS)
+                ? '在线'
+                : [0, '0'].includes(row.CONN_LATEST_STATUS)
+                  ? '离线'
+                  : '未知'
+            }}
           </el-tag>
         </template>
       </el-table-column>
@@ -141,25 +148,33 @@ const pagination = ref({
 // 防止循环更新的标志
 let isInternalUpdate = false
 
-watch(() => props.ciType, (newVal) => {
-  if (newVal) {
-    fetchData()
-    fetchGroupList()
-    fetchTagList()
-  }
-}, { immediate: true })
+watch(
+  () => props.ciType,
+  newVal => {
+    if (newVal) {
+      fetchData()
+      fetchGroupList()
+      fetchTagList()
+    }
+  },
+  { immediate: true }
+)
 
 // 监听外部 modelValue 变化，同步选中状态到表格
 // 只在外部改变时才同步（比如从父组件删除一个已选主机）
-watch(() => props.modelValue, async (newVal, oldVal) => {
-  // 如果是内部更新触发的，跳过
-  if (isInternalUpdate) {
-    return
-  }
+watch(
+  () => props.modelValue,
+  async (newVal, oldVal) => {
+    // 如果是内部更新触发的，跳过
+    if (isInternalUpdate) {
+      return
+    }
 
-  await nextTick()
-  syncSelectionFromModelValue()
-}, { deep: true })
+    await nextTick()
+    syncSelectionFromModelValue()
+  },
+  { deep: true }
+)
 
 onMounted(() => {
   fetchData()
@@ -201,16 +216,14 @@ function buildGroupTree(paths) {
   const root = { name: '~', path: '/', children: [] }
 
   // 过滤掉根路径，排序确保父路径在前
-  const sortedPaths = paths
-    .filter(p => p && p !== '/')
-    .sort((a, b) => a.length - b.length)
+  const sortedPaths = paths.filter(p => p && p !== '/').sort((a, b) => a.length - b.length)
 
   sortedPaths.forEach(path => {
     const parts = path.split('/').filter(Boolean)
     let current = root
     let currentPath = ''
 
-    parts.forEach((part) => {
+    parts.forEach(part => {
       currentPath += '/' + part
 
       let child = current.children.find(c => c.name === part)
@@ -316,9 +329,7 @@ function restoreSelection() {
 
   isInternalUpdate = true
   tableData.value.forEach(row => {
-    const isSelected = props.modelValue.some(item =>
-      item.key === row.id || item.value === row.IP
-    )
+    const isSelected = props.modelValue.some(item => item.key === row.id || item.value === row.IP)
     if (isSelected) {
       tableRef.value.toggleRowSelection(row, true)
     }
@@ -338,9 +349,7 @@ function syncSelectionFromModelValue() {
 
   if (props.modelValue?.length) {
     tableData.value.forEach(row => {
-      const isSelected = props.modelValue.some(item =>
-        item.key === row.id || item.value === row.IP
-      )
+      const isSelected = props.modelValue.some(item => item.key === row.id || item.value === row.IP)
       if (isSelected) {
         tableRef.value.toggleRowSelection(row, true)
       }
@@ -358,7 +367,6 @@ function handleSelectionChange(selection) {
     return
   }
 
-
   // 将选中的行转换为标准格式
   const selectedHosts = selection.map(row => ({
     key: row.id,
@@ -368,12 +376,11 @@ function handleSelectionChange(selection) {
 
   // 合并：保留不在当前页的已选项 + 当前页的选择
   const currentPageIds = tableData.value.map(row => row.id)
-  const otherPageSelections = (props.modelValue || []).filter(item =>
-    !currentPageIds.includes(item.key)
+  const otherPageSelections = (props.modelValue || []).filter(
+    item => !currentPageIds.includes(item.key)
   )
 
   const mergedSelection = [...otherPageSelections, ...selectedHosts]
-
 
   isInternalUpdate = true
   emit('update:modelValue', mergedSelection)
@@ -406,7 +413,7 @@ function handleTagFilter() {
   align-items: center;
   gap: 12px;
   flex-wrap: nowrap;
-  background-color: #f8f9fa;
+  background-color: var(--el-fill-color-light);
   padding: 12px 16px;
   margin-bottom: 16px;
   border-radius: 6px;
@@ -414,7 +421,7 @@ function handleTagFilter() {
 
 .instance-selector .filter-toolbar .filter-label {
   font-weight: 600;
-  color: #606266;
+  color: var(--el-text-color-regular);
   white-space: nowrap;
 }
 
@@ -435,12 +442,12 @@ function handleTagFilter() {
 .group-tree-dropdown .all-item {
   padding: 8px 12px;
   cursor: pointer;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
   font-weight: 500;
 }
 
 .group-tree-dropdown .all-item:hover {
-  background-color: #f5f7fa;
+  background-color: var(--el-bg-color-page);
 }
 
 .group-tree-dropdown .tree-node-content {
@@ -453,7 +460,7 @@ function handleTagFilter() {
 }
 
 .group-tree-dropdown :deep(.el-tree-node__content:hover) {
-  background-color: #f5f7fa;
+  background-color: var(--el-bg-color-page);
 }
 
 .instance-selector .pagination-wrapper {
@@ -465,7 +472,7 @@ function handleTagFilter() {
 
 /* 确保表格checkbox可以正常点击 */
 .instance-selector :deep(.el-table) {
-  --el-table-border-color: #ebeef5;
+  --el-table-border-color: var(--el-border-color-lighter);
 }
 
 .instance-selector :deep(.el-table .el-table__header-wrapper) {

@@ -2,7 +2,7 @@
   display: flex;
   border: 1px solid #94a3b859;
   border-radius: 12px;
-  background-color: #fff;
+  background-color: var(--el-bg-color);
   // min-height: 660px;
   height: 100%;
 }
@@ -10,7 +10,7 @@
 .job-workbench__sidebar {
   width: 180px;
   border-right: 1px solid rgba(148, 163, 184, 0.25);
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   display: flex;
   flex-direction: column;
 }
@@ -68,7 +68,7 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .content-header {
@@ -80,7 +80,7 @@
   padding: 14px 20px;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 10px;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
 }
 
 .header-left,

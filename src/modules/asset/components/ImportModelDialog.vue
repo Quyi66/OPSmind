@@ -139,7 +139,7 @@ const handleClosed = () => {
   .upload-tips {
     margin-top: 20px;
     padding: 12px 16px;
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
     border-radius: 4px;
     font-size: 13px;
     color: #606266;

@@ -661,8 +661,8 @@ watch(() => form.name, (newVal, oldVal) => {
 .main-content {
   flex: 1;
   min-width: 0;
-  background: #fff;
-  border: 1px solid #e4e7ed;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   padding: 16px;
   overflow: auto;
@@ -671,7 +671,7 @@ watch(() => form.name, (newVal, oldVal) => {
 .breadcrumb-nav {
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .type-selection-card {
@@ -688,7 +688,7 @@ watch(() => form.name, (newVal, oldVal) => {
   width: 180px;
   padding: 24px;
   text-align: center;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s;
@@ -765,7 +765,7 @@ watch(() => form.name, (newVal, oldVal) => {
   margin-top: 16px;
   margin-bottom: 0;
   padding-top: 8px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--el-border-color-light);
 
   :deep(.el-form-item__content) {
     justify-content: flex-end !important;
@@ -779,7 +779,7 @@ watch(() => form.name, (newVal, oldVal) => {
 .test-result-content {
   max-height: 400px;
   overflow: auto;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   padding: 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -788,8 +788,8 @@ watch(() => form.name, (newVal, oldVal) => {
 
 .context-menu {
   position: fixed;
-  background: #fff;
-  border: 1px solid #e4e7ed;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   z-index: 2000;
@@ -805,7 +805,7 @@ watch(() => form.name, (newVal, oldVal) => {
   gap: 8px;
 
   &:hover {
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
   }
 
   &.danger {

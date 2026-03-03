@@ -297,7 +297,7 @@ function handleClose() {
 }
 
 .host-list {
-  background: #f8f9fa;
+  background: var(--el-fill-color-light);
   border-radius: 6px;
   padding: 12px;
   min-height: 60px;
@@ -308,7 +308,7 @@ function handleClose() {
 
   .host-count {
     font-size: 13px;
-    color: #606266;
+    color: var(--el-text-color-regular);
 
     strong {
       color: #409eff;
@@ -327,7 +327,7 @@ function handleClose() {
 .no-hosts {
   padding: 24px;
   text-align: center;
-  background: #f8f9fa;
+  background: var(--el-fill-color-light);
   border-radius: 6px;
 
   .text-muted {

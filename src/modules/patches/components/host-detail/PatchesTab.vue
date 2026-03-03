@@ -373,7 +373,7 @@ defineExpose({
   justify-content: flex-end;
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--el-border-color-light);
 }
 
 :deep(.el-pagination) {

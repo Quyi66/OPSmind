@@ -1159,7 +1159,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   overflow: hidden;
 }
 
@@ -1169,8 +1169,8 @@ onMounted(() => {
   align-items: center;
   padding: 12px 0;
   padding-top: 0;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
   flex-shrink: 0;
   z-index: 10;
 
@@ -1208,7 +1208,7 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--el-bg-color);
   overflow: hidden;
 
   :deep(.el-tabs__header) {
@@ -1253,7 +1253,7 @@ onMounted(() => {
 .attrs-left {
   flex: 1;
   min-width: 0;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   overflow: hidden;
   display: flex;
@@ -1262,8 +1262,8 @@ onMounted(() => {
 
 .attrs-toolbar {
   padding: 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-bg-color-page);
+  border-bottom: 1px solid var(--el-border-color-light);
   flex-shrink: 0;
 }
 
@@ -1291,7 +1291,7 @@ onMounted(() => {
 }
 
 .attr-group {
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   &:last-child {
     border-bottom: none;
@@ -1302,7 +1302,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 10px 12px;
-  background: #fafafa;
+  background: var(--el-bg-color-page);
   cursor: pointer;
   transition: background 0.2s;
 
@@ -1361,14 +1361,14 @@ onMounted(() => {
 }
 
 .group-attrs {
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .attr-item {
   display: flex;
   align-items: center;
   padding: 8px 12px 8px 36px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-light);
   cursor: pointer;
   transition: background 0.2s;
 
@@ -1377,7 +1377,7 @@ onMounted(() => {
   }
 
   &:hover {
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
   }
 
   &.selected {
@@ -1437,7 +1437,7 @@ onMounted(() => {
 }
 
 .setting-panel {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   overflow: hidden;
   height: 100%;
@@ -1462,7 +1462,7 @@ onMounted(() => {
 
     .el-collapse-item__header {
       padding: 0 16px;
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
       font-weight: 500;
     }
 
@@ -1541,10 +1541,10 @@ onMounted(() => {
 
   .view-columns-config,
   .view-data-config {
-    border: 1px solid #ebeef5;
+    border: 1px solid var(--el-border-color-light);
     border-radius: 4px;
     padding: 16px;
-    background: #fafafa;
+    background: var(--el-bg-color-page);
   }
 
   .view-config-header {
@@ -1566,8 +1566,8 @@ onMounted(() => {
   }
 
   .data-converter-wrapper {
-    background: #fff;
-    border: 1px solid #ebeef5;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-light);
     border-radius: 4px;
     padding: 12px;
   }
@@ -1578,8 +1578,8 @@ onMounted(() => {
     justify-content: center;
     gap: 8px;
     padding: 60px 20px;
-    background: #fafafa;
-    border: 1px dashed #dcdfe6;
+    background: var(--el-bg-color-page);
+    border: 1px dashed var(--el-border-color-light);
     border-radius: 4px;
     color: #909399;
 

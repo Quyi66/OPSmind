@@ -593,7 +593,7 @@ async function saveAapConfig() {
 }
 
 .nested-card {
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
 
   :deep(.el-card__body) {
     padding: 16px;

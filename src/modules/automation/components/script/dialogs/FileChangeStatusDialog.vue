@@ -110,10 +110,10 @@ async function handleSubmit() {
 .selected-files-info {
   margin-top: 20px;
   padding: 10px;
-  background-color: #f5f7fa;
+  background-color: var(--el-bg-color-page);
   border-radius: 4px;
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .selected-files-info p {

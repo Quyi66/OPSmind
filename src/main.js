@@ -9,6 +9,8 @@ import 'element-plus/es/components/message-box/style/css'
 import 'element-plus/es/components/loading/style/css'
 import 'element-plus/es/components/notification/style/css'
 import 'element-plus/theme-chalk/el-overlay.css'
+import 'element-plus/theme-chalk/dark/css-vars.css'
+import '@/composables/useTheme' // 初始化暗黑模式判断与监听
 
 import App from './App.vue'
 import { setupRouter } from '@/core/router'
@@ -35,7 +37,7 @@ try {
     link.setAttribute('href', faviconHref)
     if (!link.parentNode) doc.head.appendChild(link)
   }
-} catch { }
+} catch {}
 
 // 创建应用实例
 const app = createApp(App)
@@ -71,7 +73,13 @@ async function bootstrapAuthFromUrl() {
         user = await angularJSBridge.getUserInfo()
       } catch (e) {
         // 兜底用户（最少字段即可通过守卫）
-        user = { id: 'link-user', login: 'linked', name: 'Linked User', role: 'user', permissions: [] }
+        user = {
+          id: 'link-user',
+          login: 'linked',
+          name: 'Linked User',
+          role: 'user',
+          permissions: []
+        }
       }
     }
 
@@ -84,7 +92,7 @@ async function bootstrapAuthFromUrl() {
       const base = import.meta.env.BASE_URL || '/'
       const cleanUrl = `${pathname.startsWith(base) ? pathname : base}${hash || ''}`
       window.history.replaceState(null, '', cleanUrl)
-    } catch { }
+    } catch {}
   } catch (e) {
     if (import.meta.env.DEV) console.warn('bootstrapAuthFromUrl failed:', e)
   }
@@ -141,12 +149,12 @@ try {
   if ((pathname === base || pathname === noSlash) && (!hash || hash === '#')) {
     router.replace('/home')
   }
-} catch { }
+} catch {}
 
 // 暴露路由实例，供菜单等非组件模块访问（生产/开发环境均生效）
 try {
   window.__VUE_ROUTER__ = router
-} catch { }
+} catch {}
 
 // 开发环境下额外暴露调试对象
 if (import.meta.env.DEV) {
@@ -184,4 +192,3 @@ if (import.meta.env.DEV) {
 }
 
 // Vue Dashboard 作为主应用运行
-

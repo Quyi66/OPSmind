@@ -492,7 +492,7 @@ onBeforeUnmount(() => {
   bottom: 0;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--el-bg-color);
   overflow: hidden;
 }
 
@@ -503,8 +503,8 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   height: 56px;
   padding: 0 20px;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5; /* 统一边框颜色 */
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light); /* 统一边框颜色 */
   flex-shrink: 0;
 
   .header-left {
@@ -573,7 +573,7 @@ onBeforeUnmount(() => {
     }
 
     &.is-active {
-      background: #fff;
+      background: var(--el-bg-color);
       color: #3b82f6;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
@@ -595,7 +595,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid var(--el-border-color-light);
 }
 
 // 画布头部状态栏
@@ -604,8 +604,8 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #fff;
+  border-bottom: 1px solid var(--el-border-color-light);
+  background: var(--el-bg-color);
 
   .header-left {
     display: flex;
@@ -631,7 +631,7 @@ onBeforeUnmount(() => {
 .canvas-container {
   flex: 1;
   position: relative;
-  background: #fafafa;
+  background: var(--el-bg-color-page);
   overflow: hidden;
 }
 
@@ -663,7 +663,7 @@ onBeforeUnmount(() => {
 .property-panel {
   width: 280px;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--el-bg-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -673,13 +673,13 @@ onBeforeUnmount(() => {
   padding: 12px 16px;
   font-size: 14px;
   color: #333;
-  border-bottom: 1px solid #e2e8f0;
-  background: #fafafa;
+  border-bottom: 1px solid var(--el-border-color-light);
+  background: var(--el-bg-color-page);
 }
 
 .panel-tabs {
   display: flex;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .panel-tab {
     padding: 8px 16px;
@@ -688,12 +688,12 @@ onBeforeUnmount(() => {
     cursor: pointer;
     border: 1px solid transparent;
     border-bottom: none;
-    background: #f8fafc;
+    background: var(--el-bg-color-page);
     margin-bottom: -1px;
 
     &.is-active {
       color: #333;
-      background: #fff;
+      background: var(--el-bg-color);
       border-color: #e2e8f0;
       border-bottom-color: #fff;
     }
@@ -712,7 +712,7 @@ onBeforeUnmount(() => {
   color: #333;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .property-group {
@@ -753,8 +753,8 @@ onBeforeUnmount(() => {
 // bpmn-js 样式覆盖
 :deep(.djs-palette) {
   width: 48px;
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
+  background: var(--el-bg-color);
+  border-right: 1px solid var(--el-border-color-light);
 }
 
 // 隐藏库自带的 Token Simulation 按钮（使用自定义开关替代）

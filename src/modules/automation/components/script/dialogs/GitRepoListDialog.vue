@@ -26,17 +26,16 @@
       <!-- 操作栏 -->
       <div class="ops-action-bar">
         <el-button type="danger" size="small" @click="handleReset">
-          <i class="fa fa-fw fa-undo" /> 初始化
+          <i class="fa fa-fw fa-undo" />
+          初始化
         </el-button>
         <el-button type="primary" size="small" @click="handleAddRepo">
-          <i class="fa fa-cogs" /> 新增
+          <i class="fa fa-cogs" />
+          新增
         </el-button>
-        <el-button
-          size="small"
-          :disabled="!selectedRepos.length"
-          @click="handleBatchDelete"
-        >
-          <i class="fa fa-trash" /> 删除
+        <el-button size="small" :disabled="!selectedRepos.length" @click="handleBatchDelete">
+          <i class="fa fa-trash" />
+          删除
         </el-button>
       </div>
 
@@ -68,14 +67,12 @@
                 class="repo-type-badge external"
                 @click="handleGoRepo(row.repoName)"
               >
-                <i class="fab fa-gitlab" /> 外部Git库
+                <i class="fab fa-gitlab" />
+                外部Git库
               </span>
-              <span
-                v-else
-                class="repo-type-badge builtin"
-                @click="handleGoRepo('')"
-              >
-                <i class="fa fa-code-branch" /> 内置Git库
+              <span v-else class="repo-type-badge builtin" @click="handleGoRepo('')">
+                <i class="fa fa-code-branch" />
+                内置Git库
               </span>
             </template>
           </el-table-column>
@@ -183,14 +180,17 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 
 // 同步 v-model
-watch(() => props.modelValue, (val) => {
-  dialogVisible.value = val
-  if (val) {
-    loadRepoList()
+watch(
+  () => props.modelValue,
+  val => {
+    dialogVisible.value = val
+    if (val) {
+      loadRepoList()
+    }
   }
-})
+)
 
-watch(dialogVisible, (val) => {
+watch(dialogVisible, val => {
   emit('update:modelValue', val)
 })
 
@@ -199,10 +199,11 @@ const filteredRepoList = computed(() => {
   let list = repoList.value
   if (searchText.value) {
     const search = searchText.value.toLowerCase()
-    list = list.filter(r =>
-      r.repoName?.toLowerCase().includes(search) ||
-      r.repoUrl?.toLowerCase().includes(search) ||
-      r.updatedBy?.toLowerCase().includes(search)
+    list = list.filter(
+      r =>
+        r.repoName?.toLowerCase().includes(search) ||
+        r.repoUrl?.toLowerCase().includes(search) ||
+        r.updatedBy?.toLowerCase().includes(search)
     )
   }
   return list
@@ -253,11 +254,9 @@ function handleEditRepo(row) {
 // 删除单个仓库
 async function handleDeleteRepo(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定删除仓库 "${row.repoName}" 吗？`,
-      '删除确认',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm(`确定删除仓库 "${row.repoName}" 吗？`, '删除确认', {
+      type: 'warning'
+    })
     await gfsApi.delExternalRepo(props.repoType, props.repo, row.repoName)
     ElMessage.success('删除成功')
     loadRepoList()
@@ -325,7 +324,7 @@ function formatDate(dateStr) {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return dateStr
-  const pad = (n) => n < 10 ? `0${n}` : String(n)
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
@@ -370,7 +369,7 @@ function handleClosed() {
 }
 
 .repo-type-badge.builtin {
-  background: #f5f5f5;
+  background: var(--el-bg-color-page);
   color: #666;
 }
 
@@ -380,10 +379,10 @@ function handleClosed() {
 
 .repo-name {
   font-weight: 500;
-  color: #1e293b;
+  color: var(--el-text-color-primary);
 }
 
 .repo-url {
-  color: #64748b;
+  color: var(--el-text-color-regular);
 }
 </style>

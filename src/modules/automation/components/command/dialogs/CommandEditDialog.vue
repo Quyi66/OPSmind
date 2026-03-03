@@ -338,7 +338,7 @@ function getStatusText(status) {
 .line-numbers {
   padding: 12px 8px;
   background: #21252b;
-  color: #636d83;
+  color: var(--el-text-color-regular);
   text-align: right;
   user-select: none;
   min-width: 40px;
@@ -354,7 +354,7 @@ function getStatusText(status) {
   padding: 12px;
   background: transparent;
   border: none;
-  color: #abb2bf;
+  color: var(--el-text-color-secondary);
   resize: none;
   outline: none;
   font-family: inherit;
@@ -365,7 +365,7 @@ function getStatusText(status) {
   overflow-x: auto;
 
   &::placeholder {
-    color: #636d83;
+    color: var(--el-text-color-regular);
   }
 
   &:disabled {

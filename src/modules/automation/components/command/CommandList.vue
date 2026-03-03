@@ -505,7 +505,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .command-list__header {
@@ -513,13 +513,13 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid #dee2e6;
-  background: #f8f9fa;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-light);
 
   .header-title {
     font-size: 16px;
     font-weight: 600;
-    color: #212529;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -528,7 +528,7 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .toolbar-left,
@@ -550,11 +550,11 @@ defineExpose({
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--el-border-color-lighter);
 
   .pagination-info {
     font-size: 13px;
-    color: #6c757d;
+    color: var(--el-text-color-secondary);
   }
 }
 
@@ -571,20 +571,20 @@ defineExpose({
 
   .name {
     font-weight: 500;
-    color: #0d6efd;
+    color: var(--el-color-primary);
   }
 
   .description {
     margin: 2px 0 0;
     font-size: 12px;
-    color: #6c757d;
+    color: var(--el-text-color-secondary);
     line-height: 1.4;
   }
 
   .command-preview {
     margin: 2px 0 0;
     font-size: 12px;
-    color: #6c757d;
+    color: var(--el-text-color-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -607,7 +607,7 @@ defineExpose({
 
   &.status-warning {
     background-color: #ffc107;
-    color: #212529;
+    color: var(--el-text-color-primary);
   }
 
   &.status-danger {
@@ -625,10 +625,10 @@ defineExpose({
   .el-button {
     padding: 4px 8px;
     font-size: 14px;
-    color: #6c757d;
+    color: var(--el-text-color-secondary);
 
     &:hover:not(:disabled) {
-      color: #0d6efd;
+      color: var(--el-color-primary);
     }
 
     &:disabled {
@@ -646,20 +646,20 @@ defineExpose({
   font-size: 13px;
 
   .el-table__header th {
-    background-color: #f8f9fa !important;
-    color: #495057;
+    background-color: var(--el-fill-color-light) !important;
+    color: var(--el-text-color-regular);
     font-weight: 600;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--el-border-color-lighter);
   }
 
   .el-table__row {
     &:hover > td {
-      background-color: #f8f9fa !important;
+      background-color: var(--el-fill-color-light) !important;
     }
   }
 
   .el-table__cell {
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--el-border-color-lighter);
   }
 }
 

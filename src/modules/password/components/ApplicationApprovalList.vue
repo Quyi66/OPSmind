@@ -434,7 +434,7 @@ async function handleDelete(row) {
   display: flex;
   flex-direction: column;
   padding: 16px;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
 }
 
 .page-header {
@@ -463,7 +463,7 @@ async function handleDelete(row) {
   align-items: center;
   margin-bottom: 16px;
   padding: 12px 16px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 6px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
@@ -477,7 +477,7 @@ async function handleDelete(row) {
 .table-container {
   flex: 1;
   min-height: 0;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -488,7 +488,7 @@ async function handleDelete(row) {
   justify-content: flex-end;
   margin-top: 16px;
   padding: 12px 16px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 6px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }

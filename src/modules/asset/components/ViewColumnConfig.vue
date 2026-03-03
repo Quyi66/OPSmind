@@ -245,7 +245,7 @@ const handleDrop = (event, targetIndex) => {
     transition: background 0.2s;
 
     &:hover {
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
     }
 
     &.disabled {

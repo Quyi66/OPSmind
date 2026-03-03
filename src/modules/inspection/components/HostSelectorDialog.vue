@@ -879,7 +879,7 @@ watch(() => props.visible, (val) => {
   border: 1px solid #dee2e6;
   border-radius: 4px;
   margin-bottom: 16px;
-  background: #fff;
+  background: var(--el-bg-color);
 
   .card-header {
     display: flex;
@@ -1013,7 +1013,7 @@ watch(() => props.visible, (val) => {
     border-bottom: 1px solid #eee;
 
     &:hover {
-      background: #f5f5f5;
+      background: var(--el-bg-color-page);
     }
   }
 
@@ -1047,10 +1047,10 @@ watch(() => props.visible, (val) => {
     align-items: center;
     padding: 8px 12px;
     cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--el-border-color-light);
 
     &:hover {
-      background: #f5f5f5;
+      background: var(--el-bg-color-page);
     }
 
     &:last-child {

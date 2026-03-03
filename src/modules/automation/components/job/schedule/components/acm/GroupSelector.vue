@@ -7,7 +7,8 @@
           {{ options.dropdownText || '选择分组' }}
         </span>
         <span v-else>
-          分组: <strong class="text-primary">{{ selectedGroup }}</strong>
+          分组:
+          <strong class="text-primary">{{ selectedGroup }}</strong>
         </span>
       </el-button>
       <template #dropdown>
@@ -46,7 +47,14 @@
         >
           <template #default="{ node, data }">
             <span class="custom-tree-node">
-              <i :class="data.children && data.children.length > 0 ? 'fa fa-folder-open text-warning' : 'fa fa-folder text-warning'" style="margin-right: 6px"></i>
+              <i
+                :class="
+                  data.children && data.children.length > 0
+                    ? 'fa fa-folder-open text-warning'
+                    : 'fa fa-folder text-warning'
+                "
+                style="margin-right: 6px"
+              ></i>
               <span>{{ node.label }}</span>
               <span v-if="data.count" class="node-count">({{ data.count }})</span>
             </span>
@@ -78,9 +86,13 @@ const treeProps = {
   children: 'children'
 }
 
-watch(() => props.ciType, () => {
-  fetchGroups()
-}, { immediate: true })
+watch(
+  () => props.ciType,
+  () => {
+    fetchGroups()
+  },
+  { immediate: true }
+)
 
 onMounted(() => {
   fetchGroups()
@@ -99,7 +111,7 @@ async function fetchGroups() {
     } else {
       treeData.value = []
     }
-    
+
     // 数据加载完成后同步选中状态
     await nextTick()
     syncTreeSelection()
@@ -112,17 +124,19 @@ async function fetchGroups() {
 // 同步选中状态
 function syncTreeSelection() {
   if (!treeRef.value || !props.modelValue) return
-  
-  const groupKeys = props.modelValue
-    .filter(item => item.runType === 'group')
-    .map(item => item.key)
-    
+
+  const groupKeys = props.modelValue.filter(item => item.runType === 'group').map(item => item.key)
+
   treeRef.value.setCheckedKeys(groupKeys)
 }
 
-watch(() => props.modelValue, () => {
-  syncTreeSelection()
-}, { deep: true })
+watch(
+  () => props.modelValue,
+  () => {
+    syncTreeSelection()
+  },
+  { deep: true }
+)
 
 // 从平铺的路径列表构建树形结构
 function buildTreeFromPaths(paths) {
@@ -185,18 +199,20 @@ function handleCheck(data, { checkedNodes }) {
 
   // 保留非分组类型的已选项 (如 specific hosts, tags 等)
   const otherSelections = (props.modelValue || []).filter(item => item.runType !== 'group')
-  
+
   emit('update:modelValue', [...otherSelections, ...selectedGroups])
 }
 
 function selectAll() {
   // 选择所有设备
-  const allSelection = [{
-    key: '@@',
-    value: '所有',
-    runType: 'all',
-    assetType: props.ciType
-  }]
+  const allSelection = [
+    {
+      key: '@@',
+      value: '所有',
+      runType: 'all',
+      assetType: props.ciType
+    }
+  ]
   emit('update:modelValue', allSelection)
 }
 </script>
@@ -207,21 +223,21 @@ function selectAll() {
 }
 
 .group-tree-view {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .tree-header {
   padding: 10px 16px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
   cursor: pointer;
   font-size: 14px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .tree-header:hover {
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
 }
 
 .tree-container {
@@ -238,7 +254,7 @@ function selectAll() {
 
 .node-count {
   margin-left: 6px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   font-size: 12px;
 }
 

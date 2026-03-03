@@ -745,7 +745,7 @@ defineExpose({ refresh })
 
   &-warning {
     background-color: #ffc107;
-    color: #212529;
+    color: var(--el-text-color-primary);
   }
 
   &-dark {
@@ -753,7 +753,7 @@ defineExpose({ refresh })
   }
 
   &-secondary {
-    background-color: #6c757d;
+    background-color: var(--el-text-color-secondary);
   }
 }
 
@@ -783,7 +783,7 @@ defineExpose({ refresh })
     justify-content: center;
     padding: 2px 8px;
     background: #e9ecef;
-    color: #6c757d;
+    color: var(--el-text-color-secondary);
     border-radius: 4px;
     font-size: 12px;
     border: none;
@@ -836,7 +836,7 @@ defineExpose({ refresh })
 }
 
 .install-card {
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
   overflow: hidden;
 
@@ -845,26 +845,26 @@ defineExpose({ refresh })
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+    background: var(--el-fill-color-light);
+    border-bottom: 1px solid var(--el-border-color-lighter);
     font-size: 13px;
-    color: #495057;
+    color: var(--el-text-color-primary);
 
     i {
-      color: #6c757d;
+      color: var(--el-text-color-secondary);
     }
   }
 
   .card-body {
     padding: 10px 12px;
-    background: #fff;
+    background: var(--el-bg-color);
     font-size: 13px;
-    color: #495057;
+    color: var(--el-text-color-primary);
 
     &--scroll {
       max-height: 140px;
       overflow-y: auto;
-      color: #495057;
+      color: var(--el-text-color-primary);
     }
   }
 
@@ -878,12 +878,12 @@ defineExpose({ refresh })
 
 .package-item {
   padding: 2px 0;
-  color: #495057;
+  color: var(--el-text-color-primary);
   font-size: 13px;
 }
 
 .no-data {
-  color: #adb5bd;
+  color: var(--el-text-color-secondary);
   text-align: center;
   padding: 20px;
 }
@@ -893,12 +893,12 @@ defineExpose({ refresh })
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  border-bottom: 1px solid #e9ecef;
-  background: #fff;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-bg-color);
 }
 
 .host-link {
-  color: #495057;
+  color: var(--el-text-color-primary);
 }
 
 .host-pagination {
@@ -906,8 +906,8 @@ defineExpose({ refresh })
   justify-content: flex-end;
   align-items: center;
   padding: 8px 12px;
-  border-top: 1px solid #e9ecef;
-  background: #fff;
+  border-top: 1px solid var(--el-border-color-lighter);
+  background: var(--el-bg-color);
 }
 
 .patch-detail {
@@ -916,7 +916,7 @@ defineExpose({ refresh })
   &__id {
     font-size: 18px;
     font-weight: bold;
-    color: #212529;
+    color: var(--el-text-color-primary);
     margin: 0 0 16px 0;
   }
 
@@ -926,17 +926,17 @@ defineExpose({ refresh })
 
   &__label {
     font-weight: bold;
-    color: #212529;
+    color: var(--el-text-color-primary);
   }
 
   &__value {
     font-size: 14px;
-    color: #495057;
+    color: var(--el-text-color-primary);
   }
 
   &__desc {
     font-size: 14px;
-    color: #495057;
+    color: var(--el-text-color-primary);
     line-height: 1.6;
     margin-bottom: 16px;
     padding: 8px 0;

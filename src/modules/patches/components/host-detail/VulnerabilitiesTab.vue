@@ -17,21 +17,24 @@
         </el-checkbox>
       </el-checkbox-group>
     </div> -->
-    <div class="ops-filter-bar" style="margin-bottom: 8px;">
-      <div style="line-height: 32px;">关键词</div>
-      <el-input
-        v-model="vulKeyword"
-        size="small"
-        placeholder="搜索CVE/补丁/包名/状态等"
-        clearable
-        style="width: 260px; margin-left: 12px;"
-        @input="handleVulKeywordChange"
-        @clear="handleVulKeywordChange"
-      >
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-      </el-input>
+    <div class="ops-filter-bar" style="margin-bottom: 8px">
+      <el-form inline size="small">
+        <el-form-item label="关键词" label-width="60">
+          <el-input
+            v-model="vulKeyword"
+            size="small"
+            placeholder="搜索CVE/补丁/包名/状态等"
+            clearable
+            style="width: 260px"
+            @input="handleVulKeywordChange"
+            @clear="handleVulKeywordChange"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 操作栏 -->
@@ -51,7 +54,6 @@
     <el-table
       v-loading="vulLoading"
       :data="vulTableData"
-
       size="small"
       max-height="calc(100vh - 400px)"
       @selection-change="handleVulSelectionChange"
@@ -60,17 +62,13 @@
       <el-table-column prop="vul_id" label="CVE" width="160">
         <template #default="{ row }">
           <div class="cve-cell">
-            <a
-              :href="getCveUrl(row.vul_id, osDistro)"
-              target="_blank"
-              class="cve-badge"
-            >
+            <a :href="getCveUrl(row.vul_id, osDistro)" target="_blank" class="cve-badge">
               {{ row.vul_id }}
             </a>
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="patch_id" label="补丁编号" width="150">
+      <el-table-column prop="patch_id" label="补丁编号" width="180">
         <template #default="{ row }">
           <div class="patch-list">
             <a
@@ -85,14 +83,23 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="affected_pkgs" label="受影响的软件包" min-width="200" show-overflow-tooltip>
+      <el-table-column
+        prop="affected_pkgs"
+        label="受影响的软件包"
+        min-width="200"
+        show-overflow-tooltip
+      >
         <template #default="{ row }">
           {{ formatPackages(row.affected_pkgs) }}
         </template>
       </el-table-column>
       <el-table-column prop="severity" label="严重程度" width="100">
         <template #default="{ row }">
-          <el-tag :type="getSeverityType(row.severity)" :class="['severity-tag', getSeverityClass(row.severity)]" size="small">
+          <el-tag
+            :type="getSeverityType(row.severity)"
+            :class="['severity-tag', getSeverityClass(row.severity)]"
+            size="small"
+          >
             {{ getSeverityLabel(row.severity) }}
           </el-tag>
         </template>
@@ -100,10 +107,12 @@
       <el-table-column prop="reboot_status" label="重启要求" width="120">
         <template #default="{ row }">
           <el-tag v-if="row.reboot_status === '系统重启'" type="danger" size="small">
-            <i class="fa fa-power-off"></i> 系统重启
+            <i class="fa fa-power-off"></i>
+            系统重启
           </el-tag>
           <el-tag v-else-if="row.reboot_status === '服务重启'" type="warning" size="small">
-            <i class="fa fa-server"></i> 服务重启
+            <i class="fa fa-server"></i>
+            服务重启
           </el-tag>
           <span v-else class="text-muted">-</span>
         </template>
@@ -111,10 +120,12 @@
       <el-table-column prop="is_kernel" label="内核漏洞" width="100">
         <template #default="{ row }">
           <el-tag v-if="row.is_kernel === '是'" type="primary" size="small">
-            <i class="fa fa-check"></i> 是
+            <i class="fa fa-check"></i>
+            是
           </el-tag>
           <el-tag v-else type="info" size="small">
-            <i class="fa fa-times"></i> 否
+            <i class="fa fa-times"></i>
+            否
           </el-tag>
         </template>
       </el-table-column>
@@ -251,8 +262,10 @@ function normalizeSeverity(severity) {
   const lower = raw.toLowerCase()
 
   if (lower === 'critical' || raw === '严重' || raw === 'Critical') return 'critical'
-  if (lower === 'important' || raw === '重要' || raw === '高危' || raw === 'Important') return 'important'
-  if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'Moderate') return 'moderate'
+  if (lower === 'important' || raw === '重要' || raw === '高危' || raw === 'Important')
+    return 'important'
+  if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'Moderate')
+    return 'moderate'
   if (lower === 'low' || raw === '低' || raw === '低危' || raw === 'Low') return 'low'
 
   return ''
@@ -314,7 +327,12 @@ const lastSubmittedRunId = ref('')
 function resolvePatchStatusIds(selection) {
   const ids = []
   selection.forEach(row => {
-    const value = row.patch_status_id ?? row.patch_status_ids ?? row.id ?? row.patchStatusId ?? row.patchStatusIds
+    const value =
+      row.patch_status_id ??
+      row.patch_status_ids ??
+      row.id ??
+      row.patchStatusId ??
+      row.patchStatusIds
     if (Array.isArray(value)) {
       ids.push(...value)
       return
@@ -418,20 +436,18 @@ async function handleConfirmFix() {
 
 // 回滚补丁
 function handleRollback(row) {
-  ElMessageBox.confirm(
-    `确认要回滚补丁 ${row.patch_id} 吗？`,
-    '确认回滚',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    // TODO: 调用回滚API
-    ElMessage.success('回滚任务已提交')
-  }).catch(() => {
-    // 用户取消
+  ElMessageBox.confirm(`确认要回滚补丁 ${row.patch_id} 吗？`, '确认回滚', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
   })
+    .then(() => {
+      // TODO: 调用回滚API
+      ElMessage.success('回滚任务已提交')
+    })
+    .catch(() => {
+      // 用户取消
+    })
 }
 
 // 暴露加载方法给父组件
@@ -494,7 +510,7 @@ defineExpose({
 }
 
 .text-muted {
-  color: #6c757d;
+  color: var(--el-text-color-secondary);
 }
 
 .pagination-wrapper {
@@ -502,7 +518,7 @@ defineExpose({
   justify-content: flex-end;
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--el-border-color-light);
 }
 
 .fix-dialog-content {
@@ -513,18 +529,18 @@ defineExpose({
 }
 
 .fix-info-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
   overflow: hidden;
 }
 
 .fix-info-header {
   padding: 8px 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-fill-color-light);
+  border-bottom: 1px solid var(--el-border-color-light);
   font-weight: 500;
   font-size: 14px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 
   i {
     margin-right: 8px;
@@ -537,7 +553,7 @@ defineExpose({
   overflow-y: auto;
   font-size: 13px;
   line-height: 1.8;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 :deep(.el-pagination) {

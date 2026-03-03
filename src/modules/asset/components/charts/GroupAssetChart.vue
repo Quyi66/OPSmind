@@ -30,6 +30,8 @@
 </template>
 
 <script setup>
+import { useTheme } from '@/composables/useTheme'
+const { isDark } = useTheme()
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { FullScreen, Connection } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
@@ -95,24 +97,16 @@ function getChartOption() {
     xAxis: {
       type: 'category',
       data: xData,
-      axisLabel: {
-        color: '#666'
-      },
+      axisLabel: {},
       axisLine: {
-        lineStyle: {
-          color: '#e0e0e0'
-        }
+        lineStyle: {}
       }
     },
     yAxis: {
       type: 'value',
-      axisLabel: {
-        color: '#666'
-      },
+      axisLabel: {},
       splitLine: {
-        lineStyle: {
-          color: '#f0f0f0'
-        }
+        lineStyle: {}
       }
     },
     series: [
@@ -123,14 +117,14 @@ function getChartOption() {
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: '#FF9F43' },
-            { offset: 1, color: 'rgba(255, 159, 67, 0.2)' }
+            { offset: 1, color: 'rgba(255, 159, 67, 0.1)' }
           ]),
           borderRadius: [4, 4, 0, 0]
         },
         label: {
           show: true,
           position: 'top',
-          color: '#666',
+
           formatter: '{c}'
         },
         barMaxWidth: 30
@@ -143,7 +137,7 @@ function getChartOption() {
         symbol: 'emptyCircle',
         symbolSize: 6,
         lineStyle: { width: 3, color: '#28C76F' },
-        itemStyle: { color: '#28C76F', borderWidth: 2, borderColor: '#fff' }
+        itemStyle: { color: '#28C76F' }
       },
       {
         name: 'Anolis',
@@ -153,7 +147,7 @@ function getChartOption() {
         symbol: 'emptyCircle',
         symbolSize: 6,
         lineStyle: { width: 3, color: '#00CFE8' },
-        itemStyle: { color: '#00CFE8', borderWidth: 2, borderColor: '#fff' }
+        itemStyle: { color: '#00CFE8' }
       },
       {
         name: 'RedHat',
@@ -163,7 +157,7 @@ function getChartOption() {
         symbol: 'emptyCircle',
         symbolSize: 6,
         lineStyle: { width: 3, color: '#EA5455' },
-        itemStyle: { color: '#EA5455', borderWidth: 2, borderColor: '#fff' }
+        itemStyle: { color: '#EA5455' }
       },
       {
         name: 'Debian',
@@ -173,7 +167,7 @@ function getChartOption() {
         symbol: 'emptyCircle',
         symbolSize: 6,
         lineStyle: { width: 3, color: '#7367F0' },
-        itemStyle: { color: '#7367F0', borderWidth: 2, borderColor: '#fff' }
+        itemStyle: { color: '#7367F0' }
       }
     ]
   }
@@ -182,7 +176,7 @@ function getChartOption() {
 function initChart() {
   if (!chartRef.value) return
 
-  chartInstance = echarts.init(chartRef.value)
+  chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
   updateChart()
 
   chartInstance.on('click', params => {
@@ -199,7 +193,7 @@ function toggleFullscreen() {
   fullscreenVisible.value = true
   nextTick(() => {
     if (fullscreenChartRef.value) {
-      fullscreenChartInstance = echarts.init(fullscreenChartRef.value)
+      fullscreenChartInstance = echarts.init(fullscreenChartRef.value, isDark.value ? 'dark' : '')
       fullscreenChartInstance.setOption(getChartOption())
     }
   })
@@ -227,6 +221,19 @@ watch(
   { deep: true }
 )
 
+watch(isDark, () => {
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
+    updateChart()
+  }
+  if (fullscreenChartInstance && fullscreenVisible.value) {
+    fullscreenChartInstance.dispose()
+    fullscreenChartInstance = echarts.init(fullscreenChartRef.value, isDark.value ? 'dark' : '')
+    fullscreenChartInstance.setOption(getChartOption())
+  }
+})
+
 onMounted(() => {
   initChart()
   window.addEventListener('resize', handleResize)
@@ -241,7 +248,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .chart-card {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   padding: 16px;
   height: 100%;
@@ -270,7 +277,7 @@ onUnmounted(() => {
 .chart-title {
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .chart-container {

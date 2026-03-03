@@ -42,7 +42,7 @@ const props = defineProps({
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   overflow: hidden;
@@ -100,7 +100,7 @@ const props = defineProps({
 .module-page.no-header {
   .module-page__body {
     padding: 0;
-    background: #fff;
+    background: var(--el-bg-color);
     overflow: hidden;
   }
 }

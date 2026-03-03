@@ -267,7 +267,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 6px;
   overflow: hidden;
 }

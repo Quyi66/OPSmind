@@ -214,8 +214,8 @@ watch(
   align-items: center;
   gap: 24px;
   padding: 12px 16px;
-  background: #f5f7fa;
-  border: 1px solid #ebeef5;
+  background: var(--el-bg-color-page);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
 }
 
@@ -236,6 +236,6 @@ watch(
   display: flex;
   justify-content: flex-end;
   padding-top: 12px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--el-border-color-light);
 }
 </style>

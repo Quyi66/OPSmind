@@ -457,7 +457,7 @@ watch(
 .icon-preview {
   width: 40px;
   height: 40px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -484,7 +484,7 @@ watch(
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #ebeef5;
+    border: 1px solid var(--el-border-color-light);
     border-radius: 4px;
     cursor: pointer;
 
@@ -514,7 +514,7 @@ watch(
 }
 
 .empty-placeholder {
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   padding: 40px;
   text-align: center;
   border-radius: 4px;
@@ -534,7 +534,7 @@ watch(
   }
 
   .script-table {
-    border: 1px solid #ebeef5;
+    border: 1px solid var(--el-border-color-light);
   }
 }
 

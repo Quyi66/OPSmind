@@ -143,14 +143,14 @@ function handleClose() {
   label {
     display: block;
     font-size: 12px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
     margin-bottom: 6px;
     font-weight: 500;
   }
 
   .value {
     font-size: 14px;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -179,7 +179,7 @@ function handleClose() {
   border: 1px solid #fecaca;
   border-radius: 6px;
   padding: 12px;
-  color: #dc2626;
+  color: var(--el-color-danger);
   font-size: 14px;
 }
 </style>

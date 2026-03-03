@@ -144,7 +144,7 @@ function handleClose() {
 
 .selected-users {
   padding: 12px;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
   max-height: 150px;
   overflow-y: auto;

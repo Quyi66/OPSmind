@@ -9,9 +9,6 @@
       :collapse="isCollapsed"
       unique-opened
       class="module-side-menu"
-      background-color="#ffffff"
-      text-color="#333333"
-      active-text-color="#409eff"
       @select="handleSelect"
     >
       <!-- 首页（可选） -->
@@ -242,7 +239,7 @@ function handleHomeClick() {
   height: 100%;
   width: 180px;
   min-width: 180px;
-  background-color: #fff;
+  background-color: var(--el-bg-color);
   transition:
     width 0.3s ease,
     min-width 0.3s ease;
@@ -258,7 +255,7 @@ function handleHomeClick() {
     top: 0;
     bottom: 0;
     width: 8px;
-    background-color: #f5f5f5;
+    background-color: var(--el-bg-color-page);
   }
 
   &.is-collapsed {
@@ -284,7 +281,7 @@ function handleHomeClick() {
     height: 48px;
     line-height: 48px;
     font-size: 14px;
-    color: #333;
+    color: var(--el-text-color-primary);
     padding-left: 20px !important;
 
     &:hover {
@@ -293,9 +290,9 @@ function handleHomeClick() {
     }
 
     &.is-active {
-      background-color: #e6f4ff !important;
-      color: #409eff !important;
-      border-right: 3px solid #409eff;
+      background-color: var(--el-color-primary-light-9) !important;
+      color: var(--el-color-primary) !important;
+      border-right: 3px solid var(--el-color-primary);
     }
 
     .el-icon {
@@ -315,7 +312,7 @@ function handleHomeClick() {
     height: 48px;
     line-height: 48px;
     font-size: 14px;
-    color: #333;
+    color: var(--el-text-color-primary);
     padding-left: 20px !important;
 
     &:hover {
@@ -335,7 +332,7 @@ function handleHomeClick() {
     }
 
     .el-sub-menu__icon-arrow {
-      color: #999;
+      color: var(--el-text-color-regular);
       font-size: 12px;
       right: 12px;
     }
@@ -348,7 +345,7 @@ function handleHomeClick() {
     line-height: 44px;
     min-width: auto;
     font-size: 14px;
-    color: #333;
+    color: var(--el-text-color-primary);
 
     &:hover {
       background-color: transparent !important;
@@ -356,9 +353,9 @@ function handleHomeClick() {
     }
 
     &.is-active {
-      background-color: #e6f4ff !important;
-      color: #409eff !important;
-      border-right: 3px solid #409eff;
+      background-color: var(--el-color-primary-light-9) !important;
+      color: var(--el-color-primary) !important;
+      border-right: 3px solid var(--el-color-primary);
     }
 
     // 子菜单项不显示图标
@@ -369,7 +366,7 @@ function handleHomeClick() {
 
   // 包含三级菜单嵌套的菜单背景
   :deep(.el-sub-menu .el-menu) {
-    background-color: #fff !important;
+    background-color: var(--el-bg-color) !important;
   }
 
   // 激活的子菜单标题
@@ -383,7 +380,7 @@ function handleHomeClick() {
     height: 44px;
     line-height: 44px;
     font-size: 14px;
-    color: #333;
+    color: var(--el-text-color-primary);
     font-weight: normal;
 
     // 防止被前面的 el-icon 样式污染导致拉扯
@@ -392,7 +389,7 @@ function handleHomeClick() {
       right: 16px;
       width: auto;
       margin: 0;
-      color: #999;
+      color: var(--el-text-color-regular);
       top: 50%;
       transform: translateY(-50%) !important;
     }
@@ -409,7 +406,7 @@ function handleHomeClick() {
     padding-left: 60px !important; // 从68降到60，增加右侧呼吸感，配合更小的字号
     height: 38px;
     line-height: 38px;
-    color: #606266;
+    color: var(--el-text-color-regular);
     margin: 2px 0; // 增加上下微小间距
 
     &:hover {
@@ -435,17 +432,17 @@ function handleHomeClick() {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #666;
+  background: var(--el-text-color-regular);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #fff;
+  color: var(--el-bg-color);
   transition: all 0.3s;
   z-index: 10;
 
   &:hover {
-    background: #409eff;
+    background: var(--el-color-primary);
   }
 
   .el-icon {

@@ -321,21 +321,21 @@ function handleClosed() {
 
   :deep(.el-dialog__footer) {
     padding: 12px 20px;
-    border-top: 1px solid #ebeef5;
+    border-top: 1px solid var(--el-border-color-light);
   }
 }
 
 .revision-container {
   display: flex;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 // ========== 左侧版本列表 ==========
 .revision-sidebar {
   width: 220px;
-  border-right: 1px solid #e4e7ed;
-  background: #fafbfc;
+  border-right: 1px solid var(--el-border-color-light);
+  background: var(--el-fill-color-light);
   overflow-y: auto;
   flex-shrink: 0;
 }
@@ -348,11 +348,11 @@ function handleClosed() {
   padding: 12px 14px;
   cursor: pointer;
   border-left: 3px solid transparent;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
   transition: all 0.15s;
 
   &:hover {
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
   }
 
   &.is-active {
@@ -430,7 +430,7 @@ function handleClosed() {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .diff-panel {
@@ -444,8 +444,8 @@ function handleClosed() {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--el-bg-color-page);
+  border-bottom: 1px solid var(--el-border-color-light);
   flex-shrink: 0;
 
   > i {
@@ -534,7 +534,7 @@ function handleClosed() {
 
     &.normal {
       .line-num {
-        background: #fafbfc;
+        background: var(--el-fill-color-light);
       }
     }
   }

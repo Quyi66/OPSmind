@@ -200,7 +200,7 @@ function handleClose() {
 
 .form-section {
   margin-bottom: 20px;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
   overflow: hidden;
 

@@ -713,7 +713,7 @@ function handleConfirm() {
 .file-selector-main {
   display: flex;
   height: calc(100vh - 300px);
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   overflow: hidden;
 
@@ -721,8 +721,8 @@ function handleConfirm() {
     flex: 7;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #ebeef5;
-    background: #fff;
+    border-right: 1px solid var(--el-border-color-light);
+    background: var(--el-bg-color);
   }
 
   .selected-column {
@@ -739,7 +739,7 @@ function handleConfirm() {
     align-items: center;
     justify-content: space-between;
     background: #fdfdfd;
-    border-bottom: 1px solid #ebeef5;
+    border-bottom: 1px solid var(--el-border-color-light);
     flex-shrink: 0;
 
     .title {
@@ -809,12 +809,12 @@ function handleConfirm() {
       height: 100%;
 
       .opx-table-thead {
-        background: #f5f7fa;
+        background: var(--el-bg-color-page);
         flex-shrink: 0;
 
         .opx-table-tr {
           display: flex;
-          border-bottom: 1px solid #ebeef5;
+          border-bottom: 1px solid var(--el-border-color-light);
         }
 
         .opx-table-th {
@@ -843,7 +843,7 @@ function handleConfirm() {
           cursor: pointer;
 
           &:hover {
-            background: #f5f7fa;
+            background: var(--el-bg-color-page);
           }
           &.is-selected {
             background: #ecf5ff;
@@ -903,8 +903,8 @@ function handleConfirm() {
       align-items: flex-start;
       justify-content: space-between;
       padding: 10px;
-      background: #fff;
-      border: 1px solid #e4e7ed;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
       border-radius: 4px;
       margin-bottom: 8px;
       transition: all 0.2s;

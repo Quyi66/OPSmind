@@ -52,7 +52,7 @@ const formattedCount = computed(() => {
 
 <style scoped lang="scss">
 .type-count-card {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 4px;
   padding: 12px 10px; /* 收紧左右内边距，给标题留空间 */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -105,7 +105,7 @@ const formattedCount = computed(() => {
 
 .type-name {
   font-size: 14px;
-  color: #666;
+  color: var(--el-text-color-regular);
   line-height: 1.2;
   white-space: nowrap; /* 保持单行显示 */
 }
@@ -113,7 +113,7 @@ const formattedCount = computed(() => {
 .type-count {
   font-size: 18px;
   font-weight: bold;
-  color: #262626;
+  color: var(--el-text-color-primary);
   line-height: 1.2;
 }
 

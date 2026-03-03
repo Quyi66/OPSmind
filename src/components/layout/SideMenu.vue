@@ -93,7 +93,7 @@ watch(() => props.activeGroup, (newGroup) => {
 <style scoped lang="scss">
 .side-menu {
   width: 60px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-right: 0;
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -104,11 +104,11 @@ watch(() => props.activeGroup, (newGroup) => {
 
 .menu-header {
   padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
+  background: var(--el-bg-color);
 
   .group-info {
     display: flex;
@@ -157,7 +157,7 @@ watch(() => props.activeGroup, (newGroup) => {
   overflow: hidden;
 
   &:hover:not(.active) {
-    background: #f5f5f5;
+    background: var(--el-bg-color-page);
     transform: translateY(-1px);
   }
 
@@ -312,7 +312,7 @@ watch(() => props.activeGroup, (newGroup) => {
 @media (max-width: 768px) {
   .side-menu {
     width: 54px;
-    background: #fff;
+    background: var(--el-bg-color);
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
   }
 

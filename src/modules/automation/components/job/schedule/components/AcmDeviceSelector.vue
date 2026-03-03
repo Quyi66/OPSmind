@@ -185,9 +185,9 @@ function handleConfirm(selectedHosts) {
   height: 32px;
   padding: 0 24px 0 12px;
   font-size: 12px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
-  background: #fff;
+  background: var(--el-bg-color);
   cursor: pointer;
   transition: border-color 0.15s;
 }

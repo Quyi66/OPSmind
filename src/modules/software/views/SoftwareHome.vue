@@ -266,9 +266,9 @@ onMounted(() => {
   min-width: 200px; /* Reduced from 240px */
   position: relative;
   padding: 12px 16px; /* Reduced from 20px 24px */
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--el-border-color-light);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   cursor: pointer;
@@ -446,7 +446,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--el-border-color-light);
   margin-bottom: 16px;
 
   .tab-nav {
@@ -487,7 +487,7 @@ onMounted(() => {
 
 .content-section {
   flex: 1;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .tab-content {

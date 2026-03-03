@@ -10,7 +10,9 @@
         <div class="main-content">
           <div v-if="moduleToolbarTitle" class="module-toolbar">
             <div class="module-toolbar-title">{{ moduleToolbarTitle }}</div>
-            <button class="module-toolbar-close" @click="handleCloseModule" aria-label="关闭">×</button>
+            <button class="module-toolbar-close" @click="handleCloseModule" aria-label="关闭">
+              ×
+            </button>
           </div>
 
           <router-view v-slot="{ Component, route }">
@@ -88,7 +90,7 @@ const handleCloseModule = () => {
     const targetPath = menuStore.previousPath || '/home'
     menuStore.clearActiveMenu()
     router.replace(targetPath)
-  } catch (e) { }
+  } catch (e) {}
 }
 
 /**
@@ -98,7 +100,7 @@ const handleCloseModule = () => {
  * @param {object} routeObj - 路由对象
  * @returns {string} key
  */
-const getRouterViewKey = (routeObj) => {
+const getRouterViewKey = routeObj => {
   // 如果路由有 groupCode，使用 groupCode 作为 key
   // 这样同一分组内的模块（如 jao、gfs、cmd）共享相同的 key
   // GroupLayout 组件不会被卸载重新挂载
@@ -130,7 +132,9 @@ onUnmounted(() => {
 // 路由切换过渡动画
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 
 .fade-slide-enter-from {
@@ -149,7 +153,7 @@ onUnmounted(() => {
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
-  background-color: #f5f6fa;
+  background-color: var(--el-bg-color-page);
   overflow: hidden;
 }
 
@@ -192,7 +196,7 @@ onUnmounted(() => {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 /* 内嵌模块顶部工具栏 */
@@ -201,8 +205,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-lighter);
   padding: 12px 24px;
   margin: 0 -16px 0 -16px;
 }
@@ -210,7 +214,7 @@ onUnmounted(() => {
 .module-toolbar-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--el-text-color-primary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -222,15 +226,17 @@ onUnmounted(() => {
   background: transparent;
   font-size: 18px;
   line-height: 1;
-  color: #9ca3af;
+  color: var(--el-text-color-secondary);
   padding: 2px 6px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color .2s, color .2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 
   &:hover {
-    background: #f3f4f6;
-    color: #111827;
+    background: var(--el-fill-color);
+    color: var(--el-text-color-primary);
   }
 }
 

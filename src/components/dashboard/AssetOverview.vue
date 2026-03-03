@@ -28,7 +28,7 @@
 
     <!-- ECharts横向柱状图 -->
     <div class="chart-container">
-      <v-chart class="chart" :option="chartOption" autoresize />
+      <v-chart class="chart" :option="chartOption" autoresize :theme="isDark ? 'dark' : ''" />
     </div>
   </div>
 </template>
@@ -45,12 +45,15 @@ import {
   GridComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
+import { useTheme } from '@/composables/useTheme'
+const { isDark } = useTheme()
 import { useDashboardStore } from '@/stores/dashboard'
 
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
 
 // 标题图标
-const assetHeaderIcon = new URL('@/assets/icons/dashboard/icon-assetview@2x.png', import.meta.url).href
+const assetHeaderIcon = new URL('@/assets/icons/dashboard/icon-assetview@2x.png', import.meta.url)
+  .href
 
 const dashboardStore = useDashboardStore()
 const activeTab = ref('type')
@@ -83,7 +86,7 @@ const chartOption = computed(() => ({
     left: '5%',
     right: '15%',
     top: '10%',
-    bottom: '15%',
+    bottom: '15%'
   },
   xAxis: {
     type: 'value',
@@ -92,24 +95,19 @@ const chartOption = computed(() => ({
     interval: 1,
     axisLine: {
       show: true,
-      lineStyle: {
-        color: '#e8e8e8'
-      }
+      lineStyle: {}
     },
     axisTick: {
       show: true,
-      lineStyle: {
-        color: '#e8e8e8'
-      }
+      lineStyle: {}
     },
     axisLabel: {
-      color: '#999',
+      
       fontSize: 14
     },
     splitLine: {
       show: true,
       lineStyle: {
-        color: '#f5f5f5',
         type: 'solid'
       }
     }
@@ -119,15 +117,13 @@ const chartOption = computed(() => ({
     data: assetData.value.categories,
     axisLine: {
       show: true,
-      lineStyle: {
-        color: '#e8e8e8'
-      }
+      lineStyle: {}
     },
     axisTick: {
       show: false
     },
     axisLabel: {
-      color: '#999',
+      
       fontSize: 12,
       margin: 10
     }
@@ -182,7 +178,7 @@ const chartOption = computed(() => ({
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #374151;
+  color: var(--el-text-color-primary);
   margin: 0;
 }
 
@@ -203,12 +199,12 @@ const chartOption = computed(() => ({
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--el-text-color-regular);
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background: #f8f9fa;
+    background: var(--el-fill-color-light);
   }
 
   &.active {
@@ -235,13 +231,13 @@ const chartOption = computed(() => ({
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--el-text-color-regular);
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background: #f8f9fa;
-    color: #374151;
+    background: var(--el-fill-color-light);
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -260,7 +256,7 @@ const chartOption = computed(() => ({
 .section-title {
   font-size: 14px;
   font-weight: 600;
-  color: #262626;
+  color: var(--el-text-color-primary);
   margin: 0;
   display: flex;
   align-items: center;

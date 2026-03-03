@@ -412,7 +412,7 @@ onUnmounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .console-body {
@@ -435,7 +435,7 @@ onUnmounted(() => {
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
-    color: #212529;
+    color: var(--el-text-color-primary);
     font-size: 14px;
   }
 }
@@ -446,7 +446,7 @@ onUnmounted(() => {
 
 .code-editor {
   display: flex;
-  border: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
   overflow: hidden;
   height: 30rem;
@@ -551,7 +551,7 @@ onUnmounted(() => {
 }
 
 :deep(.el-dialog__header) {
-  border-bottom: 1px solid #dee2e6;
+  border-top: 1px solid var(--el-border-color-lighter);
   padding: 16px 20px;
   margin: 0;
 }
@@ -561,7 +561,7 @@ onUnmounted(() => {
 }
 
 :deep(.el-dialog__footer) {
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--el-border-color-lighter);
   padding: 12px 20px;
 }
 </style>

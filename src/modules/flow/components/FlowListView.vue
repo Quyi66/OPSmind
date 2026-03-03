@@ -388,7 +388,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   padding: 16px;
 }
@@ -413,7 +413,7 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 16px;
   padding: 12px;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
 
   &__left, &__right {
@@ -435,7 +435,7 @@ onMounted(() => {
   gap: 12px;
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--el-border-color-light);
 }
 
 .page-info {

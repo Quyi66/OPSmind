@@ -742,15 +742,15 @@ watch(() => props.modelValue, (val) => {
 .attrs-left {
   flex: 1;
   min-width: 0;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .attrs-toolbar {
   padding: 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-bg-color-page);
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .attrs-groups {
@@ -759,7 +759,7 @@ watch(() => props.modelValue, (val) => {
 }
 
 .attr-group {
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   &:last-child {
     border-bottom: none;
@@ -770,7 +770,7 @@ watch(() => props.modelValue, (val) => {
   display: flex;
   align-items: center;
   padding: 10px 12px;
-  background: #fafafa;
+  background: var(--el-bg-color-page);
   cursor: pointer;
   transition: background 0.2s;
 
@@ -806,14 +806,14 @@ watch(() => props.modelValue, (val) => {
 }
 
 .group-attrs {
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .attr-item {
   display: flex;
   align-items: center;
   padding: 8px 12px 8px 36px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-light);
   cursor: pointer;
   transition: background 0.2s;
 
@@ -822,7 +822,7 @@ watch(() => props.modelValue, (val) => {
   }
 
   &:hover {
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
   }
 
   &.selected {
@@ -882,7 +882,7 @@ watch(() => props.modelValue, (val) => {
 }
 
 .setting-panel {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   overflow: hidden;
   height: 100%;
@@ -905,7 +905,7 @@ watch(() => props.modelValue, (val) => {
 
     .el-collapse-item__header {
       padding: 0 16px;
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
       font-weight: 500;
     }
 

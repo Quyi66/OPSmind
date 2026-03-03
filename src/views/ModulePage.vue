@@ -146,7 +146,7 @@ document.addEventListener('fullscreenchange', () => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f5f5f5;
+  background: var(--el-bg-color-page);
 }
 
 .module-toolbar {

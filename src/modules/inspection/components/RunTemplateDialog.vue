@@ -367,15 +367,15 @@ watch(
 
 <style scoped lang="scss">
 .audit-params-section {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .params-header {
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   padding: 12px 16px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
   font-size: 14px;
 
   i {
@@ -403,7 +403,7 @@ watch(
 }
 
 .empty-placeholder {
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   padding: 40px;
   text-align: center;
   border-radius: 4px;
@@ -423,7 +423,7 @@ watch(
   }
 
   .script-table {
-    border: 1px solid #ebeef5;
+    border: 1px solid var(--el-border-color-light);
   }
 }
 

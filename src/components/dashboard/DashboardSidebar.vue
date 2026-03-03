@@ -228,7 +228,7 @@ const handleRecentClick = item => {
   }
 
   &::-webkit-scrollbar-track {
-    background: #f8f9fa;
+    background: var(--el-fill-color-lighter);
   }
 
   &::-webkit-scrollbar-thumb {
@@ -444,9 +444,9 @@ const handleRecentClick = item => {
 .user-todo-card {
   // 顶部间距更紧凑，与内容区保持一致
   margin: 16px 16px 16px 16px;
-  background: white;
+  background: var(--el-bg-color);
   border-radius: 4px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--el-border-color-light);
   overflow: hidden;
 }
 
@@ -495,15 +495,15 @@ const handleRecentClick = item => {
 .recent-card {
   // 末卡片底部去掉外边距，统一由容器 padding-bottom 提供 16px 留白
   margin: 0 16px 0 16px;
-  background: white;
+  background: var(--el-bg-color);
   border-radius: 4px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--el-border-color-light);
   overflow: hidden;
 }
 
 .section-header {
   padding: 16px 16px 12px 16px;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 // 最近使用标题更紧凑，且移除下分割线
@@ -521,7 +521,7 @@ const handleRecentClick = item => {
 .section-title {
   font-size: 14px;
   font-weight: 600;
-  color: #262626;
+  color: var(--el-text-color-primary);
   margin: 0;
 }
 
@@ -540,7 +540,7 @@ const handleRecentClick = item => {
 
 // 待办事项样式
 .todo-section {
-  background: white;
+  background: var(--el-bg-color);
 }
 
 .todo-list {
@@ -561,7 +561,7 @@ const handleRecentClick = item => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #d1d5db; /* 略深的中性灰 */
+  color: var(--el-text-color-placeholder); /* 略深的中性灰 */
   position: relative;
 }
 
@@ -573,7 +573,7 @@ const handleRecentClick = item => {
 
 .todo-item {
   padding: 6px 0;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid var(--el-border-color-lighter);
   cursor: pointer;
   transition: background-color 0.2s ease;
 
@@ -582,7 +582,7 @@ const handleRecentClick = item => {
   }
 
   &:hover {
-    background-color: #fafafa;
+    background-color: var(--el-bg-color-page);
   }
 }
 
@@ -611,7 +611,7 @@ const handleRecentClick = item => {
 
 .todo-text {
   font-size: 13px;
-  color: #262626;
+  color: var(--el-text-color-primary);
   line-height: 1.3;
   margin: 0 0 4px 0;
 }
@@ -625,12 +625,12 @@ const handleRecentClick = item => {
 
 .todo-sender {
   font-size: 11px;
-  color: #8c8c8c;
+  color: var(--el-text-color-secondary);
 }
 
 .todo-time {
   font-size: 11px;
-  color: #8c8c8c;
+  color: var(--el-text-color-secondary);
 }
 
 .todo-actions {
@@ -641,7 +641,7 @@ const handleRecentClick = item => {
 
 .ignore-btn {
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--el-text-color-secondary);
   background: none;
   border: none;
   cursor: pointer;
@@ -685,14 +685,14 @@ const handleRecentClick = item => {
   gap: 6px; /* 更紧凑的间距 */
   padding: 6px 6px; /* 再压缩行高，便于 5 行固定占位 */
   border-radius: 8px;
-  background: #f8f9fa;
+  background: var(--el-fill-color-light);
   cursor: pointer;
   transition: all 0.2s ease;
   min-height: 36px;
   height: 100%; /* 随网格行高自适应填满 */
 
   &:hover {
-    background: #e9ecef;
+    background: var(--el-fill-color);
     transform: translateY(-1px);
   }
 }
@@ -709,19 +709,19 @@ const handleRecentClick = item => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #dee2e6;
+  background: var(--el-fill-color);
   border-radius: 6px;
   margin: 0; /* 水平布局不需要底部间距 */
 
   i {
     font-size: 12px;
-    color: #495057;
+    color: var(--el-text-color-regular);
   }
 }
 
 .recent-name {
   font-size: 12px; /* 文本整体放大一档 */
-  color: #495057;
+  color: var(--el-text-color-regular);
   text-align: left;
   line-height: 1.2;
   white-space: nowrap; /* 固定行高，避免换行增高 */
@@ -791,7 +791,7 @@ const handleRecentClick = item => {
     width: 100%;
     height: auto;
     border-right: none;
-    border-bottom: 1px solid #e8eaed;
+    border-bottom: 1px solid var(--el-border-color-light);
     position: relative;
   }
 

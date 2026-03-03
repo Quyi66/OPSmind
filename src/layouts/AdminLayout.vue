@@ -364,7 +364,7 @@ const AdminPlaceholder = {
 
 /* Table and common components polish */
 .admin-content-inner :deep(.el-table__header th) {
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   color: var(--admin-text);
 }
 .admin-content-inner :deep(.el-table__cell),

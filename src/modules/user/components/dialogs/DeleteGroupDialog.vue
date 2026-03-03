@@ -249,9 +249,9 @@ function handleClose() {
   max-height: 100px;
   overflow-y: auto;
   padding: 8px;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--el-border-color-light);
 }
 
 .dialog-footer {

@@ -309,7 +309,7 @@ defineExpose({ refresh })
   height: 100%;
   padding: 20px;
   gap: 20px;
-  background: #f0f2f5; // 更柔和的背景色
+  background: var(--el-bg-color-page); // 更柔和的背景色
   overflow-y: auto;
 }
 
@@ -321,7 +321,7 @@ defineExpose({ refresh })
 
 .kpi-card {
   flex: 1;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   padding: 24px;
   display: flex;
@@ -397,7 +397,7 @@ defineExpose({ refresh })
 
 .chart-card {
   // flex: 1;  <-- Removed generic flex: 1
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -418,7 +418,7 @@ defineExpose({ refresh })
 
   &__header {
     padding: 16px 20px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--el-border-color-light);
 
     .chart-card__title {
       font-size: 16px;

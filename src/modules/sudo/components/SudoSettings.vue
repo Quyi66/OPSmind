@@ -309,7 +309,7 @@ async function handleSave() {
 .form-card {
   width: 100%;
   max-width: 600px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -321,7 +321,7 @@ async function handleSave() {
   justify-content: space-between;
   margin-bottom: 24px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .card-title {

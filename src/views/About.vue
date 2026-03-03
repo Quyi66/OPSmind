@@ -67,7 +67,7 @@ const goBack = () => {
 }
 
 .about-container {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 12px;
   padding: 40px;
   max-width: 600px;
@@ -131,7 +131,7 @@ h1 {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: #f5f5f5;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
 
   i {

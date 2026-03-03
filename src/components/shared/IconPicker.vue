@@ -133,7 +133,7 @@ const selectIcon = (icon) => {
 .icon-preview {
   width: 40px;
   height: 40px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -143,7 +143,7 @@ const selectIcon = (icon) => {
 
   &:hover {
     border-color: #409eff;
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
   }
 
   i {
@@ -174,7 +174,7 @@ const selectIcon = (icon) => {
     transition: all 0.2s;
 
     &:hover {
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
       border-color: #dcdfe6;
     }
 

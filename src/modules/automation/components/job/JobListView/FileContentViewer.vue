@@ -1146,7 +1146,7 @@ watch(() => props.path, () => {
 // Word 文档预览
 .render-word {
   padding: 20px;
-  background: #fff;
+  background: var(--el-bg-color);
   overflow: auto;
   height: 100%;
 

@@ -134,7 +134,7 @@ function handleClosed() {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .sync-form .control-label i {
@@ -157,7 +157,7 @@ function handleClosed() {
 }
 
 .help-info strong {
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .code-input :deep(.el-input__inner) {

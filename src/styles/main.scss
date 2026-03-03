@@ -346,10 +346,10 @@ body {
 
 // 自定义工具类（不与Tailwind冲突）
 .opsmind-card {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e8eaed;
+  border: 1px solid var(--el-border-color-light);
   transition: all 0.3s ease;
 
   &:hover {
@@ -541,3 +541,24 @@ body {
 }
 
 // element-ui.scss 和 common.scss 已在 main.js 中单独引入
+
+ // ========================================
+ // View Transition API 动画支持
+ // 用于深色模式切换的圆形扩散效果
+ // ========================================
+ // View Transition API 动画支持
+ // 用于深色模式切换的圆形扩散效果
+ // ========================================
+ ::view-transition-old(root),
+ ::view-transition-new(root) {
+   animation: none;
+   mix-blend-mode: normal;
+ }
+
+ ::view-transition-old(root) {
+   z-index: 1 !important;
+ }
+
+ ::view-transition-new(root) {
+   z-index: 9999 !important;
+ }

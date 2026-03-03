@@ -182,7 +182,7 @@ function handleClose() {
 
 .action-item {
   padding: 16px;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   border-radius: 8px;
 
   .action-title {

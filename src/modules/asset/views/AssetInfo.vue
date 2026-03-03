@@ -875,7 +875,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .page-header {
@@ -891,7 +891,7 @@ onMounted(() => {
 // 顶部横向标签页
 .type-tabs-wrapper {
   padding: 0 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .type-tabs {
@@ -933,7 +933,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 12px;
   padding: 16px 20px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 0;
   overflow: hidden;
 }
@@ -987,7 +987,7 @@ onMounted(() => {
 .ops-table-wrapper {
   flex: 1;
   min-height: 0;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -1020,7 +1020,7 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #ebeef5;
+    border-bottom: 1px solid var(--el-border-color-light);
     margin-bottom: 8px;
     font-size: 14px;
     color: #303133;
@@ -1037,7 +1037,7 @@ onMounted(() => {
       margin-bottom: 4px;
 
       &:hover {
-        background: #f5f7fa;
+        background: var(--el-bg-color-page);
       }
 
       &.active {
@@ -1046,7 +1046,7 @@ onMounted(() => {
       }
 
       &.all-item {
-        background: #f5f7fa;
+        background: var(--el-bg-color-page);
         margin-bottom: 8px;
       }
     }
@@ -1069,7 +1069,7 @@ onMounted(() => {
         margin-bottom: 4px;
 
         &:hover {
-          background: #f5f7fa;
+          background: var(--el-bg-color-page);
         }
 
         &.active {

@@ -189,7 +189,7 @@ function handleClose() {
   display: flex;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   &:last-child {
     border-bottom: none;
@@ -219,7 +219,7 @@ function handleClose() {
     .password-text {
       font-family: monospace;
       font-size: 14px;
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
       padding: 4px 8px;
       border-radius: 4px;
     }

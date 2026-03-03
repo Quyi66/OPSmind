@@ -137,14 +137,14 @@ function getSeverityLabel(severity) {
 
   .detail-label {
     min-width: 80px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
     font-weight: 500;
     flex-shrink: 0;
   }
 
   .detail-value {
     flex: 1;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
     word-break: break-word;
   }
 }
@@ -152,7 +152,7 @@ function getSeverityLabel(severity) {
 .description-text {
   white-space: pre-wrap;
   line-height: 1.6;
-  color: #334155;
+  color: var(--el-text-color-primary);
 }
 
 .cve-list {
@@ -165,15 +165,16 @@ function getSeverityLabel(severity) {
   display: inline-block;
   padding: 2px 6px;
   font-size: 11px;
-  background: #6c757d;
-  color: #fff;
+  background: var(--el-fill-color-dark);
+  color: var(--el-text-color-primary);
   border-radius: 3px;
   text-decoration: none;
   white-space: nowrap;
   flex-shrink: 0;
+  border: 1px solid var(--el-border-color-light);
 
   &:hover {
-    background: #495057;
+    background: var(--el-fill-color-darker);
   }
 }
 </style>

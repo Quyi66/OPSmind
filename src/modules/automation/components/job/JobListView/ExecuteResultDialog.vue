@@ -1216,10 +1216,10 @@ function safeJsonParse(input, fallback = {}) {
 }
 
 .batch-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   padding: 12px 16px;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .batch-card__header {
@@ -1306,7 +1306,7 @@ function safeJsonParse(input, fallback = {}) {
 .hosts-tree-panel {
   width: 280px;
   padding-right: 12px;
-  border-right: 1px solid #ebeef5;
+  border-right: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
 }
@@ -1407,7 +1407,7 @@ function safeJsonParse(input, fallback = {}) {
   gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--el-border-color-light);
   color: #606266;
   font-size: 12px;
   cursor: pointer;
@@ -1429,11 +1429,11 @@ function safeJsonParse(input, fallback = {}) {
 }
 
 .host-task-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .host-task-card__header {

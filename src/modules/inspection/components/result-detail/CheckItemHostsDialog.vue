@@ -79,7 +79,7 @@ const statusOptions = STATUS_FILTER_OPTIONS
     display: flex;
     align-items: center;
     padding: 16px;
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
     border-radius: 4px;
     margin-bottom: 16px;
 

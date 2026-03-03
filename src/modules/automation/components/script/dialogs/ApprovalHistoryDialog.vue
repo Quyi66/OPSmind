@@ -10,7 +10,7 @@
     <div v-loading="loading" class="history-container">
       <!-- 单个文件的审批历史 (singleFile) -->
       <template v-if="viewMode === 'singleFile'">
-        <el-table :data="historyList"  height="400">
+        <el-table :data="historyList" height="400">
           <el-table-column label="时间" prop="actionDate" width="160" />
           <el-table-column label="备注" prop="comment" show-overflow-tooltip />
           <el-table-column label="审批结果" width="150">
@@ -23,7 +23,7 @@
 
       <!-- 全部审批历史列表 (all) -->
       <template v-else-if="viewMode === 'all'">
-        <el-table :data="historyList"  height="400">
+        <el-table :data="historyList" height="400">
           <el-table-column label="时间" prop="actionDate" width="160" />
           <el-table-column label="文件数" width="100">
             <template #default="{ row }">
@@ -44,7 +44,7 @@
 
       <!-- 审批详情（某次审批涉及的文件列表）(approvalDetail) -->
       <template v-else-if="viewMode === 'approvalDetail'">
-        <el-table :data="detailPaths"  height="400">
+        <el-table :data="detailPaths" height="400">
           <el-table-column label="文件路径" min-width="200">
             <template #default="{ row }">
               <el-button type="primary" link @click="openFile(row)">
@@ -297,15 +297,15 @@ watch(
 /* 表头浅灰色样式 */
 :deep(.el-table__header-wrapper) {
   th {
-    background-color: #e9ecef !important;
-    color: #495057 !important;
+    background-color: var(--el-fill-color-light) !important;
+    color: var(--el-text-color-regular) !important;
   }
 }
 
 :deep(.el-table__header) {
   th.el-table__cell {
-    background-color: #e9ecef !important;
-    color: #495057 !important;
+    background-color: var(--el-fill-color-light) !important;
+    color: var(--el-text-color-regular) !important;
   }
 }
 </style>

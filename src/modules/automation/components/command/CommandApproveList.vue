@@ -258,20 +258,20 @@ defineExpose({
 .command-name-cell {
   .name {
     font-weight: 500;
-    color: #212529;
+    color: var(--el-text-color-primary);
   }
 
   .description {
     margin: 2px 0 0;
     font-size: 12px;
-    color: #6c757d;
+    color: var(--el-text-color-secondary);
     line-height: 1.4;
   }
 }
 
 .command-preview {
   font-size: 13px;
-  color: #495057;
+  color: var(--el-text-color-regular);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

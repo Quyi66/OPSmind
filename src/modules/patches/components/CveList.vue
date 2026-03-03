@@ -591,7 +591,7 @@ watch(
 .cve-stats-main-title {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin: 0;
 }
 
@@ -607,13 +607,13 @@ watch(
 .cve-stats-total-number {
   font-size: 28px;
   font-weight: 700;
-  color: #303133;
+  color: var(--el-text-color-primary);
   line-height: 1;
 }
 
 .cve-stats-total-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 
@@ -624,7 +624,7 @@ watch(
 .cve-progress-bar {
   display: flex;
   height: 10px;
-  background-color: #f5f7fa;
+  background-color: var(--el-fill-color);
   border-radius: 5px;
   overflow: hidden;
 }
@@ -665,12 +665,12 @@ watch(
   padding: 12px;
   transition: all 0.2s;
   border-radius: 4px;
-  background: #fcfcfc;
+  background: var(--el-fill-color-light);
   border-left: 4px solid transparent;
   cursor: pointer;
 
   &:hover {
-    background-color: #f5f7fa;
+    background-color: var(--el-fill-color);
   }
 }
 
@@ -693,7 +693,7 @@ watch(
 
 .cve-stats-label {
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   margin-bottom: 4px;
 }
 
@@ -721,7 +721,7 @@ watch(
 
 .cve-stats-desc {
   font-size: 11px;
-  color: #c0c4cc;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 

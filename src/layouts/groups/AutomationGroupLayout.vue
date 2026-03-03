@@ -52,7 +52,7 @@ const defaultOpeneds = ['jao', 'gfs', 'cmd']
   display: flex;
   flex: 1;
   min-height: 0;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .group-side-menu {
@@ -64,7 +64,7 @@ const defaultOpeneds = ['jao', 'gfs', 'cmd']
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  background: #fff;
+  background: var(--el-bg-color);
   position: relative;
 }
 
@@ -76,7 +76,7 @@ const defaultOpeneds = ['jao', 'gfs', 'cmd']
   right: 0;
   bottom: 0;
   z-index: 10;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 // 遮罩层过渡动画

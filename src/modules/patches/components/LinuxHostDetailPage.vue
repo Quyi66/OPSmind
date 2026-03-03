@@ -153,7 +153,9 @@ const hostInfoRef = computed(() => ({
 
 const hostId = computed(() => hostInfoRef.value.host_id || '')
 const hostKey = computed(() => hostInfoRef.value.host_key || hostInfoRef.value.hostKey || '')
-const hostOsDistro = computed(() => machineInfo.value?.os_distro || hostInfoRef.value.os_distro || '')
+const hostOsDistro = computed(
+  () => machineInfo.value?.os_distro || hostInfoRef.value.os_distro || ''
+)
 
 const fromLabel = computed(() => route.query.fromLabel || '机器扫描')
 const fromRouteName = computed(() => route.query.fromRouteName || 'patches-machineScan')
@@ -331,12 +333,12 @@ function handleBack() {
 
 <style scoped lang="scss">
 .host-info-card {
-  background: #f8fafc;
+  background: var(--el-fill-color-light);
   border-radius: 6px;
   padding: 16px;
   margin-top: 8px;
   margin-bottom: 16px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--el-border-color-lighter);
 }
 
 .host-info-body {
@@ -351,12 +353,12 @@ function handleBack() {
   font-size: 14px;
 
   .label {
-    color: #64748b;
+    color: var(--el-text-color-regular);
     margin-right: 8px;
   }
 
   .value {
-    color: #1e293b;
+    color: var(--el-text-color-primary);
     font-weight: 500;
   }
 }
@@ -377,18 +379,18 @@ function handleBack() {
 }
 
 .fix-info-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
   overflow: hidden;
 }
 
 .fix-info-header {
   padding: 8px 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-fill-color-light);
+  border-bottom: 1px solid var(--el-border-color-light);
   font-weight: 500;
   font-size: 14px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 
   i {
     margin-right: 8px;
@@ -401,6 +403,6 @@ function handleBack() {
   overflow-y: auto;
   font-size: 13px;
   line-height: 1.8;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 </style>

@@ -148,7 +148,7 @@ function handleClosed() {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .folder-form .form-control-wrapper {

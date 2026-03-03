@@ -359,7 +359,7 @@ onMounted(async () => {
 .ac-table {
   margin: 0;
 }
-.ac-th { background: #f5f7fa; }
+.ac-th { background: var(--el-bg-color-page); }
 
 /* 更轻的链接编辑按钮交互态 */
 .ac-table :deep(.el-button.is-link) {

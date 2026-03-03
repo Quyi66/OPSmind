@@ -231,7 +231,7 @@ watch(visible, (val) => {
   display: flex;
   align-items: center;
   padding: 12px 0;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   &:last-child {
     border-bottom: none;

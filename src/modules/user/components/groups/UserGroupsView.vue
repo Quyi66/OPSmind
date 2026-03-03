@@ -302,9 +302,9 @@ onMounted(() => {
   gap: 16px;
   flex-wrap: wrap;
   padding: 12px 16px;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--el-border-color-light);
 
   &__item {
     display: flex;

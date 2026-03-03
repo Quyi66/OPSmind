@@ -7,13 +7,10 @@
     @closed="handleClosed"
   >
     <!-- 说明信息 -->
-    <el-alert
-      type="success"
-      :closable="false"
-      class="mb-4"
-    >
+    <el-alert type="success" :closable="false" class="mb-4">
       <p class="help-text">
-        <strong>说明：</strong>用于指定脚本库，oplus内置脚本库无需该设定，如需指定外部Git库
+        <strong>说明：</strong>
+        用于指定脚本库，oplus内置脚本库无需该设定，如需指定外部Git库
         （目前支持Github、Bitbucket、Gitlab、Gitee、Coding），按照以下指定方式配置Oplus同步外部Git库，
         该设定会清空当前已存在脚本库中所有内容，请详细阅读说明后再使用！！
       </p>
@@ -25,7 +22,8 @@
         <el-tooltip placement="top">
           <template #content>
             <div style="max-width: 300px">
-              HTTPS：基于用户名密码安全认证<br/>
+              HTTPS：基于用户名密码安全认证
+              <br />
               SSH：基于RSA非对称加密，将自定义生成公钥上传Git库中，将私钥上传Oplus平台
             </div>
           </template>
@@ -39,17 +37,16 @@
       <!-- 仓库名 -->
       <el-form-item label="仓库名" prop="repoName">
         <el-tooltip content="用户指定生成的Git仓库名，未指定则会自动生成仓库名" placement="top">
-          <el-input
-            v-model="form.repoName"
-            :disabled="!form.canEdit"
-            placeholder="请输入仓库名"
-          />
+          <el-input v-model="form.repoName" :disabled="!form.canEdit" placeholder="请输入仓库名" />
         </el-tooltip>
       </el-form-item>
 
       <!-- 同步策略 -->
       <el-form-item label="同步策略" prop="jobInterval">
-        <el-tooltip content="设定自动从远程Git服务器拉取最新更新间隔时间(范围10~60)" placement="top">
+        <el-tooltip
+          content="设定自动从远程Git服务器拉取最新更新间隔时间(范围10~60)"
+          placement="top"
+        >
           <div class="interval-input">
             <el-input-number
               v-model="form.jobInterval"
@@ -64,11 +61,18 @@
 
       <!-- Git库地址 -->
       <el-form-item label="Git库地址" prop="repoUrl">
-        <el-tooltip content="用于配置外部Git库地址，目前支持Github、Bitbucket、Gitlab、Gitee、Coding" placement="top">
+        <el-tooltip
+          content="用于配置外部Git库地址，目前支持Github、Bitbucket、Gitlab、Gitee、Coding"
+          placement="top"
+        >
           <el-input
             v-model="form.repoUrl"
             :disabled="!form.canEdit"
-            :placeholder="form.authType === 'ssh' ? 'git@github.com:user/repo.git' : 'https://github.com/user/repo.git'"
+            :placeholder="
+              form.authType === 'ssh'
+                ? 'git@github.com:user/repo.git'
+                : 'https://github.com/user/repo.git'
+            "
           />
         </el-tooltip>
       </el-form-item>
@@ -77,7 +81,8 @@
       <template v-if="form.authType === 'ssh'">
         <el-form-item label="密钥文件路径">
           <div class="key-file-info">
-            ~&nbsp;&nbsp;/&nbsp;&nbsp;<strong>{{ form.authFile?.name || '未选择' }}</strong>
+            ~&nbsp;&nbsp;/&nbsp;&nbsp;
+            <strong>{{ form.authFile?.name || '未选择' }}</strong>
           </div>
         </el-form-item>
         <el-form-item label="选择密钥文件" prop="authFile">
@@ -89,7 +94,8 @@
             accept="*"
           >
             <el-button type="primary" plain>
-              <i class="fa fa-file-upload" /> 选择密钥&lt;私钥&gt;文件
+              <i class="fa fa-file-upload" />
+              选择密钥&lt;私钥&gt;文件
             </el-button>
           </el-upload>
         </el-form-item>
@@ -126,12 +132,7 @@
 
     <template #footer>
       <el-button @click="dialogVisible = false">取消</el-button>
-      <el-button
-        type="primary"
-        :loading="saving"
-        :disabled="!isFormValid"
-        @click="handleSave"
-      >
+      <el-button type="primary" :loading="saving" :disabled="!isFormValid" @click="handleSave">
         确定
       </el-button>
     </template>
@@ -200,14 +201,17 @@ const isFormValid = computed(() => {
 })
 
 // 同步 v-model
-watch(() => props.modelValue, (val) => {
-  dialogVisible.value = val
-  if (val) {
-    initForm()
+watch(
+  () => props.modelValue,
+  val => {
+    dialogVisible.value = val
+    if (val) {
+      initForm()
+    }
   }
-})
+)
 
-watch(dialogVisible, (val) => {
+watch(dialogVisible, val => {
   emit('update:modelValue', val)
 })
 
@@ -273,7 +277,7 @@ async function handleSave() {
       formData.append('authFile', form.value.authFile)
     }
 
-    await gfsApi.initGitRepo(props.repo, formData, (p) => {
+    await gfsApi.initGitRepo(props.repo, formData, p => {
       progress.value = p
     })
 
@@ -316,14 +320,14 @@ function handleClosed() {
 }
 
 .interval-unit {
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .key-file-info {
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .key-file-info strong {
-  color: #1e293b;
+  color: var(--el-text-color-primary);
 }
 </style>

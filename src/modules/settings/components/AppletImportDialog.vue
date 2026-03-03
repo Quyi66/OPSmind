@@ -286,7 +286,7 @@ async function handleImport() {
 <style scoped lang="scss">
 .parsed-content {
   margin-top: 16px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--el-border-color-light);
   padding-top: 16px;
 }
 
@@ -302,7 +302,7 @@ async function handleImport() {
 .tree-container {
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   padding: 8px;
 }

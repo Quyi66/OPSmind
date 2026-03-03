@@ -16,7 +16,7 @@ import AvailablePackagesTable from '../components/AvailablePackagesTable.vue'
   flex-direction: column;
   height: 100%;
   padding: 16px;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .page-content {

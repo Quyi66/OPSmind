@@ -1085,7 +1085,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
 }
 
 // 顶部导航栏
@@ -1094,8 +1094,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .navbar-left {
     :deep(.el-breadcrumb) {
@@ -1136,8 +1136,8 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 12px;
   padding: 16px;
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .kpi-card {
@@ -1215,7 +1215,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   // overflow: auto;
-  background: #fff;
+  background: var(--el-bg-color);
   margin: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -1233,7 +1233,7 @@ onUnmounted(() => {
   gap: 24px;
   margin-bottom: 16px;
   padding: 12px;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   border-radius: 4px;
 
   .stat-item {
@@ -1285,9 +1285,9 @@ onUnmounted(() => {
     pre {
       max-height: 350px;
       padding: 12px;
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
       color: #303133;
-      border: 1px solid #e4e7ed;
+      border: 1px solid var(--el-border-color-light);
       border-radius: 4px;
       font-size: 13px;
       line-height: 1.6;

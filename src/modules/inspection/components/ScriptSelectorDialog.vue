@@ -342,7 +342,7 @@ watch(
 // 面包屑导航
 .breadcrumb-nav {
   padding: 8px 12px;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   border-radius: 4px;
   margin-bottom: 12px;
   font-size: 14px;
@@ -372,7 +372,7 @@ watch(
 
 // 文件表格
 .file-table-wrapper {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -383,7 +383,7 @@ watch(
   table-layout: fixed;
 
   thead {
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
 
     th {
       padding: 12px 8px;
@@ -391,7 +391,7 @@ watch(
       font-weight: 600;
       font-size: 13px;
       color: #606266;
-      border-bottom: 1px solid #ebeef5;
+      border-bottom: 1px solid var(--el-border-color-light);
 
       &.name-col {
         width: auto;
@@ -405,7 +405,7 @@ watch(
       transition: background 0.2s;
 
       &:hover {
-        background: #f5f7fa;
+        background: var(--el-bg-color-page);
       }
 
       &.is-selected {
@@ -422,7 +422,7 @@ watch(
         padding: 10px 8px;
         font-size: 13px;
         color: #606266;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 1px solid var(--el-border-color-light);
       }
 
       .checkbox-cell {
@@ -434,12 +434,12 @@ watch(
           -webkit-appearance: none;
           width: 18px;
           height: 18px;
-          border: 2px solid #dcdfe6;
+          border: 2px solid var(--el-border-color-light);
           border-radius: 50%;
           cursor: pointer;
           transition: all 0.2s;
           position: relative;
-          background: #fff;
+          background: var(--el-bg-color);
 
           &:hover {
             border-color: #409eff;
@@ -447,7 +447,7 @@ watch(
 
           &:checked {
             border-color: #409eff;
-            background: #fff;
+            background: var(--el-bg-color);
 
             &::after {
               content: '';

@@ -228,7 +228,7 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
   padding: 16px;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
 }
 
 .page-header {
@@ -247,14 +247,14 @@ onMounted(() => {
 }
 
 .info-card {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
 }
 
 .tab-section {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px 8px 0 0;
   padding: 0 16px;
 
@@ -265,7 +265,7 @@ onMounted(() => {
 
 .content-section {
   flex: 1;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 0 0 8px 8px;
   padding: 16px;
   overflow: auto;
@@ -276,6 +276,6 @@ onMounted(() => {
   justify-content: flex-end;
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--el-border-color-light);
 }
 </style>

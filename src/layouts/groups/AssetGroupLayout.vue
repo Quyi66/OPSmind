@@ -66,7 +66,7 @@ provide('handleViewAssetType', handleViewAssetType)
   display: flex;
   flex: 1;
   min-height: 0;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .group-side-menu {
@@ -78,7 +78,7 @@ provide('handleViewAssetType', handleViewAssetType)
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  background: #fff;
+  background: var(--el-bg-color);
   position: relative;
 }
 
@@ -90,7 +90,7 @@ provide('handleViewAssetType', handleViewAssetType)
   right: 0;
   bottom: 0;
   z-index: 10;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 // 遮罩层过渡动画

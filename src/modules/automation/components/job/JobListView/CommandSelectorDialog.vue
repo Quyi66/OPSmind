@@ -266,7 +266,7 @@ watch(() => props.modelValue, async (newVal) => {
 .selected-preview {
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
-  background-color: #fafafa;
+  background-color: var(--el-bg-color-page);
   max-height: 200px;
   overflow-y: auto;
 

@@ -498,7 +498,7 @@ watch(
 .result-list-page {
   display: flex;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 // 右侧主内容区

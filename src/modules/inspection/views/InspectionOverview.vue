@@ -372,7 +372,7 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
   padding: 24px;
-  // background: #f5f7fa; /* 浅色背景 */
+  // background: var(--el-bg-color-page); /* 浅色背景 */
   overflow: hidden; /* 关键：防止最外层滚动 */
 }
 
@@ -403,9 +403,9 @@ onMounted(() => {
 }
 
 .template-card {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 12px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--el-border-color-light);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* 柔和阴影 */
   overflow: visible;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -463,8 +463,8 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--el-bg-color-page);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 20px;
   font-size: 12px;
   color: #64748b;
@@ -482,7 +482,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   border-radius: 12px;
   color: #94a3b8;
   font-size: 20px;
@@ -492,7 +492,7 @@ onMounted(() => {
 
 .card-footer {
   padding: 16px 24px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-top: 1px solid #f1f5f9;
   display: flex;
   justify-content: space-between;

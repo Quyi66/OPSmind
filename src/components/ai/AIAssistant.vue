@@ -161,7 +161,7 @@ function handleFocus(e) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f8f9fa;
+  background: var(--el-fill-color-light);
   border-radius: 4px;
   padding: 12px 16px;
   gap: 20px;
@@ -189,7 +189,7 @@ function handleFocus(e) {
 .banner-title {
   font-size: 15px;
   font-weight: 700;
-  color: #262626;
+  color: var(--el-text-color-primary);
   margin: 0 0 4px 0;
   line-height: 1.2;
 }
@@ -197,7 +197,7 @@ function handleFocus(e) {
 .banner-subtitle {
   font-size: 11px;
   font-weight: 400;
-  color: #8c8c8c;
+  color: var(--el-text-color-secondary);
   margin: 0;
   line-height: 1.3;
 }
@@ -212,8 +212,8 @@ function handleFocus(e) {
 .search-input-wrapper {
   display: flex;
   align-items: center;
-  background: white;
-  border: 1px solid transparent; /* 默认无边框视觉，仅占位避免抖动 */
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light); /* 默认无边框视觉，仅占位避免抖动 */
   border-radius: 4px; /* 收紧圆角 */
   padding: 8px 16px;
   width: 100%;
@@ -235,11 +235,11 @@ function handleFocus(e) {
   outline: none;
   background: transparent;
   font-size: 14px;
-  color: #262626;
+  color: var(--el-text-color-primary);
   padding: 0;
 
   &::placeholder {
-    color: #8c8c8c;
+    color: var(--el-text-color-placeholder);
   }
 }
 
@@ -249,7 +249,7 @@ function handleFocus(e) {
   cursor: pointer;
   padding: 4px;
   margin-left: 8px;
-  color: #8c8c8c;
+  color: var(--el-text-color-secondary);
   transition: color 0.3s ease;
 
   &:hover:not(:disabled) {

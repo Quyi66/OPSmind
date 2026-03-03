@@ -407,9 +407,17 @@
             <el-table-column prop="os_major_version" label="系统版本" width="90" />
             <el-table-column prop="patch_id" label="补丁编号" min-width="150" show-overflow-tooltip>
               <template #default="{ row }">
-                <a href="javascript:void(0)" class="patch-link" @click="handlePatchClick(row)">
-                  {{ row.patch_id }}
-                </a>
+                <div class="patch-list">
+                  <a
+                    v-for="patchId in getPatchIdList(row.patch_id)"
+                    :key="patchId"
+                    href="javascript:void(0)"
+                    class="patch-link"
+                    @click="handlePatchClick({ patch_id: patchId, os_distro: row.os_distro })"
+                  >
+                    {{ patchId }}
+                  </a>
+                </div>
               </template>
             </el-table-column>
             <el-table-column
@@ -549,6 +557,14 @@
       :run-id="runResultRunId"
     />
 
+    <!-- 补丁详情弹窗 -->
+    <PatchDetailDialog
+      v-model="patchDetailVisible"
+      :patch-data="patchDetailData"
+      :loading="patchDetailLoading"
+      :os-distro="currentPatchOsDistro"
+    />
+
     <!-- 操作记录对话框 -->
     <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
 
@@ -611,6 +627,7 @@ import { getCveUrl } from '../composables/useFormatters'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'
+import PatchDetailDialog from './host-detail/PatchDetailDialog.vue'
 
 // ECharts
 import { use } from 'echarts/core'
@@ -751,6 +768,43 @@ const runResultRunId = ref('')
 // 操作记录对话框
 const operationLogsVisible = ref(false)
 const lastSubmittedRunId = ref('')
+
+// 补丁详情
+const patchDetailVisible = ref(false)
+const patchDetailLoading = ref(false)
+const patchDetailData = ref({})
+const currentPatchOsDistro = ref('')
+
+async function loadPatchDetail(patchId, osDistro) {
+  currentPatchOsDistro.value = osDistro || ''
+  patchDetailVisible.value = true
+  patchDetailLoading.value = true
+  patchDetailData.value = {}
+  try {
+    const response = await patchScanApi.getPatchDetail({ patch_id: patchId })
+    const records = response?.data?.records || response?.records || []
+    if (records.length > 0) {
+      patchDetailData.value = records[0]
+    } else {
+      ElMessage.warning('未找到补丁详情')
+      patchDetailVisible.value = false
+    }
+  } catch (error) {
+    console.error('Failed to load patch detail:', error)
+    ElMessage.error('获取补丁详情失败')
+    patchDetailVisible.value = false
+  } finally {
+    patchDetailLoading.value = false
+  }
+}
+
+function getPatchIdList(patchId) {
+  if (!patchId) return []
+  return String(patchId)
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
 
 // 修复漏洞对话框
 const fixDialogVisible = ref(false)
@@ -1030,7 +1084,9 @@ function handleVulnExport() {
 }
 
 function handlePatchClick(row) {
-  ElMessage.info(`查看补丁详情: ${row.patch_id}`)
+  if (row.patch_id) {
+    loadPatchDetail(row.patch_id, row.os_distro)
+  }
 }
 
 function handleRollback(row) {
@@ -1334,7 +1390,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .page-header {
@@ -1342,8 +1398,8 @@ defineExpose({
   justify-content: flex-start;
   align-items: center;
   padding: 0 16px 8px 0;
-  background: #fff;
-  //border-bottom: 1px solid #e9ecef;
+  background: var(--el-bg-color);
+  //border-bottom: 1px solid var(--el-border-color-lighter);
 
   &__actions {
     display: flex;
@@ -1355,7 +1411,7 @@ defineExpose({
   flex: 1;
   // padding: 0 16px;
   overflow-y: auto;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 // 统计面板
@@ -1363,10 +1419,11 @@ defineExpose({
   display: flex;
   gap: 16px;
   margin-bottom: 24px;
+  padding-top: 4px;
 }
 
 .stat-card {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   padding: 16px;
@@ -1375,18 +1432,18 @@ defineExpose({
   transition:
     transform 0.2s,
     box-shadow 0.2s;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--el-border-color-lighter);
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    border-color: #dcdfe6;
+    border-color: var(--el-border-color);
   }
 
   .card-title {
     font-size: 14px;
     font-weight: 600;
-    color: #495057;
+    color: var(--el-text-color-primary);
     margin-bottom: 12px;
   }
 }
@@ -1426,12 +1483,12 @@ defineExpose({
 
       .label-title {
         font-size: 12px;
-        color: #868e96;
+        color: var(--el-text-color-regular);
       }
       .label-value {
         font-size: 24px;
         font-weight: 700;
-        color: #212529;
+        color: var(--el-text-color-primary);
         line-height: 1.2;
       }
     }
@@ -1442,7 +1499,7 @@ defineExpose({
 
     .progress-bar-container {
       height: 12px;
-      background-color: #f1f3f5;
+      background-color: var(--el-fill-color-light);
       border-radius: 6px;
       display: flex;
       overflow: hidden;
@@ -1470,7 +1527,7 @@ defineExpose({
         display: flex;
         align-items: center;
         gap: 6px;
-        color: #495057;
+        color: var(--el-text-color-primary);
 
         &.critical i {
           color: #f53f3f;
@@ -1482,7 +1539,7 @@ defineExpose({
         }
 
         .count {
-          color: #868e96;
+          color: var(--el-text-color-regular);
           margin-left: 2px;
         }
       }
@@ -1515,14 +1572,14 @@ defineExpose({
 
   .vul-label {
     font-size: 13px;
-    color: #495057;
+    color: var(--el-text-color-primary);
     margin-bottom: 12px;
   }
 
   .vul-sub-metric {
     font-size: 12px;
-    color: #868e96;
-    background: #f8f9fa;
+    color: var(--el-text-color-regular);
+    background: var(--el-fill-color-light);
     padding: 4px 12px;
     border-radius: 12px;
     display: flex;
@@ -1530,7 +1587,7 @@ defineExpose({
     gap: 6px;
 
     i {
-      color: #adb5bd;
+      color: var(--el-text-color-secondary);
     }
   }
 
@@ -1565,12 +1622,12 @@ defineExpose({
 
     .label {
       font-size: 13px;
-      color: #495057;
+      color: var(--el-text-color-primary);
     }
     .value {
       font-size: 16px;
       font-weight: 600;
-      color: #212529;
+      color: var(--el-text-color-primary);
     }
   }
 
@@ -1590,13 +1647,13 @@ defineExpose({
         font-weight: 500;
       }
       .value {
-        color: #868e96;
+        color: var(--el-text-color-regular);
       }
     }
 
     .progress-track {
       height: 8px;
-      background: #f1f3f5;
+      background: var(--el-fill-color-light);
       border-radius: 4px;
       overflow: hidden;
 
@@ -1639,7 +1696,7 @@ defineExpose({
   display: flex;
   gap: 0;
   margin-bottom: 16px;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--el-border-color-lighter);
   background: transparent;
 }
 
@@ -1649,7 +1706,7 @@ defineExpose({
   gap: 8px;
   padding: 10px 20px;
   font-size: 14px;
-  color: #495057;
+  color: var(--el-text-color-primary);
   cursor: pointer;
   transition: all 0.2s;
   border-bottom: 2px solid transparent;
@@ -1676,14 +1733,14 @@ defineExpose({
   display: flex;
   flex-direction: column;
   padding: 0 !important;
-  height: calc(100% - 300px);
+  height: calc(100% - 310px);
 }
 
 // 表格区域
 .table-section {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--el-border-color-lighter);
   overflow: hidden;
 }
 
@@ -1692,13 +1749,13 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 
   h3 {
     margin: 0;
     font-size: 14px;
     font-weight: 600;
-    color: #212529;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -1717,7 +1774,7 @@ defineExpose({
   display: flex;
   justify-content: flex-end;
   padding: 12px 16px;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--el-border-color-lighter);
 }
 
 // 主机链接样式
@@ -1735,13 +1792,13 @@ defineExpose({
 
 // 补丁链接样式
 .patch-link {
-  color: #6c757d;
+  color: #409eff;
   text-decoration: none;
   cursor: pointer;
   user-select: text;
 
   &:hover {
-    color: #495057;
+    color: #66b1ff;
     text-decoration: underline;
   }
 }
@@ -1769,8 +1826,8 @@ defineExpose({
   align-items: flex-end;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid #e9ecef;
-  background: #f8f9fa;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-light);
 }
 
 .filter-item {
@@ -1780,7 +1837,7 @@ defineExpose({
 
   label {
     font-size: 12px;
-    color: #6c757d;
+    color: #409eff;
   }
 }
 
@@ -1816,18 +1873,18 @@ defineExpose({
 }
 
 .fix-info-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
   overflow: hidden;
 }
 
 .fix-info-header {
   padding: 8px 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-fill-color-light);
+  border-bottom: 1px solid var(--el-border-color-light);
   font-weight: 500;
   font-size: 14px;
-  color: #303133;
+  color: var(--el-text-color-primary);
 
   i {
     margin-right: 8px;
@@ -1840,7 +1897,7 @@ defineExpose({
   overflow-y: auto;
   font-size: 13px;
   line-height: 1.8;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 // 文字颜色 - Element UI 色值
@@ -1891,7 +1948,7 @@ defineExpose({
 
   .host-count {
     font-size: 13px;
-    color: #606266;
+    color: var(--el-text-color-regular);
 
     strong {
       color: #409eff;
@@ -1906,7 +1963,7 @@ defineExpose({
   max-height: 150px;
   overflow-y: auto;
   padding: 12px;
-  background: #f5f7fa;
+  background: var(--el-fill-color-light);
   border-radius: 4px;
 }
 
@@ -1914,7 +1971,7 @@ defineExpose({
   padding: 24px;
   text-align: center;
   color: #909399;
-  background: #f5f7fa;
+  background: var(--el-fill-color-light);
   border-radius: 4px;
 }
 
@@ -1936,7 +1993,7 @@ defineExpose({
 
   .nav-tab {
     border-right: none;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--el-border-color-lighter);
 
     &:last-child {
       border-bottom: none;
@@ -1947,6 +2004,38 @@ defineExpose({
 .ops-filter-bar {
   :deep(.el-form-item) {
     margin-right: 24px !important;
+  }
+}
+
+.patch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 80px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #dcdfe6;
+    border-radius: 2px;
+
+    &:hover {
+      background: #c0c4cc;
+    }
+  }
+}
+
+.patch-link {
+  color: #409eff;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    color: #66b1ff;
+    text-decoration: underline;
   }
 }
 </style>

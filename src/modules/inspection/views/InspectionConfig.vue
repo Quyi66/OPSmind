@@ -162,14 +162,14 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .navbar {
   display: flex;
   align-items: center;
   padding: 12px 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .navbar-title {
     font-size: 16px;
@@ -193,7 +193,7 @@ onMounted(() => {
 
   :deep(.el-card__header) {
     padding: 12px 20px;
-    background: #f5f7fa;
+    background: var(--el-bg-color-page);
     font-weight: 600;
   }
 }

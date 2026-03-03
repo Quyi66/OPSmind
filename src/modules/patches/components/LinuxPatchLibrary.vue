@@ -758,14 +758,14 @@ defineExpose({
   flex: 1;
 
   // Default State (Inactive)
-  background: #fff;
-  border: 1px solid #e9ecef;
-  color: #606266;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  color: var(--el-text-color-regular);
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-color: #dcdfe6;
+    border-color: var(--el-border-color);
 
     .card-bg-icon {
       opacity: 0.1;
@@ -793,8 +793,8 @@ defineExpose({
     }
 
     .latest-date {
-      background: #fff;
-      color: #303133 !important;
+      background: var(--el-bg-color);
+      color: var(--el-text-color-primary) !important;
       opacity: 0.9;
       font-weight: 600;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -846,7 +846,7 @@ defineExpose({
       font-size: 14px;
       font-weight: 700;
       letter-spacing: 0.5px;
-      color: #303133;
+      color: var(--el-text-color-primary);
     }
 
     .active-indicator {
@@ -863,12 +863,12 @@ defineExpose({
       font-weight: 800;
       line-height: 1.2;
       margin-bottom: 0px;
-      color: #303133;
+      color: var(--el-text-color-primary);
     }
 
     .count-label {
       font-size: 12px;
-      color: #909399;
+      color: var(--el-text-color-secondary);
       font-weight: 500;
     }
   }
@@ -883,8 +883,8 @@ defineExpose({
       align-items: center;
       gap: 6px;
       font-size: 11px;
-      color: #909399;
-      background: #f4f4f5;
+      color: var(--el-text-color-secondary);
+      background: var(--el-fill-color-light);
       padding: 4px 8px;
       border-radius: 4px;
       width: fit-content;
@@ -1034,7 +1034,7 @@ defineExpose({
     align-items: center;
     justify-content: center;
     padding: 2px 8px;
-    background: #e9ecef;
+    background: var(--el-fill-color-dark);
     color: #6c757d;
     border-radius: 4px;
     font-size: 12px;
@@ -1076,10 +1076,10 @@ defineExpose({
   .patch-detail-id {
     font-size: 18px;
     font-weight: 700;
-    color: #333;
+    color: var(--el-text-color-primary);
     margin-bottom: 16px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--el-border-color-lighter);
   }
 
   .patch-detail-row {
@@ -1088,12 +1088,12 @@ defineExpose({
 
     .patch-detail-label {
       font-weight: 600;
-      color: #333;
+      color: var(--el-text-color-primary);
     }
 
     .patch-detail-value {
       font-size: 14px;
-      color: #606266;
+      color: var(--el-text-color-regular);
     }
   }
 
@@ -1102,22 +1102,22 @@ defineExpose({
 
     .patch-detail-label {
       font-weight: 600;
-      color: #333;
+      color: var(--el-text-color-primary);
       margin-bottom: 8px;
     }
 
     .patch-detail-desc {
       font-size: 14px;
-      color: #606266;
+      color: var(--el-text-color-regular);
       line-height: 1.8;
       padding: 12px;
-      background: #f8f9fa;
+      background: var(--el-fill-color-light);
       border-radius: 4px;
       max-height: 300px;
       overflow-y: auto;
 
       code {
-        background: #e9ecef;
+        background: var(--el-fill-color-dark);
         padding: 2px 6px;
         border-radius: 3px;
         font-family: monospace;
@@ -1154,8 +1154,8 @@ defineExpose({
   font-size: 13px;
 
   .el-table__header th {
-    background-color: #f8f9fa !important;
-    color: #495057;
+    background-color: var(--el-fill-color-light) !important;
+    color: var(--el-text-color-primary);
     font-weight: 500;
   }
 

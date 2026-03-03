@@ -485,9 +485,9 @@ defineExpose({ refresh })
 }
 
 .fix-selection__card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .fix-selection__card-header {

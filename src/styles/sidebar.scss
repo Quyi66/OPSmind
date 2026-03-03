@@ -6,8 +6,8 @@
 .ops-sidebar-nav {
   width: 180px;
   flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
+  background: var(--el-bg-color);
+  border-right: 1px solid var(--el-border-color-light);
   padding: 8px 0;
   overflow-y: auto;
   display: flex;
@@ -24,7 +24,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .ops-sidebar-search,
   .el-input.el-input--prefix {
@@ -36,7 +36,7 @@
 .ops-sidebar-title {
   padding: 12px 16px 8px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   font-size: 14px;
 }
 
@@ -53,7 +53,7 @@
   gap: 8px;
   padding: 10px 16px;
   cursor: pointer;
-  color: #333;
+  color: var(--el-text-color-primary);
   font-size: 13px;
   text-decoration: none;
   transition: all 0.2s;
@@ -66,22 +66,22 @@
   i {
     width: 16px;
     text-align: center;
-    color: #666;
+    color: var(--el-text-color-secondary);
     flex-shrink: 0;
   }
 
   &:hover {
-    background: #f5f7fa;
-    color: #1890ff;
+    background: var(--el-bg-color-page);
+    color: var(--el-color-primary);
   }
 
   &.is-active,
   &.active {
-    background: #e6f7ff;
-    color: #1890ff;
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
 
     i {
-      color: #1890ff;
+      color: var(--el-color-primary);
     }
 
     // 左侧指示条
@@ -120,7 +120,7 @@
 .ops-sidebar {
   width: 180px;
   flex-shrink: 0;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   border-radius: 4px;
   padding: 12px 0;
   max-height: 500px;
@@ -129,9 +129,9 @@
   &__title {
     padding: 8px 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
     font-size: 14px;
-    border-bottom: 1px solid #e4e7ed;
+    border-bottom: 1px solid var(--el-border-color-light);
     margin-bottom: 8px;
   }
 
@@ -143,18 +143,18 @@
     padding: 8px 16px;
     cursor: pointer;
     font-size: 13px;
-    color: #606266;
+    color: var(--el-text-color-regular);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     transition: all 0.2s;
 
     &:hover {
-      background: #e9ecef;
+      background: var(--el-fill-color-light);
     }
 
     &.active {
-      background: #409eff;
+      background: var(--el-color-primary);
       color: #fff;
     }
   }

@@ -251,7 +251,7 @@ onUnmounted(() => {
 
 /* 统一样式 */
 .dashboard-card {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid #ebedf0;
@@ -332,7 +332,7 @@ onUnmounted(() => {
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #f8fafc; /* 列表项稍微加一点底色，与白色卡片区分 */
+  background: var(--el-bg-color-page); /* 列表项稍微加一点底色，与白色卡片区分 */
   border: 1px solid transparent;
 
   &:hover {

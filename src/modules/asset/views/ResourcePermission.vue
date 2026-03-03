@@ -315,7 +315,7 @@ function handlePageSizeChange() {
     padding: 4px 8px;
 
     &.el-button--default {
-      background: #f5f7fa;
+      background: var(--el-bg-color-page);
       border-color: #dcdfe6;
       color: #606266;
 

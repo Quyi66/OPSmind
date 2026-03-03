@@ -356,8 +356,8 @@ onMounted(() => {
 
 // 标签页样式 - 与 AssetInfo.vue 保持一致
 .type-tabs-wrapper {
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
   padding: 0 16px;
 }
 

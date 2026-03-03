@@ -87,12 +87,12 @@
 }
 
 .main-container .app-main {
-  background-color: #f0f2f5;
+  background-color: var(--el-bg-color-page);
   padding: 20px;
 
   >.main-box {
     padding: 20px !important;
-    background: #fff !important;
+    background: var(--el-bg-color) !important;
     height: 100%;
     margin: 0 !important;
     border-radius: 0 !important;
@@ -113,7 +113,7 @@
   }
 
   .dashboard-editor-container {
-    background-color: #f6f6f6 !important;
+    background-color: var(--el-bg-color-page) !important;
     padding: 15px !important;
   }
 
@@ -236,7 +236,7 @@
     }
 
     //border: 1px solid #f8f8f8;
-    background-color: #fff;
+    background-color: var(--el-bg-color);
     //box-shadow: 0 1px 3px rgba(0, 21, 41, 0.1) !important;
     //padding: 15px;
     padding-bottom: 0px;
@@ -272,7 +272,7 @@
 }
 
 .el-table table.el-table__header th {
-  background-color: #fafafa !important;
+  background-color: var(--el-fill-color-light) !important;
   //border-bottom: 1px solid #f0f0f0 !important;
   transition: background 0.2s ease;
 }
@@ -336,7 +336,7 @@
 
 .form-normal {
   .title {
-    background: #f5f5f5;
+    background: var(--el-fill-color-light);
     padding: 10px;
     margin-bottom: 20px;
     font-size: 16px;
@@ -389,18 +389,13 @@
 }
 
 .el-tabs--border-card>.el-tabs__header {
-  background-color: #f8f8f8 !important;
-  //border-bottom: 1px solid #f8f8f8 !important;
-}
-
-.el-tabs--border-card>.el-tabs__header {
-  background-color: #f8f8f8 !important;
-  border-bottom: 1px solid #f8f8f8 !important;
+  background-color: var(--el-fill-color-light) !important;
+  border-bottom: 1px solid var(--el-border-color-light) !important;
 }
 
 .el-tabs--border-card>.el-tabs__header .el-tabs__item.is-active {
-  border-right-color: #f8f8f8 !important;
-  border-left-color: #f8f8f8 !important;
+  border-right-color: var(--el-border-color-light) !important;
+  border-left-color: var(--el-border-color-light) !important;
 }
 
 //breadcrumb
@@ -673,22 +668,22 @@ input[type="number"] {
 }
 
 .el_title_ca {
-  background-color: #fafafa;
+  background-color: var(--el-fill-color-light);
   padding: 10px;
-  border: 1px solid #EBEEF5;
+  border: 1px solid var(--el-border-color-light);
   min-height: 42px;
 }
 
 .el_content_ca {
   padding: 10px;
-  border-right: 1px solid #EBEEF5;
-  border-left: 1px solid #EBEEF5;
-  background-color: #fff;
+  border-right: 1px solid var(--el-border-color-light);
+  border-left: 1px solid var(--el-border-color-light);
+  background-color: var(--el-bg-color);
   min-height: 42px;
 }
 
 .border-t {
-  border-top: 1px solid #EBEEF5;
+  border-top: 1px solid var(--el-border-color-light);
 }
 
 .h3title {

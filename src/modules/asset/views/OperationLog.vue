@@ -382,7 +382,7 @@ function calculateDuration(startTime, endTime) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
 }
 
 .page-header {
@@ -390,8 +390,8 @@ function calculateDuration(startTime, endTime) {
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .page-title {
     font-size: 16px;
@@ -404,7 +404,7 @@ function calculateDuration(startTime, endTime) {
   flex: 1;
   margin: 16px;
   padding: 16px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 4px;
   overflow: hidden;
   display: flex;
@@ -452,7 +452,7 @@ function calculateDuration(startTime, endTime) {
   justify-content: space-between;
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--el-border-color-light);
 
   .total-info {
     color: #606266;

@@ -13,11 +13,7 @@
             <el-dropdown-item command="">
               <span class="text-muted">清除标签</span>
             </el-dropdown-item>
-            <el-dropdown-item
-              v-for="tag in tags"
-              :key="tag.name"
-              :command="tag.name"
-            >
+            <el-dropdown-item v-for="tag in tags" :key="tag.name" :command="tag.name">
               {{ tag.name }}
               <el-badge :value="tag.hostCount" class="ms-2" />
             </el-dropdown-item>
@@ -39,9 +35,7 @@
           {{ tag.name }}
           <span class="tag-count">({{ tag.hostCount || 0 }})</span>
         </el-check-tag>
-        <div v-if="tags.length === 0" class="no-tags">
-          暂无标签数据
-        </div>
+        <div v-if="tags.length === 0" class="no-tags">暂无标签数据</div>
       </div>
     </div>
   </div>
@@ -73,9 +67,13 @@ function isTagSelected(tagName) {
   return selectedTagNames.value.includes(tagName)
 }
 
-watch(() => props.ciType, () => {
-  fetchTags()
-}, { immediate: true })
+watch(
+  () => props.ciType,
+  () => {
+    fetchTags()
+  },
+  { immediate: true }
+)
 
 onMounted(() => {
   fetchTags()
@@ -85,10 +83,12 @@ async function fetchTags() {
   try {
     const response = await jaoApi.queryAcmTags(props.ciType)
     const data = response?.data || response
-    tags.value = Array.isArray(data) ? data.map(tag => ({
-      name: tag.name || tag.tagName || tag,
-      hostCount: tag.hostCount || tag.count || 0
-    })) : []
+    tags.value = Array.isArray(data)
+      ? data.map(tag => ({
+          name: tag.name || tag.tagName || tag,
+          hostCount: tag.hostCount || tag.count || 0
+        }))
+      : []
   } catch (error) {
     console.error('Failed to fetch ACM tags:', error)
     tags.value = []
@@ -115,7 +115,9 @@ function toggleTag(tag) {
   }
 
   const current = Array.isArray(props.modelValue) ? [...props.modelValue] : []
-  const existingIndex = current.findIndex(item => item.value === tag.name || item.key === `#${tag.name}`)
+  const existingIndex = current.findIndex(
+    item => item.value === tag.name || item.key === `#${tag.name}`
+  )
 
   if (existingIndex >= 0) {
     // 取消选中
@@ -151,16 +153,16 @@ function toggleTag(tag) {
 
 .tag-selector .tag-cards .tag-item .tag-count {
   margin-left: 4px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   font-size: 12px;
 }
 
 .tag-selector .tag-cards .tag-item:hover {
-  background-color: #ecf5ff;
+  background-color: var(--el-color-primary-light-9);
 }
 
 .tag-selector .no-tags {
-  color: #909399;
+  color: var(--el-text-color-secondary);
   font-size: 14px;
   padding: 20px;
   text-align: center;

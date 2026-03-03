@@ -260,14 +260,14 @@ function handleClose() {
   label {
     display: block;
     font-size: 12px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
     margin-bottom: 6px;
     font-weight: 500;
   }
 
   .value {
     font-size: 14px;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -307,14 +307,14 @@ function handleClose() {
     margin-bottom: 16px;
 
     strong {
-      color: #1d4ed8;
+      color: var(--el-color-primary);
     }
   }
 }
 
 .collapse-title {
   strong {
-    color: #1e293b;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -329,23 +329,23 @@ function handleClose() {
     display: inline-block;
     width: 80px;
     font-size: 12px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
     font-weight: 500;
   }
 
   span {
-    color: #1e293b;
+    color: var(--el-text-color-primary);
   }
 }
 
 .approve-reason {
   padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--el-border-color-light);
 
   label {
     display: block;
     font-size: 12px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
     margin-bottom: 8px;
     font-weight: 500;
   }

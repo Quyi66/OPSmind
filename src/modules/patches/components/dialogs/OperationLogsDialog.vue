@@ -690,7 +690,7 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: flex-end;
   padding-top: 12px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--el-border-color-light);
 }
 
 .action-buttons {

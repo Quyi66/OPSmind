@@ -225,7 +225,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 // 顶部导航栏
@@ -235,8 +235,8 @@ onMounted(() => {
   justify-content: space-between;
   height: 56px;
   padding: 0 20px;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
   flex-shrink: 0;
 
   .header-left {

@@ -282,7 +282,7 @@ const filteredSummary = computed(() => {
   flex-direction: column;
   height: 100%;
   max-width: 100%;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -463,6 +463,6 @@ const filteredSummary = computed(() => {
 }
 
 .summary-table :deep(.el-table__row:hover) {
-  background-color: #f5f7fa;
+  background-color: var(--el-bg-color-page);
 }
 </style>

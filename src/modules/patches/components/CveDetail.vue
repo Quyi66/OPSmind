@@ -923,7 +923,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #f5f7fa;
+  background-color: var(--el-bg-color-page);
   overflow: hidden;
 }
 
@@ -931,8 +931,8 @@ onUnmounted(() => {
   flex-shrink: 0;
   padding: 12px 20px;
   padding-top: 0;
-  background: white;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
 
   :deep(.el-breadcrumb) {
     font-size: 14px;
@@ -951,7 +951,7 @@ onUnmounted(() => {
       }
 
       &:last-child .el-breadcrumb__inner {
-        color: #606266;
+        color: var(--el-text-color-regular);
         font-weight: 500;
       }
     }
@@ -974,10 +974,10 @@ onUnmounted(() => {
 
   :deep(.el-tabs__header) {
     margin-bottom: 0;
-    background: white;
+    background: var(--el-bg-color);
     padding: 0 16px;
     border-radius: 8px 8px 0 0;
-    border-bottom: 1px solid #ebeef5;
+    border-bottom: 1px solid var(--el-border-color-light);
     /* 缩小 Tab 下方的间距，让内容紧贴 */
   }
 
@@ -986,10 +986,10 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    background: white;
+    background: var(--el-bg-color);
     padding: 20px 24px;
     border-radius: 0 0 8px 8px;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: var(--el-box-shadow-light);
   }
 
   :deep(.el-tab-pane) {
@@ -1008,15 +1008,15 @@ onUnmounted(() => {
     width: 5px;
   }
   &::-webkit-scrollbar-thumb {
-    background: #e4e7ed;
+    background: var(--el-border-color-lighter);
     border-radius: 10px;
   }
 }
 
 .ops-tab-count {
   display: inline-block;
-  background: #f0f2f5;
-  color: #909399;
+  background: var(--el-bg-color-page);
+  color: var(--el-text-color-secondary);
   font-size: 11px;
   padding: 0 6px;
   border-radius: 10px;
@@ -1040,7 +1040,7 @@ onUnmounted(() => {
     .cve-title {
       font-size: 24px;
       font-weight: 700;
-      color: #1a1a1a;
+      color: var(--el-text-color-primary);
       margin: 0;
       line-height: 1.2;
     }
@@ -1057,13 +1057,13 @@ onUnmounted(() => {
       font-size: 14px;
 
       .label {
-        color: #606266;
+        color: var(--el-text-color-regular);
         margin-right: 8px;
         font-weight: 400;
       }
 
       .value {
-        color: #303133;
+        color: var(--el-text-color-primary);
         font-weight: 500;
       }
     }
@@ -1071,7 +1071,7 @@ onUnmounted(() => {
     .meta-separator {
       width: 1px;
       height: 14px;
-      background: #e4e7ed;
+      background: var(--el-border-color-lighter);
       display: none; /* 隐藏分隔符，使布局更紧凑 */
     }
   }
@@ -1081,16 +1081,16 @@ onUnmounted(() => {
 
 /* 2. Cards */
 .modern-card {
-  background: white;
-  border: 1px solid #e0e0e0;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--el-box-shadow-light);
 
   .card-title {
     font-size: 16px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--el-text-color-primary);
     margin-bottom: 20px;
     letter-spacing: -0.2px;
   }
@@ -1123,19 +1123,19 @@ onUnmounted(() => {
   cursor: pointer;
   border-radius: 6px;
   transition: all 0.2s ease;
-  background: #f9fafc; /* Light gray background */
-  border: 1px solid #ebeef5; /* Subtle border */
+  background: var(--el-fill-color-light); /* Light gray background */
+  border: 1px solid var(--el-border-color-light); /* Subtle border */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 72px; /* Reduced height */
   position: relative;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--el-box-shadow-light);
 
   &:hover {
-    background: #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Lift effect */
+    background: var(--el-bg-color);
+    box-shadow: var(--el-box-shadow); /* Lift effect */
     transform: translateY(-2px);
     border-color: #dcdfe6;
   }
@@ -1148,24 +1148,24 @@ onUnmounted(() => {
     top: 0;
     bottom: 0;
     width: 4px;
-    background: #e4e7ed;
+    background: var(--el-border-color-lighter);
     transition: background-color 0.3s;
   }
 
   &.is-danger::before {
-    background-color: #f53f3f;
+    background-color: var(--el-fill-color-light);
   }
   &.is-success::before {
     background-color: #00b42a;
   }
   &.is-warning::before {
-    background-color: #ff7d00;
+    background-color: var(--el-fill-color-light);
   }
   &.is-primary::before {
     background-color: #165dff;
   }
   &.is-info::before {
-    background-color: #909399;
+    background-color: var(--el-text-color-secondary);
   }
   &.is-default::before {
     background-color: #c0c4cc;
@@ -1185,7 +1185,7 @@ onUnmounted(() => {
 
   .stat-label {
     font-size: 12px;
-    color: #606266;
+    color: var(--el-text-color-regular);
     font-weight: 500;
   }
 
@@ -1211,7 +1211,7 @@ onUnmounted(() => {
   }
   .text-default,
   .text-info {
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -1253,21 +1253,21 @@ onUnmounted(() => {
 
     label {
       font-size: 13px;
-      color: #909399;
+      color: var(--el-text-color-secondary);
       margin-bottom: 6px;
       font-weight: 400;
     }
 
     .label {
       font-size: 13px;
-      color: #909399;
+      color: var(--el-text-color-secondary);
       margin-bottom: 6px;
       font-weight: 400;
     }
 
     .value {
       font-size: 15px;
-      color: #303133;
+      color: var(--el-text-color-primary);
       font-weight: 500;
       min-height: 22px;
 
@@ -1304,7 +1304,7 @@ onUnmounted(() => {
 .card-text {
   font-size: 15px;
   line-height: 1.6;
-  color: #303133;
+  color: var(--el-text-color-primary);
   white-space: pre-wrap;
 }
 

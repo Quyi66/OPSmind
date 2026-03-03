@@ -321,9 +321,9 @@ defineExpose({ refresh: handleRefresh })
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color-light);
 }
 
 .host-detail-card__content {

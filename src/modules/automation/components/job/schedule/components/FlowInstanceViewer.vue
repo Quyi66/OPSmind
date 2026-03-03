@@ -247,7 +247,7 @@ function formatDateTime(value) {
   position: relative;
   width: min(1200px, 95vw);
   max-height: 95vh;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 14px;
   box-shadow: 0 25px 55px rgba(15, 23, 42, 0.25);
   display: flex;
@@ -260,8 +260,8 @@ function formatDateTime(value) {
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border-bottom: 1px solid var(--el-border-color-light);
+  background: var(--el-bg-color-page);
   flex-shrink: 0;
 }
 
@@ -330,7 +330,7 @@ function formatDateTime(value) {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid #e5e7eb;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .status-table th,
@@ -341,7 +341,7 @@ function formatDateTime(value) {
 }
 
 .status-table th {
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   font-weight: 600;
   color: #475569;
 }
@@ -431,7 +431,7 @@ function formatDateTime(value) {
   margin-bottom: 12px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .task-item:last-child {
@@ -454,7 +454,7 @@ function formatDateTime(value) {
 .task-output {
   margin: 0;
   padding: 16px;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-family: 'Courier New', monospace;

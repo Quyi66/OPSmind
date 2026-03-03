@@ -385,7 +385,7 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 // 顶部导航栏
@@ -395,8 +395,8 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   height: 56px;
   padding: 0 20px;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
   flex-shrink: 0;
 
   .header-left {
@@ -459,8 +459,8 @@ onBeforeUnmount(() => {
 .bpmn-viewer-container {
   flex: 1;
   position: relative;
-  background: #fafafa;
-  border-right: 1px solid #e2e8f0;
+  background: var(--el-bg-color-page);
+  border-right: 1px solid var(--el-border-color-light);
 }
 
 .viewer-placeholder {
@@ -486,8 +486,8 @@ onBeforeUnmount(() => {
   width: 300px;
   flex-shrink: 0;
   overflow-y: auto;
-  background: #fff;
-  border-left: 1px solid #e2e8f0;
+  background: var(--el-bg-color);
+  border-left: 1px solid var(--el-border-color-light);
 }
 
 .panel-header {
@@ -495,14 +495,14 @@ onBeforeUnmount(() => {
   font-size: 14px;
   font-weight: 600;
   color: #1e293b;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--el-bg-color-page);
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .panel-tabs {
   display: flex;
-  border-bottom: 1px solid #e2e8f0;
-  background: #fff;
+  border-bottom: 1px solid var(--el-border-color-light);
+  background: var(--el-bg-color);
 }
 
 .panel-tab {
@@ -556,7 +556,7 @@ onBeforeUnmount(() => {
 }
 
 .params-card {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   margin-bottom: 16px;
 
@@ -564,8 +564,8 @@ onBeforeUnmount(() => {
     padding: 10px 16px;
     font-weight: 600;
     font-size: 13px;
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
+    background: var(--el-bg-color-page);
+    border-bottom: 1px solid var(--el-border-color-light);
     border-radius: 8px 8px 0 0;
   }
 
@@ -592,7 +592,7 @@ onBeforeUnmount(() => {
 .help-card {
   margin-top: 16px;
   padding: 12px;
-  background: #f8fafc;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
   font-size: 12px;
   color: #94a3b8;

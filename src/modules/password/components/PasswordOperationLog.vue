@@ -193,7 +193,7 @@ function handleViewDetail(row) {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .page-header {
@@ -201,7 +201,7 @@ function handleViewDetail(row) {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--el-border-color-light);
 
   .page-title {
     font-size: 16px;
@@ -222,7 +222,7 @@ function handleViewDetail(row) {
   justify-content: flex-start;
   align-items: center;
   padding: 12px 20px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--el-border-color-light);
 }
 
 .message-cell {
