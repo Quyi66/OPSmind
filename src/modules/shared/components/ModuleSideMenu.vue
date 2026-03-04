@@ -244,7 +244,7 @@ function handleHomeClick() {
     width 0.3s ease,
     min-width 0.3s ease;
   position: relative;
-  border-right: 1px solid #e8e8e8;
+  border-right: 1px solid var(--el-border-color-light);
   margin-right: 12px;
 
   // 右侧灰色隔断条

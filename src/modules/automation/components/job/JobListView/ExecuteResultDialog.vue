@@ -8,12 +8,7 @@
   >
     <div class="result-dialog" v-loading="loading">
       <el-tabs v-model="activeTab">
-        <el-tab-pane
-          v-for="tab in visibleTabs"
-          :key="tab.name"
-          :label="tab.label"
-          :name="tab.name"
-        >
+        <el-tab-pane v-for="tab in visibleTabs" :key="tab.name" :label="tab.label" :name="tab.name">
           <template v-if="tab.name === 'overview'">
             <template v-if="result">
               <div class="overview-header">
@@ -52,7 +47,9 @@
                     <div class="batch-card__header">
                       <div>
                         <span class="batch-name">{{ batch.batch }}</span>
-                        <span class="batch-status" :class="`is-${batch.status?.toLowerCase?.()}`">{{ statusLabel(batch.status) }}</span>
+                        <span class="batch-status" :class="`is-${batch.status?.toLowerCase?.()}`">
+                          {{ statusLabel(batch.status) }}
+                        </span>
                       </div>
                       <span class="batch-meta">主机数：{{ batch.machineCount ?? 0 }}</span>
                     </div>
@@ -60,7 +57,9 @@
                       <div v-for="step in batch.steps" :key="step.name" class="batch-step">
                         <div class="batch-step__title">
                           <span>{{ step.name }}</span>
-                          <el-tag size="small" :type="statusTagType(step.status)">{{ statusLabel(step.status) }}</el-tag>
+                          <el-tag size="small" :type="statusTagType(step.status)">
+                            {{ statusLabel(step.status) }}
+                          </el-tag>
                         </div>
                         <p class="batch-step__message">{{ step.message }}</p>
                       </div>
@@ -92,12 +91,7 @@
             <div v-if="ansibleTreeData.length" class="hosts-pane">
               <div class="hosts-tree-panel">
                 <div class="tree-toolbar">
-                  <el-input
-                    v-model="hostFilterText"
-                    size="small"
-                    placeholder="搜索主机"
-                    clearable
-                  >
+                  <el-input v-model="hostFilterText" size="small" placeholder="搜索主机" clearable>
                     <template #prefix>
                       <i class="fa fa-search" />
                     </template>
@@ -162,7 +156,9 @@
                     <div>
                       <div class="host-detail-title">
                         <h4>{{ selectedHost.title }}</h4>
-                        <span v-if="selectedHost.delegateHost" class="delegate-badge">Delegate: {{ selectedHost.delegateHost }}</span>
+                        <span v-if="selectedHost.delegateHost" class="delegate-badge">
+                          Delegate: {{ selectedHost.delegateHost }}
+                        </span>
                       </div>
                       <div class="host-detail-meta">
                         <el-tag size="small" :type="taskStatusTag(selectedHost.status)">
@@ -199,17 +195,26 @@
                   </div>
                   <el-scrollbar class="host-task-list">
                     <template v-if="filteredHostTasks.length">
-                      <div v-for="task in filteredHostTasks" :key="task.id" class="host-task-card" :class="`is-${task.status}`">
+                      <div
+                        v-for="task in filteredHostTasks"
+                        :key="task.id"
+                        class="host-task-card"
+                        :class="`is-${task.status}`"
+                      >
                         <div class="host-task-card__header">
                           <div>
-                            <span v-if="task.delegateHost" class="delegate-badge">{{ task.delegateHost }}</span>
+                            <span v-if="task.delegateHost" class="delegate-badge">
+                              {{ task.delegateHost }}
+                            </span>
                             <span>{{ task.name }}</span>
                           </div>
                           <el-tag size="small" :type="taskStatusTag(task.status)">
                             {{ taskStatusLabel(task.status) }}
                           </el-tag>
                         </div>
-                        <pre v-if="task.output" class="host-task-card__output">{{ task.output }}</pre>
+                        <pre v-if="task.output" class="host-task-card__output">{{
+                          task.output
+                        }}</pre>
                       </div>
                     </template>
                     <el-empty v-else description="暂无任务" />
@@ -279,9 +284,14 @@
                   </el-form-item>
                 </el-form>
               </div>
-              <el-table :data="filteredListRows" height="420" class="result-table">
+              <el-table :data="paginatedListRows" height="420" class="result-table">
                 <el-table-column prop="host" label="主机" width="180" show-overflow-tooltip />
-                <el-table-column prop="delegateHost" label="Delegate" width="160" show-overflow-tooltip />
+                <el-table-column
+                  prop="delegateHost"
+                  label="Delegate"
+                  width="160"
+                  show-overflow-tooltip
+                />
                 <el-table-column prop="task" label="任务" min-width="220" show-overflow-tooltip />
                 <el-table-column prop="play" label="Play" width="200" show-overflow-tooltip />
                 <el-table-column label="状态" width="120">
@@ -293,6 +303,18 @@
                 </el-table-column>
                 <el-table-column prop="output" label="输出" min-width="240" show-overflow-tooltip />
               </el-table>
+              <div
+                class="pagination-wrapper"
+                style="margin-top: 12px; display: flex; justify-content: flex-end"
+              >
+                <el-pagination
+                  v-model:current-page="listCurrentPage"
+                  v-model:page-size="listPageSize"
+                  :page-sizes="[50, 100, 200, 500]"
+                  layout="total, sizes, prev, pager, next, jumper"
+                  :total="filteredListRows.length"
+                />
+              </div>
             </div>
             <el-empty v-else description="暂无任务数据" />
           </template>
@@ -312,7 +334,22 @@
                 </el-button>
               </div>
               <el-scrollbar class="raw-scroll">
-                <pre>{{ ansibleRawOutput }}</pre>
+                <pre>{{ truncatedAnsibleRawOutput }}</pre>
+                <div
+                  v-if="ansibleRawOutput.length > 500000 && !showFullRawOutput"
+                  class="load-all-wrapper"
+                  style="text-align: center; margin-top: 10px; padding-bottom: 20px"
+                >
+                  <el-button type="primary" plain @click="showFullRawOutput = true">
+                    <i class="fa fa-download mr-1" />
+                    加载全部内容（{{ (ansibleRawOutput.length / 1024).toFixed(0) }} KB）
+                  </el-button>
+                  <p
+                    style="font-size: 12px; color: var(--el-text-color-secondary); margin-top: 8px"
+                  >
+                    数据量较大，加载全部可能导致短暂卡顿
+                  </p>
+                </div>
               </el-scrollbar>
             </div>
             <el-empty v-else description="暂无原始输出" />
@@ -329,7 +366,9 @@
               <div class="rest-meta">
                 <div class="rest-meta__item">
                   <span class="rest-meta__label">状态码</span>
-                  <el-tag :type="statusTagType(result ? result.status : '')">{{ restDetail.statusCode }}</el-tag>
+                  <el-tag :type="statusTagType(result ? result.status : '')">
+                    {{ restDetail.statusCode }}
+                  </el-tag>
                 </div>
                 <div class="rest-meta__item">
                   <span class="rest-meta__label">Content-Type</span>
@@ -377,7 +416,16 @@ const TASK_STATUS_TAGS = {
   running: 'warning',
   unknown: 'info'
 }
-const HOST_STATUS_PRIORITY = ['unreachable', 'failed', 'changed', 'ok', 'ignored', 'skipped', 'running', 'unknown']
+const HOST_STATUS_PRIORITY = [
+  'unreachable',
+  'failed',
+  'changed',
+  'ok',
+  'ignored',
+  'skipped',
+  'running',
+  'unknown'
+]
 const treeProps = { label: 'label', children: 'children' }
 
 const props = defineProps({
@@ -390,7 +438,7 @@ const emit = defineEmits(['update:visible'])
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value)
+  set: value => emit('update:visible', value)
 })
 
 const activeTab = ref('overview')
@@ -401,7 +449,9 @@ const isAnsibleJob = computed(() => ANSIBLE_JOB_TYPES.includes(jobType.value))
 const isProcessJob = computed(() => jobType.value === 'process')
 const isRestJob = computed(() => jobType.value === 'rest')
 const processModelData = computed(() => parseProcessModel(result.value))
-const processModelPretty = computed(() => (processModelData.value ? JSON.stringify(processModelData.value, null, 2) : ''))
+const processModelPretty = computed(() =>
+  processModelData.value ? JSON.stringify(processModelData.value, null, 2) : ''
+)
 const ansibleArtifacts = computed(() => buildAnsibleArtifacts(result.value, isAnsibleJob.value))
 const ansibleContents = computed(() => ansibleArtifacts.value.contents)
 const ansibleRawOutput = computed(() => ansibleArtifacts.value.raw)
@@ -417,19 +467,49 @@ const hostStatusFilter = ref('')
 const selectedPlayFilter = ref('')
 const selectedHostFilter = ref('')
 const listKeyword = ref('')
-const ansibleTreeData = computed(() => buildHostTree(ansibleContents.value, { mergeBatches: mergeBatches.value }).tree)
+const listCurrentPage = ref(1)
+const listPageSize = ref(50)
+const showFullRawOutput = ref(false)
+const ansibleTreeData = computed(
+  () => buildHostTree(ansibleContents.value, { mergeBatches: mergeBatches.value }).tree
+)
 const hostTaskStats = computed(() => computeStatusStats(selectedHost.value?.tasks || []))
 const hostStatusChips = computed(() => buildStatusChips(hostTaskStats.value))
-const filteredHostTasks = computed(() => filterHostTasks(selectedHost.value, hostStatusFilter.value, hostTaskSearch.value))
+const filteredHostTasks = computed(() =>
+  filterHostTasks(selectedHost.value, hostStatusFilter.value, hostTaskSearch.value)
+)
 const listPlayOptions = computed(() => buildListPlayOptions(ansibleHostRows.value))
 const listHostOptions = computed(() => buildListHostOptions(ansibleHostRows.value))
-const filteredListRows = computed(() => filterListRows(ansibleHostRows.value, {
-  play: selectedPlayFilter.value,
-  host: selectedHostFilter.value,
-  keyword: listKeyword.value
-}))
+const filteredListRows = computed(() =>
+  filterListRows(ansibleHostRows.value, {
+    play: selectedPlayFilter.value,
+    host: selectedHostFilter.value,
+    keyword: listKeyword.value
+  })
+)
+
+const paginatedListRows = computed(() => {
+  const start = (listCurrentPage.value - 1) * listPageSize.value
+  return filteredListRows.value.slice(start, start + listPageSize.value)
+})
+
+watch([selectedPlayFilter, selectedHostFilter, listKeyword], () => {
+  listCurrentPage.value = 1
+})
+
+const truncatedAnsibleRawOutput = computed(() => {
+  if (!ansibleRawOutput.value) return ''
+  if (showFullRawOutput.value) return ansibleRawOutput.value
+  const MAX_LEN = 500000
+  return ansibleRawOutput.value.length > MAX_LEN
+    ? ansibleRawOutput.value.slice(0, MAX_LEN) + '\n\n... (截断)'
+    : ansibleRawOutput.value
+})
+
 const restDetail = computed(() => buildRestDetail(result.value))
-const downloadUrl = computed(() => (props.runId ? `/oplus-portal/jao/api/jao/runlogs/ansible/${props.runId}` : ''))
+const downloadUrl = computed(() =>
+  props.runId ? `/oplus-portal/jao/api/jao/runlogs/ansible/${props.runId}` : ''
+)
 const visibleTabs = computed(() => {
   const tabs = [{ name: 'overview', label: '概要' }]
   if (isProcessJob.value) {
@@ -462,16 +542,16 @@ watch(
 
 watch(
   () => props.visible,
-  (visible) => {
+  visible => {
     if (!visible) {
       resetState()
     }
   }
 )
 
-watch(visibleTabs, (tabs) => {
+watch(visibleTabs, tabs => {
   if (!tabs.length) return
-  const exists = tabs.some((tab) => tab.name === activeTab.value)
+  const exists = tabs.some(tab => tab.name === activeTab.value)
   if (!exists) {
     activeTab.value = tabs[0].name
   }
@@ -501,12 +581,14 @@ watch(
     selectedPlayFilter.value = ''
     selectedHostFilter.value = ''
     listKeyword.value = ''
+    listCurrentPage.value = 1
+    showFullRawOutput.value = false
   }
 )
 
 watch(
   () => listPlayOptions.value,
-  (options) => {
+  options => {
     if (!options.length) {
       selectedPlayFilter.value = ''
       return
@@ -524,7 +606,7 @@ watch(
 
 watch(
   () => listHostOptions.value,
-  (options) => {
+  options => {
     if (!options.length) {
       selectedHostFilter.value = ''
       return
@@ -554,6 +636,8 @@ function resetState() {
   selectedPlayFilter.value = ''
   selectedHostFilter.value = ''
   listKeyword.value = ''
+  listCurrentPage.value = 1
+  showFullRawOutput.value = false
 }
 
 async function fetchResult() {
@@ -596,7 +680,7 @@ const statusClass = computed(() => {
 const batches = computed(() => {
   const batchList = result.value?.detail?.batches
   if (!Array.isArray(batchList)) return []
-  return batchList.map((batch) => ({
+  return batchList.map(batch => ({
     ...batch,
     steps: formatBatchSteps(batch.steps)
   }))
@@ -689,7 +773,10 @@ function toggleTreeExpand() {
 }
 
 function applyHostFilter() {
-  const tree = hostTreeRef.value
+  let tree = hostTreeRef.value
+  if (Array.isArray(tree)) {
+    tree = tree[0]
+  }
   if (!tree) return
   tree.filter(hostFilterText.value.trim())
 }
@@ -697,7 +784,9 @@ function applyHostFilter() {
 function filterHostNode(value, data) {
   if (!value) return true
   const keyword = value.toLowerCase()
-  return String(data.label || '').toLowerCase().includes(keyword)
+  return String(data.label || '')
+    .toLowerCase()
+    .includes(keyword)
 }
 
 function handleTreeNodeClick(data) {
@@ -759,7 +848,12 @@ function formatDateTime(value) {
 function formatDuration(start, end) {
   const startDate = start ? new Date(start) : null
   const endDate = end ? new Date(end) : null
-  if (!startDate || !endDate || Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+  if (
+    !startDate ||
+    !endDate ||
+    Number.isNaN(startDate.getTime()) ||
+    Number.isNaN(endDate.getTime())
+  ) {
     return '-'
   }
   const diffMs = Math.max(0, endDate.getTime() - startDate.getTime())
@@ -767,7 +861,7 @@ function formatDuration(start, end) {
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
-  const pad = (num) => String(num).padStart(2, '0')
+  const pad = num => String(num).padStart(2, '0')
   return `${hours}:${pad(minutes)}:${pad(seconds)}`
 }
 
@@ -787,7 +881,7 @@ function buildAnsibleArtifacts(data, enabled) {
   }
   const batches = Array.isArray(data.data) ? data.data : []
   const contents = []
-  batches.forEach((batch) => {
+  batches.forEach(batch => {
     const output = batch?.output
     if (!output) return
     const parsed = safeJsonParse(output, null)
@@ -809,7 +903,7 @@ function summarizeHostRows(contents) {
     plays.forEach((play, playIndex) => {
       const playName = play?.play?.name || play?.name || `Play ${contentIndex + 1}-${playIndex + 1}`
       const tasks = Array.isArray(play?.tasks) ? play.tasks : []
-      tasks.forEach((task) => {
+      tasks.forEach(task => {
         const taskName = task?.task?.name || '未命名任务'
         const hosts = Array.isArray(task?.hosts) ? task.hosts : []
         hosts.forEach((host, hostIndex) => {
@@ -848,7 +942,7 @@ function buildHostTree(contents, { mergeBatches }) {
         hostCount: play.hosts.length,
         children: []
       }
-      play.hosts.forEach((host) => {
+      play.hosts.forEach(host => {
         const hostId = `${playId}-host-${hostAutoId++}`
         const hostNode = {
           id: hostId,
@@ -870,7 +964,7 @@ function buildHostTree(contents, { mergeBatches }) {
 
   if (mergeBatches) {
     const mergedPlays = []
-    contents.forEach((content) => {
+    contents.forEach(content => {
       mergedPlays.push(...extractPlays(content, { batchTitle: 'Playbook' }))
     })
     if (mergedPlays.length) {
@@ -961,7 +1055,7 @@ function computeStatusStats(tasks) {
 
 function buildStatusChips(stats) {
   const chips = []
-  HOST_STATUS_PRIORITY.forEach((status) => {
+  HOST_STATUS_PRIORITY.forEach(status => {
     if (stats[status]) {
       chips.push({ status, count: stats[status] })
     }
@@ -977,7 +1071,7 @@ function buildStatusChips(stats) {
 function filterHostTasks(host, statusFilter, keyword) {
   if (!host) return []
   const term = keyword.trim().toLowerCase()
-  return host.tasks.filter((task) => {
+  return host.tasks.filter(task => {
     const statusMatch = !statusFilter || task.status === statusFilter
     if (!statusMatch) return false
     if (!term) return true
@@ -989,7 +1083,7 @@ function filterHostTasks(host, statusFilter, keyword) {
 
 function buildListPlayOptions(rows) {
   const set = new Set()
-  rows.forEach((row) => {
+  rows.forEach(row => {
     if (row.play) {
       set.add(row.play)
     }
@@ -999,7 +1093,7 @@ function buildListPlayOptions(rows) {
 
 function buildListHostOptions(rows) {
   const set = new Set()
-  rows.forEach((row) => {
+  rows.forEach(row => {
     if (row.host) {
       set.add(row.host)
     }
@@ -1010,7 +1104,7 @@ function buildListHostOptions(rows) {
 function filterListRows(rows, filters) {
   const { play = '', host = '', keyword = '' } = filters || {}
   const term = keyword.trim().toLowerCase()
-  return rows.filter((row) => {
+  return rows.filter(row => {
     if (play && row.play !== play) return false
     if (host && row.host !== host) return false
     if (!term) return true
@@ -1018,7 +1112,12 @@ function filterListRows(rows, filters) {
     const task = row.task ? row.task.toLowerCase() : ''
     const rowHost = row.host ? row.host.toLowerCase() : ''
     const delegate = row.delegateHost ? row.delegateHost.toLowerCase() : ''
-    return output.includes(term) || task.includes(term) || rowHost.includes(term) || delegate.includes(term)
+    return (
+      output.includes(term) ||
+      task.includes(term) ||
+      rowHost.includes(term) ||
+      delegate.includes(term)
+    )
   })
 }
 
