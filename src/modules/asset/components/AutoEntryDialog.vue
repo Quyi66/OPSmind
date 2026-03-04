@@ -8,14 +8,12 @@
   >
     <div v-loading="loading" class="auto-entry">
       <!-- 提示信息 -->
-      <el-alert
-        type="success"
-        :closable="false"
-        show-icon
-        class="tip-alert"
-      >
+      <el-alert type="success" :closable="false" show-icon class="tip-alert">
         <template #title>
-          <span>注意：使用自动化设备录入需满足，该资产模型的唯一模型属性有且只能是纳管IP 支持文本格式的IP，文本格式支持：逗号分割、空格分割、换行分割中的一种或多种，同时支持网段录入。例如：192.168.1.0/26</span>
+          <span>
+            注意：使用自动化设备录入需满足，该资产模型的唯一模型属性有且只能是纳管IP
+            支持文本格式的IP，文本格式支持：逗号分割、空格分割、换行分割中的一种或多种，同时支持网段录入。例如：192.168.1.0/26
+          </span>
         </template>
       </el-alert>
 
@@ -37,11 +35,7 @@
         </el-form-item>
 
         <el-form-item label="分组" prop="groupId">
-          <el-select
-            v-model="formData.groupId"
-            placeholder="请选择分组"
-            style="width: 100%"
-          >
+          <el-select v-model="formData.groupId" placeholder="请选择分组" style="width: 100%">
             <el-option
               v-for="item in groupOptions"
               :key="item.id"
@@ -68,12 +62,7 @@
         </el-form-item>
 
         <el-form-item label="属性值" prop="value">
-          <el-input
-            v-model="formData.value"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入属性值"
-          />
+          <el-input v-model="formData.value" type="textarea" :rows="3" placeholder="请输入属性值" />
         </el-form-item>
 
         <el-form-item label="执行引擎节点(instance group)">
@@ -122,7 +111,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -140,9 +129,7 @@ const formData = ref({
 
 // 表单校验规则
 const formRules = {
-  hostKeys: [
-    { required: true, message: '请输入IP地址', trigger: 'blur' }
-  ]
+  hostKeys: [{ required: true, message: '请输入IP地址', trigger: 'blur' }]
 }
 
 // 下拉选项
@@ -197,11 +184,7 @@ const loadInstanceGroupOptions = async () => {
 const loadData = async () => {
   loading.value = true
   try {
-    await Promise.all([
-      loadGroupOptions(),
-      loadAttrOptions(),
-      loadInstanceGroupOptions()
-    ])
+    await Promise.all([loadGroupOptions(), loadAttrOptions(), loadInstanceGroupOptions()])
   } finally {
     loading.value = false
   }
@@ -259,7 +242,7 @@ const handleClose = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadData()
   }
@@ -280,7 +263,7 @@ watch(visible, (val) => {
   .entry-form {
     .form-desc {
       font-size: 12px;
-      color: #909399;
+      color: var(--el-text-color-secondary);
       margin-top: 4px;
     }
   }

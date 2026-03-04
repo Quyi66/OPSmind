@@ -1,11 +1,5 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    title="关联用户"
-    width="800px"
-    destroy-on-close
-    @close="handleClose"
-  >
+  <el-dialog v-model="visible" title="关联用户" width="800px" destroy-on-close @close="handleClose">
     <div v-loading="loading" class="link-user-container">
       <!-- 顶部提示栏 -->
       <div class="top-bar">
@@ -69,7 +63,12 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" :loading="saving" :disabled="selectedUsers.length === 0" @click="handleSave">
+        <el-button
+          type="primary"
+          :loading="saving"
+          :disabled="selectedUsers.length === 0"
+          @click="handleSave"
+        >
           保存
         </el-button>
       </div>
@@ -101,7 +100,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -119,10 +118,11 @@ const filteredData = computed(() => {
     return userData.value
   }
   const keyword = searchKeyword.value.toLowerCase()
-  return userData.value.filter(user =>
-    (user.login || '').toLowerCase().includes(keyword) ||
-    (user.fullName || '').toLowerCase().includes(keyword) ||
-    (user.department || '').toLowerCase().includes(keyword)
+  return userData.value.filter(
+    user =>
+      (user.login || '').toLowerCase().includes(keyword) ||
+      (user.fullName || '').toLowerCase().includes(keyword) ||
+      (user.department || '').toLowerCase().includes(keyword)
   )
 })
 
@@ -133,12 +133,15 @@ const paginatedData = computed(() => {
   return filteredData.value.slice(start, end)
 })
 
-watch(() => props.modelValue, (val) => {
-  if (val) {
-    searchKeyword.value = ''
-    loadData()
+watch(
+  () => props.modelValue,
+  val => {
+    if (val) {
+      searchKeyword.value = ''
+      loadData()
+    }
   }
-})
+)
 
 async function loadData() {
   loading.value = true
@@ -222,8 +225,8 @@ function handleClose() {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #e8f4fc;
-  border: 1px solid #d1e9f6;
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-8);
   margin-bottom: 16px;
 }
 
@@ -235,7 +238,7 @@ function handleClose() {
 
 .hint-text {
   font-size: 14px;
-  color: #333;
+  color: var(--el-text-color-primary);
 }
 
 .search-section {

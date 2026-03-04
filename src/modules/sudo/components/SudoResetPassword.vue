@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout" style="background: #f1f5f9; overflow: auto;">
+  <div class="ops-page-layout" style="background: var(--el-bg-color-page); overflow: auto">
     <div class="page-content">
       <div class="form-card">
         <div class="card-title">重置密码</div>
@@ -45,10 +45,7 @@
               name="sudo_password_field"
               class="password-input"
             />
-            <el-button
-              @click="generateRandomPassword"
-              :disabled="submitting || !passwordConfig"
-            >
+            <el-button @click="generateRandomPassword" :disabled="submitting || !passwordConfig">
               <i class="fa fa-random"></i>
               随机密码
             </el-button>
@@ -57,7 +54,7 @@
         </div>
 
         <!-- 执行按钮 -->
-        <div class="form-section" style="text-align: end;">
+        <div class="form-section" style="text-align: end">
           <el-button
             type="primary"
             :loading="submitting"
@@ -115,22 +112,29 @@ const isFailed = computed(() => jobStatus.value === 'FAILED' || jobStatus.value 
 
 const statusText = computed(() => {
   switch (jobStatus.value) {
-    case 'WAITING': return '等待执行...'
-    case 'RUNNING': return '正在重置...'
+    case 'WAITING':
+      return '等待执行...'
+    case 'RUNNING':
+      return '正在重置...'
     case 'SUCCESS':
-    case 'COMPLETED': return '重置成功'
+    case 'COMPLETED':
+      return '重置成功'
     case 'FAILED':
-    case 'ERROR': return '重置失败'
-    default: return jobStatus.value
+    case 'ERROR':
+      return '重置失败'
+    default:
+      return jobStatus.value
   }
 })
 
 // 是否可以提交
 const canSubmit = computed(() => {
-  return formData.hosts.length > 0 &&
-         formData.user.trim() !== '' &&
-         formData.password.length >= 8 &&
-         formData.password.length <= 16
+  return (
+    formData.hosts.length > 0 &&
+    formData.user.trim() !== '' &&
+    formData.password.length >= 8 &&
+    formData.password.length <= 16
+  )
 })
 
 onMounted(() => {
@@ -165,7 +169,7 @@ function getRandomStr(defaultStr, length) {
 function shuffleStr(str) {
   const list = str.split('')
   const newList = []
-  list.forEach((item) => {
+  list.forEach(item => {
     const newListIndex = Math.round(Math.random() * newList.length)
     newList.splice(newListIndex, 0, item)
   })
@@ -199,10 +203,10 @@ function generateRandomPassword() {
   // 生成密码
   const password = shuffleStr(
     getRandomStr(lcredit, lcreditNum) +
-    getRandomStr(ucredit, ucreditNum) +
-    getRandomStr(ocredit, ocreditNum) +
-    getRandomStr(dcredit, dcreditNum) +
-    getRandomStr(lcredit + ucredit + ocredit + dcredit, remainingLength)
+      getRandomStr(ucredit, ucreditNum) +
+      getRandomStr(ocredit, ocreditNum) +
+      getRandomStr(dcredit, dcreditNum) +
+      getRandomStr(lcredit + ucredit + ocredit + dcredit, remainingLength)
   )
 
   formData.password = password
@@ -240,12 +244,12 @@ async function handleSubmit() {
         interval: 5000,
         successMessage: '密码重置成功',
         errorMessage: '密码重置失败',
-        onSuccess: (res) => {
+        onSuccess: res => {
           jobResult.value = res
           jobStatus.value = 'COMPLETED'
           submitting.value = false
         },
-        onError: (res) => {
+        onError: res => {
           jobResult.value = res
           jobStatus.value = 'FAILED'
           submitting.value = false
@@ -266,7 +270,7 @@ async function handleSubmit() {
 <style scoped lang="scss">
 .reset-password-container {
   height: 100%;
-  background: #f1f5f9;
+  background: var(--el-bg-color-page);
   padding: 16px;
   overflow: auto;
 }
@@ -283,13 +287,13 @@ async function handleSubmit() {
   background: var(--el-bg-color);
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--el-box-shadow-light);
 }
 
 .card-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--el-text-color-primary);
   margin-bottom: 24px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--el-border-color-light);
@@ -300,7 +304,7 @@ async function handleSubmit() {
 
   .section-label {
     font-weight: 500;
-    color: #334155;
+    color: var(--el-text-color-primary);
     margin-bottom: 8px;
     font-size: 14px;
   }
@@ -320,13 +324,13 @@ async function handleSubmit() {
 .input-hint {
   margin-top: 6px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
 }
 
 .job-status {
   margin-top: 20px;
   padding: 16px;
-  background: #f1f5f9;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
 
   .status-header {
@@ -336,18 +340,18 @@ async function handleSubmit() {
     font-weight: 500;
 
     .text-success {
-      color: #22c55e;
+      color: var(--el-color-success);
     }
 
     .text-danger {
-      color: #ef4444;
+      color: var(--el-color-danger);
     }
   }
 
   .status-detail {
     margin-top: 8px;
     font-size: 12px;
-    color: #64748b;
+    color: var(--el-text-color-secondary);
   }
 }
 </style>

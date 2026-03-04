@@ -89,15 +89,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" :disabled="saving">
-          取消
-        </el-button>
-        <el-button
-          type="primary"
-          :loading="saving"
-          :disabled="!canSave"
-          @click="handleSave"
-        >
+        <el-button @click="handleClose" :disabled="saving">取消</el-button>
+        <el-button type="primary" :loading="saving" :disabled="!canSave" @click="handleSave">
           保存
         </el-button>
       </div>
@@ -162,22 +155,27 @@ const validationError = computed(() => {
 
 // 是否可以保存
 const canSave = computed(() => {
-  return formData.ocredit >= 0 &&
-         formData.dcredit >= 0 &&
-         formData.ucredit >= 0 &&
-         formData.lcredit >= 0 &&
-         formData.passwd_length >= 1 &&
-         !validationError.value
+  return (
+    formData.ocredit >= 0 &&
+    formData.dcredit >= 0 &&
+    formData.ucredit >= 0 &&
+    formData.lcredit >= 0 &&
+    formData.passwd_length >= 1 &&
+    !validationError.value
+  )
 })
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    loadConfig()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val) {
+      loadConfig()
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
   if (!val) {
     stopPolling()
@@ -297,7 +295,7 @@ function handleClose() {
     width: 120px;
     padding-top: 8px;
     font-weight: 500;
-    color: #334155;
+    color: var(--el-text-color-primary);
     font-size: 14px;
     flex-shrink: 0;
   }
@@ -310,40 +308,40 @@ function handleClose() {
 .form-hint {
   margin-top: 6px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
 }
 
 .validation-error {
   margin-top: 16px;
   padding: 12px 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--el-color-danger-light-9);
+  border: 1px solid var(--el-color-danger-light-7);
   border-radius: 6px;
-  color: #dc2626;
+  color: var(--el-color-danger);
   font-size: 13px;
   display: flex;
   align-items: center;
   gap: 8px;
 
   i {
-    color: #ef4444;
+    color: var(--el-color-danger);
   }
 }
 
 .validation-info {
   margin-top: 16px;
   padding: 12px 16px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
   border-radius: 6px;
-  color: #1d4ed8;
+  color: var(--el-color-primary);
   font-size: 13px;
   display: flex;
   align-items: center;
   gap: 8px;
 
   i {
-    color: #3b82f6;
+    color: var(--el-color-primary);
   }
 }
 

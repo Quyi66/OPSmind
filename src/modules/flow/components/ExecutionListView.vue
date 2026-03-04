@@ -168,10 +168,11 @@ const pageSize = ref(10)
 const filteredProcessList = computed(() => {
   if (!searchKeyword.value) return processList.value
   const keyword = searchKeyword.value.toLowerCase()
-  return processList.value.filter(p =>
-    p.processName?.toLowerCase().includes(keyword) ||
-    p.processAbbr?.toLowerCase().includes(keyword) ||
-    p.processKey?.toLowerCase().includes(keyword)
+  return processList.value.filter(
+    p =>
+      p.processName?.toLowerCase().includes(keyword) ||
+      p.processAbbr?.toLowerCase().includes(keyword) ||
+      p.processKey?.toLowerCase().includes(keyword)
   )
 })
 
@@ -249,21 +250,31 @@ function formatDateTime(dateStr) {
 
 function getStatusType(status) {
   switch (status) {
-    case 1: return 'primary'  // 运行中
-    case 2: return 'danger'   // 失败
-    case 3: return 'success'  // 完成
-    case 4: return 'info'     // 已取消
-    default: return 'info'
+    case 1:
+      return 'primary' // 运行中
+    case 2:
+      return 'danger' // 失败
+    case 3:
+      return 'success' // 完成
+    case 4:
+      return 'info' // 已取消
+    default:
+      return 'info'
   }
 }
 
 function getStatusText(status) {
   switch (status) {
-    case 1: return '运行中'
-    case 2: return '失败'
-    case 3: return '完成'
-    case 4: return '已取消'
-    default: return '未知'
+    case 1:
+      return '运行中'
+    case 2:
+      return '失败'
+    case 3:
+      return '完成'
+    case 4:
+      return '已取消'
+    default:
+      return '未知'
   }
 }
 
@@ -291,7 +302,9 @@ async function handleDelete(row) {
 async function handleBatchDelete() {
   if (selectedRows.value.length === 0) return
   try {
-    await ElMessageBox.confirm(`确定要删除选中的 ${selectedRows.value.length} 条记录吗？`, '提示', { type: 'warning' })
+    await ElMessageBox.confirm(`确定要删除选中的 ${selectedRows.value.length} 条记录吗？`, '提示', {
+      type: 'warning'
+    })
     const ids = selectedRows.value.map(r => r.id)
     await flowApi.batchDeleteExecution(ids)
     ElMessage.success('删除成功')
@@ -305,7 +318,9 @@ async function handleBatchDelete() {
 
 async function handleTerminateProcess() {
   try {
-    await ElMessageBox.confirm('确定要终止此流程的所有运行实例吗？', '终止确认', { type: 'warning' })
+    await ElMessageBox.confirm('确定要终止此流程的所有运行实例吗？', '终止确认', {
+      type: 'warning'
+    })
     await flowApi.terminateProcess(activeProcessId.value)
     ElMessage.success('终止成功')
     loadExecutionList()
@@ -344,7 +359,7 @@ onMounted(() => {
 // 进程项特定样式
 .process-name {
   font-weight: 500;
-  color: #1e293b;
+  color: var(--el-text-color-primary);
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -353,7 +368,7 @@ onMounted(() => {
 
 .process-desc {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

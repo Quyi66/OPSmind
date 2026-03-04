@@ -9,7 +9,10 @@
 .placeholder-page {
   padding: 24px;
   text-align: center;
-  color: #64748b;
+  color: var(--el-text-color-regular);
 }
-h2 { color: #1e293b; margin-bottom: 8px; }
+h2 {
+  color: var(--el-text-color-primary);
+  margin-bottom: 8px;
+}
 </style>

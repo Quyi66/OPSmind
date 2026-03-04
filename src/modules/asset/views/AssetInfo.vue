@@ -884,7 +884,7 @@ onMounted(() => {
   .page-title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -903,7 +903,7 @@ onMounted(() => {
     align-items: center;
     padding: 12px 0;
     cursor: pointer;
-    color: #606266; // 未激活状态使用灰色
+    color: var(--el-text-color-regular); // 未激活状态使用灰色
     font-size: 14px;
     border-bottom: 2px solid transparent;
     transition: all 0.2s;
@@ -915,13 +915,13 @@ onMounted(() => {
     }
 
     &:hover {
-      color: #409eff;
+      color: var(--el-color-primary);
     }
 
     &.active {
-      color: #409eff; // 激活状态使用蓝色
+      color: var(--el-color-primary); // 激活状态使用蓝色
       font-weight: 500;
-      border-bottom-color: #409eff;
+      border-bottom-color: var(--el-color-primary);
     }
   }
 }
@@ -971,7 +971,7 @@ onMounted(() => {
 
       .filter-label {
         font-size: 13px;
-        color: #606266;
+        color: var(--el-text-color-regular);
       }
     }
   }
@@ -1023,7 +1023,7 @@ onMounted(() => {
     border-bottom: 1px solid var(--el-border-color-light);
     margin-bottom: 8px;
     font-size: 14px;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 
   .group-tree-container {
@@ -1041,8 +1041,8 @@ onMounted(() => {
       }
 
       &.active {
-        background: #ecf5ff;
-        color: #409eff;
+        background: var(--el-color-primary-light-9);
+        color: var(--el-color-primary);
       }
 
       &.all-item {
@@ -1073,8 +1073,8 @@ onMounted(() => {
         }
 
         &.active {
-          background: #ecf5ff;
-          color: #409eff;
+          background: var(--el-color-primary-light-9);
+          color: var(--el-color-primary);
         }
       }
     }

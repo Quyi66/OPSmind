@@ -21,6 +21,9 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 import { dtsApi } from '../api'
+import { useTheme } from '@/composables/useTheme'
+
+const { isDark } = useTheme()
 
 const props = defineProps({
   modelValue: {
@@ -41,13 +44,14 @@ const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
 const chartData = ref([])
 const chartRef = ref(null)
 let chartInstance = null
+let resizeObserver = null
 
 // 加载历史数据
 const loadHistoryData = async () => {
@@ -83,7 +87,7 @@ const renderChart = () => {
   }
 
   if (!chartInstance) {
-    chartInstance = echarts.init(chartRef.value)
+    chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
   }
 
   // 处理数据
@@ -92,7 +96,7 @@ const renderChart = () => {
   const memTotalData = chartData.value.map(item => parseFloat(item.memtotal_mb) || 0)
 
   const option = {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis'
     },
@@ -121,11 +125,11 @@ const renderChart = () => {
         smooth: true,
         data: memFreeData,
         itemStyle: {
-          color: 'rgb(0, 176, 80)'
+          color: isDark.value ? '#34d399' : 'rgb(0, 176, 80)'
         },
         lineStyle: {
           width: 2,
-          color: 'rgb(0, 176, 80)'
+          color: isDark.value ? '#34d399' : 'rgb(0, 176, 80)'
         }
       },
       {
@@ -134,11 +138,11 @@ const renderChart = () => {
         smooth: true,
         data: memTotalData,
         itemStyle: {
-          color: 'rgb(0, 176, 240)'
+          color: isDark.value ? '#60a5fa' : 'rgb(0, 176, 240)'
         },
         lineStyle: {
           width: 2,
-          color: 'rgb(0, 176, 240)'
+          color: isDark.value ? '#60a5fa' : 'rgb(0, 176, 240)'
         }
       }
     ]
@@ -165,19 +169,38 @@ const handleClose = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val && props.assetId) {
     loadHistoryData()
+  }
+})
+
+// 监听深色模式切换
+watch(isDark, () => {
+  if (chartInstance && visible.value) {
+    chartInstance.dispose()
+    chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
+    renderChart()
   }
 })
 
 // 监听窗口大小变化
 onMounted(() => {
   window.addEventListener('resize', handleResize)
+  if (chartRef.value && window.ResizeObserver) {
+    resizeObserver = new ResizeObserver(() => {
+      chartInstance?.resize()
+    })
+    resizeObserver.observe(chartRef.value)
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
   if (chartInstance) {
     chartInstance.dispose()
     chartInstance = null

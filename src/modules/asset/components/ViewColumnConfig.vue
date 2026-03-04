@@ -38,12 +38,7 @@
           </template>
           <div class="attr-select-list">
             <div class="attr-search">
-              <el-input
-                v-model="searchKeyword"
-                placeholder="搜索属性"
-                size="small"
-                clearable
-              >
+              <el-input v-model="searchKeyword" placeholder="搜索属性" size="small" clearable>
                 <template #prefix>
                   <i class="fa fa-search"></i>
                 </template>
@@ -61,9 +56,7 @@
                 <span class="attr-code">[{{ attr.code }}]</span>
                 <i v-if="modelValue.includes(attr.code)" class="fa fa-check text-success"></i>
               </div>
-              <div v-if="filteredAttrs.length === 0" class="no-attr">
-                暂无可添加的属性
-              </div>
+              <div v-if="filteredAttrs.length === 0" class="no-attr">暂无可添加的属性</div>
             </div>
           </div>
         </el-popover>
@@ -100,29 +93,28 @@ const filteredAttrs = computed(() => {
   let list = props.attrs
   if (searchKeyword.value) {
     const kw = searchKeyword.value.toLowerCase()
-    list = list.filter(attr =>
-      attr.title?.toLowerCase().includes(kw) ||
-      attr.code?.toLowerCase().includes(kw)
+    list = list.filter(
+      attr => attr.title?.toLowerCase().includes(kw) || attr.code?.toLowerCase().includes(kw)
     )
   }
   return list
 })
 
 // 获取属性标题
-const getAttrTitle = (code) => {
+const getAttrTitle = code => {
   const attr = props.attrs.find(a => a.code === code)
   return attr?.title || code
 }
 
 // 添加列
-const addColumn = (code) => {
+const addColumn = code => {
   if (!props.modelValue.includes(code)) {
     emit('update:modelValue', [...props.modelValue, code])
   }
 }
 
 // 移除列
-const removeColumn = (index) => {
+const removeColumn = index => {
   const newValue = [...props.modelValue]
   newValue.splice(index, 1)
   emit('update:modelValue', newValue)
@@ -174,7 +166,7 @@ const handleDrop = (event, targetIndex) => {
 .view-column-config {
   .column-label {
     font-size: 13px;
-    color: #606266;
+    color: var(--el-text-color-regular);
     margin-bottom: 8px;
   }
 
@@ -201,7 +193,7 @@ const handleDrop = (event, targetIndex) => {
       transition: all 0.2s;
 
       &:hover {
-        border-color: #409eff;
+        border-color: var(--el-color-primary);
       }
 
       &.is-dragging {
@@ -210,13 +202,13 @@ const handleDrop = (event, targetIndex) => {
       }
 
       &.is-over {
-        border-color: #409eff;
+        border-color: var(--el-color-primary);
         box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
       }
     }
 
     .empty-tip {
-      color: #909399;
+      color: var(--el-text-color-secondary);
       font-size: 13px;
     }
   }
@@ -249,7 +241,7 @@ const handleDrop = (event, targetIndex) => {
     }
 
     &.disabled {
-      color: #c0c4cc;
+      color: var(--el-text-color-placeholder);
       cursor: not-allowed;
 
       &:hover {
@@ -262,7 +254,7 @@ const handleDrop = (event, targetIndex) => {
     }
 
     .attr-code {
-      color: #909399;
+      color: var(--el-text-color-secondary);
       font-size: 12px;
       margin-left: 8px;
     }
@@ -275,7 +267,7 @@ const handleDrop = (event, targetIndex) => {
   .no-attr {
     padding: 20px;
     text-align: center;
-    color: #909399;
+    color: var(--el-text-color-secondary);
   }
 }
 </style>

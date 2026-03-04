@@ -25,7 +25,11 @@
             {{ modelData.count || 0 }}
           </el-descriptions-item>
           <el-descriptions-item label="图标">
-            <i v-if="modelData.icon" :class="modelData.icon" style="font-size: 18px; color: #409eff;"></i>
+            <i
+              v-if="modelData.icon"
+              :class="modelData.icon"
+              style="font-size: 18px; color: #409eff"
+            ></i>
             <span v-else class="text-secondary">未设置</span>
           </el-descriptions-item>
           <el-descriptions-item label="更新时间">
@@ -43,13 +47,7 @@
           属性列表
           <span class="attr-count">({{ attributes.length }})</span>
         </div>
-        <el-table
-          v-loading="loadingAttrs"
-          :data="attributes"
-          max-height="300"
-         
-          size="small"
-        >
+        <el-table v-loading="loadingAttrs" :data="attributes" max-height="300" size="small">
           <el-table-column prop="name" label="属性名称" min-width="120" />
           <el-table-column prop="code" label="属性代码" min-width="120" />
           <el-table-column prop="type" label="类型" width="100">
@@ -93,7 +91,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loadingAttrs = ref(false)
@@ -101,21 +99,21 @@ const attributes = ref([])
 
 // 属性类型映射
 const attrTypeMap = {
-  'string': '字符串',
-  'number': '数字',
-  'boolean': '布尔',
-  'date': '日期',
-  'datetime': '日期时间',
-  'enum': '枚举',
-  'text': '长文本'
+  string: '字符串',
+  number: '数字',
+  boolean: '布尔',
+  date: '日期',
+  datetime: '日期时间',
+  enum: '枚举',
+  text: '长文本'
 }
 
-const getAttrTypeName = (type) => {
+const getAttrTypeName = type => {
   return attrTypeMap[type] || type || '-'
 }
 
 // 格式化日期时间
-const formatDateTime = (dateStr) => {
+const formatDateTime = dateStr => {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
   const year = date.getFullYear()
@@ -149,11 +147,14 @@ const loadAttributes = async () => {
 }
 
 // 监听弹窗打开
-watch(() => props.modelValue, (val) => {
-  if (val && props.modelData) {
-    loadAttributes()
+watch(
+  () => props.modelValue,
+  val => {
+    if (val && props.modelData) {
+      loadAttributes()
+    }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">
@@ -168,21 +169,21 @@ watch(() => props.modelValue, (val) => {
     .section-title {
       font-size: 14px;
       font-weight: 600;
-      color: #303133;
+      color: var(--el-text-color-primary);
       margin-bottom: 12px;
       padding-left: 8px;
-      border-left: 3px solid #409eff;
+      border-left: 3px solid var(--el-color-primary);
 
       .attr-count {
         font-weight: normal;
-        color: #909399;
+        color: var(--el-text-color-secondary);
         margin-left: 4px;
       }
     }
   }
 
   .text-secondary {
-    color: #909399;
+    color: var(--el-text-color-secondary);
   }
 }
 </style>

@@ -3,13 +3,12 @@
     <!-- 已选设备显示 -->
     <div v-if="selectedHosts.length > 0" class="selected-devices">
       <div class="selected-header">
-        <el-button
-          type="default"
-          size="small"
-          class="select-btn"
-          @click="openSelectDialog"
-        >
-          <span>共选择 <strong class="text-primary">{{ selectedHosts.length }}</strong> 项</span>
+        <el-button type="default" size="small" class="select-btn" @click="openSelectDialog">
+          <span>
+            共选择
+            <strong class="text-primary">{{ selectedHosts.length }}</strong>
+            项
+          </span>
         </el-button>
         <el-input
           v-model="filterText"
@@ -84,12 +83,18 @@
         <el-tabs v-model="selectMode" class="mode-tabs">
           <el-tab-pane name="host" label="主机">
             <template #label>
-              <span><i class="fa fa-server"></i> 主机</span>
+              <span>
+                <i class="fa fa-server"></i>
+                主机
+              </span>
             </template>
           </el-tab-pane>
           <el-tab-pane name="group" label="分组">
             <template #label>
-              <span><i class="fa fa-folder"></i> 分组</span>
+              <span>
+                <i class="fa fa-folder"></i>
+                分组
+              </span>
             </template>
           </el-tab-pane>
         </el-tabs>
@@ -144,11 +149,7 @@
           </div>
           <div class="group-list-wrapper" v-loading="loadingGroups">
             <el-checkbox-group v-model="selectedGroupIds" @change="handleGroupChange">
-              <div
-                v-for="group in filteredGroups"
-                :key="group.id"
-                class="group-item"
-              >
+              <div v-for="group in filteredGroups" :key="group.id" class="group-item">
                 <el-checkbox :label="group.id">
                   {{ group.path }} ({{ group.total_hosts || 0 }})
                 </el-checkbox>
@@ -187,7 +188,7 @@ const emit = defineEmits(['update:modelValue'])
 // 已选主机
 const selectedHosts = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 // 过滤文本
@@ -258,14 +259,18 @@ async function openSelectDialog() {
 async function loadHostList() {
   loadingHosts.value = true
   try {
-    const response = await dtsApi.queryData('ACM_CI_BY_CIT', {
-      ciType: currentAssetType.value || 'linux',
-      param: ''
-    }, {
-      size: hostPageSize.value,
-      page: hostPage.value,
-      filter: hostSearch.value
-    })
+    const response = await dtsApi.queryData(
+      'ACM_CI_BY_CIT',
+      {
+        ciType: currentAssetType.value || 'linux',
+        param: ''
+      },
+      {
+        size: hostPageSize.value,
+        page: hostPage.value,
+        filter: hostSearch.value
+      }
+    )
 
     hostList.value = (response?.records || []).map(item => ({
       key: item.cid,
@@ -289,8 +294,8 @@ function restoreHostSelection() {
   if (!hostTableRef.value) return
 
   hostList.value.forEach(row => {
-    const isSelected = tempSelected.value.some(s =>
-      (s.key === row.key) || (s.value === row.value) || (s === row.key)
+    const isSelected = tempSelected.value.some(
+      s => s.key === row.key || s.value === row.value || s === row.key
     )
     if (isSelected) {
       hostTableRef.value.toggleRowSelection(row, true)
@@ -334,7 +339,7 @@ function handleHostSelectionChange(selection) {
 
   // 添加选中的
   selection.forEach(row => {
-    if (!tempSelected.value.some(s => (s.key === row.key) || (s === row.key))) {
+    if (!tempSelected.value.some(s => s.key === row.key || s === row.key)) {
       tempSelected.value.push(row)
     }
   })
@@ -429,7 +434,7 @@ watch(currentAssetType, () => {
   }
 
   .text-primary {
-    color: #409eff;
+    color: var(--el-color-primary);
   }
 }
 

@@ -512,6 +512,6 @@ watch(
 .loading-placeholder {
   padding: 20px;
   text-align: center;
-  color: #6c757d;
+  color: var(--el-text-color-secondary);
 }
 </style>

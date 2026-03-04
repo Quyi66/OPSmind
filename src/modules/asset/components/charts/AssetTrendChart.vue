@@ -59,6 +59,7 @@ const fullscreenChartRef = ref(null)
 const fullscreenVisible = ref(false)
 let chartInstance = null
 let fullscreenChartInstance = null
+let resizeObserver = null
 
 function getChartOption() {
   const xData = props.data.map(item => {
@@ -71,6 +72,7 @@ function getChartOption() {
   const yData = props.data.map(item => item.total)
 
   return {
+    backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis'
     },
@@ -171,6 +173,9 @@ watch(
     if (fullscreenChartInstance) {
       fullscreenChartInstance.setOption(getChartOption())
     }
+    nextTick(() => {
+      chartInstance?.resize()
+    })
   },
   { deep: true }
 )
@@ -189,12 +194,24 @@ watch(isDark, () => {
 })
 
 onMounted(() => {
-  initChart()
+  nextTick(() => {
+    initChart()
+    if (chartRef.value && window.ResizeObserver) {
+      resizeObserver = new ResizeObserver(() => {
+        chartInstance?.resize()
+      })
+      resizeObserver.observe(chartRef.value)
+    }
+  })
   window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
   chartInstance?.dispose()
   fullscreenChartInstance?.dispose()
 })

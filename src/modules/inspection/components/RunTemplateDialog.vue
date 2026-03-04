@@ -58,7 +58,12 @@
                     个文件
                   </el-button>
                 </div>
-                <el-table :data="formData.scripts" size="small" class="script-table" max-height="300px">
+                <el-table
+                  :data="formData.scripts"
+                  size="small"
+                  class="script-table"
+                  max-height="300px"
+                >
                   <el-table-column prop="scriptPath" label="脚本路径" min-width="200">
                     <template #default="{ row }">
                       <span>{{ row.scriptPath }}</span>
@@ -380,12 +385,12 @@ watch(
 
   i {
     margin-right: 4px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
   }
 
   strong {
     font-size: 16px;
-    color: #303133;
+    color: var(--el-text-color-primary);
     margin-left: 4px;
   }
 
@@ -411,7 +416,7 @@ watch(
 
   .empty-icon {
     font-size: 48px;
-    color: #c0c4cc;
+    color: var(--el-text-color-placeholder);
     display: block;
     margin-bottom: 12px;
   }

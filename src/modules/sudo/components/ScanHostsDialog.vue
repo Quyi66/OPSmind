@@ -88,13 +88,18 @@ const isFailed = computed(() => jobStatus.value === 'FAILED' || jobStatus.value 
 
 const statusText = computed(() => {
   switch (jobStatus.value) {
-    case 'WAITING': return '等待执行...'
-    case 'RUNNING': return '正在扫描...'
+    case 'WAITING':
+      return '等待执行...'
+    case 'RUNNING':
+      return '正在扫描...'
     case 'SUCCESS':
-    case 'COMPLETED': return '扫描完成'
+    case 'COMPLETED':
+      return '扫描完成'
     case 'FAILED':
-    case 'ERROR': return '扫描失败'
-    default: return jobStatus.value
+    case 'ERROR':
+      return '扫描失败'
+    default:
+      return jobStatus.value
   }
 })
 
@@ -113,14 +118,17 @@ function formatDateTime(dateStr) {
   })
 }
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    resetForm()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val) {
+      resetForm()
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
   if (!val) {
     stopPolling()
@@ -161,13 +169,13 @@ async function handleStartScan() {
         interval: 5000,
         successMessage: '扫描完成',
         errorMessage: '扫描失败',
-        onSuccess: (res) => {
+        onSuccess: res => {
           jobResult.value = res
           jobStatus.value = 'COMPLETED'
           submitting.value = false
           emit('completed')
         },
-        onError: (res) => {
+        onError: res => {
           jobResult.value = res
           jobStatus.value = 'FAILED'
           submitting.value = false
@@ -207,8 +215,8 @@ function handleClose() {
   .section-title {
     padding: 10px 16px;
     font-weight: 500;
-    color: #1e293b;
-    background: #e2e8f0;
+    color: var(--el-text-color-primary);
+    background: var(--el-fill-color-light);
     font-size: 14px;
   }
 
@@ -220,7 +228,7 @@ function handleClose() {
 .job-status {
   margin-top: 20px;
   padding: 16px;
-  background: #f1f5f9;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
 
   .status-header {
@@ -230,18 +238,18 @@ function handleClose() {
     font-weight: 500;
 
     .text-success {
-      color: #22c55e;
+      color: var(--el-color-success);
     }
 
     .text-danger {
-      color: #ef4444;
+      color: var(--el-color-danger);
     }
   }
 
   .status-detail {
     margin-top: 8px;
     font-size: 12px;
-    color: #64748b;
+    color: var(--el-text-color-secondary);
   }
 }
 

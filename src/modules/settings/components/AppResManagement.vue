@@ -4,7 +4,10 @@
     <el-tabs v-model="activeTab" class="ops-tabs" @tab-change="handleTabChange">
       <el-tab-pane name="page">
         <template #label>
-          <span><i class="fa fa-file-alt"></i> 页面</span>
+          <span>
+            <i class="fa fa-file-alt"></i>
+            页面
+          </span>
         </template>
 
         <!-- 页面列表 -->
@@ -36,14 +39,21 @@
             <div class="ops-filter-bar">
               <el-form :inline="true" size="small">
                 <el-form-item label="关键词">
-                  <el-input v-model="pageSearch" placeholder="页面标题/Code" clearable style="width: 200px" />
+                  <el-input
+                    v-model="pageSearch"
+                    placeholder="页面标题/Code"
+                    clearable
+                    style="width: 200px"
+                  />
                 </el-form-item>
                 <el-form-item>
                   <el-button type="primary" @click="handlePageSearch">
-                    <el-icon><Search /></el-icon> 搜索
+                    <el-icon><Search /></el-icon>
+                    搜索
                   </el-button>
                   <el-button @click="handlePageReset">
-                    <el-icon><RefreshRight /></el-icon> 重置
+                    <el-icon><RefreshRight /></el-icon>
+                    重置
                   </el-button>
                 </el-form-item>
               </el-form>
@@ -51,11 +61,23 @@
 
             <!-- 操作栏 -->
             <div class="ops-action-bar">
-              <el-button size="small" :disabled="selectedPages.length < 1" @click="openMoveDialog('page')">
-                <i class="fa fa-sign-in-alt"></i> 移动页面
+              <el-button
+                size="small"
+                :disabled="selectedPages.length < 1"
+                @click="openMoveDialog('page')"
+              >
+                <i class="fa fa-sign-in-alt"></i>
+                移动页面
               </el-button>
-              <span style="flex: 1;"></span>
-              <el-button class="toolbar-icon-btn" circle size="small" :loading="pageLoading" @click="loadPages" title="刷新">
+              <span style="flex: 1"></span>
+              <el-button
+                class="toolbar-icon-btn"
+                circle
+                size="small"
+                :loading="pageLoading"
+                @click="loadPages"
+                title="刷新"
+              >
                 <el-icon v-show="!pageLoading"><Refresh /></el-icon>
               </el-button>
             </div>
@@ -64,7 +86,6 @@
               <el-table
                 v-loading="pageLoading"
                 :data="paginatedPages"
-
                 style="width: 100%"
                 max-height="calc(100vh - 320px)"
                 @selection-change="handlePageSelectionChange"
@@ -101,7 +122,10 @@
 
       <el-tab-pane name="dataset">
         <template #label>
-          <span><i class="fa fa-database"></i> 数据集</span>
+          <span>
+            <i class="fa fa-database"></i>
+            数据集
+          </span>
         </template>
 
         <!-- 数据集列表 -->
@@ -133,14 +157,21 @@
             <div class="ops-filter-bar">
               <el-form :inline="true" size="small">
                 <el-form-item label="关键词">
-                  <el-input v-model="datasetSearch" placeholder="数据集名称/Code" clearable style="width: 200px" />
+                  <el-input
+                    v-model="datasetSearch"
+                    placeholder="数据集名称/Code"
+                    clearable
+                    style="width: 200px"
+                  />
                 </el-form-item>
                 <el-form-item>
                   <el-button type="primary" @click="handleDatasetSearch">
-                    <el-icon><Search /></el-icon> 搜索
+                    <el-icon><Search /></el-icon>
+                    搜索
                   </el-button>
                   <el-button @click="handleDatasetReset">
-                    <el-icon><RefreshRight /></el-icon> 重置
+                    <el-icon><RefreshRight /></el-icon>
+                    重置
                   </el-button>
                 </el-form-item>
               </el-form>
@@ -148,11 +179,23 @@
 
             <!-- 操作栏 -->
             <div class="ops-action-bar">
-              <el-button size="small" :disabled="selectedDatasets.length < 1" @click="openMoveDialog('dataset')">
-                <i class="fa fa-sign-in-alt"></i> 移动数据集
+              <el-button
+                size="small"
+                :disabled="selectedDatasets.length < 1"
+                @click="openMoveDialog('dataset')"
+              >
+                <i class="fa fa-sign-in-alt"></i>
+                移动数据集
               </el-button>
-              <span style="flex: 1;"></span>
-              <el-button class="toolbar-icon-btn" circle size="small" :loading="datasetLoading" @click="loadDatasets" title="刷新">
+              <span style="flex: 1"></span>
+              <el-button
+                class="toolbar-icon-btn"
+                circle
+                size="small"
+                :loading="datasetLoading"
+                @click="loadDatasets"
+                title="刷新"
+              >
                 <el-icon v-show="!datasetLoading"><Refresh /></el-icon>
               </el-button>
             </div>
@@ -161,7 +204,6 @@
               <el-table
                 v-loading="datasetLoading"
                 :data="paginatedDatasets"
-
                 style="width: 100%"
                 max-height="calc(100vh - 320px)"
                 @selection-change="handleDatasetSelectionChange"
@@ -195,7 +237,10 @@
 
       <el-tab-pane name="job">
         <template #label>
-          <span><i class="fa fa-tasks"></i> 作业</span>
+          <span>
+            <i class="fa fa-tasks"></i>
+            作业
+          </span>
         </template>
 
         <!-- 作业列表 -->
@@ -227,14 +272,21 @@
             <div class="ops-filter-bar">
               <el-form :inline="true" size="small">
                 <el-form-item label="关键词">
-                  <el-input v-model="jobSearch" placeholder="作业标题/Code" clearable style="width: 200px" />
+                  <el-input
+                    v-model="jobSearch"
+                    placeholder="作业标题/Code"
+                    clearable
+                    style="width: 200px"
+                  />
                 </el-form-item>
                 <el-form-item>
                   <el-button type="primary" @click="handleJobSearch">
-                    <el-icon><Search /></el-icon> 搜索
+                    <el-icon><Search /></el-icon>
+                    搜索
                   </el-button>
                   <el-button @click="handleJobReset">
-                    <el-icon><RefreshRight /></el-icon> 重置
+                    <el-icon><RefreshRight /></el-icon>
+                    重置
                   </el-button>
                 </el-form-item>
               </el-form>
@@ -242,11 +294,23 @@
 
             <!-- 操作栏 -->
             <div class="ops-action-bar">
-              <el-button size="small" :disabled="selectedJobs.length < 1" @click="openMoveDialog('job')">
-                <i class="fa fa-sign-in-alt"></i> 移动作业
+              <el-button
+                size="small"
+                :disabled="selectedJobs.length < 1"
+                @click="openMoveDialog('job')"
+              >
+                <i class="fa fa-sign-in-alt"></i>
+                移动作业
               </el-button>
-              <span style="flex: 1;"></span>
-              <el-button class="toolbar-icon-btn" circle size="small" :loading="jobLoading" @click="loadJobs" title="刷新">
+              <span style="flex: 1"></span>
+              <el-button
+                class="toolbar-icon-btn"
+                circle
+                size="small"
+                :loading="jobLoading"
+                @click="loadJobs"
+                title="刷新"
+              >
                 <el-icon v-show="!jobLoading"><Refresh /></el-icon>
               </el-button>
             </div>
@@ -255,7 +319,6 @@
               <el-table
                 v-loading="jobLoading"
                 :data="paginatedJobs"
-
                 style="width: 100%"
                 max-height="calc(100vh - 320px)"
                 @selection-change="handleJobSelectionChange"
@@ -293,12 +356,7 @@
     </el-tabs>
 
     <!-- 移动对话框 -->
-    <el-dialog
-      v-model="moveDialogVisible"
-      :title="moveDialogTitle"
-      width="400px"
-      destroy-on-close
-    >
+    <el-dialog v-model="moveDialogVisible" :title="moveDialogTitle" width="400px" destroy-on-close>
       <div class="move-dialog-content">
         <p>请选择目标应用：</p>
         <el-select v-model="targetAppletCode" placeholder="选择应用" style="width: 100%">
@@ -310,13 +368,20 @@
           />
         </el-select>
         <p class="move-tip" v-if="moveResourceCount > 0">
-          将选定的 <strong>{{ moveResourceCount }}</strong> 个资源移动到应用
+          将选定的
+          <strong>{{ moveResourceCount }}</strong>
+          个资源移动到应用
           <strong class="text-primary">{{ targetAppletTitle }}</strong>
         </p>
       </div>
       <template #footer>
         <el-button @click="moveDialogVisible = false">取消</el-button>
-        <el-button type="primary" :disabled="!targetAppletCode" :loading="moveLoading" @click="handleMove">
+        <el-button
+          type="primary"
+          :disabled="!targetAppletCode"
+          :loading="moveLoading"
+          @click="handleMove"
+        >
           确定
         </el-button>
       </template>
@@ -420,9 +485,8 @@ const filteredPages = computed(() => {
   }
   if (pageAppliedSearch.value) {
     const keyword = pageAppliedSearch.value.toLowerCase()
-    result = result.filter(p =>
-      p.title?.toLowerCase().includes(keyword) ||
-      p.id?.toLowerCase().includes(keyword)
+    result = result.filter(
+      p => p.title?.toLowerCase().includes(keyword) || p.id?.toLowerCase().includes(keyword)
     )
   }
   return result
@@ -435,9 +499,8 @@ const filteredDatasets = computed(() => {
   }
   if (datasetAppliedSearch.value) {
     const keyword = datasetAppliedSearch.value.toLowerCase()
-    result = result.filter(d =>
-      d.name?.toLowerCase().includes(keyword) ||
-      d.code?.toLowerCase().includes(keyword)
+    result = result.filter(
+      d => d.name?.toLowerCase().includes(keyword) || d.code?.toLowerCase().includes(keyword)
     )
   }
   return result
@@ -450,9 +513,8 @@ const filteredJobs = computed(() => {
   }
   if (jobAppliedSearch.value) {
     const keyword = jobAppliedSearch.value.toLowerCase()
-    result = result.filter(j =>
-      j.title?.toLowerCase().includes(keyword) ||
-      j.id?.toLowerCase().includes(keyword)
+    result = result.filter(
+      j => j.title?.toLowerCase().includes(keyword) || j.id?.toLowerCase().includes(keyword)
     )
   }
   return result
@@ -485,13 +547,15 @@ const moveResourceCount = computed(() => {
 // 目标应用标题
 const targetAppletTitle = computed(() => {
   const app = applets.value.find(a => a.name === targetAppletCode.value)
-  return app ? (translateTitle(app.title) || app.name) : ''
+  return app ? translateTitle(app.title) || app.name : ''
 })
 
 // 加载应用列表
 async function loadApplets() {
   try {
-    const response = await apiService.get(`/udp/api/udp/applets?isPaging=true&cacheBuster=${Date.now()}`)
+    const response = await apiService.get(
+      `/udp/api/udp/applets?isPaging=true&cacheBuster=${Date.now()}`
+    )
     applets.value = response?.data || response || []
   } catch (error) {
     console.error('Failed to load applets:', error)
@@ -531,7 +595,9 @@ function handleJobSelectionChange(selection) {
 async function loadPages() {
   pageLoading.value = true
   try {
-    const response = await apiService.get(`/udp/api/udp/pages?isPaging=true&page=0&size=1000&appletCode=&cacheBuster=${Date.now()}`)
+    const response = await apiService.get(
+      `/udp/api/udp/pages?isPaging=true&page=0&size=1000&appletCode=&cacheBuster=${Date.now()}`
+    )
     pages.value = response?.data?.content || response?.content || response?.data || []
   } catch (error) {
     console.error('Failed to load pages:', error)
@@ -683,9 +749,9 @@ onMounted(() => {
 .sidebar-title {
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   padding: 8px 12px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--el-border-color-light);
   margin-bottom: 8px;
 }
 
@@ -697,21 +763,21 @@ onMounted(() => {
 .move-dialog-content {
   p {
     margin: 0 0 12px;
-    color: #606266;
+    color: var(--el-text-color-regular);
   }
 
   .move-tip {
     margin-top: 16px;
     padding: 12px;
-    background: #f4f4f5;
+    background: var(--el-bg-color-page);
     border-radius: 4px;
 
     strong {
-      color: #303133;
+      color: var(--el-text-color-primary);
     }
 
     .text-primary {
-      color: #409eff;
+      color: var(--el-color-primary);
     }
   }
 }

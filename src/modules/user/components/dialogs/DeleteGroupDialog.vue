@@ -73,7 +73,7 @@ const emit = defineEmits(['update:visible', 'success'])
 
 const visible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 const showDeviceSelector = ref(false)
@@ -103,11 +103,14 @@ const buttonText = computed(() => {
   return '确认'
 })
 
-watch(() => props.groupData, (val) => {
-  if (val) {
-    groupName.value = val.group_name || ''
+watch(
+  () => props.groupData,
+  val => {
+    if (val) {
+      groupName.value = val.group_name || ''
+    }
   }
-})
+)
 
 function handleDeviceConfirm(hosts) {
   selectedHosts.value = hosts || []
@@ -144,12 +147,15 @@ async function handleSubmit() {
   try {
     // 调用作业执行接口
     const cacheBuster = Date.now()
-    const { data } = await apiService.post(`/jao/api/jao/jobs/J0PRi7/run?cacheBuster=${cacheBuster}`, {
-      params: {
-        group_name: gName,
-        hosts: hostId
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/J0PRi7/run?cacheBuster=${cacheBuster}`,
+      {
+        params: {
+          group_name: gName,
+          hosts: hostId
+        }
       }
-    })
+    )
 
     const result = Array.isArray(data) ? data[0] : data
     currentStatus.value = result?.status || ''
@@ -174,7 +180,7 @@ async function handleSubmit() {
           emit('success')
           handleClose()
         },
-        onError: (res) => {
+        onError: res => {
           submitting.value = false
           currentStatus.value = ''
           ElMessage.error(res?.error || '删除失败')
@@ -226,7 +232,9 @@ function handleClose() {
 
 <style scoped lang="scss">
 .delete-group-dialog {
-  .mb-4 { margin-bottom: 16px; }
+  .mb-4 {
+    margin-bottom: 16px;
+  }
 }
 
 .host-selector-row {
@@ -238,8 +246,10 @@ function handleClose() {
 
 .host-count {
   font-size: 13px;
-  color: #64748b;
-  strong { color: #3b82f6; }
+  color: var(--el-text-color-regular);
+  strong {
+    color: var(--el-color-primary);
+  }
 }
 
 .selected-hosts {

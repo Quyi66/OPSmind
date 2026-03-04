@@ -404,7 +404,7 @@ defineExpose({
   .navbar-title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -428,7 +428,7 @@ defineExpose({
 }
 
 .template-name-link {
-  color: #409eff;
+  color: var(--el-color-primary);
   text-decoration: none;
 
   &:hover {
@@ -438,41 +438,41 @@ defineExpose({
 
 .template-desc {
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   line-height: 1.4;
 }
 
 .text-muted {
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .check-item {
-  color: #606266;
+  color: var(--el-text-color-regular);
 
   strong {
-    color: #303133;
+    color: var(--el-text-color-primary);
     font-weight: 600;
   }
 }
 
 .execution-time {
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .not-executed {
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .action-btn {
   padding: 4px 6px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 
   i {
     font-size: 14px;
   }
 
   &:hover {
-    color: #409eff;
+    color: var(--el-color-primary);
   }
 }
 
@@ -489,7 +489,7 @@ defineExpose({
   .pagination-info {
     margin-left: 12px;
     font-size: 13px;
-    color: #606266;
+    color: var(--el-text-color-regular);
   }
 }
 </style>

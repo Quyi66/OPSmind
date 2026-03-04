@@ -28,7 +28,7 @@
             选择导入文件
           </el-button>
         </el-upload>
-        <span v-if="selectedFile" style="margin-left: 12px; color: #409eff;">
+        <span v-if="selectedFile" style="margin-left: 12px; color: var(--el-color-primary)">
           {{ selectedFile.name }}
         </span>
       </el-form-item>
@@ -41,16 +41,13 @@
           <div class="tree-section">
             <h4>应用列表</h4>
             <div v-if="appletList.length > 0" class="tree-container">
-              <el-tree
-                :data="appletList"
-                :props="treeProps"
-                default-expand-all
-                node-key="id"
-              >
+              <el-tree :data="appletList" :props="treeProps" default-expand-all node-key="id">
                 <template #default="{ node, data }">
                   <span>
-                    <i :class="['fa', data.type === 'folder' ? 'fa-folder' : 'fa-file']"
-                       style="margin-right: 6px; color: #409eff;"></i>
+                    <i
+                      :class="['fa', data.type === 'folder' ? 'fa-folder' : 'fa-file']"
+                      style="margin-right: 6px; color: var(--el-color-primary)"
+                    ></i>
                     {{ node.label }}
                   </span>
                 </template>
@@ -63,16 +60,13 @@
           <div class="tree-section">
             <h4>脚本列表</h4>
             <div v-if="scriptList.length > 0" class="tree-container">
-              <el-tree
-                :data="scriptList"
-                :props="treeProps"
-                default-expand-all
-                node-key="id"
-              >
+              <el-tree :data="scriptList" :props="treeProps" default-expand-all node-key="id">
                 <template #default="{ node, data }">
                   <span>
-                    <i :class="['fa', data.type === 'folder' ? 'fa-folder' : 'fa-file-code']"
-                       style="margin-right: 6px; color: #67c23a;"></i>
+                    <i
+                      :class="['fa', data.type === 'folder' ? 'fa-folder' : 'fa-file-code']"
+                      style="margin-right: 6px; color: var(--el-color-success)"
+                    ></i>
                     {{ node.label }}
                   </span>
                 </template>
@@ -86,12 +80,7 @@
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button
-        type="primary"
-        :loading="importing"
-        :disabled="!parsedData"
-        @click="handleImport"
-      >
+      <el-button type="primary" :loading="importing" :disabled="!parsedData" @click="handleImport">
         <i class="fa fa-upload" style="margin-right: 4px"></i>
         导入
       </el-button>
@@ -129,14 +118,17 @@ const treeProps = {
   children: 'children'
 }
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    resetForm()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val) {
+      resetForm()
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 
@@ -295,7 +287,7 @@ async function handleImport() {
     margin: 0 0 12px;
     font-size: 14px;
     font-weight: 500;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 

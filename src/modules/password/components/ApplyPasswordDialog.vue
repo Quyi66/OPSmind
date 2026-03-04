@@ -72,14 +72,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" :disabled="submitting">
-          取消
-        </el-button>
-        <el-button
-          type="primary"
-          :loading="submitting"
-          @click="handleSubmit"
-        >
+        <el-button @click="handleClose" :disabled="submitting">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">
           <i class="fa fa-check" v-if="!submitting"></i>
           提交
         </el-button>
@@ -142,37 +136,40 @@ const formRules = {
     { required: true, message: '请输入申请用途', trigger: 'blur' },
     { min: 1, max: 500, message: '用途长度在1到500个字符之间', trigger: 'blur' }
   ],
-  username: [
-    { required: true, message: '请选择用户', trigger: 'change' }
-  ],
-  effectiveHours: [
-    { required: true, message: '请输入申请时长', trigger: 'blur' }
-  ]
+  username: [{ required: true, message: '请选择用户', trigger: 'change' }],
+  effectiveHours: [{ required: true, message: '请输入申请时长', trigger: 'blur' }]
 }
 
 const isEdit = computed(() => !!props.editData?.id)
 
 // 监听主机变化，自动清除验证错误
-watch(() => formData.hosts, (newVal) => {
-  if (newVal && newVal.length > 0 && formRef.value) {
-    // 清除主机字段的验证错误
-    formRef.value.clearValidate('hosts')
-  }
-}, { deep: true })
+watch(
+  () => formData.hosts,
+  newVal => {
+    if (newVal && newVal.length > 0 && formRef.value) {
+      // 清除主机字段的验证错误
+      formRef.value.clearValidate('hosts')
+    }
+  },
+  { deep: true }
+)
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    loadUsernameList()
-    if (props.editData) {
-      fillEditData()
-    } else {
-      resetForm()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val) {
+      loadUsernameList()
+      if (props.editData) {
+        fillEditData()
+      } else {
+        resetForm()
+      }
     }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 
@@ -235,14 +232,16 @@ async function handleSubmit() {
 
     // 获取当前时间
     const now = new Date()
-    const applyTime = now.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    }).replace(/\//g, '-')
+    const applyTime = now
+      .toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })
+      .replace(/\//g, '-')
 
     await pmsApi.createApplication({
       applicantLogin: 'admin', // TODO: 从全局状态获取
@@ -280,7 +279,7 @@ function handleClose() {
 .input-hint {
   margin-top: 8px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
 }
 
 .dialog-footer {

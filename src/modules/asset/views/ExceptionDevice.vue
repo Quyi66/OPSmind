@@ -77,7 +77,12 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <!-- 数据表格 -->
-      <el-table v-loading="tableLoading" :data="tableData" style="width: 100%" max-height="calc(100vh - 520px)">
+      <el-table
+        v-loading="tableLoading"
+        :data="tableData"
+        style="width: 100%"
+        max-height="calc(100vh - 520px)"
+      >
         <el-table-column prop="IP" label="IP" min-width="120" sortable />
         <el-table-column prop="ci_name" label="资产代码" min-width="120" />
         <el-table-column prop="CONN_RATE" label="连通率" min-width="100">
@@ -708,7 +713,7 @@ onMounted(() => {
   .page-title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 
   .page-actions {
@@ -759,7 +764,7 @@ onMounted(() => {
 
   .pagination-info {
     font-size: 13px;
-    color: #606266;
+    color: var(--el-text-color-regular);
   }
 }
 
@@ -787,7 +792,7 @@ onMounted(() => {
 .dialog-content {
   padding: 12px 0;
   font-size: 14px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 
   .selected-hosts-section {
     .section-header {
@@ -798,7 +803,7 @@ onMounted(() => {
 
       .section-label {
         font-weight: 500;
-        color: #303133;
+        color: var(--el-text-color-primary);
       }
 
       .select-btn {
@@ -820,7 +825,7 @@ onMounted(() => {
     .empty-tip {
       padding: 24px;
       text-align: center;
-      color: #909399;
+      color: var(--el-text-color-secondary);
       background: var(--el-bg-color-page);
       border-radius: 4px;
     }

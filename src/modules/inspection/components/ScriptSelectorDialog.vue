@@ -349,7 +349,7 @@ watch(
 
   .breadcrumb-item {
     a {
-      color: #409eff;
+      color: var(--el-color-primary);
       text-decoration: none;
       cursor: pointer;
 
@@ -359,13 +359,13 @@ watch(
     }
 
     .current {
-      color: #606266;
+      color: var(--el-text-color-regular);
       font-weight: 500;
     }
 
     .separator {
       margin: 0 8px;
-      color: #909399;
+      color: var(--el-text-color-secondary);
     }
   }
 }
@@ -390,7 +390,7 @@ watch(
       text-align: left;
       font-weight: 600;
       font-size: 13px;
-      color: #606266;
+      color: var(--el-text-color-regular);
       border-bottom: 1px solid var(--el-border-color-light);
 
       &.name-col {
@@ -409,19 +409,19 @@ watch(
       }
 
       &.is-selected {
-        background: #ecf5ff;
+        background: var(--el-color-primary-light-9);
       }
 
       &.parent-row {
         .name-cell {
-          color: #909399;
+          color: var(--el-text-color-secondary);
         }
       }
 
       td {
         padding: 10px 8px;
         font-size: 13px;
-        color: #606266;
+        color: var(--el-text-color-regular);
         border-bottom: 1px solid var(--el-border-color-light);
       }
 
@@ -442,11 +442,11 @@ watch(
           background: var(--el-bg-color);
 
           &:hover {
-            border-color: #409eff;
+            border-color: var(--el-color-primary);
           }
 
           &:checked {
-            border-color: #409eff;
+            border-color: var(--el-color-primary);
             background: var(--el-bg-color);
 
             &::after {
@@ -457,7 +457,7 @@ watch(
               transform: translate(-50%, -50%);
               width: 10px;
               height: 10px;
-              background: #409eff;
+              background: var(--el-color-primary);
               border-radius: 50%;
             }
           }
@@ -484,7 +484,7 @@ watch(
 
       .size-cell,
       .date-cell {
-        color: #909399;
+        color: var(--el-text-color-secondary);
         font-size: 12px;
       }
     }

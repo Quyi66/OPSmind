@@ -54,15 +54,27 @@
 
     <!-- 操作栏 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table :data="tableData" v-loading="loading"  style="width: 100%" max-height="calc(100vh - 230px)">
+      <el-table
+        :data="tableData"
+        v-loading="loading"
+        style="width: 100%"
+        max-height="calc(100vh - 230px)"
+      >
         <el-table-column prop="start_time" label="开始时间" width="180" sortable>
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}
@@ -120,10 +132,7 @@
     </div>
 
     <!-- 作业运行结果弹窗 -->
-    <ExecuteResultDialog
-      v-model:visible="showRunResultDialog"
-      :run-id="currentRunId"
-    />
+    <ExecuteResultDialog v-model:visible="showRunResultDialog" :run-id="currentRunId" />
   </div>
 </template>
 
@@ -151,9 +160,9 @@ const mergedFilters = { ...props.initialFilters, ...route.query }
 const filters = ref({
   day: mergedFilters.day || '3650',
   status: mergedFilters.status
-    ? (typeof mergedFilters.status === 'string'
-        ? mergedFilters.status.split(',').filter(s => s)
-        : mergedFilters.status)
+    ? typeof mergedFilters.status === 'string'
+      ? mergedFilters.status.split(',').filter(s => s)
+      : mergedFilters.status
     : [],
   keyword: ''
 })
@@ -250,9 +259,10 @@ async function loadData() {
   loading.value = true
   try {
     // 将数组类型的status转换为逗号分隔的字符串
-    const statusParam = Array.isArray(filters.value.status) && filters.value.status.length > 0
-      ? filters.value.status.join(',')
-      : 'all'
+    const statusParam =
+      Array.isArray(filters.value.status) && filters.value.status.length > 0
+        ? filters.value.status.join(',')
+        : 'all'
 
     const response = await userApi.getOperationLogs(
       {
@@ -299,7 +309,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .time-range-label {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--el-text-color-regular);
   margin-left: 16px;
 }
 

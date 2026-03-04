@@ -39,7 +39,8 @@
               @click="handleAddToWhitelist"
               :loading="whitelistLoading"
             >
-              <i class="fa fa-plus"></i> 添加白名单
+              <i class="fa fa-plus"></i>
+              添加白名单
             </el-button>
             <el-button
               v-else
@@ -47,7 +48,8 @@
               @click="handleRemoveFromWhitelist"
               :loading="whitelistLoading"
             >
-              <i class="fa fa-trash-alt"></i> 移除白名单
+              <i class="fa fa-trash-alt"></i>
+              移除白名单
             </el-button>
           </template>
         </div>
@@ -164,13 +166,13 @@ async function handleRemoveFromWhitelist() {
 
     .result-label {
       font-weight: bold;
-      color: #303133;
+      color: var(--el-text-color-primary);
       display: inline-block;
       width: 80px;
     }
 
     .result-value {
-      color: #606266;
+      color: var(--el-text-color-regular);
     }
   }
 
@@ -181,7 +183,7 @@ async function handleRemoveFromWhitelist() {
       max-height: 350px;
       padding: 12px;
       background: var(--el-bg-color-page);
-      color: #303133;
+      color: var(--el-text-color-primary);
       border: 1px solid var(--el-border-color-light);
       border-radius: 4px;
       font-size: 13px;
@@ -192,7 +194,7 @@ async function handleRemoveFromWhitelist() {
       font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
 
       &.empty {
-        color: #909399;
+        color: var(--el-text-color-secondary);
         font-style: italic;
       }
     }

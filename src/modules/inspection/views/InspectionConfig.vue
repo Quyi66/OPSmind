@@ -7,12 +7,7 @@
 
     <!-- 配置内容 -->
     <div class="config-wrapper" v-loading="loading">
-      <el-form
-        ref="formRef"
-        :model="configData"
-        label-width="150px"
-        class="config-form"
-      >
+      <el-form ref="formRef" :model="configData" label-width="150px" class="config-form">
         <el-card class="config-card">
           <template #header>
             <span>基础配置</span>
@@ -40,39 +35,23 @@
           </template>
 
           <el-form-item label="默认超时时间">
-            <el-input-number
-              v-model="configData.defaultTimeout"
-              :min="30"
-              :max="3600"
-              :step="30"
-            />
+            <el-input-number v-model="configData.defaultTimeout" :min="30" :max="3600" :step="30" />
             <span class="form-hint">单位：秒</span>
           </el-form-item>
 
           <el-form-item label="并发主机数">
-            <el-input-number
-              v-model="configData.concurrency"
-              :min="1"
-              :max="100"
-              :step="5"
-            />
+            <el-input-number v-model="configData.concurrency" :min="1" :max="100" :step="5" />
             <span class="form-hint">同时执行巡检的主机数量</span>
           </el-form-item>
 
           <el-form-item label="重试次数">
-            <el-input-number
-              v-model="configData.retryCount"
-              :min="0"
-              :max="5"
-            />
+            <el-input-number v-model="configData.retryCount" :min="0" :max="5" />
             <span class="form-hint">执行失败时的重试次数</span>
           </el-form-item>
         </el-card>
 
         <div class="form-actions">
-          <el-button type="primary" :loading="saving" @click="saveConfig">
-            保存配置
-          </el-button>
+          <el-button type="primary" :loading="saving" @click="saveConfig">保存配置</el-button>
           <el-button @click="resetConfig">重置</el-button>
         </div>
       </el-form>
@@ -174,7 +153,7 @@ onMounted(() => {
   .navbar-title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -200,7 +179,7 @@ onMounted(() => {
 
 .form-hint {
   margin-left: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   font-size: 12px;
 }
 

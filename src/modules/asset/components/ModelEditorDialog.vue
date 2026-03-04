@@ -23,18 +23,18 @@
               <el-input v-model="formData.title" placeholder="请输入模型名称" />
             </el-form-item>
             <el-form-item label="资产代码" prop="code">
-              <el-input v-model="formData.code" placeholder="请输入资产代码" :disabled="!!modelId" />
+              <el-input
+                v-model="formData.code"
+                placeholder="请输入资产代码"
+                :disabled="!!modelId"
+              />
               <div class="form-tip">资产代码创建后不可修改</div>
             </el-form-item>
             <el-form-item label="图标" prop="icon">
               <IconPicker v-model="formData.icon" />
             </el-form-item>
             <el-form-item label="是否自动化" prop="isAuto">
-              <el-switch
-                v-model="formData.isAuto"
-                :active-value="1"
-                :inactive-value="0"
-              />
+              <el-switch v-model="formData.isAuto" :active-value="1" :inactive-value="0" />
             </el-form-item>
           </el-form>
         </el-tab-pane>
@@ -64,7 +64,13 @@
                     :class="{ expanded: expandedGroups.includes(group._id) }"
                     @click="toggleGroup(group._id)"
                   >
-                    <i :class="expandedGroups.includes(group._id) ? 'fa fa-chevron-down' : 'fa fa-chevron-right'" />
+                    <i
+                      :class="
+                        expandedGroups.includes(group._id)
+                          ? 'fa fa-chevron-down'
+                          : 'fa fa-chevron-right'
+                      "
+                    />
                     <span class="group-title">{{ group.title }}</span>
                     <el-button
                       link
@@ -138,7 +144,11 @@
                     <el-collapse-item title="数据输入" name="input">
                       <el-form label-position="top" size="small">
                         <el-form-item label="控件类型">
-                          <el-select v-model="inputControl" placeholder="选择控件类型" style="width: 100%">
+                          <el-select
+                            v-model="inputControl"
+                            placeholder="选择控件类型"
+                            style="width: 100%"
+                          >
                             <el-option label="单行输入" value="input" />
                             <el-option label="多行文本" value="textarea" />
                             <el-option label="数字" value="number" />
@@ -150,7 +160,11 @@
                           </el-select>
                         </el-form-item>
                         <el-form-item label="数据类型">
-                          <el-select v-model="inputDatatype" placeholder="选择数据类型" style="width: 100%">
+                          <el-select
+                            v-model="inputDatatype"
+                            placeholder="选择数据类型"
+                            style="width: 100%"
+                          >
                             <el-option label="字符串" value="string" />
                             <el-option label="数字" value="number" />
                             <el-option label="布尔" value="boolean" />
@@ -160,7 +174,12 @@
                           <el-input v-model="inputDefaultValue" placeholder="默认值" />
                         </el-form-item>
                         <el-form-item label="宽度（字符）">
-                          <el-input-number v-model="inputWidth" :min="0" :max="100" controls-position="right" />
+                          <el-input-number
+                            v-model="inputWidth"
+                            :min="0"
+                            :max="100"
+                            controls-position="right"
+                          />
                         </el-form-item>
                       </el-form>
                     </el-collapse-item>
@@ -175,9 +194,7 @@
                             :rows="4"
                             placeholder="JavaScript 转换函数"
                           />
-                          <div class="form-tip">
-                            示例：js:function f() { return '值'; }
-                          </div>
+                          <div class="form-tip">示例：js:function f() { return '值'; }</div>
                         </el-form-item>
                       </el-form>
                     </el-collapse-item>
@@ -198,19 +215,13 @@
             <!-- 选择器视图 -->
             <el-collapse-item title="选择器视图 (Selector)" name="selector">
               <div class="view-desc">资产选择器中显示的列</div>
-              <ViewColumnConfig
-                v-model="selectorColumns"
-                :attrs="availableAttrs"
-              />
+              <ViewColumnConfig v-model="selectorColumns" :attrs="availableAttrs" />
             </el-collapse-item>
 
             <!-- 列表视图 -->
             <el-collapse-item title="列表视图 (List)" name="list">
               <div class="view-desc">资产列表页面显示的列</div>
-              <ViewColumnConfig
-                v-model="listColumns"
-                :attrs="availableAttrs"
-              />
+              <ViewColumnConfig v-model="listColumns" :attrs="availableAttrs" />
             </el-collapse-item>
           </el-collapse>
         </el-tab-pane>
@@ -257,11 +268,13 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 // 兼容不同字段名: id, cit_id, citId
-const modelId = computed(() => props.modelData?.id || props.modelData?.cit_id || props.modelData?.citId)
+const modelId = computed(
+  () => props.modelData?.id || props.modelData?.cit_id || props.modelData?.citId
+)
 const loading = ref(false)
 const saving = ref(false)
 const activeTab = ref('basic')
@@ -281,12 +294,14 @@ const formData = ref({
 
 // 表单验证规则
 const formRules = {
-  title: [
-    { required: true, message: '请输入模型名称', trigger: 'blur' }
-  ],
+  title: [{ required: true, message: '请输入模型名称', trigger: 'blur' }],
   code: [
     { required: true, message: '请输入资产代码', trigger: 'blur' },
-    { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '代码必须以字母开头，只能包含字母、数字和下划线', trigger: 'blur' }
+    {
+      pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
+      message: '代码必须以字母开头，只能包含字母、数字和下划线',
+      trigger: 'blur'
+    }
   ]
 }
 
@@ -348,7 +363,7 @@ const groupedAttrs = computed(() => {
 })
 
 // 切换分组展开
-const toggleGroup = (groupId) => {
+const toggleGroup = groupId => {
   const index = expandedGroups.value.indexOf(groupId)
   if (index === -1) {
     expandedGroups.value.push(groupId)
@@ -388,11 +403,15 @@ watch([inputControl, inputDatatype, inputDefaultValue, inputWidth, displayConver
 })
 
 // 同步选中的属性变化到 formData
-watch(() => selectedAttr.value, (newVal) => {
-  if (newVal) {
-    syncAttrToFormData()
-  }
-}, { deep: true })
+watch(
+  () => selectedAttr.value,
+  newVal => {
+    if (newVal) {
+      syncAttrToFormData()
+    }
+  },
+  { deep: true }
+)
 
 // 同步属性到 formData
 const syncAttrToFormData = () => {
@@ -419,7 +438,6 @@ const currentAttrIndex = ref(-1)
 
 // 加载模型详情
 const loadModelDetail = async () => {
-
   if (!modelId.value) {
     // 新增模式
     formData.value = {
@@ -467,7 +485,7 @@ const loadModelDetail = async () => {
 }
 
 // 解析视图配置
-const parseViews = (views) => {
+const parseViews = views => {
   views.forEach(view => {
     if (view.type === 'selector') {
       selectorColumns.value = (view.config?.columns || []).map(col => col.attr)
@@ -533,7 +551,7 @@ const handleAddGroup = () => {
 }
 
 // 添加属性到分组
-const handleAddAttrToGroup = (groupIndex) => {
+const handleAddAttrToGroup = groupIndex => {
   // 计算在 formData.attrs 中的插入位置
   let insertIndex = 0
   for (let i = 0; i <= groupIndex; i++) {
@@ -561,52 +579,52 @@ const handleAddAttrToGroup = (groupIndex) => {
 }
 
 // 删除分组
-const handleDeleteGroup = (groupIndex) => {
+const handleDeleteGroup = groupIndex => {
   const group = groupedAttrs.value[groupIndex]
-  ElMessageBox.confirm(
-    `确定要删除分组"${group.title}"及其所有属性吗？`,
-    '删除确认',
-    { type: 'warning' }
-  ).then(() => {
-    // 计算要删除的范围
-    let startIndex = 0
-    for (let i = 0; i < groupIndex; i++) {
-      startIndex++ // 分组本身
-      startIndex += groupedAttrs.value[i].children.length
-    }
-    const deleteCount = 1 + group.children.length
+  ElMessageBox.confirm(`确定要删除分组"${group.title}"及其所有属性吗？`, '删除确认', {
+    type: 'warning'
+  })
+    .then(() => {
+      // 计算要删除的范围
+      let startIndex = 0
+      for (let i = 0; i < groupIndex; i++) {
+        startIndex++ // 分组本身
+        startIndex += groupedAttrs.value[i].children.length
+      }
+      const deleteCount = 1 + group.children.length
 
-    formData.value.attrs.splice(startIndex, deleteCount)
-    selectedAttr.value = null
-  }).catch(() => {})
+      formData.value.attrs.splice(startIndex, deleteCount)
+      selectedAttr.value = null
+    })
+    .catch(() => {})
 }
 
 // 删除分组内的属性
 const handleDeleteAttrInGroup = (groupIndex, attrIndex) => {
   const attr = groupedAttrs.value[groupIndex].children[attrIndex]
-  ElMessageBox.confirm(
-    `确定要删除属性"${attr.title || '未命名'}"吗？`,
-    '删除确认',
-    { type: 'warning' }
-  ).then(() => {
-    // 计算在 formData.attrs 中的索引
-    let flatIndex = 0
-    for (let i = 0; i < groupIndex; i++) {
-      flatIndex++ // 分组本身
-      flatIndex += groupedAttrs.value[i].children.length
-    }
-    flatIndex++ // 当前分组
-    flatIndex += attrIndex
+  ElMessageBox.confirm(`确定要删除属性"${attr.title || '未命名'}"吗？`, '删除确认', {
+    type: 'warning'
+  })
+    .then(() => {
+      // 计算在 formData.attrs 中的索引
+      let flatIndex = 0
+      for (let i = 0; i < groupIndex; i++) {
+        flatIndex++ // 分组本身
+        flatIndex += groupedAttrs.value[i].children.length
+      }
+      flatIndex++ // 当前分组
+      flatIndex += attrIndex
 
-    formData.value.attrs.splice(flatIndex, 1)
-    if (selectedAttr.value?._id === attr._id) {
-      selectedAttr.value = null
-    }
-  }).catch(() => {})
+      formData.value.attrs.splice(flatIndex, 1)
+      if (selectedAttr.value?._id === attr._id) {
+        selectedAttr.value = null
+      }
+    })
+    .catch(() => {})
 }
 
 // 上移属性
-const handleMoveUp = (index) => {
+const handleMoveUp = index => {
   if (index > 0) {
     const attrs = formData.value.attrs
     const temp = attrs[index]
@@ -616,7 +634,7 @@ const handleMoveUp = (index) => {
 }
 
 // 下移属性
-const handleMoveDown = (index) => {
+const handleMoveDown = index => {
   const attrs = formData.value.attrs
   if (index < attrs.length - 1) {
     const temp = attrs[index]
@@ -633,19 +651,21 @@ const handleConfigAttr = (attr, index) => {
 }
 
 // 属性配置保存
-const handleAttrConfigSaved = (updatedAttr) => {
+const handleAttrConfigSaved = updatedAttr => {
   if (currentAttrIndex.value !== -1) {
     formData.value.attrs[currentAttrIndex.value] = updatedAttr
   }
 }
 
 // 删除属性
-const handleDeleteAttr = (index) => {
+const handleDeleteAttr = index => {
   ElMessageBox.confirm('确定要删除该属性吗？', '删除确认', {
     type: 'warning'
-  }).then(() => {
-    formData.value.attrs.splice(index, 1)
-  }).catch(() => {})
+  })
+    .then(() => {
+      formData.value.attrs.splice(index, 1)
+    })
+    .catch(() => {})
 }
 
 // 保存
@@ -703,15 +723,18 @@ const handleClosed = () => {
 }
 
 // 监听弹窗打开
-watch(() => props.modelValue, (val) => {
-  if (val) {
-    loadModelDetail()
-    // 默认展开所有分组
-    setTimeout(() => {
-      expandedGroups.value = groupedAttrs.value.map(g => g._id)
-    }, 100)
+watch(
+  () => props.modelValue,
+  val => {
+    if (val) {
+      loadModelDetail()
+      // 默认展开所有分组
+      setTimeout(() => {
+        expandedGroups.value = groupedAttrs.value.map(g => g._id)
+      }, 100)
+    }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">
@@ -728,7 +751,7 @@ watch(() => props.modelValue, (val) => {
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 
@@ -775,24 +798,24 @@ watch(() => props.modelValue, (val) => {
   transition: background 0.2s;
 
   &:hover {
-    background: #f0f0f0;
+    background: var(--el-fill-color-light);
   }
 
   &.expanded {
-    background: #e6f0fa;
+    background: var(--el-color-primary-light-9);
   }
 
   i:first-child {
     width: 16px;
     font-size: 12px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
   }
 
   .group-title {
     flex: 1;
     margin-left: 8px;
     font-weight: 500;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 
   .group-delete {
@@ -826,13 +849,13 @@ watch(() => props.modelValue, (val) => {
   }
 
   &.selected {
-    background: #ecf5ff;
-    border-left: 3px solid #409eff;
+    background: var(--el-color-primary-light-9);
+    border-left: 3px solid var(--el-color-primary);
     padding-left: 33px;
   }
 
   .drag-handle {
-    color: #c0c4cc;
+    color: var(--el-text-color-placeholder);
     margin-right: 8px;
     cursor: move;
   }
@@ -844,7 +867,7 @@ watch(() => props.modelValue, (val) => {
 
   .attr-title {
     flex: 1;
-    color: #606266;
+    color: var(--el-text-color-regular);
   }
 
   .attr-delete {
@@ -862,12 +885,12 @@ watch(() => props.modelValue, (val) => {
   align-items: center;
   justify-content: center;
   padding: 8px 12px;
-  color: #409eff;
+  color: var(--el-color-primary);
   cursor: pointer;
   transition: background 0.2s;
 
   &:hover {
-    background: #ecf5ff;
+    background: var(--el-color-primary-light-9);
   }
 
   i {
@@ -890,7 +913,7 @@ watch(() => props.modelValue, (val) => {
 
 .panel-header {
   padding: 12px 16px;
-  background: #409eff;
+  background: var(--el-color-primary);
   color: #fff;
   font-weight: 500;
 }
@@ -926,7 +949,7 @@ watch(() => props.modelValue, (val) => {
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 
   i {
     font-size: 48px;
@@ -939,7 +962,7 @@ watch(() => props.modelValue, (val) => {
 }
 
 .text-secondary {
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .text-warning {
@@ -948,7 +971,7 @@ watch(() => props.modelValue, (val) => {
 
 .view-desc {
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-bottom: 12px;
 }
 </style>

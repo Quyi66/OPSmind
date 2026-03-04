@@ -10,7 +10,12 @@
         v-loading="loading"
       >
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" type="email" placeholder="输入邮箱用户名" maxlength="100" />
+          <el-input
+            v-model="form.username"
+            type="email"
+            placeholder="输入邮箱用户名"
+            maxlength="100"
+          />
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
@@ -35,7 +40,12 @@
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="发件人" prop="from">
-              <el-input v-model="form.from" type="email" placeholder="发件人邮箱地址（通常与用户名相同）" maxlength="100" />
+              <el-input
+                v-model="form.from"
+                type="email"
+                placeholder="发件人邮箱地址（通常与用户名相同）"
+                maxlength="100"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -59,30 +69,37 @@
 
         <el-form-item class="form-actions">
           <el-button @click="handleTest">
-            <i class="fa fa-paper-plane"></i> 测试发送
+            <i class="fa fa-paper-plane"></i>
+            测试发送
           </el-button>
           <el-button type="primary" @click="handleSave" :loading="saving">
-            <i class="fa fa-save"></i> 保存
+            <i class="fa fa-save"></i>
+            保存
           </el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 测试发送对话框 -->
-    <el-dialog
-      v-model="testDialogVisible"
-      title="测试发送邮件"
-      width="400px"
-      destroy-on-close
-    >
+    <el-dialog v-model="testDialogVisible" title="测试发送邮件" width="400px" destroy-on-close>
       <el-form @submit.prevent="handleSendTest">
         <el-form-item label="收件人邮箱">
-          <el-input v-model="testRecipient" type="email" placeholder="输入收件人邮箱地址" maxlength="100" />
+          <el-input
+            v-model="testRecipient"
+            type="email"
+            placeholder="输入收件人邮箱地址"
+            maxlength="100"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="testDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSendTest" :loading="sending" :disabled="!testRecipient">
+        <el-button
+          type="primary"
+          @click="handleSendTest"
+          :loading="sending"
+          :disabled="!testRecipient"
+        >
           发送
         </el-button>
       </template>
@@ -117,18 +134,24 @@ const originalData = ref({})
 // 端口号转换
 const formPort = computed({
   get: () => parseInt(form.port) || 25,
-  set: (val) => { form.port = String(val) }
+  set: val => {
+    form.port = String(val)
+  }
 })
 
 // 开关转换
 const debugOnOff = computed({
   get: () => form.debug_on_off === 'yes',
-  set: (val) => { form.debug_on_off = val ? 'yes' : 'no' }
+  set: val => {
+    form.debug_on_off = val ? 'yes' : 'no'
+  }
 })
 
 const sslOnOff = computed({
   get: () => form.ssl_on_off === 'yes',
-  set: (val) => { form.ssl_on_off = val ? 'yes' : 'no' }
+  set: val => {
+    form.ssl_on_off = val ? 'yes' : 'no'
+  }
 })
 
 // 表单验证规则
@@ -137,12 +160,8 @@ const rules = {
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
   ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
-  ],
-  host: [
-    { required: true, message: '请输入邮件服务器', trigger: 'blur' }
-  ],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  host: [{ required: true, message: '请输入邮件服务器', trigger: 'blur' }],
   from: [
     { required: true, message: '请输入发件人', trigger: 'blur' },
     { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
@@ -193,11 +212,11 @@ async function handleSave() {
   }
 
   try {
-    await ElMessageBox.confirm(
-      '确定要保存邮件配置吗？',
-      '变更操作',
-      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
-    )
+    await ElMessageBox.confirm('确定要保存邮件配置吗？', '变更操作', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
   } catch {
     return
   }
@@ -240,7 +259,9 @@ async function handleSendTest() {
 
   sending.value = true
   try {
-    const response = await apiService.get(`/api/email-config/${encodeURIComponent(testRecipient.value)}`)
+    const response = await apiService.get(
+      `/api/email-config/${encodeURIComponent(testRecipient.value)}`
+    )
 
     if (response?.code === '200' || response?.data?.code === '200') {
       ElMessage.success('测试邮件发送成功')
@@ -273,7 +294,7 @@ onMounted(() => {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 

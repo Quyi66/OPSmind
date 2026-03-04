@@ -10,9 +10,7 @@
       </div>
       <div class="navbar-actions">
         <el-button @click="goBack">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="saveTemplate">
-          保存
-        </el-button>
+        <el-button type="primary" :loading="saving" @click="saveTemplate">保存</el-button>
       </div>
     </nav>
 
@@ -26,11 +24,7 @@
         class="template-form"
       >
         <el-form-item label="模板名称" prop="templateName">
-          <el-input
-            v-model="formData.templateName"
-            placeholder="请输入模板名称"
-            maxlength="100"
-          />
+          <el-input v-model="formData.templateName" placeholder="请输入模板名称" maxlength="100" />
         </el-form-item>
 
         <el-form-item label="描述" prop="description">
@@ -44,20 +38,13 @@
         </el-form-item>
 
         <el-form-item label="图标" prop="icon">
-          <el-input
-            v-model="formData.icon"
-            placeholder="Font Awesome 图标类名，如 fas fa-server"
-          />
+          <el-input v-model="formData.icon" placeholder="Font Awesome 图标类名，如 fas fa-server" />
         </el-form-item>
 
         <el-divider content-position="left">审计参数配置</el-divider>
 
         <div class="audit-params-section">
-          <div
-            v-for="(param, index) in formData.auditParams"
-            :key="index"
-            class="audit-param-card"
-          >
+          <div v-for="(param, index) in formData.auditParams" :key="index" class="audit-param-card">
             <div class="param-header">
               <span class="param-title">参数组 {{ index + 1 }}</span>
               <el-button
@@ -67,7 +54,8 @@
                 size="small"
                 @click="removeAuditParam(index)"
               >
-                <i class="fa fa-trash-alt"></i> 删除
+                <i class="fa fa-trash-alt"></i>
+                删除
               </el-button>
             </div>
 
@@ -109,7 +97,8 @@
           </div>
 
           <el-button class="add-param-btn" @click="addAuditParam">
-            <i class="fa fa-plus"></i> 添加参数组
+            <i class="fa fa-plus"></i>
+            添加参数组
           </el-button>
         </div>
       </el-form>
@@ -147,9 +136,7 @@ const formData = ref({
 })
 
 const formRules = {
-  templateName: [
-    { required: true, message: '请输入模板名称', trigger: 'blur' }
-  ]
+  templateName: [{ required: true, message: '请输入模板名称', trigger: 'blur' }]
 }
 
 const hostOptions = ref([])
@@ -176,9 +163,8 @@ async function loadTemplate() {
     // 解析 auditParams
     let auditParams = []
     try {
-      auditParams = typeof data.auditParams === 'string'
-        ? JSON.parse(data.auditParams)
-        : (data.auditParams || [])
+      auditParams =
+        typeof data.auditParams === 'string' ? JSON.parse(data.auditParams) : data.auditParams || []
     } catch {
       auditParams = []
     }
@@ -311,7 +297,7 @@ onMounted(() => {
   .navbar-title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 
   .navbar-actions {
@@ -348,7 +334,7 @@ onMounted(() => {
 
     .param-title {
       font-weight: 600;
-      color: #303133;
+      color: var(--el-text-color-primary);
     }
   }
 }

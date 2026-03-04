@@ -34,7 +34,7 @@
           />
         </el-select>
       </div>
-      <el-table v-loading="loading" :data="checkItems"  max-height="400">
+      <el-table v-loading="loading" :data="checkItems" max-height="400">
         <el-table-column prop="name" label="检查项" min-width="200" />
         <el-table-column label="状态" width="120" align="left">
           <template #default="{ row }">
@@ -91,18 +91,18 @@ const statusOptions = STATUS_FILTER_OPTIONS
       .host-name {
         font-size: 18px;
         font-weight: bold;
-        color: #303133;
+        color: var(--el-text-color-primary);
       }
 
       .host-os {
         font-size: 14px;
-        color: #606266;
+        color: var(--el-text-color-regular);
       }
     }
 
     .host-icon {
       font-size: 48px;
-      color: #909399;
+      color: var(--el-text-color-secondary);
       opacity: 0.5;
     }
   }

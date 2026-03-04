@@ -213,16 +213,20 @@ onMounted(() => {
 async function loadData() {
   loading.value = true
   try {
-    const response = await dtsApi.queryData('JAO_LIST_OPERATION_LOG', {
-      module: 'acm',
-      action: filters.value.action,
-      status: filters.value.status,
-      day: filters.value.day
-    }, {
-      page: currentPage.value,
-      size: pageSize.value,
-      filter: searchKeyword.value.trim() ? `ata_node:*${searchKeyword.value.trim()}*` : undefined
-    })
+    const response = await dtsApi.queryData(
+      'JAO_LIST_OPERATION_LOG',
+      {
+        module: 'acm',
+        action: filters.value.action,
+        status: filters.value.status,
+        day: filters.value.day
+      },
+      {
+        page: currentPage.value,
+        size: pageSize.value,
+        filter: searchKeyword.value.trim() ? `ata_node:*${searchKeyword.value.trim()}*` : undefined
+      }
+    )
 
     const data = response?.records || []
     tableData.value = data
@@ -308,11 +312,11 @@ function getActionLabel(action) {
 // 获取状态标签
 function getStatusLabel(status) {
   const statusMap = {
-    'COMPLETED': '完成',
-    'ERROR': '运行错误',
-    'RUNNING': '运行中',
-    'WAITING': '等待中',
-    'FAILED': '失败'
+    COMPLETED: '完成',
+    ERROR: '运行错误',
+    RUNNING: '运行中',
+    WAITING: '等待中',
+    FAILED: '失败'
   }
   return statusMap[status] || status || '-'
 }
@@ -320,11 +324,11 @@ function getStatusLabel(status) {
 // 获取状态类型
 function getStatusType(status) {
   const typeMap = {
-    'COMPLETED': 'success',
-    'ERROR': 'danger',
-    'RUNNING': 'primary',
-    'WAITING': 'info',
-    'FAILED': 'warning'
+    COMPLETED: 'success',
+    ERROR: 'danger',
+    RUNNING: 'primary',
+    WAITING: 'info',
+    FAILED: 'warning'
   }
   return typeMap[status] || 'info'
 }
@@ -396,7 +400,7 @@ function calculateDuration(startTime, endTime) {
   .page-title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -423,7 +427,7 @@ function calculateDuration(startTime, endTime) {
   }
 
   .filter-label {
-    color: #606266;
+    color: var(--el-text-color-regular);
     font-size: 13px;
     white-space: nowrap;
   }
@@ -455,7 +459,7 @@ function calculateDuration(startTime, endTime) {
   border-top: 1px solid var(--el-border-color-light);
 
   .total-info {
-    color: #606266;
+    color: var(--el-text-color-regular);
     font-size: 13px;
   }
 }

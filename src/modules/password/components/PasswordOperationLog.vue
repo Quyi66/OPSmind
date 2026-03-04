@@ -4,12 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input
-            v-model="filters.keyword"
-            placeholder="搜索"
-            clearable
-            style="width: 180px"
-          >
+          <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 180px">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -30,8 +25,15 @@
 
     <!-- 操作栏 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -206,7 +208,7 @@ function handleViewDetail(row) {
   .page-title {
     font-size: 16px;
     font-weight: 500;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
     margin: 0;
   }
 }
@@ -227,6 +229,6 @@ function handleViewDetail(row) {
 
 .message-cell {
   line-height: 1.5;
-  color: #64748b;
+  color: var(--el-text-color-secondary);
 }
 </style>

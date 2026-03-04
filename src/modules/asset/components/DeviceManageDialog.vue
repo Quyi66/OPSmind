@@ -431,13 +431,13 @@ function handleClose() {
 .manage-form {
   :deep(.el-form-item__label) {
     font-weight: 500;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
 .form-desc {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
   line-height: 1.4;
 }

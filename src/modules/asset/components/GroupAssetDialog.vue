@@ -48,7 +48,6 @@
         ref="tableRef"
         v-loading="loading"
         :data="assetList"
-       
         max-height="calc(100vh - 400px)"
         @selection-change="handleSelectionChange"
       >
@@ -241,10 +240,10 @@ watch(visible, val => {
 
       .selected-info {
         font-size: 13px;
-        color: #606266;
+        color: var(--el-text-color-regular);
 
         .selected-count {
-          color: #409eff;
+          color: var(--el-color-primary);
           margin: 0 2px;
         }
       }
@@ -259,7 +258,7 @@ watch(visible, val => {
     .pagination-info {
       margin: 0 8px;
       font-size: 13px;
-      color: #606266;
+      color: var(--el-text-color-regular);
     }
   }
 }

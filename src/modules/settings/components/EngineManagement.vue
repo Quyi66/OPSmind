@@ -33,9 +33,7 @@
           </el-form-item>
 
           <el-form-item class="form-actions">
-            <el-button type="primary" @click="saveAnsibleConfig" :loading="saving">
-              保存
-            </el-button>
+            <el-button type="primary" @click="saveAnsibleConfig" :loading="saving">保存</el-button>
           </el-form-item>
         </template>
 
@@ -77,7 +75,7 @@
           <template v-if="isConnectAap">
             <el-form-item label="AAP Servers">
               <div class="form-help mb-2">AAP 集群服务器配置</div>
-              <el-table :data="clusterServers"  style="max-width: 800px" max-height="600px">
+              <el-table :data="clusterServers" style="max-width: 800px" max-height="600px">
                 <el-table-column label="Host" min-width="150">
                   <template #default="{ row }">
                     <el-input v-model="row.host" size="small" />
@@ -95,7 +93,12 @@
                 </el-table-column>
                 <el-table-column label="Password" min-width="150">
                   <template #default="{ row }">
-                    <el-input v-model="row.password" type="password" size="small" autocomplete="new-password" />
+                    <el-input
+                      v-model="row.password"
+                      type="password"
+                      size="small"
+                      autocomplete="new-password"
+                    />
                   </template>
                 </el-table-column>
                 <el-table-column label="操作" width="150">
@@ -236,9 +239,7 @@
           </template>
 
           <el-form-item class="form-actions">
-            <el-button type="primary" @click="saveAapConfig" :loading="saving">
-              保存
-            </el-button>
+            <el-button type="primary" @click="saveAapConfig" :loading="saving">保存</el-button>
           </el-form-item>
         </template>
       </el-form>
@@ -433,11 +434,11 @@ async function loadAapInfo() {
 
 async function handleEngineChange() {
   try {
-    await ElMessageBox.confirm(
-      '确定要切换执行引擎吗？此操作将保存更改。',
-      '变更操作',
-      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
-    )
+    await ElMessageBox.confirm('确定要切换执行引擎吗？此操作将保存更改。', '变更操作', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
   } catch {
     usedEngine.value = scriptEngine.value
     return
@@ -487,11 +488,11 @@ function deleteClusterServer(index) {
 
 async function saveAnsibleConfig() {
   try {
-    await ElMessageBox.confirm(
-      '确定要保存 Ansible 配置吗？',
-      '变更操作',
-      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
-    )
+    await ElMessageBox.confirm('确定要保存 Ansible 配置吗？', '变更操作', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
   } catch {
     return
   }
@@ -525,11 +526,11 @@ async function saveAnsibleConfig() {
 
 async function saveAapConfig() {
   try {
-    await ElMessageBox.confirm(
-      '确定要保存 AAP 配置吗？',
-      '变更操作',
-      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
-    )
+    await ElMessageBox.confirm('确定要保存 AAP 配置吗？', '变更操作', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
   } catch {
     return
   }
@@ -577,7 +578,7 @@ async function saveAapConfig() {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -587,7 +588,7 @@ async function saveAapConfig() {
 
 .engine-hint {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-regular);
   margin-bottom: 8px;
   margin-right: 8px;
 }
@@ -602,7 +603,7 @@ async function saveAapConfig() {
 
 .form-help {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-regular);
   margin-top: 4px;
 }
 
@@ -615,5 +616,4 @@ async function saveAapConfig() {
     justify-content: flex-end !important;
   }
 }
-
 </style>

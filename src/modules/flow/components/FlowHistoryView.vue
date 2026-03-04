@@ -36,7 +36,12 @@
 
     <!-- 历史版本列表 -->
     <div class="history-content">
-      <el-table :data="paginatedList" v-loading="loading" style="width: 100%" max-height="calc(100vh - 200px)">
+      <el-table
+        :data="paginatedList"
+        v-loading="loading"
+        style="width: 100%"
+        max-height="calc(100vh - 200px)"
+      >
         <el-table-column label="版本" width="150">
           <template #default="{ row }">
             <el-tag :type="row.version === row.currentVersion ? 'success' : 'primary'" size="small">
@@ -250,20 +255,20 @@ onMounted(() => {
       .el-breadcrumb__item {
         .el-breadcrumb__inner {
           a {
-            color: #409eff;
+            color: var(--el-color-primary);
             font-weight: normal;
             cursor: pointer;
             text-decoration: none;
             transition: color 0.2s;
 
             &:hover {
-              color: #66b1ff;
+              color: var(--el-color-primary-light-3);
             }
           }
         }
 
         &:last-child .el-breadcrumb__inner {
-          color: #606266;
+          color: var(--el-text-color-regular);
           font-weight: 500;
         }
       }

@@ -55,6 +55,9 @@
 import { ref, onMounted, onUnmounted, nextTick, watch, inject } from 'vue'
 import * as echarts from 'echarts'
 import * as userApi from '@/modules/user/api'
+import { useTheme } from '@/composables/useTheme'
+
+const { isDark } = useTheme()
 
 // 注入父组件提供的导航方法
 const handleNavigate = inject('handleNavigate', null)
@@ -173,9 +176,10 @@ function initChart() {
   // 销毁旧实例
   if (chartInstance) {
     chartInstance.dispose()
+    chartInstance = null
   }
 
-  chartInstance = echarts.init(chartRef.value)
+  chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
 
   // 生成完整的15天日期范围
   const days = 15
@@ -226,12 +230,13 @@ function initChart() {
   })
 
   const option = {
+    backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderColor: '#e2e8f0',
-      textStyle: { color: '#1e293b' },
-      extraCssText: 'box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'
+      backgroundColor: isDark.value ? 'var(--el-bg-color-overlay)' : 'rgba(255, 255, 255, 0.95)',
+      borderColor: isDark.value ? 'var(--el-border-color-light)' : '#e2e8f0',
+      textStyle: { color: isDark.value ? 'var(--el-text-color-primary)' : '#1e293b' },
+      extraCssText: 'box-shadow: var(--el-box-shadow-light);'
     },
     grid: {
       left: '10px',
@@ -244,14 +249,14 @@ function initChart() {
       type: 'category',
       boundaryGap: false,
       data: xData,
-      axisLabel: { color: '#64748b', margin: 12 },
-      axisLine: { lineStyle: { color: '#e2e8f0' } },
+      axisLabel: { color: isDark.value ? 'var(--el-text-color-secondary)' : '#64748b', margin: 12 },
+      axisLine: { lineStyle: { color: isDark.value ? 'var(--el-border-color)' : '#e2e8f0' } },
       axisTick: { show: false }
     },
     yAxis: {
       type: 'value',
-      axisLabel: { color: '#64748b' },
-      splitLine: { lineStyle: { color: '#f1f5f9' } }
+      axisLabel: { color: isDark.value ? 'var(--el-text-color-secondary)' : '#64748b' },
+      splitLine: { lineStyle: { color: isDark.value ? 'var(--el-border-color-light)' : '#f1f5f9' } }
     },
     series: [
       {
@@ -324,6 +329,15 @@ onMounted(() => {
   }
 })
 
+watch(isDark, () => {
+  nextTick(() => {
+    initChart()
+    if (chartInstance) {
+      chartInstance.resize()
+    }
+  })
+})
+
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   if (resizeObserver) {
@@ -374,7 +388,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--el-text-color-regular);
 }
 
 .dot {
@@ -414,7 +428,7 @@ onUnmounted(() => {
   justify-content: center;
   height: 100%;
   gap: 8px;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
   font-size: 14px;
 
   i {

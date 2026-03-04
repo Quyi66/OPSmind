@@ -1,15 +1,10 @@
 <template>
-  <div class="ops-page-layout" style="background: #f1f5f9; overflow: auto;">
+  <div class="ops-page-layout" style="background: var(--el-bg-color-page); overflow: auto">
     <div class="page-content">
       <div class="form-card">
         <div class="card-header">
           <div class="card-title">密码策略</div>
-          <el-button
-            type="primary"
-            :loading="saving"
-            :disabled="!canSave"
-            @click="handleSave"
-          >
+          <el-button type="primary" :loading="saving" :disabled="!canSave" @click="handleSave">
             保存
           </el-button>
         </div>
@@ -140,13 +135,18 @@ const isFailed = computed(() => jobStatus.value === 'FAILED' || jobStatus.value 
 
 const statusText = computed(() => {
   switch (jobStatus.value) {
-    case 'WAITING': return '等待执行...'
-    case 'RUNNING': return '正在保存...'
+    case 'WAITING':
+      return '等待执行...'
+    case 'RUNNING':
+      return '正在保存...'
     case 'SUCCESS':
-    case 'COMPLETED': return '保存成功'
+    case 'COMPLETED':
+      return '保存成功'
     case 'FAILED':
-    case 'ERROR': return '保存失败'
-    default: return jobStatus.value
+    case 'ERROR':
+      return '保存失败'
+    default:
+      return jobStatus.value
   }
 })
 
@@ -178,12 +178,14 @@ const validationError = computed(() => {
 
 // 是否可以保存
 const canSave = computed(() => {
-  return formData.ocredit >= 0 &&
-         formData.dcredit >= 0 &&
-         formData.ucredit >= 0 &&
-         formData.lcredit >= 0 &&
-         formData.passwd_length >= 1 &&
-         !validationError.value
+  return (
+    formData.ocredit >= 0 &&
+    formData.dcredit >= 0 &&
+    formData.ucredit >= 0 &&
+    formData.lcredit >= 0 &&
+    formData.passwd_length >= 1 &&
+    !validationError.value
+  )
 })
 
 // 当密码长度改变时，调整各字符要求不超过新的密码长度
@@ -273,7 +275,7 @@ async function handleSave() {
           jobStatus.value = 'FAILED'
           saving.value = false
         },
-        onComplete: (res) => {
+        onComplete: res => {
           jobResult.value = res
         }
       })
@@ -295,7 +297,7 @@ async function handleSave() {
 <style scoped lang="scss">
 .settings-container {
   height: 100%;
-  background: #f1f5f9;
+  background: var(--el-bg-color-page);
   padding: 16px;
   overflow: auto;
 }
@@ -312,7 +314,7 @@ async function handleSave() {
   background: var(--el-bg-color);
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--el-box-shadow-light);
 }
 
 .card-header {
@@ -327,7 +329,7 @@ async function handleSave() {
 .card-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--el-text-color-primary);
 }
 
 .form-content {
@@ -343,7 +345,7 @@ async function handleSave() {
     width: 140px;
     padding-top: 8px;
     font-weight: 500;
-    color: #334155;
+    color: var(--el-text-color-primary);
     font-size: 14px;
     flex-shrink: 0;
   }
@@ -356,13 +358,13 @@ async function handleSave() {
 .form-hint {
   margin-top: 6px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
 }
 
 .job-status {
   margin-top: 20px;
   padding: 16px;
-  background: #f1f5f9;
+  background: var(--el-bg-color-page);
   border-radius: 6px;
 
   .status-header {
@@ -372,11 +374,11 @@ async function handleSave() {
     font-weight: 500;
 
     .text-success {
-      color: #22c55e;
+      color: var(--el-color-success);
     }
 
     .text-danger {
-      color: #ef4444;
+      color: var(--el-color-danger);
     }
   }
 }
@@ -384,34 +386,34 @@ async function handleSave() {
 .validation-error {
   margin-top: 16px;
   padding: 12px 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--el-color-danger-light-9);
+  border: 1px solid var(--el-color-danger-light-7);
   border-radius: 6px;
-  color: #dc2626;
+  color: var(--el-color-danger);
   font-size: 13px;
   display: flex;
   align-items: center;
   gap: 8px;
 
   i {
-    color: #ef4444;
+    color: var(--el-color-danger);
   }
 }
 
 .validation-info {
   margin-top: 16px;
   padding: 12px 16px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
   border-radius: 6px;
-  color: #1d4ed8;
+  color: var(--el-color-primary);
   font-size: 13px;
   display: flex;
   align-items: center;
   gap: 8px;
 
   i {
-    color: #3b82f6;
+    color: var(--el-color-primary);
   }
 }
 </style>

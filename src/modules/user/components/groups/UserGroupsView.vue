@@ -44,10 +44,18 @@
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreateGroup">
-        <el-icon><Plus /></el-icon> 创建用户组
+        <el-icon><Plus /></el-icon>
+        创建用户组
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -57,7 +65,6 @@
       <el-table
         :data="tableData"
         v-loading="loading"
-
         @selection-change="handleSelectionChange"
         max-height="calc(100vh - 230px)"
       >
@@ -74,12 +81,7 @@
         </el-table-column>
         <el-table-column label="操作" width="60" fixed="right">
           <template #default="{ row }">
-            <el-button
-              text
-              type="danger"
-              size="small"
-              @click="handleDeleteSingleGroup(row)"
-            >
+            <el-button text type="danger" size="small" @click="handleDeleteSingleGroup(row)">
               删除
             </el-button>
           </template>
@@ -102,10 +104,7 @@
     </div>
 
     <!-- 创建用户组对话框 -->
-    <CreateGroupDialog
-      v-model:visible="showCreateGroupDialog"
-      @success="loadData"
-    />
+    <CreateGroupDialog v-model:visible="showCreateGroupDialog" @success="loadData" />
 
     <!-- 删除用户组对话框 -->
     <DeleteGroupDialog
@@ -128,7 +127,7 @@ import DeleteGroupDialog from '@/modules/user/components/dialogs/DeleteGroupDial
 const filters = ref({
   host_key: '',
   group_name: '',
-  hostname: ''     // 主机名搜索
+  hostname: '' // 主机名搜索
 })
 
 const loading = ref(false)
@@ -177,7 +176,9 @@ async function loadData() {
       hostObject: '@@(linux)',
       page,
       size,
-      filter: filters.value.hostname ? `hostname|host_key|group_name:*${filters.value.hostname}*` : ''
+      filter: filters.value.hostname
+        ? `hostname|host_key|group_name:*${filters.value.hostname}*`
+        : ''
     })
     tableData.value = response?.records || response?.data?.records || []
 
@@ -211,7 +212,7 @@ function handleSelectionChange(selection) {
 
 // 分页大小变化
 function handlePageSizeChange(val) {
-  if (isLoadingData) return  // 加载期间忽略
+  if (isLoadingData) return // 加载期间忽略
   if (pageSize.value === val) return
   pageSize.value = val
   currentPage.value = 1
@@ -220,7 +221,7 @@ function handlePageSizeChange(val) {
 
 // 当前页变化
 function handleCurrentPageChange(val) {
-  if (isLoadingData) return  // 加载期间忽略，这是关键
+  if (isLoadingData) return // 加载期间忽略，这是关键
   if (currentPage.value === val) return
   currentPage.value = val
   loadData()
@@ -315,7 +316,7 @@ onMounted(() => {
 
 .filter-label {
   font-size: 13px;
-  color: #64748b;
+  color: var(--el-text-color-regular);
   white-space: nowrap;
 }
 

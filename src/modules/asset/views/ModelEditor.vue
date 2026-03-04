@@ -1182,11 +1182,11 @@ onMounted(() => {
     .page-title {
       font-size: 16px;
       font-weight: 600;
-      color: #303133;
+      color: var(--el-text-color-primary);
     }
 
     .model-name {
-      color: #909399;
+      color: var(--el-text-color-secondary);
     }
   }
 
@@ -1239,7 +1239,7 @@ onMounted(() => {
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 
@@ -1278,7 +1278,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 
   i {
     font-size: 48px;
@@ -1307,17 +1307,17 @@ onMounted(() => {
   transition: background 0.2s;
 
   &:hover {
-    background: #f0f0f0;
+    background: var(--el-fill-color-light);
   }
 
   &.expanded {
-    background: #e6f0fa;
+    background: var(--el-color-primary-light-9);
   }
 
   i:first-child {
     width: 16px;
     font-size: 12px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
     flex-shrink: 0;
   }
 
@@ -1325,7 +1325,7 @@ onMounted(() => {
     flex: 1;
     margin-left: 8px;
     font-weight: 500;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 
   .group-title-input {
@@ -1381,13 +1381,13 @@ onMounted(() => {
   }
 
   &.selected {
-    background: #ecf5ff;
-    border-left: 3px solid #409eff;
+    background: var(--el-color-primary-light-9);
+    border-left: 3px solid var(--el-color-primary);
     padding-left: 33px;
   }
 
   .drag-handle {
-    color: #c0c4cc;
+    color: var(--el-text-color-placeholder);
     margin-right: 8px;
     cursor: move;
   }
@@ -1399,7 +1399,7 @@ onMounted(() => {
 
   .attr-title {
     flex: 1;
-    color: #606266;
+    color: var(--el-text-color-regular);
   }
 
   .attr-delete {
@@ -1417,12 +1417,12 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 8px 12px;
-  color: #409eff;
+  color: var(--el-color-primary);
   cursor: pointer;
   transition: background 0.2s;
 
   &:hover {
-    background: #ecf5ff;
+    background: var(--el-color-primary-light-9);
   }
 
   i {
@@ -1447,7 +1447,7 @@ onMounted(() => {
 
 .panel-header {
   padding: 12px 16px;
-  background: #409eff;
+  background: var(--el-color-primary);
   color: #fff;
   font-weight: 500;
   flex-shrink: 0;
@@ -1484,7 +1484,7 @@ onMounted(() => {
 
     .delim-label {
       margin-left: 8px;
-      color: #606266;
+      color: var(--el-text-color-regular);
       font-size: 13px;
     }
   }
@@ -1496,7 +1496,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 
   i {
     font-size: 48px;
@@ -1510,7 +1510,7 @@ onMounted(() => {
 
 .view-desc {
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-bottom: 12px;
 }
 
@@ -1556,12 +1556,12 @@ onMounted(() => {
     .view-config-title {
       font-size: 14px;
       font-weight: 500;
-      color: #303133;
+      color: var(--el-text-color-primary);
     }
 
     .view-config-tip {
       font-size: 12px;
-      color: #909399;
+      color: var(--el-text-color-secondary);
     }
   }
 
@@ -1581,7 +1581,7 @@ onMounted(() => {
     background: var(--el-bg-color-page);
     border: 1px dashed var(--el-border-color-light);
     border-radius: 4px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
 
     i {
       font-size: 16px;

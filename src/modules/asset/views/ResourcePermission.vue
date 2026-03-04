@@ -138,9 +138,10 @@ const filteredData = computed(() => {
 
   if (appliedSearch.value) {
     const keyword = appliedSearch.value.toLowerCase()
-    data = data.filter(item =>
-      item.groupInfo?.toLowerCase().includes(keyword) ||
-      item.assets_type?.toLowerCase().includes(keyword)
+    data = data.filter(
+      item =>
+        item.groupInfo?.toLowerCase().includes(keyword) ||
+        item.assets_type?.toLowerCase().includes(keyword)
     )
   }
 
@@ -156,16 +157,16 @@ onMounted(() => {
   loadData()
 })
 
-
-
 // 加载数据
 async function loadData() {
   loading.value = true
   try {
     const cacheBuster = Date.now()
-    const response = await apiService.get(`/acm/api/acm/permission/team/table?cacheBuster=${cacheBuster}`)
+    const response = await apiService.get(
+      `/acm/api/acm/permission/team/table?cacheBuster=${cacheBuster}`
+    )
 
-    const data = Array.isArray(response) ? response : (response?.data || [])
+    const data = Array.isArray(response) ? response : response?.data || []
     permissionData.value = _.cloneDeep(data)
 
     // 处理数据，提取 extra_param 和 teamInfo
@@ -197,7 +198,6 @@ async function loadData() {
 
     teamNames.value = Array.from(teams)
     total.value = tableData.value.length
-
   } catch (error) {
     console.error('加载权限数据失败:', error)
     ElMessage.error('加载权限数据失败')
@@ -316,19 +316,19 @@ function handlePageSizeChange() {
 
     &.el-button--default {
       background: var(--el-bg-color-page);
-      border-color: #dcdfe6;
-      color: #606266;
+      border-color: var(--el-border-color);
+      color: var(--el-text-color-regular);
 
       &:hover {
-        background: #e6f0ff;
-        border-color: #409eff;
-        color: #409eff;
+        background: var(--el-color-primary-light-9);
+        border-color: var(--el-color-primary);
+        color: var(--el-color-primary);
       }
     }
 
     &.el-button--primary {
-      background: #409eff;
-      border-color: #409eff;
+      background: var(--el-color-primary);
+      border-color: var(--el-color-primary);
       color: #fff;
     }
   }

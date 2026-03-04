@@ -36,7 +36,7 @@
       </div>
 
       <!-- 表格 -->
-      <el-table v-loading="loading" :data="data"  max-height="350">
+      <el-table v-loading="loading" :data="data" max-height="350">
         <el-table-column prop="host_key" label="主机" min-width="200" />
         <el-table-column label="检查状态" width="120" align="left">
           <template #default="{ row }">
@@ -87,19 +87,19 @@ const statusOptions = STATUS_FILTER_OPTIONS
       .title-label {
         font-size: 18px;
         font-weight: bold;
-        color: #303133;
+        color: var(--el-text-color-primary);
       }
     }
 
     .item-name {
       flex: 1;
       font-size: 14px;
-      color: #606266;
+      color: var(--el-text-color-regular);
       margin-left: 8px;
     }
 
     .item-icon {
-      color: #909399;
+      color: var(--el-text-color-secondary);
       opacity: 0.5;
     }
   }

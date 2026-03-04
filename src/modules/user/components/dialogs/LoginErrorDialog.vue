@@ -8,17 +8,11 @@
   >
     <div class="login-error-dialog" v-loading="loading">
       <div v-if="errorMessages.length" class="error-list">
-        <div
-          v-for="(item, index) in errorMessages"
-          :key="index"
-          class="error-item"
-        >
+        <div v-for="(item, index) in errorMessages" :key="index" class="error-item">
           <pre class="error-message">{{ item.message }}</pre>
         </div>
       </div>
-      <div v-else class="empty-tip">
-        暂无登录错误信息
-      </div>
+      <div v-else class="empty-tip">暂无登录错误信息</div>
     </div>
 
     <template #footer>
@@ -47,7 +41,7 @@ const emit = defineEmits(['update:visible'])
 
 const visible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 const loading = ref(false)
@@ -89,7 +83,7 @@ async function loadData() {
 }
 
 .error-item {
-  background: #1e293b;
+  background: var(--el-bg-color-page);
   border-radius: 8px;
   padding: 12px 16px;
 }
@@ -98,7 +92,7 @@ async function loadData() {
   margin: 0;
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 12px;
-  color: #e2e8f0;
+  color: var(--el-text-color-primary);
   white-space: pre-wrap;
   word-break: break-all;
   line-height: 1.5;
@@ -106,7 +100,7 @@ async function loadData() {
 
 .empty-tip {
   text-align: center;
-  color: #94a3b8;
+  color: var(--el-text-color-regular);
   padding: 40px;
   font-size: 14px;
 }

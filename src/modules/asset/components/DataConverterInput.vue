@@ -4,22 +4,9 @@
       <span class="input-prefix" :title="kindLabel">
         <i :class="kindIcon"></i>
       </span>
-      <el-input
-        :model-value="displayValue"
-        readonly
-        class="converter-input"
-        placeholder=""
-      />
-      <el-button
-        :icon="Edit"
-        :disabled="disabled"
-        @click="showEditor"
-      />
-      <el-button
-        :icon="Delete"
-        :disabled="disabled"
-        @click="handleRemove"
-      />
+      <el-input :model-value="displayValue" readonly class="converter-input" placeholder="" />
+      <el-button :icon="Edit" :disabled="disabled" @click="showEditor" />
+      <el-button :icon="Delete" :disabled="disabled" @click="handleRemove" />
     </div>
 
     <!-- 数据编辑器弹窗 -->
@@ -48,7 +35,8 @@
             :class="{ active: editKind === 'yaml' }"
             @click="editKind = 'yaml'"
           >
-            <i class="fa fa-list-alt"></i> YAML
+            <i class="fa fa-list-alt"></i>
+            YAML
           </div>
           <div
             v-if="enabledKinds.includes('json')"
@@ -64,24 +52,21 @@
             :class="{ active: editKind === 'str' }"
             @click="editKind = 'str'"
           >
-            <i class="fa fa-font"></i> 字符串
+            <i class="fa fa-font"></i>
+            字符串
           </div>
         </div>
 
         <!-- 类型说明 -->
         <p class="type-desc">
           <template v-if="editKind === 'js'">
-            支持一条JavaScript语句对数据进行转换，内置函数以<code>$$.</code>开头。
+            支持一条JavaScript语句对数据进行转换，内置函数以
+            <code>$$.</code>
+            开头。
           </template>
-          <template v-else-if="editKind === 'str'">
-            返回一条字符串。
-          </template>
-          <template v-else-if="editKind === 'yaml'">
-            返回YAML格式数据。
-          </template>
-          <template v-else-if="editKind === 'json'">
-            返回JSON格式数据。
-          </template>
+          <template v-else-if="editKind === 'str'">返回一条字符串。</template>
+          <template v-else-if="editKind === 'yaml'">返回YAML格式数据。</template>
+          <template v-else-if="editKind === 'json'">返回JSON格式数据。</template>
         </p>
 
         <!-- 代码编辑区 -->
@@ -123,10 +108,12 @@
 
       <template #footer>
         <el-button type="primary" @click="handleSave">
-          <i class="fa fa-check" style="margin-right: 4px"></i> 确认
+          <i class="fa fa-check" style="margin-right: 4px"></i>
+          确认
         </el-button>
         <el-button @click="dialogVisible = false">
-          <i class="fa fa-undo" style="margin-right: 4px"></i> 取消
+          <i class="fa fa-undo" style="margin-right: 4px"></i>
+          取消
         </el-button>
       </template>
     </el-dialog>
@@ -303,7 +290,7 @@ watch(editBody, updateLineCount)
     border: 1px solid var(--el-border-color-light);
     border-right: none;
     border-radius: 4px 0 0 4px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
     flex-shrink: 0;
 
     i {
@@ -316,7 +303,7 @@ watch(editBody, updateLineCount)
 
     :deep(.el-input__wrapper) {
       border-radius: 0;
-      box-shadow: 0 0 0 1px #dcdfe6 inset;
+      box-shadow: 0 0 0 1px var(--el-border-color) inset;
     }
   }
 
@@ -341,18 +328,18 @@ watch(editBody, updateLineCount)
     .type-tab {
       padding: 10px 16px;
       font-size: 14px;
-      color: #606266;
+      color: var(--el-text-color-regular);
       cursor: pointer;
       border-bottom: 2px solid transparent;
       transition: all 0.2s;
 
       &:hover {
-        color: #409eff;
+        color: var(--el-color-primary);
       }
 
       &.active {
-        color: #409eff;
-        border-bottom-color: #409eff;
+        color: var(--el-color-primary);
+        border-bottom-color: var(--el-color-primary);
         font-weight: 500;
       }
 
@@ -364,7 +351,7 @@ watch(editBody, updateLineCount)
 
   .type-desc {
     font-size: 13px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
     margin: 0 0 12px;
 
     code {
@@ -432,7 +419,7 @@ watch(editBody, updateLineCount)
 
     .func-label {
       font-size: 13px;
-      color: #606266;
+      color: var(--el-text-color-regular);
       white-space: nowrap;
     }
   }

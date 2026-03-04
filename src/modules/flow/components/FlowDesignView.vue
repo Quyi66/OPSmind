@@ -230,7 +230,7 @@ const defaultBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
 </bpmn:definitions>`
 
 // 监听 tab 切换，更新 XML
-watch(activeTab, async (newTab) => {
+watch(activeTab, async newTab => {
   if (newTab === 'xml') {
     currentXml.value = await getCurrentXml()
   }
@@ -247,15 +247,12 @@ async function initBpmnModeler() {
 
   bpmnModeler = new BpmnModeler({
     container: bpmnContainer.value,
-    additionalModules: [
-      TokenSimulationModule,
-      minimapModule
-    ]
+    additionalModules: [TokenSimulationModule, minimapModule]
   })
 
   // 监听选择事件
   const eventBus = bpmnModeler.get('eventBus')
-  eventBus.on('selection.changed', (e) => {
+  eventBus.on('selection.changed', e => {
     const element = e.newSelection[0]
     if (element) {
       selectedElement.value = element
@@ -518,20 +515,20 @@ onBeforeUnmount(() => {
       .el-breadcrumb__item {
         .el-breadcrumb__inner {
           a {
-            color: #409eff;
+            color: var(--el-color-primary);
             font-weight: normal;
             cursor: pointer;
             text-decoration: none;
             transition: color 0.2s;
 
             &:hover {
-              color: #66b1ff;
+              color: var(--el-color-primary-light-3);
             }
           }
         }
 
         &:last-child .el-breadcrumb__inner {
-          color: #606266;
+          color: var(--el-text-color-regular);
           font-weight: 500;
         }
       }
@@ -554,14 +551,14 @@ onBeforeUnmount(() => {
 // 视图切换 Tab (Segmented Control 风格)
 .view-tabs {
   display: flex;
-  background: #f1f5f9;
+  background: var(--el-fill-color-light);
   padding: 3px;
   border-radius: 6px;
 
   .tab-item {
     padding: 6px 20px;
     font-size: 13px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
     cursor: pointer;
     border-radius: 4px;
     transition: all 0.2s;
@@ -569,13 +566,13 @@ onBeforeUnmount(() => {
     user-select: none;
 
     &:hover {
-      color: #333;
+      color: var(--el-text-color-primary);
     }
 
     &.is-active {
       background: var(--el-bg-color);
-      color: #3b82f6;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      color: var(--el-color-primary);
+      box-shadow: var(--el-box-shadow-light);
     }
   }
 }
@@ -611,7 +608,7 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #333;
+    color: var(--el-text-color-primary);
     font-size: 14px;
   }
 
@@ -641,7 +638,7 @@ onBeforeUnmount(() => {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
   z-index: 10;
 
   i {
@@ -672,7 +669,7 @@ onBeforeUnmount(() => {
 .panel-header {
   padding: 12px 16px;
   font-size: 14px;
-  color: #333;
+  color: var(--el-text-color-primary);
   border-bottom: 1px solid var(--el-border-color-light);
   background: var(--el-bg-color-page);
 }
@@ -684,7 +681,7 @@ onBeforeUnmount(() => {
   .panel-tab {
     padding: 8px 16px;
     font-size: 13px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
     cursor: pointer;
     border: 1px solid transparent;
     border-bottom: none;
@@ -692,10 +689,10 @@ onBeforeUnmount(() => {
     margin-bottom: -1px;
 
     &.is-active {
-      color: #333;
+      color: var(--el-text-color-primary);
       background: var(--el-bg-color);
-      border-color: #e2e8f0;
-      border-bottom-color: #fff;
+      border-color: var(--el-border-color);
+      border-bottom-color: var(--el-bg-color);
     }
   }
 }
@@ -709,7 +706,7 @@ onBeforeUnmount(() => {
 .section-title {
   font-size: 13px;
   font-weight: 600;
-  color: #333;
+  color: var(--el-text-color-primary);
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--el-border-color-light);
@@ -721,14 +718,14 @@ onBeforeUnmount(() => {
   label {
     display: block;
     font-size: 13px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
     margin-bottom: 6px;
   }
 
   &.checkbox-group {
     .hint-text {
       font-size: 12px;
-      color: #94a3b8;
+      color: var(--el-text-color-secondary);
       margin-top: 4px;
     }
   }
@@ -755,6 +752,78 @@ onBeforeUnmount(() => {
   width: 48px;
   background: var(--el-bg-color);
   border-right: 1px solid var(--el-border-color-light);
+
+  .entry {
+    color: var(--el-text-color-primary) !important;
+
+    svg,
+    path,
+    polygon,
+    rect,
+    circle,
+    ellipse,
+    line {
+      stroke: currentColor !important;
+      fill: currentColor !important;
+    }
+
+    &:hover {
+      color: var(--el-color-primary) !important;
+    }
+  }
+}
+
+:deep(.djs-context-pad) {
+  .entry {
+    background-color: var(--el-bg-color-overlay) !important;
+    color: var(--el-text-color-primary) !important;
+    border-color: var(--el-border-color-light) !important;
+    box-shadow: var(--el-box-shadow-light) !important;
+
+    svg,
+    path,
+    polygon,
+    rect,
+    circle,
+    ellipse,
+    line {
+      stroke: currentColor !important;
+      fill: currentColor !important;
+    }
+
+    &:hover {
+      color: var(--el-color-primary) !important;
+      background-color: var(--el-fill-color-light) !important;
+    }
+  }
+}
+
+:deep(.djs-popup) {
+  background: var(--el-bg-color-overlay) !important;
+  border-color: var(--el-border-color-light) !important;
+  box-shadow: var(--el-box-shadow-light) !important;
+  color: var(--el-text-color-regular) !important;
+
+  .entry {
+    color: var(--el-text-color-primary) !important;
+
+    &:hover,
+    &.active {
+      background-color: var(--el-fill-color-light) !important;
+      color: var(--el-color-primary) !important;
+    }
+  }
+
+  .djs-popup-header {
+    h3 {
+      color: var(--el-text-color-primary) !important;
+    }
+  }
+}
+
+:deep(.djs-minimap) {
+  background: var(--el-bg-color-overlay) !important;
+  border-color: var(--el-border-color-light) !important;
 }
 
 // 隐藏库自带的 Token Simulation 按钮（使用自定义开关替代）
@@ -768,6 +837,7 @@ onBeforeUnmount(() => {
 }
 
 // 隐藏库自带的小地图开关按钮（使用自定义按钮替代）
+:deep(.djs-minimap .toggle),
 :deep(.djs-minimap-toggle) {
   display: none !important;
 }

@@ -9,8 +9,14 @@
     <div class="edit-user-dialog" v-loading="loading">
       <!-- 用户信息显示 -->
       <div class="user-info">
-        <p><strong>IP：</strong>{{ userData.host_key }}</p>
-        <p><strong>Hostname：</strong>{{ userData.hostname }}</p>
+        <p>
+          <strong>IP：</strong>
+          {{ userData.host_key }}
+        </p>
+        <p>
+          <strong>Hostname：</strong>
+          {{ userData.hostname }}
+        </p>
       </div>
 
       <!-- 操作类型选择 -->
@@ -33,7 +39,11 @@
         <!-- 修改基本信息 -->
         <template v-if="formData.operate === 'modify_base'">
           <el-form-item label="附加用户组">
-            <el-input v-model="formData.user_groups" placeholder="多个组名用逗号隔开" maxlength="100" />
+            <el-input
+              v-model="formData.user_groups"
+              placeholder="多个组名用逗号隔开"
+              maxlength="100"
+            />
           </el-form-item>
           <el-form-item label="主目录">
             <el-input v-model="formData.user_home" maxlength="256" />
@@ -119,7 +129,7 @@
             </el-select>
           </el-form-item>
           <el-form-item v-if="sudoCommands.length" label="sudo命令">
-            <el-table :data="sudoCommands"  size="small" max-height="200">
+            <el-table :data="sudoCommands" size="small" max-height="200">
               <el-table-column prop="command" label="命令" min-width="200" show-overflow-tooltip />
               <el-table-column prop="description" label="描述" width="150" show-overflow-tooltip />
             </el-table>
@@ -168,7 +178,7 @@ const emit = defineEmits(['update:visible', 'success'])
 
 const visible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 const loading = ref(false)
@@ -214,24 +224,31 @@ const jobIdMap = {
 }
 
 // 监听用户数据变化
-watch(() => props.user, (newUser) => {
-  if (newUser && Object.keys(newUser).length > 0) {
-    userData.value = { ...newUser }
-    formData.username = newUser.username || ''
-    formData.user_groups = newUser.secondary_group || ''
-    formData.user_home = newUser.home || ''
-    formData.user_shell = newUser.shell || ''
-    formData.user_comment = newUser.comment || ''
-    formData.user_expires = newUser.expired_date || ''
-  }
-}, { immediate: true })
+watch(
+  () => props.user,
+  newUser => {
+    if (newUser && Object.keys(newUser).length > 0) {
+      userData.value = { ...newUser }
+      formData.username = newUser.username || ''
+      formData.user_groups = newUser.secondary_group || ''
+      formData.user_home = newUser.home || ''
+      formData.user_shell = newUser.shell || ''
+      formData.user_comment = newUser.comment || ''
+      formData.user_expires = newUser.expired_date || ''
+    }
+  },
+  { immediate: true }
+)
 
 // 监听弹窗显示
-watch(() => props.visible, (val) => {
-  if (val) {
-    loadSudoTemplates()
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      loadSudoTemplates()
+    }
   }
-})
+)
 
 // 操作类型变化
 function handleOperateChange() {
@@ -316,9 +333,12 @@ async function handleSubmit() {
     const params = buildParams(hostId)
 
     const cacheBuster = Date.now()
-    const { data } = await apiService.post(`/jao/api/jao/jobs/${jobId}/run?cacheBuster=${cacheBuster}`, {
-      params
-    })
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/${jobId}/run?cacheBuster=${cacheBuster}`,
+      {
+        params
+      }
+    )
 
     const result = Array.isArray(data) ? data[0] : data
     currentStatus.value = result?.status || ''
@@ -343,7 +363,7 @@ async function handleSubmit() {
           emit('success')
           handleClose()
         },
-        onError: (res) => {
+        onError: res => {
           submitting.value = false
           currentStatus.value = ''
           ElMessage.error(res?.error || '操作失败')
@@ -448,16 +468,16 @@ function handleClose() {
 }
 
 .user-info {
-  background: #f0f9ff;
+  background: var(--el-color-primary-light-9);
   padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 20px;
-  border: 1px solid #bae6fd;
+  border: 1px solid var(--el-color-primary-light-8);
 
   p {
     margin: 4px 0;
     font-size: 14px;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
   }
 }
 

@@ -84,15 +84,18 @@ const assestsUsers = computed(() => {
   return html
 })
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    // 如果有选中的服务器，默认选择 "select"，否则选择 "all"
-    resetAll.value = hasSelection.value ? 'select' : 'all'
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val) {
+      // 如果有选中的服务器，默认选择 "select"，否则选择 "all"
+      resetAll.value = hasSelection.value ? 'select' : 'all'
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 
@@ -150,7 +153,7 @@ function handleClose() {
   overflow-y: auto;
   font-size: 13px;
   line-height: 1.8;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .dialog-footer {

@@ -12,7 +12,9 @@
       <!-- 选中的服务器信息 -->
       <el-alert type="info" :closable="false" class="info-alert">
         <template #title>
-          已选择 <strong>{{ selectedCount }}</strong> 台服务器进行密码修改
+          已选择
+          <strong>{{ selectedCount }}</strong>
+          台服务器进行密码修改
         </template>
       </el-alert>
 
@@ -55,11 +57,7 @@
         </el-form-item>
 
         <!-- 手工输入密码 -->
-        <el-form-item
-          v-if="formData.passwordType === 'manual'"
-          label="新密码"
-          prop="password"
-        >
+        <el-form-item v-if="formData.passwordType === 'manual'" label="新密码" prop="password">
           <el-input
             v-model="formData.password"
             type="password"
@@ -131,9 +129,7 @@ const formData = reactive({
 })
 
 const formRules = {
-  passwordType: [
-    { required: true, message: '请选择生成方式', trigger: 'change' }
-  ],
+  passwordType: [{ required: true, message: '请选择生成方式', trigger: 'change' }],
   password: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
     { min: 8, max: 16, message: '密码长度需要8-16位', trigger: 'blur' }
@@ -143,26 +139,32 @@ const formRules = {
 // 解析 commaIpStr，格式: assests_id@@host_key@@username
 const parsedServers = computed(() => {
   if (!props.commaIpStr) return []
-  return props.commaIpStr.split(',').map(item => {
-    const parts = item.split('@@')
-    return {
-      assetsId: parts[0] || '',
-      hostKey: parts[1] || parts[0] || '',
-      username: parts[2] || ''
-    }
-  }).filter(s => s.hostKey)
+  return props.commaIpStr
+    .split(',')
+    .map(item => {
+      const parts = item.split('@@')
+      return {
+        assetsId: parts[0] || '',
+        hostKey: parts[1] || parts[0] || '',
+        username: parts[2] || ''
+      }
+    })
+    .filter(s => s.hostKey)
 })
 
 const selectedCount = computed(() => parsedServers.value.length)
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    resetForm()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val) {
+      resetForm()
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 
@@ -251,7 +253,7 @@ function handleClose() {
     align-items: center;
     margin-bottom: 8px;
     font-size: 14px;
-    color: #606266;
+    color: var(--el-text-color-regular);
   }
 
   .servers-list {
@@ -276,7 +278,7 @@ function handleClose() {
 
 .hint-text {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
   line-height: 1.4;
 }

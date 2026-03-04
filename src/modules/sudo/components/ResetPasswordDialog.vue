@@ -51,10 +51,7 @@
             name="sudo_password_field"
             class="password-input"
           />
-          <el-button
-            @click="generateRandomPassword"
-            :disabled="submitting || !passwordConfig"
-          >
+          <el-button @click="generateRandomPassword" :disabled="submitting || !passwordConfig">
             <i class="fa fa-random"></i>
             随机密码
           </el-button>
@@ -65,9 +62,7 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" :disabled="submitting">
-          取消
-        </el-button>
+        <el-button @click="handleClose" :disabled="submitting">取消</el-button>
         <el-button
           type="primary"
           :loading="submitting"
@@ -126,9 +121,7 @@ const formRules = {
       trigger: ['change', 'blur']
     }
   ],
-  user: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
+  user: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     {
@@ -146,21 +139,26 @@ const formRules = {
 
 // 是否可以提交
 const canSubmit = computed(() => {
-  return formData.hosts.length > 0 &&
-         formData.user.trim() !== '' &&
-         formData.password.length >= 8 &&
-         formData.password.length <= 16
+  return (
+    formData.hosts.length > 0 &&
+    formData.user.trim() !== '' &&
+    formData.password.length >= 8 &&
+    formData.password.length <= 16
+  )
 })
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    resetForm()
-    loadPasswordConfig()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val) {
+      resetForm()
+      loadPasswordConfig()
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
   if (!val) {
     stopPolling()
@@ -204,7 +202,7 @@ function getRandomStr(defaultStr, length) {
 function shuffleStr(str) {
   const list = str.split('')
   const newList = []
-  list.forEach((item) => {
+  list.forEach(item => {
     const newListIndex = Math.round(Math.random() * newList.length)
     newList.splice(newListIndex, 0, item)
   })
@@ -238,10 +236,10 @@ function generateRandomPassword() {
   // 生成密码
   const password = shuffleStr(
     getRandomStr(lcredit, lcreditNum) +
-    getRandomStr(ucredit, ucreditNum) +
-    getRandomStr(ocredit, ocreditNum) +
-    getRandomStr(dcredit, dcreditNum) +
-    getRandomStr(lcredit + ucredit + ocredit + dcredit, remainingLength)
+      getRandomStr(ucredit, ucreditNum) +
+      getRandomStr(ocredit, ocreditNum) +
+      getRandomStr(dcredit, dcreditNum) +
+      getRandomStr(lcredit + ucredit + ocredit + dcredit, remainingLength)
   )
 
   formData.password = password
@@ -317,7 +315,7 @@ onMounted(() => {
 
   :deep(.el-form-item__label) {
     font-weight: 500;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -333,7 +331,7 @@ onMounted(() => {
 .form-item-hint {
   margin-top: 4px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
   line-height: 1.5;
 }
 

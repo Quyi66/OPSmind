@@ -66,20 +66,14 @@
 
       <!-- 用户 -->
       <el-form-item label="用户" prop="users">
-        <el-input
-          v-model="formData.users"
-          placeholder="请输入用户名"
-          :disabled="submitting"
-        />
+        <el-input v-model="formData.users" placeholder="请输入用户名" :disabled="submitting" />
         <div class="form-item-hint">要添加权限的用户列表，多个用户之间采用逗号、空格、换行分隔</div>
       </el-form-item>
     </el-form>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" :disabled="submitting">
-          取消
-        </el-button>
+        <el-button @click="handleClose" :disabled="submitting">取消</el-button>
         <el-button
           type="primary"
           :loading="submitting"
@@ -139,9 +133,7 @@ const formRules = {
       trigger: ['change', 'blur']
     }
   ],
-  users: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ]
+  users: [{ required: true, message: '请输入用户名', trigger: 'blur' }]
 }
 
 // 计算 valid_period（分钟数）
@@ -154,14 +146,17 @@ const canSubmit = computed(() => {
   return formData.hosts.length > 0 && formData.users.trim() !== ''
 })
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    resetForm()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val) {
+      resetForm()
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
   if (!val) {
     stopPolling()
@@ -244,7 +239,7 @@ function handleClose() {
 
   :deep(.el-form-item__label) {
     font-weight: 500;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -260,7 +255,7 @@ function handleClose() {
   gap: 8px;
 
   .duration-label {
-    color: #64748b;
+    color: var(--el-text-color-regular);
     font-size: 14px;
   }
 }
@@ -268,7 +263,7 @@ function handleClose() {
 .form-item-hint {
   margin-top: 4px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
   line-height: 1.5;
 }
 

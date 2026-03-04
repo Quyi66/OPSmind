@@ -6,12 +6,7 @@
     :close-on-click-modal="false"
     @close="handleClose"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-width="100px"
-    >
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
       <!-- 选择主机 -->
       <el-form-item label="选择主机" required>
         <AcmDeviceSelector
@@ -60,7 +55,7 @@ const emit = defineEmits(['update:visible', 'success'])
 
 const visible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 const formRef = ref(null)
@@ -132,12 +127,15 @@ async function handleSubmit() {
 
     // 调用作业执行接口
     const cacheBuster = Date.now()
-    const { data } = await apiService.post(`/jao/api/jao/jobs/zrYK7K/run?cacheBuster=${cacheBuster}`, {
-      params: {
-        hosts,
-        group_name: formData.group_name
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/zrYK7K/run?cacheBuster=${cacheBuster}`,
+      {
+        params: {
+          hosts,
+          group_name: formData.group_name
+        }
       }
-    })
+    )
 
     const result = Array.isArray(data) ? data[0] : data
     currentStatus.value = result?.status || ''
@@ -162,7 +160,7 @@ async function handleSubmit() {
           emit('success')
           handleClose()
         },
-        onError: (res) => {
+        onError: res => {
           submitting.value = false
           currentStatus.value = ''
           ElMessage.error(res?.error || '创建失败')
@@ -223,8 +221,10 @@ function handleClose() {
 
 .host-count {
   font-size: 13px;
-  color: #64748b;
-  strong { color: #3b82f6; }
+  color: var(--el-text-color-regular);
+  strong {
+    color: var(--el-color-primary);
+  }
 }
 
 .selected-hosts {

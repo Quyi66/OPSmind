@@ -99,14 +99,17 @@ const statusConfig = {
   UNKNOWN: { text: '未知', type: 'warning' }
 }
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val && props.serverId) {
-    loadPasswordData()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val && props.serverId) {
+      loadPasswordData()
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
   if (!val) {
     showPassword.value = false
@@ -198,13 +201,13 @@ function handleClose() {
   .info-label {
     width: 100px;
     flex-shrink: 0;
-    color: #606266;
+    color: var(--el-text-color-regular);
     font-size: 14px;
   }
 
   .info-value {
     flex: 1;
-    color: #303133;
+    color: var(--el-text-color-primary);
     font-size: 14px;
   }
 }

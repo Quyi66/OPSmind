@@ -102,12 +102,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table
-          v-loading="groupLoading"
-          :data="groupList"
-
-          max-height="calc(100vh - 280px)"
-        >
+        <el-table v-loading="groupLoading" :data="groupList" max-height="calc(100vh - 280px)">
           <el-table-column prop="path" label="分组路径" min-width="200" sortable>
             <template #default="{ row }">
               <el-link type="primary" :underline="false" @click="handleViewGroup(row)">
@@ -205,7 +200,7 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <el-table v-loading="tagLoading" :data="tagList"  max-height="calc(100vh - 240px)">
+        <el-table v-loading="tagLoading" :data="tagList" max-height="calc(100vh - 240px)">
           <el-table-column prop="name" label="标签名称" min-width="200" sortable>
             <template #default="{ row }">
               <el-link type="primary" :underline="false" @click="handleViewTag(row)">
@@ -665,7 +660,7 @@ onMounted(() => {
   .page-title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 
   .page-actions {

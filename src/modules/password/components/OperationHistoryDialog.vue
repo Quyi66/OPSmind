@@ -100,15 +100,18 @@ const serverInfo = computed(() => {
   }
 })
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val && props.assestsId) {
-    pagination.page = 1
-    loadData()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val && props.assestsId) {
+      pagination.page = 1
+      loadData()
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
   if (!val) {
     tableData.value = []
@@ -183,7 +186,7 @@ function handleClose() {
   border-radius: 6px;
 
   .username {
-    color: #606266;
+    color: var(--el-text-color-regular);
     font-size: 14px;
   }
 }

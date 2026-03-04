@@ -76,7 +76,7 @@
             <strong>{{ primaryStats.hostTotal }}</strong>
           </span>
         </div>
-        <el-table :data="filteredPrimaryData"  max-height="450">
+        <el-table :data="filteredPrimaryData" max-height="450">
           <el-table-column prop="name" label="二级业务名称" />
           <el-table-column prop="contItem" label="检查项失败数" width="120" align="left" />
           <el-table-column prop="contHost" label="主机数" width="100" align="left" />
@@ -115,7 +115,7 @@
               </template>
             </el-input>
           </div>
-          <el-table :data="filteredItemData"  max-height="400">
+          <el-table :data="filteredItemData" max-height="400">
             <el-table-column prop="item" label="检查项名称" />
             <el-table-column label="失败主机数" width="120" align="left">
               <template #default="{ row }">
@@ -149,7 +149,7 @@
               </template>
             </el-input>
           </div>
-          <el-table :data="filteredHostData"  max-height="400">
+          <el-table :data="filteredHostData" max-height="400">
             <el-table-column prop="host" label="主机名" />
             <el-table-column label="失败检查项数" width="120" align="left">
               <template #default="{ row }">
@@ -165,7 +165,7 @@
 
     <!-- 列表详情弹窗 -->
     <el-dialog v-model="listDialogVisible" :title="listDialogTitle" width="500px" destroy-on-close>
-      <el-table :data="listData"  max-height="400">
+      <el-table :data="listData" max-height="400">
         <el-table-column prop="name" :label="listDialogTitle" />
       </el-table>
     </el-dialog>
@@ -194,7 +194,6 @@
         <el-table
           v-loading="kpiDialogLoading"
           :data="filteredKpiDialogData"
-         
           max-height="calc(100vh - 300px)"
         >
           <!-- 检查项总数类型 (itemAll): 只显示检查项名称 -->
@@ -1104,7 +1103,7 @@ onUnmounted(() => {
       .el-breadcrumb__item {
         .el-breadcrumb__inner {
           a {
-            color: #409eff;
+            color: var(--el-color-primary);
             cursor: pointer;
             font-weight: normal;
 
@@ -1116,7 +1115,7 @@ onUnmounted(() => {
 
         &:last-child {
           .el-breadcrumb__inner {
-            color: #303133;
+            color: var(--el-text-color-primary);
             font-weight: 500;
           }
         }
@@ -1238,10 +1237,10 @@ onUnmounted(() => {
 
   .stat-item {
     font-size: 14px;
-    color: #606266;
+    color: var(--el-text-color-regular);
 
     strong {
-      color: #303133;
+      color: var(--el-text-color-primary);
       font-size: 16px;
     }
   }
@@ -1249,7 +1248,7 @@ onUnmounted(() => {
 
 .tab-stats {
   margin-bottom: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   font-size: 13px;
 }
 
@@ -1258,7 +1257,6 @@ onUnmounted(() => {
   font-size: 13px;
 
   .el-table__header th {
-    background-color: #f8f9fa !important;
   }
 }
 
@@ -1271,11 +1269,11 @@ onUnmounted(() => {
 
     .result-label {
       font-weight: bold;
-      color: #303133;
+      color: var(--el-text-color-primary);
     }
 
     .result-value {
-      color: #606266;
+      color: var(--el-text-color-regular);
     }
   }
 
@@ -1286,7 +1284,7 @@ onUnmounted(() => {
       max-height: 350px;
       padding: 12px;
       background: var(--el-bg-color-page);
-      color: #303133;
+      color: var(--el-text-color-primary);
       border: 1px solid var(--el-border-color-light);
       border-radius: 4px;
       font-size: 13px;
@@ -1297,7 +1295,7 @@ onUnmounted(() => {
       font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
 
       &.empty {
-        color: #909399;
+        color: var(--el-text-color-secondary);
         font-style: italic;
       }
     }

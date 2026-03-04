@@ -17,19 +17,11 @@
           label-position="left"
         >
           <el-form-item label="流程名称" prop="processName">
-            <el-input
-              v-model="formData.processName"
-              placeholder="请输入流程名称"
-              maxlength="50"
-            />
+            <el-input v-model="formData.processName" placeholder="请输入流程名称" maxlength="50" />
           </el-form-item>
 
           <el-form-item label="流程简称" prop="processAbbr">
-            <el-input
-              v-model="formData.processAbbr"
-              placeholder="请输入流程简称"
-              maxlength="20"
-            />
+            <el-input v-model="formData.processAbbr" placeholder="请输入流程简称" maxlength="20" />
           </el-form-item>
 
           <el-form-item label="备注" prop="remarks">
@@ -46,12 +38,7 @@
 
       <!-- mode: processDetail - 版本备注 -->
       <template v-else-if="mode === 'processDetail'">
-        <el-form
-          ref="formRef"
-          :model="formData"
-          label-width="100px"
-          label-position="left"
-        >
+        <el-form ref="formRef" :model="formData" label-width="100px" label-position="left">
           <el-form-item label="版本备注">
             <el-input
               v-model="formData.remark"
@@ -62,9 +49,7 @@
           </el-form-item>
 
           <el-form-item label="复制场景">
-            <el-checkbox v-model="formData.copyScenes">
-              复制关联场景
-            </el-checkbox>
+            <el-checkbox v-model="formData.copyScenes">复制关联场景</el-checkbox>
             <div class="help-text">勾选后将同时复制该流程关联的场景配置</div>
           </el-form-item>
         </el-form>
@@ -72,12 +57,7 @@
 
       <!-- mode: runDetail - 运行备注 -->
       <template v-else-if="mode === 'runDetail'">
-        <el-form
-          ref="formRef"
-          :model="formData"
-          label-width="100px"
-          label-position="left"
-        >
+        <el-form ref="formRef" :model="formData" label-width="100px" label-position="left">
           <el-form-item label="运行备注">
             <el-input
               v-model="formData.remark"
@@ -107,11 +87,7 @@
           </el-form-item>
 
           <el-form-item label="流程简称" prop="processAbbr">
-            <el-input
-              v-model="formData.processAbbr"
-              placeholder="请输入流程简称"
-              maxlength="20"
-            />
+            <el-input v-model="formData.processAbbr" placeholder="请输入流程简称" maxlength="20" />
           </el-form-item>
 
           <el-form-item label="备注" prop="remarks">
@@ -125,9 +101,7 @@
           </el-form-item>
 
           <el-form-item label="复制场景">
-            <el-checkbox v-model="formData.copyScenes">
-              复制关联场景
-            </el-checkbox>
+            <el-checkbox v-model="formData.copyScenes">复制关联场景</el-checkbox>
             <div class="help-text">勾选后将同时复制该流程关联的场景配置</div>
           </el-form-item>
         </el-form>
@@ -136,9 +110,7 @@
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="submitting" @click="handleConfirm">
-        确定
-      </el-button>
+      <el-button type="primary" :loading="submitting" @click="handleConfirm">确定</el-button>
     </template>
   </el-dialog>
 </template>
@@ -190,47 +162,51 @@ const formData = reactive({
 })
 
 const processRules = {
-  processName: [
-    { required: true, message: '请输入流程名称', trigger: 'blur' }
-  ],
-  processAbbr: [
-    { required: true, message: '请输入流程简称', trigger: 'blur' }
-  ]
+  processName: [{ required: true, message: '请输入流程名称', trigger: 'blur' }],
+  processAbbr: [{ required: true, message: '请输入流程简称', trigger: 'blur' }]
 }
 
 const dialogTitle = computed(() => {
   if (props.title) return props.title
   switch (props.mode) {
-    case 'process': return '编辑流程'
-    case 'processDetail': return '版本信息'
-    case 'runDetail': return '运行备注'
-    case 'processClone': return '克隆流程'
-    default: return '编辑'
+    case 'process':
+      return '编辑流程'
+    case 'processDetail':
+      return '版本信息'
+    case 'runDetail':
+      return '运行备注'
+    case 'processClone':
+      return '克隆流程'
+    default:
+      return '编辑'
   }
 })
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val) {
-    resetForm()
-    if (props.flowData) {
-      Object.assign(formData, {
-        id: props.flowData.id || '',
-        processKey: props.flowData.processKey || '',
-        processName: props.flowData.processName || '',
-        processDetailId: props.flowData.processDetailId || '',
-        processAbbr: props.flowData.processAbbr || '',
-        processStatus: props.flowData.processStatus ?? 1,
-        remarks: props.flowData.remarks || '',
-        createTime: props.flowData.createTime || '',
-        remark: props.flowData.remark || '',
-        copyScenes: props.flowData.copyScenes || false
-      })
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val) {
+      resetForm()
+      if (props.flowData) {
+        Object.assign(formData, {
+          id: props.flowData.id || '',
+          processKey: props.flowData.processKey || '',
+          processName: props.flowData.processName || '',
+          processDetailId: props.flowData.processDetailId || '',
+          processAbbr: props.flowData.processAbbr || '',
+          processStatus: props.flowData.processStatus ?? 1,
+          remarks: props.flowData.remarks || '',
+          createTime: props.flowData.createTime || '',
+          remark: props.flowData.remark || '',
+          copyScenes: props.flowData.copyScenes || false
+        })
+      }
     }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 
@@ -302,11 +278,11 @@ async function handleConfirm() {
 
 .help-text {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 
 :deep(.el-form-item__label) {
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 </style>

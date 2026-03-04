@@ -6,17 +6,9 @@
     :close-on-click-modal="false"
     @closed="handleClosed"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-position="top"
-    >
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
       <el-form-item label="模型名称" prop="title">
-        <el-input
-          v-model="formData.title"
-          placeholder="请输入模型名称"
-        />
+        <el-input v-model="formData.title" placeholder="请输入模型名称" />
       </el-form-item>
 
       <el-form-item label="资产代码" prop="code">
@@ -29,11 +21,7 @@
       </el-form-item>
 
       <el-form-item label="是否自动化" prop="isAuto">
-        <el-switch
-          v-model="formData.isAuto"
-          :active-value="1"
-          :inactive-value="0"
-        />
+        <el-switch v-model="formData.isAuto" :active-value="1" :inactive-value="0" />
         <span class="switch-label">{{ formData.isAuto === 1 ? '是' : '否' }}</span>
       </el-form-item>
 
@@ -49,9 +37,7 @@
 
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">
-        保存
-      </el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
     </template>
   </el-dialog>
 </template>
@@ -76,7 +62,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const formRef = ref()
@@ -91,7 +77,11 @@ const formRules = {
   title: [{ required: true, message: '请输入模型名称', trigger: 'blur' }],
   code: [
     { required: true, message: '请输入资产代码', trigger: 'blur' },
-    { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '资产代码必须以字母开头，只能包含字母、数字和下划线', trigger: 'blur' }
+    {
+      pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
+      message: '资产代码必须以字母开头，只能包含字母、数字和下划线',
+      trigger: 'blur'
+    }
   ]
 }
 
@@ -109,25 +99,19 @@ const handleSave = async () => {
   try {
     if (props.modelData) {
       // 编辑模型
-      await apiService.put(
-        `/acm/api/acm/cit/${props.modelData.id}?cacheBuster=${Date.now()}`,
-        {
-          title: formData.value.title,
-          isAuto: formData.value.isAuto,
-          description: formData.value.description
-        }
-      )
+      await apiService.put(`/acm/api/acm/cit/${props.modelData.id}?cacheBuster=${Date.now()}`, {
+        title: formData.value.title,
+        isAuto: formData.value.isAuto,
+        description: formData.value.description
+      })
     } else {
       // 添加模型
-      await apiService.post(
-        `/acm/api/acm/cit?cacheBuster=${Date.now()}`,
-        {
-          title: formData.value.title,
-          code: formData.value.code,
-          isAuto: formData.value.isAuto,
-          description: formData.value.description
-        }
-      )
+      await apiService.post(`/acm/api/acm/cit?cacheBuster=${Date.now()}`, {
+        title: formData.value.title,
+        code: formData.value.code,
+        isAuto: formData.value.isAuto,
+        description: formData.value.description
+      })
     }
     ElMessage.success('保存成功')
     visible.value = false
@@ -152,7 +136,7 @@ const handleClosed = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val && props.modelData) {
     formData.value = {
       title: props.modelData.title || '',
@@ -166,18 +150,18 @@ watch(visible, (val) => {
 
 <style scoped lang="scss">
 :deep(.el-form-item__label) {
-  color: #409eff;
+  color: var(--el-color-primary);
   font-weight: 500;
 }
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 
 .switch-label {
   margin-left: 8px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 </style>

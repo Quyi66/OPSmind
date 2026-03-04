@@ -19,17 +19,19 @@
       >
         <i class="fa fa-cloud-upload-alt upload-icon"></i>
         <div class="el-upload__text">
-          将文件拖到此处，或<em>点击上传</em>
+          将文件拖到此处，或
+          <em>点击上传</em>
         </div>
         <template #tip>
-          <div class="el-upload__tip">
-            只能上传 xlsx/xls 文件
-          </div>
+          <div class="el-upload__tip">只能上传 xlsx/xls 文件</div>
         </template>
       </el-upload>
 
       <div class="upload-tips">
-        <p><i class="fa fa-info-circle"></i> 导入说明：</p>
+        <p>
+          <i class="fa fa-info-circle"></i>
+          导入说明：
+        </p>
         <ul>
           <li>请使用标准的模型导入模板</li>
           <li>模型代码必须唯一且以字母开头</li>
@@ -40,7 +42,12 @@
 
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="uploading" :disabled="!selectedFile" @click="handleUpload">
+      <el-button
+        type="primary"
+        :loading="uploading"
+        :disabled="!selectedFile"
+        @click="handleUpload"
+      >
         导入
       </el-button>
     </template>
@@ -63,7 +70,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const uploadRef = ref()
@@ -71,7 +78,7 @@ const selectedFile = ref(null)
 const uploading = ref(false)
 
 // 文件选择
-const handleFileChange = (file) => {
+const handleFileChange = file => {
   selectedFile.value = file.raw
 }
 
@@ -92,15 +99,11 @@ const handleUpload = async () => {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
 
-    await apiService.post(
-      `/acm/api/acm/cit/import?cacheBuster=${Date.now()}`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+    await apiService.post(`/acm/api/acm/cit/import?cacheBuster=${Date.now()}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
       }
-    )
+    })
     ElMessage.success('导入成功')
     visible.value = false
     emit('saved')
@@ -131,7 +134,7 @@ const handleClosed = () => {
 
     .upload-icon {
       font-size: 48px;
-      color: #c0c4cc;
+      color: var(--el-text-color-placeholder);
       margin-bottom: 16px;
     }
   }
@@ -142,13 +145,13 @@ const handleClosed = () => {
     background: var(--el-bg-color-page);
     border-radius: 4px;
     font-size: 13px;
-    color: #606266;
+    color: var(--el-text-color-regular);
 
     p {
       margin: 0 0 8px;
 
       i {
-        color: #409eff;
+        color: var(--el-color-primary);
         margin-right: 4px;
       }
     }

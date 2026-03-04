@@ -65,7 +65,12 @@
 
     <!-- 数据表格 -->
     <div class="ops-table-wrapper">
-      <el-table :data="tableData" v-loading="loading" style="width: 100%" max-height="calc(100vh - 230px)">
+      <el-table
+        :data="tableData"
+        v-loading="loading"
+        style="width: 100%"
+        max-height="calc(100vh - 230px)"
+      >
         <!-- 开始时间 -->
         <el-table-column prop="start_time" label="开始时间" width="170">
           <template #default="{ row }">
@@ -293,7 +298,7 @@ function formatDuration(startTime, endTime) {
 
 <style scoped lang="scss">
 .text-danger {
-  color: #ef4444;
+  color: var(--el-color-danger);
 }
 
 .status-tag-clickable {

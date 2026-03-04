@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout" style="padding: 0">
+  <div class="ops-page-layout asset-overview" style="padding: 0">
     <div class="content-wrapper">
       <!-- 图表区域 - 第一行：资产类型 + 操作系统分布 -->
       <div class="charts-row">
@@ -230,7 +230,7 @@ onMounted(() => {
   .navbar-title {
     font-size: 18px;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
   }
 }
 

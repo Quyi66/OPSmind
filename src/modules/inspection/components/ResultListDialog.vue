@@ -9,18 +9,18 @@
     @close="handleClose"
   >
     <div class="result-list-dialog">
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        style="width: 100%"
-        height="500px"
-      >
-        <el-table-column prop="templateName" label="模板名称" min-width="200" show-overflow-tooltip />
+      <el-table v-loading="loading" :data="tableData" style="width: 100%" height="500px">
+        <el-table-column
+          prop="templateName"
+          label="模板名称"
+          min-width="200"
+          show-overflow-tooltip
+        />
         <el-table-column label="检查项" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-             <span class="check-item-info">
-               脚本: {{ countScripts(row.auditParams) }}, 主机: {{ countHosts(row.auditParams) }}
-             </span>
+            <span class="check-item-info">
+              脚本: {{ countScripts(row.auditParams) }}, 主机: {{ countHosts(row.auditParams) }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="开始时间" width="180">
@@ -100,10 +100,7 @@
       destroy-on-close
       class="structural-dialog"
     >
-      <StructuralDiagram
-        v-if="structuralDialogVisible"
-        :job-id="currentStructuralJobId"
-      />
+      <StructuralDiagram v-if="structuralDialogVisible" :job-id="currentStructuralJobId" />
     </el-dialog>
   </el-dialog>
 </template>
@@ -149,7 +146,7 @@ const currentStructuralJobTitle = ref('')
 
 watch(
   () => props.visible,
-  (val) => {
+  val => {
     if (val) {
       currentPage.value = 1
       loadParams()
@@ -220,7 +217,6 @@ async function loadData() {
     const data = response?.data || response
     tableData.value = data.data || []
     total.value = data.recordsTotal || 0
-
   } catch (error) {
     console.error('Failed to load job history:', error)
     ElMessage.error('加载执行历史失败')
@@ -282,22 +278,22 @@ function formatDateTime(dateStr) {
 function getStatusType(status) {
   // Map job status to Element Plus tag types
   const map = {
-    'OK': 'success',
-    'FAIL': 'danger',
-    'ERROR': 'danger',
-    'RUNNING': 'primary',
-    'WAITING': 'warning'
+    OK: 'success',
+    FAIL: 'danger',
+    ERROR: 'danger',
+    RUNNING: 'primary',
+    WAITING: 'warning'
   }
   return map[status] || 'info'
 }
 
 function getStatusText(status) {
   const map = {
-    'OK': '成功',
-    'FAIL': '失败',
-    'ERROR': '错误',
-    'RUNNING': '运行中',
-    'WAITING': '等待中'
+    OK: '成功',
+    FAIL: '失败',
+    ERROR: '错误',
+    RUNNING: '运行中',
+    WAITING: '等待中'
   }
   return map[status] || status
 }
@@ -336,7 +332,7 @@ function countScripts(auditParamsStr) {
 <style scoped>
 .check-item-info {
   font-size: 12px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 /* 状态按钮样式 */

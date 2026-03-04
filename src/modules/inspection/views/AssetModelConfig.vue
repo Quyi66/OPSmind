@@ -7,12 +7,7 @@
 
     <!-- 提示信息 -->
     <div class="config-wrapper">
-      <el-alert
-        type="success"
-        :closable="true"
-        show-icon
-        class="info-alert"
-      >
+      <el-alert type="success" :closable="true" show-icon class="info-alert">
         <template #title>
           <strong>导出配置说明</strong>
         </template>
@@ -48,7 +43,7 @@
                 <el-checkbox
                   :model-value="assetModel.isChecked"
                   :label="assetModel.title"
-                  @change="(checked) => handleCheckChange(assetModel, checked)"
+                  @change="checked => handleCheckChange(assetModel, checked)"
                 />
               </div>
             </div>
@@ -56,10 +51,7 @@
         </template>
 
         <!-- 空状态 -->
-        <el-empty
-          v-else-if="!loading"
-          description="暂无资产模型配置"
-        />
+        <el-empty v-else-if="!loading" description="暂无资产模型配置" />
       </div>
     </div>
   </div>
@@ -180,7 +172,7 @@ onMounted(() => {
   .navbar-title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -209,8 +201,8 @@ onMounted(() => {
 .model-card {
   :deep(.el-card__header) {
     padding: 12px 20px;
-    background: #d1e7dd;
-    border-bottom: 1px solid #c3e6cb;
+    background: var(--el-color-success-light-9);
+    border-bottom: 1px solid var(--el-color-success-light-7);
   }
 
   .card-header {
@@ -221,7 +213,7 @@ onMounted(() => {
     .card-title {
       font-size: 14px;
       font-weight: 600;
-      color: #155724;
+      color: var(--el-color-success);
     }
   }
 
@@ -254,7 +246,7 @@ onMounted(() => {
 
     .el-checkbox__label {
       font-size: 13px;
-      color: #606266;
+      color: var(--el-text-color-regular);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

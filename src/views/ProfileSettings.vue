@@ -549,7 +549,7 @@ function resetPasswordForm() {
 
   .info-label {
     font-size: 14px;
-    // color: #409eff;
+    color: var(--el-text-color-secondary);
     font-weight: 500;
     display: flex;
     align-items: center;

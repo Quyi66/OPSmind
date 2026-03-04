@@ -104,7 +104,6 @@
         <el-table
           :data="filteredAutomationData"
           v-loading="automationLoading"
-         
           :max-height="tableMaxHeight"
         >
           <el-table-column prop="ci_type" label="资产代码" width="100" />
@@ -215,7 +214,6 @@
         <el-table
           :data="paginatedAnsibleData"
           v-loading="ansibleLoading"
-         
           :max-height="tableMaxHeight"
         >
           <el-table-column prop="name" label="配置名称" width="120" />
@@ -638,14 +636,10 @@ async function loadAutomationData() {
 async function loadAnsibleData() {
   ansibleLoading.value = true
   try {
-    const response = await dtsApi.queryData(
-      'ACM_GET_ALL_ANSIBLE_SET_REST',
-      null,
-      {
-        size: 9999,
-        page: 1
-      }
-    )
+    const response = await dtsApi.queryData('ACM_GET_ALL_ANSIBLE_SET_REST', null, {
+      size: 9999,
+      page: 1
+    })
     ansibleData.value = response?.records || []
     // 更新配置选项（供其它下拉使用）
     ansibleConfigOptions.value = response?.records || []
@@ -987,7 +981,7 @@ function handleDeviceManageSuccess() {
   .page-title {
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 
   .page-actions {
@@ -1054,7 +1048,7 @@ function handleDeviceManageSuccess() {
   border-top: 1px solid var(--el-border-color-light);
 
   .page-info {
-    color: #606266;
+    color: var(--el-text-color-regular);
     font-size: 13px;
   }
 
@@ -1065,7 +1059,7 @@ function handleDeviceManageSuccess() {
 
 .form-desc {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
   line-height: 1.4;
 }

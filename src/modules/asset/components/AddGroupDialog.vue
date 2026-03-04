@@ -6,12 +6,7 @@
     :close-on-click-modal="false"
     @closed="handleClosed"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-position="top"
-    >
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
       <el-form-item label="操作" prop="operate">
         <el-radio-group v-model="formData.operate">
           <el-radio value="new">新建</el-radio>
@@ -22,11 +17,7 @@
       <!-- 新建分组 -->
       <template v-if="formData.operate === 'new'">
         <el-form-item label="分组名称" prop="name">
-          <el-input
-            v-model="formData.name"
-            placeholder="请输入分组名称"
-            style="width: 100%"
-          />
+          <el-input v-model="formData.name" placeholder="请输入分组名称" style="width: 100%" />
         </el-form-item>
 
         <el-form-item label="上级分组" prop="parentId">
@@ -47,11 +38,7 @@
       </template>
 
       <!-- 选择已有分组 -->
-      <el-form-item
-        v-if="formData.operate === 'select'"
-        label="已有分组"
-        prop="id"
-      >
+      <el-form-item v-if="formData.operate === 'select'" label="已有分组" prop="id">
         <el-select
           v-model="formData.id"
           placeholder="请选择"
@@ -69,9 +56,7 @@
     </el-form>
 
     <template #footer>
-      <el-button type="primary" :loading="saving" @click="handleSave">
-        保存
-      </el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
     </template>
   </el-dialog>
 </template>
@@ -101,7 +86,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const formRef = ref()
@@ -115,12 +100,14 @@ const formData = ref({
 // 动态验证规则
 const formRules = computed(() => ({
   operate: [{ required: true, message: '请选择操作', trigger: 'change' }],
-  name: formData.value.operate === 'new'
-    ? [{ required: true, message: '请输入分组名称', trigger: 'blur' }]
-    : [],
-  id: formData.value.operate === 'select'
-    ? [{ required: true, message: '请选择已有分组', trigger: 'change' }]
-    : []
+  name:
+    formData.value.operate === 'new'
+      ? [{ required: true, message: '请输入分组名称', trigger: 'blur' }]
+      : [],
+  id:
+    formData.value.operate === 'select'
+      ? [{ required: true, message: '请选择已有分组', trigger: 'change' }]
+      : []
 }))
 
 const loadingGroups = ref(false)
@@ -176,10 +163,7 @@ const handleSave = async () => {
       params.parentId = formData.value.parentId || ''
     }
 
-    await apiService.post(
-      `/jao/api/jao/jobs/a17VXM/run?cacheBuster=${Date.now()}`,
-      { params }
-    )
+    await apiService.post(`/jao/api/jao/jobs/a17VXM/run?cacheBuster=${Date.now()}`, { params })
 
     ElMessage.success('添加分组成功')
     visible.value = false
@@ -204,18 +188,21 @@ const handleClosed = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadExistingGroups()
   }
 })
 
 // 切换操作类型时清空相关字段
-watch(() => formData.value.operate, () => {
-  formData.value.name = ''
-  formData.value.parentId = ''
-  formData.value.id = ''
-})
+watch(
+  () => formData.value.operate,
+  () => {
+    formData.value.name = ''
+    formData.value.parentId = ''
+    formData.value.id = ''
+  }
+)
 </script>
 
 <style scoped lang="scss">
@@ -224,7 +211,7 @@ watch(() => formData.value.operate, () => {
 }
 
 :deep(.el-form-item__label) {
-  color: #409eff;
+  color: var(--el-color-primary);
   font-weight: 500;
 }
 </style>

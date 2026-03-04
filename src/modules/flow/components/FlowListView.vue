@@ -31,16 +31,31 @@
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreate">
-        <el-icon><Plus /></el-icon> 新建
+        <el-icon><Plus /></el-icon>
+        新建
       </el-button>
-      <el-button size="small" type="danger" :disabled="!selectedRows.length" @click="handleBatchDelete">
-        <el-icon><Delete /></el-icon> 删除
+      <el-button
+        size="small"
+        type="danger"
+        :disabled="!selectedRows.length"
+        @click="handleBatchDelete"
+      >
+        <el-icon><Delete /></el-icon>
+        删除
       </el-button>
       <el-button size="small" :disabled="!selectedRows.length" @click="handleExport">
-        <el-icon><Download /></el-icon> 导出
+        <el-icon><Download /></el-icon>
+        导出
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -62,24 +77,18 @@
         <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button text type="primary" size="small" @click="handleEdit(row)">
-                编辑
-              </el-button>
+              <el-button text type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
               <el-button text type="primary" size="small" @click="handleDesign(row)">
                 设计
               </el-button>
               <el-button text type="primary" size="small" @click="handleExecute(row)">
                 执行
               </el-button>
-              <el-button text type="primary" size="small" @click="handleClone(row)">
-                克隆
-              </el-button>
+              <el-button text type="primary" size="small" @click="handleClone(row)">克隆</el-button>
               <el-button type="primary" text size="small" @click="handleViewHistory(row)">
                 历史版本
               </el-button>
-              <el-button text type="danger" size="small" @click="handleDelete(row)">
-                删除
-              </el-button>
+              <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
             </div>
           </template>
         </el-table-column>
@@ -108,11 +117,7 @@
     />
 
     <!-- 编辑流程对话框 -->
-    <FlowEditDialog
-      v-model="showEditDialog"
-      :flow-data="editFlowData"
-      @saved="handleEditSaved"
-    />
+    <FlowEditDialog v-model="showEditDialog" :flow-data="editFlowData" @saved="handleEditSaved" />
 
     <!-- 克隆流程对话框 -->
     <FlowEditDialog
@@ -166,10 +171,11 @@ const filteredData = computed(() => {
   let data = tableData.value
   if (appliedKeyword.value) {
     const keyword = appliedKeyword.value.toLowerCase()
-    data = data.filter(item =>
-      item.processName?.toLowerCase().includes(keyword) ||
-      item.processAbbr?.toLowerCase().includes(keyword) ||
-      item.remarks?.toLowerCase().includes(keyword)
+    data = data.filter(
+      item =>
+        item.processName?.toLowerCase().includes(keyword) ||
+        item.processAbbr?.toLowerCase().includes(keyword) ||
+        item.remarks?.toLowerCase().includes(keyword)
     )
   }
   return data
@@ -231,16 +237,18 @@ function handleCreate() {
 function handleBatchDelete() {
   ElMessageBox.confirm('确定要删除选中的流程吗？', '提示', {
     type: 'warning'
-  }).then(async () => {
-    try {
-      const ids = selectedRows.value.map(row => row.id)
-      await flowApi.batchDeleteFlow(ids)
-      ElMessage.success('删除成功')
-      loadData()
-    } catch (error) {
-      ElMessage.error('删除失败')
-    }
-  }).catch(() => {})
+  })
+    .then(async () => {
+      try {
+        const ids = selectedRows.value.map(row => row.id)
+        await flowApi.batchDeleteFlow(ids)
+        ElMessage.success('删除成功')
+        loadData()
+      } catch (error) {
+        ElMessage.error('删除失败')
+      }
+    })
+    .catch(() => {})
 }
 
 async function handleExport() {
@@ -367,15 +375,17 @@ async function handleCloneConfirm(data) {
 function handleDelete(row) {
   ElMessageBox.confirm(`确定要删除流程"${row.processName}"吗？`, '提示', {
     type: 'warning'
-  }).then(async () => {
-    try {
-      await flowApi.deleteFlow(row.id)
-      ElMessage.success('删除成功')
-      loadData()
-    } catch (error) {
-      ElMessage.error('删除失败')
-    }
-  }).catch(() => {})
+  })
+    .then(async () => {
+      try {
+        await flowApi.deleteFlow(row.id)
+        ElMessage.success('删除成功')
+        loadData()
+      } catch (error) {
+        ElMessage.error('删除失败')
+      }
+    })
+    .catch(() => {})
 }
 
 onMounted(() => {
@@ -403,7 +413,7 @@ onMounted(() => {
 .view-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--el-text-color-primary);
   margin: 0;
 }
 
@@ -416,7 +426,8 @@ onMounted(() => {
   background: var(--el-bg-color-page);
   border-radius: 6px;
 
-  &__left, &__right {
+  &__left,
+  &__right {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -440,6 +451,6 @@ onMounted(() => {
 
 .page-info {
   font-size: 13px;
-  color: #64748b;
+  color: var(--el-text-color-regular);
 }
 </style>

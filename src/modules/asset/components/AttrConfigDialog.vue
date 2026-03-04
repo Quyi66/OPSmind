@@ -6,11 +6,7 @@
     :close-on-click-modal="false"
     @closed="handleClosed"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      label-width="100px"
-    >
+    <el-form ref="formRef" :model="formData" label-width="100px">
       <el-form-item label="属性名称">
         <el-input v-model="formData.title" placeholder="请输入属性名称" maxlength="50" />
       </el-form-item>
@@ -50,9 +46,7 @@
           :rows="4"
           placeholder="可选，输入 JavaScript 函数进行值转换显示"
         />
-        <div class="form-tip">
-          示例：js:function f() { return '转换后的值'; }
-        </div>
+        <div class="form-tip">示例：js:function f() { return '转换后的值'; }</div>
       </el-form-item>
 
       <el-divider content-position="left">其他配置</el-divider>
@@ -96,7 +90,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const formRef = ref()
@@ -119,16 +113,19 @@ const inputDatatype = ref('string')
 const displayConverter = ref('')
 
 // 监听弹窗打开
-watch(() => props.modelValue, (val) => {
-  if (val && props.attrData) {
-    formData.value = { ...props.attrData }
-    // 解析 input 配置
-    inputControl.value = props.attrData.input?.control || 'input'
-    inputDatatype.value = props.attrData.input?.datatype || 'string'
-    // 解析 display 配置
-    displayConverter.value = props.attrData.display?.converter || ''
+watch(
+  () => props.modelValue,
+  val => {
+    if (val && props.attrData) {
+      formData.value = { ...props.attrData }
+      // 解析 input 配置
+      inputControl.value = props.attrData.input?.control || 'input'
+      inputDatatype.value = props.attrData.input?.datatype || 'string'
+      // 解析 display 配置
+      displayConverter.value = props.attrData.display?.converter || ''
+    }
   }
-})
+)
 
 // 保存
 const handleSave = () => {
@@ -169,7 +166,7 @@ const handleClosed = () => {
 <style scoped lang="scss">
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 </style>

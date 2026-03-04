@@ -4,7 +4,13 @@
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
         <el-form-item label="关键词">
-          <el-input v-model="searchText" placeholder="模版名称/描述" clearable style="width: 200px" @input="handleSearch">
+          <el-input
+            v-model="searchText"
+            placeholder="模版名称/描述"
+            clearable
+            style="width: 200px"
+            @input="handleSearch"
+          >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -15,8 +21,15 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading">
           <Refresh />
         </el-icon>
@@ -25,21 +38,35 @@
 
     <!-- 模版列表 -->
     <div class="ops-table-wrapper">
-      <el-table :data="paginatedTemplates" v-loading="loading"  style="width: 100%"
-        max-height="calc(100vh - 280px)">
+      <el-table
+        :data="paginatedTemplates"
+        v-loading="loading"
+        style="width: 100%"
+        max-height="calc(100vh - 280px)"
+      >
         <el-table-column prop="templateName" label="名称" min-width="150" show-overflow-tooltip />
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
         <el-table-column label="关联团队" min-width="200">
           <template #default="{ row }">
-            <el-select v-model="row.groupId" placeholder="选择团队" clearable style="width: 100%"
-              @change="handleTeamChange(row)" size="small">
+            <el-select
+              v-model="row.groupId"
+              placeholder="选择团队"
+              clearable
+              style="width: 100%"
+              @change="handleTeamChange(row)"
+              size="small"
+            >
               <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
             </el-select>
           </template>
         </el-table-column>
         <el-table-column label="是否发送告警通知" width="150" align="left">
           <template #default="{ row }">
-            <el-switch v-model="row.sendAlert" :disabled="!row.groupId" @change="handleAlertChange(row)" />
+            <el-switch
+              v-model="row.sendAlert"
+              :disabled="!row.groupId"
+              @change="handleAlertChange(row)"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="updatedAt" label="更新时间" width="180">
@@ -52,9 +79,14 @@
 
     <!-- 分页器 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]" :total="filteredTemplates.length"
-        layout="total, sizes, prev, pager, next, jumper" background />
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="filteredTemplates.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+      />
     </div>
   </div>
 </template>
@@ -82,9 +114,10 @@ const appliedSearchText = ref('')
 const filteredTemplates = computed(() => {
   if (!appliedSearchText.value) return templates.value
   const keyword = appliedSearchText.value.toLowerCase()
-  return templates.value.filter(t =>
-    t.templateName?.toLowerCase().includes(keyword) ||
-    t.description?.toLowerCase().includes(keyword)
+  return templates.value.filter(
+    t =>
+      t.templateName?.toLowerCase().includes(keyword) ||
+      t.description?.toLowerCase().includes(keyword)
   )
 })
 
@@ -160,13 +193,17 @@ async function handleTeamChange(row) {
   const team = teams.value.find(t => t.id === row.groupId)
 
   try {
-    await apiService.post('/cac/api/cac/v2/save/teams-info', {
-      templateId: row.id,
-      teamId: row.groupId || null,
-      teamName: team?.name || null
-    }, {
-      params: { cacheBuster: Date.now() }
-    })
+    await apiService.post(
+      '/cac/api/cac/v2/save/teams-info',
+      {
+        templateId: row.id,
+        teamId: row.groupId || null,
+        teamName: team?.name || null
+      },
+      {
+        params: { cacheBuster: Date.now() }
+      }
+    )
     ElMessage.success('保存成功')
   } catch (error) {
     console.error('Failed to save:', error)
@@ -189,6 +226,6 @@ async function handleAlertChange(row) {
 
 <style scoped lang="scss">
 .text-muted {
-  color: #909399;
+  color: var(--el-text-color-regular);
 }
 </style>

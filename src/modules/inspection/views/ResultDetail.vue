@@ -935,10 +935,10 @@ onMounted(() => {
     :deep(.el-breadcrumb) {
       font-size: 14px;
       a {
-        color: #409eff;
+        color: var(--el-color-primary);
         cursor: pointer;
         &:hover {
-          color: #66b1ff;
+          color: var(--el-color-primary-light-3);
         }
       }
     }
@@ -957,7 +957,7 @@ onMounted(() => {
     margin-bottom: 12px;
     .time-info {
       font-size: 13px;
-      color: #606266;
+      color: var(--el-text-color-regular);
     }
   }
 
@@ -968,7 +968,7 @@ onMounted(() => {
     margin-top: 8px;
 
     .info-label {
-      color: #909399;
+      color: var(--el-text-color-secondary);
       font-size: 13px;
       min-width: 40px;
     }
@@ -984,7 +984,7 @@ onMounted(() => {
         text-overflow: ellipsis;
       }
       .more-hosts {
-        color: #909399;
+        color: var(--el-text-color-secondary);
       }
     }
   }
@@ -1027,7 +1027,7 @@ onMounted(() => {
   gap: 12px;
   padding-top: 12px;
   .pagination-info {
-    color: #6c757d;
+    color: var(--el-text-color-secondary);
     font-size: 13px;
   }
 }
@@ -1035,14 +1035,12 @@ onMounted(() => {
 :deep(.el-table) {
   font-size: 13px;
   .el-table__header th {
-    background-color: #f8f9fa !important;
-    color: #495057;
     font-weight: 500;
   }
 }
 
 .no-data {
-  color: #909399;
+  color: var(--el-text-color-secondary);
   font-size: 12px;
 }
 </style>

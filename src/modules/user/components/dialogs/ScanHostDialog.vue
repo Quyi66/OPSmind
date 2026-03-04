@@ -215,14 +215,14 @@ function handleClose() {
   &__title {
     font-size: 14px;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
     margin-bottom: 12px;
     display: flex;
     align-items: center;
     gap: 8px;
 
     i {
-      color: #3b82f6;
+      color: var(--el-color-primary);
     }
   }
 
@@ -233,11 +233,11 @@ function handleClose() {
 
 .scan-info {
   font-size: 13px;
-  color: #475569;
-  background: #f0f9ff;
+  color: var(--el-text-color-regular);
+  background: var(--el-color-primary-light-9);
   padding: 12px 16px;
   border-radius: 8px;
-  border: 1px solid #bae6fd;
+  border: 1px solid var(--el-color-primary-light-8);
 
   p {
     margin: 0 0 8px 0;

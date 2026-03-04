@@ -3,11 +3,24 @@
     <!-- 操作区 -->
     <div class="ops-action-bar">
       <div>
-        <el-switch v-model="emailEnabled" :loading="switchLoading" active-text="启用邮件通知" @change="handleSwitchChange" />
+        <el-switch
+          v-model="emailEnabled"
+          :loading="switchLoading"
+          active-text="启用邮件通知"
+          @change="handleSwitchChange"
+        />
       </div>
       <div class="search-box">
-        <el-input v-model="searchKeyword" placeholder="搜索模板名称" clearable size="small" style="width: 200px"
-          maxlength="50" @keyup.enter="handleSearch" @clear="handleSearch">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索模板名称"
+          clearable
+          size="small"
+          style="width: 200px"
+          maxlength="50"
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        >
           <template #prefix>
             <i class="fa fa-search"></i>
           </template>
@@ -19,7 +32,12 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="pagedTemplates" max-height="calc(100vh - 180px)">
-        <el-table-column prop="template_name" label="模板名称" min-width="200" show-overflow-tooltip />
+        <el-table-column
+          prop="template_name"
+          label="模板名称"
+          min-width="200"
+          show-overflow-tooltip
+        />
         <el-table-column prop="executed_at" label="最后执行时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.executed_at) }}
@@ -27,9 +45,7 @@
         </el-table-column>
         <el-table-column label="操作" width="220" align="left" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" @click="showRecipientDialog(row)">
-              收件人列表
-            </el-button>
+            <el-button text type="primary" @click="showRecipientDialog(row)">收件人列表</el-button>
             <el-button text type="primary" @click="showCustomContentDialog(row)">
               自定义内容
             </el-button>
@@ -53,8 +69,13 @@
     </div>
 
     <!-- 收件人列表弹窗 -->
-    <el-dialog :model-value="recipientDialogVisible" title="收件人列表" width="800px" destroy-on-close
-      @close="recipientDialogVisible = false">
+    <el-dialog
+      :model-value="recipientDialogVisible"
+      title="收件人列表"
+      width="800px"
+      destroy-on-close
+      @close="recipientDialogVisible = false"
+    >
       <div v-loading="recipientLoading" class="recipient-dialog">
         <div class="dialog-header">
           <div class="template-info">
@@ -62,12 +83,13 @@
             <span class="value">{{ currentTemplate?.template_name }}</span>
           </div>
           <el-button type="primary" size="small" @click="showAddRecipientDialog">
-            <i class="fa fa-plus"></i> 新增
+            <i class="fa fa-plus"></i>
+            新增
           </el-button>
         </div>
 
         <!-- 收件人表格 -->
-        <el-table :data="recipientTableData"  max-height="400">
+        <el-table :data="recipientTableData" max-height="400">
           <el-table-column prop="name" label="姓名" min-width="120" />
           <el-table-column prop="email" label="邮箱" min-width="180" />
           <el-table-column prop="status" label="状态" width="100" align="left">
@@ -96,14 +118,28 @@
     </el-dialog>
 
     <!-- 新增/编辑收件人弹窗 -->
-    <el-dialog :model-value="recipientFormVisible" :title="recipientFormData.id ? '编辑收件人' : '新增收件人'" width="500px"
-      destroy-on-close @close="recipientFormVisible = false">
-      <el-form ref="recipientFormRef" :model="recipientFormData" :rules="recipientFormRules" label-width="80px">
+    <el-dialog
+      :model-value="recipientFormVisible"
+      :title="recipientFormData.id ? '编辑收件人' : '新增收件人'"
+      width="500px"
+      destroy-on-close
+      @close="recipientFormVisible = false"
+    >
+      <el-form
+        ref="recipientFormRef"
+        :model="recipientFormData"
+        :rules="recipientFormRules"
+        label-width="80px"
+      >
         <el-form-item label="姓名" prop="name">
           <el-input v-model="recipientFormData.name" placeholder="请输入姓名" maxlength="50" />
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
-          <el-input v-model="recipientFormData.email" placeholder="请输入邮箱地址" maxlength="100" />
+          <el-input
+            v-model="recipientFormData.email"
+            placeholder="请输入邮箱地址"
+            maxlength="100"
+          />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="recipientFormData.status">
@@ -112,21 +148,29 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="recipientFormData.remarks" type="textarea" :rows="3" placeholder="请输入备注" />
+          <el-input
+            v-model="recipientFormData.remarks"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入备注"
+          />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <el-button @click="recipientFormVisible = false">取消</el-button>
-        <el-button type="primary" :loading="recipientSaving" @click="saveRecipient">
-          保存
-        </el-button>
+        <el-button type="primary" :loading="recipientSaving" @click="saveRecipient">保存</el-button>
       </template>
     </el-dialog>
 
     <!-- 自定义内容弹窗 -->
-    <el-dialog :model-value="customContentDialogVisible" title="自定义内容" width="600px" destroy-on-close
-      @close="customContentDialogVisible = false">
+    <el-dialog
+      :model-value="customContentDialogVisible"
+      title="自定义内容"
+      width="600px"
+      destroy-on-close
+      @close="customContentDialogVisible = false"
+    >
       <div v-loading="customContentLoading" class="custom-content-dialog">
         <div class="template-info">
           <span class="label">模板名称：</span>
@@ -135,10 +179,19 @@
 
         <el-form label-width="100px">
           <el-form-item label="自定义标题">
-            <el-input v-model="customContentData.title" placeholder="请输入自定义邮件标题" clearable />
+            <el-input
+              v-model="customContentData.title"
+              placeholder="请输入自定义邮件标题"
+              clearable
+            />
           </el-form-item>
           <el-form-item label="自定义内容">
-            <el-input v-model="customContentData.content" type="textarea" :rows="4" placeholder="请输入自定义邮件内容" />
+            <el-input
+              v-model="customContentData.content"
+              type="textarea"
+              :rows="4"
+              placeholder="请输入自定义邮件内容"
+            />
           </el-form-item>
           <el-form-item label="状态">
             <el-radio-group v-model="customContentData.state">
@@ -339,7 +392,8 @@ function filterRecipientsByTemplate() {
   recipientTableData.value = allRecipientData.value
     .filter(item => {
       try {
-        const dataJson = typeof item.dataJson === 'string' ? JSON.parse(item.dataJson) : item.dataJson
+        const dataJson =
+          typeof item.dataJson === 'string' ? JSON.parse(item.dataJson) : item.dataJson
         return dataJson?.template_id === templateId
       } catch (e) {
         console.error('解析 dataJson 失败:', e)
@@ -463,9 +517,10 @@ async function loadCustomContent() {
     })
 
     if (customItem) {
-      const dataJson = typeof customItem.dataJson === 'string'
-        ? JSON.parse(customItem.dataJson)
-        : customItem.dataJson
+      const dataJson =
+        typeof customItem.dataJson === 'string'
+          ? JSON.parse(customItem.dataJson)
+          : customItem.dataJson
       customContentData.value = {
         id: customItem.id,
         title: dataJson.title || '',
@@ -548,7 +603,7 @@ watch(templateList, () => {
 
 .template-name {
   font-weight: 500;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .recipient-dialog {
@@ -568,13 +623,13 @@ watch(templateList, () => {
     border-radius: 4px;
 
     .label {
-      color: #909399;
+      color: var(--el-text-color-secondary);
       margin-right: 8px;
     }
 
     .value {
       font-weight: 500;
-      color: #303133;
+      color: var(--el-text-color-primary);
     }
   }
 }

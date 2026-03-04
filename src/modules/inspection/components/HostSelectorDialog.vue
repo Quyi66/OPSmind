@@ -50,12 +50,7 @@
         <div class="filter-bar">
           <strong>过滤</strong>
           <!-- 选择分组 - 树形下拉 -->
-          <el-popover
-            ref="groupPopoverRef"
-            placement="bottom-start"
-            :width="200"
-            trigger="click"
-          >
+          <el-popover ref="groupPopoverRef" placement="bottom-start" :width="200" trigger="click">
             <template #reference>
               <el-button>选择分组</el-button>
             </template>
@@ -80,15 +75,11 @@
           </el-popover>
 
           <!-- 选择标签 - 带数字徽章的列表 -->
-          <el-popover
-            ref="tagPopoverRef"
-            placement="bottom-start"
-            :width="180"
-            trigger="click"
-          >
+          <el-popover ref="tagPopoverRef" placement="bottom-start" :width="180" trigger="click">
             <template #reference>
               <el-button>
-                <i class="fas fa-list-ul"></i> 选择标签
+                <i class="fas fa-list-ul"></i>
+                选择标签
               </el-button>
             </template>
             <div class="tag-dropdown-list">
@@ -220,7 +211,8 @@
           </div>
           <div class="form-row">
             <el-button type="info" @click="searchByInput">
-              <i class="fas fa-search"></i> 开始查找
+              <i class="fas fa-search"></i>
+              开始查找
             </el-button>
           </div>
         </div>
@@ -257,7 +249,10 @@
           <el-table-column prop="hosts" label="执行主机" min-width="130">
             <template #default="{ row }">
               <div class="hosts-cell">
-                <span v-for="(host, idx) in row.hosts" :key="idx">{{ host }}<br v-if="idx < row.hosts.length - 1" /></span>
+                <span v-for="(host, idx) in row.hosts" :key="idx">
+                  {{ host }}
+                  <br v-if="idx < row.hosts.length - 1" />
+                </span>
               </div>
             </template>
           </el-table-column>
@@ -266,13 +261,17 @@
           <el-table-column prop="ataNode" label="Ansible Node" min-width="130">
             <template #default="{ row }">
               <div class="ata-node-cell">
-                <span v-for="(node, idx) in row.ataNode" :key="idx" class="badge badge-secondary">{{ node }}</span>
+                <span v-for="(node, idx) in row.ataNode" :key="idx" class="badge badge-secondary">
+                  {{ node }}
+                </span>
               </div>
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="90">
             <template #default="{ row }">
-              <span :class="['status-badge', getStatusClass(row.status)]">{{ getStatusText(row.status) }}</span>
+              <span :class="['status-badge', getStatusClass(row.status)]">
+                {{ getStatusText(row.status) }}
+              </span>
             </template>
           </el-table-column>
           <el-table-column prop="statsJson" label="详情" width="80">
@@ -286,10 +285,12 @@
 
     <template #footer>
       <el-button type="primary" @click="handleConfirm">
-        <i class="fas fa-check"></i> 确认
+        <i class="fas fa-check"></i>
+        确认
       </el-button>
       <el-button @click="handleClose">
-        <i class="fas fa-reply"></i> 取消
+        <i class="fas fa-reply"></i>
+        取消
       </el-button>
     </template>
   </el-dialog>
@@ -317,7 +318,7 @@ const emit = defineEmits(['update:visible', 'confirm'])
 // 对话框可见性
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 // 选择模式配置
@@ -379,7 +380,9 @@ const filteredHosts = computed(() => {
   let result = [...allHosts.value]
 
   if (filterGroup.value) {
-    result = result.filter(h => h.groupPath === filterGroup.value || h.groupPath?.startsWith(filterGroup.value + '/'))
+    result = result.filter(
+      h => h.groupPath === filterGroup.value || h.groupPath?.startsWith(filterGroup.value + '/')
+    )
   }
 
   if (filterTag.value) {
@@ -388,9 +391,10 @@ const filteredHosts = computed(() => {
 
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase()
-    result = result.filter(h =>
-      (h.ip && h.ip.toLowerCase().includes(keyword)) ||
-      (h.hostname && h.hostname.toLowerCase().includes(keyword))
+    result = result.filter(
+      h =>
+        (h.ip && h.ip.toLowerCase().includes(keyword)) ||
+        (h.hostname && h.hostname.toLowerCase().includes(keyword))
     )
   }
 
@@ -403,10 +407,11 @@ const filteredRecentlyHosts = computed(() => {
     return recentlyUsedHosts.value
   }
   const keyword = recentlySearchText.value.toLowerCase()
-  return recentlyUsedHosts.value.filter(h =>
-    (h.jobTitle && h.jobTitle.toLowerCase().includes(keyword)) ||
-    (h.jobType && h.jobType.toLowerCase().includes(keyword)) ||
-    (h.hosts && h.hosts.some(host => host.toLowerCase().includes(keyword)))
+  return recentlyUsedHosts.value.filter(
+    h =>
+      (h.jobTitle && h.jobTitle.toLowerCase().includes(keyword)) ||
+      (h.jobType && h.jobType.toLowerCase().includes(keyword)) ||
+      (h.hosts && h.hosts.some(host => host.toLowerCase().includes(keyword)))
   )
 })
 
@@ -431,18 +436,20 @@ async function loadHostData() {
   try {
     // 通过 dts 数据集获取主机列表
     // API: /dts/api/dts/q/data/ACM_GET_CI_BY_SELECTOR/
-    const res = await apiService.post('/dts/api/dts/q/data/ACM_GET_CI_BY_SELECTOR/', {
-      params: {
-        groups: '@@',
-        tags: '@@',
-        dynamicTags: '@@',
-        assetType: 'linux',
-        dataType: 'undefined'
-      },
-      size: 200,
-      page: 1,
-      filter: ''
-    }).catch(() => null)
+    const res = await apiService
+      .post('/dts/api/dts/q/data/ACM_GET_CI_BY_SELECTOR/', {
+        params: {
+          groups: '@@',
+          tags: '@@',
+          dynamicTags: '@@',
+          assetType: 'linux',
+          dataType: 'undefined'
+        },
+        size: 200,
+        page: 1,
+        filter: ''
+      })
+      .catch(() => null)
 
     if (res?.data?.records || res?.records) {
       const list = res.data?.records || res.records || []
@@ -482,7 +489,13 @@ async function loadGroupData() {
       if (Array.isArray(groupPaths) && groupPaths.length > 0) {
         hostGroups.value = groupPaths.map(path => ({
           path: path,
-          name: path === '/' ? '~' : path.split('/').filter(s => s).pop() || path
+          name:
+            path === '/'
+              ? '~'
+              : path
+                  .split('/')
+                  .filter(s => s)
+                  .pop() || path
         }))
         groupTreeData.value = buildGroupTreeFromPaths(groupPaths)
       }
@@ -510,10 +523,12 @@ async function loadTagData() {
 // 加载最近使用数据
 async function loadRecentlyData() {
   try {
-    const res = await apiService.post('/jao/api/jao/jobs/recently', {
-      jobTypes: 'script,command',
-      limit: 100
-    }).catch(() => null)
+    const res = await apiService
+      .post('/jao/api/jao/jobs/recently', {
+        jobTypes: 'script,command',
+        limit: 100
+      })
+      .catch(() => null)
 
     if (res) {
       const list = res.data || res || []
@@ -553,13 +568,13 @@ async function loadRecentlyData() {
 // 获取状态样式类
 function getStatusClass(status) {
   const statusMap = {
-    'RUNNING': 'status-primary',
-    'COMPLETED': 'status-success',
-    'ERROR': 'status-warning',
-    'INTERRUPTED': 'status-dark',
-    'FAILED': 'status-danger',
-    'CALLBACK': 'status-primary',
-    'WAITING': 'status-secondary'
+    RUNNING: 'status-primary',
+    COMPLETED: 'status-success',
+    ERROR: 'status-warning',
+    INTERRUPTED: 'status-dark',
+    FAILED: 'status-danger',
+    CALLBACK: 'status-primary',
+    WAITING: 'status-secondary'
   }
   return statusMap[status] || 'status-danger'
 }
@@ -567,13 +582,13 @@ function getStatusClass(status) {
 // 获取状态文本
 function getStatusText(status) {
   const statusMap = {
-    'RUNNING': '运行中',
-    'COMPLETED': '完成',
-    'ERROR': '错误',
-    'INTERRUPTED': '已中断',
-    'FAILED': '运行失败',
-    'CALLBACK': '运行中',
-    'WAITING': '等待中'
+    RUNNING: '运行中',
+    COMPLETED: '完成',
+    ERROR: '错误',
+    INTERRUPTED: '已中断',
+    FAILED: '运行失败',
+    CALLBACK: '运行中',
+    WAITING: '等待中'
   }
   return statusMap[status] || '运行失败'
 }
@@ -812,10 +827,8 @@ function setInitialSelection() {
     if (!hostTableRef.value || !props.selected?.length) return
 
     props.selected.forEach(selected => {
-      const host = allHosts.value.find(h =>
-        h.key === selected.key ||
-        h.ip === selected.value ||
-        h.value === selected.value
+      const host = allHosts.value.find(
+        h => h.key === selected.key || h.ip === selected.value || h.value === selected.value
       )
       if (host) {
         hostTableRef.value?.toggleRowSelection(host, true)
@@ -839,34 +852,34 @@ function handleConfirm() {
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).replace(/\//g, '-')
+  return date
+    .toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+    .replace(/\//g, '-')
 }
 
 // 加载所有数据
 async function loadAllData() {
-  await Promise.all([
-    loadHostData(),
-    loadGroupData(),
-    loadTagData(),
-    loadRecentlyData()
-  ])
+  await Promise.all([loadHostData(), loadGroupData(), loadTagData(), loadRecentlyData()])
 }
 
 // 对话框打开时加载数据
-watch(() => props.visible, (val) => {
-  if (val) {
-    // 初始化已选主机
-    selectedHosts.value = [...(props.selected || [])]
-    loadAllData()
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      // 初始化已选主机
+      selectedHosts.value = [...(props.selected || [])]
+      loadAllData()
+    }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">
@@ -876,7 +889,7 @@ watch(() => props.visible, (val) => {
 
 // 已选主机卡片
 .selected-card {
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--el-border-color);
   border-radius: 4px;
   margin-bottom: 16px;
   background: var(--el-bg-color);
@@ -886,12 +899,12 @@ watch(() => props.visible, (val) => {
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+    background: var(--el-fill-color-light);
+    border-bottom: 1px solid var(--el-border-color);
     cursor: pointer;
 
     .text-muted {
-      color: #6c757d;
+      color: var(--el-text-color-secondary);
     }
 
     .badge {
@@ -940,7 +953,7 @@ watch(() => props.visible, (val) => {
     text-decoration: none;
 
     &:hover {
-      color: #f8f9fa;
+      color: var(--el-fill-color-blank);
     }
   }
 }
@@ -951,7 +964,7 @@ watch(() => props.visible, (val) => {
   list-style: none;
   margin: 0 0 16px;
   padding: 0;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 .nav-item {
@@ -962,7 +975,7 @@ watch(() => props.visible, (val) => {
     align-items: center;
     gap: 6px;
     padding: 10px 16px;
-    color: #495057;
+    color: var(--el-text-color-regular);
     text-decoration: none;
     border-bottom: 2px solid transparent;
     transition: all 0.2s;
@@ -973,12 +986,12 @@ watch(() => props.visible, (val) => {
   }
 
   &:hover .nav-link {
-    color: #0d6efd;
+    color: var(--el-color-primary);
   }
 
   &.active .nav-link {
-    color: #0d6efd;
-    border-bottom-color: #0d6efd;
+    color: var(--el-color-primary);
+    border-bottom-color: var(--el-color-primary);
   }
 }
 
@@ -993,7 +1006,7 @@ watch(() => props.visible, (val) => {
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  background: #f8f9fa;
+  background: var(--el-fill-color-light);
   margin-bottom: 12px;
   border-radius: 4px;
 
@@ -1010,7 +1023,7 @@ watch(() => props.visible, (val) => {
   .dropdown-item {
     padding: 8px 12px;
     cursor: pointer;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--el-border-color-lighter);
 
     &:hover {
       background: var(--el-bg-color-page);
@@ -1071,7 +1084,7 @@ watch(() => props.visible, (val) => {
   .no-data {
     padding: 12px;
     text-align: center;
-    color: #999;
+    color: var(--el-text-color-placeholder);
     font-size: 13px;
   }
 }
@@ -1094,7 +1107,7 @@ watch(() => props.visible, (val) => {
     padding: 8px 0;
 
     .pagination-info {
-      color: #6c757d;
+      color: var(--el-text-color-secondary);
       font-size: 13px;
     }
   }
@@ -1102,7 +1115,7 @@ watch(() => props.visible, (val) => {
 
 // 分组树容器
 .group-tree-container {
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--el-border-color);
   border-radius: 4px;
   padding: 12px;
   max-height: 380px;
@@ -1122,20 +1135,20 @@ watch(() => props.visible, (val) => {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--el-border-color);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    border-color: #0d6efd;
-    background: #f0f7ff;
+    border-color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
   }
 
   &.selected {
     background: #0d6efd;
     color: #fff;
-    border-color: #0d6efd;
+    border-color: var(--el-color-primary);
   }
 
   .tag-count {
@@ -1164,13 +1177,13 @@ watch(() => props.visible, (val) => {
       display: block;
       margin-bottom: 8px;
       font-weight: 500;
-      color: #212529;
+      color: var(--el-text-color-primary);
     }
 
     .help-text {
       margin-top: 8px;
       font-size: 12px;
-      color: #6c757d;
+      color: var(--el-text-color-secondary);
     }
   }
 
@@ -1183,7 +1196,7 @@ watch(() => props.visible, (val) => {
       margin-right: 12px;
       margin-bottom: 0;
       font-weight: 500;
-      color: #212529;
+      color: var(--el-text-color-primary);
     }
 
     .separator-options {
@@ -1274,7 +1287,7 @@ watch(() => props.visible, (val) => {
 
 // 对话框样式
 :deep(.el-dialog__header) {
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--el-border-color);
   padding: 16px 20px;
   margin: 0;
 }
@@ -1284,7 +1297,7 @@ watch(() => props.visible, (val) => {
 }
 
 :deep(.el-dialog__footer) {
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--el-border-color);
   padding: 12px 20px;
 }
 
@@ -1292,8 +1305,6 @@ watch(() => props.visible, (val) => {
   font-size: 13px;
 
   .el-table__header th {
-    background-color: #f8f9fa !important;
-    color: #495057;
     font-weight: 500;
   }
 }

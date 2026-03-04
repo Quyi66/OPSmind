@@ -59,12 +59,14 @@ const fullscreenChartRef = ref(null)
 const fullscreenVisible = ref(false)
 let chartInstance = null
 let fullscreenChartInstance = null
+let resizeObserver = null
 
 function getChartOption() {
   const xData = props.data.map(item => item.os_distro)
   const yData = props.data.map(item => item.count)
 
   return {
+    backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis',
       axisPointer: {
@@ -83,7 +85,7 @@ function getChartOption() {
       data: xData,
       axisLabel: {
         rotate: 0,
-        
+
         formatter: value => {
           const count = props.data.length
           // 动态计算最大长度：数量越少显示越长，最小保留 5 个字符
@@ -95,9 +97,7 @@ function getChartOption() {
         }
       },
       axisLine: {
-        lineStyle: {
-          
-        }
+        lineStyle: {}
       }
     },
     yAxis: {
@@ -106,16 +106,11 @@ function getChartOption() {
       nameLocation: 'end',
       // nameGap: 18,
       nameTextStyle: {
-        
         fontSize: 12
       },
-      axisLabel: {
-        
-      },
+      axisLabel: {},
       splitLine: {
-        lineStyle: {
-          
-        }
+        lineStyle: {}
       }
     },
     series: [
@@ -147,7 +142,7 @@ function getChartOption() {
         label: {
           show: true,
           position: 'top',
-          
+
           formatter: '{c}'
         },
         barMaxWidth: 40
@@ -202,30 +197,45 @@ watch(
     if (fullscreenChartInstance) {
       fullscreenChartInstance.setOption(getChartOption())
     }
+    nextTick(() => {
+      chartInstance?.resize()
+    })
   },
   { deep: true }
 )
 
 watch(isDark, () => {
-  if(chartInstance) {
-    chartInstance.dispose();
-    chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '');
-    updateChart();
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
+    updateChart()
   }
-  if(fullscreenChartInstance && fullscreenVisible.value) {
-    fullscreenChartInstance.dispose();
-    fullscreenChartInstance = echarts.init(fullscreenChartRef.value, isDark.value ? 'dark' : '');
-    fullscreenChartInstance.setOption(getChartOption());
+  if (fullscreenChartInstance && fullscreenVisible.value) {
+    fullscreenChartInstance.dispose()
+    fullscreenChartInstance = echarts.init(fullscreenChartRef.value, isDark.value ? 'dark' : '')
+    fullscreenChartInstance.setOption(getChartOption())
   }
-});
+})
 
 onMounted(() => {
-  initChart()
+  nextTick(() => {
+    initChart()
+    if (chartRef.value && window.ResizeObserver) {
+      resizeObserver = new ResizeObserver(() => {
+        chartInstance?.resize()
+      })
+      resizeObserver.observe(chartRef.value)
+    }
+  })
   window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
   chartInstance?.dispose()
   fullscreenChartInstance?.dispose()
 })

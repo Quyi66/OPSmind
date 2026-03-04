@@ -493,10 +493,10 @@ onMounted(() => {
 
 .host-count {
   font-size: 13px;
-  color: #64748b;
+  color: var(--el-text-color-regular);
 
   strong {
-    color: #3b82f6;
+    color: var(--el-color-primary);
   }
 }
 

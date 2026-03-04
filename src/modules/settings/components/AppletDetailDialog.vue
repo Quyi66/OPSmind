@@ -43,7 +43,6 @@
         <el-table
           v-loading="pagesLoading"
           :data="paginatedPages"
-         
           style="width: 100%"
           max-height="calc(100vh - 480px)"
         >
@@ -96,7 +95,6 @@
         <el-table
           v-loading="loading"
           :data="paginatedDatasets"
-         
           style="width: 100%"
           max-height="calc(100vh - 480px)"
         >
@@ -142,7 +140,6 @@
         <el-table
           v-loading="jobsLoading"
           :data="paginatedJobs"
-         
           style="width: 100%"
           max-height="calc(100vh - 480px)"
         >
@@ -150,7 +147,9 @@
           <el-table-column prop="title" label="作业" min-width="120">
             <template #default="{ row }">
               <div>{{ translateJobText(row.title) }}</div>
-              <div class="job-desc" v-if="row.description">{{ translateJobText(row.description) }}</div>
+              <div class="job-desc" v-if="row.description">
+                {{ translateJobText(row.description) }}
+              </div>
             </template>
           </el-table-column>
           <el-table-column prop="type" label="类型" width="100">
@@ -181,7 +180,13 @@
               <el-button text type="primary" size="small" @click="handleCopyJob(row)" title="复制">
                 复制
               </el-button>
-              <el-button text type="primary" size="small" @click="handleJobHistory(row)" title="历史">
+              <el-button
+                text
+                type="primary"
+                size="small"
+                @click="handleJobHistory(row)"
+                title="历史"
+              >
                 历史
               </el-button>
             </template>
@@ -218,7 +223,6 @@
         <el-table
           v-loading="loading"
           :data="paginatedDcModels"
-         
           style="width: 100%"
           max-height="calc(100vh - 480px)"
         >
@@ -263,7 +267,6 @@
         <el-table
           v-loading="loading"
           :data="paginatedFlows"
-         
           style="width: 100%"
           max-height="calc(100vh - 480px)"
         >
@@ -318,7 +321,7 @@
 import { ref, computed, watch, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
-import {apiService} from '@/core/api'
+import { apiService } from '@/core/api'
 import * as appletApi from '@/modules/settings/api/applet'
 import { translateText, formatDateTime } from '@/utils/i18n'
 import ExecuteJobDialog from '@/modules/automation/components/job/JobListView/ExecuteJobDialog.vue'
@@ -333,7 +336,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const activeTab = ref('basic')
@@ -378,8 +381,10 @@ const filteredDatasets = computed(() => {
   const keyword = datasetsSearch.value.trim().toLowerCase()
   if (!keyword) return datasetList.value
   return datasetList.value.filter(item => {
-    return (item.code || '').toLowerCase().includes(keyword) ||
-           (item.name || '').toLowerCase().includes(keyword)
+    return (
+      (item.code || '').toLowerCase().includes(keyword) ||
+      (item.name || '').toLowerCase().includes(keyword)
+    )
   })
 })
 
@@ -397,8 +402,10 @@ const filteredDcModels = computed(() => {
   const keyword = dcModelsSearch.value.trim().toLowerCase()
   if (!keyword) return dcModelList.value
   return dcModelList.value.filter(item => {
-    return (item.code || '').toLowerCase().includes(keyword) ||
-           (item.title || '').toLowerCase().includes(keyword)
+    return (
+      (item.code || '').toLowerCase().includes(keyword) ||
+      (item.title || '').toLowerCase().includes(keyword)
+    )
   })
 })
 
@@ -406,17 +413,29 @@ const filteredFlows = computed(() => {
   const keyword = flowsSearch.value.trim().toLowerCase()
   if (!keyword) return flowList.value
   return flowList.value.filter(item => {
-    return (item.name || '').toLowerCase().includes(keyword) ||
-           (item.description || '').toLowerCase().includes(keyword)
+    return (
+      (item.name || '').toLowerCase().includes(keyword) ||
+      (item.description || '').toLowerCase().includes(keyword)
+    )
   })
 })
 
 // 搜索时重置分页
-watch(pagesSearch, () => { pagesPagination.page = 1 })
-watch(datasetsSearch, () => { datasetsPagination.page = 1 })
-watch(jobsSearch, () => { jobsPagination.page = 1 })
-watch(dcModelsSearch, () => { dcModelsPagination.page = 1 })
-watch(flowsSearch, () => { flowsPagination.page = 1 })
+watch(pagesSearch, () => {
+  pagesPagination.page = 1
+})
+watch(datasetsSearch, () => {
+  datasetsPagination.page = 1
+})
+watch(jobsSearch, () => {
+  jobsPagination.page = 1
+})
+watch(dcModelsSearch, () => {
+  dcModelsPagination.page = 1
+})
+watch(flowsSearch, () => {
+  flowsPagination.page = 1
+})
 
 // 计算分页后的数据
 const paginatedPages = computed(() => {
@@ -450,23 +469,26 @@ const executeJobMeta = ref(null)
 const historyDialogVisible = ref(false)
 const historyJobMeta = ref(null)
 
-watch(() => props.modelValue, (val) => {
-  if (val && props.applet) {
-    activeTab.value = 'basic'
-    // 重置分页和搜索
-    pagesPagination.page = 1
-    datasetsPagination.page = 1
-    jobsPagination.page = 1
-    dcModelsPagination.page = 1
-    flowsPagination.page = 1
-    pagesSearch.value = ''
-    datasetsSearch.value = ''
-    jobsSearch.value = ''
-    dcModelsSearch.value = ''
-    flowsSearch.value = ''
-    loadDetail()
+watch(
+  () => props.modelValue,
+  val => {
+    if (val && props.applet) {
+      activeTab.value = 'basic'
+      // 重置分页和搜索
+      pagesPagination.page = 1
+      datasetsPagination.page = 1
+      jobsPagination.page = 1
+      dcModelsPagination.page = 1
+      flowsPagination.page = 1
+      pagesSearch.value = ''
+      datasetsSearch.value = ''
+      jobsSearch.value = ''
+      dcModelsSearch.value = ''
+      flowsSearch.value = ''
+      loadDetail()
+    }
   }
-})
+)
 
 async function loadDetail() {
   if (!props.applet?.id) return
@@ -527,24 +549,23 @@ function translateJobText(text) {
 
 function getJobTypeLabel(type) {
   const labels = {
-    'script': '脚本作业',
-    'command': '命令作业',
-    'rest': 'REST作业',
-    'template': '模板'
+    script: '脚本作业',
+    command: '命令作业',
+    rest: 'REST作业',
+    template: '模板'
   }
   return labels[type] || type
 }
 
 function getJobTypeIcon(type) {
   const icons = {
-    'script': 'fa fa-file-code',
-    'command': 'fa fa-terminal',
-    'rest': 'fa fa-globe',
-    'template': 'fa fa-cube'
+    script: 'fa fa-file-code',
+    command: 'fa fa-terminal',
+    rest: 'fa fa-globe',
+    template: 'fa fa-cube'
   }
   return icons[type] || 'fa fa-cog'
 }
-
 
 function handleRunJob(job) {
   if (!job?.id) {
@@ -604,7 +625,7 @@ function handleClose() {
 
 .job-desc {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-regular);
   margin-top: 4px;
 }
 
@@ -615,7 +636,7 @@ function handleClose() {
 
   i {
     font-size: 14px;
-    color: #409eff;
+    color: var(--el-color-primary);
   }
 }
 

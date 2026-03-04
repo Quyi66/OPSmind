@@ -252,7 +252,7 @@ async function initViewer() {
 
   // 监听节点点击
   const eventBus = bpmnViewer.get('eventBus')
-  eventBus.on('element.click', (e) => {
+  eventBus.on('element.click', e => {
     const element = e.element
     if (element.type !== 'bpmn:Process') {
       selectNode(element)
@@ -410,20 +410,20 @@ onBeforeUnmount(() => {
       .el-breadcrumb__item {
         .el-breadcrumb__inner {
           a {
-            color: #409eff;
+            color: var(--el-color-primary);
             font-weight: normal;
             cursor: pointer;
             text-decoration: none;
             transition: color 0.2s;
 
             &:hover {
-              color: #66b1ff;
+              color: var(--el-color-primary-light-3);
             }
           }
         }
 
         &:last-child .el-breadcrumb__inner {
-          color: #606266;
+          color: var(--el-text-color-regular);
           font-weight: 500;
         }
       }
@@ -469,7 +469,7 @@ onBeforeUnmount(() => {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
 
   i {
     font-size: 32px;
@@ -494,7 +494,7 @@ onBeforeUnmount(() => {
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--el-text-color-primary);
   background: var(--el-bg-color-page);
   border-bottom: 1px solid var(--el-border-color-light);
 }
@@ -508,18 +508,18 @@ onBeforeUnmount(() => {
 .panel-tab {
   padding: 10px 16px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--el-text-color-regular);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
 
   &:hover {
-    color: #3b82f6;
+    color: var(--el-color-primary);
   }
 
   &.is-active {
-    color: #3b82f6;
-    border-bottom-color: #3b82f6;
+    color: var(--el-color-primary);
+    border-bottom-color: var(--el-color-primary);
   }
 }
 
@@ -530,7 +530,7 @@ onBeforeUnmount(() => {
 .section-title {
   font-size: 12px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
   text-transform: uppercase;
   margin-bottom: 12px;
   margin-top: 16px;
@@ -546,7 +546,7 @@ onBeforeUnmount(() => {
   label {
     display: block;
     font-size: 12px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
     margin-bottom: 4px;
   }
 }
@@ -584,7 +584,7 @@ onBeforeUnmount(() => {
   label {
     display: block;
     font-size: 13px;
-    color: #64748b;
+    color: var(--el-text-color-regular);
     margin-bottom: 6px;
   }
 }
@@ -595,7 +595,7 @@ onBeforeUnmount(() => {
   background: var(--el-bg-color-page);
   border-radius: 6px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
 
   p {
     margin: 0;

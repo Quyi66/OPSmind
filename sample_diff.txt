@@ -1,0 +1,500 @@
+diff --git a/src/modules/asset/components/AddGroupDialog.vue b/src/modules/asset/components/AddGroupDialog.vue
+index 510b41d..5776c3f 100644
+--- a/src/modules/asset/components/AddGroupDialog.vue
++++ b/src/modules/asset/components/AddGroupDialog.vue
+@@ -6,12 +6,7 @@
+     :close-on-click-modal="false"
+     @closed="handleClosed"
+   >
+-    <el-form
+-      ref="formRef"
+-      :model="formData"
+-      :rules="formRules"
+-      label-position="top"
+-    >
++    <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
+       <el-form-item label="操作" prop="operate">
+         <el-radio-group v-model="formData.operate">
+           <el-radio value="new">新建</el-radio>
+@@ -22,11 +17,7 @@
+       <!-- 新建分组 -->
+       <template v-if="formData.operate === 'new'">
+         <el-form-item label="分组名称" prop="name">
+-          <el-input
+-            v-model="formData.name"
+-            placeholder="请输入分组名称"
+-            style="width: 100%"
+-          />
++          <el-input v-model="formData.name" placeholder="请输入分组名称" style="width: 100%" />
+         </el-form-item>
+ 
+         <el-form-item label="上级分组" prop="parentId">
+@@ -47,11 +38,7 @@
+       </template>
+ 
+       <!-- 选择已有分组 -->
+-      <el-form-item
+-        v-if="formData.operate === 'select'"
+-        label="已有分组"
+-        prop="id"
+-      >
++      <el-form-item v-if="formData.operate === 'select'" label="已有分组" prop="id">
+         <el-select
+           v-model="formData.id"
+           placeholder="请选择"
+@@ -69,9 +56,7 @@
+     </el-form>
+ 
+     <template #footer>
+-      <el-button type="primary" :loading="saving" @click="handleSave">
+-        保存
+-      </el-button>
++      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+     </template>
+   </el-dialog>
+ </template>
+@@ -101,7 +86,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
+ 
+ const visible = computed({
+   get: () => props.modelValue,
+-  set: (val) => emit('update:modelValue', val)
++  set: val => emit('update:modelValue', val)
+ })
+ 
+ const formRef = ref()
+@@ -115,12 +100,14 @@ const formData = ref({
+ // 动态验证规则
+ const formRules = computed(() => ({
+   operate: [{ required: true, message: '请选择操作', trigger: 'change' }],
+-  name: formData.value.operate === 'new'
+-    ? [{ required: true, message: '请输入分组名称', trigger: 'blur' }]
+-    : [],
+-  id: formData.value.operate === 'select'
+-    ? [{ required: true, message: '请选择已有分组', trigger: 'change' }]
+-    : []
++  name:
++    formData.value.operate === 'new'
++      ? [{ required: true, message: '请输入分组名称', trigger: 'blur' }]
++      : [],
++  id:
++    formData.value.operate === 'select'
++      ? [{ required: true, message: '请选择已有分组', trigger: 'change' }]
++      : []
+ }))
+ 
+ const loadingGroups = ref(false)
+@@ -176,10 +163,7 @@ const handleSave = async () => {
+       params.parentId = formData.value.parentId || ''
+     }
+ 
+-    await apiService.post(
+-      `/jao/api/jao/jobs/a17VXM/run?cacheBuster=${Date.now()}`,
+-      { params }
+-    )
++    await apiService.post(`/jao/api/jao/jobs/a17VXM/run?cacheBuster=${Date.now()}`, { params })
+ 
+     ElMessage.success('添加分组成功')
+     visible.value = false
+@@ -204,18 +188,21 @@ const handleClosed = () => {
+ }
+ 
+ // 监听弹窗打开
+-watch(visible, (val) => {
++watch(visible, val => {
+   if (val) {
+     loadExistingGroups()
+   }
+ })
+ 
+ // 切换操作类型时清空相关字段
+-watch(() => formData.value.operate, () => {
+-  formData.value.name = ''
+-  formData.value.parentId = ''
+-  formData.value.id = ''
+-})
++watch(
++  () => formData.value.operate,
++  () => {
++    formData.value.name = ''
++    formData.value.parentId = ''
++    formData.value.id = ''
++  }
++)
+ </script>
+ 
+ <style scoped lang="scss">
+@@ -224,7 +211,7 @@ watch(() => formData.value.operate, () => {
+ }
+ 
+ :deep(.el-form-item__label) {
+-  color: #409eff;
++  color: var(--el-color-primary);
+   font-weight: 500;
+ }
+ </style>
+diff --git a/src/modules/flow/components/FlowDesignView.vue b/src/modules/flow/components/FlowDesignView.vue
+index 769d68c..669d492 100644
+--- a/src/modules/flow/components/FlowDesignView.vue
++++ b/src/modules/flow/components/FlowDesignView.vue
+@@ -230,7 +230,7 @@ const defaultBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
+ </bpmn:definitions>`
+ 
+ // 监听 tab 切换，更新 XML
+-watch(activeTab, async (newTab) => {
++watch(activeTab, async newTab => {
+   if (newTab === 'xml') {
+     currentXml.value = await getCurrentXml()
+   }
+@@ -247,15 +247,12 @@ async function initBpmnModeler() {
+ 
+   bpmnModeler = new BpmnModeler({
+     container: bpmnContainer.value,
+-    additionalModules: [
+-      TokenSimulationModule,
+-      minimapModule
+-    ]
++    additionalModules: [TokenSimulationModule, minimapModule]
+   })
+ 
+   // 监听选择事件
+   const eventBus = bpmnModeler.get('eventBus')
+-  eventBus.on('selection.changed', (e) => {
++  eventBus.on('selection.changed', e => {
+     const element = e.newSelection[0]
+     if (element) {
+       selectedElement.value = element
+@@ -518,20 +515,20 @@ onBeforeUnmount(() => {
+       .el-breadcrumb__item {
+         .el-breadcrumb__inner {
+           a {
+-            color: #409eff;
++            color: var(--el-color-primary);
+             font-weight: normal;
+             cursor: pointer;
+             text-decoration: none;
+             transition: color 0.2s;
+ 
+             &:hover {
+-              color: #66b1ff;
++              color: var(--el-color-primary-light-3);
+             }
+           }
+         }
+ 
+         &:last-child .el-breadcrumb__inner {
+-          color: #606266;
++          color: var(--el-text-color-regular);
+           font-weight: 500;
+         }
+       }
+@@ -554,14 +551,14 @@ onBeforeUnmount(() => {
+ // 视图切换 Tab (Segmented Control 风格)
+ .view-tabs {
+   display: flex;
+-  background: #f1f5f9;
++  background: var(--el-fill-color-light);
+   padding: 3px;
+   border-radius: 6px;
+ 
+   .tab-item {
+     padding: 6px 20px;
+     font-size: 13px;
+-    color: #64748b;
++    color: var(--el-text-color-regular);
+     cursor: pointer;
+     border-radius: 4px;
+     transition: all 0.2s;
+@@ -569,13 +566,13 @@ onBeforeUnmount(() => {
+     user-select: none;
+ 
+     &:hover {
+-      color: #333;
++      color: var(--el-text-color-primary);
+     }
+ 
+     &.is-active {
+       background: var(--el-bg-color);
+-      color: #3b82f6;
+-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
++      color: var(--el-color-primary);
++      box-shadow: var(--el-box-shadow-light);
+     }
+   }
+ }
+@@ -611,7 +608,7 @@ onBeforeUnmount(() => {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+-    color: #333;
++    color: var(--el-text-color-primary);
+     font-size: 14px;
+   }
+ 
+@@ -641,7 +638,7 @@ onBeforeUnmount(() => {
+   left: 50%;
+   transform: translate(-50%, -50%);
+   text-align: center;
+-  color: #94a3b8;
++  color: var(--el-text-color-secondary);
+   z-index: 10;
+ 
+   i {
+@@ -672,7 +669,7 @@ onBeforeUnmount(() => {
+ .panel-header {
+   padding: 12px 16px;
+   font-size: 14px;
+-  color: #333;
++  color: var(--el-text-color-primary);
+   border-bottom: 1px solid var(--el-border-color-light);
+   background: var(--el-bg-color-page);
+ }
+@@ -684,7 +681,7 @@ onBeforeUnmount(() => {
+   .panel-tab {
+     padding: 8px 16px;
+     font-size: 13px;
+-    color: #64748b;
++    color: var(--el-text-color-regular);
+     cursor: pointer;
+     border: 1px solid transparent;
+     border-bottom: none;
+@@ -692,10 +689,10 @@ onBeforeUnmount(() => {
+     margin-bottom: -1px;
+ 
+     &.is-active {
+-      color: #333;
++      color: var(--el-text-color-primary);
+       background: var(--el-bg-color);
+-      border-color: #e2e8f0;
+-      border-bottom-color: #fff;
++      border-color: var(--el-border-color);
++      border-bottom-color: var(--el-bg-color);
+     }
+   }
+ }
+@@ -709,7 +706,7 @@ onBeforeUnmount(() => {
+ .section-title {
+   font-size: 13px;
+   font-weight: 600;
+-  color: #333;
++  color: var(--el-text-color-primary);
+   margin-bottom: 12px;
+   padding-bottom: 8px;
+   border-bottom: 1px solid var(--el-border-color-light);
+@@ -721,14 +718,14 @@ onBeforeUnmount(() => {
+   label {
+     display: block;
+     font-size: 13px;
+-    color: #64748b;
++    color: var(--el-text-color-regular);
+     margin-bottom: 6px;
+   }
+ 
+   &.checkbox-group {
+     .hint-text {
+       font-size: 12px;
+-      color: #94a3b8;
++      color: var(--el-text-color-secondary);
+       margin-top: 4px;
+     }
+   }
+@@ -755,6 +752,78 @@ onBeforeUnmount(() => {
+   width: 48px;
+   background: var(--el-bg-color);
+   border-right: 1px solid var(--el-border-color-light);
++
++  .entry {
++    color: var(--el-text-color-primary) !important;
++
++    svg,
++    path,
++    polygon,
++    rect,
++    circle,
++    ellipse,
++    line {
++      stroke: currentColor !important;
++      fill: currentColor !important;
++    }
++
++    &:hover {
++      color: var(--el-color-primary) !important;
++    }
++  }
++}
++
++:deep(.djs-context-pad) {
++  .entry {
++    background-color: var(--el-bg-color-overlay) !important;
++    color: var(--el-text-color-primary) !important;
++    border-color: var(--el-border-color-light) !important;
++    box-shadow: var(--el-box-shadow-light) !important;
++
++    svg,
++    path,
++    polygon,
++    rect,
++    circle,
++    ellipse,
++    line {
++      stroke: currentColor !important;
++      fill: currentColor !important;
++    }
++
++    &:hover {
++      color: var(--el-color-primary) !important;
++      background-color: var(--el-fill-color-light) !important;
++    }
++  }
++}
++
++:deep(.djs-popup) {
++  background: var(--el-bg-color-overlay) !important;
++  border-color: var(--el-border-color-light) !important;
++  box-shadow: var(--el-box-shadow-light) !important;
++  color: var(--el-text-color-regular) !important;
++
++  .entry {
++    color: var(--el-text-color-primary) !important;
++
++    &:hover,
++    &.active {
++      background-color: var(--el-fill-color-light) !important;
++      color: var(--el-color-primary) !important;
++    }
++  }
++
++  .djs-popup-header {
++    h3 {
++      color: var(--el-text-color-primary) !important;
++    }
++  }
++}
++
++:deep(.djs-minimap) {
++  background: var(--el-bg-color-overlay) !important;
++  border-color: var(--el-border-color-light) !important;
+ }
+ 
+ // 隐藏库自带的 Token Simulation 按钮（使用自定义开关替代）
+@@ -768,6 +837,7 @@ onBeforeUnmount(() => {
+ }
+ 
+ // 隐藏库自带的小地图开关按钮（使用自定义按钮替代）
++:deep(.djs-minimap .toggle),
+ :deep(.djs-minimap-toggle) {
+   display: none !important;
+ }
+diff --git a/src/modules/settings/components/DatasourceEditDialog.vue b/src/modules/settings/components/DatasourceEditDialog.vue
+index 81e19ca..bc0bb02 100644
+--- a/src/modules/settings/components/DatasourceEditDialog.vue
++++ b/src/modules/settings/components/DatasourceEditDialog.vue
+@@ -17,12 +17,9 @@
+       <!-- 类型选择（仅新建时显示） -->
+       <el-form-item v-if="!isEditing" label="数据源类型" prop="type">
+         <el-radio-group v-model="form.type" @change="handleTypeChange">
+-          <el-radio-button
+-            v-for="item in datasourceTypes"
+-            :key="item.type"
+-            :value="item.type"
+-          >
+-            <i :class="item.icon"></i> {{ item.label }}
++          <el-radio-button v-for="item in datasourceTypes" :key="item.type" :value="item.type">
++            <i :class="item.icon"></i>
++            {{ item.label }}
+           </el-radio-button>
+         </el-radio-group>
+       </el-form-item>
+@@ -33,17 +30,15 @@
+           :placeholder="form.type === 'jdbc' ? '仅允许字母、数字、下划线' : '输入数据源名称'"
+           :readonly="isEditing"
+         />
+-        <div v-if="form.type === 'jdbc'" class="form-tip">名称用于唯一标识数据源，创建后不可修改</div>
++        <div v-if="form.type === 'jdbc'" class="form-tip">
++          名称用于唯一标识数据源，创建后不可修改
++        </div>
+       </el-form-item>
+ 
+       <!-- JDBC 类型特有字段 -->
+       <template v-if="form.type === 'jdbc'">
+         <el-form-item label="JDBC 驱动" prop="config.driver">
+-          <el-select
+-            v-model="selectedDriverClass"
+-            style="width: 100%"
+-            @change="handleDriverChange"
+-          >
++          <el-select v-model="selectedDriverClass" style="width: 100%" @change="handleDriverChange">
+             <el-option
+               v-for="driver in jdbcDrivers"
+               :key="driver.className"
+@@ -65,7 +60,10 @@
+         </el-form-item>
+ 
+         <el-form-item label="JDBC URL" prop="config.url">
+-          <el-input v-model="form.config.url" placeholder="如：jdbc:mysql://localhost:3306/dbname" />
++          <el-input
++            v-model="form.config.url"
++            placeholder="如：jdbc:mysql://localhost:3306/dbname"
++          />
+         </el-form-item>
+ 
+         <el-form-item label="验证语句">
+@@ -104,7 +102,8 @@
+     <template #footer>
+       <el-button @click="visible = false">取消</el-button>
+       <el-button type="primary" @click="handleSave" :loading="saving">
+-        <i class="fa fa-save"></i> 保存
++        <i class="fa fa-save"></i>
++        保存
+       </el-button>
+     </template>
+   </el-dialog>
+@@ -124,7 +123,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
+ 
+ const visible = computed({
+   get: () => props.modelValue,
+-  set: (val) => emit('update:modelValue', val)
++  set: val => emit('update:modelValue', val)
+ })
+ 
+ const formRef = ref(null)
+@@ -182,16 +181,24 @@ const rules = computed(() => ({
+       ? [{ pattern: /^[a-zA-Z0-9_]+$/, message: '仅允许字母、数字、下划线', trigger: 'blur' }]
+       : [])
+   ],
+-  'config.driver': form.type === 'jdbc' ? [{ required: true, message: '请选择驱动', trigger: 'change' }] : [],
+-  'config.url': form.type === 'jdbc' ? [{ required: true, message: '请输入 JDBC URL', trigger: 'blur' }] : [],
+-  'config.username': form.type === 'jdbc' ? [{ required: true, message: '请输入用户名', trigger: 'blur' }] : [],
+-  'config.password': form.type === 'jdbc' && !isEditing.value ? [{ required: true, message: '请输入密码', trigger: 'blur' }] : [],
+-  'config.manager': form.type === 'jdbc' ? [{ required: true, message: '请输入负责人', trigger: 'blur' }] : [],
+-  description: form.type === 'jdbc' ? [{ required: true, message: '请输入描述', trigger: 'blur' }] : []
++  'config.driver':
++    form.type === 'jdbc' ? [{ required: true, message: '请选择驱动', trigger: 'change' }] : [],
++  'config.url':
++    form.type === 'jdbc' ? [{ required: true, message: '请输入 JDBC URL', trigger: 'blur' }] : [],
++  'config.username':
++    form.type === 'jdbc' ? [{ required: true, message: '请输入用户名', trigger: 'blur' }] : [],
++  'config.password':
++    form.type === 'jdbc' && !isEditing.value
++      ? [{ required: true, message: '请输入密码', trigger: 'blur' }]
++      : [],
++  'config.manager':
++    form.type === 'jdbc' ? [{ required: true, message: '请输入负责人', trigger: 'blur' }] : [],
++  description:
++    form.type === 'jdbc' ? [{ required: true, message: '请输入描述', trigger: 'blur' }] : []
+ }))
+ 
+ // 监听对话框打开
+-watch(visible, (val) => {
++watch(visible, val => {
+   if (val) {
+     loadDrivers()
+     if (props.datasource) {
+@@ -321,7 +328,7 @@ async function handleSave() {
+ <style scoped lang="scss">
+ .form-tip {
+   font-size: 12px;
+-  color: #909399;
++  color: var(--el-text-color-regular);
+   margin-top: 4px;
+ }
+ 

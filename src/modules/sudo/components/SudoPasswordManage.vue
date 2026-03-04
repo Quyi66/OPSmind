@@ -29,41 +29,38 @@
           />
         </el-form-item>
 
-         <!-- 用户名 -->
-          <el-form-item label="需更新的用户名" prop="user" class="inline-item">
-            <el-input
-              v-model="resetForm.user"
-              placeholder="请输入用户名"
-              :disabled="resetting"
-              autocomplete="new-password"
-              name="sudo_user_field"
-              style="width: 200px;"
-            />
-          </el-form-item>
+        <!-- 用户名 -->
+        <el-form-item label="需更新的用户名" prop="user" class="inline-item">
+          <el-input
+            v-model="resetForm.user"
+            placeholder="请输入用户名"
+            :disabled="resetting"
+            autocomplete="new-password"
+            name="sudo_user_field"
+            style="width: 200px"
+          />
+        </el-form-item>
 
         <!-- 密码 -->
-          <el-form-item label="重置密码" prop="password" class="inline-item">
-            <div class="password-row">
-              <el-input
-                v-model="resetForm.password"
-                type="password"
-                placeholder="请输入密码（8-16位）"
-                :disabled="resetting"
-                show-password
-                autocomplete="new-password"
-                name="sudo_password_field"
-                class="password-input"
-              />
-              <el-button
-                @click="generateRandomPassword"
-                :disabled="resetting || !passwordConfig"
-              >
-                <i class="fa fa-random"></i>
-                随机密码
-              </el-button>
-            </div>
-            <div class="form-item-hint">密码长度8-16位</div>
-          </el-form-item>
+        <el-form-item label="重置密码" prop="password" class="inline-item">
+          <div class="password-row">
+            <el-input
+              v-model="resetForm.password"
+              type="password"
+              placeholder="请输入密码（8-16位）"
+              :disabled="resetting"
+              show-password
+              autocomplete="new-password"
+              name="sudo_password_field"
+              class="password-input"
+            />
+            <el-button @click="generateRandomPassword" :disabled="resetting || !passwordConfig">
+              <i class="fa fa-random"></i>
+              随机密码
+            </el-button>
+          </div>
+          <div class="form-item-hint">密码长度8-16位</div>
+        </el-form-item>
 
         <el-form-item>
           <el-button
@@ -206,9 +203,7 @@ const resetFormRules = {
       trigger: ['change', 'blur']
     }
   ],
-  user: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
+  user: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     {
@@ -225,10 +220,12 @@ const resetFormRules = {
 }
 
 const canReset = computed(() => {
-  return resetForm.hosts.length > 0 &&
-         resetForm.user.trim() !== '' &&
-         resetForm.password.length >= 8 &&
-         resetForm.password.length <= 16
+  return (
+    resetForm.hosts.length > 0 &&
+    resetForm.user.trim() !== '' &&
+    resetForm.password.length >= 8 &&
+    resetForm.password.length <= 16
+  )
 })
 
 function getRandomStr(defaultStr, length) {
@@ -244,7 +241,7 @@ function getRandomStr(defaultStr, length) {
 function shuffleStr(str) {
   const list = str.split('')
   const newList = []
-  list.forEach((item) => {
+  list.forEach(item => {
     const newListIndex = Math.round(Math.random() * newList.length)
     newList.splice(newListIndex, 0, item)
   })
@@ -274,10 +271,10 @@ function generateRandomPassword() {
 
   const password = shuffleStr(
     getRandomStr(lcredit, lcreditNum) +
-    getRandomStr(ucredit, ucreditNum) +
-    getRandomStr(ocredit, ocreditNum) +
-    getRandomStr(dcredit, dcreditNum) +
-    getRandomStr(lcredit + ucredit + ocredit + dcredit, remainingLength)
+      getRandomStr(ucredit, ucreditNum) +
+      getRandomStr(ocredit, ocreditNum) +
+      getRandomStr(dcredit, dcreditNum) +
+      getRandomStr(lcredit + ucredit + ocredit + dcredit, remainingLength)
   )
 
   resetForm.password = password
@@ -368,12 +365,14 @@ const policyValidationError = computed(() => {
 })
 
 const canSavePolicy = computed(() => {
-  return policyForm.ocredit >= 0 &&
-         policyForm.dcredit >= 0 &&
-         policyForm.ucredit >= 0 &&
-         policyForm.lcredit >= 0 &&
-         policyForm.passwd_length >= 1 &&
-         !policyValidationError.value
+  return (
+    policyForm.ocredit >= 0 &&
+    policyForm.dcredit >= 0 &&
+    policyForm.ucredit >= 0 &&
+    policyForm.lcredit >= 0 &&
+    policyForm.passwd_length >= 1 &&
+    !policyValidationError.value
+  )
 })
 
 function onPasswordLengthChange(newLength) {
@@ -492,19 +491,19 @@ onUnmounted(() => {
 .card-title {
   font-size: 15px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   display: flex;
   align-items: center;
   gap: 8px;
 
   i {
-    color: #409eff;
+    color: var(--el-color-primary);
   }
 }
 
 .card-desc {
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 // 重置密码表单
@@ -526,7 +525,7 @@ onUnmounted(() => {
 .form-item-hint {
   margin-top: 4px;
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   line-height: 1.5;
 }
 

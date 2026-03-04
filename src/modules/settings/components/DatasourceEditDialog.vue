@@ -17,12 +17,9 @@
       <!-- 类型选择（仅新建时显示） -->
       <el-form-item v-if="!isEditing" label="数据源类型" prop="type">
         <el-radio-group v-model="form.type" @change="handleTypeChange">
-          <el-radio-button
-            v-for="item in datasourceTypes"
-            :key="item.type"
-            :value="item.type"
-          >
-            <i :class="item.icon"></i> {{ item.label }}
+          <el-radio-button v-for="item in datasourceTypes" :key="item.type" :value="item.type">
+            <i :class="item.icon"></i>
+            {{ item.label }}
           </el-radio-button>
         </el-radio-group>
       </el-form-item>
@@ -33,17 +30,15 @@
           :placeholder="form.type === 'jdbc' ? '仅允许字母、数字、下划线' : '输入数据源名称'"
           :readonly="isEditing"
         />
-        <div v-if="form.type === 'jdbc'" class="form-tip">名称用于唯一标识数据源，创建后不可修改</div>
+        <div v-if="form.type === 'jdbc'" class="form-tip">
+          名称用于唯一标识数据源，创建后不可修改
+        </div>
       </el-form-item>
 
       <!-- JDBC 类型特有字段 -->
       <template v-if="form.type === 'jdbc'">
         <el-form-item label="JDBC 驱动" prop="config.driver">
-          <el-select
-            v-model="selectedDriverClass"
-            style="width: 100%"
-            @change="handleDriverChange"
-          >
+          <el-select v-model="selectedDriverClass" style="width: 100%" @change="handleDriverChange">
             <el-option
               v-for="driver in jdbcDrivers"
               :key="driver.className"
@@ -65,7 +60,10 @@
         </el-form-item>
 
         <el-form-item label="JDBC URL" prop="config.url">
-          <el-input v-model="form.config.url" placeholder="如：jdbc:mysql://localhost:3306/dbname" />
+          <el-input
+            v-model="form.config.url"
+            placeholder="如：jdbc:mysql://localhost:3306/dbname"
+          />
         </el-form-item>
 
         <el-form-item label="验证语句">
@@ -104,7 +102,8 @@
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
       <el-button type="primary" @click="handleSave" :loading="saving">
-        <i class="fa fa-save"></i> 保存
+        <i class="fa fa-save"></i>
+        保存
       </el-button>
     </template>
   </el-dialog>
@@ -124,7 +123,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const formRef = ref(null)
@@ -182,16 +181,24 @@ const rules = computed(() => ({
       ? [{ pattern: /^[a-zA-Z0-9_]+$/, message: '仅允许字母、数字、下划线', trigger: 'blur' }]
       : [])
   ],
-  'config.driver': form.type === 'jdbc' ? [{ required: true, message: '请选择驱动', trigger: 'change' }] : [],
-  'config.url': form.type === 'jdbc' ? [{ required: true, message: '请输入 JDBC URL', trigger: 'blur' }] : [],
-  'config.username': form.type === 'jdbc' ? [{ required: true, message: '请输入用户名', trigger: 'blur' }] : [],
-  'config.password': form.type === 'jdbc' && !isEditing.value ? [{ required: true, message: '请输入密码', trigger: 'blur' }] : [],
-  'config.manager': form.type === 'jdbc' ? [{ required: true, message: '请输入负责人', trigger: 'blur' }] : [],
-  description: form.type === 'jdbc' ? [{ required: true, message: '请输入描述', trigger: 'blur' }] : []
+  'config.driver':
+    form.type === 'jdbc' ? [{ required: true, message: '请选择驱动', trigger: 'change' }] : [],
+  'config.url':
+    form.type === 'jdbc' ? [{ required: true, message: '请输入 JDBC URL', trigger: 'blur' }] : [],
+  'config.username':
+    form.type === 'jdbc' ? [{ required: true, message: '请输入用户名', trigger: 'blur' }] : [],
+  'config.password':
+    form.type === 'jdbc' && !isEditing.value
+      ? [{ required: true, message: '请输入密码', trigger: 'blur' }]
+      : [],
+  'config.manager':
+    form.type === 'jdbc' ? [{ required: true, message: '请输入负责人', trigger: 'blur' }] : [],
+  description:
+    form.type === 'jdbc' ? [{ required: true, message: '请输入描述', trigger: 'blur' }] : []
 }))
 
 // 监听对话框打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadDrivers()
     if (props.datasource) {
@@ -321,7 +328,7 @@ async function handleSave() {
 <style scoped lang="scss">
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-regular);
   margin-top: 4px;
 }
 

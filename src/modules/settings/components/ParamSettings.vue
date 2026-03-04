@@ -30,10 +30,18 @@
         <!-- 操作栏 -->
         <div class="ops-action-bar">
           <el-button type="primary" size="small" @click="handleCreateSysParam">
-            <i class="fa fa-plus"></i> 新建
+            <i class="fa fa-plus"></i>
+            新建
           </el-button>
-          <span style="flex: 1;"></span>
-          <el-button class="toolbar-icon-btn" circle size="small" :loading="sysLoading" @click="loadSysParams" title="刷新">
+          <span style="flex: 1"></span>
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            size="small"
+            :loading="sysLoading"
+            @click="loadSysParams"
+            title="刷新"
+          >
             <el-icon v-show="!sysLoading"><Refresh /></el-icon>
           </el-button>
         </div>
@@ -43,14 +51,18 @@
           <el-table
             v-loading="sysLoading"
             :data="paginatedSysParams"
-
             style="width: 100%"
             max-height="calc(100vh - 330px)"
           >
             <el-table-column prop="domain" label="域" width="100" />
             <el-table-column prop="name" label="参数名称" min-width="120" show-overflow-tooltip />
             <el-table-column prop="value" label="参数值" min-width="300" show-overflow-tooltip />
-            <el-table-column prop="description" label="描述" min-width="250" show-overflow-tooltip />
+            <el-table-column
+              prop="description"
+              label="描述"
+              min-width="250"
+              show-overflow-tooltip
+            />
             <el-table-column label="操作" width="150" fixed="right" align="left">
               <template #default="{ row }">
                 <el-button text type="primary" size="small" @click="handleViewSysParam(row)">
@@ -114,10 +126,18 @@
         <!-- 操作栏 -->
         <div class="ops-action-bar">
           <el-button type="primary" size="small" @click="handleCreateAppParam">
-            <i class="fa fa-plus"></i> 新建
+            <i class="fa fa-plus"></i>
+            新建
           </el-button>
-          <span style="flex: 1;"></span>
-          <el-button class="toolbar-icon-btn" circle size="small" :loading="appLoading" @click="loadAppParams" title="刷新">
+          <span style="flex: 1"></span>
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            size="small"
+            :loading="appLoading"
+            @click="loadAppParams"
+            title="刷新"
+          >
             <el-icon v-show="!appLoading"><Refresh /></el-icon>
           </el-button>
         </div>
@@ -127,13 +147,17 @@
           <el-table
             v-loading="appLoading"
             :data="paginatedAppParams"
-
             style="width: 100%"
             max-height="calc(100vh - 330px)"
           >
             <el-table-column prop="name" label="参数名称" min-width="120" show-overflow-tooltip />
             <el-table-column prop="value" label="参数值" min-width="350" show-overflow-tooltip />
-            <el-table-column prop="description" label="描述" min-width="300" show-overflow-tooltip />
+            <el-table-column
+              prop="description"
+              label="描述"
+              min-width="300"
+              show-overflow-tooltip
+            />
             <el-table-column label="操作" width="150" fixed="right" align="left">
               <template #default="{ row }">
                 <el-button text type="primary" size="small" @click="handleViewAppParam(row)">
@@ -142,12 +166,7 @@
                 <el-button text type="primary" size="small" @click="handleEditAppParam(row)">
                   编辑
                 </el-button>
-                <el-button
-                  text
-                  type="danger"
-                  size="small"
-                  @click="handleDeleteAppParam(row)"
-                >
+                <el-button text type="danger" size="small" @click="handleDeleteAppParam(row)">
                   删除
                 </el-button>
               </template>
@@ -184,34 +203,34 @@
         label-width="100px"
       >
         <!-- 提示信息 -->
-        <el-alert
-          title="提示"
-          type="success"
-          :closable="true"
-          show-icon
-          class="mb-4"
-        >
+        <el-alert title="提示" type="success" :closable="true" show-icon class="mb-4">
           <template #default>
-            建议配置的与部署环境相关的，不需要经常修改的参数，比如ip，文件路径，接口地址等等。<br/>
+            建议配置的与部署环境相关的，不需要经常修改的参数，比如ip，文件路径，接口地址等等。
+            <br />
             禁止配置需要频繁修改或者与安全相关的参数，比如数据库的账号密码，调用接口验证的token等等。
           </template>
         </el-alert>
 
         <el-form-item label="域" prop="domain">
-          <el-input v-model="sysForm.domain" placeholder="请输入域，如: jao, acm, oplus" :disabled="sysForm.editValueOnly" maxlength="30" />
+          <el-input
+            v-model="sysForm.domain"
+            placeholder="请输入域，如: jao, acm, oplus"
+            :disabled="sysForm.editValueOnly"
+            maxlength="30"
+          />
           <div class="help-text">域用于区分不同模块，如 jao（作业自动化）、acm（资产管理）等</div>
         </el-form-item>
         <el-form-item label="参数名称" prop="name">
-          <el-input v-model="sysForm.name" placeholder="请输入参数名称" :disabled="sysForm.editValueOnly" maxlength="50" />
+          <el-input
+            v-model="sysForm.name"
+            placeholder="请输入参数名称"
+            :disabled="sysForm.editValueOnly"
+            maxlength="50"
+          />
           <div class="help-text">参数名称需唯一，建议使用下划线命名法</div>
         </el-form-item>
         <el-form-item label="参数值" prop="value">
-          <el-input
-            v-model="sysForm.value"
-            type="textarea"
-            :rows="6"
-            placeholder="请输入参数值"
-          />
+          <el-input v-model="sysForm.value" type="textarea" :rows="6" placeholder="请输入参数值" />
         </el-form-item>
         <el-form-item label="是否加密">
           <el-radio-group v-model="sysForm.isEncrypt">
@@ -238,8 +257,15 @@
         <el-descriptions-item label="描述">{{ sysForm.description }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
-        <el-button @click="sysDialogVisible = false">{{ dialogMode === 'view' ? '关闭' : '取消' }}</el-button>
-        <el-button v-if="dialogMode !== 'view'" type="primary" :loading="saving" @click="handleSaveSysParam">
+        <el-button @click="sysDialogVisible = false">
+          {{ dialogMode === 'view' ? '关闭' : '取消' }}
+        </el-button>
+        <el-button
+          v-if="dialogMode !== 'view'"
+          type="primary"
+          :loading="saving"
+          @click="handleSaveSysParam"
+        >
           保存
         </el-button>
       </template>
@@ -263,12 +289,7 @@
           <el-input v-model="appForm.name" placeholder="请输入参数名称" maxlength="50" />
         </el-form-item>
         <el-form-item label="参数值" prop="value">
-          <el-input
-            v-model="appForm.value"
-            type="textarea"
-            :rows="6"
-            placeholder="请输入参数值"
-          />
+          <el-input v-model="appForm.value" type="textarea" :rows="6" placeholder="请输入参数值" />
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input
@@ -287,8 +308,15 @@
         <el-descriptions-item label="描述">{{ appForm.description }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
-        <el-button @click="appDialogVisible = false">{{ dialogMode === 'view' ? '关闭' : '取消' }}</el-button>
-        <el-button v-if="dialogMode !== 'view'" type="primary" :loading="saving" @click="handleSaveAppParam">
+        <el-button @click="appDialogVisible = false">
+          {{ dialogMode === 'view' ? '关闭' : '取消' }}
+        </el-button>
+        <el-button
+          v-if="dialogMode !== 'view'"
+          type="primary"
+          :loading="saving"
+          @click="handleSaveAppParam"
+        >
           保存
         </el-button>
       </template>
@@ -360,11 +388,12 @@ const appFormRules = {
 const filteredSysParams = computed(() => {
   if (!sysAppliedSearchKeyword.value) return sysParams.value
   const keyword = sysAppliedSearchKeyword.value.toLowerCase()
-  return sysParams.value.filter(p =>
-    p.domain?.toLowerCase().includes(keyword) ||
-    p.name?.toLowerCase().includes(keyword) ||
-    p.value?.toLowerCase().includes(keyword) ||
-    p.description?.toLowerCase().includes(keyword)
+  return sysParams.value.filter(
+    p =>
+      p.domain?.toLowerCase().includes(keyword) ||
+      p.name?.toLowerCase().includes(keyword) ||
+      p.value?.toLowerCase().includes(keyword) ||
+      p.description?.toLowerCase().includes(keyword)
   )
 })
 
@@ -372,10 +401,11 @@ const filteredSysParams = computed(() => {
 const filteredAppParams = computed(() => {
   if (!appAppliedSearchKeyword.value) return appParams.value
   const keyword = appAppliedSearchKeyword.value.toLowerCase()
-  return appParams.value.filter(p =>
-    p.name?.toLowerCase().includes(keyword) ||
-    p.value?.toLowerCase().includes(keyword) ||
-    p.description?.toLowerCase().includes(keyword)
+  return appParams.value.filter(
+    p =>
+      p.name?.toLowerCase().includes(keyword) ||
+      p.value?.toLowerCase().includes(keyword) ||
+      p.description?.toLowerCase().includes(keyword)
   )
 })
 
@@ -465,7 +495,15 @@ function handleTabChange(tab) {
 
 function handleCreateSysParam() {
   dialogMode.value = 'create'
-  sysForm.value = { id: null, domain: '', name: '', value: '', description: '', isEncrypt: 0, view: 1 }
+  sysForm.value = {
+    id: null,
+    domain: '',
+    name: '',
+    value: '',
+    description: '',
+    isEncrypt: 0,
+    view: 1
+  }
   sysDialogVisible.value = true
 }
 
@@ -511,11 +549,11 @@ async function handleSaveSysParam() {
 
 async function handleDeleteSysParam(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除参数"${row.name}"吗？`,
-      '删除确认',
-      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
-    )
+    await ElMessageBox.confirm(`确定要删除参数"${row.name}"吗？`, '删除确认', {
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消'
+    })
   } catch {
     return
   }
@@ -580,11 +618,11 @@ async function handleSaveAppParam() {
 
 async function handleDeleteAppParam(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除参数"${row.name}"吗？`,
-      '删除确认',
-      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
-    )
+    await ElMessageBox.confirm(`确定要删除参数"${row.name}"吗？`, '删除确认', {
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消'
+    })
   } catch {
     return
   }
@@ -630,7 +668,7 @@ onMounted(() => {
 
 .help-text {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-regular);
   margin-top: 4px;
 }
 

@@ -16,11 +16,7 @@
             :name="group.title"
           >
             <div class="tab-content">
-              <div
-                v-for="attr in group.attrs"
-                :key="attr.code"
-                class="attr-row"
-              >
+              <div v-for="attr in group.attrs" :key="attr.code" class="attr-row">
                 <div class="attr-label">
                   <span v-if="attr.required" class="required">*</span>
                   {{ attr.title }}
@@ -73,7 +69,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -87,7 +83,7 @@ const activeTab = ref('')
 const specialEditableFields = ['IP']
 
 // 判断字段是否可编辑
-const isFieldEditable = (attr) => {
+const isFieldEditable = attr => {
   if (attr.editable) return true
   if (specialEditableFields.includes(attr.code)) return true
   return false
@@ -124,10 +120,10 @@ const groupedAttrs = computed(() => {
         currentGroup.attrs.push(processedAttr)
       } else {
         // 没有分组的属性，放到默认分组
-        if (!groups.find((g) => g.title === '基本信息')) {
+        if (!groups.find(g => g.title === '基本信息')) {
           groups.push({ title: '基本信息', attrs: [] })
         }
-        groups.find((g) => g.title === '基本信息').attrs.push(processedAttr)
+        groups.find(g => g.title === '基本信息').attrs.push(processedAttr)
       }
     }
   }
@@ -138,7 +134,7 @@ const groupedAttrs = computed(() => {
   }
 
   // 过滤掉空分组
-  const result = groups.filter((g) => g.attrs.length > 0)
+  const result = groups.filter(g => g.attrs.length > 0)
 
   // 设置默认选中第一个 tab
   if (result.length > 0 && !activeTab.value) {
@@ -211,7 +207,7 @@ const handleClose = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val && props.assetId) {
     loadAssetDetail()
   }
@@ -241,7 +237,7 @@ watch(visible, (val) => {
 .attr-label {
   width: 120px;
   flex-shrink: 0;
-  color: #606266;
+  color: var(--el-text-color-regular);
   font-size: 14px;
 
   .required {
@@ -254,7 +250,7 @@ watch(visible, (val) => {
   flex: 1;
 
   .readonly-value {
-    color: #909399;
+    color: var(--el-text-color-secondary);
     font-size: 14px;
   }
 }

@@ -18,12 +18,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
-          <el-input
-            v-model="filters.keyword"
-            placeholder="搜索"
-            clearable
-            style="width: 200px"
-          >
+          <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 200px">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -56,8 +51,15 @@
         <i class="fa fa-sign-in-alt"></i>
         进入管理员面板
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -98,7 +100,8 @@
               {{ getStatusText(row.status) }}
             </el-tag>
             <span v-if="row.status === 'exception' && row.failUserCount" class="text-danger ml-2">
-              <i class="fa fa-key"></i> {{ row.failUserCount }}
+              <i class="fa fa-key"></i>
+              {{ row.failUserCount }}
             </span>
           </template>
         </el-table-column>
@@ -197,17 +200,10 @@
     </div>
 
     <!-- 申请临时密码弹窗 -->
-    <ApplyPasswordDialog
-      v-model="applyDialogVisible"
-      :edit-data="editingRow"
-      @saved="loadData"
-    />
+    <ApplyPasswordDialog v-model="applyDialogVisible" :edit-data="editingRow" @saved="loadData" />
 
     <!-- 批量申请弹窗 -->
-    <BatchImportDialog
-      v-model="batchImportDialogVisible"
-      @imported="loadData"
-    />
+    <BatchImportDialog v-model="batchImportDialogVisible" @imported="loadData" />
   </div>
 </template>
 
@@ -306,8 +302,10 @@ function canApprove(row) {
 }
 
 function canViewPassword(row) {
-  return (row.status === 'success' || row.status === 'exception') &&
-         row.applicant_login === currentUserLogin.value
+  return (
+    (row.status === 'success' || row.status === 'exception') &&
+    row.applicant_login === currentUserLogin.value
+  )
 }
 
 function canReapply(row) {
@@ -315,8 +313,10 @@ function canReapply(row) {
 }
 
 function canDelete(row) {
-  return (row.status === 'new' || row.status === 'approving') &&
-         row.applicant_login === currentUserLogin.value
+  return (
+    (row.status === 'new' || row.status === 'approving') &&
+    row.applicant_login === currentUserLogin.value
+  )
 }
 
 function getStatusType(status) {
@@ -443,7 +443,7 @@ async function handleDelete(row) {
   .page-title {
     font-size: 18px;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
     margin: 0;
   }
 }
@@ -465,7 +465,7 @@ async function handleDelete(row) {
   padding: 12px 16px;
   background: var(--el-bg-color);
   border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--el-box-shadow-light);
 
   .filter-left {
     display: flex;
@@ -480,7 +480,7 @@ async function handleDelete(row) {
   background: var(--el-bg-color);
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--el-box-shadow-light);
 }
 
 .pagination-container {
@@ -490,7 +490,7 @@ async function handleDelete(row) {
   padding: 12px 16px;
   background: var(--el-bg-color);
   border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--el-box-shadow-light);
 }
 
 .multi-line-cell {
@@ -505,11 +505,11 @@ async function handleDelete(row) {
 }
 
 .text-danger {
-  color: #ef4444;
+  color: var(--el-color-danger);
 }
 
 .text-muted {
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
   font-size: 12px;
 }
 

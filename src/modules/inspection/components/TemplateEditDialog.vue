@@ -465,7 +465,7 @@ watch(
 
   i {
     font-size: 20px;
-    color: #606266;
+    color: var(--el-text-color-regular);
   }
 }
 
@@ -490,17 +490,17 @@ watch(
 
     i {
       font-size: 16px;
-      color: #606266;
+      color: var(--el-text-color-regular);
     }
 
     &:hover {
-      border-color: #409eff;
-      background: #ecf5ff;
+      border-color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
     }
 
     &.active {
-      border-color: #409eff;
-      background: #409eff;
+      border-color: var(--el-color-primary);
+      background: var(--el-color-primary);
 
       i {
         color: #fff;
@@ -522,7 +522,7 @@ watch(
 
   .empty-icon {
     font-size: 48px;
-    color: #c0c4cc;
+    color: var(--el-text-color-placeholder);
     display: block;
     margin-bottom: 12px;
   }

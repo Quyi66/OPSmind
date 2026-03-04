@@ -12,6 +12,9 @@
 <script setup>
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
+import { useTheme } from '@/composables/useTheme'
+
+const { isDark } = useTheme()
 
 const props = defineProps({
   modelValue: Boolean,
@@ -43,13 +46,14 @@ function initChart() {
   if (!chartRef.value || props.data.length === 0) return
 
   if (!chartInstance) {
-    chartInstance = echarts.init(chartRef.value)
+    chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
   }
 
   const xData = props.data.map(item => item.title)
   const yData = props.data.map(item => item.count)
 
   const option = {
+    backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis',
       axisPointer: {

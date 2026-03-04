@@ -2,10 +2,10 @@
   <div class="ops-page-layout">
     <div class="layout-container">
       <!-- 左侧边栏 - 数据源树 -->
-      <div class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 280px;">
+      <div class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 280px">
         <div class="ops-sidebar-header">
           <el-row justify="space-between" align="middle" style="width: 100%">
-            <span class="ops-sidebar-title" style="padding: 0; font-size: 16px;">数据源</span>
+            <span class="ops-sidebar-title" style="padding: 0; font-size: 16px">数据源</span>
             <el-button type="primary" size="small" @click="handleCreate">
               <i class="fa fa-plus"></i>
             </el-button>
@@ -28,7 +28,9 @@
               <div class="tree-node">
                 <i :class="getNodeIcon(data)"></i>
                 <span class="tree-node-label">{{ node.label }}</span>
-                <span v-if="data.isFolder" class="tree-node-count">({{ data.children?.length || 0 }})</span>
+                <span v-if="data.isFolder" class="tree-node-count">
+                  ({{ data.children?.length || 0 }})
+                </span>
               </div>
             </template>
           </el-tree>
@@ -42,7 +44,9 @@
           <nav class="breadcrumb-nav">
             <el-breadcrumb separator="/">
               <el-breadcrumb-item>数据源</el-breadcrumb-item>
-              <el-breadcrumb-item>{{ isCreating ? '新建数据源' : '编辑数据源' }}</el-breadcrumb-item>
+              <el-breadcrumb-item>
+                {{ isCreating ? '新建数据源' : '编辑数据源' }}
+              </el-breadcrumb-item>
             </el-breadcrumb>
           </nav>
 
@@ -74,7 +78,7 @@
                   <span v-if="form.type === 'jdbc'">JDBC 数据源</span>
                   <span v-else-if="form.type === 'rest'">RESTful API 数据源</span>
                   <span v-else-if="form.type === 'join'">多数据源关联</span>
-                  <el-tag size="small" style="margin-left: 8px;">{{ form.type }}</el-tag>
+                  <el-tag size="small" style="margin-left: 8px">{{ form.type }}</el-tag>
                 </span>
               </div>
             </template>
@@ -116,7 +120,11 @@
                 <el-form-item v-if="selectedDriver" label="">
                   <div class="url-template">
                     <span class="url-template-label">JDBC URL 示例：</span>
-                    <el-input :model-value="selectedDriver.urlTemplate" readonly class="form-input-lg">
+                    <el-input
+                      :model-value="selectedDriver.urlTemplate"
+                      readonly
+                      class="form-input-lg"
+                    >
                       <template #append>
                         <el-button @click="copyToClipboard(selectedDriver.urlTemplate)">
                           <i class="fa fa-copy"></i>
@@ -131,7 +139,10 @@
                 </el-form-item>
 
                 <el-form-item label="验证语句">
-                  <el-input v-model="form.config.validationQuery" class="form-input-lg code-input" />
+                  <el-input
+                    v-model="form.config.validationQuery"
+                    class="form-input-lg code-input"
+                  />
                 </el-form-item>
 
                 <el-form-item label="用户名" prop="config.username">
@@ -171,9 +182,7 @@
                 >
                   测试连接
                 </el-button>
-                <el-button type="primary" @click="handleSave" :loading="saving">
-                  保存
-                </el-button>
+                <el-button type="primary" @click="handleSave" :loading="saving">保存</el-button>
               </el-form-item>
             </el-form>
 
@@ -200,10 +209,12 @@
       @click="contextMenuVisible = false"
     >
       <div class="context-menu-item" @click="handleEdit(contextMenuNode)">
-        <i class="fa fa-edit"></i> 编辑
+        <i class="fa fa-edit"></i>
+        编辑
       </div>
       <div class="context-menu-item danger" @click="handleDelete(contextMenuNode)">
-        <i class="fa fa-trash"></i> 删除
+        <i class="fa fa-trash"></i>
+        删除
       </div>
     </div>
   </div>
@@ -301,11 +312,18 @@ const rules = computed(() => ({
       ? [{ pattern: /^[a-zA-Z0-9_]+$/, message: '仅允许字母、数字、下划线', trigger: 'blur' }]
       : [])
   ],
-  'config.url': form.type === 'jdbc' ? [{ required: true, message: '请输入 JDBC URL', trigger: 'blur' }] : [],
-  'config.username': form.type === 'jdbc' ? [{ required: true, message: '请输入用户名', trigger: 'blur' }] : [],
-  'config.password': form.type === 'jdbc' && isCreating.value ? [{ required: true, message: '请输入密码', trigger: 'blur' }] : [],
-  'config.manager': form.type === 'jdbc' ? [{ required: true, message: '请输入负责人', trigger: 'blur' }] : [],
-  description: form.type === 'jdbc' ? [{ required: true, message: '请输入描述', trigger: 'blur' }] : []
+  'config.url':
+    form.type === 'jdbc' ? [{ required: true, message: '请输入 JDBC URL', trigger: 'blur' }] : [],
+  'config.username':
+    form.type === 'jdbc' ? [{ required: true, message: '请输入用户名', trigger: 'blur' }] : [],
+  'config.password':
+    form.type === 'jdbc' && isCreating.value
+      ? [{ required: true, message: '请输入密码', trigger: 'blur' }]
+      : [],
+  'config.manager':
+    form.type === 'jdbc' ? [{ required: true, message: '请输入负责人', trigger: 'blur' }] : [],
+  description:
+    form.type === 'jdbc' ? [{ required: true, message: '请输入描述', trigger: 'blur' }] : []
 }))
 
 // 构建树形数据
@@ -498,11 +516,11 @@ async function handleDelete(datasource) {
   if (!datasource || !datasource.id) return
 
   try {
-    await ElMessageBox.confirm(
-      `确定要删除数据源 "${datasource.name}" 吗？`,
-      '删除确认',
-      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
-    )
+    await ElMessageBox.confirm(`确定要删除数据源 "${datasource.name}" 吗？`, '删除确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
   } catch {
     return
   }
@@ -575,7 +593,11 @@ async function handleSave() {
     }
 
     // 如果是编辑且密码未修改，删除密码字段
-    if (!isCreating.value && saveData.config && saveData.config.password === originalPassword.value) {
+    if (
+      !isCreating.value &&
+      saveData.config &&
+      saveData.config.password === originalPassword.value
+    ) {
       delete saveData.config.password
     }
 
@@ -611,14 +633,17 @@ onUnmounted(() => {
 })
 
 // 监听 JDBC 名称格式（仅新建时）
-watch(() => form.name, (newVal, oldVal) => {
-  if (isCreating.value && form.type === 'jdbc' && newVal) {
-    const regex = /^[a-zA-Z0-9_]*$/
-    if (!regex.test(newVal)) {
-      form.name = oldVal || ''
+watch(
+  () => form.name,
+  (newVal, oldVal) => {
+    if (isCreating.value && form.type === 'jdbc' && newVal) {
+      const regex = /^[a-zA-Z0-9_]*$/
+      if (!regex.test(newVal)) {
+        form.name = oldVal || ''
+      }
     }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">
@@ -642,7 +667,7 @@ watch(() => form.name, (newVal, oldVal) => {
   i {
     width: 16px;
     text-align: center;
-    color: #909399;
+    color: var(--el-text-color-regular);
   }
 }
 
@@ -655,7 +680,7 @@ watch(() => form.name, (newVal, oldVal) => {
 
 .tree-node-count {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-regular);
 }
 
 .main-content {
@@ -694,7 +719,7 @@ watch(() => form.name, (newVal, oldVal) => {
   transition: all 0.3s;
 
   &:hover {
-    border-color: #409eff;
+    border-color: var(--el-color-primary);
     box-shadow: 0 2px 12px rgba(64, 158, 255, 0.2);
   }
 
@@ -702,7 +727,7 @@ watch(() => form.name, (newVal, oldVal) => {
     width: 80px;
     height: 80px;
     margin: 0 auto 16px;
-    background: linear-gradient(135deg, #409eff 0%, #67c23a 100%);
+    background: linear-gradient(135deg, var(--el-color-primary) 0%, var(--el-color-success) 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -717,7 +742,7 @@ watch(() => form.name, (newVal, oldVal) => {
   h4 {
     margin: 0;
     font-size: 14px;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -745,7 +770,7 @@ watch(() => form.name, (newVal, oldVal) => {
 
 .form-help {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-regular);
   margin-top: 4px;
 }
 
@@ -757,7 +782,7 @@ watch(() => form.name, (newVal, oldVal) => {
 
 .url-template-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-regular);
   white-space: nowrap;
 }
 
@@ -809,7 +834,7 @@ watch(() => form.name, (newVal, oldVal) => {
   }
 
   &.danger {
-    color: #f56c6c;
+    color: var(--el-color-danger);
   }
 
   i {

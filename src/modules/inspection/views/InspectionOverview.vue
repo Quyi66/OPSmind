@@ -144,9 +144,7 @@ const teamsEnabled = ref(false)
 const filteredTemplateList = computed(() => {
   if (!searchKeyword.value) return templateList.value
   const keyword = searchKeyword.value.toLowerCase()
-  return templateList.value.filter(item =>
-    item.templateName?.toLowerCase().includes(keyword)
-  )
+  return templateList.value.filter(item => item.templateName?.toLowerCase().includes(keyword))
 })
 
 // ... (retain rest of script)
@@ -192,7 +190,13 @@ function getIconClass(icon) {
     return 'fas fa-server' // 默认图标
   }
   // 如果已经包含前缀（如 fas、far、fad 等），直接返回
-  if (icon.startsWith('fas ') || icon.startsWith('far ') || icon.startsWith('fad ') || icon.startsWith('fab ') || icon.startsWith('fal ')) {
+  if (
+    icon.startsWith('fas ') ||
+    icon.startsWith('far ') ||
+    icon.startsWith('fad ') ||
+    icon.startsWith('fab ') ||
+    icon.startsWith('fal ')
+  ) {
     return icon
   }
   // 否则添加 fas 前缀
@@ -212,9 +216,10 @@ async function loadTemplates() {
       // 解析 auditParams
       let auditParams = []
       try {
-        auditParams = typeof template.auditParams === 'string'
-          ? JSON.parse(template.auditParams)
-          : (template.auditParams || [])
+        auditParams =
+          typeof template.auditParams === 'string'
+            ? JSON.parse(template.auditParams)
+            : template.auditParams || []
       } catch {
         auditParams = []
       }
@@ -226,9 +231,7 @@ async function loadTemplates() {
       })
 
       // 计算执行时间
-      const executedTime = template.executedAt
-        ? formatRelativeTime(template.executedAt)
-        : ''
+      const executedTime = template.executedAt ? formatRelativeTime(template.executedAt) : ''
 
       return {
         ...template,
@@ -332,15 +335,11 @@ function handleEditSuccess() {
  */
 async function deleteTemplate(template) {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除模板「${template.templateName}」吗？`,
-      '删除确认',
-      {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
+    await ElMessageBox.confirm(`确定要删除模板「${template.templateName}」吗？`, '删除确认', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
 
     await templateApi.deleteTemplate(template.id)
     ElMessage.success('删除成功')
@@ -417,12 +416,12 @@ onMounted(() => {
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    border-color: #c0c4cc;
+    border-color: var(--el-border-color);
 
     .template-icon-wrapper {
       // transform: scale(1.1) rotate(5deg);
-      background: #eff6ff;
-      color: #3b82f6;
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
     }
   }
 }
@@ -445,7 +444,7 @@ onMounted(() => {
   margin: 0 0 12px;
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--el-text-color-primary);
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -467,12 +466,12 @@ onMounted(() => {
   border: 1px solid var(--el-border-color-light);
   border-radius: 20px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--el-text-color-secondary);
   font-weight: 500;
 
   i {
     font-size: 11px;
-    color: #94a3b8;
+    color: var(--el-text-color-placeholder);
   }
 }
 
@@ -484,7 +483,7 @@ onMounted(() => {
   justify-content: center;
   background: var(--el-bg-color-page);
   border-radius: 12px;
-  color: #94a3b8;
+  color: var(--el-text-color-placeholder);
   font-size: 20px;
   transition: all 0.3s ease;
   flex-shrink: 0;
@@ -493,7 +492,7 @@ onMounted(() => {
 .card-footer {
   padding: 16px 24px;
   background: var(--el-bg-color);
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--el-border-color-lighter);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -517,9 +516,9 @@ onMounted(() => {
     }
 
     &.pending {
-      color: #94a3b8;
+      color: var(--el-text-color-placeholder);
       .dot {
-        background: #cbd5e1;
+        background: var(--el-border-color);
       }
     }
 
@@ -540,13 +539,13 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     border-radius: 6px;
-    color: #94a3b8;
+    color: var(--el-text-color-placeholder);
     transition: all 0.2s;
     cursor: pointer;
 
     &:hover {
-      background: #f1f5f9;
-      color: #64748b;
+      background: var(--el-fill-color-light);
+      color: var(--el-text-color-secondary);
     }
   }
 }
@@ -563,7 +562,7 @@ onMounted(() => {
 }
 
 :deep(.el-empty) {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--el-bg-color);
   border-radius: 8px;
   padding: 40px;
   margin-top: 40px;

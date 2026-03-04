@@ -54,6 +54,9 @@
 <script setup>
 import { computed, ref, onMounted, watch, nextTick, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
+import { useTheme } from '@/composables/useTheme'
+
+const { isDark } = useTheme()
 
 const props = defineProps({
   data: {
@@ -70,22 +73,23 @@ const emit = defineEmits(['click'])
 
 const chartRef = ref(null)
 let chartInstance = null
+let resizeObserver = null
 
 // KPI 定义
 const kpiConfig = {
-  'recently_ok': { title: '连通成功', color: '#67C23A' },
-  'recently': { title: '连通失败', color: '#F56C6C' },
-  'oplus_all': {
+  recently_ok: { title: '连通成功', color: '#67C23A' },
+  recently: { title: '连通失败', color: '#F56C6C' },
+  oplus_all: {
     title: '所有连通异常',
     icon: 'fa-exclamation',
     theme: 'warning'
   },
-  'today': {
+  today: {
     title: '当日新增异常',
     icon: 'fa-bell',
     theme: 'danger'
   },
-  'low': {
+  low: {
     title: '连通率 < 50%',
     icon: 'fa-chart-pie',
     theme: 'primary'
@@ -131,9 +135,10 @@ function initChart() {
 
   if (chartInstance) {
     chartInstance.dispose()
+    chartInstance = null
   }
 
-  chartInstance = echarts.init(chartRef.value)
+  chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
 
   const okCount = dataMap.value['recently_ok'] || 0
   const failCount = dataMap.value['recently'] || 0
@@ -141,6 +146,7 @@ function initChart() {
   const successRate = total > 0 ? Math.round((okCount / total) * 100) : 0
 
   const option = {
+    backgroundColor: 'transparent',
     tooltip: {
       trigger: 'item',
       formatter: '{b}: {c} ({d}%)'
@@ -153,12 +159,12 @@ function initChart() {
       textStyle: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#303133',
+        color: isDark.value ? '#e5e7eb' : '#303133',
         fontFamily: 'Inter, sans-serif'
       },
       subtextStyle: {
         fontSize: 12,
-        color: '#909399',
+        color: isDark.value ? '#9ca3af' : '#909399',
         marginTop: 4
       }
     },
@@ -168,7 +174,7 @@ function initChart() {
       icon: 'circle',
       itemGap: 24,
       textStyle: {
-        color: '#606266',
+        color: isDark.value ? '#d1d5db' : '#606266',
         fontSize: 12
       }
     },
@@ -181,7 +187,7 @@ function initChart() {
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 8,
-          borderColor: '#fff',
+          borderColor: isDark.value ? '#374151' : '#fff',
           borderWidth: 3
         },
         label: { show: false },
@@ -206,7 +212,7 @@ function initChart() {
 
   chartInstance.setOption(option)
 
-  chartInstance.on('click', (params) => {
+  chartInstance.on('click', params => {
     if (params.data && params.data.condi) {
       handleItemClick(params.data.condi)
     }
@@ -221,21 +227,51 @@ const handleResize = () => {
   chartInstance && chartInstance.resize()
 }
 
-watch(() => props.data, () => {
+watch(
+  () => props.data,
+  () => {
+    nextTick(() => {
+      initChart()
+      setTimeout(() => chartInstance?.resize(), 50)
+    })
+  },
+  { deep: true }
+)
+
+// Watch for dark mode changes
+watch(isDark, () => {
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+  }
   nextTick(() => {
     initChart()
+    if (chartInstance) {
+      chartInstance.resize()
+    }
   })
-}, { deep: true })
+})
 
 onMounted(() => {
   nextTick(() => {
     initChart()
   })
   window.addEventListener('resize', handleResize)
+
+  if (chartRef.value && window.ResizeObserver) {
+    resizeObserver = new ResizeObserver(() => {
+      chartInstance?.resize()
+    })
+    resizeObserver.observe(chartRef.value)
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
   chartInstance?.dispose()
 })
 </script>
@@ -254,7 +290,7 @@ onUnmounted(() => {
   background: var(--el-bg-color);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #ebedf0;
+  border: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -280,7 +316,7 @@ onUnmounted(() => {
 .chart-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--el-text-color-primary);
 }
 
 .chart-container {
@@ -301,7 +337,7 @@ onUnmounted(() => {
 .list-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--el-text-color-primary);
   position: relative;
   padding-left: 12px;
 
@@ -313,7 +349,7 @@ onUnmounted(() => {
     transform: translateY(-50%);
     width: 4px;
     height: 16px;
-    background: #3b82f6;
+    background: var(--el-color-primary);
     border-radius: 2px;
   }
 }
@@ -336,7 +372,7 @@ onUnmounted(() => {
   border: 1px solid transparent;
 
   &:hover {
-    background: #edf2f7;
+    background: var(--el-fill-color-light);
     transform: translateX(4px);
 
     .metric-arrow {
@@ -358,15 +394,15 @@ onUnmounted(() => {
   flex-shrink: 0;
 
   &.warning {
-    background: #fffbe6;
+    background: rgba(250, 173, 20, 0.1);
     color: #faad14;
   }
   &.danger {
-    background: #fff1f0;
+    background: rgba(255, 77, 79, 0.1);
     color: #ff4d4f;
   }
   &.primary {
-    background: #e6f7ff;
+    background: rgba(24, 144, 255, 0.1);
     color: #1890ff;
   }
 }
@@ -387,7 +423,7 @@ onUnmounted(() => {
 
 .metric-name {
   font-size: 14px;
-  color: #4b5563;
+  color: var(--el-text-color-regular);
   font-weight: 500;
 }
 
@@ -409,7 +445,7 @@ onUnmounted(() => {
 
 .metric-progress-bg {
   height: 6px;
-  background: #e2e8f0; /* 加深一点背景条颜色 */
+  background: var(--el-fill-color); /* 加深一点背景条颜色 */
   border-radius: 3px;
   width: 100%;
   overflow: hidden;
@@ -433,7 +469,7 @@ onUnmounted(() => {
 }
 
 .metric-arrow {
-  color: #94a3b8;
+  color: var(--el-text-color-secondary);
   font-size: 14px;
   opacity: 0;
   transform: translateX(-4px);

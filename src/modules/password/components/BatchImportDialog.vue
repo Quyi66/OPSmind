@@ -8,11 +8,7 @@
   >
     <div class="batch-import-content">
       <!-- 说明提示 -->
-      <el-alert
-        type="success"
-        :closable="false"
-        class="info-alert"
-      >
+      <el-alert type="success" :closable="false" class="info-alert">
         <template #title>
           <div class="alert-content">
             通过Excel模板批量导入用户申请临时密码。请先下载模板，按格式填写后上传。
@@ -95,11 +91,14 @@ const uploading = ref(false)
 const selectedFile = ref(null)
 const uploadRef = ref(null)
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-})
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+  }
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
   if (!val) {
     clearFile()
@@ -188,13 +187,13 @@ function handleClose() {
   .action-title {
     font-size: 14px;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--el-text-color-primary);
     margin-bottom: 8px;
   }
 
   .action-desc {
     font-size: 13px;
-    color: #64748b;
+    color: var(--el-text-color-secondary);
     margin-bottom: 12px;
   }
 }
@@ -204,9 +203,9 @@ function handleClose() {
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  background: #e0f2fe;
+  background: var(--el-color-primary-light-9);
   border-radius: 6px;
-  color: #0284c7;
+  color: var(--el-color-primary);
 
   i.fa-file-excel {
     font-size: 18px;

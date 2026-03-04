@@ -34,10 +34,22 @@
 
           <template v-if="showPasswordEdit || !form.id">
             <el-form-item label="密码" prop="password">
-              <el-input v-model="form.password" type="password" show-password autocomplete="new-password" maxlength="32" />
+              <el-input
+                v-model="form.password"
+                type="password"
+                show-password
+                autocomplete="new-password"
+                maxlength="32"
+              />
             </el-form-item>
             <el-form-item label="确认密码" prop="confirmPassword">
-              <el-input v-model="form.confirmPassword" type="password" show-password autocomplete="new-password" maxlength="32" />
+              <el-input
+                v-model="form.confirmPassword"
+                type="password"
+                show-password
+                autocomplete="new-password"
+                maxlength="32"
+              />
             </el-form-item>
           </template>
 
@@ -138,7 +150,7 @@
 
       <!-- API Keys (仅查看模式) -->
       <el-tab-pane v-if="isViewMode" label="ApiKey" name="apikeys">
-        <el-table :data="apiKeys"  size="small" max-height="450px">
+        <el-table :data="apiKeys" size="small" max-height="450px">
           <el-table-column prop="name" label="名称" />
           <el-table-column prop="targetApi" label="目标API" min-width="200" />
           <el-table-column prop="expireTime" label="过期时间" width="180">
@@ -189,7 +201,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const isViewMode = computed(() => props.mode === 'view')
@@ -255,25 +267,28 @@ const formRules = {
   login: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 1, max: 50, message: '用户名长度在 1 到 50 个字符', trigger: 'blur' },
-    { pattern: /^[_'.A-Za-z0-9-]*$/, message: '用户名只能包含字母、数字和特殊字符', trigger: 'blur' }
+    {
+      pattern: /^[_'.A-Za-z0-9-]*$/,
+      message: '用户名只能包含字母、数字和特殊字符',
+      trigger: 'blur'
+    }
   ],
   fullName: [
     { required: true, message: '请输入姓名', trigger: 'blur' },
     { max: 50, message: '姓名不能超过 50 个字符', trigger: 'blur' }
   ],
-  password: [
-    { min: 8, max: 32, message: '密码长度在 8 到 32 个字符', trigger: 'blur' }
-  ],
-  email: [
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
-  ]
+  password: [{ min: 8, max: 32, message: '密码长度在 8 到 32 个字符', trigger: 'blur' }],
+  email: [{ type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }]
 }
 
-watch(() => props.modelValue, async (val) => {
-  if (val) {
-    await initDialog()
+watch(
+  () => props.modelValue,
+  async val => {
+    if (val) {
+      await initDialog()
+    }
   }
-})
+)
 
 async function initDialog() {
   activeTab.value = 'basic'
@@ -576,7 +591,7 @@ function handleClose() {
 
 :deep(.el-collapse-item__header) {
   font-size: 13px;
-  color: #409eff;
+  color: var(--el-color-primary);
 }
 
 :deep(.el-collapse-item__content) {
@@ -604,7 +619,7 @@ function handleClose() {
 
 .qrcode-missing {
   padding: 40px;
-  color: #909399;
+  color: var(--el-text-color-regular);
 }
 
 .qrcode-actions {
