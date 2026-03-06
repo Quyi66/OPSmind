@@ -11,7 +11,7 @@
     <div class="selector-container">
       <!-- CI类型选择 -->
       <div v-if="ciTypeDefs.length > 1" class="ci-type-selector mb-3">
-        <el-select v-model="activeCiType" placeholder="请选择CI类型" class="w-100">
+        <el-select v-model="activeCiType" placeholder="请选择CI类型" class="w-100" popper-style="z-index: 10000">
           <el-option
             v-for="citype in ciTypeDefs"
             :key="citype.code"
@@ -235,7 +235,6 @@ function initCiTypes() {
 
   apiCall.then((response) => {
     const citMap = response?.data || response || {}
-
     if (useAllTypes || useAutoTypes) {
       // 使用所有返回的类型
       ciTypeDefs.value = Object.keys(citMap).map(code => ({
