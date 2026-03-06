@@ -624,6 +624,7 @@ import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, vulnerabilityApi } from '../api'
 import { getCveUrl } from '../composables/useFormatters'
+import { assetApi } from '@/modules/asset/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'
@@ -933,7 +934,38 @@ async function loadHostData() {
     }
     const response = await patchScanApi.getScanResults(params)
     if (response?.data) {
-      hostTableData.value = response.data.records || []
+      const records = response.data.records || []
+
+      // 一次性获取所有主机的“是否需要重启”状态
+      try {
+        const assetParams = {
+          hostKeys: '@@',
+          assetType: 'linux',
+          permission: 'r',
+          status: 'all',
+          CONN_LATEST_STATUS: '',
+          system_name: ' ',
+          os_version: ' '
+        }
+        const assetRes = await assetApi.getAssetList(assetParams, { size: 1000 })
+        if (assetRes?.records) {
+          const rebootMap = {}
+          assetRes.records.forEach(item => {
+            if (item.IP) {
+              rebootMap[item.IP] = item.needReboot
+            }
+          })
+          records.forEach(record => {
+            if (rebootMap.hasOwnProperty(record.host_key)) {
+              record.need_reboot = rebootMap[record.host_key]
+            }
+          })
+        }
+      } catch (err) {
+        console.error('Failed to load reboot status:', err)
+      }
+
+      hostTableData.value = records
       pagination.total = response.data.total || 0
     }
   } catch (error) {

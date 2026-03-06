@@ -36,7 +36,9 @@ async function loadTranslations() {
       // 从 public/i18n/zh-cn/ 目录加载翻译文件
       const importPromises = modules.map(async (module) => {
         try {
-          const response = await fetch(`/ops/i18n/zh-cn/${module}.json`)
+          // 使用 import.meta.env.BASE_URL 自动适应不同的 base 路径
+          const basePath = import.meta.env.BASE_URL || '/'
+          const response = await fetch(`${basePath}i18n/zh-cn/${module}.json`)
           if (response.ok) {
             const data = await response.json()
             Object.assign(translations, data)
