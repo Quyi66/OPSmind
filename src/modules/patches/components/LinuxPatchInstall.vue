@@ -487,7 +487,7 @@ function handleShowAllCves(row) {
 
 function resolvePatchDistro(patch) {
   if (!patch) return ''
-  return patch.os_distro || patch.vendor || ''
+  return patch.os_distro || patch.vendor || (patch.patch_id.includes('KYSA') ? 'kylin' : 'redhat')
 }
 
 // 预处理数据 - 提前解析CVE列表

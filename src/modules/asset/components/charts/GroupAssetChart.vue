@@ -61,17 +61,20 @@ let chartInstance = null
 let fullscreenChartInstance = null
 let resizeObserver = null
 
-// 操作系统颜色映射
-const osColors = {
-  count: 'rgb(197, 90, 17)',
-  CentOS: 'rgb(0, 176, 80)',
-  Anolis: 'rgb(0, 176, 240)',
-  RedHat: 'rgb(0, 112, 192)',
-  Debian: 'rgb(0, 32, 96)'
+const distroColorMap = {
+  CentOS: '#2563EB',
+  Windows: '#10B981',
+  Anolis: '#06B6D4',
+  RedHat: '#EF4444',
+  Debian: '#8B5CF6'
 }
 
 function getChartOption() {
   const xData = props.data.map(item => item.groupName)
+  const axisColor = isDark.value ? 'rgba(148, 163, 184, 0.82)' : '#64748b'
+  const splitLineColor = isDark.value ? 'rgba(148, 163, 184, 0.16)' : 'rgba(148, 163, 184, 0.24)'
+  const legendColor = isDark.value ? '#cbd5e1' : '#475569'
+  const tooltipBg = isDark.value ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)'
 
   return {
     backgroundColor: 'transparent',
@@ -79,36 +82,56 @@ function getChartOption() {
       trigger: 'axis',
       axisPointer: {
         type: 'cross'
-      }
+      },
+      backgroundColor: tooltipBg,
+      borderColor: splitLineColor,
+      textStyle: { color: isDark.value ? '#f8fafc' : '#0f172a' },
+      extraCssText: 'box-shadow: 0 12px 28px rgba(15,23,42,0.16); border-radius: 12px;'
     },
     legend: {
-      data: ['总数', 'CentOS', 'Anolis', 'RedHat', 'Debian'],
-      right: 10,
+      data: ['总数', 'CentOS', 'Windows', 'Anolis', 'RedHat', 'Debian'],
+      right: 0,
       top: 0,
       icon: 'circle',
       itemWidth: 8,
-      itemHeight: 8
+      itemHeight: 8,
+      textStyle: {
+        color: legendColor,
+        fontSize: 11
+      }
     },
     grid: {
-      left: '3%',
+      left: '4%',
       right: '4%',
-      bottom: '10%',
-      top: '15%',
+      bottom: '5%',
+      top: '12%',
       containLabel: true
     },
     xAxis: {
       type: 'category',
       data: xData,
-      axisLabel: {},
+      axisLabel: {
+        color: axisColor,
+        width: 78,
+        overflow: 'truncate',
+        fontSize: 11
+      },
       axisLine: {
-        lineStyle: {}
+        lineStyle: { color: splitLineColor }
       }
     },
     yAxis: {
       type: 'value',
-      axisLabel: {},
+      minInterval: 1,
+      axisLabel: {
+        color: axisColor,
+        fontSize: 11
+      },
       splitLine: {
-        lineStyle: {}
+        lineStyle: {
+          color: splitLineColor,
+          type: 'dashed'
+        }
       }
     },
     series: [
@@ -116,63 +139,53 @@ function getChartOption() {
         name: '总数',
         type: 'bar',
         data: props.data.map(item => item.count),
+        cursor: 'pointer',
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#FF9F43' },
-            { offset: 1, color: 'rgba(255, 159, 67, 0.1)' }
+            { offset: 0, color: '#F59E0B' },
+            { offset: 1, color: 'rgba(245, 158, 11, 0.12)' }
           ]),
-          borderRadius: [4, 4, 0, 0]
+          borderRadius: [10, 10, 0, 0],
+          shadowBlur: 10,
+          shadowColor: 'rgba(245, 158, 11, 0.2)',
+          shadowOffsetY: 4
         },
         label: {
           show: true,
           position: 'top',
-
+          color: isDark.value ? '#f8fafc' : '#0f172a',
+          fontWeight: 700,
           formatter: '{c}'
         },
         barMaxWidth: 30
       },
-      {
-        name: 'CentOS',
+      ...['CentOS', 'Windows', 'Anolis', 'RedHat', 'Debian'].map(os => ({
+        name: os,
         type: 'line',
-        data: props.data.map(item => item.CentOS),
+        data: props.data.map(item => item[os] ?? 0),
+        cursor: 'pointer',
         smooth: true,
-        symbol: 'emptyCircle',
+        symbol: 'circle',
         symbolSize: 6,
-        lineStyle: { width: 3, color: '#28C76F' },
-        itemStyle: { color: '#28C76F' }
-      },
-      {
-        name: 'Anolis',
-        type: 'line',
-        data: props.data.map(item => item.Anolis),
-        smooth: true,
-        symbol: 'emptyCircle',
-        symbolSize: 6,
-        lineStyle: { width: 3, color: '#00CFE8' },
-        itemStyle: { color: '#00CFE8' }
-      },
-      {
-        name: 'RedHat',
-        type: 'line',
-        data: props.data.map(item => item.RedHat),
-        smooth: true,
-        symbol: 'emptyCircle',
-        symbolSize: 6,
-        lineStyle: { width: 3, color: '#EA5455' },
-        itemStyle: { color: '#EA5455' }
-      },
-      {
-        name: 'Debian',
-        type: 'line',
-        data: props.data.map(item => item.Debian),
-        smooth: true,
-        symbol: 'emptyCircle',
-        symbolSize: 6,
-        lineStyle: { width: 3, color: '#7367F0' },
-        itemStyle: { color: '#7367F0' }
-      }
+        lineStyle: { width: 3, color: distroColorMap[os] },
+        itemStyle: { color: distroColorMap[os], borderColor: isDark.value ? '#0f172a' : '#fff', borderWidth: 2 },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: isDark.value ? `${distroColorMap[os]}44` : `${distroColorMap[os]}55` },
+            { offset: 1, color: `${distroColorMap[os]}05` }
+          ])
+        }
+      }))
     ]
   }
+}
+
+function bindChartEvents(instance) {
+  if (!instance) return
+  instance.off('click')
+  instance.on('click', params => {
+    emit('click', props.data[params.dataIndex])
+  })
 }
 
 function initChart() {
@@ -180,10 +193,7 @@ function initChart() {
 
   chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
   updateChart()
-
-  chartInstance.on('click', params => {
-    emit('click', props.data[params.dataIndex])
-  })
+  bindChartEvents(chartInstance)
 }
 
 function updateChart() {
@@ -197,6 +207,7 @@ function toggleFullscreen() {
     if (fullscreenChartRef.value) {
       fullscreenChartInstance = echarts.init(fullscreenChartRef.value, isDark.value ? 'dark' : '')
       fullscreenChartInstance.setOption(getChartOption())
+      bindChartEvents(fullscreenChartInstance)
     }
   })
 }
@@ -231,11 +242,13 @@ watch(isDark, () => {
     chartInstance.dispose()
     chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
     updateChart()
+    bindChartEvents(chartInstance)
   }
   if (fullscreenChartInstance && fullscreenVisible.value) {
     fullscreenChartInstance.dispose()
     fullscreenChartInstance = echarts.init(fullscreenChartRef.value, isDark.value ? 'dark' : '')
     fullscreenChartInstance.setOption(getChartOption())
+    bindChartEvents(fullscreenChartInstance)
   }
 })
 
@@ -265,12 +278,17 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .chart-card {
-  background: var(--el-bg-color);
-  border-radius: 8px;
-  padding: 16px;
+  background: var(
+    --asset-chart-card-bg,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.92))
+  );
+  border-radius: 18px;
+  padding: 16px 18px;
   height: 100%;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--asset-chart-card-border, rgba(148, 163, 184, 0.14));
+  box-shadow: var(--asset-chart-card-shadow, 0 12px 24px rgba(15, 23, 42, 0.04));
 }
 
 .chart-header {
@@ -288,13 +306,13 @@ onUnmounted(() => {
 
 .header-icon {
   font-size: 18px;
-  color: #ff9f43;
+  color: #f59e0b;
 }
 
 .chart-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--asset-chart-title-color, var(--el-text-color-primary));
 }
 
 .chart-container {
@@ -305,5 +323,18 @@ onUnmounted(() => {
 .fullscreen-chart {
   width: 100%;
   height: 70vh;
+}
+
+html.dark .chart-card {
+  --asset-chart-card-bg: var(--el-bg-color);
+  --asset-chart-card-border: var(--el-border-color-light);
+  --asset-chart-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.24);
+  --asset-chart-title-color: var(--el-text-color-primary);
+}
+
+html.dark .asset-overview .panel-shell .chart-card {
+  --asset-chart-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.008));
+  --asset-chart-card-border: rgba(148, 163, 184, 0.06);
+  --asset-chart-card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
 </style>

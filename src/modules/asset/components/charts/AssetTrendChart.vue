@@ -61,6 +61,12 @@ let chartInstance = null
 let fullscreenChartInstance = null
 let resizeObserver = null
 
+const trendAccent = {
+  primary: '#0F766E',
+  secondary: '#2DD4BF',
+  glow: 'rgba(45, 212, 191, 0.26)'
+}
+
 function getChartOption() {
   const xData = props.data.map(item => {
     // 格式化日期为 MM-DD
@@ -70,39 +76,54 @@ function getChartOption() {
     return `${month}-${day}`
   })
   const yData = props.data.map(item => item.total)
+  const axisColor = isDark.value ? 'rgba(148, 163, 184, 0.82)' : '#64748b'
+  const splitLineColor = isDark.value ? 'rgba(148, 163, 184, 0.16)' : 'rgba(148, 163, 184, 0.24)'
+  const labelColor = isDark.value ? '#f8fafc' : '#0f172a'
+  const tooltipBg = isDark.value ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)'
+  const latestIndex = yData.length - 1
 
   return {
     backgroundColor: 'transparent',
     tooltip: {
-      trigger: 'axis'
+      trigger: 'axis',
+      backgroundColor: tooltipBg,
+      borderColor: splitLineColor,
+      textStyle: { color: labelColor },
+      extraCssText: 'box-shadow: 0 12px 28px rgba(15,23,42,0.16); border-radius: 12px;'
     },
     grid: {
-      left: '3%',
+      left: '4%',
       right: '4%',
-      bottom: '10%',
-      top: '15%',
+      bottom: '4%',
+      top: '8%',
       containLabel: true
     },
     xAxis: {
       type: 'category',
       data: xData,
       boundaryGap: false,
-      axisLabel: {},
+      axisLabel: {
+        color: axisColor,
+        fontSize: 11
+      },
       axisLine: {
-        lineStyle: {}
+        lineStyle: { color: splitLineColor }
       }
     },
     yAxis: {
       type: 'value',
-      name: '总数',
-      nameLocation: 'end',
-      // nameGap: 18,
-      nameTextStyle: {
-        fontSize: 12
+      minInterval: 1,
+      precision: 0,
+      axisLabel: {
+        color: axisColor,
+        fontSize: 11,
+        formatter: value => `${Math.round(value)}`
       },
-      axisLabel: {},
       splitLine: {
-        lineStyle: {}
+        lineStyle: {
+          color: splitLineColor,
+          type: 'dashed'
+        }
       }
     },
     series: [
@@ -111,22 +132,42 @@ function getChartOption() {
         type: 'line',
         data: yData,
         smooth: true,
-        symbol: 'emptyCircle',
-        symbolSize: 8,
+        symbol: 'circle',
+        symbolSize: 7,
         lineStyle: {
-          color: '#2DD4BF', // 蓝绿色/青色
+          color: trendAccent.secondary,
           width: 3,
-          shadowColor: 'rgba(45, 212, 191, 0.3)',
+          shadowColor: trendAccent.glow,
           shadowBlur: 10
         },
         itemStyle: {
-          color: '#2DD4BF'
+          color: trendAccent.secondary,
+          borderColor: isDark.value ? '#0f172a' : '#ffffff',
+          borderWidth: 3
         },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(45,212,191,0.5)' },
-            { offset: 1, color: 'rgba(45,212,191,0.01)' }
+            { offset: 0, color: 'rgba(45,212,191,0.34)' },
+            { offset: 0.5, color: 'rgba(20,184,166,0.14)' },
+            { offset: 1, color: 'rgba(20,184,166,0.02)' }
           ])
+        },
+        markPoint: {
+          symbol: 'circle',
+          symbolSize: 34,
+          itemStyle: {
+            color: trendAccent.primary,
+            borderColor: '#ffffff',
+            borderWidth: 3,
+            shadowColor: trendAccent.glow,
+            shadowBlur: 12
+          },
+          label: {
+            color: '#ffffff',
+            fontWeight: 700,
+            formatter: params => params.value
+          },
+          data: latestIndex >= 0 ? [{ coord: [xData[latestIndex], yData[latestIndex]], value: yData[latestIndex] }] : []
         }
       }
     ]
@@ -219,12 +260,17 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .chart-card {
-  background: var(--el-bg-color);
-  border-radius: 8px;
-  padding: 16px;
+  background: var(
+    --asset-chart-card-bg,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.92))
+  );
+  border-radius: 18px;
+  padding: 16px 18px;
   height: 100%;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--asset-chart-card-border, rgba(148, 163, 184, 0.14));
+  box-shadow: var(--asset-chart-card-shadow, 0 12px 24px rgba(15, 23, 42, 0.04));
 }
 
 .chart-header {
@@ -242,13 +288,13 @@ onUnmounted(() => {
 
 .header-icon {
   font-size: 18px;
-  color: #2dd4bf;
+  color: #0f766e;
 }
 
 .chart-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--asset-chart-title-color, var(--el-text-color-primary));
 }
 
 .chart-container {
@@ -259,5 +305,18 @@ onUnmounted(() => {
 .fullscreen-chart {
   width: 100%;
   height: 70vh;
+}
+
+html.dark .chart-card {
+  --asset-chart-card-bg: var(--el-bg-color);
+  --asset-chart-card-border: var(--el-border-color-light);
+  --asset-chart-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.24);
+  --asset-chart-title-color: var(--el-text-color-primary);
+}
+
+html.dark .asset-overview .panel-shell .chart-card {
+  --asset-chart-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.008));
+  --asset-chart-card-border: rgba(148, 163, 184, 0.06);
+  --asset-chart-card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
 </style>
