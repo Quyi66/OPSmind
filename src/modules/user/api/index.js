@@ -2,6 +2,10 @@
  * 用户管理模块 API
  */
 import { apiService } from '@/core/api'
+import {
+  getSudoTemplates as getSudoTemplatesApi,
+  getSudoCommandsByTemplate as getSudoCommandsByTemplateApi
+} from '@/modules/sudo/api'
 
 const DTS_BASE = '/dts/api/dts/q/data'
 
@@ -94,6 +98,20 @@ export function saveFeatureConfig(config) {
   return apiService.post(`/uim/api/uim/config/save?cacheBuster=${Date.now()}`, config)
 }
 
+/**
+ * 获取sudo模板列表
+ */
+export function getSudoTemplates(options = {}) {
+  return getSudoTemplatesApi(options)
+}
+
+/**
+ * 根据模板ID获取sudo命令列表
+ */
+export function getSudoCommandsByTemplate(templateId, options = {}) {
+  return getSudoCommandsByTemplateApi(templateId, options)
+}
+
 export default {
   getOverviewStats,
   getAuditLogStats,
@@ -101,5 +119,7 @@ export default {
   getUsers,
   getUserGroups,
   getFeatureConfig,
-  saveFeatureConfig
+  saveFeatureConfig,
+  getSudoTemplates,
+  getSudoCommandsByTemplate
 }

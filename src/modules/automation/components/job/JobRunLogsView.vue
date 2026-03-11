@@ -163,8 +163,8 @@
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
         background
-        @size-change="handleSearch"
-        @current-change="handleSearch"
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
       />
     </div>
 
@@ -255,6 +255,15 @@ async function fetchData() {
 }
 
 function handleSearch() {
+  pagination.value.page = 1
+  fetchData()
+}
+
+function handlePageChange() {
+  fetchData()
+}
+
+function handlePageSizeChange() {
   pagination.value.page = 1
   fetchData()
 }
