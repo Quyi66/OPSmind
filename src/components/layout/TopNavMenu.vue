@@ -1,5 +1,5 @@
 <template>
-  <div class="top-nav-wrapper">
+  <div class="top-nav-wrapper" :class="{ 'is-home': props.isHomeRoute }">
     <!-- Header -->
     <header class="top-nav-header">
       <div class="nav-container">
@@ -339,6 +339,10 @@ const props = defineProps({
   user: {
     type: Object,
     default: null
+  },
+  isHomeRoute: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -897,6 +901,11 @@ onUnmounted(() => {
   background: transparent;
   border-bottom: none;
   box-shadow: none;
+}
+
+.top-nav-wrapper:not(.is-home) .nav-container {
+  max-width: none;
+  margin: 0;
 }
 
 // 左侧导航区域

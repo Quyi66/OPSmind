@@ -10,31 +10,38 @@
           <button
             class="filter-tab"
             :class="{ active: activeTab === 'type' }"
-            @click="activeTab = 'type'"
+            @click.stop="activeTab = 'type'"
           >
             按类型
           </button>
           <button
             class="filter-tab"
             :class="{ active: activeTab === 'system' }"
-            @click="activeTab = 'system'"
+            @click.stop="activeTab = 'system'"
           >
             按系统
           </button>
-          <button class="more-btn">...</button>
+          <button class="more-btn" @click="navigateToAssetOverview">...</button>
         </div>
       </div>
     </div>
 
     <!-- ECharts横向柱状图 -->
-    <div class="chart-container">
-      <v-chart class="chart" :option="chartOption" autoresize :theme="isDark ? 'dark' : ''" />
+    <div class="chart-container clickable-area">
+      <v-chart
+        class="chart"
+        :option="chartOption"
+        autoresize
+        :theme="isDark ? 'dark' : ''"
+        @click="handleChartClick"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
@@ -57,6 +64,32 @@ const assetHeaderIcon = new URL('@/assets/icons/dashboard/icon-assetview@2x.png'
 
 const dashboardStore = useDashboardStore()
 const activeTab = ref('type')
+const router = useRouter()
+
+const navigateToAssetOverview = () => {
+  router.push({ path: '/acm/info' })
+}
+
+const assetTypeRouteMap = {
+  'Windows服务器': 'windows',
+  'Unix服务器': 'unix',
+  'Linux服务器': 'linux',
+  Windows: 'windows',
+  Unix: 'unix',
+  Linux: 'linux'
+}
+
+const navigateToAssetInfoByType = assetType => {
+  if (!assetType) {
+    navigateToAssetOverview()
+    return
+  }
+
+  router.push({
+    path: '/acm/info',
+    query: { type: assetType }
+  })
+}
 
 // 资产数据（来自 API 数据）
 const assetData = computed(() => {
@@ -69,6 +102,11 @@ const assetData = computed(() => {
     values
   }
 })
+
+const handleChartClick = params => {
+  const assetType = assetTypeRouteMap[params?.name] || ''
+  navigateToAssetInfoByType(assetType)
+}
 
 // ECharts 配置
 const chartOption = computed(() => ({
@@ -102,7 +140,7 @@ const chartOption = computed(() => ({
       lineStyle: {}
     },
     axisLabel: {
-      
+
       fontSize: 14
     },
     splitLine: {
@@ -123,7 +161,7 @@ const chartOption = computed(() => ({
       show: false
     },
     axisLabel: {
-      
+
       fontSize: 12,
       margin: 10
     }
@@ -165,6 +203,10 @@ const chartOption = computed(() => ({
     'Helvetica Neue',
     Arial,
     sans-serif;
+}
+
+.clickable-area {
+  cursor: pointer;
 }
 
 .section-header {

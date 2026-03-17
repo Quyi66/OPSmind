@@ -34,6 +34,24 @@
             </template>
           </el-input>
         </el-form-item>
+        <el-form-item label="修复状态" label-width="72">
+          <el-select
+            v-model="vulPatchStatus"
+            size="small"
+            placeholder="全部"
+            clearable
+            style="width: 140px"
+            @change="handleVulPatchStatusChange"
+            @clear="handleVulPatchStatusChange"
+          >
+            <el-option
+              v-for="option in patchStatusOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+        </el-form-item>
       </el-form>
     </div>
 
@@ -162,7 +180,7 @@
     </el-table>
 
     <!-- 分页 -->
-    <div class="pagination-wrapper">
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="vulPagination.page"
         v-model:page-size="vulPagination.pageSize"
@@ -256,6 +274,17 @@ const props = defineProps({
 
 const emit = defineEmits(['patch-click'])
 
+const patchStatusOptions = [
+  { label: '未修复', value: '未修复' },
+  { label: '已修复', value: '已修复' },
+  { label: '已修复(手动)', value: '已修复(手动)' },
+  { label: '修复中', value: '修复中' },
+  { label: '修复失败', value: '修复失败' },
+  { label: '回滚中', value: '回滚中' },
+  { label: '回滚失败', value: '回滚失败' },
+  { label: '回滚成功', value: '回滚成功' }
+]
+
 function normalizeSeverity(severity) {
   const raw = String(severity || '').trim()
   if (!raw) return ''
@@ -305,6 +334,8 @@ const {
   handleVulFilterChange,
   vulKeyword,
   handleVulKeywordChange,
+  vulPatchStatus,
+  handleVulPatchStatusChange,
   handleVulSelectionChange,
   handleVulPageChange,
   handleVulSizeChange

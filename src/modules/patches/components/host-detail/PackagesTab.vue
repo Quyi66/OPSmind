@@ -60,7 +60,7 @@
       v-loading="packageLoading"
       :data="packageTableData"
       size="small"
-      max-height="calc(100vh - 410px)"
+      max-height="calc(100vh - 390px)"
       @selection-change="handlePackageSelectionChange"
     >
       <el-table-column type="selection" width="55" />
@@ -100,7 +100,7 @@
     </el-table>
 
     <!-- 分页 -->
-    <div class="pagination-wrapper">
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="packagePagination.page"
         v-model:page-size="packagePagination.pageSize"

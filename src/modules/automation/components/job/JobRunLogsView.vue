@@ -24,6 +24,16 @@
             <el-option label="运行终止" value="INTERRUPTED" />
           </el-select>
         </el-form-item>
+        <el-form-item label="类型">
+          <el-select v-model="filters.type" placeholder="类型筛选" style="width: 140px">
+            <el-option
+              v-for="option in jobTypeOptions"
+              :key="option.value || 'all'"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="关键词">
           <el-input
             v-model="filters.search"
@@ -178,10 +188,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
+import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import ExecuteResultDialog from './JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n.js'
 
@@ -202,15 +214,11 @@ const pagination = ref({
 })
 const resultDialogVisible = ref(false)
 const resultMeta = ref({ runId: '', jobTitle: '' })
+const route = useRoute()
 
 let searchTimeout = null
-
-const jobTypeMap = {
-  script: '脚本作业',
-  playbook: 'Playbook',
-  flow: '流程作业',
-  schedule: '定时作业'
-}
+const jobTypeOptions = JOB_TYPE_OPTIONS
+const validJobTypes = new Set(JOB_TYPE_OPTIONS.map(option => option.value).filter(Boolean))
 
 const statusMap = {
   WAITING: { label: '等待中', type: 'info' },
@@ -223,8 +231,47 @@ const statusMap = {
 }
 
 onMounted(() => {
+  syncFiltersFromRoute()
   fetchData()
 })
+
+watch(
+  () => route.query,
+  (query, previousQuery) => {
+    const prevDay = previousQuery?.day ?? ''
+    const prevType = previousQuery?.type ?? ''
+    const prevKeyword = previousQuery?.keyword ?? ''
+    const nextDay = query?.day ?? ''
+    const nextType = query?.type ?? ''
+    const nextKeyword = query?.keyword ?? ''
+
+    if (
+      prevDay === nextDay &&
+      prevType === nextType &&
+      prevKeyword === nextKeyword
+    ) {
+      return
+    }
+
+    syncFiltersFromRoute()
+    pagination.value.page = 1
+    fetchData()
+  }
+)
+
+function normalizeSingleQueryValue(value) {
+  return Array.isArray(value) ? value[0] || '' : value || ''
+}
+
+function syncFiltersFromRoute() {
+  const routeDay = normalizeSingleQueryValue(route.query.day)
+  const routeType = normalizeSingleQueryValue(route.query.type)
+  const routeKeyword = normalizeSingleQueryValue(route.query.keyword)
+
+  filters.value.day = routeDay || '0'
+  filters.value.type = validJobTypes.has(routeType) ? routeType : ''
+  filters.value.search = routeKeyword || ''
+}
 
 async function fetchData() {
   loading.value = true
@@ -240,7 +287,7 @@ async function fetchData() {
       size: pagination.value.size,
       page: pagination.value.page,
       orderBy: 'start_time desc',
-      filter: filters.value.search
+      filter: filters.value.search ? `start_time|username|ata_url:*${filters.value.search}*` : undefined
     }
 
     const response = await jaoApi.fetchJobRunLogs(payload)
@@ -282,13 +329,15 @@ function handleRefresh() {
 function handleReset() {
   filters.value.day = '0'
   filters.value.status = 'all'
+  filters.value.type = ''
   filters.value.search = ''
   pagination.value.page = 1
   fetchData()
 }
 
 function getJobTypeLabel(type) {
-  return jobTypeMap[type] || type
+  const option = JOB_TYPE_OPTIONS.find(item => item.value === type)
+  return option?.label || type || '-'
 }
 
 function getStatusLabel(status) {

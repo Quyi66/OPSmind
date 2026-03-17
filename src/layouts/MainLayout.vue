@@ -1,7 +1,7 @@
 <template>
   <div class="main-layout" :class="{ 'is-home': isHomeRoute }">
     <!-- 顶部菜单 -->
-    <TopNavMenu :user="currentUser" class="main-header" />
+    <TopNavMenu :user="currentUser" :is-home-route="isHomeRoute" class="main-header" />
 
     <!-- 主体区域 -->
     <div class="main-body">
@@ -181,6 +181,12 @@ onUnmounted(() => {
   margin: 0 auto;
   // padding-left: 16px;
   // padding-right: 16px;
+}
+
+.main-layout:not(.is-home) .main-container {
+  max-width: none;
+  width: 100%;
+  margin: 0;
 }
 
 // @media (min-width: 1600px) {

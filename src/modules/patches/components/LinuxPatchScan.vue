@@ -392,7 +392,7 @@
             v-loading="vulnLoading"
             :data="vulnTableData"
             style="width: 100%"
-            max-height="calc(100vh - 630px)"
+            max-height="calc(100vh - 600px)"
             @selection-change="handleVulnSelectionChange"
           >
             <el-table-column type="selection" width="45" />
@@ -618,9 +618,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, provide } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ref, reactive, onMounted, computed, provide, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, vulnerabilityApi } from '../api'
 import { getCveUrl } from '../composables/useFormatters'
@@ -657,6 +657,7 @@ const emit = defineEmits(['install', 'navigate'])
 
 // Router
 const router = useRouter()
+const route = useRoute()
 
 // 当前标签页
 const activeTab = ref('host')
@@ -743,6 +744,19 @@ const vulnFilters = reactive({
   os_major_version: 'all',
   reboot_status: 'all'
 })
+
+const validPatchTabs = new Set(['host', 'vulnerability'])
+const validSeverityValues = new Set(['all', 'Critical', 'Important', 'Moderate', 'Low'])
+
+function syncStateFromRoute() {
+  const queryTab = Array.isArray(route.query.tab) ? route.query.tab[0] : route.query.tab
+  const querySeverity = Array.isArray(route.query.severity)
+    ? route.query.severity[0]
+    : route.query.severity
+
+  activeTab.value = validPatchTabs.has(queryTab) ? queryTab : 'host'
+  vulnFilters.severity = validSeverityValues.has(querySeverity) ? querySeverity : 'all'
+}
 
 // 操作系统列表
 const osDistroList = ref([])
@@ -936,7 +950,7 @@ async function loadHostData() {
     if (response?.data) {
       const records = response.data.records || []
 
-      // 一次性获取所有主机的“是否需要重启”状态
+      // 一次性获取所有主机的资产信息，回填是否需要重启和 OS 版本
       try {
         const assetParams = {
           hostKeys: '@@',
@@ -949,15 +963,20 @@ async function loadHostData() {
         }
         const assetRes = await assetApi.getAssetList(assetParams, { size: 1000 })
         if (assetRes?.records) {
-          const rebootMap = {}
+          const assetInfoMap = {}
           assetRes.records.forEach(item => {
             if (item.IP) {
-              rebootMap[item.IP] = item.needReboot
+              assetInfoMap[item.IP] = {
+                needReboot: item.needReboot,
+                osVersion: item.os_version || ''
+              }
             }
           })
           records.forEach(record => {
-            if (rebootMap.hasOwnProperty(record.host_key)) {
-              record.need_reboot = rebootMap[record.host_key]
+            if (assetInfoMap.hasOwnProperty(record.host_key)) {
+              const assetInfo = assetInfoMap[record.host_key]
+              record.need_reboot = assetInfo.needReboot
+              record.os_version = assetInfo.osVersion || record.os_version
             }
           })
         }
@@ -1121,8 +1140,50 @@ function handlePatchClick(row) {
   }
 }
 
+async function submitRollback(patchStatusIds) {
+  const { executeJob } = await import('@/modules/automation/api/jao')
+  const response = await executeJob({
+    jobId: '5zkPfq',
+    params: {
+      patchStatusIds
+    }
+  })
+
+  const { isSuccess, runId } = parseJobRunResult(response)
+  if (!isSuccess) {
+    throw new Error('作业返回异常')
+  }
+
+  return runId
+}
+
 function handleRollback(row) {
-  ElMessage.info(`回滚补丁: ${row.id}`)
+  const patchStatusIds = resolvePatchStatusIds([row])
+  if (patchStatusIds.length === 0) {
+    ElMessage.warning('当前记录缺少补丁状态ID，无法回滚')
+    return
+  }
+
+  const patchLabel = row.patch_id || row.vul_id || patchStatusIds[0]
+
+  ElMessageBox.confirm(`确认要回滚补丁 ${patchLabel} 吗？`, '确认回滚', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+    .then(async () => {
+      const runId = await submitRollback(patchStatusIds)
+      ElMessage.success('回滚任务已提交成功')
+      lastSubmittedRunId.value = runId
+      operationLogsVisible.value = true
+      loadVulnData()
+    })
+    .catch(error => {
+      if (error === 'cancel' || error === 'close') {
+        return
+      }
+      ElMessage.error('提交回滚任务失败: ' + (error.message || '未知错误'))
+    })
 }
 
 // 格式化日期
@@ -1180,6 +1241,47 @@ function handleExport() {
   ElMessage.info('导出功能开发中...')
 }
 
+function resolvePatchStatusIds(rows) {
+  const ids = []
+
+  rows.forEach(row => {
+    const value =
+      row.patch_status_id ??
+      row.patch_status_ids ??
+      row.id ??
+      row.patchStatusId ??
+      row.patchStatusIds
+
+    if (Array.isArray(value)) {
+      ids.push(...value)
+      return
+    }
+
+    if (typeof value === 'string') {
+      value.split(',').forEach(item => {
+        const trimmed = item.trim()
+        if (trimmed) ids.push(trimmed)
+      })
+      return
+    }
+
+    if (value) ids.push(value)
+  })
+
+  return Array.from(new Set(ids))
+}
+
+function parseJobRunResult(response) {
+  const payload = response?.data ?? response
+  const result = Array.isArray(payload) ? payload[0] : payload
+
+  return {
+    isSuccess: result?.status === 'COMPLETED' && result?.data?._status === 'ok',
+    runId: result?.runId || result?.data?.runId || '',
+    result
+  }
+}
+
 // 查看作业运行结果
 function handleViewRunResult(row) {
   if (!row.run_id) return
@@ -1199,7 +1301,12 @@ async function handleFixSelected() {
     return
   }
 
-  const ids = selectedVulns.value.map(item => item.id)
+  const ids = resolvePatchStatusIds(selectedVulns.value)
+  if (ids.length === 0) {
+    ElMessage.warning('所选漏洞缺少补丁状态ID，无法修复')
+    return
+  }
+
   fixDialogData.patchStatusIds = ids
   fixDialogData.hosts = ''
   fixDialogData.patches = ''
@@ -1254,15 +1361,22 @@ async function handleConfirmFix() {
   try {
     // 调用作业执行 API
     const { executeJob } = await import('@/modules/automation/api/jao')
-    await executeJob({
+    const response = await executeJob({
       jobId: 's1r8Hp',
       params: {
         patchStatusIds: fixDialogData.patchStatusIds
       }
     })
-    ElMessage.success('修复任务已提交')
+
+    const { isSuccess, runId } = parseJobRunResult(response)
+    if (!isSuccess) {
+      throw new Error('作业返回异常')
+    }
+
+    ElMessage.success('修复任务已提交成功')
+    lastSubmittedRunId.value = runId
+    operationLogsVisible.value = true
     fixDialogVisible.value = false
-    // 刷新数据
     loadVulnData()
   } catch (error) {
     ElMessage.error('提交修复任务失败: ' + (error.message || '未知错误'))
@@ -1406,10 +1520,31 @@ watch(
 )
 
 onMounted(() => {
+  syncStateFromRoute()
   loadKpiData()
   loadHostData()
   loadOsLists()
+  if (activeTab.value === 'vulnerability') {
+    loadVulnData()
+  }
 })
+
+watch(
+  () => route.query,
+  () => {
+    const previousTab = activeTab.value
+    const previousSeverity = vulnFilters.severity
+
+    syncStateFromRoute()
+
+    if (activeTab.value === 'vulnerability') {
+      if (previousTab !== 'vulnerability' || previousSeverity !== vulnFilters.severity) {
+        vulnPagination.page = 1
+        loadVulnData()
+      }
+    }
+  }
+)
 
 // 暴露方法
 defineExpose({

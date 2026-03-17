@@ -7,7 +7,7 @@
         作业概览
       </h3>
       <div class="header-actions">
-        <button class="more-btn">...</button>
+        <button class="more-btn" @click="navigateToRunLogs()">...</button>
       </div>
     </div>
 
@@ -44,14 +44,21 @@
     </div>
 
     <!-- ECharts图表容器 -->
-    <div class="chart-container">
-      <v-chart class="chart" :option="chartOption" autoresize :theme="isDark ? 'dark' : ''" />
+    <div class="chart-container clickable-area" @click="handleChartContainerClick">
+      <v-chart
+        class="chart"
+        :option="chartOption"
+        autoresize
+        :theme="isDark ? 'dark' : ''"
+        @click="handleChartClick"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
@@ -74,6 +81,41 @@ use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent
 const jobHeaderIcon = new URL('@/assets/icons/dashboard/icon-jobview@2x.png', import.meta.url).href
 
 const dashboardStore = useDashboardStore()
+const router = useRouter()
+let suppressAreaClick = false
+
+const chartGrid = {
+  left: 50,
+  right: 20,
+  bottom: 50,
+  top: 20
+}
+
+const jobTypeRouteMap = {
+  'rest-jobs': 'rest',
+  'command-jobs': 'command',
+  'script-jobs': 'script'
+}
+
+const jobSeriesRouteMap = {
+  'REST作业': 'rest',
+  '命令作业': 'command',
+  '脚本作业': 'script'
+}
+
+const navigateToRunLogs = ({ type = '', keyword = '' } = {}) => {
+  router.push({
+    name: 'jao-runLogs',
+    params: {
+      moduleCode: 'jao'
+    },
+    query: {
+      day: '365',
+      ...(type ? { type } : {}),
+      ...(keyword ? { keyword } : {})
+    }
+  })
+}
 
 // 作业统计（来自 API 数据）
 const jobStats = computed(() => {
@@ -105,19 +147,80 @@ const jobStats = computed(() => {
 
 // 处理统计卡片点击事件
 const handleStatClick = statId => {
-  // 这里可以添加具体的点击处理逻辑
+  navigateToRunLogs({ type: jobTypeRouteMap[statId] || '' })
 }
 
 // 图表数据（来自 API 数据）
 const chartData = computed(() => {
   const list = dashboardStore.dashboardFullData?.recentJobStats || []
   return {
+    rawDates: list.map(i => i.date),
     dates: list.map(i => i.date.replace('-', '/')),
     restJobs: list.map(i => i.restJobs),
     commandJobs: list.map(i => i.commandJobs),
     scriptJobs: list.map(i => i.scriptJobs)
   }
 })
+
+const handleChartClick = params => {
+  suppressAreaClick = true
+  setTimeout(() => {
+    suppressAreaClick = false
+  }, 0)
+
+  const rawDate = chartData.value.rawDates?.[params?.dataIndex]
+  if (!rawDate) {
+    navigateToRunLogs()
+    return
+  }
+
+  navigateToRunLogs({
+    type: jobSeriesRouteMap[params?.seriesName] || '',
+    keyword: rawDate
+  })
+}
+
+const handleChartContainerClick = event => {
+  if (suppressAreaClick) {
+    return
+  }
+
+  const rect = event?.currentTarget?.getBoundingClientRect?.()
+  if (!rect) {
+    return
+  }
+
+  const plotWidth = rect.width - chartGrid.left - chartGrid.right
+  const plotHeight = rect.height - chartGrid.top - chartGrid.bottom
+  const offsetX = event.clientX - rect.left
+  const offsetY = event.clientY - rect.top
+  const rawDates = chartData.value.rawDates || []
+
+  if (
+    !rawDates.length ||
+    plotWidth <= 0 ||
+    plotHeight <= 0 ||
+    offsetX < chartGrid.left ||
+    offsetX > chartGrid.left + plotWidth ||
+    offsetY < chartGrid.top ||
+    offsetY > chartGrid.top + plotHeight
+  ) {
+    return
+  }
+
+  const categoryWidth = plotWidth / rawDates.length
+  const dataIndex = Math.min(
+    rawDates.length - 1,
+    Math.max(0, Math.floor((offsetX - chartGrid.left) / categoryWidth))
+  )
+  const rawDate = rawDates[dataIndex]
+
+  if (!rawDate) {
+    return
+  }
+
+  navigateToRunLogs({ keyword: rawDate })
+}
 
 // Y 轴最大值与刻度：
 // - 刻度始终为 5 段，间隔为 5 的倍数
@@ -156,12 +259,7 @@ const chartOption = computed(() => ({
       type: 'shadow'
     }
   },
-  grid: {
-    left: 50,
-    right: 20,
-    bottom: 50,
-    top: 20
-  },
+  grid: chartGrid,
   xAxis: {
     type: 'category',
     data: chartData.value.dates,
@@ -249,6 +347,10 @@ const chartOption = computed(() => ({
     'Helvetica Neue',
     Arial,
     sans-serif;
+}
+
+.clickable-area {
+  cursor: pointer;
 }
 
 // 标题区域

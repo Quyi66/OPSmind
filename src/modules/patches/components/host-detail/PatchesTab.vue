@@ -75,7 +75,7 @@
       v-loading="patchLoading"
       :data="patchTableData"
       size="small"
-      max-height="calc(100vh - 400px)"
+      max-height="calc(100vh - 385px)"
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" />
@@ -162,7 +162,7 @@
     </el-dialog>
 
     <!-- 分页 -->
-    <div class="pagination-wrapper">
+    <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="patchPagination.page"
         v-model:page-size="patchPagination.pageSize"

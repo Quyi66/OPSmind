@@ -7,7 +7,7 @@
         巡检概览
       </h3>
       <div class="header-actions">
-        <button class="more-btn">...</button>
+        <button class="more-btn" @click="navigateToInspectionOverview">...</button>
       </div>
     </div>
 
@@ -25,7 +25,7 @@
     </div>
 
     <!-- 图表标题和图例 -->
-    <div class="chart-header">
+    <div class="chart-header clickable-area" @click="navigateToInspectionOverview">
       <h4 class="chart-title">近10天巡检结果情况</h4>
       <div class="chart-legend">
         <div class="legend-item">
@@ -40,7 +40,7 @@
     </div>
 
     <!-- ECharts图表容器 -->
-    <div class="chart-container">
+    <div class="chart-container clickable-area" @click="navigateToInspectionOverview">
       <v-chart class="chart" :option="chartOption" autoresize :theme="isDark ? 'dark' : ''" />
     </div>
   </div>
@@ -48,6 +48,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
@@ -73,6 +74,11 @@ const inspectionHeaderIcon = new URL(
 ).href
 
 const dashboardStore = useDashboardStore()
+const router = useRouter()
+
+const navigateToInspectionOverview = () => {
+  router.push({ name: 'cac-results' })
+}
 
 // 巡检统计（来自 API 数据）
 const inspectionStats = computed(() => {
@@ -104,7 +110,7 @@ const inspectionStats = computed(() => {
 
 // 处理统计卡片点击事件
 const handleStatClick = statId => {
-  // 这里可以添加具体的点击处理逻辑
+  navigateToInspectionOverview()
 }
 
 // 图表数据（来自 API 数据）
@@ -236,6 +242,10 @@ const chartOption = computed(() => ({
     'Helvetica Neue',
     Arial,
     sans-serif;
+}
+
+.clickable-area {
+  cursor: pointer;
 }
 
 // 标题区域
