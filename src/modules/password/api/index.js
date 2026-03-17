@@ -41,7 +41,7 @@ export function getPmsServerList(assestsObjects = '@@(linux)') {
  * 导出密码
  */
 export function exportPasswords() {
-    const url = `${window.location.origin}/oplus-portal/upm/api/upm/pms/v2/password-job/export`
+    const url = `${window.location.origin}/sjxy-portal/upm/api/upm/pms/v2/password-job/export`
     window.open(url, '_blank')
 }
 
@@ -243,7 +243,7 @@ export function revertPassword(params = {}) {
  * 导入初始化密码
  */
 export function importInitPassword(formData) {
-    return apiService.post('/oplus-portal/upm/api/upm/pms/v2/password-job/import', formData, {
+    return apiService.post('/sjxy-portal/upm/api/upm/pms/v2/password-job/import', formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }

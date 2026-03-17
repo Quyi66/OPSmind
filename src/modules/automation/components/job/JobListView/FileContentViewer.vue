@@ -366,7 +366,7 @@ const fileUrl = computed(() => {
     // API 返回的 downloadUri 格式：/api/gfs/v2/...
     // 需要将 /api 替换为 /gfs/api
     if (downloadUri.startsWith('/api/')) {
-      return `/oplus-portal/gfs${downloadUri}`
+      return `/sjxy-portal/gfs${downloadUri}`
     }
     return downloadUri
   }

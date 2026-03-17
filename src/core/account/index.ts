@@ -1,6 +1,6 @@
 /**
  * Account Service
- * - Fetches current account from backend: /oplus-portal/api/account
+ * - Fetches current account from backend: /sjxy-portal/api/account
  * - Caches the payload in storage for reuse across views
  */
 

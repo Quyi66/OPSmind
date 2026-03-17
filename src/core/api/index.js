@@ -9,7 +9,7 @@ import { LOGIN_REDIRECT_URL } from '@/config/route-paths'
 
 // API 配置
 const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/oplus-portal',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/sjxy-portal',
   timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
   retryAttempts: 3,
   retryDelay: 1000

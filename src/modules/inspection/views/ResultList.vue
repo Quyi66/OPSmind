@@ -358,7 +358,7 @@ async function loadResults() {
     params.append('start', String((pagination.value.page - 1) * pagination.value.size))
 
     // 使用 axios 直接发送，确保作为 Form Data 发送
-    const baseURL = import.meta.env.VITE_API_BASE_URL || '/oplus-portal'
+    const baseURL = import.meta.env.VITE_API_BASE_URL || '/sjxy-portal'
     const authHeaders = authService.getAuthHeaders()
     const response = await axios.post(`${baseURL}/cac/api/cac/v2/jobs/page/${templateId}`, params, {
       headers: {

@@ -20,7 +20,7 @@ describe('API Service', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // 创建模拟的 axios 实例
     mockAxiosInstance = {
       get: vi.fn(),
@@ -33,7 +33,7 @@ describe('API Service', () => {
         response: { use: vi.fn() }
       }
     }
-    
+
     mockedAxios.create.mockReturnValue(mockAxiosInstance)
     authService.getAuthHeaders.mockReturnValue({
       'Authorization': 'Bearer mock-token'
@@ -43,7 +43,7 @@ describe('API Service', () => {
   describe('初始化', () => {
     it('should create axios instance with correct config', () => {
       expect(mockedAxios.create).toHaveBeenCalledWith({
-        baseURL: '/oplus-portal',
+        baseURL: '/sjxy-portal',
         timeout: 30000,
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ describe('API Service', () => {
       const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(mockLink)
       const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => {})
       const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => {})
-      
+
       global.URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-url')
       global.URL.revokeObjectURL = vi.fn()
 
@@ -173,7 +173,7 @@ describe('API Service', () => {
 
       // 模拟响应拦截器的错误处理
       const responseInterceptor = mockAxiosInstance.interceptors.response.use.mock.calls[0][1]
-      
+
       await expect(responseInterceptor(error)).rejects.toThrow('Authentication expired')
       expect(authService.logout).toHaveBeenCalled()
     })
@@ -185,7 +185,7 @@ describe('API Service', () => {
       }
 
       const responseInterceptor = mockAxiosInstance.interceptors.response.use.mock.calls[0][1]
-      
+
       await expect(responseInterceptor(error)).rejects.toThrow('Access denied')
     })
 
@@ -196,13 +196,13 @@ describe('API Service', () => {
       }
 
       const responseInterceptor = mockAxiosInstance.interceptors.response.use.mock.calls[0][1]
-      
+
       // 模拟重试逻辑
       apiService.shouldRetry = vi.fn().mockReturnValue(true)
       apiService.retryRequest = vi.fn().mockResolvedValue({ data: 'success' })
 
       const result = await responseInterceptor(error)
-      
+
       expect(apiService.retryRequest).toHaveBeenCalledWith(error.config)
       expect(result).toEqual({ data: 'success' })
     })

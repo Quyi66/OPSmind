@@ -454,7 +454,7 @@ const handleDownloadTemplate = () => {
     ElMessage.warning('正在获取租户信息，请稍后重试')
     return
   }
-  const url = `${window.location.origin}/oplus-portal/acm/api/acm/cit/template2/${currentTenantId.value}`
+  const url = `${window.location.origin}/sjxy-portal/acm/api/acm/cit/template2/${currentTenantId.value}`
   window.open(url, '_blank')
 }
 

@@ -508,7 +508,7 @@ const truncatedAnsibleRawOutput = computed(() => {
 
 const restDetail = computed(() => buildRestDetail(result.value))
 const downloadUrl = computed(() =>
-  props.runId ? `/oplus-portal/jao/api/jao/runlogs/ansible/${props.runId}` : ''
+  props.runId ? `/sjxy-portal/jao/api/jao/runlogs/ansible/${props.runId}` : ''
 )
 const visibleTabs = computed(() => {
   const tabs = [{ name: 'overview', label: '概要' }]

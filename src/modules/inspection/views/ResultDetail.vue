@@ -829,7 +829,7 @@ function exportTable() {
 
 async function exportResult() {
   try {
-    const baseURL = import.meta.env.VITE_API_BASE_URL || '/oplus-portal'
+    const baseURL = import.meta.env.VITE_API_BASE_URL || '/sjxy-portal'
     const url = `${baseURL}/cac/api/cac/v2/results/export/${jobId.value}`
     const authHeaders = authService.getAuthHeaders()
 

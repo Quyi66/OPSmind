@@ -125,7 +125,7 @@ class AuthService implements IAuthService {
         encryptedData.otpCode = this.encrypt(credentials.otp)
       }
 
-      const response = await fetch(`${this.baseURL}/oplus-portal/api/authenticate`, {
+      const response = await fetch(`${this.baseURL}/sjxy-portal/api/authenticate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -256,7 +256,7 @@ class AuthService implements IAuthService {
    */
   async refreshToken(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseURL}/oplus-portal/api/auth/refresh`, {
+      const response = await fetch(`${this.baseURL}/sjxy-portal/api/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -447,7 +447,7 @@ class AuthService implements IAuthService {
     try {
       const cacheBuster = Date.now()
       const response = await fetch(
-        `${this.baseURL}/oplus-portal/api/tenants/all?cacheBuster=${cacheBuster}`
+        `${this.baseURL}/sjxy-portal/api/tenants/all?cacheBuster=${cacheBuster}`
       )
 
       if (response.ok) {
@@ -466,7 +466,7 @@ class AuthService implements IAuthService {
    */
   async verifyLicense(): Promise<License> {
     try {
-      const response = await fetch(`${this.baseURL}/oplus-portal/api/licenses/verify`)
+      const response = await fetch(`${this.baseURL}/sjxy-portal/api/licenses/verify`)
 
       if (response.ok) {
         const result = await response.json()
@@ -486,7 +486,7 @@ class AuthService implements IAuthService {
     try {
       const cacheBuster = Date.now()
       const response = await fetch(
-        `${this.baseURL}/oplus-portal/api/authenticate/otp?cacheBuster=${cacheBuster}`
+        `${this.baseURL}/sjxy-portal/api/authenticate/otp?cacheBuster=${cacheBuster}`
       )
 
       if (response.ok) {

@@ -230,7 +230,7 @@ location /opsmind/base/ {
 }
 
 # API 代理
-location /oplus-portal/ {
+location /sjxy-portal/ {
     proxy_pass http://backend-server/;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
