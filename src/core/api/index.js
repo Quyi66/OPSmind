@@ -265,7 +265,7 @@ class ApiService {
    * 获取首页仪表盘全量数据
    */
   async getDashboardFullData() {
-    const res = await this.get('svs/api/dashboard/full-data')
+    const res = await this.get('svs/api/sys/dashboard/full-data')
     const data = res?.data || {}
 
     // Adapt backend payload into frontend expected shape when necessary
