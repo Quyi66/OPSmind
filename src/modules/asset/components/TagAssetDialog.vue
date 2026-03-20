@@ -156,20 +156,18 @@ const loadAssetList = async () => {
   if (!props.tagData) return
   loading.value = true
   try {
-    // 使用 ACM_GET_ATTRS_BY_TAGID 数据集
-    const res = await dtsApi.queryData(
-      'ACM_GET_ATTRS_BY_TAGID',
-      {
-        tagId: props.tagData.id
-      },
-      {
+    // 使用 ACM_GET_ATTRS_BY_TAGID → GET /acm/api/acm/ci/attrs/tag?tagId={tagId}
+    const res = await apiService.get('/acm/api/acm/ci/attrs/tag', {
+      params: {
+        tagId: props.tagData.id,
         size: pagination.value.size,
         page: pagination.value.page,
         filter: keyword.value || ''
       }
-    )
-    assetList.value = res?.records || []
-    pagination.value.total = res?.total || 0
+    })
+    const data = res?.data || res
+    assetList.value = data?.records || []
+    pagination.value.total = data?.total || 0
   } catch (error) {
     console.error('加载资产列表失败:', error)
     ElMessage.error('加载资产列表失败')

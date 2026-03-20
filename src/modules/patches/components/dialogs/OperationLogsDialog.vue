@@ -234,19 +234,15 @@ let pollingTimer = null
 async function loadData() {
   loading.value = true
   try {
-    const { useApi } = await import('@/core/api')
-    const cacheBuster = Date.now()
-    const response = await useApi().post(
-      `/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${cacheBuster}`,
-      {
-        params: {
-          module: 'vap2',
-          action: actionFilter.value === 'all' ? 'all' : actionFilter.value,
-          status: statusFilter.value === 'all' ? 'all' : statusFilter.value,
-          day: dayFilter.value
-        }
-      }
-    )
+    const { patchLogsApi } = await import('../../api')
+    const response = await patchLogsApi.getLogs({
+      module: 'vap2',
+      action: actionFilter.value === 'all' ? 'all' : actionFilter.value,
+      status: statusFilter.value === 'all' ? 'all' : statusFilter.value,
+      day: dayFilter.value,
+      page: pagination.value.currentPage,
+      size: pagination.value.pageSize
+    })
 
     if (response?.data) {
       tableData.value = response.data.records || []

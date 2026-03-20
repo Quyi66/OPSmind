@@ -34,7 +34,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
 
   async function loadHostMachineInfo(hostId) {
     try {
-      const res = await dtsApi.queryData('CAC_GET_MACHINE_INFO', { host_id: hostId })
+      const res = await dtsApi.getMachineInfo(hostId)
       const data = res?.data || res || {}
       const records = data.records || []
       if (records.length > 0) {
@@ -51,7 +51,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     hostCheckItems.value = []
 
     try {
-      const res = await dtsApi.queryData('CAC_CHECK_ITEM_MACHINE_DETAIL', {
+      const res = await dtsApi.getCheckItemMachineDetail({
         host_key: currentHost.value.host_key,
         job_id: jobId.value,
         status: hostDetailStatusFilter.value
@@ -87,10 +87,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     kpiDialogData.value = []
 
     try {
-      const res = await dtsApi.queryData('CAC_GET_CHECK_ITEM_BY_STATUS', {
-        job_id: jobId.value,
-        status: status
-      })
+      const res = await dtsApi.getCheckItemByStatus(jobId.value, status)
       const data = res?.data || res || {}
       kpiDialogData.value = data.records || []
     } catch (error) {
@@ -113,7 +110,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
 
     try {
       if (row.id) {
-        const res = await dtsApi.queryData('CAC_GET_CHECK_ITEM_INFO', { id: row.id })
+        const res = await dtsApi.getCheckItemInfo(row.id)
         const data = res?.data || res || {}
         const records = data.records || []
         if (records.length > 0) {
@@ -155,7 +152,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     checkItemHostsData.value = []
 
     try {
-      const res = await dtsApi.queryData('CAC_CHECK_ITEM_DETAIL', {
+      const res = await dtsApi.getCheckItemDetail({
         job_id: jobId.value,
         name: currentCheckItemName.value,
         status: checkItemHostsStatusFilter.value
@@ -182,7 +179,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     selectedWhitelistIds.value = []
 
     try {
-      const res = await dtsApi.queryData('CAC_BLACK_LIST', { module: 'cac' })
+      const res = await dtsApi.getBlackList('cac')
       const data = res?.data || res || {}
       whitelistData.value = data.records || []
     } catch (error) {

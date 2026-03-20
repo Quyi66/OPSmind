@@ -122,13 +122,13 @@ async function loadSummary() {
   summaryLoading.value = true
   try {
     const api = useApi()
-    const cacheBuster = Date.now()
-    const response = await api.post(`/dts/api/dts/q/data/VAP2_WIN_SCAN_HIST/?cacheBuster=${cacheBuster}`, {
+    const response = await api.get('/vap/api/vap/dashboard/win-scan-hist', {
       params: {
-        run_id: props.runId
+        runId: props.runId
       }
     })
-    const records = response?.data?.records || response?.records || []
+    const payload = response?.data?.data ?? response?.data ?? response
+    const records = Array.isArray(payload) ? payload : (payload?.records || [])
     summary.value = records[0] || { scan_date: '', machine_count: 0 }
   } catch (error) {
     ElMessage.error('加载扫描摘要失败: ' + (error.message || '未知错误'))
@@ -142,17 +142,17 @@ async function loadDetail() {
   loading.value = true
   try {
     const api = useApi()
-    const cacheBuster = Date.now()
-    const response = await api.post(`/dts/api/dts/q/data/VAP2_HIST_WIN_SCAN_DETAIL/?cacheBuster=${cacheBuster}`, {
+    const response = await api.get('/vap/api/vap/dashboard/hist-win-scan-detail', {
       params: {
-        runId: props.runId
-      },
-      page: pagination.value.page,
-      size: pagination.value.pageSize
+        runId: props.runId,
+        page: pagination.value.page,
+        size: pagination.value.pageSize
+      }
     })
-    const data = response?.data || response || {}
-    tableData.value = data.records || []
-    pagination.value.total = data.total || tableData.value.length
+    const payload = response?.data?.data ?? response?.data ?? response ?? {}
+    const records = Array.isArray(payload) ? payload : (payload.records || [])
+    tableData.value = records
+    pagination.value.total = payload.total || records.length
   } catch (error) {
     ElMessage.error('加载扫描详情失败: ' + (error.message || '未知错误'))
   } finally {

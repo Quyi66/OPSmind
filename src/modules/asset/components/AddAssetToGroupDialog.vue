@@ -29,7 +29,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="assetList"
-       
+
         max-height="350"
         @selection-change="handleSelectionChange"
       >
@@ -80,7 +80,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { dtsApi } from '../api'
+import { assetApi } from '../api'
 import { apiService } from '@/core/api'
 
 const props = defineProps({
@@ -114,15 +114,14 @@ const loadAssetList = async () => {
   if (!props.groupData) return
   loading.value = true
   try {
-    // 获取该资产类型下的所有资产
-    const res = await dtsApi.queryData('ACM_CI_BY_CIT', {
+    const res = await assetApi.getAssetList({
+      hostKeys: '@@',
       assetType: props.groupData.ci_type,
       permission: 'r',
       status: 'all',
       CONN_LATEST_STATUS: '',
       system_name: ' ',
-      os_version: ' ',
-      hostKeys: '/'  // 获取所有资产
+      os_version: ' '
     }, {
       size: pagination.value.size,
       page: pagination.value.page,

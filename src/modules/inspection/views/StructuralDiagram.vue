@@ -822,21 +822,7 @@ function showItemList(itemStr) {
 async function handleKpiClick(item) {
   // 重置搜索
   kpiFilterText.value = ''
-  // 根据 KPI 类型确定数据集 ID 和查询参数
-  const datasetMap = {
-    hostAll: 'CAC_STRUCTURAL_KPI_HOSTALL',
-    hostOkAll: 'CAC_STRUCTURAL_KPI_HOSTOK',
-    hostFailedAll: 'CAC_STRUCTURAL_KPI_HOSTFAILED',
-    hostCheckAll: 'CAC_STRUCTURAL_KPI_HOSTCHECK',
-    itemAll: 'CAC_STRUCTURAL_KPI_ITEMALL',
-    // OK/FAILED/CHECK 使用同一个数据集，通过 status 参数区分
-    OK: 'CAC_GET_CHECK_ITEM_BY_STATUS',
-    FAILED: 'CAC_GET_CHECK_ITEM_BY_STATUS',
-    CHECK: 'CAC_GET_CHECK_ITEM_BY_STATUS'
-  }
-
-  const datasetId = datasetMap[item.pageParam]
-  if (!datasetId) {
+  if (!item.pageParam) {
     console.warn('Unknown KPI type:', item.pageParam)
     return
   }
@@ -848,15 +834,22 @@ async function handleKpiClick(item) {
   kpiDialogData.value = []
 
   try {
-    // 构建查询参数
-    const params = { job_id: currentJobId.value }
-
-    // OK/FAILED/CHECK 类型需要传递 status 参数
-    if (['OK', 'FAILED', 'CHECK'].includes(item.pageParam)) {
-      params.status = item.pageParam
+    let res
+    if (item.pageParam === 'hostAll') {
+      res = await dtsApi.getStructuralKpiHostAll(currentJobId.value)
+    } else if (item.pageParam === 'hostOkAll') {
+      res = await dtsApi.getStructuralKpiHostOk(currentJobId.value)
+    } else if (item.pageParam === 'hostFailedAll') {
+      res = await dtsApi.getStructuralKpiHostFailed(currentJobId.value)
+    } else if (item.pageParam === 'hostCheckAll') {
+      res = await dtsApi.getStructuralKpiHostCheck(currentJobId.value)
+    } else if (item.pageParam === 'itemAll') {
+      res = await dtsApi.getStructuralKpiItemAll(currentJobId.value)
+    } else if (['OK', 'FAILED', 'CHECK'].includes(item.pageParam)) {
+      res = await dtsApi.getCheckItemByStatus(currentJobId.value, item.pageParam)
+    } else {
+      throw new Error(`Unknown KPI type: ${item.pageParam}`)
     }
-
-    const res = await dtsApi.queryData(datasetId, params)
     const data = res?.data || res || {}
     kpiDialogData.value = data.records || []
   } catch (error) {
@@ -879,7 +872,7 @@ async function showCheckItemDetail(row) {
   try {
     // 通过 id 调用 CAC_GET_CHECK_ITEM_INFO 获取详细信息
     if (row.id) {
-      const res = await dtsApi.queryData('CAC_GET_CHECK_ITEM_INFO', { id: row.id })
+      const res = await dtsApi.getCheckItemInfo(row.id)
       const data = res?.data || res || {}
       const records = data.records || []
       if (records.length > 0) {

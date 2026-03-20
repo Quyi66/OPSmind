@@ -434,20 +434,17 @@ const paginationInfo = computed(() => {
 async function loadHostData() {
   loading.value = true
   try {
-    // 通过 dts 数据集获取主机列表
-    // API: /dts/api/dts/q/data/ACM_GET_CI_BY_SELECTOR/
+    // 通过 ACM 直接接口获取主机列表
+    // ACM_GET_CI_BY_SELECTOR → POST /acm/api/acm/ci/list-by-groups-tags
     const res = await apiService
-      .post('/dts/api/dts/q/data/ACM_GET_CI_BY_SELECTOR/', {
-        params: {
-          groups: '@@',
-          tags: '@@',
-          dynamicTags: '@@',
-          assetType: 'linux',
-          dataType: 'undefined'
-        },
+      .post('/acm/api/acm/ci/list-by-groups-tags', {
+        groups: '@@',
+        tags: '@@',
+        dynamicTags: '@@',
+        assetType: 'linux',
+        dataType: 'undefined',
         size: 200,
-        page: 1,
-        filter: ''
+        page: 1
       })
       .catch(() => null)
 

@@ -24,7 +24,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { dtsApi } from '@/modules/asset/api'
+import { getUserLoginFailMessage } from '@/modules/user/api'
 
 const props = defineProps({
   visible: {
@@ -56,10 +56,8 @@ async function loadData() {
 
   loading.value = true
   try {
-    const response = await dtsApi.queryData('LUPM_GET_USER_LOGIN_FAIL_MESSAGE', {
-      id: props.userId
-    })
-    errorMessages.value = response?.records || []
+    const response = await getUserLoginFailMessage(props.userId)
+    errorMessages.value = response?.data?.records || response?.records || []
   } catch (error) {
     console.error('加载登录错误信息失败:', error)
     ElMessage.error('加载登录错误信息失败')

@@ -280,12 +280,13 @@ watch(
 // 加载表单选项
 async function loadFormOptions() {
   try {
-    // 获取脚本引擎类型
-    const engineRes = await dtsApi.queryData('ACM_GET_SCRIPT_ENGINE', null)
-    scriptEngine.value = engineRes?.records?.[0]?.result || 'ansible'
+    // 获取脚本引擎类型: ACM_GET_SCRIPT_ENGINE → GET /api/params/jao/script_engine
+    const engineRes = await apiService.get('/api/params/jao/script_engine')
+    const engineData = engineRes?.data || engineRes
+    scriptEngine.value = engineData?.result || engineData?.records?.[0]?.result || 'ansible'
 
     // 获取instance group选项
-    const instanceRes = await dtsApi.queryData('GET_TAT_URL_AS_STRING_LIST', null)
+    const instanceRes = await automationApi.getInstanceGroupOptions()
     if (instanceRes?.records?.[0]?.value) {
       try {
         instanceGroupOptions.value = JSON.parse(instanceRes.records[0].value)
@@ -294,14 +295,15 @@ async function loadFormOptions() {
       }
     }
 
-    // 如果是AAP引擎，获取AAP instance group
+    // 如果是AAP引擎，获取AAP instance group: AAP_QUERY_INSTANCE_GROUP → GET /jao/api/jao/aap/instance_group
     if (scriptEngine.value === 'aap') {
-      const aapRes = await dtsApi.queryData('AAP_QUERY_INSTANCE_GROUP', null)
-      aapInstanceGroupOptions.value = aapRes?.records || []
+      const aapRes = await apiService.get('/jao/api/jao/aap/instance_group')
+      const aapData = aapRes?.data || aapRes
+      aapInstanceGroupOptions.value = Array.isArray(aapData) ? aapData : (aapData?.records || [])
     }
 
     // 获取自动化配置选项
-    const configRes = await dtsApi.queryData('GET_ALL_ASSET_AUTO_CONFIG', null)
+    const configRes = await automationApi.getAllAssetAutoConfigs()
     autoConfigOptions.value = (configRes?.records || []).filter(item => item.id)
 
     // 获取资产类型

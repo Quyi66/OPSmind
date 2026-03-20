@@ -150,19 +150,17 @@ const loadAssetList = async () => {
   if (!props.groupData) return
   loading.value = true
   try {
-    const res = await dtsApi.queryData(
-      'ACM_GET_ATTRS_BY_GROUPID',
-      {
-        groupId: props.groupData.id
-      },
-      {
+    const res = await apiService.get('/acm/api/acm/ci/attrs/group', {
+      params: {
+        groupId: props.groupData.id,
         size: pagination.value.size,
         page: pagination.value.page,
         filter: keyword.value || ''
       }
-    )
-    assetList.value = res?.records || []
-    pagination.value.total = res?.total || 0
+    })
+    const data = res?.data || res
+    assetList.value = data?.records || []
+    pagination.value.total = data?.total || 0
   } catch (error) {
     console.error('加载资产列表失败:', error)
     ElMessage.error('加载资产列表失败')

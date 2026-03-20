@@ -170,7 +170,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
-import { dtsApi } from '../api'
+import { assetApi } from '../api'
 
 const props = defineProps({
   modelValue: {
@@ -259,11 +259,15 @@ async function openSelectDialog() {
 async function loadHostList() {
   loadingHosts.value = true
   try {
-    const response = await dtsApi.queryData(
-      'ACM_CI_BY_CIT',
+    const response = await assetApi.getAssetList(
       {
-        ciType: currentAssetType.value || 'linux',
-        param: ''
+        hostKeys: '@@',
+        assetType: currentAssetType.value || 'linux',
+        permission: 'r',
+        status: 'all',
+        CONN_LATEST_STATUS: '',
+        system_name: ' ',
+        os_version: ' '
       },
       {
         size: hostPageSize.value,
@@ -273,8 +277,8 @@ async function loadHostList() {
     )
 
     hostList.value = (response?.records || []).map(item => ({
-      key: item.cid,
-      value: item.hostKey || item.ip || item.cid,
+      key: item.cid || item.id,
+      value: item.hostKey || item.host_key || item.IP || item.ip || item.cid || item.id,
       ci_type: item.ci_type,
       ...item
     }))
@@ -307,9 +311,7 @@ function restoreHostSelection() {
 async function loadGroupList() {
   loadingGroups.value = true
   try {
-    const response = await dtsApi.queryData('ACM_GET_GROUP_BY_CIT', {
-      ciType: currentAssetType.value || 'linux'
-    })
+    const response = await assetApi.getGroupByCit(currentAssetType.value || 'linux')
     groupList.value = response?.records || []
   } catch (error) {
     console.error('加载分组列表失败:', error)

@@ -20,7 +20,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
-import { dtsApi } from '../api'
+import { apiService } from '@/core/api'
 import { useTheme } from '@/composables/useTheme'
 
 const { isDark } = useTheme()
@@ -59,13 +59,15 @@ const loadHistoryData = async () => {
 
   loading.value = true
   try {
-    const res = await dtsApi.queryData('ACM_HISTORY_ATTR_INF', {
-      cid: props.assetId,
-      attrs: 'memtotal_mb,memfree_mb',
-      day: '15'
-    })
-
-    chartData.value = res.records || []
+    // ACM_HISTORY_ATTR_INF → POST /acm/api/acm/auto/hist/statistic/single/attr/{cid}/{day}
+    const cid = props.assetId
+    const day = 15
+    const res = await apiService.post(
+      `/acm/api/acm/auto/hist/statistic/single/attr/${cid}/${day}`,
+      ['memtotal_mb', 'memfree_mb']
+    )
+    const data = res?.data || res
+    chartData.value = Array.isArray(data) ? data : (data?.records || [])
     await nextTick()
     renderChart()
   } catch (error) {

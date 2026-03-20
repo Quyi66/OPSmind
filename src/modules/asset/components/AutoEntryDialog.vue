@@ -93,7 +93,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { dtsApi } from '../api'
+import { assetApi, automationApi } from '../api'
 import { apiService } from '@/core/api'
 
 const props = defineProps({
@@ -140,9 +140,7 @@ const instanceGroupOptions = ref(['default'])
 // 加载分组列表
 const loadGroupOptions = async () => {
   try {
-    const res = await dtsApi.queryData('ACM_GET_GROUP_BY_CIT', {
-      ciType: props.assetType
-    })
+    const res = await assetApi.getGroupByCit(props.assetType)
     groupOptions.value = res.records || []
   } catch (error) {
     console.error('加载分组列表失败:', error)
@@ -152,9 +150,7 @@ const loadGroupOptions = async () => {
 // 加载模型属性列表
 const loadAttrOptions = async () => {
   try {
-    const res = await dtsApi.queryData('ACM_GET_MODEL', {
-      ciType: props.assetType
-    })
+    const res = await assetApi.getModel(props.assetType)
     // 只显示 type != 'group' 且 editable 为 true 的属性
     const attrs = (res.records || []).filter(
       item => item.type !== 'group' && item.editable && item.code
@@ -168,7 +164,7 @@ const loadAttrOptions = async () => {
 // 加载执行引擎节点列表
 const loadInstanceGroupOptions = async () => {
   try {
-    const res = await dtsApi.queryData('GET_TAT_URL_AS_STRING_LIST', null)
+    const res = await automationApi.getInstanceGroupOptions()
     if (res.records && res.records.length > 0 && res.records[0].value) {
       const config = res.records[0].value
       const arr = JSON.parse(config)

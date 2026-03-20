@@ -5,6 +5,41 @@
 import { apiService } from '@/core/api'
 
 const VAP_API_PREFIX = '/vap/api/vap'
+const VAP_DASHBOARD_BASE = `${VAP_API_PREFIX}/dashboard`
+const JAO_DASHBOARD_BASE = '/jao/api/jao/dashboard'
+
+const unwrapApiData = (response) => response?.data?.data ?? response?.data
+
+const normalizeRecords = (payload) => {
+  if (Array.isArray(payload)) {
+    return { records: payload, total: payload.length }
+  }
+  if (payload && Array.isArray(payload.records)) {
+    return payload
+  }
+  if (payload && typeof payload === 'object') {
+    return { ...payload, records: payload.records || [payload], total: payload.total || 1 }
+  }
+  return { records: [], total: 0 }
+}
+
+const wrapRecordsResponse = (response) => ({
+  ...response,
+  data: normalizeRecords(unwrapApiData(response))
+})
+
+const wrapFirstRecordDetail = (response) => {
+  const payload = normalizeRecords(unwrapApiData(response))
+  return { data: payload.records[0] || null }
+}
+
+const paginateRecords = (records, page = 1, size = records.length || 20) => {
+  const start = (page - 1) * size
+  return {
+    records: records.slice(start, start + size),
+    total: records.length
+  }
+}
 
 /**
  * 补丁扫描相关 API
@@ -22,7 +57,7 @@ export const patchScanApi = {
 
   /**
    * 获取扫描结果列表（主机概览）
-   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_WITH_PATCH/
+   * GET /vap/api/vap/dashboard/machine-with-patch
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码
    * @param {number} params.size - 每页大小
@@ -30,23 +65,14 @@ export const patchScanApi = {
    * @returns {Promise}
    */
   getScanResults(params = {}) {
-    const cacheBuster = Date.now()
-    // 构建筛选条件：host_key|os_distro|os_version|num_critical|num_important|num_moderate|num_low:*keyword*
-    let filter = ''
-    if (params.filter && params.filter.trim()) {
-      const keyword = params.filter.trim()
-      filter = `host_key|os_distro|os_version|num_critical|num_important|num_moderate|num_low:*${keyword}*`
-    }
-    const requestBody = {
-      params: {},
+    const queryParams = {
       size: params.size || 20,
-      page: params.page || 1,
-      filter: filter
+      page: params.page || 1
     }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_LIST_MACHINE_WITH_PATCH/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    if (params.filter && params.filter.trim()) {
+      queryParams.filter = params.filter.trim()
+    }
+    return apiService.get(`${VAP_DASHBOARD_BASE}/machine-with-patch`, { params: queryParams }).then(wrapRecordsResponse)
   },
 
   /**
@@ -75,16 +101,11 @@ export const patchScanApi = {
    * @returns {Promise}
    */
   getMachineInfo(params) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
-        host_id: params.host_id
-      }
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_GET_MACHINE_INFO/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    return apiService
+      .get(`${VAP_DASHBOARD_BASE}/machine-info`, {
+        params: { hostId: params.host_id || params.hostId }
+      })
+      .then(wrapRecordsResponse)
   },
 
   /**
@@ -98,20 +119,14 @@ export const patchScanApi = {
    * @returns {Promise}
    */
   getPatchesOfMachine(params = {}) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
-        host_id: params.host_id,
-        host_key: params.host_key || '',
-        severity: params.severity || ''
-      }
-      // size: params.size || 20,
-      // page: params.page || 1
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_LIST_PATCH_OF_ONE_MACHINE/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    return apiService
+      .get(`${VAP_DASHBOARD_BASE}/patch-of-one-machine`, {
+        params: {
+          hostId: params.host_id || params.hostId,
+          severity: params.severity || undefined
+        }
+      })
+      .then(wrapRecordsResponse)
   },
 
   /**
@@ -122,16 +137,11 @@ export const patchScanApi = {
    * @returns {Promise}
    */
   getMachinePackages(params) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
-        host_id: params.host_id
-      }
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_GET_MACHINE_PKGS/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    return apiService
+      .get(`${VAP_DASHBOARD_BASE}/machine-pkgs`, {
+        params: { hostId: params.host_id || params.hostId }
+      })
+      .then(wrapRecordsResponse)
   },
 
   /**
@@ -145,17 +155,14 @@ export const patchScanApi = {
    * @returns {Promise}
    */
   getMachineCVEList(params) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
-        host_id: params.host_id,
-        severity: params.severity || ''
-      }
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_MACHINE_CVE_LIST/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    return apiService
+      .get(`${VAP_DASHBOARD_BASE}/machine-cve-list`, {
+        params: {
+          hostId: params.host_id || params.hostId,
+          severity: params.severity || undefined
+        }
+      })
+      .then(wrapRecordsResponse)
   },
 
   /**
@@ -166,16 +173,11 @@ export const patchScanApi = {
    * @returns {Promise}
    */
   getPatchDetail(params) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
-        patch_id: params.patch_id
-      }
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    return apiService
+      .get(`${VAP_DASHBOARD_BASE}/patch-detail`, {
+        params: { patchId: params.patch_id || params.patchId }
+      })
+      .then(wrapRecordsResponse)
   }
 }
 
@@ -233,10 +235,13 @@ export const patchInstallApi = {
    * @returns {Promise}
    */
   getAvailablePatches(params = {}) {
-    const requestBody = {
-      params: params
-    }
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_EFFECTED_PATCH_REST/', requestBody)
+    const severity = Array.isArray(params.severity)
+      ? params.severity
+      : typeof params.severity === 'string' && params.severity.trim()
+        ? params.severity.split(',').map(item => item.trim()).filter(Boolean)
+        : []
+
+    return apiService.post(`${VAP_API_PREFIX}/v2/patch/effect/patch`, severity)
   },
 
   /**
@@ -246,12 +251,7 @@ export const patchInstallApi = {
    * @returns {Promise}
    */
   getPatchDetail(params) {
-    const requestBody = {
-      params: {
-        patch_id: params.patch_id
-      }
-    }
-    return apiService.post('/dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/', requestBody)
+    return patchScanApi.getPatchDetail(params)
   },
 
   /**
@@ -261,15 +261,13 @@ export const patchInstallApi = {
    * @returns {Promise}
    */
   getAffectedPackages(params) {
-    const requestBody = {
-      params: {
-        patch_ids: params.patch_ids
-      }
-    }
-    return apiService.post(
-      '/dts/api/dts/q/data/VAP2_LIST_AFFECTED_PKG_OF_PATCH_DETAIL/',
-      requestBody
-    )
+    return apiService
+      .get(`${VAP_DASHBOARD_BASE}/affected-pkg-of-patch-detail`, {
+        params: {
+          patchIds: params.patch_ids
+        }
+      })
+      .then(wrapRecordsResponse)
   },
 
   /**
@@ -280,13 +278,14 @@ export const patchInstallApi = {
    * @returns {Promise}
    */
   getMachinesByPatch(params) {
-    const requestBody = {
-      params: {
-        patch_ids: params.patch_ids,
-        hostId: params.hostId || '@@(linux)'
-      }
-    }
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_MACHINE_BY_PATCH/', requestBody)
+    return apiService
+      .get(`${VAP_DASHBOARD_BASE}/machine-by-patch`, {
+        params: {
+          patchIds: params.patch_ids,
+          hostId: params.hostId || '@@(linux)'
+        }
+      })
+      .then(wrapRecordsResponse)
   },
 
   /**
@@ -322,15 +321,16 @@ export const patchRollbackApi = {
    * @returns {Promise}
    */
   getHistUpdatePkgs(params = {}) {
-    const requestBody = {
-      params: {
-        host_key: params.host_key || '',
-        vul_id: params.vul_id || ''
-      },
-      page: params.page || 1,
-      size: params.size || 20
-    }
-    return apiService.post('/dts/api/dts/q/data/VAP_HIST_UPDATE_PKGS/', requestBody)
+    return apiService
+      .get(`${VAP_DASHBOARD_BASE}/hist-update-pkgs`, {
+        params: {
+          hostKey: params.host_key || '',
+          vulId: params.vul_id || '',
+          page: params.page || 1,
+          size: params.size || 20
+        }
+      })
+      .then(wrapRecordsResponse)
   },
 
   /**
@@ -394,9 +394,7 @@ export const patchLibraryApi = {
    * @returns {Promise}
    */
   getVendorStats() {
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_VENDOR_PATCH/', {
-      params: {}
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/vendor-patch`).then(wrapRecordsResponse)
   },
 
   /**
@@ -413,19 +411,26 @@ export const patchLibraryApi = {
    * @returns {Promise}
    */
   getPatchList(params = {}) {
-    // 源系统传 params 对象 + 分页参数
-    const keyword = params.filter || ''
-    const requestBody = {
-      params: {
-        severity: params.severity,
-        vendor: params.vendor,
-        is_ignore: params.is_ignore
-      },
-      page: params.page,
-      size: params.size,
-      filter: keyword ? `patch_id|title|vendor|related_vuls:*${keyword}*` : undefined
-    }
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_PATCH_DATE/', requestBody)
+    const keyword = String(params.filter || '').trim().toLowerCase()
+    return apiService
+      .get(`${VAP_DASHBOARD_BASE}/patch-date`, {
+        params: {
+          vendor: params.vendor,
+          severity: params.severity,
+          isIgnore: params.is_ignore
+        }
+      })
+      .then((response) => {
+        let records = normalizeRecords(unwrapApiData(response)).records || []
+        if (keyword) {
+          records = records.filter(item =>
+            [item.patch_id, item.title, item.vendor, item.related_vuls]
+              .filter(Boolean)
+              .some(value => String(value).toLowerCase().includes(keyword))
+          )
+        }
+        return { data: paginateRecords(records, params.page || 1, params.size || 20) }
+      })
   },
 
   /**
@@ -449,20 +454,10 @@ export const patchLibraryApi = {
    */
   getPatchDetail(patchId) {
     return apiService
-      .post('/dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/', {
-        params: {
-          patch_id: patchId
-        },
-        page: 1,
-        size: 1
+      .get(`${VAP_DASHBOARD_BASE}/patch-detail`, {
+        params: { patchId }
       })
-      .then(res => {
-        // 返回第一条记录
-        if (res?.data?.records?.[0]) {
-          return { data: res.data.records[0] }
-        }
-        return res
-      })
+      .then(wrapFirstRecordDetail)
   },
 
   /**
@@ -507,21 +502,17 @@ export const vulnerabilityApi = {
    * @returns {Promise}
    */
   getPatchIndex() {
-    return apiService.post('/dts/api/dts/q/data/VAP2_PATCH_INDEX/', {
-      params: {}
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-index`).then(wrapRecordsResponse)
   },
 
   /**
    * 获取当前统计数据（柱状图）
-   * POST /dts/api/dts/q/data/VAP2_CURRENT_STATS/
+   * GET /vap/api/vap/dashboard/current-stats
    * 返回: { records: [{ name: 'scan_count_critical_patch', value: 5 }, ...] }
    * @returns {Promise}
    */
   getCurrentStats() {
-    return apiService.post('/dts/api/dts/q/data/VAP2_CURRENT_STATS/', {
-      params: {}
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/current-stats`).then(wrapRecordsResponse)
   },
 
   /**
@@ -531,14 +522,12 @@ export const vulnerabilityApi = {
    * @returns {Promise}
    */
   getPatchTrend() {
-    return apiService.post('/dts/api/dts/q/data/VAP2_PATCH_TREND/', {
-      params: {}
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-trend`).then(wrapRecordsResponse)
   },
 
   /**
    * 获取漏洞概览列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_PATCH_BY_CVES/
+    * GET /vap/api/vap/dashboard/patch-by-cves
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码
    * @param {number} params.size - 每页大小
@@ -549,56 +538,40 @@ export const vulnerabilityApi = {
    * @returns {Promise}
    */
   getVulnerabilityList(params = {}) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
-        reboot_status: params.reboot_status || 'all',
-        os_distro: params.os_distro || 'all',
-        os_major_version: params.os_major_version || 'all',
-        severity: params.severity || 'all',
-        patch_status: params.patch_status || 'all',
-        is_kernel: params.is_kernel || 'all'
-      },
-      size: params.size || 20,
+    const queryParams = {
+      hostKey: params.host_key || params.hostKey || '',
+      vulId: params.vul_id || params.vulId || '',
+      severity: params.severity || 'all',
+      rebootStatus: params.reboot_status || params.rebootStatus || 'all',
+      isKernel: params.is_kernel || params.isKernel || 'all',
+      patchStatus: params.patch_status || params.patchStatus || 'all',
+      osDistro: params.os_distro || params.osDistro || 'all',
+      osMajorVersion: params.os_major_version || params.osMajorVersion || 'all',
       page: params.page || 1,
-      filter: params.filter
-        ? `host_key|vul_id|patch_id|affected_pkgs:*${params.filter || ''}*`
-        : undefined
+      size: params.size || 20
     }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_LIST_PATCH_BY_CVES/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    if (params.filter && String(params.filter).trim()) {
+      queryParams.filter = String(params.filter).trim()
+    }
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-by-cves`, { params: queryParams }).then(wrapRecordsResponse)
   },
 
   /**
    * 获取操作系统列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_INFO/
+   * GET /vap/api/vap/dashboard/machine-os-info
    * @returns {Promise}
    */
   getOsDistroList() {
-    const cacheBuster = Date.now()
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_INFO/?cacheBuster=${cacheBuster}`,
-      {
-        params: null
-      }
-    )
+    return apiService.get(`${VAP_DASHBOARD_BASE}/machine-os-info`).then(wrapRecordsResponse)
   },
 
   /**
    * 获取操作系统版本列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_VERSION_INFO/
+   * GET /vap/api/vap/dashboard/machine-os-version-info
    * @returns {Promise}
    */
   getOsVersionList() {
-    const cacheBuster = Date.now()
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_LIST_MACHINE_OS_VERSION_INFO/?cacheBuster=${cacheBuster}`,
-      {
-        params: null
-      }
-    )
+    return apiService.get(`${VAP_DASHBOARD_BASE}/machine-os-version-info`).then(wrapRecordsResponse)
   },
 
   /**
@@ -612,66 +585,50 @@ export const vulnerabilityApi = {
 
   /**
    * 根据补丁状态ID获取主机列表
-   * POST /dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO/
+   * GET /vap/api/vap/dashboard/patch-status-info
    * @param {Array} ids - 补丁状态ID数组
    * @returns {Promise}
    */
   getPatchStatusHosts(ids) {
-    const cacheBuster = Date.now()
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO/?cacheBuster=${cacheBuster}`,
-      {
-        params: { ids }
-      }
-    )
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-status-info`, {
+      params: { ids }
+    }).then(wrapRecordsResponse)
   },
 
   /**
    * 根据补丁状态ID获取CVE列表
-   * POST /dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_CVE/
+   * GET /vap/api/vap/dashboard/patch-status-info-by-cve
    * @param {Array} ids - 补丁状态ID数组
    * @returns {Promise}
    */
   getPatchStatusCves(ids) {
-    const cacheBuster = Date.now()
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_CVE/?cacheBuster=${cacheBuster}`,
-      {
-        params: { ids }
-      }
-    )
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-status-info-by-cve`, {
+      params: { ids }
+    }).then(wrapRecordsResponse)
   },
 
   /**
    * 根据补丁状态ID获取补丁列表
-   * POST /dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PATCH/
+   * GET /vap/api/vap/dashboard/patch-status-info-by-patch
    * @param {Array} ids - 补丁状态ID数组
    * @returns {Promise}
    */
   getPatchStatusPatches(ids) {
-    const cacheBuster = Date.now()
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PATCH/?cacheBuster=${cacheBuster}`,
-      {
-        params: { ids }
-      }
-    )
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-status-info-by-patch`, {
+      params: { ids }
+    }).then(wrapRecordsResponse)
   },
 
   /**
    * 根据补丁状态ID获取软件包列表
-   * POST /dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PKGS/
+   * GET /vap/api/vap/dashboard/patch-status-info-by-pkgs
    * @param {Array} ids - 补丁状态ID数组
    * @returns {Promise}
    */
   getPatchStatusPackages(ids) {
-    const cacheBuster = Date.now()
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_PATCH_STATUS_INFO_BY_PKGS/?cacheBuster=${cacheBuster}`,
-      {
-        params: { ids }
-      }
-    )
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-status-info-by-pkgs`, {
+      params: { ids }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -709,22 +666,19 @@ export const patchLogsApi = {
    * @returns {Promise}
    */
   getLogs(params = {}) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
-        module: 'vap2',
-        action: params.action || 'all',
-        status: params.status || 'all',
-        day: params.day || 7
-      },
-      page: params.page || 1,
-      size: params.size || 20,
-      filter: params.filter || ''
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    return apiService
+      .get(`${JAO_DASHBOARD_BASE}/list-operation-log`, {
+        params: {
+          module: 'vap2',
+          action: params.action || 'all',
+          status: params.status || 'all',
+          day: params.day || 7,
+          page: params.page || 1,
+          size: params.size || 20,
+          filter: params.filter || ''
+        }
+      })
+      .then(wrapRecordsResponse)
   },
 
   /**
@@ -751,12 +705,11 @@ export const patchOverviewApi = {
 
   /**
    * 获取首页统计卡片数据
+   * GET /vap/api/vap/dashboard/current-stats
    * @returns {Promise}
    */
   getIndexStats() {
-    return apiService.post(`/dts/api/dts/q/data/VAP2_CURRENT_STATS/?cacheBuster=${Date.now()}`, {
-      params: {}
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/current-stats`).then(wrapRecordsResponse)
   }
 }
 
@@ -771,12 +724,13 @@ export const windowsVulnerabilityApi = {
    * @returns {Promise}
    */
   getWinMachines(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_WIN_MACHINE/', {
-      params: {},
-      page: params.page,
-      size: params.size,
-      filter: `host_key|os_distro|os_version|os_arch:*${params.filter || ''}*`
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/win-machine`, {
+      params: {
+        page: params.page,
+        size: params.size,
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -786,16 +740,19 @@ export const windowsVulnerabilityApi = {
    * @returns {Promise}
    */
   getWinMachinePatches(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_WIN_MACHINE_PATCHS/', {
+    return apiService.get(`${VAP_DASHBOARD_BASE}/win-machine-patchs`, {
       params: {
-        patch_status: params.patch_status || ''
-      },
-      page: params.page,
-      size: params.size,
-      filter: params.keyword
-        ? `host_key|kb_number|os_distro|os_version|os_arch|category_name|title:*${params.keyword || ''}*`
-        : ''
-    })
+        hostKey: params.host_key || '',
+        kbNumber: params.kb_number || '',
+        patchStatus: params.patch_status || 'all',
+        osDistro: params.os_distro || 'all',
+        osArch: params.os_arch || 'all',
+        osVersion: params.os_version || 'all',
+        page: params.page,
+        size: params.size,
+        filter: params.keyword || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -807,12 +764,11 @@ export const windowsVulnerabilityApi = {
    * @returns {Promise}
    */
   getWinMachineInfo(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_GET_WIN_MACHINE_INFO/', {
+    return apiService.get(`${VAP_DASHBOARD_BASE}/win-machine-info`, {
       params: {
-        host_id: params.host_id || '',
-        host_key: params.host_key || ''
+        hostId: params.host_id || params.hostId || ''
       }
-    })
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -824,14 +780,13 @@ export const windowsVulnerabilityApi = {
    * @returns {Promise}
    */
   getWinMachinePatchInfo(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_GET_WIN_MACHINE_PATCH_INFO/', {
+    return apiService.get(`${VAP_DASHBOARD_BASE}/win-machine-patch-info`, {
       params: {
-        host_id: params.host_id || '',
-        host_key: params.host_key || ''
-      },
-      page: params.page || 1,
-      size: params.size || 10
-    })
+        hostId: params.host_id || params.hostId || '',
+        page: params.page || 1,
+        size: params.size || 10
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -840,9 +795,7 @@ export const windowsVulnerabilityApi = {
    * @returns {Promise}
    */
   getWinOsInfo() {
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_WIN_OS_INFO/', {
-      params: {}
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/win-os-info`).then(wrapRecordsResponse)
   },
 
   /**
@@ -851,9 +804,7 @@ export const windowsVulnerabilityApi = {
    * @returns {Promise}
    */
   getWinOsVersionInfo() {
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_WIN_OS_VERSION_INFO/', {
-      params: {}
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/win-os-version-info`).then(wrapRecordsResponse)
   },
 
   /**
@@ -862,9 +813,7 @@ export const windowsVulnerabilityApi = {
    * @returns {Promise}
    */
   getWinOsArchInfo() {
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_WIN_OS_ARCH_INFO/', {
-      params: {}
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/win-os-arch-info`).then(wrapRecordsResponse)
   },
 
   /**
@@ -917,11 +866,9 @@ export const windowsVulnerabilityApi = {
    * @returns {Promise}
    */
   getAvailableHosts() {
-    return apiService.post('/dts/api/dts/q/data/VAP2_WIN_MACHINE/', {
-      params: {},
-      page: 1,
-      size: 1000
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/win-machine`, {
+      params: { page: 1, size: 1000 }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -943,22 +890,18 @@ export const windowsVulnerabilityApi = {
    * 获取选择的补丁对应主机
    */
   getWinPatchStatusInfo(ids = []) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_PATCH_WIN_STATUS_INFO/', {
-      params: {
-        ids
-      }
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-win-status-info`, {
+      params: { ids }
+    }).then(wrapRecordsResponse)
   },
 
   /**
    * 获取选择的补丁 KB 列表
    */
   getWinPatchPatchInfo(ids = []) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_PATCH_WIN_PATCH_INFO/', {
-      params: {
-        ids
-      }
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-win-patch-info`, {
+      params: { ids }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -1086,34 +1029,30 @@ export const yumManageApi = {
 
   /**
    * 获取主机YUM源清单列表
-   * POST /dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/
+   * GET /jao/api/jao/universal/dc/yum_host_info
    * @param {Object} params - 查询参数
    * @returns {Promise}
    */
   getHostYumList(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/', {
+    return apiService.get('/jao/api/jao/universal/dc/yum_host_info', {
       params: {
-        model: 'yum_host_info',
-        filter: params.filter
-      },
-      page: params.page,
-      size: params.size
+        filter: params.filter,
+        page: params.page,
+        size: params.size
+      }
     })
   },
 
   /**
    * 获取主机YUM源详情列表
-   * POST /dts/api/dts/q/data/VAP2_DC_DATA_BY_KEYWORD/
+   * POST /jao/api/jao/universal/dc/{model}
    * @param {Object} params - 查询参数 { data_owner, repo_status }
    * @returns {Promise}
    */
   getHostRepoDetail(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_DC_DATA_BY_KEYWORD/', {
-      params: {
-        model: 'yum_list',
-        data_owner: params.data_owner || '',
-        repo_status: params.repo_status || 'enabled'
-      }
+    return apiService.post('/jao/api/jao/universal/dc/yum_list', {
+      '$data_owner': params.data_owner || '',
+      'repo-status': params.repo_status || 'enabled'
     })
   }
 }
@@ -1130,14 +1069,14 @@ export const windowsUpdateApi = {
    * @returns {Promise}
    */
   getPatchWinList(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_PATCH_WIN_LIST/', {
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-win-list`, {
       params: {
-        category_names: params.category_names || 'Critical Updates,Security Updates'
-      },
-      page: params.page || 1,
-      size: params.size || 10,
-      filter: params.filter || ''
-    })
+        categoryNames: params.category_names || 'Critical Updates,Security Updates',
+        page: params.page || 1,
+        size: params.size || 10,
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -1165,17 +1104,13 @@ export const windowsUpdateApi = {
    * @returns {Promise}
    */
   getAffectedMachinesByKbNumbers(params = {}) {
-    const cacheBuster = Date.now()
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_PATCH_AFFECTED_MACHINES/?cacheBuster=${cacheBuster}`,
-      {
-        params: {
-          kb_numbers: params.kb_numbers || []
-        },
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-affected-machines`, {
+      params: {
+        kbNumbers: params.kb_numbers || [],
         page: 1,
         size: 500
       }
-    )
+    }).then(wrapRecordsResponse)
   }
 }
 
@@ -1190,9 +1125,7 @@ export const windowsViewApi = {
    * @returns {Promise}
    */
   getCurrentStatsWin() {
-    return apiService.post('/dts/api/dts/q/data/VAP2_CURRENT_STATS_WIN/', {
-      params: {}
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/current-stats-win`).then(wrapRecordsResponse)
   },
 
   /**
@@ -1202,9 +1135,7 @@ export const windowsViewApi = {
    * @returns {Promise}
    */
   getPatchTrendWindows() {
-    return apiService.post('/dts/api/dts/q/data/VAP2_PATCH_TREND_WINDOWS/', {
-      params: {}
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-trend-windows`).then(wrapRecordsResponse)
   }
 }
 
@@ -1219,14 +1150,14 @@ export const windowsRollbackApi = {
    * @returns {Promise}
    */
   getHistUpdateKbsWin(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP_HIST_UPDATE_KBS_WIN/', {
+    return apiService.get(`${VAP_DASHBOARD_BASE}/hist-update-kbs-win`, {
       params: {
-        host_key: params.host_key || '',
-        update_kb_numbers: params.update_kb_numbers || ''
-      },
-      page: params.page || 1,
-      size: params.size || 20
-    })
+        hostKey: params.host_key || '',
+        updateKbNumbers: params.update_kb_numbers || '',
+        page: params.page || 1,
+        size: params.size || 20
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -1288,12 +1219,13 @@ export const operationReportApi = {
    * @returns {Promise}
    */
   getVulnerabilityReport(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_MACHINE_VUL_OTO/', {
-      params: {},
-      page: params.page || 1,
-      size: params.size || 20,
-      filter: params.filter || ''
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/machine-vul-oto`, {
+      params: {
+        page: params.page || 1,
+        size: params.size || 20,
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -1304,12 +1236,13 @@ export const operationReportApi = {
    * @returns {Promise}
    */
   getPatchReport(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_MACHINE_PATCH_OTO/', {
-      params: {},
-      page: params.page || 1,
-      size: params.size || 20,
-      filter: params.filter || ''
-    })
+    return apiService.get(`${VAP_DASHBOARD_BASE}/machine-patch-oto`, {
+      params: {
+        page: params.page || 1,
+        size: params.size || 20,
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   }
 }
 
