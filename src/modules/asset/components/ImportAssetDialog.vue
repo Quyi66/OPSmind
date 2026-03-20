@@ -96,7 +96,7 @@ const handleUpload = async () => {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
 
-    await apiService.post('/acm/api/acm/ci/import', formData, {
+    await apiService.post('/acm/api/acm/ci/import2', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

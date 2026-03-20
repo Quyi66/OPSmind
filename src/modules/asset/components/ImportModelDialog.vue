@@ -99,14 +99,24 @@ const handleUpload = async () => {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
 
-    await apiService.post(`/acm/api/acm/cit/import?cacheBuster=${Date.now()}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    const res = await apiService.post(
+      `/jao/api/jao/jobs/rzkan4/upload-to-run?cacheBuster=${Date.now()}`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' }
       }
-    })
-    ElMessage.success('导入成功')
-    visible.value = false
-    emit('saved')
+    )
+
+    // 返回结果为数组，取第一条判断状态
+    const result = Array.isArray(res?.data) ? res.data[0] : res?.data
+    if (result?.status === 'COMPLETED') {
+      ElMessage.success('导入成功')
+      visible.value = false
+      emit('saved')
+    } else {
+      const errMsg = result?.error || result?.data || '导入失败，请检查文件格式'
+      ElMessage.error(errMsg)
+    }
   } catch (error) {
     console.error('导入失败:', error)
     ElMessage.error('导入失败: ' + (error.response?.data?.message || error.message))
