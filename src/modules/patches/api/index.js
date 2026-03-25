@@ -6,6 +6,9 @@ import { apiService } from '@/core/api'
 
 const VAP_API_PREFIX = '/vap/api/vap'
 const VAP_DASHBOARD_BASE = `${VAP_API_PREFIX}/dashboard`
+// 以下路径用于 VAP2-DASHBOARD-API-MIGRATION.md 中迁移的 4 个接口
+// 这些接口原先通过 DTS 代理调用，现已迁移至 sjxy-vap 模块直接提供
+const VAP_DASHBOARD_MIGRATION_BASE = '/vap/api/vap/dashboard'
 const JAO_DASHBOARD_BASE = '/jao/api/jao/dashboard'
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
@@ -72,7 +75,8 @@ export const patchScanApi = {
     if (params.filter && params.filter.trim()) {
       queryParams.filter = params.filter.trim()
     }
-    return apiService.get(`${VAP_DASHBOARD_BASE}/machine-with-patch`, { params: queryParams }).then(wrapRecordsResponse)
+    // VAP2_LIST_MACHINE_WITH_PATCH → GET /sjxy-vap/api/vap/dashboard/machine-with-patch
+    return apiService.get(`${VAP_DASHBOARD_MIGRATION_BASE}/machine-with-patch`, { params: queryParams }).then(wrapRecordsResponse)
   },
 
   /**
@@ -483,7 +487,7 @@ export const patchLibraryApi = {
    * @returns {Promise}
    */
   uploadAndImport(formData) {
-    return apiService.post('/vap/api/vap/v2/patch/upload-and-import', formData, {
+    return apiService.post(`${VAP_API_PREFIX}/v2/patch/upload-and-import`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -512,7 +516,8 @@ export const vulnerabilityApi = {
    * @returns {Promise}
    */
   getCurrentStats() {
-    return apiService.get(`${VAP_DASHBOARD_BASE}/current-stats`).then(wrapRecordsResponse)
+    // VAP2_CURRENT_STATS → GET /sjxy-vap/api/vap/dashboard/current-stats
+    return apiService.get(`${VAP_DASHBOARD_MIGRATION_BASE}/current-stats`).then(wrapRecordsResponse)
   },
 
   /**
@@ -562,7 +567,8 @@ export const vulnerabilityApi = {
    * @returns {Promise}
    */
   getOsDistroList() {
-    return apiService.get(`${VAP_DASHBOARD_BASE}/machine-os-info`).then(wrapRecordsResponse)
+    // VAP2_LIST_MACHINE_OS_INFO → GET /sjxy-vap/api/vap/dashboard/machine-os-info
+    return apiService.get(`${VAP_DASHBOARD_MIGRATION_BASE}/machine-os-info`).then(wrapRecordsResponse)
   },
 
   /**
@@ -571,7 +577,8 @@ export const vulnerabilityApi = {
    * @returns {Promise}
    */
   getOsVersionList() {
-    return apiService.get(`${VAP_DASHBOARD_BASE}/machine-os-version-info`).then(wrapRecordsResponse)
+    // VAP2_LIST_MACHINE_OS_VERSION_INFO → GET /sjxy-vap/api/vap/dashboard/machine-os-version-info
+    return apiService.get(`${VAP_DASHBOARD_MIGRATION_BASE}/machine-os-version-info`).then(wrapRecordsResponse)
   },
 
   /**
@@ -709,7 +716,8 @@ export const patchOverviewApi = {
    * @returns {Promise}
    */
   getIndexStats() {
-    return apiService.get(`${VAP_DASHBOARD_BASE}/current-stats`).then(wrapRecordsResponse)
+    // VAP2_CURRENT_STATS → GET /sjxy-vap/api/vap/dashboard/current-stats
+    return apiService.get(`${VAP_DASHBOARD_MIGRATION_BASE}/current-stats`).then(wrapRecordsResponse)
   }
 }
 
