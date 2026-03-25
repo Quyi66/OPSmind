@@ -1382,6 +1382,62 @@ export const cveApi = {
   }
 }
 
+/**
+ * 中间件 CVE Vulnerability 查询 API
+ * 参照 middleware-cve-api.md 实现
+ */
+export const middlewareCveApi = {
+  /**
+   * 分页查询中间件 CVE 列表
+   * GET /vap/api/vap/v2/middleware-cve/list
+   * @param {Object} params - 查询参数
+   * @param {string} params.middlewareType - 中间件类型
+   * @param {string} params.severity - 严重等级
+   * @param {string} params.keyword - 关键字
+   * @param {string} params.startDate - 开始日期
+   * @param {string} params.endDate - 结束日期
+   * @param {number} params.page - 页码
+   * @param {number} params.size - 每页数量
+   * @param {string} params.sortBy - 排序字段
+   * @param {string} params.sortDir - 排序方向
+   * @returns {Promise}
+   */
+  getList(params = {}) {
+    const queryParams = {}
+
+    if (params.middlewareType && params.middlewareType !== 'all') queryParams.middlewareType = params.middlewareType
+    if (params.severity && params.severity !== 'all') queryParams.severity = params.severity
+    if (params.keyword) queryParams.keyword = params.keyword
+    if (params.startDate) queryParams.startDate = params.startDate
+    if (params.endDate) queryParams.endDate = params.endDate
+    if (params.page !== undefined) queryParams.page = params.page
+    if (params.size !== undefined) queryParams.size = params.size
+    if (params.sortBy) queryParams.sortBy = params.sortBy
+    if (params.sortDir) queryParams.sortDir = params.sortDir
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/list`, { params: queryParams })
+  },
+
+  /**
+   * 查询 中间件 CVE 详情
+   * GET /vap/api/vap/v2/middleware-cve/detail/{cveId}
+   * @param {string} cveId - CVE编号
+   * @returns {Promise}
+   */
+  getDetail(cveId) {
+    return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/detail/${encodeURIComponent(cveId)}`)
+  },
+
+  /**
+   * 获取中间件类型列表
+   * GET /vap/api/vap/v2/middleware-cve/middleware-types
+   * @returns {Promise}
+   */
+  getMiddlewareTypes() {
+    return apiService.get(`${VAP_API_PREFIX}/v2/middleware-cve/middleware-types`)
+  }
+}
+
 // 导出所有 API
 export default {
   scan: patchScanApi,
@@ -1398,5 +1454,6 @@ export default {
   windowsRollback: windowsRollbackApi,
   yum: yumManageApi,
   operationReport: operationReportApi,
-  cve: cveApi
+  cve: cveApi,
+  middlewareCve: middlewareCveApi
 }

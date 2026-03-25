@@ -15,6 +15,16 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./components/CveList.vue')
   },
   {
+    key: 'middlewareCveList',
+    path: 'middlewareCveList',
+    name: 'patches-middlewareCveList',
+    title: '中间件CVE列表',
+    navLabel: '中间件CVE列表',
+    icon: 'fas fa-shield-virus',
+    platform: 'common',
+    component: () => import('./components/MiddlewareCveList.vue')
+  },
+  {
     key: 'machineScan',
     path: 'machineScan',
     name: 'patches-machineScan',
