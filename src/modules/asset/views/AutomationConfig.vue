@@ -104,7 +104,7 @@
         <el-table
           :data="filteredAutomationData"
           v-loading="automationLoading"
-          :max-height="tableMaxHeight"
+          max-height="calc(100vh - 360px)"
         >
           <el-table-column prop="ci_type" label="资产代码" width="100" />
           <el-table-column prop="hostKey" label="IP" width="140" />
@@ -214,7 +214,7 @@
         <el-table
           :data="paginatedAnsibleData"
           v-loading="ansibleLoading"
-          :max-height="tableMaxHeight"
+          max-height="calc(100vh - 360px)"
         >
           <el-table-column prop="name" label="配置名称" width="120" />
           <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)" width="250">
@@ -523,9 +523,6 @@ const instanceGroupOptions = ref([])
 const aapInstanceGroupOptions = ref([])
 const groupOptions = ref([])
 
-// 表格高度
-const tableMaxHeight = ref(500)
-
 // 弹窗
 const editAutomationDialogVisible = ref(false)
 const editAnsibleDialogVisible = ref(false)
@@ -582,17 +579,7 @@ onMounted(() => {
   loadResourceTypes()
   loadAutomationData()
   loadAnsibleData()
-  updateTableHeight()
-  window.addEventListener('resize', updateTableHeight)
 })
-
-onUnmounted(() => {
-  window.removeEventListener('resize', updateTableHeight)
-})
-
-function updateTableHeight() {
-  tableMaxHeight.value = window.innerHeight - 340
-}
 
 // 加载资源类型
 async function loadResourceTypes() {

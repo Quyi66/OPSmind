@@ -161,7 +161,10 @@
       </div>
 
       <!-- 操作栏 -->
-      <!-- <div class="ops-action-bar">
+      <div class="ops-action-bar" style="display: flex; align-items: center; margin-bottom: 12px;">
+        <el-button type="primary" @click="openManualExportDialog">
+          导出
+        </el-button>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -173,7 +176,7 @@
         >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
-      </div> -->
+      </div>
 
       <!-- 数据表格 -->
       <div class="ops-table-wrapper" v-loading="loading">
@@ -270,16 +273,21 @@
         />
       </div>
     </template>
+
+    <ManualExportDialog
+      v-model="manualExportVisible"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Refresh, Search, RefreshRight, TopRight } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight, TopRight, Download } from '@element-plus/icons-vue'
 import { cveApi } from '../api'
 import { ElMessage } from 'element-plus'
 import CveDetail from './CveDetail.vue'
+import ManualExportDialog from './ManualExportDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -548,6 +556,14 @@ function viewDetail(cve) {
     }
   })
 }
+
+// ====== 手动导出功能逻辑 ======
+const manualExportVisible = ref(false)
+
+function openManualExportDialog() {
+  manualExportVisible.value = true
+}
+// ====== 结束 ======
 
 // 返回列表
 function backToList() {

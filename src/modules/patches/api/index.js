@@ -1379,6 +1379,18 @@ export const cveApi = {
    */
   getAffectedHosts(cveId) {
     return apiService.get(`${VAP_API_PREFIX}/v2/cve/affected-hosts/${encodeURIComponent(cveId)}`)
+  },
+
+  /**
+   * 批量导出 CVE 报告（Excel）
+   * POST /vap/api/vap/v2/cve/export
+   * @param {string[]} cveIds - CVE编号列表
+   * @returns {Promise<Blob>}
+   */
+  exportReport(cveIds) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/cve/export`, { cveIds }, {
+      responseType: 'blob'
+    })
   }
 }
 

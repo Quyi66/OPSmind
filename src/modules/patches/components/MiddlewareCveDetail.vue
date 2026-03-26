@@ -286,7 +286,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/biz-tags.scss';
+@use '@/styles/biz-tags.scss';
 
 .cve-detail {
   display: flex;

@@ -248,15 +248,17 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="连通状态" width="90" align="left" prop="CONN_LATEST_STATUS">
+          <el-table-column label="连通状态" width="100" align="left" prop="CONN_LATEST_STATUS">
             <template #default="{ row }">
-              <i v-if="row.CONN_LATEST_STATUS === '1'" class="fa fa-check-circle text-success">
-                已联通
-              </i>
-              <i v-else-if="row.CONN_LATEST_STATUS === '0'" class="fa fa-times-circle text-danger">
-                未联通
-              </i>
-              <i v-else class="fa fa-question-circle text-warning">未知</i>
+              <el-button link :loading="checkingConnIds.includes(row.id)" @click="handleCheckSingleConn(row)" style="padding: 0; line-height: 1">
+                <i v-if="row.CONN_LATEST_STATUS === '1'" class="fa fa-check-circle text-success">
+                  已联通
+                </i>
+                <i v-else-if="row.CONN_LATEST_STATUS === '0'" class="fa fa-times-circle text-danger">
+                  未联通
+                </i>
+                <i v-else class="fa fa-question-circle text-warning">未知</i>
+              </el-button>
             </template>
           </el-table-column>
 
@@ -388,6 +390,7 @@ import {
 } from '@element-plus/icons-vue'
 import { assetApi } from '../api'
 import { apiService } from '@/core/api'
+import { pollJobStatus } from '@/composables/useJobPolling'
 import AssetDetailDialog from '../components/AssetDetailDialog.vue'
 import AssetEditDialog from '../components/AssetEditDialog.vue'
 import AssetHistoryDialog from '../components/AssetHistoryDialog.vue'
@@ -497,6 +500,7 @@ const selectedRows = ref([])
 const pageSize = ref(10)
 const currentPage = ref(1)
 const total = ref(0)
+const checkingConnIds = ref([])
 
 // 计算属性
 const hasSelection = computed(() => selectedRows.value.length > 0)
@@ -801,6 +805,82 @@ const handleOnline = () => {
     })
     .catch(() => {})
 }
+
+function removeCheckingId(id) {
+  const idx = checkingConnIds.value.indexOf(id)
+  if (idx > -1) {
+    checkingConnIds.value.splice(idx, 1)
+  }
+}
+
+
+
+const handleCheckSingleConn = async (row) => {
+  const ip = row.IP || row.ip
+  try {
+    await ElMessageBox.confirm(`是否重新检查主机${ip}的连通性？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
+
+  checkingConnIds.value.push(row.id)
+  
+  try {
+    const host = {
+      key: row.id || row.key,
+      value: row.IP || row.ip,
+      assetType: currentType.value || row.ciType || 'linux'
+    }
+    
+    const cacheBuster = Date.now()
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/M1x855/run?cacheBuster=${cacheBuster}`,
+      {
+        params: { hosts: [host] }
+      }
+    )
+    
+    const result = Array.isArray(data) ? data[0] : data
+    
+    if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
+      ElMessage.success(`检查连通性任务已发起`)
+      pollJobStatus(result.runId, {
+        interval: 5000,
+        successMessage: '连通性检查完成',
+        errorMessage: '连通性检查失败',
+        onSuccess: () => {
+          removeCheckingId(row.id)
+          loadAssetList()
+        },
+        onError: () => {
+          removeCheckingId(row.id)
+        },
+        onComplete: () => {
+          removeCheckingId(row.id)
+        }
+      })
+    } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
+      ElMessage.success(`连通性检查完成`)
+      removeCheckingId(row.id)
+      loadAssetList()
+    } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
+      removeCheckingId(row.id)
+      ElMessage.error(result?.error || '连通性检查失败')
+    } else {
+      ElMessage.success(`检查连通性任务已启动`)
+      removeCheckingId(row.id)
+    }
+  } catch (error) {
+    removeCheckingId(row.id)
+    console.error('检查连通性失败', error)
+    ElMessage.error('检查连通性失败')
+  }
+}
+
 
 const handleOffline = () => {
   if (selectedRows.value.length === 0) {

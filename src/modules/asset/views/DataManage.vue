@@ -59,21 +59,21 @@
 
       <!-- 操作栏 -->
       <div class="ops-action-bar">
+        <el-button size="small" @click="handleAddGroup" type="primary">
+          <i class="fa fa-folder-plus" style="margin-right: 4px"></i>
+          添加分组
+        </el-button>
         <el-button size="small" @click="handleDownloadTemplate">
           <i class="fa fa-download" style="margin-right: 4px"></i>
           资产信息导入模板下载
         </el-button>
-        <el-button type="primary" size="small" @click="handleImport">
+        <el-button size="small" @click="handleImport">
           <i class="fa fa-file-import" style="margin-right: 4px"></i>
           导入资产
         </el-button>
         <el-button size="small" @click="handleExport">
           <i class="fa fa-file-export" style="margin-right: 4px"></i>
           资产信息导出
-        </el-button>
-        <el-button size="small" @click="handleAddGroup">
-          <i class="fa fa-folder-plus" style="margin-right: 4px"></i>
-          添加分组
         </el-button>
         <!-- <el-button size="small" @click="handleAddTag">
           <i class="fa fa-tag" style="margin-right: 4px"></i>
