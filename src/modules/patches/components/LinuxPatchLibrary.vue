@@ -2,7 +2,7 @@
   <div class="ops-page-layout">
     <!-- 厂商统计 KPI 卡片 -->
     <!-- 厂商统计 KPI 卡片 -->
-    <div class="vendor-kpi-section">
+    <div v-if="!pickerMode" class="vendor-kpi-section">
       <div
         v-for="vendor in vendorStats"
         :key="vendor.vendor"
@@ -44,6 +44,16 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
+        <el-form-item v-if="pickerMode" label="厂商">
+          <el-select v-model="currentVendor" style="width: 140px" clearable>
+            <el-option
+              v-for="vendor in vendorStats"
+              :key="vendor.vendor"
+              :label="(vendor.vendor || 'Unknown').toUpperCase()"
+              :value="vendor.vendor"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="严重级别">
           <el-select v-model="severityFilter" multiple placeholder="请选择" style="width: auto">
             <el-option label="严重" value="Critical" />
@@ -85,7 +95,7 @@
     </div>
 
     <!-- 操作栏 -->
-    <div class="ops-action-bar">
+    <div v-if="!pickerMode" class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCheckPatchUpdate">
         检查补丁库更新
       </el-button>
@@ -136,10 +146,12 @@
         ref="tableRef"
         v-loading="loading"
         :data="tableData"
-        max-height="calc(100vh - 400px)"
+        :row-key="row => row.patch_id"
+        :height="pickerMode ? '100%' : undefined"
+        :max-height="!pickerMode ? 'calc(100vh - 400px)' : undefined"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="50" />
+        <el-table-column type="selection" :reserve-selection="true" width="50" />
         <el-table-column prop="patch_id" label="补丁编号" width="180" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="handleViewDetail(row)">
@@ -304,12 +316,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchLibraryApi } from '../api'
 import { runJob } from '@/modules/automation/api/command'
 import { getCveUrl } from '../composables/useFormatters'
+
+const props = defineProps({
+  pickerMode: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['selection-change'])
 
 // 常量定义
 const CHECK_PATCH_UPDATE_JOB_ID = '0QdW7u' // 检查补丁更新作业ID
@@ -510,6 +531,7 @@ function handleSizeChange(size) {
 // 选择变化
 function handleSelectionChange(selection) {
   selectedPatches.value = selection
+  emit('selection-change', selection)
 }
 
 // 点击厂商卡片
@@ -713,9 +735,22 @@ onMounted(() => {
   loadData()
 })
 
+// 初始化选中状态（外部回调）
+function initSelection(selections) {
+  if (!selections || !selections.length) return
+  nextTick(() => {
+    selections.forEach(row => {
+      tableRef.value?.toggleRowSelection(row, true)
+    })
+  })
+}
+
 // 暴露方法
 defineExpose({
-  refresh: handleRefresh
+  refresh: handleRefresh,
+  getSelectedPatches: () => selectedPatches.value,
+  toggleRowSelection: (row, selected) => tableRef.value?.toggleRowSelection(row, selected),
+  initSelection
 })
 </script>
 

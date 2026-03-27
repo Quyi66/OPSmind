@@ -41,6 +41,22 @@
             style="width: 150px"
           />
         </el-form-item> -->
+        <!-- <el-form-item label="补丁分配库">
+          <el-select
+            v-model="filters.assignedUser"
+            placeholder="筛选有补丁分配的用户"
+            clearable
+            style="width: 200px"
+            @change="handleAssignedUserChange"
+          >
+            <el-option
+              v-for="u in assignedUsersList"
+              :key="u"
+              :label="u"
+              :value="u"
+            />
+          </el-select>
+        </el-form-item> -->
         <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
@@ -76,6 +92,10 @@
       <el-button type="default" size="small" @click="handleCreateUser">
         <i class="fa fa-user-plus"></i>
         创建用户
+      </el-button>
+      <el-button type="default" size="small" @click="handleCleanExpired">
+        <i class="fa fa-broom"></i>
+        清理过期分配
       </el-button>
       <span style="flex: 1"></span>
       <el-button
@@ -192,10 +212,16 @@
             {{ formatDateTime(row.last_login_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="66" align="left" fixed="right">
+        <el-table-column label="操作" width="220" align="left" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleEditUser(row)">
               修改
+            </el-button>
+            <el-button text type="primary" size="small" @click="handleAssignPatch(row)">
+              分配补丁
+            </el-button>
+            <el-button text type="primary" size="small" @click="handleViewPatchRecords(row)">
+              分配记录
             </el-button>
           </template>
         </el-table-column>
@@ -230,18 +256,28 @@
 
     <!-- 登录错误详情弹窗 -->
     <LoginErrorDialog v-model:visible="showLoginErrorDialog" :user-id="loginErrorUserId" />
+
+    <!-- 分配补丁对话框 -->
+    <AssignPatchDialog v-model:visible="assignDialogVisible" :username="currentRow?.username" @success="loadAssignedUsers" />
+
+    <!-- 补丁分配记录对话框 -->
+    <PatchRecordsDialog v-model:visible="recordsDialogVisible" :username="currentRow?.username" @success="loadAssignedUsers" />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { apiService } from '@/core/api'
 import * as userApi from '@/modules/user/api'
 import ScanHostDialog from '@/modules/user/components/dialogs/ScanHostDialog.vue'
 import CreateUserDialog from '@/modules/user/components/dialogs/CreateUserDialog.vue'
 import ModifyUserDialog from '@/modules/user/components/dialogs/ModifyUserDialog.vue'
 import EditUserDialog from '@/modules/user/components/dialogs/EditUserDialog.vue'
 import LoginErrorDialog from '@/modules/user/components/dialogs/LoginErrorDialog.vue'
+import AssignPatchDialog from '@/modules/user/components/dialogs/AssignPatchDialog.vue'
+import PatchRecordsDialog from '@/modules/user/components/dialogs/PatchRecordsDialog.vue'
 
 // 筛选条件
 const filters = ref({
@@ -249,8 +285,16 @@ const filters = ref({
   lockStatus: ['2'], // 锁定状态: 1=锁定, 2=未锁定
   host_key: '', // IP地址
   username: '', // 用户名
-  keyword: '' // 关键词搜索
+  keyword: '', // 关键词搜索
+  assignedUser: ''
 })
+
+const assignedUsersList = ref([])
+
+function handleAssignedUserChange(val) {
+  if (val) filters.value.keyword = val
+  handleSearch()
+}
 
 const loading = ref(false)
 const tableData = ref([])
@@ -381,7 +425,8 @@ function handleReset() {
     lockStatus: ['2'],
     host_key: '',
     username: '',
-    keyword: ''
+    keyword: '',
+    assignedUser: ''
   }
   currentPage.value = 1
   pageSize.value = 10
@@ -390,7 +435,53 @@ function handleReset() {
 
 onMounted(() => {
   loadData()
+  loadAssignedUsers()
 })
+
+// --- 补丁操作权限分配 API 与逻辑 ---
+const patchAssignmentApi = {
+  getUsers: () => apiService.get('/vap/api/vap/v2/patch/assignment/users'),
+  cleanExpired: () => apiService.post('/vap/api/vap/v2/patch/assignment/clean-expired')
+}
+
+// 获取已分配用户列表
+async function loadAssignedUsers() {
+  try {
+    const res = await patchAssignmentApi.getUsers()
+    if (res?.data) {
+      assignedUsersList.value = res.data
+    }
+  } catch (e) {
+    console.error('Failed to load assigned users', e)
+  }
+}
+
+// 全局清理过期
+async function handleCleanExpired() {
+  try {
+    await ElMessageBox.confirm('确认要清理系统中所有已经过期的补丁分配记录吗？', '清理警告', { type: 'warning' })
+    const res = await patchAssignmentApi.cleanExpired()
+    const count = res?.data?.cleaned || 0
+    ElMessage.success(`清理成功，共清理了 ${count} 条记录`)
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('清理失败')
+  }
+}
+
+// 分配补丁状态
+const currentRow = ref(null)
+const assignDialogVisible = ref(false)
+const recordsDialogVisible = ref(false)
+
+function handleAssignPatch(row) {
+  currentRow.value = row
+  assignDialogVisible.value = true
+}
+
+function handleViewPatchRecords(row) {
+  currentRow.value = row
+  recordsDialogVisible.value = true
+}
 </script>
 
 <style scoped lang="scss">

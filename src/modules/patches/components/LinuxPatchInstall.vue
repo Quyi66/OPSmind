@@ -194,16 +194,46 @@
       </div>
     </el-dialog>
 
-    <!-- 选择目标主机对话框 -->
+    <!-- 补丁安装向导对话框 -->
     <el-dialog
       v-model="installDialogVisible"
-      title="选择目标主机"
+      title="补丁安装向导"
       width="1000px"
       :close-on-click-modal="false"
       class="install-dialog"
       top="5vh"
+      @closed="resetInstallState"
     >
-      <div class="install-content" v-loading="installDataLoading">
+      <!-- 自定义步骤条 -->
+      <div class="ops-stepper">
+        <div class="stepper-item" :class="{ 'is-active': installStep === 0, 'is-success': installStep > 0 }">
+          <div class="stepper-icon">
+            <i v-if="installStep > 0" class="fa fa-check"></i>
+            <span v-else>1</span>
+          </div>
+          <div class="stepper-title">选择目标主机</div>
+        </div>
+        <div class="stepper-line" :class="{ 'is-active': installStep > 0 }"></div>
+
+        <div class="stepper-item" :class="{ 'is-active': installStep === 1, 'is-success': installStep > 1 }">
+          <div class="stepper-icon">
+            <i v-if="installStep > 1" class="fa fa-check"></i>
+            <span v-else>2</span>
+          </div>
+          <div class="stepper-title">配置升级项</div>
+        </div>
+        <div class="stepper-line" :class="{ 'is-active': installStep > 1 }"></div>
+
+        <div class="stepper-item" :class="{ 'is-active': installStep === 2 }">
+          <div class="stepper-icon">
+            <span>3</span>
+          </div>
+          <div class="stepper-title">任务确认</div>
+        </div>
+      </div>
+
+      <!-- Step 1: Select Hosts -->
+      <div v-show="installStep === 0" class="install-content" v-loading="installDataLoading">
         <!-- 更新补丁 -->
         <div class="install-card">
           <div class="card-header">
@@ -292,17 +322,110 @@
           </div>
         </div>
       </div>
+
+      <!-- Step 2: Configuration Options -->
+      <div v-show="installStep === 1" class="install-config-content">
+        <el-form :model="installConfig" label-width="120px" label-position="left" class="config-form">
+          <el-form-item label="预执行脚本">
+            <div style="width: 100%">
+              <el-input
+                type="textarea"
+                v-model="installConfig.preScript"
+                :autosize="{ minRows: 2, maxRows: 10 }"
+                placeholder="#!/bin/bash&#10;# 在此输入升级前需要执行的命令或脚本"
+                class="script-input"
+              />
+            </div>
+          </el-form-item>
+
+          <el-form-item label="重启策略">
+            <div style="width: 100%">
+              <el-alert
+                :title="'系统重启建议：' + (backendRestartReason || smartRestartGuess)"
+                type="info"
+                show-icon
+                :closable="false"
+                style="margin-bottom: 12px; line-height: 1.4"
+              >
+              </el-alert>
+              <el-radio-group v-model="installConfig.restartPolicy" class="restart-radio-group">
+                <el-radio label="smart">智能识别</el-radio>
+                <el-radio label="system">系统重启</el-radio>
+                <el-radio label="service">服务重启</el-radio>
+                <el-radio label="none">不重启</el-radio>
+              </el-radio-group>
+            </div>
+          </el-form-item>
+
+          <el-form-item label="校验脚本">
+            <div style="width: 100%">
+              <el-input
+                type="textarea"
+                v-model="installConfig.postScript"
+                :autosize="{ minRows: 2, maxRows: 10 }"
+                placeholder="#!/bin/bash&#10;# 在此输入系统升级完成后的校验脚本"
+                class="script-input"
+              />
+            </div>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- Step 3: Confirmation -->
+      <div v-show="installStep === 2" class="install-confirm-content">
+        <el-descriptions title="任务执行概要" :column="1" border size="small" class="confirm-descriptions">
+          <el-descriptions-item label="待安装补丁">
+            {{ patchesToInstall.map(p => p.patch_id).join(', ') }}
+          </el-descriptions-item>
+          <el-descriptions-item label="目标主机">
+            共选择 {{ selectedHosts.length }} 台主机
+          </el-descriptions-item>
+          <el-descriptions-item label="预执行脚本">
+            <span :class="{'text-muted': !installConfig.preScript}">
+              {{ installConfig.preScript ? '已配置' : '-' }}
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="重启策略">
+            <el-tag size="small" :type="getRestartPolicyTagType(installConfig.restartPolicy)">
+              {{ getRestartPolicyLabel(installConfig.restartPolicy) }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="策略依据">
+            <span v-if="installConfig.restartPolicy === 'smart'" style="font-size: 13px; color: var(--el-text-color-secondary)">
+              (系统建议依据: {{ backendRestartReason || smartRestartGuess }})
+            </span>
+            <span v-else style="font-size: 13px; color: var(--el-text-color-secondary)">-</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="校验脚本">
+            <span :class="{'text-muted': !installConfig.postScript}">
+              {{ installConfig.postScript ? '已配置' : '-' }}
+            </span>
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+
       <template #footer>
-        <el-button @click="installDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="installLoading"
-          :disabled="selectedHosts.length === 0"
-          @click="executeInstall"
-        >
-          <i class="fa fa-chevron-right" style="margin-right: 4px" />
-          开始更新
-        </el-button>
+        <div class="dialog-footer">
+          <el-button v-if="installStep === 0" @click="installDialogVisible = false">取消</el-button>
+
+          <el-button v-if="installStep > 0" @click="installStep--">
+            <i class="fa fa-chevron-left" style="margin-right: 4px" /> 上一步
+          </el-button>
+
+          <el-button v-if="installStep < 2" type="primary" :disabled="installStep === 0 && selectedHosts.length === 0" @click="handleNextStep">
+            下一步 <i class="fa fa-chevron-right" style="margin-left: 4px" />
+          </el-button>
+
+          <el-button
+            v-if="installStep === 2"
+            type="primary"
+            :loading="installLoading"
+            @click="executeInstall"
+          >
+            <i class="fa fa-check" style="margin-right: 4px" />
+            确认并执行
+          </el-button>
+        </div>
       </template>
     </el-dialog>
 
@@ -326,15 +449,24 @@
         <el-button @click="cveDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 任务执行五步轮询调度弹窗 -->
+    <TaskExecutionProgress
+      ref="taskProgressRef"
+      :task-id="createdTaskId"
+      :restart-policy="installConfig.restartPolicy"
+      @done="handleTaskWorkflowDone"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
+import { Search, Refresh, RefreshRight, Upload } from '@element-plus/icons-vue'
 import { patchInstallApi } from '../api'
 import { getCveUrl } from '../composables/useFormatters'
+import TaskExecutionProgress from './patch-task/TaskExecutionProgress.vue'
 
 // 加载状态
 const loading = ref(false)
@@ -412,6 +544,122 @@ const hostPagination = reactive({
   pageSize: 10,
   total: 0
 })
+
+// Wizard state
+const installStep = ref(0)
+const createdTaskId = ref('')
+const backendRestartReason = ref('')
+const taskProgressRef = ref(null)
+const installConfig = reactive({
+  preScript: '',
+  restartPolicy: 'smart',
+  postScript: ''
+})
+
+function resetInstallState() {
+  installStep.value = 0
+  createdTaskId.value = ''
+  backendRestartReason.value = ''
+  installConfig.preScript = ''
+  installConfig.restartPolicy = 'smart'
+  installConfig.postScript = ''
+  selectedHosts.value = []
+  hostSearchText.value = ''
+}
+
+// GUI label helpers
+function getRestartPolicyLabel(policy) {
+  const map = {
+    smart: '智能识别',
+    system: '系统重启',
+    service: '服务重启',
+    none: '不重启'
+  }
+  return map[policy] || policy
+}
+
+function getRestartPolicyTagType(policy) {
+  const map = {
+    smart: 'success',
+    system: 'danger',
+    service: 'warning',
+    none: 'info'
+  }
+  return map[policy] || 'info'
+}
+
+// Smart reboot guess based on current selections
+const smartRestartGuess = computed(() => {
+  const patches = patchesToInstall.value
+  let needsSystem = false
+  let needsService = false
+  for (const patch of patches) {
+    const id = patch.patch_id?.toLowerCase() || ''
+    if (patch.rebootStatus === 'system' || patch.isKernel === 'is_kernel' || id.includes('kernel')) {
+      needsSystem = true
+    } else if (patch.rebootStatus === 'service') {
+      needsService = true
+    }
+  }
+  const pkgs = affectedPackages.value.join(' ').toLowerCase()
+  if (pkgs.includes('kernel')) {
+    needsSystem = true
+  }
+
+  if (needsSystem) return '系统重启 (System Restart)'
+  if (needsService || pkgs.includes('glibc') || pkgs.includes('openssl')) return '服务重启 (Service Restart)'
+  return '无需重启 (None)'
+})
+
+async function handleNextStep() {
+  if (installStep.value === 0) {
+    if (selectedHosts.value.length === 0) return
+
+    installDataLoading.value = true
+    try {
+      // 方案 B：先在后端创建任务，获取精准评估与自动生成的脚本
+      const res = await patchInstallApi.createTask({
+        hostIds: selectedHosts.value.map(h => h.hostId),
+        patchIds: patchesToInstall.value.map(p => p.patch_id),
+        patchStatusIds: patchesToInstall.value.map(p => p.id).filter(Boolean),
+        osType: 'linux'
+      })
+
+      if (res?.data) {
+        createdTaskId.value = res.data.id || ''
+
+        // 自动使用后端返回的更精准重启策略
+        if (res.data.restartType && ['system', 'service', 'none'].includes(res.data.restartType)) {
+          installConfig.restartPolicy = res.data.restartType
+        } else {
+          installConfig.restartPolicy = 'smart'
+        }
+
+        backendRestartReason.value = res.data.restartReason || ''
+
+        // 后端可能自动生成预检和校验脚本，将它们自动填入框内（如果框内是空的）作为默认参考，支持用户继续手工修改
+        if (res.data.preCheckScript && !installConfig.preScript) {
+          installConfig.preScript = res.data.preCheckScript
+        }
+        if (res.data.validateScript && !installConfig.postScript) {
+          installConfig.postScript = res.data.validateScript
+        }
+      }
+
+      installStep.value++
+    } catch (error) {
+      console.warn('API /create failed, falling back to local heuristic', error)
+      ElMessage.warning('未能连接后端智能预判接口，已自动降级为本地启发式策略。')
+
+      backendRestartReason.value = '（后端评估网络异常，目前显示本地启发式评估）'
+      installStep.value++
+    } finally {
+      installDataLoading.value = false
+    }
+  } else if (installStep.value === 1) {
+    installStep.value++
+  }
+}
 
 // 过滤后的主机列表
 const filteredHosts = computed(() => {
@@ -701,21 +949,20 @@ async function executeInstall() {
     return
   }
 
-  installLoading.value = true
-  try {
-    await patchInstallApi.install({
-      patchIds: patchesToInstall.value.map(p => p.patch_id),
-      hostIds: selectedHosts.value.map(h => h.hostId),
-      packages: affectedPackages.value
-    })
-    ElMessage.success('安装任务已提交')
-    installDialogVisible.value = false
-  } catch (error) {
-    console.error('Install failed:', error)
-    ElMessage.error('安装任务提交失败')
-  } finally {
-    installLoading.value = false
+  if (!createdTaskId.value) return
+
+  // 以长连接轮询弹窗形式调用任务机长
+  taskProgressRef.value.open()
+}
+
+function handleTaskWorkflowDone(success) {
+  if (success) {
+    ElMessage.success('流程已完成')
+  } else {
+    ElMessage.error('执行失败')
   }
+  installDialogVisible.value = false
+  refresh()
 }
 
 function refresh() {
@@ -910,6 +1157,42 @@ defineExpose({ refresh })
   background: var(--el-bg-color);
 }
 
+/* Custom wizard styles */
+.upload-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-left: 12px;
+}
+
+.script-input :deep(.el-textarea__inner) {
+  font-family: monospace;
+  background-color: #fafafa;
+}
+
+.config-form {
+  padding: 10px 20px;
+}
+
+.restart-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.confirm-descriptions {
+  padding: 10px 20px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.text-muted {
+  color: var(--el-text-color-secondary);
+}
+
 .patch-detail {
   padding: 8px;
 
@@ -963,5 +1246,82 @@ defineExpose({ refresh })
 
 .patch-detail-loading {
   padding: 20px;
+}
+
+/* Stepper Styles */
+.ops-stepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-bottom: 30px;
+  padding: 0 40px;
+}
+
+.stepper-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 120px;
+  position: relative;
+  z-index: 1;
+
+  .stepper-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--el-bg-color, #fff);
+    border: 2px solid var(--el-text-color-placeholder, #a8abb2);
+    color: var(--el-text-color-placeholder, #a8abb2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    transition: all 0.3s;
+  }
+
+  .stepper-title {
+    font-size: 14px;
+    color: var(--el-text-color-regular, #606266);
+    font-weight: 500;
+    transition: all 0.3s;
+  }
+
+  &.is-active {
+    .stepper-icon {
+      border-color: var(--el-color-primary, #409eff);
+      background-color: var(--el-color-primary, #409eff);
+      color: #fff;
+    }
+    .stepper-title {
+      color: var(--el-color-primary, #409eff);
+      font-weight: bold;
+    }
+  }
+
+  &.is-success {
+    .stepper-icon {
+      border-color: var(--el-color-success, #67c23a);
+      color: var(--el-color-success, #67c23a);
+      background-color: var(--el-bg-color, #fff);
+    }
+    .stepper-title {
+      color: var(--el-color-success, #67c23a);
+    }
+  }
+}
+
+.stepper-line {
+  flex: 1;
+  height: 2px;
+  background-color: var(--el-border-color-lighter, #ebeef5);
+  margin: 13px -40px 0;
+  z-index: 0;
+  transition: all 0.3s;
+
+  &.is-active {
+    background-color: var(--el-color-success, #67c23a);
+  }
 }
 </style>

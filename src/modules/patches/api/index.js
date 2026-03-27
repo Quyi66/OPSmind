@@ -184,6 +184,64 @@ export const patchScanApi = {
  */
 export const patchInstallApi = {
   /**
+   * 创建补丁安装任务并获取全量真实预估策略及脚本
+   * POST /api/vap/v2/patch/task/create
+   */
+  createTask(params) {
+    return apiService.post('/vap/api/vap/v2/patch/task/create', params)
+  },
+
+  /**
+   * 获取任务详情
+   * GET /api/vap/v2/patch/task/{id}
+   */
+  getTask(id) {
+    return apiService.get(`/vap/api/vap/v2/patch/task/${id}`)
+  },
+
+  /**
+   * 步骤1：执行预检查
+   * POST /api/vap/v2/patch/task/{id}/pre-check/execute
+   */
+  executePreCheck(id) {
+    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/pre-check/execute`)
+  },
+
+  /**
+   * 步骤2：执行补丁安装
+   * POST /api/vap/v2/patch/task/{id}/install/execute
+   */
+  executeInstallTask(id) {
+    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/install/execute`)
+  },
+
+  /**
+   * 步骤3：确认重启方式
+   * POST /api/vap/v2/patch/task/{id}/restart/confirm
+   * @param {string} id - 任务ID
+   * @param {string} action - 重启策略: system, service, none
+   */
+  confirmRestart(id, action) {
+    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/restart/confirm`, { action })
+  },
+
+  /**
+   * 步骤4：执行重启
+   * POST /api/vap/v2/patch/task/{id}/restart/execute
+   */
+  executeRestart(id) {
+    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/restart/execute`)
+  },
+
+  /**
+   * 步骤5：执行安装后校验
+   * POST /api/vap/v2/patch/task/{id}/validate/execute
+   */
+  executeValidate(id) {
+    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/validate/execute`)
+  },
+
+  /**
    * 执行补丁安装
    * @param {Object} params - 安装参数
    * @param {Array<string>} params.hosts - 目标主机列表
