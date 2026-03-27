@@ -13,13 +13,25 @@ const DTS_BASE = '/api/dts/q/data'
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
 
 const normalizeRecords = (payload) => {
+  if (!payload) return { records: [], total: 0 }
   if (Array.isArray(payload)) {
     return { records: payload, total: payload.length }
   }
-  if (payload && Array.isArray(payload.records)) {
-    return payload
+  // 处理 records 格式
+  if (Array.isArray(payload.records)) {
+    return {
+      records: payload.records,
+      total: payload.total ?? payload.records.length
+    }
   }
-  return payload || { records: [], total: 0 }
+  // 处理 Spring Data Page 格式 (content + totalElements)
+  if (Array.isArray(payload.content)) {
+    return {
+      records: payload.content,
+      total: payload.totalElements ?? payload.total ?? payload.content.length
+    }
+  }
+  return { records: [], total: 0 }
 }
 
 /**
@@ -152,7 +164,9 @@ export const assetApi = {
     if (options.size) body.size = options.size
     if (options.page) body.page = options.page
     if (options.filter !== undefined) body.filter = options.filter
-    return apiService.post(`${ACM_BASE}/ci/list-asset-selector`, body).then(res => res.data)
+    return apiService
+      .post(`${ACM_BASE}/ci/list-asset-selector`, body)
+      .then(res => normalizeRecords(unwrapApiData(res)))
   },
 
   /**
@@ -162,7 +176,9 @@ export const assetApi = {
    * @param {string} code - 属性代码
    */
   getAttrValues(ciType, code) {
-    return apiService.get(`${ACM_BASE}/ci/attr/list/${ciType}/${code}`).then(res => res.data)
+    return apiService
+      .get(`${ACM_BASE}/ci/attr/list/${ciType}/${code}`)
+      .then(res => normalizeRecords(unwrapApiData(res)))
   },
 
   /**
@@ -174,7 +190,7 @@ export const assetApi = {
     const res = await apiService.get(
       `${ACM_BASE}/query/group/view/${citCode}?cacheBuster=${Date.now()}`
     )
-    return res.data
+    return normalizeRecords(unwrapApiData(res))
   },
 
   /**
@@ -186,7 +202,7 @@ export const assetApi = {
     const res = await apiService.get(
       `${ACM_BASE}/query/tag/view/${citCode}?cacheBuster=${Date.now()}`
     )
-    return res.data
+    return normalizeRecords(unwrapApiData(res))
   },
 
   /**
@@ -236,7 +252,9 @@ export const assetApi = {
    * @param {string} ciType - 资产类型
    */
   getGroupByCit(ciType) {
-    return apiService.get(`${ACM_BASE}/query/group/find/${ciType}`).then(res => res.data)
+    return apiService
+      .get(`${ACM_BASE}/query/group/find/${ciType}`)
+      .then(res => normalizeRecords(unwrapApiData(res)))
   }
 }
 
