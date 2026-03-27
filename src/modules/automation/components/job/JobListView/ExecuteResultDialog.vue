@@ -345,7 +345,7 @@
                     加载全部内容（{{ (ansibleRawOutput.length / 1024).toFixed(0) }} KB）
                   </el-button>
                   <p
-                    style="font-size: 12px; color: var(--el-text-color-secondary); margin-top: 8px"
+                    style="font-size: 14px; color: var(--el-text-color-secondary); margin-top: 8px"
                   >
                     数据量较大，加载全部可能导致短暂卡顿
                   </p>
@@ -1221,7 +1221,7 @@ function safeJsonParse(input, fallback = {}) {
 }
 
 .status-range {
-  font-size: 12px;
+  font-size: 14px;
   color: #909399;
   display: flex;
   align-items: center;
@@ -1268,7 +1268,7 @@ function safeJsonParse(input, fallback = {}) {
 }
 
 .meta-label {
-  font-size: 12px;
+  font-size: 14px;
   color: #909399;
 }
 
@@ -1294,7 +1294,7 @@ function safeJsonParse(input, fallback = {}) {
 .error-details {
   margin: 0;
   font-family: Consolas, 'SFMono-Regular', Menlo, Monaco, monospace;
-  font-size: 12px;
+  font-size: 14px;
   color: #c45656;
   white-space: pre-wrap;
 }
@@ -1334,7 +1334,7 @@ function safeJsonParse(input, fallback = {}) {
 }
 
 .batch-status {
-  font-size: 12px;
+  font-size: 14px;
   padding: 2px 8px;
   border-radius: 999px;
   background: #f4f4f5;
@@ -1347,7 +1347,7 @@ function safeJsonParse(input, fallback = {}) {
 }
 
 .batch-card__header .batch-meta {
-  font-size: 12px;
+  font-size: 14px;
   color: #909399;
 }
 
@@ -1366,7 +1366,7 @@ function safeJsonParse(input, fallback = {}) {
 
 .batch-step__message {
   margin: 4px 0 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #606266;
   white-space: pre-line;
 }
@@ -1389,7 +1389,7 @@ function safeJsonParse(input, fallback = {}) {
 .process-json {
   margin: 0;
   font-family: Consolas, 'SFMono-Regular', Menlo, Monaco, monospace;
-  font-size: 12px;
+  font-size: 14px;
   background: #1e1e1e;
   color: #f2f2f2;
   padding: 12px;
@@ -1437,7 +1437,7 @@ function safeJsonParse(input, fallback = {}) {
 }
 
 .tree-node__meta {
-  font-size: 12px;
+  font-size: 14px;
   color: #909399;
 }
 
@@ -1474,7 +1474,7 @@ function safeJsonParse(input, fallback = {}) {
   display: inline-flex;
   align-items: center;
   padding: 0 6px;
-  font-size: 12px;
+  font-size: 14px;
   border-radius: 4px;
   background: #f2f6fc;
   color: #606266;
@@ -1508,7 +1508,7 @@ function safeJsonParse(input, fallback = {}) {
   border-radius: 999px;
   border: 1px solid var(--el-border-color-light);
   color: #606266;
-  font-size: 12px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -1544,7 +1544,7 @@ function safeJsonParse(input, fallback = {}) {
 
 .host-task-card__output {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   background: #1e1e1e;
   color: #f2f2f2;
   padding: 10px;
@@ -1605,7 +1605,7 @@ function safeJsonParse(input, fallback = {}) {
 
 .raw-scroll pre {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .output-tab {
@@ -1630,7 +1630,7 @@ function safeJsonParse(input, fallback = {}) {
 }
 
 .rest-meta__label {
-  font-size: 12px;
+  font-size: 14px;
   color: #909399;
 }
 

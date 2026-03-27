@@ -90,178 +90,18 @@
       :os-distro="hostOsDistro"
     />
 
-    <!-- 安装补丁对话框 -->
-    <el-dialog
-      v-model="installDialogVisible"
-      title="补丁安装向导"
-      width="1000px"
-      :close-on-click-modal="false"
-      class="install-dialog"
-      top="5vh"
-      @closed="resetInstallState"
-    >
-      <!-- 自定义步骤条 -->
-      <div class="ops-stepper">
-        <div class="stepper-item" :class="{ 'is-active': installStep === 0, 'is-success': installStep > 0 }">
-          <div class="stepper-icon">
-            <i v-if="installStep > 0" class="fa fa-check"></i>
-            <span v-else>1</span>
-          </div>
-          <div class="stepper-title">确认更新内容</div>
-        </div>
-        <div class="stepper-line" :class="{ 'is-active': installStep > 0 }"></div>
-
-        <div class="stepper-item" :class="{ 'is-active': installStep === 1, 'is-success': installStep > 1 }">
-          <div class="stepper-icon">
-            <i v-if="installStep > 1" class="fa fa-check"></i>
-            <span v-else>2</span>
-          </div>
-          <div class="stepper-title">配置升级项</div>
-        </div>
-        <div class="stepper-line" :class="{ 'is-active': installStep > 1 }"></div>
-
-        <div class="stepper-item" :class="{ 'is-active': installStep === 2 }">
-          <div class="stepper-icon">
-            <span>3</span>
-          </div>
-          <div class="stepper-title">任务确认</div>
-        </div>
-      </div>
-
-      <!-- Step 1: Confirmation of Updates -->
-      <div v-show="installStep === 0" class="install-content" v-loading="installDialogLoading">
-        <div class="install-card">
-          <div class="card-header">
-            <i class="fa fa-lock" />
-            更新补丁
-          </div>
-          <div class="card-body">
-            {{ installDialogData.patchIds.join(', ') }}
-          </div>
-        </div>
-        <div class="install-card">
-          <div class="card-header">
-            <i class="fa fa-cube" />
-            待更新软件包
-          </div>
-          <div class="card-body card-body--scroll" v-html="installDialogData.packagesDetail || '-'">
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 2: Configuration Options -->
-      <div v-show="installStep === 1" class="install-config-content">
-        <el-form :model="installConfig" label-width="120px" label-position="left" class="config-form">
-          <el-form-item label="预执行脚本">
-            <div style="width: 100%">
-              <el-input
-                type="textarea"
-                v-model="installConfig.preScript"
-                :autosize="{ minRows: 2, maxRows: 10 }"
-                placeholder="#!/bin/bash&#10;# 在此输入升级前需要执行的命令或脚本"
-                class="script-input"
-              />
-            </div>
-          </el-form-item>
-
-          <el-form-item label="重启策略">
-            <div style="width: 100%">
-              <el-alert
-                :title="'系统重启建议：' + (backendRestartReason || smartRestartGuess)"
-                type="info"
-                show-icon
-                :closable="false"
-                style="margin-bottom: 12px; line-height: 1.4"
-              >
-              </el-alert>
-              <el-radio-group v-model="installConfig.restartPolicy" class="restart-radio-group">
-                <el-radio label="smart">智能识别</el-radio>
-                <el-radio label="system">系统重启</el-radio>
-                <el-radio label="service">服务重启</el-radio>
-                <el-radio label="none">不重启</el-radio>
-              </el-radio-group>
-            </div>
-          </el-form-item>
-
-          <el-form-item label="校验脚本">
-            <div style="width: 100%">
-              <el-input
-                type="textarea"
-                v-model="installConfig.postScript"
-                :autosize="{ minRows: 2, maxRows: 10 }"
-                placeholder="#!/bin/bash&#10;# 在此输入系统升级完成后的校验脚本"
-                class="script-input"
-              />
-            </div>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <!-- Step 3: Confirmation -->
-      <div v-show="installStep === 2" class="install-confirm-content">
-        <el-descriptions title="任务执行概要" :column="1" border size="small" class="confirm-descriptions">
-          <el-descriptions-item label="待安装补丁">
-            {{ installDialogData.patchIds.join(', ') }}
-          </el-descriptions-item>
-          <el-descriptions-item label="预执行脚本">
-            <span :class="{'text-muted': !installConfig.preScript}">
-              {{ installConfig.preScript ? '已配置' : '-' }}
-            </span>
-          </el-descriptions-item>
-          <el-descriptions-item label="重启策略">
-            <el-tag size="small" :type="getRestartPolicyTagType(installConfig.restartPolicy)">
-              {{ getRestartPolicyLabel(installConfig.restartPolicy) }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="策略依据">
-            <span v-if="installConfig.restartPolicy === 'smart'" style="font-size: 13px; color: var(--el-text-color-secondary)">
-              (系统建议依据: {{ backendRestartReason || smartRestartGuess }})
-            </span>
-            <span v-else style="font-size: 13px; color: var(--el-text-color-secondary)">-</span>
-          </el-descriptions-item>
-          <el-descriptions-item label="校验脚本">
-            <span :class="{'text-muted': !installConfig.postScript}">
-              {{ installConfig.postScript ? '已配置' : '-' }}
-            </span>
-          </el-descriptions-item>
-        </el-descriptions>
-      </div>
-
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button v-if="installStep === 0" @click="installDialogVisible = false">取消</el-button>
-
-          <el-button v-if="installStep > 0" @click="installStep--">
-            <i class="fa fa-chevron-left" style="margin-right: 4px" /> 上一步
-          </el-button>
-
-          <el-button v-if="installStep < 2" type="primary" :disabled="installStep === 0 && !installDialogData.patchIds.length" @click="handleNextStep">
-            下一步 <i class="fa fa-chevron-right" style="margin-left: 4px" />
-          </el-button>
-
-          <el-button
-            v-if="installStep === 2"
-            type="primary"
-            :loading="installSubmitting"
-            @click="handleConfirmInstall"
-          >
-            <i class="fa fa-check" style="margin-right: 4px" />
-            确认并执行
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
+    <!-- 补丁安装向导组件 -->
+    <PatchInstallWizard
+      v-model:visible="installDialogVisible"
+      :patches-to-install="patchesToInstall"
+      :fixed-host="fixedHostInfo"
+      @success="handleInstallSuccess"
+    />
 
     <!-- 操作记录对话框 -->
     <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
 
-    <!-- 任务执行五步轮询调度弹窗 -->
-    <TaskExecutionProgress
-      ref="taskProgressRef"
-      :task-id="createdTaskId"
-      :restart-policy="installConfig.restartPolicy"
-      @done="handleTaskWorkflowDone"
-    />
+
   </div>
 </template>
 
@@ -277,7 +117,7 @@ import PackagesTab from './host-detail/PackagesTab.vue'
 import VulnerabilitiesTab from './host-detail/VulnerabilitiesTab.vue'
 import PatchDetailDialog from './host-detail/PatchDetailDialog.vue'
 import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'
-import TaskExecutionProgress from './patch-task/TaskExecutionProgress.vue'
+import PatchInstallWizard from './patch-task/PatchInstallWizard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -324,114 +164,26 @@ const patchDetailVisible = ref(false)
 const patchDetailLoading = ref(false)
 const patchDetailData = ref({})
 
-// 安装补丁对话框 wizard state
-const installDialogVisible = ref(false)
-const installDialogLoading = ref(false)
-const installSubmitting = ref(false)
-const installStep = ref(0)
-const backendRestartReason = ref('')
-const installConfig = reactive({
-  preScript: '',
-  restartPolicy: 'smart',
-  postScript: ''
-})
-const installDialogData = reactive({
-  patchIds: [],
-  patchStatusIds: [],
-  packagesDetail: '',
-  hostId: ''
-})
-
 const operationLogsVisible = ref(false)
 const lastSubmittedRunId = ref('')
-const createdTaskId = ref('')
-const taskProgressRef = ref(null)
+const patchesToInstall = ref([])
 
-function resetInstallState() {
-  installStep.value = 0
-  backendRestartReason.value = ''
-  installConfig.preScript = ''
-  installConfig.restartPolicy = 'smart'
-  installConfig.postScript = ''
-  installDialogData.patchIds = []
-  installDialogData.packagesDetail = ''
-  installDialogData.hostId = ''
-  createdTaskId.value = ''
-}
-
-function getRestartPolicyLabel(policy) {
-  const map = {
-    smart: '智能识别',
-    system: '系统重启',
-    service: '服务重启',
-    none: '不重启'
+const fixedHostInfo = computed(() => {
+  if (!machineInfo.value) return null
+  return {
+    hostId: hostId.value,
+    hostKey: hostKey.value,
+    hostname: machineInfo.value.hostname,
+    os_distro: machineInfo.value.os_distro,
+    os_version: machineInfo.value.os_version
   }
-  return map[policy] || policy
-}
-
-function getRestartPolicyTagType(policy) {
-  const map = {
-    smart: 'success',
-    system: 'danger',
-    service: 'warning',
-    none: 'info'
-  }
-  return map[policy] || 'info'
-}
-
-const smartRestartGuess = computed(() => {
-  const pkgs = (installDialogData.packagesDetail || '').toLowerCase()
-  if (pkgs.includes('kernel')) return '系统重启 (System Restart)'
-  if (pkgs.includes('glibc') || pkgs.includes('openssl')) return '服务重启 (Service Restart)'
-  return '无需重启 (None)'
 })
 
-async function handleNextStep() {
-  if (installStep.value === 0) {
-    installDialogLoading.value = true
-    try {
-      // 方案 B：先在后端创建任务，获取精准评估与自动生成的脚本
-      // patchStatusIds：将 patches 中的 id (机器补丁状态ID) 传入，用于后端推断重启类型和 OS
-      const res = await patchInstallApi.createTask({
-        hostIds: [installDialogData.hostId],
-        patchIds: installDialogData.patchIds,
-        patchStatusIds: installDialogData.patchStatusIds || [],
-        osType: 'linux'
-      })
-
-      if (res?.data) {
-        createdTaskId.value = res.data.id || ''
-
-        // 自动使用后端返回的更精准重启策略
-        if (res.data.restartType && ['system', 'service', 'none'].includes(res.data.restartType)) {
-          installConfig.restartPolicy = res.data.restartType
-        } else {
-          installConfig.restartPolicy = 'smart'
-        }
-        backendRestartReason.value = res.data.restartReason || ''
-
-        // 后端可能自动生成预检和校验脚本
-        if (res.data.preCheckScript && !installConfig.preScript) {
-          installConfig.preScript = res.data.preCheckScript
-        }
-        if (res.data.validateScript && !installConfig.postScript) {
-          installConfig.postScript = res.data.validateScript
-        }
-      }
-
-      installStep.value++
-    } catch (error) {
-      console.error('Failed to pre-flight task data:', error)
-      ElMessage.warning('未能连接后端智能预判接口，已自动降级为本地启发式策略。')
-      backendRestartReason.value = '（后端评估网络异常，目前显示本地启发式评估）'
-      installStep.value++
-    } finally {
-      installDialogLoading.value = false
-    }
-  } else {
-    installStep.value++
-  }
+function handleInstallSuccess() {
+  patchesTabRef.value?.loadPatchList()
 }
+
+
 
 // 监听Tab切换
 watch(activeTab, newTab => {
@@ -493,60 +245,20 @@ async function loadPatchDetail(patchId) {
 }
 
 // 安装补丁
-async function handleFixPatches(patches) {
+function handleFixPatches(patches) {
   if (!patches || patches.length === 0) {
     ElMessage.warning('请选择要安装的补丁')
-    return
-  }
-  const patchIds = patches.map(item => item.patch_id).filter(Boolean)
-  if (patchIds.length === 0) {
-    ElMessage.warning('所选补丁缺少补丁编号')
     return
   }
   if (!hostId.value) {
     ElMessage.warning('主机信息缺失，无法安装补丁')
     return
   }
-
-  // 提取机器补丁状态 ID（用于后端推断重启类型和 OS 发行版）
-  const patchStatusIds = patches.map(item => item.id).filter(Boolean)
-
-  installDialogData.patchIds = patchIds
-  installDialogData.patchStatusIds = patchStatusIds
-  installDialogData.packagesDetail = ''
-  installDialogData.hostId = hostId.value
+  patchesToInstall.value = patches
   installDialogVisible.value = true
-  installDialogLoading.value = true
-
-  try {
-    const response = await patchInstallApi.getAffectedPackages({ patch_ids: patchIds })
-    const records = response?.data?.records || response?.records || []
-    const fileNames = records.map(item => item.file_name).filter(Boolean)
-    installDialogData.packagesDetail = fileNames.join('<br>')
-  } catch (error) {
-    ElMessage.error('获取软件包信息失败: ' + (error.message || '未知错误'))
-  } finally {
-    installDialogLoading.value = false
-  }
 }
 
-async function handleConfirmInstall() {
-  if (!createdTaskId.value) return
-
-  // 抛弃旧版单一执行形式，激活全新的5步流转弹窗
-  taskProgressRef.value.open()
-}
-
-function handleTaskWorkflowDone(success) {
-  if (success) {
-    ElMessage.success('补丁安装与智能校验流程完成')
-  } else {
-    ElMessage.error('执行失败')
-  }
-  installDialogVisible.value = false
-  // 刷新当前Tab表格刷新数据
-  patchesTabRef.value?.loadPatchList()
-}
+const installDialogVisible = ref(false)
 
 function handleBack() {
   if (fromRouteName.value) {
