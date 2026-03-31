@@ -6,9 +6,13 @@ export interface User {
   id: string
   login: string
   name: string
+  fullName?: string
+  firstName?: string
   email?: string
   role: string
+  roles?: string[]
   permissions: string[]
+  applets?: string[]
   tenantId: string
   avatar?: string
   lastLoginTime?: string
@@ -78,27 +82,27 @@ export interface AuthService {
   login(credentials: LoginCredentials): Promise<LoginResponse>
   logout(): Promise<void>
   refreshToken(): Promise<boolean>
-  
+
   // 状态查询
   isAuthenticated(): boolean
   getCurrentUser(): User | null
   getToken(): string | null
-  
+
   // 权限检查
   hasPermission(permission: string): boolean
   hasRole(role: string): boolean
-  
+
   // 会话管理
   validateSession(): Promise<boolean>
   updateActivity(): void
-  
+
   // 初始化方法
   initializeLogin(): Promise<{
     tenants: Tenant[]
     license: License
     otpEnabled: OTPStatus
   }>
-  
+
   // 工具方法
   encrypt(text: string): string
   getTenantId(): string

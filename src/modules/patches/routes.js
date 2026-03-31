@@ -137,5 +137,15 @@ export const PATCHES_ROUTE_DEFS = [
     icon: 'fas fa-file-alt',
     platform: 'common',
     component: () => import('./components/OperationLogs.vue')
+  },
+  {
+    key: 'processLogs',
+    path: 'processLogs',
+    name: 'patches-processLogs',
+    title: '流程操作记录',
+    navLabel: '流程操作记录',
+    icon: 'fas fa-stream',
+    platform: 'common',
+    component: () => import('./components/PatchProcessLogs.vue')
   }
 ]

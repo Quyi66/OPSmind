@@ -3,7 +3,7 @@
     <!-- 补丁安装向导对话框 -->
     <el-dialog
       v-model="isVisible"
-      title="补丁安装向导"
+      :title="wizardDialogTitle"
       width="1000px"
       :close-on-click-modal="false"
       class="install-dialog"
@@ -42,10 +42,16 @@
         <div class="install-card">
           <div class="card-header">
             <i class="fa fa-lock" />
-            更新补丁
+            {{ selectionCardTitle }}
           </div>
-          <div class="card-body">
-            {{ patchesToInstall.map(p => p.patch_id).join(', ') }}
+          <div class="card-body card-body--scroll">
+            <div v-if="selectionDisplayItems.length === 0" class="no-data">暂无数据</div>
+            <div v-for="item in selectionDisplayItems" :key="item.key" class="selection-item">
+              <div class="selection-item__primary">{{ item.primary }}</div>
+              <div v-if="item.secondary" class="selection-item__secondary">
+                {{ item.secondary }}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -53,7 +59,7 @@
         <div class="install-card">
           <div class="card-header">
             <i class="fa fa-cube" />
-            待更新软件包
+            {{ packageCardTitle }}
           </div>
           <div class="card-body card-body--scroll">
             <div v-for="pkg in affectedPackages" :key="pkg" class="package-item">
@@ -67,10 +73,17 @@
         <div class="install-card mt-3">
           <div class="card-header">
             <i class="fa fa-list" />
-            更新主机
+            {{ hostCardTitle }}
           </div>
-           <div class="card-body" v-if="fixedHost">
-             共 1 台：{{ fixedHost.hostKey || fixedHost.hostname || fixedHost.hostId || '当前主机' }}
+          <div class="card-body card-body--scroll" v-if="hasFixedHosts">
+            <div class="selection-item__primary">共 {{ resolvedFixedHosts.length }} 台</div>
+            <div
+              v-for="host in resolvedFixedHosts"
+              :key="host.hostId || host.id || host.hostKey"
+              class="selection-item"
+            >
+              <div class="selection-item__primary">{{ formatHostDisplay(host) }}</div>
+            </div>
           </div>
           <div class="card-body" v-else>
             <div class="host-toolbar">
@@ -132,7 +145,8 @@
         <div class="task-step-editor">
           <div class="task-step-header">
             <div class="task-step-editor__title">
-              <i class="fa fa-code" style="margin-right:6px"></i>预执行脚本
+              <i class="fa fa-code" style="margin-right: 6px"></i>
+              预执行脚本
             </div>
             <el-radio-group
               v-model="scriptModes.pre"
@@ -148,7 +162,7 @@
               type="textarea"
               v-model="installConfig.preScript"
               :autosize="{ minRows: 8, maxRows: 24 }"
-              placeholder="#!/bin/bash&#10;# 在此输入升级前需要执行的命令或脚本"
+              :placeholder="preScriptPlaceholder"
               class="script-input"
               :disabled="stepStates[1] === 'running' || stepStates[1] === 'success'"
             />
@@ -168,7 +182,8 @@
                 :disabled="stepStates[1] === 'running' || stepStates[1] === 'success'"
                 @click="triggerScriptUpload('pre')"
               >
-                <i class="fa fa-upload" style="margin-right: 4px" /> 上传脚本
+                <i class="fa fa-upload" style="margin-right: 4px" />
+                上传脚本
               </el-button>
               <span class="script-upload-file">{{ scriptFiles.pre || '未选择文件' }}</span>
             </div>
@@ -190,12 +205,28 @@
             :type="stepStates[1] === 'success' ? 'success' : 'error'"
             :closable="false"
             show-icon
-            :title="stepStates[1] === 'success' ? (isSkipped[1] ? '已跳过预执行脚本' : '预执行脚本执行完毕') : '执行失败：' + taskErrorMessage"
+            :title="
+              stepStates[1] === 'success'
+                ? isSkipped[1]
+                  ? '已跳过预执行脚本'
+                  : '预执行脚本执行完毕'
+                : '执行失败：' + taskErrorMessage
+            "
             class="task-step-alert"
           >
-            <template #default v-if="taskDetailData && taskDetailData.preCheckRunId && installConfig.preScript">
+            <template
+              #default
+              v-if="taskDetailData && taskDetailData.preCheckRunId && installConfig.preScript"
+            >
               <div class="task-detail-info">
-                <el-button type="primary" link @click="openExecuteResult(taskDetailData.preCheckRunId, '预执行脚本')" style="font-size: 14px">查看执行详情</el-button>
+                <el-button
+                  type="primary"
+                  link
+                  @click="openExecuteResult(taskDetailData.preCheckRunId, '预执行脚本')"
+                  style="font-size: 14px"
+                >
+                  查看执行详情
+                </el-button>
               </div>
             </template>
           </el-alert>
@@ -207,7 +238,8 @@
         <div class="task-step-editor">
           <div class="task-step-header">
             <div class="task-step-editor__title">
-              <i class="fa fa-check-square-o" style="margin-right:6px"></i>校验脚本
+              <i class="fa fa-check-square-o" style="margin-right: 6px"></i>
+              校验脚本
             </div>
             <el-radio-group
               v-model="scriptModes.post"
@@ -223,7 +255,7 @@
               type="textarea"
               v-model="installConfig.postScript"
               :autosize="{ minRows: 8, maxRows: 24 }"
-              placeholder="#!/bin/bash&#10;# 在此输入系统升级完成后的校验脚本"
+              :placeholder="postScriptPlaceholder"
               class="script-input"
               :disabled="stepStates[2] === 'running' || stepStates[2] === 'success'"
             />
@@ -243,7 +275,8 @@
                 :disabled="stepStates[2] === 'running' || stepStates[2] === 'success'"
                 @click="triggerScriptUpload('post')"
               >
-                <i class="fa fa-upload" style="margin-right: 4px" /> 上传脚本
+                <i class="fa fa-upload" style="margin-right: 4px" />
+                上传脚本
               </el-button>
               <span class="script-upload-file">{{ scriptFiles.post || '未选择文件' }}</span>
             </div>
@@ -265,12 +298,28 @@
             :type="stepStates[2] === 'success' ? 'success' : 'error'"
             :closable="false"
             show-icon
-            :title="stepStates[2] === 'success' ? (isSkipped[2] ? '已跳过校验脚本' : '全部校验通过') : '校验失败：' + taskErrorMessage"
+            :title="
+              stepStates[2] === 'success'
+                ? isSkipped[2]
+                  ? '已跳过校验脚本'
+                  : '全部校验通过'
+                : '校验失败：' + taskErrorMessage
+            "
             class="task-step-alert"
           >
-            <template #default v-if="taskDetailData && taskDetailData.validateRunId && installConfig.postScript">
+            <template
+              #default
+              v-if="taskDetailData && taskDetailData.validateRunId && installConfig.postScript"
+            >
               <div class="task-detail-info">
-                <el-button type="primary" link @click="openExecuteResult(taskDetailData.validateRunId, '校验脚本')" style="font-size: 14px">查看执行详情</el-button>
+                <el-button
+                  type="primary"
+                  link
+                  @click="openExecuteResult(taskDetailData.validateRunId, '校验脚本')"
+                  style="font-size: 14px"
+                >
+                  查看执行详情
+                </el-button>
               </div>
             </template>
           </el-alert>
@@ -281,7 +330,8 @@
       <div v-show="installStep === 3" class="task-step-content">
         <div class="task-step-editor">
           <div class="task-step-editor__title">
-            <i class="fa fa-refresh" style="margin-right:6px"></i>重启策略
+            <i class="fa fa-refresh" style="margin-right: 6px"></i>
+            重启策略
           </div>
           <el-alert
             :title="restartAdviceTitle"
@@ -295,8 +345,12 @@
             </template>
           </el-alert>
           <div v-if="requiresRestartConfirm" class="restart-confirm-field mt-4">
-            <div class="confirm-label" style="font-size: 14px; margin-bottom: 8px;">
-              请输入“<span style="color: var(--el-color-primary); font-weight: bold;">{{ restartConfirmKeyword }}</span>”进行确认操作
+            <div class="confirm-label" style="font-size: 14px; margin-bottom: 8px">
+              请输入“
+              <span style="color: var(--el-color-primary); font-weight: bold">
+                {{ restartConfirmKeyword }}
+              </span>
+              ”进行确认操作
             </div>
             <el-input
               v-model="restartConfirmText"
@@ -320,12 +374,25 @@
             :type="stepStates[3] === 'success' ? 'success' : 'error'"
             :closable="false"
             show-icon
-            :title="stepStates[3] === 'success' ? (isSkipped[3] || installConfig.restartPolicy === 'none' ? '已跳过重启' : '重启完成') : '重启失败：' + taskErrorMessage"
+            :title="
+              stepStates[3] === 'success'
+                ? isSkipped[3] || installConfig.restartPolicy === 'none'
+                  ? '已跳过重启'
+                  : '重启完成'
+                : '重启失败：' + taskErrorMessage
+            "
             class="task-step-alert"
           >
             <template #default v-if="taskDetailData && taskDetailData.restartRunId">
               <div class="task-detail-info">
-                <el-button type="primary" link @click="openExecuteResult(taskDetailData.restartRunId, '执行重启')" style="font-size: 14px">查看执行详情</el-button>
+                <el-button
+                  type="primary"
+                  link
+                  @click="openExecuteResult(taskDetailData.restartRunId, '执行重启')"
+                  style="font-size: 14px"
+                >
+                  查看执行详情
+                </el-button>
               </div>
             </template>
           </el-alert>
@@ -336,26 +403,47 @@
       <div v-show="installStep === 4" class="task-step-content">
         <div class="task-step-editor">
           <div class="task-step-editor__title">
-            <i class="fa fa-download" style="margin-right:6px"></i>补丁安装
+            <i class="fa fa-download" style="margin-right: 6px"></i>
+            {{ executeStepTitle }}
           </div>
           <div class="install-summary-card">
             <div class="install-summary-row">
-              <span class="install-summary-label">待安装补丁</span>
-              <span class="install-summary-value">{{ patchesToInstall.map(p => p.patch_id).join(', ') }}</span>
+              <span class="install-summary-label">{{ selectionSummaryLabel }}</span>
+              <div class="install-summary-list">
+                <div v-if="selectionDisplayItems.length === 0" class="install-summary-empty">
+                  暂无数据
+                </div>
+                <div
+                  v-for="item in selectionDisplayItems"
+                  :key="item.key"
+                  class="install-summary-item"
+                >
+                  <div>{{ item.primary }}</div>
+                  <div v-if="item.secondary" class="install-summary-subtext">
+                    {{ item.secondary }}
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="install-summary-row">
               <span class="install-summary-label">目标主机</span>
               <div class="install-summary-list">
                 <div v-if="confirmedHosts.length === 0" class="install-summary-empty">暂无主机</div>
-                <div v-for="host in confirmedHosts" :key="host.hostId || host.id || host.hostKey" class="install-summary-item">
+                <div
+                  v-for="host in confirmedHosts"
+                  :key="host.hostId || host.id || host.hostKey"
+                  class="install-summary-item"
+                >
                   {{ formatHostDisplay(host) }}
                 </div>
               </div>
             </div>
             <div class="install-summary-row">
-              <span class="install-summary-label">待更新软件包</span>
+              <span class="install-summary-label">{{ packageSummaryLabel }}</span>
               <div class="install-summary-list">
-                <div v-if="affectedPackages.length === 0" class="install-summary-empty">暂无软件包</div>
+                <div v-if="affectedPackages.length === 0" class="install-summary-empty">
+                  暂无软件包
+                </div>
                 <div v-for="pkg in affectedPackages" :key="pkg" class="install-summary-item">
                   {{ pkg }}
                 </div>
@@ -393,14 +481,27 @@
                   <div class="timeline-title">{{ item.label }}</div>
                   <div class="timeline-status-text">
                     {{
-                      stepStates[item.idx] === 'running' ? '正在执行中...' :
-                      stepStates[item.idx] === 'success' ? (isSkipped[item.idx] ? '系统已跳过执行' : '任务执行成功') :
-                      stepStates[item.idx] === 'failed' ? '任务执行失败，请检查' : '等待调度中'
+                      stepStates[item.idx] === 'running'
+                        ? '正在执行中...'
+                        : stepStates[item.idx] === 'success'
+                          ? isSkipped[item.idx]
+                            ? '系统已跳过执行'
+                            : '任务执行成功'
+                          : stepStates[item.idx] === 'failed'
+                            ? '任务执行失败，请检查'
+                            : '等待调度中'
                     }}
                   </div>
                 </div>
-                <div class="timeline-actions" v-if="taskDetailData && taskDetailData[item.runKey]">
-                  <el-button type="primary" link @click="openExecuteResult(taskDetailData[item.runKey], item.label)" size="small">
+                <div class="timeline-actions" v-if="getTaskRunId(taskDetailData, item.runKey)">
+                  <el-button
+                    type="primary"
+                    link
+                    @click="
+                      openExecuteResult(getTaskRunId(taskDetailData, item.runKey), item.label)
+                    "
+                    size="small"
+                  >
                     查看详情
                   </el-button>
                 </div>
@@ -418,18 +519,16 @@
             class="task-step-alert mt-3"
           >
             <template #default>
-              <div v-if="pipelineStatus === 'success'" style="font-size: 13px;">
-                补丁安装及其后续脚本配置已全部在目标设备上成功执行完毕。
+              <div v-if="pipelineStatus === 'success'" style="font-size: 13px">
+                {{ pipelineSuccessDescription }}
               </div>
-              <div v-else style="font-size: 13px;">
+              <div v-else style="font-size: 13px">
                 由于部分环节出现异常（{{ taskErrorMessage }}），任务已停止。请检查原因并重试。
               </div>
             </template>
           </el-alert>
         </div>
       </div>
-
-
 
       <template #footer>
         <div class="dialog-footer">
@@ -441,7 +540,8 @@
             v-if="installStep > 0 && installStep < 5 && stepStates[installStep] !== 'running'"
             @click="goBack"
           >
-            <i class="fa fa-chevron-left" style="margin-right: 4px" /> 上一步
+            <i class="fa fa-chevron-left" style="margin-right: 4px" />
+            上一步
           </el-button>
 
           <!-- 正在执行按钮 -->
@@ -456,8 +556,11 @@
 
           <!-- 跳过按钮：针对预执行和校验脚本配置 -->
           <el-button
-             v-if="(installStep === 1 || installStep === 2 || installStep === 3) && !isSkipped[installStep]"
-             @click="isSkipped[installStep] = true; handleNextStep()"
+            v-if="
+              (installStep === 1 || installStep === 2 || installStep === 3) &&
+              !isSkipped[installStep]
+            "
+            @click="handleSkipStep"
           >
             跳过此步
           </el-button>
@@ -466,19 +569,28 @@
           <el-button
             v-if="installStep >= 0 && installStep <= 3"
             type="primary"
-            :disabled="(installStep === 0 && selectedHosts.length === 0) || (installStep === 3 && requiresRestartConfirm && restartConfirmText !== restartConfirmKeyword)"
-            @click="isSkipped[installStep] = false; handleNextStep()"
+            :disabled="
+              (installStep === 0 && selectedHosts.length === 0) ||
+              (installStep === 3 &&
+                requiresRestartConfirm &&
+                restartConfirmText !== restartConfirmKeyword)
+            "
+            @click="handleAdvanceStep"
           >
-            下一步 <i class="fa fa-chevron-right" style="margin-left: 4px" />
+            下一步
+            <i class="fa fa-chevron-right" style="margin-left: 4px" />
           </el-button>
 
           <!-- 最后一步（步骤4）确认与离开按钮 -->
           <el-button
             v-if="installStep === 4 && pipelineStatus !== 'running'"
             type="primary"
-            @click="pipelineStatus === 'success' ? isVisible = false : executeStep(4)"
+            @click="handlePrimaryAction"
           >
-            <i :class="pipelineStatus === 'success' ? 'fa fa-check' : 'fa fa-play'" style="margin-right: 4px" />
+            <i
+              :class="pipelineStatus === 'success' ? 'fa fa-check' : 'fa fa-play'"
+              style="margin-right: 4px"
+            />
             {{ pipelineStatus === 'success' ? '完成' : '开始执行任务' }}
           </el-button>
         </div>
@@ -498,18 +610,73 @@ import { ref, reactive, computed, watch, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { patchInstallApi } from '../../api'
+import {
+  getPatchTaskDisplayConfig,
+  getPatchTaskWizardSteps,
+  resolvePatchTaskDisplayType
+} from '../../constants/task-display'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   patchesToInstall: { type: Array, default: () => [] },
-  fixedHost: { type: Object, default: null } // 如果有，跳过步骤0的主机选择
+  fixedHost: { type: Object, default: null }, // 如果有，跳过步骤0的主机选择
+  fixedHosts: { type: Array, default: () => [] },
+  packageCandidates: { type: Array, default: () => [] },
+  taskPackages: { type: Array, default: () => [] },
+  histUpdateIds: { type: Array, default: () => [] },
+  taskMode: { type: String, default: 'install' },
+  operationType: { type: String, default: 'patch' },
+  selectionSummaryItems: { type: Array, default: () => [] }
 })
 const emit = defineEmits(['update:visible', 'success'])
 
 const isVisible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
+})
+
+const isRollbackTask = computed(() => props.taskMode === 'rollback')
+const isPackageTask = computed(() => props.operationType === 'package')
+const isVulnerabilityTask = computed(() => props.operationType === 'vulnerability')
+const resolvedFixedHosts = computed(() => {
+  if (props.fixedHosts.length > 0) {
+    return props.fixedHosts
+  }
+
+  return props.fixedHost ? [props.fixedHost] : []
+})
+const hasFixedHosts = computed(() => resolvedFixedHosts.value.length > 0)
+const displayOperationType = computed(() =>
+  resolvePatchTaskDisplayType({ taskMode: props.taskMode, operationType: props.operationType })
+)
+
+const operationConfig = computed(() => getPatchTaskDisplayConfig(displayOperationType.value))
+
+const wizardDialogTitle = computed(() => operationConfig.value.dialogTitle)
+const selectionCardTitle = computed(() => operationConfig.value.selectionTitle)
+const executeStepTitle = computed(() => operationConfig.value.executeTitle)
+const selectionSummaryLabel = computed(() => operationConfig.value.selectionSummaryLabel)
+const packageSummaryLabel = computed(() => operationConfig.value.packageSummaryLabel)
+const packageCardTitle = computed(() => operationConfig.value.packageCardTitle)
+const hostCardTitle = computed(() => operationConfig.value.hostCardTitle)
+const pipelineSuccessDescription = computed(() => operationConfig.value.successDescription)
+const preScriptPlaceholder = computed(() => operationConfig.value.preScriptPlaceholder)
+const postScriptPlaceholder = computed(() => operationConfig.value.postScriptPlaceholder)
+const selectionDisplayItems = computed(() => {
+  if (props.selectionSummaryItems.length > 0) {
+    return props.selectionSummaryItems.map((item, index) => ({
+      key: item.key || `${props.operationType}-${index}`,
+      primary: item.primary || item.patch_id || item.patchId || '-',
+      secondary: item.secondary || ''
+    }))
+  }
+
+  return props.patchesToInstall.map((item, index) => ({
+    key: item.patch_id || `${props.operationType}-${index}`,
+    primary: item.patch_id || '-',
+    secondary: item.patch_name || item.description || ''
+  }))
 })
 
 const installDataLoading = ref(false)
@@ -519,37 +686,59 @@ const selectedHosts = ref([])
 const confirmedHosts = ref([])
 
 // watch visibility to load data
-watch(() => props.visible, (val) => {
-  if (val) {
-    if (props.fixedHost) {
-      selectedHosts.value = [props.fixedHost]
-      confirmedHosts.value = [props.fixedHost]
-      affectedHosts.value = [props.fixedHost]
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      if (hasFixedHosts.value) {
+        selectedHosts.value = [...resolvedFixedHosts.value]
+        confirmedHosts.value = [...resolvedFixedHosts.value]
+        affectedHosts.value = [...resolvedFixedHosts.value]
+      }
+      loadInstallData(props.patchesToInstall.map(p => p.patch_id))
+    } else {
+      resetInstallState()
     }
-    loadInstallData(props.patchesToInstall.map(p => p.patch_id))
-  } else {
-    resetInstallState()
   }
-})
+)
 
 // 加载安装相关数据（软件包列表、主机列表）
 async function loadInstallData(patchIds) {
-  if (!patchIds || patchIds.length === 0) return
   installDataLoading.value = true
   affectedPackages.value = []
-  if (props.fixedHost) {
-    affectedHosts.value = [props.fixedHost]
-    selectedHosts.value = [props.fixedHost]
-    confirmedHosts.value = [props.fixedHost]
+  if (hasFixedHosts.value) {
+    affectedHosts.value = [...resolvedFixedHosts.value]
+    selectedHosts.value = [...resolvedFixedHosts.value]
+    confirmedHosts.value = [...resolvedFixedHosts.value]
   } else {
     affectedHosts.value = []
     selectedHosts.value = []
     confirmedHosts.value = []
   }
+
+  if (isRollbackTask.value) {
+    affectedPackages.value = [...props.packageCandidates]
+    installDataLoading.value = false
+    return
+  }
+
+  if ((isPackageTask.value || isVulnerabilityTask.value) && props.packageCandidates.length > 0) {
+    affectedPackages.value = [...props.packageCandidates]
+    installDataLoading.value = false
+    return
+  }
+
+  if (!patchIds || patchIds.length === 0) {
+    installDataLoading.value = false
+    return
+  }
+
   try {
     const promises = [patchInstallApi.getAffectedPackages({ patch_ids: patchIds })]
-    if (!props.fixedHost) {
-      promises.push(patchInstallApi.getMachinesByPatch({ patch_ids: patchIds, hostId: '@@(linux)' }))
+    if (!hasFixedHosts.value) {
+      promises.push(
+        patchInstallApi.getMachinesByPatch({ patch_ids: patchIds, hostId: '@@(linux)' })
+      )
     }
     const responses = await Promise.all(promises)
     const pkgResponse = responses[0]
@@ -558,7 +747,7 @@ async function loadInstallData(patchIds) {
       affectedPackages.value = pkgResponse.data.records.map(r => r.file_name || r.pkg_name)
     }
 
-    if (!props.fixedHost) {
+    if (!hasFixedHosts.value) {
       const hostResponse = responses[1]
       if (hostResponse?.data?.records) {
         affectedHosts.value = hostResponse.data.records
@@ -588,7 +777,7 @@ const restartOptions = reactive({
 })
 
 // 过滤后的主机列表
-const filteredHosts = computed(() => {
+const filteredHostList = computed(() => {
   let hosts = affectedHosts.value
   if (hostSearchText.value) {
     const keyword = hostSearchText.value.toLowerCase()
@@ -597,9 +786,23 @@ const filteredHosts = computed(() => {
         h.hostKey?.toLowerCase().includes(keyword) || h.os_distro?.toLowerCase().includes(keyword)
     )
   }
-  // 更新总数
-  hostPagination.total = hosts.length
-  // 分页
+  return hosts
+})
+
+watch(
+  filteredHostList,
+  hosts => {
+    hostPagination.total = hosts.length
+    const maxPage = Math.max(1, Math.ceil(hosts.length / hostPagination.pageSize))
+    if (hostPagination.page > maxPage) {
+      hostPagination.page = maxPage
+    }
+  },
+  { immediate: true }
+)
+
+const filteredHosts = computed(() => {
+  const hosts = filteredHostList.value
   const start = (hostPagination.page - 1) * hostPagination.pageSize
   const end = start + hostPagination.pageSize
   return hosts.slice(start, end)
@@ -656,7 +859,7 @@ async function uploadScriptToTask(type, file, silent = false) {
       ElMessage.success(`${getScriptLabel(type)}已上传`)
     }
     return true
-  } catch (error) {
+  } catch {
     ElMessage.error(`${getScriptLabel(type)}上传失败`)
     return false
   }
@@ -676,7 +879,7 @@ async function syncScriptConfig(type) {
     const content = type === 'pre' ? installConfig.preScript : installConfig.postScript
     await patchInstallApi.updateScript(createdTaskId.value, getScriptType(type), content || '')
     return true
-  } catch (error) {
+  } catch {
     ElMessage.error(`${getScriptLabel(type)}保存失败`)
     return false
   }
@@ -696,21 +899,71 @@ async function loadRestartOptions() {
       installConfig.restartPolicy = restartOptions.restartType
     }
     backendRestartReason.value = restartOptions.restartReason || backendRestartReason.value
-  } catch (error) {
+  } catch {
     restartOptions.restartType = installConfig.restartPolicy || 'none'
     restartOptions.restartRequired = restartOptions.restartType !== 'none'
     restartOptions.restartReason = backendRestartReason.value
   }
 }
 
+async function loadRollbackInfo() {
+  if (!createdTaskId.value || !isRollbackTask.value) return
+
+  try {
+    const res = await patchInstallApi.getRollbackInfo(createdTaskId.value)
+    const data = res?.data || {}
+
+    if (
+      Array.isArray(data.patchPkgs) &&
+      data.patchPkgs.length &&
+      props.packageCandidates.length === 0
+    ) {
+      affectedPackages.value = data.patchPkgs
+    }
+
+    if (['system', 'service', 'none'].includes(data.restartType)) {
+      installConfig.restartPolicy = data.restartType
+      restartOptions.restartType = data.restartType
+      restartOptions.restartRequired = data.restartType !== 'none'
+    }
+
+    if (data.restartReason) {
+      restartOptions.restartReason = data.restartReason
+    }
+
+    if (data.kernelWarning) {
+      restartOptions.restartDescription = data.kernelWarning
+      backendRestartReason.value = data.kernelWarning
+    }
+  } catch {
+    // 忽略回滚信息接口失败，保持现有任务默认值
+  }
+}
+
 function getPatchStatusIds(patches) {
-  return patches.flatMap((patch) => {
+  return patches.flatMap(patch => {
     const rawValue =
       patch?.patch_status_id ||
       patch?.patchStatusId ||
       patch?.patch_status_ids ||
       patch?.patchStatusIds ||
       patch?.id
+
+    if (Array.isArray(rawValue)) {
+      return rawValue.filter(Boolean)
+    }
+
+    return rawValue ? [rawValue] : []
+  })
+}
+
+function getTaskPackages() {
+  if (props.taskPackages.length > 0) {
+    return props.taskPackages.filter(Boolean)
+  }
+
+  return props.patchesToInstall.flatMap(patch => {
+    const rawValue = patch?.packages || patch?.packageEntry || patch?.packageEntries || []
 
     if (Array.isArray(rawValue)) {
       return rawValue.filter(Boolean)
@@ -736,7 +989,7 @@ async function handleScriptUpload(type, event) {
       scriptUploadFiles.post = file
     }
     await uploadScriptToTask(type, file)
-  } catch (error) {
+  } catch {
     ElMessage.error('脚本读取失败，请检查文件内容后重试')
   } finally {
     event.target.value = ''
@@ -762,13 +1015,7 @@ function formatDateTime(timestamp) {
 // ============================================================
 // 新向导步骤定义（5步）
 // ============================================================
-const wizardSteps = [
-  { title: '选择目标主机' },       // 0
-  { title: '预执行脚本配置' },     // 1
-  { title: '脚本校验配置' },       // 2
-  { title: '重启策略配置' },       // 3
-  { title: '安装与执行' }    // 4
-]
+const wizardSteps = computed(() => getPatchTaskWizardSteps(displayOperationType.value))
 
 // Wizard state
 const installStep = ref(0)
@@ -785,20 +1032,26 @@ const installConfig = reactive({
 // 每步的执行状态: 'idle' | 'running' | 'success' | 'failed'
 const stepStates = reactive(['idle', 'idle', 'idle', 'idle', 'idle'])
 const isSkipped = reactive({ 1: false, 2: false, 3: false }) // 记录是否是手动跳过的
-const taskStatus = ref('')       // 后端任务状态
+const taskStatus = ref('') // 后端任务状态
 const taskErrorMessage = ref('') // 错误信息
 const taskDetailData = ref(null) // 从接口返回的任务详情
 const pipelineFinished = ref(false) // 只有通过 startPipeline 的才是真完成
 let pollTimer = null
 
-const pipelineItems = [
+const pipelineItems = computed(() => [
   { label: '预检查', idx: 1, runKey: 'preCheckRunId' },
-  { label: '补丁安装', idx: 4, runKey: 'installRunId' },
+  {
+    label: executeStepTitle.value,
+    idx: 4,
+    runKey: 'executeRunId'
+  },
   { label: '重启策略', idx: 3, runKey: 'restartRunId' },
   { label: '脚本校验', idx: 2, runKey: 'validateRunId' }
-]
+])
 
-const requiresRestartConfirm = computed(() => restartOptions.restartRequired || installConfig.restartPolicy !== 'none')
+const requiresRestartConfirm = computed(
+  () => restartOptions.restartRequired || installConfig.restartPolicy !== 'none'
+)
 const restartConfirmKeyword = computed(() => {
   if (installConfig.restartPolicy === 'system') return '确认系统重启'
   if (installConfig.restartPolicy === 'service') return '确认服务重启'
@@ -807,7 +1060,12 @@ const restartConfirmKeyword = computed(() => {
 const restartConfirmSubmitText = '确认重启'
 const restartAdviceTitle = computed(() => restartOptions.restartLabel || '系统重启建议')
 const restartAdviceDescription = computed(() => {
-  return restartOptions.restartDescription || restartOptions.restartReason || backendRestartReason.value || smartRestartGuess.value
+  return (
+    restartOptions.restartDescription ||
+    restartOptions.restartReason ||
+    backendRestartReason.value ||
+    smartRestartGuess.value
+  )
 })
 const restartStrategySummary = computed(() => {
   if (isSkipped[3]) return '已跳过重启'
@@ -827,6 +1085,11 @@ function openExecuteResult(runId, jobTitle) {
   executeResultVisible.value = true
 }
 
+function getTaskRunId(taskData, runKey) {
+  if (!taskData || !runKey) return ''
+  return taskData[runKey] || ''
+}
+
 async function refreshTaskDetail() {
   if (!createdTaskId.value) return null
   try {
@@ -838,7 +1101,7 @@ async function refreshTaskDetail() {
       taskDetailData.value = data
     }
     return data || null
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -879,7 +1142,7 @@ function resetInstallState() {
   restartOptions.restartLabel = ''
   restartOptions.restartDescription = ''
   restartOptions.restartReason = ''
-  if (!props.fixedHost) {
+  if (!hasFixedHosts.value) {
     selectedHosts.value = []
     confirmedHosts.value = []
   }
@@ -894,8 +1157,6 @@ function resetInstallState() {
   restartConfirmText.value = ''
 }
 
-
-
 // Smart reboot guess
 const smartRestartGuess = computed(() => {
   const patches = props.patchesToInstall
@@ -903,7 +1164,11 @@ const smartRestartGuess = computed(() => {
   let needsService = false
   for (const patch of patches) {
     const id = patch.patch_id?.toLowerCase() || ''
-    if (patch.rebootStatus === 'system' || patch.isKernel === 'is_kernel' || id.includes('kernel')) {
+    if (
+      patch.rebootStatus === 'system' ||
+      patch.isKernel === 'is_kernel' ||
+      id.includes('kernel')
+    ) {
       needsSystem = true
     } else if (patch.rebootStatus === 'service') {
       needsService = true
@@ -915,7 +1180,8 @@ const smartRestartGuess = computed(() => {
   }
 
   if (needsSystem) return '系统重启 (System Restart)'
-  if (needsService || pkgs.includes('glibc') || pkgs.includes('openssl')) return '服务重启 (Service Restart)'
+  if (needsService || pkgs.includes('glibc') || pkgs.includes('openssl'))
+    return '服务重启 (Service Restart)'
   return '无需重启 (None)'
 })
 
@@ -940,12 +1206,31 @@ async function handleNextStep() {
       pipelineFinished.value = false
       pipelineStatus.value = 'idle'
 
-      const res = await patchInstallApi.createTask({
-        hostIds: confirmedHosts.value.map(h => h.hostId || h.id), // support both
+      const requestPayload = {
+        hostIds: confirmedHosts.value.map(h => h.hostId || h.id),
         patchIds: props.patchesToInstall.map(p => p.patch_id),
-        patchStatusIds: getPatchStatusIds(props.patchesToInstall),
-        osType: 'linux'
-      })
+        patchStatusIds: getPatchStatusIds(props.patchesToInstall)
+      }
+      const res = isRollbackTask.value
+        ? await patchInstallApi.createRollbackTask({
+            ...requestPayload,
+            histUpdateIds: props.histUpdateIds
+          })
+        : isPackageTask.value
+          ? await patchInstallApi.createPkgUpdateTask({
+              hostIds: requestPayload.hostIds,
+              packages: getTaskPackages()
+            })
+          : isVulnerabilityTask.value
+            ? await patchInstallApi.createVulnFixTask({
+                hostIds: requestPayload.hostIds,
+                patchIds: requestPayload.patchIds,
+                patchStatusIds: requestPayload.patchStatusIds
+              })
+            : await patchInstallApi.createTask({
+                ...requestPayload,
+                osType: 'linux'
+              })
 
       if (res?.data) {
         createdTaskId.value = res.data.id || ''
@@ -959,6 +1244,7 @@ async function handleNextStep() {
         installConfig.preScript = res.data.preCheckScript || ''
         installConfig.postScript = res.data.validateScript || ''
         await loadRestartOptions()
+        await loadRollbackInfo()
       }
       installStep.value = 1
     } catch (error) {
@@ -995,6 +1281,25 @@ function goBack() {
   }
 }
 
+function handleSkipStep() {
+  isSkipped[installStep.value] = true
+  handleNextStep()
+}
+
+function handleAdvanceStep() {
+  isSkipped[installStep.value] = false
+  handleNextStep()
+}
+
+function handlePrimaryAction() {
+  if (pipelineStatus.value === 'success') {
+    isVisible.value = false
+    return
+  }
+
+  executeStep(4)
+}
+
 async function executeStep(step) {
   if (!createdTaskId.value) {
     ElMessage.error('任务ID不存在，请重试')
@@ -1022,23 +1327,39 @@ async function startPipeline() {
       stepStates[1] = 'running'
       await patchInstallApi.executePreCheck(createdTaskId.value)
       await refreshTaskDetail()
-      const preSuccess = await pollStatusPromise(1, ['PRE_CHECK_DONE'], ['PRE_CHECK_FAILED', 'FAILED'])
+      const preSuccess = await pollStatusPromise(
+        1,
+        ['PRE_CHECK_DONE'],
+        ['PRE_CHECK_FAILED', 'FAILED']
+      )
       if (!preSuccess) throw new Error('预执行脚本执行失败')
     } else {
       stepStates[1] = 'running'
       await patchInstallApi.skipPreCheck(createdTaskId.value)
       await refreshTaskDetail()
-      const preSkipped = await pollStatusPromise(1, ['PRE_CHECK_DONE'], ['PRE_CHECK_FAILED', 'FAILED'])
+      const preSkipped = await pollStatusPromise(
+        1,
+        ['PRE_CHECK_DONE'],
+        ['PRE_CHECK_FAILED', 'FAILED']
+      )
       if (!preSkipped) throw new Error('预执行脚本跳过失败')
       isSkipped[1] = true
     }
 
-    // 2. 补丁安装
+    // 2. 安装或回滚执行
     stepStates[4] = 'running'
-    await patchInstallApi.executeInstallTask(createdTaskId.value)
+    if (isRollbackTask.value) {
+      await patchInstallApi.executeRollbackTask(createdTaskId.value)
+    } else {
+      await patchInstallApi.executeInstallTask(createdTaskId.value)
+    }
     await refreshTaskDetail()
-    const installSuccess = await pollStatusPromise(4, ['INSTALL_DONE'], ['INSTALL_FAILED', 'FAILED'])
-    if (!installSuccess) throw new Error('补丁安装失败')
+    const installSuccess = await pollStatusPromise(
+      4,
+      [isRollbackTask.value ? 'ROLLBACK_DONE' : 'INSTALL_DONE'],
+      [isRollbackTask.value ? 'ROLLBACK_FAILED' : 'INSTALL_FAILED', 'FAILED']
+    )
+    if (!installSuccess) throw new Error(`${executeStepTitle.value}失败`)
 
     // 3. 重启策略
     if (installConfig.restartPolicy !== 'none' && !isSkipped[3]) {
@@ -1046,7 +1367,11 @@ async function startPipeline() {
       await patchInstallApi.confirmRestart(createdTaskId.value, true, restartConfirmSubmitText)
       await patchInstallApi.executeRestart(createdTaskId.value)
       await refreshTaskDetail()
-      const restartSuccess = await pollStatusPromise(3, ['RESTART_DONE'], ['RESTART_FAILED', 'FAILED'])
+      const restartSuccess = await pollStatusPromise(
+        3,
+        ['RESTART_DONE'],
+        ['RESTART_FAILED', 'FAILED']
+      )
       if (!restartSuccess) throw new Error('重启执行失败')
     } else {
       await patchInstallApi.confirmRestart(createdTaskId.value, false)
@@ -1060,13 +1385,21 @@ async function startPipeline() {
       stepStates[2] = 'running'
       await patchInstallApi.executeValidate(createdTaskId.value)
       await refreshTaskDetail()
-      const validateSuccess = await pollStatusPromise(2, ['COMPLETED'], ['VALIDATE_FAILED', 'FAILED'])
+      const validateSuccess = await pollStatusPromise(
+        2,
+        ['COMPLETED'],
+        ['VALIDATE_FAILED', 'FAILED']
+      )
       if (!validateSuccess) throw new Error('脚本校验执行失败')
     } else {
       stepStates[2] = 'running'
       await patchInstallApi.skipValidate(createdTaskId.value)
       await refreshTaskDetail()
-      const validateSkipped = await pollStatusPromise(2, ['COMPLETED'], ['VALIDATE_FAILED', 'FAILED'])
+      const validateSkipped = await pollStatusPromise(
+        2,
+        ['COMPLETED'],
+        ['VALIDATE_FAILED', 'FAILED']
+      )
       if (!validateSkipped) throw new Error('脚本校验跳过失败')
       isSkipped[2] = true
     }
@@ -1085,8 +1418,8 @@ async function startPipeline() {
 
 // 供 startPipeline 使用的 Promise 化轮询
 function pollStatusPromise(step, successStatuses, failedStatuses) {
-  return new Promise((resolve) => {
-    let internalPoll = setInterval(async () => {
+  return new Promise(resolve => {
+    const internalPoll = setInterval(async () => {
       try {
         const res = await patchInstallApi.getTask(createdTaskId.value)
         const data = res?.data
@@ -1105,62 +1438,296 @@ function pollStatusPromise(step, successStatuses, failedStatuses) {
           clearInterval(internalPoll)
           resolve(false)
         }
-      } catch (error) {
+      } catch {
         clearInterval(internalPoll)
         resolve(false)
       }
     }, 3000)
   })
 }
-
 </script>
 
 <style scoped lang="scss">
-.ops-stepper { display: flex; align-items: flex-start; justify-content: center; margin-bottom: 30px; padding: 0 40px; }
-.stepper-item { display: flex; flex-direction: column; align-items: center; width: 90px; position: relative; z-index: 1; }
-.stepper-item .stepper-icon { width: 26px; height: 26px; border-radius: 50%; background-color: var(--el-bg-color, #fff); border: 2px solid var(--el-text-color-placeholder, #a8abb2); color: var(--el-text-color-placeholder, #a8abb2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-bottom: 6px; transition: all 0.3s; }
-.stepper-item .stepper-title { font-size: 12px; color: var(--el-text-color-regular, #606266); font-weight: 500; transition: all 0.3s; text-align: center; white-space: nowrap; }
-.stepper-item.is-active .stepper-icon { border-color: var(--el-color-primary, #409eff); background-color: var(--el-color-primary, #409eff); color: #fff; }
-.stepper-item.is-active .stepper-title { color: var(--el-color-primary, #409eff); font-weight: bold; }
-.stepper-item.is-success .stepper-icon { border-color: var(--el-color-success, #67c23a); color: var(--el-color-success, #67c23a); background-color: var(--el-bg-color, #fff); }
-.stepper-item.is-success .stepper-title { color: var(--el-color-success, #67c23a); }
-.stepper-item.is-failed .stepper-icon { border-color: var(--el-color-danger, #f56c6c); background-color: var(--el-color-danger, #f56c6c); color: #fff; }
-.stepper-item.is-failed .stepper-title { color: var(--el-color-danger, #f56c6c); }
-.stepper-line { flex: 1; height: 2px; background-color: var(--el-border-color-lighter, #ebeef5); margin: 12px -30px 0; z-index: 0; transition: all 0.3s; }
-.stepper-line.is-active { background-color: var(--el-color-success, #67c23a); }
-.task-step-content { display: flex; flex-direction: column; gap: 16px; min-height: 280px; }
-.task-step-editor { display: flex; flex-direction: column; gap: 10px; }
-.task-step-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.task-step-editor__title { font-size: 14px; font-weight: 600; color: var(--el-text-color-primary); padding: 4px 0; display: flex; align-items: center; gap: 4px; }
-.task-step-editor__hint { font-size: 12px; color: var(--el-text-color-secondary); font-weight: 400; }
-.task-step-action { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 4px; }
-.task-step-alert { width: 100%; }
-.task-detail-info { font-size: 13px; margin-top: 4px; color: var(--el-text-color-regular); }
-.install-summary-card { border: 1px solid var(--el-border-color-lighter); border-radius: 6px; overflow: hidden; margin-top: 4px; }
-.install-summary-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--el-border-color-lighter); }
-.install-summary-row:last-child { border-bottom: none; }
-.install-summary-label { min-width: 90px; color: var(--el-text-color-secondary); flex-shrink: 0; font-size: 12px; }
-.install-summary-value { color: var(--el-text-color-primary); word-break: break-all; }
-.install-summary-list { display: flex; flex-direction: column; gap: 6px; width: 100%; }
-.install-summary-item { color: var(--el-text-color-primary); word-break: break-all; line-height: 1.5; }
-.install-summary-empty { color: var(--el-text-color-placeholder); }
-.task-done-content { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 320px; gap: 16px; text-align: center; }
-.task-done-icon { animation: pulse-success 0.6s ease-out; }
-@keyframes pulse-success { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
-.install-card { margin-bottom: 16px; border: 1px solid var(--el-border-color-lighter); border-radius: 4px; overflow: hidden; }
-.install-card .card-header { background: var(--el-fill-color-light); padding: 8px 12px; font-weight: 500; font-size: 13px; color: var(--el-text-color-primary); border-bottom: 1px solid var(--el-border-color-lighter); }
-.install-card .card-body { padding: 10px 12px; background: var(--el-bg-color); font-size: 13px; color: var(--el-text-color-primary); }
-.package-item { font-family: monospace; font-size: 12px; margin-bottom: 4px; color: #666; }
-.card-body--scroll { max-height: 200px; overflow-y: auto; }
-.host-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--el-border-color-lighter); }
-.host-pagination { display: flex; justify-content: flex-end; padding: 8px; }
-.mt-3 { margin-top: 12px; }
-.script-input :deep(.el-textarea__inner) { font-family: monospace; background-color: #fafafa; }
-.script-upload-panel { display: flex; flex-direction: column; gap: 10px; }
-.script-upload-input { display: none; }
-.script-upload-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.script-upload-file { color: var(--el-text-color-regular); font-size: 13px; }
-.restart-radio-group { display: flex; gap: 16px; padding: 10px 0; }
+.ops-stepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-bottom: 30px;
+  padding: 0 40px;
+}
+.stepper-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 90px;
+  position: relative;
+  z-index: 1;
+}
+.stepper-item .stepper-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--el-bg-color, #fff);
+  border: 2px solid var(--el-text-color-placeholder, #a8abb2);
+  color: var(--el-text-color-placeholder, #a8abb2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 6px;
+  transition: all 0.3s;
+}
+.stepper-item .stepper-title {
+  font-size: 12px;
+  color: var(--el-text-color-regular, #606266);
+  font-weight: 500;
+  transition: all 0.3s;
+  text-align: center;
+  white-space: nowrap;
+}
+.stepper-item.is-active .stepper-icon {
+  border-color: var(--el-color-primary, #409eff);
+  background-color: var(--el-color-primary, #409eff);
+  color: #fff;
+}
+.stepper-item.is-active .stepper-title {
+  color: var(--el-color-primary, #409eff);
+  font-weight: bold;
+}
+.stepper-item.is-success .stepper-icon {
+  border-color: var(--el-color-success, #67c23a);
+  color: var(--el-color-success, #67c23a);
+  background-color: var(--el-bg-color, #fff);
+}
+.stepper-item.is-success .stepper-title {
+  color: var(--el-color-success, #67c23a);
+}
+.stepper-item.is-failed .stepper-icon {
+  border-color: var(--el-color-danger, #f56c6c);
+  background-color: var(--el-color-danger, #f56c6c);
+  color: #fff;
+}
+.stepper-item.is-failed .stepper-title {
+  color: var(--el-color-danger, #f56c6c);
+}
+.stepper-line {
+  flex: 1;
+  height: 2px;
+  background-color: var(--el-border-color-lighter, #ebeef5);
+  margin: 12px -30px 0;
+  z-index: 0;
+  transition: all 0.3s;
+}
+.stepper-line.is-active {
+  background-color: var(--el-color-success, #67c23a);
+}
+.task-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 280px;
+}
+.task-step-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.task-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.task-step-editor__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.task-step-editor__hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  font-weight: 400;
+}
+.task-step-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 4px;
+}
+.task-step-alert {
+  width: 100%;
+}
+.task-detail-info {
+  font-size: 13px;
+  margin-top: 4px;
+  color: var(--el-text-color-regular);
+}
+.install-summary-card {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.install-summary-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.install-summary-row:last-child {
+  border-bottom: none;
+}
+.install-summary-label {
+  min-width: 90px;
+  color: var(--el-text-color-secondary);
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.install-summary-value {
+  color: var(--el-text-color-primary);
+  word-break: break-all;
+}
+.install-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.install-summary-item {
+  color: var(--el-text-color-primary);
+  word-break: break-all;
+  line-height: 1.5;
+}
+.install-summary-subtext {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+.install-summary-empty {
+  color: var(--el-text-color-placeholder);
+}
+.task-done-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  gap: 16px;
+  text-align: center;
+}
+.task-done-icon {
+  animation: pulse-success 0.6s ease-out;
+}
+@keyframes pulse-success {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.install-card {
+  margin-bottom: 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.install-card .card-header {
+  background: var(--el-fill-color-light);
+  padding: 8px 12px;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--el-text-color-primary);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.install-card .card-body {
+  padding: 10px 12px;
+  background: var(--el-bg-color);
+  font-size: 13px;
+  color: var(--el-text-color-primary);
+}
+.selection-item {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.selection-item:last-child {
+  border-bottom: none;
+}
+.selection-item__primary {
+  color: var(--el-text-color-primary);
+  word-break: break-all;
+}
+.selection-item__secondary {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  margin-top: 2px;
+  word-break: break-all;
+}
+.package-item {
+  font-family: monospace;
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: #666;
+}
+.card-body--scroll {
+  max-height: 200px;
+  overflow-y: auto;
+}
+.host-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.host-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px;
+}
+.mt-3 {
+  margin-top: 12px;
+}
+.script-input :deep(.el-textarea__inner) {
+  font-family: monospace;
+  background-color: #fafafa;
+}
+.script-upload-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.script-upload-input {
+  display: none;
+}
+.script-upload-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.script-upload-file {
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+}
+.restart-radio-group {
+  display: flex;
+  gap: 16px;
+  padding: 10px 0;
+}
 .pipeline-timeline {
   display: flex;
   flex-direction: column;
@@ -1177,13 +1744,13 @@ function pollStatusPromise(step, successStatuses, failedStatuses) {
   border-radius: 12px;
   background-color: var(--el-fill-color-blank);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 .timeline-item.is-active {
   border-color: var(--el-color-primary);
   background-color: var(--el-color-primary-light-9);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64,158,255,0.15);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
 }
 .timeline-item.is-success {
   border-color: var(--el-color-success-light-5);
@@ -1211,16 +1778,47 @@ function pollStatusPromise(step, successStatuses, failedStatuses) {
   color: var(--el-text-color-placeholder);
   flex-shrink: 0;
 }
-.is-active .timeline-node { background-color: var(--el-color-primary); color: #fff; }
-.is-success .timeline-node { background-color: var(--el-color-success); color: #fff; }
-.is-failed .timeline-node { background-color: var(--el-color-danger); color: #fff; }
-.timeline-content { flex: 1; display: flex; align-items: center; justify-content: space-between; }
-.timeline-info { display: flex; flex-direction: column; gap: 4px; }
-.timeline-title { font-size: 15px; font-weight: 600; color: var(--el-text-color-primary); }
-.timeline-status-text { font-size: 13px; color: var(--el-text-color-secondary); }
-.is-active .timeline-title { color: var(--el-color-primary); }
-.is-success .timeline-title { color: var(--el-color-success); }
-.is-failed .timeline-title { color: var(--el-color-danger); }
+.is-active .timeline-node {
+  background-color: var(--el-color-primary);
+  color: #fff;
+}
+.is-success .timeline-node {
+  background-color: var(--el-color-success);
+  color: #fff;
+}
+.is-failed .timeline-node {
+  background-color: var(--el-color-danger);
+  color: #fff;
+}
+.timeline-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.timeline-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.timeline-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+.timeline-status-text {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+.is-active .timeline-title {
+  color: var(--el-color-primary);
+}
+.is-success .timeline-title {
+  color: var(--el-color-success);
+}
+.is-failed .timeline-title {
+  color: var(--el-color-danger);
+}
 .timeline-actions .el-button {
   font-size: 14px;
   font-weight: 500;

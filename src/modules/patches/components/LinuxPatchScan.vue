@@ -568,7 +568,17 @@
     <!-- 操作记录对话框 -->
     <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
 
-    <!-- 主机详情对话框 -->
+    <PatchInstallWizard
+      v-model:visible="rollbackWizardVisible"
+      :patches-to-install="rollbackTaskPatches"
+      :fixed-hosts="rollbackTargetHosts"
+      :package-candidates="rollbackPackageCandidates"
+      :selection-summary-items="rollbackSelectionSummary"
+      operation-type="rollback"
+      task-mode="rollback"
+      @success="handleRollbackSuccess"
+    />
+
     <!-- 修复漏洞确认对话框 -->
     <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="700px" destroy-on-close>
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
@@ -629,6 +639,7 @@ import AcmDeviceSelector from '@/modules/automation/components/job/schedule/comp
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'
 import PatchDetailDialog from './host-detail/PatchDetailDialog.vue'
+import PatchInstallWizard from './patch-task/PatchInstallWizard.vue'
 
 // ECharts
 import { use } from 'echarts/core'
@@ -821,6 +832,60 @@ function getPatchIdList(patchId) {
     .filter(Boolean)
 }
 
+function getRollbackHostId(row) {
+  return row.hosts_id || row.hostsId || row.host_id || row.hostId || ''
+}
+
+function getAffectedPackageList(row) {
+  return String(row.affected_pkgs || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+function buildRollbackWizardData(row) {
+  const hostId = getRollbackHostId(row)
+  const patchIds = getPatchIdList(row.patch_id)
+  const patchStatusIds = resolvePatchStatusIds([row])
+  const packages = getAffectedPackageList(row)
+
+  if (!hostId) {
+    throw new Error('当前记录缺少主机ID，无法创建回滚任务')
+  }
+
+  if (patchIds.length === 0) {
+    throw new Error('当前记录缺少补丁编号，无法创建回滚任务')
+  }
+
+  rollbackTargetHosts.value = [
+    {
+      hostId,
+      hostKey: row.host_key || row.hostKey || row.hosts || hostId,
+      os_distro: row.os_distro || '',
+      os_version: row.os_major_version || row.os_version || ''
+    }
+  ]
+  rollbackTaskPatches.value = patchIds.map(patchId => ({
+    patch_id: patchId,
+    patch_name: row.vul_id || patchId,
+    patchStatusIds
+  }))
+  rollbackPackageCandidates.value = packages
+  rollbackSelectionSummary.value = [
+    {
+      key: row.id || `${hostId}-${patchIds.join(',')}`,
+      primary: row.vul_id || patchIds.join(', ') || '-',
+      secondary: [
+        patchIds.join(', '),
+        row.host_key || row.hostKey || '',
+        packages.length ? `${packages.length} 个软件包` : ''
+      ]
+        .filter(Boolean)
+        .join(' / ')
+    }
+  ]
+}
+
 // 修复漏洞对话框
 const fixDialogVisible = ref(false)
 const fixSubmitting = ref(false)
@@ -832,6 +897,11 @@ const fixDialogData = reactive({
   patchStatusIds: []
 })
 const fixDialogLoading = ref(false)
+const rollbackWizardVisible = ref(false)
+const rollbackTaskPatches = ref([])
+const rollbackTargetHosts = ref([])
+const rollbackPackageCandidates = ref([])
+const rollbackSelectionSummary = ref([])
 
 // 获取严重程度显示标签
 function getSeverityLabel(severity) {
@@ -1140,50 +1210,17 @@ function handlePatchClick(row) {
   }
 }
 
-async function submitRollback(patchStatusIds) {
-  const { executeJob } = await import('@/modules/automation/api/jao')
-  const response = await executeJob({
-    jobId: '5zkPfq',
-    params: {
-      patchStatusIds
-    }
-  })
-
-  const { isSuccess, runId } = parseJobRunResult(response)
-  if (!isSuccess) {
-    throw new Error('作业返回异常')
+function handleRollback(row) {
+  try {
+    buildRollbackWizardData(row)
+    rollbackWizardVisible.value = true
+  } catch (error) {
+    ElMessage.error(`打开回滚向导失败: ${error.message || '未知错误'}`)
   }
-
-  return runId
 }
 
-function handleRollback(row) {
-  const patchStatusIds = resolvePatchStatusIds([row])
-  if (patchStatusIds.length === 0) {
-    ElMessage.warning('当前记录缺少补丁状态ID，无法回滚')
-    return
-  }
-
-  const patchLabel = row.patch_id || row.vul_id || patchStatusIds[0]
-
-  ElMessageBox.confirm(`确认要回滚补丁 ${patchLabel} 吗？`, '确认回滚', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  })
-    .then(async () => {
-      const runId = await submitRollback(patchStatusIds)
-      ElMessage.success('回滚任务已提交成功')
-      lastSubmittedRunId.value = runId
-      operationLogsVisible.value = true
-      loadVulnData()
-    })
-    .catch(error => {
-      if (error === 'cancel' || error === 'close') {
-        return
-      }
-      ElMessage.error('提交回滚任务失败: ' + (error.message || '未知错误'))
-    })
+function handleRollbackSuccess() {
+  loadVulnData()
 }
 
 // 格式化日期

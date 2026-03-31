@@ -71,6 +71,7 @@
       ref="packagesTabRef"
       :host-id="hostId"
       @patch-click="handlePatchClick"
+      @update-packages="handleUpdatePackages"
     />
 
     <!-- 漏洞 Tab -->
@@ -80,6 +81,7 @@
       :host-id="hostId"
       :os-distro="hostOsDistro"
       @patch-click="handlePatchClick"
+      @fix-vulnerabilities="handleFixVulnerabilities"
     />
 
     <!-- 补丁详情弹窗 -->
@@ -95,28 +97,26 @@
       v-model:visible="installDialogVisible"
       :patches-to-install="patchesToInstall"
       :fixed-host="fixedHostInfo"
+      :operation-type="installOperationType"
+      :package-candidates="installPackageCandidates"
+      :task-packages="installTaskPackages"
+      :selection-summary-items="installSelectionSummary"
       @success="handleInstallSuccess"
     />
-
-    <!-- 操作记录对话框 -->
-    <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
-
-
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { patchScanApi, patchInstallApi } from '../api'
+import { patchScanApi } from '../api'
 import { formatDateTime, getInstalledPkgsCount } from '../composables/useFormatters'
 import { useHostDetail } from '../composables/useHostDetail'
 import PatchesTab from './host-detail/PatchesTab.vue'
 import PackagesTab from './host-detail/PackagesTab.vue'
 import VulnerabilitiesTab from './host-detail/VulnerabilitiesTab.vue'
 import PatchDetailDialog from './host-detail/PatchDetailDialog.vue'
-import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'
 import PatchInstallWizard from './patch-task/PatchInstallWizard.vue'
 
 const route = useRoute()
@@ -164,9 +164,11 @@ const patchDetailVisible = ref(false)
 const patchDetailLoading = ref(false)
 const patchDetailData = ref({})
 
-const operationLogsVisible = ref(false)
-const lastSubmittedRunId = ref('')
 const patchesToInstall = ref([])
+const installOperationType = ref('patch')
+const installSelectionSummary = ref([])
+const installPackageCandidates = ref([])
+const installTaskPackages = ref([])
 
 const fixedHostInfo = computed(() => {
   if (!machineInfo.value) return null
@@ -182,7 +184,7 @@ const fixedHostInfo = computed(() => {
 function handleInstallSuccess() {
   // 1. 刷新主机基础信息（如已安装软件包数量）
   loadMachineInfo()
-  
+
   // 2. 根据当前活跃的 Tab 刷新对应内容
   if (activeTab.value === 'patches') {
     patchesTabRef.value?.loadPatchList()
@@ -192,8 +194,6 @@ function handleInstallSuccess() {
     vulnerabilitiesTabRef.value?.loadVulnerabilityList()
   }
 }
-
-
 
 // 监听Tab切换
 watch(activeTab, newTab => {
@@ -265,7 +265,163 @@ function handleFixPatches(patches) {
     return
   }
   patchesToInstall.value = patches
+  installOperationType.value = 'patch'
+  installPackageCandidates.value = []
+  installTaskPackages.value = []
+  installSelectionSummary.value = patches.map(item => ({
+    key: item.patch_id,
+    primary: item.patch_id,
+    secondary: item.patch_name || item.description || ''
+  }))
   installDialogVisible.value = true
+}
+
+function normalizePackageSelections(packages) {
+  const patchMap = new Map()
+
+  packages.forEach(item => {
+    const patchId = String(item.patchId || '').trim()
+    if (!patchId) return
+
+    if (!patchMap.has(patchId)) {
+      patchMap.set(patchId, {
+        patch_id: patchId,
+        patch_name: item.pkgName || item.updatePkg || item.installedPkg || patchId,
+        packages: []
+      })
+    }
+
+    const packageEntry = String(item.packages || '').trim()
+    if (packageEntry) {
+      const existing = patchMap.get(patchId)
+      existing.packages = Array.from(new Set([...(existing.packages || []), packageEntry]))
+      patchMap.set(patchId, existing)
+    }
+  })
+
+  return Array.from(patchMap.values())
+}
+
+function normalizeVulnerabilitySelections(vulnerabilities) {
+  const patchMap = new Map()
+
+  vulnerabilities.forEach(item => {
+    const patchIds = String(item.patch_id || '')
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean)
+
+    const patchStatusIds = String(
+      item.patch_status_id ??
+        item.patch_status_ids ??
+        item.patchStatusId ??
+        item.patchStatusIds ??
+        ''
+    )
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean)
+
+    patchIds.forEach(patchId => {
+      const existing = patchMap.get(patchId) || {
+        patch_id: patchId,
+        patch_name: item.vul_id || patchId,
+        rebootStatus: item.reboot_status,
+        isKernel: item.is_kernel,
+        patch_status_ids: []
+      }
+
+      existing.patch_status_ids = Array.from(
+        new Set([...(existing.patch_status_ids || []), ...patchStatusIds])
+      )
+
+      patchMap.set(patchId, existing)
+    })
+  })
+
+  return Array.from(patchMap.values())
+}
+
+function handleUpdatePackages(packages) {
+  if (!packages || packages.length === 0) {
+    ElMessage.warning('请选择要更新的软件包')
+    return
+  }
+  if (!hostId.value) {
+    ElMessage.warning('主机信息缺失，无法更新软件包')
+    return
+  }
+
+  const normalizedPatches = normalizePackageSelections(packages)
+  if (normalizedPatches.length === 0) {
+    ElMessage.warning('所选软件包缺少补丁编号，暂时无法进入更新向导')
+    return
+  }
+
+  patchesToInstall.value = normalizedPatches
+  installOperationType.value = 'package'
+  installPackageCandidates.value = Array.from(
+    new Set(
+      packages
+        .map(item => item.pkgName || item.installedPkg || item.updatePkg || '')
+        .filter(Boolean)
+    )
+  )
+  installTaskPackages.value = Array.from(
+    new Set(packages.map(item => item.packages).filter(Boolean))
+  )
+  installSelectionSummary.value = packages.map(item => ({
+    key: [item.patchId, item.installedPkg, item.updatePkg].filter(Boolean).join('-'),
+    primary: item.pkgName || item.installedPkg || item.patchId,
+    secondary:
+      [item.installedPkg, item.updatePkg].filter(Boolean).join(' -> ') || item.patchId || ''
+  }))
+  installDialogVisible.value = true
+}
+
+function handleFixVulnerabilities(vulnerabilities) {
+  if (!vulnerabilities || vulnerabilities.length === 0) {
+    ElMessage.warning('请选择要修复的漏洞')
+    return
+  }
+  if (!hostId.value) {
+    ElMessage.warning('主机信息缺失，无法修复漏洞')
+    return
+  }
+
+  const normalizedPatches = normalizeVulnerabilitySelections(vulnerabilities)
+  if (normalizedPatches.length === 0) {
+    ElMessage.warning('所选漏洞缺少补丁编号，暂时无法进入修复向导')
+    return
+  }
+
+  patchesToInstall.value = normalizedPatches
+  installOperationType.value = 'vulnerability'
+  installPackageCandidates.value = Array.from(
+    new Set(
+      vulnerabilities.flatMap(item =>
+        String(item.affected_pkgs || '')
+          .split(',')
+          .map(value => value.trim())
+          .filter(Boolean)
+      )
+    )
+  )
+  installTaskPackages.value = []
+  installSelectionSummary.value = vulnerabilities.map(item => ({
+    key: [item.vul_id, item.patch_id].filter(Boolean).join('-'),
+    primary: item.vul_id || item.patch_id,
+    secondary: item.patch_id || formatAffectedPackages(item.affected_pkgs)
+  }))
+  installDialogVisible.value = true
+}
+
+function formatAffectedPackages(packages) {
+  return String(packages || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .join(', ')
 }
 
 const installDialogVisible = ref(false)

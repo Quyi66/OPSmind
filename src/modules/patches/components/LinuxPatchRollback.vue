@@ -180,21 +180,17 @@
       />
     </div>
 
-    <!-- 回滚确认对话框 -->
-    <el-dialog v-model="rollbackDialogVisible" title="确认回滚" width="500px">
-      <div class="rollback-confirm">
-        <el-alert type="warning" :closable="false" show-icon>
-          <template #title>确定要回滚选中的 {{ rollbackIds.length }} 条更新记录吗？</template>
-          <template #default>回滚操作将把软件包恢复到更新前的版本，此操作不可撤销。</template>
-        </el-alert>
-      </div>
-      <template #footer>
-        <el-button @click="rollbackDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="rollbackLoading" @click="executeRollback">
-          确认回滚
-        </el-button>
-      </template>
-    </el-dialog>
+    <PatchInstallWizard
+      v-model:visible="rollbackWizardVisible"
+      :patches-to-install="rollbackTaskPatches"
+      :fixed-hosts="rollbackTargetHosts"
+      :package-candidates="rollbackPackageCandidates"
+      :hist-update-ids="rollbackHistUpdateIds"
+      :selection-summary-items="rollbackSelectionSummary"
+      operation-type="rollback"
+      task-mode="rollback"
+      @success="handleRollbackSuccess"
+    />
   </div>
 </template>
 
@@ -203,10 +199,10 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchRollbackApi } from '../api'
+import PatchInstallWizard from './patch-task/PatchInstallWizard.vue'
 
 // 加载状态
 const loading = ref(false)
-const rollbackLoading = ref(false)
 
 // 筛选条件
 const filters = reactive({
@@ -284,9 +280,149 @@ const pagedData = computed(() => {
 // 总数（基于前端过滤）
 const totalCount = computed(() => filteredData.value.length)
 
-// 回滚对话框
-const rollbackDialogVisible = ref(false)
-const rollbackIds = ref([])
+const rollbackWizardVisible = ref(false)
+const rollbackTaskPatches = ref([])
+const rollbackTargetHosts = ref([])
+const rollbackPackageCandidates = ref([])
+const rollbackHistUpdateIds = ref([])
+const rollbackSelectionSummary = ref([])
+
+function parseCommaSeparatedValues(value) {
+  if (Array.isArray(value)) {
+    return value.map(item => String(item).trim()).filter(Boolean)
+  }
+
+  return String(value || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+function buildRollbackSelectionSummary(rows) {
+  return rows.map((row, index) => {
+    const hosts = parseHosts(row.hosts)
+    const pkgCount = parseUpdatePkgs(row.update_pkgs).length
+    const secondaryParts = [
+      row.patch_id,
+      hosts.length ? `${hosts.length} 台主机` : '',
+      pkgCount ? `${pkgCount} 个软件包` : ''
+    ]
+      .filter(Boolean)
+      .join(' / ')
+
+    return {
+      key: row.id || `rollback-${index}`,
+      primary: row.update_id || row.patch_id || '-',
+      secondary: secondaryParts
+    }
+  })
+}
+
+function buildRollbackTaskPatches(rows) {
+  const patchMap = new Map()
+
+  rows.forEach(row => {
+    const patchIds = parseCommaSeparatedValues(row.patch_id)
+    const patchStatusIds = parseCommaSeparatedValues(
+      row.patch_status_id ?? row.patch_status_ids ?? row.patchStatusId ?? row.patchStatusIds
+    )
+
+    patchIds.forEach(patchId => {
+      const current = patchMap.get(patchId) || {
+        patch_id: patchId,
+        patch_name: row.update_id || patchId,
+        patchStatusIds: []
+      }
+
+      current.patchStatusIds = Array.from(new Set([...current.patchStatusIds, ...patchStatusIds]))
+      patchMap.set(patchId, current)
+    })
+  })
+
+  return Array.from(patchMap.values())
+}
+
+function buildRollbackTargetHosts(rows) {
+  const hostMap = new Map()
+
+  rows.forEach(row => {
+    const hostKeys = parseHosts(row.hosts)
+    const hostIds = parseCommaSeparatedValues(
+      row.hosts_id || row.hostsId || row.host_id || row.hostId || row.host_ids || row.hostIds
+    )
+    hostIds.forEach((hostId, index) => {
+      const hostKey = hostKeys[index] || hostKeys[0] || hostId
+
+      if (!hostId) {
+        return
+      }
+
+      const mapKey = `${hostId}-${hostKey}`
+      if (!hostMap.has(mapKey)) {
+        hostMap.set(mapKey, {
+          hostId,
+          hostKey,
+          os_distro: row.os_distro || row.osDistro || '',
+          os_version: row.os_version || row.osVersion || ''
+        })
+      }
+    })
+  })
+
+  return Array.from(hostMap.values())
+}
+
+function buildRollbackPackageCandidates(rows) {
+  return Array.from(
+    new Set(
+      rows.flatMap(row =>
+        parseUpdatePkgs(row.update_pkgs).map(pkg => {
+          const newPkg = pkg.new_pkg || pkg.newPkg || ''
+          const oldPkg = pkg.old_pkg || pkg.oldPkg || ''
+
+          if (newPkg && oldPkg) {
+            return `${newPkg} -> ${oldPkg}`
+          }
+
+          return oldPkg || newPkg || ''
+        })
+      )
+    )
+  ).filter(Boolean)
+}
+
+function openRollbackWizard(rows) {
+  if (!rows.length) {
+    ElMessage.warning('请先选择要回滚的记录')
+    return
+  }
+
+  const histUpdateIds = rows.map(row => row.id).filter(Boolean)
+  const targetHosts = buildRollbackTargetHosts(rows)
+  const patches = buildRollbackTaskPatches(rows)
+
+  if (histUpdateIds.length === 0) {
+    ElMessage.warning('当前记录缺少历史更新ID，无法创建回滚任务')
+    return
+  }
+
+  if (targetHosts.length === 0) {
+    ElMessage.warning('当前记录缺少主机ID，无法创建回滚任务')
+    return
+  }
+
+  if (patches.length === 0) {
+    ElMessage.warning('当前记录缺少补丁信息，无法创建回滚任务')
+    return
+  }
+
+  rollbackHistUpdateIds.value = histUpdateIds
+  rollbackTargetHosts.value = targetHosts
+  rollbackTaskPatches.value = patches
+  rollbackPackageCandidates.value = buildRollbackPackageCandidates(rows)
+  rollbackSelectionSummary.value = buildRollbackSelectionSummary(rows)
+  rollbackWizardVisible.value = true
+}
 
 // 解析主机列表
 function parseHosts(hostsStr) {
@@ -370,10 +506,6 @@ function handleSelectionChange(selection) {
   selectedRows.value = selection
 }
 
-function handleSearch() {
-  pagination.page = 1
-}
-
 function handleReset() {
   filters.host_key = ''
   filters.vul_id = ''
@@ -403,36 +535,16 @@ function handleSortChange({ prop, order }) {
 
 // 单条回滚
 function handleRollback(row) {
-  rollbackIds.value = [row.id]
-  rollbackDialogVisible.value = true
+  openRollbackWizard([row])
 }
 
 // 批量回滚
 function handleBatchRollback() {
-  if (selectedIds.value.length === 0) {
-    ElMessage.warning('请先选择要回滚的记录')
-    return
-  }
-  rollbackIds.value = [...selectedIds.value]
-  rollbackDialogVisible.value = true
+  openRollbackWizard(selectedRows.value)
 }
 
-// 执行回滚
-async function executeRollback() {
-  rollbackLoading.value = true
-  try {
-    await patchRollbackApi.rollback({
-      histUpdateIds: rollbackIds.value
-    })
-    ElMessage.success('回滚任务已提交')
-    rollbackDialogVisible.value = false
-    loadData()
-  } catch (error) {
-    console.error('Rollback failed:', error)
-    ElMessage.error('回滚任务提交失败')
-  } finally {
-    rollbackLoading.value = false
-  }
+function handleRollbackSuccess() {
+  loadData()
 }
 
 // 单条删除
@@ -445,7 +557,7 @@ function handleDelete(row) {
         await patchRollbackApi.deleteHistUpdatePkgs([row.id])
         ElMessage.success('删除成功')
         loadData()
-      } catch (error) {
+      } catch {
         ElMessage.error('删除失败')
       }
     })
@@ -466,7 +578,7 @@ function handleBatchDelete() {
         await patchRollbackApi.deleteHistUpdatePkgs(selectedIds.value)
         ElMessage.success('删除成功')
         loadData()
-      } catch (error) {
+      } catch {
         ElMessage.error('删除失败')
       }
     })

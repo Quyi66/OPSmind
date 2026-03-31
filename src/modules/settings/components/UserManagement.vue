@@ -42,6 +42,9 @@
       <el-button size="small" @click="handleAllocateRole">
         <i class="fa fa-user-tag"></i> 分配角色
       </el-button>
+      <el-button size="small" @click="handleCleanExpired">
+        <i class="fa fa-broom"></i> 清理过期分配
+      </el-button>
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
         <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -100,13 +103,19 @@
             {{ formatTime(row.lastModifiedDate) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="320" fixed="right">
           <template #default="{ row }">
             <el-button size="small" text type="primary" @click="handleView(row)">
               查看
             </el-button>
             <el-button size="small" text type="primary" @click="handleEdit(row)">
               编辑
+            </el-button>
+            <el-button size="small" text type="primary" @click="handleAssignPatch(row)">
+              分配补丁
+            </el-button>
+            <el-button size="small" text type="primary" @click="handleViewPatchRecords(row)">
+              分配记录
             </el-button>
             <el-button
               size="small"
@@ -164,6 +173,16 @@
       v-model="linkUserVisible"
       @saved="loadData"
     />
+
+    <AssignPatchDialog
+      v-model:visible="assignDialogVisible"
+      :username="currentPatchUserLogin"
+    />
+
+    <PatchRecordsDialog
+      v-model:visible="recordsDialogVisible"
+      :username="currentPatchUserLogin"
+    />
   </div>
 </template>
 
@@ -171,11 +190,14 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
+import { apiService } from '@/core/api'
 import * as settingsApi from '@/modules/settings/api'
 import { authService } from '@/core/auth'
 import UserEditDialog from './UserEditDialog.vue'
 import AllocateRoleDialog from './AllocateRoleDialog.vue'
 import LinkTenantUserDialog from './LinkTenantUserDialog.vue'
+import AssignPatchDialog from '@/modules/user/components/dialogs/AssignPatchDialog.vue'
+import PatchRecordsDialog from '@/modules/user/components/dialogs/PatchRecordsDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -231,6 +253,13 @@ const selectedUser = ref(null)
 const dialogMode = ref('edit') // 'view' | 'edit' | 'create'
 const allocateRoleVisible = ref(false)
 const linkUserVisible = ref(false)
+const assignDialogVisible = ref(false)
+const recordsDialogVisible = ref(false)
+const currentPatchUserLogin = ref('')
+
+const patchAssignmentApi = {
+  cleanExpired: () => apiService.post('/vap/api/vap/v2/patch/assignment/clean-expired')
+}
 
 // 当前登录用户
 const currentUserLogin = computed(() => {
@@ -317,6 +346,10 @@ function formatTime(time) {
   }
 }
 
+function resolvePatchUserLogin(row) {
+  return row?.login || row?.username || ''
+}
+
 function isCurrentUser(row) {
   return row.login === currentUserLogin.value
 }
@@ -367,6 +400,25 @@ function handleCreateUser() {
   linkUserVisible.value = true
 }
 
+async function handleCleanExpired() {
+  try {
+    await ElMessageBox.confirm(
+      '确认要清理系统中所有已经过期的补丁分配记录吗？',
+      '清理警告',
+      { type: 'warning' }
+    )
+
+    const res = await patchAssignmentApi.cleanExpired()
+    const count = res?.data?.cleaned || 0
+    ElMessage.success(`清理成功，共清理了 ${count} 条记录`)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('Failed to clean expired patch assignments:', error)
+      ElMessage.error('清理失败')
+    }
+  }
+}
+
 function handleView(row) {
   selectedUser.value = row
   dialogMode.value = 'view'
@@ -377,6 +429,28 @@ function handleEdit(row) {
   selectedUser.value = row
   dialogMode.value = 'edit'
   dialogVisible.value = true
+}
+
+function handleAssignPatch(row) {
+  const login = resolvePatchUserLogin(row)
+  if (!login) {
+    ElMessage.warning('当前用户缺少登录名，无法分配补丁')
+    return
+  }
+
+  currentPatchUserLogin.value = login
+  assignDialogVisible.value = true
+}
+
+function handleViewPatchRecords(row) {
+  const login = resolvePatchUserLogin(row)
+  if (!login) {
+    ElMessage.warning('当前用户缺少登录名，无法查看补丁分配记录')
+    return
+  }
+
+  currentPatchUserLogin.value = login
+  recordsDialogVisible.value = true
 }
 
 // 删除中状态

@@ -215,21 +215,13 @@ const handleLogin = async () => {
     })
 
     if (result.success !== true) {
-      ElMessage.error("用户名或密码错误")
+      ElMessage.error('用户名或密码错误')
       return
     }
     ElMessage.success('登录成功')
 
     // 确保认证状态已更新，然后跳转到仪表盘
     await new Promise(resolve => setTimeout(resolve, 100))
-
-    // 验证认证状态
-    const isAuthenticated = authService.isAuthenticated()
-    const currentUser = authService.getCurrentUser()
-    //   isAuthenticated,
-    //   hasUser: !!currentUser,
-    //   userLogin: currentUser?.login
-    // })
 
     // 持久化“保持登录状态”偏好与最后登录用户名
     try {
@@ -248,7 +240,17 @@ const handleLogin = async () => {
 
     // 登录成功后获取并缓存账户信息（优先 fullName 展示）
     try {
-      await accountService.getAccount({ forceRefresh: true })
+      const account = await accountService.getAccount({
+        forceRefresh: true,
+        persist: !!loginForm.rememberMe
+      })
+      authService.applyAccountInfo(account)
+      if (account) {
+        await authService.syncUserApplets(account, {
+          forceRefresh: true,
+          persist: !!loginForm.rememberMe
+        })
+      }
     } catch (e) {
       console.warn('⚠️ Failed to fetch account info after login:', e)
     }

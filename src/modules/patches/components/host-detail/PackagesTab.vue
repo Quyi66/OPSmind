@@ -113,20 +113,14 @@
         @current-change="handlePackagePageChange"
       />
     </div>
-
-    <!-- 操作记录对话框 -->
-    <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { ElMessageBox, ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { getSeverityType } from '../../composables/useFormatters'
 import { usePackageList } from '../../composables/usePackageList'
-import { patchInstallApi } from '../../api'
 import { Search } from '@element-plus/icons-vue'
-import OperationLogsDialog from '../dialogs/OperationLogsDialog.vue'
 
 const props = defineProps({
   hostId: {
@@ -135,10 +129,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['patch-click'])
-
-const operationLogsVisible = ref(false)
-const lastSubmittedRunId = ref('')
+const emit = defineEmits(['patch-click', 'update-packages'])
 
 function normalizeSeverity(severity) {
   const raw = String(severity || '').trim()
@@ -205,39 +196,7 @@ async function handleUpdatePackages() {
     return
   }
 
-  try {
-    await ElMessageBox.confirm(
-      `确认要更新选中的 ${selectedPackages.value.length} 个软件包吗？`,
-      '确认更新',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-  } catch {
-    return
-  }
-
-  try {
-    const response = await patchInstallApi.updatePackages({
-      hosts: [],
-      patchIds: [],
-      hostIds: [props.hostId],
-      packages
-    })
-    const payload = response?.data ?? response
-    const result = Array.isArray(payload) ? payload[0] : payload
-    const isSuccess = result?.status === 'COMPLETED' && result?.data?._status === 'ok'
-    if (!isSuccess) {
-      throw new Error('作业返回异常')
-    }
-    ElMessage.success('任务提交成功')
-    lastSubmittedRunId.value = result?.runId || ''
-    operationLogsVisible.value = true
-  } catch (error) {
-    ElMessage.error('提交更新任务失败: ' + (error.message || '未知错误'))
-  }
+  emit('update-packages', selectedPackages.value)
 }
 
 // 暴露加载方法给父组件

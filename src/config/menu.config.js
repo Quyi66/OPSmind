@@ -3,6 +3,9 @@
  * 定义一级分组菜单和二级子菜单的层级结构
  */
 
+import { authService } from '@/core/auth'
+import { filterAccessibleMenuGroups } from '@/core/auth/permission-policy'
+
 export const MENU_CONFIG = {
   // 特殊菜单项（首页）
   homeMenu: {
@@ -63,7 +66,13 @@ export const MENU_CONFIG = {
           code: 'patch-logs',
           name: '变更日志查询',
           icon: 'fas fa-history',
-          description: '操作日志'
+          description: '查看补丁相关执行日志'
+        },
+        {
+          code: 'patch-process-logs',
+          name: '流程操作记录',
+          icon: 'fas fa-stream',
+          description: '查看补丁向导流程步骤记录'
         },
         {
           code: 'software',
@@ -178,14 +187,16 @@ export function getHomeMenu() {
  * 获取所有一级菜单分组
  */
 export function getMenuGroups() {
-  return MENU_CONFIG.groups
+  return filterAccessibleMenuGroups(MENU_CONFIG.groups, permission =>
+    authService.hasPermission(permission)
+  )
 }
 
 /**
  * 根据分组代码获取分组信息
  */
 export function getMenuGroup(groupCode) {
-  return MENU_CONFIG.groups.find(group => group.code === groupCode)
+  return getMenuGroups().find(group => group.code === groupCode)
 }
 
 /**
@@ -200,7 +211,7 @@ export function getSubMenus(groupCode) {
  * 根据菜单代码获取菜单项信息（包括所属分组）
  */
 export function getMenuItemInfo(menuCode) {
-  for (const group of MENU_CONFIG.groups) {
+  for (const group of getMenuGroups()) {
     const menuItem = group.children.find(child => child.code === menuCode)
     if (menuItem) {
       return {
@@ -217,7 +228,7 @@ export function getMenuItemInfo(menuCode) {
  */
 export function getAllMenuItems() {
   const allItems = []
-  MENU_CONFIG.groups.forEach(group => {
+  getMenuGroups().forEach(group => {
     group.children.forEach(child => {
       allItems.push({
         ...child,

@@ -6,6 +6,10 @@
 
 import { reactive, computed } from 'vue'
 import CryptoJS from 'crypto-js'
+import { accountService } from '@/core/account'
+import type { AccountInfo } from '@/core/account'
+import { appletService } from '@/core/applet'
+import type { AppletInfo } from '@/core/applet'
 import type {
   User,
   LoginCredentials,
@@ -17,6 +21,13 @@ import type {
   OTPStatus,
   AuthService as IAuthService
 } from '@/types/auth'
+import {
+  extractAppletTokens,
+  extractPermissionTokensFromAccount,
+  extractRoleNames,
+  isAdminRoleName,
+  mergePermissionTokens
+} from './permission-policy'
 
 // 认证状态
 const authState = reactive<AuthState>({
@@ -71,6 +82,129 @@ class AuthService implements IAuthService {
     return 'ff808081727a047f017292d0d72e0004' // 默认租户 ID
   }
 
+  private persistCurrentUser(rememberMe?: boolean): void {
+    if (!authState.token || !authState.user) return
+
+    const userJson = JSON.stringify(authState.user)
+
+    if (rememberMe === true) {
+      localStorage.setItem(SESSION_CONFIG.tokenKey, authState.token)
+      localStorage.setItem(SESSION_CONFIG.userKey, userJson)
+      sessionStorage.removeItem(SESSION_CONFIG.tokenKey)
+      sessionStorage.removeItem(SESSION_CONFIG.userKey)
+      return
+    }
+
+    if (rememberMe === false) {
+      sessionStorage.setItem(SESSION_CONFIG.tokenKey, authState.token)
+      sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
+      localStorage.removeItem(SESSION_CONFIG.tokenKey)
+      localStorage.removeItem(SESSION_CONFIG.userKey)
+      return
+    }
+
+    const useLocalStorage = !!localStorage.getItem(SESSION_CONFIG.tokenKey)
+    const storage = useLocalStorage ? localStorage : sessionStorage
+    storage.setItem(SESSION_CONFIG.tokenKey, authState.token)
+    storage.setItem(SESSION_CONFIG.userKey, userJson)
+  }
+
+  private applyResolvedUser(token: string, user: User): void {
+    const cachedApplets = (user.applets || []).map(name => ({
+      name,
+      _user_applet: true,
+      status: 'P'
+    }))
+
+    authState.token = token
+    authState.user = user
+    authState.permissions = mergePermissionTokens(
+      user.permissions || [],
+      extractAppletTokens(cachedApplets)
+    )
+    authState.isAuthenticated = true
+    authState.lastActivity = Date.now()
+
+    this.applyAccountInfo(accountService.getCached())
+    this.applyUserApplets(appletService.getCached())
+  }
+
+  applyAccountInfo(account: AccountInfo | null): void {
+    if (!account) {
+      authState.permissions = mergePermissionTokens(authState.user?.permissions || [])
+      return
+    }
+
+    const roleNames = extractRoleNames(account)
+    const permissions = mergePermissionTokens(
+      authState.user?.permissions || [],
+      extractPermissionTokensFromAccount(account)
+    )
+
+    const nextUser = {
+      ...(authState.user || {}),
+      id: account.id || authState.user?.id || account.login,
+      login: account.login || authState.user?.login || '',
+      name: account.fullName || authState.user?.name || account.login,
+      fullName: account.fullName || authState.user?.fullName || '',
+      role:
+        roleNames.some(roleName => isAdminRoleName(roleName)) || roleNames.includes('admin')
+          ? 'admin'
+          : authState.user?.role || 'user',
+      roles: roleNames,
+      permissions,
+      tenantId: account.tenantId || authState.user?.tenantId || this.getTenantId()
+    } as User
+
+    authState.user = nextUser
+    authState.permissions = permissions
+
+    const cachedApplets = appletService.getCached()
+    if (cachedApplets.length) {
+      this.applyUserApplets(cachedApplets)
+    } else if (authState.isAuthenticated) {
+      void this.syncUserApplets(account, {
+        persist: !!localStorage.getItem(SESSION_CONFIG.tokenKey)
+      }).catch(() => {})
+    }
+
+    if (authState.isAuthenticated && authState.token) {
+      this.persistCurrentUser()
+    }
+  }
+
+  applyUserApplets(applets: AppletInfo[] | null): void {
+    const appletNames = (applets || [])
+      .filter(applet => applet?._user_applet !== false)
+      .map(applet => String(applet?.name || '').trim())
+      .filter(Boolean)
+
+    if (authState.user) {
+      authState.user = {
+        ...authState.user,
+        applets: Array.from(new Set(appletNames))
+      }
+    }
+
+    authState.permissions = mergePermissionTokens(
+      authState.user?.permissions || [],
+      extractAppletTokens(applets || [])
+    )
+
+    if (authState.isAuthenticated && authState.token && authState.user) {
+      this.persistCurrentUser()
+    }
+  }
+
+  async syncUserApplets(
+    account?: AccountInfo | null,
+    options?: { forceRefresh?: boolean; persist?: boolean }
+  ): Promise<AppletInfo[]> {
+    const applets = await appletService.getUserApplets(account, options)
+    this.applyUserApplets(applets)
+    return applets
+  }
+
   /**
    * 初始化认证状态
    */
@@ -88,10 +222,7 @@ class AuthService implements IAuthService {
         const parsedUser = JSON.parse(userInfo) as User
         // 验证用户对象是否有效
         if (parsedUser && parsedUser.login) {
-          authState.token = token
-          authState.user = parsedUser
-          authState.isAuthenticated = true
-          authState.lastActivity = Date.now()
+          this.applyResolvedUser(token, parsedUser)
 
           this.validateSession()
         } else {
@@ -163,6 +294,7 @@ class AuthService implements IAuthService {
         permissions: data.permissions || [],
         tenantId: credentials.tenantId || this.getTenantId()
       }
+      authState.permissions = mergePermissionTokens(authState.user.permissions || [])
       authState.isAuthenticated = true
       authState.lastActivity = Date.now()
 
@@ -175,14 +307,7 @@ class AuthService implements IAuthService {
       // })
 
       // 保存到存储
-      const userJson = JSON.stringify(authState.user)
-      if (credentials.rememberMe) {
-        localStorage.setItem(SESSION_CONFIG.tokenKey, token)
-        localStorage.setItem(SESSION_CONFIG.userKey, userJson)
-      } else {
-        sessionStorage.setItem(SESSION_CONFIG.tokenKey, token)
-        sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
-      }
+      this.persistCurrentUser(!!credentials.rememberMe)
 
       // 返回与旧版兼容的格式
       return {
@@ -211,6 +336,7 @@ class AuthService implements IAuthService {
     try {
       // 清除本地存储
       this.clearAuthState()
+      appletService.clear()
 
       // 跳转到登录页面
       if (typeof window !== 'undefined' && window.location) {
@@ -242,6 +368,8 @@ class AuthService implements IAuthService {
     // 清除旧版可能使用的其他键名
     localStorage.removeItem('opsmind_auth_token')
     localStorage.removeItem('opsmind_user_info')
+
+    appletService.clear()
   }
 
   /**
@@ -327,10 +455,14 @@ class AuthService implements IAuthService {
     if (!authState.isAuthenticated) return false
     if (!permission) return true
 
+    const normalizedPermission = String(permission).trim().toLowerCase()
+
     return (
-      authState.permissions.includes(permission) ||
+      authState.permissions.includes(normalizedPermission) ||
+      (!normalizedPermission.includes(':') &&
+        authState.permissions.includes(`${normalizedPermission}:view`)) ||
       authState.permissions.includes('admin') ||
-      authState.user?.role === 'admin'
+      this.hasRole('admin')
     )
   }
 
@@ -339,7 +471,14 @@ class AuthService implements IAuthService {
    */
   hasRole(role: string): boolean {
     if (!authState.isAuthenticated) return false
-    return authState.user?.role === role
+
+    const normalizedRole = String(role).trim().toLowerCase()
+    const currentRole = String(authState.user?.role || '').trim().toLowerCase()
+    const roles = Array.isArray(authState.user?.roles)
+      ? authState.user.roles.map(item => String(item).trim().toLowerCase())
+      : []
+
+    return currentRole === normalizedRole || roles.includes(normalizedRole)
   }
 
   /**
@@ -503,6 +642,10 @@ class AuthService implements IAuthService {
   // Getter 方法 - 兼容旧版实现
   isAuthenticated(): boolean {
     if (authState.isAuthenticated && authState.token && authState.user && authState.user.login) {
+      if (!authState.permissions.length) {
+        authState.permissions = mergePermissionTokens(authState.user.permissions || [])
+        this.applyAccountInfo(accountService.getCached())
+      }
       return true
     }
 
@@ -518,10 +661,7 @@ class AuthService implements IAuthService {
         const parsedUser = JSON.parse(user) as User
         // 验证用户对象是否有效
         if (parsedUser && parsedUser.login) {
-          authState.token = token
-          authState.user = parsedUser
-          authState.isAuthenticated = true
-          authState.lastActivity = Date.now()
+          this.applyResolvedUser(token, parsedUser)
           return true
         } else {
           console.warn('⚠️ Invalid user data in storage, clearing...')
@@ -538,6 +678,10 @@ class AuthService implements IAuthService {
 
   getCurrentUser(): User | null {
     if (authState.user && authState.user.login) {
+      if (!authState.permissions.length) {
+        authState.permissions = mergePermissionTokens(authState.user.permissions || [])
+        this.applyAccountInfo(accountService.getCached())
+      }
       return authState.user
     }
 
@@ -548,6 +692,8 @@ class AuthService implements IAuthService {
         const parsedUser = JSON.parse(user) as User
         if (parsedUser && parsedUser.login) {
           authState.user = parsedUser
+          authState.permissions = mergePermissionTokens(parsedUser.permissions || [])
+          this.applyAccountInfo(accountService.getCached())
           return authState.user
         } else {
           console.warn('⚠️ Invalid user data, clearing...')
@@ -591,16 +737,8 @@ class AuthService implements IAuthService {
    */
   setAuthState(token: string, user: User): void {
     try {
-      authState.token = token
-      authState.user = user
-      authState.isAuthenticated = true
-      authState.lastActivity = Date.now()
-      authState.permissions = user.permissions || []
-
-      // 保存到存储
-      const userJson = JSON.stringify(user)
-      sessionStorage.setItem(SESSION_CONFIG.tokenKey, token)
-      sessionStorage.setItem(SESSION_CONFIG.userKey, userJson)
+      this.applyResolvedUser(token, user)
+      this.persistCurrentUser(false)
     } catch (error) {
       console.error('❌ Failed to set auth state:', error)
       throw error

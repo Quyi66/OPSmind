@@ -3,6 +3,9 @@
  * 定义每个模块内部的页面导航项
  */
 
+import { authService } from '@/core/auth'
+import { canAccessMenuCode } from '@/core/auth/permission-policy'
+
 import { PATCHES_ROUTE_DEFS } from '@/modules/patches/routes.js'
 import { SOFTWARE_ROUTE_DEFS } from '@/modules/software/routes.js'
 import { CAC_ROUTE_DEFS } from '@/modules/inspection/routes.js'
@@ -40,7 +43,7 @@ export const CMD_NAV_ITEMS = CMD_ROUTE_DEFS.filter(def => def.navLabel).map(def 
 
 // 补丁漏洞 - 补丁模块(Linux/Common，不包含日志)的页面导航
 export const PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
-  def => def.navLabel && def.platform !== 'windows' && def.key !== 'logs'
+  def => def.navLabel && def.platform !== 'windows' && !['logs', 'processLogs'].includes(def.key)
 ).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
@@ -63,6 +66,17 @@ export const WINDOWS_PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
 // 补丁漏洞 - 变更日志查询的导航
 export const PATCH_LOGS_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
   def => def.navLabel && def.key === 'logs'
+).map(def => ({
+  key: def.key,
+  label: def.navLabel || def.title,
+  icon: def.icon,
+  path: `/patches/${def.path}`,
+  platform: 'common'
+}))
+
+// 补丁漏洞 - 流程操作记录的导航
+export const PATCH_PROCESS_LOGS_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
+  def => def.navLabel && def.key === 'processLogs'
 ).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
@@ -146,6 +160,7 @@ export const MODULE_NAV_CONFIG = {
   patches: PATCHES_NAV_ITEMS,
   'windows-patches': WINDOWS_PATCHES_NAV_ITEMS,
   'patch-logs': PATCH_LOGS_NAV_ITEMS,
+  'patch-process-logs': PATCH_PROCESS_LOGS_NAV_ITEMS,
   software: SOFTWARE_NAV_ITEMS,
   cac: CAC_NAV_ITEMS,
   acm: ACM_NAV_ITEMS,
@@ -176,10 +191,14 @@ export function getGroupMenuConfig(groupCode, MENU_CONFIG) {
   const group = MENU_CONFIG.groups.find(g => g.code === groupCode)
   if (!group) return []
 
-  return group.children.map(module => ({
-    code: module.code,
-    name: module.name,
-    icon: module.icon,
-    children: MODULE_NAV_CONFIG[module.code] || []
-  }))
+  return group.children
+    .filter(module =>
+      canAccessMenuCode(permission => authService.hasPermission(permission), module.code)
+    )
+    .map(module => ({
+      code: module.code,
+      name: module.name,
+      icon: module.icon,
+      children: MODULE_NAV_CONFIG[module.code] || []
+    }))
 }

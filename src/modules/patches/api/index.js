@@ -5,6 +5,149 @@
 import { apiService } from '@/core/api'
 
 const VAP_API_PREFIX = '/vap/api/vap'
+const PATCH_TASK_API_PREFIX = `${VAP_API_PREFIX}/v2/patch/task`
+
+function buildPatchTaskListQuery(params = {}) {
+  const searchParams = new URLSearchParams()
+
+  if (params.taskType) {
+    searchParams.set('taskType', params.taskType)
+  }
+
+  if (params.status) {
+    searchParams.set('status', params.status)
+  }
+
+  searchParams.set('page', String(params.page ?? 0))
+  searchParams.set('size', String(params.size ?? 20))
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
+}
+
+function buildPatchTaskAuditHistoryQuery(params = {}) {
+  const searchParams = new URLSearchParams()
+
+  searchParams.set('page', String(params.page ?? 0))
+  searchParams.set('size', String(params.size ?? 50))
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
+}
+
+function buildPatchAuditLogsQuery(params = {}) {
+  const searchParams = new URLSearchParams()
+
+  if (params.taskType) {
+    searchParams.set('taskType', params.taskType)
+  }
+
+  if (params.operator) {
+    searchParams.set('operator', params.operator)
+  }
+
+  if (params.startTime) {
+    searchParams.set('startTime', params.startTime)
+  }
+
+  if (params.endTime) {
+    searchParams.set('endTime', params.endTime)
+  }
+
+  searchParams.set('page', String(params.page ?? 0))
+  searchParams.set('size', String(params.size ?? 20))
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
+}
+
+function normalizePatchTask(task) {
+  if (!task || typeof task !== 'object' || Array.isArray(task)) {
+    return task
+  }
+
+  return {
+    ...task,
+    executeRunId: task.executeRunId || task.installRunId || task.rollbackRunId || ''
+  }
+}
+
+function normalizePatchTaskSnapshot(snapshot) {
+  if (!snapshot) return snapshot
+
+  if (typeof snapshot === 'string') {
+    try {
+      return JSON.stringify(normalizePatchTask(JSON.parse(snapshot)))
+    } catch {
+      return snapshot
+    }
+  }
+
+  return normalizePatchTask(snapshot)
+}
+
+function normalizePatchAuditRecord(record) {
+  if (!record || typeof record !== 'object' || Array.isArray(record)) {
+    return record
+  }
+
+  return {
+    ...record,
+    taskSnapshot: normalizePatchTaskSnapshot(record.taskSnapshot)
+  }
+}
+
+function normalizeResponseData(response, dataNormalizer) {
+  if (!response || typeof response !== 'object') {
+    return dataNormalizer(response)
+  }
+
+  if (Object.prototype.hasOwnProperty.call(response, 'data')) {
+    return {
+      ...response,
+      data: dataNormalizer(response.data)
+    }
+  }
+
+  return dataNormalizer(response)
+}
+
+function normalizePagedData(data, itemNormalizer) {
+  if (!data || typeof data !== 'object' || Array.isArray(data) || !Array.isArray(data.content)) {
+    return data
+  }
+
+  return {
+    ...data,
+    content: data.content.map(itemNormalizer)
+  }
+}
+
+function normalizeListData(data, itemNormalizer) {
+  if (!Array.isArray(data)) {
+    return data
+  }
+
+  return data.map(itemNormalizer)
+}
+
+function normalizePatchTaskResponse(response) {
+  return normalizeResponseData(response, normalizePatchTask)
+}
+
+function normalizePatchTaskPageResponse(response) {
+  return normalizeResponseData(response, data => normalizePagedData(data, normalizePatchTask))
+}
+
+function normalizePatchAuditPageResponse(response) {
+  return normalizeResponseData(response, data =>
+    normalizePagedData(data, normalizePatchAuditRecord)
+  )
+}
+
+function normalizePatchAuditListResponse(response) {
+  return normalizeResponseData(response, data => normalizeListData(data, normalizePatchAuditRecord))
+}
 
 /**
  * 补丁扫描相关 API
@@ -41,7 +184,7 @@ export const patchScanApi = {
       params: {},
       size: params.size || 20,
       page: params.page || 1,
-      filter: filter
+      filter
     }
     return apiService.post(
       `/dts/api/dts/q/data/VAP2_LIST_MACHINE_WITH_PATCH/?cacheBuster=${cacheBuster}`,
@@ -184,73 +327,171 @@ export const patchScanApi = {
  */
 export const patchInstallApi = {
   /**
-   * 创建补丁安装任务并获取全量真实预估策略及脚本
-   * POST /api/vap/v2/patch/task/create
+   * 创建补丁安装任务
+   * POST /vap/api/vap/v2/patch/task/create
    */
   createTask(params) {
-    return apiService.post('/vap/api/vap/v2/patch/task/create', params)
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/create`, params)
+      .then(normalizePatchTaskResponse)
+  },
+
+  /**
+   * 创建补丁回滚任务
+   * POST /vap/api/vap/v2/patch/task/create-rollback
+   */
+  createRollbackTask(params) {
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/create-rollback`, params)
+      .then(normalizePatchTaskResponse)
+  },
+
+  /**
+   * 创建软件包更新任务
+   * POST /vap/api/vap/v2/patch/task/create-pkg-update
+   */
+  createPkgUpdateTask(params) {
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/create-pkg-update`, params)
+      .then(normalizePatchTaskResponse)
+  },
+
+  /**
+   * 创建漏洞修复任务
+   * POST /vap/api/vap/v2/patch/task/create-vuln-fix
+   */
+  createVulnFixTask(params) {
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/create-vuln-fix`, params)
+      .then(normalizePatchTaskResponse)
+  },
+
+  /**
+   * 分页查询任务列表
+   * GET /vap/api/vap/v2/patch/task/list
+   */
+  listTasks(params = {}) {
+    return apiService
+      .get(`${PATCH_TASK_API_PREFIX}/list${buildPatchTaskListQuery(params)}`)
+      .then(normalizePatchTaskPageResponse)
   },
 
   /**
    * 获取任务详情
-   * GET /api/vap/v2/patch/task/{id}
+   * GET /vap/api/vap/v2/patch/task/{id}
    */
   getTask(id) {
-    return apiService.get(`/vap/api/vap/v2/patch/task/${id}`)
+    return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}`).then(normalizePatchTaskResponse)
+  },
+
+  /**
+   * 查询任务操作审计日志（分页）
+   * GET /vap/api/vap/v2/patch/task/{id}/audit/history?page=0&size=50
+   */
+  getTaskAuditHistory(id, params = {}) {
+    return apiService
+      .get(`${PATCH_TASK_API_PREFIX}/${id}/audit/history${buildPatchTaskAuditHistoryQuery(params)}`)
+      .then(normalizePatchAuditPageResponse)
+  },
+
+  /**
+   * 查询任务全量操作审计日志（不分页）
+   * GET /vap/api/vap/v2/patch/task/{id}/audit/history/all
+   */
+  getTaskAuditHistoryAll(id) {
+    return apiService
+      .get(`${PATCH_TASK_API_PREFIX}/${id}/audit/history/all`)
+      .then(normalizePatchAuditListResponse)
   },
 
   /**
    * 上传任务脚本文件
-   * POST /api/vap/v2/patch/task/{id}/script/upload
+   * POST /vap/api/vap/v2/patch/task/{id}/script/upload
    */
   uploadScript(id, scriptType, file) {
     const formData = new FormData()
     formData.append('scriptType', scriptType)
     formData.append('file', file)
-    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/script/upload`, formData)
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/script/upload`, formData)
+      .then(normalizePatchTaskResponse)
   },
 
   /**
    * 编辑任务脚本内容
-   * PUT /api/vap/v2/patch/task/{id}/script/update
+   * PUT /vap/api/vap/v2/patch/task/{id}/script/update
    */
   updateScript(id, scriptType, content) {
-    return apiService.put(`/vap/api/vap/v2/patch/task/${id}/script/update`, {
-      scriptType,
-      content
-    })
+    return apiService
+      .put(`${PATCH_TASK_API_PREFIX}/${id}/script/update`, {
+        scriptType,
+        content
+      })
+      .then(normalizePatchTaskResponse)
+  },
+
+  /**
+   * 下载任务脚本内容
+   * GET /vap/api/vap/v2/patch/task/{id}/script/download?type=pre-check
+   */
+  downloadScript(id, type) {
+    return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}/script/download?type=${type}`)
   },
 
   /**
    * 获取重启策略
-   * GET /api/vap/v2/patch/task/{id}/restart/options
+   * GET /vap/api/vap/v2/patch/task/{id}/restart/options
    */
   getRestartOptions(id) {
-    return apiService.get(`/vap/api/vap/v2/patch/task/${id}/restart/options`)
+    return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}/restart/options`)
   },
 
   /**
    * 步骤1：执行预检查
-   * POST /api/vap/v2/patch/task/{id}/pre-check/execute
+   * POST /vap/api/vap/v2/patch/task/{id}/pre-check/execute
    */
   executePreCheck(id) {
-    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/pre-check/execute`)
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/pre-check/execute`)
+      .then(normalizePatchTaskResponse)
   },
 
   /**
    * 跳过预检查
-   * POST /api/vap/v2/patch/task/{id}/pre-check/skip
+   * POST /vap/api/vap/v2/patch/task/{id}/pre-check/skip
    */
   skipPreCheck(id) {
-    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/pre-check/skip`)
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/pre-check/skip`)
+      .then(normalizePatchTaskResponse)
   },
 
   /**
    * 步骤2：执行补丁安装
-   * POST /api/vap/v2/patch/task/{id}/install/execute
+   * POST /vap/api/vap/v2/patch/task/{id}/install/execute
    */
   executeInstallTask(id) {
-    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/install/execute`)
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/install/execute`)
+      .then(normalizePatchTaskResponse)
+  },
+
+  /**
+   * 步骤2：执行补丁回滚
+   * POST /vap/api/vap/v2/patch/task/{id}/rollback/execute
+   */
+  executeRollbackTask(id) {
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/rollback/execute`)
+      .then(normalizePatchTaskResponse)
+  },
+
+  /**
+   * 获取回滚额外信息
+   * GET /vap/api/vap/v2/patch/task/{id}/rollback/info
+   */
+  getRollbackInfo(id) {
+    return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}/rollback/info`)
   },
 
   /**
@@ -265,31 +506,39 @@ export const patchInstallApi = {
     if (confirmText) {
       payload.confirmText = confirmText
     }
-    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/restart/confirm`, payload)
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/restart/confirm`, payload)
+      .then(normalizePatchTaskResponse)
   },
 
   /**
    * 步骤4：执行重启
-   * POST /api/vap/v2/patch/task/{id}/restart/execute
+   * POST /vap/api/vap/v2/patch/task/{id}/restart/execute
    */
   executeRestart(id) {
-    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/restart/execute`)
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/restart/execute`)
+      .then(normalizePatchTaskResponse)
   },
 
   /**
    * 步骤5：执行安装后校验
-   * POST /api/vap/v2/patch/task/{id}/validate/execute
+   * POST /vap/api/vap/v2/patch/task/{id}/validate/execute
    */
   executeValidate(id) {
-    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/validate/execute`)
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/validate/execute`)
+      .then(normalizePatchTaskResponse)
   },
 
   /**
    * 跳过校验
-   * POST /api/vap/v2/patch/task/{id}/validate/skip
+   * POST /vap/api/vap/v2/patch/task/{id}/validate/skip
    */
   skipValidate(id) {
-    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/validate/skip`)
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/validate/skip`)
+      .then(normalizePatchTaskResponse)
   },
 
   /**
@@ -343,7 +592,7 @@ export const patchInstallApi = {
    */
   getAvailablePatches(params = {}) {
     const requestBody = {
-      params: params
+      params
     }
     return apiService.post('/dts/api/dts/q/data/VAP2_LIST_EFFECTED_PATCH_REST/', requestBody)
   },
@@ -404,7 +653,7 @@ export const patchInstallApi = {
    * @returns {Promise}
    */
   getInstallTasks(params = {}) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/install/tasks`, params)
+    return patchInstallApi.listTasks(params)
   },
 
   /**
@@ -413,7 +662,7 @@ export const patchInstallApi = {
    * @returns {Promise}
    */
   getInstallTaskDetail(taskId) {
-    return apiService.get(`${VAP_API_PREFIX}/v2/install/task/${taskId}`)
+    return patchInstallApi.getTask(taskId)
   }
 }
 
@@ -449,7 +698,27 @@ export const patchRollbackApi = {
    * @param {Array<string>} params.histUpdateIds - 更新记录ID列表
    * @returns {Promise}
    */
-  rollback(params) {
+  async rollback(params) {
+    const hostIds = Array.from(new Set((params.hostIds || []).filter(Boolean)))
+    const patchIds = Array.from(new Set((params.patchIds || []).filter(Boolean)))
+
+    if (hostIds.length > 0 && patchIds.length > 0) {
+      const createResponse = await patchInstallApi.createRollbackTask({
+        hostIds,
+        patchIds,
+        patchStatusIds: params.patchStatusIds || [],
+        histUpdateIds: params.histUpdateIds || []
+      })
+
+      const createdTask = createResponse?.data ?? createResponse
+      const taskId = createdTask?.id
+      if (!taskId) {
+        throw new Error('回滚任务创建失败')
+      }
+
+      return patchInstallApi.executeRollbackTask(taskId)
+    }
+
     return apiService.post('/jao/api/jao/jobs/Uu3eb1/run', {
       params: {
         histUpdateIds: params.histUpdateIds,
@@ -480,7 +749,7 @@ export const patchRollbackApi = {
    * @returns {Promise}
    */
   getRollbackTasks(params = {}) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/rollback/tasks`, params)
+    return patchInstallApi.listTasks(params)
   },
 
   /**
@@ -489,7 +758,7 @@ export const patchRollbackApi = {
    * @returns {Promise}
    */
   getRollbackTaskDetail(taskId) {
-    return apiService.get(`${VAP_API_PREFIX}/v2/rollback/task/${taskId}`)
+    return patchInstallApi.getTask(taskId)
   }
 }
 
@@ -807,6 +1076,16 @@ export const vulnerabilityApi = {
  */
 export const patchLogsApi = {
   /**
+   * 查询租户补丁操作审计日志
+   * GET /vap/api/vap/v2/patch/task/audit/logs?taskType=&operator=&startTime=&endTime=&page=0&size=20
+   */
+  getAuditLogs(params = {}) {
+    return apiService
+      .get(`${PATCH_TASK_API_PREFIX}/audit/logs${buildPatchAuditLogsQuery(params)}`)
+      .then(normalizePatchAuditPageResponse)
+  },
+
+  /**
    * 获取操作日志列表
    * POST /dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/
    * @param {Object} params - 查询参数
@@ -1016,7 +1295,7 @@ export const windowsVulnerabilityApi = {
    */
   scanVulnerabilities(params) {
     return apiService.post('/jao/api/jao/jobs/WIN_SCAN/run', {
-      params: params
+      params
     })
   },
 
@@ -1172,7 +1451,7 @@ export const yumManageApi = {
     return apiService.post(
       '/jao/api/jao/dc/data',
       {
-        id: id,
+        id,
         dataModel: 'yum_configs',
         dataJson: JSON.stringify(data)
       },
@@ -1497,9 +1776,13 @@ export const cveApi = {
    * @returns {Promise<Blob>}
    */
   exportReport(cveIds) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/cve/export`, { cveIds }, {
-      responseType: 'blob'
-    })
+    return apiService.post(
+      `${VAP_API_PREFIX}/v2/cve/export`,
+      { cveIds },
+      {
+        responseType: 'blob'
+      }
+    )
   }
 }
 
@@ -1526,7 +1809,8 @@ export const middlewareCveApi = {
   getList(params = {}) {
     const queryParams = {}
 
-    if (params.middlewareType && params.middlewareType !== 'all') queryParams.middlewareType = params.middlewareType
+    if (params.middlewareType && params.middlewareType !== 'all')
+      queryParams.middlewareType = params.middlewareType
     if (params.severity && params.severity !== 'all') queryParams.severity = params.severity
     if (params.keyword) queryParams.keyword = params.keyword
     if (params.startDate) queryParams.startDate = params.startDate

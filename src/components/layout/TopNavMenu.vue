@@ -300,6 +300,7 @@ import { appUrlManager } from '@/config/module-urls.config'
 import { getDefaultAdminTarget } from '@/config/admin-menu.config'
 import { authService } from '@/core/auth'
 import { accountService } from '@/core/account'
+import { getGroupDefaultRoute } from '@/core/auth/permission-policy'
 import { useMenuStore } from '@/stores/menu.js'
 import { useDashboardStore } from '@/stores/dashboard'
 import {
@@ -410,15 +411,6 @@ const handleHomeClick = () => {
   router.push('/home')
 }
 
-// 分组对应的默认路由
-const GROUP_DEFAULT_ROUTES = {
-  automation: '/jao/jobs',
-  'patch-testing': '/patches/machineScan',
-  'system-inspection': '/cac/overview',
-  'asset-management': '/acm/overview',
-  'user-management': '/users/overview'
-}
-
 // 处理分组菜单点击
 const handleGroupClick = group => {
   // 如果点击的是当前激活的分组，则切换显示/隐藏左侧菜单
@@ -429,7 +421,7 @@ const handleGroupClick = group => {
     menuStore.setActiveGroup(group.code)
 
     // 导航到分组的默认页面
-    const defaultRoute = GROUP_DEFAULT_ROUTES[group.code]
+    const defaultRoute = getGroupDefaultRoute(group, permission => authService.hasPermission(permission))
     if (defaultRoute) {
       router.push(defaultRoute)
     }

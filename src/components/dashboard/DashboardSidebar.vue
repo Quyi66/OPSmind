@@ -81,6 +81,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
 import { accountService } from '@/core/account'
+import { getDefaultRouteForMenuCode } from '@/core/auth/permission-policy'
 import { useMenuStore } from '@/stores/menu.js'
 
 import avatarImage from '@/assets/icons/avatar@2x.png'
@@ -187,7 +188,7 @@ const handleRecentClick = item => {
   // 激活模块并导航到可直达的路由 `/:code`
   try {
     menuStore.setActiveMenuItem(item.code)
-    router.push(`/${item.code}`)
+    router.push(getDefaultRouteForMenuCode(item.code))
     // eslint-disable-next-line no-unused-vars
   } catch (e) {
     /* empty */

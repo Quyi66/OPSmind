@@ -262,6 +262,25 @@ const appletTitleMap = {
   '#{app_uim.name}': '用户管理'
 }
 
+function validatePasswordComplexity(rule, value, callback) {
+  if (!value) {
+    callback()
+    return
+  }
+
+  const hasUppercase = /[A-Z]/.test(value)
+  const hasLowercase = /[a-z]/.test(value)
+  const hasDigit = /\d/.test(value)
+  const hasSpecialChar = /[^A-Za-z0-9]/.test(value)
+
+  if (hasUppercase && hasLowercase && hasDigit && hasSpecialChar) {
+    callback()
+    return
+  }
+
+  callback(new Error('密码需包含大小写字母、数字和特殊符号'))
+}
+
 // 表单验证
 const formRules = {
   login: [
@@ -277,7 +296,10 @@ const formRules = {
     { required: true, message: '请输入姓名', trigger: 'blur' },
     { max: 50, message: '姓名不能超过 50 个字符', trigger: 'blur' }
   ],
-  password: [{ min: 8, max: 32, message: '密码长度在 8 到 32 个字符', trigger: 'blur' }],
+  password: [
+    { min: 8, max: 32, message: '密码长度在 8 到 32 个字符', trigger: 'blur' },
+    { validator: validatePasswordComplexity, trigger: 'blur' }
+  ],
   email: [{ type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }]
 }
 

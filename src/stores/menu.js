@@ -18,6 +18,10 @@ import {
   getHomeMenu,
   resolveGroupCode
 } from '@/config/menu.config.js'
+import {
+  getDefaultRouteForMenuCode,
+  resolveMenuCodeFromRoutePath
+} from '@/core/auth/permission-policy'
 
 export const useMenuStore = defineStore('menu', () => {
   const BASE_RECENT_KEY = 'opsmind_recent_features'
@@ -119,7 +123,7 @@ export const useMenuStore = defineStore('menu', () => {
       const r = getRouter()
       if (r) {
         // 核心路由采用短路径（/#/<moduleCode>），此处保持一致
-        r.push(`/${menuCode}`)
+        r.push(getDefaultRouteForMenuCode(menuCode))
       }
     } catch (e) {
       console.warn('Failed to push route for menu item:', menuCode, e)
@@ -164,6 +168,18 @@ export const useMenuStore = defineStore('menu', () => {
       activeGroup.value = '' // 清除分组高亮，避免之前选中的分组继续显示高亮
       showSideMenu.value = false
       return
+    }
+
+    const resolvedMenuCode = resolveMenuCodeFromRoutePath(routePath)
+    if (resolvedMenuCode) {
+      const resolvedInfo = getMenuItemInfo(resolvedMenuCode)
+      if (resolvedInfo) {
+        activeGroup.value = resolvedInfo.group.code
+        activeMenuItem.value = resolvedMenuCode
+        showSideMenu.value = true
+        recordRecent(resolvedMenuCode)
+        return
+      }
     }
 
     const parts = clean.split('/').filter(Boolean)
@@ -285,7 +301,7 @@ export const useMenuStore = defineStore('menu', () => {
       const user = authService.getCurrentUser()
       const login = user?.login || user?.name || 'guest'
       return `${BASE_RECENT_KEY}:${login}`
-    } catch (e) {
+    } catch {
       return `${BASE_RECENT_KEY}:guest`
     }
   }
@@ -295,7 +311,7 @@ export const useMenuStore = defineStore('menu', () => {
       const userKey = getRecentKey()
       const raw = localStorage.getItem(userKey)
       const parsed = raw ? JSON.parse(raw) : []
-      if (Array.isArray(parsed)) return parsed
+      if (Array.isArray(parsed)) return parsed.filter(item => !!getMenuItemInfo(item?.code))
     } catch {
       console.warn('Failed to load recent features')
     }
@@ -304,10 +320,11 @@ export const useMenuStore = defineStore('menu', () => {
       const legacyRaw = localStorage.getItem(BASE_RECENT_KEY)
       const legacy = legacyRaw ? JSON.parse(legacyRaw) : []
       if (Array.isArray(legacy) && legacy.length) {
+        const filteredLegacy = legacy.filter(item => !!getMenuItemInfo(item?.code))
         // 将旧数据迁移到当前用户键下
-        saveRecent(legacy)
+        saveRecent(filteredLegacy)
         // 可选择清理旧键：保留以防他人用户使用同一浏览器，此处不清理
-        return legacy
+        return filteredLegacy
       }
     } catch {
       // ignore

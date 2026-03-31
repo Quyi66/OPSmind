@@ -6,12 +6,12 @@
  * 补丁状态
  */
 export const PATCH_STATUS = {
-  UNFIXED: 'UNFIXED',        // 未修复
-  FIXED: 'FIXED',            // 已修复
-  FIXING: 'FIXING',          // 修复中
-  FIX_FAILED: 'FIX_FAILED',  // 修复失败
-  ROLLING_BACK: 'ROLLING_BACK',    // 回滚中
-  ROLLBACK_FAILED: 'ROLLBACK_FAILED',  // 回滚失败
+  UNFIXED: 'UNFIXED', // 未修复
+  FIXED: 'FIXED', // 已修复
+  FIXING: 'FIXING', // 修复中
+  FIX_FAILED: 'FIX_FAILED', // 修复失败
+  ROLLING_BACK: 'ROLLING_BACK', // 回滚中
+  ROLLBACK_FAILED: 'ROLLBACK_FAILED', // 回滚失败
   ROLLBACK_SUCCESS: 'ROLLBACK_SUCCESS' // 回滚成功
 }
 
@@ -45,10 +45,10 @@ export const PATCH_STATUS_STYLES = {
  * 补丁严重程度
  */
 export const PATCH_SEVERITY = {
-  CRITICAL: 'CRITICAL',     // 严重
-  IMPORTANT: 'IMPORTANT',   // 重要
-  MODERATE: 'MODERATE',     // 中等
-  LOW: 'LOW'               // 低
+  CRITICAL: 'CRITICAL', // 严重
+  IMPORTANT: 'IMPORTANT', // 重要
+  MODERATE: 'MODERATE', // 中等
+  LOW: 'LOW' // 低
 }
 
 /**
@@ -210,8 +210,14 @@ export const NAV_ITEMS = [
   },
   {
     key: 'logs',
-    label: '操作日志报告',
+    label: '变更日志查询',
     icon: 'fas fa-file-alt',
-    description: '查看补丁操作日志和报告'
+    description: '查看补丁执行日志和报告'
+  },
+  {
+    key: 'processLogs',
+    label: '流程操作记录',
+    icon: 'fas fa-stream',
+    description: '查看补丁向导流程步骤记录'
   }
 ]
