@@ -13,20 +13,11 @@
           :label="param.label || param.name"
         >
           <template v-if="param.type === 'host'">
-            <el-select
+            <AcmDeviceSelector
               v-model="param.defaultValue"
-              multiple
-              filterable
-              placeholder="请选择主机"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="host in []"
-                :key="host.id"
-                :label="host.name"
-                :value="host.id"
-              />
-            </el-select>
+              ci-types="[auto]"
+              :options="hostSelectorOptions"
+            />
             <div v-if="param.description" class="param-desc">{{ param.description }}</div>
           </template>
           <template v-else>
@@ -47,6 +38,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 
 const props = defineProps({
   modelValue: {
@@ -60,6 +52,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+const hostSelectorOptions = {
+  selectMode: 'host,group,tag,input,recently',
+  selector: 'multiple',
+  label: '选择主机'
+}
 
 const visible = computed({
   get: () => props.modelValue,

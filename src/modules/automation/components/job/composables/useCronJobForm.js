@@ -2,6 +2,68 @@ import { ref, computed, watch } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { ElMessage } from 'element-plus'
 
+function normalizeHostSelection(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => normalizeHostItem(item))
+      .filter(Boolean)
+  }
+
+  if (typeof value === 'string') {
+    const trimmedValue = value.trim()
+    if (!trimmedValue) {
+      return []
+    }
+
+    try {
+      const parsedValue = JSON.parse(trimmedValue)
+      return normalizeHostSelection(parsedValue)
+    } catch {
+      return trimmedValue
+        .split(',')
+        .map(item => normalizeHostItem(item.trim()))
+        .filter(Boolean)
+    }
+  }
+
+  return value ? [normalizeHostItem(value)].filter(Boolean) : []
+}
+
+function normalizeHostItem(item) {
+  if (!item) {
+    return null
+  }
+
+  if (typeof item === 'string') {
+    return {
+      key: item,
+      value: item
+    }
+  }
+
+  if (typeof item !== 'object') {
+    const normalizedValue = String(item)
+    return {
+      key: normalizedValue,
+      value: normalizedValue
+    }
+  }
+
+  return {
+    ...item,
+    key: item.key || item.id || item.host_key || item.value || '',
+    value: item.value || item.name || item.hostname || item.ip || item.host_key || item.key || item.id || '',
+    assetType: item.assetType || item.ciType || item.asset_type || ''
+  }
+}
+
+function normalizeParamDefaultValue(param, value) {
+  if (param?.type === 'host') {
+    return normalizeHostSelection(value)
+  }
+  return value ?? ''
+}
+
 /**
  * CRON 任务表单管理
  * 处理表单数据、作业列表加载、表单提交等功能
@@ -127,14 +189,14 @@ export function useCronJobForm(props, emit) {
         for (const [key, value] of Object.entries(cronJob.jobParam)) {
           const existingParam = jobParams.value.find(p => p.name === key)
           if (existingParam) {
-            existingParam.defaultValue = value
+            existingParam.defaultValue = normalizeParamDefaultValue(existingParam, value)
           } else {
             params.push({
               name: key,
               label: key,
               description: key,
               type: key === 'hosts' ? 'host' : 'string',
-              defaultValue: value,
+              defaultValue: key === 'hosts' ? normalizeHostSelection(value) : value,
               secret: false
             })
           }
@@ -152,7 +214,10 @@ export function useCronJobForm(props, emit) {
           if (job && job.params) {
             jobParams.value = job.params.map(param => ({
               ...param,
-              defaultValue: cronJob.jobParam[param.name] || param.defaultValue || ''
+              defaultValue: normalizeParamDefaultValue(
+                param,
+                cronJob.jobParam[param.name] ?? param.defaultValue
+              )
             }))
           }
         } catch (error) {
@@ -245,7 +310,7 @@ export function useCronJobForm(props, emit) {
       if (job && job.params) {
         jobParams.value = job.params.map(param => ({
           ...param,
-          defaultValue: param.defaultValue || ''
+          defaultValue: normalizeParamDefaultValue(param, param.defaultValue)
         }))
       }
     } catch (error) {
@@ -331,7 +396,9 @@ export function useCronJobForm(props, emit) {
       if (needParams && (multipleTypes.indexOf(formData.value.jobType) <= -1 ||
           formData.value.jobType === 'cmd' || formData.value.jobType === 'cac')) {
         jobParams.value.forEach(param => {
-          jobParam[param.name] = param.defaultValue
+          jobParam[param.name] = param.type === 'host'
+            ? normalizeHostSelection(param.defaultValue)
+            : param.defaultValue
         })
       }
 

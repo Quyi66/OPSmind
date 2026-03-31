@@ -28,8 +28,10 @@
     <!-- 树形模式 - 按分组选择设备（完整视图） -->
     <div v-else class="group-tree-view">
       <!-- 所有选项 -->
-      <div class="tree-header" @click="selectAll">
-        <span>所有</span>
+      <div class="tree-header" :class="{ 'is-selected': isAllSelected }" @click="toggleAllSelection()">
+        <el-checkbox :model-value="isAllSelected" @change="toggleAllSelection" @click.stop>
+          所有
+        </el-checkbox>
       </div>
 
       <!-- 分组树 -->
@@ -81,10 +83,26 @@ const treeRef = ref(null)
 const treeData = ref([])
 const selectedGroup = ref(null)
 
+const ALL_GROUP_KEY = '@@'
+
 const treeProps = {
   label: 'name',
   children: 'children'
 }
+
+const isAllSelected = computed(() => {
+  if (!Array.isArray(props.modelValue)) {
+    return false
+  }
+
+  return props.modelValue.some(item => {
+    if (!item || typeof item !== 'object') {
+      return false
+    }
+
+    return item.key === ALL_GROUP_KEY || item.runType === 'all'
+  })
+})
 
 watch(
   () => props.ciType,
@@ -125,7 +143,9 @@ async function fetchGroups() {
 function syncTreeSelection() {
   if (!treeRef.value || !props.modelValue) return
 
-  const groupKeys = props.modelValue.filter(item => item.runType === 'group').map(item => item.key)
+  const groupKeys = props.modelValue
+    .filter(item => item?.runType === 'group' && item.key !== ALL_GROUP_KEY)
+    .map(item => item.key)
 
   treeRef.value.setCheckedKeys(groupKeys)
 }
@@ -198,22 +218,38 @@ function handleCheck(data, { checkedNodes }) {
   }))
 
   // 保留非分组类型的已选项 (如 specific hosts, tags 等)
-  const otherSelections = (props.modelValue || []).filter(item => item.runType !== 'group')
+  const otherSelections = (props.modelValue || []).filter(item => {
+    return item?.runType !== 'group' && item?.runType !== 'all' && item?.key !== ALL_GROUP_KEY
+  })
 
   emit('update:modelValue', [...otherSelections, ...selectedGroups])
 }
 
-function selectAll() {
-  // 选择所有设备
-  const allSelection = [
+function getOtherSelections() {
+  return (props.modelValue || []).filter(item => {
+    return item?.runType !== 'group' && item?.runType !== 'all' && item?.key !== ALL_GROUP_KEY
+  })
+}
+
+function toggleAllSelection(checked = !isAllSelected.value) {
+  treeRef.value?.setCheckedKeys([])
+
+  const otherSelections = getOtherSelections()
+
+  if (!checked) {
+    emit('update:modelValue', otherSelections)
+    return
+  }
+
+  emit('update:modelValue', [
+    ...otherSelections,
     {
-      key: '@@',
+      key: ALL_GROUP_KEY,
       value: '所有',
-      runType: 'all',
+      runType: 'group',
       assetType: props.ciType
     }
-  ]
-  emit('update:modelValue', allSelection)
+  ])
 }
 </script>
 
@@ -238,6 +274,14 @@ function selectAll() {
 
 .tree-header:hover {
   background: var(--el-bg-color-page);
+}
+
+.tree-header.is-selected {
+  background: var(--el-color-primary-light-9);
+}
+
+.tree-header :deep(.el-checkbox) {
+  width: 100%;
 }
 
 .tree-container {
