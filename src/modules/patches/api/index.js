@@ -200,11 +200,49 @@ export const patchInstallApi = {
   },
 
   /**
+   * 上传任务脚本文件
+   * POST /api/vap/v2/patch/task/{id}/script/upload
+   */
+  uploadScript(id, scriptType, file) {
+    const formData = new FormData()
+    formData.append('scriptType', scriptType)
+    formData.append('file', file)
+    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/script/upload`, formData)
+  },
+
+  /**
+   * 编辑任务脚本内容
+   * PUT /api/vap/v2/patch/task/{id}/script/update
+   */
+  updateScript(id, scriptType, content) {
+    return apiService.put(`/vap/api/vap/v2/patch/task/${id}/script/update`, {
+      scriptType,
+      content
+    })
+  },
+
+  /**
+   * 获取重启策略
+   * GET /api/vap/v2/patch/task/{id}/restart/options
+   */
+  getRestartOptions(id) {
+    return apiService.get(`/vap/api/vap/v2/patch/task/${id}/restart/options`)
+  },
+
+  /**
    * 步骤1：执行预检查
    * POST /api/vap/v2/patch/task/{id}/pre-check/execute
    */
   executePreCheck(id) {
     return apiService.post(`/vap/api/vap/v2/patch/task/${id}/pre-check/execute`)
+  },
+
+  /**
+   * 跳过预检查
+   * POST /api/vap/v2/patch/task/{id}/pre-check/skip
+   */
+  skipPreCheck(id) {
+    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/pre-check/skip`)
   },
 
   /**
@@ -219,10 +257,15 @@ export const patchInstallApi = {
    * 步骤3：确认重启方式
    * POST /api/vap/v2/patch/task/{id}/restart/confirm
    * @param {string} id - 任务ID
-   * @param {string} action - 重启策略: system, service, none
+   * @param {boolean} confirm - 是否确认执行重启
+   * @param {string} confirmText - 确认文案
    */
-  confirmRestart(id, action) {
-    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/restart/confirm`, { action })
+  confirmRestart(id, confirm, confirmText) {
+    const payload = { confirm }
+    if (confirmText) {
+      payload.confirmText = confirmText
+    }
+    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/restart/confirm`, payload)
   },
 
   /**
@@ -239,6 +282,14 @@ export const patchInstallApi = {
    */
   executeValidate(id) {
     return apiService.post(`/vap/api/vap/v2/patch/task/${id}/validate/execute`)
+  },
+
+  /**
+   * 跳过校验
+   * POST /api/vap/v2/patch/task/{id}/validate/skip
+   */
+  skipValidate(id) {
+    return apiService.post(`/vap/api/vap/v2/patch/task/${id}/validate/skip`)
   },
 
   /**

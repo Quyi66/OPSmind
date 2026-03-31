@@ -180,7 +180,17 @@ const fixedHostInfo = computed(() => {
 })
 
 function handleInstallSuccess() {
-  patchesTabRef.value?.loadPatchList()
+  // 1. 刷新主机基础信息（如已安装软件包数量）
+  loadMachineInfo()
+  
+  // 2. 根据当前活跃的 Tab 刷新对应内容
+  if (activeTab.value === 'patches') {
+    patchesTabRef.value?.loadPatchList()
+  } else if (activeTab.value === 'packages') {
+    packagesTabRef.value?.loadPackageList()
+  } else if (activeTab.value === 'vulnerabilities') {
+    vulnerabilitiesTabRef.value?.loadVulnerabilityList()
+  }
 }
 
 

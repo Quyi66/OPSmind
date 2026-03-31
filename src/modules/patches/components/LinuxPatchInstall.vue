@@ -198,6 +198,7 @@
     <PatchInstallWizard
       v-model:visible="installDialogVisible"
       :patches-to-install="patchesToInstall"
+      @success="handleInstallSuccess"
     />
 
     <!-- 关联CVE 列表对话框 -->
@@ -322,6 +323,10 @@ function handleInstallSingle(patch) {
 
 function resetInstallState() {
   installDialogVisible.value = false
+}
+
+function handleInstallSuccess() {
+  loadData()
 }
 
 
