@@ -10,6 +10,10 @@
 import { onMounted } from 'vue'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import { useUpdateChecker } from '@/composables/useUpdateChecker'
+
+// 启动前端版本更新检测（生产环境生效）
+useUpdateChecker()
 
 onMounted(() => {
   // 初始化应用

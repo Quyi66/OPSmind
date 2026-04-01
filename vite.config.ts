@@ -2,6 +2,8 @@ import { defineConfig, loadEnv, type Plugin, type UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
+import { createHash } from 'node:crypto'
+import { writeFileSync } from 'node:fs'
 
 // Element Plus 按需导入插件
 import AutoImport from 'unplugin-auto-import/vite'
@@ -27,6 +29,18 @@ function normalizeTarget(value: string | undefined, fallback: string): string {
   return sanitized
 }
 
+// 构建时生成唯一 hash，用于前端版本更新检测
+function buildVersionPlugin(buildHash: string, outDir: string): Plugin {
+  return {
+    name: 'opsmind-build-version',
+    apply: 'build',
+    closeBundle() {
+      const versionData = JSON.stringify({ hash: buildHash, buildTime: new Date().toISOString() })
+      writeFileSync(resolve(__dirname, outDir, 'version.json'), versionData)
+    }
+  }
+}
+
 export default defineConfig(({ command, mode }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), '')
   const isProduction = mode === 'production'
@@ -36,6 +50,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
     DEFAULT_BACKEND_TARGET
   )
 
+  // 每次构建生成唯一 hash
+  const buildHash = createHash('md5').update(Date.now().toString() + Math.random().toString()).digest('hex').slice(0, 12)
+
   return {
     plugins: [
       vue({
@@ -44,6 +61,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
           propsDestructure: true
         }
       }),
+
+      // 构建时生成 version.json（仅生产环境）
+      ...(isProduction ? [buildVersionPlugin(buildHash, env.VITE_BUILD_OUTDIR || 'dist')] : []),
 
       // 生产环境将构建产物 CSS 设为非阻塞加载
       ...(isProduction
@@ -280,7 +300,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
 
     define: {
       __VUE_OPTIONS_API__: true,
-      __VUE_PROD_DEVTOOLS__: false
+      __VUE_PROD_DEVTOOLS__: false,
+      __APP_BUILD_HASH__: JSON.stringify(buildHash)
     }
   }
 })

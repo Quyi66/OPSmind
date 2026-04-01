@@ -231,6 +231,10 @@ function getOtherSelections() {
   })
 }
 
+function getAllGroupValue() {
+  return `@@(${props.ciType})`
+}
+
 function toggleAllSelection(checked = !isAllSelected.value) {
   treeRef.value?.setCheckedKeys([])
 
@@ -245,7 +249,7 @@ function toggleAllSelection(checked = !isAllSelected.value) {
     ...otherSelections,
     {
       key: ALL_GROUP_KEY,
-      value: '所有',
+      value: getAllGroupValue(),
       runType: 'group',
       assetType: props.ciType
     }

@@ -405,6 +405,15 @@ export const patchInstallApi = {
   },
 
   /**
+   * 获取任务审计详情（含步骤汇总）
+   * GET /vap/api/vap/v2/patch/task/{id}/audit/detail
+   * 返回 { task, steps: [{ step, label, status, runId, logs }], logs }
+   */
+  getAuditDetail(id) {
+    return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}/audit/detail`)
+  },
+
+  /**
    * 上传任务脚本文件
    * POST /vap/api/vap/v2/patch/task/{id}/script/upload
    */
@@ -1082,7 +1091,7 @@ export const patchLogsApi = {
   getAuditLogs(params = {}) {
     return apiService
       .get(`${PATCH_TASK_API_PREFIX}/audit/logs${buildPatchAuditLogsQuery(params)}`)
-      .then(normalizePatchAuditPageResponse)
+      .then(normalizePatchTaskPageResponse)
   },
 
   /**

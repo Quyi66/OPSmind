@@ -186,6 +186,7 @@ const ciTypeDefs = ref([])
 const activeCiType = ref('')
 const currentMode = ref('host')
 const selectedHostsByCiType = ref([])
+const allSelectedHosts = ref([])
 const showHosts = ref(false)
 
 const selectModeDefs = computed(() => {
@@ -207,17 +208,26 @@ const selectModeDefs = computed(() => {
 
 watch(visible, (val) => {
   if (val) {
+    allSelectedHosts.value = [...(props.initialSelection || [])]
     initCiTypes()
-    loadInitialSelection()
+  } else {
+    selectedHostsByCiType.value = []
   }
 })
 
 watch(activeCiType, (newVal, oldVal) => {
-  if (newVal && oldVal && newVal !== oldVal) {
-    // 切换CI类型时，过滤出当前类型的已选主机
-    filterHostsByCurrentCiType()
+  if (newVal && newVal !== oldVal) {
+    syncSelectedHostsByCiType()
   }
 })
+
+watch(
+  () => selectedHostsByCiType.value,
+  (newVal) => {
+    mergeCurrentCiTypeSelection(newVal)
+  },
+  { deep: true }
+)
 
 function initCiTypes() {
   let types = props.ciTypes
@@ -287,32 +297,43 @@ function initCiTypes() {
   })
 }
 
-function loadInitialSelection() {
-  // 加载初始选中的主机
-  if (props.initialSelection && props.initialSelection.length > 0) {
-    selectedHostsByCiType.value = props.initialSelection.filter(host => {
-      if (typeof host === 'object' && host.assetType) {
-        return host.assetType === activeCiType.value
-      }
-      return true
-    })
-  } else {
-    selectedHostsByCiType.value = []
+function getHostCiType(host) {
+  if (typeof host === 'object' && host !== null) {
+    return host.assetType || host.ciType || ''
   }
+  return activeCiType.value
 }
 
-function filterHostsByCurrentCiType() {
-  // 过滤出当前CI类型的已选主机
-  if (props.initialSelection && props.initialSelection.length > 0) {
-    selectedHostsByCiType.value = props.initialSelection.filter(host => {
-      if (typeof host === 'object' && host.assetType) {
-        return host.assetType === activeCiType.value
-      }
-      return false
-    })
-  } else {
-    selectedHostsByCiType.value = []
+function normalizeHostForCiType(host) {
+  if (typeof host === 'object' && host !== null) {
+    return {
+      ...host,
+      assetType: host.assetType || host.ciType || activeCiType.value
+    }
   }
+  return host
+}
+
+function syncSelectedHostsByCiType() {
+  if (!activeCiType.value) {
+    selectedHostsByCiType.value = []
+    return
+  }
+
+  selectedHostsByCiType.value = allSelectedHosts.value
+    .filter(host => getHostCiType(host) === activeCiType.value)
+    .map(host => normalizeHostForCiType(host))
+}
+
+function mergeCurrentCiTypeSelection(currentSelection = []) {
+  if (!activeCiType.value) {
+    return
+  }
+
+  const otherSelections = allSelectedHosts.value.filter(host => getHostCiType(host) !== activeCiType.value)
+  const normalizedCurrentSelection = (currentSelection || []).map(host => normalizeHostForCiType(host))
+
+  allSelectedHosts.value = [...otherSelections, ...normalizedCurrentSelection]
 }
 
 function toggleShowHosts() {
@@ -320,11 +341,14 @@ function toggleShowHosts() {
 }
 
 function removeHost(host, index) {
+  mergeCurrentCiTypeSelection(
+    selectedHostsByCiType.value.filter((_, currentIndex) => currentIndex !== index)
+  )
   selectedHostsByCiType.value.splice(index, 1)
 }
 
 function handleConfirm() {
-  emit('confirm', selectedHostsByCiType.value)
+  emit('confirm', allSelectedHosts.value)
   visible.value = false
 }
 

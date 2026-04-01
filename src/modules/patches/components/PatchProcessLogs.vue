@@ -71,28 +71,17 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="step" label="步骤" width="110">
+        <el-table-column prop="status" label="状态" width="120">
           <template #default="{ row }">
-            {{ formatStep(row.step) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="action" label="动作" width="120">
-          <template #default="{ row }">
-            {{ formatAction(row.action) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="结果" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
-              {{ formatStatus(row.status) }}
+            <el-tag :type="getTaskStatusTagType(row.status)" size="small">
+              {{ formatTaskStatus(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="operator" label="操作人" width="120" show-overflow-tooltip />
-        <el-table-column prop="remark" label="说明" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="createdBy" label="操作人" width="120" show-overflow-tooltip />
         <el-table-column label="涉及软件包" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ formatJsonArray(row.affectedPackages) || '-' }}
+            {{ formatJsonArray(row.patchPkgs) || '-' }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="90" fixed="right">
@@ -433,6 +422,7 @@ const detailLoading = ref(false)
 const detailRow = ref(null)
 const detailTaskData = ref(null)
 const detailHistory = ref([])
+const detailSteps = ref([])
 const detailStep = ref(0)
 const executeResultVisible = ref(false)
 const currentExecuteRunId = ref('')
@@ -484,6 +474,26 @@ const STATUS_MAP = {
   FAILED: '失败',
   RUNNING: '执行中',
   SKIPPED: '已跳过'
+}
+
+const TASK_STATUS_MAP = {
+  CREATED: '已创建',
+  PRE_CHECKING: '预检查中',
+  PRE_CHECK_DONE: '预检查完成',
+  PRE_CHECK_FAILED: '预检查失败',
+  INSTALLING: '执行中',
+  INSTALL_DONE: '执行完成',
+  INSTALL_FAILED: '执行失败',
+  ROLLING_BACK: '回滚中',
+  ROLLBACK_DONE: '回滚完成',
+  ROLLBACK_FAILED: '回滚失败',
+  RESTART_PENDING: '等待重启',
+  RESTARTING: '重启中',
+  RESTART_DONE: '重启完成',
+  VALIDATING: '校验中',
+  VALIDATE_FAILED: '校验失败',
+  COMPLETED: '已完成',
+  FAILED: '失败'
 }
 
 const RECORD_STEP_TITLE_MAP = {
@@ -572,32 +582,43 @@ const executeLatestRecord = computed(() =>
   getLatestRecord(executeRecords.value, isExecutionLikeRecord)
 )
 const preCheckAlert = computed(() =>
-  buildScriptAlert('pre', preCheckLatestRecord.value, preCheckScriptContent.value)
+  buildScriptAlert('pre', preCheckLatestRecord.value, preCheckScriptContent.value, getStepStatus('PRE_CHECK'))
 )
 const validateAlert = computed(() =>
-  buildScriptAlert('validate', validateLatestRecord.value, validateScriptContent.value)
+  buildScriptAlert('validate', validateLatestRecord.value, validateScriptContent.value, getStepStatus('VALIDATE'))
 )
-const restartAlert = computed(() => buildRestartAlert(detailTask.value, restartLatestRecord.value))
-const pipelineItems = computed(() => [
-  buildPipelineItem('pre-check', '预检查', preCheckRecords.value, {
-    fallbackRunId: detailTask.value?.preCheckRunId || ''
-  }),
-  buildPipelineItem(
-    detailTaskType.value === 'rollback' ? 'rollback' : 'execute',
-    detailOperationConfig.value.executeTitle,
-    executeRecords.value,
-    {
-      fallbackRunId: detailTask.value?.executeRunId || ''
-    }
-  ),
-  buildPipelineItem('restart', '重启策略', restartRecords.value, {
-    treatNoneAsSuccess: detailTask.value?.restartType === 'none',
-    fallbackRunId: detailTask.value?.restartRunId || ''
-  }),
-  buildPipelineItem('validate', '脚本校验', validateRecords.value, {
-    fallbackRunId: detailTask.value?.validateRunId || ''
-  })
-])
+const restartAlert = computed(() => buildRestartAlert(detailTask.value, restartLatestRecord.value, getStepStatus('RESTART')))
+const pipelineItems = computed(() => {
+  const executeStepKey = detailTaskType.value === 'rollback' ? 'ROLLBACK' : 'INSTALL'
+  return [
+    buildPipelineItem('pre-check', '预检查', preCheckRecords.value, {
+      fallbackRunId: detailTask.value?.preCheckRunId || '',
+      stepStatus: getStepStatus('PRE_CHECK'),
+      stepRunId: getStepRunId('PRE_CHECK')
+    }),
+    buildPipelineItem(
+      detailTaskType.value === 'rollback' ? 'rollback' : 'execute',
+      detailOperationConfig.value.executeTitle,
+      executeRecords.value,
+      {
+        fallbackRunId: detailTask.value?.executeRunId || '',
+        stepStatus: getStepStatus(executeStepKey),
+        stepRunId: getStepRunId(executeStepKey)
+      }
+    ),
+    buildPipelineItem('restart', '重启策略', restartRecords.value, {
+      treatNoneAsSuccess: detailTask.value?.restartType === 'none',
+      fallbackRunId: detailTask.value?.restartRunId || '',
+      stepStatus: getStepStatus('RESTART'),
+      stepRunId: getStepRunId('RESTART')
+    }),
+    buildPipelineItem('validate', '脚本校验', validateRecords.value, {
+      fallbackRunId: detailTask.value?.validateRunId || '',
+      stepStatus: getStepStatus('VALIDATE'),
+      stepRunId: getStepRunId('VALIDATE')
+    })
+  ]
+})
 
 async function loadData() {
   loading.value = true
@@ -655,33 +676,52 @@ function handleSizeChange(size) {
 
 async function openDetail(row) {
   detailRow.value = row
-  detailStep.value = resolveWizardStepIndex(row?.step, row?.scriptType)
   detailVisible.value = true
   detailLoading.value = true
-  detailTaskData.value = buildFallbackTask(row)
-  detailHistory.value = row ? [row] : []
+  // 列表返回的已经是 PatchInstallTask，可直接作为初始任务数据
+  detailTaskData.value = row || null
+  detailHistory.value = []
+  detailSteps.value = []
+  detailStep.value = 0
 
-  if (!row?.taskId) {
+  const taskId = row?.id
+  if (!taskId) {
     detailLoading.value = false
     return
   }
 
-  const [taskResult, historyResult] = await Promise.allSettled([
-    patchInstallApi.getTask(row.taskId),
-    patchInstallApi.getTaskAuditHistoryAll(row.taskId)
-  ])
+  try {
+    const res = await patchInstallApi.getAuditDetail(taskId)
+    const detail = res?.data || res || {}
 
-  if (taskResult.status === 'fulfilled') {
-    detailTaskData.value = taskResult.value?.data || taskResult.value || buildFallbackTask(row)
-  }
+    if (detail.task) {
+      detailTaskData.value = detail.task
+    }
+    if (Array.isArray(detail.steps)) {
+      detailSteps.value = detail.steps
+    }
+    if (Array.isArray(detail.logs)) {
+      detailHistory.value = detail.logs
+    }
+  } catch {
+    // 新接口失败时降级到旧接口
+    const [taskResult, historyResult] = await Promise.allSettled([
+      patchInstallApi.getTask(taskId),
+      patchInstallApi.getTaskAuditHistoryAll(taskId)
+    ])
 
-  if (historyResult.status === 'fulfilled') {
-    const historyData = historyResult.value?.data || historyResult.value || []
-    detailHistory.value = Array.isArray(historyData) ? historyData : []
-  }
+    if (taskResult.status === 'fulfilled') {
+      detailTaskData.value = taskResult.value?.data || taskResult.value || row
+    }
 
-  if (taskResult.status === 'rejected' || historyResult.status === 'rejected') {
-    ElMessage.warning('部分详情数据加载失败，已展示当前可用信息')
+    if (historyResult.status === 'fulfilled') {
+      const historyData = historyResult.value?.data || historyResult.value || []
+      detailHistory.value = Array.isArray(historyData) ? historyData : []
+    }
+
+    if (taskResult.status === 'rejected' || historyResult.status === 'rejected') {
+      ElMessage.warning('部分详情数据加载失败，已展示当前可用信息')
+    }
   }
 
   detailLoading.value = false
@@ -699,22 +739,35 @@ function handleDetailClosed() {
   detailRow.value = null
   detailTaskData.value = null
   detailHistory.value = []
+  detailSteps.value = []
   detailStep.value = 0
   executeResultVisible.value = false
   currentExecuteRunId.value = ''
   currentExecuteJobTitle.value = ''
 }
 
+function findStepData(stepKey) {
+  return detailSteps.value.find(s => s.step === stepKey) || null
+}
+
+function getStepStatus(stepKey) {
+  return findStepData(stepKey)?.status || null
+}
+
+function getStepRunId(stepKey) {
+  return findStepData(stepKey)?.runId || ''
+}
+
 function getPreCheckRunId() {
-  return preCheckLatestRecord.value?.runId || detailTask.value?.preCheckRunId || ''
+  return getStepRunId('PRE_CHECK') || preCheckLatestRecord.value?.runId || detailTask.value?.preCheckRunId || ''
 }
 
 function getValidateRunId() {
-  return validateLatestRecord.value?.runId || detailTask.value?.validateRunId || ''
+  return getStepRunId('VALIDATE') || validateLatestRecord.value?.runId || detailTask.value?.validateRunId || ''
 }
 
 function getRestartRunId() {
-  return restartLatestRecord.value?.runId || detailTask.value?.restartRunId || ''
+  return getStepRunId('RESTART') || restartLatestRecord.value?.runId || detailTask.value?.restartRunId || ''
 }
 
 function formatTaskType(taskType) {
@@ -746,6 +799,19 @@ function getStatusType(status) {
   if (status === 'FAILED') return 'danger'
   if (status === 'RUNNING') return 'primary'
   if (status === 'SKIPPED') return 'info'
+  return 'info'
+}
+
+function formatTaskStatus(status) {
+  return TASK_STATUS_MAP[status] || status || '-'
+}
+
+function getTaskStatusTagType(status) {
+  if (status === 'COMPLETED') return 'success'
+  if (status === 'FAILED' || status?.endsWith('_FAILED')) return 'danger'
+  if (status?.endsWith('ING')) return 'primary'
+  if (status === 'CREATED' || status === 'RESTART_PENDING') return 'info'
+  if (status?.endsWith('_DONE')) return 'success'
   return 'info'
 }
 
@@ -939,34 +1005,78 @@ function getRecordDisplayState(record) {
   return 'idle'
 }
 
+function stepStatusToDisplayState(status) {
+  if (!status) return 'idle'
+  if (status === 'SUCCESS') return 'success'
+  if (status === 'FAILED') return 'failed'
+  if (status === 'SKIPPED') return 'success'
+  if (status === 'RUNNING') return 'running'
+  if (status === 'PENDING') return 'idle'
+  return 'idle'
+}
+
 function getWizardStepState(stepIndex) {
   if (stepIndex === 0) {
     return detailTask.value ? 'success' : 'idle'
   }
 
-  if (stepIndex === 1) {
-    return getRecordDisplayState(
-      preCheckLatestRecord.value || getLatestRecord(preCheckRecords.value)
-    )
-  }
+  // 步骤索引到 step key 的映射
+  const stepKeyMap = { 1: 'PRE_CHECK', 2: 'VALIDATE', 3: 'RESTART' }
+  const stepKey = stepKeyMap[stepIndex]
 
-  if (stepIndex === 2) {
-    return getRecordDisplayState(
-      validateLatestRecord.value || getLatestRecord(validateRecords.value)
-    )
-  }
-
-  if (stepIndex === 3) {
-    if (detailTask.value?.restartType === 'none' && restartRecords.value.length === 0) {
-      return 'success'
+  if (stepKey) {
+    const status = getStepStatus(stepKey)
+    if (status) return stepStatusToDisplayState(status)
+    // 降级：无 steps 数据时从日志推导
+    if (stepKey === 'PRE_CHECK') {
+      return getRecordDisplayState(preCheckLatestRecord.value || getLatestRecord(preCheckRecords.value))
     }
-    return getRecordDisplayState(restartLatestRecord.value || getLatestRecord(restartRecords.value))
+    if (stepKey === 'VALIDATE') {
+      return getRecordDisplayState(validateLatestRecord.value || getLatestRecord(validateRecords.value))
+    }
+    if (stepKey === 'RESTART') {
+      if (detailTask.value?.restartType === 'none' && restartRecords.value.length === 0) {
+        return 'success'
+      }
+      return getRecordDisplayState(restartLatestRecord.value || getLatestRecord(restartRecords.value))
+    }
   }
 
+  // stepIndex === 4: 执行步骤 (INSTALL / ROLLBACK)
+  const executeStepKey = detailTaskType.value === 'rollback' ? 'ROLLBACK' : 'INSTALL'
+  const executeStatus = getStepStatus(executeStepKey)
+  if (executeStatus) return stepStatusToDisplayState(executeStatus)
   return getRecordDisplayState(executeLatestRecord.value || getLatestRecord(executeRecords.value))
 }
 
-function buildScriptAlert(type, record, scriptContent) {
+function buildScriptAlert(type, record, scriptContent, stepStatus) {
+  // 优先使用 steps 数据中的 status
+  if (stepStatus === 'FAILED') {
+    return {
+      type: 'error',
+      title: `执行失败：${record?.errorMessage || record?.remark || '未知错误'}`
+    }
+  }
+  if (stepStatus === 'SKIPPED') {
+    return {
+      type: 'success',
+      title: type === 'pre' ? '已跳过预执行脚本' : '已跳过校验脚本'
+    }
+  }
+  if (stepStatus === 'SUCCESS') {
+    return {
+      type: 'success',
+      title: type === 'pre' ? '预执行脚本执行完毕' : '全部校验通过'
+    }
+  }
+  if (stepStatus === 'RUNNING') {
+    return {
+      type: 'warning',
+      title: type === 'pre' ? '预执行脚本执行中...' : '校验脚本执行中...'
+    }
+  }
+
+  // 降级：无 stepStatus 时从日志记录推导
   if (getRecordDisplayState(record) === 'failed') {
     return {
       type: 'error',
@@ -1001,7 +1111,25 @@ function buildScriptAlert(type, record, scriptContent) {
   }
 }
 
-function buildRestartAlert(task, record) {
+function buildRestartAlert(task, record, stepStatus) {
+  // 优先使用 steps 数据中的 status
+  if (stepStatus === 'FAILED') {
+    return {
+      type: 'error',
+      title: `重启失败：${record?.errorMessage || record?.remark || '未知错误'}`
+    }
+  }
+  if (stepStatus === 'SKIPPED') {
+    return { type: 'success', title: '已跳过重启' }
+  }
+  if (stepStatus === 'SUCCESS') {
+    return { type: 'success', title: '重启完成' }
+  }
+  if (stepStatus === 'RUNNING') {
+    return { type: 'warning', title: '正在重启中...' }
+  }
+
+  // 降级：无 stepStatus 时从日志记录推导
   if (task?.restartType === 'none' && !record) {
     return { type: 'info', title: '无需重启' }
   }
@@ -1033,16 +1161,22 @@ function buildRestartAlert(task, record) {
 
 function buildPipelineItem(key, label, records, options = {}) {
   const latestRecord = getLatestRecord(records, isExecutionLikeRecord)
-  const state =
-    options.treatNoneAsSuccess && records.length === 0
-      ? 'success'
-      : getRecordDisplayState(latestRecord)
+
+  // 优先使用 steps 中的 status
+  let state
+  if (options.stepStatus) {
+    state = stepStatusToDisplayState(options.stepStatus)
+  } else if (options.treatNoneAsSuccess && records.length === 0) {
+    state = 'success'
+  } else {
+    state = getRecordDisplayState(latestRecord)
+  }
 
   return {
     key,
     label,
     state,
-    runId: latestRecord?.runId || options.fallbackRunId || '',
+    runId: options.stepRunId || latestRecord?.runId || options.fallbackRunId || '',
     text: getPipelineText(state, latestRecord, options)
   }
 }

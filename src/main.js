@@ -26,6 +26,51 @@ import angularJSBridge from '@/services/angularjs-bridge'
 import '@/styles/main.scss'
 // 延迟加载非关键样式，减少首屏阻塞
 
+const ASSET_REFRESH_MARKER_KEY = 'opsmind:asset-refresh-at'
+const ASSET_REFRESH_WINDOW_MS = 15000
+
+function isStaleAssetError(errorLike) {
+  const message = String(errorLike?.message || errorLike?.reason?.message || errorLike || '')
+  return (
+    message.includes('ChunkLoadError') ||
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('Importing a module script failed') ||
+    message.includes('Unable to preload CSS')
+  )
+}
+
+function maybeReloadForUpdatedAssets() {
+  try {
+    const now = Date.now()
+    const lastRefreshAt = Number(sessionStorage.getItem(ASSET_REFRESH_MARKER_KEY) || '0')
+
+    if (lastRefreshAt && now - lastRefreshAt < ASSET_REFRESH_WINDOW_MS) {
+      ElMessage.error('检测到页面资源版本不一致，请手动刷新页面')
+      return false
+    }
+
+    sessionStorage.setItem(ASSET_REFRESH_MARKER_KEY, String(now))
+    ElMessage.warning('检测到前端已更新，正在刷新页面以加载最新资源')
+    window.setTimeout(() => window.location.reload(), 150)
+    return true
+  } catch {
+    window.location.reload()
+    return true
+  }
+}
+
+window.addEventListener('error', (event) => {
+  if (isStaleAssetError(event?.error || event?.message)) {
+    maybeReloadForUpdatedAssets()
+  }
+})
+
+window.addEventListener('unhandledrejection', (event) => {
+  if (isStaleAssetError(event?.reason)) {
+    maybeReloadForUpdatedAssets()
+  }
+})
+
 // 统一设置浏览器 Tab 图标（favicon）为 src/assets/icons/logo-opsmind@2x.png
 try {
   const faviconHref = new URL('@/assets/icons/logo-opsmind@2x.png', import.meta.url).href
