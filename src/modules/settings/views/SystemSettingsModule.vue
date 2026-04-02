@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-// 系统设置模块 - 侧边菜单已提升至 MainLayout
+// 系统设置模块内容容器，由 SettingsGroupLayout 提供分组侧边菜单
 </script>
 
 <style scoped lang="scss">

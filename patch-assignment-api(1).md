@@ -5,13 +5,21 @@
 
 ## 功能说明
 
-超级管理员按 **补丁 + 机器** 维度将操作权限分配给目标账户，设定有效时间（若干小时或永久）。被分配的用户登录后：
+超级管理员从 **所有机器的扫描记录** 出发，按 **补丁 + 机器** 维度将操作权限分配给目标账户。
 
-- **补丁仓库**：只能看到被分配且未过期的补丁（按分配的机器数统计）
+### 分配流程
+
+1. 管理员调用 `GET /available-patches` — 从扫描结果中列出每个补丁及其影响的机器列表
+2. 管理员逐个补丁选择目标机器和目标用户，调用 `POST /assignment` — 将补丁+机器组合分配给目标用户
+
+> 注意：分配数据来源是 `vap2_curr_machine_patch`（扫描结果表），不是补丁仓库。只有扫描中实际检测到的 (patch_id, host_id) 组合才能被分配。
+
+### 权限效果
+
+- **补丁仓库**：普通用户只能看到被分配且未过期的补丁（按分配的机器数统计）
 - **补丁安装**：只能对被分配的补丁+机器组合发起安装/回滚任务
 - **任务列表**：普通用户只能看到自己创建的任务
 - 用户没有任何有效分配记录时，补丁仓库和安装页面为空（需管理员先分配）
-- 分配只能引用扫描结果中实际存在的 (patch_id, host_id) 组合，防止无效分配
 - 分配过期后，限制自动解除
 
 ---
@@ -213,27 +221,64 @@ GET /api/vap/v2/patch/assignment/list?userLogin=zhangsan&page=0&size=10
 
 ---
 
-## 7. 查询补丁影响的机器列表
+## 7. 查询可分配的补丁列表（基于扫描结果，分页）
 
-**GET** `/api/vap/v2/patch/assignment/available-hosts?patchId=RHSA-2026-0001`
+**GET** `/api/vap/v2/patch/assignment/available-patches?page=0&size=20`
 
-管理员分配前调用，查看某个补丁影响了哪些机器（基于扫描结果），辅助选择分配目标。
+管理员分配入口。从所有机器的扫描记录（`vap2_curr_machine_patch`）中分页列出补丁，每条补丁包含影响的机器列表，按影响机器数倒序排列。
 
 ### 请求参数
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| patchId | String | 是 | 补丁ID |
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| page | int | 否 | 0 | 页码（从0开始） |
+| size | int | 否 | 20 | 每页条数 |
 
 ### 成功响应 `200`
 
 ```json
-[
-  { "host_id": "host-001", "host_key": "192.168.1.10" },
-  { "host_id": "host-002", "host_key": "192.168.1.11" },
-  { "host_id": "host-003", "host_key": "10.0.0.5" }
-]
+{
+  "content": [
+    {
+      "patchId": "RHSA-2026-0001",
+      "patchName": "Security Update for OpenSSL",
+      "severity": "Critical",
+      "hostCount": 12,
+      "hosts": [
+        { "hostId": "host-001", "hostKey": "192.168.1.10" },
+        { "hostId": "host-002", "hostKey": "192.168.1.11" }
+      ]
+    },
+    {
+      "patchId": "KYSA-2026-0015",
+      "patchName": "Kylin Security Advisory",
+      "severity": "Important",
+      "hostCount": 5,
+      "hosts": [
+        { "hostId": "host-003", "hostKey": "10.0.0.5" }
+      ]
+    }
+  ],
+  "totalElements": 48,
+  "totalPages": 3,
+  "size": 20,
+  "number": 0
+}
 ```
+
+| 字段 | 说明 |
+|------|------|
+| content[].patchId | 补丁ID |
+| content[].patchName | 补丁名称（来自 vap2_patch.title，可能为 null） |
+| content[].severity | 严重程度（Critical/Important/Moderate/Low，可能为 null） |
+| content[].hostCount | 该补丁影响的机器总数 |
+| content[].hosts | 该补丁影响的机器列表 |
+| content[].hosts[].hostId | 机器ID（对应 acm_ci.id，分配和任务创建时使用此值） |
+| content[].hosts[].hostKey | 机器标识（如 IP 地址，仅供展示） |
+| totalElements | 总补丁数 |
+| totalPages | 总页数 |
+| size | 每页条数 |
+| number | 当前页码 |
 
 ---
 

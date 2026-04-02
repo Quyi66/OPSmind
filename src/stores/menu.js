@@ -33,7 +33,7 @@ export const useMenuStore = defineStore('menu', () => {
   const recentItems = ref(loadRecent()) // 最近使用功能
   const previousPath = ref('') // 打开独立页面前的路径，用于关闭时返回
   // 独立页面（不属于任何分组的内嵌页），打开时隐藏左侧二级菜单
-  const STANDALONE_ITEMS = ['settings', 'ssc']
+  const STANDALONE_ITEMS = ['settings']
 
   // 计算属性
   const currentGroup = computed(() => {
@@ -160,12 +160,12 @@ export const useMenuStore = defineStore('menu', () => {
       return
     }
 
-    // 处理独立页面（ssc, settings 等）
-    // 支持子路径如 /ssc/user
+    // 处理独立页面（settings 等）
     const firstPart = clean.split('/')[0]
     if (STANDALONE_ITEMS.includes(firstPart)) {
       activeMenuItem.value = firstPart
-      activeGroup.value = '' // 清除分组高亮，避免之前选中的分组继续显示高亮
+      const standaloneInfo = getMenuItemInfo(firstPart)
+      activeGroup.value = standaloneInfo?.group?.code || ''
       showSideMenu.value = false
       return
     }

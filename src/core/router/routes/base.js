@@ -327,15 +327,15 @@ export const baseRoutes = [
     ]
   },
 
-  // ========== 系统设置（独立分组） ==========
+  // ========== 系统设置分组 (ssc) ==========
   {
     path: '/ssc',
     component: MainLayout,
     meta: {
       requiresAuth: true,
       moduleType: 'vue-native',
-      moduleCode: 'ssc',
-      showModuleToolbar: true
+      groupCode: 'system-settings',
+      moduleCode: 'ssc'
     },
     children: [
       {

@@ -23,24 +23,18 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
 import RouteLoadingFallback from '@/components/common/RouteLoadingFallback.vue'
 import { useRouteLoading } from '@/core/router/loading.js'
-import { SSC_NAV_ITEMS } from '@/config/module-nav.config.js'
+import { MENU_CONFIG } from '@/config/menu.config.js'
+import { getGroupMenuConfig } from '@/config/module-nav.config.js'
 
 const { isLoading } = useRouteLoading()
 
 const defaultOpeneds = ['ssc']
 
-// 系统设置是独立模块，不属于任何分组，直接使用SSC_NAV_ITEMS
-const menuGroups = [
-  {
-    code: 'ssc',
-    name: '系统管理',
-    icon: 'fas fa-cog',
-    children: SSC_NAV_ITEMS
-  }
-]
+const menuGroups = computed(() => getGroupMenuConfig('system-settings', MENU_CONFIG))
 </script>
 
 <style scoped lang="scss">
@@ -59,11 +53,9 @@ const menuGroups = [
   flex: 1;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
   background: var(--el-bg-color);
   position: relative;
-  display: flex;
-  flex-direction: column;
 }
 
 // 加载遮罩层

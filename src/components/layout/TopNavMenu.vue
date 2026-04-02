@@ -72,7 +72,7 @@
         <!-- Right Side User Area -->
         <div class="nav-right">
           <!-- AI OPS Button -->
-          <el-tooltip content="AI OPS" placement="bottom">
+          <el-tooltip content="AI OPS" placement="bottom" :popper-options="headerTooltipPopperOptions">
             <div class="ai-ops-wrapper" @mouseenter="prewarmAiOps" @click="handleAiOpsClick">
               <img :src="aiOpsIcon" alt="AI OPS" class="ai-ops-simple" />
             </div>
@@ -84,7 +84,7 @@
             @count-change="handleNotificationCountChange"
           >
             <div class="notification-wrapper">
-              <el-tooltip content="通知" placement="bottom" :disabled="notificationPopoverVisible">
+              <el-tooltip content="通知" placement="bottom" :disabled="notificationPopoverVisible" :popper-options="headerTooltipPopperOptions">
                 <button class="notification-btn" aria-label="通知">
                   <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -137,24 +137,11 @@
           </el-dropdown>
 
           <!-- Theme Switch Button -->
-          <el-tooltip :content="isDark ? '切换日间模式' : '切换夜间模式'" placement="bottom">
+          <el-tooltip :content="isDark ? '切换日间模式' : '切换夜间模式'" placement="bottom" :popper-options="headerTooltipPopperOptions">
             <button @click="toggleDark($event)" class="menu-action-btn">
               <el-icon>
                 <Sunny v-if="isDark" />
                 <Moon v-else />
-              </el-icon>
-            </button>
-          </el-tooltip>
-
-          <!-- Settings Button -->
-          <el-tooltip content="设置" placement="bottom">
-            <button
-              @click="handleSettingsClick"
-              class="menu-action-btn"
-              :class="{ 'is-settings-active': isSettingsActive }"
-            >
-              <el-icon>
-                <Setting />
               </el-icon>
             </button>
           </el-tooltip>
@@ -305,7 +292,6 @@ import { useMenuStore } from '@/stores/menu.js'
 import { useDashboardStore } from '@/stores/dashboard'
 import {
   User,
-  Setting,
   SwitchButton,
   InfoFilled,
   Check,
@@ -319,7 +305,6 @@ import { useTheme } from '@/composables/useTheme'
 // 导入菜单图标
 import iconHome from '@/assets/icons/menu/icon-home@2x.png'
 import iconJao from '@/assets/icons/menu/icon-jao@2x.png'
-import iconPatch from '@/assets/icons/menu/icon-patch@2x.png'
 import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
 import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
 import iconUser from '@/assets/icons/menu/icon-user@2x.png'
@@ -351,7 +336,6 @@ const props = defineProps({
 const homeMenu = computed(() => menuStore.homeMenu)
 const menuGroups = computed(() => menuStore.menuGroups)
 const activeGroup = computed(() => menuStore.activeGroup)
-const isSettingsActive = computed(() => menuStore.activeMenuItem === 'ssc')
 
 const accountFullName = ref('')
 const userAvatarUrl = ref('')
@@ -372,6 +356,26 @@ const displayAvatarUrl = computed(() => {
 // 通知相关状态
 const notificationCount = ref(0)
 const notificationPopoverVisible = ref(false)
+
+const headerTooltipPopperOptions = Object.freeze({
+  strategy: 'fixed',
+  modifiers: [
+    {
+      name: 'preventOverflow',
+      options: {
+        boundary: 'viewport',
+        padding: 8
+      }
+    },
+    {
+      name: 'flip',
+      options: {
+        padding: 8,
+        fallbackPlacements: ['bottom', 'top', 'bottom-end', 'bottom-start']
+      }
+    }
+  ]
+})
 
 // 处理通知数量变化
 const handleNotificationCountChange = count => {
@@ -432,7 +436,6 @@ const handleGroupClick = group => {
 const getMenuIcon = groupCode => {
   const iconMap = {
     automation: iconJao,
-    'patch-testing': iconPatch,
     'system-inspection': iconGfs,
     'asset-management': iconAsset,
     'user-management': iconUser
@@ -502,14 +505,6 @@ const handleLogout = async () => {
 
 const handleClearHighlight = () => {
   menuStore.clearActiveMenu()
-}
-
-// 处理设置按钮点击
-const handleSettingsClick = () => {
-  // 顶部“设置”按钮：通过 Inline Iframe 打开 /#/ssc
-  try {
-    menuStore.setActiveMenuItem('ssc')
-  } catch (e) {}
 }
 
 // Dify runtime token: prefer URL param, then runtime-config.js, then env; no hardcoded fallback
@@ -882,6 +877,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
   /* 与内容区对齐：左右内边距与主容器一致；进一步减小高度 */
   padding: 0.25rem 1rem;
   /* 再次收紧垂直间距 */
@@ -929,6 +925,17 @@ onUnmounted(() => {
   display: none;
   align-items: center;
   gap: 0.25rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.125rem 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   @media (min-width: 768px) {
     display: flex;
@@ -947,6 +954,7 @@ onUnmounted(() => {
   color: var(--el-text-color-regular);
   transition: all 0.2s ease-in-out;
   white-space: nowrap;
+  flex: 0 0 auto;
 
   &:hover {
     color: var(--el-text-color-primary);
@@ -1013,6 +1021,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.25rem;
   flex-shrink: 0;
+  margin-left: auto;
 
   @media (min-width: 640px) {
     gap: 0.5rem;
@@ -1111,11 +1120,6 @@ onUnmounted(() => {
     background: var(--el-fill-color-light);
   }
 
-  &.is-settings-active {
-    color: #f97316;
-    background: var(--el-color-warning-light-9);
-  }
-
   .el-icon {
     font-size: 1.25rem;
     /* 放大内部图标 */
@@ -1180,6 +1184,55 @@ onUnmounted(() => {
 
   @media (min-width: 640px) {
     display: inline;
+  }
+}
+
+@media (max-width: 1440px) {
+  .nav-left {
+    gap: 1rem;
+  }
+
+  .nav-menu {
+    gap: 0.125rem;
+  }
+
+  .nav-item {
+    gap: 0.375rem;
+    padding: 0.25rem 0.375rem;
+    margin: 0 0.125rem;
+  }
+
+  .nav-text,
+  .user-name {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 1280px) {
+  .nav-container {
+    gap: 0.5rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .nav-left {
+    gap: 0.75rem;
+  }
+
+  .nav-item {
+    padding: 0.25rem 0.3125rem;
+  }
+
+  .nav-text {
+    font-size: 0.8125rem;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .nav-right {
+    gap: 0.25rem;
   }
 }
 

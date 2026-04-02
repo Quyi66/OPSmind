@@ -57,23 +57,6 @@ MENU_CONFIG.groups.forEach(group => {
   })
 })
 
-// 手动添加 ssc（系统设置）模块，因为它不在 MENU_CONFIG 中
-const sscLoader = moduleComponentLoaders['ssc']
-if (sscLoader) {
-  moduleRegistry['ssc'] = {
-    code: 'ssc',
-    name: '系统设置',
-    title: '系统设置',
-    groupCode: 'system',
-    description: '系统设置中心',
-    icon: 'fa-cog',
-    path: 'ssc',
-    loader: sscLoader,
-    moduleType: 'vue-native',
-    status: 'ready'
-  }
-}
-
 export const moduleRegistryEntries: ModuleRegistryEntry[] = Object.values(moduleRegistry)
 
 export function getModuleDefinition(code: string): ModuleRegistryEntry | null {

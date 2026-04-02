@@ -61,12 +61,11 @@ const moduleTitleFromRoute = computed(() => {
 const isHomeRoute = computed(() => route.path === '/home' || route.path === '/')
 
 // 是否展示设置相关的模块工具栏
-const showModuleToolbar = computed(() => ['settings', 'ssc'].includes(activeMenuItem.value))
+const showModuleToolbar = computed(() => activeMenuItem.value === 'settings')
 
-// 标题文本：settings -> 个人资料；ssc -> 系统设置
+// 标题文本：settings -> 个人资料
 const moduleTitleText = computed(() => {
   if (activeMenuItem.value === 'settings') return '个人资料'
-  if (activeMenuItem.value === 'ssc') return '系统设置'
   return ''
 })
 

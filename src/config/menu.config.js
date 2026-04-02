@@ -47,7 +47,7 @@ export const MENU_CONFIG = {
     {
       code: 'patch-testing',
       name: '补丁漏洞',
-      icon: 'fas fa-shield-alt',
+      icon: 'fas fa-shield-virus',
       description: '补丁测试和漏洞管理',
       children: [
         {
@@ -157,6 +157,20 @@ export const MENU_CONFIG = {
           description: '用户账户和权限管理'
         }
       ]
+    },
+    {
+      code: 'system-settings',
+      name: '系统设置',
+      icon: 'fas fa-cogs',
+      description: '系统配置与平台管理',
+      children: [
+        {
+          code: 'ssc',
+          name: '系统设置',
+          icon: 'fas fa-cogs',
+          description: '系统配置与平台管理'
+        }
+      ]
     }
   ]
 }
@@ -170,6 +184,7 @@ export const GROUP_ALIAS_MAP = {
   'flow-management': 'flow',
   'security-management': 'sec',
   'user-management': 'um',
+  'system-settings': 'sys',
   home: 'home'
 }
 
