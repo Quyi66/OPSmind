@@ -112,13 +112,26 @@ export const getExecuteResult = (runId) => {
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
 
 const normalizeRecords = (payload) => {
+  if (!payload) {
+    return { records: [], total: 0 }
+  }
   if (Array.isArray(payload)) {
     return { records: payload, total: payload.length }
   }
   if (payload && Array.isArray(payload.records)) {
-    return payload
+    return {
+      ...payload,
+      total: payload.total ?? payload.totalElements ?? payload.records.length
+    }
   }
-  return payload || { records: [], total: 0 }
+  if (Array.isArray(payload.content)) {
+    return {
+      ...payload,
+      records: payload.content,
+      total: payload.total ?? payload.totalElements ?? payload.content.length
+    }
+  }
+  return payload
 }
 
 const wrapRecordsResponse = (response) => ({
@@ -335,15 +348,17 @@ export const queryAcmInstances = (params) => {
     dataType = 'auto'
   } = params;
   // ACM_GET_CI_BY_SELECTOR → POST /acm/api/acm/ci/list-by-groups-tags
-  return useApi().post('/acm/api/acm/ci/list-by-groups-tags', {
-    assetType: ciType,
-    groups,
-    tags,
-    dynamicTags,
-    dataType,
-    page,
-    size: pageSize
-  });
+  return useApi()
+    .post('/acm/api/acm/ci/list-by-groups-tags', {
+      assetType: ciType,
+      groups,
+      tags,
+      dynamicTags,
+      dataType,
+      page,
+      size: pageSize
+    })
+    .then(wrapRecordsResponse);
 }
 
 /** 查询分组树视图 */

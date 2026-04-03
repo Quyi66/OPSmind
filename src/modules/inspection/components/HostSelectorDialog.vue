@@ -448,25 +448,31 @@ async function loadHostData() {
       })
       .catch(() => null)
 
-    if (res?.data?.records || res?.records) {
-      const list = res.data?.records || res.records || []
-      allHosts.value = list.map(h => ({
-        id: h.id,
-        key: h.id,
-        value: h.IP || h.ip,
-        ip: h.IP || h.ip,
-        hostname: h.hostname || h.name,
-        os: h.os_distro || h.os,
-        osVersion: h.os_version || h.osVersion,
-        status: h.CONN_LATEST_STATUS === 1 || h.status === 1 ? 'online' : 'offline',
-        connectRate: h.CONN_RATE ? `${h.CONN_RATE}%` : '',
-        owner: h['负责人'] || h.owner,
-        systemName: h['系统名称'] || h.systemName,
-        groupPath: h.groupPath || h.groups,
-        tags: h.tags,
-        assetType: h.ciType || h.assetType || 'linux'
-      }))
-    }
+    const payload = res?.data?.data ?? res?.data ?? res
+    const list = Array.isArray(payload?.records)
+      ? payload.records
+      : Array.isArray(payload?.content)
+        ? payload.content
+        : Array.isArray(payload)
+          ? payload
+          : []
+
+    allHosts.value = list.map(h => ({
+      id: h.id,
+      key: h.id,
+      value: h.IP || h.ip,
+      ip: h.IP || h.ip,
+      hostname: h.hostname || h.name,
+      os: h.os_distro || h.os,
+      osVersion: h.os_version || h.osVersion,
+      status: h.CONN_LATEST_STATUS === 1 || h.status === 1 ? 'online' : 'offline',
+      connectRate: h.CONN_RATE ? `${h.CONN_RATE}%` : '',
+      owner: h['负责人'] || h.owner,
+      systemName: h['系统名称'] || h.systemName,
+      groupPath: h.groupPath || h.groups,
+      tags: h.tags,
+      assetType: h.ciType || h.assetType || 'linux'
+    }))
 
     // 设置初始选中状态
     setInitialSelection()
