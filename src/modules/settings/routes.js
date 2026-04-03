@@ -3,11 +3,11 @@
  * Single source of truth for router + side nav.
  */
 
-export const SSC_ROUTE_DEFS = [
+export const UAM_ROUTE_DEFS = [
   {
     key: 'user',
     path: 'user',
-    name: 'ssc-user',
+    name: 'uam-user',
     title: '用户管理',
     navLabel: '用户管理',
     icon: 'fas fa-users-cog',
@@ -16,12 +16,15 @@ export const SSC_ROUTE_DEFS = [
   {
     key: 'team',
     path: 'team',
-    name: 'ssc-team',
+    name: 'uam-team',
     title: '团队管理',
     navLabel: '团队管理',
     icon: 'fas fa-sitemap',
     component: () => import('./components/TeamManagement.vue')
-  },
+  }
+]
+
+export const SSC_ROUTE_DEFS = [
   // {
   //   key: 'template',
   //   path: 'template',

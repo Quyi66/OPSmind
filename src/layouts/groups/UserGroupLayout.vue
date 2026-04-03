@@ -36,13 +36,13 @@ const route = useRoute()
 const { isLoading } = useRouteLoading()
 
 // 从路由参数获取当前模块代码
-const currentModuleCode = computed(() => route.params.moduleCode || 'users')
+const currentModuleCode = computed(() => route.params.moduleCode || 'uam')
 
-// 获取"用户管理"分组下的所有模块菜单（用户、流程、sudo权限、密码）
+// 获取"用户管理"分组下的所有模块菜单（用户管理、团队管理）
 const menuGroups = computed(() => getGroupMenuConfig('user-management', MENU_CONFIG))
 
 // 默认展开的菜单
-const defaultOpeneds = ['users', 'flow', 'sudo', 'password']
+const defaultOpeneds = ['uam']
 
 // 提供导航方法给子组件使用（使用当前模块代码）
 function handleNavigate({ view, moduleCode, params = {} }) {

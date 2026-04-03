@@ -27,6 +27,7 @@ const moduleComponentLoaders: Partial<Record<string, AsyncComponentLoader>> = {
   workflow: () => import('@/modules/flow/views/FlowManagementModule.vue'),
   sudo: () => import('@/modules/sudo/views/SudoManagementModule.vue'),
   password: () => import('@/modules/password/views/PasswordManagementModule.vue'),
+  uam: () => import('@/modules/settings/views/SystemSettingsModule.vue'),
   ssc: () => import('@/modules/settings/views/SystemSettingsModule.vue')
   // 其余模块将逐步补充 Vue 实现
 }

@@ -5,6 +5,13 @@ import { useApi } from "@/core/api";
  */
 
 const GFS_REPO = '$tnt'; // 默认租户仓库
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/oplus-portal').replace(/\/$/, '');
+
+function withApiBaseUrl(path) {
+  if (!path) return API_BASE_URL;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+}
 
 /**
  * 获取仓库名称
@@ -221,7 +228,7 @@ export const editFolder = (config, folderName, folderDesc) => {
  * 下载单个文件
  */
 export const downloadFile = (repoType, repo, path, saveFilename) => {
-  const url = `/gfs/api/gfs/v2/${repoType}/r/${getRepo(repo)}/download/${encodeURIComponent(path)}`;
+  const url = withApiBaseUrl(`/gfs/api/gfs/v2/${repoType}/r/${getRepo(repo)}/download/${encodeURIComponent(path)}`);
   const filename = saveFilename || path.substring(path.lastIndexOf('/') + 1);
 
   // 创建隐藏的 a 标签下载
@@ -390,7 +397,7 @@ export const syncFile = (repoType, repo, fileInfo) => {
  * 获取文件下载链接
  */
 export const getFileDownloadUrl = (repoType, repo, path) => {
-  return `/gfs/api/gfs/v2/${repoType}/r/${getRepo(repo)}/download/${encodeURIComponent(path)}`;
+  return withApiBaseUrl(`/gfs/api/gfs/v2/${repoType}/r/${getRepo(repo)}/download/${encodeURIComponent(path)}`);
 }
 
 /**

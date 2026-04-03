@@ -15,7 +15,7 @@ import { JAO_ROUTE_DEFS, GFS_ROUTE_DEFS, CMD_ROUTE_DEFS } from '@/modules/automa
 import { FLOW_ROUTE_DEFS } from '@/modules/flow/routes.js'
 import { SUDO_ROUTE_DEFS } from '@/modules/sudo/routes.js'
 import { PASSWORD_ROUTE_DEFS } from '@/modules/password/routes.js'
-import { SSC_ROUTE_DEFS } from '@/modules/settings/routes.js'
+import { SSC_ROUTE_DEFS, UAM_ROUTE_DEFS } from '@/modules/settings/routes.js'
 
 // 自动化管理 - 作业模块的页面导航
 export const JAO_NAV_ITEMS = JAO_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
@@ -149,6 +149,14 @@ export const SSC_NAV_ITEMS = SSC_ROUTE_DEFS.filter(def => def.navLabel).map(def 
   path: `/ssc/${def.path}`
 }))
 
+// 用户与团队模块的页面导航
+export const UAM_NAV_ITEMS = UAM_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+  key: def.key,
+  label: def.navLabel || def.title,
+  icon: def.icon,
+  path: `/uam/${def.path}`
+}))
+
 /**
  * 模块导航配置映射
  * 键为模块代码，值为该模块的页面导航配置
@@ -168,6 +176,7 @@ export const MODULE_NAV_CONFIG = {
   flow: FLOW_NAV_ITEMS,
   sudo: SUDO_NAV_ITEMS,
   password: PASSWORD_NAV_ITEMS,
+  uam: UAM_NAV_ITEMS,
   ssc: SSC_NAV_ITEMS
 }
 

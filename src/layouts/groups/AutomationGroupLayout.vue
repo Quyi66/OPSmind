@@ -40,11 +40,11 @@ const currentModuleCode = computed(() => route.params.moduleCode || 'jao')
 // 提供给子组件使用
 provide('currentModuleCode', currentModuleCode)
 
-// 获取"自动化管理"分组下的所有模块菜单（作业、脚本、命令）
+// 获取"自动化"分组下的所有模块菜单（作业、脚本、命令、主机用户管理）
 const menuGroups = computed(() => getGroupMenuConfig('automation', MENU_CONFIG))
 
 // 默认展开的菜单（根据当前路由确定）
-const defaultOpeneds = ['jao', 'gfs', 'cmd']
+const defaultOpeneds = ['jao', 'gfs', 'cmd', 'users']
 </script>
 
 <style scoped lang="scss">

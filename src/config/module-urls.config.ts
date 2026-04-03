@@ -185,8 +185,13 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
   },
   // 系统设置中心（自定义 ssc 页面）
   ssc: {
-    entryUrl: '#/ssc/user',
+    entryUrl: '#/ssc/applet',
     description: '系统设置中心',
+    enabled: true
+  },
+  uam: {
+    entryUrl: '#/uam/user',
+    description: '用户与团队管理',
     enabled: true
   },
   // 新增流程（二级功能：#/flow）。保留 workflow 作为别名以兼容

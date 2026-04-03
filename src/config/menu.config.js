@@ -22,7 +22,7 @@ export const MENU_CONFIG = {
       code: 'automation',
       name: '自动化管理',
       icon: 'fas fa-robot',
-      description: '自动化脚本、作业和命令管理',
+      description: '自动化作业、脚本、命令和主机用户管理',
       children: [
         {
           code: 'jao',
@@ -41,6 +41,12 @@ export const MENU_CONFIG = {
           name: '命令中心',
           icon: 'fas fa-terminal',
           description: '系统命令管理和执行'
+        },
+        {
+          code: 'users',
+          name: '主机用户管理',
+          icon: 'fas fa-users',
+          description: '主机用户账户和权限管理'
         }
       ]
     },
@@ -125,8 +131,23 @@ export const MENU_CONFIG = {
       ]
     },
     {
+      code: 'user-management',
+      name: '平台用户管理',
+      icon: 'fas fa-users-cog',
+      description: '平台用户与团队管理',
+      children: [
+        {
+          code: 'uam',
+          name: '用户管理',
+          icon: 'fas fa-users-cog',
+          description: '平台用户与团队管理'
+        }
+      ]
+    },
+    {
       code: 'security-management',
       name: '安全中心',
+      hidden: true,
       icon: 'fas fa-lock',
       description: '系统安全与权限控制',
       children: [
@@ -141,20 +162,6 @@ export const MENU_CONFIG = {
           name: '密码管理',
           icon: 'fas fa-key',
           description: '密码策略和安全管理'
-        }
-      ]
-    },
-    {
-      code: 'user-management',
-      name: '用户管理',
-      icon: 'fas fa-users',
-      description: '用户账户和权限管理',
-      children: [
-        {
-          code: 'users',
-          name: '用户中心',
-          icon: 'fas fa-users',
-          description: '用户账户和权限管理'
         }
       ]
     },
@@ -182,8 +189,8 @@ export const GROUP_ALIAS_MAP = {
   'system-inspection': 'si',
   'asset-management': 'am',
   'flow-management': 'flow',
-  'security-management': 'sec',
   'user-management': 'um',
+  'security-management': 'sec',
   'system-settings': 'sys',
   home: 'home'
 }

@@ -56,12 +56,13 @@ export function buildModuleRoutes() {
 
   // 这些模块已在 base.js 中使用分组布局定义，需要从动态生成中排除
   const skipModules = [
-    'sudo', 'jao', 'cmd', 'gfs',   // 自动化管理分组
+    'sudo', 'jao', 'cmd', 'gfs', 'users', // 自动化分组
     'patches', 'software',          // 补丁漏洞分组
     'cac',                          // 系统巡检分组
     'acm',                          // 资产管理分组
-    'users', 'flow', 'password',    // 用户管理分组
-    'ssc'                           // 系统设置
+    'flow', 'password',             // 其他共享分组
+    'uam',                          // 用户管理分组
+    'ssc'                           // 系统设置分组
   ]
 
   moduleRegistryEntries.forEach(entry => {

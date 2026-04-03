@@ -32,6 +32,7 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
   flow: ['applet:flow'],
   sudo: ['applet:sudo'],
   password: ['applet:pmsv2'],
+  uam: ['applet:uim'],
   ssc: ['applet:uim'],
   admin: ['applet:uim']
 }
@@ -53,7 +54,8 @@ export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   flow: '/flow/list',
   sudo: '/sudo/permission',
   password: '/password/application',
-  ssc: '/ssc/user',
+  uam: '/uam/user',
+  ssc: '/ssc/applet',
   admin: '/admin/assets/auto-config',
   aiops: '/aiops'
 }
@@ -149,11 +151,14 @@ export function canAccessMenuCode(checkPermission: PermissionChecker, menuCode?:
   return requirements.some(requirement => checkPermission(requirement))
 }
 
-export function filterAccessibleMenuGroups<T extends { code: string; children?: Array<{ code: string }> }>(
+export function filterAccessibleMenuGroups<
+  T extends { code: string; hidden?: boolean; children?: Array<{ code: string }> }
+>(
   groups: T[],
   checkPermission: PermissionChecker
 ): T[] {
   return groups
+    .filter(group => !group.hidden)
     .map(group => {
       const children = Array.isArray(group.children)
         ? group.children.filter(child => canAccessMenuCode(checkPermission, child.code))

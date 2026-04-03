@@ -15,7 +15,7 @@ import { JAO_ROUTE_DEFS, GFS_ROUTE_DEFS, CMD_ROUTE_DEFS } from '@/modules/automa
 import { FLOW_ROUTE_DEFS } from '@/modules/flow/routes.js'
 import { SUDO_ROUTE_DEFS } from '@/modules/sudo/routes.js'
 import { PASSWORD_ROUTE_DEFS } from '@/modules/password/routes.js'
-import { SSC_ROUTE_DEFS } from '@/modules/settings/routes.js'
+import { SSC_ROUTE_DEFS, UAM_ROUTE_DEFS } from '@/modules/settings/routes.js'
 
 // 分组布局组件（懒加载）
 const AutomationGroupLayout = () => import('@/layouts/groups/AutomationGroupLayout.vue')
@@ -54,6 +54,7 @@ const cmdChildren = buildModuleChildren(CMD_ROUTE_DEFS, 'cmd')
 const flowChildren = buildModuleChildren(FLOW_ROUTE_DEFS, 'flow')
 const sudoChildren = buildModuleChildren(SUDO_ROUTE_DEFS, 'sudo')
 const passwordChildren = buildModuleChildren(PASSWORD_ROUTE_DEFS, 'password')
+const uamChildren = buildModuleChildren(UAM_ROUTE_DEFS, 'uam')
 const sscChildren = buildModuleChildren(SSC_ROUTE_DEFS, 'ssc')
 
 export const baseRoutes = [
@@ -153,10 +154,10 @@ export const baseRoutes = [
     }
   },
 
-  // ========== 自动化管理分组 (jao, gfs, cmd) ==========
+  // ========== 自动化分组 (jao, gfs, cmd, users) ==========
   // 使用动态路由参数，让同一分组内的模块共享 AutomationGroupLayout
   {
-    path: '/:moduleCode(jao|gfs|cmd)',
+    path: '/:moduleCode(jao|gfs|cmd|users)',
     component: MainLayout,
     meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'automation' },
     children: [
@@ -164,17 +165,23 @@ export const baseRoutes = [
         path: '',
         component: AutomationGroupLayout,
         children: [
-          // jao 模块路由
+          // 自动化分组模块路由
           {
             path: '',
             redirect: to => {
-              const defaults = { jao: '/jao/jobs', gfs: '/gfs/scriptLibrary', cmd: '/cmd/list' }
+              const defaults = {
+                jao: '/jao/jobs',
+                gfs: '/gfs/scriptLibrary',
+                cmd: '/cmd/list',
+                users: '/users/overview'
+              }
               return defaults[to.params.moduleCode] || '/jao/jobs'
             }
           },
           ...jaoChildren,
           ...gfsChildren,
-          ...cmdChildren
+          ...cmdChildren,
+          ...usersChildren
         ]
       }
     ]
@@ -252,28 +259,6 @@ export const baseRoutes = [
     ]
   },
 
-  // ========== 用户管理分组 (users) ==========
-  {
-    path: '/:moduleCode(users)',
-    component: MainLayout,
-    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'user-management' },
-    children: [
-      {
-        path: '',
-        component: UserGroupLayout,
-        children: [
-          // 动态重定向
-          {
-            path: '',
-            redirect: to => '/users/overview'
-          },
-          // users 模块路由
-          ...usersChildren
-        ]
-      }
-    ]
-  },
-
   // ========== 流程管理分组 (flow) ==========
   {
     path: '/:moduleCode(flow)',
@@ -327,6 +312,26 @@ export const baseRoutes = [
     ]
   },
 
+  // ========== 用户管理分组 (uam) ==========
+  {
+    path: '/uam',
+    component: MainLayout,
+    meta: {
+      requiresAuth: true,
+      moduleType: 'vue-native',
+      groupCode: 'user-management',
+      moduleCode: 'uam'
+    },
+    children: [
+      {
+        path: '',
+        component: UserGroupLayout,
+        redirect: '/uam/user',
+        children: [...uamChildren]
+      }
+    ]
+  },
+
   // ========== 系统设置分组 (ssc) ==========
   {
     path: '/ssc',
@@ -341,7 +346,7 @@ export const baseRoutes = [
       {
         path: '',
         component: SettingsGroupLayout,
-        redirect: '/ssc/user',
+        redirect: '/ssc/applet',
         children: [...sscChildren]
       }
     ]

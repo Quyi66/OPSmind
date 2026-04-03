@@ -307,7 +307,6 @@ import iconHome from '@/assets/icons/menu/icon-home@2x.png'
 import iconJao from '@/assets/icons/menu/icon-jao@2x.png'
 import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
 import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
-import iconUser from '@/assets/icons/menu/icon-user@2x.png'
 // 自绘气泡方案：不直接在当前页注入 Dify 脚本，改为 iframe 承载全屏页
 
 // 导入logo、aiOPS图标和用户头像
@@ -437,8 +436,7 @@ const getMenuIcon = groupCode => {
   const iconMap = {
     automation: iconJao,
     'system-inspection': iconGfs,
-    'asset-management': iconAsset,
-    'user-management': iconUser
+    'asset-management': iconAsset
   }
   return iconMap[groupCode]
 }
