@@ -11,6 +11,7 @@ const PANEL_IDS = {
 
 const PANEL_CLASSES = {
   handle: 'ops-dify-bubble-resize-handle',
+  handleLeft: 'ops-dify-bubble-resize-left',
   handleRight: 'ops-dify-bubble-resize-right',
   handleBottom: 'ops-dify-bubble-resize-bottom',
   handleCorner: 'ops-dify-bubble-resize-corner'
@@ -18,6 +19,7 @@ const PANEL_CLASSES = {
 
 const DEFAULT_TITLE = 'AI OPS'
 const DEFAULT_DIFY_TOKEN = 'tRnUImvfrP77TFr0'
+const PANEL_STORAGE_KEY = 'ops-ai-ops-panel-state'
 const MIN_PANEL_WIDTH = 360
 const MIN_PANEL_HEIGHT = 280
 const DEFAULT_PANEL_MAX_WIDTH = 480
@@ -120,6 +122,49 @@ function getDefaultHeight(top) {
   return Math.max(Math.min(MIN_PANEL_HEIGHT, availableHeight), availableHeight)
 }
 
+function readPersistedPanelState() {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const rawValue = window.localStorage.getItem(PANEL_STORAGE_KEY)
+    if (!rawValue) return null
+
+    const state = JSON.parse(rawValue)
+    if (!state || typeof state !== 'object') return null
+
+    const top = parseNumeric(state.top, getTopNavHeight())
+
+    return {
+      left: parseNumeric(state.left, 0),
+      top,
+      width: parseNumeric(state.width, getDefaultWidth()),
+      height: parseNumeric(state.height, getDefaultHeight(top)),
+      positionCustomized: state.positionCustomized === true,
+      sizeCustomized: state.sizeCustomized === true
+    }
+  } catch {
+    return null
+  }
+}
+
+function persistPanelState(panel) {
+  if (!panel || typeof window === 'undefined') return
+
+  try {
+    const top = parseNumeric(panel.style.top, getTopNavHeight())
+    const width = parseNumeric(panel.style.width, getDefaultWidth())
+    const state = {
+      left: parseNumeric(panel.style.left, Math.max(0, window.innerWidth - width)),
+      top,
+      width,
+      height: parseNumeric(panel.style.height, getDefaultHeight(top)),
+      positionCustomized: panel.dataset.positionCustomized === 'true',
+      sizeCustomized: panel.dataset.sizeCustomized === 'true'
+    }
+    window.localStorage.setItem(PANEL_STORAGE_KEY, JSON.stringify(state))
+  } catch {}
+}
+
 function getPanelElements() {
   const panel = document.getElementById(PANEL_IDS.panel)
   if (!panel) return null
@@ -177,34 +222,63 @@ function syncAiOpsPanelLayout(options = {}) {
   if (!elements) return
 
   const { panel } = elements
-  const useDefaultPosition = resetPosition || panel.dataset.positionCustomized !== 'true'
-  const useDefaultSize = resetSize || panel.dataset.sizeCustomized !== 'true'
+  const persistedState = readPersistedPanelState()
+  const usePersistedPosition =
+    !resetPosition && panel.dataset.positionCustomized !== 'true' && persistedState?.positionCustomized === true
+  const usePersistedSize =
+    !resetSize && panel.dataset.sizeCustomized !== 'true' && persistedState?.sizeCustomized === true
+  const useDefaultPosition = !usePersistedPosition && (resetPosition || panel.dataset.positionCustomized !== 'true')
+  const useDefaultSize = !usePersistedSize && (resetSize || panel.dataset.sizeCustomized !== 'true')
 
   const defaultWidth = getDefaultWidth()
   const defaultTop = getTopNavHeight()
-  const currentWidth = useDefaultSize ? defaultWidth : parseNumeric(panel.style.width, defaultWidth)
+  const currentWidth = usePersistedSize
+    ? persistedState.width
+    : useDefaultSize
+      ? defaultWidth
+      : parseNumeric(panel.style.width, defaultWidth)
   const currentLeft = useDefaultPosition
     ? Math.max(0, window.innerWidth - currentWidth)
-    : parseNumeric(panel.style.left, Math.max(0, window.innerWidth - currentWidth))
-  const currentTop = useDefaultPosition ? defaultTop : parseNumeric(panel.style.top, defaultTop)
-  const currentHeight = useDefaultSize
-    ? getDefaultHeight(currentTop)
-    : parseNumeric(panel.style.height, getDefaultHeight(currentTop))
+    : usePersistedPosition
+      ? persistedState.left
+      : parseNumeric(panel.style.left, Math.max(0, window.innerWidth - currentWidth))
+  const currentTop = useDefaultPosition
+    ? defaultTop
+    : usePersistedPosition
+      ? persistedState.top
+      : parseNumeric(panel.style.top, defaultTop)
+  const currentHeight = usePersistedSize
+    ? persistedState.height
+    : useDefaultSize
+      ? getDefaultHeight(currentTop)
+      : parseNumeric(panel.style.height, getDefaultHeight(currentTop))
 
-  applyPanelGeometry(
-    panel,
-    normalizePanelGeometry({
-      left: currentLeft,
-      top: currentTop,
-      width: currentWidth,
-      height: currentHeight
-    })
-  )
+  const nextGeometry = normalizePanelGeometry({
+    left: currentLeft,
+    top: currentTop,
+    width: currentWidth,
+    height: currentHeight
+  })
+
+  applyPanelGeometry(panel, nextGeometry)
+
+  if (usePersistedPosition) {
+    panel.dataset.positionCustomized = 'true'
+  }
+
+  if (usePersistedSize) {
+    panel.dataset.sizeCustomized = 'true'
+  }
+
+  if (panel.dataset.positionCustomized === 'true' || panel.dataset.sizeCustomized === 'true') {
+    persistPanelState(panel)
+  }
 }
 
 function closeAiOpsPanel() {
   const panel = document.getElementById(PANEL_IDS.panel)
   if (panel) {
+    persistPanelState(panel)
     panel.classList.remove('visible')
   }
 }
@@ -217,6 +291,7 @@ function stopInteraction() {
   if (panel) {
     panel.classList.remove('dragging')
     panel.classList.remove('resizing')
+    persistPanelState(panel)
   }
 
   if (typeof document !== 'undefined') {
@@ -247,8 +322,15 @@ function updatePanelOnPointerMove(event) {
   }
 
   if (interactionState.mode === 'resize') {
+    let nextLeft = interactionState.startLeft
     let nextWidth = interactionState.startWidth
     let nextHeight = interactionState.startHeight
+
+    if (interactionState.direction.includes('left')) {
+      const maxLeft = interactionState.startLeft + interactionState.startWidth - MIN_PANEL_WIDTH
+      nextLeft = clampValue(interactionState.startLeft + deltaX, 0, Math.max(0, maxLeft))
+      nextWidth = interactionState.startLeft + interactionState.startWidth - nextLeft
+    }
 
     if (interactionState.direction.includes('right')) {
       nextWidth += deltaX
@@ -261,12 +343,15 @@ function updatePanelOnPointerMove(event) {
     applyPanelGeometry(
       panel,
       normalizePanelGeometry({
-        left: interactionState.startLeft,
+        left: nextLeft,
         top: interactionState.startTop,
         width: nextWidth,
         height: nextHeight
       })
     )
+    if (interactionState.direction.includes('left')) {
+      panel.dataset.positionCustomized = 'true'
+    }
     panel.dataset.sizeCustomized = 'true'
   }
 }
@@ -453,6 +538,13 @@ function injectPanelStyle() {
       z-index: 3;
       touch-action: none;
     }
+    .${PANEL_CLASSES.handleLeft} {
+      top: 52px;
+      left: 0;
+      bottom: 14px;
+      width: 10px;
+      cursor: ew-resize;
+    }
     .${PANEL_CLASSES.handleRight} {
       top: 52px;
       right: 0;
@@ -512,6 +604,7 @@ function buildPanelShell(titleText) {
 
   panel.appendChild(header)
   panel.appendChild(body)
+  panel.appendChild(createResizeHandle('left', PANEL_CLASSES.handleLeft))
   panel.appendChild(createResizeHandle('right', PANEL_CLASSES.handleRight))
   panel.appendChild(createResizeHandle('bottom', PANEL_CLASSES.handleBottom))
   panel.appendChild(createResizeHandle('bottom-right', PANEL_CLASSES.handleCorner))
@@ -622,7 +715,7 @@ function ensureAiOpsPanel(options = {}) {
   document.body.appendChild(elements.root)
   mountAiOpsPanelEvents(elements)
   syncIframeContent()
-  syncAiOpsPanelLayout({ resetPosition: true, resetSize: true })
+  syncAiOpsPanelLayout()
   return elements
 }
 
