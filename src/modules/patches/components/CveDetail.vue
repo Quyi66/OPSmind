@@ -141,7 +141,7 @@
                     :key="item.key"
                     class="modern-stat-block"
                     :class="'is-' + (item.type || 'default')"
-                    @click="setPackageFilter(item.key)"
+                    @click="setPackageFilter(item.label)"
                   >
                     <div class="stat-header">
                       <div class="stat-label">{{ item.label }}</div>
@@ -188,12 +188,12 @@
               </el-radio-group>
 
               <el-radio-group v-model="packageFilter" size="small">
-                <el-radio-button label="all">全部</el-radio-button>
-                <el-radio-button label="affected">受影响</el-radio-button>
-                <el-radio-button label="fix_deferred">延迟修复</el-radio-button>
-                <el-radio-button label="fixed">已修复</el-radio-button>
-                <el-radio-button label="not_affected">不受影响</el-radio-button>
-                <el-radio-button label="will_not_fix">不修复</el-radio-button>
+                <el-radio-button label="全部">全部</el-radio-button>
+                <el-radio-button label="受影响">受影响</el-radio-button>
+                <el-radio-button label="延迟修复">延迟修复</el-radio-button>
+                <el-radio-button label="已修复">已修复</el-radio-button>
+                <el-radio-button label="不受影响">不受影响</el-radio-button>
+                <el-radio-button label="不修复">不修复</el-radio-button>
               </el-radio-group>
             </div>
             <div class="ops-table-wrapper">
@@ -385,7 +385,7 @@ const currentSource = ref(null)
 const allPackages = ref([])
 const loading = ref(true)
 const activeTab = ref('basic')
-const packageFilter = ref('all')
+const packageFilter = ref('全部')
 const systemFilter = ref('all')
 const affectedHosts = ref([])
 const affectedHostsTotal = ref(0)
@@ -413,7 +413,7 @@ const filteredPackages = computed(() => {
   }
 
   // 状态筛选
-  if (packageFilter.value !== 'all') {
+  if (packageFilter.value !== '全部') {
     list = list.filter(pkg => pkg.normalizedStatus === packageFilter.value)
   }
 
@@ -610,7 +610,7 @@ function goBack() {
 
 // 设置软件包筛选条件
 function setPackageFilter(filter) {
-  packageFilter.value = filter
+  packageFilter.value = filter === '总计' ? '全部' : filter
   activeTab.value = 'packages'
 }
 
@@ -897,7 +897,7 @@ watch(
   newId => {
     if (newId) {
       affectedHostsLoaded.value = false
-      packageFilter.value = 'all'
+      packageFilter.value = '全部'
       systemFilter.value = 'all'
       activeTab.value = 'basic'
       loadCveDetail()

@@ -84,7 +84,12 @@
             @count-change="handleNotificationCountChange"
           >
             <div class="notification-wrapper">
-              <el-tooltip content="通知" placement="bottom" :disabled="notificationPopoverVisible" :popper-options="headerTooltipPopperOptions">
+              <el-tooltip
+                content="通知"
+                placement="bottom"
+                :disabled="notificationPopoverVisible"
+                :popper-options="headerTooltipPopperOptions"
+              >
                 <button class="notification-btn" aria-label="通知">
                   <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -137,7 +142,11 @@
           </el-dropdown>
 
           <!-- Theme Switch Button -->
-          <el-tooltip :content="isDark ? '切换日间模式' : '切换夜间模式'" placement="bottom" :popper-options="headerTooltipPopperOptions">
+          <el-tooltip
+            :content="isDark ? '切换日间模式' : '切换夜间模式'"
+            placement="bottom"
+            :popper-options="headerTooltipPopperOptions"
+          >
             <button @click="toggleDark($event)" class="menu-action-btn">
               <el-icon>
                 <Sunny v-if="isDark" />
@@ -301,13 +310,13 @@ import {
 } from '@element-plus/icons-vue'
 import NotificationPopover from '@/components/layout/NotificationPopover.vue'
 import { useTheme } from '@/composables/useTheme'
+import { toggleAiOpsPanel, prewarmAiOpsPanel, disposeAiOpsPanel } from '@/utils/ai-ops-panel'
 
 // 导入菜单图标
 import iconHome from '@/assets/icons/menu/icon-home@2x.png'
 import iconJao from '@/assets/icons/menu/icon-jao@2x.png'
 import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
 import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
-// 自绘气泡方案：不直接在当前页注入 Dify 脚本，改为 iframe 承载全屏页
 
 // 导入logo、aiOPS图标和用户头像
 import logoImage from '@/assets/icons/logo@2x.png'
@@ -341,18 +350,16 @@ const userAvatarUrl = ref('')
 
 const displayUserName = computed(() => {
   if (accountFullName.value) return accountFullName.value
-  const u = props.user || authService.getCurrentUser() || null
-  if (!u) return '未登录'
-  return u.fullName || u.firstName || u.name || u.login || '用户'
+  const user = props.user || authService.getCurrentUser() || null
+  if (!user) return '未登录'
+  return user.fullName || user.firstName || user.name || user.login || '用户'
 })
 
-// 计算头像URL：优先使用用户上传的头像，否则使用默认头像
 const displayAvatarUrl = computed(() => {
   if (!userAvatarUrl.value) return avatarImage
   return '/oplus-upload' + userAvatarUrl.value
 })
 
-// 通知相关状态
 const notificationCount = ref(0)
 const notificationPopoverVisible = ref(false)
 
@@ -376,62 +383,48 @@ const headerTooltipPopperOptions = Object.freeze({
   ]
 })
 
-// 处理通知数量变化
 const handleNotificationCountChange = count => {
   notificationCount.value = count
 }
 
-// 移动菜单状态
 const showMobileMenu = ref(false)
-
-// 语言切换状态（暂不真正切换，仅提示开发中）
 const currentLanguage = ref('zh-cn')
 
-// 加载账号信息（优先缓存，再请求；用于显示 fullName 和头像）
 onMounted(async () => {
   try {
-    const acc = accountService.getCached() || (await accountService.getAccount().catch(() => null))
-    if (acc) {
-      if (acc.fullName || acc.login) accountFullName.value = acc.fullName || ''
-      // 设置用户头像（如果有）
-      if (acc.imageUrl) userAvatarUrl.value = acc.imageUrl
+    const account = accountService.getCached() || (await accountService.getAccount().catch(() => null))
+    if (account) {
+      if (account.fullName || account.login) accountFullName.value = account.fullName || ''
+      if (account.imageUrl) userAvatarUrl.value = account.imageUrl
     }
-  } catch (e) {
-    // 忽略错误，保持旧回退逻辑
+  } catch (error) {
+    // 忽略错误，保持回退逻辑
   }
 })
 
-// 处理首页菜单点击
 const handleHomeClick = () => {
-  // 设置首页为激活状态
   menuStore.setHomeActive()
 
-  // 关闭任何打开的iframe弹窗
   const event = new CustomEvent('closeAngularModuleContainer')
   window.dispatchEvent(event)
 
-  // 导航到home页面
   router.push('/home')
 }
 
-// 处理分组菜单点击
 const handleGroupClick = group => {
-  // 如果点击的是当前激活的分组，则切换显示/隐藏左侧菜单
   if (activeGroup.value === group.code) {
     menuStore.toggleSideMenu()
-  } else {
-    // 激活新的分组并导航到默认页面
-    menuStore.setActiveGroup(group.code)
+    return
+  }
 
-    // 导航到分组的默认页面
-    const defaultRoute = getGroupDefaultRoute(group, permission => authService.hasPermission(permission))
-    if (defaultRoute) {
-      router.push(defaultRoute)
-    }
+  menuStore.setActiveGroup(group.code)
+
+  const defaultRoute = getGroupDefaultRoute(group, permission => authService.hasPermission(permission))
+  if (defaultRoute) {
+    router.push(defaultRoute)
   }
 }
 
-// 获取菜单图标
 const getMenuIcon = groupCode => {
   const iconMap = {
     automation: iconJao,
@@ -443,18 +436,12 @@ const getMenuIcon = groupCode => {
 
 const getMenuIconColor = groupCode => {
   const colorMap = {
-    'flow-management': '#8b5cf6', // Violet
-    'security-management': '#F56C6C' // Red
+    'flow-management': '#8b5cf6',
+    'security-management': '#F56C6C'
   }
   return colorMap[groupCode] || 'currentColor'
 }
 
-// 处理通知点击 - 现由 NotificationPopover 组件处理
-// const handleNotificationClick = () => {
-//   notificationPopoverVisible.value = !notificationPopoverVisible.value
-// }
-
-// 切换移动菜单
 const toggleMobileMenu = () => {
   showMobileMenu.value = !showMobileMenu.value
 }
@@ -462,22 +449,19 @@ const toggleMobileMenu = () => {
 const handleUserCommand = command => {
   switch (command) {
     case 'profile':
-      // 通过 menuStore 打开个人资料页面，自动记录当前路径以便关闭时返回
       menuStore.setActiveMenuItem('settings')
       break
     case 'admin': {
-      // 新开页签进入管理后台 /ops/#/admin，并自动携带 token（便于新 Tab 自动登录）
       try {
         const base = import.meta.env.BASE_URL || '/'
         const token = authService.getToken()
         const tokenParam = appUrlManager.getTokenParam()
-        const q = token ? `?${tokenParam}=${encodeURIComponent(token)}&vue_auth=true` : ''
-        const def = getDefaultAdminTarget()
-        const path = `#/admin/${def.groupCode}/${def.pageCode}`
-        const url = `${base}${q}${path}`
-        window.open(url, '_blank', 'noopener')
-      } catch (e) {
-        console.warn('Failed to open admin page:', e)
+        const query = token ? `?${tokenParam}=${encodeURIComponent(token)}&vue_auth=true` : ''
+        const target = getDefaultAdminTarget()
+        const path = `#/admin/${target.groupCode}/${target.pageCode}`
+        window.open(`${base}${query}${path}`, '_blank', 'noopener')
+      } catch (error) {
+        console.warn('Failed to open admin page:', error)
       }
       break
     }
@@ -490,7 +474,6 @@ const handleUserCommand = command => {
 const handleLogout = async () => {
   try {
     ElMessage.success('正在安全登出...')
-    // 清理账户缓存
     try {
       accountService.clear()
     } catch {}
@@ -505,229 +488,20 @@ const handleClearHighlight = () => {
   menuStore.clearActiveMenu()
 }
 
-// Dify runtime token: prefer URL param, then runtime-config.js, then env; no hardcoded fallback
-const DEFAULT_DIFY_TOKEN = 'tRnUImvfrP77TFr0'
-function getDifyToken() {
-  // 1) URL param
+const handleAiOpsClick = () => {
   try {
-    const urlToken = new URLSearchParams(location.search).get('token')
-    if (urlToken) return urlToken
-  } catch {}
-  // 2) LocalStorage (dev convenience)
-  try {
-    const ls = window.localStorage
-    const keys = ['DIFY_TOKEN', 'ops:dify_token', 'dify:token']
-    for (const k of keys) {
-      const v = ls.getItem(k)
-      if (v) return v
-    }
-  } catch {}
-  // 3) Runtime config
-  try {
-    const rt = window.__OPS_RUNTIME__ || {}
-    if (rt.DIFY_TOKEN) return rt.DIFY_TOKEN
-  } catch {}
-  // 4) Env var
-  try {
-    return import.meta.env.VITE_DIFY_TOKEN || DEFAULT_DIFY_TOKEN
-  } catch {
-    return DEFAULT_DIFY_TOKEN
+    toggleAiOpsPanel({ title: 'AI OPS' })
+  } catch (error) {
+    console.warn('Failed to mount/toggle OPS bubble panel:', error)
   }
 }
 
-// 处理AI OPS按钮点击：显示/隐藏右下角面板（iframe 内为气泡方案页面）
-const handleAiOpsClick = async () => {
-  try {
-    ensureOpsBubble()
-    const panel = document.getElementById('ops-dify-bubble-panel')
-    if (!panel) return
-    if (panel.classList.contains('visible')) {
-      panel.classList.remove('visible')
-    } else {
-      panel.classList.add('visible')
-    }
-  } catch (e) {
-    console.warn('Failed to mount/toggle OPS bubble panel:', e)
-  }
-}
-
-function ensureOpsBubble() {
-  const base = import.meta.env.BASE_URL || '/'
-  const C = {
-    root: 'ops-dify-bubble-root',
-    panel: 'ops-dify-bubble-panel',
-    iframe: 'ops-dify-bubble-iframe',
-    style: 'ops-dify-bubble-style-self'
-  }
-  // 样式（只注入一次）
-  if (!document.getElementById(C.style)) {
-    const style = document.createElement('style')
-    style.id = C.style
-    style.textContent = `
-      #${C.panel} {
-        position: fixed; right: 0; bottom: 16px; top: var(--ops-bubble-top, 64px);
-        width: min(34vw, 30rem);
-        background: var(--el-bg-color); border: none; box-shadow: none; /* match full mode */
-        border-radius: 12px 0 0 12px; overflow: hidden;
-        z-index: 2147483647; display: none; pointer-events: auto;
-      }
-      #${C.panel}.visible { display: block; }
-      #${C.iframe} { width: 100%; height: 100%; border: 0; background: var(--el-bg-color); }
-    `
-    document.head.appendChild(style)
-  }
-  // 根容器
-  if (!document.getElementById(C.root)) {
-    const root = document.createElement('div')
-    root.id = C.root
-    document.body.appendChild(root)
-
-    // 面板 + iframe（在创建的 iframe 文档内直接注入脚本与配置）
-    const panel = document.createElement('div')
-    panel.id = C.panel
-    const iframe = document.createElement('iframe')
-    iframe.id = C.iframe
-    // 仅本地加载，避免跨域与远端依赖
-    const token = getDifyToken()
-    const embedSrc = `${window.location.origin}${base}dify/embed.min.js`
-    const rt = (() => {
-      try {
-        return window.__OPS_RUNTIME__ || {}
-      } catch {
-        return {}
-      }
-    })()
-    const difyBase = String(rt.DIFY_BASE_URL || '').replace(/\/$/, '')
-    iframe.setAttribute('allow', 'fullscreen;microphone')
-    // 使用 srcdoc 注入最小页面，确保聊天框在此 iframe 内创建
-    const tokenJson = JSON.stringify(token || '')
-    const tokenAttr = String(token || '').replace(/"/g, '&quot;')
-    const html = `<!doctype html><html lang="zh-CN"><head>
-      <meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
-      <link rel=\"preconnect\" href=\"${difyBase}\" crossorigin>
-      <style>
-        html,body{height:100%;margin:0;background: var(--el-bg-color);}
-        /* 按钮主色 */
-        #dify-chatbot-bubble-button{ background-color:#1C64F2 !important; }
-        /* 让聊天窗占满 iframe 可视区域 */
-        #dify-chatbot-bubble-window{
-          position: fixed !important;
-          inset: 0 !important;
-          width: 100vw !important;
-          height: 100vh !important;
-          max-width: none !important;
-          max-height: none !important;
-          border-radius: 0 !important;
-          border: none !important;
-          box-shadow: none !important;
-        }
-      </style>
-    </head><body>
-      <script>
-        window.difyChatbotConfig = { token: ${tokenJson}, baseUrl: '${difyBase}', inputs: {}, systemVariables: {}, userVariables: {} }
-      <\/script>
-      <script src=\"${embedSrc}\" id=\"${tokenAttr}\" defer><\/script>
-      <script>
-        (function(){
-          var attempts = 0, max = 60;
-          var timer = setInterval(function(){
-            attempts++;
-            try{
-              if (window.difyChatbot && typeof window.difyChatbot.open === 'function') {
-                window.difyChatbot.open();
-              } else {
-                var btn = document.getElementById('dify-chatbot-bubble-button');
-                if (btn) btn.click();
-              }
-              var win = document.getElementById('dify-chatbot-bubble-window');
-              if (win) {
-                // 打开后隐藏按钮，避免遮挡
-                var btn2 = document.getElementById('dify-chatbot-bubble-button');
-                if (btn2) btn2.style.display = 'none';
-                // 再次确保全屏样式（保险）
-                win.style.position = 'fixed';
-                win.style.inset = '0';
-                win.style.width = '100vw';
-                win.style.height = '100vh';
-                win.style.maxWidth = 'none';
-                win.style.maxHeight = 'none';
-                win.style.borderRadius = '0';
-                win.style.border = 'none';
-                win.style.boxShadow = 'none';
-                clearInterval(timer);
-              }
-            }catch(e){}
-            if (attempts > max) clearInterval(timer);
-          }, 250);
-        })();
-      <\/script>
-    </body></html>`
-    iframe.srcdoc = html
-    panel.appendChild(iframe)
-    root.appendChild(panel)
-    // 计算顶部菜单栏高度，令面板上边缘贴合菜单栏底部
-    function setPanelTopOffset() {
-      try {
-        const header =
-          document.querySelector('.top-nav-header') || document.querySelector('.top-nav-wrapper')
-        const h = header ? header.getBoundingClientRect().height || header.offsetHeight || 0 : 0
-        // 额外预留 8px 间距
-        const top = Math.max(0, Math.round(h + 8))
-        panel.style.top = top + 'px'
-      } catch {}
-    }
-    setPanelTopOffset()
-    window.addEventListener('resize', setPanelTopOffset)
-    window.addEventListener('orientationchange', setPanelTopOffset)
-
-    // 初始不显示；由菜单点击进行显隐切换
-    // ESC 关闭面板（再次点击顶部菜单可重新显示）
-    window.addEventListener('keydown', ev => {
-      if (ev.key === 'Escape') panel.classList.remove('visible')
-    })
-  }
-}
-
-// 预热 AI OPS：预加载本地脚本 + 预连接 Dify 服务
-let aiOpsPrewarmed = false
 function prewarmAiOps() {
-  if (aiOpsPrewarmed) return
-  aiOpsPrewarmed = true
   try {
-    const base = import.meta.env.BASE_URL || '/'
-    const embedHref = `${base}dify/embed.min.js`
-    // Prefer prefetch to avoid preload unused warning if user never opens bot
-    const link = document.createElement('link')
-    link.rel = 'prefetch'
-    link.href = embedHref
-    link.as = 'script'
-    document.head.appendChild(link)
-
-    // Preconnect to Dify base (unified key)
-    const rt = (() => {
-      try {
-        return window.__OPS_RUNTIME__ || {}
-      } catch {
-        return {}
-      }
-    })()
-    const difyBase = String(rt.DIFY_BASE_URL || '').replace(/\/$/, '')
-    if (difyBase) {
-      const preconnect = document.createElement('link')
-      preconnect.rel = 'preconnect'
-      preconnect.href = difyBase
-      preconnect.crossOrigin = ''
-      document.head.appendChild(preconnect)
-
-      const dns = document.createElement('link')
-      dns.rel = 'dns-prefetch'
-      dns.href = difyBase
-      document.head.appendChild(dns)
-    }
+    prewarmAiOpsPanel()
   } catch {}
 }
 
-// 处理关于下拉菜单命令
 const versionDialogVisible = ref(false)
 const versionLoading = ref(false)
 const versionRows = ref([])
@@ -736,7 +510,6 @@ const aboutActiveTab = ref('versions')
 const handleAboutCommand = async command => {
   switch (command) {
     case 'help':
-      // 当前不提供帮助入口，提示开发中
       ElMessage.info('帮助开发中...')
       break
     case 'about':
@@ -749,7 +522,7 @@ async function openVersionDialog() {
   try {
     versionLoading.value = true
     versionDialogVisible.value = true
-    // 按优先级尝试多种可用地址
+
     const candidates = []
     try {
       const angularBase = appUrlManager.getAngularBaseUrl() || '/oplus/base'
@@ -759,25 +532,26 @@ async function openVersionDialog() {
     candidates.push('http://localhost:18080/oplus/base/app/modules/VERSION.json')
 
     let data = null
-    let lastErr = null
+    let lastError = null
     for (const url of candidates) {
       try {
-        const res = await fetch(url, { cache: 'no-cache', mode: 'cors' })
-        if (res.ok) {
-          data = await res.json()
+        const response = await fetch(url, { cache: 'no-cache', mode: 'cors' })
+        if (response.ok) {
+          data = await response.json()
           break
-        } else {
-          lastErr = new Error(`HTTP ${res.status} for ${url}`)
         }
-      } catch (e) {
-        lastErr = e
+        lastError = new Error(`HTTP ${response.status} for ${url}`)
+      } catch (error) {
+        lastError = error
       }
     }
-    if (!data) throw lastErr || new Error('无法获取版本信息')
+
+    if (!data) {
+      throw lastError || new Error('无法获取版本信息')
+    }
 
     const versions = data?.versions || {}
     const builds = data?.builds || {}
-    // 仅展示存在版本信息的条目
     const names = Object.keys(versions).sort()
     versionRows.value = names.map(name => ({
       name,
@@ -785,20 +559,18 @@ async function openVersionDialog() {
       build: builds[name] ? `#${builds[name]}` : '-',
       code: '-'
     }))
-  } catch (e) {
-    console.error('加载版本信息失败:', e)
+  } catch (error) {
+    console.error('加载版本信息失败:', error)
     ElMessage.error('版本信息加载失败')
   } finally {
     versionLoading.value = false
   }
 }
 
-// 处理语言切换（仅提示开发中）
 const handleLanguageCommand = _language => {
   ElMessage.info('语言功能开发中...')
 }
 
-// 监听路由变化，自动设置菜单状态
 watch(
   () => route.path,
   newPath => {
@@ -807,10 +579,8 @@ watch(
   { immediate: true }
 )
 
-// 生命周期
 onMounted(() => {
   window.addEventListener('clearMenuHighlight', handleClearHighlight)
-  // 预热 AI OPS 资源，提升首次打开速度
   try {
     if ('requestIdleCallback' in window) {
       // @ts-ignore
@@ -823,6 +593,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('clearMenuHighlight', handleClearHighlight)
+  disposeAiOpsPanel()
 })
 </script>
 
