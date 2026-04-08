@@ -34,6 +34,61 @@ const normalizeRecords = (payload) => {
   return { records: [], total: 0 }
 }
 
+const normalizeSingleItem = (payload) => {
+  if (!payload) return null
+  if (Array.isArray(payload)) return payload[0] || null
+  if (Array.isArray(payload.records)) return payload.records[0] || null
+  if (Array.isArray(payload.content)) return payload.content[0] || null
+  return payload
+}
+
+const parseStringListValue = (value) => {
+  if (Array.isArray(value)) return value.filter(Boolean)
+  if (typeof value !== 'string' || !value.trim()) return []
+
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : []
+  } catch {
+    return []
+  }
+}
+
+const normalizePagedRecords = (payload) => {
+  if (!payload) {
+    return {
+      records: [],
+      total: 0,
+      content: [],
+      totalElements: 0
+    }
+  }
+
+  if (Array.isArray(payload)) {
+    return {
+      records: payload,
+      total: payload.length,
+      content: payload,
+      totalElements: payload.length
+    }
+  }
+
+  const records = Array.isArray(payload.records)
+    ? payload.records
+    : Array.isArray(payload.content)
+      ? payload.content
+      : []
+  const total = payload.total ?? payload.totalElements ?? records.length
+
+  return {
+    ...payload,
+    records,
+    total,
+    content: Array.isArray(payload.content) ? payload.content : records,
+    totalElements: payload.totalElements ?? total
+  }
+}
+
 /**
  * DTS 数据查询 API
  */
@@ -166,7 +221,7 @@ export const assetApi = {
     if (options.filter !== undefined) body.filter = options.filter
     return apiService
       .post(`${ACM_BASE}/ci/list-asset-selector`, body)
-      .then(res => normalizeRecords(unwrapApiData(res)))
+      .then(res => normalizePagedRecords(unwrapApiData(res)))
   },
 
   /**
@@ -384,16 +439,34 @@ export const automationApi = {
       .then(res => normalizeRecords(unwrapApiData(res)))
   },
 
+  getScriptEngine() {
+    return apiService.get('/api/params/jao/script_engine').then(res => normalizeSingleItem(unwrapApiData(res)))
+  },
+
   getInstanceGroupOptions() {
     return apiService
       .get(`${SYS_DASHBOARD_BASE}/tat-url-as-string-list`)
       .then(res => normalizeRecords(unwrapApiData(res)))
   },
 
+  getInstanceGroupList() {
+    return apiService
+      .get(`${SYS_DASHBOARD_BASE}/tat-url-as-string-list`)
+      .then(res => normalizeRecords(unwrapApiData(res)))
+      .then(payload => parseStringListValue(payload?.records?.[0]?.value))
+  },
+
   getAllAssetAutoConfigs() {
     return apiService
       .get(`${SYS_DASHBOARD_BASE}/all-asset-auto-config`)
       .then(res => normalizeRecords(unwrapApiData(res)))
+  },
+
+  getAllAssetAutoConfigOptions() {
+    return apiService
+      .get(`${SYS_DASHBOARD_BASE}/all-asset-auto-config`)
+      .then(res => normalizeRecords(unwrapApiData(res)))
+      .then(payload => (payload?.records || []).filter(item => item?.id))
   }
 }
 

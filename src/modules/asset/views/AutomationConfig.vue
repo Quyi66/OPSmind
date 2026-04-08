@@ -107,28 +107,28 @@
           :max-height="tableMaxHeight"
         >
           <el-table-column prop="ci_type" label="资产代码" width="100" />
-          <el-table-column prop="hostKey" label="IP" width="140" />
-          <el-table-column prop="ansibleConfigName" label="自动化配置名称" width="160">
+          <el-table-column prop="ip" label="IP" width="140" />
+          <el-table-column prop="hostname" label="自动化配置名称" width="160">
             <template #default="{ row }">
-              {{ row.ansibleConfigName || '-' }}
+              {{ row.hostname || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)" />
-          <el-table-column prop="aapInstanceGroup" label="AAP instance group" width="160">
+          <el-table-column prop="instance_group" label="执行引擎节点(instance group)" />
+          <el-table-column prop="aap_instance_group" label="AAP instance group" width="160">
             <template #default="{ row }">
-              {{ row.aapInstanceGroup || '-' }}
+              {{ row.aap_instance_group || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="loginUser" label="登录用户" width="100">
+          <!-- <el-table-column prop="login_user" label="登录用户" width="100">
             <template #default="{ row }">
-              {{ row.loginUser || '-' }}
+              {{ row.login_user || '-' }}
             </template>
           </el-table-column>
           <el-table-column prop="runUser" label="执行用户" width="100">
             <template #default="{ row }">
               {{ row.runUser || '-' }}
             </template>
-          </el-table-column>
+          </el-table-column> -->
           <el-table-column prop="updated_at" label="更新时间" width="180">
             <template #default="{ row }">
               <span>{{ formatDateTime(row.updated_at) }}</span>
@@ -693,19 +693,15 @@ function handleAutomationReset() {
 // 加载Ansible表单选项数据
 async function loadAnsibleFormOptions() {
   try {
-    // 加载脚本引擎类型: ACM_GET_SCRIPT_ENGINE → GET /api/params/jao/script_engine
-    const engineRes = await apiService.get('/api/params/jao/script_engine')
-    const engineData = engineRes?.data || engineRes
-    scriptEngine.value = engineData?.result || engineData?.records?.[0]?.result || 'ansible'
+    const engineData = await automationApi.getScriptEngine()
+    scriptEngine.value = engineData?.value || 'ansible'
+    instanceGroupOptions.value = []
+    aapInstanceGroupOptions.value = []
 
     // 加载执行引擎节点列表
-    const instanceRes = await automationApi.getInstanceGroupOptions()
-    if (instanceRes?.records?.[0]?.value) {
-      try {
-        instanceGroupOptions.value = JSON.parse(instanceRes.records[0].value)
-      } catch {
-        instanceGroupOptions.value = []
-      }
+    const instanceGroups = await automationApi.getInstanceGroupList()
+    if (instanceGroups.length > 0) {
+      instanceGroupOptions.value = instanceGroups
     }
 
     // 加载AAP instance group（如果是aap引擎）: AAP_QUERY_INSTANCE_GROUP → GET /jao/api/jao/aap/instance_group
@@ -766,21 +762,14 @@ async function handleEditAutomation(row) {
 // 加载自动化配置表单选项
 async function loadAutomationFormOptions() {
   try {
-    // 加载脚本引擎类型: ACM_GET_SCRIPT_ENGINE → GET /api/params/jao/script_engine
-    const engineRes = await apiService.get('/api/params/jao/script_engine')
-    const engineData = engineRes?.data || engineRes
-    scriptEngine.value = engineData?.result || engineData?.records?.[0]?.result || 'ansible'
+    const engineData = await automationApi.getScriptEngine()
+    scriptEngine.value = engineData?.value || 'ansible'
+    instanceGroupOptions.value = []
+    aapInstanceGroupOptions.value = []
 
     // 加载执行引擎节点列表（非AAP引擎）
     if (scriptEngine.value !== 'aap') {
-      const instanceRes = await automationApi.getInstanceGroupOptions()
-      if (instanceRes?.records?.[0]?.value) {
-        try {
-          instanceGroupOptions.value = JSON.parse(instanceRes.records[0].value)
-        } catch {
-          instanceGroupOptions.value = []
-        }
-      }
+      instanceGroupOptions.value = await automationApi.getInstanceGroupList()
     }
 
     // 加载AAP instance group（AAP引擎）: AAP_QUERY_INSTANCE_GROUP → GET /jao/api/jao/aap/instance_group
@@ -791,8 +780,7 @@ async function loadAutomationFormOptions() {
     }
 
     // 加载自动化配置名称列表
-    const configRes = await automationApi.getAllAssetAutoConfigs()
-    ansibleConfigOptions.value = configRes?.records || []
+    ansibleConfigOptions.value = await automationApi.getAllAssetAutoConfigOptions()
   } catch (error) {
     console.error('加载自动化配置表单选项失败:', error)
   }

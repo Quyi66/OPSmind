@@ -164,12 +164,8 @@ const loadAttrOptions = async () => {
 // 加载执行引擎节点列表
 const loadInstanceGroupOptions = async () => {
   try {
-    const res = await automationApi.getInstanceGroupOptions()
-    if (res.records && res.records.length > 0 && res.records[0].value) {
-      const config = res.records[0].value
-      const arr = JSON.parse(config)
-      instanceGroupOptions.value = ['none', ...arr]
-    }
+    const instanceGroups = await automationApi.getInstanceGroupList()
+    instanceGroupOptions.value = instanceGroups.length > 0 ? ['none', ...instanceGroups] : ['default']
   } catch (error) {
     console.error('加载执行引擎节点失败:', error)
     instanceGroupOptions.value = ['default']
