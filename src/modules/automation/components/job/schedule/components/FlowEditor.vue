@@ -23,13 +23,17 @@
 
         <el-form-item label="目标主机">
           <template #label>
-            <span>目标主机</span>
-            <el-tooltip
-              content="设置流程执行的目标主机，支持选择单台主机、主机组或标签"
-              placement="top"
-            >
-              <i class="fa fa-question-circle text-muted ms-1" />
-            </el-tooltip>
+            <span class="label-with-tooltip">
+              <span>目标主机</span>
+              <el-tooltip
+                content="设置流程执行的目标主机，支持选择单台主机、主机组或标签"
+                placement="top"
+              >
+                <span class="tooltip-icon" tabindex="0">
+                  <i class="fa fa-question-circle text-muted" />
+                </span>
+              </el-tooltip>
+            </span>
           </template>
           <AcmDeviceSelector v-model="flow.hosts" ci-types="[auto]" mcheck-type="map" />
         </el-form-item>
@@ -109,13 +113,17 @@
                 <el-col :span="12">
                   <el-form-item>
                     <template #label>
-                      <span>输出等级</span>
-                      <el-tooltip
-                        content="控制脚本执行时的输出详细程度，调试问题时可选择更高等级"
-                        placement="top"
-                      >
-                        <i class="fa fa-question-circle text-muted ms-1" style="cursor: help" />
-                      </el-tooltip>
+                      <span class="label-with-tooltip">
+                        <span>输出等级</span>
+                        <el-tooltip
+                          content="控制脚本执行时的输出详细程度，调试问题时可选择更高等级"
+                          placement="top"
+                        >
+                          <span class="tooltip-icon" tabindex="0">
+                            <i class="fa fa-question-circle text-muted" />
+                          </span>
+                        </el-tooltip>
+                      </span>
                     </template>
                     <el-select v-model="step.config.verbosity" style="width: 100%">
                       <el-option :value="0" label="普通" />
@@ -129,10 +137,14 @@
                 <el-col :span="12">
                   <el-form-item>
                     <template #label>
-                      <span>任务超时(秒)</span>
-                      <el-tooltip content="任务执行超时时间，-1 表示无限制" placement="top">
-                        <i class="fa fa-question-circle text-muted ms-1" style="cursor: help" />
-                      </el-tooltip>
+                      <span class="label-with-tooltip">
+                        <span>任务超时(秒)</span>
+                        <el-tooltip content="任务执行超时时间，-1 表示无限制" placement="top">
+                          <span class="tooltip-icon" tabindex="0">
+                            <i class="fa fa-question-circle text-muted" />
+                          </span>
+                        </el-tooltip>
+                      </span>
                     </template>
                     <el-input-number
                       v-model="step.config.taskTimeout"
@@ -640,14 +652,10 @@ function handleRun() {
 
   jaoApi
     .createFlowInstance(payload)
-    .then(response => {
-      const instanceId = response?.data?.id || response?.id
+    .then(() => {
       ElMessage.success('流程已开始执行')
       emit('saved')
       visible.value = false
-      // 可选:打开实例查看页面
-      if (instanceId) {
-      }
     })
     .catch(error => {
       ElMessage.error(error?.message || '执行失败')
@@ -678,9 +686,19 @@ function generateId() {
     color: var(--el-text-color-primary);
   }
 
+  :deep(.el-form-item__label .label-with-tooltip) {
+    pointer-events: auto;
+  }
+
   :deep(.el-form-item__content) {
     flex-wrap: wrap;
   }
+}
+
+.label-with-tooltip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .form-section {
@@ -905,8 +923,10 @@ function generateId() {
 
 .tooltip-icon {
   display: inline-block !important;
+  align-items: center;
   cursor: help !important;
   line-height: 1;
+  pointer-events: auto !important;
 }
 
 .tooltip-icon:hover {

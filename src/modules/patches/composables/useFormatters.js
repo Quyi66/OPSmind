@@ -11,7 +11,7 @@ export function formatDate(dateStr) {
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
     return `${year}-${month}-${day}`
-  } catch (error) {
+  } catch {
     return dateStr
   }
 }
@@ -29,7 +29,7 @@ export function formatDateTime(timestamp) {
       minute: '2-digit',
       second: '2-digit'
     })
-  } catch (error) {
+  } catch {
     return timestamp
   }
 }
@@ -40,7 +40,7 @@ export function getInstalledPkgsCount(pkgsStr) {
   try {
     const pkgs = JSON.parse(pkgsStr)
     return Array.isArray(pkgs) ? pkgs.length : 0
-  } catch (error) {
+  } catch {
     return 0
   }
 }
@@ -50,7 +50,7 @@ export function formatPackages(pkgsStr) {
   if (!pkgsStr) return ''
   const pkgs = pkgsStr.split(',')
   if (pkgs.length > 3) {
-    return pkgs.slice(0, 3).join(', ') + '...'
+    return `${pkgs.slice(0, 3).join(', ')}...`
   }
   return pkgs.join(', ')
 }
@@ -62,12 +62,94 @@ export function getCVEList(vulsStr) {
 }
 
 function normalizeCveLinkTarget(source) {
-  const value = String(source || '').trim().toLowerCase()
+  const value = String(source || '')
+    .trim()
+    .toLowerCase()
   if (!value) return 'redhat'
   if (value.includes('ubuntu')) return 'ubuntu'
   if (value.includes('kylin')) return 'kylin'
   if (value.includes('redhat') || value.includes('rhel')) return 'redhat'
   return 'redhat'
+}
+
+export function normalizeCveSourceKey(source) {
+  const raw = String(source || '').trim()
+  if (!raw) return ''
+
+  const lower = raw.toLowerCase()
+  if (lower.includes('redhat') || lower.includes('red hat') || lower.includes('rhel')) {
+    return 'redhat'
+  }
+  if (lower.includes('kylin')) return 'kylin'
+  if (lower === 'nvd') return 'nvd'
+
+  return lower
+}
+
+export function getCveSourceLabel(source) {
+  const key = normalizeCveSourceKey(source)
+  const labelMap = {
+    redhat: 'Red Hat',
+    kylin: '麒麟',
+    nvd: 'NVD'
+  }
+
+  return labelMap[key] || source
+}
+
+export function getCveSourceType(source) {
+  const key = normalizeCveSourceKey(source)
+  const typeMap = {
+    redhat: 'danger',
+    kylin: 'primary',
+    nvd: 'info'
+  }
+
+  return typeMap[key] || 'info'
+}
+
+export function isSameCveSource(source, targetSource) {
+  if (!targetSource || targetSource === 'all') return true
+
+  const rawSource = String(source || '')
+    .trim()
+    .toLowerCase()
+  const rawTarget = String(targetSource || '')
+    .trim()
+    .toLowerCase()
+  if (rawSource && rawSource === rawTarget) return true
+
+  return normalizeCveSourceKey(source) === normalizeCveSourceKey(targetSource)
+}
+
+export function buildCveSourceOptions(sourceList = [], options = {}) {
+  const { includeAll = false, dedupe = false } = options
+  const items = []
+  const seen = new Set()
+
+  if (includeAll) {
+    items.push({ value: 'all', label: '全部' })
+    seen.add('all')
+  }
+
+  sourceList.forEach(source => {
+    const rawValue = String(source || '').trim()
+    if (!rawValue) return
+
+    const dedupeKey = dedupe
+      ? normalizeCveSourceKey(rawValue) || rawValue.toLowerCase()
+      : rawValue.toLowerCase()
+
+    if (seen.has(dedupeKey)) return
+
+    seen.add(dedupeKey)
+    items.push({
+      value: rawValue,
+      label: getCveSourceLabel(rawValue)
+    })
+  })
+
+  return items
 }
 
 // 获取 CVE 外链地址（根据厂商或操作系统发行版）
@@ -112,14 +194,14 @@ export function getSeverityType(severity) {
 // 获取补丁状态类型
 export function getPatchStatusType(status) {
   const typeMap = {
-    '未修复': 'info',
-    '已修复': 'success',
+    未修复: 'info',
+    已修复: 'success',
     '已修复(手动)': 'success',
-    '修复中': 'primary',
-    '修复失败': 'warning',
-    '回滚中': 'primary',
-    '回滚失败': 'warning',
-    '回滚成功': 'info'
+    修复中: 'primary',
+    修复失败: 'warning',
+    回滚中: 'primary',
+    回滚失败: 'warning',
+    回滚成功: 'info'
   }
   return typeMap[status] || 'info'
 }
@@ -127,13 +209,13 @@ export function getPatchStatusType(status) {
 // 获取补丁状态文本
 export function getPatchStatusText(status) {
   const textMap = {
-    '已修复': '已修复',
-    '未修复': '未修复',
-    '修复中': '修复中',
-    '修复失败': '修复失败',
-    '回滚中': '回滚中',
-    '回滚失败': '回滚失败',
-    '回滚成功': '回滚成功',
+    已修复: '已修复',
+    未修复: '未修复',
+    修复中: '修复中',
+    修复失败: '修复失败',
+    回滚中: '回滚中',
+    回滚失败: '回滚失败',
+    回滚成功: '回滚成功',
     '已修复(手动)': '已修复(手动)'
   }
   return textMap[status] || status

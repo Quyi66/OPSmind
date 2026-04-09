@@ -1719,7 +1719,7 @@ export const cveApi = {
    * 分页查询 CVE 列表
    * GET /vap/api/vap/v2/cve/list
    * @param {Object} params - 查询参数
-   * @param {string} params.source - 数据源: redhat / kylin
+  * @param {string} params.source - 数据源，例如 redhat / kylinos / nvd，具体以 /cve/statistics 返回为准
    * @param {string} params.severity - 严重等级: critical / important / moderate / low
    * @param {string} params.keyword - 关键字（搜索CVE ID或描述）
    * @param {string} params.packageName - 包名

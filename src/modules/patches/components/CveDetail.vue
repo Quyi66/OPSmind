@@ -182,9 +182,13 @@
           <div class="tab-content-container">
             <div class="ops-filter-bar compact packages-filter-bar">
               <el-radio-group v-model="systemFilter" size="small">
-                <el-radio-button label="all">全部</el-radio-button>
-                <el-radio-button label="redhat">Red Hat</el-radio-button>
-                <el-radio-button label="kylin">麒麟</el-radio-button>
+                <el-radio-button
+                  v-for="option in packageSourceOptions"
+                  :key="option.value"
+                  :label="option.value"
+                >
+                  {{ option.label }}
+                </el-radio-button>
               </el-radio-group>
 
               <el-radio-group v-model="packageFilter" size="small">
@@ -345,7 +349,12 @@ import {
   RefreshLeft
 } from '@element-plus/icons-vue'
 import { cveApi } from '../api'
-import { ElMessage } from 'element-plus'
+import {
+  buildCveSourceOptions,
+  getCveSourceLabel,
+  getCveSourceType,
+  isSameCveSource
+} from '../composables/useFormatters'
 
 // Props
 const props = defineProps({
@@ -399,17 +408,21 @@ const { isDark } = useTheme()
 const impactChartRef = ref(null)
 let impactChart = null
 
+const packageSourceOptions = computed(() => {
+  const sourceList =
+    allPackages.value.length > 0
+      ? allPackages.value.map(pkg => pkg.source)
+      : sources.value.map(source => source.source)
+
+  return buildCveSourceOptions(sourceList, { includeAll: true, dedupe: true })
+})
+
 // 计算属性：过滤后的软件包
 const filteredPackages = computed(() => {
   let list = allPackages.value
 
-  // 系统筛选：麒麟兼容 kylin/kylinos 两种来源值
   if (systemFilter.value !== 'all') {
-    if (systemFilter.value === 'kylin') {
-      list = list.filter(pkg => ['kylin', 'kylinos'].includes(pkg.source))
-    } else {
-      list = list.filter(pkg => pkg.source === systemFilter.value)
-    }
+    list = list.filter(pkg => isSameCveSource(pkg.source, systemFilter.value))
   }
 
   // 状态筛选
@@ -457,17 +470,6 @@ const impactLegendItems = computed(() => {
     }
   ]
 })
-
-// 格式化日期 (短格式)
-function formatDateShort(dateStr) {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  if (isNaN(date.getTime())) return dateStr
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
 
 // 格式化日期 (含时间)
 function formatDateTime(dateStr) {
@@ -543,22 +545,12 @@ function getStatusType(status) {
 
 // 获取数据源标签
 function getSourceLabel(source) {
-  const labelMap = {
-    redhat: 'Red Hat',
-    kylin: '麒麟',
-    kylinos: '麒麟'
-  }
-  return labelMap[source] || source
+  return getCveSourceLabel(source)
 }
 
 //获取数据源样式
 function getSourceType(source) {
-  const typeMap = {
-    redhat: 'danger',
-    kylin: 'primary',
-    kylinos: 'primary'
-  }
-  return typeMap[source] || 'info'
+  return getCveSourceType(source)
 }
 
 function getHostSeverityType(severity) {
@@ -581,7 +573,7 @@ function getPatchStatusType(status) {
 // 状态标准化
 function normalizeStatusKey(status) {
   if (!status) return ''
-  const s = (status + '').toLowerCase().trim()
+  const s = `${status}`.toLowerCase().trim()
   const statusMap = {
     affected: 'affected',
     fixed: 'fixed',
@@ -719,7 +711,7 @@ function buildCveDetail(source) {
     cweId: source.cwe,
     description: source.description,
     webUrl: source.webUrl,
-    summary: summary,
+    summary,
     mitigation: source.mitigation,
     references:
       source.references || (source.webUrl ? [{ url: source.webUrl, title: '官方链接' }] : [])
@@ -858,7 +850,7 @@ function initImpactChart() {
           scale: true,
           scaleSize: 5
         },
-        data: data
+        data
       }
     ]
   }
@@ -881,7 +873,7 @@ async function loadAffectedHosts() {
     affectedHosts.value = result?.hosts || []
     affectedHostsTotal.value = result?.totalHosts || affectedHosts.value.length
     affectedHostsLoaded.value = true
-  } catch (error) {
+  } catch {
     affectedHostsError.value = '加载失败'
   } finally {
     affectedHostsLoading.value = false

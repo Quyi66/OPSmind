@@ -255,11 +255,7 @@ async function loadFiles() {
     })
   } catch (error) {
     console.error('Failed to load files:', error)
-    // 模拟数据用于开发
-    files.value = [
-      { name: 'oplus', path: 'oplus', isDirectory: true },
-      { name: 'scripts', path: 'scripts', isDirectory: true }
-    ]
+    files.value = []
   } finally {
     loading.value = false
   }

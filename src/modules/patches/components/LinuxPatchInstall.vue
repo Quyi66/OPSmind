@@ -184,7 +184,7 @@
               target="_blank"
               class="cve-link"
             >
-                            {{ cve }}
+              {{ cve }}
             </a>
           </li>
         </ul>
@@ -192,6 +192,7 @@
       <div v-else-if="patchDetailLoading" class="patch-detail-loading">
         <el-skeleton :rows="6" animated />
       </div>
+      <el-empty v-else description="暂无补丁详情" :image-size="80" />
     </el-dialog>
 
     <!-- 统一补丁向导组件 -->
@@ -221,22 +222,19 @@
         <el-button @click="cveDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
-
-
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, RefreshRight, Upload } from '@element-plus/icons-vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi } from '../api'
 import PatchInstallWizard from './patch-task/PatchInstallWizard.vue'
 
 // 加载状态
 const loading = ref(false)
-const installLoading = ref(false)
 
 // 统一筛选条件
 const filters = reactive({
@@ -290,7 +288,6 @@ const totalCount = computed(() => filteredData.value.length)
 const patchDetailVisible = ref(false)
 const patchDetail = ref(null)
 const patchDetailLoading = ref(false)
-const selectedPatch = ref(null)
 const cveDialogVisible = ref(false)
 const cveDialogList = ref([])
 const cveDialogOsDistro = ref('')
@@ -315,20 +312,9 @@ function handleInstallSelected() {
   installDialogVisible.value = true
 }
 
-function handleInstallSingle(patch) {
-  patchesToInstall.value = [patch || selectedPatch.value]
-  patchDetailVisible.value = false
-  installDialogVisible.value = true
-}
-
-function resetInstallState() {
-  installDialogVisible.value = false
-}
-
 function handleInstallSuccess() {
   loadData()
 }
-
 
 // 获取严重程度显示标签
 function getSeverityLabel(severity) {
@@ -403,30 +389,11 @@ async function loadData() {
     }
   } catch (error) {
     console.error('Failed to load patches:', error)
-    // 模拟数据
-    allData.value = preprocessData(generateMockData())
+    ElMessage.error('加载可安装补丁失败，请稍后重试')
+    allData.value = []
   } finally {
     loading.value = false
   }
-}
-
-// 生成模拟数据
-function generateMockData() {
-  const severities = ['Critical', 'Important', 'Moderate', 'Low']
-  const data = []
-  for (let i = 0; i < 30; i++) {
-    const year = 2025
-    const seqNum = String(10000 + Math.floor(Math.random() * 20000))
-    data.push({
-      patch_id: `RHSA-${year}:${seqNum}`,
-      title: `Important: ${['libtiff', 'bind', 'sssd', 'cups', 'container-tools:rhel8'][i % 5]} security update`,
-      severity: severities[i % 4],
-      publish_date: `${year}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
-      related_vuls: `CVE-${year}-${String(Math.floor(Math.random() * 90000) + 10000)}`,
-      effect_host_count: Math.floor(Math.random() * 10) + 1
-    })
-  }
-  return data
 }
 
 // 搜索处理（严重程度改变时需要重新加载）
@@ -460,7 +427,6 @@ function handleSizeChange(size) {
 }
 
 function handleViewPatchDetail(row) {
-  selectedPatch.value = row
   patchDetailVisible.value = true
   loadPatchDetail(row.patch_id)
 }
@@ -476,25 +442,12 @@ async function loadPatchDetail(patchId) {
     }
   } catch (error) {
     console.error('Failed to load patch detail:', error)
-    // 使用模拟数据
-    patchDetail.value = {
-      patch_id: patchId,
-      title: selectedPatch.value?.title || 'Important: security update',
-      severity: selectedPatch.value?.severity || 'Important',
-      description:
-        'The libtiff packages contain a library of functions for manipulating Tagged Image File Format (TIFF) files. Security Fix(es): libtiff: LibTIFF Use-After-Free Vulnerability (CVE-2025-8176) For more details about the security issue(s), including the impact, a CVSS score, acknowledgments, and other related information, refer to the CVE page(s) listed in the References section.',
-      related_vuls: selectedPatch.value?.related_vuls || 'CVE-2025-8176'
-    }
+    ElMessage.error('加载补丁详情失败，请稍后重试')
+    patchDetail.value = null
   } finally {
     patchDetailLoading.value = false
   }
 }
-
-
-
-// executeInstall 已不再使用（新流程按步骤执行）
-// 保留空函数以防外部引用
-function executeInstall() {}
 
 function refresh() {
   loadData()
@@ -508,8 +461,6 @@ defineExpose({ refresh })
 </script>
 
 <style scoped lang="scss">
-
-
 .task-done-title {
   font-size: 18px;
   font-weight: 600;
@@ -618,8 +569,4 @@ defineExpose({ refresh })
     text-decoration: underline;
   }
 }
-
-
-
-
 </style>

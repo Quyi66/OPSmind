@@ -475,30 +475,11 @@ async function loadData() {
     }
   } catch (error) {
     console.error('Failed to load rollback history:', error)
-    // 模拟数据
-    allData.value = generateMockData()
+    ElMessage.error('加载回滚历史失败，请稍后重试')
+    allData.value = []
   } finally {
     loading.value = false
   }
-}
-
-// 生成模拟数据
-function generateMockData() {
-  const data = []
-  for (let i = 0; i < 10; i++) {
-    data.push({
-      id: `hist-${i + 1}`,
-      hosts: `192.168.1.${100 + i},192.168.1.${200 + i}`,
-      update_id: `CVE-2025-${10000 + i}`,
-      patch_id: `RHSA-2025:${20000 + i}`,
-      update_pkgs: JSON.stringify([
-        { old_pkg: `glibc-2.17-${50 + i}.el7`, new_pkg: `glibc-2.17-${55 + i}.el7` },
-        { old_pkg: `openssl-1.0.2k-${10 + i}.el7`, new_pkg: `openssl-1.0.2k-${12 + i}.el7` }
-      ]),
-      update_time: new Date(Date.now() - i * 86400000).toISOString()
-    })
-  }
-  return data
 }
 
 // 事件处理

@@ -16,8 +16,12 @@
         <el-descriptions-item label="OS">{{ hostInfo.os_distro }}</el-descriptions-item>
         <el-descriptions-item label="OS版本">{{ hostInfo.os_version }}</el-descriptions-item>
         <el-descriptions-item label="已配置仓库">{{ hostInfo.repo_count }}</el-descriptions-item>
-        <el-descriptions-item label="已安装软件包">{{ hostInfo.installed_pkgs_count }}</el-descriptions-item>
-        <el-descriptions-item label="上次扫描时间">{{ formatDate(hostInfo.scan_date) }}</el-descriptions-item>
+        <el-descriptions-item label="已安装软件包">
+          {{ hostInfo.installed_pkgs_count }}
+        </el-descriptions-item>
+        <el-descriptions-item label="上次扫描时间">
+          {{ formatDate(hostInfo.scan_date) }}
+        </el-descriptions-item>
       </el-descriptions>
     </div>
 
@@ -33,13 +37,7 @@
     <div class="content-section">
       <!-- 已安装软件包 -->
       <div v-show="activeTab === 'installed'" class="tab-content">
-        <el-table
-          v-loading="packageLoading"
-          :data="packageData"
-         
-          style="width: 100%"
-          size="small"
-        >
+        <el-table v-loading="packageLoading" :data="packageData" style="width: 100%" size="small">
           <el-table-column prop="name" label="名称" min-width="200" />
           <el-table-column prop="version" label="版本号" width="150" />
           <el-table-column prop="release" label="发行号" width="120" />
@@ -67,13 +65,7 @@
 
       <!-- 已配置仓库 -->
       <div v-show="activeTab === 'repos'" class="tab-content">
-        <el-table
-          v-loading="repoLoading"
-          :data="repoData"
-         
-          style="width: 100%"
-          size="small"
-        >
+        <el-table v-loading="repoLoading" :data="repoData" style="width: 100%" size="small">
           <el-table-column prop="repo_id" label="仓库ID" width="150" />
           <el-table-column prop="name" label="仓库名" min-width="200" />
           <el-table-column prop="baseurl" label="地址" min-width="300" show-overflow-tooltip />
@@ -141,15 +133,7 @@ async function loadHostInfo() {
     hostInfo.value = response?.data || response || {}
   } catch (error) {
     console.error('Failed to load host info:', error)
-    // 模拟数据
-    hostInfo.value = {
-      host_key: props.hostKey,
-      os_distro: 'RHEL',
-      os_version: '7.6',
-      repo_count: 5,
-      installed_pkgs_count: 320,
-      scan_date: new Date().toISOString()
-    }
+    hostInfo.value = {}
   }
 }
 
@@ -168,16 +152,8 @@ async function loadPackages() {
     packagePagination.total = data?.total || 0
   } catch (error) {
     console.error('Failed to load packages:', error)
-    // 模拟数据
-    const names = ['kernel', 'glibc', 'openssl', 'bash', 'systemd', 'python', 'nginx', 'httpd']
-    packageData.value = Array.from({ length: 10 }, (_, i) => ({
-      name: names[i % names.length],
-      version: `${Math.floor(Math.random() * 10)}.${Math.floor(Math.random() * 10)}`,
-      release: `${Math.floor(Math.random() * 100)}.el7`,
-      arch: 'x86_64',
-      install_time: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString()
-    }))
-    packagePagination.total = 320
+    packageData.value = []
+    packagePagination.total = 0
   } finally {
     packageLoading.value = false
   }
@@ -193,25 +169,24 @@ async function loadRepos() {
     repoData.value = data?.records || []
   } catch (error) {
     console.error('Failed to load repos:', error)
-    // 模拟数据
-    repoData.value = [
-      { repo_id: 'base', name: 'CentOS-7 - Base', baseurl: 'http://mirror.centos.org/centos/7/os/x86_64/', enabled: true },
-      { repo_id: 'updates', name: 'CentOS-7 - Updates', baseurl: 'http://mirror.centos.org/centos/7/updates/x86_64/', enabled: true },
-      { repo_id: 'extras', name: 'CentOS-7 - Extras', baseurl: 'http://mirror.centos.org/centos/7/extras/x86_64/', enabled: true }
-    ]
+    repoData.value = []
   } finally {
     repoLoading.value = false
   }
 }
 
 // 监听 hostKey 变化
-watch(() => props.hostKey, (newVal) => {
-  if (newVal) {
-    loadHostInfo()
-    loadPackages()
-    loadRepos()
-  }
-}, { immediate: true })
+watch(
+  () => props.hostKey,
+  newVal => {
+    if (newVal) {
+      loadHostInfo()
+      loadPackages()
+      loadRepos()
+    }
+  },
+  { immediate: true }
+)
 
 onMounted(() => {
   if (props.hostKey) {

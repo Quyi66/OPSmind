@@ -255,7 +255,7 @@ export function setupErrorHandler(app) {
   }
 
   // 全局未捕获错误
-  window.addEventListener('error', (event) => {
+  window.addEventListener('error', event => {
     // 忽略某些无害的错误
     const message = event.message || event.error?.message || ''
 
@@ -277,12 +277,11 @@ export function setupErrorHandler(app) {
   })
 
   // Promise 未捕获错误
-  window.addEventListener('unhandledrejection', (event) => {
+  window.addEventListener('unhandledrejection', event => {
     errorHandler.handle(event.reason, {
       type: 'unhandledrejection'
     })
   })
-
 }
 
 // 导出 Composition API

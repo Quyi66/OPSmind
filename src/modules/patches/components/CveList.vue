@@ -103,9 +103,12 @@
           </el-form-item>
           <el-form-item label="系统">
             <el-select v-model="searchParams.source" style="width: 100px">
-              <el-option value="all" label="全部" />
-              <el-option value="redhat" label="Red Hat" />
-              <el-option value="kylinos" label="kylinos" />
+              <el-option
+                v-for="option in sourceOptions"
+                :key="option.value"
+                :value="option.value"
+                :label="option.label"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="严重等级">
@@ -161,10 +164,8 @@
       </div>
 
       <!-- 操作栏 -->
-      <div class="ops-action-bar" style="display: flex; align-items: center; margin-bottom: 12px;">
-        <el-button type="primary" @click="openManualExportDialog">
-          导出
-        </el-button>
+      <div class="ops-action-bar" style="display: flex; align-items: center; margin-bottom: 12px">
+        <el-button type="primary" @click="openManualExportDialog">导出</el-button>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -274,18 +275,22 @@
       </div>
     </template>
 
-    <ManualExportDialog
-      v-model="manualExportVisible"
-    />
+    <ManualExportDialog v-model="manualExportVisible" />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Refresh, Search, RefreshRight, TopRight, Download } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { cveApi } from '../api'
 import { ElMessage } from 'element-plus'
+import {
+  buildCveSourceOptions,
+  getCveSourceLabel,
+  getCveSourceType,
+  isSameCveSource
+} from '../composables/useFormatters'
 import CveDetail from './CveDetail.vue'
 import ManualExportDialog from './ManualExportDialog.vue'
 
@@ -333,6 +338,11 @@ const displayPage = computed({
   set: val => {
     searchParams.page = val - 1
   }
+})
+
+const sourceOptions = computed(() => {
+  const sourceList = Object.keys(statistics.value?.bySource || {})
+  return buildCveSourceOptions(sourceList, { includeAll: true })
 })
 
 // 格式化数字
@@ -425,20 +435,12 @@ function getSeverityLabel(severity) {
 
 // 获取数据源样式
 function getSourceType(source) {
-  const typeMap = {
-    redhat: 'danger',
-    kylin: 'primary'
-  }
-  return typeMap[source] || 'info'
+  return getCveSourceType(source)
 }
 
 // 获取数据源标签
 function getSourceLabel(source) {
-  const labelMap = {
-    redhat: 'Red Hat',
-    kylin: '麒麟'
-  }
-  return labelMap[source] || source
+  return getCveSourceLabel(source)
 }
 
 // 加载统计信息
@@ -447,6 +449,13 @@ async function loadStatistics() {
   try {
     const data = await cveApi.getStatistics()
     statistics.value = data?.data || data
+
+    if (searchParams.source !== 'all') {
+      const matchedOption = sourceOptions.value.find(option =>
+        isSameCveSource(option.value, searchParams.source)
+      )
+      searchParams.source = matchedOption?.value || 'all'
+    }
   } catch (error) {
     console.error('加载统计信息失败:', error)
   } finally {
