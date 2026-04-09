@@ -290,10 +290,33 @@ const patchPagination = reactive({
   total: 0
 })
 
-const assignForm = ref({
-  expireTime: '',
-  remark: ''
-})
+function padDateTimeUnit(value) {
+  return String(value).padStart(2, '0')
+}
+
+function formatDateTimeValue(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return ''
+  }
+
+  return `${date.getFullYear()}-${padDateTimeUnit(date.getMonth() + 1)}-${padDateTimeUnit(date.getDate())} ${padDateTimeUnit(date.getHours())}:${padDateTimeUnit(date.getMinutes())}:${padDateTimeUnit(date.getSeconds())}`
+}
+
+function getDefaultExpireTime() {
+  const date = new Date()
+  date.setMilliseconds(0)
+  date.setDate(date.getDate() + 1)
+  return formatDateTimeValue(date)
+}
+
+function createDefaultAssignForm() {
+  return {
+    expireTime: getDefaultExpireTime(),
+    remark: ''
+  }
+}
+
+const assignForm = ref(createDefaultAssignForm())
 
 function normalizeId(value) {
   return value === undefined || value === null ? '' : String(value)
@@ -302,6 +325,27 @@ function normalizeId(value) {
 function normalizeHostItem(item) {
   const hostId = normalizeId(item?.host_id || item?.hostId || item?.id || item?.value)
   const hostKey = item?.host_key || item?.hostKey || item?.hostname || item?.ip || item?.name
+
+  return {
+    host_id: hostId,
+    host_key: hostKey ? String(hostKey) : hostId
+  }
+}
+
+function extractAssignedHostItem(item) {
+  const hostId = normalizeId(
+    item?.host_id
+    || item?.hostId
+    || item?.machine_id
+    || item?.machineId
+    || item?.hosts_id
+    || item?.hostsId
+  )
+  const hostKey = item?.host_key || item?.hostKey || item?.hostname || item?.ip || item?.name
+
+  if (!hostId && !hostKey) {
+    return null
+  }
 
   return {
     host_id: hostId,
@@ -481,6 +525,52 @@ async function loadAvailablePatches() {
   }
 }
 
+async function fetchAvailablePatchById(patchId) {
+  if (!patchId) {
+    return null
+  }
+
+  const res = await apiService.get('/vap/api/vap/v2/patch/assignment/available-patches', {
+    params: {
+      page: 0,
+      size: 100,
+      patchId
+    }
+  })
+  const rawList = res?.data?.content || res?.data?.records || res?.data || []
+  const normalized = (Array.isArray(rawList) ? rawList : [])
+    .map(normalizeAvailablePatchItem)
+    .filter(item => item.patch_id)
+
+  return normalized.find(item => item.patch_id === patchId) || normalized[0] || null
+}
+
+async function hydratePatchHostIdsIfNeeded(patch) {
+  if (!patch?.patch_id || patch?.hostIds?.length > 0 || !Array.isArray(patch.selectedHosts) || patch.selectedHosts.length === 0) {
+    return patch
+  }
+
+  const pagePatch = availablePatches.value.find(item => item.patch_id === patch.patch_id)
+  if (pagePatch) {
+    Object.assign(patch, normalizePatchItem(pagePatch, patch))
+  }
+
+  if (patch?.hostIds?.length > 0) {
+    return patch
+  }
+
+  try {
+    const remotePatch = await fetchAvailablePatchById(patch.patch_id)
+    if (remotePatch) {
+      Object.assign(patch, normalizePatchItem(remotePatch, patch))
+    }
+  } catch (e) {
+    console.error(`Failed to hydrate host ids for patch ${patch.patch_id}`, e)
+  }
+
+  return patch
+}
+
 async function loadAssignedPatches() {
   if (!props.username) return
   loadingAssigned.value = true
@@ -499,21 +589,18 @@ async function loadAssignedPatches() {
           hostsLoaded: false,
           selectedHosts: []
         }
-        if (item.hostKey) {
-          current.selectedHosts.push({
-            host_id: '',
-            host_key: String(item.hostKey)
-          })
+        const assignedHost = extractAssignedHostItem(item)
+        if (assignedHost) {
+          current.selectedHosts.push(assignedHost)
+          if (assignedHost.host_id) {
+            current.hostIds.push(assignedHost.host_id)
+          }
         }
         map.set(patchId, current)
         return map
       }, new Map())
 
-      selectedPatchesList.value = Array.from(grouped.values()).map(item => ({
-        ...item,
-        hostIds: Array.from(new Set(item.hostIds)),
-        selectedHosts: dedupeSelectedHosts(item.selectedHosts)
-      }))
+      selectedPatchesList.value = Array.from(grouped.values()).map(item => normalizePatchItem(item))
     } else {
       selectedPatchesList.value = []
     }
@@ -743,7 +830,7 @@ function confirmHostSelection() {
 }
 
 function resetAssignForm() {
-  assignForm.value = { expireTime: '', remark: '' }
+  assignForm.value = createDefaultAssignForm()
   selectedPatchesList.value = []
   liveSelectedPatches.value = []
   currentHostPatch.value = null
@@ -777,9 +864,16 @@ async function submitAssign() {
     return
   }
 
+  await Promise.all(selectedPatchesList.value.map(hydratePatchHostIdsIfNeeded))
+
   const invalidPatch = selectedPatchesList.value.find(item => !item.hostIds || item.hostIds.length === 0)
   if (invalidPatch) {
-    ElMessage.warning(`请先为补丁 ${invalidPatch.patch_id} 选择至少一台机器`)
+    const hasExistingSelection = Array.isArray(invalidPatch.selectedHosts) && invalidPatch.selectedHosts.length > 0
+    ElMessage.warning(
+      hasExistingSelection
+        ? `补丁 ${invalidPatch.patch_id} 的已分配机器未能自动解析，请在补丁列表中重新确认机器`
+        : `请先为补丁 ${invalidPatch.patch_id} 选择至少一台机器`
+    )
     return
   }
 

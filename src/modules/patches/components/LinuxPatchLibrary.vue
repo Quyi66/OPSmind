@@ -182,7 +182,7 @@
               <a
                 v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)"
                 :key="idx"
-                :href="getCveUrl(cve, row.os_distro)"
+                :href="getCveUrl(cve, resolveCveLinkTarget(row))"
                 target="_blank"
                 class="cve-link"
               >
@@ -277,7 +277,7 @@
                   :key="idx"
                   class="cve-item"
                 >
-                  <a :href="getCveUrl(cve, patchDetail?.os_distro)" target="_blank">
+                  <a :href="getCveUrl(cve, resolveCveLinkTarget(patchDetail))" target="_blank">
                     {{ cve }}
                   </a>
                 </span>
@@ -299,7 +299,7 @@
           <a
             v-for="(cve, idx) in cveDialogList"
             :key="idx"
-            :href="getCveUrl(cve, cveDialogOsDistro)"
+            :href="getCveUrl(cve, cveDialogLinkTarget)"
             target="_blank"
             class="cve-dialog-item"
           >
@@ -371,7 +371,7 @@ const patchDetail = ref(null)
 // CVE 列表对话框
 const cveDialogVisible = ref(false)
 const cveDialogList = ref([])
-const cveDialogOsDistro = ref('')
+const cveDialogLinkTarget = ref('')
 
 // 计算补丁总数
 const totalPatches = computed(() => {
@@ -443,9 +443,13 @@ function parseCVEs(vulsStr) {
   return vulsStr.split(',').filter(cve => cve.trim())
 }
 
+function resolveCveLinkTarget(patch) {
+  return patch?.vendor || patch?.os_distro || currentVendor.value || ''
+}
+
 function handleShowAllCves(row) {
   cveDialogList.value = parseCVEs(row.related_vuls)
-  cveDialogOsDistro.value = row.os_distro
+  cveDialogLinkTarget.value = resolveCveLinkTarget(row)
   cveDialogVisible.value = true
 }
 
@@ -633,7 +637,9 @@ async function handleViewDetail(row) {
       title: row.title,
       severity: row.severity,
       description: row.description || '暂无描述信息',
-      related_vuls: row.related_vuls
+      related_vuls: row.related_vuls,
+      vendor: row.vendor,
+      os_distro: row.os_distro
     }
   } finally {
     detailLoading.value = false

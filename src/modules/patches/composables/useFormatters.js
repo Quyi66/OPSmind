@@ -61,21 +61,25 @@ export function getCVEList(vulsStr) {
   return vulsStr.split(',').filter(v => v.trim())
 }
 
-function normalizeOsDistro(osDistro) {
-  const value = String(osDistro || '').trim().toLowerCase()
+function normalizeCveLinkTarget(source) {
+  const value = String(source || '').trim().toLowerCase()
   if (!value) return 'redhat'
+  if (value.includes('ubuntu')) return 'ubuntu'
   if (value.includes('kylin')) return 'kylin'
   if (value.includes('redhat') || value.includes('rhel')) return 'redhat'
   return 'redhat'
 }
 
-// 获取 CVE 外链地址（根据操作系统发行版）
-export function getCveUrl(cveId, osDistro) {
+// 获取 CVE 外链地址（根据厂商或操作系统发行版）
+export function getCveUrl(cveId, source) {
   const id = String(cveId || '').trim()
   if (!id) return ''
 
-  const distro = normalizeOsDistro(osDistro)
-  if (distro === 'kylin') {
+  const target = normalizeCveLinkTarget(source)
+  if (target === 'ubuntu') {
+    return `https://ubuntu.com/security/${encodeURIComponent(id)}`
+  }
+  if (target === 'kylin') {
     return `https://support.kylinos.cn/#/security/cveDetail?allTitle=${encodeURIComponent(id)}`
   }
   return `https://access.redhat.com/security/cve/${id}`
