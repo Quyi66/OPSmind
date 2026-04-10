@@ -26,8 +26,7 @@
 
 html,
 body {
-  height: 100%;
-  height: 100dvh; // 动态视口高度支持
+  height: 100vh;
   font-family: 'PingFang-Medium', 'PingFang', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
   color: $text-color;
@@ -39,9 +38,16 @@ body {
 }
 
 #app {
-  height: 100%;
-  height: 100dvh; // 动态视口高度支持
+  height: 100vh;
   overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  html,
+  body,
+  #app {
+    height: 100dvh; // 动态视口高度支持
+  }
 }
 
 // 全局滚动条样式

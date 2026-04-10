@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen login-background relative overflow-hidden">
+  <div class="login-page login-background relative overflow-hidden">
     <!-- Background Pattern -->
     <div class="absolute inset-0 opacity-20">
       <div class="absolute top-20 left-20 w-2 h-2 bg-white rounded-full"></div>
@@ -28,27 +28,27 @@
     </header>
 
     <!-- Main Content -->
-    <div class="relative z-10 min-h-[calc(100vh-120px)]">
-      <div class="login-container flex items-center justify-center min-h-[inherit] px-4">
+    <div class="login-main relative z-10">
+      <div class="login-container w-full px-4 py-6 md:py-8">
         <!-- 合并的登录卡片控件 -->
-        <div class="flex w-full max-w-[760px] h-auto min-h-[400px] md:min-h-[420px] lg:h-[460px] shadow-2xl rounded-2xl overflow-hidden border border-gray-100 bg-white/70 backdrop-blur-sm">
-        <!-- 左侧插图卡片（中等及以上屏幕显示） -->
-        <div
-          class="hidden md:block md:w-1/2 h-full relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
-        >
+        <div class="login-card mx-auto flex w-full max-w-[760px] min-h-[400px] flex-col overflow-hidden rounded-2xl border border-gray-100 shadow-2xl md:min-h-[420px] md:flex-row lg:min-h-[460px]">
+          <!-- 左侧插图卡片（中等及以上屏幕显示） -->
           <div
-            class="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-indigo-400/5 to-purple-400/5"
-          ></div>
-          <img
-            src="@/assets/images/login-illu@2x.png"
-            alt="OPSmind Login Illustration"
-            class="w-full h-full object-cover drop-shadow-lg"
-            loading="eager"
-          />
-        </div>
+            class="relative hidden overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 md:block md:flex-1"
+          >
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-indigo-400/5 to-purple-400/5"
+            ></div>
+            <img
+              src="@/assets/images/login-illu@2x.png"
+              alt="OPSmind Login Illustration"
+              class="w-full h-full object-cover drop-shadow-lg"
+              loading="eager"
+            />
+          </div>
 
           <!-- 右侧登录表单卡片：占满右半部分 -->
-          <div class="w-full md:w-1/2 h-full bg-white flex items-center">
+          <div class="flex flex-1 items-center bg-white">
             <div class="w-full px-6 md:px-10">
               <LoginForm />
             </div>
@@ -64,12 +64,37 @@ import LoginForm from '@/components/auth/LoginForm.vue'
 </script>
 
 <style scoped>
+/* Login Layout */
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.login-main {
+  display: flex;
+  align-items: center;
+  min-height: calc(100vh - 120px);
+  min-height: calc(100dvh - 120px);
+}
+
 /* Login Background */
 .login-background {
   background-image: url('@/assets/images/bg-login@2x.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+.login-card {
+  background-color: rgba(255, 255, 255, 0.92);
+}
+
+@supports ((-webkit-backdrop-filter: blur(4px)) or (backdrop-filter: blur(4px))) {
+  .login-card {
+    background-color: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
 }
 
 /* 定宽居中容器（登录页专用） */
