@@ -187,7 +187,7 @@
               </el-button>
               <span class="script-upload-file">{{ scriptFiles.pre || '未选择文件' }}</span>
             </div>
-            <div class="task-step-editor__hint">上传后会同步到当前补丁安装任务。</div>
+            <div class="task-step-editor__hint">上传后会暂存到当前向导，执行时再同步到补丁安装任务。</div>
             <el-input
               type="textarea"
               :model-value="installConfig.preScript"
@@ -280,7 +280,7 @@
               </el-button>
               <span class="script-upload-file">{{ scriptFiles.post || '未选择文件' }}</span>
             </div>
-            <div class="task-step-editor__hint">上传后会同步到当前补丁安装任务。</div>
+            <div class="task-step-editor__hint">上传后会暂存到当前向导，执行时再同步到补丁安装任务。</div>
             <el-input
               type="textarea"
               :model-value="installConfig.postScript"
@@ -546,12 +546,12 @@
 
           <!-- 正在执行按钮 -->
           <el-button
-            v-if="installStep === 4 && pipelineStatus === 'running'"
+            v-if="installStep === 4 && (pipelineStatus === 'running' || executionSubmitting)"
             type="primary"
             loading
             disabled
           >
-            <span>执行中...</span>
+            <span>{{ pipelineStatus === 'running' ? '执行中...' : '准备执行...' }}</span>
           </el-button>
 
           <!-- 跳过按钮：针对预执行和校验脚本配置 -->
@@ -560,6 +560,7 @@
               (installStep === 1 || installStep === 2 || installStep === 3) &&
               !isSkipped[installStep]
             "
+            :disabled="stepTransitionLoading"
             @click="handleSkipStep"
           >
             跳过此步
@@ -569,7 +570,9 @@
           <el-button
             v-if="installStep >= 0 && installStep <= 3"
             type="primary"
+            :loading="stepTransitionLoading"
             :disabled="
+              stepTransitionLoading ||
               (installStep === 0 && selectedHosts.length === 0) ||
               (installStep === 3 &&
                 requiresRestartConfirm &&
@@ -583,7 +586,7 @@
 
           <!-- 最后一步（步骤4）确认与离开按钮 -->
           <el-button
-            v-if="installStep === 4 && pipelineStatus !== 'running'"
+            v-if="installStep === 4 && pipelineStatus !== 'running' && !executionSubmitting"
             type="primary"
             @click="handlePrimaryAction"
           >
@@ -767,6 +770,10 @@ const hostPagination = reactive({ page: 1, pageSize: 10, total: 0 })
 const preScriptUploadRef = ref(null)
 const postScriptUploadRef = ref(null)
 const pipelineSectionRef = ref(null)
+const executionSubmitting = ref(false)
+const stepTransitionLoading = ref(false)
+const restartAdviceSource = ref('local')
+const restartAdviceCacheKey = ref('')
 const scriptUploadFiles = reactive({ pre: null, post: null })
 const restartOptions = reactive({
   restartType: 'none',
@@ -822,10 +829,66 @@ function handleHostSelectionChange(selection) {
   selectedHosts.value = selection
 }
 
+watch(
+  () =>
+    selectedHosts.value
+      .map(host => host?.hostId || host?.id || host?.hostKey || host?.hostname || '')
+      .join('|'),
+  () => {
+    invalidatePreparedTask()
+  }
+)
+
 function formatHostDisplay(host) {
   const hostName = host?.hostKey || host?.hostname || host?.hostId || host?.id || '当前主机'
   const osName = [host?.os_distro, host?.os_version].filter(Boolean).join(' ')
   return osName ? `${hostName} (${osName})` : hostName
+}
+
+function normalizeRestartType(value) {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+  return ['system', 'service', 'none'].includes(normalized) ? normalized : 'none'
+}
+
+function getRestartPriority(value) {
+  const normalized = normalizeRestartType(value)
+  if (normalized === 'system') return 2
+  if (normalized === 'service') return 1
+  return 0
+}
+
+function getRestartLabel(value) {
+  const normalized = normalizeRestartType(value)
+  if (normalized === 'system') return '系统重启'
+  if (normalized === 'service') return '服务重启'
+  return '无需重启'
+}
+
+function resolveHostIp(host) {
+  return String(
+    host?.hostIp ||
+      host?.host_ip ||
+      host?.hostKey ||
+      host?.host_key ||
+      host?.ip ||
+      host?.hostname ||
+      ''
+  ).trim()
+}
+
+function getSelectedPatchIds() {
+  return Array.from(
+    new Set(
+      props.patchesToInstall.flatMap(patch =>
+        String(patch?.patch_id || patch?.patchId || '')
+          .split(',')
+          .map(value => value.trim())
+          .filter(Boolean)
+      )
+    )
+  )
 }
 
 const scriptModes = reactive({
@@ -890,6 +953,7 @@ async function loadRestartOptions() {
   try {
     const res = await patchInstallApi.getRestartOptions(createdTaskId.value)
     const data = res?.data || {}
+    restartAdviceSource.value = 'task'
     restartOptions.restartType = data.restartType || installConfig.restartPolicy || 'none'
     restartOptions.restartRequired = Boolean(data.restartRequired)
     restartOptions.restartLabel = data.restartLabel || ''
@@ -988,13 +1052,24 @@ async function handleScriptUpload(type, event) {
       scriptFiles.post = file.name
       scriptUploadFiles.post = file
     }
-    await uploadScriptToTask(type, file)
   } catch {
     ElMessage.error('脚本读取失败，请检查文件内容后重试')
   } finally {
     event.target.value = ''
   }
 }
+
+watch(
+  [
+    () => installConfig.preScript,
+    () => installConfig.postScript,
+    () => scriptModes.pre,
+    () => scriptModes.post
+  ],
+  () => {
+    invalidatePreparedTask()
+  }
+)
 
 // 格式化日期时间
 function formatDateTime(timestamp) {
@@ -1049,6 +1124,44 @@ const pipelineItems = computed(() => [
   { label: '脚本校验', idx: 2, runKey: 'validateRunId' }
 ])
 
+const smartRestartType = computed(() => {
+  const patches = props.patchesToInstall
+  let needsSystem = false
+  let needsService = false
+
+  for (const patch of patches) {
+    const id = patch.patch_id?.toLowerCase() || ''
+    if (
+      patch.rebootStatus === 'system' ||
+      patch.isKernel === 'is_kernel' ||
+      id.includes('kernel')
+    ) {
+      needsSystem = true
+    } else if (patch.rebootStatus === 'service') {
+      needsService = true
+    }
+  }
+
+  const pkgs = affectedPackages.value.join(' ').toLowerCase()
+  if (pkgs.includes('kernel')) {
+    needsSystem = true
+  }
+
+  if (needsSystem) return 'system'
+  if (needsService || pkgs.includes('glibc') || pkgs.includes('openssl')) return 'service'
+  return 'none'
+})
+
+watch(
+  smartRestartType,
+  type => {
+    if (!createdTaskId.value && restartAdviceSource.value === 'local') {
+      installConfig.restartPolicy = type
+    }
+  },
+  { immediate: true }
+)
+
 const requiresRestartConfirm = computed(
   () => restartOptions.restartRequired || installConfig.restartPolicy !== 'none'
 )
@@ -1058,8 +1171,27 @@ const restartConfirmKeyword = computed(() => {
   return '确认重启'
 })
 const restartConfirmSubmitText = '确认重启'
-const restartAdviceTitle = computed(() => restartOptions.restartLabel || '系统重启建议')
+const restartAdviceTitle = computed(() => {
+  if (restartOptions.restartLabel) return restartOptions.restartLabel
+  if (installConfig.restartPolicy === 'system') return '系统重启建议'
+  if (installConfig.restartPolicy === 'service') return '服务重启建议'
+  return '重启建议'
+})
+const packageBasedRestartAdvice = computed(() => {
+  const restartType = normalizeRestartType(restartOptions.restartType || installConfig.restartPolicy)
+  if (restartType === 'none') return ''
+
+  const packageNames = Array.from(new Set(affectedPackages.value.filter(Boolean)))
+  const packageDescription =
+    packageNames.length > 0 ? `软件包更新（${packageNames.join('、')}）` : '软件包更新'
+
+  return `${packageDescription}，建议${getRestartLabel(restartType)}。`
+})
 const restartAdviceDescription = computed(() => {
+  if (packageBasedRestartAdvice.value) {
+    return packageBasedRestartAdvice.value
+  }
+
   return (
     restartOptions.restartDescription ||
     restartOptions.restartReason ||
@@ -1122,10 +1254,218 @@ function stopPolling() {
 
 onUnmounted(() => stopPolling())
 
+function resetRestartOptions() {
+  restartAdviceSource.value = 'local'
+  restartAdviceCacheKey.value = ''
+  restartOptions.restartType = 'none'
+  restartOptions.restartRequired = false
+  restartOptions.restartLabel = ''
+  restartOptions.restartDescription = ''
+  restartOptions.restartReason = ''
+  backendRestartReason.value = ''
+}
+
+function applyLocalRestartAdvice(message = '') {
+  restartAdviceSource.value = 'local'
+  installConfig.restartPolicy = smartRestartType.value
+
+  if (!message) {
+    return
+  }
+
+  const description = `${message} ${smartRestartGuess.value}`.trim()
+  restartOptions.restartType = smartRestartType.value
+  restartOptions.restartRequired = smartRestartType.value !== 'none'
+  restartOptions.restartLabel = ''
+  restartOptions.restartDescription = description
+  restartOptions.restartReason = description
+}
+
+function buildRestartAdviceDescription(hostAdviceList, ignoredCount, failedCount) {
+  const systemHosts = hostAdviceList.filter(item => item.rebootStatus === 'system')
+  const serviceHosts = hostAdviceList.filter(item => item.rebootStatus === 'service')
+  const noneHosts = hostAdviceList.filter(item => item.rebootStatus === 'none')
+  const highlightedHosts = hostAdviceList
+    .filter(item => item.rebootStatus !== 'none')
+    .slice(0, 3)
+    .map(item => `${item.hostLabel}：${getRestartLabel(item.rebootStatus)}`)
+
+  const parts = [
+    `后端已基于 ${hostAdviceList.length} 台目标主机的补丁状态生成重启建议。`,
+    `系统重启 ${systemHosts.length} 台，服务重启 ${serviceHosts.length} 台，无需重启 ${noneHosts.length} 台。`
+  ]
+
+  if (highlightedHosts.length > 0) {
+    parts.push(`示例：${highlightedHosts.join('；')}。`)
+  }
+
+  if (ignoredCount > 0) {
+    parts.push(`${ignoredCount} 个主机与补丁组合未命中状态记录，已自动忽略。`)
+  }
+
+  if (failedCount > 0) {
+    parts.push(`${failedCount} 个主机与补丁组合查询失败，当前结果已按成功返回部分汇总。`)
+  }
+
+  return parts.join(' ')
+}
+
+async function loadRestartAdviceByHostPatch(force = false) {
+  const hostEntries = Array.from(
+    new Map(
+      confirmedHosts.value
+        .map(host => {
+          const hostIp = resolveHostIp(host)
+          if (!hostIp) return null
+
+          return [
+            hostIp,
+            {
+              hostIp,
+              hostLabel: formatHostDisplay(host)
+            }
+          ]
+        })
+        .filter(Boolean)
+    ).values()
+  )
+  const patchIds = getSelectedPatchIds()
+
+  if (hostEntries.length === 0 || patchIds.length === 0) {
+    applyLocalRestartAdvice('未获取到完整的主机或补丁信息，已退回本地启发式建议。')
+    return false
+  }
+
+  const queryKey = JSON.stringify({
+    hostIps: hostEntries.map(item => item.hostIp).sort(),
+    patchIds: [...patchIds].sort()
+  })
+
+  if (!force && restartAdviceCacheKey.value === queryKey && restartAdviceSource.value === 'backend') {
+    return true
+  }
+
+  const cacheBuster = Date.now()
+  const queryTasks = hostEntries.flatMap(host =>
+    patchIds.map(patchId => ({
+      hostIp: host.hostIp,
+      hostLabel: host.hostLabel,
+      patchId,
+      request: patchInstallApi.getPatchRebootOnHost({
+        patchId,
+        hostIp: host.hostIp,
+        cacheBuster
+      })
+    }))
+  )
+
+  const settledResults = await Promise.allSettled(queryTasks.map(item => item.request))
+  const successfulResults = []
+  let ignoredCount = 0
+  let failedCount = 0
+
+  settledResults.forEach((result, index) => {
+    const task = queryTasks[index]
+
+    if (result.status === 'fulfilled') {
+      const data = result.value?.data || result.value
+      successfulResults.push({
+        hostIp: task.hostIp,
+        hostLabel: task.hostLabel,
+        patchId: task.patchId,
+        rebootStatus: normalizeRestartType(data?.rebootStatus)
+      })
+      return
+    }
+
+    const statusCode =
+      result.reason?.response?.status || result.reason?.status || result.reason?.code || 0
+
+    if (Number(statusCode) === 404) {
+      ignoredCount++
+    } else {
+      failedCount++
+    }
+  })
+
+  if (successfulResults.length === 0) {
+    applyLocalRestartAdvice('后端未返回可用的重启建议，已退回本地启发式建议。')
+    restartAdviceCacheKey.value = ''
+    return false
+  }
+
+  const hostAdviceMap = new Map()
+  successfulResults.forEach(item => {
+    const current = hostAdviceMap.get(item.hostIp) || {
+      hostIp: item.hostIp,
+      hostLabel: item.hostLabel,
+      rebootStatus: 'none'
+    }
+
+    if (getRestartPriority(item.rebootStatus) > getRestartPriority(current.rebootStatus)) {
+      current.rebootStatus = item.rebootStatus
+    }
+
+    hostAdviceMap.set(item.hostIp, current)
+  })
+
+  const hostAdviceList = Array.from(hostAdviceMap.values())
+  const overallRestartType = hostAdviceList.reduce((current, item) => {
+    return getRestartPriority(item.rebootStatus) > getRestartPriority(current)
+      ? item.rebootStatus
+      : current
+  }, 'none')
+
+  restartAdviceSource.value = 'backend'
+  restartAdviceCacheKey.value = queryKey
+  restartOptions.restartType = overallRestartType
+  restartOptions.restartRequired = overallRestartType !== 'none'
+  restartOptions.restartLabel = getRestartLabel(overallRestartType)
+  restartOptions.restartDescription = buildRestartAdviceDescription(
+    hostAdviceList,
+    ignoredCount,
+    failedCount
+  )
+  restartOptions.restartReason = restartOptions.restartDescription
+  installConfig.restartPolicy = overallRestartType
+
+  return true
+}
+
+function resetPipelineState() {
+  stopPolling()
+  pipelineStatus.value = 'idle'
+  taskStatus.value = ''
+  taskErrorMessage.value = ''
+  taskDetailData.value = null
+  pipelineFinished.value = false
+  for (let i = 1; i < stepStates.length; i++) stepStates[i] = 'idle'
+}
+
+function canReusePreparedTask() {
+  return (
+    Boolean(createdTaskId.value) &&
+    pipelineStatus.value === 'idle' &&
+    !pipelineFinished.value &&
+    stepStates.slice(1).every(state => state === 'idle')
+  )
+}
+
+function invalidatePreparedTask() {
+  if (!canReusePreparedTask()) return
+
+  createdTaskId.value = ''
+  taskStatus.value = ''
+  taskErrorMessage.value = ''
+  taskDetailData.value = null
+  resetRestartOptions()
+}
+
 function resetInstallState() {
   stopPolling()
   installStep.value = 0
   createdTaskId.value = ''
+  executionSubmitting.value = false
   backendRestartReason.value = ''
   pipelineStatus.value = 'idle'
   installConfig.preScript = ''
@@ -1137,11 +1477,7 @@ function resetInstallState() {
   scriptFiles.post = ''
   scriptUploadFiles.pre = null
   scriptUploadFiles.post = null
-  restartOptions.restartType = 'none'
-  restartOptions.restartRequired = false
-  restartOptions.restartLabel = ''
-  restartOptions.restartDescription = ''
-  restartOptions.restartReason = ''
+  resetRestartOptions()
   if (!hasFixedHosts.value) {
     selectedHosts.value = []
     confirmedHosts.value = []
@@ -1159,44 +1495,110 @@ function resetInstallState() {
 
 // Smart reboot guess
 const smartRestartGuess = computed(() => {
-  const patches = props.patchesToInstall
-  let needsSystem = false
-  let needsService = false
-  for (const patch of patches) {
-    const id = patch.patch_id?.toLowerCase() || ''
-    if (
-      patch.rebootStatus === 'system' ||
-      patch.isKernel === 'is_kernel' ||
-      id.includes('kernel')
-    ) {
-      needsSystem = true
-    } else if (patch.rebootStatus === 'service') {
-      needsService = true
-    }
+  if (smartRestartType.value === 'system') {
+    return '检测到内核相关补丁或关键系统组件更新，建议执行系统重启。'
   }
-  const pkgs = affectedPackages.value.join(' ').toLowerCase()
-  if (pkgs.includes('kernel')) {
-    needsSystem = true
+  if (smartRestartType.value === 'service') {
+    return '检测到服务级补丁或基础库更新，建议执行服务重启。'
   }
-
-  if (needsSystem) return '系统重启 (System Restart)'
-  if (needsService || pkgs.includes('glibc') || pkgs.includes('openssl'))
-    return '服务重启 (Service Restart)'
-  return '无需重启 (None)'
+  return '当前补丁预计无需重启，可直接继续后续流程。'
 })
 
-// 步骤0 → 创建任务并进入步骤1
+function buildTaskRequestPayload() {
+  return {
+    hostIds: confirmedHosts.value.map(host => host.hostId || host.id).filter(Boolean),
+    patchIds: props.patchesToInstall.map(patch => patch.patch_id).filter(Boolean),
+    patchStatusIds: getPatchStatusIds(props.patchesToInstall)
+  }
+}
+
+async function createExecutionTask() {
+  const requestPayload = buildTaskRequestPayload()
+  const res = isRollbackTask.value
+    ? await patchInstallApi.createRollbackTask({
+        ...requestPayload,
+        histUpdateIds: props.histUpdateIds
+      })
+    : isPackageTask.value
+      ? await patchInstallApi.createPkgUpdateTask({
+          hostIds: requestPayload.hostIds,
+          packages: getTaskPackages()
+        })
+      : isVulnerabilityTask.value
+        ? await patchInstallApi.createVulnFixTask({
+            hostIds: requestPayload.hostIds,
+            patchIds: requestPayload.patchIds,
+            patchStatusIds: requestPayload.patchStatusIds
+          })
+        : await patchInstallApi.createTask({
+            ...requestPayload,
+            osType: 'linux'
+          })
+
+  const data = res?.data || null
+  const taskId = data?.id || ''
+  if (!taskId) {
+    throw new Error('任务创建失败，请稍后重试')
+  }
+
+  createdTaskId.value = taskId
+  taskDetailData.value = data
+
+  if (data.restartType && ['system', 'service', 'none'].includes(data.restartType)) {
+    installConfig.restartPolicy = data.restartType
+  }
+  backendRestartReason.value = data.restartReason || ''
+}
+
+async function prepareTaskForExecution() {
+  if (confirmedHosts.value.length === 0) {
+    ElMessage.warning('请先选择目标主机')
+    installStep.value = 0
+    return false
+  }
+
+  if (!canReusePreparedTask()) {
+    resetPipelineState()
+    createdTaskId.value = ''
+    resetRestartOptions()
+    await createExecutionTask()
+  }
+
+  const preSynced = await syncScriptConfig('pre')
+  if (!preSynced) return false
+
+  const postSynced = await syncScriptConfig('post')
+  if (!postSynced) return false
+
+  await loadRestartOptions()
+  await loadRollbackInfo()
+
+  if (
+    requiresRestartConfirm.value &&
+    !isSkipped[3] &&
+    restartConfirmText.value !== restartConfirmKeyword.value
+  ) {
+    installStep.value = 3
+    ElMessage.warning('后端评估结果要求确认重启，请完成确认后再开始执行')
+    return false
+  }
+
+  return true
+}
+
+// 步骤0 → 进入步骤1，仅保存本地配置
 async function handleNextStep() {
+  if (stepTransitionLoading.value) return
+
+  stepTransitionLoading.value = true
   const step = installStep.value
 
-  if (step === 0) {
-    if (selectedHosts.value.length === 0) return
+  try {
+    if (step === 0) {
+      if (selectedHosts.value.length === 0) return
 
-    confirmedHosts.value = [...selectedHosts.value]
+      confirmedHosts.value = [...selectedHosts.value]
 
-    installDataLoading.value = true
-    try {
-      // 切换主机或重新开始时，清空之前步骤的执行状态
       for (let i = 1; i < stepStates.length; i++) stepStates[i] = 'idle'
       isSkipped[1] = false
       isSkipped[2] = false
@@ -1205,73 +1607,22 @@ async function handleNextStep() {
       taskErrorMessage.value = ''
       pipelineFinished.value = false
       pipelineStatus.value = 'idle'
-
-      const requestPayload = {
-        hostIds: confirmedHosts.value.map(h => h.hostId || h.id),
-        patchIds: props.patchesToInstall.map(p => p.patch_id),
-        patchStatusIds: getPatchStatusIds(props.patchesToInstall)
-      }
-      const res = isRollbackTask.value
-        ? await patchInstallApi.createRollbackTask({
-            ...requestPayload,
-            histUpdateIds: props.histUpdateIds
-          })
-        : isPackageTask.value
-          ? await patchInstallApi.createPkgUpdateTask({
-              hostIds: requestPayload.hostIds,
-              packages: getTaskPackages()
-            })
-          : isVulnerabilityTask.value
-            ? await patchInstallApi.createVulnFixTask({
-                hostIds: requestPayload.hostIds,
-                patchIds: requestPayload.patchIds,
-                patchStatusIds: requestPayload.patchStatusIds
-              })
-            : await patchInstallApi.createTask({
-                ...requestPayload,
-                osType: 'linux'
-              })
-
-      if (res?.data) {
-        createdTaskId.value = res.data.id || ''
-        taskDetailData.value = res.data
-        if (res.data.restartType && ['system', 'service', 'none'].includes(res.data.restartType)) {
-          installConfig.restartPolicy = res.data.restartType
-        } else {
-          installConfig.restartPolicy = 'none'
-        }
-        backendRestartReason.value = res.data.restartReason || ''
-        installConfig.preScript = res.data.preCheckScript || ''
-        installConfig.postScript = res.data.validateScript || ''
-        await loadRestartOptions()
-        await loadRollbackInfo()
-      }
+      createdTaskId.value = ''
+      resetRestartOptions()
       installStep.value = 1
-    } catch (error) {
-      console.warn('API /create failed, falling back to local heuristic', error)
-      ElMessage.warning('未能连接后端智能预判接口，已自动降级为本地启发式策略。')
-      backendRestartReason.value = '（后端评估网络异常，目前显示本地启发式评估）'
-      installStep.value = 1
-    } finally {
-      installDataLoading.value = false
+      return
     }
-    return
-  }
 
-  if (step === 1) {
-    const synced = await syncScriptConfig('pre')
-    if (!synced) return
-  }
+    if (step === 2) {
+      await loadRestartAdviceByHostPatch()
+    }
 
-  if (step === 2) {
-    const synced = await syncScriptConfig('post')
-    if (!synced) return
-    await loadRestartOptions()
-  }
-
-  if (step >= 1 && step < 4) {
-    // 步骤 1-3 现在仅为配置，直接进入下一步
-    installStep.value = step + 1
+    if (step >= 1 && step < 4) {
+      // 步骤 1-3 现在仅为配置，直接进入下一步
+      installStep.value = step + 1
+    }
+  } finally {
+    stepTransitionLoading.value = false
   }
 }
 
@@ -1301,16 +1652,19 @@ function handlePrimaryAction() {
 }
 
 async function executeStep(step) {
-  if (!createdTaskId.value) {
-    ElMessage.error('任务ID不存在，请重试')
-    return
-  }
-
   if (step === 4) {
-    const preSynced = await syncScriptConfig('pre')
-    const postSynced = await syncScriptConfig('post')
-    if (!preSynced || !postSynced) return
-    startPipeline()
+    if (executionSubmitting.value || pipelineStatus.value === 'running') return
+
+    executionSubmitting.value = true
+    try {
+      const taskPrepared = await prepareTaskForExecution()
+      if (!taskPrepared) return
+      await startPipeline()
+    } catch (error) {
+      ElMessage.error(error?.message || '任务准备失败，请稍后重试')
+    } finally {
+      executionSubmitting.value = false
+    }
   }
 }
 

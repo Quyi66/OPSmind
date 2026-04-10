@@ -456,6 +456,23 @@ export const patchInstallApi = {
   },
 
   /**
+   * 查询补丁在指定主机上的重启建议
+   * GET /vap/api/vap/v2/patch/reboot-on-host?patchId=...&hostIp=...
+   */
+  getPatchRebootOnHost(params) {
+    const searchParams = new URLSearchParams({
+      patchId: params.patchId,
+      hostIp: params.hostIp
+    })
+
+    if (params.cacheBuster) {
+      searchParams.set('cacheBuster', String(params.cacheBuster))
+    }
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/patch/reboot-on-host?${searchParams.toString()}`)
+  },
+
+  /**
    * 步骤1：执行预检查
    * POST /vap/api/vap/v2/patch/task/{id}/pre-check/execute
    */
