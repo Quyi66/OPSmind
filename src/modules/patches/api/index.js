@@ -1813,6 +1813,62 @@ export const cveApi = {
 }
 
 /**
+ * Windows CVE 漏洞查询 API
+ * 参照 win-cve-api.md 实现
+ */
+export const winCveApi = {
+  /**
+   * 分页查询 Windows CVE 列表
+   * GET /vap/api/vap/v2/win-cve/list
+   * @param {Object} params - 查询参数
+   * @returns {Promise}
+   */
+  getCveList(params = {}) {
+    const queryParams = {}
+
+    if (params.severity && params.severity !== 'all') queryParams.severity = params.severity
+    if (params.keyword) queryParams.keyword = params.keyword
+    if (params.startDate) queryParams.startDate = params.startDate
+    if (params.endDate) queryParams.endDate = params.endDate
+    if (params.page !== undefined) queryParams.page = params.page
+    if (params.size !== undefined) queryParams.size = params.size
+    if (params.sortBy) queryParams.sortBy = params.sortBy
+    if (params.sortDir) queryParams.sortDir = params.sortDir
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/win-cve/list`, { params: queryParams })
+  },
+
+  /**
+   * 查询 Windows CVE 详情
+   * GET /vap/api/vap/v2/win-cve/detail/{cveId}
+   * @param {string} cveId - CVE 编号
+   * @returns {Promise}
+   */
+  getCveDetail(cveId) {
+    return apiService.get(`${VAP_API_PREFIX}/v2/win-cve/detail/${encodeURIComponent(cveId)}`)
+  },
+
+  /**
+   * 获取 Windows CVE 统计概览
+   * GET /vap/api/vap/v2/win-cve/statistics
+   * @returns {Promise}
+   */
+  getStatistics() {
+    return apiService.get(`${VAP_API_PREFIX}/v2/win-cve/statistics`)
+  },
+
+  /**
+   * 查询受影响的 Windows 产品列表
+   * GET /vap/api/vap/v2/win-cve/affected/{cveId}
+   * @param {string} cveId - CVE 编号
+   * @returns {Promise}
+   */
+  getAffectedProducts(cveId) {
+    return apiService.get(`${VAP_API_PREFIX}/v2/win-cve/affected/${encodeURIComponent(cveId)}`)
+  }
+}
+
+/**
  * 中间件 CVE Vulnerability 查询 API
  * 参照 middleware-cve-api.md 实现
  */
@@ -1886,5 +1942,6 @@ export default {
   yum: yumManageApi,
   operationReport: operationReportApi,
   cve: cveApi,
+  winCve: winCveApi,
   middlewareCve: middlewareCveApi
 }

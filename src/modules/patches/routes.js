@@ -99,6 +99,16 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./components/WindowsVulnerability.vue')
   },
   {
+    key: 'windowsCveList',
+    path: 'windowsCveList',
+    name: 'patches-windowsCveList',
+    title: 'Windows CVE列表',
+    navLabel: 'CVE漏洞列表',
+    icon: 'fas fa-bug',
+    platform: 'windows',
+    component: () => import('./components/WindowsCveList.vue')
+  },
+  {
     key: 'windowsUpdate',
     path: 'windowsUpdate',
     name: 'patches-windowsUpdate',
