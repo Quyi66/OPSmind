@@ -44,7 +44,7 @@ export const MENU_CONFIG = {
         },
         {
           code: 'users',
-          name: '主机用户管理',
+          name: '主机用户',
           icon: 'fas fa-users',
           description: '主机用户账户和权限管理'
         }

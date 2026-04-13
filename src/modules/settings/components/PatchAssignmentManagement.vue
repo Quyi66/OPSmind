@@ -1,6 +1,5 @@
 <template>
   <div class="ops-page-layout">
-    <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
@@ -34,13 +33,9 @@
       </el-form>
     </div>
 
-    <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" size="small" @click="handleCreateUser">
-        <i class="fa fa-plus"></i> 添加用户
-      </el-button>
-      <el-button size="small" @click="handleAllocateRole">
-        <i class="fa fa-user-tag"></i> 分配角色
+      <el-button size="small" @click="handleCleanExpired">
+        <i class="fa fa-broom"></i> 清理过期分配
       </el-button>
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
@@ -48,7 +43,6 @@
       </el-button>
     </div>
 
-    <!-- 数据表格 -->
     <div class="ops-table-wrapper">
       <el-table
         :data="filteredData"
@@ -65,26 +59,23 @@
         </el-table-column>
         <el-table-column prop="activated" label="状态" width="100" align="left">
           <template #default="{ row }">
-            <el-tag
-              :type="row.activated ? 'success' : 'danger'"
-              size="small"
-            >
+            <el-tag :type="row.activated ? 'success' : 'danger'" size="small">
               {{ row.activated ? '已激活' : '已禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="authMode" label="认证方式" width="120" align="left">
+        <!-- <el-table-column prop="authMode" label="认证方式" width="120" align="left">
           <template #default="{ row }">
             <el-tag :type="getAuthModeType(row.authMode)" size="small">
               {{ getAuthModeLabel(row.authMode) }}
             </el-tag>
           </template>
-        </el-table-column>
+        </el-table-column> -->
         <el-table-column prop="roles" label="角色" min-width="250">
           <template #default="{ row }">
             <div class="roles-cell">
               <el-tag
-                v-for="role in row.roles"
+                v-for="role in row.roles || []"
                 :key="role.id"
                 size="small"
                 type="info"
@@ -95,45 +86,24 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="lastModifiedDate" label="最后修改时间" width="180">
+        <!-- <el-table-column prop="lastModifiedDate" label="最后修改时间" width="180">
           <template #default="{ row }">
             {{ formatTime(row.lastModifiedDate) }}
           </template>
-        </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        </el-table-column> -->
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" text type="primary" @click="handleView(row)">
-              查看
+            <el-button size="small" text type="primary" @click="handleAssignPatch(row)">
+              分配补丁
             </el-button>
-            <el-button size="small" text type="primary" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button
-              size="small"
-              text
-              type="primary"
-              @click="handleToggleActivation(row)"
-              :disabled="isCurrentUser(row) || togglingUserId === row.tenantUserId"
-              :loading="togglingUserId === row.tenantUserId"
-            >
-              {{ row.activated ? '禁用' : '启用' }}
-            </el-button>
-            <el-button
-              size="small"
-              text
-              type="danger"
-              @click="handleDelete(row)"
-              :disabled="isCurrentUser(row) || deletingUserId === row.tenantUserId"
-              :loading="deletingUserId === row.tenantUserId"
-            >
-              删除
+            <el-button size="small" text type="primary" @click="handleViewPatchRecords(row)">
+              分配记录
             </el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
 
-    <!-- 分页器 -->
     <div class="ops-pagination-wrapper">
       <el-pagination
         v-model:current-page="pagination.page"
@@ -145,42 +115,31 @@
       />
     </div>
 
-    <!-- 用户编辑/查看对话框 -->
-    <UserEditDialog
-      v-model="dialogVisible"
-      :user="selectedUser"
-      :mode="dialogMode"
-      @saved="loadData"
+    <AssignPatchDialog
+      v-model:visible="assignDialogVisible"
+      :username="currentPatchUserLogin"
     />
 
-    <!-- 分配角色对话框 -->
-    <AllocateRoleDialog
-      v-model="allocateRoleVisible"
-      @saved="loadData"
-    />
-
-    <!-- 关联用户对话框 -->
-    <LinkTenantUserDialog
-      v-model="linkUserVisible"
-      @saved="loadData"
+    <PatchRecordsDialog
+      v-model:visible="recordsDialogVisible"
+      :username="currentPatchUserLogin"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
-import * as settingsApi from '@/modules/settings/api'
+import { apiService } from '@/core/api'
 import { authService } from '@/core/auth'
-import UserEditDialog from './UserEditDialog.vue'
-import AllocateRoleDialog from './AllocateRoleDialog.vue'
-import LinkTenantUserDialog from './LinkTenantUserDialog.vue'
+import * as settingsApi from '@/modules/settings/api'
+import AssignPatchDialog from '@/modules/user/components/dialogs/AssignPatchDialog.vue'
+import PatchRecordsDialog from '@/modules/user/components/dialogs/PatchRecordsDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])
 
-// 搜索和筛选
 const filters = reactive({
   keyword: '',
   status: ''
@@ -192,55 +151,39 @@ const pagination = reactive({
   total: 0
 })
 
-// 已应用的筛选条件（只在点击搜索按钮时更新）
 const appliedKeyword = ref('')
 const appliedStatus = ref('')
+const assignDialogVisible = ref(false)
+const recordsDialogVisible = ref(false)
+const currentPatchUserLogin = ref('')
 
-// 过滤后的数据（使用已应用的筛选条件）
 const filteredData = computed(() => {
   let result = tableData.value
 
-  // 关键词搜索
   if (appliedKeyword.value) {
     const keyword = appliedKeyword.value.toLowerCase()
     result = result.filter(item =>
-      item.login?.toLowerCase().includes(keyword) ||
-      item.fullName?.toLowerCase().includes(keyword)
+      item.login?.toLowerCase().includes(keyword)
+      || item.fullName?.toLowerCase().includes(keyword)
     )
   }
 
-  // 状态筛选
   if (appliedStatus.value === 'activated') {
     result = result.filter(item => item.activated)
   } else if (appliedStatus.value === 'disabled') {
     result = result.filter(item => !item.activated)
   }
 
-  // 更新分页总数
   pagination.total = result.length
 
-  // 分页
   const start = (pagination.page - 1) * pagination.pageSize
   const end = start + pagination.pageSize
   return result.slice(start, end)
 })
 
-// 对话框相关
-const dialogVisible = ref(false)
-const selectedUser = ref(null)
-const dialogMode = ref('edit') // 'view' | 'edit' | 'create'
-const allocateRoleVisible = ref(false)
-const linkUserVisible = ref(false)
-
-// 当前登录用户
-const currentUserLogin = computed(() => {
-  try {
-    const user = authService.getCurrentUser()
-    return user?.login || ''
-  } catch {
-    return ''
-  }
-})
+const patchAssignmentApi = {
+  cleanExpired: () => apiService.post('/vap/api/vap/v2/patch/assignment/clean-expired')
+}
 
 onMounted(() => {
   loadData()
@@ -249,10 +192,7 @@ onMounted(() => {
 async function loadData() {
   loading.value = true
   try {
-    // 获取当前用户的 tenantId
-    const user = authService.getCurrentUser()
-    const tenantId = user?.tenantId || ''
-
+    const tenantId = authService.getCurrentUser()?.tenantId || ''
     const response = await settingsApi.getUsers(tenantId)
     const result = response?.data || response
     tableData.value = Array.isArray(result) ? result : []
@@ -260,19 +200,19 @@ async function loadData() {
   } catch (error) {
     console.error('Failed to load users:', error)
     ElMessage.error('加载用户列表失败')
+    tableData.value = []
+    pagination.total = 0
   } finally {
     loading.value = false
   }
 }
 
-// 搜索 - 将筛选条件应用到 appliedFilters
 function handleSearch() {
   appliedKeyword.value = filters.keyword
   appliedStatus.value = filters.status
   pagination.page = 1
 }
 
-// 重置
 function handleReset() {
   filters.keyword = ''
   filters.status = ''
@@ -317,106 +257,53 @@ function formatTime(time) {
   }
 }
 
-function isCurrentUser(row) {
-  return row.login === currentUserLogin.value
+function resolvePatchUserLogin(row) {
+  return row?.login || row?.username || ''
 }
 
-// 状态切换中
-const togglingUserId = ref(null)
-
-async function handleToggleActivation(row) {
-  if (isCurrentUser(row)) {
-    ElMessage.warning('不能修改当前登录用户的状态')
-    return
-  }
-
-  // 防抖：如果正在切换则返回
-  if (togglingUserId.value) {
-    return
-  }
-
-  const newStatus = !row.activated
-  const action = newStatus ? '激活' : '禁用'
-
+async function handleCleanExpired() {
   try {
     await ElMessageBox.confirm(
-      `确定要${action}用户 "${row.fullName || row.login}" 吗？`,
-      '确认操作',
+      '确认要清理系统中所有已经过期的补丁分配记录吗？',
+      '清理警告',
       { type: 'warning' }
     )
 
-    togglingUserId.value = row.tenantUserId
-    await settingsApi.toggleUserActivation(row, newStatus)
-    ElMessage.success(`${action}成功`)
-    loadData()
+    const res = await patchAssignmentApi.cleanExpired()
+    const count = res?.data?.cleaned || 0
+    ElMessage.success(`清理成功，共清理了 ${count} 条记录`)
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('Failed to toggle user activation:', error)
-      ElMessage.error(`${action}失败`)
+      console.error('Failed to clean expired patch assignments:', error)
+      ElMessage.error('清理失败')
     }
-  } finally {
-    togglingUserId.value = null
   }
 }
 
-function handleAllocateRole() {
-  allocateRoleVisible.value = true
-}
-
-function handleCreateUser() {
-  linkUserVisible.value = true
-}
-
-function handleView(row) {
-  selectedUser.value = row
-  dialogMode.value = 'view'
-  dialogVisible.value = true
-}
-
-function handleEdit(row) {
-  selectedUser.value = row
-  dialogMode.value = 'edit'
-  dialogVisible.value = true
-}
-
-// 删除中状态
-const deletingUserId = ref(null)
-
-async function handleDelete(row) {
-  if (isCurrentUser(row)) {
-    ElMessage.warning('不能删除当前登录用户')
+function handleAssignPatch(row) {
+  const login = resolvePatchUserLogin(row)
+  if (!login) {
+    ElMessage.warning('当前用户缺少登录名，无法分配补丁')
     return
   }
 
-  // 防抖：如果正在删除则返回
-  if (deletingUserId.value) {
+  currentPatchUserLogin.value = login
+  assignDialogVisible.value = true
+}
+
+function handleViewPatchRecords(row) {
+  const login = resolvePatchUserLogin(row)
+  if (!login) {
+    ElMessage.warning('当前用户缺少登录名，无法查看补丁分配记录')
     return
   }
 
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除用户 "${row.fullName || row.login}" 吗？`,
-      '确认删除',
-      { type: 'warning' }
-    )
-
-    deletingUserId.value = row.tenantUserId
-    await settingsApi.deleteUser(row.tenantUserId)
-    ElMessage.success('删除成功')
-    loadData()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Failed to delete user:', error)
-      ElMessage.error('删除失败')
-    }
-  } finally {
-    deletingUserId.value = null
-  }
+  currentPatchUserLogin.value = login
+  recordsDialogVisible.value = true
 }
 </script>
 
 <style scoped lang="scss">
-// 仅保留组件特定样式，布局类由全局 element-ui.scss 提供
 .roles-cell {
   display: flex;
   flex-wrap: wrap;

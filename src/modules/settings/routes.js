@@ -8,10 +8,19 @@ export const UAM_ROUTE_DEFS = [
     key: 'user',
     path: 'user',
     name: 'uam-user',
-    title: '用户管理',
-    navLabel: '用户管理',
+    title: '用户列表',
+    navLabel: '用户列表',
     icon: 'fas fa-users-cog',
     component: () => import('./components/UserManagement.vue')
+  },
+  {
+    key: 'patch-assignment',
+    path: 'patch-assignment',
+    name: 'uam-patch-assignment',
+    title: '补丁分配',
+    navLabel: '补丁分配',
+    icon: 'fas fa-band-aid',
+    component: () => import('./components/PatchAssignmentManagement.vue')
   },
   {
     key: 'team',
