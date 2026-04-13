@@ -202,6 +202,10 @@ const props = defineProps({
   osDistro: {
     type: String,
     default: ''
+  },
+  defaultSeverities: {
+    type: Array,
+    default: () => ['Critical', 'Important', 'Moderate', 'Low']
   }
 })
 
@@ -236,7 +240,15 @@ const {
   hostKey: toRef(props, 'hostKey')
 })
 
-const defaultSeverities = ['Critical', 'Important', 'Moderate', 'Low']
+const fallbackSeverities = ['Critical', 'Important', 'Moderate', 'Low']
+
+function applyDefaultSeverities() {
+  const nextSeverities = Array.isArray(props.defaultSeverities) && props.defaultSeverities.length > 0
+    ? [...props.defaultSeverities]
+    : [...fallbackSeverities]
+
+  selectedSeverities.value = nextSeverities
+}
 
 function normalizeSeverity(severity) {
   const raw = String(severity || '').trim()
@@ -269,9 +281,7 @@ function getSeverityLabel(severity) {
 }
 
 onMounted(() => {
-  if (!selectedSeverities.value.length) {
-    selectedSeverities.value = [...defaultSeverities]
-  }
+  applyDefaultSeverities()
   loadPatchList()
 })
 

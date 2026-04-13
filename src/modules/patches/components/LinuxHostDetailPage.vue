@@ -13,13 +13,13 @@
     <!-- 主机信息卡片 -->
     <div class="host-info-card" v-loading="machineLoading">
       <div class="host-info-body">
-        <div class="info-item" v-if="machineInfo.hostname">
+        <div class="info-item" v-if="machineInfo.hostKey">
           <span class="label">主机名：</span>
-          <span class="value">{{ machineInfo.hostname }}</span>
+          <span class="value">{{ machineInfo.hostKey }}</span>
         </div>
         <div class="info-item">
           <span class="label">OS：</span>
-          <span class="value">{{ machineInfo.os_distro }} {{ machineInfo.os_version }}</span>
+          <span class="value">{{ machineInfo.os_distro }} {{ hostInfoRef.os_version }}</span>
         </div>
         <div class="info-item">
           <span class="label">最后扫描：</span>
@@ -468,6 +468,7 @@ function handleBack() {
   .value {
     color: var(--el-text-color-primary);
     font-weight: 500;
+    font-family: PingFang-Bold, PingFang SC, Microsoft YaHei, Helvetica, Arial, sans-serif;
   }
 }
 

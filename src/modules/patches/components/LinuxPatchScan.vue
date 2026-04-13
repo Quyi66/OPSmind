@@ -224,9 +224,16 @@
                 <i class="fa fa-circle text-danger" />
               </template>
               <template #default="{ row }">
-                <span :class="{ 'text-danger font-bold': row.num_critical > 0 }">
+                <button
+                  type="button"
+                  class="severity-count"
+                  :class="{ 'font-bold is-clickable': row.num_critical > 0 }"
+                  :disabled="row.num_critical <= 0"
+                  :title="row.num_critical > 0 ? '查看严重补丁' : ''"
+                  @click="handleSeverityCountClick(row, 'Critical')"
+                >
                   {{ row.num_critical }}
-                </span>
+                </button>
               </template>
             </el-table-column>
             <el-table-column prop="num_important" width="90">
@@ -235,9 +242,16 @@
                 <i class="fa fa-circle text-warning" />
               </template>
               <template #default="{ row }">
-                <span :class="{ 'text-warning font-bold': row.num_important > 0 }">
+                <button
+                  type="button"
+                  class="severity-count"
+                  :class="{ 'font-bold is-clickable': row.num_important > 0 }"
+                  :disabled="row.num_important <= 0"
+                  :title="row.num_important > 0 ? '查看重要补丁' : ''"
+                  @click="handleSeverityCountClick(row, 'Important')"
+                >
                   {{ row.num_important }}
-                </span>
+                </button>
               </template>
             </el-table-column>
             <el-table-column prop="num_moderate" width="90">
@@ -246,9 +260,16 @@
                 <i class="fa fa-circle text-dark" />
               </template>
               <template #default="{ row }">
-                <span :class="{ 'text-dark font-bold': row.num_moderate > 0 }">
+                <button
+                  type="button"
+                  class="severity-count"
+                  :class="{ 'font-bold is-clickable': row.num_moderate > 0 }"
+                  :disabled="row.num_moderate <= 0"
+                  :title="row.num_moderate > 0 ? '查看中等补丁' : ''"
+                  @click="handleSeverityCountClick(row, 'Moderate')"
+                >
                   {{ row.num_moderate }}
-                </span>
+                </button>
               </template>
             </el-table-column>
             <el-table-column prop="num_low" width="80">
@@ -257,14 +278,35 @@
                 <i class="fa fa-circle text-info" />
               </template>
               <template #default="{ row }">
-                <span :class="{ 'text-info font-bold': row.num_low > 0 }">
+                <button
+                  type="button"
+                  class="severity-count"
+                  :class="{ 'font-bold is-clickable': row.num_low > 0 }"
+                  :disabled="row.num_low <= 0"
+                  :title="row.num_low > 0 ? '查看低危补丁' : ''"
+                  @click="handleSeverityCountClick(row, 'Low')"
+                >
                   {{ row.num_low }}
-                </span>
+                </button>
               </template>
             </el-table-column>
             <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
               <template #default="{ row }">
                 {{ formatDateTime(row.scan_timestamp) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="70" fixed="right">
+              <template #default="{ row }">
+                <el-button
+                  text
+                  type="primary"
+                  size="small"
+                  :loading="rescanLoading && rescanningHostKey === getRescanTrackKey(row)"
+                  :disabled="rescanLoading"
+                  @click="handleSingleHostRescan(row)"
+                >
+                  扫描
+                </el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -565,6 +607,14 @@
       :os-distro="currentPatchOsDistro"
     />
 
+    <HostSeverityPatchDialog
+      v-model:visible="severityPatchesDialogVisible"
+      :host="severityPatchesDialogHost"
+      :severity="severityPatchesDialogSeverity"
+      @patch-click="handleSeverityDialogPatchClick"
+      @install-success="handleSeverityPatchInstallSuccess"
+    />
+
     <!-- 操作记录对话框 -->
     <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
 
@@ -638,6 +688,7 @@ import { assetApi } from '@/modules/asset/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from './dialogs/OperationLogsDialog.vue'
+import HostSeverityPatchDialog from './dialogs/HostSeverityPatchDialog.vue'
 import PatchDetailDialog from './host-detail/PatchDetailDialog.vue'
 import PatchInstallWizard from './patch-task/PatchInstallWizard.vue'
 
@@ -780,6 +831,7 @@ const selectedVulns = ref([])
 // 重新扫描对话框
 const rescanDialogVisible = ref(false)
 const rescanLoading = ref(false)
+const rescanningHostKey = ref('')
 const rescanFormRef = ref(null)
 const rescanForm = reactive({
   hostsInput: ''
@@ -800,6 +852,9 @@ const patchDetailVisible = ref(false)
 const patchDetailLoading = ref(false)
 const patchDetailData = ref({})
 const currentPatchOsDistro = ref('')
+const severityPatchesDialogVisible = ref(false)
+const severityPatchesDialogHost = ref(null)
+const severityPatchesDialogSeverity = ref('')
 
 async function loadPatchDetail(patchId, osDistro) {
   currentPatchOsDistro.value = osDistro || ''
@@ -1190,6 +1245,37 @@ function handleHostClick(row) {
   })
 }
 
+function handleSeverityCountClick(row, severity) {
+  const severityFieldMap = {
+    Critical: 'num_critical',
+    Important: 'num_important',
+    Moderate: 'num_moderate',
+    Low: 'num_low'
+  }
+  const count = Number(row?.[severityFieldMap[severity]] || 0)
+
+  if (count <= 0) {
+    return
+  }
+
+  severityPatchesDialogHost.value = { ...row }
+  severityPatchesDialogSeverity.value = severity
+  severityPatchesDialogVisible.value = true
+}
+
+function handleSeverityDialogPatchClick(row) {
+  handlePatchClick({
+    ...row,
+    os_distro: row?.os_distro || severityPatchesDialogHost.value?.os_distro || ''
+  })
+}
+
+function handleSeverityPatchInstallSuccess() {
+  loadKpiData()
+  loadHostData()
+  loadVulnData()
+}
+
 function handleVulnClick(row) {
   // 导航到漏洞详情
   ElMessage.info(`查看漏洞详情: ${row.advisory}`)
@@ -1428,6 +1514,92 @@ function handleRescan() {
   rescanDialogVisible.value = true
 }
 
+function getRescanTrackKey(host) {
+  return String(
+    host?.host_id || host?.hostId || host?.id || host?.host_key || host?.hostKey || ''
+  )
+}
+
+function normalizeRescanHost(host) {
+  if (typeof host === 'object' && host !== null) {
+    return {
+      key: host.key || host.id || host.host_id || host.hostId || '',
+      value: host.value || host.hostname || host.name || host.host_key || host.hostKey || '',
+      assetType: host.assetType || host.asset_type || 'linux'
+    }
+  }
+
+  return {
+    key: '',
+    value: String(host || '').trim(),
+    assetType: 'linux'
+  }
+}
+
+async function submitRescan(hosts, { closeDialog = false } = {}) {
+  const normalizedHosts = (Array.isArray(hosts) ? hosts : [])
+    .map(normalizeRescanHost)
+    .filter(item => item.value)
+
+  if (normalizedHosts.length === 0) {
+    ElMessage.warning('请输入或选择至少一个主机')
+    return false
+  }
+
+  rescanLoading.value = true
+  try {
+    const { executeJob } = await import('@/modules/automation/api/jao')
+    const response = await executeJob({
+      jobId: '0g3GfW',
+      params: { hosts: normalizedHosts }
+    })
+
+    const runId = response?.data?.[0]?.runId || response?.[0]?.runId
+    if (!runId) {
+      ElMessage.error('扫描任务提交失败：未返回运行ID')
+      return false
+    }
+
+    ElMessage.success('扫描任务已提交')
+    if (closeDialog) {
+      rescanDialogVisible.value = false
+    }
+
+    lastSubmittedRunId.value = runId
+    operationLogsVisible.value = true
+
+    setTimeout(() => {
+      loadKpiData()
+      loadHostData()
+    }, 2000)
+
+    return true
+  } catch (error) {
+    console.error('Scan failed:', error)
+    ElMessage.error('扫描任务提交失败: ' + (error.message || '未知错误'))
+    return false
+  } finally {
+    rescanLoading.value = false
+  }
+}
+
+async function handleSingleHostRescan(row) {
+  const trackKey = getRescanTrackKey(row)
+  const scanTarget = row?.host_key || row?.hostKey || row?.hostname || ''
+
+  if (!trackKey && !scanTarget) {
+    ElMessage.warning('当前主机缺少扫描标识，无法执行扫描')
+    return
+  }
+
+  rescanningHostKey.value = trackKey || scanTarget
+  try {
+    await submitRescan([row])
+  } finally {
+    rescanningHostKey.value = ''
+  }
+}
+
 function handleHostSelected(hosts) {
   selectedHosts.value = hosts
   updateHostsInput()
@@ -1462,74 +1634,17 @@ async function executeRescan() {
   // 准备主机参数
   let hosts = []
   if (selectedHosts.value.length > 0) {
-    // 从选择器选择的主机
-    hosts = selectedHosts.value.map(h => {
-      if (typeof h === 'object') {
-        return {
-          key: h.key || h.id || '',
-          value: h.value || h.hostname || h.name || h.host_key || '',
-          assetType: h.assetType || 'linux'
-        }
-      }
-      return {
-        key: '',
-        value: String(h),
-        assetType: 'linux'
-      }
-    })
+    hosts = selectedHosts.value
   } else {
-    // 从输入框输入的主机
     const hostLines = rescanForm.hostsInput.split('\n').filter(line => line.trim())
     if (hostLines.length === 0) {
       ElMessage.warning('请输入或选择至少一个主机')
       return
     }
-    hosts = hostLines.map(line => ({
-      key: '',
-      value: line.trim(),
-      assetType: 'linux'
-    }))
+    hosts = hostLines.map(line => line.trim())
   }
 
-  if (hosts.length === 0) {
-    ElMessage.warning('请输入或选择至少一个主机')
-    return
-  }
-
-  rescanLoading.value = true
-  try {
-    // 调用作业执行API
-    const { executeJob } = await import('@/modules/automation/api/jao')
-    const jobId = '0g3GfW' // 补丁扫描作业ID
-    const response = await executeJob({
-      jobId,
-      params: { hosts }
-    })
-
-    // 获取runId
-    const runId = response?.data?.[0]?.runId || response?.[0]?.runId
-    if (runId) {
-      ElMessage.success('扫描任务已提交')
-      rescanDialogVisible.value = false
-
-      // 打开操作记录对话框
-      lastSubmittedRunId.value = runId
-      operationLogsVisible.value = true
-
-      // 刷新数据
-      setTimeout(() => {
-        loadKpiData()
-        loadHostData()
-      }, 2000)
-    } else {
-      ElMessage.error('扫描任务提交失败：未返回运行ID')
-    }
-  } catch (error) {
-    console.error('Scan failed:', error)
-    ElMessage.error('扫描任务提交失败: ' + (error.message || '未知错误'))
-  } finally {
-    rescanLoading.value = false
-  }
+  await submitRescan(hosts, { closeDialog: true })
 }
 
 function refresh() {
@@ -2127,6 +2242,39 @@ defineExpose({
 
 .font-bold {
   font-weight: 600;
+}
+
+.severity-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+
+  &.is-clickable {
+    cursor: pointer;
+    color: var(--el-color-primary);
+  }
+
+  &.is-clickable:hover {
+    opacity: 0.85;
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--el-color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  &:disabled {
+    opacity: 1;
+    cursor: default;
+  }
 }
 
 // 操作区域
