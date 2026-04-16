@@ -145,6 +145,8 @@ const pagination = ref({
   total: 0
 })
 
+const isSingleSelector = computed(() => props.options.selector === 'single')
+
 // 防止循环更新的标志
 let isInternalUpdate = false
 
@@ -367,8 +369,24 @@ function handleSelectionChange(selection) {
     return
   }
 
+  let effectiveSelection = Array.isArray(selection) ? [...selection] : []
+
+  if (isSingleSelector.value && effectiveSelection.length > 1) {
+    const latestRow = effectiveSelection[effectiveSelection.length - 1]
+    effectiveSelection = latestRow ? [latestRow] : []
+
+    isInternalUpdate = true
+    tableRef.value?.clearSelection()
+    if (latestRow) {
+      tableRef.value?.toggleRowSelection(latestRow, true)
+    }
+    setTimeout(() => {
+      isInternalUpdate = false
+    }, 0)
+  }
+
   // 将选中的行转换为标准格式
-  const selectedHosts = selection.map(row => ({
+  const selectedHosts = effectiveSelection.map(row => ({
     key: row.id,
     value: row.IP,
     assetType: props.ciType
@@ -380,7 +398,7 @@ function handleSelectionChange(selection) {
     item => !currentPageIds.includes(item.key)
   )
 
-  const mergedSelection = [...otherPageSelections, ...selectedHosts]
+  const mergedSelection = isSingleSelector.value ? selectedHosts.slice(0, 1) : [...otherPageSelections, ...selectedHosts]
 
   isInternalUpdate = true
   emit('update:modelValue', mergedSelection)

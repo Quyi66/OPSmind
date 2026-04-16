@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="选择文件"
+    :title="title"
     width="1320px"
     :close-on-click-modal="false"
     destroy-on-close
@@ -167,6 +167,10 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  title: {
+    type: String,
+    default: '选择文件'
+  },
   // 仓库类型: git, staticfs
   repoType: {
     type: String,
@@ -268,9 +272,11 @@ const breadcrumbs = computed(() => {
 
 // 过滤后的显示列表
 const displayFileList = computed(() => {
-  if (!searchText.value) return fileList.value
+  const visibleFiles = fileList.value.filter(file => !file._excluded || file.directory || file._isParentDir)
+
+  if (!searchText.value) return visibleFiles
   const keyword = searchText.value.toLowerCase()
-  return fileList.value.filter(file => {
+  return visibleFiles.filter(file => {
     for (const key in file) {
       if (
         file[key] !== null &&

@@ -473,6 +473,26 @@ export const patchInstallApi = {
   },
 
   /**
+   * 步骤0：执行补丁安装预检查
+   * POST /vap/api/vap/v2/patch/task/{id}/rpm-check/execute
+   */
+  executeRpmCheck(id) {
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/rpm-check/execute`)
+      .then(normalizePatchTaskResponse)
+  },
+
+  /**
+   * 步骤0：跳过补丁安装预检查
+   * POST /vap/api/vap/v2/patch/task/{id}/rpm-check/skip
+   */
+  skipRpmCheck(id) {
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/${id}/rpm-check/skip`)
+      .then(normalizePatchTaskResponse)
+  },
+
+  /**
    * 步骤1：执行预检查
    * POST /vap/api/vap/v2/patch/task/{id}/pre-check/execute
    */
@@ -1594,6 +1614,153 @@ export const windowsUpdateApi = {
 }
 
 /**
+ * Windows WSUS 离线补丁管理 API
+ */
+export const windowsWsusApi = {
+  /**
+   * 获取 WSUS 配置列表
+   * GET /vap/api/win-patch/wsus-config
+   * @returns {Promise}
+   */
+  getWsusConfigs() {
+    return apiService.get('/vap/api/vap/v2/win-patch/wsus-config')
+  },
+
+  /**
+   * 保存 WSUS 配置
+   * POST /vap/api/win-patch/wsus-config
+   * @param {Object} payload - 配置内容
+   * @returns {Promise}
+   */
+  saveWsusConfig(payload = {}) {
+    return apiService.post('/vap/api/win-patch/wsus-config', payload)
+  },
+
+  /**
+   * 删除 WSUS 配置
+   * DELETE /vap/api/win-patch/wsus-config/{id}
+   * @param {string} id - 配置 ID
+   * @returns {Promise}
+   */
+  deleteWsusConfig(id) {
+    return apiService.delete(`/vap/api/win-patch/wsus-config/${encodeURIComponent(id)}`)
+  },
+
+  /**
+   * 创建扫描任务
+   * POST /vap/api/win-patch/tasks/scan
+   * @param {Object} payload - 扫描任务参数
+   * @returns {Promise}
+   */
+  createScanTask(payload = {}) {
+    return apiService.post('/vap/api/win-patch/tasks/scan', payload)
+  },
+
+  /**
+   * 创建安装任务
+   * POST /vap/api/win-patch/tasks/install
+   * @param {Object} payload - 安装任务参数
+   * @returns {Promise}
+   */
+  createInstallTask(payload = {}) {
+    return apiService.post('/vap/api/win-patch/tasks/install', payload)
+  },
+
+  /**
+   * 创建回滚任务
+   * POST /vap/api/win-patch/tasks/rollback
+   * @param {Object} payload - 回滚任务参数
+   * @returns {Promise}
+   */
+  createRollbackTask(payload = {}) {
+    return apiService.post('/vap/api/win-patch/tasks/rollback', payload)
+  },
+
+  /**
+   * 获取主机补丁概览
+   * GET /vap/api/win-patch/hosts
+   * @param {Object} params - 分页参数
+   * @returns {Promise}
+   */
+  getHosts(params = {}) {
+    return apiService.get('/vap/api/win-patch/hosts', {
+      params: {
+        page: params.page ?? 0,
+        size: params.size ?? 20
+      }
+    })
+  },
+
+  /**
+   * 获取单台主机补丁详情
+   * GET /vap/api/win-patch/hosts/{hostId}/patches
+   * @param {string} hostId - 主机 ID
+   * @param {Object} params - 分页参数
+   * @returns {Promise}
+   */
+  getHostPatches(hostId, params = {}) {
+    return apiService.get(`/vap/api/win-patch/hosts/${encodeURIComponent(hostId)}/patches`, {
+      params: {
+        page: params.page ?? 0,
+        size: params.size ?? 50
+      }
+    })
+  },
+
+  /**
+   * 获取任务历史
+   * GET /vap/api/win-patch/tasks
+   * @param {Object} params - 查询参数
+   * @returns {Promise}
+   */
+  getTasks(params = {}) {
+    const queryParams = {
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    }
+
+    if (params.taskType) {
+      queryParams.taskType = params.taskType
+    }
+
+    return apiService.get('/vap/api/win-patch/tasks', {
+      params: queryParams
+    })
+  },
+
+  /**
+   * 获取任务详情
+   * GET /vap/api/win-patch/tasks/{taskId}
+   * @param {string} taskId - 任务 ID
+   * @returns {Promise}
+   */
+  getTaskDetail(taskId) {
+    return apiService.get(`/vap/api/win-patch/tasks/${encodeURIComponent(taskId)}`)
+  },
+
+  /**
+   * 获取安装/回滚历史
+   * GET /vap/api/win-patch/install-logs
+   * @param {Object} params - 查询参数
+   * @returns {Promise}
+   */
+  getInstallLogs(params = {}) {
+    const queryParams = {
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    }
+
+    if (params.hostId) {
+      queryParams.hostId = params.hostId
+    }
+
+    return apiService.get('/vap/api/win-patch/install-logs', {
+      params: queryParams
+    })
+  }
+}
+
+/**
  * Windows 概览相关 API
  */
 export const windowsViewApi = {
@@ -1736,7 +1903,7 @@ export const cveApi = {
    * 分页查询 CVE 列表
    * GET /vap/api/vap/v2/cve/list
    * @param {Object} params - 查询参数
-  * @param {string} params.source - 数据源，例如 redhat / kylinos / nvd，具体以 /cve/statistics 返回为准
+   * @param {string} params.source - 数据源，例如 redhat / kylinos / nvd，具体以 /cve/statistics 返回为准
    * @param {string} params.severity - 严重等级: critical / important / moderate / low
    * @param {string} params.keyword - 关键字（搜索CVE ID或描述）
    * @param {string} params.packageName - 包名
@@ -1936,6 +2103,7 @@ export default {
   overview: patchOverviewApi,
   windows: windowsPatchApi,
   windowsVulnerability: windowsVulnerabilityApi,
+  windowsWsus: windowsWsusApi,
   windowsUpdate: windowsUpdateApi,
   windowsView: windowsViewApi,
   windowsRollback: windowsRollbackApi,

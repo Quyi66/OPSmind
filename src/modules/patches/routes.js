@@ -92,51 +92,76 @@ export const PATCHES_ROUTE_DEFS = [
     key: 'windowsVulnerability',
     path: 'windowsVulnerability',
     name: 'patches-windowsVulnerability',
-    title: 'Windows漏洞',
-    navLabel: '漏洞扫描',
-    icon: 'fas fa-search',
+    title: 'Windows 补丁概览',
+    navLabel: '主机概览',
+    icon: 'fas fa-desktop',
     platform: 'windows',
-    component: () => import('./components/WindowsVulnerability.vue')
+    component: () => import('./windows-patch/views/WindowsPatchOverviewPage.vue')
   },
   {
-    key: 'windowsCveList',
-    path: 'windowsCveList',
-    name: 'patches-windowsCveList',
-    title: 'Windows CVE列表',
-    navLabel: 'CVE漏洞列表',
-    icon: 'fas fa-bug',
+    key: 'windowsWsus',
+    path: 'windowsWsus',
+    name: 'patches-windowsWsus',
+    title: 'WSUS 配置',
+    navLabel: 'WSUS 配置',
+    icon: 'fas fa-server',
     platform: 'windows',
-    component: () => import('./components/WindowsCveList.vue')
+    component: () => import('./windows-patch/views/WindowsPatchWsusConfigPage.vue')
+  },
+  {
+    key: 'windowsYumRepo',
+    path: 'windowsYumRepo',
+    name: 'patches-windowsYumRepo',
+    title: '客户 Yum 仓库管理',
+    navLabel: 'Yum 仓库管理',
+    icon: 'fas fa-database',
+    platform: 'windows',
+    component: () => import('./windows-patch/views/WindowsPatchYumRepoPage.vue')
   },
   {
     key: 'windowsUpdate',
     path: 'windowsUpdate',
     name: 'patches-windowsUpdate',
-    title: 'Windows更新',
-    navLabel: '补丁安装',
-    icon: 'fas fa-download',
+    title: 'Windows 补丁概览',
     platform: 'windows',
-    component: () => import('./components/WindowsUpdate.vue')
+    redirect: {
+      path: '/patches/windowsVulnerability'
+    },
+    component: () => import('./windows-patch/views/WindowsPatchOverviewPage.vue')
   },
   {
     key: 'windowsRollback',
     path: 'windowsRollback',
     name: 'patches-windowsRollback',
-    title: 'Windows回滚',
-    navLabel: '变更回滚',
-    icon: 'fas fa-history',
+    title: '任务与历史',
+    navLabel: '任务与历史',
+    icon: 'fas fa-tasks',
     platform: 'windows',
-    component: () => import('./components/WindowsRollback.vue')
+    component: () => import('./windows-patch/views/WindowsPatchTaskCenterPage.vue')
   },
   {
     key: 'windowsView',
     path: 'windowsView',
     name: 'patches-windowsView',
-    title: 'Windows View',
-    navLabel: '漏洞统计',
-    icon: 'fas fa-chart-bar',
+    title: '安装回滚历史',
     platform: 'windows',
-    component: () => import('./components/WindowsView.vue')
+    redirect: {
+      path: '/patches/windowsRollback',
+      query: {
+        tab: 'history'
+      }
+    },
+    component: () => import('./windows-patch/views/WindowsPatchTaskCenterPage.vue')
+  },
+  {
+    key: 'windowsCveList',
+    path: 'windowsCveList',
+    name: 'patches-windowsCveList',
+    title: 'CVE漏洞列表',
+    navLabel: 'CVE漏洞列表',
+    icon: 'fas fa-bug',
+    platform: 'windows',
+    component: () => import('./components/WindowsCveList.vue')
   },
   {
     key: 'logs',

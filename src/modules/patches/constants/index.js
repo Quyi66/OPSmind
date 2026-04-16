@@ -191,6 +191,12 @@ export const NAV_ITEMS = [
     description: 'Windows系统漏洞扫描和修复'
   },
   {
+    key: 'windowsWsus',
+    label: 'WSUS补丁管理',
+    icon: 'fas fa-server',
+    description: '基于 WSUS 的离线补丁扫描、安装与回滚'
+  },
+  {
     key: 'windowsUpdate',
     label: 'Windows更新',
     icon: 'fas fa-sync',

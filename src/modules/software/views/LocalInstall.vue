@@ -5,7 +5,7 @@
       <div class="panel left-panel">
         <div class="panel-header">
           <i class="fa fa-box-open" />
-          <span class="title">1. 选择安装包</span>
+          <span class="title">1. 选择rpm包</span>
           <el-button type="primary" size="small" link @click="openFileSelector">
             <i class="fa fa-plus" />
             添加文件
@@ -15,7 +15,7 @@
         <div class="panel-body">
           <div v-if="selectedFiles.length === 0" class="empty-files" @click="openFileSelector">
             <i class="fa fa-folder-open" />
-            <p>点击此处或上方按钮选择本地安装包</p>
+            <p>点击此处或上方按钮选择rpm安装包</p>
           </div>
           <div v-else class="selected-files-list scroll-y">
             <div v-for="(file, index) in selectedFiles" :key="index" class="install-file-item">
@@ -63,9 +63,9 @@
           </div>
 
           <div class="install-desc">
-            <h4>本地安装说明</h4>
+            <h4>rpm包安装说明</h4>
             <ul>
-              <li>支持 RPM 格式的安装包</li>
+              <li>仅支持 .rpm 格式的安装包</li>
               <li>勾选多个文件将进行批量并行安装</li>
               <li>安装过程中请勿刷新页面</li>
             </ul>
@@ -91,8 +91,10 @@
     <!-- 文件选择器弹窗 -->
     <FileSelectorDialog
       v-model="fileSelectorVisible"
+      title="选择rpm安装包"
       :multiple="true"
       :pre-selected="selectedFiles"
+      filter="*.rpm"
       repo-type="staticfs"
       @confirm="handleFilesConfirm"
     />
@@ -111,6 +113,7 @@ import { useJobPolling } from '@/composables/useJobPolling'
 const { startPolling } = useJobPolling()
 
 const installing = ref(false)
+const RPM_FILE_PATTERN = /\.rpm$/i
 
 // 文件选择器
 const fileSelectorVisible = ref(false)
@@ -124,7 +127,16 @@ function openFileSelector() {
 }
 
 function handleFilesConfirm(files) {
-  selectedFiles.value = files
+  const validFiles = (files || []).filter(file => {
+    const fileName = file?.name || file?.path || ''
+    return RPM_FILE_PATTERN.test(fileName)
+  })
+
+  if (validFiles.length !== (files || []).length) {
+    ElMessage.warning('仅支持选择 .rpm 格式文件')
+  }
+
+  selectedFiles.value = validFiles
 }
 
 function removeFile(index) {
@@ -133,7 +145,7 @@ function removeFile(index) {
 
 async function handleStartInstall() {
   if (selectedFiles.length === 0) {
-    ElMessage.warning('请选择安装包')
+    ElMessage.warning('请选择rpm安装包')
     return
   }
   if (selectedHosts.value.length === 0) {
@@ -143,7 +155,7 @@ async function handleStartInstall() {
 
   try {
     await ElMessageBox.confirm(
-      `确定将 ${selectedFiles.value.length} 个安装包安装到 ${selectedHosts.value.length} 台主机吗？`,
+      `确定将 ${selectedFiles.value.length} 个rpm包安装到 ${selectedHosts.value.length} 台主机吗？`,
       '确认安装',
       {
         confirmButtonText: '确认',

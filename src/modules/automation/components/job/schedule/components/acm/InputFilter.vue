@@ -64,9 +64,11 @@
       </el-alert>
 
       <el-table
+        ref="tableRef"
         :data="searchResult"
         border
         height="300"
+        row-key="id"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
@@ -82,13 +84,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
   ciType: { type: String, required: true },
-  modelValue: { type: Array, default: () => [] }
+  modelValue: { type: Array, default: () => [] },
+  options: { type: Object, default: () => ({}) }
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -99,6 +102,10 @@ const searchDelims = ref([])
 const showResult = ref(false)
 const searchResult = ref([])
 const notFounds = ref([])
+const tableRef = ref(null)
+let isInternalUpdate = false
+
+const isSingleSelector = computed(() => props.options.selector === 'single')
 
 const delimDefs = [
   { label: '逗号 (,)', value: ',' },
@@ -157,6 +164,8 @@ async function doSearch() {
     }))
     notFounds.value = notFound
     showResult.value = true
+    await nextTick()
+    syncSelectionFromModelValue()
   } catch (error) {
     console.error('Failed to search ACM by attr:', error)
     ElMessage.error('搜索失败，请重试')
@@ -166,13 +175,75 @@ async function doSearch() {
   }
 }
 
+watch(
+  () => props.modelValue,
+  async () => {
+    if (isInternalUpdate) {
+      return
+    }
+
+    if (!showResult.value) {
+      return
+    }
+
+    await nextTick()
+    syncSelectionFromModelValue()
+  },
+  { deep: true }
+)
+
+function syncSelectionFromModelValue() {
+  if (!tableRef.value || !searchResult.value.length) {
+    return
+  }
+
+  isInternalUpdate = true
+  tableRef.value.clearSelection()
+
+  searchResult.value.forEach(row => {
+    const matched = (props.modelValue || []).some(item => item.key === row.id || item.value === row.IP)
+    if (matched) {
+      tableRef.value.toggleRowSelection(row, true)
+    }
+  })
+
+  setTimeout(() => {
+    isInternalUpdate = false
+  }, 0)
+}
+
 function handleSelectionChange(selection) {
-  const selected = selection.map(row => ({
+  if (isInternalUpdate) {
+    return
+  }
+
+  let effectiveSelection = Array.isArray(selection) ? [...selection] : []
+
+  if (isSingleSelector.value && effectiveSelection.length > 1) {
+    const latestRow = effectiveSelection[effectiveSelection.length - 1]
+    effectiveSelection = latestRow ? [latestRow] : []
+
+    isInternalUpdate = true
+    tableRef.value?.clearSelection()
+    if (latestRow) {
+      tableRef.value?.toggleRowSelection(latestRow, true)
+    }
+    setTimeout(() => {
+      isInternalUpdate = false
+    }, 0)
+  }
+
+  const selected = effectiveSelection.map(row => ({
     key: row.id,
     value: row.IP,
     assetType: props.ciType
   }))
-  emit('update:modelValue', selected)
+
+  isInternalUpdate = true
+  emit('update:modelValue', isSingleSelector.value ? selected.slice(0, 1) : selected)
+  setTimeout(() => {
+    isInternalUpdate = false
+  }, 0)
 }
 </script>
 

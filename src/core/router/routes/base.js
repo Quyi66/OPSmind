@@ -11,7 +11,12 @@ import { SOFTWARE_ROUTE_DEFS } from '@/modules/software/routes.js'
 import { CAC_ROUTE_DEFS } from '@/modules/inspection/routes.js'
 import { ACM_ROUTE_DEFS } from '@/modules/asset/routes.js'
 import { USERS_ROUTE_DEFS } from '@/modules/user/routes.js'
-import { JAO_ROUTE_DEFS, GFS_ROUTE_DEFS, CMD_ROUTE_DEFS } from '@/modules/automation/routes.js'
+import {
+  JAO_ROUTE_DEFS,
+  GFS_ROUTE_DEFS,
+  CMD_ROUTE_DEFS,
+  RPM_INSTALL_ROUTE_DEFS
+} from '@/modules/automation/routes.js'
 import { FLOW_ROUTE_DEFS } from '@/modules/flow/routes.js'
 import { SUDO_ROUTE_DEFS } from '@/modules/sudo/routes.js'
 import { PASSWORD_ROUTE_DEFS } from '@/modules/password/routes.js'
@@ -51,11 +56,31 @@ const softwareChildren = buildModuleChildren(SOFTWARE_ROUTE_DEFS, 'software')
 const jaoChildren = buildModuleChildren(JAO_ROUTE_DEFS, 'jao')
 const gfsChildren = buildModuleChildren(GFS_ROUTE_DEFS, 'gfs')
 const cmdChildren = buildModuleChildren(CMD_ROUTE_DEFS, 'cmd')
+const rpmInstallChildren = buildModuleChildren(RPM_INSTALL_ROUTE_DEFS, 'rpm-install')
 const flowChildren = buildModuleChildren(FLOW_ROUTE_DEFS, 'flow')
 const sudoChildren = buildModuleChildren(SUDO_ROUTE_DEFS, 'sudo')
 const passwordChildren = buildModuleChildren(PASSWORD_ROUTE_DEFS, 'password')
 const uamChildren = buildModuleChildren(UAM_ROUTE_DEFS, 'uam')
 const sscChildren = buildModuleChildren(SSC_ROUTE_DEFS, 'ssc')
+
+const buildAutomationModuleRoute = (moduleCode, redirect, children) => ({
+  path: `/${moduleCode}`,
+  component: MainLayout,
+  meta: {
+    requiresAuth: true,
+    moduleType: 'vue-native',
+    moduleCode,
+    groupCode: 'automation'
+  },
+  children: [
+    {
+      path: '',
+      component: AutomationGroupLayout,
+      redirect,
+      children: [...children]
+    }
+  ]
+})
 
 export const baseRoutes = [
   {
@@ -154,38 +179,13 @@ export const baseRoutes = [
     }
   },
 
-  // ========== 自动化分组 (jao, gfs, cmd, users) ==========
-  // 使用动态路由参数，让同一分组内的模块共享 AutomationGroupLayout
-  {
-    path: '/:moduleCode(jao|gfs|cmd|users)',
-    component: MainLayout,
-    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'automation' },
-    children: [
-      {
-        path: '',
-        component: AutomationGroupLayout,
-        children: [
-          // 自动化分组模块路由
-          {
-            path: '',
-            redirect: to => {
-              const defaults = {
-                jao: '/jao/jobs',
-                gfs: '/gfs/scriptLibrary',
-                cmd: '/cmd/list',
-                users: '/users/overview'
-              }
-              return defaults[to.params.moduleCode] || '/jao/jobs'
-            }
-          },
-          ...jaoChildren,
-          ...gfsChildren,
-          ...cmdChildren,
-          ...usersChildren
-        ]
-      }
-    ]
-  },
+  // ========== 自动化分组 (jao, gfs, cmd, users, rpm-install) ==========
+  // 按模块分别挂载，避免 logs 等重复子路径在同一父级下发生匹配冲突
+  buildAutomationModuleRoute('jao', '/jao/jobs', jaoChildren),
+  buildAutomationModuleRoute('gfs', '/gfs/scriptLibrary', gfsChildren),
+  buildAutomationModuleRoute('cmd', '/cmd/list', cmdChildren),
+  buildAutomationModuleRoute('users', '/users/overview', usersChildren),
+  buildAutomationModuleRoute('rpm-install', '/rpm-install/install', rpmInstallChildren),
 
   // ========== 补丁管理 (patches) ==========
   {

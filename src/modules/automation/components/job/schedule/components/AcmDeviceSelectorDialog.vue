@@ -187,7 +187,9 @@ const activeCiType = ref('')
 const currentMode = ref('host')
 const selectedHostsByCiType = ref([])
 const allSelectedHosts = ref([])
-const showHosts = ref(false)
+const showHosts = ref(true)
+
+const isSingleSelector = computed(() => props.options.selector === 'single')
 
 const selectModeDefs = computed(() => {
   const modes = {}
@@ -208,7 +210,7 @@ const selectModeDefs = computed(() => {
 
 watch(visible, (val) => {
   if (val) {
-    allSelectedHosts.value = [...(props.initialSelection || [])]
+    allSelectedHosts.value = normalizeSingleSelection([...(props.initialSelection || [])])
     initCiTypes()
   } else {
     selectedHostsByCiType.value = []
@@ -314,6 +316,16 @@ function normalizeHostForCiType(host) {
   return host
 }
 
+function normalizeSingleSelection(hosts = []) {
+  const normalizedHosts = Array.isArray(hosts) ? hosts : []
+
+  if (!isSingleSelector.value) {
+    return normalizedHosts
+  }
+
+  return normalizedHosts.slice(0, 1)
+}
+
 function syncSelectedHostsByCiType() {
   if (!activeCiType.value) {
     selectedHostsByCiType.value = []
@@ -331,7 +343,15 @@ function mergeCurrentCiTypeSelection(currentSelection = []) {
   }
 
   const otherSelections = allSelectedHosts.value.filter(host => getHostCiType(host) !== activeCiType.value)
-  const normalizedCurrentSelection = (currentSelection || []).map(host => normalizeHostForCiType(host))
+  const normalizedCurrentSelection = normalizeSingleSelection(
+    (currentSelection || []).map(host => normalizeHostForCiType(host))
+  )
+
+  if (isSingleSelector.value) {
+    const nextSelection = normalizedCurrentSelection[0] || otherSelections[0] || null
+    allSelectedHosts.value = nextSelection ? [nextSelection] : []
+    return
+  }
 
   allSelectedHosts.value = [...otherSelections, ...normalizedCurrentSelection]
 }

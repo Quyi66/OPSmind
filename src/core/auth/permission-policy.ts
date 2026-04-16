@@ -8,9 +8,12 @@ const ADMIN_ROLE_NAMES = new Set(['admin', 'role_admin', 'role_super_admin', 'su
 
 const WINDOWS_PATCH_PATHS = new Set([
   'windowsVulnerability',
+  'windowsWsus',
+  'windowsYumRepo',
   'windowsUpdate',
   'windowsRollback',
-  'windowsView'
+  'windowsView',
+  'windowsCveList'
 ])
 
 export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
@@ -21,6 +24,7 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
   jao: ['jao:view'],
   gfs: ['gfs:view'],
   cmd: ['cmd:view'],
+  'rpm-install': ['applet:spm'],
   patches: ['applet:vap'],
   'windows-patches': ['applet:vap'],
   'patch-logs': ['applet:vap'],
@@ -43,6 +47,7 @@ export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   jao: '/jao/jobs',
   gfs: '/gfs/scriptLibrary',
   cmd: '/cmd/list',
+  'rpm-install': '/rpm-install/install',
   patches: '/patches/cveList',
   'windows-patches': '/patches/windowsVulnerability',
   'patch-logs': '/patches/logs',
@@ -61,7 +66,9 @@ export const MENU_DEFAULT_ROUTES: Record<string, string> = {
 }
 
 function normalizeValue(value?: string | null): string {
-  return String(value || '').trim().toLowerCase()
+  return String(value || '')
+    .trim()
+    .toLowerCase()
 }
 
 function buildPermissionTokens(permission?: AccountRolePermission | null): string[] {
@@ -73,11 +80,7 @@ function buildPermissionTokens(permission?: AccountRolePermission | null): strin
 
   if (!domain) return []
 
-  return [
-    domain,
-    `${domain}:${action}`,
-    `${domain}:${action}:${target}`
-  ]
+  return [domain, `${domain}:${action}`, `${domain}:${action}:${target}`]
 }
 
 export function isAdminRoleName(roleName?: string | null): boolean {
@@ -119,7 +122,9 @@ export function extractPermissionTokensFromAccount(account?: AccountInfo | null)
   return Array.from(tokens)
 }
 
-export function mergePermissionTokens(...permissionLists: Array<string[] | null | undefined>): string[] {
+export function mergePermissionTokens(
+  ...permissionLists: Array<string[] | null | undefined>
+): string[] {
   const tokens = new Set<string>()
 
   permissionLists.forEach(permissionList => {
@@ -145,7 +150,10 @@ export function getMenuRequirements(menuCode?: string | null): string[] {
   return MENU_ACCESS_REQUIREMENTS[normalizeValue(menuCode)] || []
 }
 
-export function canAccessMenuCode(checkPermission: PermissionChecker, menuCode?: string | null): boolean {
+export function canAccessMenuCode(
+  checkPermission: PermissionChecker,
+  menuCode?: string | null
+): boolean {
   const requirements = getMenuRequirements(menuCode)
   if (!requirements.length) return true
   return requirements.some(requirement => checkPermission(requirement))
@@ -153,10 +161,7 @@ export function canAccessMenuCode(checkPermission: PermissionChecker, menuCode?:
 
 export function filterAccessibleMenuGroups<
   T extends { code: string; hidden?: boolean; children?: Array<{ code: string }> }
->(
-  groups: T[],
-  checkPermission: PermissionChecker
-): T[] {
+>(groups: T[], checkPermission: PermissionChecker): T[] {
   return groups
     .filter(group => !group.hidden)
     .map(group => {

@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, computed, nextTick } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
@@ -109,6 +109,9 @@ const searchKeyword = ref('')
 const resultDialogVisible = ref(false)
 const currentRunId = ref('')
 const currentJobTitle = ref('')
+let isInternalUpdate = false
+
+const isSingleSelector = computed(() => props.options.selector === 'single')
 
 // 过滤后的数据
 const filteredData = computed(() => {
@@ -122,6 +125,18 @@ const filteredData = computed(() => {
 watch(() => props.ciType, () => {
   fetchData()
 }, { immediate: true })
+
+watch(
+  () => props.modelValue,
+  async () => {
+    if (isInternalUpdate) {
+      return
+    }
+
+    await syncSelectionFromModelValue()
+  },
+  { deep: true }
+)
 
 onMounted(() => {
   fetchData()
@@ -138,6 +153,7 @@ async function fetchData() {
     const data = response?.data || response
     // API 返回的是作业记录列表
     tableData.value = Array.isArray(data) ? data : (data?.records || [])
+    await syncSelectionFromModelValue()
 
   } catch (error) {
     console.error('Failed to fetch recently used:', error)
@@ -152,10 +168,30 @@ function handleSearch() {
 }
 
 function handleSelectionChange(selection) {
+  if (isInternalUpdate) {
+    return
+  }
+
+  let effectiveSelection = Array.isArray(selection) ? [...selection] : []
+
+  if (isSingleSelector.value && effectiveSelection.length > 1) {
+    const latestRow = effectiveSelection[effectiveSelection.length - 1]
+    effectiveSelection = latestRow ? [latestRow] : []
+
+    isInternalUpdate = true
+    tableRef.value?.clearSelection()
+    if (latestRow) {
+      tableRef.value?.toggleRowSelection(latestRow, true)
+    }
+    setTimeout(() => {
+      isInternalUpdate = false
+    }, 0)
+  }
+
   // 选择作业记录时，将其关联的主机添加到已选列表
   const selectedHosts = []
 
-  selection.forEach(job => {
+  effectiveSelection.forEach(job => {
     if (job.run_result_hosts && Array.isArray(job.run_result_hosts)) {
       job.run_result_hosts.forEach(host => {
         // 避免重复添加
@@ -170,7 +206,36 @@ function handleSelectionChange(selection) {
     }
   })
 
-  emit('update:modelValue', selectedHosts)
+  isInternalUpdate = true
+  emit('update:modelValue', isSingleSelector.value ? selectedHosts.slice(0, 1) : selectedHosts)
+  setTimeout(() => {
+    isInternalUpdate = false
+  }, 0)
+}
+
+async function syncSelectionFromModelValue() {
+  await nextTick()
+
+  if (!tableRef.value || !tableData.value.length) {
+    return
+  }
+
+  isInternalUpdate = true
+  tableRef.value.clearSelection()
+
+  const selectedKeySet = new Set((props.modelValue || []).map(item => item.key || item.value))
+
+  tableData.value.forEach(row => {
+    const rowHosts = Array.isArray(row.run_result_hosts) ? row.run_result_hosts : []
+    const matched = rowHosts.some(host => selectedKeySet.has(host.key || host.value || host.IP))
+    if (matched) {
+      tableRef.value.toggleRowSelection(row, true)
+    }
+  })
+
+  setTimeout(() => {
+    isInternalUpdate = false
+  }, 0)
 }
 
 /**
@@ -198,7 +263,7 @@ function getAnsibleNodeLabel(nodeValue) {
     if (typeof nodeValue === 'string' && nodeValue.trim().startsWith('[')) {
       val = JSON.parse(nodeValue)
     }
-    
+
     if (Array.isArray(val)) {
       return val.filter(Boolean).join(', ')
     }

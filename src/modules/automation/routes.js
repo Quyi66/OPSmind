@@ -66,6 +66,25 @@ export const JAO_ROUTE_DEFS = [
     navLabel: '定时任务',
     icon: 'fas fa-clock',
     component: () => import('./components/job/JobTaskSchedulerView.vue')
+  },
+  {
+    key: 'localInstall',
+    path: 'localInstall',
+    name: 'jao-localInstall',
+    title: 'rpm包安装',
+    redirect: '/rpm-install/install'
+  }
+]
+
+export const RPM_INSTALL_ROUTE_DEFS = [
+  {
+    key: 'install',
+    path: 'install',
+    name: 'rpm-install-install',
+    title: 'rpm包安装',
+    navLabel: 'rpm包安装',
+    icon: 'fas fa-box-open',
+    component: () => import('@/modules/software/views/LocalInstall.vue')
   }
 ]
 

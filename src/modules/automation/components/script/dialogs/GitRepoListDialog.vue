@@ -292,17 +292,17 @@ async function handleBatchDelete() {
 async function handleReset() {
   try {
     await ElMessageBox.confirm(
-      '确认重置当前脚本库为Oplus内置脚本库？该操作会清空当前脚本库中所有内容！',
-      '重置Git库确认',
+      '确认初始化当前脚本库为Oplus内置脚本库？该操作会清空当前脚本库中所有内容！',
+      '初始化Git库确认',
       { type: 'warning' }
     )
-    await gfsApi.resetGitRepo(props.repo)
-    ElMessage.success('重置Oplus内置脚本库成功')
+    await gfsApi.initCurrentGitRepo(props.repo)
+    ElMessage.success('初始化Oplus内置脚本库成功')
     loadRepoList()
     emit('success')
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(error?.message || '重置Oplus内置脚本库失败')
+      ElMessage.error(error?.message || '初始化Oplus内置脚本库失败')
     }
   }
 }

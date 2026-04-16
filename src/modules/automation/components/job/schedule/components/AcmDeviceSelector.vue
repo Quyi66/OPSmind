@@ -131,6 +131,8 @@ const filteredDevices = computed(() => {
   return displayDevices.value.filter(d => d.display.toLowerCase().includes(keyword))
 })
 
+const isSingleSelector = computed(() => selectorOptions.value.selector === 'single')
+
 const selectorOptions = computed(() => ({
   selectMode: 'host,group,tag,input,recently',
   selector: 'multiple',
@@ -156,7 +158,8 @@ function handleClearAll() {
 
 function handleConfirm(selectedHosts) {
   // 保留完整的对象格式（包含 assetType）
-  devices.value = selectedHosts
+  const normalizedHosts = Array.isArray(selectedHosts) ? selectedHosts : []
+  devices.value = isSingleSelector.value ? normalizedHosts.slice(0, 1) : normalizedHosts
 }
 </script>
 

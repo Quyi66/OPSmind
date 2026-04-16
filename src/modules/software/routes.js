@@ -35,10 +35,8 @@ export const SOFTWARE_ROUTE_DEFS = [
     key: 'localInstall',
     path: 'localInstall',
     name: 'software-localInstall',
-    title: '本地安装',
-    navLabel: '本地安装',
-    icon: 'fas fa-map-marker',
-    component: () => import('./views/LocalInstall.vue')
+    title: 'rpm包安装',
+    redirect: '/rpm-install/install'
   },
   {
     key: 'yumManage',

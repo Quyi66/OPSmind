@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 // Element Plus - 按需导入命令式组件和样式
-import { ElMessage, ElMessageBox, ElLoading, ElNotification } from 'element-plus'
+import { ElDialog, ElMessage, ElMessageBox, ElLoading, ElNotification } from 'element-plus'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 // Element Plus 核心样式（按需导入，减少未使用 CSS）
 import 'element-plus/es/components/message/style/css'
@@ -215,12 +215,12 @@ import { ElConfigProvider } from 'element-plus'
 import 'element-plus/es/components/config-provider/style/css'
 app.component('ElConfigProvider', ElConfigProvider)
 
-// 延迟修改 el-dialog 默认值（确保组件已注册）
-setTimeout(() => {
-  if (app._context.components.ElDialog) {
-    app._context.components.ElDialog.props.closeOnClickModal.default = false
-  }
-}, 0)
+// 统一将 el-dialog 的遮罩点击关闭默认值设为 false。
+// Element Plus 当前没有通过 ConfigProvider 直接配置该默认值的官方入口，
+// 这里在应用启动时覆写组件默认 props，供全局未显式传值的对话框复用。
+if (ElDialog?.props?.closeOnClickModal) {
+  ElDialog.props.closeOnClickModal.default = false
+}
 
 // 挂载应用
 app.mount('#app')

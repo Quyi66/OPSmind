@@ -10,9 +10,9 @@
       top="5vh"
       @closed="resetInstallState"
     >
-      <!-- 自定义步骤条（新6步） -->
+      <!-- 自定义步骤条 -->
       <div class="ops-stepper">
-        <template v-for="(step, idx) in wizardSteps" :key="idx">
+        <template v-for="(step, idx) in wizardSteps" :key="step.key">
           <div
             class="stepper-item"
             :class="{
@@ -37,7 +37,11 @@
       </div>
 
       <!-- Step 0: 选择目标主机 -->
-      <div v-show="installStep === 0" class="install-content" v-loading="installDataLoading">
+      <div
+        v-show="currentStepKey === 'select'"
+        class="install-content"
+        v-loading="installDataLoading"
+      >
         <!-- 更新补丁 -->
         <div class="install-card">
           <div class="card-header">
@@ -138,10 +142,86 @@
             </div>
           </div>
         </div>
+
       </div>
 
-      <!-- Step 1: 预执行脚本 -->
-      <div v-show="installStep === 1" class="task-step-content">
+      <!-- Step 1: 补丁安装预检查 -->
+      <div v-show="currentStepKey === 'rpm'" class="task-step-content">
+        <div class="task-step-editor">
+          <div class="task-step-editor__title">
+            <i class="fa fa-cubes" style="margin-right: 6px"></i>
+            补丁安装预检查
+          </div>
+          <el-alert
+            title="执行任务前将先检查目标主机仓库中是否存在补丁或软件包所需的可安装版本。"
+            type="info"
+            show-icon
+            :closable="false"
+          >
+            <template #default>
+              <div>预检查失败时流程会中断，若需要忽略仓库可用性校验可在当前步骤选择跳过。</div>
+            </template>
+          </el-alert>
+          <div class="install-summary-card">
+            <div class="install-summary-row">
+              <span class="install-summary-label">目标主机</span>
+              <span class="install-summary-value">
+                {{ confirmedHosts.length || selectedHosts.length || resolvedFixedHosts.length }} 台
+              </span>
+            </div>
+            <div class="install-summary-row">
+              <span class="install-summary-label">校验对象</span>
+              <span class="install-summary-value">{{ selectionSummaryLabel }}</span>
+            </div>
+            <div class="install-summary-row">
+              <span class="install-summary-label">涉及软件包</span>
+              <div class="install-summary-list">
+                <div v-if="affectedPackages.length === 0" class="install-summary-empty">
+                  当前暂无软件包信息，执行时由后端根据任务数据判断。
+                </div>
+                <div v-for="pkg in affectedPackages" :key="pkg" class="install-summary-item">
+                  {{ pkg }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="task-step-action">
+          <el-alert
+            v-if="
+              stepStates[stepIndexes.rpm] === 'success' || stepStates[stepIndexes.rpm] === 'failed'
+            "
+            :type="stepStates[stepIndexes.rpm] === 'success' ? 'success' : 'error'"
+            :closable="false"
+            show-icon
+            :title="
+              stepStates[stepIndexes.rpm] === 'success'
+                ? isSkipped.rpm
+                  ? '已跳过补丁安装预检查'
+                  : '补丁安装预检查通过'
+                : '预检失败：' + taskErrorMessage
+            "
+            class="task-step-alert"
+          >
+            <template #default>
+              <div v-if="rpmCheckResultText" class="task-step-result">{{ rpmCheckResultText }}</div>
+              <div v-if="taskDetailData && taskDetailData.rpmCheckRunId" class="task-detail-info">
+                <el-button
+                  type="primary"
+                  link
+                  @click="openExecuteResult(taskDetailData.rpmCheckRunId, '补丁安装预检查')"
+                  style="font-size: 14px"
+                >
+                  查看执行详情
+                </el-button>
+              </div>
+            </template>
+          </el-alert>
+        </div>
+      </div>
+
+      <!-- Step 2: 预执行脚本 -->
+      <div v-show="currentStepKey === 'pre'" class="task-step-content">
         <div class="task-step-editor">
           <div class="task-step-header">
             <div class="task-step-editor__title">
@@ -151,7 +231,9 @@
             <el-radio-group
               v-model="scriptModes.pre"
               size="small"
-              :disabled="stepStates[1] === 'running' || stepStates[1] === 'success'"
+              :disabled="
+                stepStates[stepIndexes.pre] === 'running' || stepStates[stepIndexes.pre] === 'success'
+              "
             >
               <el-radio-button label="edit">手动编辑</el-radio-button>
               <el-radio-button label="upload">上传脚本</el-radio-button>
@@ -164,7 +246,9 @@
               :autosize="{ minRows: 8, maxRows: 24 }"
               :placeholder="preScriptPlaceholder"
               class="script-input"
-              :disabled="stepStates[1] === 'running' || stepStates[1] === 'success'"
+              :disabled="
+                stepStates[stepIndexes.pre] === 'running' || stepStates[stepIndexes.pre] === 'success'
+              "
             />
           </div>
           <div v-else class="script-upload-panel">
@@ -179,7 +263,10 @@
               <el-button
                 type="primary"
                 plain
-                :disabled="stepStates[1] === 'running' || stepStates[1] === 'success'"
+                :disabled="
+                  stepStates[stepIndexes.pre] === 'running' ||
+                  stepStates[stepIndexes.pre] === 'success'
+                "
                 @click="triggerScriptUpload('pre')"
               >
                 <i class="fa fa-upload" style="margin-right: 4px" />
@@ -201,13 +288,15 @@
         <!-- 执行状态展示 -->
         <div class="task-step-action">
           <el-alert
-            v-if="stepStates[1] === 'success' || stepStates[1] === 'failed'"
-            :type="stepStates[1] === 'success' ? 'success' : 'error'"
+            v-if="
+              stepStates[stepIndexes.pre] === 'success' || stepStates[stepIndexes.pre] === 'failed'
+            "
+            :type="stepStates[stepIndexes.pre] === 'success' ? 'success' : 'error'"
             :closable="false"
             show-icon
             :title="
-              stepStates[1] === 'success'
-                ? isSkipped[1]
+              stepStates[stepIndexes.pre] === 'success'
+                ? isSkipped.pre
                   ? '已跳过预执行脚本'
                   : '预执行脚本执行完毕'
                 : '执行失败：' + taskErrorMessage
@@ -233,8 +322,8 @@
         </div>
       </div>
 
-      <!-- Step 2: 校验脚本 -->
-      <div v-show="installStep === 2" class="task-step-content">
+      <!-- Step 3: 校验脚本 -->
+      <div v-show="currentStepKey === 'validate'" class="task-step-content">
         <div class="task-step-editor">
           <div class="task-step-header">
             <div class="task-step-editor__title">
@@ -244,7 +333,10 @@
             <el-radio-group
               v-model="scriptModes.post"
               size="small"
-              :disabled="stepStates[2] === 'running' || stepStates[2] === 'success'"
+              :disabled="
+                stepStates[stepIndexes.validate] === 'running' ||
+                stepStates[stepIndexes.validate] === 'success'
+              "
             >
               <el-radio-button label="edit">手动编辑</el-radio-button>
               <el-radio-button label="upload">上传脚本</el-radio-button>
@@ -257,7 +349,10 @@
               :autosize="{ minRows: 8, maxRows: 24 }"
               :placeholder="postScriptPlaceholder"
               class="script-input"
-              :disabled="stepStates[2] === 'running' || stepStates[2] === 'success'"
+              :disabled="
+                stepStates[stepIndexes.validate] === 'running' ||
+                stepStates[stepIndexes.validate] === 'success'
+              "
             />
           </div>
           <div v-else class="script-upload-panel">
@@ -272,7 +367,10 @@
               <el-button
                 type="primary"
                 plain
-                :disabled="stepStates[2] === 'running' || stepStates[2] === 'success'"
+                :disabled="
+                  stepStates[stepIndexes.validate] === 'running' ||
+                  stepStates[stepIndexes.validate] === 'success'
+                "
                 @click="triggerScriptUpload('post')"
               >
                 <i class="fa fa-upload" style="margin-right: 4px" />
@@ -294,13 +392,16 @@
         <!-- 执行状态展示 -->
         <div class="task-step-action">
           <el-alert
-            v-if="stepStates[2] === 'success' || stepStates[2] === 'failed'"
-            :type="stepStates[2] === 'success' ? 'success' : 'error'"
+            v-if="
+              stepStates[stepIndexes.validate] === 'success' ||
+              stepStates[stepIndexes.validate] === 'failed'
+            "
+            :type="stepStates[stepIndexes.validate] === 'success' ? 'success' : 'error'"
             :closable="false"
             show-icon
             :title="
-              stepStates[2] === 'success'
-                ? isSkipped[2]
+              stepStates[stepIndexes.validate] === 'success'
+                ? isSkipped.validate
                   ? '已跳过校验脚本'
                   : '全部校验通过'
                 : '校验失败：' + taskErrorMessage
@@ -326,8 +427,8 @@
         </div>
       </div>
 
-      <!-- Step 3: 重启策略 -->
-      <div v-show="installStep === 3" class="task-step-content">
+      <!-- Step 4: 重启策略 -->
+      <div v-show="currentStepKey === 'restart'" class="task-step-content">
         <div class="task-step-editor">
           <div class="task-step-editor__title">
             <i class="fa fa-refresh" style="margin-right: 6px"></i>
@@ -356,7 +457,10 @@
               v-model="restartConfirmText"
               :placeholder="restartConfirmKeyword"
               style="width: 320px"
-              :disabled="stepStates[3] === 'running' || stepStates[3] === 'success'"
+              :disabled="
+                stepStates[stepIndexes.restart] === 'running' ||
+                stepStates[stepIndexes.restart] === 'success'
+              "
             />
           </div>
           <el-alert
@@ -370,13 +474,16 @@
         <!-- 执行状态展示 -->
         <div class="task-step-action">
           <el-alert
-            v-if="stepStates[3] === 'success' || stepStates[3] === 'failed'"
-            :type="stepStates[3] === 'success' ? 'success' : 'error'"
+            v-if="
+              stepStates[stepIndexes.restart] === 'success' ||
+              stepStates[stepIndexes.restart] === 'failed'
+            "
+            :type="stepStates[stepIndexes.restart] === 'success' ? 'success' : 'error'"
             :closable="false"
             show-icon
             :title="
-              stepStates[3] === 'success'
-                ? isSkipped[3] || installConfig.restartPolicy === 'none'
+              stepStates[stepIndexes.restart] === 'success'
+                ? isSkipped.restart || installConfig.restartPolicy === 'none'
                   ? '已跳过重启'
                   : '重启完成'
                 : '重启失败：' + taskErrorMessage
@@ -399,8 +506,8 @@
         </div>
       </div>
 
-      <!-- Step 4: 补丁安装 -->
-      <div v-show="installStep === 4" class="task-step-content">
+      <!-- Step 5/6: 执行汇总 -->
+      <div v-show="currentStepKey === 'execute'" class="task-step-content">
         <div class="task-step-editor">
           <div class="task-step-editor__title">
             <i class="fa fa-download" style="margin-right: 6px"></i>
@@ -466,7 +573,7 @@
                 'is-active': stepStates[item.idx] === 'running',
                 'is-success': stepStates[item.idx] === 'success',
                 'is-failed': stepStates[item.idx] === 'failed',
-                'is-skipped': isSkipped[item.idx] && stepStates[item.idx] === 'success',
+                'is-skipped': isSkipped[item.key] && stepStates[item.idx] === 'success',
                 'is-pending': stepStates[item.idx] === 'idle'
               }"
             >
@@ -484,7 +591,7 @@
                       stepStates[item.idx] === 'running'
                         ? '正在执行中...'
                         : stepStates[item.idx] === 'success'
-                          ? isSkipped[item.idx]
+                          ? isSkipped[item.key]
                             ? '系统已跳过执行'
                             : '任务执行成功'
                           : stepStates[item.idx] === 'failed'
@@ -533,11 +640,11 @@
       <template #footer>
         <div class="dialog-footer">
           <!-- Step 0 取消 -->
-          <el-button v-if="installStep === 0" @click="isVisible = false">取消</el-button>
+          <el-button v-if="currentStepKey === 'select'" @click="isVisible = false">取消</el-button>
 
           <!-- 上一步：仅在非执行中时允许回退 -->
           <el-button
-            v-if="installStep > 0 && installStep < 5 && stepStates[installStep] !== 'running'"
+            v-if="installStep > 0 && stepStates[installStep] !== 'running'"
             @click="goBack"
           >
             <i class="fa fa-chevron-left" style="margin-right: 4px" />
@@ -546,7 +653,7 @@
 
           <!-- 正在执行按钮 -->
           <el-button
-            v-if="installStep === 4 && (pipelineStatus === 'running' || executionSubmitting)"
+            v-if="currentStepKey === 'execute' && (pipelineStatus === 'running' || executionSubmitting)"
             type="primary"
             loading
             disabled
@@ -554,27 +661,24 @@
             <span>{{ pipelineStatus === 'running' ? '执行中...' : '准备执行...' }}</span>
           </el-button>
 
-          <!-- 跳过按钮：针对预执行和校验脚本配置 -->
+          <!-- 跳过按钮：针对 RPM 预检、预执行、校验脚本和重启配置 -->
           <el-button
-            v-if="
-              (installStep === 1 || installStep === 2 || installStep === 3) &&
-              !isSkipped[installStep]
-            "
+            v-if="currentStepSkippable && !isSkipped[currentStepKey]"
             :disabled="stepTransitionLoading"
             @click="handleSkipStep"
           >
             跳过此步
           </el-button>
 
-          <!-- 下一步按钮：第一步到第三步调整为直接下一步 -->
+          <!-- 下一步按钮：配置步骤直接进入下一步 -->
           <el-button
-            v-if="installStep >= 0 && installStep <= 3"
+            v-if="currentStepKey !== 'execute'"
             type="primary"
             :loading="stepTransitionLoading"
             :disabled="
               stepTransitionLoading ||
-              (installStep === 0 && selectedHosts.length === 0) ||
-              (installStep === 3 &&
+              (currentStepKey === 'select' && selectedHosts.length === 0) ||
+              (currentStepKey === 'restart' &&
                 requiresRestartConfirm &&
                 restartConfirmText !== restartConfirmKeyword)
             "
@@ -584,9 +688,13 @@
             <i class="fa fa-chevron-right" style="margin-left: 4px" />
           </el-button>
 
-          <!-- 最后一步（步骤4）确认与离开按钮 -->
+          <!-- 最后一步确认与离开按钮 -->
           <el-button
-            v-if="installStep === 4 && pipelineStatus !== 'running' && !executionSubmitting"
+            v-if="
+              installStep === finalStepIndex &&
+              pipelineStatus !== 'running' &&
+              !executionSubmitting
+            "
             type="primary"
             @click="handlePrimaryAction"
           >
@@ -878,18 +986,6 @@ function resolveHostIp(host) {
   ).trim()
 }
 
-function getSelectedPatchIds() {
-  return Array.from(
-    new Set(
-      props.patchesToInstall.flatMap(patch =>
-        String(patch?.patch_id || patch?.patchId || '')
-          .split(',')
-          .map(value => value.trim())
-          .filter(Boolean)
-      )
-    )
-  )
-}
 
 const scriptModes = reactive({
   pre: 'edit',
@@ -1088,12 +1184,23 @@ function formatDateTime(timestamp) {
 }
 
 // ============================================================
-// 新向导步骤定义（5步）
+// 新向导步骤定义（按任务类型动态显示 RPM 预检）
 // ============================================================
 const wizardSteps = computed(() => getPatchTaskWizardSteps(displayOperationType.value))
 
 // Wizard state
 const installStep = ref(0)
+const currentStepKey = computed(() => wizardSteps.value[installStep.value]?.key || 'select')
+const stepIndexes = computed(() =>
+  wizardSteps.value.reduce((result, step, index) => {
+    result[step.key] = index
+    return result
+  }, {})
+)
+const finalStepIndex = computed(() => Math.max(0, wizardSteps.value.length - 1))
+const currentStepSkippable = computed(() =>
+  ['rpm', 'pre', 'validate', 'restart'].includes(currentStepKey.value)
+)
 const createdTaskId = ref('')
 const backendRestartReason = ref('')
 const restartConfirmText = ref('')
@@ -1105,24 +1212,41 @@ const installConfig = reactive({
 })
 
 // 每步的执行状态: 'idle' | 'running' | 'success' | 'failed'
-const stepStates = reactive(['idle', 'idle', 'idle', 'idle', 'idle'])
-const isSkipped = reactive({ 1: false, 2: false, 3: false }) // 记录是否是手动跳过的
+const stepStates = reactive(['idle', 'idle', 'idle', 'idle', 'idle', 'idle'])
+const isSkipped = reactive({ rpm: false, pre: false, validate: false, restart: false })
 const taskStatus = ref('') // 后端任务状态
 const taskErrorMessage = ref('') // 错误信息
 const taskDetailData = ref(null) // 从接口返回的任务详情
 const pipelineFinished = ref(false) // 只有通过 startPipeline 的才是真完成
 let pollTimer = null
 
-const pipelineItems = computed(() => [
-  { label: '预检查', idx: 1, runKey: 'preCheckRunId' },
-  {
-    label: executeStepTitle.value,
-    idx: 4,
-    runKey: 'executeRunId'
-  },
-  { label: '重启策略', idx: 3, runKey: 'restartRunId' },
-  { label: '脚本校验', idx: 2, runKey: 'validateRunId' }
-])
+const rpmCheckResultText = computed(() => formatTaskFieldValue(taskDetailData.value?.rpmCheckResult))
+const pipelineItems = computed(() => {
+  const items = []
+
+  if (!isRollbackTask.value && Number.isInteger(stepIndexes.value.rpm)) {
+    items.push({
+      key: 'rpm',
+      label: '补丁安装预检查',
+      idx: stepIndexes.value.rpm,
+      runKey: 'rpmCheckRunId'
+    })
+  }
+
+  items.push(
+    { key: 'pre', label: '预检查', idx: stepIndexes.value.pre, runKey: 'preCheckRunId' },
+    {
+      key: 'execute',
+      label: executeStepTitle.value,
+      idx: stepIndexes.value.execute,
+      runKey: 'executeRunId'
+    },
+    { key: 'restart', label: '重启策略', idx: stepIndexes.value.restart, runKey: 'restartRunId' },
+    { key: 'validate', label: '脚本校验', idx: stepIndexes.value.validate, runKey: 'validateRunId' }
+  )
+
+  return items
+})
 
 const smartRestartType = computed(() => {
   const patches = props.patchesToInstall
@@ -1165,12 +1289,12 @@ watch(
 const requiresRestartConfirm = computed(
   () => restartOptions.restartRequired || installConfig.restartPolicy !== 'none'
 )
+const restartConfirmSubmitText = '确认重启'
 const restartConfirmKeyword = computed(() => {
   if (installConfig.restartPolicy === 'system') return '确认系统重启'
   if (installConfig.restartPolicy === 'service') return '确认服务重启'
   return '确认重启'
 })
-const restartConfirmSubmitText = '确认重启'
 const restartAdviceTitle = computed(() => {
   if (restartOptions.restartLabel) return restartOptions.restartLabel
   if (installConfig.restartPolicy === 'system') return '系统重启建议'
@@ -1200,7 +1324,7 @@ const restartAdviceDescription = computed(() => {
   )
 })
 const restartStrategySummary = computed(() => {
-  if (isSkipped[3]) return '已跳过重启'
+  if (isSkipped.restart) return '已跳过重启'
   if (installConfig.restartPolicy === 'system') return '系统重启'
   if (installConfig.restartPolicy === 'service') return '服务重启'
   return '不重启'
@@ -1220,6 +1344,42 @@ function openExecuteResult(runId, jobTitle) {
 function getTaskRunId(taskData, runKey) {
   if (!taskData || !runKey) return ''
   return taskData[runKey] || ''
+}
+
+function formatTaskFieldValue(value) {
+  if (value === null || value === undefined || value === '') return ''
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  try {
+    return JSON.stringify(value, null, 2)
+  } catch {
+    return String(value)
+  }
+}
+
+function resolveApiErrorMessage(error, fallback = '操作失败，请稍后重试') {
+  return (
+    error?.response?.data?.error ||
+    error?.response?.data?.message ||
+    error?.response?.data?.msg ||
+    error?.message ||
+    fallback
+  )
+}
+
+function getStepIndex(stepKey) {
+  const index = stepIndexes.value[stepKey]
+  return Number.isInteger(index) ? index : -1
+}
+
+function resetSkippedSteps() {
+  isSkipped.rpm = false
+  isSkipped.pre = false
+  isSkipped.validate = false
+  isSkipped.restart = false
 }
 
 async function refreshTaskDetail() {
@@ -1308,6 +1468,19 @@ function buildRestartAdviceDescription(hostAdviceList, ignoredCount, failedCount
   }
 
   return parts.join(' ')
+}
+
+function getSelectedPatchIds() {
+  return Array.from(
+    new Set(
+      props.patchesToInstall.flatMap(patch =>
+        String(patch?.patch_id || patch?.patchId || '')
+          .split(',')
+          .map(value => value.trim())
+          .filter(Boolean)
+      )
+    )
+  )
 }
 
 async function loadRestartAdviceByHostPatch(force = false) {
@@ -1487,9 +1660,7 @@ function resetInstallState() {
   taskDetailData.value = null
   pipelineFinished.value = false
   for (let i = 0; i < stepStates.length; i++) stepStates[i] = 'idle'
-  isSkipped[1] = false
-  isSkipped[2] = false
-  isSkipped[3] = false
+  resetSkippedSteps()
   restartConfirmText.value = ''
 }
 
@@ -1513,47 +1684,51 @@ function buildTaskRequestPayload() {
 }
 
 async function createExecutionTask() {
-  const requestPayload = buildTaskRequestPayload()
-  const res = isRollbackTask.value
-    ? await patchInstallApi.createRollbackTask({
-        ...requestPayload,
-        histUpdateIds: props.histUpdateIds
-      })
-    : isPackageTask.value
-      ? await patchInstallApi.createPkgUpdateTask({
-          hostIds: requestPayload.hostIds,
-          packages: getTaskPackages()
+  try {
+    const requestPayload = buildTaskRequestPayload()
+    const res = isRollbackTask.value
+      ? await patchInstallApi.createRollbackTask({
+          ...requestPayload,
+          histUpdateIds: props.histUpdateIds
         })
-      : isVulnerabilityTask.value
-        ? await patchInstallApi.createVulnFixTask({
+      : isPackageTask.value
+        ? await patchInstallApi.createPkgUpdateTask({
             hostIds: requestPayload.hostIds,
-            patchIds: requestPayload.patchIds,
-            patchStatusIds: requestPayload.patchStatusIds
+            packages: getTaskPackages()
           })
-        : await patchInstallApi.createTask({
-            ...requestPayload,
-            osType: 'linux'
-          })
+        : isVulnerabilityTask.value
+          ? await patchInstallApi.createVulnFixTask({
+              hostIds: requestPayload.hostIds,
+              patchIds: requestPayload.patchIds,
+              patchStatusIds: requestPayload.patchStatusIds
+            })
+          : await patchInstallApi.createTask({
+              ...requestPayload,
+              osType: 'linux'
+            })
 
-  const data = res?.data || null
-  const taskId = data?.id || ''
-  if (!taskId) {
-    throw new Error('任务创建失败，请稍后重试')
+    const data = res?.data || null
+    const taskId = data?.id || ''
+    if (!taskId) {
+      throw new Error('任务创建失败，请稍后重试')
+    }
+
+    createdTaskId.value = taskId
+    taskDetailData.value = data
+
+    if (data.restartType && ['system', 'service', 'none'].includes(data.restartType)) {
+      installConfig.restartPolicy = data.restartType
+    }
+    backendRestartReason.value = data.restartReason || ''
+  } catch (error) {
+    throw new Error(resolveApiErrorMessage(error, '任务创建失败，请稍后重试'))
   }
-
-  createdTaskId.value = taskId
-  taskDetailData.value = data
-
-  if (data.restartType && ['system', 'service', 'none'].includes(data.restartType)) {
-    installConfig.restartPolicy = data.restartType
-  }
-  backendRestartReason.value = data.restartReason || ''
 }
 
 async function prepareTaskForExecution() {
   if (confirmedHosts.value.length === 0) {
     ElMessage.warning('请先选择目标主机')
-    installStep.value = 0
+    installStep.value = getStepIndex('select')
     return false
   }
 
@@ -1575,10 +1750,10 @@ async function prepareTaskForExecution() {
 
   if (
     requiresRestartConfirm.value &&
-    !isSkipped[3] &&
+    !isSkipped.restart &&
     restartConfirmText.value !== restartConfirmKeyword.value
   ) {
-    installStep.value = 3
+    installStep.value = getStepIndex('restart')
     ElMessage.warning('后端评估结果要求确认重启，请完成确认后再开始执行')
     return false
   }
@@ -1591,35 +1766,31 @@ async function handleNextStep() {
   if (stepTransitionLoading.value) return
 
   stepTransitionLoading.value = true
-  const step = installStep.value
+  const stepKey = currentStepKey.value
 
   try {
-    if (step === 0) {
+    if (stepKey === 'select') {
       if (selectedHosts.value.length === 0) return
 
       confirmedHosts.value = [...selectedHosts.value]
-
       for (let i = 1; i < stepStates.length; i++) stepStates[i] = 'idle'
-      isSkipped[1] = false
-      isSkipped[2] = false
-      isSkipped[3] = false
+      resetSkippedSteps()
       taskDetailData.value = null
       taskErrorMessage.value = ''
       pipelineFinished.value = false
       pipelineStatus.value = 'idle'
       createdTaskId.value = ''
       resetRestartOptions()
-      installStep.value = 1
+      installStep.value = getStepIndex(isRollbackTask.value ? 'pre' : 'rpm')
       return
     }
 
-    if (step === 2) {
+    if (stepKey === 'validate') {
       await loadRestartAdviceByHostPatch()
     }
 
-    if (step >= 1 && step < 4) {
-      // 步骤 1-3 现在仅为配置，直接进入下一步
-      installStep.value = step + 1
+    if (currentStepKey.value !== 'execute' && installStep.value < finalStepIndex.value) {
+      installStep.value += 1
     }
   } finally {
     stepTransitionLoading.value = false
@@ -1633,12 +1804,15 @@ function goBack() {
 }
 
 function handleSkipStep() {
-  isSkipped[installStep.value] = true
+  if (!currentStepSkippable.value) return
+  isSkipped[currentStepKey.value] = true
   handleNextStep()
 }
 
 function handleAdvanceStep() {
-  isSkipped[installStep.value] = false
+  if (currentStepSkippable.value) {
+    isSkipped[currentStepKey.value] = false
+  }
   handleNextStep()
 }
 
@@ -1648,60 +1822,90 @@ function handlePrimaryAction() {
     return
   }
 
-  executeStep(4)
+  executeStep()
 }
 
-async function executeStep(step) {
-  if (step === 4) {
-    if (executionSubmitting.value || pipelineStatus.value === 'running') return
+async function executeStep() {
+  if (executionSubmitting.value || pipelineStatus.value === 'running') return
 
-    executionSubmitting.value = true
-    try {
-      const taskPrepared = await prepareTaskForExecution()
-      if (!taskPrepared) return
-      await startPipeline()
-    } catch (error) {
-      ElMessage.error(error?.message || '任务准备失败，请稍后重试')
-    } finally {
-      executionSubmitting.value = false
-    }
+  executionSubmitting.value = true
+  try {
+    const taskPrepared = await prepareTaskForExecution()
+    if (!taskPrepared) return
+    await startPipeline()
+  } catch (error) {
+    ElMessage.error(resolveApiErrorMessage(error, '任务准备失败，请稍后重试'))
+  } finally {
+    executionSubmitting.value = false
   }
 }
 
 // 自动化执行逻辑
 async function startPipeline() {
+  const rpmStepIndex = getStepIndex('rpm')
+  const preStepIndex = getStepIndex('pre')
+  const validateStepIndex = getStepIndex('validate')
+  const restartStepIndex = getStepIndex('restart')
+  const executeStepIndex = getStepIndex('execute')
+
   pipelineStatus.value = 'running'
   taskErrorMessage.value = ''
   stopPolling()
   scrollToPipelineSection()
 
   try {
-    // 1. 预执行脚本
-    if (installConfig.preScript && !isSkipped[1]) {
-      stepStates[1] = 'running'
+    // 1. 补丁安装预检查
+    if (!isRollbackTask.value && rpmStepIndex >= 0) {
+      stepStates[rpmStepIndex] = 'running'
+      if (isSkipped.rpm) {
+        await patchInstallApi.skipRpmCheck(createdTaskId.value)
+        await refreshTaskDetail()
+        const rpmSkipped = await pollStatusPromise(
+          rpmStepIndex,
+          ['RPM_CHECK_DONE'],
+          ['RPM_CHECK_FAILED', 'FAILED']
+        )
+        if (!rpmSkipped) throw new Error('补丁安装预检查跳过失败')
+      } else {
+        await patchInstallApi.executeRpmCheck(createdTaskId.value)
+        await refreshTaskDetail()
+        const rpmSuccess = await pollStatusPromise(
+          rpmStepIndex,
+          ['RPM_CHECK_DONE'],
+          ['RPM_CHECK_FAILED', 'FAILED']
+        )
+        if (!rpmSuccess) {
+          throw new Error(taskErrorMessage.value || '补丁安装预检查失败')
+        }
+      }
+    }
+
+    // 2. 预执行脚本
+    if (installConfig.preScript && !isSkipped.pre) {
+      stepStates[preStepIndex] = 'running'
       await patchInstallApi.executePreCheck(createdTaskId.value)
       await refreshTaskDetail()
       const preSuccess = await pollStatusPromise(
-        1,
+        preStepIndex,
         ['PRE_CHECK_DONE'],
         ['PRE_CHECK_FAILED', 'FAILED']
       )
       if (!preSuccess) throw new Error('预执行脚本执行失败')
     } else {
-      stepStates[1] = 'running'
+      stepStates[preStepIndex] = 'running'
       await patchInstallApi.skipPreCheck(createdTaskId.value)
       await refreshTaskDetail()
       const preSkipped = await pollStatusPromise(
-        1,
+        preStepIndex,
         ['PRE_CHECK_DONE'],
         ['PRE_CHECK_FAILED', 'FAILED']
       )
       if (!preSkipped) throw new Error('预执行脚本跳过失败')
-      isSkipped[1] = true
+      isSkipped.pre = true
     }
 
-    // 2. 安装或回滚执行
-    stepStates[4] = 'running'
+    // 3. 安装或回滚执行
+    stepStates[executeStepIndex] = 'running'
     if (isRollbackTask.value) {
       await patchInstallApi.executeRollbackTask(createdTaskId.value)
     } else {
@@ -1709,20 +1913,23 @@ async function startPipeline() {
     }
     await refreshTaskDetail()
     const installSuccess = await pollStatusPromise(
-      4,
+      executeStepIndex,
       [isRollbackTask.value ? 'ROLLBACK_DONE' : 'INSTALL_DONE'],
       [isRollbackTask.value ? 'ROLLBACK_FAILED' : 'INSTALL_FAILED', 'FAILED']
     )
     if (!installSuccess) throw new Error(`${executeStepTitle.value}失败`)
 
-    // 3. 重启策略
-    if (installConfig.restartPolicy !== 'none' && !isSkipped[3]) {
-      stepStates[3] = 'running'
+    await loadRestartOptions()
+    await loadRollbackInfo()
+
+    // 4. 重启策略
+    if (installConfig.restartPolicy !== 'none' && !isSkipped.restart) {
+      stepStates[restartStepIndex] = 'running'
       await patchInstallApi.confirmRestart(createdTaskId.value, true, restartConfirmSubmitText)
       await patchInstallApi.executeRestart(createdTaskId.value)
       await refreshTaskDetail()
       const restartSuccess = await pollStatusPromise(
-        3,
+        restartStepIndex,
         ['RESTART_DONE'],
         ['RESTART_FAILED', 'FAILED']
       )
@@ -1730,32 +1937,32 @@ async function startPipeline() {
     } else {
       await patchInstallApi.confirmRestart(createdTaskId.value, false)
       await refreshTaskDetail()
-      stepStates[3] = 'success'
-      isSkipped[3] = true
+      stepStates[restartStepIndex] = 'success'
+      isSkipped.restart = true
     }
 
-    // 4. 脚本校验
-    if (installConfig.postScript && !isSkipped[2]) {
-      stepStates[2] = 'running'
+    // 5. 脚本校验
+    if (installConfig.postScript && !isSkipped.validate) {
+      stepStates[validateStepIndex] = 'running'
       await patchInstallApi.executeValidate(createdTaskId.value)
       await refreshTaskDetail()
       const validateSuccess = await pollStatusPromise(
-        2,
+        validateStepIndex,
         ['COMPLETED'],
         ['VALIDATE_FAILED', 'FAILED']
       )
       if (!validateSuccess) throw new Error('脚本校验执行失败')
     } else {
-      stepStates[2] = 'running'
+      stepStates[validateStepIndex] = 'running'
       await patchInstallApi.skipValidate(createdTaskId.value)
       await refreshTaskDetail()
       const validateSkipped = await pollStatusPromise(
-        2,
+        validateStepIndex,
         ['COMPLETED'],
         ['VALIDATE_FAILED', 'FAILED']
       )
       if (!validateSkipped) throw new Error('脚本校验跳过失败')
-      isSkipped[2] = true
+      isSkipped.validate = true
     }
 
     pipelineFinished.value = true
@@ -1765,7 +1972,7 @@ async function startPipeline() {
   } catch (error) {
     pipelineFinished.value = true
     pipelineStatus.value = 'failed'
-    taskErrorMessage.value = error?.message || '执行异常'
+    taskErrorMessage.value = resolveApiErrorMessage(error, '执行异常')
     ElMessage.error(`任务执行中断：${taskErrorMessage.value}`)
   }
 }
@@ -1773,28 +1980,50 @@ async function startPipeline() {
 // 供 startPipeline 使用的 Promise 化轮询
 function pollStatusPromise(step, successStatuses, failedStatuses) {
   return new Promise(resolve => {
-    const internalPoll = setInterval(async () => {
+    let settled = false
+
+    const finalize = success => {
+      if (settled) return
+      settled = true
+      if (step >= 0) {
+        stepStates[step] = success ? 'success' : 'failed'
+      }
+      stopPolling()
+      resolve(success)
+    }
+
+    const evaluateTask = data => {
+      if (!data?.status) return false
+
+      taskStatus.value = data.status
+      taskErrorMessage.value = data.errorMessage || taskErrorMessage.value
+      taskDetailData.value = data
+
+      if (successStatuses.includes(data.status)) {
+        finalize(true)
+        return true
+      }
+
+      if (failedStatuses.includes(data.status)) {
+        finalize(false)
+        return true
+      }
+
+      return false
+    }
+
+    if (evaluateTask(taskDetailData.value)) {
+      return
+    }
+
+    pollTimer = setInterval(async () => {
       try {
         const res = await patchInstallApi.getTask(createdTaskId.value)
         const data = res?.data
-        if (!data) return
-
-        taskStatus.value = data.status
-        taskErrorMessage.value = data.errorMessage || ''
-        taskDetailData.value = data
-
-        if (successStatuses.includes(data.status)) {
-          stepStates[step] = 'success'
-          clearInterval(internalPoll)
-          resolve(true)
-        } else if (failedStatuses.includes(data.status)) {
-          stepStates[step] = 'failed'
-          clearInterval(internalPoll)
-          resolve(false)
-        }
-      } catch {
-        clearInterval(internalPoll)
-        resolve(false)
+        evaluateTask(data)
+      } catch (error) {
+        taskErrorMessage.value = resolveApiErrorMessage(error, '任务状态查询失败')
+        finalize(false)
       }
     }, 3000)
   })
@@ -1922,6 +2151,13 @@ function pollStatusPromise(step, successStatuses, failedStatuses) {
   font-size: 13px;
   margin-top: 4px;
   color: var(--el-text-color-regular);
+}
+.task-step-result {
+  margin-top: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.5;
 }
 .install-summary-card {
   border: 1px solid var(--el-border-color-lighter);

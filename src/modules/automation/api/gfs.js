@@ -5,6 +5,11 @@ import { useApi } from "@/core/api";
  */
 
 const GFS_REPO = '$tnt'; // 默认租户仓库
+const GIT_REPO_INIT_PAYLOAD = Object.freeze({
+  src: '/opt/source/playbook.zip',
+  dest: ' ',
+  is_keep_folder: false
+});
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/oplus-portal').replace(/\/$/, '');
 
 function withApiBaseUrl(path) {
@@ -462,6 +467,17 @@ export const initGitRepo = (repo, formData, onProgress) => {
       }
     }
   });
+}
+
+/**
+ * 初始化当前 Git 脚本库
+ */
+export const initCurrentGitRepo = (repo) => {
+  const cacheBuster = Date.now();
+  return useApi().post(
+    `/gfs/api/gfs/v2/git/f/${getRepo(repo)}/init?cacheBuster=${cacheBuster}`,
+    { ...GIT_REPO_INIT_PAYLOAD }
+  );
 }
 
 /**
