@@ -123,6 +123,7 @@ import { ElMessage } from 'element-plus'
 import { templateApi, jobApi } from '../api'
 import ScriptSelectorDialog from './ScriptSelectorDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 
 const props = defineProps({
   visible: {
@@ -258,7 +259,7 @@ async function loadTemplate() {
     // 提取脚本和主机
     if (auditParams.length > 0) {
       formData.value.scripts = auditParams[0].scripts || []
-      formData.value.hosts = auditParams[0].hosts || []
+      formData.value.hosts = normalizeAcmDeviceSelection(auditParams[0].hosts, 'linux')
     }
   } catch (error) {
     console.error('Failed to load template:', error)

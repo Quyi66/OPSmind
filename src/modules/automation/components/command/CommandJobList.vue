@@ -208,6 +208,10 @@ import {
 import * as jaoApi from '@/modules/automation/api/jao'
 import CreateJobDialog from './dialogs/CreateJobDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import {
+  normalizeAcmDeviceJobHosts,
+  normalizeAcmDeviceSelection
+} from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import JobApproveDialog from '@/modules/automation/components/job/JobListView/JobApproveDialog.vue'
 
 const props = defineProps({
@@ -297,7 +301,7 @@ function parseJobConfig(job) {
     const task = cfg.tasks?.[0] || {}
     return {
       commands: task.commands || [],
-      hosts: task.hosts || []
+      hosts: normalizeAcmDeviceSelection(task.hosts, 'linux')
     }
   } catch (e) {
     return { commands: [], hosts: [] }
@@ -379,7 +383,7 @@ function fillEditForm(job) {
   }
   const cfg = parseJobConfig(job)
   selectedCommandIds.value = (cfg.commands || []).map(c => c.id)
-  jobHosts.value = cfg.hosts || []
+  jobHosts.value = normalizeAcmDeviceSelection(cfg.hosts, 'linux')
 }
 
 function handleSortChange({ prop, order }) {
@@ -443,7 +447,7 @@ async function handleSaveJob() {
   try {
     const commands = selectedCommandIds.value.map(id => ({ id }))
     const configJson = JSON.stringify({
-      tasks: [{ commands, hosts: jobHosts.value }]
+      tasks: [{ commands, hosts: normalizeAcmDeviceJobHosts(jobHosts.value, 'linux') }]
     })
 
     const job = {

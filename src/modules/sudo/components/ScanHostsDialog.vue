@@ -60,6 +60,7 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import * as sudoApi from '@/modules/sudo/api'
 import { useJobPolling } from '@/composables/useJobPolling'
 
@@ -151,11 +152,7 @@ async function handleStartScan() {
   jobStatus.value = 'WAITING'
 
   try {
-    const hosts = selectedHosts.value.map(h => ({
-      key: h.key || h.value || h,
-      value: h.value || h.key || h,
-      assetType: h.assetType || 'linux'
-    }))
+    const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
 
     const response = await sudoApi.scanSudoHosts({ hosts })
 

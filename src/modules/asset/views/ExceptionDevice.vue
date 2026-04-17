@@ -198,6 +198,7 @@ import { Download, Refresh, Search, RefreshRight } from '@element-plus/icons-vue
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import KpiCards from '../components/KpiCards.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
 
@@ -388,11 +389,7 @@ const confirmCheckConnectivity = async () => {
   checkConnLoading.value = true
 
   try {
-    const hosts = checkConnHosts.value.map(h => ({
-      key: h.key || h.id,
-      value: h.value || h.ip,
-      assetType: h.assetType || h.ciType || 'linux'
-    }))
+    const hosts = normalizeAcmDeviceJobHosts(checkConnHosts.value, 'linux')
 
     // 调用启动检查接口
     const cacheBuster = Date.now()
@@ -532,11 +529,7 @@ const confirmCollectInfo = async () => {
   collectInfoLoading.value = true
 
   try {
-    const hosts = collectInfoHosts.value.map(h => ({
-      key: h.key || h.id,
-      value: h.value || h.ip,
-      assetType: h.assetType || h.ciType || 'linux'
-    }))
+    const hosts = normalizeAcmDeviceJobHosts(collectInfoHosts.value, 'linux')
 
     // 调用启动采集接口
     const cacheBuster = Date.now()

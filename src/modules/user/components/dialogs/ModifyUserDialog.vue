@@ -166,6 +166,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import * as userApi from '@/modules/user/api'
 import { useJobPolling } from '@/composables/useJobPolling'
 
@@ -337,11 +338,7 @@ async function handleSubmit() {
   currentStatus.value = ''
 
   try {
-    const hosts = selectedHosts.value.map(h => ({
-      key: h.key || h.id,
-      value: h.value || h.ip || h.host_key,
-      assetType: h.assetType || h.ciType || 'linux'
-    }))
+    const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
     const hostsJson = JSON.stringify(hosts)
     const jobId = jobIdMap[formData.operate]
 

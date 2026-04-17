@@ -402,6 +402,10 @@ import * as gfsApi from '@/modules/automation/api/gfs'
 import FileSelectorDialog from './FileSelectorDialog.vue'
 import CommandSelectorDialog from './CommandSelectorDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import {
+  normalizeAcmDeviceJobHosts,
+  normalizeAcmDeviceSelection
+} from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import { Delete } from '@element-plus/icons-vue'
 
@@ -831,7 +835,7 @@ function toConfigJson() {
         taskConfig.hosts = []
       } else {
         // 使用 AcmDeviceSelector 选择的主机
-        taskConfig.hosts = task.hosts || []
+        taskConfig.hosts = normalizeAcmDeviceJobHosts(task.hosts, 'linux')
       }
 
       return taskConfig
@@ -847,7 +851,7 @@ function toConfigJson() {
         type: cmd.type,
         cmd: cmd.cmd || cmd.command
       })),
-      hosts: task.hosts || [],
+      hosts: normalizeAcmDeviceJobHosts(task.hosts, 'linux'),
       hostsMode: task.hostsMode || 'param'
     }))
   }
@@ -1133,10 +1137,10 @@ async function loadJobDetail(jobId) {
       if (config.tasks && config.tasks.length > 0) {
         jobConfig.tasks = config.tasks.map(task => ({
           scripts: task.scripts || [],
-          hosts: task.hosts || [],
+          hosts: normalizeAcmDeviceSelection(task.hosts, 'linux'),
           hostsMode: task.hostsMode || (task.hostsParam ? 'param' : ''),
           hostsParam: task.hostsParam || 'hosts',
-          hostsText: Array.isArray(task.hosts) ? task.hosts.join('\n') : ''
+          hostsText: normalizeAcmDeviceSelection(task.hosts, 'linux').map(host => host.value).join('\n')
         }))
       }
     } else if (jobData.type === 'rest') {
@@ -1147,7 +1151,7 @@ async function loadJobDetail(jobId) {
       if (config.tasks && config.tasks.length > 0) {
         commandConfig.tasks = config.tasks.map(task => ({
           commands: task.commands || [],
-          hosts: task.hosts || [],
+          hosts: normalizeAcmDeviceSelection(task.hosts, 'linux'),
           hostsMode: task.hostsMode || 'param',
           commandFilter: ''
         }))

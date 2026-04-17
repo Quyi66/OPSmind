@@ -106,6 +106,7 @@ import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { localInstallApi } from '../api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import FileSelectorDialog from '../components/FileSelectorDialog.vue'
 import { useJobPolling } from '@/composables/useJobPolling'
 
@@ -167,9 +168,9 @@ async function handleStartInstall() {
     installing.value = true
 
     // 构建参数
-    const hostsMap = selectedHosts.value.map(h => ({
-      host_id: h.key || h.id,
-      host_key: h.value || h.ip || h.host_key
+    const hostsMap = normalizeAcmDeviceSelection(selectedHosts.value, 'linux').map(h => ({
+      host_id: h.key,
+      host_key: h.value
     }))
 
     const fileList = selectedFiles.value.map(f => f.path || f.name || f)

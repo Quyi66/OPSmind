@@ -91,6 +91,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import * as sudoApi from '@/modules/sudo/api'
 import { useJobPolling } from '@/composables/useJobPolling'
 
@@ -183,11 +184,7 @@ async function handleSubmit() {
   submitting.value = true
 
   try {
-    const hosts = formData.hosts.map(h => ({
-      key: h.key || h.value || h,
-      value: h.value || h.key || h,
-      assetType: h.assetType || 'linux'
-    }))
+    const hosts = normalizeAcmDeviceJobHosts(formData.hosts, 'linux')
 
     const response = await sudoApi.addSudoPermission({
       hosts,

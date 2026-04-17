@@ -86,6 +86,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import * as pmsApi from '@/modules/password/api'
 
 const props = defineProps({
@@ -224,11 +225,7 @@ async function handleSubmit() {
 
   try {
     // 提取主机信息
-    const assestsParam = formData.hosts.map(h => ({
-      key: h.key || h.value || h,
-      value: h.value || h.key || h,
-      assetType: h.assetType || 'linux'
-    }))
+    const assestsParam = normalizeAcmDeviceJobHosts(formData.hosts, 'linux')
 
     // 获取当前时间
     const now = new Date()

@@ -55,6 +55,7 @@ import { ref, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { repoApi } from '../api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 
 const props = defineProps({
   modelValue: {
@@ -132,11 +133,7 @@ async function handleSubmit() {
     submitting.value = true
 
     // 构建 hosts 参数 [{key, value, assetType}] 格式
-    const hostsArray = selectedHosts.value.map(h => ({
-      key: h.key || h.id,
-      value: h.value || h.ip || h.host_key,
-      assetType: h.assetType || 'linux'
-    }))
+    const hostsArray = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
 
     // 根据仓库类型构建不同的参数
     let apiParams = { hosts: hostsArray }

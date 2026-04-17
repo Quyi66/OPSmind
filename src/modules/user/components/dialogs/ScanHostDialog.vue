@@ -66,6 +66,7 @@ import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import { useJobPolling } from '@/composables/useJobPolling'
 
 // 使用作业轮询 composable
@@ -119,11 +120,7 @@ async function handleExecute() {
 
   try {
     // 构造主机参数
-    const hosts = selectedHosts.value.map(h => ({
-      key: h.key || h.id,
-      value: h.value || h.ip || h.host_key,
-      assetType: h.assetType || h.ciType || 'linux'
-    }))
+    const hosts = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
 
     // 调用作业执行接口
     const cacheBuster = Date.now()

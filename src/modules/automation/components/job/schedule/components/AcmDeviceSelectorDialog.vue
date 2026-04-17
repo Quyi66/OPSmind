@@ -231,6 +231,24 @@ watch(
   { deep: true }
 )
 
+function resolveInitialActiveCiType() {
+  const firstHost = allSelectedHosts.value[0]
+  const assetType = typeof firstHost === 'object' && firstHost !== null
+    ? firstHost.assetType || firstHost.ciType || ''
+    : ''
+
+  if (assetType && ciTypeDefs.value.some(t => t.code === assetType)) {
+    return assetType
+  }
+
+  return ciTypeDefs.value[0]?.code || 'linux'
+}
+
+function applyInitialSelectionState() {
+  activeCiType.value = resolveInitialActiveCiType()
+  syncSelectedHostsByCiType()
+}
+
 function initCiTypes() {
   let types = props.ciTypes
   if (typeof types === 'string') {
@@ -274,19 +292,7 @@ function initCiTypes() {
       }))
     }
 
-    // 设置默认激活的CI类型
-    if (props.initialSelection.length > 0) {
-      // 如果有初始选中，使用第一个主机的assetType
-      const firstHost = props.initialSelection[0]
-      const assetType = typeof firstHost === 'object' ? firstHost.assetType : null
-      if (assetType && ciTypeDefs.value.some(t => t.code === assetType)) {
-        activeCiType.value = assetType
-      } else {
-        activeCiType.value = ciTypeDefs.value[0]?.code || 'linux'
-      }
-    } else {
-      activeCiType.value = ciTypeDefs.value[0]?.code || 'linux'
-    }
+    applyInitialSelectionState()
   }).catch((error) => {
     console.error('获取CI类型失败:', error)
     // 降级处理：使用传入的ciTypes
@@ -295,7 +301,7 @@ function initCiTypes() {
       title: code,
       icon: 'fa-server'
     }))
-    activeCiType.value = ciTypeDefs.value[0]?.code || 'linux'
+    applyInitialSelectionState()
   })
 }
 

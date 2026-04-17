@@ -98,6 +98,7 @@
 import { ref, reactive, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import { apiService } from '@/core/api'
 
 const props = defineProps({
@@ -138,11 +139,7 @@ const canSubmit = computed(() => {
 // 构建设备参数，格式与源系统一致
 const assestsParam = computed(() => {
   if (!formData.hosts.length) return []
-  return formData.hosts.map(h => ({
-    key: h.key || h.value || h,
-    value: h.value || h.key || h,
-    assetType: h.assetType || 'linux'
-  }))
+  return normalizeAcmDeviceJobHosts(formData.hosts, 'linux')
 })
 
 watch(
