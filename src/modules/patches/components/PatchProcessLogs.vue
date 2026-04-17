@@ -187,40 +187,6 @@
               </div>
             </div>
           </div>
-
-          <div v-show="detailCurrentStepKey === 'rpm'" class="task-step-content">
-            <div class="task-step-editor">
-              <div class="task-step-editor__title">
-                <i class="fa fa-cubes" style="margin-right: 6px"></i>
-                补丁安装预检查
-              </div>
-              <el-alert
-                :type="rpmCheckAlert.type"
-                :closable="false"
-                show-icon
-                :title="rpmCheckAlert.title"
-                class="task-step-alert"
-              >
-                <template #default>
-                  <div v-if="getRpmCheckRunId()" class="task-detail-info">
-                    <el-button
-                      type="primary"
-                      link
-                      style="font-size: 14px"
-                      @click="openExecuteResult(getRpmCheckRunId(), '补丁安装预检查')"
-                    >
-                      查看执行详情
-                    </el-button>
-                  </div>
-                </template>
-              </el-alert>
-              <div class="detail-block">
-                <div class="detail-block__title">预检结果</div>
-                <pre class="detail-block__content">{{ rpmCheckResultText || '暂无预检结果' }}</pre>
-              </div>
-            </div>
-          </div>
-
           <div v-show="detailCurrentStepKey === 'pre'" class="task-step-content">
             <div class="task-step-editor">
               <div class="task-step-editor__title">
@@ -482,7 +448,6 @@ const TASK_TYPE_MAP = {
 
 const STEP_MAP = {
   CREATE: '任务创建',
-  RPM_CHECK: '补丁安装预检查',
   PRE_CHECK: '预检查',
   SCRIPT: '脚本处理',
   INSTALL: '安装执行',
@@ -512,9 +477,6 @@ const STATUS_MAP = {
 
 const TASK_STATUS_MAP = {
   CREATED: '已创建',
-  RPM_CHECKING: '补丁安装预检查中',
-  RPM_CHECK_DONE: '补丁安装预检查完成',
-  RPM_CHECK_FAILED: '补丁安装预检查失败',
   PRE_CHECKING: '预检查中',
   PRE_CHECK_DONE: '预检查完成',
   PRE_CHECK_FAILED: '预检查失败',
@@ -550,9 +512,6 @@ const sortedDetailHistory = computed(() =>
     return new Date(left?.createdTime || 0).getTime() - new Date(right?.createdTime || 0).getTime()
   })
 )
-const rpmCheckRecords = computed(() =>
-  sortedDetailHistory.value.filter(record => record.step === 'RPM_CHECK')
-)
 const preCheckRecords = computed(() =>
   sortedDetailHistory.value.filter(
     record =>
@@ -580,7 +539,6 @@ const detailHosts = computed(() => toDisplayArray(detailTask.value?.hostIds))
 const detailAffectedPackages = computed(() =>
   buildAffectedPackageList(detailTask.value, detailHistory.value)
 )
-const rpmCheckResultText = computed(() => formatTaskFieldValue(detailTask.value?.rpmCheckResult))
 const preCheckScriptContent = computed(() => {
   return (
     getLatestRecord(
@@ -603,9 +561,6 @@ const validateScriptContent = computed(() => {
     ''
   )
 })
-const rpmCheckLatestRecord = computed(() =>
-  getLatestRecord(rpmCheckRecords.value, isExecutionLikeRecord)
-)
 const preCheckLatestRecord = computed(() =>
   getLatestRecord(preCheckRecords.value, isExecutionLikeRecord)
 )
@@ -618,9 +573,6 @@ const restartLatestRecord = computed(() =>
 const executeLatestRecord = computed(() =>
   getLatestRecord(executeRecords.value, isExecutionLikeRecord)
 )
-const rpmCheckAlert = computed(() =>
-  buildRpmCheckAlert(detailTask.value, rpmCheckLatestRecord.value, getStepStatus('RPM_CHECK'))
-)
 const preCheckAlert = computed(() =>
   buildScriptAlert('pre', preCheckLatestRecord.value, preCheckScriptContent.value, getStepStatus('PRE_CHECK'))
 )
@@ -630,19 +582,7 @@ const validateAlert = computed(() =>
 const restartAlert = computed(() => buildRestartAlert(detailTask.value, restartLatestRecord.value, getStepStatus('RESTART')))
 const pipelineItems = computed(() => {
   const executeStepKey = detailTaskType.value === 'rollback' ? 'ROLLBACK' : 'INSTALL'
-  const items = []
-
-  if (detailTaskType.value !== 'rollback') {
-    items.push(
-      buildPipelineItem('rpm-check', '补丁安装预检查', rpmCheckRecords.value, {
-        fallbackRunId: detailTask.value?.rpmCheckRunId || '',
-        stepStatus: getStepStatus('RPM_CHECK'),
-        stepRunId: getStepRunId('RPM_CHECK')
-      })
-    )
-  }
-
-  items.push(
+  return [
     buildPipelineItem('pre-check', '预检查', preCheckRecords.value, {
       fallbackRunId: detailTask.value?.preCheckRunId || '',
       stepStatus: getStepStatus('PRE_CHECK'),
@@ -669,9 +609,7 @@ const pipelineItems = computed(() => {
       stepStatus: getStepStatus('VALIDATE'),
       stepRunId: getStepRunId('VALIDATE')
     })
-  )
-
-  return items
+  ]
 })
 
 async function loadData() {
@@ -824,10 +762,6 @@ function formatTaskFieldValue(value) {
   } catch {
     return String(value)
   }
-}
-
-function getRpmCheckRunId() {
-  return getStepRunId('RPM_CHECK') || rpmCheckLatestRecord.value?.runId || detailTask.value?.rpmCheckRunId || ''
 }
 
 function getPreCheckRunId() {
@@ -1080,12 +1014,6 @@ function getWizardStepState(stepKey) {
     return detailTask.value ? 'success' : 'idle'
   }
 
-  if (stepKey === 'rpm') {
-    const status = getStepStatus('RPM_CHECK')
-    if (status) return stepStatusToDisplayState(status)
-    return getRecordDisplayState(rpmCheckLatestRecord.value || getLatestRecord(rpmCheckRecords.value))
-  }
-
   if (stepKey === 'pre') {
     const status = getStepStatus('PRE_CHECK')
     if (status) return stepStatusToDisplayState(status)
@@ -1177,45 +1105,6 @@ function buildScriptAlert(type, record, scriptContent, stepStatus) {
     type: 'info',
     title: type === 'pre' ? '未配置预执行脚本' : '未配置校验脚本'
   }
-}
-
-function buildRpmCheckAlert(task, record, stepStatus) {
-  if (stepStatus === 'FAILED') {
-    return {
-      type: 'error',
-      title: `补丁安装预检查失败：${record?.errorMessage || record?.remark || task?.errorMessage || '未知错误'}`
-    }
-  }
-  if (stepStatus === 'SKIPPED') {
-    return { type: 'success', title: '已跳过补丁安装预检查' }
-  }
-  if (stepStatus === 'SUCCESS') {
-    return { type: 'success', title: '补丁安装预检查通过' }
-  }
-  if (stepStatus === 'RUNNING') {
-    return { type: 'warning', title: '补丁安装预检查执行中...' }
-  }
-
-  if (getRecordDisplayState(record) === 'failed') {
-    return {
-      type: 'error',
-      title: `补丁安装预检查失败：${record?.errorMessage || record?.remark || task?.errorMessage || '未知错误'}`
-    }
-  }
-
-  if (record?.action === 'SKIP' || record?.status === 'SKIPPED') {
-    return { type: 'success', title: '已跳过补丁安装预检查' }
-  }
-
-  if (record?.action === 'COMPLETE' || record?.status === 'SUCCESS') {
-    return { type: 'success', title: '补丁安装预检查通过' }
-  }
-
-  if (task?.rpmCheckResult) {
-    return { type: 'info', title: '已生成补丁安装预检查结果' }
-  }
-
-  return { type: 'info', title: '待执行补丁安装预检查' }
 }
 
 function buildRestartAlert(task, record, stepStatus) {

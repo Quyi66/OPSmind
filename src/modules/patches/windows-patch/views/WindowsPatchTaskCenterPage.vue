@@ -33,7 +33,7 @@
           </div>
 
           <div class="ops-table-wrapper">
-            <el-table v-loading="loading" :data="taskList" max-height="calc(100vh - 360px)">
+            <el-table v-loading="loading" :data="taskList" max-height="calc(100vh - 340px)">
             <el-table-column label="任务类型" width="120">
               <template #default="{ row }">
                 <el-tag :type="getTaskTypeTagType(row)" size="small" effect="plain">

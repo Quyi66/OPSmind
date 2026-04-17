@@ -103,6 +103,8 @@ export const WIN_PATCH_TASK_STATUS_TAG_TYPES = {
 export const WIN_PATCH_TASK_STEP_LABELS = {
   PRE_CHECK: '预检查',
   EXECUTE: '执行',
+  INSTALL: '执行安装',
+  ROLLBACK: '执行回滚',
   RESTART: '重启',
   VALIDATE: '验证',
   COMPLETED: '已完成'
@@ -111,6 +113,8 @@ export const WIN_PATCH_TASK_STEP_LABELS = {
 export const WIN_PATCH_TASK_STEP_TAG_TYPES = {
   PRE_CHECK: 'info',
   EXECUTE: 'warning',
+  INSTALL: 'warning',
+  ROLLBACK: 'warning',
   RESTART: 'danger',
   VALIDATE: 'success',
   COMPLETED: 'success'

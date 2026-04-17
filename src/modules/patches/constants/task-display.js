@@ -84,21 +84,9 @@ export function getPatchTaskDisplayConfig(operationType) {
 
 export function getPatchTaskWizardSteps(operationType) {
   const config = getPatchTaskDisplayConfig(operationType)
-  const normalizedType = normalizeOperationType(operationType)
-
-  if (normalizedType === 'rollback') {
-    return [
-      { key: 'select', title: '选择目标主机' },
-      { key: 'pre', title: '预执行脚本配置' },
-      { key: 'validate', title: '脚本校验配置' },
-      { key: 'restart', title: '重启策略配置' },
-      { key: 'execute', title: config.finalStepTitle }
-    ]
-  }
 
   return [
     { key: 'select', title: '选择目标主机' },
-    { key: 'rpm', title: '补丁安装预检查' },
     { key: 'pre', title: '预执行脚本配置' },
     { key: 'validate', title: '脚本校验配置' },
     { key: 'restart', title: '重启策略配置' },

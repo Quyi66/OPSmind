@@ -188,13 +188,34 @@ export function getTaskStepValue(rowOrValue) {
   return normalizeUpper(value)
 }
 
-export function getTaskStepLabel(rowOrValue) {
+function resolveTaskStepDisplayValue(rowOrValue) {
   const step = getTaskStepValue(rowOrValue)
+  if (step !== 'EXECUTE') {
+    return step
+  }
+
+  const taskType = normalizeUpper(
+    typeof rowOrValue === 'string' ? '' : pickValue(rowOrValue, ['taskType', 'task_type'], '')
+  )
+
+  if (taskType === 'ROLLBACK') {
+    return 'ROLLBACK'
+  }
+
+  if (taskType === 'INSTALL') {
+    return 'INSTALL'
+  }
+
+  return step
+}
+
+export function getTaskStepLabel(rowOrValue) {
+  const step = resolveTaskStepDisplayValue(rowOrValue)
   return WIN_PATCH_TASK_STEP_LABELS[step] || step || '-'
 }
 
 export function getTaskStepTagType(rowOrValue) {
-  const step = getTaskStepValue(rowOrValue)
+  const step = resolveTaskStepDisplayValue(rowOrValue)
   return WIN_PATCH_TASK_STEP_TAG_TYPES[step] || 'info'
 }
 

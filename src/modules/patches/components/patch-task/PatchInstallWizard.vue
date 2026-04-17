@@ -145,82 +145,7 @@
 
       </div>
 
-      <!-- Step 1: 补丁安装预检查 -->
-      <div v-show="currentStepKey === 'rpm'" class="task-step-content">
-        <div class="task-step-editor">
-          <div class="task-step-editor__title">
-            <i class="fa fa-cubes" style="margin-right: 6px"></i>
-            补丁安装预检查
-          </div>
-          <el-alert
-            title="执行任务前将先检查目标主机仓库中是否存在补丁或软件包所需的可安装版本。"
-            type="info"
-            show-icon
-            :closable="false"
-          >
-            <template #default>
-              <div>预检查失败时流程会中断，若需要忽略仓库可用性校验可在当前步骤选择跳过。</div>
-            </template>
-          </el-alert>
-          <div class="install-summary-card">
-            <div class="install-summary-row">
-              <span class="install-summary-label">目标主机</span>
-              <span class="install-summary-value">
-                {{ confirmedHosts.length || selectedHosts.length || resolvedFixedHosts.length }} 台
-              </span>
-            </div>
-            <div class="install-summary-row">
-              <span class="install-summary-label">校验对象</span>
-              <span class="install-summary-value">{{ selectionSummaryLabel }}</span>
-            </div>
-            <div class="install-summary-row">
-              <span class="install-summary-label">涉及软件包</span>
-              <div class="install-summary-list">
-                <div v-if="affectedPackages.length === 0" class="install-summary-empty">
-                  当前暂无软件包信息，执行时由后端根据任务数据判断。
-                </div>
-                <div v-for="pkg in affectedPackages" :key="pkg" class="install-summary-item">
-                  {{ pkg }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="task-step-action">
-          <el-alert
-            v-if="
-              stepStates[stepIndexes.rpm] === 'success' || stepStates[stepIndexes.rpm] === 'failed'
-            "
-            :type="stepStates[stepIndexes.rpm] === 'success' ? 'success' : 'error'"
-            :closable="false"
-            show-icon
-            :title="
-              stepStates[stepIndexes.rpm] === 'success'
-                ? isSkipped.rpm
-                  ? '已跳过补丁安装预检查'
-                  : '补丁安装预检查通过'
-                : '预检失败：' + taskErrorMessage
-            "
-            class="task-step-alert"
-          >
-            <template #default>
-              <div v-if="rpmCheckResultText" class="task-step-result">{{ rpmCheckResultText }}</div>
-              <div v-if="taskDetailData && taskDetailData.rpmCheckRunId" class="task-detail-info">
-                <el-button
-                  type="primary"
-                  link
-                  @click="openExecuteResult(taskDetailData.rpmCheckRunId, '补丁安装预检查')"
-                  style="font-size: 14px"
-                >
-                  查看执行详情
-                </el-button>
-              </div>
-            </template>
-          </el-alert>
-        </div>
-      </div>
-
-      <!-- Step 2: 预执行脚本 -->
+      <!-- Step 1: 预执行脚本 -->
       <div v-show="currentStepKey === 'pre'" class="task-step-content">
         <div class="task-step-editor">
           <div class="task-step-header">
@@ -1184,7 +1109,7 @@ function formatDateTime(timestamp) {
 }
 
 // ============================================================
-// 新向导步骤定义（按任务类型动态显示 RPM 预检）
+// 向导步骤定义
 // ============================================================
 const wizardSteps = computed(() => getPatchTaskWizardSteps(displayOperationType.value))
 
@@ -1198,9 +1123,7 @@ const stepIndexes = computed(() =>
   }, {})
 )
 const finalStepIndex = computed(() => Math.max(0, wizardSteps.value.length - 1))
-const currentStepSkippable = computed(() =>
-  ['rpm', 'pre', 'validate', 'restart'].includes(currentStepKey.value)
-)
+const currentStepSkippable = computed(() => ['pre', 'validate', 'restart'].includes(currentStepKey.value))
 const createdTaskId = ref('')
 const backendRestartReason = ref('')
 const restartConfirmText = ref('')
@@ -1212,28 +1135,16 @@ const installConfig = reactive({
 })
 
 // 每步的执行状态: 'idle' | 'running' | 'success' | 'failed'
-const stepStates = reactive(['idle', 'idle', 'idle', 'idle', 'idle', 'idle'])
-const isSkipped = reactive({ rpm: false, pre: false, validate: false, restart: false })
+const stepStates = reactive(['idle', 'idle', 'idle', 'idle', 'idle'])
+const isSkipped = reactive({ pre: false, validate: false, restart: false })
 const taskStatus = ref('') // 后端任务状态
 const taskErrorMessage = ref('') // 错误信息
 const taskDetailData = ref(null) // 从接口返回的任务详情
 const pipelineFinished = ref(false) // 只有通过 startPipeline 的才是真完成
 let pollTimer = null
 
-const rpmCheckResultText = computed(() => formatTaskFieldValue(taskDetailData.value?.rpmCheckResult))
 const pipelineItems = computed(() => {
-  const items = []
-
-  if (!isRollbackTask.value && Number.isInteger(stepIndexes.value.rpm)) {
-    items.push({
-      key: 'rpm',
-      label: '补丁安装预检查',
-      idx: stepIndexes.value.rpm,
-      runKey: 'rpmCheckRunId'
-    })
-  }
-
-  items.push(
+  return [
     { key: 'pre', label: '预检查', idx: stepIndexes.value.pre, runKey: 'preCheckRunId' },
     {
       key: 'execute',
@@ -1243,9 +1154,7 @@ const pipelineItems = computed(() => {
     },
     { key: 'restart', label: '重启策略', idx: stepIndexes.value.restart, runKey: 'restartRunId' },
     { key: 'validate', label: '脚本校验', idx: stepIndexes.value.validate, runKey: 'validateRunId' }
-  )
-
-  return items
+  ]
 })
 
 const smartRestartType = computed(() => {
@@ -1376,7 +1285,6 @@ function getStepIndex(stepKey) {
 }
 
 function resetSkippedSteps() {
-  isSkipped.rpm = false
   isSkipped.pre = false
   isSkipped.validate = false
   isSkipped.restart = false
@@ -1781,7 +1689,7 @@ async function handleNextStep() {
       pipelineStatus.value = 'idle'
       createdTaskId.value = ''
       resetRestartOptions()
-      installStep.value = getStepIndex(isRollbackTask.value ? 'pre' : 'rpm')
+      installStep.value = getStepIndex('pre')
       return
     }
 
@@ -1842,7 +1750,6 @@ async function executeStep() {
 
 // 自动化执行逻辑
 async function startPipeline() {
-  const rpmStepIndex = getStepIndex('rpm')
   const preStepIndex = getStepIndex('pre')
   const validateStepIndex = getStepIndex('validate')
   const restartStepIndex = getStepIndex('restart')
@@ -1854,33 +1761,7 @@ async function startPipeline() {
   scrollToPipelineSection()
 
   try {
-    // 1. 补丁安装预检查
-    if (!isRollbackTask.value && rpmStepIndex >= 0) {
-      stepStates[rpmStepIndex] = 'running'
-      if (isSkipped.rpm) {
-        await patchInstallApi.skipRpmCheck(createdTaskId.value)
-        await refreshTaskDetail()
-        const rpmSkipped = await pollStatusPromise(
-          rpmStepIndex,
-          ['RPM_CHECK_DONE'],
-          ['RPM_CHECK_FAILED', 'FAILED']
-        )
-        if (!rpmSkipped) throw new Error('补丁安装预检查跳过失败')
-      } else {
-        await patchInstallApi.executeRpmCheck(createdTaskId.value)
-        await refreshTaskDetail()
-        const rpmSuccess = await pollStatusPromise(
-          rpmStepIndex,
-          ['RPM_CHECK_DONE'],
-          ['RPM_CHECK_FAILED', 'FAILED']
-        )
-        if (!rpmSuccess) {
-          throw new Error(taskErrorMessage.value || '补丁安装预检查失败')
-        }
-      }
-    }
-
-    // 2. 预执行脚本
+    // 1. 预执行脚本
     if (installConfig.preScript && !isSkipped.pre) {
       stepStates[preStepIndex] = 'running'
       await patchInstallApi.executePreCheck(createdTaskId.value)
@@ -1904,7 +1785,7 @@ async function startPipeline() {
       isSkipped.pre = true
     }
 
-    // 3. 安装或回滚执行
+    // 2. 安装或回滚执行
     stepStates[executeStepIndex] = 'running'
     if (isRollbackTask.value) {
       await patchInstallApi.executeRollbackTask(createdTaskId.value)
@@ -1922,7 +1803,7 @@ async function startPipeline() {
     await loadRestartOptions()
     await loadRollbackInfo()
 
-    // 4. 重启策略
+    // 3. 重启策略
     if (installConfig.restartPolicy !== 'none' && !isSkipped.restart) {
       stepStates[restartStepIndex] = 'running'
       await patchInstallApi.confirmRestart(createdTaskId.value, true, restartConfirmSubmitText)
@@ -1941,7 +1822,7 @@ async function startPipeline() {
       isSkipped.restart = true
     }
 
-    // 5. 脚本校验
+    // 4. 脚本校验
     if (installConfig.postScript && !isSkipped.validate) {
       stepStates[validateStepIndex] = 'running'
       await patchInstallApi.executeValidate(createdTaskId.value)

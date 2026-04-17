@@ -473,26 +473,6 @@ export const patchInstallApi = {
   },
 
   /**
-   * 步骤0：执行补丁安装预检查
-   * POST /vap/api/vap/v2/patch/task/{id}/rpm-check/execute
-   */
-  executeRpmCheck(id) {
-    return apiService
-      .post(`${PATCH_TASK_API_PREFIX}/${id}/rpm-check/execute`)
-      .then(normalizePatchTaskResponse)
-  },
-
-  /**
-   * 步骤0：跳过补丁安装预检查
-   * POST /vap/api/vap/v2/patch/task/{id}/rpm-check/skip
-   */
-  skipRpmCheck(id) {
-    return apiService
-      .post(`${PATCH_TASK_API_PREFIX}/${id}/rpm-check/skip`)
-      .then(normalizePatchTaskResponse)
-  },
-
-  /**
    * 步骤1：执行预检查
    * POST /vap/api/vap/v2/patch/task/{id}/pre-check/execute
    */

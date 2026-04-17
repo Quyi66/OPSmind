@@ -127,29 +127,29 @@
       <div class="win-patch-section-title">主机执行状态</div>
       <div class="ops-table-wrapper win-patch-task-detail__table">
         <el-table :data="taskHosts" v-loading="loading" max-height="420">
-          <el-table-column label="主机" min-width="140" show-overflow-tooltip>
+          <el-table-column label="主机" width="140" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['hostKey', 'host_key'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="主机 ID" min-width="180" show-overflow-tooltip>
+          <!-- <el-table-column label="主机 ID" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['hostId', 'host_id'], '-') }}
             </template>
-          </el-table-column>
-          <el-table-column label="状态" width="110">
+          </el-table-column> -->
+          <el-table-column label="状态" width="100">
             <template #default="{ row }">
               <el-tag :type="getTaskStatusTagType(row)" size="small">
                 {{ getTaskStatusLabel(row) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="开始时间" width="190" class-name="win-patch-table__time-column">
+          <el-table-column label="开始时间" width="180" class-name="win-patch-table__time-column">
             <template #default="{ row }">
               {{ formatDateTime(pickValue(row, ['startedDate', 'started_date'], '')) }}
             </template>
           </el-table-column>
-          <el-table-column label="完成时间" width="190" class-name="win-patch-table__time-column">
+          <el-table-column label="完成时间" width="180" class-name="win-patch-table__time-column">
             <template #default="{ row }">
               {{ formatDateTime(pickValue(row, ['completedDate', 'completed_date'], '')) }}
             </template>
@@ -191,6 +191,7 @@ import {
   getTaskTypeTagType,
   isStepControlledTask,
   isTaskRunning,
+  normalizeUpper,
   pickValue,
   unwrapResponse
 } from '../utils'
@@ -217,6 +218,8 @@ const loading = ref(false)
 const autoPollingEnabled = ref(true)
 const taskDetail = ref(null)
 const taskHosts = ref([])
+const taskAuditSteps = ref([])
+const taskAuditLogs = ref([])
 const stepSubmitting = ref(false)
 const showRunResultDialog = ref(false)
 const currentRunId = ref('')
@@ -226,6 +229,121 @@ const currentTaskId = computed(() => String(props.taskId || '').trim())
 const taskRunId = computed(() => String(pickValue(taskDetail.value, ['runId', 'run_id'], '')).trim())
 const currentStepValue = computed(() => getTaskStepValue(taskDetail.value))
 const showStepActions = computed(() => isStepControlledTask(taskDetail.value))
+const isExecutePhase = computed(() => ['EXECUTE', 'INSTALL', 'ROLLBACK'].includes(currentStepValue.value))
+
+function getAuditStepKey(step) {
+  return normalizeUpper(step?.step)
+}
+
+function resolveExecuteStepKeys(task) {
+  const taskType = normalizeUpper(pickValue(task, ['taskType', 'task_type'], ''))
+  return taskType === 'ROLLBACK' ? ['ROLLBACK', 'EXECUTE'] : ['INSTALL', 'EXECUTE']
+}
+
+function findAuditStep(stepKeys = []) {
+  const normalizedKeys = stepKeys
+    .map(key => normalizeUpper(key))
+    .filter(Boolean)
+
+  return taskAuditSteps.value.find(step => normalizedKeys.includes(getAuditStepKey(step))) || null
+}
+
+function findLatestScriptContent(scriptType) {
+  const normalizedScriptType = String(scriptType || '').trim().toLowerCase()
+
+  for (let index = taskAuditLogs.value.length - 1; index >= 0; index -= 1) {
+    const record = taskAuditLogs.value[index]
+    if (
+      getAuditStepKey(record) === 'SCRIPT' &&
+      String(record?.scriptType || '').trim().toLowerCase() === normalizedScriptType &&
+      String(record?.scriptContent || '').trim()
+    ) {
+      return record.scriptContent
+    }
+  }
+
+  return ''
+}
+
+function deriveCurrentStep(task) {
+  const explicitStep = String(pickValue(task, ['currentStep', 'current_step'], '')).trim()
+  if (explicitStep) {
+    return explicitStep
+  }
+
+  const activeStep = taskAuditSteps.value.find(step => {
+    const status = normalizeUpper(step?.status)
+    return ['PENDING', 'RUNNING', 'WAITING', 'CREATED'].includes(status)
+  })
+
+  if (activeStep) {
+    return getAuditStepKey(activeStep)
+  }
+
+  if (
+    taskAuditSteps.value.length &&
+    taskAuditSteps.value.every(step => ['SUCCESS', 'SKIPPED'].includes(normalizeUpper(step?.status)))
+  ) {
+    return 'COMPLETED'
+  }
+
+  return ''
+}
+
+function mergeTaskDetail(baseTask = null, auditTask = null) {
+  const mergedTask = {
+    ...(baseTask && typeof baseTask === 'object' ? baseTask : {}),
+    ...(auditTask && typeof auditTask === 'object' ? auditTask : {})
+  }
+
+  if (!Object.keys(mergedTask).length && !taskAuditSteps.value.length && !taskAuditLogs.value.length) {
+    return null
+  }
+
+  const preCheckStep = findAuditStep(['PRE_CHECK'])
+  const executeStep = findAuditStep(resolveExecuteStepKeys(mergedTask))
+  const restartStep = findAuditStep(['RESTART'])
+  const validateStep = findAuditStep(['VALIDATE'])
+
+  const derivedCurrentStep = deriveCurrentStep(mergedTask)
+  const preCheckScript = findLatestScriptContent('pre-check')
+  const validateScript = findLatestScriptContent('validate')
+
+  if (derivedCurrentStep) {
+    mergedTask.currentStep = derivedCurrentStep
+  }
+
+  if (!pickValue(mergedTask, ['preCheckRunId', 'pre_check_run_id'], '') && preCheckStep?.runId) {
+    mergedTask.preCheckRunId = preCheckStep.runId
+  }
+
+  if (!pickValue(mergedTask, ['executeRunId', 'execute_run_id'], '') && executeStep?.runId) {
+    mergedTask.executeRunId = executeStep.runId
+  }
+
+  if (!pickValue(mergedTask, ['restartRunId', 'restart_run_id'], '') && restartStep?.runId) {
+    mergedTask.restartRunId = restartStep.runId
+  }
+
+  if (!pickValue(mergedTask, ['validateRunId', 'validate_run_id'], '') && validateStep?.runId) {
+    mergedTask.validateRunId = validateStep.runId
+  }
+
+  if (!pickValue(mergedTask, ['preCheckScript', 'pre_check_script'], '') && preCheckScript) {
+    mergedTask.preCheckScript = preCheckScript
+  }
+
+  if (!pickValue(mergedTask, ['validateScript', 'validate_script'], '') && validateScript) {
+    mergedTask.validateScript = validateScript
+  }
+
+  return mergedTask
+}
+
+function shouldLoadTaskAuditDetail(task) {
+  return isStepControlledTask(task)
+}
+
 const availableExecuteRuns = computed(() => {
   const executeLabel = getTaskTypeLabel(taskDetail.value) === '回滚' ? '执行回滚' : '执行安装'
   const candidates = [
@@ -272,7 +390,7 @@ const canExecuteCurrentStep = computed(() => {
 const canSkipCurrentStep = computed(() => canExecuteCurrentStep.value && canSkipTaskStep(taskDetail.value))
 const executeButtonText = computed(() => {
   if (currentStepValue.value === 'PRE_CHECK') return '执行预检查'
-  if (currentStepValue.value === 'EXECUTE') {
+  if (isExecutePhase.value) {
     return getTaskTypeLabel(taskDetail.value) === '回滚' ? '执行回滚' : '执行安装'
   }
   if (currentStepValue.value === 'RESTART') return '执行重启'
@@ -294,7 +412,7 @@ const stepActionHint = computed(() => {
     return '当前步骤执行中，等待回调完成后会自动刷新。'
   }
 
-  if (currentStepValue.value === 'EXECUTE') {
+  if (isExecutePhase.value) {
     return '执行步骤不可跳过，需要由用户明确触发。'
   }
 
@@ -312,20 +430,60 @@ async function loadTaskDetail(options = {}) {
   loading.value = !options.silent
 
   try {
-    const response = await winPatchApi.getTaskDetail(taskId)
+    const detailResponse = await winPatchApi.getTaskDetail(taskId)
 
     if (requestId !== loadTaskDetailRequestId || !visibleModel.value || taskId !== currentTaskId.value) {
       return
     }
 
-    const data = unwrapResponse(response)
-    taskDetail.value = data?.task || data || null
-    taskHosts.value = Array.isArray(data?.hosts) ? data.hosts : []
+    const data = unwrapResponse(detailResponse)
+    const baseTask = data?.task || data || null
+    const nextHosts = Array.isArray(data?.hosts) ? data.hosts : []
+    const needsAuditDetail = shouldLoadTaskAuditDetail(baseTask)
+
+    taskAuditSteps.value = []
+    taskAuditLogs.value = []
+    let auditTask = null
+
+    if (needsAuditDetail) {
+      try {
+        const auditResponse = await winPatchApi.getTaskAuditDetail(taskId)
+
+        if (requestId !== loadTaskDetailRequestId || !visibleModel.value || taskId !== currentTaskId.value) {
+          return
+        }
+
+        const auditData = unwrapResponse(auditResponse)
+        auditTask = auditData?.task || null
+        taskAuditSteps.value = Array.isArray(auditData?.steps) ? auditData.steps : []
+        taskAuditLogs.value = Array.isArray(auditData?.logs) ? auditData.logs : []
+      } catch (error) {
+        console.error('加载任务流程审计详情失败:', error)
+      }
+    }
+
+    taskDetail.value = needsAuditDetail ? mergeTaskDetail(baseTask, auditTask) : baseTask
+    taskHosts.value = nextHosts
 
     if (!autoPollingEnabled.value || !isTaskRunning(taskDetail.value)) {
       stop()
     } else if (!isPolling.value) {
       start(() => loadTaskDetail({ silent: true }))
+    }
+  } catch (error) {
+    if (requestId !== loadTaskDetailRequestId) {
+      return
+    }
+
+    console.error('加载任务详情失败:', error)
+    taskDetail.value = null
+    taskHosts.value = []
+    taskAuditSteps.value = []
+    taskAuditLogs.value = []
+    stop()
+
+    if (!options.silent) {
+      ElMessage.error('加载任务详情失败')
     }
   } finally {
     if (requestId === loadTaskDetailRequestId) {
@@ -395,6 +553,8 @@ watch(
       stepSubmitting.value = false
       taskDetail.value = null
       taskHosts.value = []
+      taskAuditSteps.value = []
+      taskAuditLogs.value = []
       showRunResultDialog.value = false
       currentRunId.value = ''
       currentRunJobTitle.value = ''
@@ -428,6 +588,8 @@ watch(
       stepSubmitting.value = false
       taskDetail.value = null
       taskHosts.value = []
+      taskAuditSteps.value = []
+      taskAuditLogs.value = []
       showRunResultDialog.value = false
       currentRunId.value = ''
       currentRunJobTitle.value = ''
