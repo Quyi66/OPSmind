@@ -1080,6 +1080,12 @@ async function handleScriptUpload(type, event) {
   }
 }
 
+const installConfig = reactive({
+  preScript: '',
+  restartPolicy: 'none',
+  postScript: ''
+})
+
 watch(
   [
     () => installConfig.preScript,
@@ -1128,11 +1134,6 @@ const createdTaskId = ref('')
 const backendRestartReason = ref('')
 const restartConfirmText = ref('')
 const pipelineStatus = ref('idle')
-const installConfig = reactive({
-  preScript: '',
-  restartPolicy: 'none',
-  postScript: ''
-})
 
 // 每步的执行状态: 'idle' | 'running' | 'success' | 'failed'
 const stepStates = reactive(['idle', 'idle', 'idle', 'idle', 'idle'])
