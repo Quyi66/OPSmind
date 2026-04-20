@@ -138,6 +138,7 @@
       </div>
 
       <div class="ops-action-bar" style="display: flex; align-items: center; margin-bottom: 12px">
+        <el-button type="primary" @click="openManualExportDialog">导出</el-button>
         <div style="flex: 1"></div>
         <el-button
           class="toolbar-icon-btn"
@@ -215,6 +216,12 @@
         />
       </div>
     </template>
+
+    <ManualExportDialog
+      v-model="manualExportVisible"
+      :fetch-options="loadExportCveOptions"
+      :export-handler="exportWindowsCveReport"
+    />
   </div>
 </template>
 
@@ -224,6 +231,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { winCveApi } from '../api'
+import ManualExportDialog from './ManualExportDialog.vue'
 import WindowsCveDetail from './WindowsCveDetail.vue'
 
 const route = useRoute()
@@ -235,6 +243,7 @@ const cveList = ref([])
 const statistics = ref(null)
 const loading = ref(false)
 const statisticsLoading = ref(false)
+const manualExportVisible = ref(false)
 
 const searchParams = reactive({
   severity: 'all',
@@ -263,6 +272,18 @@ const displayPage = computed({
     searchParams.page = value - 1
   }
 })
+
+function loadExportCveOptions({ keyword = '', page = 0, size = 50 } = {}) {
+  return winCveApi.getCveList({
+    keyword,
+    page,
+    size
+  })
+}
+
+function exportWindowsCveReport(cveIds) {
+  return winCveApi.exportReport(cveIds)
+}
 
 function formatNumber(num) {
   return (num || 0).toLocaleString()
@@ -427,6 +448,10 @@ function handleSortChange({ prop, order }) {
     searchParams.sortDir = 'desc'
   }
   search()
+}
+
+function openManualExportDialog() {
+  manualExportVisible.value = true
 }
 
 function viewDetail(cve) {

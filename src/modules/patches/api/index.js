@@ -2012,6 +2012,22 @@ export const winCveApi = {
    */
   getAffectedProducts(cveId) {
     return apiService.get(`${VAP_API_PREFIX}/v2/win-cve/affected/${encodeURIComponent(cveId)}`)
+  },
+
+  /**
+   * 批量导出 Windows CVE 报告（Excel）
+   * POST v2/win-cve/export
+   * @param {string[]} cveIds - CVE 编号列表
+   * @returns {Promise<Blob>}
+   */
+  exportReport(cveIds) {
+    return apiService.post(
+      `${VAP_API_PREFIX}/v2/win-cve/export`,
+      { cveIds },
+      {
+        responseType: 'blob'
+      }
+    )
   }
 }
 

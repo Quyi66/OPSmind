@@ -127,6 +127,18 @@ export const winPatchApi = {
     })
   },
 
+  exportHosts(hostIds = []) {
+    return apiService.post(
+      `${WIN_PATCH_API_PREFIX}/export/hosts`,
+      {
+        hostIds
+      },
+      {
+        responseType: 'blob'
+      }
+    )
+  },
+
   exportReport(payload = {}) {
     return apiService.post(`${WIN_PATCH_API_PREFIX}/export`, payload, {
       responseType: 'blob'
