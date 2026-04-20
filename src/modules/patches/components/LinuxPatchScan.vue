@@ -570,7 +570,7 @@
         <el-form-item label="选择主机">
           <AcmDeviceSelector
             v-model="selectedHosts"
-            ci-types="[auto]"
+            ci-types="linux"
             :options="{
               selectMode: 'host,group,tag,input,recently',
               selector: 'multiple',
