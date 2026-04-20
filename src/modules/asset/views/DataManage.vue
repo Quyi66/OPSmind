@@ -63,30 +63,6 @@
           <i class="fa fa-folder-plus" style="margin-right: 4px"></i>
           添加分组
         </el-button>
-        <el-button size="small" @click="handleDownloadTemplate">
-          <i class="fa fa-download" style="margin-right: 4px"></i>
-          资产信息导入模板下载
-        </el-button>
-        <el-button size="small" @click="handleImport">
-          <i class="fa fa-file-import" style="margin-right: 4px"></i>
-          导入资产
-        </el-button>
-        <el-button size="small" @click="handleExport">
-          <i class="fa fa-file-export" style="margin-right: 4px"></i>
-          资产信息导出
-        </el-button>
-        <!-- <el-button size="small" @click="handleAddTag">
-          <i class="fa fa-tag" style="margin-right: 4px"></i>
-          添加标签
-        </el-button> -->
-        <el-button size="small" @click="handleDownloadDeleteTemplate">
-          <i class="fa fa-file-download" style="margin-right: 4px"></i>
-          资产批量删除模版下载
-        </el-button>
-        <el-button type="danger" size="small" @click="handleDeleteImport">
-          <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
-          资产删除导入
-        </el-button>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -260,11 +236,6 @@
     <!-- 查看标签资产弹窗 -->
     <TagAssetDialog v-model="viewTagDialogVisible" :tag-data="currentTag" />
 
-    <!-- 导入资产弹窗 -->
-    <ImportAssetDialog v-model="importDialogVisible" @saved="handleImportSaved" />
-
-    <!-- 导出资产弹窗 -->
-    <ExportAssetDialog v-model="exportDialogVisible" />
   </div>
 </template>
 
@@ -273,24 +244,18 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { dataManageApi } from '../api'
-import { apiService } from '@/core/api'
 import DataAddGroupDialog from '../components/DataAddGroupDialog.vue'
 import DataAddTagDialog from '../components/DataAddTagDialog.vue'
 import DataEditGroupDialog from '../components/DataEditGroupDialog.vue'
 import DataEditTagDialog from '../components/DataEditTagDialog.vue'
 import GroupAssetDialog from '../components/GroupAssetDialog.vue'
 import TagAssetDialog from '../components/TagAssetDialog.vue'
-import ImportAssetDialog from '../components/ImportAssetDialog.vue'
-import ExportAssetDialog from '../components/ExportAssetDialog.vue'
 
 // 当前标签页
 const activeTab = ref('group')
 
 // 资源类型列表
 const resourceTypes = ref([])
-
-// 租户ID（用于下载模板）
-const currentTenantId = ref('')
 
 // 分组相关
 const groupFilter = ref({ ciType: 'oplus_all', keyword: '' })
@@ -311,8 +276,6 @@ const editGroupDialogVisible = ref(false)
 const editTagDialogVisible = ref(false)
 const viewGroupDialogVisible = ref(false)
 const viewTagDialogVisible = ref(false)
-const importDialogVisible = ref(false)
-const exportDialogVisible = ref(false)
 
 // 当前操作的数据
 const currentGroup = ref(null)
@@ -325,15 +288,6 @@ const loadResourceTypes = async () => {
     resourceTypes.value = res?.records || []
   } catch (error) {
     console.error('加载资源类型失败:', error)
-  }
-}
-
-// 加载租户ID
-const loadTenantId = async () => {
-  try {
-    currentTenantId.value = await dataManageApi.getCurrentTenantId()
-  } catch (error) {
-    console.error('加载租户ID失败:', error)
   }
 }
 
@@ -448,121 +402,6 @@ const handleTagPageSizeChange = () => {
   loadTagList()
 }
 
-// 下载模板
-const handleDownloadTemplate = () => {
-  if (!currentTenantId.value) {
-    ElMessage.warning('正在获取租户信息，请稍后重试')
-    return
-  }
-  const url = `${window.location.origin}/oplus-portal/acm/api/acm/cit/template2/${currentTenantId.value}`
-  window.open(url, '_blank')
-}
-
-// 下载删除模板
-const handleDownloadDeleteTemplate = () => {
-  // 下载静态模板文件
-  const link = document.createElement('a')
-  link.href = '/templates/batch-delete-template.xlsx'
-  link.download = '批量删除资产模板.xlsx'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-}
-
-// 资产删除导入
-const handleDeleteImport = () => {
-  // 创建文件选择器
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = '.xlsx,.xls'
-  input.onchange = async e => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // 创建 FormData
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const response = await apiService.post(
-        `/acm/api/acm/ci/batch-delete-by-excel?cacheBuster=${Date.now()}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      )
-
-      const result = response.data
-
-      if (result) {
-        // 显示删除结果
-        const successCount = result.successCount || 0
-        const failedCount = result.failedCount || 0
-        const totalCount = result.totalCount || 0
-        const successIps = result.successIps || []
-        const failedIps = result.failedIps || []
-        const errorMessages = result.errorMessages || []
-
-        let message = `处理完成：共 ${totalCount} 条记录`
-        if (successCount > 0) {
-          message += `\n成功删除 ${successCount} 条`
-        }
-        if (failedCount > 0) {
-          message += `\n删除失败 ${failedCount} 条`
-        }
-
-        if (failedCount > 0 && errorMessages.length > 0) {
-          ElMessageBox.alert(
-            `<div style="max-height: 300px; overflow-y: auto;">
-              <p><strong>成功删除:</strong> ${successCount} 条</p>
-              ${successIps.length > 0 ? `<p style="color: #67c23a;">${successIps.join(', ')}</p>` : ''}
-              <p><strong>删除失败:</strong> ${failedCount} 条</p>
-              ${failedIps.length > 0 ? `<p style="color: #f56c6c;">${failedIps.join(', ')}</p>` : ''}
-              <p><strong>错误信息:</strong></p>
-              <ul style="color: #f56c6c; margin-left: 20px;">
-                ${errorMessages.map(msg => `<li>${msg}</li>`).join('')}
-              </ul>
-            </div>`,
-            '删除结果',
-            {
-              dangerouslyUseHTMLString: true,
-              confirmButtonText: '确定'
-            }
-          )
-        } else {
-          ElMessage.success(message)
-        }
-
-        // 刷新列表
-        loadGroupList()
-        loadTagList()
-      }
-    } catch (error) {
-      console.error('删除导入失败:', error)
-      ElMessage.error('删除导入失败: ' + error.message)
-    }
-  }
-  input.click()
-}
-
-// 导入资产
-const handleImport = () => {
-  importDialogVisible.value = true
-}
-
-// 导入成功后
-const handleImportSaved = () => {
-  loadGroupList()
-  loadTagList()
-}
-
-// 导出资产
-const handleExport = () => {
-  exportDialogVisible.value = true
-}
-
 // 添加分组
 const handleAddGroup = () => {
   addGroupDialogVisible.value = true
@@ -636,7 +475,6 @@ const handleDeleteTag = row => {
 // 初始化
 onMounted(() => {
   loadResourceTypes()
-  loadTenantId()
   loadGroupList()
   loadTagList()
 })

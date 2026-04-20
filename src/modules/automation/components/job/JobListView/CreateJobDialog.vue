@@ -325,37 +325,46 @@
         <div class="section-title">测试作业</div>
 
         <el-form-item>
-          <div class="test-controls d-flex w-full align-items-center">
-            <!-- 运行状态 -->
-            <div v-if="testJobStatus">
+          <div class="test-panel">
+            <div class="test-controls">
               <el-button
+                v-if="testJobStatus"
                 :type="testJobStatus.type"
+                :disabled="!testRunId"
+                class="test-status-button"
                 @click="viewTestResult"
               >
                 <i :class="['fa', 'fa-fw', testJobStatus.icon]"></i>
                 <span>{{ testJobStatus.title }}</span>
               </el-button>
+
+              <el-button
+                type="primary"
+                :loading="testJobRunning"
+                :disabled="testJobRunning || !canRunSavedJobTest"
+                @click="runTestJob"
+              >
+                <i class="fa fa-fw fa-chevron-right"></i>
+                运行测试
+              </el-button>
+
+              <span v-if="!isEditMode" class="test-hint">
+                请先保存作业，再运行测试。
+              </span>
             </div>
 
-            <!-- 运行按钮 -->
-            <el-button
-              type="primary"
-              :loading="testJobRunning"
-              :disabled="testJobRunning || !canRunTest"
-              @click="runTestJob"
+            <div
+              v-if="testJobResult"
+              :class="['test-result-preview', `is-${testResultPreviewState}`]"
             >
-              <i class="fa fa-fw fa-chevron-right"></i>
-              运行测试
-            </el-button>
-          </div>
-
-          <!-- 运行结果预览 -->
-          <div
-            v-if="testJobResult"
-            class="test-result-preview"
-            style="margin-top: 16px;"
-          >
-            <pre>{{ JSON.stringify(testJobResult, null, 2) }}</pre>
+              <div class="test-result-preview__header">
+                <span>运行结果预览</span>
+                <span v-if="testRunId" class="test-result-preview__meta">
+                  Run ID: {{ testRunId }}
+                </span>
+              </div>
+              <pre>{{ formattedTestJobResult }}</pre>
+            </div>
           </div>
         </el-form-item>
       </div>
@@ -490,6 +499,9 @@ const testJobRunning = ref(false)
 const testJobStatus = ref(null)
 const testJobResult = ref(null)
 const testRunId = ref(null)
+const canRunSavedJobTest = computed(() => canRunTest.value && isEditMode.value)
+const testResultPreviewState = computed(() => testJobStatus.value?.name || 'default')
+const formattedTestJobResult = computed(() => formatTestJobResult(testJobResult.value))
 
 // 导航区块配置
 const navSections = computed(() => {
@@ -534,6 +546,32 @@ const canRunTest = computed(() => {
   }
   return false
 })
+
+function formatTestJobResult(result) {
+  if (!result) return ''
+  if (typeof result === 'string') return result
+  try {
+    return JSON.stringify(result, null, 2)
+  } catch (error) {
+    return String(result)
+  }
+}
+
+function extractResponseData(response) {
+  return response?.data ?? response ?? null
+}
+
+function extractRunId(result) {
+  if (Array.isArray(result)) {
+    const firstItem = result[0] || {}
+    return firstItem.runId || firstItem.id || ''
+  }
+  return result?.runId || result?.id || ''
+}
+
+function normalizeStatus(status) {
+  return String(status || '').toLowerCase()
+}
 
 /**
  * 滚动到指定区块
@@ -1011,9 +1049,15 @@ async function runTestJob() {
     return
   }
 
+  if (!props.jobId) {
+    ElMessage.warning('请先保存作业后再运行测试')
+    return
+  }
+
   testJobRunning.value = true
   testJobStatus.value = { name: 'running', title: '运行中', icon: 'fa-spinner fa-pulse', type: 'primary' }
   testJobResult.value = null
+  testRunId.value = null
 
   try {
     // 构建执行参数
@@ -1025,6 +1069,7 @@ async function runTestJob() {
     })
 
     const payload = {
+      jobId: props.jobId,
       title: job.title,
       type: job.type,
       configJson: toConfigJson(),
@@ -1033,18 +1078,26 @@ async function runTestJob() {
     }
 
     const response = await jaoApi.executeJob(payload)
-    testRunId.value = response.data?.runId || response.data?.id
+    const result = extractResponseData(response)
+    testRunId.value = extractRunId(result)
 
     if (testRunId.value) {
       // 轮询获取结果
       pollTestResult()
     } else {
-      testJobStatus.value = { name: 'success', title: '执行成功', icon: 'fa-check-circle', type: 'success' }
-      testJobResult.value = response.data
+      const status = normalizeStatus(Array.isArray(result) ? result[0]?.status : result?.status)
+      if (['running', 'pending', 'waiting'].includes(status)) {
+        testJobStatus.value = { name: 'running', title: '运行中', icon: 'fa-spinner fa-pulse', type: 'primary' }
+      } else if (['error', 'failed', 'failure'].includes(status)) {
+        testJobStatus.value = { name: 'error', title: '执行失败', icon: 'fa-exclamation-triangle', type: 'danger' }
+      } else {
+        testJobStatus.value = { name: 'success', title: '执行成功', icon: 'fa-check-circle', type: 'success' }
+      }
+      testJobResult.value = result
     }
   } catch (error) {
     testJobStatus.value = { name: 'error', title: '执行失败', icon: 'fa-exclamation-triangle', type: 'danger' }
-    testJobResult.value = { error: error?.message || '执行失败' }
+    testJobResult.value = extractResponseData(error?.response) || { error: error?.message || '执行失败' }
   } finally {
     testJobRunning.value = false
   }
@@ -1063,16 +1116,18 @@ async function pollTestResult() {
   const poll = async () => {
     try {
       const response = await jaoApi.getExecuteResult(testRunId.value)
-      const result = response.data
+      const result = extractResponseData(response)
+      const status = normalizeStatus(result?.status)
 
-      if (result.status === 'running' || result.status === 'pending') {
+      if (['running', 'pending', 'waiting'].includes(status)) {
         attempts++
         if (attempts < maxAttempts) {
           setTimeout(poll, pollInterval)
         } else {
           testJobStatus.value = { name: 'timeout', title: '执行超时', icon: 'fa-clock', type: 'warning' }
+          testJobResult.value = result
         }
-      } else if (result.status === 'success' || result.status === 'completed') {
+      } else if (['success', 'completed', 'ok'].includes(status)) {
         testJobStatus.value = { name: 'success', title: '执行成功', icon: 'fa-check-circle', type: 'success' }
         testJobResult.value = result
       } else {
@@ -1081,6 +1136,7 @@ async function pollTestResult() {
       }
     } catch (error) {
       testJobStatus.value = { name: 'error', title: '获取结果失败', icon: 'fa-exclamation-triangle', type: 'danger' }
+      testJobResult.value = extractResponseData(error?.response) || { error: error?.message || '获取结果失败' }
     }
   }
 
@@ -1303,6 +1359,12 @@ watch(() => props.jobType, (newVal) => {
 
 // 测试控件
 .test-controls {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+
   :deep(.el-button) {
     &[type="success"] {
       box-shadow: 0 0 0 3px rgba(103, 194, 58, 0.2);
@@ -1318,19 +1380,70 @@ watch(() => props.jobType, (newVal) => {
   }
 }
 
+.test-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.test-status-button {
+  flex-shrink: 0;
+}
+
+.test-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.5;
+}
+
 // 测试结果预览
 .test-result-preview {
-  padding: 12px;
-  background-color: #2d3748;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  background: linear-gradient(180deg, #2f3b52 0%, #1f2937 100%);
   color: #e2e8f0;
-  border-radius: 4px;
-  max-height: 300px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 8px;
+  max-height: 360px;
   overflow: auto;
+
+  &.is-error {
+    border-color: rgba(248, 113, 113, 0.35);
+  }
+
+  &.is-success {
+    border-color: rgba(74, 222, 128, 0.35);
+  }
+
+  &.is-timeout {
+    border-color: rgba(251, 191, 36, 0.35);
+  }
+
+  .test-result-preview__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .test-result-preview__meta {
+    font-size: 12px;
+    font-weight: 500;
+    color: #cbd5e1;
+  }
 
   pre {
     margin: 0;
     white-space: pre-wrap;
-    word-break: break-all;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 13px;
   }

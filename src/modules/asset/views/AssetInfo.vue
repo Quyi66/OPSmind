@@ -175,7 +175,37 @@
           <i class="fa fa-plus" style="margin-right: 4px"></i>
           自动化资产录入
         </el-button>
-        <!-- <el-button :icon="Download" @click="handleExport" size="small">导出</el-button> -->
+        <el-dropdown trigger="click" @command="handleAssetDataCommand">
+          <el-button size="small" class="asset-data-button">
+            <i class="fa fa-database" style="margin-right: 4px"></i>
+            资产数据
+            <i class="fa fa-angle-down" style="margin-left: 6px"></i>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="downloadImportTemplate">
+                <i class="fa fa-download asset-data-menu-icon"></i>
+                资产信息导入模板下载
+              </el-dropdown-item>
+              <el-dropdown-item command="import">
+                <i class="fa fa-file-import asset-data-menu-icon"></i>
+                导入资产
+              </el-dropdown-item>
+              <el-dropdown-item command="export">
+                <i class="fa fa-file-export asset-data-menu-icon"></i>
+                资产信息导出
+              </el-dropdown-item>
+              <el-dropdown-item divided command="downloadDeleteTemplate">
+                <i class="fa fa-file-download asset-data-menu-icon"></i>
+                资产批量删除模版下载
+              </el-dropdown-item>
+              <el-dropdown-item command="deleteImport">
+                <i class="fa fa-trash-alt asset-data-menu-icon"></i>
+                资产删除导入
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
         <el-button :icon="Edit" :disabled="!hasSelection" @click="handleEdit" size="small">
           修改
         </el-button>
@@ -348,6 +378,12 @@
       @saved="handleAutoEntrySaved"
     />
 
+    <ImportAssetDialog v-model="importDialogVisible" @saved="handleAssetDataSaved" />
+
+    <ExportAssetDialog v-model="exportDialogVisible" :default-ci-type="currentType" />
+
+    <DeleteAssetImportDialog v-model="deleteImportDialogVisible" @saved="handleAssetDataSaved" />
+
     <!-- 批量编辑弹窗 -->
     <BatchEditDialog
       v-model="batchEditDialogVisible"
@@ -379,7 +415,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  Download,
   Edit,
   Delete,
   Top,
@@ -388,13 +423,16 @@ import {
   Search,
   RefreshRight
 } from '@element-plus/icons-vue'
-import { assetApi } from '../api'
+import { assetApi, dataManageApi } from '../api'
 import { apiService } from '@/core/api'
 import { pollJobStatus } from '@/composables/useJobPolling'
 import AssetDetailDialog from '../components/AssetDetailDialog.vue'
 import AssetEditDialog from '../components/AssetEditDialog.vue'
 import AssetHistoryDialog from '../components/AssetHistoryDialog.vue'
 import AutoEntryDialog from '../components/AutoEntryDialog.vue'
+import ImportAssetDialog from '../components/ImportAssetDialog.vue'
+import ExportAssetDialog from '../components/ExportAssetDialog.vue'
+import DeleteAssetImportDialog from '../components/DeleteAssetImportDialog.vue'
 import BatchEditDialog from '../components/BatchEditDialog.vue'
 import AddTagDialog from '../components/AddTagDialog.vue'
 import AddGroupDialog from '../components/AddGroupDialog.vue'
@@ -407,11 +445,15 @@ const detailDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 const historyDialogVisible = ref(false)
 const autoEntryDialogVisible = ref(false)
+const importDialogVisible = ref(false)
+const exportDialogVisible = ref(false)
+const deleteImportDialogVisible = ref(false)
 const batchEditDialogVisible = ref(false)
 const addTagDialogVisible = ref(false)
 const addGroupDialogVisible = ref(false)
 const currentAssetId = ref('')
 const currentAssetIp = ref('')
+const currentTenantId = ref('')
 
 // 资产类型列表
 const assetTypes = ref([])
@@ -517,6 +559,21 @@ const getConnRateClass = rate => {
   if (!rate) return 'text-secondary'
   if (rate >= 50) return 'text-primary'
   return 'text-warning'
+}
+
+const getPublicFileUrl = (relativePath) => {
+  const base = String(import.meta.env.BASE_URL || '/')
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`
+  return `${normalizedBase}${String(relativePath || '').replace(/^\/+/, '')}`
+}
+
+const downloadPublicFile = (relativePath, filename) => {
+  const link = document.createElement('a')
+  link.href = getPublicFileUrl(relativePath)
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 // 格式化日期时间
@@ -719,6 +776,62 @@ const handleRefresh = () => {
   loadAssetList()
 }
 
+const loadCurrentTenantId = async () => {
+  try {
+    currentTenantId.value = await dataManageApi.getCurrentTenantId()
+  } catch (error) {
+    console.error('加载租户ID失败:', error)
+  }
+}
+
+const ensureCurrentTenantId = async () => {
+  if (currentTenantId.value) return currentTenantId.value
+  await loadCurrentTenantId()
+  return currentTenantId.value
+}
+
+const handleDownloadImportTemplate = async () => {
+  const tenantId = await ensureCurrentTenantId()
+  if (!tenantId) {
+    ElMessage.warning('正在获取租户信息，请稍后重试')
+    return
+  }
+  window.open(`/oplus-portal/acm/api/acm/cit/template2/${tenantId}`, '_blank', 'noopener')
+}
+
+const handleDownloadDeleteTemplate = () => {
+  downloadPublicFile('templates/batch-delete-template.xlsx', '批量删除资产模板.xlsx')
+}
+
+const handleAssetDataSaved = () => {
+  loadOsVersionOptions()
+  loadGroupTree()
+  loadTagList()
+  loadAssetList()
+}
+
+const handleAssetDataCommand = async (command) => {
+  switch (command) {
+    case 'downloadImportTemplate':
+      await handleDownloadImportTemplate()
+      break
+    case 'import':
+      importDialogVisible.value = true
+      break
+    case 'export':
+      exportDialogVisible.value = true
+      break
+    case 'downloadDeleteTemplate':
+      handleDownloadDeleteTemplate()
+      break
+    case 'deleteImport':
+      deleteImportDialogVisible.value = true
+      break
+    default:
+      break
+  }
+}
+
 // 分页大小变化
 const handlePageSizeChange = () => {
   currentPage.value = 1
@@ -728,17 +841,6 @@ const handlePageSizeChange = () => {
 // 选择变化
 const handleSelectionChange = rows => {
   selectedRows.value = rows
-}
-
-// 操作按钮 - 占位
-const handleExport = () => {
-  ElMessageBox.confirm('是否确认导出数据？', '导出确认', {
-    type: 'warning'
-  })
-    .then(() => {
-      ElMessage.info('导出功能待实现')
-    })
-    .catch(() => {})
 }
 
 const handleEdit = () => {
@@ -828,14 +930,14 @@ const handleCheckSingleConn = async (row) => {
   }
 
   checkingConnIds.value.push(row.id)
-  
+
   try {
     const host = {
       key: row.id || row.key,
       value: row.IP || row.ip,
       assetType: currentType.value || row.ciType || 'linux'
     }
-    
+
     const cacheBuster = Date.now()
     const { data } = await apiService.post(
       `/jao/api/jao/jobs/M1x855/run?cacheBuster=${cacheBuster}`,
@@ -843,9 +945,9 @@ const handleCheckSingleConn = async (row) => {
         params: { hosts: [host] }
       }
     )
-    
+
     const result = Array.isArray(data) ? data[0] : data
-    
+
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
       ElMessage.success(`检查连通性任务已发起`)
       pollJobStatus(result.runId, {
@@ -947,6 +1049,7 @@ const handleAutoEntrySaved = () => {
 // 初始化
 onMounted(() => {
   loadAssetTypes()
+  loadCurrentTenantId()
 })
 </script>
 
@@ -1021,6 +1124,7 @@ onMounted(() => {
 .ops-action-bar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 0;
 
@@ -1029,6 +1133,16 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
   }
+}
+
+.asset-data-button {
+  min-width: 108px;
+}
+
+.asset-data-menu-icon {
+  width: 14px;
+  margin-right: 8px;
+  text-align: center;
 }
 
 .ops-filter-bar {

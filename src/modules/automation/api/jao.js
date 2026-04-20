@@ -99,9 +99,12 @@ export function discardApprove(approveId, remark = null) {
 
 /** 执行作业 */
 export const executeJob = (data) => {
-  const { jobId, params } = data
+  const { jobId, ...payload } = data || {}
+  if (!jobId) {
+    throw new Error('缺少作业 ID')
+  }
   const cacheBuster = Date.now()
-  return useApi().post(`/jao/api/jao/jobs/${jobId}/run?cacheBuster=${cacheBuster}`, { params });
+  return useApi().post(`/jao/api/jao/jobs/${jobId}/run?cacheBuster=${cacheBuster}`, payload);
 }
 
 /** 获取执行作业接口结果 */

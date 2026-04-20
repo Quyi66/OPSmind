@@ -567,7 +567,8 @@ function getStatusLabel(status) {
     COMPLETED: '完成',
     FAILED: '失败',
     RUNNING: '运行中',
-    PENDING: '等待中'
+    PENDING: '等待中',
+    ERROR: '错误'
   }
   return map[status] || status
 }

@@ -71,6 +71,10 @@ const props = defineProps({
   modelValue: {
     type: Boolean,
     default: false
+  },
+  defaultCiType: {
+    type: String,
+    default: ''
   }
 })
 
@@ -93,14 +97,23 @@ const groups = ref([])
 const loadingGroups = ref(false)
 const exporting = ref(false)
 
+function resolveDefaultCiType() {
+  if (!resourceTypes.value.length) return ''
+  if (props.defaultCiType && resourceTypes.value.some(item => item.code === props.defaultCiType)) {
+    return props.defaultCiType
+  }
+  return resourceTypes.value[0]?.code || ''
+}
+
 // 加载资源类型
 const loadResourceTypes = async () => {
   try {
     const res = await dataManageApi.getResourceTypes()
     resourceTypes.value = res?.records || []
-    if (resourceTypes.value.length > 0 && !formData.value.ciType) {
-      formData.value.ciType = resourceTypes.value[0].code
-      loadGroups()
+    const nextCiType = resolveDefaultCiType()
+    if (nextCiType) {
+      formData.value.ciType = nextCiType
+      await loadGroups()
     }
   } catch (error) {
     console.error('加载资源类型失败:', error)
@@ -156,7 +169,7 @@ const handleExport = async () => {
 // 弹窗关闭时重置
 const handleClosed = () => {
   formData.value = {
-    ciType: resourceTypes.value[0]?.code || '',
+    ciType: resolveDefaultCiType(),
     groupId: '',
     format: 'xlsx'
   }
@@ -167,5 +180,13 @@ watch(visible, (val) => {
   if (val) {
     loadResourceTypes()
   }
+})
+
+watch(() => props.defaultCiType, (val) => {
+  if (!visible.value || !val) return
+  if (!resourceTypes.value.some(item => item.code === val)) return
+  if (formData.value.ciType === val) return
+  formData.value.ciType = val
+  handleCiTypeChange()
 })
 </script>

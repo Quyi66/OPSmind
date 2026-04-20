@@ -8,10 +8,10 @@
         </template>
       </el-input>
 
-      <el-button type="primary" @click="goToAddTemplate">
+      <!-- <el-button type="primary" @click="goToAddTemplate">
         <i class="fa fa-plus"></i>
         新增模板
-      </el-button>
+      </el-button> -->
     </div>
 
     <div class="content-scroll-area">
