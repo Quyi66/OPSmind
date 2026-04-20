@@ -27,6 +27,7 @@
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { winPatchApi } from '../api'
+import { unwrapResponse } from '../utils'
 
 const props = defineProps({
   taskId: {
@@ -69,10 +70,10 @@ async function handleUpload(option) {
 
   uploading.value = true
   try {
-    await winPatchApi.uploadTaskScript(normalizedTaskId.value, props.scriptType, file)
+    const response = await winPatchApi.uploadTaskScript(normalizedTaskId.value, props.scriptType, file)
     ElMessage.success(`${props.label}已上传`)
     option?.onSuccess?.({}, file)
-    emit('uploaded')
+    emit('uploaded', unwrapResponse(response))
   } catch (error) {
     console.error(`上传${props.label}失败:`, error)
     ElMessage.error(`上传${props.label}失败`)

@@ -138,20 +138,24 @@ export function extractHostIds(selection = []) {
 }
 
 export function getSeverityTagType(severity) {
+  const normalized = normalizeUpper(severity)
+
   return (
     {
-      Critical: 'danger',
-      Important: 'warning',
-      Moderate: 'info',
-      Low: 'success',
-      Unspecified: 'info'
-    }[severity] || 'info'
+      CRITICAL: 'danger',
+      IMPORTANT: 'warning',
+      MODERATE: 'info',
+      MEDIUM: 'info',
+      LOW: 'success',
+      UNSPECIFIED: 'info',
+      NONE: 'info'
+    }[normalized] || 'info'
   )
 }
 
 export function getSeverityLabel(value) {
   const severity = normalizeUpper(value)
-  return WIN_PATCH_SEVERITY_LABELS[severity] || value || '-'
+  return WIN_PATCH_SEVERITY_LABELS[severity] || String(value || '').trim() || '-'
 }
 
 export function getTaskTypeLabel(rowOrValue) {
@@ -171,15 +175,72 @@ export function getTaskTypeTagType(rowOrValue) {
   return 'info'
 }
 
-export function getTaskStatusLabel(rowOrValue) {
+function hasAnyItemStatus(items = [], statuses = [], keys = ['status']) {
+  return items.some(item => statuses.includes(normalizeUpper(pickValue(item, keys, ''))))
+}
+
+function areAllItemsInStatus(items = [], statuses = [], keys = ['status']) {
+  return items.length > 0 && items.every(item => statuses.includes(normalizeUpper(pickValue(item, keys, ''))))
+}
+
+export function getTaskStatusValue(rowOrValue) {
   const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskStatus', 'task_status', 'status'], '')
-  const status = normalizeUpper(value)
+  const explicitStatus = normalizeUpper(value)
+
+  if (!rowOrValue || typeof rowOrValue === 'string') {
+    return explicitStatus
+  }
+
+  const steps = Array.isArray(rowOrValue.steps) ? rowOrValue.steps : []
+  const hosts = Array.isArray(rowOrValue.hosts) ? rowOrValue.hosts : []
+  const errorMessage = String(pickValue(rowOrValue, ['errorMessage', 'error_message'], '')).trim()
+
+  const hasFailedStep = hasAnyItemStatus(steps, ['FAILED', 'ERROR'])
+  const hasRunningStep = hasAnyItemStatus(steps, ['RUNNING', 'IN_PROGRESS'])
+  const hasPendingStep = hasAnyItemStatus(steps, ['PENDING', 'WAITING', 'CREATED'])
+  const hasFailedHost = hasAnyItemStatus(hosts, ['FAILED', 'ERROR'], ['status', 'taskStatus', 'task_status'])
+  const allStepsCompleted = areAllItemsInStatus(steps, ['SUCCESS', 'SKIPPED', 'COMPLETED'])
+
+  if (['FAILED', 'ERROR', 'PARTIAL_SUCCESS', 'COMPLETED', 'SUCCESS', 'PASS'].includes(explicitStatus)) {
+    return explicitStatus
+  }
+
+  if (['RUNNING', 'IN_PROGRESS', 'PENDING', 'CREATED', ''].includes(explicitStatus)) {
+    if (hasFailedStep || hasFailedHost) {
+      return 'FAILED'
+    }
+
+    if (allStepsCompleted) {
+      return 'COMPLETED'
+    }
+
+    if (errorMessage && !hasRunningStep && !hasPendingStep) {
+      return 'FAILED'
+    }
+
+    if (!explicitStatus && hasRunningStep) {
+      return 'RUNNING'
+    }
+
+    if (!explicitStatus && hasPendingStep) {
+      return 'PENDING'
+    }
+  }
+
+  if (!explicitStatus && errorMessage) {
+    return 'FAILED'
+  }
+
+  return explicitStatus
+}
+
+export function getTaskStatusLabel(rowOrValue) {
+  const status = getTaskStatusValue(rowOrValue)
   return WIN_PATCH_TASK_STATUS_LABELS[status] || status || '-'
 }
 
 export function getTaskStatusTagType(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskStatus', 'task_status', 'status'], '')
-  const status = normalizeUpper(value)
+  const status = getTaskStatusValue(rowOrValue)
   return WIN_PATCH_TASK_STATUS_TAG_TYPES[status] || 'info'
 }
 
@@ -269,19 +330,17 @@ export function getInstallResultTagType(rowOrValue) {
 
 export function isPatchInstallable(row) {
   const status = normalizeUpper(pickValue(row, ['patchStatus', 'patch_status'], ''))
-  const ignored = normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false))
-  return !ignored && status === 'MISSING'
+  return status !== 'INSTALLED' && status !== 'INSTALLING'
 }
 
 export function isRollbackSelectable(row) {
   const action = normalizeUpper(pickValue(row, ['action'], ''))
   const result = normalizeUpper(pickValue(row, ['result'], ''))
-  return action === 'INSTALL' && result === 'SUCCESS'
+  return (action === 'INSTALL' && result === 'SUCCESS') || (action === 'ROLLBACK' && result === 'FAILED')
 }
 
 export function isTaskRunning(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskStatus', 'task_status', 'status'], '')
-  const status = normalizeUpper(value)
+  const status = getTaskStatusValue(rowOrValue)
   return ['RUNNING', 'IN_PROGRESS'].includes(status)
 }
 

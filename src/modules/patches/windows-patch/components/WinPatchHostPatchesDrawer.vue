@@ -70,7 +70,7 @@
       </div>
 
       <div class="ops-action-bar">
-        <el-button type="primary" size="small" :disabled="installableSelection.length === 0" @click="installDialogVisible = true">
+        <el-button type="primary" size="small" :disabled="installableSelection.length === 0" @click="installWizardVisible = true">
           安装选中补丁
         </el-button>
         <span class="win-patch-selection-text">已选 {{ installableSelection.length }} 条可安装记录</span>
@@ -101,7 +101,7 @@
           <el-table-column label="严重级别" width="120">
             <template #default="{ row }">
               <el-tag :type="getSeverityTagType(pickValue(row, ['severity']))" size="small" effect="plain">
-                {{ pickValue(row, ['severity'], '-') }}
+                {{ getSeverityLabel(pickValue(row, ['severity'], '')) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -150,11 +150,12 @@
         />
       </div>
 
-      <WinPatchInstallDialog
-        v-model="installDialogVisible"
+      <WinPatchInstallWizard
+        v-model="installWizardVisible"
         :selected-rows="installableSelection"
         :host-summary="hostSummary"
-        @submitted="handleInstallSubmitted"
+        @submitted="handleInstallTaskCreated"
+        @success="handleInstallSuccess"
       />
     </div>
   </el-dialog>
@@ -164,13 +165,14 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import WinPatchInstallDialog from './WinPatchInstallDialog.vue'
+import WinPatchInstallWizard from './install-wizard/WinPatchInstallWizard.vue'
 import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS, WIN_PATCH_SEVERITY_OPTIONS, WIN_PATCH_STATUS_OPTIONS } from '../constants'
 import {
   formatDateTime,
   getPatchStatusLabel,
   getPatchStatusTagType,
+  getSeverityLabel,
   getSeverityTagType,
   isPatchInstallable,
   normalizeBoolean,
@@ -205,7 +207,7 @@ const visibleModel = computed({
 const loading = ref(false)
 const patchList = ref([])
 const selectedRows = ref([])
-const installDialogVisible = ref(false)
+const installWizardVisible = ref(false)
 
 const pagination = reactive({
   page: 1,
@@ -279,8 +281,15 @@ function handleSizeChange(size) {
   loadPatches()
 }
 
-function handleInstallSubmitted(task) {
-  emit('task-submitted', task)
+function handleInstallTaskCreated(task) {
+  emit('task-submitted', {
+    ...(task || {}),
+    openDetail: false,
+    refreshOverview: false
+  })
+}
+
+function handleInstallSuccess() {
   loadPatches({ silent: true })
 }
 

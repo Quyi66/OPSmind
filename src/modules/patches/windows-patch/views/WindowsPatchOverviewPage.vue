@@ -306,8 +306,11 @@ function openHostDrawerWithSeverity(row, severity) {
 
 function handleTaskSubmitted(task) {
   currentTaskId.value = pickValue(task, ['id'], '')
-  taskDrawerVisible.value = Boolean(currentTaskId.value)
-  loadPageData()
+  taskDrawerVisible.value = Boolean(currentTaskId.value) && pickValue(task, ['openDetail'], true) !== false
+
+  if (pickValue(task, ['refreshOverview'], true) !== false) {
+    loadPageData()
+  }
 }
 
 function handlePageChange(page) {

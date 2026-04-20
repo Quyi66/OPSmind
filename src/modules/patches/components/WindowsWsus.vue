@@ -1311,7 +1311,7 @@ function isPatchInstallable(row) {
 function isRollbackSelectable(row) {
   const action = normalizeInstallAction(pickValue(row, ['action'], ''))
   const result = normalizeInstallResult(pickValue(row, ['result'], ''))
-  return action === 'INSTALL' && result === 'SUCCESS'
+  return (action === 'INSTALL' && result === 'SUCCESS') || (action === 'ROLLBACK' && result === 'FAILED')
 }
 
 function getWsusConfigOptionLabel(config) {
@@ -1680,7 +1680,7 @@ async function handleCreateInstallTask() {
 function openRollbackDialog(rows = rollbackableSelection.value) {
   const validRows = rows.filter(row => isRollbackSelectable(row))
   if (validRows.length === 0) {
-    ElMessage.warning('请先选择安装成功的历史记录')
+    ElMessage.warning('请先选择可回滚的历史记录')
     return
   }
 

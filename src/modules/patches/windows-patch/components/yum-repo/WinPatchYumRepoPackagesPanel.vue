@@ -162,6 +162,10 @@ import { useWinPatchPolling } from '../../composables/useWinPatchPolling'
 import WinPatchYumRepoCollectDialog from './WinPatchYumRepoCollectDialog.vue'
 
 const props = defineProps({
+  active: {
+    type: Boolean,
+    default: false
+  },
   repos: {
     type: Array,
     default: () => []
@@ -214,7 +218,7 @@ function resetPanelState() {
 }
 
 function syncPollingState() {
-  if (!autoPollingEnabled.value || !hasSelectedRepo.value || !isCollectRunning(statusData.value)) {
+  if (!props.active || !autoPollingEnabled.value || !hasSelectedRepo.value || !isCollectRunning(statusData.value)) {
     stop()
     return
   }
@@ -230,7 +234,7 @@ function syncPollingState() {
 }
 
 async function loadStatus(options = {}) {
-  if (!hasSelectedRepo.value) return
+  if (!props.active || !hasSelectedRepo.value) return
 
   const requestId = ++statusRequestId
   loadingStatus.value = !options.silent
@@ -260,7 +264,7 @@ async function loadStatus(options = {}) {
 }
 
 async function loadPackages(options = {}) {
-  if (!hasSelectedRepo.value) return
+  if (!props.active || !hasSelectedRepo.value) return
 
   const requestId = ++packagesRequestId
   loadingPackages.value = !options.silent
@@ -340,19 +344,31 @@ async function handleCollectSubmitted(payload) {
 }
 
 watch(
-  () => selectedRepoModel.value,
-  value => {
+  [() => selectedRepoModel.value, () => props.active],
+  ([value, active], previous = []) => {
     if (!String(value || '').trim()) {
       resetPanelState()
       return
     }
 
+    if (!active) {
+      stop()
+      return
+    }
+
+    const previousValue = previous[0]
+    const repoChanged = value !== previousValue
+
     stop()
-    keyword.value = ''
-    pagination.page = 1
-    pagination.pageSize = 20
+
+    if (repoChanged) {
+      keyword.value = ''
+      pagination.page = 1
+      pagination.pageSize = 20
+    }
+
     void loadStatus({ silent: true })
-    void loadPackages()
+    void loadPackages({ silent: !repoChanged })
   },
   { immediate: true }
 )
@@ -360,7 +376,7 @@ watch(
 watch(
   () => autoPollingEnabled.value,
   value => {
-    if (!value) {
+    if (!value || !props.active) {
       stop()
       return
     }

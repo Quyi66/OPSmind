@@ -46,8 +46,10 @@ export const WIN_PATCH_SEVERITY_LABELS = {
   CRITICAL: '严重',
   IMPORTANT: '重要',
   MODERATE: '中等',
+  MEDIUM: '中等',
   LOW: '低危',
-  UNSPECIFIED: '未分级'
+  UNSPECIFIED: '未分级',
+  NONE: '未分级'
 }
 
 export const WIN_PATCH_STATUS_OPTIONS = [
@@ -119,6 +121,36 @@ export const WIN_PATCH_TASK_STEP_TAG_TYPES = {
   VALIDATE: 'success',
   COMPLETED: 'success'
 }
+
+export const WIN_PATCH_INSTALL_WIZARD_STEPS = [
+  { key: 'summary', title: '安装确认' },
+  { key: 'pre-check', title: '预检查脚本' },
+  { key: 'validate', title: '校验脚本' },
+  { key: 'restart', title: '重启与重扫' },
+  { key: 'execute', title: '执行安装' }
+]
+
+export const WIN_PATCH_ROLLBACK_WIZARD_STEPS = [
+  { key: 'summary', title: '回滚确认' },
+  { key: 'pre-check', title: '预检查脚本' },
+  { key: 'validate', title: '校验脚本' },
+  { key: 'restart', title: '重启与重扫' },
+  { key: 'execute', title: '执行回滚' }
+]
+
+export const WIN_PATCH_INSTALL_PIPELINE_STEPS = [
+  { key: 'PRE_CHECK', label: '预检查' },
+  { key: 'INSTALL', label: '执行安装' },
+  { key: 'RESTART', label: '重启' },
+  { key: 'VALIDATE', label: '校验' }
+]
+
+export const WIN_PATCH_ROLLBACK_PIPELINE_STEPS = [
+  { key: 'PRE_CHECK', label: '预检查' },
+  { key: 'ROLLBACK', label: '执行回滚' },
+  { key: 'RESTART', label: '重启' },
+  { key: 'VALIDATE', label: '校验' }
+]
 
 export const WIN_PATCH_TASK_SKIPPABLE_STEPS = ['PRE_CHECK', 'RESTART', 'VALIDATE']
 

@@ -1,7 +1,6 @@
 import { apiService } from '@/core/api'
 
 const WIN_PATCH_API_PREFIX = '/vap/api/win-patch'
-const WIN_PATCH_AUDIT_API_PREFIX = '/api/vap/v2/patch/task'
 
 export const winPatchApi = {
   getWsusConfigs() {
@@ -36,6 +35,16 @@ export const winPatchApi = {
     return apiService.post(
       `${WIN_PATCH_API_PREFIX}/tasks/${encodeURIComponent(taskId)}/script/upload`,
       formData
+    )
+  },
+
+  updateTaskScript(taskId, scriptType, content = '') {
+    return apiService.put(
+      `${WIN_PATCH_API_PREFIX}/tasks/${encodeURIComponent(taskId)}/script/update`,
+      {
+        scriptType,
+        content
+      }
     )
   },
 
@@ -101,10 +110,6 @@ export const winPatchApi = {
 
   getTaskDetail(taskId) {
     return apiService.get(`${WIN_PATCH_API_PREFIX}/tasks/${encodeURIComponent(taskId)}`)
-  },
-
-  getTaskAuditDetail(taskId) {
-    return apiService.get(`${WIN_PATCH_AUDIT_API_PREFIX}/${encodeURIComponent(taskId)}/audit/detail`)
   },
 
   getInstallLogs(params = {}) {

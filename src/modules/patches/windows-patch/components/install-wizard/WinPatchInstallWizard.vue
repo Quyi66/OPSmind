@@ -1,12 +1,12 @@
 <template>
   <el-dialog
     v-model="visibleModel"
-    title="补丁回滚向导"
+    title="补丁安装向导"
     width="1000px"
     top="5vh"
     destroy-on-close
     append-to-body
-    class="install-dialog win-patch-rollback-wizard"
+    class="install-dialog win-patch-install-wizard"
     :close-on-click-modal="false"
     :show-close="!dialogBusy"
     @closed="resetState"
@@ -17,18 +17,18 @@
       :step-states="wizardStepStates"
     />
 
-    <WinPatchRollbackWizardSummaryStep
+    <WinPatchInstallWizardSummaryStep
       v-show="currentStepKey === 'summary'"
-      :host-items="selectedHostItems"
-      :selected-rows="selectedRollbackItems"
+      :host-summary="hostSummary"
+      :selected-rows="selectedPatchItems"
     />
 
     <WinPatchInstallWizardScriptStep
       v-show="currentStepKey === 'pre-check'"
       :model-value="preScriptConfig"
       title="预检查脚本"
-      description="支持手动编辑或上传 PowerShell 脚本。未配置时，预检查步骤会在回滚流程中自动跳过。"
-      placeholder="例如：Write-Host 'pre rollback check'"
+      description="支持手动编辑或上传 PowerShell 脚本。未配置时，预检查步骤会在执行流程中自动跳过。"
+      placeholder="例如：Write-Host 'pre check'"
       :disabled="Boolean(currentTaskId) || dialogBusy"
       :status="pipelineItemMap.PRE_CHECK?.uiStatus || 'idle'"
       :run-id="pipelineItemMap.PRE_CHECK?.runId || ''"
@@ -41,7 +41,7 @@
       v-show="currentStepKey === 'validate'"
       :model-value="validateScriptConfig"
       title="校验脚本"
-      description="用于确认补丁回滚效果。支持手动编辑或上传 PowerShell 脚本，未配置时会在执行流程中自动跳过。"
+      description="用于确认补丁安装效果。支持手动编辑或上传 PowerShell 脚本，未配置时会在执行流程中自动跳过。"
       placeholder="例如：Get-HotFix | Where-Object { $_.HotFixID -eq 'KB5031364' }"
       :disabled="Boolean(currentTaskId) || dialogBusy"
       :status="pipelineItemMap.VALIDATE?.uiStatus || 'idle'"
@@ -53,25 +53,20 @@
 
     <WinPatchInstallWizardRestartStep
       v-show="currentStepKey === 'restart'"
-      :model-value="rollbackOptions"
-      title="重启与重扫策略"
-      alert-title="这里统一配置回滚任务中的重启与自动重扫策略。"
-      alert-description="当前向导会在校验脚本之后展示这一页，未启用的项会在任务推进时自动跳过。"
-      reboot-hint="启用后，任务进入重启环节时会继续执行主机重启。"
-      rescan-hint="启用后，任务收尾阶段会自动刷新当前主机的补丁状态。"
-      @update:model-value="updateRollbackOptions"
+      :model-value="installOptions"
+      @update:model-value="updateInstallOptions"
     />
 
-    <WinPatchRollbackWizardExecuteStep
+    <WinPatchInstallWizardExecuteStep
       v-show="currentStepKey === 'execute'"
       :available-run-items="availableRunItems"
       :error-message="taskErrorMessage"
-      :host-items="selectedHostItems"
+      :host-summary="hostSummary"
+      :install-options="installOptions"
       :pipeline-items="pipelineItems"
       :pipeline-status="pipelineStatus"
       :pre-script-config="preScriptConfig"
-      :rollback-options="rollbackOptions"
-      :selected-rollback-items="selectedRollbackItems"
+      :selected-patches="selectedPatchItems"
       :skipped-steps="skippedSteps"
       :task-id="currentTaskId"
       :validate-script-config="validateScriptConfig"
@@ -79,7 +74,8 @@
     />
 
     <template #footer>
-      <div class="dialog-footer win-patch-rollback-wizard__footer">
+      <div class="dialog-footer win-patch-install-wizard__footer">
+        <!-- <el-button v-if="!dialogBusy && pipelineStatus === 'idle'" @click="visibleModel = false">取消</el-button> -->
         <el-button v-if="canGoBack" @click="goBack">上一步</el-button>
 
         <el-button
@@ -98,7 +94,7 @@
           执行中...
         </el-button>
 
-        <el-button v-else type="primary" :disabled="selectedInstallLogIds.length === 0" @click="handlePrimaryAction">
+        <el-button v-else type="primary" :disabled="selectedPatchStatusIds.length === 0" @click="handlePrimaryAction">
           {{ primaryButtonText }}
         </el-button>
       </div>
@@ -115,17 +111,21 @@
 <script setup>
 import { computed, toRef } from 'vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
-import WinPatchInstallWizardRestartStep from './install-wizard/WinPatchInstallWizardRestartStep.vue'
-import WinPatchInstallWizardScriptStep from './install-wizard/WinPatchInstallWizardScriptStep.vue'
-import WinPatchInstallWizardStepper from './install-wizard/WinPatchInstallWizardStepper.vue'
-import WinPatchRollbackWizardExecuteStep from './rollback-wizard/WinPatchRollbackWizardExecuteStep.vue'
-import WinPatchRollbackWizardSummaryStep from './rollback-wizard/WinPatchRollbackWizardSummaryStep.vue'
-import { useWinPatchRollbackWizard } from '../composables/useWinPatchRollbackWizard'
+import WinPatchInstallWizardExecuteStep from './WinPatchInstallWizardExecuteStep.vue'
+import WinPatchInstallWizardRestartStep from './WinPatchInstallWizardRestartStep.vue'
+import WinPatchInstallWizardScriptStep from './WinPatchInstallWizardScriptStep.vue'
+import WinPatchInstallWizardStepper from './WinPatchInstallWizardStepper.vue'
+import WinPatchInstallWizardSummaryStep from './WinPatchInstallWizardSummaryStep.vue'
+import { useWinPatchInstallWizard } from '../../composables/useWinPatchInstallWizard'
 
 const props = defineProps({
   modelValue: {
     type: Boolean,
     default: false
+  },
+  hostSummary: {
+    type: Object,
+    default: null
   },
   selectedRows: {
     type: Array,
@@ -153,41 +153,37 @@ const {
   dialogBusy,
   goBack,
   goNext,
+  installOptions,
   openRunResult,
   pipelineItemMap,
   pipelineItems,
   pipelineStatus,
   preScriptConfig,
   resetState,
-  rollbackOptions,
-  selectedHostItems,
-  selectedInstallLogIds,
-  selectedRollbackItems,
+  selectedPatchItems,
+  selectedPatchStatusIds,
   showRunResultDialog,
   skipCurrentStep,
   skippedSteps,
   startExecution,
   taskErrorMessage,
+  updateInstallOptions,
   updatePreScriptConfig,
-  updateRollbackOptions,
   updateValidateScriptConfig,
   validateScriptConfig,
   wizardStepStates,
   wizardSteps
-} = useWinPatchRollbackWizard({
+} = useWinPatchInstallWizard({
+  hostSummary: toRef(props, 'hostSummary'),
   selectedRows: toRef(props, 'selectedRows'),
-  onSubmitted: task => emit('submitted', {
-    ...(task || {}),
-    openDetail: false,
-    refreshLogs: false
-  }),
+  onSubmitted: task => emit('submitted', task),
   onSuccess: task => emit('success', task)
 })
 
 const primaryButtonText = computed(() => {
   if (pipelineStatus.value === 'success') return '完成'
   if (pipelineStatus.value === 'failed') return '关闭'
-  return '开始执行回滚'
+  return '开始执行安装'
 })
 
 async function handlePrimaryAction() {
@@ -201,7 +197,7 @@ async function handlePrimaryAction() {
 </script>
 
 <style scoped lang="scss">
-.win-patch-rollback-wizard__footer {
+.win-patch-install-wizard__footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;

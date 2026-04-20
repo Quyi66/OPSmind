@@ -98,6 +98,17 @@ export const PATCHES_ROUTE_DEFS = [
     platform: 'windows',
     component: () => import('./windows-patch/views/WindowsPatchOverviewPage.vue')
   },
+  // 旧版Windows扫描入口
+  // {
+  //   key: 'windowsVulnerability1',
+  //   path: 'windowsVulnerability1',
+  //   name: 'patches-windowsVulnerability1',
+  //   title: 'Windows漏洞',
+  //   navLabel: '漏洞扫描',
+  //   icon: 'fas fa-search',
+  //   platform: 'windows',
+  //   component: () => import('./components/WindowsVulnerability.vue')
+  // },
   {
     key: 'windowsWsus',
     path: 'windowsWsus',
@@ -133,9 +144,9 @@ export const PATCHES_ROUTE_DEFS = [
     key: 'windowsRollback',
     path: 'windowsRollback',
     name: 'patches-windowsRollback',
-    title: '任务与历史',
-    navLabel: '任务与历史',
-    icon: 'fas fa-tasks',
+    title: '安装回滚历史',
+    navLabel: '安装回滚历史',
+    icon: 'fas fa-history',
     platform: 'windows',
     component: () => import('./windows-patch/views/WindowsPatchTaskCenterPage.vue')
   },
@@ -146,10 +157,7 @@ export const PATCHES_ROUTE_DEFS = [
     title: '安装回滚历史',
     platform: 'windows',
     redirect: {
-      path: '/patches/windowsRollback',
-      query: {
-        tab: 'history'
-      }
+      path: '/patches/windowsRollback'
     },
     component: () => import('./windows-patch/views/WindowsPatchTaskCenterPage.vue')
   },

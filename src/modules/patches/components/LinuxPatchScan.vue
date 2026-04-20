@@ -1271,6 +1271,10 @@ function handleSeverityDialogPatchClick(row) {
 }
 
 function handleSeverityPatchInstallSuccess() {
+  refreshPatchScanLists()
+}
+
+function refreshPatchScanLists() {
   loadKpiData()
   loadHostData()
   loadVulnData()
@@ -1306,7 +1310,7 @@ function handleRollback(row) {
 }
 
 function handleRollbackSuccess() {
-  loadVulnData()
+  refreshPatchScanLists()
 }
 
 // 格式化日期

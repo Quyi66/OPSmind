@@ -16,14 +16,15 @@
         />
       </el-tab-pane>
 
-      <el-tab-pane label="包采集与清单" name="packages">
+      <el-tab-pane label="包采集与清单" name="packages" lazy>
         <WinPatchYumRepoPackagesPanel
+          :active="activeTab === 'packages'"
           :repos="repoList"
           v-model:selected-repo-id="selectedRepoId"
         />
       </el-tab-pane>
 
-      <el-tab-pane label="补丁比对" name="compare">
+      <el-tab-pane label="补丁比对" name="compare" lazy>
         <WinPatchYumRepoComparePanel
           :repos="repoList"
           v-model:selected-repo-id="selectedRepoId"

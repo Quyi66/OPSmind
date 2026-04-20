@@ -37,16 +37,16 @@
         @selection-change="selection => (selectedRows = selection)"
       >
         <el-table-column type="selection" width="48" :selectable="isRollbackSelectable" />
-        <el-table-column label="主机" min-width="140" show-overflow-tooltip>
+        <el-table-column label="主机" width="130" show-overflow-tooltip>
           <template #default="{ row }">
             {{ pickValue(row, ['hostKey', 'host_key'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column label="主机 ID" min-width="180" show-overflow-tooltip>
+        <!-- <el-table-column label="主机 ID" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
             {{ pickValue(row, ['hostId', 'host_id'], '-') }}
           </template>
-        </el-table-column>
+        </el-table-column> -->
         <el-table-column label="KB 编号" width="130">
           <template #default="{ row }">
             {{ pickValue(row, ['kbNumber', 'kb_number'], '-') }}
@@ -114,6 +114,7 @@
       v-model="rollbackDialogVisible"
       :selected-rows="rollbackDialogRows"
       @submitted="handleTaskSubmitted"
+      @success="handleRollbackSuccess"
     />
 
     <WinPatchTaskDetailDrawer v-model="taskDrawerVisible" :task-id="currentTaskId" />
@@ -205,8 +206,15 @@ function openSingleRollback(row) {
 
 function handleTaskSubmitted(task) {
   currentTaskId.value = pickValue(task, ['id'], '')
-  taskDrawerVisible.value = Boolean(currentTaskId.value)
+  taskDrawerVisible.value = Boolean(currentTaskId.value) && pickValue(task, ['openDetail'], true) !== false
   rollbackDialogRows.value = rollbackableSelection.value
+
+  if (pickValue(task, ['refreshLogs'], true) !== false) {
+    loadLogs()
+  }
+}
+
+function handleRollbackSuccess() {
   loadLogs()
 }
 

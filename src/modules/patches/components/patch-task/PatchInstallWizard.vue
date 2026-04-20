@@ -588,7 +588,7 @@
 
           <!-- 跳过按钮：针对 RPM 预检、预执行、校验脚本和重启配置 -->
           <el-button
-            v-if="currentStepSkippable && !isSkipped[currentStepKey]"
+            v-if="currentStepSkippable"
             :disabled="stepTransitionLoading"
             @click="handleSkipStep"
           >

@@ -10,7 +10,7 @@
   >
     <div class="win-patch-task-detail">
       <div class="ops-action-bar win-patch-task-detail__actions">
-        <el-switch v-model="autoPollingEnabled" active-text="自动轮询 5 秒" />
+        <el-switch v-model="autoPollingEnabled" active-text="自动轮询 3 秒" />
         <span style="flex: 1"></span>
         <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadTaskDetail()">
           <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -132,11 +132,6 @@
               {{ pickValue(row, ['hostKey', 'host_key'], '-') }}
             </template>
           </el-table-column>
-          <!-- <el-table-column label="主机 ID" min-width="180" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ pickValue(row, ['hostId', 'host_id'], '-') }}
-            </template>
-          </el-table-column> -->
           <el-table-column label="状态" width="100">
             <template #default="{ row }">
               <el-tag :type="getTaskStatusTagType(row)" size="small">
@@ -290,7 +285,7 @@ function deriveCurrentStep(task) {
   return ''
 }
 
-function mergeTaskDetail(baseTask = null, auditTask = null) {
+function mergeTaskDetail(baseTask = null, auditTask = null, hosts = [], steps = [], logs = []) {
   const mergedTask = {
     ...(baseTask && typeof baseTask === 'object' ? baseTask : {}),
     ...(auditTask && typeof auditTask === 'object' ? auditTask : {})
@@ -337,11 +332,11 @@ function mergeTaskDetail(baseTask = null, auditTask = null) {
     mergedTask.validateScript = validateScript
   }
 
-  return mergedTask
-}
+  mergedTask.hosts = hosts
+  mergedTask.steps = steps
+  mergedTask.logs = logs
 
-function shouldLoadTaskAuditDetail(task) {
-  return isStepControlledTask(task)
+  return mergedTask
 }
 
 const availableExecuteRuns = computed(() => {
@@ -419,8 +414,19 @@ const stepActionHint = computed(() => {
   return '安装与回滚任务需要按步骤推进，当前步骤可在此继续处理。'
 })
 
-const { isPolling, start, stop } = useWinPatchPolling(5000)
+const { isPolling, start, stop } = useWinPatchPolling(3000)
 let loadTaskDetailRequestId = 0
+
+function applyTaskSnapshot(taskSnapshot = null) {
+  if (!taskSnapshot || typeof taskSnapshot !== 'object') {
+    return
+  }
+
+  taskDetail.value = {
+    ...(taskDetail.value || {}),
+    ...taskSnapshot
+  }
+}
 
 async function loadTaskDetail(options = {}) {
   const taskId = currentTaskId.value
@@ -439,31 +445,14 @@ async function loadTaskDetail(options = {}) {
     const data = unwrapResponse(detailResponse)
     const baseTask = data?.task || data || null
     const nextHosts = Array.isArray(data?.hosts) ? data.hosts : []
-    const needsAuditDetail = shouldLoadTaskAuditDetail(baseTask)
+    const nextAuditSteps = Array.isArray(data?.steps) ? data.steps : []
+    const nextAuditLogs = Array.isArray(data?.logs) ? data.logs : []
 
-    taskAuditSteps.value = []
-    taskAuditLogs.value = []
-    let auditTask = null
-
-    if (needsAuditDetail) {
-      try {
-        const auditResponse = await winPatchApi.getTaskAuditDetail(taskId)
-
-        if (requestId !== loadTaskDetailRequestId || !visibleModel.value || taskId !== currentTaskId.value) {
-          return
-        }
-
-        const auditData = unwrapResponse(auditResponse)
-        auditTask = auditData?.task || null
-        taskAuditSteps.value = Array.isArray(auditData?.steps) ? auditData.steps : []
-        taskAuditLogs.value = Array.isArray(auditData?.logs) ? auditData.logs : []
-      } catch (error) {
-        console.error('加载任务流程审计详情失败:', error)
-      }
-    }
-
-    taskDetail.value = needsAuditDetail ? mergeTaskDetail(baseTask, auditTask) : baseTask
     taskHosts.value = nextHosts
+    taskAuditSteps.value = nextAuditSteps
+    taskAuditLogs.value = nextAuditLogs
+
+    taskDetail.value = mergeTaskDetail(baseTask, null, nextHosts, nextAuditSteps, nextAuditLogs)
 
     if (!autoPollingEnabled.value || !isTaskRunning(taskDetail.value)) {
       stop()
@@ -497,9 +486,13 @@ async function handleExecuteStep() {
 
   stepSubmitting.value = true
   try {
-    await winPatchApi.executeTaskStep(currentTaskId.value)
+    const response = await winPatchApi.executeTaskStep(currentTaskId.value)
+    applyTaskSnapshot(unwrapResponse(response))
     ElMessage.success(`${executeButtonText.value}已发起`)
-    await loadTaskDetail({ silent: true })
+
+    if (autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
+      start(() => loadTaskDetail({ silent: true }))
+    }
   } catch (error) {
     console.error('执行任务步骤失败:', error)
     ElMessage.error('执行任务步骤失败')
@@ -521,9 +514,13 @@ async function handleSkipStep() {
 
   stepSubmitting.value = true
   try {
-    await winPatchApi.skipTaskStep(currentTaskId.value)
+    const response = await winPatchApi.skipTaskStep(currentTaskId.value)
+    applyTaskSnapshot(unwrapResponse(response))
     ElMessage.success(`${getTaskStepLabel(taskDetail.value)}已跳过`)
-    await loadTaskDetail({ silent: true })
+
+    if (autoPollingEnabled.value && isTaskRunning(taskDetail.value)) {
+      start(() => loadTaskDetail({ silent: true }))
+    }
   } catch (error) {
     console.error('跳过任务步骤失败:', error)
     ElMessage.error('跳过任务步骤失败')
@@ -532,8 +529,8 @@ async function handleSkipStep() {
   }
 }
 
-async function handleScriptUploaded() {
-  await loadTaskDetail({ silent: true })
+function handleScriptUploaded(taskSnapshot) {
+  applyTaskSnapshot(taskSnapshot)
 }
 
 function handleViewRunResult(runId, jobTitle = '') {

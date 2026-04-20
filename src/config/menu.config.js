@@ -19,6 +19,20 @@ export const MENU_CONFIG = {
   // 一级菜单分组
   groups: [
     {
+      code: 'asset-management',
+      name: '资产管理',
+      icon: 'fas fa-server',
+      description: 'IT基础设施资产管理',
+      children: [
+        {
+          code: 'acm',
+          name: '资产',
+          icon: 'fas fa-server',
+          description: 'IT基础设施资产管理'
+        }
+      ]
+    },
+    {
       code: 'automation',
       name: '自动化管理',
       icon: 'fas fa-robot',
@@ -105,20 +119,6 @@ export const MENU_CONFIG = {
           name: '巡检中心',
           icon: 'fas fa-search',
           description: '系统配置审计与合规性检查'
-        }
-      ]
-    },
-    {
-      code: 'asset-management',
-      name: '资产管理',
-      icon: 'fas fa-server',
-      description: 'IT基础设施资产管理',
-      children: [
-        {
-          code: 'acm',
-          name: '资产',
-          icon: 'fas fa-server',
-          description: 'IT基础设施资产管理'
         }
       ]
     },
