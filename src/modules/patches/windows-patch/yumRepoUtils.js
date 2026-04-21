@@ -13,12 +13,114 @@ import {
 
 export { formatDateTime, unwrapResponse }
 
+function parseYumConfigJson(dataJson) {
+  if (!dataJson) return {}
+  if (typeof dataJson === 'object') return dataJson
+
+  try {
+    const parsed = JSON.parse(dataJson)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function normalizeCompareValue(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+}
+
+function normalizeRepoUrlValue(value) {
+  return normalizeCompareValue(value).replace(/\/+$/, '')
+}
+
+export function resolveYumConfigId(row) {
+  return String(pickValue(row, ['id'], '')).trim()
+}
+
+export function normalizeYumConfigRecord(row) {
+  const normalizedRow = row && typeof row === 'object' ? row : {}
+  const dataJson = parseYumConfigJson(pickValue(normalizedRow, ['dataJson', 'data_json'], {}))
+  const dataOwnerId = String(
+    pickValue(normalizedRow, ['dataOwnerId', 'data_owner_id', 'hostId', 'host_id'], '')
+  ).trim()
+
+  return {
+    ...normalizedRow,
+    id: resolveYumConfigId(normalizedRow),
+    dataJson,
+    dataOwnerId,
+    name: String(pickValue(dataJson, ['name'], '')).trim(),
+    description: String(pickValue(dataJson, ['description'], '')).trim(),
+    baseurl: String(pickValue(dataJson, ['baseurl', 'baseUrl', 'repoUrl', 'repo_url'], '')).trim(),
+    file: String(pickValue(dataJson, ['file'], '')).trim()
+  }
+}
+
+export function getYumConfigLabel(row) {
+  const config = normalizeYumConfigRecord(row)
+  return config.name || config.baseurl || '-'
+}
+
+export function getYumConfigBaseurl(row) {
+  return normalizeYumConfigRecord(row).baseurl || '-'
+}
+
+export function getYumConfigFile(row) {
+  return normalizeYumConfigRecord(row).file || '-'
+}
+
+export function getYumConfigMarkerValue(row) {
+  return normalizeYumConfigRecord(row).dataOwnerId || '-'
+}
+
+export function buildYumRepoSourceFromConfig(row, sourceId = '') {
+  const config = normalizeYumConfigRecord(row)
+
+  return {
+    id: sourceId,
+    sourceId,
+    sourceType: 'USER_INPUT',
+    sourceName: config.name || config.baseurl || '-',
+    repoUrl: config.baseurl,
+    repoId: config.name,
+    enabled: true
+  }
+}
+
+export function findYumRepoSourceByConfig(configRow, repoList = []) {
+  const config = normalizeYumConfigRecord(configRow)
+  if (!config.id) return null
+
+  const configUrl = normalizeRepoUrlValue(config.baseurl)
+  const configName = normalizeCompareValue(config.name)
+
+  return repoList.find(repo => {
+    const repoUrl = normalizeRepoUrlValue(pickValue(repo, ['repoUrl', 'repo_url'], ''))
+    const repoId = normalizeCompareValue(pickValue(repo, ['repoId', 'repo_id'], ''))
+    const repoName = normalizeCompareValue(pickValue(repo, ['sourceName', 'source_name'], ''))
+
+    const sameUrl = Boolean(configUrl) && Boolean(repoUrl) && configUrl === repoUrl
+    if (sameUrl) {
+      return true
+    }
+
+    const sameName = Boolean(configName) && (configName === repoId || configName === repoName)
+    if (sameName && (!configUrl || !repoUrl || configUrl === repoUrl)) {
+      return true
+    }
+
+    return false
+  }) || null
+}
+
 export function resolveYumRepoId(row) {
   return String(pickValue(row, ['id', 'sourceId', 'source_id'], '')).trim()
 }
 
 export function getYumRepoLabel(row) {
-  return pickValue(row, ['sourceName', 'source_name', 'repoUrl', 'repo_url'], '-')
+  return pickValue(row, ['sourceName', 'source_name', 'name', 'repoUrl', 'repo_url', 'baseurl'], '-')
 }
 
 export function getYumRepoOsLabel(row) {

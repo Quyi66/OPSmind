@@ -1,8 +1,13 @@
 import { apiService } from '@/core/api'
+import { yumManageApi } from '../api'
 
 const YUM_REPO_API_PREFIX = '/vap/api/vap/v2/yum-repo'
 
 export const yumRepoApi = {
+  getConfigList() {
+    return yumManageApi.getYumConfigs()
+  },
+
   getRepos() {
     return apiService.get(`${YUM_REPO_API_PREFIX}/repos`)
   },
@@ -42,6 +47,10 @@ export const yumRepoApi = {
     return apiService.post(`${YUM_REPO_API_PREFIX}/patch-compare`, payload)
   },
 
+  compareScannedPatches(payload = {}) {
+    return apiService.post(`${YUM_REPO_API_PREFIX}/patch-compare/scanned`, payload)
+  },
+
   getCompareSummary(diffRunId) {
     return apiService.get(
       `${YUM_REPO_API_PREFIX}/patch-compare/${encodeURIComponent(diffRunId)}/summary`
@@ -54,7 +63,8 @@ export const yumRepoApi = {
       {
         params: {
           page: params.page ?? 0,
-          size: params.size ?? 20
+          size: params.size ?? 20,
+          diffType: params.diffType || undefined
         }
       }
     )

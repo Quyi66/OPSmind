@@ -89,6 +89,18 @@ export const MENU_CONFIG = {
           description: 'Windows系统补丁和更新管理'
         },
         {
+          code: 'windows-yum-repo',
+          name: 'Yum 仓库管理',
+          icon: 'fas fa-database',
+          description: '客户 Yum 仓库采集、包清单和补丁比对'
+        },
+        {
+          code: 'software-yum-manage',
+          name: '软件源管理',
+          icon: 'fas fa-cogs',
+          description: 'YUM 源配置和软件源清单管理'
+        },
+        {
           code: 'patch-logs',
           name: '变更日志查询',
           icon: 'fas fa-history',

@@ -2,12 +2,12 @@
   <div class="win-patch-yum-panel">
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
-        <el-form-item label="仓库">
+        <el-form-item label="已采集仓库">
           <el-select
             v-model="selectedRepoModel"
             clearable
             filterable
-            placeholder="请选择仓库"
+            placeholder="请选择已采集仓库"
             style="width: 280px"
           >
             <el-option
@@ -34,14 +34,17 @@
       </el-form>
     </div>
 
-    <div v-if="!hasSelectedRepo" class="win-patch-yum-empty">
-      <el-empty description="请选择仓库后查看采集状态和包清单" />
+    <div v-if="!repos.length" class="win-patch-yum-empty">
+      <el-empty description="暂无已采集仓库，请先在仓库管理页触发采集" />
+    </div>
+
+    <div v-else-if="!hasSelectedRepo" class="win-patch-yum-empty">
+      <el-empty description="请选择已采集仓库后查看采集状态和包清单" />
     </div>
 
     <template v-else>
       <div class="ops-action-bar">
         <el-switch v-model="autoPollingEnabled" active-text="自动轮询 5 秒" />
-        <el-button type="primary" size="small" @click="collectDialogVisible = true">触发采集</el-button>
         <span class="win-patch-selection-text">当前仓库：{{ getYumRepoLabel(currentRepo) }}</span>
         <span style="flex: 1"></span>
         <el-button class="toolbar-icon-btn" circle size="small" :loading="refreshing" @click="handleRefresh">
@@ -56,14 +59,17 @@
         <el-descriptions-item label="仓库地址">
           {{ pickValue(currentRepo, ['repoUrl', 'repo_url'], '-') }}
         </el-descriptions-item>
+        <!-- <el-descriptions-item label="仓库 ID">
+          {{ resolveYumRepoId(currentRepo) || '-' }}
+        </el-descriptions-item> -->
         <el-descriptions-item label="采集状态">
           <el-tag :type="getCollectStatusTagType(statusData)" size="small">
             {{ getCollectStatusLabel(statusData) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="快照 ID">
+        <!-- <el-descriptions-item label="快照 ID">
           {{ pickValue(statusData, ['snapshotId', 'snapshot_id'], '-') }}
-        </el-descriptions-item>
+        </el-descriptions-item> -->
         <el-descriptions-item label="包数量">
           {{ pickValue(statusData, ['packageCount', 'package_count'], 0) }}
         </el-descriptions-item>
@@ -76,18 +82,18 @@
       </el-descriptions>
 
       <div class="ops-table-wrapper">
-        <el-table v-loading="loadingPackages" :data="packageList" max-height="calc(100vh - 420px)">
+        <el-table v-loading="loadingPackages" :data="packageList" max-height="calc(100vh - 435px)">
           <el-table-column label="包名" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgName', 'pkg_name'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="版本" min-width="120" show-overflow-tooltip>
+          <el-table-column label="仓库版本" min-width="120" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgVersion', 'pkg_version'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="Release" min-width="120" show-overflow-tooltip>
+          <el-table-column label="仓库Release版本" min-width="120" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgRelease', 'pkg_release'], '-') }}
             </template>
@@ -102,11 +108,11 @@
               {{ pickValue(row, ['pkgArch', 'pkg_arch'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="比较版本" min-width="180" show-overflow-tooltip>
+          <!-- <el-table-column label="比较版本" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgCmpver', 'pkg_cmpver'], '-') }}
             </template>
-          </el-table-column>
+          </el-table-column> -->
           <el-table-column label="完整 NEVRA" min-width="280" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgFullNevra', 'pkg_full_nevra'], '-') }}
@@ -132,12 +138,6 @@
           @current-change="handlePageChange"
         />
       </div>
-
-      <WinPatchYumRepoCollectDialog
-        v-model="collectDialogVisible"
-        :repo="currentRepo"
-        @submitted="handleCollectSubmitted"
-      />
     </template>
   </div>
 </template>
@@ -159,7 +159,6 @@ import {
   unwrapResponse
 } from '../../yumRepoUtils'
 import { useWinPatchPolling } from '../../composables/useWinPatchPolling'
-import WinPatchYumRepoCollectDialog from './WinPatchYumRepoCollectDialog.vue'
 
 const props = defineProps({
   active: {
@@ -190,7 +189,6 @@ const hasSelectedRepo = computed(() => Boolean(currentRepo.value))
 const refreshing = computed(() => loadingStatus.value || loadingPackages.value)
 
 const autoPollingEnabled = ref(true)
-const collectDialogVisible = ref(false)
 const loadingStatus = ref(false)
 const loadingPackages = ref(false)
 const statusData = ref(null)
@@ -321,26 +319,6 @@ function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
   loadPackages()
-}
-
-async function handleCollectSubmitted(payload) {
-  statusData.value = {
-    ...(statusData.value || {}),
-    sourceId: selectedRepoModel.value,
-    sourceName: getYumRepoLabel(currentRepo.value),
-    repoUrl: pickValue(currentRepo.value, ['repoUrl', 'repo_url'], ''),
-    snapshotId: pickValue(payload, ['snapshotId', 'snapshot_id'], ''),
-    message: pickValue(payload, ['message'], ''),
-    collectStatus: 'PENDING'
-  }
-
-  await loadPackages({ silent: true })
-  start(async () => {
-    await loadStatus({ silent: true, keepPrevious: true })
-    if (!isCollectRunning(statusData.value)) {
-      await loadPackages({ silent: true })
-    }
-  }, { immediate: true })
 }
 
 watch(

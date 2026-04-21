@@ -9,7 +9,6 @@ const ADMIN_ROLE_NAMES = new Set(['admin', 'role_admin', 'role_super_admin', 'su
 const WINDOWS_PATCH_PATHS = new Set([
   'windowsVulnerability',
   'windowsWsus',
-  'windowsYumRepo',
   'windowsUpdate',
   'windowsRollback',
   'windowsView',
@@ -27,9 +26,11 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
   'rpm-install': ['applet:spm'],
   patches: ['applet:vap'],
   'windows-patches': ['applet:vap'],
+  'windows-yum-repo': ['applet:vap'],
   'patch-logs': ['applet:vap'],
   'patch-process-logs': ['applet:vap'],
   software: ['applet:spm'],
+  'software-yum-manage': ['applet:spm'],
   cac: ['applet:cac'],
   acm: ['applet:acm'],
   users: ['applet:uim'],
@@ -50,9 +51,11 @@ export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   'rpm-install': '/rpm-install/install',
   patches: '/patches/cveList',
   'windows-patches': '/patches/windowsVulnerability',
+  'windows-yum-repo': '/patches/windowsYumRepo',
   'patch-logs': '/patches/logs',
   'patch-process-logs': '/patches/processLogs',
   software: '/software/packages',
+  'software-yum-manage': '/software/yumManage',
   cac: '/cac/overview',
   acm: '/acm/overview',
   users: '/users/overview',
@@ -203,13 +206,17 @@ export function resolveMenuCodeFromRoutePath(path?: string | null): string | nul
   const [first, second] = segments
 
   if (first === 'patches') {
+    if (second === 'windowsYumRepo') return 'windows-yum-repo'
     if (second === 'logs') return 'patch-logs'
     if (second === 'processLogs') return 'patch-process-logs'
     if (WINDOWS_PATCH_PATHS.has(second || '')) return 'windows-patches'
     return 'patches'
   }
 
-  if (first === 'software') return 'software'
+  if (first === 'software') {
+    if (second === 'yumManage') return 'software-yum-manage'
+    return 'software'
+  }
   if (first === 'admin') return 'admin'
   if (first === 'login' || first === 'about' || first.startsWith('error')) return null
 
