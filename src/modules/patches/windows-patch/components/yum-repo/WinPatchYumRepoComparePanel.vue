@@ -39,7 +39,6 @@
           </el-form-item>
           <div class="win-patch-filter-actions">
             <el-button type="primary" :loading="comparing" @click="handleCompare">开始比对</el-button>
-            <el-button :disabled="!diffRunId" :loading="refreshing" @click="handleRefresh">刷新结果</el-button>
             <el-button @click="handleReset">重置</el-button>
           </div>
           <div v-if="summaryData" class="win-patch-filter-status">
@@ -243,13 +242,13 @@ const form = reactive({
 })
 
 const comparing = ref(false)
-const loadingSummary = ref(false)
 const loadingPatchView = ref(false)
 const diffRunId = ref('')
 const summaryData = ref(null)
 const patchViewList = ref([])
 const detailDialogVisible = ref(false)
 const detailPatch = ref(null)
+const hasAutoCompared = ref(false)
 
 const pagination = reactive({
   page: 1,
@@ -312,8 +311,6 @@ const patchViewEmptyText = computed(() => {
     : '暂无补丁比对结果'
 })
 
-const refreshing = computed(() => loadingSummary.value || loadingPatchView.value)
-
 function applySummaryCardPreset(key = 'total') {
   const preset = SUMMARY_CARD_FILTER_PRESETS[key] || SUMMARY_CARD_FILTER_PRESETS.total
   patchViewFilters.status = preset.status
@@ -331,23 +328,6 @@ function clearResult() {
   pagination.page = 1
   pagination.pageSize = 20
   pagination.total = 0
-}
-
-async function loadSummary(options = {}) {
-  if (!diffRunId.value) return
-
-  loadingSummary.value = !options.silent
-  try {
-    const response = await yumRepoApi.getCompareSummary(diffRunId.value)
-    summaryData.value = unwrapResponse(response)
-  } catch (error) {
-    if (!options.silent) {
-      console.error('加载补丁比对汇总失败:', error)
-      ElMessage.error('加载补丁比对汇总失败')
-    }
-  } finally {
-    loadingSummary.value = false
-  }
 }
 
 async function loadPatchView(options = {}) {
@@ -376,7 +356,7 @@ async function loadPatchView(options = {}) {
   }
 }
 
-async function handleCompare() {
+async function handleCompare(options = {}) {
   if (!selectedRepoModel.value) {
     ElMessage.warning('请先选择仓库')
     return
@@ -398,10 +378,12 @@ async function handleCompare() {
     pagination.pageSize = 20
 
     if (diffRunId.value) {
-      await loadPatchView({ silent: true })
+      await loadPatchView()
     }
 
-    ElMessage.success('补丁比对已完成')
+    if (!options.silentSuccess) {
+      ElMessage.success('补丁比对已完成')
+    }
   } catch (error) {
     console.error('执行补丁比对失败:', error)
     ElMessage.error('执行补丁比对失败')
@@ -410,14 +392,18 @@ async function handleCompare() {
   }
 }
 
-async function handleRefresh() {
-  if (!diffRunId.value) return
-  await Promise.all([loadSummary(), loadPatchView()])
-}
-
 function handleReset() {
   form.osFamily = ''
   clearResult()
+}
+
+async function tryInitialCompare() {
+  if (hasAutoCompared.value || !selectedRepoModel.value || comparing.value) {
+    return
+  }
+
+  hasAutoCompared.value = true
+  await handleCompare({ silentSuccess: true })
 }
 
 function handlePageChange(page) {
@@ -475,9 +461,14 @@ function handleOpenDetail(row) {
 
 watch(
   () => selectedRepoModel.value,
-  () => {
+  async () => {
     clearResult()
-  }
+
+    if (!hasAutoCompared.value) {
+      await tryInitialCompare()
+    }
+  },
+  { immediate: true }
 )
 
 watch(

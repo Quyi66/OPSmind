@@ -51,12 +51,6 @@ export const yumRepoApi = {
     return apiService.post(`${YUM_REPO_API_PREFIX}/patch-compare/scanned`, payload)
   },
 
-  getCompareSummary(diffRunId) {
-    return apiService.get(
-      `${YUM_REPO_API_PREFIX}/patch-compare/${encodeURIComponent(diffRunId)}/summary`
-    )
-  },
-
   getComparePatchView(diffRunId, params = {}) {
     return apiService.get(
       `${YUM_REPO_API_PREFIX}/patch-compare/${encodeURIComponent(diffRunId)}/patch-view`,

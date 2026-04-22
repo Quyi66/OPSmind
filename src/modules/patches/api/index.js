@@ -61,6 +61,21 @@ function buildPatchAuditLogsQuery(params = {}) {
   return query ? `?${query}` : ''
 }
 
+function buildHostPatchesQuery(params = {}) {
+  const searchParams = new URLSearchParams()
+
+  if (params.host_id) {
+    searchParams.set('host_id', params.host_id)
+  }
+
+  if (params.severity) {
+    searchParams.set('severity', params.severity)
+  }
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
+}
+
 function normalizePatchTask(task) {
   if (!task || typeof task !== 'object' || Array.isArray(task)) {
     return task
@@ -232,29 +247,14 @@ export const patchScanApi = {
 
   /**
    * 获取单个主机的可用补丁列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_PATCH_OF_ONE_MACHINE/
+   * GET /vap/api/vap/v2/patch/host-patches
    * @param {Object} params - 查询参数
    * @param {string} params.host_id - 主机ID
    * @param {string} params.severity - 严重程度筛选（逗号分隔：Critical,Important,Moderate,Low）
-   * @param {number} params.page - 页码
-   * @param {number} params.size - 每页大小
    * @returns {Promise}
    */
   getPatchesOfMachine(params = {}) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
-        host_id: params.host_id,
-        host_key: params.host_key || '',
-        severity: params.severity || ''
-      }
-      // size: params.size || 20,
-      // page: params.page || 1
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_LIST_PATCH_OF_ONE_MACHINE/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    return apiService.get(`${VAP_API_PREFIX}/v2/patch/host-patches${buildHostPatchesQuery(params)}`)
   },
 
   /**
@@ -646,12 +646,10 @@ export const patchInstallApi = {
    */
   getAffectedPackages(params) {
     const requestBody = {
-      params: {
-        patch_ids: params.patch_ids
-      }
+      patch_ids: params.patch_ids
     }
     return apiService.post(
-      '/dts/api/dts/q/data/VAP2_LIST_AFFECTED_PKG_OF_PATCH_DETAIL/',
+      '/vap/api/vap/v2/patch/affected-pkgs',
       requestBody
     )
   },
