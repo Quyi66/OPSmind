@@ -49,7 +49,6 @@
           </div>
         </div>
       </el-form>
-      <!-- <div class="win-patch-form-hint">系统将自动使用当前租户已扫描到的有效补丁进行比对，无需手动选择补丁 ID。</div> -->
     </div>
 
     <div v-if="!summaryData" class="win-patch-yum-empty">
@@ -57,22 +56,18 @@
     </div>
 
     <template v-else>
-      <div class="win-patch-yum-summary-grid">
+      <!-- <div class="win-patch-yum-summary-grid">
         <button
           v-for="card in summaryCards"
           :key="card.key"
           type="button"
           class="win-patch-yum-summary-card"
-          :class="[card.className, { 'is-active': activeSummaryFilter === card.key }]"
+          :class="[card.className, { 'is-active': activeSummaryCardKey === card.key }]"
           @click="handleSummaryCardClick(card.key)"
         >
           <div class="win-patch-yum-summary-card__label">{{ card.label }}</div>
           <div class="win-patch-yum-summary-card__value">{{ card.value }}</div>
         </button>
-      </div>
-
-      <!-- <div class="win-patch-yum-filter-tip" v-if="activeSummaryFilterLabel">
-        当前按「{{ activeSummaryFilterLabel }}」筛选比对明细，点击已选卡片可取消筛选。
       </div> -->
 
       <el-alert
@@ -84,122 +79,142 @@
       />
 
       <div class="win-patch-yum-section">
-        <el-tabs v-model="activeResultTab" class="win-patch-yum-result-tabs">
-          <el-tab-pane name="details" label="比对明细">
-            <div class="ops-table-wrapper">
-              <el-table v-loading="loadingDetails" :data="detailList" max-height="calc(100vh - 440px)">
-                <el-table-column label="补丁 ID" min-width="160" show-overflow-tooltip>
-                  <template #default="{ row }">
-                    {{ pickValue(row, ['patchId', 'patch_id'], '-') }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="包名" min-width="140" show-overflow-tooltip>
-                  <template #default="{ row }">
-                    {{ pickValue(row, ['pkgName', 'pkg_name'], '-') }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="要求版本" min-width="220" show-overflow-tooltip>
-                  <template #default="{ row }">
-                    {{ pickValue(row, ['requiredNevra', 'required_nevra'], '-') }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="基线版本" min-width="220" show-overflow-tooltip>
-                  <template #default="{ row }">
-                    {{ pickValue(row, ['baselineNevra', 'baseline_nevra'], '-') }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="差异类型" width="140">
-                  <template #default="{ row }">
-                    <el-tag :type="getDiffTypeTagType(row)" size="small">
-                      {{ getDiffTypeLabel(row) }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column label="OS" width="120">
-                  <template #default="{ row }">
-                    {{ pickValue(row, ['osFamily', 'os_family'], '-') }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="主版本" width="100" align="center">
-                  <template #default="{ row }">
-                    {{ pickValue(row, ['osMajor', 'os_major'], '-') }}
-                  </template>
-                </el-table-column>
-              </el-table>
-            </div>
-            <div class="ops-pagination-wrapper">
-              <el-pagination
-                v-model:current-page="pagination.page"
-                v-model:page-size="pagination.pageSize"
-                :page-sizes="YUM_REPO_PAGE_SIZE_OPTIONS"
-                :total="pagination.total"
-                layout="total, sizes, prev, pager, next, jumper"
-                background
-                @size-change="handleSizeChange"
-                @current-change="handlePageChange"
-              />
-            </div>
-          </el-tab-pane>
-          <el-tab-pane name="notSatisfied" :label="`不满足项(${notSatisfiedTotal})`">
-            <div class="ops-table-wrapper">
-              <el-table v-loading="loadingNotSatisfied" :data="pagedNotSatisfiedItems" max-height="calc(100vh - 440px)">
-                <el-table-column label="补丁 ID" min-width="160" show-overflow-tooltip>
-                  <template #default="{ row }">
-                    {{ pickValue(row, ['patchId', 'patch_id'], '-') }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="包名" min-width="140" show-overflow-tooltip>
-                  <template #default="{ row }">
-                    {{ pickValue(row, ['pkgName', 'pkg_name'], '-') }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="要求版本" min-width="220" show-overflow-tooltip>
-                  <template #default="{ row }">
-                    {{ pickValue(row, ['requiredNevra', 'required_nevra'], '-') }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="基线版本" min-width="220" show-overflow-tooltip>
-                  <template #default="{ row }">
-                    {{ pickValue(row, ['baselineNevra', 'baseline_nevra'], '-') }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="差异类型" width="140">
-                  <template #default="{ row }">
-                    <el-tag :type="getDiffTypeTagType(row)" size="small">
-                      {{ getDiffTypeLabel(row) }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-              </el-table>
-            </div>
-            <div class="ops-pagination-wrapper">
-              <el-pagination
-                v-model:current-page="notSatisfiedPagination.page"
-                v-model:page-size="notSatisfiedPagination.pageSize"
-                :page-sizes="YUM_REPO_PAGE_SIZE_OPTIONS"
-                :total="notSatisfiedTotal"
-                layout="total, sizes, prev, pager, next, jumper"
-                background
-                @size-change="handleNotSatisfiedSizeChange"
-                @current-change="handleNotSatisfiedPageChange"
-              />
-            </div>
-          </el-tab-pane>
-        </el-tabs>
+        <div class="win-patch-yum-section__header">
+          <div class="win-patch-yum-section__title">补丁视图</div>
+        </div>
+
+        <div class="win-patch-yum-patch-filter-bar">
+          <el-input
+            v-model="patchViewFilters.keyword"
+            clearable
+            placeholder="搜索补丁 ID 或补丁标题"
+            class="win-patch-yum-patch-filter-bar__keyword"
+            @keyup.enter="handlePatchViewSearch"
+            @clear="handlePatchViewSearch"
+          />
+          <el-select
+            v-model="patchViewFilters.status"
+            clearable
+            placeholder="全部状态"
+            class="win-patch-yum-patch-filter-bar__status"
+            @change="handlePatchViewFilterChange"
+          >
+            <el-option
+              v-for="item in PATCH_VIEW_STATUS_OPTIONS"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+          <div class="win-patch-yum-patch-filter-bar__actions">
+            <el-button type="primary" plain @click="handlePatchViewSearch">搜索</el-button>
+            <el-button @click="handlePatchViewReset">清空筛选</el-button>
+          </div>
+        </div>
+
+        <div class="ops-table-wrapper">
+          <el-table
+            v-loading="loadingPatchView"
+            :data="patchViewList"
+            row-key="patchId"
+            max-height="calc(100vh - 390px)"
+            :empty-text="patchViewEmptyText"
+          >
+            <el-table-column label="补丁 ID" min-width="170" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ pickValue(row, ['patchId', 'patch_id'], '-') }}
+              </template>
+            </el-table-column>
+            <el-table-column label="补丁标题" min-width="260" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ pickValue(row, ['patchTitle', 'patch_title'], '-') }}
+              </template>
+            </el-table-column>
+            <el-table-column label="严重等级" width="120" align="center">
+              <template #default="{ row }">
+                <el-tag size="small" effect="plain" :type="getSeverityTagType(pickValue(row, ['severity'], ''))">
+                  {{ getSeverityLabel(pickValue(row, ['severity'], '-')) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="110" align="center">
+              <template #default="{ row }">
+                <el-tag size="small" :type="getPatchSatisfiedTagType(row)">
+                  {{ getPatchSatisfiedLabel(row) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="影响主机" width="110" align="center">
+              <template #default="{ row }">
+                {{ pickValue(row, ['affectedHostCount', 'affected_host_count'], 0) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="总包数" width="90" align="center">
+              <template #default="{ row }">
+                {{ pickValue(row, ['totalPkgs', 'total_pkgs'], 0) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="满足" width="90" align="center">
+              <template #default="{ row }">
+                {{ pickValue(row, ['availableCount', 'available_count'], 0) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="缺失" width="90" align="center">
+              <template #default="{ row }">
+                {{ pickValue(row, ['missingCount', 'missing_count'], 0) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="版本不足" width="100" align="center">
+              <template #default="{ row }">
+                {{ pickValue(row, ['outdatedCount', 'outdated_count'], 0) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="发行版不匹配" width="130" align="center">
+              <template #default="{ row }">
+                {{ pickValue(row, ['releaseMismatchCount', 'release_mismatch_count'], 0) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="90" fixed="right" align="center">
+              <template #default="{ row }">
+                <el-button text type="primary" size="small" @click="handleOpenDetail(row)">详情</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="pagination.page"
+            v-model:page-size="pagination.pageSize"
+            :page-sizes="YUM_REPO_PAGE_SIZE_OPTIONS"
+            :total="pagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="handleSizeChange"
+            @current-change="handlePageChange"
+          />
+        </div>
       </div>
     </template>
+
+    <WinPatchYumRepoPatchDetailDialog v-model="detailDialogVisible" :patch="detailPatch" />
   </div>
 </template>
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { parsePageResponse, pickValue } from '../../utils'
+import WinPatchYumRepoPatchDetailDialog from './WinPatchYumRepoPatchDetailDialog.vue'
+import {
+  getSeverityLabel,
+  getSeverityTagType,
+  normalizeBoolean,
+  parsePageResponse,
+  pickValue
+} from '../../utils'
 import { YUM_REPO_OS_FAMILY_OPTIONS, YUM_REPO_PAGE_SIZE_OPTIONS } from '../../yumRepoConstants'
 import { yumRepoApi } from '../../yumRepoApi'
 import {
-  getDiffTypeLabel,
-  getDiffTypeTagType,
   getYumRepoLabel,
   resolveYumRepoId,
   unwrapResponse
@@ -229,14 +244,12 @@ const form = reactive({
 
 const comparing = ref(false)
 const loadingSummary = ref(false)
-const loadingDetails = ref(false)
-const loadingNotSatisfied = ref(false)
+const loadingPatchView = ref(false)
 const diffRunId = ref('')
 const summaryData = ref(null)
-const activeResultTab = ref('details')
-const activeSummaryFilter = ref('total')
-const detailList = ref([])
-const allNotSatisfiedItems = ref([])
+const patchViewList = ref([])
+const detailDialogVisible = ref(false)
+const detailPatch = ref(null)
 
 const pagination = reactive({
   page: 1,
@@ -244,10 +257,16 @@ const pagination = reactive({
   total: 0
 })
 
-const notSatisfiedPagination = reactive({
-  page: 1,
-  pageSize: 20
+const patchViewFilters = reactive({
+  keyword: '',
+  status: '',
+  diffType: ''
 })
+
+const PATCH_VIEW_STATUS_OPTIONS = [
+  { label: '仅满足', value: 'SATISFIED' },
+  { label: '仅不满足', value: 'NOT_SATISFIED' }
+]
 
 const SUMMARY_CARD_CONFIG = [
   { key: 'total', label: '总项数', className: 'is-total' },
@@ -258,13 +277,13 @@ const SUMMARY_CARD_CONFIG = [
   { key: 'ahead', label: '更高版本', className: 'is-ahead' }
 ]
 
-const DIFF_TYPE_FILTER_MAP = {
-  total: null,
-  available: 'AVAILABLE',
-  missing: 'MISSING',
-  outdated: 'OUTDATED',
-  releaseMismatch: 'RELEASE_MISMATCH',
-  ahead: 'AHEAD'
+const SUMMARY_CARD_FILTER_PRESETS = {
+  total: { status: '', diffType: '' },
+  available: { status: 'SATISFIED', diffType: '' },
+  missing: { status: 'NOT_SATISFIED', diffType: 'MISSING' },
+  outdated: { status: 'NOT_SATISFIED', diffType: 'OUTDATED' },
+  releaseMismatch: { status: 'NOT_SATISFIED', diffType: 'RELEASE_MISMATCH' },
+  ahead: { status: '', diffType: 'AHEAD' }
 }
 
 const summaryCards = computed(() =>
@@ -274,35 +293,44 @@ const summaryCards = computed(() =>
   }))
 )
 
+const activeSummaryCardKey = computed(() => {
+  const status = String(patchViewFilters.status || '').trim()
+  const diffType = String(patchViewFilters.diffType || '').trim()
+
+  return Object.entries(SUMMARY_CARD_FILTER_PRESETS).find(([, preset]) => {
+    return preset.status === status && preset.diffType === diffType
+  })?.[0] || ''
+})
+
 const activeSummaryFilterLabel = computed(() => {
-  if (activeSummaryFilter.value === 'total') return ''
-  return SUMMARY_CARD_CONFIG.find(item => item.key === activeSummaryFilter.value)?.label || ''
+  return SUMMARY_CARD_CONFIG.find(item => item.key === activeSummaryCardKey.value)?.label || ''
 })
 
-const activeDetailDiffType = computed(() => DIFF_TYPE_FILTER_MAP[activeSummaryFilter.value] || '')
-
-const notSatisfiedTotal = computed(() => allNotSatisfiedItems.value.length)
-
-const pagedNotSatisfiedItems = computed(() => {
-  const start = (notSatisfiedPagination.page - 1) * notSatisfiedPagination.pageSize
-  const end = start + notSatisfiedPagination.pageSize
-  return allNotSatisfiedItems.value.slice(start, end)
+const patchViewEmptyText = computed(() => {
+  return activeSummaryFilterLabel.value || patchViewFilters.status || patchViewFilters.keyword
+    ? '当前筛选条件下暂无补丁结果'
+    : '暂无补丁比对结果'
 })
 
-const refreshing = computed(() => loadingSummary.value || loadingDetails.value || loadingNotSatisfied.value)
+const refreshing = computed(() => loadingSummary.value || loadingPatchView.value)
+
+function applySummaryCardPreset(key = 'total') {
+  const preset = SUMMARY_CARD_FILTER_PRESETS[key] || SUMMARY_CARD_FILTER_PRESETS.total
+  patchViewFilters.status = preset.status
+  patchViewFilters.diffType = preset.diffType
+}
 
 function clearResult() {
   diffRunId.value = ''
   summaryData.value = null
-  activeResultTab.value = 'details'
-  activeSummaryFilter.value = 'total'
-  detailList.value = []
-  allNotSatisfiedItems.value = []
+  patchViewList.value = []
+  detailDialogVisible.value = false
+  detailPatch.value = null
+  patchViewFilters.keyword = ''
+  applySummaryCardPreset('total')
   pagination.page = 1
   pagination.pageSize = 20
   pagination.total = 0
-  notSatisfiedPagination.page = 1
-  notSatisfiedPagination.pageSize = 20
 }
 
 async function loadSummary(options = {}) {
@@ -322,45 +350,29 @@ async function loadSummary(options = {}) {
   }
 }
 
-async function loadNotSatisfied(options = {}) {
+async function loadPatchView(options = {}) {
   if (!diffRunId.value) return
 
-  loadingNotSatisfied.value = !options.silent
+  loadingPatchView.value = !options.silent
   try {
-    const response = await yumRepoApi.getNotSatisfied(diffRunId.value)
-    const data = unwrapResponse(response)
-    allNotSatisfiedItems.value = Array.isArray(data?.items) ? data.items : []
-    notSatisfiedPagination.page = 1
-  } catch (error) {
-    if (!options.silent) {
-      console.error('加载不满足项失败:', error)
-      ElMessage.error('加载不满足项失败')
-    }
-  } finally {
-    loadingNotSatisfied.value = false
-  }
-}
-
-async function loadDetails(options = {}) {
-  if (!diffRunId.value) return
-
-  loadingDetails.value = !options.silent
-  try {
-    const response = await yumRepoApi.getCompareDetails(diffRunId.value, {
+    const response = await yumRepoApi.getComparePatchView(diffRunId.value, {
+      diffRunId: diffRunId.value,
+      keyword: patchViewFilters.keyword || undefined,
+      status: patchViewFilters.status || undefined,
+      diffType: patchViewFilters.diffType || undefined,
       page: pagination.page - 1,
-      size: pagination.pageSize,
-      diffType: activeDetailDiffType.value || undefined
+      size: pagination.pageSize
     })
     const page = parsePageResponse(response)
-    detailList.value = page.content
+    patchViewList.value = page.content
     pagination.total = page.total
   } catch (error) {
     if (!options.silent) {
-      console.error('加载补丁比对明细失败:', error)
-      ElMessage.error('加载补丁比对明细失败')
+      console.error('加载补丁视图失败:', error)
+      ElMessage.error('加载补丁视图失败')
     }
   } finally {
-    loadingDetails.value = false
+    loadingPatchView.value = false
   }
 }
 
@@ -380,13 +392,13 @@ async function handleCompare() {
 
     diffRunId.value = String(data?.diffRunId || '').trim()
     summaryData.value = data
+    patchViewFilters.keyword = ''
+    applySummaryCardPreset('total')
     pagination.page = 1
     pagination.pageSize = 20
-    activeSummaryFilter.value = 'total'
-    activeResultTab.value = data?.passed ? 'notSatisfied' : 'details'
 
     if (diffRunId.value) {
-      await Promise.all([loadNotSatisfied({ silent: true }), loadDetails({ silent: true })])
+      await loadPatchView({ silent: true })
     }
 
     ElMessage.success('补丁比对已完成')
@@ -400,7 +412,7 @@ async function handleCompare() {
 
 async function handleRefresh() {
   if (!diffRunId.value) return
-  await Promise.all([loadSummary(), loadNotSatisfied(), loadDetails()])
+  await Promise.all([loadSummary(), loadPatchView()])
 }
 
 function handleReset() {
@@ -410,40 +422,70 @@ function handleReset() {
 
 function handlePageChange(page) {
   pagination.page = page
-  loadDetails()
+  loadPatchView()
 }
 
 function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
-  loadDetails()
+  loadPatchView()
 }
 
-function handleNotSatisfiedPageChange(page) {
-  notSatisfiedPagination.page = page
+async function handlePatchViewSearch() {
+  pagination.page = 1
+  await loadPatchView()
 }
 
-function handleNotSatisfiedSizeChange(size) {
-  notSatisfiedPagination.pageSize = size
-  notSatisfiedPagination.page = 1
+async function handlePatchViewFilterChange() {
+  pagination.page = 1
+  await loadPatchView()
+}
+
+async function handlePatchViewReset() {
+  patchViewFilters.keyword = ''
+  applySummaryCardPreset('total')
+  pagination.page = 1
+  await loadPatchView()
 }
 
 async function handleSummaryCardClick(filterKey) {
-  activeSummaryFilter.value = activeSummaryFilter.value === filterKey ? 'total' : filterKey
+  const nextKey = activeSummaryCardKey.value === filterKey ? 'total' : filterKey
+  applySummaryCardPreset(nextKey)
+  pagination.page = 1
 
   if (!diffRunId.value) {
     return
   }
 
-  activeResultTab.value = 'details'
-  pagination.page = 1
-  await loadDetails()
+  await loadPatchView()
+}
+
+function getPatchSatisfiedTagType(row) {
+  return normalizeBoolean(pickValue(row, ['satisfied'], false)) ? 'success' : 'danger'
+}
+
+function getPatchSatisfiedLabel(row) {
+  return normalizeBoolean(pickValue(row, ['satisfied'], false)) ? '满足' : '不满足'
+}
+
+function handleOpenDetail(row) {
+  detailPatch.value = row || null
+  detailDialogVisible.value = true
 }
 
 watch(
   () => selectedRepoModel.value,
   () => {
     clearResult()
+  }
+)
+
+watch(
+  () => detailDialogVisible.value,
+  value => {
+    if (!value) {
+      detailPatch.value = null
+    }
   }
 )
 </script>
@@ -478,14 +520,6 @@ watch(
   margin-bottom: 10px;
 }
 
-.win-patch-filter-item.is-repo {
-  flex: 1 1 380px;
-}
-
-.win-patch-filter-item.is-os {
-  flex: 0 1 230px;
-}
-
 .win-patch-filter-actions {
   display: flex;
   align-items: center;
@@ -496,13 +530,6 @@ watch(
 
 .win-patch-filter-status {
   margin-bottom: 10px;
-}
-
-.win-patch-form-hint {
-  margin-top: 6px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--el-text-color-secondary);
 }
 
 .win-patch-yum-empty {
@@ -603,34 +630,58 @@ watch(
   color: var(--el-text-color-primary);
 }
 
-.win-patch-yum-filter-tip {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
 .win-patch-yum-section {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+.win-patch-yum-section__header {
+  display: flex;
+  align-items: center;
+}
+
+.win-patch-yum-section__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.win-patch-yum-patch-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--el-fill-color-lighter) 70%, white 30%);
+}
+
+.win-patch-yum-patch-filter-bar__keyword {
+  width: 320px;
+}
+
+.win-patch-yum-patch-filter-bar__status {
+  width: 180px;
+}
+
+.win-patch-yum-patch-filter-bar__actions {
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.win-patch-yum-result-tabs :deep(.el-tabs__content) {
-  overflow: visible;
-}
-
 @media (max-width: 960px) {
-  .win-patch-filter-item.is-repo,
-  .win-patch-filter-item.is-os {
-    flex: 1 1 100%;
-  }
-
   .win-patch-filter-actions {
     width: 100%;
     margin-left: 0;
   }
 
-  .win-patch-filter-status {
+  .win-patch-filter-status,
+  .win-patch-yum-patch-filter-bar__keyword,
+  .win-patch-yum-patch-filter-bar__status,
+  .win-patch-yum-patch-filter-bar__actions {
     width: 100%;
   }
 }

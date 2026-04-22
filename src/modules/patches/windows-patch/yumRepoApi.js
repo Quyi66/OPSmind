@@ -57,6 +57,22 @@ export const yumRepoApi = {
     )
   },
 
+  getComparePatchView(diffRunId, params = {}) {
+    return apiService.get(
+      `${YUM_REPO_API_PREFIX}/patch-compare/${encodeURIComponent(diffRunId)}/patch-view`,
+      {
+        params: {
+          diffRunId: params.diffRunId || diffRunId,
+          keyword: params.keyword || undefined,
+          status: params.status || undefined,
+          diffType: params.diffType || undefined,
+          page: params.page ?? 0,
+          size: params.size ?? 20
+        }
+      }
+    )
+  },
+
   getCompareDetails(diffRunId, params = {}) {
     return apiService.get(
       `${YUM_REPO_API_PREFIX}/patch-compare/${encodeURIComponent(diffRunId)}/details`,
