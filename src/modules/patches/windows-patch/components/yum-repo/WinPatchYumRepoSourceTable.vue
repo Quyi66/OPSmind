@@ -11,6 +11,15 @@
       <span class="win-patch-selection-text">当前配置：{{ currentConfigLabel }}</span>
       <span class="win-patch-selection-text">已采集仓库：{{ sources.length }}</span>
       <span style="flex: 1"></span>
+      <el-button
+        type="primary"
+        size="small"
+        :disabled="!configs.length"
+        :loading="batchCollecting"
+        @click="$emit('collect-all')"
+      >
+        全部采集
+      </el-button>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="$emit('refresh')">
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
@@ -55,6 +64,18 @@
         <el-table-column label="录入标识" min-width="140" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getYumConfigMarkerValue(row) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="采集状态" width="110" align="center">
+          <template #default="{ row }">
+            <el-tag size="small" :type="getCollectStatusTagType(row)">
+              {{ getCollectStatusLabel(row) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="包数量" width="90" align="center">
+          <template #default="{ row }">
+            {{ row.packageCount ?? '-' }}
           </template>
         </el-table-column>
         <!-- <el-table-column label="采集仓库" min-width="180" show-overflow-tooltip>
@@ -103,6 +124,8 @@ import { computed } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import {
   findYumRepoSourceByConfig,
+  getCollectStatusLabel,
+  getCollectStatusTagType,
   getYumConfigBaseurl,
   getYumConfigFile,
   getYumConfigMarkerValue,
@@ -131,12 +154,17 @@ const props = defineProps({
   collectingConfigId: {
     type: String,
     default: ''
+  },
+  batchCollecting: {
+    type: Boolean,
+    default: false
   }
 })
 
 const emit = defineEmits([
   'refresh',
   'collect',
+  'collect-all',
   'delete-source',
   'open-packages',
   'open-compare',

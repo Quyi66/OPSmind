@@ -60,6 +60,14 @@
       <!-- 操作区 -->
       <div class="ops-action-bar">
         <el-button type="primary" size="small" @click="handleAddRepo">YUM源配置录入</el-button>
+        <el-button
+          size="small"
+          :loading="batchCollecting"
+          :disabled="customRepoData.length === 0"
+          @click="handleCollectAll"
+        >
+          全部采集
+        </el-button>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -94,8 +102,29 @@
             sortable
             show-overflow-tooltip
           />
-          <el-table-column label="操作" width="132" fixed="right" align="left">
+          <el-table-column label="采集状态" width="110" align="center">
             <template #default="{ row }">
+              <el-tag size="small" :type="getCollectStatusTagType(row)">
+                {{ getCollectStatusLabel(row) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="包数量" width="90" align="center">
+            <template #default="{ row }">
+              {{ row.packageCount ?? '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="180" fixed="right" align="left">
+            <template #default="{ row }">
+              <el-button
+                text
+                type="primary"
+                size="small"
+                :loading="collectingConfigId === resolveYumConfigId(row)"
+                @click="handleCollect(row)"
+              >
+                采集
+              </el-button>
               <el-button text type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
               <el-button text type="primary" size="small" @click="handleConfig(row)">
                 配置
@@ -480,6 +509,12 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { yumManageApi } from '../api'
+import {
+  getCollectStatusLabel,
+  getCollectStatusTagType,
+  normalizeYumConfigRecord,
+  resolveYumConfigId
+} from '../windows-patch/yumRepoUtils'
 import AcmDeviceSelectorDialog from '@/modules/automation/components/job/schedule/components/AcmDeviceSelectorDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { runJob } from '@/modules/automation/api/command'
@@ -504,6 +539,8 @@ watch(activeTab, newTab => {
 // ============ YUM源配置 Tab ============
 const loading = ref(false)
 const submitting = ref(false)
+const collectingConfigId = ref('')
+const batchCollecting = ref(false)
 const filterText = ref('')
 const customRepoData = ref([])
 const filters = reactive({
@@ -531,7 +568,8 @@ const filteredCustomRepoData = computed(() => {
       item.name?.toLowerCase().includes(keyword) ||
       item.description?.toLowerCase().includes(keyword) ||
       item.baseurl?.toLowerCase().includes(keyword) ||
-      item.file?.toLowerCase().includes(keyword)
+      item.file?.toLowerCase().includes(keyword) ||
+      item.collectStatus?.toLowerCase().includes(keyword)
     )
   })
 })
@@ -686,22 +724,11 @@ const paginatedHostTableData = computed(() => {
 async function loadCustomRepoData() {
   loading.value = true
   try {
-    const response = await yumManageApi.getYumConfigs()
+    const response = await yumManageApi.getYumRepoConfigs()
     const rawData = response?.data || response || []
-    // 解析 dataJson 字段
-    customRepoData.value = rawData.map(item => {
-      const dataJson =
-        typeof item.dataJson === 'string' ? JSON.parse(item.dataJson) : item.dataJson || {}
-      return {
-        id: item.id,
-        name: dataJson.name || '',
-        description: dataJson.description || '',
-        baseurl: dataJson.baseurl || '',
-        file: dataJson.file || '',
-        createTime: item.createTime,
-        updateTime: item.updateTime
-      }
-    })
+    customRepoData.value = Array.isArray(rawData)
+      ? rawData.map(item => normalizeYumConfigRecord(item))
+      : []
   } catch (error) {
     console.error('Failed to load custom repo data:', error)
     customRepoData.value = []
@@ -801,13 +828,70 @@ async function handleDelete(row) {
     await ElMessageBox.confirm(`确定要删除 "${row.name}" 吗？此操作不可恢复。`, '警告', {
       type: 'warning'
     })
-    await yumManageApi.deleteYumConfig(row.id)
+    await yumManageApi.deleteYumConfig(resolveYumConfigId(row))
     ElMessage.success('删除成功')
     loadCustomRepoData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Delete failed:', error)
     }
+  }
+}
+
+async function handleCollect(row) {
+  const dcDataId = resolveYumConfigId(row)
+  if (!dcDataId) {
+    ElMessage.warning('未获取到可采集的 YUM 源配置 ID')
+    return
+  }
+
+  collectingConfigId.value = dcDataId
+  try {
+    const response = await yumManageApi.collectYumRepo({ dcDataId })
+    const data = response?.data || response || {}
+    ElMessage.success(data?.message || '采集任务已提交')
+    await loadCustomRepoData()
+  } catch (error) {
+    console.error('Collect failed:', error)
+    ElMessage.error('触发采集失败')
+  } finally {
+    collectingConfigId.value = ''
+  }
+}
+
+async function handleCollectAll() {
+  const dcDataIds = customRepoData.value.map(item => resolveYumConfigId(item)).filter(Boolean)
+  if (dcDataIds.length === 0) {
+    ElMessage.warning('当前没有可采集的 YUM 源配置')
+    return
+  }
+
+  batchCollecting.value = true
+  try {
+    const response = await yumManageApi.collectYumRepoBatch({ dcDataIds })
+    const data = response?.data || response || {}
+    const successCount = Number(data.successCount || 0)
+    const failCount = Number(data.failCount || 0)
+
+    await loadCustomRepoData()
+
+    if (successCount > 0) {
+      ElMessage.success(
+        failCount > 0
+          ? `批量采集已提交：成功 ${successCount} 条，失败 ${failCount} 条`
+          : `批量采集已提交：成功 ${successCount} 条`
+      )
+      return
+    }
+
+    ElMessage.warning(
+      failCount > 0 ? `批量采集提交失败：共 ${failCount} 条失败` : '批量采集未提交任何任务'
+    )
+  } catch (error) {
+    console.error('Batch collect failed:', error)
+    ElMessage.error('批量触发采集失败')
+  } finally {
+    batchCollecting.value = false
   }
 }
 

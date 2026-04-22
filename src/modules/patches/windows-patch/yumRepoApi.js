@@ -5,7 +5,7 @@ const YUM_REPO_API_PREFIX = '/vap/api/vap/v2/yum-repo'
 
 export const yumRepoApi = {
   getConfigList() {
-    return yumManageApi.getYumConfigs()
+    return yumManageApi.getYumRepoConfigs()
   },
 
   getRepos() {
@@ -26,6 +26,10 @@ export const yumRepoApi = {
 
   collectPackages(payload = {}) {
     return apiService.post(`${YUM_REPO_API_PREFIX}/collect`, payload)
+  },
+
+  collectPackagesBatch(payload = {}) {
+    return apiService.post(`${YUM_REPO_API_PREFIX}/collect/batch`, payload)
   },
 
   getCollectStatus(id) {

@@ -35,8 +35,19 @@ function normalizeRepoUrlValue(value) {
   return normalizeCompareValue(value).replace(/\/+$/, '')
 }
 
+function normalizeBooleanValue(value, fallback = false) {
+  if (value === undefined || value === null || value === '') return fallback
+  if (typeof value === 'boolean') return value
+
+  const normalized = normalizeCompareValue(value)
+  if (['true', '1', 'yes', 'y'].includes(normalized)) return true
+  if (['false', '0', 'no', 'n'].includes(normalized)) return false
+
+  return Boolean(value)
+}
+
 export function resolveYumConfigId(row) {
-  return String(pickValue(row, ['id'], '')).trim()
+  return String(pickValue(row, ['dcDataId', 'dc_data_id', 'id'], '')).trim()
 }
 
 export function normalizeYumConfigRecord(row) {
@@ -49,12 +60,31 @@ export function normalizeYumConfigRecord(row) {
   return {
     ...normalizedRow,
     id: resolveYumConfigId(normalizedRow),
+    dcDataId: resolveYumConfigId(normalizedRow),
     dataJson,
     dataOwnerId,
-    name: String(pickValue(dataJson, ['name'], '')).trim(),
-    description: String(pickValue(dataJson, ['description'], '')).trim(),
-    baseurl: String(pickValue(dataJson, ['baseurl', 'baseUrl', 'repoUrl', 'repo_url'], '')).trim(),
-    file: String(pickValue(dataJson, ['file'], '')).trim()
+    name: String(pickValue(normalizedRow, ['name'], pickValue(dataJson, ['name'], ''))).trim(),
+    description: String(
+      pickValue(normalizedRow, ['description'], pickValue(dataJson, ['description'], ''))
+    ).trim(),
+    baseurl: String(
+      pickValue(
+        normalizedRow,
+        ['baseurl', 'baseUrl', 'repoUrl', 'repo_url'],
+        pickValue(dataJson, ['baseurl', 'baseUrl', 'repoUrl', 'repo_url'], '')
+      )
+    ).trim(),
+    file: String(pickValue(normalizedRow, ['file'], pickValue(dataJson, ['file'], ''))).trim(),
+    sourceId: String(pickValue(normalizedRow, ['sourceId', 'source_id'], '')).trim(),
+    collected: normalizeBooleanValue(
+      pickValue(normalizedRow, ['collected'], ''),
+      Boolean(pickValue(normalizedRow, ['sourceId', 'source_id'], ''))
+    ),
+    collectStatus: String(pickValue(normalizedRow, ['collectStatus', 'collect_status'], '')).trim(),
+    packageCount: pickValue(normalizedRow, ['packageCount', 'package_count'], null),
+    finishedAt: pickValue(normalizedRow, ['finishedAt', 'finished_at'], ''),
+    updateTime: pickValue(normalizedRow, ['updateTime', 'update_time'], ''),
+    createTime: pickValue(normalizedRow, ['createTime', 'create_time'], '')
   }
 }
 
@@ -77,26 +107,43 @@ export function getYumConfigMarkerValue(row) {
 
 export function buildYumRepoSourceFromConfig(row, sourceId = '') {
   const config = normalizeYumConfigRecord(row)
+  const resolvedSourceId = String(sourceId || config.sourceId || '').trim()
 
   return {
-    id: sourceId,
-    sourceId,
+    id: resolvedSourceId,
+    sourceId: resolvedSourceId,
     sourceType: 'USER_INPUT',
     sourceName: config.name || config.baseurl || '-',
     repoUrl: config.baseurl,
     repoId: config.name,
-    enabled: true
+    enabled: true,
+    collectStatus: config.collectStatus || undefined,
+    packageCount: config.packageCount,
+    finishedAt: config.finishedAt || ''
   }
+}
+
+export function buildCollectedYumRepoSources(configList = []) {
+  return configList
+    .map(item => normalizeYumConfigRecord(item))
+    .filter(item => item.sourceId)
+    .map(item => buildYumRepoSourceFromConfig(item))
 }
 
 export function findYumRepoSourceByConfig(configRow, repoList = []) {
   const config = normalizeYumConfigRecord(configRow)
   if (!config.id) return null
 
+  const configSourceId = normalizeCompareValue(config.sourceId)
   const configUrl = normalizeRepoUrlValue(config.baseurl)
   const configName = normalizeCompareValue(config.name)
 
   return repoList.find(repo => {
+    const repoSourceId = normalizeCompareValue(resolveYumRepoId(repo))
+    if (configSourceId && repoSourceId && configSourceId === repoSourceId) {
+      return true
+    }
+
     const repoUrl = normalizeRepoUrlValue(pickValue(repo, ['repoUrl', 'repo_url'], ''))
     const repoId = normalizeCompareValue(pickValue(repo, ['repoId', 'repo_id'], ''))
     const repoName = normalizeCompareValue(pickValue(repo, ['sourceName', 'source_name'], ''))

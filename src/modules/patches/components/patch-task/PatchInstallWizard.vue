@@ -1427,18 +1427,16 @@ async function loadRestartAdviceByHostPatch(force = false) {
   }
 
   const cacheBuster = Date.now()
-  const queryTasks = hostEntries.flatMap(host =>
-    patchIds.map(patchId => ({
+  const patchIdParam = patchIds.join(',')
+  const queryTasks = hostEntries.map(host => ({
+    hostIp: host.hostIp,
+    hostLabel: host.hostLabel,
+    request: patchInstallApi.getPatchRebootOnHost({
+      patchId: patchIdParam,
       hostIp: host.hostIp,
-      hostLabel: host.hostLabel,
-      patchId,
-      request: patchInstallApi.getPatchRebootOnHost({
-        patchId,
-        hostIp: host.hostIp,
-        cacheBuster
-      })
-    }))
-  )
+      cacheBuster
+    })
+  }))
 
   const settledResults = await Promise.allSettled(queryTasks.map(item => item.request))
   const successfulResults = []
@@ -1453,7 +1451,6 @@ async function loadRestartAdviceByHostPatch(force = false) {
       successfulResults.push({
         hostIp: task.hostIp,
         hostLabel: task.hostLabel,
-        patchId: task.patchId,
         rebootStatus: normalizeRestartType(data?.rebootStatus)
       })
       return

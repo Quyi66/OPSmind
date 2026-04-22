@@ -458,6 +458,7 @@ export const patchInstallApi = {
   /**
    * 查询补丁在指定主机上的重启建议
    * GET /vap/api/vap/v2/patch/reboot-on-host?patchId=...&hostIp=...
+   * patchId 支持逗号分隔多个补丁编号
    */
   getPatchRebootOnHost(params) {
     const searchParams = new URLSearchParams({
@@ -1443,6 +1444,39 @@ export const yumManageApi = {
         cacheBuster: Date.now()
       }
     })
+  },
+
+  /**
+   * 获取 YUM 源配置列表（含采集状态）
+   * GET /vap/api/vap/v2/yum-repo/configs
+   * @returns {Promise}
+   */
+  getYumRepoConfigs() {
+    return apiService.get(`${VAP_API_PREFIX}/v2/yum-repo/configs`, {
+      params: {
+        cacheBuster: Date.now()
+      }
+    })
+  },
+
+  /**
+   * 触发单条 YUM 源采集
+   * POST /vap/api/vap/v2/yum-repo/collect
+   * @param {Object} data - 采集参数
+   * @returns {Promise}
+   */
+  collectYumRepo(data = {}) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/yum-repo/collect`, data)
+  },
+
+  /**
+   * 批量触发 YUM 源采集
+   * POST /vap/api/vap/v2/yum-repo/collect/batch
+   * @param {Object} data - 批量采集参数
+   * @returns {Promise}
+   */
+  collectYumRepoBatch(data = {}) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/yum-repo/collect/batch`, data)
   },
 
   /**

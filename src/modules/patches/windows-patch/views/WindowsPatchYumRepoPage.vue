@@ -5,11 +5,13 @@
         <WinPatchYumRepoSourceTable
           :configs="configList"
           :sources="sourceList"
-          :loading="loadingConfigs || loadingSources"
+          :loading="loadingConfigs || batchCollecting"
           :selected-config-id="selectedConfigId"
           :collecting-config-id="collectingConfigId"
+          :batch-collecting="batchCollecting"
           @refresh="handleRefresh"
           @collect="handleCollect"
+          @collect-all="handleCollectAll"
           @delete-source="handleDeleteSource"
           @open-packages="openPackagesTab"
           @open-compare="openCompareTab"
@@ -43,6 +45,7 @@ import WinPatchYumRepoPackagesPanel from '../components/yum-repo/WinPatchYumRepo
 import WinPatchYumRepoSourceTable from '../components/yum-repo/WinPatchYumRepoSourceTable.vue'
 import { yumRepoApi } from '../yumRepoApi'
 import {
+  buildCollectedYumRepoSources,
   buildYumRepoSourceFromConfig,
   findYumRepoSourceByConfig,
   getYumConfigLabel,
@@ -54,8 +57,8 @@ import {
 
 const activeTab = ref('repos')
 const loadingConfigs = ref(false)
-const loadingSources = ref(false)
 const collectingConfigId = ref('')
+const batchCollecting = ref(false)
 const configList = ref([])
 const sourceList = ref([])
 const selectedConfigId = ref('')
@@ -81,6 +84,11 @@ function syncSelectedRepoId(preferredId = '') {
   selectedRepoId.value = resolveYumRepoId(matchedSource || sourceList.value[0])
 }
 
+function syncSourceList(preferredId = '') {
+  sourceList.value = buildCollectedYumRepoSources(configList.value)
+  syncSelectedRepoId(preferredId)
+}
+
 function upsertSource(source) {
   const sourceId = resolveYumRepoId(source)
   if (!sourceId) return
@@ -96,39 +104,25 @@ function upsertSource(source) {
   )
 }
 
-async function loadConfigs(preferredId = '') {
+async function loadConfigs(preferredConfigId = '', preferredRepoId = '') {
   loadingConfigs.value = true
   try {
     const response = await yumRepoApi.getConfigList()
     const data = unwrapResponse(response)
     configList.value = (Array.isArray(data) ? data : []).map(item => normalizeYumConfigRecord(item))
-    syncSelectedConfigId(preferredId)
+    syncSelectedConfigId(preferredConfigId)
+    syncSourceList(preferredRepoId)
   } catch (error) {
     console.error('加载 Yum 源配置失败:', error)
     ElMessage.error('加载 Yum 源配置失败')
+    sourceList.value = []
   } finally {
     loadingConfigs.value = false
   }
 }
 
-async function loadSources(preferredId = '') {
-  loadingSources.value = true
-  try {
-    const response = await yumRepoApi.getRepos()
-    const data = unwrapResponse(response)
-    sourceList.value = Array.isArray(data) ? data : []
-    syncSelectedRepoId(preferredId)
-  } catch (error) {
-    console.error('加载已采集 Yum 仓库失败:', error)
-    ElMessage.error('加载已采集 Yum 仓库失败')
-  } finally {
-    loadingSources.value = false
-  }
-}
-
 async function handleRefresh() {
-  await loadConfigs(selectedConfigId.value)
-  await loadSources(selectedRepoId.value)
+  await loadConfigs(selectedConfigId.value, selectedRepoId.value)
 }
 
 async function handleCollect(config) {
@@ -143,7 +137,7 @@ async function handleCollect(config) {
     const data = unwrapResponse(response)
     const sourceId = String(data?.sourceId || '').trim()
 
-    await loadSources(sourceId)
+    await loadConfigs(configId, sourceId)
 
     if (sourceId && !sourceList.value.some(item => resolveYumRepoId(item) === sourceId)) {
       upsertSource(buildYumRepoSourceFromConfig(config, sourceId))
@@ -163,6 +157,57 @@ async function handleCollect(config) {
   }
 }
 
+async function handleCollectAll() {
+  const dcDataIds = configList.value.map(item => resolveYumConfigId(item)).filter(Boolean)
+  if (dcDataIds.length === 0) {
+    ElMessage.warning('当前没有可采集的 YUM 源配置')
+    return
+  }
+
+  const configMap = new Map(configList.value.map(item => [resolveYumConfigId(item), item]))
+  batchCollecting.value = true
+
+  try {
+    const response = await yumRepoApi.collectPackagesBatch({ dcDataIds })
+    const data = unwrapResponse(response) || {}
+    const results = Array.isArray(data.results) ? data.results : []
+    const successResults = results.filter(item => String(item?.sourceId || '').trim())
+    const preferredRepoId = String(successResults[0]?.sourceId || selectedRepoId.value || '').trim()
+
+    await loadConfigs(selectedConfigId.value, preferredRepoId)
+
+    successResults.forEach(result => {
+      const config = configMap.get(String(result.dcDataId || '').trim())
+      const sourceId = String(result.sourceId || '').trim()
+
+      if (config && sourceId && !sourceList.value.some(item => resolveYumRepoId(item) === sourceId)) {
+        upsertSource(buildYumRepoSourceFromConfig(config, sourceId))
+      }
+    })
+
+    const successCount = Number(data.successCount || 0)
+    const failCount = Number(data.failCount || 0)
+
+    if (successCount > 0) {
+      ElMessage.success(
+        failCount > 0
+          ? `批量采集已提交：成功 ${successCount} 条，失败 ${failCount} 条`
+          : `批量采集已提交：成功 ${successCount} 条`
+      )
+      return
+    }
+
+    ElMessage.warning(
+      failCount > 0 ? `批量采集提交失败：共 ${failCount} 条失败` : '批量采集未提交任何任务'
+    )
+  } catch (error) {
+    console.error('批量触发 Yum 仓库采集失败:', error)
+    ElMessage.error('批量触发 Yum 仓库采集失败')
+  } finally {
+    batchCollecting.value = false
+  }
+}
+
 async function handleDeleteSource(config) {
   const source = findYumRepoSourceByConfig(config, sourceList.value)
   const sourceId = resolveYumRepoId(source)
@@ -179,7 +224,10 @@ async function handleDeleteSource(config) {
     )
     await yumRepoApi.deleteRepo(sourceId)
     ElMessage.success('采集仓库已删除')
-    await loadSources()
+    await loadConfigs(
+      selectedConfigId.value,
+      selectedRepoId.value === sourceId ? '' : selectedRepoId.value
+    )
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
       console.error('删除 Yum 采集仓库失败:', error)
@@ -218,7 +266,6 @@ function openCompareTab(config) {
 
 onMounted(async () => {
   await loadConfigs()
-  await loadSources()
 })
 </script>
 
