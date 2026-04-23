@@ -1432,6 +1432,22 @@ export const windowsPatchApi = {
  * YUM源管理相关 API
  */
 export const yumManageApi = {
+  buildYumConfigPayload(data = {}) {
+    const payload = {
+      baseurl: String(data?.baseurl || '').trim()
+    }
+
+    const name = String(data?.name || '').trim()
+    const description = String(data?.description || '').trim()
+    const file = String(data?.file || '').trim()
+
+    if (name) payload.name = name
+    if (description) payload.description = description
+    if (file) payload.file = file
+
+    return payload
+  },
+
   /**
    * 获取YUM源配置列表
    * GET /jao/api/jao/dc/data?code=yum_configs
@@ -1480,17 +1496,14 @@ export const yumManageApi = {
   },
 
   /**
-   * 创建/更新YUM源配置
+   * 创建YUM源配置
    * @param {Object} data - YUM源配置数据
    * @returns {Promise}
    */
   createYumConfig(data) {
     return apiService.post(
-      '/jao/api/jao/dc/data',
-      {
-        dataModel: 'yum_configs',
-        dataJson: JSON.stringify(data)
-      },
+      `${VAP_API_PREFIX}/v2/yum-repo/configs`,
+      this.buildYumConfigPayload(data),
       {
         params: {
           cacheBuster: Date.now()
@@ -1501,33 +1514,26 @@ export const yumManageApi = {
 
   /**
    * 更新YUM源配置
-   * @param {string} id - 记录ID
+   * PUT /vap/api/vap/v2/yum-repo/configs/{id}
+   * @param {string} id - dcDataId
    * @param {Object} data - YUM源配置数据
    * @returns {Promise}
    */
   updateYumConfig(id, data) {
-    return apiService.post(
-      '/jao/api/jao/dc/data',
-      {
-        id,
-        dataModel: 'yum_configs',
-        dataJson: JSON.stringify(data)
-      },
-      {
-        params: {
-          cacheBuster: Date.now()
-        }
-      }
+    return apiService.put(
+      `${VAP_API_PREFIX}/v2/yum-repo/configs/${encodeURIComponent(id)}`,
+      this.buildYumConfigPayload(data)
     )
   },
 
   /**
    * 删除YUM源配置
-   * @param {string} id - 记录ID
+   * DELETE /vap/api/vap/v2/yum-repo/configs/{id}
+   * @param {string} id - dcDataId
    * @returns {Promise}
    */
   deleteYumConfig(id) {
-    return apiService.delete(`/jao/api/jao/dc/data/${id}`)
+    return apiService.delete(`${VAP_API_PREFIX}/v2/yum-repo/configs/${encodeURIComponent(id)}`)
   },
 
   /**

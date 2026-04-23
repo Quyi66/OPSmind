@@ -8,6 +8,18 @@ export const yumRepoApi = {
     return yumManageApi.getYumRepoConfigs()
   },
 
+  createConfig(payload = {}) {
+    return yumManageApi.createYumConfig(payload)
+  },
+
+  updateConfig(id, payload = {}) {
+    return yumManageApi.updateYumConfig(id, payload)
+  },
+
+  deleteConfig(id) {
+    return yumManageApi.deleteYumConfig(id)
+  },
+
   getRepos() {
     return apiService.get(`${YUM_REPO_API_PREFIX}/repos`)
   },

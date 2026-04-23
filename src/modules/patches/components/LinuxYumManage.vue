@@ -593,9 +593,7 @@ const formData = reactive({
 })
 
 const formRules = {
-  name: [{ required: true, message: '请输入YUM源名称', trigger: 'blur' }],
-  baseurl: [{ required: true, message: '请输入YUM源地址', trigger: 'blur' }],
-  file: [{ required: true, message: '请输入YUM源文件路径', trigger: 'blur' }]
+  baseurl: [{ required: true, message: '请输入YUM源地址', trigger: 'blur' }]
 }
 
 // 设备选择器对话框
@@ -995,9 +993,8 @@ async function handleSubmit() {
   try {
     await formRef.value?.validate()
     submitting.value = true
-
     if (editingRepo.value) {
-      await yumManageApi.updateYumConfig(editingRepo.value.id, formData)
+      await yumManageApi.updateYumConfig(resolveYumConfigId(editingRepo.value), formData)
       ElMessage.success('更新成功')
     } else {
       await yumManageApi.createYumConfig(formData)
