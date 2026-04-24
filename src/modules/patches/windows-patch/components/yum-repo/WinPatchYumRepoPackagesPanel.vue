@@ -30,6 +30,7 @@
         <el-form-item>
           <el-button type="primary" :disabled="!hasSelectedRepo" @click="handleSearch">搜索</el-button>
           <el-button :disabled="!hasSelectedRepo" @click="handleReset">重置</el-button>
+          <el-button :disabled="!hasSelectedRepo" @click="handleRefresh">刷新</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -43,16 +44,16 @@
     </div>
 
     <template v-else>
-      <div class="ops-action-bar">
+      <!-- <div class="ops-action-bar">
         <el-switch v-model="autoPollingEnabled" active-text="自动轮询 5 秒" />
         <span class="win-patch-selection-text">当前仓库：{{ getYumRepoLabel(currentRepo) }}</span>
         <span style="flex: 1"></span>
         <el-button class="toolbar-icon-btn" circle size="small" :loading="refreshing" @click="handleRefresh">
           <el-icon v-show="!refreshing"><Refresh /></el-icon>
         </el-button>
-      </div>
+      </div> -->
 
-      <el-descriptions :column="2" border size="small" class="win-patch-yum-status">
+      <el-descriptions :column="3" border size="small" class="win-patch-yum-status">
         <el-descriptions-item label="仓库名称">
           {{ getYumRepoLabel(currentRepo) }}
         </el-descriptions-item>
@@ -81,46 +82,37 @@
         </el-descriptions-item>
       </el-descriptions>
 
+      <div v-if="showPollingNotice" class="win-patch-yum-table-notice">
+        <el-icon class="win-patch-yum-table-notice__icon is-loading"><Loading /></el-icon>
+        <span>{{ pollingNoticeText }}</span>
+      </div>
+
       <div class="ops-table-wrapper">
-        <el-table v-loading="loadingPackages" :data="packageList" max-height="calc(100vh - 435px)">
+        <el-table
+          v-loading="tableLoading"
+          :data="packageList"
+          :empty-text="packageEmptyText"
+          :element-loading-text="tableLoadingText"
+          max-height="calc(100vh - 560px)"
+        >
+          <el-table-column label="完整包名" min-width="320" show-overflow-tooltip>
+            <template #default="{ row }">
+              {{ pickValue(row, ['pkgFullNevra', 'pkg_full_nevra'], '-') }}
+            </template>
+          </el-table-column>
           <el-table-column label="包名" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgName', 'pkg_name'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="仓库版本" min-width="120" show-overflow-tooltip>
+          <el-table-column label="版本号" min-width="140" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgVersion', 'pkg_version'], '-') }}
-            </template>
-          </el-table-column>
-          <el-table-column label="仓库Release版本" min-width="120" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ pickValue(row, ['pkgRelease', 'pkg_release'], '-') }}
-            </template>
-          </el-table-column>
-          <el-table-column label="Epoch" width="90" align="center">
-            <template #default="{ row }">
-              {{ pickValue(row, ['pkgEpoch', 'pkg_epoch'], '-') }}
             </template>
           </el-table-column>
           <el-table-column label="架构" width="100" align="center">
             <template #default="{ row }">
               {{ pickValue(row, ['pkgArch', 'pkg_arch'], '-') }}
-            </template>
-          </el-table-column>
-          <!-- <el-table-column label="比较版本" min-width="180" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ pickValue(row, ['pkgCmpver', 'pkg_cmpver'], '-') }}
-            </template>
-          </el-table-column> -->
-          <el-table-column label="完整 NEVRA" min-width="280" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ pickValue(row, ['pkgFullNevra', 'pkg_full_nevra'], '-') }}
-            </template>
-          </el-table-column>
-          <el-table-column label="Repo" min-width="140" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ pickValue(row, ['repoName', 'repo_name'], '-') }}
             </template>
           </el-table-column>
         </el-table>
@@ -145,7 +137,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Loading } from '@element-plus/icons-vue'
 import { parsePageResponse, pickValue } from '../../utils'
 import { YUM_REPO_PAGE_SIZE_OPTIONS } from '../../yumRepoConstants'
 import { yumRepoApi } from '../../yumRepoApi'
@@ -187,6 +179,20 @@ const currentRepo = computed(() =>
 )
 const hasSelectedRepo = computed(() => Boolean(currentRepo.value))
 const refreshing = computed(() => loadingStatus.value || loadingPackages.value)
+const isStatusPollingActive = computed(() => {
+  return props.active && autoPollingEnabled.value && hasSelectedRepo.value && isCollectRunning(statusData.value) && isPolling.value
+})
+const showPollingNotice = computed(() => isStatusPollingActive.value && !loadingPackages.value)
+const pollingNoticeText = computed(() => '正在轮询采集状态，包清单会在采集完成后自动刷新')
+const tableLoading = computed(() => loadingPackages.value)
+const tableLoadingText = computed(() => (loadingPackages.value ? '正在加载包清单...' : ''))
+const packageEmptyText = computed(() => {
+  if (showPollingNotice.value) {
+    return '正在轮询采集状态，请稍后查看包清单'
+  }
+
+  return '暂无包清单数据'
+})
 
 const autoPollingEnabled = ref(true)
 const loadingStatus = ref(false)
@@ -379,6 +385,22 @@ watch(
 
 .win-patch-yum-status {
   margin-bottom: 0;
+}
+
+.win-patch-yum-table-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--el-color-primary) 18%, transparent 82%);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--el-color-primary-light-9) 72%, var(--el-bg-color) 28%);
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+}
+
+.win-patch-yum-table-notice__icon {
+  color: var(--el-color-primary);
 }
 
 .win-patch-selection-text {

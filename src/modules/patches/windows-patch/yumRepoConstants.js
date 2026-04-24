@@ -10,6 +10,7 @@ export const YUM_REPO_OS_FAMILY_OPTIONS = [
 
 export const YUM_REPO_COLLECT_STATUS_LABELS = {
   UNCOLLECTED: '未采集',
+  NOT_COLLECTED: '未采集',
   PENDING: '待执行',
   RUNNING: '采集中',
   SUCCESS: '采集成功',
@@ -18,6 +19,7 @@ export const YUM_REPO_COLLECT_STATUS_LABELS = {
 
 export const YUM_REPO_COLLECT_STATUS_TAG_TYPES = {
   UNCOLLECTED: 'info',
+  NOT_COLLECTED: 'info',
   PENDING: 'info',
   RUNNING: 'warning',
   SUCCESS: 'success',

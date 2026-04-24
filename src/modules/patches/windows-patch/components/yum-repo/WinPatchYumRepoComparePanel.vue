@@ -12,7 +12,7 @@
               style="width: 350px"
             >
               <el-option
-                v-for="item in repos"
+                v-for="item in compareRepoOptions"
                 :key="resolveYumRepoId(item)"
                 :label="getYumRepoLabel(item)"
                 :value="resolveYumRepoId(item)"
@@ -38,46 +38,32 @@
             </el-select>
           </el-form-item>
           <div class="win-patch-filter-actions">
-            <el-button type="primary" :loading="comparing" @click="handleCompare">开始比对</el-button>
+            <el-button type="primary" :loading="comparing" :disabled="!canCompare" @click="handleCompare">开始比对</el-button>
             <el-button @click="handleReset">重置</el-button>
           </div>
-          <div v-if="summaryData" class="win-patch-filter-status">
-            <el-tag :type="summaryData.passed ? 'success' : 'danger'" effect="plain">
-              {{ summaryData.passed ? '全部满足' : '存在不满足项' }}
+          <div v-if="selectedSourceOverview" class="win-patch-filter-status">
+            <el-tag :type="getCollectStatusTagType(selectedSourceOverview)" effect="plain">
+              {{ getCollectStatusLabel(selectedSourceOverview) }}
             </el-tag>
           </div>
         </div>
       </el-form>
     </div>
 
-    <div v-if="!summaryData" class="win-patch-yum-empty">
-      <el-empty description="请选择仓库后执行已扫描补丁比对" />
+    <div v-if="!selectedSourceOverview" class="win-patch-yum-empty">
+      <el-empty description="请选择仓库后查看补丁比对结果" />
     </div>
 
     <template v-else>
-      <!-- <div class="win-patch-yum-summary-grid">
-        <button
-          v-for="card in summaryCards"
-          :key="card.key"
-          type="button"
-          class="win-patch-yum-summary-card"
-          :class="[card.className, { 'is-active': activeSummaryCardKey === card.key }]"
-          @click="handleSummaryCardClick(card.key)"
-        >
-          <div class="win-patch-yum-summary-card__label">{{ card.label }}</div>
-          <div class="win-patch-yum-summary-card__value">{{ card.value }}</div>
-        </button>
-      </div> -->
-
       <el-alert
-        v-if="summaryData.hint"
-        :title="summaryData.hint"
+        v-if="selectedSourceHint"
+        :title="selectedSourceHint"
         type="info"
         :closable="false"
         show-icon
       />
 
-      <div class="win-patch-yum-section">
+      <div v-if="diffRunId" class="win-patch-yum-section">
         <div class="win-patch-yum-section__header">
           <div class="win-patch-yum-section__title">补丁视图</div>
         </div>
@@ -116,7 +102,7 @@
             v-loading="loadingPatchView"
             :data="patchViewList"
             row-key="patchId"
-            max-height="calc(100vh - 390px)"
+            max-height="calc(100vh - 610px)"
             :empty-text="patchViewEmptyText"
           >
             <el-table-column label="补丁 ID" min-width="170" show-overflow-tooltip>
@@ -194,6 +180,10 @@
           />
         </div>
       </div>
+
+      <div v-else class="win-patch-yum-empty">
+        <el-empty description="当前仓库尚未生成补丁比对结果，请先执行已扫描补丁比对" />
+      </div>
     </template>
 
     <WinPatchYumRepoPatchDetailDialog v-model="detailDialogVisible" :patch="detailPatch" />
@@ -214,15 +204,29 @@ import {
 import { YUM_REPO_OS_FAMILY_OPTIONS, YUM_REPO_PAGE_SIZE_OPTIONS } from '../../yumRepoConstants'
 import { yumRepoApi } from '../../yumRepoApi'
 import {
+  getCollectStatusLabel,
+  getCollectStatusTagType,
   getYumRepoLabel,
   resolveYumRepoId,
   unwrapResponse
 } from '../../yumRepoUtils'
 
 const props = defineProps({
+  active: {
+    type: Boolean,
+    default: false
+  },
+  autoCompareToken: {
+    type: Number,
+    default: 0
+  },
   repos: {
     type: Array,
     default: () => []
+  },
+  overviewData: {
+    type: Object,
+    default: null
   },
   selectedRepoId: {
     type: String,
@@ -230,7 +234,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:selectedRepoId'])
+const emit = defineEmits(['update:selectedRepoId', 'refresh-overview'])
 
 const selectedRepoModel = computed({
   get: () => props.selectedRepoId,
@@ -244,11 +248,13 @@ const form = reactive({
 const comparing = ref(false)
 const loadingPatchView = ref(false)
 const diffRunId = ref('')
-const summaryData = ref(null)
 const patchViewList = ref([])
 const detailDialogVisible = ref(false)
 const detailPatch = ref(null)
-const hasAutoCompared = ref(false)
+const autoCompareQueued = ref(false)
+const resultContextId = ref(0)
+const compareRequestId = ref(0)
+const patchViewRequestId = ref(0)
 
 const pagination = reactive({
   page: 1,
@@ -258,8 +264,7 @@ const pagination = reactive({
 
 const patchViewFilters = reactive({
   keyword: '',
-  status: '',
-  diffType: ''
+  status: ''
 })
 
 const PATCH_VIEW_STATUS_OPTIONS = [
@@ -267,143 +272,207 @@ const PATCH_VIEW_STATUS_OPTIONS = [
   { label: '仅不满足', value: 'NOT_SATISFIED' }
 ]
 
-const SUMMARY_CARD_CONFIG = [
-  { key: 'total', label: '总项数', className: 'is-total' },
-  { key: 'available', label: '满足要求', className: 'is-success' },
-  { key: 'missing', label: '缺失', className: 'is-danger' },
-  { key: 'outdated', label: '版本不足', className: 'is-warning' },
-  { key: 'releaseMismatch', label: 'Release 不匹配', className: 'is-release' },
-  { key: 'ahead', label: '更高版本', className: 'is-ahead' }
-]
-
-const SUMMARY_CARD_FILTER_PRESETS = {
-  total: { status: '', diffType: '' },
-  available: { status: 'SATISFIED', diffType: '' },
-  missing: { status: 'NOT_SATISFIED', diffType: 'MISSING' },
-  outdated: { status: 'NOT_SATISFIED', diffType: 'OUTDATED' },
-  releaseMismatch: { status: 'NOT_SATISFIED', diffType: 'RELEASE_MISMATCH' },
-  ahead: { status: '', diffType: 'AHEAD' }
-}
-
-const summaryCards = computed(() =>
-  SUMMARY_CARD_CONFIG.map(item => ({
-    ...item,
-    value: Number(summaryData.value?.[item.key] ?? 0)
-  }))
-)
-
-const activeSummaryCardKey = computed(() => {
-  const status = String(patchViewFilters.status || '').trim()
-  const diffType = String(patchViewFilters.diffType || '').trim()
-
-  return Object.entries(SUMMARY_CARD_FILTER_PRESETS).find(([, preset]) => {
-    return preset.status === status && preset.diffType === diffType
-  })?.[0] || ''
+const overviewSources = computed(() => {
+  const data = unwrapResponse(props.overviewData)
+  return Array.isArray(data?.sources) ? data.sources : []
 })
 
-const activeSummaryFilterLabel = computed(() => {
-  return SUMMARY_CARD_CONFIG.find(item => item.key === activeSummaryCardKey.value)?.label || ''
+const compareRepoOptions = computed(() => (overviewSources.value.length ? overviewSources.value : props.repos))
+
+const selectedSourceOverview = computed(() => {
+  return overviewSources.value.find(item => resolveYumRepoId(item) === String(selectedRepoModel.value || '').trim()) || null
+})
+
+const summaryData = computed(() => selectedSourceOverview.value?.summary || null)
+
+const canCompare = computed(() => {
+  if (!selectedRepoModel.value) return false
+  if (!selectedSourceOverview.value) return true
+  const status = String(pickValue(selectedSourceOverview.value, ['collectStatus', 'collect_status'], '')).trim()
+  return status === '' || status === 'SUCCESS'
 })
 
 const patchViewEmptyText = computed(() => {
-  return activeSummaryFilterLabel.value || patchViewFilters.status || patchViewFilters.keyword
+  return patchViewFilters.status || patchViewFilters.keyword
     ? '当前筛选条件下暂无补丁结果'
     : '暂无补丁比对结果'
 })
 
-function applySummaryCardPreset(key = 'total') {
-  const preset = SUMMARY_CARD_FILTER_PRESETS[key] || SUMMARY_CARD_FILTER_PRESETS.total
-  patchViewFilters.status = preset.status
-  patchViewFilters.diffType = preset.diffType
+const selectedSourceHint = computed(() => {
+  if (!selectedSourceOverview.value) return ''
+  if (!summaryData.value) {
+    return getOverviewHint(selectedSourceOverview.value)
+  }
+  return ''
+})
+
+function requestAutoCompare() {
+  if (autoCompareQueued.value) return
+
+  autoCompareQueued.value = true
+  queueMicrotask(async () => {
+    try {
+      if (!props.active || !selectedRepoModel.value || !canCompare.value) {
+        return
+      }
+
+      await syncSelectedRepoResult({ autoCompare: true })
+    } finally {
+      autoCompareQueued.value = false
+    }
+  })
+}
+
+function getCurrentRepoId() {
+  return String(selectedRepoModel.value || '').trim()
+}
+
+function isCompareRequestCurrent(requestId, contextId, repoId) {
+  return requestId === compareRequestId.value
+    && contextId === resultContextId.value
+    && repoId === getCurrentRepoId()
+}
+
+function isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunId) {
+  return requestId === patchViewRequestId.value
+    && contextId === resultContextId.value
+    && repoId === getCurrentRepoId()
+    && currentDiffRunId === String(diffRunId.value || '').trim()
+}
+
+async function syncSelectedRepoResult(options = {}) {
+  clearResult()
+
+  const nextDiffRunId = String(selectedSourceOverview.value?.diffRunId || '').trim()
+  if (!selectedRepoModel.value) {
+    return
+  }
+
+  if (options.autoCompare && canCompare.value) {
+    await handleCompare({ silentSuccess: true })
+    return
+  }
+
+  if (nextDiffRunId) {
+    diffRunId.value = nextDiffRunId
+    await loadPatchView({ silent: true })
+  }
 }
 
 function clearResult() {
+  resultContextId.value += 1
+  comparing.value = false
+  loadingPatchView.value = false
   diffRunId.value = ''
-  summaryData.value = null
   patchViewList.value = []
   detailDialogVisible.value = false
   detailPatch.value = null
   patchViewFilters.keyword = ''
-  applySummaryCardPreset('total')
+  patchViewFilters.status = ''
   pagination.page = 1
   pagination.pageSize = 20
   pagination.total = 0
 }
 
 async function loadPatchView(options = {}) {
-  if (!diffRunId.value) return
+  const currentDiffRunId = String(diffRunId.value || '').trim()
+  const repoId = getCurrentRepoId()
+  if (!currentDiffRunId) return
+
+  const requestId = ++patchViewRequestId.value
+  const contextId = options.contextId ?? resultContextId.value
 
   loadingPatchView.value = !options.silent
   try {
-    const response = await yumRepoApi.getComparePatchView(diffRunId.value, {
-      diffRunId: diffRunId.value,
+    const response = await yumRepoApi.getComparePatchView(currentDiffRunId, {
+      diffRunId: currentDiffRunId,
       keyword: patchViewFilters.keyword || undefined,
       status: patchViewFilters.status || undefined,
-      diffType: patchViewFilters.diffType || undefined,
       page: pagination.page - 1,
       size: pagination.pageSize
     })
+
+    if (!isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunId)) {
+      return
+    }
+
     const page = parsePageResponse(response)
     patchViewList.value = page.content
     pagination.total = page.total
   } catch (error) {
-    if (!options.silent) {
+    if (!options.silent && isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunId)) {
       console.error('加载补丁视图失败:', error)
       ElMessage.error('加载补丁视图失败')
     }
   } finally {
-    loadingPatchView.value = false
+    if (isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunId)) {
+      loadingPatchView.value = false
+    }
   }
 }
 
 async function handleCompare(options = {}) {
-  if (!selectedRepoModel.value) {
+  const repoId = getCurrentRepoId()
+  if (!repoId) {
     ElMessage.warning('请先选择仓库')
     return
   }
 
+  if (!canCompare.value) {
+    ElMessage.warning('当前仓库尚未采集成功，请先完成采集')
+    return
+  }
+
+  const requestId = ++compareRequestId.value
+  const contextId = resultContextId.value
   comparing.value = true
   try {
     const response = await yumRepoApi.compareScannedPatches({
-      sourceId: selectedRepoModel.value,
+      sourceId: repoId,
       osFamily: form.osFamily || undefined
     })
+
+    if (!isCompareRequestCurrent(requestId, contextId, repoId)) {
+      return
+    }
+
     const data = unwrapResponse(response)
 
     diffRunId.value = String(data?.diffRunId || '').trim()
-    summaryData.value = data
     patchViewFilters.keyword = ''
-    applySummaryCardPreset('total')
+    patchViewFilters.status = ''
     pagination.page = 1
     pagination.pageSize = 20
 
+    emit('refresh-overview')
+
     if (diffRunId.value) {
-      await loadPatchView()
+      await loadPatchView({ contextId })
     }
 
     if (!options.silentSuccess) {
       ElMessage.success('补丁比对已完成')
     }
   } catch (error) {
-    console.error('执行补丁比对失败:', error)
-    ElMessage.error('执行补丁比对失败')
+    if (isCompareRequestCurrent(requestId, contextId, repoId)) {
+      console.error('执行补丁比对失败:', error)
+      ElMessage.error('执行补丁比对失败')
+    }
   } finally {
-    comparing.value = false
+    if (isCompareRequestCurrent(requestId, contextId, repoId)) {
+      comparing.value = false
+    }
   }
 }
 
 function handleReset() {
   form.osFamily = ''
-  clearResult()
-}
-
-async function tryInitialCompare() {
-  if (hasAutoCompared.value || !selectedRepoModel.value || comparing.value) {
+  if (selectedSourceOverview.value?.diffRunId) {
+    diffRunId.value = String(selectedSourceOverview.value.diffRunId || '').trim()
+    loadPatchView({ silent: true })
     return
   }
-
-  hasAutoCompared.value = true
-  await handleCompare({ silentSuccess: true })
+  clearResult()
 }
 
 function handlePageChange(page) {
@@ -429,20 +498,8 @@ async function handlePatchViewFilterChange() {
 
 async function handlePatchViewReset() {
   patchViewFilters.keyword = ''
-  applySummaryCardPreset('total')
+  patchViewFilters.status = ''
   pagination.page = 1
-  await loadPatchView()
-}
-
-async function handleSummaryCardClick(filterKey) {
-  const nextKey = activeSummaryCardKey.value === filterKey ? 'total' : filterKey
-  applySummaryCardPreset(nextKey)
-  pagination.page = 1
-
-  if (!diffRunId.value) {
-    return
-  }
-
   await loadPatchView()
 }
 
@@ -459,16 +516,63 @@ function handleOpenDetail(row) {
   detailDialogVisible.value = true
 }
 
+function getOverviewHint(row) {
+  const status = String(pickValue(row, ['collectStatus', 'collect_status'], '')).trim()
+  if (!status || status === 'NOT_COLLECTED' || status === 'UNCOLLECTED') {
+    return '尚未采集'
+  }
+  if (status === 'PENDING' || status === 'RUNNING') {
+    return '采集中，请稍后查看'
+  }
+  return '尚未执行补丁比对'
+}
+
 watch(
   () => selectedRepoModel.value,
-  async () => {
-    clearResult()
-
-    if (!hasAutoCompared.value) {
-      await tryInitialCompare()
+  async (value, oldValue) => {
+    const shouldAutoCompare = props.active && oldValue !== undefined && value !== oldValue && canCompare.value
+    if (shouldAutoCompare) {
+      requestAutoCompare()
+      return
     }
+
+    await syncSelectedRepoResult()
   },
   { immediate: true }
+)
+
+watch(
+  () => props.autoCompareToken,
+  async (value, oldValue) => {
+    if (value === oldValue || !props.active || !selectedRepoModel.value) {
+      return
+    }
+
+    if (canCompare.value) {
+      requestAutoCompare()
+      return
+    }
+
+    await syncSelectedRepoResult()
+  },
+  { immediate: true }
+)
+
+watch(
+  () => selectedSourceOverview.value?.diffRunId,
+  async value => {
+    const nextDiffRunId = String(value || '').trim()
+    if (autoCompareQueued.value || comparing.value) {
+      return
+    }
+
+    if (!selectedRepoModel.value || !nextDiffRunId || nextDiffRunId === diffRunId.value) {
+      return
+    }
+
+    diffRunId.value = nextDiffRunId
+    await loadPatchView({ silent: true })
+  }
 )
 
 watch(
@@ -529,98 +633,6 @@ watch(
   padding: 40px 0 20px;
 }
 
-.win-patch-yum-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-}
-
-.win-patch-yum-summary-card {
-  --card-accent: var(--el-color-primary);
-  appearance: none;
-  cursor: pointer;
-  text-align: left;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
-  position: relative;
-  overflow: hidden;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--card-accent) 28%, var(--el-border-color-light) 72%);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--card-accent) 8%, var(--el-bg-color) 92%),
-    color-mix(in srgb, var(--card-accent) 2%, var(--el-bg-color) 98%)
-  );
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--card-accent) 12%, transparent 88%);
-}
-
-.win-patch-yum-summary-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--card-accent) 18%, transparent 82%);
-}
-
-.win-patch-yum-summary-card.is-active {
-  border-color: color-mix(in srgb, var(--card-accent) 56%, var(--el-border-color-light) 44%);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--card-accent) 18%, var(--el-bg-color) 82%),
-    color-mix(in srgb, var(--card-accent) 8%, var(--el-bg-color) 92%)
-  );
-  box-shadow: 0 10px 22px color-mix(in srgb, var(--card-accent) 24%, transparent 76%);
-}
-
-.win-patch-yum-summary-card:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--card-accent) 55%, white 45%);
-  outline-offset: 1px;
-}
-
-.win-patch-yum-summary-card.is-total {
-  --card-accent: #6f7f96;
-}
-
-.win-patch-yum-summary-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 3px;
-  background: color-mix(in srgb, var(--card-accent) 80%, white 20%);
-}
-
-.win-patch-yum-summary-card.is-success {
-  --card-accent: var(--el-color-success);
-}
-
-.win-patch-yum-summary-card.is-warning {
-  --card-accent: var(--el-color-warning);
-}
-
-.win-patch-yum-summary-card.is-danger {
-  --card-accent: var(--el-color-danger);
-}
-
-.win-patch-yum-summary-card.is-release {
-  --card-accent: #d97706;
-}
-
-.win-patch-yum-summary-card.is-ahead {
-  --card-accent: #0f766e;
-}
-
-.win-patch-yum-summary-card__label {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-}
-
-.win-patch-yum-summary-card__value {
-  margin-top: 10px;
-  font-size: 34px;
-  line-height: 1;
-  font-weight: 700;
-  color: var(--el-text-color-primary);
-}
-
 .win-patch-yum-section {
   display: flex;
   flex-direction: column;
@@ -630,6 +642,9 @@ watch(
 .win-patch-yum-section__header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .win-patch-yum-section__title {
