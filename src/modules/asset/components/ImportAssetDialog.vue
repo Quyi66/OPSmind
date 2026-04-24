@@ -7,39 +7,35 @@
     @closed="handleClosed"
   >
     <div class="import-content">
-      <el-alert
-        type="info"
-        :closable="false"
-        show-icon
-        style="margin-bottom: 20px"
-      >
-        <template #title>
-          请先下载模板，按照模板格式填写数据后上传
-        </template>
-      </el-alert>
+      <!-- 第一步：下载模板 -->
+      <div class="import-step">
+        <div class="import-step-label">第一步：下载导入模板</div>
+        <el-button @click="handleDownloadTemplate" :disabled="!tenantId">
+          <i class="fa fa-download" style="margin-right: 4px"></i>
+          下载资产信息导入模板
+        </el-button>
+      </div>
 
-      <el-form label-position="top">
-        <el-form-item label="选择文件">
-          <el-upload
-            ref="uploadRef"
-            :auto-upload="false"
-            :limit="1"
-            accept=".xlsx,.xls"
-            :on-change="handleFileChange"
-            :on-remove="handleFileRemove"
-          >
-            <el-button type="primary">
-              <i class="fa fa-upload" style="margin-right: 4px"></i>
-              选择文件
-            </el-button>
-            <template #tip>
-              <div class="el-upload__tip">
-                只能上传 xlsx/xls 文件
-              </div>
-            </template>
-          </el-upload>
-        </el-form-item>
-      </el-form>
+      <!-- 第二步：上传文件 -->
+      <div class="import-step">
+        <div class="import-step-label">第二步：按模板填写数据后上传</div>
+        <el-upload
+          ref="uploadRef"
+          :auto-upload="false"
+          :limit="1"
+          accept=".xlsx,.xls"
+          :on-change="handleFileChange"
+          :on-remove="handleFileRemove"
+        >
+          <el-button type="primary">
+            <i class="fa fa-upload" style="margin-right: 4px"></i>
+            选择文件
+          </el-button>
+          <template #tip>
+            <div class="el-upload__tip">只能上传 xlsx/xls 文件</div>
+          </template>
+        </el-upload>
+      </div>
     </div>
 
     <template #footer>
@@ -60,6 +56,10 @@ const props = defineProps({
   modelValue: {
     type: Boolean,
     default: false
+  },
+  tenantId: {
+    type: String,
+    default: ''
   }
 })
 
@@ -82,6 +82,11 @@ const handleFileChange = (file) => {
 // 文件移除
 const handleFileRemove = () => {
   selectedFile.value = null
+}
+
+// 下载导入模板
+const handleDownloadTemplate = () => {
+  window.open(`/oplus-portal/acm/api/acm/cit/template2/${props.tenantId}`, '_blank', 'noopener')
 }
 
 // 上传
@@ -123,5 +128,15 @@ const handleClosed = () => {
 <style scoped lang="scss">
 .import-content {
   padding: 0 20px;
+}
+
+.import-step {
+  margin-bottom: 24px;
+
+  .import-step-label {
+    font-size: 13px;
+    color: var(--el-text-color-secondary);
+    margin-bottom: 10px;
+  }
 }
 </style>

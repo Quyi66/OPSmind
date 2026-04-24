@@ -1,45 +1,41 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="资产删除导入"
+    title="批量删除资产"
     width="600px"
     :close-on-click-modal="false"
     @closed="handleClosed"
   >
     <div class="delete-import-content">
-      <el-alert
-        type="warning"
-        :closable="false"
-        show-icon
-        style="margin-bottom: 20px"
-      >
-        <template #title>
-          请先下载批量删除模板，按模板填写后再上传执行删除。
-        </template>
-      </el-alert>
+      <!-- 第一步：下载模板 -->
+      <div class="delete-import-step">
+        <div class="delete-import-step-label">第一步：下载批量删除模板</div>
+        <el-button @click="handleDownloadTemplate">
+          <i class="fa fa-download" style="margin-right: 4px"></i>
+          下载批量删除模板
+        </el-button>
+      </div>
 
-      <el-form label-position="top">
-        <el-form-item label="选择文件">
-          <el-upload
-            ref="uploadRef"
-            :auto-upload="false"
-            :limit="1"
-            accept=".xlsx,.xls"
-            :on-change="handleFileChange"
-            :on-remove="handleFileRemove"
-          >
-            <el-button type="danger">
-              <i class="fa fa-upload" style="margin-right: 4px"></i>
-              选择删除文件
-            </el-button>
-            <template #tip>
-              <div class="el-upload__tip">
-                只能上传 xlsx/xls 文件
-              </div>
-            </template>
-          </el-upload>
-        </el-form-item>
-      </el-form>
+      <!-- 第二步：上传文件执行删除 -->
+      <div class="delete-import-step">
+        <div class="delete-import-step-label">第二步：按模板填写后上传执行删除</div>
+        <el-upload
+          ref="uploadRef"
+          :auto-upload="false"
+          :limit="1"
+          accept=".xlsx,.xls"
+          :on-change="handleFileChange"
+          :on-remove="handleFileRemove"
+        >
+          <el-button type="danger">
+            <i class="fa fa-upload" style="margin-right: 4px"></i>
+            选择删除文件
+          </el-button>
+          <template #tip>
+            <div class="el-upload__tip">只能上传 xlsx/xls 文件</div>
+          </template>
+        </el-upload>
+      </div>
     </div>
 
     <template #footer>
@@ -78,6 +74,22 @@ const visible = computed({
 const uploadRef = ref()
 const selectedFile = ref(null)
 const uploading = ref(false)
+
+function downloadPublicFile(relativePath, filename) {
+  const base = String(import.meta.env.BASE_URL || '/')
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`
+  const url = `${normalizedBase}${String(relativePath || '').replace(/^\/+/, '')}`
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+function handleDownloadTemplate() {
+  downloadPublicFile('templates/batch-delete-template.xlsx', '批量删除资产模板.xlsx')
+}
 
 function escapeHtml(value) {
   return String(value || '')
@@ -178,5 +190,15 @@ function handleClosed() {
 <style scoped lang="scss">
 .delete-import-content {
   padding: 0 20px;
+}
+
+.delete-import-step {
+  margin-bottom: 24px;
+
+  .delete-import-step-label {
+    font-size: 13px;
+    color: var(--el-text-color-secondary);
+    margin-bottom: 10px;
+  }
 }
 </style>

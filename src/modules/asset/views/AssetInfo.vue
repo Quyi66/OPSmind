@@ -183,10 +183,6 @@
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="downloadImportTemplate">
-                <i class="fa fa-download asset-data-menu-icon"></i>
-                资产信息导入模板下载
-              </el-dropdown-item>
               <el-dropdown-item command="import">
                 <i class="fa fa-file-import asset-data-menu-icon"></i>
                 导入资产
@@ -195,13 +191,9 @@
                 <i class="fa fa-file-export asset-data-menu-icon"></i>
                 资产信息导出
               </el-dropdown-item>
-              <el-dropdown-item divided command="downloadDeleteTemplate">
-                <i class="fa fa-file-download asset-data-menu-icon"></i>
-                资产批量删除模版下载
-              </el-dropdown-item>
-              <el-dropdown-item command="deleteImport">
+              <el-dropdown-item divided command="deleteImport">
                 <i class="fa fa-trash-alt asset-data-menu-icon"></i>
-                资产删除导入
+                批量删除资产
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -378,7 +370,7 @@
       @saved="handleAutoEntrySaved"
     />
 
-    <ImportAssetDialog v-model="importDialogVisible" @saved="handleAssetDataSaved" />
+    <ImportAssetDialog v-model="importDialogVisible" :tenant-id="currentTenantId" @saved="handleAssetDataSaved" />
 
     <ExportAssetDialog v-model="exportDialogVisible" :default-ci-type="currentType" />
 
@@ -559,21 +551,6 @@ const getConnRateClass = rate => {
   if (!rate) return 'text-secondary'
   if (rate >= 50) return 'text-primary'
   return 'text-warning'
-}
-
-const getPublicFileUrl = (relativePath) => {
-  const base = String(import.meta.env.BASE_URL || '/')
-  const normalizedBase = base.endsWith('/') ? base : `${base}/`
-  return `${normalizedBase}${String(relativePath || '').replace(/^\/+/, '')}`
-}
-
-const downloadPublicFile = (relativePath, filename) => {
-  const link = document.createElement('a')
-  link.href = getPublicFileUrl(relativePath)
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
 }
 
 // 格式化日期时间
@@ -784,25 +761,6 @@ const loadCurrentTenantId = async () => {
   }
 }
 
-const ensureCurrentTenantId = async () => {
-  if (currentTenantId.value) return currentTenantId.value
-  await loadCurrentTenantId()
-  return currentTenantId.value
-}
-
-const handleDownloadImportTemplate = async () => {
-  const tenantId = await ensureCurrentTenantId()
-  if (!tenantId) {
-    ElMessage.warning('正在获取租户信息，请稍后重试')
-    return
-  }
-  window.open(`/oplus-portal/acm/api/acm/cit/template2/${tenantId}`, '_blank', 'noopener')
-}
-
-const handleDownloadDeleteTemplate = () => {
-  downloadPublicFile('templates/batch-delete-template.xlsx', '批量删除资产模板.xlsx')
-}
-
 const handleAssetDataSaved = () => {
   loadOsVersionOptions()
   loadGroupTree()
@@ -810,19 +768,13 @@ const handleAssetDataSaved = () => {
   loadAssetList()
 }
 
-const handleAssetDataCommand = async (command) => {
+const handleAssetDataCommand = (command) => {
   switch (command) {
-    case 'downloadImportTemplate':
-      await handleDownloadImportTemplate()
-      break
     case 'import':
       importDialogVisible.value = true
       break
     case 'export':
       exportDialogVisible.value = true
-      break
-    case 'downloadDeleteTemplate':
-      handleDownloadDeleteTemplate()
       break
     case 'deleteImport':
       deleteImportDialogVisible.value = true
