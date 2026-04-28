@@ -35,7 +35,7 @@
     </div>
 
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="filteredConfigs" max-height="calc(100vh - 250px)">
+      <el-table v-loading="loading" :data="filteredConfigs" max-height="calc(100vh - 520px)">
         <el-table-column label="源名称" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getYumConfigLabel(row) }}
@@ -56,9 +56,9 @@
             {{ getYumConfigFile(row) }}
           </template>
         </el-table-column>
-        <el-table-column label="录入标识" min-width="140" show-overflow-tooltip>
+        <el-table-column label="更新时间" min-width="170" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ getYumConfigMarkerValue(row) }}
+            {{ formatDateTime(row.updateTime || row.createTime) }}
           </template>
         </el-table-column>
         <el-table-column label="采集状态" width="110" align="center">
@@ -73,7 +73,7 @@
             {{ row.packageCount ?? '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="230" fixed="right">
           <template #default="{ row }">
             <el-button
               text
@@ -91,14 +91,13 @@
               比对
             </el-button>
             <el-button text type="primary" size="small" @click.stop="handleEditConfig(row)">编辑</el-button>
-            <!-- <el-button text type="primary" size="small" @click.stop="handleConfigHosts(row)">配置</el-button> -->
             <el-button text type="danger" size="small" @click.stop="handleDeleteConfig(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="editingConfig ? '编辑YUM源' : 'YUM源配置录入'" width="600px">
+    <el-dialog v-model="dialogVisible" :title="editingConfig ? '编辑YUM源配置' : 'YUM源配置录入'" width="600px">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="YUM源名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入YUM源名称" maxlength="50" />
@@ -118,42 +117,6 @@
         <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
-
-    <el-dialog
-      v-model="selectHostDialogVisible"
-      title="选择目标主机"
-      width="500px"
-      :close-on-click-modal="false"
-    >
-      <div class="select-host-dialog-content">
-        <el-form-item label="操作类型" label-width="80px" class="win-patch-config-action">
-          <el-radio-group v-model="configAction">
-            <el-radio value="add">添加YUM源</el-radio>
-            <el-radio value="remove">移除YUM源</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <AcmDeviceSelector
-          v-model="selectedDevices"
-          ci-types="[auto]"
-          :options="{
-            selectMode: 'host,group,tag,input,recently',
-            selector: 'multiple',
-            label: '选择设备'
-          }"
-        />
-      </div>
-      <template #footer>
-        <el-button @click="selectHostDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="jobExecuting"
-          :disabled="selectedDevices.length === 0"
-          @click="executeConfigJob"
-        >
-          开始配置
-        </el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -161,25 +124,18 @@
 import { computed, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
-import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
-import { runJob } from '@/modules/automation/api/command'
-import { useJobPolling } from '@/composables/useJobPolling'
 import { yumRepoApi } from '../../yumRepoApi'
 import {
+  formatDateTime,
   findYumRepoSourceByConfig,
   getCollectStatusLabel,
   getCollectStatusTagType,
   getYumConfigBaseurl,
   getYumConfigFile,
-  getYumConfigMarkerValue,
   getYumConfigLabel,
   resolveYumConfigId,
   resolveYumRepoId
 } from '../../yumRepoUtils'
-
-const YUM_JOB_ID = 'IxL8nr'
-
-const { startPolling } = useJobPolling()
 
 const props = defineProps({
   configs: {
@@ -209,19 +165,16 @@ const emit = defineEmits([
   'collect',
   'collect-all',
   'open-packages',
-  'open-compare'
+  'open-compare',
+  'created',
+  'updated'
 ])
 
 const filterText = ref('')
 const dialogVisible = ref(false)
-const selectHostDialogVisible = ref(false)
 const submitting = ref(false)
-const jobExecuting = ref(false)
 const editingConfig = ref(null)
-const configRepo = ref(null)
-const configAction = ref('add')
 const formRef = ref(null)
-const selectedDevices = ref([])
 const formData = reactive({
   name: '',
   description: '',
@@ -245,6 +198,10 @@ const filteredConfigs = computed(() => {
 
 function getSourceId(row) {
   return resolveYumRepoId(findYumRepoSourceByConfig(row, props.sources))
+}
+
+function normalizeBaseurl(value) {
+  return String(value || '').trim().replace(/\/+$/, '')
 }
 
 function resetForm() {
@@ -279,15 +236,29 @@ async function handleSubmit() {
     submitting.value = true
 
     if (editingConfig.value) {
-      await yumRepoApi.updateConfig(resolveYumConfigId(editingConfig.value), formData)
-      ElMessage.success('更新成功')
-    } else {
-      await yumRepoApi.createConfig(formData)
-      ElMessage.success('添加成功')
-    }
+      const previousConfig = editingConfig.value || {}
+      const previousBaseurl = normalizeBaseurl(previousConfig.baseurl)
+      const response = await yumRepoApi.updateConfig(resolveYumConfigId(previousConfig), formData)
+      const updatedConfig = {
+        ...previousConfig,
+        ...formData,
+        ...(response?.data ?? response ?? {})
+      }
+      const baseurlChanged = previousBaseurl !== normalizeBaseurl(updatedConfig.baseurl)
 
-    dialogVisible.value = false
-    emit('refresh')
+      ElMessage.success(baseurlChanged ? '更新成功，正在自动重新采集并比对' : '更新成功')
+      dialogVisible.value = false
+      emit('updated', {
+        config: updatedConfig,
+        baseurlChanged
+      })
+    } else {
+      const response = await yumRepoApi.createConfig(formData)
+      const newConfig = response?.data ?? response ?? {}
+      ElMessage.success('添加成功，正在自动采集并比对')
+      dialogVisible.value = false
+      emit('created', newConfig)
+    }
   } catch (error) {
     if (error !== false) {
       console.error('提交 Yum 源配置失败:', error)
@@ -312,63 +283,6 @@ async function handleDeleteConfig(row) {
     }
   }
 }
-
-function handleConfigHosts(row) {
-  configRepo.value = row
-  configAction.value = 'add'
-  selectedDevices.value = []
-  selectHostDialogVisible.value = true
-}
-
-async function executeConfigJob() {
-  if (selectedDevices.value.length === 0 || !configRepo.value) {
-    ElMessage.warning('请选择至少一台主机')
-    return
-  }
-
-  jobExecuting.value = true
-
-  try {
-    const hosts = selectedDevices.value.map(host => ({
-      key: host.key || host.id,
-      value: host.value || host.hostname || host.$data_owner,
-      assetType: host.ci_type || host.assetType || 'linux'
-    }))
-
-    const response = await runJob(YUM_JOB_ID, {
-      params: {
-        hosts,
-        func: 'yum-configs',
-        action: configAction.value,
-        repo_name: configRepo.value.name,
-        repo_desc: configRepo.value.description || '',
-        repo_url: configAction.value === 'remove' ? '' : configRepo.value.baseurl,
-        repo_file: configRepo.value.file,
-        repo_status: ''
-      }
-    })
-
-    const runResult = (response?.data || response || [])[0]
-    if (!runResult?.runId) {
-      throw new Error('未获取到任务运行ID')
-    }
-
-    ElMessage.success('配置任务已提交')
-    selectHostDialogVisible.value = false
-
-    startPolling(runResult.runId, {
-      successMessage: '任务执行成功',
-      errorMessage: '任务执行失败',
-      onComplete: () => {
-        jobExecuting.value = false
-      }
-    })
-  } catch (error) {
-    console.error('执行 Yum 源配置任务失败:', error)
-    ElMessage.error(`任务执行失败: ${error?.message || '未知错误'}`)
-    jobExecuting.value = false
-  }
-}
 </script>
 
 <style scoped lang="scss">
@@ -380,14 +294,6 @@ async function executeConfigJob() {
 
 .win-patch-action-spacer {
   flex: 1;
-}
-
-.select-host-dialog-content {
-  padding: 8px;
-}
-
-.win-patch-config-action {
-  margin-bottom: 12px;
 }
 
 </style>

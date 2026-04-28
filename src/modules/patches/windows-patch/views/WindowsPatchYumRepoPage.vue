@@ -19,6 +19,8 @@
           @collect-all="handleCollectAll"
           @open-packages="openPackagesTab"
           @open-compare="openCompareTab"
+          @created="handleConfigCreated"
+          @updated="handleConfigUpdated"
         />
       </el-tab-pane>
 
@@ -33,7 +35,6 @@
       <el-tab-pane label="补丁比对" name="compare" lazy>
         <WinPatchYumRepoComparePanel
           :active="activeTab === 'compare'"
-          :auto-compare-token="compareAutoRunToken"
           :repos="sourceList"
           :overview-data="overviewData"
           v-model:selected-repo-id="selectedRepoId"
@@ -46,7 +47,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import WinPatchYumRepoComparePanel from '../components/yum-repo/WinPatchYumRepoComparePanel.vue'
 import WinPatchYumRepoOverviewSection from '../components/yum-repo/WinPatchYumRepoOverviewSection.vue'
 import WinPatchYumRepoPackagesPanel from '../components/yum-repo/WinPatchYumRepoPackagesPanel.vue'
@@ -72,7 +73,6 @@ const overviewLoading = ref(false)
 const overviewData = ref(null)
 const selectedConfigId = ref('')
 const selectedRepoId = ref('')
-const compareAutoRunToken = ref(0)
 
 async function loadOverview(options = {}) {
   overviewLoading.value = !options.silent
@@ -151,6 +151,24 @@ async function handleRefresh() {
   await loadConfigs(selectedConfigId.value, selectedRepoId.value)
 }
 
+async function handleConfigCreated(newConfig) {
+  await loadConfigs()
+  await handleCollect(newConfig)
+}
+
+async function handleConfigUpdated(payload) {
+  const nextConfig = payload?.config || null
+  const configId = resolveYumConfigId(nextConfig)
+
+  if (!payload?.baseurlChanged) {
+    await loadConfigs(configId || selectedConfigId.value, selectedRepoId.value)
+    return
+  }
+
+  await loadConfigs(configId)
+  await handleCollect(nextConfig)
+}
+
 async function handleOverviewRefresh() {
   await loadOverview({ silent: true })
 }
@@ -167,24 +185,73 @@ async function handleCollect(config) {
     const data = unwrapResponse(response)
     const sourceId = String(data?.sourceId || '').trim()
 
-    await loadConfigs(configId, sourceId)
-
     if (sourceId && !sourceList.value.some(item => resolveYumRepoId(item) === sourceId)) {
       upsertSource(buildYumRepoSourceFromConfig(config, sourceId))
       selectedRepoId.value = sourceId
     }
 
-    ElMessage.success(data?.message || '采集任务已提交')
+    ElMessage.info(data?.message || '采集任务已提交，正在等待采集完成…')
 
-    if (sourceId) {
-      activeTab.value = 'packages'
+    if (!sourceId) {
+      await loadConfigs(configId)
+      return
     }
+
+    await pollCollectThenCompare(sourceId, configId)
   } catch (error) {
     console.error('触发 Yum 仓库采集失败:', error)
     ElMessage.error('触发 Yum 仓库采集失败')
+    await loadConfigs(configId, selectedRepoId.value)
   } finally {
     collectingConfigId.value = ''
   }
+}
+
+async function pollCollectThenCompare(sourceId, configId) {
+  const MAX_ATTEMPTS = 120
+  const INTERVAL = 2500
+
+  for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    await new Promise(resolve => setTimeout(resolve, INTERVAL))
+
+    let statusData
+    try {
+      const resp = await yumRepoApi.getCollectStatus(sourceId)
+      statusData = unwrapResponse(resp)
+    } catch {
+      continue
+    }
+
+    // Situation A: has message but no collectStatus → still running
+    if (statusData?.message && !statusData?.collectStatus) continue
+
+    const cs = String(statusData?.collectStatus || '').trim()
+    if (!cs || cs === 'RUNNING' || cs === 'PENDING') continue
+
+    if (cs === 'SUCCESS') {
+      try {
+        await yumRepoApi.compareScannedPatches({ sourceId })
+      } catch (err) {
+        console.error('触发补丁比对失败:', err)
+        ElMessage.warning('采集成功，但补丁比对触发失败，请手动执行比对')
+        await loadConfigs(configId, sourceId)
+        return
+      }
+      await loadConfigs(configId, sourceId)
+      ElMessage.success('采集完成，已自动继续比对并刷新列表')
+      return
+    }
+
+    if (cs === 'FAILED') {
+      const errMsg = String(statusData?.errorMessage || '').trim()
+      ElMessage.error(`采集失败${errMsg ? '：' + errMsg : '，请检查仓库地址是否可访问'}`)
+      await loadConfigs(configId, sourceId)
+      return
+    }
+  }
+
+  ElMessage.warning('采集等待超时，请稍后手动刷新')
+  await loadConfigs(configId, selectedRepoId.value)
 }
 
 async function handleCollectAll() {
@@ -264,7 +331,6 @@ function openCompareTab(config) {
 
   selectedRepoId.value = sourceId
   activeTab.value = 'compare'
-  compareAutoRunToken.value += 1
 }
 
 onMounted(async () => {

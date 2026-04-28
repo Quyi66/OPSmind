@@ -24,24 +24,16 @@ export const yumRepoApi = {
     return apiService.get(`${YUM_REPO_API_PREFIX}/repos`)
   },
 
-  createRepo(payload = {}) {
-    return apiService.post(`${YUM_REPO_API_PREFIX}/repos`, payload)
-  },
-
-  updateRepo(id, payload = {}) {
-    return apiService.put(`${YUM_REPO_API_PREFIX}/repos/${encodeURIComponent(id)}`, payload)
-  },
-
   deleteRepo(id) {
     return apiService.delete(`${YUM_REPO_API_PREFIX}/repos/${encodeURIComponent(id)}`)
   },
 
   collectPackages(payload = {}) {
-    return apiService.post(`${YUM_REPO_API_PREFIX}/collect`, payload)
+    return yumManageApi.collectYumRepo(payload)
   },
 
   collectPackagesBatch(payload = {}) {
-    return apiService.post(`${YUM_REPO_API_PREFIX}/collect/batch`, payload)
+    return yumManageApi.collectYumRepoBatch(payload)
   },
 
   getCollectStatus(id) {
@@ -84,25 +76,6 @@ export const yumRepoApi = {
           size: params.size ?? 20
         }
       }
-    )
-  },
-
-  getCompareDetails(diffRunId, params = {}) {
-    return apiService.get(
-      `${YUM_REPO_API_PREFIX}/patch-compare/${encodeURIComponent(diffRunId)}/details`,
-      {
-        params: {
-          page: params.page ?? 0,
-          size: params.size ?? 20,
-          diffType: params.diffType || undefined
-        }
-      }
-    )
-  },
-
-  getNotSatisfied(diffRunId) {
-    return apiService.get(
-      `${YUM_REPO_API_PREFIX}/patch-compare/${encodeURIComponent(diffRunId)}/not-satisfied`
     )
   }
 }

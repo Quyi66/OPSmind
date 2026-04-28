@@ -38,7 +38,7 @@
             </el-select>
           </el-form-item>
           <div class="win-patch-filter-actions">
-            <el-button type="primary" :loading="comparing" :disabled="!canCompare" @click="handleCompare">开始比对</el-button>
+            <el-button type="primary" :loading="comparing" :disabled="!canCompare" @click="handleCompare">{{ compareActionLabel }}</el-button>
             <el-button @click="handleReset">重置</el-button>
           </div>
           <div v-if="selectedSourceOverview" class="win-patch-filter-status">
@@ -102,7 +102,7 @@
             v-loading="loadingPatchView"
             :data="patchViewList"
             row-key="patchId"
-            max-height="calc(100vh - 610px)"
+            max-height="calc(100vh - 600px)"
             :empty-text="patchViewEmptyText"
           >
             <el-table-column label="补丁 ID" min-width="170" show-overflow-tooltip>
@@ -182,7 +182,7 @@
       </div>
 
       <div v-else class="win-patch-yum-empty">
-        <el-empty description="当前仓库尚未生成补丁比对结果，请先执行已扫描补丁比对" />
+        <el-empty description="当前仓库暂无补丁比对结果，可等待自动比对完成；如长时间未出现可手动重试" />
       </div>
     </template>
 
@@ -216,10 +216,6 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  autoCompareToken: {
-    type: Number,
-    default: 0
-  },
   repos: {
     type: Array,
     default: () => []
@@ -251,7 +247,6 @@ const diffRunId = ref('')
 const patchViewList = ref([])
 const detailDialogVisible = ref(false)
 const detailPatch = ref(null)
-const autoCompareQueued = ref(false)
 const resultContextId = ref(0)
 const compareRequestId = ref(0)
 const patchViewRequestId = ref(0)
@@ -292,6 +287,10 @@ const canCompare = computed(() => {
   return status === '' || status === 'SUCCESS'
 })
 
+const compareActionLabel = computed(() => {
+  return diffRunId.value || selectedSourceOverview.value?.diffRunId ? '重新执行比对' : '手动执行比对'
+})
+
 const patchViewEmptyText = computed(() => {
   return patchViewFilters.status || patchViewFilters.keyword
     ? '当前筛选条件下暂无补丁结果'
@@ -305,23 +304,6 @@ const selectedSourceHint = computed(() => {
   }
   return ''
 })
-
-function requestAutoCompare() {
-  if (autoCompareQueued.value) return
-
-  autoCompareQueued.value = true
-  queueMicrotask(async () => {
-    try {
-      if (!props.active || !selectedRepoModel.value || !canCompare.value) {
-        return
-      }
-
-      await syncSelectedRepoResult({ autoCompare: true })
-    } finally {
-      autoCompareQueued.value = false
-    }
-  })
-}
 
 function getCurrentRepoId() {
   return String(selectedRepoModel.value || '').trim()
@@ -343,15 +325,11 @@ function isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunI
 async function syncSelectedRepoResult(options = {}) {
   clearResult()
 
-  const nextDiffRunId = String(selectedSourceOverview.value?.diffRunId || '').trim()
-  if (!selectedRepoModel.value) {
+  if (!props.active || !selectedRepoModel.value) {
     return
   }
 
-  if (options.autoCompare && canCompare.value) {
-    await handleCompare({ silentSuccess: true })
-    return
-  }
+  const nextDiffRunId = String(selectedSourceOverview.value?.diffRunId || '').trim()
 
   if (nextDiffRunId) {
     diffRunId.value = nextDiffRunId
@@ -377,7 +355,7 @@ function clearResult() {
 async function loadPatchView(options = {}) {
   const currentDiffRunId = String(diffRunId.value || '').trim()
   const repoId = getCurrentRepoId()
-  if (!currentDiffRunId) return
+  if (!props.active || !currentDiffRunId) return
 
   const requestId = ++patchViewRequestId.value
   const contextId = options.contextId ?? resultContextId.value
@@ -521,35 +499,27 @@ function getOverviewHint(row) {
   if (!status || status === 'NOT_COLLECTED' || status === 'UNCOLLECTED') {
     return '尚未采集'
   }
-  if (status === 'PENDING' || status === 'RUNNING') {
-    return '采集中，请稍后查看'
+  if (status === 'FAILED') {
+    return '最近一次采集失败，请先重新采集'
   }
-  return '尚未执行补丁比对'
+  if (status === 'PENDING' || status === 'RUNNING') {
+    return '采集中，采集成功后会自动继续比对'
+  }
+  return '采集已完成，正在自动生成比对结果；如长时间未出现可手动重试'
 }
 
 watch(
   () => selectedRepoModel.value,
-  async (value, oldValue) => {
-    const shouldAutoCompare = props.active && oldValue !== undefined && value !== oldValue && canCompare.value
-    if (shouldAutoCompare) {
-      requestAutoCompare()
-      return
-    }
-
+  async () => {
     await syncSelectedRepoResult()
   },
   { immediate: true }
 )
 
 watch(
-  () => props.autoCompareToken,
-  async (value, oldValue) => {
-    if (value === oldValue || !props.active || !selectedRepoModel.value) {
-      return
-    }
-
-    if (canCompare.value) {
-      requestAutoCompare()
+  () => props.active,
+  async value => {
+    if (!value) {
       return
     }
 
@@ -562,7 +532,7 @@ watch(
   () => selectedSourceOverview.value?.diffRunId,
   async value => {
     const nextDiffRunId = String(value || '').trim()
-    if (autoCompareQueued.value || comparing.value) {
+    if (!props.active || comparing.value) {
       return
     }
 

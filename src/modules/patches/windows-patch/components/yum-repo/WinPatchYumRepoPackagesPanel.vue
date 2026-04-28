@@ -93,13 +93,8 @@
           :data="packageList"
           :empty-text="packageEmptyText"
           :element-loading-text="tableLoadingText"
-          max-height="calc(100vh - 560px)"
+          max-height="calc(100vh - 555px)"
         >
-          <el-table-column label="完整包名" min-width="320" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ pickValue(row, ['pkgFullNevra', 'pkg_full_nevra'], '-') }}
-            </template>
-          </el-table-column>
           <el-table-column label="包名" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['pkgName', 'pkg_name'], '-') }}
@@ -110,9 +105,14 @@
               {{ pickValue(row, ['pkgVersion', 'pkg_version'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="架构" width="100" align="center">
+          <el-table-column label="架构" width="120" align="center">
             <template #default="{ row }">
               {{ pickValue(row, ['pkgArch', 'pkg_arch'], '-') }}
+            </template>
+          </el-table-column>
+          <el-table-column label="完整包名" min-width="320" show-overflow-tooltip>
+            <template #default="{ row }">
+              {{ pickValue(row, ['pkgFullNevra', 'pkg_full_nevra'], '-') }}
             </template>
           </el-table-column>
         </el-table>
@@ -207,7 +207,7 @@ const pagination = reactive({
   total: 0
 })
 
-const { isPolling, start, stop } = useWinPatchPolling(5000)
+const { isPolling, start, stop } = useWinPatchPolling(3000)
 let statusRequestId = 0
 let packagesRequestId = 0
 

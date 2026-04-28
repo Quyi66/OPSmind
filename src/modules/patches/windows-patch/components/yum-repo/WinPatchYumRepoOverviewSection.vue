@@ -44,55 +44,49 @@
       <div class="yum-ov__placeholder-title">暂无仓库数据</div>
     </div>
 
-    <div v-else class="yum-ov__grid">
-      <button
-        v-for="item in overviewSources"
-        :key="resolveYumRepoId(item)"
-        type="button"
-        class="yum-card"
-        :class="[
-          `yum-card--${getCardTone(item)}`,
-          { 'yum-card--active': isActiveRepo(item) }
-        ]"
-        :aria-pressed="isActiveRepo(item)"
-        :title="getYumRepoLabel(item)"
-        @click="emit('update:selectedRepoId', resolveYumRepoId(item))"
-      >
-        <span class="yum-card__halo" />
-
-        <div class="yum-card__header">
-          <div class="yum-card__name-wrap">
-            <div class="yum-card__name">{{ getYumRepoLabel(item) }}</div>
-            <span v-if="isActiveRepo(item)" class="yum-card__selected-mark">当前</span>
-          </div>
-          <span class="yum-card__state-pill">{{ getCardHeadline(item) }}</span>
-        </div>
-
-        <div
-          class="yum-card__hero-metric"
-          :class="`yum-card__hero-metric--${getCardHero(item).tone}`"
+    <div v-else class="yum-ov__scroller">
+      <div class="yum-ov__grid" :style="{ '--yum-card-count': String(overviewSources.length) }">
+        <button
+          v-for="item in overviewSources"
+          :key="resolveYumRepoId(item)"
+          type="button"
+          class="yum-card"
+          :class="[
+            `yum-card--${getCardTone(item)}`,
+            { 'yum-card--active': isActiveRepo(item) }
+          ]"
+          :aria-pressed="isActiveRepo(item)"
+          :title="getYumRepoLabel(item)"
+          @click="emit('update:selectedRepoId', resolveYumRepoId(item))"
         >
-          <span class="yum-card__hero-label">{{ getCardHero(item).label }}</span>
-          <div class="yum-card__hero-value">{{ getCardHero(item).value }}</div>
-        </div>
+          <span class="yum-card__halo" />
 
-        <div v-if="item.summary" class="yum-card__metrics">
-          <div
-            v-for="metric in getSummaryItems(item.summary)"
-            :key="metric.key"
-            class="yum-card__metric"
-            :class="`yum-card__metric--${metric.tone}`"
-          >
-            <span class="yum-card__metric-label">{{ metric.label }}</span>
-            <strong class="yum-card__metric-value">{{ metric.value }}</strong>
+          <div class="yum-card__header">
+            <div class="yum-card__name-wrap">
+              <div class="yum-card__name">{{ getYumRepoLabel(item) }}</div>
+              <span v-if="isActiveRepo(item)" class="yum-card__selected-mark">当前</span>
+            </div>
+            <span class="yum-card__state-pill">{{ getCardHeadline(item) }}</span>
           </div>
-        </div>
 
-        <div v-else class="yum-card__empty-hint">
-          <span class="yum-card__empty-dot" />
-          <span>{{ getOverviewHint(item) }}</span>
-        </div>
-      </button>
+          <div
+            class="yum-card__hero-metric"
+            :class="`yum-card__hero-metric--${getCardHero(item).tone}`"
+          >
+            <span class="yum-card__hero-label">{{ getCardHero(item).label }}</span>
+            <div class="yum-card__hero-value">{{ getCardHero(item).value }}</div>
+          </div>
+
+          <div v-if="item.summary" class="yum-card__footnote">
+            {{ getCardFootnote(item) }}
+          </div>
+
+          <div v-else class="yum-card__empty-hint">
+            <span class="yum-card__empty-dot" />
+            <span>{{ getOverviewHint(item) }}</span>
+          </div>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -130,64 +124,8 @@ const overviewSources = computed(() => {
   return Array.isArray(data?.sources) ? data.sources : []
 })
 
-const overviewStats = computed(() => {
-  const data = unwrapResponse(props.overviewData) || {}
-  return {
-    totalSources: Number(data.totalSources || 0),
-    passedSources: Number(data.passedSources || 0),
-    failedSources: Number(data.failedSources || 0)
-  }
-})
-
-const overviewPendingSources = computed(() => {
-  const pending = overviewStats.value.totalSources - overviewStats.value.passedSources - overviewStats.value.failedSources
-  return pending > 0 ? pending : 0
-})
-
-const overviewComparedSources = computed(() => overviewStats.value.passedSources + overviewStats.value.failedSources)
-
-const overviewCoverageLabel = computed(() => {
-  if (!overviewStats.value.totalSources) return '0%'
-  return `${Math.round((overviewComparedSources.value / overviewStats.value.totalSources) * 100)}%`
-})
-
-const overviewProgressNote = computed(() => {
-  if (!overviewStats.value.totalSources) return '暂无可统计仓库'
-
-  return `已生成比对结果 ${formatMetricValue(overviewComparedSources.value)} / ${formatMetricValue(overviewStats.value.totalSources)} 个仓库`
-})
-
-const overviewProgressSegments = computed(() => [
-  {
-    key: 'passed',
-    label: '通过',
-    value: overviewStats.value.passedSources,
-    rate: formatSegmentRate(overviewStats.value.passedSources),
-    tone: 'success'
-  },
-  {
-    key: 'failed',
-    label: '风险',
-    value: overviewStats.value.failedSources,
-    rate: formatSegmentRate(overviewStats.value.failedSources),
-    tone: 'danger'
-  },
-  {
-    key: 'pending',
-    label: '待比对',
-    value: overviewPendingSources.value,
-    rate: formatSegmentRate(overviewPendingSources.value),
-    tone: 'idle'
-  }
-])
-
 function formatMetricValue(value) {
   return formatNumber(value)
-}
-
-function formatSegmentRate(value) {
-  if (!overviewStats.value.totalSources) return '0%'
-  return `${Math.round((Number(value || 0) / overviewStats.value.totalSources) * 100)}%`
 }
 
 function isActiveRepo(row) {
@@ -214,8 +152,8 @@ function getOverviewHint(row) {
   const status = getCollectStatus(row)
   if (!status || status === 'NOT_COLLECTED' || status === 'UNCOLLECTED') return '尚未采集软件包清单'
   if (status === 'FAILED') return '最近一次采集失败，请重新执行'
-  if (status === 'PENDING' || status === 'RUNNING') return '仓库正在采集中，完成后自动显示汇总'
-  return '已采集，等待发起补丁比对'
+  if (status === 'PENDING' || status === 'RUNNING') return '仓库正在采集中，完成后会自动继续比对'
+  return '已采集，正在自动生成比对结果；如长时间未出现可手动重试'
 }
 
 function getCardTone(row) {
@@ -245,7 +183,7 @@ function getCardHero(row) {
 
   if (status === 'PENDING' || status === 'RUNNING') {
     return {
-      value: '... ',
+      value: '...',
       label: '采集中',
       tone: 'idle'
     }
@@ -263,7 +201,7 @@ function getCardHero(row) {
     if (status === 'SUCCESS') {
       return {
         value: '0',
-        label: '待比对',
+        label: '待自动比对',
         tone: 'ready'
       }
     }
@@ -275,69 +213,28 @@ function getCardHero(row) {
     }
   }
 
-  const installablePatches = pickValue(summary, ['installablePatches', 'installable_patches'], 0)
-  const notInstallablePatches = pickValue(summary, ['notInstallablePatches', 'not_installable_patches'], 0)
   const missingPackages = pickValue(summary, ['missingPackages', 'missing_packages'], 0)
-  const outdatedPackages = pickValue(summary, ['outdatedPackages', 'outdated_packages'], 0)
-
-  if (getPassedState(row)) {
-    return {
-      value: formatMetricValue(installablePatches),
-      label: '可安装补丁',
-      tone: 'success'
-    }
-  }
-
-  if (Number(missingPackages) > 0) {
-    return {
-      value: formatMetricValue(missingPackages),
-      label: '缺失包',
-      tone: 'warning'
-    }
-  }
-
-  if (Number(outdatedPackages) > 0) {
-    return {
-      value: formatMetricValue(outdatedPackages),
-      label: '版本不满足',
-      tone: 'danger'
-    }
-  }
 
   return {
-    value: formatMetricValue(notInstallablePatches),
-    label: '不可安装补丁',
-    tone: 'danger'
+    value: formatMetricValue(missingPackages),
+    label: '缺失包',
+    tone: getPassedState(row) ? 'success' : 'danger'
   }
 }
 
-function getSummaryItems(summary) {
-  return [
-    {
-      key: 'notInstallablePatches',
-      label: '不可安装',
-      value: formatMetricValue(pickValue(summary, ['notInstallablePatches', 'not_installable_patches'], 0)),
-      tone: 'danger'
-    },
-    {
-      key: 'installablePatches',
-      label: '可安装',
-      value: formatMetricValue(pickValue(summary, ['installablePatches', 'installable_patches'], 0)),
-      tone: 'success'
-    },
-    {
-      key: 'totalPatches',
-      label: '补丁总数',
-      value: formatMetricValue(pickValue(summary, ['totalPatches', 'total_patches'], 0)),
-      tone: 'neutral'
-    },
-    {
-      key: 'outdatedPackages',
-      label: '版本不满足',
-      value: formatMetricValue(pickValue(summary, ['outdatedPackages', 'outdated_packages'], 0)),
-      tone: 'danger'
-    }
-  ]
+function getCardFootnote(row) {
+  const packageCount = Number(pickValue(row, ['packageCount', 'package_count'], 0) || 0)
+  const groupByOs = Array.isArray(row?.groupByOs) ? row.groupByOs.length : 0
+
+  if (packageCount > 0) {
+    return `已采集 ${formatMetricValue(packageCount)} 个软件包`
+  }
+
+  if (groupByOs > 1) {
+    return `已按 ${formatMetricValue(groupByOs)} 个 OS 维度汇总`
+  }
+
+  return '已完成最近一次补丁比对'
 }
 </script>
 
@@ -345,6 +242,7 @@ function getSummaryItems(summary) {
 .yum-ov {
   --yum-border: color-mix(in srgb, var(--el-border-color) 84%, var(--el-text-color-primary) 16%);
   --yum-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  --yum-card-min-width: 282px;
 
   display: flex;
   flex-direction: column;
@@ -513,10 +411,62 @@ function getSummaryItems(summary) {
   color: var(--el-text-color-primary);
 }
 
+.yum-ov__scroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 14px;
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+
+.yum-ov__scroller:hover,
+.yum-ov__scroller:focus-within {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--el-border-color-dark) 70%, var(--el-text-color-secondary) 30%) transparent;
+}
+
+.yum-ov__scroller::-webkit-scrollbar {
+  height: 0;
+}
+
+.yum-ov__scroller:hover::-webkit-scrollbar,
+.yum-ov__scroller:focus-within::-webkit-scrollbar {
+  height: 10px;
+}
+
+.yum-ov__scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.yum-ov__scroller::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.yum-ov__scroller:hover::-webkit-scrollbar-thumb,
+.yum-ov__scroller:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--el-border-color-dark) 70%, var(--el-text-color-secondary) 30%);
+}
+
+.yum-ov__scroller:hover::-webkit-scrollbar-thumb:hover,
+.yum-ov__scroller:focus-within::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--el-text-color-secondary) 78%, var(--el-text-color-primary) 22%);
+}
+
 .yum-ov__grid {
+  --yum-card-count: 1;
+  --yum-card-gap: 12px;
+
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(var(--yum-card-count), minmax(var(--yum-card-min-width), 1fr));
+  gap: var(--yum-card-gap);
+  width: max(
+    100%,
+    calc(
+      var(--yum-card-count) * var(--yum-card-min-width) +
+      (var(--yum-card-count) - 1) * var(--yum-card-gap)
+    )
+  );
 }
 
 .yum-card {
@@ -524,14 +474,17 @@ function getSummaryItems(summary) {
   --card-surface: linear-gradient(180deg, color-mix(in srgb, var(--card-accent) 6%, var(--el-bg-color) 94%), color-mix(in srgb, var(--card-accent) 10%, var(--el-bg-color) 90%));
   --card-border: color-mix(in srgb, var(--card-accent) 22%, var(--el-border-color) 78%);
   --card-pill-bg: color-mix(in srgb, var(--card-accent) 12%, transparent 88%);
-  --card-shadow: 0 10px 22px rgba(15, 23, 42, 0.07);
+  --card-shadow: 0 8px 18px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --card-shadow-hover: 0 14px 28px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.05);
+  --card-shadow-active: 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 68%, transparent 32%), 0 16px 30px rgba(15, 23, 42, 0.1), 0 5px 12px rgba(15, 23, 42, 0.06);
 
   position: relative;
   appearance: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 0;
+  min-width: 0;
+  height: 100%;
   padding: 14px;
   border: 1px solid var(--card-border);
   border-radius: 16px;
@@ -545,7 +498,7 @@ function getSummaryItems(summary) {
 
 .yum-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.1);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .yum-card:focus-visible {
@@ -561,7 +514,7 @@ function getSummaryItems(summary) {
 
 .yum-card--active {
   border-color: color-mix(in srgb, var(--el-color-primary) 58%, var(--card-accent) 42%);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 68%, transparent 32%), 0 16px 28px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--card-shadow-active);
 }
 
 .yum-card__halo {
@@ -572,15 +525,15 @@ function getSummaryItems(summary) {
   height: 96px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--card-accent) 20%, transparent 80%);
-  filter: blur(8px);
-  opacity: 0.65;
+  filter: blur(10px);
+  opacity: 0.48;
   pointer-events: none;
 }
 
 .yum-card__header,
 .yum-card__name,
 .yum-card__hero-metric,
-.yum-card__metrics,
+.yum-card__footnote,
 .yum-card__empty-hint {
   position: relative;
   z-index: 1;
@@ -670,49 +623,21 @@ function getSummaryItems(summary) {
   color: color-mix(in srgb, var(--hero-accent) 72%, var(--el-text-color-primary) 28%);
 }
 
-.yum-card__metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.yum-card__metric {
-  --metric-accent: var(--el-text-color-regular);
-
+.yum-card__footnote {
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: calc(50% - 3px);
-  flex: 1 1 calc(50% - 3px);
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--metric-accent) 14%, transparent 86%);
-  background: color-mix(in srgb, var(--metric-accent) 7%, transparent 93%);
-}
-
-.yum-card__metric--neutral { --metric-accent: var(--el-color-primary); }
-.yum-card__metric--success { --metric-accent: var(--el-color-success); }
-.yum-card__metric--warning { --metric-accent: var(--el-color-warning); }
-.yum-card__metric--danger { --metric-accent: var(--el-color-danger); }
-
-.yum-card__metric-label {
-  font-size: 10px;
-  font-weight: 600;
+  min-height: 32px;
+  margin-top: auto;
   color: var(--el-text-color-secondary);
-}
-
-.yum-card__metric-value {
-  font-size: 15px;
-  line-height: 1;
-  font-weight: 700;
-  color: color-mix(in srgb, var(--metric-accent) 72%, var(--el-text-color-primary) 28%);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .yum-card__empty-hint {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  margin-top: auto;
   min-height: 40px;
   padding: 10px 12px;
   border-radius: 12px;
@@ -738,6 +663,10 @@ function getSummaryItems(summary) {
 }
 
 @media (max-width: 720px) {
+  .yum-ov {
+    --yum-card-min-width: 220px;
+  }
+
   .yum-ov__hero,
   .yum-ov__placeholder,
   .yum-card {
@@ -754,10 +683,6 @@ function getSummaryItems(summary) {
 
   .yum-ov__progress-meta {
     gap: 6px 12px;
-  }
-
-  .yum-ov__grid {
-    grid-template-columns: 1fr;
   }
 
   .yum-card__hero-metric {

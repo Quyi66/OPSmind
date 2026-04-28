@@ -53,9 +53,7 @@ export function resolveYumConfigId(row) {
 export function normalizeYumConfigRecord(row) {
   const normalizedRow = row && typeof row === 'object' ? row : {}
   const dataJson = parseYumConfigJson(pickValue(normalizedRow, ['dataJson', 'data_json'], {}))
-  const dataOwnerId = String(
-    pickValue(normalizedRow, ['dataOwnerId', 'data_owner_id', 'hostId', 'host_id'], '')
-  ).trim()
+  const dataOwnerId = String(pickValue(normalizedRow, ['dataOwnerId', 'data_owner_id'], '')).trim()
 
   return {
     ...normalizedRow,
@@ -99,10 +97,6 @@ export function getYumConfigBaseurl(row) {
 
 export function getYumConfigFile(row) {
   return normalizeYumConfigRecord(row).file || '-'
-}
-
-export function getYumConfigMarkerValue(row) {
-  return normalizeYumConfigRecord(row).dataOwnerId || '-'
 }
 
 export function buildYumRepoSourceFromConfig(row, sourceId = '') {
@@ -174,24 +168,6 @@ export function getYumRepoOsLabel(row) {
   const family = pickValue(row, ['osFamily', 'os_family'], '-')
   const major = pickValue(row, ['osMajor', 'os_major'], '')
   return major ? `${family} ${major}` : family
-}
-
-export function buildYumRepoPayload(form = {}) {
-  const payload = {
-    repoUrl: String(form.repoUrl || '').trim()
-  }
-
-  const sourceName = String(form.sourceName || '').trim()
-  const repoId = String(form.repoId || '').trim()
-  const osFamily = String(form.osFamily || '').trim()
-  const osMajor = String(form.osMajor || '').trim()
-
-  if (sourceName) payload.sourceName = sourceName
-  if (repoId) payload.repoId = repoId
-  if (osFamily) payload.osFamily = osFamily
-  if (osMajor) payload.osMajor = osMajor
-
-  return payload
 }
 
 export function getCollectStatusValue(rowOrValue) {
