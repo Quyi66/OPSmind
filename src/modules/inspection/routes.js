@@ -46,15 +46,6 @@ export const CAC_ROUTE_DEFS = [
     component: () => import('./views/StructuralDiagram.vue')
   },
   {
-    key: 'config',
-    path: 'config',
-    name: 'cac-config',
-    title: '导出配置',
-    navLabel: '导出配置',
-    icon: 'fad fa-fw fa-cog',
-    component: () => import('./views/AssetModelConfig.vue')
-  },
-  {
     key: 'email',
     path: 'email',
     name: 'cac-email',

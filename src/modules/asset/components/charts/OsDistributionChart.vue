@@ -61,21 +61,31 @@ let chartInstance = null
 let fullscreenChartInstance = null
 let resizeObserver = null
 
-const distroColorMap = {
+const distroFamilyColorMap = {
   centos: '#2563EB',
   windows: '#10B981',
   anolis: '#06B6D4',
   redhat: '#EF4444',
   debian: '#8B5CF6',
   ubuntu: '#F97316',
-  linux: '#0EA5E9'
+  linux: '#0EA5E9',
+  kylin: '#14B8A6'
+}
+
+const fallbackColors = ['#0EA5E9', '#F59E0B', '#6366F1', '#14B8A6', '#F97316', '#A855F7']
+const unknownDistroColor = '#94A3B8'
+
+function isUnknownDistro(name) {
+  const normalized = String(name || '').trim().toLowerCase()
+  return !normalized || ['null', 'n/a', 'na', 'unknown', '未知', '-'].includes(normalized)
 }
 
 function resolveDistroColor(name, index) {
+  if (isUnknownDistro(name)) return unknownDistroColor
+
   const normalized = String(name || '').toLowerCase()
-  const exactMatch = Object.keys(distroColorMap).find(key => normalized.includes(key))
-  if (exactMatch) return distroColorMap[exactMatch]
-  const fallbackColors = ['#2563EB', '#10B981', '#06B6D4', '#F59E0B', '#EF4444', '#8B5CF6']
+  const exactMatch = Object.keys(distroFamilyColorMap).find(key => normalized.includes(key))
+  if (exactMatch) return distroFamilyColorMap[exactMatch]
   return fallbackColors[index % fallbackColors.length]
 }
 
@@ -85,109 +95,163 @@ function truncateLegendText(text, maxLength) {
   return `${normalized.slice(0, maxLength)}...`
 }
 
+function getContainerWidth() {
+  return (fullscreenVisible.value ? fullscreenChartRef.value?.clientWidth : 0) || chartRef.value?.clientWidth || 0
+}
+
+function getContainerHeight() {
+  return (fullscreenVisible.value ? fullscreenChartRef.value?.clientHeight : 0) || chartRef.value?.clientHeight || 0
+}
+
 function getChartOption() {
-  const total = props.data.reduce((sum, item) => sum + Number(item.count || 0), 0)
-  const chartWidth = chartRef.value?.clientWidth || 0
-  const compactLayout = chartWidth > 0 && chartWidth < 500
-  const narrowLayout = chartWidth > 0 && chartWidth < 620
-  const legendMaxLength = compactLayout ? 12 : narrowLayout ? 32 : 36
-  const legendColor = isDark.value ? '#cbd5e1' : '#475569'
+  const chartWidth = getContainerWidth()
+  const chartHeight = getContainerHeight()
+  const compactLayout = chartWidth > 0 && chartWidth < 520
+  const visibleCount = compactLayout ? 7 : 9
+  const minRowHeight = compactLayout ? 24 : 22
+  const sortedData = [...props.data]
+    .map(item => ({
+      os_distro: item.os_distro,
+      count: Number(item.count || 0)
+    }))
+    .sort((a, b) => b.count - a.count)
+    .map((item, index) => ({
+      ...item,
+      color: resolveDistroColor(item.os_distro, index)
+    }))
+  const total = sortedData.reduce((sum, item) => sum + item.count, 0)
+  const axisColor = isDark.value ? 'rgba(148, 163, 184, 0.82)' : '#64748b'
+  const splitLineColor = isDark.value ? 'rgba(148, 163, 184, 0.16)' : 'rgba(148, 163, 184, 0.24)'
+  const labelColor = isDark.value ? '#f8fafc' : '#0f172a'
   const tooltipBg = isDark.value ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)'
-  const seriesData = props.data.map((item, index) => ({
-    value: Number(item.count || 0),
-    name: item.os_distro,
-    itemStyle: { color: resolveDistroColor(item.os_distro, index) }
-  }))
+  const availableHeight = Math.max(0, chartHeight - 36)
+  const needsDataZoom = sortedData.length > visibleCount || (availableHeight > 0 && sortedData.length * minRowHeight > availableHeight)
 
   return {
     backgroundColor: 'transparent',
     tooltip: {
-      trigger: 'item',
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      },
       backgroundColor: tooltipBg,
-      borderColor: 'rgba(148, 163, 184, 0.2)',
-      textStyle: { color: isDark.value ? '#f8fafc' : '#0f172a' },
+      borderColor: splitLineColor,
+      textStyle: { color: labelColor },
       formatter: params => {
-        const percent = total ? Math.round((params.value / total) * 100) : 0
-        return `${params.name}<br/>数量: ${params.value}<br/>占比: ${percent}%`
+        const current = params[0]?.data?.raw
+        if (!current) return ''
+        const percent = total ? Math.round((current.count / total) * 100) : 0
+        return `${current.os_distro}<br/>数量: ${current.count}<br/>占比: ${percent}%`
       },
       extraCssText: 'box-shadow: 0 12px 28px rgba(15,23,42,0.16); border-radius: 12px;'
     },
-    legend: {
-      orient: compactLayout ? 'horizontal' : 'vertical',
-      right: compactLayout ? 'center' : 0,
-      left: compactLayout ? 'center' : 'auto',
-      top: compactLayout ? 'bottom' : 'center',
-      width: compactLayout ? '92%' : narrowLayout ? 132 : 168,
-      icon: 'circle',
-      itemWidth: 10,
-      itemHeight: 10,
-      itemGap: compactLayout ? 14 : 10,
-      textStyle: {
-        color: legendColor,
-        fontSize: compactLayout ? 11 : 12
+    grid: {
+      left: '4%',
+      right: compactLayout ? '18%' : needsDataZoom ? '14%' : '12%',
+      bottom: '6%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'value',
+      minInterval: 1,
+      splitNumber: 4,
+      axisLabel: {
+        color: axisColor,
+        fontSize: 11,
+        formatter: value => `${Math.round(value)}`
       },
-      formatter: name => {
-        const item = props.data.find(entry => entry.os_distro === name)
-        const shortName = truncateLegendText(name, legendMaxLength)
-        if (compactLayout) {
-          return item ? `${shortName} ${item.count}` : shortName
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: {
+        lineStyle: {
+          color: splitLineColor,
+          type: 'dashed'
         }
-        return `${shortName}${item ? `  ${item.count}` : ''}`
       }
     },
-    graphic: total
+    yAxis: {
+      type: 'category',
+      inverse: true,
+      data: sortedData.map(item => item.os_distro),
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: {
+        color: axisColor,
+        fontSize: 11,
+        width: compactLayout ? 82 : 110,
+        overflow: 'truncate',
+        formatter: value => truncateLegendText(value, compactLayout ? 10 : 16)
+      }
+    },
+    dataZoom: needsDataZoom
       ? [
           {
-            type: 'text',
-            left: compactLayout ? 'center' : narrowLayout ? '28%' : '32%',
-            top: compactLayout ? '38%' : '42%',
-            style: {
-              text: `${total}`,
-              textAlign: 'center',
-              fill: isDark.value ? '#f8fafc' : '#0f172a',
-              fontSize: compactLayout ? 22 : 24,
-              fontWeight: 700
-            }
+            type: 'inside',
+            yAxisIndex: 0,
+            zoomLock: true,
+            startValue: 0,
+            endValue: visibleCount - 1
           },
           {
-            type: 'text',
-            left: compactLayout ? 'center' : narrowLayout ? '25%' : '29%',
-            top: compactLayout ? '49%' : '54%',
-            style: {
-              text: '资产总量',
-              textAlign: 'center',
-              fill: legendColor,
-              fontSize: compactLayout ? 11 : 12
-            }
+            type: 'slider',
+            yAxisIndex: 0,
+            width: 10,
+            right: 0,
+            top: '18%',
+            bottom: '8%',
+            brushSelect: false,
+            borderColor: 'transparent',
+            fillerColor: isDark.value ? 'rgba(74, 222, 128, 0.18)' : 'rgba(34, 197, 94, 0.16)',
+            backgroundColor: isDark.value ? 'rgba(51, 65, 85, 0.22)' : 'rgba(226, 232, 240, 0.72)',
+            moveHandleSize: 0,
+            showDetail: false
           }
         ]
       : [],
     series: [
       {
         name: '主机数量',
-        type: 'pie',
-        radius: compactLayout ? ['44%', '64%'] : narrowLayout ? ['48%', '69%'] : ['52%', '74%'],
-        center: compactLayout ? ['50%', '40%'] : narrowLayout ? ['31%', '52%'] : ['33%', '52%'],
-        avoidLabelOverlap: true,
-        minAngle: 8,
+        type: 'bar',
+        barMaxWidth: compactLayout ? 16 : 20,
+        showBackground: true,
+        backgroundStyle: {
+          color: isDark.value ? 'rgba(51, 65, 85, 0.42)' : 'rgba(226, 232, 240, 0.8)',
+          borderRadius: 999
+        },
         itemStyle: {
-          borderColor: isDark.value ? '#0f172a' : '#ffffff',
-          borderWidth: 4,
+          borderRadius: 999,
           shadowBlur: 10,
-          shadowColor: 'rgba(15, 23, 42, 0.08)'
+          shadowColor: 'rgba(15, 23, 42, 0.08)',
+          shadowOffsetY: 4
         },
         label: {
-          show: false
-        },
-        labelLine: {
-          show: false
+          show: true,
+          position: 'right',
+          distance: 6,
+          color: labelColor,
+          fontSize: 11,
+          fontWeight: 600,
+          formatter: params => {
+            const current = params.data?.raw
+            const percent = current && total ? Math.round((current.count / total) * 100) : 0
+            return `${params.value} / ${percent}%`
+          }
         },
         emphasis: {
-          scale: true,
-          scaleSize: 6
+          itemStyle: {
+            shadowBlur: 16,
+            shadowColor: 'rgba(15, 23, 42, 0.14)'
+          }
         },
         cursor: 'pointer',
-        data: seriesData
+        data: sortedData.map(item => ({
+          value: item.count,
+          raw: item,
+          itemStyle: {
+            color: item.color
+          }
+        }))
       }
     ]
   }
@@ -198,7 +262,7 @@ function bindChartEvents(instance) {
   instance.off('click')
   instance.on('click', params => {
     emit('click', {
-      os_distro: props.data[params.dataIndex]?.os_distro
+      os_distro: params.data?.raw?.os_distro
     })
   })
 }

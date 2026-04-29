@@ -180,6 +180,10 @@ import axios from 'axios'
 import { apiService } from '@/core/api'
 import { authService } from '@/core/auth'
 import { templateApi, jobApi } from '../api'
+import {
+  buildResultListRouteQuery,
+  parseResultListRouteState
+} from '../utils/result-list-route-state'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 const router = useRouter()
@@ -380,6 +384,25 @@ async function loadResults() {
   }
 }
 
+function applyRouteState(query = {}) {
+  const state = parseResultListRouteState(query)
+  selectedTemplateId.value = state.templateId
+  templateSearchText.value = state.templateSearchText
+  filters.keyword = state.keyword
+  pagination.value.page = state.page
+  pagination.value.size = state.size
+}
+
+function getCurrentRouteStateQuery() {
+  return buildResultListRouteQuery({
+    templateId: selectedTemplateId.value,
+    templateSearchText: templateSearchText.value,
+    keyword: filters.keyword,
+    page: pagination.value.page,
+    size: pagination.value.size
+  })
+}
+
 /**
  * 选择模板
  */
@@ -460,36 +483,41 @@ function getBasePath() {
  * 查看架构图
  */
 function viewStructuralDiagram(row) {
-  router.push(`${getBasePath()}/structural-diagram/${row.id}`)
+  router.push({
+    path: `${getBasePath()}/structural-diagram/${row.id}`,
+    query: getCurrentRouteStateQuery()
+  })
 }
 
 /**
  * 查看结果详情
  */
 function viewResult(row) {
-  router.push(`${getBasePath()}/results/${row.id}`)
+  router.push({
+    path: `${getBasePath()}/results/${row.id}`,
+    query: getCurrentRouteStateQuery()
+  })
 }
 
 onMounted(() => {
-  // 检查URL参数中的模板ID
-  if (route.query.templateId) {
-    selectedTemplateId.value = route.query.templateId
-  }
-
+  applyRouteState(route.query)
   loadParams()
   loadTemplates()
   loadResults()
 })
 
-// 监听路由 query 参数变化（从模板列表跳转时）
+// 监听路由 query 参数变化，支持从二级页回退后恢复列表状态
 watch(
-  () => route.query.templateId,
-  newTemplateId => {
-    if (newTemplateId) {
-      selectedTemplateId.value = newTemplateId
-      pagination.value.page = 1
-      loadResults()
-    }
+  () => [
+    route.query.templateId,
+    route.query.templateSearch,
+    route.query.keyword,
+    route.query.page,
+    route.query.size
+  ],
+  () => {
+    applyRouteState(route.query)
+    loadResults()
   }
 )
 </script>

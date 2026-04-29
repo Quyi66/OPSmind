@@ -53,6 +53,17 @@
         <i class="fa fa-chevron-circle-right" />
         更新选定的软件包 ({{ selectedPackages.length }})
       </el-button>
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="packageLoading"
+        title="刷新"
+        @click="loadPackageList()"
+      >
+        <el-icon v-show="!packageLoading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格 -->
@@ -120,7 +131,7 @@
 import { ElMessage } from 'element-plus'
 import { getSeverityType } from '../../composables/useFormatters'
 import { usePackageList } from '../../composables/usePackageList'
-import { Search } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 
 const props = defineProps({
   hostId: {

@@ -42,8 +42,8 @@ export const SOFTWARE_ROUTE_DEFS = [
     key: 'yumManage',
     path: 'yumManage',
     name: 'software-yumManage',
-    title: '软件源管理',
-    navLabel: '软件源管理',
+    title: 'Yum源清单',
+    navLabel: 'Yum源清单',
     icon: 'fas fa-cogs',
     component: () => import('@/modules/patches/components/LinuxYumManage.vue')
   },

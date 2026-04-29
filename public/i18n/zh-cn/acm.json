@@ -141,7 +141,7 @@
   "acm.common.text.choose_permission": "选择权限",
   "acm.menu.assert_info.title": "资产信息",
   "acm.menu.assert_model.title": "资产模型",
-  "acm.menu.data_management.title": "数据管理",
+  "acm.menu.data_management.title": "分组与标签",
   "acm.menu.automation_configuration.title": "自动化配置",
   "acm.menu.abnormal_equipment.title": "异常设备",
   "acm.menu.permission_distribution.title": "资源权限",

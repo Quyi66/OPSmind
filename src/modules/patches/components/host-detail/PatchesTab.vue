@@ -68,6 +68,17 @@
         <i class="fa fa-chevron-circle-right" />
         安装选定的补丁 ({{ selectedPatches.length }})
       </el-button>
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="patchLoading"
+        title="刷新"
+        @click="loadPatchList()"
+      >
+        <el-icon v-show="!patchLoading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格 -->
@@ -188,7 +199,7 @@ import {
   getSeverityType
 } from '../../composables/useFormatters'
 import { usePatchList } from '../../composables/usePatchList'
-import { Search } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 
 const props = defineProps({
   hostId: {

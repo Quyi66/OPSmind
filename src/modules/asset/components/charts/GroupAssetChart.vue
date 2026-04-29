@@ -69,52 +69,103 @@ const distroColorMap = {
   Debian: '#8B5CF6'
 }
 
+function getContainerWidth() {
+  return (fullscreenVisible.value ? fullscreenChartRef.value?.clientWidth : 0) || chartRef.value?.clientWidth || 0
+}
+
+function getVisibleGroupCount(compactLayout) {
+  return compactLayout ? 6 : 8
+}
+
+function truncateAxisText(text, maxLength) {
+  const normalized = String(text || '')
+  if (normalized.length <= maxLength) return normalized
+  return `${normalized.slice(0, maxLength)}...`
+}
+
 function getChartOption() {
-  const xData = props.data.map(item => item.groupName)
+  const chartData = props.data
+  const xData = chartData.map(item => item.groupName)
+  const chartWidth = getContainerWidth()
+  const compactLayout = chartWidth > 0 && chartWidth < 620
+  const visibleGroupCount = getVisibleGroupCount(compactLayout)
+  const crowdedLayout = xData.length > visibleGroupCount
+  const osKeys = ['CentOS', 'Windows', 'Anolis', 'RedHat', 'Debian'].filter(key =>
+    chartData.some(item => Number(item?.[key] || 0) > 0)
+  )
+  const visibleKeys = osKeys.length
+    ? osKeys
+    : ['CentOS', 'Windows', 'Anolis', 'RedHat', 'Debian'].filter(key => key in (chartData[0] || {}))
   const axisColor = isDark.value ? 'rgba(148, 163, 184, 0.82)' : '#64748b'
   const splitLineColor = isDark.value ? 'rgba(148, 163, 184, 0.16)' : 'rgba(148, 163, 184, 0.24)'
   const legendColor = isDark.value ? '#cbd5e1' : '#475569'
+  const labelColor = isDark.value ? '#f8fafc' : '#0f172a'
   const tooltipBg = isDark.value ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)'
+  const zoomEndIndex = Math.max(0, Math.min(xData.length - 1, visibleGroupCount - 1))
 
   return {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis',
       axisPointer: {
-        type: 'cross'
+        type: 'shadow'
       },
       backgroundColor: tooltipBg,
       borderColor: splitLineColor,
       textStyle: { color: isDark.value ? '#f8fafc' : '#0f172a' },
+      formatter: params => {
+        const dataIndex = params.find(item => item.seriesName !== '总数标签')?.dataIndex
+        if (dataIndex === undefined || dataIndex < 0) return ''
+
+        const current = chartData[dataIndex]
+        const lines = [`${current.groupName}`, `总数: ${current.count}`]
+        visibleKeys.forEach(key => {
+          const value = Number(current?.[key] || 0)
+          if (value > 0) {
+            lines.push(`${key}: ${value}`)
+          }
+        })
+        return lines.join('<br/>')
+      },
       extraCssText: 'box-shadow: 0 12px 28px rgba(15,23,42,0.16); border-radius: 12px;'
     },
     legend: {
-      data: ['总数', 'CentOS', 'Windows', 'Anolis', 'RedHat', 'Debian'],
+      show: visibleKeys.length > 0,
+      type: visibleKeys.length > 4 ? 'scroll' : 'plain',
+      left: 0,
       right: 0,
       top: 0,
-      icon: 'circle',
-      itemWidth: 8,
+      icon: 'roundRect',
+      itemWidth: 10,
       itemHeight: 8,
+      itemGap: 12,
       textStyle: {
         color: legendColor,
         fontSize: 11
-      }
+      },
+      data: visibleKeys
     },
     grid: {
       left: '4%',
       right: '4%',
-      bottom: '5%',
-      top: '12%',
+      bottom: crowdedLayout ? '16%' : '6%',
+      top: visibleKeys.length > 0 ? '16%' : '10%',
       containLabel: true
     },
     xAxis: {
       type: 'category',
       data: xData,
+      axisTick: {
+        show: false
+      },
       axisLabel: {
         color: axisColor,
-        width: 78,
-        overflow: 'truncate',
-        fontSize: 11
+        width: compactLayout ? 64 : 86,
+        overflow: 'break',
+        fontSize: 11,
+        interval: 0,
+        rotate: crowdedLayout ? (compactLayout ? 26 : 18) : 0,
+        formatter: value => truncateAxisText(value, compactLayout ? 6 : 8)
       },
       axisLine: {
         lineStyle: { color: splitLineColor }
@@ -123,6 +174,7 @@ function getChartOption() {
     yAxis: {
       type: 'value',
       minInterval: 1,
+      splitNumber: 4,
       axisLabel: {
         color: axisColor,
         fontSize: 11
@@ -134,48 +186,66 @@ function getChartOption() {
         }
       }
     },
+    dataZoom: crowdedLayout
+      ? [
+          {
+            type: 'inside',
+            startValue: 0,
+            endValue: zoomEndIndex
+          },
+          {
+            type: 'slider',
+            height: 14,
+            bottom: 0,
+            startValue: 0,
+            endValue: zoomEndIndex,
+            brushSelect: false,
+            borderColor: 'transparent',
+            fillerColor: isDark.value ? 'rgba(245, 158, 11, 0.18)' : 'rgba(245, 158, 11, 0.16)',
+            backgroundColor: isDark.value ? 'rgba(51, 65, 85, 0.22)' : 'rgba(226, 232, 240, 0.72)',
+            showDetail: false,
+            moveHandleSize: 0
+          }
+        ]
+      : [],
     series: [
-      {
-        name: '总数',
+      ...visibleKeys.map(os => ({
+        name: os,
         type: 'bar',
-        data: props.data.map(item => item.count),
+        stack: 'os-distribution',
+        barMaxWidth: crowdedLayout ? 24 : 30,
         cursor: 'pointer',
         itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#F59E0B' },
-            { offset: 1, color: 'rgba(245, 158, 11, 0.12)' }
-          ]),
-          borderRadius: [10, 10, 0, 0],
-          shadowBlur: 10,
-          shadowColor: 'rgba(245, 158, 11, 0.2)',
-          shadowOffsetY: 4
+          color: distroColorMap[os],
+          opacity: isDark.value ? 0.9 : 0.95
+        },
+        emphasis: {
+          focus: 'series',
+          itemStyle: {
+            opacity: 1
+          }
+        },
+        data: chartData.map(item => Number(item?.[os] || 0))
+      })),
+      {
+        name: '总数标签',
+        type: 'line',
+        data: chartData.map(item => Number(item.count || 0)),
+        symbol: 'none',
+        silent: true,
+        lineStyle: {
+          opacity: 0
         },
         label: {
           show: true,
           position: 'top',
-          color: isDark.value ? '#f8fafc' : '#0f172a',
+          distance: 8,
+          color: labelColor,
+          fontSize: 11,
           fontWeight: 700,
-          formatter: '{c}'
-        },
-        barMaxWidth: 30
-      },
-      ...['CentOS', 'Windows', 'Anolis', 'RedHat', 'Debian'].map(os => ({
-        name: os,
-        type: 'line',
-        data: props.data.map(item => item[os] ?? 0),
-        cursor: 'pointer',
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 6,
-        lineStyle: { width: 3, color: distroColorMap[os] },
-        itemStyle: { color: distroColorMap[os], borderColor: isDark.value ? '#0f172a' : '#fff', borderWidth: 2 },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: isDark.value ? `${distroColorMap[os]}44` : `${distroColorMap[os]}55` },
-            { offset: 1, color: `${distroColorMap[os]}05` }
-          ])
+          formatter: params => (params.value ? params.value : '')
         }
-      }))
+      }
     ]
   }
 }
@@ -184,7 +254,9 @@ function bindChartEvents(instance) {
   if (!instance) return
   instance.off('click')
   instance.on('click', params => {
-    emit('click', props.data[params.dataIndex])
+    const current = props.data[params.dataIndex]
+    if (!current) return
+    emit('click', current)
   })
 }
 

@@ -198,12 +198,12 @@
 
 // Table 整体字体样式
 .el-table {
-  font-family: 'PingFang-Medium', 'PingFang', -apple-system, sans-serif !important;
+  font-family: 'PingFang-Medium', -apple-system, sans-serif !important;
   font-size: 14px !important;
 
   // 表格单元格
   .cell {
-    font-family: 'PingFang-Medium', 'PingFang', -apple-system, sans-serif !important;
+    font-family: 'PingFang-Medium', -apple-system, sans-serif !important;
   }
 
   // 统一所有表格行的最小高度
@@ -229,7 +229,7 @@
 // Table 表头样式（使用 Bold 更醒目）
 .el-table__header-wrapper th,
 .el-table__fixed-header-wrapper th {
-  font-family: 'PingFang-Bold', 'PingFang', -apple-system, sans-serif !important;
+  font-family: 'PingFang-Bold', -apple-system, sans-serif !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   color: var(--el-text-color-primary);
@@ -238,7 +238,7 @@
 // Dialog 标题样式（使用 Bold 更醒目）
 .el-dialog__header {
   .el-dialog__title {
-    font-family: 'PingFang-Bold', 'PingFang', -apple-system, sans-serif !important;
+    font-family: 'PingFang-Bold', -apple-system, sans-serif !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     color: var(--el-text-color-primary);

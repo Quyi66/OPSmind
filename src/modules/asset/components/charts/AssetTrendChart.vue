@@ -75,36 +75,61 @@ function getChartOption() {
     const day = String(date.getDate()).padStart(2, '0')
     return `${month}-${day}`
   })
-  const yData = props.data.map(item => item.total)
+  const yData = props.data.map(item => Number(item.total || 0))
   const axisColor = isDark.value ? 'rgba(148, 163, 184, 0.82)' : '#64748b'
   const splitLineColor = isDark.value ? 'rgba(148, 163, 184, 0.16)' : 'rgba(148, 163, 184, 0.24)'
+  const legendColor = isDark.value ? '#cbd5e1' : '#475569'
   const labelColor = isDark.value ? '#f8fafc' : '#0f172a'
   const tooltipBg = isDark.value ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)'
-  const latestIndex = yData.length - 1
 
   return {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis',
+      axisPointer: {
+        type: 'line',
+        lineStyle: {
+          color: trendAccent.secondary,
+          width: 1,
+          opacity: 0.45
+        }
+      },
       backgroundColor: tooltipBg,
       borderColor: splitLineColor,
       textStyle: { color: labelColor },
       extraCssText: 'box-shadow: 0 12px 28px rgba(15,23,42,0.16); border-radius: 12px;'
     },
+    legend: {
+      top: 0,
+      right: 0,
+      icon: 'roundRect',
+      itemWidth: 14,
+      itemHeight: 8,
+      textStyle: {
+        color: legendColor,
+        fontSize: 11,
+        fontWeight: 600
+      },
+      data: ['近10次新增']
+    },
     grid: {
       left: '4%',
       right: '4%',
-      bottom: '4%',
-      top: '8%',
+      bottom: '5%',
+      top: '16%',
       containLabel: true
     },
     xAxis: {
       type: 'category',
       data: xData,
       boundaryGap: false,
+      axisTick: {
+        show: false
+      },
       axisLabel: {
         color: axisColor,
-        fontSize: 11
+        fontSize: 11,
+        interval: 0
       },
       axisLine: {
         lineStyle: { color: splitLineColor }
@@ -114,6 +139,7 @@ function getChartOption() {
       type: 'value',
       minInterval: 1,
       precision: 0,
+      splitNumber: 4,
       axisLabel: {
         color: axisColor,
         fontSize: 11,
@@ -128,12 +154,13 @@ function getChartOption() {
     },
     series: [
       {
-        name: '总数',
+        name: '近10次新增',
         type: 'line',
         data: yData,
-        smooth: true,
+        smooth: 0.35,
+        showAllSymbol: true,
         symbol: 'circle',
-        symbolSize: 7,
+        symbolSize: 8,
         lineStyle: {
           color: trendAccent.secondary,
           width: 3,
@@ -145,6 +172,18 @@ function getChartOption() {
           borderColor: isDark.value ? '#0f172a' : '#ffffff',
           borderWidth: 3
         },
+        label: {
+          show: xData.length <= 10,
+          position: 'top',
+          distance: 8,
+          color: labelColor,
+          fontSize: 11,
+          fontWeight: 600,
+          formatter: params => Math.round(params.value || 0)
+        },
+        labelLayout: {
+          hideOverlap: true
+        },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: 'rgba(45,212,191,0.34)' },
@@ -152,22 +191,12 @@ function getChartOption() {
             { offset: 1, color: 'rgba(20,184,166,0.02)' }
           ])
         },
-        markPoint: {
-          symbol: 'circle',
-          symbolSize: 34,
+        emphasis: {
+          focus: 'series',
           itemStyle: {
-            color: trendAccent.primary,
-            borderColor: '#ffffff',
-            borderWidth: 3,
             shadowColor: trendAccent.glow,
-            shadowBlur: 12
-          },
-          label: {
-            color: '#ffffff',
-            fontWeight: 700,
-            formatter: params => params.value
-          },
-          data: latestIndex >= 0 ? [{ coord: [xData[latestIndex], yData[latestIndex]], value: yData[latestIndex] }] : []
+            shadowBlur: 16
+          }
         }
       }
     ]

@@ -198,7 +198,7 @@ watch(() => props.activeGroup, (newGroup) => {
   }
 
   .menu-item-text {
-    font-family: 'PingFang-Medium', 'PingFang', -apple-system, sans-serif;
+    font-family: 'PingFang-Medium', -apple-system, sans-serif;
     font-size: 14px;
     font-weight: 500;
     color: #262626;

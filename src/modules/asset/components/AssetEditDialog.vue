@@ -2,43 +2,30 @@
   <el-dialog
     v-model="visible"
     title="编辑资产"
-    width="800px"
+    width="1060px"
     :close-on-click-modal="false"
     @close="handleClose"
   >
     <div v-loading="loading" class="asset-edit">
-      <template v-if="!loading && groupedAttrs.length > 0">
-        <el-tabs v-model="activeTab">
-          <el-tab-pane
-            v-for="group in groupedAttrs"
-            :key="group.title"
-            :label="group.title"
-            :name="group.title"
-          >
-            <div class="tab-content">
-              <div v-for="attr in group.attrs" :key="attr.code" class="attr-row">
-                <div class="attr-label">
-                  <span v-if="attr.required" class="required">*</span>
-                  {{ attr.title }}
-                </div>
-                <div class="attr-value">
-                  <template v-if="!attr.editable">
-                    <!-- 不可编辑的字段 -->
-                    <span class="readonly-value">{{ formData[attr.code] || '-' }}</span>
-                  </template>
-                  <template v-else>
-                    <!-- 可编辑的字段 -->
-                    <el-input
-                      v-model="formData[attr.code]"
-                      :placeholder="`请输入${attr.title}`"
-                      clearable
-                    />
-                  </template>
-                </div>
-              </div>
-            </div>
-          </el-tab-pane>
-        </el-tabs>
+      <template v-if="!loading && visibleAttrs.length > 0">
+        <el-form :model="formData" label-width="120px" class="asset-form">
+          <el-row :gutter="20">
+            <el-col v-for="attr in visibleAttrs" :key="attr.code" :span="12">
+              <el-form-item :label="attr.title" :required="attr.required" class="asset-form-item">
+                <template v-if="attr.editable">
+                  <el-input
+                    v-model="formData[attr.code]"
+                    :placeholder="`请输入${attr.title}`"
+                    clearable
+                  />
+                </template>
+                <template v-else>
+                  <span class="readonly-value">{{ formData[attr.code] || '-' }}</span>
+                </template>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
       </template>
       <el-empty v-else-if="!loading" description="暂无数据" />
     </div>
@@ -77,7 +64,6 @@ const saving = ref(false)
 const assetType = ref(null)
 const formData = ref({})
 const originalData = ref({})
-const activeTab = ref('')
 
 // 特殊处理：这些字段即使 editable 为 false 也允许编辑
 const specialEditableFields = ['IP']
@@ -89,59 +75,16 @@ const isFieldEditable = attr => {
   return false
 }
 
-// 按分组整理属性
-const groupedAttrs = computed(() => {
+// 扁平化属性列表，忽略分组标题并保留原始顺序
+const visibleAttrs = computed(() => {
   if (!assetType.value?.attrs) return []
 
-  const groups = []
-  let currentGroup = null
-
-  for (const attr of assetType.value.attrs) {
-    if (attr.type === 'group') {
-      // 这是一个分组标题
-      if (currentGroup) {
-        groups.push(currentGroup)
-      }
-      currentGroup = {
-        title: attr.title,
-        attrs: []
-      }
-    } else if (attr.code) {
-      // 这是一个属性，跳过 hidden 类型的控件
-      if (attr.input?.control === 'hidden') {
-        continue
-      }
-      // 标记是否可编辑（包含特殊处理）
-      const processedAttr = {
-        ...attr,
-        editable: isFieldEditable(attr)
-      }
-      if (currentGroup) {
-        currentGroup.attrs.push(processedAttr)
-      } else {
-        // 没有分组的属性，放到默认分组
-        if (!groups.find(g => g.title === '基本信息')) {
-          groups.push({ title: '基本信息', attrs: [] })
-        }
-        groups.find(g => g.title === '基本信息').attrs.push(processedAttr)
-      }
-    }
-  }
-
-  // 添加最后一个分组
-  if (currentGroup && currentGroup.attrs.length > 0) {
-    groups.push(currentGroup)
-  }
-
-  // 过滤掉空分组
-  const result = groups.filter(g => g.attrs.length > 0)
-
-  // 设置默认选中第一个 tab
-  if (result.length > 0 && !activeTab.value) {
-    activeTab.value = result[0].title
-  }
-
-  return result
+  return assetType.value.attrs
+    .filter(attr => attr.code && attr.input?.control !== 'hidden')
+    .map(attr => ({
+      ...attr,
+      editable: isFieldEditable(attr)
+    }))
 })
 
 // 加载资产详情
@@ -203,7 +146,6 @@ const handleClose = () => {
   formData.value = {}
   originalData.value = {}
   assetType.value = null
-  activeTab.value = ''
 }
 
 // 监听弹窗打开
@@ -217,53 +159,34 @@ watch(visible, val => {
 <style scoped lang="scss">
 .asset-edit {
   min-height: 200px;
+  // max-height: 60vh;
+  // overflow-y: auto;
+  padding-right: 4px;
 }
 
-.tab-content {
-  padding: 16px 0;
+.asset-form {
+  padding-top: 16px;
 }
 
-.attr-row {
-  display: flex;
+.asset-form-item {
+  margin-bottom: 18px;
+}
+
+.readonly-value {
+  display: inline-flex;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--el-border-color-light);
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.attr-label {
-  width: 120px;
-  flex-shrink: 0;
-  color: var(--el-text-color-regular);
+  min-height: 32px;
+  color: var(--el-text-color-secondary);
   font-size: 14px;
-
-  .required {
-    color: #f56c6c;
-    margin-right: 4px;
-  }
+  line-height: 1.5;
+  word-break: break-all;
 }
 
-.attr-value {
-  flex: 1;
-
-  .readonly-value {
-    color: var(--el-text-color-secondary);
-    font-size: 14px;
-  }
-}
-
-:deep(.el-tabs__nav-wrap::after) {
-  height: 1px;
-}
-
-:deep(.el-tabs__item) {
-  font-size: 14px;
+:deep(.el-form-item__content) {
+  min-width: 0;
 }
 
 :deep(.el-input) {
-  max-width: 400px;
+  width: 100%;
 }
 </style>

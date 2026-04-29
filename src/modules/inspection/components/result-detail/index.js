@@ -1,4 +1,5 @@
 // 导出所有结果详情相关组件
+export { default as AssetModelConfigDialog } from './AssetModelConfigDialog.vue'
 export { default as StatisticsCards } from './StatisticsCards.vue'
 export { default as HostDetailDialog } from './HostDetailDialog.vue'
 export { default as KpiDetailDialog } from './KpiDetailDialog.vue'

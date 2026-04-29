@@ -1983,17 +1983,51 @@ export const cveApi = {
   /**
    * 批量导出 CVE 报告（Excel）
    * POST /vap/api/vap/v2/cve/export
-   * @param {string[]} cveIds - CVE编号列表
+   * @param {string[]|Object} payload - cveIds 数组或完整请求体
    * @returns {Promise<Blob>}
    */
-  exportReport(cveIds) {
+  exportReport(payload) {
+    const requestBody = Array.isArray(payload) ? { cveIds: payload } : payload || {}
+
     return apiService.post(
       `${VAP_API_PREFIX}/v2/cve/export`,
-      { cveIds },
+      requestBody,
       {
         responseType: 'blob'
       }
     )
+  },
+
+  /**
+   * 批量导出 CVE 漏洞排查反馈模板（Excel）
+   * POST /vap/api/vap/v2/cve/feedback-template-export
+   * @param {string[]|string|Object} payload - cveIds 数组、批量输入文本或完整请求体
+   * @returns {Promise<Blob>}
+   */
+  exportFeedbackTemplate(payload) {
+    const requestBody = Array.isArray(payload)
+      ? { cveIds: payload }
+      : typeof payload === 'string'
+        ? { text: payload }
+        : payload || {}
+
+    return apiService.post(
+      `${VAP_API_PREFIX}/v2/cve/feedback-template-export`,
+      requestBody,
+      {
+        responseType: 'blob'
+      }
+    )
+  },
+
+  /**
+   * 执行受影响主机重启
+   * POST /vap/api/vap/v2/patch/reboot-host
+   * @param {Object} payload - 重启请求体
+   * @returns {Promise}
+   */
+  rebootHost(payload) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/patch/reboot-host`, payload)
   }
 }
 

@@ -316,6 +316,30 @@
                     <span class="text-muted">{{ formatDateTime(row.scanDate) }}</span>
                   </template>
                 </el-table-column>
+                <el-table-column label="操作" width="180" fixed="right">
+                  <template #default="{ row }">
+                      <el-button
+                        text
+                        type="primary"
+                        size="small"
+                        :disabled="!hasRebootAction(row) || !canRebootHost(row)"
+                        :loading="isRebootSubmitting(row)"
+                        :title="isRebootRecommended(row) ? '建议重启' : ''"
+                        @click="handleHostReboot(row)"
+                      >
+                        {{ getRebootButtonLabel(row) }}
+                      </el-button>
+                      <el-button
+                        v-if="shouldShowRebootResultButton(row)"
+                        text
+                        type="primary"
+                        size="small"
+                        @click="openRebootResult(row)"
+                      >
+                        查看结果
+                      </el-button>
+                  </template>
+                </el-table-column>
               </el-table>
             </div>
           </div>
@@ -329,12 +353,20 @@
         <el-button type="primary" @click="goBack">返回列表</el-button>
       </el-empty>
     </div>
+
+    <ExecuteResultDialog
+      v-if="rebootResultDialogVisible"
+      v-model:visible="rebootResultDialogVisible"
+      :run-id="rebootResultRunId"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import * as echarts from 'echarts'
 import { useTheme } from '@/composables/useTheme'
 import {
@@ -401,6 +433,9 @@ const affectedHostsTotal = ref(0)
 const affectedHostsLoading = ref(false)
 const affectedHostsLoaded = ref(false)
 const affectedHostsError = ref('')
+const rebootSubmittingHostKey = ref('')
+const rebootResultDialogVisible = ref(false)
+const rebootResultRunId = ref('')
 const router = useRouter()
 const { isDark } = useTheme()
 
@@ -627,6 +662,138 @@ function viewHostDetail(host) {
       })
     }
   })
+}
+
+function getHostIdentity(host) {
+  return String(host?.hostId || host?.host_id || host?.hostKey || host?.host_key || '').trim()
+}
+
+function getRebootAction(host) {
+  return host?.rebootAction || host?.reboot_action || null
+}
+
+function hasRebootAction(host) {
+  return !!getRebootAction(host)
+}
+
+function canRebootHost(host) {
+  const action = getRebootAction(host)
+  if (!action) return false
+  return action.enabled !== false
+}
+
+function isRebootRecommended(host) {
+  return getRebootAction(host)?.recommended === true
+}
+
+function getRebootButtonLabel(host) {
+  const rebootType = getRebootAction(host)?.rebootType || getRebootAction(host)?.reboot_type
+  return rebootType === 'service_reboot' ? '服务重启' : '主机重启'
+}
+
+function isRebootSubmitting(host) {
+  return rebootSubmittingHostKey.value !== '' && rebootSubmittingHostKey.value === getHostIdentity(host)
+}
+
+function getHostRebootRunId(host) {
+  return String(host?.__rebootRunId || host?.rebootRunId || host?.reboot_run_id || '').trim()
+}
+
+function shouldShowRebootResultButton(host) {
+  return !isRebootSubmitting(host) && !!getHostRebootRunId(host)
+}
+
+function openRebootResult(host) {
+  const runId = getHostRebootRunId(host)
+  if (!runId) {
+    ElMessage.warning('暂无运行结果')
+    return
+  }
+
+  rebootResultRunId.value = runId
+  rebootResultDialogVisible.value = true
+}
+
+function buildHostRebootPayload(host) {
+  const action = getRebootAction(host) || {}
+  const payloadTemplate = action.payloadTemplate || action.payload_template || {}
+  const hostId = payloadTemplate.hostId || payloadTemplate.host_id || host?.hostId || host?.host_id
+  const hostIp =
+    payloadTemplate.hostIp ||
+    payloadTemplate.host_ip ||
+    host?.hostIp ||
+    host?.host_ip ||
+    host?.hostKey ||
+    host?.host_key
+
+  return {
+    ...(hostId ? { hostId } : {}),
+    ...(!hostId && hostIp ? { hostIp } : {}),
+    rebootType:
+      payloadTemplate.rebootType ||
+      payloadTemplate.reboot_type ||
+      action.rebootType ||
+      action.reboot_type ||
+      'system_reboot',
+    confirmText: payloadTemplate.confirmText || payloadTemplate.confirm_text || '确认重启'
+  }
+}
+
+async function handleHostReboot(host) {
+  const action = getRebootAction(host)
+  if (!action || !canRebootHost(host)) return
+
+  const hostLabel = host?.hostKey || host?.hostId || host?.host_key || host?.host_id || '当前主机'
+  const payload = buildHostRebootPayload(host)
+
+  if (!payload.hostId && !payload.hostIp) {
+    ElMessage.error('缺少主机标识，无法执行重启')
+    return
+  }
+
+  const message = isRebootRecommended(host)
+    ? `确认对主机 ${hostLabel} 执行${getRebootButtonLabel(host)}？当前接口建议重启。`
+    : `确认对主机 ${hostLabel} 执行${getRebootButtonLabel(host)}？`
+
+  await ElMessageBox.confirm(message, '确认重启', {
+    type: 'warning',
+    confirmButtonText: '确认重启',
+    cancelButtonText: '取消'
+  })
+
+  host.__rebootRunId = ''
+  host.__rebootStatus = 'PENDING'
+  rebootSubmittingHostKey.value = getHostIdentity(host)
+
+  try {
+    const response = await cveApi.rebootHost(payload)
+    const result = response?.data || response || {}
+
+    host.__rebootRunId = result?.runId || result?.run_id || ''
+    host.__rebootStatus = result?.status || ''
+
+    if (result?.success === false) {
+      ElMessage.warning(result?.message || '重启任务未成功完成')
+      if (host.__rebootRunId) {
+        openRebootResult(host)
+      }
+      return
+    }
+
+    ElMessage.success(result?.message || '重启完成')
+    if (host.__rebootRunId) {
+      openRebootResult(host)
+    }
+  } catch (error) {
+    if (error === 'cancel') {
+      return
+    }
+
+    console.error('主机重启失败:', error)
+    ElMessage.error(error?.response?.data?.error || error?.message || '主机重启失败，请稍后重试')
+  } finally {
+    rebootSubmittingHostKey.value = ''
+  }
 }
 
 // 加载 CVE 详情
@@ -867,13 +1034,23 @@ function initImpactChart() {
 async function loadAffectedHosts() {
   if (!props.cveId || affectedHostsLoading.value) return
   affectedHostsLoading.value = true
+  affectedHostsError.value = ''
   try {
     const data = await cveApi.getAffectedHosts(props.cveId)
     const result = data?.data || data
-    affectedHosts.value = result?.hosts || []
-    affectedHostsTotal.value = result?.totalHosts || affectedHosts.value.length
+    const hosts = Array.isArray(result?.hosts)
+      ? result.hosts
+      : Array.isArray(result?.records)
+        ? result.records
+        : Array.isArray(result)
+          ? result
+          : []
+
+    affectedHosts.value = hosts
+    affectedHostsTotal.value = Number(result?.totalHosts ?? result?.total ?? hosts.length)
     affectedHostsLoaded.value = true
-  } catch {
+  } catch (error) {
+    console.error('加载受影响主机失败:', error)
     affectedHostsError.value = '加载失败'
   } finally {
     affectedHostsLoading.value = false

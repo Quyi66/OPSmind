@@ -11,6 +11,10 @@
         </el-breadcrumb>
       </div>
       <div class="navbar-right">
+        <el-button @click="assetModelConfigVisible = true">
+          <i class="fa fa-cog"></i>
+          导出配置
+        </el-button>
         <el-button @click="exportResult">
           <i class="fa fa-file-export"></i>
           导出结果
@@ -442,6 +446,11 @@
       @close="dialogs.itemWhitelistVisible.value = false"
       @delete="handleItemWhitelistDelete"
     />
+
+    <AssetModelConfigDialog
+      :visible="assetModelConfigVisible"
+      @close="assetModelConfigVisible = false"
+    />
   </div>
 </template>
 
@@ -451,6 +460,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { authService } from '@/core/auth'
 import { jobApi, whitelistApi } from '../api'
+import { pickResultListRouteQuery } from '../utils/result-list-route-state'
 
 // 导入拆分的模块
 import { formatDateTime } from '../utils/helpers'
@@ -458,6 +468,7 @@ import { getJobStatusType, getJobStatusText } from '../constants/status'
 import { useResultDetailData } from '../composables/useResultDetailData'
 import { useResultDetailDialogs } from '../composables/useResultDetailDialogs'
 import {
+  AssetModelConfigDialog,
   StatisticsCards,
   HostDetailDialog,
   KpiDetailDialog,
@@ -499,6 +510,7 @@ const activeTab = ref('host')
 const hostSearchText = ref('')
 const overviewSearchText = ref('')
 const selectedHostIds = ref([])
+const assetModelConfigVisible = ref(false)
 
 // 巡检项详情状态
 const selectedHost = ref(null)
@@ -867,7 +879,10 @@ function getBasePath() {
 }
 
 function goBack() {
-  router.push(`${getBasePath()}/results`)
+  router.push({
+    path: `${getBasePath()}/results`,
+    query: pickResultListRouteQuery(route.query)
+  })
 }
 
 function extractJobId() {

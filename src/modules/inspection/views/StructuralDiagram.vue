@@ -300,6 +300,7 @@ import { Search } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { authService } from '@/core/auth'
 import { jobApi, dtsApi } from '../api'
+import { pickResultListRouteQuery } from '../utils/result-list-route-state'
 
 // Props
 const props = defineProps({
@@ -979,7 +980,10 @@ function getBasePath() {
  * 返回检查结果列表
  */
 function goBack() {
-  router.push(`${getBasePath()}/results`)
+  router.push({
+    path: `${getBasePath()}/results`,
+    query: pickResultListRouteQuery(route.query)
+  })
 }
 
 /**
@@ -1257,6 +1261,7 @@ onUnmounted(() => {
   font-size: 13px;
 
   .el-table__header th {
+    font-weight: 500;
   }
 }
 

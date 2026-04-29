@@ -147,7 +147,7 @@
     "acm.common.text.choose_permission": "Choose Permission",
     "acm.menu.assert_info.title": "Asset Information",
     "acm.menu.assert_model.title": "Asset Model",
-    "acm.menu.data_management.title": "Data Management",
+    "acm.menu.data_management.title": "Groups & Tags",
     "acm.menu.automation_configuration.title": "Automation Configuration",
     "acm.menu.abnormal_equipment.title": "Abnormal Equipment",
     "acm.menu.permission_distribution.title": "Resource Permission",

@@ -165,7 +165,8 @@
 
       <!-- 操作栏 -->
       <div class="ops-action-bar" style="display: flex; align-items: center; margin-bottom: 12px">
-        <el-button type="primary" @click="openManualExportDialog">导出</el-button>
+        <el-button type="primary" @click="openManualExportDialog">导出报告</el-button>
+        <el-button @click="openFeedbackTemplateDialog">导出反馈模板</el-button>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -276,6 +277,13 @@
     </template>
 
     <ManualExportDialog v-model="manualExportVisible" />
+    <ManualExportDialog
+      v-model="feedbackTemplateVisible"
+      dialog-title="导出漏洞排查反馈模板"
+      export-filename="漏洞排查结果反馈表.xlsx"
+      success-message="反馈模板导出成功"
+      :export-handler="exportFeedbackTemplate"
+    />
   </div>
 </template>
 
@@ -568,9 +576,18 @@ function viewDetail(cve) {
 
 // ====== 手动导出功能逻辑 ======
 const manualExportVisible = ref(false)
+const feedbackTemplateVisible = ref(false)
 
 function openManualExportDialog() {
   manualExportVisible.value = true
+}
+
+function openFeedbackTemplateDialog() {
+  feedbackTemplateVisible.value = true
+}
+
+async function exportFeedbackTemplate(ids) {
+  return cveApi.exportFeedbackTemplate(ids)
 }
 // ====== 结束 ======
 

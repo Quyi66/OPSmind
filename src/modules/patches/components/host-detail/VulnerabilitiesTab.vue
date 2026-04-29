@@ -66,6 +66,17 @@
         <i class="fa fa-tools" />
         修复选中的漏洞 ({{ selectedVuls.length }})
       </el-button>
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="vulLoading"
+        title="刷新"
+        @click="loadVulnerabilityList()"
+      >
+        <el-icon v-show="!vulLoading"><Refresh /></el-icon>
+      </el-button>
     </div>
 
     <!-- 表格 -->
@@ -207,7 +218,7 @@ import {
   getPatchStatusText
 } from '../../composables/useFormatters'
 import { useVulnerabilityList } from '../../composables/useVulnerabilityList'
-import { Search } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 
 const props = defineProps({
   hostId: {

@@ -61,100 +61,151 @@ let chartInstance = null
 let fullscreenChartInstance = null
 let resizeObserver = null
 
+const typeColorPalette = ['#2563EB', '#38BDF8', '#0EA5E9', '#14B8A6', '#60A5FA']
+
+function getContainerWidth() {
+  return (fullscreenVisible.value ? fullscreenChartRef.value?.clientWidth : 0) || chartRef.value?.clientWidth || 0
+}
+
+function truncateLegendText(text, maxLength) {
+  const normalized = String(text || '')
+  if (normalized.length <= maxLength) return normalized
+  return `${normalized.slice(0, maxLength)}...`
+}
+
 function getChartOption() {
-  const xData = props.data.map(item => item.title)
-  const yData = props.data.map(item => item.count)
-  const axisColor = isDark.value ? 'rgba(148, 163, 184, 0.82)' : '#64748b'
-  const splitLineColor = isDark.value ? 'rgba(148, 163, 184, 0.16)' : 'rgba(148, 163, 184, 0.24)'
+  const chartWidth = getContainerWidth()
+  const compactLayout = chartWidth > 0 && chartWidth < 460
+  const legendMaxLength = compactLayout ? 8 : 12
+  const donutCenterX = compactLayout ? '50%' : '34%'
+  const donutCenterY = compactLayout ? '40%' : '52%'
+  const total = props.data.reduce((sum, item) => sum + Number(item.count || 0), 0)
+  const seriesData = props.data
+    .map((item, index) => ({
+      name: item.title,
+      value: Number(item.count || 0),
+      code: item.code,
+      is_auto: item.is_auto,
+      itemStyle: {
+        color: typeColorPalette[index % typeColorPalette.length]
+      }
+    }))
+    .filter(item => item.value > 0)
   const labelColor = isDark.value ? '#e5e7eb' : '#0f172a'
+  const legendColor = isDark.value ? '#cbd5e1' : '#475569'
   const tooltipBg = isDark.value ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)'
 
   return {
     backgroundColor: 'transparent',
     tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      },
+      trigger: 'item',
       backgroundColor: tooltipBg,
-      borderColor: splitLineColor,
+      borderColor: isDark.value ? 'rgba(148, 163, 184, 0.16)' : 'rgba(148, 163, 184, 0.24)',
       textStyle: { color: labelColor },
+      formatter: params => {
+        const percent = total ? Math.round((Number(params.value || 0) / total) * 100) : 0
+        return `${params.name}<br/>数量: ${params.value}<br/>占比: ${percent}%`
+      },
       extraCssText: 'box-shadow: 0 12px 28px rgba(15,23,42,0.16); border-radius: 12px;'
     },
-    grid: {
-      left: '4%',
-      right: '4%',
-      bottom: '2%',
-      top: '6%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'value',
-      minInterval: 1,
-      precision: 0,
-      axisLabel: {
-        color: axisColor,
-        fontSize: 11,
-        formatter: value => `${Math.round(value)}`
+    legend: {
+      show: seriesData.length > 0,
+      type: compactLayout ? 'scroll' : 'plain',
+      orient: compactLayout ? 'horizontal' : 'vertical',
+      left: compactLayout ? 'center' : 'auto',
+      right: compactLayout ? 'center' : 0,
+      top: compactLayout ? 'bottom' : 'center',
+      bottom: compactLayout ? 0 : 'auto',
+      width: compactLayout ? '92%' : 156,
+      icon: 'circle',
+      itemWidth: 10,
+      itemHeight: 10,
+      itemGap: compactLayout ? 14 : 12,
+      textStyle: {
+        color: legendColor,
+        fontSize: 14
       },
-      axisLine: { show: false },
-      axisTick: { show: false },
-      splitLine: {
-        lineStyle: {
-          color: splitLineColor,
-          type: 'dashed'
-        }
-      }
-    },
-    yAxis: {
-      type: 'category',
-      inverse: true,
-      data: xData,
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: {
-        color: axisColor,
-        fontSize: 12,
-        width: 90,
-        overflow: 'truncate'
+      formatter: name => {
+        const item = seriesData.find(entry => entry.name === name)
+        const shortName = truncateLegendText(name, legendMaxLength)
+        const percent = item && total ? Math.round((item.value / total) * 100) : 0
+        return item ? `${shortName}  ${item.value} (${percent}%)` : shortName
       }
     },
     series: [
       {
-        name: '主机数量',
-        type: 'bar',
-        data: yData,
-        barMaxWidth: 30,
-        barWidth: xData.length <= 4 ? 26 : '45%',
-        showBackground: true,
-        backgroundStyle: {
-          color: isDark.value ? 'rgba(51, 65, 85, 0.42)' : 'rgba(226, 232, 240, 0.8)',
-          borderRadius: 999
-        },
+        name: '资产数量',
+        type: 'pie',
+        radius: compactLayout ? ['42%', '66%'] : ['50%', '74%'],
+        center: [donutCenterX, donutCenterY],
+        minAngle: seriesData.length <= 3 ? 18 : 10,
+        avoidLabelOverlap: true,
         itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: '#2563EB' },
-            { offset: 1, color: '#60A5FA' }
-          ]),
-          borderRadius: 999,
-          shadowColor: 'rgba(37, 99, 235, 0.24)',
-          shadowBlur: 10,
-          shadowOffsetY: 4
+          borderColor: isDark.value ? '#0f172a' : '#ffffff',
+          borderWidth: 4,
+          shadowColor: 'rgba(37, 99, 235, 0.14)',
+          shadowBlur: 12
         },
         label: {
-          show: true,
-          position: 'right',
+          show: !compactLayout,
+          position: 'inside',
           color: labelColor,
           fontWeight: 700,
-          formatter: '{c}'
+          fontSize: 11,
+          formatter: params => `${Math.round(params.percent || 0)}%`
+        },
+        labelLine: {
+          show: false
         },
         emphasis: {
+          scale: true,
+          scaleSize: 8,
           itemStyle: {
             shadowBlur: 16,
             shadowColor: 'rgba(37, 99, 235, 0.3)'
           }
         },
-        cursor: 'pointer'
+        cursor: 'pointer',
+        data: seriesData
+      },
+      {
+        name: '中心文案',
+        type: 'pie',
+        silent: true,
+        tooltip: {
+          show: false
+        },
+        center: [donutCenterX, donutCenterY],
+        radius: ['0%', compactLayout ? '28%' : '32%'],
+        labelLine: {
+          show: false
+        },
+        label: {
+          show: total > 0,
+          position: 'center',
+          formatter: `{total|${total}}\n{name|资产总数}`,
+          rich: {
+            total: {
+              color: isDark.value ? '#f8fafc' : '#0f172a',
+              fontSize: compactLayout ? 22 : 24,
+              fontWeight: 700,
+              lineHeight: compactLayout ? 28 : 30
+            },
+            name: {
+              color: legendColor,
+              fontSize: 11,
+              fontWeight: 500,
+              lineHeight: 18
+            }
+          }
+        },
+        itemStyle: {
+          color: 'transparent'
+        },
+        emphasis: {
+          disabled: true
+        },
+        data: [{ value: 1 }]
       }
     ]
   }
@@ -165,8 +216,8 @@ function bindChartEvents(instance) {
   instance.off('click')
   instance.on('click', params => {
     emit('click', {
-      code: props.data[params.dataIndex]?.code,
-      is_auto: props.data[params.dataIndex]?.is_auto
+      code: params.data?.code,
+      is_auto: params.data?.is_auto
     })
   })
 }

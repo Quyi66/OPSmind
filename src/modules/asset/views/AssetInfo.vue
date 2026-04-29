@@ -175,29 +175,18 @@
           <i class="fa fa-plus" style="margin-right: 4px"></i>
           自动化资产录入
         </el-button>
-        <el-dropdown trigger="click" @command="handleAssetDataCommand">
-          <el-button size="small" class="asset-data-button">
-            <i class="fa fa-database" style="margin-right: 4px"></i>
-            资产数据
-            <i class="fa fa-angle-down" style="margin-left: 6px"></i>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="import">
-                <i class="fa fa-file-import asset-data-menu-icon"></i>
-                导入资产
-              </el-dropdown-item>
-              <el-dropdown-item command="export">
-                <i class="fa fa-file-export asset-data-menu-icon"></i>
-                资产信息导出
-              </el-dropdown-item>
-              <el-dropdown-item divided command="deleteImport">
-                <i class="fa fa-trash-alt asset-data-menu-icon"></i>
-                批量删除资产
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <el-button size="small" @click="importDialogVisible = true">
+          <i class="fa fa-file-import" style="margin-right: 4px"></i>
+          导入资产
+        </el-button>
+        <el-button size="small" @click="exportDialogVisible = true">
+          <i class="fa fa-file-export" style="margin-right: 4px"></i>
+          资产信息导出
+        </el-button>
+        <el-button size="small" @click="deleteImportDialogVisible = true">
+          <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
+          批量删除资产
+        </el-button>
         <el-button :icon="Edit" :disabled="!hasSelection" @click="handleEdit" size="small">
           修改
         </el-button>
@@ -768,22 +757,6 @@ const handleAssetDataSaved = () => {
   loadAssetList()
 }
 
-const handleAssetDataCommand = (command) => {
-  switch (command) {
-    case 'import':
-      importDialogVisible.value = true
-      break
-    case 'export':
-      exportDialogVisible.value = true
-      break
-    case 'deleteImport':
-      deleteImportDialogVisible.value = true
-      break
-    default:
-      break
-  }
-}
-
 // 分页大小变化
 const handlePageSizeChange = () => {
   currentPage.value = 1
@@ -1085,16 +1058,6 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
   }
-}
-
-.asset-data-button {
-  min-width: 108px;
-}
-
-.asset-data-menu-icon {
-  width: 14px;
-  margin-right: 8px;
-  text-align: center;
 }
 
 .ops-filter-bar {

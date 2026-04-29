@@ -26,8 +26,8 @@ export const ACM_ROUTE_DEFS = [
     key: 'data',
     path: 'data',
     name: 'acm-data',
-    title: '数据管理',
-    navLabel: '数据管理',
+    title: '分组与标签',
+    navLabel: '分组与标签',
     icon: 'fad fa-fw fa-database',
     component: () => import('./views/DataManage.vue')
   },

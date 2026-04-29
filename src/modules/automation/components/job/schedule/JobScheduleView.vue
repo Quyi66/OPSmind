@@ -82,7 +82,15 @@
     </section>
 
     <section class="flow-detail-panel ops-page-layout">
-      <template v-if="activeFlow">
+      <FlowEditor
+        v-if="creatingFlowInline"
+        v-model="createFlowVisible"
+        mode="create"
+        render-mode="inline"
+        @saved="handleFlowSaved"
+      />
+
+      <template v-else-if="activeFlow">
         <div class="ops-filter-bar">
           <el-input
             v-model="instanceKeyword"
@@ -188,8 +196,11 @@ const collator = new Intl.Collator('zh-Hans-CN', { sensitivity: 'base', numeric:
 const flowEditorVisible = ref(false)
 const flowEditorMode = ref('edit')
 const editingFlowId = ref('')
+const createFlowVisible = ref(false)
 const instanceViewerVisible = ref(false)
 const viewingInstanceId = ref('')
+
+const creatingFlowInline = computed(() => createFlowVisible.value)
 
 const visibleFlows = computed(() => {
   const term = flowFilter.value.trim().toLowerCase()
@@ -281,6 +292,7 @@ function refreshInstances() {
 }
 
 function handleSelectFlow(flow) {
+  createFlowVisible.value = false
   activeFlowId.value = flow.id
 }
 
@@ -294,13 +306,17 @@ function handleOrderCommand(field) {
 }
 
 function openFlowEditor(mode, flowId = '') {
+  createFlowVisible.value = false
   flowEditorMode.value = mode
   editingFlowId.value = flowId
   flowEditorVisible.value = true
 }
 
 function handleCreateFlow() {
-  openFlowEditor('create')
+  flowEditorVisible.value = false
+  flowEditorMode.value = 'create'
+  editingFlowId.value = ''
+  createFlowVisible.value = true
 }
 
 function handleRunFlow(flow) {
@@ -340,6 +356,7 @@ function handleDeleteFlow(flow) {
 
 function handleFlowSaved() {
   flowEditorVisible.value = false
+  createFlowVisible.value = false
   const wasEditingFlowId = editingFlowId.value
   editingFlowId.value = ''
   fetchFlowList()
@@ -540,8 +557,28 @@ function pad(value) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 0;
   overflow: hidden; // Fix scrollbar issues
+}
+
+.flow-detail-panel :deep(.flow-editor-panel) {
+  height: 100%;
+}
+
+.ops-filter-bar,
+.ops-action-bar,
+.ops-table-wrapper,
+.ops-pagination-wrapper,
+.detail-blank {
+  margin: 0 16px;
+}
+
+.ops-filter-bar {
+  margin-top: 16px;
+}
+
+.ops-pagination-wrapper {
+  margin-bottom: 16px;
 }
 
 .instance-table {
