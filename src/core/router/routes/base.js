@@ -40,6 +40,7 @@ const buildModuleChildren = (defs, moduleCode) =>
       meta: { title: def.title, moduleCode }
     }
 
+    if (def.alias) route.alias = def.alias
     if (def.name) route.name = def.name
     if (def.props) route.props = def.props
     if (def.redirect) route.redirect = def.redirect

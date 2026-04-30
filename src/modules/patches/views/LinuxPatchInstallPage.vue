@@ -231,7 +231,7 @@ import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi } from '../api'
-import PatchInstallWizard from '../components/patch-task/PatchInstallWizard.vue'
+import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 
 // 加载状态
 const loading = ref(false)

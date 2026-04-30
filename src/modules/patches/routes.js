@@ -102,6 +102,7 @@ export const PATCHES_ROUTE_DEFS = [
     key: 'windowsVulnerability',
     path: 'windowsVulnerability',
     name: 'patches-windowsVulnerability',
+    alias: ['windowsUpdate'],
     title: 'Windows 补丁概览',
     navLabel: '主机概览',
     icon: 'fas fa-desktop',
@@ -129,35 +130,14 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./windows-patch/views/WindowsPatchYumRepoPage.vue')
   },
   {
-    key: 'windowsUpdate',
-    path: 'windowsUpdate',
-    name: 'patches-windowsUpdate',
-    title: 'Windows 补丁概览',
-    platform: 'windows',
-    redirect: {
-      path: '/patches/windowsVulnerability'
-    },
-    component: () => import('./windows-patch/views/WindowsPatchOverviewPage.vue')
-  },
-  {
     key: 'windowsRollback',
     path: 'windowsRollback',
     name: 'patches-windowsRollback',
+    alias: ['windowsView'],
     title: '安装回滚历史',
     navLabel: '安装回滚历史',
     icon: 'fas fa-history',
     platform: 'windows',
-    component: () => import('./windows-patch/views/WindowsPatchTaskCenterPage.vue')
-  },
-  {
-    key: 'windowsView',
-    path: 'windowsView',
-    name: 'patches-windowsView',
-    title: '安装回滚历史',
-    platform: 'windows',
-    redirect: {
-      path: '/patches/windowsRollback'
-    },
     component: () => import('./windows-patch/views/WindowsPatchTaskCenterPage.vue')
   },
   {

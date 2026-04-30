@@ -52,7 +52,7 @@ import WinPatchYumRepoComparePanel from '../components/yum-repo/WinPatchYumRepoC
 import WinPatchYumRepoOverviewSection from '../components/yum-repo/WinPatchYumRepoOverviewSection.vue'
 import WinPatchYumRepoPackagesPanel from '../components/yum-repo/WinPatchYumRepoPackagesPanel.vue'
 import WinPatchYumRepoSourceTable from '../components/yum-repo/WinPatchYumRepoSourceTable.vue'
-import { yumRepoApi } from '../yumRepoApi'
+import { yumRepoApi } from '../yum-repo/api'
 import {
   buildCollectedYumRepoSources,
   buildYumRepoSourceFromConfig,
@@ -61,7 +61,7 @@ import {
   resolveYumConfigId,
   resolveYumRepoId,
   unwrapResponse
-} from '../yumRepoUtils'
+} from '../yum-repo/utils'
 
 const activeTab = ref('repos')
 const loadingConfigs = ref(false)

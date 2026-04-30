@@ -98,7 +98,7 @@ import {
   getYumRepoLabel,
   resolveYumRepoId,
   unwrapResponse
-} from '../../yumRepoUtils'
+} from '../../yum-repo/utils'
 
 const props = defineProps({
   overviewData: {

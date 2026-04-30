@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import WinPatchInstallHistoryPanel from '../components/WinPatchInstallHistoryPanel.vue'
+import WinPatchInstallHistoryPanel from '../components/tasks/WinPatchInstallHistoryPanel.vue'
 </script>
 
 <style scoped lang="scss">

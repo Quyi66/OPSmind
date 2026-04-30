@@ -201,15 +201,15 @@ import {
   parsePageResponse,
   pickValue
 } from '../../utils'
-import { YUM_REPO_OS_FAMILY_OPTIONS, YUM_REPO_PAGE_SIZE_OPTIONS } from '../../yumRepoConstants'
-import { yumRepoApi } from '../../yumRepoApi'
+import { YUM_REPO_OS_FAMILY_OPTIONS, YUM_REPO_PAGE_SIZE_OPTIONS } from '../../yum-repo/constants'
+import { yumRepoApi } from '../../yum-repo/api'
 import {
   getCollectStatusLabel,
   getCollectStatusTagType,
   getYumRepoLabel,
   resolveYumRepoId,
   unwrapResponse
-} from '../../yumRepoUtils'
+} from '../../yum-repo/utils'
 
 const props = defineProps({
   active: {

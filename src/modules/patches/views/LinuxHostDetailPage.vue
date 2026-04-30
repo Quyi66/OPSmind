@@ -114,11 +114,11 @@ import { ElMessage } from 'element-plus'
 import { patchScanApi } from '../api'
 import { formatDateTime, getInstalledPkgsCount } from '../composables/useFormatters'
 import { useHostDetail } from '../composables/useHostDetail'
-import PatchesTab from '../components/host-detail/PatchesTab.vue'
-import PackagesTab from '../components/host-detail/PackagesTab.vue'
-import VulnerabilitiesTab from '../components/host-detail/VulnerabilitiesTab.vue'
-import PatchDetailDialog from '../components/host-detail/PatchDetailDialog.vue'
-import PatchInstallWizard from '../components/patch-task/PatchInstallWizard.vue'
+import PatchesTab from '../components/host-detail/tabs/PatchesTab.vue'
+import PackagesTab from '../components/host-detail/tabs/PackagesTab.vue'
+import VulnerabilitiesTab from '../components/host-detail/tabs/VulnerabilitiesTab.vue'
+import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
+import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -190,7 +190,7 @@ function handleInstallSuccess() {
   if (activeTab.value === 'patches') {
     patchesTabRef.value?.loadPatchList()
   } else if (activeTab.value === 'packages') {
-    packagesTabRef.value?.loadPackageList({ forceLegacy: true })
+    packagesTabRef.value?.loadPackageList({ refreshCompatibility: true })
   } else if (activeTab.value === 'vulnerabilities') {
     vulnerabilitiesTabRef.value?.loadVulnerabilityList()
   }

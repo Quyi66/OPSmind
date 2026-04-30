@@ -16,8 +16,8 @@ export function usePackageList(hostId) {
     pageSize: 20,
     total: 0
   })
-  const legacyAffectedPkgsCache = ref([])
-  const legacyAffectedPkgsHostId = ref('')
+  const compatibilityAffectedPackagesCache = ref([])
+  const compatibilityAffectedPackagesHostId = ref('')
   let keywordSearchTimer = null
   let latestRequestId = 0
 
@@ -72,7 +72,7 @@ export function usePackageList(hostId) {
     return [pkgName, updatePkg, patchId].map(value => String(value || '').trim()).join('#')
   }
 
-  function pickLatestLegacyMatch(matches = []) {
+  function pickLatestMappingMatch(matches = []) {
     if (matches.length <= 1) return matches[0] || null
 
     return matches.reduce((latest, current) => {
@@ -138,7 +138,7 @@ export function usePackageList(hostId) {
     }
   }
 
-  function buildLegacyAffectedLookup(affectedPkgs = []) {
+  function buildAffectedPackageLookup(affectedPkgs = []) {
     const byInstalledPkg = new Map()
     const byPkgName = new Map()
 
@@ -174,7 +174,7 @@ export function usePackageList(hostId) {
     }
   }
 
-  function getLegacyMatches(baseRow, affectedLookup) {
+  function getAffectedPackageMatches(baseRow, affectedLookup) {
     const installedPkgKey = normalizePkgKey(baseRow.installedPkg)
     const pkgNameKey = normalizePkgKey(baseRow.pkgName)
 
@@ -189,11 +189,11 @@ export function usePackageList(hostId) {
     return pkgNameKey ? affectedLookup.byPkgName.get(pkgNameKey) || [] : []
   }
 
-  function mergeScanRowsWithLegacy(scanRows = [], affectedPkgs = []) {
-    const affectedLookup = buildLegacyAffectedLookup(affectedPkgs)
+  function mergeScanRowsWithCompatibility(scanRows = [], affectedPkgs = []) {
+    const affectedLookup = buildAffectedPackageLookup(affectedPkgs)
     return scanRows.map(rawRow => {
       const baseRow = normalizeScanPackageRow(rawRow)
-      const match = pickLatestLegacyMatch(getLegacyMatches(baseRow, affectedLookup))
+      const match = pickLatestMappingMatch(getAffectedPackageMatches(baseRow, affectedLookup))
 
       if (!match) {
         return {
@@ -238,12 +238,12 @@ export function usePackageList(hostId) {
     }
   }
 
-  async function getLegacyAffectedPkgs(forceRefresh = false) {
+  async function getCompatibilityAffectedPackages(forceRefresh = false) {
     if (
       !forceRefresh &&
-      legacyAffectedPkgsHostId.value === hostId.value
+      compatibilityAffectedPackagesHostId.value === hostId.value
     ) {
-      return legacyAffectedPkgsCache.value
+      return compatibilityAffectedPackagesCache.value
     }
 
     const response = await patchScanApi.getMachinePackages({
@@ -251,11 +251,11 @@ export function usePackageList(hostId) {
     })
 
     const data = response?.data || response || {}
-    const legacyRecord = Array.isArray(data.records) ? data.records[0] : null
-    const affectedPkgs = parseJsonArray(legacyRecord?.affected_pkgs)
+    const compatibilityRecord = Array.isArray(data.records) ? data.records[0] : null
+    const affectedPkgs = parseJsonArray(compatibilityRecord?.affected_pkgs)
 
-    legacyAffectedPkgsCache.value = affectedPkgs
-    legacyAffectedPkgsHostId.value = hostId.value
+    compatibilityAffectedPackagesCache.value = affectedPkgs
+    compatibilityAffectedPackagesHostId.value = hostId.value
 
     return affectedPkgs
   }
@@ -269,9 +269,9 @@ export function usePackageList(hostId) {
     const requestId = ++latestRequestId
     packageLoading.value = true
     try {
-      const [listResult, legacyResult] = await Promise.allSettled([
+      const [listResult, compatibilityResult] = await Promise.allSettled([
         fetchInstalledPackagePage(),
-        getLegacyAffectedPkgs(options.forceLegacy === true)
+        getCompatibilityAffectedPackages(options.refreshCompatibility === true)
       ])
 
       if (listResult.status !== 'fulfilled') {
@@ -284,13 +284,13 @@ export function usePackageList(hostId) {
 
       let affectedPkgs = []
 
-      if (legacyResult.status === 'fulfilled') {
-        affectedPkgs = legacyResult.value
+      if (compatibilityResult.status === 'fulfilled') {
+        affectedPkgs = compatibilityResult.value
       } else {
-        console.warn('Failed to load legacy package compatibility mapping:', legacyResult.reason)
+        console.warn('Failed to load package compatibility mapping:', compatibilityResult.reason)
       }
 
-      const mergedRows = mergeScanRowsWithLegacy(listResult.value.rows, affectedPkgs)
+      const mergedRows = mergeScanRowsWithCompatibility(listResult.value.rows, affectedPkgs)
       packageTableDataAll.value = mergedRows
       packageTableData.value = mergedRows
       packagePagination.total = listResult.value.total

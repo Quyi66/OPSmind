@@ -688,9 +688,9 @@ import { assetApi } from '@/modules/asset/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
-import HostSeverityPatchDialog from '../components/host-detail/HostSeverityPatchDialog.vue'
-import PatchDetailDialog from '../components/host-detail/PatchDetailDialog.vue'
-import PatchInstallWizard from '../components/patch-task/PatchInstallWizard.vue'
+import HostSeverityPatchDialog from '../components/host-detail/dialogs/HostSeverityPatchDialog.vue'
+import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
+import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 
 // ECharts
 import { use } from 'echarts/core'

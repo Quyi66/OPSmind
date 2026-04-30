@@ -30,8 +30,8 @@
 import { computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { pickValue } from '../../utils'
-import { yumRepoApi } from '../../yumRepoApi'
-import { getYumRepoLabel, unwrapResponse } from '../../yumRepoUtils'
+import { yumRepoApi } from '../../yum-repo/api'
+import { getYumRepoLabel, unwrapResponse } from '../../yum-repo/utils'
 
 const props = defineProps({
   modelValue: {

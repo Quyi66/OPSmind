@@ -58,7 +58,7 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import WinPatchWsusConfigDialog from '../components/WinPatchWsusConfigDialog.vue'
+import WinPatchWsusConfigDialog from '../components/wsus/WinPatchWsusConfigDialog.vue'
 import { winPatchApi } from '../api'
 import { formatDateTime, normalizeBoolean, pickValue } from '../utils'
 

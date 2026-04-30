@@ -137,7 +137,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Search, RefreshRight } from '@element-plus/icons-vue'
 import { middlewareCveApi } from '../api'
 import { ElMessage } from 'element-plus'
-import MiddlewareCveDetail from '../components/cve/MiddlewareCveDetail.vue'
+import MiddlewareCveDetail from '../components/cve/details/MiddlewareCveDetail.vue'
 
 const route = useRoute()
 const router = useRouter()

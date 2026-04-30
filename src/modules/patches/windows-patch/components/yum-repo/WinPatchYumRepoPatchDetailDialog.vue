@@ -107,7 +107,7 @@ import {
   resolveHostId,
   resolveHostKey
 } from '../../utils'
-import { getDiffTypeLabel, getDiffTypeTagType } from '../../yumRepoUtils'
+import { getDiffTypeLabel, getDiffTypeTagType } from '../../yum-repo/utils'
 
 const props = defineProps({
   modelValue: {

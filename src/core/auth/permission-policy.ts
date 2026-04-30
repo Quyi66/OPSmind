@@ -6,12 +6,15 @@ type PermissionChecker = (permission: string) => boolean
 
 const ADMIN_ROLE_NAMES = new Set(['admin', 'role_admin', 'role_super_admin', 'super_admin'])
 
+const WINDOWS_PATCH_ROUTE_ALIASES: Record<string, string> = {
+  windowsUpdate: 'windowsVulnerability',
+  windowsView: 'windowsRollback'
+}
+
 const WINDOWS_PATCH_PATHS = new Set([
   'windowsVulnerability',
   'windowsWsus',
-  'windowsUpdate',
   'windowsRollback',
-  'windowsView',
   'windowsCveList'
 ])
 
@@ -206,10 +209,12 @@ export function resolveMenuCodeFromRoutePath(path?: string | null): string | nul
   const [first, second] = segments
 
   if (first === 'patches') {
+    const normalizedPatchPath = WINDOWS_PATCH_ROUTE_ALIASES[second || ''] || second || ''
+
     if (second === 'windowsYumRepo') return 'windows-yum-repo'
     if (second === 'logs') return 'patch-logs'
     if (second === 'processLogs') return 'patch-process-logs'
-    if (WINDOWS_PATCH_PATHS.has(second || '')) return 'windows-patches'
+    if (WINDOWS_PATCH_PATHS.has(normalizedPatchPath)) return 'windows-patches'
     return 'patches'
   }
 
