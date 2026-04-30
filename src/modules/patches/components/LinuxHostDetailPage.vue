@@ -70,6 +70,7 @@
       v-show="activeTab === 'packages'"
       ref="packagesTabRef"
       :host-id="hostId"
+      :os-distro="hostOsDistro"
       @patch-click="handlePatchClick"
       @update-packages="handleUpdatePackages"
     />
@@ -189,7 +190,7 @@ function handleInstallSuccess() {
   if (activeTab.value === 'patches') {
     patchesTabRef.value?.loadPatchList()
   } else if (activeTab.value === 'packages') {
-    packagesTabRef.value?.loadPackageList()
+    packagesTabRef.value?.loadPackageList({ forceLegacy: true })
   } else if (activeTab.value === 'vulnerabilities') {
     vulnerabilitiesTabRef.value?.loadVulnerabilityList()
   }

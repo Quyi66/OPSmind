@@ -76,6 +76,22 @@ function buildHostPatchesQuery(params = {}) {
   return query ? `?${query}` : ''
 }
 
+function buildGenericQuery(params = {}) {
+  const searchParams = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) return
+
+    const normalizedValue = typeof value === 'string' ? value.trim() : value
+    if (normalizedValue === '') return
+
+    searchParams.set(key, String(normalizedValue))
+  })
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
+}
+
 function normalizePatchTask(task) {
   if (!task || typeof task !== 'object' || Array.isArray(task)) {
     return task
@@ -2160,6 +2176,107 @@ export const middlewareCveApi = {
   }
 }
 
+/**
+ * RPM 软件包信息 API
+ */
+export const rpmInfoApi = {
+  /**
+   * 全量 RPM 软件包分页查询
+   * GET /vap/api/vap/v2/rpm-info/list
+   */
+  getPackageList(params = {}) {
+    const query = buildGenericQuery({
+      source: params.source,
+      keyword: params.keyword,
+      name: params.name,
+      arch: params.arch,
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/list${query}`)
+  },
+
+  /**
+   * 按 ID 查询 RPM 软件包详情
+   * GET /vap/api/vap/v2/rpm-info/detail/{id}
+   */
+  getPackageDetailById(id) {
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/detail/${encodeURIComponent(id)}`)
+  },
+
+  /**
+   * 按包名查询 RPM 软件包详情
+   * GET /vap/api/vap/v2/rpm-info/detail
+   */
+  getPackageDetail(params = {}) {
+    const query = buildGenericQuery({
+      name: params.name,
+      source: params.source,
+      arch: params.arch
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/detail${query}`)
+  },
+
+  /**
+   * 批量查询 RPM 软件包详情
+   * POST /vap/api/vap/v2/rpm-info/batch-detail
+   */
+  getBatchPackageDetail(payload = {}) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/rpm-info/batch-detail`, payload)
+  },
+
+  /**
+   * 根据 DTS 已安装包行查询软件包详情
+   * GET /vap/api/vap/v2/rpm-info/installed/detail
+   */
+  getInstalledDetail(params = {}) {
+    const query = buildGenericQuery({
+      pkgName: params.pkgName,
+      pkgId: params.pkgId,
+      currentPackage: params.currentPackage,
+      osDistro: params.osDistro,
+      source: params.source,
+      arch: params.arch
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/installed/detail${query}`)
+  },
+
+  /**
+   * 纳管机器已安装软件包查询
+   * GET /vap/api/vap/v2/rpm-info/installed/list
+   */
+  getInstalledList(params = {}) {
+    const query = buildGenericQuery({
+      hostId: params.hostId,
+      hostKey: params.hostKey,
+      keyword: params.keyword,
+      available: params.available,
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/installed/list${query}`)
+  },
+
+  /**
+   * 根据扫描记录查询主机已安装软件包
+   * GET /vap/api/vap/v2/rpm-info/installed/scan-list
+   */
+  getInstalledScanList(params = {}) {
+    const query = buildGenericQuery({
+      hostId: params.hostId,
+      keyword: params.keyword,
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/installed/scan-list${query}`)
+  }
+}
+
 // 导出所有 API
 export default {
   scan: patchScanApi,
@@ -2179,5 +2296,6 @@ export default {
   operationReport: operationReportApi,
   cve: cveApi,
   winCve: winCveApi,
-  middlewareCve: middlewareCveApi
+  middlewareCve: middlewareCveApi,
+  rpmInfo: rpmInfoApi
 }

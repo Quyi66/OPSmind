@@ -63,6 +63,7 @@
       v-show="activeTab === 'packages'"
       ref="packagesTabRef"
       :host-id="hostId"
+      :os-distro="hostOsDistro"
       @patch-click="handlePatchClick"
     />
 
@@ -121,6 +122,7 @@ const dialogVisible = computed({
 const hostKey = computed(() => props.hostInfo.host_key || props.hostInfo.hostKey || '')
 const hostId = computed(() => props.hostInfo.host_id || '')
 const hostInfoRef = computed(() => props.hostInfo)
+const hostOsDistro = computed(() => machineInfo.value?.os_distro || hostInfoRef.value.os_distro || '')
 
 // Tab 状态
 const activeTab = ref('patches')

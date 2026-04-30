@@ -3,32 +3,11 @@
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
       <el-form inline size="small">
-        <el-form-item label="漏洞范围" label-width="70">
-          <el-select
-            v-model="packageFilter.showHistory"
-            style="width: 100px"
-            @change="handlePackageFilterChange"
-          >
-            <el-option label="最新漏洞" value="no" />
-            <el-option label="历史漏洞" value="yes" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="软件包范围" label-width="85">
-          <el-select
-            v-model="packageFilter.showAll"
-            style="width: 130px"
-            @change="handlePackageFilterChange"
-          >
-            <el-option label="有漏洞的软件包" value="no" />
-            <el-option label="所有软件包" value="yes" />
-          </el-select>
-        </el-form-item>
-
         <el-form-item label="关键词" label-width="60">
           <el-input
             v-model="packageKeyword"
             size="small"
-            placeholder="搜索包名/版本/补丁"
+            placeholder="搜索完整 RPM 字符串/包名"
             clearable
             style="width: 220px"
             @input="handlePackageKeywordChange"
@@ -60,7 +39,7 @@
         size="small"
         :loading="packageLoading"
         title="刷新"
-        @click="loadPackageList()"
+        @click="loadPackageList({ forceLegacy: true })"
       >
         <el-icon v-show="!packageLoading"><Refresh /></el-icon>
       </el-button>
@@ -74,13 +53,24 @@
       max-height="calc(100vh - 390px)"
       @selection-change="handlePackageSelectionChange"
     >
-      <el-table-column type="selection" width="55" />
+      <el-table-column type="selection" width="55" :selectable="isPackageSelectable" />
+      <el-table-column prop="pkgName" label="包名" min-width="180" show-overflow-tooltip>
+        <template #default="{ row }">
+          <span>{{ row.pkgName || '-' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column
         prop="installedPkg"
         label="当前安装版本"
         min-width="200"
         show-overflow-tooltip
-      />
+      >
+        <template #default="{ row }">
+          <el-button type="primary" link @click="handleViewPackageDetail(row)">
+            {{ row.installedPkg || '-' }}
+          </el-button>
+        </template>
+      </el-table-column>
       <el-table-column prop="updatePkg" label="需更新版本" min-width="200" show-overflow-tooltip />
       <el-table-column prop="patchId" label="补丁编号" width="180">
         <template #default="{ row }">
@@ -124,19 +114,32 @@
         @current-change="handlePackagePageChange"
       />
     </div>
+
+    <RpmPackageDetailDialog
+      v-model="detailVisible"
+      :loading="detailLoading"
+      :detail-data="detailData"
+    />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { rpmInfoApi } from '../../api'
 import { getSeverityType } from '../../composables/useFormatters'
 import { usePackageList } from '../../composables/usePackageList'
 import { Refresh, Search } from '@element-plus/icons-vue'
+import RpmPackageDetailDialog from '../rpm/RpmPackageDetailDialog.vue'
 
 const props = defineProps({
   hostId: {
     type: String,
     required: true
+  },
+  osDistro: {
+    type: String,
+    default: ''
   }
 })
 
@@ -178,15 +181,51 @@ const {
   packageTableData,
   selectedPackages,
   packageKeyword,
-  packageFilter,
   packagePagination,
   loadPackageList,
-  handlePackageFilterChange,
   handlePackageKeywordChange,
   handlePackageSelectionChange,
   handlePackagePageChange,
   handlePackageSizeChange
 } = usePackageList({ value: props.hostId })
+
+const detailVisible = ref(false)
+const detailLoading = ref(false)
+const detailData = ref({})
+
+function isPackageSelectable(row) {
+  return Boolean(row?.hasUpdateInfo)
+}
+
+async function handleViewPackageDetail(row) {
+  const currentPackage = String(row?.installedPkg || '').trim()
+  const pkgName = String(row?.pkgName || '').trim()
+
+  if (!currentPackage && !pkgName) {
+    ElMessage.warning('当前行缺少软件包标识，无法查看详情')
+    return
+  }
+
+  detailVisible.value = true
+  detailLoading.value = true
+  detailData.value = {}
+
+  try {
+    const response = await rpmInfoApi.getInstalledDetail({
+      pkgName,
+      currentPackage,
+      osDistro: props.osDistro
+    })
+
+    detailData.value = response?.data || response || {}
+  } catch (error) {
+    console.error('Failed to load installed package detail:', error)
+    ElMessage.error('获取软件包详情失败')
+    detailVisible.value = false
+  } finally {
+    detailLoading.value = false
+  }
+}
 
 // 更新软件包
 async function handleUpdatePackages() {

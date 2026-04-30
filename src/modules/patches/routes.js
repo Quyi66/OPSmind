@@ -79,6 +79,16 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./components/LinuxPatchLibrary.vue')
   },
   {
+    key: 'rpmPackageList',
+    path: 'rpmPackageList',
+    name: 'patches-rpmPackageList',
+    title: 'RPM包列表',
+    navLabel: 'RPM包列表',
+    icon: 'fas fa-cube',
+    platform: 'linux',
+    component: () => import('./components/RpmPackageList.vue')
+  },
+  {
     key: 'vulnerability',
     path: 'vulnerability',
     name: 'patches-vulnerability',

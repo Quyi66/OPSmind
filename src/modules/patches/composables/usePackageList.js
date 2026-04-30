@@ -1,6 +1,6 @@
-import { ref, reactive } from 'vue'
+import { onBeforeUnmount, ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { patchScanApi } from '../api'
+import { patchScanApi, rpmInfoApi } from '../api'
 
 /**
  * 软件包列表逻辑 Composable
@@ -11,144 +11,320 @@ export function usePackageList(hostId) {
   const packageTableDataAll = ref([])
   const selectedPackages = ref([])
   const packageKeyword = ref('')
-  const packageFilter = reactive({
-    showHistory: 'no',
-    showAll: 'no'
-  })
   const packagePagination = reactive({
     page: 1,
     pageSize: 20,
     total: 0
   })
+  const legacyAffectedPkgsCache = ref([])
+  const legacyAffectedPkgsHostId = ref('')
+  let keywordSearchTimer = null
+  let latestRequestId = 0
 
-  // 处理软件包数据（根据Angular源代码逻辑）
-  function processPackageData(installedPkgs, affectedPkgs) {
-    const pkgMap = {}
-    const showAll = packageFilter.showAll === 'yes'
-    const showHistoryPatch = packageFilter.showHistory === 'yes'
+  onBeforeUnmount(() => {
+    clearTimeout(keywordSearchTimer)
+  })
 
-    installedPkgs.forEach(pkgId => {
-      const item = {
-        pkgName: '',
-        installedPkg: pkgId,
-        updatePkg: null,
-        severity: '',
-        patchId: '',
-        packages: ''
-      }
+  function parseJsonArray(value) {
+    if (Array.isArray(value)) return value
+    if (!value || typeof value !== 'string') return []
 
-      // 匹配所有的漏洞（包括历史漏洞）
-      const matchingItems = affectedPkgs.filter(ap => ap.installedPkg === pkgId)
-
-      if (showAll && matchingItems.length === 0) {
-        pkgMap[pkgId] = item
-      }
-
-      matchingItems.forEach(ap => {
-        const newItem = {
-          pkgName: ap.pkgName,
-          installedPkg: pkgId,
-          updatePkg: ap.updatePkg,
-          severity: ap.severity,
-          patchId: ap.patchId,
-          packages: `${ap.pkgName}#${ap.updatePkg}#${ap.patchId}`
-        }
-
-        let key = ap.installedPkg
-        if (showHistoryPatch) {
-          key = `${ap.installedPkg}_${ap.updatePkg}_${ap.patchId}`
-        }
-
-        const existing = pkgMap[key]
-        if (!existing) {
-          pkgMap[key] = newItem
-        } else if (!showHistoryPatch && existing.patchId < ap.patchId) {
-          // Only keep latest pkg according to patch id
-          pkgMap[key] = newItem
-        }
-      })
-    })
-
-    return Object.values(pkgMap)
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
   }
 
-  // 应用软件包前端分页
-  function applyPackagePagination() {
-    const keyword = packageKeyword.value.trim().toLowerCase()
-    const filtered = !keyword
-      ? packageTableDataAll.value
-      : packageTableDataAll.value.filter(item => {
-          const parts = [
-            item.installedPkg,
-            item.updatePkg,
-            item.patchId,
-            item.severity,
-            item.pkgName
-          ]
-          return parts
-            .filter(Boolean)
-            .map(v => String(v).toLowerCase())
-            .some(text => text.includes(keyword))
-        })
+  function getStringValue(record, keys = []) {
+    for (const key of keys) {
+      const value = record?.[key]
+      if (value === undefined || value === null) continue
 
-    const start = (packagePagination.page - 1) * packagePagination.pageSize
-    const end = start + packagePagination.pageSize
-    packagePagination.total = filtered.length
-    packageTableData.value = filtered.slice(start, end)
+      const normalized = String(value).trim()
+      if (normalized) return normalized
+    }
+
+    return ''
+  }
+
+  function getBooleanValue(record, keys = []) {
+    for (const key of keys) {
+      const value = record?.[key]
+      if (value === undefined || value === null) continue
+      if (typeof value === 'boolean') return value
+
+      const normalized = String(value).trim().toLowerCase()
+      if (['true', 'yes', '1'].includes(normalized)) return true
+      if (['false', 'no', '0'].includes(normalized)) return false
+    }
+
+    return false
+  }
+
+  function normalizePkgKey(value) {
+    return String(value || '').trim().toLowerCase()
+  }
+
+  function buildPackageToken(pkgName, updatePkg, patchId) {
+    if (!pkgName && !updatePkg && !patchId) return ''
+    return [pkgName, updatePkg, patchId].map(value => String(value || '').trim()).join('#')
+  }
+
+  function pickLatestLegacyMatch(matches = []) {
+    if (matches.length <= 1) return matches[0] || null
+
+    return matches.reduce((latest, current) => {
+      if (!latest) return current
+
+      return String(current.patchId || '').localeCompare(String(latest.patchId || ''), undefined, {
+        numeric: true,
+        sensitivity: 'base'
+      }) > 0
+        ? current
+        : latest
+    }, null)
+  }
+
+  function extractPageItems(data) {
+    if (Array.isArray(data?.content)) return data.content
+    if (Array.isArray(data?.records)) return data.records
+    if (Array.isArray(data)) return data
+    return []
+  }
+
+  function extractPageTotal(data, fallback = 0) {
+    const candidates = [data?.totalElements, data?.total, data?.totalCount, data?.count, fallback]
+
+    for (const candidate of candidates) {
+      const value = Number(candidate)
+      if (Number.isFinite(value) && value >= 0) {
+        return value
+      }
+    }
+
+    return 0
+  }
+
+  function normalizeScanPackageRow(row = {}) {
+    const packageInfo = row.packageInfo && typeof row.packageInfo === 'object' ? row.packageInfo : {}
+
+    const installedPkg =
+      getStringValue(row, ['currentPackage', 'pkgId', 'installedPkg', 'packageId', 'package_id']) ||
+      getStringValue(packageInfo, ['currentPackage', 'pkgId', 'rpmPath', 'rpm_path'])
+
+    const pkgName =
+      getStringValue(row, ['pkgName', 'pkg_name', 'name']) ||
+      getStringValue(packageInfo, ['name', 'pkgName'])
+
+    const architecture =
+      getStringValue(row, ['pkgArch', 'pkg_arch', 'arch', 'architecture']) ||
+      getStringValue(packageInfo, ['architecture', 'arch'])
+
+    return {
+      ...row,
+      packageInfo,
+      pkgName,
+      installedPkg,
+      currentPackage: installedPkg,
+      pkgId: installedPkg,
+      architecture,
+      arch: architecture,
+      source:
+        getStringValue(row, ['source']) || getStringValue(packageInfo, ['source']) || row.source || '',
+      services: row.services || packageInfo.services || [],
+      affected: getBooleanValue(row, ['affected'])
+    }
+  }
+
+  function buildLegacyAffectedLookup(affectedPkgs = []) {
+    const byInstalledPkg = new Map()
+    const byPkgName = new Map()
+
+    const pushToMap = (map, key, value) => {
+      if (!key) return
+      const list = map.get(key) || []
+      list.push(value)
+      map.set(key, list)
+    }
+
+    affectedPkgs.forEach(item => {
+      const normalizedItem = {
+        pkgName: getStringValue(item, ['pkgName', 'pkg_name']),
+        installedPkg: getStringValue(item, ['installedPkg', 'currentPackage', 'pkgId']),
+        updatePkg: getStringValue(item, ['updatePkg', 'updatePackage']),
+        severity: getStringValue(item, ['severity']),
+        patchId: getStringValue(item, ['patchId', 'patch_id'])
+      }
+
+      normalizedItem.packages = buildPackageToken(
+        normalizedItem.pkgName,
+        normalizedItem.updatePkg,
+        normalizedItem.patchId
+      )
+
+      pushToMap(byInstalledPkg, normalizePkgKey(normalizedItem.installedPkg), normalizedItem)
+      pushToMap(byPkgName, normalizePkgKey(normalizedItem.pkgName), normalizedItem)
+    })
+
+    return {
+      byInstalledPkg,
+      byPkgName
+    }
+  }
+
+  function getLegacyMatches(baseRow, affectedLookup) {
+    const installedPkgKey = normalizePkgKey(baseRow.installedPkg)
+    const pkgNameKey = normalizePkgKey(baseRow.pkgName)
+
+    const directMatches = installedPkgKey
+      ? affectedLookup.byInstalledPkg.get(installedPkgKey) || []
+      : []
+
+    if (directMatches.length > 0) {
+      return directMatches
+    }
+
+    return pkgNameKey ? affectedLookup.byPkgName.get(pkgNameKey) || [] : []
+  }
+
+  function mergeScanRowsWithLegacy(scanRows = [], affectedPkgs = []) {
+    const affectedLookup = buildLegacyAffectedLookup(affectedPkgs)
+    return scanRows.map(rawRow => {
+      const baseRow = normalizeScanPackageRow(rawRow)
+      const match = pickLatestLegacyMatch(getLegacyMatches(baseRow, affectedLookup))
+
+      if (!match) {
+        return {
+          ...baseRow,
+          updatePkg: null,
+          severity: '',
+          patchId: '',
+          packages: '',
+          hasUpdateInfo: false
+        }
+      }
+
+      return {
+        ...baseRow,
+        pkgName: match.pkgName || baseRow.pkgName,
+        installedPkg: match.installedPkg || baseRow.installedPkg,
+        currentPackage: match.installedPkg || baseRow.currentPackage,
+        pkgId: match.installedPkg || baseRow.pkgId,
+        updatePkg: match.updatePkg || null,
+        severity: match.severity || '',
+        patchId: match.patchId || '',
+        packages: match.packages || '',
+        affected: true,
+        hasUpdateInfo: Boolean(match.packages || match.patchId || match.updatePkg)
+      }
+    })
+  }
+
+  async function fetchInstalledPackagePage() {
+    const response = await rpmInfoApi.getInstalledScanList({
+      hostId: hostId.value,
+      keyword: packageKeyword.value.trim() || undefined,
+      page: packagePagination.page - 1,
+      size: packagePagination.pageSize
+    })
+
+    const data = response?.data || response || {}
+
+    return {
+      rows: extractPageItems(data),
+      total: extractPageTotal(data, extractPageItems(data).length)
+    }
+  }
+
+  async function getLegacyAffectedPkgs(forceRefresh = false) {
+    if (
+      !forceRefresh &&
+      legacyAffectedPkgsHostId.value === hostId.value
+    ) {
+      return legacyAffectedPkgsCache.value
+    }
+
+    const response = await patchScanApi.getMachinePackages({
+      host_id: hostId.value
+    })
+
+    const data = response?.data || response || {}
+    const legacyRecord = Array.isArray(data.records) ? data.records[0] : null
+    const affectedPkgs = parseJsonArray(legacyRecord?.affected_pkgs)
+
+    legacyAffectedPkgsCache.value = affectedPkgs
+    legacyAffectedPkgsHostId.value = hostId.value
+
+    return affectedPkgs
   }
 
   // 加载软件包列表
-  async function loadPackageList() {
+  async function loadPackageList(options = {}) {
     if (!hostId.value) {
       return
     }
 
+    const requestId = ++latestRequestId
     packageLoading.value = true
     try {
-      const response = await patchScanApi.getMachinePackages({
-        host_id: hostId.value
-      })
+      const [listResult, legacyResult] = await Promise.allSettled([
+        fetchInstalledPackagePage(),
+        getLegacyAffectedPkgs(options.forceLegacy === true)
+      ])
 
-      const data = response?.data || response
-      const records = data?.records || []
-
-      if (records.length > 0) {
-        const rec = records[0]
-        const installedPkgs = JSON.parse(rec.installed_pkgs || '[]')
-        const affectedPkgs = JSON.parse(rec.affected_pkgs || '[]')
-
-        // 处理软件包数据并存储所有数据
-        packageTableDataAll.value = processPackageData(installedPkgs, affectedPkgs)
-        packagePagination.total = packageTableDataAll.value.length
-
-        // 应用前端分页
-        applyPackagePagination()
-      } else {
-        packageTableDataAll.value = []
-        packageTableData.value = []
-        packagePagination.total = 0
+      if (listResult.status !== 'fulfilled') {
+        throw listResult.reason
       }
+
+      if (requestId !== latestRequestId) {
+        return
+      }
+
+      let affectedPkgs = []
+
+      if (legacyResult.status === 'fulfilled') {
+        affectedPkgs = legacyResult.value
+      } else {
+        console.warn('Failed to load legacy package compatibility mapping:', legacyResult.reason)
+      }
+
+      const mergedRows = mergeScanRowsWithLegacy(listResult.value.rows, affectedPkgs)
+      packageTableDataAll.value = mergedRows
+      packageTableData.value = mergedRows
+      packagePagination.total = listResult.value.total
+      selectedPackages.value = []
     } catch (error) {
+      if (requestId !== latestRequestId) {
+        return
+      }
+
       console.error('Failed to load package list:', error)
       ElMessage.error('获取软件包列表失败')
       packageTableDataAll.value = []
       packageTableData.value = []
       packagePagination.total = 0
+      selectedPackages.value = []
     } finally {
-      packageLoading.value = false
+      if (requestId === latestRequestId) {
+        packageLoading.value = false
+      }
     }
   }
 
-  // 软件包筛选变化
-  function handlePackageFilterChange() {
-    packagePagination.page = 1
-    packageTableData.value = []
-    loadPackageList()
-  }
-
   function handlePackageKeywordChange() {
+    clearTimeout(keywordSearchTimer)
     packagePagination.page = 1
-    applyPackagePagination()
+
+    if (!packageKeyword.value.trim()) {
+      loadPackageList()
+      return
+    }
+
+    keywordSearchTimer = setTimeout(() => {
+      loadPackageList()
+    }, 300)
   }
 
   // 软件包选择变化
@@ -159,13 +335,13 @@ export function usePackageList(hostId) {
   // 软件包分页变化
   function handlePackagePageChange(page) {
     packagePagination.page = page
-    applyPackagePagination()
+    loadPackageList()
   }
 
   function handlePackageSizeChange(size) {
     packagePagination.pageSize = size
     packagePagination.page = 1
-    applyPackagePagination()
+    loadPackageList()
   }
 
   return {
@@ -174,10 +350,8 @@ export function usePackageList(hostId) {
     packageTableDataAll,
     packageKeyword,
     selectedPackages,
-    packageFilter,
     packagePagination,
     loadPackageList,
-    handlePackageFilterChange,
     handlePackageKeywordChange,
     handlePackageSelectionChange,
     handlePackagePageChange,

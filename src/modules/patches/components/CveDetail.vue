@@ -205,25 +205,34 @@
                 :data="filteredPackages"
                 max-height="calc(100vh - 240px)"
                 style="width: 100%"
+                border
               >
                 <el-table-column
                   prop="productName"
                   label="产品名称"
-                  min-width="160"
+                  min-width="200"
                   show-overflow-tooltip
                 />
                 <el-table-column
                   prop="packageName"
                   label="软件包名称"
-                  min-width="200"
+                  min-width="130"
                   show-overflow-tooltip
                 >
                   <template #default="{ row }">
-                    <el-icon class="text-muted me-1"><Box /></el-icon>
-                    {{ row.packageName }}
+                    <!-- <el-icon class="text-muted me-1"><Box /></el-icon> -->
+                    <el-link
+                      v-if="hasPackageDetail(row)"
+                      type="primary"
+                      :underline="false"
+                      @click="handleViewPackageDetail(row)"
+                    >
+                      {{ row.packageName }}
+                    </el-link>
+                    <span v-else>{{ row.packageName }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column prop="architecture" label="架构" width="150" />
+                <el-table-column prop="architecture" label="架构" width="130" />
                 <el-table-column prop="normalizedStatus" label="状态" width="120">
                   <template #default="{ row }">
                     <el-tag :type="getStatusType(row.normalizedStatus)" size="small">
@@ -242,13 +251,62 @@
                     <span v-else class="text-muted">-</span>
                   </template>
                 </el-table-column>
-                <el-table-column prop="source" label="系统" width="100">
+                <el-table-column prop="source" label="系统" width="90">
                   <template #default="{ row }">
                     <el-tag size="small" effect="plain" :type="getSourceType(row.source)">
                       {{ getSourceLabel(row.source) }}
                     </el-tag>
                   </template>
                 </el-table-column>
+                <el-table-column label="关联服务" min-width="200">
+                  <template #default="{ row }">
+                    <div class="service-cell">
+                      <div
+                        v-for="(service, index) in getPackageServiceDisplay(row).preview"
+                        :key="`${row.packageName || 'service'}-${index}`"
+                        class="service-item"
+                        :title="service"
+                      >
+                        {{ service }}
+                      </div>
+                      <el-popover
+                        v-if="getPackageServiceDisplay(row).restCount > 0"
+                        placement="top"
+                        trigger="hover"
+                        :width="320"
+                      >
+                        <template #reference>
+                          <span class="more-link">
+                            +{{ getPackageServiceDisplay(row).restCount }} 更多
+                          </span>
+                        </template>
+                        <div class="services-popover">
+                          <div
+                            v-for="(service, index) in getPackageServiceDisplay(row).services"
+                            :key="`${row.packageName || 'popover-service'}-${index}`"
+                            class="service-item"
+                          >
+                            {{ service }}
+                          </div>
+                        </div>
+                      </el-popover>
+                      <span v-if="!getPackageServiceDisplay(row).preview.length" class="text-muted">-</span>
+                    </div>
+                  </template>
+                </el-table-column>
+                <!-- <el-table-column label="操作" width="70" fixed="right">
+                  <template #default="{ row }">
+                    <el-button
+                      v-if="hasPackageDetail(row)"
+                      type="primary"
+                      link
+                      @click="handleViewPackageDetail(row)"
+                    >
+                      详情
+                    </el-button>
+                    <span v-else class="text-muted">-</span>
+                  </template>
+                </el-table-column> -->
               </el-table>
             </div>
           </div>
@@ -359,6 +417,12 @@
       v-model:visible="rebootResultDialogVisible"
       :run-id="rebootResultRunId"
     />
+
+    <RpmPackageDetailDialog
+      v-model="packageDetailVisible"
+      :loading="false"
+      :detail-data="packageDetailData"
+    />
   </div>
 </template>
 
@@ -369,6 +433,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import * as echarts from 'echarts'
 import { useTheme } from '@/composables/useTheme'
+import RpmPackageDetailDialog from './rpm/RpmPackageDetailDialog.vue'
 import {
   TopRight,
   Box,
@@ -387,6 +452,7 @@ import {
   getCveSourceType,
   isSameCveSource
 } from '../composables/useFormatters'
+import { getServicePreview } from '../utils/rpmPackageInfo'
 
 // Props
 const props = defineProps({
@@ -436,6 +502,8 @@ const affectedHostsError = ref('')
 const rebootSubmittingHostKey = ref('')
 const rebootResultDialogVisible = ref(false)
 const rebootResultRunId = ref('')
+const packageDetailVisible = ref(false)
+const packageDetailData = ref({})
 const router = useRouter()
 const { isDark } = useTheme()
 
@@ -603,6 +671,28 @@ function getPatchStatusType(status) {
   if (['回滚失败', 'ROLLBACK_FAILED'].includes(s)) return 'failed'
   if (['回滚成功', 'ROLLBACK_SUCCESS'].includes(s)) return 'fixed'
   return 'default'
+}
+
+function hasPackageDetail(row) {
+  return Boolean(row?.packageInfo || row?.packageDescription || row?.changelog || row?.services)
+}
+
+function getPackageServicePreview(row) {
+  return getServicePreview(row?.packageInfo?.services || row?.services)
+}
+
+function getPackageServiceDisplay(row) {
+  return getPackageServicePreview(row)
+}
+
+function handleViewPackageDetail(row) {
+  if (!hasPackageDetail(row)) {
+    ElMessage.warning('当前软件包暂无 RPM 详情')
+    return
+  }
+
+  packageDetailData.value = row
+  packageDetailVisible.value = true
 }
 
 // 状态标准化
@@ -1478,6 +1568,31 @@ watch(isDark, () => {
     color: #66b1ff;
     text-decoration: underline;
   }
+}
+
+.more-link {
+  color: var(--el-color-primary);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.service-cell {
+  line-height: 1.5;
+}
+
+.service-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.services-popover {
+  max-height: 220px;
+  overflow-y: auto;
+  line-height: 1.6;
 }
 
 /* 5. Texts */
