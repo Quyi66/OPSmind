@@ -33,6 +33,16 @@
         </el-descriptions>
 
         <section class="detail-section">
+          <h4 class="detail-section__title">关联服务</h4>
+          <div v-if="normalizedDetail.services.length" class="service-list">
+            <el-tag v-for="service in normalizedDetail.services" :key="service" size="small">
+              {{ service }}
+            </el-tag>
+          </div>
+          <el-empty v-else description="暂无关联服务" :image-size="56" />
+        </section>
+
+        <section class="detail-section">
           <div class="detail-section__header">
             <h4 class="detail-section__title">Changelog</h4>
             <span v-if="parsedChangelog.isStructured" class="detail-section__meta">
@@ -76,16 +86,6 @@
           <div v-else class="detail-section__content changelog-raw pre-wrap mono-text">
             {{ normalizedDetail.changelog || '暂无 changelog 信息' }}
           </div>
-        </section>
-
-        <section class="detail-section">
-          <h4 class="detail-section__title">关联服务</h4>
-          <div v-if="normalizedDetail.services.length" class="service-list">
-            <el-tag v-for="service in normalizedDetail.services" :key="service" size="small">
-              {{ service }}
-            </el-tag>
-          </div>
-          <el-empty v-else description="暂无关联服务" :image-size="56" />
         </section>
       </template>
 

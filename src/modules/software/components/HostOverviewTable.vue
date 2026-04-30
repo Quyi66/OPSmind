@@ -3,10 +3,10 @@
     <!-- 操作栏 - 左右分布 -->
     <div class="ops-action-bar">
       <div class="action-left">
-        <el-button type="primary" size="small" @click="handleRescan">
+        <!-- <el-button type="primary" size="small" @click="handleRescan">
           <i class="fas fa-chevron-right" />
           重新进行软件包扫描
-        </el-button>
+        </el-button> -->
         <!-- <el-button size="small" @click="handleExport">
           <i class="fa fa-download" />
           导出
