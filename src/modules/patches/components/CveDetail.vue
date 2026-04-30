@@ -452,7 +452,7 @@ import {
   getCveSourceType,
   isSameCveSource
 } from '../composables/useFormatters'
-import { getServicePreview } from '../utils/rpmPackageInfo'
+import { getServicePreview, normalizeRpmPackageDetail } from '../utils/rpmPackageInfo'
 
 // Props
 const props = defineProps({
@@ -673,8 +673,22 @@ function getPatchStatusType(status) {
   return 'default'
 }
 
+function hasPackageVersion(row) {
+  return Boolean(String(normalizeRpmPackageDetail(row).version || '').trim())
+}
+
 function hasPackageDetail(row) {
-  return Boolean(row?.packageInfo || row?.packageDescription || row?.changelog || row?.services)
+  const normalizedDetail = normalizeRpmPackageDetail(row)
+
+  return Boolean(
+    String(normalizedDetail.version || '').trim() &&
+      (normalizedDetail.name ||
+        normalizedDetail.summary ||
+        normalizedDetail.description ||
+        normalizedDetail.changelog ||
+        normalizedDetail.rpmPath ||
+        normalizedDetail.services.length)
+  )
 }
 
 function getPackageServicePreview(row) {
@@ -687,7 +701,9 @@ function getPackageServiceDisplay(row) {
 
 function handleViewPackageDetail(row) {
   if (!hasPackageDetail(row)) {
-    ElMessage.warning('当前软件包暂无 RPM 详情')
+    ElMessage.warning(
+      hasPackageVersion(row) ? '当前软件包暂无 RPM 详情' : '当前软件包缺少版本信息，无法查看 RPM 详情'
+    )
     return
   }
 
