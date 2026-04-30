@@ -168,7 +168,7 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
   },
   software: {
     entryUrl: '#/apw/spm',
-    description: '软件管理',
+    description: 'Yum仓库管理',
     enabled: true
   },
   // 帮助中心

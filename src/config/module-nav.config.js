@@ -76,17 +76,6 @@ export const WINDOWS_PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
   platform: def.platform || 'windows'
 }))
 
-// 补丁漏洞 - 独立的 Yum 仓库管理导航
-export const WINDOWS_YUM_REPO_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
-  def => def.navLabel && def.key === 'windowsYumRepo'
-).map(def => ({
-  key: def.key,
-  label: def.navLabel || def.title, // 取路由内的中文如“补丁安装”
-  icon: def.icon,
-  path: `/patches/${def.path}`,
-  platform: def.platform || 'windows'
-}))
-
 // 补丁漏洞 - 变更日志查询的导航
 export const PATCH_LOGS_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
   def => def.navLabel && def.key === 'logs'
@@ -110,19 +99,7 @@ export const PATCH_PROCESS_LOGS_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
 }))
 
 // 补丁漏洞 - 软件模块的页面导航
-export const SOFTWARE_NAV_ITEMS = SOFTWARE_ROUTE_DEFS.filter(
-  def => def.navLabel && def.key !== 'yumManage'
-).map(def => ({
-  key: def.key,
-  label: def.navLabel || def.title,
-  icon: def.icon,
-  path: `/software/${def.path}`
-}))
-
-// 补丁漏洞 - 独立的软件源管理导航
-export const SOFTWARE_YUM_MANAGE_NAV_ITEMS = SOFTWARE_ROUTE_DEFS.filter(
-  def => def.navLabel && def.key === 'yumManage'
-).map(def => ({
+export const SOFTWARE_NAV_ITEMS = SOFTWARE_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
@@ -204,11 +181,9 @@ export const MODULE_NAV_CONFIG = {
   'rpm-install': RPM_INSTALL_NAV_ITEMS,
   patches: PATCHES_NAV_ITEMS,
   'windows-patches': WINDOWS_PATCHES_NAV_ITEMS,
-  'windows-yum-repo': WINDOWS_YUM_REPO_NAV_ITEMS,
   'patch-logs': PATCH_LOGS_NAV_ITEMS,
   'patch-process-logs': PATCH_PROCESS_LOGS_NAV_ITEMS,
   software: SOFTWARE_NAV_ITEMS,
-  'software-yum-manage': SOFTWARE_YUM_MANAGE_NAV_ITEMS,
   cac: CAC_NAV_ITEMS,
   acm: ACM_NAV_ITEMS,
   users: USERS_NAV_ITEMS,

@@ -76,7 +76,7 @@ const STATIC_TRANSLATIONS = {
   'app_pms.title': '密码管理',
   'app_sudo.title': 'sudo权限管理',
   'app_vap.title': '补丁管理',
-  'app_spm.title': '软件管理',
+  'app_spm.title': 'Yum仓库管理',
   'app_uim.name': '用户管理',
   'app_vcm.title': '虚拟化管理',
 

@@ -147,6 +147,9 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: 'Yum 仓库管理',
     icon: 'fas fa-database',
     platform: 'windows',
+    redirect: {
+      path: '/software/repos'
+    },
     component: () => import('./windows-patch/views/WindowsPatchYumRepoPage.vue')
   },
   {

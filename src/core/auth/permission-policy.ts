@@ -29,7 +29,7 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
   'windows-yum-repo': ['applet:vap'],
   'patch-logs': ['applet:vap'],
   'patch-process-logs': ['applet:vap'],
-  software: ['applet:spm'],
+  software: ['applet:spm', 'applet:vap'],
   'software-yum-manage': ['applet:spm'],
   cac: ['applet:cac'],
   acm: ['applet:acm'],
@@ -54,7 +54,7 @@ export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   'windows-yum-repo': '/patches/windowsYumRepo',
   'patch-logs': '/patches/logs',
   'patch-process-logs': '/patches/processLogs',
-  software: '/software/packages',
+  software: '/software/repos',
   'software-yum-manage': '/software/yumManage',
   cac: '/cac/overview',
   acm: '/acm/overview',
@@ -214,7 +214,6 @@ export function resolveMenuCodeFromRoutePath(path?: string | null): string | nul
   }
 
   if (first === 'software') {
-    if (second === 'yumManage') return 'software-yum-manage'
     return 'software'
   }
   if (first === 'admin') return 'admin'

@@ -5,7 +5,7 @@
 
 export default {
   name: 'software',
-  title: '软件管理',
+  title: 'Yum仓库管理',
   icon: 'fa-cube',
   routes: [
     {
