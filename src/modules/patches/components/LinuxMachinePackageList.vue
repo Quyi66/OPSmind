@@ -187,7 +187,7 @@ import { Download, InfoFilled, Refresh, RefreshRight, Search } from '@element-pl
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { rpmInfoApi } from '../api'
 import { useLinuxMachinePackageList } from '../composables/useLinuxMachinePackageList'
-import { getServicePreview } from '../utils/rpmPackageInfo'
+import { getServicePreview, inferRpmSource } from '../utils/rpmPackageInfo'
 import RpmPackageDetailDialog from './rpm/RpmPackageDetailDialog.vue'
 
 const selectorOptions = {
@@ -220,11 +220,13 @@ function getServiceDisplay(services) {
 }
 
 async function handleViewDetail(row) {
-  const currentPackage = String(row?.currentPackage || '').trim()
+  const version = String(row?.pkgVersion || '').trim()
   const pkgName = String(row?.pkgName || '').trim()
+  const source = inferRpmSource(row?.source, row?.osDistro)
+  const arch = String(row?.pkgArch || row?.osArch || '').trim()
 
-  if (!currentPackage && !pkgName) {
-    ElMessage.warning('当前行缺少软件包标识，无法查看详情')
+  if (!version || !pkgName || !source || !arch) {
+    ElMessage.warning('当前行缺少详情接口必传参数，无法查看详情')
     return
   }
 
@@ -234,10 +236,10 @@ async function handleViewDetail(row) {
 
   try {
     const response = await rpmInfoApi.getInstalledDetail({
+      version,
       pkgName,
-      currentPackage,
-      osDistro: row?.osDistro,
-      arch: row?.pkgArch
+      source,
+      arch
     })
 
     detailData.value = response?.data || response || {}

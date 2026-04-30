@@ -1,6 +1,7 @@
 import { onBeforeUnmount, ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchScanApi, rpmInfoApi } from '../api'
+import { extractInstalledPackageVersion, inferRpmSource } from '../utils/rpmPackageInfo'
 
 /**
  * 软件包列表逻辑 Composable
@@ -122,6 +123,20 @@ export function usePackageList(hostId) {
       getStringValue(row, ['pkgArch', 'pkg_arch', 'arch', 'architecture']) ||
       getStringValue(packageInfo, ['architecture', 'arch'])
 
+    const version =
+      getStringValue(row, ['pkgVersion', 'pkg_version', 'version']) ||
+      getStringValue(packageInfo, ['version']) ||
+      extractInstalledPackageVersion({
+        currentPackage: installedPkg,
+        pkgName,
+        arch: architecture
+      })
+
+    const source =
+      getStringValue(row, ['source']) ||
+      getStringValue(packageInfo, ['source']) ||
+      inferRpmSource('', getStringValue(row, ['osDistro', 'os_distro']))
+
     return {
       ...row,
       packageInfo,
@@ -131,8 +146,8 @@ export function usePackageList(hostId) {
       pkgId: installedPkg,
       architecture,
       arch: architecture,
-      source:
-        getStringValue(row, ['source']) || getStringValue(packageInfo, ['source']) || row.source || '',
+      version,
+      source: source || row.source || '',
       services: row.services || packageInfo.services || [],
       affected: getBooleanValue(row, ['affected'])
     }

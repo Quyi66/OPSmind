@@ -258,6 +258,53 @@ export function formatRpmVersion(detail = {}) {
   return '-'
 }
 
+export function inferRpmSource(source, osDistro = '') {
+  const normalizedSource = String(source || '')
+    .trim()
+    .toLowerCase()
+  if (normalizedSource.includes('kylin')) return 'kylin'
+  if (normalizedSource.includes('redhat') || normalizedSource.includes('red hat') || normalizedSource.includes('rhel')) {
+    return 'redhat'
+  }
+
+  const normalizedOsDistro = String(osDistro || '')
+    .trim()
+    .toLowerCase()
+  if (normalizedOsDistro.includes('kylin')) return 'kylin'
+  if (
+    normalizedOsDistro.includes('redhat') ||
+    normalizedOsDistro.includes('red hat') ||
+    normalizedOsDistro.includes('rhel')
+  ) {
+    return 'redhat'
+  }
+
+  return ''
+}
+
+export function extractInstalledPackageVersion({ version, currentPackage, pkgName, arch } = {}) {
+  const normalizedVersion = String(version || '').trim()
+  if (normalizedVersion) return normalizedVersion
+
+  let packageText = String(currentPackage || '').trim()
+  const normalizedPkgName = String(pkgName || '').trim()
+  const normalizedArch = String(arch || '').trim()
+
+  if (!packageText || !normalizedPkgName) return ''
+
+  if (packageText.toLowerCase().endsWith('.rpm')) {
+    packageText = packageText.slice(0, -4)
+  }
+
+  if (normalizedArch && packageText.endsWith(`-${normalizedArch}`)) {
+    packageText = packageText.slice(0, -(normalizedArch.length + 1))
+  }
+
+  if (!packageText.startsWith(`${normalizedPkgName}-`)) return ''
+
+  return packageText.slice(normalizedPkgName.length + 1).trim()
+}
+
 export function getServicePreview(value, maxItems = 2) {
   const services = normalizeServiceList(value)
 

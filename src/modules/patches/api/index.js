@@ -2243,10 +2243,8 @@ export const rpmInfoApi = {
    */
   getInstalledDetail(params = {}) {
     const query = buildGenericQuery({
+      version: params.version,
       pkgName: params.pkgName,
-      pkgId: params.pkgId,
-      currentPackage: params.currentPackage,
-      osDistro: params.osDistro,
       source: params.source,
       arch: params.arch
     })
