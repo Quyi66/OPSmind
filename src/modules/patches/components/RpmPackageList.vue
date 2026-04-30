@@ -70,10 +70,10 @@
 
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 250px)">
-        <el-table-column prop="name" label="包名" min-width="220" show-overflow-tooltip>
+        <el-table-column prop="completePackageName" label="包名" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="handleViewDetail(row)">
-              {{ row.name || '-' }}
+              {{ row.completePackageName || '-' }}
             </el-link>
           </template>
         </el-table-column>
@@ -183,7 +183,7 @@ function getServiceDisplay(services) {
 }
 
 async function handleViewDetail(row) {
-  const packageName = String(row?.name || '').trim()
+  const packageName = String(row?.completePackageName || '').trim()
   if (!row?.id && !packageName) {
     ElMessage.warning('当前行缺少可查询的 RPM 包标识')
     return
