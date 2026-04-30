@@ -63,6 +63,154 @@ export function normalizeChangelog(value) {
   return String(value)
 }
 
+function splitChangelogHeader(header) {
+  const normalizedHeader = String(header || '').trim().replace(/^\*\s*/, '')
+  if (!normalizedHeader) {
+    return {
+      headline: '',
+      version: '',
+      dateText: '',
+      maintainer: '',
+      email: ''
+    }
+  }
+
+  const separatorIndex = normalizedHeader.lastIndexOf(' - ')
+  const headline = separatorIndex === -1 ? normalizedHeader : normalizedHeader.slice(0, separatorIndex).trim()
+  const version = separatorIndex === -1 ? '' : normalizedHeader.slice(separatorIndex + 3).trim()
+  const headerMatch = headline.match(/^([A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4})\s+(.+?)(?:\s+<([^>]+)>)?$/)
+
+  if (headerMatch) {
+    return {
+      headline,
+      version,
+      dateText: headerMatch[1].trim(),
+      maintainer: headerMatch[2].trim(),
+      email: String(headerMatch[3] || '').trim()
+    }
+  }
+
+  if (separatorIndex === -1) {
+    return {
+      headline,
+      version,
+      dateText: '',
+      maintainer: '',
+      email: ''
+    }
+  }
+
+  return {
+    headline,
+    version,
+    dateText: '',
+    maintainer: '',
+    email: ''
+  }
+}
+
+export function parseRpmChangelog(value) {
+  const rawText = normalizeChangelog(value)
+  if (!rawText) {
+    return {
+      rawText: '',
+      entries: [],
+      isStructured: false
+    }
+  }
+
+  const lines = rawText.split(/\r?\n/)
+  const entries = []
+  const introLines = []
+  let currentEntry = null
+
+  const pushCurrentEntry = () => {
+    if (!currentEntry) return
+
+    entries.push({
+      ...currentEntry,
+      ...splitChangelogHeader(currentEntry.header)
+    })
+    currentEntry = null
+  }
+
+  const appendContinuation = text => {
+    if (!text) return
+
+    if (currentEntry.items.length) {
+      const lastIndex = currentEntry.items.length - 1
+      currentEntry.items[lastIndex] = `${currentEntry.items[lastIndex]}\n${text}`
+      return
+    }
+
+    if (currentEntry.notes.length) {
+      const lastIndex = currentEntry.notes.length - 1
+      currentEntry.notes[lastIndex] = `${currentEntry.notes[lastIndex]}\n${text}`
+      return
+    }
+
+    currentEntry.notes.push(text)
+  }
+
+  lines.forEach(rawLine => {
+    const line = String(rawLine || '').trimEnd()
+    const trimmedLine = line.trim()
+
+    if (!trimmedLine) return
+
+    if (/^\*\s+/.test(trimmedLine)) {
+      pushCurrentEntry()
+      currentEntry = {
+        header: trimmedLine.replace(/^\*\s+/, ''),
+        items: [],
+        notes: []
+      }
+      return
+    }
+
+    if (!currentEntry) {
+      introLines.push(trimmedLine)
+      return
+    }
+
+    if (/^-\s+/.test(trimmedLine)) {
+      currentEntry.items.push(trimmedLine.replace(/^-\s+/, ''))
+      return
+    }
+
+    appendContinuation(trimmedLine)
+  })
+
+  pushCurrentEntry()
+
+  const hasStructuredEntries =
+    entries.some(entry => entry.header) && entries.some(entry => entry.items.length || entry.notes.length)
+
+  if (!hasStructuredEntries) {
+    return {
+      rawText,
+      entries: [],
+      isStructured: false
+    }
+  }
+
+  if (introLines.length) {
+    entries.unshift({
+      header: '',
+      headline: '',
+      version: '',
+      items: [],
+      notes: introLines
+    })
+  }
+
+  return {
+    rawText,
+    entries,
+    isStructured: true
+  }
+}
+
 export function normalizeRpmPackageDetail(rawDetail = {}) {
   const packageInfo =
     rawDetail.packageInfo && typeof rawDetail.packageInfo === 'object' ? rawDetail.packageInfo : null
