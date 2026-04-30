@@ -128,7 +128,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Search, Delete, Rank } from '@element-plus/icons-vue'
-import { cveApi } from '../api/index.js'
+import { cveApi } from '../../api/index.js'
 import { ElMessage } from 'element-plus'
 
 async function defaultFetchOptions({ keyword, page, size }) {

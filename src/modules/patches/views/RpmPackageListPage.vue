@@ -154,7 +154,7 @@ import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import { rpmInfoApi } from '../api'
 import { useRpmPackageList } from '../composables/useRpmPackageList'
 import { getServicePreview } from '../utils/rpmPackageInfo'
-import RpmPackageDetailDialog from './rpm/RpmPackageDetailDialog.vue'
+import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
 
 const {
   filters,

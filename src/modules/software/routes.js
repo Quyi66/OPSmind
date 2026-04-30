@@ -45,7 +45,7 @@ export const SOFTWARE_ROUTE_DEFS = [
     title: 'Yum源清单',
     navLabel: 'Yum源清单',
     icon: 'fas fa-cogs',
-    component: () => import('@/modules/patches/components/LinuxYumManage.vue')
+    component: () => import('@/modules/patches/views/LinuxYumManagePage.vue')
   },
   {
     key: 'logs',

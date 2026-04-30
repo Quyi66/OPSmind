@@ -172,7 +172,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
-import { windowsRollbackApi } from '../api'
+import { windowsRollbackApi } from '../../api'
 
 // 加载状态
 const loading = ref(false)

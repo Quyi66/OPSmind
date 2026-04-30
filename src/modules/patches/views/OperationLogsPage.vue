@@ -430,8 +430,8 @@ import { translateText } from '@/utils/i18n'
 import { PATCH_SEVERITY_LABELS, PATCH_SEVERITY_STYLES } from '../constants'
 import { useApi } from '@/core/api'
 import { authService } from '@/core/auth'
-import ScanReportDialog from './dialogs/ScanReportDialog.vue'
-import WindowsScanReportDialog from './dialogs/WindowsScanReportDialog.vue'
+import ScanReportDialog from '../components/logs/ScanReportDialog.vue'
+import WindowsScanReportDialog from '../components/logs/WindowsScanReportDialog.vue'
 
 // Tab 状态
 const activeTab = ref('operation')

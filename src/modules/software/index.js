@@ -59,7 +59,7 @@ export default {
         {
           path: 'yumManage',
           name: 'YumManage',
-          component: () => import('@/modules/patches/components/LinuxYumManage.vue'),
+          component: () => import('@/modules/patches/views/LinuxYumManagePage.vue'),
           meta: { title: '软件源管理' }
         },
         {

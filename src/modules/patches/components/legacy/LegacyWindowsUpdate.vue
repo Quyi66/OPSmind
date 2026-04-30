@@ -211,7 +211,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
-import { windowsUpdateApi } from '../api'
+import { windowsUpdateApi } from '../../api'
 import FixSelectedVulnsDialog from './dialogs/FixSelectedVulnsDialog.vue'
 
 // 加载状态

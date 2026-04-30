@@ -37,7 +37,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import PatchesTab from '../host-detail/PatchesTab.vue'
+import PatchesTab from './PatchesTab.vue'
 import PatchInstallWizard from '../patch-task/PatchInstallWizard.vue'
 
 const props = defineProps({

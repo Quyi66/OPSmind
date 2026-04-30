@@ -299,8 +299,8 @@ import {
   getCveSourceType,
   isSameCveSource
 } from '../composables/useFormatters'
-import CveDetail from './CveDetail.vue'
-import ManualExportDialog from './ManualExportDialog.vue'
+import CveDetail from '../components/cve/CveDetail.vue'
+import ManualExportDialog from '../components/cve/ManualExportDialog.vue'
 
 const route = useRoute()
 const router = useRouter()

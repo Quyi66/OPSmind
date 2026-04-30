@@ -199,7 +199,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchRollbackApi } from '../api'
-import PatchInstallWizard from './patch-task/PatchInstallWizard.vue'
+import PatchInstallWizard from '../components/patch-task/PatchInstallWizard.vue'
 
 // 加载状态
 const loading = ref(false)

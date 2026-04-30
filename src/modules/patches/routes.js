@@ -12,7 +12,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: 'CVE漏洞列表',
     icon: 'fas fa-bug',
     platform: 'common',
-    component: () => import('./components/CveList.vue')
+    component: () => import('./views/CveListPage.vue')
   },
   {
     key: 'middlewareCveList',
@@ -22,7 +22,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: '中间件CVE列表',
     icon: 'fas fa-shield-virus',
     platform: 'common',
-    component: () => import('./components/MiddlewareCveList.vue')
+    component: () => import('./views/MiddlewareCveListPage.vue')
   },
   {
     key: 'machineScan',
@@ -32,14 +32,14 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: '机器扫描',
     icon: 'fas fa-search',
     platform: 'linux',
-    component: () => import('./components/LinuxPatchScan.vue')
+    component: () => import('./views/LinuxPatchScanPage.vue')
   },
   {
     key: 'hostDetail',
     path: 'hostDetail',
     name: 'patches-hostDetail',
     title: '主机详情',
-    component: () => import('./components/LinuxHostDetailPage.vue')
+    component: () => import('./views/LinuxHostDetailPage.vue')
   },
   {
     key: 'patchInstall',
@@ -49,7 +49,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: '补丁安装',
     icon: 'fas fa-download',
     platform: 'linux',
-    component: () => import('./components/LinuxPatchInstall.vue')
+    component: () => import('./views/LinuxPatchInstallPage.vue')
   },
   {
     key: 'changeRollback',
@@ -59,14 +59,14 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: '变更回滚',
     icon: 'fas fa-undo',
     platform: 'linux',
-    component: () => import('./components/LinuxPatchRollback.vue')
+    component: () => import('./views/LinuxPatchRollbackPage.vue')
   },
   {
     key: 'linuxYumManage',
     path: 'linuxYumManage',
     name: 'patches-linuxYumManage',
     title: 'Linux YUM管理',
-    component: () => import('./components/LinuxYumManage.vue')
+    component: () => import('./views/LinuxYumManagePage.vue')
   },
   {
     key: 'patchLibrary',
@@ -76,7 +76,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: '补丁仓库',
     icon: 'fas fa-database',
     platform: 'linux',
-    component: () => import('./components/LinuxPatchLibrary.vue')
+    component: () => import('./views/LinuxPatchLibraryPage.vue')
   },
   {
     key: 'rpmPackageList',
@@ -86,7 +86,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: 'RPM包列表',
     icon: 'fas fa-cube',
     platform: 'linux',
-    component: () => import('./components/RpmPackageList.vue')
+    component: () => import('./views/RpmPackageListPage.vue')
   },
   {
     key: 'vulnerability',
@@ -96,7 +96,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: '漏洞概览',
     icon: 'fas fa-shield-alt',
     platform: 'linux',
-    component: () => import('./components/LinuxVulnerability.vue')
+    component: () => import('./views/LinuxVulnerabilityPage.vue')
   },
   {
     key: 'windowsVulnerability',
@@ -108,17 +108,6 @@ export const PATCHES_ROUTE_DEFS = [
     platform: 'windows',
     component: () => import('./windows-patch/views/WindowsPatchOverviewPage.vue')
   },
-  // 旧版Windows扫描入口
-  // {
-  //   key: 'windowsVulnerability1',
-  //   path: 'windowsVulnerability1',
-  //   name: 'patches-windowsVulnerability1',
-  //   title: 'Windows漏洞',
-  //   navLabel: '漏洞扫描',
-  //   icon: 'fas fa-search',
-  //   platform: 'windows',
-  //   component: () => import('./components/WindowsVulnerability.vue')
-  // },
   {
     key: 'windowsWsus',
     path: 'windowsWsus',
@@ -179,7 +168,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: 'CVE漏洞列表',
     icon: 'fas fa-bug',
     platform: 'windows',
-    component: () => import('./components/WindowsCveList.vue')
+    component: () => import('./views/WindowsCveListPage.vue')
   },
   {
     key: 'logs',
@@ -189,7 +178,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: '变更日志查询',
     icon: 'fas fa-file-alt',
     platform: 'common',
-    component: () => import('./components/OperationLogs.vue')
+    component: () => import('./views/OperationLogsPage.vue')
   },
   {
     key: 'processLogs',
@@ -199,6 +188,6 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: '流程操作记录',
     icon: 'fas fa-stream',
     platform: 'common',
-    component: () => import('./components/PatchProcessLogs.vue')
+    component: () => import('./views/PatchProcessLogsPage.vue')
   }
 ]

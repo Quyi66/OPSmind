@@ -66,7 +66,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { windowsVulnerabilityApi } from '../../api'
+import { windowsVulnerabilityApi } from '../../../api'
 
 const props = defineProps({
   modelValue: {

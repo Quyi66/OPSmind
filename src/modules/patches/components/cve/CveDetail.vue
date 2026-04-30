@@ -433,7 +433,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import * as echarts from 'echarts'
 import { useTheme } from '@/composables/useTheme'
-import RpmPackageDetailDialog from './rpm/RpmPackageDetailDialog.vue'
+import RpmPackageDetailDialog from '../rpm/RpmPackageDetailDialog.vue'
 import {
   TopRight,
   Box,
@@ -445,14 +445,14 @@ import {
   CircleClose,
   RefreshLeft
 } from '@element-plus/icons-vue'
-import { cveApi } from '../api'
+import { cveApi } from '../../api'
 import {
   buildCveSourceOptions,
   getCveSourceLabel,
   getCveSourceType,
   isSameCveSource
-} from '../composables/useFormatters'
-import { getServicePreview } from '../utils/rpmPackageInfo'
+} from '../../composables/useFormatters'
+import { getServicePreview } from '../../utils/rpmPackageInfo'
 
 // Props
 const props = defineProps({

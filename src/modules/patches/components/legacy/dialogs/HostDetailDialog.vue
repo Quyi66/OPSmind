@@ -35,7 +35,7 @@
           <el-table
             v-loading="hostDetailLoading"
             :data="hostDetailPatches"
-           
+
             height="420px"
             @selection-change="handleSelectionChange"
           >
@@ -108,7 +108,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { windowsVulnerabilityApi } from '../../api'
+import { windowsVulnerabilityApi } from '../../../api'
 import { Refresh } from '@element-plus/icons-vue'
 
 const props = defineProps({

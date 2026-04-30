@@ -920,7 +920,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
-import { windowsWsusApi } from '../api'
+import { windowsWsusApi } from '../../api'
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 

@@ -14,7 +14,7 @@
 <script setup>
 import { ref, provide, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import InstallPatchDialog from '../components/dialogs/InstallPatchDialog.vue'
+import InstallPatchDialog from '../components/patch-task/InstallPatchDialog.vue'
 
 const router = useRouter()
 

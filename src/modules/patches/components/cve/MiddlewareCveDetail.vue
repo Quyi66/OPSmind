@@ -181,7 +181,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { TopRight } from '@element-plus/icons-vue'
-import { middlewareCveApi } from '../api'
+import { middlewareCveApi } from '../../api'
 
 // Props
 const props = defineProps({
@@ -262,7 +262,7 @@ async function loadCveDetail() {
     const data = await middlewareCveApi.getDetail(props.cveId)
     const result = data?.data || data
     cveDetail.value = result
-    
+
     if (result.middlewares && result.middlewares.length > 0) {
       currentMiddlewareIndex.value = 0
       selectMiddleware(0)

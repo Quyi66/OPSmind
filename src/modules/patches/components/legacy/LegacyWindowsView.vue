@@ -65,7 +65,7 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import * as echarts from 'echarts'
-import { windowsViewApi } from '../api'
+import { windowsViewApi } from '../../api'
 import { useTheme } from '@/composables/useTheme'
 
 const { isDark } = useTheme()

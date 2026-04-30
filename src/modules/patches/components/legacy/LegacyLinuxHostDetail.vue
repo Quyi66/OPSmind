@@ -93,13 +93,13 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { patchScanApi } from '../api'
-import { formatDateTime, getInstalledPkgsCount } from '../composables/useFormatters'
-import { useHostDetail } from '../composables/useHostDetail'
-import PatchesTab from './host-detail/PatchesTab.vue'
-import PackagesTab from './host-detail/PackagesTab.vue'
-import VulnerabilitiesTab from './host-detail/VulnerabilitiesTab.vue'
-import PatchDetailDialog from './host-detail/PatchDetailDialog.vue'
+import { patchScanApi } from '../../api'
+import { formatDateTime, getInstalledPkgsCount } from '../../composables/useFormatters'
+import { useHostDetail } from '../../composables/useHostDetail'
+import PatchesTab from '../host-detail/PatchesTab.vue'
+import PackagesTab from '../host-detail/PackagesTab.vue'
+import VulnerabilitiesTab from '../host-detail/VulnerabilitiesTab.vue'
+import PatchDetailDialog from '../host-detail/PatchDetailDialog.vue'
 
 const props = defineProps({
   modelValue: {

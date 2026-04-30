@@ -114,11 +114,11 @@ import { ElMessage } from 'element-plus'
 import { patchScanApi } from '../api'
 import { formatDateTime, getInstalledPkgsCount } from '../composables/useFormatters'
 import { useHostDetail } from '../composables/useHostDetail'
-import PatchesTab from './host-detail/PatchesTab.vue'
-import PackagesTab from './host-detail/PackagesTab.vue'
-import VulnerabilitiesTab from './host-detail/VulnerabilitiesTab.vue'
-import PatchDetailDialog from './host-detail/PatchDetailDialog.vue'
-import PatchInstallWizard from './patch-task/PatchInstallWizard.vue'
+import PatchesTab from '../components/host-detail/PatchesTab.vue'
+import PackagesTab from '../components/host-detail/PackagesTab.vue'
+import VulnerabilitiesTab from '../components/host-detail/VulnerabilitiesTab.vue'
+import PatchDetailDialog from '../components/host-detail/PatchDetailDialog.vue'
+import PatchInstallWizard from '../components/patch-task/PatchInstallWizard.vue'
 
 const route = useRoute()
 const router = useRouter()
