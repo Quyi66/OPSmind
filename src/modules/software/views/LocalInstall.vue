@@ -107,7 +107,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { localInstallApi } from '../api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
-import FileSelectorDialog from '../components/FileSelectorDialog.vue'
+import FileSelectorDialog from '../components/local-install/FileSelectorDialog.vue'
 import { useJobPolling } from '@/composables/useJobPolling'
 
 // 使用作业轮询 composable

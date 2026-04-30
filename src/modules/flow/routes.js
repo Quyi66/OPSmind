@@ -3,6 +3,21 @@
  * Single source of truth for router + side nav.
  */
 
+const flowModuleView = () => import('./views/FlowManagementModule.vue')
+
+function createFlowPageRoute(name, component) {
+  return {
+    component: flowModuleView,
+    children: [
+      {
+        path: '',
+        name,
+        component
+      }
+    ]
+  }
+}
+
 export const FLOW_ROUTE_DEFS = [
   {
     key: 'list',
@@ -10,22 +25,14 @@ export const FLOW_ROUTE_DEFS = [
     title: '流程列表',
     navLabel: '流程列表',
     icon: 'fas fa-list-alt',
-    component: () => import('./views/FlowManagementModule.vue'),
-    children: [
-      {
-        path: '',
-        name: 'flow-list',
-        component: () => import('./components/FlowListView.vue')
-      }
-    ]
+    ...createFlowPageRoute('flow-list', () => import('./views/FlowListPage.vue'))
   },
   {
     key: 'execution',
     path: 'execution',
-    name: 'flow-execution',
     title: '执行记录',
     navLabel: '执行记录',
     icon: 'fas fa-play-circle',
-    component: () => import('./components/ExecutionListView.vue')
+    ...createFlowPageRoute('flow-execution', () => import('./views/FlowExecutionPage.vue'))
   }
 ]

@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import AvailablePackagesTable from '../components/AvailablePackagesTable.vue'
+import AvailablePackagesTable from '../components/overview/AvailablePackagesTable.vue'
 </script>
 
 <style scoped lang="scss">

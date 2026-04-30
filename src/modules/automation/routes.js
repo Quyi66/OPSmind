@@ -3,7 +3,22 @@
  * Single source of truth for router + side nav.
  */
 
+const jobOrchestrationModuleView = () => import('./views/JobOrchestrationModule.vue')
 const commandCenterModuleView = () => import('./views/CommandCenterModule.vue')
+const scriptLibraryModuleView = () => import('./views/ScriptLibraryModule.vue')
+
+function createJobOrchestrationPageRoute(name, component) {
+  return {
+    component: jobOrchestrationModuleView,
+    children: [
+      {
+        path: '',
+        name,
+        component
+      }
+    ]
+  }
+}
 
 function createCommandCenterPageRoute(name, component) {
   return {
@@ -18,69 +33,94 @@ function createCommandCenterPageRoute(name, component) {
   }
 }
 
+function createScriptLibraryPageRoute(name, component, props) {
+  return {
+    component: scriptLibraryModuleView,
+    children: [
+      {
+        path: '',
+        name,
+        component,
+        props
+      }
+    ]
+  }
+}
+
 export const JAO_ROUTE_DEFS = [
   {
     key: 'jobs',
     path: 'jobs',
-    name: 'jao-jobs',
     title: '作业列表',
     navLabel: '作业列表',
     icon: 'fas fa-list-alt',
-    component: () => import('./components/job/JobListView/JobListView.vue')
+    ...createJobOrchestrationPageRoute('jao-jobs', () => import('./views/job/JobListPage.vue'))
   },
   {
     key: 'schedule',
     path: 'schedule',
-    name: 'jao-schedule',
     title: '流程编排',
     navLabel: '流程编排',
     icon: 'fas fa-network-wired',
-    component: () => import('./components/job/schedule/JobScheduleView.vue')
+    ...createJobOrchestrationPageRoute(
+      'jao-schedule',
+      () => import('./views/job/JobSchedulePage.vue')
+    )
   },
   {
     key: 'requests',
     path: 'requests',
-    name: 'jao-requests',
     title: '我的申请',
     navLabel: '我的申请',
     icon: 'fas fa-inbox',
-    component: () => import('./components/job/JobMyRequestsView.vue')
+    ...createJobOrchestrationPageRoute(
+      'jao-requests',
+      () => import('./views/job/JobMyRequestsPage.vue')
+    )
   },
   {
     key: 'approvals',
     path: 'approvals',
-    name: 'jao-approvals',
     title: '作业审批',
     navLabel: '作业审批',
     icon: 'fas fa-user-check',
-    component: () => import('./components/job/JobApprovalsView.vue')
+    ...createJobOrchestrationPageRoute(
+      'jao-approvals',
+      () => import('./views/job/JobApprovalsPage.vue')
+    )
   },
   {
     key: 'runLogs',
     path: 'runLogs',
-    name: 'jao-runLogs',
     title: '运行记录',
     navLabel: '运行记录',
     icon: 'fas fa-history',
-    component: () => import('./components/job/JobRunLogsView.vue')
+    ...createJobOrchestrationPageRoute(
+      'jao-runLogs',
+      () => import('./views/job/JobRunLogsPage.vue')
+    )
   },
   {
     key: 'statistics',
     path: 'statistics',
-    name: 'jao-statistics',
     title: '数据统计',
     navLabel: '数据统计',
     icon: 'fas fa-chart-line',
-    component: () => import('./components/job/JobStatisticsView.vue')
+    ...createJobOrchestrationPageRoute(
+      'jao-statistics',
+      () => import('./views/job/JobStatisticsPage.vue')
+    )
   },
   {
     key: 'taskScheduler',
     path: 'taskScheduler',
-    name: 'jao-taskScheduler',
     title: '定时任务',
     navLabel: '定时任务',
     icon: 'fas fa-clock',
-    component: () => import('./components/job/JobTaskSchedulerView.vue')
+    ...createJobOrchestrationPageRoute(
+      'jao-taskScheduler',
+      () => import('./views/job/JobTaskSchedulerPage.vue')
+    )
   },
   {
     key: 'localInstall',
@@ -107,32 +147,38 @@ export const GFS_ROUTE_DEFS = [
   {
     key: 'scriptLibrary',
     path: 'scriptLibrary',
-    name: 'gfs-scriptLibrary',
     title: '脚本库',
     navLabel: '脚本库',
     icon: 'fas fa-code-branch',
-    component: () => import('./components/script/ScriptFileList.vue'),
-    props: { repoType: 'git' }
+    ...createScriptLibraryPageRoute(
+      'gfs-scriptLibrary',
+      () => import('./views/script/ScriptFileListPage.vue'),
+      { repoType: 'git' }
+    )
   },
   {
     key: 'fileLibrary',
     path: 'fileLibrary',
-    name: 'gfs-fileLibrary',
     title: '文件库',
     navLabel: '文件库',
     icon: 'fas fa-archive',
-    component: () => import('./components/script/ScriptFileList.vue'),
-    props: { repoType: 'staticfs' }
+    ...createScriptLibraryPageRoute(
+      'gfs-fileLibrary',
+      () => import('./views/script/ScriptFileListPage.vue'),
+      { repoType: 'staticfs' }
+    )
   },
   {
     key: 'scriptReview',
     path: 'scriptReview',
-    name: 'gfs-scriptReview',
     title: '脚本审核',
     navLabel: '脚本审核',
     icon: 'fas fa-clipboard-check',
-    component: () => import('./components/script/ScriptFileList.vue'),
-    props: { repoType: 'stage' }
+    ...createScriptLibraryPageRoute(
+      'gfs-scriptReview',
+      () => import('./views/script/ScriptFileListPage.vue'),
+      { repoType: 'stage' }
+    )
   }
 ]
 

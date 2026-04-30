@@ -12,7 +12,7 @@
 
 <script setup>
 import { ElMessage } from 'element-plus'
-import HostOverviewTable from '../components/HostOverviewTable.vue'
+import HostOverviewTable from '../components/overview/HostOverviewTable.vue'
 
 const emit = defineEmits(['navigate'])
 

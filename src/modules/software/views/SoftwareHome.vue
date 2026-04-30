@@ -84,8 +84,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { softwareStatsApi } from '../api'
-import HostOverviewTable from '../components/HostOverviewTable.vue'
-import AvailablePackagesTable from '../components/AvailablePackagesTable.vue'
+import HostOverviewTable from '../components/overview/HostOverviewTable.vue'
+import AvailablePackagesTable from '../components/overview/AvailablePackagesTable.vue'
 
 const router = useRouter()
 

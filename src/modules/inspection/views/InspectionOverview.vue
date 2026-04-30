@@ -128,8 +128,8 @@ import { ref, onMounted, defineEmits, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { templateApi, paramApi } from '../api'
-import TemplateEditDialog from '../components/TemplateEditDialog.vue'
-import RunTemplateDialog from '../components/RunTemplateDialog.vue'
+import TemplateEditDialog from '../components/template/TemplateEditDialog.vue'
+import RunTemplateDialog from '../components/template/RunTemplateDialog.vue'
 
 const router = useRouter()
 const emit = defineEmits(['navigate'])

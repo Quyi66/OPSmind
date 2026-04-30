@@ -191,11 +191,11 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { repoApi } from '../api'
-import BaseHostTab from '../components/BaseHostTab.vue'
-import CustomRepoTab from '../components/CustomRepoTab.vue'
-import ConfiguredRepoTab from '../components/ConfiguredRepoTab.vue'
-import RepoDetailDialog from '../components/RepoDetailDialog.vue'
-import ConfigRepoToHostDialog from '../components/ConfigRepoToHostDialog.vue'
+import BaseHostTab from '../components/repo/BaseHostTab.vue'
+import CustomRepoTab from '../components/repo/CustomRepoTab.vue'
+import ConfiguredRepoTab from '../components/repo/ConfiguredRepoTab.vue'
+import RepoDetailDialog from '../components/repo/RepoDetailDialog.vue'
+import ConfigRepoToHostDialog from '../components/repo/ConfigRepoToHostDialog.vue'
 
 const tabs = [
   { key: 'baseRepo', label: '基准仓库', icon: 'fa fa-home' },

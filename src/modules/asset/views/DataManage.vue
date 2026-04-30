@@ -244,12 +244,12 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { dataManageApi } from '../api'
-import DataAddGroupDialog from '../components/DataAddGroupDialog.vue'
-import DataAddTagDialog from '../components/DataAddTagDialog.vue'
-import DataEditGroupDialog from '../components/DataEditGroupDialog.vue'
-import DataEditTagDialog from '../components/DataEditTagDialog.vue'
-import GroupAssetDialog from '../components/GroupAssetDialog.vue'
-import TagAssetDialog from '../components/TagAssetDialog.vue'
+import DataAddGroupDialog from '../components/data/DataAddGroupDialog.vue'
+import DataAddTagDialog from '../components/data/DataAddTagDialog.vue'
+import DataEditGroupDialog from '../components/data/DataEditGroupDialog.vue'
+import DataEditTagDialog from '../components/data/DataEditTagDialog.vue'
+import GroupAssetDialog from '../components/data/GroupAssetDialog.vue'
+import TagAssetDialog from '../components/data/TagAssetDialog.vue'
 
 // 当前标签页
 const activeTab = ref('group')
