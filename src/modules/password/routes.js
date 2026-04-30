@@ -3,6 +3,21 @@
  * Single source of truth for router + side nav.
  */
 
+const passwordModuleView = () => import('./views/PasswordManagementModule.vue')
+
+function createPasswordPageRoute(name, component) {
+  return {
+    component: passwordModuleView,
+    children: [
+      {
+        path: '',
+        name,
+        component
+      }
+    ]
+  }
+}
+
 export const PASSWORD_ROUTE_DEFS = [
   {
     key: 'application',
@@ -10,31 +25,31 @@ export const PASSWORD_ROUTE_DEFS = [
     title: '申请审批',
     navLabel: '申请审批',
     icon: 'fas fa-clipboard-check',
-    component: () => import('./views/PasswordManagementModule.vue'),
-    children: [
-      {
-        path: '',
-        name: 'password-application',
-        component: () => import('./components/ApplicationApprovalList.vue')
-      }
-    ]
+    ...createPasswordPageRoute(
+      'password-application',
+      () => import('./views/PasswordApplicationPage.vue')
+    )
   },
   {
     key: 'settings',
     path: 'settings',
-    name: 'password-settings',
     title: '参数配置',
     navLabel: '参数配置',
     icon: 'fas fa-cog',
-    component: () => import('./components/PasswordSettings.vue')
+    ...createPasswordPageRoute(
+      'password-settings',
+      () => import('./views/PasswordSettingsPage.vue')
+    )
   },
   {
     key: 'logs',
     path: 'logs',
-    name: 'password-logs',
     title: '操作日志',
     navLabel: '操作日志',
     icon: 'fas fa-history',
-    component: () => import('./components/PasswordOperationLog.vue')
+    ...createPasswordPageRoute(
+      'password-logs',
+      () => import('./views/PasswordOperationLogsPage.vue')
+    )
   }
 ]
