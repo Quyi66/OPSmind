@@ -120,7 +120,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { findAllUnapprovedCommand } from '@/modules/automation/api/command'
-import CommandApproveDialog from './dialogs/CommandApproveDialog.vue'
+import CommandApproveDialog from '../../components/command/dialogs/CommandApproveDialog.vue'
 
 // 状态
 const loading = ref(false)
@@ -133,7 +133,7 @@ const pageSize = ref(10)
 
 // 审核对话框状态
 const approveDialogVisible = ref(false)
-const approveMode = ref('single') // 'single' 或 'batch'
+const approveMode = ref('single')
 const currentCommand = ref(null)
 const selectedForApprove = ref([])
 
@@ -176,7 +176,6 @@ async function loadData() {
 // 搜索
 function handleSearch() {
   currentPage.value = 1
-  // 搜索通过 computed 自动处理
 }
 
 // 重置

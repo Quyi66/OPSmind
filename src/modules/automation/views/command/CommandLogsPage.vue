@@ -63,7 +63,6 @@
         ref="tableRef"
         v-loading="loading"
         :data="filteredLogs"
-       
         height="100%"
         :default-sort="{ prop: 'start_time', order: 'descending' }"
       >
@@ -303,7 +302,6 @@ async function handleRerun(row) {
       '重新运行',
       { type: 'warning' }
     )
-    // 调用重运行接口
     await useApi().post('/jao/api/jao/job/rerun', {
       runId: row.id
     })

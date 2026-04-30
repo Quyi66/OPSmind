@@ -244,7 +244,7 @@ const sudoTemplates = ref([])
 const templateKeyword = ref('')
 const templatePage = ref(1)
 const templatePageSize = ref(10)
-const templateTotal = ref(0) // 应确保此处初始值为0/数字类型
+const templateTotal = ref(0)
 
 // 创建模板表单
 const newTemplate = reactive({

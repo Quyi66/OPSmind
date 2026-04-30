@@ -73,13 +73,6 @@
 
         <el-table-column prop="name" label="名称" min-width="180" sortable>
           <template #default="{ row }">
-            <!-- <div class="command-name-cell">
-              <a class="name-link" @click="handleView(row)">
-                <span class="name">{{ row.name }}</span>
-                <p v-if="row.description" class="description">{{ row.description }}</p>
-                <p class="command-preview" v-if="getDisplayCommand(row)">{{ truncateCommand(getDisplayCommand(row)) }}</p>
-              </a>
-            </div> -->
             <el-button text type="primary" @click="handleView(row)">
               {{ row.name }}
             </el-button>
@@ -211,8 +204,8 @@ import {
   saveCommand,
   getCommandStatusInfo
 } from '@/modules/automation/api/command'
-import CommandEditDialog from './dialogs/CommandEditDialog.vue'
-import CommandApproveInfoDialog from './dialogs/CommandApproveInfoDialog.vue'
+import CommandEditDialog from '../../components/command/dialogs/CommandEditDialog.vue'
+import CommandApproveInfoDialog from '../../components/command/dialogs/CommandApproveInfoDialog.vue'
 
 const emit = defineEmits(['run-command', 'create-job'])
 
@@ -233,7 +226,7 @@ const pageSize = ref(10)
 
 // 编辑对话框状态
 const editDialogVisible = ref(false)
-const editMode = ref('create') // 'create', 'edit', 'view'
+const editMode = ref('create')
 const currentCommand = ref(null)
 
 // 审核详情对话框
@@ -370,7 +363,6 @@ function handleStatusClick(row) {
 // 切换启用/停用状态
 async function handleToggleStatus(row) {
   if (row.status === 3) {
-    // 启用
     try {
       await ElMessageBox.confirm(
         '确定要启用该命令吗？',
@@ -387,7 +379,6 @@ async function handleToggleStatus(row) {
       }
     }
   } else if (row.status === 0) {
-    // 停用
     try {
       await ElMessageBox.confirm(
         '确定要停用该命令吗？',

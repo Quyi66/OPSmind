@@ -15,12 +15,6 @@
             </template>
           </el-input>
         </el-form-item>
-        <!-- <el-form-item>
-          <el-button @click="handleReset">
-            <el-icon><Refresh /></el-icon>
-            重置
-          </el-button>
-        </el-form-item> -->
       </el-form>
     </div>
 
@@ -206,7 +200,7 @@ import {
   findAllApproveCommand
 } from '@/modules/automation/api/command'
 import * as jaoApi from '@/modules/automation/api/jao'
-import CreateJobDialog from './dialogs/CreateJobDialog.vue'
+import CreateJobDialog from '../../components/command/dialogs/CreateJobDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import {
   normalizeAcmDeviceJobHosts,
@@ -526,11 +520,11 @@ async function handleRunJob(job) {
     running.value = false
     runningJobId.value = ''
   }
+}
 
-  function handleApproveSuccess() {
-    ElMessage.success('审批申请已提交')
-    approveDialogVisible.value = false
-  }
+function handleApproveSuccess() {
+  ElMessage.success('审批申请已提交')
+  approveDialogVisible.value = false
 }
 
 async function handleDeleteJob(job) {

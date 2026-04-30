@@ -71,15 +71,12 @@
         style="width: 100%"
         max-height="calc(100vh - 230px)"
       >
-        <!-- 开始时间 -->
         <el-table-column prop="start_time" label="开始时间" width="170">
           <template #default="{ row }">
             {{ formatTime(row.start_time) }}
           </template>
         </el-table-column>
-        <!-- 操作 -->
         <el-table-column prop="action" label="操作" min-width="140" />
-        <!-- 状态 -->
         <el-table-column prop="status" label="状态" width="110">
           <template #default="{ row }">
             <el-tag
@@ -92,13 +89,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <!-- 执行引擎节点 -->
         <el-table-column prop="ata_node" label="执行引擎节点" min-width="140">
           <template #default="{ row }">
             {{ row.ata_node || '' }}
           </template>
         </el-table-column>
-        <!-- 结果 -->
         <el-table-column prop="message" label="结果" min-width="140">
           <template #default="{ row }">
             <span>
@@ -106,15 +101,12 @@
             </span>
           </template>
         </el-table-column>
-        <!-- 用户 -->
         <el-table-column prop="username" label="用户" width="100" />
-        <!-- 结束时间 -->
         <el-table-column prop="end_time" label="结束时间" width="170">
           <template #default="{ row }">
             {{ formatTime(row.end_time) }}
           </template>
         </el-table-column>
-        <!-- 耗时 -->
         <el-table-column prop="duration" label="耗时" width="90">
           <template #default="{ row }">
             {{ formatDuration(row.start_time, row.end_time) }}

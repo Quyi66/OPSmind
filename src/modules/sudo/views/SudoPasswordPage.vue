@@ -309,7 +309,6 @@ async function handleResetPassword() {
         onSuccess: () => {
           resetting.value = false
           ElMessage.success('密码重置成功')
-          // 重置表单
           resetForm.hosts = []
           resetForm.user = ''
           resetForm.password = ''
@@ -398,7 +397,6 @@ async function loadPolicyConfig() {
       policyForm.dcredit = config.dcredit || 0
       policyForm.ocredit = config.ocredit || 0
 
-      // 同步到密码配置
       passwordConfig.value = config
     }
   } catch (error) {
@@ -432,7 +430,6 @@ async function handleSavePolicy() {
     if (runResult?.status === 'COMPLETED' || runResult?.status === 'SUCCESS') {
       savingPolicy.value = false
       ElMessage.success('配置保存成功')
-      // 更新本地密码配置缓存
       passwordConfig.value = { ...policyForm }
     } else if (runResult?.status === 'FAILED' || runResult?.error) {
       savingPolicy.value = false

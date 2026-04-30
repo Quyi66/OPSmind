@@ -65,15 +65,12 @@
       </div>
     </div>
 
-    <!-- 注：设备选择器对话框已集成在 AcmDeviceSelector 组件内部 -->
-
     <!-- 运行记录对话框 -->
     <el-dialog
       v-model="historyDialogVisible"
       title="运行记录"
       width="1200px"
     >
-      <!-- 搜索框 -->
       <div class="history-search">
         <el-input
           v-model="historySearchKeyword"
@@ -88,7 +85,6 @@
       <el-table
         :data="paginatedHistoryData"
         max-height="calc(100vh - 450px)"
-       
       >
         <el-table-column prop="cmd" label="命令" show-overflow-tooltip>
           <template #default="{ row }">
@@ -114,7 +110,6 @@
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
       <div class="history-pagination">
         <el-pagination
           v-model:current-page="historyCurrentPage"
@@ -166,7 +161,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useApi } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
@@ -179,8 +174,6 @@ const hosts = ref([])
 const command = ref('')
 const executing = ref(false)
 const lineCount = ref(1)
-
-// 主机选择已由 AcmDeviceSelector 组件管理
 
 // 运行记录
 const historyDialogVisible = ref(false)
@@ -224,8 +217,6 @@ function updateLineCount() {
   lineCount.value = Math.max(lines, 1)
 }
 
-// 移除主机 - 已由 AcmDeviceSelector 组件管理
-
 // 执行命令
 async function executeCommand() {
   if (!hosts.value.length) {
@@ -259,7 +250,6 @@ async function executeCommand() {
 
     ElMessage.success('命令已提交执行')
 
-    // 如果有 runId，打开日志查看器
     if (result.runId) {
       openLogViewer(result.runId)
     }
@@ -317,8 +307,6 @@ function handleUseHistory(row) {
   historyDialogVisible.value = false
 }
 
-// 处理主机选择 - 已由 AcmDeviceSelector 组件管理
-
 // 分页变化
 function handleHistoryPageSizeChange() {
   historyCurrentPage.value = 1
@@ -344,7 +332,6 @@ function formatDate(dateStr) {
 
 // 获取 WebSocket URL
 function getWebsocketUrl(runId) {
-  // 根据当前页面协议判断使用 ws 还是 wss
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   const host = window.location.host
   return `${protocol}//${host}/oplus-ws/log/${runId}`
@@ -356,7 +343,6 @@ function openLogViewer(runId) {
   logStatus.value = 'RUNNING'
   logViewerVisible.value = true
 
-  // 连接 WebSocket
   const wsUrl = getWebsocketUrl(runId)
 
   websocket = new WebSocket(wsUrl)
@@ -364,20 +350,18 @@ function openLogViewer(runId) {
   websocket.onopen = () => {
   }
 
-  websocket.onmessage = (event) => {
+  websocket.onmessage = event => {
     try {
       const data = JSON.parse(event.data)
       const message = data.message || event.data
       logContent.value += message
 
-      // 自动滚动到底部
       if (autoScroll.value && logContentRef.value) {
         setTimeout(() => {
           logContentRef.value.scrollTop = logContentRef.value.scrollHeight
         }, 50)
       }
     } catch {
-      // 如果不是 JSON，直接追加
       logContent.value += event.data
     }
   }
@@ -386,7 +370,7 @@ function openLogViewer(runId) {
     logStatus.value = 'COMPLETED'
   }
 
-  websocket.onerror = (error) => {
+  websocket.onerror = error => {
     console.error('WebSocket error:', error)
     logStatus.value = 'ERROR'
   }

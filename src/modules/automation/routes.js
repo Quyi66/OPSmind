@@ -3,6 +3,21 @@
  * Single source of truth for router + side nav.
  */
 
+const commandCenterModuleView = () => import('./views/CommandCenterModule.vue')
+
+function createCommandCenterPageRoute(name, component) {
+  return {
+    component: commandCenterModuleView,
+    children: [
+      {
+        path: '',
+        name,
+        component
+      }
+    ]
+  }
+}
+
 export const JAO_ROUTE_DEFS = [
   {
     key: 'jobs',
@@ -128,49 +143,53 @@ export const CMD_ROUTE_DEFS = [
     title: '命令列表',
     navLabel: '命令列表',
     icon: 'fas fa-list',
-    component: () => import('./views/CommandCenterModule.vue'),
-    children: [
-      {
-        path: '',
-        name: 'cmd-list',
-        component: () => import('./components/command/CommandList.vue')
-      }
-    ]
+    ...createCommandCenterPageRoute(
+      'cmd-list',
+      () => import('./views/command/CommandListPage.vue')
+    )
   },
   {
     key: 'job',
     path: 'job',
-    name: 'cmd-job',
     title: '命令作业',
     navLabel: '命令作业',
     icon: 'fas fa-tasks',
-    component: () => import('./components/command/CommandJobList.vue')
+    ...createCommandCenterPageRoute(
+      'cmd-job',
+      () => import('./views/command/CommandJobPage.vue')
+    )
   },
   {
     key: 'review',
     path: 'review',
-    name: 'cmd-review',
     title: '命令审核',
     navLabel: '命令审核',
     icon: 'fas fa-clipboard-check',
-    component: () => import('./components/command/CommandApproveList.vue')
+    ...createCommandCenterPageRoute(
+      'cmd-review',
+      () => import('./views/command/CommandReviewPage.vue')
+    )
   },
   {
     key: 'logs',
     path: 'logs',
-    name: 'cmd-logs',
     title: '执行日志',
     navLabel: '执行日志',
     icon: 'fas fa-file-alt',
-    component: () => import('./components/command/CommandLogs.vue')
+    ...createCommandCenterPageRoute(
+      'cmd-logs',
+      () => import('./views/command/CommandLogsPage.vue')
+    )
   },
   {
     key: 'console',
     path: 'console',
-    name: 'cmd-console',
     title: '控制台',
     navLabel: '控制台',
     icon: 'fas fa-terminal',
-    component: () => import('./components/command/CommandConsole.vue')
+    ...createCommandCenterPageRoute(
+      'cmd-console',
+      () => import('./views/command/CommandConsolePage.vue')
+    )
   }
 ]
