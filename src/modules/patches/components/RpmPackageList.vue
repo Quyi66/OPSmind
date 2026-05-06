@@ -7,6 +7,7 @@
             <el-option label="全部" value="" />
             <el-option label="麒麟" value="kylin" />
             <el-option label="Red Hat" value="redhat" />
+            <el-option label="ORACLE" value="oracle" />
           </el-select>
         </el-form-item>
         <el-form-item label="包名">
