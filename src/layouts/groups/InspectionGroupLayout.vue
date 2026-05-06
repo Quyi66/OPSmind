@@ -3,28 +3,30 @@
 </template>
 
 <script setup>
-import { computed, provide } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
 import { MENU_CONFIG } from '@/config/menu.config.js'
 import { getGroupMenuConfig } from '@/config/module-nav.config.js'
 import GroupLayoutShell from './GroupLayoutShell.vue'
-
-const router = useRouter()
+import { provideGroupPathNavigation } from './useGroupLayoutContext.js'
 
 const menuGroups = computed(() => getGroupMenuConfig('system-inspection', MENU_CONFIG))
 const defaultOpeneds = ['cac']
 
-function handleNavigate(payload) {
-  const { view, params } = payload
+provideGroupPathNavigation('cac', {
+  resolveNavigationTarget({ view, params }) {
+    if (view === 'results' && params?.templateId) {
+      return { path: '/cac/results', query: { templateId: params.templateId } }
+    }
 
-  if (view === 'results' && params?.templateId) {
-    router.push({ path: '/cac/results', query: { templateId: params.templateId } })
-  } else if (view === 'structural-diagram' && params?.jobId) {
-    router.push(`/cac/structural-diagram/${params.jobId}`)
-  } else if (view === 'result-detail' && params?.jobId) {
-    router.push(`/cac/results/${params.jobId}`)
+    if (view === 'structural-diagram' && params?.jobId) {
+      return `/cac/structural-diagram/${params.jobId}`
+    }
+
+    if (view === 'result-detail' && params?.jobId) {
+      return `/cac/results/${params.jobId}`
+    }
+
+    return null
   }
-}
-
-provide('handleNavigate', handleNavigate)
+})
 </script>

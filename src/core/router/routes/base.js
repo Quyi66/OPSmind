@@ -91,7 +91,7 @@ export const baseRoutes = [
   {
     path: '/aiops',
     name: 'aiops',
-    component: () => import('@/views/AiOpsAssistant.vue'),
+    component: () => import('@/views/aiops/AiOpsAssistantPage.vue'),
     meta: {
       title: 'OPS智能助手',
       requiresAuth: true
@@ -100,7 +100,7 @@ export const baseRoutes = [
   {
     path: '/login',
     name: 'login',
-    component: () => import('@/views/Login.vue'),
+    component: () => import('@/views/auth/LoginPage.vue'),
     meta: {
       title: '登录 - OPSmind',
       requiresGuest: true,
@@ -138,14 +138,14 @@ export const baseRoutes = [
       {
         path: '',
         name: 'settings-index',
-        component: () => import('@/views/ProfileSettings.vue')
+        component: () => import('@/views/settings/ProfileSettingsPage.vue')
       }
     ]
   },
   {
     path: '/about',
     name: 'about',
-    component: () => import('@/views/About.vue'),
+    component: () => import('@/views/about/AboutPage.vue'),
     meta: {
       title: '关于 - OPSmind'
     }
@@ -164,7 +164,7 @@ export const baseRoutes = [
   {
     path: '/error/404',
     name: 'error-404',
-    component: () => import('@/views/Error404.vue'),
+    component: () => import('@/views/error/Error404Page.vue'),
     meta: {
       title: '未找到页面'
     }

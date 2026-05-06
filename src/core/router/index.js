@@ -110,7 +110,7 @@ function generateModuleRoutes(moduleConfig) {
   routes.push({
     path: `/${code}`,
     name: `${code}-main`,
-    component: component || (() => import('@/views/ModulePage.vue')),
+    component: component || (() => import('@/views/modules/ModulePage.vue')),
     meta: {
       title: name,
       requiresAuth: true,
@@ -123,7 +123,7 @@ function generateModuleRoutes(moduleConfig) {
   routes.push({
     path: `/${code}/:pathMatch(.*)*`,
     name: `${code}-sub`,
-    component: component || (() => import('@/views/ModulePage.vue')),
+    component: component || (() => import('@/views/modules/ModulePage.vue')),
     meta: {
       title: name,
       requiresAuth: true,
