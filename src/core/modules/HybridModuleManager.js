@@ -40,7 +40,7 @@ class HybridModuleManager {
       code: 'dashboard',
       name: '仪表盘',
       type: MODULE_TYPES.VUE_NATIVE,
-      component: () => import('@/views/Dashboard.vue'),
+      component: () => import('@/views/home/HomePage.vue'),
       routes: ['/home', '/dashboard'],
       features: ['数据概览', '快速操作', '系统状态']
     })

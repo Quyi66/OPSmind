@@ -65,7 +65,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { dataManageApi, assetApi } from '../api'
+import { dataManageApi, assetApi } from '../../api'
 
 const props = defineProps({
   modelValue: {

@@ -103,7 +103,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as sudoApi from '@/modules/sudo/api'
-import ScanHostsDialog from '../components/ScanHostsDialog.vue'
+import ScanHostsDialog from '../components/permission/ScanHostsDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])

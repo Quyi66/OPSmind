@@ -12,8 +12,6 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AIAssistant: typeof import('./components/ai/AIAssistant.vue')['default']
-    AssetOverview: typeof import('./components/dashboard/AssetOverview.vue')['default']
-    DashboardSidebar: typeof import('./components/dashboard/DashboardSidebar.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBadge: typeof import('element-plus/es')['ElBadge']
@@ -69,8 +67,6 @@ declare module 'vue' {
     ElTree: typeof import('element-plus/es')['ElTree']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     IconPicker: typeof import('./components/shared/IconPicker.vue')['default']
-    InspectionOverview: typeof import('./components/dashboard/InspectionOverview.vue')['default']
-    JobOverview: typeof import('./components/dashboard/JobOverview.vue')['default']
     LoginForm: typeof import('./components/auth/LoginForm.vue')['default']
     NotificationPopover: typeof import('./components/layout/NotificationPopover.vue')['default']
     RouteLoadingFallback: typeof import('./components/common/RouteLoadingFallback.vue')['default']
@@ -79,8 +75,6 @@ declare module 'vue' {
     SideMenu: typeof import('./components/layout/SideMenu.vue')['default']
     SkeletonLoader: typeof import('./components/shared/SkeletonLoader.vue')['default']
     TopNavMenu: typeof import('./components/layout/TopNavMenu.vue')['default']
-    TypeCountCard: typeof import('./components/dashboard/TypeCountCard.vue')['default']
-    VulnerabilityOverview: typeof import('./components/dashboard/VulnerabilityOverview.vue')['default']
   }
   export interface GlobalDirectives {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

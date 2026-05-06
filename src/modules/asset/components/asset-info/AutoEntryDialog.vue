@@ -93,7 +93,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { dtsApi } from '../api'
+import { dtsApi } from '../../api'
 import { apiService } from '@/core/api'
 
 const props = defineProps({

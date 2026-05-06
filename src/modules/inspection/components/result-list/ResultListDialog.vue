@@ -112,7 +112,7 @@ import { authService } from '@/core/auth'
 import { jobApi, paramApi } from '../../api'
 import { ElMessage } from 'element-plus'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
-import StructuralDiagram from '../../views/StructuralDiagram.vue'
+import StructuralDiagram from '../../views/StructuralDiagramPage.vue'
 
 const props = defineProps({
   visible: {

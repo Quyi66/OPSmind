@@ -62,7 +62,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 
 import { getAllMenuItems } from '@/config/menu.config.js'
 // 非图表组件保持同步加载（关键 UI）
-import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
+import DashboardSidebar from '@/views/home/components/DashboardSidebar.vue'
 import AIAssistant from '@/components/ai/AIAssistant.vue'
 import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
 
@@ -75,16 +75,16 @@ const asyncComponentOptions = loader => ({
 })
 
 const JobOverview = defineAsyncComponent(
-  asyncComponentOptions(() => import('@/components/dashboard/JobOverview.vue'))
+  asyncComponentOptions(() => import('@/views/home/components/JobOverview.vue'))
 )
 const InspectionOverview = defineAsyncComponent(
-  asyncComponentOptions(() => import('@/components/dashboard/InspectionOverview.vue'))
+  asyncComponentOptions(() => import('@/views/home/components/InspectionOverview.vue'))
 )
 const AssetOverview = defineAsyncComponent(
-  asyncComponentOptions(() => import('@/components/dashboard/AssetOverview.vue'))
+  asyncComponentOptions(() => import('@/views/home/components/AssetOverview.vue'))
 )
 const VulnerabilityOverview = defineAsyncComponent(
-  asyncComponentOptions(() => import('@/components/dashboard/VulnerabilityOverview.vue'))
+  asyncComponentOptions(() => import('@/views/home/components/VulnerabilityOverview.vue'))
 )
 
 const dashboardStore = useDashboardStore()

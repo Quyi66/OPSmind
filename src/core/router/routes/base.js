@@ -115,7 +115,7 @@ export const baseRoutes = [
       {
         path: '',
         name: 'home-index',
-        component: () => import('@/views/Dashboard.vue')
+        component: () => import('@/views/home/HomePage.vue')
       }
     ],
     meta: {
@@ -172,7 +172,7 @@ export const baseRoutes = [
   {
     path: '/migration',
     name: 'migration-dashboard',
-    component: () => import('@/views/Dashboard.vue'),
+    component: () => import('@/views/home/HomePage.vue'),
     meta: {
       title: '迁移管理 - OPSmind',
       requiresAuth: true,

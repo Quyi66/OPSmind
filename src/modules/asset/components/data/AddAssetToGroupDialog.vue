@@ -29,7 +29,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="assetList"
-       
+
         max-height="350"
         @selection-change="handleSelectionChange"
       >
@@ -80,7 +80,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { dtsApi } from '../api'
+import { dtsApi } from '../../api'
 import { apiService } from '@/core/api'
 
 const props = defineProps({

@@ -196,7 +196,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { Download, Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
-import KpiCards from '../components/KpiCards.vue'
+import KpiCards from '../components/exception/KpiCards.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import { dtsApi } from '../api'

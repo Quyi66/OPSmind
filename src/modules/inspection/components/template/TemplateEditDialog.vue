@@ -136,7 +136,7 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { templateApi } from '../api'
+import { templateApi } from '../../api'
 import ScriptSelectorDialog from './ScriptSelectorDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'

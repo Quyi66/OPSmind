@@ -49,7 +49,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { assetApi } from '../api'
+import { assetApi } from '../../api'
 import { apiService } from '@/core/api'
 
 const props = defineProps({

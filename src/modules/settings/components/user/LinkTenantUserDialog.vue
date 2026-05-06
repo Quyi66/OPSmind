@@ -90,7 +90,7 @@ import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import * as settingsApi from '@/modules/settings/api'
 import { authService } from '@/core/auth'
-import UserEditDialog from './UserEditDialog.vue'
+import UserEditDialog from '../user/UserEditDialog.vue'
 
 const props = defineProps({
   modelValue: Boolean

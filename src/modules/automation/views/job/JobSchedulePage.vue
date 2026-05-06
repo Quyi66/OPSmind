@@ -449,7 +449,7 @@ function pad(value) {
 </script>
 
 <style scoped lang="scss">
-@use '../../../styles/common.scss' as *;
+@use '@/styles/common.scss' as *;
 
 .schedule-shell {
   display: flex;

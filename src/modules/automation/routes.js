@@ -139,7 +139,7 @@ export const RPM_INSTALL_ROUTE_DEFS = [
     title: 'rpm包安装',
     navLabel: 'rpm包安装',
     icon: 'fas fa-box-open',
-    component: () => import('@/modules/software/views/LocalInstall.vue')
+    component: () => import('@/modules/software/views/LocalInstallPage.vue')
   }
 ]
 

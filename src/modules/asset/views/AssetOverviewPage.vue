@@ -78,7 +78,7 @@ import AssetTypeChart from '../components/charts/AssetTypeChart.vue'
 import OsDistributionChart from '../components/charts/OsDistributionChart.vue'
 import AssetTrendChart from '../components/charts/AssetTrendChart.vue'
 import GroupAssetChart from '../components/charts/GroupAssetChart.vue'
-import OsVersionDialog from '../components/OsVersionDialog.vue'
+import OsVersionDialog from '../components/overview/OsVersionDialog.vue'
 
 const router = useRouter()
 

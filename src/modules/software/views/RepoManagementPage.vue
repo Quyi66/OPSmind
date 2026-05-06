@@ -354,7 +354,7 @@ onMounted(() => {
   }
 }
 
-// 标签页样式 - 与 AssetInfo.vue 保持一致
+// 标签页样式 - 与资产列表页保持一致
 .type-tabs-wrapper {
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color-light);

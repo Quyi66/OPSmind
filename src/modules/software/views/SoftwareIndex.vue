@@ -3,35 +3,35 @@
     <!-- 软件包（默认页面） -->
     <div v-if="activeView === 'packages'" class="view-container">
       <div class="view-card">
-        <SoftwareHome ref="softwareHomeRef" />
+        <SoftwareHomePage ref="softwareHomeRef" />
       </div>
     </div>
 
     <!-- 仓库 -->
     <div v-else-if="activeView === 'repos'" class="view-container">
       <div class="view-card">
-        <RepoManagement ref="repoManagementRef" />
+        <RepoManagementPage ref="repoManagementRef" />
       </div>
     </div>
 
     <!-- 已安装软件包 -->
     <div v-else-if="activeView === 'installed'" class="view-container">
       <div class="view-card">
-        <InstalledPackages ref="installedPackagesRef" />
+        <InstalledPackagesPage ref="installedPackagesRef" />
       </div>
     </div>
 
     <!-- 本地安装 -->
     <div v-else-if="activeView === 'localInstall'" class="view-container">
       <div class="view-card">
-        <LocalInstall ref="localInstallRef" />
+        <LocalInstallPage ref="localInstallRef" />
       </div>
     </div>
 
     <!-- 日志报告 -->
     <div v-else-if="activeView === 'logs'" class="view-container">
       <div class="view-card">
-        <LogReport ref="logReportRef" />
+        <LogReportPage ref="logReportRef" />
       </div>
     </div>
   </div>
@@ -40,11 +40,11 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import SoftwareHome from './SoftwareHome.vue'
-import RepoManagement from './RepoManagement.vue'
-import InstalledPackages from './InstalledPackages.vue'
-import LocalInstall from './LocalInstall.vue'
-import LogReport from './LogReport.vue'
+import SoftwareHomePage from './SoftwareHomePage.vue'
+import RepoManagementPage from './RepoManagementPage.vue'
+import InstalledPackagesPage from './InstalledPackagesPage.vue'
+import LocalInstallPage from './LocalInstallPage.vue'
+import LogReportPage from './LogReportPage.vue'
 
 const route = useRoute()
 

@@ -170,7 +170,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
-import { dtsApi } from '../api'
+import { dtsApi } from '../../api'
 
 const props = defineProps({
   modelValue: {

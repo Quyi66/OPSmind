@@ -488,7 +488,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
 import { authService } from '@/core/auth'
-import DeviceManageDialog from '../components/DeviceManageDialog.vue'
+import DeviceManageDialog from '../components/automation/DeviceManageDialog.vue'
 
 // Tab
 const activeTab = ref('automation')

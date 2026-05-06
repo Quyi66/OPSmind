@@ -11,7 +11,7 @@ export const CAC_ROUTE_DEFS = [
     title: '巡检总览',
     navLabel: '巡检总览',
     icon: 'fad fa-fw fa-th-large',
-    component: () => import('./views/InspectionOverview.vue')
+    component: () => import('./views/InspectionOverviewPage.vue')
   },
   {
     key: 'templates',
@@ -20,7 +20,7 @@ export const CAC_ROUTE_DEFS = [
     title: '巡检模板',
     navLabel: '巡检模板',
     icon: 'fad fa-fw fa-list-alt',
-    component: () => import('./views/TemplateList.vue')
+    component: () => import('./views/TemplateListPage.vue')
   },
   {
     key: 'results',
@@ -29,21 +29,21 @@ export const CAC_ROUTE_DEFS = [
     title: '执行记录',
     navLabel: '执行记录',
     icon: 'fad fa-fw fa-history',
-    component: () => import('./views/ResultList.vue')
+    component: () => import('./views/ResultListPage.vue')
   },
   {
     key: 'resultDetail',
     path: 'results/:jobId',
     name: 'cac-result-detail',
     title: '结果详情',
-    component: () => import('./views/ResultDetail.vue')
+    component: () => import('./views/ResultDetailPage.vue')
   },
   {
     key: 'structuralDiagram',
     path: 'structural-diagram/:jobId',
     name: 'cac-structural-diagram',
     title: '架构图',
-    component: () => import('./views/StructuralDiagram.vue')
+    component: () => import('./views/StructuralDiagramPage.vue')
   },
   {
     key: 'email',
@@ -52,6 +52,6 @@ export const CAC_ROUTE_DEFS = [
     title: '邮件配置',
     navLabel: '邮件配置',
     icon: 'fad fa-fw fa-envelope',
-    component: () => import('./views/EmailConfig.vue')
+    component: () => import('./views/EmailConfigPage.vue')
   }
 ]

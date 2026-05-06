@@ -119,8 +119,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
-import ImportModelDialog from '../components/ImportModelDialog.vue'
-import ModelDetailDialog from '../components/ModelDetailDialog.vue'
+import ImportModelDialog from '../components/model/ImportModelDialog.vue'
+import ModelDetailDialog from '../components/model/ModelDetailDialog.vue'
 import ModelEditor from './ModelEditor.vue'
 
 const route = useRoute()

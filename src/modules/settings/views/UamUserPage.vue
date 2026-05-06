@@ -173,9 +173,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as settingsApi from '@/modules/settings/api'
 import { authService } from '@/core/auth'
-import UserEditDialog from '../components/UserEditDialog.vue'
-import AllocateRoleDialog from '../components/AllocateRoleDialog.vue'
-import LinkTenantUserDialog from '../components/LinkTenantUserDialog.vue'
+import UserEditDialog from '../components/user/UserEditDialog.vue'
+import AllocateRoleDialog from '../components/user/AllocateRoleDialog.vue'
+import LinkTenantUserDialog from '../components/user/LinkTenantUserDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])

@@ -1,20 +1,20 @@
 <template>
-  <div class="job-overview">
+  <div class="inspection-overview">
     <!-- 标题 -->
     <div class="section-header">
       <h3 class="section-title">
-        <img :src="jobHeaderIcon" alt="作业概览" class="section-icon" />
-        作业概览
+        <img :src="inspectionHeaderIcon" alt="巡检概览" class="section-icon" />
+        巡检概览
       </h3>
       <div class="header-actions">
-        <button class="more-btn" @click="navigateToRunLogs()">...</button>
+        <button class="more-btn" @click="navigateToInspectionOverview">...</button>
       </div>
     </div>
 
-    <!-- 作业统计 -->
-    <div class="job-stats">
+    <!-- 巡检统计 -->
+    <div class="inspection-stats">
       <TypeCountCard
-        v-for="stat in jobStats"
+        v-for="stat in inspectionStats"
         :key="stat.id"
         :type-name="stat.label"
         :count="stat.value"
@@ -25,33 +25,23 @@
     </div>
 
     <!-- 图表标题和图例 -->
-    <div class="chart-header">
-      <h4 class="chart-title">近10天执行作业数据</h4>
+    <div class="chart-header clickable-area" @click="navigateToInspectionOverview">
+      <h4 class="chart-title">近10天巡检结果情况</h4>
       <div class="chart-legend">
         <div class="legend-item">
-          <div class="legend-color" style="background: #3b82f6"></div>
-          <span>REST作业</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #60a5fa"></div>
-          <span>命令作业</span>
-        </div>
-        <div class="legend-item">
           <div class="legend-color" style="background: #10b981"></div>
-          <span>脚本作业</span>
+          <span>正常</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #fbbf24"></div>
+          <span>异常</span>
         </div>
       </div>
     </div>
 
     <!-- ECharts图表容器 -->
-    <div class="chart-container clickable-area" @click="handleChartContainerClick">
-      <v-chart
-        class="chart"
-        :option="chartOption"
-        autoresize
-        :theme="isDark ? 'dark' : ''"
-        @click="handleChartClick"
-      />
+    <div class="chart-container clickable-area" @click="navigateToInspectionOverview">
+      <v-chart class="chart" :option="chartOption" autoresize :theme="isDark ? 'dark' : ''" />
     </div>
   </div>
 </template>
@@ -70,7 +60,7 @@ import {
 } from 'echarts/components'
 import VChart from 'vue-echarts'
 
-import TypeCountCard from './TypeCountCard.vue'
+import TypeCountCard from '@/views/home/components/TypeCountCard.vue'
 import { useTheme } from '@/composables/useTheme'
 const { isDark } = useTheme()
 import { useDashboardStore } from '@/stores/dashboard'
@@ -78,68 +68,41 @@ import { useDashboardStore } from '@/stores/dashboard'
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
 
 // 标题图标
-const jobHeaderIcon = new URL('@/assets/icons/dashboard/icon-jobview@2x.png', import.meta.url).href
+const inspectionHeaderIcon = new URL(
+  '@/assets/icons/dashboard/icon-gfsview@2x.png',
+  import.meta.url
+).href
 
 const dashboardStore = useDashboardStore()
 const router = useRouter()
-let suppressAreaClick = false
 
-const chartGrid = {
-  left: 50,
-  right: 20,
-  bottom: 50,
-  top: 20
+const navigateToInspectionOverview = () => {
+  router.push({ name: 'cac-results' })
 }
 
-const jobTypeRouteMap = {
-  'rest-jobs': 'rest',
-  'command-jobs': 'command',
-  'script-jobs': 'script'
-}
-
-const jobSeriesRouteMap = {
-  'REST作业': 'rest',
-  '命令作业': 'command',
-  '脚本作业': 'script'
-}
-
-const navigateToRunLogs = ({ type = '', keyword = '' } = {}) => {
-  router.push({
-    name: 'jao-runLogs',
-    params: {
-      moduleCode: 'jao'
-    },
-    query: {
-      day: '365',
-      ...(type ? { type } : {}),
-      ...(keyword ? { keyword } : {})
-    }
-  })
-}
-
-// 作业统计（来自 API 数据）
-const jobStats = computed(() => {
-  const totals = dashboardStore.dashboardFullData?.totalJobStats
+// 巡检统计（来自 API 数据）
+const inspectionStats = computed(() => {
+  const m = dashboardStore.dashboardFullData?.monthlyInspectionStats
   return [
     {
-      id: 'rest-jobs',
-      label: 'REST作业',
-      value: totals?.restJobs ?? 0,
-      icon: new URL('@/assets/icons/dashboard/icon-job-rest@2x.png', import.meta.url).href,
+      id: 'total-inspections',
+      label: '本月巡检次数',
+      value: m?.monthlyInspections ?? 0,
+      icon: new URL('@/assets/icons/dashboard/icon-gfs-curentmonth@2x.png', import.meta.url).href,
       iconType: 'image'
     },
     {
-      id: 'command-jobs',
-      label: '命令作业',
-      value: totals?.commandJobs ?? 0,
-      icon: new URL('@/assets/icons/dashboard/icon-job-cmd@2x.png', import.meta.url).href,
+      id: 'normal-inspections',
+      label: '正常',
+      value: m?.normalInspections ?? 0,
+      icon: new URL('@/assets/icons/dashboard/icon-gfs-normal@2x.png', import.meta.url).href,
       iconType: 'image'
     },
     {
-      id: 'script-jobs',
-      label: '脚本作业',
-      value: totals?.scriptJobs ?? 0,
-      icon: new URL('@/assets/icons/dashboard/icon-job-shell@2x.png', import.meta.url).href,
+      id: 'abnormal-inspections',
+      label: '异常',
+      value: m?.abnormalInspections ?? 0,
+      icon: new URL('@/assets/icons/dashboard/icon-gfs-except@2x.png', import.meta.url).href,
       iconType: 'image'
     }
   ]
@@ -147,80 +110,18 @@ const jobStats = computed(() => {
 
 // 处理统计卡片点击事件
 const handleStatClick = statId => {
-  navigateToRunLogs({ type: jobTypeRouteMap[statId] || '' })
+  navigateToInspectionOverview()
 }
 
 // 图表数据（来自 API 数据）
 const chartData = computed(() => {
-  const list = dashboardStore.dashboardFullData?.recentJobStats || []
+  const list = dashboardStore.dashboardFullData?.recentInspectionStats || []
   return {
-    rawDates: list.map(i => i.date),
     dates: list.map(i => i.date.replace('-', '/')),
-    restJobs: list.map(i => i.restJobs),
-    commandJobs: list.map(i => i.commandJobs),
-    scriptJobs: list.map(i => i.scriptJobs)
+    normal: list.map(i => i.normalInspections),
+    abnormal: list.map(i => i.abnormalInspections)
   }
 })
-
-const handleChartClick = params => {
-  suppressAreaClick = true
-  setTimeout(() => {
-    suppressAreaClick = false
-  }, 0)
-
-  const rawDate = chartData.value.rawDates?.[params?.dataIndex]
-  if (!rawDate) {
-    navigateToRunLogs()
-    return
-  }
-
-  navigateToRunLogs({
-    type: jobSeriesRouteMap[params?.seriesName] || '',
-    keyword: rawDate
-  })
-}
-
-const handleChartContainerClick = event => {
-  if (suppressAreaClick) {
-    return
-  }
-
-  const rect = event?.currentTarget?.getBoundingClientRect?.()
-  if (!rect) {
-    return
-  }
-
-  const plotWidth = rect.width - chartGrid.left - chartGrid.right
-  const plotHeight = rect.height - chartGrid.top - chartGrid.bottom
-  const offsetX = event.clientX - rect.left
-  const offsetY = event.clientY - rect.top
-  const rawDates = chartData.value.rawDates || []
-
-  if (
-    !rawDates.length ||
-    plotWidth <= 0 ||
-    plotHeight <= 0 ||
-    offsetX < chartGrid.left ||
-    offsetX > chartGrid.left + plotWidth ||
-    offsetY < chartGrid.top ||
-    offsetY > chartGrid.top + plotHeight
-  ) {
-    return
-  }
-
-  const categoryWidth = plotWidth / rawDates.length
-  const dataIndex = Math.min(
-    rawDates.length - 1,
-    Math.max(0, Math.floor((offsetX - chartGrid.left) / categoryWidth))
-  )
-  const rawDate = rawDates[dataIndex]
-
-  if (!rawDate) {
-    return
-  }
-
-  navigateToRunLogs({ keyword: rawDate })
-}
 
 // Y 轴最大值与刻度：
 // - 刻度始终为 5 段，间隔为 5 的倍数
@@ -229,9 +130,8 @@ const handleChartContainerClick = event => {
 const yMax = computed(() => {
   const d = chartData.value
   const all = [
-    ...(Array.isArray(d.restJobs) ? d.restJobs : []),
-    ...(Array.isArray(d.commandJobs) ? d.commandJobs : []),
-    ...(Array.isArray(d.scriptJobs) ? d.scriptJobs : [])
+    ...(Array.isArray(d.normal) ? d.normal : []),
+    ...(Array.isArray(d.abnormal) ? d.abnormal : [])
   ].map(v => (typeof v === 'number' && isFinite(v) ? v : Number(v) || 0))
 
   const rawMax = Math.max(0, ...all)
@@ -259,7 +159,12 @@ const chartOption = computed(() => ({
       type: 'shadow'
     }
   },
-  grid: chartGrid,
+  grid: {
+    left: 50,
+    right: 20,
+    bottom: 50,
+    top: 20
+  },
   xAxis: {
     type: 'category',
     data: chartData.value.dates,
@@ -298,42 +203,32 @@ const chartOption = computed(() => ({
   },
   series: [
     {
-      name: 'REST作业',
+      name: '正常',
       type: 'bar',
-      data: chartData.value.restJobs,
-      itemStyle: {
-        color: '#3b82f6',
-        borderRadius: [2, 2, 0, 0]
-      },
-      barWidth: '18%',
-      barGap: '20%'
-    },
-    {
-      name: '命令作业',
-      type: 'bar',
-      data: chartData.value.commandJobs,
-      itemStyle: {
-        color: '#60a5fa',
-        borderRadius: [2, 2, 0, 0]
-      },
-      barWidth: '18%'
-    },
-    {
-      name: '脚本作业',
-      type: 'bar',
-      data: chartData.value.scriptJobs,
+      data: chartData.value.normal,
       itemStyle: {
         color: '#10b981',
         borderRadius: [2, 2, 0, 0]
       },
-      barWidth: '18%'
+      barWidth: '22%',
+      barGap: '20%'
+    },
+    {
+      name: '异常',
+      type: 'bar',
+      data: chartData.value.abnormal,
+      itemStyle: {
+        color: '#fbbf24',
+        borderRadius: [2, 2, 0, 0]
+      },
+      barWidth: '22%'
     }
   ]
 }))
 </script>
 
 <style scoped lang="scss">
-.job-overview {
+.inspection-overview {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -360,7 +255,7 @@ const chartOption = computed(() => ({
 }
 
 // 统计区域
-.job-stats {
+.inspection-stats {
   flex: 0 0 auto;
   height: 92px; // 60px卡片高度 + 32px padding (16px * 2)
 }
@@ -422,17 +317,18 @@ const chartOption = computed(() => ({
   object-fit: contain;
 }
 
-// 作业统计样式
-.job-stats {
+// 巡检统计样式
+.inspection-stats {
   display: flex;
-  gap: 16px;
+  gap: 12px; /* 收紧卡片间距 */
   align-items: center;
-  padding: 16px;
+  padding: 12px 12px; /* 收紧左右内边距 */
   background: var(--el-fill-color-light);
   border-radius: 4px;
-  margin: 0 16px;
+  margin: 0 12px; /* 收紧左右外边距 */
 }
 
+// 图表样式
 .chart-header {
   display: flex;
   justify-content: space-between;
@@ -469,7 +365,8 @@ const chartOption = computed(() => ({
 
 .chart-container {
   flex: 1;
-  min-height: 0;
+  /* 中等屏高下更充裕，但避免溢出导致轴被裁切 */
+  min-height: clamp(210px, 26vh, 280px);
   display: flex;
   flex-direction: column;
   padding: 0 16px;
@@ -478,60 +375,39 @@ const chartOption = computed(() => ({
 .chart {
   width: 100%;
   height: 100%;
+  min-height: clamp(210px, 26vh, 280px);
 }
 
-.chart-header {
+.stat-icon {
+  width: 32px;
+  height: 32px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-}
-
-.chart-title {
+  justify-content: center;
+  border-radius: 50%;
   font-size: 14px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  margin: 0;
-}
+  color: white;
 
-.chart-legend {
-  display: flex;
-  gap: 16px;
-}
+  .primary & {
+    background: #1890ff;
+  }
 
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--el-text-color-regular);
-}
+  .success & {
+    background: #52c41a;
+  }
 
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-}
-
-.chart-container {
-  flex: 1;
-  /* 中等屏高下更充裕，但避免溢出导致轴被裁切 */
-  min-height: clamp(210px, 26vh, 280px);
-}
-
-.chart {
-  width: 100%;
-  height: 100%;
-  min-height: clamp(210px, 26vh, 280px);
+  .danger & {
+    background: #ff4d4f;
+  }
 }
 
 // 响应式设计
 @media (max-width: 768px) {
-  .job-overview {
+  .inspection-overview {
     padding: 16px;
   }
 
-  .job-stats {
+  .inspection-stats {
     flex-direction: column;
     gap: 12px;
   }

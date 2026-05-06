@@ -119,7 +119,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight, Plus } from '@element-plus/icons-vue'
 import * as sudoApi from '@/modules/sudo/api'
-import AddSudoDialog from '../components/AddSudoDialog.vue'
+import AddSudoDialog from '../components/apply/AddSudoDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])

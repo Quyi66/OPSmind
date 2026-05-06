@@ -11,7 +11,7 @@ export const ACM_ROUTE_DEFS = [
     title: '资产总览',
     navLabel: '资产总览',
     icon: 'fad fa-fw fa-chart-pie',
-    component: () => import('./views/AssetOverview.vue')
+    component: () => import('./views/AssetOverviewPage.vue')
   },
   {
     key: 'info',
@@ -20,7 +20,7 @@ export const ACM_ROUTE_DEFS = [
     title: '资产列表',
     navLabel: '资产列表',
     icon: 'fad fa-fw fa-server',
-    component: () => import('./views/AssetInfo.vue')
+    component: () => import('./views/AssetInfoPage.vue')
   },
   {
     key: 'data',
@@ -29,7 +29,7 @@ export const ACM_ROUTE_DEFS = [
     title: '分组与标签',
     navLabel: '分组与标签',
     icon: 'fad fa-fw fa-database',
-    component: () => import('./views/DataManage.vue')
+    component: () => import('./views/DataManagePage.vue')
   },
   {
     key: 'model',
@@ -38,7 +38,7 @@ export const ACM_ROUTE_DEFS = [
     title: '资产模型',
     navLabel: '资产模型',
     icon: 'fad fa-fw fa-project-diagram',
-    component: () => import('./views/AssetModel.vue')
+    component: () => import('./views/AssetModelPage.vue')
   },
   {
     key: 'exception',
@@ -47,7 +47,7 @@ export const ACM_ROUTE_DEFS = [
     title: '异常设备',
     navLabel: '异常设备',
     icon: 'fad fa-fw fa-exclamation-triangle',
-    component: () => import('./views/ExceptionDevice.vue')
+    component: () => import('./views/ExceptionDevicePage.vue')
   },
   {
     key: 'automation',
@@ -56,7 +56,7 @@ export const ACM_ROUTE_DEFS = [
     title: '自动化配置',
     navLabel: '自动化配置',
     icon: 'fad fa-fw fa-cogs',
-    component: () => import('./views/AutomationConfig.vue')
+    component: () => import('./views/AutomationConfigPage.vue')
   },
   {
     key: 'permission',
@@ -65,7 +65,7 @@ export const ACM_ROUTE_DEFS = [
     title: '资源权限',
     navLabel: '资源权限',
     icon: 'fad fa-fw fa-user-lock',
-    component: () => import('./views/ResourcePermission.vue')
+    component: () => import('./views/ResourcePermissionPage.vue')
   },
   {
     key: 'log',
@@ -74,6 +74,6 @@ export const ACM_ROUTE_DEFS = [
     title: '操作日志',
     navLabel: '操作日志',
     icon: 'fad fa-fw fa-history',
-    component: () => import('./views/OperationLog.vue')
+    component: () => import('./views/OperationLogPage.vue')
   }
 ]

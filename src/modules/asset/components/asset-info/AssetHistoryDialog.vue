@@ -20,7 +20,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
-import { dtsApi } from '../api'
+import { dtsApi } from '../../api'
 import { useTheme } from '@/composables/useTheme'
 
 const { isDark } = useTheme()

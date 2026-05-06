@@ -184,9 +184,3 @@ function handleClose() {
   currentPage.value = 1
 }
 </script>
-
-<style scoped lang="scss">
-.repo-detail-dialog {
-  /* 使用全局的 ops-action-bar, ops-table-wrapper, ops-pagination-wrapper 样式 */
-}
-</style>

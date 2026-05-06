@@ -11,7 +11,7 @@ export const SOFTWARE_ROUTE_DEFS = [
     title: '软件概览',
     navLabel: '软件概览',
     icon: 'fas fa-cube',
-    component: () => import('./views/SoftwareHome.vue')
+    component: () => import('./views/SoftwareHomePage.vue')
   },
   {
     key: 'repos',
@@ -20,7 +20,7 @@ export const SOFTWARE_ROUTE_DEFS = [
     title: '仓库管理',
     navLabel: '仓库管理',
     icon: 'fas fa-database',
-    component: () => import('./views/RepoManagement.vue')
+    component: () => import('./views/RepoManagementPage.vue')
   },
   {
     key: 'installed',
@@ -29,7 +29,7 @@ export const SOFTWARE_ROUTE_DEFS = [
     title: '已安装软件包',
     navLabel: '已安装软件包',
     icon: 'fas fa-check-circle',
-    component: () => import('./views/InstalledPackages.vue')
+    component: () => import('./views/InstalledPackagesPage.vue')
   },
   {
     key: 'localInstall',
@@ -54,6 +54,6 @@ export const SOFTWARE_ROUTE_DEFS = [
     title: '操作日志',
     navLabel: '操作日志',
     icon: 'fa fa-history',
-    component: () => import('./views/LogReport.vue')
+    component: () => import('./views/LogReportPage.vue')
   }
 ]

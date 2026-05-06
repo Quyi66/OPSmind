@@ -116,7 +116,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import * as teamApi from '@/modules/settings/api/team'
-import TeamEditDialog from '../components/TeamEditDialog.vue'
+import TeamEditDialog from '../components/team/TeamEditDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])

@@ -561,9 +561,9 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
-import ViewColumnConfig from '../components/ViewColumnConfig.vue'
+import ViewColumnConfig from '../components/model/ViewColumnConfig.vue'
 import IconPicker from '@/components/shared/IconPicker.vue'
-import DataConverterInput from '../components/DataConverterInput.vue'
+import DataConverterInput from '../components/model/DataConverterInput.vue'
 
 const props = defineProps({
   modelId: {
