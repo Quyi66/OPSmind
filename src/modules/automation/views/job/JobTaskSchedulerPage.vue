@@ -74,10 +74,10 @@ import { useAppletTranslation } from '../../components/job/composables/useApplet
 
 // 按需加载对话框组件
 const CronJobFormDialog = defineAsyncComponent(() =>
-  import('./components/CronJobFormDialog.vue')
+  import('../../components/job/components/CronJobFormDialog.vue')
 )
 const NextExecutionTimeDialog = defineAsyncComponent(() =>
-  import('./components/NextExecutionTimeDialog.vue')
+  import('../../components/job/components/NextExecutionTimeDialog.vue')
 )
 
 // 使用列表管理 composable
