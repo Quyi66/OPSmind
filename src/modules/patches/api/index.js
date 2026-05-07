@@ -82,6 +82,18 @@ function buildGenericQuery(params = {}) {
   Object.entries(params).forEach(([key, value]) => {
     if (value === undefined || value === null) return
 
+    if (Array.isArray(value)) {
+      value.forEach(item => {
+        if (item === undefined || item === null) return
+
+        const normalizedItem = typeof item === 'string' ? item.trim() : item
+        if (normalizedItem === '') return
+
+        searchParams.append(key, String(normalizedItem))
+      })
+      return
+    }
+
     const normalizedValue = typeof value === 'string' ? value.trim() : value
     if (normalizedValue === '') return
 
@@ -1673,10 +1685,8 @@ export const rpmInfoApi = {
    */
   getInstalledDetail(params = {}) {
     const query = buildGenericQuery({
+      version: params.version,
       pkgName: params.pkgName,
-      pkgId: params.pkgId,
-      currentPackage: params.currentPackage,
-      osDistro: params.osDistro,
       source: params.source,
       arch: params.arch
     })
@@ -1697,6 +1707,35 @@ export const rpmInfoApi = {
     })
 
     return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/installed/scan-list${query}`)
+  },
+
+  /**
+   * 按扫描结果分页查询 Linux 机器包清单
+   * GET /vap/api/vap/v2/rpm-info/installed/scan-packages
+   */
+  getInstalledScanPackages(params = {}) {
+    const query = buildGenericQuery({
+      hostId: params.hostId,
+      hostKey: params.hostKey,
+      hostIds: params.hostIds,
+      keyword: params.keyword,
+      osDistro: params.osDistro,
+      osVersion: params.osVersion,
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/installed/scan-packages${query}`)
+  },
+
+  /**
+   * 导出 Linux 机器包清单
+   * POST /vap/api/vap/v2/rpm-info/installed/scan-packages/export
+   */
+  exportInstalledScanPackages(payload = {}) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/rpm-info/installed/scan-packages/export`, payload, {
+      responseType: 'blob'
+    })
   }
 }
 

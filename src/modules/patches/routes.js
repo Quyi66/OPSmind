@@ -82,8 +82,8 @@ export const PATCHES_ROUTE_DEFS = [
     key: 'rpmPackageList',
     path: 'rpmPackageList',
     name: 'patches-rpmPackageList',
-    title: 'RPM包列表',
-    navLabel: 'RPM包列表',
+    title: '软件包信息查询',
+    navLabel: '软件包信息查询',
     icon: 'fas fa-cube',
     platform: 'linux',
     component: () => import('./views/RpmPackageListPage.vue')
@@ -127,6 +127,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: 'Yum 仓库管理',
     icon: 'fas fa-database',
     platform: 'windows',
+    redirect: '/software/repos',
     component: () => import('./windows-patch/views/WindowsPatchYumRepoPage.vue')
   },
   {

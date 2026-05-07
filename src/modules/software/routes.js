@@ -5,31 +5,13 @@
 
 export const SOFTWARE_ROUTE_DEFS = [
   {
-    key: 'packages',
-    path: 'packages',
-    name: 'software-packages',
-    title: '软件概览',
-    navLabel: '软件概览',
-    icon: 'fas fa-cube',
-    component: () => import('./views/SoftwareHomePage.vue')
-  },
-  {
-    key: 'repos',
-    path: 'repos',
-    name: 'software-repos',
-    title: '仓库管理',
-    navLabel: '仓库管理',
+    key: 'yumRepo',
+    path: 'yumRepo',
+    name: 'software-yumRepo',
+    title: 'Yum仓库管理',
+    navLabel: 'Yum仓库管理',
     icon: 'fas fa-database',
-    component: () => import('./views/RepoManagementPage.vue')
-  },
-  {
-    key: 'installed',
-    path: 'installed',
-    name: 'software-installed',
-    title: '已安装软件包',
-    navLabel: '已安装软件包',
-    icon: 'fas fa-check-circle',
-    component: () => import('./views/InstalledPackagesPage.vue')
+    component: () => import('@/modules/patches/windows-patch/views/WindowsPatchYumRepoPage.vue')
   },
   {
     key: 'localInstall',
@@ -46,6 +28,32 @@ export const SOFTWARE_ROUTE_DEFS = [
     navLabel: 'Yum源清单',
     icon: 'fas fa-cogs',
     component: () => import('@/modules/patches/views/LinuxYumManagePage.vue')
+  },
+  {
+    key: 'repos',
+    path: 'repos',
+    name: 'software-repos',
+    title: '仓库管理',
+    navLabel: 'Yum配置下发',
+    icon: 'fas fa-database',
+    component: () => import('./views/RepoManagementPage.vue')
+  },
+  {
+    key: 'packages',
+    path: 'packages',
+    name: 'software-packages',
+    title: '软件概览',
+    navLabel: '软件概览',
+    icon: 'fas fa-cube',
+    component: () => import('./views/SoftwareHomePage.vue')
+  },
+  {
+    key: 'installed',
+    path: 'installed',
+    name: 'software-installed',
+    title: '已安装软件包',
+    icon: 'fas fa-check-circle',
+    component: () => import('./views/InstalledPackagesPage.vue')
   },
   {
     key: 'logs',

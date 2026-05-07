@@ -27,7 +27,7 @@ export function useAppletTranslation() {
         'app_pms.title': '密码管理',
         'app_sudo.title': 'sudo权限管理',
         'app_vap.title': '补丁管理',
-        'app_spm.title': '软件管理',
+        'app_spm.title': 'Yum仓库管理',
         'app_uim.name': '用户管理',
         'app_uim.menu.dashboard': '控制台',
         'app_vcm.menu.host_cluster': '主机集群',

@@ -258,7 +258,7 @@ const appletTitleMap = {
   '#{app_sudo.title}': 'sudo权限管理',
   '#{acm.title}': '资产管理',
   '#{app_vap.title}': '补丁管理',
-  '#{app_spm.title}': '软件管理',
+  '#{app_spm.title}': 'Yum仓库管理',
   '#{app_uim.name}': '用户管理'
 }
 

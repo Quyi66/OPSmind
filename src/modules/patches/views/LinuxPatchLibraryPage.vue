@@ -390,6 +390,8 @@ function getVendorClass(vendor) {
     centos: 'vendor-centos',
     suse: 'vendor-suse',
     redhat: 'vendor-redhat',
+    oracle: 'vendor-oracle',
+    oraclelinux: 'vendor-oracle',
     ubuntu: 'vendor-ubuntu',
     kylinos: 'vendor-kylinos',
     kylin: 'vendor-kylin',
@@ -406,6 +408,7 @@ function getVendorIcon(vendor) {
   if (v === 'anolis') return 'fab fa-airbnb'
   if (v === 'uniontech') return 'fab fa-linux'
   if (v === 'kylin') return 'fab fa-linux'
+  if (v === 'oracle' || v === 'oraclelinux') return 'fa fa-database'
   return `fab fa-${v}`
 }
 
@@ -1006,6 +1009,16 @@ defineExpose({
   }
   &.is-active {
     background: linear-gradient(135deg, #95a5a6 0%, #34495e 100%);
+  }
+}
+
+.vendor-oracle {
+  .vendor-icon-small,
+  .card-bg-icon {
+    color: #0f766e;
+  }
+  &.is-active {
+    background: linear-gradient(135deg, #2dd4bf 0%, #155e75 100%);
   }
 }
 

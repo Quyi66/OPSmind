@@ -212,7 +212,7 @@ export const baseRoutes = [
       {
         path: '',
         component: PatchGroupLayout,
-        redirect: '/software/packages',
+        redirect: '/software/repos',
         children: [
           ...softwareChildren
         ]

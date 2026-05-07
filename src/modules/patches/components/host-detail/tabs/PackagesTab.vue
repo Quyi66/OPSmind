@@ -129,6 +129,7 @@ import { ElMessage } from 'element-plus'
 import { rpmInfoApi } from '../../../api'
 import { getSeverityType } from '../../../composables/useFormatters'
 import { usePackageList } from '../../../composables/usePackageList'
+import { extractInstalledPackageVersion, inferRpmSource } from '../../../utils/rpmPackageInfo'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import RpmPackageDetailDialog from '../../rpm/RpmPackageDetailDialog.vue'
 
@@ -200,9 +201,17 @@ function isPackageSelectable(row) {
 async function handleViewPackageDetail(row) {
   const currentPackage = String(row?.installedPkg || '').trim()
   const pkgName = String(row?.pkgName || '').trim()
+  const arch = String(row?.arch || row?.architecture || '').trim()
+  const source = inferRpmSource(row?.source, props.osDistro)
+  const version = extractInstalledPackageVersion({
+    version: row?.version || row?.packageInfo?.version,
+    currentPackage,
+    pkgName,
+    arch
+  })
 
-  if (!currentPackage && !pkgName) {
-    ElMessage.warning('当前行缺少软件包标识，无法查看详情')
+  if (!version || !pkgName || !source || !arch) {
+    ElMessage.warning('当前行缺少详情接口必传参数，无法查看详情')
     return
   }
 
@@ -212,9 +221,10 @@ async function handleViewPackageDetail(row) {
 
   try {
     const response = await rpmInfoApi.getInstalledDetail({
+      version,
       pkgName,
-      currentPackage,
-      osDistro: props.osDistro
+      source,
+      arch
     })
 
     detailData.value = response?.data || response || {}

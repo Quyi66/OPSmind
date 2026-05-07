@@ -66,6 +66,7 @@ function normalizeCveLinkTarget(source) {
     .trim()
     .toLowerCase()
   if (!value) return 'redhat'
+  if (value.includes('oracle')) return 'oracle'
   if (value.includes('ubuntu')) return 'ubuntu'
   if (value.includes('kylin')) return 'kylin'
   if (value.includes('redhat') || value.includes('rhel')) return 'redhat'
@@ -158,6 +159,9 @@ export function getCveUrl(cveId, source) {
   if (!id) return ''
 
   const target = normalizeCveLinkTarget(source)
+  if (target === 'oracle') {
+    return `https://linux.oracle.com/cve/${encodeURIComponent(id)}.html`
+  }
   if (target === 'ubuntu') {
     return `https://ubuntu.com/security/${encodeURIComponent(id)}`
   }

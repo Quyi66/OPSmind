@@ -158,7 +158,7 @@ function translateAppCode(code) {
     'pms': '密码管理',
     'sudo': 'sudo权限管理',
     'vap': '补丁管理',
-    'spm': '软件管理',
+    'spm': 'Yum仓库管理',
     'uim': '用户管理'
   }
   return translations[code] || code
