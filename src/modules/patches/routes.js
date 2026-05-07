@@ -66,6 +66,7 @@ export const PATCHES_ROUTE_DEFS = [
     path: 'linuxYumManage',
     name: 'patches-linuxYumManage',
     title: 'Linux YUM管理',
+    redirect: '/software/yumManage',
     component: () => import('./views/LinuxYumManagePage.vue')
   },
   {

@@ -166,10 +166,10 @@ import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Download, InfoFilled, Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
-import { rpmInfoApi } from '../../api'
-import { useLinuxMachinePackageList } from '../../composables/useLinuxMachinePackageList'
-import { getServicePreview, inferRpmSource } from '../../utils/rpmPackageInfo'
-import RpmPackageDetailDialog from './RpmPackageDetailDialog.vue'
+import { rpmInfoApi } from '../api'
+import { useLinuxMachinePackageList } from '../composables/useLinuxMachinePackageList'
+import { getServicePreview, inferRpmSource } from '../utils/rpmPackageInfo'
+import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
 
 const selectorOptions = {
   selectMode: 'host,input,recently',

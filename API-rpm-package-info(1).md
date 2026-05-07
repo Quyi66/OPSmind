@@ -6,7 +6,7 @@
 
 参数：
 
-- `source`：可选，`kylin` / `redhat`
+- `source`：可选，`kylin` / `oracle` / `redhat`
 - `keyword`：可选，匹配包名、摘要、描述、rpm 路径
 - `name`：可选，精确包名
 - `arch`：可选，精确架构
@@ -57,17 +57,20 @@
 
 参数：
 
-- `pkgName`：可选，DTS 行里如果已有包名则优先传这个字段。
-- `pkgId`：可选，DTS 行里的当前安装版本/包标识，例如 `curl-7.66.0-3.ky10-x86_64.rpm`。
-- `currentPackage`：可选，与 `pkgId` 等价，便于前端按展示字段传参。
-- `osDistro`：可选，例如 `Kylin Linux Advanced Server V10 SP1`，用于推断 `source=kylin`。
-- `source`：可选，显式指定 `kylin` / `redhat` 时优先于 `osDistro`。
-- `arch`：可选，例如 `x86_64`；如果 `pkgId/currentPackage` 是完整 RPM 文件名，接口会自动从文件名解析架构。
+- `version`：必填，已安装包版本/Release，例如 `7.66.0-3.ky10`。
+- `pkgName`：必填，软件包名，例如 `curl`。
+- `source`：必填，当前支持 `kylin` / `oracle` / `redhat`。
+- `arch`：必填，软件包架构，例如 `x86_64` / `noarch`。
+
+说明：
+
+- 该接口已切换为显式参数模型，不再接收 `pkgId`、`currentPackage`、`osDistro` 推断参数。
+- 前端如拿到的是 DTS 行数据，需要先从完整包名中解析出 `version` / `pkgName` / `arch`，并结合操作系统发行版推断 `source` 后再调用。
 
 示例：
 
 ```http
-GET /vap/api/vap/v2/rpm-info/installed/detail?currentPackage=curl-7.66.0-3.ky10-x86_64.rpm&osDistro=Kylin%20Linux%20Advanced%20Server%20V10%20SP1
+GET /vap/api/vap/v2/rpm-info/installed/detail?version=7.66.0-3.ky10&pkgName=curl&source=kylin&arch=x86_64
 ```
 
 ## 3. CVE 详情补丁包信息增强
@@ -96,7 +99,7 @@ GET /vap/api/vap/v2/rpm-info/installed/detail?currentPackage=curl-7.66.0-3.ky10-
 - `page`：默认 `0`
 - `size`：默认 `20`
 
-每行返回主机扫描软件包字段，并在 `packageInfo` 中关联全量 RPM 详情。系统会根据主机 `osDistro` 推断 `kylin` / `redhat` 数据源。
+每行返回主机扫描软件包字段，并在 `packageInfo` 中关联全量 RPM 详情。系统会根据主机 `osDistro` 推断 `kylin` / `oracle` / `redhat` 数据源。
 
 如果页面已经使用 DTS `VAP2_GET_MACHINE_PKGS`，其 SQL 来自 `vap2_curr_machine_scan.installed_pkgs / affected_pkgs`，推荐使用同源接口：
 
@@ -116,6 +119,28 @@ GET /vap/api/vap/v2/rpm-info/installed/detail?currentPackage=curl-7.66.0-3.ky10-
 ```http
 GET /vap/api/vap/v2/rpm-info/installed/scan-list?hostId=xxx&page=0&size=20
 ```
+
+## 4.1 Linux 机器包清单
+
+`GET /vap/api/vap/v2/rpm-info/installed/scan-packages`
+
+用于“软件包信息查询 > 机器包清单”页，支持多主机筛选和分页查询。
+
+参数：
+
+- `hostIds`：可选，主机资产 ID 数组，可同时传多个。
+- `hostKey`：可选，按主机 IP/标识过滤。
+- `keyword`：可选，匹配完整包名或包名。
+- `osDistro`：可选，按发行版过滤。
+- `osVersion`：可选，按系统版本过滤。
+- `page`：默认 `0`。
+- `size`：默认 `20`。
+
+导出接口：
+
+`POST /vap/api/vap/v2/rpm-info/installed/scan-packages/export`
+
+请求体与查询参数字段保持一致，返回 Excel 文件流。
 
 ## 5. 补丁安装涉及服务列表
 
