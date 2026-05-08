@@ -1188,8 +1188,20 @@ export const patchOverviewApi = {
  */
 export const yumManageApi = {
   buildYumConfigPayload(data = {}) {
-    const payload = {
-      baseurl: String(data?.baseurl || '').trim()
+    const payload = {}
+    const baseurls = Array.from(
+      new Set(
+        (Array.isArray(data?.baseurls) ? data.baseurls : [data?.baseurls])
+          .map(item => String(item || '').trim())
+          .filter(Boolean)
+      )
+    )
+    const baseurl = String(data?.baseurl || '').trim()
+
+    if (baseurls.length > 0) {
+      payload.baseurls = baseurls
+    } else if (baseurl) {
+      payload.baseurl = baseurl
     }
 
     const name = String(data?.name || '').trim()

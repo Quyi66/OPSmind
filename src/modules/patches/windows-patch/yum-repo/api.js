@@ -43,6 +43,7 @@ export const yumRepoApi = {
   getPackages(params = {}) {
     return apiService.get(`${YUM_REPO_API_PREFIX}/packages`, {
       params: {
+        dcDataId: params.dcDataId,
         sourceId: params.sourceId,
         keyword: params.keyword || undefined,
         page: params.page ?? 0,

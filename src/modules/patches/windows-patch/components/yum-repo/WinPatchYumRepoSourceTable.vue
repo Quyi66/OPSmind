@@ -46,9 +46,39 @@
             {{ row.description || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="仓库地址" min-width="260" show-overflow-tooltip>
+        <el-table-column label="仓库地址" min-width="260">
           <template #default="{ row }">
-            {{ getYumConfigBaseurl(row) }}
+            <div v-if="getYumConfigBaseurls(row).length" class="yum-baseurls-cell">
+              <div
+                v-for="url in getYumConfigBaseurls(row).slice(0, 2)"
+                :key="url"
+                class="yum-baseurl-item"
+              >
+                {{ url }}
+              </div>
+              <el-popover
+                v-if="getYumConfigBaseurls(row).length > 2"
+                placement="top"
+                trigger="hover"
+                :width="400"
+              >
+                <template #reference>
+                  <span class="more-link">
+                    +{{ getYumConfigBaseurls(row).length - 2 }} 更多
+                  </span>
+                </template>
+                <div class="yum-baseurls-popover">
+                  <div
+                    v-for="url in getYumConfigBaseurls(row)"
+                    :key="url"
+                    class="yum-baseurl-item"
+                  >
+                    {{ url }}
+                  </div>
+                </div>
+              </el-popover>
+            </div>
+            <span v-else>-</span>
           </template>
         </el-table-column>
         <el-table-column label="来源文件" min-width="150" show-overflow-tooltip>
@@ -87,7 +117,7 @@
             <el-button text type="primary" size="small" :disabled="!getSourceId(row)" @click.stop="emit('open-packages', row)">
               清单
             </el-button>
-            <el-button text type="primary" size="small" :disabled="!getSourceId(row)" @click.stop="emit('open-compare', row)">
+            <el-button text type="primary" size="small" :disabled="!canOpenCompare(row)" @click.stop="emit('open-compare', row)">
               比对
             </el-button>
             <el-button text type="primary" size="small" @click.stop="handleEditConfig(row)">编辑</el-button>
@@ -97,7 +127,7 @@
       </el-table>
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="editingConfig ? '编辑YUM源配置' : 'YUM源配置录入'" width="600px">
+    <el-dialog v-model="dialogVisible" :title="editingConfig ? '编辑YUM源配置' : 'YUM源配置录入'" width="800px">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="YUM源名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入YUM源名称" maxlength="50" />
@@ -105,8 +135,29 @@
         <el-form-item label="描述" prop="description">
           <el-input v-model="formData.description" placeholder="请输入描述" maxlength="200" />
         </el-form-item>
-        <el-form-item label="YUM源地址" prop="baseurl">
-          <el-input v-model="formData.baseurl" placeholder="请输入YUM源地址" maxlength="500" />
+        <el-form-item label="YUM仓库地址" prop="baseurls">
+          <div class="yum-baseurl-list">
+            <div v-for="(url, index) in formData.baseurls" :key="index" class="yum-baseurl-row">
+              <el-input
+                v-model="formData.baseurls[index]"
+                placeholder="请输入仓库baseurl地址"
+                maxlength="500"
+              />
+              <el-button class="yum-baseurl-action" circle @click="addBaseurlRow">
+                <el-icon><Plus /></el-icon>
+              </el-button>
+              <el-button
+                v-if="formData.baseurls.length > 1"
+                class="yum-baseurl-action"
+                circle
+                type="danger"
+                plain
+                @click="removeBaseurlRow(index)"
+              >
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
+          </div>
         </el-form-item>
         <el-form-item label="YUM源文件" prop="file">
           <el-input v-model="formData.file" placeholder="如：/etc/yum.repos.d/local.repo" maxlength="256" />
@@ -123,16 +174,16 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, Search } from '@element-plus/icons-vue'
+import { Delete, Plus, Refresh, Search } from '@element-plus/icons-vue'
 import { yumRepoApi } from '../../yum-repo/api'
 import {
   formatDateTime,
   findYumRepoSourceByConfig,
   getCollectStatusLabel,
   getCollectStatusTagType,
-  getYumConfigBaseurl,
   getYumConfigFile,
   getYumConfigLabel,
+  isYumRepoCollectSucceeded,
   resolveYumConfigId,
   resolveYumRepoId
 } from '../../yum-repo/utils'
@@ -178,11 +229,21 @@ const formRef = ref(null)
 const formData = reactive({
   name: '',
   description: '',
-  baseurl: '',
+  baseurls: [''],
   file: ''
 })
+
+function validateBaseurls(rule, value, callback) {
+  if (normalizeBaseurls(value).length > 0) {
+    callback()
+    return
+  }
+
+  callback(new Error('请至少输入一个仓库baseurl地址'))
+}
+
 const formRules = {
-  baseurl: [{ required: true, message: '请输入YUM源地址', trigger: 'blur' }]
+  baseurls: [{ validator: validateBaseurls, trigger: ['blur', 'change'] }]
 }
 
 const filteredConfigs = computed(() => {
@@ -191,7 +252,13 @@ const filteredConfigs = computed(() => {
 
   return props.configs.filter(item => {
     const config = item || {}
-    return [config.name, config.description, config.baseurl, config.file, config.collectStatus]
+    return [
+      config.name,
+      config.description,
+      getYumConfigBaseurlsText(config),
+      config.file,
+      config.collectStatus
+    ]
       .some(value => String(value || '').toLowerCase().includes(keyword))
   })
 })
@@ -200,15 +267,74 @@ function getSourceId(row) {
   return resolveYumRepoId(findYumRepoSourceByConfig(row, props.sources))
 }
 
+function canOpenCompare(row) {
+  return Boolean(getSourceId(row)) && isYumRepoCollectSucceeded(row)
+}
+
+function resolveConfigBaseurls(row) {
+  const baseurls = Array.isArray(row?.baseurls) ? row.baseurls : []
+  const fallbackBaseurl = String(row?.baseurl || '').trim()
+  return baseurls.length > 0 ? baseurls : (fallbackBaseurl ? [fallbackBaseurl] : [])
+}
+
 function normalizeBaseurl(value) {
   return String(value || '').trim().replace(/\/+$/, '')
+}
+
+function normalizeBaseurls(list = []) {
+  const values = Array.isArray(list) ? list : []
+  const dedupeSet = new Set()
+
+  values.forEach(item => {
+    const normalized = normalizeBaseurl(item)
+    if (normalized) {
+      dedupeSet.add(normalized)
+    }
+  })
+
+  return Array.from(dedupeSet)
+}
+
+function getYumConfigBaseurls(row) {
+  return normalizeBaseurls(resolveConfigBaseurls(row))
+}
+
+function getYumConfigBaseurlsText(row) {
+  const urls = getYumConfigBaseurls(row)
+  return urls.length > 0 ? urls.join('；') : '-'
+}
+
+function createSubmitPayload() {
+  return {
+    name: String(formData.name || '').trim(),
+    description: String(formData.description || '').trim(),
+    baseurls: normalizeBaseurls(formData.baseurls),
+    file: String(formData.file || '').trim()
+  }
+}
+
+function serializeBaseurls(list = []) {
+  return normalizeBaseurls(list).sort().join('|')
+}
+
+function addBaseurlRow() {
+  formData.baseurls.push('')
+}
+
+function removeBaseurlRow(index) {
+  if (formData.baseurls.length <= 1) {
+    formData.baseurls[0] = ''
+    return
+  }
+
+  formData.baseurls.splice(index, 1)
 }
 
 function resetForm() {
   Object.assign(formData, {
     name: '',
     description: '',
-    baseurl: '',
+    baseurls: [''],
     file: ''
   })
 }
@@ -224,9 +350,12 @@ function handleEditConfig(row) {
   Object.assign(formData, {
     name: row?.name || '',
     description: row?.description || '',
-    baseurl: row?.baseurl || '',
+    baseurls: resolveConfigBaseurls(row),
     file: row?.file || ''
   })
+  if (!formData.baseurls.length) {
+    formData.baseurls = ['']
+  }
   dialogVisible.value = true
 }
 
@@ -234,17 +363,19 @@ async function handleSubmit() {
   try {
     await formRef.value?.validate()
     submitting.value = true
+    const submitPayload = createSubmitPayload()
 
     if (editingConfig.value) {
       const previousConfig = editingConfig.value || {}
-      const previousBaseurl = normalizeBaseurl(previousConfig.baseurl)
-      const response = await yumRepoApi.updateConfig(resolveYumConfigId(previousConfig), formData)
+      const previousBaseurls = serializeBaseurls(resolveConfigBaseurls(previousConfig))
+      const response = await yumRepoApi.updateConfig(resolveYumConfigId(previousConfig), submitPayload)
       const updatedConfig = {
         ...previousConfig,
-        ...formData,
+        ...submitPayload,
         ...(response?.data ?? response ?? {})
       }
-      const baseurlChanged = previousBaseurl !== normalizeBaseurl(updatedConfig.baseurl)
+      const nextBaseurls = serializeBaseurls(resolveConfigBaseurls(updatedConfig))
+      const baseurlChanged = previousBaseurls !== nextBaseurls
 
       ElMessage.success(baseurlChanged ? '更新成功，正在自动重新采集并比对' : '更新成功')
       dialogVisible.value = false
@@ -253,7 +384,7 @@ async function handleSubmit() {
         baseurlChanged
       })
     } else {
-      const response = await yumRepoApi.createConfig(formData)
+      const response = await yumRepoApi.createConfig(submitPayload)
       const newConfig = response?.data ?? response ?? {}
       ElMessage.success('添加成功，正在自动采集并比对')
       dialogVisible.value = false
@@ -294,6 +425,53 @@ async function handleDeleteConfig(row) {
 
 .win-patch-action-spacer {
   flex: 1;
+}
+
+.yum-baseurl-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yum-baseurl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.yum-baseurl-action {
+  flex-shrink: 0;
+}
+
+.yum-baseurls-cell {
+  line-height: 1.5;
+}
+
+.yum-baseurl-item {
+  word-break: break-all;
+}
+
+.yum-baseurls-popover {
+  max-height: 250px;
+  overflow-y: auto;
+
+  .yum-baseurl-item {
+    padding: 4px 0;
+
+    &:not(:last-child) {
+      border-bottom: 1px dashed var(--el-border-color-light);
+    }
+  }
+}
+
+.more-link {
+  color: var(--el-color-primary);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 </style>

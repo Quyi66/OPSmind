@@ -4,17 +4,17 @@
       <el-form :inline="true" size="small">
         <el-form-item label="已采集仓库">
           <el-select
-            v-model="selectedRepoModel"
+            v-model="packagesSelectedRepoModel"
             clearable
             filterable
             placeholder="请选择已采集仓库"
-            style="width: 280px"
+            style="width: 480px"
           >
             <el-option
-              v-for="item in repos"
-              :key="resolveYumRepoId(item)"
-              :label="getYumRepoLabel(item)"
-              :value="resolveYumRepoId(item)"
+              v-for="item in packageRepoOptions"
+              :key="resolveYumConfigId(item)"
+              :label="getYumConfigCompareLabel(item)"
+              :value="resolveYumConfigId(item)"
             />
           </el-select>
         </el-form-item>
@@ -23,7 +23,7 @@
             v-model="keyword"
             placeholder="按包名模糊搜索"
             clearable
-            style="width: 220px"
+            style="width: 300px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
@@ -35,7 +35,7 @@
       </el-form>
     </div>
 
-    <div v-if="!repos.length" class="win-patch-yum-empty">
+    <div v-if="!packageRepoOptions.length" class="win-patch-yum-empty">
       <el-empty description="暂无已采集仓库，请先在仓库管理页触发采集" />
     </div>
 
@@ -53,12 +53,12 @@
         </el-button>
       </div> -->
 
-      <el-descriptions :column="3" border size="small" class="win-patch-yum-status">
+      <el-descriptions :column="3" border size="small" class="win-patch-yum-status" label-width="100px">
         <el-descriptions-item label="仓库名称">
-          {{ getYumRepoLabel(currentRepo) }}
+          {{ getYumConfigCompareLabel(currentConfig) }}
         </el-descriptions-item>
         <el-descriptions-item label="仓库地址">
-          {{ pickValue(currentRepo, ['repoUrl', 'repo_url'], '-') }}
+          {{ currentConfigBaseurlsText }}
         </el-descriptions-item>
         <!-- <el-descriptions-item label="仓库 ID">
           {{ resolveYumRepoId(currentRepo) || '-' }}
@@ -87,7 +87,7 @@
         <span>{{ pollingNoticeText }}</span>
       </div>
 
-      <div class="ops-table-wrapper">
+      <div class="ops-table-wrapper" style="margin-top: 12px;">
         <el-table
           v-loading="tableLoading"
           :data="packageList"
@@ -145,9 +145,10 @@ import {
   formatDateTime,
   getCollectStatusLabel,
   getCollectStatusTagType,
-  getYumRepoLabel,
+  getYumConfigCompareLabel,
   isCollectRunning,
-  resolveYumRepoId,
+  normalizeYumConfigRecord,
+  resolveYumConfigId,
   unwrapResponse
 } from '../../yum-repo/utils'
 import { useWinPatchPolling } from '../../composables/useWinPatchPolling'
@@ -156,6 +157,10 @@ const props = defineProps({
   active: {
     type: Boolean,
     default: false
+  },
+  configs: {
+    type: Array,
+    default: () => []
   },
   repos: {
     type: Array,
@@ -174,10 +179,48 @@ const selectedRepoModel = computed({
   set: value => emit('update:selectedRepoId', String(value || '').trim())
 })
 
-const currentRepo = computed(() =>
-  props.repos.find(item => resolveYumRepoId(item) === String(selectedRepoModel.value || '').trim()) || null
-)
-const hasSelectedRepo = computed(() => Boolean(currentRepo.value))
+const normalizedSelectedConfigId = computed(() => {
+  const currentId = String(selectedRepoModel.value || '').trim()
+  if (!currentId) {
+    return ''
+  }
+
+  const directConfig = props.configs.find(item => resolveYumConfigId(item) === currentId)
+  if (directConfig) {
+    return resolveYumConfigId(directConfig)
+  }
+
+  const matchedConfig = props.configs.find(item => {
+    const config = normalizeYumConfigRecord(item)
+    return resolveYumConfigId(config) === currentId || config.sourceIds.includes(currentId)
+  })
+
+  if (!matchedConfig) {
+    return ''
+  }
+
+  return resolveYumConfigId(matchedConfig)
+})
+
+const packagesSelectedRepoModel = computed({
+  get: () => normalizedSelectedConfigId.value || String(selectedRepoModel.value || '').trim(),
+  set: value => emit('update:selectedRepoId', String(value || '').trim())
+})
+
+const packageRepoOptions = computed(() => props.configs.map(item => normalizeYumConfigRecord(item)))
+
+const currentConfig = computed(() => {
+  return props.configs.find(item => resolveYumConfigId(item) === normalizedSelectedConfigId.value) || null
+})
+
+const currentConfigBaseurlsText = computed(() => {
+  const normalizedConfig = normalizeYumConfigRecord(currentConfig.value)
+  return Array.isArray(normalizedConfig.baseurls) && normalizedConfig.baseurls.length
+    ? normalizedConfig.baseurls.join('；')
+    : '-'
+})
+
+const hasSelectedRepo = computed(() => Boolean(currentConfig.value))
 const refreshing = computed(() => loadingStatus.value || loadingPackages.value)
 const isStatusPollingActive = computed(() => {
   return props.active && autoPollingEnabled.value && hasSelectedRepo.value && isCollectRunning(statusData.value) && isPolling.value
@@ -244,10 +287,12 @@ async function loadStatus(options = {}) {
   loadingStatus.value = !options.silent
 
   try {
-    const response = await yumRepoApi.getCollectStatus(selectedRepoModel.value)
+    const response = await yumRepoApi.getConfigList()
     if (requestId !== statusRequestId) return
 
-    statusData.value = unwrapResponse(response)
+    const data = unwrapResponse(response)
+    const configList = (Array.isArray(data) ? data : []).map(item => normalizeYumConfigRecord(item))
+    statusData.value = configList.find(item => resolveYumConfigId(item) === normalizedSelectedConfigId.value) || null
   } catch (error) {
     if (requestId !== statusRequestId) return
 
@@ -275,7 +320,7 @@ async function loadPackages(options = {}) {
 
   try {
     const response = await yumRepoApi.getPackages({
-      sourceId: selectedRepoModel.value,
+      dcDataId: normalizedSelectedConfigId.value,
       keyword: keyword.value || undefined,
       page: pagination.page - 1,
       size: pagination.pageSize
@@ -330,6 +375,11 @@ function handleSizeChange(size) {
 watch(
   [() => selectedRepoModel.value, () => props.active],
   ([value, active], previous = []) => {
+    if (normalizedSelectedConfigId.value && normalizedSelectedConfigId.value !== value) {
+      selectedRepoModel.value = normalizedSelectedConfigId.value
+      return
+    }
+
     if (!String(value || '').trim()) {
       resetPanelState()
       return
@@ -374,7 +424,7 @@ watch(
 .win-patch-yum-panel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  //gap: 12px;
 }
 
 .win-patch-yum-empty {

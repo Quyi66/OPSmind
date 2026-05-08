@@ -27,6 +27,7 @@
       <el-tab-pane label="采集与清单" name="packages" lazy>
         <WinPatchYumRepoPackagesPanel
           :active="activeTab === 'packages'"
+          :configs="configList"
           :repos="sourceList"
           v-model:selected-repo-id="selectedRepoId"
         />
@@ -35,6 +36,7 @@
       <el-tab-pane label="补丁比对" name="compare" lazy>
         <WinPatchYumRepoComparePanel
           :active="activeTab === 'compare'"
+          :configs="configList"
           :repos="sourceList"
           :overview-data="overviewData"
           v-model:selected-repo-id="selectedRepoId"
@@ -55,8 +57,8 @@ import WinPatchYumRepoSourceTable from '../components/yum-repo/WinPatchYumRepoSo
 import { yumRepoApi } from '../yum-repo/api'
 import {
   buildCollectedYumRepoSources,
-  buildYumRepoSourceFromConfig,
   findYumRepoSourceByConfig,
+  isYumRepoCollectSucceeded,
   normalizeYumConfigRecord,
   resolveYumConfigId,
   resolveYumRepoId,
@@ -73,6 +75,39 @@ const overviewLoading = ref(false)
 const overviewData = ref(null)
 const selectedConfigId = ref('')
 const selectedRepoId = ref('')
+
+function resolveResponseSourceIds(payload = {}) {
+  const sourceIds = Array.isArray(payload?.sourceIds)
+    ? payload.sourceIds
+    : [payload?.sourceId]
+
+  return sourceIds.map(item => String(item || '').trim()).filter(Boolean)
+}
+
+function getPreferredSourceId(config, fallbackId = '') {
+  const fallbackSourceId = String(fallbackId || '').trim()
+  if (fallbackSourceId) {
+    return fallbackSourceId
+  }
+
+  const matchedSourceId = resolveYumRepoId(findYumRepoSourceByConfig(config, sourceList.value))
+  if (matchedSourceId) {
+    return matchedSourceId
+  }
+
+  const normalizedConfig = normalizeYumConfigRecord(config)
+  return String(normalizedConfig.sourceIds?.[0] || normalizedConfig.sourceId || '').trim()
+}
+
+function isConfigCollectSucceeded(config) {
+  return isYumRepoCollectSucceeded(normalizeYumConfigRecord(config))
+}
+
+async function fetchConfigList() {
+  const response = await yumRepoApi.getConfigList()
+  const data = unwrapResponse(response)
+  return (Array.isArray(data) ? data : []).map(item => normalizeYumConfigRecord(item))
+}
 
 async function loadOverview(options = {}) {
   overviewLoading.value = !options.silent
@@ -114,27 +149,10 @@ function syncSourceList(preferredId = '') {
   syncSelectedRepoId(preferredId)
 }
 
-function upsertSource(source) {
-  const sourceId = resolveYumRepoId(source)
-  if (!sourceId) return
-
-  const currentIndex = sourceList.value.findIndex(item => resolveYumRepoId(item) === sourceId)
-  if (currentIndex === -1) {
-    sourceList.value = [source, ...sourceList.value]
-    return
-  }
-
-  sourceList.value = sourceList.value.map((item, index) =>
-    index === currentIndex ? { ...item, ...source } : item
-  )
-}
-
 async function loadConfigs(preferredConfigId = '', preferredRepoId = '') {
   loadingConfigs.value = true
   try {
-    const response = await yumRepoApi.getConfigList()
-    const data = unwrapResponse(response)
-    configList.value = (Array.isArray(data) ? data : []).map(item => normalizeYumConfigRecord(item))
+    configList.value = await fetchConfigList()
     syncSelectedConfigId(preferredConfigId)
     syncSourceList(preferredRepoId)
     await loadOverview({ silent: true })
@@ -182,22 +200,16 @@ async function handleCollect(config) {
 
   try {
     const response = await yumRepoApi.collectPackages({ dcDataId: configId })
-    const data = unwrapResponse(response)
-    const sourceId = String(data?.sourceId || '').trim()
+    const data = unwrapResponse(response) || {}
+    const preferredRepoId = resolveResponseSourceIds(data)[0] || getPreferredSourceId(config)
 
-    if (sourceId && !sourceList.value.some(item => resolveYumRepoId(item) === sourceId)) {
-      upsertSource(buildYumRepoSourceFromConfig(config, sourceId))
-      selectedRepoId.value = sourceId
+    if (preferredRepoId) {
+      selectedRepoId.value = preferredRepoId
     }
 
     ElMessage.info(data?.message || '采集任务已提交，正在等待采集完成…')
 
-    if (!sourceId) {
-      await loadConfigs(configId)
-      return
-    }
-
-    await pollCollectThenCompare(sourceId, configId)
+    await pollCollectThenCompare(configId, preferredRepoId)
   } catch (error) {
     console.error('触发 Yum 仓库采集失败:', error)
     ElMessage.error('触发 Yum 仓库采集失败')
@@ -207,51 +219,55 @@ async function handleCollect(config) {
   }
 }
 
-async function pollCollectThenCompare(sourceId, configId) {
+async function pollCollectThenCompare(configId, preferredRepoId = '') {
   const MAX_ATTEMPTS = 120
   const INTERVAL = 2500
+  let nextPreferredRepoId = String(preferredRepoId || '').trim()
 
   for (let i = 0; i < MAX_ATTEMPTS; i++) {
     await new Promise(resolve => setTimeout(resolve, INTERVAL))
 
-    let statusData
+    let currentConfig = null
     try {
-      const resp = await yumRepoApi.getCollectStatus(sourceId)
-      statusData = unwrapResponse(resp)
+      const configs = await fetchConfigList()
+      currentConfig = configs.find(item => resolveYumConfigId(item) === configId) || null
     } catch {
       continue
     }
 
-    // Situation A: has message but no collectStatus → still running
-    if (statusData?.message && !statusData?.collectStatus) continue
+    if (!currentConfig) {
+      continue
+    }
 
-    const cs = String(statusData?.collectStatus || '').trim()
+    nextPreferredRepoId = getPreferredSourceId(currentConfig, nextPreferredRepoId)
+
+    const cs = String(currentConfig.collectStatus || '').trim()
     if (!cs || cs === 'RUNNING' || cs === 'PENDING') continue
 
-    if (cs === 'SUCCESS') {
+    if (isConfigCollectSucceeded(currentConfig)) {
       try {
-        await yumRepoApi.compareScannedPatches({ sourceId })
+        await yumRepoApi.compareScannedPatches({ dcDataId: configId })
       } catch (err) {
         console.error('触发补丁比对失败:', err)
         ElMessage.warning('采集成功，但补丁比对触发失败，请手动执行比对')
-        await loadConfigs(configId, sourceId)
+        await loadConfigs(configId, nextPreferredRepoId)
         return
       }
-      await loadConfigs(configId, sourceId)
+      await loadConfigs(configId, nextPreferredRepoId)
       ElMessage.success('采集完成，已自动继续比对并刷新列表')
       return
     }
 
     if (cs === 'FAILED') {
-      const errMsg = String(statusData?.errorMessage || '').trim()
+      const errMsg = String(currentConfig.errorMessage || '').trim()
       ElMessage.error(`采集失败${errMsg ? '：' + errMsg : '，请检查仓库地址是否可访问'}`)
-      await loadConfigs(configId, sourceId)
+      await loadConfigs(configId, nextPreferredRepoId)
       return
     }
   }
 
   ElMessage.warning('采集等待超时，请稍后手动刷新')
-  await loadConfigs(configId, selectedRepoId.value)
+  await loadConfigs(configId, nextPreferredRepoId || selectedRepoId.value)
 }
 
 async function handleCollectAll() {
@@ -261,26 +277,18 @@ async function handleCollectAll() {
     return
   }
 
-  const configMap = new Map(configList.value.map(item => [resolveYumConfigId(item), item]))
   batchCollecting.value = true
 
   try {
     const response = await yumRepoApi.collectPackagesBatch({ dcDataIds })
     const data = unwrapResponse(response) || {}
     const results = Array.isArray(data.results) ? data.results : []
-    const successResults = results.filter(item => String(item?.sourceId || '').trim())
-    const preferredRepoId = String(successResults[0]?.sourceId || selectedRepoId.value || '').trim()
+    const successResults = results.filter(item => resolveResponseSourceIds(item).length > 0)
+    const preferredRepoId = String(
+      resolveResponseSourceIds(successResults[0] || {})[0] || selectedRepoId.value || ''
+    ).trim()
 
     await loadConfigs(selectedConfigId.value, preferredRepoId)
-
-    successResults.forEach(result => {
-      const config = configMap.get(String(result.dcDataId || '').trim())
-      const sourceId = String(result.sourceId || '').trim()
-
-      if (config && sourceId && !sourceList.value.some(item => resolveYumRepoId(item) === sourceId)) {
-        upsertSource(buildYumRepoSourceFromConfig(config, sourceId))
-      }
-    })
 
     const successCount = Number(data.successCount || 0)
     const failCount = Number(data.failCount || 0)
@@ -307,8 +315,7 @@ async function handleCollectAll() {
 
 function openPackagesTab(config) {
   selectedConfigId.value = resolveYumConfigId(config)
-  const source = findYumRepoSourceByConfig(config, sourceList.value)
-  const sourceId = resolveYumRepoId(source)
+  const sourceId = getPreferredSourceId(config)
 
   if (!sourceId) {
     ElMessage.warning('该配置尚未触发采集，请先执行采集')
@@ -320,16 +327,19 @@ function openPackagesTab(config) {
 }
 
 function openCompareTab(config) {
-  selectedConfigId.value = resolveYumConfigId(config)
-  const source = findYumRepoSourceByConfig(config, sourceList.value)
-  const sourceId = resolveYumRepoId(source)
+  const configId = resolveYumConfigId(config)
+  selectedConfigId.value = configId
+  if (!isConfigCollectSucceeded(config)) {
+    ElMessage.warning('该配置下所有 repo 采集成功后才可比对')
+    return
+  }
 
-  if (!sourceId) {
+  if (!configId) {
     ElMessage.warning('该配置尚未生成可比对仓库，请先执行采集')
     return
   }
 
-  selectedRepoId.value = sourceId
+  selectedRepoId.value = configId
   activeTab.value = 'compare'
 }
 

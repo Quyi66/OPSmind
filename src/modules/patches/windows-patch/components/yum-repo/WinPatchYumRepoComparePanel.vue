@@ -5,7 +5,7 @@
         <div class="win-patch-filter-row">
           <el-form-item label="仓库" class="win-patch-filter-item">
             <el-select
-              v-model="selectedRepoModel"
+              v-model="compareSelectedRepoModel"
               clearable
               filterable
               placeholder="请选择仓库"
@@ -13,9 +13,9 @@
             >
               <el-option
                 v-for="item in compareRepoOptions"
-                :key="resolveYumRepoId(item)"
-                :label="getYumRepoLabel(item)"
-                :value="resolveYumRepoId(item)"
+                :key="resolveYumConfigId(item)"
+                :label="getYumConfigCompareLabel(item)"
+                :value="resolveYumConfigId(item)"
               />
             </el-select>
           </el-form-item>
@@ -55,13 +55,13 @@
     </div>
 
     <template v-else>
-      <el-alert
+      <!-- <el-alert
         v-if="selectedSourceHint"
         :title="selectedSourceHint"
         type="info"
         :closable="false"
         show-icon
-      />
+      /> -->
 
       <div v-if="diffRunId" class="win-patch-yum-section">
         <div class="win-patch-yum-section__header">
@@ -206,8 +206,10 @@ import { yumRepoApi } from '../../yum-repo/api'
 import {
   getCollectStatusLabel,
   getCollectStatusTagType,
-  getYumRepoLabel,
-  resolveYumRepoId,
+  getYumConfigCompareLabel,
+  isYumRepoCollectSucceeded,
+  normalizeYumConfigRecord,
+  resolveYumConfigId,
   unwrapResponse
 } from '../../yum-repo/utils'
 
@@ -217,6 +219,10 @@ const props = defineProps({
     default: false
   },
   repos: {
+    type: Array,
+    default: () => []
+  },
+  configs: {
     type: Array,
     default: () => []
   },
@@ -234,6 +240,11 @@ const emit = defineEmits(['update:selectedRepoId', 'refresh-overview'])
 
 const selectedRepoModel = computed({
   get: () => props.selectedRepoId,
+  set: value => emit('update:selectedRepoId', String(value || '').trim())
+})
+
+const compareSelectedRepoModel = computed({
+  get: () => normalizedSelectedConfigId.value || String(selectedRepoModel.value || '').trim(),
   set: value => emit('update:selectedRepoId', String(value || '').trim())
 })
 
@@ -272,19 +283,60 @@ const overviewSources = computed(() => {
   return Array.isArray(data?.sources) ? data.sources : []
 })
 
-const compareRepoOptions = computed(() => (overviewSources.value.length ? overviewSources.value : props.repos))
+const compareRepoOptions = computed(() => props.configs.map(item => normalizeYumConfigRecord(item)))
+
+const normalizedSelectedConfigId = computed(() => {
+  const currentRepoId = String(selectedRepoModel.value || '').trim()
+  if (!currentRepoId) {
+    return ''
+  }
+
+  const matchedConfig = props.configs.find(item => {
+    const config = normalizeYumConfigRecord(item)
+    return resolveYumConfigId(config) === currentRepoId || config.sourceIds.includes(currentRepoId)
+  })
+
+  return resolveYumConfigId(matchedConfig)
+})
 
 const selectedSourceOverview = computed(() => {
-  return overviewSources.value.find(item => resolveYumRepoId(item) === String(selectedRepoModel.value || '').trim()) || null
+  const currentConfigId = normalizedSelectedConfigId.value
+  const currentRepoId = String(selectedRepoModel.value || '').trim()
+
+  return overviewSources.value.find(item => {
+    const overviewConfig = normalizeYumConfigRecord(item)
+    const overviewConfigId = resolveYumConfigId(overviewConfig)
+
+    return overviewConfigId === currentConfigId
+      || overviewConfigId === currentRepoId
+      || overviewConfig.sourceIds.includes(currentRepoId)
+  }) || null
 })
+
+const selectedConfig = computed(() => {
+  const currentConfigId = normalizedSelectedConfigId.value
+  if (!currentConfigId) {
+    return null
+  }
+
+  return props.configs.find(item => {
+    const config = normalizeYumConfigRecord(item)
+    return resolveYumConfigId(config) === currentConfigId
+  }) || null
+})
+
+const selectedConfigId = computed(() => resolveYumConfigId(selectedConfig.value))
 
 const summaryData = computed(() => selectedSourceOverview.value?.summary || null)
 
 const canCompare = computed(() => {
   if (!selectedRepoModel.value) return false
-  if (!selectedSourceOverview.value) return true
-  const status = String(pickValue(selectedSourceOverview.value, ['collectStatus', 'collect_status'], '')).trim()
-  return status === '' || status === 'SUCCESS'
+
+  if (selectedConfig.value) {
+    return isYumRepoCollectSucceeded(selectedConfig.value)
+  }
+
+  return Boolean(selectedSourceOverview.value) && isYumRepoCollectSucceeded(selectedSourceOverview.value)
 })
 
 const compareActionLabel = computed(() => {
@@ -323,6 +375,10 @@ function isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunI
 }
 
 async function syncSelectedRepoResult(options = {}) {
+  if (normalizedSelectedConfigId.value && normalizedSelectedConfigId.value !== selectedRepoModel.value) {
+    selectedRepoModel.value = normalizedSelectedConfigId.value
+  }
+
   clearResult()
 
   if (!props.active || !selectedRepoModel.value) {
@@ -391,6 +447,7 @@ async function loadPatchView(options = {}) {
 
 async function handleCompare(options = {}) {
   const repoId = getCurrentRepoId()
+  const configId = selectedConfigId.value
   if (!repoId) {
     ElMessage.warning('请先选择仓库')
     return
@@ -406,7 +463,7 @@ async function handleCompare(options = {}) {
   comparing.value = true
   try {
     const response = await yumRepoApi.compareScannedPatches({
-      sourceId: repoId,
+      ...(configId ? { dcDataId: configId } : { sourceId: repoId }),
       osFamily: form.osFamily || undefined
     })
 

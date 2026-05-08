@@ -27,11 +27,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { pickValue } from '../../utils'
 import { yumRepoApi } from '../../yum-repo/api'
-import { getYumRepoLabel, unwrapResponse } from '../../yum-repo/utils'
+import { getYumRepoLabel, resolveYumConfigId, unwrapResponse } from '../../yum-repo/utils'
 
 const props = defineProps({
   modelValue: {
@@ -54,19 +54,22 @@ const visibleModel = computed({
 const submitting = ref(false)
 
 const repoLabel = computed(() => getYumRepoLabel(props.repo))
+const configId = computed(() => resolveYumConfigId(props.repo))
 const repoUrl = computed(() => String(pickValue(props.repo, ['repoUrl', 'repo_url', 'baseurl'], '')).trim())
 
 async function handleSubmit() {
-  if (!repoUrl.value) {
+  const payload = configId.value
+    ? { dcDataId: configId.value }
+    : (repoUrl.value ? { baseurl: repoUrl.value } : null)
+
+  if (!payload) {
     ElMessage.warning('请先选择仓库')
     return
   }
 
   submitting.value = true
   try {
-    const response = await yumRepoApi.collectPackages({
-      baseurl: repoUrl.value
-    })
+    const response = await yumRepoApi.collectPackages(payload)
 
     const data = unwrapResponse(response)
     ElMessage.success(data?.message || '采集任务已提交')
