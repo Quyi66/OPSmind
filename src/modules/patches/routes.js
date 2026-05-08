@@ -90,6 +90,16 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./views/RpmPackageListPage.vue')
   },
   {
+    key: 'linuxMachinePackageList',
+    path: 'linuxMachinePackageList',
+    name: 'patches-linuxMachinePackageList',
+    title: '机器包清单',
+    navLabel: '机器包清单',
+    icon: 'fas fa-box-open',
+    platform: 'linux',
+    component: () => import('./views/LinuxMachinePackageListPage.vue')
+  },
+  {
     key: 'vulnerability',
     path: 'vulnerability',
     name: 'patches-vulnerability',

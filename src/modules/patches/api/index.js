@@ -307,26 +307,17 @@ export const patchScanApi = {
 
   /**
    * 获取指定主机的CVE漏洞列表
-   * POST /dts/api/dts/q/data/VAP2_MACHINE_CVE_LIST/
+   * GET /vap/api/vap/v2/cve/host-cve-list
    * @param {Object} params - 查询参数
    * @param {string} params.host_id - 主机ID
-   * @param {string} params.severity - 严重程度筛选（逗号分隔：Critical,Important,Moderate,Low）
-   * @param {number} params.page - 页码
-   * @param {number} params.pageSize - 每页大小
    * @returns {Promise}
    */
-  getMachineCVEList(params) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
-        host_id: params.host_id,
-        severity: params.severity || ''
-      }
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_MACHINE_CVE_LIST/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+  getMachineCVEList(params = {}) {
+    const query = buildGenericQuery({
+      host_id: params.host_id
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/host-cve-list${query}`)
   },
 
   /**
@@ -337,16 +328,12 @@ export const patchScanApi = {
    * @returns {Promise}
    */
   getPatchDetail(params) {
-    const cacheBuster = Date.now()
     const requestBody = {
       params: {
         patch_id: params.patch_id
       }
     }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    return apiService.post('/dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/', requestBody)
   }
 }
 
@@ -969,7 +956,7 @@ export const vulnerabilityApi = {
 
   /**
    * 获取漏洞概览列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_PATCH_BY_CVES/
+    * GET /vap/api/vap/v2/cve/patch-by-cves
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码
    * @param {number} params.size - 每页大小
@@ -980,26 +967,21 @@ export const vulnerabilityApi = {
    * @returns {Promise}
    */
   getVulnerabilityList(params = {}) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
-        reboot_status: params.reboot_status || 'all',
-        os_distro: params.os_distro || 'all',
-        os_major_version: params.os_major_version || 'all',
-        severity: params.severity || 'all',
-        patch_status: params.patch_status || 'all',
-        is_kernel: params.is_kernel || 'all'
-      },
-      size: params.size || 20,
-      page: params.page || 1,
-      filter: params.filter
-        ? `host_key|vul_id|patch_id|affected_pkgs:*${params.filter || ''}*`
-        : undefined
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_LIST_PATCH_BY_CVES/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    const query = buildGenericQuery({
+      host_key: params.host_key === 'all' ? undefined : params.host_key,
+      vul_id: params.vul_id === 'all' ? undefined : params.vul_id,
+      severity: params.severity === 'all' ? undefined : params.severity,
+      reboot_status: params.reboot_status === 'all' ? undefined : params.reboot_status,
+      is_kernel: params.is_kernel === 'all' ? undefined : params.is_kernel,
+      patch_status: params.patch_status === 'all' ? undefined : params.patch_status,
+      os_distro: params.os_distro === 'all' ? undefined : params.os_distro,
+      os_major_version: params.os_major_version === 'all' ? undefined : params.os_major_version,
+      filter: params.filter,
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/patch-by-cves${query}`)
   },
 
   /**
@@ -1685,10 +1667,14 @@ export const rpmInfoApi = {
    */
   getInstalledDetail(params = {}) {
     const query = buildGenericQuery({
+      currentPackage: params.currentPackage,
+      osDistro: params.osDistro,
+      osVersion: params.osVersion,
+      osArch: params.osArch,
       version: params.version,
       pkgName: params.pkgName,
       source: params.source,
-      arch: params.arch
+      arch: params.arch || params.pkgArch || params.architecture
     })
 
     return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/installed/detail${query}`)

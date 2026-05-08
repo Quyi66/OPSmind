@@ -263,6 +263,7 @@ export function inferRpmSource(source, osDistro = '') {
     .trim()
     .toLowerCase()
   if (normalizedSource.includes('kylin')) return 'kylin'
+  if (normalizedSource.includes('oracle')) return 'oracle'
   if (
     normalizedSource.includes('redhat') ||
     normalizedSource.includes('red hat') ||
@@ -275,6 +276,7 @@ export function inferRpmSource(source, osDistro = '') {
     .trim()
     .toLowerCase()
   if (normalizedOsDistro.includes('kylin')) return 'kylin'
+  if (normalizedOsDistro.includes('oracle')) return 'oracle'
   if (
     normalizedOsDistro.includes('redhat') ||
     normalizedOsDistro.includes('red hat') ||

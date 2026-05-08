@@ -171,19 +171,24 @@ export function getCveUrl(cveId, source) {
   return `https://access.redhat.com/security/cve/${id}`
 }
 
-// 获取严重程度类型
-export function getSeverityType(severity) {
+function normalizeSeverityKey(severity) {
   const raw = String(severity || '').trim()
-  if (!raw) return 'info'
+  if (!raw) return ''
 
   const lower = raw.toLowerCase()
-  let key = ''
-  if (lower === 'critical' || raw === '严重' || raw === 'Critical') key = 'critical'
+  if (lower === 'critical' || raw === '严重' || raw === 'Critical') return 'critical'
   else if (lower === 'important' || raw === '重要' || raw === '高危' || raw === 'Important')
-    key = 'important'
+    return 'important'
   else if (lower === 'moderate' || raw === '中等' || raw === '中危' || raw === 'Moderate')
-    key = 'moderate'
-  else if (lower === 'low' || raw === '低' || raw === '低危' || raw === 'Low') key = 'low'
+    return 'moderate'
+  else if (lower === 'low' || raw === '低' || raw === '低危' || raw === 'Low') return 'low'
+
+  return ''
+}
+
+// 获取严重程度类型
+export function getSeverityType(severity) {
+  const key = normalizeSeverityKey(severity)
 
   const typeMap = {
     critical: 'danger',
@@ -193,6 +198,23 @@ export function getSeverityType(severity) {
   }
 
   return typeMap[key] || 'info'
+}
+
+export function getSeverityClass(severity) {
+  const key = normalizeSeverityKey(severity)
+  return key ? `is-${key}` : ''
+}
+
+export function getSeverityLabel(severity) {
+  const key = normalizeSeverityKey(severity)
+  const labelMap = {
+    critical: '严重',
+    important: '重要',
+    moderate: '中等',
+    low: '低危'
+  }
+
+  return labelMap[key] || severity || '-'
 }
 
 // 获取补丁状态类型

@@ -433,9 +433,11 @@
             ref="vulnTableRef"
             v-loading="vulnLoading"
             :data="vulnTableData"
+            class="header-border-only-table"
             style="width: 100%"
             max-height="calc(100vh - 600px)"
             @selection-change="handleVulnSelectionChange"
+            border
           >
             <el-table-column type="selection" width="45" />
             <el-table-column prop="host_key" label="主机" width="130">
@@ -447,11 +449,11 @@
             </el-table-column>
             <el-table-column prop="os_distro" label="操作系统" width="90" />
             <el-table-column prop="os_major_version" label="系统版本" width="90" />
-            <el-table-column prop="patch_id" label="补丁编号" min-width="150" show-overflow-tooltip>
+            <el-table-column prop="patch_id" label="补丁编号" min-width="180" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="patch-list">
                   <a
-                    v-for="patchId in getPatchIdList(row.patch_id)"
+                    v-for="patchId in getPatchIdPreview(row.patch_id)"
                     :key="patchId"
                     href="javascript:void(0)"
                     class="patch-link"
@@ -459,17 +461,88 @@
                   >
                     {{ patchId }}
                   </a>
+                  <el-popover
+                    v-if="getPatchIdList(row.patch_id).length > 2"
+                    placement="top"
+                    trigger="hover"
+                    :width="360"
+                  >
+                    <template #reference>
+                      <span class="more-link">+{{ getPatchIdList(row.patch_id).length - 2 }} 更多</span>
+                    </template>
+                    <div class="patch-list-popover">
+                      <a
+                        v-for="patchId in getPatchIdList(row.patch_id)"
+                        :key="patchId"
+                        href="javascript:void(0)"
+                        class="patch-link"
+                        @click="handlePatchClick({ patch_id: patchId, os_distro: row.os_distro })"
+                      >
+                        {{ patchId }}
+                      </a>
+                    </div>
+                  </el-popover>
                 </div>
               </template>
             </el-table-column>
             <el-table-column
               prop="affected_pkgs"
               label="影响的软件包"
-              min-width="180"
-              show-overflow-tooltip
+              min-width="260"
+              class-name="vulnerability-layout-top-cell"
             >
               <template #default="{ row }">
-                <div class="pkg-list">{{ row.affected_pkgs }}</div>
+                <div v-if="getAffectedPackages(row).length" class="affected-packages-cell">
+                  <div
+                    v-for="(pkg, index) in getAffectedPackagePreview(row)"
+                    :key="getAffectedPackageKey(pkg, index)"
+                    class="affected-package-row"
+                  >
+                    <button
+                      v-if="hasPackageDetail(pkg, row)"
+                      type="button"
+                      class="affected-package-link affected-package-trigger"
+                      :title="pkg.currentPackage"
+                      @click="handleViewPackageDetail(pkg, row)"
+                    >
+                      {{ pkg.currentPackage }}
+                    </button>
+                    <span v-else class="affected-package-text" :title="pkg.currentPackage">
+                      {{ pkg.currentPackage }}
+                    </span>
+                  </div>
+                  <el-popover
+                    v-if="getAffectedPackages(row).length > 2"
+                    placement="top"
+                    trigger="hover"
+                    :width="400"
+                  >
+                    <template #reference>
+                      <span class="more-link">+{{ getAffectedPackages(row).length - 2 }} 更多</span>
+                    </template>
+                    <div class="affected-packages-popover">
+                      <div
+                        v-for="(pkg, index) in getAffectedPackages(row)"
+                        :key="getAffectedPackageKey(pkg, index)"
+                        class="affected-package-row affected-package-popover-row"
+                      >
+                        <button
+                          v-if="hasPackageDetail(pkg, row)"
+                          type="button"
+                          class="affected-package-link affected-package-trigger"
+                          :title="pkg.currentPackage"
+                          @click="handleViewPackageDetail(pkg, row)"
+                        >
+                          {{ pkg.currentPackage }}
+                        </button>
+                        <span v-else class="affected-package-text" :title="pkg.currentPackage">
+                          {{ pkg.currentPackage }}
+                        </span>
+                      </div>
+                    </div>
+                  </el-popover>
+                </div>
+                <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
             <el-table-column prop="vul_id" label="CVE" width="150">
@@ -479,31 +552,71 @@
                 </a>
               </template>
             </el-table-column>
-            <el-table-column prop="severity" label="严重程度" width="100">
+            <el-table-column
+              prop="severity"
+              label="严重程度"
+              width="100"
+              class-name="vulnerability-layout-top-cell"
+            >
               <template #default="{ row }">
                 <el-tag
                   effect="dark"
                   class="severity-tag"
-                  :class="'is-' + (row.severity || '').toLowerCase()"
+                  :class="getSeverityClass(row.severity)"
                 >
                   {{ getSeverityLabel(row.severity) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="reboot_status" label="重启要求" width="100">
+            <el-table-column
+              prop="reboot_status"
+              label="重启要求"
+              min-width="260"
+              class-name="vulnerability-layout-top-cell"
+            >
               <template #default="{ row }">
-                <el-tag
-                  v-if="row.reboot_status"
-                  :type="row.reboot_status === '系统重启' ? 'danger' : 'warning'"
-                  size="small"
-                  round
+                <el-tooltip
+                  placement="top"
+                  :disabled="!getRebootStatusTooltip(row)"
+                  :content="getRebootStatusTooltip(row)"
                 >
-                  <i
-                    :class="row.reboot_status === '系统重启' ? 'fa fa-power-off' : 'fa fa-server'"
-                    style="margin-right: 4px"
-                  />
-                  {{ row.reboot_status === '系统重启' ? '系统' : '服务' }}
-                </el-tag>
+                  <div class="reboot-status-content">
+                    <span class="reboot-status-cell">
+                      <el-tag
+                        v-if="getDisplayRebootStatus(row) === '系统重启'"
+                        type="danger"
+                        size="small"
+                      >
+                        <i class="fa fa-power-off"></i>
+                        系统重启
+                      </el-tag>
+                      <el-tag
+                        v-else-if="getDisplayRebootStatus(row) === '服务重启'"
+                        type="warning"
+                        size="small"
+                      >
+                        <i class="fa fa-server"></i>
+                        服务重启
+                      </el-tag>
+                      <span v-else-if="row.reboot_status !== '服务重启'" class="text-muted">-</span>
+                    </span>
+                    <div
+                      v-if="getDisplayRebootStatus(row) === '服务重启'"
+                      class="reboot-services-list"
+                    >
+                      <el-tag
+                        v-for="(service, serviceIndex) in getRebootServices(row)"
+                        :key="getRebootServiceKey(row, service, serviceIndex)"
+                        size="small"
+                        effect="plain"
+                        type="warning"
+                        class="reboot-service-tag"
+                      >
+                        {{ service }}
+                      </el-tag>
+                    </div>
+                  </div>
+                </el-tooltip>
               </template>
             </el-table-column>
             <el-table-column prop="is_kernel" label="内核" width="70">
@@ -629,6 +742,12 @@
       @success="handleRollbackSuccess"
     />
 
+    <RpmPackageDetailDialog
+      v-model="rpmDetailVisible"
+      :loading="rpmDetailLoading"
+      :detail-data="rpmDetailData"
+    />
+
     <!-- 修复漏洞确认对话框 -->
     <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="700px" destroy-on-close>
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
@@ -682,8 +801,17 @@ import { ref, reactive, onMounted, computed, provide, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
-import { patchScanApi, patchOverviewApi, vulnerabilityApi } from '../api'
-import { getCveUrl } from '../composables/useFormatters'
+import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi } from '../api'
+import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
+import {
+  getAffectedPackageDetailParams,
+  getDisplayRebootStatus,
+  getAffectedPackageNames,
+  getAffectedPackages,
+  getRebootServices,
+  getRebootStatusTooltip,
+  hasAffectedPackageDetail
+} from '../utils/vulnerabilityPackages'
 import { assetApi } from '@/modules/asset/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
@@ -691,6 +819,7 @@ import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
 import HostSeverityPatchDialog from '../components/host-detail/dialogs/HostSeverityPatchDialog.vue'
 import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
+import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
 
 // ECharts
 import { use } from 'echarts/core'
@@ -710,7 +839,6 @@ use([
   GaugeChart,
   TitleComponent,
   TooltipComponent,
-  LegendComponent,
   GridComponent
 ])
 
@@ -855,6 +983,9 @@ const currentPatchOsDistro = ref('')
 const severityPatchesDialogVisible = ref(false)
 const severityPatchesDialogHost = ref(null)
 const severityPatchesDialogSeverity = ref('')
+const rpmDetailVisible = ref(false)
+const rpmDetailLoading = ref(false)
+const rpmDetailData = ref({})
 
 async function loadPatchDetail(patchId, osDistro) {
   currentPatchOsDistro.value = osDistro || ''
@@ -887,15 +1018,74 @@ function getPatchIdList(patchId) {
     .filter(Boolean)
 }
 
+function getPatchIdPreview(patchId) {
+  return getPatchIdList(patchId).slice(0, 2)
+}
+
 function getRollbackHostId(row) {
   return row.hosts_id || row.hostsId || row.host_id || row.hostId || ''
 }
 
 function getAffectedPackageList(row) {
-  return String(row.affected_pkgs || '')
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean)
+  return getAffectedPackageNames(row)
+}
+
+function getAffectedPackagePreview(row) {
+  return getAffectedPackages(row).slice(0, 2)
+}
+
+function getRowOsDistro(row) {
+  return String(row?.osDistro || row?.os_distro || '').trim()
+}
+
+function getAffectedPackageKey(pkg, index) {
+  return [pkg?.rpmInfoId, pkg?.currentPackage, index].filter(Boolean).join('-')
+}
+
+function hasPackageDetail(pkg, row) {
+  return hasAffectedPackageDetail(pkg, getRowOsDistro(row))
+}
+
+function hasRpmDetailResponse(data) {
+  return Boolean(
+    data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length > 0
+  )
+}
+
+function getRebootServiceKey(row, service, index) {
+  return [row?.host_key, row?.vul_id, row?.patch_id, service, index].filter(Boolean).join('-')
+}
+
+async function handleViewPackageDetail(pkg, row) {
+  const detailParams = getAffectedPackageDetailParams(pkg, getRowOsDistro(row))
+
+  if (!detailParams.installedDetail) {
+    ElMessage.warning('当前软件包暂无 RPM 详情')
+    return
+  }
+
+  rpmDetailVisible.value = true
+  rpmDetailLoading.value = true
+  rpmDetailData.value = {}
+
+  try {
+    const response = await rpmInfoApi.getInstalledDetail(detailParams.installedDetail)
+    const responseData = response?.data || response || {}
+
+    if (hasRpmDetailResponse(responseData)) {
+      rpmDetailData.value = responseData
+      return
+    }
+
+    ElMessage.warning('当前软件包暂无 RPM 详情')
+    rpmDetailVisible.value = false
+  } catch (error) {
+    console.error('Failed to load rpm package detail:', error)
+    ElMessage.error('获取软件包详情失败')
+    rpmDetailVisible.value = false
+  } finally {
+    rpmDetailLoading.value = false
+  }
 }
 
 function buildRollbackWizardData(row) {
@@ -957,28 +1147,6 @@ const rollbackTaskPatches = ref([])
 const rollbackTargetHosts = ref([])
 const rollbackPackageCandidates = ref([])
 const rollbackSelectionSummary = ref([])
-
-// 获取严重程度显示标签
-function getSeverityLabel(severity) {
-  const map = {
-    Critical: '严重',
-    Important: '重要',
-    Moderate: '中等',
-    Low: '低危'
-  }
-  return map[severity] || severity
-}
-
-// 获取严重程度样式类
-function getSeverityClass(severity) {
-  const map = {
-    Critical: 'text-danger',
-    Important: 'text-warning',
-    Moderate: 'text-dark',
-    Low: 'text-info'
-  }
-  return map[severity] || ''
-}
 
 // 格式化日期时间
 function formatDateTime(timestamp) {
@@ -1126,7 +1294,7 @@ async function loadVulnData() {
   vulnLoading.value = true
   try {
     const params = {
-      page: vulnPagination.page,
+      page: vulnPagination.page - 1,
       size: vulnPagination.pageSize,
       filter: vulnFilterText.value,
       host_key: vulnFilters.host_key || '',
@@ -1140,10 +1308,13 @@ async function loadVulnData() {
       filter: vulnFilters.filter || ''
     }
     const response = await vulnerabilityApi.getVulnerabilityList(params)
-    if (response?.data) {
-      vulnTableData.value = response.data.records || []
-      vulnPagination.total = response.data.total || 0
-    }
+    const data = response?.data || response || {}
+    vulnTableData.value = Array.isArray(data.content)
+      ? data.content
+      : Array.isArray(data.records)
+        ? data.records
+        : []
+    vulnPagination.total = Number(data.totalElements ?? data.total ?? vulnTableData.value.length)
   } catch (error) {
     console.error('Failed to load vulnerability data:', error)
     vulnTableData.value = []
@@ -1323,17 +1494,6 @@ function formatDate(dateStr) {
   return `${year}-${month}-${day}`
 }
 
-// 获取严重程度类型
-function getSeverityType(severity) {
-  const typeMap = {
-    Critical: 'danger',
-    Important: 'warning',
-    Moderate: '',
-    Low: 'info'
-  }
-  return typeMap[severity] || 'info'
-}
-
 // 获取补丁状态类型
 function getPatchStatusType(status) {
   const typeMap = {
@@ -1469,8 +1629,8 @@ async function handleFixSelected() {
 
     // 处理软件包列表（去重）
     if (pkgsRes?.data?.records) {
-      const allPkgs = pkgsRes.data.records.flatMap(r => (r.affected_pkgs || '').split(','))
-      const uniquePkgs = [...new Set(allPkgs.filter(p => p.trim()))]
+      const allPkgs = pkgsRes.data.records.flatMap(record => getAffectedPackageNames(record))
+      const uniquePkgs = [...new Set(allPkgs.filter(Boolean))]
       fixDialogData.packages = uniquePkgs.join('<br>')
     }
   } catch (error) {
@@ -2059,6 +2219,37 @@ defineExpose({
   height: calc(100% - 310px);
 }
 
+:deep(.el-table__body td.el-table__cell) {
+  vertical-align: top;
+}
+
+:deep(.vulnerability-layout-top-cell .cell) {
+  display: flex;
+  align-items: flex-start;
+  height: 100%;
+}
+
+:deep(.vulnerability-layout-top-cell .cell > *) {
+  width: 100%;
+}
+
+:deep(.header-border-only-table.el-table--border::after),
+:deep(.header-border-only-table.el-table--border .el-table__inner-wrapper::after) {
+  display: none;
+}
+
+:deep(.header-border-only-table.el-table--border .el-table__body-wrapper td.el-table__cell),
+:deep(.header-border-only-table.el-table--border .el-table__fixed-body-wrapper td.el-table__cell),
+:deep(.header-border-only-table.el-table--border .el-table__fixed-right td.el-table__cell) {
+  border-right: none;
+}
+
+:deep(.header-border-only-table.el-table--border .el-table__header-wrapper th.el-table__cell),
+:deep(.header-border-only-table.el-table--border .el-table__fixed-header-wrapper th.el-table__cell),
+:deep(.header-border-only-table.el-table--border .el-table__fixed-right .el-table__header-wrapper th.el-table__cell) {
+  border-right-color: var(--el-border-color);
+}
+
 // 表格区域
 .table-section {
   background: var(--el-bg-color);
@@ -2170,11 +2361,93 @@ defineExpose({
   margin-left: auto;
 }
 
-// 软件包列表
-.pkg-list {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.affected-packages-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.affected-package-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.affected-packages-popover {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.affected-package-popover-row {
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--el-border-color-light);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.more-link {
+  color: var(--el-color-primary);
+  cursor: pointer;
+  font-size: 12px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.affected-package-link,
+.affected-package-text {
+  max-width: 100%;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.affected-package-link {
+  color: #409eff;
+  text-decoration: none;
+
+  &:hover {
+    color: #66b1ff;
+    text-decoration: underline;
+  }
+}
+
+.affected-package-trigger {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reboot-status-cell {
+  display: inline-flex;
+  align-items: center;
+}
+
+.reboot-status-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.reboot-services-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.reboot-service-tag {
+  margin: 0;
+}
+
+.reboot-service-hint {
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 // 可点击的状态标签
@@ -2367,21 +2640,14 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 80px;
+}
+
+.patch-list-popover {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 250px;
   overflow-y: auto;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #dcdfe6;
-    border-radius: 2px;
-
-    &:hover {
-      background: #c0c4cc;
-    }
-  }
 }
 
 .patch-link {

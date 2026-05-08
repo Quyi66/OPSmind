@@ -114,6 +114,7 @@ import { ElMessage } from 'element-plus'
 import { patchScanApi } from '../api'
 import { formatDateTime, getInstalledPkgsCount } from '../composables/useFormatters'
 import { useHostDetail } from '../composables/useHostDetail'
+import { getAffectedPackageNames } from '../utils/vulnerabilityPackages'
 import PatchesTab from '../components/host-detail/tabs/PatchesTab.vue'
 import PackagesTab from '../components/host-detail/tabs/PackagesTab.vue'
 import VulnerabilitiesTab from '../components/host-detail/tabs/VulnerabilitiesTab.vue'
@@ -398,31 +399,14 @@ function handleFixVulnerabilities(vulnerabilities) {
 
   patchesToInstall.value = normalizedPatches
   installOperationType.value = 'vulnerability'
-  installPackageCandidates.value = Array.from(
-    new Set(
-      vulnerabilities.flatMap(item =>
-        String(item.affected_pkgs || '')
-          .split(',')
-          .map(value => value.trim())
-          .filter(Boolean)
-      )
-    )
-  )
+  installPackageCandidates.value = Array.from(new Set(vulnerabilities.flatMap(getAffectedPackageNames)))
   installTaskPackages.value = []
   installSelectionSummary.value = vulnerabilities.map(item => ({
     key: [item.vul_id, item.patch_id].filter(Boolean).join('-'),
     primary: item.vul_id || item.patch_id,
-    secondary: item.patch_id || formatAffectedPackages(item.affected_pkgs)
+    secondary: item.patch_id || getAffectedPackageNames(item).join(', ')
   }))
   installDialogVisible.value = true
-}
-
-function formatAffectedPackages(packages) {
-  return String(packages || '')
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean)
-    .join(', ')
 }
 
 const installDialogVisible = ref(false)
