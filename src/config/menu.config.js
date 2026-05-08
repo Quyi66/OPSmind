@@ -101,7 +101,7 @@ export const MENU_CONFIG = {
           description: '查看补丁向导流程步骤记录'
         },
         {
-          code: 'software',
+          code: 'yum-repo',
           name: 'Yum仓库管理',
           icon: 'fas fa-database',
           description: 'Yum 仓库管理与源清单查看'

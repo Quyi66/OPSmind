@@ -66,7 +66,7 @@ export const PATCHES_ROUTE_DEFS = [
     path: 'linuxYumManage',
     name: 'patches-linuxYumManage',
     title: 'Linux YUM管理',
-    redirect: '/software/yumManage',
+    redirect: '/yum-repo/yumManage',
     component: () => import('./views/LinuxYumManagePage.vue')
   },
   {
@@ -138,8 +138,8 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: 'Yum 仓库管理',
     icon: 'fas fa-database',
     platform: 'windows',
-    redirect: '/software/repos',
-    component: () => import('./windows-patch/views/WindowsPatchYumRepoPage.vue')
+    redirect: '/yum-repo/repos',
+    component: () => import('@/modules/yum-repo/views/YumRepoManagementPage.vue')
   },
   {
     key: 'windowsRollback',

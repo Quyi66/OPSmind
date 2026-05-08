@@ -186,23 +186,23 @@
       </div>
     </template>
 
-    <WinPatchYumRepoPatchDetailDialog v-model="detailDialogVisible" :patch="detailPatch" />
+    <YumRepoPatchDetailDialog v-model="detailDialogVisible" :patch="detailPatch" />
   </div>
 </template>
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import WinPatchYumRepoPatchDetailDialog from './WinPatchYumRepoPatchDetailDialog.vue'
+import YumRepoPatchDetailDialog from './YumRepoPatchDetailDialog.vue'
 import {
   getSeverityLabel,
   getSeverityTagType,
   normalizeBoolean,
   parsePageResponse,
   pickValue
-} from '../../utils'
-import { YUM_REPO_OS_FAMILY_OPTIONS, YUM_REPO_PAGE_SIZE_OPTIONS } from '../../yum-repo/constants'
-import { yumRepoApi } from '../../yum-repo/api'
+} from '@/modules/patches/windows-patch/utils.js'
+import { YUM_REPO_OS_FAMILY_OPTIONS, YUM_REPO_PAGE_SIZE_OPTIONS } from '../constants'
+import { yumRepoApi } from '../api'
 import {
   getCollectStatusLabel,
   getCollectStatusTagType,
@@ -211,7 +211,7 @@ import {
   normalizeYumConfigRecord,
   resolveYumConfigId,
   unwrapResponse
-} from '../../yum-repo/utils'
+} from '../utils'
 
 const props = defineProps({
   active: {

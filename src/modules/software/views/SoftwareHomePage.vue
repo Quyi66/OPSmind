@@ -228,10 +228,10 @@ function handleKpiClick(item) {
   } else if (item.linkPage === 'packages') {
     activeTab.value = 'packages'
   } else if (item.linkPage === 'repos') {
-    router.push('/software/repos')
+    router.push('/yum-repo/repos')
   } else if (item.linkPage === 'installed') {
     // 跳转到已安装软件包列表页面
-    router.push('/software/installed')
+    router.push('/yum-repo/installed')
   } else {
     ElMessage.info(`${item.name} 数据`)
   }

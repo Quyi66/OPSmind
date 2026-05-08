@@ -106,8 +106,8 @@ import {
   pickValue,
   resolveHostId,
   resolveHostKey
-} from '../../utils'
-import { getDiffTypeLabel, getDiffTypeTagType } from '../../yum-repo/utils'
+} from '@/modules/patches/windows-patch/utils.js'
+import { getDiffTypeLabel, getDiffTypeTagType } from '../utils'
 
 const props = defineProps({
   modelValue: {

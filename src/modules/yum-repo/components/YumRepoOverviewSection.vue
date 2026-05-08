@@ -93,12 +93,12 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatNumber, normalizeBoolean, pickValue } from '../../utils'
+import { formatNumber, normalizeBoolean, pickValue } from '@/modules/patches/windows-patch/utils.js'
 import {
   getYumRepoLabel,
   resolveYumRepoId,
   unwrapResponse
-} from '../../yum-repo/utils'
+} from '../utils'
 
 const props = defineProps({
   overviewData: {

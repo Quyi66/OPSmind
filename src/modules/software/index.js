@@ -1,17 +1,17 @@
 /**
- * 软件管理模块 (SPM - Software Package Management)
+ * Yum仓库管理模块兼容入口
  * 对应源系统 applet: spm
  */
 
 export default {
-  name: 'software',
+  name: 'yum-repo',
   title: 'Yum仓库管理',
   icon: 'fa-cube',
   routes: [
     {
-      path: '/software',
-      name: 'Software',
-      component: () => import('./views/SoftwareIndex.vue'),
+      path: '/yum-repo',
+      name: 'YumRepo',
+      component: () => import('@/modules/yum-repo/views/YumRepoIndex.vue'),
       meta: { title: '软件概览', icon: 'fa-cube' },
       children: [
         {

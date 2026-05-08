@@ -1,5 +1,5 @@
 import { apiService } from '@/core/api'
-import { yumManageApi } from '../../api'
+import { yumManageApi } from '@/modules/patches/api'
 
 const YUM_REPO_API_PREFIX = '/vap/api/vap/v2/yum-repo'
 

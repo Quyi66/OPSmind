@@ -7,7 +7,7 @@
 // 同步导入布局组件
 import MainLayout from '@/layouts/MainLayout.vue'
 import { PATCHES_ROUTE_DEFS } from '@/modules/patches/routes.js'
-import { SOFTWARE_ROUTE_DEFS } from '@/modules/software/routes.js'
+import { YUM_REPO_ROUTE_DEFS } from '@/modules/yum-repo/routes.js'
 import { CAC_ROUTE_DEFS } from '@/modules/inspection/routes.js'
 import { ACM_ROUTE_DEFS } from '@/modules/asset/routes.js'
 import { USERS_ROUTE_DEFS } from '@/modules/user/routes.js'
@@ -53,7 +53,7 @@ const patchesChildren = buildModuleChildren(PATCHES_ROUTE_DEFS, 'patches')
 const cacChildren = buildModuleChildren(CAC_ROUTE_DEFS, 'cac')
 const acmChildren = buildModuleChildren(ACM_ROUTE_DEFS, 'acm')
 const usersChildren = buildModuleChildren(USERS_ROUTE_DEFS, 'users')
-const softwareChildren = buildModuleChildren(SOFTWARE_ROUTE_DEFS, 'software')
+const yumRepoChildren = buildModuleChildren(YUM_REPO_ROUTE_DEFS, 'yum-repo')
 const jaoChildren = buildModuleChildren(JAO_ROUTE_DEFS, 'jao')
 const gfsChildren = buildModuleChildren(GFS_ROUTE_DEFS, 'gfs')
 const cmdChildren = buildModuleChildren(CMD_ROUTE_DEFS, 'cmd')
@@ -203,21 +203,37 @@ export const baseRoutes = [
     ]
   },
 
-  // ========== 软件管理 (software) ==========
+  // ========== Yum仓库管理 (yum-repo) ==========
   {
-    path: '/software',
+    path: '/yum-repo',
     component: MainLayout,
-    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'patch-testing' },
+    meta: {
+      requiresAuth: true,
+      moduleType: 'vue-native',
+      moduleCode: 'yum-repo',
+      groupCode: 'patch-testing'
+    },
     children: [
       {
         path: '',
         component: PatchGroupLayout,
-        redirect: '/software/repos',
+        redirect: '/yum-repo/repos',
         children: [
-          ...softwareChildren
+          ...yumRepoChildren
         ]
       }
     ]
+  },
+
+  {
+    path: '/software/:pathMatch(.*)*',
+    redirect: to => {
+      const pathMatch = Array.isArray(to.params.pathMatch)
+        ? to.params.pathMatch.join('/')
+        : String(to.params.pathMatch || '').trim()
+
+      return pathMatch ? `/yum-repo/${pathMatch}` : '/yum-repo/repos'
+    }
   },
 
   // ========== 系统巡检分组 (cac) - 单模块分组 ==========

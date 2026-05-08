@@ -3,7 +3,7 @@ import {
   normalizeUpper,
   pickValue,
   unwrapResponse
-} from '../utils'
+} from '@/modules/patches/windows-patch/utils.js'
 import {
   YUM_REPO_COLLECT_STATUS_LABELS,
   YUM_REPO_COLLECT_STATUS_TAG_TYPES,

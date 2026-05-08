@@ -175,7 +175,7 @@
 import { computed, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Plus, Refresh, Search } from '@element-plus/icons-vue'
-import { yumRepoApi } from '../../yum-repo/api'
+import { yumRepoApi } from '../api'
 import {
   formatDateTime,
   findYumRepoSourceByConfig,
@@ -186,7 +186,7 @@ import {
   isYumRepoCollectSucceeded,
   resolveYumConfigId,
   resolveYumRepoId
-} from '../../yum-repo/utils'
+} from '../utils'
 
 const props = defineProps({
   configs: {

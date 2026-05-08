@@ -1,6 +1,6 @@
 <template>
-  <div class="ops-page-layout win-patch-page">
-    <WinPatchYumRepoOverviewSection
+  <div class="ops-page-layout yum-repo-page">
+    <YumRepoOverviewSection
       :overview-data="overviewData"
       :loading="overviewLoading"
       v-model:selected-repo-id="selectedRepoId"
@@ -8,7 +8,7 @@
 
     <el-tabs v-model="activeTab">
       <el-tab-pane label="仓库管理" name="repos">
-        <WinPatchYumRepoSourceTable
+        <YumRepoSourceTable
           :configs="configList"
           :sources="sourceList"
           :loading="loadingConfigs || batchCollecting"
@@ -25,7 +25,7 @@
       </el-tab-pane>
 
       <el-tab-pane label="采集与清单" name="packages" lazy>
-        <WinPatchYumRepoPackagesPanel
+        <YumRepoPackagesPanel
           :active="activeTab === 'packages'"
           :configs="configList"
           :repos="sourceList"
@@ -34,7 +34,7 @@
       </el-tab-pane>
 
       <el-tab-pane label="补丁比对" name="compare" lazy>
-        <WinPatchYumRepoComparePanel
+        <YumRepoComparePanel
           :active="activeTab === 'compare'"
           :configs="configList"
           :repos="sourceList"
@@ -50,11 +50,11 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import WinPatchYumRepoComparePanel from '../components/yum-repo/WinPatchYumRepoComparePanel.vue'
-import WinPatchYumRepoOverviewSection from '../components/yum-repo/WinPatchYumRepoOverviewSection.vue'
-import WinPatchYumRepoPackagesPanel from '../components/yum-repo/WinPatchYumRepoPackagesPanel.vue'
-import WinPatchYumRepoSourceTable from '../components/yum-repo/WinPatchYumRepoSourceTable.vue'
-import { yumRepoApi } from '../yum-repo/api'
+import YumRepoComparePanel from '../components/YumRepoComparePanel.vue'
+import YumRepoOverviewSection from '../components/YumRepoOverviewSection.vue'
+import YumRepoPackagesPanel from '../components/YumRepoPackagesPanel.vue'
+import YumRepoSourceTable from '../components/YumRepoSourceTable.vue'
+import { yumRepoApi } from '../api'
 import {
   buildCollectedYumRepoSources,
   findYumRepoSourceByConfig,
@@ -63,7 +63,7 @@ import {
   resolveYumConfigId,
   resolveYumRepoId,
   unwrapResponse
-} from '../yum-repo/utils'
+} from '../utils'
 
 const activeTab = ref('repos')
 const loadingConfigs = ref(false)
@@ -349,7 +349,7 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.win-patch-page {
+.yum-repo-page {
   gap: 12px;
 }
 </style>

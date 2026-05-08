@@ -7,7 +7,7 @@ import { authService } from '@/core/auth'
 import { canAccessMenuCode } from '@/core/auth/permission-policy'
 
 import { PATCHES_ROUTE_DEFS } from '@/modules/patches/routes.js'
-import { SOFTWARE_ROUTE_DEFS } from '@/modules/software/routes.js'
+import { YUM_REPO_ROUTE_DEFS } from '@/modules/yum-repo/routes.js'
 import { CAC_ROUTE_DEFS } from '@/modules/inspection/routes.js'
 import { ACM_ROUTE_DEFS } from '@/modules/asset/routes.js'
 import { USERS_ROUTE_DEFS } from '@/modules/user/routes.js'
@@ -98,13 +98,15 @@ export const PATCH_PROCESS_LOGS_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
   platform: 'common'
 }))
 
-// 补丁漏洞 - 软件模块的页面导航
-export const SOFTWARE_NAV_ITEMS = SOFTWARE_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+// 补丁漏洞 - Yum仓库管理模块的页面导航
+export const YUM_REPO_NAV_ITEMS = YUM_REPO_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
-  path: `/software/${def.path}`
+  path: `/yum-repo/${def.path}`
 }))
+
+export const SOFTWARE_NAV_ITEMS = YUM_REPO_NAV_ITEMS
 
 // 系统巡检 - 巡检模块的页面导航
 export const CAC_NAV_ITEMS = CAC_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
@@ -183,7 +185,8 @@ export const MODULE_NAV_CONFIG = {
   'windows-patches': WINDOWS_PATCHES_NAV_ITEMS,
   'patch-logs': PATCH_LOGS_NAV_ITEMS,
   'patch-process-logs': PATCH_PROCESS_LOGS_NAV_ITEMS,
-  software: SOFTWARE_NAV_ITEMS,
+  'yum-repo': YUM_REPO_NAV_ITEMS,
+  software: YUM_REPO_NAV_ITEMS,
   cac: CAC_NAV_ITEMS,
   acm: ACM_NAV_ITEMS,
   users: USERS_NAV_ITEMS,

@@ -31,6 +31,7 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
   'windows-patches': ['applet:vap'],
   'patch-logs': ['applet:vap'],
   'patch-process-logs': ['applet:vap'],
+  'yum-repo': ['applet:spm', 'applet:vap'],
   software: ['applet:spm', 'applet:vap'],
   cac: ['applet:cac'],
   acm: ['applet:acm'],
@@ -54,7 +55,8 @@ export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   'windows-patches': '/patches/windowsVulnerability',
   'patch-logs': '/patches/logs',
   'patch-process-logs': '/patches/processLogs',
-  software: '/software/repos',
+  'yum-repo': '/yum-repo/repos',
+  software: '/yum-repo/repos',
   cac: '/cac/overview',
   acm: '/acm/overview',
   users: '/users/overview',
@@ -207,15 +209,18 @@ export function resolveMenuCodeFromRoutePath(path?: string | null): string | nul
   if (first === 'patches') {
     const normalizedPatchPath = WINDOWS_PATCH_ROUTE_ALIASES[second || ''] || second || ''
 
-    if (second === 'windowsYumRepo' || second === 'linuxYumManage') return 'software'
+    if (second === 'windowsYumRepo' || second === 'linuxYumManage') return 'yum-repo'
     if (second === 'logs') return 'patch-logs'
     if (second === 'processLogs') return 'patch-process-logs'
     if (WINDOWS_PATCH_PATHS.has(normalizedPatchPath)) return 'windows-patches'
     return 'patches'
   }
 
+  if (first === 'yum-repo') {
+    return 'yum-repo'
+  }
   if (first === 'software') {
-    return 'software'
+    return 'yum-repo'
   }
   if (first === 'admin') return 'admin'
   if (first === 'login' || first === 'about' || first.startsWith('error')) return null

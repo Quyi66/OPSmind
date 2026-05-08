@@ -29,9 +29,9 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { pickValue } from '../../utils'
-import { yumRepoApi } from '../../yum-repo/api'
-import { getYumRepoLabel, resolveYumConfigId, unwrapResponse } from '../../yum-repo/utils'
+import { pickValue } from '@/modules/patches/windows-patch/utils.js'
+import { yumRepoApi } from '../api'
+import { getYumRepoLabel, resolveYumConfigId, unwrapResponse } from '../utils'
 
 const props = defineProps({
   modelValue: {

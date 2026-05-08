@@ -166,6 +166,11 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
     description: '补丁管理',
     enabled: true
   },
+  'yum-repo': {
+    entryUrl: '#/apw/spm',
+    description: 'Yum仓库管理',
+    enabled: true
+  },
   software: {
     entryUrl: '#/apw/spm',
     description: 'Yum仓库管理',

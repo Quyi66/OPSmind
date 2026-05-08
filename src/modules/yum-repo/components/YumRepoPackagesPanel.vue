@@ -138,9 +138,9 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
-import { parsePageResponse, pickValue } from '../../utils'
-import { YUM_REPO_PAGE_SIZE_OPTIONS } from '../../yum-repo/constants'
-import { yumRepoApi } from '../../yum-repo/api'
+import { parsePageResponse, pickValue } from '@/modules/patches/windows-patch/utils.js'
+import { YUM_REPO_PAGE_SIZE_OPTIONS } from '../constants'
+import { yumRepoApi } from '../api'
 import {
   formatDateTime,
   getCollectStatusLabel,
@@ -150,8 +150,8 @@ import {
   normalizeYumConfigRecord,
   resolveYumConfigId,
   unwrapResponse
-} from '../../yum-repo/utils'
-import { useWinPatchPolling } from '../../composables/useWinPatchPolling'
+} from '../utils'
+import { useWinPatchPolling } from '@/modules/patches/windows-patch/composables/useWinPatchPolling.js'
 
 const props = defineProps({
   active: {
