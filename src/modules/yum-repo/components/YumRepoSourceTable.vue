@@ -35,7 +35,7 @@
     </div>
 
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="filteredConfigs" max-height="calc(100vh - 520px)">
+      <el-table v-loading="loading" :data="filteredConfigs" max-height="calc(100vh - 480px)">
         <el-table-column label="源名称" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getYumConfigLabel(row) }}
