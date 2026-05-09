@@ -1207,10 +1207,18 @@ export const yumManageApi = {
     const name = String(data?.name || '').trim()
     const description = String(data?.description || '').trim()
     const file = String(data?.file || '').trim()
+    const osFamily = String(data?.osFamily || '').trim()
+    const osMajor = String(data?.osMajor || '').trim()
+    const osSpVersion = String(data?.osSpVersion || '').trim()
+    const arch = String(data?.arch || '').trim()
 
     if (name) payload.name = name
     if (description) payload.description = description
     if (file) payload.file = file
+    if (osFamily) payload.osFamily = osFamily
+    if (osMajor) payload.osMajor = osMajor
+    if (osSpVersion) payload.osSpVersion = osSpVersion
+    if (arch) payload.arch = arch
 
     return payload
   },

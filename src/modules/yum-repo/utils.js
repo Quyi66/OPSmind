@@ -151,6 +151,10 @@ export function normalizeYumConfigRecord(row) {
     baseurls,
     baseurl: baseurls[0] || '',
     file: String(pickValue(normalizedRow, ['file'], pickValue(dataJson, ['file'], ''))).trim(),
+    osFamily: String(pickValue(normalizedRow, ['osFamily', 'os_family'], pickValue(dataJson, ['osFamily', 'os_family'], ''))).trim(),
+    osMajor: String(pickValue(normalizedRow, ['osMajor', 'os_major'], pickValue(dataJson, ['osMajor', 'os_major'], ''))).trim(),
+    osSpVersion: String(pickValue(normalizedRow, ['osSpVersion', 'os_sp_version'], pickValue(dataJson, ['osSpVersion', 'os_sp_version'], ''))).trim(),
+    arch: String(pickValue(normalizedRow, ['arch'], pickValue(dataJson, ['arch'], ''))).trim(),
     sourceIds,
     sourceId: sourceIds[0] || '',
     collected: normalizeBooleanValue(
@@ -191,7 +195,8 @@ export function getYumConfigFile(row) {
 }
 
 export function isYumRepoCollectSucceeded(row) {
-  return normalizeUpper(pickValue(row, ['collectStatus', 'collect_status'], '')) === 'SUCCESS'
+  const status = normalizeUpper(pickValue(row, ['collectStatus', 'collect_status'], ''))
+  return status === 'SUCCESS' || status === 'SUCCEEDED'
 }
 
 export function buildYumRepoSourceFromConfig(row, sourceId = '') {

@@ -19,24 +19,6 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="OS" class="win-patch-filter-item">
-            <el-select
-              v-model="form.osFamily"
-              filterable
-              allow-create
-              default-first-option
-              clearable
-              placeholder="可选，用于过滤补丁影响的 OS"
-              style="width: 250px"
-            >
-              <el-option
-                v-for="item in YUM_REPO_OS_FAMILY_OPTIONS"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
           <div class="win-patch-filter-actions">
             <el-button type="primary" :loading="comparing" :disabled="!canCompare" @click="handleCompare">{{ compareActionLabel }}</el-button>
             <el-button @click="handleReset">重置</el-button>
@@ -201,7 +183,7 @@ import {
   parsePageResponse,
   pickValue
 } from '@/modules/patches/windows-patch/utils.js'
-import { YUM_REPO_OS_FAMILY_OPTIONS, YUM_REPO_PAGE_SIZE_OPTIONS } from '../constants'
+import { YUM_REPO_PAGE_SIZE_OPTIONS } from '../constants'
 import { yumRepoApi } from '../api'
 import {
   getCollectStatusLabel,
@@ -246,10 +228,6 @@ const selectedRepoModel = computed({
 const compareSelectedRepoModel = computed({
   get: () => normalizedSelectedConfigId.value || String(selectedRepoModel.value || '').trim(),
   set: value => emit('update:selectedRepoId', String(value || '').trim())
-})
-
-const form = reactive({
-  osFamily: ''
 })
 
 const comparing = ref(false)
@@ -463,8 +441,7 @@ async function handleCompare(options = {}) {
   comparing.value = true
   try {
     const response = await yumRepoApi.compareScannedPatches({
-      ...(configId ? { dcDataId: configId } : { sourceId: repoId }),
-      osFamily: form.osFamily || undefined
+      ...(configId ? { dcDataId: configId } : { sourceId: repoId })
     })
 
     if (!isCompareRequestCurrent(requestId, contextId, repoId)) {
@@ -501,7 +478,6 @@ async function handleCompare(options = {}) {
 }
 
 function handleReset() {
-  form.osFamily = ''
   if (selectedSourceOverview.value?.diffRunId) {
     diffRunId.value = String(selectedSourceOverview.value.diffRunId || '').trim()
     loadPatchView({ silent: true })

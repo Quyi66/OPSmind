@@ -159,6 +159,32 @@
             </div>
           </div>
         </el-form-item>
+        <el-form-item label="操作系统" prop="osFamily">
+          <el-select v-model="formData.osFamily" placeholder="请选择操作系统" style="width: 100%">
+            <el-option
+              v-for="item in YUM_REPO_OS_FAMILY_OPTIONS"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主版本号" prop="osMajor">
+          <el-input v-model="formData.osMajor" placeholder="如：V10、8、22.04、20、12 SP5" maxlength="16" />
+        </el-form-item>
+        <el-form-item label="OS 精确版本" prop="osSpVersion">
+          <el-input v-model="formData.osSpVersion" placeholder="如：SP1、SP3、SP3 2403、HPC、Host" maxlength="32" />
+        </el-form-item>
+        <el-form-item label="架构" prop="arch">
+          <el-select v-model="formData.arch" placeholder="请选择架构" style="width: 100%">
+            <el-option
+              v-for="item in YUM_REPO_ARCH_OPTIONS"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="YUM源文件" prop="file">
           <el-input v-model="formData.file" placeholder="如：/etc/yum.repos.d/local.repo" maxlength="256" />
         </el-form-item>
@@ -172,9 +198,10 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Plus, Refresh, Search } from '@element-plus/icons-vue'
+import { YUM_REPO_ARCH_OPTIONS, YUM_REPO_OS_FAMILY_OPTIONS } from '../constants'
 import { yumRepoApi } from '../api'
 import {
   formatDateTime,
@@ -230,6 +257,10 @@ const formData = reactive({
   name: '',
   description: '',
   baseurls: [''],
+  osFamily: '',
+  osMajor: '',
+  osSpVersion: '',
+  arch: '',
   file: ''
 })
 
@@ -238,12 +269,42 @@ function validateBaseurls(rule, value, callback) {
     callback()
     return
   }
-
   callback(new Error('请至少输入一个仓库baseurl地址'))
 }
 
+function validateOsMajor(rule, value, callback) {
+  const v = String(value || '').trim()
+  if (!v) {
+    callback(new Error('请填写主版本号'))
+    return
+  }
+  if (!/^[A-Za-z0-9][A-Za-z0-9.\- ]{0,15}$/.test(v)) {
+    callback(new Error('主版本号格式不正确（仅允许字母/数字/点号/连字符/空格，长度 1~16）'))
+    return
+  }
+  callback()
+}
+
+function validateOsSpVersion(rule, value, callback) {
+  const v = String(value || '').trim()
+  if (formData.osFamily === 'kylinos' && !v) {
+    callback(new Error('麒麟仓库必须填写 OS 精确版本（如 SP1、SP3、SP3 2403、HPC、Host）'))
+    return
+  }
+  if (v && !/^(SP\d+(\.\d+)?( \w+)?|Update\d+|HPC|Host|Compat)$/.test(v)) {
+    callback(new Error('OS 精确版本格式不正确，请按 SP1 / SP1.1 / SP3 2403 / Update6 / HPC / Host / Compat 形式填写'))
+    return
+  }
+  callback()
+}
+
 const formRules = {
-  baseurls: [{ validator: validateBaseurls, trigger: ['blur', 'change'] }]
+  name: [{ required: true, message: '请输入YUM源名称', trigger: 'blur' }],
+  baseurls: [{ validator: validateBaseurls, trigger: ['blur', 'change'] }],
+  osFamily: [{ required: true, message: '请选择操作系统', trigger: 'change' }],
+  osMajor: [{ validator: validateOsMajor, trigger: 'blur' }],
+  osSpVersion: [{ validator: validateOsSpVersion, trigger: 'blur' }],
+  arch: [{ required: true, message: '请选择架构', trigger: 'change' }]
 }
 
 const filteredConfigs = computed(() => {
@@ -305,12 +366,20 @@ function getYumConfigBaseurlsText(row) {
 }
 
 function createSubmitPayload() {
-  return {
+  const payload = {
     name: String(formData.name || '').trim(),
     description: String(formData.description || '').trim(),
     baseurls: normalizeBaseurls(formData.baseurls),
+    osFamily: String(formData.osFamily || '').trim(),
+    osMajor: String(formData.osMajor || '').trim(),
+    arch: String(formData.arch || '').trim(),
     file: String(formData.file || '').trim()
   }
+  const osSpVersion = String(formData.osSpVersion || '').trim()
+  if (osSpVersion) {
+    payload.osSpVersion = osSpVersion
+  }
+  return payload
 }
 
 function serializeBaseurls(list = []) {
@@ -335,6 +404,10 @@ function resetForm() {
     name: '',
     description: '',
     baseurls: [''],
+    osFamily: '',
+    osMajor: '',
+    osSpVersion: '',
+    arch: '',
     file: ''
   })
 }
@@ -343,6 +416,7 @@ function handleAddConfig() {
   editingConfig.value = null
   resetForm()
   dialogVisible.value = true
+  nextTick(() => formRef.value?.clearValidate())
 }
 
 function handleEditConfig(row) {
@@ -351,12 +425,17 @@ function handleEditConfig(row) {
     name: row?.name || '',
     description: row?.description || '',
     baseurls: resolveConfigBaseurls(row),
+    osFamily: row?.osFamily || '',
+    osMajor: row?.osMajor || '',
+    osSpVersion: row?.osSpVersion || '',
+    arch: row?.arch || '',
     file: row?.file || ''
   })
   if (!formData.baseurls.length) {
     formData.baseurls = ['']
   }
   dialogVisible.value = true
+  nextTick(() => formRef.value?.clearValidate())
 }
 
 async function handleSubmit() {
