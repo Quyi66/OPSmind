@@ -450,6 +450,12 @@ async function handleCompare(options = {}) {
 
     const data = unwrapResponse(response)
 
+    if (data?.success === false) {
+      const bizMsg = String(data?.message || '').trim()
+      ElMessage.error(bizMsg || '执行补丁比对失败')
+      return
+    }
+
     diffRunId.value = String(data?.diffRunId || '').trim()
     patchViewFilters.keyword = ''
     patchViewFilters.status = ''
@@ -468,7 +474,8 @@ async function handleCompare(options = {}) {
   } catch (error) {
     if (isCompareRequestCurrent(requestId, contextId, repoId)) {
       console.error('执行补丁比对失败:', error)
-      ElMessage.error('执行补丁比对失败')
+      const errMsg = String(error?.response?.data?.message || error?.message || '').trim()
+      ElMessage.error(errMsg || '执行补丁比对失败')
     }
   } finally {
     if (isCompareRequestCurrent(requestId, contextId, repoId)) {

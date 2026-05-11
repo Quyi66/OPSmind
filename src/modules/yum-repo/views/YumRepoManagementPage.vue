@@ -246,10 +246,18 @@ async function pollCollectThenCompare(configId, preferredRepoId = '') {
 
     if (isConfigCollectSucceeded(currentConfig)) {
       try {
-        await yumRepoApi.compareScannedPatches({ dcDataId: configId })
+        const compareResp = await yumRepoApi.compareScannedPatches({ dcDataId: configId })
+        const compareData = unwrapResponse(compareResp)
+        if (compareData?.success === false) {
+          const bizMsg = String(compareData?.message || '').trim()
+          ElMessage.warning(`采集成功，但补丁比对失败：${bizMsg || '请手动执行比对'}`)
+          await loadConfigs(configId, nextPreferredRepoId)
+          return
+        }
       } catch (err) {
         console.error('触发补丁比对失败:', err)
-        ElMessage.warning('采集成功，但补丁比对触发失败，请手动执行比对')
+        const errMsg = String(err?.response?.data?.message || err?.message || '').trim()
+        ElMessage.warning(`采集成功，但补丁比对触发失败：${errMsg || '请手动执行比对'}`)
         await loadConfigs(configId, nextPreferredRepoId)
         return
       }
