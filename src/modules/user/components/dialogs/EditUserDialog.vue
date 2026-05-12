@@ -158,6 +158,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { apiService } from '@/core/api'
 import { dtsApi } from '@/modules/asset/api'
+import { getSudoTemplates, getSudoCommandsByTemplate } from '@/modules/user/api'
 import { useJobPolling } from '@/composables/useJobPolling'
 
 // 使用作业轮询 composable
@@ -279,8 +280,8 @@ function getSubmitButtonText() {
 // 加载sudo模板
 async function loadSudoTemplates() {
   try {
-    const response = await dtsApi.queryData('LUPM_LIST_SUDO_TEMPLATES', {})
-    sudoTemplates.value = response?.records || []
+    const response = await getSudoTemplates({ page: 1, size: 1000 })
+    sudoTemplates.value = response?.data?.records || response?.records || []
   } catch (error) {
     console.error('加载sudo模板失败:', error)
   }
@@ -293,10 +294,8 @@ async function handleTemplateChange(templateId) {
     return
   }
   try {
-    const response = await dtsApi.queryData('LUPM_LIST_SUDO_COMMAND_BY_TEMPLATE_ID', {
-      templateId
-    })
-    sudoCommands.value = response?.records || []
+    const response = await getSudoCommandsByTemplate(templateId, { page: 1, size: 1000 })
+    sudoCommands.value = response?.data?.records || response?.records || []
   } catch (error) {
     console.error('加载sudo命令失败:', error)
     sudoCommands.value = []

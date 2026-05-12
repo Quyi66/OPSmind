@@ -99,13 +99,11 @@ const handleUpload = async () => {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
 
-    const res = await apiService.post(
-      `/jao/api/jao/jobs/rzkan4/upload-to-run?cacheBuster=${Date.now()}`,
-      formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' }
+    const res = await apiService.post(`/acm/api/acm/cit/import2?cacheBuster=${Date.now()}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
       }
-    )
+    })
 
     // 返回结果为数组，取第一条判断状态
     const result = Array.isArray(res?.data) ? res.data[0] : res?.data

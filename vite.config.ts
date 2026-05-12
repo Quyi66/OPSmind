@@ -183,7 +183,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
         allow: ['..']
       },
       proxy: {
-        '/oplus-portal': {
+        '/sjxy-portal': {
           target: backendTarget,
           changeOrigin: true,
           secure: false,

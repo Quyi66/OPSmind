@@ -9,7 +9,7 @@ import { LOGIN_REDIRECT_URL } from '@/config/route-paths'
 
 // API 配置
 const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/oplus-portal',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/sjxy-portal',
   timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
   retryAttempts: 3,
   retryDelay: 1000
@@ -265,7 +265,7 @@ class ApiService {
    * 获取首页仪表盘全量数据
    */
   async getDashboardFullData() {
-    const res = await this.get('svs/api/dashboard/full-data')
+    const res = await this.get('svs/api/sys/dashboard/full-data')
     const data = res?.data || {}
 
     // Adapt backend payload into frontend expected shape when necessary

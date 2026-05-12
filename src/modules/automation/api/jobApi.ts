@@ -65,7 +65,7 @@ export async function deleteJob(jobId: string): Promise<void> {
 export async function deleteJobs(jobIds: string[]): Promise<void> {
   if (!jobIds.length) return
   const payload = JSON.stringify(jobIds.map((id) => ({ id })))
-  await apiService.delete('/api/jao/jobs/delete-batch', {
+  await apiService.delete('/jao/api/jao/jobs/delete-batch', {
     params: {
       ids: payload
     }

@@ -172,7 +172,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, EditPen, Search, InfoFilled, Connection } from '@element-plus/icons-vue'
-import { datasourceService } from '@/services/dts/datasource.service'
+import { apiService } from '@/core/api'
 import { batchUpdateDevicePasswords } from '@/services/acm/automation.service'
 import type { BatchUpdateResult } from '@/types/acm'
 
@@ -281,8 +281,9 @@ async function submitBatch() {
 
 async function fetchResourceTypes() {
   try {
-    const res = await datasourceService.doQuery('ACM_GET_RESOURCE_TYPE', { params: null })
-    const list = Array.isArray(res?.records) ? res.records : []
+    const res = await apiService.get('/acm/api/acm/dashboard/resource-type')
+    const payload = res?.data?.data ?? res?.data ?? []
+    const list = Array.isArray(payload) ? payload : (payload?.records || [])
     osOptions.value = list.map((i: any) => ({ label: i.title || i.code, value: i.code }))
   } catch (e) {
     // 静默失败，保留默认选项
@@ -292,13 +293,16 @@ async function fetchResourceTypes() {
 async function fetchAutomationConfigs() {
   loading.value = true
   try {
-    const res = await datasourceService.doQuery('ACM_AUTOMATION_GET', {
-      params: { cit: 'oplus_all', param: keyword.value || 'x' },
-      size: pageSize.value,
-      page: currentPage.value,
-      filter: ''
+    const res = await apiService.get('/acm/api/acm/dashboard/automation', {
+      params: {
+        cit: 'oplus_all',
+        param: keyword.value || 'x',
+        size: pageSize.value,
+        page: currentPage.value
+      }
     })
-    const list = Array.isArray(res?.records) ? res.records : []
+    const payload = res?.data?.data ?? res?.data ?? []
+    const list = Array.isArray(payload) ? payload : (payload?.records || [])
     rows.value = list.map((r: any) => ({
       id: r.id,
       cid: r.cid,

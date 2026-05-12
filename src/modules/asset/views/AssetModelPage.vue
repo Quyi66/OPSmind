@@ -117,7 +117,7 @@ import { ref, computed, onMounted, watch, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import { dtsApi } from '../api'
+import { assetApi } from '../api'
 import { apiService } from '@/core/api'
 import ImportModelDialog from '../components/model/ImportModelDialog.vue'
 import ModelDetailDialog from '../components/model/ModelDetailDialog.vue'
@@ -186,7 +186,7 @@ const formatDateTime = dateStr => {
 const loadModelList = async () => {
   loading.value = true
   try {
-    const res = await dtsApi.queryData('ACM_CIT_MANAGE', {})
+    const res = await assetApi.getAssetTypes()
     modelList.value = res?.records || []
     pagination.value.total = modelList.value.length
   } catch (error) {

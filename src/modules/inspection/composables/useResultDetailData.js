@@ -124,13 +124,12 @@ export function useResultDetailData() {
   async function loadOverviewData(searchText = '') {
     overviewLoading.value = true
     try {
-      const res = await dtsApi.queryData('CAC_CHECK_ITEM', {
-        job_id: jobId.value
-      }, {
-        size: overviewPagination.value.size,
-        page: overviewPagination.value.page,
-        filter: searchText
-      })
+      const res = await dtsApi.getCheckItem(
+        jobId.value,
+        overviewPagination.value.page,
+        overviewPagination.value.size,
+        searchText
+      )
       const data = res?.data || res || {}
       overviewData.value = data.records || []
       overviewPagination.value.total = data.total || overviewData.value.length

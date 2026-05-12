@@ -3,18 +3,36 @@
  */
 import { apiService } from '@/core/api'
 
+const SYS_DASHBOARD_BASE = '/svs/api/sys/dashboard'
+
+const unwrapApiData = (response) => response?.data?.data ?? response?.data
+
+const normalizeRecords = (payload) => {
+    if (Array.isArray(payload)) {
+        return { records: payload, total: payload.length }
+    }
+    if (payload && Array.isArray(payload.records)) {
+        return payload
+    }
+    return payload || { records: [], total: 0 }
+}
+
+const wrapRecordsResponse = (response) => ({
+    ...response,
+    data: normalizeRecords(unwrapApiData(response))
+})
+
 /**
  * 获取临时密码申请列表
  * POST /dts/api/dts/q/data/PMS2_GET_APPLICATION_FORM_BY_ROLE/
  */
 export function getApplicationList(params = {}) {
-    return apiService.post(`/dts/api/dts/q/data/PMS2_GET_APPLICATION_FORM_BY_ROLE/?cacheBuster=${Date.now()}`, {
+    return apiService.get(`${SYS_DASHBOARD_BASE}/pms2-application-form-by-role`, {
         params: {
             status: params.status || 'all',
-            applicantLogin: params.applicantLogin || '',
-            ...params
+            applicantLogin: params.applicantLogin || ''
         }
-    })
+    }).then(wrapRecordsResponse)
 }
 
 /**
@@ -22,9 +40,7 @@ export function getApplicationList(params = {}) {
  * POST /dts/api/dts/q/data/PMS_GET_DEFAULT_USERNAME/
  */
 export function getDefaultUsername() {
-    return apiService.post(`/dts/api/dts/q/data/PMS_GET_DEFAULT_USERNAME/?cacheBuster=${Date.now()}`, {
-        params: null
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/pms-default-username`).then(wrapRecordsResponse)
 }
 
 /**
@@ -32,16 +48,16 @@ export function getDefaultUsername() {
  * POST /dts/api/dts/q/data/GET_PMS_SERVER/
  */
 export function getPmsServerList(assestsObjects = '@@(linux)') {
-    return apiService.post(`/dts/api/dts/q/data/GET_PMS_SERVER/?cacheBuster=${Date.now()}`, {
-        params: { assestsObjects }
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/pms-server`, {
+        params: { pluginFindHost: assestsObjects }
+    }).then(wrapRecordsResponse)
 }
 
 /**
  * 导出密码
  */
 export function exportPasswords() {
-    const url = `${window.location.origin}/oplus-portal/upm/api/upm/pms/v2/password-job/export`
+    const url = `${window.location.origin}/sjxy-portal/upm/api/upm/pms/v2/password-job/export`
     window.open(url, '_blank')
 }
 
@@ -50,9 +66,7 @@ export function exportPasswords() {
  * POST /dts/api/dts/q/data/GET_PMS_SYSTEM_PARAM/
  */
 export function getSystemParams() {
-    return apiService.post(`/dts/api/dts/q/data/GET_PMS_SYSTEM_PARAM/?cacheBuster=${Date.now()}`, {
-        params: {}
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/pms-system-param`).then(wrapRecordsResponse)
 }
 
 /**
@@ -86,9 +100,7 @@ export function saveSystemParam(data) {
  * POST /dts/api/dts/q/data/PMS_LIST_USERNAME/
  */
 export function getUsernameList() {
-    return apiService.post(`/dts/api/dts/q/data/PMS_LIST_USERNAME/?cacheBuster=${Date.now()}`, {
-        params: {}
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/pms-list-username`).then(wrapRecordsResponse)
 }
 
 /**
@@ -150,12 +162,12 @@ export function getJobResult(runId) {
 
 /**
  * 获取PMS操作记录
- * POST /dts/api/dts/q/data/PMS_GET_AUDIT_LOG/
+ * GET /svs/api/sys/dashboard/pms-audit-log
  */
 export function getOperationLog(params = {}) {
-    return apiService.post(`/dts/api/dts/q/data/PMS_GET_AUDIT_LOG/?cacheBuster=${Date.now()}`, {
-        params: {}
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/pms-audit-log`, {
+        params
+    }).then(wrapRecordsResponse)
 }
 
 /**
@@ -243,7 +255,7 @@ export function revertPassword(params = {}) {
  * 导入初始化密码
  */
 export function importInitPassword(formData) {
-    return apiService.post('/oplus-portal/upm/api/upm/pms/v2/password-job/import', formData, {
+    return apiService.post('/upm/api/upm/pms/v2/password-job/import', formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }

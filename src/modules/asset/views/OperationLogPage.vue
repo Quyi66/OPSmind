@@ -160,7 +160,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { dtsApi } from '../api'
+import { operationLogApi } from '../api'
 import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
@@ -213,20 +213,15 @@ onMounted(() => {
 async function loadData() {
   loading.value = true
   try {
-    const response = await dtsApi.queryData(
-      'JAO_LIST_OPERATION_LOG',
-      {
-        module: 'acm',
-        action: filters.value.action,
-        status: filters.value.status,
-        day: filters.value.day
-      },
-      {
-        page: currentPage.value,
-        size: pageSize.value,
-        filter: searchKeyword.value.trim() ? `ata_node:*${searchKeyword.value.trim()}*` : undefined
-      }
-    )
+    const response = await operationLogApi.getOperationLogs({
+      module: 'acm',
+      action: filters.value.action,
+      status: filters.value.status,
+      day: filters.value.day,
+      page: currentPage.value,
+      size: pageSize.value,
+      filter: searchKeyword.value.trim() || undefined
+    })
 
     const data = response?.records || []
     tableData.value = data

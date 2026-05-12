@@ -12,7 +12,7 @@ export const appTableList = (params) => {
 
 /** 删除作业 */
 export const deleteJobs = (ids) => {
-  return useApi().delete(`jao/api/jao/jobs/delete-batch?ids=${ids}`);
+  return useApi().delete(`/jao/api/jao/jobs/delete-batch?ids=${ids}`);
 }
 
 /** 创建作业 */
@@ -112,11 +112,52 @@ export const getExecuteResult = (runId) => {
   return useApi().get(`/jao/api/jao/runlogs/${runId}/result`);
 }
 
+const unwrapApiData = (response) => response?.data?.data ?? response?.data
+
+const normalizeRecords = (payload) => {
+  if (!payload) {
+    return { records: [], total: 0 }
+  }
+  if (Array.isArray(payload)) {
+    return { records: payload, total: payload.length }
+  }
+  if (payload && Array.isArray(payload.records)) {
+    return {
+      ...payload,
+      total: payload.total ?? payload.totalElements ?? payload.records.length
+    }
+  }
+  if (Array.isArray(payload.content)) {
+    return {
+      ...payload,
+      records: payload.content,
+      total: payload.total ?? payload.totalElements ?? payload.content.length
+    }
+  }
+  return payload
+}
+
+const wrapRecordsResponse = (response) => ({
+  ...response,
+  data: normalizeRecords(unwrapApiData(response))
+})
+
 /** 查询作业运行记录 */
 export const fetchJobRunLogs = (payload) => {
-  return useApi().post('/dts/api/dts/q/data/JAO_LIST_RUN_LOGS/', payload, {
-    params: { cacheBuster: Date.now() }
-  });
+  const params = payload?.params || {}
+  return useApi().get('/jao/api/jao/dashboard/list-run-logs', {
+    params: {
+      type: params.type || '',
+      jobId: params.job_id || params.jobId || '',
+      runIds: params.run_ids || params.runIds || '',
+      day: params.day ?? '0',
+      status: params.status || 'all',
+      page: payload?.page || 1,
+      size: payload?.size || 10,
+      filter: payload?.filter || undefined,
+      orderBy: payload?.orderBy || undefined
+    }
+  }).then(wrapRecordsResponse);
 }
 
 /** 重新启动作业 */
@@ -130,20 +171,12 @@ export const rerunJob = (jobId, runId) => {
 
 /** 查询作业统计数据（最近30天） */
 export function fetchJobStats() {
-  return useApi().post('/dts/api/dts/q/data/JAO_COUNT_RUNS_BY_TIME/', {
-    params: {}
-  }, {
-    params: { cacheBuster: Date.now() }
-  })
+  return useApi().get('/jao/api/jao/dashboard/count-runs-by-time').then(wrapRecordsResponse)
 }
 
 /** 查询各作业运行次数汇总 */
 export function fetchJobRunCounts() {
-  return useApi().post('/dts/api/dts/q/data/JAO_COUNT_RUNS_BY_JOB/', {
-    params: {}
-  }, {
-    params: { cacheBuster: Date.now() }
-  })
+  return useApi().get('/jao/api/jao/dashboard/count-runs-by-job').then(wrapRecordsResponse)
 }
 
 // ==================== 定时任务相关 API ====================
@@ -306,7 +339,7 @@ export const checkGfsFiles = (filePaths) => {
 
 // ==================== ACM 设备管理相关 API ====================
 
-/** 查询主机实例列表 (使用 UDP Dataset) */
+/** 查询主机实例列表 (ACM 选择器接口) */
 export const queryAcmInstances = (params) => {
   const {
     ciType,
@@ -317,18 +350,18 @@ export const queryAcmInstances = (params) => {
     dynamicTags = '@@',
     dataType = 'auto'
   } = params;
-  // UDP Dataset ID: ACM_GET_CI_BY_SELECTOR
-  return useApi().post('/dts/api/dts/q/data/ACM_GET_CI_BY_SELECTOR/', {
-    params: {
+  // ACM_GET_CI_BY_SELECTOR → POST /acm/api/acm/ci/list-by-groups-tags
+  return useApi()
+    .post('/acm/api/acm/ci/list-by-groups-tags', {
       assetType: ciType,
       groups,
       tags,
       dynamicTags,
-      dataType
-    },
-    page,
-    size: pageSize
-  });
+      dataType,
+      page,
+      size: pageSize
+    })
+    .then(wrapRecordsResponse);
 }
 
 /** 查询分组树视图 */

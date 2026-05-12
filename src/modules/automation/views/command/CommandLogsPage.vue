@@ -195,7 +195,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
-import { useApi } from '@/core/api'
+import { fetchJobRunLogs } from '@/modules/automation/api/jao'
 
 // 筛选条件
 const filters = reactive({
@@ -264,7 +264,7 @@ function handleReset() {
 async function loadData() {
   loading.value = true
   try {
-    const response = await useApi().post('/dts/api/dts/q/data/JAO_LIST_RUN_LOGS/', {
+    const response = await fetchJobRunLogs({
       params: {
         type: 'command',
         day: filters.day,

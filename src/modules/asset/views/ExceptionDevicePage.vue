@@ -199,7 +199,7 @@ import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import KpiCards from '../components/exception/KpiCards.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
-import { dtsApi } from '../api'
+import { dataManageApi, exceptionApi } from '../api'
 import { apiService } from '@/core/api'
 
 // KPI 数据
@@ -246,7 +246,7 @@ const collectInfoLoading = ref(false)
 const loadKpiData = async () => {
   kpiLoading.value = true
   try {
-    const res = await dtsApi.queryData('ACM_CONNECTION_COUNT', {})
+    const res = await exceptionApi.getConnectionCount()
     kpiData.value = res.records || []
   } catch (error) {
     console.error('加载KPI数据失败:', error)
@@ -258,7 +258,7 @@ const loadKpiData = async () => {
 // 加载资源类型
 const loadResourceTypes = async () => {
   try {
-    const res = await dtsApi.queryData('ACM_GET_RESOURCE_TYPE', null)
+    const res = await dataManageApi.getResourceTypes()
     resourceTypes.value = res.records || []
   } catch (error) {
     console.error('加载资源类型失败:', error)
@@ -269,17 +269,15 @@ const loadResourceTypes = async () => {
 const loadTableData = async () => {
   tableLoading.value = true
   try {
-    const res = await dtsApi.queryData(
-      'ACM_LIST_CONNECT_EXCEPTION',
+    const res = await exceptionApi.getConnectException(
       {
         cit: filters.cit,
-        conditions: filters.conditions,
-        param: 'rwx'
+        conditions: filters.conditions
       },
       {
         size: pageSize.value,
         page: currentPage.value,
-        filter: searchKeyword.value ? `IP:*${searchKeyword.value}*` : undefined
+        filter: searchKeyword.value || undefined
       }
     )
     tableData.value = res.records || []

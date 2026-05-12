@@ -113,7 +113,7 @@ export const hostOverviewApi = {
    * 对应作业: 3hSAVR
    */
   installPackages(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
+    return apiService.post('/jao/api/jao/jobs/run', {
       jobCode: '3hSAVR',
       params: {
         install_pkgs: params.installPkgs,
@@ -196,7 +196,7 @@ export const hostOverviewApi = {
    * 对应作业: foInBU
    */
   deleteHostRepo(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
+    return apiService.post('/jao/api/jao/jobs/run', {
       jobCode: 'foInBU',
       params: {
         repo_name: params.repoName,
@@ -312,7 +312,7 @@ export const repoApi = {
    * 对应作业: foInBU
    */
   removeRepoFromHost(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
+    return apiService.post('/jao/api/jao/jobs/run', {
       jobCode: 'foInBU',
       params: {
         repo_name: params.repo_name,
@@ -569,18 +569,17 @@ export const softwareLogsApi = {
   /**
    * 获取操作日志列表
    * 对应数据集: JAO_LIST_OPERATION_LOG
-   * API: /dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/
-   * Body: { params: { module, action, status, day } }
+   * API: /jao/api/jao/dashboard/list-operation-log
    */
   getLogs(params = {}) {
-    return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/`, {
+    return apiService.get('/jao/api/jao/dashboard/list-operation-log', {
       params: {
         module: 'spm',
         action: params.action || 'all',
         status: params.status || 'all',
         day: params.day || 'all'
       }
-    })
+    }).then(res => ({ ...res, data: res?.data?.data ?? res?.data }))
   },
 
   /**
@@ -588,14 +587,14 @@ export const softwareLogsApi = {
    * 对应数据集: JAO_LIST_OPERATION_LOG
    */
   getOperationLogs(params = {}) {
-    return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/`, {
+    return apiService.get('/jao/api/jao/dashboard/list-operation-log', {
       params: {
         module: params.module || 'spm',
         action: params.action || 'all',
         status: params.status || 'all',
         day: params.day || 'all'
       }
-    })
+    }).then(res => ({ ...res, data: res?.data?.data ?? res?.data }))
   },
 
   /**
@@ -603,7 +602,7 @@ export const softwareLogsApi = {
    * @param {string} runId 执行 ID
    */
   getRunResult(runId) {
-    return apiService.get(`/api/jao/runs/${runId}/result`)
+    return apiService.get(`/jao/api/jao/runs/${runId}/result`)
   }
 }
 
@@ -615,7 +614,7 @@ export const scanApi = {
    * 执行软件包扫描
    */
   startPackageScan(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
+    return apiService.post('/jao/api/jao/jobs/run', {
       jobCode: 'SPM_PACKAGE_SCAN',
       params
     })
@@ -625,7 +624,7 @@ export const scanApi = {
    * 执行仓库扫描
    */
   startRepoScan(params = {}) {
-    return apiService.post('/api/jao/jobs/run', {
+    return apiService.post('/jao/api/jao/jobs/run', {
       jobCode: 'SPM_REPO_SCAN',
       params
     })
@@ -692,7 +691,7 @@ export const localInstallApi = {
   getInstallResult(runId) {
     // 根据用户提供的示例："/jao/api/jao/runlogs/c633f22e799b43db95d1c1403a3702d4/result?cacheBuster=1766050551531"
     const cacheBuster = Date.now()
-    return apiService.get(`/api/jao/runlogs/${runId}/result`, {
+    return apiService.get(`/jao/api/jao/runlogs/${runId}/result`, {
       params: { cacheBuster }
     })
   }

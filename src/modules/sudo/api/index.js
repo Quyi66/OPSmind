@@ -3,45 +3,52 @@
  */
 import { apiService } from '@/core/api'
 
+const JAO_DASHBOARD_BASE = '/jao/api/jao/dashboard'
+const SYS_DASHBOARD_BASE = '/svs/api/sys/dashboard'
+
+const unwrapApiData = (response) => response?.data?.data ?? response?.data
+
+const normalizeRecords = (payload) => {
+  if (Array.isArray(payload)) {
+    return { records: payload, total: payload.length }
+  }
+  if (payload && Array.isArray(payload.records)) {
+    return payload
+  }
+  return payload || { records: [], total: 0 }
+}
+
+const wrapRecordsResponse = (response) => ({
+  ...response,
+  data: normalizeRecords(unwrapApiData(response))
+})
+
 /**
  * 获取sudo权限列表
- * POST /dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/
+ * GET /jao/api/jao/universal/dc/sudo_scan_result
  * @param {Object} params 查询参数
  */
 export function getSudoPermissionList(params = {}) {
-  return apiService.post('/dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/', {
-    params: {
-      model: 'sudo_scan_result',
-      ...params
-    }
-  })
+  return apiService.get('/jao/api/jao/universal/dc/sudo_scan_result', { params })
 }
 
 /**
  * 获取Linux主机列表
- * POST /dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/
+ * GET /jao/api/jao/universal/dc/linux_hosts
  */
 export function getLinuxHosts(params = {}) {
-  return apiService.post('/dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/', {
-    params: {
-      model: 'linux_hosts',
-      assetType: 'linux',
-      ...params
-    }
+  return apiService.get('/jao/api/jao/universal/dc/linux_hosts', {
+    params: { assetType: 'linux', ...params }
   })
 }
 
 /**
  * 搜索Linux主机
- * POST /dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/
+ * GET /jao/api/jao/universal/dc/linux_hosts
  */
 export function searchLinuxHosts(keyword) {
-  return apiService.post('/dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/', {
-    params: {
-      model: 'linux_hosts',
-      assetType: 'linux',
-      keyword
-    }
+  return apiService.get('/jao/api/jao/universal/dc/linux_hosts', {
+    params: { assetType: 'linux', keyword }
   })
 }
 
@@ -60,15 +67,10 @@ export function scanSudoHosts(data = {}) {
 
 /**
  * 获取sudo申请列表
- * POST /dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/
+ * GET /jao/api/jao/universal/dc/sudo_add_result
  */
 export function getSudoApplyList(params = {}) {
-  return apiService.post('/dts/api/dts/q/data/GET_DC_DATA_BY_MODEL/', {
-    params: {
-      model: 'sudo_add_result',
-      ...params
-    }
-  })
+  return apiService.get('/jao/api/jao/universal/dc/sudo_add_result', { params })
 }
 
 /**
@@ -78,17 +80,19 @@ export function getSudoApplyList(params = {}) {
  */
 export function getOperationLog(options = {}) {
   const { page = 1, size = 10, keyword = '', ...filterParams } = options
-  return apiService.post(`/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, {
-    params: {
-      module: 'sudo',
-      action: filterParams.action || 'all',
-      status: filterParams.status || 'all',
-      day: filterParams.day || 1
-    },
-    page,
-    size,
-    filter: keyword ? `ata_node|message:*${keyword}*` : ''
-  })
+  return apiService
+    .get(`${JAO_DASHBOARD_BASE}/list-operation-log`, {
+      params: {
+        module: 'sudo',
+        action: filterParams.action || 'all',
+        status: filterParams.status || 'all',
+        day: filterParams.day || 1,
+        page,
+        size,
+        filter: keyword || ''
+      }
+    })
+    .then(wrapRecordsResponse)
 }
 
 /**
@@ -129,12 +133,10 @@ export function runJob(jobCode, params = {}) {
 
 /**
  * 获取系统参数（密码复杂度配置等）
- * POST /dts/api/dts/q/data/SYS_PARAMS/
+ * GET /adm/api/adm/tenant-param
  */
 export function getSystemParams() {
-  return apiService.post(`/dts/api/dts/q/data/SYS_PARAMS/?cacheBuster=${Date.now()}`, {
-    params: null
-  })
+  return apiService.get('/adm/api/adm/tenant-param')
 }
 
 /**
@@ -178,13 +180,27 @@ const DTS_BASE = '/dts/api/dts/q/data'
  */
 export function getSudoTemplates(options = {}) {
   const { page = 1, size = 10, keyword = '' } = options
-  return apiService.post(`${DTS_BASE}/LUPM_LIST_SUDO_TEMPLATES/?cacheBuster=${Date.now()}`, {
-    params: {},
-    page,
-    size,
-    orderBy: 'created_at desc',
-    filter: keyword ? `name|description:*${keyword}*` : ''
-  })
+  return apiService
+    .get(`${SYS_DASHBOARD_BASE}/lupm-sudo-templates`)
+    .then((response) => {
+      const data = normalizeRecords(unwrapApiData(response))
+      let records = data.records || []
+      if (keyword) {
+        const loweredKeyword = keyword.toLowerCase()
+        records = records.filter(item =>
+          [item.name, item.description]
+            .filter(Boolean)
+            .some(value => String(value).toLowerCase().includes(loweredKeyword))
+        )
+      }
+      const start = (page - 1) * size
+      return {
+        data: {
+          records: records.slice(start, start + size),
+          total: records.length
+        }
+      }
+    })
 }
 
 /**
@@ -195,14 +211,21 @@ export function getSudoTemplates(options = {}) {
  */
 export function getSudoCommandsByTemplate(templateId, options = {}) {
   const { page = 1, size = 10 } = options
-  return apiService.post(
-    `${DTS_BASE}/LUPM_LIST_SUDO_COMMAND_BY_TEMPLATE_ID/?cacheBuster=${Date.now()}`,
-    {
-      params: { templateId },
-      page,
-      size
-    }
-  )
+  return apiService
+    .get(`${SYS_DASHBOARD_BASE}/lupm-sudo-command-by-template-id`, {
+      params: { templateId }
+    })
+    .then((response) => {
+      const data = normalizeRecords(unwrapApiData(response))
+      const records = data.records || []
+      const start = (page - 1) * size
+      return {
+        data: {
+          records: records.slice(start, start + size),
+          total: records.length
+        }
+      }
+    })
 }
 
 /**

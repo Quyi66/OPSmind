@@ -8,15 +8,32 @@ import {
 } from '@/modules/sudo/api'
 
 const DTS_BASE = '/dts/api/dts/q/data'
+const SYS_DASHBOARD_BASE = '/svs/api/sys/dashboard'
+const JAO_DASHBOARD_BASE = '/jao/api/jao/dashboard'
+
+const unwrapApiData = (response) => response?.data?.data ?? response?.data
+
+const normalizeRecords = (payload) => {
+  if (Array.isArray(payload)) {
+    return { records: payload, total: payload.length }
+  }
+  if (payload && Array.isArray(payload.records)) {
+    return payload
+  }
+  return payload || { records: [], total: 0 }
+}
+
+const wrapRecordsResponse = (response) => ({
+  ...response,
+  data: normalizeRecords(unwrapApiData(response))
+})
 
 /**
  * 获取总览统计数据 (KPI cards)
  * API: LUPM_STATISTICS
  */
 export function getOverviewStats() {
-  return apiService.post(`${DTS_BASE}/LUPM_STATISTICS/?cacheBuster=${Date.now()}`, {
-    params: {}
-  })
+  return apiService.get(`${SYS_DASHBOARD_BASE}/lupm-statistics`).then(wrapRecordsResponse)
 }
 
 /**
@@ -25,9 +42,9 @@ export function getOverviewStats() {
  * @param {number} diffDay 天数，默认15天
  */
 export function getAuditLogStats(diffDay = 15) {
-  return apiService.post(`${DTS_BASE}/LUPM_AUDIT_LOG_STATISTICS/?cacheBuster=${Date.now()}`, {
-    params: { diffDay: String(diffDay) }
-  })
+  return apiService
+    .get(`${SYS_DASHBOARD_BASE}/lupm-audit-log-statistics`, { params: { diffDay: String(diffDay) } })
+    .then(wrapRecordsResponse)
 }
 
 /**
@@ -36,12 +53,16 @@ export function getAuditLogStats(diffDay = 15) {
  * @param {Object} params 查询参数
  */
 export function getOperationLogs(params = {}, filter, page, size) {
-  return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, {
-    params,
-    filter,
-    page,
-    size
-  })
+  return apiService
+    .get(`${JAO_DASHBOARD_BASE}/list-operation-log`, {
+      params: {
+        ...params,
+        filter,
+        page,
+        size
+      }
+    })
+    .then(wrapRecordsResponse)
 }
 
 /**
@@ -51,17 +72,19 @@ export function getOperationLogs(params = {}, filter, page, size) {
  */
 export function getUsers(options = {}) {
   const { page = 1, size = 15, filter = '', ...params } = options
-  return apiService.post(`${DTS_BASE}/LUPM_LIST_USERS/?cacheBuster=${Date.now()}`, {
-    params: {
-      // host_key: params.host_key || '',
-      // username: params.username || '',
-      types: params.types || '0,1',
-      lockStatus: params.lockStatus || '2'
-    },
-    page,
-    size,
-    filter
-  })
+  return apiService
+    .get(`${SYS_DASHBOARD_BASE}/lupm-users`, {
+      params: {
+        types: params.types || '0,1',
+        lockStatus: params.lockStatus || '2',
+        hostKey: params.host_key || params.hostKey || '',
+        username: params.username || '',
+        filter,
+        page,
+        size
+      }
+    })
+    .then(wrapRecordsResponse)
 }
 
 /**
@@ -71,16 +94,30 @@ export function getUsers(options = {}) {
  */
 export function getUserGroups(options = {}) {
   const { page = 1, size = 10, filter = '', ...params } = options
-  return apiService.post(`${DTS_BASE}/LUPM_LIST_GROUPS/?cacheBuster=${Date.now()}`, {
-    params: {
-      // host_key: params.host_key || null,
-      // group_name: params.group_name || null,
-      hostObject: params.hostObject || '@@(linux)'
-    },
-    page,
-    size,
-    filter
-  })
+  return apiService
+    .get(`${SYS_DASHBOARD_BASE}/lupm-groups`, {
+      params: {
+        pluginFindHost: params.hostObject || '@@(linux)',
+        hostKey: params.host_key || params.hostKey || '',
+        groupName: params.group_name || params.groupName || '',
+        filter,
+        page,
+        size
+      }
+    })
+    .then(wrapRecordsResponse)
+}
+
+/**
+ * 获取用户登录失败信息
+ * API: LUPM_GET_USER_LOGIN_FAIL_MESSAGE
+ */
+export function getUserLoginFailMessage(id) {
+  return apiService
+    .get(`${SYS_DASHBOARD_BASE}/lupm-user-login-fail-message`, {
+      params: { id }
+    })
+    .then(wrapRecordsResponse)
 }
 
 /**
@@ -118,6 +155,7 @@ export default {
   getOperationLogs,
   getUsers,
   getUserGroups,
+  getUserLoginFailMessage,
   getFeatureConfig,
   saveFeatureConfig,
   getSudoTemplates,

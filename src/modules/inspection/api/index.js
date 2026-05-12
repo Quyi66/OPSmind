@@ -7,18 +7,33 @@ import { apiService } from '@/core/api'
 const CAC_BASE = '/cac/api/cac'
 const DTS_BASE = '/dts/api/dts/q/data'
 
+const unwrapApiData = (response) => response?.data?.data ?? response?.data
+
+const normalizeRecords = (payload) => {
+  if (Array.isArray(payload)) {
+    return { records: payload, total: payload.length }
+  }
+  if (payload && Array.isArray(payload.records)) {
+    return payload
+  }
+  return payload || { records: [], total: 0 }
+}
+
+const wrapRecordsResponse = (response) => ({
+  ...response,
+  data: normalizeRecords(unwrapApiData(response))
+})
+
 /**
  * DTS 数据查询 API
  */
 export const dtsApi = {
   /**
    * 获取CAC结构图KPI数据
-   * 对应 API: POST /dts/api/dts/q/data/CAC_STRUCTURAL_KPI/
+   * CAC_STRUCTURAL_KPI → GET /cac/api/cac/v2/custom-kpi/check-item/{jobId}
    */
   getStructuralKpi(jobId) {
-    return apiService.post(`${DTS_BASE}/CAC_STRUCTURAL_KPI/`, {
-      params: { jobId }
-    })
+    return apiService.get(`${CAC_BASE}/v2/custom-kpi/check-item/${jobId}`)
   },
 
   /**
@@ -38,25 +53,114 @@ export const dtsApi = {
 
   /**
    * 获取统计数据
-   * 对应 API: POST /dts/api/dts/q/data/CAC_GET_STATISTICS/
+   * CAC_GET_STATISTICS → GET /cac/api/cac/v2/statistics/check-item/{jobId}
    */
   getStatistics(jobId) {
-    return apiService.post(`${DTS_BASE}/CAC_GET_STATISTICS/`, {
+    return apiService.get(`${CAC_BASE}/v2/statistics/check-item/${jobId}`)
+  },
+
+  getStructuralKpiHostAll(jobId) {
+    return apiService.get(`${CAC_BASE}/dashboard/structural-kpi-host-all`, {
       params: { jobId }
-    })
+    }).then(wrapRecordsResponse)
+  },
+
+  getStructuralKpiHostOk(jobId) {
+    return apiService.get(`${CAC_BASE}/dashboard/structural-kpi-host-ok`, {
+      params: { jobId }
+    }).then(wrapRecordsResponse)
+  },
+
+  getStructuralKpiHostFailed(jobId) {
+    return apiService.get(`${CAC_BASE}/dashboard/structural-kpi-host-failed`, {
+      params: { jobId }
+    }).then(wrapRecordsResponse)
+  },
+
+  getStructuralKpiHostCheck(jobId) {
+    return apiService.get(`${CAC_BASE}/dashboard/structural-kpi-host-check`, {
+      params: { jobId }
+    }).then(wrapRecordsResponse)
+  },
+
+  getStructuralKpiItemAll(jobId) {
+    return apiService.get(`${CAC_BASE}/dashboard/structural-kpi-item-all`, {
+      params: { jobId }
+    }).then(wrapRecordsResponse)
   },
 
   /**
    * 获取主机检查项统计
-   * 对应 API: POST /dts/api/dts/q/data/CAC_CHECK_ITEM_MACHINE/
+   * 对应 API: GET /cac/api/cac/dashboard/check-item-machine
    */
   getCheckItemMachine(jobId, page = 1, size = 10, filter = '') {
-    return apiService.post(`${DTS_BASE}/CAC_CHECK_ITEM_MACHINE/`, {
-      params: { job_id: jobId },
-      size,
-      page,
-      filter: filter ? `host_key:*${filter}*` : ''
-    })
+    return apiService.get(`${CAC_BASE}/dashboard/check-item-machine`, {
+      params: {
+        jobId,
+        page,
+        size,
+        filter: filter || undefined
+      }
+    }).then(wrapRecordsResponse)
+  },
+
+  getCheckItem(jobId, page = 1, size = 10, filter = '') {
+    return apiService.get(`${CAC_BASE}/dashboard/check-item`, {
+      params: {
+        jobId,
+        page,
+        size,
+        filter: filter || undefined
+      }
+    }).then(wrapRecordsResponse)
+  },
+
+  getMachineInfo(hostId) {
+    return apiService.get(`${CAC_BASE}/dashboard/machine-info`, {
+      params: { hostId }
+    }).then(wrapRecordsResponse)
+  },
+
+  getCheckItemMachineDetail(params = {}, options = {}) {
+    return apiService.get(`${CAC_BASE}/dashboard/check-item-machine-detail`, {
+      params: {
+        jobId: params.job_id || params.jobId,
+        hostKey: params.host_key || params.hostKey,
+        status: params.status || 'all',
+        page: options.page || 1,
+        size: options.size || 100
+      }
+    }).then(wrapRecordsResponse)
+  },
+
+  getCheckItemByStatus(jobId, status) {
+    return apiService.get(`${CAC_BASE}/dashboard/check-item-by-status`, {
+      params: { jobId, status }
+    }).then(wrapRecordsResponse)
+  },
+
+  getCheckItemInfo(id) {
+    return apiService.get(`${CAC_BASE}/dashboard/check-item-info`, {
+      params: { id }
+    }).then(wrapRecordsResponse)
+  },
+
+  getCheckItemDetail(params = {}, options = {}) {
+    return apiService.get(`${CAC_BASE}/dashboard/check-item-detail`, {
+      params: {
+        jobId: params.job_id || params.jobId,
+        name: params.name,
+        status: params.status || 'all',
+        page: options.page || 1,
+        size: options.size || 100
+      }
+    }).then(wrapRecordsResponse)
+  },
+
+  getBlackList(module = 'cac') {
+    return apiService.get(`${CAC_BASE}/dashboard/black-list`, {
+      params: { module }
+    }).then(wrapRecordsResponse)
   }
 }
 
@@ -488,18 +592,24 @@ export const emailConfigApi = {
 
   /**
    * 获取模板列表（用于邮件配置）
-   * 对应 API: POST /dts/api/dts/q/data/CAC_QUERY_TEMPLATE/
+   * 对应 API: GET /cac/api/cac/dashboard/query-template
    * @param {string} tenantId - 租户ID
    * @param {string} filter - 过滤条件，格式如 "template_name:*keyword*"
    */
   getTemplates(tenantId, filter = '') {
-    const body = {
-      params: { tenantId }
-    }
-    if (filter) {
-      body.filter = filter
-    }
-    return apiService.post(`${DTS_BASE}/CAC_QUERY_TEMPLATE/`, body)
+    return apiService.get(`${CAC_BASE}/dashboard/query-template`).then((response) => {
+      const payload = response?.data?.data ?? response?.data ?? []
+      let records = Array.isArray(payload) ? payload : (payload?.records || [])
+      if (filter) {
+        const keyword = String(filter).match(/\*(.*)\*/)?.[1]?.toLowerCase() || ''
+        if (keyword) {
+          records = records.filter(item =>
+            String(item.template_name || item.name || '').toLowerCase().includes(keyword)
+          )
+        }
+      }
+      return { data: { records, total: records.length } }
+    })
   },
 
   /**

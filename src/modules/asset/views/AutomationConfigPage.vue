@@ -107,28 +107,28 @@
           max-height="calc(100vh - 360px)"
         >
           <el-table-column prop="ci_type" label="资产代码" width="100" />
-          <el-table-column prop="hostKey" label="IP" width="140" />
-          <el-table-column prop="ansibleConfigName" label="自动化配置名称" width="160">
+          <el-table-column prop="ip" label="IP" width="140" />
+          <el-table-column prop="hostname" label="自动化配置名称" width="160">
             <template #default="{ row }">
-              {{ row.ansibleConfigName || '-' }}
+              {{ row.hostname || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)" />
-          <el-table-column prop="aapInstanceGroup" label="AAP instance group" width="160">
+          <el-table-column prop="instance_group" label="执行引擎节点(instance group)" />
+          <el-table-column prop="aap_instance_group" label="AAP instance group" width="160">
             <template #default="{ row }">
-              {{ row.aapInstanceGroup || '-' }}
+              {{ row.aap_instance_group || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="loginUser" label="登录用户" width="100">
+          <!-- <el-table-column prop="login_user" label="登录用户" width="100">
             <template #default="{ row }">
-              {{ row.loginUser || '-' }}
+              {{ row.login_user || '-' }}
             </template>
           </el-table-column>
           <el-table-column prop="runUser" label="执行用户" width="100">
             <template #default="{ row }">
               {{ row.runUser || '-' }}
             </template>
-          </el-table-column>
+          </el-table-column> -->
           <el-table-column prop="updated_at" label="更新时间" width="180">
             <template #default="{ row }">
               <span>{{ formatDateTime(row.updated_at) }}</span>
@@ -485,7 +485,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { dtsApi } from '../api'
+import { automationApi, dataManageApi } from '../api'
 import { apiService } from '@/core/api'
 import { authService } from '@/core/auth'
 import DeviceManageDialog from '../components/automation/DeviceManageDialog.vue'
@@ -584,7 +584,7 @@ onMounted(() => {
 // 加载资源类型
 async function loadResourceTypes() {
   try {
-    const response = await dtsApi.queryData('ACM_GET_RESOURCE_TYPE', null)
+    const response = await dataManageApi.getResourceTypes()
     resourceTypes.value = response?.records || []
   } catch (error) {
     console.error('加载资源类型失败:', error)
@@ -595,8 +595,7 @@ async function loadResourceTypes() {
 async function loadAutomationData() {
   automationLoading.value = true
   try {
-    const response = await dtsApi.queryData(
-      'ACM_AUTOMATION_GET',
+    const response = await automationApi.getAutomationConfigs(
       {
         cit: filters.value.cit,
         param: 'x'
@@ -604,9 +603,7 @@ async function loadAutomationData() {
       {
         size: automationPageSize.value,
         page: automationPage.value,
-        filter: automationSearch.value
-          ? `hostKey|ci_type|loginUser|instanceGroup:*${automationSearch.value}*`
-          : ''
+        filter: automationSearch.value || undefined
       }
     )
     automationData.value = response?.records || []
@@ -623,13 +620,12 @@ async function loadAutomationData() {
 async function loadAnsibleData() {
   ansibleLoading.value = true
   try {
-    const response = await dtsApi.queryData('ACM_GET_ALL_ANSIBLE_SET_REST', null, {
-      size: 9999,
-      page: 1
-    })
-    ansibleData.value = response?.records || []
+    // ACM_GET_ALL_ANSIBLE_SET_REST → GET /acm/api/acm/auto/ansible/find/all
+    const res = await apiService.get('/acm/api/acm/auto/ansible/find/all')
+    const records = res?.data || res || []
+    ansibleData.value = Array.isArray(records) ? records : (records?.records || [])
     // 更新配置选项（供其它下拉使用）
-    ansibleConfigOptions.value = response?.records || []
+    ansibleConfigOptions.value = ansibleData.value
   } catch (error) {
     console.error('加载Ansible配置失败:', error)
     ElMessage.error('加载Ansible配置失败')
@@ -684,29 +680,28 @@ function handleAutomationReset() {
 // 加载Ansible表单选项数据
 async function loadAnsibleFormOptions() {
   try {
-    // 加载脚本引擎类型
-    const engineRes = await dtsApi.queryData('ACM_GET_SCRIPT_ENGINE', null)
-    scriptEngine.value = engineRes?.records?.[0]?.result || 'ansible'
+    const engineData = await automationApi.getScriptEngine()
+    scriptEngine.value = engineData?.value || 'ansible'
+    instanceGroupOptions.value = []
+    aapInstanceGroupOptions.value = []
 
     // 加载执行引擎节点列表
-    const instanceRes = await dtsApi.queryData('GET_TAT_URL_AS_STRING_LIST', null)
-    if (instanceRes?.records?.[0]?.value) {
-      try {
-        instanceGroupOptions.value = JSON.parse(instanceRes.records[0].value)
-      } catch {
-        instanceGroupOptions.value = []
-      }
+    const instanceGroups = await automationApi.getInstanceGroupList()
+    if (instanceGroups.length > 0) {
+      instanceGroupOptions.value = instanceGroups
     }
 
-    // 加载AAP instance group（如果是aap引擎）
+    // 加载AAP instance group（如果是aap引擎）: AAP_QUERY_INSTANCE_GROUP → GET /jao/api/jao/aap/instance_group
     if (scriptEngine.value === 'aap') {
-      const aapRes = await dtsApi.queryData('AAP_QUERY_INSTANCE_GROUP', null)
-      aapInstanceGroupOptions.value = aapRes?.records || []
+      const aapRes = await apiService.get('/jao/api/jao/aap/instance_group')
+      const aapData = aapRes?.data || aapRes
+      aapInstanceGroupOptions.value = Array.isArray(aapData) ? aapData : (aapData?.records || [])
     }
 
     // 加载分组列表
-    const groupRes = await dtsApi.queryData('ACM_GET_GROUP_BY_CIT', { ciType: 'oplus_all' })
-    groupOptions.value = groupRes?.records || []
+    const groupRes = await apiService.get('/acm/api/acm/query/group/find/oplus_all')
+    const groupData = groupRes?.data || groupRes
+    groupOptions.value = Array.isArray(groupData) ? groupData : (groupData?.records || [])
   } catch (error) {
     console.error('加载表单选项失败:', error)
   }
@@ -754,31 +749,25 @@ async function handleEditAutomation(row) {
 // 加载自动化配置表单选项
 async function loadAutomationFormOptions() {
   try {
-    // 加载脚本引擎类型
-    const engineRes = await dtsApi.queryData('ACM_GET_SCRIPT_ENGINE', null)
-    scriptEngine.value = engineRes?.records?.[0]?.result || 'ansible'
+    const engineData = await automationApi.getScriptEngine()
+    scriptEngine.value = engineData?.value || 'ansible'
+    instanceGroupOptions.value = []
+    aapInstanceGroupOptions.value = []
 
     // 加载执行引擎节点列表（非AAP引擎）
     if (scriptEngine.value !== 'aap') {
-      const instanceRes = await dtsApi.queryData('GET_TAT_URL_AS_STRING_LIST', null)
-      if (instanceRes?.records?.[0]?.value) {
-        try {
-          instanceGroupOptions.value = JSON.parse(instanceRes.records[0].value)
-        } catch {
-          instanceGroupOptions.value = []
-        }
-      }
+      instanceGroupOptions.value = await automationApi.getInstanceGroupList()
     }
 
-    // 加载AAP instance group（AAP引擎）
+    // 加载AAP instance group（AAP引擎）: AAP_QUERY_INSTANCE_GROUP → GET /jao/api/jao/aap/instance_group
     if (scriptEngine.value === 'aap') {
-      const aapRes = await dtsApi.queryData('AAP_QUERY_INSTANCE_GROUP', null)
-      aapInstanceGroupOptions.value = aapRes?.records || []
+      const aapRes = await apiService.get('/jao/api/jao/aap/instance_group')
+      const aapData = aapRes?.data || aapRes
+      aapInstanceGroupOptions.value = Array.isArray(aapData) ? aapData : (aapData?.records || [])
     }
 
     // 加载自动化配置名称列表
-    const configRes = await dtsApi.queryData('GET_ALL_ASSET_AUTO_CONFIG', null)
-    ansibleConfigOptions.value = configRes?.records || []
+    ansibleConfigOptions.value = await automationApi.getAllAssetAutoConfigOptions()
   } catch (error) {
     console.error('加载自动化配置表单选项失败:', error)
   }

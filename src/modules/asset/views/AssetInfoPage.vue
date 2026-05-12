@@ -587,7 +587,7 @@ const loadGroupTree = async () => {
   try {
     const res = await assetApi.getGroupList(currentType.value)
     // 接口返回的是路径字符串数组，如 ["/", "/21", "/dev"]
-    const paths = Array.isArray(res) ? res : []
+    const paths = res.records || []
     groupTreeData.value = buildGroupTreeFromPaths(paths)
   } catch (error) {
     console.error('加载分组列表失败:', error)
@@ -601,7 +601,7 @@ const loadTagList = async () => {
   try {
     const res = await assetApi.getTagList(currentType.value)
     // 接口返回的是标签数组，格式如 [{name: "xxx", ...}]
-    tagList.value = Array.isArray(res) ? res : []
+    tagList.value = res.records || []
   } catch (error) {
     console.error('加载标签列表失败:', error)
     tagList.value = []
