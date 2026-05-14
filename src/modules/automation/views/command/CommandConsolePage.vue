@@ -1,56 +1,58 @@
 <template>
   <div class="command-console">
     <div class="console-body">
-      <!-- 运行记录按钮 -->
-      <div class="history-btn-wrapper">
-        <el-button type="primary" @click="handleHistory" size="small">
+      <div class="console-toolbar">
+        <el-button size="small" @click="handleHistory">
           <i class="fas fa-history"></i>
           运行记录
         </el-button>
+        <el-button size="small" :disabled="!command" @click="handleClearCommand">
+          <i class="fas fa-eraser"></i>
+          清空命令
+        </el-button>
       </div>
 
-      <!-- 主机选择 -->
-      <div class="form-group">
-        <label class="control-label">主机</label>
-        <AcmDeviceSelector
-          v-model="hosts"
-          ci-types="[auto]"
-          :options="{
-            selectMode: 'host,group,tag,input,recently',
-            selector: 'multiple',
-            label: '选择主机'
-          }"
-        />
-      </div>
+      <el-form label-position="top" class="console-form">
+        <el-form-item label="主机">
+          <AcmDeviceSelector
+            v-model="hosts"
+            ci-types="[auto]"
+            :options="{
+              selectMode: 'host,group,tag,input,recently',
+              selector: 'multiple',
+              label: '选择主机'
+            }"
+          />
+        </el-form-item>
 
-      <!-- 语法选择 -->
-      <div class="form-group">
-        <label class="control-label">语法</label>
-        <el-select v-model="commandType" placeholder="请选择执行语法" class="grammar-select">
-          <el-option label="请选择执行语法" value="" disabled />
-          <el-option label="cmd" value="cmd" />
-          <el-option label="shell" value="shell" />
-          <el-option label="python" value="python" />
-          <el-option label="playbook" value="playbook" />
-          <el-option label="powershell" value="powershell" />
-        </el-select>
-      </div>
+        <el-form-item label="语法">
+          <el-select v-model="commandType" placeholder="请选择执行语法" class="grammar-select">
+            <el-option label="请选择执行语法" value="" disabled />
+            <el-option label="cmd" value="cmd" />
+            <el-option label="shell" value="shell" />
+            <el-option label="python" value="python" />
+            <el-option label="playbook" value="playbook" />
+            <el-option label="powershell" value="powershell" />
+          </el-select>
+        </el-form-item>
 
-      <!-- 命令编辑器 -->
-      <div class="form-group">
-        <label class="control-label">命令</label>
-        <div class="code-editor">
-          <div class="line-numbers">
-            <span v-for="n in lineCount" :key="n">{{ n }}</span>
+        <el-form-item label="命令">
+          <div class="command-editor-field">
+            <div class="code-editor">
+              <div class="line-numbers">
+                <span v-for="n in lineCount" :key="n">{{ n }}</span>
+              </div>
+              <textarea
+                v-model="command"
+                class="code-textarea"
+                placeholder="请输入要执行的命令内容"
+                @input="updateLineCount"
+              ></textarea>
+            </div>
+            <div class="form-tip">当前共 {{ lineCount }} 行命令。</div>
           </div>
-          <textarea
-            v-model="command"
-            class="code-textarea"
-            placeholder=""
-            @input="updateLineCount"
-          ></textarea>
-        </div>
-      </div>
+        </el-form-item>
+      </el-form>
 
       <!-- 底部按钮 -->
       <div class="form-actions">
@@ -71,7 +73,7 @@
       title="运行记录"
       width="1200px"
     >
-      <div class="history-search">
+      <div class="history-toolbar">
         <el-input
           v-model="historySearchKeyword"
           placeholder="搜索命令、主机、创建人..."
@@ -104,7 +106,7 @@
         <el-table-column label="操作" width="100" fixed="right" align="left">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleUseHistory(row)">
-              数据回滚
+              填回控制台
             </el-button>
           </template>
         </el-table-column>
@@ -124,7 +126,7 @@
       </div>
 
       <template #footer>
-        <el-button @click="historyDialogVisible = false">返回</el-button>
+        <el-button @click="historyDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
 
@@ -307,6 +309,11 @@ function handleUseHistory(row) {
   historyDialogVisible.value = false
 }
 
+function handleClearCommand() {
+  command.value = ''
+  updateLineCount()
+}
+
 // 分页变化
 function handleHistoryPageSizeChange() {
   historyCurrentPage.value = 1
@@ -406,22 +413,30 @@ onUnmounted(() => {
   position: relative;
 }
 
-.history-btn-wrapper {
-  position: absolute;
-  top: 8px;
-  right: 16px;
+.console-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-.form-group {
-  margin-bottom: 16px;
+.form-tip {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
 
-  .control-label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: var(--el-text-color-primary);
-    font-size: 14px;
-  }
+.console-form {
+  max-width: 100%;
+}
+
+.console-form :deep(.el-form-item__content) {
+  display: block;
+  width: 100%;
+}
+
+.command-editor-field {
+  width: 100%;
 }
 
 .grammar-select {
@@ -430,6 +445,7 @@ onUnmounted(() => {
 
 .code-editor {
   display: flex;
+  width: 100%;
   border-bottom: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
   overflow: hidden;
@@ -457,6 +473,7 @@ onUnmounted(() => {
 
 .code-textarea {
   flex: 1;
+  min-width: 0;
   padding: 12px;
   border: none;
   resize: none;
@@ -472,6 +489,12 @@ onUnmounted(() => {
   }
 }
 
+.form-tip {
+  display: block;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -484,10 +507,18 @@ onUnmounted(() => {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  max-width: 100px;
+  max-width: 180px;
 }
 
-.history-search {
+.history-toolbar {
+  margin-bottom: 16px;
+}
+
+.history-toolbar :deep(.el-input) {
+  width: 300px;
+}
+
+.history-toolbar {
   margin-bottom: 16px;
 }
 
@@ -526,10 +557,6 @@ onUnmounted(() => {
   word-break: break-all;
 }
 
-:deep(.el-button) {
-  border-radius: 4px;
-}
-
 :deep(.el-input__wrapper) {
   border-radius: 4px;
 }
@@ -547,5 +574,19 @@ onUnmounted(() => {
 :deep(.el-dialog__footer) {
   border-top: 1px solid var(--el-border-color-lighter);
   padding: 12px 20px;
+}
+
+@media (max-width: 1200px) {
+  .console-toolbar,
+  .history-toolbar,
+  .form-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .grammar-select,
+  .history-toolbar :deep(.el-input) {
+    width: 100%;
+  }
 }
 </style>

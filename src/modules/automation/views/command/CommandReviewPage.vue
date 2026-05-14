@@ -6,19 +6,19 @@
         <el-form-item label="关键词">
           <el-input
             v-model="searchKeyword"
-            placeholder="名称/命令"
-            style="width: 200px"
+            placeholder="搜索名称或待审核命令"
+            style="width: 240px"
             clearable
           />
         </el-form-item>
-        <!-- <el-form-item>
+        <el-form-item>
           <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon> 搜索
+            搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon> 重置
+            重置
           </el-button>
-        </el-form-item> -->
+        </el-form-item>
       </el-form>
     </div>
 
@@ -44,7 +44,7 @@
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="filteredCommands"
+        :data="pagedCommands"
         max-height="calc(100vh - 230px)"
         @selection-change="handleSelectionChange"
       >
@@ -53,7 +53,9 @@
         <el-table-column prop="name" label="名称" min-width="200" sortable>
           <template #default="{ row }">
             <div class="command-name-cell">
-              <span class="name">{{ row.name }}</span>
+              <el-button text type="primary" class="name-link" @click="handleApprove(row)">
+                {{ row.name }}
+              </el-button>
               <p v-if="row.description" class="description">{{ row.description }}</p>
             </div>
           </template>
@@ -116,9 +118,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
 import { findAllUnapprovedCommand } from '@/modules/automation/api/command'
 import CommandApproveDialog from '../../components/command/dialogs/CommandApproveDialog.vue'
 
@@ -149,14 +151,29 @@ const filteredCommands = computed(() => {
   )
 })
 
+const pagedCommands = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredCommands.value.slice(start, start + pageSize.value)
+})
+
+const paginationInfo = computed(() => {
+  const total = filteredCommands.value.length
+  if (total === 0) return '0 - 0 / 0'
+  const start = (currentPage.value - 1) * pageSize.value + 1
+  const end = Math.min(currentPage.value * pageSize.value, total)
+  return `${start} - ${end} / ${total}`
+})
+
 // 分页大小变化
 function handlePageSizeChange() {
-  // 当前简单实现
+  currentPage.value = 1
+  clearSelection()
 }
 
 // 页码变化
 function handlePageChange(page) {
   currentPage.value = page
+  clearSelection()
 }
 
 // 加载数据
@@ -188,6 +205,11 @@ function handleReset() {
 // 选择变化
 function handleSelectionChange(selection) {
   selectedCommands.value = selection
+}
+
+function clearSelection() {
+  tableRef.value?.clearSelection()
+  selectedCommands.value = []
 }
 
 // 单个审核
@@ -246,6 +268,16 @@ onMounted(() => {
   loadData()
 })
 
+watch(
+  () => filteredCommands.value.length,
+  total => {
+    const maxPage = Math.max(1, Math.ceil(total / pageSize.value))
+    if (currentPage.value > maxPage) {
+      currentPage.value = maxPage
+    }
+  }
+)
+
 // 暴露方法
 defineExpose({
   refresh,
@@ -255,6 +287,11 @@ defineExpose({
 
 <style scoped lang="scss">
 .command-name-cell {
+  .name-link {
+    padding: 0;
+    font-weight: 500;
+  }
+
   .name {
     font-weight: 500;
     color: var(--el-text-color-primary);

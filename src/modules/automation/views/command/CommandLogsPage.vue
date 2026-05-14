@@ -27,9 +27,9 @@
         <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索"
+            placeholder="搜索作业、用户或执行节点"
             clearable
-            style="width: 200px"
+            style="width: 240px"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -74,7 +74,9 @@
 
         <el-table-column prop="job_title" label="作业" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ row.job_title || '-' }}
+            <el-button text type="primary" @click="handleViewResult(row)">
+              {{ row.job_title || '-' }}
+            </el-button>
           </template>
         </el-table-column>
 
@@ -185,6 +187,14 @@
         </div>
       </div>
       <template #footer>
+        <el-button
+          v-if="currentLog?.job_type === 'script' && !['WAITING', 'RUNNING', 'CALLBACK'].includes(currentLog?.status)"
+          type="primary"
+          plain
+          @click="handleRerun(currentLog)"
+        >
+          重新运行
+        </el-button>
         <el-button @click="showResultDialog = false">关闭</el-button>
       </template>
     </el-dialog>
@@ -217,26 +227,7 @@ const showResultDialog = ref(false)
 const currentLog = ref(null)
 
 // 过滤后的日志列表（本地搜索）
-const filteredLogs = computed(() => {
-  if (!filters.keyword) {
-    return logs.value
-  }
-  const keyword = filters.keyword.toLowerCase()
-  return logs.value.filter(log =>
-    (log.job_title && log.job_title.toLowerCase().includes(keyword)) ||
-    (log.job_type && log.job_type.toLowerCase().includes(keyword)) ||
-    (log.username && log.username.toLowerCase().includes(keyword))
-  )
-})
-
-// 分页信息
-const paginationInfo = computed(() => {
-  const totalCount = total.value || filteredLogs.value.length
-  if (totalCount === 0) return '0 - 0 / 0'
-  const start = (currentPage.value - 1) * pageSize.value + 1
-  const end = Math.min(currentPage.value * pageSize.value, totalCount)
-  return `${start} - ${end} / ${totalCount}`
-})
+const filteredLogs = computed(() => logs.value)
 
 // 分页大小变化
 function handlePageSizeChange() {

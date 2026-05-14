@@ -6,14 +6,21 @@
         <el-form-item label="关键词">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索"
+            placeholder="搜索作业标题"
             clearable
-            style="width: 200px"
+            style="width: 240px"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="currentPage = 1">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -121,6 +128,18 @@
           <div v-else class="text-muted">未配置主机</div>
         </div>
       </div>
+
+      <template #footer>
+        <el-button @click="detailDialogVisible = false">关闭</el-button>
+        <el-button @click="handleEditFromDetail">编辑作业</el-button>
+        <el-button
+          type="primary"
+          :loading="running && runningJobId === detailJob?.id"
+          @click="detailJob && handleRunJob(detailJob)"
+        >
+          执行作业
+        </el-button>
+      </template>
     </el-dialog>
 
     <!-- 编辑弹窗 -->
@@ -280,6 +299,14 @@ const filteredJobs = computed(() => {
   return result
 })
 
+const paginationInfo = computed(() => {
+  const total = filteredJobs.value.length
+  if (total === 0) return '0 - 0 / 0'
+  const start = (currentPage.value - 1) * pageSize.value + 1
+  const end = Math.min(currentPage.value * pageSize.value, total)
+  return `${start} - ${end} / ${total}`
+})
+
 const pagedJobs = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   return filteredJobs.value.slice(start, start + pageSize.value)
@@ -365,6 +392,12 @@ async function openEdit(job) {
   detailJob.value = detail
   fillEditForm(detail)
   editDialogVisible.value = true
+}
+
+async function handleEditFromDetail() {
+  if (!detailJob.value) return
+  detailDialogVisible.value = false
+  await openEdit(detailJob.value)
 }
 
 function fillEditForm(job) {
@@ -648,10 +681,6 @@ defineExpose({
 
 :deep(.el-table) {
   font-size: 13px;
-}
-
-:deep(.el-button) {
-  border-radius: 4px;
 }
 
 :deep(.el-input__wrapper) {

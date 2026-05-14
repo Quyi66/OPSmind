@@ -6,25 +6,22 @@
         <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索"
+            placeholder="搜索名称、描述或命令内容"
             clearable
-            style="width: 200px"
+            style="width: 240px"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
         </el-form-item>
-        <!-- <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSearch">
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
             搜索
           </el-button>
-          <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon>
-            重置
-          </el-button>
-        </el-form-item> -->
+          <el-button @click="handleReset">重置</el-button>
+        </el-form-item>
       </el-form>
     </div>
 
@@ -35,7 +32,6 @@
         创建命令
       </el-button>
       <el-button
-        type="default"
         size="small"
         :disabled="selectedCommands.length === 0"
         @click="handleBatchRun('run')"
@@ -48,6 +44,7 @@
         :disabled="selectedCommands.length === 0"
         @click="handleBatchRun('createJob')"
       >
+        <i class="fas fa-tasks" />
         创建作业
       </el-button>
       <span style="flex: 1;"></span>
@@ -61,7 +58,7 @@
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="filteredCommands"
+        :data="pagedCommands"
         max-height="calc(100vh - 230px)"
         @selection-change="handleSelectionChange"
       >
@@ -79,11 +76,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="description" label="描述" min-width="100" />
+        <el-table-column prop="description" label="描述" min-width="140" show-overflow-tooltip />
 
         <el-table-column prop="command" label="命令内容" min-width="200">
           <template #default="{ row }">
-            <span>{{ getDisplayCommand(row) || '-' }}</span>
+            <div class="command-preview" :title="getDisplayCommand(row) || '-'">
+              {{ getDisplayCommand(row) || '-' }}
+            </div>
           </template>
         </el-table-column>
 
@@ -195,9 +194,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, inject } from 'vue'
+import { ref, reactive, computed, onMounted, inject, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import {
   findByTenantIdAndCreatedBy,
   deleteCommand as apiDeleteCommand,
@@ -245,12 +244,17 @@ const filteredCommands = computed(() => {
   )
 })
 
+const pagedCommands = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredCommands.value.slice(start, start + pageSize.value)
+})
+
 // 分页信息
 const paginationInfo = computed(() => {
   const total = filteredCommands.value.length
   if (total === 0) return '0 - 0 / 0'
-  const start = 1
-  const end = Math.min(pageSize.value, total)
+  const start = (currentPage.value - 1) * pageSize.value + 1
+  const end = Math.min(currentPage.value * pageSize.value, total)
   return `${start} - ${end} / ${total}`
 })
 
@@ -298,9 +302,15 @@ function handleSelectionChange(selection) {
   selectedCommands.value = selection
 }
 
+function clearSelection() {
+  tableRef.value?.clearSelection()
+  selectedCommands.value = []
+}
+
 // 分页大小变化
 function handlePageSizeChange() {
-  // 当前简单实现，后续可以加入真正的分页
+  currentPage.value = 1
+  clearSelection()
 }
 
 // 创建命令
@@ -446,6 +456,7 @@ function getStatusTagType(status) {
 // 页码变化
 function handlePageChange(page) {
   currentPage.value = page
+  clearSelection()
 }
 
 // 获取状态文本
@@ -484,6 +495,16 @@ onMounted(() => {
   loadData()
 })
 
+watch(
+  () => filteredCommands.value.length,
+  total => {
+    const maxPage = Math.max(1, Math.ceil(total / pageSize.value))
+    if (currentPage.value > maxPage) {
+      currentPage.value = maxPage
+    }
+  }
+)
+
 // 暴露方法
 defineExpose({
   refresh,
@@ -492,74 +513,7 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-.command-list {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--el-bg-color);
-}
-
-.command-list__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  background: var(--el-fill-color-light);
-
-  .header-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-}
-
-.command-list__toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.toolbar-left,
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.command-list__table {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  padding: 0 16px;
-}
-
-.command-list__pagination {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--el-border-color-lighter);
-
-  .pagination-info {
-    font-size: 13px;
-    color: var(--el-text-color-secondary);
-  }
-}
-
 .command-name-cell {
-  .name-link {
-    display: block;
-    cursor: pointer;
-    text-decoration: none;
-
-    &:hover .name {
-      text-decoration: underline;
-    }
-  }
-
   .name {
     font-weight: 500;
     color: var(--el-color-primary);
@@ -573,7 +527,7 @@ defineExpose({
   }
 
   .command-preview {
-    margin: 2px 0 0;
+    margin: 6px 0 0;
     font-size: 12px;
     color: var(--el-text-color-secondary);
     white-space: nowrap;
@@ -583,54 +537,13 @@ defineExpose({
   }
 }
 
-.status-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 4px;
-  cursor: pointer;
-
-  &.status-success {
-    background-color: #198754;
-    color: #fff;
-  }
-
-  &.status-warning {
-    background-color: #ffc107;
-    color: var(--el-text-color-primary);
-  }
-
-  &.status-danger {
-    background-color: #dc3545;
-    color: #fff;
-  }
-}
-
-.action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-
-  .el-button {
-    padding: 4px 8px;
-    font-size: 14px;
-    color: var(--el-text-color-secondary);
-
-    &:hover:not(:disabled) {
-      color: var(--el-color-primary);
-    }
-
-    &:disabled {
-      color: #ced4da;
-      cursor: not-allowed;
-    }
-
-    i {
-      font-size: 14px;
-    }
-  }
+.command-preview {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--el-text-color-regular);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 :deep(.el-table) {
@@ -652,10 +565,6 @@ defineExpose({
   .el-table__cell {
     border-bottom: 1px solid var(--el-border-color-lighter);
   }
-}
-
-:deep(.el-button) {
-  border-radius: 4px;
 }
 
 :deep(.el-input__wrapper) {
