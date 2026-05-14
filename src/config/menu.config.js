@@ -57,6 +57,12 @@ export const MENU_CONFIG = {
           description: '系统命令管理和执行'
         },
         {
+          code: 'run-records',
+          name: '运行记录',
+          icon: 'fas fa-history',
+          description: '统一查看自动化任务运行记录和统计'
+        },
+        {
           code: 'users',
           name: '主机用户',
           icon: 'fas fa-users',

@@ -82,12 +82,8 @@ export const JAO_ROUTE_DEFS = [
     key: 'runLogs',
     path: 'runLogs',
     title: '运行记录',
-    navLabel: '运行记录',
-    icon: 'fas fa-history',
-    ...createJobOrchestrationPageRoute(
-      'jao-runLogs',
-      () => import('./views/job/JobRunLogsPage.vue')
-    )
+    name: 'jao-runLogs',
+    redirect: '/run-records/logs'
   },
   {
     key: 'statistics',
@@ -95,7 +91,7 @@ export const JAO_ROUTE_DEFS = [
     title: '数据统计',
     icon: 'fas fa-chart-line',
     name: 'jao-statistics',
-    redirect: '/jao/runLogs?tab=statistics'
+    redirect: '/run-records/logs?tab=statistics'
   },
   {
     key: 'requests',
@@ -125,6 +121,27 @@ export const JAO_ROUTE_DEFS = [
     name: 'jao-localInstall',
     title: 'rpm包安装',
     redirect: '/rpm-install/install'
+  }
+]
+
+export const RUN_RECORDS_ROUTE_DEFS = [
+  {
+    key: 'logs',
+    path: 'logs',
+    title: '运行记录',
+    navLabel: '运行记录',
+    icon: 'fas fa-history',
+    ...createJobOrchestrationPageRoute(
+      'run-records-logs',
+      () => import('./views/job/JobRunLogsPage.vue')
+    )
+  },
+  {
+    key: 'statistics',
+    path: 'statistics',
+    title: '数据统计',
+    name: 'run-records-statistics',
+    redirect: '/run-records/logs?tab=statistics'
   }
 ]
 
@@ -207,14 +224,15 @@ export const CMD_ROUTE_DEFS = [
       () => import('./views/command/CommandReviewPage.vue')
     )
   },
-  {
-    key: 'logs',
-    path: 'logs',
-    title: '执行日志',
-    navLabel: '执行日志',
-    icon: 'fas fa-file-alt',
-    ...createCommandCenterPageRoute('cmd-logs', () => import('./views/command/CommandLogsPage.vue'))
-  },
+  // 暂时移除命令中心“执行日志”导航入口，保留组件代码以便后续回退。
+  // {
+  //   key: 'logs',
+  //   path: 'logs',
+  //   title: '执行日志',
+  //   navLabel: '执行日志',
+  //   icon: 'fas fa-file-alt',
+  //   ...createCommandCenterPageRoute('cmd-logs', () => import('./views/command/CommandLogsPage.vue'))
+  // },
   {
     key: 'console',
     path: 'console',

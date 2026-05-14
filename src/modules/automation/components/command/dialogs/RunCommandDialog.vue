@@ -217,7 +217,7 @@ async function handleRunCommand() {
     )
     const result = response.data || response
 
-    ElMessage.success('命令已提交执行，可在执行日志中查看')
+    ElMessage.success('命令已提交执行，可在运行记录中查看')
     emit('success', result)
     handleClose()
   } catch (error) {

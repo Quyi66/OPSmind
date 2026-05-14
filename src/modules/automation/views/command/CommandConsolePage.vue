@@ -133,7 +133,7 @@
     <!-- 日志查看器对话框 -->
     <el-dialog
       v-model="logViewerVisible"
-      title="执行日志"
+      title="执行过程"
       width="900px"
       class="log-viewer-dialog"
       :close-on-click-modal="false"

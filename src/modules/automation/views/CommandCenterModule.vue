@@ -41,7 +41,7 @@ function handleCreateJob(command) {
 // 执行成功回调
 function handleRunSuccess(result) {
   if (runCommandMode.value === 'run') {
-    router.push('/cmd/logs')
+    router.push('/run-records/logs')
   }
 }
 

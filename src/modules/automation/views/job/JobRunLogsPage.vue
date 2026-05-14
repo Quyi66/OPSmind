@@ -39,7 +39,7 @@
               <el-form-item label="关键词">
                 <el-input
                   v-model="filters.search"
-                  placeholder="搜索作业标题"
+                  placeholder="搜索任务标题"
                   clearable
                   style="width: 240px"
                 >
@@ -80,7 +80,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="作业" show-overflow-tooltip>
+              <el-table-column label="任务" show-overflow-tooltip>
                 <template #default="{ row }">
                   {{ translateText(row.job_title) }}
                 </template>

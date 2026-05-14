@@ -10,7 +10,7 @@ import GroupLayoutShell from './GroupLayoutShell.vue'
 import { provideCurrentGroupModuleCode } from './useGroupLayoutContext.js'
 
 const menuGroups = computed(() => getGroupMenuConfig('automation', MENU_CONFIG))
-const defaultOpeneds = ['jao', 'gfs', 'cmd', 'users', 'rpm-install']
+const defaultOpeneds = ['jao', 'run-records', 'gfs', 'cmd', 'users', 'rpm-install']
 
 provideCurrentGroupModuleCode('jao')
 </script>

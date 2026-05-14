@@ -105,10 +105,7 @@ const jobSeriesRouteMap = {
 
 const navigateToRunLogs = ({ type = '', keyword = '' } = {}) => {
   router.push({
-    name: 'jao-runLogs',
-    params: {
-      moduleCode: 'jao'
-    },
+    name: 'run-records-logs',
     query: {
       day: '365',
       ...(type ? { type } : {}),

@@ -13,6 +13,7 @@ import { ACM_ROUTE_DEFS } from '@/modules/asset/routes.js'
 import { USERS_ROUTE_DEFS } from '@/modules/user/routes.js'
 import {
   JAO_ROUTE_DEFS,
+  RUN_RECORDS_ROUTE_DEFS,
   GFS_ROUTE_DEFS,
   CMD_ROUTE_DEFS,
   RPM_INSTALL_ROUTE_DEFS
@@ -28,6 +29,14 @@ export const JAO_NAV_ITEMS = JAO_ROUTE_DEFS.filter(def => def.navLabel).map(def 
   label: def.navLabel || def.title,
   icon: def.icon,
   path: `/jao/${def.path}`
+}))
+
+// 自动化管理 - 运行记录模块的页面导航
+export const RUN_RECORDS_NAV_ITEMS = RUN_RECORDS_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+  key: def.key,
+  label: def.navLabel || def.title,
+  icon: def.icon,
+  path: `/run-records/${def.path}`
 }))
 
 // 自动化管理 - 脚本模块的页面导航
@@ -178,6 +187,7 @@ export const UAM_NAV_ITEMS = UAM_ROUTE_DEFS.filter(def => def.navLabel).map(def 
  */
 export const MODULE_NAV_CONFIG = {
   jao: JAO_NAV_ITEMS,
+  'run-records': RUN_RECORDS_NAV_ITEMS,
   gfs: GFS_NAV_ITEMS,
   cmd: CMD_NAV_ITEMS,
   'rpm-install': RPM_INSTALL_NAV_ITEMS,

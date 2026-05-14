@@ -517,6 +517,27 @@ async function handleRunJob(job) {
     ElMessage.warning('作业未配置命令')
     return
   }
+  if (!cfg.hosts.length) {
+    ElMessage.warning('作业未配置目标主机')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定立即执行作业 "${detail.title}" 吗？该作业将向 ${cfg.hosts.length} 台主机执行 ${cfg.commands.length} 条命令。`,
+      '执行确认',
+      {
+        type: 'warning',
+        confirmButtonText: '立即执行',
+        cancelButtonText: '取消'
+      }
+    )
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error('执行确认失败')
+    }
+    return
+  }
 
   const needApproveFlag = detail?.needApprove || job?.needApprove
   if (needApproveFlag) {
@@ -547,8 +568,8 @@ async function handleRunJob(job) {
   runningJobId.value = job.id
   try {
     await runJobByRequest(buildSavedCommandJobRunRequest(detail))
-    ElMessage.success('作业已提交执行，可在执行日志中查看')
-    router.push('/cmd/logs')
+    ElMessage.success('作业已提交执行，可在运行记录中查看')
+    router.push('/run-records/logs')
   } catch (error) {
     console.error('运行作业失败:', error)
     ElMessage.error('运行作业失败: ' + (error?.message || '未知错误'))
