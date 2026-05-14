@@ -11,7 +11,8 @@
 <style scoped lang="scss">
 .ops-module__content {
   flex: 1;
-  overflow: auto;
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 </style>
