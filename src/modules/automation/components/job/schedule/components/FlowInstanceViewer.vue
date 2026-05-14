@@ -26,22 +26,18 @@
                 <article class="summary-card">
                   <span class="summary-card__label">目标主机</span>
                   <strong class="summary-card__value">{{ hostRows.length }}</strong>
-                  <p class="summary-card__meta">实例中已关联的目标主机数</p>
                 </article>
                 <article class="summary-card">
                   <span class="summary-card__label">流程步骤</span>
                   <strong class="summary-card__value">{{ normalizedSteps.length }}</strong>
-                  <p class="summary-card__meta">本次执行包含的步骤总数</p>
                 </article>
                 <article class="summary-card">
                   <span class="summary-card__label">全局参数</span>
                   <strong class="summary-card__value">{{ globalParamCount }}</strong>
-                  <p class="summary-card__meta">用于本实例的全局参数条目</p>
                 </article>
                 <article class="summary-card">
                   <span class="summary-card__label">整体状态</span>
                   <strong class="summary-card__value">{{ overallStatusText }}</strong>
-                  <p class="summary-card__meta">基于当前主机执行结果汇总</p>
                 </article>
               </section>
 
@@ -49,9 +45,6 @@
                 <div class="section-heading">
                   <div>
                     <h4 class="section-title">步骤概览</h4>
-                    <p class="section-subtitle">
-                      按步骤查看执行结果分布，快速判断哪些步骤存在异常。
-                    </p>
                   </div>
                 </div>
                 <div class="step-overview-grid">
@@ -648,46 +641,44 @@ function formatDateTime(value) {
 .viewer-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   min-height: 100%;
 }
 
 .viewer-summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .summary-card {
-  padding: 16px;
-  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-height: 88px;
+  padding: 12px 14px;
+  border-radius: 14px;
   border: 1px solid #e2e8f0;
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, #ffffff 100%);
 }
 
 .summary-card__label {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.4;
   color: #64748b;
 }
 
 .summary-card__value {
   display: block;
-  margin-top: 8px;
-  font-size: 24px;
-  line-height: 1;
+  font-size: 20px;
+  line-height: 1.2;
   color: #0f172a;
 }
 
-.summary-card__meta {
-  margin: 10px 0 0;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #94a3b8;
-}
-
 .viewer-section {
-  padding: 18px;
+  padding: 16px 18px;
   border-radius: 18px;
   border: 1px solid #e2e8f0;
   background: #fff;
@@ -698,7 +689,7 @@ function formatDateTime(value) {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .section-title {

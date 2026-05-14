@@ -2,15 +2,11 @@
   <el-dialog
     v-model="visible"
     :title="title"
-    width="650px"
+    width="760px"
+    class="cron-job-form-dialog"
     destroy-on-close
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-width="120px"
-    >
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px">
       <el-form-item label="任务描述" prop="jobDesc">
         <el-input v-model="formData.jobDesc" placeholder="请输入任务描述" maxlength="200" />
       </el-form-item>
@@ -50,7 +46,11 @@
       </el-form-item>
 
       <el-form-item label="执行作业类型" prop="jobType">
-        <el-select v-model="formData.jobType" placeholder="请选择作业类型" @change="handleJobTypeChange">
+        <el-select
+          v-model="formData.jobType"
+          placeholder="请选择作业类型"
+          @change="handleJobTypeChange"
+        >
           <el-option label="" value="" />
           <el-option label="脚本任务" value="script" />
           <el-option label="REST接口" value="rest" />
@@ -75,13 +75,7 @@
             :value="job.id"
           />
         </el-select>
-        <el-select
-          v-else
-          v-model="multipleJobIds"
-          placeholder="请选择作业"
-          multiple
-          filterable
-        >
+        <el-select v-else v-model="multipleJobIds" placeholder="请选择作业" multiple filterable>
           <el-option
             v-for="job in jobList"
             :key="job.id"
@@ -90,20 +84,23 @@
           />
         </el-select>
       </el-form-item>
+
+      <div v-if="showParamsSection" class="form-section">
+        <div class="form-section__header">
+          <div>
+            <h4 class="form-section__title">运行参数</h4>
+            <p class="form-section__subtitle">以下参数会与当前定时任务一并保存</p>
+          </div>
+          <span class="form-section__count">{{ jobParams.length }} 项</span>
+        </div>
+        <CronJobParamsSection :params="jobParams" />
+      </div>
     </el-form>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button
-          v-if="formData.jobId || ['cmd', 'cac'].includes(formData.jobType)"
-          @click="paramsDialogVisible = true"
-        >
-          运行参数
-        </el-button>
-        <div style="flex: 1"></div>
-        <el-button @click="visible = false">
-          取消
-        </el-button>
+        <div class="dialog-footer__spacer"></div>
+        <el-button @click="visible = false">取消</el-button>
         <el-button
           type="primary"
           :loading="submitting"
@@ -121,21 +118,15 @@
       :initial-value="formData.scheduleConf"
       @confirm="handleCronConfirm"
     />
-
-    <!-- 运行参数对话框 -->
-    <CronJobParamsDialog
-      v-model="paramsDialogVisible"
-      :params="jobParams"
-    />
   </el-dialog>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Calendar, Operation, Back, Check } from '@element-plus/icons-vue'
+import { Calendar } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import CronGeneratorDialog from '../CronGeneratorDialog.vue'
-import CronJobParamsDialog from './CronJobParamsDialog.vue'
+import CronJobParamsSection from './CronJobParamsSection.vue'
 import { useCronJobForm } from '../composables/useCronJobForm'
 
 const props = defineProps({
@@ -157,7 +148,7 @@ const emit = defineEmits(['update:modelValue', 'success'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const title = computed(() => {
@@ -165,7 +156,6 @@ const title = computed(() => {
 })
 
 const cronGeneratorVisible = ref(false)
-const paramsDialogVisible = ref(false)
 
 // 使用表单管理 composable
 const {
@@ -184,6 +174,17 @@ const {
   handleSubmit
 } = useCronJobForm(props, emit)
 
+const showParamsSection = computed(() => {
+  const hasSelectedJob = isMultipleJobType.value
+    ? multipleJobIds.value.length > 0
+    : !!formData.value.jobId
+
+  return (
+    jobParams.value.length > 0 &&
+    (hasSelectedJob || ['cmd', 'cac'].includes(formData.value.jobType))
+  )
+})
+
 /**
  * CRON 表达式生成器确认
  */
@@ -194,9 +195,58 @@ function handleCronConfirm(cronExpression) {
 </script>
 
 <style scoped>
+.cron-job-form-dialog :deep(.el-dialog__body) {
+  max-height: 68vh;
+  overflow-y: auto;
+  padding-top: 18px;
+}
+
 .dialog-footer {
   display: flex;
   align-items: center;
   width: 100%;
+}
+
+.dialog-footer__spacer {
+  flex: 1;
+}
+
+.form-section {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+
+.form-section__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 14px;
+  padding: 10px 0 2px;
+}
+
+.form-section__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.form-section__subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.form-section__count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
 }
 </style>
