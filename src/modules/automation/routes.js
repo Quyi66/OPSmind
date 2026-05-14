@@ -68,25 +68,14 @@ export const JAO_ROUTE_DEFS = [
     )
   },
   {
-    key: 'requests',
-    path: 'requests',
-    title: '我的申请',
-    navLabel: '我的申请',
-    icon: 'fas fa-inbox',
+    key: 'taskScheduler',
+    path: 'taskScheduler',
+    title: '定时任务',
+    navLabel: '定时任务',
+    icon: 'fas fa-clock',
     ...createJobOrchestrationPageRoute(
-      'jao-requests',
-      () => import('./views/job/JobMyRequestsPage.vue')
-    )
-  },
-  {
-    key: 'approvals',
-    path: 'approvals',
-    title: '作业审批',
-    navLabel: '作业审批',
-    icon: 'fas fa-user-check',
-    ...createJobOrchestrationPageRoute(
-      'jao-approvals',
-      () => import('./views/job/JobApprovalsPage.vue')
+      'jao-taskScheduler',
+      () => import('./views/job/JobTaskSchedulerPage.vue')
     )
   },
   {
@@ -109,14 +98,25 @@ export const JAO_ROUTE_DEFS = [
     redirect: '/jao/runLogs?tab=statistics'
   },
   {
-    key: 'taskScheduler',
-    path: 'taskScheduler',
-    title: '定时任务',
-    navLabel: '定时任务',
-    icon: 'fas fa-clock',
+    key: 'requests',
+    path: 'requests',
+    title: '我的申请',
+    navLabel: '我的申请',
+    icon: 'fas fa-inbox',
     ...createJobOrchestrationPageRoute(
-      'jao-taskScheduler',
-      () => import('./views/job/JobTaskSchedulerPage.vue')
+      'jao-requests',
+      () => import('./views/job/JobMyRequestsPage.vue')
+    )
+  },
+  {
+    key: 'approvals',
+    path: 'approvals',
+    title: '作业审批',
+    navLabel: '作业审批',
+    icon: 'fas fa-user-check',
+    ...createJobOrchestrationPageRoute(
+      'jao-approvals',
+      () => import('./views/job/JobApprovalsPage.vue')
     )
   },
   {
@@ -186,10 +186,7 @@ export const CMD_ROUTE_DEFS = [
     title: '命令列表',
     navLabel: '命令列表',
     icon: 'fas fa-list',
-    ...createCommandCenterPageRoute(
-      'cmd-list',
-      () => import('./views/command/CommandListPage.vue')
-    )
+    ...createCommandCenterPageRoute('cmd-list', () => import('./views/command/CommandListPage.vue'))
   },
   {
     key: 'job',
@@ -197,10 +194,7 @@ export const CMD_ROUTE_DEFS = [
     title: '命令作业',
     navLabel: '命令作业',
     icon: 'fas fa-tasks',
-    ...createCommandCenterPageRoute(
-      'cmd-job',
-      () => import('./views/command/CommandJobPage.vue')
-    )
+    ...createCommandCenterPageRoute('cmd-job', () => import('./views/command/CommandJobPage.vue'))
   },
   {
     key: 'review',
@@ -219,10 +213,7 @@ export const CMD_ROUTE_DEFS = [
     title: '执行日志',
     navLabel: '执行日志',
     icon: 'fas fa-file-alt',
-    ...createCommandCenterPageRoute(
-      'cmd-logs',
-      () => import('./views/command/CommandLogsPage.vue')
-    )
+    ...createCommandCenterPageRoute('cmd-logs', () => import('./views/command/CommandLogsPage.vue'))
   },
   {
     key: 'console',
