@@ -1,182 +1,191 @@
 <template>
-  <div class="ops-page-layout">
-    <!-- 筛选区 -->
-    <div class="ops-filter-bar">
-      <el-form :model="filters" inline size="small">
-        <el-form-item label="时间范围">
-          <el-select v-model="filters.day" style="width: 140px">
-            <el-option label="全部" value="3650" />
-            <el-option label="今天" value="0" />
-            <el-option label="最近7天" value="7" />
-            <el-option label="最近30天" value="30" />
-            <el-option label="最近一年" value="365" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="状态筛选" style="width: 140px">
-            <el-option label="全部状态" value="all" />
-            <el-option label="等待中" value="WAITING" />
-            <el-option label="正在运行" value="RUNNING" />
-            <el-option label="回调" value="CALLBACK" />
-            <el-option label="运行错误" value="ERROR" />
-            <el-option label="运行失败" value="FAILED" />
-            <el-option label="完成" value="COMPLETED" />
-            <el-option label="运行终止" value="INTERRUPTED" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="类型">
-          <el-select v-model="filters.type" placeholder="类型筛选" style="width: 140px">
-            <el-option
-              v-for="option in jobTypeOptions"
-              :key="option.value || 'all'"
-              :label="option.label"
-              :value="option.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="关键词">
-          <el-input
-            v-model="filters.search"
-            placeholder="搜索作业标题"
-            clearable
-            style="width: 240px"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSearch">
-            <el-icon><Search /></el-icon>
-            搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon>
-            重置
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </div>
+  <div class="ops-page-layout run-logs-page">
+    <el-tabs v-model="activeTab" class="run-logs-tabs" @tab-change="handleTabChange">
+      <el-tab-pane label="运行记录" name="logs">
+        <div class="run-logs-tab-content">
+          <div class="ops-filter-bar">
+            <el-form :model="filters" inline size="small">
+              <el-form-item label="时间范围">
+                <el-select v-model="filters.day" style="width: 140px">
+                  <el-option label="全部" value="3650" />
+                  <el-option label="今天" value="0" />
+                  <el-option label="最近7天" value="7" />
+                  <el-option label="最近30天" value="30" />
+                  <el-option label="最近一年" value="365" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="状态">
+                <el-select v-model="filters.status" placeholder="状态筛选" style="width: 140px">
+                  <el-option label="全部状态" value="all" />
+                  <el-option label="等待中" value="WAITING" />
+                  <el-option label="正在运行" value="RUNNING" />
+                  <el-option label="回调" value="CALLBACK" />
+                  <el-option label="运行错误" value="ERROR" />
+                  <el-option label="运行失败" value="FAILED" />
+                  <el-option label="完成" value="COMPLETED" />
+                  <el-option label="运行终止" value="INTERRUPTED" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="类型">
+                <el-select v-model="filters.type" placeholder="类型筛选" style="width: 140px">
+                  <el-option
+                    v-for="option in jobTypeOptions"
+                    :key="option.value || 'all'"
+                    :label="option.label"
+                    :value="option.value"
+                  />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="关键词">
+                <el-input
+                  v-model="filters.search"
+                  placeholder="搜索作业标题"
+                  clearable
+                  style="width: 240px"
+                >
+                  <template #prefix>
+                    <el-icon><Search /></el-icon>
+                  </template>
+                </el-input>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" :loading="loading" @click="handleSearch">
+                  <el-icon><Search /></el-icon>
+                  搜索
+                </el-button>
+                <el-button @click="handleReset">
+                  <el-icon><RefreshRight /></el-icon>
+                  重置
+                </el-button>
+              </el-form-item>
+            </el-form>
+          </div>
 
-    <!-- 操作栏 -->
-    <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
-        <el-icon v-show="!loading"><Refresh /></el-icon>
-      </el-button>
-    </div>
-
-    <!-- 表格区域 -->
-    <div class="ops-table-wrapper">
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        max-height="calc(100vh - 230px)"
-      >
-        <el-table-column label="开始时间" width="180" sortable>
-          <template #default="{ row }">
-            {{ formatDateTime(row.start_time) }}
-          </template>
-        </el-table-column>
-
-        <el-table-column label="作业" show-overflow-tooltip>
-          <template #default="{ row }">
-            {{ translateText(row.job_title) }}
-          </template>
-        </el-table-column>
-
-        <el-table-column label="类型" width="100">
-          <template #default="{ row }">
-            {{ getJobTypeLabel(row.job_type) }}
-          </template>
-        </el-table-column>
-
-        <el-table-column label="用户" width="100">
-          <template #default="{ row }">
-            {{ row.username || '-' }}
-          </template>
-        </el-table-column>
-
-        <el-table-column label="审核" width="100">
-          <template #default="{ row }">
-            {{ row.review_user || '-' }}
-          </template>
-        </el-table-column>
-
-        <el-table-column label="耗时" width="100">
-          <template #default="{ row }">
-            {{ calculateDuration(row.start_time, row.end_time) }}
-          </template>
-        </el-table-column>
-
-        <el-table-column label="结束时间" width="180" sortable>
-          <template #default="{ row }">
-            {{ formatDateTime(row.end_time) }}
-          </template>
-        </el-table-column>
-
-        <el-table-column label="Ansible Node" width="150">
-          <template #default="{ row }">
-            <div class="node-list">
-              <el-tag
-                v-for="(ip, index) in parseNodes(row.ata_url)"
-                :key="index"
-                size="small"
-                type="info"
-              >
-                {{ ip }}
-              </el-tag>
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag
-              :type="getStatusType(row.status)"
-              style="cursor: pointer"
-              @click="handleViewResult(row)"
-            >
-              {{ getStatusLabel(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="详情" width="150">
-          <template #default="{ row }">
-            <div class="stats-info">{{ formatStats(row.stats_json) }}</div>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="操作" width="80" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              v-if="canRerun(row)"
-              type="primary"
-              text
-              size="small"
-              @click="handleRerun(row)"
-            >
-              重新启动
+          <div class="ops-action-bar">
+            <span style="flex: 1;"></span>
+            <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+              <el-icon v-show="!loading"><Refresh /></el-icon>
             </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
+          </div>
 
-    <div class="ops-pagination-wrapper">
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.size"
-        :total="pagination.total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        background
-        @size-change="handlePageSizeChange"
-        @current-change="handlePageChange"
-      />
-    </div>
+          <div class="ops-table-wrapper">
+            <el-table
+              v-loading="loading"
+              :data="tableData"
+              max-height="calc(100vh - 290px)"
+            >
+              <el-table-column label="开始时间" width="180" sortable>
+                <template #default="{ row }">
+                  {{ formatDateTime(row.start_time) }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="作业" show-overflow-tooltip>
+                <template #default="{ row }">
+                  {{ translateText(row.job_title) }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="类型" width="100">
+                <template #default="{ row }">
+                  {{ getJobTypeLabel(row.job_type) }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="用户" width="100">
+                <template #default="{ row }">
+                  {{ row.username || '-' }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="审核" width="100">
+                <template #default="{ row }">
+                  {{ row.review_user || '-' }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="耗时" width="100">
+                <template #default="{ row }">
+                  {{ calculateDuration(row.start_time, row.end_time) }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="结束时间" width="180" sortable>
+                <template #default="{ row }">
+                  {{ formatDateTime(row.end_time) }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="Ansible Node" width="150">
+                <template #default="{ row }">
+                  <div class="node-list">
+                    <el-tag
+                      v-for="(ip, index) in parseNodes(row.ata_url)"
+                      :key="index"
+                      size="small"
+                      type="info"
+                    >
+                      {{ ip }}
+                    </el-tag>
+                  </div>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="状态" width="100">
+                <template #default="{ row }">
+                  <el-tag
+                    :type="getStatusType(row.status)"
+                    style="cursor: pointer"
+                    @click="handleViewResult(row)"
+                  >
+                    {{ getStatusLabel(row.status) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="详情" width="150">
+                <template #default="{ row }">
+                  <div class="stats-info">{{ formatStats(row.stats_json) }}</div>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="操作" width="80" fixed="right">
+                <template #default="{ row }">
+                  <el-button
+                    v-if="canRerun(row)"
+                    type="primary"
+                    text
+                    size="small"
+                    @click="handleRerun(row)"
+                  >
+                    重新启动
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <div class="ops-pagination-wrapper">
+            <el-pagination
+              v-model:current-page="pagination.page"
+              v-model:page-size="pagination.size"
+              :total="pagination.total"
+              :page-sizes="[10, 20, 50, 100]"
+              layout="total, sizes, prev, pager, next, jumper"
+              background
+              @size-change="handlePageSizeChange"
+              @current-change="handlePageChange"
+            />
+          </div>
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label="统计分析" name="statistics">
+        <div class="stats-tab-wrapper">
+          <JobStatisticsPage v-if="activeTab === 'statistics'" />
+        </div>
+      </el-tab-pane>
+    </el-tabs>
 
     <ExecuteResultDialog
       v-if="resultDialogVisible"
@@ -189,12 +198,13 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultDialog.vue'
+import JobStatisticsPage from './JobStatisticsPage.vue'
 import { translateText } from '@/utils/i18n.js'
 
 const loading = ref(false)
@@ -215,6 +225,8 @@ const pagination = ref({
 const resultDialogVisible = ref(false)
 const resultMeta = ref({ runId: '', jobTitle: '' })
 const route = useRoute()
+const router = useRouter()
+const activeTab = ref(normalizeSingleQueryValue(route.query.tab) === 'statistics' ? 'statistics' : 'logs')
 
 let searchTimeout = null
 const jobTypeOptions = JOB_TYPE_OPTIONS
@@ -232,12 +244,16 @@ const statusMap = {
 
 onMounted(() => {
   syncFiltersFromRoute()
-  fetchData()
+  if (activeTab.value === 'logs') {
+    fetchData()
+  }
 })
 
 watch(
   () => route.query,
   (query, previousQuery) => {
+    const prevTab = normalizeSingleQueryValue(previousQuery?.tab)
+    const nextTab = normalizeSingleQueryValue(query?.tab)
     const prevDay = previousQuery?.day ?? ''
     const prevType = previousQuery?.type ?? ''
     const prevKeyword = previousQuery?.keyword ?? ''
@@ -245,7 +261,10 @@ watch(
     const nextType = query?.type ?? ''
     const nextKeyword = query?.keyword ?? ''
 
+    syncTabFromRoute()
+
     if (
+      prevTab === nextTab &&
       prevDay === nextDay &&
       prevType === nextType &&
       prevKeyword === nextKeyword
@@ -254,10 +273,18 @@ watch(
     }
 
     syncFiltersFromRoute()
-    pagination.value.page = 1
-    fetchData()
+
+    if (activeTab.value === 'logs') {
+      pagination.value.page = 1
+      fetchData()
+    }
   }
 )
+
+function syncTabFromRoute() {
+  const routeTab = normalizeSingleQueryValue(route.query.tab)
+  activeTab.value = routeTab === 'statistics' ? 'statistics' : 'logs'
+}
 
 function normalizeSingleQueryValue(value) {
   return Array.isArray(value) ? value[0] || '' : value || ''
@@ -271,6 +298,19 @@ function syncFiltersFromRoute() {
   filters.value.day = routeDay || '0'
   filters.value.type = validJobTypes.has(routeType) ? routeType : ''
   filters.value.search = routeKeyword || ''
+}
+
+function handleTabChange(tab) {
+  const nextTab = tab === 'statistics' ? 'statistics' : 'logs'
+  const nextQuery = { ...route.query }
+
+  if (nextTab === 'statistics') {
+    nextQuery.tab = 'statistics'
+  } else {
+    delete nextQuery.tab
+  }
+
+  router.replace({ query: nextQuery })
 }
 
 async function fetchData() {
@@ -439,7 +479,7 @@ async function handleRerun(row) {
 <style scoped lang="scss">
 @use '@/styles/common.scss' as *;
 
-.run-logs-view {
+.run-logs-page {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -450,6 +490,31 @@ async function handleRerun(row) {
   background: var(--el-bg-color);
   border-radius: 12px;
   overflow: hidden;
+}
+
+.run-logs-tabs {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.run-logs-tabs :deep(.el-tabs__content) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.run-logs-tabs :deep(.el-tab-pane) {
+  height: 100%;
+}
+
+.run-logs-tab-content,
+.stats-tab-wrapper {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .page-header {

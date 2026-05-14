@@ -104,12 +104,9 @@ export const JAO_ROUTE_DEFS = [
     key: 'statistics',
     path: 'statistics',
     title: '数据统计',
-    navLabel: '数据统计',
     icon: 'fas fa-chart-line',
-    ...createJobOrchestrationPageRoute(
-      'jao-statistics',
-      () => import('./views/job/JobStatisticsPage.vue')
-    )
+    name: 'jao-statistics',
+    redirect: '/jao/runLogs?tab=statistics'
   },
   {
     key: 'taskScheduler',

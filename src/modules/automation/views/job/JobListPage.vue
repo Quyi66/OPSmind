@@ -1,22 +1,23 @@
 <template>
-  <div class="ops-page-layout" style="flex-direction: row; padding: 0; gap: 0;">
-    <aside class="ops-sidebar-nav">
-      <div class="ops-sidebar-header">
-        <el-input v-model="appStr" style="width: 120px" placeholder="请输入" :prefix-icon="Search"
-          @input="filterApplets()" />
-      </div>
-      <el-scrollbar class="ops-sidebar-content">
-        <button v-for="applet in appOptions" :key="applet.name || 'all'" class="ops-sidebar-item"
-          :class="{ 'is-active': currentApp.name === applet.name }" @click="selectApplet(applet)" v-show="applet.show">
-          <span>{{ applet.title }}</span>
-        </button>
-      </el-scrollbar>
-    </aside>
-
-    <section class="ops-page-layout" style="border-radius: 0; flex: 1;">
+  <div class="ops-page-layout">
       <!-- 筛选栏 -->
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
+          <el-form-item label="应用范围">
+            <el-select
+              v-model="selectedAppletName"
+              filterable
+              style="width: 220px"
+              placeholder="全部应用"
+            >
+              <el-option
+                v-for="applet in appOptions"
+                :key="applet.name || 'all'"
+                :label="applet.title"
+                :value="applet.name"
+              />
+            </el-select>
+          </el-form-item>
           <el-form-item label="类型">
             <el-select v-model="filters.jobType" style="width: 120px;" placeholder="全部类型">
               <el-option label="全部类型" value="all" />
@@ -154,7 +155,6 @@
         <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredJobsCount"
           :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next, jumper" background />
       </div>
-    </section>
 
     <ExecuteJobDialog v-if="executeDialogVisible" v-model:visible="executeDialogVisible"
       :job-id="executeJobMeta?.id || ''" :job-type="executeJobMeta?.type || ''"
@@ -198,11 +198,10 @@ const selectedRows = ref([])
 const moveTarget = ref('')
 const currentSort = ref({ prop: 'updatedAt', order: 'descending' })
 
-const appStr = ref('')
 const appOptions = ref([])
 const loading = ref(false)
 const paginatedJobs = ref([])
-const currentApp = ref({ title: '' })
+const currentApp = ref({ name: '', title: '所有应用' })
 const originalJobs = ref([])
 
 // 统一筛选条件
@@ -226,13 +225,15 @@ const approveJobMeta = ref(null)
 // 统一的弹窗可见性（新建或编辑都使用同一个弹窗）
 const jobDialogVisible = ref(false)
 
-/** 过滤app */
-function filterApplets() {
-  const str = appStr.value.trim().toLowerCase()
-  appOptions.value.forEach((app) => {
-    app.show = app.title.toLowerCase().includes(str) || (app.title && app.title.toLowerCase().includes(str))
-  })
-}
+const selectedAppletName = computed({
+  get: () => currentApp.value?.name ?? '',
+  set: (value) => {
+    const app = appOptions.value.find((item) => item.name === value)
+    if (app) {
+      selectApplet(app)
+    }
+  }
+})
 
 /** 过滤列表 - 支持关键词和类型筛选 */
 function filterList() {
@@ -663,7 +664,6 @@ function getAppList() {
     // 处理应用列表，翻译标题
     const translatedApps = apps.map(app => ({
       ...app,
-      show: true,
       title: translateAppTitle(app.title)
     }))
 
