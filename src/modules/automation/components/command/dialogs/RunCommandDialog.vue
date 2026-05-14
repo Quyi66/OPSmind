@@ -84,8 +84,12 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { runCommands, saveJob } from '@/modules/automation/api/command'
+import { runJobByRequest, saveJob } from '@/modules/automation/api/command'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import {
+  buildCommandJobConfig,
+  buildDynamicCommandRunRequest
+} from '@/modules/automation/components/command/commandJob.utils'
 
 const props = defineProps({
   visible: {
@@ -208,15 +212,12 @@ async function handleRunCommand() {
 
   submitting.value = true
   try {
-    const request = {
-      commands: commandList.value.map(cmd => cmd.id),
-      hosts: formData.hosts
-    }
-
-    const response = await runCommands(request)
+    const response = await runJobByRequest(
+      buildDynamicCommandRunRequest(commandList.value, formData.hosts, 'linux')
+    )
     const result = response.data || response
 
-    ElMessage.success('命令已提交执行')
+    ElMessage.success('命令已提交执行，可在执行日志中查看')
     emit('success', result)
     handleClose()
   } catch (error) {
@@ -237,19 +238,11 @@ async function handleSaveJob() {
 
   submitting.value = true
   try {
-    const commands = commandList.value.map(cmd => ({ id: cmd.id }))
-    const configJson = JSON.stringify({
-      tasks: [{
-        commands: commands,
-        hosts: formData.hosts
-      }]
-    })
-
     const job = {
       title: formData.title,
       description: formData.description,
       type: 'command',
-      configJson: configJson
+      configJson: buildCommandJobConfig(commandList.value, formData.hosts, 'linux')
     }
 
     const response = await saveJob(job)

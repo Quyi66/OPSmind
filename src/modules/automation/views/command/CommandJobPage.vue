@@ -146,7 +146,7 @@
     <el-dialog
       v-model="editDialogVisible"
       width="820px"
-      title="编辑作业"
+      :title="editDialogTitle"
       :close-on-click-modal="false"
       destroy-on-close
     >
@@ -187,12 +187,9 @@
       </el-form>
       <template #footer>
         <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSaveJob">保存</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSaveJob">{{ editDialogConfirmText }}</el-button>
       </template>
     </el-dialog>
-
-    <!-- 创建作业对话框 -->
-    <CreateJobDialog v-model:visible="createDialogVisible" @success="handleCreateSuccess" />
 
     <JobApproveDialog
       v-if="approveDialogVisible"
@@ -208,6 +205,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import {
@@ -219,13 +217,27 @@ import {
   findAllApproveCommand
 } from '@/modules/automation/api/command'
 import * as jaoApi from '@/modules/automation/api/jao'
-import CreateJobDialog from '../../components/command/dialogs/CreateJobDialog.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import {
-  normalizeAcmDeviceJobHosts,
   normalizeAcmDeviceSelection
 } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
+import {
+  buildCommandJobConfig,
+  buildSavedCommandJobRunRequest
+} from '@/modules/automation/components/command/commandJob.utils'
 import JobApproveDialog from '@/modules/automation/components/job/JobListView/JobApproveDialog.vue'
+
+const router = useRouter()
+
+function createEmptyJobForm() {
+  return {
+    id: null,
+    title: '',
+    description: '',
+    type: 'command',
+    configJson: ''
+  }
+}
 
 const props = defineProps({
   jobType: {
@@ -246,13 +258,7 @@ const selectedJob = ref(null)
 const detailJob = ref(null)
 
 const formRef = ref(null)
-const jobForm = ref({
-  id: null,
-  title: '',
-  description: '',
-  type: 'command',
-  configJson: ''
-})
+const jobForm = ref(createEmptyJobForm())
 
 const selectedCommandIds = ref([])
 const jobHosts = ref([])
@@ -267,11 +273,16 @@ const approveJobMeta = ref(null)
 
 const detailDialogVisible = ref(false)
 const editDialogVisible = ref(false)
-const createDialogVisible = ref(false)
 
 const formRules = {
   title: [{ required: true, message: '请输入作业标题', trigger: 'blur' }]
 }
+
+const isEditMode = computed(() => Boolean(jobForm.value.id))
+
+const editDialogTitle = computed(() => (isEditMode.value ? '编辑作业' : '创建作业'))
+
+const editDialogConfirmText = computed(() => (isEditMode.value ? '保存' : '创建作业'))
 
 const filteredJobs = computed(() => {
   let result = [...jobs.value]
@@ -413,6 +424,12 @@ function fillEditForm(job) {
   jobHosts.value = normalizeAcmDeviceSelection(cfg.hosts, 'linux')
 }
 
+function prepareCreateForm() {
+  jobForm.value = createEmptyJobForm()
+  selectedCommandIds.value = []
+  jobHosts.value = []
+}
+
 function handleSortChange({ prop, order }) {
   if (!prop || !order) {
     sortField.value = 'updatedAt'
@@ -432,11 +449,8 @@ function handlePageChange(page) {
 }
 
 function handleCreateJob() {
-  createDialogVisible.value = true
-}
-
-function handleCreateSuccess() {
-  loadJobs()
+  prepareCreateForm()
+  editDialogVisible.value = true
 }
 
 function handleReset() {
@@ -472,18 +486,15 @@ async function handleSaveJob() {
 
   saving.value = true
   try {
-    const commands = selectedCommandIds.value.map(id => ({ id }))
-    const configJson = JSON.stringify({
-      tasks: [{ commands, hosts: normalizeAcmDeviceJobHosts(jobHosts.value, 'linux') }]
-    })
+    const isEditAction = Boolean(jobForm.value.id)
 
     const job = {
       ...jobForm.value,
-      configJson
+      configJson: buildCommandJobConfig(selectedCommandIds.value, jobHosts.value, 'linux')
     }
 
     await saveJob(job)
-    ElMessage.success('作业保存成功')
+    ElMessage.success(isEditAction ? '作业保存成功' : '作业创建成功')
     editDialogVisible.value = false
     await loadJobs()
     if (detailDialogVisible.value && detailJob.value?.id === job.id) {
@@ -535,17 +546,9 @@ async function handleRunJob(job) {
   running.value = true
   runningJobId.value = job.id
   try {
-    const jobRequest = {
-      jobId: detail.id,
-      type: detail.type,
-      configJson: detail.configJson,
-      options: {
-        secretParams: [],
-        params: {}
-      }
-    }
-    await runJobByRequest(jobRequest)
-    ElMessage.success('作业已提交执行')
+    await runJobByRequest(buildSavedCommandJobRunRequest(detail))
+    ElMessage.success('作业已提交执行，可在执行日志中查看')
+    router.push('/cmd/logs')
   } catch (error) {
     console.error('运行作业失败:', error)
     ElMessage.error('运行作业失败: ' + (error?.message || '未知错误'))
@@ -586,6 +589,12 @@ async function handleDeleteJob(job) {
 onMounted(() => {
   loadJobs()
   loadAvailableCommands()
+})
+
+watch(editDialogVisible, (visible) => {
+  if (!visible) {
+    prepareCreateForm()
+  }
 })
 
 defineExpose({
