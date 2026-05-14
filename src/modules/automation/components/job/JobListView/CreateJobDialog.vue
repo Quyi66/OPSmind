@@ -1,391 +1,463 @@
 <template>
-  <el-dialog
+  <el-drawer
     v-model="visible"
     :title="dialogTitle"
-    width="1080px"
+    size="76%"
+    direction="rtl"
     destroy-on-close
     @close="handleClose"
     :close-on-click-modal="false"
-    class="create-job-dialog"
+    class="create-job-drawer"
+    append-to-body
   >
-    <el-form
-      ref="formRef"
-      :model="job"
-      label-width="100px"
-      :disabled="formDisabled"
-      class="job-form"
-    >
-      <!-- 基本设置 -->
-      <div class="form-section">
-        <div class="section-title">基本设置</div>
-
-        <el-form-item label="标题" required>
-          <el-input v-model="job.title" placeholder="请输入作业标题" />
-        </el-form-item>
-
-        <el-form-item label="描述">
-          <el-input
-            v-model="job.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入作业描述"
-          />
-        </el-form-item>
-      </div>
-
-      <!-- 脚本作业配置 -->
-      <div v-if="job.type === 'script'" class="form-section">
-        <div class="section-title">脚本设置</div>
-
-        <el-form-item label="脚本类型">
-          <el-radio-group v-model="jobConfig.scriptType">
-            <el-radio-button value="playbook">Ansible Playbook</el-radio-button>
-            <el-radio-button value="adhoc">普通脚本</el-radio-button>
-          </el-radio-group>
-        </el-form-item>
-
-        <el-form-item label="脚本任务" required>
-          <div class="task-list">
-            <div
-              v-for="(task, taskIndex) in jobConfig.tasks"
-              :key="taskIndex"
-              class="task-item"
-            >
-              <!-- 已选脚本列表 -->
-              <div v-if="task.scripts && task.scripts.length > 0" class="selected-scripts">
-                <el-button size="small" @click="openFileSelector(taskIndex)">
-                  共 <strong>{{ task.scripts.length }}</strong> 个文件
-                </el-button>
-                <el-table :data="task.scripts" size="small" class="mt-2" max-height="300px">
-                  <el-table-column label="脚本路径" min-width="200">
-                    <template #default="{ row }">
-                      <span v-if="fileStatusMap[row.location]" class="text-danger">
-                        {{ row.location }}
-                        <i class="fa fa-exclamation-triangle"></i>
-                      </span>
-                      <span v-else>{{ row.location }}</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column label="额外参数" width="200">
-                    <template #default="{ row }">
-                      <el-input v-model="row.argline" size="small" placeholder="参数" />
-                    </template>
-                  </el-table-column>
-                  <el-table-column label="标签" width="120">
-                    <template #default="{ row }">
-                      <el-input v-model="row.tag" size="small" placeholder="tag" />
-                    </template>
-                  </el-table-column>
-                  <el-table-column width="60" align="center">
-                    <template #default="{ $index }">
-                      <el-button link type="danger" @click="removeScript(task, $index)">
-                        <el-icon><Delete /></el-icon>
-                      </el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </div>
-              <div v-else class="empty-state">
-                <el-button @click="openFileSelector(taskIndex)">选择文件</el-button>
-              </div>
-            </div>
+    <div class="create-job-drawer__layout">
+      <div class="create-job-drawer__masthead">
+        <div class="create-job-drawer__summary">
+          <span class="create-job-drawer__eyebrow">{{ drawerModeLabel }}</span>
+          <div class="create-job-drawer__meta">
+            <span class="create-job-drawer__meta-item">
+              <em>作业类型</em>
+              <strong>{{ currentTypeLabel }}</strong>
+            </span>
+            <span class="create-job-drawer__meta-item">
+              <em>所属应用</em>
+              <strong>{{ currentAppletLabel }}</strong>
+            </span>
           </div>
-        </el-form-item>
-
-        <el-form-item label="目标主机">
-          <div v-for="(task, taskIndex) in jobConfig.tasks" :key="taskIndex">
-            <el-radio-group v-model="task.hostsMode" class="mb-2">
-              <el-radio-button value="param">参数传入</el-radio-button>
-              <el-radio-button value="">预定义</el-radio-button>
-            </el-radio-group>
-            <el-input
-              v-if="task.hostsMode === 'param'"
-              v-model="task.hostsParam"
-              placeholder="主机参数名称"
-              style="width: 200px; margin-top: 8px; display: block;"
-            />
-            <AcmDeviceSelector
-              v-else
-              v-model="task.hosts"
-              ci-types="[auto]"
-              style="margin-top: 8px;"
-            />
-          </div>
-        </el-form-item>
-
-        <el-form-item label="回调API">
-          <el-input v-model="jobConfig.callback" placeholder="执行完成后回调的URL" />
-        </el-form-item>
-
-        <el-form-item label="任务超时">
-          <el-input-number v-model="jobConfig.taskTimeout" :min="-1" :step="60" />
-          <span style="margin-left: 8px;">秒</span>
-        </el-form-item>
-
-        <el-form-item label="详细输出">
-          <el-select v-model="jobConfig.verbosity" style="width: 200px;">
-            <el-option label="正常" :value="0" />
-            <el-option label="详细 (-v)" :value="1" />
-            <el-option label="更详细 (-vv)" :value="2" />
-            <el-option label="调试 (-vvv)" :value="3" />
-            <el-option label="连接调试 (-vvvv)" :value="4" />
-          </el-select>
-        </el-form-item>
-      </div>
-
-      <!-- REST 作业配置 -->
-      <div v-if="job.type === 'rest'" class="form-section">
-        <div class="section-title">REST设置</div>
-
-        <el-form-item label="CURL" required>
-          <el-input
-            v-model="restConfig.curl"
-            type="textarea"
-            :rows="8"
-            :placeholder="curlPlaceholder"
-            style="font-family: 'Consolas', 'Monaco', monospace;"
-          />
-          <div class="help-text">支持使用参数变量，格式：<code v-pre>{{param_name}}</code></div>
-        </el-form-item>
-      </div>
-
-      <!-- 命令作业配置 -->
-      <div v-if="job.type === 'command'" class="form-section">
-        <div class="section-title">命令设置</div>
-
-        <el-form-item label="执行命令" required>
-          <div
-            v-for="(task, taskIndex) in commandConfig.tasks"
-            :key="taskIndex"
-            class="w-full"
+        </div>
+        <div class="create-job-drawer__nav">
+          <button
+            v-for="section in navSections"
+            :key="section.id"
+            type="button"
+            class="create-job-drawer__nav-item"
+            :class="{ 'is-active': activeSection === section.id }"
+            @click="scrollToSection(section.id)"
           >
-            <!-- 已选命令列表 -->
-            <div v-if="task.commands && task.commands.length > 0">
-              <div class="d-flex mb-2">
-                <el-button size="small" @click="openCommandSelector(taskIndex)">
-                  共 <strong>{{ task.commands.length }}</strong> 条命令
-                </el-button>
+            {{ section.label }}
+          </button>
+        </div>
+      </div>
+
+      <el-scrollbar ref="scrollbarRef" class="create-job-drawer__scroll" @scroll="handleFormScroll">
+        <div v-loading="loading" class="create-job-drawer__content">
+          <el-form
+            ref="formRef"
+            :model="job"
+            label-width="100px"
+            :disabled="formDisabled"
+            class="job-form"
+          >
+            <!-- 基本设置 -->
+            <div id="section-base" class="form-section">
+              <div class="section-title">基本设置</div>
+
+              <el-form-item label="标题" required>
+                <el-input v-model="job.title" placeholder="请输入作业标题" />
+              </el-form-item>
+
+              <el-form-item label="描述">
                 <el-input
-                  v-model="task.commandFilter"
-                  placeholder="搜索命令"
-                  clearable
-                  size="small"
-                  style="width: 200px; margin-left: auto;"
+                  v-model="job.description"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="请输入作业描述"
                 />
-              </div>
-              <div class="command-list">
-                <pre
-                  v-for="(cmd, cmdIndex) in filteredTaskCommands(task)"
-                  :key="cmdIndex"
-                  class="command-item"
-                >{{ cmd.cmd || cmd.command }}</pre>
-              </div>
+              </el-form-item>
             </div>
-            <!-- 空状态 -->
-            <div v-else class="empty-state">
-              <el-button @click="openCommandSelector(taskIndex)">选择命令</el-button>
-            </div>
-          </div>
-        </el-form-item>
 
-        <el-form-item label="目标主机" required>
-          <div v-for="(task, taskIndex) in commandConfig.tasks" :key="taskIndex">
-            <AcmDeviceSelector
-              v-model="task.hosts"
-              ci-types="[auto]"
-            />
-          </div>
-        </el-form-item>
-      </div>
+            <!-- 脚本作业配置 -->
+            <div v-if="job.type === 'script'" id="section-script" class="form-section">
+              <div class="section-title">脚本设置</div>
 
-      <!-- 运行参数 -->
-      <div v-if="job.type !== 'command'" class="form-section">
-        <div class="section-title">运行参数</div>
+              <el-form-item label="脚本类型">
+                <el-radio-group v-model="jobConfig.scriptType">
+                  <el-radio-button value="playbook">Ansible Playbook</el-radio-button>
+                  <el-radio-button value="adhoc">普通脚本</el-radio-button>
+                </el-radio-group>
+              </el-form-item>
 
-        <el-form-item>
-          <div>
-            <el-button class="ms-auto" @click="addParam">
-              <i class="fa fa-plus"></i>
-              添加参数
-            </el-button>
-            <el-button @click="addParamAuto">
-              <i class="fa fa-brackets-curly"></i>
-              解析参数
-            </el-button>
-          </div>
+              <el-form-item label="脚本任务" required>
+                <div class="task-list">
+                  <div
+                    v-for="(task, taskIndex) in jobConfig.tasks"
+                    :key="taskIndex"
+                    class="task-item"
+                  >
+                    <!-- 已选脚本列表 -->
+                    <div v-if="task.scripts && task.scripts.length > 0" class="selected-scripts">
+                      <el-button size="small" @click="openFileSelector(taskIndex)">
+                        共
+                        <strong>{{ task.scripts.length }}</strong>
+                        个文件
+                      </el-button>
+                      <el-table :data="task.scripts" size="small" class="mt-2" max-height="300px">
+                        <el-table-column label="脚本路径" min-width="200">
+                          <template #default="{ row }">
+                            <span v-if="fileStatusMap[row.location]" class="text-danger">
+                              {{ row.location }}
+                              <i class="fa fa-exclamation-triangle"></i>
+                            </span>
+                            <span v-else>{{ row.location }}</span>
+                          </template>
+                        </el-table-column>
+                        <el-table-column label="额外参数" width="200">
+                          <template #default="{ row }">
+                            <el-input v-model="row.argline" size="small" placeholder="参数" />
+                          </template>
+                        </el-table-column>
+                        <el-table-column label="标签" width="120">
+                          <template #default="{ row }">
+                            <el-input v-model="row.tag" size="small" placeholder="tag" />
+                          </template>
+                        </el-table-column>
+                        <el-table-column width="60" align="center">
+                          <template #default="{ $index }">
+                            <el-button link type="danger" @click="removeScript(task, $index)">
+                              <el-icon><Delete /></el-icon>
+                            </el-button>
+                          </template>
+                        </el-table-column>
+                      </el-table>
+                    </div>
+                    <div v-else class="empty-state">
+                      <el-button @click="openFileSelector(taskIndex)">选择文件</el-button>
+                    </div>
+                  </div>
+                </div>
+              </el-form-item>
 
-          <el-table
-            v-if="job.params && job.params.length > 0"
-            :data="job.params"
-            border
-            size="small"
-            class="mt-2"
-            max-height="300px"
-          >
-            <el-table-column label="参数" width="130">
-              <template #default="{ row }">
-                <el-input v-model="row.name" size="small" placeholder="参数名" />
-              </template>
-            </el-table-column>
-            <el-table-column label="显示名称" width="130">
-              <template #default="{ row }">
-                <el-input v-model="row.label" size="small" placeholder="显示名称" />
-              </template>
-            </el-table-column>
-            <el-table-column label="描述" min-width="150">
-              <template #default="{ row }">
-                <el-input v-model="row.description" size="small" placeholder="参数描述" />
-              </template>
-            </el-table-column>
-            <el-table-column label="默认值" width="120">
-              <template #default="{ row }">
-                <el-input v-model="row.defaultValue" size="small" placeholder="默认值" />
-              </template>
-            </el-table-column>
-            <el-table-column label="类型" width="120">
-              <template #default="{ row }">
-                <el-select v-model="row.type" size="small">
-                  <el-option
-                    v-for="pt in paramTypeList"
-                    :key="pt.type"
-                    :label="pt.title"
-                    :value="pt.type"
+              <el-form-item label="目标主机">
+                <div v-for="(task, taskIndex) in jobConfig.tasks" :key="taskIndex">
+                  <el-radio-group v-model="task.hostsMode" class="mb-2">
+                    <el-radio-button value="param">参数传入</el-radio-button>
+                    <el-radio-button value="">预定义</el-radio-button>
+                  </el-radio-group>
+                  <el-input
+                    v-if="task.hostsMode === 'param'"
+                    v-model="task.hostsParam"
+                    placeholder="主机参数名称"
+                    style="width: 200px; margin-top: 8px; display: block"
                   />
+                  <AcmDeviceSelector
+                    v-else
+                    v-model="task.hosts"
+                    ci-types="[auto]"
+                    style="margin-top: 8px"
+                  />
+                </div>
+              </el-form-item>
+
+              <el-form-item label="回调API">
+                <el-input v-model="jobConfig.callback" placeholder="执行完成后回调的URL" />
+              </el-form-item>
+
+              <el-form-item label="任务超时">
+                <el-input-number v-model="jobConfig.taskTimeout" :min="-1" :step="60" />
+                <span style="margin-left: 8px">秒</span>
+              </el-form-item>
+
+              <el-form-item label="详细输出">
+                <el-select v-model="jobConfig.verbosity" style="width: 200px">
+                  <el-option label="正常" :value="0" />
+                  <el-option label="详细 (-v)" :value="1" />
+                  <el-option label="更详细 (-vv)" :value="2" />
+                  <el-option label="调试 (-vvv)" :value="3" />
+                  <el-option label="连接调试 (-vvvv)" :value="4" />
                 </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column label="加密" width="50">
-              <template #default="{ row }">
-                <el-checkbox v-model="row.secret" />
-              </template>
-            </el-table-column>
-            <el-table-column width="50">
-              <template #default="{ row }">
-                <el-button
-                  size="small"
-                  link
-                  type="danger"
-                  @click="deleteParam(row)"
+              </el-form-item>
+            </div>
+
+            <!-- REST 作业配置 -->
+            <div v-if="job.type === 'rest'" id="section-rest" class="form-section">
+              <div class="section-title">REST设置</div>
+
+              <el-form-item label="CURL" required>
+                <el-input
+                  v-model="restConfig.curl"
+                  type="textarea"
+                  :rows="8"
+                  :placeholder="curlPlaceholder"
+                  style="font-family: 'Consolas', 'Monaco', monospace"
+                />
+                <div class="help-text">
+                  支持使用参数变量，格式：
+                  <code v-pre>{{ param_name }}</code>
+                </div>
+              </el-form-item>
+            </div>
+
+            <!-- 命令作业配置 -->
+            <div v-if="job.type === 'command'" id="section-command" class="form-section">
+              <div class="section-title">命令设置</div>
+
+              <el-form-item label="执行命令" required>
+                <div
+                  v-for="(task, taskIndex) in commandConfig.tasks"
+                  :key="taskIndex"
+                  class="w-full"
                 >
-                  <!-- <i class="fa fa-minus"></i> -->
-                   <el-icon><Delete /></el-icon>
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-form-item>
-      </div>
+                  <!-- 已选命令列表 -->
+                  <div v-if="task.commands && task.commands.length > 0">
+                    <div class="d-flex mb-2">
+                      <el-button size="small" @click="openCommandSelector(taskIndex)">
+                        共
+                        <strong>{{ task.commands.length }}</strong>
+                        条命令
+                      </el-button>
+                      <el-input
+                        v-model="task.commandFilter"
+                        placeholder="搜索命令"
+                        clearable
+                        size="small"
+                        style="width: 200px; margin-left: auto"
+                      />
+                    </div>
+                    <div class="command-list">
+                      <pre
+                        v-for="(cmd, cmdIndex) in filteredTaskCommands(task)"
+                        :key="cmdIndex"
+                        class="command-item"
+                        >{{ cmd.cmd || cmd.command }}</pre
+                      >
+                    </div>
+                  </div>
+                  <!-- 空状态 -->
+                  <div v-else class="empty-state">
+                    <el-button @click="openCommandSelector(taskIndex)">选择命令</el-button>
+                  </div>
+                </div>
+              </el-form-item>
 
-      <!-- 日志和审核 -->
-      <div class="form-section">
-        <div class="section-title">日志和审核</div>
-
-        <el-form-item label="操作审批">
-          <el-checkbox v-model="job.needApprove" :disabled="job.needReview">
-            需要审批
-          </el-checkbox>
-          <el-checkbox v-model="job.needReview" :disabled="job.needApprove" class="ms-3">
-            双人复核
-          </el-checkbox>
-        </el-form-item>
-
-        <el-form-item v-if="job.type !== 'command'" label="操作日志">
-          <el-checkbox v-model="jobConfig.audit.enabled">
-            记录操作日志
-          </el-checkbox>
-        </el-form-item>
-
-        <el-form-item v-if="jobConfig.audit.enabled" label="模块">
-          <el-input
-            v-model="jobConfig.audit.module"
-            maxlength="50"
-            style="width: 300px;"
-            placeholder="日志所属的功能模块"
-          />
-        </el-form-item>
-
-        <el-form-item v-if="jobConfig.audit.enabled" label="操作">
-          <el-input
-            v-model="jobConfig.audit.action"
-            maxlength="100"
-            style="width: 300px;"
-            placeholder="具体的操作类型"
-          />
-        </el-form-item>
-
-        <el-form-item label="操作延时">
-          <el-checkbox v-model="job.needDelayed">
-            延时执行
-          </el-checkbox>
-        </el-form-item>
-      </div>
-
-      <!-- 测试作业 -->
-      <div v-if="!viewMode" class="form-section">
-        <div class="section-title">测试作业</div>
-
-        <el-form-item>
-          <div class="test-panel">
-            <div class="test-controls">
-              <el-button
-                v-if="testJobStatus"
-                :type="testJobStatus.type"
-                :disabled="!testRunId"
-                class="test-status-button"
-                @click="viewTestResult"
-              >
-                <i :class="['fa', 'fa-fw', testJobStatus.icon]"></i>
-                <span>{{ testJobStatus.title }}</span>
-              </el-button>
-
-              <el-button
-                type="primary"
-                :loading="testJobRunning"
-                :disabled="testJobRunning || !canRunSavedJobTest"
-                @click="runTestJob"
-              >
-                <i class="fa fa-fw fa-chevron-right"></i>
-                运行测试
-              </el-button>
-
-              <span v-if="!isEditMode" class="test-hint">
-                请先保存作业，再运行测试。
-              </span>
+              <el-form-item label="目标主机" required>
+                <div v-for="(task, taskIndex) in commandConfig.tasks" :key="taskIndex">
+                  <AcmDeviceSelector v-model="task.hosts" ci-types="[auto]" />
+                </div>
+              </el-form-item>
             </div>
 
-            <div
-              v-if="testJobResult"
-              :class="['test-result-preview', `is-${testResultPreviewState}`]"
-            >
-              <div class="test-result-preview__header">
-                <span>运行结果预览</span>
-                <span v-if="testRunId" class="test-result-preview__meta">
-                  Run ID: {{ testRunId }}
-                </span>
+            <!-- 运行参数 -->
+            <div v-if="job.type !== 'command'" id="section-params" class="form-section">
+              <div class="section-header">
+                <div class="section-title">运行参数</div>
+                <span class="section-badge">{{ job.params.length }} 项</span>
               </div>
-              <pre>{{ formattedTestJobResult }}</pre>
-            </div>
-          </div>
-        </el-form-item>
-      </div>
-    </el-form>
 
-    <template #footer>
-      <div v-if="viewMode" class="dialog-footer">
-        <el-button @click="handleClose">关闭</el-button>
+              <el-form-item>
+                <div class="params-panel">
+                  <div class="params-toolbar">
+                    <span class="params-toolbar__summary">
+                      {{
+                        job.params.length
+                          ? `已配置 ${job.params.length} 个运行参数`
+                          : '当前未配置运行参数'
+                      }}
+                    </span>
+                    <div class="params-toolbar__actions">
+                      <el-button class="ms-auto" @click="addParam">
+                        <i class="fa fa-plus"></i>
+                        添加参数
+                      </el-button>
+                      <el-button @click="addParamAuto">
+                        <i class="fa fa-brackets-curly"></i>
+                        解析参数
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <el-table
+                    v-if="job.params && job.params.length > 0"
+                    :data="job.params"
+                    border
+                    size="small"
+                    class="mt-2"
+                    max-height="300px"
+                  >
+                    <el-table-column label="参数" width="130">
+                      <template #default="{ row }">
+                        <el-input v-model="row.name" size="small" placeholder="参数名" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="显示名称" width="130">
+                      <template #default="{ row }">
+                        <el-input v-model="row.label" size="small" placeholder="显示名称" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="描述" min-width="150">
+                      <template #default="{ row }">
+                        <el-input v-model="row.description" size="small" placeholder="参数描述" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="默认值" width="120">
+                      <template #default="{ row }">
+                        <el-input v-model="row.defaultValue" size="small" placeholder="默认值" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="类型" width="120">
+                      <template #default="{ row }">
+                        <el-select v-model="row.type" size="small">
+                          <el-option
+                            v-for="pt in paramTypeList"
+                            :key="pt.type"
+                            :label="pt.title"
+                            :value="pt.type"
+                          />
+                        </el-select>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="加密" width="50">
+                      <template #default="{ row }">
+                        <el-checkbox v-model="row.secret" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column width="50">
+                      <template #default="{ row }">
+                        <el-button size="small" link type="danger" @click="deleteParam(row)">
+                          <el-icon><Delete /></el-icon>
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+
+                  <div v-else class="section-empty-state">
+                    <i class="fa fa-sliders-h"></i>
+                    <strong>暂无运行参数</strong>
+                    <span>可以手动新增，也可以先配置脚本或 CURL 后自动解析。</span>
+                  </div>
+                </div>
+              </el-form-item>
+            </div>
+
+            <!-- 日志和审核 -->
+            <div id="section-audit" class="form-section">
+              <div class="section-title">日志和审核</div>
+
+              <el-form-item label="操作审批">
+                <el-checkbox v-model="job.needApprove" :disabled="job.needReview">
+                  需要审批
+                </el-checkbox>
+                <el-checkbox v-model="job.needReview" :disabled="job.needApprove" class="ms-3">
+                  双人复核
+                </el-checkbox>
+              </el-form-item>
+
+              <el-form-item v-if="job.type !== 'command'" label="操作日志">
+                <el-checkbox v-model="jobConfig.audit.enabled">记录操作日志</el-checkbox>
+              </el-form-item>
+
+              <el-form-item v-if="jobConfig.audit.enabled" label="模块">
+                <el-input
+                  v-model="jobConfig.audit.module"
+                  maxlength="50"
+                  style="width: 300px"
+                  placeholder="日志所属的功能模块"
+                />
+              </el-form-item>
+
+              <el-form-item v-if="jobConfig.audit.enabled" label="操作">
+                <el-input
+                  v-model="jobConfig.audit.action"
+                  maxlength="100"
+                  style="width: 300px"
+                  placeholder="具体的操作类型"
+                />
+              </el-form-item>
+
+              <el-form-item label="操作延时">
+                <el-checkbox v-model="job.needDelayed">延时执行</el-checkbox>
+              </el-form-item>
+            </div>
+
+            <!-- 测试作业 -->
+            <div v-if="!viewMode" id="section-test" class="form-section">
+              <div class="section-header">
+                <div class="section-title">测试作业</div>
+                <span class="section-badge">{{ testStatusLabel }}</span>
+              </div>
+
+              <el-form-item>
+                <div class="test-panel">
+                  <div class="test-summary-card">
+                    <div class="test-summary-card__item">
+                      <span>当前状态</span>
+                      <strong>{{ testStatusLabel }}</strong>
+                    </div>
+                    <div class="test-summary-card__item">
+                      <span>最近 Run ID</span>
+                      <strong>{{ testRunId || '-' }}</strong>
+                    </div>
+                  </div>
+
+                  <div class="test-controls">
+                    <el-button
+                      v-if="testJobStatus"
+                      :type="testJobStatus.type"
+                      :disabled="!testRunId && !testJobResult"
+                      class="test-status-button"
+                      @click="viewTestResult"
+                    >
+                      <i :class="['fa', 'fa-fw', testJobStatus.icon]"></i>
+                      <span>{{ testJobStatus.title }}</span>
+                    </el-button>
+
+                    <el-button
+                      type="primary"
+                      :loading="testJobRunning"
+                      :disabled="testJobRunning || !canRunSavedJobTest"
+                      @click="runTestJob"
+                    >
+                      <i class="fa fa-fw fa-chevron-right"></i>
+                      运行测试
+                    </el-button>
+
+                    <span v-if="!isEditMode" class="test-hint">请先保存作业，再运行测试。</span>
+                  </div>
+
+                  <div
+                    v-if="testJobResult"
+                    ref="testResultRef"
+                    :class="['test-result-preview', `is-${testResultPreviewState}`]"
+                  >
+                    <div class="test-result-preview__header">
+                      <span>运行结果预览</span>
+                      <span v-if="testRunId" class="test-result-preview__meta">
+                        Run ID: {{ testRunId }}
+                      </span>
+                    </div>
+                    <pre>{{ formattedTestJobResult }}</pre>
+                  </div>
+                </div>
+              </el-form-item>
+            </div>
+          </el-form>
+        </div>
+      </el-scrollbar>
+
+      <div v-if="viewMode" class="dialog-footer create-job-drawer__footer">
+        <div class="create-job-drawer__footer-info">
+          <span v-for="item in footerFacts" :key="item" class="create-job-drawer__footer-pill">
+            {{ item }}
+          </span>
+        </div>
+        <div class="create-job-drawer__footer-actions">
+          <el-button @click="handleClose">关闭</el-button>
+        </div>
       </div>
-      <div v-else class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="submitting"
-          @click="save"
-        >
-          保存
-        </el-button>
+      <div v-else class="dialog-footer create-job-drawer__footer">
+        <div class="create-job-drawer__footer-info">
+          <span v-for="item in footerFacts" :key="item" class="create-job-drawer__footer-pill">
+            {{ item }}
+          </span>
+        </div>
+        <div class="create-job-drawer__footer-actions">
+          <el-button @click="handleClose">取消</el-button>
+          <el-button type="primary" :loading="submitting" :disabled="loading" @click="save">
+            保存
+          </el-button>
+        </div>
       </div>
-    </template>
-  </el-dialog>
+    </div>
+  </el-drawer>
 
   <!-- 文件选择器对话框 -->
   <FileSelectorDialog
@@ -404,7 +476,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, reactive } from 'vue'
+import { ref, computed, watch, reactive, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import * as gfsApi from '@/modules/automation/api/gfs'
@@ -454,7 +526,7 @@ const emit = defineEmits(['update:modelValue', 'success'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 // 是否为编辑模式
@@ -464,7 +536,7 @@ const isEditMode = computed(() => !!props.jobId)
 const loading = ref(false)
 
 const dialogTitle = computed(() => {
-  const typeOption = CREATE_JOB_TYPE_OPTIONS.find((opt) => opt.value === job.type)
+  const typeOption = CREATE_JOB_TYPE_OPTIONS.find(opt => opt.value === job.type)
   if (props.viewMode) {
     return typeOption ? `查看${typeOption.label}` : '查看作业'
   }
@@ -472,6 +544,63 @@ const dialogTitle = computed(() => {
     return typeOption ? `编辑${typeOption.label}` : '编辑作业'
   }
   return typeOption ? `新建${typeOption.label}` : '新建作业'
+})
+
+const drawerModeLabel = computed(() => {
+  if (props.viewMode) {
+    return '查看模式'
+  }
+  return isEditMode.value ? '编辑模式' : '新建模式'
+})
+
+const currentTypeLabel = computed(() => {
+  const currentType = job.type || props.jobType
+  const typeOption = CREATE_JOB_TYPE_OPTIONS.find(opt => opt.value === currentType)
+  return typeOption?.label || '待选择'
+})
+
+const currentAppletLabel = computed(() => {
+  const currentAppletCode = job.appletCode || props.appletCode
+  if (!currentAppletCode) {
+    return '未指定'
+  }
+
+  const matchedApplet = props.appletsList.find(item => item.name === currentAppletCode)
+  return (
+    matchedApplet?.displayTitle || matchedApplet?.title || matchedApplet?.name || currentAppletCode
+  )
+})
+
+const scriptFileCount = computed(() =>
+  jobConfig.tasks.reduce((count, task) => count + (task.scripts?.length || 0), 0)
+)
+
+const commandCount = computed(() =>
+  commandConfig.tasks.reduce((count, task) => count + (task.commands?.length || 0), 0)
+)
+
+const testStatusLabel = computed(() => testJobStatus.value?.title || '未运行')
+
+const footerFacts = computed(() => {
+  const facts = [currentTypeLabel.value, currentAppletLabel.value]
+
+  if (job.type === 'script') {
+    facts.push(`脚本 ${scriptFileCount.value}`)
+  } else if (job.type === 'command') {
+    facts.push(`命令 ${commandCount.value}`)
+  } else if (job.type === 'rest') {
+    facts.push(restConfig.curl ? '已配置 CURL' : '未配置 CURL')
+  }
+
+  if (job.type !== 'command') {
+    facts.push(`参数 ${job.params.length}`)
+  }
+
+  if (!props.viewMode) {
+    facts.push(`测试 ${testStatusLabel.value}`)
+  }
+
+  return facts
 })
 
 // 参数类型列表
@@ -499,15 +628,14 @@ const testJobRunning = ref(false)
 const testJobStatus = ref(null)
 const testJobResult = ref(null)
 const testRunId = ref(null)
+const testResultRef = ref(null)
 const canRunSavedJobTest = computed(() => canRunTest.value && isEditMode.value)
 const testResultPreviewState = computed(() => testJobStatus.value?.name || 'default')
 const formattedTestJobResult = computed(() => formatTestJobResult(testJobResult.value))
 
 // 导航区块配置
 const navSections = computed(() => {
-  const sections = [
-    { id: 'section-base', label: '基本设置' }
-  ]
+  const sections = [{ id: 'section-base', label: '基本设置' }]
 
   if (job.type === 'script') {
     sections.push({ id: 'section-script', label: '脚本设置' })
@@ -530,7 +658,7 @@ const navSections = computed(() => {
 })
 
 // 表单是否禁用（查看模式下禁用所有表单元素）
-const formDisabled = computed(() => props.viewMode)
+const formDisabled = computed(() => props.viewMode || loading.value)
 
 // 是否可以运行测试
 const canRunTest = computed(() => {
@@ -552,7 +680,7 @@ function formatTestJobResult(result) {
   if (typeof result === 'string') return result
   try {
     return JSON.stringify(result, null, 2)
-  } catch (error) {
+  } catch {
     return String(result)
   }
 }
@@ -578,10 +706,39 @@ function normalizeStatus(status) {
  */
 function scrollToSection(sectionId) {
   activeSection.value = sectionId
-  const element = document.getElementById(sectionId)
+  const wrap = getScrollbarWrap()
+  const element = wrap?.querySelector(`#${sectionId}`) || document.getElementById(sectionId)
+  if (wrap && element) {
+    wrap.scrollTo({
+      top: Math.max(element.offsetTop - 12, 0),
+      behavior: 'smooth'
+    })
+    return
+  }
+
   if (element) {
     element.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
+}
+
+function getScrollbarWrap() {
+  return scrollbarRef.value?.wrapRef || null
+}
+
+function updateActiveSection(scrollTop = 0) {
+  const wrap = getScrollbarWrap()
+  if (!wrap) return
+
+  const current = [...navSections.value].reverse().find(section => {
+    const element = wrap.querySelector(`#${section.id}`)
+    return element ? scrollTop + 36 >= element.offsetTop : false
+  })
+
+  activeSection.value = current?.id || navSections.value[0]?.id || 'section-base'
+}
+
+function handleFormScroll({ scrollTop }) {
+  updateActiveSection(scrollTop)
 }
 
 // 作业基本信息
@@ -602,13 +759,15 @@ const jobConfig = reactive({
   callback: '',
   taskTimeout: -1,
   verbosity: 0,
-  tasks: [{
-    scripts: [],
-    hosts: [],
-    hostsMode: 'param',
-    hostsParam: 'hosts',
-    hostsText: ''
-  }],
+  tasks: [
+    {
+      scripts: [],
+      hosts: [],
+      hostsMode: 'param',
+      hostsParam: 'hosts',
+      hostsText: ''
+    }
+  ],
   audit: {
     enabled: false,
     module: '',
@@ -630,19 +789,21 @@ curl -X POST 'http://api.example.com/data' \\
 
 // 命令作业配置
 const commandConfig = reactive({
-  tasks: [{
-    commands: [],
-    hosts: [],
-    hostsMode: 'param',
-    commandFilter: ''
-  }]
+  tasks: [
+    {
+      commands: [],
+      hosts: [],
+      hostsMode: 'param',
+      commandFilter: ''
+    }
+  ]
 })
 
 // 当前任务的脚本列表（用于文件选择器）
 const currentTaskScripts = computed(() => {
   const task = jobConfig.tasks[currentTaskIndex.value]
   if (!task || !task.scripts) return []
-  return task.scripts.map((s) => ({ path: s.location }))
+  return task.scripts.map(s => ({ path: s.location }))
 })
 
 // 当前任务的命令列表（用于命令选择器）
@@ -659,10 +820,11 @@ function filteredTaskCommands(task) {
   if (!task.commands || task.commands.length === 0) return []
   if (!task.commandFilter) return task.commands
   const kw = task.commandFilter.toLowerCase()
-  return task.commands.filter(cmd =>
-    (cmd.cmd && cmd.cmd.toLowerCase().includes(kw)) ||
-    (cmd.command && cmd.command.toLowerCase().includes(kw)) ||
-    (cmd.name && cmd.name.toLowerCase().includes(kw))
+  return task.commands.filter(
+    cmd =>
+      (cmd.cmd && cmd.cmd.toLowerCase().includes(kw)) ||
+      (cmd.command && cmd.command.toLowerCase().includes(kw)) ||
+      (cmd.name && cmd.name.toLowerCase().includes(kw))
   )
 }
 
@@ -698,7 +860,7 @@ function handleFileSelect(files) {
   const task = jobConfig.tasks[currentTaskIndex.value]
   if (!task) return
 
-  task.scripts = files.map((f) => ({
+  task.scripts = files.map(f => ({
     location: f.path,
     argline: f.config || '',
     tag: f.tag || ''
@@ -714,7 +876,7 @@ function handleFileSelect(files) {
 async function checkFilesExist(scripts) {
   if (!scripts || scripts.length === 0) return
 
-  const paths = scripts.map((s) => s.location)
+  const paths = scripts.map(s => s.location)
   try {
     const response = await gfsApi.checkFileExist(paths)
     fileStatusMap.value = response.data || {}
@@ -728,28 +890,6 @@ async function checkFilesExist(scripts) {
  */
 function removeScript(task, index) {
   task.scripts.splice(index, 1)
-}
-
-/**
- * 添加任务步骤
- */
-function addTask() {
-  jobConfig.tasks.push({
-    scripts: [],
-    hosts: [],
-    hostsMode: 'param',
-    hostsParam: 'hosts',
-    hostsText: ''
-  })
-}
-
-/**
- * 移除任务步骤
- */
-function removeTask(index) {
-  if (jobConfig.tasks.length > 1) {
-    jobConfig.tasks.splice(index, 1)
-  }
 }
 
 /**
@@ -785,12 +925,12 @@ function addParamAuto() {
 
   if (job.type === 'script') {
     // 从脚本配置中解析参数
-    jobConfig.tasks.forEach((task) => {
-      task.scripts.forEach((script) => {
+    jobConfig.tasks.forEach(task => {
+      task.scripts.forEach(script => {
         // 从 argline 中提取参数
         const matches = (script.argline || '').match(/\{\{(\w+)\}\}/g)
         if (matches) {
-          matches.forEach((match) => {
+          matches.forEach(match => {
             const paramName = match.replace(/\{\{|\}\}/g, '')
             if (!paramList.includes(paramName)) {
               paramList.push(paramName)
@@ -810,7 +950,7 @@ function addParamAuto() {
     // 从 CURL 命令中解析参数
     const matches = (restConfig.curl || '').match(/\{\{(\w+)\}\}/g)
     if (matches) {
-      matches.forEach((match) => {
+      matches.forEach(match => {
         const paramName = match.replace(/\{\{|\}\}/g, '')
         if (!paramList.includes(paramName)) {
           paramList.push(paramName)
@@ -820,8 +960,8 @@ function addParamAuto() {
   }
 
   // 过滤掉已存在的参数
-  const existingParams = job.params.map((p) => p.name)
-  const newParams = paramList.filter((p) => !existingParams.includes(p))
+  const existingParams = job.params.map(p => p.name)
+  const newParams = paramList.filter(p => !existingParams.includes(p))
 
   if (newParams.length === 0) {
     ElMessage.info('未发现新参数')
@@ -829,7 +969,7 @@ function addParamAuto() {
   }
 
   // 添加新参数
-  newParams.forEach((paramName) => {
+  newParams.forEach(paramName => {
     job.params.push({
       name: paramName,
       label: paramName,
@@ -862,7 +1002,7 @@ function toConfigJson() {
     config.verbosity = jobConfig.verbosity
 
     // 构建 tasks
-    config.tasks = jobConfig.tasks.map((task) => {
+    config.tasks = jobConfig.tasks.map(task => {
       const taskConfig = {
         scripts: task.scripts || [],
         hostsMode: task.hostsMode
@@ -882,7 +1022,7 @@ function toConfigJson() {
     config.curl = restConfig.curl
   } else if (job.type === 'command') {
     // 命令作业配置
-    config.tasks = commandConfig.tasks.map((task) => ({
+    config.tasks = commandConfig.tasks.map(task => ({
       commands: (task.commands || []).map(cmd => ({
         id: cmd.id,
         name: cmd.name,
@@ -908,7 +1048,7 @@ function validateForm() {
 
   if (job.type === 'script') {
     // 检查是否有脚本
-    const hasScripts = jobConfig.tasks.some((task) => task.scripts && task.scripts.length > 0)
+    const hasScripts = jobConfig.tasks.some(task => task.scripts && task.scripts.length > 0)
     if (!hasScripts) {
       ElMessage.warning('请至少选择一个脚本文件')
       return false
@@ -920,13 +1060,13 @@ function validateForm() {
     }
   } else if (job.type === 'command') {
     // 检查是否有命令
-    const hasCommands = commandConfig.tasks.some((task) => task.commands && task.commands.length > 0)
+    const hasCommands = commandConfig.tasks.some(task => task.commands && task.commands.length > 0)
     if (!hasCommands) {
       ElMessage.warning('请至少选择一条命令')
       return false
     }
     // 检查是否有主机
-    const hasHosts = commandConfig.tasks.some((task) => task.hosts && task.hosts.length > 0)
+    const hasHosts = commandConfig.tasks.some(task => task.hosts && task.hosts.length > 0)
     if (!hasHosts) {
       ElMessage.warning('请至少选择一台主机')
       return false
@@ -934,7 +1074,7 @@ function validateForm() {
   }
 
   // 验证参数名称唯一性
-  const paramNames = job.params.map((p) => p.name).filter(Boolean)
+  const paramNames = job.params.map(p => p.name).filter(Boolean)
   const uniqueNames = new Set(paramNames)
   if (paramNames.length !== uniqueNames.size) {
     ElMessage.warning('参数名称不能重复')
@@ -1002,13 +1142,15 @@ function resetForm() {
   jobConfig.callback = ''
   jobConfig.taskTimeout = -1
   jobConfig.verbosity = 0
-  jobConfig.tasks = [{
-    scripts: [],
-    hosts: [],
-    hostsMode: 'param',
-    hostsParam: 'hosts',
-    hostsText: ''
-  }]
+  jobConfig.tasks = [
+    {
+      scripts: [],
+      hosts: [],
+      hostsMode: 'param',
+      hostsParam: 'hosts',
+      hostsText: ''
+    }
+  ]
   jobConfig.audit = {
     enabled: false,
     module: '',
@@ -1017,12 +1159,14 @@ function resetForm() {
 
   restConfig.curl = ''
 
-  commandConfig.tasks = [{
-    commands: [],
-    hosts: [],
-    hostsMode: 'param',
-    commandFilter: ''
-  }]
+  commandConfig.tasks = [
+    {
+      commands: [],
+      hosts: [],
+      hostsMode: 'param',
+      commandFilter: ''
+    }
+  ]
 
   fileStatusMap.value = {}
   activeSection.value = 'section-base'
@@ -1055,7 +1199,12 @@ async function runTestJob() {
   }
 
   testJobRunning.value = true
-  testJobStatus.value = { name: 'running', title: '运行中', icon: 'fa-spinner fa-pulse', type: 'primary' }
+  testJobStatus.value = {
+    name: 'running',
+    title: '运行中',
+    icon: 'fa-spinner fa-pulse',
+    type: 'primary'
+  }
   testJobResult.value = null
   testRunId.value = null
 
@@ -1087,17 +1236,39 @@ async function runTestJob() {
     } else {
       const status = normalizeStatus(Array.isArray(result) ? result[0]?.status : result?.status)
       if (['running', 'pending', 'waiting'].includes(status)) {
-        testJobStatus.value = { name: 'running', title: '运行中', icon: 'fa-spinner fa-pulse', type: 'primary' }
+        testJobStatus.value = {
+          name: 'running',
+          title: '运行中',
+          icon: 'fa-spinner fa-pulse',
+          type: 'primary'
+        }
       } else if (['error', 'failed', 'failure'].includes(status)) {
-        testJobStatus.value = { name: 'error', title: '执行失败', icon: 'fa-exclamation-triangle', type: 'danger' }
+        testJobStatus.value = {
+          name: 'error',
+          title: '执行失败',
+          icon: 'fa-exclamation-triangle',
+          type: 'danger'
+        }
       } else {
-        testJobStatus.value = { name: 'success', title: '执行成功', icon: 'fa-check-circle', type: 'success' }
+        testJobStatus.value = {
+          name: 'success',
+          title: '执行成功',
+          icon: 'fa-check-circle',
+          type: 'success'
+        }
       }
       testJobResult.value = result
     }
   } catch (error) {
-    testJobStatus.value = { name: 'error', title: '执行失败', icon: 'fa-exclamation-triangle', type: 'danger' }
-    testJobResult.value = extractResponseData(error?.response) || { error: error?.message || '执行失败' }
+    testJobStatus.value = {
+      name: 'error',
+      title: '执行失败',
+      icon: 'fa-exclamation-triangle',
+      type: 'danger'
+    }
+    testJobResult.value = extractResponseData(error?.response) || {
+      error: error?.message || '执行失败'
+    }
   } finally {
     testJobRunning.value = false
   }
@@ -1124,19 +1295,41 @@ async function pollTestResult() {
         if (attempts < maxAttempts) {
           setTimeout(poll, pollInterval)
         } else {
-          testJobStatus.value = { name: 'timeout', title: '执行超时', icon: 'fa-clock', type: 'warning' }
+          testJobStatus.value = {
+            name: 'timeout',
+            title: '执行超时',
+            icon: 'fa-clock',
+            type: 'warning'
+          }
           testJobResult.value = result
         }
       } else if (['success', 'completed', 'ok'].includes(status)) {
-        testJobStatus.value = { name: 'success', title: '执行成功', icon: 'fa-check-circle', type: 'success' }
+        testJobStatus.value = {
+          name: 'success',
+          title: '执行成功',
+          icon: 'fa-check-circle',
+          type: 'success'
+        }
         testJobResult.value = result
       } else {
-        testJobStatus.value = { name: 'error', title: '执行失败', icon: 'fa-exclamation-triangle', type: 'danger' }
+        testJobStatus.value = {
+          name: 'error',
+          title: '执行失败',
+          icon: 'fa-exclamation-triangle',
+          type: 'danger'
+        }
         testJobResult.value = result
       }
     } catch (error) {
-      testJobStatus.value = { name: 'error', title: '获取结果失败', icon: 'fa-exclamation-triangle', type: 'danger' }
-      testJobResult.value = extractResponseData(error?.response) || { error: error?.message || '获取结果失败' }
+      testJobStatus.value = {
+        name: 'error',
+        title: '获取结果失败',
+        icon: 'fa-exclamation-triangle',
+        type: 'danger'
+      }
+      testJobResult.value = extractResponseData(error?.response) || {
+        error: error?.message || '获取结果失败'
+      }
     }
   }
 
@@ -1147,9 +1340,12 @@ async function pollTestResult() {
  * 查看测试结果
  */
 function viewTestResult() {
-  if (testRunId.value) {
-    // TODO: 可以打开执行结果详情对话框
+  if (testResultRef.value) {
+    testResultRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return
   }
+
+  scrollToSection('section-test')
 }
 
 /**
@@ -1196,7 +1392,9 @@ async function loadJobDetail(jobId) {
           hosts: normalizeAcmDeviceSelection(task.hosts, 'linux'),
           hostsMode: task.hostsMode || (task.hostsParam ? 'param' : ''),
           hostsParam: task.hostsParam || 'hosts',
-          hostsText: normalizeAcmDeviceSelection(task.hosts, 'linux').map(host => host.value).join('\n')
+          hostsText: normalizeAcmDeviceSelection(task.hosts, 'linux')
+            .map(host => host.value)
+            .join('\n')
         }))
       }
     } else if (jobData.type === 'rest') {
@@ -1218,39 +1416,213 @@ async function loadJobDetail(jobId) {
     ElMessage.error('加载作业详情失败')
   } finally {
     loading.value = false
+    await nextTick()
+    updateActiveSection(getScrollbarWrap()?.scrollTop || 0)
   }
 }
 
 // 监听对话框打开，初始化数据
-watch(() => props.modelValue, (newVal) => {
-  if (newVal) {
-    resetForm()
-    if (props.jobId) {
-      // 编辑模式：加载作业详情
-      loadJobDetail(props.jobId)
-    } else {
-      // 新建模式
-      job.type = props.jobType || ''
-      job.appletCode = props.appletCode || ''
+watch(
+  () => props.modelValue,
+  async newVal => {
+    if (newVal) {
+      resetForm()
+      if (props.jobId) {
+        // 编辑模式：加载作业详情
+        await loadJobDetail(props.jobId)
+      } else {
+        // 新建模式
+        job.type = props.jobType || ''
+        job.appletCode = props.appletCode || ''
+        await nextTick()
+        const wrap = getScrollbarWrap()
+        wrap?.scrollTo({ top: 0 })
+        updateActiveSection(0)
+      }
     }
-  }
-}, { immediate: true })
+  },
+  { immediate: true }
+)
 
 // 监听 jobType prop 变化
-watch(() => props.jobType, (newVal) => {
-  if (props.modelValue && !isEditMode.value) {
-    job.type = newVal || ''
+watch(
+  () => props.jobType,
+  async newVal => {
+    if (props.modelValue && !isEditMode.value) {
+      job.type = newVal || ''
+      await nextTick()
+      updateActiveSection(getScrollbarWrap()?.scrollTop || 0)
+    }
   }
-})
+)
+
+watch(
+  () => job.type,
+  async () => {
+    if (!props.modelValue) return
+    await nextTick()
+    updateActiveSection(getScrollbarWrap()?.scrollTop || 0)
+  }
+)
 </script>
 
 <style scoped lang="scss">
-.create-job-dialog {
-  :deep(.el-dialog__body) {
-    padding: 24px;
-    max-height: 70vh;
-    overflow-y: auto;
-  }
+:global(.create-job-drawer) {
+  max-width: 1320px;
+}
+
+:global(.create-job-drawer .el-drawer__header) {
+  margin-bottom: 0;
+  padding: 16px 20px 10px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+:global(.create-job-drawer .el-drawer__title) {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--el-text-color-primary);
+}
+
+:global(.create-job-drawer .el-drawer__body) {
+  padding: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.create-job-drawer__layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.create-job-drawer__masthead {
+  padding: 10px 20px 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.create-job-drawer__summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.create-job-drawer__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.create-job-drawer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.create-job-drawer__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid #dbe3f0;
+}
+
+.create-job-drawer__meta-item em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.create-job-drawer__meta-item strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.create-job-drawer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.create-job-drawer__nav-item {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 999px;
+  background: var(--el-bg-color);
+  color: var(--el-text-color-regular);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-job-drawer__nav-item:hover {
+  border-color: var(--el-color-primary-light-5);
+  color: var(--el-color-primary);
+}
+
+.create-job-drawer__nav-item.is-active {
+  border-color: var(--el-color-primary-light-5);
+  background: color-mix(in srgb, var(--el-color-primary-light-9) 76%, white);
+  color: var(--el-color-primary);
+}
+
+.create-job-drawer__scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.create-job-drawer__content {
+  padding: 14px 20px 20px;
+}
+
+.create-job-drawer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  background: linear-gradient(0deg, rgba(248, 250, 252, 0.9) 0%, rgba(255, 255, 255, 0.96) 100%);
+}
+
+.create-job-drawer__footer-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.create-job-drawer__footer-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.create-job-drawer__footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-left: auto;
 }
 
 // 表单容器
@@ -1267,24 +1639,46 @@ watch(() => props.jobType, (newVal) => {
 
 // 表单分组
 .form-section {
-  // margin-bottom: 32px;
-  // border: 1px solid var(--el-border-color-lighter);
-  border-radius: 4px;
-  // padding: 20px;
+  margin-bottom: 16px;
+  padding: 14px 16px 2px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
   background-color: var(--el-fill-color-blank);
+  scroll-margin-top: 18px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 
   .section-title {
     font-size: 15px;
     font-weight: 600;
     color: var(--el-text-color-primary);
-    margin-bottom: 20px;
-    // padding-bottom: 12px;
-    // border-bottom: 1px solid var(--el-border-color-lighter);
+    margin-bottom: 14px;
   }
 
   .el-form-item {
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
 }
 
 // 帮助文本
@@ -1300,6 +1694,60 @@ watch(() => props.jobType, (newVal) => {
     border-radius: 2px;
     font-family: 'Consolas', 'Monaco', monospace;
   }
+}
+
+.params-panel {
+  width: 100%;
+}
+
+.params-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.params-toolbar__summary {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.params-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 180px;
+  margin-top: 10px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 10px;
+  background: var(--el-fill-color-lighter);
+  text-align: center;
+  color: var(--el-text-color-secondary);
+}
+
+.section-empty-state i {
+  font-size: 24px;
+  color: var(--el-text-color-placeholder);
+}
+
+.section-empty-state strong {
+  font-size: 15px;
+  color: var(--el-text-color-primary);
+}
+
+.section-empty-state span {
+  max-width: 420px;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 // 任务列表
@@ -1366,15 +1814,15 @@ watch(() => props.jobType, (newVal) => {
   gap: 12px;
 
   :deep(.el-button) {
-    &[type="success"] {
+    &[type='success'] {
       box-shadow: 0 0 0 3px rgba(103, 194, 58, 0.2);
     }
 
-    &[type="danger"] {
+    &[type='danger'] {
       box-shadow: 0 0 0 3px rgba(245, 108, 108, 0.2);
     }
 
-    &[type="warning"] {
+    &[type='warning'] {
       box-shadow: 0 0 0 3px rgba(230, 162, 60, 0.2);
     }
   }
@@ -1385,6 +1833,33 @@ watch(() => props.jobType, (newVal) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.test-summary-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.test-summary-card__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 84px;
+  padding: 14px 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, #fff 100%);
+}
+
+.test-summary-card__item span {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.test-summary-card__item strong {
+  font-size: 18px;
+  color: var(--el-text-color-primary);
 }
 
 .test-status-button {
@@ -1454,6 +1929,45 @@ watch(() => props.jobType, (newVal) => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+@media (max-width: 960px) {
+  .create-job-drawer {
+    :deep(.el-drawer) {
+      width: 100% !important;
+      max-width: none;
+    }
+  }
+
+  .create-job-drawer__masthead,
+  .create-job-drawer__content,
+  .create-job-drawer__footer {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .create-job-drawer__summary {
+    flex-direction: column;
+  }
+
+  .create-job-drawer__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .create-job-drawer__footer-actions {
+    margin-left: 0;
+  }
+
+  .section-header,
+  .params-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .test-summary-card {
+    grid-template-columns: 1fr;
+  }
 }
 
 // 工具类
