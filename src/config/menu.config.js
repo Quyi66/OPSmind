@@ -36,7 +36,7 @@ export const MENU_CONFIG = {
       code: 'automation',
       name: '自动化管理',
       icon: 'fas fa-robot',
-      description: '自动化作业、脚本、命令、rpm包安装和主机用户管理',
+      description: '自动化作业、脚本、命令、rpm包安装和主机账号管理',
       children: [
         {
           code: 'jao',
@@ -63,22 +63,22 @@ export const MENU_CONFIG = {
           description: '统一查看自动化任务运行记录和统计'
         },
         {
+          code: 'review-center',
+          name: '审批中心',
+          icon: 'fas fa-stamp',
+          description: '作业审批、命令审核与脚本审核的统一入口'
+        },
+        {
           code: 'users',
-          name: '主机用户',
+          name: '主机账号',
           icon: 'fas fa-users',
-          description: '主机用户账户和权限管理'
+          description: '主机账号与权限管理'
         },
         {
           code: 'rpm-install',
           name: 'rpm包安装',
           icon: 'fas fa-box-open',
           description: '上传rpm包并分发到目标主机安装'
-        },
-        {
-          code: 'review-center',
-          name: '审批中心',
-          icon: 'fas fa-stamp',
-          description: '作业审批、命令审核与脚本审核的统一入口'
         }
       ]
     },

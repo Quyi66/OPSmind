@@ -7,21 +7,6 @@ const userModuleView = () => import('./views/UserManagementModule.vue')
 
 export const USERS_ROUTE_DEFS = [
   {
-    key: 'overview',
-    path: 'overview',
-    title: '用户总览',
-    navLabel: '用户总览',
-    icon: 'fas fa-tachometer-alt',
-    component: userModuleView,
-    children: [
-      {
-        path: '',
-        name: 'users-overview',
-        component: () => import('./views/UserOverviewPage.vue')
-      }
-    ]
-  },
-  {
     key: 'users',
     path: 'users',
     title: '用户列表',
@@ -63,6 +48,21 @@ export const USERS_ROUTE_DEFS = [
         path: '',
         name: 'users-logs',
         component: () => import('./views/UserOperationLogsPage.vue')
+      }
+    ]
+  },
+  {
+    key: 'overview',
+    path: 'overview',
+    title: '用户总览',
+    navLabel: '用户总览',
+    icon: 'fas fa-tachometer-alt',
+    component: userModuleView,
+    children: [
+      {
+        path: '',
+        name: 'users-overview',
+        component: () => import('./views/UserOverviewPage.vue')
       }
     ]
   }

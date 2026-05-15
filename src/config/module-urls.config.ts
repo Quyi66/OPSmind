@@ -211,7 +211,7 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
     enabled: true
   },
   users: {
-    entryUrl: '#/users/overview',
+    entryUrl: '#/users/users',
     description: '用户管理',
     enabled: true
   }

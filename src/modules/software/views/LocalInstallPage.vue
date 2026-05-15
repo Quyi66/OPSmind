@@ -48,7 +48,7 @@
           <span class="title">2. 设置目标主机</span>
         </div>
 
-        <div class="panel-body">
+        <div class="panel-body panel-body--hosts">
           <div class="host-selector-container">
             <AcmDeviceSelector
               v-model="selectedHosts"
@@ -217,16 +217,19 @@ async function handleStartInstall() {
   // background: var(--el-bg-color-page);
   padding: 20px;
   height: 100%;
+  min-height: 0;
   display: flex;
-  justify-content: center;
+  overflow: hidden;
 }
 
 .install-container {
   display: flex;
   gap: 20px;
+  flex: 1;
   width: 100%;
-  max-width: 1400px;
   height: calc(100vh - 120px);
+  min-width: 0;
+  min-height: 0;
 }
 
 .panel {
@@ -237,6 +240,7 @@ async function handleStartInstall() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 
   &.left-panel {
     flex: 3;
@@ -276,6 +280,11 @@ async function handleStartInstall() {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+
+.panel-body--hosts {
+  gap: 16px;
 }
 
 .panel-footer {
@@ -296,6 +305,7 @@ async function handleStartInstall() {
 // 左侧文件列表
 .selected-files-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
 
   .install-file-item {
@@ -377,10 +387,47 @@ async function handleStartInstall() {
 
 // 右侧表单
 .host-selector-container {
-  margin-bottom: 30px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.host-selector-container :deep(.acm-device-selector) {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.host-selector-container :deep(.device-list-container) {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.host-selector-container :deep(.device-header) {
+  flex-shrink: 0;
+}
+
+.host-selector-container :deep(.device-chip-list) {
+  flex: 1;
+  min-height: 12rem;
+  max-height: none;
+  align-content: flex-start;
+}
+
+.host-selector-container :deep(.empty-state) {
+  display: flex;
+  flex: 1;
+  min-height: 12rem;
+  align-items: center;
+  justify-content: center;
 }
 
 .install-desc {
+  flex-shrink: 0;
   background: var(--el-color-warning-light-9);
   border-radius: 6px;
   padding: 15px 20px;

@@ -188,7 +188,7 @@ export const baseRoutes = [
   buildAutomationModuleRoute('run-records', '/run-records/logs', runRecordsChildren),
   buildAutomationModuleRoute('gfs', '/gfs/scriptLibrary', gfsChildren),
   buildAutomationModuleRoute('cmd', '/cmd/list', cmdChildren),
-  buildAutomationModuleRoute('users', '/users/overview', usersChildren),
+  buildAutomationModuleRoute('users', '/users/users', usersChildren),
   buildAutomationModuleRoute('rpm-install', '/rpm-install/install', rpmInstallChildren),
 
   // ========== 补丁管理 (patches) ==========
