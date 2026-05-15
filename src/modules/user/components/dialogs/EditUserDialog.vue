@@ -24,7 +24,6 @@
         <el-form-item label="操作类型">
           <el-radio-group v-model="formData.operate" @change="handleOperateChange">
             <el-radio value="modify_base">修改基本信息</el-radio>
-            <el-radio value="delete">删除用户</el-radio>
             <el-radio value="lock">锁定/解锁</el-radio>
             <el-radio value="ssh">SSH登录</el-radio>
             <el-radio value="modify_password">修改密码</el-radio>
@@ -63,16 +62,6 @@
               value-format="YYYY-MM-DD"
               style="width: 100%"
             />
-          </el-form-item>
-        </template>
-
-        <!-- 删除用户 -->
-        <template v-if="formData.operate === 'delete'">
-          <el-form-item label="是否删除主目录">
-            <el-radio-group v-model="formData.user_remove_home">
-              <el-radio value="yes">是</el-radio>
-              <el-radio value="no">否</el-radio>
-            </el-radio-group>
           </el-form-item>
         </template>
 
@@ -141,11 +130,7 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button
-          :type="formData.operate === 'delete' ? 'danger' : 'primary'"
-          :loading="submitting"
-          @click="handleSubmit"
-        >
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">
           {{ getSubmitButtonText() }}
         </el-button>
       </div>
@@ -155,7 +140,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
 import { dtsApi } from '@/modules/asset/api'
 import { useJobPolling } from '@/composables/useJobPolling'
@@ -167,6 +152,10 @@ const props = defineProps({
   visible: {
     type: Boolean,
     default: false
+  },
+  initialOperate: {
+    type: String,
+    default: 'modify_base'
   },
   user: {
     type: Object,
@@ -206,7 +195,6 @@ const formData = reactive({
   user_shell: '',
   user_comment: '',
   user_expires: '',
-  user_remove_home: 'yes',
   user_lock: 'no',
   user_login: 'yes',
   user_password: '',
@@ -216,7 +204,6 @@ const formData = reactive({
 // 作业ID映射
 const jobIdMap = {
   modify_base: 'EOLAGR',
-  delete: '5XLCC1',
   lock: '1TKvLB',
   ssh: 'wSVnmq',
   modify_password: 'rbNP8M',
@@ -235,6 +222,10 @@ watch(
       formData.user_shell = newUser.shell || ''
       formData.user_comment = newUser.comment || ''
       formData.user_expires = newUser.expired_date || ''
+
+      if (props.visible) {
+        applyOperatePreset()
+      }
     }
   },
   { immediate: true }
@@ -245,10 +236,20 @@ watch(
   () => props.visible,
   val => {
     if (val) {
+      applyOperatePreset()
       loadSudoTemplates()
     }
   }
 )
+
+function applyOperatePreset() {
+  const allowedOperateSet = new Set(['modify_base', 'lock', 'ssh', 'modify_password', 'sudo'])
+  formData.operate = allowedOperateSet.has(props.initialOperate) ? props.initialOperate : 'modify_base'
+
+  if (formData.operate === 'lock') {
+    formData.user_lock = Number(userData.value?.lock_status) === 1 ? 'no' : 'yes'
+  }
+}
 
 // 操作类型变化
 function handleOperateChange() {
@@ -267,7 +268,6 @@ function getSubmitButtonText() {
   }
   const textMap = {
     modify_base: '保存',
-    delete: '删除用户',
     lock: '确认',
     ssh: '确认',
     modify_password: '修改密码',
@@ -305,19 +305,6 @@ async function handleTemplateChange(templateId) {
 
 // 提交
 async function handleSubmit() {
-  // 删除操作需要确认
-  if (formData.operate === 'delete') {
-    try {
-      await ElMessageBox.confirm(
-        `确定要删除用户 "${formData.username}" 吗？此操作不可撤销。`,
-        '确认删除',
-        { type: 'warning' }
-      )
-    } catch {
-      return
-    }
-  }
-
   // 修改密码需要验证
   if (formData.operate === 'modify_password' && !formData.user_password) {
     ElMessage.warning('请输入新密码')
@@ -419,11 +406,6 @@ function buildParams(hostId) {
         user_shell: formData.user_shell || '',
         user_comment: formData.user_comment || '',
         user_expires: formData.user_expires || ''
-      }
-    case 'delete':
-      return {
-        ...base,
-        user_remove_home: formData.user_remove_home
       }
     case 'lock':
       return {
