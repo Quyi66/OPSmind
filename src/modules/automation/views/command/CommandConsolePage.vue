@@ -36,7 +36,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="命令">
+        <el-form-item label="命令" class="command-form-item">
           <div class="command-editor-field">
             <div class="code-editor">
               <div class="line-numbers">
@@ -400,20 +400,27 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .command-console {
-  height: 100%;
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
   background: var(--el-bg-color);
 }
 
 .console-body {
   flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   padding: 16px;
-  overflow-y: auto;
+  overflow: hidden;
   position: relative;
 }
 
 .console-toolbar {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -427,7 +434,12 @@ onUnmounted(() => {
 }
 
 .console-form {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   max-width: 100%;
+  overflow: hidden;
 }
 
 .console-form :deep(.el-form-item__content) {
@@ -435,8 +447,32 @@ onUnmounted(() => {
   width: 100%;
 }
 
+.console-form :deep(.el-form-item) {
+  flex-shrink: 0;
+}
+
+.console-form :deep(.command-form-item) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+
+.console-form :deep(.command-form-item .el-form-item__content) {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  width: 100%;
+}
+
 .command-editor-field {
   width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .grammar-select {
@@ -445,11 +481,13 @@ onUnmounted(() => {
 
 .code-editor {
   display: flex;
+  flex: 1;
+  min-height: 320px;
   width: 100%;
   border-bottom: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
   overflow: hidden;
-  height: 30rem;
+  height: auto;
   background: #1e1e2e;
 }
 
@@ -473,6 +511,8 @@ onUnmounted(() => {
 
 .code-textarea {
   flex: 1;
+  min-height: 0;
+  height: 100%;
   min-width: 0;
   padding: 12px;
   border: none;
@@ -496,10 +536,11 @@ onUnmounted(() => {
 }
 
 .form-actions {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 16px;
+  padding-top: 16px;
 }
 
 .text-ellipsis {

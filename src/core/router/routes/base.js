@@ -38,7 +38,7 @@ const buildModuleChildren = (defs, moduleCode) =>
     const route = {
       path: def.path,
       component: def.component,
-      meta: { title: def.title, moduleCode }
+      meta: { title: def.title, moduleCode, ...(def.meta || {}) }
     }
 
     if (def.alias) route.alias = def.alias

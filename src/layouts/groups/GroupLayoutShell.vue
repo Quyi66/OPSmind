@@ -9,7 +9,12 @@
     <section class="group-content">
       <router-view v-slot="{ Component, route }">
         <transition name="fade-content" mode="out-in">
-          <component :is="Component" :key="route.path" />
+          <template v-if="shouldCacheRoute(route)">
+            <keep-alive>
+              <component :is="Component" :key="getViewKey(route)" />
+            </keep-alive>
+          </template>
+          <component v-else :is="Component" :key="getViewKey(route)" />
         </transition>
       </router-view>
 
@@ -39,6 +44,18 @@ defineProps({
 })
 
 const { isLoading } = useRouteLoading()
+
+function getRouteName(route) {
+  return String(route?.name || '')
+}
+
+function shouldCacheRoute(route) {
+  return getRouteName(route) === 'cmd-list'
+}
+
+function getViewKey(route) {
+  return shouldCacheRoute(route) ? 'cmd-workspace' : String(route?.path || '')
+}
 </script>
 
 <style scoped lang="scss">

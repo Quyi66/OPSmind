@@ -123,6 +123,21 @@ const emit = defineEmits(['select', 'home-click', 'collapse-change'])
 const route = useRoute()
 const router = useRouter()
 
+function getItemTargetPath(item) {
+  return item.path || `${props.basePath}/${item.key}`
+}
+
+function getItemMatchPaths(item) {
+  const extraPaths = Array.isArray(item.matchPaths) ? item.matchPaths.filter(Boolean) : []
+  return [getItemTargetPath(item), ...extraPaths]
+}
+
+function matchesItemPath(currentPath, item) {
+  return getItemMatchPaths(item).some(matchPath =>
+    currentPath === matchPath || currentPath.startsWith(matchPath + '/')
+  )
+}
+
 // 折叠状态
 const isCollapsed = ref(false)
 
@@ -155,15 +170,12 @@ const activeIndex = computed(() => {
       for (const item of group.children) {
         if (item.children) {
           for (const sub of item.children) {
-            const subPath = sub.path || `${props.basePath}/${sub.key}`
-            if (path === subPath || path.startsWith(subPath + '/')) {
+            if (matchesItemPath(path, sub)) {
               return `${group.code}::${item.key}::${sub.key}`
             }
           }
         } else {
-          const itemPath = item.path || `${props.basePath}/${item.key}`
-          // 检查路径是否匹配
-          if (path === itemPath || path.startsWith(itemPath + '/')) {
+          if (matchesItemPath(path, item)) {
             return `${group.code}::${item.key}`
           }
         }
@@ -215,7 +227,7 @@ function handleSelect(index) {
         const itemKey = parts.slice(1).join('::')
         const item = group.children.find(child => child.key === itemKey)
         if (item) {
-          const targetPath = item.path || `${props.basePath}/${item.key}`
+          const targetPath = getItemTargetPath(item)
           router.push(targetPath)
           emit('select', item, group)
           return

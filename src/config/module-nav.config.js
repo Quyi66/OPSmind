@@ -47,13 +47,25 @@ export const GFS_NAV_ITEMS = GFS_ROUTE_DEFS.filter(def => def.navLabel).map(def 
   path: `/gfs/${def.path}`
 }))
 
-// 自动化管理 - 命令模块的页面导航
-export const CMD_NAV_ITEMS = CMD_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+const CMD_SECONDARY_NAV_ITEMS = CMD_ROUTE_DEFS.filter(
+  def => def.navLabel && !['list', 'job'].includes(def.key)
+).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
   path: `/cmd/${def.path}`
 }))
+
+// 自动化管理 - 命令模块的页面导航
+export const CMD_NAV_ITEMS = [
+  {
+    key: 'workspace',
+    label: '命令与作业',
+    icon: 'fas fa-layer-group',
+    path: '/cmd/list'
+  },
+  ...CMD_SECONDARY_NAV_ITEMS
+]
 
 // 自动化管理 - rpm 包安装模块的页面导航
 export const RPM_INSTALL_NAV_ITEMS = RPM_INSTALL_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({

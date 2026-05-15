@@ -200,18 +200,17 @@ export const CMD_ROUTE_DEFS = [
   {
     key: 'list',
     path: 'list',
-    title: '命令列表',
-    navLabel: '命令列表',
-    icon: 'fas fa-list',
-    ...createCommandCenterPageRoute('cmd-list', () => import('./views/command/CommandListPage.vue'))
+    title: '命令与作业',
+    navLabel: '命令与作业',
+    icon: 'fas fa-layer-group',
+    component: commandCenterModuleView,
+    name: 'cmd-list'
   },
   {
     key: 'job',
     path: 'job',
     title: '命令作业',
-    navLabel: '命令作业',
-    icon: 'fas fa-tasks',
-    ...createCommandCenterPageRoute('cmd-job', () => import('./views/command/CommandJobPage.vue'))
+    redirect: '/cmd/list?tab=job'
   },
   {
     key: 'review',

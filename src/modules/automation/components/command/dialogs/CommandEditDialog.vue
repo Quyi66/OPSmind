@@ -2,7 +2,7 @@
   <el-dialog
     v-model="dialogVisible"
     :title="dialogTitle"
-    width="700px"
+    width="1000px"
     :close-on-click-modal="false"
     destroy-on-close
     @close="handleClose"
@@ -360,7 +360,7 @@ function getStatusText(status) {
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
-  min-height: 200px;
+  min-height: 400px;
   white-space: pre;
   overflow-x: auto;
 
