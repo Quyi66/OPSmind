@@ -74,6 +74,7 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
+import { useReviewCountStore } from '@/stores/useReviewCountStore.js'
 
 const props = defineProps({
   modelValue: {
@@ -95,6 +96,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'success'])
+const reviewStore = useReviewCountStore()
 
 // 表单数据
 const form = ref({
@@ -138,6 +140,7 @@ async function handleSubmit() {
     }
 
     ElMessage.success('操作成功')
+    reviewStore.fetchScriptCount()
     emit('update:modelValue', false)
     emit('success')
   } catch (error) {

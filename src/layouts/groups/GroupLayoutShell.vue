@@ -3,6 +3,7 @@
     <ModuleSideMenu
       :menu-groups="menuGroups"
       :default-openeds="defaultOpeneds"
+      :badge-counts="badgeCounts"
       class="group-side-menu"
     />
 
@@ -40,6 +41,10 @@ defineProps({
   defaultOpeneds: {
     type: Array,
     default: () => []
+  },
+  badgeCounts: {
+    type: Object,
+    default: () => ({})
   }
 })
 

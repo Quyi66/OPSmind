@@ -23,8 +23,11 @@ import { SUDO_ROUTE_DEFS } from '@/modules/sudo/routes.js'
 import { PASSWORD_ROUTE_DEFS } from '@/modules/password/routes.js'
 import { SSC_ROUTE_DEFS, UAM_ROUTE_DEFS } from '@/modules/settings/routes.js'
 
-// 自动化管理 - 作业模块的页面导航
-export const JAO_NAV_ITEMS = JAO_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+// 审批中心三类待审项的 key
+const REVIEW_KEYS = new Set(['approvals', 'scriptReview', 'review'])
+
+// 自动化管理 - 作业模块的页面导航（审批相关项移至审批中心）
+export const JAO_NAV_ITEMS = JAO_ROUTE_DEFS.filter(def => def.navLabel && !REVIEW_KEYS.has(def.key)).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
@@ -39,8 +42,8 @@ export const RUN_RECORDS_NAV_ITEMS = RUN_RECORDS_ROUTE_DEFS.filter(def => def.na
   path: `/run-records/${def.path}`
 }))
 
-// 自动化管理 - 脚本模块的页面导航
-export const GFS_NAV_ITEMS = GFS_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+// 自动化管理 - 脚本模块的页面导航（审核相关项移至审批中心）
+export const GFS_NAV_ITEMS = GFS_ROUTE_DEFS.filter(def => def.navLabel && !REVIEW_KEYS.has(def.key)).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
@@ -48,7 +51,7 @@ export const GFS_NAV_ITEMS = GFS_ROUTE_DEFS.filter(def => def.navLabel).map(def 
 }))
 
 const CMD_SECONDARY_NAV_ITEMS = CMD_ROUTE_DEFS.filter(
-  def => def.navLabel && !['list', 'job'].includes(def.key)
+  def => def.navLabel && !['list', 'job'].includes(def.key) && !REVIEW_KEYS.has(def.key)
 ).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
@@ -65,6 +68,31 @@ export const CMD_NAV_ITEMS = [
     path: '/cmd/list'
   },
   ...CMD_SECONDARY_NAV_ITEMS
+]
+
+// 自动化管理 - 审批中心：聚合作业审批、命令审核、脚本审核
+export const REVIEW_CENTER_NAV_ITEMS = [
+  {
+    key: 'approvals',
+    label: '作业审批',
+    icon: 'fas fa-user-check',
+    path: '/jao/approvals',
+    accessCode: 'jao'
+  },
+  {
+    key: 'review',
+    label: '命令审核',
+    icon: 'fas fa-clipboard-check',
+    path: '/cmd/review',
+    accessCode: 'cmd'
+  },
+  {
+    key: 'scriptReview',
+    label: '脚本审核',
+    icon: 'fas fa-file-signature',
+    path: '/gfs/scriptReview',
+    accessCode: 'gfs'
+  }
 ]
 
 // 自动化管理 - rpm 包安装模块的页面导航
@@ -198,6 +226,7 @@ export const UAM_NAV_ITEMS = UAM_ROUTE_DEFS.filter(def => def.navLabel).map(def 
  * 键为模块代码，值为该模块的页面导航配置
  */
 export const MODULE_NAV_CONFIG = {
+  'review-center': REVIEW_CENTER_NAV_ITEMS,
   jao: JAO_NAV_ITEMS,
   'run-records': RUN_RECORDS_NAV_ITEMS,
   gfs: GFS_NAV_ITEMS,
@@ -239,14 +268,17 @@ export function getGroupMenuConfig(groupCode, MENU_CONFIG) {
   const group = MENU_CONFIG.groups.find(g => g.code === groupCode)
   if (!group) return []
 
+  const checkPermission = permission => authService.hasPermission(permission)
+
   return group.children
-    .filter(module =>
-      canAccessMenuCode(permission => authService.hasPermission(permission), module.code)
-    )
+    .filter(module => canAccessMenuCode(checkPermission, module.code))
     .map(module => ({
       code: module.code,
       name: module.name,
       icon: module.icon,
-      children: MODULE_NAV_CONFIG[module.code] || []
+      children: (MODULE_NAV_CONFIG[module.code] || []).filter(item =>
+        canAccessMenuCode(checkPermission, item.accessCode || module.code)
+      )
     }))
+    .filter(module => module.children.length > 0)
 }

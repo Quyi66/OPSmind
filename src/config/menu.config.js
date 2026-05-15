@@ -73,6 +73,12 @@ export const MENU_CONFIG = {
           name: 'rpm包安装',
           icon: 'fas fa-box-open',
           description: '上传rpm包并分发到目标主机安装'
+        },
+        {
+          code: 'review-center',
+          name: '审批中心',
+          icon: 'fas fa-stamp',
+          description: '作业审批、命令审核与脚本审核的统一入口'
         }
       ]
     },

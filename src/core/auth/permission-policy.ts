@@ -26,6 +26,7 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
   jao: ['jao:view'],
   gfs: ['gfs:view'],
   cmd: ['cmd:view'],
+  'review-center': ['jao:view', 'gfs:view', 'cmd:view'],
   'rpm-install': ['applet:spm'],
   patches: ['applet:vap'],
   'windows-patches': ['applet:vap'],

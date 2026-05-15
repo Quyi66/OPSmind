@@ -122,6 +122,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { findAllUnapprovedCommand } from '@/modules/automation/api/command'
+import { useReviewCountStore } from '@/stores/useReviewCountStore.js'
 import CommandApproveDialog from '../../components/command/dialogs/CommandApproveDialog.vue'
 
 // 状态
@@ -138,6 +139,7 @@ const approveDialogVisible = ref(false)
 const approveMode = ref('single')
 const currentCommand = ref(null)
 const selectedForApprove = ref([])
+const reviewStore = useReviewCountStore()
 
 // 过滤后的命令列表
 const filteredCommands = computed(() => {
@@ -181,7 +183,14 @@ async function loadData() {
   loading.value = true
   try {
     const response = await findAllUnapprovedCommand()
-    commands.value = response.data || response || []
+    const unapprovedCommands = Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response)
+        ? response
+        : []
+
+    commands.value = unapprovedCommands
+    reviewStore.commandCount = unapprovedCommands.length
   } catch (error) {
     console.error('加载待审核命令失败:', error)
     ElMessage.error('加载待审核命令失败')
@@ -193,6 +202,7 @@ async function loadData() {
 // 搜索
 function handleSearch() {
   currentPage.value = 1
+  clearSelection()
 }
 
 // 重置
@@ -200,6 +210,7 @@ function handleReset() {
   searchKeyword.value = ''
   currentPage.value = 1
   pageSize.value = 10
+  clearSelection()
 }
 
 // 选择变化
@@ -234,8 +245,8 @@ function handleBatchApprove() {
 
 // 审核成功回调
 function handleApproveSuccess() {
+  clearSelection()
   loadData()
-  selectedCommands.value = []
 }
 
 // 格式化日期

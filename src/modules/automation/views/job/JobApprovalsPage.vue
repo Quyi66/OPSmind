@@ -143,10 +143,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
+import { useReviewCountStore } from '@/stores/useReviewCountStore.js'
 import JobApprovalDetailDialog from '../../components/job/JobApprovalDetailDialog.vue'
 
 const loading = ref(false)
@@ -159,6 +160,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const detailDialogVisible = ref(false)
 const currentApprovalData = ref(null)
+const reviewStore = useReviewCountStore()
 
 const filteredData = computed(() => {
   let data = tableData.value
@@ -188,6 +190,16 @@ const paginatedData = computed(() => {
   return filteredData.value.slice(start, end)
 })
 
+watch(
+  () => filteredData.value.length,
+  total => {
+    const maxPage = Math.max(1, Math.ceil(total / pageSize.value))
+    if (currentPage.value > maxPage) {
+      currentPage.value = maxPage
+    }
+  }
+)
+
 const jobTypeMap = {
   standalone: { icon: 'fa fa-terminal', label: '独立作业' },
   flow: { icon: 'fa fa-stream', label: '流程作业' },
@@ -214,7 +226,14 @@ async function fetchData() {
   loading.value = true
   try {
     const response = await jaoApi.fetchApproveList()
-    tableData.value = response?.data || response || []
+    const approvals = Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response)
+        ? response
+        : []
+
+    tableData.value = approvals
+    reviewStore.approvalCount = approvals.filter(item => item.status === 0).length
   } catch (error) {
     ElMessage.error(error?.message || '获取审批列表失败')
   } finally {
