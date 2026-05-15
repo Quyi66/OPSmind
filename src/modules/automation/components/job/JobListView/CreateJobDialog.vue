@@ -372,32 +372,26 @@
             <div v-if="!viewMode" id="section-test" class="form-section">
               <div class="section-header">
                 <div class="section-title">测试作业</div>
-                <span class="section-badge">{{ testStatusLabel }}</span>
+                <div class="test-section-meta">
+                  <span class="section-badge">{{ testStatusLabel }}</span>
+                  <span v-if="testRunId && !testJobResult" class="test-section-run-id">
+                    Run ID {{ testRunId }}
+                  </span>
+                </div>
               </div>
 
               <el-form-item>
                 <div class="test-panel">
-                  <div class="test-summary-card">
-                    <div class="test-summary-card__item">
-                      <span>当前状态</span>
-                      <strong>{{ testStatusLabel }}</strong>
-                    </div>
-                    <div class="test-summary-card__item">
-                      <span>最近 Run ID</span>
-                      <strong>{{ testRunId || '-' }}</strong>
-                    </div>
-                  </div>
-
                   <div class="test-controls">
                     <el-button
-                      v-if="testJobStatus"
-                      :type="testJobStatus.type"
-                      :disabled="!testRunId && !testJobResult"
-                      class="test-status-button"
+                      v-if="testJobStatus && (testRunId || testJobResult)"
+                      text
+                      type="primary"
+                      class="test-result-link"
                       @click="viewTestResult"
                     >
-                      <i :class="['fa', 'fa-fw', testJobStatus.icon]"></i>
-                      <span>{{ testJobStatus.title }}</span>
+                      <i class="fa fa-fw fa-arrow-down"></i>
+                      <span>查看结果</span>
                     </el-button>
 
                     <el-button
@@ -1670,6 +1664,19 @@ watch(
   margin-bottom: 14px;
 }
 
+.test-section-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.test-section-run-id {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
 .section-badge {
   display: inline-flex;
   align-items: center;
@@ -1835,35 +1842,8 @@ watch(
   gap: 16px;
 }
 
-.test-summary-card {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.test-summary-card__item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 84px;
-  padding: 14px 16px;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, #fff 100%);
-}
-
-.test-summary-card__item span {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
-.test-summary-card__item strong {
-  font-size: 18px;
-  color: var(--el-text-color-primary);
-}
-
-.test-status-button {
-  flex-shrink: 0;
+.test-result-link {
+  padding-left: 0;
 }
 
 .test-hint {
@@ -1965,8 +1945,9 @@ watch(
     align-items: flex-start;
   }
 
-  .test-summary-card {
-    grid-template-columns: 1fr;
+  .test-section-meta {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 
