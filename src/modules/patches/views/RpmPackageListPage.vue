@@ -20,13 +20,19 @@
           />
         </el-form-item>
         <el-form-item label="架构">
-          <el-input
+          <el-select
             v-model="filters.arch"
             clearable
-            placeholder="如 x86_64"
+            placeholder="全部"
             style="width: 160px"
-            @keyup.enter="handleSearch"
-          />
+          >
+            <el-option
+              v-for="arch in archOptions"
+              :key="arch"
+              :label="arch"
+              :value="arch"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">
@@ -57,7 +63,7 @@
     </div>
 
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 320px)">
+      <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 260px)">
         <el-table-column prop="completePackageName" label="包名" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="handleViewDetail(row)">
@@ -69,7 +75,12 @@
         <el-table-column prop="architecture" label="架构" width="120" />
         <el-table-column prop="source" label="数据源" width="120">
           <template #default="{ row }">
-            <el-tag size="small" effect="plain">
+            <el-tag
+              size="small"
+              effect="plain"
+              :type="getSourceTagType(row.source)"
+              :class="`source-tag--${row.source || 'default'}`"
+            >
               {{ getSourceLabel(row.source) }}
             </el-tag>
           </template>
@@ -148,6 +159,8 @@ const {
   loading,
   pagination,
   tableData,
+  archOptions,
+  loadArchOptions,
   loadData,
   handleSearch,
   handleReset,
@@ -164,6 +177,13 @@ function getSourceLabel(source) {
   if (source === 'oracle') return 'Oracle'
   if (source === 'redhat') return 'Red Hat'
   return source || '-'
+}
+
+function getSourceTagType(source) {
+  if (source === 'redhat') return 'danger'
+  if (source === 'oracle') return 'warning'
+  if (source === 'kylin') return 'success'
+  return 'info'
 }
 
 function getServiceDisplay(services) {
@@ -201,6 +221,7 @@ async function handleViewDetail(row) {
 }
 
 onMounted(() => {
+  loadArchOptions()
   loadData()
 })
 </script>
@@ -238,5 +259,12 @@ onMounted(() => {
   max-height: 220px;
   overflow-y: auto;
   line-height: 1.6;
+}
+
+/* Oracle 使用品牌橙红色覆盖 warning 的黄色调 */
+:deep(.source-tag--oracle.el-tag--warning) {
+  color: #c74a0a;
+  border-color: #f5b187;
+  background-color: #fef0e6;
 }
 </style>

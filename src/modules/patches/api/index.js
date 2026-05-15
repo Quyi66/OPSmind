@@ -1635,6 +1635,15 @@ export const middlewareCveApi = {
  */
 export const rpmInfoApi = {
   /**
+   * 查询架构枚举
+   * GET /vap/api/vap/v2/rpm-info/architectures
+   */
+  getArchitectures(params = {}) {
+    const query = buildGenericQuery({ source: params.source })
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/architectures${query}`)
+  },
+
+  /**
    * 全量 RPM 软件包分页查询
    * GET /vap/api/vap/v2/rpm-info/list
    */
