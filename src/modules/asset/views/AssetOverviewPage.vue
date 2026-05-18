@@ -257,8 +257,16 @@ async function handleOsClick(params) {
 }
 
 function handleGroupClick(params) {
-  if (!params?.groupName) return
-  ElMessage.info(`重点分组: ${params.groupName}`)
+  const groupName = params?.groupName || params?.name
+  if (!groupName) return
+
+  router.push({
+    path: '/acm/data',
+    query: {
+      tab: 'group',
+      keyword: groupName
+    }
+  })
 }
 
 function handleSummaryCardClick(key) {

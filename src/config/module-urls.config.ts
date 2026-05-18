@@ -157,7 +157,7 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
     enabled: true
   },
   acm: {
-    entryUrl: '#/acm/overview',
+    entryUrl: '#/acm/info',
     description: '资产管理',
     enabled: true
   },

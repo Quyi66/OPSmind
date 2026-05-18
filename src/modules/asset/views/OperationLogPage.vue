@@ -41,7 +41,13 @@
         </el-form-item>
 
         <el-form-item label="执行引擎节点">
-          <el-input v-model="searchKeyword" placeholder="搜索" clearable style="width: 150px" />
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索"
+            clearable
+            style="width: 150px"
+            @keyup.enter="handleFilterChange"
+          />
         </el-form-item>
 
         <el-form-item>
@@ -157,12 +163,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { dtsApi } from '../api'
 import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 // 筛选条件（用户输入，但未应用）
 const filters = ref({
@@ -174,12 +184,6 @@ const filters = ref({
 
 // 搜索关键词
 const searchKeyword = ref('')
-
-// 已应用的筛选条件（点击搜索后才更新）
-const appliedFilters = ref({
-  ataNode: 'all',
-  keyword: ''
-})
 
 // 表格数据
 const loading = ref(false)
@@ -205,9 +209,62 @@ const filteredData = computed(() => {
   return tableData.value
 })
 
-onMounted(() => {
+function normalizeDay(value) {
+  const parsed = Number(value)
+  return [1, 3, 7, 30].includes(parsed) ? parsed : 1
+}
+
+function buildRouteQuery() {
+  const query = {}
+
+  if (filters.value.day !== 1) {
+    query.day = String(filters.value.day)
+  }
+
+  if (filters.value.status !== 'all') {
+    query.status = filters.value.status
+  }
+
+  if (filters.value.action !== 'all') {
+    query.action = filters.value.action
+  }
+
+  if (searchKeyword.value.trim()) {
+    query.keyword = searchKeyword.value.trim()
+  }
+
+  return query
+}
+
+function isSameQuery(query) {
+  return JSON.stringify(route.query || {}) === JSON.stringify(query)
+}
+
+function syncRouteQuery() {
+  const query = buildRouteQuery()
+  if (isSameQuery(query)) {
+    applyRouteQuery(query)
+    return
+  }
+
+  router.replace({
+    path: '/acm/log',
+    query
+  })
+}
+
+function applyRouteQuery(query) {
+  filters.value = {
+    ...filters.value,
+    day: normalizeDay(query.day),
+    ataNode: 'all',
+    status: typeof query.status === 'string' ? query.status : 'all',
+    action: typeof query.action === 'string' ? query.action : 'all'
+  }
+  searchKeyword.value = typeof query.keyword === 'string' ? query.keyword : ''
+  currentPage.value = 1
   loadData()
-})
+}
 
 // 加载数据
 async function loadData() {
@@ -253,12 +310,7 @@ async function loadData() {
 // 筛选变化（点击搜索按钮时触发）
 function handleFilterChange() {
   currentPage.value = 1
-  loadData()
-}
-
-// 搜索
-function handleSearch() {
-  currentPage.value = 1
+  syncRouteQuery()
 }
 
 // 重置
@@ -271,7 +323,7 @@ function handleReset() {
   }
   searchKeyword.value = ''
   currentPage.value = 1
-  loadData()
+  syncRouteQuery()
 }
 
 // 分页变化
@@ -283,6 +335,14 @@ function handlePageSizeChange() {
   currentPage.value = 1
   loadData()
 }
+
+watch(
+  () => route.query,
+  query => {
+    applyRouteQuery(query)
+  },
+  { immediate: true }
+)
 
 // 显示运行结果弹窗
 function showRunResult(row) {

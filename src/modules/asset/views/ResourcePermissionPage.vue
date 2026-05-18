@@ -6,7 +6,7 @@
         <el-form-item label="关键词">
           <el-input
             v-model="searchKeyword"
-            placeholder="请输入"
+            placeholder="资源信息/资产类型"
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
@@ -27,13 +27,30 @@
 
     <!-- 操作栏 -->
     <div class="ops-action-bar">
+      <div class="action-left">
+        <el-tag :type="hasPendingChanges ? 'warning' : 'info'" size="small">
+          {{ hasPendingChanges ? `待保存 ${changedRowCount} 项` : '已同步' }}
+        </el-tag>
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="!hasPendingChanges"
+          :loading="saving"
+          @click="handleSave"
+        >
+          保存更改
+        </el-button>
+        <el-button size="small" :disabled="!hasPendingChanges || saving" @click="handleResetPending">
+          撤销更改
+        </el-button>
+      </div>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
         circle
         size="small"
         :loading="loading"
-        @click="loadData"
+        @click="handleRefresh"
         title="刷新"
       >
         <el-icon v-show="!loading"><Refresh /></el-icon>
@@ -43,10 +60,11 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <el-table
-        :data="filteredData"
+        :data="paginatedData"
         v-loading="loading"
         style="width: 100%"
         max-height="calc(100vh - 230px)"
+        :row-class-name="getRowClassName"
       >
         <el-table-column
           prop="groupInfo"
@@ -108,29 +126,24 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { apiService } from '@/core/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { permissionApi } from '../api'
 import _ from 'lodash'
 
 // 表格数据
 const loading = ref(false)
+const saving = ref(false)
 const tableData = ref([])
-const permissionData = ref([]) // 用于保存的原始数据
+const permissionData = ref([])
+const originalPermissionData = ref([])
 const searchKeyword = ref('')
 const appliedSearch = ref('')
 const teamNames = ref([])
+const changedRowIds = ref([])
 
 // 分页
 const currentPage = ref(1)
 const pageSize = ref(10)
-const total = ref(0)
-
-// 计算分页信息
-const pageInfo = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value + 1
-  const end = Math.min(currentPage.value * pageSize.value, total.value)
-  return `${start} - ${end} / ${total.value}`
-})
 
 // 过滤后的数据
 const filteredData = computed(() => {
@@ -145,59 +158,94 @@ const filteredData = computed(() => {
     )
   }
 
-  // 更新总数
-  total.value = data.length
-
-  // 分页
-  const start = (currentPage.value - 1) * pageSize.value
-  return data.slice(start, start + pageSize.value)
+  return data
 })
+
+const total = computed(() => filteredData.value.length)
+
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredData.value.slice(start, start + pageSize.value)
+})
+
+const changedRowCount = computed(() => changedRowIds.value.length)
+
+const hasPendingChanges = computed(() => changedRowIds.value.length > 0)
 
 onMounted(() => {
   loadData()
 })
 
+function buildTableState(data) {
+  const teams = new Set()
+  const rows = data.map(item => {
+    const row = {
+      id: item.id,
+      groupInfo: item.groupInfo,
+      teamInfo: item.teamInfo || []
+    }
+
+    if (item.extra_param && Array.isArray(item.extra_param)) {
+      item.extra_param.forEach(param => {
+        row[param.name] = param.data
+      })
+    }
+
+    if (item.teamInfo && Array.isArray(item.teamInfo)) {
+      item.teamInfo.forEach(team => {
+        teams.add(team.teamName)
+        row[team.teamName] = team.permission || []
+      })
+    }
+
+    return row
+  })
+
+  tableData.value = rows
+  teamNames.value = Array.from(teams)
+
+  const maxPage = Math.max(1, Math.ceil(filteredData.value.length / pageSize.value) || 1)
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage
+  }
+}
+
+function getPermissionSignature(teamInfo = []) {
+  return JSON.stringify(
+    [...teamInfo]
+      .map(team => ({
+        teamName: team.teamName,
+        permission: [...(team.permission || [])].sort()
+      }))
+      .sort((a, b) => a.teamName.localeCompare(b.teamName))
+  )
+}
+
+function updateRowDirtyState(rowId) {
+  const currentRow = permissionData.value.find(item => item.id === rowId)
+  const originalRow = originalPermissionData.value.find(item => item.id === rowId)
+  const isDirty = getPermissionSignature(currentRow?.teamInfo) !== getPermissionSignature(originalRow?.teamInfo)
+  const dirtySet = new Set(changedRowIds.value)
+
+  if (isDirty) {
+    dirtySet.add(rowId)
+  } else {
+    dirtySet.delete(rowId)
+  }
+
+  changedRowIds.value = Array.from(dirtySet)
+}
+
 // 加载数据
 async function loadData() {
   loading.value = true
   try {
-    const cacheBuster = Date.now()
-    const response = await apiService.get(
-      `/acm/api/acm/permission/team/table?cacheBuster=${cacheBuster}`
-    )
-
+    const response = await permissionApi.getTablePermission()
     const data = Array.isArray(response) ? response : response?.data || []
+    originalPermissionData.value = _.cloneDeep(data)
     permissionData.value = _.cloneDeep(data)
-
-    // 处理数据，提取 extra_param 和 teamInfo
-    const teams = new Set()
-    tableData.value = data.map(item => {
-      const row = {
-        id: item.id,
-        groupInfo: item.groupInfo,
-        teamInfo: item.teamInfo || []
-      }
-
-      // 提取 extra_param
-      if (item.extra_param && Array.isArray(item.extra_param)) {
-        item.extra_param.forEach(param => {
-          row[param.name] = param.data
-        })
-      }
-
-      // 提取团队名称
-      if (item.teamInfo && Array.isArray(item.teamInfo)) {
-        item.teamInfo.forEach(team => {
-          teams.add(team.teamName)
-          row[team.teamName] = team.permission || []
-        })
-      }
-
-      return row
-    })
-
-    teamNames.value = Array.from(teams)
-    total.value = tableData.value.length
+    changedRowIds.value = []
+    buildTableState(permissionData.value)
   } catch (error) {
     console.error('加载权限数据失败:', error)
     ElMessage.error('加载权限数据失败')
@@ -265,21 +313,49 @@ function togglePermission(row, teamName, perm) {
 
   // 更新表格显示
   row[teamName] = [...teamInfo.permission]
-
-  // 防抖保存
-  debouncedSave()
+  updateRowDirtyState(row.id)
 }
 
-// 防抖保存
-const debouncedSave = _.debounce(async () => {
+async function handleSave() {
+  if (!hasPendingChanges.value) return
+
+  saving.value = true
   try {
-    await apiService.post('/api/team/permission/table/permission/ACM', permissionData.value)
-    // 静默保存，不显示成功消息
+    await permissionApi.saveTablePermission('ACM', permissionData.value)
+    originalPermissionData.value = _.cloneDeep(permissionData.value)
+    changedRowIds.value = []
+    ElMessage.success('权限变更已保存')
   } catch (error) {
     console.error('保存权限失败:', error)
     ElMessage.error('保存权限失败')
+  } finally {
+    saving.value = false
   }
-}, 2000)
+}
+
+function handleResetPending() {
+  if (!hasPendingChanges.value) return
+
+  permissionData.value = _.cloneDeep(originalPermissionData.value)
+  changedRowIds.value = []
+  buildTableState(permissionData.value)
+}
+
+async function handleRefresh() {
+  if (!hasPendingChanges.value) {
+    loadData()
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm('当前有未保存的权限变更，刷新后将丢失这些修改。是否继续？', '确认刷新', {
+      type: 'warning'
+    })
+    loadData()
+  } catch {
+    // ignore cancel
+  }
+}
 
 // 搜索
 function handleSearch() {
@@ -294,6 +370,10 @@ function handleReset() {
   currentPage.value = 1
 }
 
+function getRowClassName({ row }) {
+  return changedRowIds.value.includes(row.id) ? 'dirty-row' : ''
+}
+
 // 分页变化
 function handlePageChange() {
   // 分页由 computed 处理
@@ -305,6 +385,19 @@ function handlePageSizeChange() {
 </script>
 
 <style scoped lang="scss">
+.action-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ops-table-wrapper {
+  :deep(.dirty-row .el-table__cell) {
+    background: #fff8e8;
+  }
+}
+
 .permission-buttons {
   display: flex;
   gap: 4px;

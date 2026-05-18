@@ -6,7 +6,7 @@
         <template #label>
           <span>
             <i class="fa fa-code-branch"></i>
-            自动化配置信息
+            连接配置
           </span>
         </template>
       </el-tab-pane>
@@ -14,29 +14,11 @@
         <template #label>
           <span>
             <i class="fa fa-wifi"></i>
-            Ansible连接配置
+            Ansible连接模板
           </span>
         </template>
       </el-tab-pane>
     </el-tabs>
-
-    <!-- 提示信息 -->
-    <el-alert
-      v-if="activeTab === 'automation'"
-      title="注意：自动化配置是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：执行用户/密码、登录用户/密码、执行引擎节点配置等"
-      type="success"
-      :closable="false"
-      show-icon
-      style="margin-bottom: 12px"
-    />
-    <el-alert
-      v-else
-      title="注意：Ansible连接配置是针对Ansible连接参数的配置模板，可以在自动化配置中引用"
-      type="success"
-      :closable="false"
-      show-icon
-      style="margin-bottom: 12px"
-    />
 
     <!-- 自动化配置信息 Tab 内容 -->
     <template v-if="activeTab === 'automation'">
@@ -57,9 +39,9 @@
           <el-form-item label="关键词">
             <el-input
               v-model="automationSearch"
-              placeholder="搜索"
+              placeholder="IP/资产代码/登录用户/引擎节点"
               clearable
-              style="width: 180px"
+              style="width: 220px"
               maxlength="50"
             />
           </el-form-item>
@@ -78,14 +60,18 @@
 
       <!-- 操作栏 -->
       <div class="ops-action-bar">
-        <el-button type="primary" size="small" @click="handleAddAnsibleConfig">
-          <i class="fa fa-plus" style="margin-right: 4px"></i>
-          新增Ansible连接配置
-        </el-button>
-        <el-button size="small" @click="handleDeviceManage">
+        <el-button type="primary" size="small" @click="handleDeviceManage">
           <i class="fa fa-cogs" style="margin-right: 4px"></i>
           设备纳管
         </el-button>
+        <el-button size="small" @click="openOperationLog">
+          <i class="fa fa-history" style="margin-right: 4px"></i>
+          操作日志
+        </el-button>
+        <!-- <el-button size="small" @click="switchToTab('ansible')">
+          <i class="fa fa-layer-group" style="margin-right: 4px"></i>
+          连接模板
+        </el-button> -->
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -104,17 +90,30 @@
         <el-table
           :data="filteredAutomationData"
           v-loading="automationLoading"
-          max-height="calc(100vh - 360px)"
+          max-height="calc(100vh - 300px)"
         >
           <el-table-column prop="ci_type" label="资产代码" width="100" />
-          <el-table-column prop="hostKey" label="IP" width="140" />
-          <el-table-column prop="ansibleConfigName" label="自动化配置名称" width="160">
+          <el-table-column prop="hostKey" label="资产IP" width="140" />
+          <el-table-column prop="ansibleConfigName" label="引用模板" width="180">
             <template #default="{ row }">
-              {{ row.ansibleConfigName || '-' }}
+              <el-button
+                v-if="row.ansibleConfigName"
+                link
+                type="primary"
+                class="table-link-btn"
+                @click="switchToTab('ansible')"
+              >
+                {{ row.ansibleConfigName }}
+              </el-button>
+              <el-tag v-else size="small" type="info">未关联</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)" />
-          <el-table-column prop="aapInstanceGroup" label="AAP instance group" width="160">
+          <el-table-column prop="instanceGroup" label="执行引擎节点" min-width="180">
+            <template #default="{ row }">
+              {{ row.instanceGroup || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="aapInstanceGroup" label="AAP节点" width="160">
             <template #default="{ row }">
               {{ row.aapInstanceGroup || '-' }}
             </template>
@@ -167,13 +166,13 @@
           <el-form-item label="关键词">
             <el-input
               v-model="ansibleSearch"
-              placeholder="搜索"
+              placeholder="模板名/引擎节点/登录用户/执行用户"
               clearable
-              style="width: 180px"
+              style="width: 240px"
               maxlength="50"
             />
           </el-form-item>
-          <!-- <el-form-item>
+          <el-form-item>
             <el-button type="primary" @click="handleAnsibleSearch">
               <el-icon><Search /></el-icon>
               搜索
@@ -182,7 +181,7 @@
               <el-icon><RefreshRight /></el-icon>
               重置
             </el-button>
-          </el-form-item> -->
+          </el-form-item>
         </el-form>
       </div>
 
@@ -190,12 +189,12 @@
       <div class="ops-action-bar">
         <el-button type="primary" size="small" @click="handleAddAnsibleConfig">
           <i class="fa fa-plus" style="margin-right: 4px"></i>
-          新增Ansible连接配置
+          新增连接模板
         </el-button>
-        <el-button size="small" @click="handleDeviceManage">
-          <i class="fa fa-cogs" style="margin-right: 4px"></i>
-          设备纳管
-        </el-button>
+        <!-- <el-button size="small" @click="switchToTab('automation')">
+          <i class="fa fa-server" style="margin-right: 4px"></i>
+          资产配置
+        </el-button> -->
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -214,15 +213,15 @@
         <el-table
           :data="paginatedAnsibleData"
           v-loading="ansibleLoading"
-          max-height="calc(100vh - 360px)"
+          max-height="calc(100vh - 300px)"
         >
-          <el-table-column prop="name" label="配置名称" width="120" />
-          <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)" width="250">
+          <el-table-column prop="name" label="模板名称" min-width="150" />
+          <el-table-column prop="instanceGroup" label="执行引擎节点" width="220">
             <template #default="{ row }">
               {{ row.instanceGroup || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="aapInstanceGroup" label="AAP instance group" width="160">
+          <el-table-column prop="aapInstanceGroup" label="AAP节点" width="160">
             <template #default="{ row }">
               {{ row.aapInstanceGroup || '-' }}
             </template>
@@ -237,17 +236,27 @@
               {{ row.runUser || '-' }}
             </template>
           </el-table-column>
-          <el-table-column prop="group_paths" label="分组路径" min-width="120">
+          <el-table-column prop="group_paths" label="适用分组" min-width="220">
             <template #default="{ row }">
-              <div v-if="row.group_paths">
-                <p v-for="(path, idx) in row.group_paths.split(',')" :key="idx">{{ path }}</p>
+              <div v-if="getGroupPathList(row).length" class="group-path-list">
+                <el-tag
+                  v-for="path in getGroupPathList(row)"
+                  :key="path"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ path }}
+                </el-tag>
               </div>
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column prop="param" label="Ansible配置信息" width="200" show-overflow-tooltip>
+          <el-table-column prop="param" label="连接参数摘要" width="220">
             <template #default="{ row }">
-              {{ row.param || '-' }}
+              <el-tooltip v-if="row.param" :content="row.param" placement="top" effect="dark">
+                <span class="param-preview">{{ getParamPreview(row.param) }}</span>
+              </el-tooltip>
+              <span v-else>-</span>
             </template>
           </el-table-column>
           <el-table-column prop="updatedAt" label="更新时间" width="180">
@@ -482,13 +491,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
 import { authService } from '@/core/auth'
 import DeviceManageDialog from '../components/automation/DeviceManageDialog.vue'
+
+const router = useRouter()
 
 // Tab
 const activeTab = ref('automation')
@@ -535,6 +547,25 @@ const automationSaving = ref(false)
 const ansibleForm = ref({})
 const ansibleFormLoading = ref(false)
 
+function resolveScriptEngineResponse(response) {
+  return response?.value || response?.records?.[0]?.value || response?.records?.[0]?.result || 'ansible'
+}
+
+function parseStringListValue(rawValue) {
+  if (!rawValue) return []
+  if (Array.isArray(rawValue)) return rawValue
+  try {
+    const parsed = JSON.parse(rawValue)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function normalizeAnsibleConfigOptions(records = []) {
+  return records.filter(item => item?.id)
+}
+
 // 计算属性 - 直接使用后端返回的数据（后端已筛选）
 const filteredAutomationData = computed(() => {
   return automationData.value
@@ -567,12 +598,6 @@ const paginatedAnsibleData = computed(() => {
 // Ansible 配置总数（筛选后）
 const ansibleTotal = computed(() => {
   return filteredAnsibleData.value.length
-})
-
-const automationPageInfo = computed(() => {
-  const start = (automationPage.value - 1) * automationPageSize.value + 1
-  const end = Math.min(automationPage.value * automationPageSize.value, automationTotal.value)
-  return `${start} - ${end} / ${automationTotal.value}`
 })
 
 onMounted(() => {
@@ -629,7 +654,7 @@ async function loadAnsibleData() {
     })
     ansibleData.value = response?.records || []
     // 更新配置选项（供其它下拉使用）
-    ansibleConfigOptions.value = response?.records || []
+    ansibleConfigOptions.value = normalizeAnsibleConfigOptions(response?.records || [])
   } catch (error) {
     console.error('加载Ansible配置失败:', error)
     ElMessage.error('加载Ansible配置失败')
@@ -658,13 +683,32 @@ function handleAnsiblePageSizeChange() {
   ansiblePage.value = 1
 }
 
+function loadCurrentTabData(tabName = activeTab.value) {
+  if (tabName === 'automation') {
+    loadAutomationData()
+    return
+  }
+
+  loadAnsibleData()
+}
+
+function switchToTab(tabName) {
+  activeTab.value = tabName
+  loadCurrentTabData(tabName)
+}
+
+function openOperationLog() {
+  router.push({
+    path: '/acm/log',
+    query: {
+      day: '1'
+    }
+  })
+}
+
 // Tab切换
 function handleTabClick() {
-  if (activeTab.value === 'automation') {
-    loadAutomationData()
-  } else {
-    loadAnsibleData()
-  }
+  loadCurrentTabData()
 }
 
 // 自动化配置搜索
@@ -686,17 +730,13 @@ async function loadAnsibleFormOptions() {
   try {
     // 加载脚本引擎类型
     const engineRes = await dtsApi.queryData('ACM_GET_SCRIPT_ENGINE', null)
-    scriptEngine.value = engineRes?.records?.[0]?.result || 'ansible'
+    scriptEngine.value = resolveScriptEngineResponse(engineRes)
+    instanceGroupOptions.value = []
+    aapInstanceGroupOptions.value = []
 
     // 加载执行引擎节点列表
     const instanceRes = await dtsApi.queryData('GET_TAT_URL_AS_STRING_LIST', null)
-    if (instanceRes?.records?.[0]?.value) {
-      try {
-        instanceGroupOptions.value = JSON.parse(instanceRes.records[0].value)
-      } catch {
-        instanceGroupOptions.value = []
-      }
-    }
+    instanceGroupOptions.value = parseStringListValue(instanceRes?.records?.[0]?.value)
 
     // 加载AAP instance group（如果是aap引擎）
     if (scriptEngine.value === 'aap') {
@@ -756,18 +796,14 @@ async function loadAutomationFormOptions() {
   try {
     // 加载脚本引擎类型
     const engineRes = await dtsApi.queryData('ACM_GET_SCRIPT_ENGINE', null)
-    scriptEngine.value = engineRes?.records?.[0]?.result || 'ansible'
+    scriptEngine.value = resolveScriptEngineResponse(engineRes)
+    instanceGroupOptions.value = []
+    aapInstanceGroupOptions.value = []
 
     // 加载执行引擎节点列表（非AAP引擎）
     if (scriptEngine.value !== 'aap') {
       const instanceRes = await dtsApi.queryData('GET_TAT_URL_AS_STRING_LIST', null)
-      if (instanceRes?.records?.[0]?.value) {
-        try {
-          instanceGroupOptions.value = JSON.parse(instanceRes.records[0].value)
-        } catch {
-          instanceGroupOptions.value = []
-        }
-      }
+      instanceGroupOptions.value = parseStringListValue(instanceRes?.records?.[0]?.value)
     }
 
     // 加载AAP instance group（AAP引擎）
@@ -778,10 +814,22 @@ async function loadAutomationFormOptions() {
 
     // 加载自动化配置名称列表
     const configRes = await dtsApi.queryData('GET_ALL_ASSET_AUTO_CONFIG', null)
-    ansibleConfigOptions.value = configRes?.records || []
+    ansibleConfigOptions.value = normalizeAnsibleConfigOptions(configRes?.records || [])
   } catch (error) {
     console.error('加载自动化配置表单选项失败:', error)
   }
+}
+
+function getGroupPathList(row) {
+  return (row?.group_paths || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+function getParamPreview(param) {
+  if (!param) return '-'
+  return param.length > 48 ? `${param.slice(0, 48)}...` : param
 }
 
 // 保存自动化配置
@@ -1024,6 +1072,28 @@ function handleDeviceManageSuccess() {
     display: flex;
     gap: 8px;
   }
+}
+
+.table-link-btn {
+  padding: 0;
+  min-height: auto;
+  line-height: 1.4;
+}
+
+.group-path-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.param-preview {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--el-text-color-regular);
 }
 
 .pagination-wrapper {

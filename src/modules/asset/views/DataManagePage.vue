@@ -240,7 +240,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { dataManageApi } from '../api'
@@ -250,6 +251,9 @@ import DataEditGroupDialog from '../components/data/DataEditGroupDialog.vue'
 import DataEditTagDialog from '../components/data/DataEditTagDialog.vue'
 import GroupAssetDialog from '../components/data/GroupAssetDialog.vue'
 import TagAssetDialog from '../components/data/TagAssetDialog.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 // 当前标签页
 const activeTab = ref('group')
@@ -280,6 +284,58 @@ const viewTagDialogVisible = ref(false)
 // 当前操作的数据
 const currentGroup = ref(null)
 const currentTag = ref(null)
+
+const normalizeTab = tab => (tab === 'tag' ? 'tag' : 'group')
+
+const buildRouteQuery = tab => {
+  const currentTab = normalizeTab(tab || activeTab.value)
+  const currentFilter = currentTab === 'group' ? groupFilter.value : tagFilter.value
+  const query = { tab: currentTab }
+
+  if (currentFilter.ciType && currentFilter.ciType !== 'oplus_all') {
+    query.ciType = currentFilter.ciType
+  }
+
+  if (currentFilter.keyword?.trim()) {
+    query.keyword = currentFilter.keyword.trim()
+  }
+
+  return query
+}
+
+const isSameQuery = query => JSON.stringify(route.query || {}) === JSON.stringify(query)
+
+const syncRouteQuery = tab => {
+  const query = buildRouteQuery(tab)
+  if (isSameQuery(query)) {
+    applyRouteQuery(query)
+    return
+  }
+
+  router.replace({
+    path: '/acm/data',
+    query
+  })
+}
+
+const applyRouteQuery = query => {
+  const currentTab = normalizeTab(query.tab)
+  const ciType = typeof query.ciType === 'string' && query.ciType ? query.ciType : 'oplus_all'
+  const keyword = typeof query.keyword === 'string' ? query.keyword : ''
+
+  activeTab.value = currentTab
+
+  if (currentTab === 'group') {
+    groupFilter.value = { ciType, keyword }
+    groupPagination.value.page = 1
+    loadGroupList()
+    return
+  }
+
+  tagFilter.value = { ciType, keyword }
+  tagPagination.value.page = 1
+  loadTagList()
+}
 
 // 加载资源类型
 const loadResourceTypes = async () => {
@@ -349,24 +405,27 @@ const loadTagList = async () => {
 
 // Tab 切换
 const handleTabChange = tab => {
-  if (tab === 'group') {
-    loadGroupList()
+  const currentTab = normalizeTab(tab)
+  activeTab.value = currentTab
+  if (currentTab === 'group') {
+    groupPagination.value.page = 1
   } else {
-    loadTagList()
+    tagPagination.value.page = 1
   }
+  syncRouteQuery(currentTab)
 }
 
 // 分组搜索
 const handleGroupSearch = () => {
   groupPagination.value.page = 1
-  loadGroupList()
+  syncRouteQuery('group')
 }
 
 // 分组重置
 const handleGroupReset = () => {
   groupFilter.value = { ciType: 'oplus_all', keyword: '' }
   groupPagination.value.page = 1
-  loadGroupList()
+  syncRouteQuery('group')
 }
 
 // 分组分页变化
@@ -382,14 +441,14 @@ const handleGroupPageSizeChange = () => {
 // 标签搜索
 const handleTagSearch = () => {
   tagPagination.value.page = 1
-  loadTagList()
+  syncRouteQuery('tag')
 }
 
 // 标签重置
 const handleTagReset = () => {
   tagFilter.value = { ciType: 'oplus_all', keyword: '' }
   tagPagination.value.page = 1
-  loadTagList()
+  syncRouteQuery('tag')
 }
 
 // 标签分页变化
@@ -475,9 +534,15 @@ const handleDeleteTag = row => {
 // 初始化
 onMounted(() => {
   loadResourceTypes()
-  loadGroupList()
-  loadTagList()
 })
+
+watch(
+  () => route.query,
+  query => {
+    applyRouteQuery(query)
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped lang="scss">

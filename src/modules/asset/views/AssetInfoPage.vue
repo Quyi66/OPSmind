@@ -20,7 +20,7 @@
       <!-- 筛选区域 -->
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small">
-          <el-form-item label="数据过滤">
+          <el-form-item label="资产范围">
             <el-popover
               placement="bottom-start"
               :width="360"
@@ -28,19 +28,19 @@
               v-model:visible="hostSelectorVisible"
             >
               <template #reference>
-                <el-button size="small">
-                  <i class="fa fa-list-ul" style="margin-right: 4px"></i>
-                  {{ selectedFilterText }}
+                <el-button size="small" class="scope-trigger">
+                  <i class="fa fa-sitemap" style="margin-right: 4px"></i>
+                  {{ scopeSummaryText }}
                   <i class="fa fa-caret-down" style="margin-left: 4px"></i>
                 </el-button>
               </template>
-              <div class="host-selector">
-                <div class="host-selector-header">
+              <div class="scope-selector">
+                <div class="scope-selector__header">
                   <span>
-                    <i class="fa fa-desktop" style="margin-right: 4px"></i>
-                    已选主机
+                    <i class="fa fa-filter" style="margin-right: 4px"></i>
+                    选择资产范围
                   </span>
-                  <el-tag size="small" type="danger">{{ selectedHostCount }}</el-tag>
+                  <el-tag size="small" type="info">{{ selectedScopeTypeLabel }}</el-tag>
                 </div>
                 <el-tabs v-model="hostSelectorTab">
                   <el-tab-pane label="按分组" name="group">
@@ -54,9 +54,9 @@
                       <div
                         class="group-item all-item"
                         :class="{ active: selectedGroup === 'all' }"
-                        @click="handleSelectGroup('all')"
+                        @click="handleSelectGroup('all', '全部资产')"
                       >
-                        所有
+                        全部资产
                       </div>
                       <el-tree
                         v-if="groupTreeData.length > 0"
@@ -92,6 +92,13 @@
                       />
                       <div v-else class="tag-list">
                         <div
+                          class="tag-item all-item"
+                          :class="{ active: !selectedTag }"
+                          @click="handleSelectGroup('all', '全部资产')"
+                        >
+                          全部资产
+                        </div>
+                        <div
                           v-for="tag in tagList"
                           :key="tag.name"
                           class="tag-item"
@@ -108,15 +115,7 @@
             </el-popover>
           </el-form-item>
 
-          <el-form-item label="权限过滤">
-            <el-select v-model="filters.permission" style="width: 80px">
-              <el-option label="可读" value="r" />
-              <el-option label="可写" value="rw" />
-              <el-option label="可执行" value="rwx" />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item label="状态过滤">
+          <el-form-item label="在线状态">
             <el-select v-model="filters.status" style="width: 80px">
               <el-option label="全部" value="all" />
               <el-option label="在线" value="1" />
@@ -124,7 +123,7 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="最近连通状态">
+          <el-form-item label="最近连通">
             <el-select v-model="filters.connLatestStatus" style="width: 100px">
               <el-option label="所有" value="all" />
               <el-option label="连通成功" value="1" />
@@ -153,7 +152,12 @@
           </el-form-item>
 
           <el-form-item label="关键词">
-            <el-input v-model="searchText" placeholder="搜索" clearable style="width: 150px" />
+            <el-input
+              v-model="searchText"
+              placeholder="IP/主机名/业务系统/负责人"
+              clearable
+              style="width: 220px"
+            />
           </el-form-item>
 
           <el-form-item>
@@ -171,48 +175,24 @@
 
       <!-- 操作按钮区域 -->
       <div class="ops-action-bar">
-        <el-button type="primary" @click="handleAutoEntry" size="small">
-          <i class="fa fa-plus" style="margin-right: 4px"></i>
-          自动化资产录入
-        </el-button>
-        <el-button size="small" @click="importDialogVisible = true">
-          <i class="fa fa-file-import" style="margin-right: 4px"></i>
-          导入资产
-        </el-button>
-        <el-button size="small" @click="exportDialogVisible = true">
-          <i class="fa fa-file-export" style="margin-right: 4px"></i>
-          资产信息导出
-        </el-button>
-        <el-button size="small" @click="deleteImportDialogVisible = true">
-          <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
-          批量删除资产
-        </el-button>
-        <el-button :icon="Edit" :disabled="!hasSelection" @click="handleEdit" size="small">
-          修改
-        </el-button>
-        <el-button :disabled="!hasSelection" @click="handleAddTag" size="small">
-          <i class="fa fa-tag" style="margin-right: 4px"></i>
-          添加标签
-        </el-button>
-        <el-button :disabled="!hasSelection" @click="handleAddGroup" size="small">
-          <i class="fa fa-code" style="margin-right: 4px"></i>
-          添加分组
-        </el-button>
-        <el-button :icon="Top" :disabled="!hasSelection" @click="handleOnline" size="small">
-          上线
-        </el-button>
-        <el-button :icon="Bottom" :disabled="!hasSelection" @click="handleOffline" size="small">
-          下线
-        </el-button>
-        <el-button
-          type="danger"
-          :icon="Delete"
-          :disabled="!hasSelection"
-          @click="handleDelete"
-          size="small"
-        >
-          删除
-        </el-button>
+        <div class="action-left">
+          <el-button type="primary" @click="handleAutoEntry" size="small">
+            <i class="fa fa-plus" style="margin-right: 4px"></i>
+            自动化资产录入
+          </el-button>
+          <el-button size="small" @click="importDialogVisible = true">
+            <i class="fa fa-file-import" style="margin-right: 4px"></i>
+            导入资产
+          </el-button>
+          <el-button size="small" @click="exportDialogVisible = true">
+            <i class="fa fa-file-export" style="margin-right: 4px"></i>
+            资产信息导出
+          </el-button>
+          <el-button type="danger" plain size="small" @click="deleteImportDialogVisible = true">
+            <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
+            批量删除资产
+          </el-button>
+        </div>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -226,13 +206,37 @@
         </el-button>
       </div>
 
+      <div v-if="hasSelection" class="selection-action-bar">
+        <div class="selection-action-bar__summary">
+          已选
+          <strong>{{ selectedRows.length }}</strong>
+          项
+        </div>
+        <div class="selection-action-bar__actions">
+          <el-button :icon="Edit" size="small" @click="handleEdit">批量修改</el-button>
+          <el-button size="small" @click="handleAddTag">
+            <i class="fa fa-tag" style="margin-right: 4px"></i>
+            添加标签
+          </el-button>
+          <el-button size="small" @click="handleAddGroup">
+            <i class="fa fa-code" style="margin-right: 4px"></i>
+            添加分组
+          </el-button>
+          <el-button :icon="Top" size="small" @click="handleOnline">上线</el-button>
+          <el-button :icon="Bottom" size="small" @click="handleOffline">下线</el-button>
+          <el-button type="danger" :icon="Delete" size="small" @click="handleDelete">
+            删除
+          </el-button>
+        </div>
+      </div>
+
       <!-- 数据表格 -->
       <div class="ops-table-wrapper">
         <el-table
           ref="tableRef"
           v-loading="loading"
           :data="tableData"
-          max-height="calc(100vh - 340px)"
+          :max-height="tableMaxHeight"
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="40" fixed="left" />
@@ -244,28 +248,61 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="IP" label="纳管IP" width="130" />
-          <el-table-column prop="needReboot" label="是否需要重启" width="120">
+
+          <el-table-column prop="IP" label="纳管IP" width="140" fixed="left">
             <template #default="{ row }">
-              <el-tag
-                :type="
-                  row.needReboot === 1 ? 'danger' : row.needReboot === 0 ? 'success' : 'warning'
-                "
-                size="small"
-                round
-              >
-                {{ row.needReboot === 1 ? '是' : row.needReboot === 0 ? '否' : '未知' }}
-              </el-tag>
+              <el-button link type="primary" class="table-link-btn" @click="handleView(row)">
+                {{ row.IP || '-' }}
+              </el-button>
             </template>
           </el-table-column>
 
-          <el-table-column label="连通状态" width="100" align="left" prop="CONN_LATEST_STATUS">
+          <el-table-column prop="hostname" label="主机名" min-width="150" show-overflow-tooltip>
             <template #default="{ row }">
-              <el-button link :loading="checkingConnIds.includes(row.id)" @click="handleCheckSingleConn(row)" style="padding: 0; line-height: 1">
+              <el-button link type="primary" class="table-link-btn" @click="handleView(row)">
+                {{ row.hostname || '-' }}
+              </el-button>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="业务系统" label="业务系统" width="120" show-overflow-tooltip />
+
+          <el-table-column
+            prop="os_distro"
+            label="操作系统"
+            min-width="180"
+            show-overflow-tooltip
+          />
+
+          <el-table-column prop="os_version" label="系统版本" width="120" show-overflow-tooltip />
+
+          <el-table-column label="是否需要重启" width="110" align="left">
+            <template #default="{ row }">
+              <span
+                v-if="row.needReboot !== undefined && row.needReboot !== null && row.needReboot !== ''"
+                :class="row.needReboot == 1 ? 'text-danger' : 'text-success'"
+              >
+                {{ row.needReboot == 1 ? '需要' : '不需要' }}
+              </span>
+              <span v-else class="text-secondary">-</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="连通状态" width="110" align="left" prop="CONN_LATEST_STATUS">
+            <template #default="{ row }">
+              <el-button
+                link
+                :loading="checkingConnIds.includes(row.id)"
+                @click="handleCheckSingleConn(row)"
+                style="padding: 0; line-height: 1"
+              >
                 <i v-if="row.CONN_LATEST_STATUS === '1'" class="fa fa-check-circle text-success">
                   已联通
                 </i>
-                <i v-else-if="row.CONN_LATEST_STATUS === '0'" class="fa fa-times-circle text-danger">
+                <i
+                  v-else-if="row.CONN_LATEST_STATUS === '0'"
+                  class="fa fa-times-circle text-danger"
+                >
                   未联通
                 </i>
                 <i v-else class="fa fa-question-circle text-warning">未知</i>
@@ -281,24 +318,7 @@
             </template>
           </el-table-column>
 
-          <el-table-column prop="业务系统" label="业务系统" width="100" show-overflow-tooltip />
-          <el-table-column prop="os_version" label="系统版本" width="110" />
-          <el-table-column
-            prop="os_distro"
-            label="操作系统"
-            min-width="200"
-            show-overflow-tooltip
-          />
-          <el-table-column prop="hostname" label="主机名" width="120" show-overflow-tooltip />
-          <el-table-column prop="arch" label="系统架构" width="80" />
-          <el-table-column prop="cpu_vcpus" label="cpu个数" width="80" />
-          <el-table-column prop="kernel" label="内核" width="220" show-overflow-tooltip />
-          <el-table-column prop="memtotal_mb" label="总内存" width="80" />
-          <el-table-column prop="系统名称" label="系统名称" width="100" show-overflow-tooltip />
-          <el-table-column prop="负责人" label="负责人" width="80" />
-          <el-table-column prop="memfree_mb" label="可用内存" width="80" />
-          <el-table-column prop="jdk_version" label="Java版本" width="150" show-overflow-tooltip />
-          <el-table-column prop="系统模块" label="系统模块" width="100" show-overflow-tooltip />
+          <el-table-column prop="负责人" label="负责人" width="100" show-overflow-tooltip />
 
           <el-table-column label="更新时间" width="180">
             <template #default="{ row }">
@@ -306,9 +326,8 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" width="132" fixed="right">
+          <el-table-column label="操作" width="100" fixed="right">
             <template #default="{ row }">
-              <el-button text type="primary" size="small" @click="handleView(row)">查看</el-button>
               <el-button text type="primary" size="small" @click="handleEditRow(row)">
                 编辑
               </el-button>
@@ -447,16 +466,23 @@ const groupTreeRef = ref(null)
 const groupTreeData = ref([])
 const tagList = ref([])
 const selectedGroup = ref('all')
-const selectedGroupName = ref('所有')
+const selectedGroupName = ref('全部资产')
 const selectedTag = ref('')
-const selectedHostCount = computed(() => selectedRows.value.length)
 
-// 计算选中的过滤文本
-const selectedFilterText = computed(() => {
+const scopeSummaryText = computed(() => {
   if (selectedTag.value) {
-    return `#${selectedTag.value}`
+    return `标签：#${selectedTag.value}`
   }
-  return selectedGroupName.value || '@@'
+  if (selectedGroup.value !== 'all') {
+    return `分组：${selectedGroupName.value}`
+  }
+  return '全部资产'
+})
+
+const selectedScopeTypeLabel = computed(() => {
+  if (selectedTag.value) return '按标签'
+  if (selectedGroup.value !== 'all') return '按分组'
+  return '全部'
 })
 
 // 树形组件配置
@@ -498,14 +524,17 @@ const buildGroupTreeFromPaths = paths => {
   return [root]
 }
 
+function createDefaultFilters() {
+  return {
+    hostKeys: '@@',
+    status: 'all',
+    connLatestStatus: 'all',
+    osVersion: []
+  }
+}
+
 // 筛选条件
-const filters = ref({
-  hostKeys: '@@',
-  permission: 'r',
-  status: '1',
-  connLatestStatus: 'all',
-  osVersion: []
-})
+const filters = ref(createDefaultFilters())
 
 // 系统版本选项
 const osVersionOptions = ref([])
@@ -527,6 +556,16 @@ const checkingConnIds = ref([])
 
 // 计算属性
 const hasSelection = computed(() => selectedRows.value.length > 0)
+
+const tableMaxHeight = computed(() => {
+  let offset = 340
+
+  if (hasSelection.value) {
+    offset += 52
+  }
+
+  return `calc(100vh - ${offset}px)`
+})
 
 const paginationInfo = computed(() => {
   if (total.value === 0) return '0 - 0 / 0'
@@ -609,9 +648,9 @@ const loadTagList = async () => {
 }
 
 // 选择分组
-const handleSelectGroup = (groupId, groupName = '所有') => {
+const handleSelectGroup = (groupId, groupName = '全部资产') => {
   selectedGroup.value = groupId
-  selectedGroupName.value = groupName
+  selectedGroupName.value = groupId === 'all' ? '全部资产' : groupName
   selectedTag.value = ''
   if (groupId === 'all') {
     filters.value.hostKeys = '@@'
@@ -623,7 +662,7 @@ const handleSelectGroup = (groupId, groupName = '所有') => {
 
 // 分组树节点点击
 const handleGroupNodeClick = data => {
-  handleSelectGroup(data.path, data.name)
+  handleSelectGroup(data.path, data.path || '全部资产')
 }
 
 // 选择标签
@@ -674,7 +713,7 @@ const loadAssetList = async () => {
     const params = {
       hostKeys: filters.value.hostKeys,
       assetType: currentType.value,
-      permission: filters.value.permission,
+      permission: 'r',
       status: filters.value.status,
       CONN_LATEST_STATUS:
         filters.value.connLatestStatus === 'all' ? '' : filters.value.connLatestStatus,
@@ -705,7 +744,7 @@ const handleTypeChange = code => {
 watch(currentType, () => {
   currentPage.value = 1
   selectedGroup.value = 'all'
-  selectedGroupName.value = '所有'
+  selectedGroupName.value = '全部资产'
   selectedTag.value = ''
   filters.value.hostKeys = '@@'
   loadOsVersionOptions()
@@ -722,16 +761,10 @@ const handleSearch = () => {
 
 // 重置
 const handleReset = () => {
-  filters.value = {
-    hostKeys: '@@',
-    permission: 'r',
-    status: '1',
-    connLatestStatus: 'all',
-    osVersion: []
-  }
+  filters.value = createDefaultFilters()
   searchText.value = ''
   selectedGroup.value = 'all'
-  selectedGroupName.value = '所有'
+  selectedGroupName.value = '全部资产'
   selectedTag.value = ''
   currentPage.value = 1
   loadAssetList()
@@ -1101,6 +1134,41 @@ onMounted(() => {
   overflow: hidden;
 }
 
+.selection-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
+  border-radius: 8px;
+
+  &__summary {
+    color: var(--el-text-color-primary);
+    font-size: 13px;
+    white-space: nowrap;
+
+    strong {
+      color: var(--el-color-primary);
+      font-weight: 600;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+.table-link-btn {
+  padding: 0;
+  min-height: auto;
+  line-height: 1.4;
+}
+
 // 文本颜色
 .text-success {
   color: #67c23a;
@@ -1115,18 +1183,19 @@ onMounted(() => {
 }
 
 .text-primary {
-  color: #409eff;
+  color: #67c23a;
 }
 
 .text-secondary {
   color: #909399;
 }
 
-// 主机选择器
-.host-selector {
-  .host-selector-header {
+// 资产范围选择器
+.scope-selector {
+  .scope-selector__header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--el-border-color-light);
@@ -1184,6 +1253,11 @@ onMounted(() => {
         &.active {
           background: var(--el-color-primary-light-9);
           color: var(--el-color-primary);
+        }
+
+        &.all-item {
+          background: var(--el-bg-color-page);
+          margin-bottom: 8px;
         }
       }
     }

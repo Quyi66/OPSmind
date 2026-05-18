@@ -273,7 +273,7 @@ export const baseRoutes = [
       {
         path: '',
         component: AssetGroupLayout,
-        redirect: '/acm/overview',
+        redirect: '/acm/info',
         children: [...acmChildren]
       }
     ]

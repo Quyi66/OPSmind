@@ -29,14 +29,20 @@
           </el-select>
         </el-form-item>
         <el-form-item label="IP">
-          <el-input v-model="searchKeyword" placeholder="搜索" clearable style="width: 200px">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="tableLoading" @click="loadTableData">
+          <el-button type="primary" :loading="tableLoading" @click="handleSearch">
             <el-icon><Search /></el-icon>
             搜索
           </el-button>
@@ -50,14 +56,16 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button size="small" @click="handleCheckConnectivity" type="primary">
+      <el-button size="small" @click="openActionDialog('checkConnectivity')" type="primary">
         <i class="fa fa-plug" style="margin-right: 4px"></i>
         检查连通性
       </el-button>
-      <el-button size="small" @click="handleCollectInfo">
+      <el-button size="small" @click="openActionDialog('collectInfo')">
         <i class="fa fa-download" style="margin-right: 4px"></i>
         采集信息
       </el-button>
+      <el-button size="small" @click="openOperationLog('checkConnectivity')">连通性记录</el-button>
+      <el-button size="small" @click="openOperationLog('collectInfo')">采集记录</el-button>
       <!-- <el-button size="small" @click="handleExport">
         <el-icon><Download /></el-icon>
         导出</el-button> -->
@@ -126,66 +134,30 @@
       />
     </div>
 
-    <!-- 检查连通性一级弹窗 -->
+    <!-- 动作弹窗 -->
     <el-dialog
-      v-model="checkConnDialogVisible"
-      title="检查连通性"
+      v-model="actionDialogVisible"
+      :title="currentActionMeta.title"
       width="700px"
       :close-on-click-modal="false"
+      @closed="resetActionDialog"
     >
       <div class="dialog-content">
-        <!-- 使用 AcmDeviceSelector 组件 -->
         <AcmDeviceSelector
-          v-model="checkConnHosts"
+          v-model="actionHosts"
           ci-types="[auto]"
-          :options="{
-            selectMode: 'host,group,tag,input,recently',
-            selector: 'multiple',
-            label: '选择设备'
-          }"
+          :options="actionSelectorOptions"
         />
       </div>
       <template #footer>
-        <el-button @click="checkConnDialogVisible = false">取消</el-button>
+        <el-button @click="actionDialogVisible = false">取消</el-button>
         <el-button
           type="primary"
-          :disabled="checkConnHosts.length === 0"
-          :loading="checkConnLoading"
-          @click="confirmCheckConnectivity"
+          :disabled="actionHosts.length === 0"
+          :loading="actionLoading"
+          @click="confirmAction"
         >
-          检查连通性
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 采集信息一级弹窗 -->
-    <el-dialog
-      v-model="collectInfoDialogVisible"
-      title="采集信息"
-      width="700px"
-      :close-on-click-modal="false"
-    >
-      <div class="dialog-content">
-        <!-- 使用 AcmDeviceSelector 组件 -->
-        <AcmDeviceSelector
-          v-model="collectInfoHosts"
-          ci-types="[auto]"
-          :options="{
-            selectMode: 'host,group,tag,input,recently',
-            selector: 'multiple',
-            label: '选择设备'
-          }"
-        />
-      </div>
-      <template #footer>
-        <el-button @click="collectInfoDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :disabled="collectInfoHosts.length === 0"
-          :loading="collectInfoLoading"
-          @click="confirmCollectInfo"
-        >
-          采集信息
+          {{ currentActionMeta.confirmButtonText }}
         </el-button>
       </template>
     </el-dialog>
@@ -193,14 +165,50 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { Download, Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import KpiCards from '../components/exception/KpiCards.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import { dtsApi } from '../api'
 import { apiService } from '@/core/api'
+
+const router = useRouter()
+
+const ACTION_CONFIG = {
+  checkConnectivity: {
+    title: '检查连通性',
+    confirmButtonText: '检查连通性',
+    confirmMessage: '连通性检查将花费几分钟到半小时不等的时间，点击确定开始',
+    pendingMessage: '连通性检查任务已发起，可以关闭当前弹窗',
+    successMessage: '连通性检查完成',
+    failureMessage: '连通性检查失败',
+    startErrorMessage: '启动检查任务失败',
+    timeoutMessage: '检查超时，请稍后在后台查看结果',
+    pollErrorMessage: '检查结果轮询失败，请稍后在后台查看结果',
+    jobId: 'M1x855'
+  },
+  collectInfo: {
+    title: '采集信息',
+    confirmButtonText: '采集信息',
+    confirmMessage: '信息采集将花费几分钟到半小时不等的时间，点击确定开始',
+    pendingMessage: '信息采集任务已发起，可以关闭当前弹窗',
+    successMessage: '信息采集完成',
+    failureMessage: '信息采集失败',
+    startErrorMessage: '启动采集任务失败',
+    timeoutMessage: '采集超时，请稍后在后台查看结果',
+    pollErrorMessage: '采集结果轮询失败，请稍后在后台查看结果',
+    jobId: 'mjedwe'
+  }
+}
+
+const actionSelectorOptions = {
+  selectMode: 'host,group,tag,input,recently',
+  selector: 'multiple',
+  label: '选择设备'
+}
 
 // KPI 数据
 const kpiData = ref([])
@@ -217,7 +225,6 @@ const filters = reactive({
 
 // 搜索关键词
 const searchKeyword = ref('')
-const loading = ref(false)
 
 // 表格数据
 const tableData = ref([])
@@ -225,22 +232,14 @@ const tableLoading = ref(false)
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
+const loading = computed(() => kpiLoading.value || tableLoading.value)
 
-// 弹窗
-const checkConnDialogVisible = ref(false)
-const collectInfoDialogVisible = ref(false)
-
-// 设备选择二级弹窗
-const checkConnDeviceSelectorVisible = ref(false)
-const collectInfoDeviceSelectorVisible = ref(false)
-
-// 选中的设备
-const checkConnHosts = ref([])
-const collectInfoHosts = ref([])
-
-// 任务执行状态
-const checkConnLoading = ref(false)
-const collectInfoLoading = ref(false)
+// 动作弹窗
+const actionDialogVisible = ref(false)
+const currentActionKey = ref('checkConnectivity')
+const actionHosts = ref([])
+const actionLoading = ref(false)
+const currentActionMeta = computed(() => ACTION_CONFIG[currentActionKey.value])
 
 // 加载 KPI 数据
 const loadKpiData = async () => {
@@ -297,20 +296,10 @@ const handleKpiClick = params => {
   loadTableData()
 }
 
-// 处理筛选变化
-const handleFilterChange = () => {
+// 处理搜索
+const handleSearch = () => {
   currentPage.value = 1
   loadTableData()
-}
-
-// 处理搜索
-let searchTimer = null
-const handleSearch = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    currentPage.value = 1
-    loadTableData()
-  }, 300)
 }
 
 // 重置
@@ -329,110 +318,67 @@ const handlePageSizeChange = () => {
   loadTableData()
 }
 
-// 导出
-const handleExport = () => {
-  ElMessage.info('导出功能开发中...')
-}
-
 // 刷新
 const handleRefresh = () => {
   loadKpiData()
   loadTableData()
 }
 
-// 检查连通性
-const handleCheckConnectivity = () => {
-  checkConnHosts.value = []
-  checkConnDialogVisible.value = true
-}
-
-// 打开检查连通性的设备选择弹窗
-const openCheckConnDeviceSelector = () => {
-  checkConnDeviceSelectorVisible.value = true
-}
-
-// 检查连通性设备选择确认回调
-const handleCheckConnDeviceConfirm = selectedHosts => {
-  checkConnHosts.value = selectedHosts || []
-}
-
-// 移除检查连通性已选设备
-const removeCheckConnHost = index => {
-  checkConnHosts.value.splice(index, 1)
-}
-
-// 轮询定时器
-let pollingTimer = null
-
-// 确认检查连通性
-const confirmCheckConnectivity = async () => {
-  if (checkConnHosts.value.length === 0) {
-    ElMessage.warning('请先选择设备')
-    return
+const openOperationLog = actionKey => {
+  const actionMap = {
+    checkConnectivity: '#{acm.job.check_conn}',
+    collectInfo: '#{acm.job.collect_assert_info}'
   }
 
-  // 显示确认弹窗
-  try {
-    await ElMessageBox.confirm(
-      '连通性检查将花费几分钟到半小时不等的时间，点击确定开始',
-      '执行作业',
-      {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-  } catch {
-    return
-  }
-
-  checkConnLoading.value = true
-
-  try {
-    const hosts = normalizeAcmDeviceJobHosts(checkConnHosts.value, 'linux')
-
-    // 调用启动检查接口
-    const cacheBuster = Date.now()
-    const { data } = await apiService.post(
-      `/jao/api/jao/jobs/M1x855/run?cacheBuster=${cacheBuster}`,
-      {
-        params: { hosts }
-      }
-    )
-
-    const result = Array.isArray(data) ? data[0] : data
-
-    if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      ElMessage.success('任务已发起，可以关闭当前弹窗')
-      const runId = result.runId
-      // 开启后台轮询
-      pollCheckResult(runId)
-    } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      ElMessage.success('连通性检查完成')
-      checkConnLoading.value = false
-      checkConnDialogVisible.value = false
-      checkConnHosts.value = []
-      loadTableData()
-      loadKpiData()
-    } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-      checkConnLoading.value = false
-      ElMessage.error(result?.error || '连通性检查失败')
-    } else {
-      ElMessage.success('连通性检查任务已启动')
-      checkConnLoading.value = false
-      checkConnDialogVisible.value = false
-      checkConnHosts.value = []
+  router.push({
+    path: '/acm/log',
+    query: {
+      day: '1',
+      action: actionMap[actionKey] || 'all'
     }
-  } catch (error) {
-    checkConnLoading.value = false
-    console.error('启动检查任务失败:', error)
-    ElMessage.error('启动检查任务失败')
-  }
+  })
 }
 
-// 轮询检查结果
-async function pollCheckResult(runId) {
-  const maxAttempts = 360 // 最多轮询 30 分钟 (360 * 5秒)
+const openActionDialog = actionKey => {
+  currentActionKey.value = actionKey
+  actionHosts.value = []
+  actionDialogVisible.value = true
+}
+
+const resetActionDialog = () => {
+  actionHosts.value = []
+  actionLoading.value = false
+}
+
+const closeActionDialog = () => {
+  actionDialogVisible.value = false
+  resetActionDialog()
+}
+
+const refreshExceptionData = () => {
+  loadTableData()
+  loadKpiData()
+}
+
+const pollTimerIds = new Set()
+
+const schedulePolling = callback => {
+  const timerId = setTimeout(async () => {
+    pollTimerIds.delete(timerId)
+    await callback()
+  }, 5000)
+  pollTimerIds.add(timerId)
+}
+
+const isJobPending = result => result?.status === 'WAITING' || result?.status === 'RUNNING'
+
+const isJobSuccess = result => result?.status === 'COMPLETED' || result?.status === 'SUCCESS'
+
+const isJobFailed = result => result?.status === 'FAILED' || result?.status === 'ERROR'
+
+const pollActionResult = async (runId, actionKey) => {
+  const actionMeta = ACTION_CONFIG[actionKey]
+  const maxAttempts = 360
   let attempts = 0
 
   const poll = async () => {
@@ -443,81 +389,53 @@ async function pollCheckResult(runId) {
         `/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`
       )
 
-      if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
+      if (isJobPending(result)) {
         if (attempts < maxAttempts) {
-          pollingTimer = setTimeout(poll, 5000)
+          schedulePolling(poll)
         } else {
-          checkConnLoading.value = false
-          ElMessage.warning('检查超时，请稍后在后台查看结果')
+          ElMessage.warning(actionMeta.timeoutMessage)
         }
-      } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-        checkConnLoading.value = false
-        ElMessage.success('连通性检查完成')
-        // 刷新列表
-        loadTableData()
-        loadKpiData()
-      } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-        checkConnLoading.value = false
-        ElMessage.error(result?.error || '连通性检查失败')
-      } else {
-        if (attempts < maxAttempts) {
-          pollingTimer = setTimeout(poll, 5000)
-        } else {
-          checkConnLoading.value = false
-        }
+        return
+      }
+
+      if (isJobSuccess(result)) {
+        ElMessage.success(actionMeta.successMessage)
+        refreshExceptionData()
+        return
+      }
+
+      if (isJobFailed(result)) {
+        ElMessage.error(result?.error || actionMeta.failureMessage)
+        return
+      }
+
+      if (attempts < maxAttempts) {
+        schedulePolling(poll)
       }
     } catch (error) {
-      console.error('轮询失败:', error)
+      console.error(`${actionMeta.title}轮询失败:`, error)
       if (attempts < maxAttempts) {
-        pollingTimer = setTimeout(poll, 5000)
+        schedulePolling(poll)
       } else {
-        checkConnLoading.value = false
+        ElMessage.warning(actionMeta.pollErrorMessage)
       }
     }
   }
 
-  pollingTimer = setTimeout(poll, 5000)
+  schedulePolling(poll)
 }
 
-// 组件卸载时清理定时器
-onUnmounted(() => {
-  if (pollingTimer) {
-    clearTimeout(pollingTimer)
-    pollingTimer = null
-  }
-})
-
-// 采集信息
-const handleCollectInfo = () => {
-  collectInfoHosts.value = []
-  collectInfoDialogVisible.value = true
-}
-
-// 打开采集信息的设备选择弹窗
-const openCollectInfoDeviceSelector = () => {
-  collectInfoDeviceSelectorVisible.value = true
-}
-
-// 采集信息设备选择确认回调
-const handleCollectInfoDeviceConfirm = selectedHosts => {
-  collectInfoHosts.value = selectedHosts || []
-}
-
-// 移除采集信息已选设备
-const removeCollectInfoHost = index => {
-  collectInfoHosts.value.splice(index, 1)
-}
-
-// 确认采集信息
-const confirmCollectInfo = async () => {
-  if (collectInfoHosts.value.length === 0) {
+const confirmAction = async () => {
+  if (actionHosts.value.length === 0) {
     ElMessage.warning('请先选择设备')
     return
   }
 
-  // 显示确认弹窗
+  const actionKey = currentActionKey.value
+  const actionMeta = ACTION_CONFIG[actionKey]
+
   try {
-    await ElMessageBox.confirm('信息采集将花费几分钟到半小时不等的时间，点击确定开始', '执行作业', {
+    await ElMessageBox.confirm(actionMeta.confirmMessage, '执行作业', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning'
@@ -526,15 +444,13 @@ const confirmCollectInfo = async () => {
     return
   }
 
-  collectInfoLoading.value = true
+  actionLoading.value = true
 
   try {
-    const hosts = normalizeAcmDeviceJobHosts(collectInfoHosts.value, 'linux')
-
-    // 调用启动采集接口
+    const hosts = normalizeAcmDeviceJobHosts(actionHosts.value, 'linux')
     const cacheBuster = Date.now()
     const { data } = await apiService.post(
-      `/jao/api/jao/jobs/mjedwe/run?cacheBuster=${cacheBuster}`,
+      `/jao/api/jao/jobs/${actionMeta.jobId}/run?cacheBuster=${cacheBuster}`,
       {
         params: { hosts }
       }
@@ -542,82 +458,40 @@ const confirmCollectInfo = async () => {
 
     const result = Array.isArray(data) ? data[0] : data
 
-    if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-      ElMessage.success('任务已发起，可以关闭当前弹窗')
-      const runId = result.runId
-      // 开启后台轮询
-      pollCollectResult(runId)
-    } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-      ElMessage.success('信息采集完成')
-      collectInfoLoading.value = false
-      collectInfoDialogVisible.value = false
-      collectInfoHosts.value = []
-      loadTableData()
-      loadKpiData()
-    } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-      collectInfoLoading.value = false
-      ElMessage.error(result?.error || '信息采集失败')
-    } else {
-      ElMessage.success('信息采集任务已启动')
-      collectInfoLoading.value = false
-      collectInfoDialogVisible.value = false
-      collectInfoHosts.value = []
+    if (isJobPending(result)) {
+      ElMessage.success(actionMeta.pendingMessage)
+      closeActionDialog()
+      pollActionResult(result.runId, actionKey)
+      return
     }
+
+    if (isJobSuccess(result)) {
+      ElMessage.success(actionMeta.successMessage)
+      closeActionDialog()
+      refreshExceptionData()
+      return
+    }
+
+    if (isJobFailed(result)) {
+      ElMessage.error(result?.error || actionMeta.failureMessage)
+      return
+    }
+
+    ElMessage.success(actionMeta.pendingMessage)
+    closeActionDialog()
   } catch (error) {
-    collectInfoLoading.value = false
-    console.error('启动采集任务失败:', error)
-    ElMessage.error('启动采集任务失败')
+    console.error(actionMeta.startErrorMessage + ':', error)
+    ElMessage.error(actionMeta.startErrorMessage)
+  } finally {
+    actionLoading.value = false
   }
 }
 
-// 轮询采集结果
-async function pollCollectResult(runId) {
-  const maxAttempts = 360 // 最多轮询 30 分钟 (360 * 5秒)
-  let attempts = 0
-
-  const poll = async () => {
-    attempts++
-    try {
-      const cacheBuster = Date.now()
-      const { data: result } = await apiService.get(
-        `/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`
-      )
-
-      if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
-        if (attempts < maxAttempts) {
-          pollingTimer = setTimeout(poll, 5000)
-        } else {
-          collectInfoLoading.value = false
-          ElMessage.warning('采集超时，请稍后在后台查看结果')
-        }
-      } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
-        collectInfoLoading.value = false
-        ElMessage.success('信息采集完成')
-        // 刷新列表
-        loadTableData()
-        loadKpiData()
-      } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
-        collectInfoLoading.value = false
-        ElMessage.error(result?.error || '信息采集失败')
-      } else {
-        if (attempts < maxAttempts) {
-          pollingTimer = setTimeout(poll, 5000)
-        } else {
-          collectInfoLoading.value = false
-        }
-      }
-    } catch (error) {
-      console.error('采集轮询失败:', error)
-      if (attempts < maxAttempts) {
-        pollingTimer = setTimeout(poll, 5000)
-      } else {
-        collectInfoLoading.value = false
-      }
-    }
-  }
-
-  pollingTimer = setTimeout(poll, 5000)
-}
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  pollTimerIds.forEach(timerId => clearTimeout(timerId))
+  pollTimerIds.clear()
+})
 
 // 格式化连通率
 const formatConnRate = rate => {
@@ -786,42 +660,5 @@ onMounted(() => {
   padding: 12px 0;
   font-size: 14px;
   color: var(--el-text-color-regular);
-
-  .selected-hosts-section {
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-
-      .section-label {
-        font-weight: 500;
-        color: var(--el-text-color-primary);
-      }
-
-      .select-btn {
-        margin-left: auto;
-      }
-    }
-
-    .hosts-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      max-height: 200px;
-      overflow-y: auto;
-      padding: 12px;
-      background: var(--el-bg-color-page);
-      border-radius: 4px;
-    }
-
-    .empty-tip {
-      padding: 24px;
-      text-align: center;
-      color: var(--el-text-color-secondary);
-      background: var(--el-bg-color-page);
-      border-radius: 4px;
-    }
-  }
 }
 </style>
