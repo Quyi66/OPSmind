@@ -50,6 +50,7 @@
           >
             <i :class="item.icon" class="workflow-link__icon" />
             <span>{{ item.label }}</span>
+            <span v-if="item.badgeValue" class="workflow-link__badge">{{ item.badgeValue }}</span>
           </button>
         </div>
       </div>
@@ -228,98 +229,82 @@ const contexts = computed(() => ({
   workbench: {
     moduleLabel: '工作台',
     title: '自动化工作台',
-    description: '',
     tag: '总览',
     hidePendingCards: true
   },
   automation: {
     moduleLabel: '业务工作区',
     title: '自动化业务流',
-    description: '把配置准备、脚本沉淀、命令复用、作业编排、审批治理和运行回看串成一条完整链路。',
     tag: '总览'
   },
   jobList: {
     moduleLabel: '作业中心',
     title: '作业列表',
-    description: '集中维护可复用作业模板，并直接串联执行、申请和历史回看。',
     tag: '执行入口'
   },
   schedule: {
     moduleLabel: '作业中心',
     title: '流程编排',
-    description: '把多步骤作业编排为流程，适合需要顺序控制、参数编排和实例回看的场景。',
     tag: '编排设计'
   },
   taskScheduler: {
     moduleLabel: '作业中心',
     title: '定时任务',
-    description: '把高频重复动作固定为定时执行，减少人工触发和执行遗漏。',
     tag: '定时调度'
   },
   requests: {
     moduleLabel: '作业中心',
     title: '我的申请',
-    description: '统一跟踪自己发起的执行申请、有效期和审批结果，避免重复申请。',
     tag: '审批跟踪'
   },
   approvals: {
     moduleLabel: '审批中心',
     title: '作业审批',
-    description: '在审批环节直接处理作业执行授权，减少作业创建人与审批人的来回确认。',
     tag: '治理闭环'
   },
   commandWorkspace: {
     moduleLabel: '命令中心',
     title: '命令列表',
-    description: '先沉淀标准命令，再按场景选择临时执行或生成命令作业，减少重复维护。',
     tag: '命令沉淀'
   },
   commandJobs: {
     moduleLabel: '命令中心',
     title: '命令作业',
-    description: '把复用命令固化为可审批、可回看的命令作业，适合稳定的执行场景。',
     tag: '命令复用'
   },
   commandReview: {
     moduleLabel: '审批中心',
     title: '命令审核',
-    description: '集中审核新增和变更中的命令，避免未发布内容散落在编辑流程。',
     tag: '待办处理'
   },
   commandConsole: {
     moduleLabel: '命令中心',
     title: '控制台',
-    description: '用于临时排障与即时验证，确认稳定后再回收为命令或命令作业。',
     tag: '临时执行'
   },
   scriptLibrary: {
     moduleLabel: '脚本中心',
     title: '脚本库',
-    description: '集中管理可复用脚本，适合沉淀标准执行材料并给作业、流程直接复用。',
     tag: '材料沉淀'
   },
   fileLibrary: {
     moduleLabel: '脚本中心',
     title: '文件库',
-    description: '把执行依赖文件、模板和附件集中维护，减少作业和流程里的临时拷贝。',
     tag: '执行材料'
   },
   scriptReview: {
     moduleLabel: '审批中心',
     title: '脚本审核',
-    description: '把待发布脚本集中审核，避免执行材料变更绕过标准审核链路。',
     tag: '变更治理'
   },
   runLogs: {
     moduleLabel: '运行记录',
     title: '运行记录',
-    description: '统一回看命令、作业和流程的执行结果，把执行闭环从入口页直接串到复盘页。',
     tag: '执行复盘'
   },
   statistics: {
     moduleLabel: '运行记录',
     title: '统计分析',
-    description: '用统一统计面板观察自动化执行趋势，辅助回收低效链路和高频问题。',
     tag: '效果分析'
   }
 }))
@@ -339,7 +324,7 @@ const workflowGroups = computed(() => [
   },
   {
     key: 'govern',
-    label: '治理与回看',
+    label: '申请审批与记录',
     items: pickShortcuts(['requests', 'approvals', 'commandReview', 'scriptReview', 'runLogs'])
   }
 ].filter(group => group.items.length > 0))
@@ -393,98 +378,123 @@ function handleNavigate(target) {
 
 <style scoped lang="scss">
 .automation-workflow-header {
-  --automation-workflow-accent: #0f766e;
-  --automation-workflow-bg-top: rgba(15, 118, 110, 0.08);
-  --automation-workflow-bg-bottom: rgba(15, 118, 110, 0.02);
-  --automation-workflow-card-bg: rgba(255, 255, 255, 0.86);
-  --automation-workflow-card-border: rgba(15, 118, 110, 0.14);
-  --automation-workflow-card-hover-border: rgba(15, 118, 110, 0.32);
-  --automation-workflow-card-hover-shadow: 0 8px 20px rgba(15, 118, 110, 0.08);
-  --automation-workflow-link-bg: var(--el-bg-color);
-  --automation-workflow-link-border: var(--el-border-color);
-  --automation-workflow-link-hover-border: rgba(15, 118, 110, 0.32);
-  --automation-workflow-link-active-bg: rgba(15, 118, 110, 0.08);
-  --automation-workflow-link-active-border: rgba(15, 118, 110, 0.24);
-  --automation-workflow-link-active-text: var(--automation-workflow-accent);
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  background:
-    linear-gradient(
-      180deg,
-      var(--automation-workflow-bg-top) 0%,
-      var(--automation-workflow-bg-bottom) 100%
-    ),
-    var(--el-bg-color);
+  --automation-workflow-accent: #0d9488;
+  --automation-workflow-bg: rgba(255, 255, 255, 0.95);
+  --automation-workflow-border: #e2e8f0;
+  --automation-workflow-card-bg: #f8fafc;
+  --automation-workflow-card-border: #e2e8f0;
+  --automation-workflow-card-hover-border: rgba(13, 148, 136, 0.5);
+  --automation-workflow-card-hover-shadow: 0 8px 20px -4px rgba(13, 148, 136, 0.18);
+  --automation-workflow-link-bg: #ffffff;
+  --automation-workflow-link-border: #e2e8f0;
+  --automation-workflow-link-hover-border: rgba(13, 148, 136, 0.6);
+  --automation-workflow-link-active-bg: linear-gradient(135deg, rgba(20, 184, 166, 0.1), rgba(13, 148, 136, 0.04));
+  --automation-workflow-link-active-border: rgba(13, 148, 136, 0.35);
+  --automation-workflow-link-active-text: #0f766e;
+
+  padding: 14px 20px 12px;
+  border-bottom: none;
+  background: var(--automation-workflow-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.automation-workflow-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--automation-workflow-accent) 30%,
+    var(--automation-workflow-accent) 70%,
+    transparent
+  );
+  opacity: 0.35;
 }
 
 .automation-workflow-header__top {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  align-items: flex-start;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .automation-workflow-header__content {
-  min-width: 280px;
+  min-width: 200px;
   flex: 1;
 }
 
 .automation-workflow-header__eyebrow {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--automation-workflow-accent);
+  text-transform: uppercase;
+  margin-bottom: 2px;
 }
 
 .automation-workflow-header__title-row {
-  margin-top: 6px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .automation-workflow-header__title {
   margin: 0;
-  font-size: 20px;
-  line-height: 1.2;
-  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 700;
   color: var(--el-text-color-primary);
+  letter-spacing: -0.01em;
 }
 
 .automation-workflow-header__stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
-  gap: 10px;
-  min-width: min(100%, 360px);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .pending-card {
-  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 90px;
+  padding: 8px 14px;
   border: 1px solid var(--automation-workflow-card-border);
   border-radius: 10px;
   background: var(--automation-workflow-card-bg);
+  backdrop-filter: blur(8px);
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .pending-card:hover {
   border-color: var(--automation-workflow-card-hover-border);
   box-shadow: var(--automation-workflow-card-hover-shadow);
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.02);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .pending-card__label {
-  display: block;
   font-size: 12px;
+  font-weight: 500;
   color: var(--el-text-color-secondary);
 }
 
 .pending-card__value {
-  display: block;
-  margin-top: 6px;
-  font-size: 20px;
+  margin-top: 2px;
+  font-size: 18px;
+  font-weight: 700;
   line-height: 1;
   color: var(--automation-workflow-accent);
 }
@@ -492,24 +502,36 @@ function handleNavigate(target) {
 .automation-workflow-header__groups {
   margin-top: 12px;
   display: flex;
-  gap: 10px;
+  gap: 10px 24px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .workflow-group {
   display: flex;
-  gap: 10px;
   align-items: center;
-  padding: 0;
-  flex: 1 1 320px;
+  gap: 8px;
 }
 
 .workflow-group__label {
-  flex-shrink: 0;
-  width: 68px;
+  position: relative;
   font-size: 12px;
   font-weight: 600;
-  color: var(--el-text-color-secondary);
+  color: var(--el-text-color-regular);
+  padding-left: 9px;
+  white-space: nowrap;
+}
+
+.workflow-group__label::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--automation-workflow-accent);
 }
 
 .workflow-group__links {
@@ -521,74 +543,99 @@ function handleNavigate(target) {
 .workflow-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  padding: 0 10px;
+  gap: 5px;
+  height: 28px;
+  padding: 0 11px;
   border: 1px solid var(--automation-workflow-link-border);
-  border-radius: 999px;
+  border-radius: 14px;
   background: var(--automation-workflow-link-bg);
   color: var(--el-text-color-regular);
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
 }
 
 .workflow-link:hover {
   border-color: var(--automation-workflow-link-hover-border);
   color: var(--automation-workflow-accent);
+  transform: translateY(-1px);
 }
 
 .workflow-link.is-active {
   border-color: var(--automation-workflow-link-active-border);
   background: var(--automation-workflow-link-active-bg);
   color: var(--automation-workflow-link-active-text);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.1);
 }
 
 .workflow-link__icon {
   font-size: 12px;
+  opacity: 0.8;
+}
+
+.workflow-link__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--automation-workflow-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: -2px;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.3);
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
 }
 
 @media (max-width: 960px) {
-  .automation-workflow-header {
-    padding: 16px;
-  }
-
   .automation-workflow-header__stats {
     width: 100%;
-    min-width: 0;
-  }
-
-  .workflow-group {
-    flex-basis: 100%;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .workflow-group {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .workflow-group__label {
-    width: auto;
+    border-right: none;
+    padding: 8px 0;
+    width: 100%;
   }
 }
 </style>
 
 <style lang="scss">
 html.dark .automation-workflow-header {
-  --automation-workflow-accent: #5eead4;
-  --automation-workflow-bg-top: rgba(45, 212, 191, 0.16);
-  --automation-workflow-bg-bottom: rgba(45, 212, 191, 0.04);
-  --automation-workflow-card-bg: linear-gradient(180deg, rgba(20, 28, 40, 0.94), rgba(16, 23, 34, 0.9));
-  --automation-workflow-card-border: rgba(71, 85, 105, 0.56);
-  --automation-workflow-card-hover-border: rgba(94, 234, 212, 0.4);
-  --automation-workflow-card-hover-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
-  --automation-workflow-link-bg: rgba(15, 23, 42, 0.84);
-  --automation-workflow-link-border: rgba(71, 85, 105, 0.52);
-  --automation-workflow-link-hover-border: rgba(94, 234, 212, 0.4);
-  --automation-workflow-link-active-bg: rgba(45, 212, 191, 0.16);
-  --automation-workflow-link-active-border: rgba(94, 234, 212, 0.34);
-  --automation-workflow-link-active-text: #ccfbf1;
+  --automation-workflow-accent: #2dd4bf;
+  --automation-workflow-bg: rgba(15, 23, 42, 0.7);
+  --automation-workflow-border: rgba(51, 65, 85, 0.6);
+  --automation-workflow-card-bg: rgba(30, 41, 59, 0.5);
+  --automation-workflow-card-border: rgba(71, 85, 105, 0.4);
+  --automation-workflow-card-hover-border: rgba(45, 212, 191, 0.5);
+  --automation-workflow-card-hover-shadow: 0 10px 25px -5px rgba(45, 212, 191, 0.15);
+  --automation-workflow-link-bg: rgba(30, 41, 59, 0.4);
+  --automation-workflow-link-border: rgba(71, 85, 105, 0.5);
+  --automation-workflow-link-hover-border: rgba(45, 212, 191, 0.5);
+  --automation-workflow-link-active-bg: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(20, 184, 166, 0.05));
+  --automation-workflow-link-active-border: rgba(45, 212, 191, 0.4);
+  --automation-workflow-link-active-text: #5eead4;
+  box-shadow: none;
+}
+html.dark .pending-card:hover {
+  background: rgba(30, 41, 59, 0.8);
+}
+html.dark .workflow-link__badge {
+  background: #2dd4bf;
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(45, 212, 191, 0.4);
 }
 </style>
