@@ -241,6 +241,11 @@ watch(() => props.modelValue, async (newVal) => {
 }
 
 .command-selector-content {
+  --command-selector-preview-bg: var(--el-bg-color-page);
+  --command-selector-preview-header-bg: var(--el-fill-color-light);
+  --command-selector-preview-hover-bg: var(--el-fill-color-light);
+  --command-selector-command-text: var(--el-text-color-secondary);
+  --command-selector-muted-text: var(--el-text-color-secondary);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -260,13 +265,13 @@ watch(() => props.modelValue, async (newVal) => {
   max-width: 400px;
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 13px;
-  color: #666;
+  color: var(--command-selector-command-text);
 }
 
 .selected-preview {
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
-  background-color: var(--el-bg-color-page);
+  background-color: var(--command-selector-preview-bg);
   max-height: 200px;
   overflow-y: auto;
 
@@ -275,7 +280,7 @@ watch(() => props.modelValue, async (newVal) => {
     justify-content: space-between;
     align-items: center;
     padding: 8px 12px;
-    background-color: var(--el-fill-color-light);
+    background-color: var(--command-selector-preview-header-bg);
     border-bottom: 1px solid var(--el-border-color-lighter);
     font-size: 13px;
   }
@@ -293,7 +298,7 @@ watch(() => props.modelValue, async (newVal) => {
     font-size: 13px;
 
     &:hover {
-      background-color: #f0f0f0;
+      background-color: var(--command-selector-preview-hover-bg);
     }
   }
 
@@ -326,8 +331,16 @@ watch(() => props.modelValue, async (newVal) => {
     text-overflow: ellipsis;
     white-space: nowrap;
     font-family: 'Consolas', 'Monaco', monospace;
-    color: #666;
+    color: var(--command-selector-muted-text);
   }
+}
+
+:global(html.dark .command-selector-dialog) .command-selector-content {
+  --command-selector-preview-bg: rgba(15, 23, 42, 0.9);
+  --command-selector-preview-header-bg: rgba(30, 41, 59, 0.92);
+  --command-selector-preview-hover-bg: rgba(30, 41, 59, 0.74);
+  --command-selector-command-text: #cbd5e1;
+  --command-selector-muted-text: #94a3b8;
 }
 
 .dialog-footer {

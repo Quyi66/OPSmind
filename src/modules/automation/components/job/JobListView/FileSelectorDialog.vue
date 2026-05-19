@@ -585,19 +585,19 @@ watch(visible, (newVal) => {
 
 // 状态颜色
 .text-primary {
-  color: #409eff;
+  color: var(--el-color-primary);
 }
 
 .text-success {
-  color: #67c23a;
+  color: var(--el-color-success);
 }
 
 .text-warning {
-  color: #e6a23c;
+  color: var(--el-color-warning);
 }
 
 .text-secondary {
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 // 文件预览弹窗样式

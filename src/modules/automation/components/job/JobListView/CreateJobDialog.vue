@@ -1463,12 +1463,37 @@ watch(
 <style scoped lang="scss">
 :global(.create-job-drawer) {
   max-width: 1320px;
+  --create-job-drawer-surface: var(--el-bg-color);
+  --create-job-drawer-divider: var(--el-border-color-lighter);
+  --create-job-drawer-masthead-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--el-color-primary-light-9) 78%, transparent) 0%,
+    transparent 100%
+  );
+  --create-job-drawer-eyebrow-bg: var(--el-color-primary-light-9);
+  --create-job-drawer-eyebrow-text: var(--el-color-primary);
+  --create-job-drawer-meta-bg: var(--el-fill-color-blank);
+  --create-job-drawer-meta-border: var(--el-border-color-light);
+  --create-job-drawer-nav-bg: var(--el-bg-color);
+  --create-job-drawer-nav-hover-bg: var(--el-color-primary-light-9);
+  --create-job-drawer-nav-active-bg: color-mix(in srgb, var(--el-color-primary-light-9) 76%, white);
+  --create-job-drawer-footer-bg: linear-gradient(0deg, var(--el-fill-color-light) 0%, var(--el-bg-color) 100%);
+  --create-job-drawer-footer-pill-bg: var(--el-fill-color-light);
+  --create-job-drawer-command-list-bg: var(--el-fill-color-light);
+  --create-job-drawer-command-item-bg: var(--el-bg-color);
+  --create-job-drawer-command-item-border: var(--el-border-color-lighter);
+  --create-job-drawer-command-text: var(--el-text-color-primary);
+}
+
+:global(.create-job-drawer .el-drawer) {
+  background: var(--create-job-drawer-surface);
 }
 
 :global(.create-job-drawer .el-drawer__header) {
   margin-bottom: 0;
   padding: 16px 20px 10px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--create-job-drawer-divider);
+  background: var(--create-job-drawer-surface);
 }
 
 :global(.create-job-drawer .el-drawer__title) {
@@ -1481,6 +1506,7 @@ watch(
   padding: 0;
   min-height: 0;
   overflow: hidden;
+  background: var(--create-job-drawer-surface);
 }
 
 .create-job-drawer__layout {
@@ -1492,8 +1518,8 @@ watch(
 
 .create-job-drawer__masthead {
   padding: 10px 20px 12px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+  border-bottom: 1px solid var(--create-job-drawer-divider);
+  background: var(--create-job-drawer-masthead-bg);
 }
 
 .create-job-drawer__summary {
@@ -1510,8 +1536,8 @@ watch(
   min-height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
+  background: var(--create-job-drawer-eyebrow-bg);
+  color: var(--create-job-drawer-eyebrow-text);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1529,8 +1555,8 @@ watch(
   min-height: 32px;
   padding: 0 12px;
   border-radius: 999px;
-  background: rgba(248, 250, 252, 0.95);
-  border: 1px solid #dbe3f0;
+  background: var(--create-job-drawer-meta-bg);
+  border: 1px solid var(--create-job-drawer-meta-border);
 }
 
 .create-job-drawer__meta-item em {
@@ -1557,7 +1583,7 @@ watch(
   padding: 0 12px;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 999px;
-  background: var(--el-bg-color);
+  background: var(--create-job-drawer-nav-bg);
   color: var(--el-text-color-regular);
   font-size: 12px;
   cursor: pointer;
@@ -1566,12 +1592,13 @@ watch(
 
 .create-job-drawer__nav-item:hover {
   border-color: var(--el-color-primary-light-5);
+  background: var(--create-job-drawer-nav-hover-bg);
   color: var(--el-color-primary);
 }
 
 .create-job-drawer__nav-item.is-active {
   border-color: var(--el-color-primary-light-5);
-  background: color-mix(in srgb, var(--el-color-primary-light-9) 76%, white);
+  background: var(--create-job-drawer-nav-active-bg);
   color: var(--el-color-primary);
 }
 
@@ -1591,8 +1618,8 @@ watch(
   gap: 16px;
   flex-shrink: 0;
   padding: 14px 20px 18px;
-  border-top: 1px solid var(--el-border-color-lighter);
-  background: linear-gradient(0deg, rgba(248, 250, 252, 0.9) 0%, rgba(255, 255, 255, 0.96) 100%);
+  border-top: 1px solid var(--create-job-drawer-divider);
+  background: var(--create-job-drawer-footer-bg);
 }
 
 .create-job-drawer__footer-info {
@@ -1607,7 +1634,7 @@ watch(
   min-height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  background: var(--el-fill-color-light);
+  background: var(--create-job-drawer-footer-pill-bg);
   color: var(--el-text-color-secondary);
   font-size: 12px;
 }
@@ -1790,19 +1817,22 @@ watch(
 .command-list {
   max-height: 200px;
   overflow-y: auto;
-  background-color: var(--el-fill-color-light);
-  border-radius: 4px;
+  background-color: var(--create-job-drawer-command-list-bg);
+  border: 1px solid var(--create-job-drawer-command-item-border);
+  border-radius: 8px;
   padding: 8px;
   margin-top: 8px;
 
   .command-item {
     margin: 0;
     padding: 8px 12px;
-    background: var(--el-bg-color);
-    border-radius: 4px;
+    background: var(--create-job-drawer-command-item-bg);
+    border: 1px solid var(--create-job-drawer-command-item-border);
+    border-radius: 6px;
     line-height: 1.6;
     font-size: 13px;
     font-family: 'Consolas', 'Monaco', monospace;
+    color: var(--create-job-drawer-command-text);
     white-space: pre-wrap;
     word-break: break-all;
 
@@ -1982,5 +2012,35 @@ watch(
 
 .w-full {
   width: 100%;
+}
+</style>
+
+<style lang="scss">
+html.dark .create-job-drawer {
+  --create-job-drawer-surface: linear-gradient(180deg, rgba(17, 24, 39, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+  --create-job-drawer-divider: rgba(71, 85, 105, 0.62);
+  --create-job-drawer-masthead-bg: linear-gradient(180deg, rgba(59, 130, 246, 0.14) 0%, rgba(15, 23, 42, 0) 100%);
+  --create-job-drawer-eyebrow-bg: rgba(59, 130, 246, 0.16);
+  --create-job-drawer-eyebrow-text: #93c5fd;
+  --create-job-drawer-meta-bg: rgba(15, 23, 42, 0.9);
+  --create-job-drawer-meta-border: rgba(71, 85, 105, 0.62);
+  --create-job-drawer-nav-bg: rgba(15, 23, 42, 0.92);
+  --create-job-drawer-nav-hover-bg: rgba(30, 41, 59, 0.94);
+  --create-job-drawer-nav-active-bg: rgba(59, 130, 246, 0.18);
+  --create-job-drawer-footer-bg: linear-gradient(0deg, rgba(15, 23, 42, 0.98) 0%, rgba(17, 24, 39, 0.94) 100%);
+  --create-job-drawer-footer-pill-bg: rgba(30, 41, 59, 0.9);
+  --create-job-drawer-command-list-bg: rgba(30, 41, 59, 0.74);
+  --create-job-drawer-command-item-bg: rgba(15, 23, 42, 0.96);
+  --create-job-drawer-command-item-border: rgba(71, 85, 105, 0.58);
+  --create-job-drawer-command-text: #e5eefc;
+}
+
+html.dark .create-job-drawer .create-job-drawer__nav-item.is-active {
+  border-color: rgba(96, 165, 250, 0.42);
+  color: #93c5fd;
+}
+html.dark .create-job-drawer .create-job-drawer__nav-item:hover {
+  border-color: rgba(96, 165, 250, 0.42);
+  color: #93c5fd;
 }
 </style>

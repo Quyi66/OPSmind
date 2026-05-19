@@ -165,6 +165,15 @@ function handleConfirm(selectedHosts) {
 
 <style scoped>
 .acm-device-selector {
+  --device-selector-summary-bg: var(--el-fill-color-blank);
+  --device-selector-summary-hover-bg: var(--el-fill-color-light);
+  --device-selector-summary-text: var(--el-text-color-primary);
+  --device-selector-summary-strong-text: var(--el-color-primary);
+  --device-selector-summary-hover-border: var(--el-color-primary);
+  --device-selector-clear-text: var(--el-text-color-placeholder);
+  --device-selector-clear-hover-text: var(--el-color-danger);
+  --device-selector-run-type-text: var(--el-text-color-secondary);
+  --device-selector-total-hosts-text: var(--el-color-success);
   width: 100%;
 }
 
@@ -190,13 +199,20 @@ function handleConfirm(selectedHosts) {
   font-size: 12px;
   border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
-  background: var(--el-bg-color);
+  background: var(--device-selector-summary-bg);
+  color: var(--device-selector-summary-text);
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.device-summary strong {
+  color: var(--device-selector-summary-strong-text);
+  font-weight: 700;
 }
 
 .device-summary:hover {
-  border-color: #409eff;
+  border-color: var(--device-selector-summary-hover-border);
+  background: var(--device-selector-summary-hover-bg);
 }
 
 .device-summary.pe-none {
@@ -217,12 +233,12 @@ function handleConfirm(selectedHosts) {
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  color: #909399;
+  color: var(--device-selector-clear-text);
   cursor: pointer;
 }
 
 .clear-btn:hover {
-  color: #f56c6c;
+  color: var(--device-selector-clear-hover-text);
 }
 
 .device-filter {
@@ -250,12 +266,12 @@ function handleConfirm(selectedHosts) {
 }
 
 .run-type {
-  color: #64748b;
+  color: var(--device-selector-run-type-text);
   font-size: 12px;
 }
 
 .total-hosts {
-  color: #10d070;
+  color: var(--device-selector-total-hosts-text);
   font-size: 12px;
 }
 
