@@ -7,6 +7,18 @@ const jobOrchestrationModuleView = () => import('./views/JobOrchestrationModule.
 const commandCenterModuleView = () => import('./views/CommandCenterModule.vue')
 const scriptLibraryModuleView = () => import('./views/ScriptLibraryModule.vue')
 
+export const AUTO_WORKBENCH_ROUTE_DEFS = [
+  {
+    key: 'overview',
+    path: 'overview',
+    title: '工作台',
+    navLabel: '工作台',
+    icon: 'fas fa-th-large',
+    name: 'auto-workbench-overview',
+    component: () => import('./views/AutomationWorkbenchPage.vue')
+  }
+]
+
 function createJobOrchestrationPageRoute(name, component) {
   return {
     component: jobOrchestrationModuleView,

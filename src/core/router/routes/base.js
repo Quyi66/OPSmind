@@ -12,6 +12,7 @@ import { CAC_ROUTE_DEFS } from '@/modules/inspection/routes.js'
 import { ACM_ROUTE_DEFS } from '@/modules/asset/routes.js'
 import { USERS_ROUTE_DEFS } from '@/modules/user/routes.js'
 import {
+  AUTO_WORKBENCH_ROUTE_DEFS,
   JAO_ROUTE_DEFS,
   RUN_RECORDS_ROUTE_DEFS,
   GFS_ROUTE_DEFS,
@@ -55,6 +56,7 @@ const cacChildren = buildModuleChildren(CAC_ROUTE_DEFS, 'cac')
 const acmChildren = buildModuleChildren(ACM_ROUTE_DEFS, 'acm')
 const usersChildren = buildModuleChildren(USERS_ROUTE_DEFS, 'users')
 const yumRepoChildren = buildModuleChildren(YUM_REPO_ROUTE_DEFS, 'yum-repo')
+const autoWorkbenchChildren = buildModuleChildren(AUTO_WORKBENCH_ROUTE_DEFS, 'auto-workbench')
 const jaoChildren = buildModuleChildren(JAO_ROUTE_DEFS, 'jao')
 const runRecordsChildren = buildModuleChildren(RUN_RECORDS_ROUTE_DEFS, 'run-records')
 const gfsChildren = buildModuleChildren(GFS_ROUTE_DEFS, 'gfs')
@@ -184,6 +186,7 @@ export const baseRoutes = [
 
   // ========== 自动化分组 (jao, run-records, gfs, cmd, users, rpm-install) ==========
   // 按模块分别挂载，避免 logs 等重复子路径在同一父级下发生匹配冲突
+  buildAutomationModuleRoute('auto-workbench', '/auto-workbench/overview', autoWorkbenchChildren),
   buildAutomationModuleRoute('jao', '/jao/jobs', jaoChildren),
   buildAutomationModuleRoute('run-records', '/run-records/logs', runRecordsChildren),
   buildAutomationModuleRoute('gfs', '/gfs/scriptLibrary', gfsChildren),

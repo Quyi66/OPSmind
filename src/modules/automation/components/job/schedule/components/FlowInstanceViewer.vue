@@ -556,16 +556,17 @@ function formatDateTime(value) {
 .viewer__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--viewer-backdrop-bg);
 }
 
 .viewer__panel {
   position: relative;
   width: min(1380px, 96vw);
   height: min(92vh, 960px);
-  background: var(--el-bg-color);
+  background: var(--viewer-panel-bg);
+  border: 1px solid var(--viewer-panel-border);
   border-radius: 18px;
-  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.24);
+  box-shadow: var(--viewer-panel-shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -577,8 +578,8 @@ function formatDateTime(value) {
   align-items: flex-start;
   gap: 20px;
   padding: 20px 24px 18px;
-  border-bottom: 1px solid var(--el-border-color-light);
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+  border-bottom: 1px solid var(--viewer-border);
+  background: var(--viewer-header-bg);
   flex-shrink: 0;
 }
 
@@ -592,8 +593,8 @@ function formatDateTime(value) {
   min-height: 26px;
   padding: 0 10px;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
+  background: var(--viewer-badge-bg);
+  color: var(--viewer-badge-text);
   font-size: 12px;
   font-weight: 600;
 }
@@ -602,7 +603,7 @@ function formatDateTime(value) {
   margin: 10px 0 0;
   font-size: 22px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--viewer-text-primary);
 }
 
 .header-meta {
@@ -618,15 +619,15 @@ function formatDateTime(value) {
   min-height: 30px;
   padding: 0 10px;
   border-radius: 999px;
-  background: rgba(248, 250, 252, 0.95);
-  border: 1px solid #dbe3f0;
-  color: #64748b;
+  background: var(--viewer-chip-bg);
+  border: 1px solid var(--viewer-chip-border);
+  color: var(--viewer-text-secondary);
   font-size: 12px;
 }
 
 .header-close {
   flex-shrink: 0;
-  color: #64748b;
+  color: var(--viewer-text-secondary);
 }
 
 .viewer__body {
@@ -659,29 +660,31 @@ function formatDateTime(value) {
   min-height: 88px;
   padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, #ffffff 100%);
+  border: 1px solid var(--viewer-border);
+  background: var(--viewer-card-bg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .summary-card__label {
   display: block;
   font-size: 11px;
   line-height: 1.4;
-  color: #64748b;
+  color: var(--viewer-text-secondary);
 }
 
 .summary-card__value {
   display: block;
   font-size: 20px;
   line-height: 1.2;
-  color: #0f172a;
+  color: var(--viewer-text-primary);
 }
 
 .viewer-section {
   padding: 16px 18px;
   border-radius: 18px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  border: 1px solid var(--viewer-border);
+  background: var(--viewer-section-bg);
+  box-shadow: var(--viewer-section-shadow);
 }
 
 .section-heading {
@@ -696,13 +699,13 @@ function formatDateTime(value) {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--viewer-text-primary);
 }
 
 .section-subtitle {
   margin: 6px 0 0;
   font-size: 13px;
-  color: #64748b;
+  color: var(--viewer-text-secondary);
 }
 
 .step-overview-grid {
@@ -714,28 +717,28 @@ function formatDateTime(value) {
 .step-overview-card {
   padding: 14px;
   border-radius: 16px;
-  border: 1px solid #dbe3f0;
-  background: #fff;
+  border: 1px solid var(--viewer-chip-border);
+  background: var(--viewer-card-bg-plain);
 }
 
 .step-overview-card.is-success {
-  border-color: rgba(16, 185, 129, 0.28);
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, #ffffff 100%);
+  border-color: var(--viewer-success-border);
+  background: var(--viewer-success-bg-soft);
 }
 
 .step-overview-card.is-running {
-  border-color: rgba(59, 130, 246, 0.25);
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.08) 0%, #ffffff 100%);
+  border-color: var(--viewer-running-border);
+  background: var(--viewer-running-bg-soft);
 }
 
 .step-overview-card.is-failed {
-  border-color: rgba(239, 68, 68, 0.25);
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, #ffffff 100%);
+  border-color: var(--viewer-failed-border);
+  background: var(--viewer-failed-bg-soft);
 }
 
 .step-overview-card.is-pending {
-  border-color: rgba(148, 163, 184, 0.22);
-  background: linear-gradient(180deg, rgba(148, 163, 184, 0.08) 0%, #ffffff 100%);
+  border-color: var(--viewer-pending-border);
+  background: var(--viewer-pending-bg-soft);
 }
 
 .step-overview-card__top {
@@ -748,21 +751,21 @@ function formatDateTime(value) {
 .step-overview-card__index {
   font-size: 11px;
   font-weight: 700;
-  color: #475569;
+  color: var(--viewer-text-strong);
 }
 
 .step-overview-card__title {
   display: block;
   margin-top: 10px;
   font-size: 15px;
-  color: #0f172a;
+  color: var(--viewer-text-primary);
 }
 
 .step-overview-card__script {
   display: block;
   margin-top: 6px;
   font-size: 12px;
-  color: #64748b;
+  color: var(--viewer-text-secondary);
   word-break: break-all;
 }
 
@@ -775,7 +778,7 @@ function formatDateTime(value) {
 
 .step-overview-card__stats span {
   font-size: 12px;
-  color: #475569;
+  color: var(--viewer-text-strong);
 }
 
 .status-legend {
@@ -795,29 +798,30 @@ function formatDateTime(value) {
 }
 
 .legend-item.is-success {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
+  background: var(--viewer-success-bg);
+  color: var(--viewer-success-text);
 }
 
 .legend-item.is-running {
-  background: rgba(59, 130, 246, 0.12);
-  color: #2563eb;
+  background: var(--viewer-running-bg);
+  color: var(--viewer-running-text);
 }
 
 .legend-item.is-failed {
-  background: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
+  background: var(--viewer-failed-bg);
+  color: var(--viewer-failed-text);
 }
 
 .legend-item.is-pending {
-  background: rgba(148, 163, 184, 0.14);
-  color: #64748b;
+  background: var(--viewer-pending-bg);
+  color: var(--viewer-pending-text);
 }
 
 .status-matrix-wrap {
   overflow: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--viewer-border);
   border-radius: 16px;
+  background: var(--viewer-card-bg-plain);
 }
 
 .status-table {
@@ -825,14 +829,14 @@ function formatDateTime(value) {
   min-width: 900px;
   border-collapse: separate;
   border-spacing: 0;
-  background: #fff;
+  background: var(--viewer-card-bg-plain);
 }
 
 .status-table th,
 .status-table td {
   padding: 14px 12px;
-  border-bottom: 1px solid #e2e8f0;
-  border-right: 1px solid #edf2f7;
+  border-bottom: 1px solid var(--viewer-border);
+  border-right: 1px solid var(--viewer-border-soft);
   vertical-align: middle;
 }
 
@@ -840,7 +844,7 @@ function formatDateTime(value) {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #f8fafc;
+  background: var(--viewer-table-head-bg);
 }
 
 .status-table__host-head {
@@ -858,14 +862,14 @@ function formatDateTime(value) {
 .status-table__step-name {
   font-size: 13px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--viewer-text-primary);
 }
 
 .status-table__step-script {
   margin-top: 6px;
   font-size: 11px;
   line-height: 1.4;
-  color: #64748b;
+  color: var(--viewer-text-secondary);
   word-break: break-all;
 }
 
@@ -873,20 +877,20 @@ function formatDateTime(value) {
   position: sticky;
   left: 0;
   z-index: 1;
-  background: #fff;
+  background: var(--viewer-host-cell-bg);
 }
 
 .host-cell strong {
   display: block;
   font-size: 13px;
-  color: #0f172a;
+  color: var(--viewer-text-primary);
 }
 
 .host-cell span {
   display: block;
   margin-top: 4px;
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--viewer-text-tertiary);
 }
 
 .status-cell {
@@ -901,17 +905,17 @@ function formatDateTime(value) {
   width: 100%;
   min-height: 40px;
   padding: 0 10px;
-  border: 1px solid transparent;
+  border: 1px solid var(--viewer-border);
   border-radius: 12px;
-  background: #f8fafc;
-  color: #475569;
+  background: var(--viewer-status-pill-bg);
+  color: var(--viewer-status-pill-text);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .status-pill:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--viewer-status-hover-shadow);
 }
 
 .status-pill.is-disabled {
@@ -925,27 +929,31 @@ function formatDateTime(value) {
 }
 
 .status-pill.is-active {
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+  box-shadow: 0 0 0 2px var(--viewer-status-active-ring);
 }
 
 .status-pill.is-success {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
+  background: var(--viewer-success-bg);
+  border-color: var(--viewer-success-border);
+  color: var(--viewer-success-text);
 }
 
 .status-pill.is-running {
-  background: rgba(59, 130, 246, 0.1);
-  color: #2563eb;
+  background: var(--viewer-running-bg);
+  border-color: var(--viewer-running-border);
+  color: var(--viewer-running-text);
 }
 
 .status-pill.is-failed {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
+  background: var(--viewer-failed-bg);
+  border-color: var(--viewer-failed-border);
+  color: var(--viewer-failed-text);
 }
 
 .status-pill.is-pending {
-  background: rgba(148, 163, 184, 0.12);
-  color: #64748b;
+  background: var(--viewer-pending-bg);
+  border-color: var(--viewer-pending-border);
+  color: var(--viewer-pending-text);
 }
 
 .viewer-empty-state {
@@ -955,11 +963,11 @@ function formatDateTime(value) {
   justify-content: center;
   gap: 10px;
   min-height: 240px;
-  border: 1px dashed #dbe3f0;
+  border: 1px dashed var(--viewer-empty-border);
   border-radius: 16px;
-  background: #f8fafc;
+  background: var(--viewer-empty-bg);
   text-align: center;
-  color: #64748b;
+  color: var(--viewer-text-secondary);
 }
 
 .viewer-empty-state.is-compact {
@@ -968,13 +976,13 @@ function formatDateTime(value) {
 
 .viewer-empty-state i {
   font-size: 34px;
-  color: #94a3b8;
+  color: var(--viewer-empty-icon);
 }
 
 .viewer-empty-state h4 {
   margin: 0;
   font-size: 18px;
-  color: #0f172a;
+  color: var(--viewer-text-primary);
 }
 
 .viewer-empty-state p {
@@ -997,7 +1005,7 @@ function formatDateTime(value) {
   justify-content: space-between;
   gap: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--el-border-color-light);
+  border-bottom: 1px solid var(--viewer-border);
 }
 
 .host-output-drawer__eyebrow {
@@ -1006,8 +1014,8 @@ function formatDateTime(value) {
   min-height: 24px;
   padding: 0 10px;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
+  background: var(--viewer-badge-bg);
+  color: var(--viewer-badge-text);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1015,7 +1023,7 @@ function formatDateTime(value) {
 .host-output-drawer__title {
   margin: 10px 0 0;
   font-size: 20px;
-  color: #0f172a;
+  color: var(--viewer-text-primary);
 }
 
 .host-output-drawer__meta {
@@ -1031,10 +1039,10 @@ function formatDateTime(value) {
   min-height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  background: #f8fafc;
-  border: 1px solid #dbe3f0;
+  background: var(--viewer-chip-bg);
+  border: 1px solid var(--viewer-chip-border);
   font-size: 12px;
-  color: #64748b;
+  color: var(--viewer-text-secondary);
 }
 
 .host-output-drawer__content {
@@ -1047,9 +1055,9 @@ function formatDateTime(value) {
 .task-item {
   padding: 16px;
   margin-bottom: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--viewer-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--viewer-card-bg-plain);
 }
 
 .task-item:last-child {
@@ -1068,7 +1076,7 @@ function formatDateTime(value) {
 }
 
 .task-name {
-  color: #0f172a;
+  color: var(--viewer-text-primary);
   font-weight: 700;
 }
 
@@ -1076,9 +1084,9 @@ function formatDateTime(value) {
   margin: 0;
   padding: 16px;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #0f172a;
-  color: #e2e8f0;
+  border: 1px solid var(--viewer-output-border);
+  background: var(--viewer-output-bg);
+  color: var(--viewer-output-text);
   font-family: Consolas, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.6;
@@ -1088,13 +1096,14 @@ function formatDateTime(value) {
 }
 
 .task-output--empty {
-  background: #f8fafc;
-  color: #64748b;
+  background: var(--viewer-empty-bg);
+  color: var(--viewer-text-secondary);
   font-family: inherit;
 }
 
 :global(.host-output-drawer .el-drawer__body) {
   padding: 20px 24px;
+  background: var(--viewer-panel-bg);
 }
 
 .viewer-fade-enter-active,
@@ -1144,5 +1153,114 @@ function formatDateTime(value) {
   :global(.host-output-drawer .el-drawer__body) {
     padding: 16px;
   }
+}
+</style>
+
+<style lang="scss">
+.flow-instance-viewer,
+.host-output-drawer {
+  --viewer-backdrop-bg: rgba(15, 23, 42, 0.5);
+  --viewer-panel-bg: #ffffff;
+  --viewer-panel-border: rgba(226, 232, 240, 0.92);
+  --viewer-panel-shadow: 0 30px 70px rgba(15, 23, 42, 0.24);
+  --viewer-header-bg: linear-gradient(180deg, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+  --viewer-border: #e2e8f0;
+  --viewer-border-soft: #edf2f7;
+  --viewer-chip-border: #dbe3f0;
+  --viewer-card-bg: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, #ffffff 100%);
+  --viewer-card-bg-plain: #ffffff;
+  --viewer-section-bg: #ffffff;
+  --viewer-section-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+  --viewer-table-head-bg: #f8fafc;
+  --viewer-host-cell-bg: #ffffff;
+  --viewer-chip-bg: rgba(248, 250, 252, 0.95);
+  --viewer-badge-bg: rgba(37, 99, 235, 0.1);
+  --viewer-badge-text: #2563eb;
+  --viewer-text-primary: #0f172a;
+  --viewer-text-secondary: #64748b;
+  --viewer-text-tertiary: #94a3b8;
+  --viewer-text-strong: #475569;
+  --viewer-status-pill-bg: #f8fafc;
+  --viewer-status-pill-text: #475569;
+  --viewer-status-hover-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  --viewer-status-active-ring: rgba(37, 99, 235, 0.18);
+  --viewer-empty-bg: #f8fafc;
+  --viewer-empty-border: #dbe3f0;
+  --viewer-empty-icon: #94a3b8;
+  --viewer-output-bg: #0f172a;
+  --viewer-output-text: #e2e8f0;
+  --viewer-output-border: #1e293b;
+  --viewer-success-bg: rgba(16, 185, 129, 0.1);
+  --viewer-success-bg-soft: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, #ffffff 100%);
+  --viewer-success-border: rgba(16, 185, 129, 0.28);
+  --viewer-success-text: #059669;
+  --viewer-running-bg: rgba(59, 130, 246, 0.1);
+  --viewer-running-bg-soft: linear-gradient(180deg, rgba(59, 130, 246, 0.08) 0%, #ffffff 100%);
+  --viewer-running-border: rgba(59, 130, 246, 0.25);
+  --viewer-running-text: #2563eb;
+  --viewer-failed-bg: rgba(239, 68, 68, 0.1);
+  --viewer-failed-bg-soft: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, #ffffff 100%);
+  --viewer-failed-border: rgba(239, 68, 68, 0.25);
+  --viewer-failed-text: #dc2626;
+  --viewer-pending-bg: rgba(148, 163, 184, 0.12);
+  --viewer-pending-bg-soft: linear-gradient(180deg, rgba(148, 163, 184, 0.08) 0%, #ffffff 100%);
+  --viewer-pending-border: rgba(148, 163, 184, 0.22);
+  --viewer-pending-text: #64748b;
+}
+
+html.dark .flow-instance-viewer,
+html.dark .host-output-drawer {
+  --viewer-backdrop-bg: rgba(2, 6, 23, 0.72);
+  --viewer-panel-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(17, 24, 39, 0.96) 100%);
+  --viewer-panel-border: rgba(71, 85, 105, 0.58);
+  --viewer-panel-shadow: 0 34px 80px rgba(0, 0, 0, 0.48);
+  --viewer-header-bg: linear-gradient(180deg, rgba(37, 99, 235, 0.2) 0%, rgba(15, 23, 42, 0) 100%);
+  --viewer-border: rgba(51, 65, 85, 0.92);
+  --viewer-border-soft: rgba(51, 65, 85, 0.72);
+  --viewer-chip-border: rgba(71, 85, 105, 0.82);
+  --viewer-card-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.84) 0%, rgba(15, 23, 42, 0.94) 100%);
+  --viewer-card-bg-plain: rgba(15, 23, 42, 0.9);
+  --viewer-section-bg: rgba(15, 23, 42, 0.86);
+  --viewer-section-shadow: 0 18px 36px rgba(0, 0, 0, 0.24);
+  --viewer-table-head-bg: rgba(30, 41, 59, 0.96);
+  --viewer-host-cell-bg: rgba(15, 23, 42, 0.98);
+  --viewer-chip-bg: rgba(30, 41, 59, 0.9);
+  --viewer-badge-bg: rgba(96, 165, 250, 0.16);
+  --viewer-badge-text: #93c5fd;
+  --viewer-text-primary: #e5eefc;
+  --viewer-text-secondary: #94a3b8;
+  --viewer-text-tertiary: #64748b;
+  --viewer-text-strong: #cbd5e1;
+  --viewer-status-pill-bg: rgba(30, 41, 59, 0.96);
+  --viewer-status-pill-text: #cbd5e1;
+  --viewer-status-hover-shadow: 0 12px 22px rgba(0, 0, 0, 0.26);
+  --viewer-status-active-ring: rgba(96, 165, 250, 0.28);
+  --viewer-empty-bg: rgba(15, 23, 42, 0.74);
+  --viewer-empty-border: rgba(71, 85, 105, 0.82);
+  --viewer-empty-icon: #64748b;
+  --viewer-output-bg: #020617;
+  --viewer-output-text: #cbd5e1;
+  --viewer-output-border: rgba(71, 85, 105, 0.72);
+  --viewer-success-bg: rgba(16, 185, 129, 0.18);
+  --viewer-success-bg-soft: linear-gradient(180deg, rgba(16, 185, 129, 0.16) 0%, rgba(15, 23, 42, 0.92) 100%);
+  --viewer-success-border: rgba(16, 185, 129, 0.34);
+  --viewer-success-text: #34d399;
+  --viewer-running-bg: rgba(59, 130, 246, 0.18);
+  --viewer-running-bg-soft: linear-gradient(180deg, rgba(59, 130, 246, 0.16) 0%, rgba(15, 23, 42, 0.92) 100%);
+  --viewer-running-border: rgba(59, 130, 246, 0.34);
+  --viewer-running-text: #60a5fa;
+  --viewer-failed-bg: rgba(239, 68, 68, 0.18);
+  --viewer-failed-bg-soft: linear-gradient(180deg, rgba(239, 68, 68, 0.16) 0%, rgba(15, 23, 42, 0.92) 100%);
+  --viewer-failed-border: rgba(239, 68, 68, 0.34);
+  --viewer-failed-text: #f87171;
+  --viewer-pending-bg: rgba(148, 163, 184, 0.16);
+  --viewer-pending-bg-soft: linear-gradient(180deg, rgba(71, 85, 105, 0.24) 0%, rgba(15, 23, 42, 0.92) 100%);
+  --viewer-pending-border: rgba(100, 116, 139, 0.34);
+  --viewer-pending-text: #94a3b8;
+}
+
+.host-output-drawer .el-drawer,
+.host-output-drawer .el-drawer__body {
+  background: var(--viewer-panel-bg);
 }
 </style>

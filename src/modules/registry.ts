@@ -15,6 +15,7 @@ export interface ModuleRegistryEntry {
 }
 
 const moduleComponentLoaders: Partial<Record<string, AsyncComponentLoader>> = {
+  'auto-workbench': () => import('@/modules/automation/views/AutomationWorkbenchPage.vue'),
   jao: () => import('@/modules/automation/views/JobOrchestrationModule.vue'),
   gfs: () => import('@/modules/automation/views/ScriptLibraryModule.vue'),
   cmd: () => import('@/modules/automation/views/CommandCenterModule.vue'),

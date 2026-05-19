@@ -255,9 +255,11 @@ watch(
     const prevTab = normalizeSingleQueryValue(previousQuery?.tab)
     const nextTab = normalizeSingleQueryValue(query?.tab)
     const prevDay = previousQuery?.day ?? ''
+    const prevStatus = previousQuery?.status ?? ''
     const prevType = previousQuery?.type ?? ''
     const prevKeyword = previousQuery?.keyword ?? ''
     const nextDay = query?.day ?? ''
+    const nextStatus = query?.status ?? ''
     const nextType = query?.type ?? ''
     const nextKeyword = query?.keyword ?? ''
 
@@ -266,6 +268,7 @@ watch(
     if (
       prevTab === nextTab &&
       prevDay === nextDay &&
+      prevStatus === nextStatus &&
       prevType === nextType &&
       prevKeyword === nextKeyword
     ) {
@@ -292,10 +295,12 @@ function normalizeSingleQueryValue(value) {
 
 function syncFiltersFromRoute() {
   const routeDay = normalizeSingleQueryValue(route.query.day)
+  const routeStatus = normalizeSingleQueryValue(route.query.status)
   const routeType = normalizeSingleQueryValue(route.query.type)
   const routeKeyword = normalizeSingleQueryValue(route.query.keyword)
 
   filters.value.day = routeDay || '0'
+  filters.value.status = statusMap[routeStatus] ? routeStatus : 'all'
   filters.value.type = validJobTypes.has(routeType) ? routeType : ''
   filters.value.search = routeKeyword || ''
 }
@@ -343,7 +348,10 @@ async function fetchData() {
 
 function handleSearch() {
   pagination.value.page = 1
-  fetchData()
+  const queryChanged = syncRouteQueryFromFilters()
+  if (!queryChanged) {
+    fetchData()
+  }
 }
 
 function handlePageChange() {
@@ -372,7 +380,48 @@ function handleReset() {
   filters.value.type = ''
   filters.value.search = ''
   pagination.value.page = 1
-  fetchData()
+  const queryChanged = syncRouteQueryFromFilters()
+  if (!queryChanged) {
+    fetchData()
+  }
+}
+
+function syncRouteQueryFromFilters() {
+  const nextQuery = { ...route.query }
+
+  if (filters.value.day && filters.value.day !== '0') {
+    nextQuery.day = filters.value.day
+  } else {
+    delete nextQuery.day
+  }
+
+  if (filters.value.status && filters.value.status !== 'all') {
+    nextQuery.status = filters.value.status
+  } else {
+    delete nextQuery.status
+  }
+
+  if (filters.value.type) {
+    nextQuery.type = filters.value.type
+  } else {
+    delete nextQuery.type
+  }
+
+  if (filters.value.search) {
+    nextQuery.keyword = filters.value.search
+  } else {
+    delete nextQuery.keyword
+  }
+
+  const currentFullPath = router.resolve({ query: route.query }).fullPath
+  const nextFullPath = router.resolve({ query: nextQuery }).fullPath
+
+  if (currentFullPath === nextFullPath) {
+    return false
+  }
+
+  router.replace({ query: nextQuery })
+  return true
 }
 
 function getJobTypeLabel(type) {

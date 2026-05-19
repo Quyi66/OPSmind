@@ -39,6 +39,12 @@ export const MENU_CONFIG = {
       description: '自动化作业、脚本、命令、rpm包安装和主机账号管理',
       children: [
         {
+          code: 'auto-workbench',
+          name: '工作台',
+          icon: 'fas fa-th-large',
+          description: '自动化待办与运行态总览'
+        },
+        {
           code: 'jao',
           name: '作业中心',
           icon: 'fas fa-tasks',

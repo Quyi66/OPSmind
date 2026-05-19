@@ -19,14 +19,26 @@
             </el-select>
           </el-form-item>
           <el-form-item label="类型">
-            <el-select v-model="filters.jobType" style="width: 120px;" placeholder="全部类型">
+            <el-select
+              v-model="filters.jobType"
+              style="width: 120px;"
+              placeholder="全部类型"
+              @change="handleSearch"
+            >
               <el-option label="全部类型" value="all" />
               <el-option v-for="option in jobTypeOptions" :key="option.value" :label="option.label"
                 :value="option.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
-            <el-input v-model="filters.keyword" placeholder="搜索作业标题、描述..." clearable style="width: 200px;">
+            <el-input
+              v-model="filters.keyword"
+              placeholder="搜索作业标题、描述..."
+              clearable
+              style="width: 200px;"
+              @keyup.enter="handleSearch"
+              @clear="handleSearch"
+            >
               <template #prefix>
                 <el-icon>
                   <Search />
@@ -84,6 +96,50 @@
             <Refresh />
           </el-icon>
         </el-button>
+      </div>
+
+      <div class="job-overview-panel">
+        <div class="job-overview-cards">
+          <article
+            v-for="card in overviewCards"
+            :key="card.label"
+            class="job-overview-card"
+          >
+            <span class="job-overview-card__label">{{ card.label }}</span>
+            <strong class="job-overview-card__value">{{ card.value }}</strong>
+          </article>
+        </div>
+
+        <div class="job-type-strip">
+          <span class="job-type-strip__label">快捷筛选</span>
+          <button
+            v-for="option in quickTypeOptions"
+            :key="option.value"
+            type="button"
+            class="job-type-chip"
+            :class="{ 'is-active': filters.jobType === option.value }"
+            @click="applyJobTypeFilter(option.value)"
+          >
+            <i :class="['fa', option.icon]" />
+            <span>{{ option.label }}</span>
+            <span class="job-type-chip__count">{{ option.count }}</span>
+          </button>
+        </div>
+
+        <div class="job-context-strip">
+          <span>范围：{{ currentAppTitle }}</span>
+          <span>筛选结果：{{ filteredJobsCount }} 项</span>
+          <span>已选：{{ selectedIds.length }} 项</span>
+          <el-button
+            v-if="hasActiveFilters"
+            link
+            type="primary"
+            class="job-context-strip__reset"
+            @click="handleReset"
+          >
+            清空筛选
+          </el-button>
+        </div>
       </div>
 
       <el-alert v-if="error" :title="error" type="error" :closable="false" style="margin-bottom: 12px;" />
@@ -433,6 +489,57 @@ const canMove = computed(() => selectedIds.value.length > 0 && !!moveTarget.valu
 // 过滤后的数据总数
 const filteredJobsCount = computed(() => paginatedJobs.value.length)
 
+const currentAppTitle = computed(() => currentApp.value?.title || '所有应用')
+
+const recentlyUpdatedCount = computed(() =>
+  originalJobs.value.filter(job => isRecentWithinDays(job.updatedAt, 7)).length
+)
+
+const approvalRequiredCount = computed(() =>
+  originalJobs.value.filter(job => !!job.needApprove).length
+)
+
+const quickTypeOptions = computed(() => {
+  const allOption = {
+    label: '全部',
+    value: 'all',
+    icon: 'fa-layer-group',
+    count: originalJobs.value.length
+  }
+
+  const typedOptions = jobTypeOptions.value.map(option => ({
+    label: option.label,
+    value: option.value,
+    icon: option.icon,
+    count: originalJobs.value.filter(job => job.type === option.value).length
+  }))
+
+  return [allOption, ...typedOptions]
+})
+
+const overviewCards = computed(() => [
+  {
+    label: '当前范围作业',
+    value: originalJobs.value.length
+  },
+  {
+    label: '筛选后结果',
+    value: filteredJobsCount.value
+  },
+  {
+    label: '最近7天更新',
+    value: recentlyUpdatedCount.value
+  },
+  {
+    label: '需审批作业',
+    value: approvalRequiredCount.value
+  }
+])
+
+const hasActiveFilters = computed(() =>
+  filters.jobType !== 'all' || !!filters.keyword.trim()
+)
+
 // 当前页显示的数据
 const displayedJobs = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -596,6 +703,27 @@ function reloadJobs() {
   }
 }
 
+function applyJobTypeFilter(value) {
+  if (filters.jobType === value) {
+    return
+  }
+
+  filters.jobType = value
+  handleSearch()
+}
+
+function isRecentWithinDays(value, days) {
+  if (!value) return false
+
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return false
+  }
+
+  const diff = Date.now() - date.getTime()
+  return diff >= 0 && diff <= days * 24 * 60 * 60 * 1000
+}
+
 function formatDate(value) {
   if (!value) return '-'
   const date = value instanceof Date ? value : new Date(value)
@@ -689,4 +817,139 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use '@/styles/common.scss' as *;
+
+.job-overview-panel {
+  --job-overview-panel-bg: var(--el-fill-color-lighter);
+  --job-overview-panel-border: var(--el-border-color-lighter);
+  --job-overview-card-bg: var(--el-bg-color);
+  --job-overview-card-border: var(--el-border-color-lighter);
+  --job-type-chip-bg: var(--el-bg-color);
+  --job-type-chip-border: var(--el-border-color);
+  --job-type-chip-hover-border: var(--el-color-primary-light-5);
+  --job-type-chip-hover-color: var(--el-color-primary);
+  --job-type-chip-active-bg: var(--el-color-primary-light-9);
+  --job-type-chip-active-border: var(--el-color-primary-light-5);
+  --job-type-chip-count-bg: rgba(64, 158, 255, 0.12);
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--job-overview-panel-border);
+  border-radius: 12px;
+  background: var(--job-overview-panel-bg);
+}
+
+.job-overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.job-overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--job-overview-card-bg);
+  border: 1px solid var(--job-overview-card-border);
+}
+
+.job-overview-card__label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.job-overview-card__value {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--el-text-color-primary);
+}
+
+.job-type-strip {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.job-type-strip__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+}
+
+.job-type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--job-type-chip-border);
+  border-radius: 999px;
+  background: var(--job-type-chip-bg);
+  color: var(--el-text-color-regular);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.job-type-chip:hover {
+  border-color: var(--job-type-chip-hover-border);
+  color: var(--job-type-chip-hover-color);
+}
+
+.job-type-chip.is-active {
+  border-color: var(--job-type-chip-active-border);
+  background: var(--job-type-chip-active-bg);
+  color: var(--job-type-chip-hover-color);
+}
+
+.job-type-chip__count {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--job-type-chip-count-bg);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.job-context-strip {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.job-context-strip__reset {
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .job-overview-panel {
+    padding: 12px;
+  }
+
+  .job-context-strip {
+    gap: 10px;
+  }
+}
+</style>
+
+<style lang="scss">
+html.dark .job-overview-panel {
+  --job-overview-panel-bg: linear-gradient(180deg, rgba(20, 28, 40, 0.94), rgba(16, 23, 34, 0.9));
+  --job-overview-panel-border: rgba(71, 85, 105, 0.48);
+  --job-overview-card-bg: rgba(15, 23, 42, 0.8);
+  --job-overview-card-border: rgba(71, 85, 105, 0.42);
+  --job-type-chip-bg: rgba(15, 23, 42, 0.84);
+  --job-type-chip-border: rgba(71, 85, 105, 0.52);
+  --job-type-chip-hover-border: rgba(96, 165, 250, 0.42);
+  --job-type-chip-hover-color: #dbeafe;
+  --job-type-chip-active-bg: rgba(59, 130, 246, 0.18);
+  --job-type-chip-active-border: rgba(96, 165, 250, 0.4);
+  --job-type-chip-count-bg: rgba(96, 165, 250, 0.18);
+}
 </style>

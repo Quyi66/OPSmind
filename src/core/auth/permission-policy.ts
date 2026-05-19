@@ -23,6 +23,7 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
   dashboard: [],
   settings: [],
   aiops: [],
+  'auto-workbench': ['jao:view', 'gfs:view', 'cmd:view'],
   jao: ['jao:view'],
   gfs: ['gfs:view'],
   cmd: ['cmd:view'],
@@ -48,6 +49,7 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
 export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   home: '/home',
   settings: '/settings',
+  'auto-workbench': '/auto-workbench/overview',
   jao: '/jao/jobs',
   gfs: '/gfs/scriptLibrary',
   cmd: '/cmd/list',

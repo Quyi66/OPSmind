@@ -981,6 +981,18 @@ function pad(value) {
   min-width: 0;
   min-height: 0;
   gap: 0;
+  --schedule-surface-bg: var(--el-bg-color);
+  --schedule-side-bg: color-mix(in srgb, var(--el-fill-color-light) 55%, var(--el-bg-color));
+  --schedule-card-hover-border: #cfd8ec;
+  --schedule-card-hover-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --schedule-card-active-bg: color-mix(in srgb, var(--el-color-primary) 6%, var(--el-bg-color));
+  --schedule-card-active-shadow: 0 6px 18px rgba(64, 158, 255, 0.25);
+  --schedule-primary-shadow: 0 10px 22px rgba(64, 158, 255, 0.18);
+  --schedule-panel-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
+  --schedule-toolbar-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+  --schedule-header-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
+  --schedule-empty-text: #9ca3af;
+  --schedule-empty-icon: #d1d5db;
 }
 
 .schedule-shell {
@@ -988,7 +1000,7 @@ function pad(value) {
   flex: 1;
   width: 100%;
   min-height: 0;
-  background: var(--el-bg-color);
+  background: var(--schedule-surface-bg);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -999,7 +1011,7 @@ function pad(value) {
   border-right: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--el-fill-color-light) 55%, var(--el-bg-color));
+  background: var(--schedule-side-bg);
 }
 
 .flow-list-header {
@@ -1074,7 +1086,7 @@ function pad(value) {
 }
 
 .flow-create-btn {
-  box-shadow: 0 8px 18px rgba(64, 158, 255, 0.18);
+  box-shadow: var(--schedule-primary-shadow);
 }
 
 .flow-search {
@@ -1192,14 +1204,14 @@ function pad(value) {
 }
 
 .flow-item:hover {
-  border-color: #cfd8ec;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  border-color: var(--schedule-card-hover-border);
+  box-shadow: var(--schedule-card-hover-shadow);
 }
 
 .flow-item.active {
-  border-color: #409eff;
-  background: color-mix(in srgb, #409eff 6%, var(--el-bg-color));
-  box-shadow: 0 6px 18px rgba(64, 158, 255, 0.25);
+  border-color: var(--el-color-primary);
+  background: var(--schedule-card-active-bg);
+  box-shadow: var(--schedule-card-active-shadow);
 }
 
 .flow-item.active::before {
@@ -1216,7 +1228,7 @@ function pad(value) {
 
 .flow-item__meta {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 
@@ -1295,7 +1307,7 @@ function pad(value) {
       var(--el-bg-color) 54%
     ),
     var(--el-bg-color);
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--schedule-header-shadow);
 }
 
 .flow-detail-header__main {
@@ -1504,7 +1516,7 @@ function pad(value) {
 }
 
 .flow-primary-action {
-  box-shadow: 0 10px 22px rgba(64, 158, 255, 0.18);
+  box-shadow: var(--schedule-primary-shadow);
 }
 
 .flow-list-actions :deep(.el-button + .el-button),
@@ -1525,7 +1537,7 @@ function pad(value) {
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 14px;
   background: color-mix(in srgb, var(--el-fill-color-light) 65%, var(--el-bg-color));
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--schedule-toolbar-shadow);
   flex-shrink: 0;
 }
 
@@ -1586,7 +1598,7 @@ function pad(value) {
   border-color: var(--el-color-primary);
   background: color-mix(in srgb, var(--el-color-primary) 10%, var(--el-bg-color));
   color: var(--el-color-primary);
-  box-shadow: 0 8px 18px rgba(64, 158, 255, 0.12);
+  box-shadow: var(--schedule-primary-shadow);
 }
 
 .flow-detail-toolbar__actions {
@@ -1610,8 +1622,8 @@ function pad(value) {
   padding: 12px;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 18px;
-  background: var(--el-bg-color);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
+  background: var(--schedule-surface-bg);
+  box-shadow: var(--schedule-panel-shadow);
   overflow: hidden;
 }
 
@@ -1724,13 +1736,14 @@ function pad(value) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #9ca3af;
+  color: var(--schedule-empty-text);
   gap: 12px;
+  text-align: center;
 }
 
 .detail-blank__icon {
   font-size: 64px;
-  color: #d1d5db;
+  color: var(--schedule-empty-icon);
 }
 
 .me-1 {
@@ -1864,5 +1877,22 @@ function pad(value) {
     pointer-events: auto;
     transform: none;
   }
+}
+</style>
+
+<style lang="scss">
+html.dark .schedule-page {
+  --schedule-surface-bg: rgba(15, 23, 42, 0.82);
+  --schedule-side-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.82), rgba(15, 23, 42, 0.86));
+  --schedule-card-hover-border: rgba(96, 165, 250, 0.26);
+  --schedule-card-hover-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  --schedule-card-active-bg: color-mix(in srgb, var(--el-color-primary) 14%, rgba(15, 23, 42, 0.92));
+  --schedule-card-active-shadow: 0 10px 24px rgba(59, 130, 246, 0.18);
+  --schedule-primary-shadow: 0 12px 24px rgba(59, 130, 246, 0.22);
+  --schedule-panel-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);
+  --schedule-toolbar-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  --schedule-header-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+  --schedule-empty-text: #94a3b8;
+  --schedule-empty-icon: #64748b;
 }
 </style>

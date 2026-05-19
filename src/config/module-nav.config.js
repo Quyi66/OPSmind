@@ -12,6 +12,7 @@ import { CAC_ROUTE_DEFS } from '@/modules/inspection/routes.js'
 import { ACM_ROUTE_DEFS } from '@/modules/asset/routes.js'
 import { USERS_ROUTE_DEFS } from '@/modules/user/routes.js'
 import {
+  AUTO_WORKBENCH_ROUTE_DEFS,
   JAO_ROUTE_DEFS,
   RUN_RECORDS_ROUTE_DEFS,
   GFS_ROUTE_DEFS,
@@ -25,6 +26,14 @@ import { SSC_ROUTE_DEFS, UAM_ROUTE_DEFS } from '@/modules/settings/routes.js'
 
 // 审批中心三类待审项的 key
 const REVIEW_KEYS = new Set(['approvals', 'scriptReview', 'review'])
+
+// 自动化管理 - 作业模块的页面导航（审批相关项移至审批中心）
+export const AUTO_WORKBENCH_NAV_ITEMS = AUTO_WORKBENCH_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+  key: def.key,
+  label: def.navLabel || def.title,
+  icon: def.icon,
+  path: `/auto-workbench/${def.path}`
+}))
 
 // 自动化管理 - 作业模块的页面导航（审批相关项移至审批中心）
 export const JAO_NAV_ITEMS = JAO_ROUTE_DEFS.filter(def => def.navLabel && !REVIEW_KEYS.has(def.key)).map(def => ({
@@ -226,6 +235,7 @@ export const UAM_NAV_ITEMS = UAM_ROUTE_DEFS.filter(def => def.navLabel).map(def 
  * 键为模块代码，值为该模块的页面导航配置
  */
 export const MODULE_NAV_CONFIG = {
+  'auto-workbench': AUTO_WORKBENCH_NAV_ITEMS,
   'review-center': REVIEW_CENTER_NAV_ITEMS,
   jao: JAO_NAV_ITEMS,
   'run-records': RUN_RECORDS_NAV_ITEMS,
