@@ -967,6 +967,13 @@ defineExpose({
 
 <style scoped lang="scss">
 .script-file-list {
+  --script-list-secondary-text: var(--el-text-color-secondary);
+  --script-list-muted-text: var(--el-text-color-placeholder);
+  --script-list-selection-bg: color-mix(in srgb, var(--el-color-primary-light-9) 82%, white);
+  --script-list-selection-chip-bg: rgba(255, 255, 255, 0.92);
+  --script-list-selection-chip-border: var(--el-color-primary-light-7);
+  --script-list-empty-text: #94a3b8;
+  --script-list-action-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -1049,7 +1056,7 @@ defineExpose({
 }
 
 .action-group--primary :deep(.el-button) {
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--script-list-action-shadow);
 }
 
 .utility-menu :deep(.el-button) {
@@ -1107,7 +1114,7 @@ defineExpose({
 
 .file-status-help dd {
   margin: 4px 0 0 0;
-  color: #6c757d;
+  color: var(--script-list-secondary-text);
   font-size: 13px;
 }
 
@@ -1132,7 +1139,7 @@ defineExpose({
 
 .status-indicator.master-disabled {
   background: var(--el-bg-color-page);
-  color: #999;
+  color: var(--script-list-muted-text);
   text-decoration: line-through;
 }
 
@@ -1211,7 +1218,7 @@ defineExpose({
   gap: 10px;
   min-height: 360px;
   padding: 40px 24px;
-  color: #94a3b8;
+  color: var(--script-list-empty-text);
   text-align: center;
 }
 
@@ -1278,7 +1285,7 @@ defineExpose({
   padding: 12px 16px;
   border: 1px solid var(--el-color-primary-light-7);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--el-color-primary-light-9) 82%, white);
+  background: var(--script-list-selection-bg);
 }
 
 .selection-banner__content {
@@ -1309,8 +1316,8 @@ defineExpose({
   min-height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid var(--el-color-primary-light-7);
+  background: var(--script-list-selection-chip-bg);
+  border: 1px solid var(--script-list-selection-chip-border);
   font-size: 12px;
   color: var(--el-text-color-secondary);
 }
@@ -1368,5 +1375,16 @@ defineExpose({
   .empty-state__actions {
     flex-direction: column;
   }
+}
+</style>
+
+<style lang="scss">
+html.dark .script-file-list {
+  --script-list-selection-bg: color-mix(in srgb, var(--el-color-primary) 14%, rgba(15, 23, 42, 0.92));
+  --script-list-selection-chip-bg: rgba(15, 23, 42, 0.88);
+  --script-list-selection-chip-border: rgba(96, 165, 250, 0.3);
+  --script-list-empty-text: #94a3b8;
+  --script-list-muted-text: #94a3b8;
+  --script-list-action-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
 }
 </style>

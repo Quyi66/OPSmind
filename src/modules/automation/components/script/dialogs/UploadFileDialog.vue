@@ -232,17 +232,17 @@ function handleClosed() {
 
 .file-path-item {
   padding: 4px 0;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .file-path-item strong {
-  color: #409eff;
+  color: var(--el-color-primary);
 }
 
 .help-text {
   margin-top: 12px;
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   line-height: 1.6;
 }
 
@@ -251,8 +251,8 @@ function handleClosed() {
 }
 
 .alert-info-box {
-  background-color: #f0f9eb;
-  border: 1px solid #e1f3d8;
+  background-color: var(--el-color-success-light-9);
+  border: 1px solid var(--el-color-success-light-5);
   border-radius: 4px;
   padding: 12px;
   margin-bottom: 12px;
@@ -262,7 +262,7 @@ function handleClosed() {
   margin: 0;
   font-size: 13px;
   line-height: 1.8;
-  color: #67c23a;
+  color: var(--el-color-success);
 }
 
 .alert-info-box .d-block {

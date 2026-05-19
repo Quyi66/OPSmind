@@ -364,13 +364,13 @@ function handleClosed() {
 }
 
 .repo-type-badge.external {
-  background: #e6f7ff;
-  color: #1890ff;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
 }
 
 .repo-type-badge.builtin {
-  background: var(--el-bg-color-page);
-  color: #666;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-secondary);
 }
 
 .repo-type-badge:hover {

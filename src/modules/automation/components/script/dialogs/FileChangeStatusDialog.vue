@@ -27,7 +27,7 @@
             placeholder="请输入备注说明"
           />
         </el-form-item>
-        
+
         <div class="selected-files-info">
           <p>将对以下 {{ files.length }} 个文件/文件夹执行操作：</p>
           <div class="file-list">
@@ -131,7 +131,7 @@ async function handleSubmit() {
 }
 
 .file-more {
-  color: #909399;
+  color: var(--el-text-color-placeholder);
   font-style: italic;
 }
 </style>

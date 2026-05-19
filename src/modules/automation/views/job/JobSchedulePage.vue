@@ -1220,6 +1220,7 @@ function pad(value) {
 
 .flow-item__title {
   font-weight: 600;
+  color: var(--el-text-color-primary);
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;

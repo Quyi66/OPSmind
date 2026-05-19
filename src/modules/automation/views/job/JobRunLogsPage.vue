@@ -572,14 +572,14 @@ async function handleRerun(row) {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
 .page-title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--el-text-color-primary);
 }
 
 .header-filters {
@@ -605,7 +605,7 @@ async function handleRerun(row) {
 
 .job-title {
   font-weight: 500;
-  color: #1e293b;
+  color: var(--el-text-color-primary);
   word-break: break-all;
 }
 
@@ -617,7 +617,7 @@ async function handleRerun(row) {
 
 .stats-info {
   font-size: 12px;
-  color: #64748b;
+  color: var(--el-text-color-secondary);
 }
 
 .pagination-container {

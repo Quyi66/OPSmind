@@ -304,7 +304,7 @@ function handleClose() {
     color: var(--el-text-color-regular);
 
     strong {
-      color: #409eff;
+      color: var(--el-color-primary);
     }
   }
 }
@@ -324,7 +324,7 @@ function handleClose() {
   border-radius: 6px;
 
   .text-muted {
-    color: #94a3b8;
+    color: var(--el-text-color-placeholder);
     font-size: 13px;
   }
 }

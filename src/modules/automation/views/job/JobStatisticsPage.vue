@@ -56,6 +56,7 @@ import { BarChart, LineChart } from 'echarts/charts'
 import { DataZoomComponent, GridComponent, TooltipComponent } from 'echarts/components'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { translateText } from '@/utils/i18n'
+import { useTheme } from '@/composables/useTheme'
 
 use([CanvasRenderer, BarChart, LineChart, DataZoomComponent, GridComponent, TooltipComponent])
 
@@ -67,6 +68,7 @@ const summaryQuery = ref('')
 const statsViewRef = ref(null)
 const statsContentRef = ref(null)
 const chartSectionHeight = ref(0)
+const { isDark } = useTheme()
 
 const DESKTOP_BREAKPOINT = 900
 const CONTENT_GAP = 12
@@ -188,8 +190,36 @@ const filteredSummary = computed(() => {
   return [...baseRows].sort((a, b) => b.run_count - a.run_count)
 })
 
+const chartTheme = computed(() =>
+  isDark.value
+    ? {
+        trendLine: '#60a5fa',
+        axisText: '#94a3b8',
+        axisLine: '#475569',
+        splitLine: 'rgba(71, 85, 105, 0.46)',
+        trendLabel: '#bfdbfe',
+        trendArea: 'rgba(96, 165, 250, 0.18)',
+        summaryAxis: '#cbd5e1',
+        summaryLabel: '#e2e8f0',
+        summaryGradientStart: '#818cf8',
+        summaryGradientEnd: '#c4b5fd'
+      }
+    : {
+        trendLine: '#2563eb',
+        axisText: '#64748b',
+        axisLine: '#cbd5e1',
+        splitLine: '#e2e8f0',
+        trendLabel: '#1e3a8a',
+        trendArea: 'rgba(37, 99, 235, 0.12)',
+        summaryAxis: '#334155',
+        summaryLabel: '#475569',
+        summaryGradientStart: '#6366f1',
+        summaryGradientEnd: '#a78bfa'
+      }
+)
+
 const recentTrendOption = computed(() => ({
-  color: ['#2563eb'],
+  color: [chartTheme.value.trendLine],
   tooltip: {
     trigger: 'axis'
   },
@@ -204,25 +234,25 @@ const recentTrendOption = computed(() => ({
     boundaryGap: false,
     data: recentTrendRows.value.map((item) => item.date),
     axisLabel: {
-      color: '#64748b',
+      color: chartTheme.value.axisText,
       interval: 0,
       hideOverlap: false,
       rotate: 40
     },
     axisLine: {
       lineStyle: {
-        color: '#cbd5e1'
+        color: chartTheme.value.axisLine
       }
     }
   },
   yAxis: {
     type: 'value',
     axisLabel: {
-      color: '#64748b'
+      color: chartTheme.value.axisText
     },
     splitLine: {
       lineStyle: {
-        color: '#e2e8f0'
+        color: chartTheme.value.splitLine
       }
     }
   },
@@ -235,13 +265,13 @@ const recentTrendOption = computed(() => ({
       label: {
         show: true,
         position: 'top',
-        color: '#1e3a8a',
+        color: chartTheme.value.trendLabel,
         fontSize: 11,
         formatter: ({ value }) => `${value ?? 0}`
       },
       data: recentTrendRows.value.map((item) => item.count),
       areaStyle: {
-        color: 'rgba(37, 99, 235, 0.12)'
+        color: chartTheme.value.trendArea
       },
       lineStyle: {
         width: 3
@@ -291,11 +321,11 @@ const summaryChartOption = computed(() => ({
   xAxis: {
     type: 'value',
     axisLabel: {
-      color: '#64748b'
+      color: chartTheme.value.axisText
     },
     splitLine: {
       lineStyle: {
-        color: '#e2e8f0'
+        color: chartTheme.value.splitLine
       }
     }
   },
@@ -304,7 +334,7 @@ const summaryChartOption = computed(() => ({
     inverse: true,
     data: filteredSummary.value.map((row) => row.translatedTitle),
     axisLabel: {
-      color: '#334155',
+      color: chartTheme.value.summaryAxis,
       width: 150,
       overflow: 'truncate'
     },
@@ -324,7 +354,7 @@ const summaryChartOption = computed(() => ({
       label: {
         show: true,
         position: 'right',
-        color: '#475569',
+        color: chartTheme.value.summaryLabel,
         fontWeight: 600
       },
       itemStyle: {
@@ -335,8 +365,8 @@ const summaryChartOption = computed(() => ({
           x2: 1,
           y2: 0,
           colorStops: [
-            { offset: 0, color: '#6366f1' },
-            { offset: 1, color: '#a78bfa' }
+            { offset: 0, color: chartTheme.value.summaryGradientStart },
+            { offset: 1, color: chartTheme.value.summaryGradientEnd }
           ]
         },
         borderRadius: [0, 8, 8, 0]
@@ -348,6 +378,7 @@ const summaryChartOption = computed(() => ({
 
 <style scoped>
 .stats-view {
+  --stats-chart-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -376,7 +407,7 @@ const summaryChartOption = computed(() => ({
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--stats-chart-shadow);
 }
 
 .chart-section--trend {
@@ -446,5 +477,11 @@ const summaryChartOption = computed(() => ({
   .chart-section--summary {
     flex: none;
   }
+}
+</style>
+
+<style lang="scss">
+html.dark .stats-view {
+  --stats-chart-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
 }
 </style>

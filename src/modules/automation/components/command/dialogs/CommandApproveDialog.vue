@@ -272,7 +272,7 @@ function handleClose() {
 }
 
 .code-block {
-  background: #f1f5f9;
+  background: var(--el-fill-color-light);
   border-radius: 6px;
   padding: 12px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
@@ -288,8 +288,8 @@ function handleClose() {
   }
 
   &.new {
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
+    background: var(--el-color-success-light-9);
+    border: 1px solid var(--el-color-success-light-5);
   }
 
   &.small {
@@ -302,7 +302,7 @@ function handleClose() {
 .batch-mode {
   .batch-summary {
     padding: 12px;
-    background: #f1f5f9;
+    background: var(--el-fill-color-light);
     border-radius: 6px;
     margin-bottom: 16px;
 

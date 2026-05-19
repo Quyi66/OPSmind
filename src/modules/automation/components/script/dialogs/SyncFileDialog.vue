@@ -147,13 +147,14 @@ function handleClosed() {
 }
 
 .help-info {
-  background-color: #f4f4f5;
+  background-color: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   padding: 12px;
   margin-bottom: 16px;
   font-size: 13px;
   line-height: 1.6;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .help-info strong {
