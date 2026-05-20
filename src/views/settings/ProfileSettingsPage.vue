@@ -443,7 +443,8 @@ async function handleChangePassword() {
     await apiService.post('/api/account/change-password', passwordForm.password, {
       headers: {
         'Content-Type': 'text/plain'
-      }
+      },
+      transformRequest: [(data) => data]
     })
     ElMessage.success('密码修改成功')
     resetPasswordForm()
