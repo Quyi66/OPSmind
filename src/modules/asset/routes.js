@@ -5,6 +5,15 @@
 
 export const ACM_ROUTE_DEFS = [
   {
+    key: 'overview',
+    path: 'overview',
+    name: 'acm-overview',
+    title: '资产总览',
+    navLabel: '资产总览',
+    icon: 'fad fa-fw fa-chart-pie',
+    component: () => import('./views/AssetOverviewPage.vue')
+  },
+  {
     key: 'info',
     path: 'info',
     name: 'acm-info',
@@ -57,15 +66,6 @@ export const ACM_ROUTE_DEFS = [
     navLabel: '资源权限',
     icon: 'fad fa-fw fa-user-lock',
     component: () => import('./views/ResourcePermissionPage.vue')
-  },
-  {
-    key: 'overview',
-    path: 'overview',
-    name: 'acm-overview',
-    title: '资产总览',
-    navLabel: '资产总览',
-    icon: 'fad fa-fw fa-chart-pie',
-    component: () => import('./views/AssetOverviewPage.vue')
   },
   {
     key: 'model',

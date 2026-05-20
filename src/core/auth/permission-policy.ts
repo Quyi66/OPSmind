@@ -61,7 +61,7 @@ export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   'yum-repo': '/yum-repo/repos',
   software: '/yum-repo/repos',
   cac: '/cac/overview',
-  acm: '/acm/info',
+  acm: '/acm/overview',
   users: '/users/users',
   flow: '/flow/list',
   sudo: '/sudo/permission',

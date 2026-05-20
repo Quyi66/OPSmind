@@ -165,17 +165,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import KpiCards from '../components/exception/KpiCards.vue'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import { normalizeAcmDeviceJobHosts } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
-import { dtsApi } from '../api'
+import { dtsApi, exceptionApi } from '../api'
 import { apiService } from '@/core/api'
 
+const route = useRoute()
 const router = useRouter()
+const EXCEPTION_QUERY_CONDITIONS = new Set(['oplus_all', 'recently', 'recently_ok', 'today', 'low'])
 
 const ACTION_CONFIG = {
   checkConnectivity: {
@@ -268,8 +270,7 @@ const loadResourceTypes = async () => {
 const loadTableData = async () => {
   tableLoading.value = true
   try {
-    const res = await dtsApi.queryData(
-      'ACM_LIST_CONNECT_EXCEPTION',
+    const res = await exceptionApi.getExceptionDevices(
       {
         cit: filters.cit,
         conditions: filters.conditions,
@@ -288,6 +289,22 @@ const loadTableData = async () => {
   } finally {
     tableLoading.value = false
   }
+}
+
+const normalizeCondition = value => {
+  if (typeof value === 'string' && EXCEPTION_QUERY_CONDITIONS.has(value)) {
+    return value
+  }
+  return 'recently'
+}
+
+const applyRouteQuery = query => {
+  filters.cit = typeof query.cit === 'string' && query.cit ? query.cit : 'oplus_all'
+  filters.conditions = normalizeCondition(query.conditions)
+  searchKeyword.value = typeof query.keyword === 'string' ? query.keyword : ''
+  currentPage.value = 1
+  pageSize.value = 10
+  loadTableData()
 }
 
 // 处理 KPI 卡片点击
@@ -558,8 +575,15 @@ const formatDateTime = dateStr => {
 onMounted(() => {
   loadKpiData()
   loadResourceTypes()
-  loadTableData()
 })
+
+watch(
+  () => route.query,
+  query => {
+    applyRouteQuery(query)
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped lang="scss">

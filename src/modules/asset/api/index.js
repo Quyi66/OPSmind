@@ -292,7 +292,17 @@ export const modelApi = {
  * 异常设备 API
  */
 export const exceptionApi = {
-  // TODO: 待实现
+  /**
+   * 获取异常设备列表
+   * POST /dts/api/dts/q/data/ACM_LIST_CONNECT_EXCEPTION/
+   * @param {object} params - 查询参数
+   * @param {string} params.cit - 资产类型
+   * @param {string} params.conditions - 异常条件
+   * @param {string} params.param - 固定参数
+   */
+  getExceptionDevices: (params, options = {}) => {
+    return dtsApi.queryData('ACM_LIST_CONNECT_EXCEPTION', params, options)
+  }
 }
 
 /**
@@ -337,8 +347,8 @@ export const operationLogApi = {
    * @param {string} params.status - 状态 (all, COMPLETED, ERROR, RUNNING)
    * @param {number} params.day - 时间范围（天数）
    */
-  getOperationLogs: params => {
-    return dtsApi.queryData('JAO_LIST_OPERATION_LOG', params)
+  getOperationLogs: (params, options = {}) => {
+    return dtsApi.queryData('JAO_LIST_OPERATION_LOG', params, options)
   }
 }
 

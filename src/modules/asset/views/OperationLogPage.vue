@@ -236,6 +236,10 @@ function buildRouteQuery() {
   return query
 }
 
+function getQueryRunId(query) {
+  return typeof query.runId === 'string' && query.runId ? query.runId : ''
+}
+
 function isSameQuery(query) {
   return JSON.stringify(route.query || {}) === JSON.stringify(query)
 }
@@ -264,6 +268,15 @@ function applyRouteQuery(query) {
   searchKeyword.value = typeof query.keyword === 'string' ? query.keyword : ''
   currentPage.value = 1
   loadData()
+}
+
+function openRunResultByQuery(query) {
+  const runId = getQueryRunId(query)
+  if (!runId) return
+
+  currentRunId.value = runId
+  currentJobTitle.value = typeof query.action === 'string' && query.action ? getActionLabel(query.action) : '运行结果'
+  runResultDialogVisible.value = true
 }
 
 // 加载数据
@@ -340,6 +353,7 @@ watch(
   () => route.query,
   query => {
     applyRouteQuery(query)
+    openRunResultByQuery(query)
   },
   { immediate: true }
 )

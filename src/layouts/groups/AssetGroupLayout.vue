@@ -1,5 +1,5 @@
 <template>
-  <GroupLayoutShell :menu-groups="menuGroups" :default-openeds="defaultOpeneds" />
+  <GroupLayoutShell :menu-groups="menuGroups" :default-openeds="defaultOpeneds" page-scroll />
 </template>
 
 <script setup>
