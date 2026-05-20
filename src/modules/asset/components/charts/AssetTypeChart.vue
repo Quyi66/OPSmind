@@ -75,9 +75,9 @@ function truncateLegendText(text, maxLength) {
 
 function getChartOption() {
   const chartWidth = getContainerWidth()
-  const compactLayout = chartWidth > 0 && chartWidth < 460
+  const compactLayout = chartWidth > 0 && chartWidth < 520
   const legendMaxLength = compactLayout ? 8 : 12
-  const donutCenterX = compactLayout ? '50%' : '34%'
+  const donutCenterX = compactLayout ? '50%' : '38%'
   const donutCenterY = compactLayout ? '40%' : '52%'
   const total = props.data.reduce((sum, item) => sum + Number(item.count || 0), 0)
   const seriesData = props.data
@@ -116,7 +116,7 @@ function getChartOption() {
       right: compactLayout ? 'center' : 0,
       top: compactLayout ? 'bottom' : 'center',
       bottom: compactLayout ? 0 : 'auto',
-      width: compactLayout ? '92%' : 156,
+      width: compactLayout ? '92%' : 148,
       icon: 'circle',
       itemWidth: 10,
       itemHeight: 10,
@@ -136,7 +136,7 @@ function getChartOption() {
       {
         name: '资产数量',
         type: 'pie',
-        radius: compactLayout ? ['42%', '66%'] : ['50%', '74%'],
+        radius: compactLayout ? ['40%', '62%'] : ['46%', '68%'],
         center: [donutCenterX, donutCenterY],
         minAngle: seriesData.length <= 3 ? 18 : 10,
         avoidLabelOverlap: true,
@@ -176,7 +176,7 @@ function getChartOption() {
           show: false
         },
         center: [donutCenterX, donutCenterY],
-        radius: ['0%', compactLayout ? '28%' : '32%'],
+        radius: ['0%', compactLayout ? '26%' : '30%'],
         labelLine: {
           show: false
         },

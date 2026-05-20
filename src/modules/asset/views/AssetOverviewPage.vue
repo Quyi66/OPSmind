@@ -612,7 +612,7 @@ async function loadExceptionPreview() {
       },
       {
         page: 1,
-        size: 5
+        size: 3
       }
     )
     exceptionPreviewRows.value = response?.records || []
