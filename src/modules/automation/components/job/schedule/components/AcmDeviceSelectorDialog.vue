@@ -59,6 +59,7 @@
         <el-tab-pane
           v-if="selectModeDefs.host"
           name="host"
+          lazy
           :label="selectModeDefs.host.title"
         >
           <template #label>
@@ -75,6 +76,7 @@
         <el-tab-pane
           v-if="selectModeDefs.group"
           name="group"
+          lazy
           :label="selectModeDefs.group.title"
         >
           <template #label>
@@ -91,6 +93,7 @@
         <el-tab-pane
           v-if="selectModeDefs.tag"
           name="tag"
+          lazy
           :label="selectModeDefs.tag.title"
         >
           <template #label>
@@ -107,6 +110,7 @@
         <el-tab-pane
           v-if="selectModeDefs.input"
           name="input"
+          lazy
           :label="selectModeDefs.input.title"
         >
           <template #label>
@@ -122,6 +126,7 @@
         <el-tab-pane
           v-if="selectModeDefs.recently"
           name="recently"
+          lazy
           :label="selectModeDefs.recently.title"
         >
           <template #label>
@@ -384,20 +389,50 @@ function handleCancel() {
 </script>
 
 <style scoped>
+.acm-device-selector-dialog {
+  margin-top: 4vh !important;
+  height: 86vh;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.acm-device-selector-dialog :deep(.el-dialog__header),
+.acm-device-selector-dialog :deep(.el-dialog__footer) {
+  flex-shrink: 0;
+}
+
+.acm-device-selector-dialog :deep(.el-dialog__body) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  padding-top: 12px;
+}
+
 .acm-device-selector-dialog .selector-container {
-  min-height: 600px;
-  max-height: 700px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .acm-device-selector-dialog .ci-type-selector {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .acm-device-selector-dialog .selected-hosts-card .card-header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.acm-device-selector-dialog .selected-hosts-card {
+  flex-shrink: 0;
 }
 
 .acm-device-selector-dialog .selected-hosts-card .selected-hosts-body {
@@ -411,17 +446,31 @@ function handleCancel() {
   gap: 8px;
 }
 
+.acm-device-selector-dialog .selector-tabs {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .acm-device-selector-dialog .selector-tabs :deep(.el-tabs__content) {
-  min-height: 350px;
-  max-height: 450px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .acm-device-selector-dialog .selector-tabs :deep(.el-tabs__header) {
   margin: 0 0 15px;
+  flex-shrink: 0;
 }
 
 .acm-device-selector-dialog .selector-tabs :deep(.el-tabs__nav) {
   display: flex;
+}
+
+.acm-device-selector-dialog .selector-tabs :deep(.el-tab-pane) {
+  height: 100%;
+  min-height: 0;
 }
 
 .acm-device-selector-dialog .selector-tabs :deep(.el-tabs__item) {

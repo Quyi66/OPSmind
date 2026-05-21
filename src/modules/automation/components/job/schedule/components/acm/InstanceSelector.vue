@@ -56,48 +56,50 @@
     </div>
 
     <!-- 主机列表表格 -->
-    <el-table
-      ref="tableRef"
-      :data="tableData"
-      v-loading="loading"
-      height="350"
-      style="width: 100%"
-      row-key="id"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="55" reserve-selection />
-      <el-table-column prop="IP" label="IP地址" min-width="120" show-overflow-tooltip />
-      <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
-      <el-table-column prop="os_distro" label="操作系统" min-width="120" show-overflow-tooltip />
-      <el-table-column prop="os_version" label="系统版本" width="120" show-overflow-tooltip />
-      <el-table-column label="连通状态" width="120" align="left">
-        <template #default="{ row }">
-          <el-tag
-            :type="
-              [1, '1'].includes(row.CONN_LATEST_STATUS)
-                ? 'success'
-                : [0, '0'].includes(row.CONN_LATEST_STATUS)
-                  ? 'danger'
-                  : 'info'
-            "
-            size="small"
-          >
-            {{
-              [1, '1'].includes(row.CONN_LATEST_STATUS)
-                ? '在线'
-                : [0, '0'].includes(row.CONN_LATEST_STATUS)
-                  ? '离线'
-                  : '未知'
-            }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="CONN_RATE" label="连通率" width="100" align="left">
-        <template #default="{ row }">
-          {{ row.CONN_RATE ? `${row.CONN_RATE}%` : '-' }}
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="table-wrapper">
+      <el-table
+        ref="tableRef"
+        :data="tableData"
+        v-loading="loading"
+        height="100%"
+        style="width: 100%"
+        row-key="id"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" reserve-selection />
+        <el-table-column prop="IP" label="IP地址" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="os_distro" label="操作系统" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="os_version" label="系统版本" width="120" show-overflow-tooltip />
+        <el-table-column label="连通状态" width="120" align="left">
+          <template #default="{ row }">
+            <el-tag
+              :type="
+                [1, '1'].includes(row.CONN_LATEST_STATUS)
+                  ? 'success'
+                  : [0, '0'].includes(row.CONN_LATEST_STATUS)
+                    ? 'danger'
+                    : 'info'
+              "
+              size="small"
+            >
+              {{
+                [1, '1'].includes(row.CONN_LATEST_STATUS)
+                  ? '在线'
+                  : [0, '0'].includes(row.CONN_LATEST_STATUS)
+                    ? '离线'
+                    : '未知'
+              }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="CONN_RATE" label="连通率" width="100" align="left">
+          <template #default="{ row }">
+            {{ row.CONN_RATE ? `${row.CONN_RATE}%` : '-' }}
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <!-- 分页 -->
     <div class="pagination-wrapper">
@@ -105,6 +107,9 @@
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :total="pagination.total"
+        :teleported="true"
+        append-size-to="body"
+        :popper-style="{ zIndex: 4000 }"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
         @size-change="fetchData"
@@ -115,7 +120,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick, computed } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 
@@ -141,7 +146,7 @@ const groupLoading = ref(false)
 const tagLoading = ref(false)
 const pagination = ref({
   page: 1,
-  pageSize: 20,
+  pageSize: 10,
   total: 0
 })
 
@@ -177,10 +182,6 @@ watch(
   },
   { deep: true }
 )
-
-onMounted(() => {
-  fetchData()
-})
 
 // 获取分组列表
 async function fetchGroupList() {
@@ -423,6 +424,13 @@ function handleTagFilter() {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+}
+
+.instance-selector .table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .instance-selector .filter-toolbar {
@@ -435,6 +443,7 @@ function handleTagFilter() {
   padding: 12px 16px;
   margin-bottom: 16px;
   border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .instance-selector .filter-toolbar .filter-label {
@@ -486,6 +495,13 @@ function handleTagFilter() {
   justify-content: flex-end;
   margin-top: 16px;
   padding-top: 8px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
+}
+
+.instance-selector :deep(.el-pagination) {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 /* 确保表格checkbox可以正常点击 */

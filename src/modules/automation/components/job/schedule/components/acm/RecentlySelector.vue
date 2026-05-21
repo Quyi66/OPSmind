@@ -13,67 +13,84 @@
     </div>
 
     <!-- 作业列表 -->
-    <el-table
-      ref="tableRef"
-      :data="filteredData"
-      v-loading="loading"
-      height="350"
-      row-key="id"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="50" reserve-selection />
-      <el-table-column prop="jobTitle" label="作业" min-width="280" show-overflow-tooltip sortable>
-        <template #default="{ row }">
-          {{ translateText(row.jobTitle) || '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column label="执行主机" width="120" show-overflow-tooltip sortable>
-        <template #default="{ row }">
-          <span v-if="row.run_result_hosts?.length">
-            {{ row.run_result_hosts[0]?.value || '-' }}
-          </span>
-          <span v-else>-</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="jobType" label="类型" width="80" align="left" sortable>
-        <template #default="{ row }">
-          {{ getJobTypeLabel(row.jobType) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="结束时间" width="180" sortable>
-        <template #default="{ row }">
-          {{ formatDateTime(row.endTime || row.startTime) }}
-        </template>
-      </el-table-column>
-      <el-table-column label="Ansible Node" width="150" align="left">
-        <template #default="{ row }">
-          <el-tag v-if="getAnsibleNodeLabel(row.ata_node)" type="primary" size="small">
-            {{ getAnsibleNodeLabel(row.ata_node) }}
-          </el-tag>
-          <span v-else>-</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" width="90" align="left" sortable>
-        <template #default="{ row }">
-          <el-tag
-            :type="getStatusStyle(row.status)"
-            size="small"
-            class="clickable-status"
-            @click="handleViewResult(row)"
-          >
-            {{ getStatusLabel(row.status) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="详情" width="60" align="left">
-        <template #default="{ row }">
-          <span class="detail-count" v-if="row.statsJson" @click="handleViewResult(row)">
-            {{ getHostCount(row.statsJson) }}
-          </span>
-          <span v-else>-</span>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="table-wrapper">
+      <el-table
+        ref="tableRef"
+        :data="pagedData"
+        v-loading="loading"
+        height="100%"
+        row-key="id"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="50" reserve-selection />
+        <el-table-column prop="jobTitle" label="作业" min-width="280" show-overflow-tooltip sortable>
+          <template #default="{ row }">
+            {{ translateText(row.jobTitle) || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="执行主机" width="120" show-overflow-tooltip sortable>
+          <template #default="{ row }">
+            <span v-if="row.run_result_hosts?.length">
+              {{ row.run_result_hosts[0]?.value || '-' }}
+            </span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="jobType" label="类型" width="80" align="left" sortable>
+          <template #default="{ row }">
+            {{ getJobTypeLabel(row.jobType) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="结束时间" width="180" sortable>
+          <template #default="{ row }">
+            {{ formatDateTime(row.endTime || row.startTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Ansible Node" width="150" align="left">
+          <template #default="{ row }">
+            <el-tag v-if="getAnsibleNodeLabel(row.ata_node)" type="primary" size="small">
+              {{ getAnsibleNodeLabel(row.ata_node) }}
+            </el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="90" align="left" sortable>
+          <template #default="{ row }">
+            <el-tag
+              :type="getStatusStyle(row.status)"
+              size="small"
+              class="clickable-status"
+              @click="handleViewResult(row)"
+            >
+              {{ getStatusLabel(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="详情" width="60" align="left">
+          <template #default="{ row }">
+            <span class="detail-count" v-if="row.statsJson" @click="handleViewResult(row)">
+              {{ getHostCount(row.statsJson) }}
+            </span>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <div class="pagination-wrapper">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :total="filteredData.length"
+        :teleported="true"
+        append-size-to="body"
+        :popper-style="{ zIndex: 4000 }"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
+    </div>
 
     <!-- 作业运行结果弹窗 -->
     <ExecuteResultDialog
@@ -85,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed, nextTick } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
@@ -104,6 +121,10 @@ const tableRef = ref(null)
 const loading = ref(false)
 const tableData = ref([])
 const searchKeyword = ref('')
+const pagination = ref({
+  page: 1,
+  pageSize: 10
+})
 
 // 运行结果弹窗状态
 const resultDialogVisible = ref(false)
@@ -122,7 +143,13 @@ const filteredData = computed(() => {
   )
 })
 
+const pagedData = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.pageSize
+  return filteredData.value.slice(start, start + pagination.value.pageSize)
+})
+
 watch(() => props.ciType, () => {
+  pagination.value.page = 1
   fetchData()
 }, { immediate: true })
 
@@ -138,9 +165,26 @@ watch(
   { deep: true }
 )
 
-onMounted(() => {
-  fetchData()
+watch(filteredData, () => {
+  const maxPage = Math.max(1, Math.ceil(filteredData.value.length / pagination.value.pageSize))
+  if (pagination.value.page > maxPage) {
+    pagination.value.page = maxPage
+    return
+  }
+
+  nextTick(() => {
+    syncSelectionFromModelValue()
+  })
 })
+
+watch(
+  () => [pagination.value.page, pagination.value.pageSize],
+  () => {
+    nextTick(() => {
+      syncSelectionFromModelValue()
+    })
+  }
+)
 
 async function fetchData() {
   loading.value = true
@@ -164,7 +208,7 @@ async function fetchData() {
 }
 
 function handleSearch() {
-  // 搜索是实时过滤，不需要额外操作
+  pagination.value.page = 1
 }
 
 function handleSelectionChange(selection) {
@@ -188,23 +232,13 @@ function handleSelectionChange(selection) {
     }, 0)
   }
 
-  // 选择作业记录时，将其关联的主机添加到已选列表
-  const selectedHosts = []
+  const currentPageIds = pagedData.value.map(row => row.id)
+  const otherPageSelections = filteredData.value.filter(
+    row => !currentPageIds.includes(row.id) && doesJobMatchSelection(row)
+  )
 
-  effectiveSelection.forEach(job => {
-    if (job.run_result_hosts && Array.isArray(job.run_result_hosts)) {
-      job.run_result_hosts.forEach(host => {
-        // 避免重复添加
-        if (!selectedHosts.some(h => h.key === host.key || h.value === host.value)) {
-          selectedHosts.push({
-            key: host.key || host.id,
-            value: host.value || host.IP,
-            assetType: host.assetType || props.ciType
-          })
-        }
-      })
-    }
-  })
+  const mergedRows = isSingleSelector.value ? effectiveSelection : [...otherPageSelections, ...effectiveSelection]
+  const selectedHosts = extractHostsFromJobs(mergedRows)
 
   isInternalUpdate = true
   emit('update:modelValue', isSingleSelector.value ? selectedHosts.slice(0, 1) : selectedHosts)
@@ -225,9 +259,8 @@ async function syncSelectionFromModelValue() {
 
   const selectedKeySet = new Set((props.modelValue || []).map(item => item.key || item.value))
 
-  tableData.value.forEach(row => {
-    const rowHosts = Array.isArray(row.run_result_hosts) ? row.run_result_hosts : []
-    const matched = rowHosts.some(host => selectedKeySet.has(host.key || host.value || host.IP))
+  pagedData.value.forEach(row => {
+    const matched = doesJobMatchSelection(row, selectedKeySet)
     if (matched) {
       tableRef.value.toggleRowSelection(row, true)
     }
@@ -315,10 +348,52 @@ function getJobTypeLabel(type) {
   const option = JOB_TYPE_OPTIONS.find(opt => opt.value === type)
   return option ? option.label : type
 }
+
+function extractHostsFromJobs(rows = []) {
+  const selectedHosts = []
+
+  rows.forEach(job => {
+    const jobHosts = Array.isArray(job?.run_result_hosts) ? job.run_result_hosts : []
+    jobHosts.forEach(host => {
+      const normalizedHost = {
+        key: host.key || host.id,
+        value: host.value || host.IP,
+        assetType: host.assetType || props.ciType
+      }
+
+      if (!selectedHosts.some(item => item.key === normalizedHost.key || item.value === normalizedHost.value)) {
+        selectedHosts.push(normalizedHost)
+      }
+    })
+  })
+
+  return selectedHosts
+}
+
+function doesJobMatchSelection(row, selectedKeySet) {
+  const keySet = selectedKeySet || new Set((props.modelValue || []).map(item => item.key || item.value))
+  const rowHosts = Array.isArray(row?.run_result_hosts) ? row.run_result_hosts : []
+
+  return rowHosts.some(host => keySet.has(host.key || host.value || host.IP))
+}
+
+function handlePageChange() {
+  nextTick(() => {
+    syncSelectionFromModelValue()
+  })
+}
+
+function handlePageSizeChange() {
+  pagination.value.page = 1
+}
 </script>
 
 <style scoped>
 .recently-selector {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
   padding: 10px;
 }
 
@@ -327,10 +402,31 @@ function getJobTypeLabel(type) {
   justify-content: flex-end;
   gap: 8px;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .search-toolbar .el-input {
   width: 200px;
+}
+
+.recently-selector .table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
+}
+
+.recently-selector :deep(.el-pagination) {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .detail-count {

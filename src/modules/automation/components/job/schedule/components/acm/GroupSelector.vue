@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed, nextTick } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
@@ -111,10 +111,6 @@ watch(
   },
   { immediate: true }
 )
-
-onMounted(() => {
-  fetchGroups()
-})
 
 async function fetchGroups() {
   try {

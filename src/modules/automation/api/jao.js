@@ -318,17 +318,38 @@ export const queryAcmInstances = (params) => {
     dataType = 'auto'
   } = params;
   // UDP Dataset ID: ACM_GET_CI_BY_SELECTOR
-  return useApi().post('/dts/api/dts/q/data/ACM_GET_CI_BY_SELECTOR/', {
-    params: {
-      assetType: ciType,
-      groups,
-      tags,
-      dynamicTags,
-      dataType
-    },
-    page,
-    size: pageSize
-  });
+  return useApi()
+    .post('/dts/api/dts/q/data/ACM_GET_CI_BY_SELECTOR/', {
+      params: {
+        assetType: ciType,
+        groups,
+        tags,
+        dynamicTags,
+        dataType
+      },
+      page,
+      size: pageSize
+    })
+    .then(response => {
+      const payload = response?.data || response || {}
+
+      if (Array.isArray(payload)) {
+        return {
+          records: payload,
+          total: payload.length
+        }
+      }
+
+      return {
+        ...payload,
+        records: Array.isArray(payload.records)
+          ? payload.records
+          : Array.isArray(payload.content)
+            ? payload.content
+            : [],
+        total: Number(payload.total ?? payload.totalElements ?? payload.records?.length ?? payload.content?.length ?? 0)
+      }
+    })
 }
 
 /** 查询分组树视图 */
