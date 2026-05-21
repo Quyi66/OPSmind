@@ -5,9 +5,11 @@
     :badge-counts="badgeCounts"
     page-scroll
   >
+    <!--
     <template #content-top>
       <AutomationWorkflowHeader />
     </template>
+    -->
   </GroupLayoutShell>
 </template>
 
@@ -16,7 +18,6 @@ import { computed, onMounted } from 'vue'
 import { MENU_CONFIG } from '@/config/menu.config.js'
 import { getGroupMenuConfig } from '@/config/module-nav.config.js'
 import GroupLayoutShell from './GroupLayoutShell.vue'
-import AutomationWorkflowHeader from '@/modules/automation/components/shared/AutomationWorkflowHeader.vue'
 import { provideCurrentGroupModuleCode } from './useGroupLayoutContext.js'
 import { useReviewCountStore } from '@/stores/useReviewCountStore.js'
 

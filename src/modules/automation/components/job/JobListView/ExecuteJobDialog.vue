@@ -62,7 +62,7 @@ const props = defineProps({
   fallbackConfigJson: { type: [String, Object], default: '' }
 })
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'success'])
 
 const dialogVisible = computed({
   get: () => props.visible,
@@ -169,10 +169,19 @@ async function handleSubmit() {
   try {
     const payload = buildPayload()
     const response = await jaoApi.executeJob(payload)
-    const result = response?.data ?? response
-    const status = result?.status ?? ''
-    const runId = result?.runId ?? result?.id ?? ''
+    const result = response?.data ?? response ?? {}
+    const status = extractExecutionStatus(result)
+    const runId = extractRunId(result)
     handleStatusTransition(status, runId)
+    emit('success', {
+      runId,
+      status,
+      jobId: props.jobId,
+      jobType: jobDetail.value?.type || props.jobType || '',
+      jobTitle: jobDetail.value?.title || jobDetail.value?.jobTitle || ''
+    })
+    ElMessage.success(runId ? '作业已提交执行，正在打开运行结果' : '作业已提交执行，正在刷新运行记录')
+    handleClose()
   } catch (error) {
     ElMessage.error(error?.message || '执行作业失败')
   } finally {
@@ -205,6 +214,16 @@ function normalizeConfigJson(configJson) {
     console.warn('Failed to stringify configJson', error)
     return ''
   }
+}
+
+function extractRunId(source) {
+  const result = source?.data ?? source ?? {}
+  return result?.runId || result?.run_id || result?.id || result?.logId || ''
+}
+
+function extractExecutionStatus(source) {
+  const result = source?.data ?? source ?? {}
+  return result?.status || result?.runStatus || result?.state || ''
 }
 
 /** 根据状态更新提示并处理轮询 */

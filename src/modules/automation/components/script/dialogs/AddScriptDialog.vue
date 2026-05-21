@@ -9,6 +9,12 @@
   >
     <div class="script-form">
       <div class="form-group">
+        <label class="control-label">保存路径</label>
+        <div class="form-control-wrapper">
+          <div class="path-preview">{{ dirLabel }}</div>
+        </div>
+      </div>
+      <div class="form-group">
         <label class="control-label">脚本名称</label>
         <div class="form-control-wrapper">
           <el-input v-model="form.name" placeholder="例如: deploy.sh" class="code-input" maxlength="100" />
@@ -121,6 +127,8 @@ const lineCount = computed(() => {
   return form.value.content.split('\n').length
 })
 
+const dirLabel = computed(() => (props.dir ? `~/${props.dir}` : '~'))
+
 // 同步滚动
 function syncScroll() {
   if (lineNumbersRef.value && editorRef.value) {
@@ -205,6 +213,17 @@ function handleClosed() {
 
 .script-form .code-input :deep(.el-input__inner) {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.script-form .path-preview {
+  padding: 10px 12px;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 4px;
+  background: var(--el-fill-color-extra-light);
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+  line-height: 1.4;
+  word-break: break-all;
 }
 
 /* 代码编辑器样式 */

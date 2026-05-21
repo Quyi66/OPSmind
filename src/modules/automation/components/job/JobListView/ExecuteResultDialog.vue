@@ -389,7 +389,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/constants/jobStatus'
@@ -428,6 +428,7 @@ const HOST_STATUS_PRIORITY = [
   'unknown'
 ]
 const treeProps = { label: 'label', children: 'children' }
+const ACTIVE_RUN_STATUSES = ['WAITING', 'RUNNING', 'CALLBACK']
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -435,7 +436,7 @@ const props = defineProps({
   jobTitle: { type: String, default: '' }
 })
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'settled'])
 
 const dialogVisible = computed({
   get: () => props.visible,
@@ -445,6 +446,8 @@ const dialogVisible = computed({
 const activeTab = ref('overview')
 const loading = ref(false)
 const result = ref(null)
+const pollTimer = ref()
+const hasObservedActiveRun = ref(false)
 const jobType = computed(() => normalizeJobType(result.value?.jobType ?? result.value?.job_type))
 const isAnsibleJob = computed(() => ANSIBLE_JOB_TYPES.includes(jobType.value))
 const isProcessJob = computed(() => jobType.value === 'process')
@@ -535,8 +538,12 @@ watch(
   ([visible, runId]) => {
     if (visible && runId) {
       activeTab.value = 'overview'
+      hasObservedActiveRun.value = false
       fetchResult()
+      return
     }
+
+    stopResultPolling()
   },
   { immediate: true }
 )
@@ -545,6 +552,7 @@ watch(
   () => props.visible,
   visible => {
     if (!visible) {
+      stopResultPolling()
       resetState()
     }
   }
@@ -627,6 +635,7 @@ function handleClose() {
 function resetState() {
   activeTab.value = 'overview'
   result.value = null
+  hasObservedActiveRun.value = false
   hostFilterText.value = ''
   hostTaskSearch.value = ''
   mergeBatches.value = true
@@ -647,10 +656,45 @@ async function fetchResult() {
   try {
     const response = await jaoApi.getExecuteResult(props.runId)
     result.value = response?.data ?? response ?? null
+    syncResultPolling(result.value)
   } catch (error) {
+    stopResultPolling()
     ElMessage.error(error?.message || '获取执行结果失败')
   } finally {
     loading.value = false
+  }
+}
+
+function syncResultPolling(data) {
+  const status = String(data?.status || '').toUpperCase()
+  if (ACTIVE_RUN_STATUSES.includes(status)) {
+    hasObservedActiveRun.value = true
+    scheduleResultPolling()
+    return
+  }
+
+  stopResultPolling()
+  if (hasObservedActiveRun.value && props.runId) {
+    emit('settled', {
+      runId: props.runId,
+      status
+    })
+    hasObservedActiveRun.value = false
+  }
+}
+
+function scheduleResultPolling(delay = 3000) {
+  stopResultPolling()
+  pollTimer.value = window.setTimeout(() => {
+    pollTimer.value = undefined
+    void fetchResult()
+  }, delay)
+}
+
+function stopResultPolling() {
+  if (pollTimer.value) {
+    clearTimeout(pollTimer.value)
+    pollTimer.value = undefined
   }
 }
 
@@ -1186,6 +1230,10 @@ function safeJsonParse(input, fallback = {}) {
     return fallback
   }
 }
+
+onBeforeUnmount(() => {
+  stopResultPolling()
+})
 </script>
 
 <style scoped>

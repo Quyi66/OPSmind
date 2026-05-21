@@ -42,6 +42,13 @@
       :mode="runCommandMode"
       @success="handleRunSuccess"
     />
+
+    <ExecuteResultDialog
+      v-if="commandResultDialogVisible"
+      v-model:visible="commandResultDialogVisible"
+      :run-id="commandResultMeta.runId"
+      :job-title="commandResultMeta.jobTitle"
+    />
     </div>
   </div>
 </template>
@@ -50,6 +57,7 @@
 import { computed, ref, provide, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import RunCommandDialog from '@/modules/automation/components/command/dialogs/RunCommandDialog.vue'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import CommandListPage from '@/modules/automation/views/command/CommandListPage.vue'
 import CommandJobPage from '@/modules/automation/views/command/CommandJobPage.vue'
 
@@ -91,6 +99,8 @@ const renderedWorkspaceTabs = ref([activeWorkspaceName.value])
 const runCommandDialogVisible = ref(false)
 const selectedCommand = ref(null)
 const runCommandMode = ref('run')
+const commandResultDialogVisible = ref(false)
+const commandResultMeta = ref({ runId: '', jobTitle: '' })
 
 watch(
   activeWorkspaceName,
@@ -157,8 +167,33 @@ function handleCreateJob(command) {
 // 执行成功回调
 function handleRunSuccess(result) {
   if (runCommandMode.value === 'run') {
+    const runId = extractRunId(result)
+    if (runId) {
+      commandResultMeta.value = {
+        runId,
+        jobTitle: resolveCommandRunTitle()
+      }
+      commandResultDialogVisible.value = true
+      return
+    }
     router.push('/run-records/logs')
   }
+}
+
+function extractRunId(source) {
+  const data = source?.data ?? source ?? {}
+  return data?.runId || data?.run_id || data?.id || data?.logId || ''
+}
+
+function resolveCommandRunTitle() {
+  if (Array.isArray(selectedCommand.value)) {
+    if (selectedCommand.value.length === 1) {
+      return selectedCommand.value[0]?.name || '命令执行'
+    }
+    return `批量命令 (${selectedCommand.value.length})`
+  }
+
+  return selectedCommand.value?.name || '命令执行'
 }
 
 // 提供给子组件使用

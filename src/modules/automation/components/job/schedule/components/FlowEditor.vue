@@ -100,6 +100,7 @@ const formRef = ref(null)
 const flow = reactive(createEmptyFlow())
 const stepFoldList = ref([false])
 const isFoldAllSteps = ref(false)
+let flowDetailRequestId = 0
 
 const headerTitle = computed(() => {
   if (isInstance.value) return '运行流程'
@@ -107,9 +108,9 @@ const headerTitle = computed(() => {
 })
 
 watch(
-  () => visible.value,
-  val => {
-    if (val) {
+  () => [visible.value, props.flowId, props.mode],
+  ([isVisible]) => {
+    if (isVisible) {
       initialize()
     } else {
       resetEditor()
@@ -164,14 +165,20 @@ function resetFlow() {
 }
 
 async function fetchFlowDetail(flowId) {
+  const requestId = ++flowDetailRequestId
   loading.value = true
   try {
     const response = await jaoApi.fetchFlowDetail(flowId)
+    if (requestId !== flowDetailRequestId || props.flowId !== flowId) return
     applyFlowDetail(response?.data ?? response ?? {})
   } catch (error) {
-    ElMessage.error(error?.message || '获取流程详情失败')
+    if (requestId === flowDetailRequestId) {
+      ElMessage.error(error?.message || '获取流程详情失败')
+    }
   } finally {
-    loading.value = false
+    if (requestId === flowDetailRequestId) {
+      loading.value = false
+    }
   }
 }
 

@@ -206,6 +206,7 @@ import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultDialog.vue'
 import JobStatisticsPage from './JobStatisticsPage.vue'
 import { translateText } from '@/utils/i18n.js'
+import { RUN_LOG_STATUS_MAP, getRunLogStatusLabel, getRunLogStatusType } from '@/modules/automation/constants/runLogStatus'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -231,16 +232,7 @@ const activeTab = ref(normalizeSingleQueryValue(route.query.tab) === 'statistics
 let searchTimeout = null
 const jobTypeOptions = JOB_TYPE_OPTIONS
 const validJobTypes = new Set(JOB_TYPE_OPTIONS.map(option => option.value).filter(Boolean))
-
-const statusMap = {
-  WAITING: { label: '等待中', type: 'info' },
-  RUNNING: { label: '正在运行', type: 'primary' },
-  CALLBACK: { label: '回调', type: 'primary' },
-  ERROR: { label: '运行错误', type: 'warning' },
-  FAILED: { label: '运行失败', type: 'danger' },
-  COMPLETED: { label: '完成', type: 'success' },
-  INTERRUPTED: { label: '运行终止', type: 'info' }
-}
+const statusMap = RUN_LOG_STATUS_MAP
 
 onMounted(() => {
   syncFiltersFromRoute()
@@ -430,11 +422,11 @@ function getJobTypeLabel(type) {
 }
 
 function getStatusLabel(status) {
-  return statusMap[status]?.label || status
+  return getRunLogStatusLabel(status)
 }
 
 function getStatusType(status) {
-  return statusMap[status]?.type || 'info'
+  return getRunLogStatusType(status)
 }
 
 function formatDateTime(value) {

@@ -1,8 +1,9 @@
 <template>
-  <transition name="viewer-fade">
-    <div v-if="visible" class="flow-instance-viewer">
-      <div class="viewer__backdrop" @click="handleClose" />
-      <div class="viewer__panel" @click.stop>
+  <teleport to="body">
+    <transition name="viewer-fade">
+      <div v-if="visible" class="flow-instance-viewer" :style="{ zIndex: viewerZIndex }">
+        <div class="viewer__backdrop" @click="handleClose" />
+        <div class="viewer__panel" @click.stop>
         <header class="viewer__header">
           <div class="viewer__heading">
             <div class="viewer__eyebrow">流程实例详情</div>
@@ -150,9 +151,10 @@
             </template>
           </div>
         </el-scrollbar>
+        </div>
       </div>
-    </div>
-  </transition>
+    </transition>
+  </teleport>
 
   <el-drawer
     v-model="hostOutputVisible"
@@ -204,7 +206,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, useZIndex } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
@@ -213,12 +215,14 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+const { nextZIndex } = useZIndex()
 
 const visible = computed({
   get: () => props.modelValue,
   set: val => emit('update:modelValue', val)
 })
 
+const viewerZIndex = ref(2000)
 const loading = ref(false)
 const instanceData = ref(null)
 const hostStatusList = ref([])
@@ -305,11 +309,15 @@ const overallStatusText = computed(() => {
 watch(
   visible,
   val => {
-    if (val && props.instanceId) {
-      fetchInstanceView()
-    } else {
-      resetData()
+    if (val) {
+      viewerZIndex.value = nextZIndex()
+      if (props.instanceId) {
+        fetchInstanceView()
+      }
+      return
     }
+
+    resetData()
   },
   { immediate: true }
 )
@@ -547,7 +555,6 @@ function formatDateTime(value) {
 .flow-instance-viewer {
   position: fixed;
   inset: 0;
-  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
