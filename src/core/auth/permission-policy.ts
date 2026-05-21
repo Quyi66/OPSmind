@@ -25,6 +25,7 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
   aiops: [],
   'auto-workbench': ['jao:view', 'gfs:view', 'cmd:view'],
   jao: ['jao:view'],
+  'task-scheduler': ['jao:view'],
   gfs: ['gfs:view'],
   cmd: ['cmd:view'],
   'review-center': ['jao:view', 'gfs:view', 'cmd:view'],
@@ -51,6 +52,7 @@ export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   settings: '/settings',
   'auto-workbench': '/auto-workbench/overview',
   jao: '/jao/jobs',
+  'task-scheduler': '/jao/taskScheduler',
   gfs: '/gfs/scriptLibrary',
   cmd: '/cmd/list',
   'rpm-install': '/rpm-install/install',
@@ -208,6 +210,10 @@ export function resolveMenuCodeFromRoutePath(path?: string | null): string | nul
   if (!segments.length) return 'home'
 
   const [first, second] = segments
+
+  if (first === 'jao' && second === 'taskScheduler') {
+    return 'task-scheduler'
+  }
 
   if (first === 'patches') {
     const normalizedPatchPath = WINDOWS_PATCH_ROUTE_ALIASES[second || ''] || second || ''

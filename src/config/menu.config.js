@@ -63,6 +63,12 @@ export const MENU_CONFIG = {
           description: '系统命令管理和执行'
         },
         {
+          code: 'task-scheduler',
+          name: '定时任务',
+          icon: 'fas fa-clock',
+          description: '自动化定时任务调度管理'
+        },
+        {
           code: 'run-records',
           name: '运行记录',
           icon: 'fas fa-history',

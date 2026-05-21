@@ -91,9 +91,11 @@ export const CMD_NAV_ITEMS = [
     icon: 'fas fa-layer-group',
     path: '/cmd/list'
   },
-  ...(TASK_SCHEDULER_NAV_ITEM ? [TASK_SCHEDULER_NAV_ITEM] : []),
   ...CMD_SECONDARY_NAV_ITEMS
 ]
+
+// 自动化管理 - 定时任务独立入口（显示为和命令执行、运行记录同级）
+export const TASK_SCHEDULER_NAV_ITEMS = TASK_SCHEDULER_NAV_ITEM ? [TASK_SCHEDULER_NAV_ITEM] : []
 
 // 自动化管理 - 审批中心：聚合作业审批、命令审核、脚本审核
 export const REVIEW_CENTER_NAV_ITEMS = [
@@ -254,6 +256,7 @@ export const MODULE_NAV_CONFIG = {
   'auto-workbench': AUTO_WORKBENCH_NAV_ITEMS,
   'review-center': REVIEW_CENTER_NAV_ITEMS,
   jao: JAO_NAV_ITEMS,
+  'task-scheduler': TASK_SCHEDULER_NAV_ITEMS,
   'run-records': RUN_RECORDS_NAV_ITEMS,
   gfs: GFS_NAV_ITEMS,
   cmd: CMD_NAV_ITEMS,
