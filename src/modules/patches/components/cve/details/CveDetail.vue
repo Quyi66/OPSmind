@@ -199,6 +199,38 @@
                 <el-radio-button label="不受影响">不受影响</el-radio-button>
                 <el-radio-button label="不修复">不修复</el-radio-button>
               </el-radio-group>
+
+              <el-select
+                v-model="productNameFilter"
+                size="small"
+                clearable
+                filterable
+                placeholder="产品名称"
+                style="width: 220px"
+              >
+                <el-option
+                  v-for="productName in productNameOptions"
+                  :key="productName"
+                  :label="productName"
+                  :value="productName"
+                />
+              </el-select>
+
+              <el-select
+                v-model="fixedVersionFilter"
+                size="small"
+                clearable
+                filterable
+                placeholder="修复版本"
+                style="width: 220px"
+              >
+                <el-option
+                  v-for="version in fixedVersionOptions"
+                  :key="version"
+                  :label="version"
+                  :value="version"
+                />
+              </el-select>
             </div>
             <div class="ops-table-wrapper">
               <el-table
@@ -494,6 +526,8 @@ const loading = ref(true)
 const activeTab = ref('basic')
 const packageFilter = ref('全部')
 const systemFilter = ref('all')
+const productNameFilter = ref('')
+const fixedVersionFilter = ref('')
 const affectedHosts = ref([])
 const affectedHostsTotal = ref(0)
 const affectedHostsLoading = ref(false)
@@ -520,6 +554,18 @@ const packageSourceOptions = computed(() => {
   return buildCveSourceOptions(sourceList, { includeAll: true, dedupe: true })
 })
 
+const productNameOptions = computed(() => {
+  return [...new Set(allPackages.value.map(pkg => String(pkg.productName || '').trim()).filter(Boolean))].sort(
+    (left, right) => left.localeCompare(right, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' })
+  )
+})
+
+const fixedVersionOptions = computed(() => {
+  return [...new Set(allPackages.value.map(pkg => String(pkg.fixedVersion || '').trim()).filter(Boolean))].sort(
+    (left, right) => left.localeCompare(right, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' })
+  )
+})
+
 // 计算属性：过滤后的软件包
 const filteredPackages = computed(() => {
   let list = allPackages.value
@@ -531,6 +577,14 @@ const filteredPackages = computed(() => {
   // 状态筛选
   if (packageFilter.value !== '全部') {
     list = list.filter(pkg => pkg.normalizedStatus === packageFilter.value)
+  }
+
+  if (productNameFilter.value) {
+    list = list.filter(pkg => String(pkg.productName || '').trim() === productNameFilter.value)
+  }
+
+  if (fixedVersionFilter.value) {
+    list = list.filter(pkg => String(pkg.fixedVersion || '').trim() === fixedVersionFilter.value)
   }
 
   return list
@@ -1167,6 +1221,18 @@ watch(activeTab, newTab => {
   if (newTab === 'hosts' && !affectedHostsLoaded.value) loadAffectedHosts()
 })
 
+watch(productNameOptions, options => {
+  if (productNameFilter.value && !options.includes(productNameFilter.value)) {
+    productNameFilter.value = ''
+  }
+})
+
+watch(fixedVersionOptions, options => {
+  if (fixedVersionFilter.value && !options.includes(fixedVersionFilter.value)) {
+    fixedVersionFilter.value = ''
+  }
+})
+
 watch(
   () => props.cveId,
   newId => {
@@ -1174,6 +1240,8 @@ watch(
       affectedHostsLoaded.value = false
       packageFilter.value = '全部'
       systemFilter.value = 'all'
+      productNameFilter.value = ''
+      fixedVersionFilter.value = ''
       activeTab.value = 'basic'
       loadCveDetail()
       loadAffectedHosts()

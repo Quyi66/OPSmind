@@ -45,12 +45,21 @@
       </el-button>
     </template>
   </el-dialog>
+
+  <ExecuteResultDialog
+    v-if="resultDialogVisible"
+    v-model:visible="resultDialogVisible"
+    :run-id="currentRunId"
+    job-title="资产导入"
+    @settled="handleExecuteResultSettled"
+  />
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 const props = defineProps({
   modelValue: {
@@ -73,6 +82,24 @@ const visible = computed({
 const uploadRef = ref()
 const selectedFile = ref(null)
 const uploading = ref(false)
+const resultDialogVisible = ref(false)
+const currentRunId = ref('')
+
+function createImportRunId() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID()
+  }
+
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, char => {
+    const random = Math.random() * 16 | 0
+    const value = char === 'x' ? random : (random & 0x3) | 0x8
+    return value.toString(16)
+  })
+}
+
+function isSuccessStatus(status) {
+  return ['COMPLETED', 'SUCCESS'].includes(String(status || '').toUpperCase())
+}
 
 // 文件选择变化
 const handleFileChange = (file) => {
@@ -96,20 +123,30 @@ const handleUpload = async () => {
     return
   }
 
+  if (!props.tenantId) {
+    ElMessage.warning('当前租户信息缺失，无法上传导入文件')
+    return
+  }
+
   uploading.value = true
   try {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
+    const runId = createImportRunId()
 
     await apiService.post('/acm/api/acm/ci/import2', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        'X-Run-Id': runId,
+        'Tenant-Id': props.tenantId
       }
     })
 
-    ElMessage.success('导入成功')
+    currentRunId.value = runId
+    uploading.value = false
     visible.value = false
-    emit('saved')
+    resultDialogVisible.value = true
+    ElMessage.success(`导入任务已提交，正在打开运行结果，运行 ID: ${runId}`)
   } catch (error) {
     console.error('导入失败:', error)
     ElMessage.error('导入失败: ' + (error.response?.data?.message || error.message))
@@ -118,10 +155,17 @@ const handleUpload = async () => {
   }
 }
 
+function handleExecuteResultSettled(payload) {
+  if (isSuccessStatus(payload?.status)) {
+    emit('saved')
+  }
+}
+
 // 弹窗关闭时重置
 const handleClosed = () => {
   uploadRef.value?.clearFiles()
   selectedFile.value = null
+  uploading.value = false
 }
 </script>
 
