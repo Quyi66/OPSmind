@@ -63,8 +63,8 @@ export const JAO_ROUTE_DEFS = [
   {
     key: 'jobs',
     path: 'jobs',
-    title: '作业列表',
-    navLabel: '作业列表',
+    title: '运维工具列表',
+    navLabel: '运维工具列表',
     icon: 'fas fa-list-alt',
     ...createJobOrchestrationPageRoute('jao-jobs', () => import('./views/job/JobListPage.vue'))
   },
@@ -119,8 +119,8 @@ export const JAO_ROUTE_DEFS = [
   {
     key: 'approvals',
     path: 'approvals',
-    title: '作业审批',
-    navLabel: '作业审批',
+    title: '运维工具审批',
+    navLabel: '运维工具审批',
     icon: 'fas fa-user-check',
     ...createJobOrchestrationPageRoute(
       'jao-approvals',
@@ -212,8 +212,8 @@ export const CMD_ROUTE_DEFS = [
   {
     key: 'list',
     path: 'list',
-    title: '命令与作业',
-    navLabel: '命令与作业',
+    title: '命令与运维工具',
+    navLabel: '命令与运维工具',
     icon: 'fas fa-layer-group',
     component: commandCenterModuleView,
     name: 'cmd-list'
@@ -221,7 +221,7 @@ export const CMD_ROUTE_DEFS = [
   {
     key: 'job',
     path: 'job',
-    title: '命令作业',
+    title: '命令运维工具',
     redirect: '/cmd/list?tab=job'
   },
   {
@@ -235,7 +235,7 @@ export const CMD_ROUTE_DEFS = [
       () => import('./views/command/CommandReviewPage.vue')
     )
   },
-  // 暂时移除命令中心“执行日志”导航入口，保留组件代码以便后续回退。
+  // 暂时移除命令执行“执行日志”导航入口，保留组件代码以便后续回退。
   // {
   //   key: 'logs',
   //   path: 'logs',

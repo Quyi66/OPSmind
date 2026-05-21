@@ -16,7 +16,7 @@
           <span class="create-job-drawer__eyebrow">{{ drawerModeLabel }}</span>
           <div class="create-job-drawer__meta">
             <span class="create-job-drawer__meta-item">
-              <em>作业类型</em>
+              <em>运维工具类型</em>
               <strong>{{ currentTypeLabel }}</strong>
             </span>
             <span class="create-job-drawer__meta-item">
@@ -53,7 +53,7 @@
               <div class="section-title">基本设置</div>
 
               <el-form-item label="标题" required>
-                <el-input v-model="job.title" placeholder="请输入作业标题" />
+                <el-input v-model="job.title" placeholder="请输入运维工具标题" />
               </el-form-item>
 
               <el-form-item label="描述">
@@ -61,7 +61,7 @@
                   v-model="job.description"
                   type="textarea"
                   :rows="3"
-                  placeholder="请输入作业描述"
+                  placeholder="请输入运维工具描述"
                 />
               </el-form-item>
             </div>
@@ -368,10 +368,10 @@
               </el-form-item>
             </div>
 
-            <!-- 测试作业 -->
+            <!-- 测试运维工具 -->
             <div v-if="!viewMode" id="section-test" class="form-section">
               <div class="section-header">
-                <div class="section-title">测试作业</div>
+                <div class="section-title">测试运维工具</div>
                 <div class="test-section-meta">
                   <span class="section-badge">{{ testStatusLabel }}</span>
                   <span v-if="testRunId && !testJobResult" class="test-section-run-id">
@@ -404,7 +404,7 @@
                       运行测试
                     </el-button>
 
-                    <span v-if="!isEditMode" class="test-hint">请先保存作业，再运行测试。</span>
+                    <span v-if="!isEditMode" class="test-hint">请先保存运维工具，再运行测试。</span>
                   </div>
 
                   <div
@@ -532,12 +532,12 @@ const loading = ref(false)
 const dialogTitle = computed(() => {
   const typeOption = CREATE_JOB_TYPE_OPTIONS.find(opt => opt.value === job.type)
   if (props.viewMode) {
-    return typeOption ? `查看${typeOption.label}` : '查看作业'
+    return typeOption ? `查看${typeOption.label}` : '查看运维工具'
   }
   if (isEditMode.value) {
-    return typeOption ? `编辑${typeOption.label}` : '编辑作业'
+    return typeOption ? `编辑${typeOption.label}` : '编辑运维工具'
   }
-  return typeOption ? `新建${typeOption.label}` : '新建作业'
+  return typeOption ? `新建${typeOption.label}` : '新建运维工具'
 })
 
 const drawerModeLabel = computed(() => {
@@ -645,7 +645,7 @@ const navSections = computed(() => {
 
   sections.push({ id: 'section-audit', label: '日志和审核' })
   if (!props.viewMode) {
-    sections.push({ id: 'section-test', label: '测试作业' })
+    sections.push({ id: 'section-test', label: '测试运维工具' })
   }
 
   return sections
@@ -1036,7 +1036,7 @@ function toConfigJson() {
  */
 function validateForm() {
   if (!job.title || !job.title.trim()) {
-    ElMessage.warning('请输入作业标题')
+    ElMessage.warning('请输入运维工具标题')
     return false
   }
 
@@ -1183,12 +1183,12 @@ function handleClose() {
  */
 async function runTestJob() {
   if (!canRunTest.value) {
-    ElMessage.warning('请先完善作业配置')
+    ElMessage.warning('请先完善运维工具配置')
     return
   }
 
   if (!props.jobId) {
-    ElMessage.warning('请先保存作业后再运行测试')
+    ElMessage.warning('请先保存运维工具后再运行测试')
     return
   }
 
@@ -1406,8 +1406,8 @@ async function loadJobDetail(jobId) {
       }
     }
   } catch (error) {
-    console.error('加载作业详情失败:', error)
-    ElMessage.error('加载作业详情失败')
+    console.error('加载运维工具详情失败:', error)
+    ElMessage.error('加载运维工具详情失败')
   } finally {
     loading.value = false
     await nextTick()

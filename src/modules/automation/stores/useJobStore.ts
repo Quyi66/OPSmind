@@ -24,10 +24,10 @@ export interface JobTypeOption {
 
 export const JOB_TYPE_OPTIONS: JobTypeOption[] = [
   { label: '全部类型', value: '', icon: 'fa-list' },
-  { label: '脚本作业', value: 'script', icon: 'fa-file-alt' },
-  { label: '命令作业', value: 'command', icon: 'fa-terminal' },
-  { label: 'REST 作业', value: 'rest', icon: 'fa-cloud-upload' },
-  // { label: '流程作业', value: 'process', icon: 'fa-random' }
+  { label: '脚本运维工具', value: 'script', icon: 'fa-file-alt' },
+  { label: '命令运维工具', value: 'command', icon: 'fa-terminal' },
+  { label: 'REST 运维工具', value: 'rest', icon: 'fa-cloud-upload' },
+  // { label: '流程运维工具', value: 'process', icon: 'fa-random' }
 ]
 
 export const useAutomationJobStore = defineStore('automation/jobs', () => {
@@ -89,7 +89,7 @@ export const useAutomationJobStore = defineStore('automation/jobs', () => {
 
       jobs.value = Array.isArray(data) ? data : []
     } catch (err) {
-      const message = err instanceof Error ? err.message : '加载作业列表失败'
+      const message = err instanceof Error ? err.message : '加载运维工具列表失败'
       error.value = message
       jobs.value = []
     } finally {

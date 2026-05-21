@@ -496,18 +496,18 @@ function handleViewResult(row) {
 async function handleRerun(row) {
   try {
     await ElMessageBox.confirm(
-      `确定要重新启动作业 "${row.job_title}" 吗？`,
-      '重新启动作业',
+      `确定要重新启动运维工具 "${row.job_title}" 吗？`,
+      '重新启动运维工具',
       { type: 'warning' }
     )
 
     loading.value = true
     try {
       await jaoApi.rerunJob(row.job_id, row.id)
-      ElMessage.success('作业已重新启动')
+      ElMessage.success('运维工具已重新启动')
       fetchData()
     } catch (error) {
-      ElMessage.error(error?.message || '重新启动作业失败')
+      ElMessage.error(error?.message || '重新启动运维工具失败')
     } finally {
       loading.value = false
     }

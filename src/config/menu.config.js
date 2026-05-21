@@ -36,7 +36,7 @@ export const MENU_CONFIG = {
       code: 'automation',
       name: '自动化管理',
       icon: 'fas fa-robot',
-      description: '自动化作业、脚本、命令、rpm包安装和主机账号管理',
+      description: '自动化运维工具、脚本、命令执行、rpm包安装和主机账号管理',
       children: [
         {
           code: 'auto-workbench',
@@ -46,9 +46,9 @@ export const MENU_CONFIG = {
         },
         {
           code: 'jao',
-          name: '作业中心',
+          name: '运维工具箱',
           icon: 'fas fa-tasks',
-          description: '自动化作业编排和调度管理'
+          description: '自动化运维工具编排和调度管理'
         },
         {
           code: 'gfs',
@@ -58,7 +58,7 @@ export const MENU_CONFIG = {
         },
         {
           code: 'cmd',
-          name: '命令中心',
+          name: '命令执行',
           icon: 'fas fa-terminal',
           description: '系统命令管理和执行'
         },
@@ -72,7 +72,7 @@ export const MENU_CONFIG = {
           code: 'review-center',
           name: '审批中心',
           icon: 'fas fa-stamp',
-          description: '作业审批、命令审核与脚本审核的统一入口'
+          description: '运维工具审批、命令审核与脚本审核的统一入口'
         },
         {
           code: 'users',

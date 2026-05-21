@@ -118,7 +118,7 @@ watch(
     <template #footer>
       <div class="wb-drawer-footer">
         <span class="wb-drawer-footer__total">当前 {{ filteredCommands.length }} 条 / 共 {{ baseCommands.length }} 条</span>
-        <el-button link size="small" @click="emit('navigate', '/cmd/list')">在命令中心管理</el-button>
+        <el-button link size="small" @click="emit('navigate', '/cmd/list')">在命令执行中管理</el-button>
       </div>
     </template>
 
@@ -157,7 +157,7 @@ watch(
           </div>
           <div class="wb-command-item__actions">
             <el-button class="wb-inline-action" link type="primary" size="small" :disabled="!canRun(item)" @click.stop="emit('run', item)">执行</el-button>
-            <el-button class="wb-inline-action" link type="primary" size="small" @click.stop="emit('create-job', item)">作业</el-button>
+            <el-button class="wb-inline-action" link type="primary" size="small" @click.stop="emit('create-job', item)">运维工具</el-button>
             <el-button class="wb-inline-action" link size="small" :disabled="item.status === 3" @click.stop="emit('edit', item)">编辑</el-button>
             <el-button class="wb-inline-action" link size="small" :disabled="!canToggle(item)" @click.stop="emit('toggle-status', item)">{{ toggleLabel(item) }}</el-button>
             <el-button class="wb-inline-action" link type="danger" size="small" @click.stop="emit('delete', item)">删除</el-button>

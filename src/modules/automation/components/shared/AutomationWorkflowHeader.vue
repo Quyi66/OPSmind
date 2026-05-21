@@ -115,7 +115,7 @@ const shortcuts = computed(() => ({
   },
   commandJobs: {
     key: 'commandJobs',
-    label: '命令作业',
+    label: '命令运维工具',
     icon: 'fas fa-layer-group',
     to: '/cmd/list?tab=job',
     visible: canAccess('cmd'),
@@ -138,7 +138,7 @@ const shortcuts = computed(() => ({
   },
   jobList: {
     key: 'jobList',
-    label: '作业列表',
+    label: '运维工具列表',
     icon: 'fas fa-list-alt',
     to: '/jao/jobs',
     visible: canAccess('jao')
@@ -166,7 +166,7 @@ const shortcuts = computed(() => ({
   },
   approvals: {
     key: 'approvals',
-    label: '作业审批',
+    label: '运维工具审批',
     icon: 'fas fa-user-check',
     to: '/jao/approvals',
     visible: canAccess('jao'),
@@ -238,38 +238,38 @@ const contexts = computed(() => ({
     tag: '总览'
   },
   jobList: {
-    moduleLabel: '作业中心',
-    title: '作业列表',
+    moduleLabel: '运维工具箱',
+    title: '运维工具列表',
     tag: '执行入口'
   },
   schedule: {
-    moduleLabel: '作业中心',
+    moduleLabel: '运维工具箱',
     title: '流程编排',
     tag: '编排设计'
   },
   taskScheduler: {
-    moduleLabel: '作业中心',
+    moduleLabel: '运维工具箱',
     title: '定时任务',
     tag: '定时调度'
   },
   requests: {
-    moduleLabel: '作业中心',
+    moduleLabel: '运维工具箱',
     title: '我的申请',
     tag: '审批跟踪'
   },
   approvals: {
     moduleLabel: '审批中心',
-    title: '作业审批',
+    title: '运维工具审批',
     tag: '治理闭环'
   },
   commandWorkspace: {
-    moduleLabel: '命令中心',
+    moduleLabel: '命令执行',
     title: '命令列表',
     tag: '命令沉淀'
   },
   commandJobs: {
-    moduleLabel: '命令中心',
-    title: '命令作业',
+    moduleLabel: '命令执行',
+    title: '命令运维工具',
     tag: '命令复用'
   },
   commandReview: {
@@ -278,7 +278,7 @@ const contexts = computed(() => ({
     tag: '待办处理'
   },
   commandConsole: {
-    moduleLabel: '命令中心',
+    moduleLabel: '命令执行',
     title: '控制台',
     tag: '临时执行'
   },
@@ -320,7 +320,7 @@ const workflowGroups = computed(() => [
   {
     key: 'execute',
     label: '执行',
-    items: pickShortcuts(['commandWorkspace', 'commandJobs', 'jobList', 'schedule', 'taskScheduler'])
+    items: pickShortcuts(['commandWorkspace', 'commandJobs', 'taskScheduler', 'jobList', 'schedule'])
   },
   {
     key: 'govern',
@@ -332,7 +332,7 @@ const workflowGroups = computed(() => [
 const pendingCards = computed(() => [
   {
     key: 'approvals',
-    label: '作业待审批',
+    label: '运维工具待审批',
     value: reviewStore.approvalCount,
     to: '/jao/approvals',
     visible: canAccess('jao')

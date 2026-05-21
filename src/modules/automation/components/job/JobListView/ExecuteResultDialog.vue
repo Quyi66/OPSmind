@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="`作业运行结果${jobTitle ? ` · ${jobTitle}` : ''}`"
+    :title="`运维工具运行结果${jobTitle ? ` · ${jobTitle}` : ''}`"
     width="1260px"
     append-to-body
     destroy-on-close

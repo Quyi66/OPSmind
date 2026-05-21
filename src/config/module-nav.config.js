@@ -35,8 +35,23 @@ export const AUTO_WORKBENCH_NAV_ITEMS = AUTO_WORKBENCH_ROUTE_DEFS.filter(def => 
   path: `/auto-workbench/${def.path}`
 }))
 
-// 自动化管理 - 作业模块的页面导航（审批相关项移至审批中心）
-export const JAO_NAV_ITEMS = JAO_ROUTE_DEFS.filter(def => def.navLabel && !REVIEW_KEYS.has(def.key)).map(def => ({
+const TASK_SCHEDULER_NAV_ITEM = (() => {
+  const def = JAO_ROUTE_DEFS.find(item => item.key === 'taskScheduler')
+  if (!def?.navLabel) return null
+
+  return {
+    key: def.key,
+    label: def.navLabel || def.title,
+    icon: def.icon,
+    path: `/jao/${def.path}`,
+    accessCode: 'jao'
+  }
+})()
+
+// 自动化管理 - 运维工具模块的页面导航（审批相关项移至审批中心）
+export const JAO_NAV_ITEMS = JAO_ROUTE_DEFS.filter(
+  def => def.navLabel && !REVIEW_KEYS.has(def.key) && def.key !== 'taskScheduler'
+).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
@@ -72,10 +87,11 @@ const CMD_SECONDARY_NAV_ITEMS = CMD_ROUTE_DEFS.filter(
 export const CMD_NAV_ITEMS = [
   {
     key: 'workspace',
-    label: '命令与作业',
+    label: '命令与运维工具',
     icon: 'fas fa-layer-group',
     path: '/cmd/list'
   },
+  ...(TASK_SCHEDULER_NAV_ITEM ? [TASK_SCHEDULER_NAV_ITEM] : []),
   ...CMD_SECONDARY_NAV_ITEMS
 ]
 
@@ -83,7 +99,7 @@ export const CMD_NAV_ITEMS = [
 export const REVIEW_CENTER_NAV_ITEMS = [
   {
     key: 'approvals',
-    label: '作业审批',
+    label: '运维工具审批',
     icon: 'fas fa-user-check',
     path: '/jao/approvals',
     accessCode: 'jao'

@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogVisible" :title="`作业运行记录${jobTitle ? ` · ${jobTitle}` : ''}`" width="1360px"
+  <el-dialog v-model="dialogVisible" :title="`运维工具运行记录${jobTitle ? ` · ${jobTitle}` : ''}`" width="1360px"
     destroy-on-close @close="handleClose">
     <div class="history-dialog">
       <!-- 筛选栏 -->
@@ -18,7 +18,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
-            <el-input v-model.trim="keyword" placeholder="输入作业名称搜索" clearable style="width: 200px;">
+            <el-input v-model.trim="keyword" placeholder="输入运维工具名称搜索" clearable style="width: 200px;">
               <template #prefix>
                 <el-icon>
                   <Search />
@@ -56,7 +56,7 @@
         <el-table v-loading="tableLoading" :data="tableData" max-height="calc(100vh - 400px)"
           @sort-change="handleSortChange" :empty-text="tableLoading ? ' ' : '暂无数据'">
           <el-table-column prop="startTime" label="开始时间" width="180" sortable="custom" column-key="start_time" />
-          <el-table-column prop="jobTitle" label="作业" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="jobTitle" label="运维工具" min-width="150" show-overflow-tooltip />
           <el-table-column label="类型" width="80">
             <template #default="{ row }">
               <span>{{ jobTypeLabel(row.jobTypeKey, row.jobType) }}</span>
@@ -290,7 +290,7 @@ function canRerun(row) {
 async function handleRerun(row) {
   try {
     await ElMessageBox.confirm(
-      `确定要重新执行作业 "${row.jobTitle}" 吗？`,
+      `确定要重新执行运维工具 "${row.jobTitle}" 吗？`,
       '重新执行',
       {
         type: 'warning',
@@ -303,7 +303,7 @@ async function handleRerun(row) {
       jobId: 'OKPacN',
       params: { runId: row.id }
     })
-    ElMessage.success('作业已提交执行')
+    ElMessage.success('运维工具已提交执行')
     handleRefresh()
   } catch (error) {
     if (error !== 'cancel') {

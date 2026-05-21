@@ -74,7 +74,7 @@ const workspaceTabs = [
   },
   {
     name: 'job',
-    label: '命令作业',
+    label: '命令运维工具',
     to: {
       path: '/cmd/list',
       query: {
@@ -157,7 +157,7 @@ function handleRunCommand(command) {
   runCommandDialogVisible.value = true
 }
 
-// 创建作业
+// 创建运维工具
 function handleCreateJob(command) {
   selectedCommand.value = command
   runCommandMode.value = 'createJob'

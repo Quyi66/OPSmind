@@ -7,7 +7,7 @@
     @close="handleClose"
   >
     <el-form label-width="120px" size="default">
-      <el-form-item label="作业名称">
+      <el-form-item label="运维工具名称">
         <span>{{ approveData.jobName }}</span>
       </el-form-item>
 
@@ -25,7 +25,7 @@
         </div>
       </el-form-item>
 
-      <el-form-item label="脚本作业">
+      <el-form-item label="脚本运维工具">
         <el-button type="primary" @click="handleViewJob" size="small">
           <i class="fa fa-eye" /> 查看
         </el-button>
@@ -34,7 +34,7 @@
       <el-form-item label="有效时长" v-if="approveData.approveMode !== 'limitParams'">
         <span>{{ approveData.validHour }} 小时</span>
         <el-tooltip
-          content="审批通过后，在有效期内可以执行作业"
+          content="审批通过后，在有效期内可以执行运维工具"
           placement="top"
         >
           <i class="fa fa-question-circle text-muted" style="margin-left: 8px; cursor: help;" />
@@ -190,7 +190,7 @@ function formatExpirationTime(value) {
 
 function handleViewJob() {
   if (!props.approveData.jobId) {
-    ElMessage.warning('无法获取作业信息')
+    ElMessage.warning('无法获取运维工具信息')
     return
   }
   jobDialogVisible.value = true

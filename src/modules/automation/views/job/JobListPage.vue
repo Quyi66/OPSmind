@@ -33,7 +33,7 @@
           <el-form-item label="关键词">
             <el-input
               v-model="filters.keyword"
-              placeholder="搜索作业标题、描述..."
+              placeholder="搜索运维工具标题、描述..."
               clearable
               style="width: 200px;"
               @keyup.enter="handleSearch"
@@ -70,7 +70,7 @@
             <el-icon>
               <Plus />
             </el-icon>
-            新建作业
+            新建运维工具
             <el-icon class="el-icon--right">
               <ArrowDown />
             </el-icon>
@@ -150,7 +150,7 @@
           @sort-change="handleSortChange" max-height="calc(100vh - 240px)"
           :default-sort="{ prop: 'updatedAt', order: 'descending' }">
           <el-table-column type="selection" width="48" />
-          <el-table-column prop="title" label="作业" min-width="160" show-overflow-tooltip>
+          <el-table-column prop="title" label="运维工具" min-width="160" show-overflow-tooltip>
             <template #default="{ row }">
               <!-- <span class="job-title__text" style="color: #0077EE; cursor: pointer;" @click="handleEditJob(row)">
                 {{ translateText(row.title) || '-' }}
@@ -360,7 +360,7 @@ function handleSortChange({ prop, order }) {
 function handleDeleteJobs() {
   const jobIds = selectedIds.value
   ElMessageBox.confirm(
-    `确定要删除选中的 ${jobIds.length} 个作业吗？`,
+    `确定要删除选中的 ${jobIds.length} 个运维工具吗？`,
     '删除确认',
     {
       type: 'warning',
@@ -381,7 +381,7 @@ function handleDeleteJobs() {
 /** 执行作业 */
 async function handleViewJob(row) {
   if (!row?.id) {
-    ElMessage.warning('无法获取作业信息')
+    ElMessage.warning('无法获取运维工具信息')
     return
   }
 
@@ -391,7 +391,7 @@ async function handleViewJob(row) {
     if (needApprove) {
       const checkResult = await jaoApi.checkNeedApprove(row.id)
       if (checkResult?.data?.isApproving) {
-        ElMessage.info('该作业审批申请已提交，请等待审批')
+        ElMessage.info('该运维工具审批申请已提交，请等待审批')
         return
       }
     }
@@ -408,7 +408,7 @@ async function handleViewJob(row) {
       approveDialogVisible.value = true
     } else if (isApproving) {
       // 审批中，提示用户
-      ElMessage.info('该作业审批申请已提交，请等待审批')
+      ElMessage.info('该运维工具审批申请已提交，请等待审批')
     } else {
       // 不需要审批，直接执行
       executeJobMeta.value = {
@@ -519,7 +519,7 @@ const quickTypeOptions = computed(() => {
 
 const overviewCards = computed(() => [
   {
-    label: '当前范围作业',
+    label: '当前范围运维工具',
     value: originalJobs.value.length
   },
   {
@@ -531,7 +531,7 @@ const overviewCards = computed(() => [
     value: recentlyUpdatedCount.value
   },
   {
-    label: '需审批作业',
+    label: '需审批运维工具',
     value: approvalRequiredCount.value
   }
 ])
@@ -579,7 +579,7 @@ function handleSelectionChange(rows) {
 
 async function handleMoveJobs() {
   if (!selectedIds.value.length) {
-    ElMessage.warning('请先选择要移动的作业')
+    ElMessage.warning('请先选择要移动的运维工具')
     return
   }
 
@@ -598,8 +598,8 @@ async function handleMoveJobs() {
 
   try {
     await ElMessageBox.confirm(
-      `确定将选中的 ${selectedIds.value.length} 个作业移动到「${targetLabel}」吗？`,
-      '移动作业',
+      `确定将选中的 ${selectedIds.value.length} 个运维工具移动到「${targetLabel}」吗？`,
+      '移动运维工具',
       {
         type: 'warning',
         confirmButtonText: '确认',
@@ -617,7 +617,7 @@ async function handleMoveJobs() {
     // 刷新当前列表
     getAppTableList(currentApp.value.name)
   } catch (error_) {
-    const message = error_ instanceof Error ? error_.message : '移动作业失败'
+    const message = error_ instanceof Error ? error_.message : '移动运维工具失败'
     ElMessage.error(message)
   } finally {
     moveTarget.value = ''
@@ -630,7 +630,7 @@ async function handleCopy(row) {
 
   try {
     await ElMessageBox.confirm(
-      `确定要复制作业「${row.title}」吗？`,
+      `确定要复制运维工具「${row.title}」吗？`,
       '复制确认',
       {
         confirmButtonText: '确定',
@@ -652,7 +652,7 @@ async function handleCopy(row) {
 
 function handleViewHistory(row) {
   if (!row?.id) {
-    ElMessage.warning('无法获取作业信息')
+    ElMessage.warning('无法获取运维工具信息')
     return
   }
   historyJobMeta.value = {
@@ -673,7 +673,7 @@ function handleCreateJob(type) {
  */
 function handleEditJob(row) {
   if (!row?.id) {
-    ElMessage.warning('无法获取作业信息')
+    ElMessage.warning('无法获取运维工具信息')
     return
   }
   editJobId.value = row.id

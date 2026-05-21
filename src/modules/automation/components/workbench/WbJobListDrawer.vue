@@ -5,7 +5,7 @@ import { translateText } from '@/utils/i18n'
 import { useAppletTranslation } from '@/modules/automation/components/job/composables/useAppletTranslation.js'
 
 const props = defineProps({
-  title: { type: String, default: '作业列表' },
+  title: { type: String, default: '运维工具列表' },
   filterType: { type: String, default: '' },
   reloadVersion: { type: Number, default: 0 }
 })
@@ -69,7 +69,7 @@ const hasActiveFilters = computed(() => (
   Boolean(appliedFilters.keyword)
 ))
 
-const emptyText = computed(() => (jobs.value.length ? '没有符合筛选条件的作业' : '暂无作业'))
+const emptyText = computed(() => (jobs.value.length ? '没有符合筛选条件的运维工具' : '暂无运维工具'))
 
 function typeLabel(type) {
   return TYPE_LABELS[type] || type || '-'
@@ -173,7 +173,7 @@ watch(
     <template #footer>
       <div class="wb-drawer-footer">
         <span class="wb-drawer-footer__total">共 {{ filteredJobs.length }} 个</span>
-        <el-button link size="small" @click="emit('navigate', '/jao/jobs')">在作业中心管理</el-button>
+        <el-button link size="small" @click="emit('navigate', '/jao/jobs')">在运维工具箱管理</el-button>
       </div>
     </template>
 
@@ -206,7 +206,7 @@ watch(
           <el-form-item label="关键词">
             <el-input
               v-model="filters.keyword"
-              placeholder="搜索作业标题、ID"
+              placeholder="搜索运维工具标题、ID"
               clearable
               style="width: 220px"
               @keyup.enter="handleSearch"

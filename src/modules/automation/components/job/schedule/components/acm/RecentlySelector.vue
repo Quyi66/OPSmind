@@ -4,7 +4,7 @@
     <div class="search-toolbar">
       <el-input
         v-model="searchKeyword"
-        placeholder="搜索作业名称"
+        placeholder="搜索运维工具名称"
         clearable
         :prefix-icon="Search"
         @input="handleSearch"
@@ -12,7 +12,7 @@
       <el-button :icon="Refresh" @click="fetchData" />
     </div>
 
-    <!-- 作业列表 -->
+    <!-- 运维工具列表 -->
     <div class="table-wrapper">
       <el-table
         ref="tableRef"
@@ -23,7 +23,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" reserve-selection />
-        <el-table-column prop="jobTitle" label="作业" min-width="280" show-overflow-tooltip sortable>
+        <el-table-column prop="jobTitle" label="运维工具" min-width="280" show-overflow-tooltip sortable>
           <template #default="{ row }">
             {{ translateText(row.jobTitle) || '-' }}
           </template>
@@ -92,7 +92,7 @@
       />
     </div>
 
-    <!-- 作业运行结果弹窗 -->
+    <!-- 运维工具运行结果弹窗 -->
     <ExecuteResultDialog
       v-model:visible="resultDialogVisible"
       :run-id="currentRunId"

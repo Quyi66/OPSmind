@@ -27,7 +27,7 @@
         <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
-            placeholder="搜索作业、用户或执行节点"
+            placeholder="搜索运维工具、用户或执行节点"
             clearable
             style="width: 240px"
           >
@@ -72,7 +72,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="job_title" label="作业" min-width="180" show-overflow-tooltip>
+        <el-table-column prop="job_title" label="运维工具" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button text type="primary" @click="handleViewResult(row)">
               {{ row.job_title || '-' }}
@@ -168,7 +168,7 @@
       <div v-if="currentLog" class="log-detail">
         <div class="log-info">
           <el-descriptions :column="2" border>
-            <el-descriptions-item label="作业名称">{{ currentLog.job_title }}</el-descriptions-item>
+            <el-descriptions-item label="运维工具名称">{{ currentLog.job_title }}</el-descriptions-item>
             <el-descriptions-item label="类型">{{ currentLog.job_type }}</el-descriptions-item>
             <el-descriptions-item label="状态">
               <span :class="['status-badge', getStatusClass(currentLog.status)]">
@@ -289,7 +289,7 @@ async function handleViewResult(row) {
 async function handleRerun(row) {
   try {
     await ElMessageBox.confirm(
-      '确定要重新运行此作业吗？',
+      '确定要重新运行此运维工具吗？',
       '重新运行',
       { type: 'warning' }
     )

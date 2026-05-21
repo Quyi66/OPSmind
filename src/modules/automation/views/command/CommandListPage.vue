@@ -45,7 +45,7 @@
         @click="handleBatchRun('createJob')"
       >
         <i class="fas fa-tasks" />
-        创建作业
+        创建运维工具
       </el-button>
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">

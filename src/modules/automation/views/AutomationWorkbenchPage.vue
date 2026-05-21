@@ -80,7 +80,7 @@
         >
           <div class="wb-stat__top">
             <div class="wb-stat__content">
-              <span class="wb-stat__label">作业审批</span>
+              <span class="wb-stat__label">运维工具审批</span>
               <WbFlipNumber class="wb-stat__value" :value="reviewStore.approvalCount" />
             </div>
             <span class="wb-stat__icon">
@@ -160,11 +160,11 @@
     <!-- ── 主体工作台 ── -->
     <div class="wb-dashboard">
 
-        <!-- 作业分布 -->
+        <!-- 运维工具分布 -->
         <section v-if="canViewJobs" class="wb-panel wb-panel--jobs">
           <div class="wb-panel__header wb-panel__header--jobs">
             <div class="wb-panel__title-group wb-panel__title-group--jobs">
-              <h3 class="wb-panel__title">作业分布</h3>
+              <h3 class="wb-panel__title">运维工具分布</h3>
               <div class="wb-job-panel-stats">
                 <span class="wb-job-panel-stat wb-job-panel-stat--total">
                   <span class="wb-job-panel-stat__label">全部</span>
@@ -185,7 +185,7 @@
               <el-button class="wb-inline-action" link type="primary" size="small" @click="handleJobTypeCreate('rest')">+ REST</el-button>
               <el-button class="wb-inline-action" link type="primary" size="small" @click="handleJobTypeCreate('script')">+ 脚本</el-button>
               <el-button class="wb-inline-action" link type="primary" size="small" @click="handleJobTypeCreate('command')">+ 命令</el-button>
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="openJobListDrawer('', '全部作业')">查看全部</el-button>
+              <el-button class="wb-inline-action" link type="primary" size="small" @click="openJobListDrawer('', '全部运维工具')">查看全部</el-button>
             </div>
           </div>
           <transition-group v-if="workbenchJobs.length" name="wb-stack-slide" tag="div" class="wb-workbench-job-grid">
@@ -238,7 +238,7 @@
               </div>
             </article>
           </transition-group>
-          <el-empty v-else description="暂无作业" :image-size="60" />
+          <el-empty v-else description="暂无运维工具" :image-size="60" />
         </section>
 
         <!-- 定时调度 -->
@@ -348,13 +348,13 @@
           </div>
         </section>
 
-        <!-- 命令中心 -->
+        <!-- 命令执行 -->
         <section v-if="canViewCommands && showCommandWorkbenchPanel" class="wb-panel wb-panel--commands">
           <div class="wb-panel__header">
-            <h3 class="wb-panel__title">命令中心</h3>
+            <h3 class="wb-panel__title">命令执行</h3>
             <div class="wb-panel__header-actions">
               <el-button class="wb-inline-action" link type="primary" size="small" @click="openCommandEditor('create')">+ 命令</el-button>
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="handleLauncherAction('create-command-job')">+ 作业</el-button>
+              <el-button class="wb-inline-action" link type="primary" size="small" @click="handleLauncherAction('create-command-job')">+ 运维工具</el-button>
               <el-button class="wb-inline-action" link type="primary" size="small" @click="openCommandListDrawer('', '全部命令')">查看全部</el-button>
             </div>
           </div>
@@ -377,7 +377,7 @@
             </div>
 
             <div class="wb-command-job-head">
-              <span class="wb-panel-subtitle">命令作业</span>
+              <span class="wb-panel-subtitle">命令运维工具</span>
               <span class="wb-command-job-head__meta">共 {{ commandJobCount }} 个</span>
             </div>
 
@@ -399,14 +399,14 @@
                 </div>
               </div>
             </div>
-            <el-empty v-else description="暂无命令作业" :image-size="56" />
+            <el-empty v-else description="暂无命令运维工具" :image-size="56" />
 
             <div v-if="commandJobList.length" class="wb-command-job-footer">
-              <span class="wb-command-job-footer__meta">最近更新的命令作业会优先显示在这里</span>
+              <span class="wb-command-job-footer__meta">最近更新的命令运维工具会优先显示在这里</span>
               <el-button class="wb-inline-action" link type="primary" size="small" @click="openCommandJobDrawer">查看全部</el-button>
             </div>
           </div>
-          <el-empty v-else description="暂无命令与命令作业" :image-size="60" />
+          <el-empty v-else description="暂无命令与命令运维工具" :image-size="60" />
         </section>
 
         <!-- 运行分布 -->
@@ -865,7 +865,7 @@ const cronActionLoading = reactive({})
 const todayRunsDrawer = reactive({ visible: false, loading: false, records: [], total: 0, title: '今日运行记录', filterType: '' })
 const failedRunsDrawer = reactive({ visible: false, loading: false, records: [], total: 0 })
 const cronDrawer = reactive({ visible: false })
-const jobListDrawer = reactive({ visible: false, filterType: '', title: '全部作业' })
+const jobListDrawer = reactive({ visible: false, filterType: '', title: '全部运维工具' })
 const jobListReloadVersion = ref(0)
 const commandListDrawer = reactive({ visible: false, filterType: '', title: '全部命令' })
 const flowListDrawer = reactive({ visible: false })
@@ -911,9 +911,9 @@ function handleJobDialogSuccess() {
   refreshAll()
   bumpJobListReload()
   if (jobEditId.value) {
-    ElMessage.success('作业已保存。')
+    ElMessage.success('运维工具已保存。')
   } else {
-    ElMessage.success('作业已创建，可前往作业中心查看或纳入调度。')
+    ElMessage.success('运维工具已创建，可前往运维工具箱查看或纳入调度。')
   }
 }
 
@@ -932,7 +932,7 @@ function handleFlowSaved() {
 }
 
 function handleScriptDialogSuccess() {
-  ElMessage.success('脚本已创建，可转为脚本作业或进入脚本库查看。')
+  ElMessage.success('脚本已创建，可转为脚本运维工具或进入脚本库查看。')
 }
 
 function handleUploadDialogSuccess() {
@@ -1137,7 +1137,7 @@ function pickRecentWorkbenchJobs(rows, limit = WORKBENCH_JOB_LIMIT) {
 }
 
 function workbenchJobTypeLabel(type) {
-  return WORKBENCH_JOB_TYPE_LABELS[String(type || '').toLowerCase()] || String(type || '作业').toUpperCase()
+  return WORKBENCH_JOB_TYPE_LABELS[String(type || '').toLowerCase()] || String(type || '运维工具').toUpperCase()
 }
 
 function workbenchJobTypeTag(type) {
@@ -1225,7 +1225,7 @@ async function handleDeleteJob(job) {
   if (!job?.id) return
 
   try {
-    await ElMessageBox.confirm(`确定要删除作业「${translateText(job?.title) || job?.title || job?.id}」吗？`, '删除作业', {
+    await ElMessageBox.confirm(`确定要删除运维工具「${translateText(job?.title) || job?.title || job?.id}」吗？`, '删除运维工具', {
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消',
@@ -1375,9 +1375,9 @@ function formatDateTime(value) {
 
 function runTypeLabel(type) {
   const labels = {
-    rest: 'REST作业',
-    command: '命令作业',
-    script: '脚本作业'
+    rest: 'REST运维工具',
+    command: '命令运维工具',
+    script: '脚本运维工具'
   }
   return labels[String(type || '').toLowerCase()] || '运行记录'
 }
@@ -1461,9 +1461,9 @@ function normalizeFlowInstances(rows) {
     .filter(item => !!item.id)
 }
 
-function openJobListDrawer(type = '', title = '全部作业') {
+function openJobListDrawer(type = '', title = '全部运维工具') {
   jobListDrawer.filterType = type
-  jobListDrawer.title = title || '全部作业'
+  jobListDrawer.title = title || '全部运维工具'
   jobListDrawer.visible = true
 }
 
@@ -1474,7 +1474,7 @@ function openCommandListDrawer(type = '', title = '全部命令') {
 }
 
 function openCommandJobDrawer() {
-  openJobListDrawer('command', '命令作业')
+  openJobListDrawer('command', '命令运维工具')
 }
 
 function openFlowListDrawer() {
@@ -1519,7 +1519,7 @@ async function refreshTodayRunsDrawerInPlace() {
 
 async function openRunsByTypeDrawer(type = '', label = '') {
   const typeLabel = { rest: 'REST', script: '脚本', command: '命令' }[type] || label
-  todayRunsDrawer.title = type ? `${typeLabel}作业今日运行` : '今日运行记录'
+  todayRunsDrawer.title = type ? `${typeLabel}运维工具今日运行` : '今日运行记录'
   todayRunsDrawer.filterType = type || ''
   todayRunsDrawer.visible = true
   await refreshTodayRunsDrawerInPlace()
@@ -1851,8 +1851,8 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 10px;
+  padding: 13px 16px;
   background: var(--wb-panel-bg);
   border: 1px solid var(--wb-panel-border);
   border-radius: var(--wb-radius);
@@ -1873,13 +1873,13 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
   }
 
   &__content {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
     min-width: 0;
   }
 
@@ -1898,8 +1898,8 @@ onBeforeUnmount(() => {
   }
 
   &__icon {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     border-radius: 10px;
     display: inline-flex;
     align-items: center;

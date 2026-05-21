@@ -10,21 +10,21 @@
     <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
       <!-- 创建作业时需要填写标题和描述 -->
       <template v-if="isCreateJobMode">
-        <el-form-item label="作业标题" prop="title">
+        <el-form-item label="运维工具标题" prop="title">
           <el-input
             v-model="formData.title"
-            placeholder="请输入作业标题"
+            placeholder="请输入运维工具标题"
             maxlength="50"
             show-word-limit
           />
         </el-form-item>
 
-        <el-form-item label="作业描述" prop="description">
+        <el-form-item label="运维工具描述" prop="description">
           <el-input
             v-model="formData.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入作业描述（可选）"
+            placeholder="请输入运维工具描述（可选）"
           />
         </el-form-item>
       </template>
@@ -66,7 +66,7 @@
         :disabled="formData.hosts.length === 0"
         @click="handleSaveJob"
       >
-        保存作业
+        保存运维工具
       </el-button>
       <el-button
         v-else
@@ -123,7 +123,7 @@ const isCreateJobMode = computed(() => props.mode === 'createJob')
 
 // 对话框标题
 const dialogTitle = computed(() => {
-  return isCreateJobMode.value ? '创建命令作业' : '执行命令'
+  return isCreateJobMode.value ? '创建命令运维工具' : '执行命令'
 })
 
 // 命令列表（支持单个或多个命令）
@@ -145,7 +145,7 @@ const formData = reactive({
 // 表单验证规则
 const formRules = computed(() => ({
   title: isCreateJobMode.value
-    ? [{ required: true, message: '请输入作业标题', trigger: 'blur' }]
+    ? [{ required: true, message: '请输入运维工具标题', trigger: 'blur' }]
     : [],
   hosts: [
     {
@@ -178,7 +178,7 @@ watch(() => props.visible, (val) => {
     resetForm()
     // 如果是创建作业模式，默认使用命令名称作为标题
     if (isCreateJobMode.value && commandList.value.length === 1) {
-      formData.title = commandList.value[0].name + ' 作业'
+      formData.title = commandList.value[0].name + ' 运维工具'
     }
   }
 })
@@ -248,12 +248,12 @@ async function handleSaveJob() {
     const response = await saveJob(job)
     const result = response.data || response
 
-    ElMessage.success('作业创建成功')
+    ElMessage.success('运维工具创建成功')
     emit('success', result)
     handleClose()
   } catch (error) {
-    console.error('创建作业失败:', error)
-    ElMessage.error('创建作业失败: ' + (error.message || '未知错误'))
+    console.error('创建运维工具失败:', error)
+    ElMessage.error('创建运维工具失败: ' + (error.message || '未知错误'))
   } finally {
     submitting.value = false
   }

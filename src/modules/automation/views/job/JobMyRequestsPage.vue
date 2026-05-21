@@ -4,7 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input v-model="filters.keyword" placeholder="搜索作业名称" clearable style="width: 240px">
+          <el-input v-model="filters.keyword" placeholder="搜索运维工具名称" clearable style="width: 240px">
             <template #prefix>
               <el-icon>
                 <Search />
@@ -51,7 +51,7 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="paginatedData" max-height="calc(100vh - 230px)">
-        <el-table-column label="作业" min-width="150">
+        <el-table-column label="运维工具" min-width="150">
           <template #default="{ row }">
             <el-button text type="primary" @click="handleViewDetail(row)">
               {{ row.jobName }}
@@ -59,13 +59,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="作业类型" width="150">
+        <el-table-column label="运维工具类型" width="150">
           <template #default="{ row }">
             {{ getJobTypeLabel(row.jobType) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="作业ID" width="150">
+        <el-table-column label="运维工具ID" width="150">
           <template #default="{ row }">
             {{ row.jobId }}
           </template>
@@ -185,9 +185,9 @@ const paginatedData = computed(() => {
 })
 
 const jobTypeMap = {
-  standalone: { icon: 'fa fa-terminal', label: '独立作业' },
-  flow: { icon: 'fa fa-stream', label: '流程作业' },
-  schedule: { icon: 'fa fa-clock', label: '定时作业' }
+  standalone: { icon: 'fa fa-terminal', label: '独立运维工具' },
+  flow: { icon: 'fa fa-stream', label: '流程运维工具' },
+  schedule: { icon: 'fa fa-clock', label: '定时运维工具' }
 }
 
 const approveModeMap = {

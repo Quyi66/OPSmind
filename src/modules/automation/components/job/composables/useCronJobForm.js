@@ -102,10 +102,10 @@ export function useCronJobForm(props, emit) {
       { required: true, message: '请输入Cron表达式', trigger: 'blur' }
     ],
     jobType: [
-      { required: true, message: '请选择作业类型', trigger: 'change' }
+      { required: true, message: '请选择运维工具类型', trigger: 'change' }
     ],
     jobId: [
-      { required: true, message: '请选择执行作业', trigger: 'change' }
+      { required: true, message: '请选择执行运维工具', trigger: 'change' }
     ]
   }
 
@@ -171,7 +171,7 @@ export function useCronJobForm(props, emit) {
         isEncrypt: cronJob.isEncrypt === true ? '0' : '1'
       }
 
-      // 加载作业列表
+      // 加载运维工具列表
       await handleJobTypeChange(cronJob.jobType)
 
       // 处理多选类型和单选类型的 jobId 回显
@@ -206,7 +206,7 @@ export function useCronJobForm(props, emit) {
         }
       }
 
-      // 如果是script/rest类型,加载作业参数定义
+      // 如果是script/rest类型,加载运维工具参数定义
       if (!multipleTypes.includes(cronJob.jobType) && cronJob.jobId) {
         try {
           const jobResponse = await jaoApi.fetchJobById(cronJob.jobId)
@@ -221,7 +221,7 @@ export function useCronJobForm(props, emit) {
             }))
           }
         } catch (error) {
-          console.warn('获取作业参数失败:', error)
+            console.warn('获取运维工具参数失败:', error)
         }
       }
     } catch (error) {
@@ -231,7 +231,7 @@ export function useCronJobForm(props, emit) {
   }
 
   /**
-   * 处理作业类型变更
+  * 处理运维工具类型变更
    */
   async function handleJobTypeChange(jobType) {
     formData.value.jobId = ''
@@ -241,7 +241,7 @@ export function useCronJobForm(props, emit) {
     const multipleTypes = ['cac', 'cmd', 'flows']
     isMultipleJobType.value = multipleTypes.includes(jobType)
 
-    // 根据作业类型预设参数
+    // 根据运维工具类型预设参数
     if (jobType === 'cac') {
       jobParams.value = [{
         name: 'annex_name',
@@ -288,12 +288,12 @@ export function useCronJobForm(props, emit) {
           break
       }
     } catch (error) {
-      ElMessage.error('获取作业列表失败')
+      ElMessage.error('获取运维工具列表失败')
     }
   }
 
   /**
-   * 处理作业变更
+   * 处理运维工具变更
    */
   async function handleJobChange(jobId) {
     if (!jobId) return
@@ -314,12 +314,12 @@ export function useCronJobForm(props, emit) {
         }))
       }
     } catch (error) {
-      console.warn('获取作业参数失败:', error)
+        console.warn('获取运维工具参数失败:', error)
     }
   }
 
   /**
-   * 获取作业标签
+  * 获取运维工具标签
    */
   function getJobLabel(job) {
     if (!job) return ''
@@ -345,13 +345,13 @@ export function useCronJobForm(props, emit) {
   async function handleSubmit() {
     if (!formRef.value) return
 
-    // 验证作业选择
+    // 验证运维工具选择
     if (!isMultipleJobType.value && !formData.value.jobId) {
-      ElMessage.warning('请选择执行作业')
+      ElMessage.warning('请选择执行运维工具')
       return
     }
     if (isMultipleJobType.value && multipleJobIds.value.length === 0) {
-      ElMessage.warning('请选择执行作业')
+      ElMessage.warning('请选择执行运维工具')
       return
     }
 

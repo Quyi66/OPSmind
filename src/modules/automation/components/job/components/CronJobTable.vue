@@ -24,7 +24,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="作业类型" width="110" align="left">
+      <el-table-column label="运维工具类型" width="110" align="left">
         <template #default="{ row }">
           <el-tag :type="getJobTypeTag(row.jobType)" size="small">
             {{ getJobTypeName(row.jobType) }}

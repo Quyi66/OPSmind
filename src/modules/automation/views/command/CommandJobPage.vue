@@ -6,7 +6,7 @@
         <el-form-item label="关键词">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索作业标题"
+            placeholder="搜索运维工具标题"
             clearable
             style="width: 240px"
           >
@@ -29,7 +29,7 @@
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreateJob">
         <i class="fas fa-plus" />
-        创建作业
+        创建运维工具
       </el-button>
       <span style="flex: 1;"></span>
       <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadJobs" title="刷新">
@@ -47,7 +47,7 @@
         :default-sort="{ prop: sortField, order: sortOrder }"
         @sort-change="handleSortChange"
       >
-        <el-table-column prop="title" label="作业标题" min-width="200" sortable="custom">
+        <el-table-column prop="title" label="运维工具标题" min-width="200" sortable="custom">
           <template #default="{ row }">
             <el-button text type="primary" @click="openDetail(row)">{{ row.title }}</el-button>
           </template>
@@ -94,7 +94,7 @@
     <el-dialog
       v-model="detailDialogVisible"
       width="780px"
-      title="作业详情"
+      title="运维工具详情"
       :close-on-click-modal="false"
     >
       <div v-if="detailJob" class="detail-dialog-body">
@@ -131,13 +131,13 @@
 
       <template #footer>
         <el-button @click="detailDialogVisible = false">关闭</el-button>
-        <el-button @click="handleEditFromDetail">编辑作业</el-button>
+        <el-button @click="handleEditFromDetail">编辑运维工具</el-button>
         <el-button
           type="primary"
           :loading="running && runningJobId === detailJob?.id"
           @click="detailJob && handleRunJob(detailJob)"
         >
-          执行作业
+          执行运维工具
         </el-button>
       </template>
     </el-dialog>
@@ -151,11 +151,11 @@
       destroy-on-close
     >
       <el-form ref="formRef" :model="jobForm" :rules="formRules" label-width="100px">
-        <el-form-item label="作业标题" prop="title">
-          <el-input v-model="jobForm.title" placeholder="请输入作业标题" maxlength="100" />
+        <el-form-item label="运维工具标题" prop="title">
+          <el-input v-model="jobForm.title" placeholder="请输入运维工具标题" maxlength="100" />
         </el-form-item>
         <el-form-item label="描述">
-          <el-input v-model="jobForm.description" type="textarea" :rows="3" placeholder="请输入作业描述" />
+          <el-input v-model="jobForm.description" type="textarea" :rows="3" placeholder="请输入运维工具描述" />
         </el-form-item>
         <el-form-item label="命令列表" required>
           <el-select
@@ -275,14 +275,14 @@ const detailDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 
 const formRules = {
-  title: [{ required: true, message: '请输入作业标题', trigger: 'blur' }]
+  title: [{ required: true, message: '请输入运维工具标题', trigger: 'blur' }]
 }
 
 const isEditMode = computed(() => Boolean(jobForm.value.id))
 
-const editDialogTitle = computed(() => (isEditMode.value ? '编辑作业' : '创建作业'))
+const editDialogTitle = computed(() => (isEditMode.value ? '编辑运维工具' : '创建运维工具'))
 
-const editDialogConfirmText = computed(() => (isEditMode.value ? '保存' : '创建作业'))
+const editDialogConfirmText = computed(() => (isEditMode.value ? '保存' : '创建运维工具'))
 
 const filteredJobs = computed(() => {
   let result = [...jobs.value]
@@ -361,8 +361,8 @@ async function loadJobs() {
     const response = await findAllJobs(props.jobType)
     jobs.value = response.data || response || []
   } catch (error) {
-    console.error('加载作业列表失败:', error)
-    ElMessage.error('加载作业列表失败')
+    console.error('加载运维工具列表失败:', error)
+    ElMessage.error('加载运维工具列表失败')
   } finally {
     loading.value = false
   }
@@ -384,8 +384,8 @@ async function loadJobDetail(job) {
     selectedJob.value = data
     return data
   } catch (error) {
-    console.error('加载作业详情失败:', error)
-    ElMessage.error('加载作业详情失败')
+    console.error('加载运维工具详情失败:', error)
+    ElMessage.error('加载运维工具详情失败')
     return null
   }
 }
@@ -494,15 +494,15 @@ async function handleSaveJob() {
     }
 
     await saveJob(job)
-    ElMessage.success(isEditAction ? '作业保存成功' : '作业创建成功')
+    ElMessage.success(isEditAction ? '运维工具保存成功' : '运维工具创建成功')
     editDialogVisible.value = false
     await loadJobs()
     if (detailDialogVisible.value && detailJob.value?.id === job.id) {
       detailJob.value = await findJobById(job.id).then(r => r.data || r).catch(() => detailJob.value)
     }
   } catch (error) {
-    console.error('保存作业失败:', error)
-    ElMessage.error('保存作业失败')
+    console.error('保存运维工具失败:', error)
+    ElMessage.error('保存运维工具失败')
   } finally {
     saving.value = false
   }
@@ -514,17 +514,17 @@ async function handleRunJob(job) {
 
   const cfg = parseJobConfig(detail)
   if (!cfg.commands.length) {
-    ElMessage.warning('作业未配置命令')
+    ElMessage.warning('运维工具未配置命令')
     return
   }
   if (!cfg.hosts.length) {
-    ElMessage.warning('作业未配置目标主机')
+    ElMessage.warning('运维工具未配置目标主机')
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定立即执行作业 "${detail.title}" 吗？该作业将向 ${cfg.hosts.length} 台主机执行 ${cfg.commands.length} 条命令。`,
+      `确定立即执行运维工具 "${detail.title}" 吗？该运维工具将向 ${cfg.hosts.length} 台主机执行 ${cfg.commands.length} 条命令。`,
       '执行确认',
       {
         type: 'warning',
@@ -545,7 +545,7 @@ async function handleRunJob(job) {
       const checkResult = await jaoApi.checkNeedApprove(detail.id)
       const resData = checkResult?.data || checkResult || {}
       if (resData.isApproving) {
-        ElMessage.info('该作业审批申请已提交，请等待审批')
+        ElMessage.info('该运维工具审批申请已提交，请等待审批')
         return
       }
       if (resData.needApprove) {
@@ -568,11 +568,11 @@ async function handleRunJob(job) {
   runningJobId.value = job.id
   try {
     await runJobByRequest(buildSavedCommandJobRunRequest(detail))
-    ElMessage.success('作业已提交执行，可在运行记录中查看')
+    ElMessage.success('运维工具已提交执行，可在运行记录中查看')
     router.push('/run-records/logs')
   } catch (error) {
-    console.error('运行作业失败:', error)
-    ElMessage.error('运行作业失败: ' + (error?.message || '未知错误'))
+    console.error('运行运维工具失败:', error)
+    ElMessage.error('运行运维工具失败: ' + (error?.message || '未知错误'))
   } finally {
     running.value = false
     runningJobId.value = ''
@@ -587,12 +587,12 @@ function handleApproveSuccess() {
 async function handleDeleteJob(job) {
   try {
     await ElMessageBox.confirm(
-      `确定要删除作业 "${job.title}" 吗？`,
+      `确定要删除运维工具 "${job.title}" 吗？`,
       '确认删除',
       { type: 'error', confirmButtonClass: 'el-button--danger' }
     )
     await deleteJob(job.id)
-    ElMessage.success('作业已删除')
+    ElMessage.success('运维工具已删除')
     if (detailJob.value?.id === job.id) {
       detailDialogVisible.value = false
       detailJob.value = null
@@ -601,8 +601,8 @@ async function handleDeleteJob(job) {
     await loadJobs()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除作业失败:', error)
-      ElMessage.error('删除作业失败')
+      console.error('删除运维工具失败:', error)
+      ElMessage.error('删除运维工具失败')
     }
   }
 }

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="执行作业"
+    title="执行运维工具"
     width="1000px"
     destroy-on-close
     @close="handleClose"
@@ -23,7 +23,7 @@
         </template>
       </el-form>
       <div v-else class="execute-dialog__empty">
-        当前作业暂无可配置参数
+        当前运维工具暂无可配置参数
       </div>
     </div>
     <template #footer>
@@ -38,7 +38,7 @@
         <div class="dialog-footer__actions">
           <el-button @click="handleClose">取消</el-button>
           <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
-            执行作业
+            执行运维工具
           </el-button>
         </div>
       </div>
@@ -120,7 +120,7 @@ async function fetchJobDetail(jobId) {
     lastLoadedJobId.value = jobId
     initializeForm(detail)
   } catch (error) {
-    ElMessage.error(error?.message || '获取作业详情失败')
+    ElMessage.error(error?.message || '获取运维工具详情失败')
   } finally {
     detailLoading.value = false
   }
@@ -161,7 +161,7 @@ function handleClose() {
 /** 提交执行作业 */
 async function handleSubmit() {
   if (!props.jobId) {
-    ElMessage.warning('缺少作业标识')
+    ElMessage.warning('缺少运维工具标识')
     return
   }
   executionStatus.value = ''
@@ -180,10 +180,10 @@ async function handleSubmit() {
       jobType: jobDetail.value?.type || props.jobType || '',
       jobTitle: jobDetail.value?.title || jobDetail.value?.jobTitle || ''
     })
-    ElMessage.success(runId ? '作业已提交执行，正在打开运行结果' : '作业已提交执行，正在刷新运行记录')
+    ElMessage.success(runId ? '运维工具已提交执行，正在打开运行结果' : '运维工具已提交执行，正在刷新运行记录')
     handleClose()
   } catch (error) {
-    ElMessage.error(error?.message || '执行作业失败')
+    ElMessage.error(error?.message || '执行运维工具失败')
   } finally {
     submitLoading.value = false
   }

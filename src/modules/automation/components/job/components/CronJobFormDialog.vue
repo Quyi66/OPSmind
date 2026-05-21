@@ -45,10 +45,10 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="执行作业类型" prop="jobType">
+      <el-form-item label="执行运维工具类型" prop="jobType">
         <el-select
           v-model="formData.jobType"
-          placeholder="请选择作业类型"
+          placeholder="请选择运维工具类型"
           @change="handleJobTypeChange"
         >
           <el-option label="" value="" />
@@ -60,11 +60,11 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="选择执行作业" prop="jobId">
+      <el-form-item label="选择执行运维工具" prop="jobId">
         <el-select
           v-if="!isMultipleJobType"
           v-model="formData.jobId"
-          placeholder="请选择作业"
+          placeholder="请选择运维工具"
           filterable
           @change="handleJobChange"
         >
@@ -75,7 +75,7 @@
             :value="job.id"
           />
         </el-select>
-        <el-select v-else v-model="multipleJobIds" placeholder="请选择作业" multiple filterable>
+        <el-select v-else v-model="multipleJobIds" placeholder="请选择运维工具" multiple filterable>
           <el-option
             v-for="job in jobList"
             :key="job.id"

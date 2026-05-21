@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="作业审批"
+    title="运维工具审批"
     width="600px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -11,7 +11,7 @@
         <span>{{ appName }}</span>
       </el-form-item>
 
-      <el-form-item label="作业名称">
+      <el-form-item label="运维工具名称">
         <span>{{ jobTitle }}</span>
       </el-form-item>
 
@@ -50,7 +50,7 @@
         />
         <span style="margin-left: 8px;">小时</span>
         <el-tooltip
-          content="审批通过后，在有效期内可以执行作业"
+          content="审批通过后，在有效期内可以执行运维工具"
           placement="top"
         >
           <i class="fa fa-question-circle text-muted" style="margin-left: 8px; cursor: help;" />

@@ -55,9 +55,9 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
   let activeRunPollingTimer = 0
 
   const JOB_TYPE_META = [
-    { key: 'rest', label: 'REST作业', type: 'rest' },
-    { key: 'command', label: '命令作业', type: 'command' },
-    { key: 'script', label: '脚本作业', type: 'script' }
+    { key: 'rest', label: 'REST运维工具', type: 'rest' },
+    { key: 'command', label: '命令运维工具', type: 'command' },
+    { key: 'script', label: '脚本运维工具', type: 'script' }
   ]
   const CMD_TYPE_META = [
     { key: 'cmd', label: 'CMD', type: 'cmd' },

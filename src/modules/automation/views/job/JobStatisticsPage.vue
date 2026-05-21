@@ -23,13 +23,13 @@
 
       <section class="chart-section chart-section--summary" :style="{ height: chartSectionHeight ? chartSectionHeight + 50 + 'px' : 'auto' }">
         <header class="chart-section__header">
-          <h4 class="chart-section__title">作业运行次数排行</h4>
+          <h4 class="chart-section__title">运维工具运行次数排行</h4>
           <el-input
             v-model="summaryQuery"
             clearable
             size="small"
             class="summary-search"
-            placeholder="搜索作业"
+            placeholder="搜索运维工具"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -138,7 +138,7 @@ async function fetchRunCounts() {
     const data = response?.data || response
     summaryRows.value = (data.records || []).map((item) => ({
       job_id: item.job_id,
-      job_title: item.job_title || '未命名作业',
+      job_title: item.job_title || '未命名运维工具',
       run_count: Number(item.run_count) || 0
     }))
   } catch (error) {
