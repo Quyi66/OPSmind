@@ -265,11 +265,22 @@ const formData = reactive({
 })
 
 function validateBaseurls(rule, value, callback) {
-  if (normalizeBaseurls(value).length > 0) {
+  const baseurls = normalizeBaseurls(value)
+  if (!baseurls.length) {
+    callback(new Error('请至少输入一个YUM源地址'))
+    return
+  }
+
+  const invalidUrl = baseurls.find(item => !/^https?:\/\//i.test(item))
+  if (invalidUrl) {
+    callback(new Error('YUM源地址需以 http:// 或 https:// 开头'))
+    return
+  }
+
+  if (baseurls.length > 0) {
     callback()
     return
   }
-  callback(new Error('请至少输入一个仓库baseurl地址'))
 }
 
 function validateOsMajor(rule, value, callback) {
@@ -291,7 +302,7 @@ function validateOsSpVersion(rule, value, callback) {
     callback(new Error('麒麟仓库必须填写 OS 精确版本（如 SP1、SP3、SP3 2403、HPC、Host）'))
     return
   }
-  if (v && !/^(SP\d+(\.\d+)?( \w+)?|Update\d+|HPC|Host|Compat)$/.test(v)) {
+  if (v && !/^(SP\d+(?:\.\d+)?(?:[\s_/-]+\d\w*)?|Update\d+|HPC|Host|Compat)$/i.test(v)) {
     callback(new Error('OS 精确版本格式不正确，请按 SP1 / SP1.1 / SP3 2403 / Update6 / HPC / Host / Compat 形式填写'))
     return
   }
@@ -471,7 +482,7 @@ async function handleSubmit() {
     }
   } catch (error) {
     if (error !== false) {
-      console.error('提交 Yum 源配置失败:', error)
+      console.error('提交YUM源配置失败:', error)
     }
   } finally {
     submitting.value = false
@@ -488,8 +499,8 @@ async function handleDeleteConfig(row) {
     emit('refresh')
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
-      console.error('删除 Yum 源配置失败:', error)
-      ElMessage.error('删除 Yum 源配置失败')
+      console.error('删除YUM源配置失败:', error)
+      ElMessage.error('删除YUM源配置失败')
     }
   }
 }

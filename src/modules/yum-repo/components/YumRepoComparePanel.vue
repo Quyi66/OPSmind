@@ -436,13 +436,16 @@ async function handleCompare(options = {}) {
     return
   }
 
+  if (!configId) {
+    ElMessage.warning('当前仓库配置无效，请重新选择')
+    return
+  }
+
   const requestId = ++compareRequestId.value
   const contextId = resultContextId.value
   comparing.value = true
   try {
-    const response = await yumRepoApi.compareScannedPatches({
-      ...(configId ? { dcDataId: configId } : { sourceId: repoId })
-    })
+    const response = await yumRepoApi.compareScannedPatches({ dcDataId: configId })
 
     if (!isCompareRequestCurrent(requestId, contextId, repoId)) {
       return
