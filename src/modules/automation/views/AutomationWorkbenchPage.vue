@@ -2619,7 +2619,7 @@ onBeforeUnmount(() => {
   display: flex;
   position: relative;
   flex-direction: column;
-  min-height: 138px;
+  min-height: 108px;
   border: 1px solid var(--wb-panel-border);
   border-radius: 16px;
   background: var(--wb-panel-bg);
@@ -2660,9 +2660,9 @@ onBeforeUnmount(() => {
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     min-width: 0;
-    padding: 12px 16px 14px;
+    padding: 10px 14px 4px 12px;
     background: linear-gradient(180deg, var(--el-fill-color-light) 0%, var(--el-fill-color-extra-light) 100%);
   }
 
@@ -2681,17 +2681,19 @@ onBeforeUnmount(() => {
 
   &__name {
     display: -webkit-box;
-    min-height: calc(1.5em * 2);
+    min-height: 1.45em;
     font-size: 15px;
     font-weight: 600;
-    line-height: 1.5;
+    line-height: 1.45;
     color: var(--wb-text-primary);
     word-break: break-word;
     overflow: hidden;
     text-overflow: ellipsis;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
+    flex: 1;
+    padding-top: 4px;
   }
 
   &__actions {
