@@ -1,164 +1,355 @@
 <template>
-  <div class="ops-page-layout asset-overview">
-    <header class="workbench-header">
-      <div class="workbench-header__main">
-        <h2 class="workbench-header__title">资产总览</h2>
+  <div class="ops-page-layout asset-workbench">
+    <!-- ══════════ 头部：标题 + 快捷操作 ══════════ -->
+    <section class="aw-header">
+      <div class="aw-header__top">
+        <div class="aw-header__summary">
+          <h2 class="aw-header__title">资产工作台</h2>
+        </div>
       </div>
 
-      <div class="workbench-header__actions">
-        <div class="status-mini-list">
-          <span v-for="item in heroChips" :key="item.label" class="status-mini">
-            <span>{{ item.label }}</span>
-            <strong>{{ item.value }}</strong>
-          </span>
-          <span class="status-mini status-mini--muted">
-            <span>更新于</span>
-            <strong>{{ refreshedAtText }}</strong>
-          </span>
-        </div>
+      <!-- ── 统计卡片 ── -->
+      <div class="aw-stats">
+        <button
+          class="aw-stat"
+          :class="totalAssets ? 'aw-stat--accent' : 'aw-stat--muted'"
+          @click="openAssetListDrawer(selectedAssetTypeCode)"
+        >
+          <div class="aw-stat__top">
+            <div class="aw-stat__content">
+              <span class="aw-stat__label">资产总量</span>
+              <WbFlipNumber class="aw-stat__value" :value="totalAssets" />
+            </div>
+            <span class="aw-stat__icon"><i class="fa fa-server" /></span>
+          </div>
+          <div class="aw-stat__meta">
+            <span class="aw-stat__sub">{{ assetTypeCount }} 类资产</span>
+            <span class="aw-stat__hint">查看列表</span>
+          </div>
+        </button>
 
         <button
-          type="button"
-          class="refresh-button"
-          :class="{ 'is-loading': overviewRefreshing }"
-          :disabled="overviewRefreshing"
-          @click="loadAllData"
+          class="aw-stat"
+          :class="[
+            exceptionDeviceTotal ? 'aw-stat--danger' : 'aw-stat--ok',
+            exceptionDeviceTotal ? 'aw-stat--pulsing' : ''
+          ]"
+          @click="openExceptionDrawer"
         >
-          <el-icon><Refresh /></el-icon>
-          <span>{{ overviewRefreshing ? '刷新中' : '刷新' }}</span>
+          <div class="aw-stat__top">
+            <div class="aw-stat__content">
+              <span class="aw-stat__label">异常设备</span>
+              <WbFlipNumber class="aw-stat__value" :value="exceptionDeviceTotal" />
+            </div>
+            <span class="aw-stat__icon"><i class="fa fa-exclamation-triangle" /></span>
+          </div>
+          <div class="aw-stat__meta">
+            <span class="aw-stat__sub">连通失败</span>
+            <span class="aw-stat__hint">快速排查</span>
+          </div>
+        </button>
+
+        <button
+          class="aw-stat"
+          :class="failedLogTotal ? 'aw-stat--warning' : 'aw-stat--muted'"
+          @click="openFailedLogDrawer"
+        >
+          <div class="aw-stat__top">
+            <div class="aw-stat__content">
+              <span class="aw-stat__label">失败日志</span>
+              <WbFlipNumber class="aw-stat__value" :value="failedLogTotal" />
+            </div>
+            <span class="aw-stat__icon"><i class="fa fa-file-alt" /></span>
+          </div>
+          <div class="aw-stat__meta">
+            <span class="aw-stat__sub">近7天</span>
+            <span class="aw-stat__hint">查看详情</span>
+          </div>
+        </button>
+
+        <button class="aw-stat aw-stat--muted" @click="openGovernanceDrawer">
+          <div class="aw-stat__top">
+            <div class="aw-stat__content">
+              <span class="aw-stat__label">分组 / 标签</span>
+              <span class="aw-stat__value">{{ groupCount }} / {{ tagTotal }}</span>
+            </div>
+            <span class="aw-stat__icon"><i class="fa fa-code-branch" /></span>
+          </div>
+          <div class="aw-stat__meta">
+            <span class="aw-stat__sub">{{ governanceStats.permissionTeamCount }} 个团队</span>
+            <span class="aw-stat__hint">管理</span>
+          </div>
+        </button>
+
+        <button
+          class="aw-stat"
+          :class="connectionStats.totalConnection ? 'aw-stat--accent' : 'aw-stat--muted'"
+          @click="openAssetListDrawer(selectedAssetTypeCode)"
+        >
+          <div class="aw-stat__top">
+            <div class="aw-stat__content">
+              <span class="aw-stat__label">连通率</span>
+              <span class="aw-stat__value">
+                {{ connectionStats.totalConnection ? `${connectionStats.successRate}%` : '--' }}
+              </span>
+            </div>
+            <span class="aw-stat__icon"><i class="fa fa-plug" /></span>
+          </div>
+          <div class="aw-stat__meta">
+            <span class="aw-stat__sub">
+              {{ formatCount(connectionStats.successCount) }} 正常 /
+              {{ formatCount(connectionStats.failureCount) }} 异常
+            </span>
+            <span class="aw-stat__hint">查看资产</span>
+          </div>
+        </button>
+
+        <button class="aw-stat aw-stat--muted" @click="openRecentLogsDrawer">
+          <div class="aw-stat__top">
+            <div class="aw-stat__content">
+              <span class="aw-stat__label">操作记录</span>
+              <WbFlipNumber class="aw-stat__value" :value="recentOperationTotal" />
+            </div>
+            <span class="aw-stat__icon"><i class="fa fa-history" /></span>
+          </div>
+          <div class="aw-stat__meta">
+            <span class="aw-stat__sub">近7天</span>
+            <span class="aw-stat__hint">浏览</span>
+          </div>
         </button>
       </div>
-    </header>
-
-    <section class="workbench-summary-grid">
-      <button
-        v-for="card in summaryCards"
-        :key="card.key"
-        type="button"
-        class="summary-card"
-        :class="[
-          `summary-card--${card.tone}`,
-          {
-            'summary-card--textual': card.valueMode === 'text',
-            'is-active': card.targetTab && analyticsTab === card.targetTab,
-            'is-static': !card.clickable && !card.targetTab
-          }
-        ]"
-        :disabled="!card.clickable && !card.targetTab"
-        @click="handleSummaryCardClick(card)"
-      >
-        <div class="summary-card__head">
-          <span class="summary-card__label">{{ card.label }}</span>
-          <span class="summary-card__badge">
-            <el-icon><component :is="card.icon" /></el-icon>
-            {{ card.badge }}
-          </span>
-        </div>
-        <div class="summary-card__body">
-          <strong class="summary-card__value" :title="card.value">{{ card.value }}</strong>
-          <span class="summary-card__meta">{{ card.meta }}</span>
-        </div>
-        <span v-if="card.actionText" class="summary-card__action">{{ card.actionText }}</span>
-      </button>
     </section>
 
-    <section class="workbench-main-grid">
-      <article class="workbench-panel workbench-panel--wide analytics-panel">
-        <div class="workbench-panel__header">
-          <div class="workbench-panel__header-main">
-            <h3 class="workbench-panel__title">趋势与分布</h3>
-            <span class="workbench-panel__pill">{{ activeAnalyticsLabel }}</span>
+    <!-- ══════════ 面板仪表盘 ══════════ -->
+    <div class="aw-dashboard">
+      <!-- ── 资产操作面板 ── -->
+      <section class="aw-panel aw-panel--actions">
+        <div class="aw-panel__header">
+          <div class="aw-panel__title-group">
+            <h3 class="aw-panel__title">资产操作</h3>
+            <span class="aw-panel__stat-badge">
+              今日新增
+              <strong>{{ latestTrendPoint ? getTrendValue(latestTrendPoint) : 0 }}</strong>
+            </span>
           </div>
-          <div class="analytics-tabs">
-            <button
-              v-for="item in analyticsTabs"
-              :key="item.key"
-              type="button"
-              class="analytics-tab"
-              :class="{ 'is-active': analyticsTab === item.key }"
-              @click="analyticsTab = item.key"
+          <div class="aw-panel__header-actions">
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="autoEntryDialogVisible = true"
             >
-              {{ item.label }}
-            </button>
+              <i class="fa fa-plus" /> 录入
+            </el-button>
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="importDialogVisible = true"
+            >
+              <i class="fa fa-file-import" /> 导入
+            </el-button>
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="exportDialogVisible = true"
+            >
+              <i class="fa fa-file-export" /> 导出
+            </el-button>
           </div>
         </div>
 
-        <div class="analytics-stage">
-          <div class="chart-frame" :class="`chart-frame--${analyticsTab}`">
-            <AssetTrendChart
-              v-if="analyticsTab === 'trend'"
-              :data="newAssetData"
-              :loading="newAssetLoading"
-              :show-controls="false"
-            />
-            <AssetTypeChart
-              v-else-if="analyticsTab === 'type'"
-              :data="assetTypeData"
-              :loading="assetTypeLoading"
-              :show-controls="false"
-              @click="handleAssetTypeClick"
-            />
-            <OsDistributionChart
-              v-else-if="analyticsTab === 'os'"
-              :data="osDistributionData"
-              :loading="osDistributionLoading"
-              :show-controls="false"
-              @click="handleOsClick"
-            />
-            <GroupAssetChart
-              v-else
-              :data="groupAssetData"
-              :loading="groupAssetLoading"
-              :show-controls="false"
-              @click="handleGroupClick"
-            />
+        <!-- 资产列表预览（按选中类型） -->
+        <div class="aw-recent-assets">
+          <div class="aw-recent-assets__header">
+            <div class="aw-recent-assets__type-strip">
+              <span class="aw-recent-assets__title">类型：</span>
+              <button
+                v-for="item in topAssetTypes"
+                :key="item.code || item.title"
+                class="aw-asset-type-chip"
+                :class="{ 'is-active': selectedAssetTypeCode === (item.code || item.title) }"
+                @click="switchCardType(item.code || item.title)"
+              >
+                <span class="aw-asset-type-chip__name">{{ item.title }}</span>
+                <span class="aw-asset-type-chip__count">{{ formatCount(item.count) }}</span>
+              </button>
+
+            </div>
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openAssetListDrawer(selectedAssetTypeCode)"
+            >
+              查看全部
+            </el-button>
+          </div>
+
+          <transition-group
+            v-if="cardAssets.length"
+            name="aw-stack-slide"
+            tag="div"
+            class="aw-recent-assets__grid"
+          >
+            <article v-for="item in cardAssets" :key="item.id" class="aw-asset-card" @click="handleViewAssetDetail(item)">
+              <div class="aw-asset-card__body">
+                <div class="aw-asset-card__head">
+                  <el-tag size="small" effect="dark" :type="getAssetStatusTagType(item.status)">
+                    {{ getAssetStatusText(item.status) }}
+                  </el-tag>
+                  <button type="button" class="aw-asset-card__edit-btn" title="编辑" @click.stop="handleViewAssetDetail(item)">
+                    <el-icon><Edit /></el-icon>
+                  </button>
+                </div>
+                <strong class="aw-asset-card__name">{{ getAssetPrimaryText(item) }}</strong>
+                <span class="aw-asset-card__meta">{{ getAssetBusinessText(item) }}</span>
+                <span class="aw-asset-card__os" :class="getOsDistroClass(item.os_distro)">{{ getAssetOsText(item) }}</span>
+              </div>
+              <div class="aw-asset-card__footer">
+                <button
+                  type="button"
+                  class="aw-asset-card__chip"
+                  :class="[getConnToneClass(item.CONN_LATEST_STATUS), { 'is-loading': checkingConnIds.includes(item.id) }]"
+                  :disabled="checkingConnIds.includes(item.id)"
+                  @click.stop="handleAssetCheckConn(item)"
+                >
+                  <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
+                  {{ getConnStatusText(item.CONN_LATEST_STATUS) }}
+                </button>
+                <span class="aw-asset-card__chip" :class="item.needReboot == 1 ? 'is-danger' : 'is-success'">
+                  {{ item.needReboot == 1 ? '需重启' : '无需重启' }}
+                </span>
+              </div>
+            </article>
+          </transition-group>
+          <el-empty v-else description="暂无资产数据" :image-size="40" />
+        </div>
+      </section>
+
+      <!-- ── 异常设备面板 ── -->
+      <section class="aw-panel aw-panel--exceptions">
+        <div class="aw-panel__header">
+          <div class="aw-panel__title-group">
+            <h3 class="aw-panel__title">异常设备</h3>
+            <span class="aw-panel__stat-badge">
+              <strong>{{ exceptionDeviceTotal }}</strong>
+              台
+            </span>
+          </div>
+          <div class="aw-panel__header-actions">
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openExceptionDrawer"
+            >
+              查看全部
+            </el-button>
           </div>
         </div>
-      </article>
 
-      <article class="workbench-panel insight-panel">
-        <div class="workbench-panel__header">
-          <div class="workbench-panel__header-main">
-            <h3 class="workbench-panel__title">异常与日志</h3>
-            <span class="workbench-panel__pill">处置视图</span>
+        <div class="aw-exception-list">
+          <div class="aw-exception-list__section">
+            <div
+              v-if="exceptionPreviewItems.length"
+              class="aw-exception-list__body"
+            >
+              <button
+                v-for="item in exceptionPreviewItems"
+                :key="item.key"
+                type="button"
+                class="aw-exception-row"
+                @click="openExceptionDrawer"
+              >
+                <span class="aw-exception-row__ip">{{ item.title }}</span>
+                <span class="aw-exception-row__badge">{{ item.badge }}</span>
+                <span class="aw-exception-row__desc">{{ item.desc }}</span>
+                <span class="aw-exception-row__actions">
+                  <i class="fa fa-plug aw-exception-row__action" title="检查连通性" @click.stop="handleExceptionCheckConn(item.raw)" />
+                  <i class="fa fa-download aw-exception-row__action" title="采集信息" @click.stop="handleExceptionCollectInfo(item.raw)" />
+                </span>
+              </button>
+            </div>
+            <div v-else class="aw-exception-list__empty">暂无异常设备</div>
           </div>
         </div>
+      </section>
 
-        <div class="metric-grid">
-          <div v-for="item in insightMetrics" :key="item.label" class="metric-card">
-            <span class="metric-card__label">{{ item.label }}</span>
-            <strong class="metric-card__value">{{ item.value }}</strong>
-            <span class="metric-card__meta">{{ item.meta }}</span>
+      <!-- 趋势与分布 / 分组与标签面板已隐藏，可通过恢复 aw-panel--analytics / aw-panel--governance 区块重新启用 -->
+
+      <!-- ── 操作记录面板 ── -->
+      <section class="aw-panel aw-panel--logs">
+        <div class="aw-panel__header">
+          <h3 class="aw-panel__title">操作记录</h3>
+          <div class="aw-panel__header-actions">
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openRecentLogsDrawer"
+            >
+              查看全部
+            </el-button>
           </div>
         </div>
+        <transition-group
+          v-if="recentLogs.length"
+          name="aw-stack-slide"
+          tag="div"
+          class="aw-log-list"
+        >
+          <button
+            v-for="item in recentLogs.slice(0, 5)"
+            :key="item.run_id"
+            type="button"
+            class="aw-log-item"
+            @click="handleLogItemClick(item)"
+          >
+            <div class="aw-log-item__main">
+              <strong class="aw-log-item__title">{{ getOperationActionLabel(item.action) }}</strong>
+              <span class="aw-log-item__meta">
+                {{ item.ata_node || '--' }} · {{ item.username || '--' }}
+              </span>
+            </div>
+            <div class="aw-log-item__side">
+              <el-tag
+                size="small"
+                :type="
+                  item.status === 'ERROR'
+                    ? 'danger'
+                    : item.status === 'RUNNING'
+                      ? 'warning'
+                      : 'success'
+                "
+                effect="plain"
+              >
+                {{ getRunLogStatusLabel(item.status) }}
+              </el-tag>
+              <span class="aw-log-item__time">{{ formatDateTimeShort(item.start_time) }}</span>
+            </div>
+          </button>
+        </transition-group>
+        <el-empty v-else description="暂无操作记录" :image-size="48" />
+      </section>
+    </div>
 
-        <div class="insight-stream">
-          <ExceptionDevicePreviewList
-            :items="exceptionPreviewItems"
-            :total="exceptionDeviceTotal"
-            :loading="exceptionPreviewLoading"
-            @select="handleExceptionDeviceClick"
-            @view-all="openExceptionDevicePage"
-          />
-
-          <FailedLogPreviewList
-            :items="failedLogPreviewItems"
-            :total="failedLogTotal"
-            :loading="failedLogLoading"
-            @select="handleFailedLogClick"
-            @view-all="openFailedLogPage"
-          />
-        </div>
-
-        <div class="signal-strip">
-          <div v-for="item in signalItems" :key="item.label" class="signal-item" :class="`signal-item--${item.tone}`">
-            <span class="signal-item__dot"></span>
-            <span class="signal-item__label">{{ item.label }}</span>
-            <strong class="signal-item__value">{{ item.value }}</strong>
-          </div>
-        </div>
-      </article>
-    </section>
+    <!-- ══════════ 弹窗 ══════════ -->
+    <AutoEntryDialog v-model="autoEntryDialogVisible" @saved="handleDialogSaved" />
+    <ImportAssetDialog v-model="importDialogVisible" :tenant-id="currentTenantId" @saved="handleDialogSaved" />
+    <ExportAssetDialog v-model="exportDialogVisible" />
+    <AssetEditDialog
+      v-model="assetDetailDialogVisible"
+      :asset-id="currentAssetId"
+      @saved="loadAllData"
+    />
 
     <OsVersionDialog
       v-model="osVersionVisible"
@@ -166,459 +357,653 @@
       :data="osVersionData"
       :loading="osVersionLoading"
     />
+
+    <ExecuteResultDialog
+      v-if="runResultDialogVisible"
+      v-model:visible="runResultDialogVisible"
+      :run-id="runResultMeta.runId"
+      :job-title="runResultMeta.jobTitle"
+    />
+
+    <!-- ══════════ 抽屉面板 ══════════ -->
+
+    <!-- 资产列表抽屉 -->
+    <el-drawer
+      v-model="assetListDrawer.visible"
+      :title="assetListDrawerTitle"
+      size="75%"
+      class="aw-drawer aw-drawer--asset-list"
+    >
+      <div class="aw-drawer__toolbar">
+        <el-input
+          v-model="assetListDrawer.keyword"
+          placeholder="搜索 IP / 主机名"
+          size="small"
+          clearable
+          @keyup.enter="openAssetListDrawer(assetListDrawer.filterType, true)"
+          @clear="openAssetListDrawer(assetListDrawer.filterType, true)"
+        >
+          <template #prefix><i class="fa fa-search" /></template>
+        </el-input>
+      </div>
+      <div v-loading="assetListDrawer.loading" class="aw-drawer__body">
+        <template v-if="!assetListDrawer.loading">
+          <div v-if="assetListDrawer.records.length" class="aw-drawer-card-grid">
+            <article
+              v-for="item in assetListDrawer.records"
+              :key="item.id"
+              class="aw-asset-card"
+              @click="handleViewAssetDetail(item)"
+            >
+              <div class="aw-asset-card__body">
+                <div class="aw-asset-card__head">
+                  <el-tag size="small" effect="dark" :type="getAssetStatusTagType(item.status)">
+                    {{ getAssetStatusText(item.status) }}
+                  </el-tag>
+                  <button type="button" class="aw-asset-card__edit-btn" title="编辑" @click.stop="handleViewAssetDetail(item)">
+                    <el-icon><Edit /></el-icon>
+                  </button>
+                </div>
+                <strong class="aw-asset-card__name">{{ getAssetPrimaryText(item) }}</strong>
+                <span class="aw-asset-card__meta">{{ getAssetBusinessText(item) }}</span>
+                <span class="aw-asset-card__os" :class="getOsDistroClass(item.os_distro)">{{ getAssetOsText(item) }}</span>
+              </div>
+              <div class="aw-asset-card__footer">
+                <button
+                  type="button"
+                  class="aw-asset-card__chip"
+                  :class="[getConnToneClass(item.CONN_LATEST_STATUS), { 'is-loading': checkingConnIds.includes(item.id) }]"
+                  :disabled="checkingConnIds.includes(item.id)"
+                  @click.stop="handleAssetCheckConn(item)"
+                >
+                  <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
+                  {{ getConnStatusText(item.CONN_LATEST_STATUS) }}
+                </button>
+                <span class="aw-asset-card__chip" :class="item.needReboot == 1 ? 'is-danger' : 'is-success'">
+                  {{ item.needReboot == 1 ? '需重启' : '无需重启' }}
+                </span>
+              </div>
+            </article>
+          </div>
+          <el-empty v-else description="暂无资产" :image-size="60" />
+        </template>
+        <div v-if="assetListDrawer.total > assetListDrawer.pageSize" class="aw-drawer__pagination">
+          <el-pagination
+            v-model:current-page="assetListDrawer.page"
+            :page-size="assetListDrawer.pageSize"
+            :total="assetListDrawer.total"
+            layout="prev, pager, next"
+            background
+            small
+            @current-change="handleAssetListPageChange"
+          />
+        </div>
+      </div>
+    </el-drawer>
+
+    <el-drawer v-model="exceptionDrawer.visible" size="520px" class="aw-drawer">
+      <template #header>
+        <div class="aw-drawer-header">
+          <span class="aw-drawer-header__title">异常设备</span>
+          <div class="aw-drawer-header__actions">
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              :loading="exceptionDrawer.actionLoading"
+              @click="handleExceptionBulkCheckConn"
+            >
+              <i class="fa fa-plug" /> 全设备连通性检查
+            </el-button>
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              :loading="exceptionDrawer.actionLoading"
+              @click="handleExceptionBulkCollect"
+            >
+              <i class="fa fa-download" /> 全设备采集信息
+            </el-button>
+          </div>
+        </div>
+      </template>
+      <div v-loading="exceptionDrawer.loading" class="aw-drawer__body">
+        <template v-if="!exceptionDrawer.loading">
+          <div v-if="exceptionDrawer.records.length" class="aw-drawer-list">
+            <button
+              v-for="item in exceptionDrawer.records"
+              :key="item.key"
+              type="button"
+              class="aw-drawer-row"
+              @click="handleExceptionDeviceRowClick(item.raw || item)"
+            >
+              <strong class="aw-drawer-row__title">{{ item.title }}</strong>
+              <span class="aw-drawer-row__badge">{{ item.badge }}</span>
+              <span class="aw-drawer-row__desc">{{ item.desc }}</span>
+              <span class="aw-drawer-row__meta">{{ item.meta }}</span>
+              <span class="aw-drawer-row__actions">
+                <i class="fa fa-plug aw-exception-row__action" title="检查连通性" @click.stop="handleExceptionCheckConn(item.raw || item)" />
+                <i class="fa fa-download aw-exception-row__action" title="采集信息" @click.stop="handleExceptionCollectInfo(item.raw || item)" />
+              </span>
+            </button>
+          </div>
+          <el-empty v-else description="暂无异常设备" :image-size="60" />
+        </template>
+        <div v-if="exceptionDrawer.total > exceptionDrawer.pageSize" class="aw-drawer__pagination">
+          <el-pagination
+            v-model:current-page="exceptionDrawer.page"
+            :page-size="exceptionDrawer.pageSize"
+            :total="exceptionDrawer.total"
+            layout="prev, pager, next"
+            background
+            small
+            @current-change="handleExceptionPageChange"
+          />
+        </div>
+      </div>
+    </el-drawer>
+
+    <el-drawer v-model="failedLogDrawer.visible" title="失败日志" size="520px" class="aw-drawer">
+      <div v-loading="failedLogDrawer.loading" class="aw-drawer__body">
+        <template v-if="!failedLogDrawer.loading">
+          <div v-if="failedLogDrawer.records.length" class="aw-drawer-list">
+            <button
+              v-for="item in failedLogDrawer.records"
+              :key="item.key"
+              type="button"
+              class="aw-drawer-row"
+              @click="handleLogItemClick(item.raw || item)"
+            >
+              <strong class="aw-drawer-row__title">{{ item.title }}</strong>
+              <span class="aw-drawer-row__badge">{{ item.badge }}</span>
+              <span class="aw-drawer-row__desc">{{ item.desc }}</span>
+              <span class="aw-drawer-row__meta">{{ item.meta }}</span>
+            </button>
+          </div>
+          <el-empty v-else description="暂无失败日志" :image-size="60" />
+        </template>
+      </div>
+    </el-drawer>
+
+    <el-drawer
+      v-model="recentLogsDrawer.visible"
+      title="近7天操作记录"
+      size="560px"
+      class="aw-drawer"
+    >
+      <div v-loading="recentLogsDrawer.loading" class="aw-drawer__body">
+        <template v-if="!recentLogsDrawer.loading">
+          <div v-if="recentLogsDrawer.records.length" class="aw-drawer-list">
+            <button
+              v-for="item in recentLogsDrawer.records"
+              :key="item.run_id"
+              type="button"
+              class="aw-drawer-row"
+              @click="handleLogItemClick(item)"
+            >
+              <strong class="aw-drawer-row__title">
+                {{ getOperationActionLabel(item.action) }}
+              </strong>
+              <el-tag
+                size="small"
+                :type="
+                  item.status === 'ERROR'
+                    ? 'danger'
+                    : item.status === 'RUNNING'
+                      ? 'warning'
+                      : 'success'
+                "
+                effect="plain"
+              >
+                {{ getRunLogStatusLabel(item.status) }}
+              </el-tag>
+              <span class="aw-drawer-row__meta">
+                {{ item.ata_node || '--' }} · {{ item.username || '--' }}
+              </span>
+              <span class="aw-drawer-row__time">{{ formatDateTime(item.start_time) }}</span>
+            </button>
+          </div>
+          <div v-else class="aw-drawer-empty">
+            <el-empty description="暂无操作记录" :image-size="60" />
+          </div>
+        </template>
+        <div v-if="recentLogsDrawer.total > recentLogsDrawer.pageSize" class="aw-drawer__pagination">
+          <el-pagination
+            v-model:current-page="recentLogsDrawer.page"
+            :page-size="recentLogsDrawer.pageSize"
+            :total="recentLogsDrawer.total"
+            layout="prev, pager, next"
+            background
+            small
+            @current-change="handleRecentLogsPageChange"
+          />
+        </div>
+      </div>
+    </el-drawer>
+
+    <el-drawer
+      v-model="governanceDrawer.visible"
+      title="分组与标签概览"
+      size="520px"
+      class="aw-drawer"
+    >
+      <div v-loading="governanceDrawer.loading" class="aw-drawer__body">
+        <template v-if="!governanceDrawer.loading">
+          <div class="aw-drawer-section">
+            <div class="aw-drawer-section__header">
+              <h4 class="aw-drawer-section__title">分组 ({{ groupRows.length }})</h4>
+              <el-button class="aw-inline-action" link type="primary" size="small" @click="addGroupDialogVisible = true">
+                <i class="fa fa-plus" /> 新增
+              </el-button>
+            </div>
+            <div class="aw-drawer-list">
+              <button
+                v-for="item in groupRows.slice(0, 20)"
+                :key="item.id"
+                class="aw-drawer-row aw-drawer-row--slim"
+                @click="handleEditGroup(item)"
+              >
+                <i class="fa fa-folder" style="color: #e6a23c; margin-right: 8px" />
+                <span class="aw-drawer-row__name">{{ item.path }}</span>
+                <span class="aw-drawer-row__count">
+                  {{ formatCount(item.total || item.count) }}
+                </span>
+                <el-button text type="primary" size="small" class="aw-drawer-row__edit-btn" @click.stop="handleEditGroup(item)">
+                  <i class="fa fa-pen" />
+                </el-button>
+              </button>
+            </div>
+          </div>
+          <div class="aw-drawer-section">
+            <div class="aw-drawer-section__header">
+              <h4 class="aw-drawer-section__title">标签 ({{ tagRows.length }})</h4>
+              <el-button class="aw-inline-action" link type="primary" size="small" @click="addTagDialogVisible = true">
+                <i class="fa fa-plus" /> 新增
+              </el-button>
+            </div>
+            <div class="aw-drawer-tags">
+              <button
+                v-for="item in tagRows.slice(0, 30)"
+                :key="item.id"
+                class="aw-drawer-tag"
+                @click="handleEditTag(item)"
+              >
+                <i class="fa fa-tag" style="margin-right: 4px" />
+                {{ item.name }}
+                <span class="aw-drawer-tag__count">
+                  {{ formatCount(item.total || item.count) }}
+                </span>
+                <el-button text type="primary" size="small" class="aw-drawer-tag__edit-btn" @click.stop="handleEditTag(item)">
+                  <i class="fa fa-pen" />
+                </el-button>
+              </button>
+            </div>
+          </div>
+          <div v-if="governanceStats.permissionTeamCount" class="aw-drawer-section">
+            <h4 class="aw-drawer-section__title">权限概览</h4>
+            <p class="aw-drawer-section__desc">
+              {{ governanceStats.permissionResourceCount }} 项资源，{{
+                governanceStats.permissionTeamCount
+              }}
+              个团队
+            </p>
+          </div>
+        </template>
+      </div>
+    </el-drawer>
+
+    <DataAddGroupDialog v-model="addGroupDialogVisible" @saved="handleGovernanceSaved" />
+    <DataAddTagDialog v-model="addTagDialogVisible" @saved="handleGovernanceSaved" />
+    <DataEditGroupDialog v-model="editGroupDialogVisible" :group-data="currentGroupItem" @saved="handleGovernanceSaved" />
+    <DataEditTagDialog v-model="editTagDialogVisible" :tag-data="currentTagItem" @saved="handleGovernanceSaved" />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { CircleCheck, Connection, Cpu, Monitor, Refresh } from '@element-plus/icons-vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { apiService } from '@/core/api'
+import { pollJobStatus } from '@/composables/useJobPolling'
 import { translateI18nKey } from '@/utils/i18n'
-import { exceptionApi, operationLogApi, overviewApi } from '../api'
-import AssetTypeChart from '../components/charts/AssetTypeChart.vue'
-import OsDistributionChart from '../components/charts/OsDistributionChart.vue'
-import AssetTrendChart from '../components/charts/AssetTrendChart.vue'
-import GroupAssetChart from '../components/charts/GroupAssetChart.vue'
-import ExceptionDevicePreviewList from '../components/overview/ExceptionDevicePreviewList.vue'
-import FailedLogPreviewList from '../components/overview/FailedLogPreviewList.vue'
+import { assetApi, dataManageApi, exceptionApi, operationLogApi } from '../api'
+import { useAssetOverviewWorkbench } from '../utils/useAssetOverviewWorkbench'
+import { useAssetWorkbenchDrawers } from '../composables/useAssetWorkbenchDrawers'
 import OsVersionDialog from '../components/overview/OsVersionDialog.vue'
+import DataAddGroupDialog from '../components/data/DataAddGroupDialog.vue'
+import DataAddTagDialog from '../components/data/DataAddTagDialog.vue'
+import DataEditGroupDialog from '../components/data/DataEditGroupDialog.vue'
+import DataEditTagDialog from '../components/data/DataEditTagDialog.vue'
+import AssetEditDialog from '../components/asset-info/AssetEditDialog.vue'
+import AutoEntryDialog from '../components/asset-info/AutoEntryDialog.vue'
+import ImportAssetDialog from '../components/asset-info/ImportAssetDialog.vue'
+import ExportAssetDialog from '../components/asset-info/ExportAssetDialog.vue'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { Edit } from '@element-plus/icons-vue'
+import WbFlipNumber from '@/modules/automation/components/workbench/WbFlipNumber.vue'
+import { getRunLogStatusLabel } from '@/modules/automation/constants/runLogStatus'
 
-const router = useRouter()
+// ── 运行结果弹窗 ──
+const runResultDialogVisible = ref(false)
+const runResultMeta = ref({ runId: '', jobTitle: '' })
 
-const analyticsTabs = [
-  { key: 'trend', label: '新增趋势' },
-  { key: 'type', label: '资产类型' },
-  { key: 'os', label: '系统分布' },
-  { key: 'group', label: '分组分布' }
-]
+// ── 资产详情弹窗 ──
+const assetDetailDialogVisible = ref(false)
+const currentAssetId = ref('')
 
-const analyticsTab = ref('trend')
-const activeAnalyticsLabel = computed(
-  () => analyticsTabs.find(item => item.key === analyticsTab.value)?.label || '分析视图'
-)
+// ── 概览数据 composable ──
+const {
+  assetTypeData,
+  groupAssetData,
+  groupRows,
+  tagRows,
+  recentLogs,
+  recentOperationTotal,
+  latestTrendPoint,
+  totalAssets,
+  assetTypeCount,
+  connectionStats,
+  governanceStats,
+  refreshAll
+} = useAssetOverviewWorkbench()
 
-const assetTypeData = ref([])
-const assetTypeLoading = ref(false)
+// ── 抽屉 composable ──
+const {
+  assetListDrawer,
+  exceptionDrawer,
+  failedLogDrawer,
+  recentLogsDrawer,
+  governanceDrawer,
+  assetListDrawerTitle,
+  openAssetListDrawer,
+  handleAssetListPageChange,
+  handleViewAssetDetail,
+  openExceptionDrawer,
+  handleExceptionPageChange,
+  openFailedLogDrawer,
+  handleFailedLogClick,
+  openRecentLogsDrawer,
+  handleRecentLogsPageChange,
+  handleLogItemClick,
+  openGovernanceDrawer
+} = useAssetWorkbenchDrawers({
+  assetDetailDialogVisible,
+  currentAssetId,
+  runResultDialogVisible,
+  runResultMeta,
+  getOperationActionLabel
+})
 
-const osDistributionData = ref([])
-const osDistributionLoading = ref(false)
+// ── 本地状态 ──
+const osVersionVisible = ref(false)
+const osVersionLoading = ref(false)
+const osVersionData = ref([])
+const osVersionTitle = ref('')
+const refreshedAt = ref(null)
+const tagTotal = ref(0)
 
-const newAssetData = ref([])
-const newAssetLoading = ref(false)
-
-const groupAssetData = ref([])
-const groupAssetLoading = ref(false)
-
-const connectionData = ref([])
-const connectionLoading = ref(false)
+// 异常与失败日志预览
 const exceptionPreviewRows = ref([])
 const exceptionPreviewLoading = ref(false)
 const exceptionDeviceTotal = ref(0)
 const failedLogRows = ref([])
 const failedLogLoading = ref(false)
 const failedLogTotal = ref(0)
-const refreshedAt = ref(null)
 
-const osVersionVisible = ref(false)
-const osVersionLoading = ref(false)
-const osVersionData = ref([])
-const osVersionTitle = ref('')
+// 弹窗
+const autoEntryDialogVisible = ref(false)
+const importDialogVisible = ref(false)
+const exportDialogVisible = ref(false)
+const currentTenantId = ref('')
+const addGroupDialogVisible = ref(false)
+const addTagDialogVisible = ref(false)
+const editGroupDialogVisible = ref(false)
+const editTagDialogVisible = ref(false)
+const currentGroupItem = ref(null)
+const currentTagItem = ref(null)
 
-const totalAssets = computed(() => sumField(assetTypeData.value, 'count'))
-const assetTypeCount = computed(() => assetTypeData.value.length)
-const groupTotal = computed(() => sumField(sortedGroups.value, 'count'))
-const osTotal = computed(() => sumField(osDistributionData.value, 'count'))
+function handleEditGroup(item) {
+  currentGroupItem.value = item
+  editGroupDialogVisible.value = true
+}
+function handleEditTag(item) {
+  currentTagItem.value = item
+  editTagDialogVisible.value = true
+}
+function handleGovernanceSaved() {
+  refreshAll()
+}
+
+// 资产操作卡片 —— 按类型预览
+const selectedAssetTypeCode = ref('')
+const cardAssets = ref([])
+const cardAssetsLoading = ref(false)
+const checkingConnIds = ref([])
+const viewportWidth = ref(window.innerWidth || document.documentElement?.clientWidth || 1920)
+const cardColumnCount = computed(() => {
+  const w = viewportWidth.value
+  if (w <= 720) return 2
+  if (w <= 960) return 3
+  if (w <= 1280) return 4
+  if (w <= 1680) return 5
+  return 6
+})
+const cardPreviewLimit = computed(() => cardColumnCount.value * 2)
+
+function syncViewportWidth() {
+  viewportWidth.value = window.innerWidth || document.documentElement?.clientWidth || 1920
+}
+
+// ── 工具函数 ──
+function toNumber(v) {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : 0
+}
+function formatCount(v) {
+  return toNumber(v).toLocaleString('zh-CN')
+}
+function formatDateTime(v) {
+  if (!v) return '--'
+  const d = new Date(v)
+  if (Number.isNaN(d.getTime())) return '--'
+  return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+const formatDateTimeShort = formatDateTime
+
+function formatConnRate(v) {
+  if (v === null || v === undefined || v === '') return '--'
+  return `${toNumber(v)}%`
+}
+function getConnStatusText(s) {
+  if (s === '1' || s === 1) return '已联通'
+  if (s === '0' || s === 0) return '未联通'
+  return '未知'
+}
+function getConnToneClass(s) {
+  if (s == 1) return 'is-success'
+  if (s == 0) return 'is-danger'
+  return 'is-muted'
+}
+function getAssetPrimaryText(item) {
+  return item?.IP || item?.hostname || '-'
+}
+function getAssetBusinessText(item) {
+  return item?.业务系统 || item?.system_name || item?.ci_name || item?.name || '未命名资产'
+}
+function getAssetOsText(item) {
+  const parts = [item?.os_distro, item?.os_version].filter(Boolean)
+  return parts.length ? parts.join(' · ') : '未识别系统'
+}
+function getAssetStatusText(status) {
+  return status === 1 || status === '1' ? '在线' : '离线'
+}
+function getAssetStatusTagType(status) {
+  return status === 1 || status === '1' ? 'success' : 'danger'
+}
+function getOsDistroClass(distro) {
+  const value = String(distro || '').toLowerCase()
+  if (value.includes('ubuntu') || value.includes('debian')) return 'is-debian'
+  if (value.includes('centos') || value.includes('redhat') || value.includes('red hat') || value.includes('rhel')) return 'is-redhat'
+  if (value.includes('oracle')) return 'is-oracle'
+  if (value.includes('suse')) return 'is-suse'
+  if (value.includes('windows')) return 'is-windows'
+  return 'is-unknown'
+}
+function getOperationActionLabel(a) {
+  if (!a) return '未知操作'
+  return translateI18nKey(a)
+}
+function formatOperationMessage(m) {
+  if (!m) return '无失败详情'
+  try {
+    const p = typeof m === 'string' ? JSON.parse(m) : m
+    return p?.exception?.message || p?.message || p?.msg_id || JSON.stringify(p)
+  } catch {
+    return String(m)
+  }
+}
+function getTrendValue(r) {
+  return toNumber(r?.total ?? r?.count)
+}
+
+// ── 计算属性 ──
 const groupCount = computed(() => sortedGroups.value.length)
-const failedLogLatest = computed(() => failedLogRows.value[0] || null)
-const overviewRefreshing = computed(
-  () =>
-    assetTypeLoading.value ||
-    osDistributionLoading.value ||
-    newAssetLoading.value ||
-    groupAssetLoading.value ||
-    connectionLoading.value ||
-    exceptionPreviewLoading.value ||
-    failedLogLoading.value
-)
 
 const sortedAssetTypes = computed(() =>
   [...assetTypeData.value]
-    .map(item => ({
-      ...item,
-      count: toNumber(item?.count)
-    }))
-    .sort((first, second) => second.count - first.count)
+    .map(i => ({ ...i, count: toNumber(i?.count) }))
+    .sort((a, b) => b.count - a.count)
 )
-
-const sortedOsDistribution = computed(() =>
-  [...osDistributionData.value]
-    .map(item => ({
-      ...item,
-      count: toNumber(item?.count)
-    }))
-    .sort((first, second) => second.count - first.count)
-)
-
 const sortedGroups = computed(() =>
   [...groupAssetData.value]
-    .map(item => ({
-      name: item?.groupName || item?.name || item?.path || '未命名分组',
-      count: toNumber(item?.count ?? item?.total)
+    .map(i => ({
+      name: i?.groupName || i?.name || i?.path || '未命名分组',
+      count: toNumber(i?.count ?? i?.total)
     }))
-    .sort((first, second) => second.count - first.count)
+    .sort((a, b) => b.count - a.count)
 )
-
-const topAssetType = computed(() => sortedAssetTypes.value[0] || null)
-const topOs = computed(() => sortedOsDistribution.value[0] || null)
-const topGroup = computed(() => sortedGroups.value[0] || null)
-const latestTrendPoint = computed(() => newAssetData.value[newAssetData.value.length - 1] || null)
-const peakTrendPoint = computed(() => findTopRecord(newAssetData.value, item => item?.total ?? item?.count))
-
-const connectionStats = computed(() => {
-  const statsMap = connectionData.value.reduce((result, item) => {
-    if (item?.condi) {
-      result[item.condi] = toNumber(item?.c ?? item?.count)
-    }
-    return result
-  }, {})
-
-  const successCount = statsMap.recently_ok || 0
-  const failureCount = statsMap.recently || 0
-  const totalConnection = successCount + failureCount
-
-  return {
-    successCount,
-    failureCount,
-    anomalyCount: statsMap.oplus_all || failureCount,
-    todayCount: statsMap.today || 0,
-    lowCount: statsMap.low || 0,
-    totalConnection,
-    successRate: totalConnection ? Math.round((successCount / totalConnection) * 100) : 0
-  }
-})
-
-const refreshedAtText = computed(() => {
-  if (!refreshedAt.value) return '--'
-  const hour = String(refreshedAt.value.getHours()).padStart(2, '0')
-  const minute = String(refreshedAt.value.getMinutes()).padStart(2, '0')
-  return `${hour}:${minute}`
-})
-
-const heroChips = computed(() => [
-  {
-    label: '资产总量',
-    value: `${formatCount(totalAssets.value)} 台`
-  },
-  {
-    label: '结构',
-    value: `${formatCount(assetTypeCount.value)} 类 / ${formatCount(groupCount.value)} 组`
-  },
-  {
-    label: '异常设备',
-    value: `${formatCount(exceptionDeviceTotal.value)} 台`
-  }
-])
-
-const summaryCards = computed(() => [
-  {
-    key: 'totalAssets',
-    label: '资产盘点',
-    value: `${formatCount(totalAssets.value)} 台`,
-    meta: assetTypeCount.value
-      ? `当前已覆盖 ${formatCount(assetTypeCount.value)} 类资产`
-      : '等待资产类型统计返回',
-    actionText: totalAssets.value > 0 ? '查看资产列表' : '暂无可查看数据',
-    valueMode: 'metric',
-    tone: 'blue',
-    icon: Monitor,
-    badge: '总览',
-    clickable: totalAssets.value > 0
-  },
-  {
-    key: 'assetType',
-    label: '类型焦点',
-    value: topAssetType.value?.title || '暂无数据',
-    meta: topAssetType.value
-      ? `${formatCount(topAssetType.value.count)} 台 · 占比 ${formatShare(topAssetType.value.count, totalAssets.value)}`
-      : '等待资产类型聚合结果',
-    actionText: topAssetType.value?.code ? '查看该类型资产' : '暂无可跳转对象',
-    valueMode: 'text',
-    tone: 'cyan',
-    icon: Connection,
-    badge: '类型',
-    clickable: Boolean(topAssetType.value?.code)
-  },
-  {
-    key: 'os',
-    label: '系统热点',
-    value: topOs.value?.os_distro || '暂无数据',
-    meta: topOs.value
-      ? `${formatCount(topOs.value.count)} 台 · 占比 ${formatShare(topOs.value.count, osTotal.value)}`
-      : '等待操作系统分布结果',
-    actionText: topOs.value?.os_distro ? '查看版本分布' : '暂无可查看版本',
-    valueMode: 'text',
-    tone: 'green',
-    icon: Cpu,
-    badge: '系统',
-    clickable: Boolean(topOs.value?.os_distro)
-  },
-  {
-    key: 'group',
-    label: '分组承载',
-    value: topGroup.value?.name || '暂无数据',
-    meta: topGroup.value
-      ? `${formatCount(topGroup.value.count)} 台 · 覆盖 ${formatShare(topGroup.value.count, groupTotal.value)}`
-      : '等待分组聚合结果',
-    actionText: topGroup.value?.name ? '查看该分组资产' : '暂无可跳转对象',
-    valueMode: 'text',
-    tone: 'gold',
-    icon: CircleCheck,
-    badge: '分组',
-    clickable: Boolean(topGroup.value?.name)
-  }
-])
-
-const insightMetrics = computed(() => [
-  {
-    label: '异常设备',
-    value: `${formatCount(exceptionDeviceTotal.value)} 台`,
-    meta: exceptionDeviceTotal.value ? '最近一次连通失败设备' : '当前无异常设备样本'
-  },
-  {
-    label: '失败日志',
-    value: `${formatCount(failedLogTotal.value)} 条`,
-    meta: failedLogLatest.value ? `${formatDateTimeShort(failedLogLatest.value.start_time)} 最近失败` : '近7天无失败日志'
-  },
-  {
-    label: '低频连接',
-    value: `${formatCount(connectionStats.value.lowCount)} 台`,
-    meta: connectionStats.value.lowCount ? '连通率小于 50%' : '当前无低频连接主机'
-  },
-  {
-    label: '连通率',
-    value: connectionStats.value.totalConnection ? `${connectionStats.value.successRate}%` : '暂无数据',
-    meta: connectionStats.value.totalConnection
-      ? `${formatCount(connectionStats.value.successCount)} 正常 · ${formatCount(connectionStats.value.failureCount)} 异常`
-      : '等待连通性统计结果'
-  }
-])
+const topAssetTypes = computed(() => sortedAssetTypes.value.slice(0, 6))
 
 const exceptionPreviewItems = computed(() =>
-  exceptionPreviewRows.value.map(row => ({
-    key: row.IP || row.ci_name || `${row.updated_at || ''}-${row.CONN_RATE || ''}`,
-    title: row.IP || '未识别 IP',
-    badge: formatConnRate(row.CONN_RATE),
-    desc: row.ci_name || '未命名资产',
-    meta: `${getConnStatusText(row.CONN_LATEST_STATUS)} · ${formatDateTimeShort(row.updated_at)}`,
-    raw: row
+  exceptionPreviewRows.value.map(r => ({
+    key: r.IP || r.ci_name || `${r.updated_at || ''}-${r.CONN_RATE || ''}`,
+    title: r.IP || '未识别 IP',
+    badge: formatConnRate(r.CONN_RATE),
+    desc: r.ci_name || '未命名资产',
+    meta: `${getConnStatusText(r.CONN_LATEST_STATUS)} · ${formatDateTimeShort(r.updated_at)}`,
+    raw: r
   }))
 )
 
 const failedLogPreviewItems = computed(() =>
-  failedLogRows.value.map(row => ({
-    key: row.run_id || `${row.start_time || ''}-${row.action || ''}`,
-    title: getOperationActionLabel(row.action),
-    badge: formatDateTimeShort(row.start_time),
-    desc: formatOperationMessage(row.message),
-    meta: `${row.ata_node || '未标记执行节点'} · ${row.username || '未知用户'}`,
-    raw: row
+  failedLogRows.value.map(r => ({
+    key: r.run_id || `${r.start_time || ''}-${r.action || ''}`,
+    title: getOperationActionLabel(r.action),
+    badge: formatDateTimeShort(r.start_time),
+    desc: formatOperationMessage(r.message),
+    meta: `${r.ata_node || '--'} · ${r.username || '--'}`,
+    raw: r
   }))
 )
 
-const signalItems = computed(() => [
-  {
-    label: '最近新增',
-    value: latestTrendPoint.value
-      ? `${formatShortDate(latestTrendPoint.value.times)} · ${formatCount(getTrendValue(latestTrendPoint.value))} 台`
-      : '--',
-    tone: 'trend'
-  },
-  {
-    label: '新增峰值',
-    value: peakTrendPoint.value
-      ? `${formatShortDate(peakTrendPoint.value.times)} · ${formatCount(getTrendValue(peakTrendPoint.value))} 台`
-      : '--',
-    tone: 'neutral'
-  }
-])
-
-function toNumber(value) {
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : 0
+// ── 连通性检查 ──
+function removeCheckingId(id) {
+  const idx = checkingConnIds.value.indexOf(id)
+  if (idx > -1) checkingConnIds.value.splice(idx, 1)
 }
 
-function toTimestamp(value) {
-  if (!value) return 0
-  const timestamp = new Date(value).getTime()
-  return Number.isFinite(timestamp) ? timestamp : 0
-}
-
-function getTrendValue(record) {
-  return toNumber(record?.total ?? record?.count)
-}
-
-function sumField(list, field) {
-  return list.reduce((sum, item) => sum + toNumber(item?.[field]), 0)
-}
-
-function findTopRecord(list, resolver) {
-  if (!list.length) return null
-
-  return [...list].sort((first, second) => toNumber(resolver(second)) - toNumber(resolver(first)))[0]
-}
-
-function formatCount(value) {
-  return toNumber(value).toLocaleString('zh-CN')
-}
-
-function formatShare(part, total) {
-  const totalValue = toNumber(total)
-  if (!totalValue) return '0%'
-  return `${Math.round((toNumber(part) / totalValue) * 100)}%`
-}
-
-function formatShortDate(value) {
-  if (!value) return '--'
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${month}-${day}`
-}
-
-function formatDateTimeShort(value) {
-  if (!value) return '--'
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '--'
-
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-  return `${month}-${day} ${hour}:${minute}`
-}
-
-function formatConnRate(value) {
-  if (value === null || value === undefined || value === '') return '--'
-  const rate = toNumber(value)
-  return `${rate}%`
-}
-
-function getConnStatusText(status) {
-  if (status === null || status === 'null' || status === undefined) return '未测试'
-  if (status === 0 || status === '0' || status === '0.0') return '最近失败'
-  if (status === 1 || status === '1') return '最近成功'
-  return '状态未知'
-}
-
-function getOperationActionLabel(action) {
-  if (!action) return '未知操作'
-  return translateI18nKey(action)
-}
-
-function formatOperationMessage(message) {
-  if (!message) return '无失败详情'
-
+async function handleAssetCheckConn(item) {
+  const ip = item.IP || item.ip
   try {
-    const payload = typeof message === 'string' ? JSON.parse(message) : message
-    if (payload?.exception?.message) return payload.exception.message
-    if (payload?.message) return payload.message
-    if (payload?.msg_id) return payload.msg_id
-    return JSON.stringify(payload)
+    await ElMessageBox.confirm(`是否重新检查主机${ip}的连通性？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
   } catch {
-    return String(message)
+    return
   }
-}
-
-async function loadAssetType() {
-  assetTypeLoading.value = true
+  checkingConnIds.value.push(item.id)
   try {
-    const response = await overviewApi.getAssetTypeCount()
-    const data = response?.data || response || {}
-    assetTypeData.value = data.records || []
-  } catch (error) {
-    console.error('加载资产类型统计失败:', error)
-  } finally {
-    assetTypeLoading.value = false
-  }
-}
-
-async function loadOsDistribution() {
-  osDistributionLoading.value = true
-  try {
-    const response = await overviewApi.getOsDistribution()
-    const data = response?.data || response || {}
-    osDistributionData.value = data.records || []
-  } catch (error) {
-    console.error('加载操作系统分布失败:', error)
-  } finally {
-    osDistributionLoading.value = false
-  }
-}
-
-async function loadNewAsset() {
-  newAssetLoading.value = true
-  try {
-    const response = await overviewApi.getNewAssetCount()
-    const data = response?.data || response || {}
-    newAssetData.value = [...(data.records || [])].sort(
-      (first, second) => toTimestamp(first.times) - toTimestamp(second.times)
+    const host = {
+      key: item.id || item.key,
+      value: item.IP || item.ip,
+      assetType: selectedAssetTypeCode.value || item.ciType || 'linux'
+    }
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/M1x855/run?cacheBuster=${Date.now()}`,
+      { params: { hosts: [host] } }
     )
+    const result = Array.isArray(data) ? data[0] : data
+    if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
+      ElMessage.success('检查连通性任务已发起')
+      pollJobStatus(result.runId, {
+        interval: 5000,
+        successMessage: '连通性检查完成',
+        errorMessage: '连通性检查失败',
+        onSuccess: () => { removeCheckingId(item.id); switchCardType(selectedAssetTypeCode.value) },
+        onError: () => { removeCheckingId(item.id) },
+        onComplete: () => { removeCheckingId(item.id) }
+      })
+    } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
+      ElMessage.success('连通性检查完成')
+      removeCheckingId(item.id)
+      switchCardType(selectedAssetTypeCode.value)
+    } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
+      removeCheckingId(item.id)
+      ElMessage.error(result?.error || '连通性检查失败')
+    } else {
+      ElMessage.success('检查连通性任务已启动')
+      removeCheckingId(item.id)
+    }
   } catch (error) {
-    console.error('加载资产新增统计失败:', error)
-  } finally {
-    newAssetLoading.value = false
+    removeCheckingId(item.id)
+    ElMessage.error('连通性检查失败: ' + (error.response?.data?.message || error.message))
   }
 }
 
-async function loadGroupAsset() {
-  groupAssetLoading.value = true
+// ── 卡片类型切换 ──
+async function switchCardType(ciType) {
+  selectedAssetTypeCode.value = ciType || ''
+  cardAssetsLoading.value = true
   try {
-    const response = await overviewApi.getGroupAssetCount()
-    const data = response?.data || response || {}
-    groupAssetData.value = data.records || []
-  } catch (error) {
-    console.error('加载分组资产分布失败:', error)
+    const res = await assetApi.getAssetList(
+      {
+        assetType: ciType || '',
+        permission: 'r',
+        status: 'all',
+        CONN_LATEST_STATUS: '',
+        hostKeys: '/'
+      },
+      { page: 1, size: cardPreviewLimit.value, filter: '' }
+    )
+    cardAssets.value = (res?.records || []).slice(0, cardPreviewLimit.value)
+  } catch {
+    cardAssets.value = []
   } finally {
-    groupAssetLoading.value = false
+    cardAssetsLoading.value = false
   }
 }
 
-async function loadConnection() {
-  connectionLoading.value = true
-  try {
-    const response = await overviewApi.getConnectionCount()
-    const data = response?.data || response || {}
-    connectionData.value = data.records || []
-  } catch (error) {
-    console.error('加载连通性统计失败:', error)
-  } finally {
-    connectionLoading.value = false
+function handleExceptionDeviceRowClick(row) {
+  if (row?.IP || row?.id) {
+    currentAssetId.value = row.id || ''
+    assetDetailDialogVisible.value = true
   }
 }
 
+// ── 数据加载 ──
 async function loadExceptionPreview() {
   exceptionPreviewLoading.value = true
   try {
-    const response = await exceptionApi.getExceptionDevices(
-      {
-        cit: 'oplus_all',
-        conditions: 'recently',
-        param: 'rwx'
-      },
-      {
-        page: 1,
-        size: 3
-      }
+    const r = await exceptionApi.getExceptionDevices(
+      { cit: 'oplus_all', conditions: 'recently', param: 'rwx' },
+      { page: 1, size: 6 }
     )
-    exceptionPreviewRows.value = response?.records || []
-    exceptionDeviceTotal.value = response?.total || exceptionPreviewRows.value.length
-  } catch (error) {
-    console.error('加载异常设备预览失败:', error)
+    exceptionPreviewRows.value = r?.records || []
+    exceptionDeviceTotal.value = r?.total || exceptionPreviewRows.value.length
+  } catch {
     exceptionPreviewRows.value = []
     exceptionDeviceTotal.value = 0
   } finally {
@@ -626,25 +1011,138 @@ async function loadExceptionPreview() {
   }
 }
 
+// ── 异常设备操作 ──
+async function handleExceptionCollectInfo(item) {
+  const ip = item.IP || item.ip
+  try {
+    await ElMessageBox.confirm(`信息采集将花费几分钟到半小时不等的时间，是否对主机 ${ip} 进行采集？`, '采集信息', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
+  const host = {
+    key: item.id || item.key,
+    value: item.IP || item.ip,
+    assetType: selectedAssetTypeCode.value || 'linux'
+  }
+  try {
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/mjedwe/run?cacheBuster=${Date.now()}`,
+      { params: { hosts: [host] } }
+    )
+    const result = Array.isArray(data) ? data[0] : data
+    if (result?.runId) {
+      ElMessage.success('采集信息任务已发起')
+      loadAllData()
+    } else {
+      ElMessage.success('采集信息任务已发起')
+      loadAllData()
+    }
+  } catch (error) {
+    ElMessage.error('采集信息启动失败: ' + (error.response?.data?.message || error.message))
+  }
+}
+
+async function handleExceptionCheckConn(item) {
+  const ip = item.IP || item.ip
+  try {
+    await ElMessageBox.confirm(`是否重新检查主机 ${ip} 的连通性？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
+  const host = {
+    key: item.id || item.key,
+    value: item.IP || item.ip,
+    assetType: selectedAssetTypeCode.value || 'linux'
+  }
+  try {
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/M1x855/run?cacheBuster=${Date.now()}`,
+      { params: { hosts: [host] } }
+    )
+    const result = Array.isArray(data) ? data[0] : data
+    if (result?.runId) {
+      ElMessage.success('检查连通性任务已发起')
+      loadAllData()
+    } else {
+      ElMessage.success('检查连通性任务已发起')
+      loadAllData()
+    }
+  } catch (error) {
+    ElMessage.error('检查连通性失败: ' + (error.response?.data?.message || error.message))
+  }
+}
+
+// ── 异常设备批量操作 ──
+async function runExceptionBulkAction(jobId, actionName) {
+  const total = exceptionDrawer.total
+  if (!total) {
+    ElMessage.warning('没有异常设备可操作')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(`将对全部 ${total} 台异常设备${actionName}，此操作可能需要一段时间。`, '确认操作', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
+  exceptionDrawer.actionLoading = true
+  try {
+    const res = await exceptionApi.getExceptionDevices(
+      { cit: 'oplus_all', conditions: 'recently', param: 'rwx' },
+      { page: 1, size: total }
+    )
+    const allRows = res?.records || []
+    const hosts = allRows.map(row => ({
+      key: row.id || row.key || row.IP || '',
+      value: row.IP || row.ip || '',
+      assetType: 'linux'
+    }))
+    if (!hosts.length) {
+      ElMessage.warning('没有异常设备可操作')
+      return
+    }
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/${jobId}/run?cacheBuster=${Date.now()}`,
+      { params: { hosts } }
+    )
+    ElMessage.success(`全设备${actionName}任务已发起`)
+    loadAllData()
+  } catch (error) {
+    ElMessage.error(`${actionName}失败: ` + (error.response?.data?.message || error.message))
+  } finally {
+    exceptionDrawer.actionLoading = false
+  }
+}
+
+async function handleExceptionBulkCheckConn() {
+  await runExceptionBulkAction('M1x855', '连通性检查')
+}
+
+async function handleExceptionBulkCollect() {
+  await runExceptionBulkAction('mjedwe', '采集信息')
+}
+
 async function loadFailedLogPreview() {
   failedLogLoading.value = true
   try {
-    const response = await operationLogApi.getOperationLogs(
-      {
-        module: 'acm',
-        action: 'all',
-        status: 'ERROR',
-        day: 7
-      },
-      {
-        page: 1,
-        size: 5
-      }
+    const r = await operationLogApi.getOperationLogs(
+      { module: 'acm', action: 'all', status: 'ERROR', day: 7 },
+      { page: 1, size: 5 }
     )
-    failedLogRows.value = response?.records || []
-    failedLogTotal.value = response?.total || failedLogRows.value.length
-  } catch (error) {
-    console.error('加载失败日志预览失败:', error)
+    failedLogRows.value = r?.records || []
+    failedLogTotal.value = r?.total || failedLogRows.value.length
+  } catch {
     failedLogRows.value = []
     failedLogTotal.value = 0
   } finally {
@@ -652,859 +1150,1498 @@ async function loadFailedLogPreview() {
   }
 }
 
-function handleAssetTypeClick(params) {
-  if (!params?.code) return
-  router.push({
-    path: '/acm/info',
-    query: { type: params.code }
-  })
-}
-
-async function handleOsClick(params) {
-  const osDistro = params?.os_distro
-  if (!osDistro) return
-
-  osVersionTitle.value = `${osDistro} 版本分布`
-  osVersionVisible.value = true
-  osVersionLoading.value = true
-  osVersionData.value = []
-
+async function loadCurrentTenantId() {
   try {
-    const response = await overviewApi.getOsVersionDistribution(osDistro)
-    const data = response?.data || response || {}
-    osVersionData.value = data.records || []
+    currentTenantId.value = await dataManageApi.getCurrentTenantId()
   } catch (error) {
-    console.error('获取操作系统版本分布失败:', error)
-    ElMessage.error('获取版本分布失败')
-  } finally {
-    osVersionLoading.value = false
-  }
-}
-
-function handleGroupClick(params) {
-  const groupName = params?.groupName || params?.name
-  if (!groupName) return
-
-  router.push({
-    path: '/acm/data',
-    query: {
-      tab: 'group',
-      keyword: groupName
-    }
-  })
-}
-
-function openExceptionDevicePage() {
-  router.push({
-    path: '/acm/exception',
-    query: {
-      conditions: 'recently'
-    }
-  })
-}
-
-function handleExceptionDeviceClick(row) {
-  router.push({
-    path: '/acm/exception',
-    query: {
-      conditions: 'recently',
-      keyword: row?.IP || ''
-    }
-  })
-}
-
-function openFailedLogPage() {
-  router.push({
-    path: '/acm/log',
-    query: {
-      day: '7',
-      status: 'ERROR'
-    }
-  })
-}
-
-function handleFailedLogClick(row) {
-  const query = {
-    day: '7',
-    status: 'ERROR'
-  }
-
-  if (row?.action) {
-    query.action = row.action
-  }
-
-  if (row?.run_id) {
-    query.runId = row.run_id
-  }
-
-  router.push({
-    path: '/acm/log',
-    query
-  })
-}
-
-function handleSummaryCardClick(card) {
-  if (card?.key === 'totalAssets' && card.clickable) {
-    router.push({ path: '/acm/info' })
-    return
-  }
-  if (card?.key === 'assetType' && card.clickable) {
-    handleAssetTypeClick(topAssetType.value)
-    return
-  }
-  if (card?.key === 'os' && card.clickable) {
-    handleOsClick(topOs.value)
-    return
-  }
-  if (card?.key === 'group' && card.clickable) {
-    handleGroupClick(topGroup.value)
+    console.error('加载租户ID失败:', error)
   }
 }
 
 async function loadAllData() {
-  await Promise.all([
-    loadAssetType(),
-    loadOsDistribution(),
-    loadNewAsset(),
-    loadGroupAsset(),
-    loadConnection(),
-    loadExceptionPreview(),
-    loadFailedLogPreview()
-  ])
+  await Promise.allSettled([refreshAll(), loadExceptionPreview(), loadFailedLogPreview()])
+  tagTotal.value = tagRows.value.length
   refreshedAt.value = new Date()
 }
 
-onMounted(() => {
+// ── 交互 ──
+
+function handleDialogSaved() {
   loadAllData()
+}
+
+// 首个资产类型自动选中
+watch(
+  sortedAssetTypes,
+  types => {
+    if (types.length && !selectedAssetTypeCode.value) {
+      switchCardType(types[0].code || types[0].title)
+    }
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  syncViewportWidth()
+  window.addEventListener('resize', syncViewportWidth)
+  loadAllData()
+  loadCurrentTenantId()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', syncViewportWidth)
 })
 </script>
 
 <style scoped lang="scss">
-.asset-overview {
-  --workbench-panel-bg: #ffffff;
-  --workbench-panel-border: #e2e8f0;
-  --workbench-panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 20px -6px rgba(0, 0, 0, 0.07);
-  --workbench-card-bg: #f8fafc;
-  --workbench-card-border: #e2e8f0;
-  --workbench-card-hover-border: rgba(13, 148, 136, 0.5);
-  --workbench-card-hover-shadow: 0 8px 24px -6px rgba(13, 148, 136, 0.2);
-  --workbench-muted-bg: #f1f5f9;
-  --workbench-info: #3b82f6;
-  --workbench-accent: #0d9488;
-  --workbench-danger: #ef4444;
-  --workbench-warning: #f59e0b;
-  --workbench-success: #10b981;
-  --workbench-violet: #8b5cf6;
-  --asset-text-primary: var(--el-text-color-primary);
-  --asset-text-secondary: var(--el-text-color-regular);
-  --asset-text-muted: var(--el-text-color-secondary);
+// ══════════════════════════════════════════════
+//  资产工作台 — 基于自动化工作台设计模式重构
+// ══════════════════════════════════════════════
+
+.asset-workbench {
+  --aw-bg: #f8fafc;
+  --aw-panel-bg: #ffffff;
+  --aw-panel-border: #e2e8f0;
+  --aw-panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px -4px rgba(0, 0, 0, 0.06);
+  --aw-radius: 8px;
+  --aw-text-primary: #1e293b;
+  --aw-text-secondary: #64748b;
+  --aw-text-muted: #94a3b8;
+  --aw-accent: #0d9488;
+  --aw-danger: #ef4444;
+  --aw-warning: #f59e0b;
+  --aw-success: #22c55e;
+  --aw-info: #3b82f6;
+  --aw-violet: #8b5cf6;
+  --aw-cyan: #06b6d4;
+  --aw-gold: #d97706;
+
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--aw-bg);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+@supports (min-height: 100dvh) {
+  .asset-workbench {
+    min-height: 100dvh;
+  }
+}
+
+// ── 头部 ──
+.aw-header {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  position: relative;
-  min-height: 100%;
-  height: auto;
-  padding: 16px;
-  overflow: auto;
-  background:
-    radial-gradient(circle at 0% 0%, rgba(20, 184, 166, 0.08), transparent 40%),
-    radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08), transparent 40%),
-    var(--el-bg-color-page);
 }
 
-.workbench-header {
+.aw-header__top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 40px;
+  gap: 8px;
 }
 
-.workbench-header__main {
+.aw-header__summary {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.workbench-header__title {
+.aw-header__title {
   margin: 0;
-  color: var(--el-text-color-primary);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.workbench-header__actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.status-mini-list {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.status-mini {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 30px;
-  padding: 4px 10px;
-  border: 1px solid var(--workbench-card-border);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-}
-
-.status-mini strong {
-  color: var(--workbench-accent);
-  font-size: 13px;
-}
-
-.status-mini--muted {
-  background: transparent;
-  box-shadow: none;
-}
-
-.status-mini--muted strong {
-  color: var(--el-text-color-primary);
-}
-
-.refresh-button {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 78px;
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--workbench-panel-border);
-  border-radius: 999px;
-  background: var(--workbench-panel-bg);
-  color: var(--workbench-accent);
-  font-size: 12px;
-  font-weight: 700;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.refresh-button:hover:not(:disabled) {
-  border-color: var(--workbench-accent);
-  background: var(--workbench-panel-bg);
-  transform: translateY(-1px);
-}
-
-.refresh-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.72;
-}
-
-.refresh-button.is-loading :deep(.el-icon) {
-  animation: asset-spin 0.9s linear infinite;
-}
-
-.workbench-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-}
-
-.workbench-summary-grid .summary-card {
-  --summary-accent: var(--workbench-info);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
-  min-height: 132px;
-  padding: 16px;
-  border: 1px solid var(--workbench-card-border);
-  border-radius: 16px;
-  background: var(--workbench-panel-bg);
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  overflow: hidden;
-  box-shadow: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: fadeInUp 0.4s ease both;
-}
-
-.workbench-summary-grid .summary-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.workbench-summary-grid .summary-card::after {
-  content: '';
-  position: absolute;
-  inset: 0 auto auto 0;
-  width: 100%;
-  height: 4px;
-  background: var(--summary-accent);
-  opacity: 0.85;
-  transition: height 0.2s ease;
-}
-
-.workbench-summary-grid .summary-card:hover:not(:disabled),
-.workbench-summary-grid .summary-card.is-active {
-  border-color: var(--workbench-card-hover-border);
-  box-shadow: var(--workbench-card-hover-shadow);
-  transform: translateY(-3px);
-}
-
-.workbench-summary-grid .summary-card:hover::before {
-  opacity: 1;
-}
-
-.workbench-summary-grid .summary-card:hover::after,
-.workbench-summary-grid .summary-card.is-active::after {
-  height: 6px;
-}
-
-.workbench-summary-grid .summary-card:disabled {
-  cursor: default;
-}
-
-.summary-card--blue {
-  --summary-accent: var(--workbench-info);
-}
-
-.summary-card--cyan {
-  --summary-accent: #0ea5e9;
-}
-
-.summary-card--green {
-  --summary-accent: var(--workbench-success);
-}
-
-.summary-card--gold {
-  --summary-accent: var(--workbench-warning);
-}
-
-.summary-card--violet {
-  --summary-accent: var(--workbench-violet);
-}
-
-.summary-card__head {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.summary-card__label {
-  color: var(--el-text-color-regular);
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 600;
+  color: var(--aw-text-primary);
+  line-height: 1.4;
 }
 
-.summary-card__badge {
+.aw-header__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.aw-header__chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 8px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 20px;
-  background: var(--workbench-muted-bg);
-  color: var(--summary-accent);
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--aw-panel-bg);
+  border: 1px solid var(--aw-panel-border);
   font-size: 11px;
-  font-weight: 600;
+  color: var(--aw-text-secondary);
   white-space: nowrap;
+
+  strong {
+    color: var(--aw-accent);
+    font-weight: 700;
+  }
 }
 
-.summary-card__body {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 8px;
-  align-content: start;
-  min-width: 0;
+.aw-header__chip--danger strong {
+  color: var(--aw-danger);
 }
 
-.summary-card__value {
-  color: var(--el-text-color-primary);
-  font-size: clamp(32px, 2vw, 38px);
-  font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  overflow-wrap: anywhere;
+.aw-header__chip--muted {
+  background: transparent;
+  border-color: transparent;
 }
 
-.summary-card--textual .summary-card__value {
-  font-size: clamp(22px, 1.5vw, 30px);
-  line-height: 1.08;
-  letter-spacing: -0.02em;
-  display: -webkit-box;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
-}
-
-.summary-card__meta {
-  color: var(--summary-accent);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.35;
-  opacity: 0.82;
-  text-align: left;
-  overflow: hidden;
-  display: -webkit-box;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  white-space: normal;
-}
-
-.summary-card__action {
-  position: relative;
-  z-index: 1;
-  margin-top: auto;
-  align-self: flex-start;
+.aw-header__tools {
   display: inline-flex;
   align-items: center;
-  max-width: 100%;
-  color: var(--summary-accent);
+  gap: 6px;
+}
+
+.aw-header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--aw-panel-border);
+  background: var(--aw-panel-bg);
+  color: var(--aw-text-secondary);
   font-size: 12px;
-  font-weight: 700;
-  line-height: 1.2;
-  opacity: 0.92;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  i {
+    font-size: 12px;
+  }
+
+  &:hover {
+    border-color: var(--aw-accent);
+    color: var(--aw-accent);
+    background: rgba(13, 148, 136, 0.06);
+  }
 }
 
-.summary-card:disabled .summary-card__action {
-  color: var(--el-text-color-secondary);
-}
-
-.workbench-main-grid {
+// ── 统计卡片 ──
+.aw-stats {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(340px, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(164px, 1fr));
+  gap: 10px;
+}
+
+.aw-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--aw-panel-bg);
+  border: 1px solid var(--aw-panel-border);
+  border-radius: var(--aw-radius);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+  box-shadow: var(--aw-panel-shadow);
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    border-color: rgba(13, 148, 136, 0.4);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+    transform: translateY(-1px);
+  }
+
+  &__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--aw-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--aw-text-primary);
+    line-height: 1.1;
+
+    .wb-flip-number {
+      color: inherit;
+    }
+  }
+
+  &__icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    font-size: 15px;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__sub {
+    font-size: 11px;
+    color: var(--aw-text-muted);
+  }
+
+  &__hint {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--aw-accent);
+    opacity: 0;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(13, 148, 136, 0.1);
+    transition: opacity 0.2s;
+  }
+
+  &:hover &__hint {
+    opacity: 1;
+  }
+
+  // ── 变体：全面着色 ──
+  &--accent {
+    .aw-stat__icon {
+      background: rgba(13, 148, 136, 0.12);
+      color: var(--aw-accent);
+    }
+    &.aw-stat__value {
+      color: var(--aw-accent);
+    }
+    .aw-stat__value {
+      color: var(--aw-accent);
+    }
+  }
+
+  &--danger {
+    .aw-stat__icon {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--aw-danger);
+    }
+    .aw-stat__value {
+      color: var(--aw-danger);
+    }
+    .aw-stat__hint {
+      color: var(--aw-danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+  }
+
+  &--warning {
+    .aw-stat__icon {
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--aw-warning);
+    }
+    .aw-stat__value {
+      color: var(--aw-warning);
+    }
+    .aw-stat__hint {
+      color: var(--aw-warning);
+      background: rgba(245, 158, 11, 0.1);
+    }
+  }
+
+  &--ok {
+    .aw-stat__icon {
+      background: rgba(34, 197, 94, 0.12);
+      color: var(--aw-success);
+    }
+    .aw-stat__value {
+      color: var(--aw-success);
+    }
+    .aw-stat__hint {
+      color: var(--aw-success);
+      background: rgba(34, 197, 94, 0.1);
+    }
+  }
+
+  &--muted {
+    .aw-stat__icon {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--aw-text-muted);
+    }
+    .aw-stat__hint {
+      color: var(--aw-text-muted);
+      background: rgba(148, 163, 184, 0.1);
+    }
+  }
+
+  // ── 脉冲动画（异常卡片有值时触发）──
+  &--pulsing {
+    background: linear-gradient(180deg, var(--aw-panel-bg), rgba(239, 68, 68, 0.04));
+    animation: aw-stat-pulse-glow 2.4s ease-in-out infinite;
+
+    .aw-stat__icon {
+      animation: aw-stat-pulse-icon 2.4s ease-in-out infinite;
+    }
+
+    .aw-stat__hint {
+      background: rgba(239, 68, 68, 0.14);
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -60%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transform: skewX(-20deg);
+      animation: aw-stat-pulse-sheen 2.4s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes aw-stat-pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  50% {
+    box-shadow:
+      0 4px 20px rgba(239, 68, 68, 0.2),
+      0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+}
+
+@keyframes aw-stat-pulse-sheen {
+  0% {
+    left: -60%;
+  }
+  50% {
+    left: 160%;
+  }
+  100% {
+    left: 160%;
+  }
+}
+
+@keyframes aw-stat-pulse-icon {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+// ── 列表入场过渡（无布局抖动） ──
+.aw-stack-slide-enter-active,
+.aw-stack-slide-leave-active {
+  transition: opacity 0.2s ease;
+}
+.aw-stack-slide-move {
+  transition: transform 0.2s ease;
+}
+.aw-stack-slide-leave-active {
+  position: absolute !important;
+}
+.aw-stack-slide-enter-from,
+.aw-stack-slide-leave-to {
+  opacity: 0;
+}
+
+// ── 仪表盘面板网格 ──
+.aw-dashboard {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+  align-content: stretch;
   align-items: stretch;
 }
 
-.workbench-panel {
-  position: relative;
+// ── 通用面板 ──
+.aw-panel {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  height: 100%;
+  background: var(--aw-panel-bg);
+  border: 1px solid var(--aw-panel-border);
+  border-radius: var(--aw-radius);
+  box-shadow: var(--aw-panel-shadow);
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--aw-panel-border);
+    flex-shrink: 0;
+  }
+
+  &__title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--aw-text-primary);
+    white-space: nowrap;
+  }
+
+  &__stat-badge {
+    font-size: 11px;
+    color: var(--aw-text-secondary);
+    background: var(--aw-bg);
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--aw-panel-border);
+
+    strong {
+      color: var(--aw-accent);
+      font-weight: 700;
+    }
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+
+    :deep(.el-button + .el-button) {
+      margin-left: 0 !important;
+    }
+  }
+
+  &__pill {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--aw-bg);
+    border: 1px solid var(--aw-panel-border);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--aw-accent);
+    white-space: nowrap;
+  }
+}
+
+.aw-inline-action.el-button {
+  min-width: auto !important;
+  min-height: auto !important;
+  height: 22px !important;
+  padding: 0 3px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.aw-inline-action.el-button + .aw-inline-action.el-button {
+  margin-left: 0 !important;
+}
+
+// ── 资产操作面板 (span 12) ──
+.aw-panel--actions {
+  order: 1;
+  grid-column: span 12;
+
+  .aw-panel__header-actions {
+    gap: 2px;
+  }
+}
+
+.aw-asset-type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--aw-panel-border);
+  background: var(--aw-bg);
+  font-size: 11px;
+  color: var(--aw-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--aw-accent);
+    color: var(--aw-accent);
+  }
+
+  &.is-active {
+    border-color: var(--aw-accent);
+    background: rgba(13, 148, 136, 0.08);
+    color: var(--aw-accent);
+  }
+
+  &__name {
+    font-weight: 600;
+  }
+
+  &__count {
+    color: var(--aw-text-muted);
+  }
+
+  &--more {
+    border-style: dashed;
+    color: var(--aw-text-muted);
+    font-weight: 600;
+
+    &:hover {
+      border-color: var(--aw-accent);
+      color: var(--aw-accent);
+    }
+  }
+}
+
+// ── 趋势与分布面板 (span 7) ──
+.aw-panel--analytics {
+  order: 2;
+  grid-column: span 7;
+  min-height: 400px;
+}
+
+.aw-analytics-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.aw-analytics-tab {
+  appearance: none;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--aw-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    color: var(--aw-accent);
+  }
+
+  &.is-active {
+    border-color: var(--aw-panel-border);
+    background: var(--aw-bg);
+    color: var(--aw-accent);
+  }
+}
+
+.aw-analytics-stage {
+  flex: 1;
   min-height: 0;
-  padding: 18px 20px;
-  border: 1px solid var(--workbench-panel-border);
-  border-radius: 20px;
-  background: var(--workbench-panel-bg);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--workbench-panel-shadow);
-  animation: fadeInUp 0.5s ease both;
+  padding: 0;
 }
 
-.workbench-panel--wide {
-  min-height: 520px;
+.aw-chart-frame {
+  height: 100%;
+  min-height: 340px;
+
+  :deep(.chart-card) {
+    height: 100%;
+    padding: 10px 14px 14px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  :deep(.chart-container) {
+    min-height: 280px;
+  }
+
+  :deep(.chart-header) {
+    margin-bottom: 6px;
+  }
 }
 
-.workbench-panel__header {
+// ── 异常与处置面板 (span 5) ──
+.aw-panel--exceptions {
+  order: 3;
+  grid-column: span 5;
+}
+
+.aw-exception-list {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
+  gap: 8px;
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--aw-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__count {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--aw-danger);
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__empty {
+    padding: 12px 6px;
+    font-size: 12px;
+    color: var(--aw-text-muted);
+    text-align: center;
+  }
+}
+
+.aw-exception-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--aw-panel-border);
+  border-radius: 10px;
+  background: var(--aw-panel-bg);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.35);
+    box-shadow: 0 4px 14px -4px rgba(239, 68, 68, 0.12);
+    transform: translateY(-1px);
+  }
+
+  &__ip {
+    min-width: 110px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--aw-text-primary);
+  }
+
+  &__badge {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--aw-danger);
+    background: rgba(239, 68, 68, 0.08);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(239, 68, 68, 0.16);
+    text-align: center;
+    min-width: 42px;
+  }
+
+  &__desc {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--aw-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  &__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    font-size: 11px;
+    color: var(--aw-text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover {
+      background: rgba(13, 148, 136, 0.1);
+      color: var(--aw-accent);
+    }
+  }
+}
+
+// ── 最近资产列表 ──
+.aw-recent-assets {
+  padding: 8px 12px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__type-strip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--aw-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    min-height: 300px;
+  }
+}
+
+.aw-asset-card {
+  --aw-asset-card-accent: var(--aw-accent);
+  display: flex;
+  position: relative;
+  border: 1px solid var(--aw-panel-border);
+  border-radius: 16px;
+  background: var(--aw-panel-bg);
+  flex-direction: column;
+  min-height: 138px;
+  overflow: hidden;
+  box-shadow: 0 16px 32px -24px rgba(15, 23, 42, 0.42);
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--aw-asset-card-accent), rgba(255, 255, 255, 0));
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--aw-asset-card-accent) 38%, var(--aw-panel-border));
+    box-shadow: 0 20px 38px -28px rgba(15, 23, 42, 0.58);
+  }
+
+  &__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 12px 16px 14px;
+    background: linear-gradient(180deg, var(--el-fill-color-light) 0%, var(--el-fill-color-extra-light) 100%);
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  &__edit-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--aw-panel-border);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--aw-panel-bg) 82%, #fff);
+    color: var(--aw-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+    &:hover {
+      border-color: var(--aw-asset-card-accent);
+      background: color-mix(in srgb, var(--aw-asset-card-accent) 10%, var(--aw-panel-bg));
+      color: var(--aw-asset-card-accent);
+    }
+  }
+
+  &__name {
+    display: -webkit-box;
+    min-height: 1.45em;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--aw-text-primary);
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  &__meta,
+  &__os {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--aw-text-muted);
+  }
+
+  &__meta {
+    font-size: 12px;
+  }
+
+  &__os {
+    margin-top: auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--aw-text-secondary);
+
+    &.is-debian {
+      color: #2563eb;
+    }
+
+    &.is-redhat {
+      color: #dc2626;
+    }
+
+    &.is-oracle {
+      color: #c2410c;
+    }
+
+    &.is-suse {
+      color: #16a34a;
+    }
+
+    &.is-windows {
+      color: #0284c7;
+    }
+
+    &.is-unknown {
+      color: var(--aw-text-muted);
+    }
+  }
+
+  &__footer {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--aw-panel-border);
+    background: color-mix(in srgb, var(--aw-panel-bg) 88%, #fff);
+  }
+
+  &__chip {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    height: 38px;
+    padding: 0 8px;
+    border: none;
+    border-right: 1px solid var(--aw-panel-border);
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--aw-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    &:last-child {
+      border-right: none;
+    }
+
+    &:hover {
+      background: color-mix(in srgb, var(--aw-accent) 6%, transparent);
+    }
+
+    &.is-success {
+      color: var(--aw-success);
+    }
+
+    &.is-danger {
+      color: var(--aw-danger);
+    }
+
+    &.is-muted {
+      color: var(--aw-text-muted);
+    }
+
+    &.is-loading {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// ── 分组与标签面板 (span 5) ──
+.aw-panel--governance {
+  order: 4;
+  grid-column: span 5;
+}
+
+.aw-governance-section {
+  padding: 10px 14px;
+
+  + .aw-governance-section {
+    border-top: 1px solid var(--aw-panel-border);
+    padding-top: 10px;
+  }
+
+  &__title {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--aw-text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.aw-governance-list {
+  display: grid;
+  gap: 4px;
+}
+
+.aw-governance-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s;
+  text-align: left;
+
+  &:hover {
+    background: var(--aw-bg);
+  }
+
+  &__icon {
+    font-size: 13px;
+    color: #e6a23c;
+    flex-shrink: 0;
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--aw-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--aw-text-muted);
+    flex-shrink: 0;
+  }
+}
+
+.aw-governance-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aw-governance-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--aw-panel-border);
+  background: var(--aw-bg);
+  font-size: 11px;
+  color: var(--aw-text-secondary);
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover {
+    border-color: var(--aw-accent);
+    color: var(--aw-accent);
+  }
+
+  &__icon {
+    font-size: 10px;
+  }
+
+  &__count {
+    color: var(--aw-text-muted);
+    margin-left: 2px;
+  }
+}
+
+// ── 操作记录面板 (span 7，与异常处置面板共占一行) ──
+.aw-panel--logs {
+  order: 5;
+  grid-column: span 7;
+}
+
+.aw-log-list {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+}
+
+.aw-log-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--aw-panel-border);
+  background: var(--aw-panel-bg);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--aw-accent) 35%, var(--aw-panel-border));
+    box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--aw-accent) 10%, transparent);
+    transform: translateY(-1px);
+  }
+
+  &__main {
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__title {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--aw-text-primary);
+    line-height: 1.4;
+  }
+
+  &__meta {
+    display: block;
+    font-size: 11px;
+    color: var(--aw-text-muted);
+    margin-top: 2px;
+  }
+
+  &__side {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  &__time {
+    font-size: 11px;
+    color: var(--aw-text-muted);
+    white-space: nowrap;
+  }
+}
+
+// ── 抽屉样式 ──
+.aw-drawer {
+  :deep(.el-drawer__header) {
+    margin-bottom: 8px;
+  }
+
+  &__toolbar {
+    padding: 0 12px 8px;
+  }
+
+  &__body {
+    padding: 0 4px;
+  }
+}
+
+.aw-drawer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aw-drawer-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+  padding: 0 8px;
+}
+
+.aw-drawer-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: relative;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--aw-panel-border);
+  border-radius: 8px;
+  background: var(--aw-panel-bg);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+
+  &:hover {
+    border-color: var(--aw-accent);
+    background: var(--aw-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.06);
+  }
+
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--aw-text-primary);
+    min-width: 0;
+    flex-shrink: 0;
+  }
+
+  &__badge {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--aw-danger);
+    flex-shrink: 0;
+  }
+
+  &__name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--aw-text-primary);
+    min-width: 0;
+  }
+
+  &__desc {
+    font-size: 12px;
+    color: var(--aw-text-secondary);
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    font-size: 11px;
+    color: var(--aw-text-muted);
+    flex-shrink: 0;
+  }
+
+  &__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  &__time {
+    font-size: 11px;
+    color: var(--aw-text-muted);
+    flex-shrink: 0;
+  }
+
+  &__count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--aw-text-muted);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  &--slim {
+    gap: 6px;
+    padding: 6px 10px;
+  }
+
+  &__edit-btn {
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+
+  &:hover &__edit-btn {
+    opacity: 1;
+  }
+}
+
+.aw-drawer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.aw-drawer-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--aw-panel-border);
+  background: var(--aw-bg);
+  font-size: 12px;
+  color: var(--aw-text-secondary);
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover {
+    border-color: var(--aw-accent);
+    color: var(--aw-accent);
+  }
+
+  &__count {
+    color: var(--aw-text-muted);
+    margin-left: 2px;
+  }
+
+  &__edit-btn {
+    opacity: 0;
+    transition: opacity 0.15s;
+    margin-left: 4px;
+    flex-shrink: 0;
+  }
+
+  &:hover &__edit-btn {
+    opacity: 1;
+  }
+}
+
+.aw-drawer-section {
+  padding: 10px 12px;
+
+  + .aw-drawer-section {
+    border-top: 1px solid var(--aw-panel-border);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--aw-text-primary);
+  }
+
+  &__desc {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: var(--aw-text-secondary);
+  }
+}
+
+.aw-drawer-empty {
+  padding: 24px 0;
+}
+
+.aw-drawer-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  width: 100%;
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--aw-text-primary);
+    white-space: nowrap;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
 }
 
-.workbench-panel__header-main {
+.aw-drawer__pagination {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
+  justify-content: center;
+  padding: 12px 0 4px;
 }
 
-.workbench-panel__title {
-  margin: 0;
-  color: var(--el-text-color-primary);
-  font-size: 17px;
-  font-weight: 700;
+// ── 暗色主题 ──
+html.dark .asset-workbench {
+  --aw-bg: #0f172a;
+  --aw-panel-bg: rgba(20, 28, 40, 0.94);
+  --aw-panel-border: rgba(71, 85, 105, 0.48);
+  --aw-panel-shadow: 0 22px 40px rgba(0, 0, 0, 0.3);
+  --aw-text-primary: #f1f5f9;
+  --aw-text-secondary: #94a3b8;
+  --aw-text-muted: #64748b;
+  --aw-accent: #5eead4;
+  --aw-danger: #f87171;
+  --aw-warning: #fbbf24;
+  --aw-success: #34d399;
+  --aw-info: #60a5fa;
+  --aw-violet: #a78bfa;
+  --aw-cyan: #22d3ee;
+  --aw-gold: #fbbf24;
 }
 
-.workbench-panel__pill {
-  padding: 4px 12px;
-  border: 1px solid var(--workbench-panel-border);
-  border-radius: 20px;
-  background: var(--workbench-muted-bg);
-  color: var(--workbench-accent);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
+html.dark .asset-workbench .aw-stat:hover,
+html.dark .asset-workbench .aw-action-card:hover,
+html.dark .asset-workbench .aw-drawer-row:hover,
+html.dark .asset-workbench .aw-log-item:hover {
+  background: rgba(30, 41, 59, 0.6);
 }
 
-.analytics-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
+html.dark .asset-workbench .aw-stat--pulsing {
+  background: linear-gradient(180deg, rgba(30, 20, 25, 0.94), rgba(127, 29, 29, 0.32));
 
-.analytics-tab {
-  appearance: none;
-  padding: 6px 12px;
-  border: 1px solid var(--workbench-card-border);
-  border-radius: 20px;
-  background: var(--workbench-muted-bg);
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.analytics-tab:hover,
-.analytics-tab.is-active {
-  border-color: rgba(13, 148, 136, 0.32);
-  background: rgba(13, 148, 136, 0.1);
-  color: var(--workbench-accent);
-}
-
-.analytics-stage {
-  flex: 1;
-  min-height: 0;
-}
-
-.chart-frame {
-  height: 100%;
-  min-height: 420px;
-  padding: 0;
-  border: 1px solid var(--workbench-card-border);
-  border-radius: 16px;
-  background: var(--workbench-card-bg);
-  box-shadow: none;
-}
-
-.chart-frame::before {
-  display: none;
-}
-
-.chart-frame :deep(.chart-card) {
-  height: 100%;
-  padding: 14px;
-  border: 0;
-  border-radius: 16px;
-  background: transparent;
-  box-shadow: none;
-}
-
-.chart-frame :deep(.chart-header) {
-  margin-bottom: 10px;
-}
-
-.chart-frame :deep(.chart-container) {
-  min-height: 340px;
-}
-
-.metric-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.metric-card {
-  --metric-accent: var(--workbench-info);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px 12px 16px;
-  border: 1px solid var(--workbench-card-border);
-  border-radius: 16px;
-  background: var(--workbench-card-bg);
-  overflow: hidden;
-}
-
-.metric-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 4px;
-  background: var(--metric-accent);
-  opacity: 0.75;
-}
-
-.metric-card:nth-child(2) {
-  --metric-accent: var(--workbench-success);
-}
-
-.metric-card:nth-child(3) {
-  --metric-accent: var(--workbench-warning);
-}
-
-.metric-card:nth-child(4) {
-  --metric-accent: var(--workbench-violet);
-}
-
-.metric-card__label,
-.signal-item__label {
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.metric-card__value {
-  color: var(--el-text-color-primary);
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.metric-card__meta,
-.empty-state {
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-}
-
-.insight-stream {
-  display: grid;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.signal-strip {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.signal-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  padding: 11px 13px;
-  border: 1px solid var(--workbench-card-border);
-  border-radius: 12px;
-  background: var(--workbench-card-bg);
-}
-
-.signal-item__dot {
-  flex: 0 0 auto;
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-}
-
-.signal-item__label {
-  flex: 1;
-}
-
-.signal-item__value {
-  min-width: 0;
-  color: var(--el-text-color-primary);
-  font-size: 13px;
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.signal-item--success .signal-item__dot {
-  background: var(--workbench-success);
-}
-
-.signal-item--warning .signal-item__dot {
-  background: var(--workbench-danger);
-}
-
-.signal-item--trend .signal-item__dot {
-  background: var(--workbench-violet);
-}
-
-.signal-item--neutral .signal-item__dot {
-  background: var(--workbench-warning);
-}
-
-.empty-state {
-  padding: 14px 12px;
-  border: 1px dashed var(--workbench-card-border);
-  border-radius: 12px;
-  background: var(--workbench-card-bg);
-  text-align: center;
-}
-
-html.dark .asset-overview {
-  --workbench-panel-bg: linear-gradient(180deg, rgba(20, 28, 40, 0.94), rgba(16, 23, 34, 0.9));
-  --workbench-panel-border: rgba(71, 85, 105, 0.48);
-  --workbench-panel-shadow: 0 22px 40px rgba(0, 0, 0, 0.26);
-  --workbench-card-bg: rgba(15, 23, 42, 0.84);
-  --workbench-card-border: rgba(71, 85, 105, 0.46);
-  --workbench-card-hover-border: rgba(94, 234, 212, 0.36);
-  --workbench-card-hover-shadow: 0 18px 30px rgba(0, 0, 0, 0.26);
-  --workbench-muted-bg: rgba(30, 41, 59, 0.84);
-  --workbench-info: #60a5fa;
-  --workbench-accent: #5eead4;
-  --workbench-danger: #f87171;
-  --workbench-warning: #fbbf24;
-  --workbench-success: #34d399;
-  --workbench-violet: #a78bfa;
-  background:
-    radial-gradient(circle at top left, rgba(45, 212, 191, 0.16), transparent 24%),
-    radial-gradient(circle at top right, rgba(96, 165, 250, 0.12), transparent 24%),
-    transparent;
-}
-
-html.dark .asset-overview .status-mini {
-  border-color: rgba(71, 85, 105, 0.42);
-  background: rgba(15, 23, 42, 0.74);
-}
-
-html.dark .asset-overview .status-mini--muted {
-  background: transparent;
-}
-
-html.dark .asset-overview .summary-card--blue,
-html.dark .asset-overview .summary-card--cyan,
-html.dark .asset-overview .summary-card--violet {
-  background: linear-gradient(180deg, rgba(18, 28, 45, 0.92), rgba(30, 41, 59, 0.84));
-}
-
-html.dark .asset-overview .summary-card--green {
-  background: linear-gradient(180deg, rgba(18, 28, 45, 0.92), rgba(6, 95, 70, 0.48));
-}
-
-html.dark .asset-overview .summary-card--gold {
-  background: linear-gradient(180deg, rgba(28, 24, 20, 0.92), rgba(120, 53, 15, 0.46));
-}
-
-html.dark .asset-overview .summary-card__badge,
-html.dark .asset-overview .workbench-panel__pill {
-  border-color: rgba(71, 85, 105, 0.42);
-}
-
-html.dark .asset-overview .chart-frame :deep(.chart-card),
-html.dark .asset-overview .metric-card,
-html.dark .asset-overview .signal-item,
-html.dark .asset-overview .analytics-tab {
-  background: var(--workbench-card-bg);
-  border-color: var(--workbench-card-border);
-}
-
-@keyframes asset-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
+  &::after {
+    background: linear-gradient(90deg, transparent, rgba(248, 113, 113, 0.08), transparent);
   }
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
+html.dark .asset-workbench .aw-drawer-row,
+html.dark .asset-workbench .aw-log-item {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+// ── 响应式 ──
+@media (max-width: 1280px) {
+  .aw-panel--analytics {
+    grid-column: span 12;
   }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  .aw-panel--exceptions {
+    grid-column: span 6;
   }
-}
-
-.summary-card:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.summary-card:nth-child(2) {
-  animation-delay: 0.05s;
-}
-
-.summary-card:nth-child(3) {
-  animation-delay: 0.1s;
-}
-
-.summary-card:nth-child(4) {
-  animation-delay: 0.15s;
-}
-
-.summary-card:nth-child(5) {
-  animation-delay: 0.2s;
-}
-
-@media (max-width: 1080px) {
-  .workbench-header {
-    align-items: flex-start;
-    flex-direction: column;
+  .aw-panel--governance {
+    grid-column: span 6;
   }
-
-  .workbench-header__actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .workbench-main-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .workbench-panel--wide {
-    min-height: 460px;
+  .aw-panel--logs {
+    grid-column: span 12;
   }
 }
 
-@media (max-width: 768px) {
-  .asset-overview {
+@media (max-width: 960px) {
+  .aw-panel--exceptions,
+  .aw-panel--governance {
+    grid-column: span 12;
+  }
+
+  .aw-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .asset-workbench {
     padding: 12px;
   }
 
-  .workbench-header__actions,
-  .status-mini-list,
-  .workbench-panel__header {
+  .aw-header__top {
+    flex-wrap: wrap;
     align-items: flex-start;
-    flex-direction: column;
   }
 
-  .status-mini-list,
-  .workbench-header__actions {
+  .aw-header__tools {
     width: 100%;
+    order: 3;
+    margin-top: 4px;
   }
 
-  .status-mini {
-    width: 100%;
-    justify-content: space-between;
+  .aw-stats {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .refresh-button {
-    align-self: flex-end;
-  }
-
-  .analytics-tabs {
-    justify-content: flex-start;
-  }
-
-  .metric-grid {
+  .aw-metric-grid {
     grid-template-columns: 1fr;
   }
-
-  .signal-strip {
+  .aw-signal-strip {
     grid-template-columns: 1fr;
   }
+}
+</style>
 
-  .summary-card__meta {
-    text-align: left;
-  }
+<style lang="scss">
+.aw-drawer .el-drawer__header {
+  margin-bottom: 8px;
+}
+
+html.dark .aw-drawer .el-drawer__header {
+  color: var(--aw-text-primary);
 }
 </style>
