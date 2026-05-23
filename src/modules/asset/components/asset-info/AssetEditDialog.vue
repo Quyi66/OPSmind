@@ -17,6 +17,7 @@
                     v-model="formData[attr.code]"
                     :placeholder="`请输入${attr.title}`"
                     clearable
+                    style="width: 100%"
                   />
                 </template>
                 <template v-else>
@@ -180,13 +181,5 @@ watch(visible, val => {
   font-size: 14px;
   line-height: 1.5;
   word-break: break-all;
-}
-
-:deep(.el-form-item__content) {
-  min-width: 0;
-}
-
-:deep(.el-input) {
-  width: 100%;
 }
 </style>
