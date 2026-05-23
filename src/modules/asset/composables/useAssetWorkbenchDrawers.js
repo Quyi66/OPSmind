@@ -81,8 +81,11 @@ export function useAssetWorkbenchDrawers(
   // ── 资产列表抽屉 ──
   async function openAssetListDrawer(ciType, isSearch = false, goPage) {
     assetListDrawer.filterType = ciType || ''
-    if (goPage) {
+    if (typeof goPage === 'number') {
       assetListDrawer.page = goPage
+    } else if (isSearch) {
+      // 与 AssetInfoPage 行为一致：执行筛选时回到第一页
+      assetListDrawer.page = 1
     } else if (!isSearch) {
       assetListDrawer.keyword = ''
       assetListDrawer.page = 1
@@ -107,6 +110,12 @@ export function useAssetWorkbenchDrawers(
 
   function handleAssetListPageChange(page) {
     openAssetListDrawer(assetListDrawer.filterType, true, page)
+  }
+
+  function handleAssetListPageSizeChange(size) {
+    assetListDrawer.pageSize = Number(size) || assetListDrawer.pageSize
+    assetListDrawer.page = 1
+    openAssetListDrawer(assetListDrawer.filterType, true, 1)
   }
 
   function handleViewAssetDetail(item) {
@@ -149,6 +158,12 @@ export function useAssetWorkbenchDrawers(
 
   function handleExceptionPageChange(page) {
     openExceptionDrawer(page)
+  }
+
+  function handleExceptionPageSizeChange(size) {
+    exceptionDrawer.pageSize = Number(size) || exceptionDrawer.pageSize
+    exceptionDrawer.page = 1
+    openExceptionDrawer(1)
   }
 
   function handleOpenExceptionDevicePage() {
@@ -224,6 +239,12 @@ export function useAssetWorkbenchDrawers(
     openRecentLogsDrawer(page)
   }
 
+  function handleRecentLogsPageSizeChange(size) {
+    recentLogsDrawer.pageSize = Number(size) || recentLogsDrawer.pageSize
+    recentLogsDrawer.page = 1
+    openRecentLogsDrawer(1)
+  }
+
   function handleLogItemClick(item) {
     if (!item?.run_id) return
     if (runResultMeta) {
@@ -256,10 +277,10 @@ export function useAssetWorkbenchDrawers(
     // computed
     assetListDrawerTitle,
     // functions
-    openAssetListDrawer, handleAssetListPageChange, handleViewAssetDetail,
-    openExceptionDrawer, handleExceptionPageChange, handleOpenExceptionDevicePage,
+    openAssetListDrawer, handleAssetListPageChange, handleAssetListPageSizeChange, handleViewAssetDetail,
+    openExceptionDrawer, handleExceptionPageChange, handleExceptionPageSizeChange, handleOpenExceptionDevicePage,
     openFailedLogDrawer, handleFailedLogClick, handleOpenFailedLogPage,
-    openRecentLogsDrawer, handleRecentLogsPageChange, handleLogItemClick, handleOpenOperationLogPage,
+    openRecentLogsDrawer, handleRecentLogsPageChange, handleRecentLogsPageSizeChange, handleLogItemClick, handleOpenOperationLogPage,
     openGovernanceDrawer
   }
 }

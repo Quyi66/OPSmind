@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="visible" :title="title" size="760px" destroy-on-close class="wb-workbench-drawer">
+  <el-drawer v-model="visible" :title="title" size="75%" destroy-on-close class="wb-workbench-drawer">
     <div v-loading="mergedLoading" class="wb-drawer-body">
       <div class="wb-filter-panel">
         <el-form :model="filters" inline size="small" class="wb-filter-panel__form" @submit.prevent>
@@ -42,11 +42,12 @@
           class="wb-drawer-run-item"
           @click="$emit('open-result', item)"
         >
-          <div class="wb-drawer-run-item__info">
-            <strong class="wb-drawer-run-item__name">{{ translateText(item.job_title) || '-' }}</strong>
-            <span class="wb-drawer-run-item__meta">{{ formatDateTime(item.start_time) }} · {{ item.username || '-' }}</span>
-          </div>
-          <el-tag size="small" :type="statusType(item.status)" effect="plain">
+          <strong class="wb-drawer-run-item__name">{{ translateText(item.job_title) || '-' }}</strong>
+          <span class="wb-drawer-run-item__user">{{ item.username || '-' }}</span>
+          <span class="wb-drawer-run-item__time">{{ formatDateTime(item.start_time) }}</span>
+          <span class="wb-drawer-run-item__node">{{ formatAnsibleNode(item.ata_url) }}</span>
+          <span class="wb-drawer-run-item__detail">{{ formatStats(item.stats_json) }}</span>
+          <el-tag class="wb-drawer-run-item__status" size="small" :type="statusType(item.status)" effect="plain">
             {{ statusLabel(item.status) }}
           </el-tag>
         </button>
@@ -126,6 +127,7 @@ const filteredRecords = computed(() => {
     item.username,
     item.review_user,
     item.ata_url,
+    formatStats(item.stats_json),
     item.start_time
   ]
     .filter(Boolean)
@@ -155,6 +157,30 @@ function statusType(status) {
 function statusLabel(status) {
   if (props.failedOnly && !status) return getRunLogStatusLabel('FAILED')
   return getRunLogStatusLabel(status)
+}
+
+function formatAnsibleNode(ataUrl) {
+  if (!ataUrl) return '-'
+  const nodes = String(ataUrl)
+    .split(',')
+    .map(ip => ip.trim())
+    .filter(Boolean)
+  return nodes.join(', ') || '-'
+}
+
+function formatStats(statsJson) {
+  if (!statsJson) return '-'
+  try {
+    const stats = typeof statsJson === 'string' ? JSON.parse(statsJson) : statsJson
+    const parts = []
+    if (stats?.totalHosts) parts.push(`总数:${stats.totalHosts}`)
+    if (stats?.okHosts) parts.push(`成功:${stats.okHosts}`)
+    if (stats?.failedHosts) parts.push(`失败:${stats.failedHosts}`)
+    if (stats?.unreachableHosts) parts.push(`不可达:${stats.unreachableHosts}`)
+    return parts.join(' | ') || '-'
+  } catch {
+    return '-'
+  }
 }
 
 function formatDateTime(value) {
@@ -258,10 +284,10 @@ watch(
 }
 
 .wb-drawer-run-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 112px 170px 200px 84px;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  column-gap: 10px;
   padding: 10px 12px;
   border-radius: 6px;
   background: transparent;
@@ -276,26 +302,43 @@ watch(
     border-color: #e2e8f0;
   }
 
-  &__info {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
   &__name {
     font-size: 13px;
     font-weight: 500;
     color: var(--wb-text-primary);
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  &__meta {
-    font-size: 11px;
+  &__user,
+  &__time,
+  &__node,
+  &__detail {
+    font-size: 13px;
     color: var(--wb-text-muted);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__status {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 1280px) {
+  .wb-drawer-run-item {
+    grid-template-columns: minmax(0, 1fr) 76px 100px 130px 160px 72px;
+  }
+}
+
+@media (max-width: 900px) {
+  .wb-drawer-run-item {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4px;
   }
 }
 

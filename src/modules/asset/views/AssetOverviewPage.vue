@@ -208,8 +208,8 @@
                   </button>
                 </div>
                 <strong class="aw-asset-card__name">{{ getAssetPrimaryText(item) }}</strong>
-                <span class="aw-asset-card__meta">{{ getAssetBusinessText(item) }}</span>
-                <span class="aw-asset-card__os" :class="getOsDistroClass(item.os_distro)">{{ getAssetOsText(item) }}</span>
+                <!-- <span class="aw-asset-card__meta">{{ getAssetBusinessText(item) }}</span> -->
+                <span class="aw-asset-card__os"><span class="aw-asset-card__os-distro" :class="getOsDistroClass(item.os_distro)">{{ item.os_distro || '--' }}</span><span class="aw-asset-card__os-version">{{ item.os_version || '' }}</span></span>
               </div>
               <div class="aw-asset-card__footer">
                 <button
@@ -222,7 +222,7 @@
                   <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
                   {{ getConnStatusText(item.CONN_LATEST_STATUS) }}
                 </button>
-                <span class="aw-asset-card__chip" :class="item.needReboot == 1 ? 'is-danger' : 'is-success'">
+                <span class="aw-asset-card__chip" :class="item.needReboot == 1 ? 'is-danger' : 'is-success'" style="pointer-events: none; cursor: none;">
                   {{ item.needReboot == 1 ? '需重启' : '无需重启' }}
                 </span>
               </div>
@@ -307,34 +307,24 @@
           class="aw-log-list"
         >
           <button
-            v-for="item in recentLogs.slice(0, 5)"
+            v-for="item in recentLogs.slice(0, 7)"
             :key="item.run_id"
             type="button"
             class="aw-log-item"
             @click="handleLogItemClick(item)"
           >
-            <div class="aw-log-item__main">
-              <strong class="aw-log-item__title">{{ getOperationActionLabel(item.action) }}</strong>
-              <span class="aw-log-item__meta">
-                {{ item.ata_node || '--' }} · {{ item.username || '--' }}
-              </span>
-            </div>
-            <div class="aw-log-item__side">
-              <el-tag
-                size="small"
-                :type="
-                  item.status === 'ERROR'
-                    ? 'danger'
-                    : item.status === 'RUNNING'
-                      ? 'warning'
-                      : 'success'
-                "
-                effect="plain"
-              >
-                {{ getRunLogStatusLabel(item.status) }}
-              </el-tag>
-              <span class="aw-log-item__time">{{ formatDateTimeShort(item.start_time) }}</span>
-            </div>
+            <span class="aw-log-item__title">{{ getOperationActionLabel(item.action) }}</span>
+            <span class="aw-log-item__engine">{{ item.ata_node || '--' }}</span>
+            <span class="aw-log-item__user">{{ item.username || '--' }}</span>
+            <span class="aw-log-item__time">{{ formatDateTime(item.start_time) }}</span>
+            <el-tag
+              class="aw-log-item__status"
+              size="small"
+              :type="getOperationLogStatusType(item.status)"
+              effect="plain"
+            >
+              {{ getRunLogStatusLabel(item.status) }}
+            </el-tag>
           </button>
         </transition-group>
         <el-empty v-else description="暂无操作记录" :image-size="48" />
@@ -405,8 +395,8 @@
                   </button>
                 </div>
                 <strong class="aw-asset-card__name">{{ getAssetPrimaryText(item) }}</strong>
-                <span class="aw-asset-card__meta">{{ getAssetBusinessText(item) }}</span>
-                <span class="aw-asset-card__os" :class="getOsDistroClass(item.os_distro)">{{ getAssetOsText(item) }}</span>
+                <!-- <span class="aw-asset-card__meta">{{ getAssetBusinessText(item) }}</span> -->
+                <span class="aw-asset-card__os"><span class="aw-asset-card__os-distro" :class="getOsDistroClass(item.os_distro)">{{ item.os_distro || '--' }}</span><span class="aw-asset-card__os-version">{{ item.os_version || '' }}</span></span>
               </div>
               <div class="aw-asset-card__footer">
                 <button
@@ -419,7 +409,7 @@
                   <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
                   {{ getConnStatusText(item.CONN_LATEST_STATUS) }}
                 </button>
-                <span class="aw-asset-card__chip" :class="item.needReboot == 1 ? 'is-danger' : 'is-success'">
+                <span class="aw-asset-card__chip" :class="item.needReboot == 1 ? 'is-danger' : 'is-success'" style="pointer-events: none; cursor: none;">
                   {{ item.needReboot == 1 ? '需重启' : '无需重启' }}
                 </span>
               </div>
@@ -430,18 +420,21 @@
         <div v-if="assetListDrawer.total > assetListDrawer.pageSize" class="aw-drawer__pagination">
           <el-pagination
             v-model:current-page="assetListDrawer.page"
+            v-model:page-size="assetListDrawer.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
             :page-size="assetListDrawer.pageSize"
             :total="assetListDrawer.total"
-            layout="prev, pager, next"
+            layout="sizes, prev, pager, next"
             background
             small
             @current-change="handleAssetListPageChange"
+            @size-change="handleAssetListPageSizeChange"
           />
         </div>
       </div>
     </el-drawer>
 
-    <el-drawer v-model="exceptionDrawer.visible" size="520px" class="aw-drawer">
+    <el-drawer v-model="exceptionDrawer.visible" size="50%" class="aw-drawer">
       <template #header>
         <div class="aw-drawer-header">
           <span class="aw-drawer-header__title">异常设备</span>
@@ -476,7 +469,7 @@
               v-for="item in exceptionDrawer.records"
               :key="item.key"
               type="button"
-              class="aw-drawer-row"
+              class="aw-drawer-row aw-drawer-row--exception"
               @click="handleExceptionDeviceRowClick(item.raw || item)"
             >
               <strong class="aw-drawer-row__title">{{ item.title }}</strong>
@@ -494,12 +487,15 @@
         <div v-if="exceptionDrawer.total > exceptionDrawer.pageSize" class="aw-drawer__pagination">
           <el-pagination
             v-model:current-page="exceptionDrawer.page"
+            v-model:page-size="exceptionDrawer.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
             :page-size="exceptionDrawer.pageSize"
             :total="exceptionDrawer.total"
-            layout="prev, pager, next"
+            layout="sizes, prev, pager, next"
             background
             small
             @current-change="handleExceptionPageChange"
+            @size-change="handleExceptionPageSizeChange"
           />
         </div>
       </div>
@@ -530,7 +526,7 @@
     <el-drawer
       v-model="recentLogsDrawer.visible"
       title="近7天操作记录"
-      size="560px"
+      size="50%"
       class="aw-drawer"
     >
       <div v-loading="recentLogsDrawer.loading" class="aw-drawer__body">
@@ -540,29 +536,21 @@
               v-for="item in recentLogsDrawer.records"
               :key="item.run_id"
               type="button"
-              class="aw-drawer-row"
+              class="aw-drawer-row aw-drawer-row--log"
               @click="handleLogItemClick(item)"
             >
-              <strong class="aw-drawer-row__title">
-                {{ getOperationActionLabel(item.action) }}
-              </strong>
+              <span class="aw-drawer-row__title">{{ getOperationActionLabel(item.action) }}</span>
+              <span class="aw-drawer-row__engine">{{ item.ata_node || '--' }}</span>
+              <span class="aw-drawer-row__user">{{ item.username || '--' }}</span>
+              <span class="aw-drawer-row__time">{{ formatDateTime(item.start_time) }}</span>
               <el-tag
+                class="aw-drawer-row__status"
                 size="small"
-                :type="
-                  item.status === 'ERROR'
-                    ? 'danger'
-                    : item.status === 'RUNNING'
-                      ? 'warning'
-                      : 'success'
-                "
+                :type="getOperationLogStatusType(item.status)"
                 effect="plain"
               >
                 {{ getRunLogStatusLabel(item.status) }}
               </el-tag>
-              <span class="aw-drawer-row__meta">
-                {{ item.ata_node || '--' }} · {{ item.username || '--' }}
-              </span>
-              <span class="aw-drawer-row__time">{{ formatDateTime(item.start_time) }}</span>
             </button>
           </div>
           <div v-else class="aw-drawer-empty">
@@ -572,12 +560,15 @@
         <div v-if="recentLogsDrawer.total > recentLogsDrawer.pageSize" class="aw-drawer__pagination">
           <el-pagination
             v-model:current-page="recentLogsDrawer.page"
+            v-model:page-size="recentLogsDrawer.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
             :page-size="recentLogsDrawer.pageSize"
             :total="recentLogsDrawer.total"
-            layout="prev, pager, next"
+            layout="sizes, prev, pager, next"
             background
             small
             @current-change="handleRecentLogsPageChange"
+            @size-change="handleRecentLogsPageSizeChange"
           />
         </div>
       </div>
@@ -718,13 +709,16 @@ const {
   assetListDrawerTitle,
   openAssetListDrawer,
   handleAssetListPageChange,
+  handleAssetListPageSizeChange,
   handleViewAssetDetail,
   openExceptionDrawer,
   handleExceptionPageChange,
+  handleExceptionPageSizeChange,
   openFailedLogDrawer,
   handleFailedLogClick,
   openRecentLogsDrawer,
   handleRecentLogsPageChange,
+  handleRecentLogsPageSizeChange,
   handleLogItemClick,
   openGovernanceDrawer
 } = useAssetWorkbenchDrawers({
@@ -762,6 +756,12 @@ const editGroupDialogVisible = ref(false)
 const editTagDialogVisible = ref(false)
 const currentGroupItem = ref(null)
 const currentTagItem = ref(null)
+
+const OPERATION_LOG_REFRESH_RETRY_DELAYS = [1200, 3200, 6500]
+const OPERATION_LOG_POLLING_INTERVAL = 5000
+const operationLogRefreshing = ref(false)
+const operationLogRefreshTimers = []
+let operationLogPollingTimer = 0
 
 function handleEditGroup(item) {
   currentGroupItem.value = item
@@ -854,6 +854,17 @@ function getOperationActionLabel(a) {
   if (!a) return '未知操作'
   return translateI18nKey(a)
 }
+function getOperationLogStatusType(status) {
+  const normalized = String(status || '').toUpperCase()
+  const typeMap = {
+    COMPLETED: 'success',
+    ERROR: 'danger',
+    RUNNING: 'primary',
+    WAITING: 'info',
+    FAILED: 'warning'
+  }
+  return typeMap[normalized] || 'info'
+}
 function formatOperationMessage(m) {
   if (!m) return '无失败详情'
   try {
@@ -938,24 +949,38 @@ async function handleAssetCheckConn(item) {
     const result = Array.isArray(data) ? data[0] : data
     if (result?.status === 'WAITING' || result?.status === 'RUNNING') {
       ElMessage.success('检查连通性任务已发起')
+      handleOperationRunTriggered(result)
       pollJobStatus(result.runId, {
         interval: 5000,
         successMessage: '连通性检查完成',
         errorMessage: '连通性检查失败',
-        onSuccess: () => { removeCheckingId(item.id); switchCardType(selectedAssetTypeCode.value) },
-        onError: () => { removeCheckingId(item.id) },
-        onComplete: () => { removeCheckingId(item.id) }
+        onSuccess: () => {
+          removeCheckingId(item.id)
+          switchCardType(selectedAssetTypeCode.value)
+          void refreshOperationLogsInPlace()
+        },
+        onError: () => {
+          removeCheckingId(item.id)
+          void refreshOperationLogsInPlace()
+        },
+        onComplete: () => {
+          removeCheckingId(item.id)
+          void refreshOperationLogsInPlace()
+        }
       })
     } else if (result?.status === 'COMPLETED' || result?.status === 'SUCCESS') {
       ElMessage.success('连通性检查完成')
       removeCheckingId(item.id)
       switchCardType(selectedAssetTypeCode.value)
+      handleOperationRunTriggered(result)
     } else if (result?.status === 'FAILED' || result?.status === 'ERROR') {
       removeCheckingId(item.id)
       ElMessage.error(result?.error || '连通性检查失败')
+      handleOperationRunTriggered(result)
     } else {
       ElMessage.success('检查连通性任务已启动')
       removeCheckingId(item.id)
+      handleOperationRunTriggered(result)
     }
   } catch (error) {
     removeCheckingId(item.id)
@@ -1034,13 +1059,9 @@ async function handleExceptionCollectInfo(item) {
       { params: { hosts: [host] } }
     )
     const result = Array.isArray(data) ? data[0] : data
-    if (result?.runId) {
-      ElMessage.success('采集信息任务已发起')
-      loadAllData()
-    } else {
-      ElMessage.success('采集信息任务已发起')
-      loadAllData()
-    }
+    ElMessage.success('采集信息任务已发起')
+    handleOperationRunTriggered(result)
+    loadAllData()
   } catch (error) {
     ElMessage.error('采集信息启动失败: ' + (error.response?.data?.message || error.message))
   }
@@ -1068,13 +1089,9 @@ async function handleExceptionCheckConn(item) {
       { params: { hosts: [host] } }
     )
     const result = Array.isArray(data) ? data[0] : data
-    if (result?.runId) {
-      ElMessage.success('检查连通性任务已发起')
-      loadAllData()
-    } else {
-      ElMessage.success('检查连通性任务已发起')
-      loadAllData()
-    }
+    ElMessage.success('检查连通性任务已发起')
+    handleOperationRunTriggered(result)
+    loadAllData()
   } catch (error) {
     ElMessage.error('检查连通性失败: ' + (error.response?.data?.message || error.message))
   }
@@ -1116,7 +1133,9 @@ async function runExceptionBulkAction(jobId, actionName) {
       `/jao/api/jao/jobs/${jobId}/run?cacheBuster=${Date.now()}`,
       { params: { hosts } }
     )
+    const result = Array.isArray(data) ? data[0] : data
     ElMessage.success(`全设备${actionName}任务已发起`)
+    handleOperationRunTriggered(result)
     loadAllData()
   } catch (error) {
     ElMessage.error(`${actionName}失败: ` + (error.response?.data?.message || error.message))
@@ -1164,6 +1183,77 @@ async function loadAllData() {
   refreshedAt.value = new Date()
 }
 
+function isOperationRunningStatus(status) {
+  const normalized = String(status || '').toUpperCase()
+  return normalized === 'WAITING' || normalized === 'RUNNING'
+}
+
+function hasRunningOperationLogs() {
+  const cardRunning = recentLogs.value.some(item => isOperationRunningStatus(item?.status))
+  const drawerRunning = recentLogsDrawer.records.some(item => isOperationRunningStatus(item?.status))
+  return cardRunning || drawerRunning
+}
+
+function clearOperationLogRefreshTimers() {
+  while (operationLogRefreshTimers.length) {
+    clearTimeout(operationLogRefreshTimers.pop())
+  }
+}
+
+function stopOperationLogPolling() {
+  if (operationLogPollingTimer) {
+    clearInterval(operationLogPollingTimer)
+    operationLogPollingTimer = 0
+  }
+}
+
+function ensureOperationLogPolling() {
+  if (operationLogPollingTimer) return
+  operationLogPollingTimer = window.setInterval(() => {
+    void refreshOperationLogsInPlace()
+  }, OPERATION_LOG_POLLING_INTERVAL)
+}
+
+async function refreshOperationLogsInPlace() {
+  if (operationLogRefreshing.value) return
+  operationLogRefreshing.value = true
+  try {
+    await Promise.allSettled([
+      refreshAll(),
+      recentLogsDrawer.visible ? openRecentLogsDrawer(recentLogsDrawer.page) : Promise.resolve()
+    ])
+  } finally {
+    operationLogRefreshing.value = false
+    if (hasRunningOperationLogs()) {
+      ensureOperationLogPolling()
+    } else {
+      stopOperationLogPolling()
+    }
+  }
+}
+
+function scheduleOperationLogRefresh(delays = OPERATION_LOG_REFRESH_RETRY_DELAYS) {
+  clearOperationLogRefreshTimers()
+  delays.forEach(delay => {
+    const timerId = window.setTimeout(() => {
+      const idx = operationLogRefreshTimers.indexOf(timerId)
+      if (idx >= 0) {
+        operationLogRefreshTimers.splice(idx, 1)
+      }
+      void refreshOperationLogsInPlace()
+    }, delay)
+    operationLogRefreshTimers.push(timerId)
+  })
+}
+
+function handleOperationRunTriggered(result) {
+  void refreshOperationLogsInPlace()
+  scheduleOperationLogRefresh()
+  if (isOperationRunningStatus(result?.status)) {
+    ensureOperationLogPolling()
+  }
+}
+
 // ── 交互 ──
 
 function handleDialogSaved() {
@@ -1190,6 +1280,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', syncViewportWidth)
+  clearOperationLogRefreshTimers()
+  stopOperationLogPolling()
 })
 </script>
 
@@ -1277,7 +1369,7 @@ onUnmounted(() => {
   border-radius: 999px;
   background: var(--aw-panel-bg);
   border: 1px solid var(--aw-panel-border);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--aw-text-secondary);
   white-space: nowrap;
 
@@ -1374,7 +1466,7 @@ onUnmounted(() => {
   }
 
   &__label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--aw-text-secondary);
     text-transform: uppercase;
@@ -1411,12 +1503,12 @@ onUnmounted(() => {
   }
 
   &__sub {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--aw-text-muted);
   }
 
   &__hint {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--aw-accent);
     opacity: 0;
@@ -1623,7 +1715,7 @@ onUnmounted(() => {
   }
 
   &__stat-badge {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--aw-text-secondary);
     background: var(--aw-bg);
     padding: 2px 8px;
@@ -1652,7 +1744,7 @@ onUnmounted(() => {
     border-radius: 999px;
     background: var(--aw-bg);
     border: 1px solid var(--aw-panel-border);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--aw-accent);
     white-space: nowrap;
@@ -1690,7 +1782,7 @@ onUnmounted(() => {
   border-radius: 999px;
   border: 1px solid var(--aw-panel-border);
   background: var(--aw-bg);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--aw-text-secondary);
   cursor: pointer;
   transition: all 0.15s;
@@ -1745,7 +1837,7 @@ onUnmounted(() => {
   border-radius: 999px;
   background: transparent;
   color: var(--aw-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
@@ -1812,7 +1904,7 @@ onUnmounted(() => {
     align-items: center;
     justify-content: space-between;
     padding: 2px 6px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--aw-text-muted);
     text-transform: uppercase;
@@ -1820,7 +1912,7 @@ onUnmounted(() => {
   }
 
   &__count {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--aw-danger);
   }
@@ -1868,7 +1960,7 @@ onUnmounted(() => {
 
   &__badge {
     flex-shrink: 0;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--aw-danger);
     background: rgba(239, 68, 68, 0.08);
@@ -1903,7 +1995,7 @@ onUnmounted(() => {
     width: 24px;
     height: 24px;
     border-radius: 999px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--aw-text-muted);
     cursor: pointer;
     transition: all 0.15s;
@@ -1936,7 +2028,7 @@ onUnmounted(() => {
   }
 
   &__title {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--aw-text-muted);
     text-transform: uppercase;
@@ -2054,29 +2146,23 @@ onUnmounted(() => {
     font-size: 12px;
     font-weight: 600;
     color: var(--aw-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
 
-    &.is-debian {
-      color: #2563eb;
+    &-distro {
+      &.is-debian { color: #2563eb; }
+      &.is-redhat { color: #dc2626; }
+      &.is-oracle { color: #c2410c; }
+      &.is-suse { color: #16a34a; }
+      &.is-windows { color: #0284c7; }
+      &.is-unknown { color: var(--aw-text-muted); }
     }
 
-    &.is-redhat {
-      color: #dc2626;
-    }
-
-    &.is-oracle {
-      color: #c2410c;
-    }
-
-    &.is-suse {
-      color: #16a34a;
-    }
-
-    &.is-windows {
-      color: #0284c7;
-    }
-
-    &.is-unknown {
+    &-version {
       color: var(--aw-text-muted);
+      font-weight: 400;
+      font-size: 12px;
     }
   }
 
@@ -2149,7 +2235,7 @@ onUnmounted(() => {
 
   &__title {
     display: block;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--aw-text-muted);
     margin-bottom: 8px;
@@ -2197,7 +2283,7 @@ onUnmounted(() => {
   }
 
   &__count {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--aw-text-muted);
     flex-shrink: 0;
@@ -2218,7 +2304,7 @@ onUnmounted(() => {
   border-radius: 999px;
   border: 1px solid var(--aw-panel-border);
   background: var(--aw-bg);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--aw-text-secondary);
   cursor: pointer;
   transition: all 0.12s;
@@ -2253,10 +2339,10 @@ onUnmounted(() => {
 }
 
 .aw-log-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(92px, 1fr) 110px 84px 120px 72px;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  column-gap: 10px;
   width: 100%;
   padding: 10px 14px;
   border-radius: 10px;
@@ -2273,37 +2359,34 @@ onUnmounted(() => {
     transform: translateY(-1px);
   }
 
-  &__main {
-    min-width: 0;
-    flex: 1;
-  }
-
   &__title {
-    display: block;
     font-size: 12px;
-    font-weight: 600;
     color: var(--aw-text-primary);
-    line-height: 1.4;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  &__meta {
-    display: block;
-    font-size: 11px;
+  &__engine,
+  &__user {
+    font-size: 12px;
     color: var(--aw-text-muted);
-    margin-top: 2px;
-  }
-
-  &__side {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
   }
 
   &__time {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--aw-text-muted);
     white-space: nowrap;
+    text-align: left;
+  }
+
+  &__status {
+    justify-self: end;
   }
 }
 
@@ -2366,7 +2449,6 @@ onUnmounted(() => {
 
   &__title {
     font-size: 13px;
-    font-weight: 700;
     color: var(--aw-text-primary);
     min-width: 0;
     flex-shrink: 0;
@@ -2397,7 +2479,7 @@ onUnmounted(() => {
   }
 
   &__meta {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--aw-text-muted);
     flex-shrink: 0;
   }
@@ -2411,13 +2493,13 @@ onUnmounted(() => {
   }
 
   &__time {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--aw-text-muted);
     flex-shrink: 0;
   }
 
   &__count {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--aw-text-muted);
     margin-left: auto;
@@ -2437,6 +2519,62 @@ onUnmounted(() => {
 
   &:hover &__edit-btn {
     opacity: 1;
+  }
+}
+
+.aw-drawer-row--log {
+  display: grid;
+  grid-template-columns: minmax(92px, 1fr) 110px 84px 120px 72px;
+  align-items: center;
+  column-gap: 10px;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--aw-accent) 35%, var(--aw-panel-border));
+    box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--aw-accent) 10%, transparent);
+  }
+
+  .aw-drawer-row__title,
+  .aw-drawer-row__engine,
+  .aw-drawer-row__user,
+  .aw-drawer-row__time {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aw-drawer-row__engine,
+  .aw-drawer-row__user,
+  .aw-drawer-row__time {
+    font-size: 12px;
+    color: var(--aw-text-muted);
+  }
+
+  .aw-drawer-row__status {
+    justify-self: end;
+  }
+}
+
+.aw-drawer-row--exception {
+  display: grid;
+  grid-template-columns: 160px 90px minmax(120px, 1fr) 190px 52px;
+  align-items: center;
+  column-gap: 10px;
+
+  .aw-drawer-row__title,
+  .aw-drawer-row__desc,
+  .aw-drawer-row__meta {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aw-drawer-row__actions {
+    margin-left: 0;
+    justify-self: end;
   }
 }
 
@@ -2605,6 +2743,15 @@ html.dark .asset-workbench .aw-log-item {
   .aw-stats {
     grid-template-columns: repeat(3, 1fr);
   }
+
+  .aw-log-item,
+  .aw-drawer-row--log {
+    grid-template-columns: minmax(90px, 1fr) 96px 76px 110px 68px;
+  }
+
+  .aw-drawer-row--exception {
+    grid-template-columns: 130px 76px minmax(100px, 1fr) 160px 52px;
+  }
 }
 
 @media (max-width: 720px) {
@@ -2632,6 +2779,26 @@ html.dark .asset-workbench .aw-log-item {
   }
   .aw-signal-strip {
     grid-template-columns: 1fr;
+  }
+
+  .aw-log-item,
+  .aw-drawer-row--log {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4px;
+  }
+
+  .aw-drawer-row--exception {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4px;
+  }
+
+  .aw-log-item .aw-log-item__status,
+  .aw-drawer-row--log .aw-drawer-row__status {
+    justify-self: start;
+  }
+
+  .aw-drawer-row--exception .aw-drawer-row__actions {
+    justify-self: start;
   }
 }
 </style>

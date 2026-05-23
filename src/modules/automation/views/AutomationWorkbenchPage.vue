@@ -426,17 +426,13 @@
               class="wb-run-log-item"
               @click="handleOpenRunResult(item)"
             >
-              <div class="wb-run-log-item__main">
-                <strong class="wb-run-log-item__name">{{ item.displayTitle }}</strong>
-                <span class="wb-run-log-item__type" :class="`wb-run-log-item__type--${item.displayTypeClass}`">{{ item.displayTypeLabel }}</span>
-                <span class="wb-run-log-item__time">{{ item.displayTime }}</span>
-              </div>
-              <div class="wb-run-log-item__side">
-                <el-tag size="small" effect="plain" :type="item.displayStatusType">
-                  {{ item.displayStatusLabel }}
-                </el-tag>
-                <i class="fas fa-chevron-right wb-run-log-item__arrow" />
-              </div>
+              <strong class="wb-run-log-item__name">{{ item.displayTitle }}</strong>
+              <span class="wb-run-log-item__type" :class="`wb-run-log-item__type--${item.displayTypeClass}`">{{ item.displayTypeLabel }}</span>
+              <span class="wb-run-log-item__time">{{ item.displayTime }}</span>
+              <el-tag class="wb-run-log-item__status" size="small" effect="plain" :type="item.displayStatusType">
+                {{ item.displayStatusLabel }}
+              </el-tag>
+              <i class="fas fa-chevron-right wb-run-log-item__arrow" />
             </button>
           </transition-group>
           <el-empty v-else description="今日暂无运行记录" :image-size="60" />
@@ -1923,7 +1919,7 @@ onBeforeUnmount(() => {
 
   &__sub {
     min-width: 0;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--wb-text-secondary);
     white-space: nowrap;
     overflow: hidden;
@@ -2295,7 +2291,7 @@ onBeforeUnmount(() => {
   padding-top: 4px;
 
   &__meta {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--wb-text-muted);
   }
 }
@@ -2319,10 +2315,10 @@ onBeforeUnmount(() => {
 }
 
 .wb-run-log-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px 96px 84px 14px;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  column-gap: 8px;
   width: 100%;
   padding: 8px 10px;
   border-radius: 8px;
@@ -2339,21 +2335,6 @@ onBeforeUnmount(() => {
     .wb-run-log-item__arrow { transform: translateX(2px); }
   }
 
-  &__main {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  &__side {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-
   &__name {
     font-size: 13px;
     font-weight: 500;
@@ -2366,9 +2347,13 @@ onBeforeUnmount(() => {
   }
 
   &__time {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--wb-text-muted);
-    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  &__status {
+    justify-self: start;
   }
 
   &__type {
@@ -2376,9 +2361,9 @@ onBeforeUnmount(() => {
     align-items: center;
     padding: 1px 6px;
     border-radius: 999px;
-    font-size: 11px;
+    font-size: 12px;
     background: rgba(148, 163, 184, 0.12);
-    flex-shrink: 0;
+    width: fit-content;
 
     &--rest {
       color: var(--wb-info);
@@ -2400,14 +2385,20 @@ onBeforeUnmount(() => {
     font-size: 10px;
     color: var(--wb-text-muted);
     transition: transform 0.15s;
-    flex-shrink: 0;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 1280px) {
+  .wb-run-log-item {
+    grid-template-columns: minmax(0, 1fr) 100px 90px 76px 14px;
   }
 }
 
 .wb-run-entries__footer {
   padding: 8px 16px;
   border-top: 1px solid var(--wb-panel-border);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--wb-text-muted);
   background: #fafafa;
   margin-top: auto;
@@ -2524,7 +2515,7 @@ onBeforeUnmount(() => {
   }
 
   &__cron {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--wb-text-muted);
     font-family: monospace;
   }
@@ -2675,7 +2666,7 @@ onBeforeUnmount(() => {
 
   &__time {
     flex-shrink: 0;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--wb-text-muted);
   }
 
