@@ -61,15 +61,42 @@
 
         <!-- 待更新软件包 -->
         <div class="install-card">
-          <div class="card-header">
-            <i class="fa fa-cube" />
-            {{ packageCardTitle }}
+          <div
+            class="card-header"
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 4px 12px;
+              height: 36px;
+            "
+          >
+            <div>
+              <i class="fa fa-cube" style="margin-right: 6px" />
+              {{ packageCardTitle }}
+            </div>
+            <div v-if="affectedPackages.length > 10">
+              <el-input
+                v-model="packageSearchText"
+                placeholder="搜索..."
+                size="small"
+                clearable
+                style="width: 240px"
+              />
+            </div>
           </div>
           <div class="card-body card-body--scroll">
-            <div v-for="pkg in affectedPackages" :key="pkg" class="package-item">
+            <div v-for="pkg in displayedPackages" :key="pkg" class="package-item">
               {{ pkg }}
             </div>
-            <div v-if="affectedPackages.length === 0" class="no-data">暂无数据</div>
+            <div v-if="displayedPackages.length === 0" class="no-data">
+              {{ affectedPackages.length === 0 ? '暂无数据' : '未匹配到相关软件包' }}
+            </div>
+            <div v-if="hasMorePackages" style="text-align: center; padding-top: 4px">
+              <el-button link type="primary" size="small" @click="loadMorePackages">
+                加载更多 (已显示 {{ displayedPackages.length }}/{{ filteredPackages.length }})
+              </el-button>
+            </div>
           </div>
         </div>
 
@@ -142,7 +169,6 @@
             </div>
           </div>
         </div>
-
       </div>
 
       <!-- Step 1: 预执行脚本 -->
@@ -157,7 +183,8 @@
               v-model="scriptModes.pre"
               size="small"
               :disabled="
-                stepStates[stepIndexes.pre] === 'running' || stepStates[stepIndexes.pre] === 'success'
+                stepStates[stepIndexes.pre] === 'running' ||
+                stepStates[stepIndexes.pre] === 'success'
               "
             >
               <el-radio-button label="edit">手动编辑</el-radio-button>
@@ -172,7 +199,8 @@
               :placeholder="preScriptPlaceholder"
               class="script-input"
               :disabled="
-                stepStates[stepIndexes.pre] === 'running' || stepStates[stepIndexes.pre] === 'success'
+                stepStates[stepIndexes.pre] === 'running' ||
+                stepStates[stepIndexes.pre] === 'success'
               "
             />
           </div>
@@ -199,7 +227,9 @@
               </el-button>
               <span class="script-upload-file">{{ scriptFiles.pre || '未选择文件' }}</span>
             </div>
-            <div class="task-step-editor__hint">上传后会暂存到当前向导，执行时再同步到补丁安装任务。</div>
+            <div class="task-step-editor__hint">
+              上传后会暂存到当前向导，执行时再同步到补丁安装任务。
+            </div>
             <el-input
               type="textarea"
               :model-value="installConfig.preScript"
@@ -303,7 +333,9 @@
               </el-button>
               <span class="script-upload-file">{{ scriptFiles.post || '未选择文件' }}</span>
             </div>
-            <div class="task-step-editor__hint">上传后会暂存到当前向导，执行时再同步到补丁安装任务。</div>
+            <div class="task-step-editor__hint">
+              上传后会暂存到当前向导，执行时再同步到补丁安装任务。
+            </div>
             <el-input
               type="textarea"
               :model-value="installConfig.postScript"
@@ -445,29 +477,152 @@
                 <div v-if="selectionDisplayItems.length === 0" class="install-summary-empty">
                   暂无数据
                 </div>
-                <div
-                  v-for="item in selectionDisplayItems"
-                  :key="item.key"
-                  class="install-summary-item"
-                >
-                  <div>{{ item.primary }}</div>
-                  <div v-if="item.secondary" class="install-summary-subtext">
-                    {{ item.secondary }}
+                <template v-else>
+                  <div
+                    v-if="selectionDisplayItems.length > 5"
+                    style="
+                      margin-bottom: 8px;
+                      display: flex;
+                      gap: 8px;
+                      align-items: center;
+                      flex-wrap: wrap;
+                      width: 100%;
+                    "
+                  >
+                    <el-input
+                      v-model="selectionSummarySearchText"
+                      placeholder="搜索内容..."
+                      size="small"
+                      clearable
+                      style="width: 200px"
+                    />
+                    <span style="font-size: 12px; color: var(--el-text-color-secondary)">
+                      共 {{ selectionDisplayItems.length }} 个，已显示
+                      {{ displayedSummarySelectionItems.length }} 个
+                    </span>
                   </div>
-                </div>
+                  <div
+                    class="summary-selection-list-container"
+                    style="
+                      max-height: 150px;
+                      overflow-y: auto;
+                      border: 1px solid var(--el-border-color-lighter);
+                      padding: 8px;
+                      border-radius: 4px;
+                      width: 100%;
+                    "
+                  >
+                    <div
+                      v-for="item in displayedSummarySelectionItems"
+                      :key="item.key"
+                      class="install-summary-item"
+                      style="
+                        padding: 4px 0;
+                        border-bottom: 1px dashed var(--el-border-color-extra-light);
+                      "
+                    >
+                      <div style="font-weight: 500">{{ item.primary }}</div>
+                      <div
+                        v-if="item.secondary"
+                        class="install-summary-subtext"
+                        style="
+                          font-size: 12px;
+                          color: var(--el-text-color-secondary);
+                          margin-top: 2px;
+                        "
+                      >
+                        {{ item.secondary }}
+                      </div>
+                    </div>
+                    <div
+                      v-if="displayedSummarySelectionItems.length === 0"
+                      class="install-summary-empty"
+                      style="font-size: 12px"
+                    >
+                      未匹配到相关内容
+                    </div>
+                    <div
+                      v-if="hasMoreSummarySelectionItems"
+                      style="text-align: center; padding-top: 8px"
+                    >
+                      <el-button
+                        link
+                        type="primary"
+                        size="small"
+                        @click="loadMoreSummarySelectionItems"
+                      >
+                        加载更多 (已显示 {{ displayedSummarySelectionItems.length }}/{{
+                          filteredSummarySelectionItems.length
+                        }})
+                      </el-button>
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
             <div class="install-summary-row">
               <span class="install-summary-label">目标主机</span>
               <div class="install-summary-list">
                 <div v-if="confirmedHosts.length === 0" class="install-summary-empty">暂无主机</div>
-                <div
-                  v-for="host in confirmedHosts"
-                  :key="host.hostId || host.id || host.hostKey"
-                  class="install-summary-item"
-                >
-                  {{ formatHostDisplay(host) }}
-                </div>
+                <template v-else>
+                  <div
+                    v-if="confirmedHosts.length > 5"
+                    style="
+                      margin-bottom: 8px;
+                      display: flex;
+                      gap: 8px;
+                      align-items: center;
+                      flex-wrap: wrap;
+                      width: 100%;
+                    "
+                  >
+                    <el-input
+                      v-model="hostSummarySearchText"
+                      placeholder="搜索目标主机..."
+                      size="small"
+                      clearable
+                      style="width: 200px"
+                    />
+                    <span style="font-size: 12px; color: var(--el-text-color-secondary)">
+                      共 {{ confirmedHosts.length }} 台，已显示
+                      {{ displayedSummaryHosts.length }} 台
+                    </span>
+                  </div>
+                  <div
+                    class="summary-host-list-container"
+                    style="
+                      max-height: 150px;
+                      overflow-y: auto;
+                      border: 1px solid var(--el-border-color-lighter);
+                      padding: 8px;
+                      border-radius: 4px;
+                      width: 100%;
+                    "
+                  >
+                    <div
+                      v-for="host in displayedSummaryHosts"
+                      :key="host.hostId || host.id || host.hostKey"
+                      class="install-summary-item"
+                      style="padding: 2px 0"
+                    >
+                      {{ formatHostDisplay(host) }}
+                    </div>
+                    <div
+                      v-if="displayedSummaryHosts.length === 0"
+                      class="install-summary-empty"
+                      style="font-size: 12px"
+                    >
+                      未匹配到相关主机
+                    </div>
+                    <div v-if="hasMoreSummaryHosts" style="text-align: center; padding-top: 8px">
+                      <el-button link type="primary" size="small" @click="loadMoreSummaryHosts">
+                        加载更多 (已显示 {{ displayedSummaryHosts.length }}/{{
+                          filteredSummaryHosts.length
+                        }})
+                      </el-button>
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
             <div class="install-summary-row">
@@ -476,9 +631,63 @@
                 <div v-if="affectedPackages.length === 0" class="install-summary-empty">
                   暂无软件包
                 </div>
-                <div v-for="pkg in affectedPackages" :key="pkg" class="install-summary-item">
-                  {{ pkg }}
-                </div>
+                <template v-else>
+                  <div
+                    v-if="affectedPackages.length > 10"
+                    style="
+                      margin-bottom: 8px;
+                      display: flex;
+                      gap: 8px;
+                      align-items: center;
+                      flex-wrap: wrap;
+                    "
+                  >
+                    <el-input
+                      v-model="packageSearchText"
+                      placeholder="搜索软件包..."
+                      size="small"
+                      clearable
+                      style="width: 200px"
+                    />
+                    <span style="font-size: 12px; color: var(--el-text-color-secondary)">
+                      共 {{ affectedPackages.length }} 个，已显示 {{ displayedPackages.length }} 个
+                    </span>
+                  </div>
+                  <div
+                    class="package-list-container"
+                    style="
+                      max-height: 200px;
+                      overflow-y: auto;
+                      border: 1px solid var(--el-border-color-lighter);
+                      padding: 8px;
+                      border-radius: 4px;
+                      width: 100%;
+                    "
+                  >
+                    <div
+                      v-for="pkg in displayedPackages"
+                      :key="pkg"
+                      class="install-summary-item"
+                      style="font-family: monospace; font-size: 12px; padding: 2px 0"
+                    >
+                      {{ pkg }}
+                    </div>
+                    <div
+                      v-if="displayedPackages.length === 0"
+                      class="install-summary-empty"
+                      style="font-size: 12px"
+                    >
+                      未匹配到相关软件包
+                    </div>
+                    <div v-if="hasMorePackages" style="text-align: center; padding-top: 8px">
+                      <el-button link type="primary" size="small" @click="loadMorePackages">
+                        加载更多 (已显示 {{ displayedPackages.length }}/{{
+                          filteredPackages.length
+                        }})
+                      </el-button>
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
             <div class="install-summary-row">
@@ -578,7 +787,9 @@
 
           <!-- 正在执行按钮 -->
           <el-button
-            v-if="currentStepKey === 'execute' && (pipelineStatus === 'running' || executionSubmitting)"
+            v-if="
+              currentStepKey === 'execute' && (pipelineStatus === 'running' || executionSubmitting)
+            "
             type="primary"
             loading
             disabled
@@ -616,9 +827,7 @@
           <!-- 最后一步确认与离开按钮 -->
           <el-button
             v-if="
-              installStep === finalStepIndex &&
-              pipelineStatus !== 'running' &&
-              !executionSubmitting
+              installStep === finalStepIndex && pipelineStatus !== 'running' && !executionSubmitting
             "
             type="primary"
             @click="handlePrimaryAction"
@@ -643,7 +852,6 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { patchInstallApi } from '../../../api'
 import { getPatchTaskWizardSteps } from '../../../constants/task-display'
@@ -657,6 +865,7 @@ import { usePatchTaskRestartAdvice } from './usePatchTaskRestartAdvice'
 import { usePatchTaskScripts } from './usePatchTaskScripts'
 import { usePatchTaskTaskCreation } from './usePatchTaskTaskCreation'
 import { usePatchTaskTaskPreparation } from './usePatchTaskTaskPreparation'
+import { useLazyDisplayList } from '../../../composables/useLazyDisplayList'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 const props = defineProps({
@@ -709,6 +918,48 @@ const affectedPackages = ref([])
 const affectedHosts = ref([])
 const selectedHosts = ref([])
 const confirmedHosts = ref([])
+
+// 软件包渲染性能优化：分页与过滤
+const {
+  searchText: packageSearchText,
+  displayedList: displayedPackages,
+  hasMore: hasMorePackages,
+  loadMore: loadMorePackages,
+  filteredList: filteredPackages
+} = useLazyDisplayList(affectedPackages, {
+  initialCount: 50,
+  stepCount: 100
+})
+
+// 目标主机汇总渲染性能优化：分页与过滤
+const {
+  searchText: hostSummarySearchText,
+  displayedList: displayedSummaryHosts,
+  hasMore: hasMoreSummaryHosts,
+  loadMore: loadMoreSummaryHosts,
+  filteredList: filteredSummaryHosts
+} = useLazyDisplayList(confirmedHosts, {
+  initialCount: 20,
+  stepCount: 50,
+  searchFn: (host, keyword) => formatHostDisplay(host).toLowerCase().includes(keyword)
+})
+
+// 待更新软件包/补丁/漏洞汇总列表渲染性能优化：分页与过滤
+const {
+  searchText: selectionSummarySearchText,
+  displayedList: displayedSummarySelectionItems,
+  hasMore: hasMoreSummarySelectionItems,
+  loadMore: loadMoreSummarySelectionItems,
+  filteredList: filteredSummarySelectionItems
+} = useLazyDisplayList(selectionDisplayItems, {
+  initialCount: 20,
+  stepCount: 50,
+  searchFn: (item, keyword) => {
+    const primary = String(item.primary || '').toLowerCase()
+    const secondary = String(item.secondary || '').toLowerCase()
+    return primary.includes(keyword) || secondary.includes(keyword)
+  }
+})
 
 // watch visibility to load data
 watch(
@@ -885,7 +1136,9 @@ const stepIndexes = computed(() =>
   }, {})
 )
 const finalStepIndex = computed(() => Math.max(0, wizardSteps.value.length - 1))
-const currentStepSkippable = computed(() => ['pre', 'validate', 'restart'].includes(currentStepKey.value))
+const currentStepSkippable = computed(() =>
+  ['pre', 'validate', 'restart'].includes(currentStepKey.value)
+)
 const createdTaskId = ref('')
 const restartConfirmText = ref('')
 const pipelineStatus = ref('idle')
@@ -994,52 +1247,46 @@ const { loadRestartAdviceByHostPatch } = usePatchTaskBackendRestartAdvice({
   restartAdviceCacheKey,
   applyLocalRestartAdvice
 })
-const {
-  goBack,
-  handleAdvanceStep,
-  handleNextStep,
-  handlePrimaryAction,
-  handleSkipStep,
-  resetInstallState
-} = usePatchTaskFlow({
-  createdTaskId,
-  executionSubmitting,
-  pipelineStatus,
-  installStep,
-  getStepIndex,
-  confirmedHosts,
-  canReusePreparedTask,
-  resetPipelineState,
-  resetRestartOptions,
-  createExecutionTask,
-  syncScriptConfig,
-  loadRestartOptions,
-  loadRollbackInfo,
-  requiresRestartConfirm,
-  isSkipped,
-  restartConfirmText,
-  restartConfirmKeyword,
-  currentStepKey,
-  stepTransitionLoading,
-  selectedHosts,
-  stepStates,
-  resetSkippedSteps,
-  taskDetailData,
-  taskErrorMessage,
-  taskStatus,
-  pipelineFinished,
-  finalStepIndex,
-  loadRestartAdviceByHostPatch,
-  currentStepSkippable,
-  isVisible,
-  startPipeline,
-  resolveApiErrorMessage,
-  stopPolling,
-  backendRestartReason,
-  installConfig,
-  resetScriptState,
-  hasFixedHosts
-})
+const { goBack, handleAdvanceStep, handlePrimaryAction, handleSkipStep, resetInstallState } =
+  usePatchTaskFlow({
+    createdTaskId,
+    executionSubmitting,
+    pipelineStatus,
+    installStep,
+    getStepIndex,
+    confirmedHosts,
+    canReusePreparedTask,
+    resetPipelineState,
+    resetRestartOptions,
+    createExecutionTask,
+    syncScriptConfig,
+    loadRestartOptions,
+    loadRollbackInfo,
+    requiresRestartConfirm,
+    isSkipped,
+    restartConfirmText,
+    restartConfirmKeyword,
+    currentStepKey,
+    stepTransitionLoading,
+    selectedHosts,
+    stepStates,
+    resetSkippedSteps,
+    taskDetailData,
+    taskErrorMessage,
+    taskStatus,
+    pipelineFinished,
+    finalStepIndex,
+    loadRestartAdviceByHostPatch,
+    currentStepSkippable,
+    isVisible,
+    startPipeline,
+    resolveApiErrorMessage,
+    stopPolling,
+    backendRestartReason,
+    installConfig,
+    resetScriptState,
+    hasFixedHosts
+  })
 
 const pipelineItems = computed(() => {
   return [
@@ -1069,20 +1316,6 @@ function openExecuteResult(runId, jobTitle) {
 function getTaskRunId(taskData, runKey) {
   if (!taskData || !runKey) return ''
   return taskData[runKey] || ''
-}
-
-function formatTaskFieldValue(value) {
-  if (value === null || value === undefined || value === '') return ''
-
-  if (typeof value === 'string') {
-    return value
-  }
-
-  try {
-    return JSON.stringify(value, null, 2)
-  } catch {
-    return String(value)
-  }
 }
 
 function resolveApiErrorMessage(error, fallback = '操作失败，请稍后重试') {

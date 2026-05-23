@@ -53,6 +53,18 @@
           :value="tag.name"
         />
       </el-select>
+
+      <!-- 一键全选 / 一键取消 -->
+      <el-button
+        class="select-all-btn"
+        :type="allSelected ? 'default' : 'primary'"
+        size="small"
+        :loading="selectAllLoading"
+        @click="handleToggleSelectAll"
+      >
+        <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
+        {{ allSelected ? '一键取消' : '一键全选' }}
+      </el-button>
     </div>
 
     <!-- 主机列表表格 -->
@@ -144,6 +156,8 @@ const groupTreeData = ref([])
 const tagList = ref([])
 const groupLoading = ref(false)
 const tagLoading = ref(false)
+const selectAllLoading = ref(false)
+const allSelected = ref(false)
 const pagination = ref({
   page: 1,
   pageSize: 10,
@@ -159,6 +173,7 @@ watch(
   () => props.ciType,
   newVal => {
     if (newVal) {
+      allSelected.value = false
       fetchData()
       fetchGroupList()
       fetchTagList()
@@ -171,10 +186,14 @@ watch(
 // 只在外部改变时才同步（比如从父组件删除一个已选主机）
 watch(
   () => props.modelValue,
-  async (newVal, oldVal) => {
+  async newVal => {
     // 如果是内部更新触发的，跳过
     if (isInternalUpdate) {
       return
+    }
+
+    if (!newVal || newVal.length === 0) {
+      allSelected.value = false
     }
 
     await nextTick()
@@ -227,7 +246,7 @@ function buildGroupTree(paths) {
     let currentPath = ''
 
     parts.forEach(part => {
-      currentPath += '/' + part
+      currentPath += `/${part}`
 
       let child = current.children.find(c => c.name === part)
       if (!child) {
@@ -338,9 +357,9 @@ function restoreSelection() {
     }
   })
   // 延迟重置标志，确保 selection-change 事件已处理
-  setTimeout(() => {
+  nextTick(() => {
     isInternalUpdate = false
-  }, 0)
+  })
 }
 
 // 从 modelValue 同步选中状态到表格
@@ -359,9 +378,9 @@ function syncSelectionFromModelValue() {
     })
   }
 
-  setTimeout(() => {
+  nextTick(() => {
     isInternalUpdate = false
-  }, 0)
+  })
 }
 
 function handleSelectionChange(selection) {
@@ -369,6 +388,9 @@ function handleSelectionChange(selection) {
   if (isInternalUpdate) {
     return
   }
+
+  // 用户手动操作时退出全选模式
+  allSelected.value = false
 
   let effectiveSelection = Array.isArray(selection) ? [...selection] : []
 
@@ -381,9 +403,9 @@ function handleSelectionChange(selection) {
     if (latestRow) {
       tableRef.value?.toggleRowSelection(latestRow, true)
     }
-    setTimeout(() => {
+    nextTick(() => {
       isInternalUpdate = false
-    }, 0)
+    })
   }
 
   // 将选中的行转换为标准格式
@@ -399,23 +421,101 @@ function handleSelectionChange(selection) {
     item => !currentPageIds.includes(item.key)
   )
 
-  const mergedSelection = isSingleSelector.value ? selectedHosts.slice(0, 1) : [...otherPageSelections, ...selectedHosts]
+  const mergedSelection = isSingleSelector.value
+    ? selectedHosts.slice(0, 1)
+    : [...otherPageSelections, ...selectedHosts]
 
   isInternalUpdate = true
   emit('update:modelValue', mergedSelection)
-  setTimeout(() => {
+  nextTick(() => {
     isInternalUpdate = false
-  }, 0)
+  })
 }
 
 function handleGroupFilter() {
+  allSelected.value = false
   pagination.value.page = 1
   fetchData()
 }
 
 function handleTagFilter() {
+  allSelected.value = false
   pagination.value.page = 1
   fetchData()
+}
+
+// 一键全选 / 一键取消 切换
+async function handleToggleSelectAll() {
+  if (!props.ciType || selectAllLoading.value) return
+
+  // 取消全选
+  if (allSelected.value) {
+    allSelected.value = false
+    isInternalUpdate = true
+    emit('update:modelValue', [])
+    if (tableRef.value) {
+      tableRef.value.clearSelection()
+    }
+    nextTick(() => {
+      isInternalUpdate = false
+    })
+    return
+  }
+
+  // 全选：请求全量数据并全部选中
+  selectAllLoading.value = true
+  try {
+    let tagsParam = '@@'
+    if (tagFilter.value && tagFilter.value !== '@@') {
+      tagsParam = JSON.stringify([{ key: tagFilter.value, value: tagFilter.value }])
+    }
+
+    const response = await jaoApi.queryAcmInstances({
+      ciType: props.ciType,
+      page: 1,
+      pageSize: pagination.value.total || 10000,
+      groups: groupFilter.value || '@@',
+      tags: tagsParam
+    })
+
+    const data = response?.data || response
+    const records = Array.isArray(data?.records) ? data.records : Array.isArray(data) ? data : []
+
+    if (!records.length) {
+      ElMessage.info('没有可选的设备')
+      return
+    }
+
+    // 将所有记录转换为统一格式 { key, value, assetType }
+    const allHosts = records.map(item => ({
+      key: item.id || item.ci_id || `row-${Math.random()}`,
+      value: item.IP,
+      assetType: props.ciType
+    }))
+
+    allSelected.value = true
+
+    // 更新 modelValue
+    isInternalUpdate = true
+    emit('update:modelValue', allHosts)
+
+    // 勾选当前页所有行
+    await nextTick()
+    if (tableRef.value) {
+      tableRef.value.clearSelection()
+      tableData.value.forEach(row => {
+        tableRef.value.toggleRowSelection(row, true)
+      })
+    }
+
+    await nextTick()
+    isInternalUpdate = false
+  } catch (error) {
+    console.error('Failed to select all devices:', error)
+    ElMessage.error('全选失败，请重试')
+  } finally {
+    selectAllLoading.value = false
+  }
 }
 </script>
 
@@ -454,6 +554,10 @@ function handleTagFilter() {
 
 .instance-selector .filter-toolbar :deep(.el-select) {
   width: 200px;
+}
+
+.instance-selector .filter-toolbar .select-all-btn {
+  margin-left: auto;
 }
 
 .instance-selector .filter-toolbar .group-select-btn {

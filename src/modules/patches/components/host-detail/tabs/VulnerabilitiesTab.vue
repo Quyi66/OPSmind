@@ -66,6 +66,14 @@
         <i class="fa fa-tools" />
         修复选中的漏洞 ({{ selectedVuls.length }})
       </el-button>
+      <el-button
+        size="small"
+        :disabled="vulTableData.length === 0"
+        @click="handleToggleAllSelection"
+      >
+        <i :class="`fa fa-${isAllSelected ? 'times' : 'check-double'}`" />
+        {{ isAllSelected ? '取消全选' : '一键全选' }}
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -81,12 +89,14 @@
 
     <!-- 表格 -->
     <el-table
+      ref="vulTableRef"
       v-loading="vulLoading"
       :data="vulTableData"
       class="header-border-only-table"
       size="small"
       max-height="calc(100vh - 400px)"
-      @selection-change="handleVulSelectionChange"
+      @select="handleTableSelect"
+      @select-all="handleTableSelect"
       border
     >
       <el-table-column type="selection" width="55" />
@@ -246,10 +256,7 @@
                 </el-tag>
                 <span v-else-if="row.reboot_status !== '服务重启'" class="text-muted">-</span>
               </span>
-              <div
-                v-if="getDisplayRebootStatus(row) === '服务重启'"
-                class="reboot-services-list"
-              >
+              <div v-if="getDisplayRebootStatus(row) === '服务重启'" class="reboot-services-list">
                 <el-tag
                   v-for="(service, serviceIndex) in getRebootServices(row)"
                   :key="getRebootServiceKey(row, service, serviceIndex)"
@@ -346,6 +353,7 @@ import {
   getPatchStatusText
 } from '../../../composables/useFormatters'
 import { useVulnerabilityList } from '../../../composables/useVulnerabilityList'
+import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import {
   getAffectedPackages,
   getAffectedPackageDetailParams,
@@ -406,7 +414,9 @@ function hasPackageDetail(pkg) {
 }
 
 function hasRpmDetailResponse(data) {
-  return Boolean(data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length > 0)
+  return Boolean(
+    data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length > 0
+  )
 }
 
 function getRebootServiceKey(row, service, index) {
@@ -417,16 +427,16 @@ function getRebootServiceKey(row, service, index) {
 const {
   vulLoading,
   vulTableData,
+  vulFilteredData,
   selectedVuls,
   vulPagination,
-  loadVulnerabilityList,
+  loadVulnerabilityList: originalLoadVulnerabilityList,
   vulKeyword,
-  handleVulKeywordChange,
+  handleVulKeywordChange: originalHandleVulKeywordChange,
   vulPatchStatus,
-  handleVulPatchStatusChange,
-  handleVulSelectionChange,
-  handleVulPageChange,
-  handleVulSizeChange
+  handleVulPatchStatusChange: originalHandleVulPatchStatusChange,
+  handleVulPageChange: originalHandleVulPageChange,
+  handleVulSizeChange: originalHandleVulSizeChange
 } = useVulnerabilityList({ value: props.hostId })
 
 const detailVisible = ref(false)
@@ -491,6 +501,45 @@ function handleRollback(row) {
     })
 }
 
+const vulTableRef = ref(null)
+
+// 全选逻辑
+const {
+  allSelected,
+  isAllSelected,
+  handleToggleAllSelection,
+  handleTableSelect,
+  resetAllSelected
+} = useTableSelectAll(vulTableRef, {
+  tableData: vulTableData,
+  filteredData: vulFilteredData,
+  selectedItems: selectedVuls,
+  matchFn: (f, row) => f.vul_id === row.vul_id && f.patch_id === row.patch_id
+})
+
+function handleVulPageChange(page) {
+  originalHandleVulPageChange(page)
+}
+
+function handleVulSizeChange(size) {
+  originalHandleVulSizeChange(size)
+}
+
+function handleVulKeywordChange() {
+  resetAllSelected()
+  originalHandleVulKeywordChange()
+}
+
+function handleVulPatchStatusChange() {
+  resetAllSelected()
+  originalHandleVulPatchStatusChange()
+}
+
+async function loadVulnerabilityList() {
+  resetAllSelected()
+  await originalLoadVulnerabilityList()
+}
+
 // 暴露加载方法给父组件
 defineExpose({
   loadVulnerabilityList
@@ -529,7 +578,12 @@ defineExpose({
 
 :deep(.header-border-only-table.el-table--border .el-table__header-wrapper th.el-table__cell),
 :deep(.header-border-only-table.el-table--border .el-table__fixed-header-wrapper th.el-table__cell),
-:deep(.header-border-only-table.el-table--border .el-table__fixed-right .el-table__header-wrapper th.el-table__cell) {
+:deep(
+  .header-border-only-table.el-table--border
+    .el-table__fixed-right
+    .el-table__header-wrapper
+    th.el-table__cell
+) {
   border-right-color: var(--el-border-color);
 }
 

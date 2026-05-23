@@ -32,6 +32,14 @@
         <i class="fa fa-chevron-circle-right" />
         更新选定的软件包 ({{ selectedPackages.length }})
       </el-button>
+      <el-button
+        size="small"
+        :disabled="selectablePackages.length === 0"
+        @click="handleToggleAllSelection"
+      >
+        <i :class="`fa fa-${isAllSelected ? 'times' : 'check-double'}`" />
+        {{ isAllSelected ? '取消全选' : '一键全选' }}
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -45,13 +53,14 @@
       </el-button>
     </div>
 
-    <!-- 表格 -->
     <el-table
+      ref="packageTableRef"
       v-loading="packageLoading"
       :data="packageTableData"
       size="small"
       max-height="calc(100vh - 390px)"
-      @selection-change="handlePackageSelectionChange"
+      @select="handleTableSelect"
+      @select-all="handleTableSelect"
     >
       <el-table-column type="selection" width="55" :selectable="isPackageSelectable" />
       <el-table-column prop="pkgName" label="包名" min-width="180" show-overflow-tooltip>
@@ -129,6 +138,7 @@ import { ElMessage } from 'element-plus'
 import { rpmInfoApi } from '../../../api'
 import { getSeverityType } from '../../../composables/useFormatters'
 import { usePackageList } from '../../../composables/usePackageList'
+import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import { extractInstalledPackageVersion, inferRpmSource } from '../../../utils/rpmPackageInfo'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import RpmPackageDetailDialog from '../../rpm/RpmPackageDetailDialog.vue'
@@ -180,83 +190,57 @@ function getSeverityLabel(severity) {
 const {
   packageLoading,
   packageTableData,
-  selectedPackages,
   packageKeyword,
+  packageFilteredData,
+  selectedPackages,
   packagePagination,
-  loadPackageList,
-  handlePackageKeywordChange,
-  handlePackageSelectionChange,
-  handlePackagePageChange,
-  handlePackageSizeChange
+  loadPackageList: originalLoadPackageList,
+  handlePackageKeywordChange: originalHandlePackageKeywordChange,
+  handlePackagePageChange: originalHandlePackagePageChange,
+  handlePackageSizeChange: originalHandlePackageSizeChange
 } = usePackageList({ value: props.hostId })
 
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailData = ref({})
 
+const packageTableRef = ref(null)
+
 function isPackageSelectable(row) {
   return Boolean(row?.hasUpdateInfo)
 }
 
-async function handleViewPackageDetail(row) {
-  const currentPackage = String(row?.installedPkg || '').trim()
-  const pkgName = String(row?.pkgName || '').trim()
-  const arch = String(row?.arch || row?.architecture || '').trim()
-  const source = inferRpmSource(row?.source, props.osDistro)
-  const version = extractInstalledPackageVersion({
-    version: row?.version || row?.packageInfo?.version,
-    currentPackage,
-    pkgName,
-    arch
-  })
+// 全选逻辑
+const {
+  allSelected,
+  isAllSelected,
+  handleToggleAllSelection,
+  handleTableSelect,
+  resetAllSelected
+} = useTableSelectAll(packageTableRef, {
+  tableData: packageTableData,
+  filteredData: packageFilteredData,
+  selectedItems: selectedPackages,
+  matchFn: (f, row) => f.pkgName === row.pkgName && f.patchId === row.patchId,
+  selectableFn: isPackageSelectable
+})
 
-  if (!version || !pkgName || !source || !arch) {
-    ElMessage.warning('当前行缺少详情接口必传参数，无法查看详情')
-    return
-  }
-
-  detailVisible.value = true
-  detailLoading.value = true
-  detailData.value = {}
-
-  try {
-    const response = await rpmInfoApi.getInstalledDetail({
-      version,
-      pkgName,
-      source,
-      arch
-    })
-
-    detailData.value = response?.data || response || {}
-  } catch (error) {
-    console.error('Failed to load installed package detail:', error)
-    ElMessage.error('获取软件包详情失败')
-    detailVisible.value = false
-  } finally {
-    detailLoading.value = false
-  }
+function handlePackagePageChange(page) {
+  originalHandlePackagePageChange(page)
 }
 
-// 更新软件包
-async function handleUpdatePackages() {
-  if (selectedPackages.value.length === 0) {
-    ElMessage.warning('请选择要更新的软件包')
-    return
-  }
+function handlePackageSizeChange(size) {
+  originalHandlePackageSizeChange(size)
+}
 
-  const packages = selectedPackages.value.map(item => item.packages).filter(Boolean)
+function handlePackageKeywordChange() {
+  resetAllSelected()
+  originalHandlePackageKeywordChange()
+}
 
-  if (packages.length === 0) {
-    ElMessage.warning('所选软件包缺少更新信息')
-    return
-  }
-
-  if (!props.hostId) {
-    ElMessage.warning('主机信息缺失，无法更新软件包')
-    return
-  }
-
-  emit('update-packages', selectedPackages.value)
+async function loadPackageList(options) {
+  resetAllSelected()
+  await originalLoadPackageList(options)
 }
 
 // 暴露加载方法给父组件

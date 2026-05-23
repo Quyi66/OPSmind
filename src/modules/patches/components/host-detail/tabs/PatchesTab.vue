@@ -68,6 +68,14 @@
         <i class="fa fa-chevron-circle-right" />
         安装选定的补丁 ({{ selectedPatches.length }})
       </el-button>
+      <el-button
+        size="small"
+        :disabled="patchTableData.length === 0"
+        @click="handleToggleAllSelection"
+      >
+        <i :class="`fa fa-${isAllSelected ? 'times' : 'check-double'}`" />
+        {{ isAllSelected ? '取消全选' : '一键全选' }}
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -81,13 +89,14 @@
       </el-button>
     </div>
 
-    <!-- 表格 -->
     <el-table
+      ref="patchTableRef"
       v-loading="patchLoading"
       :data="patchTableData"
       size="small"
       max-height="calc(100vh - 385px)"
-      @selection-change="handleSelectionChange"
+      @select="handleTableSelect"
+      @select-all="handleTableSelect"
     >
       <el-table-column type="selection" width="55" />
       <el-table-column prop="patch_id" label="补丁编号" width="180">
@@ -199,6 +208,7 @@ import {
   getSeverityType
 } from '../../../composables/useFormatters'
 import { usePatchList } from '../../../composables/usePatchList'
+import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import { Refresh, Search } from '@element-plus/icons-vue'
 
 const props = defineProps({
@@ -236,27 +246,67 @@ const emit = defineEmits(['patch-click', 'fix-patches'])
 const {
   patchLoading,
   patchTableData,
+  patchFilteredData,
   selectedPatches,
   selectedSeverities,
   patchKeyword,
   patchPagination,
-  loadPatchList,
-  handleFilterChange,
-  handlePatchKeywordChange,
-  handleSelectionChange,
-  handlePageChange,
-  handleSizeChange
+  loadPatchList: originalLoadPatchList,
+  handleFilterChange: originalHandleFilterChange,
+  handlePatchKeywordChange: originalHandlePatchKeywordChange,
+  handlePageChange: originalHandlePageChange,
+  handleSizeChange: originalHandleSizeChange
 } = usePatchList({
   hostId: toRef(props, 'hostId'),
   hostKey: toRef(props, 'hostKey')
 })
 
+const patchTableRef = ref(null)
+
+// 全选逻辑
+const {
+  allSelected,
+  isAllSelected,
+  handleToggleAllSelection,
+  handleTableSelect,
+  resetAllSelected
+} = useTableSelectAll(patchTableRef, {
+  tableData: patchTableData,
+  filteredData: patchFilteredData,
+  selectedItems: selectedPatches,
+  matchFn: (f, row) => f.patch_id === row.patch_id
+})
+
+function handlePageChange(page) {
+  originalHandlePageChange(page)
+}
+
+function handleSizeChange(size) {
+  originalHandleSizeChange(size)
+}
+
+function handleFilterChange() {
+  resetAllSelected()
+  originalHandleFilterChange()
+}
+
+function handlePatchKeywordChange() {
+  resetAllSelected()
+  originalHandlePatchKeywordChange()
+}
+
+async function loadPatchList() {
+  resetAllSelected()
+  await originalLoadPatchList()
+}
+
 const fallbackSeverities = ['Critical', 'Important', 'Moderate', 'Low']
 
 function applyDefaultSeverities() {
-  const nextSeverities = Array.isArray(props.defaultSeverities) && props.defaultSeverities.length > 0
-    ? [...props.defaultSeverities]
-    : [...fallbackSeverities]
+  const nextSeverities =
+    Array.isArray(props.defaultSeverities) && props.defaultSeverities.length > 0
+      ? [...props.defaultSeverities]
+      : [...fallbackSeverities]
 
   selectedSeverities.value = nextSeverities
 }

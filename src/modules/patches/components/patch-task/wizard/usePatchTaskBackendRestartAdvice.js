@@ -1,3 +1,4 @@
+import { ElMessage } from 'element-plus'
 import { patchInstallApi } from '../../../api'
 import {
   buildRestartAdviceDescription,
@@ -70,12 +71,11 @@ export function usePatchTaskBackendRestartAdvice({
     }
 
     const cacheBuster = Date.now()
-    const patchIdParam = patchIds.join(',')
     const queryTasks = hostEntries.map(host => ({
       hostIp: host.hostIp,
       hostLabel: host.hostLabel,
       request: patchInstallApi.getPatchRebootOnHost({
-        patchId: patchIdParam,
+        patchIds,
         hostIp: host.hostIp,
         cacheBuster
       })
@@ -86,6 +86,7 @@ export function usePatchTaskBackendRestartAdvice({
     let ignoredCount = 0
     let failedCount = 0
 
+    const errorMessages = []
     settledResults.forEach((result, index) => {
       const task = queryTasks[index]
 
@@ -106,8 +107,22 @@ export function usePatchTaskBackendRestartAdvice({
         ignoredCount++
       } else {
         failedCount++
+        const errMsg =
+          result.reason?.response?.data?.message ||
+          result.reason?.response?.data?.error ||
+          result.reason?.message ||
+          '请求未知错误'
+        errorMessages.push(`${task.hostLabel}: ${errMsg}`)
       }
     })
+
+    if (errorMessages.length > 0) {
+      ElMessage({
+        type: 'error',
+        dangerouslyUseHTMLString: true,
+        message: `获取重启建议失败：<br>${errorMessages.join('<br>')}`
+      })
+    }
 
     if (successfulResults.length === 0) {
       applyLocalRestartAdvice('后端未返回可用的重启建议，已退回本地启发式建议。')

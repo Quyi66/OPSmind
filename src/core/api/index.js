@@ -117,7 +117,17 @@ class ApiService {
     const { config, response } = error
 
     // 已经重试过的请求不再重试
-    if (config.__retryCount >= API_CONFIG.retryAttempts) {
+    if (config?.__retryCount >= API_CONFIG.retryAttempts) {
+      return false
+    }
+
+    // 如果是取消请求，不进行重试
+    if (axios.isCancel(error)) {
+      return false
+    }
+
+    // 413 Payload Too Large 和 431 Request Header Fields Too Large 绝不重试，避免网关雪崩
+    if (response && (response.status === 413 || response.status === 431)) {
       return false
     }
 

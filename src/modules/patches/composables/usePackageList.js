@@ -1,4 +1,4 @@
-import { onBeforeUnmount, ref, reactive } from 'vue'
+import { onBeforeUnmount, ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { patchScanApi, rpmInfoApi } from '../api'
 import { extractInstalledPackageVersion, inferRpmSource } from '../utils/rpmPackageInfo'
@@ -359,11 +359,46 @@ export function usePackageList(hostId) {
     loadPackageList()
   }
 
+  const packageFilteredData = computed(() => {
+    const list = compatibilityAffectedPackagesCache.value.map(item => {
+      const normalizedItem = {
+        pkgName: getStringValue(item, ['pkgName', 'pkg_name']),
+        installedPkg: getStringValue(item, ['installedPkg', 'currentPackage', 'pkgId']),
+        updatePkg: getStringValue(item, ['updatePkg', 'updatePackage']),
+        severity: getStringValue(item, ['severity']),
+        patchId: getStringValue(item, ['patchId', 'patch_id'])
+      }
+      normalizedItem.packages = buildPackageToken(
+        normalizedItem.pkgName,
+        normalizedItem.updatePkg,
+        normalizedItem.patchId
+      )
+      return {
+        ...normalizedItem,
+        hasUpdateInfo: true,
+        affected: true
+      }
+    })
+
+    const keyword = packageKeyword.value.trim().toLowerCase()
+    if (!keyword) return list
+
+    return list.filter(item => {
+      return (
+        item.pkgName?.toLowerCase().includes(keyword) ||
+        item.installedPkg?.toLowerCase().includes(keyword) ||
+        item.updatePkg?.toLowerCase().includes(keyword) ||
+        item.patchId?.toLowerCase().includes(keyword)
+      )
+    })
+  })
+
   return {
     packageLoading,
     packageTableData,
     packageTableDataAll,
     packageKeyword,
+    packageFilteredData,
     selectedPackages,
     packagePagination,
     loadPackageList,

@@ -472,20 +472,42 @@ export const patchInstallApi = {
 
   /**
    * 查询补丁在指定主机上的重启建议
-   * GET /vap/api/vap/v2/patch/reboot-on-host?patchId=...&hostIp=...
-   * patchId 支持逗号分隔多个补丁编号
+   * GET /vap/api/vap/v2/patch/reboot-on-host?patchId=...&hostIp=... (单个 patch)
+   * POST /vap/api/vap/v2/patch/reboot-on-host (多个 patch)
+   * 请求体 { patchIds: [...], hostIp: "..." }
    */
   getPatchRebootOnHost(params) {
-    const searchParams = new URLSearchParams({
-      patchId: params.patchId,
-      hostIp: params.hostIp
-    })
-
-    if (params.cacheBuster) {
-      searchParams.set('cacheBuster', String(params.cacheBuster))
+    let patchIds = []
+    if (Array.isArray(params.patchIds)) {
+      patchIds = params.patchIds
+    } else if (typeof params.patchId === 'string') {
+      patchIds = params.patchId.split(',').map(s => s.trim()).filter(Boolean)
+    } else if (params.patchId) {
+      patchIds = [String(params.patchId)]
     }
 
-    return apiService.get(`${VAP_API_PREFIX}/v2/patch/reboot-on-host?${searchParams.toString()}`)
+    if (patchIds.length > 1) {
+      const payload = {
+        patchIds,
+        hostIp: params.hostIp
+      }
+      const url = params.cacheBuster
+        ? `${VAP_API_PREFIX}/v2/patch/reboot-on-host?cacheBuster=${params.cacheBuster}`
+        : `${VAP_API_PREFIX}/v2/patch/reboot-on-host`
+      return apiService.post(url, payload)
+    } else {
+      const patchIdVal = patchIds.length > 0 ? patchIds[0] : (params.patchId || '')
+      const searchParams = new URLSearchParams({
+        patchId: patchIdVal,
+        hostIp: params.hostIp
+      })
+
+      if (params.cacheBuster) {
+        searchParams.set('cacheBuster', String(params.cacheBuster))
+      }
+
+      return apiService.get(`${VAP_API_PREFIX}/v2/patch/reboot-on-host?${searchParams.toString()}`)
+    }
   },
 
   /**

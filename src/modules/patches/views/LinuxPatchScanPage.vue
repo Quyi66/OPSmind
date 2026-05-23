@@ -403,11 +403,20 @@
           <el-button
             type="primary"
             size="small"
-            :disabled="selectedVulns.length === 0"
+            :disabled="selectedVulns.length === 0 && !vulnAllSelected"
             @click="handleFixSelected"
           >
             <i class="fa fa-tools" />
             修复选定的漏洞
+          </el-button>
+          <el-button
+            :type="vulnAllSelected ? 'default' : 'primary'"
+            size="small"
+            :loading="vulnSelectAllLoading"
+            @click="handleToggleVulnSelectAll"
+          >
+            <i :class="`fa fa-${vulnAllSelected ? 'times' : 'check-double'} me-1`" />
+            {{ vulnAllSelected ? '一键取消' : '一键全选' }}
           </el-button>
           <!-- <el-button size="small" @click="handleVulnExport">
             <i class="fa fa-download" /> 导出
@@ -436,7 +445,8 @@
             class="header-border-only-table"
             style="width: 100%"
             max-height="calc(100vh - 600px)"
-            @selection-change="handleVulnSelectionChange"
+            @select="handleVulnSelect"
+            @select-all="handleVulnSelectAll"
             border
           >
             <el-table-column type="selection" width="45" />
@@ -468,7 +478,9 @@
                     :width="360"
                   >
                     <template #reference>
-                      <span class="more-link">+{{ getPatchIdList(row.patch_id).length - 2 }} 更多</span>
+                      <span class="more-link">
+                        +{{ getPatchIdList(row.patch_id).length - 2 }} 更多
+                      </span>
                     </template>
                     <div class="patch-list-popover">
                       <a
@@ -559,11 +571,7 @@
               class-name="vulnerability-layout-top-cell"
             >
               <template #default="{ row }">
-                <el-tag
-                  effect="dark"
-                  class="severity-tag"
-                  :class="getSeverityClass(row.severity)"
-                >
+                <el-tag effect="dark" class="severity-tag" :class="getSeverityClass(row.severity)">
                   {{ getSeverityLabel(row.severity) }}
                 </el-tag>
               </template>
@@ -749,35 +757,116 @@
     />
 
     <!-- 修复漏洞确认对话框 -->
-    <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="700px" destroy-on-close>
+    <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="960px" destroy-on-close>
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
-        <div class="fix-info-card">
-          <div class="fix-info-header">
-            <i class="fa fa-desktop text-muted" />
-            待更新的主机
+        <div class="fix-grid-layout">
+          <!-- 1. 待更新主机 -->
+          <div class="fix-info-card">
+            <div class="fix-info-header">
+              <span>
+                <i class="fa fa-desktop text-muted" />
+                待更新的主机
+              </span>
+              <el-badge :value="fixDialogData.hosts.length" type="primary" class="header-badge" />
+            </div>
+            <div class="fix-info-body">
+              <div v-if="fixDialogData.hosts.length === 0" class="empty-text">暂无主机</div>
+              <div v-else class="chips-container">
+                <el-tag
+                  v-for="host in fixDialogData.hosts"
+                  :key="host"
+                  size="small"
+                  type="info"
+                  effect="plain"
+                  class="chip-tag"
+                >
+                  {{ host }}
+                </el-tag>
+              </div>
+            </div>
           </div>
-          <div class="fix-info-body" v-html="fixDialogData.hosts || '-'"></div>
-        </div>
-        <div class="fix-info-card">
-          <div class="fix-info-header">
-            <i class="fa fa-briefcase-medical text-muted" />
-            待更新的补丁
+
+          <!-- 2. 待更新补丁 -->
+          <div class="fix-info-card">
+            <div class="fix-info-header">
+              <span>
+                <i class="fa fa-briefcase-medical text-muted" />
+                待更新的补丁
+              </span>
+              <el-badge :value="fixDialogData.patches.length" type="warning" class="header-badge" />
+            </div>
+            <div class="fix-info-body">
+              <div v-if="fixDialogData.patches.length === 0" class="empty-text">暂无补丁</div>
+              <div v-else class="chips-container">
+                <el-tag
+                  v-for="patch in fixDialogData.patches"
+                  :key="patch"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                  class="chip-tag"
+                >
+                  {{ patch }}
+                </el-tag>
+              </div>
+            </div>
           </div>
-          <div class="fix-info-body" v-html="fixDialogData.patches || '-'"></div>
-        </div>
-        <div class="fix-info-card">
-          <div class="fix-info-header">
-            <i class="fa fa-suitcase text-muted" />
-            待更新的 CVE
+
+          <!-- 3. 待更新 CVE -->
+          <div class="fix-info-card">
+            <div class="fix-info-header">
+              <span>
+                <i class="fa fa-suitcase text-muted" />
+                待更新的 CVE
+              </span>
+              <el-badge :value="fixDialogData.cves.length" type="danger" class="header-badge" />
+            </div>
+            <div class="fix-info-body">
+              <div v-if="fixDialogData.cves.length === 0" class="empty-text">暂无 CVE</div>
+              <div v-else class="chips-container">
+                <el-tag
+                  v-for="cve in fixDialogData.cves"
+                  :key="cve"
+                  size="small"
+                  type="danger"
+                  effect="plain"
+                  class="chip-tag"
+                >
+                  {{ cve }}
+                </el-tag>
+              </div>
+            </div>
           </div>
-          <div class="fix-info-body" v-html="fixDialogData.cves || '-'"></div>
-        </div>
-        <div class="fix-info-card">
-          <div class="fix-info-header">
-            <i class="fa fa-cube text-muted" />
-            待更新的软件包
+
+          <!-- 4. 待更新软件包 -->
+          <div class="fix-info-card">
+            <div class="fix-info-header">
+              <span>
+                <i class="fa fa-cube text-muted" />
+                待更新的软件包
+              </span>
+              <el-badge
+                :value="fixDialogData.packages.length"
+                type="success"
+                class="header-badge"
+              />
+            </div>
+            <div class="fix-info-body">
+              <div v-if="fixDialogData.packages.length === 0" class="empty-text">暂无软件包</div>
+              <div v-else class="chips-container">
+                <el-tag
+                  v-for="pkg in fixDialogData.packages"
+                  :key="pkg"
+                  size="small"
+                  type="success"
+                  effect="plain"
+                  class="chip-tag"
+                >
+                  {{ pkg }}
+                </el-tag>
+              </div>
+            </div>
           </div>
-          <div class="fix-info-body" v-html="fixDialogData.packages || '-'"></div>
         </div>
       </div>
       <template #footer>
@@ -785,7 +874,7 @@
         <el-button
           type="primary"
           :loading="fixSubmitting"
-          :disabled="!fixDialogData.hosts"
+          :disabled="!fixDialogData.hosts.length"
           @click="handleConfirmFix"
         >
           <i class="fa fa-chevron-right" />
@@ -797,9 +886,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, provide, watch } from 'vue'
+import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi } from '../api'
 import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
@@ -825,25 +914,10 @@ import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { PieChart, GaugeChart } from 'echarts/charts'
-import {
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent
-} from 'echarts/components'
+import { TitleComponent, TooltipComponent, GridComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 
-use([
-  CanvasRenderer,
-  PieChart,
-  GaugeChart,
-  TitleComponent,
-  TooltipComponent,
-  GridComponent
-])
-
-// Emits
-const emit = defineEmits(['install', 'navigate'])
+use([CanvasRenderer, PieChart, GaugeChart, TitleComponent, TooltipComponent, GridComponent])
 
 // Router
 const router = useRouter()
@@ -955,6 +1029,8 @@ const osVersionList = ref([])
 // 漏洞表格选择
 const vulnTableRef = ref(null)
 const selectedVulns = ref([])
+const vulnAllSelected = ref(false)
+const vulnSelectAllLoading = ref(false)
 
 // 重新扫描对话框
 const rescanDialogVisible = ref(false)
@@ -964,7 +1040,6 @@ const rescanFormRef = ref(null)
 const rescanForm = reactive({
   hostsInput: ''
 })
-const hostSelectorVisible = ref(false)
 const selectedHosts = ref([])
 
 // 作业运行结果对话框
@@ -1135,10 +1210,10 @@ function buildRollbackWizardData(row) {
 const fixDialogVisible = ref(false)
 const fixSubmitting = ref(false)
 const fixDialogData = reactive({
-  hosts: '',
-  patches: '',
-  cves: '',
-  packages: '',
+  hosts: [],
+  patches: [],
+  cves: [],
+  packages: [],
   patchStatusIds: []
 })
 const fixDialogLoading = ref(false)
@@ -1178,7 +1253,7 @@ async function loadKpiData() {
       }
 
       response.data.records.forEach(rec => {
-        if (dataMap.hasOwnProperty(rec.name)) {
+        if (rec.name in dataMap) {
           dataMap[rec.name] = rec.value || 0
         }
       })
@@ -1266,7 +1341,7 @@ async function loadHostData() {
             }
           })
           records.forEach(record => {
-            if (assetInfoMap.hasOwnProperty(record.host_key)) {
+            if (record.host_key in assetInfoMap) {
               const assetInfo = assetInfoMap[record.host_key]
               record.need_reboot = assetInfo.needReboot
               record.os_version = assetInfo.osVersion || record.os_version
@@ -1296,7 +1371,6 @@ async function loadVulnData() {
     const params = {
       page: vulnPagination.page - 1,
       size: vulnPagination.pageSize,
-      filter: vulnFilterText.value,
       host_key: vulnFilters.host_key || '',
       vul_id: vulnFilters.vul_id || null,
       severity: vulnFilters.severity,
@@ -1305,7 +1379,7 @@ async function loadVulnData() {
       os_distro: vulnFilters.os_distro,
       os_major_version: vulnFilters.os_major_version,
       reboot_status: vulnFilters.reboot_status,
-      filter: vulnFilters.filter || ''
+      filter: vulnFilters.filter || vulnFilterText.value || ''
     }
     const response = await vulnerabilityApi.getVulnerabilityList(params)
     const data = response?.data || response || {}
@@ -1355,12 +1429,9 @@ function handleHostReset() {
   loadHostData()
 }
 
-function handleVulnFilter() {
-  vulnPagination.page = 1
-  loadVulnData()
-}
-
 function handleVulnReset() {
+  vulnAllSelected.value = false
+  selectedVulns.value = []
   vulnFilters.severity = 'all'
   vulnFilters.patch_status = 'all'
   vulnFilters.is_kernel = 'all'
@@ -1392,13 +1463,6 @@ function handleVulnSizeChange(size) {
   vulnPagination.pageSize = size
   vulnPagination.page = 1
   loadVulnData()
-}
-
-function handleKpiClick(kpi) {
-  if (kpi.linkPage) {
-    // 导航到对应页面
-    emit('navigate', { pageId: kpi.linkPage, params: { severity: kpi.pageParam } })
-  }
 }
 
 function handleHostClick(row) {
@@ -1451,18 +1515,11 @@ function refreshPatchScanLists() {
   loadVulnData()
 }
 
-function handleVulnClick(row) {
-  // 导航到漏洞详情
-  ElMessage.info(`查看漏洞详情: ${row.advisory}`)
-}
-
 function handleVulnFilterChange() {
+  vulnAllSelected.value = false
+  selectedVulns.value = []
   vulnPagination.page = 1
   loadVulnData()
-}
-
-function handleVulnExport() {
-  ElMessage.info('导出功能开发中...')
 }
 
 function handlePatchClick(row) {
@@ -1524,10 +1581,6 @@ function getPatchStatusIcon(status) {
   return iconMap[status] || 'fa fa-circle'
 }
 
-function handleExport() {
-  ElMessage.info('导出功能开发中...')
-}
-
 function resolvePatchStatusIds(rows) {
   const ids = []
 
@@ -1576,9 +1629,45 @@ function handleViewRunResult(row) {
   runResultDialogVisible.value = true
 }
 
-// 漏洞选择变化
-function handleVulnSelectionChange(selection) {
+// 漏洞选择变化精确接管
+function handleVulnSelect(selection) {
+  vulnAllSelected.value = false
   selectedVulns.value = selection
+}
+
+function handleVulnSelectAll(selection) {
+  vulnAllSelected.value = false
+  selectedVulns.value = selection
+}
+
+// 恢复全选状态下可见页的勾选
+function restoreVulnPageSelection() {
+  if (!vulnAllSelected.value || !vulnTableRef.value) return
+  vulnTableRef.value.clearSelection()
+  vulnTableData.value.forEach(row => {
+    vulnTableRef.value.toggleRowSelection(row, true)
+  })
+}
+
+// 一键全选 / 一键取消 切换
+async function handleToggleVulnSelectAll() {
+  if (vulnAllSelected.value) {
+    vulnAllSelected.value = false
+    selectedVulns.value = []
+    if (vulnTableRef.value) {
+      vulnTableRef.value.clearSelection()
+    }
+  } else {
+    vulnAllSelected.value = true
+    selectedVulns.value = [...vulnTableData.value]
+
+    if (vulnTableRef.value) {
+      vulnTableRef.value.clearSelection()
+      vulnTableData.value.forEach(row => {
+        vulnTableRef.value.toggleRowSelection(row, true)
+      })
+    }
+  }
 }
 
 // 修复选定的漏洞
@@ -1588,21 +1677,52 @@ async function handleFixSelected() {
     return
   }
 
-  const ids = resolvePatchStatusIds(selectedVulns.value)
-  if (ids.length === 0) {
-    ElMessage.warning('所选漏洞缺少补丁状态ID，无法修复')
-    return
-  }
+  fixDialogData.hosts = []
+  fixDialogData.patches = []
+  fixDialogData.cves = []
+  fixDialogData.packages = []
+  fixDialogData.patchStatusIds = []
 
-  fixDialogData.patchStatusIds = ids
-  fixDialogData.hosts = ''
-  fixDialogData.patches = ''
-  fixDialogData.cves = ''
-  fixDialogData.packages = ''
   fixDialogVisible.value = true
   fixDialogLoading.value = true
 
   try {
+    let finalVulns = []
+    if (vulnAllSelected.value) {
+      // 惰性延迟加载：在点击修复按钮这一刻，才去异步拉取全量的筛选匹配漏洞数据！
+      const params = {
+        page: 0,
+        size: vulnPagination.total || 10000,
+        host_key: vulnFilters.host_key || '',
+        vul_id: vulnFilters.vul_id || null,
+        severity: vulnFilters.severity,
+        patch_status: vulnFilters.patch_status,
+        is_kernel: vulnFilters.is_kernel,
+        os_distro: vulnFilters.os_distro,
+        os_major_version: vulnFilters.os_major_version,
+        reboot_status: vulnFilters.reboot_status,
+        filter: vulnFilters.filter || vulnFilterText.value || ''
+      }
+      const response = await vulnerabilityApi.getVulnerabilityList(params)
+      const data = response?.data || response || {}
+      finalVulns = Array.isArray(data.content)
+        ? data.content
+        : Array.isArray(data.records)
+          ? data.records
+          : []
+    } else {
+      finalVulns = [...selectedVulns.value]
+    }
+
+    const ids = resolvePatchStatusIds(finalVulns)
+    if (ids.length === 0) {
+      ElMessage.warning('所选漏洞缺少补丁状态ID，无法修复')
+      fixDialogVisible.value = false
+      return
+    }
+
+    fixDialogData.patchStatusIds = ids
+
     // 并行获取所有信息
     const [hostsRes, patchesRes, cvesRes, pkgsRes] = await Promise.all([
       vulnerabilityApi.getPatchStatusHosts(ids),
@@ -1611,30 +1731,44 @@ async function handleFixSelected() {
       vulnerabilityApi.getPatchStatusPackages(ids)
     ])
 
-    // 处理主机列表
+    // 处理主机列表（去重）
     if (hostsRes?.data?.records) {
-      fixDialogData.hosts = hostsRes.data.records.map(r => r.host_key).join('<br>')
+      const allHosts = hostsRes.data.records.flatMap(r => {
+        if (!r.host_key) return []
+        return String(r.host_key)
+          .split(',')
+          .map(item => item.trim())
+          .filter(Boolean)
+      })
+      fixDialogData.hosts = [...new Set(allHosts)]
     }
 
-    // 处理补丁列表（去重）
+    // 处理补丁列表（去重并按逗号拆分）
     if (patchesRes?.data?.records) {
-      const patches = [...new Set(patchesRes.data.records.map(r => r.patch_id))]
-      fixDialogData.patches = patches.join('<br>')
+      const allPatches = patchesRes.data.records.flatMap(r => getPatchIdList(r.patch_id))
+      fixDialogData.patches = [...new Set(allPatches)]
     }
 
-    // 处理 CVE 列表
+    // 处理 CVE 列表（去重并按逗号拆分）
     if (cvesRes?.data?.records) {
-      fixDialogData.cves = cvesRes.data.records.map(r => r.vul_id).join('<br>')
+      const allCves = cvesRes.data.records.flatMap(r => {
+        if (!r.vul_id) return []
+        return String(r.vul_id)
+          .split(',')
+          .map(item => item.trim())
+          .filter(Boolean)
+      })
+      fixDialogData.cves = [...new Set(allCves)]
     }
 
     // 处理软件包列表（去重）
     if (pkgsRes?.data?.records) {
       const allPkgs = pkgsRes.data.records.flatMap(record => getAffectedPackageNames(record))
-      const uniquePkgs = [...new Set(allPkgs.filter(Boolean))]
-      fixDialogData.packages = uniquePkgs.join('<br>')
+      fixDialogData.packages = [...new Set(allPkgs.filter(Boolean))]
     }
   } catch (error) {
-    ElMessage.error('获取补丁信息失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`获取补丁信息失败: ${error.message || '未知错误'}`)
+    fixDialogVisible.value = false
   } finally {
     fixDialogLoading.value = false
   }
@@ -1666,7 +1800,7 @@ async function handleConfirmFix() {
     fixDialogVisible.value = false
     loadVulnData()
   } catch (error) {
-    ElMessage.error('提交修复任务失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`提交修复任务失败: ${error.message || '未知错误'}`)
   } finally {
     fixSubmitting.value = false
   }
@@ -1679,9 +1813,7 @@ function handleRescan() {
 }
 
 function getRescanTrackKey(host) {
-  return String(
-    host?.host_id || host?.hostId || host?.id || host?.host_key || host?.hostKey || ''
-  )
+  return String(host?.host_id || host?.hostId || host?.id || host?.host_key || host?.hostKey || '')
 }
 
 function normalizeRescanHost(host) {
@@ -1740,7 +1872,7 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
     return true
   } catch (error) {
     console.error('Scan failed:', error)
-    ElMessage.error('扫描任务提交失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`扫描任务提交失败: ${error.message || '未知错误'}`)
     return false
   } finally {
     rescanLoading.value = false
@@ -1762,17 +1894,6 @@ async function handleSingleHostRescan(row) {
   } finally {
     rescanningHostKey.value = ''
   }
-}
-
-function handleHostSelected(hosts) {
-  selectedHosts.value = hosts
-  updateHostsInput()
-}
-
-// 移除单个已选主机
-function removeSelectedHost(index) {
-  selectedHosts.value.splice(index, 1)
-  updateHostsInput()
 }
 
 // 更新主机输入框内容
@@ -1821,8 +1942,17 @@ function refresh() {
 
 // 监听 tab 切换
 watch(activeTab, newTab => {
+  vulnAllSelected.value = false
+  selectedVulns.value = []
   if (newTab === 'vulnerability' && vulnTableData.value.length === 0) {
     loadVulnData()
+  }
+})
+
+// 监听漏洞数据更新，自动恢复勾选
+watch(vulnTableData, () => {
+  if (vulnAllSelected.value) {
+    nextTick(() => restoreVulnPageSelection())
   }
 })
 
@@ -2246,7 +2376,12 @@ defineExpose({
 
 :deep(.header-border-only-table.el-table--border .el-table__header-wrapper th.el-table__cell),
 :deep(.header-border-only-table.el-table--border .el-table__fixed-header-wrapper th.el-table__cell),
-:deep(.header-border-only-table.el-table--border .el-table__fixed-right .el-table__header-wrapper th.el-table__cell) {
+:deep(
+  .header-border-only-table.el-table--border
+    .el-table__fixed-right
+    .el-table__header-wrapper
+    th.el-table__cell
+) {
   border-right-color: var(--el-border-color);
 }
 
@@ -2468,32 +2603,75 @@ defineExpose({
   min-height: 200px;
 }
 
+.fix-grid-layout {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
 .fix-info-card {
   border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
   overflow: hidden;
+  box-shadow: var(--el-box-shadow-extra-light);
+  transition: all 0.25s ease;
+
+  &:hover {
+    box-shadow: var(--el-box-shadow-light);
+    border-color: var(--el-border-color);
+  }
 }
 
 .fix-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 8px 12px;
   background: var(--el-fill-color-light);
   border-bottom: 1px solid var(--el-border-color-light);
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 13px;
   color: var(--el-text-color-primary);
 
   i {
-    margin-right: 8px;
+    margin-right: 6px;
+  }
+
+  .header-badge {
+    margin-left: auto;
   }
 }
 
 .fix-info-body {
   padding: 12px;
-  max-height: 150px;
+  max-height: 250px;
+  min-height: 80px;
   overflow-y: auto;
   font-size: 13px;
   line-height: 1.8;
   color: var(--el-text-color-regular);
+  background-color: var(--el-bg-color-blank);
+
+  .empty-text {
+    color: var(--el-text-color-placeholder);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-content: flex-start;
+  }
+
+  .chip-tag {
+    margin-bottom: 4px;
+  }
 }
 
 // 文字颜色 - Element UI 色值

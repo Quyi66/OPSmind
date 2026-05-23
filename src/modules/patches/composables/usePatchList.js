@@ -13,6 +13,7 @@ export function usePatchList(hostContext) {
   const patchLoading = ref(false)
   const patchTableData = ref([])
   const patchAllData = ref([])
+  const patchFilteredData = ref([])
   const selectedPatches = ref([])
   const selectedSeverities = ref([])
   const patchKeyword = ref('')
@@ -41,6 +42,7 @@ export function usePatchList(hostContext) {
             .some(text => text.includes(keyword))
         })
 
+    patchFilteredData.value = filtered
     const start = (patchPagination.page - 1) * patchPagination.pageSize
     const end = start + patchPagination.pageSize
     patchPagination.total = filtered.length
@@ -110,6 +112,7 @@ export function usePatchList(hostContext) {
   return {
     patchLoading,
     patchTableData,
+    patchFilteredData,
     selectedPatches,
     selectedSeverities,
     patchKeyword,

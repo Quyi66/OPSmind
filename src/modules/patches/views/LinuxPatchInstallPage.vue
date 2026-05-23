@@ -46,6 +46,14 @@
       >
         安装选中的补丁
       </el-button>
+      <el-button
+        size="small"
+        :type="allSelected ? 'default' : 'primary'"
+        @click="handleToggleSelectAll"
+      >
+        <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
+        {{ allSelected ? '一键取消' : '一键全选' }}
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -66,7 +74,8 @@
         v-loading="loading"
         :data="paginatedData"
         max-height="calc(100vh - 230px)"
-        @selection-change="handleSelectionChange"
+        @select="handleTableSelect"
+        @select-all="handleTableSelect"
       >
         <el-table-column type="selection" width="50" />
         <el-table-column prop="patch_id" label="补丁编号" min-width="160" sortable>
@@ -232,6 +241,7 @@ import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi } from '../api'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
+import { useTableSelectAll } from '../composables/useTableSelectAll'
 
 // 加载状态
 const loading = ref(false)
@@ -313,6 +323,7 @@ function handleInstallSelected() {
 }
 
 function handleInstallSuccess() {
+  resetAllSelected()
   loadData()
 }
 
@@ -387,6 +398,7 @@ async function loadData() {
     if (response?.data) {
       allData.value = preprocessData(response.data.records || response.data || [])
     }
+    resetAllSelected()
   } catch (error) {
     console.error('Failed to load patches:', error)
     ElMessage.error('加载可安装补丁失败，请稍后重试')
@@ -398,24 +410,33 @@ async function loadData() {
 
 // 搜索处理（严重程度改变时需要重新加载）
 function handleSearch() {
+  resetAllSelected()
   pagination.page = 1
   loadData()
 }
 
 // 重置处理
 function handleReset() {
-  // 重置筛选条件为默认值
+  resetAllSelected()
   filters.severity = ['Critical', 'Important', 'Moderate', 'Low']
   filters.keyword = ''
-  // 重置分页
   pagination.page = 1
   pagination.pageSize = 10
   loadData()
 }
 
-function handleSelectionChange(selection) {
-  selectedRows.value = selection
-}
+// 全选逻辑
+const {
+  allSelected,
+  isAllSelected,
+  handleToggleAllSelection: handleToggleSelectAll,
+  handleTableSelect,
+  resetAllSelected
+} = useTableSelectAll(tableRef, {
+  tableData: paginatedData,
+  filteredData,
+  selectedItems: selectedRows
+})
 
 function handlePageChange(page) {
   pagination.page = page
