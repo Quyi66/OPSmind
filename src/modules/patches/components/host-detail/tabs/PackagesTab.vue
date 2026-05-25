@@ -133,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { rpmInfoApi } from '../../../api'
 import { getSeverityType } from '../../../composables/useFormatters'
@@ -224,6 +224,73 @@ const {
   matchFn: (f, row) => f.pkgName === row.pkgName && f.patchId === row.patchId,
   selectableFn: isPackageSelectable
 })
+
+// 可选中的软件包（用于控制"一键全选"按钮禁用状态）
+const selectablePackages = computed(() => {
+  return (packageFilteredData.value || []).filter(isPackageSelectable)
+})
+
+// 更新软件包
+function handleUpdatePackages() {
+  if (selectedPackages.value.length === 0) {
+    ElMessage.warning('请选择要更新的软件包')
+    return
+  }
+
+  const packages = selectedPackages.value.map(item => item.packages).filter(Boolean)
+
+  if (packages.length === 0) {
+    ElMessage.warning('所选软件包缺少更新信息')
+    return
+  }
+
+  if (!props.hostId) {
+    ElMessage.warning('主机信息缺失，无法更新软件包')
+    return
+  }
+
+  emit('update-packages', selectedPackages.value)
+}
+
+// 查看软件包详情
+async function handleViewPackageDetail(row) {
+  const currentPackage = String(row?.installedPkg || '').trim()
+  const pkgName = String(row?.pkgName || '').trim()
+  const arch = String(row?.arch || row?.architecture || '').trim()
+  const source = inferRpmSource(row?.source, props.osDistro)
+  const version = extractInstalledPackageVersion({
+    version: row?.version || row?.packageInfo?.version,
+    currentPackage,
+    pkgName,
+    arch
+  })
+
+  if (!version || !pkgName || !source || !arch) {
+    ElMessage.warning('当前行缺少详情接口必传参数，无法查看详情')
+    return
+  }
+
+  detailVisible.value = true
+  detailLoading.value = true
+  detailData.value = {}
+
+  try {
+    const response = await rpmInfoApi.getInstalledDetail({
+      version,
+      pkgName,
+      source,
+      arch
+    })
+
+    detailData.value = response?.data || response || {}
+  } catch (error) {
+    console.error('Failed to load installed package detail:', error)
+    ElMessage.error('获取软件包详情失败')
+    detailVisible.value = false
+  } finally {
+    detailLoading.value = false
+  }
+}
 
 function handlePackagePageChange(page) {
   originalHandlePackagePageChange(page)
