@@ -400,7 +400,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 查询任务操作审计日志（分页）
+   * 查询任务操作日志（分页）
    * GET /vap/api/vap/v2/patch/task/{id}/audit/history?page=0&size=50
    */
   getTaskAuditHistory(id, params = {}) {
@@ -410,7 +410,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 查询任务全量操作审计日志（不分页）
+   * 查询任务全量操作日志（不分页）
    * GET /vap/api/vap/v2/patch/task/{id}/audit/history/all
    */
   getTaskAuditHistoryAll(id) {
@@ -1133,7 +1133,7 @@ export const vulnerabilityApi = {
  */
 export const patchLogsApi = {
   /**
-   * 查询租户补丁操作审计日志
+   * 查询租户补丁操作日志
    * GET /vap/api/vap/v2/patch/task/audit/logs?taskType=&operator=&startTime=&endTime=&page=0&size=20
    */
   getAuditLogs(params = {}) {

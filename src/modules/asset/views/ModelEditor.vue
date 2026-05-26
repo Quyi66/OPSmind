@@ -6,7 +6,7 @@
         <el-button link @click="handleBack">
           <i class="fa fa-arrow-left"></i>
         </el-button>
-        <span class="page-title">{{ isNewMode ? '添加资产模型' : '编辑资产模型' }}</span>
+        <span class="page-title">{{ isNewMode ? '添加模型定义' : '编辑模型定义' }}</span>
         <span v-if="formData.title" class="model-name">- {{ formData.title }}</span>
       </div>
       <div class="header-right">
@@ -1159,7 +1159,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--el-bg-color-page);
+  background: var(--el-bg-color);
   overflow: hidden;
 }
 

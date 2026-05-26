@@ -1,124 +1,147 @@
 <template>
   <div class="ops-page-layout">
-    <!-- 筛选区域 -->
-    <div class="ops-filter-bar">
-      <el-form :inline="true" size="small">
-        <el-form-item label="关键词">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="资源信息/资产类型"
-            clearable
-            style="width: 200px"
-            @keyup.enter="handleSearch"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon>
-            搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon>
-            重置
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </div>
+    <div class="content-view-area">
+      <!-- 筛选区域 -->
+      <div class="ops-filter-bar">
+        <el-form :inline="true" size="small">
+          <el-form-item label="关键词">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="资源路径 / 资产类型..."
+              clearable
+              style="width: 240px"
+              @keyup.enter="handleSearch"
+            />
+          </el-form-item>
+          <el-form-item class="filter-actions">
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-    <!-- 操作栏 -->
-    <div class="ops-action-bar">
-      <div class="action-left">
-        <el-tag :type="hasPendingChanges ? 'warning' : 'info'" size="small">
-          {{ hasPendingChanges ? `待保存 ${changedRowCount} 项` : '已同步' }}
-        </el-tag>
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <div class="action-left">
+          <el-tag :type="hasPendingChanges ? 'warning' : 'success'" size="small" class="sync-tag-indicator">
+            <i class="fa" :class="hasPendingChanges ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+            <span style="margin-left: 4px">
+              {{ hasPendingChanges ? `当前待保存 ${changedRowCount} 项变更` : '所有权限配置已同步' }}
+            </span>
+          </el-tag>
+          <el-button
+            type="primary"
+            size="small"
+            :disabled="!hasPendingChanges"
+            :loading="saving"
+            @click="handleSave"
+          >
+            <i class="fa fa-save" style="margin-right: 4px"></i>
+            保存权限更改
+          </el-button>
+          <el-button size="small" :disabled="!hasPendingChanges || saving" @click="handleResetPending" plain>
+            <i class="fa fa-undo" style="margin-right: 4px"></i>
+            撤销修改
+          </el-button>
+        </div>
+        <span style="flex: 1"></span>
         <el-button
-          type="primary"
+          class="toolbar-icon-btn"
+          circle
           size="small"
-          :disabled="!hasPendingChanges"
-          :loading="saving"
-          @click="handleSave"
+          :loading="loading"
+          @click="handleRefresh"
+          title="刷新"
         >
-          保存更改
-        </el-button>
-        <el-button size="small" :disabled="!hasPendingChanges || saving" @click="handleResetPending">
-          撤销更改
+          <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
-      <span style="flex: 1"></span>
-      <el-button
-        class="toolbar-icon-btn"
-        circle
-        size="small"
-        :loading="loading"
-        @click="handleRefresh"
-        title="刷新"
-      >
-        <el-icon v-show="!loading"><Refresh /></el-icon>
-      </el-button>
-    </div>
 
-    <!-- 表格区域 -->
-    <div class="ops-table-wrapper">
-      <el-table
-        :data="paginatedData"
-        v-loading="loading"
-        style="width: 100%"
-        max-height="calc(100vh - 230px)"
-        :row-class-name="getRowClassName"
-      >
-        <el-table-column
-          prop="groupInfo"
-          label="资源信息"
-          min-width="250"
-          show-overflow-tooltip
-          sortable
-        />
-        <el-table-column
-          prop="assets_type"
-          label="资产类型"
-          min-width="150"
-          align="left"
-          sortable
-        />
-
-        <!-- 动态团队权限列 -->
-        <el-table-column
-          v-for="teamName in teamNames"
-          :key="teamName"
-          :label="teamName"
-          width="180"
-          align="center"
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper card-table">
+        <el-table
+          :data="paginatedData"
+          v-loading="loading"
+          height="100%"
+          :row-class-name="getRowClassName"
         >
-          <template #default="{ row }">
-            <div class="permission-buttons">
-              <el-button
-                v-for="perm in ['r', 'w', 'x']"
-                :key="perm"
-                :type="hasPermission(row, teamName, perm) ? 'primary' : 'default'"
-                size="small"
-                class="perm-btn"
-                @click="togglePermission(row, teamName, perm)"
-              >
-                {{ perm.toUpperCase() }}
-              </el-button>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
+          <!-- 1. 资源信息 -->
+          <el-table-column
+            prop="groupInfo"
+            label="资源信息与路径"
+            min-width="260"
+            show-overflow-tooltip
+            sortable
+          >
+            <template #default="{ row }">
+              <span class="resource-info-bold">
+                <i class="fa fa-shield-alt path-decorator-icon"></i>
+                {{ row.groupInfo }}
+              </span>
+            </template>
+          </el-table-column>
 
-    <!-- 分页 -->
-    <div class="ops-pagination-wrapper">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 25, 50, 100]"
-        :total="total"
-        layout="total, sizes, prev, pager, next, jumper"
-        background
-        @size-change="handlePageSizeChange"
-        @current-change="handlePageChange"
-      />
+          <!-- 2. 资产类型 -->
+          <el-table-column
+            prop="assets_type"
+            label="适用资产类型"
+            min-width="150"
+            align="left"
+            sortable
+          >
+            <template #default="{ row }">
+              <el-tag size="small" type="info" effect="plain" class="asset-type-badge">
+                {{ row.assets_type || '所有类型' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <!-- 3. 动态团队权限列 -->
+          <el-table-column
+            v-for="teamName in teamNames"
+            :key="teamName"
+            :label="teamName"
+            width="185"
+            align="center"
+          >
+            <template #default="{ row }">
+              <div class="permission-buttons-group">
+                <el-button
+                  v-for="perm in ['r', 'w', 'x']"
+                  :key="perm"
+                  :type="hasPermission(row, teamName, perm) ? 'primary' : 'default'"
+                  size="small"
+                  class="perm-toggle-btn"
+                  :class="{ 'is-active': hasPermission(row, teamName, perm) }"
+                  @click="togglePermission(row, teamName, perm)"
+                >
+                  {{ perm.toUpperCase() }}
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 分页 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 25, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handlePageSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -280,10 +303,8 @@ function togglePermission(row, teamName, perm) {
       // 取消 R 时，同时取消 W 和 X
       teamInfo.permission = teamInfo.permission.filter(p => !['r', 'w', 'x'].includes(p))
     } else if (perm === 'w') {
-      // 取消 W
       teamInfo.permission = teamInfo.permission.filter(p => p !== 'w')
     } else {
-      // 取消 X
       teamInfo.permission = teamInfo.permission.filter(p => p !== 'x')
     }
   } else {
@@ -358,20 +379,24 @@ async function handleRefresh() {
 }
 
 // 搜索
-function handleSearch() {
+const handleSearch = () => {
   appliedSearch.value = searchKeyword.value
   currentPage.value = 1
 }
 
 // 重置
-function handleReset() {
+const handleReset = () => {
   searchKeyword.value = ''
   appliedSearch.value = ''
   currentPage.value = 1
 }
 
 function getRowClassName({ row }) {
-  return changedRowIds.value.includes(row.id) ? 'dirty-row' : ''
+  let classes = 'modern-table-row'
+  if (changedRowIds.value.includes(row.id)) {
+    classes += ' is-dirty-row'
+  }
+  return classes
 }
 
 // 分页变化
@@ -385,6 +410,8 @@ function handlePageSizeChange() {
 </script>
 
 <style scoped lang="scss">
+
+
 .action-left {
   display: flex;
   align-items: center;
@@ -392,38 +419,73 @@ function handlePageSizeChange() {
   gap: 8px;
 }
 
-.ops-table-wrapper {
-  :deep(.dirty-row .el-table__cell) {
-    background: #fff8e8;
+.sync-tag-indicator {
+  padding: 4px 10px;
+  height: 28px;
+  line-height: 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.resource-info-bold {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.path-decorator-icon {
+  color: var(--el-color-primary);
+  font-size: 12px;
+}
+
+.asset-type-badge {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.permission-buttons-group {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+
+  .perm-toggle-btn {
+    min-width: 32px;
+    height: 28px;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 4px;
+    border-color: var(--el-border-color-light);
+    background: var(--el-bg-color-page);
+    color: var(--el-text-color-regular);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      background: var(--el-color-primary-light-9);
+      border-color: var(--el-color-primary-light-7);
+      color: var(--el-color-primary);
+    }
+
+    &.is-active {
+      background: var(--el-color-primary);
+      border-color: var(--el-color-primary);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(64, 158, 255, 0.25);
+    }
   }
 }
 
-.permission-buttons {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-
-  .perm-btn {
-    min-width: 32px;
-    padding: 4px 8px;
-
-    &.el-button--default {
-      background: var(--el-bg-color-page);
-      border-color: var(--el-border-color);
-      color: var(--el-text-color-regular);
-
-      &:hover {
-        background: var(--el-color-primary-light-9);
-        border-color: var(--el-color-primary);
-        color: var(--el-color-primary);
-      }
-    }
-
-    &.el-button--primary {
-      background: var(--el-color-primary);
-      border-color: var(--el-color-primary);
-      color: #fff;
-    }
+/* Dirty row high-end warning tone */
+:deep(.el-table__row.is-dirty-row) {
+  td.el-table__cell {
+    background: var(--el-color-warning-light-9);
+    border-bottom: 1px solid var(--el-color-warning-light-8);
   }
 }
 </style>

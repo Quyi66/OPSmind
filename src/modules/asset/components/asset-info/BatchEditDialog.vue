@@ -1,49 +1,65 @@
 <template>
-  <el-dialog
+  <el-drawer
     v-model="visible"
-    title="批量更新资产属性"
-    width="480px"
-    :close-on-click-modal="false"
-    @closed="handleClosed"
+    title="批量更新设备属性"
+    size="480px"
+    direction="rtl"
+    :close-on-click-modal="true"
+    @close="handleClose"
+    class="batch-edit-drawer"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-position="top"
-    >
-      <el-form-item label="模型属性" prop="code">
-        <el-select
-          v-model="formData.code"
-          placeholder="请选择"
-          style="width: 100%"
-          :loading="loadingAttrs"
-        >
-          <el-option
-            v-for="item in editableAttrs"
-            :key="item.code"
-            :label="item.title"
-            :value="item.code"
-          />
-        </el-select>
-      </el-form-item>
+    <div class="drawer-body">
+      <el-alert
+        title="批量编辑提示"
+        description="您正在对选中的主机进行批量属性更新，保存后属性值将被批量覆盖为新输入的值。"
+        type="warning"
+        show-icon
+        :closable="false"
+        style="margin-bottom: 20px"
+      />
+      
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
+        label-position="top"
+      >
+        <el-form-item label="待更新属性字段" prop="code">
+          <el-select
+            v-model="formData.code"
+            placeholder="请选择要修改的模型属性"
+            style="width: 100%"
+            :loading="loadingAttrs"
+          >
+            <el-option
+              v-for="item in editableAttrs"
+              :key="item.code"
+              :label="item.title"
+              :value="item.code"
+            />
+          </el-select>
+        </el-form-item>
 
-      <el-form-item label="属性值" prop="value">
-        <el-input
-          v-model="formData.value"
-          type="textarea"
-          :rows="4"
-          placeholder="请输入属性值"
-        />
-      </el-form-item>
-    </el-form>
+        <el-form-item label="更新属性值" prop="value">
+          <el-input
+            v-model="formData.value"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入新的属性内容，多个资产将全部覆盖为此内容"
+          />
+        </el-form-item>
+      </el-form>
+    </div>
 
     <template #footer>
-      <el-button type="primary" :loading="saving" @click="handleSave">
-        保存
-      </el-button>
+      <div style="display: flex; gap: 12px; justify-content: flex-end">
+        <el-button @click="visible = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">
+          保存修改
+        </el-button>
+      </div>
     </template>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <script setup>
@@ -147,7 +163,7 @@ const handleSave = async () => {
 }
 
 // 弹窗关闭时重置
-const handleClosed = () => {
+const handleClose = () => {
   formRef.value?.resetFields()
   formData.value = {
     code: '',
@@ -163,8 +179,5 @@ watch(visible, (val) => {
 })
 </script>
 
-<style scoped lang="scss">
-:deep(.el-dialog__body) {
-  padding: 20px;
-}
-</style>
+
+

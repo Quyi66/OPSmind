@@ -103,7 +103,7 @@ const STATIC_TRANSLATIONS = {
   // ACM 作业相关
   'acm.job.assert_into': '主机录入',
   'acm.job.update_already_info': '更新已纳管设备信息',
-  'acm.job.delete_model': '删除资产模型',
+  'acm.job.delete_model': '删除模型定义',
   'acm.job.add_group': '新增分组',
   'acm.job.add_host_group': '新增主机分组',
   'acm.job.save_ansible_config': '保存ansible配置信息',
@@ -122,9 +122,9 @@ const STATIC_TRANSLATIONS = {
   'acm.job.modify_team_permission': '修改团队资源组权限',
   'acm.job.remove_group_assert': '移除分组内设备',
   'acm.job.remove_tag_assert': '移除标签内设备',
-  'acm.job.import_model': '资产模型导入',
+  'acm.job.import_model': '模型定义导入',
   'acm.job.assert_controller': '设备纳管',
-  'acm.job.delete_auto_config_info': '删除自动化配置信息',
+  'acm.job.delete_auto_config_info': '删除连接凭据信息',
   'acm.job.delete_ansible_config_info': '删除ansible配置信息',
 
   // 其他常见翻译

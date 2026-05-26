@@ -1,36 +1,61 @@
 <template>
-  <el-dialog
+  <el-drawer
     v-model="visible"
-    title="查看资产详情"
-    width="1060px"
-    :close-on-click-modal="false"
+    title="设备详细信息"
+    size="600px"
+    direction="rtl"
+    :close-on-click-modal="true"
     @close="handleClose"
+    class="asset-detail-drawer"
   >
-    <div v-loading="loading" class="asset-detail">
+    <div v-loading="loading" class="drawer-body">
       <template v-if="!loading && visibleAttrs.length > 0">
-        <el-form :model="attrValues" label-width="120px" class="asset-form">
-          <el-row :gutter="20">
-            <el-col v-for="attr in visibleAttrs" :key="attr.code" :span="12">
-              <el-form-item :label="attr.title" :required="attr.required" class="asset-form-item">
-                <template v-if="attr.code === 'needReboot'">
-                  <span
-                    class="readonly-value"
-                    :class="attrValues[attr.code] == 1 ? 'text-danger' : 'text-success'"
-                  >
-                    {{ attrValues[attr.code] == 1 ? '需要' : '不需要' }}
-                  </span>
-                </template>
-                <template v-else>
-                  <span class="readonly-value">{{ attrValues[attr.code] || '-' }}</span>
-                </template>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
+        <!-- 头部资产摘要卡片 -->
+        <div class="detail-header-card">
+          <div class="avatar-area">
+            <el-avatar :size="48" style="background-color: var(--el-color-primary-light-9); color: var(--el-color-primary)">
+              <i class="fa fa-server" style="font-size: 20px"></i>
+            </el-avatar>
+            <div class="title-info">
+              <h3>{{ attrValues.hostname || '-' }}</h3>
+              <span class="ip-badge">{{ attrValues.IP || '-' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 属性表格 -->
+        <el-descriptions :column="1" border class="detail-descriptions">
+          <el-descriptions-item
+            v-for="attr in visibleAttrs"
+            :key="attr.code"
+            :label="attr.title"
+            label-class-name="desc-label"
+            class-name="desc-value"
+          >
+            <template v-if="attr.code === 'needReboot'">
+              <el-tag :type="attrValues[attr.code] == 1 ? 'danger' : 'success'" size="small">
+                {{ attrValues[attr.code] == 1 ? '待重启' : '无需重启' }}
+              </el-tag>
+            </template>
+            <template v-else-if="attr.code === 'status'">
+              <el-tag :type="attrValues[attr.code] == 1 ? 'success' : 'info'" size="small">
+                {{ attrValues[attr.code] == 1 ? '在线' : '离线' }}
+              </el-tag>
+            </template>
+            <template v-else-if="attr.code === 'CONN_LATEST_STATUS'">
+              <el-tag :type="attrValues[attr.code] === '1' ? 'success' : 'danger'" size="small">
+                {{ attrValues[attr.code] === '1' ? '正常' : '失联' }}
+              </el-tag>
+            </template>
+            <template v-else>
+              <span class="detail-value">{{ attrValues[attr.code] || '-' }}</span>
+            </template>
+          </el-descriptions-item>
+        </el-descriptions>
       </template>
       <el-empty v-else-if="!loading" description="暂无数据" />
     </div>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <script setup>
@@ -105,38 +130,57 @@ watch(visible, val => {
 </script>
 
 <style scoped lang="scss">
-.asset-detail {
-  min-height: 200px;
-  padding-right: 4px;
+
+
+.detail-header-card {
+  background: var(--el-fill-color-light);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--el-border-color-lighter);
+
+  .avatar-area {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .title-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      .ip-badge {
+        font-size: 13px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+  }
 }
 
-.asset-form {
-  padding-top: 16px;
+.detail-descriptions {
+  :deep(.desc-label) {
+    width: 140px;
+    font-weight: 500;
+    color: var(--el-text-color-regular);
+    background-color: var(--el-fill-color-light);
+  }
+
+  :deep(.desc-value) {
+    color: var(--el-text-color-primary);
+  }
 }
 
-.asset-form-item {
-  margin-bottom: 18px;
-}
-
-.readonly-value {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  font-size: 14px;
+.detail-value {
+  font-size: 13px;
   line-height: 1.5;
   word-break: break-all;
-  color: var(--el-text-color-secondary);
-}
-
-.text-danger {
-  color: #f56c6c;
-}
-
-.text-success {
-  color: #67c23a;
-}
-
-:deep(.el-form-item__content) {
-  min-width: 0;
 }
 </style>
+

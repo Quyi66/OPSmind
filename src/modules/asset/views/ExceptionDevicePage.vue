@@ -8,8 +8,8 @@
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
-        <el-form-item label="类型">
-          <el-select v-model="filters.cit" placeholder="全部" style="width: 150px">
+        <el-form-item label="设备类型">
+          <el-select v-model="filters.cit" placeholder="全部" style="width: 140px">
             <el-option label="全部" value="oplus_all" />
             <el-option
               v-for="item in resourceTypes"
@@ -19,7 +19,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="条件">
+        <el-form-item label="筛选条件">
           <el-select v-model="filters.conditions" placeholder="筛选条件" style="width: 180px">
             <el-option label="全部" value="oplus_all" />
             <el-option label="今日异常" value="today" />
@@ -28,10 +28,10 @@
             <el-option label="最近一次连通成功设备" value="recently_ok" />
           </el-select>
         </el-form-item>
-        <el-form-item label="IP">
+        <el-form-item label="设备 IP">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索"
+            placeholder="搜索设备 IP..."
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
@@ -41,7 +41,7 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item>
+        <el-form-item class="filter-actions">
           <el-button type="primary" :loading="tableLoading" @click="handleSearch">
             <el-icon><Search /></el-icon>
             搜索
@@ -58,17 +58,18 @@
     <div class="ops-action-bar">
       <el-button size="small" @click="openActionDialog('checkConnectivity')" type="primary">
         <i class="fa fa-plug" style="margin-right: 4px"></i>
-        检查连通性
+        连通性检测
       </el-button>
       <el-button size="small" @click="openActionDialog('collectInfo')">
         <i class="fa fa-download" style="margin-right: 4px"></i>
-        采集信息
+        信息数据采集
       </el-button>
-      <el-button size="small" @click="openOperationLog('checkConnectivity')">连通性记录</el-button>
-      <el-button size="small" @click="openOperationLog('collectInfo')">采集记录</el-button>
-      <!-- <el-button size="small" @click="handleExport">
-        <el-icon><Download /></el-icon>
-        导出</el-button> -->
+      <el-button size="small" @click="openOperationLog('checkConnectivity')" plain>
+        连通性历史日志
+      </el-button>
+      <el-button size="small" @click="openOperationLog('collectInfo')" plain>
+        采集历史日志
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -83,38 +84,65 @@
     </div>
 
     <!-- 表格区域 -->
-    <div class="ops-table-wrapper">
-      <!-- 数据表格 -->
+    <div class="ops-table-wrapper card-table">
       <el-table
         v-loading="tableLoading"
         :data="tableData"
-        style="width: 100%"
-        max-height="calc(100vh - 520px)"
+        height="100%"
+        row-class-name="modern-table-row"
       >
-        <el-table-column prop="IP" label="IP" min-width="120" sortable />
-        <el-table-column prop="ci_name" label="资产代码" min-width="120" />
-        <el-table-column prop="CONN_RATE" label="连通率" min-width="100">
+        <!-- 1. 资产标识复合列 -->
+        <el-table-column label="设备标识 (IP & 类型)" min-width="180">
           <template #default="{ row }">
-            <span :class="getConnRateClass(row.CONN_RATE)">
-              {{ formatConnRate(row.CONN_RATE) }}
-            </span>
+            <div class="composite-ip-cell">
+              <span>{{ row.IP || '-' }}</span>
+              <el-tag size="small" type="primary" effect="plain" class="asset-code-tag">
+                {{ row.ci_name || '-' }}
+              </el-tag>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="CONN_LATEST_STATUS"
-          label="最近连通状态"
-          min-width="120"
-          align="left"
-        >
+
+        <!-- 2. 健康巡检复合列 -->
+        <el-table-column label="连通健康度" min-width="220" align="left">
           <template #default="{ row }">
-            <span :class="getConnStatusClass(row.CONN_LATEST_STATUS)">
-              <i :class="getConnStatusIcon(row.CONN_LATEST_STATUS)"></i>
-            </span>
+            <div class="health-cell">
+              <el-tag
+                :type="row.CONN_LATEST_STATUS === '1' ? 'success' : (row.CONN_LATEST_STATUS === '0' ? 'danger' : 'warning')"
+                size="small"
+                effect="light"
+                class="health-status-tag"
+              >
+                <i :class="row.CONN_LATEST_STATUS === '1' ? 'fa fa-check-circle' : (row.CONN_LATEST_STATUS === '0' ? 'fa fa-times-circle' : 'fa fa-question-circle')"></i>
+                <span style="margin-left: 4px">
+                  {{ row.CONN_LATEST_STATUS === '1' ? '正常' : (row.CONN_LATEST_STATUS === '0' ? '失联' : '未知') }}
+                </span>
+              </el-tag>
+
+              <div class="conn-rate-progress">
+                <el-progress
+                  :percentage="getProgressRate(row.CONN_RATE)"
+                  :status="getProgressRate(row.CONN_RATE) >= 80 ? 'success' : (getProgressRate(row.CONN_RATE) >= 50 ? 'warning' : 'exception')"
+                  :stroke-width="5"
+                  :show-text="false"
+                  style="width: 80px"
+                />
+              </div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="updated_at" label="更新时间" min-width="160">
+
+        <!-- 3. 更新时间 -->
+        <el-table-column label="最后同步时间" min-width="160">
           <template #default="{ row }">
-            {{ formatDateTime(row.updated_at) }}
+            <span>{{ formatDateTime(row.updated_at) }}</span>
+          </template>
+        </el-table-column>
+
+        <!-- 4. 操作 -->
+        <el-table-column label="操作" width="100" align="center" fixed="right">
+          <template #default="{ row }">
+            <el-button text type="primary" size="small" @click="viewCredentials(row)">查看凭据</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -138,9 +166,10 @@
     <el-dialog
       v-model="actionDialogVisible"
       :title="currentActionMeta.title"
-      width="700px"
+      width="820px"
       :close-on-click-modal="false"
       @closed="resetActionDialog"
+      class="premium-action-dialog"
     >
       <div class="dialog-content">
         <AcmDeviceSelector
@@ -150,9 +179,10 @@
         />
       </div>
       <template #footer>
-        <el-button @click="actionDialogVisible = false">取消</el-button>
+        <el-button @click="actionDialogVisible = false" size="small">取消</el-button>
         <el-button
           type="primary"
+          size="small"
           :disabled="actionHosts.length === 0"
           :loading="actionLoading"
           @click="confirmAction"
@@ -182,8 +212,8 @@ const EXCEPTION_QUERY_CONDITIONS = new Set(['oplus_all', 'recently', 'recently_o
 const ACTION_CONFIG = {
   checkConnectivity: {
     title: '检查连通性',
-    confirmButtonText: '检查连通性',
-    confirmMessage: '连通性检查将花费几分钟到半小时不等的时间，点击确定开始',
+    confirmButtonText: '立即检查连通性',
+    confirmMessage: '连通性检查将花费数分钟至半小时不等，确认后将立即开始执行。',
     pendingMessage: '连通性检查任务已发起，可以关闭当前弹窗',
     successMessage: '连通性检查完成',
     failureMessage: '连通性检查失败',
@@ -194,8 +224,8 @@ const ACTION_CONFIG = {
   },
   collectInfo: {
     title: '采集信息',
-    confirmButtonText: '采集信息',
-    confirmMessage: '信息采集将花费几分钟到半小时不等的时间，点击确定开始',
+    confirmButtonText: '立即采集资产数据',
+    confirmMessage: '资产数据采集将花费数分钟至半小时不等，确认后将立即开始执行。',
     pendingMessage: '信息采集任务已发起，可以关闭当前弹窗',
     successMessage: '信息采集完成',
     failureMessage: '信息采集失败',
@@ -318,6 +348,21 @@ const handleSearch = () => {
   currentPage.value = 1
   loadTableData()
 }
+
+// 搜索输入防抖
+let searchDebounceTimer = null
+watch(searchKeyword, (newVal) => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+  if (!newVal) {
+    handleSearch()
+  } else {
+    searchDebounceTimer = setTimeout(() => {
+      handleSearch()
+    }, 300)
+  }
+})
 
 // 重置
 const handleReset = () => {
@@ -510,54 +555,6 @@ onUnmounted(() => {
   pollTimerIds.clear()
 })
 
-// 格式化连通率
-const formatConnRate = rate => {
-  if (rate === null || rate === 'null' || rate === undefined) {
-    return '未测试'
-  }
-  return `${rate}%`
-}
-
-// 获取连通率样式类
-const getConnRateClass = rate => {
-  if (rate === null || rate === 'null' || rate === undefined) {
-    return 'text-secondary'
-  }
-  const numRate = Number(rate)
-  if (numRate >= 50) {
-    return 'text-primary'
-  }
-  return 'text-warning'
-}
-
-// 获取连通状态图标
-const getConnStatusIcon = status => {
-  if (status === null || status === 'null' || status === undefined) {
-    return 'fa fa-question-circle'
-  }
-  if (status === 0 || status === '0' || status === '0.0') {
-    return 'fa fa-times-circle'
-  }
-  if (status === 1 || status === '1') {
-    return 'fa fa-check-circle'
-  }
-  return 'fa fa-question-circle'
-}
-
-// 获取连通状态样式类
-const getConnStatusClass = status => {
-  if (status === null || status === 'null' || status === undefined) {
-    return 'text-secondary'
-  }
-  if (status === 0 || status === '0' || status === '0.0') {
-    return 'text-danger'
-  }
-  if (status === 1 || status === '1') {
-    return 'text-success'
-  }
-  return 'text-secondary'
-}
-
 // 格式化日期时间
 const formatDateTime = dateStr => {
   if (!dateStr) return ''
@@ -569,6 +566,24 @@ const formatDateTime = dateStr => {
   const minutes = String(date.getMinutes()).padStart(2, '0')
   const seconds = String(date.getSeconds()).padStart(2, '0')
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+// 解决 ElProgress 异常连通率转换并进行类型安全防御
+const getProgressRate = rate => {
+  if (rate === null || rate === undefined || rate === '' || rate === 'null') {
+    return 0
+  }
+  const parsed = parseInt(rate, 10)
+  return isNaN(parsed) ? 0 : Math.max(0, Math.min(100, parsed))
+}
+
+// 查看凭据跳转
+const viewCredentials = row => {
+  if (!row.IP) return
+  router.push({
+    path: '/acm/automation',
+    query: { ip: row.IP }
+  })
 }
 
 // 初始化
@@ -587,102 +602,37 @@ watch(
 </script>
 
 <style scoped lang="scss">
-.exception-device {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 0 20px;
+.kpi-section {
+  flex-shrink: 0;
 }
 
-.page-header {
+
+.composite-ip-cell {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--el-border-color-light);
+  gap: 10px;
 
-  .page-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-
-  .page-actions {
-    display: flex;
-    gap: 8px;
+  .asset-code-tag {
+    border-radius: 4px;
+    height: 20px;
+    line-height: 20px;
   }
 }
 
-// .kpi-section {
-//   padding-bottom: 12px;
-// }
-
-.table-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.filter-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  gap: 16px;
-
-  .filter-left {
-    display: flex;
-    gap: 12px;
-  }
-
-  .filter-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-}
-
-.el-table {
-  flex: 1;
-}
-
-.pagination-wrapper {
+.health-cell {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 0;
 
-  .pagination-info {
-    font-size: 13px;
-    color: var(--el-text-color-regular);
+  .health-status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 }
 
-// 状态颜色
-.text-primary {
-  color: #409eff;
-}
-
-.text-success {
-  color: #67c23a;
-}
-
-.text-warning {
-  color: #e6a23c;
-}
-
-.text-danger {
-  color: #f56c6c;
-}
-
-.text-secondary {
-  color: #909399;
-}
 
 .dialog-content {
-  padding: 12px 0;
-  font-size: 14px;
-  color: var(--el-text-color-regular);
+  padding: 8px 4px;
 }
 </style>

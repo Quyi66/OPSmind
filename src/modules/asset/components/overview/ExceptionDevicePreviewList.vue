@@ -2,14 +2,14 @@
   <section class="preview-panel">
     <div class="preview-panel__header">
       <div class="preview-panel__title-wrap">
-        <h4 class="preview-panel__title">异常设备</h4>
+        <h4 class="preview-panel__title">连通巡检</h4>
         <span class="preview-panel__meta">{{ totalText }}</span>
       </div>
       <button type="button" class="preview-panel__link" @click="$emit('view-all')">查看全部</button>
     </div>
 
     <div v-if="loading" class="preview-panel__state">加载中...</div>
-    <div v-else-if="!items.length" class="preview-panel__state">暂无异常设备</div>
+    <div v-else-if="!items.length" class="preview-panel__state">暂无连通异常设备</div>
 
     <div v-else class="preview-panel__list">
       <button

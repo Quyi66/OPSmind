@@ -74,8 +74,8 @@ export function useAssetWorkbenchDrawers(
   // ── 计算 ──
   const assetListDrawerTitle = computed(() => {
     return assetListDrawer.filterType
-      ? `资产列表 · ${assetListDrawer.filterType}`
-      : '资产列表'
+      ? `设备清单 · ${assetListDrawer.filterType}`
+      : '设备清单'
   })
 
   // ── 资产列表抽屉 ──
@@ -100,7 +100,7 @@ export function useAssetWorkbenchDrawers(
       assetListDrawer.records = res?.records || []
       assetListDrawer.total = res?.total || 0
     } catch (e) {
-      console.error('加载资产列表失败:', e)
+      console.error('加载设备清单失败:', e)
       assetListDrawer.records = []
       assetListDrawer.total = 0
     } finally {

@@ -126,7 +126,9 @@ const maxValue = computed(() => {
 })
 
 function calculatePercent(val) {
-  return Math.min((val / maxValue.value) * 100, 100) + '%'
+  if (val <= 0) return '0%'
+  const computedPercent = (val / maxValue.value) * 100
+  return Math.min(Math.max(computedPercent, 3), 100) + '%'
 }
 
 // 初始化图表
@@ -453,7 +455,7 @@ onUnmounted(() => {
 
 .metric-progress-bar {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 1px;
   width: 0;
   transition: width 0.8s ease-out;
 

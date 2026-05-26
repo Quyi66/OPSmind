@@ -38,7 +38,7 @@
         >
           <div class="aw-stat__top">
             <div class="aw-stat__content">
-              <span class="aw-stat__label">异常设备</span>
+              <span class="aw-stat__label">连通巡检</span>
               <WbFlipNumber class="aw-stat__value" :value="exceptionDeviceTotal" />
             </div>
             <span class="aw-stat__icon"><i class="fa fa-exclamation-triangle" /></span>
@@ -163,7 +163,7 @@
           </div>
         </div>
 
-        <!-- 资产列表预览（按选中类型） -->
+        <!-- 设备清单预览（按选中类型） -->
         <div class="aw-recent-assets">
           <div class="aw-recent-assets__header">
             <div class="aw-recent-assets__type-strip">
@@ -236,7 +236,7 @@
       <section class="aw-panel aw-panel--exceptions">
         <div class="aw-panel__header">
           <div class="aw-panel__title-group">
-            <h3 class="aw-panel__title">异常设备</h3>
+            <h3 class="aw-panel__title">连通巡检</h3>
             <span class="aw-panel__stat-badge">
               <strong>{{ exceptionDeviceTotal }}</strong>
               台
@@ -277,7 +277,7 @@
                 </span>
               </button>
             </div>
-            <div v-else class="aw-exception-list__empty">暂无异常设备</div>
+            <div v-else class="aw-exception-list__empty">暂无连通异常设备</div>
           </div>
         </div>
       </section>
@@ -357,7 +357,7 @@
 
     <!-- ══════════ 抽屉面板 ══════════ -->
 
-    <!-- 资产列表抽屉 -->
+    <!-- 设备清单抽屉 -->
     <el-drawer
       v-model="assetListDrawer.visible"
       size="75%"
@@ -441,7 +441,7 @@
     <el-drawer v-model="exceptionDrawer.visible" size="50%" class="aw-drawer">
       <template #header>
         <div class="aw-drawer-header">
-          <span class="aw-drawer-header__title">异常设备</span>
+          <span class="aw-drawer-header__title">连通巡检</span>
           <div class="aw-drawer-header__actions">
             <el-button
               class="aw-inline-action"
@@ -486,7 +486,7 @@
               </span>
             </button>
           </div>
-          <el-empty v-else description="暂无异常设备" :image-size="60" />
+          <el-empty v-else description="暂无连通异常设备" :image-size="60" />
         </template>
         <div v-if="exceptionDrawer.total > exceptionDrawer.pageSize" class="aw-drawer__pagination">
           <el-pagination
@@ -1114,15 +1114,15 @@ async function handleExceptionCheckConn(item) {
   }
 }
 
-// ── 异常设备批量操作 ──
+// ── 连通巡检设备批量操作 ──
 async function runExceptionBulkAction(jobId, actionName) {
   const total = exceptionDrawer.total
   if (!total) {
-    ElMessage.warning('没有异常设备可操作')
+    ElMessage.warning('没有异常巡检设备可操作')
     return
   }
   try {
-    await ElMessageBox.confirm(`将对全部 ${total} 台异常设备${actionName}，此操作可能需要一段时间。`, '确认操作', {
+    await ElMessageBox.confirm(`将对全部 ${total} 台连通异常设备${actionName}，此操作可能需要一段时间。`, '确认操作', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
@@ -1143,7 +1143,7 @@ async function runExceptionBulkAction(jobId, actionName) {
       assetType: 'linux'
     }))
     if (!hosts.length) {
-      ElMessage.warning('没有异常设备可操作')
+      ElMessage.warning('没有异常巡检设备可操作')
       return
     }
     const { data } = await apiService.post(
@@ -1861,7 +1861,7 @@ onUnmounted(() => {
   }
 }
 
-// ── 最近资产列表 ──
+// ── 最近设备清单 ──
 .aw-recent-assets {
   padding: 8px 12px;
 

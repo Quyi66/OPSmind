@@ -171,8 +171,8 @@ const loadAssetList = async () => {
     assetList.value = res?.records || []
     pagination.value.total = res?.total || 0
   } catch (error) {
-    console.error('加载资产列表失败:', error)
-    ElMessage.error('加载资产列表失败')
+    console.error('加载设备清单失败:', error)
+    ElMessage.error('加载设备清单失败')
   } finally {
     loading.value = false
   }

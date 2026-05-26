@@ -451,3 +451,73 @@ a.ops-sidebar-item {
   padding-top: 0;
   padding-bottom: 0;
 }
+
+// ──── 模块级标准 Tab 样式 ────
+.type-tabs-wrapper {
+  background: var(--el-bg-color);
+  padding: 0 24px;
+  border-bottom: 1px solid var(--el-border-color-light);
+  flex-shrink: 0;
+
+  .modern-tabs {
+    .el-tabs__header {
+      margin: 0;
+    }
+    .el-tabs__nav-wrap::after {
+      display: none;
+    }
+    .el-tabs__item {
+      height: 48px;
+      line-height: 48px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  i {
+    font-size: 14px;
+  }
+}
+
+// ──── 模块级内容区域标准布局 ────
+.content-view-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+// ──── 表格通用视觉工具类 ────
+
+.placeholder-dash {
+  color: var(--el-text-color-placeholder);
+}
+
+.action-cell {
+  display: flex;
+  gap: 6px;
+}
+
+// 主体区域（侧边栏 + 内容区并排）
+.main-body-layout {
+  flex: 1;
+  display: flex;
+  overflow: visible;
+  min-height: 0;
+  height: 100%;
+}
+
+// Drawer 通用内容区 padding
+.drawer-body {
+  padding: 8px 4px;
+}

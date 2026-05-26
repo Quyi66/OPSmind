@@ -8,7 +8,7 @@ export const ADMIN_MENU_CONFIG = [
     name: '资产管理',
     icon: 'fas fa-server',
     children: [
-      { code: 'auto-config', name: '自动化配置', icon: 'fas fa-cogs' }
+      { code: 'auto-config', name: '连接凭据', icon: 'fas fa-cogs' }
     ]
   }
 ]

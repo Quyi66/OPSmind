@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="modelId ? '编辑资产模型' : '添加资产模型'"
+    :title="modelId ? '编辑模型定义' : '添加模型定义'"
     width="90%"
     top="5vh"
     :close-on-click-modal="false"
@@ -220,7 +220,7 @@
 
             <!-- 列表视图 -->
             <el-collapse-item title="列表视图 (List)" name="list">
-              <div class="view-desc">资产列表页面显示的列</div>
+              <div class="view-desc">设备清单页面显示的列</div>
               <ViewColumnConfig v-model="listColumns" :attrs="availableAttrs" />
             </el-collapse-item>
           </el-collapse>

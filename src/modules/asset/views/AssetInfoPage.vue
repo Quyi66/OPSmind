@@ -1,377 +1,333 @@
 <template>
-  <div class="ops-page-layout" style="padding: 0; gap: 0">
-    <!-- 资产类型标签页 -->
+  <div class="ops-page-layout">
+    <!-- 资产类型标签页 (使用 el-tabs 提升视觉与易用性) -->
     <div class="type-tabs-wrapper">
-      <div class="type-tabs">
-        <div
+      <el-tabs v-model="currentType" class="modern-tabs" @tab-change="handleTypeChange">
+        <el-tab-pane
           v-for="item in assetTypes"
           :key="item.code"
-          :class="['type-tab', { active: currentType === item.code }]"
-          @click="handleTypeChange(item.code)"
-        >
-          <!-- <i :class="['fa', item.icon || 'fa-server']"></i> -->
-          <span>{{ item.title }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 内容区 -->
-    <div class="ops-page-layout">
-      <!-- 筛选区域 -->
-      <div class="ops-filter-bar">
-        <el-form :inline="true" size="small">
-          <el-form-item label="资产范围">
-            <el-popover
-              placement="bottom-start"
-              :width="360"
-              trigger="click"
-              v-model:visible="hostSelectorVisible"
-            >
-              <template #reference>
-                <el-button size="small" class="scope-trigger">
-                  <i class="fa fa-sitemap" style="margin-right: 4px"></i>
-                  {{ scopeSummaryText }}
-                  <i class="fa fa-caret-down" style="margin-left: 4px"></i>
-                </el-button>
-              </template>
-              <div class="scope-selector">
-                <div class="scope-selector__header">
-                  <span>
-                    <i class="fa fa-filter" style="margin-right: 4px"></i>
-                    选择资产范围
-                  </span>
-                  <el-tag size="small" type="info">{{ selectedScopeTypeLabel }}</el-tag>
-                </div>
-                <el-tabs v-model="hostSelectorTab">
-                  <el-tab-pane label="按分组" name="group">
-                    <template #label>
-                      <span>
-                        <i class="fa fa-code-branch" style="margin-right: 4px"></i>
-                        按分组
-                      </span>
-                    </template>
-                    <div class="group-tree-container">
-                      <div
-                        class="group-item all-item"
-                        :class="{ active: selectedGroup === 'all' }"
-                        @click="handleSelectGroup('all', '全部资产')"
-                      >
-                        全部资产
-                      </div>
-                      <el-tree
-                        v-if="groupTreeData.length > 0"
-                        ref="groupTreeRef"
-                        :data="groupTreeData"
-                        :props="treeProps"
-                        node-key="id"
-                        default-expand-all
-                        @node-click="handleGroupNodeClick"
-                      >
-                        <template #default="{ node }">
-                          <span class="tree-node">
-                            <i class="fa fa-folder" style="margin-right: 4px; color: #e6a23c"></i>
-                            {{ node.label }}
-                          </span>
-                        </template>
-                      </el-tree>
-                      <el-empty v-else description="没有数据" :image-size="60" />
-                    </div>
-                  </el-tab-pane>
-                  <el-tab-pane label="按标签" name="tag">
-                    <template #label>
-                      <span>
-                        <i class="fa fa-tag" style="margin-right: 4px"></i>
-                        按标签
-                      </span>
-                    </template>
-                    <div class="tag-list-container">
-                      <el-empty
-                        v-if="tagList.length === 0"
-                        description="没有数据"
-                        :image-size="60"
-                      />
-                      <div v-else class="tag-list">
-                        <div
-                          class="tag-item all-item"
-                          :class="{ active: !selectedTag }"
-                          @click="handleSelectGroup('all', '全部资产')"
-                        >
-                          全部资产
-                        </div>
-                        <div
-                          v-for="tag in tagList"
-                          :key="tag.name"
-                          class="tag-item"
-                          :class="{ active: selectedTag === tag.name }"
-                          @click="handleSelectTag(tag)"
-                        >
-                          {{ tag.name }}
-                        </div>
-                      </div>
-                    </div>
-                  </el-tab-pane>
-                </el-tabs>
-              </div>
-            </el-popover>
-          </el-form-item>
-
-          <el-form-item label="在线状态">
-            <el-select v-model="filters.status" style="width: 80px">
-              <el-option label="全部" value="all" />
-              <el-option label="在线" value="1" />
-              <el-option label="下线" value="0" />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item label="最近连通">
-            <el-select v-model="filters.connLatestStatus" style="width: 100px">
-              <el-option label="所有" value="all" />
-              <el-option label="连通成功" value="1" />
-              <el-option label="连通失败" value="0" />
-              <el-option label="未测试" value="null" />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item label="系统版本">
-            <el-select
-              v-model="filters.osVersion"
-              placeholder="所有"
-              multiple
-              collapse-tags
-              collapse-tags-tooltip
-              clearable
-              style="width: 120px"
-            >
-              <el-option
-                v-for="item in osVersionOptions"
-                :key="item.value"
-                :label="item.value"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item label="关键词">
-            <el-input
-              v-model="searchText"
-              placeholder="IP/主机名/业务系统/负责人"
-              clearable
-              style="width: 220px"
-            />
-          </el-form-item>
-
-          <el-form-item>
-            <el-button type="primary" @click="handleSearch">
-              <el-icon><Search /></el-icon>
-              搜索
-            </el-button>
-            <el-button @click="handleReset">
-              <el-icon><RefreshRight /></el-icon>
-              重置
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <!-- 操作按钮区域 -->
-      <div class="ops-action-bar">
-        <div class="action-left">
-          <el-button type="primary" @click="handleAutoEntry" size="small">
-            <i class="fa fa-plus" style="margin-right: 4px"></i>
-            自动化资产录入
-          </el-button>
-          <el-button size="small" @click="importDialogVisible = true">
-            <i class="fa fa-file-import" style="margin-right: 4px"></i>
-            导入资产
-          </el-button>
-          <el-button size="small" @click="exportDialogVisible = true">
-            <i class="fa fa-file-export" style="margin-right: 4px"></i>
-            资产信息导出
-          </el-button>
-          <el-button type="danger" plain size="small" @click="deleteImportDialogVisible = true">
-            <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
-            批量删除资产
-          </el-button>
-        </div>
-        <span style="flex: 1"></span>
-        <el-button
-          class="toolbar-icon-btn"
-          circle
-          size="small"
-          :loading="loading"
-          @click="handleRefresh"
-          title="刷新"
-        >
-          <el-icon v-show="!loading"><Refresh /></el-icon>
-        </el-button>
-      </div>
-
-      <div v-if="hasSelection" class="selection-action-bar">
-        <div class="selection-action-bar__summary">
-          已选
-          <strong>{{ selectedRows.length }}</strong>
-          项
-        </div>
-        <div class="selection-action-bar__actions">
-          <el-button :icon="Edit" size="small" @click="handleEdit">批量修改</el-button>
-          <el-button size="small" @click="handleAddTag">
-            <i class="fa fa-tag" style="margin-right: 4px"></i>
-            添加标签
-          </el-button>
-          <el-button size="small" @click="handleAddGroup">
-            <i class="fa fa-code" style="margin-right: 4px"></i>
-            添加分组
-          </el-button>
-          <el-button :icon="Top" size="small" @click="handleOnline">上线</el-button>
-          <el-button :icon="Bottom" size="small" @click="handleOffline">下线</el-button>
-          <el-button type="danger" :icon="Delete" size="small" @click="handleDelete">
-            删除
-          </el-button>
-        </div>
-      </div>
-
-      <!-- 数据表格 -->
-      <div class="ops-table-wrapper">
-        <el-table
-          ref="tableRef"
-          v-loading="loading"
-          :data="tableData"
-          :max-height="tableMaxHeight"
-          @selection-change="handleSelectionChange"
-        >
-          <el-table-column type="selection" width="40" fixed="left" />
-
-          <el-table-column label="资产状态" width="80" fixed="left">
-            <template #default="{ row }">
-              <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-                {{ row.status === 1 ? '在线' : '离线' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="IP" label="纳管IP" width="140" fixed="left">
-            <template #default="{ row }">
-              <el-button link type="primary" class="table-link-btn" @click="handleView(row)">
-                {{ row.IP || '-' }}
-              </el-button>
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="hostname" label="主机名" min-width="150" show-overflow-tooltip>
-            <template #default="{ row }">
-              <el-button link type="primary" class="table-link-btn" @click="handleView(row)">
-                {{ row.hostname || '-' }}
-              </el-button>
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="业务系统" label="业务系统" width="120" show-overflow-tooltip />
-
-          <el-table-column
-            prop="os_distro"
-            label="操作系统"
-            min-width="180"
-            show-overflow-tooltip
-          />
-
-          <el-table-column prop="os_version" label="系统版本" width="120" show-overflow-tooltip />
-
-          <el-table-column label="是否需要重启" width="110" align="left">
-            <template #default="{ row }">
-              <span
-                v-if="row.needReboot !== undefined && row.needReboot !== null && row.needReboot !== ''"
-                :class="row.needReboot == 1 ? 'text-danger' : 'text-success'"
-              >
-                {{ row.needReboot == 1 ? '需要' : '不需要' }}
-              </span>
-              <span v-else class="text-secondary">-</span>
-            </template>
-          </el-table-column>
-
-          <el-table-column label="连通状态" width="110" align="left" prop="CONN_LATEST_STATUS">
-            <template #default="{ row }">
-              <el-button
-                link
-                :loading="checkingConnIds.includes(row.id)"
-                @click="handleCheckSingleConn(row)"
-                style="padding: 0; line-height: 1"
-              >
-                <i v-if="row.CONN_LATEST_STATUS === '1'" class="fa fa-check-circle text-success">
-                  已联通
-                </i>
-                <i
-                  v-else-if="row.CONN_LATEST_STATUS === '0'"
-                  class="fa fa-times-circle text-danger"
-                >
-                  未联通
-                </i>
-                <i v-else class="fa fa-question-circle text-warning">未知</i>
-              </el-button>
-            </template>
-          </el-table-column>
-
-          <el-table-column label="连通率" width="80">
-            <template #default="{ row }">
-              <span :class="getConnRateClass(row.CONN_RATE)">
-                {{ row.CONN_RATE ? row.CONN_RATE + '%' : '未测试' }}
-              </span>
-            </template>
-          </el-table-column>
-
-          <el-table-column prop="负责人" label="负责人" width="100" show-overflow-tooltip />
-
-          <el-table-column label="更新时间" width="180">
-            <template #default="{ row }">
-              {{ formatDateTime(row.updated_at) }}
-            </template>
-          </el-table-column>
-
-          <el-table-column label="操作" width="100" fixed="right">
-            <template #default="{ row }">
-              <el-button text type="primary" size="small" @click="handleEditRow(row)">
-                编辑
-              </el-button>
-              <el-button text type="primary" size="small" @click="handleHistory(row)">
-                历史
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-
-      <!-- 分页 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handlePageSizeChange"
-          @current-change="loadAssetList"
+          :label="item.title"
+          :name="item.code"
         />
+      </el-tabs>
+    </div>
+
+    <!-- 主体区域：左边常驻侧边栏，右边列表内容 -->
+    <div class="main-body-layout">
+      <!-- 左侧边栏 -->
+      <AssetSidebar
+        :group-tree-data="groupTreeData"
+        :tag-list="tagList"
+        :selected-group="selectedGroup"
+        :selected-tag="selectedTag"
+        @select-group="handleSelectGroup"
+        @select-tag="handleSelectTag"
+      />
+
+      <!-- 右侧内容区 -->
+      <div class="content-view-area">
+        <!-- 筛选区域 -->
+        <div class="ops-filter-bar">
+          <el-form :inline="true" size="small">
+            <el-form-item label="在线状态">
+              <el-select v-model="filters.status" style="width: 85px">
+                <el-option label="全部" value="all" />
+                <el-option label="在线" value="1" />
+                <el-option label="下线" value="0" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="最近连通">
+              <el-select v-model="filters.connLatestStatus" style="width: 105px">
+                <el-option label="所有" value="all" />
+                <el-option label="连通成功" value="1" />
+                <el-option label="连通失败" value="0" />
+                <el-option label="未测试" value="null" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="系统版本">
+              <el-select
+                v-model="filters.osVersion"
+                placeholder="所有"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                clearable
+                style="width: 130px"
+              >
+                <el-option
+                  v-for="item in osVersionOptions"
+                  :key="item.value"
+                  :label="item.value"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="关键词">
+              <el-input
+                v-model="searchText"
+                placeholder="IP/主机名/责任人"
+                clearable
+                style="width: 240px"
+                @keyup.enter="handleSearch"
+              />
+            </el-form-item>
+
+            <el-form-item class="filter-actions">
+              <el-button type="primary" @click="handleSearch">
+                <el-icon><Search /></el-icon>
+                搜索
+              </el-button>
+              <el-button @click="handleReset">
+                <el-icon><RefreshRight /></el-icon>
+                重置
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 操作按钮区域 -->
+        <div class="ops-action-bar">
+          <div class="action-left">
+            <el-button type="primary" @click="handleAutoEntry" size="small">
+              <i class="fa fa-plus" style="margin-right: 4px"></i>
+              自动化设备录入
+            </el-button>
+            <el-button size="small" @click="importDialogVisible = true">
+              <i class="fa fa-file-import" style="margin-right: 4px"></i>
+              导入设备
+            </el-button>
+            <el-button size="small" @click="exportDialogVisible = true">
+              <i class="fa fa-file-export" style="margin-right: 4px"></i>
+              设备信息导出
+            </el-button>
+            <el-button type="danger" plain size="small" @click="deleteImportDialogVisible = true">
+              <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
+              批量删除设备
+            </el-button>
+          </div>
+          <span style="flex: 1"></span>
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            size="small"
+            :loading="loading"
+            @click="handleRefresh"
+            title="刷新"
+          >
+            <el-icon v-show="!loading"><Refresh /></el-icon>
+          </el-button>
+        </div>
+
+        <!-- 批量操作栏（设计为带滑动动画并在表格上方展示） -->
+        <transition name="slide-fade">
+          <div v-if="hasSelection" class="selection-action-bar-top animate-fade">
+            <div class="selection-action-bar__summary">
+              <i class="fa fa-info-circle text-primary" style="margin-right: 6px"></i>
+              已选择 <strong>{{ selectedRows.length }}</strong> 台主机设备
+            </div>
+            <div class="selection-action-bar__actions">
+              <el-button :icon="Edit" size="small" type="primary" plain @click="handleEdit">批量修改</el-button>
+              <el-button size="small" @click="handleAddTag">
+                <i class="fa fa-tag" style="margin-right: 4px"></i>
+                添加标签
+              </el-button>
+              <el-button size="small" @click="handleAddGroup">
+                <i class="fa fa-folder" style="margin-right: 4px"></i>
+                添加分组
+              </el-button>
+              <el-button :icon="Top" size="small" type="success" plain @click="handleOnline">上线</el-button>
+              <el-button :icon="Bottom" size="small" type="info" plain @click="handleOffline">下线</el-button>
+              <el-button type="danger" :icon="Delete" size="small" @click="handleDelete">
+                删除
+              </el-button>
+            </div>
+          </div>
+        </transition>
+
+        <!-- 数据表格 -->
+        <div class="ops-table-wrapper card-table">
+          <el-table
+            ref="tableRef"
+            v-loading="loading"
+            :data="tableData"
+            height="100%"
+            @selection-change="handleSelectionChange"
+            row-class-name="modern-table-row"
+          >
+            <el-table-column type="selection" width="40" fixed="left" />
+
+            <!-- 1. 设备标识复合列 -->
+            <el-table-column label="设备标识" min-width="220" fixed="left">
+              <template #default="{ row }">
+                <div class="composite-identity-cell">
+                  <el-tag
+                    :type="row.status === 1 ? 'success' : 'info'"
+                    size="small"
+                    round
+                    class="status-pill-tag"
+                  >
+                    <span class="status-dot-pulse" :class="{ 'is-online': row.status === 1 }"></span>
+                    {{ row.status === 1 ? '在线' : '离线' }}
+                  </el-tag>
+                  <div class="identity-text">
+                    <el-link type="primary" :underline="false" class="hostname-link" @click="handleView(row)">
+                      {{ row.hostname || '-' }}
+                    </el-link>
+                    <span class="ip-subtext">{{ row.IP || '-' }}</span>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+
+            <!-- 3. 系统环境复合列 -->
+            <el-table-column label="系统环境" min-width="160" show-overflow-tooltip>
+              <template #default="{ row }">
+                <div class="os-env-cell">
+                  <i :class="[getOsIcon(row.os_distro), 'os-brand-icon']"></i>
+                  <div class="os-text-wrapper">
+                    <span class="os-distro-name">{{ row.os_distro || '-' }}</span>
+                    <span class="os-version-sub">{{ row.os_version || '-' }}</span>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+
+            <!-- 4. 重启建议 -->
+            <el-table-column label="重启建议" width="110" align="left">
+              <template #default="{ row }">
+                <el-tag
+                  v-if="row.needReboot == 1"
+                  type="danger"
+                  size="small"
+                  effect="light"
+                  class="reboot-tag"
+                >
+                  <i class="fa fa-exclamation-triangle" style="margin-right: 2px"></i> 待重启
+                </el-tag>
+                <el-tag
+                  v-else-if="row.needReboot == 0"
+                  type="info"
+                  size="small"
+                  effect="plain"
+                  class="reboot-tag-none"
+                >
+                  无需重启
+                </el-tag>
+                <span v-else class="placeholder-dash">-</span>
+              </template>
+            </el-table-column>
+
+            <!-- 5. 连通巡检复合列 -->
+            <el-table-column label="连通巡检" min-width="190" align="left">
+              <template #default="{ row }">
+                <div class="health-cell">
+                  <el-tag
+                    :type="row.CONN_LATEST_STATUS === '1' ? 'success' : (row.CONN_LATEST_STATUS === '0' ? 'danger' : 'warning')"
+                    size="small"
+                    effect="light"
+                    class="health-status-tag"
+                  >
+                    <i :class="row.CONN_LATEST_STATUS === '1' ? 'fa fa-check-circle' : (row.CONN_LATEST_STATUS === '0' ? 'fa fa-times-circle' : 'fa fa-question-circle')"></i>
+                    <span style="margin-left: 4px">
+                      {{ row.CONN_LATEST_STATUS === '1' ? '正常' : (row.CONN_LATEST_STATUS === '0' ? '失联' : '未知') }}
+                    </span>
+                  </el-tag>
+
+                  <div class="conn-rate-progress">
+                    <el-progress
+                      :percentage="getProgressRate(row.CONN_RATE)"
+                      :status="getProgressRate(row.CONN_RATE) >= 80 ? 'success' : (getProgressRate(row.CONN_RATE) >= 50 ? 'warning' : 'exception')"
+                      :stroke-width="5"
+                      :show-text="false"
+                      style="width: 80px"
+                    />
+                  </div>
+
+                  <!-- Hover 时显现的快捷诊断按钮 -->
+                  <el-tooltip content="发起连通性诊断" placement="top" :enterable="false">
+                    <el-button
+                      type="primary"
+                      link
+                      size="small"
+                      class="hover-diagnostic-btn"
+                      :loading="checkingConnIds.includes(row.id)"
+                      @click.stop="handleCheckSingleConn(row)"
+                    >
+                      <el-icon><Refresh /></el-icon>
+                    </el-button>
+                  </el-tooltip>
+                </div>
+              </template>
+            </el-table-column>
+
+            <!-- 6. 责任人 (使用彩色头像首字母) -->
+            <el-table-column label="责任人" width="120" show-overflow-tooltip>
+              <template #default="{ row }">
+                <div class="owner-cell" v-if="row.负责人">
+                  <el-avatar
+                    :size="22"
+                    :style="{ backgroundColor: getAvatarColor(row.负责人) }"
+                    class="owner-avatar"
+                  >
+                    {{ getInitials(row.负责人) }}
+                  </el-avatar>
+                  <span class="owner-name">{{ row.负责人 }}</span>
+                </div>
+                <span v-else class="placeholder-dash">-</span>
+              </template>
+            </el-table-column>
+
+            <!-- 7. 最后同步 -->
+            <el-table-column label="最后同步" width="180">
+              <template #default="{ row }">
+                <span>{{ formatDateTime(row.updated_at) }}</span>
+              </template>
+            </el-table-column>
+
+            <!-- 8. 操作 -->
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-button text type="primary" size="small" @click="handleEditRow(row)">编辑</el-button>
+                <el-button text type="primary" size="small" @click="handleHistory(row)">历史</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- 分页 -->
+        <div class="ops-pagination-wrapper">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[10, 50, 100]"
+            :total="total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="handlePageSizeChange"
+            @current-change="loadAssetList"
+          />
+        </div>
       </div>
     </div>
 
-    <!-- 资产详情弹窗 -->
+    <!-- 所有弹窗和抽屉组件 -->
     <AssetDetailDialog v-model="detailDialogVisible" :asset-id="currentAssetId" />
 
-    <!-- 资产编辑弹窗 -->
     <AssetEditDialog
       v-model="editDialogVisible"
       :asset-id="currentAssetId"
       @saved="handleEditSaved"
     />
 
-    <!-- 资产历史弹窗 -->
     <AssetHistoryDialog
       v-model="historyDialogVisible"
       :asset-id="currentAssetId"
       :asset-ip="currentAssetIp"
     />
 
-    <!-- 自动化资产录入弹窗 -->
     <AutoEntryDialog
       v-model="autoEntryDialogVisible"
       :asset-type="currentType"
@@ -384,7 +340,6 @@
 
     <DeleteAssetImportDialog v-model="deleteImportDialogVisible" @saved="handleAssetDataSaved" />
 
-    <!-- 批量编辑弹窗 -->
     <BatchEditDialog
       v-model="batchEditDialogVisible"
       :ci-ids="selectedRows.map(row => row.id)"
@@ -392,7 +347,6 @@
       @saved="handleBatchEditSaved"
     />
 
-    <!-- 添加标签弹窗 -->
     <AddTagDialog
       v-model="addTagDialogVisible"
       :ci-ids="selectedRows.map(row => row.id)"
@@ -400,7 +354,6 @@
       @saved="handleAddTagSaved"
     />
 
-    <!-- 添加分组弹窗 -->
     <AddGroupDialog
       v-model="addGroupDialogVisible"
       :ci-ids="selectedRows.map(row => row.id)"
@@ -421,11 +374,13 @@ import {
   Bottom,
   Refresh,
   Search,
-  RefreshRight
+  RefreshRight,
+  Clock
 } from '@element-plus/icons-vue'
 import { assetApi, dataManageApi } from '../api'
 import { apiService } from '@/core/api'
 import { pollJobStatus } from '@/composables/useJobPolling'
+import AssetSidebar from '../components/asset-info/AssetSidebar.vue'
 import AssetDetailDialog from '../components/asset-info/AssetDetailDialog.vue'
 import AssetEditDialog from '../components/asset-info/AssetEditDialog.vue'
 import AssetHistoryDialog from '../components/asset-info/AssetHistoryDialog.vue'
@@ -440,7 +395,7 @@ import AddGroupDialog from '../components/asset-info/AddGroupDialog.vue'
 // 路由
 const route = useRoute()
 
-// 资产详情弹窗
+// 设备详情弹窗
 const detailDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 const historyDialogVisible = ref(false)
@@ -455,35 +410,16 @@ const currentAssetId = ref('')
 const currentAssetIp = ref('')
 const currentTenantId = ref('')
 
-// 资产类型列表
+// 设备类型列表
 const assetTypes = ref([])
 const currentType = ref('')
 
-// 主机选择器
-const hostSelectorVisible = ref(false)
-const hostSelectorTab = ref('group')
-const groupTreeRef = ref(null)
+// 主机选择器数据
 const groupTreeData = ref([])
 const tagList = ref([])
 const selectedGroup = ref('all')
-const selectedGroupName = ref('全部资产')
+const selectedGroupName = ref('全部设备')
 const selectedTag = ref('')
-
-const scopeSummaryText = computed(() => {
-  if (selectedTag.value) {
-    return `标签：#${selectedTag.value}`
-  }
-  if (selectedGroup.value !== 'all') {
-    return `分组：${selectedGroupName.value}`
-  }
-  return '全部资产'
-})
-
-const selectedScopeTypeLabel = computed(() => {
-  if (selectedTag.value) return '按标签'
-  if (selectedGroup.value !== 'all') return '按分组'
-  return '全部'
-})
 
 // 树形组件配置
 const treeProps = {
@@ -495,7 +431,7 @@ const treeProps = {
 const buildGroupTreeFromPaths = paths => {
   if (!paths || paths.length === 0) return []
 
-  const root = { path: '/', name: '~', children: [] }
+  const root = { path: '/', name: '根分组', children: [] }
   const nodeMap = new Map()
   nodeMap.set('/', root)
 
@@ -557,23 +493,6 @@ const checkingConnIds = ref([])
 // 计算属性
 const hasSelection = computed(() => selectedRows.value.length > 0)
 
-const tableMaxHeight = computed(() => {
-  let offset = 340
-
-  if (hasSelection.value) {
-    offset += 52
-  }
-
-  return `calc(100vh - ${offset}px)`
-})
-
-const paginationInfo = computed(() => {
-  if (total.value === 0) return '0 - 0 / 0'
-  const start = (currentPage.value - 1) * pageSize.value + 1
-  const end = Math.min(currentPage.value * pageSize.value, total.value)
-  return `${start} - ${end} / ${total.value}`
-})
-
 // 获取连通率样式
 const getConnRateClass = rate => {
   if (!rate) return 'text-secondary'
@@ -598,6 +517,15 @@ const formatDateTime = dateStr => {
   }
 }
 
+// 解决 ElProgress 异常连通率转换并进行类型安全防御
+const getProgressRate = rate => {
+  if (rate === null || rate === undefined || rate === '' || rate === 'null') {
+    return 0
+  }
+  const parsed = parseInt(rate, 10)
+  return isNaN(parsed) ? 0 : Math.max(0, Math.min(100, parsed))
+}
+
 // 行操作
 const handleView = row => {
   currentAssetId.value = row.id
@@ -610,7 +538,6 @@ const handleEditRow = row => {
 }
 
 const handleEditSaved = () => {
-  // 刷新列表
   loadAssetList()
 }
 
@@ -625,7 +552,6 @@ const loadGroupTree = async () => {
   if (!currentType.value) return
   try {
     const res = await assetApi.getGroupList(currentType.value)
-    // 接口返回的是路径字符串数组，如 ["/", "/21", "/dev"]
     const paths = Array.isArray(res) ? res : []
     groupTreeData.value = buildGroupTreeFromPaths(paths)
   } catch (error) {
@@ -639,7 +565,6 @@ const loadTagList = async () => {
   if (!currentType.value) return
   try {
     const res = await assetApi.getTagList(currentType.value)
-    // 接口返回的是标签数组，格式如 [{name: "xxx", ...}]
     tagList.value = Array.isArray(res) ? res : []
   } catch (error) {
     console.error('加载标签列表失败:', error)
@@ -647,50 +572,45 @@ const loadTagList = async () => {
   }
 }
 
-// 选择分组
-const handleSelectGroup = (groupId, groupName = '全部资产') => {
+// 选择分组 (侧边栏触发)
+const handleSelectGroup = (groupId, groupName = '全部设备') => {
   selectedGroup.value = groupId
-  selectedGroupName.value = groupId === 'all' ? '全部资产' : groupName
+  selectedGroupName.value = groupId === 'all' ? '全部设备' : groupName
   selectedTag.value = ''
   if (groupId === 'all') {
     filters.value.hostKeys = '@@'
   } else {
     filters.value.hostKeys = groupId
   }
-  hostSelectorVisible.value = false
+  currentPage.value = 1
+  loadAssetList()
 }
 
-// 分组树节点点击
-const handleGroupNodeClick = data => {
-  handleSelectGroup(data.path, data.path || '全部资产')
-}
-
-// 选择标签
+// 选择标签 (侧边栏触发)
 const handleSelectTag = tag => {
   selectedTag.value = tag.name
   selectedGroup.value = ''
   filters.value.hostKeys = `,#${tag.name}`
-  hostSelectorVisible.value = false
+  currentPage.value = 1
+  loadAssetList()
 }
 
-// 加载资产类型列表
+// 加载设备类型列表
 const loadAssetTypes = async () => {
   try {
     const res = await assetApi.getAssetTypes()
     if (res.records && res.records.length > 0) {
       assetTypes.value = res.records
-      // 检查 URL 参数中是否有指定的资产类型
       const typeFromQuery = route.query.type
       if (typeFromQuery && res.records.some(r => r.code === typeFromQuery)) {
         currentType.value = typeFromQuery
       } else if (!currentType.value) {
-        // 默认选中第一个
         currentType.value = res.records[0].code
       }
     }
   } catch (error) {
-    console.error('加载资产类型失败:', error)
-    ElMessage.error('加载资产类型失败')
+    console.error('加载设备类型失败:', error)
+    ElMessage.error('加载设备类型失败')
   }
 }
 
@@ -705,7 +625,7 @@ const loadOsVersionOptions = async () => {
   }
 }
 
-// 加载资产列表
+// 加载设备列表
 const loadAssetList = async () => {
   if (!currentType.value) return
   loading.value = true
@@ -728,14 +648,14 @@ const loadAssetList = async () => {
     tableData.value = res.records || []
     total.value = res.total || 0
   } catch (error) {
-    console.error('加载资产列表失败:', error)
-    ElMessage.error('加载资产列表失败')
+    console.error('加载设备列表失败:', error)
+    ElMessage.error('加载设备列表失败')
   } finally {
     loading.value = false
   }
 }
 
-// 资产类型切换
+// 设备类型切换
 const handleTypeChange = code => {
   currentType.value = code
 }
@@ -744,7 +664,7 @@ const handleTypeChange = code => {
 watch(currentType, () => {
   currentPage.value = 1
   selectedGroup.value = 'all'
-  selectedGroupName.value = '全部资产'
+  selectedGroupName.value = '全部设备'
   selectedTag.value = ''
   filters.value.hostKeys = '@@'
   loadOsVersionOptions()
@@ -759,12 +679,27 @@ const handleSearch = () => {
   loadAssetList()
 }
 
+// 搜索输入防抖
+let searchDebounceTimer = null
+watch(searchText, (newVal) => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+  if (!newVal) {
+    handleSearch()
+  } else {
+    searchDebounceTimer = setTimeout(() => {
+      handleSearch()
+    }, 300)
+  }
+})
+
 // 重置
 const handleReset = () => {
   filters.value = createDefaultFilters()
   searchText.value = ''
   selectedGroup.value = 'all'
-  selectedGroupName.value = '全部资产'
+  selectedGroupName.value = '全部设备'
   selectedTag.value = ''
   currentPage.value = 1
   loadAssetList()
@@ -803,7 +738,7 @@ const handleSelectionChange = rows => {
 
 const handleEdit = () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要修改的资产')
+    ElMessage.warning('请先选择要修改的设备')
     return
   }
   batchEditDialogVisible.value = true
@@ -815,7 +750,7 @@ const handleBatchEditSaved = () => {
 
 const handleAddTag = () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要添加标签的资产')
+    ElMessage.warning('请先选择要添加标签的设备')
     return
   }
   addTagDialogVisible.value = true
@@ -828,7 +763,7 @@ const handleAddTagSaved = () => {
 
 const handleAddGroup = () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要添加分组的资产')
+    ElMessage.warning('请先选择要添加分组的设备')
     return
   }
   addGroupDialogVisible.value = true
@@ -841,10 +776,10 @@ const handleAddGroupSaved = () => {
 
 const handleOnline = () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要上线的资产')
+    ElMessage.warning('请先选择要上线的设备')
     return
   }
-  ElMessageBox.confirm('是否将选中的资产设置为在线状态？', '上线确认', {
+  ElMessageBox.confirm('是否将选中的设备设置为在线状态？', '上线确认', {
     type: 'warning'
   })
     .then(async () => {
@@ -872,8 +807,6 @@ function removeCheckingId(id) {
     checkingConnIds.value.splice(idx, 1)
   }
 }
-
-
 
 const handleCheckSingleConn = async (row) => {
   const ip = row.IP || row.ip
@@ -941,13 +874,12 @@ const handleCheckSingleConn = async (row) => {
   }
 }
 
-
 const handleOffline = () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要下线的资产')
+    ElMessage.warning('请先选择要下线的设备')
     return
   }
-  ElMessageBox.confirm('是否将选中的资产设置为下线状态？', '下线确认', {
+  ElMessageBox.confirm('是否将选中的设备设置为下线状态？', '下线确认', {
     type: 'warning'
   })
     .then(async () => {
@@ -971,10 +903,10 @@ const handleOffline = () => {
 
 const handleDelete = () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要删除的资产')
+    ElMessage.warning('请先选择要删除的设备')
     return
   }
-  ElMessageBox.confirm('是否确认删除选中的资产？此操作不可恢复！', '删除确认', {
+  ElMessageBox.confirm('是否确认删除选中的设备？此操作不可恢复！', '删除确认', {
     type: 'warning'
   })
     .then(async () => {
@@ -1000,158 +932,88 @@ const handleAutoEntry = () => {
 }
 
 const handleAutoEntrySaved = () => {
-  // 刷新列表
   loadAssetList()
+}
+
+// 获取 OS 对应的 FontAwesome 图标
+const getOsIcon = (distro) => {
+  if (!distro) return 'fa fa-linux'
+  const d = distro.toLowerCase()
+  if (d.includes('centos')) return 'fab fa-centos'
+  if (d.includes('ubuntu')) return 'fab fa-ubuntu'
+  if (d.includes('redhat') || d.includes('red hat')) return 'fab fa-redhat'
+  if (d.includes('kylin') || d.includes('麒麟')) return 'fa fa-dragon'
+  if (d.includes('oracle')) return 'fa fa-database'
+  if (d.includes('windows')) return 'fab fa-windows'
+  if (d.includes('debian')) return 'fab fa-debian'
+  if (d.includes('suse')) return 'fab fa-suse'
+  if (d.includes('fedora')) return 'fab fa-fedora'
+  return 'fa fa-linux'
+}
+
+// 获取责任人彩色头像背景颜色
+const getAvatarColor = (name) => {
+  if (!name) return '#909399'
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const colors = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#9b59b6', '#34495e', '#1abc9c']
+  return colors[Math.abs(hash) % colors.length]
+}
+
+// 获取责任人首字母
+const getInitials = (name) => {
+  if (!name) return '?'
+  return name.trim().charAt(0).toUpperCase()
 }
 
 // 初始化
 onMounted(() => {
+  if (route.query.ip) {
+    searchText.value = route.query.ip
+  }
   loadAssetTypes()
   loadCurrentTenantId()
 })
+
+// 监听路由参数变化进行联动搜索
+watch(
+  () => route.query,
+  (query) => {
+    if (query.ip) {
+      searchText.value = query.ip
+      loadAssetList()
+    }
+  }
+)
 </script>
-
 <style scoped lang="scss">
-.asset-info {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--el-bg-color);
-}
 
-.page-header {
-  padding: 16px 20px 8px;
 
-  .page-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-}
-
-// 顶部横向标签页
-.type-tabs-wrapper {
-  padding: 0 20px;
-  border-bottom: 1px solid var(--el-border-color-light);
-}
-
-.type-tabs {
-  display: flex;
-  gap: 24px;
-
-  .type-tab {
-    display: flex;
-    align-items: center;
-    padding: 12px 0;
-    cursor: pointer;
-    color: var(--el-text-color-regular); // 未激活状态使用灰色
-    font-size: 14px;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    text-align: center;
-
-    i {
-      margin-right: 6px;
-      font-size: 14px;
-    }
-
-    &:hover {
-      color: var(--el-color-primary);
-    }
-
-    &.active {
-      color: var(--el-color-primary); // 激活状态使用蓝色
-      font-weight: 500;
-      border-bottom-color: var(--el-color-primary);
-    }
-  }
-}
-
-// 内容区 - 覆盖全局样式以适应此页面
-.ops-page-layout {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 20px;
-  background: var(--el-bg-color);
-  border-radius: 0;
-  overflow: hidden;
-}
-
-.ops-action-bar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 0;
-
-  .action-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-}
-
-.ops-filter-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: nowrap;
-
-  .filter-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-
-    .filter-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-
-      .filter-label {
-        font-size: 13px;
-        color: var(--el-text-color-regular);
-      }
-    }
-  }
-
-  .filter-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-}
-
-.ops-table-wrapper {
-  flex: 1;
-  min-height: 0;
-  background: var(--el-bg-color);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.selection-action-bar {
+// 批量操作栏
+.selection-action-bar-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 10px 16px;
   background: var(--el-color-primary-light-9);
-  border: 1px solid var(--el-color-primary-light-7);
+  border: 1px solid var(--el-color-primary-light-8);
   border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(64, 158, 255, 0.05);
+  flex-shrink: 0;
 
   &__summary {
     color: var(--el-text-color-primary);
     font-size: 13px;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
 
     strong {
       color: var(--el-color-primary);
       font-weight: 600;
+      margin: 0 4px;
     }
   }
 
@@ -1163,104 +1025,161 @@ onMounted(() => {
   }
 }
 
-.table-link-btn {
-  padding: 0;
-  min-height: auto;
-  line-height: 1.4;
-}
+// Table cell visual styles
+.composite-identity-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 
-// 文本颜色
-.text-success {
-  color: #67c23a;
-}
-
-.text-danger {
-  color: #f56c6c;
-}
-
-.text-warning {
-  color: #e6a23c;
-}
-
-.text-primary {
-  color: #67c23a;
-}
-
-.text-secondary {
-  color: #909399;
-}
-
-// 资产范围选择器
-.scope-selector {
-  .scope-selector__header {
-    display: flex;
+  .status-pill-tag {
+    height: 22px;
+    padding: 0 8px;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--el-border-color-light);
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: var(--el-text-color-primary);
+    gap: 4px;
+    border: none;
   }
 
-  .group-tree-container {
-    max-height: 300px;
-    overflow-y: auto;
+  .status-dot-pulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--el-color-info);
+    display: inline-block;
 
-    .group-item {
-      padding: 8px 12px;
-      cursor: pointer;
-      border-radius: 4px;
-      margin-bottom: 4px;
-
-      &:hover {
-        background: var(--el-bg-color-page);
-      }
-
-      &.active {
-        background: var(--el-color-primary-light-9);
-        color: var(--el-color-primary);
-      }
-
-      &.all-item {
-        background: var(--el-bg-color-page);
-        margin-bottom: 8px;
-      }
-    }
-
-    .tree-node {
-      display: flex;
-      align-items: center;
+    &.is-online {
+      background-color: var(--el-color-success);
+      box-shadow: 0 0 6px var(--el-color-success-light-5);
     }
   }
 
-  .tag-list-container {
-    max-height: 300px;
-    overflow-y: auto;
+  .identity-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.4;
 
-    .tag-list {
-      .tag-item {
-        padding: 8px 12px;
-        cursor: pointer;
-        border-radius: 4px;
-        margin-bottom: 4px;
+    .hostname-link {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--el-color-primary);
+    }
 
-        &:hover {
-          background: var(--el-bg-color-page);
-        }
-
-        &.active {
-          background: var(--el-color-primary-light-9);
-          color: var(--el-color-primary);
-        }
-
-        &.all-item {
-          background: var(--el-bg-color-page);
-          margin-bottom: 8px;
-        }
-      }
+    .ip-subtext {
+      font-size: 11px;
+      color: var(--el-text-color-secondary);
     }
   }
+}
+
+
+
+
+.os-env-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .os-brand-icon {
+    font-size: 16px;
+    color: var(--el-text-color-regular);
+    width: 16px;
+    text-align: center;
+  }
+
+  .os-text-wrapper {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+
+    .os-distro-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .os-version-sub {
+      font-size: 11px;
+      color: var(--el-text-color-secondary);
+    }
+  }
+}
+
+.reboot-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 500;
+}
+
+.health-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  position: relative;
+
+  .health-status-tag {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .conn-rate-progress {
+    flex-shrink: 0;
+
+    :deep(.el-progress-bar__outer) {
+      background-color: var(--el-border-color-lighter);
+    }
+  }
+
+  .hover-diagnostic-btn {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.2s ease;
+    margin-left: auto;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+}
+
+// Trigger diagnostic button hover effect
+:deep(.el-table__row:hover) {
+  .hover-diagnostic-btn {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.owner-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .owner-avatar {
+    font-size: 10px;
+    font-weight: bold;
+    color: #ffffff;
+  }
+
+  .owner-name {
+    font-size: 13px;
+  }
+}
+
+
+
+// Fade animation for selection bar
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateY(-10px);
+  opacity: 0;
 }
 </style>

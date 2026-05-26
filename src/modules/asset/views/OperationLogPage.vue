@@ -1,142 +1,166 @@
 <template>
   <div class="ops-page-layout">
-    <!-- 筛选区 -->
-    <div class="ops-filter-bar">
-      <el-form :inline="true" size="small">
-        <el-form-item label="时间范围">
-          <el-select v-model="filters.day" style="width: 100px">
-            <el-option label="今天" :value="1" />
-            <el-option label="近3天" :value="3" />
-            <el-option label="近7天" :value="7" />
-            <el-option label="近30天" :value="30" />
-          </el-select>
-        </el-form-item>
+    <div class="content-view-area">
+      <!-- 筛选区 -->
+      <div class="ops-filter-bar">
+        <el-form :inline="true" size="small">
+          <el-form-item label="时间范围">
+            <el-select v-model="filters.day" style="width: 95px">
+              <el-option label="今天" :value="1" />
+              <el-option label="近 3 天" :value="3" />
+              <el-option label="近 7 天" :value="7" />
+              <el-option label="近 30 天" :value="30" />
+            </el-select>
+          </el-form-item>
 
-        <!-- <el-form-item label="执行引擎">
-          <el-select v-model="filters.ataNode" placeholder="全部" style="width: 130px" clearable>
-            <el-option label="全部" value="all" />
-            <el-option v-for="node in ataNodes" :key="node" :label="node" :value="node" />
-          </el-select>
-        </el-form-item> -->
+          <el-form-item label="执行状态">
+            <el-select v-model="filters.status" style="width: 105px">
+              <el-option label="全部" value="all" />
+              <el-option label="运行成功" value="COMPLETED" />
+              <el-option label="运行异常" value="ERROR" />
+              <el-option label="正在运行" value="RUNNING" />
+            </el-select>
+          </el-form-item>
 
-        <el-form-item label="状态">
-          <el-select v-model="filters.status" style="width: 100px">
-            <el-option label="全部" value="all" />
-            <el-option label="完成" value="COMPLETED" />
-            <el-option label="运行错误" value="ERROR" />
-            <el-option label="运行中" value="RUNNING" />
-          </el-select>
-        </el-form-item>
+          <el-form-item label="操作类型">
+            <el-select v-model="filters.action" style="width: 155px">
+              <el-option label="全部操作" value="all" />
+              <el-option
+                v-for="action in actionTypes"
+                :key="action.value"
+                :label="action.label"
+                :value="action.value"
+              />
+            </el-select>
+          </el-form-item>
 
-        <el-form-item label="操作">
-          <el-select v-model="filters.action" style="width: 120px">
-            <el-option label="全部" value="all" />
-            <el-option
-              v-for="action in actionTypes"
-              :key="action.value"
-              :label="action.label"
-              :value="action.value"
+          <el-form-item label="引擎节点">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="搜索执行引擎..."
+              clearable
+              style="width: 170px"
+              @keyup.enter="handleFilterChange"
             />
-          </el-select>
-        </el-form-item>
+          </el-form-item>
 
-        <el-form-item label="执行引擎节点">
-          <el-input
-            v-model="searchKeyword"
-            placeholder="搜索"
-            clearable
-            style="width: 150px"
-            @keyup.enter="handleFilterChange"
-          />
-        </el-form-item>
+          <el-form-item class="filter-actions">
+            <el-button type="primary" @click="handleFilterChange">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-        <el-form-item>
-          <el-button type="primary" @click="handleFilterChange">
-            <el-icon><Search /></el-icon>
-            搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon>
-            重置
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </div>
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          @click="loadData"
+          title="刷新"
+        >
+          <el-icon v-show="!loading"><Refresh /></el-icon>
+        </el-button>
+      </div>
 
-    <!-- 操作栏 -->
-    <div class="ops-action-bar">
-      <span style="flex: 1"></span>
-      <el-button
-        class="toolbar-icon-btn"
-        circle
-        size="small"
-        :loading="loading"
-        @click="loadData"
-        title="刷新"
-      >
-        <el-icon v-show="!loading"><Refresh /></el-icon>
-      </el-button>
-    </div>
+      <!-- 表格区域 -->
+      <div class="ops-table-wrapper card-table">
+        <el-table
+          :data="filteredData"
+          v-loading="loading"
+          height="100%"
+          row-key="run_id"
+          row-class-name="modern-table-row"
+        >
+          <!-- 1. 开始时间 -->
+          <el-table-column prop="start_time" label="开始执行时间" width="180" sortable>
+            <template #default="{ row }">
+              <span>{{ formatDateTime(row.start_time) }}</span>
+            </template>
+          </el-table-column>
 
-    <!-- 表格区域 -->
-    <div class="ops-table-wrapper">
-      <!-- 表格 -->
-      <el-table
-        :data="filteredData"
-        v-loading="loading"
-        style="width: 100%"
-        max-height="calc(100vh - 220px)"
-        row-key="run_id"
-      >
-        <el-table-column prop="start_time" label="开始时间" width="180" sortable>
-          <template #default="{ row }">
-            {{ formatDateTime(row.start_time) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="action" label="操作" width="250" sortable>
-          <template #default="{ row }">
-            {{ getActionLabel(row.action) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100" align="left" sortable>
-          <template #default="{ row }">
-            <el-tag
-              :type="getStatusType(row.status)"
-              size="small"
-              class="status-tag clickable"
-              @click="showRunResult(row)"
-            >
-              {{ getStatusLabel(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="ata_node" label="执行引擎节点" width="140" align="left">
-          <template #default="{ row }">
-            <el-tag v-if="row.ata_node" type="primary" size="small">
-              {{ row.ata_node }}
-            </el-tag>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="message" label="结果" min-width="150" show-overflow-tooltip>
-          <template #default="{ row }">
-            <span class="message-text" :class="{ 'error-text': row.status === 'ERROR' }">
-              {{ formatMessage(row.message) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="username" label="用户" width="100" align="left" />
-        <el-table-column prop="end_time" label="结束时间" width="180" sortable>
-          <template #default="{ row }">
-            {{ formatDateTime(row.end_time) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="耗时" width="100" align="left" sortable>
-          <template #default="{ row }">
-            {{ calculateDuration(row.start_time, row.end_time) }}
-          </template>
-        </el-table-column>
-      </el-table>
+          <!-- 2. 操作 -->
+          <el-table-column prop="action" label="操作任务" min-width="180" sortable class-name="font-bold-column">
+            <template #default="{ row }">
+              <span class="action-bold">{{ getActionLabel(row.action) }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- 3. 状态 (Clickable tags with glow) -->
+          <el-table-column prop="status" label="执行状态" width="105" align="left" sortable>
+            <template #default="{ row }">
+              <el-tag
+                :type="getStatusType(row.status)"
+                size="small"
+                class="status-tag clickable"
+                @click="showRunResult(row)"
+              >
+                <span class="status-indicator-dot" :class="`is-${row.status?.toLowerCase()}`"></span>
+                {{ getStatusLabel(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <!-- 4. 引擎节点 -->
+          <el-table-column prop="ata_node" label="执行引擎节点" width="150" align="left">
+            <template #default="{ row }">
+              <el-tag v-if="row.ata_node" type="info" size="small" effect="plain" class="node-badge">
+                {{ row.ata_node }}
+              </el-tag>
+              <span v-else class="placeholder-dash">-</span>
+            </template>
+          </el-table-column>
+
+          <!-- 5. 结果消息 -->
+          <el-table-column prop="message" label="诊断采集结果反馈" min-width="240">
+            <template #default="{ row }">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%">
+                <span class="message-text" :class="{ 'error-text': row.status === 'ERROR' }" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1">
+                  {{ formatMessage(row.message) }}
+                </span>
+                <el-link
+                  v-if="extractIpFromRow(row)"
+                  type="primary"
+                  :underline="false"
+                  size="small"
+                  @click="goToDevice(extractIpFromRow(row))"
+                  title="定位到该设备"
+                  style="flex-shrink: 0"
+                >
+                  <i class="fa fa-crosshairs" style="margin-right: 4px"></i>
+                  定位设备
+                </el-link>
+              </div>
+            </template>
+          </el-table-column>
+
+          <!-- 6. 用户 -->
+          <el-table-column prop="username" label="操作人" width="100" align="left" />
+
+          <!-- 7. 结束时间 -->
+          <el-table-column prop="end_time" label="结束时间" width="180" sortable>
+            <template #default="{ row }">
+              <span>{{ formatDateTime(row.end_time) }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- 8. 耗时 -->
+          <el-table-column label="执行耗时" width="95" align="left" sortable>
+            <template #default="{ row }">
+              <span class="duration-text">{{ calculateDuration(row.start_time, row.end_time) }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <!-- 分页 -->
       <div class="ops-pagination-wrapper">
@@ -174,7 +198,7 @@ import ExecuteResultDialog from '@/modules/automation/components/job/JobListView
 const route = useRoute()
 const router = useRouter()
 
-// 筛选条件（用户输入，但未应用）
+// 筛选条件
 const filters = ref({
   day: 1,
   ataNode: 'all',
@@ -191,7 +215,7 @@ const tableData = ref([])
 const ataNodes = ref([])
 const actionTypes = ref([
   { label: '设备连通性检测', value: '#{acm.job.check_conn}' },
-  { label: '采集信息', value: '#{acm.job.collect_assert_info}' }
+  { label: '信息数据采集', value: '#{acm.job.collect_assert_info}' }
 ])
 
 // 分页
@@ -310,7 +334,6 @@ async function loadData() {
     })
     ataNodes.value = Array.from(nodes)
 
-    // 使用后端返回的总数
     total.value = response?.total || 0
   } catch (error) {
     console.error('加载操作记录失败:', error)
@@ -320,11 +343,26 @@ async function loadData() {
   }
 }
 
-// 筛选变化（点击搜索按钮时触发）
+// 筛选变化
 function handleFilterChange() {
   currentPage.value = 1
   syncRouteQuery()
 }
+
+// 搜索输入防抖
+let searchDebounceTimer = null
+watch(searchKeyword, (newVal) => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+  if (!newVal) {
+    handleFilterChange()
+  } else {
+    searchDebounceTimer = setTimeout(() => {
+      handleFilterChange()
+    }, 300)
+  }
+})
 
 // 重置
 function handleReset() {
@@ -379,7 +417,6 @@ function formatDateTime(dateStr) {
 // 获取操作标签
 function getActionLabel(action) {
   if (!action) return '-'
-  // 使用 i18n 翻译
   return translateI18nKey(action)
 }
 
@@ -412,7 +449,6 @@ function formatMessage(message) {
   if (!message) return '-'
   try {
     const msgObj = typeof message === 'string' ? JSON.parse(message) : message
-    // 优先显示异常消息
     if (msgObj.exception?.message) {
       return msgObj.exception.message
     }
@@ -420,7 +456,6 @@ function formatMessage(message) {
       return msgObj.message
     }
     if (msgObj.msg_id) {
-      // 国际化消息 ID 转换
       const msgIdMap = {
         'acm.common.log.conn_failed': '设备信息采集回调失败',
         'acm.common.log.conn_success': '设备连通性检测成功',
@@ -453,88 +488,92 @@ function calculateDuration(startTime, endTime) {
   }
   return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
+
+// 提取日志行中的 IP
+function extractIpFromRow(row) {
+  if (row.ip) return row.ip
+  if (row.IP) return row.IP
+  if (row.message) {
+    const ipRegex = /\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/
+    const match = String(row.message).match(ipRegex)
+    if (match) return match[0]
+  }
+  return ''
+}
+
+// 定位跳转设备
+function goToDevice(ip) {
+  if (!ip) return
+  router.push({
+    path: '/acm/info',
+    query: { ip }
+  })
+}
 </script>
 
 <style scoped lang="scss">
-.operation-log {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--el-bg-color-page);
-}
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-light);
-
-  .page-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-}
-
-.table-section {
-  flex: 1;
-  margin: 16px;
-  padding: 16px;
-  background: var(--el-bg-color);
-  border-radius: 4px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.filter-bar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-
-  .filter-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .filter-label {
-    color: var(--el-text-color-regular);
-    font-size: 13px;
-    white-space: nowrap;
-  }
-}
-
-.message-text {
-  &.error-text {
-    color: #f56c6c;
-  }
+.action-bold {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
 }
 
 .status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+
   &.clickable {
     cursor: pointer;
+    transition: all 0.2s ease;
 
     &:hover {
-      opacity: 0.8;
-      transform: scale(1.05);
+      opacity: 0.85;
+      transform: scale(1.03);
+    }
+  }
+
+  .status-indicator-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+
+    &.is-completed {
+      background-color: var(--el-color-success);
+    }
+    &.is-error, &.is-failed {
+      background-color: var(--el-color-danger);
+    }
+    &.is-running {
+      background-color: var(--el-color-primary);
+    }
+    &.is-waiting {
+      background-color: var(--el-color-info);
     }
   }
 }
 
-.pagination-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--el-border-color-light);
+.node-badge {
+  border-radius: 4px;
+}
 
-  .total-info {
-    color: var(--el-text-color-regular);
-    font-size: 13px;
+.message-text {
+  font-size: 12px;
+  font-family: Consolas, Monaco, monospace;
+
+  &.error-text {
+    color: var(--el-color-danger);
   }
 }
+
+.duration-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--el-text-color-regular);
+}
+
+
 </style>

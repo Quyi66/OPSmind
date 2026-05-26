@@ -10,82 +10,87 @@
 
     <!-- 列表视图 -->
     <template v-else>
-      <!-- 筛选区域 -->
-      <!-- <div class="ops-filter-bar">
-          <div class="filter-left">
-            <el-input
-              v-model="keyword"
-              placeholder="搜索"
-              style="width: 200px"
-              size="small"
-              clearable
-              @keyup.enter="handleSearch"
-            >
-              <template #prefix>
-                <i class="fa fa-search"></i>
-              </template>
-            </el-input>
-          </div>
-        </div> -->
-
       <!-- 操作按钮区域 -->
       <div class="ops-action-bar">
         <el-button type="primary" size="small" @click="handleAddModel">
           <i class="fa fa-plus" style="margin-right: 4px"></i>
-          添加模型
+          新建模型定义
         </el-button>
-        <el-button size="small" @click="handleImportModel">
-          <i class="fa fa-file-excel" style="margin-right: 4px"></i>
+        <el-button size="small" @click="handleImportModel" plain>
+          <i class="fa fa-file-import" style="margin-right: 4px"></i>
           导入模型
+        </el-button>
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          @click="loadModelList"
+          title="刷新"
+        >
+          <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
 
       <!-- 数据表格 -->
-      <div class="ops-table-wrapper">
-        <!-- 表格右上角工具栏 -->
-        <div class="table-toolbar-icons">
-          <el-button
-            class="toolbar-icon-btn"
-            circle
-            :loading="loading"
-            @click="loadModelList"
-            title="刷新"
-          >
-            <el-icon v-show="!loading"><Refresh /></el-icon>
-          </el-button>
-        </div>
+      <div class="ops-table-wrapper card-table">
         <el-table
           v-loading="loading"
           :data="filteredModelList"
-          max-height="calc(100vh - 230px)"
+          height="100%"
+          row-class-name="modern-table-row"
         >
-          <el-table-column prop="title" label="模型名称" min-width="150">
+          <!-- 1. 模型名称 -->
+          <el-table-column prop="title" label="模型名称" min-width="160" fixed="left">
             <template #default="{ row }">
-              <el-button link type="primary" @click="handleViewModel(row)">
+              <el-link type="primary" :underline="false" class="model-name-link" @click="handleViewModel(row)">
+                <i class="fa fa-cube model-icon-decorator"></i>
                 {{ row.title }}
-              </el-button>
+              </el-link>
             </template>
           </el-table-column>
-          <el-table-column prop="code" label="资产代码" width="150" />
-          <el-table-column prop="is_auto" label="是否自动化" width="120" align="left">
+
+          <!-- 2. 资产代码 -->
+          <el-table-column prop="code" label="资产类型代码" width="160" />
+
+          <!-- 3. 是否自动化 -->
+          <el-table-column prop="is_auto" label="是否自动化管理" width="150" align="left">
             <template #default="{ row }">
-              {{ row.is_auto === 1 ? '是' : '否' }}
+              <el-tag :type="row.is_auto === 1 ? 'success' : 'info'" size="small" effect="light" class="auto-badge-tag">
+                <i class="fa" :class="row.is_auto === 1 ? 'fa-check-circle' : 'fa-minus-circle'"></i>
+                <span style="margin-left: 4px">{{ row.is_auto === 1 ? '是' : '否' }}</span>
+              </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="count" label="资产数量" width="100" align="left" />
-          <el-table-column prop="updated_at" label="更新时间" width="180">
+
+          <!-- 4. 资产数量 -->
+          <el-table-column prop="count" label="已登记资产数" width="140" align="left">
             <template #default="{ row }">
-              {{ formatDateTime(row.updated_at) }}
+              <el-tag size="small" type="primary" round class="count-tag-badge">
+                {{ row.count }} 台
+              </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="100" align="left" fixed="right">
+
+          <!-- 5. 最后更新 -->
+          <el-table-column prop="updated_at" label="最后修改时间" min-width="180">
             <template #default="{ row }">
-              <el-button text type="primary" size="small" @click="handleEditModel(row)">
-                编辑
-              </el-button>
-              <el-button text type="danger" size="small" @click="handleDeleteModel(row)">
-                删除
-              </el-button>
+              <span>{{ formatDateTime(row.updated_at) }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- 6. 操作 -->
+          <el-table-column label="操作" width="120" align="left" fixed="right">
+            <template #default="{ row }">
+              <div class="action-cell">
+                <el-button text type="primary" size="small" @click="handleEditModel(row)">
+                  编辑
+                </el-button>
+                <el-button text type="danger" size="small" @click="handleDeleteModel(row)">
+                  删除
+                </el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -244,10 +249,9 @@ const handleEditorSaved = () => {
 
 // 删除模型
 const handleDeleteModel = row => {
-  ElMessageBox.confirm('确定要删除该资产模型吗？删除后不可恢复。', '删除确认', { type: 'warning' })
+  ElMessageBox.confirm('确定要删除该模型定义吗？删除后不可恢复。', '删除确认', { type: 'warning' })
     .then(async () => {
       try {
-        // Job: 8PJcRc - 删除资产模型
         await apiService.post(`/jao/api/jao/jobs/8PJcRc/run?cacheBuster=${Date.now()}`, {
           params: { id: row.id }
         })
@@ -263,7 +267,6 @@ const handleDeleteModel = row => {
 
 // 初始化
 onMounted(() => {
-  // 只有在列表模式才加载
   if (!showEditor.value) {
     loadModelList()
   }
@@ -272,7 +275,6 @@ onMounted(() => {
 // 监听路由变化，当从编辑器返回时刷新列表
 watch(showEditor, (newVal, oldVal) => {
   if (!newVal && oldVal) {
-    // 从编辑器返回到列表
     loadModelList()
   }
 })
@@ -284,25 +286,29 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-.asset-model {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--el-bg-color);
+
+.model-name-link {
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-// 覆盖全局样式以适应此页面
-.ops-page-layout {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 20px;
-  background: var(--el-bg-color);
-  overflow: hidden;
+.model-icon-decorator {
+  color: var(--el-color-primary);
+  font-size: 12px;
 }
 
-.ops-table-wrapper {
-  position: relative;
+.auto-badge-tag {
+  border-radius: 4px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.count-tag-badge {
+  font-weight: 500;
 }
 </style>
