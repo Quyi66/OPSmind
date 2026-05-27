@@ -1,14 +1,12 @@
 <template>
-  <el-drawer
+  <el-dialog
     v-model="visible"
     title="批量更新设备属性"
-    size="480px"
-    direction="rtl"
-    :close-on-click-modal="true"
+    width="680px"
+    :close-on-click-modal="false"
     @close="handleClose"
-    class="batch-edit-drawer"
   >
-    <div class="drawer-body">
+    <div class="dialog-body">
       <el-alert
         title="批量编辑提示"
         description="您正在对选中的主机进行批量属性更新，保存后属性值将被批量覆盖为新输入的值。"
@@ -17,13 +15,8 @@
         :closable="false"
         style="margin-bottom: 20px"
       />
-      
-      <el-form
-        ref="formRef"
-        :model="formData"
-        :rules="formRules"
-        label-position="top"
-      >
+
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
         <el-form-item label="待更新属性字段" prop="code">
           <el-select
             v-model="formData.code"
@@ -54,12 +47,10 @@
     <template #footer>
       <div style="display: flex; gap: 12px; justify-content: flex-end">
         <el-button @click="visible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">
-          保存修改
-        </el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">保存修改</el-button>
       </div>
     </template>
-  </el-drawer>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -87,7 +78,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const formRef = ref()
@@ -140,23 +131,20 @@ const handleSave = async () => {
   saving.value = true
   try {
     // 调用 job CoKLZM 进行批量更新
-    await apiService.post(
-      `/jao/api/jao/jobs/CoKLZM/run?cacheBuster=${Date.now()}`,
-      {
-        params: {
-          code: formData.value.code,
-          value: formData.value.value,
-          ciIds: props.ciIds.join(',')
-        }
+    await apiService.post(`/jao/api/jao/jobs/CoKLZM/run?cacheBuster=${Date.now()}`, {
+      params: {
+        code: formData.value.code,
+        value: formData.value.value,
+        ciIds: props.ciIds.join(',')
       }
-    )
+    })
 
     ElMessage.success('保存成功')
     visible.value = false
     emit('saved')
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('保存失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`保存失败: ${error.response?.data?.message || error.message}`)
   } finally {
     saving.value = false
   }
@@ -172,12 +160,9 @@ const handleClose = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadEditableAttrs()
   }
 })
 </script>
-
-
-

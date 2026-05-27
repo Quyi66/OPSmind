@@ -1,10 +1,10 @@
 <template>
-  <el-dialog
+  <el-drawer
     v-model="dialogVisible"
-    title="RPM 包详情"
-    width="880px"
+    title="软件包详情"
+    size="880px"
     destroy-on-close
-    class="rpm-package-detail-dialog"
+    class="rpm-package-detail-drawer"
   >
     <div v-loading="loading" class="rpm-package-detail">
       <template v-if="loading || hasDetail">
@@ -24,7 +24,7 @@
           <el-descriptions-item label="摘要" :span="2">
             {{ normalizedDetail.summary || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="RPM 路径" :span="2">
+          <el-descriptions-item label="RPM 路径" :span="2" v-if="normalizedDetail.source !== 'ubuntu'">
             <span class="mono-text">{{ normalizedDetail.rpmPath || '-' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="描述" :span="2">
@@ -39,50 +39,74 @@
               {{ service }}
             </el-tag>
           </div>
-          <el-empty v-else description="暂无关联服务" :image-size="56" />
+          <span v-else class="service-empty-text">暂无关联服务</span>
         </section>
 
-        <section class="detail-section">
+        <section class="detail-section detail-section--changelog">
           <div class="detail-section__header">
             <h4 class="detail-section__title">Changelog</h4>
             <span v-if="parsedChangelog.isStructured" class="detail-section__meta">
-              {{ changelogEntryCount }} 条记录
+              {{ filteredEntryCount }} / {{ changelogEntryCount }} 条记录
             </span>
           </div>
-          <div v-if="parsedChangelog.isStructured" class="changelog-list">
-            <article
-              v-for="(entry, entryIndex) in parsedChangelog.entries"
-              :key="`${entry.header || 'entry'}-${entryIndex}`"
-              class="changelog-entry"
-              :class="{ 'changelog-entry--intro': !entry.header }"
-            >
-              <div v-if="entry.header" class="changelog-entry__header">
-                <div class="changelog-entry__summary">
-                  <div v-if="entry.dateText" class="changelog-entry__date">{{ entry.dateText }}</div>
-                  <div v-if="entry.maintainer || entry.email" class="changelog-entry__author">
-                    <span v-if="entry.maintainer">{{ entry.maintainer }}</span>
-                    <span v-if="entry.email" class="changelog-entry__email">&lt;{{ entry.email }}&gt;</span>
-                  </div>
-                  <div v-else class="changelog-entry__headline">{{ entry.headline || entry.header }}</div>
-                </div>
-                <span v-if="entry.version" class="changelog-entry__version">{{ entry.version }}</span>
-              </div>
-              <div v-if="entry.notes.length" class="changelog-entry__notes">
-                <p v-for="(note, noteIndex) in entry.notes" :key="noteIndex" class="changelog-entry__note">
-                  {{ note }}
-                </p>
-              </div>
-              <ul v-if="entry.items.length" class="changelog-entry__items">
-                <li
-                  v-for="(item, itemIndex) in entry.items"
-                  :key="itemIndex"
-                  class="changelog-entry__item pre-wrap"
+          <template v-if="parsedChangelog.isStructured">
+            <div class="changelog-search">
+              <el-input
+                v-model="searchKeyword"
+                placeholder="搜索 Changelog..."
+                clearable
+                size="small"
+                :prefix-icon="SearchIcon"
+              />
+            </div>
+            <div class="changelog-list-container">
+              <div v-if="pagedChangelogEntries.length" class="changelog-list">
+                <article
+                  v-for="(entry, entryIndex) in pagedChangelogEntries"
+                  :key="`${entry.header || 'entry'}-${entryIndex}`"
+                  class="changelog-entry"
+                  :class="{ 'changelog-entry--intro': !entry.header }"
                 >
-                  {{ item }}
-                </li>
-              </ul>
-            </article>
-          </div>
+                  <div v-if="entry.header" class="changelog-entry__header">
+                    <div class="changelog-entry__summary">
+                      <div v-if="entry.dateText" class="changelog-entry__date">{{ entry.dateText }}</div>
+                      <div v-if="entry.maintainer || entry.email" class="changelog-entry__author">
+                        <span v-if="entry.maintainer">{{ entry.maintainer }}</span>
+                        <span v-if="entry.email" class="changelog-entry__email">&lt;{{ entry.email }}&gt;</span>
+                      </div>
+                      <div v-else class="changelog-entry__headline">{{ entry.headline || entry.header }}</div>
+                    </div>
+                    <span v-if="entry.version" class="changelog-entry__version">{{ entry.version }}</span>
+                  </div>
+                  <div v-if="entry.notes.length" class="changelog-entry__notes">
+                    <p v-for="(note, noteIndex) in entry.notes" :key="noteIndex" class="changelog-entry__note">
+                      {{ note }}
+                    </p>
+                  </div>
+                  <ul v-if="entry.items.length" class="changelog-entry__items">
+                    <li
+                      v-for="(item, itemIndex) in entry.items"
+                      :key="itemIndex"
+                      class="changelog-entry__item pre-wrap"
+                    >
+                      {{ item }}
+                    </li>
+                  </ul>
+                </article>
+              </div>
+              <span v-else class="service-empty-text">无匹配的 Changelog 记录</span>
+            </div>
+            <div v-if="filteredTotalEntries > pageSize" class="ops-pagination-wrapper mt-4">
+              <el-pagination
+                v-model:current-page="currentPage"
+                :page-size="pageSize"
+                :total="filteredTotalEntries"
+                layout="prev, pager, next"
+                size="small"
+                background
+              />
+            </div>
+          </template>
           <div v-else class="detail-section__content changelog-raw pre-wrap mono-text">
             {{ normalizedDetail.changelog || '暂无 changelog 信息' }}
           </div>
@@ -91,15 +115,12 @@
 
       <el-empty v-else description="暂无 RPM 包详情" :image-size="80" />
     </div>
-
-    <template #footer>
-      <el-button @click="dialogVisible = false">关闭</el-button>
-    </template>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { Search as SearchIcon } from '@element-plus/icons-vue'
 import { formatRpmVersion, normalizeRpmPackageDetail, parseRpmChangelog } from '../../utils/rpmPackageInfo'
 
 const props = defineProps({
@@ -128,6 +149,50 @@ const normalizedDetail = computed(() => normalizeRpmPackageDetail(props.detailDa
 const parsedChangelog = computed(() => parseRpmChangelog(normalizedDetail.value.changelog))
 const changelogEntryCount = computed(() => parsedChangelog.value.entries.filter(entry => entry.header).length)
 
+const currentPage = ref(1)
+const pageSize = ref(10)
+const searchKeyword = ref('')
+
+function entryMatchesKeyword(entry, keyword) {
+  const lowerKeyword = keyword.toLowerCase()
+  if (entry.header && entry.header.toLowerCase().includes(lowerKeyword)) return true
+  if (entry.headline && entry.headline.toLowerCase().includes(lowerKeyword)) return true
+  if (entry.version && entry.version.toLowerCase().includes(lowerKeyword)) return true
+  if (entry.maintainer && entry.maintainer.toLowerCase().includes(lowerKeyword)) return true
+  if (entry.dateText && entry.dateText.toLowerCase().includes(lowerKeyword)) return true
+  if (entry.notes && entry.notes.some(n => n.toLowerCase().includes(lowerKeyword))) return true
+  if (entry.items && entry.items.some(i => i.toLowerCase().includes(lowerKeyword))) return true
+  return false
+}
+
+const filteredChangelogEntries = computed(() => {
+  if (!parsedChangelog.value.isStructured) return []
+  const entries = parsedChangelog.value.entries
+  const keyword = searchKeyword.value.trim()
+  if (!keyword) return entries
+  return entries.filter(entry => entryMatchesKeyword(entry, keyword))
+})
+
+const filteredTotalEntries = computed(() => filteredChangelogEntries.value.length)
+const filteredEntryCount = computed(() => filteredChangelogEntries.value.filter(entry => entry.header).length)
+
+const pagedChangelogEntries = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredChangelogEntries.value.slice(start, end)
+})
+
+watch(searchKeyword, () => {
+  currentPage.value = 1
+})
+
+watch(dialogVisible, (visible) => {
+  if (visible) {
+    currentPage.value = 1
+    searchKeyword.value = ''
+  }
+})
+
 const versionText = computed(() => formatRpmVersion(normalizedDetail.value))
 
 const hasDetail = computed(() => {
@@ -145,7 +210,10 @@ const hasDetail = computed(() => {
 
 <style scoped lang="scss">
 .rpm-package-detail {
-  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
 .detail-descriptions {
@@ -154,6 +222,19 @@ const hasDetail = computed(() => {
 
 .detail-section {
   margin-top: 16px;
+  flex-shrink: 0;
+}
+
+.detail-section--changelog {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.changelog-search {
+  margin-bottom: 12px;
 }
 .detail-section__header {
   display: flex;
@@ -191,6 +272,12 @@ const hasDetail = computed(() => {
 .mono-text {
   font-family: Consolas, 'Courier New', monospace;
 }
+.changelog-list-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .changelog-list {
   display: flex;
   flex-direction: column;
@@ -299,7 +386,8 @@ const hasDetail = computed(() => {
 }
 
 .changelog-raw {
-  max-height: 360px;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -307,5 +395,19 @@ const hasDetail = computed(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.service-empty-text {
+  display: block;
+  padding: 12px 0;
+  color: var(--el-text-color-placeholder);
+  font-size: 13px;
+  text-align: center;
+}
+</style>
+
+<style lang="scss">
+.el-drawer__header {
+  margin-bottom: 0;
 }
 </style>

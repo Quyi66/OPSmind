@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue'
-import { dataManageApi, operationLogApi, overviewApi, permissionApi } from '../api'
+import { assetApi, dataManageApi, operationLogApi, overviewApi, permissionApi } from '../api'
 
 function toNumber(value) {
   const parsed = Number(value)
@@ -149,6 +149,26 @@ export function useAssetOverviewWorkbench() {
 
     if (assetTypeRes.status === 'fulfilled') {
       assetTypeData.value = extractRecords(assetTypeRes.value)
+
+      // ACM_CIT_MANAGE 只统计在线设备数量，需要额外请求获取包含所有状态的真实总数
+      if (assetTypeData.value.length) {
+        const countPromises = assetTypeData.value.map(item => {
+          const typeCode = item.code || item.title || ''
+          return assetApi
+            .getAssetList(
+              { assetType: typeCode, permission: 'r', status: 'all', CONN_LATEST_STATUS: '', hostKeys: '/' },
+              { page: 1, size: 1, filter: '' }
+            )
+            .then(res => ({ typeCode, total: toNumber(res?.total) }))
+            .catch(() => ({ typeCode, total: toNumber(item?.count) })) // 失败时保留原值
+        })
+        const countResults = await Promise.all(countPromises)
+        const countMap = Object.fromEntries(countResults.map(r => [r.typeCode, r.total]))
+        assetTypeData.value = assetTypeData.value.map(item => {
+          const key = item.code || item.title || ''
+          return { ...item, count: countMap[key] ?? toNumber(item?.count) }
+        })
+      }
     } else {
       console.error('加载资产类型统计失败:', assetTypeRes.reason)
       assetTypeData.value = []

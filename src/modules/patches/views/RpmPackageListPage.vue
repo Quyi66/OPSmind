@@ -8,14 +8,15 @@
             <el-option label="麒麟" value="kylin" />
             <el-option label="Oracle" value="oracle" />
             <el-option label="Red Hat" value="redhat" />
+            <el-option label="ubuntu" value="ubuntu" />
           </el-select>
         </el-form-item>
         <el-form-item label="包名">
           <el-input
             v-model="filters.name"
             clearable
-            placeholder="精确包名"
-            style="width: 180px"
+            placeholder="请输入包名"
+            style="width: 280px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>

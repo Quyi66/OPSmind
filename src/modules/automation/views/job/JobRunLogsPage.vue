@@ -80,13 +80,13 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="任务" show-overflow-tooltip>
+              <el-table-column label="任务" show-overflow-tooltip min-width="200">
                 <template #default="{ row }">
                   {{ translateText(row.job_title) }}
                 </template>
               </el-table-column>
 
-              <el-table-column label="类型" width="100">
+              <el-table-column label="类型" width="130">
                 <template #default="{ row }">
                   {{ getJobTypeLabel(row.job_type) }}
                 </template>

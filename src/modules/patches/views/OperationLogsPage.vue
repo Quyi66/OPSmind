@@ -87,7 +87,7 @@
               {{ formatTimestamp(row.start_time) }}
             </template>
           </el-table-column>
-          <el-table-column prop="action" label="操作" width="140" show-overflow-tooltip>
+          <el-table-column prop="action" label="操作" width="160" show-overflow-tooltip>
             <template #default="{ row }">
               {{ translateAction(row.action) }}
             </template>
@@ -143,7 +143,7 @@
               {{ formatTimestamp(row.end_time) }}
             </template>
           </el-table-column>
-          <el-table-column label="耗时" width="100">
+          <el-table-column label="耗时" width="90">
             <template #default="{ row }">
               {{ calculateDuration(row.start_time, row.end_time) }}
             </template>

@@ -127,8 +127,10 @@ const maxValue = computed(() => {
 
 function calculatePercent(val) {
   if (val <= 0) return '0%'
-  const computedPercent = (val / maxValue.value) * 100
-  return Math.min(Math.max(computedPercent, 3), 100) + '%'
+  // 使用平方根比例尺（Square Root Scale）来处理高动态范围（High Dynamic Range）的数据，
+  // 确保在最大值很大（例如几百）时，较小的不同非零值（如 5 和 2）依然能够呈现明显区别的条形图长度，且不会过于微小。
+  const computedPercent = (Math.sqrt(val) / Math.sqrt(maxValue.value)) * 100
+  return `${Math.min(Math.max(computedPercent, 3), 100)}%`
 }
 
 // 初始化图表
@@ -154,7 +156,7 @@ function initChart() {
       formatter: '{b}: {c} ({d}%)'
     },
     title: {
-      text: successRate + '%',
+      text: `${successRate}%`,
       subtext: '连通率',
       left: 'center',
       top: '32%',

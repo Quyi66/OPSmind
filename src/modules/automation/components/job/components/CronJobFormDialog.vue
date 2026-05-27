@@ -6,7 +6,7 @@
     class="cron-job-form-dialog"
     destroy-on-close
   >
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px">
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="140px">
       <el-form-item label="任务描述" prop="jobDesc">
         <el-input v-model="formData.jobDesc" placeholder="请输入任务描述" maxlength="200" />
       </el-form-item>

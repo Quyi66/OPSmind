@@ -31,13 +31,19 @@
           />
         </el-form-item>
         <el-form-item label="操作系统">
-          <el-input
+          <el-select
             v-model="filters.osDistro"
             clearable
-            placeholder="发行版"
+            placeholder="全部"
             style="width: 120px"
-            @keyup.enter="handleSearch"
-          />
+            @change="handleSearch"
+          >
+            <el-option label="全部" value="" />
+            <el-option label="麒麟" value="kylin" />
+            <el-option label="Oracle" value="oracle" />
+            <el-option label="Red Hat" value="redhat" />
+            <el-option label="ubuntu" value="ubuntu" />
+          </el-select>
         </el-form-item>
         <el-form-item label="系统版本">
           <el-input
@@ -91,7 +97,12 @@
         <el-table-column prop="osVersion" label="系统版本" width="100" show-overflow-tooltip />
         <el-table-column prop="osSpVersion" label="SP版本" width="100" show-overflow-tooltip />
         <el-table-column prop="osArch" label="系统架构" width="120" />
-        <el-table-column prop="currentPackage" label="完整包名" min-width="350" show-overflow-tooltip>
+        <el-table-column
+          prop="currentPackage"
+          label="完整包名"
+          min-width="350"
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="handleViewDetail(row)">
               {{ row.currentPackage || '-' }}
@@ -99,7 +110,12 @@
           </template>
         </el-table-column>
         <el-table-column prop="pkgName" label="包名" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="pkgVersion" label="包版本/Release" min-width="160" show-overflow-tooltip />
+        <el-table-column
+          prop="pkgVersion"
+          label="包版本/Release"
+          min-width="160"
+          show-overflow-tooltip
+        />
         <el-table-column prop="pkgArch" label="包架构" width="120" />
         <el-table-column label="受影响服务" min-width="320">
           <template #default="{ row }">
@@ -133,7 +149,12 @@
                   </div>
                 </div>
               </el-popover>
-              <span v-if="!getServiceDisplay(row.affectedServices).preview.length" class="text-muted">-</span>
+              <span
+                v-if="!getServiceDisplay(row.affectedServices).preview.length"
+                class="text-muted"
+              >
+                -
+              </span>
             </div>
           </template>
         </el-table-column>
@@ -205,7 +226,6 @@ async function handleViewDetail(row) {
   const pkgName = String(row?.pkgName || '').trim()
   const source = inferRpmSource(row?.source, row?.osDistro)
   const arch = String(row?.pkgArch || row?.osArch || '').trim()
-
   if (!version || !pkgName || !source || !arch) {
     ElMessage.warning('当前行缺少详情接口必传参数，无法查看详情')
     return

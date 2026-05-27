@@ -107,22 +107,61 @@
         <el-table-column label="连通健康度" min-width="220" align="left">
           <template #default="{ row }">
             <div class="health-cell">
-              <el-tag
-                :type="row.CONN_LATEST_STATUS === '1' ? 'success' : (row.CONN_LATEST_STATUS === '0' ? 'danger' : 'warning')"
-                size="small"
-                effect="light"
-                class="health-status-tag"
-              >
-                <i :class="row.CONN_LATEST_STATUS === '1' ? 'fa fa-check-circle' : (row.CONN_LATEST_STATUS === '0' ? 'fa fa-times-circle' : 'fa fa-question-circle')"></i>
-                <span style="margin-left: 4px">
-                  {{ row.CONN_LATEST_STATUS === '1' ? '正常' : (row.CONN_LATEST_STATUS === '0' ? '失联' : '未知') }}
-                </span>
-              </el-tag>
+              <el-tooltip content="点击发起连通性诊断" placement="top" :enterable="false">
+                <el-tag
+                  :type="
+                    row.CONN_LATEST_STATUS === '1'
+                      ? 'success'
+                      : row.CONN_LATEST_STATUS === '0'
+                        ? 'danger'
+                        : 'warning'
+                  "
+                  size="small"
+                  effect="light"
+                  class="health-status-tag clickable-tag"
+                  :class="{ 'is-loading': checkingConnIds.includes(row.id || row.key) }"
+                  @click.stop="
+                    !checkingConnIds.includes(row.id || row.key) && handleCheckSingleConn(row)
+                  "
+                >
+                  <i
+                    v-if="checkingConnIds.includes(row.id || row.key)"
+                    class="fa fa-spinner fa-spin"
+                  ></i>
+                  <i
+                    v-else
+                    :class="
+                      row.CONN_LATEST_STATUS === '1'
+                        ? 'fa fa-check-circle'
+                        : row.CONN_LATEST_STATUS === '0'
+                          ? 'fa fa-times-circle'
+                          : 'fa fa-question-circle'
+                    "
+                  ></i>
+                  <span style="margin-left: 4px">
+                    {{
+                      checkingConnIds.includes(row.id || row.key)
+                        ? '诊断中...'
+                        : row.CONN_LATEST_STATUS === '1'
+                          ? '正常'
+                          : row.CONN_LATEST_STATUS === '0'
+                            ? '失联'
+                            : '未知'
+                    }}
+                  </span>
+                </el-tag>
+              </el-tooltip>
 
               <div class="conn-rate-progress">
                 <el-progress
                   :percentage="getProgressRate(row.CONN_RATE)"
-                  :status="getProgressRate(row.CONN_RATE) >= 80 ? 'success' : (getProgressRate(row.CONN_RATE) >= 50 ? 'warning' : 'exception')"
+                  :status="
+                    getProgressRate(row.CONN_RATE) >= 80
+                      ? 'success'
+                      : getProgressRate(row.CONN_RATE) >= 50
+                        ? 'warning'
+                        : 'exception'
+                  "
                   :stroke-width="5"
                   :show-text="false"
                   style="width: 80px"
@@ -142,7 +181,9 @@
         <!-- 4. 操作 -->
         <el-table-column label="操作" width="100" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="viewCredentials(row)">查看凭据</el-button>
+            <el-button text type="primary" size="small" @click="viewCredentials(row)">
+              查看凭据
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -351,7 +392,7 @@ const handleSearch = () => {
 
 // 搜索输入防抖
 let searchDebounceTimer = null
-watch(searchKeyword, (newVal) => {
+watch(searchKeyword, newVal => {
   if (searchDebounceTimer) {
     clearTimeout(searchDebounceTimer)
   }
@@ -542,10 +583,122 @@ const confirmAction = async () => {
     ElMessage.success(actionMeta.pendingMessage)
     closeActionDialog()
   } catch (error) {
-    console.error(actionMeta.startErrorMessage + ':', error)
+    console.error(`${actionMeta.startErrorMessage}:`, error)
     ElMessage.error(actionMeta.startErrorMessage)
   } finally {
     actionLoading.value = false
+  }
+}
+
+// ── 单个设备连通性诊断 ──
+const checkingConnIds = ref([])
+
+const removeCheckingId = id => {
+  const idx = checkingConnIds.value.indexOf(id)
+  if (idx > -1) {
+    checkingConnIds.value.splice(idx, 1)
+  }
+}
+
+const handleCheckSingleConn = async row => {
+  const ip = row.IP || row.ip
+  try {
+    await ElMessageBox.confirm(`是否重新检查主机 ${ip} 的连通性？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
+
+  const targetId = row.id || row.key
+  checkingConnIds.value.push(targetId)
+
+  try {
+    const host = {
+      key: targetId,
+      value: row.IP || row.ip,
+      assetType: row.ci_type || row.ciType || 'linux'
+    }
+
+    const cacheBuster = Date.now()
+    const { data } = await apiService.post(
+      `/jao/api/jao/jobs/M1x855/run?cacheBuster=${cacheBuster}`,
+      {
+        params: { hosts: [host] }
+      }
+    )
+
+    const result = Array.isArray(data) ? data[0] : data
+
+    const finishCheck = (success = true, errorMsg = '') => {
+      removeCheckingId(targetId)
+      if (success) {
+        ElMessage.success('连通性检查完成')
+      } else {
+        ElMessage.error(errorMsg || '连通性检查失败')
+      }
+      refreshExceptionData()
+    }
+
+    if (isJobPending(result)) {
+      ElMessage.success('连通性检查任务已发起')
+
+      const maxAttempts = 360
+      let attempts = 0
+      const poll = async () => {
+        attempts++
+        try {
+          const { data: res } = await apiService.get(
+            `/jao/api/jao/runlogs/${result.runId}/result?cacheBuster=${Date.now()}`
+          )
+          if (isJobPending(res)) {
+            if (attempts < maxAttempts) {
+              setTimeout(poll, 5000)
+            } else {
+              removeCheckingId(targetId)
+              ElMessage.warning('检查超时，请稍后在后台查看结果')
+            }
+            return
+          }
+          if (isJobSuccess(res)) {
+            finishCheck(true)
+            return
+          }
+          if (isJobFailed(res)) {
+            finishCheck(false, res?.error)
+            return
+          }
+        } catch (err) {
+          console.error('单个连通性检查轮询失败:', err)
+          if (attempts < maxAttempts) {
+            setTimeout(poll, 5000)
+          } else {
+            removeCheckingId(targetId)
+          }
+        }
+      }
+      setTimeout(poll, 5000)
+      return
+    }
+
+    if (isJobSuccess(result)) {
+      finishCheck(true)
+      return
+    }
+
+    if (isJobFailed(result)) {
+      finishCheck(false, result?.error)
+      return
+    }
+
+    ElMessage.success('连通性检查任务已启动')
+    removeCheckingId(targetId)
+  } catch (error) {
+    removeCheckingId(targetId)
+    console.error('检查连通性失败:', error)
+    ElMessage.error(`检查连通性失败: ${error.response?.data?.message || error.message}`)
   }
 }
 
@@ -606,7 +759,6 @@ watch(
   flex-shrink: 0;
 }
 
-
 .composite-ip-cell {
   display: flex;
   align-items: center;
@@ -628,9 +780,24 @@ watch(
     display: inline-flex;
     align-items: center;
     gap: 4px;
+
+    &.clickable-tag {
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover:not(.is-loading) {
+        filter: brightness(0.95);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      }
+
+      &.is-loading {
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+    }
   }
 }
-
 
 .dialog-content {
   padding: 8px 4px;

@@ -98,7 +98,7 @@
         </el-button>
       </div>
 
-      <div class="job-overview-panel">
+      <!-- <div class="job-overview-panel">
         <div class="job-overview-cards">
           <article
             v-for="card in overviewCards"
@@ -140,7 +140,7 @@
             清空筛选
           </el-button>
         </div>
-      </div>
+      </div> -->
 
       <el-alert v-if="error" :title="error" type="error" :closable="false" style="margin-bottom: 12px;" />
 
@@ -165,7 +165,7 @@
               {{ translateText(row.description) || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="类型" width="120">
+          <el-table-column label="类型" width="140">
             <template #default="{ row }">
               <el-tag v-if="row.type" size="small" :type="typeTagType(row.type)" effect="plain" class="job-type-tag">
                 <i :class="['fa', typeIcon(row.type)]" />

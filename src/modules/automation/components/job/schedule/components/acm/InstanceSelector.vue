@@ -54,6 +54,21 @@
         />
       </el-select>
 
+      <!-- 文本筛选 -->
+      <el-input
+        v-model="searchQuery"
+        placeholder="请输入 IP/主机名/操作系统/系统版本"
+        clearable
+        size="small"
+        style="width: 280px"
+        @input="handleSearch"
+        @clear="handleSearch"
+      >
+        <template #prefix>
+          <i class="fa fa-search text-muted" />
+        </template>
+      </el-input>
+
       <!-- 一键全选 / 一键取消 -->
       <el-button
         class="select-all-btn"
@@ -132,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, computed } from 'vue'
+import { ref, watch, nextTick, computed, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 
@@ -169,11 +184,35 @@ const isSingleSelector = computed(() => props.options.selector === 'single')
 // 防止循环更新的标志
 let isInternalUpdate = false
 
+const searchQuery = ref('')
+let searchTimeout = null
+
+function handleSearch() {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+  searchTimeout = setTimeout(() => {
+    allSelected.value = false
+    pagination.value.page = 1
+    fetchData()
+  }, 300)
+}
+
+onBeforeUnmount(() => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+})
+
 watch(
   () => props.ciType,
   newVal => {
     if (newVal) {
       allSelected.value = false
+      searchQuery.value = ''
+      if (searchTimeout) {
+        clearTimeout(searchTimeout)
+      }
       fetchData()
       fetchGroupList()
       fetchTagList()
@@ -318,7 +357,8 @@ async function fetchData() {
       page: pagination.value.page,
       pageSize: pagination.value.pageSize,
       groups: groupFilter.value || '@@',
-      tags: tagsParam
+      tags: tagsParam,
+      filter: searchQuery.value.trim()
     })
 
     // 处理响应数据
@@ -328,7 +368,7 @@ async function fetchData() {
     // 保持原始字段名，确保每条记录有唯一id
     tableData.value = records.map((item, index) => ({
       ...item,
-      id: item.id || item.ci_id || `row-${index}`
+      id: item.id || item.ci_id || item.IP || item.ip || `row-${index}`
     }))
 
     pagination.value.total = data?.total || tableData.value.length
@@ -421,9 +461,22 @@ function handleSelectionChange(selection) {
     item => !currentPageIds.includes(item.key)
   )
 
+  // 使用 Map 去重合并，彻底防止 Element Plus 的 reserve-selection 与手动跨页合并产生重复数据
+  const mergedMap = new Map()
+  otherPageSelections.forEach(item => {
+    if (item && item.key) {
+      mergedMap.set(item.key, item)
+    }
+  })
+  selectedHosts.forEach(item => {
+    if (item && item.key) {
+      mergedMap.set(item.key, item)
+    }
+  })
+
   const mergedSelection = isSingleSelector.value
     ? selectedHosts.slice(0, 1)
-    : [...otherPageSelections, ...selectedHosts]
+    : Array.from(mergedMap.values())
 
   isInternalUpdate = true
   emit('update:modelValue', mergedSelection)
@@ -475,7 +528,8 @@ async function handleToggleSelectAll() {
       page: 1,
       pageSize: pagination.value.total || 10000,
       groups: groupFilter.value || '@@',
-      tags: tagsParam
+      tags: tagsParam,
+      filter: searchQuery.value.trim()
     })
 
     const data = response?.data || response
@@ -487,8 +541,8 @@ async function handleToggleSelectAll() {
     }
 
     // 将所有记录转换为统一格式 { key, value, assetType }
-    const allHosts = records.map(item => ({
-      key: item.id || item.ci_id || `row-${Math.random()}`,
+    const allHosts = records.map((item, index) => ({
+      key: item.id || item.ci_id || item.IP || item.ip || `row-${index}`,
       value: item.IP,
       assetType: props.ciType
     }))

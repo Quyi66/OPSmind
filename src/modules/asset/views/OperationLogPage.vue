@@ -89,9 +89,9 @@
           </el-table-column>
 
           <!-- 2. 操作 -->
-          <el-table-column prop="action" label="操作任务" min-width="180" sortable class-name="font-bold-column">
+          <el-table-column prop="action" label="操作任务" min-width="180" sortable>
             <template #default="{ row }">
-              <span class="action-bold">{{ getActionLabel(row.action) }}</span>
+              <span>{{ getActionLabel(row.action) }}</span>
             </template>
           </el-table-column>
 
@@ -104,7 +104,10 @@
                 class="status-tag clickable"
                 @click="showRunResult(row)"
               >
-                <span class="status-indicator-dot" :class="`is-${row.status?.toLowerCase()}`"></span>
+                <span
+                  class="status-indicator-dot"
+                  :class="`is-${row.status?.toLowerCase()}`"
+                ></span>
                 {{ getStatusLabel(row.status) }}
               </el-tag>
             </template>
@@ -113,7 +116,13 @@
           <!-- 4. 引擎节点 -->
           <el-table-column prop="ata_node" label="执行引擎节点" width="150" align="left">
             <template #default="{ row }">
-              <el-tag v-if="row.ata_node" type="info" size="small" effect="plain" class="node-badge">
+              <el-tag
+                v-if="row.ata_node"
+                type="info"
+                size="small"
+                effect="plain"
+                class="node-badge"
+              >
                 {{ row.ata_node }}
               </el-tag>
               <span v-else class="placeholder-dash">-</span>
@@ -121,25 +130,16 @@
           </el-table-column>
 
           <!-- 5. 结果消息 -->
-          <el-table-column prop="message" label="诊断采集结果反馈" min-width="240">
+          <el-table-column
+            prop="message"
+            label="诊断采集结果反馈"
+            min-width="240"
+            show-overflow-tooltip
+          >
             <template #default="{ row }">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%">
-                <span class="message-text" :class="{ 'error-text': row.status === 'ERROR' }" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1">
-                  {{ formatMessage(row.message) }}
-                </span>
-                <el-link
-                  v-if="extractIpFromRow(row)"
-                  type="primary"
-                  :underline="false"
-                  size="small"
-                  @click="goToDevice(extractIpFromRow(row))"
-                  title="定位到该设备"
-                  style="flex-shrink: 0"
-                >
-                  <i class="fa fa-crosshairs" style="margin-right: 4px"></i>
-                  定位设备
-                </el-link>
-              </div>
+              <span :class="{ 'error-text': row.status === 'ERROR' }">
+                {{ formatMessage(row.message) }}
+              </span>
             </template>
           </el-table-column>
 
@@ -154,9 +154,25 @@
           </el-table-column>
 
           <!-- 8. 耗时 -->
-          <el-table-column label="执行耗时" width="95" align="left" sortable>
+          <el-table-column label="执行耗时" width="105" align="left" sortable>
             <template #default="{ row }">
-              <span class="duration-text">{{ calculateDuration(row.start_time, row.end_time) }}</span>
+              <span>{{ calculateDuration(row.start_time, row.end_time) }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- 9. 操作 (定位设备) -->
+          <el-table-column label="操作" width="100" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-link
+                v-if="extractIpFromRow(row)"
+                type="primary"
+                :underline="false"
+                size="small"
+                @click="goToDevice(extractIpFromRow(row))"
+              >
+                定位设备
+              </el-link>
+              <span v-else class="placeholder-dash">-</span>
             </template>
           </el-table-column>
         </el-table>
@@ -299,7 +315,8 @@ function openRunResultByQuery(query) {
   if (!runId) return
 
   currentRunId.value = runId
-  currentJobTitle.value = typeof query.action === 'string' && query.action ? getActionLabel(query.action) : '运行结果'
+  currentJobTitle.value =
+    typeof query.action === 'string' && query.action ? getActionLabel(query.action) : '运行结果'
   runResultDialogVisible.value = true
 }
 
@@ -351,7 +368,7 @@ function handleFilterChange() {
 
 // 搜索输入防抖
 let searchDebounceTimer = null
-watch(searchKeyword, (newVal) => {
+watch(searchKeyword, newVal => {
   if (searchDebounceTimer) {
     clearTimeout(searchDebounceTimer)
   }
@@ -512,13 +529,6 @@ function goToDevice(ip) {
 </script>
 
 <style scoped lang="scss">
-
-.action-bold {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
 .status-tag {
   display: inline-flex;
   align-items: center;
@@ -544,7 +554,8 @@ function goToDevice(ip) {
     &.is-completed {
       background-color: var(--el-color-success);
     }
-    &.is-error, &.is-failed {
+    &.is-error,
+    &.is-failed {
       background-color: var(--el-color-danger);
     }
     &.is-running {
@@ -560,20 +571,7 @@ function goToDevice(ip) {
   border-radius: 4px;
 }
 
-.message-text {
-  font-size: 12px;
-  font-family: Consolas, Monaco, monospace;
-
-  &.error-text {
-    color: var(--el-color-danger);
-  }
+.error-text {
+  color: var(--el-color-danger);
 }
-
-.duration-text {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--el-text-color-regular);
-}
-
-
 </style>
