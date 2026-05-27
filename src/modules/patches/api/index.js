@@ -1776,6 +1776,226 @@ export const rpmInfoApi = {
   }
 }
 
+/**
+ * R3 · 主机总览自定义视图 API
+ */
+export const viewConfigApi = {
+  /**
+   * 拉取生效视图
+   * GET /acm/api/acm/ci/view-config?ciType=host&scope=user
+   */
+  getViewConfig(params = {}) {
+    const query = buildGenericQuery({
+      ciType: params.ciType || 'host',
+      scope: params.scope || 'user'
+    })
+    return apiService.get(`/acm/api/acm/ci/view-config${query}`)
+  },
+
+  /**
+   * 保存视图
+   * PUT /acm/api/acm/ci/view-config
+   */
+  saveViewConfig(data) {
+    return apiService.put('/acm/api/acm/ci/view-config', data)
+  },
+
+  /**
+   * 可选属性列表
+   * GET /acm/api/acm/ci/view-config/attrs?ciType=host
+   */
+  getAttrs(params = {}) {
+    const query = buildGenericQuery({
+      ciType: params.ciType || 'host'
+    })
+    return apiService.get(`/acm/api/acm/ci/view-config/attrs${query}`)
+  }
+}
+
+/**
+ * R4 · 主机端口与区域批量配置 API
+ */
+export const hostBatchApi = {
+  /**
+   * 批量配置端口
+   * POST /acm/api/acm/ci/batch/apply-ports
+   */
+  applyPorts(data) {
+    return apiService.post('/acm/api/acm/ci/batch/apply-ports', data)
+  },
+
+  /**
+   * 批量设置单个属性
+   * POST /acm/api/acm/ci/batch/save/attr
+   */
+  saveAttr(data) {
+    return apiService.post('/acm/api/acm/ci/batch/save/attr', data)
+  },
+
+  /**
+   * 列出 3 个保留区域名
+   * GET /acm/api/acm/ci/batch/locations
+   */
+  getLocations() {
+    return apiService.get('/acm/api/acm/ci/batch/locations')
+  },
+
+  /**
+   * 批量给主机标记区域
+   * POST /acm/api/acm/ci/batch/set-location
+   */
+  setLocation(data) {
+    return apiService.post('/acm/api/acm/ci/batch/set-location', data)
+  },
+
+  /**
+   * 查单台主机当前区域
+   * GET /acm/api/acm/ci/batch/get-location?hostId=...
+   */
+  getLocation(hostId) {
+    return apiService.get(`/acm/api/acm/ci/batch/get-location?hostId=${hostId}`)
+  }
+}
+
+/**
+ * R2 · 漏洞紧急程度看板与规则 API
+ */
+export const urgencyApi = {
+  /**
+   * 4 档统计大卡
+   * GET /vap/api/vap/v2/urgency/statistics
+   */
+  getStatistics() {
+    return apiService.get('/vap/api/vap/v2/urgency/statistics')
+  },
+
+  /**
+   * 全量重算
+   * POST /vap/api/vap/v2/urgency/recompute?batchSize=1000
+   */
+  recompute(params = {}) {
+    const query = buildGenericQuery({
+      batchSize: params.batchSize || 1000
+    })
+    return apiService.post(`/vap/api/vap/v2/urgency/recompute${query}`)
+  },
+
+  /**
+   * 单台主机重算
+   * POST /vap/api/vap/v2/urgency/recompute-host?hostId=...
+   */
+  recomputeHost(hostId) {
+    return apiService.post(`/vap/api/vap/v2/urgency/recompute-host?hostId=${hostId}`)
+  },
+
+  /**
+   * 规则列表
+   * GET /vap/api/vap/v2/urgency/rule
+   */
+  getRules() {
+    return apiService.get('/vap/api/vap/v2/urgency/rule')
+  },
+
+  /**
+   * 多 CVE 查紧急程度 (即时计算, 0落库)
+   * POST /vap/api/vap/v2/urgency/lookup
+   */
+  lookupUrgency(data) {
+    return apiService.post('/vap/api/vap/v2/urgency/lookup', data)
+  },
+
+  /**
+   * 多 CVE 查询结果导出 Excel
+   * POST /vap/api/vap/v2/urgency/lookup/export
+   */
+  exportLookupUrgency(data) {
+    return apiService.post('/vap/api/vap/v2/urgency/lookup/export', data, {
+      responseType: 'blob'
+    })
+  },
+
+  /**
+   * 规则编辑
+   * PUT /vap/api/vap/v2/urgency/rule/{id}
+   */
+  updateRule(id, data) {
+    return apiService.put(`/vap/api/vap/v2/urgency/rule/${id}`, data)
+  }
+}
+
+/**
+ * R1 · CVE 文件导入比对 API
+ */
+export const cveImportApi = {
+  /**
+   * 上传 Excel
+   * POST /vap/api/vap/v2/cve/import/upload
+   */
+  uploadExcel(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiService.post('/vap/api/vap/v2/cve/import/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+
+  /**
+   * 触发比对
+   * POST /vap/api/vap/v2/cve/import/batch/{id}/compare
+   */
+  compareBatch(id) {
+    return apiService.post(`/vap/api/vap/v2/cve/import/batch/${id}/compare`)
+  },
+
+  /**
+   * 历史批次分页
+   * GET /vap/api/vap/v2/cve/import/batch?page=0&size=20
+   */
+  getBatches(params = {}) {
+    const query = buildGenericQuery({
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    })
+    return apiService.get(`/vap/api/vap/v2/cve/import/batch${query}`)
+  },
+
+  /**
+   * 批次详情
+   * GET /vap/api/vap/v2/cve/import/batch/{id}
+   */
+  getBatchDetail(id) {
+    return apiService.get(`/vap/api/vap/v2/cve/import/batch/${id}`)
+  },
+
+  /**
+   * 涉及主机清单
+   * GET /vap/api/vap/v2/cve/import/batch/{id}/affected-hosts
+   */
+  getAffectedHosts(id) {
+    return apiService.get(`/vap/api/vap/v2/cve/import/batch/${id}/affected-hosts`)
+  },
+
+  /**
+   * 导出上报模板
+   * POST /vap/api/vap/v2/cve/import/batch/{id}/export-report
+   */
+  exportReport(id) {
+    return apiService.post(`/vap/api/vap/v2/cve/import/batch/${id}/export-report`, {}, {
+      responseType: 'blob'
+    })
+  },
+
+  /**
+   * 删除批次
+   * DELETE /vap/api/vap/v2/cve/import/batch/{id}
+   */
+  deleteBatch(id) {
+    return apiService.delete(`/vap/api/vap/v2/cve/import/batch/${id}`)
+  }
+}
+
 // 导出所有 API
 export default {
   scan: patchScanApi,
@@ -1790,5 +2010,9 @@ export default {
   cve: cveApi,
   winCve: winCveApi,
   middlewareCve: middlewareCveApi,
-  rpmInfo: rpmInfoApi
+  rpmInfo: rpmInfoApi,
+  viewConfig: viewConfigApi,
+  hostBatch: hostBatchApi,
+  urgency: urgencyApi,
+  cveImport: cveImportApi
 }

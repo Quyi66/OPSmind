@@ -168,9 +168,6 @@
 
         <!-- 操作栏 -->
         <div class="ops-action-bar">
-          <!-- <el-button size="small" @click="handleExport">
-            <i class="fa fa-download" /> 导出
-          </el-button> -->
           <span style="flex: 1"></span>
           <el-button
             class="toolbar-icon-btn"
@@ -192,13 +189,15 @@
             v-loading="loading"
             :data="hostTableData"
             style="width: 100%"
-            height="calc(100vh - 600px)"
+            height="100%"
+            @selection-change="handleHostSelectionChange"
           >
+            <el-table-column type="selection" width="45" />
             <el-table-column prop="host_key" label="主机" width="150">
               <template #default="{ row }">
-                <a href="javascript:void(0)" class="host-link" @click="handleHostClick(row)">
+                <el-link type="primary" :underline="false" @click="handleHostClick(row)">
                   {{ row.host_key }}
-                </a>
+                </el-link>
               </template>
             </el-table-column>
             <el-table-column prop="need_reboot" label="是否需要重启" width="120">
@@ -210,14 +209,113 @@
                   size="small"
                   round
                 >
-                  <!-- <i :class="row.need_reboot === 0 ? 'fa fa-power-off' : 'fa fa-check'" /> -->
                   {{ row.need_reboot === 1 ? '是' : row.need_reboot === 0 ? '否' : '未知' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="os_distro" label="操作系统" width="120" />
-            <el-table-column prop="os_version" label="OS版本" width="140" />
+
+            <!-- 动态及核心表格展示列 (R3) -->
+            <template v-for="col in activeColumns" :key="col">
+              <el-table-column
+                v-if="col === 'HOSTNAME'"
+                prop="hostname"
+                label="主机名"
+                min-width="120"
+                show-overflow-tooltip
+              />
+              <el-table-column
+                v-else-if="col === 'OS'"
+                prop="os_distro"
+                label="操作系统"
+                width="110"
+              />
+              <el-table-column
+                v-else-if="col === 'OS_VERSION'"
+                prop="os_version"
+                label="OS版本"
+                width="110"
+              />
+              <el-table-column
+                v-else-if="col === 'RUN_ENVIRONMENT'"
+                prop="run_environment"
+                label="运行环境"
+                width="120"
+              >
+                <template #default="{ row }">
+                  {{ row.run_environment || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                v-else-if="col === 'DEPT_NAME'"
+                prop="dept_name"
+                label="处置团队"
+                width="130"
+                show-overflow-tooltip
+              >
+                <template #default="{ row }">
+                  {{ row.dept_name || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                v-else-if="col === 'APPLICATION_SYSTEM'"
+                prop="application_system"
+                label="应用系统"
+                width="140"
+                show-overflow-tooltip
+              >
+                <template #default="{ row }">
+                  {{ row.application_system || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                v-else-if="col === 'HOST_RISK_LEVEL'"
+                prop="host_risk_level"
+                label="主机风险等级"
+                width="120"
+              >
+                <template #default="{ row }">
+                  {{ row.host_risk_level || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                v-else-if="col === 'SSH_PORT'"
+                prop="ssh_port"
+                label="SSH端口"
+                width="100"
+              >
+                <template #default="{ row }">
+                  {{ row.ssh_port || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                v-else-if="col === 'SERVICE_PORT'"
+                prop="service_port"
+                label="业务端口"
+                width="100"
+              >
+                <template #default="{ row }">
+                  {{ row.service_port || '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                v-else-if="col === 'LOCATION'"
+                prop="location"
+                label="网络区域环境"
+                width="140"
+              >
+                <template #default="{ row }">
+                  <el-tag
+                    v-if="row.location"
+                    size="small"
+                    type="success"
+                    effect="plain"
+                  >
+                    {{ row.location }}
+                  </el-tag>
+                  <span v-else class="text-muted">-</span>
+                </template>
+              </el-table-column>
+            </template>
             <el-table-column prop="num_critical" width="90">
               <template #header>
                 严重
@@ -882,6 +980,7 @@
         </el-button>
       </template>
     </el-dialog>
+
   </div>
 </template>
 
@@ -890,7 +989,7 @@ import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
-import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi } from '../api'
+import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi, viewConfigApi, hostBatchApi } from '../api'
 import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
 import {
   getAffectedPackageDetailParams,
@@ -987,6 +1086,16 @@ const pagination = reactive({
   pageSize: 20,
   total: 0
 })
+
+// ====== R3 & R4 状态 ======
+const batchSelectedHosts = ref([]) // 批量选中的主机列表
+const activeColumns = ref(["HOSTNAME", "OS", "LOCATION", "RUN_ENVIRONMENT"])
+
+// 表格多选发生变化
+function handleHostSelectionChange(selection) {
+  batchSelectedHosts.value = selection
+}
+// ====== 结束 ======
 
 // 漏洞表格
 const vulnLoading = ref(false)
@@ -1334,9 +1443,25 @@ async function loadHostData() {
           const assetInfoMap = {}
           assetRes.records.forEach(item => {
             if (item.IP) {
+              // 从标签筛选 LOCATION 区域
+              let location = null
+              const tags = item.tags || item.Tags || []
+              const locationNames = ["互联网", "外联网", "内网环境、孤岛环境"]
+              const matchedTag = tags.find(t => locationNames.includes(t.name || t))
+              if (matchedTag) {
+                location = matchedTag.name || matchedTag
+              }
+
               assetInfoMap[item.IP] = {
                 needReboot: item.needReboot,
-                osVersion: item.os_version || ''
+                osVersion: item.os_version || '',
+                run_environment: item.RUN_ENVIRONMENT || item.run_environment || '',
+                dept_name: item.DEPT_NAME || item.dept_name || '',
+                application_system: item.APPLICATION_SYSTEM || item.application_system || '',
+                host_risk_level: item.HOST_RISK_LEVEL || item.host_risk_level || '',
+                ssh_port: item.SSH_PORT || item.ssh_port || '',
+                service_port: item.SERVICE_PORT || item.service_port || '',
+                location: location
               }
             }
           })
@@ -1345,6 +1470,13 @@ async function loadHostData() {
               const assetInfo = assetInfoMap[record.host_key]
               record.need_reboot = assetInfo.needReboot
               record.os_version = assetInfo.osVersion || record.os_version
+              record.run_environment = assetInfo.run_environment
+              record.dept_name = assetInfo.dept_name
+              record.application_system = assetInfo.application_system
+              record.host_risk_level = assetInfo.host_risk_level
+              record.ssh_port = assetInfo.ssh_port
+              record.service_port = assetInfo.service_port
+              record.location = assetInfo.location
             }
           })
         }
