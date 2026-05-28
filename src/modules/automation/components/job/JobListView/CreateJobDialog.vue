@@ -1477,7 +1477,11 @@ watch(
   --create-job-drawer-nav-bg: var(--el-bg-color);
   --create-job-drawer-nav-hover-bg: var(--el-color-primary-light-9);
   --create-job-drawer-nav-active-bg: color-mix(in srgb, var(--el-color-primary-light-9) 76%, white);
-  --create-job-drawer-footer-bg: linear-gradient(0deg, var(--el-fill-color-light) 0%, var(--el-bg-color) 100%);
+  --create-job-drawer-footer-bg: linear-gradient(
+    0deg,
+    var(--el-fill-color-light) 0%,
+    var(--el-bg-color) 100%
+  );
   --create-job-drawer-footer-pill-bg: var(--el-fill-color-light);
   --create-job-drawer-command-list-bg: var(--el-fill-color-light);
   --create-job-drawer-command-item-bg: var(--el-bg-color);
@@ -2017,9 +2021,17 @@ watch(
 
 <style lang="scss">
 html.dark .create-job-drawer {
-  --create-job-drawer-surface: linear-gradient(180deg, rgba(17, 24, 39, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+  --create-job-drawer-surface: linear-gradient(
+    180deg,
+    rgba(17, 24, 39, 0.98) 0%,
+    rgba(15, 23, 42, 0.98) 100%
+  );
   --create-job-drawer-divider: rgba(71, 85, 105, 0.62);
-  --create-job-drawer-masthead-bg: linear-gradient(180deg, rgba(59, 130, 246, 0.14) 0%, rgba(15, 23, 42, 0) 100%);
+  --create-job-drawer-masthead-bg: linear-gradient(
+    180deg,
+    rgba(59, 130, 246, 0.14) 0%,
+    rgba(15, 23, 42, 0) 100%
+  );
   --create-job-drawer-eyebrow-bg: rgba(59, 130, 246, 0.16);
   --create-job-drawer-eyebrow-text: #93c5fd;
   --create-job-drawer-meta-bg: rgba(15, 23, 42, 0.9);
@@ -2027,7 +2039,11 @@ html.dark .create-job-drawer {
   --create-job-drawer-nav-bg: rgba(15, 23, 42, 0.92);
   --create-job-drawer-nav-hover-bg: rgba(30, 41, 59, 0.94);
   --create-job-drawer-nav-active-bg: rgba(59, 130, 246, 0.18);
-  --create-job-drawer-footer-bg: linear-gradient(0deg, rgba(15, 23, 42, 0.98) 0%, rgba(17, 24, 39, 0.94) 100%);
+  --create-job-drawer-footer-bg: linear-gradient(
+    0deg,
+    rgba(15, 23, 42, 0.98) 0%,
+    rgba(17, 24, 39, 0.94) 100%
+  );
   --create-job-drawer-footer-pill-bg: rgba(30, 41, 59, 0.9);
   --create-job-drawer-command-list-bg: rgba(30, 41, 59, 0.74);
   --create-job-drawer-command-item-bg: rgba(15, 23, 42, 0.96);

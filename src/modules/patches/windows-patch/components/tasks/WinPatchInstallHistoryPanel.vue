@@ -19,12 +19,25 @@
     </div>
 
     <div class="ops-action-bar">
-      <el-button type="primary" size="small" :disabled="rollbackableSelection.length === 0" @click="rollbackDialogVisible = true">
+      <el-button
+        type="primary"
+        size="small"
+        :disabled="rollbackableSelection.length === 0"
+        @click="rollbackDialogVisible = true"
+      >
         回滚选中记录
       </el-button>
-      <span class="win-patch-selection-text">已选 {{ rollbackableSelection.length }} 条可回滚记录</span>
+      <span class="win-patch-selection-text">
+        已选 {{ rollbackableSelection.length }} 条可回滚记录
+      </span>
       <span style="flex: 1"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadLogs()">
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadLogs()"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -157,7 +170,9 @@ const pagination = reactive({
   total: 0
 })
 
-const rollbackableSelection = computed(() => selectedRows.value.filter(row => isRollbackSelectable(row)))
+const rollbackableSelection = computed(() =>
+  selectedRows.value.filter(row => isRollbackSelectable(row))
+)
 
 async function loadLogs() {
   loading.value = true
@@ -206,7 +221,8 @@ function openSingleRollback(row) {
 
 function handleTaskSubmitted(task) {
   currentTaskId.value = pickValue(task, ['id'], '')
-  taskDrawerVisible.value = Boolean(currentTaskId.value) && pickValue(task, ['openDetail'], true) !== false
+  taskDrawerVisible.value =
+    Boolean(currentTaskId.value) && pickValue(task, ['openDetail'], true) !== false
   rollbackDialogRows.value = rollbackableSelection.value
 
   if (pickValue(task, ['refreshLogs'], true) !== false) {

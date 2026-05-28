@@ -2,7 +2,9 @@
   <div class="win-patch-script-uploader">
     <div class="win-patch-script-uploader__meta">
       <div class="win-patch-script-uploader__label">{{ label }}</div>
-      <div class="win-patch-script-uploader__hint">支持上传 .ps1 脚本，再次上传会覆盖当前内容。</div>
+      <div class="win-patch-script-uploader__hint">
+        支持上传 .ps1 脚本，再次上传会覆盖当前内容。
+      </div>
     </div>
     <div class="win-patch-script-uploader__actions">
       <el-tag :type="hasScript ? 'success' : 'info'" size="small" effect="plain">
@@ -70,7 +72,11 @@ async function handleUpload(option) {
 
   uploading.value = true
   try {
-    const response = await winPatchApi.uploadTaskScript(normalizedTaskId.value, props.scriptType, file)
+    const response = await winPatchApi.uploadTaskScript(
+      normalizedTaskId.value,
+      props.scriptType,
+      file
+    )
     ElMessage.success(`${props.label}已上传`)
     option?.onSuccess?.({}, file)
     emit('uploaded', unwrapResponse(response))

@@ -1,13 +1,15 @@
 <template>
-  <el-dialog v-model="visibleModel" title="创建扫描任务" width="760px" destroy-on-close :close-on-click-modal="false">
+  <el-dialog
+    v-model="visibleModel"
+    title="创建扫描任务"
+    width="760px"
+    destroy-on-close
+    :close-on-click-modal="false"
+  >
     <div class="win-patch-dialog-body">
       <el-form label-width="110px">
         <el-form-item label="选择主机" required>
-          <AcmDeviceSelector
-            v-model="selection"
-            ci-types="windows"
-            :options="selectorOptions"
-          />
+          <AcmDeviceSelector v-model="selection" ci-types="windows" :options="selectorOptions" />
         </el-form-item>
         <el-form-item label="扫描模式">
           <el-select v-model="form.scanMode" style="width: 100%">
@@ -56,7 +58,6 @@
           </el-select>
         </el-form-item>
       </el-form>
-
     </div>
     <template #footer>
       <el-button @click="visibleModel = false">取消</el-button>

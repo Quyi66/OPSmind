@@ -344,7 +344,7 @@ async function handlePasswordSubmit() {
     visible.value = false
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error('提交失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`提交失败: ${error.message || '未知错误'}`)
   } finally {
     submitting.value = false
   }
@@ -376,7 +376,7 @@ async function handleSSHSubmit() {
     visible.value = false
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error('提交失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`提交失败: ${error.message || '未知错误'}`)
   } finally {
     submitting.value = false
   }

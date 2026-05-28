@@ -55,7 +55,12 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatDate, getCVEList, getCveUrl, getSeverityType } from '../../../composables/useFormatters'
+import {
+  formatDate,
+  getCVEList,
+  getCveUrl,
+  getSeverityType
+} from '../../../composables/useFormatters'
 
 const props = defineProps({
   modelValue: {

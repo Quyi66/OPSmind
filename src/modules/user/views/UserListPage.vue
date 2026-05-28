@@ -4,12 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="用户类型">
-          <el-select
-            v-model="filters.types"
-            multiple
-            placeholder="请选择"
-            style="width: 200px"
-          >
+          <el-select v-model="filters.types" multiple placeholder="请选择" style="width: 200px">
             <el-option label="系统用户" value="0" />
             <el-option label="普通用户" value="1" />
           </el-select>
@@ -78,18 +73,19 @@
 
     <!-- 用户列表表格 -->
     <div class="ops-table-wrapper">
-      <el-table
-        :data="tableData"
-        v-loading="loading"
-        max-height="calc(100vh - 230px)"
-      >
+      <el-table :data="tableData" v-loading="loading" max-height="calc(100vh - 230px)">
         <el-table-column prop="host_key" label="IP" width="130" />
 
         <el-table-column prop="hostname" label="主机名" width="120" show-overflow-tooltip />
 
         <el-table-column prop="username" label="用户名" width="140">
           <template #default="{ row }">
-            <el-tag :type="getUserBadgeType(row.uid)" size="small" class="clickable-tag" @click="handleEditUser(row)">
+            <el-tag
+              :type="getUserBadgeType(row.uid)"
+              size="small"
+              class="clickable-tag"
+              @click="handleEditUser(row)"
+            >
               <i :class="['fa', getUserIcon(row.uid)]"></i>
               {{ row.username }}
             </el-tag>
@@ -112,7 +108,12 @@
 
         <el-table-column prop="primary_group" label="主用户组" width="140" show-overflow-tooltip />
 
-        <el-table-column prop="secondary_group" label="附加用户组" min-width="180" show-overflow-tooltip />
+        <el-table-column
+          prop="secondary_group"
+          label="附加用户组"
+          min-width="180"
+          show-overflow-tooltip
+        />
 
         <el-table-column prop="shell" label="Shell" width="130" show-overflow-tooltip />
 
@@ -280,7 +281,9 @@ async function loadData() {
       lockStatus: filters.value.lockStatus.join(','),
       page: currentPage.value,
       size: pageSize.value,
-      filter: filters.value.keyword ? `host_key|hostname|primary_group|secondary_group|comment|shell|home|username:*${filters.value.keyword}*` : undefined
+      filter: filters.value.keyword
+        ? `host_key|hostname|primary_group|secondary_group|comment|shell|home|username:*${filters.value.keyword}*`
+        : undefined
     })
     tableData.value = response?.records || response?.data?.records || []
     total.value = response?.total || response?.data?.total || 0

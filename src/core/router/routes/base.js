@@ -224,9 +224,7 @@ export const baseRoutes = [
         path: '',
         component: PatchGroupLayout,
         redirect: '/yum-repo/repos',
-        children: [
-          ...yumRepoChildren
-        ]
+        children: [...yumRepoChildren]
       }
     ]
   },
@@ -328,9 +326,7 @@ export const baseRoutes = [
         path: '',
         component: SecurityGroupLayout,
         redirect: '/password/application',
-        children: [
-          ...passwordChildren
-        ]
+        children: [...passwordChildren]
       }
     ]
   },

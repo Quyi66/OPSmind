@@ -68,11 +68,7 @@
     </div>
 
     <!-- 运行记录对话框 -->
-    <el-dialog
-      v-model="historyDialogVisible"
-      title="运行记录"
-      width="1200px"
-    >
+    <el-dialog v-model="historyDialogVisible" title="运行记录" width="1200px">
       <div class="history-toolbar">
         <el-input
           v-model="historySearchKeyword"
@@ -84,10 +80,7 @@
         />
       </div>
 
-      <el-table
-        :data="paginatedHistoryData"
-        max-height="calc(100vh - 450px)"
-      >
+      <el-table :data="paginatedHistoryData" max-height="calc(100vh - 450px)">
         <el-table-column prop="cmd" label="命令" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="text-ellipsis">{{ row.cmd }}</span>
@@ -141,8 +134,15 @@
     >
       <div class="log-viewer-header">
         <div class="log-status">
-          <el-tag :type="logStatus === 'RUNNING' ? 'warning' : (logStatus === 'COMPLETED' ? 'success' : 'info')" size="small">
-            {{ logStatus === 'RUNNING' ? '运行中' : (logStatus === 'COMPLETED' ? '完成' : logStatus) }}
+          <el-tag
+            :type="
+              logStatus === 'RUNNING' ? 'warning' : logStatus === 'COMPLETED' ? 'success' : 'info'
+            "
+            size="small"
+          >
+            {{
+              logStatus === 'RUNNING' ? '运行中' : logStatus === 'COMPLETED' ? '完成' : logStatus
+            }}
           </el-tag>
           <el-switch
             v-model="autoScroll"
@@ -198,11 +198,12 @@ const filteredHistoryData = computed(() => {
     return historyData.value
   }
   const keyword = historySearchKeyword.value.toLowerCase()
-  return historyData.value.filter(item =>
-    (item.cmd && item.cmd.toLowerCase().includes(keyword)) ||
-    (item.type && item.type.toLowerCase().includes(keyword)) ||
-    (item.hostname && item.hostname.join(',').toLowerCase().includes(keyword)) ||
-    (item.createdBy && item.createdBy.toLowerCase().includes(keyword))
+  return historyData.value.filter(
+    item =>
+      (item.cmd && item.cmd.toLowerCase().includes(keyword)) ||
+      (item.type && item.type.toLowerCase().includes(keyword)) ||
+      (item.hostname && item.hostname.join(',').toLowerCase().includes(keyword)) ||
+      (item.createdBy && item.createdBy.toLowerCase().includes(keyword))
   )
 })
 
@@ -239,11 +240,13 @@ async function executeCommand() {
   try {
     const request = {
       commands: [],
-      consoleCmd: [{
-        name: 'console',
-        cmd: command.value,
-        type: commandType.value
-      }],
+      consoleCmd: [
+        {
+          name: 'console',
+          cmd: command.value,
+          type: commandType.value
+        }
+      ],
       hosts: hosts.value
     }
 
@@ -257,7 +260,7 @@ async function executeCommand() {
     }
   } catch (error) {
     console.error('执行命令失败:', error)
-    ElMessage.error('执行命令失败: ' + (error?.message || '未知错误'))
+    ElMessage.error(`执行命令失败: ${error?.message || '未知错误'}`)
   } finally {
     executing.value = false
   }
@@ -284,7 +287,7 @@ async function handleHistory() {
         cmd: cmdConfig[0]?.cmd || '',
         type: cmdConfig[0]?.type || '',
         hostname: hostNames,
-        hostConfig: hostConfig,
+        hostConfig,
         createdAt: formatDate(log.createdAt),
         createdBy: log.createdBy,
         lastRunTime: formatDate(log.lastRunTime),
@@ -327,14 +330,16 @@ function handleHistoryPageChange(page) {
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).replace(/\//g, '-')
+  return date
+    .toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+    .replace(/\//g, '-')
 }
 
 // 获取 WebSocket URL
@@ -354,8 +359,7 @@ function openLogViewer(runId) {
 
   websocket = new WebSocket(wsUrl)
 
-  websocket.onopen = () => {
-  }
+  websocket.onopen = () => {}
 
   websocket.onmessage = event => {
     try {

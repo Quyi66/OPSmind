@@ -52,26 +52,19 @@
       <!-- 已选命令预览 -->
       <div v-if="selectedCommands.length > 0" class="selected-preview">
         <div class="preview-header">
-          <span>已选择 <strong>{{ selectedCommands.length }}</strong> 条命令</span>
-          <el-button type="danger" link size="small" @click="clearSelection">
-            清空选择
-          </el-button>
+          <span>
+            已选择
+            <strong>{{ selectedCommands.length }}</strong>
+            条命令
+          </span>
+          <el-button type="danger" link size="small" @click="clearSelection">清空选择</el-button>
         </div>
         <div class="preview-list">
-          <div
-            v-for="(cmd, index) in selectedCommands"
-            :key="cmd.id"
-            class="preview-item"
-          >
+          <div v-for="(cmd, index) in selectedCommands" :key="cmd.id" class="preview-item">
             <span class="preview-index">{{ index + 1 }}</span>
             <span class="preview-name">{{ cmd.name }}</span>
             <span class="preview-cmd">{{ cmd.command }}</span>
-            <el-button
-              type="danger"
-              link
-              size="small"
-              @click="removeFromSelection(cmd)"
-            >
+            <el-button type="danger" link size="small" @click="removeFromSelection(cmd)">
               <i class="fa fa-times"></i>
             </el-button>
           </div>
@@ -82,9 +75,7 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleConfirm">
-          确定
-        </el-button>
+        <el-button type="primary" @click="handleConfirm">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -111,7 +102,7 @@ const emit = defineEmits(['update:modelValue', 'confirm'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -126,10 +117,11 @@ const filteredCommands = computed(() => {
     return commandList.value
   }
   const kw = searchKeyword.value.toLowerCase()
-  return commandList.value.filter(cmd =>
-    (cmd.name && cmd.name.toLowerCase().includes(kw)) ||
-    (cmd.command && cmd.command.toLowerCase().includes(kw)) ||
-    (cmd.type && cmd.type.toLowerCase().includes(kw))
+  return commandList.value.filter(
+    cmd =>
+      (cmd.name && cmd.name.toLowerCase().includes(kw)) ||
+      (cmd.command && cmd.command.toLowerCase().includes(kw)) ||
+      (cmd.type && cmd.type.toLowerCase().includes(kw))
   )
 })
 
@@ -225,12 +217,15 @@ function handleClose() {
 }
 
 // 监听对话框打开
-watch(() => props.modelValue, async (newVal) => {
-  if (newVal) {
-    await loadCommands()
-    await initPreSelection()
+watch(
+  () => props.modelValue,
+  async newVal => {
+    if (newVal) {
+      await loadCommands()
+      await initPreSelection()
+    }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">

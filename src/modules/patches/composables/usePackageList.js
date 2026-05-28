@@ -65,7 +65,9 @@ export function usePackageList(hostId) {
   }
 
   function normalizePkgKey(value) {
-    return String(value || '').trim().toLowerCase()
+    return String(value || '')
+      .trim()
+      .toLowerCase()
   }
 
   function buildPackageToken(pkgName, updatePkg, patchId) {
@@ -109,7 +111,8 @@ export function usePackageList(hostId) {
   }
 
   function normalizeScanPackageRow(row = {}) {
-    const packageInfo = row.packageInfo && typeof row.packageInfo === 'object' ? row.packageInfo : {}
+    const packageInfo =
+      row.packageInfo && typeof row.packageInfo === 'object' ? row.packageInfo : {}
 
     const installedPkg =
       getStringValue(row, ['currentPackage', 'pkgId', 'installedPkg', 'packageId', 'package_id']) ||
@@ -254,10 +257,7 @@ export function usePackageList(hostId) {
   }
 
   async function getCompatibilityAffectedPackages(forceRefresh = false) {
-    if (
-      !forceRefresh &&
-      compatibilityAffectedPackagesHostId.value === hostId.value
-    ) {
+    if (!forceRefresh && compatibilityAffectedPackagesHostId.value === hostId.value) {
       return compatibilityAffectedPackagesCache.value
     }
 

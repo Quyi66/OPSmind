@@ -12,12 +12,8 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            搜索
-          </el-button>
-          <el-button @click="handleReset">
-            重置
-          </el-button>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -33,8 +29,15 @@
         <i class="fas fa-check"></i>
         批量审核
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -79,14 +82,7 @@
 
         <el-table-column label="操作" width="80" fixed="right" align="left">
           <template #default="{ row }">
-            <el-button
-              text
-              type="primary"
-              size="small"
-              @click="handleApprove(row)"
-            >
-              审核
-            </el-button>
+            <el-button text type="primary" size="small" @click="handleApprove(row)">审核</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -147,9 +143,10 @@ const filteredCommands = computed(() => {
     return commands.value
   }
   const keyword = searchKeyword.value.toLowerCase()
-  return commands.value.filter(cmd =>
-    (cmd.name && cmd.name.toLowerCase().includes(keyword)) ||
-    (cmd.unapprovedCommand && cmd.unapprovedCommand.toLowerCase().includes(keyword))
+  return commands.value.filter(
+    cmd =>
+      (cmd.name && cmd.name.toLowerCase().includes(keyword)) ||
+      (cmd.unapprovedCommand && cmd.unapprovedCommand.toLowerCase().includes(keyword))
   )
 })
 
@@ -253,20 +250,22 @@ function handleApproveSuccess() {
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).replace(/\//g, '/')
+  return date
+    .toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+    .replace(/\//g, '/')
 }
 
 // 截断命令预览
 function truncateCommand(command) {
   if (!command) return ''
-  return command.length > 80 ? command.substring(0, 80) + '...' : command
+  return command.length > 80 ? `${command.substring(0, 80)}...` : command
 }
 
 // 刷新方法

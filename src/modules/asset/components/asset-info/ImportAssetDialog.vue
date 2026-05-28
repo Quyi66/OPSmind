@@ -40,7 +40,12 @@
 
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="uploading" :disabled="!selectedFile" @click="handleUpload">
+      <el-button
+        type="primary"
+        :loading="uploading"
+        :disabled="!selectedFile"
+        @click="handleUpload"
+      >
         上传
       </el-button>
     </template>
@@ -76,7 +81,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const uploadRef = ref()
@@ -91,7 +96,7 @@ function createImportRunId() {
   }
 
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, char => {
-    const random = Math.random() * 16 | 0
+    const random = (Math.random() * 16) | 0
     const value = char === 'x' ? random : (random & 0x3) | 0x8
     return value.toString(16)
   })
@@ -102,7 +107,7 @@ function isSuccessStatus(status) {
 }
 
 // 文件选择变化
-const handleFileChange = (file) => {
+const handleFileChange = file => {
   selectedFile.value = file.raw
 }
 
@@ -149,7 +154,7 @@ const handleUpload = async () => {
     ElMessage.success(`导入任务已提交，正在打开运行结果，运行 ID: ${runId}`)
   } catch (error) {
     console.error('导入失败:', error)
-    ElMessage.error('导入失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`导入失败: ${error.response?.data?.message || error.message}`)
   } finally {
     uploading.value = false
   }

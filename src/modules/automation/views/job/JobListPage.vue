@@ -1,104 +1,124 @@
 <template>
   <div class="ops-page-layout">
-      <!-- 筛选栏 -->
-      <div class="ops-filter-bar">
-        <el-form :model="filters" inline size="small">
-          <el-form-item label="应用范围">
-            <el-select
-              v-model="selectedAppletName"
-              filterable
-              style="width: 220px"
-              placeholder="全部应用"
-            >
-              <el-option
-                v-for="applet in appOptions"
-                :key="applet.name || 'all'"
-                :label="applet.title"
-                :value="applet.name"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="类型">
-            <el-select
-              v-model="filters.jobType"
-              style="width: 120px;"
-              placeholder="全部类型"
-              @change="handleSearch"
-            >
-              <el-option label="全部类型" value="all" />
-              <el-option v-for="option in jobTypeOptions" :key="option.value" :label="option.label"
-                :value="option.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="关键词">
-            <el-input
-              v-model="filters.keyword"
-              placeholder="搜索运维工具标题、描述..."
-              clearable
-              style="width: 200px;"
-              @keyup.enter="handleSearch"
-              @clear="handleSearch"
-            >
-              <template #prefix>
-                <el-icon>
-                  <Search />
-                </el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :loading="loading" @click="handleSearch">
+    <!-- 筛选栏 -->
+    <div class="ops-filter-bar">
+      <el-form :model="filters" inline size="small">
+        <el-form-item label="应用范围">
+          <el-select
+            v-model="selectedAppletName"
+            filterable
+            style="width: 220px"
+            placeholder="全部应用"
+          >
+            <el-option
+              v-for="applet in appOptions"
+              :key="applet.name || 'all'"
+              :label="applet.title"
+              :value="applet.name"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="类型">
+          <el-select
+            v-model="filters.jobType"
+            style="width: 120px"
+            placeholder="全部类型"
+            @change="handleSearch"
+          >
+            <el-option label="全部类型" value="all" />
+            <el-option
+              v-for="option in jobTypeOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关键词">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索运维工具标题、描述..."
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
+            <template #prefix>
               <el-icon>
                 <Search />
               </el-icon>
-              搜索
-            </el-button>
-            <el-button @click="handleReset">
-              <el-icon>
-                <RefreshRight />
-              </el-icon>
-              重置
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <!-- 操作栏 -->
-      <div class="ops-action-bar">
-        <el-dropdown @command="handleCreateJob">
-          <el-button type="primary" size="small">
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="loading" @click="handleSearch">
             <el-icon>
-              <Plus />
+              <Search />
             </el-icon>
-            新建运维工具
-            <el-icon class="el-icon--right">
-              <ArrowDown />
-            </el-icon>
+            搜索
           </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item v-for="option in createJobOptions" :key="option.value" :command="option.value">
-                <i :class="['fa', option.icon, 'dropdown-icon']"></i>
-                {{ option.label }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-        <el-button size="small" :disabled="!selectedIds.length" @click="handleDeleteJobs" type="danger">
-          <el-icon>
-            <Delete />
-          </el-icon>
-          删除
-        </el-button>
-        <span style="flex: 1;"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="reloadJobs" title="刷新">
-          <el-icon v-show="!loading">
-            <Refresh />
-          </el-icon>
-        </el-button>
-      </div>
+          <el-button @click="handleReset">
+            <el-icon>
+              <RefreshRight />
+            </el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
 
-      <!-- <div class="job-overview-panel">
+    <!-- 操作栏 -->
+    <div class="ops-action-bar">
+      <el-dropdown @command="handleCreateJob">
+        <el-button type="primary" size="small">
+          <el-icon>
+            <Plus />
+          </el-icon>
+          新建运维工具
+          <el-icon class="el-icon--right">
+            <ArrowDown />
+          </el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item
+              v-for="option in createJobOptions"
+              :key="option.value"
+              :command="option.value"
+            >
+              <i :class="['fa', option.icon, 'dropdown-icon']"></i>
+              {{ option.label }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      <el-button
+        size="small"
+        :disabled="!selectedIds.length"
+        @click="handleDeleteJobs"
+        type="danger"
+      >
+        <el-icon>
+          <Delete />
+        </el-icon>
+        删除
+      </el-button>
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="reloadJobs"
+        title="刷新"
+      >
+        <el-icon v-show="!loading">
+          <Refresh />
+        </el-icon>
+      </el-button>
+    </div>
+
+    <!-- <div class="job-overview-panel">
         <div class="job-overview-cards">
           <article
             v-for="card in overviewCards"
@@ -142,83 +162,117 @@
         </div>
       </div> -->
 
-      <el-alert v-if="error" :title="error" type="error" :closable="false" style="margin-bottom: 12px;" />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+      style="margin-bottom: 12px"
+    />
 
-      <!-- 表格区域 -->
-      <div class="ops-table-wrapper">
-        <el-table v-loading="loading" :data="displayedJobs" @selection-change="handleSelectionChange"
-          @sort-change="handleSortChange" max-height="calc(100vh - 240px)"
-          :default-sort="{ prop: 'updatedAt', order: 'descending' }">
-          <el-table-column type="selection" width="48" />
-          <el-table-column prop="title" label="运维工具" min-width="160" show-overflow-tooltip>
-            <template #default="{ row }">
-              <!-- <span class="job-title__text" style="color: #0077EE; cursor: pointer;" @click="handleEditJob(row)">
+    <!-- 表格区域 -->
+    <div class="ops-table-wrapper">
+      <el-table
+        v-loading="loading"
+        :data="displayedJobs"
+        @selection-change="handleSelectionChange"
+        @sort-change="handleSortChange"
+        max-height="calc(100vh - 240px)"
+        :default-sort="{ prop: 'updatedAt', order: 'descending' }"
+      >
+        <el-table-column type="selection" width="48" />
+        <el-table-column prop="title" label="运维工具" min-width="160" show-overflow-tooltip>
+          <template #default="{ row }">
+            <!-- <span class="job-title__text" style="color: #0077EE; cursor: pointer;" @click="handleEditJob(row)">
                 {{ translateText(row.title) || '-' }}
               </span> -->
-              <el-button text type="primary" @click="handleEditJob(row)">
-                {{ translateText(row.title) || '-' }}
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ translateText(row.description) || '-' }}
-            </template>
-          </el-table-column>
-          <el-table-column label="类型" width="140">
-            <template #default="{ row }">
-              <el-tag v-if="row.type" size="small" :type="typeTagType(row.type)" effect="plain" class="job-type-tag">
-                <i :class="['fa', typeIcon(row.type)]" />
-                <span>{{ typeLabel(row.type) }}</span>
-              </el-tag>
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="appletCode" label="所属应用" min-width="100">
-            <template #default="{ row }">
-              {{ row.appletCode || '未分类' }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="updatedBy" label="修改人" width="100" />
-          <el-table-column prop="updatedAt" label="修改时间" width="180" sortable="custom">
-            <template #default="{ row }">
-              {{ formatDate(row.updatedAt) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="lastRunTime" label="上次运行时间" width="180" sortable="custom">
-            <template #default="{ row }">
-              {{ formatDate(row.lastRunTime) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" fixed="right" width="130">
-            <template #default="{ row }">
-              <el-button text type="primary" size="small" @click="handleViewJob(row)">
-                执行
-              </el-button>
-              <el-button text type="primary" size="small" @click="handleCopy(row)">
-                复制
-              </el-button>
-              <el-button text type="primary" size="small" @click="handleViewHistory(row)">
-                历史
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+            <el-button text type="primary" @click="handleEditJob(row)">
+              {{ translateText(row.title) || '-' }}
+            </el-button>
+          </template>
+        </el-table-column>
+        <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ translateText(row.description) || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="类型" width="140">
+          <template #default="{ row }">
+            <el-tag
+              v-if="row.type"
+              size="small"
+              :type="typeTagType(row.type)"
+              effect="plain"
+              class="job-type-tag"
+            >
+              <i :class="['fa', typeIcon(row.type)]" />
+              <span>{{ typeLabel(row.type) }}</span>
+            </el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="appletCode" label="所属应用" min-width="100">
+          <template #default="{ row }">
+            {{ row.appletCode || '未分类' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="updatedBy" label="修改人" width="100" />
+        <el-table-column prop="updatedAt" label="修改时间" width="180" sortable="custom">
+          <template #default="{ row }">
+            {{ formatDate(row.updatedAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="lastRunTime" label="上次运行时间" width="180" sortable="custom">
+          <template #default="{ row }">
+            {{ formatDate(row.lastRunTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" fixed="right" width="130">
+          <template #default="{ row }">
+            <el-button text type="primary" size="small" @click="handleViewJob(row)">执行</el-button>
+            <el-button text type="primary" size="small" @click="handleCopy(row)">复制</el-button>
+            <el-button text type="primary" size="small" @click="handleViewHistory(row)">
+              历史
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
-      <!-- 分页器区域 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="filteredJobsCount"
-          :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next, jumper" background />
-      </div>
+    <!-- 分页器区域 -->
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :total="filteredJobsCount"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+      />
+    </div>
 
-    <ExecuteJobDialog v-if="executeDialogVisible" v-model:visible="executeDialogVisible"
-      :job-id="executeJobMeta?.id || ''" :job-type="executeJobMeta?.type || ''"
-      :fallback-config-json="executeJobMeta?.configJson || ''" />
-    <ExecuteHistoryDialog v-if="historyDialogVisible" v-model:visible="historyDialogVisible"
-      :job-id="historyJobMeta?.id || ''" :job-title="historyJobMeta?.title || ''" />
-    <CreateJobDialog v-if="jobDialogVisible" v-model="jobDialogVisible" :job-type="createJobType" :job-id="editJobId"
-      :applet-code="currentApp.name" :applets-list="appOptions" @success="handleCreateSuccess" />
+    <ExecuteJobDialog
+      v-if="executeDialogVisible"
+      v-model:visible="executeDialogVisible"
+      :job-id="executeJobMeta?.id || ''"
+      :job-type="executeJobMeta?.type || ''"
+      :fallback-config-json="executeJobMeta?.configJson || ''"
+    />
+    <ExecuteHistoryDialog
+      v-if="historyDialogVisible"
+      v-model:visible="historyDialogVisible"
+      :job-id="historyJobMeta?.id || ''"
+      :job-title="historyJobMeta?.title || ''"
+    />
+    <CreateJobDialog
+      v-if="jobDialogVisible"
+      v-model="jobDialogVisible"
+      :job-type="createJobType"
+      :job-id="editJobId"
+      :applet-code="currentApp.name"
+      :applets-list="appOptions"
+      @success="handleCreateSuccess"
+    />
     <JobApproveDialog
       v-if="approveDialogVisible"
       v-model:visible="approveDialogVisible"
@@ -283,8 +337,8 @@ const jobDialogVisible = ref(false)
 
 const selectedAppletName = computed({
   get: () => currentApp.value?.name ?? '',
-  set: (value) => {
-    const app = appOptions.value.find((item) => item.name === value)
+  set: value => {
+    const app = appOptions.value.find(item => item.name === value)
     if (app) {
       selectApplet(app)
     }
@@ -304,9 +358,11 @@ function filterList() {
   if (filters.keyword && filters.keyword.trim()) {
     const kw = filters.keyword.trim().toLowerCase()
     filtered = filtered.filter(job => {
-      return (job.title && job.title.toLowerCase().includes(kw)) ||
+      return (
+        (job.title && job.title.toLowerCase().includes(kw)) ||
         (job.description && job.description.toLowerCase().includes(kw)) ||
         (job.id && job.id.toLowerCase().includes(kw))
+      )
     })
   }
 
@@ -359,24 +415,21 @@ function handleSortChange({ prop, order }) {
 /**删除作业 */
 function handleDeleteJobs() {
   const jobIds = selectedIds.value
-  ElMessageBox.confirm(
-    `确定要删除选中的 ${jobIds.length} 个运维工具吗？`,
-    '删除确认',
-    {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消'
-    }
-  ).then(() => {
-    ElMessage.success('删除成功')
-    jaoApi.deleteJobs(JSON.stringify(jobIds)).then(() => {
-      getAppTableList(currentApp.value.name)
-    })
-  }).catch(() => {
-    // 取消删除
+  ElMessageBox.confirm(`确定要删除选中的 ${jobIds.length} 个运维工具吗？`, '删除确认', {
+    type: 'warning',
+    confirmButtonText: '删除',
+    cancelButtonText: '取消'
   })
+    .then(() => {
+      ElMessage.success('删除成功')
+      jaoApi.deleteJobs(JSON.stringify(jobIds)).then(() => {
+        getAppTableList(currentApp.value.name)
+      })
+    })
+    .catch(() => {
+      // 取消删除
+    })
 }
-
 
 /** 执行作业 */
 async function handleViewJob(row) {
@@ -423,20 +476,20 @@ async function handleViewJob(row) {
   }
 }
 
-watch(executeDialogVisible, (visible) => {
+watch(executeDialogVisible, visible => {
   if (!visible) {
     executeJobMeta.value = null
   }
 })
 
-watch(historyDialogVisible, (visible) => {
+watch(historyDialogVisible, visible => {
   if (!visible) {
     historyJobMeta.value = null
   }
 })
 
 const jobTypeOptions = computed(() =>
-  JOB_TYPE_OPTIONS.filter((option) => option.value !== '').map((option) => ({
+  JOB_TYPE_OPTIONS.filter(option => option.value !== '').map(option => ({
     label: option.label,
     value: option.value,
     icon: option.icon
@@ -444,20 +497,18 @@ const jobTypeOptions = computed(() =>
 )
 
 const createJobOptions = computed(() =>
-  JOB_TYPE_OPTIONS.filter((option) => option.value !== '').map((option) => ({
+  JOB_TYPE_OPTIONS.filter(option => option.value !== '').map(option => ({
     label: option.label,
     value: option.value,
     icon: option.icon
   }))
 )
 
-const selectedIds = computed(() =>
-  selectedRows.value.map((row) => row.id).filter(Boolean)
-)
+const selectedIds = computed(() => selectedRows.value.map(row => row.id).filter(Boolean))
 
 const appletOptions = computed(() => {
   const unique = new Set()
-  jobs.value.forEach((job) => {
+  jobs.value.forEach(job => {
     if (job?.appletCode) {
       unique.add(String(job.appletCode))
     }
@@ -467,7 +518,7 @@ const appletOptions = computed(() => {
 
 const appletCounts = computed(() => {
   const counts = { ALL: jobs.value.length, __UNASSIGNED__: 0 }
-  jobs.value.forEach((job) => {
+  jobs.value.forEach(job => {
     const key = job?.appletCode ? String(job.appletCode) : '__UNASSIGNED__'
     counts[key] = (counts[key] || 0) + 1
   })
@@ -477,8 +528,8 @@ const appletCounts = computed(() => {
 
 const moveTargetOptions = computed(() =>
   appletOptions.value
-    .filter((code) => code !== store.filters.appletCode)
-    .map((code) => ({
+    .filter(code => code !== store.filters.appletCode)
+    .map(code => ({
       label: code,
       value: code
     }))
@@ -491,12 +542,12 @@ const filteredJobsCount = computed(() => paginatedJobs.value.length)
 
 const currentAppTitle = computed(() => currentApp.value?.title || '所有应用')
 
-const recentlyUpdatedCount = computed(() =>
-  originalJobs.value.filter(job => isRecentWithinDays(job.updatedAt, 7)).length
+const recentlyUpdatedCount = computed(
+  () => originalJobs.value.filter(job => isRecentWithinDays(job.updatedAt, 7)).length
 )
 
-const approvalRequiredCount = computed(() =>
-  originalJobs.value.filter(job => !!job.needApprove).length
+const approvalRequiredCount = computed(
+  () => originalJobs.value.filter(job => !!job.needApprove).length
 )
 
 const quickTypeOptions = computed(() => {
@@ -536,9 +587,7 @@ const overviewCards = computed(() => [
   }
 ])
 
-const hasActiveFilters = computed(() =>
-  filters.jobType !== 'all' || !!filters.keyword.trim()
-)
+const hasActiveFilters = computed(() => filters.jobType !== 'all' || !!filters.keyword.trim())
 
 // 当前页显示的数据
 const displayedJobs = computed(() => {
@@ -547,7 +596,7 @@ const displayedJobs = computed(() => {
   return paginatedJobs.value.slice(start, end)
 })
 
-watch(selectedIds, (ids) => {
+watch(selectedIds, ids => {
   if (!ids.length) {
     moveTarget.value = ''
   }
@@ -556,15 +605,18 @@ watch(selectedIds, (ids) => {
 function getAppTableList(appletCode) {
   loading.value = true
   paginatedJobs.value = []
-  jaoApi.appTableList({ appletCode }).then((response) => {
-    originalJobs.value = response.data
-    // 应用当前筛选条件
-    filterList()
-    loading.value = false
-  }).catch((error) => {
-    loading.value = false
-    // console.error('Failed to fetch app list:', error);
-  });
+  jaoApi
+    .appTableList({ appletCode })
+    .then(response => {
+      originalJobs.value = response.data
+      // 应用当前筛选条件
+      filterList()
+      loading.value = false
+    })
+    .catch(error => {
+      loading.value = false
+      // console.error('Failed to fetch app list:', error);
+    })
 }
 
 /** 切换作业列表 */
@@ -593,7 +645,7 @@ async function handleMoveJobs() {
     return
   }
 
-  const target = moveTargetOptions.value.find((item) => item.value === moveTarget.value)
+  const target = moveTargetOptions.value.find(item => item.value === moveTarget.value)
   const targetLabel = target?.label ?? moveTarget.value
 
   try {
@@ -624,20 +676,15 @@ async function handleMoveJobs() {
   }
 }
 
-
 async function handleCopy(row) {
   if (!row?.id) return
 
   try {
-    await ElMessageBox.confirm(
-      `确定要复制运维工具「${row.title}」吗？`,
-      '复制确认',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'info'
-      }
-    )
+    await ElMessageBox.confirm(`确定要复制运维工具「${row.title}」吗？`, '复制确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info'
+    })
 
     await store.duplicateJob(row.id)
     ElMessage.success('复制成功')
@@ -741,12 +788,12 @@ function formatDate(value) {
 }
 
 function typeLabel(type) {
-  const item = JOB_TYPE_OPTIONS.find((option) => option.value === type)
+  const item = JOB_TYPE_OPTIONS.find(option => option.value === type)
   return item?.label ?? '未知类型'
 }
 
 function typeIcon(type) {
-  const item = JOB_TYPE_OPTIONS.find((option) => option.value === type)
+  const item = JOB_TYPE_OPTIONS.find(option => option.value === type)
   return item?.icon ?? 'fa-question-circle'
 }
 
@@ -755,9 +802,9 @@ function typeIcon(type) {
  */
 function typeTagType(type) {
   const colorMap = {
-    'script': 'success',   // 脚本作业 - 绿色
-    'command': 'warning',  // 命令作业 - 橙色
-    'rest': ''             // REST 作业 - 蓝色（默认）
+    script: 'success', // 脚本作业 - 绿色
+    command: 'warning', // 命令作业 - 橙色
+    rest: '' // REST 作业 - 蓝色（默认）
   }
   return colorMap[type] || 'info'
 }
@@ -786,28 +833,31 @@ function translateAppTitle(title) {
 }
 
 function getAppList() {
-  jaoApi.appList().then((response) => {
-    const apps = response.data || []
+  jaoApi
+    .appList()
+    .then(response => {
+      const apps = response.data || []
 
-    // 处理应用列表，翻译标题
-    const translatedApps = apps.map(app => ({
-      ...app,
-      title: translateAppTitle(app.title)
-    }))
+      // 处理应用列表，翻译标题
+      const translatedApps = apps.map(app => ({
+        ...app,
+        title: translateAppTitle(app.title)
+      }))
 
-    // 添加"所有应用"和"未分类"选项在最前面
-    appOptions.value = [
-      { name: '', show: true, title: '所有应用' },
-      { name: '$NULL$', show: true, title: '未分类' }
-    ].concat(translatedApps)
+      // 添加"所有应用"和"未分类"选项在最前面
+      appOptions.value = [
+        { name: '', show: true, title: '所有应用' },
+        { name: '$NULL$', show: true, title: '未分类' }
+      ].concat(translatedApps)
 
-    // 默认选中第一个（所有应用）
-    if (appOptions.value.length > 0) {
-      selectApplet(appOptions.value[0])
-    }
-  }).catch((error) => {
-    console.error('Failed to fetch app list:', error);
-  });
+      // 默认选中第一个（所有应用）
+      if (appOptions.value.length > 0) {
+        selectApplet(appOptions.value[0])
+      }
+    })
+    .catch(error => {
+      console.error('Failed to fetch app list:', error)
+    })
 }
 
 onMounted(() => {

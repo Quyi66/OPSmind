@@ -354,7 +354,7 @@ async function handleCreateTemplate() {
     newTemplate.description = ''
     loadSudoTemplates()
   } catch (error) {
-    ElMessage.error('创建失败: ' + (error?.message || '未知错误'))
+    ElMessage.error(`创建失败: ${error?.message || '未知错误'}`)
   } finally {
     creatingTemplate.value = false
   }
@@ -408,7 +408,7 @@ async function handleDeleteTemplate(template) {
     ElMessage.success('模板已删除')
     loadSudoTemplates()
   } catch (error) {
-    ElMessage.error('删除失败: ' + (error?.message || '未知错误'))
+    ElMessage.error(`删除失败: ${error?.message || '未知错误'}`)
   }
 }
 
@@ -433,7 +433,7 @@ async function handleAddCommand() {
     newCommand.description = ''
     loadTemplateCommands()
   } catch (error) {
-    ElMessage.error('添加失败: ' + (error?.message || '未知错误'))
+    ElMessage.error(`添加失败: ${error?.message || '未知错误'}`)
   } finally {
     addingCommand.value = false
   }
@@ -459,7 +459,7 @@ async function handleDeleteCommand(command) {
     ElMessage.success('命令已删除')
     loadTemplateCommands()
   } catch (error) {
-    ElMessage.error('删除失败: ' + (error?.message || '未知错误'))
+    ElMessage.error(`删除失败: ${error?.message || '未知错误'}`)
   }
 }
 

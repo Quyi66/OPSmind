@@ -9,9 +9,9 @@ import { listFiles } from '@/modules/automation/api/gfs.js'
  * 聚合作业审批、命令审核、脚本审核三类待处理数量
  */
 export const useReviewCountStore = defineStore('reviewCount', () => {
-  const approvalCount = ref(0)    // 作业审批：待审批数量
-  const commandCount = ref(0)     // 命令审核：待审核数量
-  const scriptCount = ref(0)      // 脚本审核：待审核数量
+  const approvalCount = ref(0) // 作业审批：待审批数量
+  const commandCount = ref(0) // 命令审核：待审核数量
+  const scriptCount = ref(0) // 脚本审核：待审核数量
   const loading = ref(false)
 
   const totalCount = computed(() => approvalCount.value + commandCount.value + scriptCount.value)
@@ -19,7 +19,7 @@ export const useReviewCountStore = defineStore('reviewCount', () => {
   async function fetchApprovalCount() {
     try {
       const res = await fetchApproveList()
-      const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : [])
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
       // 状态为 0 表示待审批中
       approvalCount.value = list.filter(item => item.status === 0).length
     } catch {
@@ -30,7 +30,7 @@ export const useReviewCountStore = defineStore('reviewCount', () => {
   async function fetchCommandCount() {
     try {
       const res = await findAllUnapprovedCommand()
-      const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : [])
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
       commandCount.value = list.length
     } catch {
       commandCount.value = 0

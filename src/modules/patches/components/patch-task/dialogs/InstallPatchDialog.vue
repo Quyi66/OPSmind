@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    :model-value="visible"
-    title="安装补丁"
-    width="600px"
-    @close="handleClose"
-  >
+  <el-dialog :model-value="visible" title="安装补丁" width="600px" @close="handleClose">
     <div class="install-dialog">
       <el-alert
         v-if="patches.length > 0"
@@ -14,7 +9,7 @@
         show-icon
       />
 
-      <el-table :data="patches"  size="small" max-height="300" style="margin-top: 16px">
+      <el-table :data="patches" size="small" max-height="300" style="margin-top: 16px">
         <el-table-column prop="hostname" label="主机" min-width="120" />
         <el-table-column prop="patchName" label="补丁名称" min-width="180" show-overflow-tooltip />
         <el-table-column prop="targetVersion" label="目标版本" width="120" />
@@ -39,9 +34,7 @@
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="loading" @click="handleInstall">
-        开始安装
-      </el-button>
+      <el-button type="primary" :loading="loading" @click="handleInstall">开始安装</el-button>
     </template>
   </el-dialog>
 </template>
@@ -65,8 +58,12 @@ const options = reactive({
   forceInstall: false
 })
 
-function getSeverityLabel(s) { return PATCH_SEVERITY_LABELS[s] || s }
-function getSeverityStyle(s) { return PATCH_SEVERITY_STYLES[s] || '' }
+function getSeverityLabel(s) {
+  return PATCH_SEVERITY_LABELS[s] || s
+}
+function getSeverityStyle(s) {
+  return PATCH_SEVERITY_STYLES[s] || ''
+}
 
 function handleClose() {
   emit('update:visible', false)
@@ -108,12 +105,15 @@ async function handleInstall() {
   }
 }
 
-watch(() => props.visible, (val) => {
-  if (val) {
-    options.autoReboot = false
-    options.forceInstall = false
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      options.autoReboot = false
+      options.forceInstall = false
+    }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">

@@ -29,7 +29,6 @@ export function logStorageAuth() {
 
   console.group('💾 [AuthDebug] Storage Auth Data')
 
-
   if (sessionUser) {
     try {
       const parsedUser = JSON.parse(sessionUser)
@@ -37,8 +36,7 @@ export function logStorageAuth() {
       //   name: parsedUser.name,
       //   tenantId: parsedUser.tenantId
       // })
-    } catch (e) {
-    }
+    } catch (e) {}
   }
   console.groupEnd()
 }
@@ -79,8 +77,7 @@ export function sendTestMessageToIframes() {
     if (iframe.contentWindow) {
       try {
         iframe.contentWindow.postMessage(testMessage, '*')
-      } catch (error) {
-      }
+      } catch (error) {}
     } else {
     }
   })
@@ -92,14 +89,14 @@ export function sendTestMessageToIframes() {
  */
 export function forceResendAuthData() {
   try {
-
     // 使用单iframe管理器发送认证数据
-    import('@/utils/single-iframe-manager').then(({ singleIframeManager }) => {
-      singleIframeManager.sendAuthData()
-    }).catch(error => {
-      console.error('❌ [AuthDebug] Failed to load single iframe manager:', error)
-    })
-
+    import('@/utils/single-iframe-manager')
+      .then(({ singleIframeManager }) => {
+        singleIframeManager.sendAuthData()
+      })
+      .catch(error => {
+        console.error('❌ [AuthDebug] Failed to load single iframe manager:', error)
+      })
   } catch (error) {
     console.error('❌ [AuthDebug] Failed to resend auth data:', error)
   }
@@ -109,11 +106,9 @@ export function forceResendAuthData() {
  * 完整的认证调试报告
  */
 export function generateAuthDebugReport() {
-
   logAuthStatus()
   logStorageAuth()
   logIframeStatus()
-
 }
 
 /**

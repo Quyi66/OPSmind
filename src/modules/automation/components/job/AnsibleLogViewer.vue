@@ -15,11 +15,7 @@
         </el-tooltip>
         <!-- 下载按钮 -->
         <el-tooltip content="下载原始输出" placement="top">
-          <el-button
-            size="small"
-            :disabled="!logContent"
-            @click="handleDownload"
-          >
+          <el-button size="small" :disabled="!logContent" @click="handleDownload">
             <i class="fa fa-file-download" />
           </el-button>
         </el-tooltip>
@@ -49,7 +45,9 @@
         >
           <template #suffix>
             <div class="search-nav" v-if="searchMatches.length > 0">
-              <span class="search-count">{{ searchCurrentIndex + 1 }}/{{ searchMatches.length }}</span>
+              <span class="search-count">
+                {{ searchCurrentIndex + 1 }}/{{ searchMatches.length }}
+              </span>
               <el-button size="small" text @click="navigateSearch(-1)">
                 <i class="fa fa-chevron-up" />
               </el-button>
@@ -66,14 +64,8 @@
     <div class="log-container" ref="logContainerRef">
       <div class="log-content" ref="logContentRef">
         <!-- 虚拟滚动区域 -->
-        <div
-          class="log-virtual-spacer"
-          :style="{ height: `${virtualSpacerHeight}px` }"
-        />
-        <div
-          class="log-visible-lines"
-          :style="{ transform: `translateY(${virtualOffset}px)` }"
-        >
+        <div class="log-virtual-spacer" :style="{ height: `${virtualSpacerHeight}px` }" />
+        <div class="log-visible-lines" :style="{ transform: `translateY(${virtualOffset}px)` }">
           <div
             v-for="(line, index) in visibleLines"
             :key="startLineIndex + index"
@@ -91,13 +83,16 @@
     <!-- 连接状态 -->
     <div v-if="wsStatus !== 'closed'" class="log-status">
       <span v-if="wsStatus === 'connecting'" class="status-connecting">
-        <i class="fa fa-spinner fa-spin" /> 连接中...
+        <i class="fa fa-spinner fa-spin" />
+        连接中...
       </span>
       <span v-else-if="wsStatus === 'connected'" class="status-connected">
-        <i class="fa fa-circle" /> 实时日志
+        <i class="fa fa-circle" />
+        实时日志
       </span>
       <span v-else-if="wsStatus === 'error'" class="status-error">
-        <i class="fa fa-exclamation-triangle" /> 连接失败
+        <i class="fa fa-exclamation-triangle" />
+        连接失败
       </span>
     </div>
   </div>
@@ -111,7 +106,7 @@ import { authService } from '@/core/auth'
 const props = defineProps({
   runId: { type: String, default: '' },
   content: { type: String, default: '' },
-  active: { type: Boolean, default: false }  // 是否激活状态，用于控制 WebSocket 连接
+  active: { type: Boolean, default: false } // 是否激活状态，用于控制 WebSocket 连接
 })
 
 const emit = defineEmits(['loaded'])
@@ -191,7 +186,7 @@ function connectWebsocket() {
       wsStatus.value = 'connected'
     }
 
-    websocket.onmessage = (event) => {
+    websocket.onmessage = event => {
       try {
         const data = JSON.parse(event.data)
         const batchId = data.batchId || 'default'
@@ -226,7 +221,7 @@ function connectWebsocket() {
       }
     }
 
-    websocket.onerror = (error) => {
+    websocket.onerror = error => {
       console.error('WebSocket error:', error)
       wsStatus.value = 'error'
     }
@@ -277,7 +272,8 @@ function scrollToBottom() {
 
     // 标记为程序化滚动，避免触发 autoScroll = false
     programmaticScroll = true
-    const targetScrollTop = Math.max(container.scrollHeight, totalHeight.value) - containerHeight.value
+    const targetScrollTop =
+      Math.max(container.scrollHeight, totalHeight.value) - containerHeight.value
     container.scrollTop = Math.max(0, targetScrollTop)
 
     // 延迟重置标志
@@ -437,7 +433,7 @@ function getLineClass(line) {
 function initResizeObserver() {
   if (!logContainerRef.value) return
 
-  const resizeObserver = new ResizeObserver((entries) => {
+  const resizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
       containerHeight.value = entry.contentRect.height
     }
@@ -449,45 +445,56 @@ function initResizeObserver() {
 }
 
 // 监听 runId 变化
-watch(() => props.runId, (newVal, oldVal) => {
-  if (newVal && newVal !== oldVal) {
-    // 清空旧数据
-    batchData.value = {}
-    batchList.value = []
-    activeBatch.value = 'default'
-    closeWebsocket()
-    // 只有在激活状态时才连接
-    if (props.active) {
-      connectWebsocket()
+watch(
+  () => props.runId,
+  (newVal, oldVal) => {
+    if (newVal && newVal !== oldVal) {
+      // 清空旧数据
+      batchData.value = {}
+      batchList.value = []
+      activeBatch.value = 'default'
+      closeWebsocket()
+      // 只有在激活状态时才连接
+      if (props.active) {
+        connectWebsocket()
+      }
     }
   }
-})
+)
 
 // 监听 active 变化 - 切换到 output tab 时才建立连接
-watch(() => props.active, (isActive) => {
-  if (isActive && props.runId) {
-    // 激活时，如果有 runId 且未连接，则建立连接
-    if (!websocket) {
-      connectWebsocket()
+watch(
+  () => props.active,
+  isActive => {
+    if (isActive && props.runId) {
+      // 激活时，如果有 runId 且未连接，则建立连接
+      if (!websocket) {
+        connectWebsocket()
+      }
+    } else {
+      // 非激活时关闭连接
+      closeWebsocket()
     }
-  } else {
-    // 非激活时关闭连接
-    closeWebsocket()
-  }
-}, { immediate: true })
+  },
+  { immediate: true }
+)
 
 // 监听静态 content
-watch(() => props.content, (newVal) => {
-  if (newVal) {
-    batchData.value = { default: { content: newVal } }
-    batchList.value = ['default']
-    activeBatch.value = 'default'
-    // 自动滚动到底部
-    if (autoScroll.value) {
-      scrollToBottom()
+watch(
+  () => props.content,
+  newVal => {
+    if (newVal) {
+      batchData.value = { default: { content: newVal } }
+      batchList.value = ['default']
+      activeBatch.value = 'default'
+      // 自动滚动到底部
+      if (autoScroll.value) {
+        scrollToBottom()
+      }
     }
-  }
-}, { immediate: true })
+  },
+  { immediate: true }
+)
 
 let cleanupResize = null
 

@@ -17,7 +17,9 @@
 
       <!-- 文件信息 -->
       <span class="file-info">
-        <span class="info-item" v-if="fileInfo?.lastModified">{{ formatRelativeTime(fileInfo.lastModified) }}</span>
+        <span class="info-item" v-if="fileInfo?.lastModified">
+          {{ formatRelativeTime(fileInfo.lastModified) }}
+        </span>
         <span class="info-item" v-if="fileInfo?.size">{{ formatFileSize(fileInfo.size) }}</span>
       </span>
 
@@ -63,7 +65,11 @@
         </div>
 
         <!-- Markdown -->
-        <div v-else-if="renderType === 'markdown'" class="render-markdown" v-html="renderedMarkdown"></div>
+        <div
+          v-else-if="renderType === 'markdown'"
+          class="render-markdown"
+          v-html="renderedMarkdown"
+        ></div>
 
         <!-- HTML -->
         <div v-else-if="renderType === 'html'" class="render-html">
@@ -113,16 +119,12 @@
 
         <!-- 视频 -->
         <div v-else-if="renderType === 'video'" class="render-video">
-          <video controls :src="fileUrl" class="video-player">
-            您的浏览器不支持视频播放
-          </video>
+          <video controls :src="fileUrl" class="video-player">您的浏览器不支持视频播放</video>
         </div>
 
         <!-- 音频 -->
         <div v-else-if="renderType === 'audio'" class="render-audio">
-          <audio controls :src="fileUrl" class="audio-player">
-            您的浏览器不支持音频播放
-          </audio>
+          <audio controls :src="fileUrl" class="audio-player">您的浏览器不支持音频播放</audio>
         </div>
 
         <!-- Word 文档 -->
@@ -180,8 +182,11 @@
             <el-form-item>
               <template #label>
                 <span>参数配置</span>
-                <el-tooltip content="如果文件支持配置（例如命令行执行参数），可以在这里填写" placement="top">
-                  <i class="fa fa-question-circle text-muted" style="margin-left: 4px;"></i>
+                <el-tooltip
+                  content="如果文件支持配置（例如命令行执行参数），可以在这里填写"
+                  placement="top"
+                >
+                  <i class="fa fa-question-circle text-muted" style="margin-left: 4px"></i>
                 </el-tooltip>
               </template>
               <el-input
@@ -195,8 +200,11 @@
             <el-form-item>
               <template #label>
                 <span>说明</span>
-                <el-tooltip content="可以在这里填写文件的用途、目的、使用方法等描述信息，便于使用者理解这个文件" placement="top">
-                  <i class="fa fa-question-circle text-muted" style="margin-left: 4px;"></i>
+                <el-tooltip
+                  content="可以在这里填写文件的用途、目的、使用方法等描述信息，便于使用者理解这个文件"
+                  placement="top"
+                >
+                  <i class="fa fa-question-circle text-muted" style="margin-left: 4px"></i>
                 </el-tooltip>
               </template>
               <el-input
@@ -213,9 +221,7 @@
         <!-- 脚本内容标签页 -->
         <el-tab-pane label="脚本内容" name="content">
           <div v-if="!isFileContentEditable" class="content-warning">
-            <el-alert type="warning" :closable="false" show-icon>
-              该文件不支持编辑。
-            </el-alert>
+            <el-alert type="warning" :closable="false" show-icon>该文件不支持编辑。</el-alert>
           </div>
           <div class="content-editor" v-if="editActiveTab === 'content' && isFileContentEditable">
             <codemirror
@@ -243,9 +249,7 @@ import { ElMessage } from 'element-plus'
 import * as gfsApi from '@/modules/automation/api/gfs'
 
 // 动态导入 Codemirror 组件 - 真正按需加载
-const Codemirror = defineAsyncComponent(() =>
-  import('vue-codemirror').then(m => m.Codemirror)
-)
+const Codemirror = defineAsyncComponent(() => import('vue-codemirror').then(m => m.Codemirror))
 
 // CodeMirror 相关模块 - 延迟加载
 let codemirrorModules = null
@@ -276,7 +280,19 @@ async function loadCodemirrorModules() {
     import('@codemirror/theme-one-dark'),
     import('@codemirror/view')
   ])
-  codemirrorModules = { javascript, python, json, xml, yaml, markdown, html, css, sql, oneDark, EditorView }
+  codemirrorModules = {
+    javascript,
+    python,
+    json,
+    xml,
+    yaml,
+    markdown,
+    html,
+    css,
+    sql,
+    oneDark,
+    EditorView
+  }
   return codemirrorModules
 }
 
@@ -325,7 +341,7 @@ const emit = defineEmits(['loaded', 'error'])
 const loading = ref(true)
 const content = ref('')
 const fileInfo = ref(null)
-const viewMode = ref('raw')  // 'raw' | 'render'
+const viewMode = ref('raw') // 'raw' | 'render'
 
 // Excel 相关
 const excelSheets = ref([])
@@ -336,7 +352,7 @@ const excelWorkbook = ref(null)
 // Word 相关
 const wordContent = ref('')
 
-const renderType = ref('')    // 'image' | 'markdown' | 'html' | 'excel' | 'pdf' | 'video' | 'audio' | 'word' | ''
+const renderType = ref('') // 'image' | 'markdown' | 'html' | 'excel' | 'pdf' | 'video' | 'audio' | 'word' | ''
 const htmlFrame = ref(null)
 
 // 编辑相关
@@ -385,26 +401,33 @@ const canPreview = computed(() => {
   const ext = fileExtension.value
 
   // 支持文本类型
-  if (mime.startsWith('text/') ||
-      mime.includes('json') ||
-      mime.includes('xml') ||
-      mime.includes('yaml') ||
-      mime.includes('javascript') ||
-      mime.includes('x-sh') ||
-      mime.includes('markdown')) {
+  if (
+    mime.startsWith('text/') ||
+    mime.includes('json') ||
+    mime.includes('xml') ||
+    mime.includes('yaml') ||
+    mime.includes('javascript') ||
+    mime.includes('x-sh') ||
+    mime.includes('markdown')
+  ) {
     return true
   }
 
   // 支持图片
-  if (mime.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(ext)) {
+  if (
+    mime.startsWith('image/') ||
+    ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(ext)
+  ) {
     return true
   }
 
   // 支持 Excel/CSV
-  if (mime.includes('spreadsheet') ||
-      mime.includes('excel') ||
-      mime.includes('csv') ||
-      ['xlsx', 'xls', 'csv'].includes(ext)) {
+  if (
+    mime.includes('spreadsheet') ||
+    mime.includes('excel') ||
+    mime.includes('csv') ||
+    ['xlsx', 'xls', 'csv'].includes(ext)
+  ) {
     return true
   }
 
@@ -424,9 +447,11 @@ const canPreview = computed(() => {
   }
 
   // 支持 Word 文档
-  if (mime.includes('wordprocessingml') ||
-      mime.includes('msword') ||
-      ['doc', 'docx'].includes(ext)) {
+  if (
+    mime.includes('wordprocessingml') ||
+    mime.includes('msword') ||
+    ['doc', 'docx'].includes(ext)
+  ) {
     return true
   }
 
@@ -442,7 +467,12 @@ const canShowCode = computed(() => {
 // 是否可编辑文件内容
 const isFileContentEditable = computed(() => {
   const mime = fileInfo.value?.fileContent?.mime || fileInfo.value?.mime || ''
-  const supportMimes = [/^text\/.*/, /^application\/x-sh$/, /^application\/json$/, /^application\/octet-stream$/]
+  const supportMimes = [
+    /^text\/.*/,
+    /^application\/x-sh$/,
+    /^application\/json$/,
+    /^application\/octet-stream$/
+  ]
   return supportMimes.some(pattern => mime.match(pattern))
 })
 
@@ -457,20 +487,14 @@ async function loadCmExtensions() {
 
   try {
     const modules = await loadCodemirrorModules()
-    const { javascript, python, json, xml, yaml, markdown, html, css, sql, oneDark, EditorView } = modules
+    const { javascript, python, json, xml, yaml, markdown, html, css, sql, oneDark, EditorView } =
+      modules
 
     // 构建只读扩展
-    const baseExtensions = [
-      oneDark,
-      EditorView.lineWrapping,
-      EditorView.editable.of(false)
-    ]
+    const baseExtensions = [oneDark, EditorView.lineWrapping, EditorView.editable.of(false)]
 
     // 构建可编辑扩展
-    const editBaseExtensions = [
-      oneDark,
-      EditorView.lineWrapping
-    ]
+    const editBaseExtensions = [oneDark, EditorView.lineWrapping]
 
     // 根据文件扩展名添加语言支持
     const langMap = {
@@ -519,7 +543,7 @@ const renderedMarkdown = computed(() => {
     .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
     .replace(/\*(.*)\*/gim, '<em>$1</em>')
     .replace(/`([^`]+)`/gim, '<code>$1</code>')
-    .replace(/```[\s\S]*?```/gim, (match) => {
+    .replace(/```[\s\S]*?```/gim, match => {
       const code = match.replace(/```\w*\n?/g, '').replace(/```$/g, '')
       return `<pre><code>${code}</code></pre>`
     })
@@ -562,7 +586,7 @@ async function loadContent() {
     emit('loaded', fileInfo.value)
   } catch (error) {
     console.error('Failed to load file content:', error)
-    content.value = '加载文件内容失败: ' + (error.message || '未知错误')
+    content.value = `加载文件内容失败: ${error.message || '未知错误'}`
     emit('error', error)
   } finally {
     loading.value = false
@@ -577,15 +601,20 @@ function detectRenderType() {
   const ext = fileExtension.value
 
   // 图片
-  if (mime.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(ext)) {
+  if (
+    mime.startsWith('image/') ||
+    ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(ext)
+  ) {
     renderType.value = 'image'
     viewMode.value = 'render'
   }
   // Excel/CSV
-  else if (mime.includes('spreadsheet') ||
-           mime.includes('excel') ||
-           mime.includes('csv') ||
-           ['xlsx', 'xls', 'csv'].includes(ext)) {
+  else if (
+    mime.includes('spreadsheet') ||
+    mime.includes('excel') ||
+    mime.includes('csv') ||
+    ['xlsx', 'xls', 'csv'].includes(ext)
+  ) {
     renderType.value = 'excel'
     viewMode.value = 'render'
     loadExcelFile()
@@ -606,9 +635,11 @@ function detectRenderType() {
     viewMode.value = 'render'
   }
   // Word 文档
-  else if (mime.includes('wordprocessingml') ||
-           mime.includes('msword') ||
-           ['doc', 'docx'].includes(ext)) {
+  else if (
+    mime.includes('wordprocessingml') ||
+    mime.includes('msword') ||
+    ['doc', 'docx'].includes(ext)
+  ) {
     renderType.value = 'word'
     viewMode.value = 'render'
     loadWordFile()
@@ -751,7 +782,8 @@ async function loadWordFile() {
 
     // 仅支持 docx 格式，doc 格式需要服务端转换
     if (ext === 'doc') {
-      wordContent.value = '<div class="word-notice"><p>暂不支持 .doc 格式预览，请下载后查看或转换为 .docx 格式</p></div>'
+      wordContent.value =
+        '<div class="word-notice"><p>暂不支持 .doc 格式预览，请下载后查看或转换为 .docx 格式</p></div>'
       return
     }
 
@@ -850,7 +882,7 @@ async function saveFileInfo() {
     // 重新加载文件信息
     loadContent()
   } catch (error) {
-    ElMessage.error('保存失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`保存失败: ${error.message || '未知错误'}`)
   } finally {
     saving.value = false
   }
@@ -861,9 +893,9 @@ async function saveFileInfo() {
  */
 function formatFileSize(size) {
   if (!size || size < 0) return ''
-  if (size < 1024) return size + ' B'
-  if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB'
-  return (size / 1024 / 1024).toFixed(1) + ' MB'
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(1)} MB`
 }
 
 /**
@@ -887,11 +919,15 @@ function formatRelativeTime(dateStr) {
 }
 
 // 监听 path 变化重新加载
-watch(() => props.path, () => {
-  if (props.path) {
-    loadContent()
-  }
-}, { immediate: true })
+watch(
+  () => props.path,
+  () => {
+    if (props.path) {
+      loadContent()
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped lang="scss">
@@ -995,7 +1031,12 @@ watch(() => props.path, () => {
   padding: 20px;
   line-height: 1.6;
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     margin-top: 1em;
     margin-bottom: 0.5em;
   }
@@ -1060,7 +1101,8 @@ watch(() => props.path, () => {
     border-collapse: collapse;
     font-size: 13px;
 
-    th, td {
+    th,
+    td {
       border: 1px solid var(--el-border-color-light);
       padding: 8px 12px;
       text-align: left;
@@ -1157,16 +1199,29 @@ watch(() => props.path, () => {
     color: var(--el-text-color-primary);
 
     // 基本排版
-    h1, h2, h3, h4, h5, h6 {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
       margin: 1em 0 0.5em;
       font-weight: 600;
       color: var(--el-text-color-primary);
     }
 
-    h1 { font-size: 2em; }
-    h2 { font-size: 1.5em; }
-    h3 { font-size: 1.25em; }
-    h4 { font-size: 1.1em; }
+    h1 {
+      font-size: 2em;
+    }
+    h2 {
+      font-size: 1.5em;
+    }
+    h3 {
+      font-size: 1.25em;
+    }
+    h4 {
+      font-size: 1.1em;
+    }
 
     p {
       margin: 0.8em 0;
@@ -1179,7 +1234,8 @@ watch(() => props.path, () => {
       border-collapse: collapse;
       margin: 1em 0;
 
-      th, td {
+      th,
+      td {
         border: 1px solid var(--el-border-color);
         padding: 8px 12px;
         text-align: left;
@@ -1192,7 +1248,8 @@ watch(() => props.path, () => {
     }
 
     // 列表样式
-    ul, ol {
+    ul,
+    ol {
       margin: 0.8em 0;
       padding-left: 2em;
     }
@@ -1208,11 +1265,13 @@ watch(() => props.path, () => {
     }
 
     // 强调
-    strong, b {
+    strong,
+    b {
       font-weight: 600;
     }
 
-    em, i {
+    em,
+    i {
       font-style: italic;
     }
 

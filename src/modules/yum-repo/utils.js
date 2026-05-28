@@ -48,9 +48,7 @@ function normalizeBooleanValue(value, fallback = false) {
 
 function normalizeStringArrayValue(value) {
   if (Array.isArray(value)) {
-    return value
-      .map(item => String(item || '').trim())
-      .filter(Boolean)
+    return value.map(item => String(item || '').trim()).filter(Boolean)
   }
 
   if (value === undefined || value === null || value === '') {
@@ -93,9 +91,9 @@ function buildYumRepoDisplayLabel(name, repoUrl) {
   const normalizedRepoUrl = normalizeRepoUrlValue(resolvedRepoUrl)
 
   if (
-    !normalizedRepoUrl
-    || normalizedPrimary.includes(normalizedRepoUrl)
-    || normalizeRepoUrlValue(primary) === normalizedRepoUrl
+    !normalizedRepoUrl ||
+    normalizedPrimary.includes(normalizedRepoUrl) ||
+    normalizeRepoUrlValue(primary) === normalizedRepoUrl
   ) {
     return primary
   }
@@ -133,7 +131,11 @@ export function normalizeYumConfigRecord(row) {
       pickValue(
         dataJson,
         ['sourceIds', 'source_ids'],
-        pickValue(normalizedRow, ['sourceId', 'source_id'], pickValue(dataJson, ['sourceId', 'source_id'], ''))
+        pickValue(
+          normalizedRow,
+          ['sourceId', 'source_id'],
+          pickValue(dataJson, ['sourceId', 'source_id'], '')
+        )
       )
     )
   )
@@ -151,9 +153,27 @@ export function normalizeYumConfigRecord(row) {
     baseurls,
     baseurl: baseurls[0] || '',
     file: String(pickValue(normalizedRow, ['file'], pickValue(dataJson, ['file'], ''))).trim(),
-    osFamily: String(pickValue(normalizedRow, ['osFamily', 'os_family'], pickValue(dataJson, ['osFamily', 'os_family'], ''))).trim(),
-    osMajor: String(pickValue(normalizedRow, ['osMajor', 'os_major'], pickValue(dataJson, ['osMajor', 'os_major'], ''))).trim(),
-    osSpVersion: String(pickValue(normalizedRow, ['osSpVersion', 'os_sp_version'], pickValue(dataJson, ['osSpVersion', 'os_sp_version'], ''))).trim(),
+    osFamily: String(
+      pickValue(
+        normalizedRow,
+        ['osFamily', 'os_family'],
+        pickValue(dataJson, ['osFamily', 'os_family'], '')
+      )
+    ).trim(),
+    osMajor: String(
+      pickValue(
+        normalizedRow,
+        ['osMajor', 'os_major'],
+        pickValue(dataJson, ['osMajor', 'os_major'], '')
+      )
+    ).trim(),
+    osSpVersion: String(
+      pickValue(
+        normalizedRow,
+        ['osSpVersion', 'os_sp_version'],
+        pickValue(dataJson, ['osSpVersion', 'os_sp_version'], '')
+      )
+    ).trim(),
     arch: String(pickValue(normalizedRow, ['arch'], pickValue(dataJson, ['arch'], ''))).trim(),
     sourceIds,
     sourceId: sourceIds[0] || '',
@@ -204,9 +224,14 @@ export function buildYumRepoSourceFromConfig(row, sourceId = '') {
   const configSourceIds = Array.isArray(config.sourceIds) ? config.sourceIds : []
   const configBaseurls = Array.isArray(config.baseurls) ? config.baseurls : []
   const resolvedSourceId = String(sourceId || config.sourceId || '').trim()
-  const sourceIndex = configSourceIds.findIndex(item => String(item || '').trim() === resolvedSourceId)
+  const sourceIndex = configSourceIds.findIndex(
+    item => String(item || '').trim() === resolvedSourceId
+  )
   const resolvedRepoUrl = String(
-    (sourceIndex >= 0 ? configBaseurls[sourceIndex] : '') || config.baseurl || configBaseurls[0] || ''
+    (sourceIndex >= 0 ? configBaseurls[sourceIndex] : '') ||
+      config.baseurl ||
+      configBaseurls[0] ||
+      ''
   ).trim()
 
   return {
@@ -234,8 +259,7 @@ export function buildYumRepoSourcesFromConfig(row) {
 }
 
 export function buildCollectedYumRepoSources(configList = []) {
-  return configList
-    .flatMap(item => buildYumRepoSourcesFromConfig(item))
+  return configList.flatMap(item => buildYumRepoSourcesFromConfig(item))
 }
 
 export function findYumRepoSourceByConfig(configRow, repoList = []) {
@@ -246,32 +270,36 @@ export function findYumRepoSourceByConfig(configRow, repoList = []) {
   const configUrls = config.baseurls.map(item => normalizeRepoUrlValue(item)).filter(Boolean)
   const configName = normalizeCompareValue(config.name)
 
-  return repoList.find(repo => {
-    const repoSourceId = normalizeCompareValue(resolveYumRepoId(repo))
-    if (configSourceIds.length && repoSourceId && configSourceIds.includes(repoSourceId)) {
-      return true
-    }
+  return (
+    repoList.find(repo => {
+      const repoSourceId = normalizeCompareValue(resolveYumRepoId(repo))
+      if (configSourceIds.length && repoSourceId && configSourceIds.includes(repoSourceId)) {
+        return true
+      }
 
-    const repoUrl = normalizeRepoUrlValue(pickValue(repo, ['repoUrl', 'repo_url'], ''))
-    const repoId = normalizeCompareValue(pickValue(repo, ['repoId', 'repo_id'], ''))
-    const repoName = normalizeCompareValue(pickValue(repo, ['sourceName', 'source_name'], ''))
+      const repoUrl = normalizeRepoUrlValue(pickValue(repo, ['repoUrl', 'repo_url'], ''))
+      const repoId = normalizeCompareValue(pickValue(repo, ['repoId', 'repo_id'], ''))
+      const repoName = normalizeCompareValue(pickValue(repo, ['sourceName', 'source_name'], ''))
 
-    const sameUrl = configUrls.length > 0 && Boolean(repoUrl) && configUrls.includes(repoUrl)
-    if (sameUrl) {
-      return true
-    }
+      const sameUrl = configUrls.length > 0 && Boolean(repoUrl) && configUrls.includes(repoUrl)
+      if (sameUrl) {
+        return true
+      }
 
-    const sameName = Boolean(configName) && (configName === repoId || configName === repoName)
-    if (sameName && (configUrls.length === 0 || !repoUrl || configUrls.includes(repoUrl))) {
-      return true
-    }
+      const sameName = Boolean(configName) && (configName === repoId || configName === repoName)
+      if (sameName && (configUrls.length === 0 || !repoUrl || configUrls.includes(repoUrl))) {
+        return true
+      }
 
-    return false
-  }) || null
+      return false
+    }) || null
+  )
 }
 
 export function resolveYumRepoId(row) {
-  return String(pickValue(row, ['id', 'sourceId', 'source_id', 'dcDataId', 'dc_data_id'], '')).trim()
+  return String(
+    pickValue(row, ['id', 'sourceId', 'source_id', 'dcDataId', 'dc_data_id'], '')
+  ).trim()
 }
 
 export function getYumRepoLabel(row) {
@@ -309,9 +337,10 @@ function hasCollectProgressMessage(rowOrValue) {
     return false
   }
 
-  return Boolean(getCollectStatusMessage(rowOrValue)) && !String(
-    pickValue(rowOrValue, ['collectStatus', 'collect_status'], '')
-  ).trim()
+  return (
+    Boolean(getCollectStatusMessage(rowOrValue)) &&
+    !String(pickValue(rowOrValue, ['collectStatus', 'collect_status'], '')).trim()
+  )
 }
 
 export function getCollectStatusLabel(rowOrValue) {
@@ -343,7 +372,9 @@ export function isCollectRunning(rowOrValue) {
 
 export function getDiffTypeValue(rowOrValue) {
   const value =
-    typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['diffType', 'diff_type'], '')
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['diffType', 'diff_type'], '')
 
   return normalizeUpper(value)
 }

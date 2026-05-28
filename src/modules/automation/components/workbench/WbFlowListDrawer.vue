@@ -79,7 +79,7 @@ function toggleOrderDirection() {
 
 watch(
   () => visible.value,
-  (isVisible) => {
+  isVisible => {
     if (!isVisible) return
     handleReset()
   }
@@ -87,11 +87,21 @@ watch(
 </script>
 
 <template>
-  <el-drawer v-model="visible" title="流程列表" size="700px" destroy-on-close class="wb-workbench-drawer">
+  <el-drawer
+    v-model="visible"
+    title="流程列表"
+    size="700px"
+    destroy-on-close
+    class="wb-workbench-drawer"
+  >
     <template #footer>
       <div class="wb-drawer-footer">
-        <span class="wb-drawer-footer__total">当前 {{ filteredFlows.length }} 个 / 共 {{ flows.length }} 个流程</span>
-        <el-button link size="small" @click="emit('navigate', '/flow/list')">在流程页管理</el-button>
+        <span class="wb-drawer-footer__total">
+          当前 {{ filteredFlows.length }} 个 / 共 {{ flows.length }} 个流程
+        </span>
+        <el-button link size="small" @click="emit('navigate', '/flow/list')">
+          在流程页管理
+        </el-button>
       </div>
     </template>
 
@@ -109,13 +119,19 @@ watch(
             />
           </el-form-item>
           <el-form-item label="排序">
-            <el-select v-model="filters.orderField" style="width: 140px" @change="handleOrderFieldChange">
+            <el-select
+              v-model="filters.orderField"
+              style="width: 140px"
+              @change="handleOrderFieldChange"
+            >
               <el-option label="更新时间" value="updatedAt" />
               <el-option label="名称" value="name" />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button @click="toggleOrderDirection">{{ filters.orderDesc ? '倒序' : '正序' }}</el-button>
+            <el-button @click="toggleOrderDirection">
+              {{ filters.orderDesc ? '倒序' : '正序' }}
+            </el-button>
             <el-button type="primary" @click="handleSearch">搜索</el-button>
             <el-button @click="handleReset">重置</el-button>
           </el-form-item>
@@ -124,16 +140,55 @@ watch(
       </div>
 
       <div v-if="filteredFlows.length" class="wb-flow-list-drawer">
-        <div v-for="item in filteredFlows" :key="item.id" class="wb-flow-list-item" @click="emit('edit', item)">
+        <div
+          v-for="item in filteredFlows"
+          :key="item.id"
+          class="wb-flow-list-item"
+          @click="emit('edit', item)"
+        >
           <div class="wb-flow-list-item__info">
             <span class="wb-flow-list-item__name">{{ item.name || '未命名流程' }}</span>
-            <span class="wb-flow-list-item__meta">最近修改 {{ formatDateTime(item.updatedAt) }}</span>
+            <span class="wb-flow-list-item__meta">
+              最近修改 {{ formatDateTime(item.updatedAt) }}
+            </span>
           </div>
           <div class="wb-flow-list-item__actions">
-            <el-button class="wb-inline-action" text type="primary" size="small" @click.stop="emit('run', item)">执行</el-button>
-            <el-button class="wb-inline-action" text type="primary" size="small" @click.stop="emit('instances', item)">实例</el-button>
-            <el-button class="wb-inline-action" text type="primary" size="small" @click.stop="emit('edit', item)">编辑</el-button>
-            <el-button class="wb-inline-action" text type="danger" size="small" @click.stop="emit('delete', item)">删除</el-button>
+            <el-button
+              class="wb-inline-action"
+              text
+              type="primary"
+              size="small"
+              @click.stop="emit('run', item)"
+            >
+              执行
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              text
+              type="primary"
+              size="small"
+              @click.stop="emit('instances', item)"
+            >
+              实例
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              text
+              type="primary"
+              size="small"
+              @click.stop="emit('edit', item)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              text
+              type="danger"
+              size="small"
+              @click.stop="emit('delete', item)"
+            >
+              删除
+            </el-button>
           </div>
         </div>
       </div>
@@ -191,7 +246,9 @@ watch(
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 
   &:hover {
     background: #f8fafc;

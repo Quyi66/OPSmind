@@ -95,10 +95,7 @@ export const SSC_ROUTE_DEFS = [
     title: '数据源管理',
     navLabel: '数据源管理',
     icon: 'fas fa-code-merge',
-    ...createSettingsPageRoute(
-      'ssc-datasource',
-      () => import('./views/SscDataSourcePage.vue')
-    )
+    ...createSettingsPageRoute('ssc-datasource', () => import('./views/SscDataSourcePage.vue'))
   },
   {
     key: 'engine',
@@ -114,9 +111,6 @@ export const SSC_ROUTE_DEFS = [
     title: '计划任务',
     navLabel: '计划任务',
     icon: 'fas fa-clock',
-    ...createSettingsPageRoute(
-      'ssc-scheduler',
-      () => import('./views/SscTaskSchedulerPage.vue')
-    )
+    ...createSettingsPageRoute('ssc-scheduler', () => import('./views/SscTaskSchedulerPage.vue'))
   }
 ]

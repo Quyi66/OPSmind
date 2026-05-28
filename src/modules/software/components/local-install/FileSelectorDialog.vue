@@ -272,7 +272,9 @@ const breadcrumbs = computed(() => {
 
 // 过滤后的显示列表
 const displayFileList = computed(() => {
-  const visibleFiles = fileList.value.filter(file => !file._excluded || file.directory || file._isParentDir)
+  const visibleFiles = fileList.value.filter(
+    file => !file._excluded || file.directory || file._isParentDir
+  )
 
   if (!searchText.value) return visibleFiles
   const keyword = searchText.value.toLowerCase()

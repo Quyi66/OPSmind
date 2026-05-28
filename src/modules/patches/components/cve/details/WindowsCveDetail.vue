@@ -173,7 +173,11 @@
               </el-radio-group>
             </div>
             <div class="ops-table-wrapper" v-loading="productsLoading">
-              <el-table :data="filteredProducts" max-height="calc(100vh - 240px)" style="width: 100%">
+              <el-table
+                :data="filteredProducts"
+                max-height="calc(100vh - 240px)"
+                style="width: 100%"
+              >
                 <el-table-column
                   prop="productName"
                   label="产品名称"
@@ -313,7 +317,9 @@ function formatDateTime(dateStr) {
 }
 
 function normalizeStatusKey(status) {
-  const raw = String(status || '').trim().toLowerCase()
+  const raw = String(status || '')
+    .trim()
+    .toLowerCase()
   if (!raw) return ''
   if (raw === 'fixed' || raw === '已修复') return 'fixed'
   if (raw === 'affected' || raw === '受影响') return 'affected'
@@ -401,8 +407,12 @@ const filteredProducts = computed(() => {
 
 const summary = computed(() => {
   const detailSummary = cveDetail.value?.summary || {}
-  const fixedFromProducts = products.value.filter(item => normalizeStatusKey(item.status) === 'fixed').length
-  const affectedFromProducts = products.value.filter(item => normalizeStatusKey(item.status) === 'affected').length
+  const fixedFromProducts = products.value.filter(
+    item => normalizeStatusKey(item.status) === 'fixed'
+  ).length
+  const affectedFromProducts = products.value.filter(
+    item => normalizeStatusKey(item.status) === 'affected'
+  ).length
 
   return {
     total: detailSummary.total || products.value.length,
@@ -518,7 +528,11 @@ function initImpactChart() {
   const chartData = []
 
   if (summary.value.affected > 0) {
-    chartData.push({ value: summary.value.affected, name: '受影响', itemStyle: { color: '#F53F3F' } })
+    chartData.push({
+      value: summary.value.affected,
+      name: '受影响',
+      itemStyle: { color: '#F53F3F' }
+    })
   }
 
   if (summary.value.fixed > 0) {

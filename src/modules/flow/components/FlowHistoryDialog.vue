@@ -1,16 +1,6 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    title="历史版本"
-    width="700px"
-    @close="handleClose"
-  >
-    <el-table
-      :data="historyList"
-      v-loading="loading"
-      border
-      style="width: 100%"
-    >
+  <el-dialog v-model="visible" title="历史版本" width="700px" @close="handleClose">
+    <el-table :data="historyList" v-loading="loading" border style="width: 100%">
       <el-table-column prop="version" label="版本号" width="80" />
       <el-table-column prop="versionRemarks" label="版本说明" min-width="150" />
       <el-table-column prop="operator" label="操作人" width="100" />
@@ -71,14 +61,17 @@ const visible = ref(false)
 const loading = ref(false)
 const historyList = ref([])
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (val && props.processId) {
-    loadHistory()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (val && props.processId) {
+      loadHistory()
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 
@@ -126,5 +119,4 @@ function handleClose() {
 }
 </script>
 
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

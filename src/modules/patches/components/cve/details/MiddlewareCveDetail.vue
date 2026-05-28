@@ -28,7 +28,9 @@
                   effect="dark"
                   :class="['severity-badge', getSeverityClass(currentMiddleware.severity)]"
                 >
-                  {{ currentMiddleware.severityLabel || getSeverityLabel(currentMiddleware.severity) }}
+                  {{
+                    currentMiddleware.severityLabel || getSeverityLabel(currentMiddleware.severity)
+                  }}
                 </el-tag>
               </div>
               <div class="header-meta">
@@ -37,7 +39,10 @@
                   <span class="value">{{ formatDateTime(currentMiddleware.publicDate) }}</span>
                 </div>
                 <div class="meta-separator"></div>
-                <div class="meta-item data-source-item" v-if="cveDetail.middlewares && cveDetail.middlewares.length > 0">
+                <div
+                  class="meta-item data-source-item"
+                  v-if="cveDetail.middlewares && cveDetail.middlewares.length > 0"
+                >
                   <span class="label">中间件:</span>
                   <el-radio-group
                     v-model="currentMiddlewareIndex"
@@ -81,7 +86,9 @@
                 <div class="detail-cell">
                   <span class="label">中间件类型</span>
                   <div class="value">
-                    <el-tag size="small" effect="plain">{{ currentMiddleware.middlewareType }}</el-tag>
+                    <el-tag size="small" effect="plain">
+                      {{ currentMiddleware.middlewareType }}
+                    </el-tag>
                   </div>
                 </div>
                 <div class="detail-cell">
@@ -93,15 +100,22 @@
                       size="small"
                       :class="['severity-badge', getSeverityClass(currentMiddleware.severity)]"
                     >
-                      {{ currentMiddleware.severityLabel || getSeverityLabel(currentMiddleware.severity) }}
+                      {{
+                        currentMiddleware.severityLabel ||
+                        getSeverityLabel(currentMiddleware.severity)
+                      }}
                     </el-tag>
                   </div>
                 </div>
                 <div class="detail-cell">
                   <span class="label">CVSS 评分</span>
                   <div class="value">
-                    <span :class="currentMiddleware.cvss3Score ? 'text-danger fw-bold' : 'text-muted'">
-                      {{ currentMiddleware.cvss3Score ? currentMiddleware.cvss3Score.toFixed(1) : '-' }}
+                    <span
+                      :class="currentMiddleware.cvss3Score ? 'text-danger fw-bold' : 'text-muted'"
+                    >
+                      {{
+                        currentMiddleware.cvss3Score ? currentMiddleware.cvss3Score.toFixed(1) : '-'
+                      }}
                     </span>
                     <span v-if="currentMiddleware.cvss3Vector" class="text-muted ms-2 code-font">
                       ({{ currentMiddleware.cvss3Vector }})
@@ -157,7 +171,16 @@
                 </el-table-column>
                 <el-table-column prop="status" label="状态" width="100">
                   <template #default="{ row }">
-                    <el-tag size="small" :type="row.status === 'fixed' ? 'success' : (row.status === 'affected' ? 'danger' : 'info')">
+                    <el-tag
+                      size="small"
+                      :type="
+                        row.status === 'fixed'
+                          ? 'success'
+                          : row.status === 'affected'
+                            ? 'danger'
+                            : 'info'
+                      "
+                    >
                       {{ row.statusLabel || row.status }}
                     </el-tag>
                   </template>

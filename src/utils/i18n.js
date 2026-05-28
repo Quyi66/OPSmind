@@ -27,14 +27,30 @@ async function loadTranslations() {
 
     // 需要加载的翻译文件列表
     const modules = [
-      'acm', 'adm', 'app', 'app_pms', 'app_spm', 'app_sudo', 'app_uim',
-      'app_vap', 'app_vcm', 'cac', 'cmd', 'common', 'dts', 'flow',
-      'gfs', 'jao', 'ssc', 'udp', 'global'
+      'acm',
+      'adm',
+      'app',
+      'app_pms',
+      'app_spm',
+      'app_sudo',
+      'app_uim',
+      'app_vap',
+      'app_vcm',
+      'cac',
+      'cmd',
+      'common',
+      'dts',
+      'flow',
+      'gfs',
+      'jao',
+      'ssc',
+      'udp',
+      'global'
     ]
 
     try {
       // 从 public/i18n/zh-cn/ 目录加载翻译文件
-      const importPromises = modules.map(async (module) => {
+      const importPromises = modules.map(async module => {
         try {
           // 使用 import.meta.env.BASE_URL 自动适应不同的 base 路径
           const basePath = import.meta.env.BASE_URL || '/'
@@ -159,7 +175,7 @@ const STATIC_TRANSLATIONS = {
   'app_vap.common.button.batch_rollback': '批量回滚',
 
   // 流程
-  'flow.index.list': '流程列表',
+  'flow.index.list': '流程列表'
 }
 
 /**

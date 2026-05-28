@@ -24,11 +24,7 @@ import { startRouteLoading, finishRouteLoading } from './loading.js'
  */
 export function setupRouter() {
   // 合并所有路由
-  const routes = [
-    ...baseRoutes,
-    ...moduleRoutes,
-    ...(import.meta.env.DEV ? testRoutes : [])
-  ]
+  const routes = [...baseRoutes, ...moduleRoutes, ...(import.meta.env.DEV ? testRoutes : [])]
 
   // 创建路由器
   const router = createRouter({
@@ -96,7 +92,6 @@ export function addModuleRoute(moduleConfig) {
   routes.forEach(route => {
     router.addRoute(route)
   })
-
 }
 
 /**

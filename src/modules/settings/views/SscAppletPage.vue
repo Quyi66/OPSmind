@@ -26,13 +26,22 @@
             :disabled="selectedApplets.length === 0"
             @click="handleExport"
           >
-            <i class="fa fa-download"></i> 导出
+            <i class="fa fa-download"></i>
+            导出
           </el-button>
           <el-button size="small" @click="handleImport">
-            <i class="fa fa-upload"></i> 导入
+            <i class="fa fa-upload"></i>
+            导入
           </el-button>
-          <span style="flex: 1;"></span>
-          <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadApplets" title="刷新">
+          <span style="flex: 1"></span>
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            size="small"
+            :loading="loading"
+            @click="loadApplets"
+            title="刷新"
+          >
             <el-icon v-show="!loading"><Refresh /></el-icon>
           </el-button>
         </div>
@@ -42,7 +51,6 @@
           <el-table
             v-loading="loading"
             :data="paginatedApplets"
-
             style="width: 100%"
             max-height="calc(100vh - 330px)"
             @selection-change="handleSelectionChange"
@@ -125,8 +133,14 @@
 
         <!-- 操作栏 -->
         <div class="ops-action-bar">
-          <el-button type="danger" size="small" @click="handleClearRecycle" :loading="clearingRecycle">
-            <i class="fa fa-trash-alt"></i> 清空回收站
+          <el-button
+            type="danger"
+            size="small"
+            @click="handleClearRecycle"
+            :loading="clearingRecycle"
+          >
+            <i class="fa fa-trash-alt"></i>
+            清空回收站
           </el-button>
           <el-button
             type="danger"
@@ -134,17 +148,26 @@
             :disabled="selectedRecycled.length === 0"
             @click="handleDeleteSelectedRecycle"
           >
-            <i class="fa fa-trash-alt"></i> 删除选中
+            <i class="fa fa-trash-alt"></i>
+            删除选中
           </el-button>
           <el-button
             size="small"
             :disabled="selectedRecycled.length === 0"
             @click="handleRecoverSelectedRecycle"
           >
-            <i class="fa fa-redo"></i> 恢复选中
+            <i class="fa fa-redo"></i>
+            恢复选中
           </el-button>
-          <span style="flex: 1;"></span>
-          <el-button class="toolbar-icon-btn" circle size="small" :loading="recycleLoading" @click="loadRecycledApplets" title="刷新">
+          <span style="flex: 1"></span>
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            size="small"
+            :loading="recycleLoading"
+            @click="loadRecycledApplets"
+            title="刷新"
+          >
             <el-icon v-show="!recycleLoading"><Refresh /></el-icon>
           </el-button>
         </div>
@@ -154,7 +177,6 @@
           <el-table
             v-loading="recycleLoading"
             :data="paginatedRecycledApplets"
-
             style="width: 100%"
             max-height="calc(100vh - 330px)"
             @selection-change="handleRecycleSelectionChange"
@@ -213,23 +235,13 @@
     />
 
     <!-- 复制对话框 -->
-    <AppletCopyDialog
-      v-model="copyDialogVisible"
-      :applet="currentApplet"
-      @saved="handleSaved"
-    />
+    <AppletCopyDialog v-model="copyDialogVisible" :applet="currentApplet" @saved="handleSaved" />
 
     <!-- 导出对话框 -->
-    <AppletExportDialog
-      v-model="exportDialogVisible"
-      :applet-ids="selectedAppletNames"
-    />
+    <AppletExportDialog v-model="exportDialogVisible" :applet-ids="selectedAppletNames" />
 
     <!-- 导入对话框 -->
-    <AppletImportDialog
-      v-model="importDialogVisible"
-      @success="handleImportSuccess"
-    />
+    <AppletImportDialog v-model="importDialogVisible" @success="handleImportSuccess" />
   </div>
 </template>
 
@@ -278,9 +290,10 @@ const recyclePagination = ref({
 const filteredApplets = computed(() => {
   if (!appSearchKeyword.value) return applets.value
   const keyword = appSearchKeyword.value.toLowerCase()
-  return applets.value.filter(item =>
-    (item.name && item.name.toLowerCase().includes(keyword)) ||
-    (item.title && translateText(item.title).toLowerCase().includes(keyword))
+  return applets.value.filter(
+    item =>
+      (item.name && item.name.toLowerCase().includes(keyword)) ||
+      (item.title && translateText(item.title).toLowerCase().includes(keyword))
   )
 })
 
@@ -288,9 +301,10 @@ const filteredApplets = computed(() => {
 const filteredRecycledApplets = computed(() => {
   if (!recycleSearchKeyword.value) return recycledApplets.value
   const keyword = recycleSearchKeyword.value.toLowerCase()
-  return recycledApplets.value.filter(item =>
-    (item.appletCode && item.appletCode.toLowerCase().includes(keyword)) ||
-    (item.title && translateText(item.title).toLowerCase().includes(keyword))
+  return recycledApplets.value.filter(
+    item =>
+      (item.appletCode && item.appletCode.toLowerCase().includes(keyword)) ||
+      (item.title && translateText(item.title).toLowerCase().includes(keyword))
   )
 })
 
@@ -311,7 +325,7 @@ onMounted(() => {
   loadApplets()
 })
 
-watch(activeTab, (val) => {
+watch(activeTab, val => {
   if (val === 'can' && recycledApplets.value.length === 0) {
     loadRecycledApplets()
   }
@@ -441,11 +455,7 @@ async function handleDeleteRecycle(row) {
 
 async function handleRecoverRecycle(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定要恢复应用 "${row.title}" 吗？`,
-      '确认恢复',
-      { type: 'info' }
-    )
+    await ElMessageBox.confirm(`确定要恢复应用 "${row.title}" 吗？`, '确认恢复', { type: 'info' })
 
     await appletApi.recoverRecycledApplet([row.appletCode])
     ElMessage.success('恢复成功')

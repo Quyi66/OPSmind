@@ -46,12 +46,7 @@
       <el-table v-loading="loading" :data="tableData" max-height="500px" size="small">
         <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-button
-              v-if="row.host_key"
-              link
-              type="primary"
-              @click="handleViewHost(row)"
-            >
+            <el-button v-if="row.host_key" link type="primary" @click="handleViewHost(row)">
               {{ row.host_key }}
             </el-button>
             <span v-else>-</span>
@@ -140,7 +135,11 @@
           <span class="count-tag">{{ hostDetail.vuls.length }}</span>
         </div>
         <div class="fix-info-body">
-          <div v-for="item in getDisplayItems(hostDetail.vuls, 'vuls')" :key="item" class="list-item">
+          <div
+            v-for="item in getDisplayItems(hostDetail.vuls, 'vuls')"
+            :key="item"
+            class="list-item"
+          >
             {{ item }}
           </div>
           <div v-if="shouldShowToggle(hostDetail.vuls)" class="list-footer">
@@ -156,7 +155,11 @@
           <span class="count-tag">{{ hostDetail.patches.length }}</span>
         </div>
         <div class="fix-info-body">
-          <div v-for="item in getDisplayItems(hostDetail.patches, 'patches')" :key="item" class="list-item">
+          <div
+            v-for="item in getDisplayItems(hostDetail.patches, 'patches')"
+            :key="item"
+            class="list-item"
+          >
             {{ item }}
           </div>
           <div v-if="shouldShowToggle(hostDetail.patches)" class="list-footer">
@@ -172,7 +175,11 @@
           <span class="count-tag">{{ hostDetail.affectedPkgs.length }}</span>
         </div>
         <div class="fix-info-body">
-          <div v-for="item in getDisplayItems(hostDetail.affectedPkgs, 'affectedPkgs')" :key="item" class="list-item">
+          <div
+            v-for="item in getDisplayItems(hostDetail.affectedPkgs, 'affectedPkgs')"
+            :key="item"
+            class="list-item"
+          >
             {{ item }}
           </div>
           <div v-if="shouldShowToggle(hostDetail.affectedPkgs)" class="list-footer">
@@ -188,7 +195,11 @@
           <span class="count-tag">{{ hostDetail.installedPkgs.length }}</span>
         </div>
         <div class="fix-info-body">
-          <div v-for="item in getDisplayItems(hostDetail.installedPkgs, 'installedPkgs')" :key="item" class="list-item">
+          <div
+            v-for="item in getDisplayItems(hostDetail.installedPkgs, 'installedPkgs')"
+            :key="item"
+            class="list-item"
+          >
             {{ item }}
           </div>
           <div v-if="shouldShowToggle(hostDetail.installedPkgs)" class="list-footer">
@@ -224,7 +235,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -298,15 +309,18 @@ async function loadSummary() {
   try {
     const api = useApi()
     const cacheBuster = Date.now()
-    const response = await api.post(`/dts/api/dts/q/data/VAP2_SCAN_HIST/?cacheBuster=${cacheBuster}`, {
-      params: {
-        run_id: props.runId
+    const response = await api.post(
+      `/dts/api/dts/q/data/VAP2_SCAN_HIST/?cacheBuster=${cacheBuster}`,
+      {
+        params: {
+          run_id: props.runId
+        }
       }
-    })
+    )
     const records = response?.data?.records || response?.records || []
     summary.value = records[0] || { machine_count: 0, scan_timestamp: '' }
   } catch (error) {
-    ElMessage.error('加载扫描摘要失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`加载扫描摘要失败: ${error.message || '未知错误'}`)
   } finally {
     summaryLoading.value = false
   }
@@ -318,18 +332,21 @@ async function loadDetail() {
   try {
     const api = useApi()
     const cacheBuster = Date.now()
-    const response = await api.post(`/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL/?cacheBuster=${cacheBuster}`, {
-      params: {
-        run_id: props.runId
-      },
-      page: pagination.value.page,
-      size: pagination.value.pageSize
-    })
+    const response = await api.post(
+      `/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL/?cacheBuster=${cacheBuster}`,
+      {
+        params: {
+          run_id: props.runId
+        },
+        page: pagination.value.page,
+        size: pagination.value.pageSize
+      }
+    )
     const data = response?.data || response || {}
     tableData.value = data.records || []
     pagination.value.total = data.total || tableData.value.length
   } catch (error) {
-    ElMessage.error('加载扫描详情失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`加载扫描详情失败: ${error.message || '未知错误'}`)
   } finally {
     loading.value = false
   }
@@ -355,15 +372,12 @@ async function fetchReportFileInfo(path) {
   const api = useApi()
   const tenantId = authService.getTenantId()
   const encodedPath = encodeURIComponent(path)
-  const response = await api.get(
-    `/gfs/api/gfs/v2/staticfs/f/${tenantId}/file/${encodedPath}`,
-    {
-      params: {
-        cacheBuster: Date.now(),
-        isContent: true
-      }
+  const response = await api.get(`/gfs/api/gfs/v2/staticfs/f/${tenantId}/file/${encodedPath}`, {
+    params: {
+      cacheBuster: Date.now(),
+      isContent: true
     }
-  )
+  })
   return response?.data || response
 }
 
@@ -422,7 +436,7 @@ async function handleExport() {
     }
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
-    ElMessage.error('导出扫描报告失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`导出扫描报告失败: ${error.message || '未知错误'}`)
   } finally {
     exporting.value = false
   }
@@ -466,12 +480,18 @@ async function fetchHostDetail({ hostId, runId }) {
     api.post(`/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL_BY_PACTHS/?cacheBuster=${cacheBuster}`, {
       params: { host_id: hostId, run_id: runId }
     }),
-    api.post(`/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL_BY_INSTALL_PKGS/?cacheBuster=${cacheBuster}`, {
-      params: { host_id: hostId, run_id: runId }
-    }),
-    api.post(`/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL_BY_AFFECTED_PKGS/?cacheBuster=${cacheBuster}`, {
-      params: { host_id: hostId, run_id: runId }
-    })
+    api.post(
+      `/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL_BY_INSTALL_PKGS/?cacheBuster=${cacheBuster}`,
+      {
+        params: { host_id: hostId, run_id: runId }
+      }
+    ),
+    api.post(
+      `/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL_BY_AFFECTED_PKGS/?cacheBuster=${cacheBuster}`,
+      {
+        params: { host_id: hostId, run_id: runId }
+      }
+    )
   ])
 
   const vulsRecord = (vulsRes?.data?.records || vulsRes?.records || [])[0] || {}
@@ -504,7 +524,7 @@ async function handleViewHost(row) {
       installedPkgs: false
     }
   } catch (error) {
-    ElMessage.error('加载主机详情失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`加载主机详情失败: ${error.message || '未知错误'}`)
   } finally {
     hostDetailLoading.value = false
   }
@@ -523,7 +543,7 @@ function handleSizeChange(size) {
 
 watch(
   () => props.modelValue,
-  (val) => {
+  val => {
     if (val) {
       pagination.value.page = 1
       loadReport()
@@ -533,7 +553,7 @@ watch(
 
 watch(
   () => props.runId,
-  (val) => {
+  val => {
     if (val && props.modelValue) {
       pagination.value.page = 1
       loadReport()

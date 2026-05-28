@@ -145,7 +145,7 @@ function removeFile(index) {
 }
 
 async function handleStartInstall() {
-  if (selectedFiles.length === 0) {
+  if (selectedFiles.value.length === 0) {
     ElMessage.warning('请选择rpm安装包')
     return
   }

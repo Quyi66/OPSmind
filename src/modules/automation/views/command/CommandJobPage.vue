@@ -31,8 +31,15 @@
         <i class="fas fa-plus" />
         创建运维工具
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadJobs" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadJobs"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -69,8 +76,18 @@
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="openDetail(row)">查看</el-button>
             <el-button text type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button text type="primary" size="small" :loading="running && runningJobId === row.id" @click="handleRunJob(row)">执行</el-button>
-            <el-button text type="danger" size="small" @click="handleDeleteJob(row)">删除</el-button>
+            <el-button
+              text
+              type="primary"
+              size="small"
+              :loading="running && runningJobId === row.id"
+              @click="handleRunJob(row)"
+            >
+              执行
+            </el-button>
+            <el-button text type="danger" size="small" @click="handleDeleteJob(row)">
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -100,16 +117,29 @@
       <div v-if="detailJob" class="detail-dialog-body">
         <el-descriptions :column="2" border size="small">
           <el-descriptions-item label="标题">{{ detailJob.title }}</el-descriptions-item>
-          <el-descriptions-item label="类型">{{ detailJob.type || 'command' }}</el-descriptions-item>
-          <el-descriptions-item label="最近修改">{{ formatDateTime(detailJob.updatedAt) }}</el-descriptions-item>
-          <el-descriptions-item label="最近执行">{{ formatDateTime(detailJob.lastRunTime) || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="描述" :span="2">{{ detailJob.description || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="类型">
+            {{ detailJob.type || 'command' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="最近修改">
+            {{ formatDateTime(detailJob.updatedAt) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="最近执行">
+            {{ formatDateTime(detailJob.lastRunTime) || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="描述" :span="2">
+            {{ detailJob.description || '-' }}
+          </el-descriptions-item>
         </el-descriptions>
 
         <div class="subsection">
           <h4>命令</h4>
           <div class="chip-list" v-if="detailCommands.length">
-            <el-tag v-for="cmd in detailCommands" :key="cmd.id || cmd.name" type="info" class="chip">
+            <el-tag
+              v-for="cmd in detailCommands"
+              :key="cmd.id || cmd.name"
+              type="info"
+              class="chip"
+            >
               <span class="cmd-name">{{ cmd.name || cmd.id }}</span>
               <span class="cmd-type">{{ cmd.type || '-' }}</span>
             </el-tag>
@@ -120,7 +150,12 @@
         <div class="subsection">
           <h4>目标主机</h4>
           <div class="chip-list" v-if="detailHosts.length">
-            <el-tag v-for="host in detailHosts" :key="host.key || host.value" class="chip" type="success">
+            <el-tag
+              v-for="host in detailHosts"
+              :key="host.key || host.value"
+              class="chip"
+              type="success"
+            >
               <span class="host-name">{{ host.value || host.key }}</span>
               <span class="host-type">{{ host.assetType || '-' }}</span>
             </el-tag>
@@ -155,7 +190,12 @@
           <el-input v-model="jobForm.title" placeholder="请输入运维工具标题" maxlength="100" />
         </el-form-item>
         <el-form-item label="描述">
-          <el-input v-model="jobForm.description" type="textarea" :rows="3" placeholder="请输入运维工具描述" />
+          <el-input
+            v-model="jobForm.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入运维工具描述"
+          />
         </el-form-item>
         <el-form-item label="命令列表" required>
           <el-select
@@ -187,7 +227,9 @@
       </el-form>
       <template #footer>
         <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSaveJob">{{ editDialogConfirmText }}</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSaveJob">
+          {{ editDialogConfirmText }}
+        </el-button>
       </template>
     </el-dialog>
 
@@ -218,9 +260,7 @@ import {
 } from '@/modules/automation/api/command'
 import * as jaoApi from '@/modules/automation/api/jao'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
-import {
-  normalizeAcmDeviceSelection
-} from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
+import { normalizeAcmDeviceSelection } from '@/modules/automation/components/job/schedule/components/acmDeviceSelector.utils'
 import {
   buildCommandJobConfig,
   buildSavedCommandJobRunRequest
@@ -498,7 +538,9 @@ async function handleSaveJob() {
     editDialogVisible.value = false
     await loadJobs()
     if (detailDialogVisible.value && detailJob.value?.id === job.id) {
-      detailJob.value = await findJobById(job.id).then(r => r.data || r).catch(() => detailJob.value)
+      detailJob.value = await findJobById(job.id)
+        .then(r => r.data || r)
+        .catch(() => detailJob.value)
     }
   } catch (error) {
     console.error('保存运维工具失败:', error)
@@ -572,7 +614,7 @@ async function handleRunJob(job) {
     router.push('/run-records/logs')
   } catch (error) {
     console.error('运行运维工具失败:', error)
-    ElMessage.error('运行运维工具失败: ' + (error?.message || '未知错误'))
+    ElMessage.error(`运行运维工具失败: ${error?.message || '未知错误'}`)
   } finally {
     running.value = false
     runningJobId.value = ''
@@ -586,11 +628,10 @@ function handleApproveSuccess() {
 
 async function handleDeleteJob(job) {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除运维工具 "${job.title}" 吗？`,
-      '确认删除',
-      { type: 'error', confirmButtonClass: 'el-button--danger' }
-    )
+    await ElMessageBox.confirm(`确定要删除运维工具 "${job.title}" 吗？`, '确认删除', {
+      type: 'error',
+      confirmButtonClass: 'el-button--danger'
+    })
     await deleteJob(job.id)
     ElMessage.success('运维工具已删除')
     if (detailJob.value?.id === job.id) {
@@ -612,7 +653,7 @@ onMounted(() => {
   loadAvailableCommands()
 })
 
-watch(editDialogVisible, (visible) => {
+watch(editDialogVisible, visible => {
   if (!visible) {
     prepareCreateForm()
   }

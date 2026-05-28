@@ -1,9 +1,5 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    title="查询下次执行时间"
-    width="500px"
-  >
+  <el-dialog v-model="visible" title="查询下次执行时间" width="500px">
     <div v-loading="loading" class="next-time-content">
       <div v-if="times.length" class="next-time-list">
         <h4 v-for="(time, index) in times" :key="index" class="next-time-item">
@@ -35,7 +31,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -66,12 +62,16 @@ async function fetchNextExecutionTimes() {
 
 // 监听对话框打开时加载数据
 // 监听对话框打开时加载数据
-watch(() => props.modelValue, (newVal) => {
-  if (newVal) {
-    times.value = []
-    fetchNextExecutionTimes()
-  }
-}, { immediate: true })
+watch(
+  () => props.modelValue,
+  newVal => {
+    if (newVal) {
+      times.value = []
+      fetchNextExecutionTimes()
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

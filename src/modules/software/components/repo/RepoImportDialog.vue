@@ -68,13 +68,13 @@ const formData = ref({
 // 监听 modelValue
 watch(
   () => props.modelValue,
-  (val) => {
+  val => {
     visible.value = val
   }
 )
 
 // 监听 visible
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 

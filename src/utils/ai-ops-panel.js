@@ -105,7 +105,10 @@ function getTopNavHeight() {
   try {
     const header =
       document.querySelector('.top-nav-header') || document.querySelector('.top-nav-wrapper')
-    return Math.max(0, Math.round(header?.getBoundingClientRect().height || header?.offsetHeight || 0))
+    return Math.max(
+      0,
+      Math.round(header?.getBoundingClientRect().height || header?.offsetHeight || 0)
+    )
   } catch {
     return 64
   }
@@ -224,10 +227,13 @@ function syncAiOpsPanelLayout(options = {}) {
   const { panel } = elements
   const persistedState = readPersistedPanelState()
   const usePersistedPosition =
-    !resetPosition && panel.dataset.positionCustomized !== 'true' && persistedState?.positionCustomized === true
+    !resetPosition &&
+    panel.dataset.positionCustomized !== 'true' &&
+    persistedState?.positionCustomized === true
   const usePersistedSize =
     !resetSize && panel.dataset.sizeCustomized !== 'true' && persistedState?.sizeCustomized === true
-  const useDefaultPosition = !usePersistedPosition && (resetPosition || panel.dataset.positionCustomized !== 'true')
+  const useDefaultPosition =
+    !usePersistedPosition && (resetPosition || panel.dataset.positionCustomized !== 'true')
   const useDefaultSize = !usePersistedSize && (resetSize || panel.dataset.sizeCustomized !== 'true')
 
   const defaultWidth = getDefaultWidth()

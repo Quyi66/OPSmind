@@ -17,11 +17,19 @@
         </header>
         <div v-loading="statsLoading" class="chart-section__body chart-section__body--trend">
           <el-empty v-if="!statsLoading && !recentTrendRows.length" description="暂无统计数据" />
-          <VChart v-else-if="recentTrendRows.length" autoresize :option="recentTrendOption" class="chart-view" />
+          <VChart
+            v-else-if="recentTrendRows.length"
+            autoresize
+            :option="recentTrendOption"
+            class="chart-view"
+          />
         </div>
       </section>
 
-      <section class="chart-section chart-section--summary" :style="{ height: chartSectionHeight ? chartSectionHeight + 50 + 'px' : 'auto' }">
+      <section
+        class="chart-section chart-section--summary"
+        :style="{ height: chartSectionHeight ? chartSectionHeight + 50 + 'px' : 'auto' }"
+      >
         <header class="chart-section__header">
           <h4 class="chart-section__title">运维工具运行次数排行</h4>
           <el-input
@@ -38,7 +46,12 @@
         </header>
         <div v-loading="summaryLoading" class="chart-section__body chart-section__body--summary">
           <el-empty v-if="!summaryLoading && !filteredSummary.length" description="暂无统计数据" />
-          <VChart v-else-if="filteredSummary.length" autoresize :option="summaryChartOption" class="chart-view" />
+          <VChart
+            v-else-if="filteredSummary.length"
+            autoresize
+            :option="summaryChartOption"
+            class="chart-view"
+          />
         </div>
       </section>
     </div>
@@ -136,7 +149,7 @@ async function fetchRunCounts() {
   try {
     const response = await jaoApi.fetchJobRunCounts()
     const data = response?.data || response
-    summaryRows.value = (data.records || []).map((item) => ({
+    summaryRows.value = (data.records || []).map(item => ({
       job_id: item.job_id,
       job_title: item.job_title || '未命名运维工具',
       run_count: Number(item.run_count) || 0
@@ -163,7 +176,7 @@ const chartSectionStyle = computed(() =>
 const recentTrendRows = computed(() => {
   const byDate = new Map()
 
-  rawData.value.forEach((item) => {
+  rawData.value.forEach(item => {
     if (!item.start_date) return
     const count = Number(item.run_count) || 0
     byDate.set(item.start_date, (byDate.get(item.start_date) || 0) + count)
@@ -175,7 +188,7 @@ const recentTrendRows = computed(() => {
 })
 
 const translatedSummaryRows = computed(() =>
-  summaryRows.value.map((row) => ({
+  summaryRows.value.map(row => ({
     ...row,
     translatedTitle: translateText(row.job_title) || row.job_title || '-'
   }))
@@ -184,7 +197,7 @@ const translatedSummaryRows = computed(() =>
 const filteredSummary = computed(() => {
   const keyword = summaryQuery.value.trim().toLowerCase()
   const baseRows = keyword
-    ? translatedSummaryRows.value.filter((row) => row.translatedTitle.toLowerCase().includes(keyword))
+    ? translatedSummaryRows.value.filter(row => row.translatedTitle.toLowerCase().includes(keyword))
     : translatedSummaryRows.value
 
   return [...baseRows].sort((a, b) => b.run_count - a.run_count)
@@ -232,7 +245,7 @@ const recentTrendOption = computed(() => ({
   xAxis: {
     type: 'category',
     boundaryGap: false,
-    data: recentTrendRows.value.map((item) => item.date),
+    data: recentTrendRows.value.map(item => item.date),
     axisLabel: {
       color: chartTheme.value.axisText,
       interval: 0,
@@ -269,7 +282,7 @@ const recentTrendOption = computed(() => ({
         fontSize: 11,
         formatter: ({ value }) => `${value ?? 0}`
       },
-      data: recentTrendRows.value.map((item) => item.count),
+      data: recentTrendRows.value.map(item => item.count),
       areaStyle: {
         color: chartTheme.value.trendArea
       },
@@ -287,31 +300,32 @@ const summaryChartOption = computed(() => ({
       type: 'shadow'
     }
   },
-  dataZoom: filteredSummary.value.length > 12
-    ? [
-        {
-          type: 'inside',
-          yAxisIndex: 0,
-          startValue: 0,
-          endValue: 11,
-          zoomLock: false,
-          zoomOnMouseWheel: false,
-          moveOnMouseWheel: false
-        },
-        {
-          type: 'slider',
-          yAxisIndex: 0,
-          orient: 'vertical',
-          right: 8,
-          top: 16,
-          bottom: 24,
-          width: 12,
-          startValue: 0,
-          endValue: 11,
-          brushSelect: false
-        }
-      ]
-    : [],
+  dataZoom:
+    filteredSummary.value.length > 12
+      ? [
+          {
+            type: 'inside',
+            yAxisIndex: 0,
+            startValue: 0,
+            endValue: 11,
+            zoomLock: false,
+            zoomOnMouseWheel: false,
+            moveOnMouseWheel: false
+          },
+          {
+            type: 'slider',
+            yAxisIndex: 0,
+            orient: 'vertical',
+            right: 8,
+            top: 16,
+            bottom: 24,
+            width: 12,
+            startValue: 0,
+            endValue: 11,
+            brushSelect: false
+          }
+        ]
+      : [],
   grid: {
     left: 180,
     right: filteredSummary.value.length > 12 ? 42 : 24,
@@ -332,7 +346,7 @@ const summaryChartOption = computed(() => ({
   yAxis: {
     type: 'category',
     inverse: true,
-    data: filteredSummary.value.map((row) => row.translatedTitle),
+    data: filteredSummary.value.map(row => row.translatedTitle),
     axisLabel: {
       color: chartTheme.value.summaryAxis,
       width: 150,
@@ -350,7 +364,7 @@ const summaryChartOption = computed(() => ({
       name: '运行次数',
       type: 'bar',
       barWidth: 16,
-      data: filteredSummary.value.map((row) => row.run_count),
+      data: filteredSummary.value.map(row => row.run_count),
       label: {
         show: true,
         position: 'right',

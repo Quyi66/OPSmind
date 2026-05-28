@@ -1,7 +1,13 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { getRestartLabel, normalizeRestartType } from './patchTaskWizardUtils'
 
-export function usePatchTaskRestartAdvice({ props, affectedPackages, createdTaskId, installConfig, isSkipped }) {
+export function usePatchTaskRestartAdvice({
+  props,
+  affectedPackages,
+  createdTaskId,
+  installConfig,
+  isSkipped
+}) {
   const restartAdviceSource = ref('local')
   const restartAdviceCacheKey = ref('')
   const backendRestartReason = ref('')
@@ -67,11 +73,13 @@ export function usePatchTaskRestartAdvice({ props, affectedPackages, createdTask
     return '重启建议'
   })
   const packageBasedRestartAdvice = computed(() => {
-    const restartType = normalizeRestartType(restartOptions.restartType || installConfig.restartPolicy)
+    const restartType = normalizeRestartType(
+      restartOptions.restartType || installConfig.restartPolicy
+    )
     if (restartType === 'none') return ''
 
     const packageNames = Array.from(new Set(affectedPackages.value.filter(Boolean)))
-    
+
     let packageDescription = '软件包更新'
     if (packageNames.length > 0) {
       if (packageNames.length > 10) {

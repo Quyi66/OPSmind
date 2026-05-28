@@ -4,7 +4,12 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input v-model="filters.keyword" placeholder="搜索运维工具名称" clearable style="width: 240px">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索运维工具名称"
+            clearable
+            style="width: 240px"
+          >
             <template #prefix>
               <el-icon>
                 <Search />
@@ -40,8 +45,15 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="fetchData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="fetchData"
+        title="刷新"
+      >
         <el-icon v-show="!loading">
           <Refresh />
         </el-icon>
@@ -111,7 +123,13 @@
 
         <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.status === 0" type="danger" text size="small" @click="handleCancel(row)">
+            <el-button
+              v-if="row.status === 0"
+              type="danger"
+              text
+              size="small"
+              @click="handleCancel(row)"
+            >
               取消
             </el-button>
           </template>
@@ -121,9 +139,16 @@
 
     <!-- 分页区域 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
-        :total="filteredData.length" layout="total, sizes, prev, pager, next, jumper" background
-        @size-change="handlePageSizeChange" @current-change="handlePageChange" />
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="filteredData.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 申请详情弹窗 -->
@@ -147,7 +172,7 @@ const loading = ref(false)
 const tableData = ref([])
 const filters = reactive({
   keyword: '',
-  status: ''  // 空字符串表示"全部状态"
+  status: '' // 空字符串表示"全部状态"
 })
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -162,10 +187,11 @@ const filteredData = computed(() => {
   // 文本筛选
   if (filters.keyword) {
     const keyword = filters.keyword.toLowerCase()
-    data = data.filter(item =>
-      item.jobName?.toLowerCase().includes(keyword) ||
-      item.jobId?.toLowerCase().includes(keyword) ||
-      item.approver?.toLowerCase().includes(keyword)
+    data = data.filter(
+      item =>
+        item.jobName?.toLowerCase().includes(keyword) ||
+        item.jobId?.toLowerCase().includes(keyword) ||
+        item.approver?.toLowerCase().includes(keyword)
     )
   }
 
@@ -224,7 +250,7 @@ function handleSearch() {
 
 function handleReset() {
   filters.keyword = ''
-  filters.status = ''  // 重置为空字符串
+  filters.status = '' // 重置为空字符串
   currentPage.value = 1
   pageSize.value = 10
 }
@@ -261,7 +287,7 @@ function formatDateTime(value) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
@@ -270,7 +296,7 @@ function formatExpirationTime(value) {
   if (value === 'expired') return '已过期'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 

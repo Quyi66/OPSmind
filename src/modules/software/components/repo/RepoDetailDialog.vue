@@ -16,7 +16,8 @@
             :disabled="selectedRows.length === 0"
             @click="handleRemoveRepoFromHost"
           >
-            <i class="fa fa-calendar-minus" /> 移除主机配置
+            <i class="fa fa-calendar-minus" />
+            移除主机配置
           </el-button>
         </div>
       </div>
@@ -98,7 +99,7 @@ const repoInfo = ref(null)
 // 监听 modelValue
 watch(
   () => props.modelValue,
-  (val) => {
+  val => {
     visible.value = val
     if (val && props.refid) {
       loadRepoInfo()
@@ -108,7 +109,7 @@ watch(
 )
 
 // 监听 visible
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 
@@ -165,17 +166,19 @@ function handleRemoveRepoFromHost() {
   const hosts = selectedRows.value.map(item => item.host_id).join(',')
   ElMessageBox.confirm('确定要从选中的主机上移除该仓库配置吗？', '确认移除', {
     type: 'warning'
-  }).then(async () => {
-    // TODO: 调用移除仓库配置 API
-    // await repoApi.removeRepoFromHost({
-    //   repo_name: repoInfo.value?.refid,
-    //   hosts: hosts,
-    //   repo_file: repoInfo.value?.repo_file
-    // })
-    ElMessage.success('移除成功')
-    loadData()
-    emit('refresh')
-  }).catch(() => {})
+  })
+    .then(async () => {
+      // TODO: 调用移除仓库配置 API
+      // await repoApi.removeRepoFromHost({
+      //   repo_name: repoInfo.value?.refid,
+      //   hosts: hosts,
+      //   repo_file: repoInfo.value?.repo_file
+      // })
+      ElMessage.success('移除成功')
+      loadData()
+      emit('refresh')
+    })
+    .catch(() => {})
 }
 
 function handleClose() {

@@ -55,9 +55,7 @@ export const winPatchApi = {
   },
 
   skipTaskStep(taskId) {
-    return apiService.post(
-      `${WIN_PATCH_API_PREFIX}/tasks/${encodeURIComponent(taskId)}/skip-step`
-    )
+    return apiService.post(`${WIN_PATCH_API_PREFIX}/tasks/${encodeURIComponent(taskId)}/skip-step`)
   },
 
   getHosts(params = {}) {
@@ -85,12 +83,9 @@ export const winPatchApi = {
       queryParams.keyword = params.keyword
     }
 
-    return apiService.get(
-      `${WIN_PATCH_API_PREFIX}/hosts/${encodeURIComponent(hostId)}/patches`,
-      {
-        params: queryParams
-      }
-    )
+    return apiService.get(`${WIN_PATCH_API_PREFIX}/hosts/${encodeURIComponent(hostId)}/patches`, {
+      params: queryParams
+    })
   },
 
   getTasks(params = {}) {

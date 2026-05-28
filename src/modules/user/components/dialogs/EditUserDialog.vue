@@ -244,7 +244,9 @@ watch(
 
 function applyOperatePreset() {
   const allowedOperateSet = new Set(['modify_base', 'lock', 'ssh', 'modify_password', 'sudo'])
-  formData.operate = allowedOperateSet.has(props.initialOperate) ? props.initialOperate : 'modify_base'
+  formData.operate = allowedOperateSet.has(props.initialOperate)
+    ? props.initialOperate
+    : 'modify_base'
 
   if (formData.operate === 'lock') {
     formData.user_lock = Number(userData.value?.lock_status) === 1 ? 'no' : 'yes'
@@ -386,7 +388,7 @@ async function handleSubmit() {
     submitting.value = false
     currentStatus.value = ''
     console.error('执行失败:', error)
-    ElMessage.error('执行失败: ' + (error?.message || '未知错误'))
+    ElMessage.error(`执行失败: ${error?.message || '未知错误'}`)
   }
 }
 

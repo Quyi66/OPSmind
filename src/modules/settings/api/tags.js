@@ -8,7 +8,7 @@ import { apiService } from '@/core/api'
  * GET /udp/api/udp/tags/total
  */
 export function getTags() {
-    return apiService.get(`/udp/api/udp/tags/total`)
+  return apiService.get(`/udp/api/udp/tags/total`)
 }
 
 /**
@@ -16,7 +16,7 @@ export function getTags() {
  * GET /udp/api/udp/tags/id/:id
  */
 export function getTagById(id) {
-    return apiService.get(`/udp/api/udp/tags/id/${id}?cacheBuster=${Date.now()}`)
+  return apiService.get(`/udp/api/udp/tags/id/${id}?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -24,7 +24,7 @@ export function getTagById(id) {
  * POST /udp/api/udp/tags
  */
 export function createTag(tag) {
-    return apiService.post(`/udp/api/udp/tags?cacheBuster=${Date.now()}`, tag)
+  return apiService.post(`/udp/api/udp/tags?cacheBuster=${Date.now()}`, tag)
 }
 
 /**
@@ -32,7 +32,7 @@ export function createTag(tag) {
  * PUT /udp/api/udp/tags
  */
 export function updateTag(tag) {
-    return apiService.put(`/udp/api/udp/tags?cacheBuster=${Date.now()}`, tag)
+  return apiService.put(`/udp/api/udp/tags?cacheBuster=${Date.now()}`, tag)
 }
 
 /**
@@ -40,7 +40,7 @@ export function updateTag(tag) {
  * DELETE /udp/api/udp/tags/:id
  */
 export function deleteTag(id) {
-    return apiService.delete(`/udp/api/udp/tags/${id}?cacheBuster=${Date.now()}`)
+  return apiService.delete(`/udp/api/udp/tags/${id}?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -48,7 +48,7 @@ export function deleteTag(id) {
  * GET /udp/api/udp/tags/applet/:id
  */
 export function getTagApplets(tagId) {
-    return apiService.get(`/udp/api/udp/tags/applet/${tagId}?cacheBuster=${Date.now()}`)
+  return apiService.get(`/udp/api/udp/tags/applet/${tagId}?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -56,15 +56,15 @@ export function getTagApplets(tagId) {
  * POST /udp/api/udp/tags/mapper/remove
  */
 export function removeTagAppletMapper(param) {
-    return apiService.post(`/udp/api/udp/tags/mapper/remove?cacheBuster=${Date.now()}`, param)
+  return apiService.post(`/udp/api/udp/tags/mapper/remove?cacheBuster=${Date.now()}`, param)
 }
 
 export default {
-    getTags,
-    getTagById,
-    createTag,
-    updateTag,
-    deleteTag,
-    getTagApplets,
-    removeTagAppletMapper
+  getTags,
+  getTagById,
+  createTag,
+  updateTag,
+  deleteTag,
+  getTagApplets,
+  removeTagAppletMapper
 }

@@ -22,7 +22,9 @@ function formatDateTime(value) {
   return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-function formatDateTimeShort(value) { return formatDateTime(value) }
+function formatDateTimeShort(value) {
+  return formatDateTime(value)
+}
 
 function formatConnRate(value) {
   if (value === null || value === undefined || value === '') return '--'
@@ -53,29 +55,49 @@ function formatOperationMessage(message) {
   }
 }
 
-export function useAssetWorkbenchDrawers(
-  {
-    assetDetailDialogVisible,
-    currentAssetId,
-    runResultDialogVisible,
-    runResultMeta,
-    getOperationActionLabel: getActionLabel
-  } = {}
-) {
+export function useAssetWorkbenchDrawers({
+  assetDetailDialogVisible,
+  currentAssetId,
+  runResultDialogVisible,
+  runResultMeta,
+  getOperationActionLabel: getActionLabel
+} = {}) {
   const router = useRouter()
 
   // ── 抽屉状态 ──
-  const assetListDrawer = reactive({ visible: false, loading: false, records: [], keyword: '', filterType: '', total: 0, page: 1, pageSize: 20 })
-  const exceptionDrawer = reactive({ visible: false, loading: false, records: [], total: 0, page: 1, pageSize: 20, actionLoading: false })
+  const assetListDrawer = reactive({
+    visible: false,
+    loading: false,
+    records: [],
+    keyword: '',
+    filterType: '',
+    total: 0,
+    page: 1,
+    pageSize: 20
+  })
+  const exceptionDrawer = reactive({
+    visible: false,
+    loading: false,
+    records: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+    actionLoading: false
+  })
   const failedLogDrawer = reactive({ visible: false, loading: false, records: [] })
-  const recentLogsDrawer = reactive({ visible: false, loading: false, records: [], total: 0, page: 1, pageSize: 20 })
+  const recentLogsDrawer = reactive({
+    visible: false,
+    loading: false,
+    records: [],
+    total: 0,
+    page: 1,
+    pageSize: 20
+  })
   const governanceDrawer = reactive({ visible: false, loading: false })
 
   // ── 计算 ──
   const assetListDrawerTitle = computed(() => {
-    return assetListDrawer.filterType
-      ? `设备清单 · ${assetListDrawer.filterType}`
-      : '设备清单'
+    return assetListDrawer.filterType ? `设备清单 · ${assetListDrawer.filterType}` : '设备清单'
   })
 
   // ── 资产列表抽屉 ──
@@ -94,8 +116,18 @@ export function useAssetWorkbenchDrawers(
     assetListDrawer.loading = true
     try {
       const res = await assetApi.getAssetList(
-        { assetType: assetListDrawer.filterType || '', permission: 'r', status: 'all', CONN_LATEST_STATUS: '', hostKeys: '/' },
-        { page: assetListDrawer.page, size: assetListDrawer.pageSize, filter: assetListDrawer.keyword || '' }
+        {
+          assetType: assetListDrawer.filterType || '',
+          permission: 'r',
+          status: 'all',
+          CONN_LATEST_STATUS: '',
+          hostKeys: '/'
+        },
+        {
+          page: assetListDrawer.page,
+          size: assetListDrawer.pageSize,
+          filter: assetListDrawer.keyword || ''
+        }
       )
       assetListDrawer.records = res?.records || []
       assetListDrawer.total = res?.total || 0
@@ -181,7 +213,9 @@ export function useAssetWorkbenchDrawers(
       )
       const rows = response?.records || []
       failedLogDrawer.records = rows.map(row => {
-        const actionLabel = getActionLabel ? getActionLabel(row.action) : getOperationActionLabel(row.action)
+        const actionLabel = getActionLabel
+          ? getActionLabel(row.action)
+          : getOperationActionLabel(row.action)
         return {
           key: row.run_id || `${row.start_time || ''}-${row.action || ''}`,
           title: actionLabel,
@@ -250,7 +284,9 @@ export function useAssetWorkbenchDrawers(
     if (runResultMeta) {
       runResultMeta.value = {
         runId: item.run_id,
-        jobTitle: getActionLabel ? getActionLabel(item.action) : getOperationActionLabel(item.action)
+        jobTitle: getActionLabel
+          ? getActionLabel(item.action)
+          : getOperationActionLabel(item.action)
       }
       runResultDialogVisible.value = true
     }
@@ -272,15 +308,30 @@ export function useAssetWorkbenchDrawers(
 
   return {
     // state
-    assetListDrawer, exceptionDrawer, failedLogDrawer,
-    recentLogsDrawer, governanceDrawer,
+    assetListDrawer,
+    exceptionDrawer,
+    failedLogDrawer,
+    recentLogsDrawer,
+    governanceDrawer,
     // computed
     assetListDrawerTitle,
     // functions
-    openAssetListDrawer, handleAssetListPageChange, handleAssetListPageSizeChange, handleViewAssetDetail,
-    openExceptionDrawer, handleExceptionPageChange, handleExceptionPageSizeChange, handleOpenExceptionDevicePage,
-    openFailedLogDrawer, handleFailedLogClick, handleOpenFailedLogPage,
-    openRecentLogsDrawer, handleRecentLogsPageChange, handleRecentLogsPageSizeChange, handleLogItemClick, handleOpenOperationLogPage,
+    openAssetListDrawer,
+    handleAssetListPageChange,
+    handleAssetListPageSizeChange,
+    handleViewAssetDetail,
+    openExceptionDrawer,
+    handleExceptionPageChange,
+    handleExceptionPageSizeChange,
+    handleOpenExceptionDevicePage,
+    openFailedLogDrawer,
+    handleFailedLogClick,
+    handleOpenFailedLogPage,
+    openRecentLogsDrawer,
+    handleRecentLogsPageChange,
+    handleRecentLogsPageSizeChange,
+    handleLogItemClick,
+    handleOpenOperationLogPage,
     openGovernanceDrawer
   }
 }

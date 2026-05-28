@@ -206,7 +206,6 @@ const handleLogin = async () => {
     loading.value = true
     authError.value = false
 
-
     const result = await authService.login({
       username: loginForm.username,
       password: loginForm.password,
@@ -277,7 +276,6 @@ const handleLogin = async () => {
 // 通知所有iframe模块认证状态更新
 const notifyIframeModulesAuthUpdate = async () => {
   try {
-
     // 使用单iframe管理器发送认证更新
     try {
       const { singleIframeManager } = await import('@/utils/single-iframe-manager')
@@ -306,7 +304,6 @@ const notifyIframeModulesAuthUpdate = async () => {
         })
       }
     }
-
   } catch (error) {
     console.error('❌ [Login] Failed to notify iframe modules:', error)
   }
@@ -321,7 +318,6 @@ const initializeLoginPage = async () => {
     tenants.value = result.tenants || []
     licenseInfo.value = result.license
     showOTP.value = result.otpEnabled || false
-
   } catch (error) {
     console.error('❌ Failed to initialize login page:', error)
     // 即使初始化失败，也允许用户尝试登录

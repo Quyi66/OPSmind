@@ -12,12 +12,24 @@
       <div class="ops-action-bar win-patch-task-detail__actions">
         <el-switch v-model="autoPollingEnabled" active-text="自动轮询 3 秒" />
         <span style="flex: 1"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadTaskDetail()">
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          @click="loadTaskDetail()"
+        >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
 
-      <el-descriptions v-if="taskDetail" :column="2" border size="small" class="win-patch-descriptions">
+      <el-descriptions
+        v-if="taskDetail"
+        :column="2"
+        border
+        size="small"
+        class="win-patch-descriptions"
+      >
         <el-descriptions-item label="任务类型">
           <el-tag :type="getTaskTypeTagType(taskDetail)" size="small" effect="plain">
             {{ getTaskTypeLabel(taskDetail) }}
@@ -28,7 +40,9 @@
             :type="getTaskStatusTagType(taskDetail)"
             size="small"
             :class="{ 'clickable-tag': taskRunId }"
-            @click="taskRunId && handleViewRunResult(taskRunId, `${getTaskTypeLabel(taskDetail)}任务`)"
+            @click="
+              taskRunId && handleViewRunResult(taskRunId, `${getTaskTypeLabel(taskDetail)}任务`)
+            "
           >
             {{ getTaskStatusLabel(taskDetail) }}
           </el-tag>
@@ -37,7 +51,12 @@
           {{ taskRunId || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="当前步骤">
-          <el-tag v-if="getTaskStepLabel(taskDetail) !== '-'" :type="getTaskStepTagType(taskDetail)" size="small" effect="plain">
+          <el-tag
+            v-if="getTaskStepLabel(taskDetail) !== '-'"
+            :type="getTaskStepTagType(taskDetail)"
+            size="small"
+            effect="plain"
+          >
             {{ getTaskStepLabel(taskDetail) }}
           </el-tag>
           <span v-else>-</span>
@@ -78,7 +97,9 @@
       <div v-if="showStepActions" class="win-patch-task-scripts">
         <div class="win-patch-task-scripts__header">
           <div class="win-patch-task-scripts__title">脚本配置</div>
-          <div class="win-patch-task-scripts__hint">预检查和校验脚本可按需上传，再执行对应步骤。</div>
+          <div class="win-patch-task-scripts__hint">
+            预检查和校验脚本可按需上传，再执行对应步骤。
+          </div>
         </div>
         <div class="win-patch-task-scripts__list">
           <WinPatchTaskScriptUploader
@@ -221,10 +242,14 @@ const currentRunId = ref('')
 const currentRunJobTitle = ref('')
 
 const currentTaskId = computed(() => String(props.taskId || '').trim())
-const taskRunId = computed(() => String(pickValue(taskDetail.value, ['runId', 'run_id'], '')).trim())
+const taskRunId = computed(() =>
+  String(pickValue(taskDetail.value, ['runId', 'run_id'], '')).trim()
+)
 const currentStepValue = computed(() => getTaskStepValue(taskDetail.value))
 const showStepActions = computed(() => isStepControlledTask(taskDetail.value))
-const isExecutePhase = computed(() => ['EXECUTE', 'INSTALL', 'ROLLBACK'].includes(currentStepValue.value))
+const isExecutePhase = computed(() =>
+  ['EXECUTE', 'INSTALL', 'ROLLBACK'].includes(currentStepValue.value)
+)
 
 function getAuditStepKey(step) {
   return normalizeUpper(step?.step)
@@ -236,21 +261,23 @@ function resolveExecuteStepKeys(task) {
 }
 
 function findAuditStep(stepKeys = []) {
-  const normalizedKeys = stepKeys
-    .map(key => normalizeUpper(key))
-    .filter(Boolean)
+  const normalizedKeys = stepKeys.map(key => normalizeUpper(key)).filter(Boolean)
 
   return taskAuditSteps.value.find(step => normalizedKeys.includes(getAuditStepKey(step))) || null
 }
 
 function findLatestScriptContent(scriptType) {
-  const normalizedScriptType = String(scriptType || '').trim().toLowerCase()
+  const normalizedScriptType = String(scriptType || '')
+    .trim()
+    .toLowerCase()
 
   for (let index = taskAuditLogs.value.length - 1; index >= 0; index -= 1) {
     const record = taskAuditLogs.value[index]
     if (
       getAuditStepKey(record) === 'SCRIPT' &&
-      String(record?.scriptType || '').trim().toLowerCase() === normalizedScriptType &&
+      String(record?.scriptType || '')
+        .trim()
+        .toLowerCase() === normalizedScriptType &&
       String(record?.scriptContent || '').trim()
     ) {
       return record.scriptContent
@@ -277,7 +304,9 @@ function deriveCurrentStep(task) {
 
   if (
     taskAuditSteps.value.length &&
-    taskAuditSteps.value.every(step => ['SUCCESS', 'SKIPPED'].includes(normalizeUpper(step?.status)))
+    taskAuditSteps.value.every(step =>
+      ['SUCCESS', 'SKIPPED'].includes(normalizeUpper(step?.status))
+    )
   ) {
     return 'COMPLETED'
   }
@@ -291,7 +320,11 @@ function mergeTaskDetail(baseTask = null, auditTask = null, hosts = [], steps = 
     ...(auditTask && typeof auditTask === 'object' ? auditTask : {})
   }
 
-  if (!Object.keys(mergedTask).length && !taskAuditSteps.value.length && !taskAuditLogs.value.length) {
+  if (
+    !Object.keys(mergedTask).length &&
+    !taskAuditSteps.value.length &&
+    !taskAuditLogs.value.length
+  ) {
     return null
   }
 
@@ -382,7 +415,9 @@ const canExecuteCurrentStep = computed(() => {
     currentStepValue.value !== 'COMPLETED'
   )
 })
-const canSkipCurrentStep = computed(() => canExecuteCurrentStep.value && canSkipTaskStep(taskDetail.value))
+const canSkipCurrentStep = computed(
+  () => canExecuteCurrentStep.value && canSkipTaskStep(taskDetail.value)
+)
 const executeButtonText = computed(() => {
   if (currentStepValue.value === 'PRE_CHECK') return '执行预检查'
   if (isExecutePhase.value) {
@@ -438,7 +473,11 @@ async function loadTaskDetail(options = {}) {
   try {
     const detailResponse = await winPatchApi.getTaskDetail(taskId)
 
-    if (requestId !== loadTaskDetailRequestId || !visibleModel.value || taskId !== currentTaskId.value) {
+    if (
+      requestId !== loadTaskDetailRequestId ||
+      !visibleModel.value ||
+      taskId !== currentTaskId.value
+    ) {
       return
     }
 
@@ -505,9 +544,13 @@ async function handleSkipStep() {
   if (!currentTaskId.value || !canSkipCurrentStep.value) return
 
   try {
-    await ElMessageBox.confirm(`确定跳过“${getTaskStepLabel(taskDetail.value)}”步骤吗？`, '跳过步骤', {
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      `确定跳过“${getTaskStepLabel(taskDetail.value)}”步骤吗？`,
+      '跳过步骤',
+      {
+        type: 'warning'
+      }
+    )
   } catch {
     return
   }

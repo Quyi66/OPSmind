@@ -17,29 +17,19 @@
             :rows="10"
             placeholder="请输入要匹配的数据，每行一个"
           />
-          <div class="form-text text-muted mt-2">
-            支持多行输入，可使用逗号、分号、换行符等分隔
-          </div>
+          <div class="form-text text-muted mt-2">支持多行输入，可使用逗号、分号、换行符等分隔</div>
         </el-form-item>
 
         <el-form-item label="其他分隔符">
           <el-checkbox-group v-model="searchDelims">
-            <el-checkbox
-              v-for="delim in delimDefs"
-              :key="delim.value"
-              :label="delim.value"
-            >
+            <el-checkbox v-for="delim in delimDefs" :key="delim.value" :label="delim.value">
               {{ delim.label }}
             </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
 
         <el-form-item>
-          <el-button
-            type="primary"
-            :disabled="!searchText"
-            @click="doSearch"
-          >
+          <el-button type="primary" :disabled="!searchText" @click="doSearch">
             <i class="fa fa-search me-1" />
             查找
           </el-button>
@@ -49,15 +39,8 @@
 
     <!-- 搜索结果 -->
     <div v-else class="search-result">
-      <el-alert
-        v-if="notFounds.length > 0"
-        type="error"
-        :closable="false"
-        class="mb-3"
-      >
-        <template #title>
-          未找到以下数据:
-        </template>
+      <el-alert v-if="notFounds.length > 0" type="error" :closable="false" class="mb-3">
+        <template #title>未找到以下数据:</template>
         <ul class="mb-0">
           <li v-for="item in notFounds" :key="item">{{ item }}</li>
         </ul>
@@ -76,9 +59,7 @@
         <el-table-column prop="name" label="主机名" min-width="150" />
       </el-table>
 
-      <el-button type="primary" plain class="mt-3" @click="showResult = false">
-        重新输入
-      </el-button>
+      <el-button type="primary" plain class="mt-3" @click="showResult = false">重新输入</el-button>
     </div>
   </div>
 </template>
@@ -121,7 +102,10 @@ async function doSearch() {
 
   // 解析输入的文本
   const delimiters = ['\n', ...searchDelims.value]
-  const pattern = new RegExp(delimiters.map(d => d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g')
+  const pattern = new RegExp(
+    delimiters.map(d => d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
+    'g'
+  )
   const keywords = searchText.value
     .split(pattern)
     .map(k => k.trim())
@@ -129,11 +113,7 @@ async function doSearch() {
 
   try {
     // 调用 ACM 按属性搜索接口
-    const response = await jaoApi.searchAcmByAttr(
-      props.ciType,
-      attrCode.value,
-      keywords
-    )
+    const response = await jaoApi.searchAcmByAttr(props.ciType, attrCode.value, keywords)
 
     const data = response?.data || response
 
@@ -201,7 +181,9 @@ function syncSelectionFromModelValue() {
   tableRef.value.clearSelection()
 
   searchResult.value.forEach(row => {
-    const matched = (props.modelValue || []).some(item => item.key === row.id || item.value === row.IP)
+    const matched = (props.modelValue || []).some(
+      item => item.key === row.id || item.value === row.IP
+    )
     if (matched) {
       tableRef.value.toggleRowSelection(row, true)
     }

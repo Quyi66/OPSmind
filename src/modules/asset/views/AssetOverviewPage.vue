@@ -10,8 +10,11 @@
 
       <!-- ── 统计卡片 ── -->
       <div class="aw-stats">
-        <button class="aw-stat" :class="totalAssets ? 'aw-stat--accent' : 'aw-stat--muted'"
-          @click="openAssetListDrawer(selectedAssetTypeCode)">
+        <button
+          class="aw-stat"
+          :class="totalAssets ? 'aw-stat--accent' : 'aw-stat--muted'"
+          @click="openAssetListDrawer(selectedAssetTypeCode)"
+        >
           <div class="aw-stat__top">
             <div class="aw-stat__content">
               <span class="aw-stat__label">资产总量</span>
@@ -25,10 +28,14 @@
           </div>
         </button>
 
-        <button class="aw-stat" :class="[
-          exceptionDeviceTotal ? 'aw-stat--danger' : 'aw-stat--ok',
-          exceptionDeviceTotal ? 'aw-stat--pulsing' : ''
-        ]" @click="openExceptionDrawer">
+        <button
+          class="aw-stat"
+          :class="[
+            exceptionDeviceTotal ? 'aw-stat--danger' : 'aw-stat--ok',
+            exceptionDeviceTotal ? 'aw-stat--pulsing' : ''
+          ]"
+          @click="openExceptionDrawer"
+        >
           <div class="aw-stat__top">
             <div class="aw-stat__content">
               <span class="aw-stat__label">连通巡检</span>
@@ -42,8 +49,11 @@
           </div>
         </button>
 
-        <button class="aw-stat" :class="failedLogTotal ? 'aw-stat--warning' : 'aw-stat--muted'"
-          @click="openFailedLogDrawer">
+        <button
+          class="aw-stat"
+          :class="failedLogTotal ? 'aw-stat--warning' : 'aw-stat--muted'"
+          @click="openFailedLogDrawer"
+        >
           <div class="aw-stat__top">
             <div class="aw-stat__content">
               <span class="aw-stat__label">失败日志</span>
@@ -71,8 +81,11 @@
           </div>
         </button>
 
-        <button class="aw-stat" :class="connectionStats.totalConnection ? 'aw-stat--success' : 'aw-stat--muted'"
-          @click="openAssetListDrawer(selectedAssetTypeCode)">
+        <button
+          class="aw-stat"
+          :class="connectionStats.totalConnection ? 'aw-stat--success' : 'aw-stat--muted'"
+          @click="openAssetListDrawer(selectedAssetTypeCode)"
+        >
           <div class="aw-stat__top">
             <div class="aw-stat__content">
               <span class="aw-stat__label">连通率</span>
@@ -120,14 +133,35 @@
             </span>
           </div>
           <div class="aw-panel__header-actions">
-            <el-button class="aw-inline-action" link type="primary" size="small" @click="autoEntryDialogVisible = true">
-              <i class="fa fa-plus" /> 录入
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="autoEntryDialogVisible = true"
+            >
+              <i class="fa fa-plus" />
+              录入
             </el-button>
-            <el-button class="aw-inline-action" link type="primary" size="small" @click="importDialogVisible = true">
-              <i class="fa fa-file-import" /> 导入
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="importDialogVisible = true"
+            >
+              <i class="fa fa-file-import" />
+              导入
             </el-button>
-            <el-button class="aw-inline-action" link type="primary" size="small" @click="exportDialogVisible = true">
-              <i class="fa fa-file-export" /> 导出
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="exportDialogVisible = true"
+            >
+              <i class="fa fa-file-export" />
+              导出
             </el-button>
           </div>
         </div>
@@ -137,30 +171,51 @@
           <div class="aw-recent-assets__header">
             <div class="aw-recent-assets__type-strip">
               <span class="aw-recent-assets__title">类型：</span>
-              <button v-for="item in topAssetTypes" :key="item.code || item.title" class="aw-asset-type-chip"
+              <button
+                v-for="item in topAssetTypes"
+                :key="item.code || item.title"
+                class="aw-asset-type-chip"
                 :class="{ 'is-active': selectedAssetTypeCode === (item.code || item.title) }"
-                @click="switchCardType(item.code || item.title)">
+                @click="switchCardType(item.code || item.title)"
+              >
                 <span class="aw-asset-type-chip__name">{{ item.title }}</span>
                 <span class="aw-asset-type-chip__count">{{ formatCount(item.count) }}</span>
               </button>
-
             </div>
-            <el-button class="aw-inline-action" link type="primary" size="small"
-              @click="openAssetListDrawer(selectedAssetTypeCode)">
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openAssetListDrawer(selectedAssetTypeCode)"
+            >
               查看全部
             </el-button>
           </div>
 
-          <transition-group v-if="cardAssets.length" name="aw-stack-slide" tag="div" class="aw-recent-assets__grid">
-            <article v-for="item in cardAssets" :key="item.id" class="aw-asset-card"
-              @click="handleViewAssetDetail(item)">
+          <transition-group
+            v-if="cardAssets.length"
+            name="aw-stack-slide"
+            tag="div"
+            class="aw-recent-assets__grid"
+          >
+            <article
+              v-for="item in cardAssets"
+              :key="item.id"
+              class="aw-asset-card"
+              @click="handleViewAssetDetail(item)"
+            >
               <div class="aw-asset-card__body">
                 <div class="aw-asset-card__head">
                   <el-tag size="small" round :type="getAssetStatusTagType(item.status)">
                     {{ getAssetStatusText(item.status) }}
                   </el-tag>
-                  <button type="button" class="aw-asset-card__edit-btn" title="编辑"
-                    @click.stop="handleViewAssetDetail(item)">
+                  <button
+                    type="button"
+                    class="aw-asset-card__edit-btn"
+                    title="编辑"
+                    @click.stop="handleViewAssetDetail(item)"
+                  >
                     <el-icon>
                       <Edit />
                     </el-icon>
@@ -168,19 +223,32 @@
                 </div>
                 <strong class="aw-asset-card__name">{{ getAssetPrimaryText(item) }}</strong>
                 <!-- <span class="aw-asset-card__meta">{{ getAssetBusinessText(item) }}</span> -->
-                <span class="aw-asset-card__os"><span class="aw-asset-card__os-distro"
-                    :class="getOsDistroClass(item.os_distro)">{{ item.os_distro || '--' }}</span><span
-                    class="aw-asset-card__os-version">{{ item.os_version || '' }}</span></span>
+                <span class="aw-asset-card__os">
+                  <span class="aw-asset-card__os-distro" :class="getOsDistroClass(item.os_distro)">
+                    {{ item.os_distro || '--' }}
+                  </span>
+                  <span class="aw-asset-card__os-version">{{ item.os_version || '' }}</span>
+                </span>
               </div>
               <div class="aw-asset-card__footer">
-                <button type="button" class="aw-asset-card__chip"
-                  :class="[getConnToneClass(item.CONN_LATEST_STATUS), { 'is-loading': checkingConnIds.includes(item.id) }]"
-                  :disabled="checkingConnIds.includes(item.id)" @click.stop="handleAssetCheckConn(item)">
+                <button
+                  type="button"
+                  class="aw-asset-card__chip"
+                  :class="[
+                    getConnToneClass(item.CONN_LATEST_STATUS),
+                    { 'is-loading': checkingConnIds.includes(item.id) }
+                  ]"
+                  :disabled="checkingConnIds.includes(item.id)"
+                  @click.stop="handleAssetCheckConn(item)"
+                >
                   <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
                   {{ getConnStatusText(item.CONN_LATEST_STATUS) }}
                 </button>
-                <span class="aw-asset-card__chip" :class="item.needReboot == 1 ? 'is-danger' : 'is-success'"
-                  style="pointer-events: none; cursor: none;">
+                <span
+                  class="aw-asset-card__chip"
+                  :class="item.needReboot == 1 ? 'is-danger' : 'is-success'"
+                  style="pointer-events: none; cursor: none"
+                >
                   {{ item.needReboot == 1 ? '需重启' : '无需重启' }}
                 </span>
               </div>
@@ -201,7 +269,13 @@
             </span>
           </div>
           <div class="aw-panel__header-actions">
-            <el-button class="aw-inline-action" link type="primary" size="small" @click="openExceptionDrawer">
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openExceptionDrawer"
+            >
               查看全部
             </el-button>
           </div>
@@ -210,16 +284,27 @@
         <div class="aw-exception-list">
           <div class="aw-exception-list__section">
             <div v-if="exceptionPreviewItems.length" class="aw-exception-list__body">
-              <button v-for="item in exceptionPreviewItems" :key="item.key" type="button" class="aw-exception-row"
-                @click="openExceptionDrawer">
+              <button
+                v-for="item in exceptionPreviewItems"
+                :key="item.key"
+                type="button"
+                class="aw-exception-row"
+                @click="openExceptionDrawer"
+              >
                 <span class="aw-exception-row__ip">{{ item.title }}</span>
                 <span class="aw-exception-row__badge">{{ item.badge }}</span>
                 <span class="aw-exception-row__desc">{{ item.desc }}</span>
                 <span class="aw-exception-row__actions">
-                  <i class="fa fa-plug aw-exception-row__action" title="检查连通性"
-                    @click.stop="handleExceptionCheckConn(item.raw)" />
-                  <i class="fa fa-download aw-exception-row__action" title="采集信息"
-                    @click.stop="handleExceptionCollectInfo(item.raw)" />
+                  <i
+                    class="fa fa-plug aw-exception-row__action"
+                    title="检查连通性"
+                    @click.stop="handleExceptionCheckConn(item.raw)"
+                  />
+                  <i
+                    class="fa fa-download aw-exception-row__action"
+                    title="采集信息"
+                    @click.stop="handleExceptionCollectInfo(item.raw)"
+                  />
                 </span>
               </button>
             </div>
@@ -235,19 +320,40 @@
         <div class="aw-panel__header">
           <h3 class="aw-panel__title">操作记录</h3>
           <div class="aw-panel__header-actions">
-            <el-button class="aw-inline-action" link type="primary" size="small" @click="openRecentLogsDrawer">
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openRecentLogsDrawer"
+            >
               查看全部
             </el-button>
           </div>
         </div>
-        <transition-group v-if="recentLogs.length" name="aw-stack-slide" tag="div" class="aw-log-list">
-          <button v-for="item in recentLogs.slice(0, 7)" :key="item.run_id" type="button" class="aw-log-item"
-            @click="handleLogItemClick(item)">
+        <transition-group
+          v-if="recentLogs.length"
+          name="aw-stack-slide"
+          tag="div"
+          class="aw-log-list"
+        >
+          <button
+            v-for="item in recentLogs.slice(0, 7)"
+            :key="item.run_id"
+            type="button"
+            class="aw-log-item"
+            @click="handleLogItemClick(item)"
+          >
             <span class="aw-log-item__title">{{ getOperationActionLabel(item.action) }}</span>
             <span class="aw-log-item__engine">{{ item.ata_node || '--' }}</span>
             <span class="aw-log-item__user">{{ item.username || '--' }}</span>
             <span class="aw-log-item__time">{{ formatDateTime(item.start_time) }}</span>
-            <el-tag class="aw-log-item__status" size="small" round :type="getOperationLogStatusType(item.status)">
+            <el-tag
+              class="aw-log-item__status"
+              size="small"
+              round
+              :type="getOperationLogStatusType(item.status)"
+            >
               {{ getRunLogStatusLabel(item.status) }}
             </el-tag>
           </button>
@@ -258,15 +364,31 @@
 
     <!-- ══════════ 弹窗 ══════════ -->
     <AutoEntryDialog v-model="autoEntryDialogVisible" @saved="handleDialogSaved" />
-    <ImportAssetDialog v-model="importDialogVisible" :tenant-id="currentTenantId" @saved="handleDialogSaved" />
+    <ImportAssetDialog
+      v-model="importDialogVisible"
+      :tenant-id="currentTenantId"
+      @saved="handleDialogSaved"
+    />
     <ExportAssetDialog v-model="exportDialogVisible" />
-    <AssetEditDialog v-model="assetDetailDialogVisible" :asset-id="currentAssetId" @saved="loadAllData" />
+    <AssetEditDialog
+      v-model="assetDetailDialogVisible"
+      :asset-id="currentAssetId"
+      @saved="loadAllData"
+    />
 
-    <OsVersionDialog v-model="osVersionVisible" :title="osVersionTitle" :data="osVersionData"
-      :loading="osVersionLoading" />
+    <OsVersionDialog
+      v-model="osVersionVisible"
+      :title="osVersionTitle"
+      :data="osVersionData"
+      :loading="osVersionLoading"
+    />
 
-    <ExecuteResultDialog v-if="runResultDialogVisible" v-model:visible="runResultDialogVisible"
-      :run-id="runResultMeta.runId" :job-title="runResultMeta.jobTitle" />
+    <ExecuteResultDialog
+      v-if="runResultDialogVisible"
+      v-model:visible="runResultDialogVisible"
+      :run-id="runResultMeta.runId"
+      :job-title="runResultMeta.jobTitle"
+    />
 
     <!-- ══════════ 抽屉面板 ══════════ -->
 
@@ -278,24 +400,37 @@
         </div>
       </template>
       <div class="aw-drawer__toolbar">
-        <el-input v-model="assetListDrawer.keyword" placeholder="搜索 IP / 主机名" size="small" clearable
+        <el-input
+          v-model="assetListDrawer.keyword"
+          placeholder="搜索 IP / 主机名"
+          size="small"
+          clearable
           @keyup.enter="openAssetListDrawer(assetListDrawer.filterType, true)"
-          @clear="openAssetListDrawer(assetListDrawer.filterType, true)">
+          @clear="openAssetListDrawer(assetListDrawer.filterType, true)"
+        >
           <template #prefix><i class="fa fa-search" /></template>
         </el-input>
       </div>
       <div v-loading="assetListDrawer.loading" class="aw-drawer__body">
         <template v-if="!assetListDrawer.loading">
           <div v-if="assetListDrawer.records.length" class="aw-drawer-card-grid">
-            <article v-for="item in assetListDrawer.records" :key="item.id" class="aw-asset-card"
-              @click="handleViewAssetDetail(item)">
+            <article
+              v-for="item in assetListDrawer.records"
+              :key="item.id"
+              class="aw-asset-card"
+              @click="handleViewAssetDetail(item)"
+            >
               <div class="aw-asset-card__body">
                 <div class="aw-asset-card__head">
                   <el-tag size="small" round :type="getAssetStatusTagType(item.status)">
                     {{ getAssetStatusText(item.status) }}
                   </el-tag>
-                  <button type="button" class="aw-asset-card__edit-btn" title="编辑"
-                    @click.stop="handleViewAssetDetail(item)">
+                  <button
+                    type="button"
+                    class="aw-asset-card__edit-btn"
+                    title="编辑"
+                    @click.stop="handleViewAssetDetail(item)"
+                  >
                     <el-icon>
                       <Edit />
                     </el-icon>
@@ -303,19 +438,32 @@
                 </div>
                 <strong class="aw-asset-card__name">{{ getAssetPrimaryText(item) }}</strong>
                 <!-- <span class="aw-asset-card__meta">{{ getAssetBusinessText(item) }}</span> -->
-                <span class="aw-asset-card__os"><span class="aw-asset-card__os-distro"
-                    :class="getOsDistroClass(item.os_distro)">{{ item.os_distro || '--' }}</span><span
-                    class="aw-asset-card__os-version">{{ item.os_version || '' }}</span></span>
+                <span class="aw-asset-card__os">
+                  <span class="aw-asset-card__os-distro" :class="getOsDistroClass(item.os_distro)">
+                    {{ item.os_distro || '--' }}
+                  </span>
+                  <span class="aw-asset-card__os-version">{{ item.os_version || '' }}</span>
+                </span>
               </div>
               <div class="aw-asset-card__footer">
-                <button type="button" class="aw-asset-card__chip"
-                  :class="[getConnToneClass(item.CONN_LATEST_STATUS), { 'is-loading': checkingConnIds.includes(item.id) }]"
-                  :disabled="checkingConnIds.includes(item.id)" @click.stop="handleAssetCheckConn(item)">
+                <button
+                  type="button"
+                  class="aw-asset-card__chip"
+                  :class="[
+                    getConnToneClass(item.CONN_LATEST_STATUS),
+                    { 'is-loading': checkingConnIds.includes(item.id) }
+                  ]"
+                  :disabled="checkingConnIds.includes(item.id)"
+                  @click.stop="handleAssetCheckConn(item)"
+                >
                   <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
                   {{ getConnStatusText(item.CONN_LATEST_STATUS) }}
                 </button>
-                <span class="aw-asset-card__chip" :class="item.needReboot == 1 ? 'is-danger' : 'is-success'"
-                  style="pointer-events: none; cursor: none;">
+                <span
+                  class="aw-asset-card__chip"
+                  :class="item.needReboot == 1 ? 'is-danger' : 'is-success'"
+                  style="pointer-events: none; cursor: none"
+                >
                   {{ item.needReboot == 1 ? '需重启' : '无需重启' }}
                 </span>
               </div>
@@ -324,10 +472,18 @@
           <el-empty v-else description="暂无资产" :image-size="60" />
         </template>
         <div v-if="assetListDrawer.total > assetListDrawer.pageSize" class="aw-drawer__pagination">
-          <el-pagination v-model:current-page="assetListDrawer.page" v-model:page-size="assetListDrawer.pageSize"
-            :page-sizes="[10, 20, 50, 100]" :page-size="assetListDrawer.pageSize" :total="assetListDrawer.total"
-            layout="sizes, prev, pager, next" background small @current-change="handleAssetListPageChange"
-            @size-change="handleAssetListPageSizeChange" />
+          <el-pagination
+            v-model:current-page="assetListDrawer.page"
+            v-model:page-size="assetListDrawer.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :page-size="assetListDrawer.pageSize"
+            :total="assetListDrawer.total"
+            layout="sizes, prev, pager, next"
+            background
+            small
+            @current-change="handleAssetListPageChange"
+            @size-change="handleAssetListPageSizeChange"
+          />
         </div>
       </div>
     </el-drawer>
@@ -337,13 +493,27 @@
         <div class="aw-drawer-header">
           <span class="aw-drawer-header__title">连通巡检</span>
           <div class="aw-drawer-header__actions">
-            <el-button class="aw-inline-action" link type="primary" size="small"
-              :loading="exceptionDrawer.actionLoading" @click="handleExceptionBulkCheckConn">
-              <i class="fa fa-plug" /> 全设备连通性检查
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              :loading="exceptionDrawer.actionLoading"
+              @click="handleExceptionBulkCheckConn"
+            >
+              <i class="fa fa-plug" />
+              全设备连通性检查
             </el-button>
-            <el-button class="aw-inline-action" link type="primary" size="small"
-              :loading="exceptionDrawer.actionLoading" @click="handleExceptionBulkCollect">
-              <i class="fa fa-download" /> 全设备采集信息
+            <el-button
+              class="aw-inline-action"
+              link
+              type="primary"
+              size="small"
+              :loading="exceptionDrawer.actionLoading"
+              @click="handleExceptionBulkCollect"
+            >
+              <i class="fa fa-download" />
+              全设备采集信息
             </el-button>
           </div>
         </div>
@@ -351,27 +521,46 @@
       <div v-loading="exceptionDrawer.loading" class="aw-drawer__body">
         <template v-if="!exceptionDrawer.loading">
           <div v-if="exceptionDrawer.records.length" class="aw-drawer-list">
-            <button v-for="item in exceptionDrawer.records" :key="item.key" type="button"
-              class="aw-drawer-row aw-drawer-row--exception" @click="handleExceptionDeviceRowClick(item.raw || item)">
+            <button
+              v-for="item in exceptionDrawer.records"
+              :key="item.key"
+              type="button"
+              class="aw-drawer-row aw-drawer-row--exception"
+              @click="handleExceptionDeviceRowClick(item.raw || item)"
+            >
               <strong class="aw-drawer-row__title">{{ item.title }}</strong>
               <span class="aw-drawer-row__badge">{{ item.badge }}</span>
               <span class="aw-drawer-row__desc">{{ item.desc }}</span>
               <span class="aw-drawer-row__meta">{{ item.meta }}</span>
               <span class="aw-drawer-row__actions">
-                <i class="fa fa-plug aw-exception-row__action" title="检查连通性"
-                  @click.stop="handleExceptionCheckConn(item.raw || item)" />
-                <i class="fa fa-download aw-exception-row__action" title="采集信息"
-                  @click.stop="handleExceptionCollectInfo(item.raw || item)" />
+                <i
+                  class="fa fa-plug aw-exception-row__action"
+                  title="检查连通性"
+                  @click.stop="handleExceptionCheckConn(item.raw || item)"
+                />
+                <i
+                  class="fa fa-download aw-exception-row__action"
+                  title="采集信息"
+                  @click.stop="handleExceptionCollectInfo(item.raw || item)"
+                />
               </span>
             </button>
           </div>
           <el-empty v-else description="暂无连通异常设备" :image-size="60" />
         </template>
         <div v-if="exceptionDrawer.total > exceptionDrawer.pageSize" class="aw-drawer__pagination">
-          <el-pagination v-model:current-page="exceptionDrawer.page" v-model:page-size="exceptionDrawer.pageSize"
-            :page-sizes="[10, 20, 50, 100]" :page-size="exceptionDrawer.pageSize" :total="exceptionDrawer.total"
-            layout="sizes, prev, pager, next" background small @current-change="handleExceptionPageChange"
-            @size-change="handleExceptionPageSizeChange" />
+          <el-pagination
+            v-model:current-page="exceptionDrawer.page"
+            v-model:page-size="exceptionDrawer.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :page-size="exceptionDrawer.pageSize"
+            :total="exceptionDrawer.total"
+            layout="sizes, prev, pager, next"
+            background
+            small
+            @current-change="handleExceptionPageChange"
+            @size-change="handleExceptionPageSizeChange"
+          />
         </div>
       </div>
     </el-drawer>
@@ -385,8 +574,13 @@
       <div v-loading="failedLogDrawer.loading" class="aw-drawer__body">
         <template v-if="!failedLogDrawer.loading">
           <div v-if="failedLogDrawer.records.length" class="aw-drawer-list">
-            <button v-for="item in failedLogDrawer.records" :key="item.key" type="button" class="aw-drawer-row"
-              @click="handleLogItemClick(item.raw || item)">
+            <button
+              v-for="item in failedLogDrawer.records"
+              :key="item.key"
+              type="button"
+              class="aw-drawer-row"
+              @click="handleLogItemClick(item.raw || item)"
+            >
               <strong class="aw-drawer-row__title">{{ item.title }}</strong>
               <span class="aw-drawer-row__badge">{{ item.badge }}</span>
               <span class="aw-drawer-row__desc">{{ item.desc }}</span>
@@ -407,13 +601,23 @@
       <div v-loading="recentLogsDrawer.loading" class="aw-drawer__body">
         <template v-if="!recentLogsDrawer.loading">
           <div v-if="recentLogsDrawer.records.length" class="aw-drawer-list">
-            <button v-for="item in recentLogsDrawer.records" :key="item.run_id" type="button"
-              class="aw-drawer-row aw-drawer-row--log" @click="handleLogItemClick(item)">
+            <button
+              v-for="item in recentLogsDrawer.records"
+              :key="item.run_id"
+              type="button"
+              class="aw-drawer-row aw-drawer-row--log"
+              @click="handleLogItemClick(item)"
+            >
               <span class="aw-drawer-row__title">{{ getOperationActionLabel(item.action) }}</span>
               <span class="aw-drawer-row__engine">{{ item.ata_node || '--' }}</span>
               <span class="aw-drawer-row__user">{{ item.username || '--' }}</span>
               <span class="aw-drawer-row__time">{{ formatDateTime(item.start_time) }}</span>
-              <el-tag class="aw-drawer-row__status" size="small" round :type="getOperationLogStatusType(item.status)">
+              <el-tag
+                class="aw-drawer-row__status"
+                size="small"
+                round
+                :type="getOperationLogStatusType(item.status)"
+              >
                 {{ getRunLogStatusLabel(item.status) }}
               </el-tag>
             </button>
@@ -422,11 +626,22 @@
             <el-empty description="暂无操作记录" :image-size="60" />
           </div>
         </template>
-        <div v-if="recentLogsDrawer.total > recentLogsDrawer.pageSize" class="aw-drawer__pagination">
-          <el-pagination v-model:current-page="recentLogsDrawer.page" v-model:page-size="recentLogsDrawer.pageSize"
-            :page-sizes="[10, 20, 50, 100]" :page-size="recentLogsDrawer.pageSize" :total="recentLogsDrawer.total"
-            layout="sizes, prev, pager, next" background small @current-change="handleRecentLogsPageChange"
-            @size-change="handleRecentLogsPageSizeChange" />
+        <div
+          v-if="recentLogsDrawer.total > recentLogsDrawer.pageSize"
+          class="aw-drawer__pagination"
+        >
+          <el-pagination
+            v-model:current-page="recentLogsDrawer.page"
+            v-model:page-size="recentLogsDrawer.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :page-size="recentLogsDrawer.pageSize"
+            :total="recentLogsDrawer.total"
+            layout="sizes, prev, pager, next"
+            background
+            small
+            @current-change="handleRecentLogsPageChange"
+            @size-change="handleRecentLogsPageSizeChange"
+          />
         </div>
       </div>
     </el-drawer>
@@ -442,21 +657,36 @@
           <div class="aw-drawer-section">
             <div class="aw-drawer-section__header">
               <h4 class="aw-drawer-section__title">分组 ({{ groupRows.length }})</h4>
-              <el-button class="aw-inline-action" link type="primary" size="small"
-                @click="addGroupDialogVisible = true">
-                <i class="fa fa-plus" /> 新增
+              <el-button
+                class="aw-inline-action"
+                link
+                type="primary"
+                size="small"
+                @click="addGroupDialogVisible = true"
+              >
+                <i class="fa fa-plus" />
+                新增
               </el-button>
             </div>
             <div class="aw-drawer-list">
-              <button v-for="item in groupRows.slice(0, 20)" :key="item.id" class="aw-drawer-row aw-drawer-row--slim"
-                @click="handleEditGroup(item)">
+              <button
+                v-for="item in groupRows.slice(0, 20)"
+                :key="item.id"
+                class="aw-drawer-row aw-drawer-row--slim"
+                @click="handleEditGroup(item)"
+              >
                 <i class="fa fa-folder" style="color: #e6a23c; margin-right: 8px" />
                 <span class="aw-drawer-row__name">{{ item.path }}</span>
                 <span class="aw-drawer-row__count">
                   {{ formatCount(item.total || item.count) }}
                 </span>
-                <el-button text type="primary" size="small" class="aw-drawer-row__edit-btn"
-                  @click.stop="handleEditGroup(item)">
+                <el-button
+                  text
+                  type="primary"
+                  size="small"
+                  class="aw-drawer-row__edit-btn"
+                  @click.stop="handleEditGroup(item)"
+                >
                   <i class="fa fa-pen" />
                 </el-button>
               </button>
@@ -465,20 +695,36 @@
           <div class="aw-drawer-section">
             <div class="aw-drawer-section__header">
               <h4 class="aw-drawer-section__title">标签 ({{ tagRows.length }})</h4>
-              <el-button class="aw-inline-action" link type="primary" size="small" @click="addTagDialogVisible = true">
-                <i class="fa fa-plus" /> 新增
+              <el-button
+                class="aw-inline-action"
+                link
+                type="primary"
+                size="small"
+                @click="addTagDialogVisible = true"
+              >
+                <i class="fa fa-plus" />
+                新增
               </el-button>
             </div>
             <div class="aw-drawer-tags">
-              <button v-for="item in tagRows.slice(0, 30)" :key="item.id" class="aw-drawer-tag"
-                @click="handleEditTag(item)">
+              <button
+                v-for="item in tagRows.slice(0, 30)"
+                :key="item.id"
+                class="aw-drawer-tag"
+                @click="handleEditTag(item)"
+              >
                 <i class="fa fa-tag" style="margin-right: 4px" />
                 {{ item.name }}
                 <span class="aw-drawer-tag__count">
                   {{ formatCount(item.total || item.count) }}
                 </span>
-                <el-button text type="primary" size="small" class="aw-drawer-tag__edit-btn"
-                  @click.stop="handleEditTag(item)">
+                <el-button
+                  text
+                  type="primary"
+                  size="small"
+                  class="aw-drawer-tag__edit-btn"
+                  @click.stop="handleEditTag(item)"
+                >
                   <i class="fa fa-pen" />
                 </el-button>
               </button>
@@ -499,9 +745,16 @@
 
     <DataAddGroupDialog v-model="addGroupDialogVisible" @saved="handleGovernanceSaved" />
     <DataAddTagDialog v-model="addTagDialogVisible" @saved="handleGovernanceSaved" />
-    <DataEditGroupDialog v-model="editGroupDialogVisible" :group-data="currentGroupItem"
-      @saved="handleGovernanceSaved" />
-    <DataEditTagDialog v-model="editTagDialogVisible" :tag-data="currentTagItem" @saved="handleGovernanceSaved" />
+    <DataEditGroupDialog
+      v-model="editGroupDialogVisible"
+      :group-data="currentGroupItem"
+      @saved="handleGovernanceSaved"
+    />
+    <DataEditTagDialog
+      v-model="editTagDialogVisible"
+      :tag-data="currentTagItem"
+      @saved="handleGovernanceSaved"
+    />
   </div>
 </template>
 
@@ -697,7 +950,13 @@ function getAssetStatusTagType(status) {
 function getOsDistroClass(distro) {
   const value = String(distro || '').toLowerCase()
   if (value.includes('ubuntu') || value.includes('debian')) return 'is-debian'
-  if (value.includes('centos') || value.includes('redhat') || value.includes('red hat') || value.includes('rhel')) return 'is-redhat'
+  if (
+    value.includes('centos') ||
+    value.includes('redhat') ||
+    value.includes('red hat') ||
+    value.includes('rhel')
+  )
+    return 'is-redhat'
   if (value.includes('oracle')) return 'is-oracle'
   if (value.includes('suse')) return 'is-suse'
   if (value.includes('windows')) return 'is-windows'
@@ -837,7 +1096,7 @@ async function handleAssetCheckConn(item) {
     }
   } catch (error) {
     removeCheckingId(item.id)
-    ElMessage.error('连通性检查失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`连通性检查失败: ${error.response?.data?.message || error.message}`)
   }
 }
 
@@ -893,11 +1152,15 @@ async function loadExceptionPreview() {
 async function handleExceptionCollectInfo(item) {
   const ip = item.IP || item.ip
   try {
-    await ElMessageBox.confirm(`信息采集将花费几分钟到半小时不等的时间，是否对主机 ${ip} 进行采集？`, '采集信息', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      `信息采集将花费几分钟到半小时不等的时间，是否对主机 ${ip} 进行采集？`,
+      '采集信息',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
   } catch {
     return
   }
@@ -916,7 +1179,7 @@ async function handleExceptionCollectInfo(item) {
     handleOperationRunTriggered(result)
     loadAllData()
   } catch (error) {
-    ElMessage.error('采集信息启动失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`采集信息启动失败: ${error.response?.data?.message || error.message}`)
   }
 }
 
@@ -946,7 +1209,7 @@ async function handleExceptionCheckConn(item) {
     handleOperationRunTriggered(result)
     loadAllData()
   } catch (error) {
-    ElMessage.error('检查连通性失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`检查连通性失败: ${error.response?.data?.message || error.message}`)
   }
 }
 
@@ -958,11 +1221,15 @@ async function runExceptionBulkAction(jobId, actionName) {
     return
   }
   try {
-    await ElMessageBox.confirm(`将对全部 ${total} 台连通异常设备${actionName}，此操作可能需要一段时间。`, '确认操作', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      `将对全部 ${total} 台连通异常设备${actionName}，此操作可能需要一段时间。`,
+      '确认操作',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
   } catch {
     return
   }
@@ -991,7 +1258,7 @@ async function runExceptionBulkAction(jobId, actionName) {
     handleOperationRunTriggered(result)
     loadAllData()
   } catch (error) {
-    ElMessage.error(`${actionName}失败: ` + (error.response?.data?.message || error.message))
+    ElMessage.error(`${actionName}失败: ${error.response?.data?.message || error.message}`)
   } finally {
     exceptionDrawer.actionLoading = false
   }
@@ -1043,7 +1310,9 @@ function isOperationRunningStatus(status) {
 
 function hasRunningOperationLogs() {
   const cardRunning = recentLogs.value.some(item => isOperationRunningStatus(item?.status))
-  const drawerRunning = recentLogsDrawer.records.some(item => isOperationRunningStatus(item?.status))
+  const drawerRunning = recentLogsDrawer.records.some(item =>
+    isOperationRunningStatus(item?.status)
+  )
   return cardRunning || drawerRunning
 }
 
@@ -1293,7 +1562,9 @@ onUnmounted(() => {
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px -4px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.02),
+    0 4px 12px -4px rgba(0, 0, 0, 0.04);
   text-align: left;
   position: relative;
   overflow: hidden;
@@ -1394,7 +1665,9 @@ onUnmounted(() => {
 
     &:hover {
       border-color: rgba(13, 148, 136, 0.35);
-      box-shadow: 0 8px 24px rgba(13, 148, 136, 0.08), var(--aw-panel-shadow);
+      box-shadow:
+        0 8px 24px rgba(13, 148, 136, 0.08),
+        var(--aw-panel-shadow);
     }
   }
 
@@ -1418,7 +1691,9 @@ onUnmounted(() => {
 
     &:hover {
       border-color: rgba(239, 68, 68, 0.35);
-      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.08), var(--aw-panel-shadow);
+      box-shadow:
+        0 8px 24px rgba(239, 68, 68, 0.08),
+        var(--aw-panel-shadow);
     }
   }
 
@@ -1442,7 +1717,9 @@ onUnmounted(() => {
 
     &:hover {
       border-color: rgba(245, 158, 11, 0.35);
-      box-shadow: 0 8px 24px rgba(245, 158, 11, 0.08), var(--aw-panel-shadow);
+      box-shadow:
+        0 8px 24px rgba(245, 158, 11, 0.08),
+        var(--aw-panel-shadow);
     }
   }
 
@@ -1467,7 +1744,9 @@ onUnmounted(() => {
 
     &:hover {
       border-color: rgba(16, 185, 129, 0.35);
-      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.08), var(--aw-panel-shadow);
+      box-shadow:
+        0 8px 24px rgba(16, 185, 129, 0.08),
+        var(--aw-panel-shadow);
     }
   }
 
@@ -1491,7 +1770,9 @@ onUnmounted(() => {
 
     &:hover {
       border-color: rgba(139, 92, 246, 0.35);
-      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.08), var(--aw-panel-shadow);
+      box-shadow:
+        0 8px 24px rgba(139, 92, 246, 0.08),
+        var(--aw-panel-shadow);
     }
   }
 
@@ -1515,7 +1796,9 @@ onUnmounted(() => {
 
     &:hover {
       border-color: rgba(59, 130, 246, 0.35);
-      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.08), var(--aw-panel-shadow);
+      box-shadow:
+        0 8px 24px rgba(59, 130, 246, 0.08),
+        var(--aw-panel-shadow);
     }
   }
 
@@ -1559,14 +1842,15 @@ onUnmounted(() => {
 }
 
 @keyframes aw-stat-pulse-glow {
-
   0%,
   100% {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   }
 
   50% {
-    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.12), 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-shadow:
+      0 4px 20px rgba(239, 68, 68, 0.12),
+      0 1px 3px rgba(0, 0, 0, 0.02);
   }
 }
 
@@ -1585,7 +1869,6 @@ onUnmounted(() => {
 }
 
 @keyframes aw-stat-pulse-icon {
-
   0%,
   100% {
     transform: scale(1);
@@ -1688,7 +1971,7 @@ onUnmounted(() => {
   font-size: 12px !important;
 }
 
-.aw-inline-action+.aw-inline-action {
+.aw-inline-action + .aw-inline-action {
   margin-left: 0 !important;
 }
 
@@ -1789,7 +2072,9 @@ onUnmounted(() => {
   min-height: 138px;
   overflow: hidden;
   box-shadow: 0 16px 32px -24px rgba(15, 23, 42, 0.42);
-  transition: transform 0.15s, border-color 0.15s;
+  transition:
+    transform 0.15s,
+    border-color 0.15s;
   cursor: pointer;
 
   &::before {
@@ -1799,7 +2084,11 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--aw-asset-card-accent) 0%, color-mix(in srgb, var(--aw-asset-card-accent) 10%, transparent) 100%);
+    background: linear-gradient(
+      90deg,
+      var(--aw-asset-card-accent) 0%,
+      color-mix(in srgb, var(--aw-asset-card-accent) 10%, transparent) 100%
+    );
   }
 
   &:hover {
@@ -1837,7 +2126,10 @@ onUnmounted(() => {
     background: color-mix(in srgb, var(--aw-panel-bg) 82%, #fff);
     color: var(--aw-text-secondary);
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      border-color 0.15s,
+      color 0.15s;
 
     &:hover {
       border-color: var(--aw-asset-card-accent);
@@ -1937,7 +2229,9 @@ onUnmounted(() => {
     font-weight: 600;
     color: var(--aw-text-secondary);
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
 
     &:last-child {
       border-right: none;
@@ -2356,7 +2650,7 @@ onUnmounted(() => {
 .aw-drawer-section {
   padding: 10px 12px;
 
-  +.aw-drawer-section {
+  + .aw-drawer-section {
     border-top: 1px solid var(--aw-panel-border);
   }
 

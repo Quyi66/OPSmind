@@ -55,12 +55,16 @@ const submitting = ref(false)
 
 const repoLabel = computed(() => getYumRepoLabel(props.repo))
 const configId = computed(() => resolveYumConfigId(props.repo))
-const repoUrl = computed(() => String(pickValue(props.repo, ['repoUrl', 'repo_url', 'baseurl'], '')).trim())
+const repoUrl = computed(() =>
+  String(pickValue(props.repo, ['repoUrl', 'repo_url', 'baseurl'], '')).trim()
+)
 
 async function handleSubmit() {
   const payload = configId.value
     ? { dcDataId: configId.value }
-    : (repoUrl.value ? { baseurl: repoUrl.value } : null)
+    : repoUrl.value
+      ? { baseurl: repoUrl.value }
+      : null
 
   if (!payload) {
     ElMessage.warning('请先选择仓库')
@@ -82,7 +86,6 @@ async function handleSubmit() {
     submitting.value = false
   }
 }
-
 </script>
 
 <style scoped lang="scss">

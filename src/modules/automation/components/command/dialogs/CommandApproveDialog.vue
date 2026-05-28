@@ -61,15 +61,12 @@
     <!-- 批量审核 -->
     <div v-else class="approve-content batch-mode">
       <div class="batch-summary">
-        <strong>共 {{ commandList.length }} 条</strong> 命令待审核
+        <strong>共 {{ commandList.length }} 条</strong>
+        命令待审核
       </div>
 
       <el-collapse accordion>
-        <el-collapse-item
-          v-for="cmd in commandList"
-          :key="cmd.id"
-          :name="cmd.id"
-        >
+        <el-collapse-item v-for="cmd in commandList" :key="cmd.id" :name="cmd.id">
           <template #title>
             <div class="collapse-title">
               <strong>{{ cmd.name }}</strong>
@@ -118,12 +115,7 @@
     <!-- 审核原因 -->
     <div class="approve-reason">
       <label>审核原因（可选）</label>
-      <el-input
-        v-model="approveReason"
-        type="textarea"
-        :rows="3"
-        placeholder="请输入审核原因..."
-      />
+      <el-input v-model="approveReason" type="textarea" :rows="3" placeholder="请输入审核原因..." />
     </div>
 
     <template #footer>
@@ -154,7 +146,7 @@ const props = defineProps({
   mode: {
     type: String,
     default: 'single', // 'single' 或 'batch'
-    validator: (value) => ['single', 'batch'].includes(value)
+    validator: value => ['single', 'batch'].includes(value)
   },
   command: {
     type: Object,
@@ -171,7 +163,7 @@ const emit = defineEmits(['update:visible', 'success'])
 // 对话框可见性
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 // 是否单个模式
@@ -195,11 +187,14 @@ const approveReason = ref('')
 const submitting = ref(false)
 
 // 监听对话框打开
-watch(() => props.visible, (val) => {
-  if (val) {
-    approveReason.value = ''
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      approveReason.value = ''
+    }
   }
-})
+)
 
 // 审核操作
 async function handleApprove(isApproved) {
@@ -210,11 +205,13 @@ async function handleApprove(isApproved) {
 
     if (isSingleMode.value) {
       // 单个审核
-      commandsToApprove = [{
-        ...currentCommand.value,
-        status: isApproved ? COMMAND_STATUS.PUBLISHED : COMMAND_STATUS.REJECTED,
-        unapprovedReason: approveReason.value
-      }]
+      commandsToApprove = [
+        {
+          ...currentCommand.value,
+          status: isApproved ? COMMAND_STATUS.PUBLISHED : COMMAND_STATUS.REJECTED,
+          unapprovedReason: approveReason.value
+        }
+      ]
     } else {
       // 批量审核
       commandsToApprove = commandList.value.map(cmd => ({

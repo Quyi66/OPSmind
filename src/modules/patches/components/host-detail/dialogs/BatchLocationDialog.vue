@@ -32,12 +32,7 @@
             v-loading="locationsLoading"
             style="width: 100%"
           >
-            <el-option
-              v-for="loc in locationOptions"
-              :key="loc"
-              :value="loc"
-              :label="loc"
-            />
+            <el-option v-for="loc in locationOptions" :key="loc" :value="loc" :label="loc" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -46,7 +41,9 @@
       <div v-if="recomputing" class="recompute-loading-panel mt-3">
         <div class="recompute-loading-text">
           <el-icon class="is-loading"><Loading /></el-icon>
-          正在为 {{ hosts.length }} 台主机重新评估评估漏洞紧急度 ({{ recomputeProgress }}/{{ hosts.length }})...
+          正在为 {{ hosts.length }} 台主机重新评估评估漏洞紧急度 ({{ recomputeProgress }}/{{
+            hosts.length
+          }})...
         </div>
         <el-progress
           :percentage="Math.round((recomputeProgress / hosts.length) * 100)"
@@ -91,7 +88,7 @@ const emit = defineEmits(['update:modelValue', 'success'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -112,11 +109,11 @@ async function loadLocations() {
   locationsLoading.value = true
   try {
     const res = await hostBatchApi.getLocations()
-    locationOptions.value = res?.data || res || ["互联网", "外联网", "内网环境、孤岛环境"]
+    locationOptions.value = res?.data || res || ['互联网', '外联网', '内网环境、孤岛环境']
   } catch (error) {
     console.error('加载网络区域失败:', error)
     // 降级兜底方案
-    locationOptions.value = ["互联网", "外联网", "内网环境、孤岛环境"]
+    locationOptions.value = ['互联网', '外联网', '内网环境、孤岛环境']
   } finally {
     locationsLoading.value = false
   }
@@ -144,9 +141,9 @@ async function handleSubmit() {
       hostIds,
       location: form.location
     })
-    
+
     ElMessage.success(`区域 [${form.location}] 设置成功！开始触发相关主机的漏洞紧急度规则重算...`)
-    
+
     // 2. 触发紧急度重算联动 (R2.4 强力推荐)
     saving.value = false
     recomputing.value = true
@@ -184,7 +181,7 @@ async function handleSubmit() {
   }
 }
 
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadLocations()
   }

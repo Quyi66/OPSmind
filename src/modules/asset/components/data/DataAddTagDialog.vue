@@ -6,18 +6,9 @@
     :close-on-click-modal="false"
     @closed="handleClosed"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-position="top"
-    >
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
       <el-form-item label="资产类型" prop="ciType">
-        <el-select
-          v-model="formData.ciType"
-          placeholder="请选择"
-          style="width: 100%"
-        >
+        <el-select v-model="formData.ciType" placeholder="请选择" style="width: 100%">
           <el-option
             v-for="item in resourceTypes"
             :key="item.code"
@@ -28,18 +19,13 @@
       </el-form-item>
 
       <el-form-item label="标签名称" prop="name">
-        <el-input
-          v-model="formData.name"
-          placeholder="请输入标签名称"
-        />
+        <el-input v-model="formData.name" placeholder="请输入标签名称" />
       </el-form-item>
     </el-form>
 
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">
-        保存
-      </el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
     </template>
   </el-dialog>
 </template>
@@ -61,7 +47,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const formRef = ref()
@@ -102,22 +88,19 @@ const handleSave = async () => {
   saving.value = true
   try {
     // Job: chq5Pe - 添加标签（与编辑标签使用同一个job，通过id是否为null区分）
-    await apiService.post(
-      `/jao/api/jao/jobs/chq5Pe/run?cacheBuster=${Date.now()}`,
-      {
-        params: {
-          id: null,
-          name: formData.value.name,
-          ciType: formData.value.ciType
-        }
+    await apiService.post(`/jao/api/jao/jobs/chq5Pe/run?cacheBuster=${Date.now()}`, {
+      params: {
+        id: null,
+        name: formData.value.name,
+        ciType: formData.value.ciType
       }
-    )
+    })
     ElMessage.success('添加成功')
     visible.value = false
     emit('saved')
   } catch (error) {
     console.error('添加标签失败:', error)
-    ElMessage.error('添加失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`添加失败: ${error.response?.data?.message || error.message}`)
   } finally {
     saving.value = false
   }
@@ -133,7 +116,7 @@ const handleClosed = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadResourceTypes()
   }

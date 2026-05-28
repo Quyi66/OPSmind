@@ -414,7 +414,7 @@ async function handleAvatarChange(file) {
       tempAvatarPath.value = uploadedFile.path
 
       // 更新头像预览（使用临时路径）
-      avatarUrl.value = getUploadBaseUrl() + '/temp' + uploadedFile.path
+      avatarUrl.value = `${getUploadBaseUrl()}/temp${uploadedFile.path}`
 
       // 更新表单中的 imageUrl
       form.imageUrl = uploadedFile.path
@@ -444,7 +444,7 @@ async function handleChangePassword() {
       headers: {
         'Content-Type': 'text/plain'
       },
-      transformRequest: [(data) => data]
+      transformRequest: [data => data]
     })
     ElMessage.success('密码修改成功')
     resetPasswordForm()

@@ -97,7 +97,7 @@ const emit = defineEmits(['update:visible'])
 // 对话框可见性
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 // 获取状态类型

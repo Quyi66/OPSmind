@@ -64,7 +64,9 @@ export function normalizeChangelog(value) {
 }
 
 function splitChangelogHeader(header) {
-  const normalizedHeader = String(header || '').trim().replace(/^\*\s*/, '')
+  const normalizedHeader = String(header || '')
+    .trim()
+    .replace(/^\*\s*/, '')
   if (!normalizedHeader) {
     return {
       headline: '',
@@ -76,9 +78,12 @@ function splitChangelogHeader(header) {
   }
 
   const separatorIndex = normalizedHeader.lastIndexOf(' - ')
-  const headline = separatorIndex === -1 ? normalizedHeader : normalizedHeader.slice(0, separatorIndex).trim()
+  const headline =
+    separatorIndex === -1 ? normalizedHeader : normalizedHeader.slice(0, separatorIndex).trim()
   const version = separatorIndex === -1 ? '' : normalizedHeader.slice(separatorIndex + 3).trim()
-  const headerMatch = headline.match(/^([A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4})\s+(.+?)(?:\s+<([^>]+)>)?$/)
+  const headerMatch = headline.match(
+    /^([A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4})\s+(.+?)(?:\s+<([^>]+)>)?$/
+  )
 
   if (headerMatch) {
     return {
@@ -184,7 +189,8 @@ export function parseRpmChangelog(value) {
   pushCurrentEntry()
 
   const hasStructuredEntries =
-    entries.some(entry => entry.header) && entries.some(entry => entry.items.length || entry.notes.length)
+    entries.some(entry => entry.header) &&
+    entries.some(entry => entry.items.length || entry.notes.length)
 
   if (!hasStructuredEntries) {
     return {
@@ -213,13 +219,18 @@ export function parseRpmChangelog(value) {
 
 export function normalizeRpmPackageDetail(rawDetail = {}) {
   const packageInfo =
-    rawDetail.packageInfo && typeof rawDetail.packageInfo === 'object' ? rawDetail.packageInfo : null
+    rawDetail.packageInfo && typeof rawDetail.packageInfo === 'object'
+      ? rawDetail.packageInfo
+      : null
 
   const baseDetail = packageInfo
     ? {
         ...packageInfo,
         description:
-          rawDetail.packageDescription || packageInfo.description || packageInfo.packageDescription || '',
+          rawDetail.packageDescription ||
+          packageInfo.description ||
+          packageInfo.packageDescription ||
+          '',
         changelog: rawDetail.changelog || packageInfo.changelog || '',
         services: rawDetail.services || packageInfo.services || []
       }
@@ -241,10 +252,12 @@ export function normalizeRpmPackageDetail(rawDetail = {}) {
     version: baseDetail.version || rawDetail.version || '',
     release: baseDetail.release || rawDetail.release || '',
     summary: baseDetail.summary || rawDetail.summary || '',
-    description: baseDetail.description || rawDetail.packageDescription || rawDetail.description || '',
+    description:
+      baseDetail.description || rawDetail.packageDescription || rawDetail.description || '',
     changelog: normalizeChangelog(baseDetail.changelog || rawDetail.changelog),
     services: normalizeServiceList(baseDetail.services || rawDetail.services),
-    rpmPath: baseDetail.rpmPath || baseDetail.rpm_path || rawDetail.rpmPath || rawDetail.rpm_path || ''
+    rpmPath:
+      baseDetail.rpmPath || baseDetail.rpm_path || rawDetail.rpmPath || rawDetail.rpm_path || ''
   }
 }
 

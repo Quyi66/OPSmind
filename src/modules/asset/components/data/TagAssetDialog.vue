@@ -205,7 +205,7 @@ const handleRemoveAsset = () => {
         loadAssetList()
       } catch (error) {
         console.error('移除失败:', error)
-        ElMessage.error('移除失败: ' + (error.response?.data?.message || error.message))
+        ElMessage.error(`移除失败: ${error.response?.data?.message || error.message}`)
       }
     })
     .catch(() => {})

@@ -42,7 +42,7 @@ const appletOptions = computed(() => [
 const filteredJobs = computed(() => {
   const keyword = appliedFilters.keyword.trim().toLowerCase()
 
-  return jobs.value.filter((job) => {
+  return jobs.value.filter(job => {
     if (appliedFilters.jobType !== 'all' && job.type !== appliedFilters.jobType) {
       return false
     }
@@ -63,13 +63,16 @@ const filteredJobs = computed(() => {
   })
 })
 
-const hasActiveFilters = computed(() => (
-  Boolean(appliedFilters.appletCode) ||
-  appliedFilters.jobType !== 'all' ||
-  Boolean(appliedFilters.keyword)
-))
+const hasActiveFilters = computed(
+  () =>
+    Boolean(appliedFilters.appletCode) ||
+    appliedFilters.jobType !== 'all' ||
+    Boolean(appliedFilters.keyword)
+)
 
-const emptyText = computed(() => (jobs.value.length ? '没有符合筛选条件的运维工具' : '暂无运维工具'))
+const emptyText = computed(() =>
+  jobs.value.length ? '没有符合筛选条件的运维工具' : '暂无运维工具'
+)
 
 function typeLabel(type) {
   return TYPE_LABELS[type] || type || '-'
@@ -140,7 +143,7 @@ async function loadJobs() {
 
 watch(
   () => visible.value,
-  async (isVisible) => {
+  async isVisible => {
     if (!isVisible) return
     syncFilters(true)
     handleSearch()
@@ -169,11 +172,19 @@ watch(
 </script>
 
 <template>
-  <el-drawer v-model="visible" :title="title" size="76%" destroy-on-close class="wb-workbench-drawer">
+  <el-drawer
+    v-model="visible"
+    :title="title"
+    size="76%"
+    destroy-on-close
+    class="wb-workbench-drawer"
+  >
     <template #footer>
       <div class="wb-drawer-footer">
         <span class="wb-drawer-footer__total">共 {{ filteredJobs.length }} 个</span>
-        <el-button link size="small" @click="emit('navigate', '/jao/jobs')">在运维工具箱管理</el-button>
+        <el-button link size="small" @click="emit('navigate', '/jao/jobs')">
+          在运维工具箱管理
+        </el-button>
       </div>
     </template>
 
@@ -198,9 +209,19 @@ watch(
             </el-select>
           </el-form-item>
           <el-form-item label="类型">
-            <el-select v-model="filters.jobType" placeholder="全部类型" style="width: 140px" @change="handleSearch">
+            <el-select
+              v-model="filters.jobType"
+              placeholder="全部类型"
+              style="width: 140px"
+              @change="handleSearch"
+            >
               <el-option label="全部类型" value="all" />
-              <el-option v-for="(label, value) in TYPE_LABELS" :key="value" :label="label" :value="value" />
+              <el-option
+                v-for="(label, value) in TYPE_LABELS"
+                :key="value"
+                :label="label"
+                :value="value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
@@ -221,7 +242,9 @@ watch(
 
         <div class="wb-job-filter-panel__summary">
           <span>筛选结果 {{ filteredJobs.length }} / {{ jobs.length }}</span>
-          <el-button v-if="hasActiveFilters" link type="primary" size="small" @click="handleReset">清空筛选</el-button>
+          <el-button v-if="hasActiveFilters" link type="primary" size="small" @click="handleReset">
+            清空筛选
+          </el-button>
         </div>
       </div>
 
@@ -234,8 +257,12 @@ watch(
         >
           <div class="wb-job-card__body">
             <div class="wb-job-card__head">
-              <el-tag :type="typeTag(job.type)" size="small" effect="dark">{{ typeLabel(job.type) }}</el-tag>
-              <span class="wb-job-card__meta-time">{{ formatDateTime(job.updatedAt || job.createdAt) }}</span>
+              <el-tag :type="typeTag(job.type)" size="small" effect="dark">
+                {{ typeLabel(job.type) }}
+              </el-tag>
+              <span class="wb-job-card__meta-time">
+                {{ formatDateTime(job.updatedAt || job.createdAt) }}
+              </span>
             </div>
             <span class="wb-job-card__name">{{ jobTitle(job) }}</span>
           </div>
@@ -249,12 +276,24 @@ watch(
               <i class="fa fa-cog" />
               <span>编辑</span>
             </button>
-            <button type="button" class="wb-job-card__action wb-job-card__action--danger" @click.stop="emit('delete', job)">
+            <button
+              type="button"
+              class="wb-job-card__action wb-job-card__action--danger"
+              @click.stop="emit('delete', job)"
+            >
               <i class="fa fa-trash" />
               <span>删除</span>
             </button>
-            <el-dropdown trigger="hover" placement="bottom-end" @command="handleMoreCommand(job, $event)">
-              <button type="button" class="wb-job-card__action wb-job-card__action--more" @click.stop>
+            <el-dropdown
+              trigger="hover"
+              placement="bottom-end"
+              @command="handleMoreCommand(job, $event)"
+            >
+              <button
+                type="button"
+                class="wb-job-card__action wb-job-card__action--more"
+                @click.stop
+              >
                 <i class="fa fa-ellipsis-h" />
               </button>
               <template #dropdown>
@@ -338,7 +377,10 @@ watch(
   background: var(--el-bg-color);
   overflow: hidden;
   box-shadow: 0 16px 32px -24px rgba(15, 23, 42, 0.45);
-  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
 
   &::before {
     content: '';
@@ -377,7 +419,11 @@ watch(
     align-items: stretch;
     justify-content: flex-start;
     gap: 8px;
-    background: linear-gradient(180deg, var(--el-fill-color-light) 0%, var(--el-fill-color-extra-light) 100%);
+    background: linear-gradient(
+      180deg,
+      var(--el-fill-color-light) 0%,
+      var(--el-fill-color-extra-light) 100%
+    );
   }
 
   &__head {
@@ -431,7 +477,9 @@ watch(
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
 
     &:hover {
       background: var(--el-fill-color-extra-light);

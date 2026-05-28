@@ -1,24 +1,49 @@
 <template>
-  <el-drawer v-model="visible" :title="title" size="540px" destroy-on-close class="wb-workbench-drawer">
+  <el-drawer
+    v-model="visible"
+    :title="title"
+    size="540px"
+    destroy-on-close
+    class="wb-workbench-drawer"
+  >
     <div v-loading="loading" class="wb-drawer-body">
       <div v-if="records.length" class="wb-drawer-run-list">
-        <div
-          v-for="item in records"
-          :key="item.id"
-          class="wb-drawer-run-item"
-        >
+        <div v-for="item in records" :key="item.id" class="wb-drawer-run-item">
           <div class="wb-drawer-run-item__info">
             <strong class="wb-drawer-run-item__name">{{ item.name }}</strong>
             <span
               class="wb-drawer-run-item__meta"
               :class="{ 'wb-drawer-run-item__meta--code': item.metaCode }"
-            >{{ item.meta }}</span>
+            >
+              {{ item.meta }}
+            </span>
           </div>
           <div class="wb-drawer-run-item__right">
-            <el-tag size="small" :type="safeTagType(item.tagType)" effect="plain">{{ item.tagLabel }}</el-tag>
-            <div v-if="drawerType === 'approval' || drawerType === 'command'" class="wb-drawer-run-item__actions">
-              <el-button class="wb-inline-action" link type="success" size="small" @click.stop="$emit('approve', item)">通过</el-button>
-              <el-button class="wb-inline-action" link type="danger" size="small" @click.stop="$emit('reject', item)">拒绝</el-button>
+            <el-tag size="small" :type="safeTagType(item.tagType)" effect="plain">
+              {{ item.tagLabel }}
+            </el-tag>
+            <div
+              v-if="drawerType === 'approval' || drawerType === 'command'"
+              class="wb-drawer-run-item__actions"
+            >
+              <el-button
+                class="wb-inline-action"
+                link
+                type="success"
+                size="small"
+                @click.stop="$emit('approve', item)"
+              >
+                通过
+              </el-button>
+              <el-button
+                class="wb-inline-action"
+                link
+                type="danger"
+                size="small"
+                @click.stop="$emit('reject', item)"
+              >
+                拒绝
+              </el-button>
             </div>
           </div>
         </div>
@@ -42,7 +67,7 @@ const props = defineProps({
   link: { type: String, default: '' },
   linkLabel: { type: String, default: '前往审核页面' },
   emptyText: { type: String, default: '暂无待审核记录' },
-  drawerType: { type: String, default: '' }   // 'approval' | 'command' | 'script'
+  drawerType: { type: String, default: '' } // 'approval' | 'command' | 'script'
 })
 
 defineEmits(['navigate', 'approve', 'reject'])
@@ -85,7 +110,9 @@ function safeTagType(type) {
   border-radius: 6px;
   border: 1px solid transparent;
   background: transparent;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 
   &:hover {
     background: #f8fafc;

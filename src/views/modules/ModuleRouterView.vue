@@ -28,7 +28,8 @@ const moduleDefinition = computed(() => {
 })
 const componentProps = computed(() => {
   const definition = moduleDefinition.value
-  const titleFromMeta = typeof route.meta?.moduleTitle === 'string' ? route.meta.moduleTitle : undefined
+  const titleFromMeta =
+    typeof route.meta?.moduleTitle === 'string' ? route.meta.moduleTitle : undefined
 
   return {
     moduleCode: moduleCode.value,

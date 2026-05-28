@@ -1,17 +1,6 @@
 <template>
-  <el-dialog
-    v-model="visible"
-    title="复制应用"
-    width="500px"
-    destroy-on-close
-    @close="handleClose"
-  >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="100px"
-    >
+  <el-dialog v-model="visible" title="复制应用" width="500px" destroy-on-close @close="handleClose">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="新名称" prop="title">
         <el-input v-model="form.title" placeholder="请输入新的应用名称" />
       </el-form-item>
@@ -22,9 +11,7 @@
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="warning" :loading="saving" @click="handleCopy">
-        复制
-      </el-button>
+      <el-button type="warning" :loading="saving" @click="handleCopy">复制</el-button>
     </template>
   </el-dialog>
 </template>
@@ -43,7 +30,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const saving = ref(false)
@@ -55,23 +42,28 @@ const form = ref({
 })
 
 const rules = {
-  title: [
-    { required: true, message: '请输入应用名称', trigger: 'blur' }
-  ],
+  title: [{ required: true, message: '请输入应用名称', trigger: 'blur' }],
   name: [
     { required: true, message: '请输入应用Code', trigger: 'blur' },
-    { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: 'Code必须以字母开头，只能包含字母、数字和下划线', trigger: 'blur' }
+    {
+      pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
+      message: 'Code必须以字母开头，只能包含字母、数字和下划线',
+      trigger: 'blur'
+    }
   ]
 }
 
-watch(() => props.modelValue, (val) => {
-  if (val && props.applet) {
-    form.value = {
-      title: props.applet.title + '_copy',
-      name: props.applet.name + '_copy'
+watch(
+  () => props.modelValue,
+  val => {
+    if (val && props.applet) {
+      form.value = {
+        title: `${props.applet.title}_copy`,
+        name: `${props.applet.name}_copy`
+      }
     }
   }
-})
+)
 
 async function handleCopy() {
   if (!formRef.value) return

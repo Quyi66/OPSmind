@@ -321,7 +321,7 @@ async function handleSubmit() {
     submitting.value = false
     currentStatus.value = ''
     console.error('创建用户失败:', error)
-    ElMessage.error('提交失败: ' + (error?.message || '未知错误'))
+    ElMessage.error(`提交失败: ${error?.message || '未知错误'}`)
   }
 }
 

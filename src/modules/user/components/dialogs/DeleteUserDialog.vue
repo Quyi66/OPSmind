@@ -205,7 +205,7 @@ async function handleSubmit() {
     submitting.value = false
     currentStatus.value = ''
     console.error('删除用户失败:', error)
-    ElMessage.error('删除用户失败: ' + (error?.message || '未知错误'))
+    ElMessage.error(`删除用户失败: ${error?.message || '未知错误'}`)
   }
 }
 

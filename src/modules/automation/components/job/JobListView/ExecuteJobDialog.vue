@@ -7,12 +7,7 @@
     @close="handleClose"
   >
     <div class="execute-dialog" v-loading="detailLoading">
-      <el-form
-        v-if="formSchema.length"
-        :model="formValues"
-        label-width="0"
-        label-position="top"
-      >
+      <el-form v-if="formSchema.length" :model="formValues" label-width="0" label-position="top">
         <template v-for="field in formSchema" :key="field.name">
           <el-form-item :label="field.label">
             <el-input v-model="formValues[field.name]" />
@@ -22,17 +17,11 @@
           </el-form-item>
         </template>
       </el-form>
-      <div v-else class="execute-dialog__empty">
-        当前运维工具暂无可配置参数
-      </div>
+      <div v-else class="execute-dialog__empty">当前运维工具暂无可配置参数</div>
     </div>
     <template #footer>
       <div class="dialog-footer">
-        <div
-          v-if="executionStatusLabel"
-          class="execute-status"
-          :class="executionStatusClass"
-        >
+        <div v-if="executionStatusLabel" class="execute-status" :class="executionStatusClass">
           <span>{{ executionStatusLabel }}</span>
         </div>
         <div class="dialog-footer__actions">
@@ -50,10 +39,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
-import {
-  JOB_STATUS_LABELS,
-  JOB_STATUS_CLASS_MAP
-} from '@/modules/automation/constants/jobStatus'
+import { JOB_STATUS_LABELS, JOB_STATUS_CLASS_MAP } from '@/modules/automation/constants/jobStatus'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -66,7 +52,7 @@ const emit = defineEmits(['update:visible', 'success'])
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value)
+  set: value => emit('update:visible', value)
 })
 
 const detailLoading = ref(false)
@@ -100,7 +86,7 @@ watch(
 
 watch(
   () => props.visible,
-  (visible) => {
+  visible => {
     if (!visible) {
       resetForm()
     }
@@ -129,14 +115,14 @@ async function fetchJobDetail(jobId) {
 /** 初始化执行表单 */
 function initializeForm(detail) {
   const params = Array.isArray(detail?.params) ? detail.params : []
-  formSchema.value = params.map((item) => ({
+  formSchema.value = params.map(item => ({
     name: item.name,
     label: item.label || item.name,
     description: item.description || '',
     defaultValue: item.defaultValue ?? ''
   }))
   const defaults = {}
-  formSchema.value.forEach((field) => {
+  formSchema.value.forEach(field => {
     defaults[field.name] = field.defaultValue
   })
   formValues.value = defaults
@@ -180,7 +166,9 @@ async function handleSubmit() {
       jobType: jobDetail.value?.type || props.jobType || '',
       jobTitle: jobDetail.value?.title || jobDetail.value?.jobTitle || ''
     })
-    ElMessage.success(runId ? '运维工具已提交执行，正在打开运行结果' : '运维工具已提交执行，正在刷新运行记录')
+    ElMessage.success(
+      runId ? '运维工具已提交执行，正在打开运行结果' : '运维工具已提交执行，正在刷新运行记录'
+    )
     handleClose()
   } catch (error) {
     ElMessage.error(error?.message || '执行运维工具失败')

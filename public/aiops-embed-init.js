@@ -22,7 +22,6 @@
           ls.getItem('DIFY_TOKEN') || ls.getItem('ops:dify_token') || ls.getItem('dify:token') || ''
       } catch (e) {
         //console.log(e)
-
       }
     }
     if (!token) token = DIFY_TOKEN
@@ -44,7 +43,13 @@
     }
 
     // Pass config to Dify
-    window.difyChatbotConfig = { token, baseUrl: difyBase, inputs: {}, systemVariables: {}, userVariables: {} }
+    window.difyChatbotConfig = {
+      token,
+      baseUrl: difyBase,
+      inputs: {},
+      systemVariables: {},
+      userVariables: {}
+    }
 
     // If already injected (same token as element id), try to open directly
     const existing = document.getElementById(token)

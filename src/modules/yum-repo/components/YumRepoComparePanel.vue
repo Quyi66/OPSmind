@@ -20,7 +20,14 @@
             </el-select>
           </el-form-item>
           <div class="win-patch-filter-actions">
-            <el-button type="primary" :loading="comparing" :disabled="!canCompare" @click="handleCompare">{{ compareActionLabel }}</el-button>
+            <el-button
+              type="primary"
+              :loading="comparing"
+              :disabled="!canCompare"
+              @click="handleCompare"
+            >
+              {{ compareActionLabel }}
+            </el-button>
             <el-button @click="handleReset">重置</el-button>
           </div>
           <div v-if="selectedSourceOverview" class="win-patch-filter-status">
@@ -99,7 +106,11 @@
             </el-table-column>
             <el-table-column label="严重等级" width="120" align="center">
               <template #default="{ row }">
-                <el-tag size="small" effect="plain" :type="getSeverityTagType(pickValue(row, ['severity'], ''))">
+                <el-tag
+                  size="small"
+                  effect="plain"
+                  :type="getSeverityTagType(pickValue(row, ['severity'], ''))"
+                >
                   {{ getSeverityLabel(pickValue(row, ['severity'], '-')) }}
                 </el-tag>
               </template>
@@ -143,7 +154,9 @@
             </el-table-column>
             <el-table-column label="操作" width="90" fixed="right" align="center">
               <template #default="{ row }">
-                <el-button text type="primary" size="small" @click="handleOpenDetail(row)">详情</el-button>
+                <el-button text type="primary" size="small" @click="handleOpenDetail(row)">
+                  详情
+                </el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -164,7 +177,9 @@
       </div>
 
       <div v-else class="win-patch-yum-empty">
-        <el-empty description="当前仓库暂无补丁比对结果，可等待自动比对完成；如长时间未出现可手动重试" />
+        <el-empty
+          description="当前仓库暂无补丁比对结果，可等待自动比对完成；如长时间未出现可手动重试"
+        />
       </div>
     </template>
 
@@ -281,14 +296,18 @@ const selectedSourceOverview = computed(() => {
   const currentConfigId = normalizedSelectedConfigId.value
   const currentRepoId = String(selectedRepoModel.value || '').trim()
 
-  return overviewSources.value.find(item => {
-    const overviewConfig = normalizeYumConfigRecord(item)
-    const overviewConfigId = resolveYumConfigId(overviewConfig)
+  return (
+    overviewSources.value.find(item => {
+      const overviewConfig = normalizeYumConfigRecord(item)
+      const overviewConfigId = resolveYumConfigId(overviewConfig)
 
-    return overviewConfigId === currentConfigId
-      || overviewConfigId === currentRepoId
-      || overviewConfig.sourceIds.includes(currentRepoId)
-  }) || null
+      return (
+        overviewConfigId === currentConfigId ||
+        overviewConfigId === currentRepoId ||
+        overviewConfig.sourceIds.includes(currentRepoId)
+      )
+    }) || null
+  )
 })
 
 const selectedConfig = computed(() => {
@@ -297,10 +316,12 @@ const selectedConfig = computed(() => {
     return null
   }
 
-  return props.configs.find(item => {
-    const config = normalizeYumConfigRecord(item)
-    return resolveYumConfigId(config) === currentConfigId
-  }) || null
+  return (
+    props.configs.find(item => {
+      const config = normalizeYumConfigRecord(item)
+      return resolveYumConfigId(config) === currentConfigId
+    }) || null
+  )
 })
 
 const selectedConfigId = computed(() => resolveYumConfigId(selectedConfig.value))
@@ -314,11 +335,15 @@ const canCompare = computed(() => {
     return isYumRepoCollectSucceeded(selectedConfig.value)
   }
 
-  return Boolean(selectedSourceOverview.value) && isYumRepoCollectSucceeded(selectedSourceOverview.value)
+  return (
+    Boolean(selectedSourceOverview.value) && isYumRepoCollectSucceeded(selectedSourceOverview.value)
+  )
 })
 
 const compareActionLabel = computed(() => {
-  return diffRunId.value || selectedSourceOverview.value?.diffRunId ? '重新执行比对' : '手动执行比对'
+  return diffRunId.value || selectedSourceOverview.value?.diffRunId
+    ? '重新执行比对'
+    : '手动执行比对'
 })
 
 const patchViewEmptyText = computed(() => {
@@ -340,20 +365,27 @@ function getCurrentRepoId() {
 }
 
 function isCompareRequestCurrent(requestId, contextId, repoId) {
-  return requestId === compareRequestId.value
-    && contextId === resultContextId.value
-    && repoId === getCurrentRepoId()
+  return (
+    requestId === compareRequestId.value &&
+    contextId === resultContextId.value &&
+    repoId === getCurrentRepoId()
+  )
 }
 
 function isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunId) {
-  return requestId === patchViewRequestId.value
-    && contextId === resultContextId.value
-    && repoId === getCurrentRepoId()
-    && currentDiffRunId === String(diffRunId.value || '').trim()
+  return (
+    requestId === patchViewRequestId.value &&
+    contextId === resultContextId.value &&
+    repoId === getCurrentRepoId() &&
+    currentDiffRunId === String(diffRunId.value || '').trim()
+  )
 }
 
 async function syncSelectedRepoResult(options = {}) {
-  if (normalizedSelectedConfigId.value && normalizedSelectedConfigId.value !== selectedRepoModel.value) {
+  if (
+    normalizedSelectedConfigId.value &&
+    normalizedSelectedConfigId.value !== selectedRepoModel.value
+  ) {
     selectedRepoModel.value = normalizedSelectedConfigId.value
   }
 
@@ -412,7 +444,10 @@ async function loadPatchView(options = {}) {
     patchViewList.value = page.content
     pagination.total = page.total
   } catch (error) {
-    if (!options.silent && isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunId)) {
+    if (
+      !options.silent &&
+      isPatchViewRequestCurrent(requestId, contextId, repoId, currentDiffRunId)
+    ) {
       console.error('加载补丁视图失败:', error)
       ElMessage.error('加载补丁视图失败')
     }

@@ -19,12 +19,11 @@
       </template>
 
       <template v-else>
-
         <!-- ② 检查结果分布（单行 5 列条形进度条） -->
         <section class="aw-panel distribution-bar-section mb-4">
           <div class="aw-panel__header">
             <div class="aw-panel__title-group">
-              <i class="fas fa-chart-bar" style="color: var(--aw-accent); font-size: 14px;"></i>
+              <i class="fas fa-chart-bar" style="color: var(--aw-accent); font-size: 14px"></i>
               <h3 class="aw-panel__title">检查结果分布</h3>
             </div>
           </div>
@@ -46,10 +45,7 @@
                 </span>
               </div>
               <div class="dist-bar-track">
-                <div
-                  class="dist-bar-fill"
-                  :style="{ width: item.percent + '%' }"
-                ></div>
+                <div class="dist-bar-fill" :style="{ width: item.percent + '%' }"></div>
               </div>
             </div>
           </div>
@@ -61,10 +57,11 @@
           <section class="aw-panel recent-panel">
             <div class="aw-panel__header">
               <div class="aw-panel__title-group">
-                <i class="fas fa-history" style="color: var(--aw-accent); font-size: 14px;"></i>
+                <i class="fas fa-history" style="color: var(--aw-accent); font-size: 14px"></i>
                 <h3 class="aw-panel__title">最近执行记录</h3>
                 <span class="aw-panel__stat-badge" v-if="recentExecutions.length > 0">
-                  <strong>{{ recentExecutions.length }}</strong> 条
+                  <strong>{{ recentExecutions.length }}</strong>
+                  条
                 </span>
               </div>
             </div>
@@ -96,12 +93,12 @@
                 </div>
                 <div class="recent-status">
                   <template v-if="exec.stats">
-                    <el-tag
-                      :type="exec.stats.failed > 0 ? 'danger' : 'success'"
-                      size="small"
-                      round
-                    >
-                      <i :class="exec.stats.failed > 0 ? 'fas fa-exclamation-triangle' : 'fas fa-check'"></i>
+                    <el-tag :type="exec.stats.failed > 0 ? 'danger' : 'success'" size="small" round>
+                      <i
+                        :class="
+                          exec.stats.failed > 0 ? 'fas fa-exclamation-triangle' : 'fas fa-check'
+                        "
+                      ></i>
                       {{ exec.stats.failed > 0 ? `${exec.stats.failed} 失败` : '全部通过' }}
                     </el-tag>
                   </template>
@@ -125,10 +122,11 @@
           <section class="aw-panel templates-panel">
             <div class="aw-panel__header">
               <div class="aw-panel__title-group">
-                <i class="fas fa-th-large" style="color: var(--aw-accent); font-size: 14px;"></i>
+                <i class="fas fa-th-large" style="color: var(--aw-accent); font-size: 14px"></i>
                 <h3 class="aw-panel__title">模板健康度</h3>
                 <span class="aw-panel__stat-badge">
-                  <strong>{{ filteredTemplateList.length }}</strong> / {{ templateList.length }}
+                  <strong>{{ filteredTemplateList.length }}</strong>
+                  / {{ templateList.length }}
                 </span>
               </div>
               <div class="aw-panel__header-actions">
@@ -187,9 +185,7 @@
                       <template v-if="template.executedTime">
                         {{ template.executedTime }}
                       </template>
-                      <template v-else>
-                        未执行
-                      </template>
+                      <template v-else>未执行</template>
                     </div>
                   </div>
 
@@ -241,21 +237,42 @@
 
                   <!-- 底部（平铺功能按钮） -->
                   <div class="hc-footer">
-                    <el-button type="primary" link size="small" @click.stop="handleCommand('run', template)">
-                      <i class="fas fa-play mr-1"></i> 执行
+                    <el-button
+                      type="primary"
+                      link
+                      size="small"
+                      @click.stop="handleCommand('run', template)"
+                    >
+                      <i class="fas fa-play mr-1"></i>
+                      执行
                     </el-button>
-                    <el-button type="primary" link size="small" @click.stop="handleCommand('edit', template)">
-                      <i class="fas fa-edit mr-1"></i> 编辑
+                    <el-button
+                      type="primary"
+                      link
+                      size="small"
+                      @click.stop="handleCommand('edit', template)"
+                    >
+                      <i class="fas fa-edit mr-1"></i>
+                      编辑
                     </el-button>
-                    <el-button type="danger" link size="small" @click.stop="handleCommand('delete', template)">
-                      <i class="fas fa-trash-alt mr-1"></i> 删除
+                    <el-button
+                      type="danger"
+                      link
+                      size="small"
+                      @click.stop="handleCommand('delete', template)"
+                    >
+                      <i class="fas fa-trash-alt mr-1"></i>
+                      删除
                     </el-button>
                   </div>
                 </div>
               </div>
 
               <!-- 空状态 -->
-              <el-empty v-else-if="!loading && templateList.length === 0" description="暂无巡检模板">
+              <el-empty
+                v-else-if="!loading && templateList.length === 0"
+                description="暂无巡检模板"
+              >
                 <el-button type="primary" @click="goToAddTemplate">
                   <i class="fa fa-plus"></i>
                   新增模板
@@ -318,7 +335,6 @@ const editTemplateId = ref('')
 const runDialogVisible = ref(false)
 const runTemplateId = ref('')
 
-
 function getPassRateClass(rate) {
   if (rate === null || rate === undefined) return 'rate-none'
   if (rate >= 90) return 'rate-high'
@@ -352,11 +368,11 @@ function handleCommand(command, template) {
 
 async function deleteTemplate(template) {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除模板「${template.templateName}」吗？`,
-      '删除确认',
-      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' }
-    )
+    await ElMessageBox.confirm(`确定要删除模板「${template.templateName}」吗？`, '删除确认', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
     await templateApi.deleteTemplate(template.id)
     ElMessage.success('删除成功')
     refreshAll()
@@ -368,8 +384,12 @@ async function deleteTemplate(template) {
   }
 }
 
-function handleEditSuccess() { refreshAll() }
-function handleRunSuccess() { refreshAll() }
+function handleEditSuccess() {
+  refreshAll()
+}
+function handleRunSuccess() {
+  refreshAll()
+}
 
 function goToResult(jobId) {
   if (jobId) router.push(`/cac/results/${jobId}`)
@@ -379,7 +399,9 @@ function goToAddTemplate() {
   router.push('/cac/templates?action=add')
 }
 
-onMounted(() => { initData() })
+onMounted(() => {
+  initData()
+})
 </script>
 
 <style scoped lang="scss">
@@ -449,7 +471,9 @@ html.dark .overview-dashboard {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04), var(--aw-panel-shadow);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.04),
+      var(--aw-panel-shadow);
   }
 }
 
@@ -512,8 +536,9 @@ html.dark .overview-dashboard {
     border: 1px solid var(--aw-panel-border);
     box-shadow: none !important;
     padding: 0 10px;
-    
-    &:hover, &.is-focus {
+
+    &:hover,
+    &.is-focus {
       border-color: var(--aw-accent);
     }
 
@@ -529,7 +554,7 @@ html.dark .overview-dashboard {
     background-color: var(--aw-bg);
     border: 1px solid var(--aw-panel-border);
     color: var(--aw-text-secondary);
-    
+
     &:hover {
       border-color: var(--aw-accent);
       color: var(--aw-accent);
@@ -537,7 +562,6 @@ html.dark .overview-dashboard {
     }
   }
 }
-
 
 /* ───── ④ 检查结果分布 ───── */
 .distribution-bar-section {
@@ -735,7 +759,10 @@ html.dark .overview-dashboard {
   align-items: center;
   gap: 6px;
 
-  i { font-size: 11px; margin-right: 2px; }
+  i {
+    font-size: 11px;
+    margin-right: 2px;
+  }
 }
 
 .recent-dot {
@@ -784,7 +811,9 @@ html.dark .overview-dashboard {
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06), var(--aw-panel-shadow);
+    box-shadow:
+      0 12px 28px rgba(0, 0, 0, 0.06),
+      var(--aw-panel-shadow);
     border-color: var(--aw-accent);
 
     .hc-icon {
@@ -801,10 +830,18 @@ html.dark .overview-dashboard {
 .hc-color-strip {
   height: 3px;
 
-  &.rate-high { background: linear-gradient(90deg, #10b981, #34d399); }
-  &.rate-mid { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-  &.rate-low { background: linear-gradient(90deg, #ef4444, #f87171); }
-  &.rate-none { background: var(--aw-panel-border); }
+  &.rate-high {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+  &.rate-mid {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  }
+  &.rate-low {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+  }
+  &.rate-none {
+    background: var(--aw-panel-border);
+  }
 }
 
 .hc-header {
@@ -825,10 +862,22 @@ html.dark .overview-dashboard {
   flex-shrink: 0;
   transition: transform 0.3s;
 
-  &.rate-high { background: rgba(16, 185, 129, 0.08); color: #10b981; }
-  &.rate-mid { background: rgba(245, 158, 11, 0.08); color: #f59e0b; }
-  &.rate-low { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
-  &.rate-none { background: var(--aw-bg); color: var(--aw-text-muted); }
+  &.rate-high {
+    background: rgba(16, 185, 129, 0.08);
+    color: #10b981;
+  }
+  &.rate-mid {
+    background: rgba(245, 158, 11, 0.08);
+    color: #f59e0b;
+  }
+  &.rate-low {
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+  }
+  &.rate-none {
+    background: var(--aw-bg);
+    color: var(--aw-text-muted);
+  }
 }
 
 .hc-title-wrap {
@@ -861,10 +910,22 @@ html.dark .overview-dashboard {
   align-self: center;
   flex-shrink: 0;
 
-  &.rate-high { background: rgba(16, 185, 129, 0.08); color: #10b981; }
-  &.rate-mid { background: rgba(245, 158, 11, 0.08); color: #f59e0b; }
-  &.rate-low { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
-  &.rate-none { background: var(--aw-bg); color: var(--aw-text-muted); }
+  &.rate-high {
+    background: rgba(16, 185, 129, 0.08);
+    color: #10b981;
+  }
+  &.rate-mid {
+    background: rgba(245, 158, 11, 0.08);
+    color: #f59e0b;
+  }
+  &.rate-low {
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+  }
+  &.rate-none {
+    background: var(--aw-bg);
+    color: var(--aw-text-muted);
+  }
 }
 
 /* 通过率进度条区域 */
@@ -888,9 +949,15 @@ html.dark .overview-dashboard {
   font-size: 16px;
   font-weight: 700;
 
-  &.rate-high { color: #10b981; }
-  &.rate-mid { color: #f59e0b; }
-  &.rate-low { color: #ef4444; }
+  &.rate-high {
+    color: #10b981;
+  }
+  &.rate-mid {
+    color: #f59e0b;
+  }
+  &.rate-low {
+    color: #ef4444;
+  }
 }
 
 .progress-track {
@@ -906,9 +973,15 @@ html.dark .overview-dashboard {
   transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 0;
 
-  &.rate-high { background: linear-gradient(90deg, #10b981, #34d399); }
-  &.rate-mid { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-  &.rate-low { background: linear-gradient(90deg, #ef4444, #f87171); }
+  &.rate-high {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+  &.rate-mid {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  }
+  &.rate-low {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+  }
 }
 
 /* 四格统计 */
@@ -936,10 +1009,18 @@ html.dark .overview-dashboard {
   font-variant-numeric: tabular-nums;
 }
 
-.metric-ok .metric-num { color: #10b981; }
-.metric-fail .metric-num { color: #ef4444; }
-.metric-check .metric-num { color: #3b82f6; }
-.metric-skip .metric-num { color: #64748b; }
+.metric-ok .metric-num {
+  color: #10b981;
+}
+.metric-fail .metric-num {
+  color: #ef4444;
+}
+.metric-check .metric-num {
+  color: #3b82f6;
+}
+.metric-skip .metric-num {
+  color: #64748b;
+}
 
 .metric-txt {
   font-size: 11px;
@@ -976,17 +1057,17 @@ html.dark .overview-dashboard {
   .el-button {
     font-weight: 600;
     color: var(--aw-text-secondary);
-    
+
     i {
       font-size: 11px;
       margin-right: 2px;
     }
-    
+
     &:hover {
       color: var(--aw-accent);
       background-color: transparent !important;
     }
-    
+
     &.el-button--danger {
       &:hover {
         color: var(--el-color-danger);
@@ -1000,7 +1081,6 @@ html.dark .overview-dashboard {
 .skeleton-section {
   padding: 0;
 }
-
 
 .skeleton-bar-row {
   margin-bottom: 20px;
@@ -1035,4 +1115,3 @@ html.dark .overview-dashboard {
   padding: 0 !important;
 }
 </style>
-

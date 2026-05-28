@@ -32,12 +32,7 @@
       <!-- 命令信息 -->
       <el-form-item label="选中命令">
         <div class="selected-commands">
-          <el-tag
-            v-for="cmd in commandList"
-            :key="cmd.id"
-            type="info"
-            class="command-tag"
-          >
+          <el-tag v-for="cmd in commandList" :key="cmd.id" type="info" class="command-tag">
             {{ cmd.name }}
           </el-tag>
         </div>
@@ -103,7 +98,7 @@ const props = defineProps({
   mode: {
     type: String,
     default: 'run', // 'run' 或 'createJob'
-    validator: (value) => ['run', 'createJob'].includes(value)
+    validator: value => ['run', 'createJob'].includes(value)
   }
 })
 
@@ -112,7 +107,7 @@ const emit = defineEmits(['update:visible', 'success'])
 // 对话框可见性
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 // 设备选择器可见性
@@ -173,15 +168,18 @@ watch(
 )
 
 // 监听对话框打开
-watch(() => props.visible, (val) => {
-  if (val) {
-    resetForm()
-    // 如果是创建作业模式，默认使用命令名称作为标题
-    if (isCreateJobMode.value && commandList.value.length === 1) {
-      formData.title = commandList.value[0].name + ' 运维工具'
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      resetForm()
+      // 如果是创建作业模式，默认使用命令名称作为标题
+      if (isCreateJobMode.value && commandList.value.length === 1) {
+        formData.title = `${commandList.value[0].name} 运维工具`
+      }
     }
   }
-})
+)
 
 // 重置表单
 function resetForm() {
@@ -222,7 +220,7 @@ async function handleRunCommand() {
     handleClose()
   } catch (error) {
     console.error('执行命令失败:', error)
-    ElMessage.error('执行命令失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`执行命令失败: ${error.message || '未知错误'}`)
   } finally {
     submitting.value = false
   }
@@ -253,7 +251,7 @@ async function handleSaveJob() {
     handleClose()
   } catch (error) {
     console.error('创建运维工具失败:', error)
-    ElMessage.error('创建运维工具失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`创建运维工具失败: ${error.message || '未知错误'}`)
   } finally {
     submitting.value = false
   }

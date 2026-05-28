@@ -29,7 +29,6 @@
         ref="tableRef"
         v-loading="loading"
         :data="assetList"
-
         max-height="350"
         @selection-change="handleSelectionChange"
       >
@@ -98,7 +97,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const tableRef = ref()
@@ -115,19 +114,23 @@ const loadAssetList = async () => {
   loading.value = true
   try {
     // 获取该资产类型下的所有资产
-    const res = await dtsApi.queryData('ACM_CI_BY_CIT', {
-      assetType: props.groupData.ci_type,
-      permission: 'r',
-      status: 'all',
-      CONN_LATEST_STATUS: '',
-      system_name: ' ',
-      os_version: ' ',
-      hostKeys: '/'  // 获取所有资产
-    }, {
-      size: pagination.value.size,
-      page: pagination.value.page,
-      filter: keyword.value || ''
-    })
+    const res = await dtsApi.queryData(
+      'ACM_CI_BY_CIT',
+      {
+        assetType: props.groupData.ci_type,
+        permission: 'r',
+        status: 'all',
+        CONN_LATEST_STATUS: '',
+        system_name: ' ',
+        os_version: ' ',
+        hostKeys: '/' // 获取所有资产
+      },
+      {
+        size: pagination.value.size,
+        page: pagination.value.page,
+        filter: keyword.value || ''
+      }
+    )
     assetList.value = res?.records || []
     pagination.value.total = res?.total || 0
   } catch (error) {
@@ -139,7 +142,7 @@ const loadAssetList = async () => {
 }
 
 // 选择变化
-const handleSelectionChange = (rows) => {
+const handleSelectionChange = rows => {
   selectedRows.value = rows
 }
 
@@ -167,7 +170,7 @@ const handleSave = async () => {
     emit('saved')
   } catch (error) {
     console.error('添加失败:', error)
-    ElMessage.error('添加失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`添加失败: ${error.response?.data?.message || error.message}`)
   } finally {
     saving.value = false
   }
@@ -182,7 +185,7 @@ const handleClosed = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadAssetList()
   }

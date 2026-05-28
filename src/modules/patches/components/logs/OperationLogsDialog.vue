@@ -19,7 +19,12 @@
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
-            <el-select v-model="statusFilter" style="width: 100px" clearable @change="handleFilterChange">
+            <el-select
+              v-model="statusFilter"
+              style="width: 100px"
+              clearable
+              @change="handleFilterChange"
+            >
               <el-option label="全部" value="all" />
               <el-option label="完成" value="COMPLETED" />
               <el-option label="失败" value="FAILED" />
@@ -28,7 +33,12 @@
             </el-select>
           </el-form-item>
           <el-form-item label="操作">
-            <el-select v-model="actionFilter" style="width: 150px" clearable @change="handleFilterChange">
+            <el-select
+              v-model="actionFilter"
+              style="width: 150px"
+              clearable
+              @change="handleFilterChange"
+            >
               <el-option label="全部" value="all" />
               <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
               <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
@@ -42,13 +52,7 @@
       </div>
 
       <!-- 表格 -->
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-
-        size="small"
-        max-height="500px"
-      >
+      <el-table v-loading="loading" :data="tableData" size="small" max-height="500px">
         <el-table-column prop="start_time" label="开始时间" width="160">
           <template #default="{ row }">
             {{ formatDateTime(row.start_time) }}
@@ -86,7 +90,9 @@
         <el-table-column :width="actionColumnWidth" fixed="right" label="操作">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button type="primary" size="small" text @click="handleViewDetail(row)">详情</el-button>
+              <el-button type="primary" size="small" text @click="handleViewDetail(row)">
+                详情
+              </el-button>
               <el-button
                 v-if="canShowWindowsScanReport(row)"
                 size="small"
@@ -152,15 +158,9 @@
     :run-id="selectedRunId"
   />
 
-  <ScanReportDialog
-    v-model="scanReportVisible"
-    :run-id="scanReportRunId"
-  />
+  <ScanReportDialog v-model="scanReportVisible" :run-id="scanReportRunId" />
 
-  <WindowsScanReportDialog
-    v-model="winScanReportVisible"
-    :run-id="winScanReportRunId"
-  />
+  <WindowsScanReportDialog v-model="winScanReportVisible" :run-id="winScanReportRunId" />
 </template>
 
 <script setup>
@@ -189,7 +189,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -214,8 +214,8 @@ const winScanReportRunId = ref('')
 
 const actionColumnWidth = computed(() => {
   const hasWindows = tableData.value.some(row => canShowWindowsScanReport(row))
-  const hasOther = tableData.value.some(row =>
-    canShowScanReport(row) || canShowInstallReport(row) || canShowRollbackReport(row)
+  const hasOther = tableData.value.some(
+    row => canShowScanReport(row) || canShowInstallReport(row) || canShowRollbackReport(row)
   )
   if (!hasWindows && !hasOther) return 80
   return hasWindows ? 190 : 130
@@ -456,15 +456,12 @@ async function fetchReportFileInfo(path) {
   const api = useApi()
   const tenantId = authService.getTenantId()
   const encodedPath = encodeURIComponent(path)
-  const response = await api.get(
-    `/gfs/api/gfs/v2/staticfs/f/${tenantId}/file/${encodedPath}`,
-    {
-      params: {
-        cacheBuster: Date.now(),
-        isContent: true
-      }
+  const response = await api.get(`/gfs/api/gfs/v2/staticfs/f/${tenantId}/file/${encodedPath}`, {
+    params: {
+      cacheBuster: Date.now(),
+      isContent: true
     }
-  )
+  })
   return response?.data || response
 }
 
@@ -516,7 +513,7 @@ async function downloadReport(row, dir, extension) {
     const filename = `${dir}_${formatFilenameTimestamp(row.start_time)}.${extension}`
     downloadFile('staticfs', null, `VAP_EXPORT_DATA/${dir}/${filePath}`, filename)
   } catch (error) {
-    ElMessage.error('下载报告失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`下载报告失败: ${error.message || '未知错误'}`)
   }
 }
 
@@ -558,14 +555,14 @@ async function downloadInstallReport(row) {
       : 'VAP_EXPORT_DATA/patch_install/'
     const fileInfo = await fetchReportFileInfo(reportPath)
     const downloadUri = fileInfo?.fileContent?.downloadUri || fileInfo?.downloadUri
-    const filename = fileInfo?.fileContent?.name
-      || `patch_install_${formatFilenameTimestamp(row.start_time)}.html`
+    const filename =
+      fileInfo?.fileContent?.name || `patch_install_${formatFilenameTimestamp(row.start_time)}.html`
     if (!downloadUri) {
       throw new Error('未找到下载地址')
     }
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
-    ElMessage.error('下载安装报告失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`下载安装报告失败: ${error.message || '未知错误'}`)
   }
 }
 
@@ -602,7 +599,7 @@ async function downloadRollbackReport(row) {
     const filename = resolveDownloadFilename(fileInfo, 'patch_rollback', row.start_time)
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
-    ElMessage.error('下载回退报告失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`下载回退报告失败: ${error.message || '未知错误'}`)
   }
 }
 
@@ -652,14 +649,17 @@ function stopPolling() {
 }
 
 // 监听对话框打开
-watch(() => props.modelValue, (val) => {
-  if (val) {
-    loadData()
-    startPolling()
-  } else {
-    stopPolling()
+watch(
+  () => props.modelValue,
+  val => {
+    if (val) {
+      loadData()
+      startPolling()
+    } else {
+      stopPolling()
+    }
   }
-})
+)
 
 onMounted(() => {
   if (props.modelValue) {

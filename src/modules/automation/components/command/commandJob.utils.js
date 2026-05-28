@@ -6,7 +6,7 @@ function normalizeCommandRefs(commands) {
   }
 
   return commands
-    .map((command) => {
+    .map(command => {
       if (command == null) {
         return null
       }
@@ -23,10 +23,12 @@ function normalizeCommandRefs(commands) {
 
 export function buildCommandJobConfig(commands, hosts, fallbackAssetType = 'linux') {
   return JSON.stringify({
-    tasks: [{
-      commands: normalizeCommandRefs(commands),
-      hosts: normalizeAcmDeviceJobHosts(hosts, fallbackAssetType)
-    }]
+    tasks: [
+      {
+        commands: normalizeCommandRefs(commands),
+        hosts: normalizeAcmDeviceJobHosts(hosts, fallbackAssetType)
+      }
+    ]
   })
 }
 

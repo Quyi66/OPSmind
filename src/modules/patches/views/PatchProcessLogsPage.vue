@@ -504,7 +504,9 @@ const detailDisplayType = computed(() =>
 )
 const detailOperationConfig = computed(() => getPatchTaskDisplayConfig(detailDisplayType.value))
 const detailWizardSteps = computed(() => getPatchTaskWizardSteps(detailDisplayType.value))
-const detailCurrentStepKey = computed(() => detailWizardSteps.value[detailStep.value]?.key || 'select')
+const detailCurrentStepKey = computed(
+  () => detailWizardSteps.value[detailStep.value]?.key || 'select'
+)
 const sortedDetailHistory = computed(() =>
   [...detailHistory.value].sort((left, right) => {
     const seqDiff = Number(left?.seqNo ?? 0) - Number(right?.seqNo ?? 0)
@@ -574,12 +576,24 @@ const executeLatestRecord = computed(() =>
   getLatestRecord(executeRecords.value, isExecutionLikeRecord)
 )
 const preCheckAlert = computed(() =>
-  buildScriptAlert('pre', preCheckLatestRecord.value, preCheckScriptContent.value, getStepStatus('PRE_CHECK'))
+  buildScriptAlert(
+    'pre',
+    preCheckLatestRecord.value,
+    preCheckScriptContent.value,
+    getStepStatus('PRE_CHECK')
+  )
 )
 const validateAlert = computed(() =>
-  buildScriptAlert('validate', validateLatestRecord.value, validateScriptContent.value, getStepStatus('VALIDATE'))
+  buildScriptAlert(
+    'validate',
+    validateLatestRecord.value,
+    validateScriptContent.value,
+    getStepStatus('VALIDATE')
+  )
 )
-const restartAlert = computed(() => buildRestartAlert(detailTask.value, restartLatestRecord.value, getStepStatus('RESTART')))
+const restartAlert = computed(() =>
+  buildRestartAlert(detailTask.value, restartLatestRecord.value, getStepStatus('RESTART'))
+)
 const pipelineItems = computed(() => {
   const executeStepKey = detailTaskType.value === 'rollback' ? 'ROLLBACK' : 'INSTALL'
   return [
@@ -765,15 +779,30 @@ function formatTaskFieldValue(value) {
 }
 
 function getPreCheckRunId() {
-  return getStepRunId('PRE_CHECK') || preCheckLatestRecord.value?.runId || detailTask.value?.preCheckRunId || ''
+  return (
+    getStepRunId('PRE_CHECK') ||
+    preCheckLatestRecord.value?.runId ||
+    detailTask.value?.preCheckRunId ||
+    ''
+  )
 }
 
 function getValidateRunId() {
-  return getStepRunId('VALIDATE') || validateLatestRecord.value?.runId || detailTask.value?.validateRunId || ''
+  return (
+    getStepRunId('VALIDATE') ||
+    validateLatestRecord.value?.runId ||
+    detailTask.value?.validateRunId ||
+    ''
+  )
 }
 
 function getRestartRunId() {
-  return getStepRunId('RESTART') || restartLatestRecord.value?.runId || detailTask.value?.restartRunId || ''
+  return (
+    getStepRunId('RESTART') ||
+    restartLatestRecord.value?.runId ||
+    detailTask.value?.restartRunId ||
+    ''
+  )
 }
 
 function formatTaskType(taskType) {
@@ -1017,13 +1046,17 @@ function getWizardStepState(stepKey) {
   if (stepKey === 'pre') {
     const status = getStepStatus('PRE_CHECK')
     if (status) return stepStatusToDisplayState(status)
-    return getRecordDisplayState(preCheckLatestRecord.value || getLatestRecord(preCheckRecords.value))
+    return getRecordDisplayState(
+      preCheckLatestRecord.value || getLatestRecord(preCheckRecords.value)
+    )
   }
 
   if (stepKey === 'validate') {
     const status = getStepStatus('VALIDATE')
     if (status) return stepStatusToDisplayState(status)
-    return getRecordDisplayState(validateLatestRecord.value || getLatestRecord(validateRecords.value))
+    return getRecordDisplayState(
+      validateLatestRecord.value || getLatestRecord(validateRecords.value)
+    )
   }
 
   if (stepKey === 'restart') {

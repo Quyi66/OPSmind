@@ -84,10 +84,20 @@
 
           <!-- 表格区域 -->
           <div class="ops-table-wrapper card-table">
-            <el-table v-loading="groupLoading" :data="groupList" height="100%" row-class-name="modern-table-row">
+            <el-table
+              v-loading="groupLoading"
+              :data="groupList"
+              height="100%"
+              row-class-name="modern-table-row"
+            >
               <el-table-column prop="path" label="分组路径" min-width="220" sortable>
                 <template #default="{ row }">
-                  <el-link type="primary" :underline="false" class="path-link" @click="handleViewGroup(row)">
+                  <el-link
+                    type="primary"
+                    :underline="false"
+                    class="path-link"
+                    @click="handleViewGroup(row)"
+                  >
                     <i class="fa fa-folder-open folder-icon-decorator"></i>
                     {{ row.path }}
                   </el-link>
@@ -196,10 +206,20 @@
 
           <!-- 表格区域 -->
           <div class="ops-table-wrapper card-table">
-            <el-table v-loading="tagLoading" :data="tagList" height="100%" row-class-name="modern-table-row">
+            <el-table
+              v-loading="tagLoading"
+              :data="tagList"
+              height="100%"
+              row-class-name="modern-table-row"
+            >
               <el-table-column prop="name" label="标签名称" min-width="220" sortable>
                 <template #default="{ row }">
-                  <el-link type="primary" :underline="false" class="path-link" @click="handleViewTag(row)">
+                  <el-link
+                    type="primary"
+                    :underline="false"
+                    class="path-link"
+                    @click="handleViewTag(row)"
+                  >
                     <el-tag size="small" effect="plain" type="primary" class="visual-badge-tag">
                       <i class="fa fa-tag" style="margin-right: 4px; font-size: 11px"></i>
                       {{ row.name }}
@@ -254,15 +274,15 @@
     <!-- 添加/编辑弹窗组件 -->
     <DataAddGroupDialog v-model="addGroupDialogVisible" @saved="loadGroupList" />
     <DataAddTagDialog v-model="addTagDialogVisible" @saved="loadTagList" />
-    
+
     <DataEditGroupDialog
       v-model="editGroupDialogVisible"
       :group-data="currentGroup"
       @saved="loadGroupList"
     />
-    
+
     <DataEditTagDialog v-model="editTagDialogVisible" :tag-data="currentTag" @saved="loadTagList" />
-    
+
     <GroupAssetDialog v-model="viewGroupDialogVisible" :group-data="currentGroup" />
     <TagAssetDialog v-model="viewTagDialogVisible" :tag-data="currentTag" />
   </div>
@@ -524,7 +544,7 @@ const handleDeleteGroup = row => {
         loadGroupList()
       } catch (error) {
         console.error('删除分组失败:', error)
-        ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+        ElMessage.error(`删除失败: ${error.response?.data?.message || error.message}`)
       }
     })
     .catch(() => {})
@@ -554,7 +574,7 @@ const handleDeleteTag = row => {
         loadTagList()
       } catch (error) {
         console.error('删除标签失败:', error)
-        ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+        ElMessage.error(`删除失败: ${error.response?.data?.message || error.message}`)
       }
     })
     .catch(() => {})
@@ -575,7 +595,6 @@ watch(
 </script>
 
 <style scoped lang="scss">
-
 .main-content-layout {
   flex: 1;
   display: flex;
@@ -583,9 +602,6 @@ watch(
   overflow: hidden;
   height: 100%;
 }
-
-
-
 
 .path-link {
   font-size: 13px;
@@ -615,6 +631,4 @@ watch(
   height: 22px;
   line-height: 22px;
 }
-
-
 </style>

@@ -40,8 +40,10 @@
               <span
                 v-if="getGroupBadgeCount(group) > 0"
                 class="menu-badge-pill"
-                style="margin-left: 4px;"
-              >{{ getGroupBadgeCount(group) }}</span>
+                style="margin-left: 4px"
+              >
+                {{ getGroupBadgeCount(group) }}
+              </span>
             </template>
             <!-- 递归或者判断一层嵌套：如果有三级树 -->
             <template v-for="item in group.children" :key="item.key">
@@ -69,7 +71,9 @@
                   <span
                     v-if="badgeCounts[`${group.code}::${item.key}`] > 0"
                     class="menu-badge-pill"
-                  >{{ badgeCounts[`${group.code}::${item.key}`] }}</span>
+                  >
+                    {{ badgeCounts[`${group.code}::${item.key}`] }}
+                  </span>
                 </template>
               </el-menu-item>
             </template>
@@ -149,8 +153,8 @@ function getItemMatchPaths(item) {
 }
 
 function matchesItemPath(currentPath, item) {
-  return getItemMatchPaths(item).some(matchPath =>
-    currentPath === matchPath || currentPath.startsWith(matchPath + '/')
+  return getItemMatchPaths(item).some(
+    matchPath => currentPath === matchPath || currentPath.startsWith(`${matchPath}/`)
   )
 }
 

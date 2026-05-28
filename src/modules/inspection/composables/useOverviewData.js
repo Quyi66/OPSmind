@@ -88,9 +88,7 @@ export function useOverviewData() {
   const filteredTemplateList = computed(() => {
     if (!searchKeyword.value) return templateList.value
     const keyword = searchKeyword.value.toLowerCase()
-    return templateList.value.filter(item =>
-      item.templateName?.toLowerCase().includes(keyword)
-    )
+    return templateList.value.filter(item => item.templateName?.toLowerCase().includes(keyword))
   })
 
   // 通过率
@@ -106,11 +104,41 @@ export function useOverviewData() {
     const { okTotal, failedTotal, checkTotal, skippingTotal, unreachableTotal } = globalStats.value
     const total = okTotal + failedTotal + checkTotal + skippingTotal + unreachableTotal
     return [
-      { key: 'OK', label: '检查通过', value: okTotal, color: '#28a745', percent: total ? (okTotal / total * 100) : 0 },
-      { key: 'FAILED', label: '检查失败', value: failedTotal, color: '#dc3545', percent: total ? (failedTotal / total * 100) : 0 },
-      { key: 'CHECK', label: '人工检查', value: checkTotal, color: '#17a2b8', percent: total ? (checkTotal / total * 100) : 0 },
-      { key: 'SKIPPING', label: '白名单', value: skippingTotal, color: '#6c757d', percent: total ? (skippingTotal / total * 100) : 0 },
-      { key: 'UNREACHABLE', label: '数据缺失', value: unreachableTotal, color: '#ffc107', percent: total ? (unreachableTotal / total * 100) : 0 }
+      {
+        key: 'OK',
+        label: '检查通过',
+        value: okTotal,
+        color: '#28a745',
+        percent: total ? (okTotal / total) * 100 : 0
+      },
+      {
+        key: 'FAILED',
+        label: '检查失败',
+        value: failedTotal,
+        color: '#dc3545',
+        percent: total ? (failedTotal / total) * 100 : 0
+      },
+      {
+        key: 'CHECK',
+        label: '人工检查',
+        value: checkTotal,
+        color: '#17a2b8',
+        percent: total ? (checkTotal / total) * 100 : 0
+      },
+      {
+        key: 'SKIPPING',
+        label: '白名单',
+        value: skippingTotal,
+        color: '#6c757d',
+        percent: total ? (skippingTotal / total) * 100 : 0
+      },
+      {
+        key: 'UNREACHABLE',
+        label: '数据缺失',
+        value: unreachableTotal,
+        color: '#ffc107',
+        percent: total ? (unreachableTotal / total) * 100 : 0
+      }
     ]
   })
 
@@ -128,9 +156,7 @@ export function useOverviewData() {
 
       templateList.value = data.map(template => {
         const hostLength = parseHostCount(template.auditParams)
-        const executedTime = template.executedAt
-          ? formatRelativeTime(template.executedAt)
-          : ''
+        const executedTime = template.executedAt ? formatRelativeTime(template.executedAt) : ''
 
         return {
           ...template,
@@ -168,7 +194,8 @@ export function useOverviewData() {
     statsLoading.value = true
     try {
       const promises = templatesWithJob.map(t =>
-        dtsApi.getStatistics(t.jobId)
+        dtsApi
+          .getStatistics(t.jobId)
           .then(res => ({ jobId: t.jobId, data: res?.data || res || {} }))
           .catch(() => ({ jobId: t.jobId, data: {} }))
       )
@@ -275,7 +302,9 @@ export function useOverviewData() {
       const records = data.data || []
 
       const mappedExecutions = records.map(job => {
-        const tmpl = templateList.value.find(t => t.id === job.templateId || t.templateName === job.templateName)
+        const tmpl = templateList.value.find(
+          t => t.id === job.templateId || t.templateName === job.templateName
+        )
         const icon = tmpl ? tmpl.iconClass : 'fas fa-server'
         const executedTime = job.createdAt ? formatRelativeTime(job.createdAt) : ''
 
@@ -294,7 +323,8 @@ export function useOverviewData() {
 
       // 并行请求加载最近 12 条记录的检查结果统计
       const statsPromises = mappedExecutions.map(exec =>
-        dtsApi.getStatistics(exec.jobId)
+        dtsApi
+          .getStatistics(exec.jobId)
           .then(res => ({ jobId: exec.jobId, data: res?.data || res || {} }))
           .catch(() => ({ jobId: exec.jobId, data: {} }))
       )
@@ -341,10 +371,7 @@ export function useOverviewData() {
    */
   async function initData() {
     await loadTemplates()
-    void Promise.allSettled([
-      loadAllStatistics(),
-      loadRecentExecutions()
-    ])
+    void Promise.allSettled([loadAllStatistics(), loadRecentExecutions()])
   }
 
   /**
@@ -352,10 +379,7 @@ export function useOverviewData() {
    */
   async function refreshAll() {
     await loadTemplates()
-    await Promise.allSettled([
-      loadAllStatistics(),
-      loadRecentExecutions()
-    ])
+    await Promise.allSettled([loadAllStatistics(), loadRecentExecutions()])
   }
 
   return {

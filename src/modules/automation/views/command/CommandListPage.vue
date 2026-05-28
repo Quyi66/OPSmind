@@ -47,8 +47,15 @@
         <i class="fas fa-tasks" />
         创建运维工具
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -62,11 +69,7 @@
         max-height="calc(100vh - 230px)"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column
-          type="selection"
-          width="45"
-          :selectable="checkSelectable"
-        />
+        <el-table-column type="selection" width="45" :selectable="checkSelectable" />
 
         <el-table-column prop="name" label="名称" min-width="180" sortable>
           <template #default="{ row }">
@@ -113,7 +116,7 @@
             <el-tag
               :type="getStatusTagType(row.status)"
               size="small"
-              style="cursor: pointer;"
+              style="cursor: pointer"
               @click="handleStatusClick(row)"
             >
               {{ getStatusText(row.status) }}
@@ -150,14 +153,7 @@
             >
               执行
             </el-button>
-            <el-button
-              text
-              type="danger"
-              size="small"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
+            <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -237,10 +233,11 @@ const filteredCommands = computed(() => {
     return commands.value
   }
   const keyword = filters.keyword.toLowerCase()
-  return commands.value.filter(cmd =>
-    (cmd.name && cmd.name.toLowerCase().includes(keyword)) ||
-    (cmd.description && cmd.description.toLowerCase().includes(keyword)) ||
-    (cmd.command && cmd.command.toLowerCase().includes(keyword))
+  return commands.value.filter(
+    cmd =>
+      (cmd.name && cmd.name.toLowerCase().includes(keyword)) ||
+      (cmd.description && cmd.description.toLowerCase().includes(keyword)) ||
+      (cmd.command && cmd.command.toLowerCase().includes(keyword))
   )
 })
 
@@ -374,11 +371,7 @@ function handleStatusClick(row) {
 async function handleToggleStatus(row) {
   if (row.status === 3) {
     try {
-      await ElMessageBox.confirm(
-        '确定要启用该命令吗？',
-        '启用命令',
-        { type: 'warning' }
-      )
+      await ElMessageBox.confirm('确定要启用该命令吗？', '启用命令', { type: 'warning' })
       const command = { ...row, status: 0 }
       await saveCommand(command)
       ElMessage.success('操作成功')
@@ -390,11 +383,7 @@ async function handleToggleStatus(row) {
     }
   } else if (row.status === 0) {
     try {
-      await ElMessageBox.confirm(
-        '确定要停用该命令吗？',
-        '停用命令',
-        { type: 'warning' }
-      )
+      await ElMessageBox.confirm('确定要停用该命令吗？', '停用命令', { type: 'warning' })
       const command = { ...row, status: 3 }
       await saveCommand(command)
       ElMessage.success('操作成功')
@@ -410,11 +399,7 @@ async function handleToggleStatus(row) {
 // 删除命令
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm(
-      '确定要删除该命令吗？',
-      '删除命令',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm('确定要删除该命令吗？', '删除命令', { type: 'warning' })
     await apiDeleteCommand(row.id)
     ElMessage.success('操作成功')
     loadData()
@@ -434,22 +419,32 @@ function handleEditSuccess() {
 // 获取状态样式类
 function getStatusClass(status) {
   switch (status) {
-    case 0: return 'status-success'
-    case 1: return 'status-warning'
-    case 2: return 'status-danger'
-    case 3: return 'status-danger'
-    default: return ''
+    case 0:
+      return 'status-success'
+    case 1:
+      return 'status-warning'
+    case 2:
+      return 'status-danger'
+    case 3:
+      return 'status-danger'
+    default:
+      return ''
   }
 }
 
 // 获取状态 Tag 类型
 function getStatusTagType(status) {
   switch (status) {
-    case 0: return 'success'
-    case 1: return 'warning'
-    case 2: return 'danger'
-    case 3: return 'danger'
-    default: return 'info'
+    case 0:
+      return 'success'
+    case 1:
+      return 'warning'
+    case 2:
+      return 'danger'
+    case 3:
+      return 'danger'
+    default:
+      return 'info'
   }
 }
 
@@ -469,20 +464,22 @@ function getStatusText(status) {
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).replace(/\//g, '/')
+  return date
+    .toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+    .replace(/\//g, '/')
 }
 
 // 截断命令预览
 function truncateCommand(command) {
   if (!command) return ''
-  return command.length > 50 ? command.substring(0, 50) + '...' : command
+  return command.length > 50 ? `${command.substring(0, 50)}...` : command
 }
 
 // 刷新方法

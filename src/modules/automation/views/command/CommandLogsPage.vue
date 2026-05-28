@@ -51,8 +51,15 @@
 
     <!-- 操作栏 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -106,7 +113,9 @@
                 :key="idx"
                 type="info"
                 size="small"
-              >{{ node }}</el-tag>
+              >
+                {{ node }}
+              </el-tag>
             </div>
           </template>
         </el-table-column>
@@ -118,7 +127,9 @@
               size="small"
               style="cursor: pointer"
               @click="handleViewResult(row)"
-            >{{ getStatusText(row.status) }}</el-tag>
+            >
+              {{ getStatusText(row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
 
@@ -131,7 +142,10 @@
         <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <el-button
-              v-if="row.job_type === 'script' && !['WAITING', 'RUNNING', 'CALLBACK'].includes(row.status)"
+              v-if="
+                row.job_type === 'script' &&
+                !['WAITING', 'RUNNING', 'CALLBACK'].includes(row.status)
+              "
               text
               type="primary"
               size="small"
@@ -168,7 +182,9 @@
       <div v-if="currentLog" class="log-detail">
         <div class="log-info">
           <el-descriptions :column="2" border>
-            <el-descriptions-item label="运维工具名称">{{ currentLog.job_title }}</el-descriptions-item>
+            <el-descriptions-item label="运维工具名称">
+              {{ currentLog.job_title }}
+            </el-descriptions-item>
             <el-descriptions-item label="类型">{{ currentLog.job_type }}</el-descriptions-item>
             <el-descriptions-item label="状态">
               <span :class="['status-badge', getStatusClass(currentLog.status)]">
@@ -176,8 +192,12 @@
               </span>
             </el-descriptions-item>
             <el-descriptions-item label="执行人">{{ currentLog.username }}</el-descriptions-item>
-            <el-descriptions-item label="开始时间">{{ formatDate(currentLog.start_time) }}</el-descriptions-item>
-            <el-descriptions-item label="结束时间">{{ formatDate(currentLog.end_time) }}</el-descriptions-item>
+            <el-descriptions-item label="开始时间">
+              {{ formatDate(currentLog.start_time) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="结束时间">
+              {{ formatDate(currentLog.end_time) }}
+            </el-descriptions-item>
           </el-descriptions>
         </div>
 
@@ -188,7 +208,10 @@
       </div>
       <template #footer>
         <el-button
-          v-if="currentLog?.job_type === 'script' && !['WAITING', 'RUNNING', 'CALLBACK'].includes(currentLog?.status)"
+          v-if="
+            currentLog?.job_type === 'script' &&
+            !['WAITING', 'RUNNING', 'CALLBACK'].includes(currentLog?.status)
+          "
           type="primary"
           plain
           @click="handleRerun(currentLog)"
@@ -288,11 +311,7 @@ async function handleViewResult(row) {
 // 重新运行
 async function handleRerun(row) {
   try {
-    await ElMessageBox.confirm(
-      '确定要重新运行此运维工具吗？',
-      '重新运行',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm('确定要重新运行此运维工具吗？', '重新运行', { type: 'warning' })
     await useApi().post('/jao/api/jao/job/rerun', {
       runId: row.id
     })
@@ -315,13 +334,13 @@ function parseAtaUrl(ataUrl) {
 // 获取状态样式类
 function getStatusClass(status) {
   const statusMap = {
-    'WAITING': 'status-secondary',
-    'RUNNING': 'status-primary',
-    'CALLBACK': 'status-primary',
-    'ERROR': 'status-warning',
-    'FAILED': 'status-danger',
-    'COMPLETED': 'status-success',
-    'INTERRUPTED': 'status-dark'
+    WAITING: 'status-secondary',
+    RUNNING: 'status-primary',
+    CALLBACK: 'status-primary',
+    ERROR: 'status-warning',
+    FAILED: 'status-danger',
+    COMPLETED: 'status-success',
+    INTERRUPTED: 'status-dark'
   }
   return statusMap[status] || 'status-secondary'
 }
@@ -329,13 +348,13 @@ function getStatusClass(status) {
 // 获取状态 Tag 类型
 function getStatusTagType(status) {
   const statusMap = {
-    'WAITING': 'info',
-    'RUNNING': 'primary',
-    'CALLBACK': 'primary',
-    'ERROR': 'warning',
-    'FAILED': 'danger',
-    'COMPLETED': 'success',
-    'INTERRUPTED': 'info'
+    WAITING: 'info',
+    RUNNING: 'primary',
+    CALLBACK: 'primary',
+    ERROR: 'warning',
+    FAILED: 'danger',
+    COMPLETED: 'success',
+    INTERRUPTED: 'info'
   }
   return statusMap[status] || 'info'
 }
@@ -343,13 +362,13 @@ function getStatusTagType(status) {
 // 获取状态文本
 function getStatusText(status) {
   const statusMap = {
-    'WAITING': '等待中',
-    'RUNNING': '运行中',
-    'CALLBACK': '回调中',
-    'ERROR': '运行错误',
-    'FAILED': '运行失败',
-    'COMPLETED': '完成',
-    'INTERRUPTED': '运行终止'
+    WAITING: '等待中',
+    RUNNING: '运行中',
+    CALLBACK: '回调中',
+    ERROR: '运行错误',
+    FAILED: '运行失败',
+    COMPLETED: '完成',
+    INTERRUPTED: '运行终止'
   }
   return statusMap[status] || status || '未知'
 }

@@ -7,18 +7,16 @@
         </div>
         <div class="automation-workflow-header__title-row">
           <h1 class="automation-workflow-header__title">{{ currentContext.title }}</h1>
-          <el-tag
-            v-if="currentContext.tag"
-            size="small"
-            effect="plain"
-            type="info"
-          >
+          <el-tag v-if="currentContext.tag" size="small" effect="plain" type="info">
             {{ currentContext.tag }}
           </el-tag>
         </div>
       </div>
 
-      <div v-if="pendingCards.length && !currentContext.hidePendingCards" class="automation-workflow-header__stats">
+      <div
+        v-if="pendingCards.length && !currentContext.hidePendingCards"
+        class="automation-workflow-header__stats"
+      >
         <button
           v-for="card in pendingCards"
           :key="card.key"
@@ -33,11 +31,7 @@
     </div>
 
     <div class="automation-workflow-header__groups">
-      <div
-        v-for="group in workflowGroups"
-        :key="group.key"
-        class="workflow-group"
-      >
+      <div v-for="group in workflowGroups" :key="group.key" class="workflow-group">
         <span class="workflow-group__label">{{ group.label }}</span>
         <div class="workflow-group__links">
           <button
@@ -198,9 +192,7 @@ const shortcuts = computed(() => ({
 }))
 
 function pickShortcuts(keys) {
-  return keys
-    .map(key => shortcuts.value[key])
-    .filter(item => item?.visible)
+  return keys.map(key => shortcuts.value[key]).filter(item => item?.visible)
 }
 
 const contextKey = computed(() => {
@@ -311,47 +303,57 @@ const contexts = computed(() => ({
 
 const currentContext = computed(() => contexts.value[contextKey.value] || contexts.value.automation)
 
-const workflowGroups = computed(() => [
-  {
-    key: 'prepare',
-    label: '准备',
-    items: pickShortcuts(['automationConfig', 'scriptLibrary', 'fileLibrary'])
-  },
-  {
-    key: 'execute',
-    label: '执行',
-    items: pickShortcuts(['commandWorkspace', 'commandJobs', 'taskScheduler', 'jobList', 'schedule'])
-  },
-  {
-    key: 'govern',
-    label: '申请审批与记录',
-    items: pickShortcuts(['requests', 'approvals', 'commandReview', 'scriptReview', 'runLogs'])
-  }
-].filter(group => group.items.length > 0))
+const workflowGroups = computed(() =>
+  [
+    {
+      key: 'prepare',
+      label: '准备',
+      items: pickShortcuts(['automationConfig', 'scriptLibrary', 'fileLibrary'])
+    },
+    {
+      key: 'execute',
+      label: '执行',
+      items: pickShortcuts([
+        'commandWorkspace',
+        'commandJobs',
+        'taskScheduler',
+        'jobList',
+        'schedule'
+      ])
+    },
+    {
+      key: 'govern',
+      label: '申请审批与记录',
+      items: pickShortcuts(['requests', 'approvals', 'commandReview', 'scriptReview', 'runLogs'])
+    }
+  ].filter(group => group.items.length > 0)
+)
 
-const pendingCards = computed(() => [
-  {
-    key: 'approvals',
-    label: '运维工具待审批',
-    value: reviewStore.approvalCount,
-    to: '/jao/approvals',
-    visible: canAccess('jao')
-  },
-  {
-    key: 'commandReview',
-    label: '命令待审核',
-    value: reviewStore.commandCount,
-    to: '/cmd/review',
-    visible: canAccess('cmd')
-  },
-  {
-    key: 'scriptReview',
-    label: '脚本待审核',
-    value: reviewStore.scriptCount,
-    to: '/gfs/scriptReview',
-    visible: canAccess('gfs')
-  }
-].filter(item => item.visible && item.value > 0))
+const pendingCards = computed(() =>
+  [
+    {
+      key: 'approvals',
+      label: '运维工具待审批',
+      value: reviewStore.approvalCount,
+      to: '/jao/approvals',
+      visible: canAccess('jao')
+    },
+    {
+      key: 'commandReview',
+      label: '命令待审核',
+      value: reviewStore.commandCount,
+      to: '/cmd/review',
+      visible: canAccess('cmd')
+    },
+    {
+      key: 'scriptReview',
+      label: '脚本待审核',
+      value: reviewStore.scriptCount,
+      to: '/gfs/scriptReview',
+      visible: canAccess('gfs')
+    }
+  ].filter(item => item.visible && item.value > 0)
+)
 
 function isActive(item) {
   if (typeof item.match === 'function') {
@@ -388,7 +390,11 @@ function handleNavigate(target) {
   --automation-workflow-link-bg: #ffffff;
   --automation-workflow-link-border: #e2e8f0;
   --automation-workflow-link-hover-border: rgba(13, 148, 136, 0.6);
-  --automation-workflow-link-active-bg: linear-gradient(135deg, rgba(20, 184, 166, 0.1), rgba(13, 148, 136, 0.04));
+  --automation-workflow-link-active-bg: linear-gradient(
+    135deg,
+    rgba(20, 184, 166, 0.1),
+    rgba(13, 148, 136, 0.04)
+  );
   --automation-workflow-link-active-border: rgba(13, 148, 136, 0.35);
   --automation-workflow-link-active-text: #0f766e;
 
@@ -594,8 +600,13 @@ function handleNavigate(target) {
 }
 
 @keyframes badgePulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
 }
 
 @media (max-width: 960px) {
@@ -625,7 +636,11 @@ html.dark .automation-workflow-header {
   --automation-workflow-link-bg: rgba(30, 41, 59, 0.4);
   --automation-workflow-link-border: rgba(71, 85, 105, 0.5);
   --automation-workflow-link-hover-border: rgba(45, 212, 191, 0.5);
-  --automation-workflow-link-active-bg: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(20, 184, 166, 0.05));
+  --automation-workflow-link-active-bg: linear-gradient(
+    135deg,
+    rgba(45, 212, 191, 0.15),
+    rgba(20, 184, 166, 0.05)
+  );
   --automation-workflow-link-active-border: rgba(45, 212, 191, 0.4);
   --automation-workflow-link-active-text: #5eead4;
   box-shadow: none;

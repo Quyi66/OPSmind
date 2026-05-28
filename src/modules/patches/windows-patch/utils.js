@@ -159,13 +159,19 @@ export function getSeverityLabel(value) {
 }
 
 export function getTaskTypeLabel(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskType', 'task_type'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['taskType', 'task_type'], '')
   const type = normalizeUpper(value)
   return WIN_PATCH_TASK_TYPE_LABELS[type] || type || '-'
 }
 
 export function getTaskTypeTagType(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskType', 'task_type'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['taskType', 'task_type'], '')
   const type = normalizeUpper(value)
 
   if (type === 'SCAN') return 'primary'
@@ -180,11 +186,17 @@ function hasAnyItemStatus(items = [], statuses = [], keys = ['status']) {
 }
 
 function areAllItemsInStatus(items = [], statuses = [], keys = ['status']) {
-  return items.length > 0 && items.every(item => statuses.includes(normalizeUpper(pickValue(item, keys, ''))))
+  return (
+    items.length > 0 &&
+    items.every(item => statuses.includes(normalizeUpper(pickValue(item, keys, ''))))
+  )
 }
 
 export function getTaskStatusValue(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskStatus', 'task_status', 'status'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['taskStatus', 'task_status', 'status'], '')
   const explicitStatus = normalizeUpper(value)
 
   if (!rowOrValue || typeof rowOrValue === 'string') {
@@ -198,10 +210,16 @@ export function getTaskStatusValue(rowOrValue) {
   const hasFailedStep = hasAnyItemStatus(steps, ['FAILED', 'ERROR'])
   const hasRunningStep = hasAnyItemStatus(steps, ['RUNNING', 'IN_PROGRESS'])
   const hasPendingStep = hasAnyItemStatus(steps, ['PENDING', 'WAITING', 'CREATED'])
-  const hasFailedHost = hasAnyItemStatus(hosts, ['FAILED', 'ERROR'], ['status', 'taskStatus', 'task_status'])
+  const hasFailedHost = hasAnyItemStatus(
+    hosts,
+    ['FAILED', 'ERROR'],
+    ['status', 'taskStatus', 'task_status']
+  )
   const allStepsCompleted = areAllItemsInStatus(steps, ['SUCCESS', 'SKIPPED', 'COMPLETED'])
 
-  if (['FAILED', 'ERROR', 'PARTIAL_SUCCESS', 'COMPLETED', 'SUCCESS', 'PASS'].includes(explicitStatus)) {
+  if (
+    ['FAILED', 'ERROR', 'PARTIAL_SUCCESS', 'COMPLETED', 'SUCCESS', 'PASS'].includes(explicitStatus)
+  ) {
     return explicitStatus
   }
 
@@ -245,7 +263,10 @@ export function getTaskStatusTagType(rowOrValue) {
 }
 
 export function getTaskStepValue(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['currentStep', 'current_step'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['currentStep', 'current_step'], '')
   return normalizeUpper(value)
 }
 
@@ -282,7 +303,9 @@ export function getTaskStepTagType(rowOrValue) {
 
 export function isStepControlledTask(rowOrValue) {
   const type = normalizeUpper(
-    typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskType', 'task_type'], '')
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['taskType', 'task_type'], '')
   )
 
   return type === 'INSTALL' || type === 'ROLLBACK'
@@ -293,13 +316,19 @@ export function canSkipTaskStep(rowOrValue) {
 }
 
 export function getPatchStatusLabel(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['patchStatus', 'patch_status'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['patchStatus', 'patch_status'], '')
   const status = normalizeUpper(value)
   return WIN_PATCH_PATCH_STATUS_LABELS[status] || status || '-'
 }
 
 export function getPatchStatusTagType(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['patchStatus', 'patch_status'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['patchStatus', 'patch_status'], '')
   const status = normalizeUpper(value)
   return WIN_PATCH_PATCH_STATUS_TAG_TYPES[status] || 'info'
 }
@@ -336,7 +365,9 @@ export function isPatchInstallable(row) {
 export function isRollbackSelectable(row) {
   const action = normalizeUpper(pickValue(row, ['action'], ''))
   const result = normalizeUpper(pickValue(row, ['result'], ''))
-  return (action === 'INSTALL' && result === 'SUCCESS') || (action === 'ROLLBACK' && result === 'FAILED')
+  return (
+    (action === 'INSTALL' && result === 'SUCCESS') || (action === 'ROLLBACK' && result === 'FAILED')
+  )
 }
 
 export function isTaskRunning(rowOrValue) {

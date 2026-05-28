@@ -9,7 +9,13 @@
     :close-on-click-modal="false"
   >
     <div class="win-patch-host-dialog">
-      <el-descriptions v-if="hostSummary" :column="2" border size="small" class="win-patch-descriptions">
+      <el-descriptions
+        v-if="hostSummary"
+        :column="2"
+        border
+        size="small"
+        class="win-patch-descriptions"
+      >
         <el-descriptions-item label="主机">
           {{ resolveHostKey(hostSummary) }}
         </el-descriptions-item>
@@ -44,7 +50,12 @@
             </el-select>
           </el-form-item>
           <el-form-item label="补丁状态">
-            <el-select v-model="filters.patchStatus" clearable placeholder="全部" style="width: 140px">
+            <el-select
+              v-model="filters.patchStatus"
+              clearable
+              placeholder="全部"
+              style="width: 140px"
+            >
               <el-option
                 v-for="item in WIN_PATCH_STATUS_OPTIONS"
                 :key="item.value"
@@ -70,12 +81,25 @@
       </div>
 
       <div class="ops-action-bar">
-        <el-button type="primary" size="small" :disabled="installableSelection.length === 0" @click="installWizardVisible = true">
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="installableSelection.length === 0"
+          @click="installWizardVisible = true"
+        >
           安装选中补丁
         </el-button>
-        <span class="win-patch-selection-text">已选 {{ installableSelection.length }} 条可安装记录</span>
+        <span class="win-patch-selection-text">
+          已选 {{ installableSelection.length }} 条可安装记录
+        </span>
         <span style="flex: 1"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadPatches()">
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          @click="loadPatches()"
+        >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
@@ -100,7 +124,11 @@
           </el-table-column>
           <el-table-column label="严重级别" width="120">
             <template #default="{ row }">
-              <el-tag :type="getSeverityTagType(pickValue(row, ['severity']))" size="small" effect="plain">
+              <el-tag
+                :type="getSeverityTagType(pickValue(row, ['severity']))"
+                size="small"
+                effect="plain"
+              >
                 {{ getSeverityLabel(pickValue(row, ['severity'], '')) }}
               </el-tag>
             </template>
@@ -119,8 +147,18 @@
           </el-table-column>
           <el-table-column label="已忽略" width="90" align="center">
             <template #default="{ row }">
-              <el-tag :type="normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false)) ? 'warning' : 'info'" size="small" effect="plain">
-                {{ normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false)) ? '是' : '否' }}
+              <el-tag
+                :type="
+                  normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false))
+                    ? 'warning'
+                    : 'info'
+                "
+                size="small"
+                effect="plain"
+              >
+                {{
+                  normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false)) ? '是' : '否'
+                }}
               </el-tag>
             </template>
           </el-table-column>
@@ -167,7 +205,11 @@ import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchInstallWizard from '../install-wizard/WinPatchInstallWizard.vue'
 import { winPatchApi } from '../../api'
-import { WIN_PATCH_PAGE_SIZE_OPTIONS, WIN_PATCH_SEVERITY_OPTIONS, WIN_PATCH_STATUS_OPTIONS } from '../../constants'
+import {
+  WIN_PATCH_PAGE_SIZE_OPTIONS,
+  WIN_PATCH_SEVERITY_OPTIONS,
+  WIN_PATCH_STATUS_OPTIONS
+} from '../../constants'
 import {
   formatDateTime,
   getPatchStatusLabel,
@@ -221,7 +263,9 @@ const filters = reactive({
   keyword: ''
 })
 
-const installableSelection = computed(() => selectedRows.value.filter(row => isPatchInstallable(row)))
+const installableSelection = computed(() =>
+  selectedRows.value.filter(row => isPatchInstallable(row))
+)
 
 function applyInitialFilters() {
   const initialFilters = props.initialFilters || {}

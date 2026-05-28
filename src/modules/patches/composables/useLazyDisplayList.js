@@ -12,11 +12,7 @@ import { ref, computed, watch } from 'vue'
  * @param {number}  [options.stepCount=100]    - 每次"加载更多"增加的条目数
  * @param {Function} [options.searchFn]         - (item, keyword) => boolean，自定义搜索匹配
  */
-export function useLazyDisplayList(source, {
-  initialCount = 50,
-  stepCount = 100,
-  searchFn
-} = {}) {
+export function useLazyDisplayList(source, { initialCount = 50, stepCount = 100, searchFn } = {}) {
   const searchText = ref('')
   const displayedCount = ref(initialCount)
 
@@ -37,9 +33,7 @@ export function useLazyDisplayList(source, {
     }
 
     // 默认：对字符串类型的 item 做 includes 匹配
-    return source.value.filter(item =>
-      item && String(item).toLowerCase().includes(keyword)
-    )
+    return source.value.filter(item => item && String(item).toLowerCase().includes(keyword))
   })
 
   const displayedList = computed(() => {

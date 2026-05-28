@@ -170,7 +170,7 @@ const throttle = {
     const { value, arg, modifiers } = binding
     const delay = Object.keys(modifiers)[0] || 300
 
-    let timer = null
+    const timer = null
     let lastTime = 0
 
     const handler = (...args) => {
@@ -238,7 +238,7 @@ const lazy = {
   mounted(el, binding) {
     const { value } = binding
 
-    const observer = new IntersectionObserver((entries) => {
+    const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           const img = entry.target

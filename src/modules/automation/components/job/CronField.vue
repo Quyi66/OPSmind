@@ -63,18 +63,11 @@
 
       <!-- 指定（不适用于日和周的冲突） -->
       <div v-if="!isSpecialField" class="field-option">
-        <el-radio label="specific">
-          指定
-        </el-radio>
+        <el-radio label="specific">指定</el-radio>
       </div>
       <div v-if="!isSpecialField && selectedType === 'specific'" class="checkbox-group">
         <el-checkbox-group v-model="specificValues" @change="handleSpecificChange">
-          <el-checkbox
-            v-for="val in getValueRange()"
-            :key="val"
-            :label="val"
-            :value="val"
-          >
+          <el-checkbox v-for="val in getValueRange()" :key="val" :label="val" :value="val">
             {{ formatValue(val) }}
           </el-checkbox>
         </el-checkbox-group>
@@ -82,16 +75,12 @@
 
       <!-- 不指定（仅用于日和周） -->
       <div v-if="isSpecialField" class="field-option">
-        <el-radio label="unspecified">
-          不指定
-        </el-radio>
+        <el-radio label="unspecified">不指定</el-radio>
       </div>
 
       <!-- 年份可选项 -->
       <div v-if="fieldType === 'year' && optional" class="field-option">
-        <el-radio label="empty">
-          不限制年份
-        </el-radio>
+        <el-radio label="empty">不限制年份</el-radio>
       </div>
     </el-radio-group>
   </div>
@@ -135,9 +124,13 @@ const isSpecialField = computed(() => {
 })
 
 // 监听初始值变化
-watch(() => props.modelValue, (newVal) => {
-  parseValue(newVal)
-}, { immediate: true })
+watch(
+  () => props.modelValue,
+  newVal => {
+    parseValue(newVal)
+  },
+  { immediate: true }
+)
 
 // 解析 CRON 值
 function parseValue(value) {

@@ -23,7 +23,13 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" reserve-selection />
-        <el-table-column prop="jobTitle" label="运维工具" min-width="280" show-overflow-tooltip sortable>
+        <el-table-column
+          prop="jobTitle"
+          label="运维工具"
+          min-width="280"
+          show-overflow-tooltip
+          sortable
+        >
           <template #default="{ row }">
             {{ translateText(row.jobTitle) || '-' }}
           </template>
@@ -138,9 +144,7 @@ const isSingleSelector = computed(() => props.options.selector === 'single')
 const filteredData = computed(() => {
   if (!searchKeyword.value) return tableData.value
   const keyword = searchKeyword.value.toLowerCase()
-  return tableData.value.filter(item =>
-    item.jobTitle?.toLowerCase().includes(keyword)
-  )
+  return tableData.value.filter(item => item.jobTitle?.toLowerCase().includes(keyword))
 })
 
 const pagedData = computed(() => {
@@ -148,10 +152,14 @@ const pagedData = computed(() => {
   return filteredData.value.slice(start, start + pagination.value.pageSize)
 })
 
-watch(() => props.ciType, () => {
-  pagination.value.page = 1
-  fetchData()
-}, { immediate: true })
+watch(
+  () => props.ciType,
+  () => {
+    pagination.value.page = 1
+    fetchData()
+  },
+  { immediate: true }
+)
 
 watch(
   () => props.modelValue,
@@ -196,9 +204,8 @@ async function fetchData() {
 
     const data = response?.data || response
     // API 返回的是作业记录列表
-    tableData.value = Array.isArray(data) ? data : (data?.records || [])
+    tableData.value = Array.isArray(data) ? data : data?.records || []
     await syncSelectionFromModelValue()
-
   } catch (error) {
     console.error('Failed to fetch recently used:', error)
     tableData.value = []
@@ -237,7 +244,9 @@ function handleSelectionChange(selection) {
     row => !currentPageIds.includes(row.id) && doesJobMatchSelection(row)
   )
 
-  const mergedRows = isSingleSelector.value ? effectiveSelection : [...otherPageSelections, ...effectiveSelection]
+  const mergedRows = isSingleSelector.value
+    ? effectiveSelection
+    : [...otherPageSelections, ...effectiveSelection]
   const selectedHosts = extractHostsFromJobs(mergedRows)
 
   isInternalUpdate = true
@@ -310,12 +319,12 @@ function getStatusLabel(status) {
   if (!status) return '-'
   const statusUpper = status.toUpperCase()
   const labels = {
-    'SUCCESS': '完成',
-    'COMPLETED': '完成',
-    'FAILED': '运行失败',
-    'ERROR': '运行错误',
-    'RUNNING': '执行中',
-    'PENDING': '等待中'
+    SUCCESS: '完成',
+    COMPLETED: '完成',
+    FAILED: '运行失败',
+    ERROR: '运行错误',
+    RUNNING: '执行中',
+    PENDING: '等待中'
   }
   return labels[statusUpper] || status
 }
@@ -324,12 +333,12 @@ function getStatusStyle(status) {
   if (!status) return 'info'
   const statusUpper = status.toUpperCase()
   const styles = {
-    'SUCCESS': 'success',
-    'COMPLETED': 'success',
-    'FAILED': 'warning',
-    'ERROR': 'danger',
-    'RUNNING': 'primary',
-    'PENDING': 'info'
+    SUCCESS: 'success',
+    COMPLETED: 'success',
+    FAILED: 'warning',
+    ERROR: 'danger',
+    RUNNING: 'primary',
+    PENDING: 'info'
   }
   return styles[statusUpper] || 'info'
 }
@@ -361,7 +370,11 @@ function extractHostsFromJobs(rows = []) {
         assetType: host.assetType || props.ciType
       }
 
-      if (!selectedHosts.some(item => item.key === normalizedHost.key || item.value === normalizedHost.value)) {
+      if (
+        !selectedHosts.some(
+          item => item.key === normalizedHost.key || item.value === normalizedHost.value
+        )
+      ) {
         selectedHosts.push(normalizedHost)
       }
     })
@@ -371,7 +384,8 @@ function extractHostsFromJobs(rows = []) {
 }
 
 function doesJobMatchSelection(row, selectedKeySet) {
-  const keySet = selectedKeySet || new Set((props.modelValue || []).map(item => item.key || item.value))
+  const keySet =
+    selectedKeySet || new Set((props.modelValue || []).map(item => item.key || item.value))
   const rowHosts = Array.isArray(row?.run_result_hosts) ? row.run_result_hosts : []
 
   return rowHosts.some(host => keySet.has(host.key || host.value || host.IP))
@@ -447,4 +461,3 @@ function handlePageSizeChange() {
   transform: scale(1.05);
 }
 </style>
-

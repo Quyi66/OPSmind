@@ -29,10 +29,19 @@
       <!-- 操作栏 -->
       <div class="ops-action-bar">
         <div class="action-left">
-          <el-tag :type="hasPendingChanges ? 'warning' : 'success'" size="small" class="sync-tag-indicator">
-            <i class="fa" :class="hasPendingChanges ? 'fa-exclamation-circle' : 'fa-check-circle'"></i>
+          <el-tag
+            :type="hasPendingChanges ? 'warning' : 'success'"
+            size="small"
+            class="sync-tag-indicator"
+          >
+            <i
+              class="fa"
+              :class="hasPendingChanges ? 'fa-exclamation-circle' : 'fa-check-circle'"
+            ></i>
             <span style="margin-left: 4px">
-              {{ hasPendingChanges ? `当前待保存 ${changedRowCount} 项变更` : '所有权限配置已同步' }}
+              {{
+                hasPendingChanges ? `当前待保存 ${changedRowCount} 项变更` : '所有权限配置已同步'
+              }}
             </span>
           </el-tag>
           <el-button
@@ -45,7 +54,12 @@
             <i class="fa fa-save" style="margin-right: 4px"></i>
             保存权限更改
           </el-button>
-          <el-button size="small" :disabled="!hasPendingChanges || saving" @click="handleResetPending" plain>
+          <el-button
+            size="small"
+            :disabled="!hasPendingChanges || saving"
+            @click="handleResetPending"
+            plain
+          >
             <i class="fa fa-undo" style="margin-right: 4px"></i>
             撤销修改
           </el-button>
@@ -247,7 +261,8 @@ function getPermissionSignature(teamInfo = []) {
 function updateRowDirtyState(rowId) {
   const currentRow = permissionData.value.find(item => item.id === rowId)
   const originalRow = originalPermissionData.value.find(item => item.id === rowId)
-  const isDirty = getPermissionSignature(currentRow?.teamInfo) !== getPermissionSignature(originalRow?.teamInfo)
+  const isDirty =
+    getPermissionSignature(currentRow?.teamInfo) !== getPermissionSignature(originalRow?.teamInfo)
   const dirtySet = new Set(changedRowIds.value)
 
   if (isDirty) {
@@ -369,9 +384,13 @@ async function handleRefresh() {
   }
 
   try {
-    await ElMessageBox.confirm('当前有未保存的权限变更，刷新后将丢失这些修改。是否继续？', '确认刷新', {
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      '当前有未保存的权限变更，刷新后将丢失这些修改。是否继续？',
+      '确认刷新',
+      {
+        type: 'warning'
+      }
+    )
     loadData()
   } catch {
     // ignore cancel
@@ -410,8 +429,6 @@ function handlePageSizeChange() {
 </script>
 
 <style scoped lang="scss">
-
-
 .action-left {
   display: flex;
   align-items: center;

@@ -37,7 +37,7 @@
           <el-tag
             :type="row.triggerStatus === '1' ? 'success' : 'danger'"
             size="small"
-            style="cursor: pointer;"
+            style="cursor: pointer"
             @click="$emit('toggle-status', row)"
           >
             {{ row.triggerStatus === '1' ? '已启用' : '已停用' }}
@@ -62,45 +62,21 @@
 
       <el-table-column label="操作" width="260" align="left" fixed="right">
         <template #default="{ row }">
-          <el-button
-            text
-            type="primary"
-            size="small"
-            @click="$emit('execute', row)"
-          >
+          <el-button text type="primary" size="small" @click="$emit('execute', row)">
             执行
           </el-button>
-          <el-button
-            text
-            type="primary"
-            size="small"
-            @click="$emit('edit', row)"
-          >
-            编辑
-          </el-button>
-          <el-button
-            text
-            type="primary"
-            size="small"
-            @click="$emit('copy', row)"
-          >
-            复制
-          </el-button>
+          <el-button text type="primary" size="small" @click="$emit('edit', row)">编辑</el-button>
+          <el-button text type="primary" size="small" @click="$emit('copy', row)">复制</el-button>
           <el-button
             type="primary"
             size="small"
             text
             title="查询下次执行时间"
             @click="$emit('query-next-time', row)"
-          >下次执行时间</el-button>
-          <el-button
-            text
-            type="danger"
-            size="small"
-            @click="$emit('delete', row)"
           >
-            删除
+            下次执行时间
           </el-button>
+          <el-button text type="danger" size="small" @click="$emit('delete', row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

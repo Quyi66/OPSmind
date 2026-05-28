@@ -2,9 +2,15 @@
   <div class="side-menu">
     <!-- 菜单项列表 -->
     <div class="menu-items" v-if="currentGroup">
-      <div v-for="menuItem in currentGroup.children" :key="menuItem.code" class="menu-item" :class="{
-        active: activeMenuItem === menuItem.code
-      }" @click="handleMenuItemClick(menuItem, $event)">
+      <div
+        v-for="menuItem in currentGroup.children"
+        :key="menuItem.code"
+        class="menu-item"
+        :class="{
+          active: activeMenuItem === menuItem.code
+        }"
+        @click="handleMenuItemClick(menuItem, $event)"
+      >
         <div class="menu-item-content">
           <i :class="menuItem.icon" class="menu-item-icon"></i>
           <span class="menu-item-text">{{ menuItem.name }}</span>
@@ -44,7 +50,6 @@ const currentGroup = computed(() => {
 
 // 方法
 const handleMenuItemClick = (menuItem, event) => {
-
   // 创建水波纹效果
   createRippleEffect(event)
 
@@ -86,8 +91,10 @@ const createRippleEffect = event => {
 }
 
 // 监听activeGroup变化
-watch(() => props.activeGroup, (newGroup) => {
-})
+watch(
+  () => props.activeGroup,
+  newGroup => {}
+)
 </script>
 
 <style scoped lang="scss">
@@ -198,7 +205,10 @@ watch(() => props.activeGroup, (newGroup) => {
   }
 
   .menu-item-text {
-    font-family: 'PingFang-Medium', -apple-system, sans-serif;
+    font-family:
+      'PingFang-Medium',
+      -apple-system,
+      sans-serif;
     font-size: 14px;
     font-weight: 500;
     color: #262626;

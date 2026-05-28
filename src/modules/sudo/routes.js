@@ -25,10 +25,7 @@ export const SUDO_ROUTE_DEFS = [
     title: 'sudo列表',
     navLabel: 'sudo列表',
     icon: 'fas fa-list',
-    ...createSudoPageRoute(
-      'sudo-permission',
-      () => import('./views/SudoPermissionPage.vue')
-    )
+    ...createSudoPageRoute('sudo-permission', () => import('./views/SudoPermissionPage.vue'))
   },
   {
     key: 'apply',
@@ -44,10 +41,7 @@ export const SUDO_ROUTE_DEFS = [
     title: '模板管理',
     navLabel: '模板管理',
     icon: 'fas fa-clipboard-list',
-    ...createSudoPageRoute(
-      'sudo-templates',
-      () => import('./views/SudoTemplatePage.vue')
-    )
+    ...createSudoPageRoute('sudo-templates', () => import('./views/SudoTemplatePage.vue'))
   },
   {
     key: 'password',
@@ -55,10 +49,7 @@ export const SUDO_ROUTE_DEFS = [
     title: '主机密码',
     navLabel: '主机密码',
     icon: 'fas fa-key',
-    ...createSudoPageRoute(
-      'sudo-password',
-      () => import('./views/SudoPasswordPage.vue')
-    )
+    ...createSudoPageRoute('sudo-password', () => import('./views/SudoPasswordPage.vue'))
   },
   {
     key: 'log',

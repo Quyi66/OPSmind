@@ -506,7 +506,7 @@ const truncatedAnsibleRawOutput = computed(() => {
   if (showFullRawOutput.value) return ansibleRawOutput.value
   const MAX_LEN = 500000
   return ansibleRawOutput.value.length > MAX_LEN
-    ? ansibleRawOutput.value.slice(0, MAX_LEN) + '\n\n... (截断)'
+    ? `${ansibleRawOutput.value.slice(0, MAX_LEN)}\n\n... (截断)`
     : ansibleRawOutput.value
 })
 

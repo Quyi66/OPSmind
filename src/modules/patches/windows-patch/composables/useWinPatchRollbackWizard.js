@@ -106,13 +106,17 @@ function resolvePipelineCurrentStep(task = null) {
 }
 
 function findLatestScriptContent(logs = [], scriptType) {
-  const normalizedType = String(scriptType || '').trim().toLowerCase()
+  const normalizedType = String(scriptType || '')
+    .trim()
+    .toLowerCase()
 
   for (let index = logs.length - 1; index >= 0; index -= 1) {
     const record = logs[index]
     if (
       getAuditStepKey(record) === 'SCRIPT' &&
-      String(record?.scriptType || '').trim().toLowerCase() === normalizedType &&
+      String(record?.scriptType || '')
+        .trim()
+        .toLowerCase() === normalizedType &&
       String(record?.scriptContent || '').trim()
     ) {
       return record.scriptContent
@@ -147,7 +151,13 @@ function deriveCurrentStep(task, auditSteps = []) {
   return ''
 }
 
-function mergeTaskDetail(baseTask = null, auditTask = null, auditSteps = [], auditLogs = [], hosts = []) {
+function mergeTaskDetail(
+  baseTask = null,
+  auditTask = null,
+  auditSteps = [],
+  auditLogs = [],
+  hosts = []
+) {
   const mergedTask = {
     ...(baseTask && typeof baseTask === 'object' ? baseTask : {}),
     ...(auditTask && typeof auditTask === 'object' ? auditTask : {})
@@ -267,29 +277,37 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   const selectedHostItems = computed(() => {
     const seen = new Set()
 
-    return selectedRollbackItems.value.filter(item => {
-      const key = `${item.hostId || ''}::${item.hostKey || ''}`
-      if (seen.has(key)) {
-        return false
-      }
+    return selectedRollbackItems.value
+      .filter(item => {
+        const key = `${item.hostId || ''}::${item.hostKey || ''}`
+        if (seen.has(key)) {
+          return false
+        }
 
-      seen.add(key)
-      return true
-    }).map(item => ({
-      hostId: item.hostId,
-      hostKey: item.hostKey
-    }))
+        seen.add(key)
+        return true
+      })
+      .map(item => ({
+        hostId: item.hostId,
+        hostKey: item.hostKey
+      }))
   })
   const currentTaskStatus = computed(() => getTaskStatusValue(taskDetail.value))
   const currentPipelineStep = computed(() => resolvePipelineCurrentStep(taskDetail.value))
   const pipelineItems = computed(() => {
     return WIN_PATCH_ROLLBACK_PIPELINE_STEPS.map(step => {
-      const auditStep = findAuditStep(taskAuditSteps.value, resolvePipelineStepKeys(step.key, taskDetail.value))
+      const auditStep = findAuditStep(
+        taskAuditSteps.value,
+        resolvePipelineStepKeys(step.key, taskDetail.value)
+      )
       const auditStatus = normalizeUpper(auditStep?.status)
       let uiStatus = mapPipelineUiStatus(auditStatus)
 
       if (!auditStatus && currentTaskId.value && currentPipelineStep.value === step.key) {
-        if (['FAILED', 'ERROR'].includes(currentTaskStatus.value) || pipelineStatus.value === 'failed') {
+        if (
+          ['FAILED', 'ERROR'].includes(currentTaskStatus.value) ||
+          pipelineStatus.value === 'failed'
+        ) {
           uiStatus = 'failed'
         } else if (pipelineStatus.value === 'running') {
           uiStatus = 'running'
@@ -383,7 +401,13 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       taskAuditSteps.value = nextAuditSteps
       taskAuditLogs.value = nextAuditLogs
 
-      const mergedTask = mergeTaskDetail(baseTask, null, nextAuditSteps, nextAuditLogs, taskHosts.value)
+      const mergedTask = mergeTaskDetail(
+        baseTask,
+        null,
+        nextAuditSteps,
+        nextAuditLogs,
+        taskHosts.value
+      )
 
       taskDetail.value = mergedTask
       if (mergedTask) {
@@ -392,7 +416,9 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
           ...mergedTask
         }
       }
-      taskErrorMessage.value = String(pickValue(mergedTask, ['errorMessage', 'error_message'], '')).trim()
+      taskErrorMessage.value = String(
+        pickValue(mergedTask, ['errorMessage', 'error_message'], '')
+      ).trim()
 
       return mergedTask
     } catch (error) {
@@ -420,7 +446,9 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       ...(createdTask.value || {}),
       ...taskSnapshot
     }
-    taskErrorMessage.value = String(pickValue(nextTask, ['errorMessage', 'error_message'], '')).trim()
+    taskErrorMessage.value = String(
+      pickValue(nextTask, ['errorMessage', 'error_message'], '')
+    ).trim()
   }
 
   async function ensureTaskCreated() {
@@ -483,7 +511,10 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   }
 
   function getAuditStepStatus(stepKey) {
-    return normalizeUpper(findAuditStep(taskAuditSteps.value, resolvePipelineStepKeys(stepKey, taskDetail.value))?.status)
+    return normalizeUpper(
+      findAuditStep(taskAuditSteps.value, resolvePipelineStepKeys(stepKey, taskDetail.value))
+        ?.status
+    )
   }
 
   function stopRuntimePolling() {
@@ -560,13 +591,15 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       throw new Error('回滚任务尚未创建，无法继续执行')
     }
 
-    const stepLabel = WIN_PATCH_ROLLBACK_PIPELINE_STEPS.find(item => item.key === stepKey)?.label || stepKey
+    const stepLabel =
+      WIN_PATCH_ROLLBACK_PIPELINE_STEPS.find(item => item.key === stepKey)?.label || stepKey
     const actionLabel = action === 'skip' ? `跳过${stepLabel}` : stepLabel
 
     try {
-      const response = action === 'skip'
-        ? await winPatchApi.skipTaskStep(currentTaskId.value)
-        : await winPatchApi.executeTaskStep(currentTaskId.value)
+      const response =
+        action === 'skip'
+          ? await winPatchApi.skipTaskStep(currentTaskId.value)
+          : await winPatchApi.executeTaskStep(currentTaskId.value)
       applyTaskSnapshot(unwrapResponse(response))
 
       if (action === 'skip') {
@@ -600,18 +633,10 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     try {
       await ensureTaskCreated()
       if (!skippedSteps.value['pre-check']) {
-        await syncScriptConfig(
-          'pre-check',
-          preScriptConfig.value,
-          '预检查脚本'
-        )
+        await syncScriptConfig('pre-check', preScriptConfig.value, '预检查脚本')
       }
       if (!skippedSteps.value.validate) {
-        await syncScriptConfig(
-          'validate',
-          validateScriptConfig.value,
-          '校验脚本'
-        )
+        await syncScriptConfig('validate', validateScriptConfig.value, '校验脚本')
       }
 
       await triggerTaskStep(
@@ -688,7 +713,12 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   }
 
   function skipCurrentStep() {
-    if (!currentStepSkippable.value || dialogBusy.value || currentTaskId.value || !canGoNext.value) {
+    if (
+      !currentStepSkippable.value ||
+      dialogBusy.value ||
+      currentTaskId.value ||
+      !canGoNext.value
+    ) {
       return
     }
 

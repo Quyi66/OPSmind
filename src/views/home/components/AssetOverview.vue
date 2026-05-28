@@ -71,9 +71,9 @@ const navigateToAssetOverview = () => {
 }
 
 const assetTypeRouteMap = {
-  'Windows服务器': 'windows',
-  'Unix服务器': 'unix',
-  'Linux服务器': 'linux',
+  Windows服务器: 'windows',
+  Unix服务器: 'unix',
+  Linux服务器: 'linux',
   Windows: 'windows',
   Unix: 'unix',
   Linux: 'linux'
@@ -140,7 +140,6 @@ const chartOption = computed(() => ({
       lineStyle: {}
     },
     axisLabel: {
-
       fontSize: 14
     },
     splitLine: {
@@ -161,7 +160,6 @@ const chartOption = computed(() => ({
       show: false
     },
     axisLabel: {
-
       fontSize: 12,
       margin: 10
     }

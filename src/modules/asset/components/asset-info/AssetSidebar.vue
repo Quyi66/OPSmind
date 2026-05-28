@@ -1,7 +1,11 @@
 <template>
   <div :class="['asset-sidebar', { collapsed: isCollapsed }]">
     <!-- 折叠切换按钮 -->
-    <div class="collapse-btn" @click="toggleCollapse" :title="isCollapsed ? '展开侧边栏' : '收起侧边栏'">
+    <div
+      class="collapse-btn"
+      @click="toggleCollapse"
+      :title="isCollapsed ? '展开侧边栏' : '收起侧边栏'"
+    >
       <el-icon>
         <component :is="isCollapsed ? ArrowRight : ArrowLeft" />
       </el-icon>
@@ -10,12 +14,7 @@
     <div v-show="!isCollapsed" class="sidebar-content">
       <!-- 搜索过滤 -->
       <div class="sidebar-search">
-        <el-input
-          v-model="filterText"
-          placeholder="快速查找分组/标签..."
-          clearable
-          size="small"
-        >
+        <el-input v-model="filterText" placeholder="快速查找分组/标签..." clearable size="small">
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>
@@ -96,7 +95,11 @@
                 </div>
               </div>
 
-              <el-empty v-if="filteredTags.length === 0" description="未找到标签" :image-size="40" />
+              <el-empty
+                v-if="filteredTags.length === 0"
+                description="未找到标签"
+                :image-size="40"
+              />
             </div>
           </div>
         </el-tab-pane>
@@ -146,7 +149,7 @@ const toggleCollapse = () => {
 }
 
 // 监听搜索框输入，如果是分组 Tab，则过滤树节点
-watch(filterText, (val) => {
+watch(filterText, val => {
   if (activeTab.value === 'group' && groupTreeRef.value) {
     groupTreeRef.value.filter(val)
   }
@@ -171,12 +174,12 @@ const handleSelectGroup = (path, name) => {
 }
 
 // 树节点点击
-const handleGroupNodeClick = (data) => {
+const handleGroupNodeClick = data => {
   handleSelectGroup(data.path, data.name || data.path)
 }
 
 // 选择标签
-const handleSelectTag = (tag) => {
+const handleSelectTag = tag => {
   emit('select-tag', tag)
 }
 </script>
@@ -208,7 +211,9 @@ const handleSelectTag = (tag) => {
       right: auto;
       border: 1px solid var(--el-color-primary-light-7);
       border-radius: 20px;
-      box-shadow: 0 4px 12px rgba(64, 158, 255, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
+      box-shadow:
+        0 4px 12px rgba(64, 158, 255, 0.12),
+        0 1px 3px rgba(0, 0, 0, 0.05);
 
       &:hover {
         transform: translateY(-50%) scale(1.08);
@@ -236,7 +241,9 @@ const handleSelectTag = (tag) => {
     justify-content: center;
     cursor: pointer;
     z-index: 100;
-    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    box-shadow:
+      0 4px 12px rgba(64, 158, 255, 0.08),
+      0 1px 2px rgba(0, 0, 0, 0.04);
     color: var(--el-color-primary);
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
@@ -249,7 +256,9 @@ const handleSelectTag = (tag) => {
       color: #ffffff;
       background: linear-gradient(135deg, var(--el-color-primary) 0%, #53a8ff 100%);
       border-color: var(--el-color-primary-light-3);
-      box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4), 0 2px 4px rgba(64, 158, 255, 0.15);
+      box-shadow:
+        0 6px 16px rgba(64, 158, 255, 0.4),
+        0 2px 4px rgba(64, 158, 255, 0.15);
       transform: translateY(-50%) scale(1.08);
 
       .el-icon {
@@ -330,7 +339,8 @@ const handleSelectTag = (tag) => {
     }
   }
 
-  .tree-container, .tag-container {
+  .tree-container,
+  .tag-container {
     flex: 1;
     overflow-y: auto;
     padding-right: 2px;
@@ -344,7 +354,8 @@ const handleSelectTag = (tag) => {
     }
   }
 
-  .tree-node-item, .tag-node-item {
+  .tree-node-item,
+  .tag-node-item {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -464,7 +475,9 @@ html.dark {
     .collapse-btn {
       background: rgba(30, 30, 30, 0.85);
       border-color: rgba(64, 158, 255, 0.25);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.35),
+        0 1px 2px rgba(0, 0, 0, 0.25);
       color: var(--el-color-primary-light-3);
 
       &:hover {
@@ -482,7 +495,8 @@ html.dark {
       }
     }
 
-    .tree-node-item, .tag-node-item {
+    .tree-node-item,
+    .tag-node-item {
       &:hover {
         background: var(--el-fill-color-darker);
       }

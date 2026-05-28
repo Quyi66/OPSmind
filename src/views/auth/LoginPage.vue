@@ -31,7 +31,9 @@
     <div class="login-main relative z-10">
       <div class="login-container w-full px-4 py-6 md:py-8">
         <!-- 合并的登录卡片控件 -->
-        <div class="login-card mx-auto flex w-full max-w-[760px] min-h-[400px] flex-col overflow-hidden rounded-2xl border border-gray-100 shadow-2xl md:min-h-[420px] md:flex-row lg:min-h-[460px]">
+        <div
+          class="login-card mx-auto flex w-full max-w-[760px] min-h-[400px] flex-col overflow-hidden rounded-2xl border border-gray-100 shadow-2xl md:min-h-[420px] md:flex-row lg:min-h-[460px]"
+        >
           <!-- 左侧插图卡片（中等及以上屏幕显示） -->
           <div
             class="relative hidden overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 md:block md:flex-1"

@@ -13,10 +13,7 @@
         <div class="gfs-directory-picker__path-block">
           <span class="gfs-directory-picker__path-label">当前目录</span>
           <el-breadcrumb separator="/">
-            <el-breadcrumb-item
-              v-for="crumb in breadcrumbs"
-              :key="crumb.path || 'root'"
-            >
+            <el-breadcrumb-item v-for="crumb in breadcrumbs" :key="crumb.path || 'root'">
               <button
                 type="button"
                 class="gfs-directory-picker__crumb"
@@ -30,7 +27,13 @@
         </div>
         <div class="gfs-directory-picker__toolbar-actions">
           <el-button link type="primary" size="small" @click="navigateTo('')">根目录</el-button>
-          <el-button circle size="small" :loading="loading" title="刷新目录" @click="loadDirectories">
+          <el-button
+            circle
+            size="small"
+            :loading="loading"
+            title="刷新目录"
+            @click="loadDirectories"
+          >
             <el-icon v-show="!loading"><Refresh /></el-icon>
           </el-button>
         </div>
@@ -66,7 +69,9 @@
               <i class="fa fa-folder-open" />
               <span class="gfs-directory-picker__item-name">{{ item.name }}</span>
             </span>
-            <span v-if="item.description" class="gfs-directory-picker__item-desc">{{ item.description }}</span>
+            <span v-if="item.description" class="gfs-directory-picker__item-desc">
+              {{ item.description }}
+            </span>
             <i class="fa fa-chevron-right gfs-directory-picker__item-arrow" />
           </button>
         </div>
@@ -120,7 +125,7 @@ const emit = defineEmits(['update:modelValue', 'confirm'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -135,7 +140,7 @@ const breadcrumbs = computed(() => {
 
   const parts = currentDir.value.split('/').filter(Boolean)
   let path = ''
-  parts.forEach((part) => {
+  parts.forEach(part => {
     path = path ? `${path}/${part}` : part
     crumbs.push({ name: part, path })
   })
@@ -176,7 +181,7 @@ function handleConfirm() {
   visible.value = false
 }
 
-watch(visible, (newVal) => {
+watch(visible, newVal => {
   if (!newVal) return
   currentDir.value = props.initDir || ''
   loadDirectories()
@@ -270,7 +275,10 @@ watch(visible, (newVal) => {
     background: var(--el-fill-color-blank);
     text-align: left;
     cursor: pointer;
-    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+    transition:
+      border-color 0.15s,
+      background 0.15s,
+      transform 0.15s;
 
     &:hover {
       border-color: var(--el-color-primary-light-5);

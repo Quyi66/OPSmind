@@ -64,7 +64,11 @@ let resizeObserver = null
 const typeColorPalette = ['#2563EB', '#38BDF8', '#0EA5E9', '#14B8A6', '#60A5FA']
 
 function getContainerWidth() {
-  return (fullscreenVisible.value ? fullscreenChartRef.value?.clientWidth : 0) || chartRef.value?.clientWidth || 0
+  return (
+    (fullscreenVisible.value ? fullscreenChartRef.value?.clientWidth : 0) ||
+    chartRef.value?.clientWidth ||
+    0
+  )
 }
 
 function truncateLegendText(text, maxLength) {
@@ -367,7 +371,11 @@ html.dark .chart-card {
 }
 
 html.dark .asset-overview .panel-shell .chart-card {
-  --asset-chart-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.008));
+  --asset-chart-card-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.022),
+    rgba(255, 255, 255, 0.008)
+  );
   --asset-chart-card-border: rgba(148, 163, 184, 0.06);
   --asset-chart-card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }

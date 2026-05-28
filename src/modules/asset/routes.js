@@ -77,4 +77,3 @@ export const ACM_ROUTE_DEFS = [
     component: () => import('./views/AssetModelPage.vue')
   }
 ]
-

@@ -304,12 +304,7 @@
                 width="140"
               >
                 <template #default="{ row }">
-                  <el-tag
-                    v-if="row.location"
-                    size="small"
-                    type="success"
-                    effect="plain"
-                  >
+                  <el-tag v-if="row.location" size="small" type="success" effect="plain">
                     {{ row.location }}
                   </el-tag>
                   <span v-else class="text-muted">-</span>
@@ -980,7 +975,6 @@
         </el-button>
       </template>
     </el-dialog>
-
   </div>
 </template>
 
@@ -989,7 +983,14 @@ import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
-import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi, viewConfigApi, hostBatchApi } from '../api'
+import {
+  patchScanApi,
+  patchOverviewApi,
+  rpmInfoApi,
+  vulnerabilityApi,
+  viewConfigApi,
+  hostBatchApi
+} from '../api'
 import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
 import {
   getAffectedPackageDetailParams,
@@ -1089,7 +1090,7 @@ const pagination = reactive({
 
 // ====== R3 & R4 状态 ======
 const batchSelectedHosts = ref([]) // 批量选中的主机列表
-const activeColumns = ref(["HOSTNAME", "OS", "LOCATION", "RUN_ENVIRONMENT"])
+const activeColumns = ref(['HOSTNAME', 'OS', 'LOCATION', 'RUN_ENVIRONMENT'])
 
 // 表格多选发生变化
 function handleHostSelectionChange(selection) {
@@ -1446,7 +1447,7 @@ async function loadHostData() {
               // 从标签筛选 LOCATION 区域
               let location = null
               const tags = item.tags || item.Tags || []
-              const locationNames = ["互联网", "外联网", "内网环境、孤岛环境"]
+              const locationNames = ['互联网', '外联网', '内网环境、孤岛环境']
               const matchedTag = tags.find(t => locationNames.includes(t.name || t))
               if (matchedTag) {
                 location = matchedTag.name || matchedTag
@@ -1461,7 +1462,7 @@ async function loadHostData() {
                 host_risk_level: item.HOST_RISK_LEVEL || item.host_risk_level || '',
                 ssh_port: item.SSH_PORT || item.ssh_port || '',
                 service_port: item.SERVICE_PORT || item.service_port || '',
-                location: location
+                location
               }
             }
           })

@@ -81,7 +81,7 @@ function initChart() {
           // 弹窗空间较大，容忍度更高
           const maxLen = count <= 3 ? 20 : count <= 8 ? 12 : count <= 15 ? 8 : 6
           if (value && value.length > maxLen) {
-            return value.substring(0, maxLen) + '...'
+            return `${value.substring(0, maxLen)}...`
           }
           return value
         }

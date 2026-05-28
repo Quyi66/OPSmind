@@ -14,11 +14,14 @@
       <el-form-item label="执行策略">
         <span>{{ getApproveModeLabel(approveData.approveMode) }}</span>
 
-        <div v-if="approveData.approveMode === 'limitParams' && paramsArray.length > 0" style="margin-top: 12px;">
+        <div
+          v-if="approveData.approveMode === 'limitParams' && paramsArray.length > 0"
+          style="margin-top: 12px"
+        >
           <el-tag
             v-for="(param, index) in paramsArray"
             :key="index"
-            style="margin-bottom: 8px; max-width: 100%; display: block; white-space: pre-wrap;"
+            style="margin-bottom: 8px; max-width: 100%; display: block; white-space: pre-wrap"
           >
             {{ param.name }} : {{ param.value }}
           </el-tag>
@@ -27,17 +30,15 @@
 
       <el-form-item label="脚本运维工具">
         <el-button type="primary" @click="handleViewJob" size="small">
-          <i class="fa fa-eye" /> 查看
+          <i class="fa fa-eye" />
+          查看
         </el-button>
       </el-form-item>
 
       <el-form-item label="有效时长" v-if="approveData.approveMode !== 'limitParams'">
         <span>{{ approveData.validHour }} 小时</span>
-        <el-tooltip
-          content="审批通过后，在有效期内可以执行运维工具"
-          placement="top"
-        >
-          <i class="fa fa-question-circle text-muted" style="margin-left: 8px; cursor: help;" />
+        <el-tooltip content="审批通过后，在有效期内可以执行运维工具" placement="top">
+          <i class="fa fa-question-circle text-muted" style="margin-left: 8px; cursor: help" />
         </el-tooltip>
       </el-form-item>
 
@@ -137,9 +138,10 @@ const statusMap = {
 const paramsArray = computed(() => {
   if (!props.approveData.params) return []
   try {
-    const parsed = typeof props.approveData.params === 'string'
-      ? JSON.parse(props.approveData.params)
-      : props.approveData.params
+    const parsed =
+      typeof props.approveData.params === 'string'
+        ? JSON.parse(props.approveData.params)
+        : props.approveData.params
     if (Array.isArray(parsed)) {
       return parsed
     }
@@ -149,11 +151,15 @@ const paramsArray = computed(() => {
   }
 })
 
-watch(() => props.visible, (val) => {
-  dialogVisible.value = val
-}, { immediate: true })
+watch(
+  () => props.visible,
+  val => {
+    dialogVisible.value = val
+  },
+  { immediate: true }
+)
 
-watch(dialogVisible, (val) => {
+watch(dialogVisible, val => {
   if (!val) {
     emit('update:visible', false)
   }
@@ -175,7 +181,7 @@ function formatDateTime(value) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
@@ -184,7 +190,7 @@ function formatExpirationTime(value) {
   if (value === 'expired') return '已过期'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 

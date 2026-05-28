@@ -59,13 +59,13 @@ function maybeReloadForUpdatedAssets() {
   }
 }
 
-window.addEventListener('error', (event) => {
+window.addEventListener('error', event => {
   if (isStaleAssetError(event?.error || event?.message)) {
     maybeReloadForUpdatedAssets()
   }
 })
 
-window.addEventListener('unhandledrejection', (event) => {
+window.addEventListener('unhandledrejection', event => {
   if (isStaleAssetError(event?.reason)) {
     maybeReloadForUpdatedAssets()
   }
@@ -76,7 +76,7 @@ try {
   const faviconHref = new URL('@/assets/icons/logo-opsmind@2x.png', import.meta.url).href
   const doc = document
   if (doc && doc.head) {
-    let link = doc.querySelector('link[rel="icon"]') || doc.createElement('link')
+    const link = doc.querySelector('link[rel="icon"]') || doc.createElement('link')
     link.setAttribute('rel', 'icon')
     link.setAttribute('type', 'image/png')
     link.setAttribute('href', faviconHref)

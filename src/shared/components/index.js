@@ -38,18 +38,15 @@ export function setupGlobalComponents(app) {
   // app.component('BaseLoading', BaseLoading)
   // app.component('BaseEmpty', BaseEmpty)
   // app.component('BaseError', BaseError)
-
   // 业务组件 (暂时注释，需要时取消注释)
   // app.component('StatsCard', StatsCard)
   // app.component('ModuleCard', ModuleCard)
   // app.component('QuickActions', QuickActions)
   // app.component('UserAvatar', UserAvatar)
   // app.component('ModuleStatus', ModuleStatus)
-
   // 布局组件 (暂时注释，需要时取消注释)
   // app.component('AppHeader', AppHeader)
   // app.component('AppSidebar', AppSidebar)
   // app.component('AppFooter', AppFooter)
   // app.component('PageContainer', PageContainer)
-
 }

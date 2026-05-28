@@ -9,7 +9,11 @@
         <div v-if="hostItems.length === 0" class="selection-item">
           <div class="selection-item__primary">暂无主机</div>
         </div>
-        <div v-for="item in hostItems" :key="`${item.hostId}-${item.hostKey}`" class="selection-item">
+        <div
+          v-for="item in hostItems"
+          :key="`${item.hostId}-${item.hostKey}`"
+          class="selection-item"
+        >
           <div class="selection-item__primary">{{ item.hostKey || '-' }}</div>
           <div class="selection-item__secondary">主机 ID：{{ item.hostId || '-' }}</div>
         </div>

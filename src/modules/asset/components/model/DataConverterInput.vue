@@ -193,7 +193,7 @@ const displayValue = computed(() => {
   const body = parsedValue.value.body
   if (!body) return ''
   // 截取前50个字符显示
-  return body.length > 50 ? body.substring(0, 50) + '...' : body
+  return body.length > 50 ? `${body.substring(0, 50)}...` : body
 })
 
 // 当前类型的图标
@@ -244,11 +244,11 @@ const insertFunction = () => {
 const handleSave = () => {
   let newValue = editBody.value
   if (editKind.value === 'js' && newValue) {
-    newValue = 'js:' + newValue
+    newValue = `js:${newValue}`
   } else if (editKind.value === 'yaml' && newValue) {
-    newValue = 'yaml:' + newValue
+    newValue = `yaml:${newValue}`
   } else if (editKind.value === 'json' && newValue) {
-    newValue = 'json:' + newValue
+    newValue = `json:${newValue}`
   }
   emit('update:modelValue', newValue)
   dialogVisible.value = false

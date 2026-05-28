@@ -32,10 +32,18 @@
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleScanHosts">
-        <i class="fa fa-redo"></i> 扫描主机
+        <i class="fa fa-redo"></i>
+        扫描主机
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -48,7 +56,13 @@
         style="width: 100%"
         max-height="calc(100vh - 230px)"
       >
-        <el-table-column label="主机" prop="$data_owner" min-width="150" sortable show-overflow-tooltip>
+        <el-table-column
+          label="主机"
+          prop="$data_owner"
+          min-width="150"
+          sortable
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
             {{ row.$data_owner || row.host || '-----' }}
           </template>
@@ -91,10 +105,7 @@
     </div>
 
     <!-- 扫描主机对话框 -->
-    <ScanHostsDialog
-      v-model="showScanDialog"
-      @scanned="handleScanCompleted"
-    />
+    <ScanHostsDialog v-model="showScanDialog" @scanned="handleScanCompleted" />
   </div>
 </template>
 
@@ -119,12 +130,13 @@ const filteredData = computed(() => {
   let data = tableData.value
   if (filters.keyword) {
     const keyword = filters.keyword.toLowerCase()
-    data = data.filter(row =>
-      row.$data_owner?.toLowerCase().includes(keyword) ||
-      row.host?.toLowerCase().includes(keyword) ||
-      row.user?.toLowerCase().includes(keyword) ||
-      row.file?.toLowerCase().includes(keyword) ||
-      row.user_spec?.toLowerCase().includes(keyword)
+    data = data.filter(
+      row =>
+        row.$data_owner?.toLowerCase().includes(keyword) ||
+        row.host?.toLowerCase().includes(keyword) ||
+        row.user?.toLowerCase().includes(keyword) ||
+        row.file?.toLowerCase().includes(keyword) ||
+        row.user_spec?.toLowerCase().includes(keyword)
     )
   }
   return data

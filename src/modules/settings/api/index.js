@@ -5,8 +5,10 @@ import { apiService } from '@/core/api'
  * GET /api/users
  */
 export function getUsers(tenantId) {
-    const params = tenantId ? `?tenantId=${tenantId}&cacheBuster=${Date.now()}` : `?cacheBuster=${Date.now()}`
-    return apiService.get(`/api/users${params}`)
+  const params = tenantId
+    ? `?tenantId=${tenantId}&cacheBuster=${Date.now()}`
+    : `?cacheBuster=${Date.now()}`
+  return apiService.get(`/api/users${params}`)
 }
 
 /**
@@ -14,7 +16,7 @@ export function getUsers(tenantId) {
  * GET /api/users/basic
  */
 export function getBasicUsers(tenantId) {
-    return apiService.get(`/api/users/basic?tenantId=${tenantId}&cacheBuster=${Date.now()}`)
+  return apiService.get(`/api/users/basic?tenantId=${tenantId}&cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -22,7 +24,7 @@ export function getBasicUsers(tenantId) {
  * GET /api/users/:tenantUserId
  */
 export function getUserDetail(tenantUserId) {
-    return apiService.get(`/api/users/${tenantUserId}`)
+  return apiService.get(`/api/users/${tenantUserId}`)
 }
 
 /**
@@ -30,7 +32,7 @@ export function getUserDetail(tenantUserId) {
  * POST /api/users
  */
 export function createUser(user) {
-    return apiService.post('/api/users', user)
+  return apiService.post('/api/users', user)
 }
 
 /**
@@ -38,7 +40,7 @@ export function createUser(user) {
  * PUT /api/users
  */
 export function updateUser(user) {
-    return apiService.put('/api/users', user)
+  return apiService.put('/api/users', user)
 }
 
 /**
@@ -46,7 +48,7 @@ export function updateUser(user) {
  * DELETE /api/users/:userId
  */
 export function deleteUser(userId) {
-    return apiService.delete(`/api/users/${userId}`)
+  return apiService.delete(`/api/users/${userId}`)
 }
 
 /**
@@ -54,7 +56,7 @@ export function deleteUser(userId) {
  * PUT /api/users
  */
 export function toggleUserActivation(user, activated) {
-    return apiService.put('/api/users', { ...user, activated })
+  return apiService.put('/api/users', { ...user, activated })
 }
 
 /**
@@ -62,8 +64,8 @@ export function toggleUserActivation(user, activated) {
  * GET /api/roles
  */
 export function getRoles(withPermission = false) {
-    const params = withPermission ? '?isWithPermission=true' : ''
-    return apiService.get(`/api/roles${params}`)
+  const params = withPermission ? '?isWithPermission=true' : ''
+  return apiService.get(`/api/roles${params}`)
 }
 
 /**
@@ -71,7 +73,9 @@ export function getRoles(withPermission = false) {
  * GET /udp/api/udp/applets/tenant/user
  */
 export function getUserApplets(login, tenantUserId) {
-    return apiService.get(`/udp/api/udp/applets/tenant/user?cacheBuster=${Date.now()}&login=${login}&tenantUserId=${tenantUserId}`)
+  return apiService.get(
+    `/udp/api/udp/applets/tenant/user?cacheBuster=${Date.now()}&login=${login}&tenantUserId=${tenantUserId}`
+  )
 }
 
 /**
@@ -79,7 +83,7 @@ export function getUserApplets(login, tenantUserId) {
  * GET /api/apikey/:tenantUserId
  */
 export function getUserApiKeys(tenantUserId) {
-    return apiService.get(`/api/apikey/${tenantUserId}`)
+  return apiService.get(`/api/apikey/${tenantUserId}`)
 }
 
 /**
@@ -88,7 +92,10 @@ export function getUserApiKeys(tenantUserId) {
  * Body: 完整的应用列表，包含 _user_applet 标记
  */
 export function saveUserApplets(tenantUserId, applets) {
-    return apiService.post(`/udp/api/udp/applet/tenant/${tenantUserId}?cacheBuster=${Date.now()}`, applets)
+  return apiService.post(
+    `/udp/api/udp/applet/tenant/${tenantUserId}?cacheBuster=${Date.now()}`,
+    applets
+  )
 }
 
 /**
@@ -96,7 +103,7 @@ export function saveUserApplets(tenantUserId, applets) {
  * PUT /api/users/roles
  */
 export function updateUserRoles(users) {
-    return apiService.put('/api/users/roles', users)
+  return apiService.put('/api/users/roles', users)
 }
 
 /**
@@ -104,7 +111,7 @@ export function updateUserRoles(users) {
  * GET /api/users/not-associated
  */
 export function getNotAssociatedUsers(tenantId) {
-    return apiService.get(`/api/users/not-associated?tenantId=${tenantId}`)
+  return apiService.get(`/api/users/not-associated?tenantId=${tenantId}`)
 }
 
 /**
@@ -112,7 +119,7 @@ export function getNotAssociatedUsers(tenantId) {
  * POST /api/users/associate
  */
 export function associateTenantUsers(tenantId, userIds) {
-    return apiService.post('/api/users/associate', { tenantId, userIds })
+  return apiService.post('/api/users/associate', { tenantId, userIds })
 }
 
 /**
@@ -120,23 +127,25 @@ export function associateTenantUsers(tenantId, userIds) {
  * GET /udp/api/udp/applets/tenant
  */
 export function getTenantApplets(tenantId) {
-    return apiService.get(`/udp/api/udp/applets/tenant?tenantId=${tenantId}&cacheBuster=${Date.now()}`)
+  return apiService.get(
+    `/udp/api/udp/applets/tenant?tenantId=${tenantId}&cacheBuster=${Date.now()}`
+  )
 }
 
 export default {
-    getUsers,
-    getBasicUsers,
-    getUserDetail,
-    createUser,
-    updateUser,
-    deleteUser,
-    toggleUserActivation,
-    getRoles,
-    getUserApplets,
-    getUserApiKeys,
-    saveUserApplets,
-    updateUserRoles,
-    getNotAssociatedUsers,
-    associateTenantUsers,
-    getTenantApplets
+  getUsers,
+  getBasicUsers,
+  getUserDetail,
+  createUser,
+  updateUser,
+  deleteUser,
+  toggleUserActivation,
+  getRoles,
+  getUserApplets,
+  getUserApiKeys,
+  saveUserApplets,
+  updateUserRoles,
+  getNotAssociatedUsers,
+  associateTenantUsers,
+  getTenantApplets
 }

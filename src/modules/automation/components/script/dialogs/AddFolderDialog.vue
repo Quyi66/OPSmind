@@ -10,12 +10,7 @@
       <div class="form-group">
         <label class="control-label">文件夹名称</label>
         <div class="form-control-wrapper">
-          <el-input
-            v-model="form.name"
-            :disabled="isEdit"
-            class="code-input"
-            maxlength="100"
-          />
+          <el-input v-model="form.name" :disabled="isEdit" class="code-input" maxlength="100" />
         </div>
       </div>
       <div class="form-group">
@@ -26,16 +21,13 @@
       </div>
     </div>
     <template #footer>
-      <el-button
-        type="primary"
-        :disabled="!form.name"
-        :loading="saving"
-        @click="handleSubmit"
-      >
-        <i class="fa fa-check me-1" /> 确定
+      <el-button type="primary" :disabled="!form.name" :loading="saving" @click="handleSubmit">
+        <i class="fa fa-check me-1" />
+        确定
       </el-button>
       <el-button @click="visible = false">
-        <i class="fa fa-reply me-1" /> 取消
+        <i class="fa fa-reply me-1" />
+        取消
       </el-button>
     </template>
   </el-dialog>
@@ -71,7 +63,7 @@ const emit = defineEmits(['update:modelValue', 'success'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const isEdit = computed(() => !!props.editData)
@@ -84,14 +76,18 @@ const form = ref({
 const saving = ref(false)
 
 // 监听 editData 变化，填充表单
-watch(() => props.editData, (data) => {
-  if (data) {
-    form.value = {
-      name: data.name || '',
-      description: data.description || ''
+watch(
+  () => props.editData,
+  data => {
+    if (data) {
+      form.value = {
+        name: data.name || '',
+        description: data.description || ''
+      }
     }
-  }
-}, { immediate: true })
+  },
+  { immediate: true }
+)
 
 // 提交
 async function handleSubmit() {
@@ -103,18 +99,26 @@ async function handleSubmit() {
   saving.value = true
   try {
     if (isEdit.value) {
-      await gfsApi.editFolder({
-        repoType: props.repoType,
-        repo: props.repo,
-        dir: props.dir
-      }, form.value.name, form.value.description)
+      await gfsApi.editFolder(
+        {
+          repoType: props.repoType,
+          repo: props.repo,
+          dir: props.dir
+        },
+        form.value.name,
+        form.value.description
+      )
       ElMessage.success('修改成功')
     } else {
-      await gfsApi.addFolder({
-        repoType: props.repoType,
-        repo: props.repo,
-        dir: props.dir
-      }, form.value.name, form.value.description)
+      await gfsApi.addFolder(
+        {
+          repoType: props.repoType,
+          repo: props.repo,
+          dir: props.dir
+        },
+        form.value.name,
+        form.value.description
+      )
       ElMessage.success('创建成功')
     }
     visible.value = false

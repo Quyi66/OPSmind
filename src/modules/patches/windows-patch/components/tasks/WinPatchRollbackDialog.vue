@@ -90,15 +90,23 @@
           跳过此步
         </el-button>
 
-        <el-button v-if="currentStepKey !== 'execute'" type="primary" :disabled="!canGoNext" @click="goNext">
+        <el-button
+          v-if="currentStepKey !== 'execute'"
+          type="primary"
+          :disabled="!canGoNext"
+          @click="goNext"
+        >
           下一步
         </el-button>
 
-        <el-button v-else-if="dialogBusy" type="primary" loading disabled>
-          执行中...
-        </el-button>
+        <el-button v-else-if="dialogBusy" type="primary" loading disabled>执行中...</el-button>
 
-        <el-button v-else type="primary" :disabled="selectedInstallLogIds.length === 0" @click="handlePrimaryAction">
+        <el-button
+          v-else
+          type="primary"
+          :disabled="selectedInstallLogIds.length === 0"
+          @click="handlePrimaryAction"
+        >
           {{ primaryButtonText }}
         </el-button>
       </div>
@@ -176,11 +184,12 @@ const {
   wizardSteps
 } = useWinPatchRollbackWizard({
   selectedRows: toRef(props, 'selectedRows'),
-  onSubmitted: task => emit('submitted', {
-    ...(task || {}),
-    openDetail: false,
-    refreshLogs: false
-  }),
+  onSubmitted: task =>
+    emit('submitted', {
+      ...(task || {}),
+      openDetail: false,
+      refreshLogs: false
+    }),
   onSuccess: task => emit('success', task)
 })
 

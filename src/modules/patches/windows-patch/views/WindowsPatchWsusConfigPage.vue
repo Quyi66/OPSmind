@@ -3,7 +3,13 @@
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="openCreateDialog">新建配置</el-button>
       <span style="flex: 1"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadConfigs()">
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadConfigs()"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -22,7 +28,12 @@
         </el-table-column>
         <el-table-column label="HTTPS" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="normalizeBoolean(pickValue(row, ['useSsl', 'use_ssl'], false)) ? 'success' : 'info'" size="small">
+            <el-tag
+              :type="
+                normalizeBoolean(pickValue(row, ['useSsl', 'use_ssl'], false)) ? 'success' : 'info'
+              "
+              size="small"
+            >
               {{ normalizeBoolean(pickValue(row, ['useSsl', 'use_ssl'], false)) ? '启用' : '关闭' }}
             </el-tag>
           </template>
@@ -34,12 +45,18 @@
         </el-table-column>
         <el-table-column label="更新时间" width="190" class-name="win-patch-table__time-column">
           <template #default="{ row }">
-            {{ formatDateTime(pickValue(row, ['updatedDate', 'updated_date', 'createdDate', 'created_date'], '')) }}
+            {{
+              formatDateTime(
+                pickValue(row, ['updatedDate', 'updated_date', 'createdDate', 'created_date'], '')
+              )
+            }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="openEditDialog(row)">编辑</el-button>
+            <el-button text type="primary" size="small" @click="openEditDialog(row)">
+              编辑
+            </el-button>
             <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>

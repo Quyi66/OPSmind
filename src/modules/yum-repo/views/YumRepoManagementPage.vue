@@ -106,7 +106,9 @@ function syncSelectedConfigId(preferredId = '') {
 }
 
 function syncSelectedRepoId(preferredId = '') {
-  const nextSelectedId = String(preferredId || selectedRepoId.value || selectedConfigId.value || '').trim()
+  const nextSelectedId = String(
+    preferredId || selectedRepoId.value || selectedConfigId.value || ''
+  ).trim()
   const hasCurrent = configList.value.some(item => resolveYumConfigId(item) === nextSelectedId)
   selectedRepoId.value = hasCurrent ? nextSelectedId : resolveYumConfigId(configList.value[0])
 }
@@ -228,7 +230,7 @@ async function pollCollectThenCompare(configId) {
 
     if (cs === 'FAILED') {
       const errMsg = String(currentConfig.errorMessage || '').trim()
-      ElMessage.error(`采集失败${errMsg ? '：' + errMsg : '，请检查仓库地址是否可访问'}`)
+      ElMessage.error(`采集失败${errMsg ? `：${errMsg}` : '，请检查仓库地址是否可访问'}`)
       await loadConfigs(configId, configId)
       return
     }

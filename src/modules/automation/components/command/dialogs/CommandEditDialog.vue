@@ -26,12 +26,7 @@
 
       <el-form-item label="语法类型" prop="type">
         <el-select v-model="formData.type" placeholder="请选择语法类型" style="width: 100%">
-          <el-option
-            v-for="type in commandTypes"
-            :key="type"
-            :label="type"
-            :value="type"
-          />
+          <el-option v-for="type in commandTypes" :key="type" :label="type" :value="type" />
         </el-select>
       </el-form-item>
 
@@ -65,12 +60,7 @@
 
       <!-- 仅查看模式显示审核原因 -->
       <el-form-item v-if="isViewMode && formData.unapprovedReason" label="审核原因">
-        <el-input
-          v-model="formData.unapprovedReason"
-          type="textarea"
-          :rows="2"
-          disabled
-        />
+        <el-input v-model="formData.unapprovedReason" type="textarea" :rows="2" disabled />
       </el-form-item>
 
       <!-- 显示命令状态 -->
@@ -93,12 +83,7 @@
           <el-button @click="handleClose">
             {{ isViewMode ? '关闭' : '取消' }}
           </el-button>
-          <el-button
-            v-if="!isViewMode"
-            type="primary"
-            :loading="saving"
-            @click="handleSave"
-          >
+          <el-button v-if="!isViewMode" type="primary" :loading="saving" @click="handleSave">
             保存
           </el-button>
         </div>
@@ -125,7 +110,7 @@ const props = defineProps({
   mode: {
     type: String,
     default: 'create', // 'create', 'edit', 'view'
-    validator: (value) => ['create', 'edit', 'view'].includes(value)
+    validator: value => ['create', 'edit', 'view'].includes(value)
   },
   command: {
     type: Object,
@@ -138,7 +123,7 @@ const emit = defineEmits(['update:visible', 'success'])
 // 对话框可见性
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 // 当前模式
@@ -150,10 +135,14 @@ const isCreateMode = computed(() => currentMode.value === 'create')
 // 对话框标题
 const dialogTitle = computed(() => {
   switch (currentMode.value) {
-    case 'create': return '新建命令'
-    case 'edit': return '编辑命令'
-    case 'view': return '命令详情'
-    default: return '命令'
+    case 'create':
+      return '新建命令'
+    case 'edit':
+      return '编辑命令'
+    case 'view':
+      return '命令详情'
+    default:
+      return '命令'
   }
 })
 
@@ -192,28 +181,27 @@ const formRules = {
     { required: true, message: '请输入命令名称', trigger: 'blur' },
     { min: 1, max: 50, message: '命令名称长度在 1 到 50 个字符', trigger: 'blur' }
   ],
-  type: [
-    { required: true, message: '请选择语法类型', trigger: 'change' }
-  ],
-  command: [
-    { required: true, message: '请输入命令内容', trigger: 'blur' }
-  ]
+  type: [{ required: true, message: '请选择语法类型', trigger: 'change' }],
+  command: [{ required: true, message: '请输入命令内容', trigger: 'blur' }]
 }
 
 // 保存状态
 const saving = ref(false)
 
 // 监听 props 变化
-watch(() => props.visible, async (val) => {
-  if (val) {
-    currentMode.value = props.mode
-    if (props.command) {
-      await loadCommandData()
-    } else {
-      resetForm()
+watch(
+  () => props.visible,
+  async val => {
+    if (val) {
+      currentMode.value = props.mode
+      if (props.command) {
+        await loadCommandData()
+      } else {
+        resetForm()
+      }
     }
   }
-})
+)
 
 // 加载命令数据
 async function loadCommandData() {

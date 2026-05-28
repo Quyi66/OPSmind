@@ -84,7 +84,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -123,15 +123,18 @@ async function loadSummary() {
   try {
     const api = useApi()
     const cacheBuster = Date.now()
-    const response = await api.post(`/dts/api/dts/q/data/VAP2_WIN_SCAN_HIST/?cacheBuster=${cacheBuster}`, {
-      params: {
-        run_id: props.runId
+    const response = await api.post(
+      `/dts/api/dts/q/data/VAP2_WIN_SCAN_HIST/?cacheBuster=${cacheBuster}`,
+      {
+        params: {
+          run_id: props.runId
+        }
       }
-    })
+    )
     const records = response?.data?.records || response?.records || []
     summary.value = records[0] || { scan_date: '', machine_count: 0 }
   } catch (error) {
-    ElMessage.error('加载扫描摘要失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`加载扫描摘要失败: ${error.message || '未知错误'}`)
   } finally {
     summaryLoading.value = false
   }
@@ -143,18 +146,21 @@ async function loadDetail() {
   try {
     const api = useApi()
     const cacheBuster = Date.now()
-    const response = await api.post(`/dts/api/dts/q/data/VAP2_HIST_WIN_SCAN_DETAIL/?cacheBuster=${cacheBuster}`, {
-      params: {
-        runId: props.runId
-      },
-      page: pagination.value.page,
-      size: pagination.value.pageSize
-    })
+    const response = await api.post(
+      `/dts/api/dts/q/data/VAP2_HIST_WIN_SCAN_DETAIL/?cacheBuster=${cacheBuster}`,
+      {
+        params: {
+          runId: props.runId
+        },
+        page: pagination.value.page,
+        size: pagination.value.pageSize
+      }
+    )
     const data = response?.data || response || {}
     tableData.value = data.records || []
     pagination.value.total = data.total || tableData.value.length
   } catch (error) {
-    ElMessage.error('加载扫描详情失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`加载扫描详情失败: ${error.message || '未知错误'}`)
   } finally {
     loading.value = false
   }
@@ -177,7 +183,7 @@ function handleSizeChange(size) {
 
 watch(
   () => props.modelValue,
-  (val) => {
+  val => {
     if (val) {
       pagination.value.page = 1
       loadReport()
@@ -187,7 +193,7 @@ watch(
 
 watch(
   () => props.runId,
-  (val) => {
+  val => {
     if (val && props.modelValue) {
       pagination.value.page = 1
       loadReport()

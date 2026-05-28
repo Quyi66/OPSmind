@@ -6,7 +6,10 @@
       class="wb-flip-number__slot"
       :class="{ 'wb-flip-number__slot--separator': isSeparator(char) }"
     >
-      <transition :name="isSeparator(char) ? 'wb-flip-number__noop' : 'wb-flip-number__digit'" mode="out-in">
+      <transition
+        :name="isSeparator(char) ? 'wb-flip-number__noop' : 'wb-flip-number__digit'"
+        mode="out-in"
+      >
         <span :key="`${index}-${char}`" class="wb-flip-number__char">{{ char }}</span>
       </transition>
     </span>
@@ -80,7 +83,9 @@ function isSeparator(char) {
 
 .wb-flip-number__digit-enter-active,
 .wb-flip-number__digit-leave-active {
-  transition: transform 0.22s ease, opacity 0.22s ease;
+  transition:
+    transform 0.22s ease,
+    opacity 0.22s ease;
 }
 
 .wb-flip-number__digit-enter-from {

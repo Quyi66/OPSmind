@@ -9,13 +9,7 @@
     <el-tabs v-model="activeTab">
       <!-- 基本信息 -->
       <el-tab-pane label="基本信息" name="basic">
-        <el-form
-          ref="formRef"
-          :model="form"
-          :rules="rules"
-          label-width="100px"
-          v-loading="loading"
-        >
+        <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" v-loading="loading">
           <el-form-item label="团队名称" prop="name">
             <el-input v-model="form.name" maxlength="50" placeholder="请输入团队名称" />
           </el-form-item>
@@ -45,11 +39,7 @@
             show-icon
           />
           <div v-else class="checkbox-grid">
-            <el-checkbox
-              v-for="user in allUsers"
-              :key="user.id"
-              v-model="user.isChecked"
-            >
+            <el-checkbox v-for="user in allUsers" :key="user.id" v-model="user.isChecked">
               {{ user.fullName || user.login }}
             </el-checkbox>
           </div>
@@ -60,9 +50,7 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">
-          保存
-        </el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
       </div>
     </template>
   </el-dialog>
@@ -88,7 +76,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const isCreate = computed(() => props.mode === 'create')
@@ -119,11 +107,14 @@ const rules = {
   ]
 }
 
-watch(() => props.modelValue, (val) => {
-  if (val) {
-    initDialog()
+watch(
+  () => props.modelValue,
+  val => {
+    if (val) {
+      initDialog()
+    }
   }
-})
+)
 
 function initDialog() {
   activeTab.value = 'basic'
@@ -173,8 +164,14 @@ async function loadUsers() {
       const isChecked = teamUsers.some(teamUser => {
         // 比对多种可能的ID字段
         return (
-          (user.id && (user.id === teamUser.id || user.id === teamUser.tenantUserId || user.id === teamUser.userId)) ||
-          (user.tenantUserId && (user.tenantUserId === teamUser.id || user.tenantUserId === teamUser.tenantUserId || user.tenantUserId === teamUser.userId)) ||
+          (user.id &&
+            (user.id === teamUser.id ||
+              user.id === teamUser.tenantUserId ||
+              user.id === teamUser.userId)) ||
+          (user.tenantUserId &&
+            (user.tenantUserId === teamUser.id ||
+              user.tenantUserId === teamUser.tenantUserId ||
+              user.tenantUserId === teamUser.userId)) ||
           (user.login && user.login === teamUser.login)
         )
       })

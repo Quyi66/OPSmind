@@ -8,10 +8,14 @@
       <div class="card-body card-body--scroll">
         <div class="selection-item">
           <div class="selection-item__primary">{{ resolveHostKey(hostSummary) }}</div>
-          <div class="selection-item__secondary">主机 ID：{{ resolveHostId(hostSummary) || '-' }}</div>
+          <div class="selection-item__secondary">
+            主机 ID：{{ resolveHostId(hostSummary) || '-' }}
+          </div>
         </div>
         <div class="selection-item">
-          <div class="selection-item__primary">{{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }}</div>
+          <div class="selection-item__primary">
+            {{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }}
+          </div>
           <div class="selection-item__secondary">
             版本 / 架构：{{ pickValue(hostSummary, ['osVersion', 'os_version'], '-') }} /
             {{ pickValue(hostSummary, ['osArch', 'os_arch'], '-') }}

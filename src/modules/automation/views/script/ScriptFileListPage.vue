@@ -1380,7 +1380,11 @@ defineExpose({
 
 <style lang="scss">
 html.dark .script-file-list {
-  --script-list-selection-bg: color-mix(in srgb, var(--el-color-primary) 14%, rgba(15, 23, 42, 0.92));
+  --script-list-selection-bg: color-mix(
+    in srgb,
+    var(--el-color-primary) 14%,
+    rgba(15, 23, 42, 0.92)
+  );
   --script-list-selection-chip-bg: rgba(15, 23, 42, 0.88);
   --script-list-selection-chip-border: rgba(96, 165, 250, 0.3);
   --script-list-empty-text: #94a3b8;

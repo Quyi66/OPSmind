@@ -4,153 +4,153 @@
       <div v-if="visible" class="flow-instance-viewer" :style="{ zIndex: viewerZIndex }">
         <div class="viewer__backdrop" @click="handleClose" />
         <div class="viewer__panel" @click.stop>
-        <header class="viewer__header">
-          <div class="viewer__heading">
-            <div class="viewer__eyebrow">流程实例详情</div>
-            <h3 class="header-title">{{ instanceData?.name || '流程实例详情' }}</h3>
-            <div class="header-meta">
-              <span>执行人 {{ instanceData?.createdBy || '-' }}</span>
-              <span>开始时间 {{ formatDateTime(instanceData?.createdAt) }}</span>
-              <span>主机 {{ hostRows.length }}</span>
-              <span>步骤 {{ normalizedSteps.length }}</span>
+          <header class="viewer__header">
+            <div class="viewer__heading">
+              <div class="viewer__eyebrow">流程实例详情</div>
+              <h3 class="header-title">{{ instanceData?.name || '流程实例详情' }}</h3>
+              <div class="header-meta">
+                <span>执行人 {{ instanceData?.createdBy || '-' }}</span>
+                <span>开始时间 {{ formatDateTime(instanceData?.createdAt) }}</span>
+                <span>主机 {{ hostRows.length }}</span>
+                <span>步骤 {{ normalizedSteps.length }}</span>
+              </div>
             </div>
-          </div>
-          <el-button class="header-close" text circle @click="handleClose">
-            <i class="fa fa-times" />
-          </el-button>
-        </header>
+            <el-button class="header-close" text circle @click="handleClose">
+              <i class="fa fa-times" />
+            </el-button>
+          </header>
 
-        <el-scrollbar class="viewer__body">
-          <div v-loading="loading" class="viewer-content">
-            <template v-if="instanceData">
-              <section class="viewer-summary-grid">
-                <article class="summary-card">
-                  <span class="summary-card__label">目标主机</span>
-                  <strong class="summary-card__value">{{ hostRows.length }}</strong>
-                </article>
-                <article class="summary-card">
-                  <span class="summary-card__label">流程步骤</span>
-                  <strong class="summary-card__value">{{ normalizedSteps.length }}</strong>
-                </article>
-                <article class="summary-card">
-                  <span class="summary-card__label">全局参数</span>
-                  <strong class="summary-card__value">{{ globalParamCount }}</strong>
-                </article>
-                <article class="summary-card">
-                  <span class="summary-card__label">整体状态</span>
-                  <strong class="summary-card__value">{{ overallStatusText }}</strong>
-                </article>
-              </section>
-
-              <section class="viewer-section">
-                <div class="section-heading">
-                  <div>
-                    <h4 class="section-title">步骤概览</h4>
-                  </div>
-                </div>
-                <div class="step-overview-grid">
-                  <article
-                    v-for="step in normalizedSteps"
-                    :key="step.id"
-                    class="step-overview-card"
-                    :class="`is-${step.aggregateBucket}`"
-                  >
-                    <div class="step-overview-card__top">
-                      <span class="step-overview-card__index">步骤 {{ step.index }}</span>
-                      <el-tag
-                        size="small"
-                        :type="getStatusTagType(step.aggregateBucket)"
-                        effect="light"
-                      >
-                        {{ getStatusLabel(step.aggregateBucket) }}
-                      </el-tag>
-                    </div>
-                    <strong class="step-overview-card__title">{{ step.name }}</strong>
-                    <span class="step-overview-card__script">
-                      {{ step.scriptPath || '未配置脚本路径' }}
-                    </span>
-                    <div class="step-overview-card__stats">
-                      <span>成功 {{ step.summary.success }}</span>
-                      <span>运行中 {{ step.summary.running }}</span>
-                      <span>失败 {{ step.summary.failed }}</span>
-                      <span>待执行 {{ step.summary.pending }}</span>
-                    </div>
+          <el-scrollbar class="viewer__body">
+            <div v-loading="loading" class="viewer-content">
+              <template v-if="instanceData">
+                <section class="viewer-summary-grid">
+                  <article class="summary-card">
+                    <span class="summary-card__label">目标主机</span>
+                    <strong class="summary-card__value">{{ hostRows.length }}</strong>
                   </article>
-                </div>
-              </section>
+                  <article class="summary-card">
+                    <span class="summary-card__label">流程步骤</span>
+                    <strong class="summary-card__value">{{ normalizedSteps.length }}</strong>
+                  </article>
+                  <article class="summary-card">
+                    <span class="summary-card__label">全局参数</span>
+                    <strong class="summary-card__value">{{ globalParamCount }}</strong>
+                  </article>
+                  <article class="summary-card">
+                    <span class="summary-card__label">整体状态</span>
+                    <strong class="summary-card__value">{{ overallStatusText }}</strong>
+                  </article>
+                </section>
 
-              <section class="viewer-section">
-                <div class="section-heading">
-                  <div>
-                    <h4 class="section-title">主机执行矩阵</h4>
-                    <p class="section-subtitle">
-                      点击状态单元格可查看该主机在对应步骤上的具体输出。
-                    </p>
+                <section class="viewer-section">
+                  <div class="section-heading">
+                    <div>
+                      <h4 class="section-title">步骤概览</h4>
+                    </div>
                   </div>
-                  <div class="status-legend">
-                    <span class="legend-item is-success">成功</span>
-                    <span class="legend-item is-running">运行中</span>
-                    <span class="legend-item is-failed">失败</span>
-                    <span class="legend-item is-pending">待执行</span>
-                  </div>
-                </div>
-
-                <div v-if="hostRows.length && normalizedSteps.length" class="status-matrix-wrap">
-                  <table class="status-table">
-                    <thead>
-                      <tr>
-                        <th class="status-table__host-head">主机</th>
-                        <th
-                          v-for="step in normalizedSteps"
-                          :key="step.id"
-                          class="status-table__step-head"
+                  <div class="step-overview-grid">
+                    <article
+                      v-for="step in normalizedSteps"
+                      :key="step.id"
+                      class="step-overview-card"
+                      :class="`is-${step.aggregateBucket}`"
+                    >
+                      <div class="step-overview-card__top">
+                        <span class="step-overview-card__index">步骤 {{ step.index }}</span>
+                        <el-tag
+                          size="small"
+                          :type="getStatusTagType(step.aggregateBucket)"
+                          effect="light"
                         >
-                          <div class="status-table__step-name">{{ step.name }}</div>
-                          <div class="status-table__step-script">
-                            {{ step.scriptPath || '未配置脚本' }}
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="host in hostRows" :key="host.hostId">
-                        <td class="host-cell">
-                          <strong>{{ host.hostKey }}</strong>
-                          <span>{{ host.assetType || '未知类型' }}</span>
-                        </td>
-                        <td v-for="step in normalizedSteps" :key="step.id" class="status-cell">
-                          <button
-                            type="button"
-                            class="status-pill"
-                            :class="[
-                              `is-${getStepStatusBucket(host.stepStates[step.id])}`,
-                              {
-                                'is-disabled': !canInspectStatus(host.stepStates[step.id]),
-                                'is-active':
-                                  currentCell.stepId === step.id &&
-                                  currentCell.hostId === host.hostId
-                              }
-                            ]"
-                            :disabled="!canInspectStatus(host.stepStates[step.id])"
-                            @click="handleCellClick(step, host)"
+                          {{ getStatusLabel(step.aggregateBucket) }}
+                        </el-tag>
+                      </div>
+                      <strong class="step-overview-card__title">{{ step.name }}</strong>
+                      <span class="step-overview-card__script">
+                        {{ step.scriptPath || '未配置脚本路径' }}
+                      </span>
+                      <div class="step-overview-card__stats">
+                        <span>成功 {{ step.summary.success }}</span>
+                        <span>运行中 {{ step.summary.running }}</span>
+                        <span>失败 {{ step.summary.failed }}</span>
+                        <span>待执行 {{ step.summary.pending }}</span>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="viewer-section">
+                  <div class="section-heading">
+                    <div>
+                      <h4 class="section-title">主机执行矩阵</h4>
+                      <p class="section-subtitle">
+                        点击状态单元格可查看该主机在对应步骤上的具体输出。
+                      </p>
+                    </div>
+                    <div class="status-legend">
+                      <span class="legend-item is-success">成功</span>
+                      <span class="legend-item is-running">运行中</span>
+                      <span class="legend-item is-failed">失败</span>
+                      <span class="legend-item is-pending">待执行</span>
+                    </div>
+                  </div>
+
+                  <div v-if="hostRows.length && normalizedSteps.length" class="status-matrix-wrap">
+                    <table class="status-table">
+                      <thead>
+                        <tr>
+                          <th class="status-table__host-head">主机</th>
+                          <th
+                            v-for="step in normalizedSteps"
+                            :key="step.id"
+                            class="status-table__step-head"
                           >
-                            <i class="fa" :class="getStatusIconClass(host.stepStates[step.id])" />
-                            <span>{{ getStatusLabel(host.stepStates[step.id]) }}</span>
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <div v-else class="viewer-empty-state">
-                  <i class="fa fa-stream" />
-                  <h4>暂无可展示的执行矩阵</h4>
-                  <p>当前实例没有返回主机状态视图，稍后可刷新后再试。</p>
-                </div>
-              </section>
-            </template>
-          </div>
-        </el-scrollbar>
+                            <div class="status-table__step-name">{{ step.name }}</div>
+                            <div class="status-table__step-script">
+                              {{ step.scriptPath || '未配置脚本' }}
+                            </div>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="host in hostRows" :key="host.hostId">
+                          <td class="host-cell">
+                            <strong>{{ host.hostKey }}</strong>
+                            <span>{{ host.assetType || '未知类型' }}</span>
+                          </td>
+                          <td v-for="step in normalizedSteps" :key="step.id" class="status-cell">
+                            <button
+                              type="button"
+                              class="status-pill"
+                              :class="[
+                                `is-${getStepStatusBucket(host.stepStates[step.id])}`,
+                                {
+                                  'is-disabled': !canInspectStatus(host.stepStates[step.id]),
+                                  'is-active':
+                                    currentCell.stepId === step.id &&
+                                    currentCell.hostId === host.hostId
+                                }
+                              ]"
+                              :disabled="!canInspectStatus(host.stepStates[step.id])"
+                              @click="handleCellClick(step, host)"
+                            >
+                              <i class="fa" :class="getStatusIconClass(host.stepStates[step.id])" />
+                              <span>{{ getStatusLabel(host.stepStates[step.id]) }}</span>
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div v-else class="viewer-empty-state">
+                    <i class="fa fa-stream" />
+                    <h4>暂无可展示的执行矩阵</h4>
+                    <p>当前实例没有返回主机状态视图，稍后可刷新后再试。</p>
+                  </div>
+                </section>
+              </template>
+            </div>
+          </el-scrollbar>
         </div>
       </div>
     </transition>
@@ -1170,7 +1170,11 @@ function formatDateTime(value) {
   --viewer-panel-bg: #ffffff;
   --viewer-panel-border: rgba(226, 232, 240, 0.92);
   --viewer-panel-shadow: 0 30px 70px rgba(15, 23, 42, 0.24);
-  --viewer-header-bg: linear-gradient(180deg, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+  --viewer-header-bg: linear-gradient(
+    180deg,
+    rgba(37, 99, 235, 0.06) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
   --viewer-border: #e2e8f0;
   --viewer-border-soft: #edf2f7;
   --viewer-chip-border: #dbe3f0;
@@ -1218,7 +1222,11 @@ function formatDateTime(value) {
 html.dark .flow-instance-viewer,
 html.dark .host-output-drawer {
   --viewer-backdrop-bg: rgba(2, 6, 23, 0.72);
-  --viewer-panel-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(17, 24, 39, 0.96) 100%);
+  --viewer-panel-bg: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.98) 0%,
+    rgba(17, 24, 39, 0.96) 100%
+  );
   --viewer-panel-border: rgba(71, 85, 105, 0.58);
   --viewer-panel-shadow: 0 34px 80px rgba(0, 0, 0, 0.48);
   --viewer-header-bg: linear-gradient(180deg, rgba(37, 99, 235, 0.2) 0%, rgba(15, 23, 42, 0) 100%);
@@ -1249,19 +1257,35 @@ html.dark .host-output-drawer {
   --viewer-output-text: #cbd5e1;
   --viewer-output-border: rgba(71, 85, 105, 0.72);
   --viewer-success-bg: rgba(16, 185, 129, 0.18);
-  --viewer-success-bg-soft: linear-gradient(180deg, rgba(16, 185, 129, 0.16) 0%, rgba(15, 23, 42, 0.92) 100%);
+  --viewer-success-bg-soft: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.16) 0%,
+    rgba(15, 23, 42, 0.92) 100%
+  );
   --viewer-success-border: rgba(16, 185, 129, 0.34);
   --viewer-success-text: #34d399;
   --viewer-running-bg: rgba(59, 130, 246, 0.18);
-  --viewer-running-bg-soft: linear-gradient(180deg, rgba(59, 130, 246, 0.16) 0%, rgba(15, 23, 42, 0.92) 100%);
+  --viewer-running-bg-soft: linear-gradient(
+    180deg,
+    rgba(59, 130, 246, 0.16) 0%,
+    rgba(15, 23, 42, 0.92) 100%
+  );
   --viewer-running-border: rgba(59, 130, 246, 0.34);
   --viewer-running-text: #60a5fa;
   --viewer-failed-bg: rgba(239, 68, 68, 0.18);
-  --viewer-failed-bg-soft: linear-gradient(180deg, rgba(239, 68, 68, 0.16) 0%, rgba(15, 23, 42, 0.92) 100%);
+  --viewer-failed-bg-soft: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.16) 0%,
+    rgba(15, 23, 42, 0.92) 100%
+  );
   --viewer-failed-border: rgba(239, 68, 68, 0.34);
   --viewer-failed-text: #f87171;
   --viewer-pending-bg: rgba(148, 163, 184, 0.16);
-  --viewer-pending-bg-soft: linear-gradient(180deg, rgba(71, 85, 105, 0.24) 0%, rgba(15, 23, 42, 0.92) 100%);
+  --viewer-pending-bg-soft: linear-gradient(
+    180deg,
+    rgba(71, 85, 105, 0.24) 0%,
+    rgba(15, 23, 42, 0.92) 100%
+  );
   --viewer-pending-border: rgba(100, 116, 139, 0.34);
   --viewer-pending-text: #94a3b8;
 }

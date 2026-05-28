@@ -155,15 +155,11 @@ export function useCronJobActions(refreshCallback) {
    */
   async function handleExecuteOnce(row) {
     try {
-      await ElMessageBox.confirm(
-        `确定要立即执行一次任务 ID: ${row.id} 吗？`,
-        '确认操作',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }
-      )
+      await ElMessageBox.confirm(`确定要立即执行一次任务 ID: ${row.id} 吗？`, '确认操作', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
 
       await jaoApi.executeCronJob(row.id)
       ElMessage.success(`任务 ${row.id} 执行成功`)
@@ -179,15 +175,11 @@ export function useCronJobActions(refreshCallback) {
    */
   async function handleCopy(row) {
     try {
-      await ElMessageBox.confirm(
-        '确定要复制该定时任务吗？',
-        '确认操作',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'info'
-        }
-      )
+      await ElMessageBox.confirm('确定要复制该定时任务吗？', '确认操作', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      })
 
       await jaoApi.copyCronJob(row.id)
       ElMessage.success('复制成功')
@@ -204,15 +196,11 @@ export function useCronJobActions(refreshCallback) {
    */
   async function handleDelete(row) {
     try {
-      await ElMessageBox.confirm(
-        `确定要删除定时任务 ID: ${row.id} 吗？`,
-        '确认删除',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }
-      )
+      await ElMessageBox.confirm(`确定要删除定时任务 ID: ${row.id} 吗？`, '确认删除', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
 
       await jaoApi.deleteCronJob(row.id)
       ElMessage.success(`任务 ${row.id} 已删除`)

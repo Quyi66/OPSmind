@@ -33,7 +33,9 @@
             <span class="install-summary-label">目标主机</span>
             <div class="install-summary-list">
               <div class="install-summary-item">{{ resolveHostKey(hostSummary) }}</div>
-              <div class="install-summary-subtext">主机 ID：{{ resolveHostId(hostSummary) || '-' }}</div>
+              <div class="install-summary-subtext">
+                主机 ID：{{ resolveHostId(hostSummary) || '-' }}
+              </div>
               <div class="install-summary-subtext">
                 {{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }} /
                 {{ pickValue(hostSummary, ['osVersion', 'os_version'], '-') }} /
@@ -44,14 +46,20 @@
           <div class="install-summary-row">
             <span class="install-summary-label">脚本配置</span>
             <div class="install-summary-list">
-              <div class="install-summary-item">预检查脚本：{{ getScriptSummary(preScriptConfig, 'pre-check') }}</div>
-              <div class="install-summary-item">校验脚本：{{ getScriptSummary(validateScriptConfig, 'validate') }}</div>
+              <div class="install-summary-item">
+                预检查脚本：{{ getScriptSummary(preScriptConfig, 'pre-check') }}
+              </div>
+              <div class="install-summary-item">
+                校验脚本：{{ getScriptSummary(validateScriptConfig, 'validate') }}
+              </div>
             </div>
           </div>
           <div class="install-summary-row">
             <span class="install-summary-label">执行策略</span>
             <div class="install-summary-list">
-              <div class="install-summary-item">{{ getInstallStrategySummary(installOptions, skippedSteps) }}</div>
+              <div class="install-summary-item">
+                {{ getInstallStrategySummary(installOptions, skippedSteps) }}
+              </div>
             </div>
           </div>
           <div v-if="availableRunItems.length" class="install-summary-row">
@@ -87,7 +95,10 @@
             }"
           >
             <div class="timeline-node">
-              <i v-if="item.uiStatus === 'success' || item.uiStatus === 'skipped'" class="fa fa-check" />
+              <i
+                v-if="item.uiStatus === 'success' || item.uiStatus === 'skipped'"
+                class="fa fa-check"
+              />
               <i v-else-if="item.uiStatus === 'failed'" class="fa fa-times" />
               <i v-else-if="item.uiStatus === 'running'" class="fa fa-spinner fa-spin" />
               <span v-else>{{ index + 1 }}</span>
@@ -99,7 +110,12 @@
                 <div v-if="item.remark" class="timeline-remark">{{ item.remark }}</div>
               </div>
               <div class="timeline-actions" v-if="item.runId">
-                <el-button type="primary" link size="small" @click="emit('view-run', item.runId, item.label)">
+                <el-button
+                  type="primary"
+                  link
+                  size="small"
+                  @click="emit('view-run', item.runId, item.label)"
+                >
                   查看详情
                 </el-button>
               </div>
@@ -120,7 +136,9 @@
               Windows 补丁安装流程已按既定步骤执行完成，可关闭向导或查看步骤详情确认结果。
             </div>
             <div v-else class="timeline-status-text">
-              由于部分环节出现异常（{{ errorMessage || '未知错误' }}），任务已停止。请检查原因并重试。
+              由于部分环节出现异常（{{
+                errorMessage || '未知错误'
+              }}），任务已停止。请检查原因并重试。
             </div>
           </template>
         </el-alert>
@@ -131,11 +149,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import {
-  pickValue,
-  resolveHostId,
-  resolveHostKey
-} from '../../utils'
+import { pickValue, resolveHostId, resolveHostKey } from '../../utils'
 
 const props = defineProps({
   availableRunItems: {
@@ -197,9 +211,10 @@ function getScriptSummary(scriptConfig = {}, stepKey = '') {
   }
 
   const mode = scriptConfig?.mode === 'upload' ? 'upload' : 'edit'
-  const hasContent = mode === 'upload'
-    ? Boolean(scriptConfig?.file || scriptConfig?.fileName)
-    : Boolean(String(scriptConfig?.content || '').trim())
+  const hasContent =
+    mode === 'upload'
+      ? Boolean(scriptConfig?.file || scriptConfig?.fileName)
+      : Boolean(String(scriptConfig?.content || '').trim())
 
   if (!hasContent) return '未配置，执行时会自动跳过'
   return mode === 'upload' ? '已上传脚本文件' : '手动编辑脚本'

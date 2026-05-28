@@ -17,7 +17,12 @@
       <div class="form-group">
         <label class="control-label">脚本名称</label>
         <div class="form-control-wrapper">
-          <el-input v-model="form.name" placeholder="例如: deploy.sh" class="code-input" maxlength="100" />
+          <el-input
+            v-model="form.name"
+            placeholder="例如: deploy.sh"
+            class="code-input"
+            maxlength="100"
+          />
         </div>
       </div>
       <div class="form-group">
@@ -41,7 +46,10 @@
       <div v-if="repoType === 'git'" class="form-group">
         <label class="control-label">
           参数配置
-          <el-tooltip content="如果文件支持配置（例如命令行执行参数），可以在这里填写" placement="top">
+          <el-tooltip
+            content="如果文件支持配置（例如命令行执行参数），可以在这里填写"
+            placement="top"
+          >
             <i class="fa fa-info-circle text-muted" />
           </el-tooltip>
         </label>
@@ -52,17 +60,15 @@
       <div v-if="repoType === 'git'" class="form-group">
         <label class="control-label">
           说明
-          <el-tooltip content="可以在这里填写文件的用途、目的、使用方法等描述信息，便于使用者理解这个文件" placement="top">
+          <el-tooltip
+            content="可以在这里填写文件的用途、目的、使用方法等描述信息，便于使用者理解这个文件"
+            placement="top"
+          >
             <i class="fa fa-info-circle text-muted" />
           </el-tooltip>
         </label>
         <div class="form-control-wrapper">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            resize="none"
-          />
+          <el-input v-model="form.description" type="textarea" :rows="3" resize="none" />
         </div>
       </div>
     </div>
@@ -73,10 +79,12 @@
         :loading="saving"
         @click="handleSubmit"
       >
-        <i class="fa fa-check me-1" /> 确定
+        <i class="fa fa-check me-1" />
+        确定
       </el-button>
       <el-button @click="visible = false">
-        <i class="fa fa-reply me-1" /> 取消
+        <i class="fa fa-reply me-1" />
+        取消
       </el-button>
     </template>
   </el-dialog>
@@ -107,7 +115,7 @@ const emit = defineEmits(['update:modelValue', 'success'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const form = ref({

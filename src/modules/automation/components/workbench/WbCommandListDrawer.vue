@@ -8,7 +8,15 @@ const props = defineProps({
   filterType: { type: String, default: '' }
 })
 
-const emit = defineEmits(['navigate', 'view', 'edit', 'run', 'create-job', 'toggle-status', 'delete'])
+const emit = defineEmits([
+  'navigate',
+  'view',
+  'edit',
+  'run',
+  'create-job',
+  'toggle-status',
+  'delete'
+])
 const visible = defineModel('visible', { default: false })
 const filters = reactive({
   keyword: ''
@@ -42,7 +50,7 @@ const filteredCommands = computed(() => {
   const keyword = appliedFilters.keyword.trim().toLowerCase()
   if (!keyword) return baseCommands.value
 
-  return baseCommands.value.filter((item) => {
+  return baseCommands.value.filter(item => {
     const preview = previewText(item)
     return [item.name, item.description, preview, item.type, item.id]
       .filter(Boolean)
@@ -50,7 +58,9 @@ const filteredCommands = computed(() => {
   })
 })
 
-const emptyText = computed(() => (baseCommands.value.length ? '没有符合筛选条件的命令' : '暂无命令'))
+const emptyText = computed(() =>
+  baseCommands.value.length ? '没有符合筛选条件的命令' : '暂无命令'
+)
 
 function typeLabel(type) {
   return TYPE_LABELS[type] || type || '-'
@@ -61,7 +71,10 @@ function typeTag(type) {
 }
 
 function previewText(item) {
-  if ((item?.status === 1 || item?.status === 2 || item?.command == null) && item?.unapprovedCommand) {
+  if (
+    (item?.status === 1 || item?.status === 2 || item?.command == null) &&
+    item?.unapprovedCommand
+  ) {
     return item.unapprovedCommand
   }
   return item?.command || item?.unapprovedCommand || '-'
@@ -106,7 +119,7 @@ function handleReset() {
 
 watch(
   () => visible.value,
-  (isVisible) => {
+  isVisible => {
     if (!isVisible) return
     handleReset()
   }
@@ -114,11 +127,21 @@ watch(
 </script>
 
 <template>
-  <el-drawer v-model="visible" :title="title" size="680px" destroy-on-close class="wb-workbench-drawer">
+  <el-drawer
+    v-model="visible"
+    :title="title"
+    size="680px"
+    destroy-on-close
+    class="wb-workbench-drawer"
+  >
     <template #footer>
       <div class="wb-drawer-footer">
-        <span class="wb-drawer-footer__total">当前 {{ filteredCommands.length }} 条 / 共 {{ baseCommands.length }} 条</span>
-        <el-button link size="small" @click="emit('navigate', '/cmd/list')">在命令执行中管理</el-button>
+        <span class="wb-drawer-footer__total">
+          当前 {{ filteredCommands.length }} 条 / 共 {{ baseCommands.length }} 条
+        </span>
+        <el-button link size="small" @click="emit('navigate', '/cmd/list')">
+          在命令执行中管理
+        </el-button>
       </div>
     </template>
 
@@ -143,24 +166,76 @@ watch(
       </div>
 
       <div v-if="filteredCommands.length" class="wb-command-list">
-        <div v-for="item in filteredCommands" :key="item.id || item.name" class="wb-command-item" @click="emit('view', item)">
+        <div
+          v-for="item in filteredCommands"
+          :key="item.id || item.name"
+          class="wb-command-item"
+          @click="emit('view', item)"
+        >
           <div class="wb-command-item__info">
             <div class="wb-command-item__top">
               <span class="wb-command-item__name">{{ item.name || '-' }}</span>
               <div class="wb-command-item__badges">
-                <el-tag :type="typeTag(item.type)" size="small" effect="plain">{{ typeLabel(item.type) }}</el-tag>
-                <el-tag :type="statusType(item.status)" size="small" effect="plain">{{ statusText(item.status) }}</el-tag>
+                <el-tag :type="typeTag(item.type)" size="small" effect="plain">
+                  {{ typeLabel(item.type) }}
+                </el-tag>
+                <el-tag :type="statusType(item.status)" size="small" effect="plain">
+                  {{ statusText(item.status) }}
+                </el-tag>
               </div>
             </div>
             <span class="wb-command-item__desc">{{ previewText(item) }}</span>
-            <span class="wb-command-item__meta">最近修改 {{ formatDateTime(item.updatedAt || item.createdAt) }}</span>
+            <span class="wb-command-item__meta">
+              最近修改 {{ formatDateTime(item.updatedAt || item.createdAt) }}
+            </span>
           </div>
           <div class="wb-command-item__actions">
-            <el-button class="wb-inline-action" link type="primary" size="small" :disabled="!canRun(item)" @click.stop="emit('run', item)">执行</el-button>
-            <el-button class="wb-inline-action" link type="primary" size="small" @click.stop="emit('create-job', item)">运维工具</el-button>
-            <el-button class="wb-inline-action" link size="small" :disabled="item.status === 3" @click.stop="emit('edit', item)">编辑</el-button>
-            <el-button class="wb-inline-action" link size="small" :disabled="!canToggle(item)" @click.stop="emit('toggle-status', item)">{{ toggleLabel(item) }}</el-button>
-            <el-button class="wb-inline-action" link type="danger" size="small" @click.stop="emit('delete', item)">删除</el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              :disabled="!canRun(item)"
+              @click.stop="emit('run', item)"
+            >
+              执行
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click.stop="emit('create-job', item)"
+            >
+              运维工具
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              size="small"
+              :disabled="item.status === 3"
+              @click.stop="emit('edit', item)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              size="small"
+              :disabled="!canToggle(item)"
+              @click.stop="emit('toggle-status', item)"
+            >
+              {{ toggleLabel(item) }}
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="danger"
+              size="small"
+              @click.stop="emit('delete', item)"
+            >
+              删除
+            </el-button>
           </div>
         </div>
       </div>
@@ -211,7 +286,9 @@ watch(
   border-radius: 6px;
   background: transparent;
   border: 1px solid transparent;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
   cursor: pointer;
 
   &:hover {

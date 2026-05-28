@@ -5,7 +5,6 @@
       <button class="retry-btn" @click="retryOpen">手动打开</button>
     </div>
   </div>
-
 </template>
 
 <script setup>

@@ -36,18 +36,15 @@
         @row-click="handleRowClick"
         @selection-change="handleSelectionChange"
         row-class-name="file-row"
-        :row-key="(row) => row.path"
+        :row-key="row => row.path"
       >
         <el-table-column
           v-if="multipleSelect"
           type="selection"
           width="50"
-          :selectable="(row) => !row.directory && !row._excluded"
+          :selectable="row => !row.directory && !row._excluded"
         />
-        <el-table-column
-          v-else
-          width="50"
-        >
+        <el-table-column v-else width="50">
           <template #default="{ row }">
             <el-radio
               v-if="!row.directory && !row._excluded"
@@ -62,7 +59,11 @@
             <div class="file-name" :class="{ 'is-excluded': row._excluded }">
               <i :class="getFileIcon(row)" class="file-icon"></i>
               <span class="file-name-text">{{ row.name }}</span>
-              <i v-if="row._stageExists && !row._stageIsThis" class="fa fa-circle text-primary stage-indicator" title="有新版本，等待审核"></i>
+              <i
+                v-if="row._stageExists && !row._stageIsThis"
+                class="fa fa-circle text-primary stage-indicator"
+                title="有新版本，等待审核"
+              ></i>
             </div>
           </template>
         </el-table-column>
@@ -84,8 +85,18 @@
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
             <template v-if="!row.directory && !row._isParentDir">
-              <span v-if="row._stageExists" :class="'text-' + (row._stageStatusColor || 'primary')" class="status-dot" :title="row._stageStatusText || '待审核'"></span>
-              <span v-else-if="row._statusText" :class="'text-' + (row._statusCss || 'success')" class="status-dot" :title="row._statusText"></span>
+              <span
+                v-if="row._stageExists"
+                :class="'text-' + (row._stageStatusColor || 'primary')"
+                class="status-dot"
+                :title="row._stageStatusText || '待审核'"
+              ></span>
+              <span
+                v-else-if="row._statusText"
+                :class="'text-' + (row._statusCss || 'success')"
+                class="status-dot"
+                :title="row._statusText"
+              ></span>
             </template>
           </template>
         </el-table-column>
@@ -183,7 +194,7 @@ const emit = defineEmits(['update:modelValue', 'confirm'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -203,7 +214,7 @@ const breadcrumbs = computed(() => {
   if (currentDir.value) {
     const parts = currentDir.value.split('/').filter(Boolean)
     let path = ''
-    parts.forEach((part) => {
+    parts.forEach(part => {
       path += (path ? '/' : '') + part
       crumbs.push({ name: part, path })
     })
@@ -239,8 +250,14 @@ async function loadFiles() {
 
     // 文件过滤
     if (props.fileFilter) {
-      const regex = new RegExp(props.fileFilter.replace(/\s*,\s*/g, ')|(').replace(/^/, '(').replace(/$/, ')').replace(/\*/g, '.*'))
-      files.forEach((f) => {
+      const regex = new RegExp(
+        props.fileFilter
+          .replace(/\s*,\s*/g, ')|(')
+          .replace(/^/, '(')
+          .replace(/$/, ')')
+          .replace(/\*/g, '.*')
+      )
+      files.forEach(f => {
         if (!f.directory && !regex.test(f.name)) {
           f._excluded = true
         }
@@ -253,7 +270,7 @@ async function loadFiles() {
     await nextTick()
     restoreSelection()
   } catch (error) {
-    ElMessage.error('加载文件列表失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`加载文件列表失败: ${error.message || '未知错误'}`)
   } finally {
     loading.value = false
   }
@@ -318,9 +335,9 @@ function getFileIcon(file) {
  */
 function formatFileSize(size) {
   if (!size || size < 0) return '-'
-  if (size < 1024) return size + ' B'
-  if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB'
-  return (size / 1024 / 1024).toFixed(1) + ' MB'
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(1)} MB`
 }
 
 /**
@@ -367,7 +384,7 @@ function handleRowClick(row) {
  */
 function handleSelectionChange(selection) {
   if (props.multipleSelect) {
-    selectedFiles.value = selection.filter((f) => !f.directory && !f._excluded)
+    selectedFiles.value = selection.filter(f => !f.directory && !f._excluded)
   }
 }
 
@@ -383,7 +400,7 @@ function clearSelection() {
  * 移除已选文件
  */
 function removeSelected(file) {
-  const index = selectedFiles.value.findIndex((f) => f.path === file.path)
+  const index = selectedFiles.value.findIndex(f => f.path === file.path)
   if (index !== -1) {
     selectedFiles.value.splice(index, 1)
   }
@@ -419,20 +436,22 @@ function closeFilePreview() {
 function handleConfirm() {
   let result = []
   if (props.multipleSelect) {
-    result = selectedFiles.value.map((f) => ({
+    result = selectedFiles.value.map(f => ({
       path: f.path,
       name: f.name,
       config: f.config || '',
       tag: ''
     }))
   } else if (selectedFile.value) {
-    const file = fileList.value.find((f) => f.path === selectedFile.value)
-    result = [{
-      path: selectedFile.value,
-      name: file?.name || '',
-      config: file?.config || '',
-      tag: ''
-    }]
+    const file = fileList.value.find(f => f.path === selectedFile.value)
+    result = [
+      {
+        path: selectedFile.value,
+        name: file?.name || '',
+        config: file?.config || '',
+        tag: ''
+      }
+    ]
   }
 
   emit('confirm', result)
@@ -440,7 +459,7 @@ function handleConfirm() {
 }
 
 // 初始化
-watch(visible, (newVal) => {
+watch(visible, newVal => {
   if (newVal) {
     currentDir.value = props.initDir || ''
     selectedFiles.value = [...props.preSelected]

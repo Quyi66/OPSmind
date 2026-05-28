@@ -17,13 +17,23 @@
 
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="openScanDialog()">创建扫描任务</el-button>
-      <el-button size="small" :disabled="selectedHostRows.length === 0" @click="openScanDialog(selectedHostRows)">
+      <el-button
+        size="small"
+        :disabled="selectedHostRows.length === 0"
+        @click="openScanDialog(selectedHostRows)"
+      >
         扫描选中主机
       </el-button>
       <el-button size="small" @click="openReportDialog(selectedHostRows)">导出报告</el-button>
       <span class="win-patch-selection-text">已选 {{ selectedHostRows.length }} 台主机</span>
       <span style="flex: 1"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadPageData()">
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadPageData()"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -145,10 +155,7 @@
       @submitted="handleTaskSubmitted"
     />
 
-    <WinPatchReportDialog
-      v-model="reportDialogVisible"
-      :preselected-hosts="reportDialogHosts"
-    />
+    <WinPatchReportDialog v-model="reportDialogVisible" :preselected-hosts="reportDialogHosts" />
 
     <WinPatchHostPatchesDrawer
       v-model="hostDrawerVisible"
@@ -306,7 +313,8 @@ function openHostDrawerWithSeverity(row, severity) {
 
 function handleTaskSubmitted(task) {
   currentTaskId.value = pickValue(task, ['id'], '')
-  taskDrawerVisible.value = Boolean(currentTaskId.value) && pickValue(task, ['openDetail'], true) !== false
+  taskDrawerVisible.value =
+    Boolean(currentTaskId.value) && pickValue(task, ['openDetail'], true) !== false
 
   if (pickValue(task, ['refreshOverview'], true) !== false) {
     loadPageData()

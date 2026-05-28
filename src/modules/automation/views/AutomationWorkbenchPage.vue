@@ -1,6 +1,5 @@
 <template>
   <div class="automation-workbench ops-page-layout">
-
     <!-- ── 头部：标题 + 统计卡片 ── -->
     <section class="wb-header">
       <div class="wb-header__top">
@@ -14,11 +13,19 @@
             <span class="wb-header-path__label">目标路径</span>
             <span class="wb-header-path__value">{{ scriptDirLabel }}</span>
           </button>
-          <button type="button" class="wb-header-action" @click="handleLauncherAction('create-script-file')">
+          <button
+            type="button"
+            class="wb-header-action"
+            @click="handleLauncherAction('create-script-file')"
+          >
             <i class="fas fa-scroll" />
             <span>新建脚本</span>
           </button>
-          <button type="button" class="wb-header-action" @click="handleLauncherAction('upload-file')">
+          <button
+            type="button"
+            class="wb-header-action"
+            @click="handleLauncherAction('upload-file')"
+          >
             <i class="fas fa-upload" />
             <span>上传文件</span>
           </button>
@@ -48,7 +55,9 @@
           </div>
           <div class="wb-stat__meta">
             <span class="wb-stat__sub">成功 {{ successfulRunTotal }}</span>
-            <span class="wb-stat__hint">{{ hasActiveRuns ? `执行中 ${activeRunCount}` : '查看记录' }}</span>
+            <span class="wb-stat__hint">
+              {{ hasActiveRuns ? `执行中 ${activeRunCount}` : '查看记录' }}
+            </span>
           </div>
         </button>
 
@@ -67,7 +76,9 @@
             </span>
           </div>
           <div class="wb-stat__meta">
-            <span class="wb-stat__sub" :class="failedRunTotal ? 'is-danger' : ''">{{ failedRateLabel }}</span>
+            <span class="wb-stat__sub" :class="failedRunTotal ? 'is-danger' : ''">
+              {{ failedRateLabel }}
+            </span>
             <span class="wb-stat__hint">快速排查</span>
           </div>
         </button>
@@ -135,11 +146,7 @@
           </div>
         </button>
 
-        <button
-          v-if="canViewJobs"
-          class="wb-stat wb-stat--muted"
-          @click="openCronDrawer"
-        >
+        <button v-if="canViewJobs" class="wb-stat wb-stat--muted" @click="openCronDrawer">
           <div class="wb-stat__top">
             <div class="wb-stat__content">
               <span class="wb-stat__label">定时任务</span>
@@ -159,287 +166,509 @@
 
     <!-- ── 主体工作台 ── -->
     <div class="wb-dashboard">
-
-        <!-- 运维工具分布 -->
-        <section v-if="canViewJobs" class="wb-panel wb-panel--jobs">
-          <div class="wb-panel__header wb-panel__header--jobs">
-            <div class="wb-panel__title-group wb-panel__title-group--jobs">
-              <h3 class="wb-panel__title">运维工具分布</h3>
-              <div class="wb-job-panel-stats">
-                <span class="wb-job-panel-stat wb-job-panel-stat--total">
-                  <span class="wb-job-panel-stat__label">全部</span>
-                  <strong class="wb-job-panel-stat__value">{{ totalJobCount }}</strong>
-                </span>
-                <span
-                  v-for="item in jobTypeCounts"
-                  :key="item.key"
-                  class="wb-job-panel-stat"
-                  :class="`wb-job-panel-stat--${item.type}`"
+      <!-- 运维工具分布 -->
+      <section v-if="canViewJobs" class="wb-panel wb-panel--jobs">
+        <div class="wb-panel__header wb-panel__header--jobs">
+          <div class="wb-panel__title-group wb-panel__title-group--jobs">
+            <h3 class="wb-panel__title">运维工具分布</h3>
+            <div class="wb-job-panel-stats">
+              <span class="wb-job-panel-stat wb-job-panel-stat--total">
+                <span class="wb-job-panel-stat__label">全部</span>
+                <strong class="wb-job-panel-stat__value">{{ totalJobCount }}</strong>
+              </span>
+              <span
+                v-for="item in jobTypeCounts"
+                :key="item.key"
+                class="wb-job-panel-stat"
+                :class="`wb-job-panel-stat--${item.type}`"
+              >
+                <span class="wb-job-panel-stat__label">{{ item.label }}</span>
+                <strong class="wb-job-panel-stat__value">{{ item.value }}</strong>
+              </span>
+            </div>
+          </div>
+          <div class="wb-panel__header-actions">
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="handleJobTypeCreate('rest')"
+            >
+              + REST
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="handleJobTypeCreate('script')"
+            >
+              + 脚本
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="handleJobTypeCreate('command')"
+            >
+              + 命令
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openJobListDrawer('', '全部运维工具')"
+            >
+              查看全部
+            </el-button>
+          </div>
+        </div>
+        <transition-group
+          v-if="workbenchJobs.length"
+          name="wb-stack-slide"
+          tag="div"
+          class="wb-workbench-job-grid"
+        >
+          <article
+            v-for="job in workbenchJobs"
+            :key="job.id"
+            class="wb-workbench-job-card"
+            :class="`wb-workbench-job-card--${job.type || 'rest'}`"
+            @click="handleEditJobFromDrawer(job)"
+          >
+            <div class="wb-workbench-job-card__body">
+              <div class="wb-workbench-job-card__head">
+                <el-tag size="small" effect="dark" :type="job.displayTypeTag">
+                  {{ job.displayTypeLabel }}
+                </el-tag>
+                <span class="wb-workbench-job-card__time">{{ job.displayTime }}</span>
+              </div>
+              <strong class="wb-workbench-job-card__name">{{ job.displayTitle }}</strong>
+            </div>
+            <div class="wb-workbench-job-card__actions">
+              <button
+                type="button"
+                class="wb-workbench-job-card__action"
+                @click.stop="handleExecuteJobFromDrawer(job)"
+              >
+                <i class="fa fa-play" />
+                <span>执行</span>
+              </button>
+              <button
+                type="button"
+                class="wb-workbench-job-card__action"
+                @click.stop="handleEditJobFromDrawer(job)"
+              >
+                <i class="fa fa-cog" />
+                <span>编辑</span>
+              </button>
+              <button
+                type="button"
+                class="wb-workbench-job-card__action wb-workbench-job-card__action--danger"
+                @click.stop="handleDeleteJob(job)"
+              >
+                <i class="fa fa-trash" />
+                <span>删除</span>
+              </button>
+              <el-dropdown
+                trigger="hover"
+                placement="bottom-end"
+                @command="handleWorkbenchJobCommand(job, $event)"
+              >
+                <button
+                  type="button"
+                  class="wb-workbench-job-card__action wb-workbench-job-card__action--more"
+                  @click.stop
                 >
-                  <span class="wb-job-panel-stat__label">{{ item.label }}</span>
-                  <strong class="wb-job-panel-stat__value">{{ item.value }}</strong>
-                </span>
-              </div>
+                  <i class="fa fa-ellipsis-h" />
+                </button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="copy">
+                      <i class="fa fa-copy wb-workbench-job-card__menu-icon" />
+                      <span>复制</span>
+                    </el-dropdown-item>
+                    <el-dropdown-item command="history">
+                      <i class="fa fa-history wb-workbench-job-card__menu-icon" />
+                      <span>历史</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </div>
-            <div class="wb-panel__header-actions">
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="handleJobTypeCreate('rest')">+ REST</el-button>
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="handleJobTypeCreate('script')">+ 脚本</el-button>
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="handleJobTypeCreate('command')">+ 命令</el-button>
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="openJobListDrawer('', '全部运维工具')">查看全部</el-button>
-            </div>
-          </div>
-          <transition-group v-if="workbenchJobs.length" name="wb-stack-slide" tag="div" class="wb-workbench-job-grid">
-            <article
-              v-for="job in workbenchJobs"
-              :key="job.id"
-              class="wb-workbench-job-card"
-              :class="`wb-workbench-job-card--${job.type || 'rest'}`"
-              @click="handleEditJobFromDrawer(job)"
+          </article>
+        </transition-group>
+        <el-empty v-else description="暂无运维工具" :image-size="60" />
+      </section>
+
+      <!-- 定时调度 -->
+      <section v-if="canViewJobs" class="wb-panel wb-panel--cron">
+        <div class="wb-panel__header">
+          <h3 class="wb-panel__title">定时调度</h3>
+          <div class="wb-panel__header-actions">
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="handleLauncherAction('create-cron-job')"
             >
-              <div class="wb-workbench-job-card__body">
-                <div class="wb-workbench-job-card__head">
-                  <el-tag size="small" effect="dark" :type="job.displayTypeTag">
-                    {{ job.displayTypeLabel }}
-                  </el-tag>
-                  <span class="wb-workbench-job-card__time">{{ job.displayTime }}</span>
-                </div>
-                <strong class="wb-workbench-job-card__name">{{ job.displayTitle }}</strong>
-              </div>
-              <div class="wb-workbench-job-card__actions">
-                <button type="button" class="wb-workbench-job-card__action" @click.stop="handleExecuteJobFromDrawer(job)">
-                  <i class="fa fa-play" />
-                  <span>执行</span>
-                </button>
-                <button type="button" class="wb-workbench-job-card__action" @click.stop="handleEditJobFromDrawer(job)">
-                  <i class="fa fa-cog" />
-                  <span>编辑</span>
-                </button>
-                <button type="button" class="wb-workbench-job-card__action wb-workbench-job-card__action--danger" @click.stop="handleDeleteJob(job)">
-                  <i class="fa fa-trash" />
-                  <span>删除</span>
-                </button>
-                <el-dropdown trigger="hover" placement="bottom-end" @command="handleWorkbenchJobCommand(job, $event)">
-                  <button type="button" class="wb-workbench-job-card__action wb-workbench-job-card__action--more" @click.stop>
-                    <i class="fa fa-ellipsis-h" />
-                  </button>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item command="copy">
-                        <i class="fa fa-copy wb-workbench-job-card__menu-icon" />
-                        <span>复制</span>
-                      </el-dropdown-item>
-                      <el-dropdown-item command="history">
-                        <i class="fa fa-history wb-workbench-job-card__menu-icon" />
-                        <span>历史</span>
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-            </article>
-          </transition-group>
-          <el-empty v-else description="暂无运维工具" :image-size="60" />
-        </section>
+              + 新增
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openCronDrawer"
+            >
+              全部任务
+            </el-button>
+          </div>
+        </div>
 
-        <!-- 定时调度 -->
-        <section v-if="canViewJobs" class="wb-panel wb-panel--cron">
-          <div class="wb-panel__header">
-            <h3 class="wb-panel__title">定时调度</h3>
-            <div class="wb-panel__header-actions">
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="handleLauncherAction('create-cron-job')">+ 新增</el-button>
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="openCronDrawer">全部任务</el-button>
+        <transition-group
+          v-if="highlightedCronJobs.length"
+          name="wb-stack-slide"
+          tag="div"
+          class="wb-cron-list"
+        >
+          <div
+            v-for="item in highlightedCronJobs"
+            :key="item.id"
+            class="wb-cron-item"
+            :class="{ 'wb-cron-item--enabled': item.triggerStatus === '1' }"
+            @click="handleEditCronFromDrawer(item)"
+          >
+            <div class="wb-cron-item__info">
+              <strong class="wb-cron-item__name" :title="item.jobDesc">
+                {{ item.jobDesc || `任务 ${item.id}` }}
+              </strong>
+              <span class="wb-cron-item__cron">{{ item.scheduleConf || '-' }}</span>
+            </div>
+            <div class="wb-cron-item__actions">
+              <el-button
+                class="wb-inline-action"
+                text
+                type="primary"
+                size="small"
+                :loading="cronActionLoading[item.id + '_exec']"
+                @click.stop="handleExecuteCron(item)"
+              >
+                执行
+              </el-button>
+              <el-button
+                class="wb-inline-action"
+                text
+                size="small"
+                :type="item.triggerStatus === '1' ? 'danger' : 'success'"
+                :loading="cronActionLoading[item.id + '_toggle']"
+                @click.stop="handleToggleCron(item)"
+              >
+                {{ item.triggerStatus === '1' ? '停用' : '启用' }}
+              </el-button>
+              <el-button
+                class="wb-inline-action"
+                text
+                size="small"
+                @click.stop="handleCopyCronFromDrawer(item)"
+              >
+                复制
+              </el-button>
+              <el-button
+                class="wb-inline-action"
+                text
+                type="danger"
+                size="small"
+                @click.stop="handleDeleteCronFromDrawer(item)"
+              >
+                删除
+              </el-button>
             </div>
           </div>
+        </transition-group>
+        <el-empty v-else description="暂无定时任务" :image-size="60" />
 
-          <transition-group v-if="highlightedCronJobs.length" name="wb-stack-slide" tag="div" class="wb-cron-list">
+        <div v-if="cronSummary.total" class="wb-cron-footer">
+          <span class="wb-cron-footer__total">共 {{ cronSummary.total }} 个</span>
+          <el-tag size="small" type="success" effect="plain">启用 {{ cronSummary.enabled }}</el-tag>
+          <el-tag size="small" type="info" effect="plain" style="margin-left: 4px">
+            停用 {{ cronSummary.disabled }}
+          </el-tag>
+        </div>
+      </section>
+
+      <!-- 流程编排 -->
+      <section v-if="canViewJobs && showFlowWorkbenchPanel" class="wb-panel wb-panel--flows">
+        <div class="wb-panel__header">
+          <h3 class="wb-panel__title">流程编排</h3>
+          <div class="wb-panel__header-actions">
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="handleLauncherAction('create-flow')"
+            >
+              + 新建
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openFlowListDrawer"
+            >
+              查看全部
+            </el-button>
+          </div>
+        </div>
+        <div v-if="flows.length" class="wb-flow-list">
+          <div
+            v-for="item in flows.slice(0, 5)"
+            :key="item.id"
+            class="wb-flow-item"
+            @click="openFlowForEdit(item)"
+          >
+            <div class="wb-flow-item__info">
+              <strong class="wb-flow-item__name" :title="item.name">{{ item.name }}</strong>
+            </div>
+            <div class="wb-flow-item__actions">
+              <el-button
+                class="wb-inline-action"
+                text
+                type="primary"
+                size="small"
+                @click.stop="openFlowForRun(item)"
+              >
+                执行
+              </el-button>
+              <el-button
+                class="wb-inline-action"
+                text
+                type="primary"
+                size="small"
+                @click.stop="openFlowInstancesDrawer(item)"
+              >
+                实例
+              </el-button>
+              <el-button
+                class="wb-inline-action"
+                text
+                type="primary"
+                size="small"
+                @click.stop="openFlowForEdit(item)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                class="wb-inline-action"
+                text
+                type="danger"
+                size="small"
+                @click.stop="handleDeleteFlow(item)"
+              >
+                删除
+              </el-button>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else description="暂无流程" :image-size="60" />
+        <div v-if="flows.length" class="wb-cron-footer">
+          <span class="wb-cron-footer__total">共 {{ flows.length }} 个流程</span>
+        </div>
+      </section>
+
+      <!-- 命令执行 -->
+      <section
+        v-if="canViewCommands && showCommandWorkbenchPanel"
+        class="wb-panel wb-panel--commands"
+      >
+        <div class="wb-panel__header">
+          <h3 class="wb-panel__title">命令执行</h3>
+          <div class="wb-panel__header-actions">
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openCommandEditor('create')"
+            >
+              + 命令
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="handleLauncherAction('create-command-job')"
+            >
+              + 运维工具
+            </el-button>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openCommandListDrawer('', '全部命令')"
+            >
+              查看全部
+            </el-button>
+          </div>
+        </div>
+        <div v-if="commandTypeCounts.length || commandJobCount" class="wb-command-panel">
+          <div v-if="commandTypeCounts.length" class="wb-panel-subtitle">命令统计</div>
+          <div v-if="commandTypeCounts.length" class="wb-job-types wb-command-type-list">
             <div
-              v-for="item in highlightedCronJobs"
-              :key="item.id"
-              class="wb-cron-item"
-              :class="{ 'wb-cron-item--enabled': item.triggerStatus === '1' }"
-              @click="handleEditCronFromDrawer(item)"
+              v-for="item in commandTypeCounts"
+              :key="item.key"
+              class="wb-job-type-item"
+              :class="`wb-job-type-item--${item.type}`"
+              @click="openCommandListDrawer(item.type, `${item.label}命令`)"
             >
-              <div class="wb-cron-item__info">
-                <strong class="wb-cron-item__name" :title="item.jobDesc">
-                  {{ item.jobDesc || `任务 ${item.id}` }}
-                </strong>
-                <span class="wb-cron-item__cron">{{ item.scheduleConf || '-' }}</span>
+              <div class="wb-job-type-item__left">
+                <span class="wb-job-type-item__dot" />
+                <span class="wb-job-type-item__label">{{ item.label }}</span>
               </div>
-              <div class="wb-cron-item__actions">
+              <span class="wb-job-type-item__value">{{ item.value }}</span>
+            </div>
+          </div>
+
+          <div class="wb-command-job-head">
+            <span class="wb-panel-subtitle">命令运维工具</span>
+            <span class="wb-command-job-head__meta">共 {{ commandJobCount }} 个</span>
+          </div>
+
+          <div v-if="commandJobList.length" class="wb-command-job-list">
+            <div
+              v-for="item in commandJobList.slice(0, 5)"
+              :key="item.id"
+              class="wb-command-job-item"
+              @click="handleEditJobFromDrawer(item)"
+            >
+              <div class="wb-command-job-item__info">
+                <strong class="wb-command-job-item__name">
+                  {{ translateText(item.title) || item.title || item.id }}
+                </strong>
+              </div>
+              <div class="wb-command-job-item__actions">
                 <el-button
                   class="wb-inline-action"
                   text
                   type="primary"
                   size="small"
-                  :loading="cronActionLoading[item.id + '_exec']"
-                  @click.stop="handleExecuteCron(item)"
+                  @click.stop="handleExecuteJobFromDrawer(item)"
                 >
                   执行
                 </el-button>
                 <el-button
                   class="wb-inline-action"
                   text
+                  type="primary"
                   size="small"
-                  :type="item.triggerStatus === '1' ? 'danger' : 'success'"
-                  :loading="cronActionLoading[item.id + '_toggle']"
-                  @click.stop="handleToggleCron(item)"
+                  @click.stop="handleEditJobFromDrawer(item)"
                 >
-                  {{ item.triggerStatus === '1' ? '停用' : '启用' }}
+                  编辑
                 </el-button>
                 <el-button
                   class="wb-inline-action"
                   text
                   size="small"
-                  @click.stop="handleCopyCronFromDrawer(item)"
+                  @click.stop="handleOpenJobHistory(item)"
                 >
-                  复制
+                  历史
                 </el-button>
                 <el-button
                   class="wb-inline-action"
                   text
                   type="danger"
                   size="small"
-                  @click.stop="handleDeleteCronFromDrawer(item)"
+                  @click.stop="handleDeleteJob(item)"
                 >
                   删除
                 </el-button>
               </div>
             </div>
-          </transition-group>
-          <el-empty v-else description="暂无定时任务" :image-size="60" />
-
-          <div v-if="cronSummary.total" class="wb-cron-footer">
-            <span class="wb-cron-footer__total">共 {{ cronSummary.total }} 个</span>
-            <el-tag size="small" type="success" effect="plain">启用 {{ cronSummary.enabled }}</el-tag>
-            <el-tag size="small" type="info" effect="plain" style="margin-left:4px">停用 {{ cronSummary.disabled }}</el-tag>
           </div>
-        </section>
+          <el-empty v-else description="暂无命令运维工具" :image-size="56" />
 
-        <!-- 流程编排 -->
-        <section v-if="canViewJobs && showFlowWorkbenchPanel" class="wb-panel wb-panel--flows">
-          <div class="wb-panel__header">
-            <h3 class="wb-panel__title">流程编排</h3>
-            <div class="wb-panel__header-actions">
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="handleLauncherAction('create-flow')">+ 新建</el-button>
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="openFlowListDrawer">查看全部</el-button>
-            </div>
-          </div>
-          <div v-if="flows.length" class="wb-flow-list">
-            <div
-              v-for="item in flows.slice(0, 5)"
-              :key="item.id"
-              class="wb-flow-item"
-              @click="openFlowForEdit(item)"
+          <div v-if="commandJobList.length" class="wb-command-job-footer">
+            <span class="wb-command-job-footer__meta">最近更新的命令运维工具会优先显示在这里</span>
+            <el-button
+              class="wb-inline-action"
+              link
+              type="primary"
+              size="small"
+              @click="openCommandJobDrawer"
             >
-              <div class="wb-flow-item__info">
-                <strong class="wb-flow-item__name" :title="item.name">{{ item.name }}</strong>
-              </div>
-              <div class="wb-flow-item__actions">
-                <el-button class="wb-inline-action" text type="primary" size="small" @click.stop="openFlowForRun(item)">执行</el-button>
-                <el-button class="wb-inline-action" text type="primary" size="small" @click.stop="openFlowInstancesDrawer(item)">实例</el-button>
-                <el-button class="wb-inline-action" text type="primary" size="small" @click.stop="openFlowForEdit(item)">编辑</el-button>
-                <el-button class="wb-inline-action" text type="danger" size="small" @click.stop="handleDeleteFlow(item)">删除</el-button>
-              </div>
-            </div>
+              查看全部
+            </el-button>
           </div>
-          <el-empty v-else description="暂无流程" :image-size="60" />
-          <div v-if="flows.length" class="wb-cron-footer">
-            <span class="wb-cron-footer__total">共 {{ flows.length }} 个流程</span>
+        </div>
+        <el-empty v-else description="暂无命令与命令运维工具" :image-size="60" />
+      </section>
+
+      <!-- 运行分布 -->
+      <section v-if="canViewJobs" class="wb-panel wb-panel--runs">
+        <div class="wb-panel__header">
+          <div class="wb-panel__title-group">
+            <h3 class="wb-panel__title">运行分布</h3>
+            <el-tag size="small" type="info" effect="plain" style="margin-left: 6px">今日</el-tag>
           </div>
-        </section>
-
-        <!-- 命令执行 -->
-        <section v-if="canViewCommands && showCommandWorkbenchPanel" class="wb-panel wb-panel--commands">
-          <div class="wb-panel__header">
-            <h3 class="wb-panel__title">命令执行</h3>
-            <div class="wb-panel__header-actions">
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="openCommandEditor('create')">+ 命令</el-button>
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="handleLauncherAction('create-command-job')">+ 运维工具</el-button>
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="openCommandListDrawer('', '全部命令')">查看全部</el-button>
-            </div>
-          </div>
-          <div v-if="commandTypeCounts.length || commandJobCount" class="wb-command-panel">
-            <div v-if="commandTypeCounts.length" class="wb-panel-subtitle">命令统计</div>
-            <div v-if="commandTypeCounts.length" class="wb-job-types wb-command-type-list">
-              <div
-                v-for="item in commandTypeCounts"
-                :key="item.key"
-                class="wb-job-type-item"
-                :class="`wb-job-type-item--${item.type}`"
-                @click="openCommandListDrawer(item.type, `${item.label}命令`)"
-              >
-                <div class="wb-job-type-item__left">
-                  <span class="wb-job-type-item__dot" />
-                  <span class="wb-job-type-item__label">{{ item.label }}</span>
-                </div>
-                <span class="wb-job-type-item__value">{{ item.value }}</span>
-              </div>
-            </div>
-
-            <div class="wb-command-job-head">
-              <span class="wb-panel-subtitle">命令运维工具</span>
-              <span class="wb-command-job-head__meta">共 {{ commandJobCount }} 个</span>
-            </div>
-
-            <div v-if="commandJobList.length" class="wb-command-job-list">
-              <div
-                v-for="item in commandJobList.slice(0, 5)"
-                :key="item.id"
-                class="wb-command-job-item"
-                @click="handleEditJobFromDrawer(item)"
-              >
-                <div class="wb-command-job-item__info">
-                  <strong class="wb-command-job-item__name">{{ translateText(item.title) || item.title || item.id }}</strong>
-                </div>
-                <div class="wb-command-job-item__actions">
-                  <el-button class="wb-inline-action" text type="primary" size="small" @click.stop="handleExecuteJobFromDrawer(item)">执行</el-button>
-                  <el-button class="wb-inline-action" text type="primary" size="small" @click.stop="handleEditJobFromDrawer(item)">编辑</el-button>
-                  <el-button class="wb-inline-action" text size="small" @click.stop="handleOpenJobHistory(item)">历史</el-button>
-                  <el-button class="wb-inline-action" text type="danger" size="small" @click.stop="handleDeleteJob(item)">删除</el-button>
-                </div>
-              </div>
-            </div>
-            <el-empty v-else description="暂无命令运维工具" :image-size="56" />
-
-            <div v-if="commandJobList.length" class="wb-command-job-footer">
-              <span class="wb-command-job-footer__meta">最近更新的命令运维工具会优先显示在这里</span>
-              <el-button class="wb-inline-action" link type="primary" size="small" @click="openCommandJobDrawer">查看全部</el-button>
-            </div>
-          </div>
-          <el-empty v-else description="暂无命令与命令运维工具" :image-size="60" />
-        </section>
-
-        <!-- 运行分布 -->
-        <section v-if="canViewJobs" class="wb-panel wb-panel--runs">
-          <div class="wb-panel__header">
-            <div class="wb-panel__title-group">
-              <h3 class="wb-panel__title">运行分布</h3>
-              <el-tag size="small" type="info" effect="plain" style="margin-left:6px">今日</el-tag>
-            </div>
-            <el-button class="wb-inline-action" link type="primary" size="small" @click="openTodayRunsDrawer">查看全部</el-button>
-          </div>
-          <transition-group v-if="todayRunRecords.length" name="wb-stack-slide" tag="div" class="wb-run-list">
-            <button
-              v-for="item in workbenchRunRecords"
-              :key="item.id"
-              type="button"
-              class="wb-run-log-item"
-              @click="handleOpenRunResult(item)"
+          <el-button
+            class="wb-inline-action"
+            link
+            type="primary"
+            size="small"
+            @click="openTodayRunsDrawer"
+          >
+            查看全部
+          </el-button>
+        </div>
+        <transition-group
+          v-if="todayRunRecords.length"
+          name="wb-stack-slide"
+          tag="div"
+          class="wb-run-list"
+        >
+          <button
+            v-for="item in workbenchRunRecords"
+            :key="item.id"
+            type="button"
+            class="wb-run-log-item"
+            @click="handleOpenRunResult(item)"
+          >
+            <strong class="wb-run-log-item__name">{{ item.displayTitle }}</strong>
+            <span
+              class="wb-run-log-item__type"
+              :class="`wb-run-log-item__type--${item.displayTypeClass}`"
             >
-              <strong class="wb-run-log-item__name">{{ item.displayTitle }}</strong>
-              <span class="wb-run-log-item__type" :class="`wb-run-log-item__type--${item.displayTypeClass}`">{{ item.displayTypeLabel }}</span>
-              <span class="wb-run-log-item__time">{{ item.displayTime }}</span>
-              <el-tag class="wb-run-log-item__status" size="small" effect="plain" :type="item.displayStatusType">
-                {{ item.displayStatusLabel }}
-              </el-tag>
-              <i class="fas fa-chevron-right wb-run-log-item__arrow" />
-            </button>
-          </transition-group>
-          <el-empty v-else description="今日暂无运行记录" :image-size="60" />
-          <div class="wb-run-entries__footer">
-            今日共运行 <strong>{{ todayRunTotal }}</strong> 次，失败 <strong :class="failedRunTotal ? 'text-danger' : ''">{{ failedRunTotal }}</strong> 次
-          </div>
-        </section>
+              {{ item.displayTypeLabel }}
+            </span>
+            <span class="wb-run-log-item__time">{{ item.displayTime }}</span>
+            <el-tag
+              class="wb-run-log-item__status"
+              size="small"
+              effect="plain"
+              :type="item.displayStatusType"
+            >
+              {{ item.displayStatusLabel }}
+            </el-tag>
+            <i class="fas fa-chevron-right wb-run-log-item__arrow" />
+          </button>
+        </transition-group>
+        <el-empty v-else description="今日暂无运行记录" :image-size="60" />
+        <div class="wb-run-entries__footer">
+          今日共运行
+          <strong>{{ todayRunTotal }}</strong>
+          次，失败
+          <strong :class="failedRunTotal ? 'text-danger' : ''">{{ failedRunTotal }}</strong>
+          次
+        </div>
+      </section>
     </div>
 
     <!-- ── 弹窗 ── -->
@@ -663,7 +892,6 @@
     />
 
     <FlowInstanceViewer v-model="flowInstanceViewerVisible" :instance-id="viewingFlowInstanceId" />
-
   </div>
 </template>
 
@@ -678,10 +906,25 @@ import { translateText } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { useAppletTranslation } from '@/modules/automation/components/job/composables/useAppletTranslation.js'
 import { useAutomationWorkbench } from '@/modules/automation/composables/useAutomationWorkbench.js'
-import { fetchFlowInstances as fetchFlowInstancesApi, passApprove, refuseApprove, copyCronJob, deleteCronJob, deleteFlow as deleteFlowApi } from '@/modules/automation/api/jao'
-import { approveCommand, COMMAND_STATUS, saveCommand, deleteCommand as deleteCommandApi } from '@/modules/automation/api/command'
+import {
+  fetchFlowInstances as fetchFlowInstancesApi,
+  passApprove,
+  refuseApprove,
+  copyCronJob,
+  deleteCronJob,
+  deleteFlow as deleteFlowApi
+} from '@/modules/automation/api/jao'
+import {
+  approveCommand,
+  COMMAND_STATUS,
+  saveCommand,
+  deleteCommand as deleteCommandApi
+} from '@/modules/automation/api/command'
 import { copyJob as copyJobApi, deleteJob as deleteJobApi } from '@/modules/automation/api/jobApi'
-import { getRunLogStatusLabel as runStatusLabel, getRunLogStatusType as runStatusType } from '@/modules/automation/constants/runLogStatus'
+import {
+  getRunLogStatusLabel as runStatusLabel,
+  getRunLogStatusType as runStatusType
+} from '@/modules/automation/constants/runLogStatus'
 import WbRunLogsDrawer from '@/modules/automation/components/workbench/WbRunLogsDrawer.vue'
 import WbReviewDrawer from '@/modules/automation/components/workbench/WbReviewDrawer.vue'
 import WbCronDrawer from '@/modules/automation/components/workbench/WbCronDrawer.vue'
@@ -691,38 +934,38 @@ import WbCommandListDrawer from '@/modules/automation/components/workbench/WbCom
 import WbFlowListDrawer from '@/modules/automation/components/workbench/WbFlowListDrawer.vue'
 import WbFlowInstancesDrawer from '@/modules/automation/components/workbench/WbFlowInstancesDrawer.vue'
 
-const CreateJobDialog = defineAsyncComponent(() =>
-  import('@/modules/automation/components/job/JobListView/CreateJobDialog.vue')
+const CreateJobDialog = defineAsyncComponent(
+  () => import('@/modules/automation/components/job/JobListView/CreateJobDialog.vue')
 )
-const ExecuteJobDialog = defineAsyncComponent(() =>
-  import('@/modules/automation/components/job/JobListView/ExecuteJobDialog.vue')
+const ExecuteJobDialog = defineAsyncComponent(
+  () => import('@/modules/automation/components/job/JobListView/ExecuteJobDialog.vue')
 )
-const ExecuteHistoryDialog = defineAsyncComponent(() =>
-  import('@/modules/automation/components/job/JobListView/ExecuteHistoryDialog.vue')
+const ExecuteHistoryDialog = defineAsyncComponent(
+  () => import('@/modules/automation/components/job/JobListView/ExecuteHistoryDialog.vue')
 )
-const CommandEditDialog = defineAsyncComponent(() =>
-  import('@/modules/automation/components/command/dialogs/CommandEditDialog.vue')
+const CommandEditDialog = defineAsyncComponent(
+  () => import('@/modules/automation/components/command/dialogs/CommandEditDialog.vue')
 )
-const RunCommandDialog = defineAsyncComponent(() =>
-  import('@/modules/automation/components/command/dialogs/RunCommandDialog.vue')
+const RunCommandDialog = defineAsyncComponent(
+  () => import('@/modules/automation/components/command/dialogs/RunCommandDialog.vue')
 )
-const CronJobFormDialog = defineAsyncComponent(() =>
-  import('@/modules/automation/components/job/components/CronJobFormDialog.vue')
+const CronJobFormDialog = defineAsyncComponent(
+  () => import('@/modules/automation/components/job/components/CronJobFormDialog.vue')
 )
-const FlowEditor = defineAsyncComponent(() =>
-  import('@/modules/automation/components/job/schedule/components/FlowEditor.vue')
+const FlowEditor = defineAsyncComponent(
+  () => import('@/modules/automation/components/job/schedule/components/FlowEditor.vue')
 )
-const FlowInstanceViewer = defineAsyncComponent(() =>
-  import('@/modules/automation/components/job/schedule/components/FlowInstanceViewer.vue')
+const FlowInstanceViewer = defineAsyncComponent(
+  () => import('@/modules/automation/components/job/schedule/components/FlowInstanceViewer.vue')
 )
-const AddScriptDialog = defineAsyncComponent(() =>
-  import('@/modules/automation/components/script/dialogs/AddScriptDialog.vue')
+const AddScriptDialog = defineAsyncComponent(
+  () => import('@/modules/automation/components/script/dialogs/AddScriptDialog.vue')
 )
-const UploadFileDialog = defineAsyncComponent(() =>
-  import('@/modules/automation/components/script/dialogs/UploadFileDialog.vue')
+const UploadFileDialog = defineAsyncComponent(
+  () => import('@/modules/automation/components/script/dialogs/UploadFileDialog.vue')
 )
-const GfsDirectoryPickerDialog = defineAsyncComponent(() =>
-  import('@/modules/automation/components/script/dialogs/GfsDirectoryPickerDialog.vue')
+const GfsDirectoryPickerDialog = defineAsyncComponent(
+  () => import('@/modules/automation/components/script/dialogs/GfsDirectoryPickerDialog.vue')
 )
 
 const router = useRouter()
@@ -763,7 +1006,9 @@ const {
   refreshAll
 } = useAutomationWorkbench({ canViewJobs, canViewCommands })
 
-const successfulRunTotal = computed(() => Math.max(Number(todayRunTotal.value || 0) - Number(failedRunTotal.value || 0), 0))
+const successfulRunTotal = computed(() =>
+  Math.max(Number(todayRunTotal.value || 0) - Number(failedRunTotal.value || 0), 0)
+)
 
 const failedRateLabel = computed(() => {
   const total = Number(todayRunTotal.value || 0)
@@ -801,25 +1046,31 @@ const workbenchJobColumnCount = computed(() => {
 
 const workbenchJobLimit = computed(() => workbenchJobColumnCount.value * 2)
 
-const workbenchJobs = computed(() => pickRecentWorkbenchJobs(jobList.value, workbenchJobLimit.value).map(job => ({
-  ...job,
-  displayTitle: translateText(job?.title) || job?.title || job?.id || '-',
-  displayTime: formatDateTime(job?.updatedAt || job?.createdAt),
-  displayTypeLabel: workbenchJobTypeLabel(job?.type),
-  displayTypeTag: workbenchJobTypeTag(job?.type)
-})))
+const workbenchJobs = computed(() =>
+  pickRecentWorkbenchJobs(jobList.value, workbenchJobLimit.value).map(job => ({
+    ...job,
+    displayTitle: translateText(job?.title) || job?.title || job?.id || '-',
+    displayTime: formatDateTime(job?.updatedAt || job?.createdAt),
+    displayTypeLabel: workbenchJobTypeLabel(job?.type),
+    displayTypeTag: workbenchJobTypeTag(job?.type)
+  }))
+)
 
-const workbenchRunRecords = computed(() => todayRunRecords.value.slice(0, WORKBENCH_RUN_LIMIT).map(item => ({
-  ...item,
-  displayTitle: translateText(item?.job_title) || '-',
-  displayTypeClass: String(item?.job_type || item?.type || 'rest').toLowerCase(),
-  displayTypeLabel: runTypeLabel(item?.job_type || item?.type),
-  displayTime: formatDateTime(item?.start_time),
-  displayStatusLabel: runStatusLabel(item?.status),
-  displayStatusType: runStatusType(item?.status)
-})))
+const workbenchRunRecords = computed(() =>
+  todayRunRecords.value.slice(0, WORKBENCH_RUN_LIMIT).map(item => ({
+    ...item,
+    displayTitle: translateText(item?.job_title) || '-',
+    displayTypeClass: String(item?.job_type || item?.type || 'rest').toLowerCase(),
+    displayTypeLabel: runTypeLabel(item?.job_type || item?.type),
+    displayTime: formatDateTime(item?.start_time),
+    displayStatusLabel: runStatusLabel(item?.status),
+    displayStatusType: runStatusType(item?.status)
+  }))
+)
 
-const cronStatusLabel = computed(() => `启用 ${cronSummary.value.enabled} / 停用 ${cronSummary.value.disabled}`)
+const cronStatusLabel = computed(
+  () => `启用 ${cronSummary.value.enabled} / 停用 ${cronSummary.value.disabled}`
+)
 const commandJobCount = computed(() => commandJobList.value.length)
 const scriptDirLabel = computed(() => (scriptDir.value ? `~/${scriptDir.value}` : '~'))
 
@@ -858,14 +1109,26 @@ const scriptDir = ref('')
 const cronActionLoading = reactive({})
 
 // 抽屉状态
-const todayRunsDrawer = reactive({ visible: false, loading: false, records: [], total: 0, title: '今日运行记录', filterType: '' })
+const todayRunsDrawer = reactive({
+  visible: false,
+  loading: false,
+  records: [],
+  total: 0,
+  title: '今日运行记录',
+  filterType: ''
+})
 const failedRunsDrawer = reactive({ visible: false, loading: false, records: [], total: 0 })
 const cronDrawer = reactive({ visible: false })
 const jobListDrawer = reactive({ visible: false, filterType: '', title: '全部运维工具' })
 const jobListReloadVersion = ref(0)
 const commandListDrawer = reactive({ visible: false, filterType: '', title: '全部命令' })
 const flowListDrawer = reactive({ visible: false })
-const flowInstancesDrawer = reactive({ visible: false, loading: false, title: '流程实例', records: [] })
+const flowInstancesDrawer = reactive({
+  visible: false,
+  loading: false,
+  title: '流程实例',
+  records: []
+})
 const approvalsDrawer = reactive({ visible: false, loading: false, records: [] })
 const cmdReviewDrawer = reactive({ visible: false, loading: false, records: [] })
 const scriptReviewDrawer = reactive({ visible: false, loading: false, records: [] })
@@ -880,14 +1143,21 @@ function handleLauncherAction(action) {
     'create-rest-job': () => openJobDialog('rest'),
     'create-script-job': () => openJobDialog('script'),
     'create-command-job': () => openJobDialog('command'),
-    'create-cron-job': () => { cronEditId.value = ''; cronDialogVisible.value = true },
+    'create-cron-job': () => {
+      cronEditId.value = ''
+      cronDialogVisible.value = true
+    },
     'create-flow': () => {
       flowEditorMode.value = 'create'
       flowEditorId.value = ''
       flowEditorVisible.value = true
     },
-    'create-script-file': () => { scriptDialogVisible.value = true },
-    'upload-file': () => { uploadDialogVisible.value = true }
+    'create-script-file': () => {
+      scriptDialogVisible.value = true
+    },
+    'upload-file': () => {
+      uploadDialogVisible.value = true
+    }
   }
 
   actionMap[action]?.()
@@ -985,11 +1255,15 @@ async function handleToggleCommand(item) {
   const actionLabel = nextStatus === 0 ? '启用' : '停用'
 
   try {
-    await ElMessageBox.confirm(`确定要${actionLabel}命令「${item.name || item.id}」吗？`, `${actionLabel}命令`, {
-      type: 'warning',
-      confirmButtonText: actionLabel,
-      cancelButtonText: '取消'
-    })
+    await ElMessageBox.confirm(
+      `确定要${actionLabel}命令「${item.name || item.id}」吗？`,
+      `${actionLabel}命令`,
+      {
+        type: 'warning',
+        confirmButtonText: actionLabel,
+        cancelButtonText: '取消'
+      }
+    )
     await saveCommand({ ...item, status: nextStatus })
     ElMessage.success(`${actionLabel}成功`)
     await refreshAll()
@@ -1112,7 +1386,7 @@ function pickRecentWorkbenchJobs(rows, limit = WORKBENCH_JOB_LIMIT) {
 
   const selected = []
 
-  rows.forEach((job) => {
+  rows.forEach(job => {
     const currentTime = resolveJobTimestamp(job)
     const insertAt = selected.findIndex(item => currentTime > resolveJobTimestamp(item))
 
@@ -1133,7 +1407,10 @@ function pickRecentWorkbenchJobs(rows, limit = WORKBENCH_JOB_LIMIT) {
 }
 
 function workbenchJobTypeLabel(type) {
-  return WORKBENCH_JOB_TYPE_LABELS[String(type || '').toLowerCase()] || String(type || '运维工具').toUpperCase()
+  return (
+    WORKBENCH_JOB_TYPE_LABELS[String(type || '').toLowerCase()] ||
+    String(type || '运维工具').toUpperCase()
+  )
 }
 
 function workbenchJobTypeTag(type) {
@@ -1221,12 +1498,16 @@ async function handleDeleteJob(job) {
   if (!job?.id) return
 
   try {
-    await ElMessageBox.confirm(`确定要删除运维工具「${translateText(job?.title) || job?.title || job?.id}」吗？`, '删除运维工具', {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      confirmButtonClass: 'el-button--danger'
-    })
+    await ElMessageBox.confirm(
+      `确定要删除运维工具「${translateText(job?.title) || job?.title || job?.id}」吗？`,
+      '删除运维工具',
+      {
+        type: 'warning',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
     await deleteJobApi(job.id)
     ElMessage.success('删除成功')
     await refreshAll()
@@ -1259,12 +1540,16 @@ async function handleDeleteCronFromDrawer(item) {
   if (!item?.id) return
 
   try {
-    await ElMessageBox.confirm(`确定要删除定时任务「${item.jobDesc || item.id}」吗？`, '删除定时任务', {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      confirmButtonClass: 'el-button--danger'
-    })
+    await ElMessageBox.confirm(
+      `确定要删除定时任务「${item.jobDesc || item.id}」吗？`,
+      '删除定时任务',
+      {
+        type: 'warning',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
     await deleteCronJob(item.id)
     ElMessage.success('删除成功')
     await refreshAll()
@@ -1286,12 +1571,16 @@ async function handleDeleteFlow(flow) {
   if (!flow?.id) return
 
   try {
-    await ElMessageBox.confirm(`确定要删除流程「${flow.name || flow.id}」吗？此操作不可恢复。`, '删除确认', {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      confirmButtonClass: 'el-button--danger'
-    })
+    await ElMessageBox.confirm(
+      `确定要删除流程「${flow.name || flow.id}」吗？此操作不可恢复。`,
+      '删除确认',
+      {
+        type: 'warning',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
     await deleteFlowApi(flow.id)
     ElMessage.success('删除成功')
     await refreshAll()
@@ -1312,8 +1601,22 @@ function _normalizeApprovalRecord(item) {
     id: item.id,
     name: item.jobName || '-',
     meta: item.description || item.approveMode || '-',
-    tagType: item.status === 0 ? 'primary' : item.status === 1 ? 'success' : item.status === 2 ? 'danger' : 'info',
-    tagLabel: item.status === 0 ? '审批中' : item.status === 1 ? '已通过' : item.status === 2 ? '未通过' : '已作废'
+    tagType:
+      item.status === 0
+        ? 'primary'
+        : item.status === 1
+          ? 'success'
+          : item.status === 2
+            ? 'danger'
+            : 'info',
+    tagLabel:
+      item.status === 0
+        ? '审批中'
+        : item.status === 1
+          ? '已通过'
+          : item.status === 2
+            ? '未通过'
+            : '已作废'
   }
 }
 
@@ -1345,13 +1648,17 @@ async function handleApproveItem(item) {
 
 async function handleRejectItem(item) {
   try {
-    const { value: remark } = await ElMessageBox.prompt(`请输入拒绝「${item.name}」的原因`, '拒绝审批', {
-      type: 'warning',
-      confirmButtonText: '确定拒绝',
-      cancelButtonText: '取消',
-      inputPlaceholder: '输入拒绝原因（可不填）',
-      inputType: 'textarea'
-    })
+    const { value: remark } = await ElMessageBox.prompt(
+      `请输入拒绝「${item.name}」的原因`,
+      '拒绝审批',
+      {
+        type: 'warning',
+        confirmButtonText: '确定拒绝',
+        cancelButtonText: '取消',
+        inputPlaceholder: '输入拒绝原因（可不填）',
+        inputType: 'textarea'
+      }
+    )
     await refuseApprove(item.id, remark || '')
     ElMessage.success('审批已拒绝')
     await _refreshApprovalsInPlace()
@@ -1399,7 +1706,9 @@ function resolveResponseArray(response) {
 }
 
 function normalizeFlowInstanceStatus(status) {
-  return String(status || '').trim().toUpperCase()
+  return String(status || '')
+    .trim()
+    .toUpperCase()
 }
 
 function getFlowInstanceStatusType(status) {
@@ -1626,14 +1935,20 @@ async function handleCmdApproveItem(item) {
 
 async function handleCmdRejectItem(item) {
   try {
-    const { value: reason } = await ElMessageBox.prompt(`请输入拒绝【${item.name}】的原因`, '拒绝审核', {
-      type: 'warning',
-      confirmButtonText: '确定拒绝',
-      cancelButtonText: '取消',
-      inputPlaceholder: '输入拒绝原因（可不填）',
-      inputType: 'textarea'
-    })
-    await approveCommand([{ ...item._raw, status: COMMAND_STATUS.REJECTED, unapprovedReason: reason || '' }])
+    const { value: reason } = await ElMessageBox.prompt(
+      `请输入拒绝【${item.name}】的原因`,
+      '拒绝审核',
+      {
+        type: 'warning',
+        confirmButtonText: '确定拒绝',
+        cancelButtonText: '取消',
+        inputPlaceholder: '输入拒绝原因（可不填）',
+        inputType: 'textarea'
+      }
+    )
+    await approveCommand([
+      { ...item._raw, status: COMMAND_STATUS.REJECTED, unapprovedReason: reason || '' }
+    ])
     ElMessage.success('审核已拒绝')
     await _refreshCmdReviewInPlace()
     reviewStore.fetchAll()
@@ -1943,33 +2258,55 @@ onBeforeUnmount(() => {
   &--accent {
     border-color: rgba(13, 148, 136, 0.3);
     background: rgba(13, 148, 136, 0.04);
-    .wb-stat__value { color: var(--wb-accent); }
-    .wb-stat__icon { background: rgba(13, 148, 136, 0.12); color: var(--wb-accent); }
+    .wb-stat__value {
+      color: var(--wb-accent);
+    }
+    .wb-stat__icon {
+      background: rgba(13, 148, 136, 0.12);
+      color: var(--wb-accent);
+    }
   }
 
   &--danger {
     border-color: rgba(239, 68, 68, 0.4);
     background: rgba(239, 68, 68, 0.05);
-    .wb-stat__value { color: var(--wb-danger); }
-    .wb-stat__icon { background: rgba(239, 68, 68, 0.12); color: var(--wb-danger); }
+    .wb-stat__value {
+      color: var(--wb-danger);
+    }
+    .wb-stat__icon {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--wb-danger);
+    }
   }
 
   &--warning {
     border-color: rgba(245, 158, 11, 0.4);
     background: rgba(245, 158, 11, 0.05);
-    .wb-stat__value { color: var(--wb-warning); }
-    .wb-stat__icon { background: rgba(245, 158, 11, 0.12); color: var(--wb-warning); }
+    .wb-stat__value {
+      color: var(--wb-warning);
+    }
+    .wb-stat__icon {
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--wb-warning);
+    }
   }
 
   &--ok {
     border-color: rgba(34, 197, 94, 0.3);
     background: rgba(34, 197, 94, 0.04);
-    .wb-stat__value { color: var(--wb-success); }
-    .wb-stat__icon { background: rgba(34, 197, 94, 0.12); color: var(--wb-success); }
+    .wb-stat__value {
+      color: var(--wb-success);
+    }
+    .wb-stat__icon {
+      background: rgba(34, 197, 94, 0.12);
+      color: var(--wb-success);
+    }
   }
 
   &--muted {
-    .wb-stat__value { color: var(--wb-text-secondary); }
+    .wb-stat__value {
+      color: var(--wb-text-secondary);
+    }
   }
 
   &--running {
@@ -2005,11 +2342,16 @@ onBeforeUnmount(() => {
 @keyframes wb-stat-running-glow {
   0%,
   100% {
-    box-shadow: var(--wb-panel-shadow), 0 0 0 0 rgba(13, 148, 136, 0.08);
+    box-shadow:
+      var(--wb-panel-shadow),
+      0 0 0 0 rgba(13, 148, 136, 0.08);
   }
 
   50% {
-    box-shadow: var(--wb-panel-shadow), 0 0 0 6px rgba(13, 148, 136, 0.08), 0 12px 28px -18px rgba(13, 148, 136, 0.5);
+    box-shadow:
+      var(--wb-panel-shadow),
+      0 0 0 6px rgba(13, 148, 136, 0.08),
+      0 12px 28px -18px rgba(13, 148, 136, 0.5);
   }
 }
 
@@ -2097,7 +2439,6 @@ onBeforeUnmount(() => {
       align-items: center;
     }
   }
-
 }
 
 .wb-job-panel-stats {
@@ -2232,7 +2573,9 @@ onBeforeUnmount(() => {
   border: 1px solid #e5edf5;
   background: #fafcff;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 
   &:hover {
     background: #f5f9ff;
@@ -2325,14 +2668,18 @@ onBeforeUnmount(() => {
   border: 1px solid #edf2f7;
   background: #fafafa;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
   text-align: left;
 
   &:hover {
     background: #f1f5f9;
     border-color: #e2e8f0;
 
-    .wb-run-log-item__arrow { transform: translateX(2px); }
+    .wb-run-log-item__arrow {
+      transform: translateX(2px);
+    }
   }
 
   &__name {
@@ -2403,8 +2750,12 @@ onBeforeUnmount(() => {
   background: #fafafa;
   margin-top: auto;
 
-  strong { color: var(--wb-text-secondary); }
-  .text-danger { color: var(--wb-danger); }
+  strong {
+    color: var(--wb-text-secondary);
+  }
+  .text-danger {
+    color: var(--wb-danger);
+  }
 }
 
 // ── 流程列表 ──
@@ -2616,7 +2967,10 @@ onBeforeUnmount(() => {
   background: var(--wb-panel-bg);
   overflow: hidden;
   box-shadow: 0 16px 32px -24px rgba(15, 23, 42, 0.45);
-  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
   cursor: pointer;
 
   &::before {
@@ -2654,7 +3008,11 @@ onBeforeUnmount(() => {
     gap: 4px;
     min-width: 0;
     padding: 10px 14px 4px 12px;
-    background: linear-gradient(180deg, var(--el-fill-color-light) 0%, var(--el-fill-color-extra-light) 100%);
+    background: linear-gradient(
+      180deg,
+      var(--el-fill-color-light) 0%,
+      var(--el-fill-color-extra-light) 100%
+    );
   }
 
   &__head {
@@ -2710,7 +3068,9 @@ onBeforeUnmount(() => {
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
 
     &:focus,
     &:focus-visible {
@@ -2754,7 +3114,9 @@ onBeforeUnmount(() => {
 
 .wb-stack-slide-enter-active,
 .wb-stack-slide-leave-active {
-  transition: transform 0.24s ease, opacity 0.24s ease;
+  transition:
+    transform 0.24s ease,
+    opacity 0.24s ease;
 }
 
 .wb-stack-slide-move {
@@ -2834,57 +3196,89 @@ onBeforeUnmount(() => {
   &--rest {
     border-color: rgba(59, 130, 246, 0.22);
     background: rgba(59, 130, 246, 0.05);
-    .wb-job-type-item__dot { background: var(--wb-info); }
-    .wb-job-type-item__value { color: var(--wb-info); }
+    .wb-job-type-item__dot {
+      background: var(--wb-info);
+    }
+    .wb-job-type-item__value {
+      color: var(--wb-info);
+    }
   }
 
   &--command {
     border-color: rgba(245, 158, 11, 0.24);
     background: rgba(245, 158, 11, 0.06);
-    .wb-job-type-item__dot { background: var(--wb-warning); }
-    .wb-job-type-item__value { color: var(--wb-warning); }
+    .wb-job-type-item__dot {
+      background: var(--wb-warning);
+    }
+    .wb-job-type-item__value {
+      color: var(--wb-warning);
+    }
   }
 
   &--script {
     border-color: rgba(22, 163, 74, 0.22);
     background: rgba(22, 163, 74, 0.05);
-    .wb-job-type-item__dot { background: var(--wb-success); }
-    .wb-job-type-item__value { color: var(--wb-success); }
+    .wb-job-type-item__dot {
+      background: var(--wb-success);
+    }
+    .wb-job-type-item__value {
+      color: var(--wb-success);
+    }
   }
 
   &--cmd {
     border-color: rgba(100, 116, 139, 0.2);
     background: rgba(100, 116, 139, 0.04);
-    .wb-job-type-item__dot { background: #64748b; }
-    .wb-job-type-item__value { color: #64748b; }
+    .wb-job-type-item__dot {
+      background: #64748b;
+    }
+    .wb-job-type-item__value {
+      color: #64748b;
+    }
   }
 
   &--shell {
     border-color: rgba(34, 197, 94, 0.2);
     background: rgba(34, 197, 94, 0.03);
-    .wb-job-type-item__dot { background: var(--wb-success); }
-    .wb-job-type-item__value { color: var(--wb-success); }
+    .wb-job-type-item__dot {
+      background: var(--wb-success);
+    }
+    .wb-job-type-item__value {
+      color: var(--wb-success);
+    }
   }
 
   &--python {
     border-color: rgba(59, 130, 246, 0.2);
     background: rgba(59, 130, 246, 0.03);
-    .wb-job-type-item__dot { background: var(--wb-info); }
-    .wb-job-type-item__value { color: var(--wb-info); }
+    .wb-job-type-item__dot {
+      background: var(--wb-info);
+    }
+    .wb-job-type-item__value {
+      color: var(--wb-info);
+    }
   }
 
   &--playbook {
     border-color: rgba(139, 92, 246, 0.2);
     background: rgba(139, 92, 246, 0.03);
-    .wb-job-type-item__dot { background: #8b5cf6; }
-    .wb-job-type-item__value { color: #8b5cf6; }
+    .wb-job-type-item__dot {
+      background: #8b5cf6;
+    }
+    .wb-job-type-item__value {
+      color: #8b5cf6;
+    }
   }
 
   &--powershell {
     border-color: rgba(14, 165, 233, 0.2);
     background: rgba(14, 165, 233, 0.03);
-    .wb-job-type-item__dot { background: #0ea5e9; }
-    .wb-job-type-item__value { color: #0ea5e9; }
+    .wb-job-type-item__dot {
+      background: #0ea5e9;
+    }
+    .wb-job-type-item__value {
+      color: #0ea5e9;
+    }
   }
 }
 

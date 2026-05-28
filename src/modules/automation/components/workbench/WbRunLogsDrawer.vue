@@ -1,21 +1,42 @@
 <template>
-  <el-drawer v-model="visible" :title="title" size="75%" destroy-on-close class="wb-workbench-drawer">
+  <el-drawer
+    v-model="visible"
+    :title="title"
+    size="75%"
+    destroy-on-close
+    class="wb-workbench-drawer"
+  >
     <div v-loading="mergedLoading" class="wb-drawer-body">
       <div class="wb-filter-panel">
         <el-form :model="filters" inline size="small" class="wb-filter-panel__form" @submit.prevent>
           <el-form-item label="时间范围">
             <el-select v-model="filters.day" style="width: 140px">
-              <el-option v-for="option in dayOptions" :key="option.value" :label="option.label" :value="option.value" />
+              <el-option
+                v-for="option in dayOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
             <el-select v-model="filters.status" style="width: 140px">
-              <el-option v-for="option in statusOptions" :key="option.value" :label="option.label" :value="option.value" />
+              <el-option
+                v-for="option in statusOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="类型">
             <el-select v-model="filters.type" style="width: 140px">
-              <el-option v-for="option in jobTypeOptions" :key="option.value || 'all'" :label="option.label" :value="option.value" />
+              <el-option
+                v-for="option in jobTypeOptions"
+                :key="option.value || 'all'"
+                :label="option.label"
+                :value="option.value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
@@ -42,12 +63,19 @@
           class="wb-drawer-run-item"
           @click="$emit('open-result', item)"
         >
-          <strong class="wb-drawer-run-item__name">{{ translateText(item.job_title) || '-' }}</strong>
+          <strong class="wb-drawer-run-item__name">
+            {{ translateText(item.job_title) || '-' }}
+          </strong>
           <span class="wb-drawer-run-item__user">{{ item.username || '-' }}</span>
           <span class="wb-drawer-run-item__time">{{ formatDateTime(item.start_time) }}</span>
           <span class="wb-drawer-run-item__node">{{ formatAnsibleNode(item.ata_url) }}</span>
           <span class="wb-drawer-run-item__detail">{{ formatStats(item.stats_json) }}</span>
-          <el-tag class="wb-drawer-run-item__status" size="small" :type="statusType(item.status)" effect="plain">
+          <el-tag
+            class="wb-drawer-run-item__status"
+            size="small"
+            :type="statusType(item.status)"
+            effect="plain"
+          >
             {{ statusLabel(item.status) }}
           </el-tag>
         </button>
@@ -56,7 +84,9 @@
     </div>
     <template #footer>
       <div class="wb-drawer-footer">
-        <span class="wb-drawer-footer__total">当前 {{ filteredRecords.length }} 条 / 共 {{ drawerTotal || total }} 条</span>
+        <span class="wb-drawer-footer__total">
+          当前 {{ filteredRecords.length }} 条 / 共 {{ drawerTotal || total }} 条
+        </span>
         <el-button size="small" @click="$emit('navigate', link)">{{ linkLabel }}</el-button>
       </div>
     </template>
@@ -67,7 +97,10 @@
 import { computed, reactive, ref, watch } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { translateText } from '@/utils/i18n'
-import { getRunLogStatusLabel, getRunLogStatusType } from '@/modules/automation/constants/runLogStatus'
+import {
+  getRunLogStatusLabel,
+  getRunLogStatusType
+} from '@/modules/automation/constants/runLogStatus'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 
 const props = defineProps({
@@ -110,31 +143,36 @@ const drawerTotal = ref(0)
 const filters = reactive(createDefaultFilters())
 
 const mergedLoading = computed(() => props.loading || drawerLoading.value)
-const hasActiveFilters = computed(() => (
-  filters.day !== '0' ||
-  normalizeStatus(filters.status) !== createDefaultFilters().status ||
-  Boolean(filters.type) ||
-  Boolean(filters.search.trim())
-))
+const hasActiveFilters = computed(
+  () =>
+    filters.day !== '0' ||
+    normalizeStatus(filters.status) !== createDefaultFilters().status ||
+    Boolean(filters.type) ||
+    Boolean(filters.search.trim())
+)
 
 const filteredRecords = computed(() => {
   const keyword = filters.search.trim().toLowerCase()
   if (!keyword) return drawerRecords.value
 
-  return drawerRecords.value.filter((item) => [
-    translateText(item.job_title),
-    item.job_title,
-    item.username,
-    item.review_user,
-    item.ata_url,
-    formatStats(item.stats_json),
-    item.start_time
-  ]
-    .filter(Boolean)
-    .some(value => String(value).toLowerCase().includes(keyword)))
+  return drawerRecords.value.filter(item =>
+    [
+      translateText(item.job_title),
+      item.job_title,
+      item.username,
+      item.review_user,
+      item.ata_url,
+      formatStats(item.stats_json),
+      item.start_time
+    ]
+      .filter(Boolean)
+      .some(value => String(value).toLowerCase().includes(keyword))
+  )
 })
 
-const resolvedEmptyText = computed(() => (hasActiveFilters.value ? '没有符合筛选条件的记录' : props.emptyText))
+const resolvedEmptyText = computed(() =>
+  hasActiveFilters.value ? '没有符合筛选条件的记录' : props.emptyText
+)
 
 function createDefaultFilters() {
   return {
@@ -193,7 +231,11 @@ function formatDateTime(value) {
 
 function normalizeStatus(status) {
   if (props.failedOnly && !status) return 'FAILED'
-  return String(status || '').trim().toUpperCase() || 'all'
+  return (
+    String(status || '')
+      .trim()
+      .toUpperCase() || 'all'
+  )
 }
 
 function createPayload() {
@@ -239,7 +281,7 @@ async function handleReset() {
 
 watch(
   () => visible.value,
-  async (isVisible) => {
+  async isVisible => {
     if (!isVisible) return
     drawerRecords.value = Array.isArray(props.records) ? props.records : []
     drawerTotal.value = Number(props.total ?? drawerRecords.value.length ?? 0) || 0

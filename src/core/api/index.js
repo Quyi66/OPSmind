@@ -43,7 +43,7 @@ class ApiService {
   setupInterceptors() {
     // 请求拦截器
     this.client.interceptors.request.use(
-      (config) => {
+      config => {
         // 添加认证头
         const authHeaders = authService.getAuthHeaders()
         config.headers = { ...config.headers, ...authHeaders }
@@ -55,7 +55,7 @@ class ApiService {
               delete config.headers['Content-Type']
             }
           }
-        } catch { }
+        } catch {}
 
         // 添加缓存破坏参数（后端约定使用 cacheBuster）
         if (config.method === 'get' && config.cache !== false) {
@@ -69,7 +69,7 @@ class ApiService {
 
         return config
       },
-      (error) => {
+      error => {
         console.error('❌ Request Error:', error)
         return Promise.reject(error)
       }
@@ -77,10 +77,10 @@ class ApiService {
 
     // 响应拦截器
     this.client.interceptors.response.use(
-      (response) => {
+      response => {
         return response
       },
-      async (error) => {
+      async error => {
         const { config, response } = error
 
         console.error(`❌ API Error: ${config?.method?.toUpperCase()} ${config?.url}`, {
@@ -191,11 +191,9 @@ class ApiService {
     formData.append('file', file)
 
     return this.client.post(url, formData, {
-      onUploadProgress: (progressEvent) => {
+      onUploadProgress: progressEvent => {
         if (onProgress) {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          )
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
           onProgress(percentCompleted)
         }
       }
@@ -260,7 +258,9 @@ class ApiService {
    */
   async getApplets() {
     console.warn('⚠️ getApplets() is deprecated. Use static module configuration instead.')
-    throw new Error('getApplets() is deprecated. Use static module configuration from angular-modules.config.ts')
+    throw new Error(
+      'getApplets() is deprecated. Use static module configuration from angular-modules.config.ts'
+    )
   }
 
   /**
@@ -283,10 +283,9 @@ class ApiService {
     // - Map linuxVulnStats -> vulnerabilityOverview if frontend field missing
     const adapted = { ...data }
     if (Array.isArray(adapted.recentJobStats)) {
-      adapted.recentJobStats = adapted.recentJobStats.map((i) => ({
+      adapted.recentJobStats = adapted.recentJobStats.map(i => ({
         ...i,
-        totalJobs:
-          (i?.restJobs || 0) + (i?.scriptJobs || 0) + (i?.commandJobs || 0)
+        totalJobs: (i?.restJobs || 0) + (i?.scriptJobs || 0) + (i?.commandJobs || 0)
       }))
     }
     if (!adapted.vulnerabilityOverview && adapted.linuxVulnStats) {
@@ -432,7 +431,9 @@ class ApiService {
    * @deprecated 使用 angular-modules.config.ts 中的静态配置
    */
   convertAppletsToModules(applets) {
-    console.warn('⚠️ convertAppletsToModules() is deprecated. Use static module configuration instead.')
+    console.warn(
+      '⚠️ convertAppletsToModules() is deprecated. Use static module configuration instead.'
+    )
     return []
   }
 
@@ -441,7 +442,9 @@ class ApiService {
    * @deprecated 使用 angular-modules.config.ts 中的静态配置
    */
   getDefaultModules() {
-    console.warn('⚠️ getDefaultModules() is deprecated. Use getAllModuleConfigs() from angular-modules.config.ts instead.')
+    console.warn(
+      '⚠️ getDefaultModules() is deprecated. Use getAllModuleConfigs() from angular-modules.config.ts instead.'
+    )
     // 返回空数组，强制使用静态配置
     return []
   }

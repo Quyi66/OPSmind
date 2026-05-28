@@ -79,7 +79,9 @@ export function useAssetOverviewWorkbench() {
 
   const latestTrendPoint = computed(() => {
     if (!newAssetData.value.length) return null
-    return [...newAssetData.value].sort((a, b) => toTimestamp(a?.times) - toTimestamp(b?.times)).at(-1)
+    return [...newAssetData.value]
+      .sort((a, b) => toTimestamp(a?.times) - toTimestamp(b?.times))
+      .at(-1)
   })
 
   const connectionStats = computed(() => {
@@ -114,7 +116,12 @@ export function useAssetOverviewWorkbench() {
       .slice(0, 5)
   )
 
-  const topTags = computed(() => sortByField(tagRows.value.filter(item => item?.name), 'total').slice(0, 5))
+  const topTags = computed(() =>
+    sortByField(
+      tagRows.value.filter(item => item?.name),
+      'total'
+    ).slice(0, 5)
+  )
 
   const governanceStats = computed(() => {
     const teamNames = new Set()
@@ -156,7 +163,13 @@ export function useAssetOverviewWorkbench() {
           const typeCode = item.code || item.title || ''
           return assetApi
             .getAssetList(
-              { assetType: typeCode, permission: 'r', status: 'all', CONN_LATEST_STATUS: '', hostKeys: '/' },
+              {
+                assetType: typeCode,
+                permission: 'r',
+                status: 'all',
+                CONN_LATEST_STATUS: '',
+                hostKeys: '/'
+              },
               { page: 1, size: 1, filter: '' }
             )
             .then(res => ({ typeCode, total: toNumber(res?.total) }))

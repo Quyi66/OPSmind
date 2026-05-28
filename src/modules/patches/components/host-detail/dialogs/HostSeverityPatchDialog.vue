@@ -69,8 +69,8 @@ const installDialogVisible = ref(false)
 const patchesToInstall = ref([])
 const installSelectionSummary = ref([])
 
-const resolvedHostId = computed(() =>
-  props.host?.host_id || props.host?.hostId || props.host?.id || ''
+const resolvedHostId = computed(
+  () => props.host?.host_id || props.host?.hostId || props.host?.id || ''
 )
 const resolvedHostKey = computed(() => props.host?.host_key || props.host?.hostKey || '')
 const resolvedOsDistro = computed(() => props.host?.os_distro || props.host?.osDistro || '')
@@ -85,8 +85,10 @@ const dialogTitle = computed(() => {
   const severityLabel = severityLabelMap[props.severity] || '可用补丁'
   return `${hostLabel} · ${severityLabel}补丁列表`
 })
-const patchesTabKey = computed(() =>
-  [resolvedHostId.value, resolvedHostKey.value, props.severity].filter(Boolean).join('-') || 'host-severity-patches'
+const patchesTabKey = computed(
+  () =>
+    [resolvedHostId.value, resolvedHostKey.value, props.severity].filter(Boolean).join('-') ||
+    'host-severity-patches'
 )
 const fixedHostInfo = computed(() => {
   if (!hasHostReference.value) {

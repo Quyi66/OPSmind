@@ -107,20 +107,14 @@
 
       <!-- 表达式预览 -->
       <div class="cron-preview-section">
-        <el-alert
-          :title="`当前表达式: ${cronExpression}`"
-          type="info"
-          :closable="false"
-        />
+        <el-alert :title="`当前表达式: ${cronExpression}`" type="info" :closable="false" />
       </div>
     </div>
 
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleConfirm">
-          确认
-        </el-button>
+        <el-button type="primary" @click="handleConfirm">确认</el-button>
       </div>
     </template>
   </el-dialog>
@@ -141,7 +135,8 @@
       <el-empty v-else description="该任务没有执行计划，是否已禁用？" />
     </div>
   </el-dialog>
-</template><script setup>
+</template>
+<script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Clock, Check } from '@element-plus/icons-vue'
@@ -160,7 +155,7 @@ const emit = defineEmits(['update:modelValue', 'confirm'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const activeTab = ref('second')
@@ -181,12 +176,16 @@ const cronParts = ref({
 })
 
 // 初始化时解析已有的 CRON 表达式
-watch(() => props.initialValue, (newVal) => {
-  if (newVal) {
-    cronExpression.value = newVal
-    parseCronExpression(newVal)
-  }
-}, { immediate: true })
+watch(
+  () => props.initialValue,
+  newVal => {
+    if (newVal) {
+      cronExpression.value = newVal
+      parseCronExpression(newVal)
+    }
+  },
+  { immediate: true }
+)
 
 // 解析 CRON 表达式到各个部分
 function parseCronExpression(expression) {
@@ -323,4 +322,3 @@ function handleConfirm() {
   }
 }
 </style>
-

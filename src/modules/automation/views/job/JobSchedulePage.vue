@@ -1887,7 +1887,11 @@ html.dark .schedule-page {
   --schedule-side-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.82), rgba(15, 23, 42, 0.86));
   --schedule-card-hover-border: rgba(96, 165, 250, 0.26);
   --schedule-card-hover-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
-  --schedule-card-active-bg: color-mix(in srgb, var(--el-color-primary) 14%, rgba(15, 23, 42, 0.92));
+  --schedule-card-active-bg: color-mix(
+    in srgb,
+    var(--el-color-primary) 14%,
+    rgba(15, 23, 42, 0.92)
+  );
   --schedule-card-active-shadow: 0 10px 24px rgba(59, 130, 246, 0.18);
   --schedule-primary-shadow: 0 12px 24px rgba(59, 130, 246, 0.22);
   --schedule-panel-shadow: 0 18px 36px rgba(0, 0, 0, 0.2);

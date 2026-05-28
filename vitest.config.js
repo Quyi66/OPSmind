@@ -53,9 +53,7 @@ export default defineConfig({
         '.github/',
         '**/*.d.ts'
       ],
-      include: [
-        'src/**/*.{js,ts,vue}'
-      ],
+      include: ['src/**/*.{js,ts,vue}'],
       thresholds: {
         global: {
           branches: 70,

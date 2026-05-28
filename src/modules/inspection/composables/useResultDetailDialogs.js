@@ -51,11 +51,15 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     hostCheckItems.value = []
 
     try {
-      const res = await dtsApi.queryData('CAC_CHECK_ITEM_MACHINE_DETAIL', {
-        host_key: currentHost.value.host_key,
-        job_id: jobId.value,
-        status: hostDetailStatusFilter.value
-      }, { size: 100, page: 1 })
+      const res = await dtsApi.queryData(
+        'CAC_CHECK_ITEM_MACHINE_DETAIL',
+        {
+          host_key: currentHost.value.host_key,
+          job_id: jobId.value,
+          status: hostDetailStatusFilter.value
+        },
+        { size: 100, page: 1 }
+      )
       const data = res?.data || res || {}
       hostCheckItems.value = data.records || []
     } catch (error) {
@@ -74,11 +78,11 @@ export function useResultDetailDialogs(jobId, jobInfo) {
 
   async function showKpiDialog(status) {
     const titleMap = {
-      'OK': '检查通过',
-      'FAILED': '检查失败',
-      'CHECK': '人工检查',
-      'SKIPPING': '白名单',
-      'UNREACHABLE': '数据缺失'
+      OK: '检查通过',
+      FAILED: '检查失败',
+      CHECK: '人工检查',
+      SKIPPING: '白名单',
+      UNREACHABLE: '数据缺失'
     }
 
     kpiDialogTitle.value = `${titleMap[status]} - 详情`
@@ -89,7 +93,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     try {
       const res = await dtsApi.queryData('CAC_GET_CHECK_ITEM_BY_STATUS', {
         job_id: jobId.value,
-        status: status
+        status
       })
       const data = res?.data || res || {}
       kpiDialogData.value = data.records || []
@@ -155,11 +159,15 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     checkItemHostsData.value = []
 
     try {
-      const res = await dtsApi.queryData('CAC_CHECK_ITEM_DETAIL', {
-        job_id: jobId.value,
-        name: currentCheckItemName.value,
-        status: checkItemHostsStatusFilter.value
-      }, { size: 100, page: 1 })
+      const res = await dtsApi.queryData(
+        'CAC_CHECK_ITEM_DETAIL',
+        {
+          job_id: jobId.value,
+          name: currentCheckItemName.value,
+          status: checkItemHostsStatusFilter.value
+        },
+        { size: 100, page: 1 }
+      )
       const data = res?.data || res || {}
       checkItemHostsData.value = data.records || []
     } catch (error) {

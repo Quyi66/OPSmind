@@ -13,15 +13,12 @@ import { apiService } from './index.js'
 export async function fetchNewMessagesCount(lastTimestamp = 0) {
   try {
     const cacheBuster = Date.now()
-    const response = await apiService.get(
-      `/mac/api/mac/messages/count`,
-      {
-        params: {
-          lastTimestamp,
-          cacheBuster
-        }
+    const response = await apiService.get(`/mac/api/mac/messages/count`, {
+      params: {
+        lastTimestamp,
+        cacheBuster
       }
-    )
+    })
     return response || 0
   } catch (error) {
     console.error('获取新消息数量失败:', error)
@@ -39,16 +36,13 @@ export async function fetchMessages(pageNum = 1, pageSize = 5) {
   const cacheBuster = Date.now()
 
   try {
-    const response = await apiService.get(
-      `/mac/api/mac/messages`,
-      {
-        params: {
-          pageNum,
-          pageSize,
-          cacheBuster
-        }
+    const response = await apiService.get(`/mac/api/mac/messages`, {
+      params: {
+        pageNum,
+        pageSize,
+        cacheBuster
       }
-    )
+    })
     return response || []
   } catch (error) {
     console.error('获取通知消息失败:', error)

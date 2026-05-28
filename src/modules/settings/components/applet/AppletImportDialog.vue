@@ -165,7 +165,7 @@ function convertToTreeNode(rawNodeList) {
     const node = {
       id: rawNode.id,
       type: rawNode.type,
-      title: title,
+      title,
       value: rawNode.value
     }
 

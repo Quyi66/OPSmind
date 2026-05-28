@@ -22,7 +22,10 @@
           <div class="install-summary-label">自动重启</div>
           <div class="install-summary-value win-patch-restart-step__summary-value">
             <span class="win-patch-restart-step__summary-text">{{ rebootHint }}</span>
-            <el-switch :model-value="resolvedValue.reboot" @update:model-value="value => updateField('reboot', value)" />
+            <el-switch
+              :model-value="resolvedValue.reboot"
+              @update:model-value="value => updateField('reboot', value)"
+            />
           </div>
         </div>
         <div class="install-summary-row">

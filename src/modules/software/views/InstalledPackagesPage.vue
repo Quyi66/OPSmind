@@ -284,7 +284,7 @@ function formatDateTime(dateStr) {
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return dateStr
 
-  const pad = n => n < 10 ? '0' + n : n
+  const pad = n => (n < 10 ? `0${n}` : n)
   const y = date.getFullYear()
   const m = pad(date.getMonth() + 1)
   const d = pad(date.getDate())

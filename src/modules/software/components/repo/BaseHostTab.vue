@@ -4,10 +4,17 @@
     <div class="ops-action-bar">
       <div class="action-left">
         <el-button type="primary" @click="handleChooseBaseHost">
-          <i class="fa fa-mouse-pointer" /> 选择基准主机
+          <i class="fa fa-mouse-pointer" />
+          选择基准主机
         </el-button>
-        <el-button type="danger" plain :disabled="selectedRows.length === 0" @click="handleBatchDelete">
-          <i class="fa fa-trash-alt" /> 批量删除
+        <el-button
+          type="danger"
+          plain
+          :disabled="selectedRows.length === 0"
+          @click="handleBatchDelete"
+        >
+          <i class="fa fa-trash-alt" />
+          批量删除
         </el-button>
       </div>
     </div>
@@ -31,9 +38,7 @@
         </el-table-column>
         <el-table-column label="操作" width="60" fixed="right">
           <template #default="{ row }">
-            <el-button text type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <el-button text type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -53,10 +58,7 @@
     </div>
 
     <!-- 选择基准主机弹窗 -->
-    <SelectBaseHostDialog
-      v-model="selectHostDialogVisible"
-      @success="loadData"
-    />
+    <SelectBaseHostDialog v-model="selectHostDialogVisible" @success="loadData" />
   </div>
 </template>
 

@@ -17,18 +17,11 @@
       <div class="notification-body" v-loading="loading">
         <!-- 有消息时 -->
         <template v-if="messages.length > 0">
-          <div
-            v-for="msg in messages"
-            :key="msg.id"
-            class="notification-item"
-          >
+          <div v-for="msg in messages" :key="msg.id" class="notification-item">
             <!-- 发送者 -->
             <div class="notification-item-header">
               <span class="notification-sender">From: {{ msg.addresserName }}</span>
-              <span
-                class="status-dot"
-                :class="msg.status === 0 ? 'is-unread' : 'is-read'"
-              ></span>
+              <span class="status-dot" :class="msg.status === 0 ? 'is-unread' : 'is-read'"></span>
             </div>
 
             <!-- 时间 -->
@@ -39,11 +32,7 @@
 
             <!-- 操作按钮 -->
             <div class="notification-actions">
-              <el-button
-                v-if="msg.status === 0"
-                size="small"
-                @click="handleIgnore(msg)"
-              >
+              <el-button v-if="msg.status === 0" size="small" @click="handleIgnore(msg)">
                 忽略
               </el-button>
               <el-button
@@ -70,9 +59,7 @@
         <!-- 无消息时 -->
         <div v-else class="empty-state">
           <p>暂无消息</p>
-          <el-button type="primary" link @click="loadHistoryMessages">
-            查看历史消息
-          </el-button>
+          <el-button type="primary" link @click="loadHistoryMessages">查看历史消息</el-button>
         </div>
       </div>
     </div>
@@ -104,7 +91,7 @@ const pageSize = ref(5)
 // 获取消息列表
 const loadMessages = async (page = 1, size = 5, isNew = false) => {
   try {
-    const {data} = await fetchMessages(page, size)
+    const { data } = await fetchMessages(page, size)
     const newMessages = data || []
 
     if (isNew) {
@@ -127,7 +114,6 @@ const loadMessages = async (page = 1, size = 5, isNew = false) => {
     // 更新未读数量
     const unreadCount = messages.value.filter(m => m.status === 0).length
     emit('count-change', unreadCount)
-
   } catch (error) {
     console.error('获取通知失败:', error)
   }
@@ -173,7 +159,7 @@ const loadHistoryMessages = async () => {
 }
 
 // 处理忽略（仅标记已读，不跳转）
-const handleIgnore = async (msg) => {
+const handleIgnore = async msg => {
   if (msg.status === 0) {
     try {
       await handleMessage(msg.id)
@@ -187,7 +173,7 @@ const handleIgnore = async (msg) => {
 }
 
 // 处理立即处理/查看（标记已读）
-const handleProcess = async (msg) => {
+const handleProcess = async msg => {
   // 先标记为已读
   if (msg.status === 0) {
     try {
@@ -213,7 +199,7 @@ const handleProcess = async (msg) => {
 }
 
 // 处理弹窗显隐
-const handleVisibleChange = (val) => {
+const handleVisibleChange = val => {
   emit('update:visible', val)
   if (val) {
     initLoad()

@@ -13,13 +13,10 @@ import { ref, computed, watch, nextTick } from 'vue'
  * @param {Function}          [options.matchFn]       - (filteredItem, tableRow) => boolean，默认引用相等
  * @param {Function}          [options.selectableFn]  - (row) => boolean，行是否可被选中，默认全部可选
  */
-export function useTableSelectAll(tableRef, {
-  tableData,
-  filteredData,
-  selectedItems,
-  matchFn = (f, row) => f === row,
-  selectableFn
-} = {}) {
+export function useTableSelectAll(
+  tableRef,
+  { tableData, filteredData, selectedItems, matchFn = (f, row) => f === row, selectableFn } = {}
+) {
   const allSelected = ref(false)
   const isAllSelected = computed(() => allSelected.value)
 

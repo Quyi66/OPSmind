@@ -26,7 +26,13 @@ function safeTagType(type) {
 </script>
 
 <template>
-  <el-drawer v-model="visible" :title="title" size="560px" destroy-on-close class="wb-workbench-drawer">
+  <el-drawer
+    v-model="visible"
+    :title="title"
+    size="560px"
+    destroy-on-close
+    class="wb-workbench-drawer"
+  >
     <template #footer>
       <div class="wb-drawer-footer">
         <span class="wb-drawer-footer__total">共 {{ instances.length }} 条</span>
@@ -41,15 +47,24 @@ function safeTagType(type) {
             <div class="wb-flow-instance-item__top">
               <span class="wb-flow-instance-item__name">{{ item.name }}</span>
               <div class="wb-flow-instance-item__tools">
-                <el-tag size="small" :type="safeTagType(item.statusType)" effect="plain">{{ item.statusLabel }}</el-tag>
-                <el-button class="wb-inline-action" text type="primary" size="small" @click.stop="emit('view', item)">详情</el-button>
+                <el-tag size="small" :type="safeTagType(item.statusType)" effect="plain">
+                  {{ item.statusLabel }}
+                </el-tag>
+                <el-button
+                  class="wb-inline-action"
+                  text
+                  type="primary"
+                  size="small"
+                  @click.stop="emit('view', item)"
+                >
+                  详情
+                </el-button>
               </div>
             </div>
             <span class="wb-flow-instance-item__meta">
               {{ formatDateTime(item.createdAt) }}
-              <template v-if="item.createdBy"> · {{ item.createdBy }}</template>
-              · 主机 {{ item.hostCount }}
-              · 步骤 {{ item.stepCount }}
+              <template v-if="item.createdBy">· {{ item.createdBy }}</template>
+              · 主机 {{ item.hostCount }} · 步骤 {{ item.stepCount }}
             </span>
           </div>
         </div>
@@ -87,7 +102,9 @@ function safeTagType(type) {
   border-radius: 6px;
   background: transparent;
   border: 1px solid transparent;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 
   &:hover {
     background: #f8fafc;

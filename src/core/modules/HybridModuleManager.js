@@ -7,8 +7,8 @@ import { ref, reactive, computed } from 'vue'
 
 // 模块类型
 export const MODULE_TYPES = {
-  VUE_NATIVE: 'vue-native',      // Vue 3 原生模块
-  HYBRID: 'hybrid'               // 混合模块 (部分功能已迁移)
+  VUE_NATIVE: 'vue-native', // Vue 3 原生模块
+  HYBRID: 'hybrid' // 混合模块 (部分功能已迁移)
 }
 
 // 模块状态
@@ -17,8 +17,8 @@ export const MODULE_STATUS = {
   LOADING: 'loading',
   LOADED: 'loaded',
   ERROR: 'error',
-  MIGRATING: 'migrating',       // 迁移中
-  DEPRECATED: 'deprecated'       // 已弃用
+  MIGRATING: 'migrating', // 迁移中
+  DEPRECATED: 'deprecated' // 已弃用
 }
 
 class HybridModuleManager {
@@ -26,7 +26,7 @@ class HybridModuleManager {
     this.modules = reactive(new Map())
     this.loadingModules = ref(new Set())
     this.migrationConfig = reactive(new Map()) // 迁移配置
-    this.featureFlags = reactive(new Map())    // 功能开关
+    this.featureFlags = reactive(new Map()) // 功能开关
 
     this.initializeModules()
   }
@@ -101,9 +101,7 @@ class HybridModuleManager {
     if (module) {
       module.type = MODULE_TYPES.HYBRID
       module.metadata.migratedFeatures = migratedFeatures
-      module.metadata.remainingFeatures = module.features.filter(
-        f => !migratedFeatures.includes(f)
-      )
+      module.metadata.remainingFeatures = module.features.filter(f => !migratedFeatures.includes(f))
     }
   }
 
@@ -143,9 +141,7 @@ class HybridModuleManager {
    * 按类型获取模块
    */
   getModulesByType(type) {
-    return Array.from(this.modules.values()).filter(
-      module => module.type === type
-    )
+    return Array.from(this.modules.values()).filter(module => module.type === type)
   }
 
   /**

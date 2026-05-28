@@ -1,5 +1,11 @@
 <template>
-  <el-dialog v-model="visibleModel" title="创建安装任务" width="680px" destroy-on-close :close-on-click-modal="false">
+  <el-dialog
+    v-model="visibleModel"
+    title="创建安装任务"
+    width="680px"
+    destroy-on-close
+    :close-on-click-modal="false"
+  >
     <div class="win-patch-dialog-body">
       <el-form label-width="110px" size="small">
         <el-form-item label="目标主机">

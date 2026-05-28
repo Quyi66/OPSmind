@@ -116,11 +116,7 @@
           <el-table-column prop="hostIp" label="主机 IP" width="160" />
           <el-table-column prop="status" label="更新状态">
             <template #default="{ row }">
-              <el-tag
-                :type="row.status === 'ok' ? 'success' : 'danger'"
-                size="small"
-                round
-              >
+              <el-tag :type="row.status === 'ok' ? 'success' : 'danger'" size="small" round>
                 {{ row.status === 'ok' ? '配置成功' : row.status }}
               </el-tag>
             </template>
@@ -135,9 +131,7 @@
       </div>
       <div v-else>
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSubmit">
-          确认应用配置
-        </el-button>
+        <el-button type="primary" :loading="saving" @click="handleSubmit">确认应用配置</el-button>
       </div>
     </template>
   </el-dialog>
@@ -164,7 +158,7 @@ const emit = defineEmits(['update:modelValue', 'success'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -172,9 +166,7 @@ const saving = ref(false)
 const configMode = ref('multi') // multi | single
 
 // 批量多端口配置数据
-const portsList = ref([
-  { name: 'SSH', port: 22, protocol: 'tcp' }
-])
+const portsList = ref([{ name: 'SSH', port: 22, protocol: 'tcp' }])
 const mergeStrategy = ref('overwrite')
 
 // 快捷单端口配置数据
@@ -244,7 +236,8 @@ async function handleSubmit() {
       const payload = {
         ciIds: hostIds.join(','),
         code: singleForm.attrCode,
-        value: singleForm.port === null || singleForm.port === undefined ? '' : String(singleForm.port)
+        value:
+          singleForm.port === null || singleForm.port === undefined ? '' : String(singleForm.port)
       }
       response = await hostBatchApi.saveAttr(payload)
     }

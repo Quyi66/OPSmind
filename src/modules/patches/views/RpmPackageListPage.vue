@@ -21,18 +21,8 @@
           />
         </el-form-item>
         <el-form-item label="架构">
-          <el-select
-            v-model="filters.arch"
-            clearable
-            placeholder="全部"
-            style="width: 160px"
-          >
-            <el-option
-              v-for="arch in archOptions"
-              :key="arch"
-              :label="arch"
-              :value="arch"
-            />
+          <el-select v-model="filters.arch" clearable placeholder="全部" style="width: 160px">
+            <el-option v-for="arch in archOptions" :key="arch" :label="arch" :value="arch" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -65,7 +55,12 @@
 
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 260px)">
-        <el-table-column prop="completePackageName" label="包名" min-width="220" show-overflow-tooltip>
+        <el-table-column
+          prop="completePackageName"
+          label="包名"
+          min-width="220"
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="handleViewDetail(row)">
               {{ row.completePackageName || '-' }}
@@ -118,7 +113,9 @@
                   </div>
                 </div>
               </el-popover>
-              <span v-if="!getServiceDisplay(row.services).preview.length" class="text-muted">-</span>
+              <span v-if="!getServiceDisplay(row.services).preview.length" class="text-muted">
+                -
+              </span>
             </div>
           </template>
         </el-table-column>

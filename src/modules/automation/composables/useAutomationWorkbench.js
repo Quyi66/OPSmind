@@ -32,12 +32,15 @@ function resolveRunLogTotal(data) {
 }
 
 function normalizeRunStatus(status) {
-  return String(status || '').trim().toUpperCase()
+  return String(status || '')
+    .trim()
+    .toUpperCase()
 }
 
 function countActiveRunRecords(records) {
   if (!Array.isArray(records)) return 0
-  return records.filter(item => ACTIVE_RUN_STATUSES.includes(normalizeRunStatus(item?.status))).length
+  return records.filter(item => ACTIVE_RUN_STATUSES.includes(normalizeRunStatus(item?.status)))
+    .length
 }
 
 export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = true } = {}) {
@@ -83,9 +86,10 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
   )
 
   const commandTypeCounts = computed(() =>
-    CMD_TYPE_META
-      .map(m => ({ ...m, value: commandList.value.filter(c => c.type === m.type).length }))
-      .filter(item => item.value > 0)
+    CMD_TYPE_META.map(m => ({
+      ...m,
+      value: commandList.value.filter(c => c.type === m.type).length
+    })).filter(item => item.value > 0)
   )
 
   const cronSummary = computed(() => {
@@ -182,7 +186,10 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
   }
 
   async function loadJobListData() {
-    if (!canViewJobs) { jobList.value = []; return }
+    if (!canViewJobs) {
+      jobList.value = []
+      return
+    }
     try {
       const res = await jaoApi.appTableList({ appletCode: '' })
       jobList.value = Array.isArray(res?.data) ? res.data : []
@@ -192,16 +199,21 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
   }
 
   async function loadFlowData() {
-    if (!canViewJobs) { flows.value = []; return }
+    if (!canViewJobs) {
+      flows.value = []
+      return
+    }
     try {
       const res = await jaoApi.fetchFlows()
       const raw = res?.data || res || []
       flows.value = Array.isArray(raw)
-        ? raw.map(r => ({
-            id: r.id ?? r.flowId ?? '',
-            name: r.name ?? r.flowName ?? '未命名流程',
-            updatedAt: r.updatedAt ?? r.updated_at ?? ''
-          })).filter(f => f.id)
+        ? raw
+            .map(r => ({
+              id: r.id ?? r.flowId ?? '',
+              name: r.name ?? r.flowName ?? '未命名流程',
+              updatedAt: r.updatedAt ?? r.updated_at ?? ''
+            }))
+            .filter(f => f.id)
         : []
     } catch {
       flows.value = []
@@ -209,10 +221,13 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
   }
 
   async function loadCommandData() {
-    if (!canViewCommands) { commandList.value = []; return }
+    if (!canViewCommands) {
+      commandList.value = []
+      return
+    }
     try {
       const res = await findCommandByTenantId()
-      commandList.value = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : [])
+      commandList.value = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
     } catch {
       commandList.value = []
     }
@@ -262,7 +277,9 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
   }
 
   async function fetchFailedRuns(size = 20) {
-    const response = await jaoApi.fetchJobRunLogs(createRunLogPayload({ day: '0', status: 'FAILED', size }))
+    const response = await jaoApi.fetchJobRunLogs(
+      createRunLogPayload({ day: '0', status: 'FAILED', size })
+    )
     const data = unwrapResponseData(response)
     return {
       records: Array.isArray(data.records) ? data.records : [],
@@ -271,7 +288,9 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
   }
 
   async function fetchTodayRuns(size = 20) {
-    const response = await jaoApi.fetchJobRunLogs(createRunLogPayload({ day: '0', status: 'all', size }))
+    const response = await jaoApi.fetchJobRunLogs(
+      createRunLogPayload({ day: '0', status: 'all', size })
+    )
     const data = unwrapResponseData(response)
     return {
       records: Array.isArray(data.records) ? data.records : [],

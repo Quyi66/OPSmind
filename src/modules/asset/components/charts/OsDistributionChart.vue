@@ -76,7 +76,9 @@ const fallbackColors = ['#0EA5E9', '#F59E0B', '#6366F1', '#14B8A6', '#F97316', '
 const unknownDistroColor = '#94A3B8'
 
 function isUnknownDistro(name) {
-  const normalized = String(name || '').trim().toLowerCase()
+  const normalized = String(name || '')
+    .trim()
+    .toLowerCase()
   return !normalized || ['null', 'n/a', 'na', 'unknown', '未知', '-'].includes(normalized)
 }
 
@@ -96,11 +98,19 @@ function truncateLegendText(text, maxLength) {
 }
 
 function getContainerWidth() {
-  return (fullscreenVisible.value ? fullscreenChartRef.value?.clientWidth : 0) || chartRef.value?.clientWidth || 0
+  return (
+    (fullscreenVisible.value ? fullscreenChartRef.value?.clientWidth : 0) ||
+    chartRef.value?.clientWidth ||
+    0
+  )
 }
 
 function getContainerHeight() {
-  return (fullscreenVisible.value ? fullscreenChartRef.value?.clientHeight : 0) || chartRef.value?.clientHeight || 0
+  return (
+    (fullscreenVisible.value ? fullscreenChartRef.value?.clientHeight : 0) ||
+    chartRef.value?.clientHeight ||
+    0
+  )
 }
 
 function getChartOption() {
@@ -125,7 +135,9 @@ function getChartOption() {
   const labelColor = isDark.value ? '#f8fafc' : '#0f172a'
   const tooltipBg = isDark.value ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)'
   const availableHeight = Math.max(0, chartHeight - 36)
-  const needsDataZoom = sortedData.length > visibleCount || (availableHeight > 0 && sortedData.length * minRowHeight > availableHeight)
+  const needsDataZoom =
+    sortedData.length > visibleCount ||
+    (availableHeight > 0 && sortedData.length * minRowHeight > availableHeight)
 
   return {
     backgroundColor: 'transparent',
@@ -327,7 +339,7 @@ watch(isDark, () => {
     fullscreenChartInstance.dispose()
     fullscreenChartInstance = echarts.init(fullscreenChartRef.value, isDark.value ? 'dark' : '')
     fullscreenChartInstance.setOption(getChartOption())
-      bindChartEvents(fullscreenChartInstance)
+    bindChartEvents(fullscreenChartInstance)
   }
 })
 
@@ -422,7 +434,11 @@ html.dark .chart-card {
 }
 
 html.dark .asset-overview .panel-shell .chart-card {
-  --asset-chart-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.008));
+  --asset-chart-card-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.022),
+    rgba(255, 255, 255, 0.008)
+  );
   --asset-chart-card-border: rgba(148, 163, 184, 0.06);
   --asset-chart-card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }

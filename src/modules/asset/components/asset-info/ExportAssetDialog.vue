@@ -6,11 +6,7 @@
     :close-on-click-modal="false"
     @closed="handleClosed"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      label-position="top"
-    >
+    <el-form ref="formRef" :model="formData" label-position="top">
       <el-form-item label="资产类型">
         <el-select
           v-model="formData.ciType"
@@ -36,12 +32,7 @@
           :loading="loadingGroups"
         >
           <el-option label="全部" value="" />
-          <el-option
-            v-for="item in groups"
-            :key="item.id"
-            :label="item.path"
-            :value="item.id"
-          />
+          <el-option v-for="item in groups" :key="item.id" :label="item.path" :value="item.id" />
         </el-select>
       </el-form-item>
 
@@ -55,9 +46,7 @@
 
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="exporting" @click="handleExport">
-        导出
-      </el-button>
+      <el-button type="primary" :loading="exporting" @click="handleExport">导出</el-button>
     </template>
   </el-dialog>
 </template>
@@ -82,7 +71,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const formRef = ref()
@@ -160,7 +149,7 @@ const handleExport = async () => {
     visible.value = false
   } catch (error) {
     console.error('导出失败:', error)
-    ElMessage.error('导出失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`导出失败: ${error.response?.data?.message || error.message}`)
   } finally {
     exporting.value = false
   }
@@ -176,17 +165,20 @@ const handleClosed = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadResourceTypes()
   }
 })
 
-watch(() => props.defaultCiType, (val) => {
-  if (!visible.value || !val) return
-  if (!resourceTypes.value.some(item => item.code === val)) return
-  if (formData.value.ciType === val) return
-  formData.value.ciType = val
-  handleCiTypeChange()
-})
+watch(
+  () => props.defaultCiType,
+  val => {
+    if (!visible.value || !val) return
+    if (!resourceTypes.value.some(item => item.code === val)) return
+    if (formData.value.ciType === val) return
+    formData.value.ciType = val
+    handleCiTypeChange()
+  }
+)
 </script>

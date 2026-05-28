@@ -28,12 +28,14 @@ import { SSC_ROUTE_DEFS, UAM_ROUTE_DEFS } from '@/modules/settings/routes.js'
 const REVIEW_KEYS = new Set(['approvals', 'scriptReview', 'review'])
 
 // 自动化管理 - 作业模块的页面导航（审批相关项移至审批中心）
-export const AUTO_WORKBENCH_NAV_ITEMS = AUTO_WORKBENCH_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
-  key: def.key,
-  label: def.navLabel || def.title,
-  icon: def.icon,
-  path: `/auto-workbench/${def.path}`
-}))
+export const AUTO_WORKBENCH_NAV_ITEMS = AUTO_WORKBENCH_ROUTE_DEFS.filter(def => def.navLabel).map(
+  def => ({
+    key: def.key,
+    label: def.navLabel || def.title,
+    icon: def.icon,
+    path: `/auto-workbench/${def.path}`
+  })
+)
 
 const TASK_SCHEDULER_NAV_ITEM = (() => {
   const def = JAO_ROUTE_DEFS.find(item => item.key === 'taskScheduler')
@@ -59,15 +61,19 @@ export const JAO_NAV_ITEMS = JAO_ROUTE_DEFS.filter(
 }))
 
 // 自动化管理 - 运行记录模块的页面导航
-export const RUN_RECORDS_NAV_ITEMS = RUN_RECORDS_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
-  key: def.key,
-  label: def.navLabel || def.title,
-  icon: def.icon,
-  path: `/run-records/${def.path}`
-}))
+export const RUN_RECORDS_NAV_ITEMS = RUN_RECORDS_ROUTE_DEFS.filter(def => def.navLabel).map(
+  def => ({
+    key: def.key,
+    label: def.navLabel || def.title,
+    icon: def.icon,
+    path: `/run-records/${def.path}`
+  })
+)
 
 // 自动化管理 - 脚本模块的页面导航（审核相关项移至审批中心）
-export const GFS_NAV_ITEMS = GFS_ROUTE_DEFS.filter(def => def.navLabel && !REVIEW_KEYS.has(def.key)).map(def => ({
+export const GFS_NAV_ITEMS = GFS_ROUTE_DEFS.filter(
+  def => def.navLabel && !REVIEW_KEYS.has(def.key)
+).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
@@ -123,12 +129,14 @@ export const REVIEW_CENTER_NAV_ITEMS = [
 ]
 
 // 自动化管理 - rpm 包安装模块的页面导航
-export const RPM_INSTALL_NAV_ITEMS = RPM_INSTALL_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
-  key: def.key,
-  label: def.navLabel || def.title,
-  icon: def.icon,
-  path: `/rpm-install/${def.path}`
-}))
+export const RPM_INSTALL_NAV_ITEMS = RPM_INSTALL_ROUTE_DEFS.filter(def => def.navLabel).map(
+  def => ({
+    key: def.key,
+    label: def.navLabel || def.title,
+    icon: def.icon,
+    path: `/rpm-install/${def.path}`
+  })
+)
 
 // 补丁漏洞 - 补丁模块(Linux/Common，不包含日志)的页面导航
 export const PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(

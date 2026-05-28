@@ -28,7 +28,9 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :disabled="!hasSelectedRepo" @click="handleSearch">搜索</el-button>
+          <el-button type="primary" :disabled="!hasSelectedRepo" @click="handleSearch">
+            搜索
+          </el-button>
           <el-button :disabled="!hasSelectedRepo" @click="handleReset">重置</el-button>
           <el-button :disabled="!hasSelectedRepo" @click="handleRefresh">刷新</el-button>
         </el-form-item>
@@ -53,7 +55,13 @@
         </el-button>
       </div> -->
 
-      <el-descriptions :column="3" border size="small" class="win-patch-yum-status" label-width="100px">
+      <el-descriptions
+        :column="3"
+        border
+        size="small"
+        class="win-patch-yum-status"
+        label-width="100px"
+      >
         <el-descriptions-item label="仓库名称">
           {{ getYumConfigCompareLabel(currentConfig) }}
         </el-descriptions-item>
@@ -87,7 +95,7 @@
         <span>{{ pollingNoticeText }}</span>
       </div>
 
-      <div class="ops-table-wrapper" style="margin-top: 12px;">
+      <div class="ops-table-wrapper" style="margin-top: 12px">
         <el-table
           v-loading="tableLoading"
           :data="packageList"
@@ -210,7 +218,10 @@ const packagesSelectedRepoModel = computed({
 const packageRepoOptions = computed(() => props.configs.map(item => normalizeYumConfigRecord(item)))
 
 const currentConfig = computed(() => {
-  return props.configs.find(item => resolveYumConfigId(item) === normalizedSelectedConfigId.value) || null
+  return (
+    props.configs.find(item => resolveYumConfigId(item) === normalizedSelectedConfigId.value) ||
+    null
+  )
 })
 
 const currentConfigBaseurlsText = computed(() => {
@@ -223,7 +234,13 @@ const currentConfigBaseurlsText = computed(() => {
 const hasSelectedRepo = computed(() => Boolean(currentConfig.value))
 const refreshing = computed(() => loadingStatus.value || loadingPackages.value)
 const isStatusPollingActive = computed(() => {
-  return props.active && autoPollingEnabled.value && hasSelectedRepo.value && isCollectRunning(statusData.value) && isPolling.value
+  return (
+    props.active &&
+    autoPollingEnabled.value &&
+    hasSelectedRepo.value &&
+    isCollectRunning(statusData.value) &&
+    isPolling.value
+  )
 })
 const showPollingNotice = computed(() => isStatusPollingActive.value && !loadingPackages.value)
 const pollingNoticeText = computed(() => '正在轮询采集状态，包清单会在采集完成后自动刷新')
@@ -265,7 +282,12 @@ function resetPanelState() {
 }
 
 function syncPollingState() {
-  if (!props.active || !autoPollingEnabled.value || !hasSelectedRepo.value || !isCollectRunning(statusData.value)) {
+  if (
+    !props.active ||
+    !autoPollingEnabled.value ||
+    !hasSelectedRepo.value ||
+    !isCollectRunning(statusData.value)
+  ) {
     stop()
     return
   }
@@ -292,7 +314,8 @@ async function loadStatus(options = {}) {
 
     const data = unwrapResponse(response)
     const configList = (Array.isArray(data) ? data : []).map(item => normalizeYumConfigRecord(item))
-    statusData.value = configList.find(item => resolveYumConfigId(item) === normalizedSelectedConfigId.value) || null
+    statusData.value =
+      configList.find(item => resolveYumConfigId(item) === normalizedSelectedConfigId.value) || null
   } catch (error) {
     if (requestId !== statusRequestId) return
 

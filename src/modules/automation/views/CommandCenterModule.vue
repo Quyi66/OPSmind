@@ -2,53 +2,50 @@
   <div class="ops-module__content">
     <div class="ops-page-layout">
       <el-tabs
-      v-if="showWorkspaceTabs"
-      :model-value="activeWorkspaceName"
-      class="command-center-tabs"
-      @tab-change="handleWorkspaceChange"
-    >
-      <el-tab-pane
-        v-for="tab in workspaceTabs"
-        :key="tab.name"
-        :label="tab.label"
-        :name="tab.name"
+        v-if="showWorkspaceTabs"
+        :model-value="activeWorkspaceName"
+        class="command-center-tabs"
+        @tab-change="handleWorkspaceChange"
       >
-        <div class="command-center-tab-pane">
-          <component
-            v-if="shouldRenderWorkspaceTab(tab.name)"
-            :is="workspaceViewMap[tab.name]"
-            v-show="activeWorkspaceName === tab.name"
-            class="command-center-tab-page"
-          />
-        </div>
-      </el-tab-pane>
-    </el-tabs>
+        <el-tab-pane
+          v-for="tab in workspaceTabs"
+          :key="tab.name"
+          :label="tab.label"
+          :name="tab.name"
+        >
+          <div class="command-center-tab-pane">
+            <component
+              v-if="shouldRenderWorkspaceTab(tab.name)"
+              :is="workspaceViewMap[tab.name]"
+              v-show="activeWorkspaceName === tab.name"
+              class="command-center-tab-page"
+            />
+          </div>
+        </el-tab-pane>
+      </el-tabs>
 
-    <div v-else class="ops-module__view">
-      <router-view v-slot="{ Component, route: currentRoute }">
-        <transition name="fade-content" mode="out-in">
-          <component
-            :is="Component"
-            :key="String(currentRoute.name || currentRoute.path)"
-          />
-        </transition>
-      </router-view>
-    </div>
+      <div v-else class="ops-module__view">
+        <router-view v-slot="{ Component, route: currentRoute }">
+          <transition name="fade-content" mode="out-in">
+            <component :is="Component" :key="String(currentRoute.name || currentRoute.path)" />
+          </transition>
+        </router-view>
+      </div>
 
-    <!-- 执行命令对话框 -->
-    <RunCommandDialog
-      v-model:visible="runCommandDialogVisible"
-      :command="selectedCommand"
-      :mode="runCommandMode"
-      @success="handleRunSuccess"
-    />
+      <!-- 执行命令对话框 -->
+      <RunCommandDialog
+        v-model:visible="runCommandDialogVisible"
+        :command="selectedCommand"
+        :mode="runCommandMode"
+        @success="handleRunSuccess"
+      />
 
-    <ExecuteResultDialog
-      v-if="commandResultDialogVisible"
-      v-model:visible="commandResultDialogVisible"
-      :run-id="commandResultMeta.runId"
-      :job-title="commandResultMeta.jobTitle"
-    />
+      <ExecuteResultDialog
+        v-if="commandResultDialogVisible"
+        v-model:visible="commandResultDialogVisible"
+        :run-id="commandResultMeta.runId"
+        :job-title="commandResultMeta.jobTitle"
+      />
     </div>
   </div>
 </template>
@@ -91,7 +88,9 @@ const workspaceViewMap = {
 
 const showWorkspaceTabs = computed(() => String(route.name || '') === 'cmd-list')
 
-const activeWorkspaceName = computed(() => (resolveTabQuery(route.query.tab) === 'job' ? 'job' : 'list'))
+const activeWorkspaceName = computed(() =>
+  resolveTabQuery(route.query.tab) === 'job' ? 'job' : 'list'
+)
 
 const renderedWorkspaceTabs = ref([activeWorkspaceName.value])
 
@@ -104,7 +103,7 @@ const commandResultMeta = ref({ runId: '', jobTitle: '' })
 
 watch(
   activeWorkspaceName,
-  (name) => {
+  name => {
     if (!renderedWorkspaceTabs.value.includes(name)) {
       renderedWorkspaceTabs.value = [...renderedWorkspaceTabs.value, name]
     }

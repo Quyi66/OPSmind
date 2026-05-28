@@ -22,7 +22,16 @@ import { provideCurrentGroupModuleCode } from './useGroupLayoutContext.js'
 import { useReviewCountStore } from '@/stores/useReviewCountStore.js'
 
 const menuGroups = computed(() => getGroupMenuConfig('automation', MENU_CONFIG))
-const defaultOpeneds = ['jao', 'gfs', 'cmd', 'task-scheduler', 'run-records', 'review-center', 'users', 'rpm-install']
+const defaultOpeneds = [
+  'jao',
+  'gfs',
+  'cmd',
+  'task-scheduler',
+  'run-records',
+  'review-center',
+  'users',
+  'rpm-install'
+]
 
 provideCurrentGroupModuleCode('jao')
 

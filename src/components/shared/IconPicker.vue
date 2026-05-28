@@ -3,12 +3,7 @@
     <div class="icon-preview">
       <i :class="getIconClass(modelValue)" />
     </div>
-    <el-popover
-      v-model:visible="showPicker"
-      placement="bottom-start"
-      :width="420"
-      trigger="click"
-    >
+    <el-popover v-model:visible="showPicker" placement="bottom-start" :width="420" trigger="click">
       <template #reference>
         <el-button size="small" class="ml-2">选择图标</el-button>
       </template>
@@ -56,56 +51,146 @@ const searchKeyword = ref('')
 // 常用图标列表 - FontAwesome 5 图标
 const commonIcons = [
   // 设备类
-  'fa-tv', 'fa-server', 'fa-laptop', 'fa-desktop', 'fa-mobile-alt', 'fa-tablet-alt',
-  'fa-hdd', 'fa-database', 'fa-microchip', 'fa-memory', 'fa-sd-card',
+  'fa-tv',
+  'fa-server',
+  'fa-laptop',
+  'fa-desktop',
+  'fa-mobile-alt',
+  'fa-tablet-alt',
+  'fa-hdd',
+  'fa-database',
+  'fa-microchip',
+  'fa-memory',
+  'fa-sd-card',
   // 网络类
-  'fa-network-wired', 'fa-ethernet', 'fa-wifi', 'fa-globe', 'fa-cloud', 'fa-cloud-upload-alt',
-  'fa-satellite', 'fa-router', 'fa-signal',
+  'fa-network-wired',
+  'fa-ethernet',
+  'fa-wifi',
+  'fa-globe',
+  'fa-cloud',
+  'fa-cloud-upload-alt',
+  'fa-satellite',
+  'fa-router',
+  'fa-signal',
   // 存储类
-  'fa-archive', 'fa-box', 'fa-boxes', 'fa-cube', 'fa-cubes', 'fa-folder',
-  'fa-folder-open', 'fa-file', 'fa-file-alt', 'fa-file-code',
+  'fa-archive',
+  'fa-box',
+  'fa-boxes',
+  'fa-cube',
+  'fa-cubes',
+  'fa-folder',
+  'fa-folder-open',
+  'fa-file',
+  'fa-file-alt',
+  'fa-file-code',
   // 操作类
-  'fa-cog', 'fa-cogs', 'fa-tools', 'fa-wrench', 'fa-hammer', 'fa-screwdriver',
-  'fa-sliders-h', 'fa-toggle-on', 'fa-toggle-off',
+  'fa-cog',
+  'fa-cogs',
+  'fa-tools',
+  'fa-wrench',
+  'fa-hammer',
+  'fa-screwdriver',
+  'fa-sliders-h',
+  'fa-toggle-on',
+  'fa-toggle-off',
   // 状态类
-  'fa-check', 'fa-check-circle', 'fa-times', 'fa-times-circle', 'fa-exclamation',
-  'fa-exclamation-circle', 'fa-exclamation-triangle', 'fa-question-circle', 'fa-info-circle',
+  'fa-check',
+  'fa-check-circle',
+  'fa-times',
+  'fa-times-circle',
+  'fa-exclamation',
+  'fa-exclamation-circle',
+  'fa-exclamation-triangle',
+  'fa-question-circle',
+  'fa-info-circle',
   // 图表类
-  'fa-chart-line', 'fa-chart-bar', 'fa-chart-pie', 'fa-chart-area', 'fa-tachometer-alt',
+  'fa-chart-line',
+  'fa-chart-bar',
+  'fa-chart-pie',
+  'fa-chart-area',
+  'fa-tachometer-alt',
   // 安全类
-  'fa-shield-alt', 'fa-lock', 'fa-unlock', 'fa-key', 'fa-user-shield',
+  'fa-shield-alt',
+  'fa-lock',
+  'fa-unlock',
+  'fa-key',
+  'fa-user-shield',
   // 用户类
-  'fa-user', 'fa-users', 'fa-user-circle', 'fa-user-cog', 'fa-user-tie',
-  'fa-address-book', 'fa-address-card', 'fa-id-card',
+  'fa-user',
+  'fa-users',
+  'fa-user-circle',
+  'fa-user-cog',
+  'fa-user-tie',
+  'fa-address-book',
+  'fa-address-card',
+  'fa-id-card',
   // 通用类
-  'fa-home', 'fa-building', 'fa-sitemap', 'fa-project-diagram', 'fa-th',
-  'fa-th-large', 'fa-th-list', 'fa-list', 'fa-list-alt', 'fa-tasks',
-  'fa-clipboard', 'fa-clipboard-list', 'fa-clipboard-check',
+  'fa-home',
+  'fa-building',
+  'fa-sitemap',
+  'fa-project-diagram',
+  'fa-th',
+  'fa-th-large',
+  'fa-th-list',
+  'fa-list',
+  'fa-list-alt',
+  'fa-tasks',
+  'fa-clipboard',
+  'fa-clipboard-list',
+  'fa-clipboard-check',
   // 品牌类
-  'fa-linux', 'fa-windows', 'fa-apple', 'fa-android', 'fa-docker',
-  'fa-aws', 'fa-google', 'fa-microsoft',
+  'fa-linux',
+  'fa-windows',
+  'fa-apple',
+  'fa-android',
+  'fa-docker',
+  'fa-aws',
+  'fa-google',
+  'fa-microsoft',
   // 箭头类
-  'fa-arrow-up', 'fa-arrow-down', 'fa-arrow-left', 'fa-arrow-right',
-  'fa-arrows-alt', 'fa-sync', 'fa-redo', 'fa-undo',
+  'fa-arrow-up',
+  'fa-arrow-down',
+  'fa-arrow-left',
+  'fa-arrow-right',
+  'fa-arrows-alt',
+  'fa-sync',
+  'fa-redo',
+  'fa-undo',
   // 其他
-  'fa-bell', 'fa-bookmark', 'fa-calendar', 'fa-clock', 'fa-download',
-  'fa-upload', 'fa-link', 'fa-paperclip', 'fa-print', 'fa-search',
-  'fa-star', 'fa-heart', 'fa-flag', 'fa-tag', 'fa-tags'
+  'fa-bell',
+  'fa-bookmark',
+  'fa-calendar',
+  'fa-clock',
+  'fa-download',
+  'fa-upload',
+  'fa-link',
+  'fa-paperclip',
+  'fa-print',
+  'fa-search',
+  'fa-star',
+  'fa-heart',
+  'fa-flag',
+  'fa-tag',
+  'fa-tags'
 ]
 
 // 过滤后的图标
 const filteredIcons = computed(() => {
   if (!searchKeyword.value) return commonIcons
   const kw = searchKeyword.value.toLowerCase()
-  return commonIcons.filter(icon =>
-    icon.toLowerCase().includes(kw)
-  )
+  return commonIcons.filter(icon => icon.toLowerCase().includes(kw))
 })
 
 // 获取图标类名
-const getIconClass = (icon) => {
+const getIconClass = icon => {
   if (!icon) return 'fa fa-cube'
-  if (icon.startsWith('fa ') || icon.startsWith('fas ') || icon.startsWith('far ') || icon.startsWith('fab ') || icon.startsWith('fad ')) {
+  if (
+    icon.startsWith('fa ') ||
+    icon.startsWith('fas ') ||
+    icon.startsWith('far ') ||
+    icon.startsWith('fab ') ||
+    icon.startsWith('fad ')
+  ) {
     return icon
   }
   return `fa ${icon}`
@@ -117,7 +202,7 @@ const togglePicker = () => {
 }
 
 // 选择图标
-const selectIcon = (icon) => {
+const selectIcon = icon => {
   emit('update:modelValue', icon)
   showPicker.value = false
 }

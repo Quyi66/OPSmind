@@ -6,12 +6,7 @@
     :close-on-click-modal="false"
     @closed="handleClosed"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-position="top"
-    >
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
       <el-form-item label="资产类型" prop="ciType">
         <el-select
           v-model="formData.ciType"
@@ -29,10 +24,7 @@
       </el-form-item>
 
       <el-form-item label="分组名称" prop="name">
-        <el-input
-          v-model="formData.name"
-          placeholder="请输入分组名称"
-        />
+        <el-input v-model="formData.name" placeholder="请输入分组名称" />
       </el-form-item>
 
       <el-form-item label="上级分组" prop="parentId">
@@ -54,9 +46,7 @@
 
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">
-        保存
-      </el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
     </template>
   </el-dialog>
 </template>
@@ -78,7 +68,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const formRef = ref()
@@ -144,25 +134,22 @@ const handleSave = async () => {
   saving.value = true
   try {
     // Job: a17VXM - 添加分组
-    await apiService.post(
-      `/jao/api/jao/jobs/a17VXM/run?cacheBuster=${Date.now()}`,
-      {
-        params: {
-          operate: 'new',
-          ciIds: null,
-          id: null,
-          name: formData.value.name,
-          parentId: formData.value.parentId,
-          ciType: formData.value.ciType
-        }
+    await apiService.post(`/jao/api/jao/jobs/a17VXM/run?cacheBuster=${Date.now()}`, {
+      params: {
+        operate: 'new',
+        ciIds: null,
+        id: null,
+        name: formData.value.name,
+        parentId: formData.value.parentId,
+        ciType: formData.value.ciType
       }
-    )
+    })
     ElMessage.success('添加成功')
     visible.value = false
     emit('saved')
   } catch (error) {
     console.error('添加分组失败:', error)
-    ElMessage.error('添加失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`添加失败: ${error.response?.data?.message || error.message}`)
   } finally {
     saving.value = false
   }
@@ -179,7 +166,7 @@ const handleClosed = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadResourceTypes()
   }

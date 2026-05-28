@@ -28,7 +28,11 @@
     <!-- 树形模式 - 按分组选择设备（完整视图） -->
     <div v-else class="group-tree-view">
       <!-- 所有选项 -->
-      <div class="tree-header" :class="{ 'is-selected': isAllSelected }" @click="toggleAllSelection()">
+      <div
+        class="tree-header"
+        :class="{ 'is-selected': isAllSelected }"
+        @click="toggleAllSelection()"
+      >
         <el-checkbox :model-value="isAllSelected" @change="toggleAllSelection" @click.stop>
           所有
         </el-checkbox>
@@ -166,7 +170,7 @@ function buildTreeFromPaths(paths) {
     let currentPath = ''
 
     parts.forEach((part, index) => {
-      currentPath += '/' + part
+      currentPath += `/${part}`
 
       let child = current.children.find(c => c.name === part)
       if (!child) {

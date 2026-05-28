@@ -72,7 +72,11 @@
         <!-- Right Side User Area -->
         <div class="nav-right">
           <!-- AI OPS Button -->
-          <el-tooltip content="AI OPS" placement="bottom" :popper-options="headerTooltipPopperOptions">
+          <el-tooltip
+            content="AI OPS"
+            placement="bottom"
+            :popper-options="headerTooltipPopperOptions"
+          >
             <div class="ai-ops-wrapper" @mouseenter="prewarmAiOps" @click="handleAiOpsClick">
               <img :src="aiOpsIcon" alt="AI OPS" class="ai-ops-simple" />
             </div>
@@ -357,7 +361,7 @@ const displayUserName = computed(() => {
 
 const displayAvatarUrl = computed(() => {
   if (!userAvatarUrl.value) return avatarImage
-  return '/oplus-upload' + userAvatarUrl.value
+  return `/oplus-upload${userAvatarUrl.value}`
 })
 
 const notificationCount = ref(0)
@@ -392,7 +396,8 @@ const currentLanguage = ref('zh-cn')
 
 onMounted(async () => {
   try {
-    const account = accountService.getCached() || (await accountService.getAccount().catch(() => null))
+    const account =
+      accountService.getCached() || (await accountService.getAccount().catch(() => null))
     if (account) {
       if (account.fullName || account.login) accountFullName.value = account.fullName || ''
       if (account.imageUrl) userAvatarUrl.value = account.imageUrl
@@ -419,7 +424,9 @@ const handleGroupClick = group => {
 
   menuStore.setActiveGroup(group.code)
 
-  const defaultRoute = getGroupDefaultRoute(group, permission => authService.hasPermission(permission))
+  const defaultRoute = getGroupDefaultRoute(group, permission =>
+    authService.hasPermission(permission)
+  )
   if (defaultRoute) {
     router.push(defaultRoute)
   }

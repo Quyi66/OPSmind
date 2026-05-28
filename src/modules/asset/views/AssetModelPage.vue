@@ -44,7 +44,12 @@
           <!-- 1. 模型名称 -->
           <el-table-column prop="title" label="模型名称" min-width="160" fixed="left">
             <template #default="{ row }">
-              <el-link type="primary" :underline="false" class="model-name-link" @click="handleViewModel(row)">
+              <el-link
+                type="primary"
+                :underline="false"
+                class="model-name-link"
+                @click="handleViewModel(row)"
+              >
                 <i class="fa fa-cube model-icon-decorator"></i>
                 {{ row.title }}
               </el-link>
@@ -57,8 +62,16 @@
           <!-- 3. 是否自动化 -->
           <el-table-column prop="is_auto" label="是否自动化管理" width="150" align="left">
             <template #default="{ row }">
-              <el-tag :type="row.is_auto === 1 ? 'success' : 'info'" size="small" effect="light" class="auto-badge-tag">
-                <i class="fa" :class="row.is_auto === 1 ? 'fa-check-circle' : 'fa-minus-circle'"></i>
+              <el-tag
+                :type="row.is_auto === 1 ? 'success' : 'info'"
+                size="small"
+                effect="light"
+                class="auto-badge-tag"
+              >
+                <i
+                  class="fa"
+                  :class="row.is_auto === 1 ? 'fa-check-circle' : 'fa-minus-circle'"
+                ></i>
                 <span style="margin-left: 4px">{{ row.is_auto === 1 ? '是' : '否' }}</span>
               </el-tag>
             </template>
@@ -259,7 +272,7 @@ const handleDeleteModel = row => {
         loadModelList()
       } catch (error) {
         console.error('删除失败:', error)
-        ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
+        ElMessage.error(`删除失败: ${error.response?.data?.message || error.message}`)
       }
     })
     .catch(() => {})
@@ -286,7 +299,6 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-
 .model-name-link {
   font-size: 13px;
   font-weight: 600;

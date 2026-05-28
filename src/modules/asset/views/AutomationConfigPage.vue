@@ -143,7 +143,8 @@
                 <template #default="{ row }">
                   <div class="credentials-cell">
                     <span class="cred-item" title="登录用户">
-                      <i class="fa fa-user-circle text-primary"></i> {{ row.loginUser || '-' }}
+                      <i class="fa fa-user-circle text-primary"></i>
+                      {{ row.loginUser || '-' }}
                     </span>
                   </div>
                 </template>
@@ -153,7 +154,8 @@
                 <template #default="{ row }">
                   <div class="credentials-cell">
                     <span class="cred-item" title="提权执行用户">
-                      <i class="fa fa-user-shield text-warning"></i> {{ row.runUser || '-' }}
+                      <i class="fa fa-user-shield text-warning"></i>
+                      {{ row.runUser || '-' }}
                     </span>
                   </div>
                 </template>
@@ -169,7 +171,9 @@
               <!-- 7. 操作 -->
               <el-table-column label="操作" width="80" fixed="right">
                 <template #default="{ row }">
-                  <el-button text type="primary" size="small" @click="handleEditAutomation(row)">编辑</el-button>
+                  <el-button text type="primary" size="small" @click="handleEditAutomation(row)">
+                    编辑
+                  </el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -247,19 +251,31 @@
               height="100%"
               row-class-name="modern-table-row"
             >
-              <el-table-column prop="name" label="模板名称" min-width="150" fixed="left" class-name="font-bold-column" />
+              <el-table-column
+                prop="name"
+                label="模板名称"
+                min-width="150"
+                fixed="left"
+                class-name="font-bold-column"
+              />
               <el-table-column prop="instanceGroup" label="执行引擎节点" min-width="150" />
               <el-table-column prop="aapInstanceGroup" label="AAP 引擎节点" min-width="140" />
 
               <el-table-column prop="loginUser" label="登录账号" width="120">
                 <template #default="{ row }">
-                  <span class="user-cell-item"><i class="fa fa-user text-primary"></i> {{ row.loginUser || '-' }}</span>
+                  <span class="user-cell-item">
+                    <i class="fa fa-user text-primary"></i>
+                    {{ row.loginUser || '-' }}
+                  </span>
                 </template>
               </el-table-column>
 
               <el-table-column prop="runUser" label="提权账号" width="120">
                 <template #default="{ row }">
-                  <span class="user-cell-item"><i class="fa fa-user-shield text-warning"></i> {{ row.runUser || '-' }}</span>
+                  <span class="user-cell-item">
+                    <i class="fa fa-user-shield text-warning"></i>
+                    {{ row.runUser || '-' }}
+                  </span>
                 </template>
               </el-table-column>
 
@@ -298,8 +314,12 @@
 
               <el-table-column label="操作" width="100" fixed="right">
                 <template #default="{ row }">
-                  <el-button text type="primary" size="small" @click="handleEditAnsible(row)">编辑</el-button>
-                  <el-button text type="danger" size="small" @click="handleDeleteAnsible(row)">删除</el-button>
+                  <el-button text type="primary" size="small" @click="handleEditAnsible(row)">
+                    编辑
+                  </el-button>
+                  <el-button text type="danger" size="small" @click="handleDeleteAnsible(row)">
+                    删除
+                  </el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -399,7 +419,11 @@
           <el-row :gutter="16">
             <el-col :span="12">
               <el-form-item label="连接登录用户">
-                <el-input v-model="automationForm.loginUser" placeholder="例如: root" maxlength="32" />
+                <el-input
+                  v-model="automationForm.loginUser"
+                  placeholder="例如: root"
+                  maxlength="32"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -419,7 +443,11 @@
           <el-row :gutter="16">
             <el-col :span="12">
               <el-form-item label="特权执行用户 (sudo)">
-                <el-input v-model="automationForm.runUser" placeholder="例如: root" maxlength="32" />
+                <el-input
+                  v-model="automationForm.runUser"
+                  placeholder="例如: root"
+                  maxlength="32"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -574,7 +602,9 @@
               :rows="4"
               placeholder="例如: ansible_python_interpreter=/usr/bin/python3\nansible_ssh_common_args='-o StrictHostKeyChecking=no'"
             />
-            <div class="form-desc">支持输入登录及执行用户凭据以外的其它特定 Ansible 参数变量，多条用换行隔开。</div>
+            <div class="form-desc">
+              支持输入登录及执行用户凭据以外的其它特定 Ansible 参数变量，多条用换行隔开。
+            </div>
           </el-form-item>
         </el-form>
       </div>
@@ -651,7 +681,9 @@ const ansibleForm = ref({})
 const ansibleFormLoading = ref(false)
 
 function resolveScriptEngineResponse(response) {
-  return response?.value || response?.records?.[0]?.value || response?.records?.[0]?.result || 'ansible'
+  return (
+    response?.value || response?.records?.[0]?.value || response?.records?.[0]?.result || 'ansible'
+  )
 }
 
 function parseStringListValue(rawValue) {
@@ -716,7 +748,7 @@ onMounted(() => {
 // 监听路由参数变化进行联动搜索
 watch(
   () => route.query,
-  (query) => {
+  query => {
     if (query.ip) {
       automationSearch.value = query.ip
       activeTab.value = 'automation'
@@ -788,7 +820,7 @@ function handleAnsibleSearch() {
 
 // 凭据模板搜索防抖
 let ansibleDebounceTimer = null
-watch(ansibleSearch, (newVal) => {
+watch(ansibleSearch, newVal => {
   if (ansibleDebounceTimer) {
     clearTimeout(ansibleDebounceTimer)
   }
@@ -852,7 +884,7 @@ function handleAutomationSearch() {
 
 // 设备凭据搜索防抖
 let automationDebounceTimer = null
-watch(automationSearch, (newVal) => {
+watch(automationSearch, newVal => {
   if (automationDebounceTimer) {
     clearTimeout(automationDebounceTimer)
   }
@@ -1128,7 +1160,6 @@ function handleDeviceManageSuccess() {
 </script>
 
 <style scoped lang="scss">
-
 .main-content-layout {
   flex: 1;
   display: flex;
@@ -1136,9 +1167,6 @@ function handleDeviceManageSuccess() {
   overflow: hidden;
   height: 100%;
 }
-
-
-
 
 .composite-device-cell {
   display: flex;
@@ -1214,14 +1242,10 @@ function handleDeviceManageSuccess() {
   font-family: Consolas, Monaco, monospace;
 }
 
-
-
 .form-desc {
   font-size: 12px;
   color: var(--el-text-color-secondary);
   margin-top: 4px;
   line-height: 1.4;
 }
-
-
 </style>

@@ -62,18 +62,21 @@
           </div>
 
           <div class="ops-action-bar">
-            <span style="flex: 1;"></span>
-            <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+            <span style="flex: 1"></span>
+            <el-button
+              class="toolbar-icon-btn"
+              circle
+              size="small"
+              :loading="loading"
+              @click="handleRefresh"
+              title="刷新"
+            >
               <el-icon v-show="!loading"><Refresh /></el-icon>
             </el-button>
           </div>
 
           <div class="ops-table-wrapper">
-            <el-table
-              v-loading="loading"
-              :data="tableData"
-              max-height="calc(100vh - 290px)"
-            >
+            <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 290px)">
               <el-table-column label="开始时间" width="180" sortable>
                 <template #default="{ row }">
                   {{ formatDateTime(row.start_time) }}
@@ -206,7 +209,11 @@ import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultDialog.vue'
 import JobStatisticsPage from './JobStatisticsPage.vue'
 import { translateText } from '@/utils/i18n.js'
-import { RUN_LOG_STATUS_MAP, getRunLogStatusLabel, getRunLogStatusType } from '@/modules/automation/constants/runLogStatus'
+import {
+  RUN_LOG_STATUS_MAP,
+  getRunLogStatusLabel,
+  getRunLogStatusType
+} from '@/modules/automation/constants/runLogStatus'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -227,7 +234,9 @@ const resultDialogVisible = ref(false)
 const resultMeta = ref({ runId: '', jobTitle: '' })
 const route = useRoute()
 const router = useRouter()
-const activeTab = ref(normalizeSingleQueryValue(route.query.tab) === 'statistics' ? 'statistics' : 'logs')
+const activeTab = ref(
+  normalizeSingleQueryValue(route.query.tab) === 'statistics' ? 'statistics' : 'logs'
+)
 
 let searchTimeout = null
 const jobTypeOptions = JOB_TYPE_OPTIONS
@@ -324,7 +333,9 @@ async function fetchData() {
       size: pagination.value.size,
       page: pagination.value.page,
       orderBy: 'start_time desc',
-      filter: filters.value.search ? `start_time|username|ata_url:*${filters.value.search}*` : undefined
+      filter: filters.value.search
+        ? `start_time|username|ata_url:*${filters.value.search}*`
+        : undefined
     }
 
     const response = await jaoApi.fetchJobRunLogs(payload)
@@ -433,7 +444,7 @@ function formatDateTime(value) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
@@ -478,10 +489,12 @@ function formatStats(statsJson) {
 }
 
 function canRerun(row) {
-  return row.job_type === 'script' &&
-         row.status !== 'WAITING' &&
-         row.status !== 'RUNNING' &&
-         row.status !== 'CALLBACK'
+  return (
+    row.job_type === 'script' &&
+    row.status !== 'WAITING' &&
+    row.status !== 'RUNNING' &&
+    row.status !== 'CALLBACK'
+  )
 }
 
 function handleViewResult(row) {

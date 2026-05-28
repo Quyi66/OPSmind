@@ -4,7 +4,14 @@
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
         <el-form-item label="关键词">
-          <el-input v-model="searchKeyword" placeholder="标签名称" clearable style="width: 200px" maxlength="50" @input="handleSearch" />
+          <el-input
+            v-model="searchKeyword"
+            placeholder="标签名称"
+            clearable
+            style="width: 200px"
+            maxlength="50"
+            @input="handleSearch"
+          />
         </el-form-item>
         <!-- <el-form-item>
           <el-button type="primary" @click="handleSearch">
@@ -24,10 +31,18 @@
     <!-- 操作栏 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreate">
-        <i class="fa fa-plus"></i> 新建标签
+        <i class="fa fa-plus"></i>
+        新建标签
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadTags" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadTags"
+        title="刷新"
+      >
         <el-icon v-show="!loading">
           <Refresh />
         </el-icon>
@@ -36,7 +51,12 @@
 
     <!-- 表格 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="paginatedTags"  style="width: 100%" max-height="calc(100vh - 290px)">
+      <el-table
+        v-loading="loading"
+        :data="paginatedTags"
+        style="width: 100%"
+        max-height="calc(100vh - 290px)"
+      >
         <el-table-column prop="name" label="标签名称" min-width="200" />
         <el-table-column prop="count" label="应用数量" min-width="120" align="left">
           <template #default="{ row }">
@@ -45,13 +65,15 @@
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right" align="left">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="handleView(row)">
-              查看
-            </el-button>
-            <el-button text type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button text type="danger" size="small" @click="handleDelete(row)" :loading="deletingId === row.id">
+            <el-button text type="primary" size="small" @click="handleView(row)">查看</el-button>
+            <el-button text type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button
+              text
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+              :loading="deletingId === row.id"
+            >
               删除
             </el-button>
           </template>
@@ -61,14 +83,23 @@
 
     <!-- 分页器 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]" :total="filteredTags.length" layout="total, sizes, prev, pager, next, jumper"
-        background />
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="filteredTags.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+      />
     </div>
 
     <!-- 新建/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogMode === 'create' ? '新建标签' : '编辑标签'" width="500px"
-      destroy-on-close>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogMode === 'create' ? '新建标签' : '编辑标签'"
+      width="500px"
+      destroy-on-close
+    >
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="标签名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入标签名称" maxlength="50" />
@@ -76,24 +107,37 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">
-          保存
-        </el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
 
     <!-- 查看详情对话框 -->
-    <el-dialog v-model="detailDialogVisible" :title="`标签详情: ${currentTag?.name || ''}`" width="900px" destroy-on-close>
+    <el-dialog
+      v-model="detailDialogVisible"
+      :title="`标签详情: ${currentTag?.name || ''}`"
+      width="900px"
+      destroy-on-close
+    >
       <div v-loading="loadingDetail">
         <div class="detail-toolbar" v-if="tagApplets?.length">
-          <el-button type="primary" size="small" :disabled="!selectedAppletIds.length" @click="handleRemoveApplets">
+          <el-button
+            type="primary"
+            size="small"
+            :disabled="!selectedAppletIds.length"
+            @click="handleRemoveApplets"
+          >
             <i class="fa fa-minus-circle"></i>
             移除选中应用
           </el-button>
         </div>
 
-        <el-table v-if="tagApplets?.length" :data="tagApplets"  size="small" max-height="400"
-          @selection-change="handleAppletSelectionChange">
+        <el-table
+          v-if="tagApplets?.length"
+          :data="tagApplets"
+          size="small"
+          max-height="400"
+          @selection-change="handleAppletSelectionChange"
+        >
           <el-table-column type="selection" width="48" />
           <el-table-column prop="title" label="标题" min-width="150">
             <template #default="{ row }">
@@ -150,9 +194,7 @@ const form = ref({
 })
 
 const formRules = {
-  name: [
-    { required: true, message: '请输入标签名称', trigger: 'blur' }
-  ]
+  name: [{ required: true, message: '请输入标签名称', trigger: 'blur' }]
 }
 
 // 详情对话框
@@ -166,9 +208,7 @@ const selectedAppletIds = ref([])
 const filteredTags = computed(() => {
   if (!appliedSearchKeyword.value) return tags.value
   const keyword = appliedSearchKeyword.value.toLowerCase()
-  return tags.value.filter(tag =>
-    tag.name?.toLowerCase().includes(keyword)
-  )
+  return tags.value.filter(tag => tag.name?.toLowerCase().includes(keyword))
 })
 
 // 分页后的数据
@@ -254,15 +294,11 @@ async function handleRemoveApplets() {
   if (!selectedAppletIds.value.length) return
 
   try {
-    await ElMessageBox.confirm(
-      '确定要从该标签移除选中的应用吗？',
-      '移除确认',
-      {
-        type: 'warning',
-        confirmButtonText: '移除',
-        cancelButtonText: '取消'
-      }
-    )
+    await ElMessageBox.confirm('确定要从该标签移除选中的应用吗？', '移除确认', {
+      type: 'warning',
+      confirmButtonText: '移除',
+      cancelButtonText: '取消'
+    })
   } catch {
     return
   }
@@ -341,15 +377,11 @@ async function handleSave() {
 // 删除
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除标签"${row.name}"吗？`,
-      '删除确认',
-      {
-        type: 'warning',
-        confirmButtonText: '删除',
-        cancelButtonText: '取消'
-      }
-    )
+    await ElMessageBox.confirm(`确定要删除标签"${row.name}"吗？`, '删除确认', {
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消'
+    })
   } catch {
     return
   }

@@ -16,7 +16,7 @@
           </span>
         </template>
       </el-alert>
-      
+
       <!-- 表单 -->
       <el-form
         ref="formRef"
@@ -208,7 +208,7 @@ const handleSave = async () => {
     // 调用作业执行接口
     await apiService.post(`/jao/api/jao/jobs/0MKtcJ/run?cacheBuster=${Date.now()}`, {
       params: {
-        hostKeys: hostKeys,
+        hostKeys,
         ciType: props.assetType,
         instanceGroup: formData.value.instanceGroup || 'default',
         groupId: formData.value.groupId || '/',
@@ -223,7 +223,7 @@ const handleSave = async () => {
     handleClose()
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('保存失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`保存失败: ${error.message || '未知错误'}`)
   } finally {
     saving.value = false
   }

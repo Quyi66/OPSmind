@@ -1,5 +1,11 @@
 <template>
-  <el-drawer v-model="visible" title="定时任务" size="680px" destroy-on-close class="wb-workbench-drawer">
+  <el-drawer
+    v-model="visible"
+    title="定时任务"
+    size="680px"
+    destroy-on-close
+    class="wb-workbench-drawer"
+  >
     <div class="wb-drawer-body">
       <div class="wb-filter-panel">
         <el-form :model="filters" inline size="small" class="wb-filter-panel__form" @submit.prevent>
@@ -54,20 +60,10 @@
             >
               {{ item.triggerStatus === '1' ? '停用' : '启用' }}
             </el-button>
-            <el-button
-              class="wb-inline-action"
-              text
-              size="small"
-              @click="$emit('edit', item)"
-            >
+            <el-button class="wb-inline-action" text size="small" @click="$emit('edit', item)">
               编辑
             </el-button>
-            <el-button
-              class="wb-inline-action"
-              text
-              size="small"
-              @click="$emit('copy', item)"
-            >
+            <el-button class="wb-inline-action" text size="small" @click="$emit('copy', item)">
               复制
             </el-button>
             <el-button
@@ -86,7 +82,9 @@
     </div>
     <template #footer>
       <div class="wb-drawer-footer">
-        <span class="wb-drawer-footer__total">当前 {{ filteredJobs.length }} 个 / 共 {{ jobs.length }} 个 · 启用 {{ summary.enabled }}</span>
+        <span class="wb-drawer-footer__total">
+          当前 {{ filteredJobs.length }} 个 / 共 {{ jobs.length }} 个 · 启用 {{ summary.enabled }}
+        </span>
         <el-button size="small" @click="$emit('navigate')">在列表页管理</el-button>
       </div>
     </template>
@@ -116,17 +114,20 @@ const filteredJobs = computed(() => {
   const keyword = appliedFilters.keyword.trim().toLowerCase()
   if (!keyword) return props.jobs
 
-  return props.jobs.filter((item) => (
-    (item.id && String(item.id).toLowerCase().includes(keyword)) ||
-    (item.jobDesc && item.jobDesc.toLowerCase().includes(keyword)) ||
-    (item.scheduleConf && item.scheduleConf.toLowerCase().includes(keyword)) ||
-    (item.appCode && item.appCode.toLowerCase().includes(keyword)) ||
-    (item.jobType && item.jobType.toLowerCase().includes(keyword)) ||
-    (item.author && item.author.toLowerCase().includes(keyword))
-  ))
+  return props.jobs.filter(
+    item =>
+      (item.id && String(item.id).toLowerCase().includes(keyword)) ||
+      (item.jobDesc && item.jobDesc.toLowerCase().includes(keyword)) ||
+      (item.scheduleConf && item.scheduleConf.toLowerCase().includes(keyword)) ||
+      (item.appCode && item.appCode.toLowerCase().includes(keyword)) ||
+      (item.jobType && item.jobType.toLowerCase().includes(keyword)) ||
+      (item.author && item.author.toLowerCase().includes(keyword))
+  )
 })
 
-const emptyText = computed(() => (props.jobs.length ? '没有符合筛选条件的定时任务' : '暂无定时任务'))
+const emptyText = computed(() =>
+  props.jobs.length ? '没有符合筛选条件的定时任务' : '暂无定时任务'
+)
 
 function handleSearch() {
   appliedFilters.keyword = filters.keyword.trim()
@@ -139,7 +140,7 @@ function handleReset() {
 
 watch(
   () => visible.value,
-  (isVisible) => {
+  isVisible => {
     if (!isVisible) return
     handleReset()
   }

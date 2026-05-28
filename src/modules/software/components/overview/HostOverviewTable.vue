@@ -289,7 +289,7 @@ async function executeScan() {
     }
   } catch (error) {
     console.error('Scan failed:', error)
-    ElMessage.error('扫描失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`扫描失败: ${error.message || '未知错误'}`)
     scanLoading.value = false
   }
 }

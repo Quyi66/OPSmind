@@ -26,10 +26,7 @@ export function setupFeatureFlagGuard(router) {
       const currentUser = authService.getCurrentUser()
       const evaluator = new FeatureFlagEvaluator(currentUser)
 
-      const shouldUseVue = evaluator.shouldUseVueVersion(
-        to.meta.moduleCode,
-        to.meta.feature
-      )
+      const shouldUseVue = evaluator.shouldUseVueVersion(to.meta.moduleCode, to.meta.feature)
 
       if (shouldUseVue && to.meta.vueComponent) {
         // 重定向到 Vue 版本

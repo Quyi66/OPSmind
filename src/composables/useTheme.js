@@ -28,7 +28,7 @@ function toggleDark(event) {
     const clipPath = [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`]
     document.documentElement.animate(
       {
-        clipPath: clipPath
+        clipPath
       },
       {
         duration: 500,
