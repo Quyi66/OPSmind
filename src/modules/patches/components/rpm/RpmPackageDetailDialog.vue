@@ -24,7 +24,11 @@
           <el-descriptions-item label="摘要" :span="2">
             {{ normalizedDetail.summary || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="RPM 路径" :span="2" v-if="normalizedDetail.source !== 'ubuntu'">
+          <el-descriptions-item
+            label="RPM 路径"
+            :span="2"
+            v-if="normalizedDetail.source !== 'ubuntu'"
+          >
             <span class="mono-text">{{ normalizedDetail.rpmPath || '-' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="描述" :span="2">
@@ -69,28 +73,49 @@
                 >
                   <div v-if="entry.header" class="changelog-entry__header">
                     <div class="changelog-entry__summary">
-                      <div v-if="entry.dateText" class="changelog-entry__date">{{ entry.dateText }}</div>
+                      <div
+                        v-if="entry.dateText"
+                        class="changelog-entry__date"
+                        v-html="highlightText(entry.dateText, searchKeyword)"
+                      ></div>
                       <div v-if="entry.maintainer || entry.email" class="changelog-entry__author">
-                        <span v-if="entry.maintainer">{{ entry.maintainer }}</span>
-                        <span v-if="entry.email" class="changelog-entry__email">&lt;{{ entry.email }}&gt;</span>
+                        <span
+                          v-if="entry.maintainer"
+                          v-html="highlightText(entry.maintainer, searchKeyword)"
+                        ></span>
+                        <span v-if="entry.email" class="changelog-entry__email">
+                          &lt;
+                          <span v-html="highlightText(entry.email, searchKeyword)"></span>
+                          &gt;
+                        </span>
                       </div>
-                      <div v-else class="changelog-entry__headline">{{ entry.headline || entry.header }}</div>
+                      <div
+                        v-else
+                        class="changelog-entry__headline"
+                        v-html="highlightText(entry.headline || entry.header, searchKeyword)"
+                      ></div>
                     </div>
-                    <span v-if="entry.version" class="changelog-entry__version">{{ entry.version }}</span>
+                    <span
+                      v-if="entry.version"
+                      class="changelog-entry__version"
+                      v-html="highlightText(entry.version, searchKeyword)"
+                    ></span>
                   </div>
                   <div v-if="entry.notes.length" class="changelog-entry__notes">
-                    <p v-for="(note, noteIndex) in entry.notes" :key="noteIndex" class="changelog-entry__note">
-                      {{ note }}
-                    </p>
+                    <p
+                      v-for="(note, noteIndex) in entry.notes"
+                      :key="noteIndex"
+                      class="changelog-entry__note"
+                      v-html="highlightText(note, searchKeyword)"
+                    ></p>
                   </div>
                   <ul v-if="entry.items.length" class="changelog-entry__items">
                     <li
                       v-for="(item, itemIndex) in entry.items"
                       :key="itemIndex"
                       class="changelog-entry__item pre-wrap"
-                    >
-                      {{ item }}
-                    </li>
+                      v-html="highlightText(item, searchKeyword)"
+                    ></li>
                   </ul>
                 </article>
               </div>
@@ -107,9 +132,13 @@
               />
             </div>
           </template>
-          <div v-else class="detail-section__content changelog-raw pre-wrap mono-text">
-            {{ normalizedDetail.changelog || '暂无 changelog 信息' }}
-          </div>
+          <div
+            v-else
+            class="detail-section__content changelog-raw pre-wrap mono-text"
+            v-html="
+              highlightText(normalizedDetail.changelog || '暂无 changelog 信息', searchKeyword)
+            "
+          ></div>
         </section>
       </template>
 
@@ -121,7 +150,11 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Search as SearchIcon } from '@element-plus/icons-vue'
-import { formatRpmVersion, normalizeRpmPackageDetail, parseRpmChangelog } from '../../utils/rpmPackageInfo'
+import {
+  formatRpmVersion,
+  normalizeRpmPackageDetail,
+  parseRpmChangelog
+} from '../../utils/rpmPackageInfo'
 
 const props = defineProps({
   modelValue: {
@@ -147,7 +180,9 @@ const dialogVisible = computed({
 
 const normalizedDetail = computed(() => normalizeRpmPackageDetail(props.detailData))
 const parsedChangelog = computed(() => parseRpmChangelog(normalizedDetail.value.changelog))
-const changelogEntryCount = computed(() => parsedChangelog.value.entries.filter(entry => entry.header).length)
+const changelogEntryCount = computed(
+  () => parsedChangelog.value.entries.filter(entry => entry.header).length
+)
 
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -159,6 +194,7 @@ function entryMatchesKeyword(entry, keyword) {
   if (entry.headline && entry.headline.toLowerCase().includes(lowerKeyword)) return true
   if (entry.version && entry.version.toLowerCase().includes(lowerKeyword)) return true
   if (entry.maintainer && entry.maintainer.toLowerCase().includes(lowerKeyword)) return true
+  if (entry.email && entry.email.toLowerCase().includes(lowerKeyword)) return true
   if (entry.dateText && entry.dateText.toLowerCase().includes(lowerKeyword)) return true
   if (entry.notes && entry.notes.some(n => n.toLowerCase().includes(lowerKeyword))) return true
   if (entry.items && entry.items.some(i => i.toLowerCase().includes(lowerKeyword))) return true
@@ -174,7 +210,9 @@ const filteredChangelogEntries = computed(() => {
 })
 
 const filteredTotalEntries = computed(() => filteredChangelogEntries.value.length)
-const filteredEntryCount = computed(() => filteredChangelogEntries.value.filter(entry => entry.header).length)
+const filteredEntryCount = computed(
+  () => filteredChangelogEntries.value.filter(entry => entry.header).length
+)
 
 const pagedChangelogEntries = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -184,12 +222,38 @@ const pagedChangelogEntries = computed(() => {
 
 watch(searchKeyword, () => {
   currentPage.value = 1
+  setTimeout(() => {
+    const firstHighlight = document.querySelector('.rpm-package-detail .search-highlight')
+    if (firstHighlight) {
+      firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    } else {
+      const drawerBody = document.querySelector('.rpm-package-detail-drawer .el-drawer__body')
+      if (drawerBody) {
+        drawerBody.scrollTop = 0
+      }
+    }
+  }, 100)
 })
 
-watch(dialogVisible, (visible) => {
+watch(currentPage, () => {
+  setTimeout(() => {
+    const drawerBody = document.querySelector('.rpm-package-detail-drawer .el-drawer__body')
+    if (drawerBody) {
+      drawerBody.scrollTop = 0
+    }
+  }, 100)
+})
+
+watch(dialogVisible, visible => {
   if (visible) {
     currentPage.value = 1
     searchKeyword.value = ''
+    setTimeout(() => {
+      const drawerBody = document.querySelector('.rpm-package-detail-drawer .el-drawer__body')
+      if (drawerBody) {
+        drawerBody.scrollTop = 0
+      }
+    }, 150)
   }
 })
 
@@ -199,21 +263,51 @@ const hasDetail = computed(() => {
   const detail = normalizedDetail.value
   return Boolean(
     detail.name ||
-      detail.summary ||
-      detail.description ||
-      detail.changelog ||
-      detail.rpmPath ||
-      detail.services.length
+    detail.summary ||
+    detail.description ||
+    detail.changelog ||
+    detail.rpmPath ||
+    detail.services.length
   )
 })
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+function highlightText(text, keyword) {
+  if (!text) return ''
+  const str = String(text)
+  const trimKeyword = keyword ? keyword.trim() : ''
+  if (!trimKeyword) {
+    return escapeHtml(str)
+  }
+
+  const escapedKeyword = trimKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${escapedKeyword})`, 'gi')
+  const parts = str.split(regex)
+
+  return parts
+    .map(part => {
+      if (part.toLowerCase() === trimKeyword.toLowerCase()) {
+        return `<mark class="search-highlight">${escapeHtml(part)}</mark>`
+      }
+      return escapeHtml(part)
+    })
+    .join('')
+}
 </script>
 
 <style scoped lang="scss">
 .rpm-package-detail {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  height: 100%;
+  min-height: 100%;
 }
 
 .detail-descriptions {
@@ -229,11 +323,25 @@ const hasDetail = computed(() => {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  min-height: 300px;
+  overflow: visible;
+}
+
+:deep(mark.search-highlight) {
+  background-color: rgba(230, 162, 60, 0.2);
+  color: var(--el-color-warning);
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: bold;
 }
 
 .changelog-search {
+  position: sticky;
+  top: -20px;
+  z-index: 10;
+  background: var(--el-bg-color, var(--el-fill-color-blank, #fff));
+  padding: 8px 0;
+  margin-top: -8px;
   margin-bottom: 12px;
 }
 .detail-section__header {
@@ -289,7 +397,11 @@ const hasDetail = computed(() => {
   padding: 14px 16px 14px 18px;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
-  background: linear-gradient(180deg, var(--el-fill-color-blank) 0%, var(--el-fill-color-light) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--el-fill-color-blank) 0%,
+    var(--el-fill-color-light) 100%
+  );
 }
 
 .changelog-entry::before {

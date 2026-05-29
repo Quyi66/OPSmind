@@ -8,8 +8,8 @@ import { patchScanApi } from '../api'
 export function usePatchList(hostContext) {
   const hostIdRef = hostContext?.hostId ?? hostContext
   const hostKeyRef = hostContext?.hostKey
-  const getHostId = () => (hostIdRef?.value ?? hostIdRef ?? '')
-  const getHostKey = () => (hostKeyRef?.value ?? hostKeyRef ?? '')
+  const getHostId = () => hostIdRef?.value ?? hostIdRef ?? ''
+  const getHostKey = () => hostKeyRef?.value ?? hostKeyRef ?? ''
   const patchLoading = ref(false)
   const patchTableData = ref([])
   const patchAllData = ref([])
@@ -117,6 +117,7 @@ export function usePatchList(hostContext) {
     selectedSeverities,
     patchKeyword,
     patchPagination,
+    applyClientPaging,
     loadPatchList,
     handleFilterChange,
     handlePatchKeywordChange,

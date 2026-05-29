@@ -10,8 +10,7 @@
                 <el-skeleton-item variant="rect" class="skeleton-bar-item" />
               </div>
               <div class="skeleton-bottom-row">
-                <el-skeleton-item variant="rect" class="skeleton-left" />
-                <el-skeleton-item variant="rect" class="skeleton-right" />
+                <el-skeleton-item variant="rect" class="skeleton-full" />
               </div>
             </template>
           </el-skeleton>
@@ -23,7 +22,7 @@
         <section class="aw-panel distribution-bar-section mb-4">
           <div class="aw-panel__header">
             <div class="aw-panel__title-group">
-              <i class="fas fa-chart-bar" style="color: var(--aw-accent); font-size: 14px"></i>
+              <i class="fas fa-chart-bar panel-title-icon"></i>
               <h3 class="aw-panel__title">检查结果分布</h3>
             </div>
           </div>
@@ -51,162 +50,91 @@
           </div>
         </section>
 
-        <!-- ③ 底部双栏：最近执行记录 + 模板健康度 -->
-        <div class="bottom-section-layout">
-          <!-- 左栏：最近执行记录 -->
-          <section class="aw-panel recent-panel">
-            <div class="aw-panel__header">
-              <div class="aw-panel__title-group">
-                <i class="fas fa-history" style="color: var(--aw-accent); font-size: 14px"></i>
-                <h3 class="aw-panel__title">最近执行记录</h3>
-                <span class="aw-panel__stat-badge" v-if="recentExecutions.length > 0">
-                  <strong>{{ recentExecutions.length }}</strong>
-                  条
-                </span>
-              </div>
+        <!-- ③ 模板健康度 -->
+        <section class="aw-panel templates-panel">
+          <div class="aw-panel__header">
+            <div class="aw-panel__title-group">
+              <i class="fas fa-th-large panel-title-icon"></i>
+              <h3 class="aw-panel__title">模板健康度</h3>
+              <span class="aw-panel__stat-badge">
+                <strong>{{ filteredTemplateList.length }}</strong>
+                / {{ templateList.length }}
+              </span>
             </div>
-            <div class="recent-list">
-              <div
-                v-for="(exec, idx) in recentExecutions"
-                :key="exec.id"
-                class="recent-item"
-                :class="{ clickable: exec.hasResult }"
-                @click="exec.hasResult && goToResult(exec.jobId)"
+            <div class="aw-panel__header-actions">
+              <el-input
+                v-model="searchKeyword"
+                placeholder="搜索模板名称"
+                clearable
+                class="template-search-input"
+                size="small"
               >
-                <div class="recent-seq">{{ idx + 1 }}</div>
-                <div class="recent-icon-wrap">
-                  <i :class="exec.icon"></i>
-                </div>
-                <div class="recent-body">
-                  <div class="recent-name" :title="exec.templateName">{{ exec.templateName }}</div>
-                  <div class="recent-meta">
-                    <span class="recent-user">
-                      <i class="fas fa-user-circle"></i>
-                      {{ exec.executedBy }}
-                    </span>
-                    <span class="recent-dot">·</span>
-                    <span class="recent-time">
-                      <i class="fas fa-clock"></i>
-                      {{ exec.executedTime }}
-                    </span>
+                <template #prefix>
+                  <i class="fa fa-search"></i>
+                </template>
+              </el-input>
+              <el-button
+                size="small"
+                circle
+                :loading="statsLoading"
+                title="刷新"
+                @click="refreshAll"
+              >
+                <i v-show="!statsLoading" class="fas fa-sync-alt"></i>
+              </el-button>
+            </div>
+          </div>
+
+          <div class="health-grid-scroll-wrap">
+            <div v-if="filteredTemplateList.length > 0" class="health-grid">
+              <div
+                v-for="template in filteredTemplateList"
+                :key="template.id"
+                class="health-card"
+                :class="[getPassRateClass(template.passRate), { 'is-executed': template.jobId }]"
+                @click="handleCardClick(template)"
+              >
+                <!-- 顶部色彩指示条 -->
+                <div class="hc-indicator-bar"></div>
+
+                <!-- 卡片头 -->
+                <div class="hc-header">
+                  <div class="hc-icon">
+                    <i :class="template.iconClass"></i>
                   </div>
-                </div>
-                <div class="recent-status">
-                  <template v-if="exec.stats">
-                    <el-tag :type="exec.stats.failed > 0 ? 'danger' : 'success'" size="small" round>
-                      <i
-                        :class="
-                          exec.stats.failed > 0 ? 'fas fa-exclamation-triangle' : 'fas fa-check'
-                        "
-                      ></i>
-                      {{ exec.stats.failed > 0 ? `${exec.stats.failed} 失败` : '全部通过' }}
-                    </el-tag>
-                  </template>
-                  <template v-else>
-                    <el-tag type="success" size="small" round>
-                      <i class="fas fa-check"></i>
-                      全部通过
-                    </el-tag>
-                  </template>
-                </div>
-              </div>
-              <el-empty
-                v-if="recentExecutions.length === 0"
-                description="暂无执行记录"
-                :image-size="64"
-              />
-            </div>
-          </section>
-
-          <!-- 右栏：模板健康度 -->
-          <section class="aw-panel templates-panel">
-            <div class="aw-panel__header">
-              <div class="aw-panel__title-group">
-                <i class="fas fa-th-large" style="color: var(--aw-accent); font-size: 14px"></i>
-                <h3 class="aw-panel__title">模板健康度</h3>
-                <span class="aw-panel__stat-badge">
-                  <strong>{{ filteredTemplateList.length }}</strong>
-                  / {{ templateList.length }}
-                </span>
-              </div>
-              <div class="aw-panel__header-actions">
-                <el-input
-                  v-model="searchKeyword"
-                  placeholder="搜索模板名称"
-                  clearable
-                  style="width: 220px"
-                  size="small"
-                >
-                  <template #prefix>
-                    <i class="fa fa-search"></i>
-                  </template>
-                </el-input>
-                <el-button
-                  size="small"
-                  circle
-                  :loading="statsLoading"
-                  title="刷新"
-                  @click="refreshAll"
-                >
-                  <i v-show="!statsLoading" class="fas fa-sync-alt"></i>
-                </el-button>
-              </div>
-            </div>
-
-            <div class="health-grid-scroll-wrap">
-              <div v-if="filteredTemplateList.length > 0" class="health-grid">
-                <div
-                  v-for="template in filteredTemplateList"
-                  :key="template.id"
-                  class="health-card"
-                  :class="{ 'is-executed': template.jobId }"
-                  @click="handleCardClick(template)"
-                >
-                  <!-- 顶部色带 -->
-                  <div class="hc-color-strip" :class="getPassRateClass(template.passRate)"></div>
-
-                  <!-- 卡片头 -->
-                  <div class="hc-header">
-                    <div class="hc-icon" :class="getPassRateClass(template.passRate)">
-                      <i :class="template.iconClass"></i>
-                    </div>
-                    <div class="hc-title-wrap">
-                      <h4 class="hc-name" :title="template.templateName">
-                        {{ template.templateName }}
-                      </h4>
-                      <div class="hc-badges">
-                        <el-tag size="small" round type="info">
-                          <i class="fas fa-desktop"></i>
-                          {{ template.hostLength }} 主机
-                        </el-tag>
-                      </div>
-                    </div>
-                    <div class="hc-time-badge" :class="getPassRateClass(template.passRate)">
-                      <template v-if="template.executedTime">
-                        {{ template.executedTime }}
-                      </template>
-                      <template v-else>未执行</template>
+                  <div class="hc-title-wrap">
+                    <h4 class="hc-name" :title="template.templateName">
+                      {{ template.templateName }}
+                    </h4>
+                    <div class="hc-badges">
+                      <el-tag size="small" round type="info">
+                        <i class="fas fa-desktop"></i>
+                        {{ template.hostLength }} 主机
+                      </el-tag>
                     </div>
                   </div>
+                  <div class="hc-time-badge" :class="getPassRateClass(template.passRate)">
+                    <span class="hc-status-dot"></span>
+                    <template v-if="template.executedTime">
+                      {{ template.executedTime }}
+                    </template>
+                    <template v-else>未执行</template>
+                  </div>
+                </div>
 
-                  <!-- 已执行：通过率 + 指标 -->
-                  <template v-if="template.stats">
-                    <div class="hc-progress-area">
-                      <div class="progress-header">
-                        <span class="progress-label">通过率</span>
-                        <span class="progress-value" :class="getPassRateClass(template.passRate)">
-                          {{ template.passRate ?? 0 }}%
-                        </span>
-                      </div>
-                      <div class="progress-track">
-                        <div
-                          class="progress-fill"
-                          :class="getPassRateClass(template.passRate)"
-                          :style="{ width: (template.passRate ?? 0) + '%' }"
-                        ></div>
-                      </div>
-                    </div>
+                <!-- 已执行：通过率 + 指标 -->
+                <template
+                  v-if="
+                    template.stats &&
+                    (template.stats.ok > 0 ||
+                      template.stats.failed > 0 ||
+                      template.stats.check > 0 ||
+                      template.stats.skipping > 0)
+                  "
+                >
 
+                  <!-- 嵌入式指标容器（强化层级感） -->
+                  <div class="hc-metrics-wrap">
                     <div class="hc-metrics">
                       <div class="metric metric-ok">
                         <span class="metric-num">{{ template.stats.ok }}</span>
@@ -225,67 +153,67 @@
                         <span class="metric-txt">白名单</span>
                       </div>
                     </div>
-                  </template>
-
-                  <!-- 未执行：占位 -->
-                  <template v-else>
-                    <div class="hc-empty-state">
-                      <i class="fas fa-hourglass-half"></i>
-                      <span>待巡检</span>
-                    </div>
-                  </template>
-
-                  <!-- 底部（平铺功能按钮） -->
-                  <div class="hc-footer">
-                    <el-button
-                      type="primary"
-                      link
-                      size="small"
-                      @click.stop="handleCommand('run', template)"
-                    >
-                      <i class="fas fa-play mr-1"></i>
-                      执行
-                    </el-button>
-                    <el-button
-                      type="primary"
-                      link
-                      size="small"
-                      @click.stop="handleCommand('edit', template)"
-                    >
-                      <i class="fas fa-edit mr-1"></i>
-                      编辑
-                    </el-button>
-                    <el-button
-                      type="danger"
-                      link
-                      size="small"
-                      @click.stop="handleCommand('delete', template)"
-                    >
-                      <i class="fas fa-trash-alt mr-1"></i>
-                      删除
-                    </el-button>
                   </div>
+                </template>
+
+                <!-- 未执行：占位 -->
+                <template v-else>
+                  <div class="hc-empty-state">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span>尚未执行巡检</span>
+                  </div>
+                </template>
+
+                <!-- 底部（平铺功能按钮） -->
+                <div class="hc-footer">
+                  <el-button
+                    type="primary"
+                    link
+                    size="small"
+                    class="hc-action-btn hc-action-btn--run"
+                    @click.stop="handleCommand('run', template)"
+                  >
+                    <i class="fas fa-play mr-1"></i>
+                    执行
+                  </el-button>
+                  <el-button
+                    type="primary"
+                    link
+                    size="small"
+                    class="hc-action-btn hc-action-btn--edit"
+                    @click.stop="handleCommand('edit', template)"
+                  >
+                    <i class="fas fa-edit mr-1"></i>
+                    编辑
+                  </el-button>
+                  <el-button
+                    type="danger"
+                    link
+                    size="small"
+                    class="hc-action-btn hc-action-btn--delete"
+                    @click.stop="handleCommand('delete', template)"
+                  >
+                    <i class="fas fa-trash-alt mr-1"></i>
+                    删除
+                  </el-button>
                 </div>
               </div>
-
-              <!-- 空状态 -->
-              <el-empty
-                v-else-if="!loading && templateList.length === 0"
-                description="暂无巡检模板"
-              >
-                <el-button type="primary" @click="goToAddTemplate">
-                  <i class="fa fa-plus"></i>
-                  新增模板
-                </el-button>
-              </el-empty>
-              <el-empty
-                v-else-if="filteredTemplateList.length === 0"
-                description="没有匹配的模板"
-                :image-size="80"
-              />
             </div>
-          </section>
-        </div>
+
+            <!-- 空状态 -->
+            <el-empty v-else-if="!loading && templateList.length === 0" description="暂无巡检模板">
+              <el-button type="primary" @click="goToAddTemplate">
+                <i class="fa fa-plus"></i>
+                新增模板
+              </el-button>
+            </el-empty>
+            <el-empty
+              v-else-if="filteredTemplateList.length === 0"
+              description="没有匹配的模板"
+              :image-size="80"
+            />
+          </div>
+        </section>
       </template>
     </div>
 
@@ -306,7 +234,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { templateApi } from '../api'
@@ -322,10 +250,7 @@ const {
   templateList,
   searchKeyword,
   filteredTemplateList,
-  globalStats,
-  passRate,
   distributionData,
-  recentExecutions,
   initData,
   refreshAll
 } = useOverviewData()
@@ -391,10 +316,6 @@ function handleRunSuccess() {
   refreshAll()
 }
 
-function goToResult(jobId) {
-  if (jobId) router.push(`/cac/results/${jobId}`)
-}
-
 function goToAddTemplate() {
   router.push('/cac/templates?action=add')
 }
@@ -405,712 +326,661 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-/* ══════════════════════════════════════════════
-   巡检总览仪表盘 — 基于自动化/资产工作台设计模式重构
-   ══════════════════════════════════════════════ */
-
+/* 巡检总览：轻量、紧凑、状态清晰的仪表盘风格 */
 .overview-dashboard {
-  --aw-bg: #f8fafc;
-  --aw-panel-bg: #ffffff;
-  --aw-panel-border: #e2e8f0;
-  --aw-panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px -4px rgba(0, 0, 0, 0.05);
-  --aw-radius: 12px;
-  --aw-text-primary: #1e293b;
-  --aw-text-secondary: #64748b;
-  --aw-text-muted: #94a3b8;
-  --aw-accent: #0d9488;
-  --aw-accent-glow: rgba(13, 148, 136, 0.06);
+  --page-bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+  --line: #e7edf5;
+  --line-strong: #dbe4ef;
+  --text: #16243d;
+  --text-2: #5e718d;
+  --text-3: #95a4ba;
+  --brand: #0d9488;
+  --brand-soft: rgba(13, 148, 136, 0.09);
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --neutral: #64748b;
+  --radius: 14px;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.03), 0 6px 16px rgba(15, 23, 42, 0.035);
+  --shadow-md: 0 16px 34px rgba(15, 23, 42, 0.09);
 
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
   overflow: hidden;
-  background: var(--aw-bg);
+  background: var(--page-bg);
+  color: var(--text);
   padding: 0 !important;
 }
 
-html.dark .overview-dashboard {
-  --aw-bg: #0f172a;
-  --aw-panel-bg: rgba(20, 28, 40, 0.94);
-  --aw-panel-border: rgba(71, 85, 105, 0.48);
-  --aw-panel-shadow: 0 22px 40px rgba(0, 0, 0, 0.3);
-  --aw-text-primary: #f1f5f9;
-  --aw-text-secondary: #94a3b8;
-  --aw-text-muted: #64748b;
-  --aw-accent: #5eead4;
-  --aw-accent-glow: rgba(94, 234, 212, 0.08);
+:global(html.dark) .overview-dashboard {
+  --page-bg: #0b1220;
+  --surface: #121c2d;
+  --surface-soft: #172336;
+  --line: rgba(148, 163, 184, 0.14);
+  --line-strong: rgba(148, 163, 184, 0.24);
+  --text: #e5edf7;
+  --text-2: #a1b1c7;
+  --text-3: #6f829c;
+  --brand: #2dd4bf;
+  --brand-soft: rgba(45, 212, 191, 0.12);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 18px 42px rgba(0, 0, 0, 0.35);
 }
 
 .content-scroll-area {
   flex: 1;
-  overflow-y: auto;
   min-height: 0;
-  padding: 16px 20px 20px;
+  overflow-y: auto;
+  padding: 18px 20px 22px;
+  scrollbar-gutter: stable;
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 7px;
   }
+
   &::-webkit-scrollbar-thumb {
-    background: var(--aw-panel-border);
-    border-radius: 3px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
+    border-radius: 999px;
+    background: var(--line-strong);
   }
 }
 
-/* ───── ① 通用面板 aw-panel ───── */
+/* 面板 */
 .aw-panel {
   display: flex;
   flex-direction: column;
-  background: var(--aw-panel-bg);
-  border: 1px solid var(--aw-panel-border);
-  border-radius: var(--aw-radius);
-  box-shadow: var(--aw-panel-shadow);
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  &:hover {
-    box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.04),
-      var(--aw-panel-shadow);
-  }
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
 }
 
 .aw-panel__header {
+  min-height: 52px;
+  padding: 0 18px;
   display: flex;
+  gap: 16px;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--aw-panel-border);
-  flex-shrink: 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .aw-panel__title-group {
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
+  gap: 9px;
+}
+
+.panel-title-icon {
+  width: 18px;
+  color: var(--brand);
+  font-size: 14px;
+  text-align: center;
 }
 
 .aw-panel__title {
   margin: 0;
-  font-size: 14px;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1;
   font-weight: 700;
-  color: var(--aw-text-primary);
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
 }
 
 .aw-panel__stat-badge {
-  font-size: 12px;
-  color: var(--aw-text-secondary);
-  background: var(--aw-bg);
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--aw-panel-border);
-  font-weight: 600;
+  height: 23px;
+  padding: 0 9px;
+  margin-left: 6px;
   display: inline-flex;
   align-items: center;
-  line-height: 1.2;
-  white-space: nowrap;
-  margin-left: 6px;
+  gap: 3px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-soft);
 
   strong {
-    color: var(--aw-accent);
+    color: var(--brand);
     font-weight: 700;
   }
 }
 
 .aw-panel__header-actions {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  gap: 10px;
 
-  :deep(.el-input--small .el-input__wrapper) {
-    border-radius: 999px;
-    background-color: var(--aw-bg);
-    border: 1px solid var(--aw-panel-border);
-    box-shadow: none !important;
-    padding: 0 10px;
+  .template-search-input {
+    width: 228px;
+  }
 
-    &:hover,
-    &.is-focus {
-      border-color: var(--aw-accent);
+  :deep(.el-input__wrapper) {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 18px;
+    background: var(--surface-soft);
+    border: 1px solid transparent;
+    box-shadow: none;
+
+    &:hover {
+      border-color: var(--line-strong);
     }
 
-    .el-input__inner {
-      color: var(--aw-text-primary);
-      &::placeholder {
-        color: var(--aw-text-muted);
-      }
+    &.is-focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-soft);
     }
   }
 
-  :deep(.el-button--small) {
-    background-color: var(--aw-bg);
-    border: 1px solid var(--aw-panel-border);
-    color: var(--aw-text-secondary);
+  :deep(.el-input__inner) {
+    color: var(--text);
+
+    &::placeholder {
+      color: var(--text-3);
+    }
+  }
+
+  :deep(.el-button--small.is-circle) {
+    width: 34px;
+    height: 34px;
+    color: var(--text-2);
+    border-color: var(--line);
+    background: var(--surface-soft);
 
     &:hover {
-      border-color: var(--aw-accent);
-      color: var(--aw-accent);
-      background-color: var(--aw-accent-glow);
+      color: var(--brand);
+      border-color: rgba(13, 148, 136, 0.35);
+      background: var(--brand-soft);
     }
   }
 }
 
-/* ───── ④ 检查结果分布 ───── */
+/* 检查结果分布 */
 .distribution-bar-section {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .distribution-bar-content {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 20px;
-  padding: 12px 16px 16px;
+  grid-template-columns: repeat(5, minmax(128px, 1fr));
+  gap: 22px;
+  padding: 15px 18px 17px;
 }
 
 .dist-bar-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  --bar-color: var(--neutral);
+  --bar-soft: rgba(100, 116, 139, 0.09);
+
+  min-width: 0;
+  padding: 0 1px;
 }
 
 .dist-bar-header {
   display: flex;
-  justify-content: space-between;
+  gap: 10px;
   align-items: center;
-  font-size: 13px;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+
+.dist-bar-label,
+.dist-bar-meta {
+  display: inline-flex;
+  align-items: center;
 }
 
 .dist-bar-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--aw-text-secondary);
+  min-width: 0;
+  gap: 7px;
+  color: var(--text-2);
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .dist-bar-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  flex: 0 0 auto;
+  border-radius: 999px;
   background: var(--bar-color);
+  box-shadow: 0 0 0 3px var(--bar-soft);
 }
 
 .dist-bar-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  flex: 0 0 auto;
+  gap: 7px;
 }
 
 .dist-bar-value {
-  font-weight: 600;
-  color: var(--aw-text-primary);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .dist-bar-percent {
-  color: var(--aw-text-muted);
+  color: var(--text-3);
   font-size: 11px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .dist-bar-track {
-  height: 8px;
-  border-radius: 4px;
-  background: var(--aw-bg);
+  height: 7px;
   overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-soft);
 }
 
 .dist-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  background: var(--bar-gradient);
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--bar-color);
+  transition: width 0.65s ease;
 }
 
-/* 进度条色彩定义 */
 .dist-ok {
-  --bar-color: #10b981;
-  --bar-gradient: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  --bar-color: var(--success);
+  --bar-soft: rgba(16, 185, 129, 0.1);
 }
 .dist-failed {
-  --bar-color: #ef4444;
-  --bar-gradient: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+  --bar-color: var(--danger);
+  --bar-soft: rgba(239, 68, 68, 0.1);
 }
 .dist-check {
-  --bar-color: #3b82f6;
-  --bar-gradient: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+  --bar-color: var(--info);
+  --bar-soft: rgba(59, 130, 246, 0.1);
 }
 .dist-skipping {
-  --bar-color: #64748b;
-  --bar-gradient: linear-gradient(90deg, #64748b 0%, #94a3b8 100%);
+  --bar-color: var(--neutral);
 }
 .dist-unreachable {
-  --bar-color: #f59e0b;
-  --bar-gradient: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+  --bar-color: var(--warning);
+  --bar-soft: rgba(245, 158, 11, 0.11);
 }
 
-/* ───── ⑤ 底部双栏布局 ───── */
-.bottom-section-layout {
-  display: grid;
-  grid-template-columns: 400px 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
-  align-items: stretch;
-}
-
-.recent-panel {
-  height: 100%;
-}
-
+/* 模板区域 */
 .templates-panel {
-  height: 100%;
+  min-height: 500px;
 }
 
-.recent-list {
-  padding: 4px 0;
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: var(--aw-panel-border);
-    border-radius: 3px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-}
-
-.recent-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  transition: all 0.2s;
-
-  &.clickable {
-    cursor: pointer;
-    &:hover {
-      background: var(--aw-accent-glow);
-    }
-  }
-
-  & + .recent-item {
-    border-top: 1px solid var(--aw-panel-border);
-  }
-}
-
-.recent-seq {
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--aw-text-muted);
-  background: var(--aw-bg);
-  flex-shrink: 0;
-}
-
-.recent-icon-wrap {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--aw-bg);
-  border-radius: 10px;
-  color: var(--aw-text-secondary);
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.recent-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.recent-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--aw-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.3;
-}
-
-.recent-meta {
-  font-size: 12px;
-  color: var(--aw-text-secondary);
-  margin-top: 3px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  i {
-    font-size: 11px;
-    margin-right: 2px;
-  }
-}
-
-.recent-dot {
-  color: var(--aw-panel-border);
-}
-
-.recent-status {
-  flex-shrink: 0;
-}
-
-/* ───── ⑥ 模板健康度网格 ───── */
 .health-grid-scroll-wrap {
   flex: 1;
-  overflow-y: auto;
   min-height: 0;
+  overflow-y: auto;
+  background: var(--page-bg);
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 7px;
   }
+
   &::-webkit-scrollbar-thumb {
-    background: var(--aw-panel-border);
-    border-radius: 3px;
+    border-radius: 999px;
+    background: var(--line-strong);
   }
-  &::-webkit-scrollbar-track {
-    background: transparent;
+
+  :deep(.el-empty) {
+    min-height: 340px;
   }
 }
 
 .health-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  align-items: stretch;
   gap: 16px;
-  padding: 16px;
+  padding: 18px;
 }
 
+/* 健康卡片 */
 .health-card {
-  background: var(--aw-panel-bg);
-  border: 1px solid var(--aw-panel-border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  --state: var(--text-3);
+  --state-soft: rgba(148, 163, 184, 0.1);
+  --state-border: rgba(148, 163, 184, 0.18);
+
+  min-width: 0;
+  min-height: 218px;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.025);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow:
-      0 12px 28px rgba(0, 0, 0, 0.06),
-      var(--aw-panel-shadow);
-    border-color: var(--aw-accent);
-
-    .hc-icon {
-      transform: scale(1.05);
-    }
+  &.rate-high {
+    --state: var(--success);
+    --state-soft: rgba(16, 185, 129, 0.09);
+    --state-border: rgba(16, 185, 129, 0.18);
   }
 
-  &.is-executed:hover {
-    border-color: var(--aw-accent);
+  &.rate-mid {
+    --state: var(--warning);
+    --state-soft: rgba(245, 158, 11, 0.1);
+    --state-border: rgba(245, 158, 11, 0.19);
+  }
+
+  &.rate-low {
+    --state: var(--danger);
+    --state-soft: rgba(239, 68, 68, 0.09);
+    --state-border: rgba(239, 68, 68, 0.18);
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--state-border);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:focus-within {
+    border-color: var(--state);
+    box-shadow: 0 0 0 3px var(--state-soft);
   }
 }
 
-/* 顶部色带 */
-.hc-color-strip {
+.hc-indicator-bar {
+  position: absolute;
+  inset: 0 0 auto;
   height: 3px;
-
-  &.rate-high {
-    background: linear-gradient(90deg, #10b981, #34d399);
-  }
-  &.rate-mid {
-    background: linear-gradient(90deg, #f59e0b, #fbbf24);
-  }
-  &.rate-low {
-    background: linear-gradient(90deg, #ef4444, #f87171);
-  }
-  &.rate-none {
-    background: var(--aw-panel-border);
-  }
+  background: var(--state);
+  opacity: 0.96;
 }
 
 .hc-header {
+  min-height: 77px;
+  padding: 17px 15px 12px;
   display: flex;
+  gap: 11px;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px 8px;
 }
 
 .hc-icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--state);
   font-size: 16px;
-  flex-shrink: 0;
-  transition: transform 0.3s;
+  border: 1px solid var(--state-border);
+  border-radius: 12px;
+  background: var(--state-soft);
+  transition: transform 0.18s ease;
 
-  &.rate-high {
-    background: rgba(16, 185, 129, 0.08);
-    color: #10b981;
-  }
-  &.rate-mid {
-    background: rgba(245, 158, 11, 0.08);
-    color: #f59e0b;
-  }
-  &.rate-low {
-    background: rgba(239, 68, 68, 0.08);
-    color: #ef4444;
-  }
-  &.rate-none {
-    background: var(--aw-bg);
-    color: var(--aw-text-muted);
+  .health-card:hover & {
+    transform: scale(1.03);
   }
 }
 
 .hc-title-wrap {
   flex: 1;
   min-width: 0;
+  padding-top: 1px;
 }
 
 .hc-name {
-  margin: 0 0 4px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--aw-text-primary);
-  line-height: 1.3;
-  white-space: nowrap;
+  margin: 0 0 6px;
   overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 21px;
+  font-weight: 700;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 .hc-badges {
   display: flex;
-  gap: 6px;
+  align-items: center;
+
+  :deep(.el-tag) {
+    height: 20px;
+    padding: 0 7px;
+    color: var(--text-2);
+    font-size: 11px;
+    font-weight: 500;
+    border-color: transparent;
+    background: var(--surface-soft);
+
+    i {
+      margin-right: 4px;
+    }
+  }
 }
 
 .hc-time-badge {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 20px;
-  font-weight: 500;
-  white-space: nowrap;
-  align-self: center;
-  flex-shrink: 0;
-
-  &.rate-high {
-    background: rgba(16, 185, 129, 0.08);
-    color: #10b981;
-  }
-  &.rate-mid {
-    background: rgba(245, 158, 11, 0.08);
-    color: #f59e0b;
-  }
-  &.rate-low {
-    background: rgba(239, 68, 68, 0.08);
-    color: #ef4444;
-  }
-  &.rate-none {
-    background: var(--aw-bg);
-    color: var(--aw-text-muted);
-  }
-}
-
-/* 通过率进度条区域 */
-.hc-progress-area {
-  padding: 4px 16px 8px;
-}
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
+  min-height: 22px;
+  max-width: 76px;
+  flex: 0 0 auto;
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 6px;
-}
-
-.progress-label {
-  font-size: 12px;
-  color: var(--aw-text-secondary);
-}
-
-.progress-value {
-  font-size: 16px;
-  font-weight: 700;
-
-  &.rate-high {
-    color: #10b981;
-  }
-  &.rate-mid {
-    color: #f59e0b;
-  }
-  &.rate-low {
-    color: #ef4444;
-  }
-}
-
-.progress-track {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--aw-bg);
+  gap: 5px;
+  padding: 0 8px;
   overflow: hidden;
-}
+  color: var(--state);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: 999px;
+  background: var(--state-soft);
 
-.progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 0;
-
-  &.rate-high {
-    background: linear-gradient(90deg, #10b981, #34d399);
-  }
-  &.rate-mid {
-    background: linear-gradient(90deg, #f59e0b, #fbbf24);
-  }
-  &.rate-low {
-    background: linear-gradient(90deg, #ef4444, #f87171);
+  .hc-status-dot {
+    width: 5px;
+    height: 5px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: currentColor;
   }
 }
 
-/* 四格统计 */
+.hc-metrics-wrap {
+  margin: 1px 15px 13px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-soft);
+}
+
 .hc-metrics {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
-  padding: 2px 16px 12px;
 }
 
 .metric {
+  min-height: 53px;
   display: flex;
   flex-direction: column;
+  gap: 4px;
   align-items: center;
-  gap: 2px;
-  padding: 8px 4px;
+  justify-content: center;
   border-radius: 8px;
-  background: var(--aw-bg);
+
+  &.metric-ok {
+    color: var(--success);
+    background: rgba(16, 185, 129, 0.08);
+  }
+
+  &.metric-fail {
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.075);
+  }
+
+  &.metric-check {
+    color: var(--info);
+    background: rgba(59, 130, 246, 0.075);
+  }
+
+  &.metric-skip {
+    color: var(--neutral);
+    background: rgba(100, 116, 139, 0.075);
+  }
 }
 
 .metric-num {
-  font-size: 18px;
+  color: currentColor;
+  font-size: 17px;
+  line-height: 18px;
   font-weight: 700;
-  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
-.metric-ok .metric-num {
-  color: #10b981;
-}
-.metric-fail .metric-num {
-  color: #ef4444;
-}
-.metric-check .metric-num {
-  color: #3b82f6;
-}
-.metric-skip .metric-num {
-  color: #64748b;
-}
-
 .metric-txt {
+  color: var(--text-2);
   font-size: 11px;
-  color: var(--aw-text-secondary);
-  margin-top: 2px;
+  line-height: 13px;
 }
 
-/* 未执行占位 */
 .hc-empty-state {
+  flex: 1;
+  min-height: 78px;
+  margin: 1px 15px 13px;
   display: flex;
+  gap: 7px;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 28px 16px;
-  color: var(--aw-text-muted);
-  font-size: 13px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px dashed var(--line-strong);
+  border-radius: 11px;
+  background: var(--surface-soft);
 
   i {
-    font-size: 14px;
-    opacity: 0.5;
+    color: var(--brand);
+    font-size: 16px;
+    opacity: 0.82;
   }
 }
 
-/* 卡片底部 */
 .hc-footer {
-  padding: 8px 12px;
-  border-top: 1px solid var(--aw-panel-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
+  min-height: 46px;
   margin-top: auto;
-  background: var(--aw-bg);
+  padding: 6px 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+}
 
-  .el-button {
-    font-weight: 600;
-    color: var(--aw-text-secondary);
+.hc-action-btn {
+  width: 100%;
+  height: 33px !important;
+  margin: 0 !important;
+  justify-content: center;
+  color: var(--text-2) !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  transition: color 0.16s ease, background-color 0.16s ease !important;
 
-    i {
-      font-size: 11px;
-      margin-right: 2px;
-    }
+  i {
+    margin-right: 5px;
+    font-size: 11px;
+  }
 
-    &:hover {
-      color: var(--aw-accent);
-      background-color: transparent !important;
-    }
+  &.hc-action-btn--run:hover {
+    color: var(--brand) !important;
+    background: var(--brand-soft) !important;
+  }
 
-    &.el-button--danger {
-      &:hover {
-        color: var(--el-color-danger);
-        background-color: transparent !important;
-      }
-    }
+  &.hc-action-btn--edit:hover {
+    color: var(--info) !important;
+    background: rgba(59, 130, 246, 0.09) !important;
+  }
+
+  &.hc-action-btn--delete:hover {
+    color: var(--danger) !important;
+    background: rgba(239, 68, 68, 0.09) !important;
   }
 }
 
-/* ───── ⑦ 骨架屏 ───── */
+/* 骨架屏 */
 .skeleton-section {
   padding: 0;
 }
 
 .skeleton-bar-row {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .skeleton-bar-item {
-  height: 120px;
-  border-radius: 12px;
+  height: 119px;
+  border-radius: var(--radius);
 }
 
-.skeleton-bottom-row {
-  display: grid;
-  grid-template-columns: 400px 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
+.skeleton-full {
+  height: 520px;
+  border-radius: var(--radius);
 }
 
-.skeleton-left {
-  height: 480px;
-  border-radius: 12px;
+/* 响应式 */
+@media (max-width: 1280px) {
+  .distribution-bar-content {
+    grid-template-columns: repeat(3, 1fr);
+    row-gap: 18px;
+  }
 }
 
-.skeleton-right {
-  height: 480px;
-  border-radius: 12px;
+@media (max-width: 840px) {
+  .content-scroll-area {
+    padding: 12px;
+  }
+
+  .aw-panel__header {
+    min-height: auto;
+    padding: 14px;
+    flex-wrap: wrap;
+  }
+
+  .aw-panel__header-actions,
+  .aw-panel__header-actions .template-search-input {
+    width: 100%;
+  }
+
+  .distribution-bar-content {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 14px;
+  }
+
+  .health-grid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .distribution-bar-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .health-card,
+  .hc-icon,
+  .dist-bar-fill {
+    transition: none;
+  }
 }
 </style>
 
 <style lang="scss">
-/* 覆盖全局 ops-page-layout 边距限制，消除双重 Padding */
+/* 消除外层布局的重复内边距 */
 .overview-dashboard.ops-page-layout {
   padding: 0 !important;
 }

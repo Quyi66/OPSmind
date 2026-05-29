@@ -133,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import { ElMessage } from 'element-plus'
 import { rpmInfoApi } from '../../../api'
 import { getSeverityType } from '../../../composables/useFormatters'
@@ -198,7 +198,7 @@ const {
   handlePackageKeywordChange: originalHandlePackageKeywordChange,
   handlePackagePageChange: originalHandlePackagePageChange,
   handlePackageSizeChange: originalHandlePackageSizeChange
-} = usePackageList({ value: props.hostId })
+} = usePackageList(toRef(props, 'hostId'))
 
 const detailVisible = ref(false)
 const detailLoading = ref(false)

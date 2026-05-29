@@ -52,6 +52,7 @@ function showUpdateNotification() {
     type: 'warning',
     duration: 0, // 不自动关闭
     position: 'top-left',
+    customClass: 'update-notification',
     onClick() {
       window.location.reload()
     },

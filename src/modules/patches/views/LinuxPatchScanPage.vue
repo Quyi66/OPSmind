@@ -511,9 +511,9 @@
             <i :class="`fa fa-${vulnAllSelected ? 'times' : 'check-double'} me-1`" />
             {{ vulnAllSelected ? '一键取消' : '一键全选' }}
           </el-button>
-          <!-- <el-button size="small" @click="handleVulnExport">
+          <el-button size="small" @click="handleVulnExport">
             <i class="fa fa-download" /> 导出
-          </el-button> -->
+          </el-button>
           <span style="flex: 1"></span>
           <el-button
             class="toolbar-icon-btn"
@@ -615,6 +615,19 @@
                     <span v-else class="affected-package-text" :title="pkg.currentPackage">
                       {{ pkg.currentPackage }}
                     </span>
+                    <template v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length">
+                      <el-tag
+                        v-for="service in pkg.services"
+                        :key="service"
+                        size="small"
+                        type="warning"
+                        effect="plain"
+                        class="reboot-service-tag"
+                        style="margin-left: 4px"
+                      >
+                        {{ service }}
+                      </el-tag>
+                    </template>
                   </div>
                   <el-popover
                     v-if="getAffectedPackages(row).length > 2"
@@ -643,6 +656,19 @@
                         <span v-else class="affected-package-text" :title="pkg.currentPackage">
                           {{ pkg.currentPackage }}
                         </span>
+                        <template v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length">
+                          <el-tag
+                            v-for="service in pkg.services"
+                            :key="service"
+                            size="small"
+                            type="warning"
+                            effect="plain"
+                            class="reboot-service-tag"
+                            style="margin-left: 4px"
+                          >
+                            {{ service }}
+                          </el-tag>
+                        </template>
                       </div>
                     </div>
                   </el-popover>
@@ -1002,6 +1028,7 @@ import {
   hasAffectedPackageDetail
 } from '../utils/vulnerabilityPackages'
 import { assetApi } from '@/modules/asset/api'
+import { authService } from '@/core/auth'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
@@ -1228,6 +1255,11 @@ function getAffectedPackageKey(pkg, index) {
 }
 
 function hasPackageDetail(pkg, row) {
+  if (pkg?.rpmInfoId != null) return true
+  const pkgName = pkg?.pkgName || pkg?.name
+  const source = pkg?.source
+  const arch = pkg?.pkgArch || pkg?.arch || pkg?.architecture
+  if (pkgName && source && arch) return true
   return hasAffectedPackageDetail(pkg, getRowOsDistro(row))
 }
 
@@ -1241,32 +1273,69 @@ function getRebootServiceKey(row, service, index) {
   return [row?.host_key, row?.vul_id, row?.patch_id, service, index].filter(Boolean).join('-')
 }
 
-async function handleViewPackageDetail(pkg, row) {
-  const detailParams = getAffectedPackageDetailParams(pkg, getRowOsDistro(row))
+// 按 API 文档 §2.3 的三级回退顺序构建候选请求
+// 1) rpmInfoId → /rpm-info/detail/{id}
+// 2) pkgName + source + arch → /rpm-info/detail
+// 3) currentPackage + osDistro + arch → /rpm-info/installed/detail
+function buildRpmDetailCandidates(pkg, row) {
+  const candidates = []
 
-  if (!detailParams.installedDetail) {
+  if (pkg?.rpmInfoId != null) {
+    candidates.push({
+      label: 'by id',
+      request: () => rpmInfoApi.getPackageDetailById(pkg.rpmInfoId)
+    })
+  }
+
+  const pkgName = pkg?.pkgName || pkg?.name
+  const source = pkg?.source
+  const arch = pkg?.pkgArch || pkg?.arch || pkg?.architecture
+  if (pkgName && source && arch) {
+    candidates.push({
+      label: 'by name/source/arch',
+      request: () => rpmInfoApi.getPackageDetail({ name: pkgName, source, arch })
+    })
+  }
+
+  const detailParams = getAffectedPackageDetailParams(pkg, getRowOsDistro(row))
+  if (detailParams.installedDetail) {
+    candidates.push({
+      label: 'by installed currentPackage',
+      request: () => rpmInfoApi.getInstalledDetail(detailParams.installedDetail)
+    })
+  }
+
+  return candidates
+}
+
+async function handleViewPackageDetail(pkg, row) {
+  const candidates = buildRpmDetailCandidates(pkg, row)
+  if (candidates.length === 0) {
     ElMessage.warning('当前软件包暂无 RPM 详情')
     return
   }
 
+  // 一次性打开 Drawer 并进入 loading，避免多级回退过程中 visible/loading 反复切换导致 UI 闪烁
   rpmDetailVisible.value = true
   rpmDetailLoading.value = true
   rpmDetailData.value = {}
 
   try {
-    const response = await rpmInfoApi.getInstalledDetail(detailParams.installedDetail)
-    const responseData = response?.data || response || {}
-
-    if (hasRpmDetailResponse(responseData)) {
-      rpmDetailData.value = responseData
-      return
+    for (const candidate of candidates) {
+      try {
+        const response = await candidate.request()
+        const responseData = response?.data || response || {}
+        if (hasRpmDetailResponse(responseData)) {
+          rpmDetailData.value = responseData
+          return
+        }
+      } catch (error) {
+        // 任意一级失败继续尝试下一级，错误仅落日志，最终在所有候选都未命中时才提示用户
+        console.error(`Failed to load rpm package detail (${candidate.label}):`, error)
+      }
     }
 
     ElMessage.warning('当前软件包暂无 RPM 详情')
-    rpmDetailVisible.value = false
-  } catch (error) {
-    console.error('Failed to load rpm package detail:', error)
-    ElMessage.error('获取软件包详情失败')
     rpmDetailVisible.value = false
   } finally {
     rpmDetailLoading.value = false
@@ -1574,6 +1643,55 @@ function handleVulnReset() {
   vulnPagination.page = 1
   vulnPagination.pageSize = 20
   loadVulnData()
+}
+
+async function handleVulnExport() {
+  const queryParams = {}
+
+  if (vulnFilters.host_key && vulnFilters.host_key !== 'all') {
+    queryParams.host_key = vulnFilters.host_key
+  }
+  if (vulnFilters.vul_id && vulnFilters.vul_id !== 'all') {
+    queryParams.vul_id = vulnFilters.vul_id
+  }
+  if (vulnFilters.severity && vulnFilters.severity !== 'all') {
+    queryParams.severity = vulnFilters.severity
+  }
+  if (vulnFilters.reboot_status && vulnFilters.reboot_status !== 'all') {
+    queryParams.reboot_status = vulnFilters.reboot_status
+  }
+  if (vulnFilters.is_kernel && vulnFilters.is_kernel !== 'all') {
+    queryParams.is_kernel = vulnFilters.is_kernel
+  }
+  if (vulnFilters.patch_status && vulnFilters.patch_status !== 'all') {
+    queryParams.patch_status = vulnFilters.patch_status
+  }
+  if (vulnFilters.os_distro && vulnFilters.os_distro !== 'all') {
+    queryParams.os_distro = vulnFilters.os_distro
+  }
+  if (vulnFilters.os_major_version && vulnFilters.os_major_version !== 'all') {
+    queryParams.os_major_version = vulnFilters.os_major_version
+  }
+  if (vulnFilters.filter || vulnFilterText.value) {
+    queryParams.filter = vulnFilters.filter || vulnFilterText.value
+  }
+
+  try {
+    ElMessage.info('正在导出，请稍候...')
+    const res = await vulnerabilityApi.exportVulnerabilityList(queryParams)
+    const blob = new Blob([res.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `补丁扫描信息_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    URL.revokeObjectURL(a.href)
+    ElMessage.success('导出成功！')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败，请稍后重试')
+  }
 }
 
 function handlePageChange(page) {

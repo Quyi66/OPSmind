@@ -227,6 +227,10 @@ const props = defineProps({
   defaultSeverities: {
     type: Array,
     default: () => ['Critical', 'Important', 'Moderate', 'Low']
+  },
+  defaultKeyword: {
+    type: String,
+    default: ''
   }
 })
 
@@ -251,6 +255,7 @@ const {
   selectedSeverities,
   patchKeyword,
   patchPagination,
+  applyClientPaging,
   loadPatchList: originalLoadPatchList,
   handleFilterChange: originalHandleFilterChange,
   handlePatchKeywordChange: originalHandlePatchKeywordChange,
@@ -343,6 +348,9 @@ function getSeverityLabel(severity) {
 
 onMounted(() => {
   applyDefaultSeverities()
+  if (props.defaultKeyword) {
+    patchKeyword.value = props.defaultKeyword
+  }
   loadPatchList()
 })
 
@@ -353,14 +361,24 @@ watch(
   }
 )
 
+watch(
+  () => props.defaultKeyword,
+  newVal => {
+    patchKeyword.value = newVal || ''
+    patchPagination.page = 1
+    applyClientPaging()
+  }
+)
+
 // 修复补丁
 function handleFixPatches() {
   emit('fix-patches', selectedPatches.value)
 }
 
-// 暴露加载方法给父组件
+// 暴露加载方法和变量给父组件
 defineExpose({
-  loadPatchList
+  loadPatchList,
+  patchKeyword
 })
 </script>
 

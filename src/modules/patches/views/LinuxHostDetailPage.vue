@@ -61,6 +61,7 @@
       :host-id="hostId"
       :host-key="hostKey"
       :os-distro="hostOsDistro"
+      :default-keyword="route.query.patchId || ''"
       @patch-click="handlePatchClick"
       @fix-patches="handleFixPatches"
     />
@@ -399,7 +400,9 @@ function handleFixVulnerabilities(vulnerabilities) {
 
   patchesToInstall.value = normalizedPatches
   installOperationType.value = 'vulnerability'
-  installPackageCandidates.value = Array.from(new Set(vulnerabilities.flatMap(getAffectedPackageNames)))
+  installPackageCandidates.value = Array.from(
+    new Set(vulnerabilities.flatMap(getAffectedPackageNames))
+  )
   installTaskPackages.value = []
   installSelectionSummary.value = vulnerabilities.map(item => ({
     key: [item.vul_id, item.patch_id].filter(Boolean).join('-'),
@@ -453,7 +456,13 @@ function handleBack() {
   .value {
     color: var(--el-text-color-primary);
     font-weight: 500;
-    font-family: PingFang-Bold, PingFang SC, Microsoft YaHei, Helvetica, Arial, sans-serif;
+    font-family:
+      PingFang-Bold,
+      PingFang SC,
+      Microsoft YaHei,
+      Helvetica,
+      Arial,
+      sans-serif;
   }
 }
 

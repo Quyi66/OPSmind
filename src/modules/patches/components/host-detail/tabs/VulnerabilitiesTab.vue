@@ -171,6 +171,19 @@
               <span v-else class="affected-package-text" :title="pkg.currentPackage">
                 {{ pkg.currentPackage }}
               </span>
+              <template v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length">
+                <el-tag
+                  v-for="service in pkg.services"
+                  :key="service"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                  class="reboot-service-tag"
+                  style="margin-left: 4px"
+                >
+                  {{ service }}
+                </el-tag>
+              </template>
             </div>
             <el-popover
               v-if="getAffectedPackages(row).length > 2"
@@ -199,6 +212,19 @@
                   <span v-else class="affected-package-text" :title="pkg.currentPackage">
                     {{ pkg.currentPackage }}
                   </span>
+                  <template v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length">
+                    <el-tag
+                      v-for="service in pkg.services"
+                      :key="service"
+                      size="small"
+                      type="warning"
+                      effect="plain"
+                      class="reboot-service-tag"
+                      style="margin-left: 4px"
+                    >
+                      {{ service }}
+                    </el-tag>
+                  </template>
                 </div>
               </div>
             </el-popover>
@@ -338,9 +364,8 @@
     />
   </div>
 </template>
-
 <script setup>
-import { ref } from 'vue'
+import { ref, toRef } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { rpmInfoApi } from '../../../api'
 import {
@@ -410,6 +435,11 @@ function getAffectedPackagePreview(row) {
 }
 
 function hasPackageDetail(pkg) {
+  if (pkg?.rpmInfoId != null) return true
+  const pkgName = pkg?.pkgName || pkg?.name
+  const source = pkg?.source
+  const arch = pkg?.pkgArch || pkg?.arch || pkg?.architecture
+  if (pkgName && source && arch) return true
   return hasAffectedPackageDetail(pkg, props.osDistro)
 }
 
@@ -437,38 +467,75 @@ const {
   handleVulPatchStatusChange: originalHandleVulPatchStatusChange,
   handleVulPageChange: originalHandleVulPageChange,
   handleVulSizeChange: originalHandleVulSizeChange
-} = useVulnerabilityList({ value: props.hostId })
+} = useVulnerabilityList(toRef(props, 'hostId'))
 
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailData = ref({})
 
-async function handleViewPackageDetail(pkg) {
-  const detailParams = getAffectedPackageDetailParams(pkg, props.osDistro)
+// 按 API 文档 §2.3 的三级回退顺序构建候选请求
+// 1) rpmInfoId → /rpm-info/detail/{id}
+// 2) pkgName + source + arch → /rpm-info/detail
+// 3) currentPackage + osDistro + arch → /rpm-info/installed/detail
+function buildDetailCandidates(pkg) {
+  const candidates = []
 
-  if (!detailParams.installedDetail) {
+  if (pkg?.rpmInfoId != null) {
+    candidates.push({
+      label: 'by id',
+      request: () => rpmInfoApi.getPackageDetailById(pkg.rpmInfoId)
+    })
+  }
+
+  const pkgName = pkg?.pkgName || pkg?.name
+  const source = pkg?.source
+  const arch = pkg?.pkgArch || pkg?.arch || pkg?.architecture
+  if (pkgName && source && arch) {
+    candidates.push({
+      label: 'by name/source/arch',
+      request: () => rpmInfoApi.getPackageDetail({ name: pkgName, source, arch })
+    })
+  }
+
+  const detailParams = getAffectedPackageDetailParams(pkg, props.osDistro)
+  if (detailParams.installedDetail) {
+    candidates.push({
+      label: 'by installed currentPackage',
+      request: () => rpmInfoApi.getInstalledDetail(detailParams.installedDetail)
+    })
+  }
+
+  return candidates
+}
+
+async function handleViewPackageDetail(pkg) {
+  const candidates = buildDetailCandidates(pkg)
+  if (candidates.length === 0) {
     ElMessage.warning('当前软件包暂无 RPM 详情')
     return
   }
 
+  // 一次性打开 Drawer 并进入 loading，避免多级回退过程中 visible/loading 反复切换导致 UI 闪烁
   detailVisible.value = true
   detailLoading.value = true
   detailData.value = {}
 
   try {
-    const response = await rpmInfoApi.getInstalledDetail(detailParams.installedDetail)
-    const responseData = response?.data || response || {}
-
-    if (hasRpmDetailResponse(responseData)) {
-      detailData.value = responseData
-      return
+    for (const candidate of candidates) {
+      try {
+        const response = await candidate.request()
+        const responseData = response?.data || response || {}
+        if (hasRpmDetailResponse(responseData)) {
+          detailData.value = responseData
+          return
+        }
+      } catch (error) {
+        // 任意一级失败继续尝试下一级，错误仅落日志，最终在所有候选都未命中时才提示用户
+        console.error(`Failed to load rpm package detail (${candidate.label}):`, error)
+      }
     }
 
     ElMessage.warning('当前软件包暂无 RPM 详情')
-    detailVisible.value = false
-  } catch (error) {
-    console.error('Failed to load rpm package detail:', error)
-    ElMessage.error('获取软件包详情失败')
     detailVisible.value = false
   } finally {
     detailLoading.value = false

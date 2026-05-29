@@ -1,7 +1,7 @@
 <template>
   <div class="cve-detail">
     <!-- 顶部面包屑：导航入口 -->
-    <div class="cve-detail-breadcrumb">
+    <div v-if="!hideBreadcrumb" class="cve-detail-breadcrumb">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
           <a @click.prevent="goBack">CVE 漏洞列表</a>
@@ -322,7 +322,9 @@
                           </div>
                         </div>
                       </el-popover>
-                      <span v-if="!getPackageServiceDisplay(row).preview.length" class="text-muted">-</span>
+                      <span v-if="!getPackageServiceDisplay(row).preview.length" class="text-muted">
+                        -
+                      </span>
                     </div>
                   </template>
                 </el-table-column>
@@ -408,26 +410,26 @@
                 </el-table-column>
                 <el-table-column label="操作" width="180" fixed="right">
                   <template #default="{ row }">
-                      <el-button
-                        text
-                        type="primary"
-                        size="small"
-                        :disabled="!hasRebootAction(row) || !canRebootHost(row)"
-                        :loading="isRebootSubmitting(row)"
-                        :title="isRebootRecommended(row) ? '建议重启' : ''"
-                        @click="handleHostReboot(row)"
-                      >
-                        {{ getRebootButtonLabel(row) }}
-                      </el-button>
-                      <el-button
-                        v-if="shouldShowRebootResultButton(row)"
-                        text
-                        type="primary"
-                        size="small"
-                        @click="openRebootResult(row)"
-                      >
-                        查看结果
-                      </el-button>
+                    <el-button
+                      text
+                      type="primary"
+                      size="small"
+                      :disabled="!hasRebootAction(row) || !canRebootHost(row)"
+                      :loading="isRebootSubmitting(row)"
+                      :title="isRebootRecommended(row) ? '建议重启' : ''"
+                      @click="handleHostReboot(row)"
+                    >
+                      {{ getRebootButtonLabel(row) }}
+                    </el-button>
+                    <el-button
+                      v-if="shouldShowRebootResultButton(row)"
+                      text
+                      type="primary"
+                      size="small"
+                      @click="openRebootResult(row)"
+                    >
+                      查看结果
+                    </el-button>
                   </template>
                 </el-table-column>
               </el-table>
@@ -491,6 +493,22 @@ const props = defineProps({
   cveId: {
     type: String,
     required: true
+  },
+  hideBreadcrumb: {
+    type: Boolean,
+    default: false
+  },
+  hostBackLabel: {
+    type: String,
+    default: 'CVE详情'
+  },
+  hostBackRouteName: {
+    type: String,
+    default: 'patches-cveList'
+  },
+  hostBackRouteQuery: {
+    type: String,
+    default: ''
   }
 })
 
@@ -555,14 +573,18 @@ const packageSourceOptions = computed(() => {
 })
 
 const productNameOptions = computed(() => {
-  return [...new Set(allPackages.value.map(pkg => String(pkg.productName || '').trim()).filter(Boolean))].sort(
-    (left, right) => left.localeCompare(right, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' })
+  return [
+    ...new Set(allPackages.value.map(pkg => String(pkg.productName || '').trim()).filter(Boolean))
+  ].sort((left, right) =>
+    left.localeCompare(right, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' })
   )
 })
 
 const fixedVersionOptions = computed(() => {
-  return [...new Set(allPackages.value.map(pkg => String(pkg.fixedVersion || '').trim()).filter(Boolean))].sort(
-    (left, right) => left.localeCompare(right, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' })
+  return [
+    ...new Set(allPackages.value.map(pkg => String(pkg.fixedVersion || '').trim()).filter(Boolean))
+  ].sort((left, right) =>
+    left.localeCompare(right, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' })
   )
 })
 
@@ -736,12 +758,12 @@ function hasPackageDetail(row) {
 
   return Boolean(
     String(normalizedDetail.version || '').trim() &&
-      (normalizedDetail.name ||
-        normalizedDetail.summary ||
-        normalizedDetail.description ||
-        normalizedDetail.changelog ||
-        normalizedDetail.rpmPath ||
-        normalizedDetail.services.length)
+    (normalizedDetail.name ||
+      normalizedDetail.summary ||
+      normalizedDetail.description ||
+      normalizedDetail.changelog ||
+      normalizedDetail.rpmPath ||
+      normalizedDetail.services.length)
   )
 }
 
@@ -756,7 +778,9 @@ function getPackageServiceDisplay(row) {
 function handleViewPackageDetail(row) {
   if (!hasPackageDetail(row)) {
     ElMessage.warning(
-      hasPackageVersion(row) ? '当前软件包暂无 RPM 详情' : '当前软件包缺少版本信息，无法查看 RPM 详情'
+      hasPackageVersion(row)
+        ? '当前软件包暂无 RPM 详情'
+        : '当前软件包缺少版本信息，无法查看 RPM 详情'
     )
     return
   }
@@ -814,12 +838,14 @@ function viewHostDetail(host) {
       os_distro: host.osDistro || host.os_distro || '',
       os_version: host.osVersion || host.os_version || '',
       hostname: host.hostname || '',
-      fromLabel: 'CVE详情',
-      fromRouteName: 'patches-cveList',
-      fromRouteQuery: JSON.stringify({
-        view: 'detail',
-        cveId: props.cveId
-      })
+      fromLabel: props.hostBackLabel,
+      fromRouteName: props.hostBackRouteName,
+      fromRouteQuery:
+        props.hostBackRouteQuery ||
+        JSON.stringify({
+          view: 'detail',
+          cveId: props.cveId
+        })
     }
   })
 }
@@ -852,7 +878,9 @@ function getRebootButtonLabel(host) {
 }
 
 function isRebootSubmitting(host) {
-  return rebootSubmittingHostKey.value !== '' && rebootSubmittingHostKey.value === getHostIdentity(host)
+  return (
+    rebootSubmittingHostKey.value !== '' && rebootSubmittingHostKey.value === getHostIdentity(host)
+  )
 }
 
 function getHostRebootRunId(host) {

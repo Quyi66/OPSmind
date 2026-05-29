@@ -1,11 +1,11 @@
 <template>
   <div class="ops-page-layout">
     <!-- 顶部标题与操作 -->
-    <div class="ops-section mb-3">
+    <div class="ops-section mb-2" style="padding: 10px 16px">
       <div class="dashboard-header">
         <h3 class="dashboard-title">漏洞紧急程度管理</h3>
         <div class="dashboard-header-actions" v-if="activeViewTab === 'dashboard'">
-          <el-button type="primary" :loading="recomputing" @click="handleRecomputeAll">
+          <el-button type="primary" size="small" :loading="recomputing" @click="handleRecomputeAll">
             <el-icon><Refresh /></el-icon>
             全量重算紧急度
           </el-button>
@@ -29,6 +29,8 @@
             :key="card.key"
             class="stat-card"
             :class="['stat-card--' + card.type]"
+            style="cursor: pointer;"
+            @click="handleCardClick(card.key)"
           >
             <div class="stat-card__icon">
               <i :class="card.icon"></i>
@@ -43,17 +45,80 @@
 
         <!-- 规则配置区域 -->
         <div class="ops-section flex-table-container">
-          <div class="table-header mb-3">
+          <div class="table-header mb-2">
             <div class="table-title">
               <i class="fas fa-sliders-h text-primary me-2"></i>
               紧急度评估规则 (33 + 3 条)
             </div>
-            <span class="text-muted fs-7">紧急程度 = f(资产网络区域 × CVE 利用程度 × CVE 风险等级)</span>
+            <span class="text-muted fs-7">
+              紧急程度 = f(资产网络区域 × CVE 利用程度 × CVE 风险等级)
+            </span>
+          </div>
+
+          <!-- 评估规则过滤工具栏 -->
+          <div
+            class="ops-filter-bar mb-2"
+            style="
+              padding: 8px 12px;
+              display: flex;
+              align-items: center;
+              background: var(--el-fill-color-blank);
+              border: 1px solid var(--el-border-color-lighter);
+              border-radius: 4px;
+            "
+          >
+            <el-form
+              inline
+              size="small"
+              style="margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 12px; width: 100%"
+            >
+              <el-form-item label="网络区域" style="margin-bottom: 0; margin-right: 0">
+                <el-select v-model="filterLocation" style="width: 140px" placeholder="全部">
+                  <el-option value="all" label="全部" />
+                  <el-option value="互联网" label="互联网" />
+                  <el-option value="外联网" label="外联网" />
+                  <el-option value="内网环境、孤岛环境" label="内网环境、孤岛环境" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="利用程度" style="margin-bottom: 0; margin-right: 0">
+                <el-select v-model="filterExploit" style="width: 120px" placeholder="全部">
+                  <el-option value="all" label="全部" />
+                  <el-option value="可利用" label="可利用" />
+                  <el-option value="可检测" label="可检测" />
+                  <el-option value="尚不可利用" label="尚不可利用" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="风险等级" style="margin-bottom: 0; margin-right: 0">
+                <el-select v-model="filterRiskLevel" style="width: 110px" placeholder="全部">
+                  <el-option value="all" label="全部" />
+                  <el-option value="特高危" label="特高危" />
+                  <el-option value="高危" label="高危" />
+                  <el-option value="中危" label="中危" />
+                  <el-option value="低危" label="低危" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="评估紧急度" style="margin-bottom: 0; margin-right: 0">
+                <el-select v-model="filterUrgency" style="width: 110px" placeholder="全部">
+                  <el-option value="all" label="全部" />
+                  <el-option value="特急" label="特急" />
+                  <el-option value="紧急" label="紧急" />
+                  <el-option value="普通" label="普通" />
+                  <el-option value="一般" label="一般" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="规则状态" style="margin-bottom: 0; margin-right: 0">
+                <el-select v-model="filterEnabled" style="width: 110px" placeholder="全部">
+                  <el-option value="all" label="全部" />
+                  <el-option value="1" label="已启用" />
+                  <el-option value="0" label="已禁用" />
+                </el-select>
+              </el-form-item>
+            </el-form>
           </div>
 
           <!-- 规则表格 -->
           <div class="ops-table-wrapper" v-loading="rulesLoading">
-            <el-table :data="sortedRules" height="100%" style="width: 100%">
+            <el-table class="rules-table" :data="filteredRules" height="100%" style="width: 100%">
               <el-table-column prop="id" label="规则ID" width="90" />
               <el-table-column prop="location" label="资产网络区域" min-width="160">
                 <template #default="{ row }">
@@ -116,7 +181,7 @@
         </template>
 
         <!-- 输入区域 -->
-        <div class="ops-section mb-3">
+        <div class="ops-section mb-2" style="padding: 12px 16px">
           <div class="lookup-input-bar">
             <div class="lookup-input-title mb-2">
               <i class="fas fa-search-plus text-primary me-2"></i>
@@ -125,29 +190,33 @@
             <el-input
               v-model="lookupText"
               type="textarea"
-              :rows="4"
+              :rows="3"
               placeholder="粘贴包含一个或多个 CVE 编号的排查文本（例如：CVE-2024-1234, CVE-2024-5678&#10;或者直接粘贴整篇通知正文，后台会自动正则提取 CVE 编号并执行即时诊断，结果不落库）"
-              class="mb-3"
+              class="mb-2"
             />
             <div class="lookup-actions">
-              <el-button type="primary" :loading="lookupLoading" @click="handleLookup">
+              <el-button type="primary" size="small" :loading="lookupLoading" @click="handleLookup">
                 <i class="fas fa-search me-1"></i>
                 即时排查
               </el-button>
-              <el-button type="success" :disabled="!lookupResults.length" :loading="exportLoading" @click="handleExportLookup">
+              <el-button
+                type="success"
+                size="small"
+                :disabled="!lookupResults.length"
+                :loading="exportLoading"
+                @click="handleExportLookup"
+              >
                 <i class="fas fa-file-excel me-1"></i>
                 导出 Excel
               </el-button>
-              <el-button @click="handleClearLookup">
-                清空输入
-              </el-button>
+              <el-button size="small" @click="handleClearLookup">清空输入</el-button>
             </div>
           </div>
         </div>
 
         <!-- 结果展示区域 -->
         <div class="ops-section flex-table-container">
-          <div class="table-header mb-3">
+          <div class="table-header mb-2">
             <div class="table-title">
               <i class="fas fa-table text-primary me-2"></i>
               即时排查诊断结果
@@ -157,12 +226,83 @@
             </div>
           </div>
 
+          <!-- 即时排查过滤工具栏 -->
+          <div
+            class="ops-filter-bar mb-2"
+            style="
+              padding: 8px 12px;
+              display: flex;
+              align-items: center;
+              background: var(--el-fill-color-blank);
+              border: 1px solid var(--el-border-color-lighter);
+              border-radius: 4px;
+            "
+            v-if="lookupResults.length"
+          >
+            <el-form
+              inline
+              size="small"
+              style="margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 12px; width: 100%"
+            >
+              <el-form-item label="模糊匹配" style="margin-bottom: 0; margin-right: 0">
+                <el-input
+                  v-model="lookupSearchQuery"
+                  placeholder="搜索 CVE 编号 / 主机 IP"
+                  clearable
+                  style="width: 220px"
+                />
+              </el-form-item>
+              <el-form-item label="紧急程度" style="margin-bottom: 0; margin-right: 0">
+                <el-select v-model="lookupUrgencyFilter" style="width: 110px" placeholder="全部">
+                  <el-option value="all" label="全部" />
+                  <el-option value="特急" label="特急" />
+                  <el-option value="紧急" label="紧急" />
+                  <el-option value="普通" label="普通" />
+                  <el-option value="一般" label="一般" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="所处区域" style="margin-bottom: 0; margin-right: 0">
+                <el-select v-model="lookupLocationFilter" style="width: 140px" placeholder="全部">
+                  <el-option value="all" label="全部" />
+                  <el-option value="互联网" label="互联网" />
+                  <el-option value="外联网" label="外联网" />
+                  <el-option value="内网环境、孤岛环境" label="内网环境、孤岛环境" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="补丁状态" style="margin-bottom: 0; margin-right: 0">
+                <el-select
+                  v-model="lookupPatchStatusFilter"
+                  style="width: 130px"
+                  placeholder="全部"
+                >
+                  <el-option value="all" label="全部" />
+                  <el-option value="no_repair" label="未修复" />
+                  <el-option value="is_repair" label="已修复" />
+                  <el-option value="repairing" label="正在修复" />
+                  <el-option value="repair_faild" label="修复失败" />
+                </el-select>
+              </el-form-item>
+            </el-form>
+          </div>
+
           <!-- 结果表格 -->
           <div class="ops-table-wrapper" v-loading="lookupLoading">
-            <el-table :data="lookupResults" height="100%" style="width: 100%">
+            <el-table
+              class="lookup-table"
+              :data="filteredLookupResults"
+              height="100%"
+              style="width: 100%"
+            >
               <el-table-column prop="cveId" label="CVE 编号" width="160">
                 <template #default="{ row }">
-                  <el-tag size="small" effect="plain" type="danger">{{ row.cveId }}</el-tag>
+                  <el-link
+                    type="primary"
+                    :underline="false"
+                    style="font-weight: 500"
+                    @click="showCveDetail(row.cveId)"
+                  >
+                    {{ row.cveId }}
+                  </el-link>
                 </template>
               </el-table-column>
               <el-table-column prop="hostKey" label="主机 IP" width="150">
@@ -179,7 +319,9 @@
               </el-table-column>
               <el-table-column prop="location" label="所处区域" width="140" show-overflow-tooltip>
                 <template #default="{ row }">
-                  <el-tag v-if="row.location" size="small" effect="plain" type="info">{{ row.location }}</el-tag>
+                  <el-tag v-if="row.location" size="small" effect="plain" type="info">
+                    {{ row.location }}
+                  </el-tag>
                   <span v-else class="text-muted">未标记</span>
                 </template>
               </el-table-column>
@@ -199,12 +341,27 @@
               </el-table-column>
               <el-table-column prop="cvss" label="CVSS" width="80" align="center">
                 <template #default="{ row }">
-                  <span :class="{ 'text-danger fw-bold': row.cvss >= 9.0 }">{{ row.cvss || '-' }}</span>
+                  <span :class="{ 'text-danger fw-bold': row.cvss >= 9.0 }">
+                    {{ row.cvss || '-' }}
+                  </span>
                 </template>
               </el-table-column>
               <el-table-column prop="patchId" label="补丁编号" width="160" show-overflow-tooltip>
                 <template #default="{ row }">
-                  <span>{{ row.patchId || '-' }}</span>
+                  <div v-if="row.patchId" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                    <template v-for="(pId, index) in getPatchIds(row.patchId)" :key="pId">
+                      <el-link
+                        type="primary"
+                        :underline="false"
+                        style="font-weight: 500"
+                        @click="showPatchDetail(pId, row.osDistro)"
+                      >
+                        {{ pId }}
+                      </el-link>
+                      <span v-if="index < getPatchIds(row.patchId).length - 1" class="text-muted" style="margin-right: 4px;">,</span>
+                    </template>
+                  </div>
+                  <span v-else>-</span>
                 </template>
               </el-table-column>
               <el-table-column prop="patchStatus" label="补丁状态" width="110" align="center">
@@ -214,7 +371,12 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="affectedPkgs" label="受影响包" min-width="180" show-overflow-tooltip>
+              <el-table-column
+                prop="affectedPkgs"
+                label="受影响包"
+                min-width="180"
+                show-overflow-tooltip
+              >
                 <template #default="{ row }">
                   <span>{{ row.affectedPkgs || '-' }}</span>
                 </template>
@@ -225,6 +387,184 @@
                 </template>
               </el-table-column>
             </el-table>
+          </div>
+        </div>
+      </el-tab-pane>
+
+      <!-- 标签页三：漏洞紧急度明细 -->
+      <el-tab-pane name="urgencyList">
+        <template #label>
+          <i class="fas fa-list me-1"></i>
+          漏洞紧急度明细
+        </template>
+
+        <!-- 列表页过滤栏 -->
+        <div
+          class="ops-filter-bar mb-2"
+          style="
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            background: var(--el-fill-color-blank);
+            border: 1px solid var(--el-border-color-lighter);
+            border-radius: 4px;
+          "
+        >
+          <el-form
+            inline
+            size="small"
+            style="margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 12px; width: 100%"
+          >
+            <el-form-item label="漏洞紧急程度" style="margin-bottom: 0; margin-right: 0">
+              <el-select v-model="listUrgency" style="width: 110px" @change="handleListUrgencyChange">
+                <el-option value="特急" label="特急" />
+                <el-option value="紧急" label="紧急" />
+                <el-option value="普通" label="普通" />
+                <el-option value="一般" label="一般" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="资产网络区域" style="margin-bottom: 0; margin-right: 0">
+              <el-select v-model="listLocationFilter" style="width: 140px" placeholder="全部">
+                <el-option value="all" label="全部" />
+                <el-option value="互联网" label="互联网" />
+                <el-option value="外联网" label="外联网" />
+                <el-option value="内网环境、孤岛环境" label="内网环境、孤岛环境" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="补丁状态" style="margin-bottom: 0; margin-right: 0">
+              <el-select v-model="listPatchStatusFilter" style="width: 130px" placeholder="全部">
+                <el-option value="all" label="全部" />
+                <el-option value="no_repair" label="未修复" />
+                <el-option value="is_repair" label="已修复" />
+                <el-option value="is_repair_artificial" label="人工已修复" />
+                <el-option value="repairing" label="修复中" />
+                <el-option value="repair_faild" label="修复失败" />
+                <el-option value="rolling_back" label="回滚中" />
+                <el-option value="rolling_back_success" label="回滚成功" />
+                <el-option value="rolling_back_faild" label="回滚失败" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="模糊匹配" style="margin-bottom: 0; margin-right: 0">
+              <el-input
+                v-model="listSearchQuery"
+                placeholder="搜索 CVE 编号 / 主机 IP"
+                clearable
+                style="width: 220px"
+              />
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 列表表格 -->
+        <div class="ops-section flex-table-container">
+          <div class="ops-table-wrapper" v-loading="listLoading">
+            <el-table
+              class="lookup-table list-table"
+              :data="filteredListResults"
+              height="100%"
+              style="width: 100%"
+            >
+              <el-table-column prop="cveId" label="CVE 编号" min-width="160">
+                <template #default="{ row }">
+                  <el-link
+                    type="primary"
+                    :underline="false"
+                    style="font-weight: 500"
+                    @click="showCveDetail(row.cveId)"
+                  >
+                    {{ row.cveId }}
+                  </el-link>
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="hostKey" label="主机 IP" width="150">
+                <template #default="{ row }">
+                  <el-link type="primary" :underline="false" @click="goToHostDetail(row)">
+                    {{ row.hostKey }}
+                  </el-link>
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="osDistro" label="操作系统" min-width="180" show-overflow-tooltip>
+                <template #default="{ row }">
+                  {{ row.osDistro }} {{ row.osVersion }} ({{ row.osArch }})
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="location" label="所处区域" width="140" show-overflow-tooltip>
+                <template #default="{ row }">
+                  <el-tag v-if="row.location" size="small" effect="plain" type="info">
+                    {{ row.location }}
+                  </el-tag>
+                  <span v-else class="text-muted">未标记</span>
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="riskLevel" label="风险等级" width="110" align="center">
+                <template #default="{ row }">
+                  <el-tag size="small" effect="light" :type="getRiskTagType(row.riskLevel)">
+                    {{ row.riskLevel }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="urgency" label="紧急程度" width="120" align="center">
+                <template #default="{ row }">
+                  <el-tag size="small" round effect="dark" :type="getUrgencyTagType(row.urgency)">
+                    {{ row.urgency }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="patchStatus" label="补丁状态" width="130" align="center">
+                <template #default="{ row }">
+                  <el-tag size="small" round :type="getPatchStatusTagType(row.patchStatus)">
+                    {{ getPatchStatusLabel(row.patchStatus) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="patchId" label="补丁编号" min-width="180" show-overflow-tooltip>
+                <template #default="{ row }">
+                  <div v-if="row.patchId" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                    <template v-for="(pId, index) in getPatchIds(row.patchId)" :key="pId">
+                      <el-link
+                        type="primary"
+                        :underline="false"
+                        style="font-weight: 500"
+                        @click="showPatchDetail(pId, row.osDistro)"
+                      >
+                        {{ pId }}
+                      </el-link>
+                      <span v-if="index < getPatchIds(row.patchId).length - 1" class="text-muted" style="margin-right: 4px;">,</span>
+                    </template>
+                  </div>
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="scanDate" label="扫描时间" width="170">
+                <template #default="{ row }">
+                  <span class="text-muted">{{ formatDateTime(row.scanDate) }}</span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <!-- 分页组件 -->
+          <div class="pagination-container mt-2" style="display: flex; justify-content: flex-end;">
+            <el-pagination
+              v-model:current-page="listCurrentPage"
+              v-model:page-size="listPageSize"
+              :page-sizes="[10, 20, 50, 100, 200]"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="listTotal"
+              @size-change="handleListSizeChange"
+              @current-change="handleListCurrentChange"
+            />
           </div>
         </div>
       </el-tab-pane>
@@ -263,13 +603,13 @@
     <el-dialog v-model="editDialogVisible" title="编辑评估规则" width="480px" destroy-on-close>
       <el-form :model="editForm" label-width="120px">
         <el-form-item label="资产网络区域">
-          <el-input :model-value="editForm.location" disabled />
+          <el-tag type="info" effect="plain" style="filter: grayscale(100%);">{{ editForm.location }}</el-tag>
         </el-form-item>
         <el-form-item label="CVE 利用程度">
-          <el-input :model-value="editForm.exploit" disabled />
+          <el-tag type="info" effect="plain" style="filter: grayscale(100%);">{{ editForm.exploit }}</el-tag>
         </el-form-item>
         <el-form-item label="CVE 风险等级">
-          <el-input :model-value="editForm.riskLevel" disabled />
+          <el-tag type="info" effect="plain" style="filter: grayscale(100%);">{{ editForm.riskLevel }}</el-tag>
         </el-form-item>
         <el-form-item label="漏洞紧急程度">
           <el-select v-model="editForm.urgency" style="width: 100%">
@@ -294,17 +634,48 @@
         <el-button type="primary" :loading="saving" @click="saveRule">保存配置</el-button>
       </template>
     </el-dialog>
+
+    <!-- CVE 详情弹窗 -->
+    <el-dialog v-model="cveDetailVisible" title="CVE 漏洞详情" width="90%" destroy-on-close>
+      <div
+        style="
+          max-height: calc(100vh - 200px);
+          overflow-y: auto;
+          margin: -10px -20px -20px;
+          padding: 10px 20px 20px;
+        "
+      >
+        <CveDetail
+          :cve-id="selectedCveId"
+          :hide-breadcrumb="true"
+          host-back-label="漏洞紧急程度查询"
+          host-back-route-name="patches-urgencyDashboard"
+          :host-back-route-query="cveDetailHostBackRouteQuery"
+        />
+      </div>
+    </el-dialog>
+
+    <!-- 补丁详情弹窗 -->
+    <PatchDetailDialog
+      v-model="patchDetailVisible"
+      :patch-data="patchDetailData"
+      :loading="patchDetailLoading"
+      :os-distro="currentPatchOsDistro"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { urgencyApi } from '../api'
+import { urgencyApi, patchScanApi } from '../api'
+import CveDetail from '../components/cve/details/CveDetail.vue'
+import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 // 标签页状态
 const activeViewTab = ref('dashboard') // dashboard | lookup
@@ -354,6 +725,19 @@ const statCards = [
 const rulesLoading = ref(false)
 const rules = ref([])
 
+// 评估规则过滤条件
+const filterLocation = ref('all')
+const filterExploit = ref('all')
+const filterRiskLevel = ref('all')
+const filterUrgency = ref('all')
+const filterEnabled = ref('all')
+
+// 即时排查过滤条件
+const lookupSearchQuery = ref('')
+const lookupUrgencyFilter = ref('all')
+const lookupLocationFilter = ref('all')
+const lookupPatchStatusFilter = ref('all')
+
 // 重算控制
 const recomputing = ref(false)
 const recomputeDialogVisible = ref(false)
@@ -380,6 +764,177 @@ const exportLoading = ref(false)
 const lookupResults = ref([])
 const totalInputCves = ref(0)
 
+// 漏洞紧急度明细列表状态
+const listLoading = ref(false)
+const listResults = ref([])
+const listTotal = ref(0)
+const listCurrentPage = ref(1)
+const listPageSize = ref(20)
+const listUrgency = ref('特急')
+const listLocationFilter = ref('all')
+const listPatchStatusFilter = ref('all')
+const listSearchQuery = ref('')
+
+// CVE 详情弹窗控制
+const cveDetailVisible = ref(false)
+const selectedCveId = ref('')
+// 点击 CVE 链接时实时快照下来的页面状态，用于主机详情页"返回"时还原
+// 不用 computed 是因为 computed 仅依赖响应式状态，DOM 滚动位置无法触发重算
+const cveDetailHostBackRouteQuery = ref('')
+
+function showCveDetail(cveId) {
+  selectedCveId.value = cveId
+  cveDetailHostBackRouteQuery.value = snapshotHostBackRouteQuery()
+  cveDetailVisible.value = true
+}
+
+// 补丁详情弹窗控制
+const patchDetailVisible = ref(false)
+const patchDetailLoading = ref(false)
+const patchDetailData = ref({})
+const currentPatchOsDistro = ref('')
+
+function getPatchIds(patchIdStr) {
+  if (!patchIdStr) return []
+  return String(patchIdStr)
+    .split(/[,;]/)
+    .map(s => s.trim())
+    .filter(Boolean)
+}
+
+async function showPatchDetail(rowOrPatchId, optionalOsDistro = null) {
+  let patchId = ''
+  let osDistro = ''
+  if (typeof rowOrPatchId === 'object' && rowOrPatchId !== null) {
+    patchId = rowOrPatchId.patchId
+    osDistro = rowOrPatchId.osDistro || ''
+  } else {
+    patchId = rowOrPatchId
+    osDistro = optionalOsDistro || ''
+  }
+
+  if (!patchId) return
+
+  patchDetailVisible.value = true
+  patchDetailLoading.value = true
+  patchDetailData.value = {}
+  currentPatchOsDistro.value = osDistro
+
+  try {
+    const response = await patchScanApi.getPatchDetail({ patch_id: patchId })
+    const records = response?.data?.records || response?.records || []
+    if (records.length > 0) {
+      patchDetailData.value = records[0]
+    } else {
+      ElMessage.warning('未找到补丁详情')
+      patchDetailVisible.value = false
+    }
+  } catch (error) {
+    console.error('Failed to load patch detail:', error)
+    ElMessage.error('获取补丁详情失败')
+    patchDetailVisible.value = false
+  } finally {
+    patchDetailLoading.value = false
+  }
+}
+
+// 抓取当前页面状态（含表格滚动位置）并序列化为路由 query 字符串
+// 在打开 CVE 详情弹窗或跳转主机详情的瞬间调用一次
+function getActiveTableScrollSelector() {
+  if (activeViewTab.value === 'dashboard') return '.rules-table .el-scrollbar__wrap'
+  if (activeViewTab.value === 'lookup') return '.lookup-table .el-scrollbar__wrap'
+  return '.list-table .el-scrollbar__wrap'
+}
+
+function snapshotHostBackRouteQuery() {
+  let scrollTop = 0
+  const scrollWrapper = document.querySelector(getActiveTableScrollSelector())
+  if (scrollWrapper) {
+    scrollTop = scrollWrapper.scrollTop
+  }
+
+  return JSON.stringify({
+    activeViewTab: activeViewTab.value,
+    filterLocation: filterLocation.value,
+    filterExploit: filterExploit.value,
+    filterRiskLevel: filterRiskLevel.value,
+    filterUrgency: filterUrgency.value,
+    filterEnabled: filterEnabled.value,
+    lookupText: lookupText.value,
+    lookupSearchQuery: lookupSearchQuery.value,
+    lookupUrgencyFilter: lookupUrgencyFilter.value,
+    lookupLocationFilter: lookupLocationFilter.value,
+    lookupPatchStatusFilter: lookupPatchStatusFilter.value,
+    listUrgency: listUrgency.value,
+    listLocationFilter: listLocationFilter.value,
+    listPatchStatusFilter: listPatchStatusFilter.value,
+    listSearchQuery: listSearchQuery.value,
+    listCurrentPage: listCurrentPage.value,
+    listPageSize: listPageSize.value,
+    scrollTop
+  })
+}
+
+// 监听路由参数变化，就地恢复页面状态与滚动条
+watch(
+  () => route.query,
+  async query => {
+    if (query.activeViewTab) {
+      activeViewTab.value = query.activeViewTab
+    }
+    if (query.filterLocation) filterLocation.value = query.filterLocation
+    if (query.filterExploit) filterExploit.value = query.filterExploit
+    if (query.filterRiskLevel) filterRiskLevel.value = query.filterRiskLevel
+    if (query.filterUrgency) filterUrgency.value = query.filterUrgency
+    if (query.filterEnabled) filterEnabled.value = query.filterEnabled
+
+    if (query.lookupText !== undefined) {
+      lookupText.value = query.lookupText || ''
+    }
+    if (query.lookupSearchQuery) lookupSearchQuery.value = query.lookupSearchQuery
+    if (query.lookupUrgencyFilter) lookupUrgencyFilter.value = query.lookupUrgencyFilter
+    if (query.lookupLocationFilter) lookupLocationFilter.value = query.lookupLocationFilter
+    if (query.lookupPatchStatusFilter) lookupPatchStatusFilter.value = query.lookupPatchStatusFilter
+
+    // 漏洞紧急度下钻明细状态恢复
+    if (query.listUrgency) listUrgency.value = query.listUrgency
+    if (query.listLocationFilter) listLocationFilter.value = query.listLocationFilter
+    if (query.listPatchStatusFilter) listPatchStatusFilter.value = query.listPatchStatusFilter
+    if (query.listSearchQuery) listSearchQuery.value = query.listSearchQuery
+    if (query.listCurrentPage) listCurrentPage.value = Number(query.listCurrentPage)
+    if (query.listPageSize) listPageSize.value = Number(query.listPageSize)
+
+    // 如果是即时排查 tab，且输入框有值但 lookupResults 为空，且我们有之前的 lookupText，自动触发一次排查
+    if (activeViewTab.value === 'lookup' && lookupText.value && lookupResults.value.length === 0) {
+      await handleLookup(true)
+    }
+
+    // 如果是漏洞紧急度明细 tab，自动加载数据
+    if (activeViewTab.value === 'urgencyList') {
+      await fetchUrgencyPageData()
+    }
+
+    // 平滑恢复表格滚动位置
+    if (query.scrollTop) {
+      nextTick(() => {
+        setTimeout(() => {
+          const selector =
+            activeViewTab.value === 'dashboard'
+              ? '.rules-table .el-scrollbar__wrap'
+              : activeViewTab.value === 'lookup'
+              ? '.lookup-table .el-scrollbar__wrap'
+              : '.list-table .el-scrollbar__wrap'
+          const scrollWrapper = document.querySelector(selector)
+          if (scrollWrapper) {
+            scrollWrapper.scrollTop = Number(query.scrollTop)
+          }
+        }, 150)
+      })
+    }
+  },
+  { immediate: true }
+)
+
 // 排序后的规则
 const sortedRules = computed(() => {
   if (!rules.value || rules.value.length === 0) return []
@@ -400,6 +955,71 @@ const sortedRules = computed(() => {
     // 3. exploit 升序
     return (a.exploit || '').localeCompare(b.exploit || '', 'zh')
   })
+})
+
+// 过滤后的规则
+const filteredRules = computed(() => {
+  let list = sortedRules.value || []
+  if (filterLocation.value !== 'all') {
+    list = list.filter(item => item.location === filterLocation.value)
+  }
+  if (filterExploit.value !== 'all') {
+    list = list.filter(item => item.exploit === filterExploit.value)
+  }
+  if (filterRiskLevel.value !== 'all') {
+    list = list.filter(item => item.riskLevel === filterRiskLevel.value)
+  }
+  if (filterUrgency.value !== 'all') {
+    list = list.filter(item => item.urgency === filterUrgency.value)
+  }
+  if (filterEnabled.value !== 'all') {
+    const val = Number(filterEnabled.value)
+    list = list.filter(item => item.enabled === val)
+  }
+  return list
+})
+
+// 过滤后的即时排查诊断结果
+const filteredLookupResults = computed(() => {
+  let list = lookupResults.value || []
+  if (lookupSearchQuery.value && lookupSearchQuery.value.trim()) {
+    const q = lookupSearchQuery.value.trim().toLowerCase()
+    list = list.filter(item => {
+      const cveMatch = (item.cveId || '').toLowerCase().includes(q)
+      const ipMatch = (item.hostKey || '').toLowerCase().includes(q)
+      return cveMatch || ipMatch
+    })
+  }
+  if (lookupUrgencyFilter.value !== 'all') {
+    list = list.filter(item => item.urgency === lookupUrgencyFilter.value)
+  }
+  if (lookupLocationFilter.value !== 'all') {
+    list = list.filter(item => item.location === lookupLocationFilter.value)
+  }
+  if (lookupPatchStatusFilter.value !== 'all') {
+    list = list.filter(item => item.patchStatus === lookupPatchStatusFilter.value)
+  }
+  return list
+})
+
+// 过滤后的漏洞紧急度明细结果 (在客户端二次过滤)
+const filteredListResults = computed(() => {
+  let list = listResults.value || []
+  if (listSearchQuery.value && listSearchQuery.value.trim()) {
+    const q = listSearchQuery.value.trim().toLowerCase()
+    list = list.filter(item => {
+      const cveMatch = (item.cveId || '').toLowerCase().includes(q)
+      const ipMatch = (item.hostKey || '').toLowerCase().includes(q)
+      return cveMatch || ipMatch
+    })
+  }
+  if (listLocationFilter.value !== 'all') {
+    list = list.filter(item => item.location === listLocationFilter.value)
+  }
+  if (listPatchStatusFilter.value !== 'all') {
+    list = list.filter(item => item.patchStatus === listPatchStatusFilter.value)
+  }
+  return list
 })
 
 // 加载统计信息
@@ -431,7 +1051,7 @@ async function loadRules() {
 
 // 格式化数字
 function formatNumber(val) {
-  return typeof val === 'number' ? val.toLocaleString() : (val || 0)
+  return typeof val === 'number' ? val.toLocaleString() : val || 0
 }
 
 // 格式化日期
@@ -477,12 +1097,12 @@ function getPatchStatusLabel(status) {
   const map = {
     is_repair: '已修复',
     no_repair: '未修复',
-    repairing: '正在修复',
+    repairing: '修复中',
     repair_faild: '修复失败',
-    rolling_back: '正在回滚',
+    rolling_back: '回滚中',
     rolling_back_faild: '回滚失败',
     rolling_back_success: '回滚成功',
-    is_repair_artificial: '手动修复'
+    is_repair_artificial: '人工已修复'
   }
   return map[status] || status || '-'
 }
@@ -564,7 +1184,7 @@ async function saveRule() {
 }
 
 // 多 CVE 即时诊断排查
-async function handleLookup() {
+async function handleLookup(preventReset = false) {
   if (!lookupText.value || !lookupText.value.trim()) {
     ElMessage.warning('请输入待排查的 CVE 编号或文本')
     return
@@ -578,6 +1198,15 @@ async function handleLookup() {
     const data = res?.data || res || {}
     lookupResults.value = data.rows || []
     totalInputCves.value = data.totalInput || 0
+
+    // 重置过滤条件，避免之前过滤导致看不到新排查结果
+    if (!preventReset) {
+      lookupSearchQuery.value = ''
+      lookupUrgencyFilter.value = 'all'
+      lookupLocationFilter.value = 'all'
+      lookupPatchStatusFilter.value = 'all'
+    }
+
     ElMessage.success(`排查诊断完成！成功获取 ${lookupResults.value.length} 条关联主机排查记录`)
   } catch (error) {
     console.error('即时排查失败:', error)
@@ -605,7 +1234,7 @@ async function handleExportLookup() {
     })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = `CVE紧急程度_${new Date().toISOString().slice(0,10)}.xlsx`
+    a.download = `CVE紧急程度_${new Date().toISOString().slice(0, 10)}.xlsx`
     a.click()
     URL.revokeObjectURL(a.href)
     ElMessage.success('排查报告 Excel 导出成功！')
@@ -622,8 +1251,62 @@ function handleClearLookup() {
   lookupText.value = ''
   lookupResults.value = []
   totalInputCves.value = 0
+  lookupSearchQuery.value = ''
+  lookupUrgencyFilter.value = 'all'
+  lookupLocationFilter.value = 'all'
+  lookupPatchStatusFilter.value = 'all'
   ElMessage.info('输入及排查结果已清空')
 }
+
+// 获取漏洞紧急度明细列表数据
+async function fetchUrgencyPageData() {
+  listLoading.value = true
+  try {
+    const res = await urgencyApi.getUrgencyPage({
+      urgency: listUrgency.value,
+      page: listCurrentPage.value,
+      size: listPageSize.value
+    })
+    const data = res?.data || res || {}
+    listResults.value = data.rows || []
+    listTotal.value = data.total || 0
+  } catch (error) {
+    console.error('加载漏洞紧急度明细失败:', error)
+    ElMessage.error('加载漏洞紧急度明细失败')
+  } finally {
+    listLoading.value = false
+  }
+}
+
+function handleListUrgencyChange() {
+  listCurrentPage.value = 1
+  fetchUrgencyPageData()
+}
+
+function handleListSizeChange(val) {
+  listPageSize.value = val
+  listCurrentPage.value = 1
+  fetchUrgencyPageData()
+}
+
+function handleListCurrentChange(val) {
+  listCurrentPage.value = val
+  fetchUrgencyPageData()
+}
+
+function handleCardClick(urgencyKey) {
+  activeViewTab.value = 'urgencyList'
+  listUrgency.value = urgencyKey
+  listCurrentPage.value = 1
+  fetchUrgencyPageData()
+}
+
+// 监听活动 Tab 切换，自动加载明细数据
+watch(activeViewTab, (newTab) => {
+  if (newTab === 'urgencyList') {
+    fetchUrgencyPageData()
+  }
+})
 
 // 跳转至主机详情页进行管理
 function goToHostDetail(row) {
@@ -632,9 +1315,10 @@ function goToHostDetail(row) {
     query: {
       hostId: row.hostId,
       hostKey: row.hostKey,
-      tab: 'vulnerabilities',
+      patchId: row.patchId,
       fromLabel: '漏洞紧急程度查询',
-      fromRouteName: 'patches-urgencyDashboard'
+      fromRouteName: 'patches-urgencyDashboard',
+      fromRouteQuery: snapshotHostBackRouteQuery()
     }
   })
 }
@@ -667,8 +1351,9 @@ onMounted(() => {
 .dashboard-tabs {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 165px);
-  min-height: 500px;
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 0 !important;
 
   :deep(.el-tabs__content) {
     flex: 1;
@@ -691,13 +1376,14 @@ onMounted(() => {
 .stat-card {
   display: flex;
   align-items: center;
-  padding: 20px;
+  padding: 10px 16px;
   border-radius: 8px;
   background: var(--el-fill-color-light);
   border: 1px solid var(--el-border-color-lighter);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 
   &::before {
     content: '';
@@ -715,10 +1401,10 @@ onMounted(() => {
   }
 
   &__icon {
-    font-size: 28px;
-    margin-right: 20px;
-    width: 48px;
-    height: 48px;
+    font-size: 20px;
+    margin-right: 12px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -731,23 +1417,23 @@ onMounted(() => {
   }
 
   &__value {
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 700;
     line-height: 1;
     color: var(--el-text-color-primary);
   }
 
   &__label {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
-    margin-top: 6px;
+    margin-top: 4px;
     color: var(--el-text-color-regular);
   }
 
   &__desc {
     font-size: 11px;
     color: var(--el-text-color-secondary);
-    margin-top: 4px;
+    margin-top: 2px;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -755,27 +1441,51 @@ onMounted(() => {
 
   /* 4档类型高亮 */
   &--danger {
-    &::before { background: #f53f3f; }
-    .stat-card__icon { background: rgba(245, 63, 63, 0.1); }
-    .stat-card__value { color: #f53f3f; }
+    &::before {
+      background: #f53f3f;
+    }
+    .stat-card__icon {
+      background: rgba(245, 63, 63, 0.1);
+    }
+    .stat-card__value {
+      color: #f53f3f;
+    }
   }
 
   &--warning {
-    &::before { background: #ff7d00; }
-    .stat-card__icon { background: rgba(255, 125, 0, 0.1); }
-    .stat-card__value { color: #ff7d00; }
+    &::before {
+      background: #ff7d00;
+    }
+    .stat-card__icon {
+      background: rgba(255, 125, 0, 0.1);
+    }
+    .stat-card__value {
+      color: #ff7d00;
+    }
   }
 
   &--primary {
-    &::before { background: #165dff; }
-    .stat-card__icon { background: rgba(22, 93, 255, 0.1); }
-    .stat-card__value { color: #165dff; }
+    &::before {
+      background: #165dff;
+    }
+    .stat-card__icon {
+      background: rgba(22, 93, 255, 0.1);
+    }
+    .stat-card__value {
+      color: #165dff;
+    }
   }
 
   &--info {
-    &::before { background: #86909c; }
-    .stat-card__icon { background: rgba(134, 144, 156, 0.1); }
-    .stat-card__value { color: #86909c; }
+    &::before {
+      background: #86909c;
+    }
+    .stat-card__icon {
+      background: rgba(134, 144, 156, 0.1);
+    }
+    .stat-card__value {
+      color: #86909c;
+    }
   }
 }
 
@@ -783,6 +1493,15 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
+  margin-bottom: 0 !important;
+  padding: 12px 16px !important;
+}
+
+.detail-workbench {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   min-height: 0;
 }
 

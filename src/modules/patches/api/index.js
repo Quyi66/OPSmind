@@ -481,7 +481,10 @@ export const patchInstallApi = {
     if (Array.isArray(params.patchIds)) {
       patchIds = params.patchIds
     } else if (typeof params.patchId === 'string') {
-      patchIds = params.patchId.split(',').map(s => s.trim()).filter(Boolean)
+      patchIds = params.patchId
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
     } else if (params.patchId) {
       patchIds = [String(params.patchId)]
     }
@@ -496,7 +499,7 @@ export const patchInstallApi = {
         : `${VAP_API_PREFIX}/v2/patch/reboot-on-host`
       return apiService.post(url, payload)
     } else {
-      const patchIdVal = patchIds.length > 0 ? patchIds[0] : (params.patchId || '')
+      const patchIdVal = patchIds.length > 0 ? patchIds[0] : params.patchId || ''
       const searchParams = new URLSearchParams({
         patchId: patchIdVal,
         hostIp: params.hostIp
@@ -686,10 +689,7 @@ export const patchInstallApi = {
     const requestBody = {
       patch_ids: params.patch_ids
     }
-    return apiService.post(
-      '/vap/api/vap/v2/patch/affected-pkgs',
-      requestBody
-    )
+    return apiService.post('/vap/api/vap/v2/patch/affected-pkgs', requestBody)
   },
 
   /**
@@ -978,7 +978,7 @@ export const vulnerabilityApi = {
 
   /**
    * 获取漏洞概览列表
-    * GET /vap/api/vap/v2/cve/patch-by-cves
+   * GET /vap/api/vap/v2/cve/patch-by-cves
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码
    * @param {number} params.size - 每页大小
@@ -1004,6 +1004,28 @@ export const vulnerabilityApi = {
     })
 
     return apiService.get(`${VAP_API_PREFIX}/v2/cve/patch-by-cves${query}`)
+  },
+
+  /**
+   * 导出漏洞列表 Excel
+   * GET /vap/api/vap/v2/cve/patch-by-cves/export
+   */
+  exportVulnerabilityList(params = {}) {
+    const query = buildGenericQuery({
+      host_key: params.host_key === 'all' ? undefined : params.host_key,
+      vul_id: params.vul_id === 'all' ? undefined : params.vul_id,
+      severity: params.severity === 'all' ? undefined : params.severity,
+      reboot_status: params.reboot_status === 'all' ? undefined : params.reboot_status,
+      is_kernel: params.is_kernel === 'all' ? undefined : params.is_kernel,
+      patch_status: params.patch_status === 'all' ? undefined : params.patch_status,
+      os_distro: params.os_distro === 'all' ? undefined : params.os_distro,
+      os_major_version: params.os_major_version === 'all' ? undefined : params.os_major_version,
+      filter: params.filter
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/patch-by-cves/export${query}`, {
+      responseType: 'blob'
+    })
   },
 
   /**
@@ -1481,13 +1503,9 @@ export const cveApi = {
   exportReport(payload) {
     const requestBody = Array.isArray(payload) ? { cveIds: payload } : payload || {}
 
-    return apiService.post(
-      `${VAP_API_PREFIX}/v2/cve/export`,
-      requestBody,
-      {
-        responseType: 'blob'
-      }
-    )
+    return apiService.post(`${VAP_API_PREFIX}/v2/cve/export`, requestBody, {
+      responseType: 'blob'
+    })
   },
 
   /**
@@ -1503,13 +1521,9 @@ export const cveApi = {
         ? { text: payload }
         : payload || {}
 
-    return apiService.post(
-      `${VAP_API_PREFIX}/v2/cve/feedback-template-export`,
-      requestBody,
-      {
-        responseType: 'blob'
-      }
-    )
+    return apiService.post(`${VAP_API_PREFIX}/v2/cve/feedback-template-export`, requestBody, {
+      responseType: 'blob'
+    })
   },
 
   /**
@@ -1770,9 +1784,13 @@ export const rpmInfoApi = {
    * POST /vap/api/vap/v2/rpm-info/installed/scan-packages/export
    */
   exportInstalledScanPackages(payload = {}) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/rpm-info/installed/scan-packages/export`, payload, {
-      responseType: 'blob'
-    })
+    return apiService.post(
+      `${VAP_API_PREFIX}/v2/rpm-info/installed/scan-packages/export`,
+      payload,
+      {
+        responseType: 'blob'
+      }
+    )
   }
 }
 
@@ -1920,6 +1938,19 @@ export const urgencyApi = {
    */
   updateRule(id, data) {
     return apiService.put(`/vap/api/vap/v2/urgency/rule/${id}`, data)
+  },
+
+  /**
+   * 大卡下钻分页列表
+   * GET /vap/api/vap/v2/urgency/page?urgency=...&page=1&size=20
+   */
+  getUrgencyPage(params = {}) {
+    const query = buildGenericQuery({
+      urgency: params.urgency,
+      page: params.page ?? 1,
+      size: params.size ?? 20
+    })
+    return apiService.get(`/vap/api/vap/v2/urgency/page${query}`)
   }
 }
 
@@ -1982,9 +2013,13 @@ export const cveImportApi = {
    * POST /vap/api/vap/v2/cve/import/batch/{id}/export-report
    */
   exportReport(id) {
-    return apiService.post(`/vap/api/vap/v2/cve/import/batch/${id}/export-report`, {}, {
-      responseType: 'blob'
-    })
+    return apiService.post(
+      `/vap/api/vap/v2/cve/import/batch/${id}/export-report`,
+      {},
+      {
+        responseType: 'blob'
+      }
+    )
   },
 
   /**
