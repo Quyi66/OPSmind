@@ -132,7 +132,6 @@
                       template.stats.skipping > 0)
                   "
                 >
-
                   <!-- 嵌入式指标容器（强化层级感） -->
                   <div class="hc-metrics-wrap">
                     <div class="hc-metrics">
@@ -328,11 +327,12 @@ onMounted(() => {
 <style scoped lang="scss">
 /* 巡检总览：轻量、紧凑、状态清晰的仪表盘风格 */
 .overview-dashboard {
-  --page-bg: #f5f7fb;
+  --page-bg: #f4f7fb;
   --surface: #ffffff;
   --surface-soft: #f8fafc;
-  --line: #e7edf5;
-  --line-strong: #dbe4ef;
+  --surface-raised: #fbfdff;
+  --line: #e5ebf3;
+  --line-strong: #d6e0ec;
   --text: #16243d;
   --text-2: #5e718d;
   --text-3: #95a4ba;
@@ -343,9 +343,9 @@ onMounted(() => {
   --warning: #f59e0b;
   --info: #3b82f6;
   --neutral: #64748b;
-  --radius: 14px;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.03), 0 6px 16px rgba(15, 23, 42, 0.035);
-  --shadow-md: 0 16px 34px rgba(15, 23, 42, 0.09);
+  --radius: 10px;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.03), 0 10px 26px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.1);
 
   height: 100%;
   display: flex;
@@ -360,6 +360,7 @@ onMounted(() => {
   --page-bg: #0b1220;
   --surface: #121c2d;
   --surface-soft: #172336;
+  --surface-raised: #162235;
   --line: rgba(148, 163, 184, 0.14);
   --line-strong: rgba(148, 163, 184, 0.24);
   --text: #e5edf7;
@@ -375,7 +376,7 @@ onMounted(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 18px 20px 22px;
+  padding: 16px 18px 20px;
   scrollbar-gutter: stable;
 
   &::-webkit-scrollbar {
@@ -400,8 +401,8 @@ onMounted(() => {
 }
 
 .aw-panel__header {
-  min-height: 52px;
-  padding: 0 18px;
+  min-height: 50px;
+  padding: 0 20px;
   display: flex;
   gap: 16px;
   align-items: center;
@@ -413,11 +414,11 @@ onMounted(() => {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
 }
 
 .panel-title-icon {
-  width: 18px;
+  width: 16px;
   color: var(--brand);
   font-size: 14px;
   text-align: center;
@@ -455,16 +456,16 @@ onMounted(() => {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 
   .template-search-input {
-    width: 228px;
+    width: 248px;
   }
 
   :deep(.el-input__wrapper) {
-    min-height: 34px;
+    min-height: 32px;
     padding: 0 12px;
-    border-radius: 18px;
+    border-radius: 16px;
     background: var(--surface-soft);
     border: 1px solid transparent;
     box-shadow: none;
@@ -488,8 +489,8 @@ onMounted(() => {
   }
 
   :deep(.el-button--small.is-circle) {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     color: var(--text-2);
     border-color: var(--line);
     background: var(--surface-soft);
@@ -509,9 +510,9 @@ onMounted(() => {
 
 .distribution-bar-content {
   display: grid;
-  grid-template-columns: repeat(5, minmax(128px, 1fr));
-  gap: 22px;
-  padding: 15px 18px 17px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 14px 18px 16px;
 }
 
 .dist-bar-item {
@@ -519,7 +520,18 @@ onMounted(() => {
   --bar-soft: rgba(100, 116, 139, 0.09);
 
   min-width: 0;
-  padding: 0 1px;
+  padding: 11px 12px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--surface-raised);
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+
+  &:hover {
+    border-color: var(--line-strong);
+    background: var(--surface);
+  }
 }
 
 .dist-bar-header {
@@ -527,7 +539,7 @@ onMounted(() => {
   gap: 10px;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 11px;
+  margin-bottom: 10px;
 }
 
 .dist-bar-label,
@@ -540,7 +552,7 @@ onMounted(() => {
   min-width: 0;
   gap: 7px;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
 }
 
@@ -560,7 +572,7 @@ onMounted(() => {
 
 .dist-bar-value {
   color: var(--text);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -574,10 +586,10 @@ onMounted(() => {
 }
 
 .dist-bar-track {
-  height: 7px;
+  height: 6px;
   overflow: hidden;
   border-radius: 999px;
-  background: var(--surface-soft);
+  background: rgba(148, 163, 184, 0.11);
 }
 
 .dist-bar-fill {
@@ -635,10 +647,10 @@ onMounted(() => {
 
 .health-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-items: stretch;
-  gap: 16px;
-  padding: 18px;
+  gap: 14px;
+  padding: 16px;
 }
 
 /* 健康卡片 */
@@ -648,17 +660,20 @@ onMounted(() => {
   --state-border: rgba(148, 163, 184, 0.18);
 
   min-width: 0;
-  min-height: 218px;
+  min-height: 202px;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
   cursor: pointer;
   border: 1px solid var(--line);
-  border-radius: 13px;
+  border-radius: 8px;
   background: var(--surface);
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.025);
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.025);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 
   &.rate-high {
     --state: var(--success);
@@ -699,23 +714,23 @@ onMounted(() => {
 }
 
 .hc-header {
-  min-height: 77px;
-  padding: 17px 15px 12px;
+  min-height: 70px;
+  padding: 16px 15px 10px;
   display: flex;
-  gap: 11px;
+  gap: 10px;
   align-items: flex-start;
 }
 
 .hc-icon {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
   display: grid;
   place-items: center;
   color: var(--state);
   font-size: 16px;
   border: 1px solid var(--state-border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--state-soft);
   transition: transform 0.18s ease;
 
@@ -731,11 +746,11 @@ onMounted(() => {
 }
 
 .hc-name {
-  margin: 0 0 6px;
+  margin: 0 0 5px;
   overflow: hidden;
   color: var(--text);
-  font-size: 15px;
-  line-height: 21px;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 700;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -762,7 +777,7 @@ onMounted(() => {
 
 .hc-time-badge {
   min-height: 22px;
-  max-width: 76px;
+  max-width: 82px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -787,10 +802,10 @@ onMounted(() => {
 }
 
 .hc-metrics-wrap {
-  margin: 1px 15px 13px;
-  padding: 8px;
+  margin: 0 15px 12px;
+  padding: 7px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: 8px;
   background: var(--surface-soft);
 }
 
@@ -801,13 +816,13 @@ onMounted(() => {
 }
 
 .metric {
-  min-height: 53px;
+  min-height: 48px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 6px;
 
   &.metric-ok {
     color: var(--success);
@@ -832,7 +847,7 @@ onMounted(() => {
 
 .metric-num {
   color: currentColor;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 18px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -846,46 +861,54 @@ onMounted(() => {
 
 .hc-empty-state {
   flex: 1;
-  min-height: 78px;
-  margin: 1px 15px 13px;
+  min-height: 72px;
+  margin: 0 15px 12px;
   display: flex;
-  gap: 7px;
-  flex-direction: column;
+  gap: 8px;
   align-items: center;
   justify-content: center;
   color: var(--text-3);
   font-size: 12px;
   font-weight: 500;
   border: 1px dashed var(--line-strong);
-  border-radius: 11px;
+  border-radius: 8px;
   background: var(--surface-soft);
 
   i {
+    width: 24px;
+    height: 24px;
+    display: inline-grid;
+    place-items: center;
     color: var(--brand);
-    font-size: 16px;
+    font-size: 14px;
+    border-radius: 999px;
+    background: var(--brand-soft);
     opacity: 0.82;
   }
 }
 
 .hc-footer {
-  min-height: 46px;
+  min-height: 42px;
   margin-top: auto;
-  padding: 6px 8px;
+  padding: 5px 8px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   border-top: 1px solid var(--line);
+  background: var(--surface-raised);
 }
 
 .hc-action-btn {
   width: 100%;
-  height: 33px !important;
+  height: 30px !important;
   margin: 0 !important;
   justify-content: center;
   color: var(--text-2) !important;
   font-weight: 500 !important;
   border-radius: 8px !important;
   background: transparent !important;
-  transition: color 0.16s ease, background-color 0.16s ease !important;
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease !important;
 
   i {
     margin-right: 5px;
@@ -914,11 +937,11 @@ onMounted(() => {
 }
 
 .skeleton-bar-row {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .skeleton-bar-item {
-  height: 119px;
+  height: 122px;
   border-radius: var(--radius);
 }
 
@@ -931,7 +954,7 @@ onMounted(() => {
 @media (max-width: 1280px) {
   .distribution-bar-content {
     grid-template-columns: repeat(3, 1fr);
-    row-gap: 18px;
+    row-gap: 12px;
   }
 }
 
@@ -953,7 +976,7 @@ onMounted(() => {
 
   .distribution-bar-content {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 12px;
     padding: 14px;
   }
 
@@ -967,6 +990,10 @@ onMounted(() => {
 @media (max-width: 520px) {
   .distribution-bar-content {
     grid-template-columns: 1fr;
+  }
+
+  .hc-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
