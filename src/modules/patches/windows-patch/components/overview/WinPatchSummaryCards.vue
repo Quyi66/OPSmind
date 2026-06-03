@@ -83,12 +83,8 @@ function getCardTheme(index) {
 
 function resolveBadge(item, index) {
   const label = String(item?.label || '')
-  if (label.includes('WSUS')) return '配置'
   if (label.includes('主机')) return '资产'
   if (label.includes('缺失')) return '风险'
-  if (label.includes('任务')) return '执行'
-  if (label.includes('完成')) return '结果'
-  if (label.includes('失败')) return '告警'
   return ['概览', '统计', '监控', '指标'][index % 4]
 }
 

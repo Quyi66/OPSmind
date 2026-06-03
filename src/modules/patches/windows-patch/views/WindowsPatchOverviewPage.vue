@@ -1,6 +1,6 @@
 <template>
   <div class="ops-page-layout win-patch-page">
-    <!-- <WinPatchSummaryCards :items="summaryCards" compact /> -->
+    <WinPatchSummaryCards :items="summaryCards" compact />
 
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
@@ -16,15 +16,7 @@
     </div>
 
     <div class="ops-action-bar">
-      <el-button type="primary" size="small" @click="openScanDialog()">创建扫描任务</el-button>
-      <el-button
-        size="small"
-        :disabled="selectedHostRows.length === 0"
-        @click="openScanDialog(selectedHostRows)"
-      >
-        扫描选中主机
-      </el-button>
-      <el-button size="small" @click="openReportDialog(selectedHostRows)">导出报告</el-button>
+      <el-button size="small" @click="handleExport(selectedHostRows)">导出报告</el-button>
       <span class="win-patch-selection-text">已选 {{ selectedHostRows.length }} 台主机</span>
       <span style="flex: 1"></span>
       <el-button
@@ -42,7 +34,7 @@
       <el-table
         v-loading="loading"
         :data="filteredHostList"
-        max-height="calc(100vh - 320px)"
+        height="100%"
         @selection-change="selection => (selectedHostRows = selection)"
       >
         <el-table-column type="selection" width="48" />
@@ -53,11 +45,6 @@
             </el-link>
           </template>
         </el-table-column>
-        <!-- <el-table-column label="主机 ID" min-width="180" show-overflow-tooltip>
-          <template #default="{ row }">
-            {{ resolveHostId(row) || '-' }}
-          </template>
-        </el-table-column> -->
         <el-table-column label="操作系统" min-width="240" show-overflow-tooltip>
           <template #default="{ row }">
             {{ pickValue(row, ['osDistro', 'os_distro'], '-') }}
@@ -120,7 +107,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="最后扫描时间" width="190" class-name="win-patch-table__time-column">
+        <el-table-column label="最后扫描时间" width="190">
           <template #default="{ row }">
             {{ formatDateTime(pickValue(row, ['lastScanDate', 'last_scan_date'], '')) }}
           </template>
@@ -148,38 +135,26 @@
       />
     </div>
 
-    <WinPatchScanDialog
-      v-model="scanDialogVisible"
-      :preselected-hosts="scanDialogHosts"
-      :wsus-configs="wsusConfigs"
-      @submitted="handleTaskSubmitted"
-    />
-
-    <WinPatchReportDialog v-model="reportDialogVisible" :preselected-hosts="reportDialogHosts" />
-
     <WinPatchHostPatchesDrawer
       v-model="hostDrawerVisible"
       :host-summary="currentHost"
       :initial-filters="hostDrawerInitialFilters"
-      @task-submitted="handleTaskSubmitted"
+      @install-submitted="handleInstallSubmitted"
     />
-
-    <WinPatchTaskDetailDrawer v-model="taskDrawerVisible" :task-id="currentTaskId" />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchHostPatchesDrawer from '../components/overview/WinPatchHostPatchesDrawer.vue'
-import WinPatchReportDialog from '../components/overview/WinPatchReportDialog.vue'
-import WinPatchScanDialog from '../components/overview/WinPatchScanDialog.vue'
 import WinPatchSummaryCards from '../components/overview/WinPatchSummaryCards.vue'
-import WinPatchTaskDetailDrawer from '../components/tasks/WinPatchTaskDetailDrawer.vue'
 import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
 import {
+  downloadBlobResponse,
+  extractHostIds,
   formatDateTime,
   formatNumber,
   parsePageResponse,
@@ -188,25 +163,13 @@ import {
   resolveHostKey
 } from '../utils'
 
-const route = useRoute()
-const router = useRouter()
-
 const loading = ref(false)
 const keyword = ref('')
-const wsusConfigs = ref([])
 const hostList = ref([])
 const selectedHostRows = ref([])
 const currentHost = ref(null)
 const hostDrawerInitialFilters = ref(null)
-const currentTaskId = ref('')
-const taskTotal = ref(0)
-
-const scanDialogVisible = ref(false)
 const hostDrawerVisible = ref(false)
-const reportDialogVisible = ref(false)
-const taskDrawerVisible = ref(false)
-const reportDialogHosts = ref([])
-const scanDialogHosts = ref([])
 
 const pagination = reactive({
   page: 1,
@@ -240,11 +203,6 @@ const summaryCards = computed(() => {
 
   return [
     {
-      label: 'WSUS 配置',
-      value: formatNumber(wsusConfigs.value.length),
-      helper: '当前租户可用配置数'
-    },
-    {
       label: '纳管主机',
       value: formatNumber(pagination.total),
       helper: '主机补丁概览总数'
@@ -253,11 +211,6 @@ const summaryCards = computed(() => {
       label: '当前页缺失补丁',
       value: formatNumber(missingCount),
       helper: '按当前页主机统计'
-    },
-    {
-      label: '任务总数',
-      value: formatNumber(taskTotal.value),
-      helper: '扫描、安装、回滚任务总数'
     }
   ]
 })
@@ -265,37 +218,18 @@ const summaryCards = computed(() => {
 async function loadPageData() {
   loading.value = true
   try {
-    const [wsusResponse, hostResponse, taskResponse] = await Promise.all([
-      winPatchApi.getWsusConfigs(),
-      winPatchApi.getHosts({
-        page: pagination.page - 1,
-        size: pagination.pageSize
-      }),
-      winPatchApi.getTasks({ page: 0, size: 1 })
-    ])
-
-    wsusConfigs.value = Array.isArray(wsusResponse?.data) ? wsusResponse.data : []
+    const hostResponse = await winPatchApi.getHosts({
+      page: pagination.page - 1,
+      size: pagination.pageSize
+    })
 
     const hostPage = parsePageResponse(hostResponse)
     hostList.value = hostPage.content
     pagination.total = hostPage.total
     selectedHostRows.value = []
-
-    const taskPage = parsePageResponse(taskResponse)
-    taskTotal.value = taskPage.total
   } finally {
     loading.value = false
   }
-}
-
-function openScanDialog(rows = []) {
-  scanDialogHosts.value = rows
-  scanDialogVisible.value = true
-}
-
-function openReportDialog(rows = []) {
-  reportDialogHosts.value = rows
-  reportDialogVisible.value = true
 }
 
 function openHostDrawer(row, initialFilters = null) {
@@ -307,17 +241,23 @@ function openHostDrawer(row, initialFilters = null) {
 function openHostDrawerWithSeverity(row, severity) {
   openHostDrawer(row, {
     severity,
-    patchStatus: 'MISSING'
+    patchStatus: ''
   })
 }
 
-function handleTaskSubmitted(task) {
-  currentTaskId.value = pickValue(task, ['id'], '')
-  taskDrawerVisible.value =
-    Boolean(currentTaskId.value) && pickValue(task, ['openDetail'], true) !== false
+function handleInstallSubmitted() {
+  loadPageData()
+}
 
-  if (pickValue(task, ['refreshOverview'], true) !== false) {
-    loadPageData()
+async function handleExport(rows = []) {
+  const hostIds = extractHostIds(rows)
+  try {
+    const response = await winPatchApi.exportHosts(hostIds)
+    downloadBlobResponse(response)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
   }
 }
 
@@ -331,43 +271,6 @@ function handleSizeChange(size) {
   pagination.page = 1
   loadPageData()
 }
-
-function normalizeDialogValue(value) {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-}
-
-function replaceToOverviewIfNeeded(dialogType) {
-  if (normalizeDialogValue(route.query.dialog) !== dialogType) {
-    return
-  }
-
-  router.replace({ path: '/patches/windowsVulnerability' })
-}
-
-watch(
-  () => route.query.dialog,
-  dialog => {
-    const normalized = normalizeDialogValue(dialog)
-
-    if (normalized === 'report') {
-      openReportDialog(selectedHostRows.value)
-      return
-    }
-
-    if (normalized) {
-      router.replace({ path: '/patches/windowsVulnerability' })
-    }
-  },
-  { immediate: true }
-)
-
-watch(reportDialogVisible, visible => {
-  if (!visible) {
-    replaceToOverviewIfNeeded('report')
-  }
-})
 
 onMounted(() => {
   loadPageData()
@@ -420,9 +323,5 @@ onMounted(() => {
 
 .win-patch-severity-link--low {
   color: var(--el-color-success);
-}
-
-:deep(.win-patch-table__time-column .cell) {
-  white-space: nowrap;
 }
 </style>

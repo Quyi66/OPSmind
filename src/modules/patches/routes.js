@@ -141,16 +141,6 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./windows-patch/views/WindowsPatchOverviewPage.vue')
   },
   {
-    key: 'windowsWsus',
-    path: 'windowsWsus',
-    name: 'patches-windowsWsus',
-    title: 'WSUS 配置',
-    navLabel: 'WSUS 配置',
-    icon: 'fas fa-server',
-    platform: 'windows',
-    component: () => import('./windows-patch/views/WindowsPatchWsusConfigPage.vue')
-  },
-  {
     key: 'windowsYumRepo',
     path: 'windowsYumRepo',
     name: 'patches-windowsYumRepo',
