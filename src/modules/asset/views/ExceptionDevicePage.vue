@@ -19,9 +19,9 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="筛选条件">
+        <el-form-item label="状态筛选">
           <el-select v-model="filters.conditions" placeholder="筛选条件" style="width: 180px">
-            <el-option label="全部" value="oplus_all" />
+            <el-option label="全部异常" value="oplus_all" />
             <el-option label="今日异常" value="today" />
             <el-option label="连通率小于50%设备" value="low" />
             <el-option label="最近一次连通失败" value="recently" />
