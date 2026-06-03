@@ -42,7 +42,7 @@
                   </article>
                 </section>
 
-                <section class="viewer-section">
+                <section class="viewer-section is-step-overview">
                   <div class="section-heading">
                     <div>
                       <h4 class="section-title">步骤概览</h4>
@@ -55,9 +55,16 @@
                       class="step-overview-card"
                       :class="`is-${step.aggregateBucket}`"
                     >
-                      <div class="step-overview-card__top">
-                        <span class="step-overview-card__index">步骤 {{ step.index }}</span>
+                      <div class="step-overview-card__main">
+                        <div class="step-overview-card__meta">
+                          <span class="step-overview-card__index">步骤 {{ step.index }}</span>
+                          <strong class="step-overview-card__title">{{ step.name }}</strong>
+                          <span class="step-overview-card__script">
+                            {{ step.scriptPath || '未配置脚本路径' }}
+                          </span>
+                        </div>
                         <el-tag
+                          class="step-overview-card__status"
                           size="small"
                           :type="getStatusTagType(step.aggregateBucket)"
                           effect="light"
@@ -65,15 +72,23 @@
                           {{ getStatusLabel(step.aggregateBucket) }}
                         </el-tag>
                       </div>
-                      <strong class="step-overview-card__title">{{ step.name }}</strong>
-                      <span class="step-overview-card__script">
-                        {{ step.scriptPath || '未配置脚本路径' }}
-                      </span>
                       <div class="step-overview-card__stats">
-                        <span>成功 {{ step.summary.success }}</span>
-                        <span>运行中 {{ step.summary.running }}</span>
-                        <span>失败 {{ step.summary.failed }}</span>
-                        <span>待执行 {{ step.summary.pending }}</span>
+                        <span>
+                          <b>{{ step.summary.success }}</b>
+                          成功
+                        </span>
+                        <span>
+                          <b>{{ step.summary.running }}</b>
+                          运行中
+                        </span>
+                        <span>
+                          <b>{{ step.summary.failed }}</b>
+                          失败
+                        </span>
+                        <span>
+                          <b>{{ step.summary.pending }}</b>
+                          待执行
+                        </span>
                       </div>
                     </article>
                   </div>
@@ -688,10 +703,18 @@ function formatDateTime(value) {
 
 .viewer-section {
   padding: 16px 18px;
-  border-radius: 18px;
+  border-radius: 14px;
   border: 1px solid var(--viewer-border);
   background: var(--viewer-section-bg);
   box-shadow: var(--viewer-section-shadow);
+}
+
+.viewer-section.is-step-overview {
+  padding: 14px 16px;
+}
+
+.viewer-section.is-step-overview .section-heading {
+  margin-bottom: 10px;
 }
 
 .section-heading {
@@ -717,13 +740,17 @@ function formatDateTime(value) {
 
 .step-overview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 8px;
 }
 
 .step-overview-card {
-  padding: 14px;
-  border-radius: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
   border: 1px solid var(--viewer-chip-border);
   background: var(--viewer-card-bg-plain);
 }
@@ -748,44 +775,85 @@ function formatDateTime(value) {
   background: var(--viewer-pending-bg-soft);
 }
 
-.step-overview-card__top {
+.step-overview-card__main {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+}
+
+.step-overview-card__meta {
+  display: grid;
+  grid-template-columns: auto minmax(80px, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .step-overview-card__index {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--viewer-chip-bg);
+  border: 1px solid var(--viewer-chip-border);
   font-size: 11px;
   font-weight: 700;
   color: var(--viewer-text-strong);
+  white-space: nowrap;
 }
 
 .step-overview-card__title {
-  display: block;
-  margin-top: 10px;
-  font-size: 15px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.4;
   color: var(--viewer-text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .step-overview-card__script {
-  display: block;
-  margin-top: 6px;
+  min-width: 0;
+  overflow: hidden;
   font-size: 12px;
+  line-height: 1.4;
   color: var(--viewer-text-secondary);
-  word-break: break-all;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.step-overview-card__status {
+  flex: 0 0 auto;
 }
 
 .step-overview-card__stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 12px;
+  grid-template-columns: repeat(4, auto);
+  align-items: center;
+  justify-content: end;
+  gap: 6px;
 }
 
 .step-overview-card__stats span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  min-width: 52px;
+  min-height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--viewer-chip-bg);
+  border: 1px solid var(--viewer-chip-border);
   font-size: 12px;
   color: var(--viewer-text-strong);
+  white-space: nowrap;
+}
+
+.step-overview-card__stats b {
+  font-size: 13px;
+  color: var(--viewer-text-primary);
 }
 
 .status-legend {
@@ -1128,6 +1196,14 @@ function formatDateTime(value) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .step-overview-card {
+    grid-template-columns: 1fr;
+  }
+
+  .step-overview-card__stats {
+    justify-content: start;
+  }
+
   .section-heading {
     flex-direction: column;
   }
@@ -1151,6 +1227,27 @@ function formatDateTime(value) {
   .viewer-summary-grid,
   .step-overview-grid {
     grid-template-columns: 1fr;
+  }
+
+  .step-overview-card__main {
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .step-overview-card__meta {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .step-overview-card__script {
+    grid-column: 1 / -1;
+  }
+
+  .step-overview-card__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .step-overview-card__stats span {
+    justify-content: center;
   }
 
   .header-meta {
