@@ -133,6 +133,22 @@
               </el-tag>
             </template>
           </el-table-column>
+          <el-table-column label="关联 CVE" min-width="200" show-overflow-tooltip>
+            <template #default="{ row }">
+              <template v-if="resolveCveIds(row).length">
+                <el-tag
+                  v-for="cveId in resolveCveIds(row)"
+                  :key="cveId"
+                  size="small"
+                  effect="plain"
+                  class="win-patch-cve-tag"
+                >
+                  {{ cveId }}
+                </el-tag>
+              </template>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
           <el-table-column label="分类" min-width="150" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['classification'], '-') }}
@@ -267,6 +283,18 @@ const installableSelection = computed(() =>
   selectedRows.value.filter(row => isPatchInstallable(row))
 )
 
+function resolveCveIds(row) {
+  const raw = pickValue(row, ['cveIds', 'cve_ids'], '')
+  if (Array.isArray(raw)) {
+    return raw.map(item => String(item).trim()).filter(Boolean)
+  }
+
+  return String(raw)
+    .split(/[,，;；\s]+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
 function applyInitialFilters() {
   const initialFilters = props.initialFilters || {}
 
@@ -368,6 +396,10 @@ watch(
 .win-patch-selection-text {
   font-size: 13px;
   color: var(--el-text-color-secondary);
+}
+
+.win-patch-cve-tag {
+  margin: 0 4px 2px 0;
 }
 
 .win-patch-host-table {

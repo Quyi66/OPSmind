@@ -120,6 +120,23 @@
             </span>
           </template>
         </el-table-column>
+        <el-table-column label="未分级" width="90" align="center">
+          <template #default="{ row }">
+            <span
+              class="win-patch-severity-link win-patch-severity-link--unspecified"
+              @click="openHostDrawerWithSeverity(row, 'Unspecified')"
+            >
+              {{ pickValue(row, ['unspecifiedCount', 'unspecified_count'], 0) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="已安装" width="90" align="center">
+          <template #default="{ row }">
+            <span class="win-patch-metric win-patch-metric--success">
+              {{ pickValue(row, ['installedCount', 'installed_count'], 0) }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column label="最后扫描时间" width="190" class-name="win-patch-table__time-column">
           <template #default="{ row }">
             {{ formatDateTime(pickValue(row, ['lastScanDate', 'last_scan_date'], '')) }}
@@ -392,6 +409,10 @@ onMounted(() => {
   color: var(--el-color-danger);
 }
 
+.win-patch-metric--success {
+  color: var(--el-color-success);
+}
+
 .win-patch-severity-link {
   display: inline-flex;
   align-items: center;
@@ -420,6 +441,10 @@ onMounted(() => {
 
 .win-patch-severity-link--low {
   color: var(--el-color-success);
+}
+
+.win-patch-severity-link--unspecified {
+  color: var(--el-text-color-secondary);
 }
 
 :deep(.win-patch-table__time-column .cell) {

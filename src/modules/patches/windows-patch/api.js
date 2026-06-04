@@ -1,6 +1,6 @@
 import { apiService } from '@/core/api'
 
-const WIN_PATCH_API_PREFIX = '/vap/api/win-patch'
+const WIN_PATCH_API_PREFIX = '/vap/api/vap/win-patch'
 
 export const winPatchApi = {
   getWsusConfigs() {

@@ -48,8 +48,24 @@
             <el-table-column label="严重级别" width="120">
               <template #default="{ row }">
                 <el-tag :type="getSeverityTagType(row.severity)" size="small" effect="plain">
-                  {{ row.severityLabel }}
+                  {{ row.severityLabel || getSeverityLabel(row.severity) }}
                 </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="关联 CVE" min-width="200" show-overflow-tooltip>
+              <template #default="{ row }">
+                <template v-if="resolveCveIds(row).length">
+                  <el-tag
+                    v-for="cveId in resolveCveIds(row)"
+                    :key="cveId"
+                    size="small"
+                    effect="plain"
+                    class="win-patch-cve-tag"
+                  >
+                    {{ cveId }}
+                  </el-tag>
+                </template>
+                <span v-else>-</span>
               </template>
             </el-table-column>
           </el-table>
@@ -61,7 +77,25 @@
 
 <script setup>
 import { computed } from 'vue'
-import { getSeverityTagType, pickValue, resolveHostId, resolveHostKey } from '../../utils'
+import {
+  getSeverityLabel,
+  getSeverityTagType,
+  pickValue,
+  resolveHostId,
+  resolveHostKey
+} from '../../utils'
+
+function resolveCveIds(row) {
+  const raw = pickValue(row, ['cveIds', 'cve_ids'], '')
+  if (Array.isArray(raw)) {
+    return raw.map(item => String(item).trim()).filter(Boolean)
+  }
+
+  return String(raw)
+    .split(/[,，;；\s]+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
 
 const props = defineProps({
   hostSummary: {
@@ -138,5 +172,9 @@ const patchItems = computed(() => (Array.isArray(props.selectedRows) ? props.sel
 
 .win-patch-summary-step__table {
   margin-top: 0;
+}
+
+.win-patch-cve-tag {
+  margin: 0 4px 2px 0;
 }
 </style>
