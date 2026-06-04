@@ -150,10 +150,7 @@
               <el-button :icon="Edit" size="small" type="primary" plain @click="handleEdit">
                 批量修改
               </el-button>
-              <el-button size="small" @click="handleBatchPorts">
-                <i class="fa fa-plug" style="margin-right: 4px"></i>
-                配置端口
-              </el-button>
+
               <el-button size="small" @click="handleBatchLocation">
                 <i class="fa fa-map-marker-alt" style="margin-right: 4px"></i>
                 标记区域
@@ -399,19 +396,7 @@
                 </template>
               </el-table-column>
 
-              <!-- SSH 端口 (SSH_PORT) -->
-              <el-table-column v-else-if="col === 'SSH_PORT'" label="SSH端口" width="100">
-                <template #default="{ row }">
-                  <span>{{ row.ssh_port || row.SSH_PORT || '-' }}</span>
-                </template>
-              </el-table-column>
 
-              <!-- 业务端口 (SERVICE_PORT) -->
-              <el-table-column v-else-if="col === 'SERVICE_PORT'" label="业务端口" width="100">
-                <template #default="{ row }">
-                  <span>{{ row.service_port || row.SERVICE_PORT || '-' }}</span>
-                </template>
-              </el-table-column>
 
               <!-- 责任人 (负责人 / OWNER) -->
               <el-table-column
@@ -554,8 +539,7 @@
       @success="loadAssetList"
     />
 
-    <!-- 批量配置端口弹窗 -->
-    <BatchPortsDialog v-model="batchPortsVisible" :hosts="selectedRows" @success="loadAssetList" />
+
   </div>
 </template>
 
@@ -589,7 +573,7 @@ import AddTagDialog from '../components/asset-info/AddTagDialog.vue'
 import AddGroupDialog from '../components/asset-info/AddGroupDialog.vue'
 import CustomViewDialog from '@/modules/patches/components/host-detail/dialogs/CustomViewDialog.vue'
 import BatchLocationDialog from '@/modules/patches/components/host-detail/dialogs/BatchLocationDialog.vue'
-import BatchPortsDialog from '@/modules/patches/components/host-detail/dialogs/BatchPortsDialog.vue'
+
 import { viewConfigApi } from '@/modules/patches/api'
 
 // 路由
@@ -613,7 +597,7 @@ const currentTenantId = ref('')
 // 自定义列及视图配置 (R3)
 const customViewVisible = ref(false)
 const batchLocationVisible = ref(false)
-const batchPortsVisible = ref(false)
+
 
 const activeColumns = ref(['OS', 'LOCATION', 'RUN_ENVIRONMENT', 'CONN_LATEST_STATUS', 'DEPT_NAME'])
 
@@ -1378,11 +1362,7 @@ async function handleBatchLocation() {
   batchLocationVisible.value = true
 }
 
-async function handleBatchPorts() {
-  const rows = await resolveSelectedRowsForAction('请先选择要配置端口的设备')
-  if (!rows?.length) return
-  batchPortsVisible.value = true
-}
+
 
 // 初始化
 onMounted(() => {

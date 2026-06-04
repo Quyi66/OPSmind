@@ -215,8 +215,7 @@ const defaultAvailableAttrs = [
   { code: 'DEPT_NAME', title: '处置团队', required: false, editable: true },
   { code: 'APPLICATION_SYSTEM', title: '应用系统', required: false, editable: true },
   { code: 'HOST_RISK_LEVEL', title: '主机风险等级', required: false, editable: true },
-  { code: 'SSH_PORT', title: 'SSH端口', required: false, editable: true },
-  { code: 'SERVICE_PORT', title: '业务端口', required: false, editable: true },
+
   { code: 'OWNER', title: '责任人', required: false, editable: true },
   { code: 'updated_at', title: '最后同步时间', required: false, editable: true }
 ]
@@ -335,8 +334,6 @@ async function loadConfig() {
           'DEPT_NAME',
           'APPLICATION_SYSTEM',
           'HOST_RISK_LEVEL',
-          'SSH_PORT',
-          'SERVICE_PORT',
           'OWNER',
           'updated_at'
         ]
@@ -355,8 +352,6 @@ async function loadConfig() {
           'IP',
           'HOSTNAME',
           'OS',
-          'SSH_PORT',
-          'SERVICE_PORT',
           'LOCATION',
           'RUN_ENVIRONMENT',
           'APPLICATION_SYSTEM',
@@ -376,8 +371,6 @@ async function loadConfig() {
         'DEPT_NAME',
         'APPLICATION_SYSTEM',
         'HOST_RISK_LEVEL',
-        'SSH_PORT',
-        'SERVICE_PORT',
         'OWNER',
         'updated_at'
       ]
@@ -385,8 +378,6 @@ async function loadConfig() {
         'IP',
         'HOSTNAME',
         'OS',
-        'SSH_PORT',
-        'SERVICE_PORT',
         'LOCATION',
         'RUN_ENVIRONMENT',
         'APPLICATION_SYSTEM',
