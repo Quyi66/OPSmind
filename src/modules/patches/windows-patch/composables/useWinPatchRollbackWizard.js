@@ -574,7 +574,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     })
   }
 
-  async function triggerTaskStep(stepKey, action) {
+  async function triggerTaskStep(stepKey, action, executor = null) {
     const currentStatus = getAuditStepStatus(stepKey)
     if (['SUCCESS', 'SKIPPED'].includes(currentStatus)) {
       return
@@ -596,6 +596,14 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     const actionLabel = action === 'skip' ? `跳过${stepLabel}` : stepLabel
 
     try {
+      if (action !== 'skip' && typeof executor === 'function') {
+        // 真正的回滚动作走新接口（/win/patch/rollback），返回 {_status:"ok"}，
+        // 进度仍由 getTaskDetail 轮询的步骤状态判定。
+        await executor()
+        await waitForStepCompletion(stepKey, actionLabel)
+        return
+      }
+
       const response =
         action === 'skip'
           ? await winPatchApi.skipTaskStep(currentTaskId.value)
@@ -645,7 +653,9 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
           ? 'skip'
           : 'execute'
       )
-      await triggerTaskStep('ROLLBACK', 'execute')
+      await triggerTaskStep('ROLLBACK', 'execute', () =>
+        winPatchApi.rollbackPatches(selectedInstallLogIds.value, rollbackOptions.value.reboot)
+      )
       await triggerTaskStep(
         'RESTART',
         skippedSteps.value.restart || !rollbackOptions.value.reboot ? 'skip' : 'execute'

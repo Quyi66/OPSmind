@@ -359,7 +359,8 @@ export function getInstallResultTagType(rowOrValue) {
 
 export function isPatchInstallable(row) {
   const status = normalizeUpper(pickValue(row, ['patchStatus', 'patch_status'], ''))
-  return status !== 'INSTALLED' && status !== 'INSTALLING'
+  // 已修复/修复中（及旧枚举 已安装/安装中）不可再次安装
+  return !['REPAIRD', 'REPAIRING', 'INSTALLED', 'INSTALLING'].includes(status)
 }
 
 export function isRollbackSelectable(row) {

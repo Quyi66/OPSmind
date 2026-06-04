@@ -324,7 +324,7 @@ function openHostDrawer(row, initialFilters = null) {
 function openHostDrawerWithSeverity(row, severity) {
   openHostDrawer(row, {
     severity,
-    patchStatus: 'MISSING'
+    patchStatus: 'no_repair'
   })
 }
 

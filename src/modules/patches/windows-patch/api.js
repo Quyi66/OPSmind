@@ -1,6 +1,11 @@
 import { apiService } from '@/core/api'
 
 const WIN_PATCH_API_PREFIX = '/vap/api/vap/win-patch'
+const WIN_PATCH_ACTION_API_PREFIX = '/vap/api/vap/win/patch'
+
+function resolveRebootFlag(reboot) {
+  return reboot ? 'yes' : 'no'
+}
 
 export const winPatchApi = {
   getWsusConfigs() {
@@ -25,6 +30,31 @@ export const winPatchApi = {
 
   createRollbackTask(payload = {}) {
     return apiService.post(`${WIN_PATCH_API_PREFIX}/tasks/rollback`, payload)
+  },
+
+  // 安装补丁：入参为 vap2_curr_machine_status_win.id 数组，reboot 走 query
+  installPatches(currMachineStatusWinIds = [], reboot = false) {
+    return apiService.post(`${WIN_PATCH_ACTION_API_PREFIX}/install`, currMachineStatusWinIds, {
+      params: {
+        reboot: resolveRebootFlag(reboot)
+      }
+    })
+  },
+
+  // 回滚补丁：入参为 vap2_hist_update_pkgs_win.id 数组，reboot 走 query
+  rollbackPatches(histUpdatePkgsWinIds = [], reboot = false) {
+    return apiService.post(`${WIN_PATCH_ACTION_API_PREFIX}/rollback`, histUpdatePkgsWinIds, {
+      params: {
+        reboot: resolveRebootFlag(reboot)
+      }
+    })
+  },
+
+  // 删除回滚历史记录（仅删前端记录，不影响目标机）
+  deleteRollbackHistory(histIds = []) {
+    return apiService.delete(`${WIN_PATCH_ACTION_API_PREFIX}/rollback/history/windows`, {
+      data: histIds
+    })
   },
 
   uploadTaskScript(taskId, scriptType, file) {

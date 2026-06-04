@@ -151,7 +151,7 @@
           </el-table-column>
           <el-table-column label="分类" min-width="150" show-overflow-tooltip>
             <template #default="{ row }">
-              {{ pickValue(row, ['classification'], '-') }}
+              {{ pickValue(row, ['categoryName', 'category_name', 'classification'], '-') }}
             </template>
           </el-table-column>
           <el-table-column label="补丁状态" width="120">
@@ -165,7 +165,7 @@
             <template #default="{ row }">
               <el-tag
                 :type="
-                  normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false))
+                  normalizeBoolean(pickValue(row, ['isIgnore', 'isIgnored', 'is_ignored'], false))
                     ? 'warning'
                     : 'info'
                 "
@@ -173,7 +173,9 @@
                 effect="plain"
               >
                 {{
-                  normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false)) ? '是' : '否'
+                  normalizeBoolean(pickValue(row, ['isIgnore', 'isIgnored', 'is_ignored'], false))
+                    ? '是'
+                    : '否'
                 }}
               </el-tag>
             </template>
