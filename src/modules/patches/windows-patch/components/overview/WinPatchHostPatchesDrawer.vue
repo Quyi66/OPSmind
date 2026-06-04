@@ -85,7 +85,7 @@
           type="primary"
           size="small"
           :disabled="installableSelection.length === 0"
-          @click="installDialogVisible = true"
+          @click="installWizardVisible = true"
         >
           安装选中补丁
         </el-button>
@@ -117,12 +117,12 @@
               {{ pickValue(row, ['kbNumber', 'kb_number'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="标题" min-width="240" show-overflow-tooltip>
+          <el-table-column label="标题" min-width="280" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['title'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="严重级别" width="110">
+          <el-table-column label="严重级别" width="120">
             <template #default="{ row }">
               <el-tag
                 :type="getSeverityTagType(pickValue(row, ['severity']))"
@@ -133,31 +133,23 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="关联 CVE" min-width="160" show-overflow-tooltip>
+          <el-table-column label="分类" min-width="150" show-overflow-tooltip>
             <template #default="{ row }">
-              <span v-if="resolveCveIds(row).length">
-                {{ resolveCveIds(row).join(', ') }}
-              </span>
-              <span v-else class="text-muted">-</span>
+              {{ pickValue(row, ['classification'], '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="分类" min-width="120" show-overflow-tooltip>
-            <template #default="{ row }">
-              {{ pickValue(row, ['categoryName', 'classification'], '-') }}
-            </template>
-          </el-table-column>
-          <el-table-column label="补丁状态" width="110">
+          <el-table-column label="补丁状态" width="120">
             <template #default="{ row }">
               <el-tag :type="getPatchStatusTagType(row)" size="small">
                 {{ getPatchStatusLabel(row) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="已忽略" width="80" align="center">
+          <el-table-column label="已忽略" width="90" align="center">
             <template #default="{ row }">
               <el-tag
                 :type="
-                  normalizeBoolean(pickValue(row, ['isIgnore', 'isIgnored', 'is_ignored'], false))
+                  normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false))
                     ? 'warning'
                     : 'info'
                 "
@@ -165,16 +157,19 @@
                 effect="plain"
               >
                 {{
-                  normalizeBoolean(pickValue(row, ['isIgnore', 'isIgnored', 'is_ignored'], false))
-                    ? '是'
-                    : '否'
+                  normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false)) ? '是' : '否'
                 }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="扫描时间" width="180">
+          <el-table-column label="扫描时间" width="190" class-name="win-patch-table__time-column">
             <template #default="{ row }">
               {{ formatDateTime(pickValue(row, ['scanDate', 'scan_date'], '')) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="安装时间" width="190" class-name="win-patch-table__time-column">
+            <template #default="{ row }">
+              {{ formatDateTime(pickValue(row, ['installDate', 'install_date'], '')) }}
             </template>
           </el-table-column>
         </el-table>
@@ -193,10 +188,12 @@
         />
       </div>
 
-      <WinPatchInstallConfirmDialog
-        v-model="installDialogVisible"
+      <WinPatchInstallWizard
+        v-model="installWizardVisible"
         :selected-rows="installableSelection"
-        @submitted="handleInstallSubmitted"
+        :host-summary="hostSummary"
+        @submitted="handleInstallTaskCreated"
+        @success="handleInstallSuccess"
       />
     </div>
   </el-dialog>
@@ -206,7 +203,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import WinPatchInstallConfirmDialog from '../WinPatchInstallConfirmDialog.vue'
+import WinPatchInstallWizard from '../install-wizard/WinPatchInstallWizard.vue'
 import { winPatchApi } from '../../api'
 import {
   WIN_PATCH_PAGE_SIZE_OPTIONS,
@@ -223,7 +220,6 @@ import {
   normalizeBoolean,
   parsePageResponse,
   pickValue,
-  resolveCveIds,
   resolveHostId,
   resolveHostKey
 } from '../../utils'
@@ -243,7 +239,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'install-submitted'])
+const emit = defineEmits(['update:modelValue', 'task-submitted'])
 
 const visibleModel = computed({
   get: () => props.modelValue,
@@ -253,7 +249,7 @@ const visibleModel = computed({
 const loading = ref(false)
 const patchList = ref([])
 const selectedRows = ref([])
-const installDialogVisible = ref(false)
+const installWizardVisible = ref(false)
 
 const pagination = reactive({
   page: 1,
@@ -329,9 +325,16 @@ function handleSizeChange(size) {
   loadPatches()
 }
 
-function handleInstallSubmitted() {
+function handleInstallTaskCreated(task) {
+  emit('task-submitted', {
+    ...(task || {}),
+    openDetail: false,
+    refreshOverview: false
+  })
+}
+
+function handleInstallSuccess() {
   loadPatches({ silent: true })
-  emit('install-submitted')
 }
 
 watch(
@@ -373,7 +376,13 @@ watch(
   min-height: 0;
 }
 
-.text-muted {
-  color: var(--el-text-color-placeholder);
+:deep(.win-patch-table__time-column .cell) {
+  white-space: nowrap;
+}
+
+@media (max-width: 1280px) {
+  .win-patch-host-dialog {
+    max-height: calc(92vh - 84px);
+  }
 }
 </style>
