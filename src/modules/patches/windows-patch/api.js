@@ -20,8 +20,11 @@ export const winPatchApi = {
     return apiService.delete(`${WIN_PATCH_API_PREFIX}/wsus-config/${encodeURIComponent(id)}`)
   },
 
-  createScanTask(payload = {}) {
-    return apiService.post(`${WIN_PATCH_API_PREFIX}/tasks/scan`, payload)
+  // 触发扫描：目标机本地采集（不依赖 WSUS / 联网），body 为 hostId 数组，
+  // 异步返回 { _status: 'ok', runId }
+  createScanTask(hostIds = []) {
+    const body = Array.isArray(hostIds) ? hostIds : (hostIds?.hostIds ?? [])
+    return apiService.post(`${WIN_PATCH_API_PREFIX}/tasks/scan`, body)
   },
 
   createInstallTask(payload = {}) {
