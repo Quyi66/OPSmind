@@ -22,7 +22,8 @@ function withApiBaseUrl(path) {
  * 获取仓库名称
  */
 function getRepo(repo) {
-  return repo || GFS_REPO
+  const value = repo || GFS_REPO
+  return String(value).replace(/\/+$/, '')
 }
 
 /**
