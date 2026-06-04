@@ -2,7 +2,7 @@
   <div class="tab-content">
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
-      <el-form inline size="small">
+      <el-form inline size="small" @submit.prevent>
         <el-form-item label="关键词" label-width="60">
           <el-input
             v-model="packageKeyword"

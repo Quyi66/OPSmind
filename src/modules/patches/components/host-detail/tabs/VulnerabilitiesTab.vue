@@ -18,7 +18,7 @@
       </el-checkbox-group>
     </div> -->
     <div class="ops-filter-bar" style="margin-bottom: 8px">
-      <el-form inline size="small">
+      <el-form inline size="small" @submit.prevent>
         <el-form-item label="关键词" label-width="60">
           <el-input
             v-model="vulKeyword"
