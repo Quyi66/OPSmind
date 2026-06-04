@@ -111,6 +111,18 @@
               <i class="fa fa-sliders-h" style="margin-right: 4px"></i>
               自定义视图配置
             </el-button>
+            <el-button
+              size="small"
+              :type="allSelected ? 'default' : 'primary'"
+              :loading="selectAllLoading"
+              @click="handleToggleSelectAll"
+            >
+              <i
+                :class="`fa fa-${allSelected ? 'times' : 'check-double'}`"
+                style="margin-right: 4px"
+              ></i>
+              {{ allSelected ? '一键取消' : '一键全选' }}
+            </el-button>
           </div>
           <span style="flex: 1"></span>
           <el-button
@@ -131,7 +143,7 @@
             <div class="selection-action-bar__summary">
               <i class="fa fa-info-circle text-primary" style="margin-right: 6px"></i>
               已选择
-              <strong>{{ selectedRows.length }}</strong>
+              <strong>{{ selectedCount }}</strong>
               台主机设备
             </div>
             <div class="selection-action-bar__actions">
@@ -174,7 +186,8 @@
             v-loading="loading"
             :data="tableData"
             height="100%"
-            @selection-change="handleSelectionChange"
+            @select="handleTableSelect"
+            @select-all="handleTableSelect"
             row-class-name="modern-table-row"
           >
             <el-table-column type="selection" width="40" fixed="left" />
@@ -274,7 +287,7 @@
               <!-- 运行环境 -->
               <el-table-column v-else-if="col === 'RUN_ENVIRONMENT'" label="运行环境" width="120">
                 <template #default="{ row }">
-                  <span>{{ row.run_environment || row.RUN_ENVIRONMENT || '-' }}</span>
+                  <span>{{ row.location || '-' }}</span>
                 </template>
               </el-table-column>
 
@@ -473,7 +486,7 @@
             layout="total, sizes, prev, pager, next, jumper"
             background
             @size-change="handlePageSizeChange"
-            @current-change="loadAssetList"
+            @current-change="handlePageChange"
           />
         </div>
       </div>
@@ -547,7 +560,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -677,6 +690,9 @@ const tableRef = ref()
 const tableData = ref([])
 const loading = ref(false)
 const selectedRows = ref([])
+const allSelected = ref(false)
+const excludedRowIds = ref([])
+const selectAllLoading = ref(false)
 
 // 分页
 const pageSize = ref(10)
@@ -685,7 +701,184 @@ const total = ref(0)
 const checkingConnIds = ref([])
 
 // 计算属性
-const hasSelection = computed(() => selectedRows.value.length > 0)
+const selectedCount = computed(() => {
+  if (!allSelected.value) {
+    return selectedRows.value.length
+  }
+
+  return Math.max(total.value - excludedRowIds.value.length, 0)
+})
+const hasSelection = computed(() => selectedCount.value > 0)
+
+const getAssetRowId = row => row?.id || row?.host_id || row?.hostId || null
+
+const normalizeAssetRecord = item => {
+  const locationNames = ['互联网', '外联网', '内网环境、孤岛环境']
+  const tags = item.tags || item.Tags || []
+  const matchedTag = tags.find(tag => locationNames.includes(tag.name || tag))
+
+  const rawLocation = item.location || item.LOCATION || item.Location
+  let locationVal = ''
+  if (rawLocation) {
+    locationVal =
+      typeof rawLocation === 'object'
+        ? rawLocation.name || rawLocation.title || rawLocation.value || ''
+        : rawLocation
+  }
+  if (!locationVal && matchedTag) {
+    locationVal = matchedTag.name || matchedTag
+  }
+
+  return {
+    ...item,
+    location: locationVal || null
+  }
+}
+
+const buildAssetListParams = () => ({
+  hostKeys: filters.value.hostKeys,
+  assetType: currentType.value,
+  permission: 'r',
+  status: filters.value.status,
+  CONN_LATEST_STATUS:
+    filters.value.connLatestStatus === 'all' ? '' : filters.value.connLatestStatus,
+  system_name: ' ',
+  os_version: filters.value.osVersion.length > 0 ? filters.value.osVersion.join(',') : ' '
+})
+
+const resetSelectionState = () => {
+  allSelected.value = false
+  excludedRowIds.value = []
+  selectedRows.value = []
+  tableRef.value?.clearSelection()
+}
+
+const restorePageSelection = () => {
+  if (!tableRef.value) return
+
+  tableRef.value.clearSelection()
+  if (allSelected.value) {
+    tableData.value.forEach(row => {
+      if (!excludedRowIds.value.includes(getAssetRowId(row))) {
+        tableRef.value.toggleRowSelection(row, true)
+      }
+    })
+    return
+  }
+
+  const selectedIds = new Set(selectedRows.value.map(getAssetRowId).filter(Boolean))
+  if (selectedIds.size === 0) return
+
+  tableData.value.forEach(row => {
+    if (selectedIds.has(getAssetRowId(row))) {
+      tableRef.value.toggleRowSelection(row, true)
+    }
+  })
+}
+
+const fetchAllMatchedAssets = async () => {
+  const requestParams = buildAssetListParams()
+  const batchSize = Math.max(pageSize.value, 200)
+  let page = 1
+  let totalCount = Number(total.value || 0)
+  const allRows = []
+
+  while (true) {
+    const response = await assetApi.getAssetList(requestParams, {
+      size: batchSize,
+      page,
+      filter: searchText.value
+    })
+    const pageRows = Array.isArray(response.records)
+      ? response.records.map(normalizeAssetRecord)
+      : []
+
+    allRows.push(...pageRows)
+
+    if (!totalCount) {
+      totalCount = Number(response.total || 0)
+    }
+
+    if (pageRows.length === 0 || pageRows.length < batchSize || allRows.length >= totalCount) {
+      break
+    }
+
+    page += 1
+  }
+
+  return allRows
+}
+
+const handleTableSelect = selection => {
+  if (!allSelected.value) {
+    selectedRows.value = selection
+    return
+  }
+
+  const currentPageIds = tableData.value.map(getAssetRowId).filter(Boolean)
+  const currentSelectedIds = new Set(selection.map(getAssetRowId).filter(Boolean))
+  const nextExcludedIds = new Set(excludedRowIds.value)
+
+  currentPageIds.forEach(id => {
+    nextExcludedIds.delete(id)
+  })
+
+  currentPageIds.forEach(id => {
+    if (!currentSelectedIds.has(id)) {
+      nextExcludedIds.add(id)
+    }
+  })
+
+  excludedRowIds.value = Array.from(nextExcludedIds)
+  selectedRows.value = selection
+
+  if (total.value > 0 && excludedRowIds.value.length >= total.value) {
+    resetSelectionState()
+  }
+}
+
+const handleToggleSelectAll = async () => {
+  if (allSelected.value) {
+    resetSelectionState()
+    return
+  }
+
+  if (total.value === 0) {
+    return
+  }
+
+  allSelected.value = true
+  excludedRowIds.value = []
+  selectedRows.value = [...tableData.value]
+  await nextTick()
+  restorePageSelection()
+}
+
+const resolveSelectedRowsForAction = async warningMessage => {
+  if (!allSelected.value && selectedRows.value.length === 0) {
+    ElMessage.warning(warningMessage)
+    return null
+  }
+
+  if (!allSelected.value) {
+    return [...selectedRows.value]
+  }
+
+  selectAllLoading.value = true
+  try {
+    const excludedIdSet = new Set(excludedRowIds.value)
+    const allRows = await fetchAllMatchedAssets()
+    const finalRows = allRows.filter(row => !excludedIdSet.has(getAssetRowId(row)))
+    selectedRows.value = finalRows
+    return finalRows
+  } catch (error) {
+    console.error('加载全量设备选择失败:', error)
+    ElMessage.error('加载全量设备失败，请稍后重试')
+    return null
+  } finally {
+    selectAllLoading.value = false
+  }
+}
 
 // 获取连通率样式
 const _getConnRateClass = rate => {
@@ -820,53 +1013,27 @@ const loadOsVersionOptions = async () => {
 }
 
 // 加载设备列表
-const loadAssetList = async () => {
+const loadAssetList = async ({ preserveSelection = false } = {}) => {
   if (!currentType.value) return
+  if (!preserveSelection) {
+    resetSelectionState()
+  }
   loading.value = true
   try {
-    const params = {
-      hostKeys: filters.value.hostKeys,
-      assetType: currentType.value,
-      permission: 'r',
-      status: filters.value.status,
-      CONN_LATEST_STATUS:
-        filters.value.connLatestStatus === 'all' ? '' : filters.value.connLatestStatus,
-      system_name: ' ',
-      os_version: filters.value.osVersion.length > 0 ? filters.value.osVersion.join(',') : ' '
-    }
+    const params = buildAssetListParams()
     const res = await assetApi.getAssetList(params, {
       size: pageSize.value,
       page: currentPage.value,
       filter: searchText.value
     })
-
-    // 预处理 tags 筛选并写入 location 网络区域 (R3)
-    const locationNames = ['互联网', '外联网', '内网环境、孤岛环境']
     const records = res.records || []
-    tableData.value = records.map(item => {
-      const tags = item.tags || item.Tags || []
-      const matchedTag = tags.find(t => locationNames.includes(t.name || t))
-
-      // 兼容字符串与对象等复杂类型，确保 100% 正确提取网络区域值
-      const rawLocation = item.location || item.LOCATION || item.Location
-      let locationVal = ''
-      if (rawLocation) {
-        locationVal =
-          typeof rawLocation === 'object'
-            ? rawLocation.name || rawLocation.title || rawLocation.value || ''
-            : rawLocation
-      }
-      if (!locationVal && matchedTag) {
-        locationVal = matchedTag.name || matchedTag
-      }
-
-      return {
-        ...item,
-        location: locationVal || null
-      }
-    })
+    tableData.value = records.map(normalizeAssetRecord)
 
     total.value = res.total || 0
+    if (preserveSelection && allSelected.value) {
+      await nextTick()
+      restorePageSelection()
+    }
   } catch (error) {
     console.error('加载设备列表失败:', error)
     ElMessage.error('加载设备列表失败')
@@ -948,19 +1115,17 @@ const handleAssetDataSaved = () => {
 // 分页大小变化
 const handlePageSizeChange = () => {
   currentPage.value = 1
-  loadAssetList()
+  loadAssetList({ preserveSelection: allSelected.value })
 }
 
-// 选择变化
-const handleSelectionChange = rows => {
-  selectedRows.value = rows
+const handlePageChange = page => {
+  currentPage.value = page
+  loadAssetList({ preserveSelection: allSelected.value })
 }
 
-const handleEdit = () => {
-  if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要修改的设备')
-    return
-  }
+const handleEdit = async () => {
+  const rows = await resolveSelectedRowsForAction('请先选择要修改的设备')
+  if (!rows?.length) return
   batchEditDialogVisible.value = true
 }
 
@@ -968,11 +1133,9 @@ const handleBatchEditSaved = () => {
   loadAssetList()
 }
 
-const handleAddTag = () => {
-  if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要添加标签的设备')
-    return
-  }
+const handleAddTag = async () => {
+  const rows = await resolveSelectedRowsForAction('请先选择要添加标签的设备')
+  if (!rows?.length) return
   addTagDialogVisible.value = true
 }
 
@@ -981,11 +1144,9 @@ const handleAddTagSaved = () => {
   loadTagList()
 }
 
-const handleAddGroup = () => {
-  if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要添加分组的设备')
-    return
-  }
+const handleAddGroup = async () => {
+  const rows = await resolveSelectedRowsForAction('请先选择要添加分组的设备')
+  if (!rows?.length) return
   addGroupDialogVisible.value = true
 }
 
@@ -994,17 +1155,15 @@ const handleAddGroupSaved = () => {
   loadGroupTree()
 }
 
-const handleOnline = () => {
-  if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要上线的设备')
-    return
-  }
+const handleOnline = async () => {
+  const rows = await resolveSelectedRowsForAction('请先选择要上线的设备')
+  if (!rows?.length) return
   ElMessageBox.confirm('是否将选中的设备设置为在线状态？', '上线确认', {
     type: 'warning'
   })
     .then(async () => {
       try {
-        const ids = selectedRows.value.map(row => row.id).join(',')
+        const ids = rows.map(row => row.id).join(',')
         await apiService.post(`/jao/api/jao/jobs/QqUnBG/run?cacheBuster=${Date.now()}`, {
           params: {
             status: 1,
@@ -1094,17 +1253,15 @@ const handleCheckSingleConn = async row => {
   }
 }
 
-const handleOffline = () => {
-  if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要下线的设备')
-    return
-  }
+const handleOffline = async () => {
+  const rows = await resolveSelectedRowsForAction('请先选择要下线的设备')
+  if (!rows?.length) return
   ElMessageBox.confirm('是否将选中的设备设置为下线状态？', '下线确认', {
     type: 'warning'
   })
     .then(async () => {
       try {
-        const ids = selectedRows.value.map(row => row.id).join(',')
+        const ids = rows.map(row => row.id).join(',')
         await apiService.post(`/jao/api/jao/jobs/QqUnBG/run?cacheBuster=${Date.now()}`, {
           params: {
             status: 0,
@@ -1121,17 +1278,15 @@ const handleOffline = () => {
     .catch(() => {})
 }
 
-const handleDelete = () => {
-  if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要删除的设备')
-    return
-  }
+const handleDelete = async () => {
+  const rows = await resolveSelectedRowsForAction('请先选择要删除的设备')
+  if (!rows?.length) return
   ElMessageBox.confirm('是否确认删除选中的设备？此操作不可恢复！', '删除确认', {
     type: 'warning'
   })
     .then(async () => {
       try {
-        const ids = selectedRows.value.map(row => row.id).join(',')
+        const ids = rows.map(row => row.id).join(',')
         await apiService.post(`/jao/api/jao/jobs/CdPKGF/run?cacheBuster=${Date.now()}`, {
           params: {
             id: ids
@@ -1217,19 +1372,15 @@ function handleCustomView() {
   customViewVisible.value = true
 }
 
-function handleBatchLocation() {
-  if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要配置区域的设备')
-    return
-  }
+async function handleBatchLocation() {
+  const rows = await resolveSelectedRowsForAction('请先选择要配置区域的设备')
+  if (!rows?.length) return
   batchLocationVisible.value = true
 }
 
-function handleBatchPorts() {
-  if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要配置端口的设备')
-    return
-  }
+async function handleBatchPorts() {
+  const rows = await resolveSelectedRowsForAction('请先选择要配置端口的设备')
+  if (!rows?.length) return
   batchPortsVisible.value = true
 }
 

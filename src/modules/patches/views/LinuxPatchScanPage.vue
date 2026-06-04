@@ -496,7 +496,7 @@
           <el-button
             type="primary"
             size="small"
-            :disabled="selectedVulns.length === 0 && !vulnAllSelected"
+            :disabled="vulnSelectedCount === 0"
             @click="handleFixSelected"
           >
             <i class="fa fa-tools" />
@@ -512,7 +512,8 @@
             {{ vulnAllSelected ? '一键取消' : '一键全选' }}
           </el-button>
           <el-button size="small" @click="handleVulnExport">
-            <i class="fa fa-download" /> 导出
+            <i class="fa fa-download" />
+            导出
           </el-button>
           <span style="flex: 1"></span>
           <el-button
@@ -615,7 +616,9 @@
                     <span v-else class="affected-package-text" :title="pkg.currentPackage">
                       {{ pkg.currentPackage }}
                     </span>
-                    <template v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length">
+                    <template
+                      v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length"
+                    >
                       <el-tag
                         v-for="service in pkg.services"
                         :key="service"
@@ -656,7 +659,11 @@
                         <span v-else class="affected-package-text" :title="pkg.currentPackage">
                           {{ pkg.currentPackage }}
                         </span>
-                        <template v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length">
+                        <template
+                          v-if="
+                            pkg.restartType === 'service' && pkg.services && pkg.services.length
+                          "
+                        >
                           <el-tag
                             v-for="service in pkg.services"
                             :key="service"
@@ -878,111 +885,101 @@
     <!-- 修复漏洞确认对话框 -->
     <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="960px" destroy-on-close>
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
+        <div class="fix-summary-card">
+          <div class="fix-summary-item">
+            <span class="fix-summary-label">选中漏洞</span>
+            <strong class="fix-summary-value">
+              {{ fixDialogData.selectedVulnerabilityCount }}
+            </strong>
+          </div>
+          <div class="fix-summary-item">
+            <span class="fix-summary-label">待更新关系</span>
+            <strong class="fix-summary-value">{{ fixDialogData.patchStatusIds.length }}</strong>
+          </div>
+          <div class="fix-summary-hint">
+            明细默认按需加载，仅预览部分结果，避免一键全选后一次性拉取过大返回。
+          </div>
+        </div>
         <div class="fix-grid-layout">
-          <!-- 1. 待更新主机 -->
-          <div class="fix-info-card">
+          <div v-for="section in fixSectionCards" :key="section.key" class="fix-info-card">
             <div class="fix-info-header">
               <span>
-                <i class="fa fa-desktop text-muted" />
-                待更新的主机
-              </span>
-              <el-badge :value="fixDialogData.hosts.length" type="primary" class="header-badge" />
-            </div>
-            <div class="fix-info-body">
-              <div v-if="fixDialogData.hosts.length === 0" class="empty-text">暂无主机</div>
-              <div v-else class="chips-container">
-                <el-tag
-                  v-for="host in fixDialogData.hosts"
-                  :key="host"
-                  size="small"
-                  type="info"
-                  effect="plain"
-                  class="chip-tag"
-                >
-                  {{ host }}
-                </el-tag>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2. 待更新补丁 -->
-          <div class="fix-info-card">
-            <div class="fix-info-header">
-              <span>
-                <i class="fa fa-briefcase-medical text-muted" />
-                待更新的补丁
-              </span>
-              <el-badge :value="fixDialogData.patches.length" type="warning" class="header-badge" />
-            </div>
-            <div class="fix-info-body">
-              <div v-if="fixDialogData.patches.length === 0" class="empty-text">暂无补丁</div>
-              <div v-else class="chips-container">
-                <el-tag
-                  v-for="patch in fixDialogData.patches"
-                  :key="patch"
-                  size="small"
-                  type="warning"
-                  effect="plain"
-                  class="chip-tag"
-                >
-                  {{ patch }}
-                </el-tag>
-              </div>
-            </div>
-          </div>
-
-          <!-- 3. 待更新 CVE -->
-          <div class="fix-info-card">
-            <div class="fix-info-header">
-              <span>
-                <i class="fa fa-suitcase text-muted" />
-                待更新的 CVE
-              </span>
-              <el-badge :value="fixDialogData.cves.length" type="danger" class="header-badge" />
-            </div>
-            <div class="fix-info-body">
-              <div v-if="fixDialogData.cves.length === 0" class="empty-text">暂无 CVE</div>
-              <div v-else class="chips-container">
-                <el-tag
-                  v-for="cve in fixDialogData.cves"
-                  :key="cve"
-                  size="small"
-                  type="danger"
-                  effect="plain"
-                  class="chip-tag"
-                >
-                  {{ cve }}
-                </el-tag>
-              </div>
-            </div>
-          </div>
-
-          <!-- 4. 待更新软件包 -->
-          <div class="fix-info-card">
-            <div class="fix-info-header">
-              <span>
-                <i class="fa fa-cube text-muted" />
-                待更新的软件包
+                <i :class="section.icon" />
+                {{ section.label }}
               </span>
               <el-badge
-                :value="fixDialogData.packages.length"
-                type="success"
+                :value="getFixSectionBadgeValue(section.key)"
+                :type="section.badgeType"
                 class="header-badge"
               />
             </div>
             <div class="fix-info-body">
-              <div v-if="fixDialogData.packages.length === 0" class="empty-text">暂无软件包</div>
-              <div v-else class="chips-container">
-                <el-tag
-                  v-for="pkg in fixDialogData.packages"
-                  :key="pkg"
-                  size="small"
-                  type="success"
-                  effect="plain"
-                  class="chip-tag"
-                >
-                  {{ pkg }}
-                </el-tag>
+              <div v-if="fixDialogLoading" class="empty-text">正在汇总更新范围...</div>
+              <div v-else-if="!fixDialogData.patchStatusIds.length" class="empty-text">
+                暂无可更新项
+              </div>
+              <div
+                v-else-if="
+                  !fixSectionState[section.key].loaded && fixSectionState[section.key].loading
+                "
+                v-loading="true"
+                class="empty-text fix-info-loading"
+              >
+                正在加载预览...
+              </div>
+              <div v-else-if="!fixSectionState[section.key].loaded" class="fix-info-placeholder">
+                <div class="empty-text">明细未加载</div>
+                <div class="fix-info-actions">
+                  <el-button
+                    size="small"
+                    :loading="fixSectionState[section.key].loading"
+                    @click="loadFixDialogSection(section.key, 'preview')"
+                  >
+                    加载预览
+                  </el-button>
+                  <el-button
+                    link
+                    :disabled="fixSectionState[section.key].loading"
+                    @click="loadFixDialogSection(section.key, 'full')"
+                  >
+                    加载全部
+                  </el-button>
+                </div>
+                <div v-if="fixSectionState[section.key].error" class="fix-info-hint is-error">
+                  {{ fixSectionState[section.key].error }}
+                </div>
+              </div>
+              <div v-else-if="!fixDialogData[section.key].length" class="empty-text">
+                {{ section.emptyText }}
+              </div>
+              <div v-else class="fix-info-content">
+                <div class="chips-container">
+                  <el-tag
+                    v-for="item in getFixSectionDisplayItems(section.key)"
+                    :key="item"
+                    size="small"
+                    :type="section.badgeType"
+                    effect="plain"
+                    class="chip-tag"
+                  >
+                    {{ item }}
+                  </el-tag>
+                </div>
+                <div class="fix-info-footer">
+                  <span class="fix-info-hint">
+                    {{ getFixSectionHint(section.key) }}
+                  </span>
+                  <el-button
+                    v-if="
+                      fixSectionState[section.key].mode !== 'full' &&
+                      fixSectionState[section.key].hasMore
+                    "
+                    link
+                    @click="loadFixDialogSection(section.key, 'full')"
+                  >
+                    加载完整数据
+                  </el-button>
+                </div>
               </div>
             </div>
           </div>
@@ -993,7 +990,7 @@
         <el-button
           type="primary"
           :loading="fixSubmitting"
-          :disabled="!fixDialogData.hosts.length"
+          :disabled="!fixDialogData.patchStatusIds.length || fixDialogLoading"
           @click="handleConfirmFix"
         >
           <i class="fa fa-chevron-right" />
@@ -1009,14 +1006,7 @@ import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
-import {
-  patchScanApi,
-  patchOverviewApi,
-  rpmInfoApi,
-  vulnerabilityApi,
-  viewConfigApi,
-  hostBatchApi
-} from '../api'
+import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi } from '../api'
 import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
 import {
   getAffectedPackageDetailParams,
@@ -1028,7 +1018,6 @@ import {
   hasAffectedPackageDetail
 } from '../utils/vulnerabilityPackages'
 import { assetApi } from '@/modules/asset/api'
-import { authService } from '@/core/auth'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
@@ -1167,7 +1156,15 @@ const osVersionList = ref([])
 const vulnTableRef = ref(null)
 const selectedVulns = ref([])
 const vulnAllSelected = ref(false)
+const vulnExcludedRowKeys = ref([])
 const vulnSelectAllLoading = ref(false)
+const vulnSelectedCount = computed(() => {
+  if (!vulnAllSelected.value) {
+    return selectedVulns.value.length
+  }
+
+  return Math.max(vulnPagination.total - vulnExcludedRowKeys.value.length, 0)
+})
 
 // 重新扫描对话框
 const rescanDialogVisible = ref(false)
@@ -1388,12 +1385,52 @@ function buildRollbackWizardData(row) {
 // 修复漏洞对话框
 const fixDialogVisible = ref(false)
 const fixSubmitting = ref(false)
+const FIX_DIALOG_PREVIEW_LIMIT = 20
+const FIX_DIALOG_ID_BATCH_SIZE = 200
+const FIX_DIALOG_DETAIL_BATCH_SIZE = 1000
+const fixSectionCards = [
+  {
+    key: 'hosts',
+    label: '待更新的主机',
+    icon: 'fa fa-desktop text-muted',
+    badgeType: 'primary',
+    emptyText: '暂无主机'
+  },
+  {
+    key: 'patches',
+    label: '待更新的补丁',
+    icon: 'fa fa-briefcase-medical text-muted',
+    badgeType: 'warning',
+    emptyText: '暂无补丁'
+  },
+  {
+    key: 'cves',
+    label: '待更新的 CVE',
+    icon: 'fa fa-suitcase text-muted',
+    badgeType: 'danger',
+    emptyText: '暂无 CVE'
+  },
+  {
+    key: 'packages',
+    label: '待更新的软件包',
+    icon: 'fa fa-cube text-muted',
+    badgeType: 'success',
+    emptyText: '暂无软件包'
+  }
+]
 const fixDialogData = reactive({
   hosts: [],
   patches: [],
   cves: [],
   packages: [],
-  patchStatusIds: []
+  patchStatusIds: [],
+  selectedVulnerabilityCount: 0
+})
+const fixSectionState = reactive({
+  hosts: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' },
+  patches: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' },
+  cves: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' },
+  packages: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' }
 })
 const fixDialogLoading = ref(false)
 const rollbackWizardVisible = ref(false)
@@ -1570,20 +1607,7 @@ async function loadHostData() {
 async function loadVulnData() {
   vulnLoading.value = true
   try {
-    const params = {
-      page: vulnPagination.page - 1,
-      size: vulnPagination.pageSize,
-      host_key: vulnFilters.host_key || '',
-      vul_id: vulnFilters.vul_id || null,
-      severity: vulnFilters.severity,
-      patch_status: vulnFilters.patch_status,
-      is_kernel: vulnFilters.is_kernel,
-      os_distro: vulnFilters.os_distro,
-      os_major_version: vulnFilters.os_major_version,
-      reboot_status: vulnFilters.reboot_status,
-      filter: vulnFilters.filter || vulnFilterText.value || ''
-    }
-    const response = await vulnerabilityApi.getVulnerabilityList(params)
+    const response = await vulnerabilityApi.getVulnerabilityList(buildVulnListParams())
     const data = response?.data || response || {}
     vulnTableData.value = Array.isArray(data.content)
       ? data.content
@@ -1632,8 +1656,7 @@ function handleHostReset() {
 }
 
 function handleVulnReset() {
-  vulnAllSelected.value = false
-  selectedVulns.value = []
+  resetVulnSelectionState()
   vulnFilters.severity = 'all'
   vulnFilters.patch_status = 'all'
   vulnFilters.is_kernel = 'all'
@@ -1767,8 +1790,7 @@ function refreshPatchScanLists() {
 }
 
 function handleVulnFilterChange() {
-  vulnAllSelected.value = false
-  selectedVulns.value = []
+  resetVulnSelectionState()
   vulnPagination.page = 1
   loadVulnData()
 }
@@ -1833,33 +1855,34 @@ function getPatchStatusIcon(status) {
 }
 
 function resolvePatchStatusIds(rows) {
-  const ids = []
+  const ids = new Set()
 
   rows.forEach(row => {
-    const value =
-      row.patch_status_id ??
-      row.patch_status_ids ??
-      row.id ??
-      row.patchStatusId ??
-      row.patchStatusIds
-
-    if (Array.isArray(value)) {
-      ids.push(...value)
-      return
-    }
-
-    if (typeof value === 'string') {
-      value.split(',').forEach(item => {
-        const trimmed = item.trim()
-        if (trimmed) ids.push(trimmed)
-      })
-      return
-    }
-
-    if (value) ids.push(value)
+    extractPatchStatusIdsFromRow(row).forEach(id => ids.add(id))
   })
 
-  return Array.from(new Set(ids))
+  return Array.from(ids)
+}
+
+function extractPatchStatusIdsFromRow(row) {
+  const value =
+    row.patch_status_id ?? row.patch_status_ids ?? row.id ?? row.patchStatusId ?? row.patchStatusIds
+
+  if (Array.isArray(value)) {
+    return value
+      .map(String)
+      .map(item => item.trim())
+      .filter(Boolean)
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+  }
+
+  return value ? [String(value)] : []
 }
 
 function parseJobRunResult(response) {
@@ -1880,15 +1903,291 @@ function handleViewRunResult(row) {
   runResultDialogVisible.value = true
 }
 
+function buildVulnListParams(overrides = {}) {
+  return {
+    page: overrides.page ?? vulnPagination.page - 1,
+    size: overrides.size ?? vulnPagination.pageSize,
+    host_key: vulnFilters.host_key || '',
+    vul_id: vulnFilters.vul_id || null,
+    severity: vulnFilters.severity,
+    patch_status: vulnFilters.patch_status,
+    is_kernel: vulnFilters.is_kernel,
+    os_distro: vulnFilters.os_distro,
+    os_major_version: vulnFilters.os_major_version,
+    reboot_status: vulnFilters.reboot_status,
+    filter: vulnFilters.filter || vulnFilterText.value || ''
+  }
+}
+
+function getVulnRowKey(row) {
+  const directId = row?.patch_status_id ?? row?.patchStatusId ?? row?.id
+  if (directId) {
+    return String(directId)
+  }
+
+  return [row?.host_key, row?.vul_id, row?.patch_id, row?.os_distro].filter(Boolean).join('|')
+}
+
+function chunkArray(items, chunkSize) {
+  const chunks = []
+  for (let index = 0; index < items.length; index += chunkSize) {
+    chunks.push(items.slice(index, index + chunkSize))
+  }
+  return chunks
+}
+
+function resetFixDialogData() {
+  fixDialogData.hosts = []
+  fixDialogData.patches = []
+  fixDialogData.cves = []
+  fixDialogData.packages = []
+  fixDialogData.patchStatusIds = []
+  fixDialogData.selectedVulnerabilityCount = 0
+
+  Object.values(fixSectionState).forEach(state => {
+    state.loaded = false
+    state.loading = false
+    state.mode = 'idle'
+    state.hasMore = false
+    state.error = ''
+  })
+}
+
+async function collectSelectedPatchStatusIdsForFix() {
+  if (!vulnAllSelected.value) {
+    return resolvePatchStatusIds(selectedVulns.value)
+  }
+
+  const excludedKeySet = new Set(vulnExcludedRowKeys.value)
+  const ids = new Set()
+  const batchSize = Math.max(vulnPagination.pageSize, FIX_DIALOG_ID_BATCH_SIZE)
+  let page = 0
+  let totalCount = Number(vulnPagination.total || 0)
+
+  while (true) {
+    const response = await vulnerabilityApi.getVulnerabilityList(
+      buildVulnListParams({ page, size: batchSize })
+    )
+    const data = response?.data || response || {}
+    const pageRows = Array.isArray(data.content)
+      ? data.content
+      : Array.isArray(data.records)
+        ? data.records
+        : []
+
+    pageRows.forEach(row => {
+      if (excludedKeySet.has(getVulnRowKey(row))) {
+        return
+      }
+
+      extractPatchStatusIdsFromRow(row).forEach(id => ids.add(id))
+    })
+
+    if (!totalCount) {
+      totalCount = Number(data.totalElements ?? data.total ?? 0)
+    }
+
+    if (
+      pageRows.length === 0 ||
+      pageRows.length < batchSize ||
+      (page + 1) * batchSize >= totalCount
+    ) {
+      break
+    }
+
+    page += 1
+  }
+
+  return Array.from(ids)
+}
+
+function getFixSectionItemsFromRecords(sectionKey, records) {
+  switch (sectionKey) {
+    case 'hosts':
+      return records.flatMap(record => {
+        if (!record.host_key) return []
+        return String(record.host_key)
+          .split(',')
+          .map(item => item.trim())
+          .filter(Boolean)
+      })
+    case 'patches':
+      return records.flatMap(record => getPatchIdList(record.patch_id))
+    case 'cves':
+      return records.flatMap(record => {
+        if (!record.vul_id) return []
+        return String(record.vul_id)
+          .split(',')
+          .map(item => item.trim())
+          .filter(Boolean)
+      })
+    case 'packages':
+      return records.flatMap(record => getAffectedPackageNames(record)).filter(Boolean)
+    default:
+      return []
+  }
+}
+
+async function fetchFixDialogSectionItems(sectionKey, mode = 'preview') {
+  const idChunks = chunkArray(fixDialogData.patchStatusIds, FIX_DIALOG_DETAIL_BATCH_SIZE)
+  const uniqueItems = new Set()
+  let hasMore = false
+
+  for (let index = 0; index < idChunks.length; index += 1) {
+    const chunk = idChunks[index]
+    let response = null
+
+    if (sectionKey === 'hosts') {
+      response = await vulnerabilityApi.getPatchStatusHosts(chunk)
+    } else if (sectionKey === 'patches') {
+      response = await vulnerabilityApi.getPatchStatusPatches(chunk)
+    } else if (sectionKey === 'cves') {
+      response = await vulnerabilityApi.getPatchStatusCves(chunk)
+    } else if (sectionKey === 'packages') {
+      response = await vulnerabilityApi.getPatchStatusPackages(chunk)
+    }
+
+    const records = response?.data?.records || []
+    const items = getFixSectionItemsFromRecords(sectionKey, records)
+
+    for (const item of items) {
+      const normalized = typeof item === 'string' ? item.trim() : item
+      if (!normalized) {
+        continue
+      }
+
+      if (uniqueItems.has(normalized)) {
+        continue
+      }
+
+      if (mode === 'preview' && uniqueItems.size >= FIX_DIALOG_PREVIEW_LIMIT) {
+        hasMore = true
+        break
+      }
+
+      uniqueItems.add(normalized)
+    }
+
+    if (mode === 'preview' && (hasMore || uniqueItems.size >= FIX_DIALOG_PREVIEW_LIMIT)) {
+      hasMore = hasMore || index < idChunks.length - 1
+      break
+    }
+  }
+
+  return {
+    items: Array.from(uniqueItems),
+    hasMore: mode === 'preview' ? hasMore : false
+  }
+}
+
+async function loadFixDialogSection(sectionKey, mode = 'preview') {
+  const state = fixSectionState[sectionKey]
+  if (!state || state.loading || !fixDialogData.patchStatusIds.length) {
+    return
+  }
+
+  if (state.loaded && (state.mode === 'full' || state.mode === mode)) {
+    return
+  }
+
+  state.loading = true
+  state.error = ''
+
+  try {
+    const { items, hasMore } = await fetchFixDialogSectionItems(sectionKey, mode)
+    fixDialogData[sectionKey] = items
+    state.loaded = true
+    state.mode = mode
+    state.hasMore = hasMore
+  } catch (error) {
+    console.error(`加载${sectionKey}明细失败:`, error)
+    state.error = error.message || '加载失败，请稍后重试'
+  } finally {
+    state.loading = false
+  }
+}
+
+function getFixSectionBadgeValue(sectionKey) {
+  const state = fixSectionState[sectionKey]
+  if (!fixDialogData.patchStatusIds.length) {
+    return 0
+  }
+
+  if (state.loading) {
+    return '...'
+  }
+
+  if (!state.loaded) {
+    return '待加载'
+  }
+
+  if (state.mode === 'preview' && state.hasMore) {
+    return `${Math.min(fixDialogData[sectionKey].length, FIX_DIALOG_PREVIEW_LIMIT)}+`
+  }
+
+  return fixDialogData[sectionKey].length
+}
+
+function getFixSectionDisplayItems(sectionKey) {
+  return fixDialogData[sectionKey].slice(0, FIX_DIALOG_PREVIEW_LIMIT)
+}
+
+function getFixSectionHint(sectionKey) {
+  const state = fixSectionState[sectionKey]
+  const displayCount = getFixSectionDisplayItems(sectionKey).length
+
+  if (state.mode === 'preview') {
+    if (state.hasMore) {
+      return `当前仅展示前 ${displayCount} 项预览，可按需继续加载完整数据。`
+    }
+    return `已加载 ${displayCount} 项预览结果。`
+  }
+
+  if (fixDialogData[sectionKey].length > FIX_DIALOG_PREVIEW_LIMIT) {
+    return `已完整加载 ${fixDialogData[sectionKey].length} 项结果，当前仅展示前 ${displayCount} 项。`
+  }
+
+  return `已完整加载 ${fixDialogData[sectionKey].length} 项结果。`
+}
+
+function resetVulnSelectionState() {
+  vulnAllSelected.value = false
+  vulnExcludedRowKeys.value = []
+  selectedVulns.value = []
+  vulnTableRef.value?.clearSelection()
+}
+
 // 漏洞选择变化精确接管
 function handleVulnSelect(selection) {
-  vulnAllSelected.value = false
+  if (!vulnAllSelected.value) {
+    selectedVulns.value = selection
+    return
+  }
+
+  const currentPageKeys = vulnTableData.value.map(getVulnRowKey).filter(Boolean)
+  const currentSelectedKeys = new Set(selection.map(getVulnRowKey).filter(Boolean))
+  const nextExcludedKeys = new Set(vulnExcludedRowKeys.value)
+
+  currentPageKeys.forEach(key => {
+    nextExcludedKeys.delete(key)
+  })
+
+  currentPageKeys.forEach(key => {
+    if (!currentSelectedKeys.has(key)) {
+      nextExcludedKeys.add(key)
+    }
+  })
+
+  vulnExcludedRowKeys.value = Array.from(nextExcludedKeys)
   selectedVulns.value = selection
+
+  if (vulnPagination.total > 0 && vulnExcludedRowKeys.value.length >= vulnPagination.total) {
+    resetVulnSelectionState()
+  }
 }
 
 function handleVulnSelectAll(selection) {
-  vulnAllSelected.value = false
-  selectedVulns.value = selection
+  handleVulnSelect(selection)
 }
 
 // 恢复全选状态下可见页的勾选
@@ -1896,76 +2195,44 @@ function restoreVulnPageSelection() {
   if (!vulnAllSelected.value || !vulnTableRef.value) return
   vulnTableRef.value.clearSelection()
   vulnTableData.value.forEach(row => {
-    vulnTableRef.value.toggleRowSelection(row, true)
+    if (!vulnExcludedRowKeys.value.includes(getVulnRowKey(row))) {
+      vulnTableRef.value.toggleRowSelection(row, true)
+    }
   })
 }
 
 // 一键全选 / 一键取消 切换
 async function handleToggleVulnSelectAll() {
   if (vulnAllSelected.value) {
-    vulnAllSelected.value = false
-    selectedVulns.value = []
-    if (vulnTableRef.value) {
-      vulnTableRef.value.clearSelection()
-    }
+    resetVulnSelectionState()
   } else {
-    vulnAllSelected.value = true
-    selectedVulns.value = [...vulnTableData.value]
-
-    if (vulnTableRef.value) {
-      vulnTableRef.value.clearSelection()
-      vulnTableData.value.forEach(row => {
-        vulnTableRef.value.toggleRowSelection(row, true)
-      })
+    if (vulnPagination.total === 0) {
+      return
     }
+
+    vulnAllSelected.value = true
+    vulnExcludedRowKeys.value = []
+    selectedVulns.value = [...vulnTableData.value]
+    await nextTick()
+    restoreVulnPageSelection()
   }
 }
 
 // 修复选定的漏洞
 async function handleFixSelected() {
-  if (selectedVulns.value.length === 0) {
+  if (vulnSelectedCount.value === 0) {
     ElMessage.warning('请先选择要修复的漏洞')
     return
   }
 
-  fixDialogData.hosts = []
-  fixDialogData.patches = []
-  fixDialogData.cves = []
-  fixDialogData.packages = []
-  fixDialogData.patchStatusIds = []
+  resetFixDialogData()
+  fixDialogData.selectedVulnerabilityCount = vulnSelectedCount.value
 
   fixDialogVisible.value = true
   fixDialogLoading.value = true
 
   try {
-    let finalVulns = []
-    if (vulnAllSelected.value) {
-      // 惰性延迟加载：在点击修复按钮这一刻，才去异步拉取全量的筛选匹配漏洞数据！
-      const params = {
-        page: 0,
-        size: vulnPagination.total || 10000,
-        host_key: vulnFilters.host_key || '',
-        vul_id: vulnFilters.vul_id || null,
-        severity: vulnFilters.severity,
-        patch_status: vulnFilters.patch_status,
-        is_kernel: vulnFilters.is_kernel,
-        os_distro: vulnFilters.os_distro,
-        os_major_version: vulnFilters.os_major_version,
-        reboot_status: vulnFilters.reboot_status,
-        filter: vulnFilters.filter || vulnFilterText.value || ''
-      }
-      const response = await vulnerabilityApi.getVulnerabilityList(params)
-      const data = response?.data || response || {}
-      finalVulns = Array.isArray(data.content)
-        ? data.content
-        : Array.isArray(data.records)
-          ? data.records
-          : []
-    } else {
-      finalVulns = [...selectedVulns.value]
-    }
-
-    const ids = resolvePatchStatusIds(finalVulns)
+    const ids = await collectSelectedPatchStatusIdsForFix()
     if (ids.length === 0) {
       ElMessage.warning('所选漏洞缺少补丁状态ID，无法修复')
       fixDialogVisible.value = false
@@ -1973,56 +2240,18 @@ async function handleFixSelected() {
     }
 
     fixDialogData.patchStatusIds = ids
-
-    // 并行获取所有信息
-    const [hostsRes, patchesRes, cvesRes, pkgsRes] = await Promise.all([
-      vulnerabilityApi.getPatchStatusHosts(ids),
-      vulnerabilityApi.getPatchStatusPatches(ids),
-      vulnerabilityApi.getPatchStatusCves(ids),
-      vulnerabilityApi.getPatchStatusPackages(ids)
-    ])
-
-    // 处理主机列表（去重）
-    if (hostsRes?.data?.records) {
-      const allHosts = hostsRes.data.records.flatMap(r => {
-        if (!r.host_key) return []
-        return String(r.host_key)
-          .split(',')
-          .map(item => item.trim())
-          .filter(Boolean)
-      })
-      fixDialogData.hosts = [...new Set(allHosts)]
-    }
-
-    // 处理补丁列表（去重并按逗号拆分）
-    if (patchesRes?.data?.records) {
-      const allPatches = patchesRes.data.records.flatMap(r => getPatchIdList(r.patch_id))
-      fixDialogData.patches = [...new Set(allPatches)]
-    }
-
-    // 处理 CVE 列表（去重并按逗号拆分）
-    if (cvesRes?.data?.records) {
-      const allCves = cvesRes.data.records.flatMap(r => {
-        if (!r.vul_id) return []
-        return String(r.vul_id)
-          .split(',')
-          .map(item => item.trim())
-          .filter(Boolean)
-      })
-      fixDialogData.cves = [...new Set(allCves)]
-    }
-
-    // 处理软件包列表（去重）
-    if (pkgsRes?.data?.records) {
-      const allPkgs = pkgsRes.data.records.flatMap(record => getAffectedPackageNames(record))
-      fixDialogData.packages = [...new Set(allPkgs.filter(Boolean))]
-    }
   } catch (error) {
     ElMessage.error(`获取补丁信息失败: ${error.message || '未知错误'}`)
     fixDialogVisible.value = false
+    return
   } finally {
     fixDialogLoading.value = false
   }
+
+  // 默认并行加载各分区的预览数据，避免用户手动点击
+  fixSectionCards.forEach(section => {
+    loadFixDialogSection(section.key, 'preview')
+  })
 }
 
 // 确认开始修复
@@ -2193,8 +2422,7 @@ function refresh() {
 
 // 监听 tab 切换
 watch(activeTab, newTab => {
-  vulnAllSelected.value = false
-  selectedVulns.value = []
+  resetVulnSelectionState()
   if (newTab === 'vulnerability' && vulnTableData.value.length === 0) {
     loadVulnData()
   }
@@ -2204,6 +2432,12 @@ watch(activeTab, newTab => {
 watch(vulnTableData, () => {
   if (vulnAllSelected.value) {
     nextTick(() => restoreVulnPageSelection())
+  }
+})
+
+watch(fixDialogVisible, visible => {
+  if (!visible) {
+    resetFixDialogData()
   }
 })
 
@@ -2854,6 +3088,37 @@ defineExpose({
   min-height: 200px;
 }
 
+.fix-summary-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--el-border-color-light);
+  background: var(--el-fill-color-light);
+}
+
+.fix-summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.fix-summary-label {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.fix-summary-value {
+  font-size: 16px;
+  color: var(--el-text-color-primary);
+}
+
+.fix-summary-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
 .fix-grid-layout {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -2923,6 +3188,44 @@ defineExpose({
   .chip-tag {
     margin-bottom: 4px;
   }
+}
+
+.fix-info-placeholder,
+.fix-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fix-info-loading {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fix-info-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fix-info-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fix-info-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.fix-info-hint.is-error {
+  color: var(--el-color-danger);
+  text-align: center;
 }
 
 // 文字颜色 - Element UI 色值
