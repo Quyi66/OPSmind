@@ -783,4 +783,8 @@ watch(
     grid-template-columns: 1fr;
   }
 }
+
+:deep(.el-date-editor) {
+  height: 32px !important;
+}
 </style>
