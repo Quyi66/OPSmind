@@ -14,7 +14,7 @@
             <el-input
               v-model="cronExpression"
               placeholder="请输入或生成CRON表达式"
-              @input="handleCronChange"
+              @change="handleCronChange"
             >
               <template #append>
                 <el-button @click="handlePreview">
@@ -175,16 +175,52 @@ const cronParts = ref({
   year: ''
 })
 
-// 初始化时解析已有的 CRON 表达式
+// 当对话框打开时，使用最新的 initialValue 初始化/重置数据
 watch(
-  () => props.initialValue,
-  newVal => {
-    if (newVal) {
-      cronExpression.value = newVal
-      parseCronExpression(newVal)
+  () => props.modelValue,
+  active => {
+    if (active) {
+      const val = props.initialValue || '0 0 0 * * ?'
+      cronExpression.value = val
+      parseCronExpression(val)
     }
   },
   { immediate: true }
+)
+
+// 解决“日”和“周”字段的冲突，Quartz CRON 中两者必有一个为 "?"
+watch(
+  () => cronParts.value.day,
+  newVal => {
+    if (newVal && newVal !== '?') {
+      if (cronParts.value.week !== '?') {
+        cronParts.value.week = '?'
+        updateCronExpression()
+      }
+    } else if (newVal === '?') {
+      if (cronParts.value.week === '?') {
+        cronParts.value.week = '*'
+        updateCronExpression()
+      }
+    }
+  }
+)
+
+watch(
+  () => cronParts.value.week,
+  newVal => {
+    if (newVal && newVal !== '?') {
+      if (cronParts.value.day !== '?') {
+        cronParts.value.day = '?'
+        updateCronExpression()
+      }
+    } else if (newVal === '?') {
+      if (cronParts.value.day === '?') {
+        cronParts.value.day = '*'
+        updateCronExpression()
+      }
+    }
+  }
 )
 
 // 解析 CRON 表达式到各个部分

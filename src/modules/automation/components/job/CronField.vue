@@ -199,7 +199,7 @@ function getValueRange() {
 // 格式化值显示
 function formatValue(val) {
   if (props.fieldType === 'week') {
-    const weekDays = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日']
+    const weekDays = ['', '周日', '周一', '周二', '周三', '周四', '周五', '周六']
     return weekDays[val] || val
   }
   if (props.fieldType === 'month') {
@@ -222,7 +222,9 @@ function generateValue() {
     case 'interval':
       return `${intervalStart.value}/${intervalStep.value}`
     case 'specific':
-      return specificValues.value.sort((a, b) => a - b).join(',')
+      return specificValues.value.length > 0 
+        ? specificValues.value.sort((a, b) => a - b).join(',') 
+        : '*'
     default:
       return '*'
   }
