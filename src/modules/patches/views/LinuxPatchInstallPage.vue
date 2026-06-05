@@ -159,49 +159,11 @@
       :close-on-click-modal="false"
       class="patch-detail-dialog"
     >
-      <div class="patch-detail" v-if="patchDetail" v-loading="patchDetailLoading">
-        <h3 class="patch-detail__id">{{ patchDetail.patch_id }}</h3>
-        <div class="patch-detail__item">
-          <span class="patch-detail__label">概要：</span>
-          <span class="patch-detail__value">{{ patchDetail.title }}</span>
-        </div>
-        <div class="patch-detail__item">
-          <span class="patch-detail__label">严重性：</span>
-          <span class="patch-detail__value">
-            <el-tag
-              effect="dark"
-              class="severity-tag"
-              :class="'is-' + (patchDetail.severity || '').toLowerCase()"
-            >
-              {{ getSeverityLabel(patchDetail.severity) }}
-            </el-tag>
-          </span>
-        </div>
-        <div class="patch-detail__item">
-          <span class="patch-detail__label">描述</span>
-        </div>
-        <div class="patch-detail__desc">
-          {{ patchDetail.description }}
-        </div>
-        <div class="patch-detail__item">
-          <span class="patch-detail__label">关联CVE</span>
-        </div>
-        <ul class="patch-detail__cve-list">
-          <li v-for="cve in parseCveList(patchDetail.related_vuls)" :key="cve">
-            <a
-              :href="getCveUrl(cve, resolvePatchDistro(patchDetail))"
-              target="_blank"
-              class="cve-link"
-            >
-              {{ cve }}
-            </a>
-          </li>
-        </ul>
-      </div>
-      <div v-else-if="patchDetailLoading" class="patch-detail-loading">
-        <el-skeleton :rows="6" animated />
-      </div>
-      <el-empty v-else description="暂无补丁详情" :image-size="80" />
+      <PatchDetailContent
+        :patch="patchDetail || {}"
+        :loading="patchDetailLoading"
+        :cve-source="resolvePatchDistro(patchDetail)"
+      />
     </el-dialog>
 
     <!-- 统一补丁向导组件 -->
@@ -241,6 +203,7 @@ import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi } from '../api'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
+import PatchDetailContent from '../components/common/PatchDetailContent.vue'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
 
 // 加载状态
@@ -555,6 +518,32 @@ defineExpose({ refresh })
     &:hover {
       background: #dfe3e6;
     }
+  }
+}
+
+.severity-tag {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border: none;
+
+  &.is-critical {
+    background-color: #dc3545;
+    color: #fff;
+  }
+
+  &.is-important {
+    background-color: #fd7e14;
+    color: #fff;
+  }
+
+  &.is-moderate {
+    background-color: #ffc107;
+    color: #5c3c00;
+  }
+
+  &.is-low {
+    background-color: #6c757d;
+    color: #fff;
   }
 }
 
