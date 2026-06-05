@@ -46,9 +46,9 @@
                 {{ row.title || '-' }}
               </template>
             </el-table-column>
-            <el-table-column label="原执行时间" width="180">
+            <el-table-column label="严重级别" width="120">
               <template #default="{ row }">
-                {{ formatDateTime(row.executedDate) }}
+                {{ row.severityLabel || '-' }}
               </template>
             </el-table-column>
           </el-table>
@@ -60,7 +60,6 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatDateTime } from '../../utils'
 
 const props = defineProps({
   hostItems: {

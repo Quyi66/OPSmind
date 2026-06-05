@@ -19,17 +19,7 @@
     </div>
 
     <div class="ops-action-bar">
-      <el-button
-        type="primary"
-        size="small"
-        :disabled="rollbackableSelection.length === 0"
-        @click="rollbackDialogVisible = true"
-      >
-        回滚选中记录
-      </el-button>
-      <span class="win-patch-selection-text">
-        已选 {{ rollbackableSelection.length }} 条可回滚记录
-      </span>
+      <span class="win-patch-selection-text">安装 / 回滚日志（按时间倒序）</span>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -43,23 +33,12 @@
     </div>
 
     <div class="ops-table-wrapper">
-      <el-table
-        v-loading="loading"
-        :data="logList"
-        max-height="calc(100vh - 360px)"
-        @selection-change="selection => (selectedRows = selection)"
-      >
-        <el-table-column type="selection" width="48" :selectable="isRollbackSelectable" />
+      <el-table v-loading="loading" :data="logList" max-height="calc(100vh - 360px)">
         <el-table-column label="主机" width="130" show-overflow-tooltip>
           <template #default="{ row }">
             {{ pickValue(row, ['hostKey', 'host_key'], '-') }}
           </template>
         </el-table-column>
-        <!-- <el-table-column label="主机 ID" min-width="180" show-overflow-tooltip>
-          <template #default="{ row }">
-            {{ pickValue(row, ['hostId', 'host_id'], '-') }}
-          </template>
-        </el-table-column> -->
         <el-table-column label="KB 编号" width="130">
           <template #default="{ row }">
             {{ pickValue(row, ['kbNumber', 'kb_number'], '-') }}
@@ -94,19 +73,6 @@
             {{ pickValue(row, ['errorMessage', 'error_message'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              text
-              type="primary"
-              size="small"
-              :disabled="!isRollbackSelectable(row)"
-              @click="openSingleRollback(row)"
-            >
-              回滚
-            </el-button>
-          </template>
-        </el-table-column>
       </el-table>
     </div>
 
@@ -122,23 +88,12 @@
         @current-change="handlePageChange"
       />
     </div>
-
-    <WinPatchRollbackDialog
-      v-model="rollbackDialogVisible"
-      :selected-rows="rollbackDialogRows"
-      @submitted="handleTaskSubmitted"
-      @success="handleRollbackSuccess"
-    />
-
-    <WinPatchTaskDetailDrawer v-model="taskDrawerVisible" :task-id="currentTaskId" />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
-import WinPatchRollbackDialog from './WinPatchRollbackDialog.vue'
-import WinPatchTaskDetailDrawer from './WinPatchTaskDetailDrawer.vue'
 import { winPatchApi } from '../../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../../constants'
 import {
@@ -147,18 +102,12 @@ import {
   getInstallActionTagType,
   getInstallResultLabel,
   getInstallResultTagType,
-  isRollbackSelectable,
   parsePageResponse,
   pickValue
 } from '../../utils'
 
 const loading = ref(false)
 const logList = ref([])
-const selectedRows = ref([])
-const rollbackDialogVisible = ref(false)
-const rollbackDialogRows = ref([])
-const taskDrawerVisible = ref(false)
-const currentTaskId = ref('')
 
 const filters = reactive({
   hostId: ''
@@ -169,10 +118,6 @@ const pagination = reactive({
   pageSize: 20,
   total: 0
 })
-
-const rollbackableSelection = computed(() =>
-  selectedRows.value.filter(row => isRollbackSelectable(row))
-)
 
 async function loadLogs() {
   loading.value = true
@@ -185,7 +130,6 @@ async function loadLogs() {
     const page = parsePageResponse(response)
     logList.value = page.content
     pagination.total = page.total
-    selectedRows.value = []
   } finally {
     loading.value = false
   }
@@ -211,26 +155,6 @@ function handlePageChange(page) {
 function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
-  loadLogs()
-}
-
-function openSingleRollback(row) {
-  rollbackDialogRows.value = [row]
-  rollbackDialogVisible.value = true
-}
-
-function handleTaskSubmitted(task) {
-  currentTaskId.value = pickValue(task, ['id'], '')
-  taskDrawerVisible.value =
-    Boolean(currentTaskId.value) && pickValue(task, ['openDetail'], true) !== false
-  rollbackDialogRows.value = rollbackableSelection.value
-
-  if (pickValue(task, ['refreshLogs'], true) !== false) {
-    loadLogs()
-  }
-}
-
-function handleRollbackSuccess() {
   loadLogs()
 }
 

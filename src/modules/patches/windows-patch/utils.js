@@ -359,8 +359,21 @@ export function getInstallResultTagType(rowOrValue) {
 
 export function isPatchInstallable(row) {
   const status = normalizeUpper(pickValue(row, ['patchStatus', 'patch_status'], ''))
-  // 已修复/修复中（及旧枚举 已安装/安装中）不可再次安装
-  return !['REPAIRD', 'REPAIRING', 'INSTALLED', 'INSTALLING'].includes(status)
+  // 已修复 / 人工已修复 / 修复中（及旧枚举 已安装 / 安装中）不可再次安装
+  return ![
+    'IS_REPAIR',
+    'IS_REPAIR_ARTIFICIAL',
+    'REPAIRD',
+    'REPAIRING',
+    'INSTALLED',
+    'INSTALLING'
+  ].includes(status)
+}
+
+export function isPatchRollbackable(row) {
+  const status = normalizeUpper(pickValue(row, ['patchStatus', 'patch_status'], ''))
+  // 仅已修复（工具安装）的补丁可回滚；人工已修复无安装记录，暂不支持回滚
+  return ['IS_REPAIR', 'REPAIRD', 'INSTALLED'].includes(status)
 }
 
 export function isRollbackSelectable(row) {

@@ -54,9 +54,9 @@ export const WIN_PATCH_SEVERITY_LABELS = {
 
 export const WIN_PATCH_STATUS_OPTIONS = [
   { label: '待修复', value: 'no_repair' },
-  { label: '待安装', value: 'is_repair' },
+  { label: '已修复', value: 'is_repair' },
+  { label: '人工已修复', value: 'is_repair_artificial' },
   { label: '修复中', value: 'repairing' },
-  { label: '已修复', value: 'repaird' },
   { label: '修复失败', value: 'repair_faild' }
 ]
 
@@ -155,7 +155,8 @@ export const WIN_PATCH_TASK_SKIPPABLE_STEPS = ['PRE_CHECK', 'RESTART', 'VALIDATE
 
 export const WIN_PATCH_PATCH_STATUS_LABELS = {
   NO_REPAIR: '待修复',
-  IS_REPAIR: '待安装',
+  IS_REPAIR: '已修复',
+  IS_REPAIR_ARTIFICIAL: '人工已修复',
   REPAIRING: '修复中',
   REPAIRD: '已修复',
   REPAIR_FAILD: '修复失败',
@@ -171,7 +172,8 @@ export const WIN_PATCH_PATCH_STATUS_LABELS = {
 
 export const WIN_PATCH_PATCH_STATUS_TAG_TYPES = {
   NO_REPAIR: 'danger',
-  IS_REPAIR: 'warning',
+  IS_REPAIR: 'success',
+  IS_REPAIR_ARTIFICIAL: 'success',
   REPAIRING: 'warning',
   REPAIRD: 'success',
   REPAIR_FAILD: 'danger',

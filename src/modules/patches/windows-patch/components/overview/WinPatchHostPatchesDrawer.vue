@@ -89,8 +89,16 @@
         >
           安装选中补丁
         </el-button>
+        <el-button
+          type="warning"
+          size="small"
+          :disabled="rollbackableSelection.length === 0"
+          @click="rollbackWizardVisible = true"
+        >
+          回滚选中补丁
+        </el-button>
         <span class="win-patch-selection-text">
-          已选 {{ installableSelection.length }} 条可安装记录
+          已选 {{ installableSelection.length }} 条可安装 / {{ rollbackableSelection.length }} 条可回滚
         </span>
         <span style="flex: 1"></span>
         <el-button
@@ -111,7 +119,7 @@
           max-height="440"
           @selection-change="selection => (selectedRows = selection)"
         >
-          <el-table-column type="selection" width="48" :selectable="isPatchInstallable" />
+          <el-table-column type="selection" width="48" :selectable="isPatchActionable" />
           <el-table-column label="KB 编号" width="130">
             <template #default="{ row }">
               {{ pickValue(row, ['kbNumber', 'kb_number'], '-') }}
@@ -213,6 +221,13 @@
         @submitted="handleInstallTaskCreated"
         @success="handleInstallSuccess"
       />
+
+      <WinPatchRollbackDialog
+        v-model="rollbackWizardVisible"
+        :selected-rows="rollbackableSelection"
+        @submitted="handleRollbackTaskCreated"
+        @success="handleRollbackSuccess"
+      />
     </div>
   </el-dialog>
 </template>
@@ -222,6 +237,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchInstallWizard from '../install-wizard/WinPatchInstallWizard.vue'
+import WinPatchRollbackDialog from '../tasks/WinPatchRollbackDialog.vue'
 import { winPatchApi } from '../../api'
 import {
   WIN_PATCH_PAGE_SIZE_OPTIONS,
@@ -235,6 +251,7 @@ import {
   getSeverityLabel,
   getSeverityTagType,
   isPatchInstallable,
+  isPatchRollbackable,
   normalizeBoolean,
   parsePageResponse,
   pickValue,
@@ -268,6 +285,7 @@ const loading = ref(false)
 const patchList = ref([])
 const selectedRows = ref([])
 const installWizardVisible = ref(false)
+const rollbackWizardVisible = ref(false)
 
 const pagination = reactive({
   page: 1,
@@ -284,6 +302,14 @@ const filters = reactive({
 const installableSelection = computed(() =>
   selectedRows.value.filter(row => isPatchInstallable(row))
 )
+
+const rollbackableSelection = computed(() =>
+  selectedRows.value.filter(row => isPatchRollbackable(row))
+)
+
+function isPatchActionable(row) {
+  return isPatchInstallable(row) || isPatchRollbackable(row)
+}
 
 function resolveCveIds(row) {
   const raw = pickValue(row, ['cveIds', 'cve_ids'], '')
@@ -364,6 +390,18 @@ function handleInstallTaskCreated(task) {
 }
 
 function handleInstallSuccess() {
+  loadPatches({ silent: true })
+}
+
+function handleRollbackTaskCreated(task) {
+  emit('task-submitted', {
+    ...(task || {}),
+    openDetail: false,
+    refreshOverview: false
+  })
+}
+
+function handleRollbackSuccess() {
   loadPatches({ silent: true })
 }
 

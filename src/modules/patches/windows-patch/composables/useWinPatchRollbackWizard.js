@@ -4,10 +4,11 @@ import { winPatchApi } from '../api'
 import { WIN_PATCH_ROLLBACK_PIPELINE_STEPS, WIN_PATCH_ROLLBACK_WIZARD_STEPS } from '../constants'
 import { useWinPatchPolling } from './useWinPatchPolling'
 import {
+  getSeverityLabel,
   getTaskStatusValue,
   normalizeUpper,
   pickValue,
-  resolveInstallLogId,
+  resolvePatchStatusId,
   unwrapResponse
 } from '../utils'
 
@@ -259,19 +260,20 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
   const dialogBusy = computed(() => {
     return executionSubmitting.value || pipelineStatus.value === 'running'
   })
-  const selectedInstallLogIds = computed(() => {
+  const selectedPatchStatusIds = computed(() => {
     const rows = Array.isArray(selectedRows?.value) ? selectedRows.value : []
-    return Array.from(new Set(rows.map(row => resolveInstallLogId(row)).filter(Boolean)))
+    return Array.from(new Set(rows.map(row => resolvePatchStatusId(row)).filter(Boolean)))
   })
   const selectedRollbackItems = computed(() => {
     const rows = Array.isArray(selectedRows?.value) ? selectedRows.value : []
     return rows.map(row => ({
-      id: resolveInstallLogId(row),
+      id: resolvePatchStatusId(row),
       kbNumber: pickValue(row, ['kbNumber', 'kb_number'], '-'),
       title: pickValue(row, ['title'], '-'),
       hostId: String(pickValue(row, ['hostId', 'host_id'], '')).trim(),
       hostKey: String(pickValue(row, ['hostKey', 'host_key'], '-')).trim() || '-',
-      executedDate: pickValue(row, ['executedDate', 'executed_date'], '')
+      severity: pickValue(row, ['severity'], ''),
+      severityLabel: getSeverityLabel(pickValue(row, ['severity'], ''))
     }))
   })
   const selectedHostItems = computed(() => {
@@ -456,12 +458,12 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
       return currentTaskId.value
     }
 
-    if (!selectedInstallLogIds.value.length) {
-      throw new Error('当前选择中没有可回滚的日志记录')
+    if (!selectedPatchStatusIds.value.length) {
+      throw new Error('当前选择中没有可回滚的补丁记录')
     }
 
     const response = await winPatchApi.createRollbackTask({
-      installLogIds: selectedInstallLogIds.value,
+      patchStatusIds: selectedPatchStatusIds.value,
       reboot: rollbackOptions.value.reboot,
       rescanAfter: rollbackOptions.value.rescanAfter
     })
@@ -654,7 +656,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
           : 'execute'
       )
       await triggerTaskStep('ROLLBACK', 'execute', () =>
-        winPatchApi.rollbackPatches(selectedInstallLogIds.value, rollbackOptions.value.reboot)
+        winPatchApi.rollbackPatches(selectedPatchStatusIds.value, rollbackOptions.value.reboot)
       )
       await triggerTaskStep(
         'RESTART',
@@ -798,7 +800,7 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     resetState,
     rollbackOptions,
     selectedHostItems,
-    selectedInstallLogIds,
+    selectedPatchStatusIds,
     selectedRollbackItems,
     showRunResultDialog,
     skipCurrentStep,

@@ -4,7 +4,20 @@ const WIN_PATCH_API_PREFIX = '/vap/api/vap/win-patch'
 const WIN_PATCH_ACTION_API_PREFIX = '/vap/api/vap/win/patch'
 
 function resolveRebootFlag(reboot) {
+  if (typeof reboot === 'string') {
+    return reboot === 'yes' ? 'yes' : 'no'
+  }
   return reboot ? 'yes' : 'no'
+}
+
+function normalizeIdList(ids) {
+  if (Array.isArray(ids)) {
+    return ids
+  }
+  if (Array.isArray(ids?.winPatchStatusIds)) {
+    return ids.winPatchStatusIds
+  }
+  return []
 }
 
 export const winPatchApi = {
@@ -20,8 +33,8 @@ export const winPatchApi = {
     return apiService.delete(`${WIN_PATCH_API_PREFIX}/wsus-config/${encodeURIComponent(id)}`)
   },
 
-  // 触发扫描：目标机本地采集（不依赖 WSUS / 联网），body 为 hostId 数组，
-  // 异步返回 { _status: 'ok', runId }
+  // 触发扫描：目标机用 WUA 引擎对接内网 WSUS 扫描（客户端无需外网），body 为 hostId 数组，
+  // 结果经 /win/callback/scan 异步落库，立即返回 { _status: 'ok', runId }
   createScanTask(hostIds = []) {
     const body = Array.isArray(hostIds) ? hostIds : (hostIds?.hostIds ?? [])
     return apiService.post(`${WIN_PATCH_API_PREFIX}/tasks/scan`, body)
@@ -35,21 +48,21 @@ export const winPatchApi = {
     return apiService.post(`${WIN_PATCH_API_PREFIX}/tasks/rollback`, payload)
   },
 
-  // 安装补丁：入参为 vap2_curr_machine_status_win.id 数组，reboot 走 query
-  installPatches(currMachineStatusWinIds = [], reboot = false) {
-    return apiService.post(`${WIN_PATCH_ACTION_API_PREFIX}/install`, currMachineStatusWinIds, {
-      params: {
-        reboot: resolveRebootFlag(reboot)
-      }
+  // 安装补丁：POST /api/vap/win/patch/update
+  // 入参为 vap2_curr_machine_status_win.id 数组，reboot 随 body 下发（yes|no）
+  installPatches(winPatchStatusIds = [], reboot = false) {
+    return apiService.post(`${WIN_PATCH_ACTION_API_PREFIX}/update`, {
+      winPatchStatusIds: normalizeIdList(winPatchStatusIds),
+      reboot: resolveRebootFlag(reboot)
     })
   },
 
-  // 回滚补丁：入参为 vap2_hist_update_pkgs_win.id 数组，reboot 走 query
-  rollbackPatches(histUpdatePkgsWinIds = [], reboot = false) {
-    return apiService.post(`${WIN_PATCH_ACTION_API_PREFIX}/rollback`, histUpdatePkgsWinIds, {
-      params: {
-        reboot: resolveRebootFlag(reboot)
-      }
+  // 回滚补丁：POST /api/vap/win/patch/rollback
+  // 入参为 vap2_curr_machine_status_win.id 数组，reboot 随 body 下发（yes|no）
+  rollbackPatches(winPatchStatusIds = [], reboot = false) {
+    return apiService.post(`${WIN_PATCH_ACTION_API_PREFIX}/rollback`, {
+      winPatchStatusIds: normalizeIdList(winPatchStatusIds),
+      reboot: resolveRebootFlag(reboot)
     })
   },
 
