@@ -54,7 +54,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { winPatchApi } from '../../api'
-import { pickValue, resolveHostKey, resolvePatchStatusId, unwrapResponse } from '../../utils'
+import { pickValue, resolveHostId, resolveHostKey, resolvePatchStatusId, unwrapResponse } from '../../utils'
 
 const props = defineProps({
   modelValue: {
@@ -88,15 +88,30 @@ const patchStatusIds = computed(() =>
   Array.from(new Set(props.selectedRows.map(row => resolvePatchStatusId(row)).filter(Boolean)))
 )
 
+const hostIds = computed(() => {
+  const rowHostIds = props.selectedRows
+    .map(row => String(pickValue(row, ['hostId', 'host_id'], '')).trim())
+    .filter(Boolean)
+  const fallbackHostId = resolveHostId(props.hostSummary)
+
+  return Array.from(new Set([...rowHostIds, fallbackHostId].filter(Boolean)))
+})
+
 async function handleSubmit() {
   if (!patchStatusIds.value.length) {
     ElMessage.warning('当前选择中没有可安装的补丁记录')
     return
   }
 
+  if (!hostIds.value.length) {
+    ElMessage.warning('当前选择中缺少主机信息，无法创建安装任务')
+    return
+  }
+
   submitting.value = true
   try {
     const response = await winPatchApi.createInstallTask({
+      hostIds: hostIds.value,
       patchStatusIds: patchStatusIds.value,
       reboot: form.reboot,
       rescanAfter: form.rescanAfter

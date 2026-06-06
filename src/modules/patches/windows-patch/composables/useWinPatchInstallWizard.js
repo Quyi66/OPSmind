@@ -8,9 +8,40 @@ import {
   getTaskStatusValue,
   normalizeUpper,
   pickValue,
+  resolveHostId,
   resolvePatchStatusId,
   unwrapResponse
 } from '../utils'
+
+function getStepSuccessStatuses(stepKey) {
+  switch (normalizeUpper(stepKey)) {
+    case 'PRE_CHECK':
+      return ['PRE_CHECK_DONE']
+    case 'INSTALL':
+      return ['INSTALL_DONE']
+    case 'RESTART':
+      return ['RESTART_DONE']
+    case 'VALIDATE':
+      return ['COMPLETED']
+    default:
+      return []
+  }
+}
+
+function getStepFailedStatuses(stepKey) {
+  switch (normalizeUpper(stepKey)) {
+    case 'PRE_CHECK':
+      return ['PRE_CHECK_FAILED', 'FAILED']
+    case 'INSTALL':
+      return ['INSTALL_FAILED', 'FAILED']
+    case 'RESTART':
+      return ['FAILED']
+    case 'VALIDATE':
+      return ['VALIDATE_FAILED', 'FAILED']
+    default:
+      return ['FAILED', 'ERROR']
+  }
+}
 
 function createInstallOptions() {
   return {
@@ -269,6 +300,15 @@ export function useWinPatchInstallWizard({
     const rows = Array.isArray(selectedRows?.value) ? selectedRows.value : []
     return Array.from(new Set(rows.map(row => resolvePatchStatusId(row)).filter(Boolean)))
   })
+  const selectedHostIds = computed(() => {
+    const rows = Array.isArray(selectedRows?.value) ? selectedRows.value : []
+    const rowHostIds = rows
+      .map(row => String(pickValue(row, ['hostId', 'host_id'], '')).trim())
+      .filter(Boolean)
+    const fallbackHostId = resolveHostId(hostSummary?.value || hostSummary)
+
+    return Array.from(new Set([...rowHostIds, fallbackHostId].filter(Boolean)))
+  })
   const selectedPatchItems = computed(() => {
     const rows = Array.isArray(selectedRows?.value) ? selectedRows.value : []
     return rows.map(row => ({
@@ -447,7 +487,12 @@ export function useWinPatchInstallWizard({
       throw new Error('当前选择中没有可安装的补丁记录')
     }
 
+    if (!selectedHostIds.value.length) {
+      throw new Error('当前选择中缺少主机信息，无法创建安装任务')
+    }
+
     const response = await winPatchApi.createInstallTask({
+      hostIds: selectedHostIds.value,
       patchStatusIds: selectedPatchStatusIds.value,
       reboot: installOptions.value.reboot,
       rescanAfter: installOptions.value.rescanAfter
@@ -511,6 +556,8 @@ export function useWinPatchInstallWizard({
   function waitForStepCompletion(stepKey, actionLabel) {
     return new Promise((resolve, reject) => {
       let settled = false
+      const successStatuses = getStepSuccessStatuses(stepKey)
+      const failedStatuses = getStepFailedStatuses(stepKey)
 
       const finalize = (success, error = null) => {
         if (settled) {
@@ -537,13 +584,14 @@ export function useWinPatchInstallWizard({
           return
         }
 
-        if (['FAILED', 'ERROR'].includes(stepStatus) || ['FAILED', 'ERROR'].includes(taskStatus)) {
-          finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
+        if (successStatuses.includes(taskStatus)) {
+          finalize(true)
           return
         }
 
-        if (stepKey === 'VALIDATE' && ['COMPLETED', 'SUCCESS'].includes(taskStatus)) {
-          finalize(true)
+        if (['FAILED', 'ERROR'].includes(stepStatus) || failedStatuses.includes(taskStatus)) {
+          finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
+          return
         }
       }
 
@@ -561,7 +609,7 @@ export function useWinPatchInstallWizard({
     })
   }
 
-  async function triggerTaskStep(stepKey, action, executor = null) {
+  async function triggerTaskStep(stepKey, action, executeOptions = {}) {
     const currentStatus = getAuditStepStatus(stepKey)
     if (['SUCCESS', 'SKIPPED'].includes(currentStatus)) {
       return
@@ -583,21 +631,20 @@ export function useWinPatchInstallWizard({
     const actionLabel = action === 'skip' ? `跳过${stepLabel}` : stepLabel
 
     try {
-      if (action !== 'skip' && typeof executor === 'function') {
-        // 真正的安装动作走新接口（/win/patch/install），返回 {_status:"ok"}，
-        // 进度仍由 getTaskDetail 轮询的步骤状态判定。
-        await executor()
-        await waitForStepCompletion(stepKey, actionLabel)
-        return
-      }
-
       const response =
         action === 'skip'
-          ? await winPatchApi.skipTaskStep(currentTaskId.value)
-          : await winPatchApi.executeTaskStep(currentTaskId.value)
+          ? await winPatchApi.skipTaskStep(currentTaskId.value, taskDetail.value, {
+              stepKey,
+              taskType: 'INSTALL'
+            })
+          : await winPatchApi.executeTaskStep(currentTaskId.value, taskDetail.value, {
+              stepKey,
+              taskType: 'INSTALL',
+              ...executeOptions
+            })
       applyTaskSnapshot(unwrapResponse(response))
 
-      if (action === 'skip') {
+      if (action === 'skip' && stepKey !== 'RESTART') {
         taskAuditSteps.value = taskAuditSteps.value.map(step => {
           if (normalizeUpper(step?.step) !== stepKey) {
             return step
@@ -640,12 +687,11 @@ export function useWinPatchInstallWizard({
           ? 'skip'
           : 'execute'
       )
-      await triggerTaskStep('INSTALL', 'execute', () =>
-        winPatchApi.installPatches(selectedPatchStatusIds.value, installOptions.value.reboot)
-      )
+      await triggerTaskStep('INSTALL', 'execute')
       await triggerTaskStep(
         'RESTART',
-        skippedSteps.value.restart || !installOptions.value.reboot ? 'skip' : 'execute'
+        skippedSteps.value.restart || !installOptions.value.reboot ? 'skip' : 'execute',
+        { confirmText: '确认重启' }
       )
       await triggerTaskStep(
         'VALIDATE',

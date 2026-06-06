@@ -19,7 +19,16 @@
     </div>
 
     <div class="ops-action-bar">
+      <el-button
+        type="warning"
+        size="small"
+        :disabled="selectedRows.length === 0"
+        @click="rollbackDialogVisible = true"
+      >
+        回滚选中记录
+      </el-button>
       <span class="win-patch-selection-text">安装 / 回滚日志（按时间倒序）</span>
+      <span class="win-patch-selection-text">已选 {{ selectedRows.length }} 条可回滚记录</span>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -33,7 +42,13 @@
     </div>
 
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="logList" max-height="calc(100vh - 360px)">
+      <el-table
+        v-loading="loading"
+        :data="logList"
+        max-height="calc(100vh - 360px)"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="48" :selectable="isRollbackRowSelectable" />
         <el-table-column label="主机" width="130" show-overflow-tooltip>
           <template #default="{ row }">
             {{ pickValue(row, ['hostKey', 'host_key'], '-') }}
@@ -88,12 +103,19 @@
         @current-change="handlePageChange"
       />
     </div>
+
+    <WinPatchRollbackDialog
+      v-model="rollbackDialogVisible"
+      :selected-rows="selectedRows"
+      @success="handleRollbackSuccess"
+    />
   </div>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
+import WinPatchRollbackDialog from './WinPatchRollbackDialog.vue'
 import { winPatchApi } from '../../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../../constants'
 import {
@@ -102,12 +124,15 @@ import {
   getInstallActionTagType,
   getInstallResultLabel,
   getInstallResultTagType,
+  isRollbackSelectable,
   parsePageResponse,
   pickValue
 } from '../../utils'
 
 const loading = ref(false)
 const logList = ref([])
+const selectedRows = ref([])
+const rollbackDialogVisible = ref(false)
 
 const filters = reactive({
   hostId: ''
@@ -130,9 +155,18 @@ async function loadLogs() {
     const page = parsePageResponse(response)
     logList.value = page.content
     pagination.total = page.total
+    selectedRows.value = []
   } finally {
     loading.value = false
   }
+}
+
+function isRollbackRowSelectable(row) {
+  return isRollbackSelectable(row)
+}
+
+function handleSelectionChange(rows) {
+  selectedRows.value = Array.isArray(rows) ? rows : []
 }
 
 function handleSearch() {
@@ -155,6 +189,11 @@ function handlePageChange(page) {
 function handleSizeChange(size) {
   pagination.pageSize = size
   pagination.page = 1
+  loadLogs()
+}
+
+function handleRollbackSuccess() {
+  rollbackDialogVisible.value = false
   loadLogs()
 }
 

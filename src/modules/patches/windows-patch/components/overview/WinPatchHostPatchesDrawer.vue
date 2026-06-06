@@ -1,11 +1,12 @@
 <template>
-  <el-dialog
+  <el-drawer
     v-model="visibleModel"
     title="主机补丁详情"
-    width="1240px"
-    top="4vh"
+    direction="rtl"
+    size="82%"
     destroy-on-close
     append-to-body
+    class="win-patch-host-drawer"
     :close-on-click-modal="false"
   >
     <div class="win-patch-host-dialog">
@@ -89,16 +90,8 @@
         >
           安装选中补丁
         </el-button>
-        <el-button
-          type="warning"
-          size="small"
-          :disabled="rollbackableSelection.length === 0"
-          @click="rollbackWizardVisible = true"
-        >
-          回滚选中补丁
-        </el-button>
         <span class="win-patch-selection-text">
-          已选 {{ installableSelection.length }} 条可安装 / {{ rollbackableSelection.length }} 条可回滚
+          已选 {{ installableSelection.length }} 条可安装补丁
         </span>
         <span style="flex: 1"></span>
         <el-button
@@ -116,7 +109,7 @@
         <el-table
           v-loading="loading"
           :data="patchList"
-          max-height="440"
+          height="100%"
           @selection-change="selection => (selectedRows = selection)"
         >
           <el-table-column type="selection" width="48" :selectable="isPatchActionable" />
@@ -141,19 +134,29 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="关联 CVE" min-width="200" show-overflow-tooltip>
+          <el-table-column label="关联 CVE" min-width="220">
             <template #default="{ row }">
-              <template v-if="resolveCveIds(row).length">
-                <el-tag
-                  v-for="cveId in resolveCveIds(row)"
+              <div v-if="resolveCveIds(row).length" class="cve-tags">
+                <a
+                  v-for="cveId in resolveCveIds(row).slice(0, 3)"
                   :key="cveId"
-                  size="small"
-                  effect="plain"
-                  class="win-patch-cve-tag"
+                  :href="getWinCveUrl(cveId)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="cve-link"
+                  @click.stop
                 >
                   {{ cveId }}
-                </el-tag>
-              </template>
+                </a>
+                <button
+                  v-if="resolveCveIds(row).length > 3"
+                  type="button"
+                  class="cve-more"
+                  @click.stop="handleShowAllCves(row)"
+                >
+                  +{{ resolveCveIds(row).length - 3 }}
+                </button>
+              </div>
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -222,14 +225,32 @@
         @success="handleInstallSuccess"
       />
 
-      <WinPatchRollbackDialog
-        v-model="rollbackWizardVisible"
-        :selected-rows="rollbackableSelection"
-        @submitted="handleRollbackTaskCreated"
-        @success="handleRollbackSuccess"
-      />
+      <el-dialog
+        v-model="cveDialogVisible"
+        title="关联 CVE"
+        width="560px"
+        append-to-body
+        destroy-on-close
+      >
+        <div v-if="cveDialogList.length" class="cve-dialog">
+          <a
+            v-for="cveId in cveDialogList"
+            :key="cveId"
+            :href="getWinCveUrl(cveId)"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="cve-dialog-item"
+          >
+            {{ cveId }}
+          </a>
+        </div>
+        <span v-else>-</span>
+        <template #footer>
+          <el-button @click="cveDialogVisible = false">关闭</el-button>
+        </template>
+      </el-dialog>
     </div>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <script setup>
@@ -237,7 +258,6 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchInstallWizard from '../install-wizard/WinPatchInstallWizard.vue'
-import WinPatchRollbackDialog from '../tasks/WinPatchRollbackDialog.vue'
 import { winPatchApi } from '../../api'
 import {
   WIN_PATCH_PAGE_SIZE_OPTIONS,
@@ -251,7 +271,6 @@ import {
   getSeverityLabel,
   getSeverityTagType,
   isPatchInstallable,
-  isPatchRollbackable,
   normalizeBoolean,
   parsePageResponse,
   pickValue,
@@ -285,7 +304,8 @@ const loading = ref(false)
 const patchList = ref([])
 const selectedRows = ref([])
 const installWizardVisible = ref(false)
-const rollbackWizardVisible = ref(false)
+const cveDialogVisible = ref(false)
+const cveDialogList = ref([])
 
 const pagination = reactive({
   page: 1,
@@ -303,12 +323,8 @@ const installableSelection = computed(() =>
   selectedRows.value.filter(row => isPatchInstallable(row))
 )
 
-const rollbackableSelection = computed(() =>
-  selectedRows.value.filter(row => isPatchRollbackable(row))
-)
-
 function isPatchActionable(row) {
-  return isPatchInstallable(row) || isPatchRollbackable(row)
+  return isPatchInstallable(row)
 }
 
 function resolveCveIds(row) {
@@ -321,6 +337,18 @@ function resolveCveIds(row) {
     .split(/[,，;；\s]+/)
     .map(item => item.trim())
     .filter(Boolean)
+}
+
+// Windows CVE 跳转 MSRC（微软安全响应中心）官方漏洞详情页
+function getWinCveUrl(cveId) {
+  const id = String(cveId || '').trim()
+  if (!id) return ''
+  return `https://msrc.microsoft.com/update-guide/vulnerability/${encodeURIComponent(id)}`
+}
+
+function handleShowAllCves(row) {
+  cveDialogList.value = resolveCveIds(row)
+  cveDialogVisible.value = true
 }
 
 function applyInitialFilters() {
@@ -393,18 +421,6 @@ function handleInstallSuccess() {
   loadPatches({ silent: true })
 }
 
-function handleRollbackTaskCreated(task) {
-  emit('task-submitted', {
-    ...(task || {}),
-    openDetail: false,
-    refreshOverview: false
-  })
-}
-
-function handleRollbackSuccess() {
-  loadPatches({ silent: true })
-}
-
 watch(
   [() => props.modelValue, () => props.hostSummary, () => props.initialFilters],
   ([open, host]) => {
@@ -420,26 +436,39 @@ watch(
 </script>
 
 <style scoped lang="scss">
+.win-patch-host-drawer {
+  :deep(.el-drawer__header) {
+    margin-bottom: 0;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+
+  :deep(.el-drawer__body) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 16px 20px;
+    overflow: hidden;
+  }
+}
+
 .win-patch-host-dialog {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1 1 auto;
   min-height: 0;
-  max-height: calc(90vh - 90px);
   overflow: hidden;
 }
 
 .win-patch-descriptions {
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  flex: 0 0 auto;
 }
 
 .win-patch-selection-text {
   font-size: 13px;
   color: var(--el-text-color-secondary);
-}
-
-.win-patch-cve-tag {
-  margin: 0 4px 2px 0;
 }
 
 .win-patch-host-table {
@@ -448,13 +477,69 @@ watch(
   min-height: 0;
 }
 
-:deep(.win-patch-table__time-column .cell) {
-  white-space: nowrap;
+.cve-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+
+  .cve-link {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #6c757d;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+    text-decoration: none;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #545b62;
+    }
+  }
+
+  .cve-more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    background: #e9ecef;
+    color: var(--el-text-color-secondary);
+    border-radius: 4px;
+    font-size: 12px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #dfe3e6;
+    }
+  }
 }
 
-@media (max-width: 1280px) {
-  .win-patch-host-dialog {
-    max-height: calc(92vh - 84px);
+.cve-dialog {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.cve-dialog-item {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #6c757d;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #545b62;
   }
+}
+
+:deep(.win-patch-table__time-column .cell) {
+  white-space: nowrap;
 }
 </style>

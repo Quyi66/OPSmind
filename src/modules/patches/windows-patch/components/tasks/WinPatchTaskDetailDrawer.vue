@@ -202,6 +202,7 @@ import {
   getTaskStepTagType,
   getTaskStepValue,
   getTaskStatusLabel,
+  getTaskStatusValue,
   getTaskStatusTagType,
   getTaskTypeLabel,
   getTaskTypeTagType,
@@ -246,6 +247,7 @@ const taskRunId = computed(() =>
   String(pickValue(taskDetail.value, ['runId', 'run_id'], '')).trim()
 )
 const currentStepValue = computed(() => getTaskStepValue(taskDetail.value))
+const currentTaskStatusValue = computed(() => getTaskStatusValue(taskDetail.value))
 const showStepActions = computed(() => isStepControlledTask(taskDetail.value))
 const isExecutePhase = computed(() =>
   ['EXECUTE', 'INSTALL', 'ROLLBACK'].includes(currentStepValue.value)
@@ -410,9 +412,20 @@ const availableExecuteRuns = computed(() => {
 const canExecuteCurrentStep = computed(() => {
   return (
     showStepActions.value &&
-    getTaskStatusLabel(taskDetail.value) === '待执行' &&
     Boolean(currentStepValue.value) &&
-    currentStepValue.value !== 'COMPLETED'
+    currentStepValue.value !== 'COMPLETED' &&
+    ![
+      'COMPLETED',
+      'SUCCESS',
+      'PASS',
+      'FAILED',
+      'ERROR',
+      'PRE_CHECK_FAILED',
+      'INSTALL_FAILED',
+      'ROLLBACK_FAILED',
+      'VALIDATE_FAILED'
+    ].includes(currentTaskStatusValue.value) &&
+    !isTaskRunning(taskDetail.value)
   )
 })
 const canSkipCurrentStep = computed(
@@ -430,11 +443,14 @@ const executeButtonText = computed(() => {
 const stepActionHint = computed(() => {
   if (!showStepActions.value) return ''
 
-  if (getTaskStatusLabel(taskDetail.value) === '已完成') {
+  if (['COMPLETED', 'SUCCESS', 'PASS'].includes(currentTaskStatusValue.value)) {
     return '任务已完成，无需继续处理。'
   }
 
-  if (getTaskStatusLabel(taskDetail.value) === '失败') {
+  if (
+    ['FAILED', 'ERROR', 'PRE_CHECK_FAILED', 'INSTALL_FAILED', 'ROLLBACK_FAILED', 'VALIDATE_FAILED']
+      .includes(currentTaskStatusValue.value)
+  ) {
     return '任务执行失败，请结合错误信息确认是否需要重试。'
   }
 
@@ -525,7 +541,9 @@ async function handleExecuteStep() {
 
   stepSubmitting.value = true
   try {
-    const response = await winPatchApi.executeTaskStep(currentTaskId.value)
+    const response = await winPatchApi.executeTaskStep(currentTaskId.value, taskDetail.value, {
+      confirmText: '确认重启'
+    })
     applyTaskSnapshot(unwrapResponse(response))
     ElMessage.success(`${executeButtonText.value}已发起`)
 
@@ -557,7 +575,7 @@ async function handleSkipStep() {
 
   stepSubmitting.value = true
   try {
-    const response = await winPatchApi.skipTaskStep(currentTaskId.value)
+    const response = await winPatchApi.skipTaskStep(currentTaskId.value, taskDetail.value)
     applyTaskSnapshot(unwrapResponse(response))
     ElMessage.success(`${getTaskStepLabel(taskDetail.value)}已跳过`)
 

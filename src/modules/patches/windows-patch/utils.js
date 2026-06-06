@@ -112,6 +112,12 @@ export function resolveInstallLogId(row) {
   return String(pickValue(row, ['installLogId', 'install_log_id', 'id'], '')).trim()
 }
 
+export function resolveHistUpdateId(row) {
+  return String(
+    pickValue(row, ['histUpdateId', 'hist_update_id', 'installLogId', 'install_log_id', 'id'], '')
+  ).trim()
+}
+
 export function resolveWsusConfigId(config) {
   return String(pickValue(config, ['id'], '')).trim()
 }
@@ -386,7 +392,15 @@ export function isRollbackSelectable(row) {
 
 export function isTaskRunning(rowOrValue) {
   const status = getTaskStatusValue(rowOrValue)
-  return ['RUNNING', 'IN_PROGRESS'].includes(status)
+  return [
+    'RUNNING',
+    'IN_PROGRESS',
+    'PRE_CHECKING',
+    'INSTALLING',
+    'ROLLING_BACK',
+    'RESTARTING',
+    'VALIDATING'
+  ].includes(status)
 }
 
 export function getWsusConfigLabel(config) {

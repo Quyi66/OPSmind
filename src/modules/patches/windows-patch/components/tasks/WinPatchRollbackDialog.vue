@@ -104,7 +104,7 @@
         <el-button
           v-else
           type="primary"
-          :disabled="selectedPatchStatusIds.length === 0"
+          :disabled="selectedHistUpdateIds.length === 0"
           @click="handlePrimaryAction"
         >
           {{ primaryButtonText }}
@@ -169,7 +169,7 @@ const {
   resetState,
   rollbackOptions,
   selectedHostItems,
-  selectedPatchStatusIds,
+  selectedHistUpdateIds,
   selectedRollbackItems,
   showRunResultDialog,
   skipCurrentStep,
