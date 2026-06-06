@@ -685,9 +685,10 @@
             </el-table-column>
             <el-table-column prop="vul_id" label="CVE" width="150">
               <template #default="{ row }">
-                <a :href="getCveUrl(row.vul_id, row.os_distro)" target="_blank" class="cve-badge">
-                  {{ row.vul_id }}
-                </a>
+                <CveLinkList
+                  :cves="[row.vul_id]"
+                  :url-resolver="cve => getCveUrl(cve, row.os_distro)"
+                />
               </template>
             </el-table-column>
             <el-table-column
@@ -1025,6 +1026,7 @@ import HostSeverityPatchDialog from '../components/host-detail/dialogs/HostSever
 import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
+import CveLinkList from '../components/common/CveLinkList.vue'
 
 // ECharts
 import { use } from 'echarts/core'
@@ -2934,22 +2936,6 @@ defineExpose({
   &:hover {
     color: #66b1ff;
     text-decoration: underline;
-  }
-}
-
-// CVE 徽章样式
-.cve-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 12px;
-  background: #6c757d;
-  color: #fff;
-  border-radius: 4px;
-  text-decoration: none;
-
-  &:hover {
-    background: #495057;
-    color: #fff;
   }
 }
 

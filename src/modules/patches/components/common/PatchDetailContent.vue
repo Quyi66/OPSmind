@@ -31,14 +31,12 @@
           关联 CVE
           <span v-if="cveList.length" class="patch-detail__count">{{ cveList.length }}</span>
         </h4>
-        <ul v-if="cveList.length" class="patch-detail__cve-list">
-          <li v-for="cve in cveList" :key="cve">
-            <a :href="getCveUrl(cve, linkSource)" target="_blank" class="cve-link">
-              {{ cve }}
-            </a>
-          </li>
-        </ul>
-        <span v-else class="patch-detail__empty">暂无关联 CVE</span>
+        <CveLinkList
+          :cves="cveList"
+          :url-resolver="cve => getCveUrl(cve, linkSource)"
+          :max="0"
+          empty-text="暂无关联 CVE"
+        />
       </section>
     </template>
     <el-empty v-else-if="!loading" description="暂无补丁详情" :image-size="80" />
@@ -54,6 +52,7 @@ import {
   getSeverityClass,
   getSeverityLabel
 } from '../../composables/useFormatters'
+import CveLinkList from './CveLinkList.vue'
 
 const props = defineProps({
   // 补丁数据对象
@@ -228,11 +227,6 @@ const renderedDescription = computed(() => {
   }
 }
 
-.patch-detail__empty {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-}
-
 .severity-tag {
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -259,45 +253,4 @@ const renderedDescription = computed(() => {
   }
 }
 
-.patch-detail__cve-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  li {
-    margin: 0;
-  }
-
-  .cve-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 10px;
-    color: #409eff;
-    background: rgba(64, 158, 255, 0.1);
-    border: 1px solid rgba(64, 158, 255, 0.25);
-    border-radius: 4px;
-    font-size: 13px;
-    line-height: 20px;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &::after {
-      content: '↗';
-      font-size: 11px;
-      opacity: 0.7;
-    }
-
-    &:hover {
-      color: #fff;
-      background: #409eff;
-      border-color: #409eff;
-      text-decoration: none;
-    }
-  }
-}
 </style>

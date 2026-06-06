@@ -178,26 +178,10 @@
         </el-table-column>
         <el-table-column prop="related_vuls" label="关联CVE" min-width="200">
           <template #default="{ row }">
-            <div class="cve-tags" v-if="row.related_vuls">
-              <a
-                v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)"
-                :key="idx"
-                :href="getCveUrl(cve, resolveCveLinkTarget(row))"
-                target="_blank"
-                class="cve-link"
-              >
-                {{ cve }}
-              </a>
-              <button
-                v-if="parseCVEs(row.related_vuls).length > 3"
-                type="button"
-                class="cve-more"
-                @click="handleShowAllCves(row)"
-              >
-                +{{ parseCVEs(row.related_vuls).length - 3 }}
-              </button>
-            </div>
-            <span v-else>-</span>
+            <CveLinkList
+              :cves="row.related_vuls"
+              :url-resolver="cve => getCveUrl(cve, resolveCveLinkTarget(row))"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="vendor" label="厂商" width="100" />
@@ -247,26 +231,6 @@
       </template>
     </el-dialog>
 
-    <!-- 关联CVE 列表对话框 -->
-    <el-dialog v-model="cveDialogVisible" title="关联CVE" width="520px" destroy-on-close>
-      <div class="cve-dialog">
-        <template v-if="cveDialogList.length">
-          <a
-            v-for="(cve, idx) in cveDialogList"
-            :key="idx"
-            :href="getCveUrl(cve, cveDialogLinkTarget)"
-            target="_blank"
-            class="cve-dialog-item"
-          >
-            {{ cve }}
-          </a>
-        </template>
-        <span v-else>-</span>
-      </div>
-      <template #footer>
-        <el-button @click="cveDialogVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -278,6 +242,7 @@ import { patchLibraryApi } from '../api'
 import { runJob } from '@/modules/automation/api/command'
 import { getCveUrl } from '../composables/useFormatters'
 import PatchDetailContent from '../components/common/PatchDetailContent.vue'
+import CveLinkList from '../components/common/CveLinkList.vue'
 
 const props = defineProps({
   pickerMode: {
@@ -325,9 +290,6 @@ const detailLoading = ref(false)
 const patchDetail = ref(null)
 
 // CVE 列表对话框
-const cveDialogVisible = ref(false)
-const cveDialogList = ref([])
-const cveDialogLinkTarget = ref('')
 
 // 计算补丁总数
 const totalPatches = computed(() => {
@@ -396,20 +358,8 @@ function formatDate(dateStr) {
   }
 }
 
-// 解析CVE列表
-function parseCVEs(vulsStr) {
-  if (!vulsStr) return []
-  return vulsStr.split(',').filter(cve => cve.trim())
-}
-
 function resolveCveLinkTarget(patch) {
   return patch?.vendor || patch?.os_distro || currentVendor.value || ''
-}
-
-function handleShowAllCves(row) {
-  cveDialogList.value = parseCVEs(row.related_vuls)
-  cveDialogLinkTarget.value = resolveCveLinkTarget(row)
-  cveDialogVisible.value = true
 }
 
 // 加载厂商统计数据
@@ -1004,67 +954,6 @@ defineExpose({
 .severity-low {
   background-color: #6c757d;
   color: #fff;
-}
-
-// CVE标签
-.cve-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-
-  .cve-link {
-    display: inline-block;
-    padding: 2px 8px;
-    background: #6c757d;
-    color: #fff;
-    border-radius: 4px;
-    font-size: 12px;
-    text-decoration: none;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #545b62;
-    }
-  }
-
-  .cve-more {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 8px;
-    background: var(--el-fill-color-dark);
-    color: #6c757d;
-    border-radius: 4px;
-    font-size: 12px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #dfe3e6;
-    }
-  }
-}
-
-.cve-dialog {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.cve-dialog-item {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #6c757d;
-  color: #fff;
-  border-radius: 4px;
-  font-size: 13px;
-  text-decoration: none;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #545b62;
-  }
 }
 
 // 表格样式

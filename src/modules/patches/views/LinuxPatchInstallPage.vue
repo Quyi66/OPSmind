@@ -104,27 +104,10 @@
         </el-table-column>
         <el-table-column prop="related_vuls" label="关联CVE" min-width="320">
           <template #default="{ row }">
-            <div class="cve-tags" v-if="row.related_vuls">
-              <a
-                v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)"
-                :key="idx"
-                :href="getCveUrl(cve, resolvePatchDistro(row))"
-                target="_blank"
-                class="cve-link"
-                @click.stop
-              >
-                {{ cve }}
-              </a>
-              <button
-                v-if="parseCVEs(row.related_vuls).length > 3"
-                type="button"
-                class="cve-more"
-                @click="handleShowAllCves(row)"
-              >
-                +{{ parseCVEs(row.related_vuls).length - 3 }}
-              </button>
-            </div>
-            <span v-else>-</span>
+            <CveLinkList
+              :cves="row.related_vuls"
+              :url-resolver="cve => getCveUrl(cve, resolvePatchDistro(row))"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="effect_host_count" label="受影响的软件包" width="130" align="left">
@@ -172,27 +155,6 @@
       :patches-to-install="patchesToInstall"
       @success="handleInstallSuccess"
     />
-
-    <!-- 关联CVE 列表对话框 -->
-    <el-dialog v-model="cveDialogVisible" title="关联CVE" width="520px" destroy-on-close>
-      <div class="cve-dialog">
-        <template v-if="cveDialogList.length">
-          <a
-            v-for="(cve, idx) in cveDialogList"
-            :key="idx"
-            :href="getCveUrl(cve, cveDialogOsDistro)"
-            target="_blank"
-            class="cve-dialog-item"
-          >
-            {{ cve }}
-          </a>
-        </template>
-        <span v-else>-</span>
-      </div>
-      <template #footer>
-        <el-button @click="cveDialogVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -204,6 +166,7 @@ import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi } from '../api'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import PatchDetailContent from '../components/common/PatchDetailContent.vue'
+import CveLinkList from '../components/common/CveLinkList.vue'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
 
 // 加载状态
@@ -261,9 +224,6 @@ const totalCount = computed(() => filteredData.value.length)
 const patchDetailVisible = ref(false)
 const patchDetail = ref(null)
 const patchDetailLoading = ref(false)
-const cveDialogVisible = ref(false)
-const cveDialogList = ref([])
-const cveDialogOsDistro = ref('')
 
 // ============================================================
 // 补丁安装相关
@@ -323,17 +283,6 @@ function parseCveList(cveStr) {
     .filter(cve => cve)
 }
 
-function parseCVEs(vulsStr) {
-  if (!vulsStr) return []
-  return vulsStr.split(',').filter(cve => cve.trim())
-}
-
-function handleShowAllCves(row) {
-  cveDialogList.value = parseCVEs(row.related_vuls)
-  cveDialogOsDistro.value = resolvePatchDistro(row)
-  cveDialogVisible.value = true
-}
-
 function resolvePatchDistro(patch) {
   if (!patch) return ''
   return patch.os_distro || patch.vendor || (patch.patch_id.includes('KYSA') ? 'kylin' : 'redhat')
@@ -391,7 +340,6 @@ function handleReset() {
 // 全选逻辑
 const {
   allSelected,
-  isAllSelected,
   handleToggleAllSelection: handleToggleSelectAll,
   handleTableSelect,
   resetAllSelected
@@ -482,45 +430,6 @@ defineExpose({ refresh })
   }
 }
 
-.cve-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-
-  .cve-link {
-    display: inline-block;
-    padding: 2px 8px;
-    background: #6c757d;
-    color: #fff;
-    border-radius: 4px;
-    font-size: 12px;
-    text-decoration: none;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #545b62;
-    }
-  }
-
-  .cve-more {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 8px;
-    background: #e9ecef;
-    color: var(--el-text-color-secondary);
-    border-radius: 4px;
-    font-size: 12px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #dfe3e6;
-    }
-  }
-}
-
 .severity-tag {
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -544,27 +453,6 @@ defineExpose({ refresh })
   &.is-low {
     background-color: #6c757d;
     color: #fff;
-  }
-}
-
-.cve-dialog {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.cve-dialog-item {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #6c757d;
-  color: #fff;
-  border-radius: 4px;
-  font-size: 13px;
-  text-decoration: none;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #545b62;
   }
 }
 

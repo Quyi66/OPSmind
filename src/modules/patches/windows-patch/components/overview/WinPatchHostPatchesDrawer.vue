@@ -136,28 +136,7 @@
           </el-table-column>
           <el-table-column label="关联 CVE" min-width="220">
             <template #default="{ row }">
-              <div v-if="resolveCveIds(row).length" class="cve-tags">
-                <a
-                  v-for="cveId in resolveCveIds(row).slice(0, 3)"
-                  :key="cveId"
-                  :href="getWinCveUrl(cveId)"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="cve-link"
-                  @click.stop
-                >
-                  {{ cveId }}
-                </a>
-                <button
-                  v-if="resolveCveIds(row).length > 3"
-                  type="button"
-                  class="cve-more"
-                  @click.stop="handleShowAllCves(row)"
-                >
-                  +{{ resolveCveIds(row).length - 3 }}
-                </button>
-              </div>
-              <span v-else>-</span>
+              <CveLinkList :cves="resolveCveIds(row)" :url-resolver="getWinCveUrl" />
             </template>
           </el-table-column>
           <el-table-column label="分类" min-width="150" show-overflow-tooltip>
@@ -225,30 +204,6 @@
         @success="handleInstallSuccess"
       />
 
-      <el-dialog
-        v-model="cveDialogVisible"
-        title="关联 CVE"
-        width="560px"
-        append-to-body
-        destroy-on-close
-      >
-        <div v-if="cveDialogList.length" class="cve-dialog">
-          <a
-            v-for="cveId in cveDialogList"
-            :key="cveId"
-            :href="getWinCveUrl(cveId)"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="cve-dialog-item"
-          >
-            {{ cveId }}
-          </a>
-        </div>
-        <span v-else>-</span>
-        <template #footer>
-          <el-button @click="cveDialogVisible = false">关闭</el-button>
-        </template>
-      </el-dialog>
     </div>
   </el-drawer>
 </template>
@@ -258,6 +213,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchInstallWizard from '../install-wizard/WinPatchInstallWizard.vue'
+import CveLinkList from '../../../components/common/CveLinkList.vue'
 import { winPatchApi } from '../../api'
 import {
   WIN_PATCH_PAGE_SIZE_OPTIONS,
@@ -304,8 +260,6 @@ const loading = ref(false)
 const patchList = ref([])
 const selectedRows = ref([])
 const installWizardVisible = ref(false)
-const cveDialogVisible = ref(false)
-const cveDialogList = ref([])
 
 const pagination = reactive({
   page: 1,
@@ -344,11 +298,6 @@ function getWinCveUrl(cveId) {
   const id = String(cveId || '').trim()
   if (!id) return ''
   return `https://msrc.microsoft.com/update-guide/vulnerability/${encodeURIComponent(id)}`
-}
-
-function handleShowAllCves(row) {
-  cveDialogList.value = resolveCveIds(row)
-  cveDialogVisible.value = true
 }
 
 function applyInitialFilters() {
@@ -475,68 +424,6 @@ watch(
   margin-top: 0;
   flex: 1 1 auto;
   min-height: 0;
-}
-
-.cve-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-
-  .cve-link {
-    display: inline-block;
-    padding: 2px 8px;
-    background: #6c757d;
-    color: #fff;
-    border-radius: 4px;
-    font-size: 12px;
-    text-decoration: none;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #545b62;
-    }
-  }
-
-  .cve-more {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 8px;
-    background: #e9ecef;
-    color: var(--el-text-color-secondary);
-    border-radius: 4px;
-    font-size: 12px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #dfe3e6;
-    }
-  }
-}
-
-.cve-dialog {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-height: 50vh;
-  overflow-y: auto;
-}
-
-.cve-dialog-item {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #6c757d;
-  color: #fff;
-  border-radius: 4px;
-  font-size: 13px;
-  text-decoration: none;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #545b62;
-  }
 }
 
 :deep(.win-patch-table__time-column .cell) {

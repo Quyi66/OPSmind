@@ -100,13 +100,9 @@
       border
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="vul_id" label="CVE" width="120">
+      <el-table-column prop="vul_id" label="CVE" width="150">
         <template #default="{ row }">
-          <div class="cve-cell">
-            <a :href="getCveUrl(row.vul_id, osDistro)" target="_blank" class="cve-badge">
-              {{ row.vul_id }}
-            </a>
-          </div>
+          <CveLinkList :cves="[row.vul_id]" :url-resolver="cve => getCveUrl(cve, osDistro)" />
         </template>
       </el-table-column>
       <el-table-column prop="patch_id" label="补丁编号" width="180">
@@ -389,6 +385,7 @@ import {
 } from '../../../utils/vulnerabilityPackages'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import RpmPackageDetailDialog from '../../rpm/RpmPackageDetailDialog.vue'
+import CveLinkList from '../../common/CveLinkList.vue'
 
 const props = defineProps({
   hostId: {
@@ -662,41 +659,6 @@ defineExpose({
   &:hover {
     color: #66b1ff;
     text-decoration: underline;
-  }
-}
-
-.cve-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #dcdfe6;
-    border-radius: 2px;
-
-    &:hover {
-      background: #c0c4cc;
-    }
-  }
-}
-
-.cve-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  font-size: 11px;
-  background: #6c757d;
-  color: #fff;
-  border-radius: 3px;
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-
-  &:hover {
-    background: #495057;
   }
 }
 
