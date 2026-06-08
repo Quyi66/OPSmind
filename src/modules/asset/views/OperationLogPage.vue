@@ -434,6 +434,10 @@ function formatDateTime(dateStr) {
 // 获取操作标签
 function getActionLabel(action) {
   if (!action) return '-'
+  const actionLabelMap = {
+    asset_import: '资产导入'
+  }
+  if (actionLabelMap[action]) return actionLabelMap[action]
   return translateI18nKey(action)
 }
 

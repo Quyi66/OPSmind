@@ -462,7 +462,8 @@
           </div>
           <template #tip>
             <div class="el-upload__tip text-center mt-2">
-              仅支持导入银行下发的 .xlsx / .xls 格式表格，且文件大小不超过 10 MB。
+              仅支持 .xlsx / .xls，文件不超过 10
+              MB。可选“利用程度”列，合法值为：可利用、可检测、尚不可利用。
             </div>
           </template>
         </el-upload>

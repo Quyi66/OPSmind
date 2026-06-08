@@ -42,6 +42,10 @@ import { translateI18nKey } from '@/utils/i18n'
 
 function getOperationActionLabel(action) {
   if (!action) return '未知操作'
+  const actionLabelMap = {
+    asset_import: '资产导入'
+  }
+  if (actionLabelMap[action]) return actionLabelMap[action]
   return translateI18nKey(action)
 }
 

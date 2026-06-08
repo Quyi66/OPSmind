@@ -1941,6 +1941,16 @@ export const urgencyApi = {
   },
 
   /**
+   * 全量导入当前租户的紧急程度规则
+   * POST /vap/api/vap/v2/urgency/rule/import
+   */
+  importRules(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiService.post('/vap/api/vap/v2/urgency/rule/import', formData)
+  },
+
+  /**
    * 大卡下钻分页列表
    * GET /vap/api/vap/v2/urgency/page?urgency=...&page=1&size=20
    */

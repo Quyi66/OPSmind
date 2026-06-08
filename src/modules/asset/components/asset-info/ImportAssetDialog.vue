@@ -32,7 +32,10 @@
             选择文件
           </el-button>
           <template #tip>
-            <div class="el-upload__tip">只能上传 xlsx/xls 文件</div>
+            <div class="el-upload__tip">
+              只能上传 xlsx/xls 文件。“端口”列（ANSIBLE_PORT）填写后，后端会自动匹配并绑定对应的
+              Ansible 连接模板。
+            </div>
           </template>
         </el-upload>
       </div>
@@ -118,7 +121,7 @@ const handleFileRemove = () => {
 
 // 下载导入模板
 const handleDownloadTemplate = () => {
-  window.open(`/oplus-portal/acm/api/acm/cit/template2/${props.tenantId}`, '_blank', 'noopener')
+  window.open(`${import.meta.env.BASE_URL}templates/acm-template.xlsx`, '_blank', 'noopener')
 }
 
 // 上传
@@ -154,7 +157,9 @@ const handleUpload = async () => {
     ElMessage.success(`导入任务已提交，正在打开运行结果，运行 ID: ${runId}`)
   } catch (error) {
     console.error('导入失败:', error)
-    ElMessage.error(`导入失败: ${error.response?.data?.message || error.message}`)
+    ElMessage.error(
+      `导入失败: ${error.response?.data?.error || error.response?.data?.message || error.message}`
+    )
   } finally {
     uploading.value = false
   }

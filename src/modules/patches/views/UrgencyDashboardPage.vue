@@ -48,11 +48,21 @@
           <div class="table-header mb-2">
             <div class="table-title">
               <i class="fas fa-sliders-h text-primary me-2"></i>
-              紧急度评估规则 (33 + 3 条)
+              紧急度评估规则（{{ rules.length }} 条）
             </div>
-            <span class="text-muted fs-7">
-              紧急程度 = f(资产网络区域 × CVE 利用程度 × CVE 风险等级)
-            </span>
+            <div class="rule-header-actions">
+              <span class="text-muted fs-7">
+                紧急程度 = f(资产网络区域 × CVE 利用程度 × CVE 风险等级)
+              </span>
+              <el-button size="small" @click="downloadRuleTemplate">
+                <i class="fas fa-download me-1"></i>
+                下载导入模板
+              </el-button>
+              <el-button type="primary" size="small" @click="openRuleImportDialog">
+                <i class="fas fa-file-import me-1"></i>
+                导入规则
+              </el-button>
+            </div>
           </div>
 
           <!-- 评估规则过滤工具栏 -->
@@ -119,6 +129,9 @@
           <!-- 规则表格 -->
           <div class="ops-table-wrapper" v-loading="rulesLoading">
             <el-table class="rules-table" :data="filteredRules" height="100%" style="width: 100%">
+              <template #empty>
+                <el-empty description="当前租户尚未导入紧急程度规则，请先下载模板并导入" />
+              </template>
               <el-table-column prop="id" label="规则ID" width="90" />
               <el-table-column prop="location" label="资产网络区域" min-width="160">
                 <template #default="{ row }">
@@ -576,7 +589,7 @@
         <el-alert
           title="重算影响提示"
           type="warning"
-          description="系统将分批读取全量资产与漏洞关联数据，并按照当前启用的 36 条规则对所有 CVE 漏洞的紧急程度进行重新评估写入，此操作耗时随数据规模而定（数千条数据通常在 5 秒内完成）。"
+          :description="`系统将分批读取全量资产与漏洞关联数据，并按照当前租户导入的 ${rules.length} 条规则对所有 CVE 漏洞的紧急程度进行重新评估写入。未命中规则时按“一般”兜底。`"
           :closable="false"
           show-icon
         />
@@ -595,6 +608,57 @@
         <el-button @click="recomputeDialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="recomputing" @click="executeRecompute">
           开始计算
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 规则导入对话框 -->
+    <el-dialog
+      v-model="ruleImportDialogVisible"
+      title="导入漏洞紧急程度规则"
+      width="560px"
+      destroy-on-close
+      @closed="resetRuleImport"
+    >
+      <el-alert
+        title="导入将全量覆盖当前租户的已有规则"
+        description="文件列固定为：所处环境、利用程度、风险等级、紧急程度。任一数据行存在非法取值时，整次导入都会失败且不会写入。"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="mb-3"
+      />
+      <el-upload
+        ref="ruleUploadRef"
+        drag
+        action=""
+        :auto-upload="false"
+        :limit="1"
+        accept=".xlsx,.xls"
+        :file-list="ruleFileList"
+        :on-change="handleRuleFileChange"
+        :on-remove="handleRuleFileRemove"
+      >
+        <i class="fas fa-file-excel rule-upload-icon"></i>
+        <div class="el-upload__text">
+          将规则文件拖到此处，或
+          <em>点击选择</em>
+        </div>
+        <template #tip>
+          <div class="el-upload__tip">
+            仅支持 .xlsx / .xls 文件。导入模板由本页面提供，不包含任何默认规则数据。
+          </div>
+        </template>
+      </el-upload>
+      <template #footer>
+        <el-button @click="ruleImportDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="ruleImporting"
+          :disabled="!ruleImportFile"
+          @click="submitRuleImport"
+        >
+          确认覆盖并导入
         </el-button>
       </template>
     </el-dialog>
@@ -671,6 +735,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { urgencyApi, patchScanApi } from '../api'
+import { downloadUrgencyRuleTemplate } from '../utils/urgencyRuleTemplate'
 import CveDetail from '../components/cve/details/CveDetail.vue'
 import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
 
@@ -724,6 +789,11 @@ const statCards = [
 // 规则列表状态
 const rulesLoading = ref(false)
 const rules = ref([])
+const ruleImportDialogVisible = ref(false)
+const ruleImporting = ref(false)
+const ruleUploadRef = ref()
+const ruleFileList = ref([])
+const ruleImportFile = ref(null)
 
 // 评估规则过滤条件
 const filterLocation = ref('all')
@@ -1049,6 +1119,81 @@ async function loadRules() {
   }
 }
 
+function downloadRuleTemplate() {
+  downloadUrgencyRuleTemplate()
+}
+
+function openRuleImportDialog() {
+  resetRuleImport()
+  ruleImportDialogVisible.value = true
+}
+
+function handleRuleFileChange(uploadFile, uploadFiles) {
+  if (!/\.(xlsx|xls)$/i.test(uploadFile.name || '')) {
+    ElMessage.warning('仅支持 .xlsx / .xls 格式的规则文件')
+    ruleUploadRef.value?.clearFiles()
+    ruleFileList.value = []
+    ruleImportFile.value = null
+    return
+  }
+
+  ruleFileList.value = uploadFiles.slice(-1)
+  ruleImportFile.value = uploadFile.raw || null
+}
+
+function handleRuleFileRemove() {
+  ruleFileList.value = []
+  ruleImportFile.value = null
+}
+
+function resetRuleImport() {
+  ruleUploadRef.value?.clearFiles()
+  ruleFileList.value = []
+  ruleImportFile.value = null
+  ruleImporting.value = false
+}
+
+async function submitRuleImport() {
+  if (!ruleImportFile.value) {
+    ElMessage.warning('请先选择规则 Excel 文件')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `导入后将覆盖当前租户已有的 ${rules.value.length} 条规则，是否继续？`,
+      '确认全量覆盖',
+      {
+        confirmButtonText: '确认导入',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+  } catch {
+    return
+  }
+
+  ruleImporting.value = true
+  try {
+    const response = await urgencyApi.importRules(ruleImportFile.value)
+    const result = response?.data || response || {}
+    ruleImportDialogVisible.value = false
+    await loadRules()
+    ElMessage.success(
+      `规则导入成功：写入 ${result.imported || 0} 条，覆盖 ${result.replaced || 0} 条。规则已即时生效。`
+    )
+  } catch (error) {
+    console.error('导入紧急程度规则失败:', error)
+    ElMessage.error(
+      error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        '规则导入失败，请检查文件内容'
+    )
+  } finally {
+    ruleImporting.value = false
+  }
+}
+
 // 格式化数字
 function formatNumber(val) {
   return typeof val === 'number' ? val.toLocaleString() : val || 0
@@ -1227,7 +1372,7 @@ async function handleExportLookup() {
   try {
     ElMessage.info('正在生成排查报告 Excel，请稍候...')
     const res = await urgencyApi.exportLookupUrgency({
-      cveIds: [lookupText.value.trim()]
+      text: lookupText.value.trim()
     })
     const blob = new Blob([res.data], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -1509,6 +1654,18 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.rule-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rule-upload-icon {
+  margin: 18px 0 12px;
+  color: var(--el-color-success);
+  font-size: 42px;
 }
 
 .table-title {

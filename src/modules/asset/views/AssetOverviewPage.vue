@@ -964,6 +964,10 @@ function getOsDistroClass(distro) {
 }
 function getOperationActionLabel(a) {
   if (!a) return '未知操作'
+  const actionLabelMap = {
+    asset_import: '资产导入'
+  }
+  if (actionLabelMap[a]) return actionLabelMap[a]
   return translateI18nKey(a)
 }
 function getOperationLogStatusType(status) {
