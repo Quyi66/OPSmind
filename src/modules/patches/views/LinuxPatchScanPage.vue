@@ -138,12 +138,12 @@
             <el-form-item label="操作系统">
               <el-select
                 v-model="hostFilters.os_distro"
-                placeholder="全部"
+                placeholder="全部，可输入自定义值"
                 clearable
                 filterable
                 allow-create
                 default-first-option
-                style="width: 140px"
+                style="width: 180px"
               >
                 <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
               </el-select>
@@ -151,12 +151,12 @@
             <el-form-item label="系统版本">
               <el-select
                 v-model="hostFilters.os_version"
-                placeholder="全部"
+                placeholder="全部，可输入自定义值"
                 clearable
                 filterable
                 allow-create
                 default-first-option
-                style="width: 140px"
+                style="width: 180px"
               >
                 <el-option v-for="item in osVersionList" :key="item" :label="item" :value="item" />
               </el-select>
@@ -1508,7 +1508,6 @@ async function loadHostData() {
 
             assetInfoMap[item.IP] = {
               needReboot: item.needReboot,
-              osVersion: item.os_version || '',
               run_environment: item.RUN_ENVIRONMENT || item.run_environment || '',
               location
             }
@@ -1518,7 +1517,6 @@ async function loadHostData() {
           if (record.host_key in assetInfoMap) {
             const assetInfo = assetInfoMap[record.host_key]
             record.need_reboot = assetInfo.needReboot
-            record.os_version = assetInfo.osVersion || record.os_version
             record.run_environment = assetInfo.run_environment
             record.location = assetInfo.location
           }

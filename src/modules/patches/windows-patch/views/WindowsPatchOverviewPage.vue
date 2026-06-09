@@ -14,11 +14,11 @@
         <el-form-item label="操作系统">
           <el-select
             v-model="filters.osDistro"
-            placeholder="全部"
+            placeholder="全部，可输入自定义值"
             clearable
             filterable
             allow-create
-            style="width: 190px"
+            style="width: 290px"
           >
             <el-option
               v-for="item in hostFilterOptions.osDistros"
@@ -31,11 +31,11 @@
         <el-form-item label="版本">
           <el-select
             v-model="filters.osVersion"
-            placeholder="全部"
+            placeholder="全部，可输入自定义值"
             clearable
             filterable
             allow-create
-            style="width: 150px"
+            style="width: 180px"
           >
             <el-option
               v-for="item in hostFilterOptions.osVersions"
