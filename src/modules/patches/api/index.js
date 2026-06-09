@@ -208,31 +208,25 @@ export const patchScanApi = {
 
   /**
    * 获取扫描结果列表（主机概览）
-   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_WITH_PATCH/
+   * GET /vap/api/vap/v2/cve/machine-list
    * @param {Object} params - 查询参数
-   * @param {number} params.page - 页码
+   * @param {string} params.os_distro - 操作系统发行版
+   * @param {string} params.os_version - 操作系统版本
+   * @param {string} params.keyword - 主机名、主机 IP 或资产 ID
+   * @param {number} params.page - 页码，从 0 开始
    * @param {number} params.size - 每页大小
-   * @param {string} params.filter - 筛选关键词
    * @returns {Promise}
    */
   getScanResults(params = {}) {
-    const cacheBuster = Date.now()
-    // 构建筛选条件：host_key|os_distro|os_version|num_critical|num_important|num_moderate|num_low:*keyword*
-    let filter = ''
-    if (params.filter && params.filter.trim()) {
-      const keyword = params.filter.trim()
-      filter = `host_key|os_distro|os_version|num_critical|num_important|num_moderate|num_low:*${keyword}*`
-    }
-    const requestBody = {
-      params: {},
-      size: params.size || 20,
-      page: params.page || 1,
-      filter
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/VAP2_LIST_MACHINE_WITH_PATCH/?cacheBuster=${cacheBuster}`,
-      requestBody
-    )
+    const query = buildGenericQuery({
+      os_distro: params.os_distro,
+      os_version: params.os_version,
+      keyword: params.keyword,
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/machine-list${query}`)
   },
 
   /**

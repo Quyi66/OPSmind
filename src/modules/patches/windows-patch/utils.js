@@ -371,6 +371,7 @@ export function isPatchInstallable(row) {
     'IS_REPAIR_ARTIFICIAL',
     'REPAIRD',
     'REPAIRING',
+    'REPAIR_PENDING_REBOOT',
     'INSTALLED',
     'INSTALLING'
   ].includes(status)

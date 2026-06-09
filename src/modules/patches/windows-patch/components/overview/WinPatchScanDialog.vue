@@ -49,10 +49,6 @@ const props = defineProps({
   preselectedHosts: {
     type: Array,
     default: () => []
-  },
-  wsusConfigs: {
-    type: Array,
-    default: () => []
   }
 })
 

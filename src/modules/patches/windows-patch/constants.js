@@ -57,6 +57,7 @@ export const WIN_PATCH_STATUS_OPTIONS = [
   { label: '已修复', value: 'is_repair' },
   { label: '人工已修复', value: 'is_repair_artificial' },
   { label: '修复中', value: 'repairing' },
+  { label: '安装待重启', value: 'REPAIR_PENDING_REBOOT' },
   { label: '修复失败', value: 'repair_faild' }
 ]
 
@@ -186,6 +187,7 @@ export const WIN_PATCH_PATCH_STATUS_LABELS = {
   IS_REPAIR: '已修复',
   IS_REPAIR_ARTIFICIAL: '人工已修复',
   REPAIRING: '修复中',
+  REPAIR_PENDING_REBOOT: '安装待重启',
   REPAIRD: '已修复',
   REPAIR_FAILD: '修复失败',
   // 兼容旧枚举
@@ -203,6 +205,7 @@ export const WIN_PATCH_PATCH_STATUS_TAG_TYPES = {
   IS_REPAIR: 'success',
   IS_REPAIR_ARTIFICIAL: 'success',
   REPAIRING: 'warning',
+  REPAIR_PENDING_REBOOT: 'warning',
   REPAIRD: 'success',
   REPAIR_FAILD: 'danger',
   // 兼容旧枚举

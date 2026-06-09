@@ -135,11 +135,37 @@
         <!-- 筛选栏 -->
         <div class="ops-filter-bar">
           <el-form :model="hostFilters" inline size="small">
+            <el-form-item label="操作系统">
+              <el-select
+                v-model="hostFilters.os_distro"
+                placeholder="全部"
+                clearable
+                filterable
+                allow-create
+                default-first-option
+                style="width: 140px"
+              >
+                <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="系统版本">
+              <el-select
+                v-model="hostFilters.os_version"
+                placeholder="全部"
+                clearable
+                filterable
+                allow-create
+                default-first-option
+                style="width: 140px"
+              >
+                <el-option v-for="item in osVersionList" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="关键词">
               <el-input
-                v-model="filterText"
-                placeholder="输入字符搜索"
-                style="width: 200px"
+                v-model="hostFilters.keyword"
+                placeholder="主机名 / IP / 资产 ID"
+                style="width: 220px"
                 clearable
               >
                 <template #prefix>
@@ -214,103 +240,22 @@
               </template>
             </el-table-column>
 
-            <!-- 动态及核心表格展示列 (R3) -->
-            <template v-for="col in activeColumns" :key="col">
-              <el-table-column
-                v-if="col === 'HOSTNAME'"
-                prop="hostname"
-                label="主机名"
-                min-width="120"
-                show-overflow-tooltip
-              />
-              <el-table-column
-                v-else-if="col === 'OS'"
-                prop="os_distro"
-                label="操作系统"
-                width="110"
-              />
-              <el-table-column
-                v-else-if="col === 'OS_VERSION'"
-                prop="os_version"
-                label="OS版本"
-                width="110"
-              />
-              <el-table-column
-                v-else-if="col === 'RUN_ENVIRONMENT'"
-                prop="run_environment"
-                label="运行环境"
-                width="120"
-              >
-                <template #default="{ row }">
-                  {{ row.run_environment || '-' }}
-                </template>
-              </el-table-column>
-              <el-table-column
-                v-else-if="col === 'DEPT_NAME'"
-                prop="dept_name"
-                label="处置团队"
-                width="130"
-                show-overflow-tooltip
-              >
-                <template #default="{ row }">
-                  {{ row.dept_name || '-' }}
-                </template>
-              </el-table-column>
-              <el-table-column
-                v-else-if="col === 'APPLICATION_SYSTEM'"
-                prop="application_system"
-                label="应用系统"
-                width="140"
-                show-overflow-tooltip
-              >
-                <template #default="{ row }">
-                  {{ row.application_system || '-' }}
-                </template>
-              </el-table-column>
-              <el-table-column
-                v-else-if="col === 'HOST_RISK_LEVEL'"
-                prop="host_risk_level"
-                label="主机风险等级"
-                width="120"
-              >
-                <template #default="{ row }">
-                  {{ row.host_risk_level || '-' }}
-                </template>
-              </el-table-column>
-              <el-table-column
-                v-else-if="col === 'SSH_PORT'"
-                prop="ssh_port"
-                label="SSH端口"
-                width="100"
-              >
-                <template #default="{ row }">
-                  {{ row.ssh_port || '-' }}
-                </template>
-              </el-table-column>
-              <el-table-column
-                v-else-if="col === 'SERVICE_PORT'"
-                prop="service_port"
-                label="业务端口"
-                width="100"
-              >
-                <template #default="{ row }">
-                  {{ row.service_port || '-' }}
-                </template>
-              </el-table-column>
-              <el-table-column
-                v-else-if="col === 'LOCATION'"
-                prop="location"
-                label="网络区域环境"
-                width="140"
-              >
-                <template #default="{ row }">
-                  <el-tag v-if="row.location" size="small" type="success" effect="plain">
-                    {{ row.location }}
-                  </el-tag>
-                  <span v-else class="text-muted">-</span>
-                </template>
-              </el-table-column>
-            </template>
+            <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
+            <el-table-column prop="os_distro" label="操作系统" width="110" />
+            <el-table-column prop="os_version" label="版本" width="120" />
+            <!-- <el-table-column prop="location" label="网络区域环境" width="140">
+              <template #default="{ row }">
+                <el-tag v-if="row.location" size="small" type="success" effect="plain">
+                  {{ row.location }}
+                </el-tag>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="run_environment" label="运行环境" width="120">
+              <template #default="{ row }">
+                {{ row.run_environment || '-' }}
+              </template>
+            </el-table-column> -->
             <el-table-column prop="num_critical" width="90">
               <template #header>
                 严重
@@ -1095,9 +1040,10 @@ const chartOption = computed(() => {
 
 // 主机表格
 const loading = ref(false)
-const filterText = ref('')
 const hostTableData = ref([])
 const hostFilters = reactive({
+  os_distro: '',
+  os_version: '',
   keyword: ''
 })
 const pagination = reactive({
@@ -1106,15 +1052,12 @@ const pagination = reactive({
   total: 0
 })
 
-// ====== R3 & R4 状态 ======
 const batchSelectedHosts = ref([]) // 批量选中的主机列表
-const activeColumns = ref(['HOSTNAME', 'OS', 'LOCATION', 'RUN_ENVIRONMENT'])
 
 // 表格多选发生变化
 function handleHostSelectionChange(selection) {
   batchSelectedHosts.value = selection
 }
-// ====== 结束 ======
 
 // 漏洞表格
 const vulnLoading = ref(false)
@@ -1528,74 +1471,65 @@ async function loadHostData() {
   loading.value = true
   try {
     const params = {
-      page: pagination.page,
+      page: pagination.page - 1,
       size: pagination.pageSize,
-      filter: filterText.value
+      os_distro: hostFilters.os_distro,
+      os_version: hostFilters.os_version,
+      keyword: hostFilters.keyword
     }
     const response = await patchScanApi.getScanResults(params)
-    if (response?.data) {
-      const records = response.data.records || []
+    const data = response?.data || response || {}
+    const records = Array.isArray(data.content) ? data.content : []
 
-      // 一次性获取所有主机的资产信息，回填是否需要重启和 OS 版本
-      try {
-        const assetParams = {
-          hostKeys: '@@',
-          assetType: 'linux',
-          permission: 'r',
-          status: 'all',
-          CONN_LATEST_STATUS: '',
-          system_name: ' ',
-          os_version: ' '
-        }
-        const assetRes = await assetApi.getAssetList(assetParams, { size: 1000 })
-        if (assetRes?.records) {
-          const assetInfoMap = {}
-          assetRes.records.forEach(item => {
-            if (item.IP) {
-              // 从标签筛选 LOCATION 区域
-              let location = null
-              const tags = item.tags || item.Tags || []
-              const locationNames = ['互联网', '外联网', '内网环境、孤岛环境']
-              const matchedTag = tags.find(t => locationNames.includes(t.name || t))
-              if (matchedTag) {
-                location = matchedTag.name || matchedTag
-              }
-
-              assetInfoMap[item.IP] = {
-                needReboot: item.needReboot,
-                osVersion: item.os_version || '',
-                run_environment: item.RUN_ENVIRONMENT || item.run_environment || '',
-                dept_name: item.DEPT_NAME || item.dept_name || '',
-                application_system: item.APPLICATION_SYSTEM || item.application_system || '',
-                host_risk_level: item.HOST_RISK_LEVEL || item.host_risk_level || '',
-                ssh_port: item.SSH_PORT || item.ssh_port || '',
-                service_port: item.SERVICE_PORT || item.service_port || '',
-                location
-              }
-            }
-          })
-          records.forEach(record => {
-            if (record.host_key in assetInfoMap) {
-              const assetInfo = assetInfoMap[record.host_key]
-              record.need_reboot = assetInfo.needReboot
-              record.os_version = assetInfo.osVersion || record.os_version
-              record.run_environment = assetInfo.run_environment
-              record.dept_name = assetInfo.dept_name
-              record.application_system = assetInfo.application_system
-              record.host_risk_level = assetInfo.host_risk_level
-              record.ssh_port = assetInfo.ssh_port
-              record.service_port = assetInfo.service_port
-              record.location = assetInfo.location
-            }
-          })
-        }
-      } catch (err) {
-        console.error('Failed to load reboot status:', err)
+    // 一次性获取所有主机的资产信息，回填主机概览固定列
+    try {
+      const assetParams = {
+        hostKeys: '@@',
+        assetType: 'linux',
+        permission: 'r',
+        status: 'all',
+        CONN_LATEST_STATUS: '',
+        system_name: ' ',
+        os_version: ' '
       }
+      const assetRes = await assetApi.getAssetList(assetParams, { size: 1000 })
+      if (assetRes?.records) {
+        const assetInfoMap = {}
+        assetRes.records.forEach(item => {
+          if (item.IP) {
+            // 从标签筛选 LOCATION 区域
+            let location = null
+            const tags = item.tags || item.Tags || []
+            const locationNames = ['互联网', '外联网', '内网环境、孤岛环境']
+            const matchedTag = tags.find(t => locationNames.includes(t.name || t))
+            if (matchedTag) {
+              location = matchedTag.name || matchedTag
+            }
 
-      hostTableData.value = records
-      pagination.total = response.data.total || 0
+            assetInfoMap[item.IP] = {
+              needReboot: item.needReboot,
+              osVersion: item.os_version || '',
+              run_environment: item.RUN_ENVIRONMENT || item.run_environment || '',
+              location
+            }
+          }
+        })
+        records.forEach(record => {
+          if (record.host_key in assetInfoMap) {
+            const assetInfo = assetInfoMap[record.host_key]
+            record.need_reboot = assetInfo.needReboot
+            record.os_version = assetInfo.osVersion || record.os_version
+            record.run_environment = assetInfo.run_environment
+            record.location = assetInfo.location
+          }
+        })
+      }
+    } catch (err) {
+      console.error('Failed to load reboot status:', err)
     }
+
+    hostTableData.value = records
+    pagination.total = Number(data.totalElements) || 0
   } catch (error) {
     console.error('Failed to load host data:', error)
     hostTableData.value = []
@@ -1651,7 +1585,9 @@ function handleFilter() {
 }
 
 function handleHostReset() {
-  filterText.value = ''
+  hostFilters.os_distro = ''
+  hostFilters.os_version = ''
+  hostFilters.keyword = ''
   pagination.page = 1
   pagination.pageSize = 20
   loadHostData()

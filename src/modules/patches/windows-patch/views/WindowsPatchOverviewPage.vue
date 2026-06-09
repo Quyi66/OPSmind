@@ -1,16 +1,59 @@
 <template>
   <div class="ops-page-layout win-patch-page">
-    <!-- <WinPatchSummaryCards :items="summaryCards" compact /> -->
-
     <div class="ops-filter-bar">
-      <el-form :inline="true" size="small">
-        <el-form-item label="关键字">
+      <el-form :model="filters" :inline="true" size="small">
+        <el-form-item label="主机">
           <el-input
-            v-model="keyword"
-            placeholder="按主机、主机 ID、系统版本过滤当前页"
+            v-model="filters.hostKeyword"
+            placeholder="主机地址或主机 ID"
             clearable
-            style="width: 260px"
+            style="width: 190px"
+            @keyup.enter="handleSearch"
           />
+        </el-form-item>
+        <el-form-item label="操作系统">
+          <el-select
+            v-model="filters.osDistro"
+            placeholder="全部"
+            clearable
+            filterable
+            allow-create
+            style="width: 190px"
+          >
+            <el-option
+              v-for="item in hostFilterOptions.osDistros"
+              :key="item"
+              :label="item"
+              :value="item"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="版本">
+          <el-select
+            v-model="filters.osVersion"
+            placeholder="全部"
+            clearable
+            filterable
+            allow-create
+            style="width: 150px"
+          >
+            <el-option
+              v-for="item in hostFilterOptions.osVersions"
+              :key="item"
+              :label="item"
+              :value="item"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><RefreshRight /></el-icon>
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -41,7 +84,7 @@
     <div class="ops-table-wrapper">
       <el-table
         v-loading="loading"
-        :data="filteredHostList"
+        :data="hostList"
         max-height="calc(100vh - 320px)"
         @selection-change="selection => (selectedHostRows = selection)"
       >
@@ -58,7 +101,7 @@
             {{ resolveHostId(row) || '-' }}
           </template>
         </el-table-column> -->
-        <el-table-column label="操作系统" min-width="240" show-overflow-tooltip>
+        <el-table-column label="操作系统" min-width="240">
           <template #default="{ row }">
             {{ pickValue(row, ['osDistro', 'os_distro'], '-') }}
           </template>
@@ -75,64 +118,119 @@
         </el-table-column>
         <el-table-column label="缺失数" width="100" align="center">
           <template #default="{ row }">
-            <span class="win-patch-metric win-patch-metric--danger">
+            <span class="win-patch-metric">
               {{ pickValue(row, ['totalMissing', 'total_missing'], 0) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="严重" width="90" align="center">
+        <el-table-column width="90" align="center">
+          <template #header>
+            <span class="win-patch-severity-header">
+              严重
+              <span class="win-patch-severity-dot win-patch-severity-dot--critical"></span>
+            </span>
+          </template>
           <template #default="{ row }">
-            <span
-              class="win-patch-severity-link win-patch-severity-link--critical"
+            <button
+              type="button"
+              class="win-patch-severity-link"
+              :class="{ 'is-clickable': resolveSeverityCount(row, 'Critical') > 0 }"
+              :disabled="resolveSeverityCount(row, 'Critical') <= 0"
+              :title="resolveSeverityCount(row, 'Critical') > 0 ? '查看严重级别补丁' : ''"
+              aria-label="查看严重级别补丁"
               @click="openHostDrawerWithSeverity(row, 'Critical')"
             >
-              {{ pickValue(row, ['criticalCount', 'critical_count'], 0) }}
-            </span>
+              {{ resolveSeverityCount(row, 'Critical') }}
+            </button>
           </template>
         </el-table-column>
-        <el-table-column label="重要" width="90" align="center">
+        <el-table-column width="90" align="center">
+          <template #header>
+            <span class="win-patch-severity-header">
+              重要
+              <span class="win-patch-severity-dot win-patch-severity-dot--important"></span>
+            </span>
+          </template>
           <template #default="{ row }">
-            <span
-              class="win-patch-severity-link win-patch-severity-link--important"
+            <button
+              type="button"
+              class="win-patch-severity-link"
+              :class="{ 'is-clickable': resolveSeverityCount(row, 'Important') > 0 }"
+              :disabled="resolveSeverityCount(row, 'Important') <= 0"
+              :title="resolveSeverityCount(row, 'Important') > 0 ? '查看重要级别补丁' : ''"
+              aria-label="查看重要级别补丁"
               @click="openHostDrawerWithSeverity(row, 'Important')"
             >
-              {{ pickValue(row, ['importantCount', 'important_count'], 0) }}
-            </span>
+              {{ resolveSeverityCount(row, 'Important') }}
+            </button>
           </template>
         </el-table-column>
-        <el-table-column label="中等" width="90" align="center">
+        <el-table-column width="90" align="center">
+          <template #header>
+            <span class="win-patch-severity-header">
+              中等
+              <span class="win-patch-severity-dot win-patch-severity-dot--moderate"></span>
+            </span>
+          </template>
           <template #default="{ row }">
-            <span
-              class="win-patch-severity-link win-patch-severity-link--moderate"
+            <button
+              type="button"
+              class="win-patch-severity-link"
+              :class="{ 'is-clickable': resolveSeverityCount(row, 'Moderate') > 0 }"
+              :disabled="resolveSeverityCount(row, 'Moderate') <= 0"
+              :title="resolveSeverityCount(row, 'Moderate') > 0 ? '查看中等级别补丁' : ''"
+              aria-label="查看中等级别补丁"
               @click="openHostDrawerWithSeverity(row, 'Moderate')"
             >
-              {{ pickValue(row, ['moderateCount', 'moderate_count'], 0) }}
-            </span>
+              {{ resolveSeverityCount(row, 'Moderate') }}
+            </button>
           </template>
         </el-table-column>
-        <el-table-column label="低危" width="80" align="center">
+        <el-table-column width="80" align="center">
+          <template #header>
+            <span class="win-patch-severity-header">
+              低危
+              <span class="win-patch-severity-dot win-patch-severity-dot--low"></span>
+            </span>
+          </template>
           <template #default="{ row }">
-            <span
-              class="win-patch-severity-link win-patch-severity-link--low"
+            <button
+              type="button"
+              class="win-patch-severity-link"
+              :class="{ 'is-clickable': resolveSeverityCount(row, 'Low') > 0 }"
+              :disabled="resolveSeverityCount(row, 'Low') <= 0"
+              :title="resolveSeverityCount(row, 'Low') > 0 ? '查看低危级别补丁' : ''"
+              aria-label="查看低危级别补丁"
               @click="openHostDrawerWithSeverity(row, 'Low')"
             >
-              {{ pickValue(row, ['lowCount', 'low_count'], 0) }}
-            </span>
+              {{ resolveSeverityCount(row, 'Low') }}
+            </button>
           </template>
         </el-table-column>
-        <el-table-column label="未分级" width="90" align="center">
+        <el-table-column width="90" align="center">
+          <template #header>
+            <span class="win-patch-severity-header">
+              未分级
+              <span class="win-patch-severity-dot win-patch-severity-dot--unspecified"></span>
+            </span>
+          </template>
           <template #default="{ row }">
-            <span
-              class="win-patch-severity-link win-patch-severity-link--unspecified"
+            <button
+              type="button"
+              class="win-patch-severity-link"
+              :class="{ 'is-clickable': resolveSeverityCount(row, 'Unspecified') > 0 }"
+              :disabled="resolveSeverityCount(row, 'Unspecified') <= 0"
+              :title="resolveSeverityCount(row, 'Unspecified') > 0 ? '查看未分级补丁' : ''"
+              aria-label="查看未分级补丁"
               @click="openHostDrawerWithSeverity(row, 'Unspecified')"
             >
-              {{ pickValue(row, ['unspecifiedCount', 'unspecified_count'], 0) }}
-            </span>
+              {{ resolveSeverityCount(row, 'Unspecified') }}
+            </button>
           </template>
         </el-table-column>
         <el-table-column label="已安装" width="90" align="center">
           <template #default="{ row }">
-            <span class="win-patch-metric win-patch-metric--success">
+            <span class="win-patch-metric">
               {{ pickValue(row, ['installedCount', 'installed_count'], 0) }}
             </span>
           </template>
@@ -168,7 +266,6 @@
     <WinPatchScanDialog
       v-model="scanDialogVisible"
       :preselected-hosts="scanDialogHosts"
-      :wsus-configs="wsusConfigs"
       @submitted="handleTaskSubmitted"
     />
 
@@ -188,20 +285,17 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import WinPatchHostPatchesDrawer from '../components/overview/WinPatchHostPatchesDrawer.vue'
 import WinPatchReportDialog from '../components/overview/WinPatchReportDialog.vue'
 import WinPatchScanDialog from '../components/overview/WinPatchScanDialog.vue'
-import WinPatchSummaryCards from '../components/overview/WinPatchSummaryCards.vue'
 import WinPatchTaskDetailDrawer from '../components/tasks/WinPatchTaskDetailDrawer.vue'
 import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
 import {
   formatDateTime,
-  formatNumber,
   parsePageResponse,
   pickValue,
-  resolveHostId,
   resolveHostKey
 } from '../utils'
 
@@ -209,14 +303,11 @@ const route = useRoute()
 const router = useRouter()
 
 const loading = ref(false)
-const keyword = ref('')
-const wsusConfigs = ref([])
 const hostList = ref([])
 const selectedHostRows = ref([])
 const currentHost = ref(null)
 const hostDrawerInitialFilters = ref(null)
 const currentTaskId = ref('')
-const taskTotal = ref(0)
 
 const scanDialogVisible = ref(false)
 const hostDrawerVisible = ref(false)
@@ -231,75 +322,52 @@ const pagination = reactive({
   total: 0
 })
 
-const filteredHostList = computed(() => {
-  const query = keyword.value.trim().toLowerCase()
-  if (!query) return hostList.value
-
-  return hostList.value.filter(row => {
-    const text = [
-      resolveHostKey(row),
-      resolveHostId(row),
-      pickValue(row, ['osDistro', 'os_distro'], ''),
-      pickValue(row, ['osVersion', 'os_version'], '')
-    ]
-      .join(' ')
-      .toLowerCase()
-
-    return text.includes(query)
-  })
+const filters = reactive({
+  hostKeyword: '',
+  osDistro: '',
+  osVersion: ''
 })
 
-const summaryCards = computed(() => {
-  const missingCount = hostList.value.reduce(
-    (total, row) => total + Number(pickValue(row, ['totalMissing', 'total_missing'], 0) || 0),
-    0
-  )
-
-  return [
-    {
-      label: 'WSUS 配置',
-      value: formatNumber(wsusConfigs.value.length),
-      helper: '当前租户可用配置数'
-    },
-    {
-      label: '纳管主机',
-      value: formatNumber(pagination.total),
-      helper: '主机补丁概览总数'
-    },
-    {
-      label: '当前页缺失补丁',
-      value: formatNumber(missingCount),
-      helper: '按当前页主机统计'
-    },
-    {
-      label: '任务总数',
-      value: formatNumber(taskTotal.value),
-      helper: '扫描、安装、回滚任务总数'
-    }
-  ]
+const appliedFilters = reactive({
+  hostKeyword: '',
+  osDistro: '',
+  osVersion: ''
 })
+
+const severityCountFields = {
+  Critical: ['criticalCount', 'critical_count'],
+  Important: ['importantCount', 'important_count'],
+  Moderate: ['moderateCount', 'moderate_count'],
+  Low: ['lowCount', 'low_count'],
+  Unspecified: ['unspecifiedCount', 'unspecified_count']
+}
+
+function createHostFieldOptions(keys) {
+  return Array.from(
+    new Set(hostList.value.map(row => String(pickValue(row, keys, '') || '').trim()).filter(Boolean))
+  ).sort((left, right) => left.localeCompare(right, 'zh-CN'))
+}
+
+const hostFilterOptions = computed(() => ({
+  osDistros: createHostFieldOptions(['osDistro', 'os_distro']),
+  osVersions: createHostFieldOptions(['osVersion', 'os_version'])
+}))
 
 async function loadPageData() {
   loading.value = true
   try {
-    const [wsusResponse, hostResponse, taskResponse] = await Promise.all([
-      winPatchApi.getWsusConfigs(),
-      winPatchApi.getHosts({
-        page: pagination.page - 1,
-        size: pagination.pageSize
-      }),
-      winPatchApi.getTasks({ page: 0, size: 1 })
-    ])
-
-    wsusConfigs.value = Array.isArray(wsusResponse?.data) ? wsusResponse.data : []
+    const hostResponse = await winPatchApi.getHosts({
+      page: pagination.page - 1,
+      size: pagination.pageSize,
+      keyword: appliedFilters.hostKeyword,
+      os: appliedFilters.osDistro,
+      osVersion: appliedFilters.osVersion
+    })
 
     const hostPage = parsePageResponse(hostResponse)
     hostList.value = hostPage.content
     pagination.total = hostPage.total
     selectedHostRows.value = []
-
-    const taskPage = parsePageResponse(taskResponse)
-    taskTotal.value = taskPage.total
   } finally {
     loading.value = false
   }
@@ -315,13 +383,36 @@ function openReportDialog(rows = []) {
   reportDialogVisible.value = true
 }
 
+function handleSearch() {
+  Object.assign(appliedFilters, filters)
+  pagination.page = 1
+  loadPageData()
+}
+
+function handleReset() {
+  Object.keys(filters).forEach(key => {
+    filters[key] = ''
+    appliedFilters[key] = ''
+  })
+  pagination.page = 1
+  loadPageData()
+}
+
 function openHostDrawer(row, initialFilters = null) {
   currentHost.value = row
   hostDrawerInitialFilters.value = initialFilters ? { ...initialFilters } : null
   hostDrawerVisible.value = true
 }
 
+function resolveSeverityCount(row, severity) {
+  return Number(pickValue(row, severityCountFields[severity] || [], 0) || 0)
+}
+
 function openHostDrawerWithSeverity(row, severity) {
+  if (resolveSeverityCount(row, severity) <= 0) {
+    return
+  }
+
   openHostDrawer(row, {
     severity,
     patchStatus: 'no_repair'
@@ -402,15 +493,41 @@ onMounted(() => {
 }
 
 .win-patch-metric {
-  font-weight: 600;
+  color: var(--el-text-color-regular);
+  font-variant-numeric: tabular-nums;
 }
 
-.win-patch-metric--danger {
-  color: var(--el-color-danger);
+.win-patch-severity-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.win-patch-metric--success {
-  color: var(--el-color-success);
+.win-patch-severity-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.win-patch-severity-dot--critical {
+  background-color: var(--el-color-danger);
+}
+
+.win-patch-severity-dot--important {
+  background-color: var(--el-color-warning);
+}
+
+.win-patch-severity-dot--moderate {
+  background-color: #ffc72e;
+}
+
+.win-patch-severity-dot--low {
+  background-color: var(--el-color-primary);
+}
+
+.win-patch-severity-dot--unspecified {
+  background-color: var(--el-text-color-secondary);
 }
 
 .win-patch-severity-link {
@@ -418,33 +535,40 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   min-width: 24px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: var(--el-border-radius-small);
+  background: transparent;
+  font: inherit;
+  color: var(--el-text-color-regular);
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 0.2s ease,
+    text-decoration-color 0.2s ease;
 
-  &:hover {
-    transform: scale(1.05);
+  &:disabled {
+    cursor: default;
   }
-}
 
-.win-patch-severity-link--critical {
-  color: var(--el-color-danger);
-}
+  &.is-clickable {
+    color: var(--el-color-primary);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
 
-.win-patch-severity-link--important {
-  color: var(--el-color-warning);
-}
+  &.is-clickable:hover {
+    background-color: var(--el-fill-color-light);
+    text-decoration-style: solid;
+  }
 
-.win-patch-severity-link--moderate {
-  color: var(--el-color-primary);
-}
-
-.win-patch-severity-link--low {
-  color: var(--el-color-success);
-}
-
-.win-patch-severity-link--unspecified {
-  color: var(--el-text-color-secondary);
+  &:focus-visible {
+    outline: 2px solid var(--el-color-primary-light-5);
+    outline-offset: 1px;
+  }
 }
 
 :deep(.win-patch-table__time-column .cell) {
