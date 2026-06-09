@@ -31,24 +31,24 @@
       <div class="card-body">
         <div class="ops-table-wrapper win-patch-summary-step__table">
           <el-table :data="rollbackItems" max-height="320">
-            <el-table-column label="主机" width="180" show-overflow-tooltip>
+            <el-table-column label="主机" width="150" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ row.hostKey || '-' }}
               </template>
             </el-table-column>
-            <el-table-column label="KB 编号" width="140">
+            <el-table-column label="KB 编号" width="140" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ row.kbNumber || '-' }}
               </template>
             </el-table-column>
-            <el-table-column label="标题" min-width="320" show-overflow-tooltip>
+            <el-table-column label="更新时间" width="190">
               <template #default="{ row }">
-                {{ row.title || '-' }}
+                {{ formatDateTime(row.updateTime) }}
               </template>
             </el-table-column>
-            <el-table-column label="严重级别" width="120">
+            <el-table-column label="Run ID" min-width="220" show-overflow-tooltip>
               <template #default="{ row }">
-                {{ row.severityLabel || '-' }}
+                {{ row.runId || '-' }}
               </template>
             </el-table-column>
           </el-table>
@@ -60,6 +60,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { formatDateTime } from '../../utils'
 
 const props = defineProps({
   hostItems: {

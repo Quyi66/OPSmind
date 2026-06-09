@@ -22,13 +22,14 @@ describe('machine with patch list API', () => {
     patchScanApi.getScanResults({
       os_distro: 'redhat',
       os_version: '8.5',
+      os_sp_version: 'SP2',
       keyword: '192.168.1',
       page: 0,
       size: 20
     })
 
     expect(apiMocks.get).toHaveBeenCalledWith(
-      '/vap/api/vap/v2/cve/machine-list?os_distro=redhat&os_version=8.5&keyword=192.168.1&page=0&size=20'
+      '/vap/api/vap/v2/cve/machine-list?os_distro=redhat&os_version=8.5&os_sp_version=SP2&keyword=192.168.1&page=0&size=20'
     )
   })
 
@@ -36,6 +37,7 @@ describe('machine with patch list API', () => {
     patchScanApi.getScanResults({
       os_distro: ' ',
       os_version: '',
+      os_sp_version: '',
       keyword: ''
     })
 

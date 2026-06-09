@@ -94,13 +94,16 @@ export function formatDateTime(value) {
 }
 
 export function resolveHostId(host) {
-  return String(pickValue(host, ['hostId', 'host_id', 'id', 'key'], '')).trim()
+  return String(
+    pickValue(host, ['hostId', 'host_id', 'hostsId', 'hosts_id', 'id', 'key'], '')
+  ).trim()
 }
 
 export function resolveHostKey(host) {
   return (
-    String(pickValue(host, ['hostKey', 'host_key', 'hostname', 'value', 'ip', 'IP'], '-')).trim() ||
-    '-'
+    String(
+      pickValue(host, ['hostKey', 'host_key', 'hosts', 'hostname', 'value', 'ip', 'IP'], '-')
+    ).trim() || '-'
   )
 }
 
@@ -386,6 +389,15 @@ export function isPatchRollbackable(row) {
 export function isRollbackSelectable(row) {
   const action = normalizeUpper(pickValue(row, ['action'], ''))
   const result = normalizeUpper(pickValue(row, ['result'], ''))
+
+  if (!action && !result) {
+    return Boolean(
+      resolveHistUpdateId(row) &&
+      pickValue(row, ['updateKbNumbers', 'update_kb_numbers', 'kbNumber', 'kb_number'], '') &&
+      pickValue(row, ['hostsId', 'hosts_id', 'hostId', 'host_id'], '')
+    )
+  }
+
   return (
     (action === 'INSTALL' && result === 'SUCCESS') || (action === 'ROLLBACK' && result === 'FAILED')
   )

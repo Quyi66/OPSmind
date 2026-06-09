@@ -54,6 +54,7 @@
     <WinPatchInstallWizardRestartStep
       v-show="currentStepKey === 'restart'"
       :model-value="rollbackOptions"
+      confirm-mode
       title="重启与重扫策略"
       alert-title="这里统一配置回滚任务中的重启与自动重扫策略。"
       alert-description="当前向导会在校验脚本之后展示这一页，未启用的项会在任务推进时自动跳过。"

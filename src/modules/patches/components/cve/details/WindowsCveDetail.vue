@@ -225,6 +225,69 @@
             </div>
           </div>
         </el-tab-pane>
+
+        <el-tab-pane name="hosts">
+          <template #label>
+            受影响机器
+            <span class="ops-tab-count" v-if="affectedHostsTotal">{{ affectedHostsTotal }}</span>
+          </template>
+          <div class="tab-content-container">
+            <div class="ops-table-wrapper" v-loading="affectedHostsLoading">
+              <el-table :data="affectedHosts" height="100%" stripe style="width: 100%">
+                <el-table-column label="主机标识" width="160" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    <span class="host-identity">{{ getHostKey(row) }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="主机名" min-width="140" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    {{ pickValue(row, ['hostname', 'hostName', 'host_name'], '-') }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="系统版本" min-width="180" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    {{ getHostOsDisplay(row) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="KB 编号" min-width="140" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    {{ getHostKbDisplay(row) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="影响产品" min-width="240" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    {{ getHostProductDisplay(row) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="严重等级" width="110">
+                  <template #default="{ row }">
+                    <el-tag
+                      :type="getSeverityType(getHostSeverity(row))"
+                      effect="dark"
+                      size="small"
+                    >
+                      {{ getSeverityLabel(getHostSeverity(row)) }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="补丁状态" width="120">
+                  <template #default="{ row }">
+                    <el-tag :type="getPatchStatusType(getHostPatchStatus(row))" size="small">
+                      {{ getPatchStatusLabel(getHostPatchStatus(row)) }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="扫描时间" width="180">
+                  <template #default="{ row }">
+                    <span class="text-muted">
+                      {{ formatDateTime(getHostScanDate(row)) }}
+                    </span>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+        </el-tab-pane>
       </el-tabs>
     </div>
 
@@ -255,10 +318,13 @@ const emit = defineEmits(['back'])
 
 const loading = ref(true)
 const productsLoading = ref(false)
+const affectedHostsLoading = ref(false)
 const activeTab = ref('basic')
 const productFilter = ref('all')
 const cveDetail = ref(null)
 const products = ref([])
+const affectedHosts = ref([])
+const affectedHostsTotal = ref(0)
 const impactChartRef = ref(null)
 
 const { isDark } = useTheme()
@@ -344,6 +410,131 @@ function getStatusLabel(status) {
   return labelMap[key] || status || '-'
 }
 
+function pickValue(row, keys, fallback = '-') {
+  for (const key of keys) {
+    const value = row?.[key]
+    if (value !== undefined && value !== null && value !== '') {
+      return value
+    }
+  }
+  return fallback
+}
+
+function formatCellValue(value, fallback = '-') {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).join(', ') || fallback
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.values(value).flat().filter(Boolean).join(', ') || fallback
+  }
+
+  return value || fallback
+}
+
+function getHostKey(host) {
+  return pickValue(
+    host,
+    ['hostKey', 'host_key', 'hostId', 'host_id', 'hostIp', 'host_ip', 'ip'],
+    '-'
+  )
+}
+
+function getHostOsDisplay(host) {
+  const distro = pickValue(host, ['osDistro', 'os_distro', 'osName', 'os_name'], '')
+  const version = pickValue(host, ['osVersion', 'os_version'], '')
+  const arch = pickValue(host, ['osArch', 'os_arch', 'architecture'], '')
+  return [distro, version, arch].filter(Boolean).join(' / ') || '-'
+}
+
+function getHostKbDisplay(host) {
+  return formatCellValue(
+    pickValue(
+      host,
+      [
+        'kbArticle',
+        'kb_article',
+        'kbNumber',
+        'kb_number',
+        'kb',
+        'patchId',
+        'patch_id',
+        'updateId',
+        'update_id'
+      ],
+      ''
+    )
+  )
+}
+
+function getHostProductDisplay(host) {
+  return formatCellValue(
+    pickValue(
+      host,
+      ['productName', 'product_name', 'products', 'affectedProducts', 'affected_products'],
+      ''
+    )
+  )
+}
+
+function getHostSeverity(host) {
+  return pickValue(host, ['severity', 'severityLabel', 'severity_label'], '')
+}
+
+function getHostPatchStatus(host) {
+  return pickValue(
+    host,
+    ['patchStatus', 'patch_status', 'status', 'installStatus', 'install_status'],
+    ''
+  )
+}
+
+function getHostScanDate(host) {
+  return pickValue(host, ['scanDate', 'scan_date', 'lastScanDate', 'last_scan_date'], '')
+}
+
+function normalizePatchStatusKey(status) {
+  const raw = String(status || '').trim()
+  const lower = raw.toLowerCase()
+
+  if (['missing', 'unfixed', 'affected', '未修复', '缺失'].includes(lower) || raw === 'MISSING') {
+    return 'missing'
+  }
+  if (['installed', 'fixed', 'success', '已安装', '已修复'].includes(lower) || raw === 'INSTALLED') {
+    return 'installed'
+  }
+  if (['installing', 'pending', 'fixing', '修复中', '安装中'].includes(lower)) {
+    return 'installing'
+  }
+  if (['failed', 'install_failed', 'fix_failed', '失败', '安装失败', '修复失败'].includes(lower)) {
+    return 'failed'
+  }
+
+  return lower
+}
+
+function getPatchStatusType(status) {
+  const key = normalizePatchStatusKey(status)
+  const typeMap = {
+    missing: 'danger',
+    installed: 'success',
+    installing: 'warning',
+    failed: 'danger'
+  }
+  return typeMap[key] || 'info'
+}
+
+function getPatchStatusLabel(status) {
+  const key = normalizePatchStatusKey(status)
+  const labelMap = {
+    missing: '缺失',
+    installed: '已安装',
+    installing: '安装中',
+    failed: '失败'
+  }
+  return labelMap[key] || status || '-'
+}
+
 function normalizeProduct(item, fallbackStatus = '') {
   const status = item?.status || fallbackStatus
   return {
@@ -356,8 +547,17 @@ function normalizeProduct(item, fallbackStatus = '') {
 
 function flattenAffectedProducts(affectedProducts) {
   const list = []
+  const nonProductKeys = new Set([
+    'hosts',
+    'records',
+    'totalHosts',
+    'total_hosts',
+    'hostCount',
+    'host_count'
+  ])
 
   Object.entries(affectedProducts || {}).forEach(([group, items]) => {
+    if (nonProductKeys.has(group)) return
     if (!Array.isArray(items)) return
 
     items.forEach(item => {
@@ -395,6 +595,30 @@ function resolveProducts(result) {
   }
 
   return flattenAffectedProducts(result?.affectedProducts || result)
+}
+
+function resolveAffectedHosts(result) {
+  if (Array.isArray(result?.hosts)) {
+    return result.hosts
+  }
+
+  if (Array.isArray(result?.records)) {
+    return result.records
+  }
+
+  return []
+}
+
+function resolveAffectedHostsTotal(result, hosts) {
+  return Number(
+    result?.totalHosts ??
+      result?.total_hosts ??
+      result?.affectedHosts ??
+      result?.affected_hosts ??
+      result?.hostCount ??
+      result?.host_count ??
+      hosts.length
+  )
 }
 
 const filteredProducts = computed(() => {
@@ -619,15 +843,23 @@ function setProductFilter(filter) {
 
 async function loadProductsFallback(detailResult) {
   productsLoading.value = true
+  affectedHostsLoading.value = true
   try {
     const affectedResult = await winCveApi.getAffectedProducts(props.cveId)
     const data = affectedResult?.data || affectedResult
     products.value = resolveProducts(data)
+    const hosts = resolveAffectedHosts(data)
+    affectedHosts.value = hosts
+    affectedHostsTotal.value = resolveAffectedHostsTotal(data, hosts)
   } catch (error) {
     console.error('加载 Windows CVE 产品列表失败:', error)
     products.value = flattenAffectedProducts(detailResult?.affectedProducts)
+    const hosts = resolveAffectedHosts(detailResult)
+    affectedHosts.value = hosts
+    affectedHostsTotal.value = resolveAffectedHostsTotal(detailResult, hosts)
   } finally {
     productsLoading.value = false
+    affectedHostsLoading.value = false
   }
 }
 
@@ -637,6 +869,8 @@ async function loadDetail() {
   activeTab.value = 'basic'
   cveDetail.value = null
   products.value = []
+  affectedHosts.value = []
+  affectedHostsTotal.value = 0
   disposeImpactChart()
 
   try {
@@ -1060,6 +1294,12 @@ onUnmounted(() => {
       }
     }
   }
+}
+
+.host-identity {
+  color: var(--el-color-primary);
+  font-weight: 500;
+  user-select: text;
 }
 
 .card-text {

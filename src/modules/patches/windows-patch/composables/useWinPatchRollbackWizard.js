@@ -9,6 +9,8 @@ import {
   normalizeUpper,
   pickValue,
   resolveHistUpdateId,
+  resolveHostId,
+  resolveHostKey,
   unwrapResponse
 } from '../utils'
 
@@ -298,10 +300,20 @@ export function useWinPatchRollbackWizard({ selectedRows, onSubmitted, onSuccess
     const rows = Array.isArray(selectedRows?.value) ? selectedRows.value : []
     return rows.map(row => ({
       id: resolveHistUpdateId(row),
-      kbNumber: pickValue(row, ['kbNumber', 'kb_number'], '-'),
-      title: pickValue(row, ['title'], '-'),
-      hostId: String(pickValue(row, ['hostId', 'host_id'], '')).trim(),
-      hostKey: String(pickValue(row, ['hostKey', 'host_key'], '-')).trim() || '-',
+      kbNumber: pickValue(
+        row,
+        ['updateKbNumbers', 'update_kb_numbers', 'kbNumber', 'kb_number'],
+        '-'
+      ),
+      title: pickValue(row, ['title'], ''),
+      hostId: resolveHostId(row),
+      hostKey: resolveHostKey(row),
+      runId: pickValue(row, ['runId', 'run_id'], ''),
+      updateTime: pickValue(
+        row,
+        ['updateTime', 'update_time', 'executedDate', 'executed_date'],
+        ''
+      ),
       severity: pickValue(row, ['severity'], ''),
       severityLabel: getSeverityLabel(pickValue(row, ['severity'], ''))
     }))

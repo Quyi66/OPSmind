@@ -150,15 +150,21 @@
             </el-form-item>
             <el-form-item label="系统版本">
               <el-select
-                v-model="hostFilters.os_version"
+                v-model="hostVersionFilter"
                 placeholder="全部，可输入自定义值"
                 clearable
                 filterable
                 allow-create
                 default-first-option
                 style="width: 180px"
+                @change="handleHostVersionChange"
               >
-                <el-option v-for="item in osVersionList" :key="item" :label="item" :value="item" />
+                <el-option
+                  v-for="item in hostOsVersionOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
               </el-select>
             </el-form-item>
             <el-form-item label="关键词">
@@ -242,7 +248,11 @@
 
             <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
             <el-table-column prop="os_distro" label="操作系统" width="110" />
-            <el-table-column prop="os_version" label="版本" width="120" />
+            <el-table-column label="版本" width="150">
+              <template #default="{ row }">
+                {{ [row.os_version, row.os_sp_version].filter(Boolean).join(' ') || '-' }}
+              </template>
+            </el-table-column>
             <!-- <el-table-column prop="location" label="网络区域环境" width="140">
               <template #default="{ row }">
                 <el-tag v-if="row.location" size="small" type="success" effect="plain">
@@ -963,6 +973,7 @@ import {
   getRebootStatusTooltip,
   hasAffectedPackageDetail
 } from '../utils/vulnerabilityPackages'
+import { parseOsVersionFilter } from '../utils/linuxPatchScan'
 import { assetApi } from '@/modules/asset/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
@@ -1044,8 +1055,10 @@ const hostTableData = ref([])
 const hostFilters = reactive({
   os_distro: '',
   os_version: '',
+  os_sp_version: '',
   keyword: ''
 })
+const hostVersionFilter = ref('')
 const pagination = reactive({
   page: 1,
   pageSize: 20,
@@ -1096,6 +1109,27 @@ function syncStateFromRoute() {
 // 操作系统列表
 const osDistroList = ref([])
 const osVersionList = ref([])
+const hostOsVersionOptions = ref([])
+
+function mergeHostOsVersionOptions(records = []) {
+  const optionMap = new Map(hostOsVersionOptions.value.map(item => [item.value, item]))
+
+  records.forEach(item => {
+    const osVersion = item.os_major_version || item.os_version || ''
+    const osSpVersion = item.os_sp_version || ''
+    const label = [osVersion, osSpVersion].filter(Boolean).join(' ')
+    if (!label) return
+
+    optionMap.set(label, {
+      label,
+      value: label,
+      osVersion,
+      osSpVersion
+    })
+  })
+
+  hostOsVersionOptions.value = [...optionMap.values()]
+}
 
 // 漏洞表格选择
 const vulnTableRef = ref(null)
@@ -1475,11 +1509,13 @@ async function loadHostData() {
       size: pagination.pageSize,
       os_distro: hostFilters.os_distro,
       os_version: hostFilters.os_version,
+      os_sp_version: hostFilters.os_sp_version,
       keyword: hostFilters.keyword
     }
     const response = await patchScanApi.getScanResults(params)
     const data = response?.data || response || {}
     const records = Array.isArray(data.content) ? data.content : []
+    mergeHostOsVersionOptions(records)
 
     // 一次性获取所有主机的资产信息，回填主机概览固定列
     try {
@@ -1569,7 +1605,11 @@ async function loadOsLists() {
       osDistroList.value = osDistroRes.data.records.map(item => item.os_distro)
     }
     if (osVersionRes?.data?.records) {
-      osVersionList.value = osVersionRes.data.records.map(item => item.os_major_version)
+      const records = osVersionRes.data.records
+      osVersionList.value = [
+        ...new Set(records.map(item => item.os_major_version || item.os_version).filter(Boolean))
+      ]
+      mergeHostOsVersionOptions(records)
     }
   } catch (error) {
     console.error('Failed to load OS lists:', error)
@@ -1582,9 +1622,18 @@ function handleFilter() {
   loadHostData()
 }
 
+function handleHostVersionChange(value) {
+  const option = hostOsVersionOptions.value.find(item => item.value === value)
+  const parsedValue = parseOsVersionFilter(value)
+  hostFilters.os_version = option?.osVersion || parsedValue.osVersion
+  hostFilters.os_sp_version = option?.osSpVersion || parsedValue.osSpVersion
+}
+
 function handleHostReset() {
   hostFilters.os_distro = ''
   hostFilters.os_version = ''
+  hostFilters.os_sp_version = ''
+  hostVersionFilter.value = ''
   hostFilters.keyword = ''
   pagination.page = 1
   pagination.pageSize = 20

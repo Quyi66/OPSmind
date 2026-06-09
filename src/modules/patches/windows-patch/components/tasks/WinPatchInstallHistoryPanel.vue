@@ -27,7 +27,7 @@
       >
         回滚选中记录
       </el-button>
-      <span class="win-patch-selection-text">安装 / 回滚日志（按时间倒序）</span>
+      <span class="win-patch-selection-text">安装历史（按时间倒序）</span>
       <span class="win-patch-selection-text">已选 {{ selectedRows.length }} 条可回滚记录</span>
       <span style="flex: 1"></span>
       <el-button
@@ -49,43 +49,38 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="48" :selectable="isRollbackRowSelectable" />
-        <el-table-column label="主机" width="130" show-overflow-tooltip>
+        <el-table-column label="主机" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ pickValue(row, ['hostKey', 'host_key'], '-') }}
+            {{ pickValue(row, ['hosts', 'hostKey', 'host_key'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column label="KB 编号" width="130">
+        <el-table-column label="KB 编号" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ pickValue(row, ['kbNumber', 'kb_number'], '-') }}
+            {{
+              pickValue(row, ['updateKbNumbers', 'update_kb_numbers', 'kbNumber', 'kb_number'], '-')
+            }}
           </template>
         </el-table-column>
-        <el-table-column label="标题" min-width="240" show-overflow-tooltip>
+        <el-table-column label="更新时间" min-width="190" class-name="win-patch-table__time-column">
           <template #default="{ row }">
-            {{ pickValue(row, ['title'], '-') }}
+            {{
+              formatDateTime(
+                pickValue(row, ['updateTime', 'update_time', 'executedDate', 'executed_date'], '')
+              )
+            }}
           </template>
         </el-table-column>
-        <el-table-column label="动作" width="100">
+        <el-table-column label="安装历史" min-width="110" align="center">
           <template #default="{ row }">
-            <el-tag :type="getInstallActionTagType(row)" size="small" effect="plain">
-              {{ getInstallActionLabel(row) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="结果" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getInstallResultTagType(row)" size="small">
-              {{ getInstallResultLabel(row) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="执行时间" width="190" class-name="win-patch-table__time-column">
-          <template #default="{ row }">
-            {{ formatDateTime(pickValue(row, ['executedDate', 'executed_date'], '')) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="错误信息" min-width="220" show-overflow-tooltip>
-          <template #default="{ row }">
-            {{ pickValue(row, ['errorMessage', 'error_message'], '-') }}
+            <el-button
+              v-if="resolveRunId(row)"
+              type="primary"
+              link
+              @click.stop="openRunResult(row)"
+            >
+              查看
+            </el-button>
+            <span v-else>-</span>
           </template>
         </el-table-column>
       </el-table>
@@ -109,30 +104,31 @@
       :selected-rows="selectedRows"
       @success="handleRollbackSuccess"
     />
+
+    <ExecuteResultDialog
+      v-model:visible="runResultDialogVisible"
+      :run-id="currentRunId"
+      :job-title="currentRunTitle"
+    />
   </div>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import WinPatchRollbackDialog from './WinPatchRollbackDialog.vue'
 import { winPatchApi } from '../../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../../constants'
-import {
-  formatDateTime,
-  getInstallActionLabel,
-  getInstallActionTagType,
-  getInstallResultLabel,
-  getInstallResultTagType,
-  isRollbackSelectable,
-  parsePageResponse,
-  pickValue
-} from '../../utils'
+import { formatDateTime, isRollbackSelectable, parsePageResponse, pickValue } from '../../utils'
 
 const loading = ref(false)
 const logList = ref([])
 const selectedRows = ref([])
 const rollbackDialogVisible = ref(false)
+const runResultDialogVisible = ref(false)
+const currentRunId = ref('')
+const currentRunTitle = ref('')
 
 const filters = reactive({
   hostId: ''
@@ -167,6 +163,23 @@ function isRollbackRowSelectable(row) {
 
 function handleSelectionChange(rows) {
   selectedRows.value = Array.isArray(rows) ? rows : []
+}
+
+function resolveRunId(row) {
+  return String(pickValue(row, ['runId', 'run_id'], '')).trim()
+}
+
+function openRunResult(row) {
+  const runId = resolveRunId(row)
+  if (!runId) return
+
+  currentRunId.value = runId
+  currentRunTitle.value = `补丁安装历史：${pickValue(
+    row,
+    ['updateKbNumbers', 'update_kb_numbers', 'kbNumber', 'kb_number'],
+    runId
+  )}`
+  runResultDialogVisible.value = true
 }
 
 function handleSearch() {
