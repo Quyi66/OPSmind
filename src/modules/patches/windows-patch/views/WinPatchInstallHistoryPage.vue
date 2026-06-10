@@ -1,5 +1,5 @@
 <template>
-  <div class="win-patch-history-panel">
+  <div class="ops-page-layout win-patch-page">
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
         <el-form-item label="主机 ID">
@@ -117,10 +117,10 @@
 import { onMounted, reactive, ref } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
-import WinPatchRollbackDialog from './WinPatchRollbackDialog.vue'
-import { winPatchApi } from '../../api'
-import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../../constants'
-import { formatDateTime, isRollbackSelectable, parsePageResponse, pickValue } from '../../utils'
+import WinPatchRollbackDialog from '../components/tasks/WinPatchRollbackDialog.vue'
+import { winPatchApi } from '../api'
+import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
+import { formatDateTime, isRollbackSelectable, parsePageResponse, pickValue } from '../utils'
 
 const loading = ref(false)
 const logList = ref([])
@@ -216,9 +216,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.win-patch-history-panel {
-  display: flex;
-  flex-direction: column;
+.win-patch-page {
   gap: 12px;
 }
 

@@ -170,7 +170,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: '安装回滚历史',
     icon: 'fas fa-history',
     platform: 'windows',
-    component: () => import('./windows-patch/views/WindowsPatchTaskCenterPage.vue')
+    component: () => import('./windows-patch/views/WinPatchInstallHistoryPage.vue')
   },
   {
     key: 'windowsCveList',
