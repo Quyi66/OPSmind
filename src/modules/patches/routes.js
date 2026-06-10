@@ -180,7 +180,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: 'CVE漏洞列表',
     icon: 'fas fa-bug',
     platform: 'windows',
-    component: () => import('./views/WindowsCveListPage.vue')
+    component: () => import('./windows-patch/views/WindowsCveListPage.vue')
   },
   {
     key: 'logs',

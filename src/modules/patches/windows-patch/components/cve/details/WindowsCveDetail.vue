@@ -305,7 +305,7 @@ import * as echarts from 'echarts'
 import { useTheme } from '@/composables/useTheme'
 import { TopRight, TrendCharts, Warning, Check } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { winCveApi } from '../../../api'
+import { winCveApi } from '../../../../api'
 
 const props = defineProps({
   cveId: {

@@ -230,8 +230,8 @@ import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { winCveApi } from '../api'
-import ManualExportDialog from '../components/cve/dialogs/ManualExportDialog.vue'
+import { winCveApi } from '../../api'
+import ManualExportDialog from '../../components/cve/dialogs/ManualExportDialog.vue'
 import WindowsCveDetail from '../components/cve/details/WindowsCveDetail.vue'
 
 const route = useRoute()
