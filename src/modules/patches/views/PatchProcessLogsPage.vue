@@ -73,7 +73,12 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="120">
           <template #default="{ row }">
-            <el-tag :type="getTaskStatusTagType(row.status)" size="small">
+            <el-tag
+              :type="getTaskStatusTagType(row.status)"
+              size="small"
+              class="status-tag--clickable"
+              @click="openDetail(row)"
+            >
               {{ formatTaskStatus(row.status) }}
             </el-tag>
           </template>
@@ -1694,5 +1699,15 @@ onMounted(() => {
 
 :deep(.el-date-editor) {
   height: 32px !important;
+}
+
+.status-tag--clickable {
+  cursor: pointer;
+  transition: opacity 0.2s, filter 0.2s;
+}
+
+.status-tag--clickable:hover {
+  opacity: 0.8;
+  filter: brightness(1.1);
 }
 </style>
