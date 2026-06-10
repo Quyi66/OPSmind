@@ -115,7 +115,11 @@
           <el-table-column type="selection" width="48" :selectable="isPatchActionable" />
           <el-table-column label="KB 编号" width="130">
             <template #default="{ row }">
-              {{ pickValue(row, ['kbNumber', 'kb_number'], '-') }}
+              <CveLinkList
+                :cves="resolveKbNumbers(row)"
+                :url-resolver="kbNumber => getWinKbUrl(row, kbNumber)"
+                dialog-title="关联 KB"
+              />
             </template>
           </el-table-column>
           <el-table-column label="标题" min-width="280" show-overflow-tooltip>
@@ -203,7 +207,6 @@
         @submitted="handleInstallTaskCreated"
         @success="handleInstallSuccess"
       />
-
     </div>
   </el-drawer>
 </template>
@@ -293,11 +296,55 @@ function resolveCveIds(row) {
     .filter(Boolean)
 }
 
+function resolveKbNumbers(row) {
+  const raw = pickValue(
+    row,
+    ['kbNumber', 'kb_number', 'updateKbNumbers', 'update_kb_numbers', 'kbArticle', 'kb_article'],
+    ''
+  )
+  if (Array.isArray(raw)) {
+    return raw.map(normalizeKbNumber).filter(Boolean)
+  }
+
+  return String(raw)
+    .split(/[,，;；\s]+/)
+    .map(normalizeKbNumber)
+    .filter(Boolean)
+}
+
 // Windows CVE 跳转 MSRC（微软安全响应中心）官方漏洞详情页
 function getWinCveUrl(cveId) {
   const id = String(cveId || '').trim()
   if (!id) return ''
   return `https://msrc.microsoft.com/update-guide/vulnerability/${encodeURIComponent(id)}`
+}
+
+function normalizeKbNumber(value) {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase()
+  if (!normalized) return ''
+
+  const match = normalized.match(/KB\s*\d+/i)
+  if (match) {
+    return match[0].replace(/\s+/g, '')
+  }
+
+  return /^\d+$/.test(normalized) ? `KB${normalized}` : normalized
+}
+
+function getWinKbUrl(row, kbNumber) {
+  const explicitUrl = pickValue(
+    row,
+    ['kbUrl', 'kb_url', 'supportUrl', 'support_url', 'articleUrl', 'article_url', 'moreInfoUrl'],
+    ''
+  )
+  if (explicitUrl) {
+    return explicitUrl
+  }
+
+  const articleId = String(kbNumber || '').match(/\d+/)?.[0]
+  return articleId ? `https://support.microsoft.com/help/${encodeURIComponent(articleId)}` : ''
 }
 
 function applyInitialFilters() {

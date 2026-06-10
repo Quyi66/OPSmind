@@ -1,52 +1,31 @@
 <template>
   <div class="ops-page-layout">
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="page-header__actions">
-        <el-button type="primary" @click="handleRescan">
-          <i class="fa fa-bug" />
-          重新扫描补丁
-        </el-button>
-      </div>
-    </div>
-
     <!-- 内容区域 -->
     <div class="page-content">
       <!-- 新版统计面板 -->
       <div class="stats-dashboard">
         <!-- 1. 补丁统计卡片 -->
         <div class="stat-card patch-card">
-          <div class="card-title">补丁统计</div>
+          <div class="compact-card-header">
+            <div class="card-title">补丁统计</div>
+            <div class="card-subtitle">总计 {{ kpiStats.totalPatchCount }} 个</div>
+          </div>
           <div class="patch-chart-container">
             <div class="chart-wrapper">
-              <v-chart class="patch-pie-chart" :option="chartOption" autoresize />
-              <div class="chart-center-label">
-                <div class="label-title">总计</div>
-                <div class="label-value">{{ kpiStats.totalPatchCount }}</div>
-              </div>
+              <v-chart class="patch-bar-chart" :option="chartOption" autoresize />
             </div>
           </div>
           <div class="patch-progress-section">
-            <div class="progress-bar-container">
-              <div
-                class="progress-segment critical"
-                :style="{ width: kpiStats.criticalPatchPercent + '%' }"
-              ></div>
-              <div
-                class="progress-segment important"
-                :style="{ width: kpiStats.importantPatchPercent + '%' }"
-              ></div>
-            </div>
             <div class="progress-labels">
               <div class="stat-label critical">
                 <i class="fa fa-circle"></i>
-                致命 {{ kpiStats.criticalPatchPercent }}%
-                <span class="count">({{ kpiStats.criticalPatchCount }})</span>
+                致命
+                <span class="count">{{ kpiStats.criticalPatchPercent }}%</span>
               </div>
               <div class="stat-label important">
                 <i class="fa fa-circle"></i>
-                严重 {{ kpiStats.importantPatchPercent }}%
-                <span class="count">({{ kpiStats.importantPatchCount }})</span>
+                严重
+                <span class="count">{{ kpiStats.importantPatchPercent }}%</span>
               </div>
             </div>
           </div>
@@ -54,41 +33,35 @@
 
         <!-- 2. 漏洞概览卡片 -->
         <div class="stat-card vul-card">
-          <div class="card-title">漏洞概览</div>
+          <div class="compact-card-header">
+            <div class="card-title">漏洞概览</div>
+            <div class="card-subtitle">CVE 漏洞总数</div>
+          </div>
           <div class="vul-content">
-            <div class="vul-number">{{ kpiStats.vulCount.toLocaleString() }}</div>
-            <div class="vul-label">CVE漏洞总数</div>
-            <div class="vul-sub-metric">
-              <i class="fa fa-bug"></i>
-              平均每主机 {{ kpiStats.avgVulPerHost }} 个漏洞
+            <div class="metric-main">
+              <div class="vul-number">{{ kpiStats.vulCount.toLocaleString() }}</div>
+              <div class="vul-label">个</div>
             </div>
-            <div class="vul-icon-bg">
-              <i class="fa fa-shield-alt"></i>
+            <div class="vul-sub-metric compact">
+              <i class="fa fa-bug"></i>
+              平均每主机 {{ kpiStats.avgVulPerHost }} 个
             </div>
           </div>
         </div>
 
         <!-- 3. 主机影响卡片 -->
         <div class="stat-card host-card">
-          <div class="card-title">主机影响</div>
+          <div class="compact-card-header">
+            <div class="card-title">主机影响</div>
+            <div class="card-subtitle">扫描主机 {{ kpiStats.hostCount }} 台</div>
+          </div>
           <div class="host-content">
-            <div class="host-total-row">
-              <span class="label">扫描主机</span>
-              <span class="value">{{ kpiStats.hostCount }} 台</span>
-            </div>
-
             <div class="impact-item">
               <div class="impact-header">
                 <span class="label-critical">致命影响</span>
                 <span class="value">
                   {{ kpiStats.criticalHostCount }} 台 ({{ kpiStats.criticalHostPercent }}%)
                 </span>
-              </div>
-              <div class="progress-track">
-                <div
-                  class="progress-fill critical"
-                  :style="{ width: kpiStats.criticalHostPercent + '%' }"
-                ></div>
               </div>
             </div>
 
@@ -98,12 +71,6 @@
                 <span class="value">
                   {{ kpiStats.importantHostCount }} 台 ({{ kpiStats.importantHostPercent }}%)
                 </span>
-              </div>
-              <div class="progress-track">
-                <div
-                  class="progress-fill important"
-                  :style="{ width: kpiStats.importantHostPercent + '%' }"
-                ></div>
               </div>
             </div>
           </div>
@@ -167,6 +134,21 @@
                 />
               </el-select>
             </el-form-item>
+            <el-form-item label="标签">
+              <el-select
+                v-model="hostFilters.tags"
+                placeholder="全部标签"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                clearable
+                filterable
+                :loading="hostTagLoading"
+                style="width: 180px"
+              >
+                <el-option v-for="tag in hostTagOptions" :key="tag" :label="tag" :value="tag" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="关键词">
               <el-input
                 v-model="hostFilters.keyword"
@@ -200,6 +182,10 @@
 
         <!-- 操作栏 -->
         <div class="ops-action-bar">
+          <el-button type="primary" size="small" @click="handleRescan">
+            <i class="fa fa-bug" />
+            重新扫描补丁
+          </el-button>
           <span style="flex: 1"></span>
           <el-button
             class="toolbar-icon-btn"
@@ -225,14 +211,14 @@
             @selection-change="handleHostSelectionChange"
           >
             <el-table-column type="selection" width="45" />
-            <el-table-column prop="host_key" label="主机" width="150">
+            <el-table-column prop="host_key" label="主机" width="140">
               <template #default="{ row }">
                 <el-link type="primary" :underline="false" @click="handleHostClick(row)">
                   {{ row.host_key }}
                 </el-link>
               </template>
             </el-table-column>
-            <el-table-column prop="need_reboot" label="是否需要重启" width="120">
+            <el-table-column prop="need_reboot" label="是否需要重启" width="110">
               <template #default="{ row }">
                 <el-tag
                   :type="
@@ -247,10 +233,64 @@
             </el-table-column>
 
             <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
+            <el-table-column prop="tags" label="标签" min-width="140">
+              <template #default="{ row }">
+                <div v-if="Array.isArray(row.tags) && row.tags.length" class="host-list-tags">
+                  <el-tag
+                    v-for="(tag, index) in row.tags"
+                    :key="`${tag}-${index}`"
+                    size="small"
+                    effect="plain"
+                  >
+                    {{ tag }}
+                  </el-tag>
+                </div>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="os_distro" label="操作系统" width="110" />
             <el-table-column label="版本" width="150">
               <template #default="{ row }">
                 {{ [row.os_version, row.os_sp_version].filter(Boolean).join(' ') || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="内存" width="170">
+              <template #default="{ row }">
+                <div v-if="row.memoryOverview" class="memory-overview">
+                  <div
+                    v-if="row.memoryOverview.usedPercent !== null"
+                    class="memory-usage"
+                    :class="`memory-usage--${row.memoryOverview.usageLevel}`"
+                  >
+                    <div
+                      class="memory-usage__track"
+                      :title="`已使用 ${row.memoryOverview.usedPercent}%`"
+                    >
+                      <div
+                        class="memory-usage__fill"
+                        :style="{ width: `${row.memoryOverview.usedPercent}%` }"
+                      />
+                    </div>
+                    <div class="memory-usage__desc">
+                      {{ row.memoryOverview.freeGb }} GB 可用, 共 {{ row.memoryOverview.totalGb }} GB
+                    </div>
+                  </div>
+                  <div v-else class="memory-usage memory-usage--unknown">
+                    <div class="memory-usage__track" />
+                    <div class="memory-usage__desc">
+                      {{
+                        row.memoryOverview.freeGb !== null
+                          ? `${row.memoryOverview.freeGb} GB 可用`
+                          : '-'
+                      }}{{
+                        row.memoryOverview.totalGb !== null
+                          ? `, 共 ${row.memoryOverview.totalGb} GB`
+                          : ', 总量未知'
+                      }}
+                    </div>
+                  </div>
+                </div>
+                <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
             <!-- <el-table-column prop="location" label="网络区域环境" width="140">
@@ -266,7 +306,7 @@
                 {{ row.run_environment || '-' }}
               </template>
             </el-table-column> -->
-            <el-table-column prop="num_critical" width="90">
+            <el-table-column prop="num_critical" width="80">
               <template #header>
                 严重
                 <i class="fa fa-circle text-danger" />
@@ -284,7 +324,7 @@
                 </button>
               </template>
             </el-table-column>
-            <el-table-column prop="num_important" width="90">
+            <el-table-column prop="num_important" width="80">
               <template #header>
                 重要
                 <i class="fa fa-circle text-warning" />
@@ -302,7 +342,7 @@
                 </button>
               </template>
             </el-table-column>
-            <el-table-column prop="num_moderate" width="90">
+            <el-table-column prop="num_moderate" width="80">
               <template #header>
                 中等
                 <i class="fa fa-circle text-dark" />
@@ -493,7 +533,7 @@
             :data="vulnTableData"
             class="header-border-only-table"
             style="width: 100%"
-            max-height="calc(100vh - 600px)"
+            height="100%"
             @select="handleVulnSelect"
             @select-all="handleVulnSelectAll"
             border
@@ -973,8 +1013,8 @@ import {
   getRebootStatusTooltip,
   hasAffectedPackageDetail
 } from '../utils/vulnerabilityPackages'
-import { parseOsVersionFilter } from '../utils/linuxPatchScan'
-import { assetApi } from '@/modules/asset/api'
+import { buildMemoryOverview, parseOsVersionFilter } from '../utils/linuxPatchScan'
+import { assetApi, dataManageApi } from '@/modules/asset/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
@@ -987,11 +1027,11 @@ import CveLinkList from '../components/common/CveLinkList.vue'
 // ECharts
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { PieChart, GaugeChart } from 'echarts/charts'
-import { TitleComponent, TooltipComponent, GridComponent } from 'echarts/components'
+import { BarChart } from 'echarts/charts'
+import { TooltipComponent, GridComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 
-use([CanvasRenderer, PieChart, GaugeChart, TitleComponent, TooltipComponent, GridComponent])
+use([CanvasRenderer, BarChart, TooltipComponent, GridComponent])
 
 // Router
 const router = useRouter()
@@ -1018,31 +1058,79 @@ const kpiStats = reactive({
   importantHostPercent: 0
 })
 
-// 图表配置 - 补丁统计半环图
+// 图表配置 - 补丁统计条形图
 const chartOption = computed(() => {
+  const rootStyle =
+    typeof window !== 'undefined' ? getComputedStyle(document.documentElement) : null
+  const textColor = rootStyle?.getPropertyValue('--el-text-color-primary').trim() || '#303133'
+  const axisColor = rootStyle?.getPropertyValue('--el-text-color-regular').trim() || '#606266'
+  const backgroundColor = rootStyle?.getPropertyValue('--el-fill-color-light').trim() || '#f5f7fa'
+
   return {
+    grid: {
+      top: 2,
+      right: 42,
+      bottom: 2,
+      left: 42,
+      containLabel: false
+    },
     tooltip: {
-      trigger: 'item'
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      },
+      formatter: params => {
+        const item = params?.[0]
+        if (!item) return ''
+        const percent =
+          item.name === '致命' ? kpiStats.criticalPatchPercent : kpiStats.importantPatchPercent
+        return `${item.name}: ${item.value} (${percent}%)`
+      }
+    },
+    xAxis: {
+      type: 'value',
+      show: false,
+      max: value => Math.max(value.max, 1)
+    },
+    yAxis: {
+      type: 'category',
+      inverse: true,
+      data: ['致命', '严重'],
+      axisTick: { show: false },
+      axisLine: { show: false },
+      axisLabel: {
+        color: axisColor,
+        fontSize: 12,
+        margin: 8
+      }
     },
     series: [
       {
         name: '补丁统计',
-        type: 'pie',
-        radius: ['60%', '80%'],
-        center: ['50%', '70%'],
-        // 调整起始角度，使其变成半圆
-        startAngle: 180,
-        endAngle: 0,
+        type: 'bar',
+        barWidth: 12,
+        barGap: '45%',
         data: [
-          { value: kpiStats.criticalPatchCount, name: '严重', itemStyle: { color: '#F53F3F' } },
-          { value: kpiStats.importantPatchCount, name: '重要', itemStyle: { color: '#FF7D00' } }
+          { value: kpiStats.criticalPatchCount, itemStyle: { color: '#F53F3F' } },
+          { value: kpiStats.importantPatchCount, itemStyle: { color: '#FF7D00' } }
         ],
         label: {
-          show: false
+          show: true,
+          position: 'right',
+          color: textColor,
+          fontSize: 12,
+          fontWeight: 600
         },
+        itemStyle: {
+          borderRadius: [0, 6, 6, 0]
+        },
+        backgroundStyle: {
+          color: backgroundColor,
+          borderRadius: [0, 6, 6, 0]
+        },
+        showBackground: true,
         emphasis: {
-          scale: true,
-          scaleSize: 5
+          focus: 'series'
         }
       }
     ]
@@ -1052,10 +1140,13 @@ const chartOption = computed(() => {
 // 主机表格
 const loading = ref(false)
 const hostTableData = ref([])
+const hostTagLoading = ref(false)
+const hostTagOptions = ref([])
 const hostFilters = reactive({
   os_distro: '',
   os_version: '',
   os_sp_version: '',
+  tags: [],
   keyword: ''
 })
 const hostVersionFilter = ref('')
@@ -1510,6 +1601,7 @@ async function loadHostData() {
       os_distro: hostFilters.os_distro,
       os_version: hostFilters.os_version,
       os_sp_version: hostFilters.os_sp_version,
+      tags: hostFilters.tags,
       keyword: hostFilters.keyword
     }
     const response = await patchScanApi.getScanResults(params)
@@ -1545,7 +1637,11 @@ async function loadHostData() {
             assetInfoMap[item.IP] = {
               needReboot: item.needReboot,
               run_environment: item.RUN_ENVIRONMENT || item.run_environment || '',
-              location
+              location,
+              memoryOverview: buildMemoryOverview(
+                item.memtotal_mb ?? item.MEMTOTAL_MB,
+                item.memfree_mb ?? item.MEMFREE_MB
+              )
             }
           }
         })
@@ -1555,6 +1651,7 @@ async function loadHostData() {
             record.need_reboot = assetInfo.needReboot
             record.run_environment = assetInfo.run_environment
             record.location = assetInfo.location
+            record.memoryOverview = assetInfo.memoryOverview
           }
         })
       }
@@ -1570,6 +1667,31 @@ async function loadHostData() {
     pagination.total = 0
   } finally {
     loading.value = false
+  }
+}
+
+async function loadHostTagOptions() {
+  hostTagLoading.value = true
+  try {
+    const responses = await Promise.all([
+      dataManageApi.getAllTags('linux'),
+      dataManageApi.getAllTags('host')
+    ])
+    const records = responses.flatMap(response =>
+      Array.isArray(response?.records) ? response.records : []
+    )
+    hostTagOptions.value = [
+      ...new Set(
+        records
+          .map(item => (typeof item === 'string' ? item : item?.name || item?.tagName))
+          .filter(Boolean)
+      )
+    ].sort((a, b) => a.localeCompare(b, 'zh-CN'))
+  } catch (error) {
+    console.error('Failed to load host tag options:', error)
+    hostTagOptions.value = []
+  } finally {
+    hostTagLoading.value = false
   }
 }
 
@@ -1633,6 +1755,7 @@ function handleHostReset() {
   hostFilters.os_distro = ''
   hostFilters.os_version = ''
   hostFilters.os_sp_version = ''
+  hostFilters.tags = []
   hostVersionFilter.value = ''
   hostFilters.keyword = ''
   pagination.page = 1
@@ -2440,6 +2563,7 @@ onMounted(() => {
   loadKpiData()
   loadHostData()
   loadOsLists()
+  loadHostTagOptions()
   if (activeTab.value === 'vulnerability') {
     loadVulnData()
   }
@@ -2476,42 +2600,34 @@ defineExpose({
   background: var(--el-bg-color);
 }
 
-.page-header {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 0 16px 8px 0;
-  background: var(--el-bg-color);
-  //border-bottom: 1px solid var(--el-border-color-lighter);
-
-  &__actions {
-    display: flex;
-    gap: 8px;
-  }
-}
-
 .page-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   // padding: 0 16px;
-  overflow-y: auto;
+  overflow: hidden;
   background: var(--el-bg-color);
 }
 
 // 统计面板
 .stats-dashboard {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-top: 4px;
+  display: grid;
+  grid-template-columns: minmax(420px, 1.45fr) minmax(220px, 0.75fr) minmax(260px, 0.9fr);
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-top: 2px;
+  flex-shrink: 0;
 }
 
 .stat-card {
   background: var(--el-bg-color);
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  padding: 16px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
+  min-height: 96px;
   transition:
     transform 0.2s,
     box-shadow 0.2s;
@@ -2527,89 +2643,75 @@ defineExpose({
     font-size: 14px;
     font-weight: 600;
     color: var(--el-text-color-primary);
-    margin-bottom: 12px;
   }
+}
+
+.compact-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  white-space: nowrap;
 }
 
 // 1. 补丁统计卡片
 .patch-card {
-  flex: 4; // 40% width
-  display: flex;
-  flex-direction: column;
-  min-height: 180px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 118px;
+  grid-template-rows: auto 1fr;
+  column-gap: 12px;
+  align-items: center;
+
+  .compact-card-header {
+    grid-column: 1 / -1;
+  }
 
   .patch-chart-container {
-    flex: 1;
+    grid-column: 1;
+    grid-row: 2;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 0;
 
     .chart-wrapper {
       position: relative;
-      width: 200px;
-      height: 100px; // 半圆高度
-    }
-
-    .patch-pie-chart {
       width: 100%;
-      height: 200px; // 实际渲染高度给大一点，通过 overflow 和 clip 控制半圆效果，或者 echoarts 本身设置
-      margin-top: -50px; // 调整位置
+      height: 58px;
     }
 
-    .chart-center-label {
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-
-      .label-title {
-        font-size: 12px;
-        color: var(--el-text-color-regular);
-      }
-      .label-value {
-        font-size: 24px;
-        font-weight: 700;
-        color: var(--el-text-color-primary);
-        line-height: 1.2;
-      }
+    .patch-bar-chart {
+      width: 100%;
+      height: 100%;
     }
   }
 
   .patch-progress-section {
-    padding: 0 16px;
-
-    .progress-bar-container {
-      height: 12px;
-      background-color: var(--el-fill-color-light);
-      border-radius: 6px;
-      display: flex;
-      overflow: hidden;
-      margin-bottom: 8px;
-
-      .progress-segment {
-        height: 100%;
-        transition: width 0.5s ease;
-
-        &.critical {
-          background-color: #f53f3f;
-        }
-        &.important {
-          background-color: #ff7d00;
-        }
-      }
-    }
+    grid-column: 2;
+    grid-row: 2;
+    padding: 0;
 
     .progress-labels {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 8px;
       font-size: 12px;
 
       .stat-label {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 6px;
+        min-height: 24px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background: var(--el-fill-color-lighter);
         color: var(--el-text-color-primary);
 
         &.critical i {
@@ -2622,7 +2724,8 @@ defineExpose({
         }
 
         .count {
-          color: var(--el-text-color-regular);
+          color: var(--el-text-color-primary);
+          font-weight: 600;
           margin-left: 2px;
         }
       }
@@ -2632,94 +2735,75 @@ defineExpose({
 
 // 2. 漏洞概览卡片
 .vul-card {
-  flex: 3; // 30% width
   position: relative;
   overflow: hidden;
 
   .vul-content {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center;
     align-items: center;
+    gap: 12px;
     z-index: 1;
   }
 
+  .metric-main {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
   .vul-number {
-    font-size: 42px;
+    font-size: 32px;
     font-weight: 700;
     color: #409eff; // OpsMind Blue
     line-height: 1;
-    margin-bottom: 8px;
   }
 
   .vul-label {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--el-text-color-primary);
-    margin-bottom: 12px;
   }
 
   .vul-sub-metric {
     font-size: 12px;
     color: var(--el-text-color-regular);
     background: var(--el-fill-color-light);
-    padding: 4px 12px;
+    padding: 4px 10px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 
     i {
       color: var(--el-text-color-secondary);
     }
   }
-
-  .vul-icon-bg {
-    position: absolute;
-    right: -20px;
-    bottom: -20px;
-    font-size: 120px;
-    color: rgba(64, 158, 255, 0.05);
-    z-index: 0;
-    transform: rotate(-15deg);
-  }
 }
 
 // 3. 主机影响卡片
 .host-card {
-  flex: 3; // 30% width
-
   .host-content {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
     flex: 1;
     justify-content: center;
   }
 
-  .host-total-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-
-    .label {
-      font-size: 13px;
-      color: var(--el-text-color-primary);
-    }
-    .value {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--el-text-color-primary);
-    }
-  }
-
   .impact-item {
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: var(--el-fill-color-lighter);
+
     .impact-header {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 12px;
-      margin-bottom: 6px;
+      gap: 8px;
 
       .label-critical {
         color: #f53f3f;
@@ -2731,25 +2815,7 @@ defineExpose({
       }
       .value {
         color: var(--el-text-color-regular);
-      }
-    }
-
-    .progress-track {
-      height: 8px;
-      background: var(--el-fill-color-light);
-      border-radius: 4px;
-      overflow: hidden;
-
-      .progress-fill {
-        height: 100%;
-        border-radius: 4px;
-
-        &.critical {
-          background: #f53f3f;
-        }
-        &.important {
-          background: #ff7d00;
-        }
+        white-space: nowrap;
       }
     }
   }
@@ -2758,19 +2824,10 @@ defineExpose({
 // 响应式调整
 @media (max-width: 1200px) {
   .stats-dashboard {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr;
   }
   .patch-card {
-    flex: 100%;
-    order: 1;
-  }
-  .vul-card {
-    flex: 48%;
-    order: 2;
-  }
-  .host-card {
-    flex: 48%;
-    order: 3;
+    grid-template-columns: minmax(0, 1fr) 118px;
   }
 }
 
@@ -2778,9 +2835,10 @@ defineExpose({
 .nav-tabs {
   display: flex;
   gap: 0;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   border-bottom: 1px solid var(--el-border-color-lighter);
   background: transparent;
+  flex-shrink: 0;
 }
 
 .nav-tab {
@@ -2813,10 +2871,12 @@ defineExpose({
 
 // 标签内容
 .tab-content {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   padding: 0 !important;
-  height: calc(100% - 310px);
+  height: auto;
 }
 
 :deep(.el-table__body td.el-table__cell) {
@@ -3222,6 +3282,74 @@ defineExpose({
   font-weight: 600;
 }
 
+.host-list-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.memory-overview {
+  width: 100%;
+  padding: 5px 0;
+}
+
+.memory-usage {
+  --memory-color: var(--el-color-success);
+  --memory-color-soft: var(--el-color-success-light-9);
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &--warning {
+    --memory-color: var(--el-color-warning);
+    --memory-color-soft: var(--el-color-warning-light-9);
+  }
+
+  &--danger {
+    --memory-color: var(--el-color-danger);
+    --memory-color-soft: var(--el-color-danger-light-9);
+  }
+
+  &--unknown {
+    --memory-color: var(--el-border-color);
+    --memory-color-soft: var(--el-fill-color-light);
+  }
+}
+
+.memory-usage__desc {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--el-text-color-regular);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.memory-usage__track {
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--memory-color) 22%, transparent);
+  border-radius: 5px;
+  background: var(--memory-color-soft);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.memory-usage__fill {
+  height: 100%;
+  min-width: 2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--memory-color) 78%, white),
+    var(--memory-color)
+  );
+  box-shadow: 1px 0 4px color-mix(in srgb, var(--memory-color) 45%, transparent);
+  transition:
+    width 0.35s ease,
+    background-color 0.2s ease;
+}
+
 .severity-count {
   display: inline-flex;
   align-items: center;
@@ -3315,6 +3443,27 @@ defineExpose({
 @media (max-width: 768px) {
   .kpi-cards {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .patch-card {
+    grid-template-columns: 1fr;
+
+    .patch-chart-container,
+    .patch-progress-section {
+      grid-column: 1;
+    }
+
+    .patch-progress-section {
+      grid-row: 3;
+    }
+
+    .progress-labels {
+      flex-direction: row;
+    }
+  }
+
+  .vul-card .vul-content {
+    justify-content: space-between;
   }
 
   .nav-tabs {

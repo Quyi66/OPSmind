@@ -54,6 +54,7 @@
     <WinPatchInstallWizardRestartStep
       v-show="currentStepKey === 'restart'"
       :model-value="installOptions"
+      confirm-mode
       @update:model-value="updateInstallOptions"
     />
 

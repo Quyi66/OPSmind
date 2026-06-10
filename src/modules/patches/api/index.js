@@ -213,6 +213,7 @@ export const patchScanApi = {
    * @param {string} params.os_distro - 操作系统发行版
    * @param {string} params.os_version - 操作系统版本
    * @param {string} params.os_sp_version - 操作系统 SP 版本
+   * @param {Array<string>} params.tags - 标签列表
    * @param {string} params.keyword - 主机名、主机 IP 或资产 ID
    * @param {number} params.page - 页码，从 0 开始
    * @param {number} params.size - 每页大小
@@ -223,6 +224,7 @@ export const patchScanApi = {
       os_distro: params.os_distro,
       os_version: params.os_version,
       os_sp_version: params.os_sp_version,
+      tags: params.tags,
       keyword: params.keyword,
       page: params.page ?? 0,
       size: params.size ?? 20

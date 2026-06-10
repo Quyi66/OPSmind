@@ -316,7 +316,8 @@ export function useWinPatchInstallWizard({
       kbNumber: pickValue(row, ['kbNumber', 'kb_number'], '-'),
       title: pickValue(row, ['title'], '-'),
       severity: pickValue(row, ['severity'], ''),
-      severityLabel: getSeverityLabel(pickValue(row, ['severity'], ''))
+      severityLabel: getSeverityLabel(pickValue(row, ['severity'], '')),
+      cveIds: pickValue(row, ['cveIds', 'cve_ids'], '')
     }))
   })
   const currentTaskStatus = computed(() => getTaskStatusValue(taskDetail.value))

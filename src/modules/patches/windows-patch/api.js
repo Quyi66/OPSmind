@@ -157,10 +157,10 @@ export const winPatchApi = {
   },
 
   getHosts(params = {}) {
-    const queryParams = {
+    const queryParams = new URLSearchParams({
       page: params.page ?? 0,
       size: params.size ?? 20
-    }
+    })
 
     const optionalFilters = {
       os: params.os,
@@ -171,13 +171,20 @@ export const winPatchApi = {
     Object.entries(optionalFilters).forEach(([key, value]) => {
       const normalizedValue = String(value ?? '').trim()
       if (normalizedValue) {
-        queryParams[key] = normalizedValue
+        queryParams.set(key, normalizedValue)
       }
     })
 
-    return apiService.get(`${WIN_PATCH_API_PREFIX}/hosts`, {
-      params: queryParams
-    })
+    if (Array.isArray(params.tags)) {
+      params.tags.forEach(tag => {
+        const normalizedTag = String(tag ?? '').trim()
+        if (normalizedTag) {
+          queryParams.append('tags', normalizedTag)
+        }
+      })
+    }
+
+    return apiService.get(`${WIN_PATCH_API_PREFIX}/hosts?${queryParams.toString()}`)
   },
 
   getHostPatches(hostId, params = {}) {

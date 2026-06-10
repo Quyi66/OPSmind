@@ -45,6 +45,21 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="标签">
+          <el-select
+            v-model="filters.tags"
+            placeholder="全部标签"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            clearable
+            filterable
+            :loading="tagLoading"
+            style="width: 180px"
+          >
+            <el-option v-for="tag in tagOptions" :key="tag" :label="tag" :value="tag" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
@@ -89,7 +104,7 @@
         @selection-change="selection => (selectedHostRows = selection)"
       >
         <el-table-column type="selection" width="48" />
-        <el-table-column label="主机" width="140" show-overflow-tooltip>
+        <el-table-column label="主机" width="130">
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="openHostDrawer(row)">
               {{ resolveHostKey(row) }}
@@ -116,14 +131,68 @@
             {{ pickValue(row, ['osArch', 'os_arch'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column label="缺失数" width="100" align="center">
+        <el-table-column label="标签" min-width="140">
+          <template #default="{ row }">
+            <div v-if="getRowTags(row).length" class="win-patch-host-tags">
+              <el-tag
+                v-for="(tag, index) in getRowTags(row)"
+                :key="`${tag}-${index}`"
+                size="small"
+                effect="plain"
+              >
+                {{ tag }}
+              </el-tag>
+            </div>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="内存" width="170">
+          <template #default="{ row }">
+            <div v-if="row.memoryOverview" class="memory-overview">
+              <div
+                v-if="row.memoryOverview.usedPercent !== null"
+                class="memory-usage"
+                :class="`memory-usage--${row.memoryOverview.usageLevel}`"
+              >
+                <div
+                  class="memory-usage__track"
+                  :title="`已使用 ${row.memoryOverview.usedPercent}%`"
+                >
+                  <div
+                    class="memory-usage__fill"
+                    :style="{ width: `${row.memoryOverview.usedPercent}%` }"
+                  />
+                </div>
+                <div class="memory-usage__desc">
+                  {{ row.memoryOverview.freeGb }} GB 可用, 共 {{ row.memoryOverview.totalGb }} GB
+                </div>
+              </div>
+              <div v-else class="memory-usage memory-usage--unknown">
+                <div class="memory-usage__track" />
+                <div class="memory-usage__desc">
+                  {{
+                    row.memoryOverview.freeGb !== null
+                      ? `${row.memoryOverview.freeGb} GB 可用`
+                      : '-'
+                  }}{{
+                    row.memoryOverview.totalGb !== null
+                      ? `, 共 ${row.memoryOverview.totalGb} GB`
+                      : ', 总量未知'
+                  }}
+                </div>
+              </div>
+            </div>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="缺失数" width="80" align="center">
           <template #default="{ row }">
             <span class="win-patch-metric">
               {{ pickValue(row, ['totalMissing', 'total_missing'], 0) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column width="90" align="center">
+        <el-table-column width="80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
               严重
@@ -144,7 +213,7 @@
             </button>
           </template>
         </el-table-column>
-        <el-table-column width="90" align="center">
+        <el-table-column width="80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
               重要
@@ -165,7 +234,7 @@
             </button>
           </template>
         </el-table-column>
-        <el-table-column width="90" align="center">
+        <el-table-column width="80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
               中等
@@ -292,18 +361,18 @@ import WinPatchScanDialog from '../components/overview/WinPatchScanDialog.vue'
 import WinPatchTaskDetailDrawer from '../components/tasks/WinPatchTaskDetailDrawer.vue'
 import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
-import {
-  formatDateTime,
-  parsePageResponse,
-  pickValue,
-  resolveHostKey
-} from '../utils'
+import { dataManageApi } from '@/modules/asset/api'
+import { buildMemoryOverview } from '@/modules/patches/utils/linuxPatchScan'
+import { formatDateTime, parsePageResponse, pickValue, resolveHostKey } from '../utils'
 
 const route = useRoute()
 const router = useRouter()
+const WIN_PATCH_TAG_CI_TYPES = ['host', 'windows']
 
 const loading = ref(false)
+const tagLoading = ref(false)
 const hostList = ref([])
+const tagOptions = ref([])
 const selectedHostRows = ref([])
 const currentHost = ref(null)
 const hostDrawerInitialFilters = ref(null)
@@ -325,13 +394,15 @@ const pagination = reactive({
 const filters = reactive({
   hostKeyword: '',
   osDistro: '',
-  osVersion: ''
+  osVersion: '',
+  tags: []
 })
 
 const appliedFilters = reactive({
   hostKeyword: '',
   osDistro: '',
-  osVersion: ''
+  osVersion: '',
+  tags: []
 })
 
 const severityCountFields = {
@@ -344,7 +415,9 @@ const severityCountFields = {
 
 function createHostFieldOptions(keys) {
   return Array.from(
-    new Set(hostList.value.map(row => String(pickValue(row, keys, '') || '').trim()).filter(Boolean))
+    new Set(
+      hostList.value.map(row => String(pickValue(row, keys, '') || '').trim()).filter(Boolean)
+    )
   ).sort((left, right) => left.localeCompare(right, 'zh-CN'))
 }
 
@@ -361,15 +434,41 @@ async function loadPageData() {
       size: pagination.pageSize,
       keyword: appliedFilters.hostKeyword,
       os: appliedFilters.osDistro,
-      osVersion: appliedFilters.osVersion
+      osVersion: appliedFilters.osVersion,
+      tags: appliedFilters.tags
     })
 
     const hostPage = parsePageResponse(hostResponse)
-    hostList.value = hostPage.content
+    hostList.value = hostPage.content.map(row => ({
+      ...row,
+      memoryOverview: buildHostMemoryOverview(row)
+    }))
     pagination.total = hostPage.total
     selectedHostRows.value = []
   } finally {
     loading.value = false
+  }
+}
+
+async function loadTagOptions() {
+  tagLoading.value = true
+  try {
+    const responses = await Promise.allSettled(
+      WIN_PATCH_TAG_CI_TYPES.map(ciType => dataManageApi.getAllTags(ciType))
+    )
+    const records = responses.flatMap(result =>
+      result.status === 'fulfilled' && Array.isArray(result.value?.records)
+        ? result.value.records
+        : []
+    )
+    tagOptions.value = [...new Set(records.map(normalizeTagName).filter(Boolean))].sort(
+      (left, right) => left.localeCompare(right, 'zh-CN')
+    )
+  } catch (error) {
+    console.error('Failed to load Windows patch tag options:', error)
+    tagOptions.value = []
+  } finally {
+    tagLoading.value = false
   }
 }
 
@@ -384,18 +483,26 @@ function openReportDialog(rows = []) {
 }
 
 function handleSearch() {
-  Object.assign(appliedFilters, filters)
+  applyFilters()
   pagination.page = 1
   loadPageData()
 }
 
 function handleReset() {
-  Object.keys(filters).forEach(key => {
-    filters[key] = ''
-    appliedFilters[key] = ''
-  })
+  filters.hostKeyword = ''
+  filters.osDistro = ''
+  filters.osVersion = ''
+  filters.tags = []
+  applyFilters()
   pagination.page = 1
   loadPageData()
+}
+
+function applyFilters() {
+  appliedFilters.hostKeyword = filters.hostKeyword
+  appliedFilters.osDistro = filters.osDistro
+  appliedFilters.osVersion = filters.osVersion
+  appliedFilters.tags = [...filters.tags]
 }
 
 function openHostDrawer(row, initialFilters = null) {
@@ -406,6 +513,52 @@ function openHostDrawer(row, initialFilters = null) {
 
 function resolveSeverityCount(row, severity) {
   return Number(pickValue(row, severityCountFields[severity] || [], 0) || 0)
+}
+
+function normalizeTagName(tag) {
+  if (typeof tag === 'string') {
+    return tag.trim()
+  }
+
+  return String(tag?.name || tag?.tagName || tag?.value || '').trim()
+}
+
+function normalizeTags(value) {
+  if (Array.isArray(value)) {
+    return value.map(normalizeTagName).filter(Boolean)
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim()
+    if (!normalized) return []
+
+    try {
+      const parsed = JSON.parse(normalized)
+      if (Array.isArray(parsed)) {
+        return parsed.map(normalizeTagName).filter(Boolean)
+      }
+    } catch {
+      // 非 JSON 字符串继续按逗号分隔标签处理
+    }
+
+    return normalized
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+  }
+
+  return []
+}
+
+function getRowTags(row) {
+  return normalizeTags(pickValue(row, ['tags', 'Tags'], []))
+}
+
+function buildHostMemoryOverview(row) {
+  return buildMemoryOverview(
+    pickValue(row, ['memtotalMb', 'memtotal_mb', 'MEMTOTAL_MB'], null),
+    pickValue(row, ['memfreeMb', 'memfree_mb', 'MEMFREE_MB'], null)
+  )
 }
 
 function openHostDrawerWithSeverity(row, severity) {
@@ -479,6 +632,7 @@ watch(reportDialogVisible, visible => {
 
 onMounted(() => {
   loadPageData()
+  loadTagOptions()
 })
 </script>
 
@@ -495,6 +649,74 @@ onMounted(() => {
 .win-patch-metric {
   color: var(--el-text-color-regular);
   font-variant-numeric: tabular-nums;
+}
+
+.win-patch-host-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.memory-overview {
+  width: 100%;
+  padding: 5px 0;
+}
+
+.memory-usage {
+  --memory-color: var(--el-color-success);
+  --memory-color-soft: var(--el-color-success-light-9);
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &--warning {
+    --memory-color: var(--el-color-warning);
+    --memory-color-soft: var(--el-color-warning-light-9);
+  }
+
+  &--danger {
+    --memory-color: var(--el-color-danger);
+    --memory-color-soft: var(--el-color-danger-light-9);
+  }
+
+  &--unknown {
+    --memory-color: var(--el-border-color);
+    --memory-color-soft: var(--el-fill-color-light);
+  }
+}
+
+.memory-usage__desc {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--el-text-color-regular);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.memory-usage__track {
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--memory-color) 22%, transparent);
+  border-radius: 5px;
+  background: var(--memory-color-soft);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.memory-usage__fill {
+  height: 100%;
+  min-width: 2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--memory-color) 78%, white),
+    var(--memory-color)
+  );
+  box-shadow: 1px 0 4px color-mix(in srgb, var(--memory-color) 45%, transparent);
+  transition:
+    width 0.35s ease,
+    background-color 0.2s ease;
 }
 
 .win-patch-severity-header {

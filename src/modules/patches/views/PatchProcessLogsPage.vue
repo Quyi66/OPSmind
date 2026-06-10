@@ -78,6 +78,17 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="osType" label="系统类型" width="120">
+          <template #default="{ row }">
+            <span class="os-type-cell">
+              <i
+                v-if="getOsIcon(row.osType)"
+                :class="[getOsIcon(row.osType), 'os-brand-icon']"
+              />
+              <span>{{ row.osType }}</span>
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdBy" label="操作人" width="120" show-overflow-tooltip />
         <el-table-column label="涉及软件包" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">
@@ -837,6 +848,18 @@ function getStatusType(status) {
   return 'info'
 }
 
+function getOsIcon(osType) {
+  if (!osType) return ''
+  const type = String(osType).toLowerCase()
+  if (type.includes('windows')) {
+    return 'fab fa-windows'
+  }
+  if (type.includes('linux')) {
+    return 'fab fa-linux'
+  }
+  return ''
+}
+
 function formatTaskStatus(status) {
   return TASK_STATUS_MAP[status] || status || '-'
 }
@@ -1242,6 +1265,25 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+.os-type-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  .os-brand-icon {
+    font-size: 16px;
+    color: var(--el-text-color-regular);
+    width: 16px;
+    text-align: center;
+    display: inline-block;
+    vertical-align: middle;
+
+    :deep(path) {
+      fill: currentColor !important;
+    }
+  }
+}
+
 :deep(.process-log-dialog) {
   .el-dialog {
     border-radius: 12px;
