@@ -54,11 +54,13 @@
             {{ pickValue(row, ['hosts', 'hostKey', 'host_key'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column label="KB 编号" min-width="160" show-overflow-tooltip>
+        <el-table-column label="KB 编号" min-width="160">
           <template #default="{ row }">
-            {{
-              pickValue(row, ['updateKbNumbers', 'update_kb_numbers', 'kbNumber', 'kb_number'], '-')
-            }}
+            <CveLinkList
+              :cves="resolveKbNumbers(row)"
+              :url-resolver="kbNumber => getWinKbUrl(row, kbNumber)"
+              dialog-title="关联 KB"
+            />
           </template>
         </el-table-column>
         <el-table-column label="更新时间" min-width="190" class-name="win-patch-table__time-column">
@@ -118,6 +120,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import WinPatchRollbackDialog from '../components/tasks/WinPatchRollbackDialog.vue'
+import CveLinkList from '../../components/common/CveLinkList.vue'
 import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
 import { formatDateTime, isRollbackSelectable, parsePageResponse, pickValue } from '../utils'
@@ -208,6 +211,50 @@ function handleSizeChange(size) {
 function handleRollbackSuccess() {
   rollbackDialogVisible.value = false
   loadLogs()
+}
+
+function resolveKbNumbers(row) {
+  const raw = pickValue(
+    row,
+    ['updateKbNumbers', 'update_kb_numbers', 'kbNumber', 'kb_number', 'kbArticle', 'kb_article'],
+    ''
+  )
+  if (Array.isArray(raw)) {
+    return raw.map(normalizeKbNumber).filter(Boolean)
+  }
+
+  return String(raw)
+    .split(/[,，;；\s]+/)
+    .map(normalizeKbNumber)
+    .filter(Boolean)
+}
+
+function normalizeKbNumber(value) {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase()
+  if (!normalized) return ''
+
+  const match = normalized.match(/KB\s*\d+/i)
+  if (match) {
+    return match[0].replace(/\s+/g, '')
+  }
+
+  return /^\d+$/.test(normalized) ? `KB${normalized}` : normalized
+}
+
+function getWinKbUrl(row, kbNumber) {
+  const explicitUrl = pickValue(
+    row,
+    ['kbUrl', 'kb_url', 'supportUrl', 'support_url', 'articleUrl', 'article_url', 'moreInfoUrl'],
+    ''
+  )
+  if (explicitUrl) {
+    return explicitUrl
+  }
+
+  const articleId = String(kbNumber || '').match(/\d+/)?.[0]
+  return articleId ? `https://support.microsoft.com/help/${encodeURIComponent(articleId)}` : ''
 }
 
 onMounted(() => {
