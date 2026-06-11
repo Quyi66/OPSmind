@@ -196,6 +196,7 @@ export const WIN_PATCH_PATCH_STATUS_LABELS = {
   INSTALLING: '安装中',
   INSTALL_FAILED: '安装失败',
   ROLLING_BACK: '回滚中',
+  ROLLBACK_PENDING_REBOOT: '回滚待重启',
   ROLLBACK_FAILED: '回滚失败',
   ROLLBACK_SUCCESS: '已回滚'
 }
@@ -214,6 +215,7 @@ export const WIN_PATCH_PATCH_STATUS_TAG_TYPES = {
   INSTALLING: 'warning',
   INSTALL_FAILED: 'danger',
   ROLLING_BACK: 'warning',
+  ROLLBACK_PENDING_REBOOT: 'warning',
   ROLLBACK_FAILED: 'danger',
   ROLLBACK_SUCCESS: 'success'
 }

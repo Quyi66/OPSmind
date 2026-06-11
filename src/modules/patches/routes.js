@@ -193,6 +193,16 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./windows-patch/views/WindowsCveListPage.vue')
   },
   {
+    key: 'windowsKbList',
+    path: 'windowsKbList',
+    name: 'patches-windowsKbList',
+    title: 'Windows KB知识库',
+    navLabel: 'KB知识库',
+    icon: 'fas fa-book',
+    platform: 'windows',
+    component: () => import('./windows-patch/views/WindowsKbListPage.vue')
+  },
+  {
     key: 'logs',
     path: 'logs',
     name: 'patches-logs',

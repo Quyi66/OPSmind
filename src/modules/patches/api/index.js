@@ -1628,6 +1628,35 @@ export const winCveApi = {
  * 中间件 CVE Vulnerability 查询 API
  * 参照 middleware-cve-api.md 实现
  */
+export const winKbApi = {
+  getKbList(params = {}) {
+    const queryParams = {}
+
+    if (params.severity && params.severity !== 'all') queryParams.severity = params.severity
+    if (params.keyword) queryParams.keyword = params.keyword
+    if (params.startDate) queryParams.startDate = params.startDate
+    if (params.endDate) queryParams.endDate = params.endDate
+    if (params.page !== undefined) queryParams.page = params.page
+    if (params.size !== undefined) queryParams.size = params.size
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/win-kb/list`, { params: queryParams })
+  },
+
+  getKbDetail(kbNumber) {
+    return apiService.get(`${VAP_API_PREFIX}/v2/win-kb/detail/${encodeURIComponent(kbNumber)}`)
+  },
+
+  getAffectedHosts(kbNumber) {
+    return apiService.get(
+      `${VAP_API_PREFIX}/v2/win-kb/affected-hosts/${encodeURIComponent(kbNumber)}`
+    )
+  },
+
+  getStatistics() {
+    return apiService.get(`${VAP_API_PREFIX}/v2/win-kb/statistics`)
+  }
+}
+
 export const middlewareCveApi = {
   /**
    * 分页查询中间件 CVE 列表
@@ -2070,6 +2099,7 @@ export default {
   operationReport: operationReportApi,
   cve: cveApi,
   winCve: winCveApi,
+  winKb: winKbApi,
   middlewareCve: middlewareCveApi,
   rpmInfo: rpmInfoApi,
   viewConfig: viewConfigApi,

@@ -56,10 +56,10 @@
         </el-table-column>
         <el-table-column label="KB 编号" min-width="160">
           <template #default="{ row }">
-            <CveLinkList
-              :cves="resolveKbNumbers(row)"
-              :url-resolver="kbNumber => getWinKbUrl(row, kbNumber)"
+            <WindowsKbLinkList
+              :kb-numbers="resolveKbNumbers(row)"
               dialog-title="关联 KB"
+              @select-kb="openKbDetail"
             />
           </template>
         </el-table-column>
@@ -112,6 +112,8 @@
       :run-id="currentRunId"
       :job-title="currentRunTitle"
     />
+
+    <WindowsKbDetailDialog v-model="kbDetailDialogVisible" :kb-number="selectedKbNumber" />
   </div>
 </template>
 
@@ -120,7 +122,8 @@ import { onMounted, reactive, ref } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import WinPatchRollbackDialog from '../components/tasks/WinPatchRollbackDialog.vue'
-import CveLinkList from '../../components/common/CveLinkList.vue'
+import WindowsKbDetailDialog from '../components/kb/WindowsKbDetailDialog.vue'
+import WindowsKbLinkList from '../components/kb/WindowsKbLinkList.vue'
 import { winPatchApi } from '../api'
 import { WIN_PATCH_PAGE_SIZE_OPTIONS } from '../constants'
 import { formatDateTime, isRollbackSelectable, parsePageResponse, pickValue } from '../utils'
@@ -132,6 +135,8 @@ const rollbackDialogVisible = ref(false)
 const runResultDialogVisible = ref(false)
 const currentRunId = ref('')
 const currentRunTitle = ref('')
+const kbDetailDialogVisible = ref(false)
+const selectedKbNumber = ref('')
 
 const filters = reactive({
   hostId: ''
@@ -213,6 +218,11 @@ function handleRollbackSuccess() {
   loadLogs()
 }
 
+function openKbDetail(kbNumber) {
+  selectedKbNumber.value = normalizeKbNumber(kbNumber)
+  kbDetailDialogVisible.value = Boolean(selectedKbNumber.value)
+}
+
 function resolveKbNumbers(row) {
   const raw = pickValue(
     row,
@@ -241,20 +251,6 @@ function normalizeKbNumber(value) {
   }
 
   return /^\d+$/.test(normalized) ? `KB${normalized}` : normalized
-}
-
-function getWinKbUrl(row, kbNumber) {
-  const explicitUrl = pickValue(
-    row,
-    ['kbUrl', 'kb_url', 'supportUrl', 'support_url', 'articleUrl', 'article_url', 'moreInfoUrl'],
-    ''
-  )
-  if (explicitUrl) {
-    return explicitUrl
-  }
-
-  const articleId = String(kbNumber || '').match(/\d+/)?.[0]
-  return articleId ? `https://support.microsoft.com/help/${encodeURIComponent(articleId)}` : ''
 }
 
 onMounted(() => {

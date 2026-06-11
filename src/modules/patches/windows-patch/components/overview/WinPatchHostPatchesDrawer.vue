@@ -3,7 +3,7 @@
     v-model="visibleModel"
     title="主机补丁详情"
     direction="rtl"
-    size="82%"
+    size="85%"
     destroy-on-close
     append-to-body
     class="win-patch-host-drawer"
@@ -115,16 +115,21 @@
           <el-table-column type="selection" width="48" :selectable="isPatchActionable" />
           <el-table-column label="KB 编号" width="130">
             <template #default="{ row }">
-              <CveLinkList
-                :cves="resolveKbNumbers(row)"
-                :url-resolver="kbNumber => getWinKbUrl(row, kbNumber)"
+              <WindowsKbLinkList
+                :kb-numbers="resolveKbNumbers(row)"
                 dialog-title="关联 KB"
+                @select-kb="openKbDetail"
               />
             </template>
           </el-table-column>
           <el-table-column label="标题" min-width="280" show-overflow-tooltip>
             <template #default="{ row }">
               {{ pickValue(row, ['title'], '-') }}
+            </template>
+          </el-table-column>
+          <el-table-column label="大小" width="110">
+            <template #default="{ row }">
+              {{ formatBytes(pickValue(row, ['sizeBytes', 'size_bytes'], 0)) }}
             </template>
           </el-table-column>
           <el-table-column label="严重级别" width="120">
@@ -207,6 +212,8 @@
         @submitted="handleInstallTaskCreated"
         @success="handleInstallSuccess"
       />
+
+      <WindowsKbDetailDialog v-model="kbDetailDialogVisible" :kb-number="selectedKbNumber" />
     </div>
   </el-drawer>
 </template>
@@ -216,6 +223,8 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchInstallWizard from '../install-wizard/WinPatchInstallWizard.vue'
+import WindowsKbDetailDialog from '../kb/WindowsKbDetailDialog.vue'
+import WindowsKbLinkList from '../kb/WindowsKbLinkList.vue'
 import CveLinkList from '../../../components/common/CveLinkList.vue'
 import { winPatchApi } from '../../api'
 import {
@@ -263,6 +272,8 @@ const loading = ref(false)
 const patchList = ref([])
 const selectedRows = ref([])
 const installWizardVisible = ref(false)
+const kbDetailDialogVisible = ref(false)
+const selectedKbNumber = ref('')
 
 const pagination = reactive({
   page: 1,
@@ -333,18 +344,20 @@ function normalizeKbNumber(value) {
   return /^\d+$/.test(normalized) ? `KB${normalized}` : normalized
 }
 
-function getWinKbUrl(row, kbNumber) {
-  const explicitUrl = pickValue(
-    row,
-    ['kbUrl', 'kb_url', 'supportUrl', 'support_url', 'articleUrl', 'article_url', 'moreInfoUrl'],
-    ''
-  )
-  if (explicitUrl) {
-    return explicitUrl
+function formatBytes(value) {
+  const size = Number(value)
+  if (!Number.isFinite(size) || size <= 0) return '-'
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let current = size
+  let index = 0
+
+  while (current >= 1024 && index < units.length - 1) {
+    current /= 1024
+    index += 1
   }
 
-  const articleId = String(kbNumber || '').match(/\d+/)?.[0]
-  return articleId ? `https://support.microsoft.com/help/${encodeURIComponent(articleId)}` : ''
+  return `${current.toFixed(index === 0 ? 0 : 1)} ${units[index]}`
 }
 
 function applyInitialFilters() {
@@ -415,6 +428,11 @@ function handleInstallTaskCreated(task) {
 
 function handleInstallSuccess() {
   loadPatches({ silent: true })
+}
+
+function openKbDetail(kbNumber) {
+  selectedKbNumber.value = normalizeKbNumber(kbNumber)
+  kbDetailDialogVisible.value = Boolean(selectedKbNumber.value)
 }
 
 watch(

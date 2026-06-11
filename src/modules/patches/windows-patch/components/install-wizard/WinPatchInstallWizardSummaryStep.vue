@@ -45,6 +45,11 @@
                 {{ row.title }}
               </template>
             </el-table-column>
+            <el-table-column label="大小" width="110">
+              <template #default="{ row }">
+                {{ formatBytes(pickValue(row, ['sizeBytes', 'size_bytes'], 0)) }}
+              </template>
+            </el-table-column>
             <el-table-column label="严重级别" width="120">
               <template #default="{ row }">
                 <el-tag :type="getSeverityTagType(row.severity)" size="small" effect="plain">
@@ -109,6 +114,22 @@ const props = defineProps({
 })
 
 const patchItems = computed(() => (Array.isArray(props.selectedRows) ? props.selectedRows : []))
+
+function formatBytes(value) {
+  const size = Number(value)
+  if (!Number.isFinite(size) || size <= 0) return '-'
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let current = size
+  let index = 0
+
+  while (current >= 1024 && index < units.length - 1) {
+    current /= 1024
+    index += 1
+  }
+
+  return `${current.toFixed(index === 0 ? 0 : 1)} ${units[index]}`
+}
 </script>
 
 <style scoped lang="scss">

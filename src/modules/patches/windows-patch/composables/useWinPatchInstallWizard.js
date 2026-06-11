@@ -315,6 +315,7 @@ export function useWinPatchInstallWizard({
       id: resolvePatchStatusId(row),
       kbNumber: pickValue(row, ['kbNumber', 'kb_number'], '-'),
       title: pickValue(row, ['title'], '-'),
+      sizeBytes: pickValue(row, ['sizeBytes', 'size_bytes'], 0),
       severity: pickValue(row, ['severity'], ''),
       severityLabel: getSeverityLabel(pickValue(row, ['severity'], '')),
       cveIds: pickValue(row, ['cveIds', 'cve_ids'], '')
