@@ -324,7 +324,7 @@ import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
 import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
 
 // 导入logo、aiOPS图标和用户头像
-import logoImage from '@/assets/icons/logo.png'
+import logoImage from '@/assets/icons/logo-transparent.png'
 import aiOpsIcon from '@/assets/icons/aiOPS@2x.png'
 import avatarImage from '@/assets/icons/avatar@2x.png'
 
@@ -709,6 +709,15 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
+:global(html.dark) .brand-name {
+  color: #4f8cff;
+  text-shadow: 0 0 10px rgba(79, 140, 255, 0.18);
+}
+
+:global(html.dark) .brand-logo {
+  filter: drop-shadow(0 0 8px rgba(45, 212, 191, 0.16));
+}
+
 // 导航菜单
 .nav-menu {
   display: none;
@@ -978,22 +987,17 @@ onUnmounted(() => {
 
 @media (max-width: 1440px) {
   .nav-left {
-    gap: 1rem;
+    gap: 1.5rem;
   }
 
   .nav-menu {
-    gap: 0.125rem;
+    gap: 0.25rem;
   }
 
   .nav-item {
-    gap: 0.375rem;
-    padding: 0.25rem 0.375rem;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem;
     margin: 0 0.125rem;
-  }
-
-  .nav-text,
-  .user-name {
-    font-size: 0.875rem;
   }
 }
 
@@ -1005,15 +1009,12 @@ onUnmounted(() => {
   }
 
   .nav-left {
-    gap: 0.75rem;
+    gap: 1rem;
   }
 
   .nav-item {
-    padding: 0.25rem 0.3125rem;
-  }
-
-  .nav-text {
-    font-size: 0.8125rem;
+    gap: 0.375rem;
+    padding: 0.25rem 0.375rem;
   }
 
   .user-name {
@@ -1022,6 +1023,24 @@ onUnmounted(() => {
 
   .nav-right {
     gap: 0.25rem;
+  }
+}
+
+@media (max-width: 1152px) {
+  .nav-left {
+    gap: 0.75rem;
+  }
+
+  .nav-menu {
+    gap: 0.125rem;
+  }
+
+  .nav-item {
+    padding: 0.25rem 0.3125rem;
+  }
+
+  .nav-text {
+    font-size: 0.875rem;
   }
 }
 

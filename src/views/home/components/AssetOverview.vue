@@ -129,23 +129,20 @@ const chartOption = computed(() => ({
   xAxis: {
     type: 'value',
     min: 0,
-    max: Math.max(1, ...assetData.value.values),
-    interval: 1,
     axisLine: {
       show: true,
       lineStyle: {}
     },
     axisTick: {
-      show: true,
-      lineStyle: {}
+      show: true
     },
     axisLabel: {
-      fontSize: 14
+      fontSize: 12
     },
     splitLine: {
       show: true,
       lineStyle: {
-        type: 'solid'
+        type: 'dashed'
       }
     }
   },
