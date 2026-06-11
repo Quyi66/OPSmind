@@ -37,7 +37,7 @@
                       target="_blank"
                       rel="noopener noreferrer"
                       class="win-kb-external-link"
-                      title="打开 Microsoft Update Catalog"
+                      title="打开 Microsoft Support"
                     >
                       {{ detail.kbNumber || kbNumber }}
                     </a>
@@ -83,9 +83,6 @@
 
             <div class="win-kb-card win-kb-card--relations">
               <div class="win-kb-card__title">补丁取代关系</div>
-              <p class="win-kb-relations-note">
-                仅展示 KB supersedence，不代表安装依赖、前置补丁或主机适用性判断。
-              </p>
               <div class="win-kb-relation-grid">
                 <div class="win-kb-relation-panel">
                   <div class="win-kb-relation-title">取代此补丁的更新</div>
@@ -132,7 +129,6 @@
               <div class="win-kb-chain" v-if="supersedesChain.length">
                 <div class="win-kb-chain__header">
                   <span class="win-kb-chain__label">主要历史替代链</span>
-                  <span class="win-kb-chain__hint">按后端主链口径向历史更新递进</span>
                 </div>
                 <div class="win-kb-chain__flow">
                   <template v-for="(item, index) in supersedesChain" :key="`${item}-${index}`">
@@ -280,19 +276,9 @@ const supersedesChain = computed(() =>
   Array.isArray(supersedence.value.supersedesChain) ? supersedence.value.supersedesChain : []
 )
 const currentKbNumber = computed(() => normalizeKbNumber(detail.value?.kbNumber || props.kbNumber))
-const currentKbExternalUrl = computed(() => {
-  const explicitUrl = pickValue(
-    detail.value || {},
-    ['kbUrl', 'kb_url', 'supportUrl', 'support_url', 'articleUrl', 'article_url', 'moreInfoUrl'],
-    ''
-  )
-  if (explicitUrl) return explicitUrl
-  return currentKbNumber.value
-    ? `https://www.catalog.update.microsoft.com/Search.aspx?q=${encodeURIComponent(
-        currentKbNumber.value
-      )}`
-    : ''
-})
+const currentKbExternalUrl = computed(() =>
+  resolveKbSupportUrl(detail.value || {}, currentKbNumber.value)
+)
 const affectedHosts = computed(() =>
   Array.isArray(affectedHostsResult.value?.hosts) ? affectedHostsResult.value.hosts : []
 )
@@ -330,6 +316,89 @@ function getCveUrl(cveId) {
     cveUrlMap.value.get(id) ||
     `https://msrc.microsoft.com/update-guide/vulnerability/${encodeURIComponent(id)}`
   )
+}
+
+function resolveKbSupportUrl(kbDetail, kbNumber) {
+  const normalizedKb = normalizeKbNumber(kbNumber)
+  const useSearchFallback = shouldUseSupportSearchFallback(kbDetail)
+  const supportUrl = [
+    'supportUrl',
+    'support_url',
+    'supportArticleUrl',
+    'support_article_url',
+    'articleUrl',
+    'article_url',
+    'moreInfoUrl',
+    'more_info_url',
+    'webUrl',
+    'web_url',
+    'kbUrl',
+    'kb_url'
+  ]
+    .map(key => normalizeUrl(kbDetail?.[key]))
+    .find(url => isAcceptableMicrosoftSupportUrl(url, normalizedKb, useSearchFallback))
+
+  if (supportUrl) return supportUrl
+
+  return useSearchFallback
+    ? buildMicrosoftSupportSearchUrl(normalizedKb)
+    : buildMicrosoftSupportHelpUrl(normalizedKb)
+}
+
+function normalizeUrl(value) {
+  return String(value || '').trim()
+}
+
+function isMicrosoftSupportUrl(value) {
+  if (!value) return false
+
+  try {
+    const url = new URL(value)
+    return url.hostname.toLowerCase() === 'support.microsoft.com'
+  } catch {
+    return false
+  }
+}
+
+function isAcceptableMicrosoftSupportUrl(value, kbNumber, requireKbInUrl = false) {
+  if (!isMicrosoftSupportUrl(value)) return false
+  if (!requireKbInUrl) return true
+
+  return hasKbNumberInUrl(value, kbNumber)
+}
+
+function hasKbNumberInUrl(value, kbNumber) {
+  if (!value || !kbNumber) return false
+
+  try {
+    return decodeURIComponent(value).toUpperCase().includes(kbNumber)
+  } catch {
+    return String(value).toUpperCase().includes(kbNumber)
+  }
+}
+
+function shouldUseSupportSearchFallback(kbDetail) {
+  const text = [
+    kbDetail?.title,
+    kbDetail?.description,
+    kbDetail?.products,
+    kbDetail?.classification
+  ]
+    .map(value => String(value || ''))
+    .join(' ')
+
+  return /\b\.NET\b/i.test(text)
+}
+
+function buildMicrosoftSupportSearchUrl(kbNumber) {
+  return kbNumber
+    ? `https://support.microsoft.com/zh-cn/search/results?query=${encodeURIComponent(kbNumber)}`
+    : ''
+}
+
+function buildMicrosoftSupportHelpUrl(kbNumber) {
+  const articleId = String(kbNumber || '').match(/\d+/)?.[0]
+  return articleId ? `https://support.microsoft.com/help/${encodeURIComponent(articleId)}` : ''
 }
 
 function normalizeKbNumber(value) {
@@ -554,8 +623,15 @@ watch(
 .win-kb-detail-grid,
 .win-kb-relation-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px 20px;
+}
+
+.win-kb-detail-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.win-kb-relation-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .win-kb-card--relations .win-kb-card__title {
@@ -602,7 +678,7 @@ watch(
 }
 
 .win-kb-detail-cell--wide {
-  grid-column: span 2;
+  grid-column: span 3;
 }
 
 .win-kb-external-link {
