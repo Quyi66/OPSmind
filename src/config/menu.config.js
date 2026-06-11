@@ -36,7 +36,7 @@ export const MENU_CONFIG = {
       code: 'automation',
       name: '自动化管理',
       icon: 'fas fa-robot',
-      description: '自动化运维工具、脚本、命令执行和主机账号管理',
+      description: '自动化运维工具、脚本、命令执行和主机用户管理',
       children: [
         {
           code: 'auto-workbench',
@@ -81,10 +81,10 @@ export const MENU_CONFIG = {
           description: '运维工具审批、命令审核与脚本审核的统一入口'
         },
         {
-          code: 'users',
-          name: '主机账号',
-          icon: 'fas fa-users',
-          description: '主机账号与权限管理'
+          code: 'flow',
+          name: '流程中心',
+          icon: 'fas fa-project-diagram',
+          description: '流程设计与任务管理'
         }
       ]
     },
@@ -142,15 +142,15 @@ export const MENU_CONFIG = {
     },
     {
       code: 'flow-management',
-      name: '流程管理',
-      icon: 'fas fa-project-diagram',
-      description: '业务流程设计与审批管理',
+      name: '主机用户管理',
+      icon: 'fas fa-users',
+      description: '主机用户与权限管理',
       children: [
         {
-          code: 'flow',
-          name: '流程中心',
-          icon: 'fas fa-project-diagram',
-          description: '流程设计与任务管理'
+          code: 'users',
+          name: '主机用户管理',
+          icon: 'fas fa-users',
+          description: '主机用户与权限管理'
         }
       ]
     },

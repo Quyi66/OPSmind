@@ -30,7 +30,7 @@ const InspectionGroupLayout = () => import('@/layouts/groups/InspectionGroupLayo
 const AssetGroupLayout = () => import('@/layouts/groups/AssetGroupLayout.vue')
 const UserGroupLayout = () => import('@/layouts/groups/UserGroupLayout.vue')
 const SettingsGroupLayout = () => import('@/layouts/groups/SettingsGroupLayout.vue')
-const FlowGroupLayout = () => import('@/layouts/groups/FlowGroupLayout.vue')
+const HostAccountGroupLayout = () => import('@/layouts/groups/FlowGroupLayout.vue')
 const SecurityGroupLayout = () => import('@/layouts/groups/SecurityGroupLayout.vue')
 
 const buildModuleChildren = (defs, moduleCode) =>
@@ -182,14 +182,14 @@ export const baseRoutes = [
     }
   },
 
-  // ========== 自动化分组 (jao, run-records, gfs, cmd, users) ==========
+  // ========== 自动化分组 (jao, run-records, gfs, cmd, flow) ==========
   // 按模块分别挂载，避免 logs 等重复子路径在同一父级下发生匹配冲突
   buildAutomationModuleRoute('auto-workbench', '/auto-workbench/overview', autoWorkbenchChildren),
   buildAutomationModuleRoute('jao', '/jao/jobs', jaoChildren),
   buildAutomationModuleRoute('run-records', '/run-records/logs', runRecordsChildren),
   buildAutomationModuleRoute('gfs', '/gfs/scriptLibrary', gfsChildren),
   buildAutomationModuleRoute('cmd', '/cmd/list', cmdChildren),
-  buildAutomationModuleRoute('users', '/users/users', usersChildren),
+  buildAutomationModuleRoute('flow', '/flow/list', flowChildren),
 
   {
     path: '/rpm-install/:pathMatch(.*)*',
@@ -282,23 +282,22 @@ export const baseRoutes = [
     ]
   },
 
-  // ========== 流程管理分组 (flow) ==========
+  // ========== 主机用户管理分组 (users) ==========
   {
-    path: '/:moduleCode(flow)',
+    path: '/users',
     component: MainLayout,
-    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'flow-management' },
+    meta: {
+      requiresAuth: true,
+      moduleType: 'vue-native',
+      moduleCode: 'users',
+      groupCode: 'flow-management'
+    },
     children: [
       {
         path: '',
-        component: FlowGroupLayout,
-        children: [
-          // 动态重定向
-          {
-            path: '',
-            redirect: to => '/flow/list'
-          },
-          ...flowChildren
-        ]
+        component: HostAccountGroupLayout,
+        redirect: '/users/users',
+        children: [...usersChildren]
       }
     ]
   },

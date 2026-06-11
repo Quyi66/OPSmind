@@ -29,7 +29,7 @@ const defaultOpeneds = [
   'task-scheduler',
   'run-records',
   'review-center',
-  'users'
+  'flow'
 ]
 
 provideCurrentGroupModuleCode('jao')
