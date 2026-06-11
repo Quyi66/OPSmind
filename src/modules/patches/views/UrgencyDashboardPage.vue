@@ -1,18 +1,5 @@
 <template>
   <div class="ops-page-layout">
-    <!-- 顶部标题与操作 -->
-    <div class="ops-section mb-2" style="padding: 10px 16px">
-      <div class="dashboard-header">
-        <h3 class="dashboard-title">漏洞紧急程度管理</h3>
-        <div class="dashboard-header-actions" v-if="activeViewTab === 'dashboard'">
-          <el-button type="primary" size="small" :loading="recomputing" @click="handleRecomputeAll">
-            <el-icon><Refresh /></el-icon>
-            全量重算紧急度
-          </el-button>
-        </div>
-      </div>
-    </div>
-
     <!-- 选项卡 -->
     <el-tabs v-model="activeViewTab" class="dashboard-tabs">
       <!-- 标签页一：评估规则与统计 -->
@@ -54,6 +41,15 @@
               <span class="text-muted fs-7">
                 紧急程度 = f(资产网络区域 × CVE 利用程度 × CVE 风险等级)
               </span>
+              <el-button
+                type="primary"
+                size="small"
+                :loading="recomputing"
+                @click="handleRecomputeAll"
+              >
+                <el-icon><Refresh /></el-icon>
+                全量重算紧急度
+              </el-button>
               <el-button size="small" @click="downloadRuleTemplate">
                 <i class="fas fa-download me-1"></i>
                 下载导入模板
@@ -581,6 +577,16 @@
           </div>
         </div>
       </el-tab-pane>
+
+      <!-- 标签页四：CVE 文件导入比对 -->
+      <el-tab-pane name="cveImport" lazy>
+        <template #label>
+          <i class="fas fa-file-import me-1"></i>
+          CVE 导入比对
+        </template>
+
+        <CveImportPage />
+      </el-tab-pane>
     </el-tabs>
 
     <!-- 全量重算对话框 -->
@@ -736,6 +742,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { urgencyApi, patchScanApi } from '../api'
 import { downloadUrgencyRuleTemplate } from '../utils/urgencyRuleTemplate'
+import CveImportPage from './CveImportPage.vue'
 import CveDetail from '../components/cve/details/CveDetail.vue'
 import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
 
@@ -743,7 +750,7 @@ const router = useRouter()
 const route = useRoute()
 
 // 标签页状态
-const activeViewTab = ref('dashboard') // dashboard | lookup
+const activeViewTab = ref('dashboard') // dashboard | lookup | urgencyList | cveImport
 
 // 看板统计状态
 const statsLoading = ref(false)
@@ -951,6 +958,8 @@ watch(
   async query => {
     if (query.activeViewTab) {
       activeViewTab.value = query.activeViewTab
+    } else if (query.view === 'detail' && query.batchId) {
+      activeViewTab.value = 'cveImport'
     }
     if (query.filterLocation) filterLocation.value = query.filterLocation
     if (query.filterExploit) filterExploit.value = query.filterExploit
@@ -1480,19 +1489,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.dashboard-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  color: var(--el-text-color-primary);
-}
-
 .dashboard-tabs {
   display: flex;
   flex-direction: column;

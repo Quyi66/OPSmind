@@ -25,21 +25,11 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./views/MiddlewareCveListPage.vue')
   },
   {
-    key: 'cveImport',
-    path: 'cveImport',
-    name: 'patches-cveImport',
-    title: 'CVE文件导入比对',
-    navLabel: 'CVE导入比对',
-    icon: 'fas fa-file-import',
-    platform: 'linux',
-    component: () => import('./views/CveImportPage.vue')
-  },
-  {
     key: 'urgencyDashboard',
     path: 'urgencyDashboard',
     name: 'patches-urgencyDashboard',
-    title: '漏洞紧急程度',
-    navLabel: '漏洞紧急程度',
+    title: '漏洞紧急程度管理',
+    navLabel: '漏洞紧急程度管理',
     icon: 'fas fa-exclamation-triangle',
     platform: 'linux',
     component: () => import('./views/UrgencyDashboardPage.vue')

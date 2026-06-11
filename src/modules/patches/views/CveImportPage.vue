@@ -500,7 +500,7 @@
           :cve-id="selectedCveId"
           :hide-breadcrumb="true"
           host-back-label="CVE比对详情"
-          host-back-route-name="patches-cveImport"
+          host-back-route-name="patches-urgencyDashboard"
           :host-back-route-query="cveDetailHostBackRouteQuery"
           @back="cveDetailVisible = false"
         />
@@ -685,6 +685,7 @@ function snapshotHostBackRouteQuery() {
   const scrollTop = scrollWrapper ? scrollWrapper.scrollTop : 0
 
   return JSON.stringify({
+    activeViewTab: 'cveImport',
     view: 'detail',
     batchId: activeBatch.value?.id,
     activeDetailTab: activeDetailTab.value,
@@ -902,6 +903,7 @@ async function viewDetail(row) {
   router.replace({
     query: {
       ...route.query,
+      activeViewTab: 'cveImport',
       view: 'detail',
       batchId: row.id
     }
@@ -1062,7 +1064,7 @@ function goToHostDetail(row) {
       hostId: row.hostId,
       hostKey: row.hostKey,
       fromLabel: 'CVE比对详情',
-      fromRouteName: 'patches-cveImport',
+      fromRouteName: 'patches-urgencyDashboard',
       fromRouteQuery: snapshotHostBackRouteQuery()
     }
   })

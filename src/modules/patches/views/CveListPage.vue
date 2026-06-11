@@ -167,7 +167,12 @@
       <div class="ops-action-bar" style="display: flex; align-items: center; margin-bottom: 12px">
         <el-button type="primary" @click="openManualExportDialog">导出报告</el-button>
         <el-button @click="openFeedbackTemplateDialog">导出反馈模板</el-button>
-        <el-button type="success" @click="router.push({ name: 'patches-cveImport' })">
+        <el-button
+          type="success"
+          @click="
+            router.push({ name: 'patches-urgencyDashboard', query: { activeViewTab: 'cveImport' } })
+          "
+        >
           <!-- <el-icon><Upload /></el-icon> -->
           导入CVE比对
         </el-button>
