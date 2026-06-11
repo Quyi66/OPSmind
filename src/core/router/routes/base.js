@@ -104,7 +104,7 @@ export const baseRoutes = [
     name: 'login',
     component: () => import('@/views/auth/LoginPage.vue'),
     meta: {
-      title: '登录 - OPSmind',
+      title: '登录 - KoreOPS',
       requiresGuest: true,
       layout: 'auth'
     }
@@ -121,7 +121,7 @@ export const baseRoutes = [
       }
     ],
     meta: {
-      title: 'OPSmind 仪表盘',
+      title: 'KoreOPS 仪表盘',
       requiresAuth: true,
       moduleType: 'vue-native',
       moduleCode: 'dashboard'
@@ -133,7 +133,7 @@ export const baseRoutes = [
     name: 'settings',
     component: MainLayout,
     meta: {
-      title: '个人资料 - OPSmind',
+      title: '个人资料 - KoreOPS',
       requiresAuth: true
     },
     children: [
@@ -149,7 +149,7 @@ export const baseRoutes = [
     name: 'about',
     component: () => import('@/views/about/AboutPage.vue'),
     meta: {
-      title: '关于 - OPSmind'
+      title: '关于 - KoreOPS'
     }
   },
   // 管理后台
@@ -176,7 +176,7 @@ export const baseRoutes = [
     name: 'migration-dashboard',
     component: () => import('@/views/home/HomePage.vue'),
     meta: {
-      title: '迁移管理 - OPSmind',
+      title: '迁移管理 - KoreOPS',
       requiresAuth: true,
       requiresPermission: 'admin'
     }

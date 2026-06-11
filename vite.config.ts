@@ -129,11 +129,11 @@ export default defineConfig(({ command, mode }): UserConfig => {
         autoInstall: true
       }),
 
-      // 在开发环境下，将 /opsMind 重定向为 /opsMind/，避免 Vite base 提示
+      // 在开发环境下，将 /KoreOPS 重定向为 /KoreOPS/，避免 Vite base 提示
       {
         name: 'ops-trailing-slash-redirect',
         configureServer(server) {
-          const base = mode === 'production' ? '/opsMind/' : '/opsMind/'
+          const base = mode === 'production' ? '/KoreOPS/' : '/KoreOPS/'
           const noSlash = base.endsWith('/') ? base.slice(0, -1) : base
           server.middlewares.use((req, res, next) => {
             const url = req.url || '/'
@@ -167,7 +167,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
         : [])
     ],
 
-    base: mode === 'production' ? '/opsMind/' : '/opsMind/',
+    base: mode === 'production' ? '/KoreOPS/' : '/KoreOPS/',
 
     server: {
       port: parseInt(env.VITE_DEV_PORT) || 5173,

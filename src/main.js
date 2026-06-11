@@ -71,9 +71,9 @@ window.addEventListener('unhandledrejection', event => {
   }
 })
 
-// 统一设置浏览器 Tab 图标（favicon）为 src/assets/icons/logo-opsmind@2x.png
+// 统一设置浏览器 Tab 图标（favicon）为 src/assets/icons/logo.png
 try {
-  const faviconHref = new URL('@/assets/icons/logo-opsmind@2x.png', import.meta.url).href
+  const faviconHref = new URL('@/assets/icons/logo.png', import.meta.url).href
   const doc = document
   if (doc && doc.head) {
     const link = doc.querySelector('link[rel="icon"]') || doc.createElement('link')

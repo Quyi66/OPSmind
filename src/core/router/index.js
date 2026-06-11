@@ -47,7 +47,7 @@ export function setupRouter() {
   // 全局前置守卫 - 开始加载
   router.beforeEach(async (to, from, next) => {
     // 固定页面标题
-    document.title = 'OPSmind'
+    document.title = 'KoreOPS'
 
     // 如果路由发生变化，开始显示加载状态
     if (to.path !== from.path) {

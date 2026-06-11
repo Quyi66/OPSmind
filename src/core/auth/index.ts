@@ -341,7 +341,7 @@ class AuthService implements IAuthService {
       // 跳转到登录页面
       if (typeof window !== 'undefined' && window.location) {
         // 使用 window.location 确保完全刷新页面状态
-        window.location.href = '/opsMind/'
+        window.location.href = '/KoreOPS/'
       }
     } catch (error) {
       console.error('❌ Logout error:', error)

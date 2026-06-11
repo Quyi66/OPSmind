@@ -3,8 +3,9 @@
     <!-- 左侧二级菜单 -->
     <aside class="admin-sider">
       <!-- 左侧顶部 Logo -->
-      <div class="sider-header" @click="goHome" title="OPSmind">
-        <img :src="logoImage" alt="OPSmind" class="sider-logo" />
+      <div class="sider-header" @click="goHome" title="KoreOPS">
+        <img :src="logoImage" alt="KoreOPS" class="sider-logo" />
+        <span class="sider-brand-name">KoreOPS</span>
       </div>
       <el-menu
         :key="`menu-${activeGroup}`"
@@ -125,7 +126,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ADMIN_MENU_CONFIG, getDefaultAdminTarget } from '@/config/admin-menu.config'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
-import logoImage from '@/assets/icons/logo@2x.png'
+import logoImage from '@/assets/icons/logo.png'
 import avatarImage from '@/assets/icons/avatar@2x.png'
 import { Search, User, SwitchButton } from '@element-plus/icons-vue'
 
@@ -230,7 +231,7 @@ watch(
 function updateDocumentTitle() {
   try {
     const sub = currentSubTitle.value
-    document.title = sub ? `OPSmind - ${sub}` : 'OPSmind'
+    document.title = sub ? `KoreOPS - ${sub}` : 'KoreOPS'
   } catch {}
 }
 
@@ -291,14 +292,26 @@ const AdminPlaceholder = {
   min-height: 48px;
   display: flex;
   align-items: center;
+  gap: 0.25rem;
   padding: 0.25rem 0.75rem; /* 与主页顶部相近的垂直内边距 */
   border-bottom: 1px solid #eef0f3;
   cursor: pointer;
 }
 
 .sider-logo {
-  height: 22px;
+  height: 28px;
   width: auto;
+  transform: translateY(1px);
+}
+
+.sider-brand-name {
+  color: #1269c3;
+  font-family: Inter, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 1.18rem;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .admin-menu {

@@ -6,7 +6,8 @@
         <div class="nav-left">
           <!-- Logo Section -->
           <div class="logo-section">
-            <img :src="logoImage" alt="OPSmind" class="brand-logo" />
+            <img :src="logoImage" alt="KoreOPS" class="brand-logo" />
+            <span class="brand-name">KoreOPS</span>
           </div>
 
           <!-- Navigation Menu -->
@@ -323,7 +324,7 @@ import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
 import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
 
 // 导入logo、aiOPS图标和用户头像
-import logoImage from '@/assets/icons/logo@2x.png'
+import logoImage from '@/assets/icons/logo.png'
 import aiOpsIcon from '@/assets/icons/aiOPS@2x.png'
 import avatarImage from '@/assets/icons/avatar@2x.png'
 
@@ -685,15 +686,27 @@ onUnmounted(() => {
 .logo-section {
   display: flex;
   align-items: center;
+  gap: 0.25rem;
   flex-shrink: 0;
 }
 
 .brand-logo {
-  height: 1.5rem;
+  height: 1.85rem;
   /* shrink logo to reduce header height */
   width: auto;
   object-fit: contain;
   object-position: center;
+  transform: translateY(1px);
+}
+
+.brand-name {
+  color: #1269c3;
+  font-family: Inter, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 1.28rem;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 // 导航菜单
@@ -1085,7 +1098,11 @@ onUnmounted(() => {
   }
 
   .brand-logo {
-    height: 2.5rem;
+    height: 2.35rem;
+  }
+
+  .brand-name {
+    font-size: 1.55rem;
   }
 
   .nav-menu {
@@ -1159,7 +1176,11 @@ onUnmounted(() => {
   }
 
   .brand-logo {
-    height: 2.75rem;
+    height: 2.55rem;
+  }
+
+  .brand-name {
+    font-size: 1.7rem;
   }
 
   .nav-item {

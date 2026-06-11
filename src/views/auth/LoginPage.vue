@@ -21,8 +21,9 @@
     <!-- Header -->
     <header class="relative z-10 p-6">
       <div class="login-container">
-        <div class="flex items-center">
-          <img src="@/assets/icons/logo@2x.png" alt="OPSmind" class="h-10 w-auto object-contain" />
+        <div class="login-brand">
+          <img src="@/assets/icons/logo.png" alt="KoreOPS" class="h-10 w-auto object-contain" />
+          <span class="login-brand-name">KoreOPS</span>
         </div>
       </div>
     </header>
@@ -43,7 +44,7 @@
             ></div>
             <img
               src="@/assets/images/login-illu@2x.png"
-              alt="OPSmind Login Illustration"
+              alt="KoreOPS Login Illustration"
               class="w-full h-full object-cover drop-shadow-lg"
               loading="eager"
             />
@@ -77,6 +78,21 @@ import LoginForm from '@/components/auth/LoginForm.vue'
   align-items: center;
   min-height: calc(100vh - 120px);
   min-height: calc(100dvh - 120px);
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.login-brand-name {
+  color: #1269c3;
+  font-family: Inter, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
 }
 
 /* Login Background */
