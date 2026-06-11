@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout ops-page-layout--page-scroll">
     <WindowsCveDetail v-if="currentView === 'detail'" :cve-id="selectedCveId" @back="backToList" />
 
     <template v-else>
@@ -153,7 +153,12 @@
       </div>
 
       <div class="ops-table-wrapper" v-loading="loading">
-        <el-table :data="cveList" height="100%" style="width: 100%" @sort-change="handleSortChange">
+        <el-table
+          :data="cveList"
+          class="natural-height-table"
+          style="width: 100%"
+          @sort-change="handleSortChange"
+        >
           <el-table-column prop="cveId" label="CVE 编号" width="180" sortable="custom">
             <template #default="{ row }">
               <el-link type="primary" :underline="false" @click="viewDetail(row)">

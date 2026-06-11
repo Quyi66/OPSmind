@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout linux-patch-scan-page">
+  <div class="ops-page-layout ops-page-layout--page-scroll linux-patch-scan-page">
     <!-- 内容区域 -->
     <div class="page-content">
       <!-- 新版统计面板 -->
@@ -2593,39 +2593,6 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-.linux-patch-scan-page {
-  height: 100%;
-  min-height: 0;
-  overflow: auto;
-
-  .ops-table-wrapper {
-    flex: none;
-    min-height: auto;
-  }
-}
-
-:deep(.natural-height-table) {
-  height: auto !important;
-  max-height: none !important;
-}
-
-:deep(.natural-height-table .el-table__inner-wrapper),
-:deep(.natural-height-table .el-table__body-wrapper),
-:deep(.natural-height-table .el-scrollbar),
-:deep(.natural-height-table .el-scrollbar__wrap) {
-  height: auto !important;
-  max-height: none !important;
-}
-
-:deep(.natural-height-table .el-scrollbar__wrap) {
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-}
-
-:deep(.natural-height-table .el-scrollbar__bar.is-vertical) {
-  display: none !important;
-}
-
 .patch-scan {
   display: flex;
   flex-direction: column;

@@ -25,6 +25,38 @@
   }
 }
 
+// 页面级滚动，表格随内容自然增高
+.ops-page-layout--page-scroll {
+  overflow: auto;
+
+  > * {
+    flex-shrink: 0;
+  }
+
+  .ops-table-wrapper {
+    flex: none;
+    min-height: auto;
+  }
+
+  .natural-height-table,
+  .natural-height-table .el-table__inner-wrapper,
+  .natural-height-table .el-table__body-wrapper,
+  .natural-height-table .el-scrollbar,
+  .natural-height-table .el-scrollbar__wrap {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .natural-height-table .el-scrollbar__wrap {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+
+  .natural-height-table .el-scrollbar__bar.is-vertical {
+    display: none !important;
+  }
+}
+
 // 筛选栏（统一使用 el-form inline 模式）
 .ops-filter-bar {
   display: flex;
@@ -183,7 +215,7 @@
   background: var(--el-bg-color-page);
 
   // 确保子元素填充容器
-  >* {
+  > * {
     flex: 1;
     min-height: 0;
   }
@@ -321,7 +353,9 @@ a.ops-sidebar-item {
   // 可点击
   &--clickable {
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
 
     &:hover {
       transform: translateY(-2px);

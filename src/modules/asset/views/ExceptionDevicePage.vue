@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout ops-page-layout--page-scroll">
     <!-- KPI 卡片区域 -->
     <div class="kpi-section">
       <KpiCards :data="kpiData" :loading="kpiLoading" @click="handleKpiClick" />
@@ -88,7 +88,7 @@
       <el-table
         v-loading="tableLoading"
         :data="tableData"
-        height="100%"
+        class="natural-height-table"
         row-class-name="modern-table-row"
       >
         <!-- 1. 资产标识复合列 -->

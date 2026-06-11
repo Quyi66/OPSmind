@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout ops-page-layout--page-scroll">
     <!-- 厂商统计 KPI 卡片 -->
     <!-- 厂商统计 KPI 卡片 -->
     <div v-if="!pickerMode" class="vendor-kpi-section">
@@ -147,8 +147,7 @@
         v-loading="loading"
         :data="tableData"
         :row-key="row => row.patch_id"
-        :height="pickerMode ? '100%' : undefined"
-        :max-height="!pickerMode ? 'calc(100vh - 400px)' : undefined"
+        class="natural-height-table"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" :reserve-selection="true" width="50" />
@@ -230,7 +229,6 @@
         <el-button @click="detailDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
-
   </div>
 </template>
 
