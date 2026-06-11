@@ -61,7 +61,6 @@ export function buildModuleRoutes() {
     'cmd',
     'gfs',
     'users',
-    'rpm-install', // 自动化分组
     'patches',
     'yum-repo',
     'software', // 补丁漏洞分组

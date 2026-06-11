@@ -16,8 +16,7 @@ import {
   JAO_ROUTE_DEFS,
   RUN_RECORDS_ROUTE_DEFS,
   GFS_ROUTE_DEFS,
-  CMD_ROUTE_DEFS,
-  RPM_INSTALL_ROUTE_DEFS
+  CMD_ROUTE_DEFS
 } from '@/modules/automation/routes.js'
 import { FLOW_ROUTE_DEFS } from '@/modules/flow/routes.js'
 import { SUDO_ROUTE_DEFS } from '@/modules/sudo/routes.js'
@@ -61,7 +60,6 @@ const jaoChildren = buildModuleChildren(JAO_ROUTE_DEFS, 'jao')
 const runRecordsChildren = buildModuleChildren(RUN_RECORDS_ROUTE_DEFS, 'run-records')
 const gfsChildren = buildModuleChildren(GFS_ROUTE_DEFS, 'gfs')
 const cmdChildren = buildModuleChildren(CMD_ROUTE_DEFS, 'cmd')
-const rpmInstallChildren = buildModuleChildren(RPM_INSTALL_ROUTE_DEFS, 'rpm-install')
 const flowChildren = buildModuleChildren(FLOW_ROUTE_DEFS, 'flow')
 const sudoChildren = buildModuleChildren(SUDO_ROUTE_DEFS, 'sudo')
 const passwordChildren = buildModuleChildren(PASSWORD_ROUTE_DEFS, 'password')
@@ -184,7 +182,7 @@ export const baseRoutes = [
     }
   },
 
-  // ========== 自动化分组 (jao, run-records, gfs, cmd, users, rpm-install) ==========
+  // ========== 自动化分组 (jao, run-records, gfs, cmd, users) ==========
   // 按模块分别挂载，避免 logs 等重复子路径在同一父级下发生匹配冲突
   buildAutomationModuleRoute('auto-workbench', '/auto-workbench/overview', autoWorkbenchChildren),
   buildAutomationModuleRoute('jao', '/jao/jobs', jaoChildren),
@@ -192,7 +190,11 @@ export const baseRoutes = [
   buildAutomationModuleRoute('gfs', '/gfs/scriptLibrary', gfsChildren),
   buildAutomationModuleRoute('cmd', '/cmd/list', cmdChildren),
   buildAutomationModuleRoute('users', '/users/users', usersChildren),
-  buildAutomationModuleRoute('rpm-install', '/rpm-install/install', rpmInstallChildren),
+
+  {
+    path: '/rpm-install/:pathMatch(.*)*',
+    redirect: '/patches/localInstall'
+  },
 
   // ========== 补丁管理 (patches) ==========
   {

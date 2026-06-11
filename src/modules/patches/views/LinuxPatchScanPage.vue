@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout linux-patch-scan-page">
     <!-- 内容区域 -->
     <div class="page-content">
       <!-- 新版统计面板 -->
@@ -206,8 +206,8 @@
           <el-table
             v-loading="loading"
             :data="hostTableData"
+            class="natural-height-table"
             style="width: 100%"
-            height="100%"
             @selection-change="handleHostSelectionChange"
           >
             <el-table-column type="selection" width="45" />
@@ -272,7 +272,8 @@
                       />
                     </div>
                     <div class="memory-usage__desc">
-                      {{ row.memoryOverview.freeGb }} GB 可用, 共 {{ row.memoryOverview.totalGb }} GB
+                      {{ row.memoryOverview.freeGb }} GB 可用, 共
+                      {{ row.memoryOverview.totalGb }} GB
                     </div>
                   </div>
                   <div v-else class="memory-usage memory-usage--unknown">
@@ -531,9 +532,8 @@
             ref="vulnTableRef"
             v-loading="vulnLoading"
             :data="vulnTableData"
-            class="header-border-only-table"
+            class="header-border-only-table natural-height-table"
             style="width: 100%"
-            height="100%"
             @select="handleVulnSelect"
             @select-all="handleVulnSelectAll"
             border
@@ -2593,6 +2593,39 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
+.linux-patch-scan-page {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+
+  .ops-table-wrapper {
+    flex: none;
+    min-height: auto;
+  }
+}
+
+:deep(.natural-height-table) {
+  height: auto !important;
+  max-height: none !important;
+}
+
+:deep(.natural-height-table .el-table__inner-wrapper),
+:deep(.natural-height-table .el-table__body-wrapper),
+:deep(.natural-height-table .el-scrollbar),
+:deep(.natural-height-table .el-scrollbar__wrap) {
+  height: auto !important;
+  max-height: none !important;
+}
+
+:deep(.natural-height-table .el-scrollbar__wrap) {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+:deep(.natural-height-table .el-scrollbar__bar.is-vertical) {
+  display: none !important;
+}
+
 .patch-scan {
   display: flex;
   flex-direction: column;
@@ -2601,12 +2634,12 @@ defineExpose({
 }
 
 .page-content {
-  flex: 1;
+  flex: none;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: auto;
   // padding: 0 16px;
-  overflow: hidden;
+  overflow: visible;
   background: var(--el-bg-color);
 }
 
@@ -2871,8 +2904,8 @@ defineExpose({
 
 // 标签内容
 .tab-content {
-  flex: 1;
-  min-height: 0;
+  flex: none;
+  min-height: auto;
   display: flex;
   flex-direction: column;
   padding: 0 !important;

@@ -130,6 +130,16 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./views/LinuxVulnerabilityPage.vue')
   },
   {
+    key: 'localInstall',
+    path: 'localInstall',
+    name: 'patches-localInstall',
+    title: '软件包安装',
+    navLabel: '软件包安装',
+    icon: 'fas fa-box-open',
+    platform: 'linux',
+    component: () => import('./views/LocalInstallPage.vue')
+  },
+  {
     key: 'windowsVulnerability',
     path: 'windowsVulnerability',
     name: 'patches-windowsVulnerability',

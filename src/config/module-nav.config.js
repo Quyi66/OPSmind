@@ -16,8 +16,7 @@ import {
   JAO_ROUTE_DEFS,
   RUN_RECORDS_ROUTE_DEFS,
   GFS_ROUTE_DEFS,
-  CMD_ROUTE_DEFS,
-  RPM_INSTALL_ROUTE_DEFS
+  CMD_ROUTE_DEFS
 } from '@/modules/automation/routes.js'
 import { FLOW_ROUTE_DEFS } from '@/modules/flow/routes.js'
 import { SUDO_ROUTE_DEFS } from '@/modules/sudo/routes.js'
@@ -127,16 +126,6 @@ export const REVIEW_CENTER_NAV_ITEMS = [
     accessCode: 'gfs'
   }
 ]
-
-// 自动化管理 - rpm 包安装模块的页面导航
-export const RPM_INSTALL_NAV_ITEMS = RPM_INSTALL_ROUTE_DEFS.filter(def => def.navLabel).map(
-  def => ({
-    key: def.key,
-    label: def.navLabel || def.title,
-    icon: def.icon,
-    path: `/rpm-install/${def.path}`
-  })
-)
 
 // 补丁漏洞 - 补丁模块(Linux/Common，不包含日志)的页面导航
 export const PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
@@ -268,7 +257,6 @@ export const MODULE_NAV_CONFIG = {
   'run-records': RUN_RECORDS_NAV_ITEMS,
   gfs: GFS_NAV_ITEMS,
   cmd: CMD_NAV_ITEMS,
-  'rpm-install': RPM_INSTALL_NAV_ITEMS,
   patches: PATCHES_NAV_ITEMS,
   'windows-patches': WINDOWS_PATCHES_NAV_ITEMS,
   'patch-logs': PATCH_LOGS_NAV_ITEMS,

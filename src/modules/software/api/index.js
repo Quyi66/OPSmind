@@ -661,43 +661,6 @@ export const softwareScanApi = {
   }
 }
 
-/**
- * 本地安装 API
- */
-export const localInstallApi = {
-  /**
-   * 开始本地安装
-   * 对应作业: EKjwO7
-   */
-  startInstall(params = {}) {
-    const cacheBuster = Date.now()
-    return apiService.post(
-      '/jao/api/jao/jobs/EKjwO7/run',
-      {
-        params: {
-          hosts: params.hosts,
-          file_list: params.file_list
-        }
-      },
-      {
-        params: { cacheBuster }
-      }
-    )
-  },
-
-  /**
-   * 获取安装结果
-   * @param {string} runId
-   */
-  getInstallResult(runId) {
-    // 根据用户提供的示例："/jao/api/jao/runlogs/c633f22e799b43db95d1c1403a3702d4/result?cacheBuster=1766050551531"
-    const cacheBuster = Date.now()
-    return apiService.get(`/api/jao/runlogs/${runId}/result`, {
-      params: { cacheBuster }
-    })
-  }
-}
-
 export default {
   softwareStatsApi,
   hostOverviewApi,
@@ -707,6 +670,5 @@ export default {
   logApi,
   softwareLogsApi,
   scanApi,
-  softwareScanApi,
-  localInstallApi
+  softwareScanApi
 }

@@ -29,8 +29,7 @@ const defaultOpeneds = [
   'task-scheduler',
   'run-records',
   'review-center',
-  'users',
-  'rpm-install'
+  'users'
 ]
 
 provideCurrentGroupModuleCode('jao')

@@ -5,7 +5,7 @@
       <div class="panel left-panel">
         <div class="panel-header">
           <i class="fa fa-box-open" />
-          <span class="title">1. 选择rpm包</span>
+          <span class="title">1. 选择软件包</span>
           <el-button type="primary" size="small" link @click="openFileSelector">
             <i class="fa fa-plus" />
             添加文件
@@ -15,7 +15,7 @@
         <div class="panel-body">
           <div v-if="selectedFiles.length === 0" class="empty-files" @click="openFileSelector">
             <i class="fa fa-folder-open" />
-            <p>点击此处或上方按钮选择rpm安装包</p>
+            <p>点击此处或上方按钮选择软件包</p>
           </div>
           <div v-else class="selected-files-list scroll-y">
             <div v-for="(file, index) in selectedFiles" :key="index" class="install-file-item">
@@ -63,7 +63,7 @@
           </div>
 
           <div class="install-desc">
-            <h4>rpm包安装说明</h4>
+            <h4>软件包安装说明</h4>
             <ul>
               <li>仅支持 .rpm 格式的安装包</li>
               <li>勾选多个文件将进行批量并行安装</li>
@@ -91,7 +91,7 @@
     <!-- 文件选择器弹窗 -->
     <FileSelectorDialog
       v-model="fileSelectorVisible"
-      title="选择rpm安装包"
+      title="选择软件包"
       :multiple="true"
       :pre-selected="selectedFiles"
       filter="*.rpm"
@@ -146,7 +146,7 @@ function removeFile(index) {
 
 async function handleStartInstall() {
   if (selectedFiles.value.length === 0) {
-    ElMessage.warning('请选择rpm安装包')
+    ElMessage.warning('请选择软件包')
     return
   }
   if (selectedHosts.value.length === 0) {
@@ -156,7 +156,7 @@ async function handleStartInstall() {
 
   try {
     await ElMessageBox.confirm(
-      `确定将 ${selectedFiles.value.length} 个rpm包安装到 ${selectedHosts.value.length} 台主机吗？`,
+      `确定将 ${selectedFiles.value.length} 个软件包安装到 ${selectedHosts.value.length} 台主机吗？`,
       '确认安装',
       {
         confirmButtonText: '确认',

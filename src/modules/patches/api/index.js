@@ -727,6 +727,23 @@ export const patchInstallApi = {
 }
 
 /**
+ * 软件包本地安装 API
+ */
+export const localInstallApi = {
+  /**
+   * 启动软件包安装作业
+   * Job Code: QJb6B8
+   */
+  startInstall(params) {
+    return apiService
+      .post(`/jao/api/jao/jobs/QJb6B8/run?cacheBuster=${Date.now()}`, {
+        params
+      })
+      .then(response => response?.data ?? response)
+  }
+}
+
+/**
  * 补丁回退相关 API
  */
 export const patchRollbackApi = {
@@ -2043,6 +2060,7 @@ export const cveImportApi = {
 export default {
   scan: patchScanApi,
   install: patchInstallApi,
+  localInstall: localInstallApi,
   rollback: patchRollbackApi,
   library: patchLibraryApi,
   vulnerability: vulnerabilityApi,

@@ -36,7 +36,7 @@ export const MENU_CONFIG = {
       code: 'automation',
       name: '自动化管理',
       icon: 'fas fa-robot',
-      description: '自动化运维工具、脚本、命令执行、rpm包安装和主机账号管理',
+      description: '自动化运维工具、脚本、命令执行和主机账号管理',
       children: [
         {
           code: 'auto-workbench',
@@ -85,12 +85,6 @@ export const MENU_CONFIG = {
           name: '主机账号',
           icon: 'fas fa-users',
           description: '主机账号与权限管理'
-        },
-        {
-          code: 'rpm-install',
-          name: 'rpm包安装',
-          icon: 'fas fa-box-open',
-          description: '上传rpm包并分发到目标主机安装'
         }
       ]
     },

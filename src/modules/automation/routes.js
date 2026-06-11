@@ -131,8 +131,8 @@ export const JAO_ROUTE_DEFS = [
     key: 'localInstall',
     path: 'localInstall',
     name: 'jao-localInstall',
-    title: 'rpm包安装',
-    redirect: '/rpm-install/install'
+    title: '软件包安装',
+    redirect: '/patches/localInstall'
   }
 ]
 
@@ -154,18 +154,6 @@ export const RUN_RECORDS_ROUTE_DEFS = [
     title: '数据统计',
     name: 'run-records-statistics',
     redirect: '/run-records/logs?tab=statistics'
-  }
-]
-
-export const RPM_INSTALL_ROUTE_DEFS = [
-  {
-    key: 'install',
-    path: 'install',
-    name: 'rpm-install-install',
-    title: 'rpm包安装',
-    navLabel: 'rpm包安装',
-    icon: 'fas fa-box-open',
-    component: () => import('@/modules/software/views/LocalInstallPage.vue')
   }
 ]
 
