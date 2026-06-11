@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div ref="pageScrollRef" class="ops-page-layout ops-page-layout--page-scroll">
     <!-- 选项卡 -->
     <el-tabs v-model="activeViewTab" class="dashboard-tabs">
       <!-- 标签页一：评估规则与统计 -->
@@ -124,7 +124,11 @@
 
           <!-- 规则表格 -->
           <div class="ops-table-wrapper" v-loading="rulesLoading">
-            <el-table class="rules-table" :data="filteredRules" height="100%" style="width: 100%">
+            <el-table
+              class="rules-table natural-height-table"
+              :data="filteredRules"
+              style="width: 100%"
+            >
               <template #empty>
                 <el-empty description="当前租户尚未导入紧急程度规则，请先下载模板并导入" />
               </template>
@@ -297,9 +301,8 @@
           <!-- 结果表格 -->
           <div class="ops-table-wrapper" v-loading="lookupLoading">
             <el-table
-              class="lookup-table"
+              class="lookup-table natural-height-table"
               :data="filteredLookupResults"
-              height="100%"
               style="width: 100%"
             >
               <el-table-column prop="cveId" label="CVE 编号" width="160">
@@ -471,9 +474,8 @@
         <div class="ops-section flex-table-container">
           <div class="ops-table-wrapper" v-loading="listLoading">
             <el-table
-              class="lookup-table list-table"
+              class="lookup-table list-table natural-height-table"
               :data="filteredListResults"
-              height="100%"
               style="width: 100%"
             >
               <el-table-column prop="cveId" label="CVE 编号" min-width="160">
@@ -748,6 +750,7 @@ import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDial
 
 const router = useRouter()
 const route = useRoute()
+const pageScrollRef = ref()
 
 // 标签页状态
 const activeViewTab = ref('dashboard') // dashboard | lookup | urgencyList | cveImport
@@ -915,20 +918,10 @@ async function showPatchDetail(rowOrPatchId, optionalOsDistro = null) {
   }
 }
 
-// 抓取当前页面状态（含表格滚动位置）并序列化为路由 query 字符串
+// 抓取当前页面状态（含页面滚动位置）并序列化为路由 query 字符串
 // 在打开 CVE 详情弹窗或跳转主机详情的瞬间调用一次
-function getActiveTableScrollSelector() {
-  if (activeViewTab.value === 'dashboard') return '.rules-table .el-scrollbar__wrap'
-  if (activeViewTab.value === 'lookup') return '.lookup-table .el-scrollbar__wrap'
-  return '.list-table .el-scrollbar__wrap'
-}
-
 function snapshotHostBackRouteQuery() {
-  let scrollTop = 0
-  const scrollWrapper = document.querySelector(getActiveTableScrollSelector())
-  if (scrollWrapper) {
-    scrollTop = scrollWrapper.scrollTop
-  }
+  const scrollTop = pageScrollRef.value?.scrollTop || 0
 
   return JSON.stringify({
     activeViewTab: activeViewTab.value,
@@ -993,19 +986,12 @@ watch(
       await fetchUrgencyPageData()
     }
 
-    // 平滑恢复表格滚动位置
+    // 恢复页面滚动位置
     if (query.scrollTop) {
       nextTick(() => {
         setTimeout(() => {
-          const selector =
-            activeViewTab.value === 'dashboard'
-              ? '.rules-table .el-scrollbar__wrap'
-              : activeViewTab.value === 'lookup'
-              ? '.lookup-table .el-scrollbar__wrap'
-              : '.list-table .el-scrollbar__wrap'
-          const scrollWrapper = document.querySelector(selector)
-          if (scrollWrapper) {
-            scrollWrapper.scrollTop = Number(query.scrollTop)
+          if (pageScrollRef.value) {
+            pageScrollRef.value.scrollTop = Number(query.scrollTop)
           }
         }, 150)
       })
@@ -1492,16 +1478,17 @@ onMounted(() => {
 .dashboard-tabs {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  flex: none;
+  min-height: auto;
   margin-bottom: 0 !important;
 
   :deep(.el-tabs__content) {
-    flex: 1;
-    min-height: 0;
+    flex: none;
+    min-height: auto;
+    overflow: visible;
 
     .el-tab-pane {
-      height: 100%;
+      height: auto;
       display: flex;
       flex-direction: column;
     }
@@ -1633,8 +1620,8 @@ onMounted(() => {
 .flex-table-container {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  flex: none;
+  min-height: auto;
   margin-bottom: 0 !important;
   padding: 12px 16px !important;
 }
