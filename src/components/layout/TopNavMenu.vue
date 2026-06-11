@@ -686,7 +686,7 @@ onUnmounted(() => {
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.3rem; /* 微调间距，从 0.25rem 增加到 0.3rem，提供极轻微的呼吸感而不至于割裂 */
   flex-shrink: 0;
 }
 
@@ -700,11 +700,11 @@ onUnmounted(() => {
 }
 
 .brand-name {
-  color: #1269c3;
+  color: #1b5ab7; /* 提升色彩纯度，使其与 Logo 的深蓝色波浪色相完全一致 */
   font-family: Inter, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 1.28rem;
-  font-weight: 800;
-  letter-spacing: -0.045em;
+  font-weight: 700; /* 从 800 降为 700，减小笔画宽度以释放字内空间 */
+  letter-spacing: -0.02em; /* 从 -0.045em 调整为 -0.02em，防止字形在紧凑布局下粘连 */
   line-height: 1;
   white-space: nowrap;
 }
