@@ -1,14 +1,20 @@
 <template>
   <div v-if="kbList.length" class="win-kb-link-list">
-    <button
-      v-for="kbNumber in visibleKbs"
-      :key="kbNumber"
-      type="button"
-      class="win-kb-link"
-      @click.stop="selectKb(kbNumber)"
-    >
-      {{ kbNumber }}
-    </button>
+    <template v-for="kbNumber in visibleKbs" :key="kbNumber">
+      <button v-if="hasCve" type="button" class="win-kb-link" @click.stop="selectKb(kbNumber)">
+        {{ kbNumber }}
+      </button>
+      <a
+        v-else
+        :href="resolveUrl(kbNumber)"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="win-kb-link win-kb-link--external"
+        @click.stop
+      >
+        {{ kbNumber }}
+      </a>
+    </template>
     <button
       v-if="overflowCount > 0"
       type="button"
@@ -27,15 +33,26 @@
       destroy-on-close
     >
       <div class="win-kb-link-list win-kb-link-list--dialog">
-        <button
-          v-for="kbNumber in kbList"
-          :key="kbNumber"
-          type="button"
-          class="win-kb-link"
-          @click.stop="selectKb(kbNumber, true)"
-        >
-          {{ kbNumber }}
-        </button>
+        <template v-for="kbNumber in kbList" :key="kbNumber">
+          <button
+            v-if="hasCve"
+            type="button"
+            class="win-kb-link"
+            @click.stop="selectKb(kbNumber, true)"
+          >
+            {{ kbNumber }}
+          </button>
+          <a
+            v-else
+            :href="resolveUrl(kbNumber)"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="win-kb-link win-kb-link--external"
+            @click.stop="dialogVisible = false"
+          >
+            {{ kbNumber }}
+          </a>
+        </template>
       </div>
       <template #footer>
         <el-button @click="dialogVisible = false">关闭</el-button>
@@ -64,6 +81,14 @@ const props = defineProps({
   emptyText: {
     type: String,
     default: '-'
+  },
+  hasCve: {
+    type: Boolean,
+    default: true
+  },
+  kbDetail: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -116,6 +141,95 @@ function selectKb(kbNumber, closeDialog = false) {
   }
   emit('select-kb', kbNumber)
 }
+
+// ----------------- External URL resolution helper logic (from WindowsKbDetail.vue) -----------------
+
+function normalizeUrl(value) {
+  return String(value || '').trim()
+}
+
+function isMicrosoftSupportUrl(value) {
+  if (!value) return false
+
+  try {
+    const url = new URL(value)
+    return url.hostname.toLowerCase() === 'support.microsoft.com'
+  } catch {
+    return false
+  }
+}
+
+function isAcceptableMicrosoftSupportUrl(value, kbNumber, requireKbInUrl = false) {
+  if (!isMicrosoftSupportUrl(value)) return false
+  if (!requireKbInUrl) return true
+
+  return hasKbNumberInUrl(value, kbNumber)
+}
+
+function hasKbNumberInUrl(value, kbNumber) {
+  if (!value || !kbNumber) return false
+
+  try {
+    return decodeURIComponent(value).toUpperCase().includes(kbNumber)
+  } catch {
+    return String(value).toUpperCase().includes(kbNumber)
+  }
+}
+
+function shouldUseSupportSearchFallback(kbDetail) {
+  const text = [
+    kbDetail?.title,
+    kbDetail?.description,
+    kbDetail?.products,
+    kbDetail?.classification
+  ]
+    .map(value => String(value || ''))
+    .join(' ')
+
+  return /\b\.NET\b/i.test(text)
+}
+
+function buildMicrosoftSupportSearchUrl(kbNumber) {
+  return kbNumber
+    ? `https://support.microsoft.com/zh-cn/search/results?query=${encodeURIComponent(kbNumber)}`
+    : ''
+}
+
+function buildMicrosoftSupportHelpUrl(kbNumber) {
+  const articleId = String(kbNumber || '').match(/\d+/)?.[0]
+  return articleId ? `https://support.microsoft.com/help/${encodeURIComponent(articleId)}` : ''
+}
+
+function resolveKbSupportUrl(kbDetail, kbNumber) {
+  const normalizedKb = normalizeKbNumber(kbNumber)
+  const useSearchFallback = shouldUseSupportSearchFallback(kbDetail)
+  const supportUrl = [
+    'supportUrl',
+    'support_url',
+    'supportArticleUrl',
+    'support_article_url',
+    'articleUrl',
+    'article_url',
+    'moreInfoUrl',
+    'more_info_url',
+    'webUrl',
+    'web_url',
+    'kbUrl',
+    'kb_url'
+  ]
+    .map(key => normalizeUrl(kbDetail?.[key]))
+    .find(url => isAcceptableMicrosoftSupportUrl(url, normalizedKb, useSearchFallback))
+
+  if (supportUrl) return supportUrl
+
+  return useSearchFallback
+    ? buildMicrosoftSupportSearchUrl(normalizedKb)
+    : buildMicrosoftSupportHelpUrl(normalizedKb)
+}
+
+function resolveUrl(kbNumber) {
+  return resolveKbSupportUrl(props.kbDetail || {}, kbNumber)
+}
 </script>
 
 <style scoped lang="scss">
@@ -155,6 +269,14 @@ function selectKb(kbNumber, closeDialog = false) {
     background: #409eff;
     color: #fff;
     text-decoration: none;
+  }
+}
+
+.win-kb-link--external {
+  &::after {
+    content: '↗';
+    font-size: 11px;
+    opacity: 0.7;
   }
 }
 

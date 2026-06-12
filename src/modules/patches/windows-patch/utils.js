@@ -368,7 +368,7 @@ export function getInstallResultTagType(rowOrValue) {
 
 export function isPatchInstallable(row) {
   const status = normalizeUpper(pickValue(row, ['patchStatus', 'patch_status'], ''))
-  // 已修复 / 人工已修复 / 修复中（及旧枚举 已安装 / 安装中）不可再次安装
+  // 已修复 / 人工已修复 / 修复中 / 回滚中 / 回滚待重启（及旧枚举 已安装 / 安装中）不可再次安装
   return ![
     'IS_REPAIR',
     'IS_REPAIR_ARTIFICIAL',
@@ -376,7 +376,9 @@ export function isPatchInstallable(row) {
     'REPAIRING',
     'REPAIR_PENDING_REBOOT',
     'INSTALLED',
-    'INSTALLING'
+    'INSTALLING',
+    'ROLLBACK_PENDING_REBOOT',
+    'ROLLING_BACK'
   ].includes(status)
 }
 

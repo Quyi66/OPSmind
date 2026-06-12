@@ -117,6 +117,8 @@
             <template #default="{ row }">
               <WindowsKbLinkList
                 :kb-numbers="resolveKbNumbers(row)"
+                :has-cve="resolveCveIds(row).length > 0"
+                :kb-detail="row"
                 dialog-title="关联 KB"
                 @select-kb="openKbDetail"
               />
