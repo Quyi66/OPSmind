@@ -1341,5 +1341,5 @@ function resetSkippedSteps() {
 </script>
 
 <style scoped lang="scss">
-@import './PatchTaskWizard.scss';
+@use './PatchTaskWizard.scss' as *;
 </style>

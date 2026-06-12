@@ -234,7 +234,6 @@ let pollingTimer = null
 async function loadData() {
   loading.value = true
   try {
-    const { useApi } = await import('@/core/api')
     const cacheBuster = Date.now()
     const response = await useApi().post(
       `/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${cacheBuster}`,

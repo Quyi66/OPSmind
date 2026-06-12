@@ -3,6 +3,9 @@
  * 提供各种性能优化功能，包括预加载、预连接等
  */
 
+import { authService } from '@/core/auth'
+import { appUrlManager } from '@/config/module-urls.config'
+
 const ANGULAR_ENDPOINT = (import.meta.env.VITE_ANGULAR_URL || '').trim()
 const BACKEND_ENDPOINT = (import.meta.env.VITE_BACKEND_URL || '').trim()
 
@@ -152,24 +155,12 @@ export class IframePreloader {
    */
   private static async buildUrlWithToken(baseUrl: string): Promise<string> {
     try {
-      // 动态导入authService以避免循环依赖
-      const [{ authService }, { appUrlManager }] = await Promise.all([
-        import('@/core/auth'),
-        import('@/config/module-urls.config')
-      ])
-
       const token = authService.getToken()
 
       if (token) {
         const tokenParam = appUrlManager.getTokenParam()
         const separator = baseUrl.includes('?') ? '&' : '?'
         const finalUrl = `${baseUrl}${separator}${tokenParam}=${token}&vue_auth=true&t=${Date.now()}`
-
-        //   baseUrl,
-        //   hasToken: !!token,
-        //   tokenLength: token.length,
-        //   finalUrl: finalUrl.substring(0, 100) + '...'
-        // })
 
         return finalUrl
       }

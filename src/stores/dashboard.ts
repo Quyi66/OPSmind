@@ -4,6 +4,7 @@ import { LOGIN_REDIRECT_URL } from '@/config/route-paths'
 import { angularJSBridge } from '@/services/angularjs-bridge'
 import { hybridModuleManager } from '@/core/modules/HybridModuleManager.js'
 import { authService } from '@/core/auth'
+import { apiService } from '@/core/api'
 import type { User } from '@/types/auth'
 import type { DashboardFullData } from '@/types/dashboard'
 
@@ -175,7 +176,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   const getSystemStats = async (): Promise<SystemStat[]> => {
     try {
-      const { apiService } = await import('@/core/api')
       return await apiService.getSystemStats()
     } catch (err) {
       console.error('Failed to get system stats:', err)
@@ -184,7 +184,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   const getDashboardFullData = async (): Promise<DashboardFullData> => {
-    const { apiService } = await import('@/core/api')
     const data = await apiService.getDashboardFullData()
     return data as DashboardFullData
   }
@@ -201,7 +200,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
   // 获取 AI OPS URL 参数
   const fetchAiOpsUrl = async (): Promise<string | null> => {
     try {
-      const { apiService } = await import('@/core/api')
       const result = await apiService.getParam('ai', 'url')
       let url: string | null = null
       if (typeof result === 'string') url = result

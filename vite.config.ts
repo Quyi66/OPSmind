@@ -248,9 +248,13 @@ export default defineConfig(({ command, mode }): UserConfig => {
 
             // 大型库单独分割（懒加载）
             if (/vue-echarts|echarts/.test(id)) return 'vendor-echarts'
-            if (/codemirror|@codemirror|vue-codemirror/.test(id)) return 'vendor-codemirror'
+            if (/zrender/.test(id)) return 'vendor-zrender'
+            if (/codemirror|@codemirror|@lezer|vue-codemirror/.test(id)) return 'vendor-codemirror'
             if (/bpmn-js|diagram-js/.test(id)) return 'vendor-bpmn'
-            if (/xlsx|mammoth/.test(id)) return 'vendor-doc'
+            if (/bpmn-moddle|moddle|moddle-xml|saxen|bluebird/.test(id)) return 'vendor-bpmn-core'
+            if (/xlsx/.test(id)) return 'vendor-xlsx'
+            if (/mammoth|jszip|@xmldom|dingbat-to-unicode/.test(id)) return 'vendor-doc'
+            if (/lodash|lodash-es|lodash-unified|lodash\.merge/.test(id)) return 'vendor-lodash'
 
             // Vue 核心（首屏必需）
             if (/vue-router|pinia|@vue\//.test(id)) return 'vendor-vue'
@@ -281,7 +285,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       minify: isProduction ? 'esbuild' : false,
 
       reportCompressedSize: isProduction,
-      chunkSizeWarningLimit: 500 // 降低警告阈值，鼓励更细粒度分割
+      chunkSizeWarningLimit: 1000 // ECharts 体积较大但已懒加载，保留接近实际上限的预警阈值
     },
 
     css: {
