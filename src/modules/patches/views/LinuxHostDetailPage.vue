@@ -139,7 +139,7 @@ const hostOsDistro = computed(
   () => machineInfo.value?.os_distro || hostInfoRef.value.os_distro || ''
 )
 
-const fromLabel = computed(() => route.query.fromLabel || '机器扫描')
+const fromLabel = computed(() => route.query.fromLabel || '主机概览')
 const fromRouteName = computed(() => route.query.fromRouteName || 'patches-machineScan')
 const fromRouteQuery = computed(() => {
   const raw = route.query.fromRouteQuery

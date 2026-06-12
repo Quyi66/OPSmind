@@ -38,8 +38,8 @@ export const PATCHES_ROUTE_DEFS = [
     key: 'machineScan',
     path: 'machineScan',
     name: 'patches-machineScan',
-    title: '机器扫描',
-    navLabel: '机器扫描',
+    title: '主机概览',
+    navLabel: '主机概览',
     icon: 'fas fa-search',
     platform: 'linux',
     component: () => import('./views/LinuxPatchScanPage.vue')

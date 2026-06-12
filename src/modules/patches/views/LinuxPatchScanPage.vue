@@ -1855,7 +1855,7 @@ function handleHostClick(row) {
       os_distro: row.os_distro,
       os_version: row.os_version,
       hostname: row.hostname,
-      fromLabel: '机器扫描',
+      fromLabel: '主机概览',
       fromRouteName: 'patches-machineScan'
     }
   })
