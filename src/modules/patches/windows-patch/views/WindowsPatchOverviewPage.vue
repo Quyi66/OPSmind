@@ -116,7 +116,7 @@
             {{ resolveHostId(row) || '-' }}
           </template>
         </el-table-column> -->
-        <el-table-column label="操作系统" min-width="240">
+        <el-table-column label="操作系统" min-width="220">
           <template #default="{ row }">
             {{ pickValue(row, ['osDistro', 'os_distro'], '-') }}
           </template>
@@ -226,6 +226,13 @@
             </button>
           </template>
         </el-table-column>
+        <el-table-column label="已安装" width="80">
+          <template #default="{ row }">
+            <span class="win-patch-metric">
+              {{ pickValue(row, ['installedCount', 'installed_count'], 0) }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column label="版本" min-width="120">
           <template #default="{ row }">
             {{ pickValue(row, ['osVersion', 'os_version'], '-') }}
@@ -297,13 +304,6 @@
             </span>
           </template>
         </el-table-column> -->
-        <el-table-column label="已安装" width="90" align="center">
-          <template #default="{ row }">
-            <span class="win-patch-metric">
-              {{ pickValue(row, ['installedCount', 'installed_count'], 0) }}
-            </span>
-          </template>
-        </el-table-column>
         <el-table-column label="最后扫描时间" width="190" class-name="win-patch-table__time-column">
           <template #default="{ row }">
             {{ formatDateTime(pickValue(row, ['lastScanDate', 'last_scan_date'], '')) }}
