@@ -231,7 +231,78 @@
                 </el-tag>
               </template>
             </el-table-column>
-
+            <el-table-column prop="num_critical" width="80">
+              <template #header>
+                严重
+                <i class="fa fa-circle text-danger" />
+              </template>
+              <template #default="{ row }">
+                <button
+                  type="button"
+                  class="severity-count"
+                  :class="{ 'font-bold is-clickable': row.num_critical > 0 }"
+                  :disabled="row.num_critical <= 0"
+                  :title="row.num_critical > 0 ? '查看严重补丁' : ''"
+                  @click="handleSeverityCountClick(row, 'Critical')"
+                >
+                  {{ row.num_critical }}
+                </button>
+              </template>
+            </el-table-column>
+            <el-table-column prop="num_important" width="80">
+              <template #header>
+                重要
+                <i class="fa fa-circle text-warning" />
+              </template>
+              <template #default="{ row }">
+                <button
+                  type="button"
+                  class="severity-count"
+                  :class="{ 'font-bold is-clickable': row.num_important > 0 }"
+                  :disabled="row.num_important <= 0"
+                  :title="row.num_important > 0 ? '查看重要补丁' : ''"
+                  @click="handleSeverityCountClick(row, 'Important')"
+                >
+                  {{ row.num_important }}
+                </button>
+              </template>
+            </el-table-column>
+            <el-table-column prop="num_moderate" width="80">
+              <template #header>
+                中等
+                <i class="fa fa-circle text-dark" />
+              </template>
+              <template #default="{ row }">
+                <button
+                  type="button"
+                  class="severity-count"
+                  :class="{ 'font-bold is-clickable': row.num_moderate > 0 }"
+                  :disabled="row.num_moderate <= 0"
+                  :title="row.num_moderate > 0 ? '查看中等补丁' : ''"
+                  @click="handleSeverityCountClick(row, 'Moderate')"
+                >
+                  {{ row.num_moderate }}
+                </button>
+              </template>
+            </el-table-column>
+            <el-table-column prop="num_low" width="80">
+              <template #header>
+                低
+                <i class="fa fa-circle text-info" />
+              </template>
+              <template #default="{ row }">
+                <button
+                  type="button"
+                  class="severity-count"
+                  :class="{ 'font-bold is-clickable': row.num_low > 0 }"
+                  :disabled="row.num_low <= 0"
+                  :title="row.num_low > 0 ? '查看低危补丁' : ''"
+                  @click="handleSeverityCountClick(row, 'Low')"
+                >
+                  {{ row.num_low }}
+                </button>
+              </template>
+            </el-table-column>
             <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
             <el-table-column prop="tags" label="标签" min-width="140">
               <template #default="{ row }">
@@ -307,78 +378,6 @@
                 {{ row.run_environment || '-' }}
               </template>
             </el-table-column> -->
-            <el-table-column prop="num_critical" width="80">
-              <template #header>
-                严重
-                <i class="fa fa-circle text-danger" />
-              </template>
-              <template #default="{ row }">
-                <button
-                  type="button"
-                  class="severity-count"
-                  :class="{ 'font-bold is-clickable': row.num_critical > 0 }"
-                  :disabled="row.num_critical <= 0"
-                  :title="row.num_critical > 0 ? '查看严重补丁' : ''"
-                  @click="handleSeverityCountClick(row, 'Critical')"
-                >
-                  {{ row.num_critical }}
-                </button>
-              </template>
-            </el-table-column>
-            <el-table-column prop="num_important" width="80">
-              <template #header>
-                重要
-                <i class="fa fa-circle text-warning" />
-              </template>
-              <template #default="{ row }">
-                <button
-                  type="button"
-                  class="severity-count"
-                  :class="{ 'font-bold is-clickable': row.num_important > 0 }"
-                  :disabled="row.num_important <= 0"
-                  :title="row.num_important > 0 ? '查看重要补丁' : ''"
-                  @click="handleSeverityCountClick(row, 'Important')"
-                >
-                  {{ row.num_important }}
-                </button>
-              </template>
-            </el-table-column>
-            <el-table-column prop="num_moderate" width="80">
-              <template #header>
-                中等
-                <i class="fa fa-circle text-dark" />
-              </template>
-              <template #default="{ row }">
-                <button
-                  type="button"
-                  class="severity-count"
-                  :class="{ 'font-bold is-clickable': row.num_moderate > 0 }"
-                  :disabled="row.num_moderate <= 0"
-                  :title="row.num_moderate > 0 ? '查看中等补丁' : ''"
-                  @click="handleSeverityCountClick(row, 'Moderate')"
-                >
-                  {{ row.num_moderate }}
-                </button>
-              </template>
-            </el-table-column>
-            <el-table-column prop="num_low" width="80">
-              <template #header>
-                低
-                <i class="fa fa-circle text-info" />
-              </template>
-              <template #default="{ row }">
-                <button
-                  type="button"
-                  class="severity-count"
-                  :class="{ 'font-bold is-clickable': row.num_low > 0 }"
-                  :disabled="row.num_low <= 0"
-                  :title="row.num_low > 0 ? '查看低危补丁' : ''"
-                  @click="handleSeverityCountClick(row, 'Low')"
-                >
-                  {{ row.num_low }}
-                </button>
-              </template>
-            </el-table-column>
             <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
               <template #default="{ row }">
                 {{ formatDateTime(row.scan_timestamp) }}

@@ -121,77 +121,6 @@
             {{ pickValue(row, ['osDistro', 'os_distro'], '-') }}
           </template>
         </el-table-column>
-        <el-table-column label="版本" min-width="120">
-          <template #default="{ row }">
-            {{ pickValue(row, ['osVersion', 'os_version'], '-') }}
-          </template>
-        </el-table-column>
-        <el-table-column label="架构" min-width="90">
-          <template #default="{ row }">
-            {{ pickValue(row, ['osArch', 'os_arch'], '-') }}
-          </template>
-        </el-table-column>
-        <el-table-column label="标签" min-width="140">
-          <template #default="{ row }">
-            <div v-if="getRowTags(row).length" class="win-patch-host-tags">
-              <el-tag
-                v-for="(tag, index) in getRowTags(row)"
-                :key="`${tag}-${index}`"
-                size="small"
-                effect="plain"
-              >
-                {{ tag }}
-              </el-tag>
-            </div>
-            <span v-else class="text-muted">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="内存" width="170">
-          <template #default="{ row }">
-            <div v-if="row.memoryOverview" class="memory-overview">
-              <div
-                v-if="row.memoryOverview.usedPercent !== null"
-                class="memory-usage"
-                :class="`memory-usage--${row.memoryOverview.usageLevel}`"
-              >
-                <div
-                  class="memory-usage__track"
-                  :title="`已使用 ${row.memoryOverview.usedPercent}%`"
-                >
-                  <div
-                    class="memory-usage__fill"
-                    :style="{ width: `${row.memoryOverview.usedPercent}%` }"
-                  />
-                </div>
-                <div class="memory-usage__desc">
-                  {{ row.memoryOverview.freeGb }} GB 可用, 共 {{ row.memoryOverview.totalGb }} GB
-                </div>
-              </div>
-              <div v-else class="memory-usage memory-usage--unknown">
-                <div class="memory-usage__track" />
-                <div class="memory-usage__desc">
-                  {{
-                    row.memoryOverview.freeGb !== null
-                      ? `${row.memoryOverview.freeGb} GB 可用`
-                      : '-'
-                  }}{{
-                    row.memoryOverview.totalGb !== null
-                      ? `, 共 ${row.memoryOverview.totalGb} GB`
-                      : ', 总量未知'
-                  }}
-                </div>
-              </div>
-            </div>
-            <span v-else class="text-muted">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="缺失数" width="80" align="center">
-          <template #default="{ row }">
-            <span class="win-patch-metric">
-              {{ pickValue(row, ['totalMissing', 'total_missing'], 0) }}
-            </span>
-          </template>
-        </el-table-column>
         <el-table-column width="80" align="center">
           <template #header>
             <span class="win-patch-severity-header">
@@ -297,6 +226,77 @@
             </button>
           </template>
         </el-table-column>
+        <el-table-column label="版本" min-width="120">
+          <template #default="{ row }">
+            {{ pickValue(row, ['osVersion', 'os_version'], '-') }}
+          </template>
+        </el-table-column>
+        <el-table-column label="架构" min-width="90">
+          <template #default="{ row }">
+            {{ pickValue(row, ['osArch', 'os_arch'], '-') }}
+          </template>
+        </el-table-column>
+        <el-table-column label="标签" min-width="140">
+          <template #default="{ row }">
+            <div v-if="getRowTags(row).length" class="win-patch-host-tags">
+              <el-tag
+                v-for="(tag, index) in getRowTags(row)"
+                :key="`${tag}-${index}`"
+                size="small"
+                effect="plain"
+              >
+                {{ tag }}
+              </el-tag>
+            </div>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="内存" width="170">
+          <template #default="{ row }">
+            <div v-if="row.memoryOverview" class="memory-overview">
+              <div
+                v-if="row.memoryOverview.usedPercent !== null"
+                class="memory-usage"
+                :class="`memory-usage--${row.memoryOverview.usageLevel}`"
+              >
+                <div
+                  class="memory-usage__track"
+                  :title="`已使用 ${row.memoryOverview.usedPercent}%`"
+                >
+                  <div
+                    class="memory-usage__fill"
+                    :style="{ width: `${row.memoryOverview.usedPercent}%` }"
+                  />
+                </div>
+                <div class="memory-usage__desc">
+                  {{ row.memoryOverview.freeGb }} GB 可用, 共 {{ row.memoryOverview.totalGb }} GB
+                </div>
+              </div>
+              <div v-else class="memory-usage memory-usage--unknown">
+                <div class="memory-usage__track" />
+                <div class="memory-usage__desc">
+                  {{
+                    row.memoryOverview.freeGb !== null
+                      ? `${row.memoryOverview.freeGb} GB 可用`
+                      : '-'
+                  }}{{
+                    row.memoryOverview.totalGb !== null
+                      ? `, 共 ${row.memoryOverview.totalGb} GB`
+                      : ', 总量未知'
+                  }}
+                </div>
+              </div>
+            </div>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
+        <!-- <el-table-column label="缺失数" width="80" align="center">
+          <template #default="{ row }">
+            <span class="win-patch-metric">
+              {{ pickValue(row, ['totalMissing', 'total_missing'], 0) }}
+            </span>
+          </template>
+        </el-table-column> -->
         <el-table-column label="已安装" width="90" align="center">
           <template #default="{ row }">
             <span class="win-patch-metric">
