@@ -17,10 +17,19 @@ export const ACM_ROUTE_DEFS = [
     key: 'info',
     path: 'info',
     name: 'acm-info',
-    title: '资产列表',
-    navLabel: '资产列表',
+    title: '设备清单',
+    navLabel: '设备清单',
     icon: 'fad fa-fw fa-server',
     component: () => import('./views/AssetInfoPage.vue')
+  },
+  {
+    key: 'exception',
+    path: 'exception',
+    name: 'acm-exception',
+    title: '连通巡检',
+    navLabel: '连通巡检',
+    icon: 'fad fa-fw fa-exclamation-triangle',
+    component: () => import('./views/ExceptionDevicePage.vue')
   },
   {
     key: 'data',
@@ -32,40 +41,13 @@ export const ACM_ROUTE_DEFS = [
     component: () => import('./views/DataManagePage.vue')
   },
   {
-    key: 'model',
-    path: 'model',
-    name: 'acm-model',
-    title: '资产模型',
-    navLabel: '资产模型',
-    icon: 'fad fa-fw fa-project-diagram',
-    component: () => import('./views/AssetModelPage.vue')
-  },
-  {
-    key: 'exception',
-    path: 'exception',
-    name: 'acm-exception',
-    title: '异常设备',
-    navLabel: '异常设备',
-    icon: 'fad fa-fw fa-exclamation-triangle',
-    component: () => import('./views/ExceptionDevicePage.vue')
-  },
-  {
     key: 'automation',
     path: 'automation',
     name: 'acm-automation',
-    title: '自动化配置',
-    navLabel: '自动化配置',
+    title: '连接凭据',
+    navLabel: '连接凭据',
     icon: 'fad fa-fw fa-cogs',
     component: () => import('./views/AutomationConfigPage.vue')
-  },
-  {
-    key: 'permission',
-    path: 'permission',
-    name: 'acm-permission',
-    title: '资源权限',
-    navLabel: '资源权限',
-    icon: 'fad fa-fw fa-user-lock',
-    component: () => import('./views/ResourcePermissionPage.vue')
   },
   {
     key: 'log',
@@ -75,5 +57,23 @@ export const ACM_ROUTE_DEFS = [
     navLabel: '操作日志',
     icon: 'fad fa-fw fa-history',
     component: () => import('./views/OperationLogPage.vue')
+  },
+  {
+    key: 'permission',
+    path: 'permission',
+    name: 'acm-permission',
+    title: '访问控制',
+    navLabel: '访问控制',
+    icon: 'fad fa-fw fa-user-lock',
+    component: () => import('./views/ResourcePermissionPage.vue')
+  },
+  {
+    key: 'model',
+    path: 'model',
+    name: 'acm-model',
+    title: '模型定义',
+    navLabel: '模型定义',
+    icon: 'fad fa-fw fa-project-diagram',
+    component: () => import('./views/AssetModelPage.vue')
   }
 ]

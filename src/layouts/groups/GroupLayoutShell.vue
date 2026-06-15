@@ -3,21 +3,31 @@
     <ModuleSideMenu
       :menu-groups="menuGroups"
       :default-openeds="defaultOpeneds"
+      :badge-counts="badgeCounts"
       class="group-side-menu"
     />
 
-    <section class="group-content">
-      <router-view v-slot="{ Component, route }">
-        <transition name="fade-content" mode="out-in">
-          <component :is="Component" :key="route.path" />
-        </transition>
-      </router-view>
+    <section class="group-content" :class="{ 'group-content--page-scroll': pageScroll }">
+      <slot name="content-top" />
 
-      <transition name="fade-overlay">
-        <div v-if="isLoading" class="loading-overlay">
-          <RouteLoadingFallback />
-        </div>
-      </transition>
+      <div class="group-content__view">
+        <router-view v-slot="{ Component, route }">
+          <transition name="fade-content" mode="out-in">
+            <template v-if="shouldCacheRoute(route)">
+              <keep-alive>
+                <component :is="Component" :key="getViewKey(route)" />
+              </keep-alive>
+            </template>
+            <component v-else :is="Component" :key="getViewKey(route)" />
+          </transition>
+        </router-view>
+
+        <transition name="fade-overlay">
+          <div v-if="isLoading" class="loading-overlay">
+            <RouteLoadingFallback />
+          </div>
+        </transition>
+      </div>
     </section>
   </div>
 </template>
@@ -35,10 +45,30 @@ defineProps({
   defaultOpeneds: {
     type: Array,
     default: () => []
+  },
+  badgeCounts: {
+    type: Object,
+    default: () => ({})
+  },
+  pageScroll: {
+    type: Boolean,
+    default: false
   }
 })
 
 const { isLoading } = useRouteLoading()
+
+function getRouteName(route) {
+  return String(route?.name || '')
+}
+
+function shouldCacheRoute(route) {
+  return getRouteName(route) === 'cmd-list'
+}
+
+function getViewKey(route) {
+  return shouldCacheRoute(route) ? 'cmd-workspace' : String(route?.path || '')
+}
 </script>
 
 <style scoped lang="scss">
@@ -55,11 +85,42 @@ const { isLoading } = useRouteLoading()
 
 .group-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   background: var(--el-bg-color);
   position: relative;
+}
+
+.group-content__view {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.group-content--page-scroll {
+  overflow: auto;
+}
+
+.group-content--page-scroll > .group-content__view {
+  flex: 1 0 auto;
+  overflow: visible;
+}
+
+.group-content--page-scroll :deep(.ops-module__content) {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
+.group-content--page-scroll :deep(.ops-page-layout) {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
 }
 
 .loading-overlay {

@@ -37,6 +37,13 @@
             <template #title>
               <el-icon><i :class="group.icon" /></el-icon>
               <span>{{ group.name }}</span>
+              <span
+                v-if="getGroupBadgeCount(group) > 0"
+                class="menu-badge-pill"
+                style="margin-left: 4px"
+              >
+                {{ getGroupBadgeCount(group) }}
+              </span>
             </template>
             <!-- 递归或者判断一层嵌套：如果有三级树 -->
             <template v-for="item in group.children" :key="item.key">
@@ -59,7 +66,15 @@
 
               <!-- 正常的二级菜单 -->
               <el-menu-item v-else :index="`${group.code}::${item.key}`">
-                <template #title>{{ item.label }}</template>
+                <template #title>
+                  <span>{{ item.label }}</span>
+                  <span
+                    v-if="badgeCounts[`${group.code}::${item.key}`] > 0"
+                    class="menu-badge-pill"
+                  >
+                    {{ badgeCounts[`${group.code}::${item.key}`] }}
+                  </span>
+                </template>
               </el-menu-item>
             </template>
           </el-sub-menu>
@@ -115,6 +130,11 @@ const props = defineProps({
   defaultOpeneds: {
     type: Array,
     default: () => []
+  },
+  // badge 计数映射：key 为 "groupCode::itemKey"，值为待处理数量
+  badgeCounts: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -122,6 +142,21 @@ const emit = defineEmits(['select', 'home-click', 'collapse-change'])
 
 const route = useRoute()
 const router = useRouter()
+
+function getItemTargetPath(item) {
+  return item.path || `${props.basePath}/${item.key}`
+}
+
+function getItemMatchPaths(item) {
+  const extraPaths = Array.isArray(item.matchPaths) ? item.matchPaths.filter(Boolean) : []
+  return [getItemTargetPath(item), ...extraPaths]
+}
+
+function matchesItemPath(currentPath, item) {
+  return getItemMatchPaths(item).some(
+    matchPath => currentPath === matchPath || currentPath.startsWith(`${matchPath}/`)
+  )
+}
 
 // 折叠状态
 const isCollapsed = ref(false)
@@ -155,15 +190,12 @@ const activeIndex = computed(() => {
       for (const item of group.children) {
         if (item.children) {
           for (const sub of item.children) {
-            const subPath = sub.path || `${props.basePath}/${sub.key}`
-            if (path === subPath || path.startsWith(subPath + '/')) {
+            if (matchesItemPath(path, sub)) {
               return `${group.code}::${item.key}::${sub.key}`
             }
           }
         } else {
-          const itemPath = item.path || `${props.basePath}/${item.key}`
-          // 检查路径是否匹配
-          if (path === itemPath || path.startsWith(itemPath + '/')) {
+          if (matchesItemPath(path, item)) {
             return `${group.code}::${item.key}`
           }
         }
@@ -215,7 +247,7 @@ function handleSelect(index) {
         const itemKey = parts.slice(1).join('::')
         const item = group.children.find(child => child.key === itemKey)
         if (item) {
-          const targetPath = item.path || `${props.basePath}/${item.key}`
+          const targetPath = getItemTargetPath(item)
           router.push(targetPath)
           emit('select', item, group)
           return
@@ -229,6 +261,14 @@ function handleSelect(index) {
 function handleHomeClick() {
   emit('home-click')
   router.push('/home')
+}
+
+// 计算某个分组的 badge 总数（对所有子项计数求和）
+function getGroupBadgeCount(group) {
+  if (!group.children) return 0
+  return group.children.reduce((sum, item) => {
+    return sum + (props.badgeCounts[`${group.code}::${item.key}`] || 0)
+  }, 0)
 }
 </script>
 
@@ -453,5 +493,24 @@ function handleHomeClick() {
 // 折叠状态下按钮位置调整
 .is-collapsed .collapse-toggle {
   left: 16px;
+}
+
+// Badge 样式 - 内联 pill，跟随文字流，紧贴展开箭头左侧
+.menu-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--el-color-danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  margin-left: auto;
+  margin-right: 20px;
+  flex-shrink: 0;
 }
 </style>

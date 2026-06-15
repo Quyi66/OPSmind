@@ -27,7 +27,7 @@
             v-model="searchKeyword"
             placeholder="搜索 IP/主机名/用户名"
             clearable
-            style="width: 200px;"
+            style="width: 200px"
             @keyup.enter="handleSearch"
           >
             <template #prefix>
@@ -37,10 +37,12 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon> 搜索
+            <el-icon><Search /></el-icon>
+            搜索
           </el-button>
           <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon> 重置
+            <el-icon><RefreshRight /></el-icon>
+            重置
           </el-button>
         </el-form-item>
       </el-form>
@@ -48,29 +50,26 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" size="small" @click="handleBatchModify">
-        批量修改
-      </el-button>
+      <el-button type="primary" size="small" @click="handleBatchModify">批量修改</el-button>
       <el-button size="small" :disabled="!selectedRows.length" @click="handleSelectModify">
         选择修改
       </el-button>
-      <el-button size="small" @click="handleCheckPasswordState">
-        检查密码状态
-      </el-button>
-      <el-button size="small" @click="handleRevertPassword">
-        重置密码
-      </el-button>
+      <el-button size="small" @click="handleCheckPasswordState">检查密码状态</el-button>
+      <el-button size="small" @click="handleRevertPassword">重置密码</el-button>
       <!-- <el-button size="small" @click="handleExportPassword">
         导出密码
       </el-button> -->
-      <el-button size="small" @click="handleImportInitPassword">
-        导入初始密码
-      </el-button>
-      <el-button size="small" @click="handleDownloadTemplate">
-        模板下载
-      </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <el-button size="small" @click="handleImportInitPassword">导入初始密码</el-button>
+      <el-button size="small" @click="handleDownloadTemplate">模板下载</el-button>
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -143,13 +142,7 @@
               >
                 修改中
               </el-button>
-              <el-button
-                v-if="row.setup_status === 'RESET'"
-                text
-                type="info"
-                size="small"
-                disabled
-              >
+              <el-button v-if="row.setup_status === 'RESET'" text type="info" size="small" disabled>
                 重置中
               </el-button>
             </div>
@@ -173,10 +166,7 @@
     </div>
 
     <!-- 对话框组件 -->
-    <ViewPasswordDialog
-      v-model="viewPasswordDialogVisible"
-      :server-id="currentServerId"
-    />
+    <ViewPasswordDialog v-model="viewPasswordDialogVisible" :server-id="currentServerId" />
 
     <OperationHistoryDialog
       v-model="operationHistoryDialogVisible"
@@ -185,10 +175,7 @@
       :host-key="currentHostKey"
     />
 
-    <BatchModifyDialog
-      v-model="batchModifyDialogVisible"
-      @success="handleDialogSuccess"
-    />
+    <BatchModifyDialog v-model="batchModifyDialogVisible" @success="handleDialogSuccess" />
 
     <SelectModifyDialog
       v-model="selectModifyDialogVisible"
@@ -259,9 +246,11 @@ const currentHostKey = ref('')
 // 选中的服务器逗号分隔字符串，格式: assests_id@@host_key@@username
 const selectedCommaIpStr = computed(() => {
   if (!selectedRows.value.length) return ''
-  return selectedRows.value.map(row => {
-    return `${row.assests_id || row.id}@@${row.host_key}@@${row.username}`
-  }).join(',')
+  return selectedRows.value
+    .map(row => {
+      return `${row.assests_id || row.id}@@${row.host_key}@@${row.username}`
+    })
+    .join(',')
 })
 
 // 过滤后的表格数据

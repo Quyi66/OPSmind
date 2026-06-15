@@ -4,12 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input
-            v-model="filters.keyword"
-            placeholder="搜索"
-            clearable
-            style="width: 200px"
-          >
+          <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 200px">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -30,8 +25,15 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -45,9 +47,7 @@
         style="width: 100%"
       >
         <el-table-column prop="type" label="类型" width="100" show-overflow-tooltip>
-          <template #default>
-            密码策略
-          </template>
+          <template #default>密码策略</template>
         </el-table-column>
         <el-table-column prop="param_name" label="名称" width="120" show-overflow-tooltip>
           <template #default="{ row }">
@@ -66,9 +66,7 @@
         </el-table-column>
         <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" text type="primary" @click="handleEdit(row)">
-              编辑
-            </el-button>
+            <el-button size="small" text type="primary" @click="handleEdit(row)">编辑</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -101,25 +99,15 @@
           <el-input :value="getParamNameText(editForm.param_name)" disabled />
         </el-form-item>
         <el-form-item label="参数值">
-          <el-input
-            v-model="editForm.expression"
-            type="textarea"
-            :rows="3"
-          />
+          <el-input v-model="editForm.expression" type="textarea" :rows="3" />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="editForm.description"
-            type="textarea"
-            :rows="3"
-          />
+          <el-input v-model="editForm.description" type="textarea" :rows="3" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">
-          保存
-        </el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
   </div>

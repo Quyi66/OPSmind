@@ -68,6 +68,14 @@
         <i class="fa fa-chevron-circle-right" />
         安装选定的补丁 ({{ selectedPatches.length }})
       </el-button>
+      <el-button
+        size="small"
+        :disabled="patchTableData.length === 0"
+        @click="handleToggleAllSelection"
+      >
+        <i :class="`fa fa-${isAllSelected ? 'times' : 'check-double'}`" />
+        {{ isAllSelected ? '取消全选' : '一键全选' }}
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -81,13 +89,14 @@
       </el-button>
     </div>
 
-    <!-- 表格 -->
     <el-table
+      ref="patchTableRef"
       v-loading="patchLoading"
       :data="patchTableData"
       size="small"
       max-height="calc(100vh - 385px)"
-      @selection-change="handleSelectionChange"
+      @select="handleTableSelect"
+      @select-all="handleTableSelect"
     >
       <el-table-column type="selection" width="55" />
       <el-table-column prop="patch_id" label="补丁编号" width="180">
@@ -126,51 +135,13 @@
       </el-table-column>
       <el-table-column prop="related_vuls" label="关联CVE" min-width="180">
         <template #default="{ row }">
-          <div class="cve-tags" v-if="row.related_vuls">
-            <a
-              v-for="(cve, idx) in getCVEList(row.related_vuls).slice(0, 3)"
-              :key="idx"
-              :href="getCveUrl(cve, osDistro)"
-              target="_blank"
-              class="cve-link"
-              @click.stop
-            >
-              {{ cve }}
-            </a>
-            <button
-              v-if="getCVEList(row.related_vuls).length > 3"
-              type="button"
-              class="cve-more"
-              @click="handleShowAllCves(row)"
-            >
-              +{{ getCVEList(row.related_vuls).length - 3 }}
-            </button>
-          </div>
-          <span v-else>-</span>
+          <CveLinkList
+            :cves="row.related_vuls"
+            :url-resolver="cve => getCveUrl(cve, osDistro)"
+          />
         </template>
       </el-table-column>
     </el-table>
-
-    <!-- 关联CVE 列表对话框 -->
-    <el-dialog v-model="cveDialogVisible" title="关联CVE" width="520px" destroy-on-close>
-      <div class="cve-dialog">
-        <template v-if="cveDialogList.length">
-          <a
-            v-for="(cve, idx) in cveDialogList"
-            :key="idx"
-            :href="getCveUrl(cve, cveDialogOsDistro)"
-            target="_blank"
-            class="cve-dialog-item"
-          >
-            {{ cve }}
-          </a>
-        </template>
-        <span v-else>-</span>
-      </div>
-      <template #footer>
-        <el-button @click="cveDialogVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
 
     <!-- 分页 -->
     <div class="ops-pagination-wrapper">
@@ -194,12 +165,13 @@ import { ref, toRef, onMounted, watch } from 'vue'
 import {
   formatDate,
   formatPackages,
-  getCVEList,
   getCveUrl,
   getSeverityType
 } from '../../../composables/useFormatters'
 import { usePatchList } from '../../../composables/usePatchList'
+import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import { Refresh, Search } from '@element-plus/icons-vue'
+import CveLinkList from '../../common/CveLinkList.vue'
 
 const props = defineProps({
   hostId: {
@@ -217,18 +189,12 @@ const props = defineProps({
   defaultSeverities: {
     type: Array,
     default: () => ['Critical', 'Important', 'Moderate', 'Low']
+  },
+  defaultKeyword: {
+    type: String,
+    default: ''
   }
 })
-
-const cveDialogVisible = ref(false)
-const cveDialogList = ref([])
-const cveDialogOsDistro = ref('')
-
-function handleShowAllCves(row) {
-  cveDialogList.value = getCVEList(row.related_vuls)
-  cveDialogOsDistro.value = props.osDistro
-  cveDialogVisible.value = true
-}
 
 const emit = defineEmits(['patch-click', 'fix-patches'])
 
@@ -236,27 +202,68 @@ const emit = defineEmits(['patch-click', 'fix-patches'])
 const {
   patchLoading,
   patchTableData,
+  patchFilteredData,
   selectedPatches,
   selectedSeverities,
   patchKeyword,
   patchPagination,
-  loadPatchList,
-  handleFilterChange,
-  handlePatchKeywordChange,
-  handleSelectionChange,
-  handlePageChange,
-  handleSizeChange
+  applyClientPaging,
+  loadPatchList: originalLoadPatchList,
+  handleFilterChange: originalHandleFilterChange,
+  handlePatchKeywordChange: originalHandlePatchKeywordChange,
+  handlePageChange: originalHandlePageChange,
+  handleSizeChange: originalHandleSizeChange
 } = usePatchList({
   hostId: toRef(props, 'hostId'),
   hostKey: toRef(props, 'hostKey')
 })
 
+const patchTableRef = ref(null)
+
+// 全选逻辑
+const {
+  allSelected,
+  isAllSelected,
+  handleToggleAllSelection,
+  handleTableSelect,
+  resetAllSelected
+} = useTableSelectAll(patchTableRef, {
+  tableData: patchTableData,
+  filteredData: patchFilteredData,
+  selectedItems: selectedPatches,
+  matchFn: (f, row) => f.patch_id === row.patch_id
+})
+
+function handlePageChange(page) {
+  originalHandlePageChange(page)
+}
+
+function handleSizeChange(size) {
+  originalHandleSizeChange(size)
+}
+
+function handleFilterChange() {
+  resetAllSelected()
+  originalHandleFilterChange()
+}
+
+function handlePatchKeywordChange() {
+  resetAllSelected()
+  originalHandlePatchKeywordChange()
+}
+
+async function loadPatchList() {
+  resetAllSelected()
+  await originalLoadPatchList()
+}
+
 const fallbackSeverities = ['Critical', 'Important', 'Moderate', 'Low']
 
 function applyDefaultSeverities() {
-  const nextSeverities = Array.isArray(props.defaultSeverities) && props.defaultSeverities.length > 0
-    ? [...props.defaultSeverities]
-    : [...fallbackSeverities]
+  const nextSeverities =
+    Array.isArray(props.defaultSeverities) && props.defaultSeverities.length > 0
+      ? [...props.defaultSeverities]
+      : [...fallbackSeverities]
 
   selectedSeverities.value = nextSeverities
 }
@@ -293,6 +300,9 @@ function getSeverityLabel(severity) {
 
 onMounted(() => {
   applyDefaultSeverities()
+  if (props.defaultKeyword) {
+    patchKeyword.value = props.defaultKeyword
+  }
   loadPatchList()
 })
 
@@ -303,14 +313,24 @@ watch(
   }
 )
 
+watch(
+  () => props.defaultKeyword,
+  newVal => {
+    patchKeyword.value = newVal || ''
+    patchPagination.page = 1
+    applyClientPaging()
+  }
+)
+
 // 修复补丁
 function handleFixPatches() {
   emit('fix-patches', selectedPatches.value)
 }
 
-// 暴露加载方法给父组件
+// 暴露加载方法和变量给父组件
 defineExpose({
-  loadPatchList
+  loadPatchList,
+  patchKeyword
 })
 </script>
 
@@ -327,65 +347,6 @@ defineExpose({
   &:hover {
     color: #66b1ff;
     text-decoration: underline;
-  }
-}
-
-.cve-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-
-  .cve-link {
-    display: inline-block;
-    padding: 2px 6px;
-    background: #6c757d;
-    color: #fff;
-    border-radius: 4px;
-    font-size: 11px;
-    text-decoration: none;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #545b62;
-    }
-  }
-
-  .cve-more {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 6px;
-    background: #e9ecef;
-    color: #6c757d;
-    border-radius: 4px;
-    font-size: 11px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #dfe3e6;
-    }
-  }
-}
-
-.cve-dialog {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.cve-dialog-item {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #6c757d;
-  color: #fff;
-  border-radius: 4px;
-  font-size: 13px;
-  text-decoration: none;
-
-  &:hover {
-    background: #5a6268;
   }
 }
 

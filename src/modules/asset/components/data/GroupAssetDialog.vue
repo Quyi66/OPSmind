@@ -162,8 +162,8 @@ const loadAssetList = async () => {
     assetList.value = data?.records || []
     pagination.value.total = data?.total || 0
   } catch (error) {
-    console.error('加载资产列表失败:', error)
-    ElMessage.error('加载资产列表失败')
+    console.error('加载设备清单失败:', error)
+    ElMessage.error('加载设备清单失败')
   } finally {
     loading.value = false
   }
@@ -195,7 +195,7 @@ const handleRemoveAsset = () => {
         loadAssetList()
       } catch (error) {
         console.error('移除失败:', error)
-        ElMessage.error('移除失败: ' + (error.response?.data?.message || error.message))
+        ElMessage.error(`移除失败: ${error.response?.data?.message || error.message}`)
       }
     })
     .catch(() => {})

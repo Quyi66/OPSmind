@@ -1,11 +1,5 @@
 <template>
-  <el-dialog
-    v-model="visibleModel"
-    title="补丁详情"
-    width="1080px"
-    destroy-on-close
-    append-to-body
-  >
+  <el-dialog v-model="visibleModel" title="补丁详情" width="1080px" destroy-on-close append-to-body>
     <div class="win-patch-yum-detail-dialog">
       <el-descriptions :column="3" border>
         <el-descriptions-item label="补丁 ID">
@@ -17,7 +11,11 @@
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="严重等级">
-          <el-tag size="small" effect="plain" :type="getSeverityTagType(pickValue(currentPatch, ['severity'], ''))">
+          <el-tag
+            size="small"
+            effect="plain"
+            :type="getSeverityTagType(pickValue(currentPatch, ['severity'], ''))"
+          >
             {{ getSeverityLabel(pickValue(currentPatch, ['severity'], '-')) }}
           </el-tag>
         </el-descriptions-item>
@@ -48,7 +46,11 @@
         <div class="win-patch-yum-detail-dialog__section-title">
           {{ affectedHosts.length ? `影响主机列表（${affectedHosts.length} 台）` : '影响主机列表' }}
         </div>
-        <el-empty v-if="!affectedHosts.length" description="当前未返回影响主机明细" :image-size="72" />
+        <el-empty
+          v-if="!affectedHosts.length"
+          description="当前未返回影响主机明细"
+          :image-size="72"
+        />
         <div v-else class="win-patch-yum-detail-dialog__host-list">
           <el-tag
             v-for="host in affectedHosts"
@@ -63,9 +65,15 @@
 
       <div class="win-patch-yum-detail-dialog__section">
         <div class="win-patch-yum-detail-dialog__section-title">
-          {{ failedPackages.length ? `不满足包明细（${failedPackages.length} 项）` : '不满足包明细' }}
+          {{
+            failedPackages.length ? `不满足包明细（${failedPackages.length} 项）` : '不满足包明细'
+          }}
         </div>
-        <el-empty v-if="!failedPackages.length" description="该补丁当前没有不满足包" :image-size="72" />
+        <el-empty
+          v-if="!failedPackages.length"
+          description="该补丁当前没有不满足包"
+          :image-size="72"
+        />
         <div v-else class="ops-table-wrapper">
           <el-table :data="failedPackages" size="small" border max-height="calc(100vh - 520px)">
             <el-table-column label="包名" min-width="160" show-overflow-tooltip>

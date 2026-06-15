@@ -1,204 +1,204 @@
 <template>
-  <div class="script-file-list" :class="{ 'repo-stage': repoType === 'stage' }">
-    <!-- 面包屑导航和工具栏 -->
-    <div class="toolbar">
-      <!-- 面包屑导航 -->
-      <ol class="breadcrumb">
-        <li
-          v-for="(crumb, index) in breadcrumbs"
-          :key="index"
-          class="breadcrumb-item"
-          :class="{ active: crumb.path === currentDir }"
-        >
-          <a v-if="crumb.path !== currentDir" class="dir-link" @click="goDir(crumb.path)">
-            {{ crumb.name || '~' }}
-          </a>
-          <span v-else>{{ crumb.name || '~' }}</span>
-        </li>
-      </ol>
+  <div class="script-file-list" :class="[`repo-${repoType}`]">
+    <ol class="breadcrumb">
+      <li
+        v-for="(crumb, index) in breadcrumbs"
+        :key="index"
+        class="breadcrumb-item"
+        :class="{ active: crumb.path === currentDir }"
+      >
+        <a v-if="crumb.path !== currentDir" class="dir-link" @click="goDir(crumb.path)">
+          {{ crumb.name || '~' }}
+        </a>
+        <span v-else>{{ crumb.name || '~' }}</span>
+      </li>
+    </ol>
 
-      <div class="toolbar-actions">
-        <!-- ========== 以下是 git/staticfs 类型的工具栏 ========== -->
+    <section class="workspace-toolbar">
+      <div class="workspace-toolbar__groups">
         <template v-if="repoType !== 'stage'">
-          <!-- 批量操作按钮组 (git 和 staticfs 都有) -->
-          <div class="btn-group">
-            <el-button :disabled="!hasSelection" title="剪切已选择文件夹和文件" @click="handleCut">
-              <i class="fa fa-fw fa-cut" />
-              <span v-if="clipboard.length" class="badge bg-primary">{{ clipboard.length }}</span>
-            </el-button>
-            <el-button
-              :disabled="!canPaste"
-              title="粘贴已剪切文件夹和文件到当前目录下"
-              @click="handlePaste"
-            >
-              <i class="fa fa-fw fa-paste" />
-            </el-button>
-            <el-button
-              :disabled="!hasSelection"
-              title="删除已选择文件夹和文件"
-              @click="handleDelete"
-            >
-              <i class="fa fa-fw fa-trash-alt" />
-            </el-button>
-            <el-button
-              :disabled="!hasSelection"
-              title="下载已选择文件和文件夹"
-              @click="handleDownload"
-            >
-              <i class="fa fa-download" />
-            </el-button>
-          </div>
-
-          <!-- 停用/启用按钮（仅git） -->
-          <div v-if="repoType === 'git'" class="btn-group">
-            <el-button
-              :disabled="!hasSelection"
-              title="停用或启用已选择文件夹和文件"
-              @click="handleChangeStatus"
-            >
-              <i class="fa fa-fw fa-stop-circle" />
-            </el-button>
-          </div>
-
-          <!-- 修复工具按钮 -->
-          <div class="btn-group">
-            <el-button title="修复" @click="handleRepair">
-              <i class="fa fa-tools" />
-            </el-button>
-          </div>
-
-          <!-- 刷新按钮 -->
-          <div class="btn-group">
-            <el-button title="刷新当前列表" @click="refresh">
-              <i class="fa fa-sync-alt" />
-            </el-button>
-          </div>
-
-          <!-- 内置应用脚本（仅git） -->
-          <div v-if="repoType === 'git'" class="btn-group">
-            <el-button title="内置应用脚本" @click="goBaseRepo">
-              <i class="fa fa-scroll" />
-            </el-button>
-          </div>
-
-          <!-- 新增操作按钮组 -->
-          <div class="btn-group">
-            <el-button title="在当前文件夹下新建子文件夹" @click="handleAddFolder">
+          <div class="action-group action-group--primary">
+            <el-button type="primary" @click="handleAddFolder">
               <i class="fa fa-fw fa-folder-plus" />
               文件夹
             </el-button>
-            <el-button
-              v-if="repoType === 'git'"
-              title="在当前文件夹下新建子文件"
-              @click="scriptDialogVisible = true"
-            >
+            <el-button v-if="repoType === 'git'" @click="scriptDialogVisible = true">
               <i class="fa fa-file-code" />
               脚本
             </el-button>
-            <el-button title="上传文件到当前文件夹" @click="uploadDialogVisible = true">
+            <el-button @click="uploadDialogVisible = true">
               <i class="fa fa-fw fa-file-upload" />
               文件
             </el-button>
-            <el-button
-              v-if="repoType === 'git'"
-              title="从远程服务器同步文件"
-              @click="syncDialogVisible = true"
-            >
+            <el-button v-if="repoType === 'git'" @click="syncDialogVisible = true">
               <i class="fa fa-cloud" />
               同步文件
             </el-button>
           </div>
 
-          <!-- Git操作按钮组（仅git） -->
-          <div v-if="repoType === 'git'" class="btn-group git-actions">
-            <el-button title="从远程Git服务器拉取文件到本地目录" @click="handleGitPull">
-              <i class="fa fa-cloud-download-alt" />
+          <div class="action-group">
+            <el-button :disabled="!hasSelection" @click="handleDelete">
+              <i class="fa fa-fw fa-trash-alt" />
+              删除
+            </el-button>
+            <el-button :disabled="!hasSelection" @click="handleDownload">
+              <i class="fa fa-download" />
+              下载
+            </el-button>
+          </div>
+
+          <div v-if="repoType === 'git'" class="action-group">
+            <el-button @click="goBaseRepo">
+              <i class="fa fa-fw fa-scroll" />
+              内置应用脚本
+            </el-button>
+            <el-button @click="handleGitPull">
+              <i class="fa fa-cloud-download-alt fa-fw" />
               拉取
             </el-button>
-            <el-button title="将本地目录文件同步到远程Git服务器" @click="handleGitPush">
-              <i class="fa fa-cloud-upload-alt" />
+            <el-button @click="handleGitPush">
+              <i class="fa fa-cloud-upload-alt fa-fw" />
               推送
             </el-button>
-            <el-button title="Git库列表" @click="handleGitList">
-              <i class="fa fa-list-alt" />
-              Git库
+          </div>
+
+          <el-dropdown class="utility-menu" trigger="click" @command="handleUtilityCommand">
+            <el-button>
+              <i class="fa fa-sliders-h" />
+              更多操作
+              <i class="fa fa-chevron-down action-caret" />
             </el-button>
-          </div>
-
-          <!-- 搜索框 -->
-          <div class="search-box">
-            <input
-              v-model="searchText"
-              type="search"
-              class="form-control"
-              placeholder="请输入搜索内容"
-              @keyup.enter="handleSearch"
-            />
-          </div>
-
-          <!-- 文件状态帮助图标（仅git） -->
-          <el-popover v-if="repoType === 'git'" placement="bottom-end" :width="320" trigger="click">
-            <template #reference>
-              <el-button class="info-btn" title="文件状态">
-                <i class="fa fa-info" />
-              </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="cut" :disabled="!hasSelection">
+                  <i class="fa fa-cut fa-fw" />
+                  剪切
+                </el-dropdown-item>
+                <el-dropdown-item command="paste" :disabled="!canPaste">
+                  <i class="fa fa-paste fa-fw" />
+                  粘贴
+                </el-dropdown-item>
+                <el-dropdown-item
+                  v-if="repoType === 'git'"
+                  command="changeStatus"
+                  :disabled="!hasSelection"
+                >
+                  <i class="fa fa-stop-circle fa-fw" />
+                  停用/启用
+                </el-dropdown-item>
+                <el-dropdown-item divided command="refresh">
+                  <i class="fa fa-sync-alt fa-fw" />
+                  刷新当前列表
+                </el-dropdown-item>
+                <el-dropdown-item command="repair">
+                  <i class="fa fa-tools fa-fw" />
+                  修复
+                </el-dropdown-item>
+                <el-dropdown-item v-if="repoType === 'git'" command="gitList">
+                  <i class="fa fa-list-alt fa-fw" />
+                  Git库
+                </el-dropdown-item>
+              </el-dropdown-menu>
             </template>
-            <div class="file-status-help">
-              <dl>
-                <dt><span class="status-indicator stage-exist">filename</span></dt>
-                <dd>有新版本，等待审核</dd>
-                <dt><span class="status-indicator stage-rejected">filename</span></dt>
-                <dd>新版本被拒绝</dd>
-                <dt><span class="status-indicator master-disabled">filename</span></dt>
-                <dd>文件被停用</dd>
-                <dt>
-                  <span class="status-indicator missing-file">
-                    filename
-                    <i class="fa fa-exclamation-triangle" />
-                  </span>
-                </dt>
-                <dd>找不到文件</dd>
-                <dt>
-                  <span class="status-indicator missing-rec">
-                    filename
-                    <i class="fa fa-exclamation-triangle" />
-                  </span>
-                </dt>
-                <dd>找不到记录</dd>
-              </dl>
-            </div>
-          </el-popover>
+          </el-dropdown>
         </template>
 
-        <!-- ========== 以下是 stage 类型（审核页面）的工具栏 ========== -->
         <template v-else>
-          <!-- 审核按钮 -->
-          <el-button
-            type="primary"
-            :disabled="!hasSelection"
-            title="审核已选择的文件"
-            @click="fileApproveDialogVisible = true"
-            size="small"
-          >
-            <!-- <i class="fa fa-fw fa-comment-alt-edit" />  -->
-            审核
-          </el-button>
-
-          <!-- 审批历史按钮 -->
-          <el-button title="查看审批历史" @click="approvalHistoryDialogVisible = true" size="small">
-            <!-- <i class="fa fa-history" />  -->
-            审批历史
-          </el-button>
+          <div class="action-group action-group--primary">
+            <el-button
+              type="primary"
+              :disabled="!hasSelection"
+              title="审核已选择的文件"
+              @click="fileApproveDialogVisible = true"
+            >
+              审核已选文件
+            </el-button>
+            <el-button @click="approvalHistoryDialogVisible = true">审批历史</el-button>
+          </div>
         </template>
+      </div>
+
+      <div class="workspace-toolbar__search">
+        <el-input
+          v-model="searchText"
+          clearable
+          :placeholder="searchPlaceholder"
+          @keyup.enter="handleSearch"
+        >
+          <template #prefix>
+            <i class="fa fa-search" />
+          </template>
+        </el-input>
+
+        <el-popover v-if="repoType === 'git'" placement="bottom-end" :width="320" trigger="click">
+          <template #reference>
+            <el-button class="info-btn" title="文件状态">
+              <i class="fa fa-info" />
+            </el-button>
+          </template>
+          <div class="file-status-help">
+            <dl>
+              <dt><span class="status-indicator stage-exist">filename</span></dt>
+              <dd>有新版本，等待审核</dd>
+              <dt><span class="status-indicator stage-rejected">filename</span></dt>
+              <dd>新版本被拒绝</dd>
+              <dt><span class="status-indicator master-disabled">filename</span></dt>
+              <dd>文件被停用</dd>
+              <dt>
+                <span class="status-indicator missing-file">
+                  filename
+                  <i class="fa fa-exclamation-triangle" />
+                </span>
+              </dt>
+              <dd>找不到文件</dd>
+              <dt>
+                <span class="status-indicator missing-rec">
+                  filename
+                  <i class="fa fa-exclamation-triangle" />
+                </span>
+              </dt>
+              <dd>找不到记录</dd>
+            </dl>
+          </div>
+        </el-popover>
+      </div>
+    </section>
+
+    <div v-if="showSelectionBanner" class="selection-banner">
+      <div class="selection-banner__content">
+        <strong>{{ selectionBannerTitle }}</strong>
+        <span>{{ selectionBannerDescription }}</span>
+      </div>
+      <div class="selection-banner__chips">
+        <span class="selection-banner__chip">已选 {{ selectedFiles.length }} 项</span>
+        <span v-if="clipboard.length" class="selection-banner__chip">
+          剪贴板 {{ clipboard.length }} 项
+        </span>
       </div>
     </div>
 
-    <!-- 文件列表 -->
-    <div class="file-table-container">
+    <div
+      class="file-table-container"
+      :class="{ 'is-empty': !loading && filteredFiles.length === 0 }"
+    >
+      <template v-if="!loading && filteredFiles.length === 0">
+        <div class="empty-state">
+          <i :class="repoMeta.emptyIcon" />
+          <h3>{{ emptyStateTitle }}</h3>
+          <p>{{ emptyStateDescription }}</p>
+          <div v-if="repoType !== 'stage'" class="empty-state__actions">
+            <el-button type="primary" @click="handleAddFolder">新建文件夹</el-button>
+            <el-button @click="uploadDialogVisible = true">上传文件</el-button>
+          </div>
+        </div>
+      </template>
+
       <el-table
+        v-else
         v-loading="loading"
         :data="filteredFiles"
         height="100%"
+        row-key="_key"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="40" :selectable="isSelectable" />
@@ -303,26 +303,19 @@
         <el-table-column
           v-if="repoType === 'git' || repoType === 'stage'"
           label="状态"
-          width="80"
+          width="110"
           align="left"
         >
           <template #default="{ row }">
-            <span
-              v-if="row._statusCss && !row.directory && !row._isParentDir"
-              class="status-dot"
-              :class="row._statusCss"
-              :title="row._statusText"
-            />
+            <div v-if="row._statusCss && !row.directory && !row._isParentDir" class="status-cell">
+              <span class="status-dot" :class="row._statusCss" />
+              <span>{{ row._statusText || '未知' }}</span>
+            </div>
+            <span v-else>-</span>
           </template>
         </el-table-column>
       </el-table>
     </div>
-
-    <!-- 空状态 -->
-    <!-- <div v-if="!loading && filteredFiles.length === 0" class="empty-state">
-      <i class="fa fa-inbox fa-5x" />
-      <p>没有文件</p>
-    </div> -->
 
     <!-- 弹窗组件 -->
     <AddScriptDialog
@@ -482,6 +475,64 @@ const historyFile = ref(null)
 
 const currentRepo = ref(props.repo)
 
+const repoMeta = computed(() => {
+  const iconMap = {
+    git: 'fa fa-folder-open',
+    staticfs: 'fa fa-box-open',
+    stage: 'fa fa-clipboard-check'
+  }
+
+  return {
+    emptyIcon: iconMap[props.repoType] || iconMap.git
+  }
+})
+
+const searchPlaceholder = computed(() => {
+  if (props.repoType === 'stage') return '搜索待审核文件或说明'
+  return '搜索名称或说明'
+})
+
+const showSelectionBanner = computed(
+  () => selectedFiles.value.length > 0 || clipboard.value.length > 0
+)
+
+const selectionBannerTitle = computed(() => {
+  if (props.repoType === 'stage') {
+    return selectedFiles.value.length > 0 ? '已选审核文件' : '当前有待处理条目'
+  }
+  return selectedFiles.value.length > 0 ? '已选文件条目' : '当前有待粘贴内容'
+})
+
+const selectionBannerDescription = computed(() => {
+  if (props.repoType === 'stage') {
+    return selectedFiles.value.length > 0
+      ? `已选择 ${selectedFiles.value.length} 个文件，可直接发起审核。`
+      : '当前没有选中文件，但审批历史仍可随时查看。'
+  }
+
+  if (selectedFiles.value.length > 0 && clipboard.value.length > 0) {
+    return `已选择 ${selectedFiles.value.length} 项，剪贴板中还有 ${clipboard.value.length} 项待粘贴。`
+  }
+
+  if (selectedFiles.value.length > 0) {
+    return `已选择 ${selectedFiles.value.length} 项，可继续执行剪切、删除、下载或状态操作。`
+  }
+
+  return `剪贴板中有 ${clipboard.value.length} 项，可直接粘贴到当前目录。`
+})
+
+const emptyStateTitle = computed(() => {
+  if (searchText.value) return '没有找到匹配内容'
+  if (props.repoType === 'stage') return '当前没有待审核文件'
+  return currentDir.value ? '当前目录为空' : '当前仓库暂无文件'
+})
+
+const emptyStateDescription = computed(() => {
+  if (searchText.value) return '可以尝试调整关键词，或切换到其他目录继续查看。'
+  if (props.repoType === 'stage') return '待有新版本提交后，这里会出现可审核的文件。'
+  return '可以在当前目录新建文件夹、上传文件，或同步远程内容到这里。'
+})
+
 async function resolveRepoId() {
   if (props.repo !== '$tnt') {
     currentRepo.value = props.repo
@@ -504,17 +555,19 @@ async function resolveRepoId() {
 
 watch(() => props.repo, resolveRepoId, { immediate: true })
 
-// 面包屑
 const breadcrumbs = computed(() => {
   const crumbs = [{ name: '~', path: '' }]
-  if (currentDir.value) {
-    const dirs = currentDir.value.split('/')
-    let path = ''
-    dirs.forEach(dir => {
-      path = path ? `${path}/${dir}` : dir
-      crumbs.push({ name: dir, path })
-    })
-  }
+
+  if (!currentDir.value) return crumbs
+
+  const dirs = currentDir.value.split('/')
+  let path = ''
+
+  dirs.forEach(dir => {
+    path = path ? `${path}/${dir}` : dir
+    crumbs.push({ name: dir, path })
+  })
+
   return crumbs
 })
 
@@ -613,6 +666,38 @@ async function loadFiles() {
 function refresh() {
   loadFiles()
   ElMessage.success('刷新成功')
+}
+
+function handleUtilityCommand(command) {
+  switch (command) {
+    case 'cut':
+      handleCut()
+      break
+    case 'paste':
+      handlePaste()
+      break
+    case 'changeStatus':
+      handleChangeStatus()
+      break
+    case 'refresh':
+      refresh()
+      break
+    case 'repair':
+      handleRepair()
+      break
+    case 'goBaseRepo':
+      goBaseRepo()
+      break
+    case 'gitPull':
+      handleGitPull()
+      break
+    case 'gitPush':
+      handleGitPush()
+      break
+    case 'gitList':
+      handleGitList()
+      break
+  }
 }
 
 // 进入目录
@@ -882,39 +967,34 @@ defineExpose({
 
 <style scoped lang="scss">
 .script-file-list {
+  --script-list-secondary-text: var(--el-text-color-secondary);
+  --script-list-muted-text: var(--el-text-color-placeholder);
+  --script-list-selection-bg: color-mix(in srgb, var(--el-color-primary-light-9) 82%, white);
+  --script-list-selection-chip-bg: rgba(255, 255, 255, 0.92);
+  --script-list-selection-chip-border: var(--el-color-primary-light-7);
+  --script-list-empty-text: #94a3b8;
+  --script-list-action-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
   padding: 12px;
+  gap: 12px;
   background: var(--el-bg-color);
 }
 
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  min-height: 32px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-
-/* 面包屑样式 */
 .breadcrumb {
   display: flex;
   flex-wrap: nowrap;
-  padding: 0;
+  padding: 10px 12px;
   margin: 0;
   list-style: none;
-  background: transparent;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 14px;
+  background: var(--el-bg-color);
   font-size: 13px;
   white-space: nowrap;
-  flex-shrink: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-x: auto;
 }
 
 .breadcrumb-item {
@@ -925,49 +1005,67 @@ defineExpose({
 
 .breadcrumb-item + .breadcrumb-item::before {
   content: '/';
-  padding: 0 4px;
-  color: #6c757d;
+  padding: 0 6px;
+  color: var(--el-text-color-secondary);
 }
 
 .breadcrumb-item.active {
-  color: #6c757d;
+  color: var(--el-text-color-secondary);
 }
 
-.toolbar-actions {
+.workspace-toolbar {
   display: flex;
-  gap: 4px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 16px;
+  background: var(--el-bg-color);
+}
+
+.workspace-toolbar__groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   align-items: center;
-  flex-shrink: 0;
+}
+
+.workspace-toolbar__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: min(320px, 100%);
+}
+
+.workspace-toolbar__search :deep(.el-input) {
+  min-width: 240px;
 }
 
 /* 按钮组样式 */
-.btn-group {
+.action-group {
   display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.btn-group :deep(.el-button) {
-  border-radius: 0;
-  margin-left: -1px;
-  padding: 6px 8px;
+.action-group :deep(.el-button) {
+  min-height: 34px;
+  padding: 0 12px;
   font-size: 12px;
 }
 
-.btn-group :deep(.el-button:first-child) {
-  border-radius: 3px 0 0 3px;
-  margin-left: 0;
+.action-group--primary :deep(.el-button) {
+  box-shadow: var(--script-list-action-shadow);
 }
 
-.btn-group :deep(.el-button:last-child) {
-  border-radius: 0 3px 3px 0;
+.utility-menu :deep(.el-button) {
+  min-height: 34px;
 }
 
-.btn-group :deep(.el-button:only-child) {
-  border-radius: 3px;
-}
-
-.git-actions :deep(.el-button) {
-  font-weight: 500;
-  font-size: 12px;
+.action-caret {
+  margin-left: 8px;
+  font-size: 10px;
 }
 
 .dir-link,
@@ -982,24 +1080,7 @@ defineExpose({
   text-decoration: underline;
 }
 
-.search-box .form-control {
-  padding: 4px 8px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 3px;
-  outline: none;
-  font-size: 12px;
-  width: 200px;
-  height: 28px;
-  background-color: var(--el-bg-color);
-  color: var(--el-text-color-primary);
-}
-
-.search-box .form-control:focus {
-  border-color: var(--el-color-primary);
-}
-
 .info-btn {
-  padding: 6px 8px;
   padding: 8px 12px;
 }
 
@@ -1033,7 +1114,7 @@ defineExpose({
 
 .file-status-help dd {
   margin: 4px 0 0 0;
-  color: #6c757d;
+  color: var(--script-list-secondary-text);
   font-size: 13px;
 }
 
@@ -1058,7 +1139,7 @@ defineExpose({
 
 .status-indicator.master-disabled {
   background: var(--el-bg-color-page);
-  color: #999;
+  color: var(--script-list-muted-text);
   text-decoration: line-through;
 }
 
@@ -1071,6 +1152,15 @@ defineExpose({
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 16px;
+  background: var(--el-bg-color);
+}
+
+.file-table-container.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .file-name-cell {
@@ -1125,12 +1215,35 @@ defineExpose({
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px;
-  color: #94a3b8;
+  gap: 10px;
+  min-height: 360px;
+  padding: 40px 24px;
+  color: var(--script-list-empty-text);
+  text-align: center;
 }
 
 .empty-state i {
-  margin-bottom: 16px;
+  font-size: 38px;
+  margin-bottom: 4px;
+}
+
+.empty-state h3 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--el-text-color-primary);
+}
+
+.empty-state p {
+  margin: 0;
+  max-width: 420px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.empty-state__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 .status-dot {
@@ -1156,6 +1269,59 @@ defineExpose({
   background-color: #909399;
 }
 
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+}
+
+.selection-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--el-color-primary-light-7);
+  border-radius: 14px;
+  background: var(--script-list-selection-bg);
+}
+
+.selection-banner__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selection-banner__content strong {
+  font-size: 14px;
+  color: var(--el-text-color-primary);
+}
+
+.selection-banner__content span {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.selection-banner__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selection-banner__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--script-list-selection-chip-bg);
+  border: 1px solid var(--script-list-selection-chip-border);
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
 /* Stage 类型（审核页面）特殊样式 */
 .repo-stage {
   :deep(.el-table__header-wrapper) {
@@ -1171,9 +1337,58 @@ defineExpose({
       color: var(--el-text-color-regular) !important;
     }
   }
+}
 
-  .toolbar-actions {
-    justify-content: flex-end;
+@media (max-width: 1200px) {
+  .workspace-toolbar,
+  .selection-banner {
+    flex-direction: column;
+    align-items: stretch;
   }
+
+  .workspace-toolbar__search {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .workspace-toolbar__search :deep(.el-input) {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .selection-banner__chips {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .script-file-list {
+    padding: 10px;
+  }
+
+  .breadcrumb,
+  .workspace-toolbar,
+  .selection-banner {
+    padding: 12px;
+  }
+
+  .empty-state__actions {
+    flex-direction: column;
+  }
+}
+</style>
+
+<style lang="scss">
+html.dark .script-file-list {
+  --script-list-selection-bg: color-mix(
+    in srgb,
+    var(--el-color-primary) 14%,
+    rgba(15, 23, 42, 0.92)
+  );
+  --script-list-selection-chip-bg: rgba(15, 23, 42, 0.88);
+  --script-list-selection-chip-border: rgba(96, 165, 250, 0.3);
+  --script-list-empty-text: #94a3b8;
+  --script-list-muted-text: #94a3b8;
+  --script-list-action-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
 }
 </style>

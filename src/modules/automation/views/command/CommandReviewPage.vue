@@ -6,19 +6,15 @@
         <el-form-item label="关键词">
           <el-input
             v-model="searchKeyword"
-            placeholder="名称/命令"
-            style="width: 200px"
+            placeholder="搜索名称或待审核命令"
+            style="width: 240px"
             clearable
           />
         </el-form-item>
-        <!-- <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon> 搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon> 重置
-          </el-button>
-        </el-form-item> -->
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </el-form-item>
       </el-form>
     </div>
 
@@ -33,8 +29,15 @@
         <i class="fas fa-check"></i>
         批量审核
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -44,7 +47,7 @@
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="filteredCommands"
+        :data="pagedCommands"
         max-height="calc(100vh - 230px)"
         @selection-change="handleSelectionChange"
       >
@@ -53,7 +56,9 @@
         <el-table-column prop="name" label="名称" min-width="200" sortable>
           <template #default="{ row }">
             <div class="command-name-cell">
-              <span class="name">{{ row.name }}</span>
+              <el-button text type="primary" class="name-link" @click="handleApprove(row)">
+                {{ row.name }}
+              </el-button>
               <p v-if="row.description" class="description">{{ row.description }}</p>
             </div>
           </template>
@@ -77,14 +82,7 @@
 
         <el-table-column label="操作" width="80" fixed="right" align="left">
           <template #default="{ row }">
-            <el-button
-              text
-              type="primary"
-              size="small"
-              @click="handleApprove(row)"
-            >
-              审核
-            </el-button>
+            <el-button text type="primary" size="small" @click="handleApprove(row)">审核</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -116,10 +114,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
 import { findAllUnapprovedCommand } from '@/modules/automation/api/command'
+import { useReviewCountStore } from '@/stores/useReviewCountStore.js'
 import CommandApproveDialog from '../../components/command/dialogs/CommandApproveDialog.vue'
 
 // 状态
@@ -136,6 +135,7 @@ const approveDialogVisible = ref(false)
 const approveMode = ref('single')
 const currentCommand = ref(null)
 const selectedForApprove = ref([])
+const reviewStore = useReviewCountStore()
 
 // 过滤后的命令列表
 const filteredCommands = computed(() => {
@@ -143,20 +143,36 @@ const filteredCommands = computed(() => {
     return commands.value
   }
   const keyword = searchKeyword.value.toLowerCase()
-  return commands.value.filter(cmd =>
-    (cmd.name && cmd.name.toLowerCase().includes(keyword)) ||
-    (cmd.unapprovedCommand && cmd.unapprovedCommand.toLowerCase().includes(keyword))
+  return commands.value.filter(
+    cmd =>
+      (cmd.name && cmd.name.toLowerCase().includes(keyword)) ||
+      (cmd.unapprovedCommand && cmd.unapprovedCommand.toLowerCase().includes(keyword))
   )
+})
+
+const pagedCommands = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredCommands.value.slice(start, start + pageSize.value)
+})
+
+const paginationInfo = computed(() => {
+  const total = filteredCommands.value.length
+  if (total === 0) return '0 - 0 / 0'
+  const start = (currentPage.value - 1) * pageSize.value + 1
+  const end = Math.min(currentPage.value * pageSize.value, total)
+  return `${start} - ${end} / ${total}`
 })
 
 // 分页大小变化
 function handlePageSizeChange() {
-  // 当前简单实现
+  currentPage.value = 1
+  clearSelection()
 }
 
 // 页码变化
 function handlePageChange(page) {
   currentPage.value = page
+  clearSelection()
 }
 
 // 加载数据
@@ -164,7 +180,14 @@ async function loadData() {
   loading.value = true
   try {
     const response = await findAllUnapprovedCommand()
-    commands.value = response.data || response || []
+    const unapprovedCommands = Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response)
+        ? response
+        : []
+
+    commands.value = unapprovedCommands
+    reviewStore.commandCount = unapprovedCommands.length
   } catch (error) {
     console.error('加载待审核命令失败:', error)
     ElMessage.error('加载待审核命令失败')
@@ -176,6 +199,7 @@ async function loadData() {
 // 搜索
 function handleSearch() {
   currentPage.value = 1
+  clearSelection()
 }
 
 // 重置
@@ -183,11 +207,17 @@ function handleReset() {
   searchKeyword.value = ''
   currentPage.value = 1
   pageSize.value = 10
+  clearSelection()
 }
 
 // 选择变化
 function handleSelectionChange(selection) {
   selectedCommands.value = selection
+}
+
+function clearSelection() {
+  tableRef.value?.clearSelection()
+  selectedCommands.value = []
 }
 
 // 单个审核
@@ -212,28 +242,30 @@ function handleBatchApprove() {
 
 // 审核成功回调
 function handleApproveSuccess() {
+  clearSelection()
   loadData()
-  selectedCommands.value = []
 }
 
 // 格式化日期
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).replace(/\//g, '/')
+  return date
+    .toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+    .replace(/\//g, '/')
 }
 
 // 截断命令预览
 function truncateCommand(command) {
   if (!command) return ''
-  return command.length > 80 ? command.substring(0, 80) + '...' : command
+  return command.length > 80 ? `${command.substring(0, 80)}...` : command
 }
 
 // 刷新方法
@@ -246,6 +278,16 @@ onMounted(() => {
   loadData()
 })
 
+watch(
+  () => filteredCommands.value.length,
+  total => {
+    const maxPage = Math.max(1, Math.ceil(total / pageSize.value))
+    if (currentPage.value > maxPage) {
+      currentPage.value = maxPage
+    }
+  }
+)
+
 // 暴露方法
 defineExpose({
   refresh,
@@ -255,6 +297,11 @@ defineExpose({
 
 <style scoped lang="scss">
 .command-name-cell {
+  .name-link {
+    padding: 0;
+    font-weight: 500;
+  }
+
   .name {
     font-weight: 500;
     color: var(--el-text-color-primary);

@@ -32,22 +32,25 @@
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreateTeam">
-        <i class="fa fa-plus"></i> 创建团队
+        <i class="fa fa-plus"></i>
+        创建团队
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
 
     <!-- 团队列表表格 -->
     <div class="ops-table-wrapper" v-loading="loading">
-      <el-table
-        :data="filteredData"
-
-        style="width: 100%"
-        max-height="calc(100vh - 280px)"
-      >
+      <el-table :data="filteredData" style="width: 100%" max-height="calc(100vh - 280px)">
         <el-table-column prop="name" label="名称" min-width="150" />
         <el-table-column prop="code" label="编码" min-width="120">
           <template #default="{ row }">
@@ -71,9 +74,7 @@
         </el-table-column>
         <el-table-column label="操作" width="100" fixed="right" align="left">
           <template #default="{ row }">
-            <el-button size="small" text type="primary" @click="handleEdit(row)">
-              编辑
-            </el-button>
+            <el-button size="small" text type="primary" @click="handleEdit(row)">编辑</el-button>
             <el-button
               size="small"
               text
@@ -141,9 +142,9 @@ const filteredData = computed(() => {
 
   if (appliedFilters.keyword) {
     const keyword = appliedFilters.keyword.toLowerCase()
-    result = result.filter(item =>
-      item.name?.toLowerCase().includes(keyword) ||
-      item.code?.toLowerCase().includes(keyword)
+    result = result.filter(
+      item =>
+        item.name?.toLowerCase().includes(keyword) || item.code?.toLowerCase().includes(keyword)
     )
   }
 
@@ -222,11 +223,7 @@ async function handleDelete(row) {
   if (deletingTeamId.value) return
 
   try {
-    await ElMessageBox.confirm(
-      `确定要删除团队 "${row.name}" 吗？`,
-      '确认删除',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm(`确定要删除团队 "${row.name}" 吗？`, '确认删除', { type: 'warning' })
 
     deletingTeamId.value = row.id
     await teamApi.deleteTeam(row.id)
@@ -246,4 +243,3 @@ async function handleDelete(row) {
 <style scoped lang="scss">
 // 使用全局布局类，无需额外样式
 </style>
-

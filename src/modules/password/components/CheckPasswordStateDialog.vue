@@ -42,11 +42,14 @@ const emit = defineEmits(['update:modelValue', 'success'])
 const visible = ref(props.modelValue)
 const submitting = ref(false)
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-})
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+  }
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 

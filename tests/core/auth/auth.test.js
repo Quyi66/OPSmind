@@ -41,8 +41,8 @@ describe('Auth Service', () => {
     it('should restore state from localStorage', () => {
       const mockUser = { id: '1', login: 'test', role: 'user' }
       const mockToken = 'mock-token'
-      
-      localStorageMock.getItem.mockImplementation((key) => {
+
+      localStorageMock.getItem.mockImplementation(key => {
         if (key === 'opsmind_auth_token') return mockToken
         if (key === 'opsmind_user_info') return JSON.stringify(mockUser)
         return null
@@ -65,7 +65,7 @@ describe('Auth Service', () => {
           permissions: ['read', 'write']
         }
       }
-      
+
       apiService.post.mockResolvedValue(mockResponse)
 
       const result = await authService.login({
@@ -76,10 +76,7 @@ describe('Auth Service', () => {
       expect(result.success).toBe(true)
       expect(result.user).toEqual(mockResponse.data.user)
       expect(authService.isAuthenticated()).toBe(true)
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        'opsmind_auth_token',
-        'new-token'
-      )
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('opsmind_auth_token', 'new-token')
     })
 
     it('should handle login failure', async () => {
@@ -116,7 +113,7 @@ describe('Auth Service', () => {
 
     it('should grant admin all permissions', () => {
       authService.authState.user.role = 'admin'
-      
+
       expect(authService.hasPermission('any-permission')).toBe(true)
     })
 
@@ -127,7 +124,7 @@ describe('Auth Service', () => {
 
     it('should deny permissions when not authenticated', () => {
       authService.authState.isAuthenticated = false
-      
+
       expect(authService.hasPermission('read')).toBe(false)
       expect(authService.hasRole('user')).toBe(false)
     })
@@ -156,7 +153,7 @@ describe('Auth Service', () => {
     it('should logout on session timeout', async () => {
       authService.authState = {
         isAuthenticated: true,
-        lastActivity: Date.now() - (31 * 60 * 1000), // 31 minutes ago
+        lastActivity: Date.now() - 31 * 60 * 1000, // 31 minutes ago
         token: 'mock-token'
       }
 
@@ -171,7 +168,7 @@ describe('Auth Service', () => {
 
       authService.authState = {
         isAuthenticated: true,
-        lastActivity: Date.now() - (6 * 60 * 1000), // 6 minutes ago
+        lastActivity: Date.now() - 6 * 60 * 1000, // 6 minutes ago
         token: 'old-token'
       }
 

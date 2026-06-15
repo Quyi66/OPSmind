@@ -36,13 +36,19 @@ export const MENU_CONFIG = {
       code: 'automation',
       name: '自动化管理',
       icon: 'fas fa-robot',
-      description: '自动化作业、脚本、命令、rpm包安装和主机用户管理',
+      description: '自动化运维工具、脚本、命令执行和主机用户管理',
       children: [
         {
+          code: 'auto-workbench',
+          name: '工作台',
+          icon: 'fas fa-th-large',
+          description: '自动化待办与运行态总览'
+        },
+        {
           code: 'jao',
-          name: '作业中心',
+          name: '运维工具箱',
           icon: 'fas fa-tasks',
-          description: '自动化作业编排和调度管理'
+          description: '自动化运维工具编排和调度管理'
         },
         {
           code: 'gfs',
@@ -52,21 +58,33 @@ export const MENU_CONFIG = {
         },
         {
           code: 'cmd',
-          name: '命令中心',
+          name: '命令执行',
           icon: 'fas fa-terminal',
           description: '系统命令管理和执行'
         },
         {
-          code: 'users',
-          name: '主机用户',
-          icon: 'fas fa-users',
-          description: '主机用户账户和权限管理'
+          code: 'task-scheduler',
+          name: '定时任务',
+          icon: 'fas fa-clock',
+          description: '自动化定时任务调度管理'
         },
         {
-          code: 'rpm-install',
-          name: 'rpm包安装',
-          icon: 'fas fa-box-open',
-          description: '上传rpm包并分发到目标主机安装'
+          code: 'run-records',
+          name: '运行记录',
+          icon: 'fas fa-history',
+          description: '统一查看自动化任务运行记录和统计'
+        },
+        {
+          code: 'review-center',
+          name: '审批中心',
+          icon: 'fas fa-stamp',
+          description: '运维工具审批、命令审核与脚本审核的统一入口'
+        },
+        {
+          code: 'flow',
+          name: '流程中心',
+          icon: 'fas fa-project-diagram',
+          description: '流程设计与任务管理'
         }
       ]
     },
@@ -124,15 +142,15 @@ export const MENU_CONFIG = {
     },
     {
       code: 'flow-management',
-      name: '流程管理',
-      icon: 'fas fa-project-diagram',
-      description: '业务流程设计与审批管理',
+      name: '主机用户管理',
+      icon: 'fas fa-users',
+      description: '主机用户与权限管理',
       children: [
         {
-          code: 'flow',
-          name: '流程中心',
-          icon: 'fas fa-project-diagram',
-          description: '流程设计与任务管理'
+          code: 'users',
+          name: '主机用户管理',
+          icon: 'fas fa-users',
+          description: '主机用户与权限管理'
         }
       ]
     },

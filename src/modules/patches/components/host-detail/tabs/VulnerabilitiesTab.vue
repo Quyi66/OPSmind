@@ -18,7 +18,7 @@
       </el-checkbox-group>
     </div> -->
     <div class="ops-filter-bar" style="margin-bottom: 8px">
-      <el-form inline size="small">
+      <el-form inline size="small" @submit.prevent>
         <el-form-item label="关键词" label-width="60">
           <el-input
             v-model="vulKeyword"
@@ -66,6 +66,14 @@
         <i class="fa fa-tools" />
         修复选中的漏洞 ({{ selectedVuls.length }})
       </el-button>
+      <el-button
+        size="small"
+        :disabled="vulTableData.length === 0"
+        @click="handleToggleAllSelection"
+      >
+        <i :class="`fa fa-${isAllSelected ? 'times' : 'check-double'}`" />
+        {{ isAllSelected ? '取消全选' : '一键全选' }}
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -81,22 +89,20 @@
 
     <!-- 表格 -->
     <el-table
+      ref="vulTableRef"
       v-loading="vulLoading"
       :data="vulTableData"
       class="header-border-only-table"
       size="small"
       max-height="calc(100vh - 400px)"
-      @selection-change="handleVulSelectionChange"
+      @select="handleTableSelect"
+      @select-all="handleTableSelect"
       border
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="vul_id" label="CVE" width="120">
+      <el-table-column prop="vul_id" label="CVE" width="150">
         <template #default="{ row }">
-          <div class="cve-cell">
-            <a :href="getCveUrl(row.vul_id, osDistro)" target="_blank" class="cve-badge">
-              {{ row.vul_id }}
-            </a>
-          </div>
+          <CveLinkList :cves="[row.vul_id]" :url-resolver="cve => getCveUrl(cve, osDistro)" />
         </template>
       </el-table-column>
       <el-table-column prop="patch_id" label="补丁编号" width="180">
@@ -161,6 +167,19 @@
               <span v-else class="affected-package-text" :title="pkg.currentPackage">
                 {{ pkg.currentPackage }}
               </span>
+              <template v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length">
+                <el-tag
+                  v-for="service in pkg.services"
+                  :key="service"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                  class="reboot-service-tag"
+                  style="margin-left: 4px"
+                >
+                  {{ service }}
+                </el-tag>
+              </template>
             </div>
             <el-popover
               v-if="getAffectedPackages(row).length > 2"
@@ -189,6 +208,19 @@
                   <span v-else class="affected-package-text" :title="pkg.currentPackage">
                     {{ pkg.currentPackage }}
                   </span>
+                  <template v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length">
+                    <el-tag
+                      v-for="service in pkg.services"
+                      :key="service"
+                      size="small"
+                      type="warning"
+                      effect="plain"
+                      class="reboot-service-tag"
+                      style="margin-left: 4px"
+                    >
+                      {{ service }}
+                    </el-tag>
+                  </template>
                 </div>
               </div>
             </el-popover>
@@ -246,10 +278,7 @@
                 </el-tag>
                 <span v-else-if="row.reboot_status !== '服务重启'" class="text-muted">-</span>
               </span>
-              <div
-                v-if="getDisplayRebootStatus(row) === '服务重启'"
-                class="reboot-services-list"
-              >
+              <div v-if="getDisplayRebootStatus(row) === '服务重启'" class="reboot-services-list">
                 <el-tag
                   v-for="(service, serviceIndex) in getRebootServices(row)"
                   :key="getRebootServiceKey(row, service, serviceIndex)"
@@ -331,9 +360,8 @@
     />
   </div>
 </template>
-
 <script setup>
-import { ref } from 'vue'
+import { ref, toRef } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { rpmInfoApi } from '../../../api'
 import {
@@ -346,6 +374,7 @@ import {
   getPatchStatusText
 } from '../../../composables/useFormatters'
 import { useVulnerabilityList } from '../../../composables/useVulnerabilityList'
+import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import {
   getAffectedPackages,
   getAffectedPackageDetailParams,
@@ -356,6 +385,7 @@ import {
 } from '../../../utils/vulnerabilityPackages'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import RpmPackageDetailDialog from '../../rpm/RpmPackageDetailDialog.vue'
+import CveLinkList from '../../common/CveLinkList.vue'
 
 const props = defineProps({
   hostId: {
@@ -402,11 +432,18 @@ function getAffectedPackagePreview(row) {
 }
 
 function hasPackageDetail(pkg) {
+  if (pkg?.rpmInfoId != null) return true
+  const pkgName = pkg?.pkgName || pkg?.name
+  const source = pkg?.source
+  const arch = pkg?.pkgArch || pkg?.arch || pkg?.architecture
+  if (pkgName && source && arch) return true
   return hasAffectedPackageDetail(pkg, props.osDistro)
 }
 
 function hasRpmDetailResponse(data) {
-  return Boolean(data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length > 0)
+  return Boolean(
+    data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length > 0
+  )
 }
 
 function getRebootServiceKey(row, service, index) {
@@ -417,48 +454,85 @@ function getRebootServiceKey(row, service, index) {
 const {
   vulLoading,
   vulTableData,
+  vulFilteredData,
   selectedVuls,
   vulPagination,
-  loadVulnerabilityList,
+  loadVulnerabilityList: originalLoadVulnerabilityList,
   vulKeyword,
-  handleVulKeywordChange,
+  handleVulKeywordChange: originalHandleVulKeywordChange,
   vulPatchStatus,
-  handleVulPatchStatusChange,
-  handleVulSelectionChange,
-  handleVulPageChange,
-  handleVulSizeChange
-} = useVulnerabilityList({ value: props.hostId })
+  handleVulPatchStatusChange: originalHandleVulPatchStatusChange,
+  handleVulPageChange: originalHandleVulPageChange,
+  handleVulSizeChange: originalHandleVulSizeChange
+} = useVulnerabilityList(toRef(props, 'hostId'))
 
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailData = ref({})
 
-async function handleViewPackageDetail(pkg) {
-  const detailParams = getAffectedPackageDetailParams(pkg, props.osDistro)
+// 按 API 文档 §2.3 的三级回退顺序构建候选请求
+// 1) rpmInfoId → /rpm-info/detail/{id}
+// 2) pkgName + source + arch → /rpm-info/detail
+// 3) currentPackage + osDistro + arch → /rpm-info/installed/detail
+function buildDetailCandidates(pkg) {
+  const candidates = []
 
-  if (!detailParams.installedDetail) {
+  if (pkg?.rpmInfoId != null) {
+    candidates.push({
+      label: 'by id',
+      request: () => rpmInfoApi.getPackageDetailById(pkg.rpmInfoId)
+    })
+  }
+
+  const pkgName = pkg?.pkgName || pkg?.name
+  const source = pkg?.source
+  const arch = pkg?.pkgArch || pkg?.arch || pkg?.architecture
+  if (pkgName && source && arch) {
+    candidates.push({
+      label: 'by name/source/arch',
+      request: () => rpmInfoApi.getPackageDetail({ name: pkgName, source, arch })
+    })
+  }
+
+  const detailParams = getAffectedPackageDetailParams(pkg, props.osDistro)
+  if (detailParams.installedDetail) {
+    candidates.push({
+      label: 'by installed currentPackage',
+      request: () => rpmInfoApi.getInstalledDetail(detailParams.installedDetail)
+    })
+  }
+
+  return candidates
+}
+
+async function handleViewPackageDetail(pkg) {
+  const candidates = buildDetailCandidates(pkg)
+  if (candidates.length === 0) {
     ElMessage.warning('当前软件包暂无 RPM 详情')
     return
   }
 
+  // 一次性打开 Drawer 并进入 loading，避免多级回退过程中 visible/loading 反复切换导致 UI 闪烁
   detailVisible.value = true
   detailLoading.value = true
   detailData.value = {}
 
   try {
-    const response = await rpmInfoApi.getInstalledDetail(detailParams.installedDetail)
-    const responseData = response?.data || response || {}
-
-    if (hasRpmDetailResponse(responseData)) {
-      detailData.value = responseData
-      return
+    for (const candidate of candidates) {
+      try {
+        const response = await candidate.request()
+        const responseData = response?.data || response || {}
+        if (hasRpmDetailResponse(responseData)) {
+          detailData.value = responseData
+          return
+        }
+      } catch (error) {
+        // 任意一级失败继续尝试下一级，错误仅落日志，最终在所有候选都未命中时才提示用户
+        console.error(`Failed to load rpm package detail (${candidate.label}):`, error)
+      }
     }
 
     ElMessage.warning('当前软件包暂无 RPM 详情')
-    detailVisible.value = false
-  } catch (error) {
-    console.error('Failed to load rpm package detail:', error)
-    ElMessage.error('获取软件包详情失败')
     detailVisible.value = false
   } finally {
     detailLoading.value = false
@@ -489,6 +563,45 @@ function handleRollback(row) {
     .catch(() => {
       // 用户取消
     })
+}
+
+const vulTableRef = ref(null)
+
+// 全选逻辑
+const {
+  allSelected,
+  isAllSelected,
+  handleToggleAllSelection,
+  handleTableSelect,
+  resetAllSelected
+} = useTableSelectAll(vulTableRef, {
+  tableData: vulTableData,
+  filteredData: vulFilteredData,
+  selectedItems: selectedVuls,
+  matchFn: (f, row) => f.vul_id === row.vul_id && f.patch_id === row.patch_id
+})
+
+function handleVulPageChange(page) {
+  originalHandleVulPageChange(page)
+}
+
+function handleVulSizeChange(size) {
+  originalHandleVulSizeChange(size)
+}
+
+function handleVulKeywordChange() {
+  resetAllSelected()
+  originalHandleVulKeywordChange()
+}
+
+function handleVulPatchStatusChange() {
+  resetAllSelected()
+  originalHandleVulPatchStatusChange()
+}
+
+async function loadVulnerabilityList() {
+  resetAllSelected()
+  await originalLoadVulnerabilityList()
 }
 
 // 暴露加载方法给父组件
@@ -529,7 +642,12 @@ defineExpose({
 
 :deep(.header-border-only-table.el-table--border .el-table__header-wrapper th.el-table__cell),
 :deep(.header-border-only-table.el-table--border .el-table__fixed-header-wrapper th.el-table__cell),
-:deep(.header-border-only-table.el-table--border .el-table__fixed-right .el-table__header-wrapper th.el-table__cell) {
+:deep(
+  .header-border-only-table.el-table--border
+    .el-table__fixed-right
+    .el-table__header-wrapper
+    th.el-table__cell
+) {
   border-right-color: var(--el-border-color);
 }
 
@@ -541,41 +659,6 @@ defineExpose({
   &:hover {
     color: #66b1ff;
     text-decoration: underline;
-  }
-}
-
-.cve-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #dcdfe6;
-    border-radius: 2px;
-
-    &:hover {
-      background: #c0c4cc;
-    }
-  }
-}
-
-.cve-badge {
-  display: inline-block;
-  padding: 2px 6px;
-  font-size: 11px;
-  background: #6c757d;
-  color: #fff;
-  border-radius: 3px;
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-
-  &:hover {
-    background: #495057;
   }
 }
 

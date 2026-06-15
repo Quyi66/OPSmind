@@ -2,16 +2,16 @@
   <div class="about">
     <div class="about-container">
       <div class="about-header">
-        <img src="@/assets/icons/logo@2x.png" alt="OPSmind" class="logo" />
-        <h1>OPSmind Dashboard</h1>
+        <img src="@/assets/icons/logo.png" alt="KoreOPS" class="logo" />
+        <h1>KoreOPS Dashboard</h1>
         <p class="version">Version 1.0.0</p>
       </div>
 
       <div class="about-content">
         <div class="info-section">
-          <h2>关于 OPSmind</h2>
+          <h2>关于 KoreOPS</h2>
           <p>
-            OPSmind 是一个现代化的运维管理平台，提供统一的运维工具和服务。 本仪表盘基于 Vue 3
+            KoreOPS 是一个现代化的运维管理平台，提供统一的运维工具和服务。 本仪表盘基于 Vue 3
             构建，提供高效的运维管理体验。
           </p>
         </div>
@@ -81,16 +81,17 @@ const goBack = () => {
 }
 
 .logo {
-  height: 80px;
+  height: 72px;
   width: auto;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   object-fit: contain;
 }
 
 h1 {
   font-size: 28px;
-  font-weight: 600;
-  color: #262626;
+  font-weight: 800;
+  color: #1269c3;
+  letter-spacing: -0.045em;
   margin: 0 0 8px 0;
 }
 

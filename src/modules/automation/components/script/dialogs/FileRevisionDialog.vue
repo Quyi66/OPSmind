@@ -33,12 +33,17 @@
                 @click.stop="handleRollback(rev)"
                 :loading="rollbackLoading"
               >
-                <i class="fa fa-undo"></i> 回退
+                <i class="fa fa-undo"></i>
+                回退
               </el-button>
             </div>
             <div class="revision-author">{{ rev.author }}</div>
           </div>
-          <el-empty v-if="!loading && revisions.length === 0" description="暂无历史版本" :image-size="80" />
+          <el-empty
+            v-if="!loading && revisions.length === 0"
+            description="暂无历史版本"
+            :image-size="80"
+          />
         </div>
       </div>
 
@@ -118,14 +123,17 @@ const diffLines = ref([])
 
 const fileName = computed(() => props.path?.split('/').pop() || '')
 
-watch(() => props.modelValue, (val) => {
-  dialogVisible.value = val
-  if (val) {
-    loadRevisions()
+watch(
+  () => props.modelValue,
+  val => {
+    dialogVisible.value = val
+    if (val) {
+      loadRevisions()
+    }
   }
-})
+)
 
-watch(dialogVisible, (val) => {
+watch(dialogVisible, val => {
   emit('update:modelValue', val)
 })
 
@@ -235,11 +243,9 @@ function parseDiff(rev) {
 
 async function handleRollback(rev) {
   try {
-    await ElMessageBox.confirm(
-      `确定要回退到此版本吗？此操作将覆盖当前文件内容。`,
-      '回退确认',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm(`确定要回退到此版本吗？此操作将覆盖当前文件内容。`, '回退确认', {
+      type: 'warning'
+    })
 
     rollbackLoading.value = true
     await gfsApi.rollbackFileRevision(props.repo, rev.name, props.path)
@@ -258,36 +264,36 @@ async function handleRollback(rev) {
 
 function getChangeIconClass(changeType) {
   const map = {
-    'ADD': 'icon-add',
-    'DELETE': 'icon-delete',
-    'MODIFY': 'icon-modify'
+    ADD: 'icon-add',
+    DELETE: 'icon-delete',
+    MODIFY: 'icon-modify'
   }
   return map[changeType] || 'icon-modify'
 }
 
 function getChangeIconText(changeType) {
   const map = {
-    'ADD': '+',
-    'DELETE': '-',
-    'MODIFY': 'M'
+    ADD: '+',
+    DELETE: '-',
+    MODIFY: 'M'
   }
   return map[changeType] || 'M'
 }
 
 function getChangeBadgeClass(changeType) {
   const map = {
-    'ADD': 'badge-add',
-    'DELETE': 'badge-delete',
-    'MODIFY': 'badge-modify'
+    ADD: 'badge-add',
+    DELETE: 'badge-delete',
+    MODIFY: 'badge-modify'
   }
   return map[changeType] || 'badge-modify'
 }
 
 function getChangeTypeName(changeType) {
   const map = {
-    'ADD': '新建',
-    'DELETE': '删除',
-    'MODIFY': '修改'
+    ADD: '新建',
+    DELETE: '删除',
+    MODIFY: '修改'
   }
   return map[changeType] || changeType
 }
@@ -314,6 +320,22 @@ function handleClosed() {
 
 <style scoped lang="scss">
 .file-revision-dialog {
+  --revision-active-bg: var(--el-color-primary-light-9);
+  --revision-active-border: var(--el-color-primary);
+  --revision-date-text: var(--el-text-color-primary);
+  --revision-secondary-text: var(--el-text-color-secondary);
+  --revision-placeholder-text: var(--el-text-color-placeholder);
+  --revision-primary-soft: var(--el-color-primary-light-9);
+  --revision-primary-soft-strong: var(--el-color-primary-light-8);
+  --revision-success-soft: var(--el-color-success-light-9);
+  --revision-success-soft-strong: var(--el-color-success-light-8);
+  --revision-success-text: var(--el-color-success);
+  --revision-danger-soft: var(--el-color-danger-light-9);
+  --revision-danger-soft-strong: var(--el-color-danger-light-8);
+  --revision-danger-text: var(--el-color-danger);
+  --revision-warning-soft: var(--el-color-warning-light-9);
+  --revision-warning-text: var(--el-color-warning);
+
   :deep(.el-dialog__body) {
     padding: 0 !important;
     height: 480px;
@@ -356,8 +378,8 @@ function handleClosed() {
   }
 
   &.is-active {
-    background: #ecf5ff;
-    border-left-color: #409eff;
+    background: var(--revision-active-bg);
+    border-left-color: var(--revision-active-border);
   }
 }
 
@@ -389,30 +411,30 @@ function handleClosed() {
   font-family: monospace;
 
   &.icon-add {
-    background: #67c23a;
+    background: var(--el-color-success);
     color: #fff;
   }
 
   &.icon-delete {
-    background: #f56c6c;
+    background: var(--el-color-danger);
     color: #fff;
   }
 
   &.icon-modify {
-    background: #409eff;
+    background: var(--el-color-primary);
     color: #fff;
   }
 }
 
 .revision-date {
   font-size: 13px;
-  color: #303133;
+  color: var(--revision-date-text);
   font-weight: 500;
 }
 
 .revision-author {
   font-size: 12px;
-  color: #909399;
+  color: var(--revision-secondary-text);
   margin-top: 4px;
   padding-left: 24px;
 }
@@ -449,14 +471,14 @@ function handleClosed() {
   flex-shrink: 0;
 
   > i {
-    color: #909399;
+    color: var(--revision-secondary-text);
     font-size: 14px;
   }
 
   .file-name {
     font-size: 14px;
     font-weight: 500;
-    color: #303133;
+    color: var(--revision-date-text);
   }
 }
 
@@ -467,21 +489,21 @@ function handleClosed() {
   font-weight: 500;
 
   &.badge-add {
-    background: #f0f9eb;
-    color: #67c23a;
-    border: 1px solid #c2e7b0;
+    background: var(--revision-success-soft);
+    color: var(--revision-success-text);
+    border: 1px solid var(--el-color-success-light-5);
   }
 
   &.badge-delete {
-    background: #fef0f0;
-    color: #f56c6c;
-    border: 1px solid #fbc4c4;
+    background: var(--revision-danger-soft);
+    color: var(--revision-danger-text);
+    border: 1px solid var(--el-color-danger-light-5);
   }
 
   &.badge-modify {
-    background: #fdf6ec;
-    color: #e6a23c;
-    border: 1px solid #f5dab1;
+    background: var(--revision-warning-soft);
+    color: var(--revision-warning-text);
+    border: 1px solid var(--el-color-warning-light-5);
   }
 }
 
@@ -500,35 +522,35 @@ function handleClosed() {
 
   tr {
     &.info {
-      background: #f1f8ff;
-      color: #0366d6;
+      background: var(--revision-primary-soft);
+      color: var(--el-color-primary);
 
       .line-num {
-        background: #dbedff;
+        background: var(--revision-primary-soft-strong);
       }
     }
 
     &.add {
-      background: #e6ffed;
+      background: var(--revision-success-soft);
 
       .line-num {
-        background: #cdffd8;
+        background: var(--revision-success-soft-strong);
       }
 
       .line-prefix {
-        color: #22863a;
+        color: var(--revision-success-text);
       }
     }
 
     &.del {
-      background: #ffeef0;
+      background: var(--revision-danger-soft);
 
       .line-num {
-        background: #ffdce0;
+        background: var(--revision-danger-soft-strong);
       }
 
       .line-prefix {
-        color: #cb2431;
+        color: var(--revision-danger-text);
       }
     }
 
@@ -549,8 +571,8 @@ function handleClosed() {
     min-width: 50px;
     padding: 0 10px;
     text-align: right;
-    color: rgba(27, 31, 35, 0.3);
-    border-right: 1px solid #e1e4e8;
+    color: var(--revision-placeholder-text);
+    border-right: 1px solid var(--el-border-color-light);
     user-select: none;
   }
 
@@ -576,8 +598,8 @@ function handleClosed() {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #67c23a;
-  background: #f0f9eb;
+  color: var(--revision-success-text);
+  background: var(--revision-success-soft);
 
   i {
     font-size: 48px;

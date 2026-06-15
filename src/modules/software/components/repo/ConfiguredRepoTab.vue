@@ -12,11 +12,7 @@
       </el-checkbox-group>
     </div>
 
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      max-height="calc(100vh - 240px)"
-    >
+    <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 240px)">
       <el-table-column prop="refid" label="仓库ID" min-width="150" show-overflow-tooltip>
         <template #default="{ row }">
           <el-link type="primary" @click="handleViewDetail(row)">
@@ -24,7 +20,7 @@
           </el-link>
         </template>
       </el-table-column>
-      <el-table-column prop="repo_id" label="仓库" min-width="120" show-overflow-tooltip   />
+      <el-table-column prop="repo_id" label="仓库" min-width="120" show-overflow-tooltip />
       <el-table-column prop="repo_name" label="名称" min-width="150" show-overflow-tooltip />
       <el-table-column prop="repo_file" label="配置文件" min-width="150" show-overflow-tooltip />
       <el-table-column prop="repo_baseurl" label="地址" min-width="250" show-overflow-tooltip>

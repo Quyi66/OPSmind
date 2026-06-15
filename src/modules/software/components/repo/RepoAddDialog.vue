@@ -7,17 +7,16 @@
     @close="handleClose"
   >
     <div class="repo-add-dialog">
-      <el-form
-        ref="formRef"
-        :model="formData"
-        :rules="formRules"
-        label-width="100px"
-      >
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="仓库名称" prop="repoName">
           <el-input v-model="formData.repoName" placeholder="请输入仓库名称" maxlength="50" />
         </el-form-item>
         <el-form-item label="配置文件" prop="repoFile">
-          <el-input v-model="formData.repoFile" placeholder="请输入配置文件名，如 custom.repo" maxlength="100" />
+          <el-input
+            v-model="formData.repoFile"
+            placeholder="请输入配置文件名，如 custom.repo"
+            maxlength="100"
+          />
         </el-form-item>
         <el-form-item label="仓库描述" prop="repoDesc">
           <el-input
@@ -41,13 +40,7 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="submitting"
-          @click="handleSubmit"
-        >
-          确定
-        </el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -84,15 +77,9 @@ const formData = ref({
 })
 
 const formRules = {
-  repoName: [
-    { required: true, message: '请输入仓库名称', trigger: 'blur' }
-  ],
-  repoFile: [
-    { required: true, message: '请输入配置文件名', trigger: 'blur' }
-  ],
-  repoUrl: [
-    { required: true, message: '请输入仓库地址', trigger: 'blur' }
-  ]
+  repoName: [{ required: true, message: '请输入仓库名称', trigger: 'blur' }],
+  repoFile: [{ required: true, message: '请输入配置文件名', trigger: 'blur' }],
+  repoUrl: [{ required: true, message: '请输入仓库地址', trigger: 'blur' }]
 }
 
 const isEdit = computed(() => !!formData.value.id)
@@ -100,7 +87,7 @@ const isEdit = computed(() => !!formData.value.id)
 // 监听 modelValue
 watch(
   () => props.modelValue,
-  (val) => {
+  val => {
     visible.value = val
     if (val && props.repoData) {
       // 编辑模式，填充数据
@@ -116,7 +103,7 @@ watch(
 )
 
 // 监听 visible
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 

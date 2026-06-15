@@ -715,7 +715,7 @@ async function exportWinPatches(filters) {
 
 | 日志表 | 说明 |
 |--------|------|
-| `vap2_patch_operation_log` | 步骤级操作审计日志，记录每个步骤的执行/完成/失败/跳过 |
+| `vap2_patch_operation_log` | 步骤级操作日志，记录每个步骤的执行/完成/失败/跳过 |
 | `jao_audit_log` | 平台级审计日志，记录 JAO 任务的启动和最终状态 |
 
 写入时机：

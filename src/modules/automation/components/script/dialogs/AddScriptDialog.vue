@@ -9,9 +9,20 @@
   >
     <div class="script-form">
       <div class="form-group">
+        <label class="control-label">保存路径</label>
+        <div class="form-control-wrapper">
+          <div class="path-preview">{{ dirLabel }}</div>
+        </div>
+      </div>
+      <div class="form-group">
         <label class="control-label">脚本名称</label>
         <div class="form-control-wrapper">
-          <el-input v-model="form.name" placeholder="例如: deploy.sh" class="code-input" maxlength="100" />
+          <el-input
+            v-model="form.name"
+            placeholder="例如: deploy.sh"
+            class="code-input"
+            maxlength="100"
+          />
         </div>
       </div>
       <div class="form-group">
@@ -35,7 +46,10 @@
       <div v-if="repoType === 'git'" class="form-group">
         <label class="control-label">
           参数配置
-          <el-tooltip content="如果文件支持配置（例如命令行执行参数），可以在这里填写" placement="top">
+          <el-tooltip
+            content="如果文件支持配置（例如命令行执行参数），可以在这里填写"
+            placement="top"
+          >
             <i class="fa fa-info-circle text-muted" />
           </el-tooltip>
         </label>
@@ -46,17 +60,15 @@
       <div v-if="repoType === 'git'" class="form-group">
         <label class="control-label">
           说明
-          <el-tooltip content="可以在这里填写文件的用途、目的、使用方法等描述信息，便于使用者理解这个文件" placement="top">
+          <el-tooltip
+            content="可以在这里填写文件的用途、目的、使用方法等描述信息，便于使用者理解这个文件"
+            placement="top"
+          >
             <i class="fa fa-info-circle text-muted" />
           </el-tooltip>
         </label>
         <div class="form-control-wrapper">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            resize="none"
-          />
+          <el-input v-model="form.description" type="textarea" :rows="3" resize="none" />
         </div>
       </div>
     </div>
@@ -67,10 +79,12 @@
         :loading="saving"
         @click="handleSubmit"
       >
-        <i class="fa fa-check me-1" /> 确定
+        <i class="fa fa-check me-1" />
+        确定
       </el-button>
       <el-button @click="visible = false">
-        <i class="fa fa-reply me-1" /> 取消
+        <i class="fa fa-reply me-1" />
+        取消
       </el-button>
     </template>
   </el-dialog>
@@ -101,7 +115,7 @@ const emit = defineEmits(['update:modelValue', 'success'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const form = ref({
@@ -120,6 +134,8 @@ const lineCount = computed(() => {
   if (!form.value.content) return 1
   return form.value.content.split('\n').length
 })
+
+const dirLabel = computed(() => (props.dir ? `~/${props.dir}` : '~'))
 
 // 同步滚动
 function syncScroll() {
@@ -205,6 +221,17 @@ function handleClosed() {
 
 .script-form .code-input :deep(.el-input__inner) {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.script-form .path-preview {
+  padding: 10px 12px;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 4px;
+  background: var(--el-fill-color-extra-light);
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+  line-height: 1.4;
+  word-break: break-all;
 }
 
 /* 代码编辑器样式 */

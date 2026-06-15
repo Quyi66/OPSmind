@@ -14,7 +14,7 @@
             <el-input
               v-model="cronExpression"
               placeholder="请输入或生成CRON表达式"
-              @input="handleCronChange"
+              @change="handleCronChange"
             >
               <template #append>
                 <el-button @click="handlePreview">
@@ -107,20 +107,14 @@
 
       <!-- 表达式预览 -->
       <div class="cron-preview-section">
-        <el-alert
-          :title="`当前表达式: ${cronExpression}`"
-          type="info"
-          :closable="false"
-        />
+        <el-alert :title="`当前表达式: ${cronExpression}`" type="info" :closable="false" />
       </div>
     </div>
 
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleConfirm">
-          确认
-        </el-button>
+        <el-button type="primary" @click="handleConfirm">确认</el-button>
       </div>
     </template>
   </el-dialog>
@@ -141,7 +135,8 @@
       <el-empty v-else description="该任务没有执行计划，是否已禁用？" />
     </div>
   </el-dialog>
-</template><script setup>
+</template>
+<script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Clock, Check } from '@element-plus/icons-vue'
@@ -160,7 +155,7 @@ const emit = defineEmits(['update:modelValue', 'confirm'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const activeTab = ref('second')
@@ -180,13 +175,53 @@ const cronParts = ref({
   year: ''
 })
 
-// 初始化时解析已有的 CRON 表达式
-watch(() => props.initialValue, (newVal) => {
-  if (newVal) {
-    cronExpression.value = newVal
-    parseCronExpression(newVal)
+// 当对话框打开时，使用最新的 initialValue 初始化/重置数据
+watch(
+  () => props.modelValue,
+  active => {
+    if (active) {
+      const val = props.initialValue || '0 0 0 * * ?'
+      cronExpression.value = val
+      parseCronExpression(val)
+    }
+  },
+  { immediate: true }
+)
+
+// 解决“日”和“周”字段的冲突，Quartz CRON 中两者必有一个为 "?"
+watch(
+  () => cronParts.value.day,
+  newVal => {
+    if (newVal && newVal !== '?') {
+      if (cronParts.value.week !== '?') {
+        cronParts.value.week = '?'
+        updateCronExpression()
+      }
+    } else if (newVal === '?') {
+      if (cronParts.value.week === '?') {
+        cronParts.value.week = '*'
+        updateCronExpression()
+      }
+    }
   }
-}, { immediate: true })
+)
+
+watch(
+  () => cronParts.value.week,
+  newVal => {
+    if (newVal && newVal !== '?') {
+      if (cronParts.value.day !== '?') {
+        cronParts.value.day = '?'
+        updateCronExpression()
+      }
+    } else if (newVal === '?') {
+      if (cronParts.value.day === '?') {
+        cronParts.value.day = '*'
+        updateCronExpression()
+      }
+    }
+  }
+)
 
 // 解析 CRON 表达式到各个部分
 function parseCronExpression(expression) {
@@ -323,4 +358,3 @@ function handleConfirm() {
   }
 }
 </style>
-

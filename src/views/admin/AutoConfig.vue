@@ -2,7 +2,7 @@
   <div class="auto-config">
     <!-- 顶部标题与操作 -->
     <div class="ac-header">
-      <h2 class="ac-title">自动化配置</h2>
+      <h2 class="ac-title">连接凭据</h2>
       <div class="ac-actions">
         <el-button type="primary" plain size="small" @click="openBatchDialog">
           <el-icon style="margin-right:6px"><EditPen /></el-icon>
@@ -17,7 +17,7 @@
         <template #label>
           <span class="tab-label">
             <el-icon class="tab-icon"><InfoFilled /></el-icon>
-            自动化配置信息
+            连接凭据信息
           </span>
         </template>
       </el-tab-pane>
@@ -37,7 +37,7 @@
       :closable="false"
       class="ac-alert"
       show-icon
-      description="注意：自动化配置是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：执行用户/密码、登录用户/密码、执行引擎节点配置等"
+      description="注意：连接凭据是针对每一个自动化资产的默认连接配置进行修改，使用场景如下：执行用户/密码、登录用户/密码、执行引擎节点配置等"
     />
 
     <!-- 工具栏：筛选 + 搜索 -->
@@ -79,7 +79,7 @@
     >
       <el-table-column prop="assetCode" label="资产代码" width="120" />
       <el-table-column prop="ip" label="IP" width="160" />
-      <el-table-column prop="name" label="自动化配置名称" min-width="160" />
+      <el-table-column prop="name" label="连接凭据名称" min-width="160" />
       <el-table-column prop="instanceGroup" label="执行引擎节点(instance group)" min-width="220" />
       <el-table-column prop="aapGroup" label="AAP instance group" min-width="180" />
       <el-table-column prop="loginUser" label="登录用户" width="120" />
@@ -316,7 +316,7 @@ async function fetchAutomationConfigs() {
       updatedAt: r.updated_at || r.updatedAt || ''
     }))
   } catch (e) {
-    ElMessage.error('获取自动化配置失败')
+    ElMessage.error('获取连接凭据失败')
   } finally {
     loading.value = false
   }

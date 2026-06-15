@@ -136,7 +136,7 @@ async function handleSubmit() {
     const hostsArray = normalizeAcmDeviceJobHosts(selectedHosts.value, 'linux')
 
     // 根据仓库类型构建不同的参数
-    let apiParams = { hosts: hostsArray }
+    const apiParams = { hosts: hostsArray }
 
     if (props.repoType === 'base') {
       // 基准仓库使用 repoIds 参数（使用 refid 字段）

@@ -64,12 +64,10 @@ function handleInstallSuccess() {
 }
 
 // 处理导航事件
-function handleNavigate(nav) {
-}
+function handleNavigate(nav) {}
 
 // 日志输出当前检测到的平台
-onMounted(() => {
-})
+onMounted(() => {})
 
 // 提供给子组件使用
 provide('handleInstallPatch', handleInstallPatch)

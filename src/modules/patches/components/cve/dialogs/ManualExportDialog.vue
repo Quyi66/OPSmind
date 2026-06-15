@@ -69,7 +69,9 @@
                     {{ isItemSelected(getItemKey(item)) ? '已选' : '添加' }}
                   </el-button>
                 </div>
-                <div v-if="exportHasMore" class="load-more-btn" @click="exportSearchLoadMore">加载更多...</div>
+                <div v-if="exportHasMore" class="load-more-btn" @click="exportSearchLoadMore">
+                  加载更多...
+                </div>
               </div>
             </div>
           </div>
@@ -77,7 +79,14 @@
           <div class="export-right">
             <div class="export-header">
               {{ selectedTitle }} ({{ exportSelectedList.length }})
-              <el-button type="danger" link @click="clearExportSelected" v-if="exportSelectedList.length > 0">清空</el-button>
+              <el-button
+                type="danger"
+                link
+                @click="clearExportSelected"
+                v-if="exportSelectedList.length > 0"
+              >
+                清空
+              </el-button>
             </div>
             <div class="export-list" @drop="onDropRightContainer($event)" @dragover.prevent>
               <el-empty
@@ -95,7 +104,10 @@
                   @dragover.prevent="onDragOver($event, index)"
                   @drop="onDrop($event, index)"
                   @dragend="onDragEnd"
-                  :class="{ 'drop-target': dropTargetIndex === index, 'drag-active': draggingIndex === index }"
+                  :class="{
+                    'drop-target': dropTargetIndex === index,
+                    'drag-active': draggingIndex === index
+                  }"
                 >
                   <div class="drag-handle">
                     <el-icon class="mr-1 grab-cursor"><Rank /></el-icon>
@@ -106,7 +118,9 @@
                   <el-icon
                     class="cursor-pointer text-danger hover-danger"
                     @click="removeFromExport(getItemKey(item))"
-                  ><Delete /></el-icon>
+                  >
+                    <Delete />
+                  </el-icon>
                 </div>
               </div>
             </div>
@@ -236,7 +250,7 @@ const parseBatchInput = props.parseBatchInput || defaultParseBatchInput
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const exportSearchKeyword = ref('')
@@ -349,7 +363,8 @@ async function loadExportOptions() {
       exportOptions.value = mergeOptions(exportOptions.value, nextItems)
     }
 
-    const totalPages = result.totalPages || Math.ceil(result.totalElements / props.listPageSize) || 0
+    const totalPages =
+      result.totalPages || Math.ceil(result.totalElements / props.listPageSize) || 0
     exportHasMore.value = exportCurrentPage.value < totalPages - 1
   } catch (error) {
     console.error(`获取${props.itemName}列表失败:`, error)
@@ -493,7 +508,8 @@ async function handleManualExportConfirm() {
   gap: 20px;
   height: calc(100vh - 320px);
 }
-.export-left, .export-right {
+.export-left,
+.export-right {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -528,7 +544,9 @@ async function handleManualExportConfirm() {
   align-items: center;
   padding: 8px 10px;
   border-radius: 4px;
-  transition: background-color 0.2s, border 0.2s;
+  transition:
+    background-color 0.2s,
+    border 0.2s;
   &:hover {
     background-color: var(--el-fill-color);
   }

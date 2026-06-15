@@ -29,7 +29,13 @@
         全部采集
       </el-button>
       <span class="win-patch-action-spacer"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="emit('refresh')">
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="emit('refresh')"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -63,16 +69,10 @@
                 :width="400"
               >
                 <template #reference>
-                  <span class="more-link">
-                    +{{ getYumConfigBaseurls(row).length - 2 }} 更多
-                  </span>
+                  <span class="more-link">+{{ getYumConfigBaseurls(row).length - 2 }} 更多</span>
                 </template>
                 <div class="yum-baseurls-popover">
-                  <div
-                    v-for="url in getYumConfigBaseurls(row)"
-                    :key="url"
-                    class="yum-baseurl-item"
-                  >
+                  <div v-for="url in getYumConfigBaseurls(row)" :key="url" class="yum-baseurl-item">
                     {{ url }}
                   </div>
                 </div>
@@ -114,20 +114,40 @@
             >
               采集
             </el-button>
-            <el-button text type="primary" size="small" :disabled="!getSourceId(row)" @click.stop="emit('open-packages', row)">
+            <el-button
+              text
+              type="primary"
+              size="small"
+              :disabled="!getSourceId(row)"
+              @click.stop="emit('open-packages', row)"
+            >
               清单
             </el-button>
-            <el-button text type="primary" size="small" :disabled="!canOpenCompare(row)" @click.stop="emit('open-compare', row)">
+            <el-button
+              text
+              type="primary"
+              size="small"
+              :disabled="!canOpenCompare(row)"
+              @click.stop="emit('open-compare', row)"
+            >
               比对
             </el-button>
-            <el-button text type="primary" size="small" @click.stop="handleEditConfig(row)">编辑</el-button>
-            <el-button text type="danger" size="small" @click.stop="handleDeleteConfig(row)">删除</el-button>
+            <el-button text type="primary" size="small" @click.stop="handleEditConfig(row)">
+              编辑
+            </el-button>
+            <el-button text type="danger" size="small" @click.stop="handleDeleteConfig(row)">
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="editingConfig ? '编辑YUM源配置' : 'YUM源配置录入'" width="800px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editingConfig ? '编辑YUM源配置' : 'YUM源配置录入'"
+      width="800px"
+    >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="YUM源名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入YUM源名称" maxlength="50" />
@@ -170,10 +190,18 @@
           </el-select>
         </el-form-item>
         <el-form-item label="主版本号" prop="osMajor">
-          <el-input v-model="formData.osMajor" placeholder="如：V10、8、22.04、20、12 SP5" maxlength="16" />
+          <el-input
+            v-model="formData.osMajor"
+            placeholder="如：V10、8、22.04、20、12 SP5"
+            maxlength="16"
+          />
         </el-form-item>
         <el-form-item label="OS 精确版本" prop="osSpVersion">
-          <el-input v-model="formData.osSpVersion" placeholder="如：SP1、SP3、SP3 2403、HPC、Host" maxlength="32" />
+          <el-input
+            v-model="formData.osSpVersion"
+            placeholder="如：SP1、SP3、SP3 2403、HPC、Host"
+            maxlength="32"
+          />
         </el-form-item>
         <el-form-item label="架构" prop="arch">
           <el-select v-model="formData.arch" placeholder="请选择架构" style="width: 100%">
@@ -186,7 +214,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="YUM源文件" prop="file">
-          <el-input v-model="formData.file" placeholder="如：/etc/yum.repos.d/local.repo" maxlength="256" />
+          <el-input
+            v-model="formData.file"
+            placeholder="如：/etc/yum.repos.d/local.repo"
+            maxlength="256"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -265,11 +297,22 @@ const formData = reactive({
 })
 
 function validateBaseurls(rule, value, callback) {
-  if (normalizeBaseurls(value).length > 0) {
+  const baseurls = normalizeBaseurls(value)
+  if (!baseurls.length) {
+    callback(new Error('请至少输入一个YUM源地址'))
+    return
+  }
+
+  const invalidUrl = baseurls.find(item => !/^https?:\/\//i.test(item))
+  if (invalidUrl) {
+    callback(new Error('YUM源地址需以 http:// 或 https:// 开头'))
+    return
+  }
+
+  if (baseurls.length > 0) {
     callback()
     return
   }
-  callback(new Error('请至少输入一个仓库baseurl地址'))
 }
 
 function validateOsMajor(rule, value, callback) {
@@ -291,8 +334,12 @@ function validateOsSpVersion(rule, value, callback) {
     callback(new Error('麒麟仓库必须填写 OS 精确版本（如 SP1、SP3、SP3 2403、HPC、Host）'))
     return
   }
-  if (v && !/^(SP\d+(\.\d+)?( \w+)?|Update\d+|HPC|Host|Compat)$/.test(v)) {
-    callback(new Error('OS 精确版本格式不正确，请按 SP1 / SP1.1 / SP3 2403 / Update6 / HPC / Host / Compat 形式填写'))
+  if (v && !/^(SP\d+(?:\.\d+)?(?:[\s_/-]+\d\w*)?|Update\d+|HPC|Host|Compat)$/i.test(v)) {
+    callback(
+      new Error(
+        'OS 精确版本格式不正确，请按 SP1 / SP1.1 / SP3 2403 / Update6 / HPC / Host / Compat 形式填写'
+      )
+    )
     return
   }
   callback()
@@ -308,7 +355,9 @@ const formRules = {
 }
 
 const filteredConfigs = computed(() => {
-  const keyword = String(filterText.value || '').trim().toLowerCase()
+  const keyword = String(filterText.value || '')
+    .trim()
+    .toLowerCase()
   if (!keyword) return props.configs
 
   return props.configs.filter(item => {
@@ -319,8 +368,11 @@ const filteredConfigs = computed(() => {
       getYumConfigBaseurlsText(config),
       config.file,
       config.collectStatus
-    ]
-      .some(value => String(value || '').toLowerCase().includes(keyword))
+    ].some(value =>
+      String(value || '')
+        .toLowerCase()
+        .includes(keyword)
+    )
   })
 })
 
@@ -335,11 +387,13 @@ function canOpenCompare(row) {
 function resolveConfigBaseurls(row) {
   const baseurls = Array.isArray(row?.baseurls) ? row.baseurls : []
   const fallbackBaseurl = String(row?.baseurl || '').trim()
-  return baseurls.length > 0 ? baseurls : (fallbackBaseurl ? [fallbackBaseurl] : [])
+  return baseurls.length > 0 ? baseurls : fallbackBaseurl ? [fallbackBaseurl] : []
 }
 
 function normalizeBaseurl(value) {
-  return String(value || '').trim().replace(/\/+$/, '')
+  return String(value || '')
+    .trim()
+    .replace(/\/+$/, '')
 }
 
 function normalizeBaseurls(list = []) {
@@ -447,7 +501,10 @@ async function handleSubmit() {
     if (editingConfig.value) {
       const previousConfig = editingConfig.value || {}
       const previousBaseurls = serializeBaseurls(resolveConfigBaseurls(previousConfig))
-      const response = await yumRepoApi.updateConfig(resolveYumConfigId(previousConfig), submitPayload)
+      const response = await yumRepoApi.updateConfig(
+        resolveYumConfigId(previousConfig),
+        submitPayload
+      )
       const updatedConfig = {
         ...previousConfig,
         ...submitPayload,
@@ -471,7 +528,7 @@ async function handleSubmit() {
     }
   } catch (error) {
     if (error !== false) {
-      console.error('提交 Yum 源配置失败:', error)
+      console.error('提交YUM源配置失败:', error)
     }
   } finally {
     submitting.value = false
@@ -480,16 +537,20 @@ async function handleSubmit() {
 
 async function handleDeleteConfig(row) {
   try {
-    await ElMessageBox.confirm(`确定要删除“${getYumConfigLabel(row)}”吗？此操作不可恢复。`, '删除确认', {
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      `确定要删除“${getYumConfigLabel(row)}”吗？此操作不可恢复。`,
+      '删除确认',
+      {
+        type: 'warning'
+      }
+    )
     await yumRepoApi.deleteConfig(resolveYumConfigId(row))
     ElMessage.success('配置已删除')
     emit('refresh')
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
-      console.error('删除 Yum 源配置失败:', error)
-      ElMessage.error('删除 Yum 源配置失败')
+      console.error('删除YUM源配置失败:', error)
+      ElMessage.error('删除YUM源配置失败')
     }
   }
 }
@@ -552,5 +613,4 @@ async function handleDeleteConfig(row) {
     text-decoration: underline;
   }
 }
-
 </style>

@@ -8,10 +8,14 @@
       <div class="card-body card-body--scroll">
         <div class="selection-item">
           <div class="selection-item__primary">{{ resolveHostKey(hostSummary) }}</div>
-          <div class="selection-item__secondary">主机 ID：{{ resolveHostId(hostSummary) || '-' }}</div>
+          <div class="selection-item__secondary">
+            主机 ID：{{ resolveHostId(hostSummary) || '-' }}
+          </div>
         </div>
         <div class="selection-item">
-          <div class="selection-item__primary">{{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }}</div>
+          <div class="selection-item__primary">
+            {{ pickValue(hostSummary, ['osDistro', 'os_distro'], '-') }}
+          </div>
           <div class="selection-item__secondary">
             版本 / 架构：{{ pickValue(hostSummary, ['osVersion', 'os_version'], '-') }} /
             {{ pickValue(hostSummary, ['osArch', 'os_arch'], '-') }}
@@ -41,11 +45,32 @@
                 {{ row.title }}
               </template>
             </el-table-column>
+            <el-table-column label="大小" width="110">
+              <template #default="{ row }">
+                {{ formatBytes(pickValue(row, ['sizeBytes', 'size_bytes'], 0)) }}
+              </template>
+            </el-table-column>
             <el-table-column label="严重级别" width="120">
               <template #default="{ row }">
                 <el-tag :type="getSeverityTagType(row.severity)" size="small" effect="plain">
-                  {{ row.severityLabel }}
+                  {{ row.severityLabel || getSeverityLabel(row.severity) }}
                 </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="关联 CVE" min-width="200" show-overflow-tooltip>
+              <template #default="{ row }">
+                <template v-if="resolveCveIds(row).length">
+                  <el-tag
+                    v-for="cveId in resolveCveIds(row)"
+                    :key="cveId"
+                    size="small"
+                    effect="plain"
+                    class="win-patch-cve-tag"
+                  >
+                    {{ cveId }}
+                  </el-tag>
+                </template>
+                <span v-else>-</span>
               </template>
             </el-table-column>
           </el-table>
@@ -57,7 +82,25 @@
 
 <script setup>
 import { computed } from 'vue'
-import { getSeverityTagType, pickValue, resolveHostId, resolveHostKey } from '../../utils'
+import {
+  getSeverityLabel,
+  getSeverityTagType,
+  pickValue,
+  resolveHostId,
+  resolveHostKey
+} from '../../utils'
+
+function resolveCveIds(row) {
+  const raw = pickValue(row, ['cveIds', 'cve_ids'], '')
+  if (Array.isArray(raw)) {
+    return raw.map(item => String(item).trim()).filter(Boolean)
+  }
+
+  return String(raw)
+    .split(/[,，;；\s]+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
 
 const props = defineProps({
   hostSummary: {
@@ -71,6 +114,22 @@ const props = defineProps({
 })
 
 const patchItems = computed(() => (Array.isArray(props.selectedRows) ? props.selectedRows : []))
+
+function formatBytes(value) {
+  const size = Number(value)
+  if (!Number.isFinite(size) || size <= 0) return '-'
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let current = size
+  let index = 0
+
+  while (current >= 1024 && index < units.length - 1) {
+    current /= 1024
+    index += 1
+  }
+
+  return `${current.toFixed(index === 0 ? 0 : 1)} ${units[index]}`
+}
 </script>
 
 <style scoped lang="scss">
@@ -134,5 +193,9 @@ const patchItems = computed(() => (Array.isArray(props.selectedRows) ? props.sel
 
 .win-patch-summary-step__table {
   margin-top: 0;
+}
+
+.win-patch-cve-tag {
+  margin: 0 4px 2px 0;
 }
 </style>

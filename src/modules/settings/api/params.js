@@ -13,7 +13,7 @@ const APP_PARAMS_BASE = '/adm/api/adm/tenant-param'
  * GET /api/params
  */
 export function getSysParams() {
-    return apiService.get(`${SYS_PARAMS_BASE}?cacheBuster=${Date.now()}`)
+  return apiService.get(`${SYS_PARAMS_BASE}?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -21,7 +21,7 @@ export function getSysParams() {
  * GET /api/params/:id
  */
 export function getSysParamById(id) {
-    return apiService.get(`${SYS_PARAMS_BASE}/${id}?cacheBuster=${Date.now()}`)
+  return apiService.get(`${SYS_PARAMS_BASE}/${id}?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -29,7 +29,7 @@ export function getSysParamById(id) {
  * POST /api/params
  */
 export function createSysParam(param) {
-    return apiService.post(`${SYS_PARAMS_BASE}?cacheBuster=${Date.now()}`, param)
+  return apiService.post(`${SYS_PARAMS_BASE}?cacheBuster=${Date.now()}`, param)
 }
 
 /**
@@ -37,7 +37,7 @@ export function createSysParam(param) {
  * PUT /api/params
  */
 export function updateSysParam(param) {
-    return apiService.put(`${SYS_PARAMS_BASE}?cacheBuster=${Date.now()}`, param)
+  return apiService.put(`${SYS_PARAMS_BASE}?cacheBuster=${Date.now()}`, param)
 }
 
 /**
@@ -45,7 +45,7 @@ export function updateSysParam(param) {
  * DELETE /api/params/:id
  */
 export function deleteSysParam(id) {
-    return apiService.delete(`${SYS_PARAMS_BASE}/${id}?cacheBuster=${Date.now()}`)
+  return apiService.delete(`${SYS_PARAMS_BASE}/${id}?cacheBuster=${Date.now()}`)
 }
 
 // ==================== 应用参数 API ====================
@@ -55,7 +55,7 @@ export function deleteSysParam(id) {
  * GET /adm/api/adm/tenant-param
  */
 export function getAppParams() {
-    return apiService.get(`${APP_PARAMS_BASE}?cacheBuster=${Date.now()}`)
+  return apiService.get(`${APP_PARAMS_BASE}?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -63,7 +63,7 @@ export function getAppParams() {
  * GET /adm/api/adm/tenant-param/:id
  */
 export function getAppParamById(id) {
-    return apiService.get(`${APP_PARAMS_BASE}/${id}?cacheBuster=${Date.now()}`)
+  return apiService.get(`${APP_PARAMS_BASE}/${id}?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -71,7 +71,7 @@ export function getAppParamById(id) {
  * POST /adm/api/adm/tenant-param
  */
 export function createAppParam(param) {
-    return apiService.post(`${APP_PARAMS_BASE}?cacheBuster=${Date.now()}`, param)
+  return apiService.post(`${APP_PARAMS_BASE}?cacheBuster=${Date.now()}`, param)
 }
 
 /**
@@ -79,7 +79,7 @@ export function createAppParam(param) {
  * PUT /adm/api/adm/tenant-param
  */
 export function updateAppParam(param) {
-    return apiService.put(`${APP_PARAMS_BASE}?cacheBuster=${Date.now()}`, param)
+  return apiService.put(`${APP_PARAMS_BASE}?cacheBuster=${Date.now()}`, param)
 }
 
 /**
@@ -87,18 +87,20 @@ export function updateAppParam(param) {
  * DELETE /adm/api/adm/tenant-param/:id
  */
 export function deleteAppParam(id) {
-    return apiService.delete(`${APP_PARAMS_BASE}/${id}?cacheBuster=${Date.now()}`)
+  return apiService.delete(`${APP_PARAMS_BASE}/${id}?cacheBuster=${Date.now()}`)
 }
 
 export default {
-    getSysParams,
-    getSysParamById,
-    createSysParam,
-    updateSysParam,
-    deleteSysParam,
-    getAppParams,
-    getAppParamById,
-    createAppParam,
-    updateAppParam,
-    deleteAppParam
+  // 系统参数
+  getSysParams,
+  getSysParamById,
+  createSysParam,
+  updateSysParam,
+  deleteSysParam,
+  // 应用参数
+  getAppParams,
+  getAppParamById,
+  createAppParam,
+  updateAppParam,
+  deleteAppParam
 }

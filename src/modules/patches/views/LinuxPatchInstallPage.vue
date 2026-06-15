@@ -46,6 +46,14 @@
       >
         安装选中的补丁
       </el-button>
+      <el-button
+        size="small"
+        :type="allSelected ? 'default' : 'primary'"
+        @click="handleToggleSelectAll"
+      >
+        <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
+        {{ allSelected ? '一键取消' : '一键全选' }}
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -66,7 +74,8 @@
         v-loading="loading"
         :data="paginatedData"
         max-height="calc(100vh - 230px)"
-        @selection-change="handleSelectionChange"
+        @select="handleTableSelect"
+        @select-all="handleTableSelect"
       >
         <el-table-column type="selection" width="50" />
         <el-table-column prop="patch_id" label="补丁编号" min-width="160" sortable>
@@ -95,27 +104,10 @@
         </el-table-column>
         <el-table-column prop="related_vuls" label="关联CVE" min-width="320">
           <template #default="{ row }">
-            <div class="cve-tags" v-if="row.related_vuls">
-              <a
-                v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)"
-                :key="idx"
-                :href="getCveUrl(cve, resolvePatchDistro(row))"
-                target="_blank"
-                class="cve-link"
-                @click.stop
-              >
-                {{ cve }}
-              </a>
-              <button
-                v-if="parseCVEs(row.related_vuls).length > 3"
-                type="button"
-                class="cve-more"
-                @click="handleShowAllCves(row)"
-              >
-                +{{ parseCVEs(row.related_vuls).length - 3 }}
-              </button>
-            </div>
-            <span v-else>-</span>
+            <CveLinkList
+              :cves="row.related_vuls"
+              :url-resolver="cve => getCveUrl(cve, resolvePatchDistro(row))"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="effect_host_count" label="受影响的软件包" width="130" align="left">
@@ -150,49 +142,11 @@
       :close-on-click-modal="false"
       class="patch-detail-dialog"
     >
-      <div class="patch-detail" v-if="patchDetail" v-loading="patchDetailLoading">
-        <h3 class="patch-detail__id">{{ patchDetail.patch_id }}</h3>
-        <div class="patch-detail__item">
-          <span class="patch-detail__label">概要：</span>
-          <span class="patch-detail__value">{{ patchDetail.title }}</span>
-        </div>
-        <div class="patch-detail__item">
-          <span class="patch-detail__label">严重性：</span>
-          <span class="patch-detail__value">
-            <el-tag
-              effect="dark"
-              class="severity-tag"
-              :class="'is-' + (patchDetail.severity || '').toLowerCase()"
-            >
-              {{ getSeverityLabel(patchDetail.severity) }}
-            </el-tag>
-          </span>
-        </div>
-        <div class="patch-detail__item">
-          <span class="patch-detail__label">描述</span>
-        </div>
-        <div class="patch-detail__desc">
-          {{ patchDetail.description }}
-        </div>
-        <div class="patch-detail__item">
-          <span class="patch-detail__label">关联CVE</span>
-        </div>
-        <ul class="patch-detail__cve-list">
-          <li v-for="cve in parseCveList(patchDetail.related_vuls)" :key="cve">
-            <a
-              :href="getCveUrl(cve, resolvePatchDistro(patchDetail))"
-              target="_blank"
-              class="cve-link"
-            >
-              {{ cve }}
-            </a>
-          </li>
-        </ul>
-      </div>
-      <div v-else-if="patchDetailLoading" class="patch-detail-loading">
-        <el-skeleton :rows="6" animated />
-      </div>
-      <el-empty v-else description="暂无补丁详情" :image-size="80" />
+      <PatchDetailContent
+        :patch="patchDetail || {}"
+        :loading="patchDetailLoading"
+        :cve-source="resolvePatchDistro(patchDetail)"
+      />
     </el-dialog>
 
     <!-- 统一补丁向导组件 -->
@@ -201,27 +155,6 @@
       :patches-to-install="patchesToInstall"
       @success="handleInstallSuccess"
     />
-
-    <!-- 关联CVE 列表对话框 -->
-    <el-dialog v-model="cveDialogVisible" title="关联CVE" width="520px" destroy-on-close>
-      <div class="cve-dialog">
-        <template v-if="cveDialogList.length">
-          <a
-            v-for="(cve, idx) in cveDialogList"
-            :key="idx"
-            :href="getCveUrl(cve, cveDialogOsDistro)"
-            target="_blank"
-            class="cve-dialog-item"
-          >
-            {{ cve }}
-          </a>
-        </template>
-        <span v-else>-</span>
-      </div>
-      <template #footer>
-        <el-button @click="cveDialogVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -232,6 +165,9 @@ import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi } from '../api'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
+import PatchDetailContent from '../components/common/PatchDetailContent.vue'
+import CveLinkList from '../components/common/CveLinkList.vue'
+import { useTableSelectAll } from '../composables/useTableSelectAll'
 
 // 加载状态
 const loading = ref(false)
@@ -288,9 +224,6 @@ const totalCount = computed(() => filteredData.value.length)
 const patchDetailVisible = ref(false)
 const patchDetail = ref(null)
 const patchDetailLoading = ref(false)
-const cveDialogVisible = ref(false)
-const cveDialogList = ref([])
-const cveDialogOsDistro = ref('')
 
 // ============================================================
 // 补丁安装相关
@@ -313,6 +246,7 @@ function handleInstallSelected() {
 }
 
 function handleInstallSuccess() {
+  resetAllSelected()
   loadData()
 }
 
@@ -349,17 +283,6 @@ function parseCveList(cveStr) {
     .filter(cve => cve)
 }
 
-function parseCVEs(vulsStr) {
-  if (!vulsStr) return []
-  return vulsStr.split(',').filter(cve => cve.trim())
-}
-
-function handleShowAllCves(row) {
-  cveDialogList.value = parseCVEs(row.related_vuls)
-  cveDialogOsDistro.value = resolvePatchDistro(row)
-  cveDialogVisible.value = true
-}
-
 function resolvePatchDistro(patch) {
   if (!patch) return ''
   return patch.os_distro || patch.vendor || (patch.patch_id.includes('KYSA') ? 'kylin' : 'redhat')
@@ -387,6 +310,7 @@ async function loadData() {
     if (response?.data) {
       allData.value = preprocessData(response.data.records || response.data || [])
     }
+    resetAllSelected()
   } catch (error) {
     console.error('Failed to load patches:', error)
     ElMessage.error('加载可安装补丁失败，请稍后重试')
@@ -398,24 +322,32 @@ async function loadData() {
 
 // 搜索处理（严重程度改变时需要重新加载）
 function handleSearch() {
+  resetAllSelected()
   pagination.page = 1
   loadData()
 }
 
 // 重置处理
 function handleReset() {
-  // 重置筛选条件为默认值
+  resetAllSelected()
   filters.severity = ['Critical', 'Important', 'Moderate', 'Low']
   filters.keyword = ''
-  // 重置分页
   pagination.page = 1
   pagination.pageSize = 10
   loadData()
 }
 
-function handleSelectionChange(selection) {
-  selectedRows.value = selection
-}
+// 全选逻辑
+const {
+  allSelected,
+  handleToggleAllSelection: handleToggleSelectAll,
+  handleTableSelect,
+  resetAllSelected
+} = useTableSelectAll(tableRef, {
+  tableData: paginatedData,
+  filteredData,
+  selectedItems: selectedRows
+})
 
 function handlePageChange(page) {
   pagination.page = page
@@ -498,63 +430,29 @@ defineExpose({ refresh })
   }
 }
 
-.cve-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+.severity-tag {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border: none;
 
-  .cve-link {
-    display: inline-block;
-    padding: 2px 8px;
-    background: #6c757d;
+  &.is-critical {
+    background-color: #dc3545;
     color: #fff;
-    border-radius: 4px;
-    font-size: 12px;
-    text-decoration: none;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #545b62;
-    }
   }
 
-  .cve-more {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 8px;
-    background: #e9ecef;
-    color: var(--el-text-color-secondary);
-    border-radius: 4px;
-    font-size: 12px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #dfe3e6;
-    }
+  &.is-important {
+    background-color: #fd7e14;
+    color: #fff;
   }
-}
 
-.cve-dialog {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+  &.is-moderate {
+    background-color: #ffc107;
+    color: #5c3c00;
+  }
 
-.cve-dialog-item {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #6c757d;
-  color: #fff;
-  border-radius: 4px;
-  font-size: 13px;
-  text-decoration: none;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #545b62;
+  &.is-low {
+    background-color: #6c757d;
+    color: #fff;
   }
 }
 

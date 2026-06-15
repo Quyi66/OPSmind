@@ -2,7 +2,7 @@
   <div class="tab-content">
     <!-- 筛选栏 -->
     <div class="ops-filter-bar">
-      <el-form inline size="small">
+      <el-form inline size="small" @submit.prevent>
         <el-form-item label="关键词" label-width="60">
           <el-input
             v-model="packageKeyword"
@@ -32,6 +32,14 @@
         <i class="fa fa-chevron-circle-right" />
         更新选定的软件包 ({{ selectedPackages.length }})
       </el-button>
+      <el-button
+        size="small"
+        :disabled="selectablePackages.length === 0"
+        @click="handleToggleAllSelection"
+      >
+        <i :class="`fa fa-${isAllSelected ? 'times' : 'check-double'}`" />
+        {{ isAllSelected ? '取消全选' : '一键全选' }}
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -45,13 +53,14 @@
       </el-button>
     </div>
 
-    <!-- 表格 -->
     <el-table
+      ref="packageTableRef"
       v-loading="packageLoading"
       :data="packageTableData"
       size="small"
       max-height="calc(100vh - 390px)"
-      @selection-change="handlePackageSelectionChange"
+      @select="handleTableSelect"
+      @select-all="handleTableSelect"
     >
       <el-table-column type="selection" width="55" :selectable="isPackageSelectable" />
       <el-table-column prop="pkgName" label="包名" min-width="180" show-overflow-tooltip>
@@ -124,11 +133,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import { ElMessage } from 'element-plus'
 import { rpmInfoApi } from '../../../api'
 import { getSeverityType } from '../../../composables/useFormatters'
 import { usePackageList } from '../../../composables/usePackageList'
+import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import { extractInstalledPackageVersion, inferRpmSource } from '../../../utils/rpmPackageInfo'
 import { Refresh, Search } from '@element-plus/icons-vue'
 import RpmPackageDetailDialog from '../../rpm/RpmPackageDetailDialog.vue'
@@ -180,24 +190,69 @@ function getSeverityLabel(severity) {
 const {
   packageLoading,
   packageTableData,
-  selectedPackages,
   packageKeyword,
+  packageFilteredData,
+  selectedPackages,
   packagePagination,
-  loadPackageList,
-  handlePackageKeywordChange,
-  handlePackageSelectionChange,
-  handlePackagePageChange,
-  handlePackageSizeChange
-} = usePackageList({ value: props.hostId })
+  loadPackageList: originalLoadPackageList,
+  handlePackageKeywordChange: originalHandlePackageKeywordChange,
+  handlePackagePageChange: originalHandlePackagePageChange,
+  handlePackageSizeChange: originalHandlePackageSizeChange
+} = usePackageList(toRef(props, 'hostId'))
 
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailData = ref({})
 
+const packageTableRef = ref(null)
+
 function isPackageSelectable(row) {
   return Boolean(row?.hasUpdateInfo)
 }
 
+// 全选逻辑
+const {
+  allSelected,
+  isAllSelected,
+  handleToggleAllSelection,
+  handleTableSelect,
+  resetAllSelected
+} = useTableSelectAll(packageTableRef, {
+  tableData: packageTableData,
+  filteredData: packageFilteredData,
+  selectedItems: selectedPackages,
+  matchFn: (f, row) => f.pkgName === row.pkgName && f.patchId === row.patchId,
+  selectableFn: isPackageSelectable
+})
+
+// 可选中的软件包（用于控制"一键全选"按钮禁用状态）
+const selectablePackages = computed(() => {
+  return (packageFilteredData.value || []).filter(isPackageSelectable)
+})
+
+// 更新软件包
+function handleUpdatePackages() {
+  if (selectedPackages.value.length === 0) {
+    ElMessage.warning('请选择要更新的软件包')
+    return
+  }
+
+  const packages = selectedPackages.value.map(item => item.packages).filter(Boolean)
+
+  if (packages.length === 0) {
+    ElMessage.warning('所选软件包缺少更新信息')
+    return
+  }
+
+  if (!props.hostId) {
+    ElMessage.warning('主机信息缺失，无法更新软件包')
+    return
+  }
+
+  emit('update-packages', selectedPackages.value)
+}
+
+// 查看软件包详情
 async function handleViewPackageDetail(row) {
   const currentPackage = String(row?.installedPkg || '').trim()
   const pkgName = String(row?.pkgName || '').trim()
@@ -237,26 +292,22 @@ async function handleViewPackageDetail(row) {
   }
 }
 
-// 更新软件包
-async function handleUpdatePackages() {
-  if (selectedPackages.value.length === 0) {
-    ElMessage.warning('请选择要更新的软件包')
-    return
-  }
+function handlePackagePageChange(page) {
+  originalHandlePackagePageChange(page)
+}
 
-  const packages = selectedPackages.value.map(item => item.packages).filter(Boolean)
+function handlePackageSizeChange(size) {
+  originalHandlePackageSizeChange(size)
+}
 
-  if (packages.length === 0) {
-    ElMessage.warning('所选软件包缺少更新信息')
-    return
-  }
+function handlePackageKeywordChange() {
+  resetAllSelected()
+  originalHandlePackageKeywordChange()
+}
 
-  if (!props.hostId) {
-    ElMessage.warning('主机信息缺失，无法更新软件包')
-    return
-  }
-
-  emit('update-packages', selectedPackages.value)
+async function loadPackageList(options) {
+  resetAllSelected()
+  await originalLoadPackageList(options)
 }
 
 // 暴露加载方法给父组件

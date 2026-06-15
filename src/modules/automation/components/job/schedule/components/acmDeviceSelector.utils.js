@@ -54,8 +54,34 @@ export function normalizeAcmDeviceItem(item, fallbackAssetType = '') {
     }
   }
 
-  const key = item.key || item.id || item.ci_id || item.ciId || item.host_id || item.hostId || item.host_key || item.hostKey || item.IP || item.ip || item.value || item.hostname || item.hostName || item.name || ''
-  const value = item.value || item.IP || item.ip || item.hostname || item.hostName || item.name || item.host_key || item.hostKey || item.key || item.id || ''
+  const key =
+    item.key ||
+    item.id ||
+    item.ci_id ||
+    item.ciId ||
+    item.host_id ||
+    item.hostId ||
+    item.host_key ||
+    item.hostKey ||
+    item.IP ||
+    item.ip ||
+    item.value ||
+    item.hostname ||
+    item.hostName ||
+    item.name ||
+    ''
+  const value =
+    item.value ||
+    item.IP ||
+    item.ip ||
+    item.hostname ||
+    item.hostName ||
+    item.name ||
+    item.host_key ||
+    item.hostKey ||
+    item.key ||
+    item.id ||
+    ''
   const assetType = item.assetType || item.ciType || item.asset_type || fallbackAssetType
 
   if (!key && !value) {

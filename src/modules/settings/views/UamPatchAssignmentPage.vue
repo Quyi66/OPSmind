@@ -35,10 +35,18 @@
 
     <div class="ops-action-bar">
       <el-button size="small" @click="handleCleanExpired">
-        <i class="fa fa-broom"></i> 清理过期分配
+        <i class="fa fa-broom"></i>
+        清理过期分配
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -115,15 +123,9 @@
       />
     </div>
 
-    <AssignPatchDialog
-      v-model:visible="assignDialogVisible"
-      :username="currentPatchUserLogin"
-    />
+    <AssignPatchDialog v-model:visible="assignDialogVisible" :username="currentPatchUserLogin" />
 
-    <PatchRecordsDialog
-      v-model:visible="recordsDialogVisible"
-      :username="currentPatchUserLogin"
-    />
+    <PatchRecordsDialog v-model:visible="recordsDialogVisible" :username="currentPatchUserLogin" />
   </div>
 </template>
 
@@ -162,9 +164,10 @@ const filteredData = computed(() => {
 
   if (appliedKeyword.value) {
     const keyword = appliedKeyword.value.toLowerCase()
-    result = result.filter(item =>
-      item.login?.toLowerCase().includes(keyword)
-      || item.fullName?.toLowerCase().includes(keyword)
+    result = result.filter(
+      item =>
+        item.login?.toLowerCase().includes(keyword) ||
+        item.fullName?.toLowerCase().includes(keyword)
     )
   }
 
@@ -224,20 +227,29 @@ function handleReset() {
 
 function getAuthModeType(authMode) {
   switch (authMode) {
-    case 'AD': return 'primary'
-    case 'MIX': return 'warning'
-    case 'UN': return 'success'
-    default: return 'info'
+    case 'AD':
+      return 'primary'
+    case 'MIX':
+      return 'warning'
+    case 'UN':
+      return 'success'
+    default:
+      return 'info'
   }
 }
 
 function getAuthModeLabel(authMode) {
   switch (authMode) {
-    case 'AD': return 'Active Directory'
-    case 'MIX': return '混合认证'
-    case 'UN': return '统一认证'
-    case 'LOCAL': return '本地认证'
-    default: return authMode || '本地'
+    case 'AD':
+      return 'Active Directory'
+    case 'MIX':
+      return '混合认证'
+    case 'UN':
+      return '统一认证'
+    case 'LOCAL':
+      return '本地认证'
+    default:
+      return authMode || '本地'
   }
 }
 
@@ -263,11 +275,9 @@ function resolvePatchUserLogin(row) {
 
 async function handleCleanExpired() {
   try {
-    await ElMessageBox.confirm(
-      '确认要清理系统中所有已经过期的补丁分配记录吗？',
-      '清理警告',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm('确认要清理系统中所有已经过期的补丁分配记录吗？', '清理警告', {
+      type: 'warning'
+    })
 
     const res = await patchAssignmentApi.cleanExpired()
     const count = res?.data?.cleaned || 0

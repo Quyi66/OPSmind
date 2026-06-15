@@ -51,10 +51,7 @@
           :key="resolveYumRepoId(item)"
           type="button"
           class="yum-card"
-          :class="[
-            `yum-card--${getCardTone(item)}`,
-            { 'yum-card--active': isActiveRepo(item) }
-          ]"
+          :class="[`yum-card--${getCardTone(item)}`, { 'yum-card--active': isActiveRepo(item) }]"
           :aria-pressed="isActiveRepo(item)"
           :title="getYumRepoLabel(item)"
           @click="emit('update:selectedRepoId', resolveYumRepoId(item))"
@@ -94,11 +91,7 @@
 <script setup>
 import { computed } from 'vue'
 import { formatNumber, normalizeBoolean, pickValue } from '@/modules/patches/windows-patch/utils.js'
-import {
-  getYumRepoLabel,
-  resolveYumRepoId,
-  unwrapResponse
-} from '../utils'
+import { getYumRepoLabel, resolveYumRepoId, unwrapResponse } from '../utils'
 
 const props = defineProps({
   overviewData: {
@@ -256,8 +249,16 @@ function getCardFootnote(row) {
   border-radius: 14px;
   overflow: hidden;
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--el-color-primary-light-8) 72%, transparent 28%), transparent 38%),
-    linear-gradient(135deg, color-mix(in srgb, var(--el-bg-color) 92%, var(--el-color-primary-light-9) 8%), color-mix(in srgb, var(--el-bg-color) 90%, var(--el-fill-color-light) 10%));
+    radial-gradient(
+      circle at top left,
+      color-mix(in srgb, var(--el-color-primary-light-8) 72%, transparent 28%),
+      transparent 38%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--el-bg-color) 92%, var(--el-color-primary-light-9) 8%),
+      color-mix(in srgb, var(--el-bg-color) 90%, var(--el-fill-color-light) 10%)
+    );
   box-shadow: var(--yum-shadow);
 }
 
@@ -329,9 +330,15 @@ function getCardFootnote(row) {
   border-radius: 999px;
 }
 
-.yum-ov__progress-segment--success { background: var(--el-color-success); }
-.yum-ov__progress-segment--danger { background: var(--el-color-danger); }
-.yum-ov__progress-segment--idle { background: color-mix(in srgb, var(--el-color-info) 70%, var(--el-border-color) 30%); }
+.yum-ov__progress-segment--success {
+  background: var(--el-color-success);
+}
+.yum-ov__progress-segment--danger {
+  background: var(--el-color-danger);
+}
+.yum-ov__progress-segment--idle {
+  background: color-mix(in srgb, var(--el-color-info) 70%, var(--el-border-color) 30%);
+}
 
 .yum-ov__progress-meta {
   display: flex;
@@ -351,9 +358,15 @@ function getCardFootnote(row) {
   color: color-mix(in srgb, var(--chip-accent) 72%, var(--el-text-color-primary) 28%);
 }
 
-.yum-ov__progress-chip--success { --chip-accent: var(--el-color-success); }
-.yum-ov__progress-chip--danger { --chip-accent: var(--el-color-danger); }
-.yum-ov__progress-chip--idle { --chip-accent: var(--el-color-info); }
+.yum-ov__progress-chip--success {
+  --chip-accent: var(--el-color-success);
+}
+.yum-ov__progress-chip--danger {
+  --chip-accent: var(--el-color-danger);
+}
+.yum-ov__progress-chip--idle {
+  --chip-accent: var(--el-color-info);
+}
 
 .yum-ov__progress-dot {
   width: 6px;
@@ -381,7 +394,11 @@ function getCardFootnote(row) {
   border-radius: 14px;
   border: 1px dashed color-mix(in srgb, var(--el-border-color) 75%, var(--el-color-primary) 25%);
   flex-shrink: 0;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--el-fill-color-light) 70%, var(--el-bg-color) 30%), color-mix(in srgb, var(--el-fill-color-lighter) 78%, var(--el-bg-color) 22%));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--el-fill-color-light) 70%, var(--el-bg-color) 30%),
+    color-mix(in srgb, var(--el-fill-color-lighter) 78%, var(--el-bg-color) 22%)
+  );
   overflow: hidden;
 }
 
@@ -422,7 +439,12 @@ function getCardFootnote(row) {
 .yum-ov__scroller:hover,
 .yum-ov__scroller:focus-within {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--el-border-color-dark) 70%, var(--el-text-color-secondary) 30%) transparent;
+  scrollbar-color: color-mix(
+      in srgb,
+      var(--el-border-color-dark) 70%,
+      var(--el-text-color-secondary) 30%
+    )
+    transparent;
 }
 
 .yum-ov__scroller::-webkit-scrollbar {
@@ -445,12 +467,20 @@ function getCardFootnote(row) {
 
 .yum-ov__scroller:hover::-webkit-scrollbar-thumb,
 .yum-ov__scroller:focus-within::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--el-border-color-dark) 70%, var(--el-text-color-secondary) 30%);
+  background: color-mix(
+    in srgb,
+    var(--el-border-color-dark) 70%,
+    var(--el-text-color-secondary) 30%
+  );
 }
 
 .yum-ov__scroller:hover::-webkit-scrollbar-thumb:hover,
 .yum-ov__scroller:focus-within::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--el-text-color-secondary) 78%, var(--el-text-color-primary) 22%);
+  background: color-mix(
+    in srgb,
+    var(--el-text-color-secondary) 78%,
+    var(--el-text-color-primary) 22%
+  );
 }
 
 .yum-ov__grid {
@@ -463,20 +493,26 @@ function getCardFootnote(row) {
   width: max(
     100%,
     calc(
-      var(--yum-card-count) * var(--yum-card-min-width) +
-      (var(--yum-card-count) - 1) * var(--yum-card-gap)
+      var(--yum-card-count) * var(--yum-card-min-width) + (var(--yum-card-count) - 1) *
+        var(--yum-card-gap)
     )
   );
 }
 
 .yum-card {
   --card-accent: var(--el-text-color-placeholder);
-  --card-surface: linear-gradient(180deg, color-mix(in srgb, var(--card-accent) 6%, var(--el-bg-color) 94%), color-mix(in srgb, var(--card-accent) 10%, var(--el-bg-color) 90%));
+  --card-surface: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card-accent) 6%, var(--el-bg-color) 94%),
+    color-mix(in srgb, var(--card-accent) 10%, var(--el-bg-color) 90%)
+  );
   --card-border: color-mix(in srgb, var(--card-accent) 22%, var(--el-border-color) 78%);
   --card-pill-bg: color-mix(in srgb, var(--card-accent) 12%, transparent 88%);
   --card-shadow: 0 8px 18px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.04);
   --card-shadow-hover: 0 14px 28px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.05);
-  --card-shadow-active: 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 68%, transparent 32%), 0 16px 30px rgba(15, 23, 42, 0.1), 0 5px 12px rgba(15, 23, 42, 0.06);
+  --card-shadow-active:
+    0 0 0 1px color-mix(in srgb, var(--el-color-primary) 68%, transparent 32%),
+    0 16px 30px rgba(15, 23, 42, 0.1), 0 5px 12px rgba(15, 23, 42, 0.06);
 
   position: relative;
   appearance: none;
@@ -493,7 +529,10 @@ function getCardFootnote(row) {
   text-align: left;
   cursor: pointer;
   overflow: hidden;
-  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
 .yum-card:hover {
@@ -506,11 +545,21 @@ function getCardFootnote(row) {
   outline-offset: 2px;
 }
 
-.yum-card--idle { --card-accent: var(--el-color-info); }
-.yum-card--pending { --card-accent: var(--el-color-warning); }
-.yum-card--ready { --card-accent: var(--el-color-primary); }
-.yum-card--success { --card-accent: var(--el-color-success); }
-.yum-card--danger { --card-accent: var(--el-color-danger); }
+.yum-card--idle {
+  --card-accent: var(--el-color-info);
+}
+.yum-card--pending {
+  --card-accent: var(--el-color-warning);
+}
+.yum-card--ready {
+  --card-accent: var(--el-color-primary);
+}
+.yum-card--success {
+  --card-accent: var(--el-color-success);
+}
+.yum-card--danger {
+  --card-accent: var(--el-color-danger);
+}
 
 .yum-card--active {
   border-color: color-mix(in srgb, var(--el-color-primary) 58%, var(--card-accent) 42%);
@@ -600,15 +649,29 @@ function getCardFootnote(row) {
   gap: 10px;
   padding: 12px 13px;
   border-radius: 14px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--hero-accent) 11%, transparent 89%), color-mix(in srgb, var(--hero-accent) 5%, var(--el-bg-color) 95%));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hero-accent) 11%, transparent 89%),
+    color-mix(in srgb, var(--hero-accent) 5%, var(--el-bg-color) 95%)
+  );
   border: 1px solid color-mix(in srgb, var(--hero-accent) 18%, transparent 82%);
 }
 
-.yum-card__hero-metric--idle { --hero-accent: var(--el-color-info); }
-.yum-card__hero-metric--ready { --hero-accent: var(--el-color-primary); }
-.yum-card__hero-metric--success { --hero-accent: var(--el-color-success); }
-.yum-card__hero-metric--warning { --hero-accent: #f08c2e; }
-.yum-card__hero-metric--danger { --hero-accent: var(--el-color-danger); }
+.yum-card__hero-metric--idle {
+  --hero-accent: var(--el-color-info);
+}
+.yum-card__hero-metric--ready {
+  --hero-accent: var(--el-color-primary);
+}
+.yum-card__hero-metric--success {
+  --hero-accent: var(--el-color-success);
+}
+.yum-card__hero-metric--warning {
+  --hero-accent: #f08c2e;
+}
+.yum-card__hero-metric--danger {
+  --hero-accent: var(--el-color-danger);
+}
 
 .yum-card__hero-value {
   font-size: clamp(24px, 2.2vw, 32px);

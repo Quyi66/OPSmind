@@ -4,12 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="用户类型">
-          <el-select
-            v-model="filters.types"
-            multiple
-            placeholder="请选择"
-            style="width: 200px"
-          >
+          <el-select v-model="filters.types" multiple placeholder="请选择" style="width: 200px">
             <el-option label="系统用户" value="0" />
             <el-option label="普通用户" value="1" />
           </el-select>
@@ -28,9 +23,9 @@
         <el-form-item label="关键词">
           <el-input
             v-model="filters.keyword"
-            placeholder="请输入"
+            placeholder="主机/IP/用户名/用户组"
             clearable
-            style="width: 140px"
+            style="width: 220px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
@@ -78,15 +73,12 @@
 
     <!-- 用户列表表格 -->
     <div class="ops-table-wrapper">
-      <el-table
-        :data="tableData"
-        v-loading="loading"
-        @selection-change="handleSelectionChange"
-        max-height="calc(100vh - 230px)"
-      >
+      <el-table :data="tableData" v-loading="loading" max-height="calc(100vh - 230px)">
         <el-table-column prop="host_key" label="IP" width="130" />
-        <el-table-column prop="hostname" label="主机名" width="100" show-overflow-tooltip />
-        <el-table-column prop="username" label="用户名" width="120">
+
+        <el-table-column prop="hostname" label="主机名" width="120" show-overflow-tooltip />
+
+        <el-table-column prop="username" label="用户名" width="140">
           <template #default="{ row }">
             <el-tag
               :type="getUserBadgeType(row.uid)"
@@ -99,67 +91,43 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="lock_status" label="锁定状态" width="100">
+
+        <el-table-column label="锁定状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getLockStatusType(row.lock_status)" size="small">
+            <el-tag
+              :type="getLockStatusType(row.lock_status)"
+              size="small"
+              class="clickable-tag"
+              @click="handleEditUser(row, 'lock')"
+            >
               <i :class="['fa', getLockStatusIcon(row.lock_status)]"></i>
               {{ getLockStatusText(row.lock_status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="uid" label="UID" width="70" />
-        <el-table-column prop="gid" label="GID" width="70" />
-        <el-table-column prop="primary_group" label="主用户组" width="100" show-overflow-tooltip />
+
+        <el-table-column prop="primary_group" label="主用户组" width="140" show-overflow-tooltip />
+
         <el-table-column
           prop="secondary_group"
           label="附加用户组"
-          min-width="120"
+          min-width="180"
           show-overflow-tooltip
         />
-        <el-table-column prop="comment" label="备注" width="100" show-overflow-tooltip />
-        <el-table-column prop="shell" label="Shell" width="120" show-overflow-tooltip />
-        <el-table-column prop="home" label="主目录" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="password_last_modify_time" label="密码修改时间" width="180">
+
+        <el-table-column prop="shell" label="Shell" width="130" show-overflow-tooltip />
+
+        <el-table-column prop="last_login_time" label="最后登录" width="180">
           <template #default="{ row }">
-            {{ formatDateTime(row.password_last_modify_time) }}
+            {{ formatDateTime(row.last_login_time) }}
           </template>
         </el-table-column>
-        <el-table-column prop="updated_at" label="更新时间" width="180" sortable>
-          <template #default="{ row }">
-            {{ formatDateTime(row.updated_at) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="expired_date" label="过期时间" width="120" />
-        <el-table-column
-          prop="sudo_command"
-          label="sudo权限"
-          min-width="150"
-          show-overflow-tooltip
-        />
-        <el-table-column prop="crontab" label="定时任务" width="90">
-          <template #default="{ row }">
-            <el-tag
-              v-if="row.crontab"
-              type="info"
-              size="small"
-              class="clickable-tag"
-              @click="handleCrontabDetail(row)"
-            >
-              <i class="fa fa-list-alt"></i>
-              详情
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="home_size" label="主目录大小" width="100">
-          <template #default="{ row }">
-            {{ row.home_size ? row.home_size + 'M' : '' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="login_fail_message" label="登录错误" width="90">
+
+        <el-table-column label="登录错误" width="90">
           <template #default="{ row }">
             <el-tag
               v-if="row.login_fail_message"
-              type="primary"
+              type="warning"
               size="small"
               class="clickable-tag"
               @click="handleLoginErrorDetail(row)"
@@ -167,17 +135,23 @@
               <i class="fa fa-list-alt"></i>
               详情
             </el-tag>
+            <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="last_login_time" label="最后登录" width="180">
+
+        <el-table-column prop="updated_at" label="更新时间" width="180" sortable>
           <template #default="{ row }">
-            {{ formatDateTime(row.last_login_time) }}
+            {{ formatDateTime(row.updated_at) }}
           </template>
         </el-table-column>
+
         <el-table-column label="操作" width="100" align="left" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="handleEditUser(row)">
               修改
+            </el-button>
+            <el-button text type="danger" size="small" @click="handleDeleteUser(row)">
+              删除
             </el-button>
           </template>
         </el-table-column>
@@ -204,13 +178,20 @@
     <!-- 创建用户对话框 -->
     <CreateUserDialog v-model:visible="showCreateUserDialog" @success="loadData" />
 
-    <!-- 修改用户对话框 -->
-    <ModifyUserDialog v-model:visible="showModifyUserDialog" @success="loadData" />
-
     <!-- 编辑单个用户对话框 -->
-    <EditUserDialog v-model:visible="showEditUserDialog" :user="editingUser" @success="loadData" />
+    <EditUserDialog
+      v-model:visible="showEditUserDialog"
+      :user="editingUser"
+      :initial-operate="editOperate"
+      @success="loadData"
+    />
 
-    <!-- 登录错误详情弹窗 -->
+    <DeleteUserDialog
+      v-model:visible="showDeleteUserDialog"
+      :user="deletingUser"
+      @success="loadData"
+    />
+
     <LoginErrorDialog v-model:visible="showLoginErrorDialog" :user-id="loginErrorUserId" />
   </div>
 </template>
@@ -221,7 +202,7 @@ import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as userApi from '@/modules/user/api'
 import ScanHostDialog from '@/modules/user/components/dialogs/ScanHostDialog.vue'
 import CreateUserDialog from '@/modules/user/components/dialogs/CreateUserDialog.vue'
-import ModifyUserDialog from '@/modules/user/components/dialogs/ModifyUserDialog.vue'
+import DeleteUserDialog from '@/modules/user/components/dialogs/DeleteUserDialog.vue'
 import EditUserDialog from '@/modules/user/components/dialogs/EditUserDialog.vue'
 import LoginErrorDialog from '@/modules/user/components/dialogs/LoginErrorDialog.vue'
 
@@ -235,16 +216,17 @@ const filters = ref({
 
 const loading = ref(false)
 const tableData = ref([])
-const selectedRows = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
 const showScanHostDialog = ref(false)
 const showCreateUserDialog = ref(false)
-const showModifyUserDialog = ref(false)
 const showEditUserDialog = ref(false)
 const editingUser = ref({})
+const editOperate = ref('modify_base')
+const showDeleteUserDialog = ref(false)
+const deletingUser = ref({})
 const showLoginErrorDialog = ref(false)
 const loginErrorUserId = ref('')
 
@@ -299,7 +281,9 @@ async function loadData() {
       lockStatus: filters.value.lockStatus.join(','),
       page: currentPage.value,
       size: pageSize.value,
-      filter: filters.value.keyword ? `host_key|hostname|primary_group|secondary_group|comment|shell|home|username:*${filters.value.keyword}*` : undefined
+      filter: filters.value.keyword
+        ? `host_key|hostname|primary_group|secondary_group|comment|shell|home|username:*${filters.value.keyword}*`
+        : undefined
     })
     tableData.value = response?.records || response?.data?.records || []
     total.value = response?.total || response?.data?.total || 0
@@ -311,10 +295,6 @@ async function loadData() {
   }
 }
 
-function handleSelectionChange(selection) {
-  selectedRows.value = selection
-}
-
 function handleScanHost() {
   showScanHostDialog.value = true
 }
@@ -323,18 +303,16 @@ function handleCreateUser() {
   showCreateUserDialog.value = true
 }
 
-function handleModifyUser() {
-  showModifyUserDialog.value = true
-}
-
-function handleEditUser(row) {
+function handleEditUser(row, operate = 'modify_base') {
   editingUser.value = { ...row }
+  editOperate.value = operate
   showEditUserDialog.value = true
 }
 
-function handleUserDetail(row) {}
-
-function handleCrontabDetail(row) {}
+function handleDeleteUser(row) {
+  deletingUser.value = { ...row }
+  showDeleteUserDialog.value = true
+}
 
 function handleLoginErrorDetail(row) {
   loginErrorUserId.value = row.id || ''
@@ -365,26 +343,8 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.users-view {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.view-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-
-  &__left,
-  &__right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+:deep(.el-tag i) {
+  margin-right: 4px;
 }
 
 .clickable-tag {
@@ -394,14 +354,5 @@ onMounted(() => {
   &:hover {
     opacity: 0.8;
   }
-}
-
-:deep(.el-checkbox-group) {
-  display: flex;
-  gap: 8px;
-}
-
-:deep(.el-checkbox) {
-  margin-right: 0;
 }
 </style>

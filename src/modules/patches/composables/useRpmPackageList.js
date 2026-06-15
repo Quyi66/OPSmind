@@ -1,10 +1,11 @@
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { rpmInfoApi } from '../api'
 
 export function useRpmPackageList() {
   const loading = ref(false)
   const tableData = ref([])
+  const archOptions = ref([])
 
   const filters = reactive({
     source: '',
@@ -12,6 +13,24 @@ export function useRpmPackageList() {
     name: '',
     arch: ''
   })
+
+  async function loadArchOptions() {
+    try {
+      const res = await rpmInfoApi.getArchitectures({ source: filters.source || undefined })
+      const data = res?.data || res || {}
+      archOptions.value = Array.isArray(data.content) ? data.content : []
+    } catch {
+      archOptions.value = []
+    }
+  }
+
+  watch(
+    () => filters.source,
+    () => {
+      filters.arch = ''
+      loadArchOptions()
+    }
+  )
 
   const pagination = reactive({
     page: 1,
@@ -76,6 +95,8 @@ export function useRpmPackageList() {
     loading,
     pagination,
     tableData,
+    archOptions,
+    loadArchOptions,
     loadData,
     handleSearch,
     handleReset,

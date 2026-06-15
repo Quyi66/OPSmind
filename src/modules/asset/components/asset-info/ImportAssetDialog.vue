@@ -32,7 +32,10 @@
             选择文件
           </el-button>
           <template #tip>
-            <div class="el-upload__tip">只能上传 xlsx/xls 文件</div>
+            <div class="el-upload__tip">
+              只能上传 xlsx/xls 文件。“端口”列（ANSIBLE_PORT）填写后，后端会自动匹配并绑定对应的
+              Ansible 连接模板。
+            </div>
           </template>
         </el-upload>
       </div>
@@ -40,17 +43,31 @@
 
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="uploading" :disabled="!selectedFile" @click="handleUpload">
+      <el-button
+        type="primary"
+        :loading="uploading"
+        :disabled="!selectedFile"
+        @click="handleUpload"
+      >
         上传
       </el-button>
     </template>
   </el-dialog>
+
+  <ExecuteResultDialog
+    v-if="resultDialogVisible"
+    v-model:visible="resultDialogVisible"
+    :run-id="currentRunId"
+    job-title="资产导入"
+    @settled="handleExecuteResultSettled"
+  />
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 const props = defineProps({
   modelValue: {
@@ -67,15 +84,33 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const uploadRef = ref()
 const selectedFile = ref(null)
 const uploading = ref(false)
+const resultDialogVisible = ref(false)
+const currentRunId = ref('')
+
+function createImportRunId() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID()
+  }
+
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, char => {
+    const random = (Math.random() * 16) | 0
+    const value = char === 'x' ? random : (random & 0x3) | 0x8
+    return value.toString(16)
+  })
+}
+
+function isSuccessStatus(status) {
+  return ['COMPLETED', 'SUCCESS'].includes(String(status || '').toUpperCase())
+}
 
 // 文件选择变化
-const handleFileChange = (file) => {
+const handleFileChange = file => {
   selectedFile.value = file.raw
 }
 
@@ -86,7 +121,7 @@ const handleFileRemove = () => {
 
 // 下载导入模板
 const handleDownloadTemplate = () => {
-  window.open(`/oplus-portal/acm/api/acm/cit/template2/${props.tenantId}`, '_blank', 'noopener')
+  window.open(`${import.meta.env.BASE_URL}templates/acm-template.xlsx`, '_blank', 'noopener')
 }
 
 // 上传
@@ -96,25 +131,43 @@ const handleUpload = async () => {
     return
   }
 
+  if (!props.tenantId) {
+    ElMessage.warning('当前租户信息缺失，无法上传导入文件')
+    return
+  }
+
   uploading.value = true
   try {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
+    const runId = createImportRunId()
 
     await apiService.post('/acm/api/acm/ci/import2', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        'X-Run-Id': runId,
+        'Tenant-Id': props.tenantId
       }
     })
 
-    ElMessage.success('导入成功')
+    currentRunId.value = runId
+    uploading.value = false
     visible.value = false
-    emit('saved')
+    resultDialogVisible.value = true
+    ElMessage.success(`导入任务已提交，正在打开运行结果，运行 ID: ${runId}`)
   } catch (error) {
     console.error('导入失败:', error)
-    ElMessage.error('导入失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(
+      `导入失败: ${error.response?.data?.error || error.response?.data?.message || error.message}`
+    )
   } finally {
     uploading.value = false
+  }
+}
+
+function handleExecuteResultSettled(payload) {
+  if (isSuccessStatus(payload?.status)) {
+    emit('saved')
   }
 }
 
@@ -122,6 +175,7 @@ const handleUpload = async () => {
 const handleClosed = () => {
   uploadRef.value?.clearFiles()
   selectedFile.value = null
+  uploading.value = false
 }
 </script>
 

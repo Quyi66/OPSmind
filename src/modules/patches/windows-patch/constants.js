@@ -53,12 +53,12 @@ export const WIN_PATCH_SEVERITY_LABELS = {
 }
 
 export const WIN_PATCH_STATUS_OPTIONS = [
-  { label: '待安装', value: 'MISSING' },
-  { label: '已安装', value: 'INSTALLED' },
-  { label: '安装中', value: 'INSTALLING' },
-  { label: '安装失败', value: 'INSTALL_FAILED' },
-  { label: '回滚中', value: 'ROLLING_BACK' },
-  { label: '回滚失败', value: 'ROLLBACK_FAILED' }
+  { label: '待修复', value: 'no_repair' },
+  { label: '已修复', value: 'is_repair' },
+  { label: '人工已修复', value: 'is_repair_artificial' },
+  { label: '修复中', value: 'repairing' },
+  { label: '修复待重启', value: 'REPAIR_PENDING_REBOOT' },
+  { label: '修复失败', value: 'repair_faild' }
 ]
 
 export const WIN_PATCH_TASK_TYPE_OPTIONS = [
@@ -79,11 +79,25 @@ export const WIN_PATCH_TASK_TYPE_LABELS = {
 export const WIN_PATCH_TASK_STATUS_LABELS = {
   PENDING: '待执行',
   CREATED: '待执行',
+  PRE_CHECK_DONE: '待执行',
+  INSTALL_DONE: '待执行',
+  ROLLBACK_DONE: '待执行',
+  RESTART_PENDING: '待执行',
   RUNNING: '执行中',
   IN_PROGRESS: '执行中',
+  PRE_CHECKING: '执行中',
+  INSTALLING: '执行中',
+  ROLLING_BACK: '执行中',
+  RESTARTING: '执行中',
+  VALIDATING: '执行中',
   COMPLETED: '已完成',
+  RESTART_DONE: '已完成',
   SUCCESS: '成功',
   PASS: '通过',
+  PRE_CHECK_FAILED: '失败',
+  INSTALL_FAILED: '失败',
+  ROLLBACK_FAILED: '失败',
+  VALIDATE_FAILED: '失败',
   FAILED: '失败',
   ERROR: '失败',
   PARTIAL_SUCCESS: '部分成功'
@@ -92,11 +106,25 @@ export const WIN_PATCH_TASK_STATUS_LABELS = {
 export const WIN_PATCH_TASK_STATUS_TAG_TYPES = {
   PENDING: 'info',
   CREATED: 'info',
+  PRE_CHECK_DONE: 'info',
+  INSTALL_DONE: 'info',
+  ROLLBACK_DONE: 'info',
+  RESTART_PENDING: 'warning',
   RUNNING: 'warning',
   IN_PROGRESS: 'warning',
+  PRE_CHECKING: 'warning',
+  INSTALLING: 'warning',
+  ROLLING_BACK: 'warning',
+  RESTARTING: 'warning',
+  VALIDATING: 'warning',
   COMPLETED: 'success',
+  RESTART_DONE: 'success',
   SUCCESS: 'success',
   PASS: 'success',
+  PRE_CHECK_FAILED: 'danger',
+  INSTALL_FAILED: 'danger',
+  ROLLBACK_FAILED: 'danger',
+  VALIDATE_FAILED: 'danger',
   FAILED: 'danger',
   ERROR: 'danger',
   PARTIAL_SUCCESS: 'warning'
@@ -155,21 +183,39 @@ export const WIN_PATCH_ROLLBACK_PIPELINE_STEPS = [
 export const WIN_PATCH_TASK_SKIPPABLE_STEPS = ['PRE_CHECK', 'RESTART', 'VALIDATE']
 
 export const WIN_PATCH_PATCH_STATUS_LABELS = {
+  NO_REPAIR: '待修复',
+  IS_REPAIR: '已修复',
+  IS_REPAIR_ARTIFICIAL: '人工已修复',
+  REPAIRING: '修复中',
+  REPAIR_PENDING_REBOOT: '修复待重启',
+  REPAIRD: '已修复',
+  REPAIR_FAILD: '修复失败',
+  // 兼容旧枚举
   MISSING: '待安装',
   INSTALLED: '已安装',
   INSTALLING: '安装中',
   INSTALL_FAILED: '安装失败',
   ROLLING_BACK: '回滚中',
+  ROLLBACK_PENDING_REBOOT: '回滚待重启',
   ROLLBACK_FAILED: '回滚失败',
   ROLLBACK_SUCCESS: '已回滚'
 }
 
 export const WIN_PATCH_PATCH_STATUS_TAG_TYPES = {
+  NO_REPAIR: 'danger',
+  IS_REPAIR: 'success',
+  IS_REPAIR_ARTIFICIAL: 'success',
+  REPAIRING: 'warning',
+  REPAIR_PENDING_REBOOT: 'warning',
+  REPAIRD: 'success',
+  REPAIR_FAILD: 'danger',
+  // 兼容旧枚举
   MISSING: 'danger',
   INSTALLED: 'success',
   INSTALLING: 'warning',
   INSTALL_FAILED: 'danger',
   ROLLING_BACK: 'warning',
+  ROLLBACK_PENDING_REBOOT: 'warning',
   ROLLBACK_FAILED: 'danger',
   ROLLBACK_SUCCESS: 'success'
 }

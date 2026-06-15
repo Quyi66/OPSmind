@@ -111,8 +111,12 @@ function formatIndex(index) {
   padding: 18px 18px 16px;
   border: 1px solid var(--summary-card-border);
   border-radius: 22px;
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 253, 0.96) 52%, rgba(243, 247, 251, 0.98) 100%);
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(248, 250, 253, 0.96) 52%,
+    rgba(243, 247, 251, 0.98) 100%
+  );
   box-shadow:
     0 18px 38px rgba(15, 23, 42, 0.07),
     inset 0 1px 0 rgba(255, 255, 255, 0.88);
@@ -147,7 +151,9 @@ function formatIndex(index) {
     linear-gradient(135deg, var(--summary-accent-soft) 0%, transparent 30%),
     radial-gradient(circle at 88% 14%, var(--summary-accent-glow) 0%, transparent 28%);
   opacity: 0.95;
-  transition: transform 0.24s ease, opacity 0.24s ease;
+  transition:
+    transform 0.24s ease,
+    opacity 0.24s ease;
 }
 
 .win-patch-summary__card:hover .win-patch-summary__wash {
@@ -169,7 +175,9 @@ function formatIndex(index) {
   backdrop-filter: blur(8px);
   opacity: 0.75;
   transform: rotate(-8deg);
-  transition: transform 0.24s ease, opacity 0.24s ease;
+  transition:
+    transform 0.24s ease,
+    opacity 0.24s ease;
 }
 
 .win-patch-summary__card:hover .win-patch-summary__panel {
@@ -258,7 +266,16 @@ function formatIndex(index) {
   border-radius: 16px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.28)),
-    linear-gradient(135deg, transparent 0 18%, var(--summary-accent) 18% 23%, transparent 23% 40%, var(--summary-accent) 40% 45%, transparent 45% 62%, var(--summary-accent) 62% 67%, transparent 67% 100%);
+    linear-gradient(
+      135deg,
+      transparent 0 18%,
+      var(--summary-accent) 18% 23%,
+      transparent 23% 40%,
+      var(--summary-accent) 40% 45%,
+      transparent 45% 62%,
+      var(--summary-accent) 62% 67%,
+      transparent 67% 100%
+    );
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 

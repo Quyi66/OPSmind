@@ -94,13 +94,16 @@ export function formatDateTime(value) {
 }
 
 export function resolveHostId(host) {
-  return String(pickValue(host, ['hostId', 'host_id', 'id', 'key'], '')).trim()
+  return String(
+    pickValue(host, ['hostId', 'host_id', 'hostsId', 'hosts_id', 'id', 'key'], '')
+  ).trim()
 }
 
 export function resolveHostKey(host) {
   return (
-    String(pickValue(host, ['hostKey', 'host_key', 'hostname', 'value', 'ip', 'IP'], '-')).trim() ||
-    '-'
+    String(
+      pickValue(host, ['hostKey', 'host_key', 'hosts', 'hostname', 'value', 'ip', 'IP'], '-')
+    ).trim() || '-'
   )
 }
 
@@ -110,6 +113,12 @@ export function resolvePatchStatusId(row) {
 
 export function resolveInstallLogId(row) {
   return String(pickValue(row, ['installLogId', 'install_log_id', 'id'], '')).trim()
+}
+
+export function resolveHistUpdateId(row) {
+  return String(
+    pickValue(row, ['histUpdateId', 'hist_update_id', 'installLogId', 'install_log_id', 'id'], '')
+  ).trim()
 }
 
 export function resolveWsusConfigId(config) {
@@ -159,13 +168,19 @@ export function getSeverityLabel(value) {
 }
 
 export function getTaskTypeLabel(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskType', 'task_type'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['taskType', 'task_type'], '')
   const type = normalizeUpper(value)
   return WIN_PATCH_TASK_TYPE_LABELS[type] || type || '-'
 }
 
 export function getTaskTypeTagType(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskType', 'task_type'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['taskType', 'task_type'], '')
   const type = normalizeUpper(value)
 
   if (type === 'SCAN') return 'primary'
@@ -180,11 +195,17 @@ function hasAnyItemStatus(items = [], statuses = [], keys = ['status']) {
 }
 
 function areAllItemsInStatus(items = [], statuses = [], keys = ['status']) {
-  return items.length > 0 && items.every(item => statuses.includes(normalizeUpper(pickValue(item, keys, ''))))
+  return (
+    items.length > 0 &&
+    items.every(item => statuses.includes(normalizeUpper(pickValue(item, keys, ''))))
+  )
 }
 
 export function getTaskStatusValue(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskStatus', 'task_status', 'status'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['taskStatus', 'task_status', 'status'], '')
   const explicitStatus = normalizeUpper(value)
 
   if (!rowOrValue || typeof rowOrValue === 'string') {
@@ -198,10 +219,16 @@ export function getTaskStatusValue(rowOrValue) {
   const hasFailedStep = hasAnyItemStatus(steps, ['FAILED', 'ERROR'])
   const hasRunningStep = hasAnyItemStatus(steps, ['RUNNING', 'IN_PROGRESS'])
   const hasPendingStep = hasAnyItemStatus(steps, ['PENDING', 'WAITING', 'CREATED'])
-  const hasFailedHost = hasAnyItemStatus(hosts, ['FAILED', 'ERROR'], ['status', 'taskStatus', 'task_status'])
+  const hasFailedHost = hasAnyItemStatus(
+    hosts,
+    ['FAILED', 'ERROR'],
+    ['status', 'taskStatus', 'task_status']
+  )
   const allStepsCompleted = areAllItemsInStatus(steps, ['SUCCESS', 'SKIPPED', 'COMPLETED'])
 
-  if (['FAILED', 'ERROR', 'PARTIAL_SUCCESS', 'COMPLETED', 'SUCCESS', 'PASS'].includes(explicitStatus)) {
+  if (
+    ['FAILED', 'ERROR', 'PARTIAL_SUCCESS', 'COMPLETED', 'SUCCESS', 'PASS'].includes(explicitStatus)
+  ) {
     return explicitStatus
   }
 
@@ -245,7 +272,10 @@ export function getTaskStatusTagType(rowOrValue) {
 }
 
 export function getTaskStepValue(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['currentStep', 'current_step'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['currentStep', 'current_step'], '')
   return normalizeUpper(value)
 }
 
@@ -282,7 +312,9 @@ export function getTaskStepTagType(rowOrValue) {
 
 export function isStepControlledTask(rowOrValue) {
   const type = normalizeUpper(
-    typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['taskType', 'task_type'], '')
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['taskType', 'task_type'], '')
   )
 
   return type === 'INSTALL' || type === 'ROLLBACK'
@@ -293,13 +325,19 @@ export function canSkipTaskStep(rowOrValue) {
 }
 
 export function getPatchStatusLabel(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['patchStatus', 'patch_status'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['patchStatus', 'patch_status'], '')
   const status = normalizeUpper(value)
   return WIN_PATCH_PATCH_STATUS_LABELS[status] || status || '-'
 }
 
 export function getPatchStatusTagType(rowOrValue) {
-  const value = typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['patchStatus', 'patch_status'], '')
+  const value =
+    typeof rowOrValue === 'string'
+      ? rowOrValue
+      : pickValue(rowOrValue, ['patchStatus', 'patch_status'], '')
   const status = normalizeUpper(value)
   return WIN_PATCH_PATCH_STATUS_TAG_TYPES[status] || 'info'
 }
@@ -330,18 +368,54 @@ export function getInstallResultTagType(rowOrValue) {
 
 export function isPatchInstallable(row) {
   const status = normalizeUpper(pickValue(row, ['patchStatus', 'patch_status'], ''))
-  return status !== 'INSTALLED' && status !== 'INSTALLING'
+  // 已修复 / 人工已修复 / 修复中 / 回滚中 / 回滚待重启（及旧枚举 已安装 / 安装中）不可再次安装
+  return ![
+    'IS_REPAIR',
+    'IS_REPAIR_ARTIFICIAL',
+    'REPAIRD',
+    'REPAIRING',
+    'REPAIR_PENDING_REBOOT',
+    'INSTALLED',
+    'INSTALLING',
+    'ROLLBACK_PENDING_REBOOT',
+    'ROLLING_BACK'
+  ].includes(status)
+}
+
+export function isPatchRollbackable(row) {
+  const status = normalizeUpper(pickValue(row, ['patchStatus', 'patch_status'], ''))
+  // 仅已修复（工具安装）的补丁可回滚；人工已修复无安装记录，暂不支持回滚
+  return ['IS_REPAIR', 'REPAIRD', 'INSTALLED'].includes(status)
 }
 
 export function isRollbackSelectable(row) {
   const action = normalizeUpper(pickValue(row, ['action'], ''))
   const result = normalizeUpper(pickValue(row, ['result'], ''))
-  return (action === 'INSTALL' && result === 'SUCCESS') || (action === 'ROLLBACK' && result === 'FAILED')
+
+  if (!action && !result) {
+    return Boolean(
+      resolveHistUpdateId(row) &&
+      pickValue(row, ['updateKbNumbers', 'update_kb_numbers', 'kbNumber', 'kb_number'], '') &&
+      pickValue(row, ['hostsId', 'hosts_id', 'hostId', 'host_id'], '')
+    )
+  }
+
+  return (
+    (action === 'INSTALL' && result === 'SUCCESS') || (action === 'ROLLBACK' && result === 'FAILED')
+  )
 }
 
 export function isTaskRunning(rowOrValue) {
   const status = getTaskStatusValue(rowOrValue)
-  return ['RUNNING', 'IN_PROGRESS'].includes(status)
+  return [
+    'RUNNING',
+    'IN_PROGRESS',
+    'PRE_CHECKING',
+    'INSTALLING',
+    'ROLLING_BACK',
+    'RESTARTING',
+    'VALIDATING'
+  ].includes(status)
 }
 
 export function getWsusConfigLabel(config) {

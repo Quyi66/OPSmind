@@ -97,7 +97,7 @@ const emit = defineEmits(['update:visible'])
 // 对话框可见性
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (val) => emit('update:visible', val)
+  set: val => emit('update:visible', val)
 })
 
 // 获取状态类型
@@ -155,7 +155,7 @@ function handleClose() {
 }
 
 .code-block {
-  background: #f1f5f9;
+  background: var(--el-fill-color-light);
   border-radius: 6px;
   padding: 12px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
@@ -169,14 +169,14 @@ function handleClose() {
   }
 
   &.pending {
-    background: #fefce8;
-    border: 1px solid #fef08a;
+    background: var(--el-color-warning-light-9);
+    border: 1px solid var(--el-color-warning-light-5);
   }
 }
 
 .reason-block {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--el-color-danger-light-9);
+  border: 1px solid var(--el-color-danger-light-5);
   border-radius: 6px;
   padding: 12px;
   color: var(--el-color-danger);

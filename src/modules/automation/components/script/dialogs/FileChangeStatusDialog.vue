@@ -11,32 +11,27 @@
         <el-form-item label="操作">
           <el-radio-group v-model="status">
             <el-radio label="PUBLISHED">
-              <i class="fa fa-play-circle text-success me-1"></i> 启用
+              <i class="fa fa-play-circle text-success me-1"></i>
+              启用
             </el-radio>
             <el-radio label="DISABLED">
-              <i class="fa fa-stop-circle text-danger me-1"></i> 停用
+              <i class="fa fa-stop-circle text-danger me-1"></i>
+              停用
             </el-radio>
           </el-radio-group>
         </el-form-item>
 
         <el-form-item label="备注说明">
-          <el-input
-            v-model="comment"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注说明"
-          />
+          <el-input v-model="comment" type="textarea" :rows="3" placeholder="请输入备注说明" />
         </el-form-item>
-        
+
         <div class="selected-files-info">
           <p>将对以下 {{ files.length }} 个文件/文件夹执行操作：</p>
           <div class="file-list">
             <div v-for="file in files.slice(0, 5)" :key="file.path" class="file-item">
               {{ file.name }}
             </div>
-            <div v-if="files.length > 5" class="file-more">
-              ... 等 {{ files.length }} 个文件
-            </div>
+            <div v-if="files.length > 5" class="file-more">... 等 {{ files.length }} 个文件</div>
           </div>
         </div>
       </el-form>
@@ -75,7 +70,7 @@ const emit = defineEmits(['update:modelValue', 'success'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const status = ref('PUBLISHED')
@@ -90,7 +85,13 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    await gfsApi.changeFileStatus(props.repoType, props.repo, props.files, status.value, comment.value)
+    await gfsApi.changeFileStatus(
+      props.repoType,
+      props.repo,
+      props.files,
+      status.value,
+      comment.value
+    )
     ElMessage.success('操作成功')
     emit('success')
     visible.value = false
@@ -131,7 +132,7 @@ async function handleSubmit() {
 }
 
 .file-more {
-  color: #909399;
+  color: var(--el-text-color-placeholder);
   font-style: italic;
 }
 </style>

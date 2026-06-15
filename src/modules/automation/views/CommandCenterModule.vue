@@ -1,28 +1,153 @@
 <template>
   <div class="ops-module__content">
-    <router-view />
+    <div class="ops-page-layout">
+      <el-tabs
+        v-if="showWorkspaceTabs"
+        :model-value="activeWorkspaceName"
+        class="command-center-tabs"
+        @tab-change="handleWorkspaceChange"
+      >
+        <el-tab-pane
+          v-for="tab in workspaceTabs"
+          :key="tab.name"
+          :label="tab.label"
+          :name="tab.name"
+        >
+          <div class="command-center-tab-pane">
+            <component
+              v-if="shouldRenderWorkspaceTab(tab.name)"
+              :is="workspaceViewMap[tab.name]"
+              v-show="activeWorkspaceName === tab.name"
+              class="command-center-tab-page"
+            />
+          </div>
+        </el-tab-pane>
+      </el-tabs>
 
-    <!-- 执行命令对话框 -->
-    <RunCommandDialog
-      v-model:visible="runCommandDialogVisible"
-      :command="selectedCommand"
-      :mode="runCommandMode"
-      @success="handleRunSuccess"
-    />
+      <div v-else class="ops-module__view">
+        <router-view v-slot="{ Component, route: currentRoute }">
+          <transition name="fade-content" mode="out-in">
+            <component :is="Component" :key="String(currentRoute.name || currentRoute.path)" />
+          </transition>
+        </router-view>
+      </div>
+
+      <!-- 执行命令对话框 -->
+      <RunCommandDialog
+        v-model:visible="runCommandDialogVisible"
+        :command="selectedCommand"
+        :mode="runCommandMode"
+        @success="handleRunSuccess"
+      />
+
+      <ExecuteResultDialog
+        v-if="commandResultDialogVisible"
+        v-model:visible="commandResultDialogVisible"
+        :run-id="commandResultMeta.runId"
+        :job-title="commandResultMeta.jobTitle"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref, provide, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import RunCommandDialog from '@/modules/automation/components/command/dialogs/RunCommandDialog.vue'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import CommandListPage from '@/modules/automation/views/command/CommandListPage.vue'
+import CommandJobPage from '@/modules/automation/views/command/CommandJobPage.vue'
 
 const router = useRouter()
+const route = useRoute()
+
+const workspaceTabs = [
+  {
+    name: 'list',
+    label: '命令列表',
+    to: {
+      path: '/cmd/list'
+    }
+  },
+  {
+    name: 'job',
+    label: '命令运维工具',
+    to: {
+      path: '/cmd/list',
+      query: {
+        tab: 'job'
+      }
+    }
+  }
+]
+
+const workspaceViewMap = {
+  list: CommandListPage,
+  job: CommandJobPage
+}
+
+const showWorkspaceTabs = computed(() => String(route.name || '') === 'cmd-list')
+
+const activeWorkspaceName = computed(() =>
+  resolveTabQuery(route.query.tab) === 'job' ? 'job' : 'list'
+)
+
+const renderedWorkspaceTabs = ref([activeWorkspaceName.value])
 
 // 执行命令对话框状态
 const runCommandDialogVisible = ref(false)
 const selectedCommand = ref(null)
 const runCommandMode = ref('run')
+const commandResultDialogVisible = ref(false)
+const commandResultMeta = ref({ runId: '', jobTitle: '' })
+
+watch(
+  activeWorkspaceName,
+  name => {
+    if (!renderedWorkspaceTabs.value.includes(name)) {
+      renderedWorkspaceTabs.value = [...renderedWorkspaceTabs.value, name]
+    }
+  },
+  { immediate: true }
+)
+
+function shouldRenderWorkspaceTab(name) {
+  return renderedWorkspaceTabs.value.includes(name)
+}
+
+function resolveTabQuery(value) {
+  if (Array.isArray(value)) {
+    return value[0] || ''
+  }
+
+  return value || ''
+}
+
+function handleWorkspaceChange(name) {
+  const targetTab = workspaceTabs.find(tab => tab.name === name)
+  if (!targetTab) {
+    return
+  }
+
+  const nextTab = targetTab.name === 'job' ? 'job' : ''
+  const currentTab = resolveTabQuery(route.query.tab)
+
+  if (currentTab === nextTab) {
+    return
+  }
+
+  if (targetTab.name === 'job') {
+    router.replace(targetTab.to)
+    return
+  }
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.tab
+  router.replace({
+    path: '/cmd/list',
+    query: nextQuery
+  })
+}
 
 // 执行命令
 function handleRunCommand(command) {
@@ -31,7 +156,7 @@ function handleRunCommand(command) {
   runCommandDialogVisible.value = true
 }
 
-// 创建作业
+// 创建运维工具
 function handleCreateJob(command) {
   selectedCommand.value = command
   runCommandMode.value = 'createJob'
@@ -41,8 +166,33 @@ function handleCreateJob(command) {
 // 执行成功回调
 function handleRunSuccess(result) {
   if (runCommandMode.value === 'run') {
-    router.push('/cmd/logs')
+    const runId = extractRunId(result)
+    if (runId) {
+      commandResultMeta.value = {
+        runId,
+        jobTitle: resolveCommandRunTitle()
+      }
+      commandResultDialogVisible.value = true
+      return
+    }
+    router.push('/run-records/logs')
   }
+}
+
+function extractRunId(source) {
+  const data = source?.data ?? source ?? {}
+  return data?.runId || data?.run_id || data?.id || data?.logId || ''
+}
+
+function resolveCommandRunTitle() {
+  if (Array.isArray(selectedCommand.value)) {
+    if (selectedCommand.value.length === 1) {
+      return selectedCommand.value[0]?.name || '命令执行'
+    }
+    return `批量命令 (${selectedCommand.value.length})`
+  }
+
+  return selectedCommand.value?.name || '命令执行'
 }
 
 // 提供给子组件使用
@@ -58,7 +208,71 @@ defineExpose({
 <style scoped lang="scss">
 .ops-module__content {
   flex: 1;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
   min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  background: var(--el-bg-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ops-module__content > .ops-page-layout {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.command-center-tabs {
+  flex-shrink: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--el-bg-color);
+}
+
+:deep(.command-center-tabs .el-tabs__content) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+:deep(.command-center-tabs .el-tab-pane) {
+  height: 100%;
+}
+
+.command-center-tab-pane,
+.ops-module__view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.command-center-tab-page {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+:deep(.command-center-tabs .el-tabs__header) {
+  margin: 0;
+}
+
+:deep(.fade-content-enter-active),
+:deep(.fade-content-leave-active) {
+  transition: opacity 0.12s ease;
+}
+
+:deep(.fade-content-enter-from),
+:deep(.fade-content-leave-to) {
+  opacity: 0;
 }
 </style>

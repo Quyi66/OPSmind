@@ -199,7 +199,12 @@
                 <el-checkbox v-model="param.secret" />
               </td>
               <td class="text-right">
-                <el-button text title="删除参数" type="danger" @click="$emit('delete-param', index)">
+                <el-button
+                  text
+                  title="删除参数"
+                  type="danger"
+                  @click="$emit('delete-param', index)"
+                >
                   <el-icon><Delete /></el-icon>
                 </el-button>
               </td>

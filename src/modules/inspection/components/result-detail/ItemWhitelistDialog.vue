@@ -22,21 +22,14 @@
     </div>
 
     <!-- 表格 -->
-    <el-table
-      v-loading="loading"
-      :data="paginatedData"
-     
-      max-height="350"
-    >
+    <el-table v-loading="loading" :data="paginatedData" max-height="350">
       <el-table-column prop="hostKey" label="主机" width="140" />
       <el-table-column prop="checkName" label="检查项" min-width="180" show-overflow-tooltip />
       <el-table-column prop="templateName" label="模板名称" min-width="150" show-overflow-tooltip />
       <el-table-column prop="scriptPath" label="脚本路径" min-width="250" show-overflow-tooltip />
       <el-table-column label="操作" width="80" align="left" fixed="right">
         <template #default="{ row }">
-          <el-button text type="danger" size="small" @click="$emit('delete', row)">
-            删除
-          </el-button>
+          <el-button text type="danger" size="small" @click="$emit('delete', row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -83,11 +76,12 @@ const filteredData = computed(() => {
     return props.data
   }
   const keyword = searchText.value.toLowerCase()
-  return props.data.filter(item =>
-    item.hostKey?.toLowerCase().includes(keyword) ||
-    item.checkName?.toLowerCase().includes(keyword) ||
-    item.templateName?.toLowerCase().includes(keyword) ||
-    item.scriptPath?.toLowerCase().includes(keyword)
+  return props.data.filter(
+    item =>
+      item.hostKey?.toLowerCase().includes(keyword) ||
+      item.checkName?.toLowerCase().includes(keyword) ||
+      item.templateName?.toLowerCase().includes(keyword) ||
+      item.scriptPath?.toLowerCase().includes(keyword)
   )
 })
 
@@ -112,12 +106,15 @@ function handlePageChange(page) {
 }
 
 // 监听弹窗打开时重置状态
-watch(() => props.visible, (val) => {
-  if (val) {
-    searchText.value = ''
-    currentPage.value = 1
+watch(
+  () => props.visible,
+  val => {
+    if (val) {
+      searchText.value = ''
+      currentPage.value = 1
+    }
   }
-})
+)
 </script>
 
 <style scoped>

@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout ops-page-layout--page-scroll">
     <!-- 厂商统计 KPI 卡片 -->
     <!-- 厂商统计 KPI 卡片 -->
     <div v-if="!pickerMode" class="vendor-kpi-section">
@@ -147,8 +147,7 @@
         v-loading="loading"
         :data="tableData"
         :row-key="row => row.patch_id"
-        :height="pickerMode ? '100%' : undefined"
-        :max-height="!pickerMode ? 'calc(100vh - 400px)' : undefined"
+        class="natural-height-table"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" :reserve-selection="true" width="50" />
@@ -178,26 +177,10 @@
         </el-table-column>
         <el-table-column prop="related_vuls" label="关联CVE" min-width="200">
           <template #default="{ row }">
-            <div class="cve-tags" v-if="row.related_vuls">
-              <a
-                v-for="(cve, idx) in parseCVEs(row.related_vuls).slice(0, 3)"
-                :key="idx"
-                :href="getCveUrl(cve, resolveCveLinkTarget(row))"
-                target="_blank"
-                class="cve-link"
-              >
-                {{ cve }}
-              </a>
-              <button
-                v-if="parseCVEs(row.related_vuls).length > 3"
-                type="button"
-                class="cve-more"
-                @click="handleShowAllCves(row)"
-              >
-                +{{ parseCVEs(row.related_vuls).length - 3 }}
-              </button>
-            </div>
-            <span v-else>-</span>
+            <CveLinkList
+              :cves="row.related_vuls"
+              :url-resolver="cve => getCveUrl(cve, resolveCveLinkTarget(row))"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="vendor" label="厂商" width="100" />
@@ -236,80 +219,14 @@
 
     <!-- 补丁详情对话框 -->
     <el-dialog v-model="detailDialogVisible" title="补丁详情" width="1000px" destroy-on-close>
-      <div v-loading="detailLoading" class="patch-detail">
-        <template v-if="patchDetail">
-          <!-- 补丁编号 - 大号加粗 -->
-          <h3 class="patch-detail-id">{{ patchDetail.patch_id }}</h3>
-
-          <!-- 概要 -->
-          <div class="patch-detail-row">
-            <span class="patch-detail-label">概要：</span>
-            <span class="patch-detail-value">{{ patchDetail.title }}</span>
-          </div>
-
-          <!-- 严重程度 -->
-          <div class="patch-detail-row">
-            <span class="patch-detail-label">严重程度：</span>
-            <span class="patch-detail-value">
-              <el-tag
-                effect="dark"
-                class="severity-tag"
-                :class="'is-' + (patchDetail.severity || '').toLowerCase()"
-              >
-                {{ getSeverityLabel(patchDetail.severity) }}
-              </el-tag>
-            </span>
-          </div>
-
-          <!-- 描述 -->
-          <div class="patch-detail-section">
-            <div class="patch-detail-label">描述</div>
-            <div class="patch-detail-desc" v-html="renderMarkdown(patchDetail.description)"></div>
-          </div>
-
-          <!-- 关联CVE -->
-          <div class="patch-detail-section">
-            <div class="patch-detail-label">关联CVE</div>
-            <div class="patch-detail-cves">
-              <template v-if="patchDetail.related_vuls">
-                <span
-                  v-for="(cve, idx) in parseCVEs(patchDetail.related_vuls)"
-                  :key="idx"
-                  class="cve-item"
-                >
-                  <a :href="getCveUrl(cve, resolveCveLinkTarget(patchDetail))" target="_blank">
-                    {{ cve }}
-                  </a>
-                </span>
-              </template>
-              <span v-else>-</span>
-            </div>
-          </div>
-        </template>
-      </div>
+      <PatchDetailContent
+        :patch="patchDetail || {}"
+        :loading="detailLoading"
+        :cve-source="resolveCveLinkTarget(patchDetail)"
+        markdown
+      />
       <template #footer>
         <el-button @click="detailDialogVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 关联CVE 列表对话框 -->
-    <el-dialog v-model="cveDialogVisible" title="关联CVE" width="520px" destroy-on-close>
-      <div class="cve-dialog">
-        <template v-if="cveDialogList.length">
-          <a
-            v-for="(cve, idx) in cveDialogList"
-            :key="idx"
-            :href="getCveUrl(cve, cveDialogLinkTarget)"
-            target="_blank"
-            class="cve-dialog-item"
-          >
-            {{ cve }}
-          </a>
-        </template>
-        <span v-else>-</span>
-      </div>
-      <template #footer>
-        <el-button @click="cveDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
   </div>
@@ -322,6 +239,8 @@ import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchLibraryApi } from '../api'
 import { runJob } from '@/modules/automation/api/command'
 import { getCveUrl } from '../composables/useFormatters'
+import PatchDetailContent from '../components/common/PatchDetailContent.vue'
+import CveLinkList from '../components/common/CveLinkList.vue'
 
 const props = defineProps({
   pickerMode: {
@@ -369,9 +288,6 @@ const detailLoading = ref(false)
 const patchDetail = ref(null)
 
 // CVE 列表对话框
-const cveDialogVisible = ref(false)
-const cveDialogList = ref([])
-const cveDialogLinkTarget = ref('')
 
 // 计算补丁总数
 const totalPatches = computed(() => {
@@ -440,20 +356,8 @@ function formatDate(dateStr) {
   }
 }
 
-// 解析CVE列表
-function parseCVEs(vulsStr) {
-  if (!vulsStr) return []
-  return vulsStr.split(',').filter(cve => cve.trim())
-}
-
 function resolveCveLinkTarget(patch) {
   return patch?.vendor || patch?.os_distro || currentVendor.value || ''
-}
-
-function handleShowAllCves(row) {
-  cveDialogList.value = parseCVEs(row.related_vuls)
-  cveDialogLinkTarget.value = resolveCveLinkTarget(row)
-  cveDialogVisible.value = true
 }
 
 // 加载厂商统计数据
@@ -647,18 +551,6 @@ async function handleViewDetail(row) {
   } finally {
     detailLoading.value = false
   }
-}
-
-// 简单的 markdown 渲染（处理基本格式）
-function renderMarkdown(text) {
-  if (!text) return '<span class="text-muted">暂无描述</span>'
-  // 简单处理：换行、链接、加粗等
-  return text
-    .replace(/\n/g, '<br>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/`(.*?)`/g, '<code>$1</code>')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
 }
 
 // 添加到白名单
@@ -1060,147 +952,6 @@ defineExpose({
 .severity-low {
   background-color: #6c757d;
   color: #fff;
-}
-
-// CVE标签
-.cve-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-
-  .cve-link {
-    display: inline-block;
-    padding: 2px 8px;
-    background: #6c757d;
-    color: #fff;
-    border-radius: 4px;
-    font-size: 12px;
-    text-decoration: none;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #545b62;
-    }
-  }
-
-  .cve-more {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 8px;
-    background: var(--el-fill-color-dark);
-    color: #6c757d;
-    border-radius: 4px;
-    font-size: 12px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #dfe3e6;
-    }
-  }
-}
-
-.cve-dialog {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.cve-dialog-item {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #6c757d;
-  color: #fff;
-  border-radius: 4px;
-  font-size: 13px;
-  text-decoration: none;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #545b62;
-  }
-}
-
-// 补丁详情对话框样式
-.patch-detail {
-  min-height: 200px;
-
-  .patch-detail-id {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--el-text-color-primary);
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-  }
-
-  .patch-detail-row {
-    margin-bottom: 12px;
-    line-height: 1.6;
-
-    .patch-detail-label {
-      font-weight: 600;
-      color: var(--el-text-color-primary);
-    }
-
-    .patch-detail-value {
-      font-size: 14px;
-      color: var(--el-text-color-regular);
-    }
-  }
-
-  .patch-detail-section {
-    margin-top: 16px;
-
-    .patch-detail-label {
-      font-weight: 600;
-      color: var(--el-text-color-primary);
-      margin-bottom: 8px;
-    }
-
-    .patch-detail-desc {
-      font-size: 14px;
-      color: var(--el-text-color-regular);
-      line-height: 1.8;
-      padding: 12px;
-      background: var(--el-fill-color-light);
-      border-radius: 4px;
-      max-height: 300px;
-      overflow-y: auto;
-
-      code {
-        background: var(--el-fill-color-dark);
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-family: monospace;
-      }
-    }
-
-    .patch-detail-cves {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-
-      .cve-item {
-        a {
-          display: inline-block;
-          padding: 4px 10px;
-          background: #6c757d;
-          color: #fff;
-          border-radius: 4px;
-          font-size: 13px;
-          text-decoration: none;
-          transition: background 0.2s;
-
-          &:hover {
-            background: #545b62;
-          }
-        }
-      }
-    }
-  }
 }
 
 // 表格样式

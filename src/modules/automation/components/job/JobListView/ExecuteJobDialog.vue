@@ -1,18 +1,13 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="执行作业"
+    title="执行运维工具"
     width="1000px"
     destroy-on-close
     @close="handleClose"
   >
     <div class="execute-dialog" v-loading="detailLoading">
-      <el-form
-        v-if="formSchema.length"
-        :model="formValues"
-        label-width="0"
-        label-position="top"
-      >
+      <el-form v-if="formSchema.length" :model="formValues" label-width="0" label-position="top">
         <template v-for="field in formSchema" :key="field.name">
           <el-form-item :label="field.label">
             <el-input v-model="formValues[field.name]" />
@@ -22,23 +17,17 @@
           </el-form-item>
         </template>
       </el-form>
-      <div v-else class="execute-dialog__empty">
-        当前作业暂无可配置参数
-      </div>
+      <div v-else class="execute-dialog__empty">当前运维工具暂无可配置参数</div>
     </div>
     <template #footer>
       <div class="dialog-footer">
-        <div
-          v-if="executionStatusLabel"
-          class="execute-status"
-          :class="executionStatusClass"
-        >
+        <div v-if="executionStatusLabel" class="execute-status" :class="executionStatusClass">
           <span>{{ executionStatusLabel }}</span>
         </div>
         <div class="dialog-footer__actions">
           <el-button @click="handleClose">取消</el-button>
           <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
-            执行作业
+            执行运维工具
           </el-button>
         </div>
       </div>
@@ -50,10 +39,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
-import {
-  JOB_STATUS_LABELS,
-  JOB_STATUS_CLASS_MAP
-} from '@/modules/automation/constants/jobStatus'
+import { JOB_STATUS_LABELS, JOB_STATUS_CLASS_MAP } from '@/modules/automation/constants/jobStatus'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -62,11 +48,11 @@ const props = defineProps({
   fallbackConfigJson: { type: [String, Object], default: '' }
 })
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'success'])
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value)
+  set: value => emit('update:visible', value)
 })
 
 const detailLoading = ref(false)
@@ -100,7 +86,7 @@ watch(
 
 watch(
   () => props.visible,
-  (visible) => {
+  visible => {
     if (!visible) {
       resetForm()
     }
@@ -120,7 +106,7 @@ async function fetchJobDetail(jobId) {
     lastLoadedJobId.value = jobId
     initializeForm(detail)
   } catch (error) {
-    ElMessage.error(error?.message || '获取作业详情失败')
+    ElMessage.error(error?.message || '获取运维工具详情失败')
   } finally {
     detailLoading.value = false
   }
@@ -129,14 +115,14 @@ async function fetchJobDetail(jobId) {
 /** 初始化执行表单 */
 function initializeForm(detail) {
   const params = Array.isArray(detail?.params) ? detail.params : []
-  formSchema.value = params.map((item) => ({
+  formSchema.value = params.map(item => ({
     name: item.name,
     label: item.label || item.name,
     description: item.description || '',
     defaultValue: item.defaultValue ?? ''
   }))
   const defaults = {}
-  formSchema.value.forEach((field) => {
+  formSchema.value.forEach(field => {
     defaults[field.name] = field.defaultValue
   })
   formValues.value = defaults
@@ -161,7 +147,7 @@ function handleClose() {
 /** 提交执行作业 */
 async function handleSubmit() {
   if (!props.jobId) {
-    ElMessage.warning('缺少作业标识')
+    ElMessage.warning('缺少运维工具标识')
     return
   }
   executionStatus.value = ''
@@ -169,12 +155,23 @@ async function handleSubmit() {
   try {
     const payload = buildPayload()
     const response = await jaoApi.executeJob(payload)
-    const result = response?.data ?? response
-    const status = result?.status ?? ''
-    const runId = result?.runId ?? result?.id ?? ''
+    const result = response?.data ?? response ?? {}
+    const status = extractExecutionStatus(result)
+    const runId = extractRunId(result)
     handleStatusTransition(status, runId)
+    emit('success', {
+      runId,
+      status,
+      jobId: props.jobId,
+      jobType: jobDetail.value?.type || props.jobType || '',
+      jobTitle: jobDetail.value?.title || jobDetail.value?.jobTitle || ''
+    })
+    ElMessage.success(
+      runId ? '运维工具已提交执行，正在打开运行结果' : '运维工具已提交执行，正在刷新运行记录'
+    )
+    handleClose()
   } catch (error) {
-    ElMessage.error(error?.message || '执行作业失败')
+    ElMessage.error(error?.message || '执行运维工具失败')
   } finally {
     submitLoading.value = false
   }
@@ -205,6 +202,16 @@ function normalizeConfigJson(configJson) {
     console.warn('Failed to stringify configJson', error)
     return ''
   }
+}
+
+function extractRunId(source) {
+  const result = source?.data ?? source ?? {}
+  return result?.runId || result?.run_id || result?.id || result?.logId || ''
+}
+
+function extractExecutionStatus(source) {
+  const result = source?.data ?? source ?? {}
+  return result?.status || result?.runStatus || result?.state || ''
 }
 
 /** 根据状态更新提示并处理轮询 */

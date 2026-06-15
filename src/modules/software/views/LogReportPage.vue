@@ -28,12 +28,7 @@
           </el-select>
         </el-form-item> -->
         <el-form-item label="状态">
-          <el-select
-            v-model="statusFilter"
-            placeholder="全部"
-            clearable
-            style="width: 100px"
-          >
+          <el-select v-model="statusFilter" placeholder="全部" clearable style="width: 100px">
             <el-option
               v-for="status in statusOptions"
               :key="status.value"
@@ -43,12 +38,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="操作">
-          <el-select
-            v-model="actionFilter"
-            placeholder="全部"
-            clearable
-            style="width: 100px"
-          >
+          <el-select v-model="actionFilter" placeholder="全部" clearable style="width: 100px">
             <el-option
               v-for="action in actionOptions"
               :key="action"
@@ -58,12 +48,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
-          <el-input
-            v-model="searchText"
-            placeholder="搜索..."
-            clearable
-            style="width: 180px"
-          >
+          <el-input v-model="searchText" placeholder="搜索..." clearable style="width: 180px">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -84,8 +69,15 @@
 
     <!-- 操作栏 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadLogs" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadLogs"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -114,7 +106,7 @@
               :type="getStatusType(row.status)"
               size="small"
               class="status-badge"
-              :class="{ 'clickable': row.run_record }"
+              :class="{ clickable: row.run_record }"
               @click="row.run_record && handleViewRunResult(row)"
             >
               {{ getStatusText(row.status) }}

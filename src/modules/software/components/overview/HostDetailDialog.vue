@@ -11,10 +11,22 @@
     <div class="host-info-header">
       <h2 class="host-name">{{ hostKey }}</h2>
       <div class="host-meta">
-        <p><strong>OS：</strong>{{ machineInfo.os_distro || '-' }} {{ machineInfo.os_version || '' }}</p>
-        <p><strong>可用软件包：</strong>{{ machineInfo.yum_count || 0 }}</p>
-        <p><strong>已安装软件包：</strong>{{ machineInfo.installed_count || 0 }}</p>
-        <p><strong>上次扫描时间：</strong>{{ formatDate(machineInfo.scan_date) }}</p>
+        <p>
+          <strong>OS：</strong>
+          {{ machineInfo.os_distro || '-' }} {{ machineInfo.os_version || '' }}
+        </p>
+        <p>
+          <strong>可用软件包：</strong>
+          {{ machineInfo.yum_count || 0 }}
+        </p>
+        <p>
+          <strong>已安装软件包：</strong>
+          {{ machineInfo.installed_count || 0 }}
+        </p>
+        <p>
+          <strong>上次扫描时间：</strong>
+          {{ formatDate(machineInfo.scan_date) }}
+        </p>
       </div>
     </div>
 
@@ -22,17 +34,20 @@
     <el-tabs v-model="activeTab" @tab-change="handleTabChange">
       <el-tab-pane name="repos">
         <template #label>
-          <i class="fa fa-laptop-house" /> 仓库
+          <i class="fa fa-laptop-house" />
+          仓库
         </template>
       </el-tab-pane>
       <el-tab-pane name="available">
         <template #label>
-          <i class="fa fa-cube" /> 可用软件包
+          <i class="fa fa-cube" />
+          可用软件包
         </template>
       </el-tab-pane>
       <el-tab-pane name="installed">
         <template #label>
-          <i class="fa fa-backpack" /> 已安装软件包
+          <i class="fa fa-backpack" />
+          已安装软件包
         </template>
       </el-tab-pane>
     </el-tabs>
@@ -52,13 +67,7 @@
             </el-checkbox>
           </el-checkbox-group>
         </div>
-        <el-table
-          v-loading="reposLoading"
-          :data="reposData"
-
-          size="small"
-          max-height="350px"
-        >
+        <el-table v-loading="reposLoading" :data="reposData" size="small" max-height="350px">
           <el-table-column prop="repo_id" label="仓库" min-width="120" />
           <el-table-column prop="repo_name" label="名称" min-width="150" />
           <el-table-column prop="repo_file" label="配置文件" min-width="150" />
@@ -92,12 +101,7 @@
               >
                 禁用
               </el-button>
-              <el-button
-                text
-                type="danger"
-                size="small"
-                @click="handleDeleteRepo(row)"
-              >
+              <el-button text type="danger" size="small" @click="handleDeleteRepo(row)">
                 删除
               </el-button>
             </template>
@@ -127,14 +131,14 @@
             :disabled="selectedAvailablePackages.length === 0"
             @click="handleInstallSelected"
           >
-            <i class="fa fa-chevron-circle-right" /> 安装选中的软件包
+            <i class="fa fa-chevron-circle-right" />
+            安装选中的软件包
           </el-button>
         </div>
         <el-table
           ref="availableTableRef"
           v-loading="availableLoading"
           :data="availableData"
-
           size="small"
           max-height="350px"
           @selection-change="handleAvailableSelectionChange"
@@ -172,7 +176,8 @@
             :loading="uninstallSelectedLoading"
             @click="handleUninstallSelected"
           >
-            <i class="fa fa-chevron-circle-right" /> 卸载选中的软件包
+            <i class="fa fa-chevron-circle-right" />
+            卸载选中的软件包
           </el-button>
           <el-button
             type="primary"
@@ -181,7 +186,8 @@
             :loading="upgradeSelectedLoading"
             @click="handleUpgradeSelected"
           >
-            <i class="fa fa-upload" /> 升级选中的软件包
+            <i class="fa fa-upload" />
+            升级选中的软件包
           </el-button>
           <el-button
             type="primary"
@@ -190,14 +196,14 @@
             :loading="rollbackSelectedLoading"
             @click="handleRollbackSelected"
           >
-            <i class="fa fa-undo-alt" /> 回滚选中的软件包
+            <i class="fa fa-undo-alt" />
+            回滚选中的软件包
           </el-button>
         </div>
         <el-table
           ref="installedTableRef"
           v-loading="installedLoading"
           :data="installedData"
-
           size="small"
           max-height="350px"
           @selection-change="handleInstalledSelectionChange"
@@ -309,11 +315,7 @@ const reposPagination = reactive({
 
 function resolveRepoKeys(row, index = 0) {
   const repoId = row?.refid || row?.repo_id || row?.repo_name || row?.repo_file
-  const loadingKey = repoId || [
-    'row',
-    index,
-    row?.repo_status || 'unknown-status'
-  ].join('|')
+  const loadingKey = repoId || ['row', index, row?.repo_status || 'unknown-status'].join('|')
   return { repoId, loadingKey }
 }
 
@@ -594,16 +596,19 @@ function handleClose() {
 }
 
 // 监听显示状态
-watch(() => props.modelValue, (val) => {
-  dialogVisible.value = val
-  if (val && props.hostId) {
-    activeTab.value = 'repos'
-    loadMachineInfo()
-    loadRepos()
+watch(
+  () => props.modelValue,
+  val => {
+    dialogVisible.value = val
+    if (val && props.hostId) {
+      activeTab.value = 'repos'
+      loadMachineInfo()
+      loadRepos()
+    }
   }
-})
+)
 
-watch(dialogVisible, (val) => {
+watch(dialogVisible, val => {
   emit('update:modelValue', val)
 })
 

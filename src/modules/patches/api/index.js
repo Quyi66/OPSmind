@@ -100,6 +100,34 @@ function buildPatchAuditLogsQuery(params = {}) {
   return query ? `?${query}` : ''
 }
 
+function buildGenericQuery(params = {}) {
+  const searchParams = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) return
+
+    if (Array.isArray(value)) {
+      value.forEach(item => {
+        if (item === undefined || item === null) return
+
+        const normalizedItem = typeof item === 'string' ? item.trim() : item
+        if (normalizedItem === '') return
+
+        searchParams.append(key, String(normalizedItem))
+      })
+      return
+    }
+
+    const normalizedValue = typeof value === 'string' ? value.trim() : value
+    if (normalizedValue === '') return
+
+    searchParams.set(key, String(normalizedValue))
+  })
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
+}
+
 function normalizePatchTask(task) {
   if (!task || typeof task !== 'object' || Array.isArray(task)) {
     return task
@@ -204,23 +232,29 @@ export const patchScanApi = {
 
   /**
    * 获取扫描结果列表（主机概览）
-   * GET /vap/api/vap/dashboard/machine-with-patch
+   * GET /vap/api/vap/v2/cve/machine-list
    * @param {Object} params - 查询参数
-   * @param {number} params.page - 页码
+   * @param {string} params.os_distro - 操作系统发行版
+   * @param {string} params.os_version - 操作系统版本
+   * @param {string} params.os_sp_version - 操作系统 SP 版本
+   * @param {Array<string>} params.tags - 标签列表
+   * @param {string} params.keyword - 主机名、主机 IP 或资产 ID
+   * @param {number} params.page - 页码，从 0 开始
    * @param {number} params.size - 每页大小
-   * @param {string} params.filter - 筛选关键词
    * @returns {Promise}
    */
   getScanResults(params = {}) {
-    const queryParams = {
-      size: params.size || 20,
-      page: params.page || 1
-    }
-    if (params.filter && params.filter.trim()) {
-      queryParams.filter = params.filter.trim()
-    }
-    // VAP2_LIST_MACHINE_WITH_PATCH → GET /sjxy-vap/api/vap/dashboard/machine-with-patch
-    return apiService.get(`${VAP_DASHBOARD_MIGRATION_BASE}/machine-with-patch`, { params: queryParams }).then(wrapRecordsResponse)
+    const query = buildGenericQuery({
+      os_distro: params.os_distro,
+      os_version: params.os_version,
+      os_sp_version: params.os_sp_version,
+      tags: params.tags,
+      keyword: params.keyword,
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/machine-list${query}`).then(wrapRecordsResponse)
   },
 
   /**
@@ -387,7 +421,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 查询任务操作审计日志（分页）
+   * 查询任务操作日志（分页）
    * GET /vap/api/vap/v2/patch/task/{id}/audit/history?page=0&size=50
    */
   getTaskAuditHistory(id, params = {}) {
@@ -397,7 +431,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 查询任务全量操作审计日志（不分页）
+   * 查询任务全量操作日志（不分页）
    * GET /vap/api/vap/v2/patch/task/{id}/audit/history/all
    */
   getTaskAuditHistoryAll(id) {
@@ -459,20 +493,45 @@ export const patchInstallApi = {
 
   /**
    * 查询补丁在指定主机上的重启建议
-   * GET /vap/api/vap/v2/patch/reboot-on-host?patchId=...&hostIp=...
-   * patchId 支持逗号分隔多个补丁编号
+   * GET /vap/api/vap/v2/patch/reboot-on-host?patchId=...&hostIp=... (单个 patch)
+   * POST /vap/api/vap/v2/patch/reboot-on-host (多个 patch)
+   * 请求体 { patchIds: [...], hostIp: "..." }
    */
   getPatchRebootOnHost(params) {
-    const searchParams = new URLSearchParams({
-      patchId: params.patchId,
-      hostIp: params.hostIp
-    })
-
-    if (params.cacheBuster) {
-      searchParams.set('cacheBuster', String(params.cacheBuster))
+    let patchIds = []
+    if (Array.isArray(params.patchIds)) {
+      patchIds = params.patchIds
+    } else if (typeof params.patchId === 'string') {
+      patchIds = params.patchId
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+    } else if (params.patchId) {
+      patchIds = [String(params.patchId)]
     }
 
-    return apiService.get(`${VAP_API_PREFIX}/v2/patch/reboot-on-host?${searchParams.toString()}`)
+    if (patchIds.length > 1) {
+      const payload = {
+        patchIds,
+        hostIp: params.hostIp
+      }
+      const url = params.cacheBuster
+        ? `${VAP_API_PREFIX}/v2/patch/reboot-on-host?cacheBuster=${params.cacheBuster}`
+        : `${VAP_API_PREFIX}/v2/patch/reboot-on-host`
+      return apiService.post(url, payload)
+    } else {
+      const patchIdVal = patchIds.length > 0 ? patchIds[0] : params.patchId || ''
+      const searchParams = new URLSearchParams({
+        patchId: patchIdVal,
+        hostIp: params.hostIp
+      })
+
+      if (params.cacheBuster) {
+        searchParams.set('cacheBuster', String(params.cacheBuster))
+      }
+
+      return apiService.get(`${VAP_API_PREFIX}/v2/patch/reboot-on-host?${searchParams.toString()}`)
+    }
   },
 
   /**
@@ -646,13 +705,10 @@ export const patchInstallApi = {
    * @returns {Promise}
    */
   getAffectedPackages(params) {
-    return apiService
-      .get(`${VAP_DASHBOARD_BASE}/affected-pkg-of-patch-detail`, {
-        params: {
-          patchIds: params.patch_ids
-        }
-      })
-      .then(wrapRecordsResponse)
+    const requestBody = {
+      patch_ids: params.patch_ids
+    }
+    return apiService.post('/vap/api/vap/v2/patch/affected-pkgs', requestBody).then(wrapRecordsResponse)
   },
 
   /**
@@ -689,6 +745,23 @@ export const patchInstallApi = {
    */
   getInstallTaskDetail(taskId) {
     return patchInstallApi.getTask(taskId)
+  }
+}
+
+/**
+ * 软件包本地安装 API
+ */
+export const localInstallApi = {
+  /**
+   * 启动软件包安装作业
+   * Job Code: QJb6B8
+   */
+  startInstall(params) {
+    return apiService
+      .post(`/jao/api/jao/jobs/QJb6B8/run?cacheBuster=${Date.now()}`, {
+        params
+      })
+      .then(response => response?.data ?? response)
   }
 }
 
@@ -933,7 +1006,7 @@ export const vulnerabilityApi = {
 
   /**
    * 获取漏洞概览列表
-    * GET /vap/api/vap/dashboard/patch-by-cves
+   * GET /vap/api/vap/v2/cve/patch-by-cves
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码
    * @param {number} params.size - 每页大小
@@ -944,22 +1017,43 @@ export const vulnerabilityApi = {
    * @returns {Promise}
    */
   getVulnerabilityList(params = {}) {
-    const queryParams = {
-      hostKey: params.host_key || params.hostKey || '',
-      vulId: params.vul_id || params.vulId || '',
-      severity: params.severity || 'all',
-      rebootStatus: params.reboot_status || params.rebootStatus || 'all',
-      isKernel: params.is_kernel || params.isKernel || 'all',
-      patchStatus: params.patch_status || params.patchStatus || 'all',
-      osDistro: params.os_distro || params.osDistro || 'all',
-      osMajorVersion: params.os_major_version || params.osMajorVersion || 'all',
-      page: params.page || 1,
-      size: params.size || 20
-    }
-    if (params.filter && String(params.filter).trim()) {
-      queryParams.filter = String(params.filter).trim()
-    }
-    return apiService.get(`${VAP_DASHBOARD_BASE}/patch-by-cves`, { params: queryParams }).then(wrapRecordsResponse)
+    const query = buildGenericQuery({
+      host_key: params.host_key === 'all' ? undefined : params.host_key,
+      vul_id: params.vul_id === 'all' ? undefined : params.vul_id,
+      severity: params.severity === 'all' ? undefined : params.severity,
+      reboot_status: params.reboot_status === 'all' ? undefined : params.reboot_status,
+      is_kernel: params.is_kernel === 'all' ? undefined : params.is_kernel,
+      patch_status: params.patch_status === 'all' ? undefined : params.patch_status,
+      os_distro: params.os_distro === 'all' ? undefined : params.os_distro,
+      os_major_version: params.os_major_version === 'all' ? undefined : params.os_major_version,
+      filter: params.filter,
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/patch-by-cves${query}`).then(wrapRecordsResponse)
+  },
+
+  /**
+   * 导出漏洞列表 Excel
+   * GET /vap/api/vap/v2/cve/patch-by-cves/export
+   */
+  exportVulnerabilityList(params = {}) {
+    const query = buildGenericQuery({
+      host_key: params.host_key === 'all' ? undefined : params.host_key,
+      vul_id: params.vul_id === 'all' ? undefined : params.vul_id,
+      severity: params.severity === 'all' ? undefined : params.severity,
+      reboot_status: params.reboot_status === 'all' ? undefined : params.reboot_status,
+      is_kernel: params.is_kernel === 'all' ? undefined : params.is_kernel,
+      patch_status: params.patch_status === 'all' ? undefined : params.patch_status,
+      os_distro: params.os_distro === 'all' ? undefined : params.os_distro,
+      os_major_version: params.os_major_version === 'all' ? undefined : params.os_major_version,
+      filter: params.filter
+    })
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/cve/patch-by-cves/export${query}`, {
+      responseType: 'blob'
+    })
   },
 
   /**
@@ -1063,7 +1157,7 @@ export const vulnerabilityApi = {
  */
 export const patchLogsApi = {
   /**
-   * 查询租户补丁操作审计日志
+   * 查询租户补丁操作日志
    * GET /vap/api/vap/v2/patch/task/audit/logs?taskType=&operator=&startTime=&endTime=&page=0&size=20
    */
   getAuditLogs(params = {}) {
@@ -1801,13 +1895,9 @@ export const cveApi = {
   exportReport(payload) {
     const requestBody = Array.isArray(payload) ? { cveIds: payload } : payload || {}
 
-    return apiService.post(
-      `${VAP_API_PREFIX}/v2/cve/export`,
-      requestBody,
-      {
-        responseType: 'blob'
-      }
-    )
+    return apiService.post(`${VAP_API_PREFIX}/v2/cve/export`, requestBody, {
+      responseType: 'blob'
+    })
   },
 
   /**
@@ -1823,13 +1913,9 @@ export const cveApi = {
         ? { text: payload }
         : payload || {}
 
-    return apiService.post(
-      `${VAP_API_PREFIX}/v2/cve/feedback-template-export`,
-      requestBody,
-      {
-        responseType: 'blob'
-      }
-    )
+    return apiService.post(`${VAP_API_PREFIX}/v2/cve/feedback-template-export`, requestBody, {
+      responseType: 'blob'
+    })
   },
 
   /**
@@ -1919,6 +2005,35 @@ export const winCveApi = {
  * 中间件 CVE Vulnerability 查询 API
  * 参照 middleware-cve-api.md 实现
  */
+export const winKbApi = {
+  getKbList(params = {}) {
+    const queryParams = {}
+
+    if (params.severity && params.severity !== 'all') queryParams.severity = params.severity
+    if (params.keyword) queryParams.keyword = params.keyword
+    if (params.startDate) queryParams.startDate = params.startDate
+    if (params.endDate) queryParams.endDate = params.endDate
+    if (params.page !== undefined) queryParams.page = params.page
+    if (params.size !== undefined) queryParams.size = params.size
+
+    return apiService.get(`${VAP_API_PREFIX}/v2/win-kb/list`, { params: queryParams })
+  },
+
+  getKbDetail(kbNumber) {
+    return apiService.get(`${VAP_API_PREFIX}/v2/win-kb/detail/${encodeURIComponent(kbNumber)}`)
+  },
+
+  getAffectedHosts(kbNumber) {
+    return apiService.get(
+      `${VAP_API_PREFIX}/v2/win-kb/affected-hosts/${encodeURIComponent(kbNumber)}`
+    )
+  },
+
+  getStatistics() {
+    return apiService.get(`${VAP_API_PREFIX}/v2/win-kb/statistics`)
+  }
+}
+
 export const middlewareCveApi = {
   /**
    * 分页查询中间件 CVE 列表
@@ -1976,6 +2091,15 @@ export const middlewareCveApi = {
  * RPM 软件包信息 API
  */
 export const rpmInfoApi = {
+  /**
+   * 查询架构枚举
+   * GET /vap/api/vap/v2/rpm-info/architectures
+   */
+  getArchitectures(params = {}) {
+    const query = buildGenericQuery({ source: params.source })
+    return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/architectures${query}`)
+  },
+
   /**
    * 全量 RPM 软件包分页查询
    * GET /vap/api/vap/v2/rpm-info/list
@@ -2081,9 +2205,260 @@ export const rpmInfoApi = {
    * POST /vap/api/vap/v2/rpm-info/installed/scan-packages/export
    */
   exportInstalledScanPackages(payload = {}) {
-    return apiService.post(`${VAP_API_PREFIX}/v2/rpm-info/installed/scan-packages/export`, payload, {
+    return apiService.post(
+      `${VAP_API_PREFIX}/v2/rpm-info/installed/scan-packages/export`,
+      payload,
+      {
+        responseType: 'blob'
+      }
+    )
+  }
+}
+
+/**
+ * R3 · 主机总览自定义视图 API
+ */
+export const viewConfigApi = {
+  /**
+   * 拉取生效视图
+   * GET /acm/api/acm/ci/view-config?ciType=host&scope=user
+   */
+  getViewConfig(params = {}) {
+    const query = buildGenericQuery({
+      ciType: params.ciType || 'host',
+      scope: params.scope || 'user'
+    })
+    return apiService.get(`/acm/api/acm/ci/view-config${query}`)
+  },
+
+  /**
+   * 保存视图
+   * PUT /acm/api/acm/ci/view-config
+   */
+  saveViewConfig(data) {
+    return apiService.put('/acm/api/acm/ci/view-config', data)
+  },
+
+  /**
+   * 可选属性列表
+   * GET /acm/api/acm/ci/view-config/attrs?ciType=host
+   */
+  getAttrs(params = {}) {
+    const query = buildGenericQuery({
+      ciType: params.ciType || 'host'
+    })
+    return apiService.get(`/acm/api/acm/ci/view-config/attrs${query}`)
+  }
+}
+
+/**
+ * R4 · 主机端口与区域批量配置 API
+ */
+export const hostBatchApi = {
+  /**
+   * 批量配置端口
+   * POST /acm/api/acm/ci/batch/apply-ports
+   */
+  applyPorts(data) {
+    return apiService.post('/acm/api/acm/ci/batch/apply-ports', data)
+  },
+
+  /**
+   * 批量设置单个属性
+   * POST /acm/api/acm/ci/batch/save/attr
+   */
+  saveAttr(data) {
+    return apiService.post('/acm/api/acm/ci/batch/save/attr', data)
+  },
+
+  /**
+   * 列出 3 个保留区域名
+   * GET /acm/api/acm/ci/batch/locations
+   */
+  getLocations() {
+    return apiService.get('/acm/api/acm/ci/batch/locations')
+  },
+
+  /**
+   * 批量给主机标记区域
+   * POST /acm/api/acm/ci/batch/set-location
+   */
+  setLocation(data) {
+    return apiService.post('/acm/api/acm/ci/batch/set-location', data)
+  },
+
+  /**
+   * 查单台主机当前区域
+   * GET /acm/api/acm/ci/batch/get-location?hostId=...
+   */
+  getLocation(hostId) {
+    return apiService.get(`/acm/api/acm/ci/batch/get-location?hostId=${hostId}`)
+  }
+}
+
+/**
+ * R2 · 漏洞紧急程度看板与规则 API
+ */
+export const urgencyApi = {
+  /**
+   * 4 档统计大卡
+   * GET /vap/api/vap/v2/urgency/statistics
+   */
+  getStatistics() {
+    return apiService.get('/vap/api/vap/v2/urgency/statistics')
+  },
+
+  /**
+   * 全量重算
+   * POST /vap/api/vap/v2/urgency/recompute?batchSize=1000
+   */
+  recompute(params = {}) {
+    const query = buildGenericQuery({
+      batchSize: params.batchSize || 1000
+    })
+    return apiService.post(`/vap/api/vap/v2/urgency/recompute${query}`)
+  },
+
+  /**
+   * 单台主机重算
+   * POST /vap/api/vap/v2/urgency/recompute-host?hostId=...
+   */
+  recomputeHost(hostId) {
+    return apiService.post(`/vap/api/vap/v2/urgency/recompute-host?hostId=${hostId}`)
+  },
+
+  /**
+   * 规则列表
+   * GET /vap/api/vap/v2/urgency/rule
+   */
+  getRules() {
+    return apiService.get('/vap/api/vap/v2/urgency/rule')
+  },
+
+  /**
+   * 多 CVE 查紧急程度 (即时计算, 0落库)
+   * POST /vap/api/vap/v2/urgency/lookup
+   */
+  lookupUrgency(data) {
+    return apiService.post('/vap/api/vap/v2/urgency/lookup', data)
+  },
+
+  /**
+   * 多 CVE 查询结果导出 Excel
+   * POST /vap/api/vap/v2/urgency/lookup/export
+   */
+  exportLookupUrgency(data) {
+    return apiService.post('/vap/api/vap/v2/urgency/lookup/export', data, {
       responseType: 'blob'
     })
+  },
+
+  /**
+   * 规则编辑
+   * PUT /vap/api/vap/v2/urgency/rule/{id}
+   */
+  updateRule(id, data) {
+    return apiService.put(`/vap/api/vap/v2/urgency/rule/${id}`, data)
+  },
+
+  /**
+   * 全量导入当前租户的紧急程度规则
+   * POST /vap/api/vap/v2/urgency/rule/import
+   */
+  importRules(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiService.post('/vap/api/vap/v2/urgency/rule/import', formData)
+  },
+
+  /**
+   * 大卡下钻分页列表
+   * GET /vap/api/vap/v2/urgency/page?urgency=...&page=1&size=20
+   */
+  getUrgencyPage(params = {}) {
+    const query = buildGenericQuery({
+      urgency: params.urgency,
+      page: params.page ?? 1,
+      size: params.size ?? 20
+    })
+    return apiService.get(`/vap/api/vap/v2/urgency/page${query}`)
+  }
+}
+
+/**
+ * R1 · CVE 文件导入比对 API
+ */
+export const cveImportApi = {
+  /**
+   * 上传 Excel
+   * POST /vap/api/vap/v2/cve/import/upload
+   */
+  uploadExcel(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiService.post('/vap/api/vap/v2/cve/import/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+
+  /**
+   * 触发比对
+   * POST /vap/api/vap/v2/cve/import/batch/{id}/compare
+   */
+  compareBatch(id) {
+    return apiService.post(`/vap/api/vap/v2/cve/import/batch/${id}/compare`)
+  },
+
+  /**
+   * 历史批次分页
+   * GET /vap/api/vap/v2/cve/import/batch?page=0&size=20
+   */
+  getBatches(params = {}) {
+    const query = buildGenericQuery({
+      page: params.page ?? 0,
+      size: params.size ?? 20
+    })
+    return apiService.get(`/vap/api/vap/v2/cve/import/batch${query}`)
+  },
+
+  /**
+   * 批次详情
+   * GET /vap/api/vap/v2/cve/import/batch/{id}
+   */
+  getBatchDetail(id) {
+    return apiService.get(`/vap/api/vap/v2/cve/import/batch/${id}`)
+  },
+
+  /**
+   * 涉及主机清单
+   * GET /vap/api/vap/v2/cve/import/batch/{id}/affected-hosts
+   */
+  getAffectedHosts(id) {
+    return apiService.get(`/vap/api/vap/v2/cve/import/batch/${id}/affected-hosts`)
+  },
+
+  /**
+   * 导出上报模板
+   * POST /vap/api/vap/v2/cve/import/batch/{id}/export-report
+   */
+  exportReport(id) {
+    return apiService.post(
+      `/vap/api/vap/v2/cve/import/batch/${id}/export-report`,
+      {},
+      {
+        responseType: 'blob'
+      }
+    )
+  },
+
+  /**
+   * 删除批次
+   * DELETE /vap/api/vap/v2/cve/import/batch/{id}
+   */
+  deleteBatch(id) {
+    return apiService.delete(`/vap/api/vap/v2/cve/import/batch/${id}`)
   }
 }
 
@@ -2091,6 +2466,7 @@ export const rpmInfoApi = {
 export default {
   scan: patchScanApi,
   install: patchInstallApi,
+  localInstall: localInstallApi,
   rollback: patchRollbackApi,
   library: patchLibraryApi,
   vulnerability: vulnerabilityApi,
@@ -2100,6 +2476,11 @@ export default {
   operationReport: operationReportApi,
   cve: cveApi,
   winCve: winCveApi,
+  winKb: winKbApi,
   middlewareCve: middlewareCveApi,
-  rpmInfo: rpmInfoApi
+  rpmInfo: rpmInfoApi,
+  viewConfig: viewConfigApi,
+  hostBatch: hostBatchApi,
+  urgency: urgencyApi,
+  cveImport: cveImportApi
 }

@@ -73,7 +73,7 @@ export function getDevLoginDefaults(): LoginDefaults {
 export function logDevInfo(): void {
   if (!DEV_DEFAULTS.IS_DEV) return
 
-  console.group('🔧 OPSmind 开发环境信息')
+  console.group('🔧 KoreOPS 开发环境信息')
   console.groupEnd()
 }
 

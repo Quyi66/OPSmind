@@ -10,7 +10,7 @@ import GroupLayoutShell from './GroupLayoutShell.vue'
 import { provideGroupPathNavigation } from './useGroupLayoutContext.js'
 
 const menuGroups = computed(() => getGroupMenuConfig('flow-management', MENU_CONFIG))
-const defaultOpeneds = ['flow']
+const defaultOpeneds = ['users']
 
-provideGroupPathNavigation('flow')
+provideGroupPathNavigation('users')
 </script>

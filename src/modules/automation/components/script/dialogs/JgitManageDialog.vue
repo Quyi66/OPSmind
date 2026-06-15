@@ -13,12 +13,7 @@
             <div class="line-numbers">
               <div v-for="n in lineCount" :key="n" class="line-number">{{ n }}</div>
             </div>
-            <textarea
-              v-model="jgitInfo"
-              class="code-textarea"
-              readonly
-              placeholder="加载中..."
-            />
+            <textarea v-model="jgitInfo" class="code-textarea" readonly placeholder="加载中..." />
           </div>
         </div>
       </el-form-item>
@@ -27,10 +22,12 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button type="danger" :loading="resetting" @click="handleReset">
-          <i class="fa fa-undo-alt" /> 重置JGit
+          <i class="fa fa-undo-alt" />
+          重置JGit
         </el-button>
         <el-button type="warning" :loading="repairing" @click="handleRepair">
-          <i class="fa fa-tools" /> 修复
+          <i class="fa fa-tools" />
+          修复
         </el-button>
         <el-button type="primary" :loading="refreshing" @click="handleRefresh" title="刷新">
           <i class="fa fa-sync-alt" />
@@ -75,14 +72,17 @@ const lineCount = computed(() => {
 })
 
 // 同步 v-model
-watch(() => props.modelValue, (val) => {
-  dialogVisible.value = val
-  if (val) {
-    loadJgitInfo()
+watch(
+  () => props.modelValue,
+  val => {
+    dialogVisible.value = val
+    if (val) {
+      loadJgitInfo()
+    }
   }
-})
+)
 
-watch(dialogVisible, (val) => {
+watch(dialogVisible, val => {
   emit('update:modelValue', val)
 })
 
@@ -99,11 +99,9 @@ async function loadJgitInfo() {
 // 重置 JGit
 async function handleReset() {
   try {
-    await ElMessageBox.confirm(
-      '确定重置JGit存储区吗？该操作将清除本地JGit缓存数据。',
-      '重置确认',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm('确定重置JGit存储区吗？该操作将清除本地JGit缓存数据。', '重置确认', {
+      type: 'warning'
+    })
   } catch {
     return
   }

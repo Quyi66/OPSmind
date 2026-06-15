@@ -15,7 +15,7 @@
           </el-button>
         </template>
       </el-input>
-      <el-row v-if="fileList.length > 0" :gutter="12" style="margin-top: 8px;">
+      <el-row v-if="fileList.length > 0" :gutter="12" style="margin-top: 8px">
         <el-col :span="12" v-if="showConfig">
           <el-input
             v-model="fileList[0].config"
@@ -39,7 +39,9 @@
     <div v-else-if="multipleSelect && fileList.length" class="file-list">
       <div class="file-list-header">
         <el-button size="small" :disabled="disabled" @click="handleOpenSelector">
-          共 <strong>{{ fileList.length }}</strong> 个文件
+          共
+          <strong>{{ fileList.length }}</strong>
+          个文件
         </el-button>
       </div>
       <table class="file-table">
@@ -69,12 +71,7 @@
               />
             </td>
             <td v-if="showTag" class="file-tag-cell">
-              <el-input
-                v-model="file.tag"
-                placeholder="Tag"
-                size="small"
-                :disabled="disabled"
-              />
+              <el-input v-model="file.tag" placeholder="Tag" size="small" :disabled="disabled" />
             </td>
             <td class="file-action-cell">
               <el-button
@@ -93,9 +90,7 @@
 
     <!-- 无文件时的空状态 -->
     <div v-else>
-      <el-button size="small" :disabled="disabled" @click="handleOpenSelector">
-        选择文件
-      </el-button>
+      <el-button size="small" :disabled="disabled" @click="handleOpenSelector">选择文件</el-button>
     </div>
 
     <!-- GFS 文件选择对话框 -->
@@ -113,7 +108,7 @@
             placeholder="搜索文件名..."
             prefix-icon="Search"
             clearable
-            style="width: 300px;"
+            style="width: 300px"
           />
         </div>
         <div class="gfs-browser-body">
@@ -143,7 +138,11 @@
               <span class="file-name">{{ item.name }}</span>
               <span v-if="item.description" class="file-desc">{{ item.description }}</span>
             </div>
-            <el-empty v-if="!loading && !filteredFiles.length" description="暂无文件" :image-size="60" />
+            <el-empty
+              v-if="!loading && !filteredFiles.length"
+              description="暂无文件"
+              :image-size="60"
+            />
           </div>
         </div>
         <div class="gfs-browser-footer">
@@ -178,7 +177,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const fileList = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 // 单选模式下显示的文件路径
@@ -215,7 +214,9 @@ const filteredFiles = computed(() => {
 
 // 判断文件是否被选中
 function isFileSelected(filePath) {
-  return selectedFiles.value.some(f => f === filePath || (typeof f === 'object' && f.path === filePath))
+  return selectedFiles.value.some(
+    f => f === filePath || (typeof f === 'object' && f.path === filePath)
+  )
 }
 
 // 加载 GFS 文件列表
@@ -238,7 +239,7 @@ async function loadGfsFiles(path = '') {
     }))
   } catch (error) {
     console.error('加载文件列表失败:', error)
-    ElMessage.error('加载文件列表失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`加载文件列表失败: ${error.message || '未知错误'}`)
     gfsFiles.value = []
   } finally {
     loading.value = false
@@ -315,11 +316,13 @@ function handleConfirmSelect() {
   } else {
     // 单选模式 - 替换整个列表（保留原有的 config）
     const existingConfig = fileList.value.length > 0 ? fileList.value[0].config : ''
-    fileList.value = [{
-      path: selectedFiles.value[0],
-      config: existingConfig || '',
-      tag: ''
-    }]
+    fileList.value = [
+      {
+        path: selectedFiles.value[0],
+        config: existingConfig || '',
+        tag: ''
+      }
+    ]
   }
 
   selectedFiles.value = []
@@ -327,18 +330,22 @@ function handleConfirmSelect() {
 }
 
 // 检查文件是否存在（模拟）
-watch(fileList, (list) => {
-  // TODO: 实际应该调用 GFS API 检查文件状态
-  const statusMap = {}
-  list.forEach(file => {
-    // 暂时不标记任何文件为不存在
-    statusMap[file.path] = false
-  })
-  fileStatusMap.value = statusMap
-}, { deep: true, immediate: true })
+watch(
+  fileList,
+  list => {
+    // TODO: 实际应该调用 GFS API 检查文件状态
+    const statusMap = {}
+    list.forEach(file => {
+      // 暂时不标记任何文件为不存在
+      statusMap[file.path] = false
+    })
+    fileStatusMap.value = statusMap
+  },
+  { deep: true, immediate: true }
+)
 
 // 监听对话框打开，确保初始化文件列表为空
-watch(dialogVisible, (visible) => {
+watch(dialogVisible, visible => {
   if (visible && !props.multipleSelect) {
     // 单选模式下，如果已经有选中的文件，预选中
     if (fileList.value.length > 0 && fileList.value[0].path) {

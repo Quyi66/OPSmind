@@ -1,156 +1,135 @@
 <template>
-  <div class="stats-view">
-    <header class="stats-header">
-      <div class="tabs-wrapper">
-        <el-tabs v-model="activeTab" class="stats-tabs">
-          <el-tab-pane name="recent">
-            <template #label>
-              <span class="tab-label">
-                最近30天执行作业
-                <el-icon
-                  v-if="activeTab === 'recent'"
-                  class="tab-refresh"
-                  :class="{ 'is-loading': contentLoading }"
-                  @click.stop="handleRefresh"
-                >
-                  <RefreshRight />
-                </el-icon>
-              </span>
-            </template>
-          </el-tab-pane>
-          <el-tab-pane name="summary">
-            <template #label>
-              <span class="tab-label">
-                作业运行次数
-                <el-icon
-                  v-if="activeTab === 'summary'"
-                  class="tab-refresh"
-                  :class="{ 'is-loading': contentLoading }"
-                  @click.stop="handleRefresh"
-                >
-                  <RefreshRight />
-                </el-icon>
-              </span>
-            </template>
-          </el-tab-pane>
-        </el-tabs>
-      </div>
-    </header>
-
-    <div v-loading="contentLoading" class="stats-content">
-      <div v-if="activeTab === 'recent'" class="stats-tab-pane">
-        <div v-if="tableData.length" class="stats-table-wrapper">
-          <el-table
-            :data="tableData"
-           
-            height="100%"
+  <div ref="statsViewRef" class="stats-view">
+    <div ref="statsContentRef" class="stats-content">
+      <section class="chart-section chart-section--trend" :style="chartSectionStyle">
+        <header class="chart-section__header">
+          <h4 class="chart-section__title">最近30天执行趋势</h4>
+          <el-button
+            class="toolbar-icon-btn"
+            circle
+            size="small"
+            :loading="contentLoading"
+            @click="handleRefresh"
+            title="刷新"
           >
-            <el-table-column label="作业标题" min-width="240" show-overflow-tooltip fixed>
-              <template #default="{ row }">
-                {{ translateText(row.job_title) || '-' }}
-              </template>
-            </el-table-column>
-
-            <el-table-column
-              v-for="date in dateColumns"
-              :key="date"
-              :label="date"
-              width="80"
-              align="left"
-            >
-              <template #default="{ row }">
-                <div
-                  v-if="row.dates[date]"
-                  class="count-cell"
-                  :class="getHeatmapClass(row.dates[date])"
-                >
-                  {{ row.dates[date] }}
-                </div>
-                <div v-else class="count-cell count-empty">-</div>
-              </template>
-            </el-table-column>
-          </el-table>
+            <el-icon v-show="!contentLoading"><RefreshRight /></el-icon>
+          </el-button>
+        </header>
+        <div v-loading="statsLoading" class="chart-section__body chart-section__body--trend">
+          <el-empty v-if="!statsLoading && !recentTrendRows.length" description="暂无统计数据" />
+          <VChart
+            v-else-if="recentTrendRows.length"
+            autoresize
+            :option="recentTrendOption"
+            class="chart-view"
+          />
         </div>
+      </section>
 
-        <el-empty
-          v-else-if="!contentLoading"
-          description="暂无统计数据"
-        />
-      </div>
-
-      <div v-else class="stats-tab-pane">
-        <div v-if="filteredSummary.length" class="summary-pane">
-          <div class="summary-controls">
-            <el-input
-              v-model="summaryQuery"
-              clearable
-              size="small"
-              class="summary-search"
-              placeholder="搜索作业"
-              prefix-icon="Search"
-            />
-          </div>
-
-          <div class="summary-table-wrapper">
-            <el-table
-              ref="summaryTableRef"
-              :data="filteredSummary"
-             
-              height="100%"
-              class="summary-table"
-            >
-              <el-table-column prop="job_title" label="作业" min-width="240" show-overflow-tooltip>
-                <template #default="{ row }">
-                  <span>{{ translateText(row.job_title) || '-' }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="run_count"
-                label="次数"
-                width="120"
-                align="left"
-                sortable
-                :sort-orders="['descending', 'ascending']"
-                :default-sort="{ prop: 'run_count', order: 'descending' }"
-              >
-                <template #default="{ row }">
-                  <span>{{ row.run_count }}</span>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
+      <section
+        class="chart-section chart-section--summary"
+        :style="{ height: chartSectionHeight ? chartSectionHeight + 50 + 'px' : 'auto' }"
+      >
+        <header class="chart-section__header">
+          <h4 class="chart-section__title">运维工具运行次数排行</h4>
+          <el-input
+            v-model="summaryQuery"
+            clearable
+            size="small"
+            class="summary-search"
+            placeholder="搜索运维工具"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </header>
+        <div v-loading="summaryLoading" class="chart-section__body chart-section__body--summary">
+          <el-empty v-if="!summaryLoading && !filteredSummary.length" description="暂无统计数据" />
+          <VChart
+            v-else-if="filteredSummary.length"
+            autoresize
+            :option="summaryChartOption"
+            class="chart-view"
+          />
         </div>
-
-        <el-empty
-          v-else-if="!contentLoading"
-          description="暂无统计数据"
-        />
-      </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { RefreshRight, Search } from '@element-plus/icons-vue'
+import VChart from 'vue-echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart, LineChart } from 'echarts/charts'
+import { DataZoomComponent, GridComponent, TooltipComponent } from 'echarts/components'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { translateText } from '@/utils/i18n'
+import { useTheme } from '@/composables/useTheme'
+
+use([CanvasRenderer, BarChart, LineChart, DataZoomComponent, GridComponent, TooltipComponent])
 
 const statsLoading = ref(false)
 const summaryLoading = ref(false)
 const rawData = ref([])
-const tableData = ref([])
-const dateColumns = ref([])
-const activeTab = ref('recent')
-const summaryQuery = ref('')
-const summaryFetched = ref(false)
 const summaryRows = ref([])
-const summaryTableRef = ref(null)
+const summaryQuery = ref('')
+const statsViewRef = ref(null)
+const statsContentRef = ref(null)
+const chartSectionHeight = ref(0)
+const { isDark } = useTheme()
+
+const DESKTOP_BREAKPOINT = 900
+const CONTENT_GAP = 12
+const MIN_SECTION_HEIGHT = 320
+let resizeObserver = null
 
 onMounted(() => {
-  fetchStats()
+  handleRefresh()
+  nextTick(() => {
+    updateChartSectionHeight()
+  })
+  window.addEventListener('resize', handleResize)
+
+  if (statsViewRef.value && window.ResizeObserver) {
+    resizeObserver = new ResizeObserver(() => {
+      updateChartSectionHeightChartSectionHeight()
+    })
+    resizeObserver.observe(statsViewRef.value)
+  }
 })
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+})
+
+function handleResize() {
+  updateChartSectionHeight()
+}
+
+function updateChartSectionHeight() {
+  const contentEl = statsContentRef.value
+  if (!contentEl || window.innerWidth <= DESKTOP_BREAKPOINT) {
+    chartSectionHeight.value = 0
+    return
+  }
+
+  const contentHeight = Math.floor(contentEl.getBoundingClientRect().height)
+  if (!contentHeight) return
+
+  chartSectionHeight.value = Math.max(
+    Math.floor((contentHeight - CONTENT_GAP) / 2),
+    MIN_SECTION_HEIGHT
+  )
+}
 
 async function fetchStats() {
   statsLoading.value = true
@@ -158,7 +137,6 @@ async function fetchStats() {
     const response = await jaoApi.fetchJobStats()
     const data = response?.data || response
     rawData.value = data.records || []
-    processData()
   } catch (error) {
     ElMessage.error(error?.message || '获取统计数据失败')
   } finally {
@@ -166,89 +144,16 @@ async function fetchStats() {
   }
 }
 
-function handleRefresh() {
-  if (contentLoading.value) return
-  if (activeTab.value === 'recent') {
-    fetchStats()
-  } else {
-    fetchRunCounts(true)
-  }
-}
-
-function processData() {
-  if (!rawData.value.length) {
-    tableData.value = []
-    dateColumns.value = []
-    return
-  }
-
-  // 提取所有唯一的日期并排序
-  const dates = new Set()
-  rawData.value.forEach(item => {
-    if (item.start_date) {
-      dates.add(item.start_date)
-    }
-  })
-  dateColumns.value = Array.from(dates).sort()
-
-  // 按作业分组数据
-  const jobMap = new Map()
-  rawData.value.forEach(item => {
-    const jobTitle = item.job_title || '未命名作业'
-    if (!jobMap.has(jobTitle)) {
-      jobMap.set(jobTitle, {
-        job_title: jobTitle,
-        job_id: item.job_id,
-        dates: {}
-      })
-    }
-    if (item.start_date) {
-      jobMap.get(jobTitle).dates[item.start_date] = item.run_count
-    }
-  })
-
-  // 转换为数组并按总执行次数排序
-  tableData.value = Array.from(jobMap.values())
-    .map(job => {
-      const dateEntries = Object.entries(job.dates)
-      const totalCount = dateEntries.reduce((sum, [, count]) => sum + count, 0)
-      const activeDays = dateEntries.length
-      const avgPerDay = activeDays ? totalCount / activeDays : 0
-      const lastDate = dateEntries.reduce((max, [date]) => (date > max ? date : max), '')
-
-      return {
-        ...job,
-        totalCount,
-        activeDays,
-        avgPerDay,
-        lastDate
-      }
-    })
-    .sort((a, b) => b.totalCount - a.totalCount)
-}
-
-function getHeatmapClass(count) {
-  // 根据执行次数返回不同的热力图颜色类
-  if (count >= 20) return 'heat-5'
-  if (count >= 15) return 'heat-4'
-  if (count >= 10) return 'heat-3'
-  if (count >= 5) return 'heat-2'
-  if (count >= 1) return 'heat-1'
-  return ''
-}
-
-async function fetchRunCounts(force = false) {
-  if (summaryLoading.value || (!force && summaryFetched.value)) return
+async function fetchRunCounts() {
   summaryLoading.value = true
   try {
     const response = await jaoApi.fetchJobRunCounts()
     const data = response?.data || response
     summaryRows.value = (data.records || []).map(item => ({
       job_id: item.job_id,
-      job_title: item.job_title || '未命名作业',
+      job_title: item.job_title || '未命名运维工具',
       run_count: Number(item.run_count) || 0
     }))
-    summaryFetched.value = true
   } catch (error) {
     ElMessage.error(error?.message || '获取运行次数失败')
   } finally {
@@ -256,213 +161,341 @@ async function fetchRunCounts(force = false) {
   }
 }
 
-watch(activeTab, tab => {
-  if (tab === 'summary' && !summaryFetched.value) {
-    fetchRunCounts()
-  }
+async function handleRefresh() {
+  await Promise.all([fetchStats(), fetchRunCounts()])
+  nextTick(() => {
+    updateChartSectionHeight()
+  })
+}
+
+const contentLoading = computed(() => statsLoading.value || summaryLoading.value)
+const chartSectionStyle = computed(() =>
+  chartSectionHeight.value ? { height: `${chartSectionHeight.value}px` } : undefined
+)
+
+const recentTrendRows = computed(() => {
+  const byDate = new Map()
+
+  rawData.value.forEach(item => {
+    if (!item.start_date) return
+    const count = Number(item.run_count) || 0
+    byDate.set(item.start_date, (byDate.get(item.start_date) || 0) + count)
+  })
+
+  return Array.from(byDate.entries())
+    .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+    .map(([date, count]) => ({ date, count }))
 })
 
-const contentLoading = computed(() =>
-  activeTab.value === 'recent' ? statsLoading.value : summaryLoading.value
+const translatedSummaryRows = computed(() =>
+  summaryRows.value.map(row => ({
+    ...row,
+    translatedTitle: translateText(row.job_title) || row.job_title || '-'
+  }))
 )
 
 const filteredSummary = computed(() => {
   const keyword = summaryQuery.value.trim().toLowerCase()
   const baseRows = keyword
-    ? summaryRows.value.filter(row => row.job_title.toLowerCase().includes(keyword))
-    : summaryRows.value
+    ? translatedSummaryRows.value.filter(row => row.translatedTitle.toLowerCase().includes(keyword))
+    : translatedSummaryRows.value
 
   return [...baseRows].sort((a, b) => b.run_count - a.run_count)
 })
+
+const chartTheme = computed(() =>
+  isDark.value
+    ? {
+        trendLine: '#60a5fa',
+        axisText: '#94a3b8',
+        axisLine: '#475569',
+        splitLine: 'rgba(71, 85, 105, 0.46)',
+        trendLabel: '#bfdbfe',
+        trendArea: 'rgba(96, 165, 250, 0.18)',
+        summaryAxis: '#cbd5e1',
+        summaryLabel: '#e2e8f0',
+        summaryGradientStart: '#818cf8',
+        summaryGradientEnd: '#c4b5fd'
+      }
+    : {
+        trendLine: '#2563eb',
+        axisText: '#64748b',
+        axisLine: '#cbd5e1',
+        splitLine: '#e2e8f0',
+        trendLabel: '#1e3a8a',
+        trendArea: 'rgba(37, 99, 235, 0.12)',
+        summaryAxis: '#334155',
+        summaryLabel: '#475569',
+        summaryGradientStart: '#6366f1',
+        summaryGradientEnd: '#a78bfa'
+      }
+)
+
+const recentTrendOption = computed(() => ({
+  color: [chartTheme.value.trendLine],
+  tooltip: {
+    trigger: 'axis'
+  },
+  grid: {
+    left: 48,
+    right: 24,
+    top: 36,
+    bottom: 64
+  },
+  xAxis: {
+    type: 'category',
+    boundaryGap: false,
+    data: recentTrendRows.value.map(item => item.date),
+    axisLabel: {
+      color: chartTheme.value.axisText,
+      interval: 0,
+      hideOverlap: false,
+      rotate: 40
+    },
+    axisLine: {
+      lineStyle: {
+        color: chartTheme.value.axisLine
+      }
+    }
+  },
+  yAxis: {
+    type: 'value',
+    axisLabel: {
+      color: chartTheme.value.axisText
+    },
+    splitLine: {
+      lineStyle: {
+        color: chartTheme.value.splitLine
+      }
+    }
+  },
+  series: [
+    {
+      name: '执行次数',
+      type: 'line',
+      smooth: true,
+      symbolSize: 8,
+      label: {
+        show: true,
+        position: 'top',
+        color: chartTheme.value.trendLabel,
+        fontSize: 11,
+        formatter: ({ value }) => `${value ?? 0}`
+      },
+      data: recentTrendRows.value.map(item => item.count),
+      areaStyle: {
+        color: chartTheme.value.trendArea
+      },
+      lineStyle: {
+        width: 3
+      }
+    }
+  ]
+}))
+
+const summaryChartOption = computed(() => ({
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: {
+      type: 'shadow'
+    }
+  },
+  dataZoom:
+    filteredSummary.value.length > 12
+      ? [
+          {
+            type: 'inside',
+            yAxisIndex: 0,
+            startValue: 0,
+            endValue: 11,
+            zoomLock: false,
+            zoomOnMouseWheel: false,
+            moveOnMouseWheel: false
+          },
+          {
+            type: 'slider',
+            yAxisIndex: 0,
+            orient: 'vertical',
+            right: 8,
+            top: 16,
+            bottom: 24,
+            width: 12,
+            startValue: 0,
+            endValue: 11,
+            brushSelect: false
+          }
+        ]
+      : [],
+  grid: {
+    left: 180,
+    right: filteredSummary.value.length > 12 ? 42 : 24,
+    top: 16,
+    bottom: 24
+  },
+  xAxis: {
+    type: 'value',
+    axisLabel: {
+      color: chartTheme.value.axisText
+    },
+    splitLine: {
+      lineStyle: {
+        color: chartTheme.value.splitLine
+      }
+    }
+  },
+  yAxis: {
+    type: 'category',
+    inverse: true,
+    data: filteredSummary.value.map(row => row.translatedTitle),
+    axisLabel: {
+      color: chartTheme.value.summaryAxis,
+      width: 150,
+      overflow: 'truncate'
+    },
+    axisLine: {
+      show: false
+    },
+    axisTick: {
+      show: false
+    }
+  },
+  series: [
+    {
+      name: '运行次数',
+      type: 'bar',
+      barWidth: 16,
+      data: filteredSummary.value.map(row => row.run_count),
+      label: {
+        show: true,
+        position: 'right',
+        color: chartTheme.value.summaryLabel,
+        fontWeight: 600
+      },
+      itemStyle: {
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 1,
+          y2: 0,
+          colorStops: [
+            { offset: 0, color: chartTheme.value.summaryGradientStart },
+            { offset: 1, color: chartTheme.value.summaryGradientEnd }
+          ]
+        },
+        borderRadius: [0, 8, 8, 0]
+      }
+    }
+  ]
+}))
 </script>
 
 <style scoped>
 .stats-view {
+  --stats-chart-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
   display: flex;
   flex-direction: column;
+  flex: 1;
   height: 100%;
+  min-height: 0;
   max-width: 100%;
   background: var(--el-bg-color);
-  border-radius: 12px;
   overflow: hidden;
-}
-
-.stats-header {
-  padding: 12px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-
-.tabs-wrapper {
-  flex: 0 0 auto;
-  max-width: 520px;
-}
-
-.stats-tabs {
-  width: auto;
-}
-
-.stats-tabs :deep(.el-tabs__header) {
-  margin: 0;
-}
-
-.stats-tabs :deep(.el-tabs__nav-wrap) {
-  padding: 0 4px;
-}
-
-.stats-tabs :deep(.el-tabs__item) {
-  padding: 0 16px !important;
-  font-size: 14px;
-}
-
-.tab-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.tab-refresh {
-  cursor: pointer;
-  color: #6b7280;
-  transition: color 0.2s ease;
-}
-
-.tab-refresh:hover {
-  color: #1d4ed8;
-}
-
-.tab-refresh.is-loading {
-  animation: spin 1s linear infinite;
-  pointer-events: none;
-  color: #1d4ed8;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .stats-content {
+  display: flex;
   flex: 1;
-  padding: 16px 20px;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
   overflow: hidden;
+}
+
+.chart-section {
   display: flex;
   flex-direction: column;
+  gap: 12px;
   min-height: 0;
+  padding: 16px;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 16px;
+  box-shadow: var(--stats-chart-shadow);
 }
 
-.stats-tab-pane {
-  flex: 1;
+.chart-section--trend {
+  flex: 1 1 auto;
+}
+
+.chart-section--summary {
+  flex: 1 1 auto;
+}
+
+.chart-section__header {
   display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.stats-table-wrapper {
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
-}
-
-.stats-table-wrapper :deep(.el-table) {
-  font-size: 12px;
-}
-
-.stats-table-wrapper :deep(.el-table th) {
-  padding: 8px 0;
-  font-size: 12px;
-}
-
-.stats-table-wrapper :deep(.el-table td) {
-  padding: 6px 0;
-}
-
-.stats-table-wrapper :deep(.el-table .cell) {
-  padding: 0 8px;
-}
-
-.count-cell {
-  padding: 6px;
-  border-radius: 3px;
-  font-weight: 600;
-  font-size: 11px;
-  transition: all 0.2s;
-}
-
-.count-empty {
-  color: #d1d5db;
-}
-
-.heat-1 {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.heat-2 {
-  background-color: #fca5a5;
-  color: #7f1d1d;
-}
-
-.heat-3 {
-  background-color: #f87171;
-  color: #fff;
-}
-
-.heat-4 {
-  background-color: #ef4444;
-  color: #fff;
-}
-
-.heat-5 {
-  background-color: #dc2626;
-  color: #fff;
-}
-
-.count-cell:not(.count-empty):hover {
-  transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.summary-pane {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-.summary-controls {
-  display: flex;
-  justify-content: flex-end;
   align-items: center;
-  padding-bottom: 12px;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chart-section__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.chart-section__body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.chart-section__body--trend {
+  min-height: 280px;
+}
+
+.chart-section__body--summary {
+  min-height: 320px;
+}
+
+.chart-view {
+  width: 100%;
+  height: 100%;
 }
 
 .summary-search {
-  width: 240px;
+  width: 220px;
 }
 
-.summary-table-wrapper {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
+@media (max-width: 900px) {
+  .stats-view {
+    overflow: auto;
+  }
 
-.summary-table :deep(.el-table__header) {
-  font-weight: 600;
-}
+  .stats-content {
+    overflow: visible;
+  }
 
-.summary-table :deep(.el-table td),
-.summary-table :deep(.el-table th) {
-  border: none;
-}
+  .summary-search {
+    width: 100%;
+  }
 
-.summary-table :deep(.el-table__row:hover) {
-  background-color: var(--el-bg-color-page);
+  .chart-section__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .chart-section--trend,
+  .chart-section--summary {
+    flex: none;
+  }
+}
+</style>
+
+<style lang="scss">
+html.dark .stats-view {
+  --stats-chart-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
 }
 </style>

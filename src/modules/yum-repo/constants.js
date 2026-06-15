@@ -20,7 +20,8 @@ export const YUM_REPO_ARCH_OPTIONS = [
   { label: 'loongarch64', value: 'loongarch64' },
   { label: 'mips64el', value: 'mips64el' },
   { label: 'ppc64le', value: 'ppc64le' },
-  { label: 's390x', value: 's390x' }
+  { label: 's390x', value: 's390x' },
+  { label: 'amd64', value: 'amd64' }
 ]
 
 export const YUM_REPO_COLLECT_STATUS_LABELS = {

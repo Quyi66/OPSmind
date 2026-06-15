@@ -36,7 +36,7 @@ describe('API Service', () => {
 
     mockedAxios.create.mockReturnValue(mockAxiosInstance)
     authService.getAuthHeaders.mockReturnValue({
-      'Authorization': 'Bearer mock-token'
+      Authorization: 'Bearer mock-token'
     })
   })
 

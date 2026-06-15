@@ -4,7 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input v-model="searchKeyword" placeholder="搜索..." clearable style="width: 240px;">
+          <el-input v-model="searchKeyword" placeholder="搜索..." clearable style="width: 240px">
             <template #prefix>
               <el-icon>
                 <Search />
@@ -31,17 +31,26 @@
 
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
-      <el-button type="primary" size="small" :icon="Plus" @click="handleCreate">
-        新增任务
-      </el-button>
-      <el-button size="small" :disabled="!selectedRows.length" @click="() => handleBatchToggle(selectedRows)">
+      <el-button type="primary" size="small" :icon="Plus" @click="handleCreate">新增任务</el-button>
+      <el-button
+        size="small"
+        :disabled="!selectedRows.length"
+        @click="() => handleBatchToggle(selectedRows)"
+      >
         <el-icon>
           <Grid />
         </el-icon>
         批量启停CRON
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="handleRefresh" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="handleRefresh"
+        title="刷新"
+      >
         <el-icon v-show="!loading">
           <Refresh />
         </el-icon>
@@ -50,17 +59,35 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <CronJobTable :data="filteredTableData" :loading="loading" :applet-map="appletMap"
-        @selection-change="handleSelectionChange" @edit="handleEdit" @delete="handleDelete" @copy="handleCopy"
-        @execute="handleExecuteOnce" @toggle-status="handleToggleStatus" @query-next-time="handleQueryNextTime" />
+      <CronJobTable
+        :data="filteredTableData"
+        :loading="loading"
+        :applet-map="appletMap"
+        @selection-change="handleSelectionChange"
+        @edit="handleEdit"
+        @delete="handleDelete"
+        @copy="handleCopy"
+        @execute="handleExecuteOnce"
+        @toggle-status="handleToggleStatus"
+        @query-next-time="handleQueryNextTime"
+      />
     </div>
 
     <!-- 编辑表单对话框（按需加载） -->
-    <CronJobFormDialog v-if="formDialogVisible" v-model="formDialogVisible" :editing-id="editingId"
-      :applets-list="appletsList" @success="handleFormSuccess" />
+    <CronJobFormDialog
+      v-if="formDialogVisible"
+      v-model="formDialogVisible"
+      :editing-id="editingId"
+      :applets-list="appletsList"
+      @success="handleFormSuccess"
+    />
 
     <!-- 下次执行时间对话框（按需加载） -->
-    <NextExecutionTimeDialog v-if="nextTimeVisible" v-model="nextTimeVisible" :schedule-conf="currentScheduleConf" />
+    <NextExecutionTimeDialog
+      v-if="nextTimeVisible"
+      v-model="nextTimeVisible"
+      :schedule-conf="currentScheduleConf"
+    />
   </div>
 </template>
 
@@ -73,11 +100,11 @@ import { useCronJobActions } from '../../components/job/composables/useCronJobAc
 import { useAppletTranslation } from '../../components/job/composables/useAppletTranslation'
 
 // 按需加载对话框组件
-const CronJobFormDialog = defineAsyncComponent(() =>
-  import('../../components/job/components/CronJobFormDialog.vue')
+const CronJobFormDialog = defineAsyncComponent(
+  () => import('../../components/job/components/CronJobFormDialog.vue')
 )
-const NextExecutionTimeDialog = defineAsyncComponent(() =>
-  import('../../components/job/components/NextExecutionTimeDialog.vue')
+const NextExecutionTimeDialog = defineAsyncComponent(
+  () => import('../../components/job/components/NextExecutionTimeDialog.vue')
 )
 
 // 使用列表管理 composable
@@ -94,19 +121,11 @@ const {
 } = useCronJobList()
 
 // 使用应用资源翻译 composable
-const {
-  appletMap,
-  appletsList
-} = useAppletTranslation()
+const { appletMap, appletsList } = useAppletTranslation()
 
 // 使用操作行为 composable
-const {
-  handleToggleStatus,
-  handleBatchToggle,
-  handleExecuteOnce,
-  handleCopy,
-  handleDelete
-} = useCronJobActions(fetchData)
+const { handleToggleStatus, handleBatchToggle, handleExecuteOnce, handleCopy, handleDelete } =
+  useCronJobActions(fetchData)
 
 // 筛选表单对象
 const filters = reactive({

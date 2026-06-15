@@ -1,33 +1,37 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="作业申请"
+    title="运维工具申请"
     width="600px"
     :close-on-click-modal="false"
     @close="handleClose"
   >
     <el-form ref="formRef" :model="formData" label-width="120px" size="default">
-      <el-form-item label="作业名称">
+      <el-form-item label="运维工具名称">
         <span>{{ approveData.jobName }}</span>
       </el-form-item>
 
       <el-form-item label="执行策略">
         <span>{{ getApproveModeLabel(approveData.approveMode) }}</span>
 
-        <div v-if="approveData.approveMode === 'limitParams' && paramsArray.length > 0" style="margin-top: 12px;">
+        <div
+          v-if="approveData.approveMode === 'limitParams' && paramsArray.length > 0"
+          style="margin-top: 12px"
+        >
           <el-tag
             v-for="(param, index) in paramsArray"
             :key="index"
-            style="margin-bottom: 8px; max-width: 100%; display: block; white-space: pre-wrap;"
+            style="margin-bottom: 8px; max-width: 100%; display: block; white-space: pre-wrap"
           >
             {{ param.name }} : {{ param.value }}
           </el-tag>
         </div>
       </el-form-item>
 
-      <el-form-item label="脚本作业">
+      <el-form-item label="脚本运维工具">
         <el-button type="primary" @click="handleViewJob" size="small">
-          <i class="fa fa-eye" /> 查看
+          <i class="fa fa-eye" />
+          查看
         </el-button>
       </el-form-item>
 
@@ -40,12 +44,9 @@
           :disabled="!canEdit"
           controls-position="right"
         />
-        <span style="margin-left: 8px;">小时</span>
-        <el-tooltip
-          content="审批通过后，在有效期内可以执行作业"
-          placement="top"
-        >
-          <i class="fa fa-question-circle text-muted" style="margin-left: 8px; cursor: help;" />
+        <span style="margin-left: 8px">小时</span>
+        <el-tooltip content="审批通过后，在有效期内可以执行运维工具" placement="top">
+          <i class="fa fa-question-circle text-muted" style="margin-left: 8px; cursor: help" />
         </el-tooltip>
       </el-form-item>
 
@@ -80,12 +81,7 @@
 
     <template #footer>
       <el-button @click="handleClose">关闭</el-button>
-      <el-button
-        v-if="canEdit"
-        type="primary"
-        :loading="submitting"
-        @click="handleResubmit"
-      >
+      <el-button v-if="canEdit" type="primary" :loading="submitting" @click="handleResubmit">
         提交申请
       </el-button>
     </template>
@@ -162,9 +158,10 @@ const canEdit = computed(() => {
 const paramsArray = computed(() => {
   if (!props.approveData.params) return []
   try {
-    const parsed = typeof props.approveData.params === 'string'
-      ? JSON.parse(props.approveData.params)
-      : props.approveData.params
+    const parsed =
+      typeof props.approveData.params === 'string'
+        ? JSON.parse(props.approveData.params)
+        : props.approveData.params
     if (Array.isArray(parsed)) {
       return parsed
     }
@@ -174,19 +171,25 @@ const paramsArray = computed(() => {
   }
 })
 
-watch(() => props.visible, (val) => {
-  dialogVisible.value = val
-  if (val) {
-    initForm()
-  }
-}, { immediate: true }
+watch(
+  () => props.visible,
+  val => {
+    dialogVisible.value = val
+    if (val) {
+      initForm()
+    }
+  },
+  { immediate: true }
 )
 
-watch(dialogVisible, (val) => {
-  if (!val) {
-    emit('update:visible', false)
-  }
-}, { immediate: true }
+watch(
+  dialogVisible,
+  val => {
+    if (!val) {
+      emit('update:visible', false)
+    }
+  },
+  { immediate: true }
 )
 
 function initForm() {
@@ -210,7 +213,7 @@ function formatDateTime(value) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
@@ -219,13 +222,13 @@ function formatExpirationTime(value) {
   if (value === 'expired') return '已过期'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
 function handleViewJob() {
   if (!props.approveData.jobId) {
-    ElMessage.warning('无法获取作业信息')
+    ElMessage.warning('无法获取运维工具信息')
     return
   }
   jobDialogVisible.value = true

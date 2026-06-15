@@ -37,13 +37,22 @@
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleCreateUser">
-        <i class="fa fa-plus"></i> 添加用户
+        <i class="fa fa-plus"></i>
+        添加用户
       </el-button>
       <el-button size="small" @click="handleAllocateRole">
-        <i class="fa fa-user-tag"></i> 分配角色
+        <i class="fa fa-user-tag"></i>
+        分配角色
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -65,10 +74,7 @@
         </el-table-column>
         <el-table-column prop="activated" label="状态" width="100" align="left">
           <template #default="{ row }">
-            <el-tag
-              :type="row.activated ? 'success' : 'danger'"
-              size="small"
-            >
+            <el-tag :type="row.activated ? 'success' : 'danger'" size="small">
               {{ row.activated ? '已激活' : '已禁用' }}
             </el-tag>
           </template>
@@ -102,12 +108,8 @@
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" text type="primary" @click="handleView(row)">
-              查看
-            </el-button>
-            <el-button size="small" text type="primary" @click="handleEdit(row)">
-              编辑
-            </el-button>
+            <el-button size="small" text type="primary" @click="handleView(row)">查看</el-button>
+            <el-button size="small" text type="primary" @click="handleEdit(row)">编辑</el-button>
             <el-button
               size="small"
               text
@@ -154,16 +156,10 @@
     />
 
     <!-- 分配角色对话框 -->
-    <AllocateRoleDialog
-      v-model="allocateRoleVisible"
-      @saved="loadData"
-    />
+    <AllocateRoleDialog v-model="allocateRoleVisible" @saved="loadData" />
 
     <!-- 关联用户对话框 -->
-    <LinkTenantUserDialog
-      v-model="linkUserVisible"
-      @saved="loadData"
-    />
+    <LinkTenantUserDialog v-model="linkUserVisible" @saved="loadData" />
   </div>
 </template>
 
@@ -203,9 +199,10 @@ const filteredData = computed(() => {
   // 关键词搜索
   if (appliedKeyword.value) {
     const keyword = appliedKeyword.value.toLowerCase()
-    result = result.filter(item =>
-      item.login?.toLowerCase().includes(keyword) ||
-      item.fullName?.toLowerCase().includes(keyword)
+    result = result.filter(
+      item =>
+        item.login?.toLowerCase().includes(keyword) ||
+        item.fullName?.toLowerCase().includes(keyword)
     )
   }
 
@@ -284,20 +281,29 @@ function handleReset() {
 
 function getAuthModeType(authMode) {
   switch (authMode) {
-    case 'AD': return 'primary'
-    case 'MIX': return 'warning'
-    case 'UN': return 'success'
-    default: return 'info'
+    case 'AD':
+      return 'primary'
+    case 'MIX':
+      return 'warning'
+    case 'UN':
+      return 'success'
+    default:
+      return 'info'
   }
 }
 
 function getAuthModeLabel(authMode) {
   switch (authMode) {
-    case 'AD': return 'Active Directory'
-    case 'MIX': return '混合认证'
-    case 'UN': return '统一认证'
-    case 'LOCAL': return '本地认证'
-    default: return authMode || '本地'
+    case 'AD':
+      return 'Active Directory'
+    case 'MIX':
+      return '混合认证'
+    case 'UN':
+      return '统一认证'
+    case 'LOCAL':
+      return '本地认证'
+    default:
+      return authMode || '本地'
   }
 }
 
@@ -394,11 +400,9 @@ async function handleDelete(row) {
   }
 
   try {
-    await ElMessageBox.confirm(
-      `确定要删除用户 "${row.fullName || row.login}" 吗？`,
-      '确认删除',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm(`确定要删除用户 "${row.fullName || row.login}" 吗？`, '确认删除', {
+      type: 'warning'
+    })
 
     deletingUserId.value = row.tenantUserId
     await settingsApi.deleteUser(row.tenantUserId)

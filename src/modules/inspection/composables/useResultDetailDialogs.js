@@ -74,11 +74,11 @@ export function useResultDetailDialogs(jobId, jobInfo) {
 
   async function showKpiDialog(status) {
     const titleMap = {
-      'OK': '检查通过',
-      'FAILED': '检查失败',
-      'CHECK': '人工检查',
-      'SKIPPING': '白名单',
-      'UNREACHABLE': '数据缺失'
+      OK: '检查通过',
+      FAILED: '检查失败',
+      CHECK: '人工检查',
+      SKIPPING: '白名单',
+      UNREACHABLE: '数据缺失'
     }
 
     kpiDialogTitle.value = `${titleMap[status]} - 详情`

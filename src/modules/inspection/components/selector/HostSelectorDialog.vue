@@ -381,7 +381,7 @@ const filteredHosts = computed(() => {
 
   if (filterGroup.value) {
     result = result.filter(
-      h => h.groupPath === filterGroup.value || h.groupPath?.startsWith(filterGroup.value + '/')
+      h => h.groupPath === filterGroup.value || h.groupPath?.startsWith(`${filterGroup.value}/`)
     )
   }
 
@@ -491,7 +491,7 @@ async function loadGroupData() {
       const groupPaths = res.data || res || []
       if (Array.isArray(groupPaths) && groupPaths.length > 0) {
         hostGroups.value = groupPaths.map(path => ({
-          path: path,
+          path,
           name:
             path === '/'
               ? '~'
@@ -548,8 +548,8 @@ async function loadRecentlyData() {
           id: h.id,
           jobTitle: h.jobTitle,
           jobType: h.jobType,
-          hosts: hosts,
-          ataNode: ataNode,
+          hosts,
+          ataNode,
           startTime: h.startTime,
           endTime: formatDate(h.startTime),
           status: h.status,
@@ -628,7 +628,7 @@ function buildGroupTreeFromPaths(paths) {
     let parent = root
 
     segments.forEach(segment => {
-      currentPath = currentPath + '/' + segment
+      currentPath = `${currentPath}/${segment}`
       if (!nodeMap.has(currentPath)) {
         const node = {
           path: currentPath,
@@ -713,7 +713,7 @@ function handleGroupCheck(data, { checkedKeys }) {
     if (path && !selectedHosts.value.some(h => h.key === path)) {
       selectedHosts.value.push({
         key: path,
-        value: path + '(host)',
+        value: `${path}(host)`,
         assetType: 'linux',
         isGroup: true
       })
@@ -726,15 +726,15 @@ function toggleTagSelection(tag) {
   const index = selectedTagNames.value.indexOf(tag.name)
   if (index > -1) {
     selectedTagNames.value.splice(index, 1)
-    const hostIndex = selectedHosts.value.findIndex(h => h.key === '#' + tag.name)
+    const hostIndex = selectedHosts.value.findIndex(h => h.key === `#${tag.name}`)
     if (hostIndex > -1) {
       selectedHosts.value.splice(hostIndex, 1)
     }
   } else {
     selectedTagNames.value.push(tag.name)
     selectedHosts.value.push({
-      key: '#' + tag.name,
-      value: '#' + tag.name + '(host)',
+      key: `#${tag.name}`,
+      value: `#${tag.name}(host)`,
       assetType: 'linux',
       isTag: true
     })
@@ -748,14 +748,14 @@ function searchByInput() {
     return
   }
 
-  let separators = ['\\n', ';']
+  const separators = ['\\n', ';']
   if (useSeparatorSpace.value) {
     separators.push('\\s')
   }
   if (useSeparatorComma.value) {
     separators.push(',')
   }
-  const separatorRegex = new RegExp('[' + separators.join('') + ']+')
+  const separatorRegex = new RegExp(`[${separators.join('')}]+`)
 
   const ips = inputSearchText.value
     .split(separatorRegex)

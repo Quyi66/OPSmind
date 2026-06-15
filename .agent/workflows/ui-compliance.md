@@ -9,7 +9,7 @@ description: 维护系统 UI 样式统一性约束与开发规范
 ### 1. 样式统一性原则 (Style Consistency)
 
 - **严禁私有覆盖**：禁止在 Vue 组件的 `<style scoped>` 中通过 `:deep()` 或直接定义的方式覆盖 Element Plus 的全局类（如 `.el-form-item__label`, `.el-input__inner`）或项目级全局布局类（如 `.ops-filter-bar`, `.ops-table-wrapper`, `.ops-pagination-wrapper`）。
-- **全局布局优先**：页面主容器必须使用 `.ops-page-layout` 类，区块卡片必须使用 `.ops-section`。
+- **全局布局优先**：页面主容器必须使用 `.ops-page-layout` 类，区块卡片必须使用 `.ops-section`。需要页面级滚动时，使用 `.ops-page-layout--page-scroll` 修饰类，不要在页面私有样式中覆盖 `.ops-page-layout`。
 - **使用工具类**：垂直间距、水平间距必须使用标准的 Margin/Padding 工具类（如 `mb-3`, `mt-4`, `ms-2`），严禁在私有 style 中设置外边距。
 
 ### 2. 组件选用规范 (Component Selection)
@@ -20,7 +20,9 @@ description: 维护系统 UI 样式统一性约束与开发规范
 
 ### 3. Table 表格开发规范
 
-- **固定表头与高度**：表格必须嵌套在 `.ops-table-wrapper` 中，并设置 `height="100%"`。严禁在组件内部硬编码 `calc(100vh - 480px)` 这种高度计算逻辑。
+- **表格容器**：表格必须嵌套在 `.ops-table-wrapper` 中。严禁在组件内部硬编码 `calc(100vh - 480px)` 这类高度计算逻辑。
+- **默认内部滚动**：普通表格页默认沿用 `.ops-page-layout` 的固定页面布局，表格可设置 `height="100%"`，由 `.ops-table-wrapper` 承接剩余高度。
+- **页面级滚动**：当需求要求取消表格高度限制、使用页面级滚动时，页面根容器使用 `.ops-page-layout ops-page-layout--page-scroll`，表格添加 `class="natural-height-table"`，并移除 `height` / `max-height` 绑定。该行为由 `src/styles/opsmind.scss` 统一维护，禁止在页面 `<style scoped>` 中重复编写 `:deep(.natural-height-table ...)` 或覆盖 `.ops-table-wrapper`。
 - **样式剔除**：表格列模板 `<template #default>` 中只应包含数据格式化逻辑（如日期格式化），禁止包含样式控制标签（如 `fw-bold`, `style="color:..."`）。
 - **默认行为**：除非用户明确要求，否则表格不应手动开启 `border` 或 `stripe`，应保持与模块内其他页面一致的扁平化风格。
 
@@ -28,4 +30,5 @@ description: 维护系统 UI 样式统一性约束与开发规范
 
 1.  **检查 Style 块**：确保 `<style scoped>` 中不存在任何以 `.el-` 或 `.ops-` 开头的选择器。
 2.  **检查 ID 与链接**：确保所有的交互式 ID 都是 `el-link` 或标准 `el-button link`。
-3.  **对齐参考页面**：在修改完成后，必须对照 `LinuxPatchScan.vue` 或 `PatchOverview.vue` 的实现，确保内边距和控件尺寸完全一致。
+3.  **检查滚动模式**：若页面使用 `.ops-page-layout--page-scroll`，确认表格同时具备 `natural-height-table`，且没有残留 `height="100%"`、`:height` 或 `:max-height`。
+4.  **对齐参考页面**：在修改完成后，必须对照 `LinuxPatchScanPage.vue` 或 `PatchOverview.vue` 的实现，确保内边距和控件尺寸完全一致。

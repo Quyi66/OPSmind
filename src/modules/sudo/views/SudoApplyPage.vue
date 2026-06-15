@@ -31,10 +31,18 @@
     <!-- 功能按钮区 -->
     <div class="ops-action-bar">
       <el-button type="primary" size="small" @click="handleAddSudo">
-        <el-icon><Plus /></el-icon> 添加sudo
+        <el-icon><Plus /></el-icon>
+        添加sudo
       </el-button>
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="loadData"
+        title="刷新"
+      >
         <el-icon v-show="!loading"><Refresh /></el-icon>
       </el-button>
     </div>
@@ -107,10 +115,7 @@
     </div>
 
     <!-- 添加sudo对话框 -->
-    <AddSudoDialog
-      v-model="showAddDialog"
-      @saved="handleAddCompleted"
-    />
+    <AddSudoDialog v-model="showAddDialog" @saved="handleAddCompleted" />
   </div>
 </template>
 
@@ -135,11 +140,12 @@ const filteredData = computed(() => {
   let data = tableData.value
   if (filters.keyword) {
     const keyword = filters.keyword.toLowerCase()
-    data = data.filter(row =>
-      row.$data_owner?.toLowerCase().includes(keyword) ||
-      row.host?.toLowerCase().includes(keyword) ||
-      row.user?.toLowerCase().includes(keyword) ||
-      row.user_spec?.toLowerCase().includes(keyword)
+    data = data.filter(
+      row =>
+        row.$data_owner?.toLowerCase().includes(keyword) ||
+        row.host?.toLowerCase().includes(keyword) ||
+        row.user?.toLowerCase().includes(keyword) ||
+        row.user_spec?.toLowerCase().includes(keyword)
     )
   }
   return data

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="作业审批"
+    title="运维工具审批"
     width="600px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -11,7 +11,7 @@
         <span>{{ appName }}</span>
       </el-form-item>
 
-      <el-form-item label="作业名称">
+      <el-form-item label="运维工具名称">
         <span>{{ jobTitle }}</span>
       </el-form-item>
 
@@ -21,11 +21,14 @@
           <el-radio value="limitParams" v-if="hasParams">限定参数执行</el-radio>
         </el-radio-group>
 
-        <div v-if="formData.approveMode === 'limitParams' && hasParams" style="margin-top: 12px; padding-left: 20px;">
+        <div
+          v-if="formData.approveMode === 'limitParams' && hasParams"
+          style="margin-top: 12px; padding-left: 20px"
+        >
           <el-tag
             v-for="(param, index) in paramsArray"
             :key="index"
-            style="margin-bottom: 8px; max-width: 100%; display: block; white-space: pre-wrap;"
+            style="margin-bottom: 8px; max-width: 100%; display: block; white-space: pre-wrap"
           >
             {{ param.name }} : {{ param.value }}
           </el-tag>
@@ -33,9 +36,10 @@
       </el-form-item>
 
       <el-form-item label="脚本路径" v-if="scriptPaths.length > 0">
-        <div v-for="(scriptPath, index) in scriptPaths" :key="index" style="margin-bottom: 8px;">
+        <div v-for="(scriptPath, index) in scriptPaths" :key="index" style="margin-bottom: 8px">
           <el-button type="primary" link @click="handleViewScript(scriptPath)">
-            <i class="fa fa-eye" /> {{ scriptPath }}
+            <i class="fa fa-eye" />
+            {{ scriptPath }}
           </el-button>
         </div>
       </el-form-item>
@@ -48,12 +52,9 @@
           :step="1"
           controls-position="right"
         />
-        <span style="margin-left: 8px;">小时</span>
-        <el-tooltip
-          content="审批通过后，在有效期内可以执行作业"
-          placement="top"
-        >
-          <i class="fa fa-question-circle text-muted" style="margin-left: 8px; cursor: help;" />
+        <span style="margin-left: 8px">小时</span>
+        <el-tooltip content="审批通过后，在有效期内可以执行运维工具" placement="top">
+          <i class="fa fa-question-circle text-muted" style="margin-left: 8px; cursor: help" />
         </el-tooltip>
       </el-form-item>
 
@@ -69,9 +70,7 @@
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="submitting" @click="handleSubmit">
-        提交申请
-      </el-button>
+      <el-button type="primary" :loading="submitting" @click="handleSubmit">提交申请</el-button>
     </template>
   </el-dialog>
 </template>
@@ -112,19 +111,25 @@ const paramsArray = computed(() => {
 
 const hasParams = computed(() => paramsArray.value.length > 0)
 
-watch(() => props.visible, (val) => {
-  dialogVisible.value = val
-  if (val) {
-    initForm()
-  }
-}, { immediate: true }
+watch(
+  () => props.visible,
+  val => {
+    dialogVisible.value = val
+    if (val) {
+      initForm()
+    }
+  },
+  { immediate: true }
 )
 
-watch(dialogVisible, (val) => {
-  if (!val) {
-    emit('update:visible', false)
-  }
-}, { immediate: true }
+watch(
+  dialogVisible,
+  val => {
+    if (!val) {
+      emit('update:visible', false)
+    }
+  },
+  { immediate: true }
 )
 
 function initForm() {
@@ -136,8 +141,9 @@ function initForm() {
 
   // 获取脚本路径
   if (props.jobId) {
-    jaoApi.getScriptPath(props.jobId)
-      .then((data) => {
+    jaoApi
+      .getScriptPath(props.jobId)
+      .then(data => {
         scriptPaths.value = data || []
       })
       .catch(() => {
@@ -153,13 +159,13 @@ function initForm() {
 
 function translateAppCode(code) {
   const translations = {
-    'cac': '系统巡检',
-    'acm': '资产管理',
-    'pms': '密码管理',
-    'sudo': 'sudo权限管理',
-    'vap': '补丁管理',
-    'spm': 'Yum仓库管理',
-    'uim': '用户管理'
+    cac: '系统巡检',
+    acm: '资产管理',
+    pms: '密码管理',
+    sudo: 'sudo权限管理',
+    vap: '补丁管理',
+    spm: 'Yum仓库管理',
+    uim: '用户管理'
   }
   return translations[code] || code
 }

@@ -6,12 +6,7 @@
     destroy-on-close
     @close="$emit('close')"
   >
-    <el-alert
-      type="info"
-      :closable="false"
-      show-icon
-      class="mb-3"
-    >
+    <el-alert type="info" :closable="false" show-icon class="mb-3">
       白名单中的主机将在巡检时跳过检查
     </el-alert>
     <div class="whitelist-toolbar mb-3">
@@ -20,14 +15,14 @@
         :disabled="selectedIds.length === 0"
         @click="$emit('remove-selected')"
       >
-        <i class="fa fa-trash-alt"></i> 移除白名单
+        <i class="fa fa-trash-alt"></i>
+        移除白名单
       </el-button>
     </div>
     <el-table
       v-loading="loading"
       :data="data"
       border
-     
       max-height="400"
       @selection-change="handleSelectionChange"
     >
@@ -56,9 +51,12 @@ function handleSelectionChange(selection) {
 }
 
 // 当弹窗关闭时清空选择
-watch(() => props.visible, (val) => {
-  if (!val) {
-    selectedIds.value = []
+watch(
+  () => props.visible,
+  val => {
+    if (!val) {
+      selectedIds.value = []
+    }
   }
-})
+)
 </script>

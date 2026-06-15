@@ -9,11 +9,7 @@
     <div class="win-patch-dialog-body">
       <el-form label-width="110px">
         <el-form-item label="目标主机">
-          <AcmDeviceSelector
-            v-model="selection"
-            ci-types="windows"
-            :options="selectorOptions"
-          />
+          <AcmDeviceSelector v-model="selection" ci-types="windows" :options="selectorOptions" />
           <div class="win-patch-form-hint">不选择主机时，将导出全部 Windows 主机的补丁数据。</div>
         </el-form-item>
         <el-form-item label="严重级别">
@@ -99,8 +95,12 @@ const form = reactive({
 })
 
 const hostIds = computed(() => extractHostIds(selection.value))
-const hostScopeLabel = computed(() => (hostIds.value.length ? `${hostIds.value.length} 台主机` : '全部主机'))
-const severityDisplayLabel = computed(() => (form.severity ? getSeverityLabel(form.severity) : '全部'))
+const hostScopeLabel = computed(() =>
+  hostIds.value.length ? `${hostIds.value.length} 台主机` : '全部主机'
+)
+const severityDisplayLabel = computed(() =>
+  form.severity ? getSeverityLabel(form.severity) : '全部'
+)
 const patchStatusDisplayLabel = computed(() =>
   form.patchStatus ? getPatchStatusLabel(form.patchStatus) : '全部'
 )

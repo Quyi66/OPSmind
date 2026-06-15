@@ -60,7 +60,6 @@ export function useAppletTranslation() {
         map[app.name] = translateTitle(app.title)
         return map
       }, {})
-
     } catch (error) {
       console.warn('获取应用列表失败:', error)
     }

@@ -4,9 +4,7 @@ import { ElMessage } from 'element-plus'
 
 function normalizeHostSelection(value) {
   if (Array.isArray(value)) {
-    return value
-      .map((item) => normalizeHostItem(item))
-      .filter(Boolean)
+    return value.map(item => normalizeHostItem(item)).filter(Boolean)
   }
 
   if (typeof value === 'string') {
@@ -52,7 +50,15 @@ function normalizeHostItem(item) {
   return {
     ...item,
     key: item.key || item.id || item.host_key || item.value || '',
-    value: item.value || item.name || item.hostname || item.ip || item.host_key || item.key || item.id || '',
+    value:
+      item.value ||
+      item.name ||
+      item.hostname ||
+      item.ip ||
+      item.host_key ||
+      item.key ||
+      item.id ||
+      '',
     assetType: item.assetType || item.ciType || item.asset_type || ''
   }
 }
@@ -89,24 +95,12 @@ export function useCronJobForm(props, emit) {
   })
 
   const formRules = {
-    jobDesc: [
-      { required: true, message: '请输入任务描述', trigger: 'blur' }
-    ],
-    logOutput: [
-      { required: true, message: '请选择是否输出日志', trigger: 'change' }
-    ],
-    isEncrypt: [
-      { required: true, message: '请选择是否参数加密', trigger: 'change' }
-    ],
-    scheduleConf: [
-      { required: true, message: '请输入Cron表达式', trigger: 'blur' }
-    ],
-    jobType: [
-      { required: true, message: '请选择作业类型', trigger: 'change' }
-    ],
-    jobId: [
-      { required: true, message: '请选择执行作业', trigger: 'change' }
-    ]
+    jobDesc: [{ required: true, message: '请输入任务描述', trigger: 'blur' }],
+    logOutput: [{ required: true, message: '请选择是否输出日志', trigger: 'change' }],
+    isEncrypt: [{ required: true, message: '请选择是否参数加密', trigger: 'change' }],
+    scheduleConf: [{ required: true, message: '请输入Cron表达式', trigger: 'blur' }],
+    jobType: [{ required: true, message: '请选择运维工具类型', trigger: 'change' }],
+    jobId: [{ required: true, message: '请选择执行运维工具', trigger: 'change' }]
   }
 
   /**
@@ -171,7 +165,7 @@ export function useCronJobForm(props, emit) {
         isEncrypt: cronJob.isEncrypt === true ? '0' : '1'
       }
 
-      // 加载作业列表
+      // 加载运维工具列表
       await handleJobTypeChange(cronJob.jobType)
 
       // 处理多选类型和单选类型的 jobId 回显
@@ -206,7 +200,7 @@ export function useCronJobForm(props, emit) {
         }
       }
 
-      // 如果是script/rest类型,加载作业参数定义
+      // 如果是script/rest类型,加载运维工具参数定义
       if (!multipleTypes.includes(cronJob.jobType) && cronJob.jobId) {
         try {
           const jobResponse = await jaoApi.fetchJobById(cronJob.jobId)
@@ -221,7 +215,7 @@ export function useCronJobForm(props, emit) {
             }))
           }
         } catch (error) {
-          console.warn('获取作业参数失败:', error)
+          console.warn('获取运维工具参数失败:', error)
         }
       }
     } catch (error) {
@@ -231,7 +225,7 @@ export function useCronJobForm(props, emit) {
   }
 
   /**
-   * 处理作业类型变更
+   * 处理运维工具类型变更
    */
   async function handleJobTypeChange(jobType) {
     formData.value.jobId = ''
@@ -241,25 +235,29 @@ export function useCronJobForm(props, emit) {
     const multipleTypes = ['cac', 'cmd', 'flows']
     isMultipleJobType.value = multipleTypes.includes(jobType)
 
-    // 根据作业类型预设参数
+    // 根据运维工具类型预设参数
     if (jobType === 'cac') {
-      jobParams.value = [{
-        name: 'annex_name',
-        label: '自定义附件名称',
-        description: '自定义附件名称',
-        type: null,
-        defaultValue: '',
-        secret: false
-      }]
+      jobParams.value = [
+        {
+          name: 'annex_name',
+          label: '自定义附件名称',
+          description: '自定义附件名称',
+          type: null,
+          defaultValue: '',
+          secret: false
+        }
+      ]
     } else if (jobType === 'cmd') {
-      jobParams.value = [{
-        name: 'hosts',
-        label: '主机',
-        description: '主机',
-        type: 'host',
-        defaultValue: [],
-        secret: false
-      }]
+      jobParams.value = [
+        {
+          name: 'hosts',
+          label: '主机',
+          description: '主机',
+          type: 'host',
+          defaultValue: [],
+          secret: false
+        }
+      ]
     } else {
       jobParams.value = []
     }
@@ -288,12 +286,12 @@ export function useCronJobForm(props, emit) {
           break
       }
     } catch (error) {
-      ElMessage.error('获取作业列表失败')
+      ElMessage.error('获取运维工具列表失败')
     }
   }
 
   /**
-   * 处理作业变更
+   * 处理运维工具变更
    */
   async function handleJobChange(jobId) {
     if (!jobId) return
@@ -314,12 +312,12 @@ export function useCronJobForm(props, emit) {
         }))
       }
     } catch (error) {
-      console.warn('获取作业参数失败:', error)
+      console.warn('获取运维工具参数失败:', error)
     }
   }
 
   /**
-   * 获取作业标签
+   * 获取运维工具标签
    */
   function getJobLabel(job) {
     if (!job) return ''
@@ -345,13 +343,13 @@ export function useCronJobForm(props, emit) {
   async function handleSubmit() {
     if (!formRef.value) return
 
-    // 验证作业选择
+    // 验证运维工具选择
     if (!isMultipleJobType.value && !formData.value.jobId) {
-      ElMessage.warning('请选择执行作业')
+      ElMessage.warning('请选择执行运维工具')
       return
     }
     if (isMultipleJobType.value && multipleJobIds.value.length === 0) {
-      ElMessage.warning('请选择执行作业')
+      ElMessage.warning('请选择执行运维工具')
       return
     }
 
@@ -389,16 +387,20 @@ export function useCronJobForm(props, emit) {
       // 构建jobParam
       const jobParam = {}
       const multipleTypes = ['cac', 'cmd', 'flows']
-      const needParams = multipleTypes.includes(formData.value.jobType) ||
-                        formData.value.jobType === 'script' ||
-                        formData.value.jobType === 'rest'
+      const needParams =
+        multipleTypes.includes(formData.value.jobType) ||
+        formData.value.jobType === 'script' ||
+        formData.value.jobType === 'rest'
 
-      if (needParams && (multipleTypes.indexOf(formData.value.jobType) <= -1 ||
-          formData.value.jobType === 'cmd' || formData.value.jobType === 'cac')) {
+      if (
+        needParams &&
+        (multipleTypes.indexOf(formData.value.jobType) <= -1 ||
+          formData.value.jobType === 'cmd' ||
+          formData.value.jobType === 'cac')
+      ) {
         jobParams.value.forEach(param => {
-          jobParam[param.name] = param.type === 'host'
-            ? normalizeHostSelection(param.defaultValue)
-            : param.defaultValue
+          jobParam[param.name] =
+            param.type === 'host' ? normalizeHostSelection(param.defaultValue) : param.defaultValue
         })
       }
 
@@ -407,7 +409,7 @@ export function useCronJobForm(props, emit) {
         jobId: finalJobId,
         logOutput: formData.value.logOutput === '0',
         isEncrypt: formData.value.isEncrypt === '0',
-        jobParam: jobParam
+        jobParam
       }
 
       if (props.editingId) {
@@ -429,18 +431,25 @@ export function useCronJobForm(props, emit) {
   }
 
   // 监听编辑ID变化，加载编辑数据
-  watch(() => props.editingId, async (newId) => {
-    if (newId && props.modelValue) {
-      await loadEditData(newId)
-    }
-  }, { immediate: true })
+  watch(
+    () => props.editingId,
+    async newId => {
+      if (newId && props.modelValue) {
+        await loadEditData(newId)
+      }
+    },
+    { immediate: true }
+  )
 
   // 监听对话框打开，如果是新增则重置表单
-  watch(() => props.modelValue, (newVal) => {
-    if (newVal && !props.editingId) {
-      resetForm()
+  watch(
+    () => props.modelValue,
+    newVal => {
+      if (newVal && !props.editingId) {
+        resetForm()
+      }
     }
-  })
+  )
 
   return {
     formRef,

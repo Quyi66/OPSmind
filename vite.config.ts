@@ -129,11 +129,11 @@ export default defineConfig(({ command, mode }): UserConfig => {
         autoInstall: true
       }),
 
-      // 在开发环境下，将 /opsMind 重定向为 /opsMind/，避免 Vite base 提示
+      // 在开发环境下，将 /KoreOPS 重定向为 /KoreOPS/，避免 Vite base 提示
       {
         name: 'ops-trailing-slash-redirect',
         configureServer(server) {
-          const base = mode === 'production' ? '/opsMind/' : '/opsMind/'
+          const base = mode === 'production' ? '/KoreOPS/' : '/KoreOPS/'
           const noSlash = base.endsWith('/') ? base.slice(0, -1) : base
           server.middlewares.use((req, res, next) => {
             const url = req.url || '/'
@@ -167,7 +167,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
         : [])
     ],
 
-    base: mode === 'production' ? '/opsMind/' : '/opsMind/',
+    base: mode === 'production' ? '/KoreOPS/' : '/KoreOPS/',
 
     server: {
       port: parseInt(env.VITE_DEV_PORT) || 5173,
@@ -248,9 +248,13 @@ export default defineConfig(({ command, mode }): UserConfig => {
 
             // 大型库单独分割（懒加载）
             if (/vue-echarts|echarts/.test(id)) return 'vendor-echarts'
-            if (/codemirror|@codemirror|vue-codemirror/.test(id)) return 'vendor-codemirror'
+            if (/zrender/.test(id)) return 'vendor-zrender'
+            if (/codemirror|@codemirror|@lezer|vue-codemirror/.test(id)) return 'vendor-codemirror'
             if (/bpmn-js|diagram-js/.test(id)) return 'vendor-bpmn'
-            if (/xlsx|mammoth/.test(id)) return 'vendor-doc'
+            if (/bpmn-moddle|moddle|moddle-xml|saxen|bluebird/.test(id)) return 'vendor-bpmn-core'
+            if (/xlsx/.test(id)) return 'vendor-xlsx'
+            if (/mammoth|jszip|@xmldom|dingbat-to-unicode/.test(id)) return 'vendor-doc'
+            if (/lodash|lodash-es|lodash-unified|lodash\.merge/.test(id)) return 'vendor-lodash'
 
             // Vue 核心（首屏必需）
             if (/vue-router|pinia|@vue\//.test(id)) return 'vendor-vue'
@@ -281,7 +285,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       minify: isProduction ? 'esbuild' : false,
 
       reportCompressedSize: isProduction,
-      chunkSizeWarningLimit: 500 // 降低警告阈值，鼓励更细粒度分割
+      chunkSizeWarningLimit: 1000 // ECharts 体积较大但已懒加载，保留接近实际上限的预警阈值
     },
 
     css: {

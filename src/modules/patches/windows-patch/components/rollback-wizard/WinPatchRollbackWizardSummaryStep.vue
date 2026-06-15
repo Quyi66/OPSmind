@@ -9,7 +9,11 @@
         <div v-if="hostItems.length === 0" class="selection-item">
           <div class="selection-item__primary">暂无主机</div>
         </div>
-        <div v-for="item in hostItems" :key="`${item.hostId}-${item.hostKey}`" class="selection-item">
+        <div
+          v-for="item in hostItems"
+          :key="`${item.hostId}-${item.hostKey}`"
+          class="selection-item"
+        >
           <div class="selection-item__primary">{{ item.hostKey || '-' }}</div>
           <div class="selection-item__secondary">主机 ID：{{ item.hostId || '-' }}</div>
         </div>
@@ -27,24 +31,24 @@
       <div class="card-body">
         <div class="ops-table-wrapper win-patch-summary-step__table">
           <el-table :data="rollbackItems" max-height="320">
-            <el-table-column label="主机" width="180" show-overflow-tooltip>
+            <el-table-column label="主机" width="150" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ row.hostKey || '-' }}
               </template>
             </el-table-column>
-            <el-table-column label="KB 编号" width="140">
+            <el-table-column label="KB 编号" width="140" show-overflow-tooltip>
               <template #default="{ row }">
                 {{ row.kbNumber || '-' }}
               </template>
             </el-table-column>
-            <el-table-column label="标题" min-width="320" show-overflow-tooltip>
+            <el-table-column label="更新时间" width="190">
               <template #default="{ row }">
-                {{ row.title || '-' }}
+                {{ formatDateTime(row.updateTime) }}
               </template>
             </el-table-column>
-            <el-table-column label="原执行时间" width="180">
+            <el-table-column label="Run ID" min-width="220" show-overflow-tooltip>
               <template #default="{ row }">
-                {{ formatDateTime(row.executedDate) }}
+                {{ row.runId || '-' }}
               </template>
             </el-table-column>
           </el-table>

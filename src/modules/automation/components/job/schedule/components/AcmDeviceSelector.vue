@@ -16,25 +16,33 @@
           >
             <i class="fa fa-times" />
           </span>
-          <span>共 <strong>{{ devices.length }}</strong> 项</span>
+          <span>
+            共
+            <strong>{{ devices.length }}</strong>
+            项
+          </span>
         </div>
-        <!-- <el-input
+        <el-input
+          v-if="displayDevices.length > 10"
           v-model="filterText"
-          class="device-filter autohide"
-          placeholder="搜索..."
+          class="device-filter"
+          placeholder="搜索已选设备..."
           clearable
           size="small"
         >
           <template #prefix>
-            <i class="fa fa-search" />
+            <i
+              class="fa fa-search"
+              style="color: var(--el-text-color-secondary); margin-right: 4px"
+            />
           </template>
-        </el-input> -->
+        </el-input>
       </div>
 
       <ul class="device-chip-list" v-if="showTagList">
         <li
-          v-for="(device, index) in filteredDevices"
-          :key="index"
+          v-for="device in displayedOutsideDevices"
+          :key="device.originalIndex"
           class="device-chip-item"
         >
           <el-tag
@@ -44,17 +52,32 @@
             size="default"
           >
             {{ device.display }}
-            <span v-if="device.runType" class="run-type"> [{{ device.runType }}]</span>
+            <span v-if="device.runType" class="run-type">[{{ device.runType }}]</span>
             <span v-if="device.totalHosts" class="total-hosts">({{ device.totalHosts }})</span>
           </el-tag>
         </li>
       </ul>
+      <div
+        v-if="showTagList && displayedOutsideDevices.length === 0"
+        class="text-muted text-center py-2"
+        style="font-size: 13px"
+      >
+        未匹配到相关设备
+      </div>
+      <div v-if="showTagList && hasMoreOutsideDevices" style="margin-top: 8px; text-align: left">
+        <el-button link type="primary" size="small" @click="loadMoreOutsideDevices">
+          加载更多已选设备 (已显示 {{ displayedOutsideDevices.length }}/{{
+            filteredDevices.length
+          }})
+        </el-button>
+      </div>
     </div>
 
     <!-- 无设备时的空状态 -->
     <div v-else class="empty-state">
       <el-button size="small" :disabled="disabled" @click="handleOpenSelector">
-        <i class="fal fa-server me-1" />{{ options.label || '选择设备' }}
+        <i class="fal fa-server me-1" />
+        {{ options.label || '选择设备' }}
       </el-button>
     </div>
 
@@ -70,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import AcmDeviceSelectorDialog from './AcmDeviceSelectorDialog.vue'
 
 const props = defineProps({
@@ -99,7 +122,7 @@ function triggerValidation(val) {
 
 const devices = computed({
   get: () => props.modelValue,
-  set: (val) => triggerValidation(val)
+  set: val => triggerValidation(val)
 })
 
 // 用于显示的设备列表（提取显示文本）
@@ -130,6 +153,23 @@ const filteredDevices = computed(() => {
   const keyword = filterText.value.toLowerCase()
   return displayDevices.value.filter(d => d.display.toLowerCase().includes(keyword))
 })
+
+const displayedOutsideCount = ref(30)
+watch([filteredDevices, filterText], () => {
+  displayedOutsideCount.value = 30
+})
+
+const displayedOutsideDevices = computed(() => {
+  return filteredDevices.value.slice(0, displayedOutsideCount.value)
+})
+
+const hasMoreOutsideDevices = computed(() => {
+  return filteredDevices.value.length > displayedOutsideCount.value
+})
+
+function loadMoreOutsideDevices() {
+  displayedOutsideCount.value += 50
+}
 
 const isSingleSelector = computed(() => selectorOptions.value.selector === 'single')
 
@@ -165,6 +205,15 @@ function handleConfirm(selectedHosts) {
 
 <style scoped>
 .acm-device-selector {
+  --device-selector-summary-bg: var(--el-fill-color-blank);
+  --device-selector-summary-hover-bg: var(--el-fill-color-light);
+  --device-selector-summary-text: var(--el-text-color-primary);
+  --device-selector-summary-strong-text: var(--el-color-primary);
+  --device-selector-summary-hover-border: var(--el-color-primary);
+  --device-selector-clear-text: var(--el-text-color-placeholder);
+  --device-selector-clear-hover-text: var(--el-color-danger);
+  --device-selector-run-type-text: var(--el-text-color-secondary);
+  --device-selector-total-hosts-text: var(--el-color-success);
   width: 100%;
 }
 
@@ -190,13 +239,23 @@ function handleConfirm(selectedHosts) {
   font-size: 12px;
   border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
-  background: var(--el-bg-color);
+  background: var(--device-selector-summary-bg);
+  color: var(--device-selector-summary-text);
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.device-summary strong {
+  color: var(--device-selector-summary-strong-text);
+  font-weight: 700;
 }
 
 .device-summary:hover {
-  border-color: #409eff;
+  border-color: var(--device-selector-summary-hover-border);
+  background: var(--device-selector-summary-hover-bg);
 }
 
 .device-summary.pe-none {
@@ -217,12 +276,12 @@ function handleConfirm(selectedHosts) {
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  color: #909399;
+  color: var(--device-selector-clear-text);
   cursor: pointer;
 }
 
 .clear-btn:hover {
-  color: #f56c6c;
+  color: var(--device-selector-clear-hover-text);
 }
 
 .device-filter {
@@ -231,7 +290,9 @@ function handleConfirm(selectedHosts) {
 }
 
 .device-filter.autohide {
-  transition: width 0.2s, opacity 0.2s;
+  transition:
+    width 0.2s,
+    opacity 0.2s;
 }
 
 .device-chip-list {
@@ -250,12 +311,12 @@ function handleConfirm(selectedHosts) {
 }
 
 .run-type {
-  color: #64748b;
+  color: var(--device-selector-run-type-text);
   font-size: 12px;
 }
 
 .total-hosts {
-  color: #10d070;
+  color: var(--device-selector-total-hosts-text);
   font-size: 12px;
 }
 

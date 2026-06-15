@@ -1,9 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -18,7 +15,7 @@ export default {
           600: '#096dd9',
           700: '#0050b3',
           800: '#003a8c',
-          900: '#002766',
+          900: '#002766'
         },
         // OpsMind 辅助色 - 蓝色
         blue: {
@@ -31,7 +28,7 @@ export default {
           600: '#1c7ed6',
           700: '#1864ab',
           800: '#145a80',
-          900: '#0f4c75',
+          900: '#0f4c75'
         },
         // OpsMind 成功色 - 绿色
         success: {
@@ -44,7 +41,7 @@ export default {
           600: '#389e0d',
           700: '#237804',
           800: '#135200',
-          900: '#092b00',
+          900: '#092b00'
         },
         // OpsMind 品牌绿色
         green: {
@@ -57,7 +54,7 @@ export default {
           600: '#16a85a',
           700: '#139249',
           800: '#107c38',
-          900: '#0d6627',
+          900: '#0d6627'
         },
         // 警告色 - 橙色
         warning: {
@@ -70,7 +67,7 @@ export default {
           600: '#d48806',
           700: '#ad6800',
           800: '#874d00',
-          900: '#613400',
+          900: '#613400'
         },
         // 错误色 - 红色
         error: {
@@ -83,7 +80,7 @@ export default {
           600: '#cf1322',
           700: '#a8071a',
           800: '#820014',
-          900: '#5c0011',
+          900: '#5c0011'
         },
         // 中性色
         gray: {
@@ -96,42 +93,42 @@ export default {
           600: '#595959',
           700: '#434343',
           800: '#262626',
-          900: '#1f1f1f',
-        },
+          900: '#1f1f1f'
+        }
       },
       animation: {
-        'float': 'float 3s ease-in-out infinite',
+        float: 'float 3s ease-in-out infinite',
         'fade-in': 'fadeIn 0.3s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
-        'scale-in': 'scaleIn 0.2s ease-out',
+        'scale-in': 'scaleIn 0.2s ease-out'
       },
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
+          '50%': { transform: 'translateY(-10px)' }
         },
         fadeIn: {
           '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          '100%': { opacity: '1' }
         },
         slideUp: {
           '0%': { transform: 'translateY(10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
+          '100%': { transform: 'translateY(0)', opacity: '1' }
         },
         scaleIn: {
           '0%': { transform: 'scale(0.95)', opacity: '0' },
-          '100%': { transform: 'scale(1)', opacity: '1' },
-        },
+          '100%': { transform: 'scale(1)', opacity: '1' }
+        }
       },
       boxShadow: {
-        'card': '0 2px 8px rgba(0, 0, 0, 0.06)',
+        card: '0 2px 8px rgba(0, 0, 0, 0.06)',
         'card-hover': '0 4px 16px rgba(0, 0, 0, 0.1)',
-        'nav': '0 2px 4px rgba(0, 0, 0, 0.1)',
+        nav: '0 2px 4px rgba(0, 0, 0, 0.1)'
       },
       borderRadius: {
-        'card': '8px',
-      },
-    },
+        card: '8px'
+      }
+    }
   },
-  plugins: [],
+  plugins: []
 }

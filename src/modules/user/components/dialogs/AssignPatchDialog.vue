@@ -1,14 +1,20 @@
 <template>
-  <el-dialog :model-value="visible" @update:model-value="emit('update:visible', $event)" title="分配补丁给用户" width="800px" @open="loadAssignedPatches" @closed="resetAssignForm" :close-on-click-modal="false">
+  <el-dialog
+    :model-value="visible"
+    @update:model-value="emit('update:visible', $event)"
+    title="分配补丁给用户"
+    width="800px"
+    @open="loadAssignedPatches"
+    @closed="resetAssignForm"
+    :close-on-click-modal="false"
+  >
     <el-form label-width="100px" :model="assignForm" v-loading="loadingAssigned">
       <el-form-item label="目标用户">
         <el-input :value="username" disabled />
       </el-form-item>
 
-
-
       <el-form-item label="选择补丁">
-        <div style="width: 100%;">
+        <div style="width: 100%">
           <div v-if="selectedPatchesList.length" class="device-list-container">
             <div class="device-header">
               <div
@@ -22,19 +28,38 @@
                 >
                   <i class="fa fa-times" />
                 </span>
-                <span>共 <strong>{{ selectedPatchesList.length }}</strong> 项</span>
+                <span>
+                  共
+                  <strong>{{ selectedPatchesList.length }}</strong>
+                  项
+                </span>
               </div>
             </div>
 
             <ul class="device-chip-list">
-              <li v-for="patch in selectedPatchesList" :key="patch.patch_id" class="device-chip-item">
+              <li
+                v-for="patch in selectedPatchesList"
+                :key="patch.patch_id"
+                class="device-chip-item"
+              >
                 <div class="patch-assignment-card">
                   <div class="patch-assignment-head">
-                    <el-tag type="primary" closable @close="removeSelectedPatchFromMain(patch.patch_id)">
+                    <el-tag
+                      type="primary"
+                      closable
+                      @close="removeSelectedPatchFromMain(patch.patch_id)"
+                    >
                       {{ patch.patch_id }}
                     </el-tag>
-                    <el-tag :type="getSelectedHostCount(patch) ? 'success' : 'warning'" size="small">
-                      {{ getSelectedHostCount(patch) ? `已选 ${getSelectedHostCount(patch)} 台机器` : '未选择机器' }}
+                    <el-tag
+                      :type="getSelectedHostCount(patch) ? 'success' : 'warning'"
+                      size="small"
+                    >
+                      {{
+                        getSelectedHostCount(patch)
+                          ? `已选 ${getSelectedHostCount(patch)} 台机器`
+                          : '未选择机器'
+                      }}
                     </el-tag>
                     <el-button link type="primary" @click="openPatchLibrary">
                       在补丁列表中修改
@@ -60,7 +85,8 @@
 
           <div v-else class="empty-state">
             <el-button @click="openPatchLibrary">
-              <i class="fa fa-list" style="margin-right: 4px" /> 打开扫描结果补丁列表进行选择
+              <i class="fa fa-list" style="margin-right: 4px" />
+              打开扫描结果补丁列表进行选择
             </el-button>
           </div>
         </div>
@@ -85,17 +111,52 @@
     </template>
   </el-dialog>
 
-  <el-dialog v-model="innerDialogVisible" title="从扫描结果选择补丁" width="1200px" append-to-body destroy-on-close @opened="handleInnerDialogOpened" :close-on-click-modal="false">
-    <div style="height: calc(100vh - 280px); display: flex; flex-direction: column; overflow: hidden; padding: 0; gap: 16px;">
-
-      <el-card v-if="liveSelectedPatches.length > 0" class="selected-patches-card" shadow="never" :body-style="{ padding: '12px' }">
+  <el-dialog
+    v-model="innerDialogVisible"
+    title="从扫描结果选择补丁"
+    width="1200px"
+    append-to-body
+    destroy-on-close
+    @opened="handleInnerDialogOpened"
+    :close-on-click-modal="false"
+  >
+    <div
+      style="
+        height: calc(100vh - 280px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 0;
+        gap: 16px;
+      "
+    >
+      <el-card
+        v-if="liveSelectedPatches.length > 0"
+        class="selected-patches-card"
+        shadow="never"
+        :body-style="{ padding: '12px' }"
+      >
         <template #header>
-          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: bold; color: var(--el-text-color-primary)">
-            <span><i class="fa fa-shopping-cart text-muted me-2" /> 已筛选准备分配的补丁</span>
-            <el-tag size="small" type="success" effect="dark" round>共 {{ liveSelectedPatches.length }} 项</el-tag>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              font-size: 14px;
+              font-weight: bold;
+              color: var(--el-text-color-primary);
+            "
+          >
+            <span>
+              <i class="fa fa-shopping-cart text-muted me-2" />
+              已筛选准备分配的补丁
+            </span>
+            <el-tag size="small" type="success" effect="dark" round>
+              共 {{ liveSelectedPatches.length }} 项
+            </el-tag>
           </div>
         </template>
-        <div style="max-height: 100px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px;">
+        <div style="max-height: 100px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px">
           <el-tag
             v-for="patch in liveSelectedPatches"
             :key="patch.patch_id"
@@ -136,7 +197,13 @@
               </el-select>
             </el-form-item> -->
             <el-form-item>
-              <el-button type="primary" :loading="availablePatchesLoading" @click="handlePatchSearch">搜索</el-button>
+              <el-button
+                type="primary"
+                :loading="availablePatchesLoading"
+                @click="handlePatchSearch"
+              >
+                搜索
+              </el-button>
               <el-button @click="handlePatchReset">重置</el-button>
             </el-form-item>
           </el-form>
@@ -152,8 +219,18 @@
             @selection-change="onPatchSelectionChange"
           >
             <el-table-column type="selection" :reserve-selection="true" width="50" />
-            <el-table-column prop="patch_id" label="补丁编号" min-width="180" show-overflow-tooltip />
-            <el-table-column prop="patch_name" label="补丁名称" min-width="300" show-overflow-tooltip>
+            <el-table-column
+              prop="patch_id"
+              label="补丁编号"
+              min-width="180"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              prop="patch_name"
+              label="补丁名称"
+              min-width="300"
+              show-overflow-tooltip
+            >
               <template #default="{ row }">
                 {{ row.patch_name || '-' }}
               </template>
@@ -218,7 +295,10 @@
         <el-tag size="small" type="success">已选 {{ tempSelectedHostIds.length }} 台</el-tag>
       </div>
 
-      <el-empty v-if="!hostLoading && availableHosts.length === 0" description="该补丁当前没有可分配的机器" />
+      <el-empty
+        v-if="!hostLoading && availableHosts.length === 0"
+        description="该补丁当前没有可分配的机器"
+      />
 
       <el-table
         v-else
@@ -334,12 +414,12 @@ function normalizeHostItem(item) {
 
 function extractAssignedHostItem(item) {
   const hostId = normalizeId(
-    item?.host_id
-    || item?.hostId
-    || item?.machine_id
-    || item?.machineId
-    || item?.hosts_id
-    || item?.hostsId
+    item?.host_id ||
+      item?.hostId ||
+      item?.machine_id ||
+      item?.machineId ||
+      item?.hosts_id ||
+      item?.hostsId
   )
   const hostKey = item?.host_key || item?.hostKey || item?.hostname || item?.ip || item?.name
 
@@ -354,15 +434,20 @@ function extractAssignedHostItem(item) {
 }
 
 function buildSelectedHosts(hostIds = [], availableHostList = []) {
-  const hostMap = new Map((availableHostList || []).map(item => {
-    const normalized = normalizeHostItem(item)
-    return [normalized.host_id, normalized]
-  }))
+  const hostMap = new Map(
+    (availableHostList || []).map(item => {
+      const normalized = normalizeHostItem(item)
+      return [normalized.host_id, normalized]
+    })
+  )
 
-  return hostIds.map(hostId => hostMap.get(hostId) || {
-    host_id: hostId,
-    host_key: hostId
-  })
+  return hostIds.map(
+    hostId =>
+      hostMap.get(hostId) || {
+        host_id: hostId,
+        host_key: hostId
+      }
+  )
 }
 
 function matchHostBySelection(host, selectedHost) {
@@ -372,10 +457,10 @@ function matchHostBySelection(host, selectedHost) {
   const normalizedSelectedKey = normalizeId(selectedHost?.host_key)
 
   return Boolean(
-    (normalizedSelectedId && normalizedHostId && normalizedSelectedId === normalizedHostId)
-    || (normalizedSelectedKey && normalizedHostKey && normalizedSelectedKey === normalizedHostKey)
-    || (normalizedSelectedKey && normalizedHostId && normalizedSelectedKey === normalizedHostId)
-    || (normalizedSelectedId && normalizedHostKey && normalizedSelectedId === normalizedHostKey)
+    (normalizedSelectedId && normalizedHostId && normalizedSelectedId === normalizedHostId) ||
+    (normalizedSelectedKey && normalizedHostKey && normalizedSelectedKey === normalizedHostKey) ||
+    (normalizedSelectedKey && normalizedHostId && normalizedSelectedKey === normalizedHostId) ||
+    (normalizedSelectedId && normalizedHostKey && normalizedSelectedId === normalizedHostKey)
   )
 }
 
@@ -398,10 +483,12 @@ function hydratePatchHostSelection(patch) {
   const selectedHostList = Array.isArray(patch.selectedHosts)
     ? patch.selectedHosts.map(normalizeHostItem).filter(item => item.host_id || item.host_key)
     : []
-  const resolvedSelectedHosts = dedupeSelectedHosts(selectedHostList.map(selectedHost => {
-    const matchedHost = availableHostList.find(host => matchHostBySelection(host, selectedHost))
-    return matchedHost || selectedHost
-  }))
+  const resolvedSelectedHosts = dedupeSelectedHosts(
+    selectedHostList.map(selectedHost => {
+      const matchedHost = availableHostList.find(host => matchHostBySelection(host, selectedHost))
+      return matchedHost || selectedHost
+    })
+  )
   const resolvedHostIds = resolvedSelectedHosts
     .map(item => normalizeId(item.host_id))
     .filter(Boolean)
@@ -418,12 +505,17 @@ function hydratePatchHostSelection(patch) {
 }
 
 function extractHostsFromPatch(item) {
-  const sourceHosts = item?.availableHosts || item?.hosts || item?.hostList || item?.machines || item?.machineList || item?.affectedHosts || []
+  const sourceHosts =
+    item?.availableHosts ||
+    item?.hosts ||
+    item?.hostList ||
+    item?.machines ||
+    item?.machineList ||
+    item?.affectedHosts ||
+    []
   if (!Array.isArray(sourceHosts)) return []
 
-  return sourceHosts
-    .map(normalizeHostItem)
-    .filter(host => host.host_id)
+  return sourceHosts.map(normalizeHostItem).filter(host => host.host_id)
 }
 
 function normalizeAvailablePatchItem(item) {
@@ -431,11 +523,11 @@ function normalizeAvailablePatchItem(item) {
   const normalizedHosts = extractHostsFromPatch(item)
   const effectHostCount = Number(
     item?.hostCount ??
-    item?.effect_host_count ??
-    item?.effectHostCount ??
-    item?.affectedHostCount ??
-    item?.host_count ??
-    normalizedHosts.length
+      item?.effect_host_count ??
+      item?.effectHostCount ??
+      item?.affectedHostCount ??
+      item?.host_count ??
+      normalizedHosts.length
   )
   const patchName = item?.patchName || item?.patch_name || item?.title || item?.summary || ''
 
@@ -458,17 +550,29 @@ function normalizePatchItem(patch, existingPatch = null) {
   const hasSelectedHosts = patch && Object.prototype.hasOwnProperty.call(patch, 'selectedHosts')
 
   const normalizedHostIds = hasHostIds
-    ? (Array.isArray(patch.hostIds) ? patch.hostIds : [])
-    : (Array.isArray(existingPatch?.hostIds) ? existingPatch.hostIds : [])
+    ? Array.isArray(patch.hostIds)
+      ? patch.hostIds
+      : []
+    : Array.isArray(existingPatch?.hostIds)
+      ? existingPatch.hostIds
+      : []
   const normalizedAvailableHosts = hasAvailableHosts
-    ? (Array.isArray(patch.availableHosts) ? patch.availableHosts : [])
-    : (Array.isArray(existingPatch?.availableHosts) ? existingPatch.availableHosts : [])
+    ? Array.isArray(patch.availableHosts)
+      ? patch.availableHosts
+      : []
+    : Array.isArray(existingPatch?.availableHosts)
+      ? existingPatch.availableHosts
+      : []
   const normalizedHostsLoaded = hasHostsLoaded
     ? Boolean(patch.hostsLoaded)
     : Boolean(existingPatch?.hostsLoaded)
   const normalizedSelectedHosts = hasSelectedHosts
-    ? (Array.isArray(patch.selectedHosts) ? patch.selectedHosts.map(normalizeHostItem) : [])
-    : (Array.isArray(existingPatch?.selectedHosts) ? existingPatch.selectedHosts.map(normalizeHostItem) : [])
+    ? Array.isArray(patch.selectedHosts)
+      ? patch.selectedHosts.map(normalizeHostItem)
+      : []
+    : Array.isArray(existingPatch?.selectedHosts)
+      ? existingPatch.selectedHosts.map(normalizeHostItem)
+      : []
 
   return hydratePatchHostSelection({
     ...existingPatch,
@@ -546,7 +650,12 @@ async function fetchAvailablePatchById(patchId) {
 }
 
 async function hydratePatchHostIdsIfNeeded(patch) {
-  if (!patch?.patch_id || patch?.hostIds?.length > 0 || !Array.isArray(patch.selectedHosts) || patch.selectedHosts.length === 0) {
+  if (
+    !patch?.patch_id ||
+    patch?.hostIds?.length > 0 ||
+    !Array.isArray(patch.selectedHosts) ||
+    patch.selectedHosts.length === 0
+  ) {
     return patch
   }
 
@@ -630,7 +739,9 @@ function removeSelectedPatchFromMain(patchId) {
 }
 
 function handleRemovePatch(patch) {
-  liveSelectedPatches.value = liveSelectedPatches.value.filter(item => item.patch_id !== patch.patch_id)
+  liveSelectedPatches.value = liveSelectedPatches.value.filter(
+    item => item.patch_id !== patch.patch_id
+  )
   syncPatchTableSelection()
 }
 
@@ -638,8 +749,9 @@ function getSelectedHostCount(patch) {
   const patchId = patch?.patch_id || patch?.patchId
   if (!patchId) return 0
 
-  const targetPatch = liveSelectedPatches.value.find(item => item.patch_id === patchId)
-    || selectedPatchesList.value.find(item => item.patch_id === patchId)
+  const targetPatch =
+    liveSelectedPatches.value.find(item => item.patch_id === patchId) ||
+    selectedPatchesList.value.find(item => item.patch_id === patchId)
 
   return targetPatch?.hostIds?.length || targetPatch?.selectedHosts?.length || 0
 }
@@ -708,7 +820,11 @@ function onPatchSelectionChange(selection) {
   selection.forEach(item => {
     nextSelectionMap.set(
       item.patch_id,
-      normalizePatchItem(item, previousSelectionMap.get(item.patch_id) || selectedPatchesList.value.find(row => row.patch_id === item.patch_id))
+      normalizePatchItem(
+        item,
+        previousSelectionMap.get(item.patch_id) ||
+          selectedPatchesList.value.find(row => row.patch_id === item.patch_id)
+      )
     )
   })
 
@@ -742,7 +858,10 @@ function handlePatchPageSizeChange(size) {
 function ensureAvailableHosts(patch) {
   if (!patch?.patch_id) return []
 
-  if ((!Array.isArray(patch.availableHosts) || patch.availableHosts.length === 0) && availablePatches.value.length > 0) {
+  if (
+    (!Array.isArray(patch.availableHosts) || patch.availableHosts.length === 0) &&
+    availablePatches.value.length > 0
+  ) {
     const pagePatch = availablePatches.value.find(item => item.patch_id === patch.patch_id)
     if (pagePatch) {
       Object.assign(patch, normalizePatchItem(pagePatch, patch))
@@ -764,9 +883,10 @@ function ensureAvailableHosts(patch) {
 }
 
 function getSelectedHostPreview(patch) {
-  const previewHosts = Array.isArray(patch.selectedHosts) && patch.selectedHosts.length > 0
-    ? patch.selectedHosts
-    : buildSelectedHosts(patch.hostIds || [], patch.availableHosts || [])
+  const previewHosts =
+    Array.isArray(patch.selectedHosts) && patch.selectedHosts.length > 0
+      ? patch.selectedHosts
+      : buildSelectedHosts(patch.hostIds || [], patch.availableHosts || [])
 
   return previewHosts.slice(0, 3)
 }
@@ -818,7 +938,9 @@ function confirmHostSelection() {
     return
   }
 
-  currentHostPatch.value.hostIds = Array.from(new Set(tempSelectedHostIds.value.map(normalizeId).filter(Boolean)))
+  currentHostPatch.value.hostIds = Array.from(
+    new Set(tempSelectedHostIds.value.map(normalizeId).filter(Boolean))
+  )
   currentHostPatch.value.selectedHosts = tempSelectedHosts.value.map(normalizeHostItem)
   hostDialogVisible.value = false
 
@@ -866,9 +988,12 @@ async function submitAssign() {
 
   await Promise.all(selectedPatchesList.value.map(hydratePatchHostIdsIfNeeded))
 
-  const invalidPatch = selectedPatchesList.value.find(item => !item.hostIds || item.hostIds.length === 0)
+  const invalidPatch = selectedPatchesList.value.find(
+    item => !item.hostIds || item.hostIds.length === 0
+  )
   if (invalidPatch) {
-    const hasExistingSelection = Array.isArray(invalidPatch.selectedHosts) && invalidPatch.selectedHosts.length > 0
+    const hasExistingSelection =
+      Array.isArray(invalidPatch.selectedHosts) && invalidPatch.selectedHosts.length > 0
     ElMessage.warning(
       hasExistingSelection
         ? `补丁 ${invalidPatch.patch_id} 的已分配机器未能自动解析，请在补丁列表中重新确认机器`
@@ -1067,5 +1192,4 @@ function getSeverityTagType(severity) {
   color: var(--el-text-color-secondary);
   font-size: 13px;
 }
-
 </style>

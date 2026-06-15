@@ -54,6 +54,7 @@
     <WinPatchInstallWizardRestartStep
       v-show="currentStepKey === 'restart'"
       :model-value="rollbackOptions"
+      confirm-mode
       title="重启与重扫策略"
       alert-title="这里统一配置回滚任务中的重启与自动重扫策略。"
       alert-description="当前向导会在校验脚本之后展示这一页，未启用的项会在任务推进时自动跳过。"
@@ -90,15 +91,23 @@
           跳过此步
         </el-button>
 
-        <el-button v-if="currentStepKey !== 'execute'" type="primary" :disabled="!canGoNext" @click="goNext">
+        <el-button
+          v-if="currentStepKey !== 'execute'"
+          type="primary"
+          :disabled="!canGoNext"
+          @click="goNext"
+        >
           下一步
         </el-button>
 
-        <el-button v-else-if="dialogBusy" type="primary" loading disabled>
-          执行中...
-        </el-button>
+        <el-button v-else-if="dialogBusy" type="primary" loading disabled>执行中...</el-button>
 
-        <el-button v-else type="primary" :disabled="selectedInstallLogIds.length === 0" @click="handlePrimaryAction">
+        <el-button
+          v-else
+          type="primary"
+          :disabled="selectedHistUpdateIds.length === 0"
+          @click="handlePrimaryAction"
+        >
           {{ primaryButtonText }}
         </el-button>
       </div>
@@ -161,7 +170,7 @@ const {
   resetState,
   rollbackOptions,
   selectedHostItems,
-  selectedInstallLogIds,
+  selectedHistUpdateIds,
   selectedRollbackItems,
   showRunResultDialog,
   skipCurrentStep,
@@ -176,11 +185,12 @@ const {
   wizardSteps
 } = useWinPatchRollbackWizard({
   selectedRows: toRef(props, 'selectedRows'),
-  onSubmitted: task => emit('submitted', {
-    ...(task || {}),
-    openDetail: false,
-    refreshLogs: false
-  }),
+  onSubmitted: task =>
+    emit('submitted', {
+      ...(task || {}),
+      openDetail: false,
+      refreshLogs: false
+    }),
   onSuccess: task => emit('success', task)
 })
 

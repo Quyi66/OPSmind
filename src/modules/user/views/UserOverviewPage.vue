@@ -347,7 +347,15 @@ onUnmounted(() => {
 @use '../styles/common.scss' as *;
 
 .overview-page {
-  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.stat-cards {
+  flex-shrink: 0;
+  margin-bottom: 0;
 }
 
 .chart-section--flex {
@@ -356,6 +364,7 @@ onUnmounted(() => {
   flex: 1;
   min-height: 0;
   margin-bottom: 0;
+  overflow: hidden;
 }
 
 .chart-section__content--flex {
@@ -363,6 +372,7 @@ onUnmounted(() => {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .chart-legend {
@@ -406,6 +416,7 @@ onUnmounted(() => {
 .chart-container--flex {
   flex: 1;
   min-height: 280px;
+  width: 100%;
   border-radius: 8px;
 }
 

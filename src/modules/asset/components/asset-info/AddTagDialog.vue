@@ -139,7 +139,7 @@ const handleSave = async () => {
     emit('saved')
   } catch (error) {
     console.error('添加标签失败:', error)
-    ElMessage.error('添加标签失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`添加标签失败: ${error.response?.data?.message || error.message}`)
   } finally {
     saving.value = false
   }

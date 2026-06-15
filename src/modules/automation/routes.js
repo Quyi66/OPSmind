@@ -7,6 +7,18 @@ const jobOrchestrationModuleView = () => import('./views/JobOrchestrationModule.
 const commandCenterModuleView = () => import('./views/CommandCenterModule.vue')
 const scriptLibraryModuleView = () => import('./views/ScriptLibraryModule.vue')
 
+export const AUTO_WORKBENCH_ROUTE_DEFS = [
+  {
+    key: 'overview',
+    path: 'overview',
+    title: '工作台',
+    navLabel: '工作台',
+    icon: 'fas fa-th-large',
+    name: 'auto-workbench-overview',
+    component: () => import('./views/AutomationWorkbenchPage.vue')
+  }
+]
+
 function createJobOrchestrationPageRoute(name, component) {
   return {
     component: jobOrchestrationModuleView,
@@ -51,8 +63,8 @@ export const JAO_ROUTE_DEFS = [
   {
     key: 'jobs',
     path: 'jobs',
-    title: '作业列表',
-    navLabel: '作业列表',
+    title: '运维工具列表',
+    navLabel: '运维工具列表',
     icon: 'fas fa-list-alt',
     ...createJobOrchestrationPageRoute('jao-jobs', () => import('./views/job/JobListPage.vue'))
   },
@@ -68,6 +80,32 @@ export const JAO_ROUTE_DEFS = [
     )
   },
   {
+    key: 'taskScheduler',
+    path: 'taskScheduler',
+    title: '定时任务',
+    navLabel: '定时任务',
+    icon: 'fas fa-clock',
+    ...createJobOrchestrationPageRoute(
+      'jao-taskScheduler',
+      () => import('./views/job/JobTaskSchedulerPage.vue')
+    )
+  },
+  {
+    key: 'runLogs',
+    path: 'runLogs',
+    title: '运行记录',
+    name: 'jao-runLogs',
+    redirect: '/run-records/logs'
+  },
+  {
+    key: 'statistics',
+    path: 'statistics',
+    title: '数据统计',
+    icon: 'fas fa-chart-line',
+    name: 'jao-statistics',
+    redirect: '/run-records/logs?tab=statistics'
+  },
+  {
     key: 'requests',
     path: 'requests',
     title: '我的申请',
@@ -81,8 +119,8 @@ export const JAO_ROUTE_DEFS = [
   {
     key: 'approvals',
     path: 'approvals',
-    title: '作业审批',
-    navLabel: '作业审批',
+    title: '运维工具审批',
+    navLabel: '运维工具审批',
     icon: 'fas fa-user-check',
     ...createJobOrchestrationPageRoute(
       'jao-approvals',
@@ -90,13 +128,23 @@ export const JAO_ROUTE_DEFS = [
     )
   },
   {
-    key: 'runLogs',
-    path: 'runLogs',
+    key: 'localInstall',
+    path: 'localInstall',
+    name: 'jao-localInstall',
+    title: '软件包安装',
+    redirect: '/patches/localInstall'
+  }
+]
+
+export const RUN_RECORDS_ROUTE_DEFS = [
+  {
+    key: 'logs',
+    path: 'logs',
     title: '运行记录',
     navLabel: '运行记录',
     icon: 'fas fa-history',
     ...createJobOrchestrationPageRoute(
-      'jao-runLogs',
+      'run-records-logs',
       () => import('./views/job/JobRunLogsPage.vue')
     )
   },
@@ -104,42 +152,8 @@ export const JAO_ROUTE_DEFS = [
     key: 'statistics',
     path: 'statistics',
     title: '数据统计',
-    navLabel: '数据统计',
-    icon: 'fas fa-chart-line',
-    ...createJobOrchestrationPageRoute(
-      'jao-statistics',
-      () => import('./views/job/JobStatisticsPage.vue')
-    )
-  },
-  {
-    key: 'taskScheduler',
-    path: 'taskScheduler',
-    title: '定时任务',
-    navLabel: '定时任务',
-    icon: 'fas fa-clock',
-    ...createJobOrchestrationPageRoute(
-      'jao-taskScheduler',
-      () => import('./views/job/JobTaskSchedulerPage.vue')
-    )
-  },
-  {
-    key: 'localInstall',
-    path: 'localInstall',
-    name: 'jao-localInstall',
-    title: 'rpm包安装',
-    redirect: '/rpm-install/install'
-  }
-]
-
-export const RPM_INSTALL_ROUTE_DEFS = [
-  {
-    key: 'install',
-    path: 'install',
-    name: 'rpm-install-install',
-    title: 'rpm包安装',
-    navLabel: 'rpm包安装',
-    icon: 'fas fa-box-open',
-    component: () => import('@/modules/software/views/LocalInstallPage.vue')
+    name: 'run-records-statistics',
+    redirect: '/run-records/logs?tab=statistics'
   }
 ]
 
@@ -186,24 +200,17 @@ export const CMD_ROUTE_DEFS = [
   {
     key: 'list',
     path: 'list',
-    title: '命令列表',
-    navLabel: '命令列表',
-    icon: 'fas fa-list',
-    ...createCommandCenterPageRoute(
-      'cmd-list',
-      () => import('./views/command/CommandListPage.vue')
-    )
+    title: '命令与运维工具',
+    navLabel: '命令与运维工具',
+    icon: 'fas fa-layer-group',
+    component: commandCenterModuleView,
+    name: 'cmd-list'
   },
   {
     key: 'job',
     path: 'job',
-    title: '命令作业',
-    navLabel: '命令作业',
-    icon: 'fas fa-tasks',
-    ...createCommandCenterPageRoute(
-      'cmd-job',
-      () => import('./views/command/CommandJobPage.vue')
-    )
+    title: '命令运维工具',
+    redirect: '/cmd/list?tab=job'
   },
   {
     key: 'review',
@@ -216,17 +223,15 @@ export const CMD_ROUTE_DEFS = [
       () => import('./views/command/CommandReviewPage.vue')
     )
   },
-  {
-    key: 'logs',
-    path: 'logs',
-    title: '执行日志',
-    navLabel: '执行日志',
-    icon: 'fas fa-file-alt',
-    ...createCommandCenterPageRoute(
-      'cmd-logs',
-      () => import('./views/command/CommandLogsPage.vue')
-    )
-  },
+  // 暂时移除命令执行“执行日志”导航入口，保留组件代码以便后续回退。
+  // {
+  //   key: 'logs',
+  //   path: 'logs',
+  //   title: '执行日志',
+  //   navLabel: '执行日志',
+  //   icon: 'fas fa-file-alt',
+  //   ...createCommandCenterPageRoute('cmd-logs', () => import('./views/command/CommandLogsPage.vue'))
+  // },
   {
     key: 'console',
     path: 'console',

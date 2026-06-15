@@ -80,14 +80,17 @@ const selectedFile = ref(null)
 const uploadRef = ref(null)
 const fileList = ref([])
 
-watch(() => props.modelValue, (val) => {
-  visible.value = val
-  if (!val) {
-    clearFile()
+watch(
+  () => props.modelValue,
+  val => {
+    visible.value = val
+    if (!val) {
+      clearFile()
+    }
   }
-})
+)
 
-watch(visible, (val) => {
+watch(visible, val => {
   emit('update:modelValue', val)
 })
 

@@ -6,7 +6,8 @@
         <div class="nav-left">
           <!-- Logo Section -->
           <div class="logo-section">
-            <img :src="logoImage" alt="OPSmind" class="brand-logo" />
+            <img :src="logoImage" alt="KoreOPS" class="brand-logo" />
+            <span class="brand-name">KoreOPS</span>
           </div>
 
           <!-- Navigation Menu -->
@@ -72,7 +73,11 @@
         <!-- Right Side User Area -->
         <div class="nav-right">
           <!-- AI OPS Button -->
-          <el-tooltip content="AI OPS" placement="bottom" :popper-options="headerTooltipPopperOptions">
+          <el-tooltip
+            content="AI OPS"
+            placement="bottom"
+            :popper-options="headerTooltipPopperOptions"
+          >
             <div class="ai-ops-wrapper" @mouseenter="prewarmAiOps" @click="handleAiOpsClick">
               <img :src="aiOpsIcon" alt="AI OPS" class="ai-ops-simple" />
             </div>
@@ -319,7 +324,7 @@ import iconGfs from '@/assets/icons/menu/icon-gfs@2x.png'
 import iconAsset from '@/assets/icons/menu/icon-asset@2x.png'
 
 // 导入logo、aiOPS图标和用户头像
-import logoImage from '@/assets/icons/logo@2x.png'
+import logoImage from '@/assets/icons/logo-transparent.png'
 import aiOpsIcon from '@/assets/icons/aiOPS@2x.png'
 import avatarImage from '@/assets/icons/avatar@2x.png'
 
@@ -357,7 +362,7 @@ const displayUserName = computed(() => {
 
 const displayAvatarUrl = computed(() => {
   if (!userAvatarUrl.value) return avatarImage
-  return '/oplus-upload' + userAvatarUrl.value
+  return `/oplus-upload${userAvatarUrl.value}`
 })
 
 const notificationCount = ref(0)
@@ -392,7 +397,8 @@ const currentLanguage = ref('zh-cn')
 
 onMounted(async () => {
   try {
-    const account = accountService.getCached() || (await accountService.getAccount().catch(() => null))
+    const account =
+      accountService.getCached() || (await accountService.getAccount().catch(() => null))
     if (account) {
       if (account.fullName || account.login) accountFullName.value = account.fullName || ''
       if (account.imageUrl) userAvatarUrl.value = account.imageUrl
@@ -419,7 +425,9 @@ const handleGroupClick = group => {
 
   menuStore.setActiveGroup(group.code)
 
-  const defaultRoute = getGroupDefaultRoute(group, permission => authService.hasPermission(permission))
+  const defaultRoute = getGroupDefaultRoute(group, permission =>
+    authService.hasPermission(permission)
+  )
   if (defaultRoute) {
     router.push(defaultRoute)
   }
@@ -678,15 +686,36 @@ onUnmounted(() => {
 .logo-section {
   display: flex;
   align-items: center;
+  gap: 0.3rem; /* 微调间距，从 0.25rem 增加到 0.3rem，提供极轻微的呼吸感而不至于割裂 */
   flex-shrink: 0;
 }
 
 .brand-logo {
-  height: 1.5rem;
+  height: 1.85rem;
   /* shrink logo to reduce header height */
   width: auto;
   object-fit: contain;
   object-position: center;
+  transform: translateY(1px);
+}
+
+.brand-name {
+  color: #1b5ab7; /* 提升色彩纯度，使其与 Logo 的深蓝色波浪色相完全一致 */
+  font-family: Inter, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 1.28rem;
+  font-weight: 700; /* 从 800 降为 700，减小笔画宽度以释放字内空间 */
+  letter-spacing: -0.02em; /* 从 -0.045em 调整为 -0.02em，防止字形在紧凑布局下粘连 */
+  line-height: 1;
+  white-space: nowrap;
+}
+
+:global(html.dark) .brand-name {
+  color: #4f8cff;
+  text-shadow: 0 0 10px rgba(79, 140, 255, 0.18);
+}
+
+:global(html.dark) .brand-logo {
+  filter: drop-shadow(0 0 8px rgba(45, 212, 191, 0.16));
 }
 
 // 导航菜单
@@ -958,22 +987,17 @@ onUnmounted(() => {
 
 @media (max-width: 1440px) {
   .nav-left {
-    gap: 1rem;
+    gap: 1.5rem;
   }
 
   .nav-menu {
-    gap: 0.125rem;
+    gap: 0.25rem;
   }
 
   .nav-item {
-    gap: 0.375rem;
-    padding: 0.25rem 0.375rem;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem;
     margin: 0 0.125rem;
-  }
-
-  .nav-text,
-  .user-name {
-    font-size: 0.875rem;
   }
 }
 
@@ -985,15 +1009,12 @@ onUnmounted(() => {
   }
 
   .nav-left {
-    gap: 0.75rem;
+    gap: 1rem;
   }
 
   .nav-item {
-    padding: 0.25rem 0.3125rem;
-  }
-
-  .nav-text {
-    font-size: 0.8125rem;
+    gap: 0.375rem;
+    padding: 0.25rem 0.375rem;
   }
 
   .user-name {
@@ -1002,6 +1023,24 @@ onUnmounted(() => {
 
   .nav-right {
     gap: 0.25rem;
+  }
+}
+
+@media (max-width: 1152px) {
+  .nav-left {
+    gap: 0.75rem;
+  }
+
+  .nav-menu {
+    gap: 0.125rem;
+  }
+
+  .nav-item {
+    padding: 0.25rem 0.3125rem;
+  }
+
+  .nav-text {
+    font-size: 0.875rem;
   }
 }
 
@@ -1078,7 +1117,11 @@ onUnmounted(() => {
   }
 
   .brand-logo {
-    height: 2.5rem;
+    height: 2.35rem;
+  }
+
+  .brand-name {
+    font-size: 1.55rem;
   }
 
   .nav-menu {
@@ -1152,7 +1195,11 @@ onUnmounted(() => {
   }
 
   .brand-logo {
-    height: 2.75rem;
+    height: 2.55rem;
+  }
+
+  .brand-name {
+    font-size: 1.7rem;
   }
 
   .nav-item {

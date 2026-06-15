@@ -87,7 +87,7 @@
               {{ formatTimestamp(row.start_time) }}
             </template>
           </el-table-column>
-          <el-table-column prop="action" label="操作" width="140" show-overflow-tooltip>
+          <el-table-column prop="action" label="操作" width="160" show-overflow-tooltip>
             <template #default="{ row }">
               {{ translateAction(row.action) }}
             </template>
@@ -143,7 +143,7 @@
               {{ formatTimestamp(row.end_time) }}
             </template>
           </el-table-column>
-          <el-table-column label="耗时" width="100">
+          <el-table-column label="耗时" width="90">
             <template #default="{ row }">
               {{ calculateDuration(row.start_time, row.end_time) }}
             </template>
@@ -884,7 +884,7 @@ async function downloadReport(row, dir, extension) {
     const filename = `${dir}_${formatFilenameTimestamp(row.start_time)}.${extension}`
     downloadFile('staticfs', null, `VAP_EXPORT_DATA/${dir}/${filePath}`, filename)
   } catch (error) {
-    ElMessage.error('下载报告失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`下载报告失败: ${error.message || '未知错误'}`)
   }
 }
 
@@ -933,7 +933,7 @@ async function downloadInstallReport(row) {
     }
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
-    ElMessage.error('下载安装报告失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`下载安装报告失败: ${error.message || '未知错误'}`)
   }
 }
 
@@ -970,7 +970,7 @@ async function downloadRollbackReport(row) {
     const filename = resolveDownloadFilename(fileInfo, 'patch_rollback', row.start_time)
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
-    ElMessage.error('下载回退报告失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`下载回退报告失败: ${error.message || '未知错误'}`)
   }
 }
 
@@ -1037,7 +1037,7 @@ async function loadPatchData() {
     const response = await operationReportApi.getPatchReport({
       page: patchPagination.page,
       size: patchPagination.pageSize,
-      filter: filter
+      filter
     })
     const data = response?.data || response
     patchTableData.value = data?.records || []

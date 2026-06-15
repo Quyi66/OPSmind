@@ -21,13 +21,6 @@
       </div>
     </div>
 
-    <!-- 本地安装 -->
-    <div v-else-if="activeView === 'localInstall'" class="view-container">
-      <div class="view-card">
-        <LocalInstallPage ref="localInstallRef" />
-      </div>
-    </div>
-
     <!-- 日志报告 -->
     <div v-else-if="activeView === 'logs'" class="view-container">
       <div class="view-card">
@@ -43,7 +36,6 @@ import { useRoute } from 'vue-router'
 import SoftwareHomePage from './SoftwareHomePage.vue'
 import RepoManagementPage from './RepoManagementPage.vue'
 import InstalledPackagesPage from './InstalledPackagesPage.vue'
-import LocalInstallPage from './LocalInstallPage.vue'
 import LogReportPage from './LogReportPage.vue'
 
 const route = useRoute()
@@ -55,7 +47,6 @@ const activeView = ref('packages')
 const softwareHomeRef = ref(null)
 const repoManagementRef = ref(null)
 const installedPackagesRef = ref(null)
-const localInstallRef = ref(null)
 const logReportRef = ref(null)
 
 /**
@@ -73,9 +64,6 @@ function parseRouteView() {
   }
   if (path.includes('/installed') || pathMatch.includes('installed')) {
     return 'installed'
-  }
-  if (path.includes('/localInstall') || pathMatch.includes('localInstall')) {
-    return 'localInstall'
   }
   if (path.includes('/logs') || pathMatch.includes('logs')) {
     return 'logs'

@@ -149,7 +149,12 @@
           <el-table-column prop="$data_owner" label="主机" min-width="100" />
           <el-table-column prop="repo-name" label="名称" min-width="120" />
           <el-table-column prop="repo-pkgs" label="软件包数" min-width="80" />
-          <el-table-column prop="repo-baseurl" label="Base URL" min-width="250" show-overflow-tooltip>
+          <el-table-column
+            prop="repo-baseurl"
+            label="Base URL"
+            min-width="250"
+            show-overflow-tooltip
+          >
             <template #default="{ row }">
               <div class="url-badges">
                 <el-tag
@@ -369,7 +374,7 @@ async function executeScanJob() {
     })
   } catch (error) {
     console.error('Job execution failed:', error)
-    ElMessage.error('任务执行失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`任务执行失败: ${error.message || '未知错误'}`)
     jobExecuting.value = false
   }
 }

@@ -8,9 +8,40 @@ import {
   getTaskStatusValue,
   normalizeUpper,
   pickValue,
+  resolveHostId,
   resolvePatchStatusId,
   unwrapResponse
 } from '../utils'
+
+function getStepSuccessStatuses(stepKey) {
+  switch (normalizeUpper(stepKey)) {
+    case 'PRE_CHECK':
+      return ['PRE_CHECK_DONE']
+    case 'INSTALL':
+      return ['INSTALL_DONE']
+    case 'RESTART':
+      return ['RESTART_DONE']
+    case 'VALIDATE':
+      return ['COMPLETED']
+    default:
+      return []
+  }
+}
+
+function getStepFailedStatuses(stepKey) {
+  switch (normalizeUpper(stepKey)) {
+    case 'PRE_CHECK':
+      return ['PRE_CHECK_FAILED', 'FAILED']
+    case 'INSTALL':
+      return ['INSTALL_FAILED', 'FAILED']
+    case 'RESTART':
+      return ['FAILED']
+    case 'VALIDATE':
+      return ['VALIDATE_FAILED', 'FAILED']
+    default:
+      return ['FAILED', 'ERROR']
+  }
+}
 
 function createInstallOptions() {
   return {
@@ -107,13 +138,17 @@ function resolvePipelineCurrentStep(task = null) {
 }
 
 function findLatestScriptContent(logs = [], scriptType) {
-  const normalizedType = String(scriptType || '').trim().toLowerCase()
+  const normalizedType = String(scriptType || '')
+    .trim()
+    .toLowerCase()
 
   for (let index = logs.length - 1; index >= 0; index -= 1) {
     const record = logs[index]
     if (
       getAuditStepKey(record) === 'SCRIPT' &&
-      String(record?.scriptType || '').trim().toLowerCase() === normalizedType &&
+      String(record?.scriptType || '')
+        .trim()
+        .toLowerCase() === normalizedType &&
       String(record?.scriptContent || '').trim()
     ) {
       return record.scriptContent
@@ -148,7 +183,13 @@ function deriveCurrentStep(task, auditSteps = []) {
   return ''
 }
 
-function mergeTaskDetail(baseTask = null, auditTask = null, auditSteps = [], auditLogs = [], hosts = []) {
+function mergeTaskDetail(
+  baseTask = null,
+  auditTask = null,
+  auditSteps = [],
+  auditLogs = [],
+  hosts = []
+) {
   const mergedTask = {
     ...(baseTask && typeof baseTask === 'object' ? baseTask : {}),
     ...(auditTask && typeof auditTask === 'object' ? auditTask : {})
@@ -212,7 +253,12 @@ function mapPipelineUiStatus(status) {
   return 'idle'
 }
 
-export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitted, onSuccess } = {}) {
+export function useWinPatchInstallWizard({
+  hostSummary,
+  selectedRows,
+  onSubmitted,
+  onSuccess
+} = {}) {
   const activeStep = ref(0)
   const installOptions = ref(createInstallOptions())
   const preScriptConfig = ref(createScriptConfig())
@@ -254,26 +300,43 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
     const rows = Array.isArray(selectedRows?.value) ? selectedRows.value : []
     return Array.from(new Set(rows.map(row => resolvePatchStatusId(row)).filter(Boolean)))
   })
+  const selectedHostIds = computed(() => {
+    const rows = Array.isArray(selectedRows?.value) ? selectedRows.value : []
+    const rowHostIds = rows
+      .map(row => String(pickValue(row, ['hostId', 'host_id'], '')).trim())
+      .filter(Boolean)
+    const fallbackHostId = resolveHostId(hostSummary?.value || hostSummary)
+
+    return Array.from(new Set([...rowHostIds, fallbackHostId].filter(Boolean)))
+  })
   const selectedPatchItems = computed(() => {
     const rows = Array.isArray(selectedRows?.value) ? selectedRows.value : []
     return rows.map(row => ({
       id: resolvePatchStatusId(row),
       kbNumber: pickValue(row, ['kbNumber', 'kb_number'], '-'),
       title: pickValue(row, ['title'], '-'),
+      sizeBytes: pickValue(row, ['sizeBytes', 'size_bytes'], 0),
       severity: pickValue(row, ['severity'], ''),
-      severityLabel: getSeverityLabel(pickValue(row, ['severity'], ''))
+      severityLabel: getSeverityLabel(pickValue(row, ['severity'], '')),
+      cveIds: pickValue(row, ['cveIds', 'cve_ids'], '')
     }))
   })
   const currentTaskStatus = computed(() => getTaskStatusValue(taskDetail.value))
   const currentPipelineStep = computed(() => resolvePipelineCurrentStep(taskDetail.value))
   const pipelineItems = computed(() => {
     return WIN_PATCH_INSTALL_PIPELINE_STEPS.map(step => {
-      const auditStep = findAuditStep(taskAuditSteps.value, resolvePipelineStepKeys(step.key, taskDetail.value))
+      const auditStep = findAuditStep(
+        taskAuditSteps.value,
+        resolvePipelineStepKeys(step.key, taskDetail.value)
+      )
       const auditStatus = normalizeUpper(auditStep?.status)
       let uiStatus = mapPipelineUiStatus(auditStatus)
 
       if (!auditStatus && currentTaskId.value && currentPipelineStep.value === step.key) {
-        if (['FAILED', 'ERROR'].includes(currentTaskStatus.value) || pipelineStatus.value === 'failed') {
+        if (
+          ['FAILED', 'ERROR'].includes(currentTaskStatus.value) ||
+          pipelineStatus.value === 'failed'
+        ) {
           uiStatus = 'failed'
         } else if (pipelineStatus.value === 'running') {
           uiStatus = 'running'
@@ -367,7 +430,13 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
       taskAuditSteps.value = nextAuditSteps
       taskAuditLogs.value = nextAuditLogs
 
-      const mergedTask = mergeTaskDetail(baseTask, null, nextAuditSteps, nextAuditLogs, taskHosts.value)
+      const mergedTask = mergeTaskDetail(
+        baseTask,
+        null,
+        nextAuditSteps,
+        nextAuditLogs,
+        taskHosts.value
+      )
 
       taskDetail.value = mergedTask
       if (mergedTask) {
@@ -376,7 +445,9 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
           ...mergedTask
         }
       }
-      taskErrorMessage.value = String(pickValue(mergedTask, ['errorMessage', 'error_message'], '')).trim()
+      taskErrorMessage.value = String(
+        pickValue(mergedTask, ['errorMessage', 'error_message'], '')
+      ).trim()
 
       return mergedTask
     } catch (error) {
@@ -404,7 +475,9 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
       ...(createdTask.value || {}),
       ...taskSnapshot
     }
-    taskErrorMessage.value = String(pickValue(nextTask, ['errorMessage', 'error_message'], '')).trim()
+    taskErrorMessage.value = String(
+      pickValue(nextTask, ['errorMessage', 'error_message'], '')
+    ).trim()
   }
 
   async function ensureTaskCreated() {
@@ -416,7 +489,12 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
       throw new Error('当前选择中没有可安装的补丁记录')
     }
 
+    if (!selectedHostIds.value.length) {
+      throw new Error('当前选择中缺少主机信息，无法创建安装任务')
+    }
+
     const response = await winPatchApi.createInstallTask({
+      hostIds: selectedHostIds.value,
       patchStatusIds: selectedPatchStatusIds.value,
       reboot: installOptions.value.reboot,
       rescanAfter: installOptions.value.rescanAfter
@@ -467,7 +545,10 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
   }
 
   function getAuditStepStatus(stepKey) {
-    return normalizeUpper(findAuditStep(taskAuditSteps.value, resolvePipelineStepKeys(stepKey, taskDetail.value))?.status)
+    return normalizeUpper(
+      findAuditStep(taskAuditSteps.value, resolvePipelineStepKeys(stepKey, taskDetail.value))
+        ?.status
+    )
   }
 
   function stopRuntimePolling() {
@@ -477,6 +558,8 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
   function waitForStepCompletion(stepKey, actionLabel) {
     return new Promise((resolve, reject) => {
       let settled = false
+      const successStatuses = getStepSuccessStatuses(stepKey)
+      const failedStatuses = getStepFailedStatuses(stepKey)
 
       const finalize = (success, error = null) => {
         if (settled) {
@@ -503,13 +586,14 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
           return
         }
 
-        if (['FAILED', 'ERROR'].includes(stepStatus) || ['FAILED', 'ERROR'].includes(taskStatus)) {
-          finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
+        if (successStatuses.includes(taskStatus)) {
+          finalize(true)
           return
         }
 
-        if (stepKey === 'VALIDATE' && ['COMPLETED', 'SUCCESS'].includes(taskStatus)) {
-          finalize(true)
+        if (['FAILED', 'ERROR'].includes(stepStatus) || failedStatuses.includes(taskStatus)) {
+          finalize(false, new Error(taskErrorMessage.value || `${actionLabel}失败`))
+          return
         }
       }
 
@@ -527,7 +611,7 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
     })
   }
 
-  async function triggerTaskStep(stepKey, action) {
+  async function triggerTaskStep(stepKey, action, executeOptions = {}) {
     const currentStatus = getAuditStepStatus(stepKey)
     if (['SUCCESS', 'SKIPPED'].includes(currentStatus)) {
       return
@@ -544,16 +628,25 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
       throw new Error('安装任务尚未创建，无法继续执行')
     }
 
-    const stepLabel = WIN_PATCH_INSTALL_PIPELINE_STEPS.find(item => item.key === stepKey)?.label || stepKey
+    const stepLabel =
+      WIN_PATCH_INSTALL_PIPELINE_STEPS.find(item => item.key === stepKey)?.label || stepKey
     const actionLabel = action === 'skip' ? `跳过${stepLabel}` : stepLabel
 
     try {
-      const response = action === 'skip'
-        ? await winPatchApi.skipTaskStep(currentTaskId.value)
-        : await winPatchApi.executeTaskStep(currentTaskId.value)
+      const response =
+        action === 'skip'
+          ? await winPatchApi.skipTaskStep(currentTaskId.value, taskDetail.value, {
+              stepKey,
+              taskType: 'INSTALL'
+            })
+          : await winPatchApi.executeTaskStep(currentTaskId.value, taskDetail.value, {
+              stepKey,
+              taskType: 'INSTALL',
+              ...executeOptions
+            })
       applyTaskSnapshot(unwrapResponse(response))
 
-      if (action === 'skip') {
+      if (action === 'skip' && stepKey !== 'RESTART') {
         taskAuditSteps.value = taskAuditSteps.value.map(step => {
           if (normalizeUpper(step?.step) !== stepKey) {
             return step
@@ -584,18 +677,10 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
     try {
       await ensureTaskCreated()
       if (!skippedSteps.value['pre-check']) {
-        await syncScriptConfig(
-          'pre-check',
-          preScriptConfig.value,
-          '预检查脚本'
-        )
+        await syncScriptConfig('pre-check', preScriptConfig.value, '预检查脚本')
       }
       if (!skippedSteps.value.validate) {
-        await syncScriptConfig(
-          'validate',
-          validateScriptConfig.value,
-          '校验脚本'
-        )
+        await syncScriptConfig('validate', validateScriptConfig.value, '校验脚本')
       }
 
       await triggerTaskStep(
@@ -607,7 +692,8 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
       await triggerTaskStep('INSTALL', 'execute')
       await triggerTaskStep(
         'RESTART',
-        skippedSteps.value.restart || !installOptions.value.reboot ? 'skip' : 'execute'
+        skippedSteps.value.restart || !installOptions.value.reboot ? 'skip' : 'execute',
+        { confirmText: '确认重启' }
       )
       await triggerTaskStep(
         'VALIDATE',
@@ -672,7 +758,12 @@ export function useWinPatchInstallWizard({ hostSummary, selectedRows, onSubmitte
   }
 
   function skipCurrentStep() {
-    if (!currentStepSkippable.value || dialogBusy.value || currentTaskId.value || !canGoNext.value) {
+    if (
+      !currentStepSkippable.value ||
+      dialogBusy.value ||
+      currentTaskId.value ||
+      !canGoNext.value
+    ) {
       return
     }
 

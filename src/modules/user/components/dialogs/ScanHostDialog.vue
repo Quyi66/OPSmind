@@ -187,7 +187,7 @@ async function handleExecute() {
     executing.value = false
     currentStatus.value = ''
     console.error('执行扫描失败:', error)
-    ElMessage.error('执行失败: ' + (error?.message || '未知错误'))
+    ElMessage.error(`执行失败: ${error?.message || '未知错误'}`)
   }
 }
 

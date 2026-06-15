@@ -1,52 +1,31 @@
 <template>
-  <div class="ops-page-layout">
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="page-header__actions">
-        <el-button type="primary" @click="handleRescan">
-          <i class="fa fa-bug" />
-          重新扫描补丁
-        </el-button>
-      </div>
-    </div>
-
+  <div class="ops-page-layout ops-page-layout--page-scroll linux-patch-scan-page">
     <!-- 内容区域 -->
     <div class="page-content">
       <!-- 新版统计面板 -->
       <div class="stats-dashboard">
         <!-- 1. 补丁统计卡片 -->
         <div class="stat-card patch-card">
-          <div class="card-title">补丁统计</div>
+          <div class="compact-card-header">
+            <div class="card-title">补丁统计</div>
+            <div class="card-subtitle">总计 {{ kpiStats.totalPatchCount }} 个</div>
+          </div>
           <div class="patch-chart-container">
             <div class="chart-wrapper">
-              <v-chart class="patch-pie-chart" :option="chartOption" autoresize />
-              <div class="chart-center-label">
-                <div class="label-title">总计</div>
-                <div class="label-value">{{ kpiStats.totalPatchCount }}</div>
-              </div>
+              <v-chart class="patch-bar-chart" :option="chartOption" autoresize />
             </div>
           </div>
           <div class="patch-progress-section">
-            <div class="progress-bar-container">
-              <div
-                class="progress-segment critical"
-                :style="{ width: kpiStats.criticalPatchPercent + '%' }"
-              ></div>
-              <div
-                class="progress-segment important"
-                :style="{ width: kpiStats.importantPatchPercent + '%' }"
-              ></div>
-            </div>
             <div class="progress-labels">
               <div class="stat-label critical">
                 <i class="fa fa-circle"></i>
-                致命 {{ kpiStats.criticalPatchPercent }}%
-                <span class="count">({{ kpiStats.criticalPatchCount }})</span>
+                致命
+                <span class="count">{{ kpiStats.criticalPatchPercent }}%</span>
               </div>
               <div class="stat-label important">
                 <i class="fa fa-circle"></i>
-                严重 {{ kpiStats.importantPatchPercent }}%
-                <span class="count">({{ kpiStats.importantPatchCount }})</span>
+                严重
+                <span class="count">{{ kpiStats.importantPatchPercent }}%</span>
               </div>
             </div>
           </div>
@@ -54,41 +33,35 @@
 
         <!-- 2. 漏洞概览卡片 -->
         <div class="stat-card vul-card">
-          <div class="card-title">漏洞概览</div>
+          <div class="compact-card-header">
+            <div class="card-title">漏洞概览</div>
+            <div class="card-subtitle">CVE 漏洞总数</div>
+          </div>
           <div class="vul-content">
-            <div class="vul-number">{{ kpiStats.vulCount.toLocaleString() }}</div>
-            <div class="vul-label">CVE漏洞总数</div>
-            <div class="vul-sub-metric">
-              <i class="fa fa-bug"></i>
-              平均每主机 {{ kpiStats.avgVulPerHost }} 个漏洞
+            <div class="metric-main">
+              <div class="vul-number">{{ kpiStats.vulCount.toLocaleString() }}</div>
+              <div class="vul-label">个</div>
             </div>
-            <div class="vul-icon-bg">
-              <i class="fa fa-shield-alt"></i>
+            <div class="vul-sub-metric compact">
+              <i class="fa fa-bug"></i>
+              平均每主机 {{ kpiStats.avgVulPerHost }} 个
             </div>
           </div>
         </div>
 
         <!-- 3. 主机影响卡片 -->
         <div class="stat-card host-card">
-          <div class="card-title">主机影响</div>
+          <div class="compact-card-header">
+            <div class="card-title">主机影响</div>
+            <div class="card-subtitle">扫描主机 {{ kpiStats.hostCount }} 台</div>
+          </div>
           <div class="host-content">
-            <div class="host-total-row">
-              <span class="label">扫描主机</span>
-              <span class="value">{{ kpiStats.hostCount }} 台</span>
-            </div>
-
             <div class="impact-item">
               <div class="impact-header">
                 <span class="label-critical">致命影响</span>
                 <span class="value">
                   {{ kpiStats.criticalHostCount }} 台 ({{ kpiStats.criticalHostPercent }}%)
                 </span>
-              </div>
-              <div class="progress-track">
-                <div
-                  class="progress-fill critical"
-                  :style="{ width: kpiStats.criticalHostPercent + '%' }"
-                ></div>
               </div>
             </div>
 
@@ -98,12 +71,6 @@
                 <span class="value">
                   {{ kpiStats.importantHostCount }} 台 ({{ kpiStats.importantHostPercent }}%)
                 </span>
-              </div>
-              <div class="progress-track">
-                <div
-                  class="progress-fill important"
-                  :style="{ width: kpiStats.importantHostPercent + '%' }"
-                ></div>
               </div>
             </div>
           </div>
@@ -135,11 +102,58 @@
         <!-- 筛选栏 -->
         <div class="ops-filter-bar">
           <el-form :model="hostFilters" inline size="small">
+            <el-form-item label="操作系统">
+              <el-select
+                v-model="hostFilters.os_distro"
+                placeholder="全部，可输入自定义值"
+                clearable
+                filterable
+                allow-create
+                default-first-option
+                style="width: 180px"
+              >
+                <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="系统版本">
+              <el-select
+                v-model="hostVersionFilter"
+                placeholder="全部，可输入自定义值"
+                clearable
+                filterable
+                allow-create
+                default-first-option
+                style="width: 180px"
+                @change="handleHostVersionChange"
+              >
+                <el-option
+                  v-for="item in hostOsVersionOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="标签">
+              <el-select
+                v-model="hostFilters.tags"
+                placeholder="全部标签"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                clearable
+                filterable
+                :loading="hostTagLoading"
+                style="width: 180px"
+              >
+                <el-option v-for="tag in hostTagOptions" :key="tag" :label="tag" :value="tag" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="关键词">
               <el-input
-                v-model="filterText"
-                placeholder="输入字符搜索"
-                style="width: 200px"
+                v-model="hostFilters.keyword"
+                placeholder="主机名 / IP / 资产 ID"
+                style="width: 220px"
                 clearable
               >
                 <template #prefix>
@@ -168,9 +182,10 @@
 
         <!-- 操作栏 -->
         <div class="ops-action-bar">
-          <!-- <el-button size="small" @click="handleExport">
-            <i class="fa fa-download" /> 导出
-          </el-button> -->
+          <el-button type="primary" size="small" @click="handleRescan">
+            <i class="fa fa-bug" />
+            重新扫描补丁
+          </el-button>
           <span style="flex: 1"></span>
           <el-button
             class="toolbar-icon-btn"
@@ -191,17 +206,19 @@
           <el-table
             v-loading="loading"
             :data="hostTableData"
+            class="natural-height-table"
             style="width: 100%"
-            height="calc(100vh - 600px)"
+            @selection-change="handleHostSelectionChange"
           >
-            <el-table-column prop="host_key" label="主机" width="150">
+            <el-table-column type="selection" width="45" />
+            <el-table-column prop="host_key" label="主机" width="140">
               <template #default="{ row }">
-                <a href="javascript:void(0)" class="host-link" @click="handleHostClick(row)">
+                <el-link type="primary" :underline="false" @click="handleHostClick(row)">
                   {{ row.host_key }}
-                </a>
+                </el-link>
               </template>
             </el-table-column>
-            <el-table-column prop="need_reboot" label="是否需要重启" width="120">
+            <el-table-column prop="need_reboot" label="是否需要重启" width="110">
               <template #default="{ row }">
                 <el-tag
                   :type="
@@ -210,15 +227,11 @@
                   size="small"
                   round
                 >
-                  <!-- <i :class="row.need_reboot === 0 ? 'fa fa-power-off' : 'fa fa-check'" /> -->
                   {{ row.need_reboot === 1 ? '是' : row.need_reboot === 0 ? '否' : '未知' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="os_distro" label="操作系统" width="120" />
-            <el-table-column prop="os_version" label="OS版本" width="140" />
-            <el-table-column prop="num_critical" width="90">
+            <el-table-column prop="num_critical" width="80">
               <template #header>
                 严重
                 <i class="fa fa-circle text-danger" />
@@ -236,7 +249,7 @@
                 </button>
               </template>
             </el-table-column>
-            <el-table-column prop="num_important" width="90">
+            <el-table-column prop="num_important" width="80">
               <template #header>
                 重要
                 <i class="fa fa-circle text-warning" />
@@ -254,7 +267,7 @@
                 </button>
               </template>
             </el-table-column>
-            <el-table-column prop="num_moderate" width="90">
+            <el-table-column prop="num_moderate" width="80">
               <template #header>
                 中等
                 <i class="fa fa-circle text-dark" />
@@ -290,6 +303,81 @@
                 </button>
               </template>
             </el-table-column>
+            <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
+            <el-table-column prop="tags" label="标签" min-width="140">
+              <template #default="{ row }">
+                <div v-if="Array.isArray(row.tags) && row.tags.length" class="host-list-tags">
+                  <el-tag
+                    v-for="(tag, index) in row.tags"
+                    :key="`${tag}-${index}`"
+                    size="small"
+                    effect="plain"
+                  >
+                    {{ tag }}
+                  </el-tag>
+                </div>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="os_distro" label="操作系统" width="110" />
+            <el-table-column label="版本" width="150">
+              <template #default="{ row }">
+                {{ [row.os_version, row.os_sp_version].filter(Boolean).join(' ') || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="内存" width="170">
+              <template #default="{ row }">
+                <div v-if="row.memoryOverview" class="memory-overview">
+                  <div
+                    v-if="row.memoryOverview.usedPercent !== null"
+                    class="memory-usage"
+                    :class="`memory-usage--${row.memoryOverview.usageLevel}`"
+                  >
+                    <div
+                      class="memory-usage__track"
+                      :title="`已使用 ${row.memoryOverview.usedPercent}%`"
+                    >
+                      <div
+                        class="memory-usage__fill"
+                        :style="{ width: `${row.memoryOverview.usedPercent}%` }"
+                      />
+                    </div>
+                    <div class="memory-usage__desc">
+                      {{ row.memoryOverview.freeGb }} GB 可用, 共
+                      {{ row.memoryOverview.totalGb }} GB
+                    </div>
+                  </div>
+                  <div v-else class="memory-usage memory-usage--unknown">
+                    <div class="memory-usage__track" />
+                    <div class="memory-usage__desc">
+                      {{
+                        row.memoryOverview.freeGb !== null
+                          ? `${row.memoryOverview.freeGb} GB 可用`
+                          : '-'
+                      }}{{
+                        row.memoryOverview.totalGb !== null
+                          ? `, 共 ${row.memoryOverview.totalGb} GB`
+                          : ', 总量未知'
+                      }}
+                    </div>
+                  </div>
+                </div>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <!-- <el-table-column prop="location" label="网络区域环境" width="140">
+              <template #default="{ row }">
+                <el-tag v-if="row.location" size="small" type="success" effect="plain">
+                  {{ row.location }}
+                </el-tag>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="run_environment" label="运行环境" width="120">
+              <template #default="{ row }">
+                {{ row.run_environment || '-' }}
+              </template>
+            </el-table-column> -->
             <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
               <template #default="{ row }">
                 {{ formatDateTime(row.scan_timestamp) }}
@@ -403,15 +491,25 @@
           <el-button
             type="primary"
             size="small"
-            :disabled="selectedVulns.length === 0"
+            :disabled="vulnSelectedCount === 0"
             @click="handleFixSelected"
           >
             <i class="fa fa-tools" />
             修复选定的漏洞
           </el-button>
-          <!-- <el-button size="small" @click="handleVulnExport">
-            <i class="fa fa-download" /> 导出
-          </el-button> -->
+          <el-button
+            :type="vulnAllSelected ? 'default' : 'primary'"
+            size="small"
+            :loading="vulnSelectAllLoading"
+            @click="handleToggleVulnSelectAll"
+          >
+            <i :class="`fa fa-${vulnAllSelected ? 'times' : 'check-double'} me-1`" />
+            {{ vulnAllSelected ? '一键取消' : '一键全选' }}
+          </el-button>
+          <el-button size="small" @click="handleVulnExport">
+            <i class="fa fa-download" />
+            导出
+          </el-button>
           <span style="flex: 1"></span>
           <el-button
             class="toolbar-icon-btn"
@@ -433,10 +531,10 @@
             ref="vulnTableRef"
             v-loading="vulnLoading"
             :data="vulnTableData"
-            class="header-border-only-table"
+            class="header-border-only-table natural-height-table"
             style="width: 100%"
-            max-height="calc(100vh - 600px)"
-            @selection-change="handleVulnSelectionChange"
+            @select="handleVulnSelect"
+            @select-all="handleVulnSelectAll"
             border
           >
             <el-table-column type="selection" width="45" />
@@ -468,7 +566,9 @@
                     :width="360"
                   >
                     <template #reference>
-                      <span class="more-link">+{{ getPatchIdList(row.patch_id).length - 2 }} 更多</span>
+                      <span class="more-link">
+                        +{{ getPatchIdList(row.patch_id).length - 2 }} 更多
+                      </span>
                     </template>
                     <div class="patch-list-popover">
                       <a
@@ -510,6 +610,21 @@
                     <span v-else class="affected-package-text" :title="pkg.currentPackage">
                       {{ pkg.currentPackage }}
                     </span>
+                    <template
+                      v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length"
+                    >
+                      <el-tag
+                        v-for="service in pkg.services"
+                        :key="service"
+                        size="small"
+                        type="warning"
+                        effect="plain"
+                        class="reboot-service-tag"
+                        style="margin-left: 4px"
+                      >
+                        {{ service }}
+                      </el-tag>
+                    </template>
                   </div>
                   <el-popover
                     v-if="getAffectedPackages(row).length > 2"
@@ -538,6 +653,23 @@
                         <span v-else class="affected-package-text" :title="pkg.currentPackage">
                           {{ pkg.currentPackage }}
                         </span>
+                        <template
+                          v-if="
+                            pkg.restartType === 'service' && pkg.services && pkg.services.length
+                          "
+                        >
+                          <el-tag
+                            v-for="service in pkg.services"
+                            :key="service"
+                            size="small"
+                            type="warning"
+                            effect="plain"
+                            class="reboot-service-tag"
+                            style="margin-left: 4px"
+                          >
+                            {{ service }}
+                          </el-tag>
+                        </template>
                       </div>
                     </div>
                   </el-popover>
@@ -547,9 +679,10 @@
             </el-table-column>
             <el-table-column prop="vul_id" label="CVE" width="150">
               <template #default="{ row }">
-                <a :href="getCveUrl(row.vul_id, row.os_distro)" target="_blank" class="cve-badge">
-                  {{ row.vul_id }}
-                </a>
+                <CveLinkList
+                  :cves="[row.vul_id]"
+                  :url-resolver="cve => getCveUrl(cve, row.os_distro)"
+                />
               </template>
             </el-table-column>
             <el-table-column
@@ -559,11 +692,7 @@
               class-name="vulnerability-layout-top-cell"
             >
               <template #default="{ row }">
-                <el-tag
-                  effect="dark"
-                  class="severity-tag"
-                  :class="getSeverityClass(row.severity)"
-                >
+                <el-tag effect="dark" class="severity-tag" :class="getSeverityClass(row.severity)">
                   {{ getSeverityLabel(row.severity) }}
                 </el-tag>
               </template>
@@ -749,35 +878,106 @@
     />
 
     <!-- 修复漏洞确认对话框 -->
-    <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="700px" destroy-on-close>
+    <el-dialog v-model="fixDialogVisible" title="修复选定的漏洞" width="960px" destroy-on-close>
       <div v-loading="fixDialogLoading" class="fix-dialog-content">
-        <div class="fix-info-card">
-          <div class="fix-info-header">
-            <i class="fa fa-desktop text-muted" />
-            待更新的主机
+        <div class="fix-summary-card">
+          <div class="fix-summary-item">
+            <span class="fix-summary-label">选中漏洞</span>
+            <strong class="fix-summary-value">
+              {{ fixDialogData.selectedVulnerabilityCount }}
+            </strong>
           </div>
-          <div class="fix-info-body" v-html="fixDialogData.hosts || '-'"></div>
+          <div class="fix-summary-item">
+            <span class="fix-summary-label">待更新关系</span>
+            <strong class="fix-summary-value">{{ fixDialogData.patchStatusIds.length }}</strong>
+          </div>
+          <div class="fix-summary-hint">
+            明细默认按需加载，仅预览部分结果，避免一键全选后一次性拉取过大返回。
+          </div>
         </div>
-        <div class="fix-info-card">
-          <div class="fix-info-header">
-            <i class="fa fa-briefcase-medical text-muted" />
-            待更新的补丁
+        <div class="fix-grid-layout">
+          <div v-for="section in fixSectionCards" :key="section.key" class="fix-info-card">
+            <div class="fix-info-header">
+              <span>
+                <i :class="section.icon" />
+                {{ section.label }}
+              </span>
+              <el-badge
+                :value="getFixSectionBadgeValue(section.key)"
+                :type="section.badgeType"
+                class="header-badge"
+              />
+            </div>
+            <div class="fix-info-body">
+              <div v-if="fixDialogLoading" class="empty-text">正在汇总更新范围...</div>
+              <div v-else-if="!fixDialogData.patchStatusIds.length" class="empty-text">
+                暂无可更新项
+              </div>
+              <div
+                v-else-if="
+                  !fixSectionState[section.key].loaded && fixSectionState[section.key].loading
+                "
+                v-loading="true"
+                class="empty-text fix-info-loading"
+              >
+                正在加载预览...
+              </div>
+              <div v-else-if="!fixSectionState[section.key].loaded" class="fix-info-placeholder">
+                <div class="empty-text">明细未加载</div>
+                <div class="fix-info-actions">
+                  <el-button
+                    size="small"
+                    :loading="fixSectionState[section.key].loading"
+                    @click="loadFixDialogSection(section.key, 'preview')"
+                  >
+                    加载预览
+                  </el-button>
+                  <el-button
+                    link
+                    :disabled="fixSectionState[section.key].loading"
+                    @click="loadFixDialogSection(section.key, 'full')"
+                  >
+                    加载全部
+                  </el-button>
+                </div>
+                <div v-if="fixSectionState[section.key].error" class="fix-info-hint is-error">
+                  {{ fixSectionState[section.key].error }}
+                </div>
+              </div>
+              <div v-else-if="!fixDialogData[section.key].length" class="empty-text">
+                {{ section.emptyText }}
+              </div>
+              <div v-else class="fix-info-content">
+                <div class="chips-container">
+                  <el-tag
+                    v-for="item in getFixSectionDisplayItems(section.key)"
+                    :key="item"
+                    size="small"
+                    :type="section.badgeType"
+                    effect="plain"
+                    class="chip-tag"
+                  >
+                    {{ item }}
+                  </el-tag>
+                </div>
+                <div class="fix-info-footer">
+                  <span class="fix-info-hint">
+                    {{ getFixSectionHint(section.key) }}
+                  </span>
+                  <el-button
+                    v-if="
+                      fixSectionState[section.key].mode !== 'full' &&
+                      fixSectionState[section.key].hasMore
+                    "
+                    link
+                    @click="loadFixDialogSection(section.key, 'full')"
+                  >
+                    加载完整数据
+                  </el-button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="fix-info-body" v-html="fixDialogData.patches || '-'"></div>
-        </div>
-        <div class="fix-info-card">
-          <div class="fix-info-header">
-            <i class="fa fa-suitcase text-muted" />
-            待更新的 CVE
-          </div>
-          <div class="fix-info-body" v-html="fixDialogData.cves || '-'"></div>
-        </div>
-        <div class="fix-info-card">
-          <div class="fix-info-header">
-            <i class="fa fa-cube text-muted" />
-            待更新的软件包
-          </div>
-          <div class="fix-info-body" v-html="fixDialogData.packages || '-'"></div>
         </div>
       </div>
       <template #footer>
@@ -785,7 +985,7 @@
         <el-button
           type="primary"
           :loading="fixSubmitting"
-          :disabled="!fixDialogData.hosts"
+          :disabled="!fixDialogData.patchStatusIds.length || fixDialogLoading"
           @click="handleConfirmFix"
         >
           <i class="fa fa-chevron-right" />
@@ -797,9 +997,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, provide, watch } from 'vue'
+import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi } from '../api'
 import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
@@ -812,7 +1012,8 @@ import {
   getRebootStatusTooltip,
   hasAffectedPackageDetail
 } from '../utils/vulnerabilityPackages'
-import { assetApi } from '@/modules/asset/api'
+import { buildMemoryOverview, parseOsVersionFilter } from '../utils/linuxPatchScan'
+import { assetApi, dataManageApi } from '@/modules/asset/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
@@ -820,30 +1021,16 @@ import HostSeverityPatchDialog from '../components/host-detail/dialogs/HostSever
 import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
+import CveLinkList from '../components/common/CveLinkList.vue'
 
 // ECharts
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { PieChart, GaugeChart } from 'echarts/charts'
-import {
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent
-} from 'echarts/components'
+import { BarChart } from 'echarts/charts'
+import { TooltipComponent, GridComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
 
-use([
-  CanvasRenderer,
-  PieChart,
-  GaugeChart,
-  TitleComponent,
-  TooltipComponent,
-  GridComponent
-])
-
-// Emits
-const emit = defineEmits(['install', 'navigate'])
+use([CanvasRenderer, BarChart, TooltipComponent, GridComponent])
 
 // Router
 const router = useRouter()
@@ -870,31 +1057,79 @@ const kpiStats = reactive({
   importantHostPercent: 0
 })
 
-// 图表配置 - 补丁统计半环图
+// 图表配置 - 补丁统计条形图
 const chartOption = computed(() => {
+  const rootStyle =
+    typeof window !== 'undefined' ? getComputedStyle(document.documentElement) : null
+  const textColor = rootStyle?.getPropertyValue('--el-text-color-primary').trim() || '#303133'
+  const axisColor = rootStyle?.getPropertyValue('--el-text-color-regular').trim() || '#606266'
+  const backgroundColor = rootStyle?.getPropertyValue('--el-fill-color-light').trim() || '#f5f7fa'
+
   return {
+    grid: {
+      top: 2,
+      right: 42,
+      bottom: 2,
+      left: 42,
+      containLabel: false
+    },
     tooltip: {
-      trigger: 'item'
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      },
+      formatter: params => {
+        const item = params?.[0]
+        if (!item) return ''
+        const percent =
+          item.name === '致命' ? kpiStats.criticalPatchPercent : kpiStats.importantPatchPercent
+        return `${item.name}: ${item.value} (${percent}%)`
+      }
+    },
+    xAxis: {
+      type: 'value',
+      show: false,
+      max: value => Math.max(value.max, 1)
+    },
+    yAxis: {
+      type: 'category',
+      inverse: true,
+      data: ['致命', '严重'],
+      axisTick: { show: false },
+      axisLine: { show: false },
+      axisLabel: {
+        color: axisColor,
+        fontSize: 12,
+        margin: 8
+      }
     },
     series: [
       {
         name: '补丁统计',
-        type: 'pie',
-        radius: ['60%', '80%'],
-        center: ['50%', '70%'],
-        // 调整起始角度，使其变成半圆
-        startAngle: 180,
-        endAngle: 0,
+        type: 'bar',
+        barWidth: 12,
+        barGap: '45%',
         data: [
-          { value: kpiStats.criticalPatchCount, name: '严重', itemStyle: { color: '#F53F3F' } },
-          { value: kpiStats.importantPatchCount, name: '重要', itemStyle: { color: '#FF7D00' } }
+          { value: kpiStats.criticalPatchCount, itemStyle: { color: '#F53F3F' } },
+          { value: kpiStats.importantPatchCount, itemStyle: { color: '#FF7D00' } }
         ],
         label: {
-          show: false
+          show: true,
+          position: 'right',
+          color: textColor,
+          fontSize: 12,
+          fontWeight: 600
         },
+        itemStyle: {
+          borderRadius: [0, 6, 6, 0]
+        },
+        backgroundStyle: {
+          color: backgroundColor,
+          borderRadius: [0, 6, 6, 0]
+        },
+        showBackground: true,
         emphasis: {
-          scale: true,
-          scaleSize: 5
+          focus: 'series'
         }
       }
     ]
@@ -903,16 +1138,29 @@ const chartOption = computed(() => {
 
 // 主机表格
 const loading = ref(false)
-const filterText = ref('')
 const hostTableData = ref([])
+const hostTagLoading = ref(false)
+const hostTagOptions = ref([])
 const hostFilters = reactive({
+  os_distro: '',
+  os_version: '',
+  os_sp_version: '',
+  tags: [],
   keyword: ''
 })
+const hostVersionFilter = ref('')
 const pagination = reactive({
   page: 1,
   pageSize: 20,
   total: 0
 })
+
+const batchSelectedHosts = ref([]) // 批量选中的主机列表
+
+// 表格多选发生变化
+function handleHostSelectionChange(selection) {
+  batchSelectedHosts.value = selection
+}
 
 // 漏洞表格
 const vulnLoading = ref(false)
@@ -951,10 +1199,41 @@ function syncStateFromRoute() {
 // 操作系统列表
 const osDistroList = ref([])
 const osVersionList = ref([])
+const hostOsVersionOptions = ref([])
+
+function mergeHostOsVersionOptions(records = []) {
+  const optionMap = new Map(hostOsVersionOptions.value.map(item => [item.value, item]))
+
+  records.forEach(item => {
+    const osVersion = item.os_major_version || item.os_version || ''
+    const osSpVersion = item.os_sp_version || ''
+    const label = [osVersion, osSpVersion].filter(Boolean).join(' ')
+    if (!label) return
+
+    optionMap.set(label, {
+      label,
+      value: label,
+      osVersion,
+      osSpVersion
+    })
+  })
+
+  hostOsVersionOptions.value = [...optionMap.values()]
+}
 
 // 漏洞表格选择
 const vulnTableRef = ref(null)
 const selectedVulns = ref([])
+const vulnAllSelected = ref(false)
+const vulnExcludedRowKeys = ref([])
+const vulnSelectAllLoading = ref(false)
+const vulnSelectedCount = computed(() => {
+  if (!vulnAllSelected.value) {
+    return selectedVulns.value.length
+  }
+
+  return Math.max(vulnPagination.total - vulnExcludedRowKeys.value.length, 0)
+})
 
 // 重新扫描对话框
 const rescanDialogVisible = ref(false)
@@ -964,7 +1243,6 @@ const rescanFormRef = ref(null)
 const rescanForm = reactive({
   hostsInput: ''
 })
-const hostSelectorVisible = ref(false)
 const selectedHosts = ref([])
 
 // 作业运行结果对话框
@@ -1043,6 +1321,11 @@ function getAffectedPackageKey(pkg, index) {
 }
 
 function hasPackageDetail(pkg, row) {
+  if (pkg?.rpmInfoId != null) return true
+  const pkgName = pkg?.pkgName || pkg?.name
+  const source = pkg?.source
+  const arch = pkg?.pkgArch || pkg?.arch || pkg?.architecture
+  if (pkgName && source && arch) return true
   return hasAffectedPackageDetail(pkg, getRowOsDistro(row))
 }
 
@@ -1056,32 +1339,69 @@ function getRebootServiceKey(row, service, index) {
   return [row?.host_key, row?.vul_id, row?.patch_id, service, index].filter(Boolean).join('-')
 }
 
-async function handleViewPackageDetail(pkg, row) {
-  const detailParams = getAffectedPackageDetailParams(pkg, getRowOsDistro(row))
+// 按 API 文档 §2.3 的三级回退顺序构建候选请求
+// 1) rpmInfoId → /rpm-info/detail/{id}
+// 2) pkgName + source + arch → /rpm-info/detail
+// 3) currentPackage + osDistro + arch → /rpm-info/installed/detail
+function buildRpmDetailCandidates(pkg, row) {
+  const candidates = []
 
-  if (!detailParams.installedDetail) {
+  if (pkg?.rpmInfoId != null) {
+    candidates.push({
+      label: 'by id',
+      request: () => rpmInfoApi.getPackageDetailById(pkg.rpmInfoId)
+    })
+  }
+
+  const pkgName = pkg?.pkgName || pkg?.name
+  const source = pkg?.source
+  const arch = pkg?.pkgArch || pkg?.arch || pkg?.architecture
+  if (pkgName && source && arch) {
+    candidates.push({
+      label: 'by name/source/arch',
+      request: () => rpmInfoApi.getPackageDetail({ name: pkgName, source, arch })
+    })
+  }
+
+  const detailParams = getAffectedPackageDetailParams(pkg, getRowOsDistro(row))
+  if (detailParams.installedDetail) {
+    candidates.push({
+      label: 'by installed currentPackage',
+      request: () => rpmInfoApi.getInstalledDetail(detailParams.installedDetail)
+    })
+  }
+
+  return candidates
+}
+
+async function handleViewPackageDetail(pkg, row) {
+  const candidates = buildRpmDetailCandidates(pkg, row)
+  if (candidates.length === 0) {
     ElMessage.warning('当前软件包暂无 RPM 详情')
     return
   }
 
+  // 一次性打开 Drawer 并进入 loading，避免多级回退过程中 visible/loading 反复切换导致 UI 闪烁
   rpmDetailVisible.value = true
   rpmDetailLoading.value = true
   rpmDetailData.value = {}
 
   try {
-    const response = await rpmInfoApi.getInstalledDetail(detailParams.installedDetail)
-    const responseData = response?.data || response || {}
-
-    if (hasRpmDetailResponse(responseData)) {
-      rpmDetailData.value = responseData
-      return
+    for (const candidate of candidates) {
+      try {
+        const response = await candidate.request()
+        const responseData = response?.data || response || {}
+        if (hasRpmDetailResponse(responseData)) {
+          rpmDetailData.value = responseData
+          return
+        }
+      } catch (error) {
+        // 任意一级失败继续尝试下一级，错误仅落日志，最终在所有候选都未命中时才提示用户
+        console.error(`Failed to load rpm package detail (${candidate.label}):`, error)
+      }
     }
 
     ElMessage.warning('当前软件包暂无 RPM 详情')
-    rpmDetailVisible.value = false
-  } catch (error) {
-    console.error('Failed to load rpm package detail:', error)
-    ElMessage.error('获取软件包详情失败')
     rpmDetailVisible.value = false
   } finally {
     rpmDetailLoading.value = false
@@ -1134,12 +1454,52 @@ function buildRollbackWizardData(row) {
 // 修复漏洞对话框
 const fixDialogVisible = ref(false)
 const fixSubmitting = ref(false)
+const FIX_DIALOG_PREVIEW_LIMIT = 20
+const FIX_DIALOG_ID_BATCH_SIZE = 200
+const FIX_DIALOG_DETAIL_BATCH_SIZE = 1000
+const fixSectionCards = [
+  {
+    key: 'hosts',
+    label: '待更新的主机',
+    icon: 'fa fa-desktop text-muted',
+    badgeType: 'primary',
+    emptyText: '暂无主机'
+  },
+  {
+    key: 'patches',
+    label: '待更新的补丁',
+    icon: 'fa fa-briefcase-medical text-muted',
+    badgeType: 'warning',
+    emptyText: '暂无补丁'
+  },
+  {
+    key: 'cves',
+    label: '待更新的 CVE',
+    icon: 'fa fa-suitcase text-muted',
+    badgeType: 'danger',
+    emptyText: '暂无 CVE'
+  },
+  {
+    key: 'packages',
+    label: '待更新的软件包',
+    icon: 'fa fa-cube text-muted',
+    badgeType: 'success',
+    emptyText: '暂无软件包'
+  }
+]
 const fixDialogData = reactive({
-  hosts: '',
-  patches: '',
-  cves: '',
-  packages: '',
-  patchStatusIds: []
+  hosts: [],
+  patches: [],
+  cves: [],
+  packages: [],
+  patchStatusIds: [],
+  selectedVulnerabilityCount: 0
+})
+const fixSectionState = reactive({
+  hosts: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' },
+  patches: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' },
+  cves: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' },
+  packages: { loaded: false, loading: false, mode: 'idle', hasMore: false, error: '' }
 })
 const fixDialogLoading = ref(false)
 const rollbackWizardVisible = ref(false)
@@ -1178,7 +1538,7 @@ async function loadKpiData() {
       }
 
       response.data.records.forEach(rec => {
-        if (dataMap.hasOwnProperty(rec.name)) {
+        if (rec.name in dataMap) {
           dataMap[rec.name] = rec.value || 0
         }
       })
@@ -1235,51 +1595,71 @@ async function loadHostData() {
   loading.value = true
   try {
     const params = {
-      page: pagination.page,
+      page: pagination.page - 1,
       size: pagination.pageSize,
-      filter: filterText.value
+      os_distro: hostFilters.os_distro,
+      os_version: hostFilters.os_version,
+      os_sp_version: hostFilters.os_sp_version,
+      tags: hostFilters.tags,
+      keyword: hostFilters.keyword
     }
     const response = await patchScanApi.getScanResults(params)
-    if (response?.data) {
-      const records = response.data.records || []
+    const data = response?.data || response || {}
+    const records = Array.isArray(data.content) ? data.content : []
+    mergeHostOsVersionOptions(records)
 
-      // 一次性获取所有主机的资产信息，回填是否需要重启和 OS 版本
-      try {
-        const assetParams = {
-          hostKeys: '@@',
-          assetType: 'linux',
-          permission: 'r',
-          status: 'all',
-          CONN_LATEST_STATUS: '',
-          system_name: ' ',
-          os_version: ' '
-        }
-        const assetRes = await assetApi.getAssetList(assetParams, { size: 1000 })
-        if (assetRes?.records) {
-          const assetInfoMap = {}
-          assetRes.records.forEach(item => {
-            if (item.IP) {
-              assetInfoMap[item.IP] = {
-                needReboot: item.needReboot,
-                osVersion: item.os_version || ''
-              }
-            }
-          })
-          records.forEach(record => {
-            if (assetInfoMap.hasOwnProperty(record.host_key)) {
-              const assetInfo = assetInfoMap[record.host_key]
-              record.need_reboot = assetInfo.needReboot
-              record.os_version = assetInfo.osVersion || record.os_version
-            }
-          })
-        }
-      } catch (err) {
-        console.error('Failed to load reboot status:', err)
+    // 一次性获取所有主机的资产信息，回填主机概览固定列
+    try {
+      const assetParams = {
+        hostKeys: '@@',
+        assetType: 'linux',
+        permission: 'r',
+        status: 'all',
+        CONN_LATEST_STATUS: '',
+        system_name: ' ',
+        os_version: ' '
       }
+      const assetRes = await assetApi.getAssetList(assetParams, { size: 1000 })
+      if (assetRes?.records) {
+        const assetInfoMap = {}
+        assetRes.records.forEach(item => {
+          if (item.IP) {
+            // 从标签筛选 LOCATION 区域
+            let location = null
+            const tags = item.tags || item.Tags || []
+            const locationNames = ['互联网', '外联网', '内网环境、孤岛环境']
+            const matchedTag = tags.find(t => locationNames.includes(t.name || t))
+            if (matchedTag) {
+              location = matchedTag.name || matchedTag
+            }
 
-      hostTableData.value = records
-      pagination.total = response.data.total || 0
+            assetInfoMap[item.IP] = {
+              needReboot: item.needReboot,
+              run_environment: item.RUN_ENVIRONMENT || item.run_environment || '',
+              location,
+              memoryOverview: buildMemoryOverview(
+                item.memtotal_mb ?? item.MEMTOTAL_MB,
+                item.memfree_mb ?? item.MEMFREE_MB
+              )
+            }
+          }
+        })
+        records.forEach(record => {
+          if (record.host_key in assetInfoMap) {
+            const assetInfo = assetInfoMap[record.host_key]
+            record.need_reboot = assetInfo.needReboot
+            record.run_environment = assetInfo.run_environment
+            record.location = assetInfo.location
+            record.memoryOverview = assetInfo.memoryOverview
+          }
+        })
+      }
+    } catch (err) {
+      console.error('Failed to load reboot status:', err)
     }
+
+    hostTableData.value = records
+    pagination.total = Number(data.totalElements) || 0
   } catch (error) {
     console.error('Failed to load host data:', error)
     hostTableData.value = []
@@ -1289,25 +1669,36 @@ async function loadHostData() {
   }
 }
 
+async function loadHostTagOptions() {
+  hostTagLoading.value = true
+  try {
+    const responses = await Promise.all([
+      dataManageApi.getAllTags('linux'),
+      dataManageApi.getAllTags('host')
+    ])
+    const records = responses.flatMap(response =>
+      Array.isArray(response?.records) ? response.records : []
+    )
+    hostTagOptions.value = [
+      ...new Set(
+        records
+          .map(item => (typeof item === 'string' ? item : item?.name || item?.tagName))
+          .filter(Boolean)
+      )
+    ].sort((a, b) => a.localeCompare(b, 'zh-CN'))
+  } catch (error) {
+    console.error('Failed to load host tag options:', error)
+    hostTagOptions.value = []
+  } finally {
+    hostTagLoading.value = false
+  }
+}
+
 // 加载漏洞表格数据
 async function loadVulnData() {
   vulnLoading.value = true
   try {
-    const params = {
-      page: vulnPagination.page - 1,
-      size: vulnPagination.pageSize,
-      filter: vulnFilterText.value,
-      host_key: vulnFilters.host_key || '',
-      vul_id: vulnFilters.vul_id || null,
-      severity: vulnFilters.severity,
-      patch_status: vulnFilters.patch_status,
-      is_kernel: vulnFilters.is_kernel,
-      os_distro: vulnFilters.os_distro,
-      os_major_version: vulnFilters.os_major_version,
-      reboot_status: vulnFilters.reboot_status,
-      filter: vulnFilters.filter || ''
-    }
-    const response = await vulnerabilityApi.getVulnerabilityList(params)
+    const response = await vulnerabilityApi.getVulnerabilityList(buildVulnListParams())
     const data = response?.data || response || {}
     vulnTableData.value = Array.isArray(data.content)
       ? data.content
@@ -1335,7 +1726,11 @@ async function loadOsLists() {
       osDistroList.value = osDistroRes.data.records.map(item => item.os_distro)
     }
     if (osVersionRes?.data?.records) {
-      osVersionList.value = osVersionRes.data.records.map(item => item.os_major_version)
+      const records = osVersionRes.data.records
+      osVersionList.value = [
+        ...new Set(records.map(item => item.os_major_version || item.os_version).filter(Boolean))
+      ]
+      mergeHostOsVersionOptions(records)
     }
   } catch (error) {
     console.error('Failed to load OS lists:', error)
@@ -1348,19 +1743,27 @@ function handleFilter() {
   loadHostData()
 }
 
+function handleHostVersionChange(value) {
+  const option = hostOsVersionOptions.value.find(item => item.value === value)
+  const parsedValue = parseOsVersionFilter(value)
+  hostFilters.os_version = option?.osVersion || parsedValue.osVersion
+  hostFilters.os_sp_version = option?.osSpVersion || parsedValue.osSpVersion
+}
+
 function handleHostReset() {
-  filterText.value = ''
+  hostFilters.os_distro = ''
+  hostFilters.os_version = ''
+  hostFilters.os_sp_version = ''
+  hostFilters.tags = []
+  hostVersionFilter.value = ''
+  hostFilters.keyword = ''
   pagination.page = 1
   pagination.pageSize = 20
   loadHostData()
 }
 
-function handleVulnFilter() {
-  vulnPagination.page = 1
-  loadVulnData()
-}
-
 function handleVulnReset() {
+  resetVulnSelectionState()
   vulnFilters.severity = 'all'
   vulnFilters.patch_status = 'all'
   vulnFilters.is_kernel = 'all'
@@ -1370,6 +1773,55 @@ function handleVulnReset() {
   vulnPagination.page = 1
   vulnPagination.pageSize = 20
   loadVulnData()
+}
+
+async function handleVulnExport() {
+  const queryParams = {}
+
+  if (vulnFilters.host_key && vulnFilters.host_key !== 'all') {
+    queryParams.host_key = vulnFilters.host_key
+  }
+  if (vulnFilters.vul_id && vulnFilters.vul_id !== 'all') {
+    queryParams.vul_id = vulnFilters.vul_id
+  }
+  if (vulnFilters.severity && vulnFilters.severity !== 'all') {
+    queryParams.severity = vulnFilters.severity
+  }
+  if (vulnFilters.reboot_status && vulnFilters.reboot_status !== 'all') {
+    queryParams.reboot_status = vulnFilters.reboot_status
+  }
+  if (vulnFilters.is_kernel && vulnFilters.is_kernel !== 'all') {
+    queryParams.is_kernel = vulnFilters.is_kernel
+  }
+  if (vulnFilters.patch_status && vulnFilters.patch_status !== 'all') {
+    queryParams.patch_status = vulnFilters.patch_status
+  }
+  if (vulnFilters.os_distro && vulnFilters.os_distro !== 'all') {
+    queryParams.os_distro = vulnFilters.os_distro
+  }
+  if (vulnFilters.os_major_version && vulnFilters.os_major_version !== 'all') {
+    queryParams.os_major_version = vulnFilters.os_major_version
+  }
+  if (vulnFilters.filter || vulnFilterText.value) {
+    queryParams.filter = vulnFilters.filter || vulnFilterText.value
+  }
+
+  try {
+    ElMessage.info('正在导出，请稍候...')
+    const res = await vulnerabilityApi.exportVulnerabilityList(queryParams)
+    const blob = new Blob([res.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `补丁扫描信息_${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    URL.revokeObjectURL(a.href)
+    ElMessage.success('导出成功！')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败，请稍后重试')
+  }
 }
 
 function handlePageChange(page) {
@@ -1394,13 +1846,6 @@ function handleVulnSizeChange(size) {
   loadVulnData()
 }
 
-function handleKpiClick(kpi) {
-  if (kpi.linkPage) {
-    // 导航到对应页面
-    emit('navigate', { pageId: kpi.linkPage, params: { severity: kpi.pageParam } })
-  }
-}
-
 function handleHostClick(row) {
   router.push({
     name: 'patches-hostDetail',
@@ -1410,7 +1855,7 @@ function handleHostClick(row) {
       os_distro: row.os_distro,
       os_version: row.os_version,
       hostname: row.hostname,
-      fromLabel: '机器扫描',
+      fromLabel: '主机概览',
       fromRouteName: 'patches-machineScan'
     }
   })
@@ -1451,18 +1896,10 @@ function refreshPatchScanLists() {
   loadVulnData()
 }
 
-function handleVulnClick(row) {
-  // 导航到漏洞详情
-  ElMessage.info(`查看漏洞详情: ${row.advisory}`)
-}
-
 function handleVulnFilterChange() {
+  resetVulnSelectionState()
   vulnPagination.page = 1
   loadVulnData()
-}
-
-function handleVulnExport() {
-  ElMessage.info('导出功能开发中...')
 }
 
 function handlePatchClick(row) {
@@ -1524,38 +1961,35 @@ function getPatchStatusIcon(status) {
   return iconMap[status] || 'fa fa-circle'
 }
 
-function handleExport() {
-  ElMessage.info('导出功能开发中...')
-}
-
 function resolvePatchStatusIds(rows) {
-  const ids = []
+  const ids = new Set()
 
   rows.forEach(row => {
-    const value =
-      row.patch_status_id ??
-      row.patch_status_ids ??
-      row.id ??
-      row.patchStatusId ??
-      row.patchStatusIds
-
-    if (Array.isArray(value)) {
-      ids.push(...value)
-      return
-    }
-
-    if (typeof value === 'string') {
-      value.split(',').forEach(item => {
-        const trimmed = item.trim()
-        if (trimmed) ids.push(trimmed)
-      })
-      return
-    }
-
-    if (value) ids.push(value)
+    extractPatchStatusIdsFromRow(row).forEach(id => ids.add(id))
   })
 
-  return Array.from(new Set(ids))
+  return Array.from(ids)
+}
+
+function extractPatchStatusIdsFromRow(row) {
+  const value =
+    row.patch_status_id ?? row.patch_status_ids ?? row.id ?? row.patchStatusId ?? row.patchStatusIds
+
+  if (Array.isArray(value)) {
+    return value
+      .map(String)
+      .map(item => item.trim())
+      .filter(Boolean)
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean)
+  }
+
+  return value ? [String(value)] : []
 }
 
 function parseJobRunResult(response) {
@@ -1576,68 +2010,355 @@ function handleViewRunResult(row) {
   runResultDialogVisible.value = true
 }
 
-// 漏洞选择变化
-function handleVulnSelectionChange(selection) {
+function buildVulnListParams(overrides = {}) {
+  return {
+    page: overrides.page ?? vulnPagination.page - 1,
+    size: overrides.size ?? vulnPagination.pageSize,
+    host_key: vulnFilters.host_key || '',
+    vul_id: vulnFilters.vul_id || null,
+    severity: vulnFilters.severity,
+    patch_status: vulnFilters.patch_status,
+    is_kernel: vulnFilters.is_kernel,
+    os_distro: vulnFilters.os_distro,
+    os_major_version: vulnFilters.os_major_version,
+    reboot_status: vulnFilters.reboot_status,
+    filter: vulnFilters.filter || vulnFilterText.value || ''
+  }
+}
+
+function getVulnRowKey(row) {
+  const directId = row?.patch_status_id ?? row?.patchStatusId ?? row?.id
+  if (directId) {
+    return String(directId)
+  }
+
+  return [row?.host_key, row?.vul_id, row?.patch_id, row?.os_distro].filter(Boolean).join('|')
+}
+
+function chunkArray(items, chunkSize) {
+  const chunks = []
+  for (let index = 0; index < items.length; index += chunkSize) {
+    chunks.push(items.slice(index, index + chunkSize))
+  }
+  return chunks
+}
+
+function resetFixDialogData() {
+  fixDialogData.hosts = []
+  fixDialogData.patches = []
+  fixDialogData.cves = []
+  fixDialogData.packages = []
+  fixDialogData.patchStatusIds = []
+  fixDialogData.selectedVulnerabilityCount = 0
+
+  Object.values(fixSectionState).forEach(state => {
+    state.loaded = false
+    state.loading = false
+    state.mode = 'idle'
+    state.hasMore = false
+    state.error = ''
+  })
+}
+
+async function collectSelectedPatchStatusIdsForFix() {
+  if (!vulnAllSelected.value) {
+    return resolvePatchStatusIds(selectedVulns.value)
+  }
+
+  const excludedKeySet = new Set(vulnExcludedRowKeys.value)
+  const ids = new Set()
+  const batchSize = Math.max(vulnPagination.pageSize, FIX_DIALOG_ID_BATCH_SIZE)
+  let page = 0
+  let totalCount = Number(vulnPagination.total || 0)
+
+  while (true) {
+    const response = await vulnerabilityApi.getVulnerabilityList(
+      buildVulnListParams({ page, size: batchSize })
+    )
+    const data = response?.data || response || {}
+    const pageRows = Array.isArray(data.content)
+      ? data.content
+      : Array.isArray(data.records)
+        ? data.records
+        : []
+
+    pageRows.forEach(row => {
+      if (excludedKeySet.has(getVulnRowKey(row))) {
+        return
+      }
+
+      extractPatchStatusIdsFromRow(row).forEach(id => ids.add(id))
+    })
+
+    if (!totalCount) {
+      totalCount = Number(data.totalElements ?? data.total ?? 0)
+    }
+
+    if (
+      pageRows.length === 0 ||
+      pageRows.length < batchSize ||
+      (page + 1) * batchSize >= totalCount
+    ) {
+      break
+    }
+
+    page += 1
+  }
+
+  return Array.from(ids)
+}
+
+function getFixSectionItemsFromRecords(sectionKey, records) {
+  switch (sectionKey) {
+    case 'hosts':
+      return records.flatMap(record => {
+        if (!record.host_key) return []
+        return String(record.host_key)
+          .split(',')
+          .map(item => item.trim())
+          .filter(Boolean)
+      })
+    case 'patches':
+      return records.flatMap(record => getPatchIdList(record.patch_id))
+    case 'cves':
+      return records.flatMap(record => {
+        if (!record.vul_id) return []
+        return String(record.vul_id)
+          .split(',')
+          .map(item => item.trim())
+          .filter(Boolean)
+      })
+    case 'packages':
+      return records.flatMap(record => getAffectedPackageNames(record)).filter(Boolean)
+    default:
+      return []
+  }
+}
+
+async function fetchFixDialogSectionItems(sectionKey, mode = 'preview') {
+  const idChunks = chunkArray(fixDialogData.patchStatusIds, FIX_DIALOG_DETAIL_BATCH_SIZE)
+  const uniqueItems = new Set()
+  let hasMore = false
+
+  for (let index = 0; index < idChunks.length; index += 1) {
+    const chunk = idChunks[index]
+    let response = null
+
+    if (sectionKey === 'hosts') {
+      response = await vulnerabilityApi.getPatchStatusHosts(chunk)
+    } else if (sectionKey === 'patches') {
+      response = await vulnerabilityApi.getPatchStatusPatches(chunk)
+    } else if (sectionKey === 'cves') {
+      response = await vulnerabilityApi.getPatchStatusCves(chunk)
+    } else if (sectionKey === 'packages') {
+      response = await vulnerabilityApi.getPatchStatusPackages(chunk)
+    }
+
+    const records = response?.data?.records || []
+    const items = getFixSectionItemsFromRecords(sectionKey, records)
+
+    for (const item of items) {
+      const normalized = typeof item === 'string' ? item.trim() : item
+      if (!normalized) {
+        continue
+      }
+
+      if (uniqueItems.has(normalized)) {
+        continue
+      }
+
+      if (mode === 'preview' && uniqueItems.size >= FIX_DIALOG_PREVIEW_LIMIT) {
+        hasMore = true
+        break
+      }
+
+      uniqueItems.add(normalized)
+    }
+
+    if (mode === 'preview' && (hasMore || uniqueItems.size >= FIX_DIALOG_PREVIEW_LIMIT)) {
+      hasMore = hasMore || index < idChunks.length - 1
+      break
+    }
+  }
+
+  return {
+    items: Array.from(uniqueItems),
+    hasMore: mode === 'preview' ? hasMore : false
+  }
+}
+
+async function loadFixDialogSection(sectionKey, mode = 'preview') {
+  const state = fixSectionState[sectionKey]
+  if (!state || state.loading || !fixDialogData.patchStatusIds.length) {
+    return
+  }
+
+  if (state.loaded && (state.mode === 'full' || state.mode === mode)) {
+    return
+  }
+
+  state.loading = true
+  state.error = ''
+
+  try {
+    const { items, hasMore } = await fetchFixDialogSectionItems(sectionKey, mode)
+    fixDialogData[sectionKey] = items
+    state.loaded = true
+    state.mode = mode
+    state.hasMore = hasMore
+  } catch (error) {
+    console.error(`加载${sectionKey}明细失败:`, error)
+    state.error = error.message || '加载失败，请稍后重试'
+  } finally {
+    state.loading = false
+  }
+}
+
+function getFixSectionBadgeValue(sectionKey) {
+  const state = fixSectionState[sectionKey]
+  if (!fixDialogData.patchStatusIds.length) {
+    return 0
+  }
+
+  if (state.loading) {
+    return '...'
+  }
+
+  if (!state.loaded) {
+    return '待加载'
+  }
+
+  if (state.mode === 'preview' && state.hasMore) {
+    return `${Math.min(fixDialogData[sectionKey].length, FIX_DIALOG_PREVIEW_LIMIT)}+`
+  }
+
+  return fixDialogData[sectionKey].length
+}
+
+function getFixSectionDisplayItems(sectionKey) {
+  return fixDialogData[sectionKey].slice(0, FIX_DIALOG_PREVIEW_LIMIT)
+}
+
+function getFixSectionHint(sectionKey) {
+  const state = fixSectionState[sectionKey]
+  const displayCount = getFixSectionDisplayItems(sectionKey).length
+
+  if (state.mode === 'preview') {
+    if (state.hasMore) {
+      return `当前仅展示前 ${displayCount} 项预览，可按需继续加载完整数据。`
+    }
+    return `已加载 ${displayCount} 项预览结果。`
+  }
+
+  if (fixDialogData[sectionKey].length > FIX_DIALOG_PREVIEW_LIMIT) {
+    return `已完整加载 ${fixDialogData[sectionKey].length} 项结果，当前仅展示前 ${displayCount} 项。`
+  }
+
+  return `已完整加载 ${fixDialogData[sectionKey].length} 项结果。`
+}
+
+function resetVulnSelectionState() {
+  vulnAllSelected.value = false
+  vulnExcludedRowKeys.value = []
+  selectedVulns.value = []
+  vulnTableRef.value?.clearSelection()
+}
+
+// 漏洞选择变化精确接管
+function handleVulnSelect(selection) {
+  if (!vulnAllSelected.value) {
+    selectedVulns.value = selection
+    return
+  }
+
+  const currentPageKeys = vulnTableData.value.map(getVulnRowKey).filter(Boolean)
+  const currentSelectedKeys = new Set(selection.map(getVulnRowKey).filter(Boolean))
+  const nextExcludedKeys = new Set(vulnExcludedRowKeys.value)
+
+  currentPageKeys.forEach(key => {
+    nextExcludedKeys.delete(key)
+  })
+
+  currentPageKeys.forEach(key => {
+    if (!currentSelectedKeys.has(key)) {
+      nextExcludedKeys.add(key)
+    }
+  })
+
+  vulnExcludedRowKeys.value = Array.from(nextExcludedKeys)
   selectedVulns.value = selection
+
+  if (vulnPagination.total > 0 && vulnExcludedRowKeys.value.length >= vulnPagination.total) {
+    resetVulnSelectionState()
+  }
+}
+
+function handleVulnSelectAll(selection) {
+  handleVulnSelect(selection)
+}
+
+// 恢复全选状态下可见页的勾选
+function restoreVulnPageSelection() {
+  if (!vulnAllSelected.value || !vulnTableRef.value) return
+  vulnTableRef.value.clearSelection()
+  vulnTableData.value.forEach(row => {
+    if (!vulnExcludedRowKeys.value.includes(getVulnRowKey(row))) {
+      vulnTableRef.value.toggleRowSelection(row, true)
+    }
+  })
+}
+
+// 一键全选 / 一键取消 切换
+async function handleToggleVulnSelectAll() {
+  if (vulnAllSelected.value) {
+    resetVulnSelectionState()
+  } else {
+    if (vulnPagination.total === 0) {
+      return
+    }
+
+    vulnAllSelected.value = true
+    vulnExcludedRowKeys.value = []
+    selectedVulns.value = [...vulnTableData.value]
+    await nextTick()
+    restoreVulnPageSelection()
+  }
 }
 
 // 修复选定的漏洞
 async function handleFixSelected() {
-  if (selectedVulns.value.length === 0) {
+  if (vulnSelectedCount.value === 0) {
     ElMessage.warning('请先选择要修复的漏洞')
     return
   }
 
-  const ids = resolvePatchStatusIds(selectedVulns.value)
-  if (ids.length === 0) {
-    ElMessage.warning('所选漏洞缺少补丁状态ID，无法修复')
-    return
-  }
+  resetFixDialogData()
+  fixDialogData.selectedVulnerabilityCount = vulnSelectedCount.value
 
-  fixDialogData.patchStatusIds = ids
-  fixDialogData.hosts = ''
-  fixDialogData.patches = ''
-  fixDialogData.cves = ''
-  fixDialogData.packages = ''
   fixDialogVisible.value = true
   fixDialogLoading.value = true
 
   try {
-    // 并行获取所有信息
-    const [hostsRes, patchesRes, cvesRes, pkgsRes] = await Promise.all([
-      vulnerabilityApi.getPatchStatusHosts(ids),
-      vulnerabilityApi.getPatchStatusPatches(ids),
-      vulnerabilityApi.getPatchStatusCves(ids),
-      vulnerabilityApi.getPatchStatusPackages(ids)
-    ])
-
-    // 处理主机列表
-    if (hostsRes?.data?.records) {
-      fixDialogData.hosts = hostsRes.data.records.map(r => r.host_key).join('<br>')
+    const ids = await collectSelectedPatchStatusIdsForFix()
+    if (ids.length === 0) {
+      ElMessage.warning('所选漏洞缺少补丁状态ID，无法修复')
+      fixDialogVisible.value = false
+      return
     }
 
-    // 处理补丁列表（去重）
-    if (patchesRes?.data?.records) {
-      const patches = [...new Set(patchesRes.data.records.map(r => r.patch_id))]
-      fixDialogData.patches = patches.join('<br>')
-    }
-
-    // 处理 CVE 列表
-    if (cvesRes?.data?.records) {
-      fixDialogData.cves = cvesRes.data.records.map(r => r.vul_id).join('<br>')
-    }
-
-    // 处理软件包列表（去重）
-    if (pkgsRes?.data?.records) {
-      const allPkgs = pkgsRes.data.records.flatMap(record => getAffectedPackageNames(record))
-      const uniquePkgs = [...new Set(allPkgs.filter(Boolean))]
-      fixDialogData.packages = uniquePkgs.join('<br>')
-    }
+    fixDialogData.patchStatusIds = ids
   } catch (error) {
-    ElMessage.error('获取补丁信息失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`获取补丁信息失败: ${error.message || '未知错误'}`)
+    fixDialogVisible.value = false
+    return
   } finally {
     fixDialogLoading.value = false
   }
+
+  // 默认并行加载各分区的预览数据，避免用户手动点击
+  fixSectionCards.forEach(section => {
+    loadFixDialogSection(section.key, 'preview')
+  })
 }
 
 // 确认开始修复
@@ -1666,7 +2387,7 @@ async function handleConfirmFix() {
     fixDialogVisible.value = false
     loadVulnData()
   } catch (error) {
-    ElMessage.error('提交修复任务失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`提交修复任务失败: ${error.message || '未知错误'}`)
   } finally {
     fixSubmitting.value = false
   }
@@ -1679,9 +2400,7 @@ function handleRescan() {
 }
 
 function getRescanTrackKey(host) {
-  return String(
-    host?.host_id || host?.hostId || host?.id || host?.host_key || host?.hostKey || ''
-  )
+  return String(host?.host_id || host?.hostId || host?.id || host?.host_key || host?.hostKey || '')
 }
 
 function normalizeRescanHost(host) {
@@ -1740,7 +2459,7 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
     return true
   } catch (error) {
     console.error('Scan failed:', error)
-    ElMessage.error('扫描任务提交失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`扫描任务提交失败: ${error.message || '未知错误'}`)
     return false
   } finally {
     rescanLoading.value = false
@@ -1762,17 +2481,6 @@ async function handleSingleHostRescan(row) {
   } finally {
     rescanningHostKey.value = ''
   }
-}
-
-function handleHostSelected(hosts) {
-  selectedHosts.value = hosts
-  updateHostsInput()
-}
-
-// 移除单个已选主机
-function removeSelectedHost(index) {
-  selectedHosts.value.splice(index, 1)
-  updateHostsInput()
 }
 
 // 更新主机输入框内容
@@ -1821,8 +2529,22 @@ function refresh() {
 
 // 监听 tab 切换
 watch(activeTab, newTab => {
+  resetVulnSelectionState()
   if (newTab === 'vulnerability' && vulnTableData.value.length === 0) {
     loadVulnData()
+  }
+})
+
+// 监听漏洞数据更新，自动恢复勾选
+watch(vulnTableData, () => {
+  if (vulnAllSelected.value) {
+    nextTick(() => restoreVulnPageSelection())
+  }
+})
+
+watch(fixDialogVisible, visible => {
+  if (!visible) {
+    resetFixDialogData()
   }
 })
 
@@ -1840,6 +2562,7 @@ onMounted(() => {
   loadKpiData()
   loadHostData()
   loadOsLists()
+  loadHostTagOptions()
   if (activeTab.value === 'vulnerability') {
     loadVulnData()
   }
@@ -1876,42 +2599,34 @@ defineExpose({
   background: var(--el-bg-color);
 }
 
-.page-header {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 0 16px 8px 0;
-  background: var(--el-bg-color);
-  //border-bottom: 1px solid var(--el-border-color-lighter);
-
-  &__actions {
-    display: flex;
-    gap: 8px;
-  }
-}
-
 .page-content {
-  flex: 1;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: auto;
   // padding: 0 16px;
-  overflow-y: auto;
+  overflow: visible;
   background: var(--el-bg-color);
 }
 
 // 统计面板
 .stats-dashboard {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-top: 4px;
+  display: grid;
+  grid-template-columns: minmax(420px, 1.45fr) minmax(220px, 0.75fr) minmax(260px, 0.9fr);
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-top: 2px;
+  flex-shrink: 0;
 }
 
 .stat-card {
   background: var(--el-bg-color);
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  padding: 16px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
+  min-height: 96px;
   transition:
     transform 0.2s,
     box-shadow 0.2s;
@@ -1927,89 +2642,75 @@ defineExpose({
     font-size: 14px;
     font-weight: 600;
     color: var(--el-text-color-primary);
-    margin-bottom: 12px;
   }
+}
+
+.compact-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  white-space: nowrap;
 }
 
 // 1. 补丁统计卡片
 .patch-card {
-  flex: 4; // 40% width
-  display: flex;
-  flex-direction: column;
-  min-height: 180px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 118px;
+  grid-template-rows: auto 1fr;
+  column-gap: 12px;
+  align-items: center;
+
+  .compact-card-header {
+    grid-column: 1 / -1;
+  }
 
   .patch-chart-container {
-    flex: 1;
+    grid-column: 1;
+    grid-row: 2;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 0;
 
     .chart-wrapper {
       position: relative;
-      width: 200px;
-      height: 100px; // 半圆高度
-    }
-
-    .patch-pie-chart {
       width: 100%;
-      height: 200px; // 实际渲染高度给大一点，通过 overflow 和 clip 控制半圆效果，或者 echoarts 本身设置
-      margin-top: -50px; // 调整位置
+      height: 58px;
     }
 
-    .chart-center-label {
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-
-      .label-title {
-        font-size: 12px;
-        color: var(--el-text-color-regular);
-      }
-      .label-value {
-        font-size: 24px;
-        font-weight: 700;
-        color: var(--el-text-color-primary);
-        line-height: 1.2;
-      }
+    .patch-bar-chart {
+      width: 100%;
+      height: 100%;
     }
   }
 
   .patch-progress-section {
-    padding: 0 16px;
-
-    .progress-bar-container {
-      height: 12px;
-      background-color: var(--el-fill-color-light);
-      border-radius: 6px;
-      display: flex;
-      overflow: hidden;
-      margin-bottom: 8px;
-
-      .progress-segment {
-        height: 100%;
-        transition: width 0.5s ease;
-
-        &.critical {
-          background-color: #f53f3f;
-        }
-        &.important {
-          background-color: #ff7d00;
-        }
-      }
-    }
+    grid-column: 2;
+    grid-row: 2;
+    padding: 0;
 
     .progress-labels {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 8px;
       font-size: 12px;
 
       .stat-label {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 6px;
+        min-height: 24px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background: var(--el-fill-color-lighter);
         color: var(--el-text-color-primary);
 
         &.critical i {
@@ -2022,7 +2723,8 @@ defineExpose({
         }
 
         .count {
-          color: var(--el-text-color-regular);
+          color: var(--el-text-color-primary);
+          font-weight: 600;
           margin-left: 2px;
         }
       }
@@ -2032,94 +2734,75 @@ defineExpose({
 
 // 2. 漏洞概览卡片
 .vul-card {
-  flex: 3; // 30% width
   position: relative;
   overflow: hidden;
 
   .vul-content {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     justify-content: center;
     align-items: center;
+    gap: 12px;
     z-index: 1;
   }
 
+  .metric-main {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
   .vul-number {
-    font-size: 42px;
+    font-size: 32px;
     font-weight: 700;
     color: #409eff; // OpsMind Blue
     line-height: 1;
-    margin-bottom: 8px;
   }
 
   .vul-label {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--el-text-color-primary);
-    margin-bottom: 12px;
   }
 
   .vul-sub-metric {
     font-size: 12px;
     color: var(--el-text-color-regular);
     background: var(--el-fill-color-light);
-    padding: 4px 12px;
+    padding: 4px 10px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 
     i {
       color: var(--el-text-color-secondary);
     }
   }
-
-  .vul-icon-bg {
-    position: absolute;
-    right: -20px;
-    bottom: -20px;
-    font-size: 120px;
-    color: rgba(64, 158, 255, 0.05);
-    z-index: 0;
-    transform: rotate(-15deg);
-  }
 }
 
 // 3. 主机影响卡片
 .host-card {
-  flex: 3; // 30% width
-
   .host-content {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
     flex: 1;
     justify-content: center;
   }
 
-  .host-total-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-
-    .label {
-      font-size: 13px;
-      color: var(--el-text-color-primary);
-    }
-    .value {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--el-text-color-primary);
-    }
-  }
-
   .impact-item {
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: var(--el-fill-color-lighter);
+
     .impact-header {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 12px;
-      margin-bottom: 6px;
+      gap: 8px;
 
       .label-critical {
         color: #f53f3f;
@@ -2131,25 +2814,7 @@ defineExpose({
       }
       .value {
         color: var(--el-text-color-regular);
-      }
-    }
-
-    .progress-track {
-      height: 8px;
-      background: var(--el-fill-color-light);
-      border-radius: 4px;
-      overflow: hidden;
-
-      .progress-fill {
-        height: 100%;
-        border-radius: 4px;
-
-        &.critical {
-          background: #f53f3f;
-        }
-        &.important {
-          background: #ff7d00;
-        }
+        white-space: nowrap;
       }
     }
   }
@@ -2158,19 +2823,10 @@ defineExpose({
 // 响应式调整
 @media (max-width: 1200px) {
   .stats-dashboard {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr;
   }
   .patch-card {
-    flex: 100%;
-    order: 1;
-  }
-  .vul-card {
-    flex: 48%;
-    order: 2;
-  }
-  .host-card {
-    flex: 48%;
-    order: 3;
+    grid-template-columns: minmax(0, 1fr) 118px;
   }
 }
 
@@ -2178,9 +2834,10 @@ defineExpose({
 .nav-tabs {
   display: flex;
   gap: 0;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   border-bottom: 1px solid var(--el-border-color-lighter);
   background: transparent;
+  flex-shrink: 0;
 }
 
 .nav-tab {
@@ -2213,10 +2870,12 @@ defineExpose({
 
 // 标签内容
 .tab-content {
+  flex: none;
+  min-height: auto;
   display: flex;
   flex-direction: column;
   padding: 0 !important;
-  height: calc(100% - 310px);
+  height: auto;
 }
 
 :deep(.el-table__body td.el-table__cell) {
@@ -2246,7 +2905,12 @@ defineExpose({
 
 :deep(.header-border-only-table.el-table--border .el-table__header-wrapper th.el-table__cell),
 :deep(.header-border-only-table.el-table--border .el-table__fixed-header-wrapper th.el-table__cell),
-:deep(.header-border-only-table.el-table--border .el-table__fixed-right .el-table__header-wrapper th.el-table__cell) {
+:deep(
+  .header-border-only-table.el-table--border
+    .el-table__fixed-right
+    .el-table__header-wrapper
+    th.el-table__cell
+) {
   border-right-color: var(--el-border-color);
 }
 
@@ -2314,22 +2978,6 @@ defineExpose({
   &:hover {
     color: #66b1ff;
     text-decoration: underline;
-  }
-}
-
-// CVE 徽章样式
-.cve-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 12px;
-  background: #6c757d;
-  color: #fff;
-  border-radius: 4px;
-  text-decoration: none;
-
-  &:hover {
-    background: #495057;
-    color: #fff;
   }
 }
 
@@ -2468,32 +3116,144 @@ defineExpose({
   min-height: 200px;
 }
 
+.fix-summary-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--el-border-color-light);
+  background: var(--el-fill-color-light);
+}
+
+.fix-summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.fix-summary-label {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.fix-summary-value {
+  font-size: 16px;
+  color: var(--el-text-color-primary);
+}
+
+.fix-summary-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.fix-grid-layout {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
 .fix-info-card {
   border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
   overflow: hidden;
+  box-shadow: var(--el-box-shadow-extra-light);
+  transition: all 0.25s ease;
+
+  &:hover {
+    box-shadow: var(--el-box-shadow-light);
+    border-color: var(--el-border-color);
+  }
 }
 
 .fix-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 8px 12px;
   background: var(--el-fill-color-light);
   border-bottom: 1px solid var(--el-border-color-light);
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 13px;
   color: var(--el-text-color-primary);
 
   i {
-    margin-right: 8px;
+    margin-right: 6px;
+  }
+
+  .header-badge {
+    margin-left: auto;
   }
 }
 
 .fix-info-body {
   padding: 12px;
-  max-height: 150px;
+  max-height: 250px;
+  min-height: 80px;
   overflow-y: auto;
   font-size: 13px;
   line-height: 1.8;
   color: var(--el-text-color-regular);
+  background-color: var(--el-bg-color-blank);
+
+  .empty-text {
+    color: var(--el-text-color-placeholder);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-content: flex-start;
+  }
+
+  .chip-tag {
+    margin-bottom: 4px;
+  }
+}
+
+.fix-info-placeholder,
+.fix-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fix-info-loading {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fix-info-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fix-info-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fix-info-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.fix-info-hint.is-error {
+  color: var(--el-color-danger);
+  text-align: center;
 }
 
 // 文字颜色 - Element UI 色值
@@ -2519,6 +3279,74 @@ defineExpose({
 
 .font-bold {
   font-weight: 600;
+}
+
+.host-list-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.memory-overview {
+  width: 100%;
+  padding: 5px 0;
+}
+
+.memory-usage {
+  --memory-color: var(--el-color-success);
+  --memory-color-soft: var(--el-color-success-light-9);
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &--warning {
+    --memory-color: var(--el-color-warning);
+    --memory-color-soft: var(--el-color-warning-light-9);
+  }
+
+  &--danger {
+    --memory-color: var(--el-color-danger);
+    --memory-color-soft: var(--el-color-danger-light-9);
+  }
+
+  &--unknown {
+    --memory-color: var(--el-border-color);
+    --memory-color-soft: var(--el-fill-color-light);
+  }
+}
+
+.memory-usage__desc {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--el-text-color-regular);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.memory-usage__track {
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--memory-color) 22%, transparent);
+  border-radius: 5px;
+  background: var(--memory-color-soft);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.memory-usage__fill {
+  height: 100%;
+  min-width: 2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--memory-color) 78%, white),
+    var(--memory-color)
+  );
+  box-shadow: 1px 0 4px color-mix(in srgb, var(--memory-color) 45%, transparent);
+  transition:
+    width 0.35s ease,
+    background-color 0.2s ease;
 }
 
 .severity-count {
@@ -2614,6 +3442,27 @@ defineExpose({
 @media (max-width: 768px) {
   .kpi-cards {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .patch-card {
+    grid-template-columns: 1fr;
+
+    .patch-chart-container,
+    .patch-progress-section {
+      grid-column: 1;
+    }
+
+    .patch-progress-section {
+      grid-row: 3;
+    }
+
+    .progress-labels {
+      flex-direction: row;
+    }
+  }
+
+  .vul-card .vul-content {
+    justify-content: space-between;
   }
 
   .nav-tabs {

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    :title="`作业运行结果${jobTitle ? ` · ${jobTitle}` : ''}`"
+    :title="`运维工具运行结果${jobTitle ? ` · ${jobTitle}` : ''}`"
     width="1260px"
     append-to-body
     destroy-on-close
@@ -389,7 +389,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/constants/jobStatus'
@@ -428,6 +428,7 @@ const HOST_STATUS_PRIORITY = [
   'unknown'
 ]
 const treeProps = { label: 'label', children: 'children' }
+const ACTIVE_RUN_STATUSES = ['WAITING', 'RUNNING', 'CALLBACK']
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -435,7 +436,7 @@ const props = defineProps({
   jobTitle: { type: String, default: '' }
 })
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible', 'settled'])
 
 const dialogVisible = computed({
   get: () => props.visible,
@@ -445,6 +446,8 @@ const dialogVisible = computed({
 const activeTab = ref('overview')
 const loading = ref(false)
 const result = ref(null)
+const pollTimer = ref()
+const hasObservedActiveRun = ref(false)
 const jobType = computed(() => normalizeJobType(result.value?.jobType ?? result.value?.job_type))
 const isAnsibleJob = computed(() => ANSIBLE_JOB_TYPES.includes(jobType.value))
 const isProcessJob = computed(() => jobType.value === 'process')
@@ -503,7 +506,7 @@ const truncatedAnsibleRawOutput = computed(() => {
   if (showFullRawOutput.value) return ansibleRawOutput.value
   const MAX_LEN = 500000
   return ansibleRawOutput.value.length > MAX_LEN
-    ? ansibleRawOutput.value.slice(0, MAX_LEN) + '\n\n... (截断)'
+    ? `${ansibleRawOutput.value.slice(0, MAX_LEN)}\n\n... (截断)`
     : ansibleRawOutput.value
 })
 
@@ -535,8 +538,12 @@ watch(
   ([visible, runId]) => {
     if (visible && runId) {
       activeTab.value = 'overview'
+      hasObservedActiveRun.value = false
       fetchResult()
+      return
     }
+
+    stopResultPolling()
   },
   { immediate: true }
 )
@@ -545,6 +552,7 @@ watch(
   () => props.visible,
   visible => {
     if (!visible) {
+      stopResultPolling()
       resetState()
     }
   }
@@ -627,6 +635,7 @@ function handleClose() {
 function resetState() {
   activeTab.value = 'overview'
   result.value = null
+  hasObservedActiveRun.value = false
   hostFilterText.value = ''
   hostTaskSearch.value = ''
   mergeBatches.value = true
@@ -647,10 +656,45 @@ async function fetchResult() {
   try {
     const response = await jaoApi.getExecuteResult(props.runId)
     result.value = response?.data ?? response ?? null
+    syncResultPolling(result.value)
   } catch (error) {
+    stopResultPolling()
     ElMessage.error(error?.message || '获取执行结果失败')
   } finally {
     loading.value = false
+  }
+}
+
+function syncResultPolling(data) {
+  const status = String(data?.status || '').toUpperCase()
+  if (ACTIVE_RUN_STATUSES.includes(status)) {
+    hasObservedActiveRun.value = true
+    scheduleResultPolling()
+    return
+  }
+
+  stopResultPolling()
+  if (hasObservedActiveRun.value && props.runId) {
+    emit('settled', {
+      runId: props.runId,
+      status
+    })
+    hasObservedActiveRun.value = false
+  }
+}
+
+function scheduleResultPolling(delay = 3000) {
+  stopResultPolling()
+  pollTimer.value = window.setTimeout(() => {
+    pollTimer.value = undefined
+    void fetchResult()
+  }, delay)
+}
+
+function stopResultPolling() {
+  if (pollTimer.value) {
+    clearTimeout(pollTimer.value)
+    pollTimer.value = undefined
   }
 }
 
@@ -1186,10 +1230,30 @@ function safeJsonParse(input, fallback = {}) {
     return fallback
   }
 }
+
+onBeforeUnmount(() => {
+  stopResultPolling()
+})
 </script>
 
 <style scoped>
 .result-dialog {
+  --result-text-secondary: var(--el-text-color-secondary);
+  --result-text-placeholder: var(--el-text-color-placeholder);
+  --result-surface-soft: var(--el-fill-color-light);
+  --result-danger-bg: var(--el-color-danger-light-9);
+  --result-danger-border: var(--el-color-danger-light-5);
+  --result-danger-text: var(--el-color-danger);
+  --result-success-bg: var(--el-color-success-light-9);
+  --result-success-border: var(--el-color-success-light-5);
+  --result-success-text: var(--el-color-success);
+  --result-primary-bg: var(--el-color-primary-light-9);
+  --result-primary-border: var(--el-color-primary-light-5);
+  --result-primary-text: var(--el-color-primary);
+  --result-neutral-bg: var(--el-fill-color-light);
+  --result-neutral-border: var(--el-border-color-light);
+  --result-neutral-text: var(--el-text-color-secondary);
+  --result-neutral-strong: var(--el-text-color-regular);
   min-height: 360px;
 }
 
@@ -1223,38 +1287,38 @@ function safeJsonParse(input, fallback = {}) {
 
 .status-range {
   font-size: 14px;
-  color: #909399;
+  color: var(--result-text-secondary);
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .status-sep {
-  color: #c0c4cc;
+  color: var(--result-text-placeholder);
 }
 
 .status-failed {
-  background: #fef0f0;
-  border-color: #fbc4c4;
-  color: #f56c6c;
+  background: var(--result-danger-bg);
+  border-color: var(--result-danger-border);
+  color: var(--result-danger-text);
 }
 
 .status-success {
-  background: #f0f9eb;
-  border-color: #c2e7b0;
-  color: #67c23a;
+  background: var(--result-success-bg);
+  border-color: var(--result-success-border);
+  color: var(--result-success-text);
 }
 
 .status-waiting {
-  background: #f4f4f5;
-  border-color: #dcdfe6;
-  color: #909399;
+  background: var(--result-neutral-bg);
+  border-color: var(--result-neutral-border);
+  color: var(--result-neutral-text);
 }
 
 .status-default {
-  background: #f4f4f5;
-  border-color: #dcdfe6;
-  color: #606266;
+  background: var(--result-neutral-bg);
+  border-color: var(--result-neutral-border);
+  color: var(--result-neutral-strong);
 }
 
 .overview-meta {
@@ -1270,17 +1334,17 @@ function safeJsonParse(input, fallback = {}) {
 
 .meta-label {
   font-size: 14px;
-  color: #909399;
+  color: var(--result-text-secondary);
 }
 
 .meta-value {
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .result-error {
-  border: 1px solid #fbc4c4;
-  background: #fef0f0;
+  border: 1px solid var(--result-danger-border);
+  background: var(--result-danger-bg);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
@@ -1288,7 +1352,7 @@ function safeJsonParse(input, fallback = {}) {
 
 .error-title {
   margin: 0 0 8px;
-  color: #f56c6c;
+  color: var(--result-danger-text);
   font-weight: 600;
 }
 
@@ -1296,7 +1360,7 @@ function safeJsonParse(input, fallback = {}) {
   margin: 0;
   font-family: Consolas, 'SFMono-Regular', Menlo, Monaco, monospace;
   font-size: 14px;
-  color: #c45656;
+  color: var(--result-danger-text);
   white-space: pre-wrap;
 }
 
@@ -1338,18 +1402,18 @@ function safeJsonParse(input, fallback = {}) {
   font-size: 14px;
   padding: 2px 8px;
   border-radius: 999px;
-  background: #f4f4f5;
-  color: #909399;
+  background: var(--result-neutral-bg);
+  color: var(--result-neutral-text);
 }
 
 .batch-status.is-failed {
-  background: #fef0f0;
-  color: #f56c6c;
+  background: var(--result-danger-bg);
+  color: var(--result-danger-text);
 }
 
 .batch-card__header .batch-meta {
   font-size: 14px;
-  color: #909399;
+  color: var(--result-text-secondary);
 }
 
 .batch-steps {
@@ -1368,14 +1432,14 @@ function safeJsonParse(input, fallback = {}) {
 .batch-step__message {
   margin: 4px 0 0;
   font-size: 14px;
-  color: #606266;
+  color: var(--el-text-color-regular);
   white-space: pre-line;
 }
 
 .tab-placeholder {
   padding: 48px 0;
   text-align: center;
-  color: #c0c4cc;
+  color: var(--result-text-placeholder);
 }
 
 .process-tab {
@@ -1439,7 +1503,7 @@ function safeJsonParse(input, fallback = {}) {
 
 .tree-node__meta {
   font-size: 14px;
-  color: #909399;
+  color: var(--result-text-secondary);
 }
 
 .dropdown-check {
@@ -1477,8 +1541,8 @@ function safeJsonParse(input, fallback = {}) {
   padding: 0 6px;
   font-size: 14px;
   border-radius: 4px;
-  background: #f2f6fc;
-  color: #606266;
+  background: var(--result-surface-soft);
+  color: var(--result-neutral-strong);
 }
 
 .host-detail-meta {
@@ -1487,7 +1551,7 @@ function safeJsonParse(input, fallback = {}) {
   gap: 8px;
   margin-top: 4px;
   font-size: 13px;
-  color: #909399;
+  color: var(--result-text-secondary);
 }
 
 .host-task-search {
@@ -1508,15 +1572,15 @@ function safeJsonParse(input, fallback = {}) {
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--el-border-color-light);
-  color: #606266;
+  color: var(--result-neutral-strong);
   font-size: 14px;
   cursor: pointer;
 }
 
 .host-status-chip.active {
-  background: #ecf5ff;
-  border-color: #409eff;
-  color: #409eff;
+  background: var(--result-primary-bg);
+  border-color: var(--result-primary-border);
+  color: var(--result-primary-text);
 }
 
 .chip-count {
@@ -1632,16 +1696,16 @@ function safeJsonParse(input, fallback = {}) {
 
 .rest-meta__label {
   font-size: 14px;
-  color: #909399;
+  color: var(--result-text-secondary);
 }
 
 .rest-error {
   margin: 0;
   padding: 12px;
   border-radius: 6px;
-  background: #fef0f0;
-  color: #c45656;
-  border: 1px solid #fbc4c4;
+  background: var(--result-danger-bg);
+  color: var(--result-danger-text);
+  border: 1px solid var(--result-danger-border);
 }
 
 .rest-payload {

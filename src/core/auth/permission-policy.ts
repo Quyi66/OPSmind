@@ -23,10 +23,12 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
   dashboard: [],
   settings: [],
   aiops: [],
+  'auto-workbench': ['jao:view', 'gfs:view', 'cmd:view'],
   jao: ['jao:view'],
+  'task-scheduler': ['jao:view'],
   gfs: ['gfs:view'],
   cmd: ['cmd:view'],
-  'rpm-install': ['applet:spm'],
+  'review-center': ['jao:view', 'gfs:view', 'cmd:view'],
   patches: ['applet:vap'],
   'windows-patches': ['applet:vap'],
   'patch-logs': ['applet:vap'],
@@ -47,10 +49,11 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
 export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   home: '/home',
   settings: '/settings',
+  'auto-workbench': '/auto-workbench/overview',
   jao: '/jao/jobs',
+  'task-scheduler': '/jao/taskScheduler',
   gfs: '/gfs/scriptLibrary',
   cmd: '/cmd/list',
-  'rpm-install': '/rpm-install/install',
   patches: '/patches/cveList',
   'windows-patches': '/patches/windowsVulnerability',
   'patch-logs': '/patches/logs',
@@ -59,7 +62,7 @@ export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   software: '/yum-repo/repos',
   cac: '/cac/overview',
   acm: '/acm/overview',
-  users: '/users/overview',
+  users: '/users/users',
   flow: '/flow/list',
   sudo: '/sudo/permission',
   password: '/password/application',
@@ -205,6 +208,10 @@ export function resolveMenuCodeFromRoutePath(path?: string | null): string | nul
   if (!segments.length) return 'home'
 
   const [first, second] = segments
+
+  if (first === 'jao' && second === 'taskScheduler') {
+    return 'task-scheduler'
+  }
 
   if (first === 'patches') {
     const normalizedPatchPath = WINDOWS_PATCH_ROUTE_ALIASES[second || ''] || second || ''

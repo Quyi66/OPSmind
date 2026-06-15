@@ -6,7 +6,7 @@
         <el-form-item label="关键词">
           <el-input
             v-model="filters.hostname"
-            placeholder="输入主机名/IP/组名"
+            placeholder="主机名/IP/用户组"
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
@@ -31,6 +31,10 @@
         <el-icon><Plus /></el-icon>
         创建用户组
       </el-button>
+      <el-button size="small" @click="handleDeleteGroup">
+        <i class="fa fa-user-minus"></i>
+        批量删除
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -46,12 +50,7 @@
 
     <!-- 用户组列表表格 -->
     <div class="ops-table-wrapper">
-      <el-table
-        :data="tableData"
-        v-loading="loading"
-        @selection-change="handleSelectionChange"
-        max-height="calc(100vh - 230px)"
-      >
+      <el-table :data="tableData" v-loading="loading" max-height="calc(100vh - 230px)">
         <el-table-column prop="host_key" label="IP" width="130" />
         <el-table-column prop="hostname" label="主机名" width="150" show-overflow-tooltip />
         <el-table-column prop="group_name" label="组名" min-width="140" />
@@ -114,7 +113,6 @@ const filters = ref({
 
 const loading = ref(false)
 const tableData = ref([])
-const selectedRows = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -175,10 +173,6 @@ async function loadData() {
   }
 }
 
-function handleSelectionChange(selection) {
-  selectedRows.value = selection
-}
-
 function handlePageSizeChange(val) {
   if (isLoadingData) return
   if (pageSize.value === val) return
@@ -199,10 +193,6 @@ function handleCreateGroup() {
 }
 
 function handleDeleteGroup() {
-  if (!selectedRows.value.length) {
-    ElMessage.warning('请先选择要删除的用户组')
-    return
-  }
   currentGroupData.value = null
   showDeleteGroupDialog.value = true
 }

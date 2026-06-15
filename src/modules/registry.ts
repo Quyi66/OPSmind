@@ -15,10 +15,10 @@ export interface ModuleRegistryEntry {
 }
 
 const moduleComponentLoaders: Partial<Record<string, AsyncComponentLoader>> = {
+  'auto-workbench': () => import('@/modules/automation/views/AutomationWorkbenchPage.vue'),
   jao: () => import('@/modules/automation/views/JobOrchestrationModule.vue'),
   gfs: () => import('@/modules/automation/views/ScriptLibraryModule.vue'),
   cmd: () => import('@/modules/automation/views/CommandCenterModule.vue'),
-  'rpm-install': () => import('@/modules/software/views/LocalInstallPage.vue'),
   patches: () => import('@/modules/patches/views/PatchManagementModule.vue'),
   'yum-repo': () => import('@/modules/yum-repo/views/YumRepoIndex.vue'),
   software: () => import('@/modules/yum-repo/views/YumRepoIndex.vue'),

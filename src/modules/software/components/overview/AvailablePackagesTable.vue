@@ -22,7 +22,13 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        <el-button class="toolbar-icon-btn" circle :loading="loading" @click="loadData" title="刷新">
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          :loading="loading"
+          @click="loadData"
+          title="刷新"
+        >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
@@ -33,7 +39,6 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-
         style="width: 100%"
         size="small"
         max-height="calc(100vh - 380px)"
@@ -51,7 +56,11 @@
         <el-table-column prop="pkg_version" label="版本号" width="120" />
         <el-table-column prop="pkg_yumstate" label="软件状态" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.pkg_yumstate" :type="row.pkg_yumstate === '可用' ? 'success' : 'info'" size="small">
+            <el-tag
+              v-if="row.pkg_yumstate"
+              :type="row.pkg_yumstate === '可用' ? 'success' : 'info'"
+              size="small"
+            >
               {{ row.pkg_yumstate }}
             </el-tag>
           </template>

@@ -58,7 +58,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const formRef = ref()
@@ -83,7 +83,7 @@ const loadParentGroups = async () => {
     const res = await assetApi.getGroupByCit(props.groupData.ci_type)
     // 过滤掉自己和子分组
     parentGroups.value = (res?.records || []).filter(
-      item => item.id !== props.groupData.id && !item.path.startsWith(props.groupData.path + '/')
+      item => item.id !== props.groupData.id && !item.path.startsWith(`${props.groupData.path}/`)
     )
 
     // 根据当前路径计算上级分组路径并匹配
@@ -91,7 +91,7 @@ const loadParentGroups = async () => {
     const pathParts = currentPath.split('/').filter(Boolean)
     if (pathParts.length > 1) {
       // 上级路径 = 去掉最后一段
-      const parentPath = '/' + pathParts.slice(0, -1).join('/')
+      const parentPath = `/${pathParts.slice(0, -1).join('/')}`
       const parentGroup = parentGroups.value.find(item => item.path === parentPath)
       if (parentGroup) {
         formData.value.parentId = parentGroup.id
@@ -121,26 +121,23 @@ const handleSave = async () => {
   saving.value = true
   try {
     // Job: BAzNVq - 编辑分组
-    await apiService.post(
-      `/jao/api/jao/jobs/BAzNVq/run?cacheBuster=${Date.now()}`,
-      {
-        params: {
-          id: props.groupData.id,
-          name: formData.value.name,
-          operate: 'modify',
-          parentId: formData.value.parentId,
-          ciType: props.groupData.ci_type,
-          ciIds: null,
-          path: ''
-        }
+    await apiService.post(`/jao/api/jao/jobs/BAzNVq/run?cacheBuster=${Date.now()}`, {
+      params: {
+        id: props.groupData.id,
+        name: formData.value.name,
+        operate: 'modify',
+        parentId: formData.value.parentId,
+        ciType: props.groupData.ci_type,
+        ciIds: null,
+        path: ''
       }
-    )
+    })
     ElMessage.success('保存成功')
     visible.value = false
     emit('saved')
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('保存失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`保存失败: ${error.response?.data?.message || error.message}`)
   } finally {
     saving.value = false
   }
@@ -152,7 +149,7 @@ const handleClosed = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val && props.groupData) {
     // 从路径中提取分组名称（最后一段）
     const pathParts = props.groupData.path?.split('/').filter(Boolean) || []

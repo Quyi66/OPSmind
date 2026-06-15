@@ -8,7 +8,7 @@ import { apiService } from '@/core/api'
  * GET /udp/api/udp/applets
  */
 export function getApplets() {
-    return apiService.get(`/udp/api/udp/applets?cacheBuster=${Date.now()}`)
+  return apiService.get(`/udp/api/udp/applets?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -16,7 +16,7 @@ export function getApplets() {
  * GET /adm/api/adm/applet/id/:id
  */
 export function getAppletDetail(id) {
-    return apiService.get(`/adm/api/adm/applet/id/${id}`)
+  return apiService.get(`/adm/api/adm/applet/id/${id}`)
 }
 
 /**
@@ -24,7 +24,7 @@ export function getAppletDetail(id) {
  * DELETE /adm/api/adm/applet/:id
  */
 export function deleteApplet(id) {
-    return apiService.delete(`/adm/api/adm/applet/${id}`)
+  return apiService.delete(`/adm/api/adm/applet/${id}`)
 }
 
 /**
@@ -32,7 +32,7 @@ export function deleteApplet(id) {
  * POST /adm/api/adm/applet/copy
  */
 export function copyApplet(data) {
-    return apiService.post(`/adm/api/adm/applet/copy?cacheBuster=${Date.now()}`, data)
+  return apiService.post(`/adm/api/adm/applet/copy?cacheBuster=${Date.now()}`, data)
 }
 
 /**
@@ -40,7 +40,7 @@ export function copyApplet(data) {
  * GET /adm/api/adm/applet/recycled
  */
 export function getRecycledApplets() {
-    return apiService.get('/adm/api/adm/applet/recycled')
+  return apiService.get('/adm/api/adm/applet/recycled')
 }
 
 /**
@@ -48,7 +48,7 @@ export function getRecycledApplets() {
  * DELETE /adm/api/adm/applet/recycled/:appletCode
  */
 export function deleteRecycledApplet(appletCode) {
-    return apiService.delete(`/adm/api/adm/applet/recycled/${appletCode}`)
+  return apiService.delete(`/adm/api/adm/applet/recycled/${appletCode}`)
 }
 
 /**
@@ -56,7 +56,7 @@ export function deleteRecycledApplet(appletCode) {
  * GET /adm/api/adm/applet/recycled/delete
  */
 export function deleteRecycledApplets(appletCodes) {
-    return apiService.get('/adm/api/adm/applet/recycled/delete', { appletCodes })
+  return apiService.get('/adm/api/adm/applet/recycled/delete', { appletCodes })
 }
 
 /**
@@ -64,7 +64,7 @@ export function deleteRecycledApplets(appletCodes) {
  * GET /adm/api/adm/applet/recycled/recover
  */
 export function recoverRecycledApplet(appletCodes) {
-    return apiService.get('/adm/api/adm/applet/recycled/recover', { appletCodes })
+  return apiService.get('/adm/api/adm/applet/recycled/recover', { appletCodes })
 }
 
 /**
@@ -72,7 +72,7 @@ export function recoverRecycledApplet(appletCodes) {
  * POST /adm/api/adm/applet/recycled/clear
  */
 export function clearRecycledApplets() {
-    return apiService.post('/adm/api/adm/applet/recycled/clear')
+  return apiService.post('/adm/api/adm/applet/recycled/clear')
 }
 
 /**
@@ -80,9 +80,9 @@ export function clearRecycledApplets() {
  * POST /adm/api/adm/applet/export/relation
  */
 export function exportApplets(appletVm) {
-    return apiService.post('/adm/api/adm/applet/export/relation', appletVm, {
-        responseType: 'blob'
-    })
+  return apiService.post('/adm/api/adm/applet/export/relation', appletVm, {
+    responseType: 'blob'
+  })
 }
 
 /**
@@ -90,7 +90,7 @@ export function exportApplets(appletVm) {
  * POST /adm/api/adm/applet/import/relation/:importType
  */
 export function importApplets(importType, udpAppletList) {
-    return apiService.post(`/adm/api/adm/applet/import/relation/${importType}`, udpAppletList)
+  return apiService.post(`/adm/api/adm/applet/import/relation/${importType}`, udpAppletList)
 }
 
 /**
@@ -98,7 +98,9 @@ export function importApplets(importType, udpAppletList) {
  * GET /udp/api/udp/pages
  */
 export function getPages(appletCode) {
-    return apiService.get(`/udp/api/udp/pages?isPaging=true&appletCode=${appletCode}&page=0&size=1000&cacheBuster=${Date.now()}`)
+  return apiService.get(
+    `/udp/api/udp/pages?isPaging=true&appletCode=${appletCode}&page=0&size=1000&cacheBuster=${Date.now()}`
+  )
 }
 
 /**
@@ -106,21 +108,21 @@ export function getPages(appletCode) {
  * GET /jao/api/jao/jobs/app
  */
 export function getJobs(appletCode) {
-    return apiService.get(`/jao/api/jao/jobs/app?appletCode=${appletCode}&cacheBuster=${Date.now()}`)
+  return apiService.get(`/jao/api/jao/jobs/app?appletCode=${appletCode}&cacheBuster=${Date.now()}`)
 }
 
 export default {
-    getApplets,
-    getAppletDetail,
-    deleteApplet,
-    copyApplet,
-    getRecycledApplets,
-    deleteRecycledApplet,
-    deleteRecycledApplets,
-    recoverRecycledApplet,
-    clearRecycledApplets,
-    exportApplets,
-    importApplets,
-    getPages,
-    getJobs
+  getApplets,
+  getAppletDetail,
+  deleteApplet,
+  copyApplet,
+  getRecycledApplets,
+  deleteRecycledApplet,
+  deleteRecycledApplets,
+  recoverRecycledApplet,
+  clearRecycledApplets,
+  exportApplets,
+  importApplets,
+  getPages,
+  getJobs
 }

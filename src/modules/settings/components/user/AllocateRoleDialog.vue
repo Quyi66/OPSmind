@@ -40,10 +40,7 @@
           :width="role.description.length * 22"
         >
           <template #default="{ row }">
-            <el-checkbox
-              v-model="row.roleMap[role.name]"
-              @change="markUserChanged(row)"
-            />
+            <el-checkbox v-model="row.roleMap[role.name]" @change="markUserChanged(row)" />
           </template>
         </el-table-column>
       </el-table>
@@ -52,9 +49,7 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">
-          保存
-        </el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
       </div>
     </template>
   </el-dialog>
@@ -75,7 +70,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -99,12 +94,15 @@ const filteredUserData = computed(() => {
   })
 })
 
-watch(() => props.modelValue, (val) => {
-  if (val) {
-    searchKeyword.value = ''
-    loadData()
+watch(
+  () => props.modelValue,
+  val => {
+    if (val) {
+      searchKeyword.value = ''
+      loadData()
+    }
   }
-})
+)
 
 async function loadData() {
   loading.value = true

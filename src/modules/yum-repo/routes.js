@@ -17,8 +17,8 @@ export const YUM_REPO_ROUTE_DEFS = [
     key: 'localInstall',
     path: 'localInstall',
     name: 'yum-repo-localInstall',
-    title: 'rpm包安装',
-    redirect: '/rpm-install/install'
+    title: '软件包安装',
+    redirect: '/patches/localInstall'
   },
   {
     key: 'yumManage',

@@ -8,11 +8,7 @@
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
       <el-form-item label="WSUS 地址" prop="wsusUrl">
-        <el-input
-          v-model="form.wsusUrl"
-          placeholder="请输入 WSUS 地址"
-          clearable
-        />
+        <el-input v-model="form.wsusUrl" placeholder="请输入 WSUS 地址" clearable />
       </el-form-item>
       <el-form-item label="端口" prop="wsusPort">
         <el-input-number

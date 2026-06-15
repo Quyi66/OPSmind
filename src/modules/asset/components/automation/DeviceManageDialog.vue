@@ -211,7 +211,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { automationApi } from '../api'
+import { automationApi } from '../../api'
 import { apiService } from '@/core/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 
@@ -339,7 +339,7 @@ async function handlePasswordSubmit() {
     visible.value = false
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error('提交失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`提交失败: ${error.message || '未知错误'}`)
   } finally {
     submitting.value = false
   }
@@ -371,7 +371,7 @@ async function handleSSHSubmit() {
     visible.value = false
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error('提交失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`提交失败: ${error.message || '未知错误'}`)
   } finally {
     submitting.value = false
   }

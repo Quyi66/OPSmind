@@ -53,51 +53,80 @@
           :value="tag.name"
         />
       </el-select>
+
+      <!-- 文本筛选 -->
+      <el-input
+        v-model="searchQuery"
+        placeholder="请输入 IP/主机名/操作系统/系统版本"
+        clearable
+        size="small"
+        style="width: 280px"
+        @input="handleSearch"
+        @clear="handleSearch"
+      >
+        <template #prefix>
+          <i class="fa fa-search text-muted" />
+        </template>
+      </el-input>
+
+      <!-- 一键全选 / 一键取消 -->
+      <el-button
+        class="select-all-btn"
+        :type="allSelected ? 'default' : 'primary'"
+        size="small"
+        :loading="selectAllLoading"
+        @click="handleToggleSelectAll"
+      >
+        <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
+        {{ allSelected ? '一键取消' : '一键全选' }}
+      </el-button>
     </div>
 
     <!-- 主机列表表格 -->
-    <el-table
-      ref="tableRef"
-      :data="tableData"
-      v-loading="loading"
-      height="350"
-      style="width: 100%"
-      row-key="id"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="55" reserve-selection />
-      <el-table-column prop="IP" label="IP地址" min-width="120" show-overflow-tooltip />
-      <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
-      <el-table-column prop="os_distro" label="操作系统" min-width="120" show-overflow-tooltip />
-      <el-table-column prop="os_version" label="系统版本" width="120" show-overflow-tooltip />
-      <el-table-column label="连通状态" width="120" align="left">
-        <template #default="{ row }">
-          <el-tag
-            :type="
-              [1, '1'].includes(row.CONN_LATEST_STATUS)
-                ? 'success'
-                : [0, '0'].includes(row.CONN_LATEST_STATUS)
-                  ? 'danger'
-                  : 'info'
-            "
-            size="small"
-          >
-            {{
-              [1, '1'].includes(row.CONN_LATEST_STATUS)
-                ? '在线'
-                : [0, '0'].includes(row.CONN_LATEST_STATUS)
-                  ? '离线'
-                  : '未知'
-            }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="CONN_RATE" label="连通率" width="100" align="left">
-        <template #default="{ row }">
-          {{ row.CONN_RATE ? `${row.CONN_RATE}%` : '-' }}
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="table-wrapper">
+      <el-table
+        ref="tableRef"
+        :data="tableData"
+        v-loading="loading"
+        height="100%"
+        style="width: 100%"
+        row-key="id"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" reserve-selection />
+        <el-table-column prop="IP" label="IP地址" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="os_distro" label="操作系统" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="os_version" label="系统版本" width="120" show-overflow-tooltip />
+        <el-table-column label="连通状态" width="120" align="left">
+          <template #default="{ row }">
+            <el-tag
+              :type="
+                [1, '1'].includes(row.CONN_LATEST_STATUS)
+                  ? 'success'
+                  : [0, '0'].includes(row.CONN_LATEST_STATUS)
+                    ? 'danger'
+                    : 'info'
+              "
+              size="small"
+            >
+              {{
+                [1, '1'].includes(row.CONN_LATEST_STATUS)
+                  ? '在线'
+                  : [0, '0'].includes(row.CONN_LATEST_STATUS)
+                    ? '离线'
+                    : '未知'
+              }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="CONN_RATE" label="连通率" width="100" align="left">
+          <template #default="{ row }">
+            {{ row.CONN_RATE ? `${row.CONN_RATE}%` : '-' }}
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <!-- 分页 -->
     <div class="pagination-wrapper">
@@ -105,6 +134,9 @@
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :total="pagination.total"
+        :teleported="true"
+        append-size-to="body"
+        :popper-style="{ zIndex: 4000 }"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
         @size-change="fetchData"
@@ -115,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick, computed } from 'vue'
+import { ref, watch, nextTick, computed, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 
@@ -139,9 +171,11 @@ const groupTreeData = ref([])
 const tagList = ref([])
 const groupLoading = ref(false)
 const tagLoading = ref(false)
+const selectAllLoading = ref(false)
+const allSelected = ref(false)
 const pagination = ref({
   page: 1,
-  pageSize: 20,
+  pageSize: 10,
   total: 0
 })
 
@@ -150,10 +184,35 @@ const isSingleSelector = computed(() => props.options.selector === 'single')
 // 防止循环更新的标志
 let isInternalUpdate = false
 
+const searchQuery = ref('')
+let searchTimeout = null
+
+function handleSearch() {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+  searchTimeout = setTimeout(() => {
+    allSelected.value = false
+    pagination.value.page = 1
+    fetchData()
+  }, 300)
+}
+
+onBeforeUnmount(() => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+})
+
 watch(
   () => props.ciType,
   newVal => {
     if (newVal) {
+      allSelected.value = false
+      searchQuery.value = ''
+      if (searchTimeout) {
+        clearTimeout(searchTimeout)
+      }
       fetchData()
       fetchGroupList()
       fetchTagList()
@@ -166,10 +225,14 @@ watch(
 // 只在外部改变时才同步（比如从父组件删除一个已选主机）
 watch(
   () => props.modelValue,
-  async (newVal, oldVal) => {
+  async newVal => {
     // 如果是内部更新触发的，跳过
     if (isInternalUpdate) {
       return
+    }
+
+    if (!newVal || newVal.length === 0) {
+      allSelected.value = false
     }
 
     await nextTick()
@@ -177,10 +240,6 @@ watch(
   },
   { deep: true }
 )
-
-onMounted(() => {
-  fetchData()
-})
 
 // 获取分组列表
 async function fetchGroupList() {
@@ -226,7 +285,7 @@ function buildGroupTree(paths) {
     let currentPath = ''
 
     parts.forEach(part => {
-      currentPath += '/' + part
+      currentPath += `/${part}`
 
       let child = current.children.find(c => c.name === part)
       if (!child) {
@@ -298,7 +357,8 @@ async function fetchData() {
       page: pagination.value.page,
       pageSize: pagination.value.pageSize,
       groups: groupFilter.value || '@@',
-      tags: tagsParam
+      tags: tagsParam,
+      filter: searchQuery.value.trim()
     })
 
     // 处理响应数据
@@ -308,7 +368,7 @@ async function fetchData() {
     // 保持原始字段名，确保每条记录有唯一id
     tableData.value = records.map((item, index) => ({
       ...item,
-      id: item.id || item.ci_id || `row-${index}`
+      id: item.id || item.ci_id || item.IP || item.ip || `row-${index}`
     }))
 
     pagination.value.total = data?.total || tableData.value.length
@@ -337,9 +397,9 @@ function restoreSelection() {
     }
   })
   // 延迟重置标志，确保 selection-change 事件已处理
-  setTimeout(() => {
+  nextTick(() => {
     isInternalUpdate = false
-  }, 0)
+  })
 }
 
 // 从 modelValue 同步选中状态到表格
@@ -358,9 +418,9 @@ function syncSelectionFromModelValue() {
     })
   }
 
-  setTimeout(() => {
+  nextTick(() => {
     isInternalUpdate = false
-  }, 0)
+  })
 }
 
 function handleSelectionChange(selection) {
@@ -368,6 +428,9 @@ function handleSelectionChange(selection) {
   if (isInternalUpdate) {
     return
   }
+
+  // 用户手动操作时退出全选模式
+  allSelected.value = false
 
   let effectiveSelection = Array.isArray(selection) ? [...selection] : []
 
@@ -380,9 +443,9 @@ function handleSelectionChange(selection) {
     if (latestRow) {
       tableRef.value?.toggleRowSelection(latestRow, true)
     }
-    setTimeout(() => {
+    nextTick(() => {
       isInternalUpdate = false
-    }, 0)
+    })
   }
 
   // 将选中的行转换为标准格式
@@ -398,23 +461,115 @@ function handleSelectionChange(selection) {
     item => !currentPageIds.includes(item.key)
   )
 
-  const mergedSelection = isSingleSelector.value ? selectedHosts.slice(0, 1) : [...otherPageSelections, ...selectedHosts]
+  // 使用 Map 去重合并，彻底防止 Element Plus 的 reserve-selection 与手动跨页合并产生重复数据
+  const mergedMap = new Map()
+  otherPageSelections.forEach(item => {
+    if (item && item.key) {
+      mergedMap.set(item.key, item)
+    }
+  })
+  selectedHosts.forEach(item => {
+    if (item && item.key) {
+      mergedMap.set(item.key, item)
+    }
+  })
+
+  const mergedSelection = isSingleSelector.value
+    ? selectedHosts.slice(0, 1)
+    : Array.from(mergedMap.values())
 
   isInternalUpdate = true
   emit('update:modelValue', mergedSelection)
-  setTimeout(() => {
+  nextTick(() => {
     isInternalUpdate = false
-  }, 0)
+  })
 }
 
 function handleGroupFilter() {
+  allSelected.value = false
   pagination.value.page = 1
   fetchData()
 }
 
 function handleTagFilter() {
+  allSelected.value = false
   pagination.value.page = 1
   fetchData()
+}
+
+// 一键全选 / 一键取消 切换
+async function handleToggleSelectAll() {
+  if (!props.ciType || selectAllLoading.value) return
+
+  // 取消全选
+  if (allSelected.value) {
+    allSelected.value = false
+    isInternalUpdate = true
+    emit('update:modelValue', [])
+    if (tableRef.value) {
+      tableRef.value.clearSelection()
+    }
+    nextTick(() => {
+      isInternalUpdate = false
+    })
+    return
+  }
+
+  // 全选：请求全量数据并全部选中
+  selectAllLoading.value = true
+  try {
+    let tagsParam = '@@'
+    if (tagFilter.value && tagFilter.value !== '@@') {
+      tagsParam = JSON.stringify([{ key: tagFilter.value, value: tagFilter.value }])
+    }
+
+    const response = await jaoApi.queryAcmInstances({
+      ciType: props.ciType,
+      page: 1,
+      pageSize: pagination.value.total || 10000,
+      groups: groupFilter.value || '@@',
+      tags: tagsParam,
+      filter: searchQuery.value.trim()
+    })
+
+    const data = response?.data || response
+    const records = Array.isArray(data?.records) ? data.records : Array.isArray(data) ? data : []
+
+    if (!records.length) {
+      ElMessage.info('没有可选的设备')
+      return
+    }
+
+    // 将所有记录转换为统一格式 { key, value, assetType }
+    const allHosts = records.map((item, index) => ({
+      key: item.id || item.ci_id || item.IP || item.ip || `row-${index}`,
+      value: item.IP,
+      assetType: props.ciType
+    }))
+
+    allSelected.value = true
+
+    // 更新 modelValue
+    isInternalUpdate = true
+    emit('update:modelValue', allHosts)
+
+    // 勾选当前页所有行
+    await nextTick()
+    if (tableRef.value) {
+      tableRef.value.clearSelection()
+      tableData.value.forEach(row => {
+        tableRef.value.toggleRowSelection(row, true)
+      })
+    }
+
+    await nextTick()
+    isInternalUpdate = false
+  } catch (error) {
+    console.error('Failed to select all devices:', error)
+    ElMessage.error('全选失败，请重试')
+  } finally {
+    selectAllLoading.value = false
+  }
 }
 </script>
 
@@ -423,6 +578,13 @@ function handleTagFilter() {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+}
+
+.instance-selector .table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .instance-selector .filter-toolbar {
@@ -435,6 +597,7 @@ function handleTagFilter() {
   padding: 12px 16px;
   margin-bottom: 16px;
   border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .instance-selector .filter-toolbar .filter-label {
@@ -445,6 +608,10 @@ function handleTagFilter() {
 
 .instance-selector .filter-toolbar :deep(.el-select) {
   width: 200px;
+}
+
+.instance-selector .filter-toolbar .select-all-btn {
+  margin-left: auto;
 }
 
 .instance-selector .filter-toolbar .group-select-btn {
@@ -486,6 +653,13 @@ function handleTagFilter() {
   justify-content: flex-end;
   margin-top: 16px;
   padding-top: 8px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
+}
+
+.instance-selector :deep(.el-pagination) {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 /* 确保表格checkbox可以正常点击 */

@@ -29,7 +29,6 @@
         ref="tableRef"
         v-loading="loading"
         :data="assetList"
-
         max-height="350"
         @selection-change="handleSelectionChange"
       >
@@ -98,7 +97,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const tableRef = ref()
@@ -115,7 +114,7 @@ const loadAssetList = async () => {
   loading.value = true
   try {
     const res = await assetApi.getAssetList({
-      hostKeys: '@@',
+      hostKeys: '/',
       assetType: props.groupData.ci_type,
       permission: 'r',
       status: 'all',
@@ -130,15 +129,15 @@ const loadAssetList = async () => {
     assetList.value = res?.records || []
     pagination.value.total = res?.total || 0
   } catch (error) {
-    console.error('加载资产列表失败:', error)
-    ElMessage.error('加载资产列表失败')
+    console.error('加载设备清单失败:', error)
+    ElMessage.error('加载设备清单失败')
   } finally {
     loading.value = false
   }
 }
 
 // 选择变化
-const handleSelectionChange = (rows) => {
+const handleSelectionChange = rows => {
   selectedRows.value = rows
 }
 
@@ -166,7 +165,7 @@ const handleSave = async () => {
     emit('saved')
   } catch (error) {
     console.error('添加失败:', error)
-    ElMessage.error('添加失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`添加失败: ${error.response?.data?.message || error.message}`)
   } finally {
     saving.value = false
   }
@@ -181,7 +180,7 @@ const handleClosed = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadAssetList()
   }

@@ -98,17 +98,14 @@ const jobTypeRouteMap = {
 }
 
 const jobSeriesRouteMap = {
-  'REST作业': 'rest',
-  '命令作业': 'command',
-  '脚本作业': 'script'
+  REST作业: 'rest',
+  命令作业: 'command',
+  脚本作业: 'script'
 }
 
 const navigateToRunLogs = ({ type = '', keyword = '' } = {}) => {
   router.push({
-    name: 'jao-runLogs',
-    params: {
-      moduleCode: 'jao'
-    },
+    name: 'run-records-logs',
     query: {
       day: '365',
       ...(type ? { type } : {}),

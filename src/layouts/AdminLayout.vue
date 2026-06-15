@@ -3,8 +3,9 @@
     <!-- 左侧二级菜单 -->
     <aside class="admin-sider">
       <!-- 左侧顶部 Logo -->
-      <div class="sider-header" @click="goHome" title="OPSmind">
-        <img :src="logoImage" alt="OPSmind" class="sider-logo" />
+      <div class="sider-header" @click="goHome" title="KoreOPS">
+        <img :src="logoImage" alt="KoreOPS" class="sider-logo" />
+        <span class="sider-brand-name">KoreOPS</span>
       </div>
       <el-menu
         :key="`menu-${activeGroup}`"
@@ -19,11 +20,7 @@
             <i v-if="group.icon" :class="['menu-icon', group.icon]"></i>
             <span class="group-title">{{ group.name }}</span>
           </template>
-          <el-menu-item
-            v-for="item in group.children"
-            :key="item.code"
-            :index="item.code"
-          >
+          <el-menu-item v-for="item in group.children" :key="item.code" :index="item.code">
             <i v-if="item.icon" :class="['menu-icon', item.icon]"></i>
             <span>{{ item.name }}</span>
           </el-menu-item>
@@ -58,7 +55,8 @@
               <button @click="handleNotificationClick" class="notification-btn" aria-label="通知">
                 <svg class="notification-icon" fill="currentColor" viewBox="0 0 20 20">
                   <path
-                    d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                    d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"
+                  />
                 </svg>
                 <span v-if="notificationCount > 0" class="notification-badge">
                   {{ notificationCount > 99 ? '99+' : notificationCount }}
@@ -70,12 +68,20 @@
           <!-- 用户菜单 -->
           <el-dropdown @command="handleUserCommand" class="user-dropdown">
             <div class="user-dropdown-trigger">
-              <el-avatar :size="24" shape="circle" :fit="'cover'" class="user-avatar" :src="avatarImage"></el-avatar>
+              <el-avatar
+                :size="24"
+                shape="circle"
+                :fit="'cover'"
+                class="user-avatar"
+                :src="avatarImage"
+              ></el-avatar>
               <span class="user-name">{{ displayUserName }}</span>
               <svg class="dropdown-arrow" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
+                <path
+                  fill-rule="evenodd"
                   d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clip-rule="evenodd" />
+                  clip-rule="evenodd"
+                />
               </svg>
             </div>
             <template #dropdown>
@@ -112,7 +118,6 @@
       </main>
     </div>
   </div>
-
 </template>
 
 <script setup>
@@ -121,7 +126,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ADMIN_MENU_CONFIG, getDefaultAdminTarget } from '@/config/admin-menu.config'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
-import logoImage from '@/assets/icons/logo@2x.png'
+import logoImage from '@/assets/icons/logo.png'
 import avatarImage from '@/assets/icons/avatar@2x.png'
 import { Search, User, SwitchButton } from '@element-plus/icons-vue'
 
@@ -152,7 +157,7 @@ const displayUserName = computed(() => {
 
 const goHome = () => router.push('/home')
 
-const handleUserCommand = (command) => {
+const handleUserCommand = command => {
   switch (command) {
     case 'profile':
       router.push('/settings')
@@ -201,7 +206,9 @@ function syncFromRoute() {
 function normalizeOrRedirect() {
   // 若路由缺少参数或非法，跳转到默认
   const ok = syncFromRoute()
-  const valid = menu.some(g => g.code === activeGroup.value && g.children?.some(c => c.code === activePage.value))
+  const valid = menu.some(
+    g => g.code === activeGroup.value && g.children?.some(c => c.code === activePage.value)
+  )
   if (!ok || !valid) {
     const def = getDefaultAdminTarget()
     router.replace(`/admin/${def.groupCode}/${def.pageCode}`)
@@ -213,20 +220,23 @@ onMounted(() => {
   updateDocumentTitle()
 })
 
-watch(() => route.fullPath, () => {
-  syncFromRoute()
-  updateDocumentTitle()
-})
+watch(
+  () => route.fullPath,
+  () => {
+    syncFromRoute()
+    updateDocumentTitle()
+  }
+)
 
 function updateDocumentTitle() {
   try {
     const sub = currentSubTitle.value
-    document.title = sub ? `OPSmind - ${sub}` : 'OPSmind'
+    document.title = sub ? `KoreOPS - ${sub}` : 'KoreOPS'
   } catch {}
 }
 
 // 切换菜单：更新 URL 为 /admin/:group/:page
-const onMenuSelect = (index) => {
+const onMenuSelect = index => {
   // index 为 pageCode，找到其上级 group
   let foundGroup = activeGroup.value
   for (const g of menu) {
@@ -282,14 +292,26 @@ const AdminPlaceholder = {
   min-height: 48px;
   display: flex;
   align-items: center;
+  gap: 0.25rem;
   padding: 0.25rem 0.75rem; /* 与主页顶部相近的垂直内边距 */
   border-bottom: 1px solid #eef0f3;
   cursor: pointer;
 }
 
 .sider-logo {
-  height: 22px;
+  height: 28px;
   width: auto;
+  transform: translateY(1px);
+}
+
+.sider-brand-name {
+  color: #1269c3;
+  font-family: Inter, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 1.18rem;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .admin-menu {
@@ -324,7 +346,12 @@ const AdminPlaceholder = {
   color: #1f2937;
 }
 
-.admin-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 .admin-header {
   display: flex;
   justify-content: flex-end;
@@ -335,30 +362,100 @@ const AdminPlaceholder = {
   background: var(--admin-surface);
   border-bottom: 1px solid var(--admin-border);
 }
-.admin-header-right { display: flex; align-items: center; gap: 12px; }
-.search-wrapper { width: 220px; }
-.nav-search :deep(.el-input__wrapper) { border-radius: 16px; }
-@media (max-width: 992px) { .search-wrapper { display: none; } }
-.notification-wrapper { position: relative; }
-.notification-btn { display: flex; align-items: center; justify-content: center; padding: 4px; color: #9ca3af; background: transparent; border: none; border-radius: 6px; transition: color .2s; cursor: pointer; }
-.notification-btn:hover { color: #6b7280; }
-.notification-icon { width: 18px; height: 18px; }
-.notification-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff; font-size: 12px; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-weight: 500; }
-.user-dropdown-trigger { display: flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 8px; }
-.user-dropdown-trigger:hover { background: #f9fafb; }
-.user-dropdown-trigger :deep(.el-avatar) { flex-shrink: 0; }
-.user-avatar { width: 24px; height: 24px; }
+.admin-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.search-wrapper {
+  width: 220px;
+}
+.nav-search :deep(.el-input__wrapper) {
+  border-radius: 16px;
+}
+@media (max-width: 992px) {
+  .search-wrapper {
+    display: none;
+  }
+}
+.notification-wrapper {
+  position: relative;
+}
+.notification-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+.notification-btn:hover {
+  color: #6b7280;
+}
+.notification-icon {
+  width: 18px;
+  height: 18px;
+}
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 12px;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+.user-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+.user-dropdown-trigger:hover {
+  background: #f9fafb;
+}
+.user-dropdown-trigger :deep(.el-avatar) {
+  flex-shrink: 0;
+}
+.user-avatar {
+  width: 24px;
+  height: 24px;
+}
 .user-avatar :deep(img),
-.user-avatar :deep(.el-avatar__img) { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-.user-name { display: inline; color: #374151; white-space: nowrap; }
-.admin-content { flex: 1; overflow: auto; background: var(--admin-bg); }
+.user-avatar :deep(.el-avatar__img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.user-name {
+  display: inline;
+  color: #374151;
+  white-space: nowrap;
+}
+.admin-content {
+  flex: 1;
+  overflow: auto;
+  background: var(--admin-bg);
+}
 .admin-content-inner {
   max-width: 1440px;
   margin: 12px auto;
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
   border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   padding: 12px 16px 16px;
 }
 
@@ -371,7 +468,7 @@ const AdminPlaceholder = {
 .admin-content-inner :deep(.el-table__header .cell) {
   font-size: 14px; /* 表格字体整体放大一号 */
 }
-.admin-content-inner :deep(.el-table .el-table__row:hover>td) {
+.admin-content-inner :deep(.el-table .el-table__row:hover > td) {
   background: #fafbff;
 }
 /* 使用 Element Plus 默认的浅色 primary plain 背景，更现代更轻巧 */

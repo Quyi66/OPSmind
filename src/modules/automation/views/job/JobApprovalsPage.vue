@@ -4,7 +4,12 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input v-model="filters.keyword" placeholder="搜索作业名称" clearable style="width: 240px">
+          <el-input
+            v-model="filters.keyword"
+            placeholder="搜索运维工具名称"
+            clearable
+            style="width: 240px"
+          >
             <template #prefix>
               <el-icon>
                 <Search />
@@ -40,8 +45,15 @@
 
     <!-- 操作栏 -->
     <div class="ops-action-bar">
-      <span style="flex: 1;"></span>
-      <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="fetchData" title="刷新">
+      <span style="flex: 1"></span>
+      <el-button
+        class="toolbar-icon-btn"
+        circle
+        size="small"
+        :loading="loading"
+        @click="fetchData"
+        title="刷新"
+      >
         <el-icon v-show="!loading">
           <Refresh />
         </el-icon>
@@ -51,13 +63,15 @@
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
       <el-table v-loading="loading" :data="paginatedData" max-height="calc(100vh - 230px)">
-        <el-table-column label="作业" min-width="150">
+        <el-table-column label="运维工具" min-width="150">
           <template #default="{ row }">
-            <el-button type="primary" text @click="handleViewDetail(row)">{{ row.jobName }}</el-button>
+            <el-button type="primary" text @click="handleViewDetail(row)">
+              {{ row.jobName }}
+            </el-button>
           </template>
         </el-table-column>
 
-        <el-table-column label="作业类型" width="100">
+        <el-table-column label="运维工具类型" width="100">
           <template #default="{ row }">
             {{ getJobTypeLabel(row.jobType) }}
           </template>
@@ -110,14 +124,31 @@
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button v-if="row.status === 0" type="success" text size="small" @click="handlePass(row)">
+              <el-button
+                v-if="row.status === 0"
+                type="success"
+                text
+                size="small"
+                @click="handlePass(row)"
+              >
                 通过
               </el-button>
-              <el-button v-if="row.status === 0" type="danger" text size="small" @click="handleRefuse(row)">
+              <el-button
+                v-if="row.status === 0"
+                type="danger"
+                text
+                size="small"
+                @click="handleRefuse(row)"
+              >
                 拒绝
               </el-button>
-              <el-button v-if="row.status === 1 && row.canCanceled" type="warning" text size="small"
-                @click="handleDiscard(row)">
+              <el-button
+                v-if="row.status === 1 && row.canCanceled"
+                type="warning"
+                text
+                size="small"
+                @click="handleDiscard(row)"
+              >
                 作废
               </el-button>
             </div>
@@ -128,9 +159,16 @@
 
     <!-- 分页区域 -->
     <div class="ops-pagination-wrapper">
-      <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
-        :total="filteredData.length" layout="total, sizes, prev, pager, next, jumper" background
-        @size-change="handlePageSizeChange" @current-change="handlePageChange" />
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="filteredData.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
 
     <!-- 审批详情弹窗 -->
@@ -143,22 +181,24 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
+import { useReviewCountStore } from '@/stores/useReviewCountStore.js'
 import JobApprovalDetailDialog from '../../components/job/JobApprovalDetailDialog.vue'
 
 const loading = ref(false)
 const tableData = ref([])
 const filters = reactive({
   keyword: '',
-  status: ''  // 空字符串表示"全部状态"
+  status: '' // 空字符串表示"全部状态"
 })
 const currentPage = ref(1)
 const pageSize = ref(10)
 const detailDialogVisible = ref(false)
 const currentApprovalData = ref(null)
+const reviewStore = useReviewCountStore()
 
 const filteredData = computed(() => {
   let data = tableData.value
@@ -166,10 +206,11 @@ const filteredData = computed(() => {
   // 文本筛选
   if (filters.keyword) {
     const keyword = filters.keyword.toLowerCase()
-    data = data.filter(item =>
-      item.jobName?.toLowerCase().includes(keyword) ||
-      item.jobId?.toLowerCase().includes(keyword) ||
-      item.applicant?.toLowerCase().includes(keyword)
+    data = data.filter(
+      item =>
+        item.jobName?.toLowerCase().includes(keyword) ||
+        item.jobId?.toLowerCase().includes(keyword) ||
+        item.applicant?.toLowerCase().includes(keyword)
     )
   }
 
@@ -188,10 +229,20 @@ const paginatedData = computed(() => {
   return filteredData.value.slice(start, end)
 })
 
+watch(
+  () => filteredData.value.length,
+  total => {
+    const maxPage = Math.max(1, Math.ceil(total / pageSize.value))
+    if (currentPage.value > maxPage) {
+      currentPage.value = maxPage
+    }
+  }
+)
+
 const jobTypeMap = {
-  standalone: { icon: 'fa fa-terminal', label: '独立作业' },
-  flow: { icon: 'fa fa-stream', label: '流程作业' },
-  schedule: { icon: 'fa fa-clock', label: '定时作业' }
+  standalone: { icon: 'fa fa-terminal', label: '独立运维工具' },
+  flow: { icon: 'fa fa-stream', label: '流程运维工具' },
+  schedule: { icon: 'fa fa-clock', label: '定时运维工具' }
 }
 
 const approveModeMap = {
@@ -214,7 +265,14 @@ async function fetchData() {
   loading.value = true
   try {
     const response = await jaoApi.fetchApproveList()
-    tableData.value = response?.data || response || []
+    const approvals = Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response)
+        ? response
+        : []
+
+    tableData.value = approvals
+    reviewStore.approvalCount = approvals.filter(item => item.status === 0).length
   } catch (error) {
     ElMessage.error(error?.message || '获取审批列表失败')
   } finally {
@@ -228,7 +286,7 @@ function handleSearch() {
 
 function handleReset() {
   filters.keyword = ''
-  filters.status = ''  // 重置为空字符串
+  filters.status = '' // 重置为空字符串
   currentPage.value = 1
   pageSize.value = 10
 }
@@ -265,7 +323,7 @@ function formatDateTime(value) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
@@ -274,7 +332,7 @@ function formatExpirationTime(value) {
   if (value === 'expired') return '已过期'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  const pad = (n) => (n < 10 ? `0${n}` : String(n))
+  const pad = n => (n < 10 ? `0${n}` : String(n))
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
@@ -285,11 +343,9 @@ function handleViewDetail(row) {
 
 async function handlePass(row) {
   try {
-    await ElMessageBox.confirm(
-      `确定要通过作业 "${row.jobName}" 的审批申请吗？`,
-      '通过审批',
-      { type: 'success' }
-    )
+    await ElMessageBox.confirm(`确定要通过运维工具 "${row.jobName}" 的审批申请吗？`, '通过审批', {
+      type: 'success'
+    })
 
     loading.value = true
     await jaoApi.passApprove(row.id, null)
@@ -306,16 +362,12 @@ async function handlePass(row) {
 
 async function handleRefuse(row) {
   try {
-    const { value: reason } = await ElMessageBox.prompt(
-      '请输入拒绝理由',
-      '拒绝审批',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        inputType: 'textarea',
-        inputPlaceholder: '请输入拒绝理由'
-      }
-    )
+    const { value: reason } = await ElMessageBox.prompt('请输入拒绝理由', '拒绝审批', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputType: 'textarea',
+      inputPlaceholder: '请输入拒绝理由'
+    })
 
     loading.value = true
     await jaoApi.refuseApprove(row.id, reason)

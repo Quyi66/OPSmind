@@ -25,11 +25,21 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./views/MiddlewareCveListPage.vue')
   },
   {
+    key: 'urgencyDashboard',
+    path: 'urgencyDashboard',
+    name: 'patches-urgencyDashboard',
+    title: '漏洞紧急程度管理',
+    navLabel: '漏洞紧急程度管理',
+    icon: 'fas fa-exclamation-triangle',
+    platform: 'linux',
+    component: () => import('./views/UrgencyDashboardPage.vue')
+  },
+  {
     key: 'machineScan',
     path: 'machineScan',
     name: 'patches-machineScan',
-    title: '机器扫描',
-    navLabel: '机器扫描',
+    title: '主机概览',
+    navLabel: '主机概览',
     icon: 'fas fa-search',
     platform: 'linux',
     component: () => import('./views/LinuxPatchScanPage.vue')
@@ -110,6 +120,16 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./views/LinuxVulnerabilityPage.vue')
   },
   {
+    key: 'localInstall',
+    path: 'localInstall',
+    name: 'patches-localInstall',
+    title: '软件包安装',
+    navLabel: '软件包安装',
+    icon: 'fas fa-box-open',
+    platform: 'linux',
+    component: () => import('./views/LocalInstallPage.vue')
+  },
+  {
     key: 'windowsVulnerability',
     path: 'windowsVulnerability',
     name: 'patches-windowsVulnerability',
@@ -150,7 +170,7 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: '安装回滚历史',
     icon: 'fas fa-history',
     platform: 'windows',
-    component: () => import('./windows-patch/views/WindowsPatchTaskCenterPage.vue')
+    component: () => import('./windows-patch/views/WinPatchInstallHistoryPage.vue')
   },
   {
     key: 'windowsCveList',
@@ -160,7 +180,17 @@ export const PATCHES_ROUTE_DEFS = [
     navLabel: 'CVE漏洞列表',
     icon: 'fas fa-bug',
     platform: 'windows',
-    component: () => import('./views/WindowsCveListPage.vue')
+    component: () => import('./windows-patch/views/WindowsCveListPage.vue')
+  },
+  {
+    key: 'windowsKbList',
+    path: 'windowsKbList',
+    name: 'patches-windowsKbList',
+    title: 'Windows KB知识库',
+    navLabel: 'KB知识库',
+    icon: 'fas fa-book',
+    platform: 'windows',
+    component: () => import('./windows-patch/views/WindowsKbListPage.vue')
   },
   {
     key: 'logs',

@@ -71,12 +71,7 @@ const props = defineProps({
   }
 })
 
-const loadingTexts = [
-  '正在加载模块...',
-  '初始化应用...',
-  '准备界面...',
-  '即将完成...'
-]
+const loadingTexts = ['正在加载模块...', '初始化应用...', '准备界面...', '即将完成...']
 
 const loadingText = ref(loadingTexts[0])
 let textInterval = null
@@ -121,14 +116,14 @@ onUnmounted(() => {
   }
 }
 
-.skeleton-loader [class*="skeleton-"] {
+.skeleton-loader [class*='skeleton-'] {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200px 100%;
   animation: skeleton-loading 1.5s infinite;
   border-radius: 4px;
 }
 
-.dark-mode [class*="skeleton-"] {
+.dark-mode [class*='skeleton-'] {
   background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
   background-size: 200px 100%;
 }
@@ -256,8 +251,12 @@ onUnmounted(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 响应式 */
@@ -265,18 +264,18 @@ onUnmounted(() => {
   .skeleton-loader {
     padding: 15px;
   }
-  
+
   .skeleton-content {
     grid-template-columns: 1fr;
     gap: 15px;
   }
-  
+
   .skeleton-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .skeleton-nav {
     flex-wrap: wrap;
     gap: 10px;

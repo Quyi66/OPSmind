@@ -1,15 +1,22 @@
 <template>
-  <el-dialog
+  <el-drawer
     v-model="visibleModel"
     title="主机补丁详情"
-    width="1240px"
-    top="4vh"
+    direction="rtl"
+    size="85%"
     destroy-on-close
     append-to-body
+    class="win-patch-host-drawer"
     :close-on-click-modal="false"
   >
     <div class="win-patch-host-dialog">
-      <el-descriptions v-if="hostSummary" :column="2" border size="small" class="win-patch-descriptions">
+      <el-descriptions
+        v-if="hostSummary"
+        :column="2"
+        border
+        size="small"
+        class="win-patch-descriptions"
+      >
         <el-descriptions-item label="主机">
           {{ resolveHostKey(hostSummary) }}
         </el-descriptions-item>
@@ -44,7 +51,12 @@
             </el-select>
           </el-form-item>
           <el-form-item label="补丁状态">
-            <el-select v-model="filters.patchStatus" clearable placeholder="全部" style="width: 140px">
+            <el-select
+              v-model="filters.patchStatus"
+              clearable
+              placeholder="全部"
+              style="width: 140px"
+            >
               <el-option
                 v-for="item in WIN_PATCH_STATUS_OPTIONS"
                 :key="item.value"
@@ -70,12 +82,25 @@
       </div>
 
       <div class="ops-action-bar">
-        <el-button type="primary" size="small" :disabled="installableSelection.length === 0" @click="installWizardVisible = true">
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="installableSelection.length === 0"
+          @click="installWizardVisible = true"
+        >
           安装选中补丁
         </el-button>
-        <span class="win-patch-selection-text">已选 {{ installableSelection.length }} 条可安装记录</span>
+        <span class="win-patch-selection-text">
+          已选 {{ installableSelection.length }} 条可安装补丁
+        </span>
         <span style="flex: 1"></span>
-        <el-button class="toolbar-icon-btn" circle size="small" :loading="loading" @click="loadPatches()">
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          @click="loadPatches()"
+        >
           <el-icon v-show="!loading"><Refresh /></el-icon>
         </el-button>
       </div>
@@ -84,13 +109,19 @@
         <el-table
           v-loading="loading"
           :data="patchList"
-          max-height="440"
+          height="100%"
           @selection-change="selection => (selectedRows = selection)"
         >
-          <el-table-column type="selection" width="48" :selectable="isPatchInstallable" />
+          <el-table-column type="selection" width="48" :selectable="isPatchActionable" />
           <el-table-column label="KB 编号" width="130">
             <template #default="{ row }">
-              {{ pickValue(row, ['kbNumber', 'kb_number'], '-') }}
+              <WindowsKbLinkList
+                :kb-numbers="resolveKbNumbers(row)"
+                :has-cve="resolveCveIds(row).length > 0"
+                :kb-detail="row"
+                dialog-title="关联 KB"
+                @select-kb="openKbDetail"
+              />
             </template>
           </el-table-column>
           <el-table-column label="标题" min-width="280" show-overflow-tooltip>
@@ -98,16 +129,30 @@
               {{ pickValue(row, ['title'], '-') }}
             </template>
           </el-table-column>
+          <el-table-column label="大小" width="110">
+            <template #default="{ row }">
+              {{ formatBytes(pickValue(row, ['sizeBytes', 'size_bytes'], 0)) }}
+            </template>
+          </el-table-column>
           <el-table-column label="严重级别" width="120">
             <template #default="{ row }">
-              <el-tag :type="getSeverityTagType(pickValue(row, ['severity']))" size="small" effect="plain">
+              <el-tag
+                :type="getSeverityTagType(pickValue(row, ['severity']))"
+                size="small"
+                effect="plain"
+              >
                 {{ getSeverityLabel(pickValue(row, ['severity'], '')) }}
               </el-tag>
             </template>
           </el-table-column>
+          <el-table-column label="关联 CVE" min-width="220">
+            <template #default="{ row }">
+              <CveLinkList :cves="resolveCveIds(row)" :url-resolver="getWinCveUrl" />
+            </template>
+          </el-table-column>
           <el-table-column label="分类" min-width="150" show-overflow-tooltip>
             <template #default="{ row }">
-              {{ pickValue(row, ['classification'], '-') }}
+              {{ pickValue(row, ['categoryName', 'category_name', 'classification'], '-') }}
             </template>
           </el-table-column>
           <el-table-column label="补丁状态" width="120">
@@ -119,8 +164,20 @@
           </el-table-column>
           <el-table-column label="已忽略" width="90" align="center">
             <template #default="{ row }">
-              <el-tag :type="normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false)) ? 'warning' : 'info'" size="small" effect="plain">
-                {{ normalizeBoolean(pickValue(row, ['isIgnored', 'is_ignored'], false)) ? '是' : '否' }}
+              <el-tag
+                :type="
+                  normalizeBoolean(pickValue(row, ['isIgnore', 'isIgnored', 'is_ignored'], false))
+                    ? 'warning'
+                    : 'info'
+                "
+                size="small"
+                effect="plain"
+              >
+                {{
+                  normalizeBoolean(pickValue(row, ['isIgnore', 'isIgnored', 'is_ignored'], false))
+                    ? '是'
+                    : '否'
+                }}
               </el-tag>
             </template>
           </el-table-column>
@@ -157,8 +214,10 @@
         @submitted="handleInstallTaskCreated"
         @success="handleInstallSuccess"
       />
+
+      <WindowsKbDetailDialog v-model="kbDetailDialogVisible" :kb-number="selectedKbNumber" />
     </div>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <script setup>
@@ -166,8 +225,15 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import WinPatchInstallWizard from '../install-wizard/WinPatchInstallWizard.vue'
+import WindowsKbDetailDialog from '../kb/WindowsKbDetailDialog.vue'
+import WindowsKbLinkList from '../kb/WindowsKbLinkList.vue'
+import CveLinkList from '../../../components/common/CveLinkList.vue'
 import { winPatchApi } from '../../api'
-import { WIN_PATCH_PAGE_SIZE_OPTIONS, WIN_PATCH_SEVERITY_OPTIONS, WIN_PATCH_STATUS_OPTIONS } from '../../constants'
+import {
+  WIN_PATCH_PAGE_SIZE_OPTIONS,
+  WIN_PATCH_SEVERITY_OPTIONS,
+  WIN_PATCH_STATUS_OPTIONS
+} from '../../constants'
 import {
   formatDateTime,
   getPatchStatusLabel,
@@ -208,6 +274,8 @@ const loading = ref(false)
 const patchList = ref([])
 const selectedRows = ref([])
 const installWizardVisible = ref(false)
+const kbDetailDialogVisible = ref(false)
+const selectedKbNumber = ref('')
 
 const pagination = reactive({
   page: 1,
@@ -221,7 +289,78 @@ const filters = reactive({
   keyword: ''
 })
 
-const installableSelection = computed(() => selectedRows.value.filter(row => isPatchInstallable(row)))
+const installableSelection = computed(() =>
+  selectedRows.value.filter(row => isPatchInstallable(row))
+)
+
+function isPatchActionable(row) {
+  return isPatchInstallable(row)
+}
+
+function resolveCveIds(row) {
+  const raw = pickValue(row, ['cveIds', 'cve_ids'], '')
+  if (Array.isArray(raw)) {
+    return raw.map(item => String(item).trim()).filter(Boolean)
+  }
+
+  return String(raw)
+    .split(/[,，;；\s]+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+function resolveKbNumbers(row) {
+  const raw = pickValue(
+    row,
+    ['kbNumber', 'kb_number', 'updateKbNumbers', 'update_kb_numbers', 'kbArticle', 'kb_article'],
+    ''
+  )
+  if (Array.isArray(raw)) {
+    return raw.map(normalizeKbNumber).filter(Boolean)
+  }
+
+  return String(raw)
+    .split(/[,，;；\s]+/)
+    .map(normalizeKbNumber)
+    .filter(Boolean)
+}
+
+// Windows CVE 跳转 MSRC（微软安全响应中心）官方漏洞详情页
+function getWinCveUrl(cveId) {
+  const id = String(cveId || '').trim()
+  if (!id) return ''
+  return `https://msrc.microsoft.com/update-guide/vulnerability/${encodeURIComponent(id)}`
+}
+
+function normalizeKbNumber(value) {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase()
+  if (!normalized) return ''
+
+  const match = normalized.match(/KB\s*\d+/i)
+  if (match) {
+    return match[0].replace(/\s+/g, '')
+  }
+
+  return /^\d+$/.test(normalized) ? `KB${normalized}` : normalized
+}
+
+function formatBytes(value) {
+  const size = Number(value)
+  if (!Number.isFinite(size) || size <= 0) return '-'
+
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let current = size
+  let index = 0
+
+  while (current >= 1024 && index < units.length - 1) {
+    current /= 1024
+    index += 1
+  }
+
+  return `${current.toFixed(index === 0 ? 0 : 1)} ${units[index]}`
+}
 
 function applyInitialFilters() {
   const initialFilters = props.initialFilters || {}
@@ -293,6 +432,11 @@ function handleInstallSuccess() {
   loadPatches({ silent: true })
 }
 
+function openKbDetail(kbNumber) {
+  selectedKbNumber.value = normalizeKbNumber(kbNumber)
+  kbDetailDialogVisible.value = Boolean(selectedKbNumber.value)
+}
+
 watch(
   [() => props.modelValue, () => props.hostSummary, () => props.initialFilters],
   ([open, host]) => {
@@ -308,17 +452,34 @@ watch(
 </script>
 
 <style scoped lang="scss">
+.win-patch-host-drawer {
+  :deep(.el-drawer__header) {
+    margin-bottom: 0;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+
+  :deep(.el-drawer__body) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 16px 20px;
+    overflow: hidden;
+  }
+}
+
 .win-patch-host-dialog {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1 1 auto;
   min-height: 0;
-  max-height: calc(90vh - 90px);
   overflow: hidden;
 }
 
 .win-patch-descriptions {
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  flex: 0 0 auto;
 }
 
 .win-patch-selection-text {
@@ -334,11 +495,5 @@ watch(
 
 :deep(.win-patch-table__time-column .cell) {
   white-space: nowrap;
-}
-
-@media (max-width: 1280px) {
-  .win-patch-host-dialog {
-    max-height: calc(92vh - 84px);
-  }
 }
 </style>

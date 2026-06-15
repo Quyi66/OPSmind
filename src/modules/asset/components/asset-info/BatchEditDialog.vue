@@ -1,47 +1,54 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="批量更新资产属性"
-    width="480px"
+    title="批量更新设备属性"
+    width="680px"
     :close-on-click-modal="false"
-    @closed="handleClosed"
+    @close="handleClose"
   >
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-position="top"
-    >
-      <el-form-item label="模型属性" prop="code">
-        <el-select
-          v-model="formData.code"
-          placeholder="请选择"
-          style="width: 100%"
-          :loading="loadingAttrs"
-        >
-          <el-option
-            v-for="item in editableAttrs"
-            :key="item.code"
-            :label="item.title"
-            :value="item.code"
-          />
-        </el-select>
-      </el-form-item>
+    <div class="dialog-body">
+      <el-alert
+        title="批量编辑提示"
+        description="您正在对选中的主机进行批量属性更新，保存后属性值将被批量覆盖为新输入的值。"
+        type="warning"
+        show-icon
+        :closable="false"
+        style="margin-bottom: 20px"
+      />
 
-      <el-form-item label="属性值" prop="value">
-        <el-input
-          v-model="formData.value"
-          type="textarea"
-          :rows="4"
-          placeholder="请输入属性值"
-        />
-      </el-form-item>
-    </el-form>
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
+        <el-form-item label="待更新属性字段" prop="code">
+          <el-select
+            v-model="formData.code"
+            placeholder="请选择要修改的模型属性"
+            style="width: 100%"
+            :loading="loadingAttrs"
+          >
+            <el-option
+              v-for="item in editableAttrs"
+              :key="item.code"
+              :label="item.title"
+              :value="item.code"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="更新属性值" prop="value">
+          <el-input
+            v-model="formData.value"
+            type="textarea"
+            :rows="6"
+            placeholder="请输入新的属性内容，多个资产将全部覆盖为此内容"
+          />
+        </el-form-item>
+      </el-form>
+    </div>
 
     <template #footer>
-      <el-button type="primary" :loading="saving" @click="handleSave">
-        保存
-      </el-button>
+      <div style="display: flex; gap: 12px; justify-content: flex-end">
+        <el-button @click="visible = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">保存修改</el-button>
+      </div>
     </template>
   </el-dialog>
 </template>
@@ -71,7 +78,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const formRef = ref()
@@ -124,30 +131,27 @@ const handleSave = async () => {
   saving.value = true
   try {
     // 调用 job CoKLZM 进行批量更新
-    await apiService.post(
-      `/jao/api/jao/jobs/CoKLZM/run?cacheBuster=${Date.now()}`,
-      {
-        params: {
-          code: formData.value.code,
-          value: formData.value.value,
-          ciIds: props.ciIds.join(',')
-        }
+    await apiService.post(`/jao/api/jao/jobs/CoKLZM/run?cacheBuster=${Date.now()}`, {
+      params: {
+        code: formData.value.code,
+        value: formData.value.value,
+        ciIds: props.ciIds.join(',')
       }
-    )
+    })
 
     ElMessage.success('保存成功')
     visible.value = false
     emit('saved')
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('保存失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`保存失败: ${error.response?.data?.message || error.message}`)
   } finally {
     saving.value = false
   }
 }
 
 // 弹窗关闭时重置
-const handleClosed = () => {
+const handleClose = () => {
   formRef.value?.resetFields()
   formData.value = {
     code: '',
@@ -156,15 +160,9 @@ const handleClosed = () => {
 }
 
 // 监听弹窗打开
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     loadEditableAttrs()
   }
 })
 </script>
-
-<style scoped lang="scss">
-:deep(.el-dialog__body) {
-  padding: 20px;
-}
-</style>

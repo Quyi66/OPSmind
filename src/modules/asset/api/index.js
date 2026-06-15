@@ -419,6 +419,19 @@ export const exceptionApi = {
 
   getOsDiff(params = {}) {
     return apiService.get(`${ACM_DASHBOARD_BASE}/os-diff`, { params }).then(res => normalizeRecords(unwrapApiData(res)))
+  },
+
+  getExceptionDevices(params = {}, options = {}) {
+    return apiService
+      .get(`${ACM_DASHBOARD_BASE}/connect-exception`, {
+        params: {
+          ...params,
+          page: options.page || 1,
+          size: options.size || 10,
+          filter: options.filter || undefined
+        }
+      })
+      .then(res => normalizeRecords(unwrapApiData(res)))
   }
 }
 
@@ -505,9 +518,16 @@ export const operationLogApi = {
    * @param {string} params.status - 状态 (all, COMPLETED, ERROR, RUNNING)
    * @param {number} params.day - 时间范围（天数）
    */
-  getOperationLogs: params => {
+  getOperationLogs(params = {}, options = {}) {
     return apiService
-      .get(`${JAO_DASHBOARD_BASE}/list-operation-log`, { params })
+      .get(`${JAO_DASHBOARD_BASE}/list-operation-log`, {
+        params: {
+          ...params,
+          page: options.page || 1,
+          size: options.size || 10,
+          filter: options.filter || undefined
+        }
+      })
       .then(res => normalizeRecords(unwrapApiData(res)))
   }
 }

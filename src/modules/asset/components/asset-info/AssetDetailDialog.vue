@@ -1,42 +1,78 @@
 <template>
-  <el-dialog
+  <el-drawer
     v-model="visible"
-    title="查看资产详情"
-    width="1060px"
-    :close-on-click-modal="false"
+    title="设备详细信息"
+    size="55%"
+    direction="rtl"
+    :close-on-click-modal="true"
     @close="handleClose"
+    class="asset-detail-drawer"
   >
-    <div v-loading="loading" class="asset-detail">
-      <template v-if="!loading && visibleAttrs.length > 0">
-        <el-form :model="attrValues" label-width="120px" class="asset-form">
-          <el-row :gutter="20">
-            <el-col v-for="attr in visibleAttrs" :key="attr.code" :span="12">
-              <el-form-item :label="attr.title" :required="attr.required" class="asset-form-item">
-                <template v-if="attr.code === 'needReboot'">
-                  <span
-                    class="readonly-value"
-                    :class="attrValues[attr.code] == 1 ? 'text-danger' : 'text-success'"
-                  >
-                    {{ attrValues[attr.code] == 1 ? '需要' : '不需要' }}
-                  </span>
-                </template>
-                <template v-else>
-                  <span class="readonly-value">{{ attrValues[attr.code] || '-' }}</span>
-                </template>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
+    <div v-loading="loading" class="drawer-body">
+      <template v-if="!loading && finalDisplayAttrs.length > 0">
+        <!-- 头部资产摘要卡片 -->
+        <div class="detail-header-card">
+          <div class="avatar-area">
+            <el-avatar
+              :size="48"
+              style="
+                background-color: var(--el-color-primary-light-9);
+                color: var(--el-color-primary);
+              "
+            >
+              <i class="fa fa-server" style="font-size: 20px"></i>
+            </el-avatar>
+            <div class="title-info">
+              <h3>{{ getAttrValue('HOSTNAME') }}</h3>
+              <span class="ip-badge">{{ getAttrValue('IP') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 扁平属性表格列表 -->
+        <el-descriptions :column="2" border class="detail-descriptions mt-3">
+          <el-descriptions-item
+            v-for="attr in finalDisplayAttrs"
+            :key="attr.code"
+            :label="attr.title"
+            label-class-name="desc-label"
+            class-name="desc-value"
+          >
+            <el-tag
+              v-if="attr.code.toUpperCase() === 'NEEDREBOOT'"
+              :type="getAttrValue(attr.code) == 1 ? 'danger' : 'success'"
+              size="small"
+            >
+              {{ getAttrValue(attr.code) == 1 ? '待重启' : '无需重启' }}
+            </el-tag>
+            <el-tag
+              v-else-if="attr.code.toUpperCase() === 'STATUS'"
+              :type="getAttrValue(attr.code) == 1 ? 'success' : 'info'"
+              size="small"
+            >
+              {{ getAttrValue(attr.code) == 1 ? '在线' : '离线' }}
+            </el-tag>
+            <el-tag
+              v-else-if="attr.code.toUpperCase() === 'CONN_LATEST_STATUS'"
+              :type="String(getAttrValue(attr.code)) === '1' ? 'success' : 'danger'"
+              size="small"
+            >
+              {{ String(getAttrValue(attr.code)) === '1' ? '正常' : '失联' }}
+            </el-tag>
+            <span v-else class="detail-value">{{ getAttrValue(attr.code) }}</span>
+          </el-descriptions-item>
+        </el-descriptions>
       </template>
       <el-empty v-else-if="!loading" description="暂无数据" />
     </div>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { assetApi } from '../../api'
+import { viewConfigApi } from '@/modules/patches/api'
 
 const props = defineProps({
   modelValue: {
@@ -60,11 +96,131 @@ const loading = ref(false)
 const assetType = ref(null)
 const attrValues = ref({})
 
-// 扁平化属性列表，忽略分组标题并保留原始顺序
-const visibleAttrs = computed(() => {
-  if (!assetType.value?.attrs) return []
+// 内置系统属性与后端模型属性合并的备选属性
+const defaultAvailableAttrs = [
+  { code: 'IP', title: '纳管IP' },
+  { code: 'HOSTNAME', title: '主机名' },
+  { code: 'OS', title: '系统环境' },
+  { code: 'RUN_ENVIRONMENT', title: '运行环境' },
+  { code: 'CONN_LATEST_STATUS', title: '连通巡检' },
+  { code: 'DEPT_NAME', title: '处置团队' },
+  { code: 'APPLICATION_SYSTEM', title: '应用系统' },
+  { code: 'HOST_RISK_LEVEL', title: '主机风险等级' },
+  { code: 'SSH_PORT', title: 'SSH端口' },
+  { code: 'SERVICE_PORT', title: '业务端口' },
+  { code: 'OWNER', title: '责任人' },
+  { code: 'updated_at', title: '最后同步时间' }
+]
 
-  return assetType.value.attrs.filter(attr => attr.code && attr.input?.control !== 'hidden')
+const displayAttrs = ref([
+  'IP',
+  'HOSTNAME',
+  'OS',
+  'SSH_PORT',
+  'SERVICE_PORT',
+  'LOCATION',
+  'RUN_ENVIRONMENT',
+  'APPLICATION_SYSTEM',
+  'DEPT_NAME',
+  'HOST_RISK_LEVEL'
+])
+
+// 扁平化所有属性，构建统一的字典，用于快速查找标题
+const allAttrsMap = computed(() => {
+  const map = new Map()
+
+  // 1. 系统内置属性
+  defaultAvailableAttrs.forEach(attr => {
+    map.set(attr.code.toUpperCase(), attr.title)
+    map.set(attr.code.toLowerCase(), attr.title)
+  })
+
+  // 2. 动态模型属性
+  if (assetType.value?.attrs) {
+    assetType.value.attrs.forEach(attr => {
+      if (attr.code && attr.title) {
+        map.set(attr.code.toUpperCase(), attr.title)
+        map.set(attr.code.toLowerCase(), attr.title)
+      }
+    })
+  }
+
+  return map
+})
+
+function getAttrTitle(code) {
+  if (!code) return ''
+  return (
+    allAttrsMap.value.get(code) ||
+    allAttrsMap.value.get(code.toUpperCase()) ||
+    allAttrsMap.value.get(code.toLowerCase()) ||
+    code
+  )
+}
+
+function getAttrValue(code) {
+  if (!code) return '-'
+
+  // 1. 精确匹配
+  if (attrValues.value[code] !== undefined && attrValues.value[code] !== null) {
+    return attrValues.value[code]
+  }
+
+  // 2. 不区分大小写匹配
+  const upper = code.toUpperCase()
+  const lower = code.toLowerCase()
+
+  if (attrValues.value[upper] !== undefined && attrValues.value[upper] !== null) {
+    return attrValues.value[upper]
+  }
+  if (attrValues.value[lower] !== undefined && attrValues.value[lower] !== null) {
+    return attrValues.value[lower]
+  }
+
+  // 3. 针对 OS / 操作系统等特殊字段的容错
+  if (upper === 'OS') {
+    return attrValues.value.os_distro || attrValues.value.osDistro || attrValues.value.os || '-'
+  }
+
+  return '-'
+}
+
+// 合并显示属性：自定义配置字段 + 其它所有在模型中定义且未在配置中勾选的属性
+const finalDisplayAttrs = computed(() => {
+  const result = []
+  const addedCodes = new Set()
+
+  // 1. 先加入自定义配置中的属性 (保持用户的配置先后排序)
+  displayAttrs.value.forEach(code => {
+    if (code) {
+      result.push({
+        code,
+        title: getAttrTitle(code)
+      })
+      addedCodes.add(code.toUpperCase())
+      addedCodes.add(code.toLowerCase())
+    }
+  })
+
+  // 2. 再加入原始模型中定义、且在自定义配置中未选择的其它所有属性
+  if (assetType.value?.attrs) {
+    assetType.value.attrs.forEach(attr => {
+      if (attr.code && attr.input?.control !== 'hidden') {
+        const upperCode = attr.code.toUpperCase()
+        const lowerCode = attr.code.toLowerCase()
+        if (!addedCodes.has(upperCode) && !addedCodes.has(lowerCode)) {
+          result.push({
+            code: attr.code,
+            title: attr.title || attr.code
+          })
+          addedCodes.add(upperCode)
+          addedCodes.add(lowerCode)
+        }
+      }
+    })
+  }
+
+  return result
 })
 
 // 加载资产详情
@@ -73,14 +229,41 @@ const loadAssetDetail = async () => {
 
   loading.value = true
   try {
-    // 并行请求资产属性值和资产类型定义
-    const [attrs, typeInfo] = await Promise.all([
+    // 并行请求资产属性值、资产类型定义和自定义视图配置
+    const [attrs, typeInfo, viewConfigRes] = await Promise.all([
       assetApi.getAssetAttrs(props.assetId),
-      assetApi.getAssetTypeByAssetId(props.assetId)
+      assetApi.getAssetTypeByAssetId(props.assetId),
+      viewConfigApi.getViewConfig({ ciType: 'host', scope: 'user' }).catch(() => null)
     ])
 
     attrValues.value = attrs || {}
     assetType.value = typeInfo
+
+    // 解析自定义详情卡片属性，将其展平为单一显示列表
+    const data = viewConfigRes?.data || viewConfigRes
+    if (data && data.viewJson) {
+      let configObj = {}
+      if (typeof data.viewJson === 'string') {
+        try {
+          configObj = JSON.parse(data.viewJson)
+        } catch {
+          configObj = {}
+        }
+      } else {
+        configObj = data.viewJson
+      }
+      if (configObj.overviewCard?.groups && configObj.overviewCard.groups.length > 0) {
+        const flatAttrs = []
+        configObj.overviewCard.groups.forEach(g => {
+          if (Array.isArray(g.attrs)) {
+            flatAttrs.push(...g.attrs)
+          }
+        })
+        if (flatAttrs.length > 0) {
+          displayAttrs.value = Array.from(new Set(flatAttrs))
+        }
+      }
+    }
   } catch (error) {
     console.error('加载资产详情失败:', error)
     ElMessage.error('加载资产详情失败')
@@ -94,6 +277,18 @@ const handleClose = () => {
   visible.value = false
   attrValues.value = {}
   assetType.value = null
+  displayAttrs.value = [
+    'IP',
+    'HOSTNAME',
+    'OS',
+    'SSH_PORT',
+    'SERVICE_PORT',
+    'LOCATION',
+    'RUN_ENVIRONMENT',
+    'APPLICATION_SYSTEM',
+    'DEPT_NAME',
+    'HOST_RISK_LEVEL'
+  ]
 }
 
 // 监听弹窗打开
@@ -105,38 +300,54 @@ watch(visible, val => {
 </script>
 
 <style scoped lang="scss">
-.asset-detail {
-  min-height: 200px;
-  padding-right: 4px;
+.detail-header-card {
+  background: var(--el-fill-color-light);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--el-border-color-lighter);
+
+  .avatar-area {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .title-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      .ip-badge {
+        font-size: 13px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+  }
 }
 
-.asset-form {
-  padding-top: 16px;
+.detail-descriptions {
+  :deep(.desc-label) {
+    width: 140px;
+    font-weight: 500;
+    color: var(--el-text-color-regular);
+    background-color: var(--el-fill-color-light);
+  }
+
+  :deep(.desc-value) {
+    color: var(--el-text-color-primary);
+  }
 }
 
-.asset-form-item {
-  margin-bottom: 18px;
-}
-
-.readonly-value {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  font-size: 14px;
+.detail-value {
+  font-size: 13px;
   line-height: 1.5;
   word-break: break-all;
-  color: var(--el-text-color-secondary);
-}
-
-.text-danger {
-  color: #f56c6c;
-}
-
-.text-success {
-  color: #67c23a;
-}
-
-:deep(.el-form-item__content) {
-  min-width: 0;
 }
 </style>

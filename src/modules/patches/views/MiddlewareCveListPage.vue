@@ -1,6 +1,10 @@
 <template>
   <div class="ops-page-layout">
-    <MiddlewareCveDetail v-if="currentView === 'detail'" :cve-id="selectedCveId" @back="backToList" />
+    <MiddlewareCveDetail
+      v-if="currentView === 'detail'"
+      :cve-id="selectedCveId"
+      @back="backToList"
+    />
 
     <template v-else>
       <div class="ops-filter-bar mb-3">
@@ -15,18 +19,23 @@
             />
           </el-form-item>
           <el-form-item label="中间件类型">
-            <el-select v-model="searchParams.middlewareType" style="width: 120px" clearable placeholder="全部">
+            <el-select
+              v-model="searchParams.middlewareType"
+              style="width: 120px"
+              clearable
+              placeholder="全部"
+            >
               <el-option label="全部" value="" />
-              <el-option
-                v-for="type in middlewareTypes"
-                :key="type"
-                :label="type"
-                :value="type"
-              />
+              <el-option v-for="type in middlewareTypes" :key="type" :label="type" :value="type" />
             </el-select>
           </el-form-item>
           <el-form-item label="严重等级">
-            <el-select v-model="searchParams.severity" style="width: 100px" clearable placeholder="全部">
+            <el-select
+              v-model="searchParams.severity"
+              style="width: 100px"
+              clearable
+              placeholder="全部"
+            >
               <el-option value="" label="全部" />
               <el-option value="critical" label="严重" />
               <el-option value="important" label="重要" />
@@ -74,7 +83,7 @@
           <el-table-column prop="middlewareType" label="中间件" width="120">
             <template #default="{ row }">
               <!-- <el-tag size="small" type="info" effect="light">{{ row.middlewareType }}</el-tag> -->
-               {{ row.middlewareType }}
+              {{ row.middlewareType }}
             </template>
           </el-table-column>
           <el-table-column prop="severity" label="严重等级" width="90">
@@ -128,7 +137,8 @@
           @current-change="handlePageChange"
         />
       </div>
-    </template>  </div>
+    </template>
+  </div>
 </template>
 
 <script setup>
@@ -205,8 +215,6 @@ function getSeverityClass(severity) {
   const key = normalizeSeverityKey(severity)
   return key ? `is-${key}` : ''
 }
-
-
 
 function getSeverityType(severity) {
   const key = normalizeSeverityKey(severity)

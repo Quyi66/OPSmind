@@ -10,8 +10,8 @@
       <!-- 提示信息 -->
       <el-alert type="success" :closable="false" show-icon class="tip-alert">
         <template #title>
-          <span>
-            注意：使用自动化设备录入需满足，该资产模型的唯一模型属性有且只能是纳管IP
+          <span class="tip-alert-text">
+            注意：使用自动化设备录入需满足，该资产模型的唯一模型属性有且只能是纳管IP。
             支持文本格式的IP，文本格式支持：逗号分割、空格分割、换行分割中的一种或多种，同时支持网段录入。例如：192.168.1.0/26
           </span>
         </template>
@@ -93,7 +93,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { assetApi, automationApi } from '../api'
+import { assetApi, automationApi } from '../../api'
 import { apiService } from '@/core/api'
 
 const props = defineProps({
@@ -200,7 +200,7 @@ const handleSave = async () => {
     // 调用作业执行接口
     await apiService.post(`/jao/api/jao/jobs/0MKtcJ/run?cacheBuster=${Date.now()}`, {
       params: {
-        hostKeys: hostKeys,
+        hostKeys,
         ciType: props.assetType,
         instanceGroup: formData.value.instanceGroup || 'default',
         groupId: formData.value.groupId || '/',
@@ -215,7 +215,7 @@ const handleSave = async () => {
     handleClose()
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('保存失败: ' + (error.message || '未知错误'))
+    ElMessage.error(`保存失败: ${error.message || '未知错误'}`)
   } finally {
     saving.value = false
   }
@@ -245,11 +245,12 @@ watch(visible, val => {
 .auto-entry {
   .tip-alert {
     margin-bottom: 20px;
+  }
 
-    :deep(.el-alert__title) {
-      font-size: 13px;
-      line-height: 1.6;
-    }
+  .tip-alert-text {
+    font-size: 13px;
+    line-height: 1.6;
+    display: inline-block;
   }
 
   .entry-form {

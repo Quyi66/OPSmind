@@ -3,42 +3,22 @@
     <!-- 顶部工具栏 -->
     <div class="module-toolbar">
       <div class="toolbar-left">
-        <el-button
-          @click="goBack"
-          type="primary"
-          :icon="ArrowLeft"
-          size="small"
-        >
-          返回
-        </el-button>
+        <el-button @click="goBack" type="primary" :icon="ArrowLeft" size="small">返回</el-button>
         <span class="module-title">{{ moduleTitle }}</span>
       </div>
 
       <div class="toolbar-right">
-        <el-button
-          @click="refreshModule"
-          :icon="Refresh"
-          size="small"
-          :loading="isRefreshing"
-        >
+        <el-button @click="refreshModule" :icon="Refresh" size="small" :loading="isRefreshing">
           刷新
         </el-button>
-        <el-button
-          @click="toggleFullscreen"
-          :icon="isFullscreen ? Minus : FullScreen"
-          size="small"
-        >
+        <el-button @click="toggleFullscreen" :icon="isFullscreen ? Minus : FullScreen" size="small">
           {{ isFullscreen ? '退出全屏' : '全屏' }}
         </el-button>
       </div>
     </div>
 
     <!-- 模块容器 -->
-    <div
-      ref="moduleContainer"
-      class="module-container"
-      :class="{ 'fullscreen': isFullscreen }"
-    >
+    <div ref="moduleContainer" class="module-container" :class="{ fullscreen: isFullscreen }">
       <!-- 加载状态 -->
       <div v-if="loading" class="loading-overlay">
         <SkeletonLoader :module-code="moduleCode" />
@@ -46,11 +26,7 @@
 
       <!-- 错误状态 -->
       <div v-if="error" class="error-overlay">
-        <el-result
-          icon="error"
-          :title="`${moduleTitle} 模块加载失败`"
-          :sub-title="error"
-        >
+        <el-result icon="error" :title="`${moduleTitle} 模块加载失败`" :sub-title="error">
           <template #extra>
             <el-button type="primary" @click="retryLoad">重试</el-button>
             <el-button @click="goBack">返回</el-button>

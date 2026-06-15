@@ -24,7 +24,12 @@ export function useWinPatchPolling(defaultInterval = 5000) {
   }
 
   async function tick(sessionId) {
-    if (!isPolling.value || sessionId !== pollSessionId || typeof runner !== 'function' || isTicking) {
+    if (
+      !isPolling.value ||
+      sessionId !== pollSessionId ||
+      typeof runner !== 'function' ||
+      isTicking
+    ) {
       return
     }
 

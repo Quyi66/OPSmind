@@ -40,12 +40,7 @@
 
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
-      <el-button
-        type="danger"
-        :loading="uploading"
-        :disabled="!selectedFile"
-        @click="handleUpload"
-      >
+      <el-button type="danger" :loading="uploading" :disabled="!selectedFile" @click="handleUpload">
         开始删除
       </el-button>
     </template>
@@ -68,7 +63,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const uploadRef = ref()
@@ -175,7 +170,7 @@ async function handleUpload() {
     emit('saved')
   } catch (error) {
     console.error('删除导入失败:', error)
-    ElMessage.error('删除导入失败: ' + (error.response?.data?.message || error.message))
+    ElMessage.error(`删除导入失败: ${error.response?.data?.message || error.message}`)
   } finally {
     uploading.value = false
   }

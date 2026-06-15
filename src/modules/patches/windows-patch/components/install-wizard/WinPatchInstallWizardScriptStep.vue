@@ -2,19 +2,19 @@
   <div class="task-step-content">
     <div class="task-step-editor">
       <div class="task-step-header">
-      <div>
-        <div class="task-step-editor__title">{{ title }}</div>
-        <div class="task-step-editor__hint">{{ description }}</div>
-      </div>
-      <el-radio-group
-        :model-value="resolvedModel.mode"
-        size="small"
-        :disabled="disabled"
-        @update:model-value="handleModeChange"
-      >
-        <el-radio-button label="edit">手动编辑</el-radio-button>
-        <el-radio-button label="upload">上传脚本</el-radio-button>
-      </el-radio-group>
+        <div>
+          <div class="task-step-editor__title">{{ title }}</div>
+          <div class="task-step-editor__hint">{{ description }}</div>
+        </div>
+        <el-radio-group
+          :model-value="resolvedModel.mode"
+          size="small"
+          :disabled="disabled"
+          @update:model-value="handleModeChange"
+        >
+          <el-radio-button label="edit">手动编辑</el-radio-button>
+          <el-radio-button label="upload">上传脚本</el-radio-button>
+        </el-radio-group>
       </div>
 
       <div v-if="resolvedModel.mode === 'edit'">
@@ -136,7 +136,8 @@ const statusType = computed(() => {
 const statusTitle = computed(() => {
   if (props.status === 'success') return `${props.title}已执行完成`
   if (props.status === 'skipped') return `${props.title}已跳过`
-  if (props.status === 'failed') return `执行失败：${props.errorMessage || `${props.title}执行失败`}`
+  if (props.status === 'failed')
+    return `执行失败：${props.errorMessage || `${props.title}执行失败`}`
   return ''
 })
 

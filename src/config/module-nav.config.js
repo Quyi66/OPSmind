@@ -12,47 +12,120 @@ import { CAC_ROUTE_DEFS } from '@/modules/inspection/routes.js'
 import { ACM_ROUTE_DEFS } from '@/modules/asset/routes.js'
 import { USERS_ROUTE_DEFS } from '@/modules/user/routes.js'
 import {
+  AUTO_WORKBENCH_ROUTE_DEFS,
   JAO_ROUTE_DEFS,
+  RUN_RECORDS_ROUTE_DEFS,
   GFS_ROUTE_DEFS,
-  CMD_ROUTE_DEFS,
-  RPM_INSTALL_ROUTE_DEFS
+  CMD_ROUTE_DEFS
 } from '@/modules/automation/routes.js'
 import { FLOW_ROUTE_DEFS } from '@/modules/flow/routes.js'
 import { SUDO_ROUTE_DEFS } from '@/modules/sudo/routes.js'
 import { PASSWORD_ROUTE_DEFS } from '@/modules/password/routes.js'
 import { SSC_ROUTE_DEFS, UAM_ROUTE_DEFS } from '@/modules/settings/routes.js'
 
-// 自动化管理 - 作业模块的页面导航
-export const JAO_NAV_ITEMS = JAO_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+// 审批中心三类待审项的 key
+const REVIEW_KEYS = new Set(['approvals', 'scriptReview', 'review'])
+
+// 自动化管理 - 作业模块的页面导航（审批相关项移至审批中心）
+export const AUTO_WORKBENCH_NAV_ITEMS = AUTO_WORKBENCH_ROUTE_DEFS.filter(def => def.navLabel).map(
+  def => ({
+    key: def.key,
+    label: def.navLabel || def.title,
+    icon: def.icon,
+    path: `/auto-workbench/${def.path}`
+  })
+)
+
+const TASK_SCHEDULER_NAV_ITEM = (() => {
+  const def = JAO_ROUTE_DEFS.find(item => item.key === 'taskScheduler')
+  if (!def?.navLabel) return null
+
+  return {
+    key: def.key,
+    label: def.navLabel || def.title,
+    icon: def.icon,
+    path: `/jao/${def.path}`,
+    accessCode: 'jao'
+  }
+})()
+
+// 自动化管理 - 运维工具模块的页面导航（审批相关项移至审批中心）
+export const JAO_NAV_ITEMS = JAO_ROUTE_DEFS.filter(
+  def => def.navLabel && !REVIEW_KEYS.has(def.key) && def.key !== 'taskScheduler'
+).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
   path: `/jao/${def.path}`
 }))
 
-// 自动化管理 - 脚本模块的页面导航
-export const GFS_NAV_ITEMS = GFS_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+// 自动化管理 - 运行记录模块的页面导航
+export const RUN_RECORDS_NAV_ITEMS = RUN_RECORDS_ROUTE_DEFS.filter(def => def.navLabel).map(
+  def => ({
+    key: def.key,
+    label: def.navLabel || def.title,
+    icon: def.icon,
+    path: `/run-records/${def.path}`
+  })
+)
+
+// 自动化管理 - 脚本模块的页面导航（审核相关项移至审批中心）
+export const GFS_NAV_ITEMS = GFS_ROUTE_DEFS.filter(
+  def => def.navLabel && !REVIEW_KEYS.has(def.key)
+).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
   path: `/gfs/${def.path}`
 }))
 
-// 自动化管理 - 命令模块的页面导航
-export const CMD_NAV_ITEMS = CMD_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
+const CMD_SECONDARY_NAV_ITEMS = CMD_ROUTE_DEFS.filter(
+  def => def.navLabel && !['list', 'job'].includes(def.key) && !REVIEW_KEYS.has(def.key)
+).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
   path: `/cmd/${def.path}`
 }))
 
-// 自动化管理 - rpm 包安装模块的页面导航
-export const RPM_INSTALL_NAV_ITEMS = RPM_INSTALL_ROUTE_DEFS.filter(def => def.navLabel).map(def => ({
-  key: def.key,
-  label: def.navLabel || def.title,
-  icon: def.icon,
-  path: `/rpm-install/${def.path}`
-}))
+// 自动化管理 - 命令模块的页面导航
+export const CMD_NAV_ITEMS = [
+  {
+    key: 'workspace',
+    label: '命令与运维工具',
+    icon: 'fas fa-layer-group',
+    path: '/cmd/list'
+  },
+  ...CMD_SECONDARY_NAV_ITEMS
+]
+
+// 自动化管理 - 定时任务独立入口（显示为和命令执行、运行记录同级）
+export const TASK_SCHEDULER_NAV_ITEMS = TASK_SCHEDULER_NAV_ITEM ? [TASK_SCHEDULER_NAV_ITEM] : []
+
+// 自动化管理 - 审批中心：聚合作业审批、命令审核、脚本审核
+export const REVIEW_CENTER_NAV_ITEMS = [
+  {
+    key: 'approvals',
+    label: '运维工具审批',
+    icon: 'fas fa-user-check',
+    path: '/jao/approvals',
+    accessCode: 'jao'
+  },
+  {
+    key: 'review',
+    label: '命令审核',
+    icon: 'fas fa-clipboard-check',
+    path: '/cmd/review',
+    accessCode: 'cmd'
+  },
+  {
+    key: 'scriptReview',
+    label: '脚本审核',
+    icon: 'fas fa-file-signature',
+    path: '/gfs/scriptReview',
+    accessCode: 'gfs'
+  }
+]
 
 // 补丁漏洞 - 补丁模块(Linux/Common，不包含日志)的页面导航
 export const PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
@@ -177,10 +250,13 @@ export const UAM_NAV_ITEMS = UAM_ROUTE_DEFS.filter(def => def.navLabel).map(def 
  * 键为模块代码，值为该模块的页面导航配置
  */
 export const MODULE_NAV_CONFIG = {
+  'auto-workbench': AUTO_WORKBENCH_NAV_ITEMS,
+  'review-center': REVIEW_CENTER_NAV_ITEMS,
   jao: JAO_NAV_ITEMS,
+  'task-scheduler': TASK_SCHEDULER_NAV_ITEMS,
+  'run-records': RUN_RECORDS_NAV_ITEMS,
   gfs: GFS_NAV_ITEMS,
   cmd: CMD_NAV_ITEMS,
-  'rpm-install': RPM_INSTALL_NAV_ITEMS,
   patches: PATCHES_NAV_ITEMS,
   'windows-patches': WINDOWS_PATCHES_NAV_ITEMS,
   'patch-logs': PATCH_LOGS_NAV_ITEMS,
@@ -217,14 +293,17 @@ export function getGroupMenuConfig(groupCode, MENU_CONFIG) {
   const group = MENU_CONFIG.groups.find(g => g.code === groupCode)
   if (!group) return []
 
+  const checkPermission = permission => authService.hasPermission(permission)
+
   return group.children
-    .filter(module =>
-      canAccessMenuCode(permission => authService.hasPermission(permission), module.code)
-    )
+    .filter(module => canAccessMenuCode(checkPermission, module.code))
     .map(module => ({
       code: module.code,
       name: module.name,
       icon: module.icon,
-      children: MODULE_NAV_CONFIG[module.code] || []
+      children: (MODULE_NAV_CONFIG[module.code] || []).filter(item =>
+        canAccessMenuCode(checkPermission, item.accessCode || module.code)
+      )
     }))
+    .filter(module => module.children.length > 0)
 }

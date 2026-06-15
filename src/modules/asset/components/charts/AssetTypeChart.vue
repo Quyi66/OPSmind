@@ -64,7 +64,11 @@ let resizeObserver = null
 const typeColorPalette = ['#2563EB', '#38BDF8', '#0EA5E9', '#14B8A6', '#60A5FA']
 
 function getContainerWidth() {
-  return (fullscreenVisible.value ? fullscreenChartRef.value?.clientWidth : 0) || chartRef.value?.clientWidth || 0
+  return (
+    (fullscreenVisible.value ? fullscreenChartRef.value?.clientWidth : 0) ||
+    chartRef.value?.clientWidth ||
+    0
+  )
 }
 
 function truncateLegendText(text, maxLength) {
@@ -75,9 +79,9 @@ function truncateLegendText(text, maxLength) {
 
 function getChartOption() {
   const chartWidth = getContainerWidth()
-  const compactLayout = chartWidth > 0 && chartWidth < 460
+  const compactLayout = chartWidth > 0 && chartWidth < 520
   const legendMaxLength = compactLayout ? 8 : 12
-  const donutCenterX = compactLayout ? '50%' : '34%'
+  const donutCenterX = compactLayout ? '50%' : '38%'
   const donutCenterY = compactLayout ? '40%' : '52%'
   const total = props.data.reduce((sum, item) => sum + Number(item.count || 0), 0)
   const seriesData = props.data
@@ -116,7 +120,7 @@ function getChartOption() {
       right: compactLayout ? 'center' : 0,
       top: compactLayout ? 'bottom' : 'center',
       bottom: compactLayout ? 0 : 'auto',
-      width: compactLayout ? '92%' : 156,
+      width: compactLayout ? '92%' : 148,
       icon: 'circle',
       itemWidth: 10,
       itemHeight: 10,
@@ -136,7 +140,7 @@ function getChartOption() {
       {
         name: '资产数量',
         type: 'pie',
-        radius: compactLayout ? ['42%', '66%'] : ['50%', '74%'],
+        radius: compactLayout ? ['40%', '62%'] : ['46%', '68%'],
         center: [donutCenterX, donutCenterY],
         minAngle: seriesData.length <= 3 ? 18 : 10,
         avoidLabelOverlap: true,
@@ -176,7 +180,7 @@ function getChartOption() {
           show: false
         },
         center: [donutCenterX, donutCenterY],
-        radius: ['0%', compactLayout ? '28%' : '32%'],
+        radius: ['0%', compactLayout ? '26%' : '30%'],
         labelLine: {
           show: false
         },
@@ -367,7 +371,11 @@ html.dark .chart-card {
 }
 
 html.dark .asset-overview .panel-shell .chart-card {
-  --asset-chart-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.008));
+  --asset-chart-card-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.022),
+    rgba(255, 255, 255, 0.008)
+  );
   --asset-chart-card-border: rgba(148, 163, 184, 0.06);
   --asset-chart-card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }

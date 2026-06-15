@@ -11,7 +11,12 @@
     <div class="selector-container">
       <!-- CI类型选择 -->
       <div v-if="ciTypeDefs.length > 1" class="ci-type-selector mb-3">
-        <el-select v-model="activeCiType" placeholder="请选择CI类型" class="w-100" popper-style="z-index: 10000">
+        <el-select
+          v-model="activeCiType"
+          placeholder="请选择CI类型"
+          class="w-100"
+          popper-style="z-index: 10000"
+        >
           <el-option
             v-for="citype in ciTypeDefs"
             :key="citype.code"
@@ -25,30 +30,69 @@
       <div class="selected-hosts-card mb-3">
         <el-card>
           <template #header>
-            <div class="card-header-content">
+            <div
+              class="card-header-content"
+              style="display: flex; justify-content: space-between; align-items: center"
+            >
               <span>
                 <i class="fa fa-briefcase-medical text-muted me-2" />
                 已选主机
+                <el-badge :value="selectedHostsByCiType.length" type="danger" class="ms-2" />
               </span>
-              <el-badge :value="selectedHostsByCiType.length" type="danger" class="ms-3">
-                <el-button text @click="toggleShowHosts">
+              <div style="display: flex; gap: 8px; align-items: center">
+                <el-input
+                  v-if="selectedHostsByCiType.length > 10"
+                  v-model="searchSelectedQuery"
+                  placeholder="搜索已选主机..."
+                  size="small"
+                  clearable
+                  style="width: 180px"
+                />
+                <el-button text size="small" @click="toggleShowHosts">
                   {{ showHosts ? '收起' : '展开' }}
                 </el-button>
-              </el-badge>
+                <el-button
+                  v-if="selectedHostsByCiType.length > 0"
+                  text
+                  type="danger"
+                  size="small"
+                  @click="clearAllSelected"
+                >
+                  清空
+                </el-button>
+              </div>
             </div>
           </template>
-          <div v-if="showHosts && selectedHostsByCiType.length > 0" class="selected-hosts-body">
-            <div class="host-chips">
+          <div
+            v-if="showHosts && selectedHostsByCiType.length > 0"
+            class="selected-hosts-body"
+            style="max-height: 120px; overflow-y: auto; padding: 4px"
+          >
+            <div class="host-chips" style="display: flex; flex-wrap: wrap; gap: 8px">
               <el-tag
-                v-for="(host, index) in selectedHostsByCiType"
-                :key="index"
+                v-for="host in displayedSelectedTags"
+                :key="host.key || host.value"
                 closable
                 type="primary"
-                size="large"
-                @close="removeHost(host, index)"
+                size="default"
+                @close="removeHost(host)"
               >
                 {{ host.value }}
               </el-tag>
+            </div>
+            <div
+              v-if="displayedSelectedTags.length === 0"
+              class="text-muted text-center py-2"
+              style="font-size: 13px"
+            >
+              未匹配到相关主机
+            </div>
+            <div v-if="hasMoreSelectedTags" style="text-align: center; margin-top: 8px">
+              <el-button link type="primary" size="small" @click="loadMoreSelectedTags">
+                加载更多 (已显示 {{ displayedSelectedTags.length }}/{{
+                  filteredSelectedTags.length
+                }})
+              </el-button>
             </div>
           </div>
         </el-card>
@@ -56,11 +100,7 @@
 
       <!-- 选择模式标签页 -->
       <el-tabs v-if="activeCiType" v-model="currentMode" class="selector-tabs">
-        <el-tab-pane
-          v-if="selectModeDefs.host"
-          name="host"
-          :label="selectModeDefs.host.title"
-        >
+        <el-tab-pane v-if="selectModeDefs.host" name="host" lazy :label="selectModeDefs.host.title">
           <template #label>
             <i :class="`fa fa-fw ${selectModeDefs.host.icon}`" />
             {{ selectModeDefs.host.title }}
@@ -75,6 +115,7 @@
         <el-tab-pane
           v-if="selectModeDefs.group"
           name="group"
+          lazy
           :label="selectModeDefs.group.title"
         >
           <template #label>
@@ -88,40 +129,31 @@
           />
         </el-tab-pane>
 
-        <el-tab-pane
-          v-if="selectModeDefs.tag"
-          name="tag"
-          :label="selectModeDefs.tag.title"
-        >
+        <el-tab-pane v-if="selectModeDefs.tag" name="tag" lazy :label="selectModeDefs.tag.title">
           <template #label>
             <i :class="`fa fa-fw ${selectModeDefs.tag.icon}`" />
             {{ selectModeDefs.tag.title }}
           </template>
-          <TagSelector
-            :ci-type="activeCiType"
-            v-model="selectedHostsByCiType"
-            :options="options"
-          />
+          <TagSelector :ci-type="activeCiType" v-model="selectedHostsByCiType" :options="options" />
         </el-tab-pane>
 
         <el-tab-pane
           v-if="selectModeDefs.input"
           name="input"
+          lazy
           :label="selectModeDefs.input.title"
         >
           <template #label>
             <i :class="`fa fa-fw ${selectModeDefs.input.icon}`" />
             {{ selectModeDefs.input.title }}
           </template>
-          <InputFilter
-            :ci-type="activeCiType"
-            v-model="selectedHostsByCiType"
-          />
+          <InputFilter :ci-type="activeCiType" v-model="selectedHostsByCiType" />
         </el-tab-pane>
 
         <el-tab-pane
           v-if="selectModeDefs.recently"
           name="recently"
+          lazy
           :label="selectModeDefs.recently.title"
         >
           <template #label>
@@ -146,7 +178,6 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
 import InstanceSelector from './acm/InstanceSelector.vue'
 import GroupSelector from './acm/GroupSelector.vue'
 import TagSelector from './acm/TagSelector.vue'
@@ -171,7 +202,7 @@ const emit = defineEmits(['update:modelValue', 'confirm'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const selectModeDefaults = {
@@ -188,6 +219,41 @@ const currentMode = ref('host')
 const selectedHostsByCiType = ref([])
 const allSelectedHosts = ref([])
 const showHosts = ref(true)
+
+// 已选主机性能优化与检索
+const searchSelectedQuery = ref('')
+const displayedSelectedCount = ref(30)
+
+watch([selectedHostsByCiType, searchSelectedQuery], () => {
+  displayedSelectedCount.value = 30
+})
+
+const filteredSelectedTags = computed(() => {
+  if (!searchSelectedQuery.value) return selectedHostsByCiType.value
+  const keyword = searchSelectedQuery.value.toLowerCase().trim()
+  return selectedHostsByCiType.value.filter(host =>
+    String(host.value || '')
+      .toLowerCase()
+      .includes(keyword)
+  )
+})
+
+const displayedSelectedTags = computed(() => {
+  return filteredSelectedTags.value.slice(0, displayedSelectedCount.value)
+})
+
+const hasMoreSelectedTags = computed(() => {
+  return filteredSelectedTags.value.length > displayedSelectedCount.value
+})
+
+function loadMoreSelectedTags() {
+  displayedSelectedCount.value += 50
+}
+
+function clearAllSelected() {
+  selectedHostsByCiType.value = []
+  mergeCurrentCiTypeSelection([])
+}
 
 const isSingleSelector = computed(() => props.options.selector === 'single')
 
@@ -208,7 +274,7 @@ const selectModeDefs = computed(() => {
   return modes
 })
 
-watch(visible, (val) => {
+watch(visible, val => {
   if (val) {
     allSelectedHosts.value = normalizeSingleSelection([...(props.initialSelection || [])])
     initCiTypes()
@@ -225,7 +291,7 @@ watch(activeCiType, (newVal, oldVal) => {
 
 watch(
   () => selectedHostsByCiType.value,
-  (newVal) => {
+  newVal => {
     mergeCurrentCiTypeSelection(newVal)
   },
   { deep: true }
@@ -233,9 +299,10 @@ watch(
 
 function resolveInitialActiveCiType() {
   const firstHost = allSelectedHosts.value[0]
-  const assetType = typeof firstHost === 'object' && firstHost !== null
-    ? firstHost.assetType || firstHost.ciType || ''
-    : ''
+  const assetType =
+    typeof firstHost === 'object' && firstHost !== null
+      ? firstHost.assetType || firstHost.ciType || ''
+      : ''
 
   if (assetType && ciTypeDefs.value.some(t => t.code === assetType)) {
     return assetType
@@ -259,50 +326,50 @@ function initCiTypes() {
   const useAutoTypes = !useAllTypes && types.includes('[auto]')
 
   // 根据不同模式获取CI类型列表
-  const apiCall = useAutoTypes
-    ? jaoApi.getAcmCiTypesAuto()
-    : jaoApi.getAcmCiTypes()
+  const apiCall = useAutoTypes ? jaoApi.getAcmCiTypesAuto() : jaoApi.getAcmCiTypes()
 
-  apiCall.then((response) => {
-    const citMap = response?.data || response || {}
-    if (useAllTypes || useAutoTypes) {
-      // 使用所有返回的类型
-      ciTypeDefs.value = Object.keys(citMap).map(code => ({
-        code,
-        title: citMap[code]?.title || code,
-        icon: citMap[code]?.icon || 'fa-server'
-      }))
-    } else {
-      // 只使用指定的类型
-      ciTypeDefs.value = types
-        .filter(type => citMap[type])
-        .map(code => ({
+  apiCall
+    .then(response => {
+      const citMap = response?.data || response || {}
+      if (useAllTypes || useAutoTypes) {
+        // 使用所有返回的类型
+        ciTypeDefs.value = Object.keys(citMap).map(code => ({
           code,
           title: citMap[code]?.title || code,
           icon: citMap[code]?.icon || 'fa-server'
         }))
-    }
+      } else {
+        // 只使用指定的类型
+        ciTypeDefs.value = types
+          .filter(type => citMap[type])
+          .map(code => ({
+            code,
+            title: citMap[code]?.title || code,
+            icon: citMap[code]?.icon || 'fa-server'
+          }))
+      }
 
-    // 如果没有获取到类型，使用传入的第一个作为默认值
-    if (ciTypeDefs.value.length === 0) {
+      // 如果没有获取到类型，使用传入的第一个作为默认值
+      if (ciTypeDefs.value.length === 0) {
+        ciTypeDefs.value = types.map(code => ({
+          code: code.replace(/^\[|\]$/g, ''),
+          title: code,
+          icon: 'fa-server'
+        }))
+      }
+
+      applyInitialSelectionState()
+    })
+    .catch(error => {
+      console.error('获取CI类型失败:', error)
+      // 降级处理：使用传入的ciTypes
       ciTypeDefs.value = types.map(code => ({
         code: code.replace(/^\[|\]$/g, ''),
         title: code,
         icon: 'fa-server'
       }))
-    }
-
-    applyInitialSelectionState()
-  }).catch((error) => {
-    console.error('获取CI类型失败:', error)
-    // 降级处理：使用传入的ciTypes
-    ciTypeDefs.value = types.map(code => ({
-      code: code.replace(/^\[|\]$/g, ''),
-      title: code,
-      icon: 'fa-server'
-    }))
-    applyInitialSelectionState()
-  })
+      applyInitialSelectionState()
+    })
 }
 
 function getHostCiType(host) {
@@ -348,7 +415,9 @@ function mergeCurrentCiTypeSelection(currentSelection = []) {
     return
   }
 
-  const otherSelections = allSelectedHosts.value.filter(host => getHostCiType(host) !== activeCiType.value)
+  const otherSelections = allSelectedHosts.value.filter(
+    host => getHostCiType(host) !== activeCiType.value
+  )
   const normalizedCurrentSelection = normalizeSingleSelection(
     (currentSelection || []).map(host => normalizeHostForCiType(host))
   )
@@ -366,11 +435,12 @@ function toggleShowHosts() {
   showHosts.value = !showHosts.value
 }
 
-function removeHost(host, index) {
-  mergeCurrentCiTypeSelection(
-    selectedHostsByCiType.value.filter((_, currentIndex) => currentIndex !== index)
+function removeHost(host) {
+  const nextSelection = selectedHostsByCiType.value.filter(
+    item => item.key !== host.key && item.value !== host.value
   )
-  selectedHostsByCiType.value.splice(index, 1)
+  mergeCurrentCiTypeSelection(nextSelection)
+  selectedHostsByCiType.value = nextSelection
 }
 
 function handleConfirm() {
@@ -384,20 +454,50 @@ function handleCancel() {
 </script>
 
 <style scoped>
+.acm-device-selector-dialog {
+  margin-top: 4vh !important;
+  height: 86vh;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.acm-device-selector-dialog :deep(.el-dialog__header),
+.acm-device-selector-dialog :deep(.el-dialog__footer) {
+  flex-shrink: 0;
+}
+
+.acm-device-selector-dialog :deep(.el-dialog__body) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  padding-top: 12px;
+}
+
 .acm-device-selector-dialog .selector-container {
-  min-height: 600px;
-  max-height: 700px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .acm-device-selector-dialog .ci-type-selector {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .acm-device-selector-dialog .selected-hosts-card .card-header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.acm-device-selector-dialog .selected-hosts-card {
+  flex-shrink: 0;
 }
 
 .acm-device-selector-dialog .selected-hosts-card .selected-hosts-body {
@@ -411,17 +511,31 @@ function handleCancel() {
   gap: 8px;
 }
 
+.acm-device-selector-dialog .selector-tabs {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .acm-device-selector-dialog .selector-tabs :deep(.el-tabs__content) {
-  min-height: 350px;
-  max-height: 450px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .acm-device-selector-dialog .selector-tabs :deep(.el-tabs__header) {
   margin: 0 0 15px;
+  flex-shrink: 0;
 }
 
 .acm-device-selector-dialog .selector-tabs :deep(.el-tabs__nav) {
   display: flex;
+}
+
+.acm-device-selector-dialog .selector-tabs :deep(.el-tab-pane) {
+  height: 100%;
+  min-height: 0;
 }
 
 .acm-device-selector-dialog .selector-tabs :deep(.el-tabs__item) {

@@ -37,7 +37,7 @@ export function getOverviewStats() {
 }
 
 /**
- * 获取操作审计日志统计数据 (图表)
+ * 获取操作日志统计数据 (图表)
  * API: LUPM_AUDIT_LOG_STATISTICS
  * @param {number} diffDay 天数，默认15天
  */

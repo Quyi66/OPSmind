@@ -52,26 +52,19 @@
       <!-- 已选命令预览 -->
       <div v-if="selectedCommands.length > 0" class="selected-preview">
         <div class="preview-header">
-          <span>已选择 <strong>{{ selectedCommands.length }}</strong> 条命令</span>
-          <el-button type="danger" link size="small" @click="clearSelection">
-            清空选择
-          </el-button>
+          <span>
+            已选择
+            <strong>{{ selectedCommands.length }}</strong>
+            条命令
+          </span>
+          <el-button type="danger" link size="small" @click="clearSelection">清空选择</el-button>
         </div>
         <div class="preview-list">
-          <div
-            v-for="(cmd, index) in selectedCommands"
-            :key="cmd.id"
-            class="preview-item"
-          >
+          <div v-for="(cmd, index) in selectedCommands" :key="cmd.id" class="preview-item">
             <span class="preview-index">{{ index + 1 }}</span>
             <span class="preview-name">{{ cmd.name }}</span>
             <span class="preview-cmd">{{ cmd.command }}</span>
-            <el-button
-              type="danger"
-              link
-              size="small"
-              @click="removeFromSelection(cmd)"
-            >
+            <el-button type="danger" link size="small" @click="removeFromSelection(cmd)">
               <i class="fa fa-times"></i>
             </el-button>
           </div>
@@ -82,9 +75,7 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleConfirm">
-          确定
-        </el-button>
+        <el-button type="primary" @click="handleConfirm">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -111,7 +102,7 @@ const emit = defineEmits(['update:modelValue', 'confirm'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
+  set: val => emit('update:modelValue', val)
 })
 
 const loading = ref(false)
@@ -126,10 +117,11 @@ const filteredCommands = computed(() => {
     return commandList.value
   }
   const kw = searchKeyword.value.toLowerCase()
-  return commandList.value.filter(cmd =>
-    (cmd.name && cmd.name.toLowerCase().includes(kw)) ||
-    (cmd.command && cmd.command.toLowerCase().includes(kw)) ||
-    (cmd.type && cmd.type.toLowerCase().includes(kw))
+  return commandList.value.filter(
+    cmd =>
+      (cmd.name && cmd.name.toLowerCase().includes(kw)) ||
+      (cmd.command && cmd.command.toLowerCase().includes(kw)) ||
+      (cmd.type && cmd.type.toLowerCase().includes(kw))
   )
 })
 
@@ -225,12 +217,15 @@ function handleClose() {
 }
 
 // 监听对话框打开
-watch(() => props.modelValue, async (newVal) => {
-  if (newVal) {
-    await loadCommands()
-    await initPreSelection()
+watch(
+  () => props.modelValue,
+  async newVal => {
+    if (newVal) {
+      await loadCommands()
+      await initPreSelection()
+    }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">
@@ -241,6 +236,11 @@ watch(() => props.modelValue, async (newVal) => {
 }
 
 .command-selector-content {
+  --command-selector-preview-bg: var(--el-bg-color-page);
+  --command-selector-preview-header-bg: var(--el-fill-color-light);
+  --command-selector-preview-hover-bg: var(--el-fill-color-light);
+  --command-selector-command-text: var(--el-text-color-secondary);
+  --command-selector-muted-text: var(--el-text-color-secondary);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -260,13 +260,13 @@ watch(() => props.modelValue, async (newVal) => {
   max-width: 400px;
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 13px;
-  color: #666;
+  color: var(--command-selector-command-text);
 }
 
 .selected-preview {
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
-  background-color: var(--el-bg-color-page);
+  background-color: var(--command-selector-preview-bg);
   max-height: 200px;
   overflow-y: auto;
 
@@ -275,7 +275,7 @@ watch(() => props.modelValue, async (newVal) => {
     justify-content: space-between;
     align-items: center;
     padding: 8px 12px;
-    background-color: var(--el-fill-color-light);
+    background-color: var(--command-selector-preview-header-bg);
     border-bottom: 1px solid var(--el-border-color-lighter);
     font-size: 13px;
   }
@@ -293,7 +293,7 @@ watch(() => props.modelValue, async (newVal) => {
     font-size: 13px;
 
     &:hover {
-      background-color: #f0f0f0;
+      background-color: var(--command-selector-preview-hover-bg);
     }
   }
 
@@ -326,8 +326,16 @@ watch(() => props.modelValue, async (newVal) => {
     text-overflow: ellipsis;
     white-space: nowrap;
     font-family: 'Consolas', 'Monaco', monospace;
-    color: #666;
+    color: var(--command-selector-muted-text);
   }
+}
+
+:global(html.dark .command-selector-dialog) .command-selector-content {
+  --command-selector-preview-bg: rgba(15, 23, 42, 0.9);
+  --command-selector-preview-header-bg: rgba(30, 41, 59, 0.92);
+  --command-selector-preview-hover-bg: rgba(30, 41, 59, 0.74);
+  --command-selector-command-text: #cbd5e1;
+  --command-selector-muted-text: #94a3b8;
 }
 
 .dialog-footer {

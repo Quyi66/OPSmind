@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { 
-  FeatureFlagEvaluator, 
-  FLAG_TYPES, 
+import {
+  FeatureFlagEvaluator,
+  FLAG_TYPES,
   USER_GROUPS,
   checkUserGroup,
   checkPercentage,
@@ -73,7 +73,7 @@ describe('Feature Flags', () => {
           groups: [USER_GROUPS.ADMIN]
         }
         const adminEvaluator = new FeatureFlagEvaluator(adminUser)
-        
+
         const result = adminEvaluator.isEnabled('migration.cac_vue_audit')
         expect(result).toBe(true)
       })
@@ -89,7 +89,7 @@ describe('Feature Flags', () => {
           groups: [USER_GROUPS.DEVELOPER]
         }
         const devEvaluator = new FeatureFlagEvaluator(developerUser)
-        
+
         const result = devEvaluator.isEnabled('migration.cac_vue_audit')
         expect(result).toBe(true)
       })
@@ -103,14 +103,10 @@ describe('Feature Flags', () => {
 
     describe('Batch evaluation', () => {
       it('should evaluate multiple flags at once', () => {
-        const flags = [
-          'migration.dashboard_vue',
-          'migration.cac_vue_config',
-          'ui.dark_mode'
-        ]
-        
+        const flags = ['migration.dashboard_vue', 'migration.cac_vue_config', 'ui.dark_mode']
+
         const results = evaluator.getEnabledFlags(flags)
-        
+
         expect(Object.keys(results)).toEqual(flags)
         expect(typeof results['migration.dashboard_vue']).toBe('boolean')
         expect(typeof results['migration.cac_vue_config']).toBe('boolean')
@@ -119,7 +115,7 @@ describe('Feature Flags', () => {
 
       it('should get module-specific flags', () => {
         const moduleFlags = evaluator.getModuleFlags('migration')
-        
+
         expect(Object.keys(moduleFlags).length).toBeGreaterThan(0)
         Object.keys(moduleFlags).forEach(key => {
           expect(key).toMatch(/^migration\./)
@@ -128,7 +124,7 @@ describe('Feature Flags', () => {
 
       it('should get migration flags', () => {
         const migrationFlags = evaluator.getMigrationFlags()
-        
+
         expect(Object.keys(migrationFlags).length).toBeGreaterThan(0)
         Object.keys(migrationFlags).forEach(key => {
           expect(key).toMatch(/^migration\./)
@@ -151,7 +147,7 @@ describe('Feature Flags', () => {
     describe('Statistics', () => {
       it('should generate flag statistics', () => {
         const stats = evaluator.getStats()
-        
+
         expect(stats.total).toBeGreaterThan(0)
         expect(stats.enabled).toBeGreaterThanOrEqual(0)
         expect(stats.enabled).toBeLessThanOrEqual(stats.total)
@@ -198,10 +194,10 @@ describe('Feature Flags', () => {
       it('should return consistent results for same user', () => {
         const userId = 'test123'
         const percentage = 50
-        
+
         const result1 = checkPercentage(userId, percentage)
         const result2 = checkPercentage(userId, percentage)
-        
+
         expect(result1).toBe(result2)
       })
 
@@ -228,12 +224,12 @@ describe('Feature Flags', () => {
       it('should return true when current time is within window', () => {
         const now = new Date('2024-03-02T12:00:00Z')
         vi.setSystemTime(now)
-        
+
         const windowConfig = {
           start: '2024-03-01T18:00:00Z',
           end: '2024-03-03T06:00:00Z'
         }
-        
+
         const result = checkTimeWindow(windowConfig)
         expect(result).toBe(true)
       })
@@ -241,12 +237,12 @@ describe('Feature Flags', () => {
       it('should return false when current time is before window', () => {
         const now = new Date('2024-02-28T12:00:00Z')
         vi.setSystemTime(now)
-        
+
         const windowConfig = {
           start: '2024-03-01T18:00:00Z',
           end: '2024-03-03T06:00:00Z'
         }
-        
+
         const result = checkTimeWindow(windowConfig)
         expect(result).toBe(false)
       })
@@ -254,12 +250,12 @@ describe('Feature Flags', () => {
       it('should return false when current time is after window', () => {
         const now = new Date('2024-03-04T12:00:00Z')
         vi.setSystemTime(now)
-        
+
         const windowConfig = {
           start: '2024-03-01T18:00:00Z',
           end: '2024-03-03T06:00:00Z'
         }
-        
+
         const result = checkTimeWindow(windowConfig)
         expect(result).toBe(false)
       })

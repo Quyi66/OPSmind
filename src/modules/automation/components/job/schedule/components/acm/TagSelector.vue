@@ -42,7 +42,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
@@ -74,10 +74,6 @@ watch(
   },
   { immediate: true }
 )
-
-onMounted(() => {
-  fetchTags()
-})
 
 async function fetchTags() {
   try {

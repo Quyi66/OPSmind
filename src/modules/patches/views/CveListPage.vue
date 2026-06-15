@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout ops-page-layout--page-scroll">
     <!-- 详情视图 -->
     <CveDetail v-if="currentView === 'detail'" :cve-id="selectedCveId" @back="backToList" />
 
@@ -167,6 +167,15 @@
       <div class="ops-action-bar" style="display: flex; align-items: center; margin-bottom: 12px">
         <el-button type="primary" @click="openManualExportDialog">导出报告</el-button>
         <el-button @click="openFeedbackTemplateDialog">导出反馈模板</el-button>
+        <el-button
+          type="success"
+          @click="
+            router.push({ name: 'patches-urgencyDashboard', query: { activeViewTab: 'cveImport' } })
+          "
+        >
+          <!-- <el-icon><Upload /></el-icon> -->
+          导入CVE比对
+        </el-button>
         <span style="flex: 1"></span>
         <el-button
           class="toolbar-icon-btn"
@@ -182,7 +191,12 @@
 
       <!-- 数据表格 -->
       <div class="ops-table-wrapper" v-loading="loading">
-        <el-table :data="cveList" height="100%" style="width: 100%" @sort-change="handleSortChange">
+        <el-table
+          :data="cveList"
+          class="natural-height-table"
+          style="width: 100%"
+          @sort-change="handleSortChange"
+        >
           <el-table-column prop="cveId" label="CVE 编号" width="180" sortable="custom">
             <!-- <template #default="{ row }">
               <el-link type="primary" :underline="false" @click="viewDetail(row)">
@@ -778,5 +792,9 @@ watch(
   .cve-stats-grid {
     grid-template-columns: 1fr;
   }
+}
+
+:deep(.el-date-editor) {
+  height: 32px !important;
 }
 </style>

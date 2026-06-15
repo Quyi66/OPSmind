@@ -51,12 +51,6 @@ export default {
           meta: { title: '仓库管理' }
         },
         {
-          path: 'local-install',
-          name: 'LocalInstall',
-          component: () => import('./views/LocalInstallPage.vue'),
-          meta: { title: '本地安装' }
-        },
-        {
           path: 'yumManage',
           name: 'YumManage',
           component: () => import('@/modules/patches/views/LinuxYumManagePage.vue'),

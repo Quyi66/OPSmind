@@ -1,110 +1,219 @@
 <template>
-  <div class="ops-page-layout">
-    <!-- 头部搜索栏 -->
-    <div class="header-bar">
-      <el-input v-model="searchKeyword" placeholder="搜索模板名称" clearable style="width: 300px">
-        <template #prefix>
-          <i class="fa fa-search"></i>
-        </template>
-      </el-input>
-
-      <!-- <el-button type="primary" @click="goToAddTemplate">
-        <i class="fa fa-plus"></i>
-        新增模板
-      </el-button> -->
-    </div>
-
+  <div class="ops-page-layout overview-dashboard">
     <div class="content-scroll-area">
-      <!-- 加载状态 -->
-      <div v-if="loading" class="loading-state">
-        <el-skeleton animated :count="4" style="width: 100%">
-          <template #template>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px">
-              <el-skeleton-item variant="rect" style="height: 180px; border-radius: 12px" />
-              <el-skeleton-item variant="rect" style="height: 180px; border-radius: 12px" />
-              <el-skeleton-item variant="rect" style="height: 180px; border-radius: 12px" />
-              <el-skeleton-item variant="rect" style="height: 180px; border-radius: 12px" />
-            </div>
-          </template>
-        </el-skeleton>
-      </div>
+      <!-- 加载骨架屏 -->
+      <template v-if="loading">
+        <div class="skeleton-section">
+          <el-skeleton animated>
+            <template #template>
+              <div class="skeleton-bar-row">
+                <el-skeleton-item variant="rect" class="skeleton-bar-item" />
+              </div>
+              <div class="skeleton-bottom-row">
+                <el-skeleton-item variant="rect" class="skeleton-full" />
+              </div>
+            </template>
+          </el-skeleton>
+        </div>
+      </template>
 
-      <!-- 模板方格列表 -->
-      <div v-else class="template-grid">
-        <div
-          v-for="template in filteredTemplateList"
-          :key="template.id"
-          class="template-card"
-          :class="{ 'has-job': template.jobId }"
-          @click="handleCardClick(template)"
-        >
-          <div class="card-body">
-            <div class="template-main">
-              <h3 class="template-name" :title="template.templateName">
-                {{ template.templateName }}
-              </h3>
-              <div class="template-meta">
-                <span class="host-badge">
-                  <i class="fa fa-desktop"></i>
-                  {{ template.hostLength }} 设备
+      <template v-else>
+        <!-- ② 检查结果分布（单行 5 列条形进度条） -->
+        <section class="aw-panel distribution-bar-section mb-4">
+          <div class="aw-panel__header">
+            <div class="aw-panel__title-group">
+              <i class="fas fa-chart-bar panel-title-icon"></i>
+              <h3 class="aw-panel__title">检查结果分布</h3>
+            </div>
+          </div>
+          <div class="distribution-bar-content">
+            <div
+              v-for="item in distributionData"
+              :key="item.key"
+              class="dist-bar-item"
+              :class="`dist-${item.key.toLowerCase()}`"
+            >
+              <div class="dist-bar-header">
+                <span class="dist-bar-label">
+                  <span class="dist-bar-dot"></span>
+                  {{ item.label }}
+                </span>
+                <span class="dist-bar-meta">
+                  <span class="dist-bar-value">{{ item.value }}</span>
+                  <span class="dist-bar-percent">{{ item.percent.toFixed(1) }}%</span>
                 </span>
               </div>
-            </div>
-            <div class="template-icon-wrapper">
-              <i :class="getIconClass(template.icon)"></i>
+              <div class="dist-bar-track">
+                <div class="dist-bar-fill" :style="{ width: item.percent + '%' }"></div>
+              </div>
             </div>
           </div>
+        </section>
 
-          <div class="card-footer">
-            <div class="status-section">
-              <template v-if="!template.executedBy">
-                <span class="status-tag pending">
-                  <span class="dot"></span>
-                  未执行
-                </span>
-              </template>
-              <template v-else>
-                <span class="status-tag executed">
-                  <span class="dot"></span>
-                  {{ template.executedTime }}执行
-                </span>
-              </template>
+        <!-- ③ 模板健康度 -->
+        <section class="aw-panel templates-panel">
+          <div class="aw-panel__header">
+            <div class="aw-panel__title-group">
+              <i class="fas fa-th-large panel-title-icon"></i>
+              <h3 class="aw-panel__title">模板健康度</h3>
+              <span class="aw-panel__stat-badge">
+                <strong>{{ filteredTemplateList.length }}</strong>
+                / {{ templateList.length }}
+              </span>
             </div>
-
-            <div class="action-section" @click.stop>
-              <el-dropdown trigger="click" @command="handleCommand($event, template)">
-                <div class="more-btn">
-                  <i class="fa fa-ellipsis-h"></i>
-                </div>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="run">
-                      <i class="fa fa-play-circle text-primary"></i>
-                      执行巡检
-                    </el-dropdown-item>
-                    <el-dropdown-item command="edit">
-                      <i class="fa fa-pencil-alt text-warning"></i>
-                      编辑模板
-                    </el-dropdown-item>
-                    <el-dropdown-item command="delete" divided class="text-danger">
-                      <i class="fa fa-trash-alt"></i>
-                      删除
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
+            <div class="aw-panel__header-actions">
+              <el-input
+                v-model="searchKeyword"
+                placeholder="搜索模板名称"
+                clearable
+                class="template-search-input"
+                size="small"
+              >
+                <template #prefix>
+                  <i class="fa fa-search"></i>
                 </template>
-              </el-dropdown>
+              </el-input>
+              <el-button
+                size="small"
+                circle
+                :loading="statsLoading"
+                title="刷新"
+                @click="refreshAll"
+              >
+                <i v-show="!statsLoading" class="fas fa-sync-alt"></i>
+              </el-button>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- 空状态 -->
-      <el-empty v-if="!loading && templateList.length === 0" description="暂无巡检模板">
-        <el-button type="primary" @click="goToAddTemplate">
-          <i class="fa fa-plus"></i>
-          新增模板
-        </el-button>
-      </el-empty>
+          <div class="health-grid-scroll-wrap">
+            <div v-if="filteredTemplateList.length > 0" class="health-grid">
+              <div
+                v-for="template in filteredTemplateList"
+                :key="template.id"
+                class="health-card"
+                :class="[getPassRateClass(template.passRate), { 'is-executed': template.jobId }]"
+                @click="handleCardClick(template)"
+              >
+                <!-- 顶部色彩指示条 -->
+                <div class="hc-indicator-bar"></div>
+
+                <!-- 卡片头 -->
+                <div class="hc-header">
+                  <div class="hc-icon">
+                    <i :class="template.iconClass"></i>
+                  </div>
+                  <div class="hc-title-wrap">
+                    <h4 class="hc-name" :title="template.templateName">
+                      {{ template.templateName }}
+                    </h4>
+                    <div class="hc-badges">
+                      <el-tag size="small" round type="info">
+                        <i class="fas fa-desktop"></i>
+                        {{ template.hostLength }} 主机
+                      </el-tag>
+                    </div>
+                  </div>
+                  <div class="hc-time-badge" :class="getPassRateClass(template.passRate)">
+                    <span class="hc-status-dot"></span>
+                    <template v-if="template.executedTime">
+                      {{ template.executedTime }}
+                    </template>
+                    <template v-else>未执行</template>
+                  </div>
+                </div>
+
+                <!-- 已执行：通过率 + 指标 -->
+                <template
+                  v-if="
+                    template.stats &&
+                    (template.stats.ok > 0 ||
+                      template.stats.failed > 0 ||
+                      template.stats.check > 0 ||
+                      template.stats.skipping > 0)
+                  "
+                >
+                  <!-- 嵌入式指标容器（强化层级感） -->
+                  <div class="hc-metrics-wrap">
+                    <div class="hc-metrics">
+                      <div class="metric metric-ok">
+                        <span class="metric-num">{{ template.stats.ok }}</span>
+                        <span class="metric-txt">通过</span>
+                      </div>
+                      <div class="metric metric-fail">
+                        <span class="metric-num">{{ template.stats.failed }}</span>
+                        <span class="metric-txt">失败</span>
+                      </div>
+                      <div class="metric metric-check">
+                        <span class="metric-num">{{ template.stats.check }}</span>
+                        <span class="metric-txt">人工</span>
+                      </div>
+                      <div class="metric metric-skip">
+                        <span class="metric-num">{{ template.stats.skipping }}</span>
+                        <span class="metric-txt">白名单</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- 未执行：占位 -->
+                <template v-else>
+                  <div class="hc-empty-state">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span>尚未执行巡检</span>
+                  </div>
+                </template>
+
+                <!-- 底部（平铺功能按钮） -->
+                <div class="hc-footer">
+                  <el-button
+                    type="primary"
+                    link
+                    size="small"
+                    class="hc-action-btn hc-action-btn--run"
+                    @click.stop="handleCommand('run', template)"
+                  >
+                    <i class="fas fa-play mr-1"></i>
+                    执行
+                  </el-button>
+                  <el-button
+                    type="primary"
+                    link
+                    size="small"
+                    class="hc-action-btn hc-action-btn--edit"
+                    @click.stop="handleCommand('edit', template)"
+                  >
+                    <i class="fas fa-edit mr-1"></i>
+                    编辑
+                  </el-button>
+                  <el-button
+                    type="danger"
+                    link
+                    size="small"
+                    class="hc-action-btn hc-action-btn--delete"
+                    @click.stop="handleCommand('delete', template)"
+                  >
+                    <i class="fas fa-trash-alt mr-1"></i>
+                    删除
+                  </el-button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 空状态 -->
+            <el-empty v-else-if="!loading && templateList.length === 0" description="暂无巡检模板">
+              <el-button type="primary" @click="goToAddTemplate">
+                <i class="fa fa-plus"></i>
+                新增模板
+              </el-button>
+            </el-empty>
+            <el-empty
+              v-else-if="filteredTemplateList.length === 0"
+              description="没有匹配的模板"
+              :image-size="80"
+            />
+          </div>
+        </section>
+      </template>
     </div>
 
     <!-- 编辑模板弹窗 -->
@@ -124,175 +233,56 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineEmits, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { templateApi, paramApi } from '../api'
+import { templateApi } from '../api'
+import { useOverviewData } from '../composables/useOverviewData'
 import TemplateEditDialog from '../components/template/TemplateEditDialog.vue'
 import RunTemplateDialog from '../components/template/RunTemplateDialog.vue'
 
 const router = useRouter()
-const emit = defineEmits(['navigate'])
 
-const loading = ref(true)
-const templateList = ref([])
-const searchKeyword = ref('')
-const dashboardEnabled = ref(false)
-const teamsEnabled = ref(false)
+const {
+  loading,
+  statsLoading,
+  templateList,
+  searchKeyword,
+  filteredTemplateList,
+  distributionData,
+  initData,
+  refreshAll
+} = useOverviewData()
 
-// 过滤后的列表
-const filteredTemplateList = computed(() => {
-  if (!searchKeyword.value) return templateList.value
-  const keyword = searchKeyword.value.toLowerCase()
-  return templateList.value.filter(item => item.templateName?.toLowerCase().includes(keyword))
-})
-
-// ... (retain rest of script)
-
-// 编辑弹窗状态
 const editDialogVisible = ref(false)
 const editTemplateId = ref('')
-
-// 执行弹窗状态
 const runDialogVisible = ref(false)
 const runTemplateId = ref('')
 
-/**
- * 格式化相对时间
- */
-function formatRelativeTime(dateStr) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now - date
-  const diffSeconds = Math.floor(diffMs / 1000)
-  const diffMinutes = Math.floor(diffSeconds / 60)
-  const diffHours = Math.floor(diffMinutes / 60)
-  const diffDays = Math.floor(diffHours / 24)
-  const diffMonths = Math.floor(diffDays / 30)
-  const diffYears = Math.floor(diffDays / 365)
-
-  if (diffYears > 0) return `${diffYears}年前`
-  if (diffMonths > 0) return `${diffMonths}个月前`
-  if (diffDays > 0) return `${diffDays}天前`
-  if (diffHours > 0) return `${diffHours}小时前`
-  if (diffMinutes > 0) return `${diffMinutes}分钟前`
-  return '刚刚'
+function getPassRateClass(rate) {
+  if (rate === null || rate === undefined) return 'rate-none'
+  if (rate >= 90) return 'rate-high'
+  if (rate >= 60) return 'rate-mid'
+  return 'rate-low'
 }
 
-/**
- * 获取图标类名
- * API 返回的 icon 格式是 "fa-address-book" 这样只有图标名的格式
- * 需要添加前缀 fas（solid）来组成完整的 Font Awesome 5 类名
- */
-function getIconClass(icon) {
-  if (!icon) {
-    return 'fas fa-server' // 默认图标
-  }
-  // 如果已经包含前缀（如 fas、far、fad 等），直接返回
-  if (
-    icon.startsWith('fas ') ||
-    icon.startsWith('far ') ||
-    icon.startsWith('fad ') ||
-    icon.startsWith('fab ') ||
-    icon.startsWith('fal ')
-  ) {
-    return icon
-  }
-  // 否则添加 fas 前缀
-  return `fas ${icon}`
-}
-
-/**
- * 加载模板列表
- */
-async function loadTemplates() {
-  loading.value = true
-  try {
-    const response = await templateApi.getSquareTemplates()
-    const data = response?.data || response || []
-
-    templateList.value = data.map(template => {
-      // 解析 auditParams
-      let auditParams = []
-      try {
-        auditParams =
-          typeof template.auditParams === 'string'
-            ? JSON.parse(template.auditParams)
-            : template.auditParams || []
-      } catch {
-        auditParams = []
-      }
-
-      // 计算主机数量
-      let hostLength = 0
-      auditParams.forEach(param => {
-        hostLength += (param.hosts || []).length
-      })
-
-      // 计算执行时间
-      const executedTime = template.executedAt ? formatRelativeTime(template.executedAt) : ''
-
-      return {
-        ...template,
-        hostLength,
-        executedTime
-      }
-    })
-  } catch (error) {
-    console.error('Failed to load templates:', error)
-    ElMessage.error('加载模板列表失败')
-    templateList.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-/**
- * 加载配置参数
- */
-async function loadParams() {
-  try {
-    const response = await paramApi.getParams()
-    const params = response?.data || response || []
-    const paramMap = new Map(params.map(item => [item.name, item.value]))
-
-    dashboardEnabled.value = paramMap.get('dashboard_switch') === 'yes'
-    teamsEnabled.value = paramMap.get('teams_switch') === 'yes'
-  } catch (error) {
-    console.error('Failed to load params:', error)
-  }
-}
-
-/**
- * 点击卡片 - 跳转到检查结果详情页面
- */
 function handleCardClick(template) {
   if (template.jobId) {
-    // 有执行记录，跳转到检查结果详情页面
     router.push(`/cac/results/${template.jobId}`)
   } else {
-    // 没有执行记录，提示用户
-    ElMessage.warning('该模板尚未执行巡检，请先点击右侧菜单执行巡检')
+    ElMessage.warning('该模板尚未执行巡检，请先点击菜单执行巡检')
   }
 }
 
-/**
- * 处理下拉菜单命令
- */
 function handleCommand(command, template) {
   switch (command) {
     case 'run':
-      runTemplate(template)
+      runTemplateId.value = template.id
+      runDialogVisible.value = true
       break
     case 'edit':
-      editTemplate(template)
-      break
-    case 'dashboard':
-      ElMessage.info('仪表盘功能待实现')
-      break
-    case 'teams':
-      ElMessage.info('团队选择功能待实现')
+      editTemplateId.value = template.id
+      editDialogVisible.value = true
       break
     case 'delete':
       deleteTemplate(template)
@@ -300,39 +290,6 @@ function handleCommand(command, template) {
   }
 }
 
-/**
- * 执行模板 - 打开执行弹窗
- */
-function runTemplate(template) {
-  runTemplateId.value = template.id
-  runDialogVisible.value = true
-}
-
-/**
- * 执行成功回调
- */
-function handleRunSuccess() {
-  loadTemplates()
-}
-
-/**
- * 编辑模板 - 打开弹窗
- */
-function editTemplate(template) {
-  editTemplateId.value = template.id
-  editDialogVisible.value = true
-}
-
-/**
- * 编辑成功回调
- */
-function handleEditSuccess() {
-  loadTemplates()
-}
-
-/**
- * 删除模板
- */
 async function deleteTemplate(template) {
   try {
     await ElMessageBox.confirm(`确定要删除模板「${template.templateName}」吗？`, '删除确认', {
@@ -340,10 +297,9 @@ async function deleteTemplate(template) {
       cancelButtonText: '取消',
       type: 'warning'
     })
-
     await templateApi.deleteTemplate(template.id)
     ElMessage.success('删除成功')
-    loadTemplates()
+    refreshAll()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Failed to delete template:', error)
@@ -352,219 +308,707 @@ async function deleteTemplate(template) {
   }
 }
 
-/**
- * 跳转到新增模板
- */
+function handleEditSuccess() {
+  refreshAll()
+}
+function handleRunSuccess() {
+  refreshAll()
+}
+
 function goToAddTemplate() {
   router.push('/cac/templates?action=add')
 }
 
 onMounted(() => {
-  loadTemplates()
-  loadParams()
+  initData()
 })
 </script>
 
 <style scoped lang="scss">
-.ops-page-layout {
+/* 巡检总览：轻量、紧凑、状态清晰的仪表盘风格 */
+.overview-dashboard {
+  --page-bg: #f4f7fb;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+  --surface-raised: #fbfdff;
+  --line: #e5ebf3;
+  --line-strong: #d6e0ec;
+  --text: #16243d;
+  --text-2: #5e718d;
+  --text-3: #95a4ba;
+  --brand: #0d9488;
+  --brand-soft: rgba(13, 148, 136, 0.09);
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --neutral: #64748b;
+  --radius: 10px;
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.03), 0 10px 26px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.1);
+
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: 24px;
-  // background: var(--el-bg-color-page); /* 浅色背景 */
-  overflow: hidden; /* 关键：防止最外层滚动 */
+  overflow: hidden;
+  background: var(--page-bg);
+  color: var(--text);
+  padding: 0 !important;
 }
 
-.header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-shrink: 0;
+:global(html.dark) .overview-dashboard {
+  --page-bg: #0b1220;
+  --surface: #121c2d;
+  --surface-soft: #172336;
+  --surface-raised: #162235;
+  --line: rgba(148, 163, 184, 0.14);
+  --line-strong: rgba(148, 163, 184, 0.24);
+  --text: #e5edf7;
+  --text-2: #a1b1c7;
+  --text-3: #6f829c;
+  --brand: #2dd4bf;
+  --brand-soft: rgba(45, 212, 191, 0.12);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 18px 42px rgba(0, 0, 0, 0.35);
 }
 
 .content-scroll-area {
   flex: 1;
-  overflow-y: auto; /* 仅此处滚动 */
-  min-height: 0; /* Flex item 滚动必需 */
-  padding: 4px; /* 防止 box-shadow 被裁剪 */
-  margin: -4px; /* 抵消 padding 带来的额外空间 */
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 18px 20px;
+  scrollbar-gutter: stable;
+
+  &::-webkit-scrollbar {
+    width: 7px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--line-strong);
+  }
 }
 
-.loading-state {
-  padding: 20px;
-}
-
-.template-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
-}
-
-.template-card {
-  background: var(--el-bg-color);
-  border-radius: 12px;
-  border: 1px solid var(--el-border-color-light);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* 柔和阴影 */
-  overflow: visible;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  position: relative;
+/* 面板 */
+.aw-panel {
   display: flex;
   flex-direction: column;
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    border-color: var(--el-border-color);
-
-    .template-icon-wrapper {
-      // transform: scale(1.1) rotate(5deg);
-      background: var(--el-color-primary-light-9);
-      color: var(--el-color-primary);
-    }
-  }
-}
-
-.card-body {
-  padding: 24px;
-  flex: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.template-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.template-name {
-  margin: 0 0 12px;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--el-text-color-primary);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
   overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
 }
 
-.template-meta {
+.aw-panel__header {
+  min-height: 50px;
+  padding: 0 20px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+
+.aw-panel__title-group {
+  min-width: 0;
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
-.host-badge {
+.panel-title-icon {
+  width: 16px;
+  color: var(--brand);
+  font-size: 14px;
+  text-align: center;
+}
+
+.aw-panel__title {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.aw-panel__stat-badge {
+  height: 23px;
+  padding: 0 9px;
+  margin-left: 6px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: var(--el-bg-color-page);
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 20px;
+  gap: 3px;
+  color: var(--text-2);
   font-size: 12px;
-  color: var(--el-text-color-secondary);
-  font-weight: 500;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-soft);
 
-  i {
-    font-size: 11px;
-    color: var(--el-text-color-placeholder);
+  strong {
+    color: var(--brand);
+    font-weight: 700;
   }
 }
 
-.template-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--el-bg-color-page);
-  border-radius: 12px;
-  color: var(--el-text-color-placeholder);
-  font-size: 20px;
-  transition: all 0.3s ease;
+.aw-panel__header-actions {
   flex-shrink: 0;
-}
-
-.card-footer {
-  padding: 16px 24px;
-  background: var(--el-bg-color);
-  border-top: 1px solid var(--el-border-color-lighter);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-}
+  gap: 8px;
 
-.status-section {
-  font-size: 13px;
-
-  .status-tag {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    &.pending {
-      color: var(--el-text-color-placeholder);
-      .dot {
-        background: var(--el-border-color);
-      }
-    }
-
-    &.executed {
-      color: #059669; /* 绿色 */
-      .dot {
-        background: #10b981;
-      }
-    }
+  .template-search-input {
+    width: 248px;
   }
-}
 
-.action-section {
-  .more-btn {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    color: var(--el-text-color-placeholder);
-    transition: all 0.2s;
-    cursor: pointer;
+  :deep(.el-input__wrapper) {
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 16px;
+    background: var(--surface-soft);
+    border: 1px solid transparent;
+    box-shadow: none;
 
     &:hover {
-      background: var(--el-fill-color-light);
-      color: var(--el-text-color-secondary);
+      border-color: var(--line-strong);
+    }
+
+    &.is-focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-soft);
+    }
+  }
+
+  :deep(.el-input__inner) {
+    color: var(--text);
+
+    &::placeholder {
+      color: var(--text-3);
+    }
+  }
+
+  :deep(.el-button--small.is-circle) {
+    width: 32px;
+    height: 32px;
+    color: var(--text-2);
+    border-color: var(--line);
+    background: var(--surface-soft);
+
+    &:hover {
+      color: var(--brand);
+      border-color: rgba(13, 148, 136, 0.35);
+      background: var(--brand-soft);
     }
   }
 }
 
-/* 辅助样式 */
-.text-primary {
-  color: #409eff;
-}
-.text-warning {
-  color: #e6a23c;
-}
-.text-danger {
-  color: #f56c6c;
+/* 检查结果分布 */
+.distribution-bar-section {
+  margin-bottom: 16px;
 }
 
-:deep(.el-empty) {
-  background: var(--el-bg-color);
+.distribution-bar-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 14px 18px 16px;
+}
+
+.dist-bar-item {
+  --bar-color: var(--neutral);
+  --bar-soft: rgba(100, 116, 139, 0.09);
+
+  min-width: 0;
+  padding: 11px 12px 12px;
+  border: 1px solid transparent;
   border-radius: 8px;
-  padding: 40px;
-  margin-top: 40px;
+  background: var(--surface-raised);
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+
+  &:hover {
+    border-color: var(--line-strong);
+    background: var(--surface);
+  }
+}
+
+.dist-bar-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dist-bar-label,
+.dist-bar-meta {
+  display: inline-flex;
+  align-items: center;
+}
+
+.dist-bar-label {
+  min-width: 0;
+  gap: 7px;
+  color: var(--text-2);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dist-bar-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--bar-color);
+  box-shadow: 0 0 0 3px var(--bar-soft);
+}
+
+.dist-bar-meta {
+  flex: 0 0 auto;
+  gap: 7px;
+}
+
+.dist-bar-value {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dist-bar-percent {
+  color: var(--text-3);
+  font-size: 11px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dist-bar-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.11);
+}
+
+.dist-bar-fill {
+  min-width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--bar-color);
+  transition: width 0.65s ease;
+}
+
+.dist-ok {
+  --bar-color: var(--success);
+  --bar-soft: rgba(16, 185, 129, 0.1);
+}
+.dist-failed {
+  --bar-color: var(--danger);
+  --bar-soft: rgba(239, 68, 68, 0.1);
+}
+.dist-check {
+  --bar-color: var(--info);
+  --bar-soft: rgba(59, 130, 246, 0.1);
+}
+.dist-skipping {
+  --bar-color: var(--neutral);
+}
+.dist-unreachable {
+  --bar-color: var(--warning);
+  --bar-soft: rgba(245, 158, 11, 0.11);
+}
+
+/* 模板区域 */
+.templates-panel {
+  min-height: 500px;
+}
+
+.health-grid-scroll-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--page-bg);
+
+  &::-webkit-scrollbar {
+    width: 7px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--line-strong);
+  }
+
+  :deep(.el-empty) {
+    min-height: 340px;
+  }
+}
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-items: stretch;
+  gap: 14px;
+  padding: 16px;
+}
+
+/* 健康卡片 */
+.health-card {
+  --state: var(--text-3);
+  --state-soft: rgba(148, 163, 184, 0.1);
+  --state-border: rgba(148, 163, 184, 0.18);
+
+  min-width: 0;
+  min-height: 202px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.025);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &.rate-high {
+    --state: var(--success);
+    --state-soft: rgba(16, 185, 129, 0.09);
+    --state-border: rgba(16, 185, 129, 0.18);
+  }
+
+  &.rate-mid {
+    --state: var(--warning);
+    --state-soft: rgba(245, 158, 11, 0.1);
+    --state-border: rgba(245, 158, 11, 0.19);
+  }
+
+  &.rate-low {
+    --state: var(--danger);
+    --state-soft: rgba(239, 68, 68, 0.09);
+    --state-border: rgba(239, 68, 68, 0.18);
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--state-border);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:focus-within {
+    border-color: var(--state);
+    box-shadow: 0 0 0 3px var(--state-soft);
+  }
+}
+
+.hc-indicator-bar {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--state);
+  opacity: 0.96;
+}
+
+.hc-header {
+  min-height: 70px;
+  padding: 16px 15px 10px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.hc-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--state);
+  font-size: 16px;
+  border: 1px solid var(--state-border);
+  border-radius: 8px;
+  background: var(--state-soft);
+  transition: transform 0.18s ease;
+
+  .health-card:hover & {
+    transform: scale(1.03);
+  }
+}
+
+.hc-title-wrap {
+  flex: 1;
+  min-width: 0;
+  padding-top: 1px;
+}
+
+.hc-name {
+  margin: 0 0 5px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hc-badges {
+  display: flex;
+  align-items: center;
+
+  :deep(.el-tag) {
+    height: 20px;
+    padding: 0 7px;
+    color: var(--text-2);
+    font-size: 11px;
+    font-weight: 500;
+    border-color: transparent;
+    background: var(--surface-soft);
+
+    i {
+      margin-right: 4px;
+    }
+  }
+}
+
+.hc-time-badge {
+  min-height: 22px;
+  max-width: 82px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  overflow: hidden;
+  color: var(--state);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: 999px;
+  background: var(--state-soft);
+
+  .hc-status-dot {
+    width: 5px;
+    height: 5px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: currentColor;
+  }
+}
+
+.hc-metrics-wrap {
+  margin: 0 15px 12px;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.hc-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.metric {
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+
+  &.metric-ok {
+    color: var(--success);
+    background: rgba(16, 185, 129, 0.08);
+  }
+
+  &.metric-fail {
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.075);
+  }
+
+  &.metric-check {
+    color: var(--info);
+    background: rgba(59, 130, 246, 0.075);
+  }
+
+  &.metric-skip {
+    color: var(--neutral);
+    background: rgba(100, 116, 139, 0.075);
+  }
+}
+
+.metric-num {
+  color: currentColor;
+  font-size: 16px;
+  line-height: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-txt {
+  color: var(--text-2);
+  font-size: 11px;
+  line-height: 13px;
+}
+
+.hc-empty-state {
+  flex: 1;
+  min-height: 72px;
+  margin: 0 15px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface-soft);
+
+  i {
+    width: 24px;
+    height: 24px;
+    display: inline-grid;
+    place-items: center;
+    color: var(--brand);
+    font-size: 14px;
+    border-radius: 999px;
+    background: var(--brand-soft);
+    opacity: 0.82;
+  }
+}
+
+.hc-footer {
+  min-height: 42px;
+  margin-top: auto;
+  padding: 5px 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+  background: var(--surface-raised);
+}
+
+.hc-action-btn {
+  width: 100%;
+  height: 30px !important;
+  margin: 0 !important;
+  justify-content: center;
+  color: var(--text-2) !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease !important;
+
+  i {
+    margin-right: 5px;
+    font-size: 11px;
+  }
+
+  &.hc-action-btn--run:hover {
+    color: var(--brand) !important;
+    background: var(--brand-soft) !important;
+  }
+
+  &.hc-action-btn--edit:hover {
+    color: var(--info) !important;
+    background: rgba(59, 130, 246, 0.09) !important;
+  }
+
+  &.hc-action-btn--delete:hover {
+    color: var(--danger) !important;
+    background: rgba(239, 68, 68, 0.09) !important;
+  }
+}
+
+/* 骨架屏 */
+.skeleton-section {
+  padding: 0;
+}
+
+.skeleton-bar-row {
+  margin-bottom: 14px;
+}
+
+.skeleton-bar-item {
+  height: 122px;
+  border-radius: var(--radius);
+}
+
+.skeleton-full {
+  height: 520px;
+  border-radius: var(--radius);
+}
+
+/* 响应式 */
+@media (max-width: 1280px) {
+  .distribution-bar-content {
+    grid-template-columns: repeat(3, 1fr);
+    row-gap: 12px;
+  }
+}
+
+@media (max-width: 840px) {
+  .content-scroll-area {
+    padding: 12px;
+  }
+
+  .aw-panel__header {
+    min-height: auto;
+    padding: 14px;
+    flex-wrap: wrap;
+  }
+
+  .aw-panel__header-actions,
+  .aw-panel__header-actions .template-search-input {
+    width: 100%;
+  }
+
+  .distribution-bar-content {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .health-grid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .distribution-bar-content {
+    grid-template-columns: 1fr;
+  }
+
+  .hc-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .health-card,
+  .hc-icon,
+  .dist-bar-fill {
+    transition: none;
+  }
+}
+</style>
+
+<style lang="scss">
+/* 消除外层布局的重复内边距 */
+.overview-dashboard.ops-page-layout {
+  padding: 0 !important;
 }
 </style>
