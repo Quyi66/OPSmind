@@ -171,14 +171,21 @@
           </template>
         </el-table-column>
 
-        <!-- 3. 更新时间 -->
+        <!-- 3. 异常原因 -->
+        <el-table-column label="异常详情" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span>{{ row.description || '-' }}</span>
+          </template>
+        </el-table-column>
+
+        <!-- 4. 更新时间 -->
         <el-table-column label="最后同步时间" min-width="160">
           <template #default="{ row }">
             <span>{{ formatDateTime(row.updated_at) }}</span>
           </template>
         </el-table-column>
 
-        <!-- 4. 操作 -->
+        <!-- 5. 操作 -->
         <el-table-column label="操作" width="100" align="center" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" size="small" @click="viewCredentials(row)">
@@ -731,10 +738,11 @@ const getProgressRate = rate => {
 
 // 查看凭据跳转
 const viewCredentials = row => {
-  if (!row.IP) return
+  const ip = row.IP || row.ip
+  if (!ip) return
   router.push({
     path: '/acm/automation',
-    query: { ip: row.IP }
+    query: { ip }
   })
 }
 

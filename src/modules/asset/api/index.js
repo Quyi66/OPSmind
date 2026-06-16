@@ -393,6 +393,17 @@ export const modelApi = {
 /**
  * 异常设备 API
  */
+const mapExceptionItem = (item) => {
+  if (!item) return item
+  return {
+    ...item,
+    IP: item.IP || item.ip || '',
+    ci_name: item.ci_name || (item.hostname && item.hostname !== 'N/A' ? item.hostname : item.ci_type) || '',
+    CONN_LATEST_STATUS: item.CONN_LATEST_STATUS !== undefined ? item.CONN_LATEST_STATUS : '0',
+    CONN_RATE: item.CONN_RATE !== undefined ? item.CONN_RATE : 0
+  }
+}
+
 export const exceptionApi = {
   getConnectionCount() {
     return overviewApi.getConnectionCount()
@@ -415,6 +426,12 @@ export const exceptionApi = {
         }
       })
       .then(res => normalizeRecords(unwrapApiData(res)))
+      .then(res => {
+        if (res && Array.isArray(res.records)) {
+          res.records = res.records.map(mapExceptionItem)
+        }
+        return res
+      })
   },
 
   getOsDiff(params = {}) {
@@ -432,6 +449,12 @@ export const exceptionApi = {
         }
       })
       .then(res => normalizeRecords(unwrapApiData(res)))
+      .then(res => {
+        if (res && Array.isArray(res.records)) {
+          res.records = res.records.map(mapExceptionItem)
+        }
+        return res
+      })
   }
 }
 

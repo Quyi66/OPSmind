@@ -175,10 +175,10 @@ export function useAssetWorkbenchDrawers({
       )
       const rows = response?.records || []
       exceptionDrawer.records = rows.map(row => ({
-        key: row.IP || row.ci_name || `${row.updated_at || ''}-${row.CONN_RATE || ''}`,
-        title: row.IP || '未识别 IP',
+        key: row.IP || row.ip || row.ci_name || `${row.updated_at || ''}-${row.CONN_RATE || ''}`,
+        title: row.IP || row.ip || '未识别 IP',
         badge: formatConnRate(row.CONN_RATE),
-        desc: row.ci_name || '未命名资产',
+        desc: row.description ? `${row.ci_name || '未命名资产'} · ${row.description}` : (row.ci_name || '未命名资产'),
         meta: `${getConnStatusText(row.CONN_LATEST_STATUS)} · ${formatDateTimeShort(row.updated_at)}`,
         raw: row
       }))

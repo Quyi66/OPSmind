@@ -99,7 +99,7 @@
               <el-table-column label="设备标识" min-width="180" fixed="left">
                 <template #default="{ row }">
                   <div class="composite-device-cell">
-                    <span>{{ row.hostKey || '-' }}</span>
+                    <span>{{ row.ip || '-' }}</span>
                     <el-tag size="small" type="info" effect="plain" class="cit-tag">
                       {{ row.ci_type || row.ciType || '-' }}
                     </el-tag>
