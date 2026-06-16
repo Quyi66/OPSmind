@@ -773,11 +773,14 @@ async function loadAutomationData() {
     const response = await automationApi.getAutomationConfigs(
       {
         cit: filters.value.cit,
-        param: automationSearch.value || 'x'
+        param: 'x'
       },
       {
         size: automationPageSize.value,
-        page: automationPage.value
+        page: automationPage.value,
+        filter: automationSearch.value
+          ? `hostKey|ci_type|loginUser|instanceGroup:*${automationSearch.value}*`
+          : ''
       }
     )
     automationData.value = response?.records || []

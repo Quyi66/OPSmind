@@ -196,12 +196,13 @@
       <el-table
         v-else
         v-loading="loading"
-        :data="filteredFiles"
+        :data="paginatedFiles"
+        ref="fileTableRef"
         height="100%"
         row-key="_key"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="40" :selectable="isSelectable" />
+        <el-table-column type="selection" width="40" :selectable="isSelectable" :reserve-selection="true" />
 
         <el-table-column label="名称" min-width="300" sortable prop="name">
           <template #default="{ row }">
@@ -315,6 +316,19 @@
           </template>
         </el-table-column>
       </el-table>
+    </div>
+ 
+    <!-- 分页组件 -->
+    <div class="pagination-container" v-if="filteredFiles.length > 0">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="filteredFiles.length"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
     </div>
 
     <!-- 弹窗组件 -->
@@ -450,6 +464,9 @@ const currentDir = ref('')
 const fileList = ref([])
 const selectedFiles = ref([])
 const searchText = ref('')
+const fileTableRef = ref(null)
+const currentPage = ref(1)
+const pageSize = ref(20)
 const clipboard = ref([])
 const clipboardDir = ref('')
 const hideOplus = ref(true) // 是否隐藏内置应用脚本目录(oplus)
@@ -593,6 +610,28 @@ const filteredFiles = computed(() => {
   return list
 })
 
+// 分页过滤后的文件列表
+const paginatedFiles = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredFiles.value.slice(start, end)
+})
+
+watch(searchText, () => {
+  currentPage.value = 1
+})
+
+function handleSizeChange() {
+  currentPage.value = 1
+}
+
+function handleCurrentChange() {
+  const tableBody = document.querySelector('.file-table-container .el-table__body-wrapper')
+  if (tableBody) {
+    tableBody.scrollTop = 0
+  }
+}
+
 // 是否有选中
 const hasSelection = computed(() => selectedFiles.value.length > 0)
 
@@ -655,6 +694,10 @@ async function loadFiles() {
     }
 
     fileList.value = processed
+    currentPage.value = 1
+    if (fileTableRef.value) {
+      fileTableRef.value.clearSelection()
+    }
   } catch (error) {
     ElMessage.error(error?.message || '获取文件列表失败')
   } finally {
@@ -981,6 +1024,14 @@ defineExpose({
   padding: 12px;
   gap: 12px;
   background: var(--el-bg-color);
+
+  .pagination-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
 }
 
 .breadcrumb {

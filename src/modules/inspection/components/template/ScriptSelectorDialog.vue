@@ -7,19 +7,28 @@
     append-to-body
   >
     <div class="script-selector-content">
-      <!-- 面包屑导航 -->
-      <div class="breadcrumb-nav">
-        <span v-for="(crumb, index) in breadcrumbs" :key="index" class="breadcrumb-item">
-          <a
-            v-if="index < breadcrumbs.length - 1"
-            href="javascript:void(0)"
-            @click="navigateTo(index)"
-          >
-            {{ crumb || '~' }}
-          </a>
-          <span v-else class="current">{{ crumb || '~' }}</span>
-          <span v-if="index < breadcrumbs.length - 1" class="separator">›</span>
-        </span>
+      <!-- 顶部工具栏：面包屑导航 + 搜索框 -->
+      <div class="toolbar-header">
+        <div class="breadcrumb-nav">
+          <span v-for="(crumb, index) in breadcrumbs" :key="index" class="breadcrumb-item">
+            <a
+              v-if="index < breadcrumbs.length - 1"
+              href="javascript:void(0)"
+              @click="navigateTo(index)"
+            >
+              {{ crumb || '~' }}
+            </a>
+            <span v-else class="current">{{ crumb || '~' }}</span>
+            <span v-if="index < breadcrumbs.length - 1" class="separator">›</span>
+          </span>
+        </div>
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索文件名..."
+          clearable
+          :prefix-icon="Search"
+          class="search-input"
+        />
       </div>
 
       <!-- 文件列表表格 -->
@@ -48,7 +57,7 @@
             </tr>
             <!-- 文件列表 -->
             <tr
-              v-for="file in filteredFiles"
+              v-for="file in paginatedFiles"
               :key="file.path"
               class="file-row"
               :class="{ 'is-selected': isSelected(file), 'is-folder': file.isDirectory }"
@@ -83,6 +92,19 @@
           description="暂无文件"
         />
       </div>
+
+      <!-- 分页组件 -->
+      <div class="pagination-container" v-if="filteredFiles.length > 0">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="filteredFiles.length"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </div>
 
     <template #footer>
@@ -97,6 +119,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { apiService } from '@/core/api'
+import { Search } from '@element-plus/icons-vue'
 
 const props = defineProps({
   visible: {
@@ -122,6 +145,10 @@ const currentPath = ref('')
 const files = ref([])
 const selectedFiles = ref([])
 
+// 分页状态
+const currentPage = ref(1)
+const pageSize = ref(20)
+
 // 面包屑导航
 const breadcrumbs = computed(() => {
   const parts = ['~']
@@ -137,6 +164,29 @@ const filteredFiles = computed(() => {
   const keyword = searchKeyword.value.toLowerCase()
   return files.value.filter(f => f.name.toLowerCase().includes(keyword))
 })
+
+// 分页过滤后的文件列表
+const paginatedFiles = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredFiles.value.slice(start, end)
+})
+
+// 监听搜索词变化，重置页码
+watch(searchKeyword, () => {
+  currentPage.value = 1
+})
+
+function handleSizeChange() {
+  currentPage.value = 1
+}
+
+function handleCurrentChange() {
+  const tableWrapper = document.querySelector('.file-table-wrapper')
+  if (tableWrapper) {
+    tableWrapper.scrollTop = 0
+  }
+}
 
 /**
  * 获取文件图标
@@ -253,6 +303,7 @@ async function loadFiles() {
         statusType
       }
     })
+    currentPage.value = 1
   } catch (error) {
     console.error('Failed to load files:', error)
     files.value = []
@@ -324,6 +375,8 @@ watch(
         scriptName: s.scriptName || s.scriptPath?.split('/').pop() || ''
       }))
       currentPath.value = ''
+      searchKeyword.value = ''
+      currentPage.value = 1
       loadFiles()
     }
   }
@@ -335,12 +388,30 @@ watch(
   min-height: 400px;
 }
 
+// 顶部工具栏（面包屑 + 搜索框）
+.toolbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+
+  .breadcrumb-nav {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  .search-input {
+    width: 240px;
+    flex-shrink: 0;
+  }
+}
+
 // 面包屑导航
 .breadcrumb-nav {
   padding: 8px 12px;
   background: var(--el-bg-color-page);
   border-radius: 4px;
-  margin-bottom: 12px;
   font-size: 14px;
 
   .breadcrumb-item {
@@ -506,5 +577,12 @@ watch(
 
 .text-muted {
   color: #c0c4cc;
+}
+
+// 分页组件容器
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 </style>
