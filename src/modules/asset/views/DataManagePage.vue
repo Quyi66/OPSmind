@@ -32,7 +32,7 @@
             <el-form :inline="true" size="small">
               <el-form-item label="类型">
                 <el-select v-model="groupFilter.ciType" style="width: 140px">
-                  <el-option label="全部" value="oplus_all" />
+                  <el-option label="全部" value="sjxy_all" />
                   <el-option
                     v-for="item in resourceTypes"
                     :key="item.code"
@@ -154,7 +154,7 @@
             <el-form :inline="true" size="small">
               <el-form-item label="类型">
                 <el-select v-model="tagFilter.ciType" style="width: 140px">
-                  <el-option label="全部" value="oplus_all" />
+                  <el-option label="全部" value="sjxy_all" />
                   <el-option
                     v-for="item in resourceTypes"
                     :key="item.code"
@@ -311,13 +311,13 @@ const activeTab = ref('group')
 const resourceTypes = ref([])
 
 // 分组相关
-const groupFilter = ref({ ciType: 'oplus_all', keyword: '' })
+const groupFilter = ref({ ciType: 'sjxy_all', keyword: '' })
 const groupList = ref([])
 const groupLoading = ref(false)
 const groupPagination = ref({ page: 1, size: 10, total: 0 })
 
 // 标签相关
-const tagFilter = ref({ ciType: 'oplus_all', keyword: '' })
+const tagFilter = ref({ ciType: 'sjxy_all', keyword: '' })
 const tagList = ref([])
 const tagLoading = ref(false)
 const tagPagination = ref({ page: 1, size: 10, total: 0 })
@@ -341,7 +341,7 @@ const buildRouteQuery = tab => {
   const currentFilter = currentTab === 'group' ? groupFilter.value : tagFilter.value
   const query = { tab: currentTab }
 
-  if (currentFilter.ciType && currentFilter.ciType !== 'oplus_all') {
+  if (currentFilter.ciType && currentFilter.ciType !== 'sjxy_all') {
     query.ciType = currentFilter.ciType
   }
 
@@ -369,7 +369,7 @@ const syncRouteQuery = tab => {
 
 const applyRouteQuery = query => {
   const currentTab = normalizeTab(query.tab)
-  const ciType = typeof query.ciType === 'string' && query.ciType ? query.ciType : 'oplus_all'
+  const ciType = typeof query.ciType === 'string' && query.ciType ? query.ciType : 'sjxy_all'
   const keyword = typeof query.keyword === 'string' ? query.keyword : ''
 
   activeTab.value = currentTab
@@ -472,7 +472,7 @@ const handleGroupSearch = () => {
 
 // 分组重置
 const handleGroupReset = () => {
-  groupFilter.value = { ciType: 'oplus_all', keyword: '' }
+  groupFilter.value = { ciType: 'sjxy_all', keyword: '' }
   groupPagination.value.page = 1
   syncRouteQuery('group')
 }
@@ -495,7 +495,7 @@ const handleTagSearch = () => {
 
 // 标签重置
 const handleTagReset = () => {
-  tagFilter.value = { ciType: 'oplus_all', keyword: '' }
+  tagFilter.value = { ciType: 'sjxy_all', keyword: '' }
   tagPagination.value.page = 1
   syncRouteQuery('tag')
 }
