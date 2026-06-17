@@ -79,7 +79,7 @@ let resizeObserver = null
 const kpiConfig = {
   recently_ok: { title: '连通成功', color: '#67C23A' },
   recently: { title: '连通失败', color: '#F56C6C' },
-  oplus_all: {
+  sjxy_all: {
     title: '所有连通异常',
     icon: 'fa-exclamation',
     theme: 'warning'
@@ -107,7 +107,7 @@ const dataMap = computed(() => {
 
 // 列表数据
 const listData = computed(() => {
-  const list = ['oplus_all', 'today', 'low']
+  const list = ['sjxy_all', 'today', 'low']
   return list.map(key => {
     const conf = kpiConfig[key]
     return {

@@ -170,7 +170,7 @@ export function useAssetWorkbenchDrawers({
     exceptionDrawer.loading = true
     try {
       const response = await exceptionApi.getExceptionDevices(
-        { cit: 'oplus_all', conditions: 'recently', param: 'rwx' },
+        { cit: 'sjxy_all', conditions: 'recently', param: 'rwx' },
         { page: exceptionDrawer.page, size: exceptionDrawer.pageSize }
       )
       const rows = response?.records || []

@@ -340,9 +340,9 @@ export const dataManageApi = {
   /**
    * 获取所有分组列表
    * GET /acm/api/acm/dashboard/all-group
-   * @param {string} ciType - 资产类型，oplus_all 表示全部
+   * @param {string} ciType - 资产类型，sjxy_all 表示全部
    */
-  getAllGroups(ciType = 'oplus_all') {
+  getAllGroups(ciType = 'sjxy_all') {
     const params = ciType ? { ciType } : undefined
     return apiService.get(`${ACM_DASHBOARD_BASE}/all-group`, { params }).then(res => normalizeRecords(unwrapApiData(res)))
   },
@@ -350,9 +350,9 @@ export const dataManageApi = {
   /**
    * 获取所有标签列表
    * GET /acm/api/acm/dashboard/tags
-   * @param {string} ciType - 资产类型，oplus_all 表示全部
+   * @param {string} ciType - 资产类型，sjxy_all 表示全部
    */
-  getAllTags(ciType = 'oplus_all') {
+  getAllTags(ciType = 'sjxy_all') {
     return apiService
       .get(`${ACM_DASHBOARD_BASE}/tags`, { params: { ciType } })
       .then(res => normalizeRecords(unwrapApiData(res)))

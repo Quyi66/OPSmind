@@ -1139,7 +1139,7 @@ async function loadExceptionPreview() {
   exceptionPreviewLoading.value = true
   try {
     const r = await exceptionApi.getExceptionDevices(
-      { cit: 'oplus_all', conditions: 'recently', param: 'rwx' },
+      { cit: 'sjxy_all', conditions: 'recently', param: 'rwx' },
       { page: 1, size: 6 }
     )
     exceptionPreviewRows.value = r?.records || []
@@ -1240,7 +1240,7 @@ async function runExceptionBulkAction(jobId, actionName) {
   exceptionDrawer.actionLoading = true
   try {
     const res = await exceptionApi.getExceptionDevices(
-      { cit: 'oplus_all', conditions: 'recently', param: 'rwx' },
+      { cit: 'sjxy_all', conditions: 'recently', param: 'rwx' },
       { page: 1, size: total }
     )
     const allRows = res?.records || []

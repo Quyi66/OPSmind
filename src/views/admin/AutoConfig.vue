@@ -295,7 +295,7 @@ async function fetchAutomationConfigs() {
   try {
     const res = await apiService.get('/acm/api/acm/dashboard/automation', {
       params: {
-        cit: 'oplus_all',
+        cit: 'sjxy_all',
         param: keyword.value || 'x',
         size: pageSize.value,
         page: currentPage.value

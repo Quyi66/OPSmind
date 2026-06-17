@@ -32,7 +32,7 @@
             <el-form :inline="true" size="small">
               <el-form-item label="设备类型">
                 <el-select v-model="filters.cit" style="width: 140px">
-                  <el-option label="全部" value="oplus_all" />
+                  <el-option label="全部" value="sjxy_all" />
                   <el-option
                     v-for="item in resourceTypes"
                     :key="item.code"
@@ -642,7 +642,7 @@ const resourceTypes = ref([])
 
 // 筛选条件
 const filters = ref({
-  cit: 'oplus_all'
+  cit: 'sjxy_all'
 })
 
 // 自动化配置数据
@@ -897,7 +897,7 @@ watch(automationSearch, newVal => {
 
 // 自动化配置重置
 function handleAutomationReset() {
-  filters.value.cit = 'oplus_all'
+  filters.value.cit = 'sjxy_all'
   automationSearch.value = ''
   automationPage.value = 1
   loadAutomationData()
@@ -925,7 +925,7 @@ async function loadAnsibleFormOptions() {
     }
 
     // 加载分组列表
-    const groupRes = await apiService.get('/acm/api/acm/query/group/find/oplus_all')
+    const groupRes = await apiService.get('/acm/api/acm/query/group/find/sjxy_all')
     const groupData = groupRes?.data || groupRes
     groupOptions.value = Array.isArray(groupData) ? groupData : (groupData?.records || [])
   } catch (error) {

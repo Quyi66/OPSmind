@@ -10,7 +10,7 @@
       <el-form :model="filters" inline size="small">
         <el-form-item label="设备类型">
           <el-select v-model="filters.cit" placeholder="全部" style="width: 140px">
-            <el-option label="全部" value="oplus_all" />
+            <el-option label="全部" value="sjxy_all" />
             <el-option
               v-for="item in resourceTypes"
               :key="item.code"
@@ -21,7 +21,7 @@
         </el-form-item>
         <el-form-item label="状态筛选">
           <el-select v-model="filters.conditions" placeholder="筛选条件" style="width: 180px">
-            <el-option label="全部异常" value="oplus_all" />
+            <el-option label="全部异常" value="sjxy_all" />
             <el-option label="今日异常" value="today" />
             <el-option label="连通率小于50%设备" value="low" />
             <el-option label="最近一次连通失败" value="recently" />
@@ -255,7 +255,7 @@ import { apiService } from '@/core/api'
 
 const route = useRoute()
 const router = useRouter()
-const EXCEPTION_QUERY_CONDITIONS = new Set(['oplus_all', 'recently', 'recently_ok', 'today', 'low'])
+const EXCEPTION_QUERY_CONDITIONS = new Set(['sjxy_all', 'recently', 'recently_ok', 'today', 'low'])
 
 const ACTION_CONFIG = {
   checkConnectivity: {
@@ -299,7 +299,7 @@ const resourceTypes = ref([])
 
 // 筛选条件
 const filters = reactive({
-  cit: 'oplus_all',
+  cit: 'sjxy_all',
   conditions: 'recently'
 })
 
@@ -376,7 +376,7 @@ const normalizeCondition = value => {
 }
 
 const applyRouteQuery = query => {
-  filters.cit = typeof query.cit === 'string' && query.cit ? query.cit : 'oplus_all'
+  filters.cit = typeof query.cit === 'string' && query.cit ? query.cit : 'sjxy_all'
   filters.conditions = normalizeCondition(query.conditions)
   searchKeyword.value = typeof query.keyword === 'string' ? query.keyword : ''
   currentPage.value = 1
@@ -413,7 +413,7 @@ watch(searchKeyword, newVal => {
 
 // 重置
 const handleReset = () => {
-  filters.cit = 'oplus_all'
+  filters.cit = 'sjxy_all'
   filters.conditions = 'recently'
   searchKeyword.value = ''
   currentPage.value = 1

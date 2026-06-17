@@ -99,7 +99,7 @@ export function useAssetOverviewWorkbench() {
     return {
       successCount,
       failureCount,
-      anomalyCount: statsMap.oplus_all || failureCount,
+      anomalyCount: statsMap.sjxy_all || failureCount,
       todayCount: statsMap.today || 0,
       lowCount: statsMap.low || 0,
       totalConnection,
@@ -224,8 +224,8 @@ export function useAssetOverviewWorkbench() {
     governanceLoading.value = true
 
     const [groupRes, tagRes, permissionRes] = await Promise.allSettled([
-      dataManageApi.getAllGroups('oplus_all'),
-      dataManageApi.getAllTags('oplus_all'),
+      dataManageApi.getAllGroups('sjxy_all'),
+      dataManageApi.getAllTags('sjxy_all'),
       permissionApi.getTablePermission()
     ])
 
