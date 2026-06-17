@@ -5,6 +5,36 @@ import { apiService } from '@/core/api'
 
 // 数据集 API 基础路径
 const DTS_BASE = '/dts/api/dts/q/data'
+const SYS_DASHBOARD_BASE = '/svs/api/sys/dashboard'
+
+const unwrapApiData = (response) => response?.data?.data ?? response?.data
+
+const normalizeRecords = (payload) => {
+  if (!payload) return { records: [], total: 0 }
+  if (Array.isArray(payload)) {
+    return { records: payload, total: payload.length }
+  }
+  // 处理 records 格式
+  if (Array.isArray(payload.records)) {
+    return {
+      records: payload.records,
+      total: payload.total ?? payload.records.length
+    }
+  }
+  // 处理 Spring Data Page 格式 (content + totalElements)
+  if (Array.isArray(payload.content)) {
+    return {
+      records: payload.content,
+      total: payload.totalElements ?? payload.total ?? payload.content.length
+    }
+  }
+  return { records: [], total: 0 }
+}
+
+const wrapRecordsResponse = (response) => ({
+  ...response,
+  data: normalizeRecords(unwrapApiData(response))
+})
 
 /**
  * 软件包统计 API
@@ -16,13 +46,7 @@ export const softwareStatsApi = {
    * 返回 KPI 统计数据：scan_count_host, scan_count_repos, scan_count_pkgs, scan_count_installed_pkgs
    */
   getStats() {
-    return apiService.post(`${DTS_BASE}/SPM_CURRENT_SOFTWARE_STATS_V2/`, {
-      params: {},
-      size: 10,
-      page: 1,
-      orderBy: '',
-      filter: ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-current-software-stats-v2`).then(wrapRecordsResponse)
   }
 }
 
@@ -35,13 +59,14 @@ export const hostOverviewApi = {
    * 对应数据集: SPM_MACHINE_OVERERVIEW_LIST
    */
   getList(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_MACHINE_OVERERVIEW_LIST/`, {
-      params: {},
-      page: params.page || 1,
-      size: params.size || 10,
-      orderBy: params.orderBy || 'scan_date desc',
-      filter: params.filter || ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-machine-overerview-list`, {
+      params: {
+        page: params.page || 1,
+        size: params.size || 10,
+        orderBy: params.orderBy || 'scan_date desc',
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -58,9 +83,9 @@ export const hostOverviewApi = {
    * 对应数据集: SPM_GET_PKG_MACHINE_INFO
    */
   getMachineInfo(hostId) {
-    return apiService.post(`${DTS_BASE}/SPM_GET_PKG_MACHINE_INFO/`, {
-      params: { host_id: hostId }
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-pkg-machine-info`, {
+      params: { hostId }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -68,16 +93,16 @@ export const hostOverviewApi = {
    * 对应数据集: SPM_LIST_YUM_OF_ONE_MACHIN
    */
   getMachineRepos(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_LIST_YUM_OF_ONE_MACHIN/`, {
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-list-yum-of-one-machin`, {
       params: {
-        host_id: params.hostId,
-        repoStatus: params.repoStatus || 'enabled'
-      },
-      page: params.page || 1,
-      size: params.size || 10,
-      orderBy: params.orderBy || '',
-      filter: params.filter || ''
-    })
+        hostId: params.hostId,
+        repoStatus: params.repoStatus || 'enabled',
+        page: params.page || 1,
+        size: params.size || 10,
+        orderBy: params.orderBy || '',
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -85,13 +110,15 @@ export const hostOverviewApi = {
    * 对应数据集: SPM_LIST_YUM_PKG_OF_ONE_MACHIN
    */
   getMachineAvailablePackages(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_LIST_YUM_PKG_OF_ONE_MACHIN/`, {
-      params: { host_id: params.hostId },
-      page: params.page || 1,
-      size: params.size || 10,
-      orderBy: params.orderBy || '',
-      filter: params.filter || ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-list-yum-pkg-of-one-machin`, {
+      params: {
+        hostId: params.hostId,
+        page: params.page || 1,
+        size: params.size || 10,
+        orderBy: params.orderBy || '',
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -99,13 +126,15 @@ export const hostOverviewApi = {
    * 对应数据集: SPM_CURRENT_INSTALLEND_PKGS
    */
   getMachineInstalledPackages(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_CURRENT_INSTALLEND_PKGS/`, {
-      params: { host_id: params.hostId },
-      page: params.page || 1,
-      size: params.size || 10,
-      orderBy: params.orderBy || '',
-      filter: params.filter || ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-current-installend-pkgs`, {
+      params: {
+        hostId: params.hostId,
+        page: params.page || 1,
+        size: params.size || 10,
+        orderBy: params.orderBy || '',
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -218,13 +247,15 @@ export const repoApi = {
    * @param {string} params.repoStatus - 仓库状态 enabled/disabled
    */
   getRepoList(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_LIST_REPO/`, {
-      params: params.repoStatus ? { repoStatus: params.repoStatus } : {},
-      page: params.page || 1,
-      size: params.size || 10,
-      orderBy: params.orderBy || 'scan_date desc',
-      filter: params.filter || ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-list-repo`, {
+      params: {
+        repoStatus: params.repoStatus || '',
+        page: params.page || 1,
+        size: params.size || 10,
+        orderBy: params.orderBy || 'scan_date desc',
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -232,11 +263,7 @@ export const repoApi = {
    * 对应数据集: SPM_REPO_DEFAULT_HOSTS
    */
   getRepoDefaultHosts() {
-    return apiService.post(`${DTS_BASE}/SPM_REPO_DEFAULT_HOSTS/`, {
-      params: {},
-      page: 1,
-      size: 1
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-repo-default-hosts`).then(wrapRecordsResponse)
   },
 
   /**
@@ -244,13 +271,14 @@ export const repoApi = {
    * 对应数据集: SPM_REPO_DEFAULT_HOSTS_LIST
    */
   getBaseHostList(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_REPO_DEFAULT_HOSTS_LIST/`, {
-      params: {},
-      page: params.page || 1,
-      size: params.size || 10,
-      orderBy: params.orderBy || '',
-      filter: params.filter || ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-repo-default-hosts-list`, {
+      params: {
+        page: params.page || 1,
+        size: params.size || 10,
+        orderBy: params.orderBy || '',
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -258,13 +286,14 @@ export const repoApi = {
    * 对应数据集: SPM_REPO_COFIGS
    */
   getCustomRepoList(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_REPO_COFIGS/`, {
-      params: {},
-      page: params.page || 1,
-      size: params.size || 10,
-      orderBy: params.orderBy || '',
-      filter: params.filter || ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-repo-cofigs`, {
+      params: {
+        page: params.page || 1,
+        size: params.size || 10,
+        orderBy: params.orderBy || '',
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -272,13 +301,15 @@ export const repoApi = {
    * 对应数据集: SPM_CONFIGURED_REPO
    */
   getConfiguredRepoList(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_CONFIGURED_REPO/`, {
-      params: params.repoStatus ? { repoStatus: params.repoStatus } : {},
-      page: params.page || 1,
-      size: params.size || 10,
-      orderBy: params.orderBy || 'scan_date',
-      filter: params.filter || ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-configured-repo`, {
+      params: {
+        repoStatus: params.repoStatus || '',
+        page: params.page || 1,
+        size: params.size || 10,
+        orderBy: params.orderBy || 'scan_date',
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -286,11 +317,9 @@ export const repoApi = {
    * 对应数据集: SPM_REPO_INFO_BY_REFID
    */
   getRepoInfoByRefid(refid) {
-    return apiService.post(`${DTS_BASE}/SPM_REPO_INFO_BY_REFID/`, {
-      params: { refid },
-      page: 1,
-      size: 1
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-repo-info-by-refid`, {
+      params: { refid }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -298,13 +327,15 @@ export const repoApi = {
    * 对应数据集: SPM_LIST_PACKAGE_MACHINE
    */
   getPackageMachineList(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_LIST_PACKAGE_MACHINE/`, {
-      params: { refid: params.refid },
-      page: params.page || 1,
-      size: params.size || 10,
-      orderBy: params.orderBy || 'scan_date desc',
-      filter: params.filter || ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-list-package-machine`, {
+      params: {
+        refid: params.refid,
+        page: params.page || 1,
+        size: params.size || 10,
+        orderBy: params.orderBy || 'scan_date desc',
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -428,13 +459,14 @@ export const packageApi = {
    * 对应数据集: SPM_PACKAGES_OVERERVIEW_LIST
    */
   getAvailableList(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_PACKAGES_OVERERVIEW_LIST/`, {
-      params: {},
-      page: params.page || 1,
-      size: params.size || 10,
-      orderBy: params.orderBy || '',
-      filter: params.filter || ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-packages-overerview-list`, {
+      params: {
+        page: params.page || 1,
+        size: params.size || 10,
+        orderBy: params.orderBy || '',
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -454,14 +486,14 @@ export const packageApi = {
    * 对应数据集: SPM_PACKAGES_INSTALLLED_ALL_LIST
    */
   getAllInstalledPackages(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_PACKAGES_INSTALLLED_ALL_LIST/`, {
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-packages-installled-all-list`, {
       params: {
-        available_pkg: params.availablePkg || '可升级,all'
-      },
-      page: params.page || 1,
-      size: params.size || 10,
-      filter: params.filter || ''
-    })
+        availablePkg: params.availablePkg || '可升级,all',
+        page: params.page || 1,
+        size: params.size || 10,
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -487,16 +519,14 @@ export const packageApi = {
    * 对应数据集: SPM_INSTALLED_PKGS_MACHINE
    */
   getInstalledPkgMachines(params = {}) {
-    // 增加 cacheBuster 避免缓存
-    const url = `${DTS_BASE}/SPM_INSTALLED_PKGS_MACHINE/?cacheBuster=${Date.now()}`
-    return apiService.post(url, {
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-installed-pkgs-machine`, {
       params: {
-        pkgs: params.pkgId
-      },
-      page: params.page || 1,
-      size: params.size || 10,
-      filter: params.filter || ''
-    })
+        pkgs: params.pkgId,
+        page: params.page || 1,
+        size: params.size || 10,
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   }
 }
 

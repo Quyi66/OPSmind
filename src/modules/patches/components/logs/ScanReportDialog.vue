@@ -303,21 +303,32 @@ function formatFilenameTimestamp(timestamp) {
   return `${parts[0]}${parts[1]}${parts[2]}${parts[3]}${parts[4]}${parts[5]}`
 }
 
+function adaptScanDetailResponse(res) {
+  const payload = res.data?.data
+  let records = []
+  if (payload) {
+    if (Array.isArray(payload)) {
+      records = payload
+    } else if (Array.isArray(payload.records)) {
+      records = payload.records
+    } else if (Array.isArray(payload.content)) {
+      records = payload.content
+    }
+  }
+  return { records }
+}
+
 async function loadSummary() {
   if (!props.runId) return
   summaryLoading.value = true
   try {
     const api = useApi()
-    const cacheBuster = Date.now()
-    const response = await api.post(
-      `/dts/api/dts/q/data/VAP2_SCAN_HIST/?cacheBuster=${cacheBuster}`,
-      {
-        params: {
-          run_id: props.runId
-        }
+    const res = await api.get('/vap/api/vap/dashboard/scan-hist', {
+      params: {
+        runId: props.runId
       }
-    )
-    const records = response?.data?.records || response?.records || []
+    })
+    const records = res.data?.data || []
     summary.value = records[0] || { machine_count: 0, scan_timestamp: '' }
   } catch (error) {
     ElMessage.error(`加载扫描摘要失败: ${error.message || '未知错误'}`)
@@ -331,20 +342,30 @@ async function loadDetail() {
   loading.value = true
   try {
     const api = useApi()
-    const cacheBuster = Date.now()
-    const response = await api.post(
-      `/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL/?cacheBuster=${cacheBuster}`,
-      {
-        params: {
-          run_id: props.runId
-        },
+    const res = await api.get('/vap/api/vap/dashboard/hist-scan-detail', {
+      params: {
+        runId: props.runId,
         page: pagination.value.page,
         size: pagination.value.pageSize
       }
-    )
-    const data = response?.data || response || {}
-    tableData.value = data.records || []
-    pagination.value.total = data.total || tableData.value.length
+    })
+    const payload = res.data?.data
+    let records = []
+    let total = 0
+    if (payload) {
+      if (Array.isArray(payload)) {
+        records = payload
+        total = payload.length
+      } else if (Array.isArray(payload.records)) {
+        records = payload.records
+        total = payload.total ?? payload.records.length
+      } else if (Array.isArray(payload.content)) {
+        records = payload.content
+        total = payload.totalElements ?? payload.total ?? payload.content.length
+      }
+    }
+    tableData.value = records
+    pagination.value.total = total
   } catch (error) {
     ElMessage.error(`加载扫描详情失败: ${error.message || '未知错误'}`)
   } finally {
@@ -472,26 +493,19 @@ function safeJsonArray(value) {
 
 async function fetchHostDetail({ hostId, runId }) {
   const api = useApi()
-  const cacheBuster = Date.now()
   const [vulsRes, patchesRes, installedRes, affectedRes] = await Promise.all([
-    api.post(`/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL_BY_VULS/?cacheBuster=${cacheBuster}`, {
-      params: { host_id: hostId, run_id: runId }
-    }),
-    api.post(`/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL_BY_PACTHS/?cacheBuster=${cacheBuster}`, {
-      params: { host_id: hostId, run_id: runId }
-    }),
-    api.post(
-      `/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL_BY_INSTALL_PKGS/?cacheBuster=${cacheBuster}`,
-      {
-        params: { host_id: hostId, run_id: runId }
-      }
-    ),
-    api.post(
-      `/dts/api/dts/q/data/VAP2_HIST_SCAN_DETAIL_BY_AFFECTED_PKGS/?cacheBuster=${cacheBuster}`,
-      {
-        params: { host_id: hostId, run_id: runId }
-      }
-    )
+    api.get('/vap/api/vap/dashboard/hist-scan-detail-by-vuls', {
+      params: { hostId, runId }
+    }).then(adaptScanDetailResponse),
+    api.get('/vap/api/vap/dashboard/hist-scan-detail-by-patches', {
+      params: { hostId, runId }
+    }).then(adaptScanDetailResponse),
+    api.get('/vap/api/vap/dashboard/hist-scan-detail-by-install-pkgs', {
+      params: { hostId, runId }
+    }).then(adaptScanDetailResponse),
+    api.get('/vap/api/vap/dashboard/hist-scan-detail-by-affected-pkgs', {
+      params: { hostId, runId }
+    }).then(adaptScanDetailResponse)
   ])
 
   const vulsRecord = (vulsRes?.data?.records || vulsRes?.records || [])[0] || {}

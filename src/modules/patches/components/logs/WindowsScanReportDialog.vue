@@ -122,16 +122,12 @@ async function loadSummary() {
   summaryLoading.value = true
   try {
     const api = useApi()
-    const cacheBuster = Date.now()
-    const response = await api.post(
-      `/dts/api/dts/q/data/VAP2_WIN_SCAN_HIST/?cacheBuster=${cacheBuster}`,
-      {
-        params: {
-          run_id: props.runId
-        }
+    const res = await api.get('/vap/api/vap/dashboard/win-scan-hist', {
+      params: {
+        runId: props.runId
       }
-    )
-    const records = response?.data?.records || response?.records || []
+    })
+    const records = res.data?.data || []
     summary.value = records[0] || { scan_date: '', machine_count: 0 }
   } catch (error) {
     ElMessage.error(`加载扫描摘要失败: ${error.message || '未知错误'}`)
@@ -145,20 +141,30 @@ async function loadDetail() {
   loading.value = true
   try {
     const api = useApi()
-    const cacheBuster = Date.now()
-    const response = await api.post(
-      `/dts/api/dts/q/data/VAP2_HIST_WIN_SCAN_DETAIL/?cacheBuster=${cacheBuster}`,
-      {
-        params: {
-          runId: props.runId
-        },
+    const res = await api.get('/vap/api/vap/dashboard/hist-win-scan-detail', {
+      params: {
+        runId: props.runId,
         page: pagination.value.page,
         size: pagination.value.pageSize
       }
-    )
-    const data = response?.data || response || {}
-    tableData.value = data.records || []
-    pagination.value.total = data.total || tableData.value.length
+    })
+    const payload = res.data?.data
+    let records = []
+    let total = 0
+    if (payload) {
+      if (Array.isArray(payload)) {
+        records = payload
+        total = payload.length
+      } else if (Array.isArray(payload.records)) {
+        records = payload.records
+        total = payload.total ?? payload.records.length
+      } else if (Array.isArray(payload.content)) {
+        records = payload.content
+        total = payload.totalElements ?? payload.total ?? payload.content.length
+      }
+    }
+    tableData.value = records
+    pagination.value.total = total
   } catch (error) {
     ElMessage.error(`加载扫描详情失败: ${error.message || '未知错误'}`)
   } finally {
