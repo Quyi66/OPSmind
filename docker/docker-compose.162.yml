@@ -1,0 +1,102 @@
+version: '3'
+services:
+  mariadb:
+    image: mariadb:latest
+    restart: unless-stopped
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: 1qaz@WSX
+      MYSQL_DATABASE: oplus
+      MYSQL_USER: oplus
+      MYSQL_PASSWORD: Oplus@888!
+    ports:
+      - "3306:3306"
+    volumes:
+      - "sjxy-mysql:/var/lib/mysql"
+    networks:
+      - internal
+
+  opsmind:
+    restart: unless-stopped
+    container_name: sjxy
+    image: sjxy:${SJXY_VERSION:-3.0.7}
+    networks:
+      - sjxy
+      - internal
+    ports:
+      - '23:22'
+      - '8080:80'
+      - '6379:6379'
+      - '8099:8099'
+    volumes:
+      # todo：根据具体纳管用户来修改 /root/.ssh 和 /root/.ansible
+      # todo：宿主机需先执行 ssh-keygen -t rsa && cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+      - "/root/.ssh:/root/.ssh"
+      - "/root/.ansible:/root/.ansible"
+      - "sjxy-assets:/opt/sjxy/assets"
+      - "sjxy-logs:/opt/sjxy/logs"
+      - "/tmp:/tmp"
+      - ".sjxy-env.yml:/opt/sjxy/.sjxy-env.yml"
+    environment:
+      # todo: 若DB信息有差异，请修改
+      - SJXY_DB_IP=mariadb
+      - SJXY_DB_PORT=3306
+      # todo: （单一docker节点不用填写）其他节点地址
+      - SJXY_CLUSTER_ADDRESS=
+      - INIT_MODULE_DATA=yes
+      - LICENSE_ENABLED=${LICENSE_ENABLED:-false}
+      - AUTO_GENERATE_LICENSE=${AUTO_GENERATE_LICENSE:-true}
+      - LICENSE_CUSTOM=${LICENSE_CUSTOM:-sjxy}
+      - LICENSE_MODULE=${LICENSE_MODULE:-all}
+      - LICENSE_EXPIRE_DATE=${LICENSE_EXPIRE_DATE:-2099-12-31}
+      - SJXY_DB_ROOT_USER=oplus
+      - SJXY_DB_ROOT_PWD=Oplus@888!
+      - SJXY_DB_ADMIN_USER=root
+      - SJXY_DB_ADMIN_PWD=1qaz@WSX
+      - LANG=en_US.UTF-8
+    privileged: true
+    tty: true
+    stdin_open: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - mariadb
+    links:
+      - 'mariadb:mariadb'
+
+  opsmind-web:
+    restart: unless-stopped
+    container_name: sjxy-web
+    image: opsmind-web:${WEB_VERSION:-2.1.1}
+    networks:
+      - sjxy
+    ports:
+      - '80:80'
+      - '443:443'
+    entrypoint: ["/entrypoint.sh"]
+    command: ["nginx", "-g", "daemon off;"]
+    volumes:
+      - "sjxy-ssl:/etc/nginx/ssl"
+    environment:
+      - BACKEND_URL=http://192.168.1.162:8080
+      - DIFY_BASE_URL=http://192.168.1.10:3000
+      - DIFY_TOKEN=CqLqxTQL8FeNqAqK
+      - BACKEND_HOST=opsmind
+      - BACKEND_PORT=80
+      - SSL_DOMAINS=192.168.1.162,localhost
+
+networks:
+  sjxy:
+    driver: bridge
+  internal:
+    driver: bridge
+
+volumes:
+  sjxy-assets:
+    driver: local
+  sjxy-logs:
+    driver: local
+  sjxy-mysql:
+    driver: local
+  sjxy-ssl:
+    driver: local

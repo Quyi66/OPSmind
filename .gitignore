@@ -57,3 +57,6 @@ $RECYCLE.BIN/
 # Temporary files
 *.tmp
 *.temp
+
+# SSL certificates (self-signed, do not commit private keys)
+docker/nginx/ssl/
