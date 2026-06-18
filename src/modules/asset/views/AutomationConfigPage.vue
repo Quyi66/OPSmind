@@ -773,7 +773,7 @@ async function loadAutomationData() {
     const response = await automationApi.getAutomationConfigs(
       {
         cit: filters.value.cit,
-        param: 'x'
+        //param: 'x'
       },
       {
         size: automationPageSize.value,
