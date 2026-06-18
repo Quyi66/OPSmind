@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
 import { createHash } from 'node:crypto'
-import { writeFileSync } from 'node:fs'
+import { writeFileSync, readFileSync, existsSync } from 'node:fs'
 
 // Element Plus 按需导入插件
 import AutoImport from 'unplugin-auto-import/vite'
@@ -27,6 +27,23 @@ function normalizeTarget(value: string | undefined, fallback: string): string {
     return fallback
   }
   return sanitized
+}
+
+/**
+ * 加载本地 SSL 证书（用于 Vite dev server HTTPS）
+ * 证书不存在时返回 undefined，Vite 将回退到 HTTP
+ */
+function loadDevSSL(): { key: Buffer; cert: Buffer } | undefined {
+  const keyPath = resolve(__dirname, 'docker/nginx/ssl/server.key')
+  const certPath = resolve(__dirname, 'docker/nginx/ssl/server.crt')
+  if (existsSync(keyPath) && existsSync(certPath)) {
+    return {
+      key: readFileSync(keyPath),
+      cert: readFileSync(certPath)
+    }
+  }
+  console.warn('[vite-config] SSL certs not found at docker/nginx/ssl/, falling back to HTTP.')
+  return undefined
 }
 
 // 构建时生成唯一 hash，用于前端版本更新检测
@@ -174,6 +191,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       host: env.VITE_DEV_HOST || '0.0.0.0',
       open: env.VITE_DEV_OPEN === 'true',
       cors: env.VITE_DEV_CORS === 'true',
+      https: loadDevSSL(),
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
         Pragma: 'no-cache',
