@@ -624,7 +624,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Search, Refresh, RefreshRight, Edit, Delete } from '@element-plus/icons-vue'
+import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { automationApi, dataManageApi } from '../api'
 import { apiService } from '@/core/api'
@@ -697,20 +697,74 @@ function parseStringListValue(rawValue) {
 }
 
 function normalizeAnsibleConfigOptions(records = []) {
-  return records.filter(item => item?.id)
+  return records.map(item => normalizeAnsibleRecord(item)).filter(item => item?.id)
+}
+
+function normalizeAnsibleRecord(record = {}) {
+  const groupIdList = Array.isArray(record.groupIds)
+    ? record.groupIds
+    : `${record.groupIds || record.group_ids || ''}`
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean)
+
+  return {
+    ...record,
+    name: record.name || record.ansibleConfigName || record.ansible_config_name || '',
+    param: record.param || '',
+    instanceGroup: record.instanceGroup ?? record.instance_group ?? '',
+    aapInstanceGroup: record.aapInstanceGroup ?? record.aap_instance_group ?? '',
+    loginUser: record.loginUser ?? record.login_user ?? '',
+    loginPasswd: record.loginPasswd ?? record.login_passwd ?? '',
+    runUser: record.runUser ?? record.run_user ?? '',
+    runPasswd: record.runPasswd ?? record.run_passwd ?? '',
+    groupIds: groupIdList,
+    group_paths: record.group_paths ?? record.groupPaths ?? '',
+    updatedAt: record.updatedAt || record.updated_at || '',
+    createdAt: record.createdAt || record.created_at || ''
+  }
+}
+
+function normalizeAutomationRecord(record = {}) {
+  const ansibleConfigId =
+    record.ansibleConfigId || record.ansible_config_id || record.ansibleVarsSetId || ''
+  const matchedConfig = ansibleConfigOptions.value.find(
+    item => `${item.id}` === `${ansibleConfigId}`
+  )
+
+  return {
+    ...record,
+    ciId: record.ciId || record.ci_id || record.cid || '',
+    hostKey: record.hostKey || record.host_key || record.ip || '',
+    ip: record.ip || record.hostKey || record.host_key || '',
+    ciType: record.ciType || record.ci_type || '',
+    instanceGroup: record.instanceGroup ?? record.instance_group ?? '',
+    aapInstanceGroup: record.aapInstanceGroup ?? record.aap_instance_group ?? '',
+    loginUser: record.loginUser ?? record.login_user ?? '',
+    runUser: record.runUser ?? record.run_user ?? '',
+    ansibleConfigId,
+    ansibleVarsSetId:
+      record.ansibleVarsSetId || record.ansible_config_id || record.ansibleConfigId || '',
+    ansibleConfigName:
+      record.ansibleConfigName || record.ansible_config_name || matchedConfig?.name || '',
+    updatedAt: record.updatedAt || record.updated_at || '',
+    updated_at: record.updated_at || record.updatedAt || ''
+  }
 }
 
 // 计算属性 - 直接使用后端返回的数据（后端已筛选）
 const filteredAutomationData = computed(() => {
-  return automationData.value
+  return automationData.value.map(item => normalizeAutomationRecord(item))
 })
 
 const filteredAnsibleData = computed(() => {
+  const normalizedData = ansibleData.value.map(item => normalizeAnsibleRecord(item))
+
   if (!ansibleSearch.value) {
-    return ansibleData.value
+    return normalizedData
   }
   const keyword = ansibleSearch.value.toLowerCase()
-  return ansibleData.value.filter(item => {
+  return normalizedData.filter(item => {
     return (
       item.name?.toLowerCase().includes(keyword) ||
       item.instanceGroup?.toLowerCase().includes(keyword) ||
@@ -772,14 +826,14 @@ async function loadAutomationData() {
   try {
     const response = await automationApi.getAutomationConfigs(
       {
-        cit: filters.value.cit,
+        cit: filters.value.cit
         //param: 'x'
       },
       {
         size: automationPageSize.value,
         page: automationPage.value,
         filter: automationSearch.value
-          ? `hostKey|ci_type|loginUser|instanceGroup:*${automationSearch.value}*`
+          ? `ip|hostKey|ci_id|ci_type|login_user|loginUser|instance_group|instanceGroup:*${automationSearch.value}*`
           : ''
       }
     )
@@ -800,9 +854,9 @@ async function loadAnsibleData() {
     // ACM_GET_ALL_ANSIBLE_SET_REST → GET /acm/api/acm/auto/ansible/find/all
     const res = await apiService.get('/acm/api/acm/auto/ansible/find/all')
     const records = res?.data || res || []
-    ansibleData.value = Array.isArray(records) ? records : (records?.records || [])
+    ansibleData.value = Array.isArray(records) ? records : records?.records || []
     // 更新配置选项（供其它下拉使用）
-    ansibleConfigOptions.value = ansibleData.value
+    ansibleConfigOptions.value = normalizeAnsibleConfigOptions(ansibleData.value)
   } catch (error) {
     console.error('加载Ansible配置失败:', error)
     ElMessage.error('加载Ansible配置失败')
@@ -907,7 +961,7 @@ function handleAutomationReset() {
 async function loadAnsibleFormOptions() {
   try {
     const engineData = await automationApi.getScriptEngine()
-    scriptEngine.value = engineData?.value || 'ansible'
+    scriptEngine.value = resolveScriptEngineResponse(engineData)
     instanceGroupOptions.value = []
     aapInstanceGroupOptions.value = []
 
@@ -921,13 +975,13 @@ async function loadAnsibleFormOptions() {
     if (scriptEngine.value === 'aap') {
       const aapRes = await apiService.get('/jao/api/jao/aap/instance_group')
       const aapData = aapRes?.data || aapRes
-      aapInstanceGroupOptions.value = Array.isArray(aapData) ? aapData : (aapData?.records || [])
+      aapInstanceGroupOptions.value = Array.isArray(aapData) ? aapData : aapData?.records || []
     }
 
     // 加载分组列表
     const groupRes = await apiService.get('/acm/api/acm/query/group/find/sjxy_all')
     const groupData = groupRes?.data || groupRes
-    groupOptions.value = Array.isArray(groupData) ? groupData : (groupData?.records || [])
+    groupOptions.value = Array.isArray(groupData) ? groupData : groupData?.records || []
   } catch (error) {
     console.error('加载表单选项失败:', error)
   }
@@ -948,16 +1002,18 @@ async function handleEditAutomation(row) {
   editAutomationDialogVisible.value = true
   automationFormLoading.value = true
 
+  const normalizedRow = normalizeAutomationRecord(row)
+
   automationForm.value = {
-    id: row.id,
-    ciId: row.cid || row.ciId || row.ci_id,
-    ip: row.hostKey,
-    ansibleConfigId: row.ansibleVarsSetId,
-    instanceGroup: row.instanceGroup || '',
-    aapInstanceGroup: row.aapInstanceGroup || '',
-    loginUser: row.loginUser || '',
+    id: normalizedRow.id,
+    ciId: normalizedRow.ciId,
+    ip: normalizedRow.ip,
+    ansibleConfigId: normalizedRow.ansibleConfigId,
+    instanceGroup: normalizedRow.instanceGroup || '',
+    aapInstanceGroup: normalizedRow.aapInstanceGroup || '',
+    loginUser: normalizedRow.loginUser || '',
     loginPasswd: '',
-    runUser: row.runUser || '',
+    runUser: normalizedRow.runUser || '',
     runPasswd: ''
   }
 
@@ -972,7 +1028,7 @@ async function handleEditAutomation(row) {
 async function loadAutomationFormOptions() {
   try {
     const engineData = await automationApi.getScriptEngine()
-    scriptEngine.value = engineData?.value || 'ansible'
+    scriptEngine.value = resolveScriptEngineResponse(engineData)
     instanceGroupOptions.value = []
     aapInstanceGroupOptions.value = []
 
@@ -983,18 +1039,25 @@ async function loadAutomationFormOptions() {
     if (scriptEngine.value === 'aap') {
       const aapRes = await apiService.get('/jao/api/jao/aap/instance_group')
       const aapData = aapRes?.data || aapRes
-      aapInstanceGroupOptions.value = Array.isArray(aapData) ? aapData : (aapData?.records || [])
+      aapInstanceGroupOptions.value = Array.isArray(aapData) ? aapData : aapData?.records || []
     }
 
     // 加载自动化配置名称列表
-    ansibleConfigOptions.value = await automationApi.getAllAssetAutoConfigOptions()
+    ansibleConfigOptions.value = normalizeAnsibleConfigOptions(
+      await automationApi.getAllAssetAutoConfigOptions()
+    )
   } catch (error) {
     console.error('加载自动化配置表单选项失败:', error)
   }
 }
 
 function getGroupPathList(row) {
-  return (row?.group_paths || '')
+  const groupPaths = parseStringListValue(row?.group_paths ?? row?.groupPaths)
+  if (groupPaths.length > 0) {
+    return groupPaths.map(item => `${item}`.trim()).filter(Boolean)
+  }
+
+  return `${row?.group_paths ?? row?.groupPaths ?? ''}`
     .split(',')
     .map(item => item.trim())
     .filter(Boolean)
@@ -1063,17 +1126,19 @@ async function handleAddAnsibleConfig() {
 
 // 编辑Ansible配置
 async function handleEditAnsible(row) {
+  const normalizedRow = normalizeAnsibleRecord(row)
+
   ansibleForm.value = {
-    id: row.id,
-    name: row.name,
-    instanceGroup: row.instanceGroup,
-    aapInstanceGroup: row.aapInstanceGroup,
-    groupIds: row.groupIds ? row.groupIds.split(',') : [],
-    loginUser: row.loginUser,
+    id: normalizedRow.id,
+    name: normalizedRow.name,
+    instanceGroup: normalizedRow.instanceGroup,
+    aapInstanceGroup: normalizedRow.aapInstanceGroup,
+    groupIds: normalizedRow.groupIds,
+    loginUser: normalizedRow.loginUser,
     loginPasswd: '',
-    runUser: row.runUser,
+    runUser: normalizedRow.runUser,
     runPasswd: '',
-    param: row.param
+    param: normalizedRow.param
   }
   editAnsibleDialogVisible.value = true
   ansibleFormLoading.value = true

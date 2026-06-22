@@ -191,6 +191,7 @@ const currentPage = ref(1)
 
 // Data rows
 const rows = ref<any[]>([])
+const autoConfigOptions = ref<any[]>([])
 const loading = ref(false)
 
 // Batch update dialog state
@@ -231,6 +232,39 @@ const pageFrom = computed(() => {
   return (currentPage.value - 1) * pageSize.value + 1
 })
 const pageTo = computed(() => Math.min(filteredRows.value.length, currentPage.value * pageSize.value))
+
+function normalizeAutoConfigOption(option: any) {
+  return {
+    ...option,
+    id: option?.id || '',
+    name: option?.name || option?.ansibleConfigName || option?.ansible_config_name || ''
+  }
+}
+
+function normalizeAutomationRow(record: any) {
+  const ansibleConfigId =
+    record?.ansibleConfigId || record?.ansible_config_id || record?.ansibleVarsSetId || ''
+  const matchedConfig = autoConfigOptions.value.find(
+    (item: any) => `${item.id}` === `${ansibleConfigId}`
+  )
+
+  return {
+    id: record?.id,
+    cid: record?.cid || record?.ciId || record?.ci_id || '',
+    assetCode: record?.ci_type || record?.ciType || '',
+    ip: record?.ip || record?.hostKey || record?.host_key || '',
+    name:
+      record?.ansibleConfigName ||
+      record?.ansible_config_name ||
+      matchedConfig?.name ||
+      '',
+    instanceGroup: record?.instanceGroup ?? record?.instance_group ?? '',
+    aapGroup: record?.aapInstanceGroup ?? record?.aap_instance_group ?? '',
+    loginUser: record?.loginUser ?? record?.login_user ?? '',
+    execUser: record?.runUser ?? record?.run_user ?? '',
+    updatedAt: record?.updated_at || record?.updatedAt || ''
+  }
+}
 
 function editRow(row) {
   ElMessage.info(`编辑：${row.ip}`)
@@ -290,6 +324,17 @@ async function fetchResourceTypes() {
   }
 }
 
+async function fetchAutoConfigOptions() {
+  try {
+    const res = await apiService.get('/svs/api/sys/dashboard/all-asset-auto-config')
+    const payload = res?.data?.data ?? res?.data ?? []
+    const list = Array.isArray(payload) ? payload : payload?.records || []
+    autoConfigOptions.value = list.map((item: any) => normalizeAutoConfigOption(item))
+  } catch (e) {
+    autoConfigOptions.value = []
+  }
+}
+
 async function fetchAutomationConfigs() {
   loading.value = true
   try {
@@ -302,19 +347,8 @@ async function fetchAutomationConfigs() {
       }
     })
     const payload = res?.data?.data ?? res?.data ?? []
-    const list = Array.isArray(payload) ? payload : (payload?.records || [])
-    rows.value = list.map((r: any) => ({
-      id: r.id,
-      cid: r.cid,
-      assetCode: r.ci_type || '',
-      ip: r.hostKey || '',
-      name: r.ansibleConfigName || '',
-      instanceGroup: r.instanceGroup || '',
-      aapGroup: r.aapInstanceGroup || '',
-      loginUser: r.loginUser || '',
-      execUser: r.runUser || '',
-      updatedAt: r.updated_at || r.updatedAt || ''
-    }))
+    const list = Array.isArray(payload) ? payload : payload?.records || []
+    rows.value = list.map((r: any) => normalizeAutomationRow(r))
   } catch (e) {
     ElMessage.error('获取连接凭据失败')
   } finally {
@@ -329,6 +363,7 @@ function refreshData() {
 
 onMounted(async () => {
   await fetchResourceTypes()
+  await fetchAutoConfigOptions()
   await fetchAutomationConfigs()
 })
 </script>
