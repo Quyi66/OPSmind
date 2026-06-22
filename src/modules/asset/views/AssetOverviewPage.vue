@@ -2074,6 +2074,7 @@ onUnmounted(() => {
   background: var(--aw-panel-bg);
   flex-direction: column;
   min-height: 138px;
+  max-height: 150px;
   overflow: hidden;
   box-shadow: 0 16px 32px -24px rgba(15, 23, 42, 0.42);
   transition:
