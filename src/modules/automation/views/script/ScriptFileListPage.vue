@@ -407,6 +407,7 @@
       :repo="currentRepo"
       :path="revisionFile?.path || ''"
       @rollback="loadFiles"
+      @open-file="handleRevisionFileOpen"
     />
   </div>
 </template>
@@ -711,6 +712,24 @@ function goDir(dir) {
 
 // 审批历史中点击文件路径，直接打开文件内容弹窗
 function handleHistoryFileOpen(payload) {
+  const path = typeof payload === 'string' ? payload : payload?.path
+  if (!path) return
+
+  const repoFromPayload = typeof payload === 'object' ? payload.repo : ''
+  openFileContent(
+    {
+      path,
+      name: path.split('/').pop()
+    },
+    {
+      repoType: 'git',
+      repo: repoFromPayload || currentRepo.value,
+      mode: 'view'
+    }
+  )
+}
+
+function handleRevisionFileOpen(payload) {
   const path = typeof payload === 'string' ? payload : payload?.path
   if (!path) return
 
