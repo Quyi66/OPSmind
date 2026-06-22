@@ -217,7 +217,7 @@ function extractExecutionStatus(source) {
 /** 根据状态更新提示并处理轮询 */
 function handleStatusTransition(status, runId) {
   executionStatus.value = status || ''
-  if (status === 'WAITING' && runId) {
+  if (['WAITING', 'RUNNING'].includes(status) && runId) {
     scheduleResultPolling(runId)
   } else {
     stopResultPolling()

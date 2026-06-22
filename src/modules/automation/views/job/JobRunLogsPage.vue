@@ -489,8 +489,11 @@ function formatStats(statsJson) {
 }
 
 function canRerun(row) {
+  const effectiveRunId = String(row?.runId ?? row?.id ?? '')
   return (
     row.job_type === 'script' &&
+    effectiveRunId &&
+    !effectiveRunId.startsWith('step_') &&
     row.status !== 'WAITING' &&
     row.status !== 'RUNNING' &&
     row.status !== 'CALLBACK'
@@ -508,6 +511,12 @@ function handleViewResult(row) {
 
 async function handleRerun(row) {
   try {
+    const effectiveRunId = String(row?.runId ?? row?.id ?? '')
+    if (!effectiveRunId || effectiveRunId.startsWith('step_')) {
+      ElMessage.warning('聚合步骤视图不支持按运行 ID 重新执行，请切换到单个任务记录后重试')
+      return
+    }
+
     await ElMessageBox.confirm(
       `确定要重新启动运维工具 "${row.job_title}" 吗？`,
       '重新启动运维工具',
@@ -516,7 +525,7 @@ async function handleRerun(row) {
 
     loading.value = true
     try {
-      await jaoApi.rerunJob(row.job_id, row.id)
+      await jaoApi.rerunJob(row.job_id, effectiveRunId)
       ElMessage.success('运维工具已重新启动')
       fetchData()
     } catch (error) {

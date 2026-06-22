@@ -128,6 +128,16 @@ export const getExecuteResult = runId => {
   return useApi().get(`/jao/api/jao/runlogs/${runId}/result`)
 }
 
+/** 检查执行作业状态 */
+export const checkExecuteResult = runId => {
+  return useApi().get(`/jao/api/jao/runlogs/${runId}/check-result`)
+}
+
+/** 获取运行中主机 */
+export const getRunningHosts = runId => {
+  return useApi().get(`/jao/api/jao/jobs/${runId}/running-hosts`)
+}
+
 /** 查询作业运行记录 */
 export const fetchJobRunLogs = payload => {
   return useApi().post('/dts/api/dts/q/data/JAO_LIST_RUN_LOGS/', payload, {
@@ -309,6 +319,11 @@ export const deleteFlow = flowId => {
 /** 创建流程实例(执行流程) */
 export const createFlowInstance = data => {
   return useApi().put('/jao/api/jao/flow-instances', data)
+}
+
+/** 执行流程模板并传入运行参数 */
+export const runFlowWithParams = (flowId, data = {}) => {
+  return useApi().post(`/jao/api/jao/flow-instances/run-with-params/${flowId}`, data)
 }
 
 /** 获取流程实例详情（用于查看） */
