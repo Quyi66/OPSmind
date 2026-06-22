@@ -247,10 +247,10 @@
                       <i class="fa fa-pencil fa-fw" />
                       修改信息
                     </el-dropdown-item>
-                    <el-dropdown-item v-if="!row.directory && repoType === 'git'" command="testRun">
+                    <!-- <el-dropdown-item v-if="!row.directory && repoType === 'git'" command="testRun">
                       <i class="fa fa-chevron-right fa-fw" />
                       测试运行
-                    </el-dropdown-item>
+                    </el-dropdown-item> -->
                     <el-dropdown-item v-if="!row.directory && repoType === 'git'" command="history">
                       <i class="fa fa-comment-alt-dots fa-fw" />
                       审批历史
@@ -354,9 +354,11 @@
 
     <FileContentDialog
       v-model="contentDialogVisible"
+      :open-mode="contentDialogMode"
       :repo-type="contentRepoType"
       :repo="contentRepo || currentRepo"
       :file="currentFile"
+      @updated="handleContentUpdated"
     />
 
     <GitRepoListDialog
@@ -455,6 +457,7 @@ const clipboardDir = ref('')
 const hideOplus = ref(true) // 是否隐藏内置应用脚本目录(oplus)
 const contentRepo = ref('') // 用于文件内容弹窗的 repo（审批历史可返回真实 repo）
 const contentRepoType = ref(props.repoType) // 用于文件内容弹窗的仓库类型（审批历史需要强制用 git）
+const contentDialogMode = ref('view') // 文件内容弹窗打开模式：预览或直接进入修改信息
 
 // 弹窗状态
 const scriptDialogVisible = ref(false)
@@ -712,13 +715,17 @@ function handleHistoryFileOpen(payload) {
   if (!path) return
 
   const repoFromPayload = typeof payload === 'object' ? payload.repo : ''
-  contentRepoType.value = 'git'
-  contentRepo.value = repoFromPayload || currentRepo.value
-  currentFile.value = {
-    path,
-    name: path.split('/').pop()
-  }
-  contentDialogVisible.value = true
+  openFileContent(
+    {
+      path,
+      name: path.split('/').pop()
+    },
+    {
+      repoType: 'git',
+      repo: repoFromPayload || currentRepo.value,
+      mode: 'view'
+    }
+  )
 }
 
 // 进入内置应用脚本目录
@@ -733,11 +740,20 @@ function handleFileClick(file) {
   if (file.directory) {
     goDir(file.path)
   } else if (file.conflict !== 'FileNotFound') {
-    contentRepoType.value = props.repoType
-    contentRepo.value = currentRepo.value
-    currentFile.value = file
-    contentDialogVisible.value = true
+    openFileContent(file)
   }
+}
+
+function openFileContent(file, options = {}) {
+  contentDialogMode.value = options.mode || 'view'
+  contentRepoType.value = options.repoType || props.repoType
+  contentRepo.value = options.repo || currentRepo.value
+  currentFile.value = file
+  contentDialogVisible.value = true
+}
+
+function handleContentUpdated() {
+  loadFiles()
 }
 
 // 选择变化
@@ -768,7 +784,11 @@ function handleFileAction(command, file) {
       gfsApi.downloadFile(props.repoType, currentRepo.value, file.path, file.name)
       break
     case 'edit':
-      ElMessage.info('编辑文件信息功能开发中')
+      if (file.conflict === 'FileNotFound') {
+        ElMessage.error('找不到文件，无法修改信息')
+        break
+      }
+      openFileContent(file, { mode: 'edit' })
       break
     case 'delete':
       handleDeleteSingle(file)

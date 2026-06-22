@@ -9,11 +9,14 @@
   >
     <div class="content-wrapper">
       <FileContentViewer
+        ref="viewerRef"
         v-if="file"
         :path="file.path"
         :repo-type="repoType"
         :repo="repo"
         height="100%"
+        @loaded="handleViewerLoaded"
+        @updated="handleViewerUpdated"
       />
     </div>
     <template #footer>
@@ -23,7 +26,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import FileContentViewer from '@/modules/automation/components/job/JobListView/FileContentViewer.vue'
 
 const props = defineProps({
@@ -36,18 +39,46 @@ const props = defineProps({
     type: String,
     default: '$tnt'
   },
+  openMode: {
+    type: String,
+    default: 'view'
+  },
   file: {
     type: Object,
     default: null
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'updated'])
+
+const viewerRef = ref(null)
+const shouldAutoOpenEdit = ref(false)
 
 const visible = computed({
   get: () => props.modelValue,
   set: val => emit('update:modelValue', val)
 })
+
+watch(
+  () => props.modelValue,
+  isVisible => {
+    shouldAutoOpenEdit.value = isVisible && props.openMode === 'edit'
+  },
+  { immediate: true }
+)
+
+function handleViewerLoaded() {
+  if (!shouldAutoOpenEdit.value) return
+
+  shouldAutoOpenEdit.value = false
+  nextTick(() => {
+    viewerRef.value?.openEditInfo?.()
+  })
+}
+
+function handleViewerUpdated(payload) {
+  emit('updated', payload)
+}
 </script>
 
 <style scoped>
