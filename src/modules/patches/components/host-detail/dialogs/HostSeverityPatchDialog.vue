@@ -4,7 +4,6 @@
     @update:model-value="emit('update:visible', $event)"
     :title="dialogTitle"
     width="1350px"
-    top="5vh"
     destroy-on-close
     :close-on-click-modal="false"
     class="host-severity-patch-dialog"

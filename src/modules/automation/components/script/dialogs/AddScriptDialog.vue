@@ -3,7 +3,6 @@
     v-model="visible"
     title="新建脚本"
     width="800px"
-    top="5vh"
     :close-on-click-modal="false"
     @closed="handleClosed"
   >

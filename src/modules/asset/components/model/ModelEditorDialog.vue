@@ -3,7 +3,6 @@
     v-model="visible"
     :title="modelId ? '编辑模型定义' : '添加模型定义'"
     width="90%"
-    top="5vh"
     :close-on-click-modal="false"
     destroy-on-close
     @closed="handleClosed"

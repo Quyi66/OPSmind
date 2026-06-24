@@ -155,7 +155,7 @@
         </el-form-item>
 
         <!-- Oplus纳管目标用户 -->
-        <el-form-item label="Oplus纳管目标用户">
+        <el-form-item label="纳管目标用户">
           <el-input v-model="sshForm.oplus_ansible_ssh_user" placeholder="ansible" />
         </el-form-item>
 

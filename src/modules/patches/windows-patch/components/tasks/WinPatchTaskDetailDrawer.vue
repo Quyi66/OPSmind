@@ -3,7 +3,6 @@
     v-model="visibleModel"
     title="任务详情"
     width="1100px"
-    top="5vh"
     destroy-on-close
     append-to-body
     :close-on-click-modal="false"

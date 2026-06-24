@@ -20,7 +20,6 @@
       v-model="fullscreenVisible"
       title="操作系统分布"
       width="90%"
-      top="5vh"
       destroy-on-close
       append-to-body
     >

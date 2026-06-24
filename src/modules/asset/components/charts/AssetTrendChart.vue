@@ -20,7 +20,6 @@
       v-model="fullscreenVisible"
       title="资产新增统计"
       width="90%"
-      top="5vh"
       destroy-on-close
       append-to-body
     >

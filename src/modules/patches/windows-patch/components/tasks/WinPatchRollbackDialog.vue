@@ -3,7 +3,6 @@
     v-model="visibleModel"
     title="补丁回滚向导"
     width="1000px"
-    top="5vh"
     destroy-on-close
     append-to-body
     class="install-dialog win-patch-rollback-wizard"

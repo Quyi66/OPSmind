@@ -20,7 +20,6 @@
       v-model="fullscreenVisible"
       title="分组内资产分布"
       width="90%"
-      top="5vh"
       destroy-on-close
       append-to-body
     >

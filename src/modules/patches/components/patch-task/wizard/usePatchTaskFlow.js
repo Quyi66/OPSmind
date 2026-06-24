@@ -37,7 +37,8 @@ export function usePatchTaskFlow({
   backendRestartReason,
   installConfig,
   resetScriptState,
-  hasFixedHosts
+  hasFixedHosts,
+  resetHostAllSelected
 }) {
   function resetInstallState() {
     stopPolling()
@@ -52,6 +53,7 @@ export function usePatchTaskFlow({
     if (!hasFixedHosts.value) {
       selectedHosts.value = []
       confirmedHosts.value = []
+      if (typeof resetHostAllSelected === 'function') resetHostAllSelected()
     }
     taskStatus.value = ''
     taskErrorMessage.value = ''
