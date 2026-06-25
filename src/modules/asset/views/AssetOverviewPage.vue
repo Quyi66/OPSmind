@@ -767,6 +767,7 @@ import { translateI18nKey } from '@/utils/i18n'
 import { assetApi, dataManageApi, exceptionApi, operationLogApi } from '../api'
 import { useAssetOverviewWorkbench } from '../utils/useAssetOverviewWorkbench'
 import { useAssetWorkbenchDrawers } from '../composables/useAssetWorkbenchDrawers'
+import { ensureArray, ensurePositiveInteger, normalizePagedResponse } from '../utils/response'
 import OsVersionDialog from '../components/overview/OsVersionDialog.vue'
 import DataAddGroupDialog from '../components/data/DataAddGroupDialog.vue'
 import DataAddTagDialog from '../components/data/DataAddTagDialog.vue'
@@ -802,6 +803,8 @@ const {
   assetTypeCount,
   connectionStats,
   governanceStats,
+  loadGovernanceData,
+  loadRecentOperations,
   refreshAll
 } = useAssetOverviewWorkbench()
 
@@ -821,7 +824,6 @@ const {
   handleExceptionPageChange,
   handleExceptionPageSizeChange,
   openFailedLogDrawer,
-  handleFailedLogClick,
   openRecentLogsDrawer,
   handleRecentLogsPageChange,
   handleRecentLogsPageSizeChange,
@@ -877,8 +879,15 @@ function handleEditTag(item) {
   currentTagItem.value = item
   editTagDialogVisible.value = true
 }
+
+async function refreshGovernanceSummary() {
+  await loadGovernanceData()
+  tagTotal.value = tagRows.value.length
+  refreshedAt.value = new Date()
+}
+
 function handleGovernanceSaved() {
-  refreshAll()
+  void refreshGovernanceSummary()
 }
 
 // 资产操作卡片 —— 按类型预览
@@ -934,13 +943,6 @@ function getConnToneClass(s) {
 function getAssetPrimaryText(item) {
   return item?.IP || item?.hostname || '-'
 }
-function getAssetBusinessText(item) {
-  return item?.业务系统 || item?.system_name || item?.ci_name || item?.name || '未命名资产'
-}
-function getAssetOsText(item) {
-  const parts = [item?.os_distro, item?.os_version].filter(Boolean)
-  return parts.length ? parts.join(' · ') : '未识别系统'
-}
 function getAssetStatusText(status) {
   return status === 1 || status === '1' ? '在线' : '离线'
 }
@@ -981,15 +983,6 @@ function getOperationLogStatusType(status) {
   }
   return typeMap[normalized] || 'info'
 }
-function formatOperationMessage(m) {
-  if (!m) return '无失败详情'
-  try {
-    const p = typeof m === 'string' ? JSON.parse(m) : m
-    return p?.exception?.message || p?.message || p?.msg_id || JSON.stringify(p)
-  } catch {
-    return String(m)
-  }
-}
 function getTrendValue(r) {
   return toNumber(r?.total ?? r?.count)
 }
@@ -1013,23 +1006,12 @@ const sortedGroups = computed(() =>
 const topAssetTypes = computed(() => sortedAssetTypes.value.slice(0, 6))
 
 const exceptionPreviewItems = computed(() =>
-  exceptionPreviewRows.value.map(r => ({
+  ensureArray(exceptionPreviewRows.value).map(r => ({
     key: r.IP || r.ci_name || `${r.updated_at || ''}-${r.CONN_RATE || ''}`,
     title: r.IP || '未识别 IP',
     badge: formatConnRate(r.CONN_RATE),
     desc: r.ci_name || '未命名资产',
     meta: `${getConnStatusText(r.CONN_LATEST_STATUS)} · ${formatDateTimeShort(r.updated_at)}`,
-    raw: r
-  }))
-)
-
-const failedLogPreviewItems = computed(() =>
-  failedLogRows.value.map(r => ({
-    key: r.run_id || `${r.start_time || ''}-${r.action || ''}`,
-    title: getOperationActionLabel(r.action),
-    badge: formatDateTimeShort(r.start_time),
-    desc: formatOperationMessage(r.message),
-    meta: `${r.ata_node || '--'} · ${r.username || '--'}`,
     raw: r
   }))
 )
@@ -1119,7 +1101,7 @@ async function switchCardType(ciType) {
       },
       { page: 1, size: cardPreviewLimit.value, filter: '' }
     )
-    cardAssets.value = (res?.records || []).slice(0, cardPreviewLimit.value)
+    cardAssets.value = normalizePagedResponse(res).records.slice(0, cardPreviewLimit.value)
   } catch {
     cardAssets.value = []
   } finally {
@@ -1142,8 +1124,9 @@ async function loadExceptionPreview() {
       { cit: 'oplus_all', conditions: 'recently', param: 'rwx' },
       { page: 1, size: 6 }
     )
-    exceptionPreviewRows.value = r?.records || []
-    exceptionDeviceTotal.value = r?.total || exceptionPreviewRows.value.length
+    const normalized = normalizePagedResponse(r)
+    exceptionPreviewRows.value = normalized.records
+    exceptionDeviceTotal.value = normalized.total
   } catch {
     exceptionPreviewRows.value = []
     exceptionDeviceTotal.value = 0
@@ -1181,7 +1164,10 @@ async function handleExceptionCollectInfo(item) {
     const result = Array.isArray(data) ? data[0] : data
     ElMessage.success('采集信息任务已发起')
     handleOperationRunTriggered(result)
-    loadAllData()
+    void loadExceptionPreview()
+    if (exceptionDrawer.visible) {
+      void openExceptionDrawer(exceptionDrawer.page)
+    }
   } catch (error) {
     ElMessage.error(`采集信息启动失败: ${error.response?.data?.message || error.message}`)
   }
@@ -1211,7 +1197,11 @@ async function handleExceptionCheckConn(item) {
     const result = Array.isArray(data) ? data[0] : data
     ElMessage.success('检查连通性任务已发起')
     handleOperationRunTriggered(result)
-    loadAllData()
+    void Promise.allSettled([
+      loadExceptionPreview(),
+      selectedAssetTypeCode.value ? switchCardType(selectedAssetTypeCode.value) : Promise.resolve(),
+      exceptionDrawer.visible ? openExceptionDrawer(exceptionDrawer.page) : Promise.resolve()
+    ])
   } catch (error) {
     ElMessage.error(`检查连通性失败: ${error.response?.data?.message || error.message}`)
   }
@@ -1219,7 +1209,7 @@ async function handleExceptionCheckConn(item) {
 
 // ── 连通巡检设备批量操作 ──
 async function runExceptionBulkAction(jobId, actionName) {
-  const total = exceptionDrawer.total
+  const total = ensurePositiveInteger(exceptionDrawer.total, 0)
   if (!total) {
     ElMessage.warning('没有异常巡检设备可操作')
     return
@@ -1239,28 +1229,47 @@ async function runExceptionBulkAction(jobId, actionName) {
   }
   exceptionDrawer.actionLoading = true
   try {
-    const res = await exceptionApi.getExceptionDevices(
-      { cit: 'oplus_all', conditions: 'recently', param: 'rwx' },
-      { page: 1, size: total }
-    )
-    const allRows = res?.records || []
-    const hosts = allRows.map(row => ({
-      key: row.id || row.key || row.IP || '',
-      value: row.IP || row.ip || '',
-      assetType: 'linux'
-    }))
-    if (!hosts.length) {
+    const pageSize = 200
+    const pageCount = Math.max(1, Math.ceil(total / pageSize))
+    let batchCount = 0
+    let handledHostCount = 0
+    let triggerResult = null
+
+    for (let page = 1; page <= pageCount; page += 1) {
+      const res = await exceptionApi.getExceptionDevices(
+        { cit: 'oplus_all', conditions: 'recently', param: 'rwx' },
+        { page, size: pageSize }
+      )
+      const { records } = normalizePagedResponse(res)
+      const hosts = records
+        .map(row => ({
+          key: row.id || row.key || row.IP || '',
+          value: row.IP || row.ip || '',
+          assetType: 'linux'
+        }))
+        .filter(host => host.value)
+
+      if (!hosts.length) {
+        continue
+      }
+
+      const { data } = await apiService.post(
+        `/jao/api/jao/jobs/${jobId}/run?cacheBuster=${Date.now()}`,
+        { params: { hosts } }
+      )
+      const result = Array.isArray(data) ? data[0] : data
+      triggerResult = triggerResult || result
+      batchCount += 1
+      handledHostCount += hosts.length
+    }
+
+    if (!batchCount) {
       ElMessage.warning('没有异常巡检设备可操作')
       return
     }
-    const { data } = await apiService.post(
-      `/jao/api/jao/jobs/${jobId}/run?cacheBuster=${Date.now()}`,
-      { params: { hosts } }
-    )
-    const result = Array.isArray(data) ? data[0] : data
-    ElMessage.success(`全设备${actionName}任务已发起`)
-    handleOperationRunTriggered(result)
-    loadAllData()
+
+    ElMessage.success(`已分 ${batchCount} 批发起 ${handledHostCount} 台设备的${actionName}任务`)
+    handleOperationRunTriggered(triggerResult)
   } catch (error) {
     ElMessage.error(`${actionName}失败: ${error.response?.data?.message || error.message}`)
   } finally {
@@ -1283,8 +1292,9 @@ async function loadFailedLogPreview() {
       { module: 'acm', action: 'all', status: 'ERROR', day: 7 },
       { page: 1, size: 5 }
     )
-    failedLogRows.value = r?.records || []
-    failedLogTotal.value = r?.total || failedLogRows.value.length
+    const normalized = normalizePagedResponse(r)
+    failedLogRows.value = normalized.records
+    failedLogTotal.value = normalized.total
   } catch {
     failedLogRows.value = []
     failedLogTotal.value = 0
@@ -1301,8 +1311,8 @@ async function loadCurrentTenantId() {
   }
 }
 
-async function loadAllData() {
-  await Promise.allSettled([refreshAll(), loadExceptionPreview(), loadFailedLogPreview()])
+async function loadAllData(options = {}) {
+  await Promise.allSettled([refreshAll(options), loadExceptionPreview(), loadFailedLogPreview()])
   tagTotal.value = tagRows.value.length
   refreshedAt.value = new Date()
 }
@@ -1313,8 +1323,10 @@ function isOperationRunningStatus(status) {
 }
 
 function hasRunningOperationLogs() {
-  const cardRunning = recentLogs.value.some(item => isOperationRunningStatus(item?.status))
-  const drawerRunning = recentLogsDrawer.records.some(item =>
+  const cardRunning = ensureArray(recentLogs.value).some(item =>
+    isOperationRunningStatus(item?.status)
+  )
+  const drawerRunning = ensureArray(recentLogsDrawer.records).some(item =>
     isOperationRunningStatus(item?.status)
   )
   return cardRunning || drawerRunning
@@ -1345,7 +1357,8 @@ async function refreshOperationLogsInPlace() {
   operationLogRefreshing.value = true
   try {
     await Promise.allSettled([
-      refreshAll(),
+      loadRecentOperations(),
+      loadFailedLogPreview(),
       recentLogsDrawer.visible ? openRecentLogsDrawer(recentLogsDrawer.page) : Promise.resolve()
     ])
   } finally {
@@ -1383,7 +1396,7 @@ function handleOperationRunTriggered(result) {
 // ── 交互 ──
 
 function handleDialogSaved() {
-  loadAllData()
+  void loadAllData({ forceAssetTypeTotals: true })
 }
 
 // 首个资产类型自动选中
@@ -1400,8 +1413,8 @@ watch(
 onMounted(() => {
   syncViewportWidth()
   window.addEventListener('resize', syncViewportWidth)
-  loadAllData()
-  loadCurrentTenantId()
+  void loadAllData({ forceAssetTypeTotals: true })
+  void loadCurrentTenantId()
 })
 
 onUnmounted(() => {
