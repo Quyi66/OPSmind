@@ -18,7 +18,11 @@
             <div class="win-kb-card win-kb-card--header">
               <div class="win-kb-detail__title-row">
                 <h1>{{ detail.kbNumber || kbNumber }}</h1>
-                <el-tag :type="getSeverityTagType(detail.msrcSeverity)" effect="dark">
+                <el-tag
+                  :type="getSeverityType(detail.msrcSeverity)"
+                  effect="dark"
+                  :class="['severity-badge', getSeverityClass(detail.msrcSeverity)]"
+                >
                   {{ detail.severityLabel || getSeverityLabel(detail.msrcSeverity) }}
                 </el-tag>
               </div>
@@ -47,7 +51,14 @@
                 <div class="win-kb-detail-cell">
                   <span>严重等级</span>
                   <strong>
-                    {{ detail.severityLabel || getSeverityLabel(detail.msrcSeverity) }}
+                    <el-tag
+                      :type="getSeverityType(detail.msrcSeverity)"
+                      effect="dark"
+                      size="small"
+                      :class="['severity-badge', getSeverityClass(detail.msrcSeverity)]"
+                    >
+                      {{ detail.severityLabel || getSeverityLabel(detail.msrcSeverity) }}
+                    </el-tag>
                   </strong>
                 </div>
                 <div class="win-kb-detail-cell">
@@ -162,7 +173,11 @@
               </el-table-column>
               <el-table-column label="严重等级" width="110">
                 <template #default="{ row }">
-                  <el-tag :type="getSeverityTagType(row.severity)" size="small">
+                  <el-tag
+                    :type="getSeverityType(row.severity)"
+                    :class="['severity-tag', getSeverityClass(row.severity)]"
+                    size="small"
+                  >
                     {{ row.severityLabel || getSeverityLabel(row.severity) }}
                   </el-tag>
                 </template>
@@ -234,7 +249,6 @@ import {
   getPatchStatusLabel,
   getPatchStatusTagType,
   getSeverityLabel,
-  getSeverityTagType,
   pickValue
 } from '../../utils'
 
@@ -306,6 +320,34 @@ function formatBytes(value) {
   }
 
   return `${current.toFixed(index === 0 ? 0 : 2)} ${units[index]}`
+}
+
+function normalizeSeverityKey(severity) {
+  const raw = String(severity || '').trim()
+  if (!raw) return ''
+
+  const lower = raw.toLowerCase()
+  if (lower === 'critical' || raw === '严重' || raw === 'CRITICAL') return 'critical'
+  if (lower === 'important' || raw === '重要' || raw === 'IMPORTANT') return 'important'
+  if (lower === 'moderate' || raw === '中等' || raw === 'MODERATE') return 'moderate'
+  if (lower === 'low' || raw === '低危' || raw === 'LOW') return 'low'
+  return ''
+}
+
+function getSeverityClass(severity) {
+  const key = normalizeSeverityKey(severity)
+  return key ? `is-${key}` : ''
+}
+
+function getSeverityType(severity) {
+  const key = normalizeSeverityKey(severity)
+  const typeMap = {
+    critical: 'danger',
+    important: 'warning',
+    moderate: 'primary',
+    low: 'info'
+  }
+  return typeMap[key] || 'info'
 }
 
 function getCveUrl(cveId) {
