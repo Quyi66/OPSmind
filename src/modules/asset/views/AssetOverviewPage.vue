@@ -67,7 +67,7 @@
           </div>
         </button>
 
-        <button class="aw-stat aw-stat--violet" @click="openGovernanceDrawer">
+        <button class="aw-stat" @click="openGovernanceDrawer">
           <div class="aw-stat__top">
             <div class="aw-stat__content">
               <span class="aw-stat__label">分组 / 标签</span>
@@ -83,7 +83,7 @@
 
         <button
           class="aw-stat"
-          :class="connectionStats.totalConnection ? 'aw-stat--success' : 'aw-stat--muted'"
+          :class="connectionStats.totalConnection ? '' : 'aw-stat--muted'"
           @click="openAssetListDrawer(selectedAssetTypeCode)"
         >
           <div class="aw-stat__top">
@@ -104,7 +104,7 @@
           </div>
         </button>
 
-        <button class="aw-stat aw-stat--info" @click="openRecentLogsDrawer">
+        <button class="aw-stat" @click="openRecentLogsDrawer">
           <div class="aw-stat__top">
             <div class="aw-stat__content">
               <span class="aw-stat__label">操作记录</span>
@@ -1629,6 +1629,8 @@ onUnmounted(() => {
     border-radius: 999px;
     font-size: 15px;
     transition: transform 0.25s;
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--aw-text-secondary);
   }
 
   &__meta {
@@ -1656,6 +1658,10 @@ onUnmounted(() => {
 
   &:hover {
     transform: translateY(-2px);
+    border-color: rgba(148, 163, 184, 0.35);
+    box-shadow:
+      0 8px 24px rgba(148, 163, 184, 0.08),
+      var(--aw-panel-shadow);
 
     .aw-stat__icon {
       transform: scale(1.12);
