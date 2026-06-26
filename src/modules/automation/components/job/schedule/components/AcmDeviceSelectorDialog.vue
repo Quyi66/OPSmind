@@ -4,7 +4,7 @@
     title="选择设备"
     width="1200px"
     :close-on-click-modal="false"
-    :z-index="3000"
+    :z-index="5000"
     append-to-body
     class="acm-device-selector-dialog"
   >

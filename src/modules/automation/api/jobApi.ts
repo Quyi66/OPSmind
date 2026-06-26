@@ -32,6 +32,10 @@ function buildQueryString(params: Record<string, string | undefined>) {
   return query ? `?${query}` : ''
 }
 
+function buildDeleteIdsParam(jobIds: string[]) {
+  return JSON.stringify(jobIds.filter((id) => typeof id === 'string' && id.trim() !== ''))
+}
+
 export async function fetchJobs(query: JobQuery = {}): Promise<JobSummary[]> {
   const { type, appletCode, keyword } = query
   const normalizedType = type && type !== 'all' ? type : undefined
@@ -59,15 +63,17 @@ export async function fetchJobs(query: JobQuery = {}): Promise<JobSummary[]> {
 
 export async function deleteJob(jobId: string): Promise<void> {
   if (!jobId) return
-  await apiService.delete(`/api/jao/jobs/${encodeURIComponent(jobId)}`)
+  await deleteJobs([jobId])
 }
 
 export async function deleteJobs(jobIds: string[]): Promise<void> {
   if (!jobIds.length) return
-  const payload = JSON.stringify(jobIds.map((id) => ({ id })))
-  await apiService.delete('/api/jao/jobs/delete-batch', {
+  const ids = buildDeleteIdsParam(jobIds)
+  if (!ids || ids === '[]') return
+
+  await apiService.delete('/jao/api/jao/jobs/delete-batch', {
     params: {
-      ids: payload
+      ids
     }
   })
 }
