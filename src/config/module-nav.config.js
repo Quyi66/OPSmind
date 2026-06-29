@@ -234,7 +234,8 @@ export const SSC_NAV_ITEMS = SSC_ROUTE_DEFS.filter(def => def.navLabel).map(def 
   key: def.key,
   label: def.navLabel || def.title,
   icon: def.icon,
-  path: `/ssc/${def.path}`
+  path: `/ssc/${def.path}`,
+  accessCode: def.accessCode
 }))
 
 // 用户与团队模块的页面导航

@@ -46,7 +46,7 @@ class ApiService {
       config => {
         // 添加认证头
         const authHeaders = authService.getAuthHeaders()
-        config.headers = { ...config.headers, ...authHeaders }
+        config.headers = { ...authHeaders, ...config.headers }
 
         // 如果是 FormData 上传，移除默认的 Content-Type，让浏览器自动设置带 boundary 的 multipart/form-data
         try {

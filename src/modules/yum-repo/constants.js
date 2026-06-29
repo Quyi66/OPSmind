@@ -59,3 +59,17 @@ export const YUM_REPO_DIFF_TYPE_TAG_TYPES = {
   RELEASE_MISMATCH: 'danger',
   AHEAD: 'info'
 }
+
+export const SQL_IMPORT_STATUS_LABELS = {
+  PENDING: '待执行',
+  RUNNING: '执行中',
+  SUCCESS: '执行成功',
+  FAILED: '执行失败'
+}
+
+export const SQL_IMPORT_STATUS_TAG_TYPES = {
+  PENDING: 'info',
+  RUNNING: 'warning',
+  SUCCESS: 'success',
+  FAILED: 'danger'
+}

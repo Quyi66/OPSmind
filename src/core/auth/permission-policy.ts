@@ -43,7 +43,8 @@ export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
   password: ['applet:pmsv2'],
   uam: ['applet:uim'],
   ssc: ['applet:uim'],
-  admin: ['applet:uim']
+  admin: ['applet:uim'],
+  'super-admin': ['admin']
 }
 
 export const MENU_DEFAULT_ROUTES: Record<string, string> = {

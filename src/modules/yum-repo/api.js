@@ -2,6 +2,15 @@ import { apiService } from '@/core/api'
 import { yumManageApi } from '@/modules/patches/api'
 
 const YUM_REPO_API_PREFIX = '/vap/api/vap/v2/yum-repo'
+const SQL_IMPORT_API_PREFIX = '/vap/api/vap/v2/sql'
+
+function buildSqlImportParams(params = {}) {
+  return {
+    async: params.async ?? true,
+    continueOnError: params.continueOnError ?? false,
+    dryRun: params.dryRun ?? false
+  }
+}
 
 export const yumRepoApi = {
   getConfigList() {
@@ -78,6 +87,23 @@ export const yumRepoApi = {
         }
       }
     )
+  },
+
+  runSqlServerFile(params = {}) {
+    return apiService.post(
+      `${SQL_IMPORT_API_PREFIX}/run-file`,
+      {},
+      {
+        params: {
+          file: params.file,
+          ...buildSqlImportParams(params)
+        }
+      }
+    )
+  },
+
+  getSqlImportResult(jobId) {
+    return apiService.get(`${SQL_IMPORT_API_PREFIX}/result/${encodeURIComponent(jobId)}`)
   }
 }
 
