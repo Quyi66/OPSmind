@@ -99,9 +99,9 @@
         <el-table
           v-loading="tableLoading"
           :data="packageList"
+          class="natural-height-table"
           :empty-text="packageEmptyText"
           :element-loading-text="tableLoadingText"
-          max-height="calc(100vh - 555px)"
         >
           <el-table-column label="包名" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">

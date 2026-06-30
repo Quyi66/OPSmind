@@ -1,12 +1,12 @@
 <template>
-  <div class="ops-page-layout yum-repo-page">
+  <div class="ops-page-layout ops-page-layout--page-scroll yum-repo-page">
     <YumRepoOverviewSection
       :overview-data="overviewData"
       :loading="overviewLoading"
       v-model:selected-repo-id="selectedRepoId"
     />
 
-    <el-tabs v-model="activeTab">
+    <el-tabs v-model="activeTab" class="yum-repo-tabs">
       <el-tab-pane label="仓库管理" name="repos">
         <YumRepoSourceTable
           :configs="configList"
@@ -315,5 +315,12 @@ onMounted(async () => {
 <style scoped lang="scss">
 .yum-repo-page {
   gap: 12px;
+}
+
+.yum-repo-tabs {
+  :deep(.el-tabs__content),
+  :deep(.el-tab-pane) {
+    overflow: visible;
+  }
 }
 </style>

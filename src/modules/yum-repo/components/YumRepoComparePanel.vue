@@ -91,7 +91,7 @@
             v-loading="loadingPatchView"
             :data="patchViewList"
             row-key="patchId"
-            max-height="calc(100vh - 600px)"
+            class="natural-height-table"
             :empty-text="patchViewEmptyText"
           >
             <el-table-column label="补丁 ID" min-width="170" show-overflow-tooltip>
