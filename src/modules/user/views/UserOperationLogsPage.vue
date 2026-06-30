@@ -264,8 +264,8 @@ async function loadData() {
       currentPage.value,
       pageSize.value
     )
-    tableData.value = response?.records || response?.data?.records || []
-    total.value = response?.total || response?.data?.total || tableData.value.length
+    tableData.value = response?.records || []
+    total.value = response?.total || tableData.value.length
   } catch (error) {
     console.error('Failed to load operation logs:', error)
     tableData.value = []

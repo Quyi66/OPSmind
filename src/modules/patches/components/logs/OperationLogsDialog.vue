@@ -170,6 +170,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n'
 import { useApi } from '@/core/api'
+import { patchLogsApi } from '../../api'
 import { authService } from '@/core/auth'
 import ScanReportDialog from './ScanReportDialog.vue'
 import WindowsScanReportDialog from './WindowsScanReportDialog.vue'
@@ -234,23 +235,16 @@ let pollingTimer = null
 async function loadData() {
   loading.value = true
   try {
-    const cacheBuster = Date.now()
-    const response = await useApi().post(
-      `/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${cacheBuster}`,
-      {
-        params: {
-          module: 'vap2',
-          action: actionFilter.value === 'all' ? 'all' : actionFilter.value,
-          status: statusFilter.value === 'all' ? 'all' : statusFilter.value,
-          day: dayFilter.value
-        }
-      }
-    )
+    const response = await patchLogsApi.getLogs({
+      page: pagination.value.page,
+      size: pagination.value.pageSize,
+      action: actionFilter.value === 'all' ? 'all' : actionFilter.value,
+      status: statusFilter.value === 'all' ? 'all' : statusFilter.value,
+      day: dayFilter.value
+    })
 
-    if (response?.data) {
-      tableData.value = response.data.records || []
-      pagination.value.total = response.data.total || 0
-    }
+    tableData.value = response?.records || []
+    pagination.value.total = response?.total || 0
   } catch (error) {
     console.error('Failed to load operation logs:', error)
     ElMessage.error('加载操作记录失败')

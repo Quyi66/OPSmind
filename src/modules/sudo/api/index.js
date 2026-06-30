@@ -1,7 +1,7 @@
 /**
  * sudo权限管理模块 API
  */
-import { apiService } from '@/core/api'
+import { apiService, getJaoOperationLogs } from '@/core/api'
 
 /**
  * 获取sudo权限列表
@@ -73,22 +73,24 @@ export function getSudoApplyList(params = {}) {
 
 /**
  * 获取操作记录
- * POST /dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/
+ * GET /jao/api/jao/dashboard/list-operation-log
  * @param {Object} options 包含 params(筛选参数), page, size(分页参数), keyword(关键词)
  */
 export function getOperationLog(options = {}) {
   const { page = 1, size = 10, keyword = '', ...filterParams } = options
-  return apiService.post(`/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, {
-    params: {
+  return getJaoOperationLogs(
+    {
       module: 'sudo',
       action: filterParams.action || 'all',
       status: filterParams.status || 'all',
       day: filterParams.day || 1
     },
-    page,
-    size,
-    filter: keyword ? `ata_node|message:*${keyword}*` : ''
-  })
+    {
+      page,
+      size,
+      filter: keyword ? `ata_node|message:*${keyword}*` : ''
+    }
+  )
 }
 
 /**

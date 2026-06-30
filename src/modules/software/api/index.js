@@ -1,7 +1,7 @@
 /**
  * 软件管理模块 API
  */
-import { apiService } from '@/core/api'
+import { apiService, getJaoOperationLogs } from '@/core/api'
 
 // 数据集 API 基础路径
 const DTS_BASE = '/dts/api/dts/q/data'
@@ -568,33 +568,27 @@ export const logApi = {
 export const softwareLogsApi = {
   /**
    * 获取操作日志列表
-   * 对应数据集: JAO_LIST_OPERATION_LOG
-   * API: /dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/
-   * Body: { params: { module, action, status, day } }
+   * API: /jao/api/jao/dashboard/list-operation-log
    */
   getLogs(params = {}) {
-    return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/`, {
-      params: {
-        module: 'spm',
-        action: params.action || 'all',
-        status: params.status || 'all',
-        day: params.day || 'all'
-      }
+    return getJaoOperationLogs({
+      module: 'spm',
+      action: params.action || 'all',
+      status: params.status || 'all',
+      day: params.day || 'all'
     })
   },
 
   /**
    * 获取操作日志列表（与 getLogs 相同，提供别名）
-   * 对应数据集: JAO_LIST_OPERATION_LOG
+   * API: /jao/api/jao/dashboard/list-operation-log
    */
   getOperationLogs(params = {}) {
-    return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/`, {
-      params: {
-        module: params.module || 'spm',
-        action: params.action || 'all',
-        status: params.status || 'all',
-        day: params.day || 'all'
-      }
+    return getJaoOperationLogs({
+      module: params.module || 'spm',
+      action: params.action || 'all',
+      status: params.status || 'all',
+      day: params.day || 'all'
     })
   },
 

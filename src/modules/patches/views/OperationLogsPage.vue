@@ -709,9 +709,8 @@ async function loadData() {
       day: dayFilter.value,
       filter: keywordFilter
     })
-    const data = response?.data || response
-    tableData.value = data?.records || []
-    pagination.total = data?.total || 0
+    tableData.value = response?.records || []
+    pagination.total = response?.total || 0
   } catch (error) {
     console.error('Failed to load logs:', error)
     ElMessage.error('加载数据失败')

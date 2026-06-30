@@ -207,7 +207,7 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { dtsApi } from '../api'
+import { operationLogApi } from '../api'
 import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
@@ -324,8 +324,7 @@ function openRunResultByQuery(query) {
 async function loadData() {
   loading.value = true
   try {
-    const response = await dtsApi.queryData(
-      'JAO_LIST_OPERATION_LOG',
+    const response = await operationLogApi.getOperationLogs(
       {
         module: 'acm',
         action: filters.value.action,

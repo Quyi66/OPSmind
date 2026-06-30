@@ -2,7 +2,7 @@
  * 补丁管理模块 API
  * 与后端 VAP (Vulnerability and Patch) 服务交互
  */
-import { apiService } from '@/core/api'
+import { apiService, getJaoOperationLogs } from '@/core/api'
 
 const VAP_API_PREFIX = '/vap/api/vap'
 const PATCH_TASK_API_PREFIX = `${VAP_API_PREFIX}/v2/patch/task`
@@ -1181,7 +1181,7 @@ export const patchLogsApi = {
 
   /**
    * 获取操作日志列表
-   * POST /dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/
+   * GET /jao/api/jao/dashboard/list-operation-log
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码
    * @param {number} params.size - 每页大小
@@ -1191,21 +1191,18 @@ export const patchLogsApi = {
    * @returns {Promise}
    */
   getLogs(params = {}) {
-    const cacheBuster = Date.now()
-    const requestBody = {
-      params: {
+    return getJaoOperationLogs(
+      {
         module: 'vap2',
         action: params.action || 'all',
         status: params.status || 'all',
         day: params.day || 7
       },
-      page: params.page || 1,
-      size: params.size || 20,
-      filter: params.filter || ''
-    }
-    return apiService.post(
-      `/dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/?cacheBuster=${cacheBuster}`,
-      requestBody
+      {
+        page: params.page || 1,
+        size: params.size || 20,
+        filter: params.filter || ''
+      }
     )
   },
 

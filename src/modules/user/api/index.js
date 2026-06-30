@@ -1,7 +1,7 @@
 /**
  * 用户管理模块 API
  */
-import { apiService } from '@/core/api'
+import { apiService, getJaoOperationLogs } from '@/core/api'
 import {
   getSudoTemplates as getSudoTemplatesApi,
   getSudoCommandsByTemplate as getSudoCommandsByTemplateApi
@@ -32,16 +32,11 @@ export function getAuditLogStats(diffDay = 15) {
 
 /**
  * 获取操作日志列表
- * API: JAO_LIST_OPERATION_LOG
+ * API: /jao/api/jao/dashboard/list-operation-log
  * @param {Object} params 查询参数
  */
 export function getOperationLogs(params = {}, filter, page, size) {
-  return apiService.post(`${DTS_BASE}/JAO_LIST_OPERATION_LOG/?cacheBuster=${Date.now()}`, {
-    params,
-    filter,
-    page,
-    size
-  })
+  return getJaoOperationLogs(params, { filter, page, size })
 }
 
 /**

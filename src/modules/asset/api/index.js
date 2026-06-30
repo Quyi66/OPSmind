@@ -1,7 +1,7 @@
 /**
  * 资产管理模块 API
  */
-import { apiService } from '@/core/api'
+import { apiService, getJaoOperationLogs } from '@/core/api'
 
 // ACM API 基础路径
 const ACM_BASE = '/acm/api/acm'
@@ -340,7 +340,7 @@ export const permissionApi = {
 export const operationLogApi = {
   /**
    * 获取操作日志列表
-   * POST /dts/api/dts/q/data/JAO_LIST_OPERATION_LOG/
+   * GET /jao/api/jao/dashboard/list-operation-log
    * @param {object} params - 查询参数
    * @param {string} params.module - 模块名称 (acm)
    * @param {string} params.action - 操作类型 (all 或具体操作)
@@ -348,7 +348,7 @@ export const operationLogApi = {
    * @param {number} params.day - 时间范围（天数）
    */
   getOperationLogs: (params, options = {}) => {
-    return dtsApi.queryData('JAO_LIST_OPERATION_LOG', params, options)
+    return getJaoOperationLogs(params, options)
   }
 }
 
