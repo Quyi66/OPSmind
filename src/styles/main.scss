@@ -20,7 +20,7 @@
 
 // 全局基础重置（配合 Tailwind Preflight）
 // 仅保留 box-sizing，避免覆盖 Tailwind 的间距工具类
-:where(*, *::before, *::after) {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 

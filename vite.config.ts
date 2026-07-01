@@ -244,7 +244,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       outDir: env.VITE_BUILD_OUTDIR || 'dist',
       assetsDir: env.VITE_BUILD_ASSETSDIR || 'assets',
       sourcemap: isDevelopment || env.VITE_BUILD_SOURCEMAP === 'true',
-      target: 'es2022',
+      target: ['chrome89', 'edge89', 'firefox89', 'safari15'],
       assetsInlineLimit: 4096,
       // 启用 CSS 代码分割
       cssCodeSplit: true,
