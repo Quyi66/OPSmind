@@ -154,6 +154,14 @@ export const getRunResult = runId => {
 }
 
 /**
+ * 检查运行结果状态
+ * @param {string} runId - 运行ID
+ */
+export const checkRunResult = runId => {
+  return useApi().get(`/jao/api/jao/runlogs/${runId}/check-result`)
+}
+
+/**
  * 获取最后一次运行结果
  * @param {string} jobId - 作业ID
  */

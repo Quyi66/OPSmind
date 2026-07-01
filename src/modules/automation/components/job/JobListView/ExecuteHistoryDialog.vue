@@ -347,12 +347,19 @@ function handleStatusClick(row) {
 
 function canRerun(row) {
   if (!row?.id) return false
+  const effectiveRunId = String(row?.runId ?? row?.id ?? '')
   const isBusy = RUNNING_STATUSES.includes(row.status)
-  return !isBusy && row.jobTypeKey === 'script'
+  return !isBusy && row.jobTypeKey === 'script' && !effectiveRunId.startsWith('step_')
 }
 
 async function handleRerun(row) {
   try {
+    const effectiveRunId = String(row?.runId ?? row?.id ?? '')
+    if (!effectiveRunId || effectiveRunId.startsWith('step_')) {
+      ElMessage.warning('聚合步骤视图不支持按运行 ID 重新执行，请切换到单个任务记录后重试')
+      return
+    }
+
     await ElMessageBox.confirm(`确定要重新执行运维工具 "${row.jobTitle}" 吗？`, '重新执行', {
       type: 'warning',
       confirmButtonText: '执行',
@@ -361,7 +368,7 @@ async function handleRerun(row) {
 
     await jaoApi.executeJob({
       jobId: 'OKPacN',
-      params: { runId: row.id }
+      params: { runId: effectiveRunId }
     })
     ElMessage.success('运维工具已提交执行')
     handleRefresh()

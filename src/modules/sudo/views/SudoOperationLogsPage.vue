@@ -195,9 +195,8 @@ async function loadData() {
       size: pagination.pageSize
     })
 
-    const result = response?.data || response
-    tableData.value = result?.records || []
-    pagination.total = result?.total || tableData.value.length
+    tableData.value = response?.records || []
+    pagination.total = response?.total || tableData.value.length
   } catch (error) {
     console.error('Failed to load operation log:', error)
     ElMessage.error('加载操作记录失败')

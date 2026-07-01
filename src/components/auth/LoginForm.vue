@@ -30,9 +30,9 @@
             placeholder="用户名"
             autocomplete="username"
             spellcheck="false"
-            class="w-full h-10 px-4 text-sm border border-transparent rounded bg-gray-50 focus:outline-none focus:ring-0 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500"
+            class="login-text-input"
             :class="{
-              'border-red-300 focus:ring-red-500 focus:bg-red-50': authError && !loginForm.username
+              'login-text-input--error': authError && !loginForm.username
             }"
             :disabled="loading"
             :aria-invalid="authError && !loginForm.username ? 'true' : 'false'"
@@ -52,11 +52,8 @@
               placeholder="密码"
               autocomplete="current-password"
               spellcheck="false"
-              class="w-full h-10 px-4 text-sm border border-transparent rounded bg-gray-50 focus:outline-none focus:ring-0 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500"
-              :class="{
-                'border-red-300 focus:ring-red-500 focus:bg-red-50':
-                  authError && !loginForm.password
-              }"
+              class="login-text-input"
+              :class="{ 'login-text-input--error': authError && !loginForm.password }"
               :disabled="loading"
               :aria-invalid="authError && !loginForm.password ? 'true' : 'false'"
               :aria-describedby="
@@ -93,7 +90,7 @@
             spellcheck="false"
             inputmode="numeric"
             pattern="[0-9]*"
-            class="w-full h-10 px-4 text-sm border border-transparent rounded bg-gray-50 focus:outline-none focus:ring-0 focus:border-blue-500 focus:bg-white transition-all duration-200 placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-500 text-center tracking-widest"
+            class="login-text-input text-center tracking-widest"
             :disabled="loading"
             maxlength="6"
           />
@@ -105,7 +102,7 @@
             id="remember"
             v-model="loginForm.rememberMe"
             type="checkbox"
-            class="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 transition-colors duration-200 disabled:opacity-50"
+            class="login-checkbox"
             :disabled="loading"
           />
           <label for="remember" class="ml-2 text-sm text-gray-600 cursor-pointer select-none">
@@ -117,7 +114,7 @@
         <div>
           <button
             type="submit"
-            class="w-full h-10 bg-blue-500 text-white px-4 rounded font-medium text-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-200 disabled:cursor-not-allowed shadow-sm"
+            class="login-submit-button"
             :disabled="loading || !loginForm.username || !loginForm.password"
             :aria-label="loading ? '登录中，请稍候' : '登录'"
           >
@@ -367,3 +364,110 @@ watch(
   }
 )
 </script>
+
+<style scoped>
+.login-text-input {
+  display: block;
+  width: 100%;
+  height: 40px;
+  padding: 0 16px;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.25;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background-color: #f9fafb;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.login-text-input::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
+
+.login-text-input:hover {
+  border-color: #cbd5e1;
+}
+
+.login-text-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.login-text-input:disabled {
+  color: #6b7280;
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.login-text-input--error {
+  border-color: #fca5a5;
+  background-color: #fef2f2;
+}
+
+.login-text-input--error:focus {
+  border-color: #ef4444;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.12);
+}
+
+.login-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+
+.login-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.login-submit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 16px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  background-color: #3b82f6;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.login-submit-button:hover:not(:disabled) {
+  border-color: #2563eb;
+  background-color: #2563eb;
+}
+
+.login-submit-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.45);
+}
+
+.login-submit-button:disabled {
+  color: #eff6ff;
+  border-color: #93c5fd;
+  background-color: #93c5fd;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+</style>

@@ -370,7 +370,7 @@ function applyFilters() {
 
 /**
  * 加载日志数据
- * 调用数据集: JAO_LIST_OPERATION_LOG
+ * 调用操作日志接口: /jao/api/jao/dashboard/list-operation-log
  * 返回格式: { total: number, records: [] }
  */
 async function loadLogs() {
@@ -383,13 +383,11 @@ async function loadLogs() {
       day: filterDay.value
     }
     const response = await softwareLogsApi.getOperationLogs(params)
-    // 返回格式: { total: number, records: [] }
-    const data = response?.data || response || {}
-    const records = data.records || []
+    const records = response?.records || []
     allData.value = Array.isArray(records) ? records : []
 
     // 设置总数（服务端返回）
-    pagination.value.total = data.total || allData.value.length
+    pagination.value.total = response?.total || allData.value.length
 
     applyFilters()
   } catch (error) {

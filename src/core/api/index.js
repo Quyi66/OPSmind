@@ -46,7 +46,7 @@ class ApiService {
       config => {
         // 添加认证头
         const authHeaders = authService.getAuthHeaders()
-        config.headers = { ...config.headers, ...authHeaders }
+        config.headers = { ...authHeaders, ...config.headers }
 
         // 如果是 FormData 上传，移除默认的 Content-Type，让浏览器自动设置带 boundary 的 multipart/form-data
         try {
@@ -452,6 +452,119 @@ class ApiService {
 
 // 创建全局实例
 export const apiService = new ApiService()
+
+const JAO_OPERATION_LOG_PATH = '/jao/api/jao/dashboard/list-operation-log'
+
+function normalizeOperationLogStatus(status) {
+  if (status === 'SUCCESS') {
+    return 'COMPLETED'
+  }
+  return status
+}
+
+function normalizeOperationLogStatusFilter(status) {
+  if (!status || status === 'all') {
+    return 'all'
+  }
+
+  return String(status)
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(item => (item === 'COMPLETED' ? 'SUCCESS' : item))
+    .join(',')
+}
+
+function normalizeOperationLogRecord(record = {}) {
+  return {
+    ...record,
+    status: normalizeOperationLogStatus(record.status),
+    target_hosts: record.target_hosts || ''
+  }
+}
+
+function parseOperationLogFilter(filter) {
+  if (!filter || typeof filter !== 'string') {
+    return null
+  }
+
+  const [rawFields, rawKeyword = ''] = filter.split(':')
+  const keyword = rawKeyword.replace(/^\*/, '').replace(/\*$/, '').trim().toLowerCase()
+  const fields = (rawFields || '')
+    .split('|')
+    .map(item => item.trim())
+    .filter(Boolean)
+
+  if (!fields.length || !keyword) {
+    return null
+  }
+
+  return { fields, keyword }
+}
+
+function applyOperationLogFilter(records, filter) {
+  const parsed = parseOperationLogFilter(filter)
+  if (!parsed) {
+    return records
+  }
+
+  return records.filter(record =>
+    parsed.fields.some(field => String(record?.[field] || '').toLowerCase().includes(parsed.keyword))
+  )
+}
+
+export async function getJaoOperationLogs(params = {}, options = {}) {
+  const queryParams = {
+    module: params.module,
+    action: params.action || 'all',
+    status: normalizeOperationLogStatusFilter(params.status),
+    day: params.day ?? 'all'
+  }
+
+  if (options.filter) {
+    const response = await apiService.get(JAO_OPERATION_LOG_PATH, {
+      params: queryParams
+    })
+    const payload = response?.data || {}
+    const allRecords = Array.isArray(payload.data)
+      ? payload.data.map(item => normalizeOperationLogRecord(item))
+      : []
+    const filteredRecords = applyOperationLogFilter(allRecords, options.filter)
+    const page = Number(options.page) > 0 ? Number(options.page) : 1
+    const size = Number(options.size) > 0 ? Number(options.size) : filteredRecords.length
+    const startIndex = (page - 1) * size
+    const pagedRecords = filteredRecords.slice(startIndex, startIndex + size)
+
+    return {
+      ...payload,
+      data: pagedRecords,
+      records: pagedRecords,
+      total: filteredRecords.length
+    }
+  }
+
+  if (Number(options.page) > 0) {
+    queryParams.page = Number(options.page)
+  }
+  if (Number(options.size) > 0) {
+    queryParams.size = Number(options.size)
+  }
+
+  const response = await apiService.get(JAO_OPERATION_LOG_PATH, {
+    params: queryParams
+  })
+  const payload = response?.data || {}
+  const records = Array.isArray(payload.data)
+    ? payload.data.map(item => normalizeOperationLogRecord(item))
+    : []
+
+  return {
+    ...payload,
+    data: records,
+    records,
+    total: payload.total ?? records.length
+  }
+}
 
 // 导出便捷方法
 export const { get, post, put, patch, delete: del, upload, download } = apiService

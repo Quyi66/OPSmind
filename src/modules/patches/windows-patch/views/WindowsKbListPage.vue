@@ -171,9 +171,13 @@
               </el-link>
             </template>
           </el-table-column>
-          <el-table-column label="严重等级" width="90">
+          <el-table-column label="严重等级" width="110">
             <template #default="{ row }">
-              <el-tag :type="getSeverityTagType(row.msrcSeverity)" size="small">
+              <el-tag
+                :type="getSeverityType(row.msrcSeverity)"
+                :class="['severity-tag', getSeverityClass(row.msrcSeverity)]"
+                size="small"
+              >
                 {{ getSeverityLabel(row.msrcSeverity) }}
               </el-tag>
             </template>
@@ -231,7 +235,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { InfoFilled, Refresh, RefreshRight, Search } from '@element-plus/icons-vue'
 import { winKbApi } from '../../api'
-import { formatNumber, getSeverityLabel, getSeverityTagType } from '../utils'
+import { formatNumber, getSeverityLabel } from '../utils'
 import CveLinkList from '../../components/common/CveLinkList.vue'
 import WindowsKbDetail from '../components/kb/WindowsKbDetail.vue'
 
@@ -338,6 +342,34 @@ const unspecifiedCount = computed(() => getSeverityCount('Unspecified', '未指�
 function getSeverityCount(enKey, zhKey) {
   const bySeverity = statistics.bySeverity || {}
   return Number(bySeverity[enKey] ?? bySeverity[zhKey] ?? 0)
+}
+
+function normalizeSeverityKey(severity) {
+  const raw = String(severity || '').trim()
+  if (!raw) return ''
+
+  const lower = raw.toLowerCase()
+  if (lower === 'critical' || raw === '严重' || raw === 'CRITICAL') return 'critical'
+  if (lower === 'important' || raw === '重要' || raw === 'IMPORTANT') return 'important'
+  if (lower === 'moderate' || raw === '中等' || raw === 'MODERATE') return 'moderate'
+  if (lower === 'low' || raw === '低危' || raw === 'LOW') return 'low'
+  return ''
+}
+
+function getSeverityClass(severity) {
+  const key = normalizeSeverityKey(severity)
+  return key ? `is-${key}` : ''
+}
+
+function getSeverityType(severity) {
+  const key = normalizeSeverityKey(severity)
+  const typeMap = {
+    critical: 'danger',
+    important: 'warning',
+    moderate: 'primary',
+    low: 'info'
+  }
+  return typeMap[key] || 'info'
 }
 
 function formatDate(value) {

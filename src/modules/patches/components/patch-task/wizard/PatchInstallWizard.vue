@@ -7,7 +7,6 @@
       width="1000px"
       :close-on-click-modal="false"
       class="install-dialog"
-      top="5vh"
       @closed="resetInstallState"
     >
       <!-- 自定义步骤条 -->
@@ -132,13 +131,22 @@
                 style="width: 200px"
                 clearable
               />
+              <el-button
+                size="small"
+                :type="hostAllSelected ? 'default' : 'primary'"
+                @click="handleToggleHostSelectAll"
+              >
+                <i :class="`fa fa-${hostAllSelected ? 'times' : 'check-double'} me-1`" />
+                {{ hostAllSelected ? '一键取消' : '一键全选' }}
+              </el-button>
             </div>
             <el-table
               ref="hostTableRef"
               :data="filteredHosts"
               size="small"
-              height="220"
-              @selection-change="handleHostSelectionChange"
+              max-height="320"
+              @select="handleHostTableSelect"
+              @select-all="handleHostTableSelect"
             >
               <el-table-column type="selection" width="40" />
               <el-table-column prop="hostKey" label="主机" min-width="200" sortable>
@@ -866,6 +874,7 @@ import { usePatchTaskScripts } from './usePatchTaskScripts'
 import { usePatchTaskTaskCreation } from './usePatchTaskTaskCreation'
 import { usePatchTaskTaskPreparation } from './usePatchTaskTaskPreparation'
 import { useLazyDisplayList } from '../../../composables/useLazyDisplayList'
+import { useTableSelectAll } from '../../../composables/useTableSelectAll'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 
 const props = defineProps({
@@ -990,6 +999,7 @@ async function loadInstallData(patchIds) {
     affectedHosts.value = []
     selectedHosts.value = []
     confirmedHosts.value = []
+    resetHostAllSelected()
   }
 
   if (isRollbackTask.value) {
@@ -1085,9 +1095,19 @@ function handleHostSizeChange(size) {
   hostPagination.page = 1
 }
 
-function handleHostSelectionChange(selection) {
-  selectedHosts.value = selection
-}
+// 一键全选 / 跨页勾选
+const {
+  allSelected: hostAllSelected,
+  handleToggleAllSelection: handleToggleHostSelectAll,
+  handleTableSelect: handleHostTableSelect,
+  resetAllSelected: resetHostAllSelected
+} = useTableSelectAll(hostTableRef, {
+  tableData: filteredHosts,
+  filteredData: filteredHostList,
+  selectedItems: selectedHosts,
+  matchFn: (a, b) =>
+    (a.hostId || a.id || a.hostKey) === (b.hostId || b.id || b.hostKey)
+})
 
 watch(
   () =>
@@ -1285,7 +1305,8 @@ const { goBack, handleAdvanceStep, handlePrimaryAction, handleSkipStep, resetIns
     backendRestartReason,
     installConfig,
     resetScriptState,
-    hasFixedHosts
+    hasFixedHosts,
+    resetHostAllSelected
   })
 
 const pipelineItems = computed(() => {

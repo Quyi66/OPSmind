@@ -325,18 +325,18 @@ async function loadData() {
   loading.value = true
   try {
     const response = await operationLogApi.getOperationLogs(
-       {
-         module: 'acm',
-         action: filters.value.action,
-         status: filters.value.status,
-         day: filters.value.day
-       },
-       {
-         page: currentPage.value,
-         size: pageSize.value,
-         filter: searchKeyword.value.trim() || undefined
-       }
-     )
+      {
+        module: 'acm',
+        action: filters.value.action,
+        status: filters.value.status,
+        day: filters.value.day
+      },
+      {
+        page: currentPage.value,
+        size: pageSize.value,
+        filter: searchKeyword.value.trim() ? `ata_node:*${searchKeyword.value.trim()}*` : undefined
+      }
+    )
 
     const data = response?.records || []
     tableData.value = data

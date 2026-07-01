@@ -128,35 +128,15 @@ export const getExecuteResult = runId => {
   return useApi().get(`/jao/api/jao/runlogs/${runId}/result`)
 }
 
-const unwrapApiData = (response) => response?.data?.data ?? response?.data
-
-const normalizeRecords = (payload) => {
-  if (!payload) {
-    return { records: [], total: 0 }
-  }
-  if (Array.isArray(payload)) {
-    return { records: payload, total: payload.length }
-  }
-  if (payload && Array.isArray(payload.records)) {
-    return {
-      ...payload,
-      total: payload.total ?? payload.totalElements ?? payload.records.length
-    }
-  }
-  if (Array.isArray(payload.content)) {
-    return {
-      ...payload,
-      records: payload.content,
-      total: payload.total ?? payload.totalElements ?? payload.content.length
-    }
-  }
-  return payload
+/** 检查执行作业状态 */
+export const checkExecuteResult = runId => {
+  return useApi().get(`/jao/api/jao/runlogs/${runId}/check-result`)
 }
 
-const wrapRecordsResponse = (response) => ({
-  ...response,
-  data: normalizeRecords(unwrapApiData(response))
-})
+/** 获取运行中主机 */
+export const getRunningHosts = runId => {
+  return useApi().get(`/jao/api/jao/jobs/${runId}/running-hosts`)
+}
 
 /** 查询作业运行记录 */
 export const fetchJobRunLogs = (payload) => {
@@ -334,6 +314,11 @@ export const deleteFlow = flowId => {
 /** 创建流程实例(执行流程) */
 export const createFlowInstance = data => {
   return useApi().put('/jao/api/jao/flow-instances', data)
+}
+
+/** 执行流程模板并传入运行参数 */
+export const runFlowWithParams = (flowId, data = {}) => {
+  return useApi().post(`/jao/api/jao/flow-instances/run-with-params/${flowId}`, data)
 }
 
 /** 获取流程实例详情（用于查看） */

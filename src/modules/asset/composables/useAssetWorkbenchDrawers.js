@@ -5,11 +5,7 @@
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { assetApi, exceptionApi, operationLogApi, overviewApi } from '../api'
-
-function toNumber(value) {
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : 0
-}
+import { ensureArray, normalizePagedResponse, toNumber } from '../utils/response'
 
 function formatCount(value) {
   return toNumber(value).toLocaleString('zh-CN')
@@ -133,8 +129,9 @@ export function useAssetWorkbenchDrawers({
           filter: assetListDrawer.keyword || ''
         }
       )
-      assetListDrawer.records = res?.records || []
-      assetListDrawer.total = res?.total || 0
+      const normalized = normalizePagedResponse(res)
+      assetListDrawer.records = normalized.records
+      assetListDrawer.total = normalized.total
     } catch (e) {
       console.error('加载设备清单失败:', e)
       assetListDrawer.records = []
@@ -173,7 +170,7 @@ export function useAssetWorkbenchDrawers({
         { cit: 'sjxy_all', conditions: 'recently', param: 'rwx' },
         { page: exceptionDrawer.page, size: exceptionDrawer.pageSize }
       )
-      const rows = response?.records || []
+      const { records: rows, total } = normalizePagedResponse(response)
       exceptionDrawer.records = rows.map(row => ({
         key: row.IP || row.ip || row.ci_name || `${row.updated_at || ''}-${row.CONN_RATE || ''}`,
         title: row.IP || row.ip || '未识别 IP',
@@ -182,7 +179,7 @@ export function useAssetWorkbenchDrawers({
         meta: `${getConnStatusText(row.CONN_LATEST_STATUS)} · ${formatDateTimeShort(row.updated_at)}`,
         raw: row
       }))
-      exceptionDrawer.total = response?.total || 0
+      exceptionDrawer.total = total
     } catch (e) {
       console.error(e)
       exceptionDrawer.records = []
@@ -215,7 +212,7 @@ export function useAssetWorkbenchDrawers({
         { module: 'acm', action: 'all', status: 'ERROR', day: 7 },
         { page: 1, size: 20 }
       )
-      const rows = response?.records || []
+      const { records: rows } = normalizePagedResponse(response)
       failedLogDrawer.records = rows.map(row => {
         const actionLabel = getActionLabel
           ? getActionLabel(row.action)
@@ -262,8 +259,9 @@ export function useAssetWorkbenchDrawers({
         { module: 'acm', action: 'all', status: 'all', day: 7 },
         { page: recentLogsDrawer.page, size: recentLogsDrawer.pageSize }
       )
-      recentLogsDrawer.records = response?.records || []
-      recentLogsDrawer.total = response?.total || 0
+      const normalized = normalizePagedResponse(response)
+      recentLogsDrawer.records = ensureArray(normalized.records)
+      recentLogsDrawer.total = normalized.total
     } catch (e) {
       console.error('加载操作记录抽屉数据失败:', e)
       recentLogsDrawer.records = []

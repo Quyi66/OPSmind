@@ -1,10 +1,8 @@
 import { computed, ref } from 'vue'
 import { assetApi, dataManageApi, operationLogApi, overviewApi, permissionApi } from '../api'
+import { extractRecords, extractTotal, toNumber } from './response'
 
-function toNumber(value) {
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : 0
-}
+const ASSET_TYPE_TOTAL_CONCURRENCY = 4
 
 function toTimestamp(value) {
   if (!value) return 0
@@ -17,14 +15,6 @@ function sortByField(list, field, fallbackField) {
     (a, b) =>
       toNumber(b?.[field] ?? b?.[fallbackField]) - toNumber(a?.[field] ?? a?.[fallbackField])
   )
-}
-
-function extractRecords(response) {
-  if (Array.isArray(response)) return response
-  if (Array.isArray(response?.records)) return response.records
-  if (Array.isArray(response?.data)) return response.data
-  if (Array.isArray(response?.data?.records)) return response.data.records
-  return []
 }
 
 function extractPermissionRows(response) {
@@ -55,6 +45,8 @@ export function useAssetOverviewWorkbench() {
   const recentLogs = ref([])
   const recentOperationTotal = ref(0)
   const recentErrorTotal = ref(0)
+  const assetTypeTotalsCache = new Map()
+  let assetTypeTotalsRequestId = 0
 
   const overviewLoading = ref(false)
   const governanceLoading = ref(false)
@@ -143,7 +135,68 @@ export function useAssetOverviewWorkbench() {
     }
   })
 
-  async function loadOverviewMetrics() {
+  async function resolveAssetTypeTotals(assetTypes, forceRefresh = false) {
+    const pendingItems = assetTypes.filter(item => {
+      const typeCode = item?.code || item?.title || ''
+      return typeCode && (forceRefresh || !assetTypeTotalsCache.has(typeCode))
+    })
+
+    if (!pendingItems.length) {
+      return assetTypes.map(item => {
+        const typeCode = item?.code || item?.title || ''
+        return {
+          ...item,
+          count: assetTypeTotalsCache.get(typeCode) ?? toNumber(item?.count)
+        }
+      })
+    }
+
+    const requestId = assetTypeTotalsRequestId + 1
+    assetTypeTotalsRequestId = requestId
+
+    for (let index = 0; index < pendingItems.length; index += ASSET_TYPE_TOTAL_CONCURRENCY) {
+      const chunk = pendingItems.slice(index, index + ASSET_TYPE_TOTAL_CONCURRENCY)
+      const results = await Promise.all(
+        chunk.map(async item => {
+          const typeCode = item.code || item.title || ''
+          try {
+            const response = await assetApi.getAssetList(
+              {
+                assetType: typeCode,
+                permission: 'r',
+                status: 'all',
+                CONN_LATEST_STATUS: '',
+                hostKeys: '/'
+              },
+              { page: 1, size: 1, filter: '' }
+            )
+            return { typeCode, total: extractTotal(response, toNumber(item?.count)) }
+          } catch {
+            return { typeCode, total: toNumber(item?.count) }
+          }
+        })
+      )
+
+      if (requestId !== assetTypeTotalsRequestId) {
+        return assetTypes.map(item => ({ ...item, count: toNumber(item?.count) }))
+      }
+
+      results.forEach(({ typeCode, total }) => {
+        assetTypeTotalsCache.set(typeCode, total)
+      })
+    }
+
+    return assetTypes.map(item => {
+      const typeCode = item?.code || item?.title || ''
+      return {
+        ...item,
+        count: assetTypeTotalsCache.get(typeCode) ?? toNumber(item?.count)
+      }
+    })
+  }
+
+  async function loadOverviewMetrics(options = {}) {
+    const { forceAssetTypeTotals = false } = options
     overviewLoading.value = true
 
     const [assetTypeRes, osRes, trendRes, groupRes, connectionRes] = await Promise.allSettled([
@@ -159,28 +212,10 @@ export function useAssetOverviewWorkbench() {
 
       // ACM_CIT_MANAGE 只统计在线设备数量，需要额外请求获取包含所有状态的真实总数
       if (assetTypeData.value.length) {
-        const countPromises = assetTypeData.value.map(item => {
-          const typeCode = item.code || item.title || ''
-          return assetApi
-            .getAssetList(
-              {
-                assetType: typeCode,
-                permission: 'r',
-                status: 'all',
-                CONN_LATEST_STATUS: '',
-                hostKeys: '/'
-              },
-              { page: 1, size: 1, filter: '' }
-            )
-            .then(res => ({ typeCode, total: toNumber(res?.total) }))
-            .catch(() => ({ typeCode, total: toNumber(item?.count) })) // 失败时保留原值
-        })
-        const countResults = await Promise.all(countPromises)
-        const countMap = Object.fromEntries(countResults.map(r => [r.typeCode, r.total]))
-        assetTypeData.value = assetTypeData.value.map(item => {
-          const key = item.code || item.title || ''
-          return { ...item, count: countMap[key] ?? toNumber(item?.count) }
-        })
+        assetTypeData.value = await resolveAssetTypeTotals(
+          assetTypeData.value,
+          forceAssetTypeTotals
+        )
       }
     } else {
       console.error('加载资产类型统计失败:', assetTypeRes.reason)
@@ -304,9 +339,13 @@ export function useAssetOverviewWorkbench() {
     logLoading.value = false
   }
 
-  async function refreshAll() {
+  async function refreshAll(options = {}) {
     refreshing.value = true
-    await Promise.allSettled([loadOverviewMetrics(), loadGovernanceData(), loadRecentOperations()])
+    await Promise.allSettled([
+      loadOverviewMetrics(options),
+      loadGovernanceData(),
+      loadRecentOperations()
+    ])
     refreshing.value = false
   }
 

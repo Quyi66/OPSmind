@@ -73,9 +73,17 @@
               </tbody>
             </table>
           </div>
-          <div v-else class="diff-add-placeholder">
-            <i class="fa fa-plus-circle"></i>
-            <span>新建文件</span>
+          <div v-else class="diff-add-state">
+            <div class="diff-add-state__icon">
+              <i class="fa fa-plus"></i>
+            </div>
+            <div class="diff-add-state__body">
+              <strong>该版本为新建文件</strong>
+              <p>首次提交没有历史差异可对比，可以直接打开当前文件查看完整内容。</p>
+              <el-button type="primary" plain size="small" @click="handleOpenFile">
+                查看当前文件
+              </el-button>
+            </div>
           </div>
         </div>
         <el-empty v-else description="请选择一个版本查看详情" :image-size="80" />
@@ -112,7 +120,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'rollback'])
+const emit = defineEmits(['update:modelValue', 'rollback', 'open-file'])
 
 const dialogVisible = ref(false)
 const loading = ref(false)
@@ -260,6 +268,13 @@ async function handleRollback(rev) {
   } finally {
     rollbackLoading.value = false
   }
+}
+
+function handleOpenFile() {
+  emit('open-file', {
+    path: props.path,
+    repo: props.repo
+  })
 }
 
 function getChangeIconClass(changeType) {
@@ -592,23 +607,57 @@ function handleClosed() {
   }
 }
 
-.diff-add-placeholder {
+.diff-add-state {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin: 20px;
+  padding: 18px 20px;
+  border: 1px solid var(--el-color-success-light-5);
+  border-radius: 12px;
+  background: var(--revision-success-soft);
+  color: var(--revision-success-text);
+}
+
+.diff-add-state__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  color: var(--revision-success-text);
-  background: var(--revision-success-soft);
+  background: var(--el-color-success);
+  color: #fff;
+  flex-shrink: 0;
 
   i {
-    font-size: 48px;
-    margin-bottom: 12px;
+    font-size: 16px;
+  }
+}
+
+.diff-add-state__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+
+  strong {
+    font-size: 15px;
+    line-height: 1.4;
   }
 
-  span {
-    font-size: 15px;
-    font-weight: 500;
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--el-text-color-regular);
+  }
+}
+
+@media (max-width: 768px) {
+  .diff-add-state {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

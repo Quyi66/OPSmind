@@ -1,7 +1,7 @@
 /**
  * 资产管理模块 API
  */
-import { apiService } from '@/core/api'
+import { apiService, getJaoOperationLogs } from '@/core/api'
 
 // ACM API 基础路径
 const ACM_BASE = '/acm/api/acm'
@@ -541,17 +541,8 @@ export const operationLogApi = {
    * @param {string} params.status - 状态 (all, COMPLETED, ERROR, RUNNING)
    * @param {number} params.day - 时间范围（天数）
    */
-  getOperationLogs(params = {}, options = {}) {
-    return apiService
-      .get(`${JAO_DASHBOARD_BASE}/list-operation-log`, {
-        params: {
-          ...params,
-          page: options.page || 1,
-          size: options.size || 10,
-          filter: options.filter || undefined
-        }
-      })
-      .then(res => normalizeRecords(unwrapApiData(res)))
+  getOperationLogs: (params, options = {}) => {
+    return getJaoOperationLogs(params, options)
   }
 }
 

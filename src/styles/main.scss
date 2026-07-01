@@ -20,7 +20,7 @@
 
 // 全局基础重置（配合 Tailwind Preflight）
 // 仅保留 box-sizing，避免覆盖 Tailwind 的间距工具类
-:where(*, *::before, *::after) {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
@@ -518,7 +518,7 @@ body {
       margin: 0 auto !important;
 
       // 限制最大高度，确保在小屏幕上也能正常显示
-      max-height: 90vh;
+      max-height: 95vh;
       display: flex;
       flex-direction: column;
 
@@ -537,6 +537,11 @@ body {
     }
   }
 }
+
+.el-dialog {
+  --el-dialog-margin-top: 2.5vh;
+}
+
 
 // 全屏 Dialog 样式（保持原有行为）
 .el-dialog--fullscreen {

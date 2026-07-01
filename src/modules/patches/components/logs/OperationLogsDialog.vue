@@ -170,6 +170,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n'
 import { useApi } from '@/core/api'
+import { patchLogsApi } from '../../api'
 import { authService } from '@/core/auth'
 import ScanReportDialog from './ScanReportDialog.vue'
 import WindowsScanReportDialog from './WindowsScanReportDialog.vue'
@@ -234,32 +235,16 @@ let pollingTimer = null
 async function loadData() {
   loading.value = true
   try {
-    const res = await useApi().get('/jao/api/jao/dashboard/list-operation-log', {
-      params: {
-        module: 'vap2',
-        action: actionFilter.value === 'all' ? 'all' : actionFilter.value,
-        status: statusFilter.value === 'all' ? 'all' : statusFilter.value,
-        day: dayFilter.value
-      }
+    const response = await patchLogsApi.getLogs({
+      page: pagination.value.page,
+      size: pagination.value.pageSize,
+      action: actionFilter.value === 'all' ? 'all' : actionFilter.value,
+      status: statusFilter.value === 'all' ? 'all' : statusFilter.value,
+      day: dayFilter.value
     })
 
-    const payload = res.data?.data
-    let records = []
-    let total = 0
-    if (payload) {
-      if (Array.isArray(payload)) {
-        records = payload
-        total = payload.length
-      } else if (Array.isArray(payload.records)) {
-        records = payload.records
-        total = payload.total ?? payload.records.length
-      } else if (Array.isArray(payload.content)) {
-        records = payload.content
-        total = payload.totalElements ?? payload.total ?? payload.content.length
-      }
-    }
-    tableData.value = records
-    pagination.value.total = total
+    tableData.value = response?.records || []
+    pagination.value.total = response?.total || 0
   } catch (error) {
     console.error('Failed to load operation logs:', error)
     ElMessage.error('加载操作记录失败')

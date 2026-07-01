@@ -8,7 +8,9 @@ import {
   YUM_REPO_COLLECT_STATUS_LABELS,
   YUM_REPO_COLLECT_STATUS_TAG_TYPES,
   YUM_REPO_DIFF_TYPE_LABELS,
-  YUM_REPO_DIFF_TYPE_TAG_TYPES
+  YUM_REPO_DIFF_TYPE_TAG_TYPES,
+  SQL_IMPORT_STATUS_LABELS,
+  SQL_IMPORT_STATUS_TAG_TYPES
 } from './constants'
 
 export { formatDateTime, unwrapResponse }
@@ -399,4 +401,49 @@ export function splitPatchIds(rawText = '') {
         .filter(Boolean)
     )
   )
+}
+
+export function normalizeSqlImportJobResult(row) {
+  const source = row && typeof row === 'object' ? row : {}
+
+  return {
+    jobId: String(pickValue(source, ['jobId'], '')).trim(),
+    fileName: String(pickValue(source, ['fileName', 'filename'], '')).trim(),
+    status: normalizeUpper(pickValue(source, ['status'], '')),
+    dryRun: normalizeBooleanValue(pickValue(source, ['dryRun'], false), false),
+    continueOnError: normalizeBooleanValue(pickValue(source, ['continueOnError'], false), false),
+    currentEntry: String(pickValue(source, ['currentEntry'], '')).trim(),
+    totalStatements: Number(pickValue(source, ['totalStatements'], 0) || 0),
+    failedStatements: Number(pickValue(source, ['failedStatements'], 0) || 0),
+    startTime: pickValue(source, ['startTime'], ''),
+    endTime: pickValue(source, ['endTime'], ''),
+    elapsedMs: Number(pickValue(source, ['elapsedMs'], 0) || 0),
+    message: String(pickValue(source, ['message'], '')).trim(),
+    resultUrl: String(pickValue(source, ['resultUrl'], '')).trim(),
+    entries: Array.isArray(source.entries) ? source.entries : [],
+    errors: Array.isArray(source.errors) ? source.errors : [],
+    errorsTruncated: normalizeBooleanValue(pickValue(source, ['errorsTruncated'], false), false)
+  }
+}
+
+export function getSqlImportStatusValue(rowOrValue) {
+  const value =
+    typeof rowOrValue === 'string' ? rowOrValue : pickValue(rowOrValue, ['status'], 'PENDING')
+
+  return normalizeUpper(value || 'PENDING') || 'PENDING'
+}
+
+export function getSqlImportStatusLabel(rowOrValue) {
+  const status = getSqlImportStatusValue(rowOrValue)
+  return SQL_IMPORT_STATUS_LABELS[status] || status || '-'
+}
+
+export function getSqlImportStatusTagType(rowOrValue) {
+  const status = getSqlImportStatusValue(rowOrValue)
+  return SQL_IMPORT_STATUS_TAG_TYPES[status] || 'info'
+}
+
+export function isSqlImportRunning(rowOrValue) {
+  const status = getSqlImportStatusValue(rowOrValue)
+  return status === 'PENDING' || status === 'RUNNING'
 }

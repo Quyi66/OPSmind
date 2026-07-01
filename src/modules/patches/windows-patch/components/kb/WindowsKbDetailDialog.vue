@@ -3,7 +3,6 @@
     v-model="visibleModel"
     :title="dialogTitle"
     width="88%"
-    top="4vh"
     append-to-body
     destroy-on-close
     class="win-kb-detail-dialog"

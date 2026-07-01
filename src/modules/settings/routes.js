@@ -74,6 +74,18 @@ export const SSC_ROUTE_DEFS = [
     ...createSettingsPageRoute('ssc-param', () => import('./views/SscParamPage.vue'))
   },
   {
+    key: 'sql-import',
+    path: 'sql-import',
+    title: 'SQL导入',
+    navLabel: 'SQL导入',
+    icon: 'fas fa-file-import',
+    accessCode: 'super-admin',
+    meta: {
+      requiresPermission: 'admin'
+    },
+    ...createSettingsPageRoute('ssc-sql-import', () => import('./views/SscSqlImportPage.vue'))
+  },
+  {
     key: 'appres',
     path: 'appres',
     title: '应用资源',

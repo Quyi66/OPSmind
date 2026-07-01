@@ -336,7 +336,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['loaded', 'error'])
+const emit = defineEmits(['loaded', 'error', 'updated'])
 
 const loading = ref(true)
 const content = ref('')
@@ -841,8 +841,8 @@ async function copyLink() {
 /**
  * 打开修改信息弹窗
  */
-function editFileInfo() {
-  editActiveTab.value = 'basic'
+function openEditInfo(tab = 'basic') {
+  editActiveTab.value = tab
   // 直接进入编辑模式
   isEditingContent.value = true
   editForm.value = {
@@ -851,6 +851,10 @@ function editFileInfo() {
     scriptContent: content.value || ''
   }
   editDialogVisible.value = true
+}
+
+function editFileInfo() {
+  openEditInfo('basic')
 }
 
 /**
@@ -879,6 +883,7 @@ async function saveFileInfo() {
     await gfsApi.updateFileInfo(props.repoType, fileInfo.value?.repo, props.path, updateData)
     ElMessage.success('保存成功')
     editDialogVisible.value = false
+    emit('updated', updateData)
     // 重新加载文件信息
     loadContent()
   } catch (error) {
@@ -928,6 +933,10 @@ watch(
   },
   { immediate: true }
 )
+
+defineExpose({
+  openEditInfo
+})
 </script>
 
 <style scoped lang="scss">

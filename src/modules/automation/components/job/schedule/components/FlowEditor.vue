@@ -483,12 +483,20 @@ function handleRun() {
     }
   }))
 
+  const runtimeParams = flow.globalParams.reduce((params, item) => {
+    const key = String(item?.name || '').trim()
+    if (!key) return params
+    params[key] = item?.defaultValue ?? ''
+    return params
+  }, {})
+
   const payload = {
     ...flow.extraData,
     name: flow.name,
     description: flow.description || null,
     hosts: hostsPayload,
     steps: stepsPayload,
+    params: runtimeParams,
     globalParamsJson: JSON.stringify(flow.globalParams || []),
     jobFlowId: flow.id
   }

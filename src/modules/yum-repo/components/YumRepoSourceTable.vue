@@ -41,7 +41,7 @@
     </div>
 
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="filteredConfigs" max-height="calc(100vh - 480px)">
+      <el-table v-loading="loading" :data="paginatedConfigs" class="natural-height-table">
         <el-table-column label="源名称" min-width="150" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getYumConfigLabel(row) }}
@@ -143,6 +143,18 @@
       </el-table>
     </div>
 
+    <div class="ops-pagination-wrapper">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="filteredConfigs.length"
+        layout="total, sizes, prev, pager, next, jumper"
+        background
+        @size-change="handlePageSizeChange"
+      />
+    </div>
+
     <el-dialog
       v-model="dialogVisible"
       :title="editingConfig ? '编辑YUM源配置' : 'YUM源配置录入'"
@@ -230,7 +242,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Plus, Refresh, Search } from '@element-plus/icons-vue'
 import { YUM_REPO_ARCH_OPTIONS, YUM_REPO_OS_FAMILY_OPTIONS } from '../constants'
@@ -281,6 +293,8 @@ const emit = defineEmits([
 ])
 
 const filterText = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
 const dialogVisible = ref(false)
 const submitting = ref(false)
 const editingConfig = ref(null)
@@ -330,10 +344,6 @@ function validateOsMajor(rule, value, callback) {
 
 function validateOsSpVersion(rule, value, callback) {
   const v = String(value || '').trim()
-  if (formData.osFamily === 'kylinos' && !v) {
-    callback(new Error('麒麟仓库必须填写 OS 精确版本（如 SP1、SP3、SP3 2403、HPC、Host）'))
-    return
-  }
   if (v && !/^(SP\d+(?:\.\d+)?(?:[\s_/-]+\d\w*)?|Update\d+|HPC|Host|Compat)$/i.test(v)) {
     callback(
       new Error(
@@ -375,6 +385,30 @@ const filteredConfigs = computed(() => {
     )
   })
 })
+
+const paginatedConfigs = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredConfigs.value.slice(start, start + pageSize.value)
+})
+
+watch(filterText, () => {
+  currentPage.value = 1
+})
+
+watch(
+  () => filteredConfigs.value.length,
+  total => {
+    const maxPage = Math.max(1, Math.ceil(total / pageSize.value))
+    if (currentPage.value > maxPage) {
+      currentPage.value = maxPage
+    }
+  },
+  { immediate: true }
+)
+
+function handlePageSizeChange() {
+  currentPage.value = 1
+}
 
 function getSourceId(row) {
   return resolveYumRepoId(findYumRepoSourceByConfig(row, props.sources))

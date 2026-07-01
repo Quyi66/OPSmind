@@ -100,6 +100,8 @@ function getViewKey(route) {
   min-height: 0;
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .group-content--page-scroll {

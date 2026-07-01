@@ -22,7 +22,7 @@
     <header class="relative z-10 p-6">
       <div class="login-container">
         <div class="login-brand">
-          <img src="@/assets/icons/logo.png" alt="KoreOPS" class="h-10 w-auto object-contain" />
+          <img src="@/assets/icons/logo.png" alt="KoreOPS" class="h-10 w-auto object-contain mr-1.5" />
           <span class="login-brand-name">KoreOPS</span>
         </div>
       </div>
@@ -83,7 +83,6 @@ import LoginForm from '@/components/auth/LoginForm.vue'
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
 }
 
 .login-brand-name {
