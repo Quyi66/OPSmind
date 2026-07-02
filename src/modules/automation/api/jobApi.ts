@@ -47,7 +47,7 @@ export async function fetchJobs(query: JobQuery = {}): Promise<JobSummary[]> {
     keyword: keyword?.trim()
   })
 
-  const response = await apiService.get(`/api/jao/jobs/app${queryString}`)
+  const response = await apiService.get(`/workflow/api/workflow/jobs/app${queryString}`)
   const data = response?.data
 
   if (Array.isArray(data)) {
@@ -71,7 +71,7 @@ export async function deleteJobs(jobIds: string[]): Promise<void> {
   const ids = buildDeleteIdsParam(jobIds)
   if (!ids || ids === '[]') return
 
-  await apiService.delete('/jao/api/jao/jobs/delete-batch', {
+  await apiService.delete('/workflow/api/workflow/jobs/delete-batch', {
     params: {
       ids
     }
@@ -80,13 +80,13 @@ export async function deleteJobs(jobIds: string[]): Promise<void> {
 
 export async function copyJob(jobId: string): Promise<void> {
   if (!jobId) return
-  await apiService.get(`/jao/api/jao/jobs/clone/${encodeURIComponent(jobId)}`)
+  await apiService.get(`/workflow/api/workflow/jobs/clone/${encodeURIComponent(jobId)}`)
 }
 
 export async function moveJobs(jobIds: string[], targetApplet: string): Promise<void> {
   if (!jobIds.length || !targetApplet) return
   const payload = jobIds.map((id) => ({ id }))
-  await apiService.put(`/api/jao/jobs/move/${encodeURIComponent(targetApplet)}`, payload)
+  await apiService.put(`/workflow/api/workflow/jobs/move/${encodeURIComponent(targetApplet)}`, payload)
 }
 
 export async function fetchRunLogs(params: Record<string, string | number | undefined> = {}) {
@@ -95,6 +95,6 @@ export async function fetchRunLogs(params: Record<string, string | number | unde
       Object.entries(params).map(([key, value]) => [key, value?.toString()])
     )
   )
-  const response = await apiService.get(`/api/jao/runlogs${queryString}`)
+  const response = await apiService.get(`/workflow/api/workflow/runlogs${queryString}`)
   return response?.data ?? []
 }

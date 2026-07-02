@@ -199,10 +199,10 @@ async function loadData() {
     params.append('search[regex]', 'false')
 
     // 使用 axios 直接发送，确保作为 Form Data 发送
-    const baseURL = import.meta.env.VITE_API_BASE_URL || '/sjxy-portal'
+    const baseURL = import.meta.env.VITE_API_BASE_URL || '/sjxy-console'
     const authHeaders = authService.getAuthHeaders()
     const response = await axios.post(
-      `${baseURL}/cac/api/cac/v2/jobs/page/${props.templateId}`,
+      `${baseURL}/audit/api/audit/v2/jobs/page/${props.templateId}`,
       params,
       {
         params: { cacheBuster: Date.now() },

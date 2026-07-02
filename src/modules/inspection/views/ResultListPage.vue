@@ -329,7 +329,7 @@ async function loadTemplates() {
 async function loadResults() {
   loading.value = true
   try {
-    // 使用正确的API: POST /cac/api/cac/v2/jobs/page/{templateId}
+    // 使用正确的API: POST /audit/api/audit/v2/jobs/page/{templateId}
     const templateId = selectedTemplateId.value || 'all'
 
     // DataTables 格式的请求参数（与源系统完全一致）
@@ -362,9 +362,9 @@ async function loadResults() {
     params.append('start', String((pagination.value.page - 1) * pagination.value.size))
 
     // 使用 axios 直接发送，确保作为 Form Data 发送
-    const baseURL = import.meta.env.VITE_API_BASE_URL || '/sjxy-portal'
+    const baseURL = import.meta.env.VITE_API_BASE_URL || '/sjxy-console'
     const authHeaders = authService.getAuthHeaders()
-    const response = await axios.post(`${baseURL}/cac/api/cac/v2/jobs/page/${templateId}`, params, {
+    const response = await axios.post(`${baseURL}/audit/api/audit/v2/jobs/page/${templateId}`, params, {
       headers: {
         ...authHeaders,
         'Content-Type': 'application/x-www-form-urlencoded'

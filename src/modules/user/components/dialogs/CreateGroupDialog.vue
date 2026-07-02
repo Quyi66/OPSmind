@@ -125,7 +125,7 @@ async function handleSubmit() {
     // 调用作业执行接口
     const cacheBuster = Date.now()
     const { data } = await apiService.post(
-      `/jao/api/jao/jobs/zrYK7K/run?cacheBuster=${cacheBuster}`,
+      `/workflow/api/workflow/jobs/zrYK7K/run?cacheBuster=${cacheBuster}`,
       {
         params: {
           hosts,

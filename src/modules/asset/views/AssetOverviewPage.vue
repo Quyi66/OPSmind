@@ -1041,7 +1041,7 @@ async function handleAssetCheckConn(item) {
       assetType: selectedAssetTypeCode.value || item.ciType || 'linux'
     }
     const { data } = await apiService.post(
-      `/jao/api/jao/jobs/M1x855/run?cacheBuster=${Date.now()}`,
+      `/workflow/api/workflow/jobs/M1x855/run?cacheBuster=${Date.now()}`,
       { params: { hosts: [host] } }
     )
     const result = Array.isArray(data) ? data[0] : data
@@ -1158,7 +1158,7 @@ async function handleExceptionCollectInfo(item) {
   }
   try {
     const { data } = await apiService.post(
-      `/jao/api/jao/jobs/mjedwe/run?cacheBuster=${Date.now()}`,
+      `/workflow/api/workflow/jobs/mjedwe/run?cacheBuster=${Date.now()}`,
       { params: { hosts: [host] } }
     )
     const result = Array.isArray(data) ? data[0] : data
@@ -1191,7 +1191,7 @@ async function handleExceptionCheckConn(item) {
   }
   try {
     const { data } = await apiService.post(
-      `/jao/api/jao/jobs/M1x855/run?cacheBuster=${Date.now()}`,
+      `/workflow/api/workflow/jobs/M1x855/run?cacheBuster=${Date.now()}`,
       { params: { hosts: [host] } }
     )
     const result = Array.isArray(data) ? data[0] : data
@@ -1254,7 +1254,7 @@ async function runExceptionBulkAction(jobId, actionName) {
       }
 
       const { data } = await apiService.post(
-        `/jao/api/jao/jobs/${jobId}/run?cacheBuster=${Date.now()}`,
+        `/workflow/api/workflow/jobs/${jobId}/run?cacheBuster=${Date.now()}`,
         { params: { hosts } }
       )
       const result = Array.isArray(data) ? data[0] : data

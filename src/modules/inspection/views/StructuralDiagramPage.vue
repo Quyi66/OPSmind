@@ -922,8 +922,8 @@ function downloadImage() {
  */
 async function exportExcel() {
   try {
-    const baseURL = import.meta.env.VITE_API_BASE_URL || '/sjxy-portal'
-    const url = `${baseURL}/cac/api/cac/v2/results/export/${currentJobId.value}`
+    const baseURL = import.meta.env.VITE_API_BASE_URL || '/sjxy-console'
+    const url = `${baseURL}/audit/api/audit/v2/results/export/${currentJobId.value}`
 
     const authHeaders = authService.getAuthHeaders()
 

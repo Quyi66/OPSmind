@@ -322,7 +322,7 @@ async function handleSubmit() {
 
     const cacheBuster = Date.now()
     const { data } = await apiService.post(
-      `/jao/api/jao/jobs/${jobId}/run?cacheBuster=${cacheBuster}`,
+      `/workflow/api/workflow/jobs/${jobId}/run?cacheBuster=${cacheBuster}`,
       {
         params
       }

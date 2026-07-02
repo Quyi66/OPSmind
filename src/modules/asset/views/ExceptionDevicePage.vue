@@ -495,7 +495,7 @@ const pollActionResult = async (runId, actionKey) => {
     try {
       const cacheBuster = Date.now()
       const { data: result } = await apiService.get(
-        `/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`
+        `/workflow/api/workflow/runlogs/${runId}/result?cacheBuster=${cacheBuster}`
       )
 
       if (isJobPending(result)) {
@@ -559,7 +559,7 @@ const confirmAction = async () => {
     const hosts = normalizeAcmDeviceJobHosts(actionHosts.value, 'linux')
     const cacheBuster = Date.now()
     const { data } = await apiService.post(
-      `/jao/api/jao/jobs/${actionMeta.jobId}/run?cacheBuster=${cacheBuster}`,
+      `/workflow/api/workflow/jobs/${actionMeta.jobId}/run?cacheBuster=${cacheBuster}`,
       {
         params: { hosts }
       }
@@ -630,7 +630,7 @@ const handleCheckSingleConn = async row => {
 
     const cacheBuster = Date.now()
     const { data } = await apiService.post(
-      `/jao/api/jao/jobs/M1x855/run?cacheBuster=${cacheBuster}`,
+      `/workflow/api/workflow/jobs/M1x855/run?cacheBuster=${cacheBuster}`,
       {
         params: { hosts: [host] }
       }
@@ -657,7 +657,7 @@ const handleCheckSingleConn = async row => {
         attempts++
         try {
           const { data: res } = await apiService.get(
-            `/jao/api/jao/runlogs/${result.runId}/result?cacheBuster=${Date.now()}`
+            `/workflow/api/workflow/runlogs/${result.runId}/result?cacheBuster=${Date.now()}`
           )
           if (isJobPending(res)) {
             if (attempts < maxAttempts) {

@@ -114,7 +114,7 @@ const taskTotal = ref(0)
 async function loadScheduleTasks() {
   loadingTasks.value = true
   try {
-    const response = await apiService.get('/jao/api/jao/cron/app', {
+    const response = await apiService.get('/workflow/api/workflow/cron/app', {
       params: { appCode: 'uim' }
     })
     const allTasks = response || []

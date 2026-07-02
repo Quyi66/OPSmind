@@ -127,7 +127,7 @@ async function handleUpload() {
     formData.append('file', selectedFile.value)
 
     // 调用作业 jBZm9w
-    await apiService.post(`/jao/api/jao/jobs/jBZm9w/run?cacheBuster=${Date.now()}`, formData, {
+    await apiService.post(`/workflow/api/workflow/jobs/jBZm9w/run?cacheBuster=${Date.now()}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

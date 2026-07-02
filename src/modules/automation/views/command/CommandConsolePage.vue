@@ -250,7 +250,7 @@ async function executeCommand() {
       hosts: hosts.value
     }
 
-    const response = await useApi().post('/jao/api/jao/console-log/run', request)
+    const response = await useApi().post('/workflow/api/workflow/console-log/run', request)
     const result = response.data || response
 
     ElMessage.success('命令已提交执行')
@@ -274,7 +274,7 @@ function handleBack() {
 // 查看运行记录
 async function handleHistory() {
   try {
-    const response = await useApi().get('/jao/api/jao/console-log')
+    const response = await useApi().get('/workflow/api/workflow/console-log')
     const logs = response.data || response || []
 
     historyData.value = logs.map(log => {

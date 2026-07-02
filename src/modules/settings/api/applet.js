@@ -5,10 +5,10 @@ import { apiService } from '@/core/api'
 
 /**
  * 获取应用列表
- * GET /udp/api/udp/applets
+ * GET /workspace/api/workspace/applets
  */
 export function getApplets() {
-  return apiService.get(`/udp/api/udp/applets?cacheBuster=${Date.now()}`)
+  return apiService.get(`/workspace/api/workspace/applets?cacheBuster=${Date.now()}`)
 }
 
 /**
@@ -95,20 +95,20 @@ export function importApplets(importType, udpAppletList) {
 
 /**
  * 获取应用页面列表
- * GET /udp/api/udp/pages
+ * GET /workspace/api/workspace/pages
  */
 export function getPages(appletCode) {
   return apiService.get(
-    `/udp/api/udp/pages?isPaging=true&appletCode=${appletCode}&page=0&size=1000&cacheBuster=${Date.now()}`
+    `/workspace/api/workspace/pages?isPaging=true&appletCode=${appletCode}&page=0&size=1000&cacheBuster=${Date.now()}`
   )
 }
 
 /**
  * 获取应用作业列表
- * GET /jao/api/jao/jobs/app
+ * GET /workflow/api/workflow/jobs/app
  */
 export function getJobs(appletCode) {
-  return apiService.get(`/jao/api/jao/jobs/app?appletCode=${appletCode}&cacheBuster=${Date.now()}`)
+  return apiService.get(`/workflow/api/workflow/jobs/app?appletCode=${appletCode}&cacheBuster=${Date.now()}`)
 }
 
 export default {

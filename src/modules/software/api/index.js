@@ -5,7 +5,7 @@ import { apiService, getJaoOperationLogs } from '@/core/api'
 
 // 数据集 API 基础路径
 const DTS_BASE = '/dts/api/dts/q/data'
-const SYS_DASHBOARD_BASE = '/svs/api/sys/dashboard'
+const SYS_DASHBOARD_BASE = '/dashboard/api/sys/dashboard'
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
 
@@ -142,7 +142,7 @@ export const hostOverviewApi = {
    * 对应作业: 3hSAVR
    */
   installPackages(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/run', {
+    return apiService.post('/workflow/api/workflow/jobs/run', {
       jobCode: '3hSAVR',
       params: {
         install_pkgs: params.installPkgs,
@@ -156,7 +156,7 @@ export const hostOverviewApi = {
    * 对应作业: 1RR26y
    */
   uninstallPackages(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/1RR26y/run', {
+    return apiService.post('/workflow/api/workflow/jobs/1RR26y/run', {
       // jobCode: '1RR26y',
       params: {
         hosts: params.hostId,
@@ -170,7 +170,7 @@ export const hostOverviewApi = {
    * 对应作业: aXEihQ
    */
   upgradePackages(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/aXEihQ/run', {
+    return apiService.post('/workflow/api/workflow/jobs/aXEihQ/run', {
       params: {
         update_pkgs: params.updatePkgs,
         hosts: params.hostId
@@ -183,7 +183,7 @@ export const hostOverviewApi = {
    * 对应作业: B5KDp0
    */
   rollbackPackages(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/B5KDp0/run', {
+    return apiService.post('/workflow/api/workflow/jobs/B5KDp0/run', {
       params: {
         update_pkgs: params.updatePkgs,
         hosts: params.hostId
@@ -208,7 +208,7 @@ export const hostOverviewApi = {
    * 对应作业: gnLGFi
    */
   toggleRepoStatus(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/gnLGFi/run', {
+    return apiService.post('/workflow/api/workflow/jobs/gnLGFi/run', {
       params: {
         repo_name: params.repoName,
         repo_status: params.repoStatus, // 'yes' or 'no'
@@ -225,7 +225,7 @@ export const hostOverviewApi = {
    * 对应作业: foInBU
    */
   deleteHostRepo(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/run', {
+    return apiService.post('/workflow/api/workflow/jobs/run', {
       jobCode: 'foInBU',
       params: {
         repo_name: params.repoName,
@@ -343,7 +343,7 @@ export const repoApi = {
    * 对应作业: foInBU
    */
   removeRepoFromHost(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/run', {
+    return apiService.post('/workflow/api/workflow/jobs/run', {
       jobCode: 'foInBU',
       params: {
         repo_name: params.repo_name,
@@ -356,11 +356,11 @@ export const repoApi = {
   /**
    * 从 Excel 导入仓库配置
    * 对应作业: wBFwHn
-   * POST: /jao/api/jao/jobs/wBFwHn/upload-to-run
+   * POST: /workflow/api/workflow/jobs/wBFwHn/upload-to-run
    * Form Data: file (binary)
    */
   importRepoFromExcel(formData) {
-    return apiService.post('/jao/api/jao/jobs/wBFwHn/upload-to-run', formData, {
+    return apiService.post('/workflow/api/workflow/jobs/wBFwHn/upload-to-run', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -370,10 +370,10 @@ export const repoApi = {
   /**
    * 保存自定义仓库 (新增/编辑)
    * 对应作业: dfApaC
-   * POST: /jao/api/jao/jobs/dfApaC/run
+   * POST: /workflow/api/workflow/jobs/dfApaC/run
    */
   saveCustomRepo(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/dfApaC/run', {
+    return apiService.post('/workflow/api/workflow/jobs/dfApaC/run', {
       params: {
         id: params.id,
         repoName: params.repoName,
@@ -387,10 +387,10 @@ export const repoApi = {
   /**
    * 删除自定义仓库
    * 对应作业: K6zNCC
-   * POST: /jao/api/jao/jobs/K6zNCC/run
+   * POST: /workflow/api/workflow/jobs/K6zNCC/run
    */
   deleteCustomRepo(id) {
-    return apiService.post('/jao/api/jao/jobs/K6zNCC/run', {
+    return apiService.post('/workflow/api/workflow/jobs/K6zNCC/run', {
       params: { id }
     })
   },
@@ -398,10 +398,10 @@ export const repoApi = {
   /**
    * 设置基准仓库主机
    * 对应作业: FB8oVl
-   * POST: /jao/api/jao/jobs/FB8oVl/run
+   * POST: /workflow/api/workflow/jobs/FB8oVl/run
    */
   setBaseRepoHosts(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/FB8oVl/run', {
+    return apiService.post('/workflow/api/workflow/jobs/FB8oVl/run', {
       params: {
         hosts: params.hosts
       }
@@ -411,12 +411,12 @@ export const repoApi = {
   /**
    * 删除基准主机
    * 对应作业: puc46x
-   * POST: /jao/api/jao/jobs/puc46x/run
+   * POST: /workflow/api/workflow/jobs/puc46x/run
    */
   deleteBaseHost(ids) {
     // ids 可以是单个 id 字符串或 id 数组
     const idsArray = Array.isArray(ids) ? ids : [ids]
-    return apiService.post('/jao/api/jao/jobs/puc46x/run', {
+    return apiService.post('/workflow/api/workflow/jobs/puc46x/run', {
       params: { ids: idsArray }
     })
   },
@@ -424,7 +424,7 @@ export const repoApi = {
   /**
    * 配置仓库到主机
    * 对应作业: 3m2kbd
-   * POST: /jao/api/jao/jobs/3m2kbd/run
+   * POST: /workflow/api/workflow/jobs/3m2kbd/run
    * 参数格式:
    * {
    *   params: {
@@ -438,7 +438,7 @@ export const repoApi = {
    */
   configRepoToHosts(params = {}) {
     const cacheBuster = Date.now()
-    return apiService.post(`/jao/api/jao/jobs/3m2kbd/run?cacheBuster=${cacheBuster}`, {
+    return apiService.post(`/workflow/api/workflow/jobs/3m2kbd/run?cacheBuster=${cacheBuster}`, {
       params: {
         repoConfigIds: params.repoConfigIds,
         hosts: params.hosts,
@@ -598,7 +598,7 @@ export const logApi = {
 export const softwareLogsApi = {
   /**
    * 获取操作日志列表
-   * API: /jao/api/jao/dashboard/list-operation-log
+   * API: /workflow/api/workflow/dashboard/list-operation-log
    */
   getLogs(params = {}) {
     return getJaoOperationLogs({
@@ -611,7 +611,7 @@ export const softwareLogsApi = {
 
   /**
    * 获取操作日志列表（与 getLogs 相同，提供别名）
-   * API: /jao/api/jao/dashboard/list-operation-log
+   * API: /workflow/api/workflow/dashboard/list-operation-log
    */
   getOperationLogs(params = {}) {
     return getJaoOperationLogs({
@@ -627,7 +627,7 @@ export const softwareLogsApi = {
    * @param {string} runId 执行 ID
    */
   getRunResult(runId) {
-    return apiService.get(`/jao/api/jao/runs/${runId}/result`)
+    return apiService.get(`/workflow/api/workflow/runs/${runId}/result`)
   }
 }
 
@@ -639,7 +639,7 @@ export const scanApi = {
    * 执行软件包扫描
    */
   startPackageScan(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/run', {
+    return apiService.post('/workflow/api/workflow/jobs/run', {
       jobCode: 'SPM_PACKAGE_SCAN',
       params
     })
@@ -649,7 +649,7 @@ export const scanApi = {
    * 执行仓库扫描
    */
   startRepoScan(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/run', {
+    return apiService.post('/workflow/api/workflow/jobs/run', {
       jobCode: 'SPM_REPO_SCAN',
       params
     })
@@ -663,12 +663,12 @@ export const scanApi = {
 export const softwareScanApi = {
   /**
    * 执行软件包扫描
-   * POST: /jao/api/jao/jobs/ccZagK/run
+   * POST: /workflow/api/workflow/jobs/ccZagK/run
    * 参数格式: { params: { hosts: [{ key, value, assetType }] } }
    */
   scan(params = {}) {
     const cacheBuster = Date.now()
-    return apiService.post(`/jao/api/jao/jobs/ccZagK/run?cacheBuster=${cacheBuster}`, {
+    return apiService.post(`/workflow/api/workflow/jobs/ccZagK/run?cacheBuster=${cacheBuster}`, {
       params: {
         hosts: params.hosts
       }
@@ -677,11 +677,11 @@ export const softwareScanApi = {
 
   /**
    * 获取扫描运行结果
-   * GET: /jao/api/jao/runlogs/{runId}/result
+   * GET: /workflow/api/workflow/runlogs/{runId}/result
    */
   getRunResult(runId) {
     const cacheBuster = Date.now()
-    return apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+    return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
   }
 }
 
@@ -696,7 +696,7 @@ export const localInstallApi = {
   startInstall(params = {}) {
     const cacheBuster = Date.now()
     return apiService.post(
-      '/jao/api/jao/jobs/EKjwO7/run',
+      '/workflow/api/workflow/jobs/EKjwO7/run',
       {
         params: {
           hosts: params.hosts,
@@ -714,9 +714,9 @@ export const localInstallApi = {
    * @param {string} runId
    */
   getInstallResult(runId) {
-    // 根据用户提供的示例："/jao/api/jao/runlogs/c633f22e799b43db95d1c1403a3702d4/result?cacheBuster=1766050551531"
+    // 根据用户提供的示例："/workflow/api/workflow/runlogs/c633f22e799b43db95d1c1403a3702d4/result?cacheBuster=1766050551531"
     const cacheBuster = Date.now()
-    return apiService.get(`/jao/api/jao/runlogs/${runId}/result`, {
+    return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result`, {
       params: { cacheBuster }
     })
   }

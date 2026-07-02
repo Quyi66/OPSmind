@@ -99,14 +99,14 @@ const handleSave = async () => {
   try {
     if (props.modelData) {
       // 编辑模型
-      await apiService.put(`/acm/api/acm/cit/${props.modelData.id}?cacheBuster=${Date.now()}`, {
+      await apiService.put(`/cmdb/api/cmdb/cit/${props.modelData.id}?cacheBuster=${Date.now()}`, {
         title: formData.value.title,
         isAuto: formData.value.isAuto,
         description: formData.value.description
       })
     } else {
       // 添加模型
-      await apiService.post(`/acm/api/acm/cit?cacheBuster=${Date.now()}`, {
+      await apiService.post(`/cmdb/api/cmdb/cit?cacheBuster=${Date.now()}`, {
         title: formData.value.title,
         code: formData.value.code,
         isAuto: formData.value.isAuto,

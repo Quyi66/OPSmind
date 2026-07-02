@@ -201,7 +201,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
         allow: ['..']
       },
       proxy: {
-        '/sjxy-portal': {
+        '/sjxy-console': {
           target: backendTarget,
           changeOrigin: true,
           secure: false,

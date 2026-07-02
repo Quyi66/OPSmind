@@ -185,7 +185,7 @@ async function handleSubmit() {
   submitting.value = true
   try {
     // 调用作业 u160sB
-    await apiService.post(`/jao/api/jao/jobs/u160sB/run?cacheBuster=${Date.now()}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/u160sB/run?cacheBuster=${Date.now()}`, {
       params: {
         assestsParam: assestsParam.value,
         passwordGenerateMode: formData.passwordGenerateMode || 'input',

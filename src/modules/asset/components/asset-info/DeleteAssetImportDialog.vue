@@ -156,7 +156,7 @@ async function handleUpload() {
     formData.append('file', selectedFile.value)
 
     const response = await apiService.post(
-      `/acm/api/acm/ci/batch-delete-by-excel?cacheBuster=${Date.now()}`,
+      `/cmdb/api/cmdb/ci/batch-delete-by-excel?cacheBuster=${Date.now()}`,
       formData,
       {
         headers: {

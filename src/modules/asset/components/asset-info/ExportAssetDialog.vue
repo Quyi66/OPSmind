@@ -142,7 +142,7 @@ const handleExport = async () => {
       params.append('groupId', formData.value.groupId)
     }
 
-    const url = `/acm/api/acm/ci/export?${params.toString()}&cacheBuster=${Date.now()}`
+    const url = `/cmdb/api/cmdb/ci/export?${params.toString()}&cacheBuster=${Date.now()}`
     window.open(url, '_blank')
 
     ElMessage.success('导出请求已发送')

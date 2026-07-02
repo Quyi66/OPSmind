@@ -8,8 +8,8 @@ import {
 } from '@/modules/sudo/api'
 
 const DTS_BASE = '/dts/api/dts/q/data'
-const SYS_DASHBOARD_BASE = '/svs/api/sys/dashboard'
-const JAO_DASHBOARD_BASE = '/jao/api/jao/dashboard'
+const SYS_DASHBOARD_BASE = '/dashboard/api/sys/dashboard'
+const JAO_DASHBOARD_BASE = '/workflow/api/workflow/dashboard'
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
 
@@ -49,7 +49,7 @@ export function getAuditLogStats(diffDay = 15) {
 
 /**
  * 获取操作日志列表
- * API: /jao/api/jao/dashboard/list-operation-log
+ * API: /workflow/api/workflow/dashboard/list-operation-log
  * @param {Object} params 查询参数
  */
 export function getOperationLogs(params = {}, filter, page, size) {

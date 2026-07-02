@@ -163,7 +163,7 @@ const handleSave = async () => {
       params.parentId = formData.value.parentId || ''
     }
 
-    await apiService.post(`/jao/api/jao/jobs/a17VXM/run?cacheBuster=${Date.now()}`, { params })
+    await apiService.post(`/workflow/api/workflow/jobs/a17VXM/run?cacheBuster=${Date.now()}`, { params })
 
     ElMessage.success('添加分组成功')
     visible.value = false

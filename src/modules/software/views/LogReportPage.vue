@@ -370,7 +370,7 @@ function applyFilters() {
 
 /**
  * 加载日志数据
- * 调用操作日志接口: /jao/api/jao/dashboard/list-operation-log
+ * 调用操作日志接口: /workflow/api/workflow/dashboard/list-operation-log
  * 返回格式: { total: number, records: [] }
  */
 async function loadLogs() {

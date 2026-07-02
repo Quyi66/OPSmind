@@ -1,8 +1,8 @@
 import { apiService } from '@/core/api'
 import { patchInstallApi } from '../api'
 
-const WIN_PATCH_API_PREFIX = '/vap/api/vap/win-patch'
-const WIN_PATCH_ACTION_API_PREFIX = '/vap/api/vap/win/patch'
+const WIN_PATCH_API_PREFIX = '/secops/api/secops/win-patch'
+const WIN_PATCH_ACTION_API_PREFIX = '/secops/api/secops/win/patch'
 
 function normalizeIdList(ids) {
   if (Array.isArray(ids)) {

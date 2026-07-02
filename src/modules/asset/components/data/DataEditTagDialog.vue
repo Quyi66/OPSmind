@@ -64,7 +64,7 @@ const handleSave = async () => {
   saving.value = true
   try {
     // Job: chq5Pe - 编辑标签
-    await apiService.post(`/jao/api/jao/jobs/chq5Pe/run?cacheBuster=${Date.now()}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/chq5Pe/run?cacheBuster=${Date.now()}`, {
       params: {
         parentId: '',
         id: props.tagData.id,

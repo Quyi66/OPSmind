@@ -1,8 +1,8 @@
 import { apiService } from '@/core/api'
 import { yumManageApi } from '@/modules/patches/api'
 
-const YUM_REPO_API_PREFIX = '/vap/api/vap/v2/yum-repo'
-const SQL_IMPORT_API_PREFIX = '/vap/api/vap/v2/sql'
+const YUM_REPO_API_PREFIX = '/secops/api/secops/v2/yum-repo'
+const SQL_IMPORT_API_PREFIX = '/secops/api/secops/v2/sql'
 
 function buildSqlImportParams(params = {}) {
   return {

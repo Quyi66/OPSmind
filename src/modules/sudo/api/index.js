@@ -3,8 +3,8 @@
  */
 import { apiService, getJaoOperationLogs } from '@/core/api'
 
-const JAO_DASHBOARD_BASE = '/jao/api/jao/dashboard'
-const SYS_DASHBOARD_BASE = '/svs/api/sys/dashboard'
+const JAO_DASHBOARD_BASE = '/workflow/api/workflow/dashboard'
+const SYS_DASHBOARD_BASE = '/dashboard/api/sys/dashboard'
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
 
@@ -25,29 +25,29 @@ const wrapRecordsResponse = (response) => ({
 
 /**
  * 获取sudo权限列表
- * GET /jao/api/jao/universal/dc/sudo_scan_result
+ * GET /workflow/api/workflow/universal/dc/sudo_scan_result
  * @param {Object} params 查询参数
  */
 export function getSudoPermissionList(params = {}) {
-  return apiService.get('/jao/api/jao/universal/dc/sudo_scan_result', { params })
+  return apiService.get('/workflow/api/workflow/universal/dc/sudo_scan_result', { params })
 }
 
 /**
  * 获取Linux主机列表
- * GET /jao/api/jao/universal/dc/linux_hosts
+ * GET /workflow/api/workflow/universal/dc/linux_hosts
  */
 export function getLinuxHosts(params = {}) {
-  return apiService.get('/jao/api/jao/universal/dc/linux_hosts', {
+  return apiService.get('/workflow/api/workflow/universal/dc/linux_hosts', {
     params: { assetType: 'linux', ...params }
   })
 }
 
 /**
  * 搜索Linux主机
- * GET /jao/api/jao/universal/dc/linux_hosts
+ * GET /workflow/api/workflow/universal/dc/linux_hosts
  */
 export function searchLinuxHosts(keyword) {
-  return apiService.get('/jao/api/jao/universal/dc/linux_hosts', {
+  return apiService.get('/workflow/api/workflow/universal/dc/linux_hosts', {
     params: { assetType: 'linux', keyword }
   })
 }
@@ -55,10 +55,10 @@ export function searchLinuxHosts(keyword) {
 /**
  * 扫描主机sudo配置
  * 调用作业 iDdpHA
- * POST /jao/api/jao/jobs/{jobCode}/run
+ * POST /workflow/api/workflow/jobs/{jobCode}/run
  */
 export function scanSudoHosts(data = {}) {
-  return apiService.post(`/jao/api/jao/jobs/iDdpHA/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/iDdpHA/run?cacheBuster=${Date.now()}`, {
     params: {
       hosts: data.hosts || []
     }
@@ -67,15 +67,15 @@ export function scanSudoHosts(data = {}) {
 
 /**
  * 获取sudo申请列表
- * GET /jao/api/jao/universal/dc/sudo_add_result
+ * GET /workflow/api/workflow/universal/dc/sudo_add_result
  */
 export function getSudoApplyList(params = {}) {
-  return apiService.get('/jao/api/jao/universal/dc/sudo_add_result', { params })
+  return apiService.get('/workflow/api/workflow/universal/dc/sudo_add_result', { params })
 }
 
 /**
  * 获取操作记录
- * GET /jao/api/jao/dashboard/list-operation-log
+ * GET /workflow/api/workflow/dashboard/list-operation-log
  * @param {Object} options 包含 params(筛选参数), page, size(分页参数), keyword(关键词)
  */
 export function getOperationLog(options = {}) {
@@ -98,10 +98,10 @@ export function getOperationLog(options = {}) {
 /**
  * 添加sudo权限
  * 调用作业 xObuPC 添加sudo配置
- * POST /jao/api/jao/jobs/{jobCode}/run
+ * POST /workflow/api/workflow/jobs/{jobCode}/run
  */
 export function addSudoPermission(data = {}) {
-  return apiService.post(`/jao/api/jao/jobs/xObuPC/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/xObuPC/run?cacheBuster=${Date.now()}`, {
     params: {
       hosts: data.hosts || [],
       users: data.users,
@@ -112,21 +112,21 @@ export function addSudoPermission(data = {}) {
 
 /**
  * 获取作业执行结果
- * GET /jao/api/jao/runlogs/{runId}/result
+ * GET /workflow/api/workflow/runlogs/{runId}/result
  * @param {string} runId 执行ID
  */
 export function getJobResult(runId) {
-  return apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${Date.now()}`)
+  return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result?cacheBuster=${Date.now()}`)
 }
 
 /**
  * 通用作业执行函数
- * POST /jao/api/jao/jobs/{jobCode}/run
+ * POST /workflow/api/workflow/jobs/{jobCode}/run
  * @param {string} jobCode 作业代码
  * @param {Object} params 作业参数
  */
 export function runJob(jobCode, params = {}) {
-  return apiService.post(`/jao/api/jao/jobs/${jobCode}/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/${jobCode}/run?cacheBuster=${Date.now()}`, {
     params
   })
 }
@@ -142,10 +142,10 @@ export function getSystemParams() {
 /**
  * 重置密码
  * 调用作业 YUZz3m
- * POST /jao/api/jao/jobs/{jobCode}/run
+ * POST /workflow/api/workflow/jobs/{jobCode}/run
  */
 export function resetPassword(data = {}) {
-  return apiService.post(`/jao/api/jao/jobs/YUZz3m/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/YUZz3m/run?cacheBuster=${Date.now()}`, {
     params: {
       hosts: data.hosts || [],
       user: data.user,
@@ -157,10 +157,10 @@ export function resetPassword(data = {}) {
 /**
  * 保存密码复杂度配置
  * 调用作业 y8D4V1
- * POST /jao/api/jao/jobs/{jobCode}/run
+ * POST /workflow/api/workflow/jobs/{jobCode}/run
  */
 export function savePasswordComplexity(data = {}) {
-  return apiService.post(`/jao/api/jao/jobs/y8D4V1/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/y8D4V1/run?cacheBuster=${Date.now()}`, {
     params: {
       ocredit: data.ocredit,
       dcredit: data.dcredit,
@@ -234,7 +234,7 @@ export function getSudoCommandsByTemplate(templateId, options = {}) {
  * @param {Object} data 模板数据 {id, name, description}
  */
 export function createSudoTemplate(data) {
-  return apiService.post(`/jao/api/jao/jobs/kJym3M/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/kJym3M/run?cacheBuster=${Date.now()}`, {
     params: {
       id: data.id || null,
       name: data.name,
@@ -249,7 +249,7 @@ export function createSudoTemplate(data) {
  * @param {string} id 模板ID
  */
 export function deleteSudoTemplate(id) {
-  return apiService.post(`/jao/api/jao/jobs/yW3mhs/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/yW3mhs/run?cacheBuster=${Date.now()}`, {
     params: { id }
   })
 }
@@ -260,7 +260,7 @@ export function deleteSudoTemplate(id) {
  * @param {Object} data 命令数据 {templateId, command, description}
  */
 export function createSudoCommand(data) {
-  return apiService.post(`/jao/api/jao/jobs/c06cQz/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/c06cQz/run?cacheBuster=${Date.now()}`, {
     params: {
       id: null,
       templateId: data.templateId,
@@ -276,7 +276,7 @@ export function createSudoCommand(data) {
  * @param {string} id 命令ID
  */
 export function deleteSudoCommand(id) {
-  return apiService.post(`/jao/api/jao/jobs/xr6PHd/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/xr6PHd/run?cacheBuster=${Date.now()}`, {
     params: { id }
   })
 }

@@ -6,7 +6,7 @@
 import { apiService } from '@/core/api'
 import type { BatchUpdateResult } from '@/types/acm'
 
-const BATCH_UPDATE_URL = '/acm/api/acm/auto/password/batch-update'
+const BATCH_UPDATE_URL = '/cmdb/api/cmdb/auto/password/batch-update'
 
 export async function batchUpdateDevicePasswords(
   file: File,

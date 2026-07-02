@@ -57,7 +57,7 @@ async function handleCheck() {
   submitting.value = true
   try {
     // 调用作业 v0KKtQ
-    await apiService.post(`/jao/api/jao/jobs/v0KKtQ/run?cacheBuster=${Date.now()}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/v0KKtQ/run?cacheBuster=${Date.now()}`, {
       params: {}
     })
 

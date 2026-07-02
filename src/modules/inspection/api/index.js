@@ -4,7 +4,7 @@
 import { apiService } from '@/core/api'
 
 // CAC API 基础路径
-const CAC_BASE = '/cac/api/cac'
+const CAC_BASE = '/audit/api/audit'
 const DTS_BASE = '/dts/api/dts/q/data'
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
@@ -329,11 +329,11 @@ export const jobApi = {
 
   /**
    * 添加主机到白名单
-   * 对应 API: POST /jao/api/jao/jobs/DbnJiF/run
+   * 对应 API: POST /workflow/api/workflow/jobs/DbnJiF/run
    * @param {string[]} hostIds - 主机ID数组
    */
   addHostToWhitelist(hostIds) {
-    return apiService.post(`/jao/api/jao/jobs/DbnJiF/run?cacheBuster=${Date.now()}`, {
+    return apiService.post(`/workflow/api/workflow/jobs/DbnJiF/run?cacheBuster=${Date.now()}`, {
       params: {
         module: 'cac',
         blackHost: hostIds
@@ -343,11 +343,11 @@ export const jobApi = {
 
   /**
    * 从白名单移除主机
-   * 对应 API: POST /jao/api/jao/jobs/3x6mlL/run
+   * 对应 API: POST /workflow/api/workflow/jobs/3x6mlL/run
    * @param {string[]} hostIds - 主机ID数组
    */
   removeHostFromWhitelist(hostIds) {
-    return apiService.post(`/jao/api/jao/jobs/3x6mlL/run?cacheBuster=${Date.now()}`, {
+    return apiService.post(`/workflow/api/workflow/jobs/3x6mlL/run?cacheBuster=${Date.now()}`, {
       params: {
         module: 'cac',
         blackHost: hostIds
@@ -491,11 +491,11 @@ export const whitelistApi = {
 
   /**
    * 移除黑名单主机（从白名单中移除）
-   * 对应 API: POST /jao/api/jao/jobs/3x6mlL/run
+   * 对应 API: POST /workflow/api/workflow/jobs/3x6mlL/run
    * @param {Array<string>} hostIds - 主机ID数组
    */
   removeBlackHost(hostIds) {
-    return apiService.post(`/jao/api/jao/jobs/3x6mlL/run?cacheBuster=${Date.now()}`, {
+    return apiService.post(`/workflow/api/workflow/jobs/3x6mlL/run?cacheBuster=${Date.now()}`, {
       params: {
         module: 'cac',
         blackHost: hostIds
@@ -505,11 +505,11 @@ export const whitelistApi = {
 
   /**
    * 添加黑名单主机（添加到白名单）
-   * 对应 API: POST /jao/api/jao/jobs/DbnJiF/run
+   * 对应 API: POST /workflow/api/workflow/jobs/DbnJiF/run
    * @param {Array<string>} hostIds - 主机ID数组
    */
   addBlackHost(hostIds) {
-    return apiService.post(`/jao/api/jao/jobs/DbnJiF/run?cacheBuster=${Date.now()}`, {
+    return apiService.post(`/workflow/api/workflow/jobs/DbnJiF/run?cacheBuster=${Date.now()}`, {
       params: {
         module: 'cac',
         blackHost: hostIds
@@ -614,10 +614,10 @@ export const emailConfigApi = {
 
   /**
    * 获取收件人列表
-   * 对应 API: GET /jao/api/jao/dc/data?code=CAC_RECIPIENT_LIST
+   * 对应 API: GET /workflow/api/workflow/dc/data?code=CAC_RECIPIENT_LIST
    */
   getRecipientList() {
-    return apiService.get('/jao/api/jao/dc/data', {
+    return apiService.get('/workflow/api/workflow/dc/data', {
       params: { code: 'CAC_RECIPIENT_LIST' }
     })
   },
@@ -627,7 +627,7 @@ export const emailConfigApi = {
    * 对应 job code: N4TqAN, callId: CAC_RECIPIENT_LIST_ADD
    */
   saveRecipient(data) {
-    return apiService.post(`/jao/api/jao/jobs/N4TqAN/run?cacheBuster=${Date.now()}`, {
+    return apiService.post(`/workflow/api/workflow/jobs/N4TqAN/run?cacheBuster=${Date.now()}`, {
       callId: 'CAC_RECIPIENT_LIST_ADD',
       params: {
         id: data.id || null,
@@ -649,17 +649,17 @@ export const emailConfigApi = {
    * 对应 job code: eNBw8A
    */
   deleteRecipient(id) {
-    return apiService.post(`/jao/api/jao/jobs/eNBw8A/run?cacheBuster=${Date.now()}`, {
+    return apiService.post(`/workflow/api/workflow/jobs/eNBw8A/run?cacheBuster=${Date.now()}`, {
       params: { id }
     })
   },
 
   /**
    * 获取自定义邮件内容列表
-   * 对应 API: GET /jao/api/jao/dc/data?code=CAC_EMAIL_CUSTOM
+   * 对应 API: GET /workflow/api/workflow/dc/data?code=CAC_EMAIL_CUSTOM
    */
   getEmailCustomList() {
-    return apiService.get('/jao/api/jao/dc/data', {
+    return apiService.get('/workflow/api/workflow/dc/data', {
       params: { code: 'CAC_EMAIL_CUSTOM' }
     })
   },
@@ -669,7 +669,7 @@ export const emailConfigApi = {
    * 对应 job code: N4TqAN, callId: CAC_EMAIL_CUSTOM_ADD
    */
   saveEmailCustom(data) {
-    return apiService.post(`/jao/api/jao/jobs/N4TqAN/run?cacheBuster=${Date.now()}`, {
+    return apiService.post(`/workflow/api/workflow/jobs/N4TqAN/run?cacheBuster=${Date.now()}`, {
       callId: 'CAC_EMAIL_CUSTOM_ADD',
       params: {
         id: data.id || null,

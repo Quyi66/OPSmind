@@ -30,7 +30,7 @@ describe('bank province branch urgency API', () => {
     urgencyApi.importRules(file)
 
     expect(apiMocks.post).toHaveBeenCalledWith(
-      '/vap/api/vap/v2/urgency/rule/import',
+      '/secops/api/secops/v2/urgency/rule/import',
       expect.any(FormData)
     )
     expect(apiMocks.post.mock.calls[0][1].get('file')).toBe(file)

@@ -607,7 +607,7 @@ async function loadAvailablePatches() {
       params.severity = patchFilters.severity.join(',')
     }
 
-    const res = await apiService.get('/vap/api/vap/v2/patch/assignment/available-patches', {
+    const res = await apiService.get('/secops/api/secops/v2/patch/assignment/available-patches', {
       params
     })
     const rawList = res?.data?.content || res?.data?.records || res?.data || []
@@ -634,7 +634,7 @@ async function fetchAvailablePatchById(patchId) {
     return null
   }
 
-  const res = await apiService.get('/vap/api/vap/v2/patch/assignment/available-patches', {
+  const res = await apiService.get('/secops/api/secops/v2/patch/assignment/available-patches', {
     params: {
       page: 0,
       size: 100,
@@ -684,7 +684,7 @@ async function loadAssignedPatches() {
   if (!props.username) return
   loadingAssigned.value = true
   try {
-    const res = await apiService.get('/vap/api/vap/v2/patch/assignment/list', {
+    const res = await apiService.get('/secops/api/secops/v2/patch/assignment/list', {
       params: { userLogin: props.username, page: 0, size: 1000 }
     })
     if (res?.data?.content) {
@@ -1009,7 +1009,7 @@ async function submitAssign() {
 
   assignLoading.value = true
   try {
-    const res = await apiService.post('/vap/api/vap/v2/patch/assignment', {
+    const res = await apiService.post('/secops/api/secops/v2/patch/assignment', {
       userLogin: props.username,
       items,
       expireTime: assignForm.value.expireTime || undefined,

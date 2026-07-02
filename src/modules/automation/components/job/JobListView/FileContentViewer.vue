@@ -382,7 +382,7 @@ const fileUrl = computed(() => {
     // API 返回的 downloadUri 格式：/api/gfs/v2/...
     // 需要将 /api 替换为 /gfs/api
     if (downloadUri.startsWith('/api/')) {
-      return `/sjxy-portal/gfs${downloadUri}`
+      return `/sjxy-console/gfs${downloadUri}`
     }
     return downloadUri
   }
@@ -871,7 +871,7 @@ async function saveFileInfo() {
     // 更新用户编辑的字段
     updateData.description = editForm.value.description
     updateData.config = editForm.value.config
-
+    debugger
     // 设置是否编辑了内容
     updateData.isContent = isEditingContent.value
 

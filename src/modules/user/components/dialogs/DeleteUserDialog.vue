@@ -135,7 +135,7 @@ async function handleSubmit() {
   try {
     const cacheBuster = Date.now()
     const { data } = await apiService.post(
-      `/jao/api/jao/jobs/${DELETE_USER_JOB_ID}/run?cacheBuster=${cacheBuster}`,
+      `/workflow/api/workflow/jobs/${DELETE_USER_JOB_ID}/run?cacheBuster=${cacheBuster}`,
       {
         params: {
           user_name: formData.username,

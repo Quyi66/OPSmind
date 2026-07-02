@@ -4,14 +4,14 @@
  */
 import { apiService, getJaoOperationLogs } from '@/core/api'
 
-const VAP_API_PREFIX = '/vap/api/vap'
+const VAP_API_PREFIX = '/secops/api/secops'
 const PATCH_TASK_API_PREFIX = `${VAP_API_PREFIX}/v2/patch/task`
 
 const VAP_DASHBOARD_BASE = `${VAP_API_PREFIX}/dashboard`
 // 以下路径用于 VAP2-DASHBOARD-API-MIGRATION.md 中迁移的 4 个接口
 // 这些接口原先通过 DTS 代理调用，现已迁移至 sjxy-vap 模块直接提供
-const VAP_DASHBOARD_MIGRATION_BASE = '/vap/api/vap/dashboard'
-const JAO_DASHBOARD_BASE = '/jao/api/jao/dashboard'
+const VAP_DASHBOARD_MIGRATION_BASE = '/secops/api/secops/dashboard'
+const JAO_DASHBOARD_BASE = '/workflow/api/workflow/dashboard'
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
 
@@ -232,7 +232,7 @@ export const patchScanApi = {
 
   /**
    * 获取扫描结果列表（主机概览）
-   * GET /vap/api/vap/v2/cve/machine-list
+   * GET /secops/api/secops/v2/cve/machine-list
    * @param {Object} params - 查询参数
    * @param {string} params.os_distro - 操作系统发行版
    * @param {string} params.os_version - 操作系统版本
@@ -292,7 +292,7 @@ export const patchScanApi = {
 
   /**
    * 获取单个主机的可用补丁列表
-   * GET /vap/api/vap/v2/patch/host-patches
+   * GET /secops/api/secops/v2/patch/host-patches
    * @param {Object} params - 查询参数
    * @param {string} params.host_id - 主机ID
    * @param {string} params.severity - 严重程度筛选（逗号分隔：Critical,Important,Moderate,Low）
@@ -326,7 +326,7 @@ export const patchScanApi = {
 
   /**
    * 获取指定主机的CVE漏洞列表
-   * GET /vap/api/vap/v2/cve/host-cve-list
+   * GET /secops/api/secops/v2/cve/host-cve-list
    * @param {Object} params - 查询参数
    * @param {string} params.host_id - 主机ID
    * @returns {Promise}
@@ -364,7 +364,7 @@ export const patchScanApi = {
 export const patchInstallApi = {
   /**
    * 创建补丁安装任务
-   * POST /vap/api/vap/v2/patch/task/create
+   * POST /secops/api/secops/v2/patch/task/create
    */
   createTask(params) {
     return apiService
@@ -374,7 +374,7 @@ export const patchInstallApi = {
 
   /**
    * 创建补丁回滚任务
-   * POST /vap/api/vap/v2/patch/task/create-rollback
+   * POST /secops/api/secops/v2/patch/task/create-rollback
    */
   createRollbackTask(params) {
     return apiService
@@ -384,7 +384,7 @@ export const patchInstallApi = {
 
   /**
    * 创建软件包更新任务
-   * POST /vap/api/vap/v2/patch/task/create-pkg-update
+   * POST /secops/api/secops/v2/patch/task/create-pkg-update
    */
   createPkgUpdateTask(params) {
     return apiService
@@ -394,7 +394,7 @@ export const patchInstallApi = {
 
   /**
    * 创建漏洞修复任务
-   * POST /vap/api/vap/v2/patch/task/create-vuln-fix
+   * POST /secops/api/secops/v2/patch/task/create-vuln-fix
    */
   createVulnFixTask(params) {
     return apiService
@@ -404,7 +404,7 @@ export const patchInstallApi = {
 
   /**
    * 分页查询任务列表
-   * GET /vap/api/vap/v2/patch/task/list
+   * GET /secops/api/secops/v2/patch/task/list
    */
   listTasks(params = {}) {
     return apiService
@@ -414,7 +414,7 @@ export const patchInstallApi = {
 
   /**
    * 获取任务详情
-   * GET /vap/api/vap/v2/patch/task/{id}
+   * GET /secops/api/secops/v2/patch/task/{id}
    */
   getTask(id) {
     return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}`).then(normalizePatchTaskResponse)
@@ -422,7 +422,7 @@ export const patchInstallApi = {
 
   /**
    * 查询任务操作日志（分页）
-   * GET /vap/api/vap/v2/patch/task/{id}/audit/history?page=0&size=50
+   * GET /secops/api/secops/v2/patch/task/{id}/audit/history?page=0&size=50
    */
   getTaskAuditHistory(id, params = {}) {
     return apiService
@@ -432,7 +432,7 @@ export const patchInstallApi = {
 
   /**
    * 查询任务全量操作日志（不分页）
-   * GET /vap/api/vap/v2/patch/task/{id}/audit/history/all
+   * GET /secops/api/secops/v2/patch/task/{id}/audit/history/all
    */
   getTaskAuditHistoryAll(id) {
     return apiService
@@ -442,7 +442,7 @@ export const patchInstallApi = {
 
   /**
    * 获取任务审计详情（含步骤汇总）
-   * GET /vap/api/vap/v2/patch/task/{id}/audit/detail
+   * GET /secops/api/secops/v2/patch/task/{id}/audit/detail
    * 返回 { task, steps: [{ step, label, status, runId, logs }], logs }
    */
   getAuditDetail(id) {
@@ -451,7 +451,7 @@ export const patchInstallApi = {
 
   /**
    * 上传任务脚本文件
-   * POST /vap/api/vap/v2/patch/task/{id}/script/upload
+   * POST /secops/api/secops/v2/patch/task/{id}/script/upload
    */
   uploadScript(id, scriptType, file) {
     const formData = new FormData()
@@ -464,7 +464,7 @@ export const patchInstallApi = {
 
   /**
    * 编辑任务脚本内容
-   * PUT /vap/api/vap/v2/patch/task/{id}/script/update
+   * PUT /secops/api/secops/v2/patch/task/{id}/script/update
    */
   updateScript(id, scriptType, content) {
     return apiService
@@ -477,7 +477,7 @@ export const patchInstallApi = {
 
   /**
    * 下载任务脚本内容
-   * GET /vap/api/vap/v2/patch/task/{id}/script/download?type=pre-check
+   * GET /secops/api/secops/v2/patch/task/{id}/script/download?type=pre-check
    */
   downloadScript(id, type) {
     return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}/script/download?type=${type}`)
@@ -485,7 +485,7 @@ export const patchInstallApi = {
 
   /**
    * 获取重启策略
-   * GET /vap/api/vap/v2/patch/task/{id}/restart/options
+   * GET /secops/api/secops/v2/patch/task/{id}/restart/options
    */
   getRestartOptions(id) {
     return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}/restart/options`)
@@ -493,8 +493,8 @@ export const patchInstallApi = {
 
   /**
    * 查询补丁在指定主机上的重启建议
-   * GET /vap/api/vap/v2/patch/reboot-on-host?patchId=...&hostIp=... (单个 patch)
-   * POST /vap/api/vap/v2/patch/reboot-on-host (多个 patch)
+   * GET /secops/api/secops/v2/patch/reboot-on-host?patchId=...&hostIp=... (单个 patch)
+   * POST /secops/api/secops/v2/patch/reboot-on-host (多个 patch)
    * 请求体 { patchIds: [...], hostIp: "..." }
    */
   getPatchRebootOnHost(params) {
@@ -536,7 +536,7 @@ export const patchInstallApi = {
 
   /**
    * 步骤1：执行预检查
-   * POST /vap/api/vap/v2/patch/task/{id}/pre-check/execute
+   * POST /secops/api/secops/v2/patch/task/{id}/pre-check/execute
    */
   executePreCheck(id) {
     return apiService
@@ -546,7 +546,7 @@ export const patchInstallApi = {
 
   /**
    * 跳过预检查
-   * POST /vap/api/vap/v2/patch/task/{id}/pre-check/skip
+   * POST /secops/api/secops/v2/patch/task/{id}/pre-check/skip
    */
   skipPreCheck(id) {
     return apiService
@@ -556,7 +556,7 @@ export const patchInstallApi = {
 
   /**
    * 步骤2：执行补丁安装
-   * POST /vap/api/vap/v2/patch/task/{id}/install/execute
+   * POST /secops/api/secops/v2/patch/task/{id}/install/execute
    */
   executeInstallTask(id) {
     return apiService
@@ -566,7 +566,7 @@ export const patchInstallApi = {
 
   /**
    * 步骤2：执行补丁回滚
-   * POST /vap/api/vap/v2/patch/task/{id}/rollback/execute
+   * POST /secops/api/secops/v2/patch/task/{id}/rollback/execute
    */
   executeRollbackTask(id) {
     return apiService
@@ -576,7 +576,7 @@ export const patchInstallApi = {
 
   /**
    * 获取回滚额外信息
-   * GET /vap/api/vap/v2/patch/task/{id}/rollback/info
+   * GET /secops/api/secops/v2/patch/task/{id}/rollback/info
    */
   getRollbackInfo(id) {
     return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}/rollback/info`)
@@ -601,7 +601,7 @@ export const patchInstallApi = {
 
   /**
    * 步骤4：执行重启
-   * POST /vap/api/vap/v2/patch/task/{id}/restart/execute
+   * POST /secops/api/secops/v2/patch/task/{id}/restart/execute
    */
   executeRestart(id) {
     return apiService
@@ -611,7 +611,7 @@ export const patchInstallApi = {
 
   /**
    * 步骤5：执行安装后校验
-   * POST /vap/api/vap/v2/patch/task/{id}/validate/execute
+   * POST /secops/api/secops/v2/patch/task/{id}/validate/execute
    */
   executeValidate(id) {
     return apiService
@@ -621,7 +621,7 @@ export const patchInstallApi = {
 
   /**
    * 跳过校验
-   * POST /vap/api/vap/v2/patch/task/{id}/validate/skip
+   * POST /secops/api/secops/v2/patch/task/{id}/validate/skip
    */
   skipValidate(id) {
     return apiService
@@ -639,7 +639,7 @@ export const patchInstallApi = {
    */
   install(params) {
     // 使用作业方式执行安装，后端期望参数形如 { params: { hosts, patchIds, hostIds, packages } }
-    return apiService.post('/jao/api/jao/jobs/QJb6B8/run', {
+    return apiService.post('/workflow/api/workflow/jobs/QJb6B8/run', {
       params: {
         hosts: params.hosts || null,
         patchIds: params.patchIds || [],
@@ -660,7 +660,7 @@ export const patchInstallApi = {
    */
   updatePackages(params) {
     const cacheBuster = Date.now()
-    return apiService.post(`/jao/api/jao/jobs/QJb6B8/run?cacheBuster=${cacheBuster}`, {
+    return apiService.post(`/workflow/api/workflow/jobs/QJb6B8/run?cacheBuster=${cacheBuster}`, {
       params: {
         hosts: params.hosts || [],
         patchIds: params.patchIds || [],
@@ -708,7 +708,7 @@ export const patchInstallApi = {
     const requestBody = {
       patch_ids: params.patch_ids
     }
-    return apiService.post('/vap/api/vap/v2/patch/affected-pkgs', requestBody).then(wrapRecordsResponse)
+    return apiService.post('/secops/api/secops/v2/patch/affected-pkgs', requestBody).then(wrapRecordsResponse)
   },
 
   /**
@@ -758,7 +758,7 @@ export const localInstallApi = {
    */
   startInstall(params) {
     return apiService
-      .post(`/jao/api/jao/jobs/QJb6B8/run?cacheBuster=${Date.now()}`, {
+      .post(`/workflow/api/workflow/jobs/QJb6B8/run?cacheBuster=${Date.now()}`, {
         params
       })
       .then(response => response?.data ?? response)
@@ -819,7 +819,7 @@ export const patchRollbackApi = {
       return patchInstallApi.executeRollbackTask(taskId)
     }
 
-    return apiService.post('/jao/api/jao/jobs/Uu3eb1/run', {
+    return apiService.post('/workflow/api/workflow/jobs/Uu3eb1/run', {
       params: {
         histUpdateIds: params.histUpdateIds,
         hostIds: null,
@@ -836,7 +836,7 @@ export const patchRollbackApi = {
    * @returns {Promise}
    */
   deleteHistUpdatePkgs(ids) {
-    return apiService.post('/jao/api/jao/jobs/3Fl7CJ/run', {
+    return apiService.post('/workflow/api/workflow/jobs/3Fl7CJ/run', {
       params: {
         histUpdatePkgsWinIds: ids
       }
@@ -985,7 +985,7 @@ export const vulnerabilityApi = {
 
   /**
    * 获取当前统计数据（柱状图）
-   * GET /vap/api/vap/dashboard/current-stats
+   * GET /secops/api/secops/dashboard/current-stats
    * 返回: { records: [{ name: 'scan_count_critical_patch', value: 5 }, ...] }
    * @returns {Promise}
    */
@@ -1006,7 +1006,7 @@ export const vulnerabilityApi = {
 
   /**
    * 获取漏洞概览列表
-   * GET /vap/api/vap/v2/cve/patch-by-cves
+   * GET /secops/api/secops/v2/cve/patch-by-cves
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码
    * @param {number} params.size - 每页大小
@@ -1036,7 +1036,7 @@ export const vulnerabilityApi = {
 
   /**
    * 导出漏洞列表 Excel
-   * GET /vap/api/vap/v2/cve/patch-by-cves/export
+   * GET /secops/api/secops/v2/cve/patch-by-cves/export
    */
   exportVulnerabilityList(params = {}) {
     const query = buildGenericQuery({
@@ -1058,7 +1058,7 @@ export const vulnerabilityApi = {
 
   /**
    * 获取操作系统列表
-   * GET /vap/api/vap/dashboard/machine-os-info
+   * GET /secops/api/secops/dashboard/machine-os-info
    * @returns {Promise}
    */
   getOsDistroList() {
@@ -1068,7 +1068,7 @@ export const vulnerabilityApi = {
 
   /**
    * 获取操作系统版本列表
-   * GET /vap/api/vap/dashboard/machine-os-version-info
+   * GET /secops/api/secops/dashboard/machine-os-version-info
    * @returns {Promise}
    */
   getOsVersionList() {
@@ -1087,7 +1087,7 @@ export const vulnerabilityApi = {
 
   /**
    * 根据补丁状态ID获取主机列表
-   * GET /vap/api/vap/dashboard/patch-status-info
+   * GET /secops/api/secops/dashboard/patch-status-info
    * @param {Array} ids - 补丁状态ID数组
    * @returns {Promise}
    */
@@ -1099,7 +1099,7 @@ export const vulnerabilityApi = {
 
   /**
    * 根据补丁状态ID获取CVE列表
-   * GET /vap/api/vap/dashboard/patch-status-info-by-cve
+   * GET /secops/api/secops/dashboard/patch-status-info-by-cve
    * @param {Array} ids - 补丁状态ID数组
    * @returns {Promise}
    */
@@ -1111,7 +1111,7 @@ export const vulnerabilityApi = {
 
   /**
    * 根据补丁状态ID获取补丁列表
-   * GET /vap/api/vap/dashboard/patch-status-info-by-patch
+   * GET /secops/api/secops/dashboard/patch-status-info-by-patch
    * @param {Array} ids - 补丁状态ID数组
    * @returns {Promise}
    */
@@ -1123,7 +1123,7 @@ export const vulnerabilityApi = {
 
   /**
    * 根据补丁状态ID获取软件包列表
-   * GET /vap/api/vap/dashboard/patch-status-info-by-pkgs
+   * GET /secops/api/secops/dashboard/patch-status-info-by-pkgs
    * @param {Array} ids - 补丁状态ID数组
    * @returns {Promise}
    */
@@ -1158,7 +1158,7 @@ export const vulnerabilityApi = {
 export const patchLogsApi = {
   /**
    * 查询租户补丁操作日志
-   * GET /vap/api/vap/v2/patch/task/audit/logs?taskType=&operator=&startTime=&endTime=&page=0&size=20
+   * GET /secops/api/secops/v2/patch/task/audit/logs?taskType=&operator=&startTime=&endTime=&page=0&size=20
    */
   getAuditLogs(params = {}) {
     return apiService
@@ -1168,7 +1168,7 @@ export const patchLogsApi = {
 
   /**
    * 获取操作日志列表
-   * GET /jao/api/jao/dashboard/list-operation-log
+   * GET /workflow/api/workflow/dashboard/list-operation-log
    * @param {Object} params - 查询参数
    * @param {number} params.page - 页码
    * @param {number} params.size - 每页大小
@@ -1217,7 +1217,7 @@ export const patchOverviewApi = {
 
   /**
    * 获取首页统计卡片数据
-   * GET /vap/api/vap/dashboard/current-stats
+   * GET /secops/api/secops/dashboard/current-stats
    * @returns {Promise}
    */
   getIndexStats() {
@@ -1368,7 +1368,7 @@ export const windowsVulnerabilityApi = {
    * @returns {Promise}
    */
   scanVulnerabilities(params) {
-    return apiService.post('/jao/api/jao/jobs/WIN_SCAN/run', {
+    return apiService.post('/workflow/api/workflow/jobs/WIN_SCAN/run', {
       params: params
     })
   },
@@ -1392,7 +1392,7 @@ export const windowsVulnerabilityApi = {
    * @returns {Promise}
    */
   executeWinScan(params) {
-    return apiService.post('/jao/api/jao/jobs/Fteqeo/run', {
+    return apiService.post('/workflow/api/workflow/jobs/Fteqeo/run', {
       params: {
         host_ids: params.host_ids
       }
@@ -1421,7 +1421,7 @@ export const windowsVulnerabilityApi = {
    * 执行补丁修复
    */
   executeWinPatchFix(params = {}) {
-    return apiService.post('/jao/api/jao/jobs/EAsxlK/run', {
+    return apiService.post('/workflow/api/workflow/jobs/EAsxlK/run', {
       params: {
         winPatchStatusIds: params.winPatchStatusIds || [],
         reboot: params.reboot || 'no'
@@ -1513,11 +1513,11 @@ export const yumManageApi = {
 
   /**
    * 获取YUM源配置列表
-   * GET /jao/api/jao/dc/data?code=yum_configs
+   * GET /workflow/api/workflow/dc/data?code=yum_configs
    * @returns {Promise}
    */
   getYumConfigs() {
-    return apiService.get('/jao/api/jao/dc/data', {
+    return apiService.get('/workflow/api/workflow/dc/data', {
       params: {
         code: 'yum_configs',
         cacheBuster: Date.now()
@@ -1527,7 +1527,7 @@ export const yumManageApi = {
 
   /**
    * 获取 YUM 源配置列表（含采集状态）
-   * GET /vap/api/vap/v2/yum-repo/configs
+   * GET /secops/api/secops/v2/yum-repo/configs
    * @returns {Promise}
    */
   getYumRepoConfigs() {
@@ -1540,7 +1540,7 @@ export const yumManageApi = {
 
   /**
    * 触发单条 YUM 源采集
-   * POST /vap/api/vap/v2/yum-repo/collect
+   * POST /secops/api/secops/v2/yum-repo/collect
    * @param {Object} data - 采集参数
    * @returns {Promise}
    */
@@ -1550,7 +1550,7 @@ export const yumManageApi = {
 
   /**
    * 批量触发 YUM 源采集
-   * POST /vap/api/vap/v2/yum-repo/collect/batch
+   * POST /secops/api/secops/v2/yum-repo/collect/batch
    * @param {Object} data - 批量采集参数
    * @returns {Promise}
    */
@@ -1577,7 +1577,7 @@ export const yumManageApi = {
 
   /**
    * 更新YUM源配置
-   * PUT /vap/api/vap/v2/yum-repo/configs/{id}
+   * PUT /secops/api/secops/v2/yum-repo/configs/{id}
    * @param {string} id - dcDataId
    * @param {Object} data - YUM源配置数据
    * @returns {Promise}
@@ -1591,7 +1591,7 @@ export const yumManageApi = {
 
   /**
    * 删除YUM源配置
-   * DELETE /vap/api/vap/v2/yum-repo/configs/{id}
+   * DELETE /secops/api/secops/v2/yum-repo/configs/{id}
    * @param {string} id - dcDataId
    * @returns {Promise}
    */
@@ -1601,12 +1601,12 @@ export const yumManageApi = {
 
   /**
    * 获取主机YUM源清单列表
-   * GET /jao/api/jao/universal/dc/yum_host_info
+   * GET /workflow/api/workflow/universal/dc/yum_host_info
    * @param {Object} params - 查询参数
    * @returns {Promise}
    */
   getHostYumList(params = {}) {
-    return apiService.get('/jao/api/jao/universal/dc/yum_host_info', {
+    return apiService.get('/workflow/api/workflow/universal/dc/yum_host_info', {
       params: {
         filter: params.filter,
         page: params.page,
@@ -1617,12 +1617,12 @@ export const yumManageApi = {
 
   /**
    * 获取主机YUM源详情列表
-   * POST /jao/api/jao/universal/dc/{model}
+   * POST /workflow/api/workflow/universal/dc/{model}
    * @param {Object} params - 查询参数 { data_owner, repo_status }
    * @returns {Promise}
    */
   getHostRepoDetail(params = {}) {
-    return apiService.post('/jao/api/jao/universal/dc/yum_list', {
+    return apiService.post('/workflow/api/workflow/universal/dc/yum_list', {
       '$data_owner': params.data_owner || '',
       'repo-status': params.repo_status || 'enabled'
     })
@@ -1739,7 +1739,7 @@ export const windowsRollbackApi = {
    * @returns {Promise}
    */
   rollback(params) {
-    return apiService.post('/jao/api/jao/jobs/S9eC0m/run', {
+    return apiService.post('/workflow/api/workflow/jobs/S9eC0m/run', {
       params: {
         update_kbs: params.update_kbs,
         hosts: params.hosts,
@@ -1756,7 +1756,7 @@ export const windowsRollbackApi = {
    * @returns {Promise}
    */
   batchRollback(params) {
-    return apiService.post('/jao/api/jao/jobs/HiuT3F/run', {
+    return apiService.post('/workflow/api/workflow/jobs/HiuT3F/run', {
       params: {
         histUpdatePkgsWinIds: params.histUpdatePkgsWinIds,
         reboot: params.reboot || 'no'
@@ -1771,7 +1771,7 @@ export const windowsRollbackApi = {
    * @returns {Promise}
    */
   deleteHistUpdateKbs(ids) {
-    return apiService.post('/jao/api/jao/jobs/aJlha6/run', {
+    return apiService.post('/workflow/api/workflow/jobs/aJlha6/run', {
       params: {
         histUpdatePkgsWinIds: ids
       }
@@ -1825,7 +1825,7 @@ export const operationReportApi = {
 export const cveApi = {
   /**
    * 分页查询 CVE 列表
-   * GET /vap/api/vap/v2/cve/list
+   * GET /secops/api/secops/v2/cve/list
    * @param {Object} params - 查询参数
    * @param {string} params.source - 数据源，例如 redhat / kylinos / nvd，具体以 /cve/statistics 返回为准
    * @param {string} params.severity - 严重等级: critical / important / moderate / low
@@ -1859,7 +1859,7 @@ export const cveApi = {
 
   /**
    * 查询 CVE 详情
-   * GET /vap/api/vap/v2/cve/detail/{cveId}
+   * GET /secops/api/secops/v2/cve/detail/{cveId}
    * @param {string} cveId - CVE编号，如 CVE-2025-26597
    * @returns {Promise}
    */
@@ -1869,7 +1869,7 @@ export const cveApi = {
 
   /**
    * 获取统计概览
-   * GET /vap/api/vap/v2/cve/statistics
+   * GET /secops/api/secops/v2/cve/statistics
    * @returns {Promise}
    */
   getStatistics() {
@@ -1878,7 +1878,7 @@ export const cveApi = {
 
   /**
    * 查询 CVE 受影响主机列表
-   * GET /vap/api/vap/v2/cve/affected-hosts/{cveId}
+   * GET /secops/api/secops/v2/cve/affected-hosts/{cveId}
    * @param {string} cveId - CVE编号
    * @returns {Promise}
    */
@@ -1888,7 +1888,7 @@ export const cveApi = {
 
   /**
    * 批量导出 CVE 报告（Excel）
-   * POST /vap/api/vap/v2/cve/export
+   * POST /secops/api/secops/v2/cve/export
    * @param {string[]|Object} payload - cveIds 数组或完整请求体
    * @returns {Promise<Blob>}
    */
@@ -1902,7 +1902,7 @@ export const cveApi = {
 
   /**
    * 批量导出 CVE 漏洞排查反馈模板（Excel）
-   * POST /vap/api/vap/v2/cve/feedback-template-export
+   * POST /secops/api/secops/v2/cve/feedback-template-export
    * @param {string[]|string|Object} payload - cveIds 数组、批量输入文本或完整请求体
    * @returns {Promise<Blob>}
    */
@@ -1920,7 +1920,7 @@ export const cveApi = {
 
   /**
    * 执行受影响主机重启
-   * POST /vap/api/vap/v2/patch/reboot-host
+   * POST /secops/api/secops/v2/patch/reboot-host
    * @param {Object} payload - 重启请求体
    * @returns {Promise}
    */
@@ -1936,7 +1936,7 @@ export const cveApi = {
 export const winCveApi = {
   /**
    * 分页查询 Windows CVE 列表
-   * GET /vap/api/vap/v2/win-cve/list
+   * GET /secops/api/secops/v2/win-cve/list
    * @param {Object} params - 查询参数
    * @returns {Promise}
    */
@@ -1957,7 +1957,7 @@ export const winCveApi = {
 
   /**
    * 查询 Windows CVE 详情
-   * GET /vap/api/vap/v2/win-cve/detail/{cveId}
+   * GET /secops/api/secops/v2/win-cve/detail/{cveId}
    * @param {string} cveId - CVE 编号
    * @returns {Promise}
    */
@@ -1967,7 +1967,7 @@ export const winCveApi = {
 
   /**
    * 获取 Windows CVE 统计概览
-   * GET /vap/api/vap/v2/win-cve/statistics
+   * GET /secops/api/secops/v2/win-cve/statistics
    * @returns {Promise}
    */
   getStatistics() {
@@ -1976,7 +1976,7 @@ export const winCveApi = {
 
   /**
    * 查询受影响的 Windows 产品列表
-   * GET /vap/api/vap/v2/win-cve/affected/{cveId}
+   * GET /secops/api/secops/v2/win-cve/affected/{cveId}
    * @param {string} cveId - CVE 编号
    * @returns {Promise}
    */
@@ -2037,7 +2037,7 @@ export const winKbApi = {
 export const middlewareCveApi = {
   /**
    * 分页查询中间件 CVE 列表
-   * GET /vap/api/vap/v2/middleware-cve/list
+   * GET /secops/api/secops/v2/middleware-cve/list
    * @param {Object} params - 查询参数
    * @param {string} params.middlewareType - 中间件类型
    * @param {string} params.severity - 严重等级
@@ -2069,7 +2069,7 @@ export const middlewareCveApi = {
 
   /**
    * 查询 中间件 CVE 详情
-   * GET /vap/api/vap/v2/middleware-cve/detail/{cveId}
+   * GET /secops/api/secops/v2/middleware-cve/detail/{cveId}
    * @param {string} cveId - CVE编号
    * @returns {Promise}
    */
@@ -2079,7 +2079,7 @@ export const middlewareCveApi = {
 
   /**
    * 获取中间件类型列表
-   * GET /vap/api/vap/v2/middleware-cve/middleware-types
+   * GET /secops/api/secops/v2/middleware-cve/middleware-types
    * @returns {Promise}
    */
   getMiddlewareTypes() {
@@ -2093,7 +2093,7 @@ export const middlewareCveApi = {
 export const rpmInfoApi = {
   /**
    * 查询架构枚举
-   * GET /vap/api/vap/v2/rpm-info/architectures
+   * GET /secops/api/secops/v2/rpm-info/architectures
    */
   getArchitectures(params = {}) {
     const query = buildGenericQuery({ source: params.source })
@@ -2102,7 +2102,7 @@ export const rpmInfoApi = {
 
   /**
    * 全量 RPM 软件包分页查询
-   * GET /vap/api/vap/v2/rpm-info/list
+   * GET /secops/api/secops/v2/rpm-info/list
    */
   getPackageList(params = {}) {
     const query = buildGenericQuery({
@@ -2119,7 +2119,7 @@ export const rpmInfoApi = {
 
   /**
    * 按 ID 查询 RPM 软件包详情
-   * GET /vap/api/vap/v2/rpm-info/detail/{id}
+   * GET /secops/api/secops/v2/rpm-info/detail/{id}
    */
   getPackageDetailById(id) {
     return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/detail/${encodeURIComponent(id)}`)
@@ -2127,7 +2127,7 @@ export const rpmInfoApi = {
 
   /**
    * 按包名查询 RPM 软件包详情
-   * GET /vap/api/vap/v2/rpm-info/detail
+   * GET /secops/api/secops/v2/rpm-info/detail
    */
   getPackageDetail(params = {}) {
     const query = buildGenericQuery({
@@ -2141,7 +2141,7 @@ export const rpmInfoApi = {
 
   /**
    * 批量查询 RPM 软件包详情
-   * POST /vap/api/vap/v2/rpm-info/batch-detail
+   * POST /secops/api/secops/v2/rpm-info/batch-detail
    */
   getBatchPackageDetail(payload = {}) {
     return apiService.post(`${VAP_API_PREFIX}/v2/rpm-info/batch-detail`, payload)
@@ -2149,7 +2149,7 @@ export const rpmInfoApi = {
 
   /**
    * 根据 DTS 已安装包行查询软件包详情
-   * GET /vap/api/vap/v2/rpm-info/installed/detail
+   * GET /secops/api/secops/v2/rpm-info/installed/detail
    */
   getInstalledDetail(params = {}) {
     const query = buildGenericQuery({
@@ -2168,7 +2168,7 @@ export const rpmInfoApi = {
 
   /**
    * 根据扫描记录查询主机已安装软件包
-   * GET /vap/api/vap/v2/rpm-info/installed/scan-list
+   * GET /secops/api/secops/v2/rpm-info/installed/scan-list
    */
   getInstalledScanList(params = {}) {
     const query = buildGenericQuery({
@@ -2183,7 +2183,7 @@ export const rpmInfoApi = {
 
   /**
    * 按扫描结果分页查询 Linux 机器包清单
-   * GET /vap/api/vap/v2/rpm-info/installed/scan-packages
+   * GET /secops/api/secops/v2/rpm-info/installed/scan-packages
    */
   getInstalledScanPackages(params = {}) {
     const query = buildGenericQuery({
@@ -2202,7 +2202,7 @@ export const rpmInfoApi = {
 
   /**
    * 导出 Linux 机器包清单
-   * POST /vap/api/vap/v2/rpm-info/installed/scan-packages/export
+   * POST /secops/api/secops/v2/rpm-info/installed/scan-packages/export
    */
   exportInstalledScanPackages(payload = {}) {
     return apiService.post(
@@ -2221,33 +2221,33 @@ export const rpmInfoApi = {
 export const viewConfigApi = {
   /**
    * 拉取生效视图
-   * GET /acm/api/acm/ci/view-config?ciType=host&scope=user
+   * GET /cmdb/api/cmdb/ci/view-config?ciType=host&scope=user
    */
   getViewConfig(params = {}) {
     const query = buildGenericQuery({
       ciType: params.ciType || 'host',
       scope: params.scope || 'user'
     })
-    return apiService.get(`/acm/api/acm/ci/view-config${query}`)
+    return apiService.get(`/cmdb/api/cmdb/ci/view-config${query}`)
   },
 
   /**
    * 保存视图
-   * PUT /acm/api/acm/ci/view-config
+   * PUT /cmdb/api/cmdb/ci/view-config
    */
   saveViewConfig(data) {
-    return apiService.put('/acm/api/acm/ci/view-config', data)
+    return apiService.put('/cmdb/api/cmdb/ci/view-config', data)
   },
 
   /**
    * 可选属性列表
-   * GET /acm/api/acm/ci/view-config/attrs?ciType=host
+   * GET /cmdb/api/cmdb/ci/view-config/attrs?ciType=host
    */
   getAttrs(params = {}) {
     const query = buildGenericQuery({
       ciType: params.ciType || 'host'
     })
-    return apiService.get(`/acm/api/acm/ci/view-config/attrs${query}`)
+    return apiService.get(`/cmdb/api/cmdb/ci/view-config/attrs${query}`)
   }
 }
 
@@ -2257,42 +2257,42 @@ export const viewConfigApi = {
 export const hostBatchApi = {
   /**
    * 批量配置端口
-   * POST /acm/api/acm/ci/batch/apply-ports
+   * POST /cmdb/api/cmdb/ci/batch/apply-ports
    */
   applyPorts(data) {
-    return apiService.post('/acm/api/acm/ci/batch/apply-ports', data)
+    return apiService.post('/cmdb/api/cmdb/ci/batch/apply-ports', data)
   },
 
   /**
    * 批量设置单个属性
-   * POST /acm/api/acm/ci/batch/save/attr
+   * POST /cmdb/api/cmdb/ci/batch/save/attr
    */
   saveAttr(data) {
-    return apiService.post('/acm/api/acm/ci/batch/save/attr', data)
+    return apiService.post('/cmdb/api/cmdb/ci/batch/save/attr', data)
   },
 
   /**
    * 列出 3 个保留区域名
-   * GET /acm/api/acm/ci/batch/locations
+   * GET /cmdb/api/cmdb/ci/batch/locations
    */
   getLocations() {
-    return apiService.get('/acm/api/acm/ci/batch/locations')
+    return apiService.get('/cmdb/api/cmdb/ci/batch/locations')
   },
 
   /**
    * 批量给主机标记区域
-   * POST /acm/api/acm/ci/batch/set-location
+   * POST /cmdb/api/cmdb/ci/batch/set-location
    */
   setLocation(data) {
-    return apiService.post('/acm/api/acm/ci/batch/set-location', data)
+    return apiService.post('/cmdb/api/cmdb/ci/batch/set-location', data)
   },
 
   /**
    * 查单台主机当前区域
-   * GET /acm/api/acm/ci/batch/get-location?hostId=...
+   * GET /cmdb/api/cmdb/ci/batch/get-location?hostId=...
    */
   getLocation(hostId) {
-    return apiService.get(`/acm/api/acm/ci/batch/get-location?hostId=${hostId}`)
+    return apiService.get(`/cmdb/api/cmdb/ci/batch/get-location?hostId=${hostId}`)
   }
 }
 
@@ -2302,78 +2302,78 @@ export const hostBatchApi = {
 export const urgencyApi = {
   /**
    * 4 档统计大卡
-   * GET /vap/api/vap/v2/urgency/statistics
+   * GET /secops/api/secops/v2/urgency/statistics
    */
   getStatistics() {
-    return apiService.get('/vap/api/vap/v2/urgency/statistics')
+    return apiService.get('/secops/api/secops/v2/urgency/statistics')
   },
 
   /**
    * 全量重算
-   * POST /vap/api/vap/v2/urgency/recompute?batchSize=1000
+   * POST /secops/api/secops/v2/urgency/recompute?batchSize=1000
    */
   recompute(params = {}) {
     const query = buildGenericQuery({
       batchSize: params.batchSize || 1000
     })
-    return apiService.post(`/vap/api/vap/v2/urgency/recompute${query}`)
+    return apiService.post(`/secops/api/secops/v2/urgency/recompute${query}`)
   },
 
   /**
    * 单台主机重算
-   * POST /vap/api/vap/v2/urgency/recompute-host?hostId=...
+   * POST /secops/api/secops/v2/urgency/recompute-host?hostId=...
    */
   recomputeHost(hostId) {
-    return apiService.post(`/vap/api/vap/v2/urgency/recompute-host?hostId=${hostId}`)
+    return apiService.post(`/secops/api/secops/v2/urgency/recompute-host?hostId=${hostId}`)
   },
 
   /**
    * 规则列表
-   * GET /vap/api/vap/v2/urgency/rule
+   * GET /secops/api/secops/v2/urgency/rule
    */
   getRules() {
-    return apiService.get('/vap/api/vap/v2/urgency/rule')
+    return apiService.get('/secops/api/secops/v2/urgency/rule')
   },
 
   /**
    * 多 CVE 查紧急程度 (即时计算, 0落库)
-   * POST /vap/api/vap/v2/urgency/lookup
+   * POST /secops/api/secops/v2/urgency/lookup
    */
   lookupUrgency(data) {
-    return apiService.post('/vap/api/vap/v2/urgency/lookup', data)
+    return apiService.post('/secops/api/secops/v2/urgency/lookup', data)
   },
 
   /**
    * 多 CVE 查询结果导出 Excel
-   * POST /vap/api/vap/v2/urgency/lookup/export
+   * POST /secops/api/secops/v2/urgency/lookup/export
    */
   exportLookupUrgency(data) {
-    return apiService.post('/vap/api/vap/v2/urgency/lookup/export', data, {
+    return apiService.post('/secops/api/secops/v2/urgency/lookup/export', data, {
       responseType: 'blob'
     })
   },
 
   /**
    * 规则编辑
-   * PUT /vap/api/vap/v2/urgency/rule/{id}
+   * PUT /secops/api/secops/v2/urgency/rule/{id}
    */
   updateRule(id, data) {
-    return apiService.put(`/vap/api/vap/v2/urgency/rule/${id}`, data)
+    return apiService.put(`/secops/api/secops/v2/urgency/rule/${id}`, data)
   },
 
   /**
    * 全量导入当前租户的紧急程度规则
-   * POST /vap/api/vap/v2/urgency/rule/import
+   * POST /secops/api/secops/v2/urgency/rule/import
    */
   importRules(file) {
     const formData = new FormData()
     formData.append('file', file)
-    return apiService.post('/vap/api/vap/v2/urgency/rule/import', formData)
+    return apiService.post('/secops/api/secops/v2/urgency/rule/import', formData)
   },
 
   /**
    * 大卡下钻分页列表
-   * GET /vap/api/vap/v2/urgency/page?urgency=...&page=1&size=20
+   * GET /secops/api/secops/v2/urgency/page?urgency=...&page=1&size=20
    */
   getUrgencyPage(params = {}) {
     const query = buildGenericQuery({
@@ -2381,7 +2381,7 @@ export const urgencyApi = {
       page: params.page ?? 1,
       size: params.size ?? 20
     })
-    return apiService.get(`/vap/api/vap/v2/urgency/page${query}`)
+    return apiService.get(`/secops/api/secops/v2/urgency/page${query}`)
   }
 }
 
@@ -2391,12 +2391,12 @@ export const urgencyApi = {
 export const cveImportApi = {
   /**
    * 上传 Excel
-   * POST /vap/api/vap/v2/cve/import/upload
+   * POST /secops/api/secops/v2/cve/import/upload
    */
   uploadExcel(file) {
     const formData = new FormData()
     formData.append('file', file)
-    return apiService.post('/vap/api/vap/v2/cve/import/upload', formData, {
+    return apiService.post('/secops/api/secops/v2/cve/import/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -2405,47 +2405,47 @@ export const cveImportApi = {
 
   /**
    * 触发比对
-   * POST /vap/api/vap/v2/cve/import/batch/{id}/compare
+   * POST /secops/api/secops/v2/cve/import/batch/{id}/compare
    */
   compareBatch(id) {
-    return apiService.post(`/vap/api/vap/v2/cve/import/batch/${id}/compare`)
+    return apiService.post(`/secops/api/secops/v2/cve/import/batch/${id}/compare`)
   },
 
   /**
    * 历史批次分页
-   * GET /vap/api/vap/v2/cve/import/batch?page=0&size=20
+   * GET /secops/api/secops/v2/cve/import/batch?page=0&size=20
    */
   getBatches(params = {}) {
     const query = buildGenericQuery({
       page: params.page ?? 0,
       size: params.size ?? 20
     })
-    return apiService.get(`/vap/api/vap/v2/cve/import/batch${query}`)
+    return apiService.get(`/secops/api/secops/v2/cve/import/batch${query}`)
   },
 
   /**
    * 批次详情
-   * GET /vap/api/vap/v2/cve/import/batch/{id}
+   * GET /secops/api/secops/v2/cve/import/batch/{id}
    */
   getBatchDetail(id) {
-    return apiService.get(`/vap/api/vap/v2/cve/import/batch/${id}`)
+    return apiService.get(`/secops/api/secops/v2/cve/import/batch/${id}`)
   },
 
   /**
    * 涉及主机清单
-   * GET /vap/api/vap/v2/cve/import/batch/{id}/affected-hosts
+   * GET /secops/api/secops/v2/cve/import/batch/{id}/affected-hosts
    */
   getAffectedHosts(id) {
-    return apiService.get(`/vap/api/vap/v2/cve/import/batch/${id}/affected-hosts`)
+    return apiService.get(`/secops/api/secops/v2/cve/import/batch/${id}/affected-hosts`)
   },
 
   /**
    * 导出上报模板
-   * POST /vap/api/vap/v2/cve/import/batch/{id}/export-report
+   * POST /secops/api/secops/v2/cve/import/batch/{id}/export-report
    */
   exportReport(id) {
     return apiService.post(
-      `/vap/api/vap/v2/cve/import/batch/${id}/export-report`,
+      `/secops/api/secops/v2/cve/import/batch/${id}/export-report`,
       {},
       {
         responseType: 'blob'
@@ -2455,10 +2455,10 @@ export const cveImportApi = {
 
   /**
    * 删除批次
-   * DELETE /vap/api/vap/v2/cve/import/batch/{id}
+   * DELETE /secops/api/secops/v2/cve/import/batch/{id}
    */
   deleteBatch(id) {
-    return apiService.delete(`/vap/api/vap/v2/cve/import/batch/${id}`)
+    return apiService.delete(`/secops/api/secops/v2/cve/import/batch/${id}`)
   }
 }
 

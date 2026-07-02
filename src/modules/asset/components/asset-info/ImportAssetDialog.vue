@@ -142,7 +142,7 @@ const handleUpload = async () => {
     formData.append('file', selectedFile.value)
     const runId = createImportRunId()
 
-    await apiService.post('/acm/api/acm/ci/import2', formData, {
+    await apiService.post('/cmdb/api/cmdb/ci/import2', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'X-Run-Id': runId,

@@ -554,7 +554,7 @@ const targetAppletTitle = computed(() => {
 async function loadApplets() {
   try {
     const response = await apiService.get(
-      `/udp/api/udp/applets?isPaging=true&cacheBuster=${Date.now()}`
+      `/workspace/api/workspace/applets?isPaging=true&cacheBuster=${Date.now()}`
     )
     applets.value = response?.data || response || []
   } catch (error) {
@@ -596,7 +596,7 @@ async function loadPages() {
   pageLoading.value = true
   try {
     const response = await apiService.get(
-      `/udp/api/udp/pages?isPaging=true&page=0&size=1000&appletCode=&cacheBuster=${Date.now()}`
+      `/workspace/api/workspace/pages?isPaging=true&page=0&size=1000&appletCode=&cacheBuster=${Date.now()}`
     )
     pages.value = response?.data?.content || response?.content || response?.data || []
   } catch (error) {
@@ -625,7 +625,7 @@ async function loadDatasets() {
 async function loadJobs() {
   jobLoading.value = true
   try {
-    const response = await apiService.get(`/jao/api/jao/jobs/app?cacheBuster=${Date.now()}`)
+    const response = await apiService.get(`/workflow/api/workflow/jobs/app?cacheBuster=${Date.now()}`)
     jobs.value = response?.data || response || []
   } catch (error) {
     console.error('Failed to load jobs:', error)
@@ -666,7 +666,7 @@ async function handleMove() {
 
   if (type === 'page') {
     ids = selectedPages.value.map(p => p.id)
-    apiUrl = `/udp/api/udp/pages/move/${targetAppletCode.value}`
+    apiUrl = `/workspace/api/workspace/pages/move/${targetAppletCode.value}`
     resourceName = '页面'
     loadFn = loadPages
   } else if (type === 'dataset') {
@@ -676,7 +676,7 @@ async function handleMove() {
     loadFn = loadDatasets
   } else if (type === 'job') {
     ids = selectedJobs.value.map(j => j.id)
-    apiUrl = `/jao/api/jao/jobs/move/${targetAppletCode.value}`
+    apiUrl = `/workflow/api/workflow/jobs/move/${targetAppletCode.value}`
     resourceName = '作业'
     loadFn = loadJobs
   }

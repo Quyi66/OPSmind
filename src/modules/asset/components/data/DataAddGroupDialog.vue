@@ -134,7 +134,7 @@ const handleSave = async () => {
   saving.value = true
   try {
     // Job: a17VXM - 添加分组
-    await apiService.post(`/jao/api/jao/jobs/a17VXM/run?cacheBuster=${Date.now()}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/a17VXM/run?cacheBuster=${Date.now()}`, {
       params: {
         operate: 'new',
         ciIds: null,

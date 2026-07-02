@@ -156,8 +156,8 @@ const loadAssetList = async () => {
   if (!props.tagData) return
   loading.value = true
   try {
-    // 使用 ACM_GET_ATTRS_BY_TAGID → GET /acm/api/acm/ci/attrs/tag?tagId={tagId}
-    const res = await apiService.get('/acm/api/acm/ci/attrs/tag', {
+    // 使用 ACM_GET_ATTRS_BY_TAGID → GET /cmdb/api/cmdb/ci/attrs/tag?tagId={tagId}
+    const res = await apiService.get('/cmdb/api/cmdb/ci/attrs/tag', {
       params: {
         tagId: props.tagData.id,
         size: pagination.value.size,
@@ -193,7 +193,7 @@ const handleRemoveAsset = () => {
       try {
         const ciIds = selectedRows.value.map(row => row.id).join(',')
         // Job: dosxGT - 从标签移除资产
-        await apiService.post(`/jao/api/jao/jobs/dosxGT/run?cacheBuster=${Date.now()}`, {
+        await apiService.post(`/workflow/api/workflow/jobs/dosxGT/run?cacheBuster=${Date.now()}`, {
           params: {
             tagId: props.tagData.id,
             ciId: ciIds

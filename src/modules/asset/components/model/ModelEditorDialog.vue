@@ -455,7 +455,7 @@ const loadModelDetail = async () => {
 
   loading.value = true
   try {
-    const url = `/acm/api/acm/cit/vo/citid/${modelId.value}?cacheBuster=${Date.now()}`
+    const url = `/cmdb/api/cmdb/cit/vo/citid/${modelId.value}?cacheBuster=${Date.now()}`
     const response = await apiService.get(url)
     // API 返回的数据在 response.data 中
     const res = response.data || response
@@ -687,7 +687,7 @@ const handleSave = async () => {
       template_id: originalData.value?.template_id || null
     }
 
-    await apiService.post(`/acm/api/acm/cit?cacheBuster=${Date.now()}`, saveData)
+    await apiService.post(`/cmdb/api/cmdb/cit?cacheBuster=${Date.now()}`, saveData)
     ElMessage.success('保存成功')
     visible.value = false
     emit('saved')

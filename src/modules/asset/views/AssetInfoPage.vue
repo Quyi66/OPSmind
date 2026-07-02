@@ -1150,7 +1150,7 @@ const handleOnline = async () => {
     .then(async () => {
       try {
         const ids = rows.map(row => row.id).join(',')
-        await apiService.post(`/jao/api/jao/jobs/QqUnBG/run?cacheBuster=${Date.now()}`, {
+        await apiService.post(`/workflow/api/workflow/jobs/QqUnBG/run?cacheBuster=${Date.now()}`, {
           params: {
             status: 1,
             id: ids
@@ -1196,7 +1196,7 @@ const handleCheckSingleConn = async row => {
 
     const cacheBuster = Date.now()
     const { data } = await apiService.post(
-      `/jao/api/jao/jobs/M1x855/run?cacheBuster=${cacheBuster}`,
+      `/workflow/api/workflow/jobs/M1x855/run?cacheBuster=${cacheBuster}`,
       {
         params: { hosts: [host] }
       }
@@ -1248,7 +1248,7 @@ const handleOffline = async () => {
     .then(async () => {
       try {
         const ids = rows.map(row => row.id).join(',')
-        await apiService.post(`/jao/api/jao/jobs/QqUnBG/run?cacheBuster=${Date.now()}`, {
+        await apiService.post(`/workflow/api/workflow/jobs/QqUnBG/run?cacheBuster=${Date.now()}`, {
           params: {
             status: 0,
             id: ids
@@ -1273,7 +1273,7 @@ const handleDelete = async () => {
     .then(async () => {
       try {
         const ids = rows.map(row => row.id).join(',')
-        await apiService.post(`/jao/api/jao/jobs/CdPKGF/run?cacheBuster=${Date.now()}`, {
+        await apiService.post(`/workflow/api/workflow/jobs/CdPKGF/run?cacheBuster=${Date.now()}`, {
           params: {
             id: ids
           }

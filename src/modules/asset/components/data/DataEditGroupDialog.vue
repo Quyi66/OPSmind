@@ -121,7 +121,7 @@ const handleSave = async () => {
   saving.value = true
   try {
     // Job: BAzNVq - 编辑分组
-    await apiService.post(`/jao/api/jao/jobs/BAzNVq/run?cacheBuster=${Date.now()}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/BAzNVq/run?cacheBuster=${Date.now()}`, {
       params: {
         id: props.groupData.id,
         name: formData.value.name,

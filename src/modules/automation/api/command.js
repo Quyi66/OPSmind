@@ -8,14 +8,14 @@ import { useApi } from '@/core/api'
  * 获取当前租户的所有命令
  */
 export const findCommandByTenantId = () => {
-  return useApi().get('/jao/api/jao/command/tenantId')
+  return useApi().get('/workflow/api/workflow/command/tenantId')
 }
 
 /**
  * 获取当前用户创建的命令
  */
 export const findByTenantIdAndCreatedBy = () => {
-  return useApi().get('/jao/api/jao/command/tenantId/user')
+  return useApi().get('/workflow/api/workflow/command/tenantId/user')
 }
 
 /**
@@ -24,9 +24,9 @@ export const findByTenantIdAndCreatedBy = () => {
  */
 export const saveCommand = command => {
   if (command.id) {
-    return useApi().put('/jao/api/jao/command', command)
+    return useApi().put('/workflow/api/workflow/command', command)
   } else {
-    return useApi().post('/jao/api/jao/command', command)
+    return useApi().post('/workflow/api/workflow/command', command)
   }
 }
 
@@ -35,7 +35,7 @@ export const saveCommand = command => {
  * @param {string} id - 命令ID
  */
 export const findCommandById = id => {
-  return useApi().get(`/jao/api/jao/command/${id}`)
+  return useApi().get(`/workflow/api/workflow/command/${id}`)
 }
 
 /**
@@ -43,21 +43,21 @@ export const findCommandById = id => {
  * @param {string} id - 命令ID
  */
 export const deleteCommand = id => {
-  return useApi().delete(`/jao/api/jao/command/${id}`)
+  return useApi().delete(`/workflow/api/workflow/command/${id}`)
 }
 
 /**
  * 获取所有待审核的命令
  */
 export const findAllUnapprovedCommand = () => {
-  return useApi().get('/jao/api/jao/command/unapproved')
+  return useApi().get('/workflow/api/workflow/command/unapproved')
 }
 
 /**
  * 获取所有已审核通过的命令
  */
 export const findAllApproveCommand = () => {
-  return useApi().get('/jao/api/jao/command/approve')
+  return useApi().get('/workflow/api/workflow/command/approve')
 }
 
 /**
@@ -65,7 +65,7 @@ export const findAllApproveCommand = () => {
  * @param {array} commands - 命令数组
  */
 export const approveCommand = commands => {
-  return useApi().put('/jao/api/jao/command/approve', commands)
+  return useApi().put('/workflow/api/workflow/command/approve', commands)
 }
 
 /**
@@ -75,7 +75,7 @@ export const approveCommand = commands => {
  * @param {object[]} request.hosts - 主机列表
  */
 export const runCommands = request => {
-  return useApi().post('/jao/api/jao/run/command', request)
+  return useApi().post('/workflow/api/workflow/run/command', request)
 }
 
 // ============ 作业相关 API ============
@@ -85,7 +85,7 @@ export const runCommands = request => {
  * @param {string} type - 作业类型: 'command', 'script', 'rest', 'process'
  */
 export const findAllJobs = type => {
-  let path = '/jao/api/jao/jobs'
+  let path = '/workflow/api/workflow/jobs'
   if (type) {
     path += `?type=${type}`
   }
@@ -97,7 +97,7 @@ export const findAllJobs = type => {
  * @param {string} id - 作业ID
  */
 export const findJobById = id => {
-  return useApi().get(`/jao/api/jao/jobs/${id}`)
+  return useApi().get(`/workflow/api/workflow/jobs/${id}`)
 }
 
 /**
@@ -106,9 +106,9 @@ export const findJobById = id => {
  */
 export const saveJob = job => {
   if (job.id) {
-    return useApi().put(`/jao/api/jao/jobs/${job.id}`, job)
+    return useApi().put(`/workflow/api/workflow/jobs/${job.id}`, job)
   } else {
-    return useApi().post('/jao/api/jao/jobs', job)
+    return useApi().post('/workflow/api/workflow/jobs', job)
   }
 }
 
@@ -117,7 +117,7 @@ export const saveJob = job => {
  * @param {string} id - 作业ID
  */
 export const deleteJob = id => {
-  return useApi().delete(`/jao/api/jao/jobs/${id}`)
+  return useApi().delete(`/workflow/api/workflow/jobs/${id}`)
 }
 
 /**
@@ -126,7 +126,7 @@ export const deleteJob = id => {
  * @param {object} options - 运行选项
  */
 export const runJob = (id, options = {}) => {
-  return useApi().post(`/jao/api/jao/jobs/${id}/run`, options)
+  return useApi().post(`/workflow/api/workflow/jobs/${id}/run`, options)
 }
 
 /**
@@ -134,7 +134,7 @@ export const runJob = (id, options = {}) => {
  * @param {object} request - 作业请求对象
  */
 export const runJobByRequest = request => {
-  return useApi().post('/jao/api/jao/run', request)
+  return useApi().post('/workflow/api/workflow/run', request)
 }
 
 /**
@@ -142,7 +142,7 @@ export const runJobByRequest = request => {
  * @param {string} jobId - 作业ID
  */
 export const findBriefLogsByJobId = jobId => {
-  return useApi().get(`/jao/api/jao/jobs/${jobId}/runlogs`)
+  return useApi().get(`/workflow/api/workflow/jobs/${jobId}/runlogs`)
 }
 
 /**
@@ -150,7 +150,7 @@ export const findBriefLogsByJobId = jobId => {
  * @param {string} runId - 运行ID
  */
 export const getRunResult = runId => {
-  return useApi().get(`/jao/api/jao/runlogs/${runId}/result`)
+  return useApi().get(`/workflow/api/workflow/runlogs/${runId}/result`)
 }
 
 /**
@@ -158,7 +158,7 @@ export const getRunResult = runId => {
  * @param {string} runId - 运行ID
  */
 export const checkRunResult = runId => {
-  return useApi().get(`/jao/api/jao/runlogs/${runId}/check-result`)
+  return useApi().get(`/workflow/api/workflow/runlogs/${runId}/check-result`)
 }
 
 /**
@@ -166,7 +166,7 @@ export const checkRunResult = runId => {
  * @param {string} jobId - 作业ID
  */
 export const getLastRunResult = jobId => {
-  return useApi().get(`/jao/api/jao/jobs/${jobId}/lastrunresult`)
+  return useApi().get(`/workflow/api/workflow/jobs/${jobId}/lastrunresult`)
 }
 
 // ============ 命令状态定义 ============

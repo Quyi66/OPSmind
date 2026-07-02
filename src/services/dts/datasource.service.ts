@@ -122,7 +122,7 @@ async function testConnectivity(datasource: string | Datasource): Promise<Connec
 
 /**
  * Execute DTS dataset query
- * - Endpoint example: /sjxy-portal/dts/api/dts/q/data/{datasetId}
+ * - Endpoint example: /sjxy-console/dts/api/dts/q/data/{datasetId}
  * - Request body: { params, page, size, filter }
  * - Response body: { total, records, ... }
  */

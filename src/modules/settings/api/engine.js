@@ -3,7 +3,7 @@
  */
 import { apiService } from '@/core/api'
 
-const JAO_PREFIX = '/jao/api/jao'
+const JAO_PREFIX = '/workflow/api/workflow'
 
 /**
  * 获取指定 domain 的参数配置

@@ -3,7 +3,7 @@
  */
 import { apiService } from '@/core/api'
 
-const SYS_DASHBOARD_BASE = '/svs/api/sys/dashboard'
+const SYS_DASHBOARD_BASE = '/dashboard/api/sys/dashboard'
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
 
@@ -58,7 +58,7 @@ export function getPmsServerList(assestsObjects = '@@(linux)') {
  * 导出密码
  */
 export function exportPasswords() {
-  const url = `${window.location.origin}/sjxy-portal/upm/api/upm/pms/v2/password-job/export`
+  const url = `${window.location.origin}/sjxy-console/upm/api/upm/pms/v2/password-job/export`
   window.open(url, '_blank')
 }
 
@@ -75,7 +75,7 @@ export function getSystemParams() {
  * 调用作业 8jgzI0
  */
 export function deleteSystemParam(id) {
-  return apiService.post(`/jao/api/jao/jobs/8jgzI0/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/8jgzI0/run?cacheBuster=${Date.now()}`, {
     params: { id }
   })
 }
@@ -85,7 +85,7 @@ export function deleteSystemParam(id) {
  * 调用作业 zRQjPA
  */
 export function saveSystemParam(data) {
-  return apiService.post(`/jao/api/jao/jobs/zRQjPA/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/zRQjPA/run?cacheBuster=${Date.now()}`, {
     params: {
       id: data.id,
       type: data.type,
@@ -109,7 +109,7 @@ export function getUsernameList() {
  * 调用作业 Su0G8O
  */
 export function createApplication(data = {}) {
-  return apiService.post(`/jao/api/jao/jobs/Su0G8O/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/Su0G8O/run?cacheBuster=${Date.now()}`, {
     params: {
       applicantLogin: data.applicantLogin,
       applicantName: data.applicantName,
@@ -128,7 +128,7 @@ export function createApplication(data = {}) {
  * 调用作业 hV5lB4
  */
 export function submitApplication(id) {
-  return apiService.post(`/jao/api/jao/jobs/hV5lB4/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/hV5lB4/run?cacheBuster=${Date.now()}`, {
     params: { id }
   })
 }
@@ -138,7 +138,7 @@ export function submitApplication(id) {
  * 调用作业 GqoyL7
  */
 export function reapplyApplication(id) {
-  return apiService.post(`/jao/api/jao/jobs/GqoyL7/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/GqoyL7/run?cacheBuster=${Date.now()}`, {
     params: { id }
   })
 }
@@ -148,22 +148,22 @@ export function reapplyApplication(id) {
  * 调用作业 iHSVgH
  */
 export function deleteApplication(id) {
-  return apiService.post(`/jao/api/jao/jobs/iHSVgH/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/iHSVgH/run?cacheBuster=${Date.now()}`, {
     params: { id }
   })
 }
 
 /**
  * 获取作业执行结果
- * GET /jao/api/jao/runlogs/{runId}/result
+ * GET /workflow/api/workflow/runlogs/{runId}/result
  */
 export function getJobResult(runId) {
-  return apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${Date.now()}`)
+  return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result?cacheBuster=${Date.now()}`)
 }
 
 /**
  * 获取PMS操作记录
- * GET /svs/api/sys/dashboard/pms-audit-log
+ * GET /dashboard/api/sys/dashboard/pms-audit-log
  */
 export function getOperationLog(params = {}) {
   return apiService.get(`${SYS_DASHBOARD_BASE}/pms-audit-log`, {
@@ -200,7 +200,7 @@ export function getServerHistory(params = {}) {
  * 调用作业进行批量密码修改
  */
 export function batchModifyPassword(params = {}) {
-  return apiService.post(`/jao/api/jao/jobs/PMS_BATCH_MODIFY/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/PMS_BATCH_MODIFY/run?cacheBuster=${Date.now()}`, {
     params: {
       username: params.username,
       passwordType: params.passwordType, // 'random' 或 'manual'
@@ -216,7 +216,7 @@ export function batchModifyPassword(params = {}) {
  * 调用作业进行选择性密码修改
  */
 export function selectModifyPassword(params = {}) {
-  return apiService.post(`/jao/api/jao/jobs/PMS_SELECT_MODIFY/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/PMS_SELECT_MODIFY/run?cacheBuster=${Date.now()}`, {
     params: {
       commaIpStr: params.commaIpStr,
       username: params.username,
@@ -232,7 +232,7 @@ export function selectModifyPassword(params = {}) {
  * 调用作业检查密码状态
  */
 export function checkPasswordState(params = {}) {
-  return apiService.post(`/jao/api/jao/jobs/PMS_CHECK_PASSWORD/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/PMS_CHECK_PASSWORD/run?cacheBuster=${Date.now()}`, {
     params: {
       scope: params.scope, // 'all' 或 'selected'
       commaIpStr: params.commaIpStr
@@ -245,7 +245,7 @@ export function checkPasswordState(params = {}) {
  * 调用作业重置密码
  */
 export function revertPassword(params = {}) {
-  return apiService.post(`/jao/api/jao/jobs/PMS_REVERT_PASSWORD/run?cacheBuster=${Date.now()}`, {
+  return apiService.post(`/workflow/api/workflow/jobs/PMS_REVERT_PASSWORD/run?cacheBuster=${Date.now()}`, {
     params: {
       commaIpStr: params.commaIpStr
     }

@@ -70,11 +70,11 @@ export function getRoles(withPermission = false) {
 
 /**
  * 获取用户的应用列表
- * GET /udp/api/udp/applets/tenant/user
+ * GET /workspace/api/workspace/applets/tenant/user
  */
 export function getUserApplets(login, tenantUserId) {
   return apiService.get(
-    `/udp/api/udp/applets/tenant/user?cacheBuster=${Date.now()}&login=${login}&tenantUserId=${tenantUserId}`
+    `/workspace/api/workspace/applets/tenant/user?cacheBuster=${Date.now()}&login=${login}&tenantUserId=${tenantUserId}`
   )
 }
 
@@ -88,12 +88,12 @@ export function getUserApiKeys(tenantUserId) {
 
 /**
  * 保存用户应用权限
- * POST /udp/api/udp/applet/tenant/:tenantUserId
+ * POST /workspace/api/workspace/applet/tenant/:tenantUserId
  * Body: 完整的应用列表，包含 _user_applet 标记
  */
 export function saveUserApplets(tenantUserId, applets) {
   return apiService.post(
-    `/udp/api/udp/applet/tenant/${tenantUserId}?cacheBuster=${Date.now()}`,
+    `/workspace/api/workspace/applet/tenant/${tenantUserId}?cacheBuster=${Date.now()}`,
     applets
   )
 }
@@ -124,11 +124,11 @@ export function associateTenantUsers(tenantId, userIds) {
 
 /**
  * 获取租户的所有应用列表（用于创建新用户时）
- * GET /udp/api/udp/applets/tenant
+ * GET /workspace/api/workspace/applets/tenant
  */
 export function getTenantApplets(tenantId) {
   return apiService.get(
-    `/udp/api/udp/applets/tenant?tenantId=${tenantId}&cacheBuster=${Date.now()}`
+    `/workspace/api/workspace/applets/tenant?tenantId=${tenantId}&cacheBuster=${Date.now()}`
   )
 }
 

@@ -125,7 +125,7 @@ const handleSave = async () => {
   saving.value = true
   try {
     // 调用 job chq5Pe 添加标签
-    await apiService.post(`/jao/api/jao/jobs/chq5Pe/run?cacheBuster=${Date.now()}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/chq5Pe/run?cacheBuster=${Date.now()}`, {
       params: {
         parentId: formData.value.parentId || '',
         name: formData.value.name || '',

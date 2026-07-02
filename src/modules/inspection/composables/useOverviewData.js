@@ -259,7 +259,7 @@ export function useOverviewData() {
   }
 
   /**
-   * 加载最近执行记录（对应 API: POST /cac/api/cac/v2/jobs/page/all）
+   * 加载最近执行记录（对应 API: POST /audit/api/audit/v2/jobs/page/all）
    */
   async function loadRecentExecutions() {
     try {
@@ -290,9 +290,9 @@ export function useOverviewData() {
       params.append('search[value]', '')
       params.append('start', '0')
 
-      const baseURL = import.meta.env.VITE_API_BASE_URL || '/oplus-portal'
+      const baseURL = import.meta.env.VITE_API_BASE_URL || '/sjxy-console'
       const authHeaders = authService.getAuthHeaders()
-      const response = await axios.post(`${baseURL}/cac/api/cac/v2/jobs/page/all`, params, {
+      const response = await axios.post(`${baseURL}/audit/api/audit/v2/jobs/page/all`, params, {
         headers: {
           ...authHeaders,
           'Content-Type': 'application/x-www-form-urlencoded'

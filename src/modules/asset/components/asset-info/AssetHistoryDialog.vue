@@ -59,11 +59,11 @@ const loadHistoryData = async () => {
 
   loading.value = true
   try {
-    // ACM_HISTORY_ATTR_INF → POST /acm/api/acm/auto/hist/statistic/single/attr/{cid}/{day}
+    // ACM_HISTORY_ATTR_INF → POST /cmdb/api/cmdb/auto/hist/statistic/single/attr/{cid}/{day}
     const cid = props.assetId
     const day = 15
     const res = await apiService.post(
-      `/acm/api/acm/auto/hist/statistic/single/attr/${cid}/${day}`,
+      `/cmdb/api/cmdb/auto/hist/statistic/single/attr/${cid}/${day}`,
       ['memtotal_mb', 'memfree_mb']
     )
     const data = res?.data || res

@@ -146,7 +146,7 @@ function handleReset() {
 async function loadData() {
   loading.value = true
   try {
-    const res = await apiService.get('/cac/api/cac/v2/templates', {
+    const res = await apiService.get('/audit/api/audit/v2/templates', {
       params: { cacheBuster: Date.now() }
     })
     templates.value = (res?.data || res || []).map(item => ({
@@ -194,7 +194,7 @@ async function handleTeamChange(row) {
 
   try {
     await apiService.post(
-      '/cac/api/cac/v2/save/teams-info',
+      '/audit/api/audit/v2/save/teams-info',
       {
         templateId: row.id,
         teamId: row.groupId || null,
@@ -213,7 +213,7 @@ async function handleTeamChange(row) {
 
 async function handleAlertChange(row) {
   try {
-    await apiService.put(`/cac/api/cac/v2/templates/${row.id}/send-sms`, null, {
+    await apiService.put(`/audit/api/audit/v2/templates/${row.id}/send-sms`, null, {
       params: { cacheBuster: Date.now(), sendSms: row.sendAlert }
     })
     ElMessage.success('保存成功')

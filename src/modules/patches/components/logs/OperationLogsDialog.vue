@@ -435,7 +435,7 @@ function formatFilenameTimestamp(timestamp) {
 
 async function fetchReportPath(runId, dir) {
   const api = useApi()
-  const response = await api.get('/vap/api/vap/v2/download/filename', {
+  const response = await api.get('/secops/api/secops/v2/download/filename', {
     params: {
       runId,
       dir,

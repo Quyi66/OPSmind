@@ -99,7 +99,7 @@ const handleUpload = async () => {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
 
-    const res = await apiService.post(`/acm/api/acm/cit/import2?cacheBuster=${Date.now()}`, formData, {
+    const res = await apiService.post(`/cmdb/api/cmdb/cit/import2?cacheBuster=${Date.now()}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

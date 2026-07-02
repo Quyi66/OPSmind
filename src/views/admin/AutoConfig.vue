@@ -315,7 +315,7 @@ async function submitBatch() {
 
 async function fetchResourceTypes() {
   try {
-    const res = await apiService.get('/acm/api/acm/dashboard/resource-type')
+    const res = await apiService.get('/cmdb/api/cmdb/dashboard/resource-type')
     const payload = res?.data?.data ?? res?.data ?? []
     const list = Array.isArray(payload) ? payload : (payload?.records || [])
     osOptions.value = list.map((i: any) => ({ label: i.title || i.code, value: i.code }))
@@ -326,7 +326,7 @@ async function fetchResourceTypes() {
 
 async function fetchAutoConfigOptions() {
   try {
-    const res = await apiService.get('/svs/api/sys/dashboard/all-asset-auto-config')
+    const res = await apiService.get('/dashboard/api/sys/dashboard/all-asset-auto-config')
     const payload = res?.data?.data ?? res?.data ?? []
     const list = Array.isArray(payload) ? payload : payload?.records || []
     autoConfigOptions.value = list.map((item: any) => normalizeAutoConfigOption(item))
@@ -338,7 +338,7 @@ async function fetchAutoConfigOptions() {
 async function fetchAutomationConfigs() {
   loading.value = true
   try {
-    const res = await apiService.get('/acm/api/acm/dashboard/automation', {
+    const res = await apiService.get('/cmdb/api/cmdb/dashboard/automation', {
       params: {
         cit: 'sjxy_all',
         param: keyword.value || 'x',

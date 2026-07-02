@@ -37,7 +37,7 @@ export function isJobSuccess(status) {
  */
 export async function getJobRunResult(runId) {
   const cacheBuster = Date.now()
-  return apiService.get(`/jao/api/jao/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+  return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
 }
 
 /**

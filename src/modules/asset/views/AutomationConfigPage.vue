@@ -851,8 +851,8 @@ async function loadAutomationData() {
 async function loadAnsibleData() {
   ansibleLoading.value = true
   try {
-    // ACM_GET_ALL_ANSIBLE_SET_REST → GET /acm/api/acm/auto/ansible/find/all
-    const res = await apiService.get('/acm/api/acm/auto/ansible/find/all')
+    // ACM_GET_ALL_ANSIBLE_SET_REST → GET /cmdb/api/cmdb/auto/ansible/find/all
+    const res = await apiService.get('/cmdb/api/cmdb/auto/ansible/find/all')
     const records = res?.data || res || []
     ansibleData.value = Array.isArray(records) ? records : records?.records || []
     // 更新配置选项（供其它下拉使用）
@@ -971,15 +971,15 @@ async function loadAnsibleFormOptions() {
       instanceGroupOptions.value = instanceGroups
     }
 
-    // 加载AAP instance group（如果是aap引擎）: AAP_QUERY_INSTANCE_GROUP → GET /jao/api/jao/aap/instance_group
+    // 加载AAP instance group（如果是aap引擎）: AAP_QUERY_INSTANCE_GROUP → GET /workflow/api/workflow/aap/instance_group
     if (scriptEngine.value === 'aap') {
-      const aapRes = await apiService.get('/jao/api/jao/aap/instance_group')
+      const aapRes = await apiService.get('/workflow/api/workflow/aap/instance_group')
       const aapData = aapRes?.data || aapRes
       aapInstanceGroupOptions.value = Array.isArray(aapData) ? aapData : aapData?.records || []
     }
 
     // 加载分组列表
-    const groupRes = await apiService.get('/acm/api/acm/query/group/find/sjxy_all')
+    const groupRes = await apiService.get('/cmdb/api/cmdb/query/group/find/sjxy_all')
     const groupData = groupRes?.data || groupRes
     groupOptions.value = Array.isArray(groupData) ? groupData : groupData?.records || []
   } catch (error) {
@@ -1037,7 +1037,7 @@ async function loadAutomationFormOptions() {
     }
 
     if (scriptEngine.value === 'aap') {
-      const aapRes = await apiService.get('/jao/api/jao/aap/instance_group')
+      const aapRes = await apiService.get('/workflow/api/workflow/aap/instance_group')
       const aapData = aapRes?.data || aapRes
       aapInstanceGroupOptions.value = Array.isArray(aapData) ? aapData : aapData?.records || []
     }
@@ -1085,7 +1085,7 @@ async function saveAutomationConfig() {
     }
 
     const cacheBuster = Date.now()
-    await apiService.post(`/jao/api/jao/jobs/3TRE7d/run?cacheBuster=${cacheBuster}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/3TRE7d/run?cacheBuster=${cacheBuster}`, {
       params
     })
 
@@ -1159,7 +1159,7 @@ async function handleDeleteAnsible(row) {
 
     const token = authService.getToken() || ''
     const cacheBuster = Date.now()
-    await apiService.post(`/jao/api/jao/jobs/OApRjl/run?cacheBuster=${cacheBuster}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/OApRjl/run?cacheBuster=${cacheBuster}`, {
       params: {
         token,
         id: row.id
@@ -1200,7 +1200,7 @@ async function saveAnsibleConfig() {
     }
 
     const cacheBuster = Date.now()
-    await apiService.post(`/jao/api/jao/jobs/c7WN62/run?cacheBuster=${cacheBuster}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/c7WN62/run?cacheBuster=${cacheBuster}`, {
       params
     })
 

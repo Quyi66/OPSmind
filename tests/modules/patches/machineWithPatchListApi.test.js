@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const apiMocks = vi.hoisted(() => ({
-  get: vi.fn(),
-  post: vi.fn(),
-  put: vi.fn(),
-  delete: vi.fn()
+  get: vi.fn(() => Promise.resolve({ data: [] })),
+  post: vi.fn(() => Promise.resolve({ data: [] })),
+  put: vi.fn(() => Promise.resolve({ data: [] })),
+  delete: vi.fn(() => Promise.resolve({ data: [] }))
 }))
 
 vi.mock('@/core/api', () => ({
@@ -29,7 +29,7 @@ describe('machine with patch list API', () => {
     })
 
     expect(apiMocks.get).toHaveBeenCalledWith(
-      '/vap/api/vap/v2/cve/machine-list?os_distro=redhat&os_version=8.5&os_sp_version=SP2&keyword=192.168.1&page=0&size=20'
+      '/secops/api/secops/v2/cve/machine-list?os_distro=redhat&os_version=8.5&os_sp_version=SP2&keyword=192.168.1&page=0&size=20'
     )
   })
 
@@ -41,6 +41,6 @@ describe('machine with patch list API', () => {
       keyword: ''
     })
 
-    expect(apiMocks.get).toHaveBeenCalledWith('/vap/api/vap/v2/cve/machine-list?page=0&size=20')
+    expect(apiMocks.get).toHaveBeenCalledWith('/secops/api/secops/v2/cve/machine-list?page=0&size=20')
   })
 })

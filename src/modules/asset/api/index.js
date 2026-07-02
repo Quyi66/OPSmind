@@ -4,10 +4,10 @@
 import { apiService, getJaoOperationLogs } from '@/core/api'
 
 // ACM API 基础路径
-const ACM_BASE = '/acm/api/acm'
+const ACM_BASE = '/cmdb/api/cmdb'
 const ACM_DASHBOARD_BASE = `${ACM_BASE}/dashboard`
-const SYS_DASHBOARD_BASE = '/svs/api/sys/dashboard'
-const JAO_DASHBOARD_BASE = '/jao/api/jao/dashboard'
+const SYS_DASHBOARD_BASE = '/dashboard/api/sys/dashboard'
+const JAO_DASHBOARD_BASE = '/workflow/api/workflow/dashboard'
 const DTS_BASE = '/api/dts/q/data'
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
@@ -115,7 +115,7 @@ export const dtsApi = {
 export const overviewApi = {
   /**
    * 获取连接状态统计
-   * GET /acm/api/acm/dashboard/connection-count
+   * GET /cmdb/api/cmdb/dashboard/connection-count
    */
   getConnectionCount() {
     return apiService.get(`${ACM_DASHBOARD_BASE}/connection-count`).then(res => normalizeRecords(unwrapApiData(res)))
@@ -123,7 +123,7 @@ export const overviewApi = {
 
   /**
    * 获取资产类型统计
-   * GET /acm/api/acm/dashboard/cit-manage
+   * GET /cmdb/api/cmdb/dashboard/cit-manage
    */
   getAssetTypeCount() {
     return apiService.get(`${ACM_DASHBOARD_BASE}/cit-manage`).then(res => normalizeRecords(unwrapApiData(res)))
@@ -131,7 +131,7 @@ export const overviewApi = {
 
   /**
    * 获取操作系统分布
-   * GET /acm/api/acm/dashboard/os-distro
+   * GET /cmdb/api/cmdb/dashboard/os-distro
    */
   getOsDistribution() {
     return apiService.get(`${ACM_DASHBOARD_BASE}/os-distro`).then(res => normalizeRecords(unwrapApiData(res)))
@@ -139,7 +139,7 @@ export const overviewApi = {
 
   /**
    * 获取资产新增统计
-   * GET /acm/api/acm/dashboard/ci-new-count
+   * GET /cmdb/api/cmdb/dashboard/ci-new-count
    */
   getNewAssetCount() {
     return apiService.get(`${ACM_DASHBOARD_BASE}/ci-new-count`).then(res => normalizeRecords(unwrapApiData(res)))
@@ -147,7 +147,7 @@ export const overviewApi = {
 
   /**
    * 获取分组内资产分布
-   * GET /acm/api/acm/query/group/find/group/sum?os={os}
+   * GET /cmdb/api/cmdb/query/group/find/group/sum?os={os}
    * @param {string} os - 操作系统列表，逗号分隔
    */
   getGroupAssetCount(os = 'CentOS,Windows,Anolis,Debian,RedHat,Debian') {
@@ -156,7 +156,7 @@ export const overviewApi = {
 
   /**
    * 获取操作系统版本分布
-   * GET /acm/api/acm/dashboard/os-version
+   * GET /cmdb/api/cmdb/dashboard/os-version
    * @param {string} osDistro - 操作系统发行版
    */
   getOsVersionDistribution(osDistro) {
@@ -172,7 +172,7 @@ export const overviewApi = {
 export const assetApi = {
   /**
    * 获取资产类型列表
-   * GET /acm/api/acm/dashboard/cit-manage
+   * GET /cmdb/api/cmdb/dashboard/cit-manage
    */
   getAssetTypes() {
     return apiService.get(`${ACM_DASHBOARD_BASE}/cit-manage`).then(res => normalizeRecords(unwrapApiData(res)))
@@ -180,7 +180,7 @@ export const assetApi = {
 
   /**
    * 获取资产类型配置（包含属性和视图定义）
-   * GET /acm/api/acm/cit/code/{citCode}
+   * GET /cmdb/api/cmdb/cit/code/{citCode}
    * @param {string} citCode - 资产类型代码
    */
   async getAssetTypeConfig(citCode) {
@@ -190,7 +190,7 @@ export const assetApi = {
 
   /**
    * 获取资产属性值
-   * GET /acm/api/acm/ci/attr/{id}
+   * GET /cmdb/api/cmdb/ci/attr/{id}
    * @param {string} id - 资产ID
    */
   async getAssetAttrs(id) {
@@ -200,7 +200,7 @@ export const assetApi = {
 
   /**
    * 获取资产类型定义（通过资产ID）
-   * GET /acm/api/acm/cit/vo/cid/{id}
+   * GET /cmdb/api/cmdb/cit/vo/cid/{id}
    * @param {string} id - 资产ID
    */
   async getAssetTypeByAssetId(id) {
@@ -210,7 +210,7 @@ export const assetApi = {
 
   /**
    * 获取资产列表
-   * POST /acm/api/acm/ci/list-asset-selector
+   * POST /cmdb/api/cmdb/ci/list-asset-selector
    * @param {object} params - 查询参数
    * @param {object} options - 分页选项
    */
@@ -226,7 +226,7 @@ export const assetApi = {
 
   /**
    * 获取属性值列表（用于筛选下拉）
-   * GET /acm/api/acm/ci/attr/list/{ciType}/{code}
+   * GET /cmdb/api/cmdb/ci/attr/list/{ciType}/{code}
    * @param {string} ciType - 资产类型
    * @param {string} code - 属性代码
    */
@@ -238,7 +238,7 @@ export const assetApi = {
 
   /**
    * 获取分组列表
-   * GET /acm/api/acm/query/group/view/{citCode}
+   * GET /cmdb/api/cmdb/query/group/view/{citCode}
    * @param {string} citCode - 资产类型代码
    */
   async getGroupList(citCode) {
@@ -250,7 +250,7 @@ export const assetApi = {
 
   /**
    * 获取标签列表
-   * GET /acm/api/acm/query/tag/view/{citCode}
+   * GET /cmdb/api/cmdb/query/tag/view/{citCode}
    * @param {string} citCode - 资产类型代码
    */
   async getTagList(citCode) {
@@ -262,7 +262,7 @@ export const assetApi = {
 
   /**
    * 获取所有资产类型列表
-   * GET /acm/api/acm/cit/get/all/list
+   * GET /cmdb/api/cmdb/cit/get/all/list
    */
   async getAllAssetTypes() {
     const res = await apiService.get(`${ACM_BASE}/cit/get/all/list?cacheBuster=${Date.now()}`)
@@ -271,7 +271,7 @@ export const assetApi = {
 
   /**
    * 更新资产属性（批量修改接口）
-   * POST /acm/api/acm/ci/modify/batch
+   * POST /cmdb/api/cmdb/ci/modify/batch
    * @param {string} id - 资产ID
    * @param {object} attrs - 所有属性键值对（包含 id）
    */
@@ -283,7 +283,7 @@ export const assetApi = {
 
   /**
    * 获取资产模型属性列表
-   * GET /acm/api/acm/cit/code/{ciType}/as/list
+   * GET /cmdb/api/cmdb/cit/code/{ciType}/as/list
    * @param {string} ciType - 资产类型
    */
   getModel(ciType) {
@@ -292,7 +292,7 @@ export const assetApi = {
 
   /**
    * 获取资产类型的标签列表（用于添加标签弹窗）
-   * GET /acm/api/acm/dashboard/tags/{ciType}
+   * GET /cmdb/api/cmdb/dashboard/tags/{ciType}
    * @param {string} ciType - 资产类型
    */
   getCiTagsByCit(ciType) {
@@ -303,7 +303,7 @@ export const assetApi = {
 
   /**
    * 获取资产类型的分组列表（用于添加分组弹窗）
-   * GET /acm/api/acm/query/group/find/{ciType}
+   * GET /cmdb/api/cmdb/query/group/find/{ciType}
    * @param {string} ciType - 资产类型
    */
   getGroupByCit(ciType) {
@@ -319,7 +319,7 @@ export const assetApi = {
 export const dataManageApi = {
   /**
    * 获取当前租户ID
-   * GET /svs/api/sys/dashboard/current-tenant-id
+   * GET /dashboard/api/sys/dashboard/current-tenant-id
    */
   async getCurrentTenantId() {
     const res = await apiService.get(`${SYS_DASHBOARD_BASE}/current-tenant-id`)
@@ -331,7 +331,7 @@ export const dataManageApi = {
 
   /**
    * 获取资源类型列表
-   * GET /acm/api/acm/dashboard/resource-type
+   * GET /cmdb/api/cmdb/dashboard/resource-type
    */
   getResourceTypes() {
     return apiService.get(`${ACM_DASHBOARD_BASE}/resource-type`).then(res => normalizeRecords(unwrapApiData(res)))
@@ -339,7 +339,7 @@ export const dataManageApi = {
 
   /**
    * 获取所有分组列表
-   * GET /acm/api/acm/dashboard/all-group
+   * GET /cmdb/api/cmdb/dashboard/all-group
    * @param {string} ciType - 资产类型，sjxy_all 表示全部
    */
   getAllGroups(ciType = 'sjxy_all') {
@@ -349,7 +349,7 @@ export const dataManageApi = {
 
   /**
    * 获取所有标签列表
-   * GET /acm/api/acm/dashboard/tags
+   * GET /cmdb/api/cmdb/dashboard/tags
    * @param {string} ciType - 资产类型，sjxy_all 表示全部
    */
   getAllTags(ciType = 'sjxy_all') {
@@ -360,11 +360,11 @@ export const dataManageApi = {
 
   /**
    * 删除分组
-   * POST /jao/api/jao/jobs/r08zUN/run
+   * POST /workflow/api/workflow/jobs/r08zUN/run
    * @param {string} id - 分组ID
    */
   async deleteGroup(id) {
-    const res = await apiService.post(`/jao/api/jao/jobs/r08zUN/run?cacheBuster=${Date.now()}`, {
+    const res = await apiService.post(`/workflow/api/workflow/jobs/r08zUN/run?cacheBuster=${Date.now()}`, {
       params: { id }
     })
     return res.data
@@ -372,11 +372,11 @@ export const dataManageApi = {
 
   /**
    * 删除标签
-   * POST /jao/api/jao/jobs/sKaBlB/run
+   * POST /workflow/api/workflow/jobs/sKaBlB/run
    * @param {string} id - 标签ID
    */
   async deleteTag(id) {
-    const res = await apiService.post(`/jao/api/jao/jobs/sKaBlB/run?cacheBuster=${Date.now()}`, {
+    const res = await apiService.post(`/workflow/api/workflow/jobs/sKaBlB/run?cacheBuster=${Date.now()}`, {
       params: { id }
     })
     return res.data
@@ -515,7 +515,7 @@ export const permissionApi = {
    */
   getTablePermission: () => {
     const cacheBuster = Date.now()
-    return apiService.get(`/acm/api/acm/permission/team/table?cacheBuster=${cacheBuster}`).then(res => res.data)
+    return apiService.get(`/cmdb/api/cmdb/permission/team/table?cacheBuster=${cacheBuster}`).then(res => res.data)
   },
 
   /**
@@ -534,7 +534,7 @@ export const permissionApi = {
 export const operationLogApi = {
   /**
    * 获取操作日志列表
-   * GET /jao/api/jao/dashboard/list-operation-log
+   * GET /workflow/api/workflow/dashboard/list-operation-log
    * @param {object} params - 查询参数
    * @param {string} params.module - 模块名称 (acm)
    * @param {string} params.action - 操作类型 (all 或具体操作)

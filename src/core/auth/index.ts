@@ -47,7 +47,7 @@ const SESSION_CONFIG: SessionConfig = {
   timeout: 24 * 60 * 60 * 1000, // 24小时
   // 在超时前 5 分钟触发刷新逻辑（基于空闲时间阈值）
   refreshThreshold: 24 * 60 * 60 * 1000 - 5 * 60 * 1000, // 23小时55分钟
-  encryptionKey: 'Oplus@2022!!sys@' // 加密密钥
+  encryptionKey: 'Sjxy@2026!!sys@!' // 加密密钥
 }
 
 class AuthService implements IAuthService {
@@ -248,6 +248,7 @@ class AuthService implements IAuthService {
         username: this.encrypt(credentials.username),
         password: this.encrypt(credentials.password),
         rememberMe: credentials.rememberMe,
+        encrypt: true,
         tenantId: credentials.tenantId || this.getTenantId()
       }
 
@@ -256,7 +257,7 @@ class AuthService implements IAuthService {
         encryptedData.otpCode = this.encrypt(credentials.otp)
       }
 
-      const response = await fetch(`${this.baseURL}/sjxy-portal/api/authenticate`, {
+      const response = await fetch(`${this.baseURL}/sjxy-console/api/authenticate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -384,7 +385,7 @@ class AuthService implements IAuthService {
    */
   async refreshToken(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseURL}/sjxy-portal/api/auth/refresh`, {
+      const response = await fetch(`${this.baseURL}/sjxy-console/api/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -586,7 +587,7 @@ class AuthService implements IAuthService {
     try {
       const cacheBuster = Date.now()
       const response = await fetch(
-        `${this.baseURL}/sjxy-portal/api/tenants/all?cacheBuster=${cacheBuster}`
+        `${this.baseURL}/sjxy-console/api/tenants/all?cacheBuster=${cacheBuster}`
       )
 
       if (response.ok) {
@@ -605,7 +606,7 @@ class AuthService implements IAuthService {
    */
   async verifyLicense(): Promise<License> {
     try {
-      const response = await fetch(`${this.baseURL}/sjxy-portal/api/licenses/verify`)
+      const response = await fetch(`${this.baseURL}/sjxy-console/api/licenses/verify`)
 
       if (response.ok) {
         const result = await response.json()
@@ -625,7 +626,7 @@ class AuthService implements IAuthService {
     try {
       const cacheBuster = Date.now()
       const response = await fetch(
-        `${this.baseURL}/sjxy-portal/api/authenticate/otp?cacheBuster=${cacheBuster}`
+        `${this.baseURL}/sjxy-console/api/authenticate/otp?cacheBuster=${cacheBuster}`
       )
 
       if (response.ok) {

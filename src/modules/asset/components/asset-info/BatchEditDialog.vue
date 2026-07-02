@@ -131,7 +131,7 @@ const handleSave = async () => {
   saving.value = true
   try {
     // 调用 job CoKLZM 进行批量更新
-    await apiService.post(`/jao/api/jao/jobs/CoKLZM/run?cacheBuster=${Date.now()}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/CoKLZM/run?cacheBuster=${Date.now()}`, {
       params: {
         code: formData.value.code,
         value: formData.value.value,

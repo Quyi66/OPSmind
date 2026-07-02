@@ -323,7 +323,7 @@ async function loadSummary() {
   summaryLoading.value = true
   try {
     const api = useApi()
-    const res = await api.get('/vap/api/vap/dashboard/scan-hist', {
+    const res = await api.get('/secops/api/secops/dashboard/scan-hist', {
       params: {
         runId: props.runId
       }
@@ -342,7 +342,7 @@ async function loadDetail() {
   loading.value = true
   try {
     const api = useApi()
-    const res = await api.get('/vap/api/vap/dashboard/hist-scan-detail', {
+    const res = await api.get('/secops/api/secops/dashboard/hist-scan-detail', {
       params: {
         runId: props.runId,
         page: pagination.value.page,
@@ -379,7 +379,7 @@ async function loadReport() {
 
 async function fetchReportPath(runId, dir) {
   const api = useApi()
-  const response = await api.get('/vap/api/vap/v2/download/filename', {
+  const response = await api.get('/secops/api/secops/v2/download/filename', {
     params: {
       runId,
       dir,
@@ -494,16 +494,16 @@ function safeJsonArray(value) {
 async function fetchHostDetail({ hostId, runId }) {
   const api = useApi()
   const [vulsRes, patchesRes, installedRes, affectedRes] = await Promise.all([
-    api.get('/vap/api/vap/dashboard/hist-scan-detail-by-vuls', {
+    api.get('/secops/api/secops/dashboard/hist-scan-detail-by-vuls', {
       params: { hostId, runId }
     }).then(adaptScanDetailResponse),
-    api.get('/vap/api/vap/dashboard/hist-scan-detail-by-patches', {
+    api.get('/secops/api/secops/dashboard/hist-scan-detail-by-patches', {
       params: { hostId, runId }
     }).then(adaptScanDetailResponse),
-    api.get('/vap/api/vap/dashboard/hist-scan-detail-by-install-pkgs', {
+    api.get('/secops/api/secops/dashboard/hist-scan-detail-by-install-pkgs', {
       params: { hostId, runId }
     }).then(adaptScanDetailResponse),
-    api.get('/vap/api/vap/dashboard/hist-scan-detail-by-affected-pkgs', {
+    api.get('/secops/api/secops/dashboard/hist-scan-detail-by-affected-pkgs', {
       params: { hostId, runId }
     }).then(adaptScanDetailResponse)
   ])

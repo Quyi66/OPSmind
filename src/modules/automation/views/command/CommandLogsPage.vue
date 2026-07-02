@@ -312,7 +312,7 @@ async function handleViewResult(row) {
 async function handleRerun(row) {
   try {
     await ElMessageBox.confirm('确定要重新运行此运维工具吗？', '重新运行', { type: 'warning' })
-    await useApi().post('/jao/api/jao/job/rerun', {
+    await useApi().post('/workflow/api/workflow/job/rerun', {
       runId: row.id
     })
     ElMessage.success('已提交重新运行')

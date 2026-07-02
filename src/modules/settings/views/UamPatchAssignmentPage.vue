@@ -185,7 +185,7 @@ const filteredData = computed(() => {
 })
 
 const patchAssignmentApi = {
-  cleanExpired: () => apiService.post('/vap/api/vap/v2/patch/assignment/clean-expired')
+  cleanExpired: () => apiService.post('/secops/api/secops/v2/patch/assignment/clean-expired')
 }
 
 onMounted(() => {

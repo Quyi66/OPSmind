@@ -96,7 +96,7 @@ async function loadRecords() {
   if (!props.username) return
   recordsLoading.value = true
   try {
-    const res = await apiService.get('/vap/api/vap/v2/patch/assignment/list', {
+    const res = await apiService.get('/secops/api/secops/v2/patch/assignment/list', {
       params: {
         userLogin: props.username,
         page: recordPage.value - 1, // 后端分页从0开始
@@ -126,7 +126,7 @@ async function handleRevokeSingle(row) {
       '提示',
       { type: 'warning' }
     )
-    await apiService.delete(`/vap/api/vap/v2/patch/assignment/${row.id}`)
+    await apiService.delete(`/secops/api/secops/v2/patch/assignment/${row.id}`)
     ElMessage.success('撤销成功')
     loadRecords()
     emit('success')
@@ -147,7 +147,7 @@ async function handleRevokeSelected() {
       selectedRecords.value
         .map(item => item.id)
         .filter(Boolean)
-        .map(id => apiService.delete(`/vap/api/vap/v2/patch/assignment/${id}`))
+        .map(id => apiService.delete(`/secops/api/secops/v2/patch/assignment/${id}`))
     )
 
     ElMessage.success('批量撤销成功')
@@ -165,7 +165,7 @@ async function handleRevokeAll() {
       '警告',
       { type: 'danger' }
     )
-    await apiService.delete(`/vap/api/vap/v2/patch/assignment/user/${props.username}`)
+    await apiService.delete(`/secops/api/secops/v2/patch/assignment/user/${props.username}`)
     ElMessage.success('已撤销所有分配')
     loadRecords()
     emit('success')

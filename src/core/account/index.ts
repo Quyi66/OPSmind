@@ -1,6 +1,6 @@
 /**
  * Account Service
- * - Fetches current account from backend: /sjxy-portal/api/account
+ * - Fetches current account from backend: /sjxy-console/api/account
  * - Caches the payload in storage for reuse across views
  */
 

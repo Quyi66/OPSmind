@@ -27,15 +27,7 @@ describe('Windows patch API', () => {
       keyword: ' 192.168.1 '
     })
 
-    expect(apiMocks.get).toHaveBeenCalledWith('/vap/api/vap/win-patch/hosts', {
-      params: {
-        page: 2,
-        size: 50,
-        os: 'Windows Server 2025',
-        osVersion: '10.0.26100',
-        keyword: '192.168.1'
-      }
-    })
+    expect(apiMocks.get).toHaveBeenCalledWith('/secops/api/secops/win-patch/hosts?page=2&size=50&os=Windows+Server+2025&osVersion=10.0.26100&keyword=192.168.1')
   })
 
   it('omits empty optional host list filters', () => {
@@ -45,11 +37,6 @@ describe('Windows patch API', () => {
       keyword: undefined
     })
 
-    expect(apiMocks.get).toHaveBeenCalledWith('/vap/api/vap/win-patch/hosts', {
-      params: {
-        page: 0,
-        size: 20
-      }
-    })
+    expect(apiMocks.get).toHaveBeenCalledWith('/secops/api/secops/win-patch/hosts?page=0&size=20')
   })
 })

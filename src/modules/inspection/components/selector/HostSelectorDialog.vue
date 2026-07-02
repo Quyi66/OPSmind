@@ -435,9 +435,9 @@ async function loadHostData() {
   loading.value = true
   try {
     // 通过 ACM 直接接口获取主机列表
-    // ACM_GET_CI_BY_SELECTOR → POST /acm/api/acm/ci/list-by-groups-tags
+    // ACM_GET_CI_BY_SELECTOR → POST /cmdb/api/cmdb/ci/list-by-groups-tags
     const res = await apiService
-      .post('/acm/api/acm/ci/list-by-groups-tags', {
+      .post('/cmdb/api/cmdb/ci/list-by-groups-tags', {
         groups: '@@',
         tags: '@@',
         dynamicTags: '@@',
@@ -486,7 +486,7 @@ async function loadHostData() {
 // 加载分组数据
 async function loadGroupData() {
   try {
-    const res = await apiService.get('/acm/api/acm/query/group/view/linux').catch(() => null)
+    const res = await apiService.get('/cmdb/api/cmdb/query/group/view/linux').catch(() => null)
     if (res) {
       const groupPaths = res.data || res || []
       if (Array.isArray(groupPaths) && groupPaths.length > 0) {
@@ -511,7 +511,7 @@ async function loadGroupData() {
 // 加载标签数据
 async function loadTagData() {
   try {
-    const res = await apiService.get('/acm/api/acm/query/tag/view/linux').catch(() => null)
+    const res = await apiService.get('/cmdb/api/cmdb/query/tag/view/linux').catch(() => null)
     if (res) {
       const tags = res.data || res || []
       if (Array.isArray(tags)) {
@@ -527,7 +527,7 @@ async function loadTagData() {
 async function loadRecentlyData() {
   try {
     const res = await apiService
-      .post('/jao/api/jao/jobs/recently', {
+      .post('/workflow/api/workflow/jobs/recently', {
         jobTypes: 'script,command',
         limit: 100
       })

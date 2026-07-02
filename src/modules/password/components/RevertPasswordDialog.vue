@@ -104,7 +104,7 @@ async function handleRevert() {
   try {
     // 调用作业 fk4rJ4
     // resetAll: true = 全部, false = 选中
-    await apiService.post(`/jao/api/jao/jobs/fk4rJ4/run?cacheBuster=${Date.now()}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/fk4rJ4/run?cacheBuster=${Date.now()}`, {
       params: {
         selectedAssests: props.commaIpStr,
         resetAll: resetAll.value === 'all'

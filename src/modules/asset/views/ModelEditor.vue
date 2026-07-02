@@ -868,7 +868,7 @@ const isNewMode = computed(() => !props.modelId || props.modelId === 'new')
 // 加载模板列表（获取所有模型作为模板选项）
 const loadTemplateList = async () => {
   try {
-    const url = `/acm/api/acm/cit?cacheBuster=${Date.now()}`
+    const url = `/cmdb/api/cmdb/cit?cacheBuster=${Date.now()}`
     const response = await apiService.get(url)
     const list = response.data || response || []
     templateList.value = list
@@ -917,7 +917,7 @@ const loadModelDetail = async () => {
 
   loading.value = true
   try {
-    const url = `/acm/api/acm/cit/vo/citid/${props.modelId}?cacheBuster=${Date.now()}`
+    const url = `/cmdb/api/cmdb/cit/vo/citid/${props.modelId}?cacheBuster=${Date.now()}`
     const response = await apiService.get(url)
     const res = response.data || response
     originalData.value = res
@@ -1122,7 +1122,7 @@ const handleSave = async () => {
     }
 
     // 新增和编辑都使用同一个接口
-    const url = `/acm/api/acm/cit/modify/batch?cacheBuster=${Date.now()}`
+    const url = `/cmdb/api/cmdb/cit/modify/batch?cacheBuster=${Date.now()}`
 
     await apiService.post(url, saveData)
     ElMessage.success('保存成功')

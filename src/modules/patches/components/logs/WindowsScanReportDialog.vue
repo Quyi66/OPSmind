@@ -122,7 +122,7 @@ async function loadSummary() {
   summaryLoading.value = true
   try {
     const api = useApi()
-    const res = await api.get('/vap/api/vap/dashboard/win-scan-hist', {
+    const res = await api.get('/secops/api/secops/dashboard/win-scan-hist', {
       params: {
         runId: props.runId
       }
@@ -141,7 +141,7 @@ async function loadDetail() {
   loading.value = true
   try {
     const api = useApi()
-    const res = await api.get('/vap/api/vap/dashboard/hist-win-scan-detail', {
+    const res = await api.get('/secops/api/secops/dashboard/hist-win-scan-detail', {
       params: {
         runId: props.runId,
         page: pagination.value.page,

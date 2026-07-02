@@ -152,7 +152,7 @@ const handleSave = async () => {
   try {
     const ciIds = selectedRows.value.map(row => row.id).join(',')
     // 使用添加分组的 job，operate 为 select，id 为分组id
-    await apiService.post(`/jao/api/jao/jobs/a17VXM/run?cacheBuster=${Date.now()}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/a17VXM/run?cacheBuster=${Date.now()}`, {
       params: {
         operate: 'new',
         id: props.groupData.id,

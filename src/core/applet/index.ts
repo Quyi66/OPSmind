@@ -81,7 +81,7 @@ export const appletService = {
 
     try {
       const response = await apiService.get(
-        `/udp/api/udp/applets/tenant/user?cacheBuster=${Date.now()}&login=${encodeURIComponent(login)}&tenantUserId=${encodeURIComponent(tenantUserId)}`,
+        `/workspace/api/workspace/applets/tenant/user?cacheBuster=${Date.now()}&login=${encodeURIComponent(login)}&tenantUserId=${encodeURIComponent(tenantUserId)}`,
         { cache: false }
       )
       const applets = normalizeApplets(response?.data || response)

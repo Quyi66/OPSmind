@@ -150,7 +150,7 @@ const loadAssetList = async () => {
   if (!props.groupData) return
   loading.value = true
   try {
-    const res = await apiService.get('/acm/api/acm/ci/attrs/group', {
+    const res = await apiService.get('/cmdb/api/cmdb/ci/attrs/group', {
       params: {
         groupId: props.groupData.id,
         size: pagination.value.size,
@@ -185,7 +185,7 @@ const handleRemoveAsset = () => {
     .then(async () => {
       try {
         const ciIds = selectedRows.value.map(row => row.id).join(',')
-        await apiService.post(`/jao/api/jao/jobs/oJXQFK/run?cacheBuster=${Date.now()}`, {
+        await apiService.post(`/workflow/api/workflow/jobs/oJXQFK/run?cacheBuster=${Date.now()}`, {
           params: {
             groupId: props.groupData.id,
             ciId: ciIds

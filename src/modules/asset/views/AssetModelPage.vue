@@ -265,7 +265,7 @@ const handleDeleteModel = row => {
   ElMessageBox.confirm('确定要删除该模型定义吗？删除后不可恢复。', '删除确认', { type: 'warning' })
     .then(async () => {
       try {
-        await apiService.post(`/jao/api/jao/jobs/8PJcRc/run?cacheBuster=${Date.now()}`, {
+        await apiService.post(`/workflow/api/workflow/jobs/8PJcRc/run?cacheBuster=${Date.now()}`, {
           params: { id: row.id }
         })
         ElMessage.success('删除成功')

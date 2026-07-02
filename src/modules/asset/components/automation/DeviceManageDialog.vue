@@ -289,9 +289,9 @@ async function loadFormOptions() {
     const instanceGroups = await automationApi.getInstanceGroupList()
     instanceGroupOptions.value = instanceGroups.length > 0 ? instanceGroups : ['default']
 
-    // 如果是AAP引擎，获取AAP instance group: AAP_QUERY_INSTANCE_GROUP → GET /jao/api/jao/aap/instance_group
+    // 如果是AAP引擎，获取AAP instance group: AAP_QUERY_INSTANCE_GROUP → GET /workflow/api/workflow/aap/instance_group
     if (scriptEngine.value === 'aap') {
-      const aapRes = await apiService.get('/jao/api/jao/aap/instance_group')
+      const aapRes = await apiService.get('/workflow/api/workflow/aap/instance_group')
       const aapData = aapRes?.data || aapRes
       aapInstanceGroupOptions.value = Array.isArray(aapData) ? aapData : (aapData?.records || [])
     }
@@ -301,7 +301,7 @@ async function loadFormOptions() {
 
     // 获取资产类型
     const typeRes = await apiService.get(
-      `/acm/api/acm/cit/get/all/select?cacheBuster=${Date.now()}`
+      `/cmdb/api/cmdb/cit/get/all/select?cacheBuster=${Date.now()}`
     )
     assetTypes.value = typeRes.data || []
   } catch (error) {
@@ -333,7 +333,7 @@ async function handlePasswordSubmit() {
       aapInstanceGroup: passwordForm.value.aapInstanceGroup
     }
 
-    await apiService.post(`/jao/api/jao/jobs/eGfsxb/run?cacheBuster=${Date.now()}`, { params })
+    await apiService.post(`/workflow/api/workflow/jobs/eGfsxb/run?cacheBuster=${Date.now()}`, { params })
     ElMessage.success('设备纳管任务已提交')
     emit('success')
     visible.value = false
@@ -365,7 +365,7 @@ async function handleSSHSubmit() {
       oplus_ssh_pub_key: sshForm.value.oplus_ssh_pub_key
     }
 
-    await apiService.post(`/jao/api/jao/jobs/p2AW5s/run?cacheBuster=${Date.now()}`, { params })
+    await apiService.post(`/workflow/api/workflow/jobs/p2AW5s/run?cacheBuster=${Date.now()}`, { params })
     ElMessage.success('SSH公钥纳管任务已提交')
     emit('success')
     visible.value = false

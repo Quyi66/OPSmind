@@ -28,7 +28,7 @@ describe('Windows KB API', () => {
       endDate: '2024-03-31'
     })
 
-    expect(apiMocks.get).toHaveBeenCalledWith('/vap/api/vap/v2/win-kb/list', {
+    expect(apiMocks.get).toHaveBeenCalledWith('/secops/api/secops/v2/win-kb/list', {
       params: {
         page: 2,
         size: 50,
@@ -48,7 +48,7 @@ describe('Windows KB API', () => {
       size: 20
     })
 
-    expect(apiMocks.get).toHaveBeenCalledWith('/vap/api/vap/v2/win-kb/list', {
+    expect(apiMocks.get).toHaveBeenCalledWith('/secops/api/secops/v2/win-kb/list', {
       params: {
         page: 0,
         size: 20
@@ -61,11 +61,11 @@ describe('Windows KB API', () => {
     winKbApi.getAffectedHosts('KB5035853')
     winKbApi.getStatistics()
 
-    expect(apiMocks.get).toHaveBeenNthCalledWith(1, '/vap/api/vap/v2/win-kb/detail/KB5035853')
+    expect(apiMocks.get).toHaveBeenNthCalledWith(1, '/secops/api/secops/v2/win-kb/detail/KB5035853')
     expect(apiMocks.get).toHaveBeenNthCalledWith(
       2,
-      '/vap/api/vap/v2/win-kb/affected-hosts/KB5035853'
+      '/secops/api/secops/v2/win-kb/affected-hosts/KB5035853'
     )
-    expect(apiMocks.get).toHaveBeenNthCalledWith(3, '/vap/api/vap/v2/win-kb/statistics')
+    expect(apiMocks.get).toHaveBeenNthCalledWith(3, '/secops/api/secops/v2/win-kb/statistics')
   })
 })

@@ -198,7 +198,7 @@ const handleSave = async () => {
     const hostKeys = formData.value.hostKeys.replace(/\n/g, '\\n')
 
     // 调用作业执行接口
-    await apiService.post(`/jao/api/jao/jobs/0MKtcJ/run?cacheBuster=${Date.now()}`, {
+    await apiService.post(`/workflow/api/workflow/jobs/0MKtcJ/run?cacheBuster=${Date.now()}`, {
       params: {
         hostKeys,
         ciType: props.assetType,
