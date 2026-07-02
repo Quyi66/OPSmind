@@ -23,6 +23,8 @@ import type {
 // DTS API prefix - confirmed backend uses '/dts/api/dts'
 const DTS_PREFIX = (import.meta as any).env?.VITE_DTS_API_PREFIX || '/dts/api/dts'
 
+const DTS_V2_PREFIX = '/api/v2/dts'
+
 function getJdbcDrivers(): JdbcDriver[] {
   return [
     {
@@ -78,31 +80,48 @@ function getJdbcDrivers(): JdbcDriver[] {
 }
 
 async function findAllDatasources(): Promise<Datasource[]> {
-  const res = await apiService.get(`${DTS_PREFIX}/datasources`, { cache: false })
-  return res?.data ?? []
+  const res = await apiService.get(`${DTS_V2_PREFIX}/datasources`, { cache: false })
+  return res?.data?.data ?? []
 }
 
 async function findDatasource(id: string): Promise<Datasource | null> {
   if (!id) throw new Error('Empty argument `id`')
   const safeId = encodeURIComponent(id)
-  const res = await apiService.get(`${DTS_PREFIX}/datasources/${safeId}`, { cache: false })
-  return res?.data ?? null
+  const res = await apiService.get(`${DTS_V2_PREFIX}/datasources/${safeId}`, { cache: false })
+  const ds = res?.data?.data ?? null
+
+  if (ds) {
+    try {
+      const credsRes = await apiService.get(`${DTS_V2_PREFIX}/datasources/${safeId}/credentials`, { cache: false })
+      const credentials = credsRes?.data?.data
+      if (credentials) {
+        ds.config = {
+          ...(ds.config || {}),
+          ...credentials
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch credentials for datasource ${id}:`, error)
+    }
+  }
+
+  return ds
 }
 
 async function saveDatasource(ds: Datasource): Promise<Datasource> {
   if (!ds) throw new Error('Empty argument `datasource`')
 
   // 使用 PUT 方法保存
-  const res = await apiService.put(`${DTS_PREFIX}/datasources`, ds, {
+  const res = await apiService.put(`${DTS_V2_PREFIX}/datasources`, ds, {
     params: { cacheBuster: Date.now() }
   })
-  return res?.data ?? ds
+  return res?.data?.data ?? ds
 }
 
 async function deleteDatasource(id: string): Promise<void> {
   if (!id) throw new Error('Empty argument `id`')
   const safeId = encodeURIComponent(id)
-  await apiService.delete(`${DTS_PREFIX}/datasources/${safeId}`)
+  await apiService.delete(`${DTS_V2_PREFIX}/datasources/${safeId}`)
 }
 
 async function testConnectivity(datasource: string | Datasource): Promise<ConnectivityTestResult> {
@@ -110,13 +129,13 @@ async function testConnectivity(datasource: string | Datasource): Promise<Connec
 
   if (typeof datasource === 'string') {
     const safeId = encodeURIComponent(datasource)
-    const res = await apiService.get(`${DTS_PREFIX}/datasources/test/${safeId}`)
-    return res?.data ?? { success: false }
+    const res = await apiService.get(`${DTS_V2_PREFIX}/datasources/test/${safeId}`)
+    return res?.data?.data ?? { success: false }
   } else {
-    const res = await apiService.post(`${DTS_PREFIX}/datasources/test`, datasource, {
+    const res = await apiService.post(`${DTS_V2_PREFIX}/datasources/test`, datasource, {
       params: { cacheBuster: Date.now() }
     })
-    return res?.data ?? { success: false }
+    return res?.data?.data ?? { success: false }
   }
 }
 
