@@ -35,130 +35,76 @@
         </el-button>
       </div>
 
-      <div class="wb-stats">
+      <!-- ── 数据指标条 ── -->
+      <div class="wb-metrics-bar">
         <button
-          class="wb-stat"
-          :class="[
-            todayRunTotal ? 'wb-stat--accent' : 'wb-stat--muted',
-            hasActiveRuns ? 'wb-stat--running' : ''
-          ]"
+          class="wb-metric-item"
           @click="openTodayRunsDrawer"
         >
-          <div class="wb-stat__top">
-            <div class="wb-stat__content">
-              <span class="wb-stat__label">今日运行</span>
-              <WbFlipNumber class="wb-stat__value" :value="todayRunTotal" />
-            </div>
-            <span class="wb-stat__icon">
-              <i class="fas fa-play-circle" />
-            </span>
-          </div>
-          <div class="wb-stat__meta">
-            <span class="wb-stat__sub">成功 {{ successfulRunTotal }}</span>
-            <span class="wb-stat__hint">
-              {{ hasActiveRuns ? `执行中 ${activeRunCount}` : '查看记录' }}
+          <span class="wb-metric-item__label">今日运行</span>
+          <div class="wb-metric-item__value-group" :class="{ 'is-running': hasActiveRuns }">
+            <WbFlipNumber class="wb-metric-item__value" :value="todayRunTotal" />
+            <span class="wb-metric-item__sub">
+              成功 {{ successfulRunTotal }}
+              <span v-if="hasActiveRuns" class="wb-metric-item__run-badge">
+                <i class="fas fa-spinner fa-spin" /> 执行中 {{ activeRunCount }}
+              </span>
             </span>
           </div>
         </button>
 
         <button
-          class="wb-stat"
-          :class="failedRunTotal ? 'wb-stat--danger' : 'wb-stat--ok'"
+          class="wb-metric-item"
           @click="openFailedRunsDrawer"
         >
-          <div class="wb-stat__top">
-            <div class="wb-stat__content">
-              <span class="wb-stat__label">今日失败</span>
-              <WbFlipNumber class="wb-stat__value" :value="failedRunTotal" />
-            </div>
-            <span class="wb-stat__icon">
-              <i class="fas fa-exclamation-triangle" />
-            </span>
-          </div>
-          <div class="wb-stat__meta">
-            <span class="wb-stat__sub" :class="failedRunTotal ? 'is-danger' : ''">
-              {{ failedRateLabel }}
-            </span>
-            <span class="wb-stat__hint">快速排查</span>
+          <span class="wb-metric-item__label">今日失败</span>
+          <div class="wb-metric-item__value-group" :class="{ 'is-danger': failedRunTotal > 0 }">
+            <WbFlipNumber class="wb-metric-item__value" :value="failedRunTotal" />
+            <span class="wb-metric-item__sub">{{ failedRateLabel }}</span>
           </div>
         </button>
 
         <button
           v-if="canViewJobs"
-          class="wb-stat"
-          :class="reviewStore.approvalCount ? 'wb-stat--warning' : 'wb-stat--muted'"
+          class="wb-metric-item"
           @click="openApprovalsDrawer"
         >
-          <div class="wb-stat__top">
-            <div class="wb-stat__content">
-              <span class="wb-stat__label">运维工具审批</span>
-              <WbFlipNumber class="wb-stat__value" :value="reviewStore.approvalCount" />
-            </div>
-            <span class="wb-stat__icon">
-              <i class="fas fa-stamp" />
-            </span>
-          </div>
-          <div class="wb-stat__meta">
-            <span class="wb-stat__sub">待处理审批项</span>
-            <span class="wb-stat__hint">打开抽屉</span>
+          <span class="wb-metric-item__label">运维工具审批</span>
+          <div class="wb-metric-item__value-group" :class="{ 'is-warning': reviewStore.approvalCount > 0 }">
+            <WbFlipNumber class="wb-metric-item__value" :value="reviewStore.approvalCount" />
+            <span class="wb-metric-item__sub">待处理审批</span>
           </div>
         </button>
 
         <button
           v-if="canViewCommands"
-          class="wb-stat"
-          :class="reviewStore.commandCount ? 'wb-stat--warning' : 'wb-stat--muted'"
+          class="wb-metric-item"
           @click="openCmdReviewDrawer"
         >
-          <div class="wb-stat__top">
-            <div class="wb-stat__content">
-              <span class="wb-stat__label">命令待审</span>
-              <WbFlipNumber class="wb-stat__value" :value="reviewStore.commandCount" />
-            </div>
-            <span class="wb-stat__icon">
-              <i class="fas fa-terminal" />
-            </span>
-          </div>
-          <div class="wb-stat__meta">
-            <span class="wb-stat__sub">待审核命令队列</span>
-            <span class="wb-stat__hint">直接审核</span>
+          <span class="wb-metric-item__label">命令待审</span>
+          <div class="wb-metric-item__value-group" :class="{ 'is-warning': reviewStore.commandCount > 0 }">
+            <WbFlipNumber class="wb-metric-item__value" :value="reviewStore.commandCount" />
+            <span class="wb-metric-item__sub">待审核队列</span>
           </div>
         </button>
 
         <button
           v-if="canViewScripts"
-          class="wb-stat"
-          :class="reviewStore.scriptCount ? 'wb-stat--warning' : 'wb-stat--muted'"
+          class="wb-metric-item"
           @click="openScriptReviewDrawer"
         >
-          <div class="wb-stat__top">
-            <div class="wb-stat__content">
-              <span class="wb-stat__label">脚本待审</span>
-              <WbFlipNumber class="wb-stat__value" :value="reviewStore.scriptCount" />
-            </div>
-            <span class="wb-stat__icon">
-              <i class="fas fa-file-code" />
-            </span>
-          </div>
-          <div class="wb-stat__meta">
-            <span class="wb-stat__sub">待审核脚本变更</span>
-            <span class="wb-stat__hint">查看清单</span>
+          <span class="wb-metric-item__label">脚本待审</span>
+          <div class="wb-metric-item__value-group" :class="{ 'is-warning': reviewStore.scriptCount > 0 }">
+            <WbFlipNumber class="wb-metric-item__value" :value="reviewStore.scriptCount" />
+            <span class="wb-metric-item__sub">待审核变更</span>
           </div>
         </button>
 
-        <button v-if="canViewJobs" class="wb-stat wb-stat--muted" @click="openCronDrawer">
-          <div class="wb-stat__top">
-            <div class="wb-stat__content">
-              <span class="wb-stat__label">定时任务</span>
-              <WbFlipNumber class="wb-stat__value" :value="cronSummary.total" />
-            </div>
-            <span class="wb-stat__icon">
-              <i class="fas fa-clock" />
-            </span>
-          </div>
-          <div class="wb-stat__meta">
-            <span class="wb-stat__sub">{{ cronStatusLabel }}</span>
-            <span class="wb-stat__hint">调度总览</span>
+        <button v-if="canViewJobs" class="wb-metric-item" @click="openCronDrawer">
+          <span class="wb-metric-item__label">定时任务</span>
+          <div class="wb-metric-item__value-group">
+            <WbFlipNumber class="wb-metric-item__value" :value="cronSummary.total" />
+            <span class="wb-metric-item__sub">{{ cronStatusLabel }}</span>
           </div>
         </button>
       </div>
@@ -241,7 +187,7 @@
           >
             <div class="wb-workbench-job-card__body">
               <div class="wb-workbench-job-card__head">
-                <el-tag size="small" effect="dark" :type="job.displayTypeTag">
+                <el-tag size="small" round :type="job.displayTypeTag">
                   {{ job.displayTypeLabel }}
                 </el-tag>
                 <span class="wb-workbench-job-card__time">{{ job.displayTime }}</span>
@@ -2151,191 +2097,110 @@ onBeforeUnmount(() => {
   }
 }
 
-// ── 统计卡片 ──
-.wb-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
-  gap: 12px;
-}
-
-.wb-stat {
+// ── 数据指标条（Metrics Bar） ──
+.wb-metrics-bar {
   display: flex;
-  flex-direction: column;
   align-items: stretch;
-  gap: 10px;
-  padding: 13px 16px;
   background: var(--wb-panel-bg);
   border: 1px solid var(--wb-panel-border);
   border-radius: var(--wb-radius);
+  padding: 10px 0;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.wb-metric-item {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--wb-panel-border);
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4px 20px;
   cursor: pointer;
-  transition: all 0.15s;
-  min-width: 0;
-  box-shadow: var(--wb-panel-shadow);
+  transition: background 0.15s ease;
+  min-width: 120px;
   text-align: left;
-  position: relative;
-  overflow: hidden;
+
+  &:last-child {
+    border-right: none;
+  }
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.12);
-  }
-
-  &__top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
-  }
-
-  &__content {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-  }
-
-  &__value {
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1.2;
-    color: var(--wb-text-primary);
+    background: var(--el-fill-color-extra-light);
   }
 
   &__label {
-    font-size: 12px;
-    color: var(--wb-text-muted);
-    white-space: nowrap;
-    letter-spacing: 0.02em;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--wb-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
   }
 
-  &__icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    background: rgba(148, 163, 184, 0.12);
-    color: var(--wb-text-secondary);
+  &__value-group {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
 
-    i {
-      font-size: 14px;
+    &.is-danger {
+      .wb-metric-item__value {
+        color: var(--wb-danger);
+      }
+      .wb-metric-item__sub {
+        color: color-mix(in srgb, var(--wb-danger) 80%, transparent);
+        font-weight: 600;
+      }
+    }
+
+    &.is-warning {
+      .wb-metric-item__value {
+        color: var(--wb-warning);
+      }
+    }
+
+    &.is-running {
+      .wb-metric-item__value {
+        color: var(--wb-accent);
+      }
     }
   }
 
-  &__meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-top: auto;
+  &__value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--wb-text-primary);
+    line-height: 1.2;
   }
 
   &__sub {
-    min-width: 0;
-    font-size: 12px;
-    color: var(--wb-text-secondary);
+    font-size: 11px;
+    color: var(--wb-text-muted);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    &.is-danger {
-      color: var(--wb-danger);
-    }
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 
-  &__hint {
-    flex-shrink: 0;
-    padding: 2px 6px;
+  &__run-badge {
+    padding: 1px 6px;
     border-radius: 999px;
-    background: rgba(148, 163, 184, 0.12);
-    color: var(--wb-text-secondary);
+    background: rgba(13, 148, 136, 0.08);
+    color: var(--wb-accent);
+    font-weight: 600;
     font-size: 10px;
-    line-height: 1.4;
-  }
-
-  &--accent {
-    border-color: rgba(13, 148, 136, 0.3);
-    background: rgba(13, 148, 136, 0.04);
-    .wb-stat__value {
-      color: var(--wb-accent);
-    }
-    .wb-stat__icon {
-      background: rgba(13, 148, 136, 0.12);
-      color: var(--wb-accent);
-    }
-  }
-
-  &--danger {
-    border-color: rgba(239, 68, 68, 0.4);
-    background: rgba(239, 68, 68, 0.05);
-    .wb-stat__value {
-      color: var(--wb-danger);
-    }
-    .wb-stat__icon {
-      background: rgba(239, 68, 68, 0.12);
-      color: var(--wb-danger);
-    }
-  }
-
-  &--warning {
-    border-color: rgba(245, 158, 11, 0.4);
-    background: rgba(245, 158, 11, 0.05);
-    .wb-stat__value {
-      color: var(--wb-warning);
-    }
-    .wb-stat__icon {
-      background: rgba(245, 158, 11, 0.12);
-      color: var(--wb-warning);
-    }
-  }
-
-  &--ok {
-    border-color: rgba(34, 197, 94, 0.3);
-    background: rgba(34, 197, 94, 0.04);
-    .wb-stat__value {
-      color: var(--wb-success);
-    }
-    .wb-stat__icon {
-      background: rgba(34, 197, 94, 0.12);
-      color: var(--wb-success);
-    }
-  }
-
-  &--muted {
-    .wb-stat__value {
-      color: var(--wb-text-secondary);
-    }
-  }
-
-  &--running {
-    border-color: rgba(13, 148, 136, 0.38);
-    animation: wb-stat-running-glow 2.8s ease-in-out infinite;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: -30%;
-      bottom: -30%;
-      left: -42%;
-      width: 34%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.36), transparent);
-      transform: skewX(-18deg);
-      animation: wb-stat-running-sheen 2.8s linear infinite;
-      pointer-events: none;
-    }
-
-    .wb-stat__icon {
-      background: rgba(13, 148, 136, 0.18);
-      color: var(--wb-accent);
-      animation: wb-stat-running-icon 1.6s ease-in-out infinite;
-    }
-
-    .wb-stat__hint {
-      background: rgba(13, 148, 136, 0.16);
-      color: var(--wb-accent);
-    }
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 2px;
   }
 }
 
@@ -2951,7 +2816,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   grid-auto-rows: 1fr;
-  gap: 14px;
+  gap: 20px;
   align-content: start;
   position: relative;
 }
@@ -2962,31 +2827,25 @@ onBeforeUnmount(() => {
   position: relative;
   flex-direction: column;
   min-height: 108px;
-  border: 1px solid var(--wb-panel-border);
-  border-radius: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
   background: var(--wb-panel-bg);
   overflow: hidden;
-  box-shadow: 0 16px 32px -24px rgba(15, 23, 42, 0.45);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
   transition:
-    transform 0.15s,
-    border-color 0.15s,
-    box-shadow 0.15s;
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s,
+    box-shadow 0.25s;
   cursor: pointer;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--wb-workbench-job-accent), rgba(255, 255, 255, 0));
-  }
-
   &:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--wb-workbench-job-accent) 38%, var(--wb-panel-border));
-    box-shadow: 0 20px 38px -28px rgba(15, 23, 42, 0.58);
+    transform: translateY(-3px);
+    border-color: var(--wb-workbench-job-accent);
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.08),
+      0 8px 10px -6px rgba(0, 0, 0, 0.04);
   }
 
   &--rest {
@@ -3008,11 +2867,7 @@ onBeforeUnmount(() => {
     gap: 4px;
     min-width: 0;
     padding: 10px 14px 4px 12px;
-    background: linear-gradient(
-      180deg,
-      var(--el-fill-color-light) 0%,
-      var(--el-fill-color-extra-light) 100%
-    );
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.8) 0%, rgba(255, 255, 255, 1) 100%);
   }
 
   &__head {
@@ -3031,8 +2886,8 @@ onBeforeUnmount(() => {
   &__name {
     display: -webkit-box;
     min-height: 1.45em;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
     line-height: 1.45;
     color: var(--wb-text-primary);
     word-break: break-word;
@@ -3048,8 +2903,8 @@ onBeforeUnmount(() => {
   &__actions {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr)) 52px;
-    border-top: 1px solid var(--wb-panel-border);
-    background: color-mix(in srgb, var(--wb-panel-bg) 88%, #fff);
+    border-top: 1px solid #cbd5e1;
+    background: #f8fafc;
   }
 
   &__action {
@@ -3059,14 +2914,14 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 40px;
+    height: 36px;
     padding: 0 8px;
     border: none;
-    border-right: 1px solid var(--wb-panel-border);
+    border-right: 1px solid #cbd5e1;
     background: transparent;
     color: var(--wb-text-secondary);
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
     transition:
       background 0.15s,
@@ -3079,7 +2934,7 @@ onBeforeUnmount(() => {
     }
 
     &:hover {
-      background: var(--el-fill-color-extra-light);
+      background: rgba(148, 163, 184, 0.05);
       color: var(--wb-workbench-job-accent);
     }
 
@@ -3089,7 +2944,7 @@ onBeforeUnmount(() => {
   }
 
   &__action:first-child {
-    border-bottom-left-radius: 15px;
+    border-bottom-left-radius: 11px;
   }
 
   &__action--danger:hover {
@@ -3099,7 +2954,7 @@ onBeforeUnmount(() => {
   &__action--more {
     width: 52px;
     border-right: none;
-    border-bottom-right-radius: 15px;
+    border-bottom-right-radius: 11px;
   }
 
   &__menu-icon {

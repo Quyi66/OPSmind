@@ -257,7 +257,7 @@ watch(
         >
           <div class="wb-job-card__body">
             <div class="wb-job-card__head">
-              <el-tag :type="typeTag(job.type)" size="small" effect="dark">
+              <el-tag :type="typeTag(job.type)" size="small" round>
                 {{ typeLabel(job.type) }}
               </el-tag>
               <span class="wb-job-card__meta-time">
@@ -362,7 +362,7 @@ watch(
 .wb-job-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
-  gap: 18px;
+  gap: 20px;
 }
 
 .wb-job-card {
@@ -371,31 +371,25 @@ watch(
   position: relative;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 138px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 16px;
+  min-height: 108px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
   background: var(--el-bg-color);
   overflow: hidden;
-  box-shadow: 0 16px 32px -24px rgba(15, 23, 42, 0.45);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
   transition:
-    transform 0.15s,
-    border-color 0.15s,
-    box-shadow 0.15s;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--wb-job-card-accent), rgba(255, 255, 255, 0));
-  }
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s,
+    box-shadow 0.25s;
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     border-color: var(--wb-job-card-accent);
-    box-shadow: 0 22px 40px -28px rgba(15, 23, 42, 0.55);
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.08),
+      0 8px 10px -6px rgba(0, 0, 0, 0.04);
   }
 
   &--rest {
@@ -419,11 +413,7 @@ watch(
     align-items: stretch;
     justify-content: flex-start;
     gap: 8px;
-    background: linear-gradient(
-      180deg,
-      var(--el-fill-color-light) 0%,
-      var(--el-fill-color-extra-light) 100%
-    );
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.8) 0%, rgba(255, 255, 255, 1) 100%);
   }
 
   &__head {
@@ -440,17 +430,17 @@ watch(
   }
 
   &__name {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
     color: var(--el-text-color-primary);
     line-height: 1.5;
     width: 100%;
     text-align: left;
     word-break: break-word;
-    min-height: calc(1.5em * 2);
+    min-height: 1.45em;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -459,8 +449,8 @@ watch(
   &__actions {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr)) 52px;
-    border-top: 1px solid var(--el-border-color);
-    background: var(--el-fill-color-blank);
+    border-top: 1px solid #cbd5e1;
+    background: #f8fafc;
   }
 
   &__action {
@@ -468,27 +458,31 @@ watch(
     align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 40px;
+    height: 36px;
     padding: 0 8px;
     border: none;
-    border-right: 1px solid var(--el-border-color);
+    border-right: 1px solid #cbd5e1;
     background: transparent;
     color: var(--el-text-color-secondary);
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
     transition:
       background 0.15s,
       color 0.15s;
 
     &:hover {
-      background: var(--el-fill-color-extra-light);
+      background: rgba(148, 163, 184, 0.05);
       color: var(--wb-job-card-accent);
     }
 
     i {
       font-size: 12px;
     }
+  }
+
+  &__action:first-child {
+    border-bottom-left-radius: 11px;
   }
 
   &__action--danger:hover {
@@ -498,6 +492,7 @@ watch(
   &__action--more {
     width: 52px;
     border-right: none;
+    border-bottom-right-radius: 11px;
   }
 
   &__menu-icon {
