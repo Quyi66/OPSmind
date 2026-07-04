@@ -94,9 +94,6 @@
                 :class="[getPassRateClass(template.passRate), { 'is-executed': template.jobId }]"
                 @click="handleCardClick(template)"
               >
-                <!-- 顶部色彩指示条 -->
-                <div class="hc-indicator-bar"></div>
-
                 <!-- 卡片头 -->
                 <div class="hc-header">
                   <div class="hc-icon">
@@ -649,7 +646,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-items: stretch;
-  gap: 14px;
+  gap: 20px;
   padding: 16px;
 }
 
@@ -666,14 +663,16 @@ onMounted(() => {
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.025);
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.8) 0%, rgba(255, 255, 255, 1) 100%);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
   transition:
-    transform 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease;
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s,
+    box-shadow 0.25s;
 
   &.rate-high {
     --state: var(--success);
@@ -694,23 +693,17 @@ onMounted(() => {
   }
 
   &:hover {
-    transform: translateY(-2px);
-    border-color: var(--state-border);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+    border-color: var(--state);
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.08),
+      0 8px 10px -6px rgba(0, 0, 0, 0.04);
   }
 
   &:focus-within {
     border-color: var(--state);
     box-shadow: 0 0 0 3px var(--state-soft);
   }
-}
-
-.hc-indicator-bar {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 3px;
-  background: var(--state);
-  opacity: 0.96;
 }
 
 .hc-header {
@@ -777,27 +770,29 @@ onMounted(() => {
 
 .hc-time-badge {
   min-height: 22px;
-  max-width: 82px;
+  max-width: 90px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 0 8px;
   overflow: hidden;
-  color: var(--state);
+  color: var(--text-2);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
   text-overflow: ellipsis;
   border-radius: 999px;
-  background: var(--state-soft);
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
 
   .hc-status-dot {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
     flex: 0 0 auto;
     border-radius: 999px;
-    background: currentColor;
+    background: var(--state);
+    box-shadow: 0 0 0 2px var(--state-soft);
   }
 }
 
@@ -826,22 +821,18 @@ onMounted(() => {
 
   &.metric-ok {
     color: var(--success);
-    background: rgba(16, 185, 129, 0.08);
   }
 
   &.metric-fail {
     color: var(--danger);
-    background: rgba(239, 68, 68, 0.075);
   }
 
   &.metric-check {
     color: var(--info);
-    background: rgba(59, 130, 246, 0.075);
   }
 
   &.metric-skip {
     color: var(--neutral);
-    background: rgba(100, 116, 139, 0.075);
   }
 }
 
@@ -893,8 +884,8 @@ onMounted(() => {
   padding: 5px 8px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid var(--line);
-  background: var(--surface-raised);
+  border-top: 1px solid #cbd5e1;
+  background: #f8fafc;
 }
 
 .hc-action-btn {

@@ -8,113 +8,70 @@
         </div>
       </div>
 
-      <!-- ── 统计卡片 ── -->
-      <div class="aw-stats">
+      <!-- ── 数据指标条 ── -->
+      <div class="aw-metrics-bar">
         <button
-          class="aw-stat"
-          :class="totalAssets ? 'aw-stat--accent' : 'aw-stat--muted'"
+          class="aw-metric-item"
           @click="openAssetListDrawer(selectedAssetTypeCode)"
         >
-          <div class="aw-stat__top">
-            <div class="aw-stat__content">
-              <span class="aw-stat__label">资产总量</span>
-              <WbFlipNumber class="aw-stat__value" :value="totalAssets" />
-            </div>
-            <span class="aw-stat__icon"><i class="fa fa-server" /></span>
-          </div>
-          <div class="aw-stat__meta">
-            <span class="aw-stat__sub">{{ assetTypeCount }} 类资产</span>
-            <span class="aw-stat__hint">查看列表</span>
+          <span class="aw-metric-item__label">资产总量</span>
+          <div class="aw-metric-item__value-group">
+            <WbFlipNumber class="aw-metric-item__value" :value="totalAssets" />
+            <span class="aw-metric-item__sub">{{ assetTypeCount }}类资产</span>
           </div>
         </button>
 
         <button
-          class="aw-stat"
-          :class="[
-            exceptionDeviceTotal ? 'aw-stat--danger' : 'aw-stat--ok',
-            exceptionDeviceTotal ? 'aw-stat--pulsing' : ''
-          ]"
+          class="aw-metric-item"
           @click="openExceptionDrawer"
         >
-          <div class="aw-stat__top">
-            <div class="aw-stat__content">
-              <span class="aw-stat__label">连通巡检</span>
-              <WbFlipNumber class="aw-stat__value" :value="exceptionDeviceTotal" />
-            </div>
-            <span class="aw-stat__icon"><i class="fa fa-exclamation-triangle" /></span>
-          </div>
-          <div class="aw-stat__meta">
-            <span class="aw-stat__sub">连通失败</span>
-            <span class="aw-stat__hint">快速排查</span>
+          <span class="aw-metric-item__label">连通巡检</span>
+          <div class="aw-metric-item__value-group" :class="{ 'is-danger': exceptionDeviceTotal > 0 }">
+            <WbFlipNumber class="aw-metric-item__value" :value="exceptionDeviceTotal" />
+            <span class="aw-metric-item__sub">台巡检失败</span>
           </div>
         </button>
 
         <button
-          class="aw-stat"
-          :class="failedLogTotal ? 'aw-stat--warning' : 'aw-stat--muted'"
+          class="aw-metric-item"
           @click="openFailedLogDrawer"
         >
-          <div class="aw-stat__top">
-            <div class="aw-stat__content">
-              <span class="aw-stat__label">失败日志</span>
-              <WbFlipNumber class="aw-stat__value" :value="failedLogTotal" />
-            </div>
-            <span class="aw-stat__icon"><i class="fa fa-file-alt" /></span>
-          </div>
-          <div class="aw-stat__meta">
-            <span class="aw-stat__sub">近7天</span>
-            <span class="aw-stat__hint">查看详情</span>
+          <span class="aw-metric-item__label">失败日志</span>
+          <div class="aw-metric-item__value-group" :class="{ 'is-warning': failedLogTotal > 0 }">
+            <WbFlipNumber class="aw-metric-item__value" :value="failedLogTotal" />
+            <span class="aw-metric-item__sub">近7天</span>
           </div>
         </button>
 
-        <button class="aw-stat" @click="openGovernanceDrawer">
-          <div class="aw-stat__top">
-            <div class="aw-stat__content">
-              <span class="aw-stat__label">分组 / 标签</span>
-              <span class="aw-stat__value">{{ groupCount }} / {{ tagTotal }}</span>
-            </div>
-            <span class="aw-stat__icon"><i class="fa fa-code-branch" /></span>
-          </div>
-          <div class="aw-stat__meta">
-            <span class="aw-stat__sub">{{ governanceStats.permissionTeamCount }} 个团队</span>
-            <span class="aw-stat__hint">管理</span>
+        <button class="aw-metric-item" @click="openGovernanceDrawer">
+          <span class="aw-metric-item__label">分组 / 标签</span>
+          <div class="aw-metric-item__value-group">
+            <span class="aw-metric-item__value-text">{{ groupCount }} / {{ tagTotal }}</span>
+            <span class="aw-metric-item__sub">{{ governanceStats.permissionTeamCount }}个团队</span>
           </div>
         </button>
 
         <button
-          class="aw-stat"
-          :class="connectionStats.totalConnection ? '' : 'aw-stat--muted'"
+          class="aw-metric-item"
           @click="openAssetListDrawer(selectedAssetTypeCode)"
         >
-          <div class="aw-stat__top">
-            <div class="aw-stat__content">
-              <span class="aw-stat__label">连通率</span>
-              <span class="aw-stat__value">
-                {{ connectionStats.totalConnection ? `${connectionStats.successRate}%` : '--' }}
-              </span>
-            </div>
-            <span class="aw-stat__icon"><i class="fa fa-plug" /></span>
-          </div>
-          <div class="aw-stat__meta">
-            <span class="aw-stat__sub">
-              {{ formatCount(connectionStats.successCount) }} 正常 /
-              {{ formatCount(connectionStats.failureCount) }} 异常
+          <span class="aw-metric-item__label">连通率</span>
+          <div class="aw-metric-item__value-group">
+            <span class="aw-metric-item__value-text">
+              {{ connectionStats.totalConnection ? `${connectionStats.successRate}%` : '--' }}
             </span>
-            <span class="aw-stat__hint">查看资产</span>
+            <span class="aw-metric-item__sub">
+              {{ formatCount(connectionStats.successCount) }}正常 /
+              {{ formatCount(connectionStats.failureCount) }}异常
+            </span>
           </div>
         </button>
 
-        <button class="aw-stat" @click="openRecentLogsDrawer">
-          <div class="aw-stat__top">
-            <div class="aw-stat__content">
-              <span class="aw-stat__label">操作记录</span>
-              <WbFlipNumber class="aw-stat__value" :value="recentOperationTotal" />
-            </div>
-            <span class="aw-stat__icon"><i class="fa fa-history" /></span>
-          </div>
-          <div class="aw-stat__meta">
-            <span class="aw-stat__sub">近7天</span>
-            <span class="aw-stat__hint">浏览</span>
+        <button class="aw-metric-item" @click="openRecentLogsDrawer">
+          <span class="aw-metric-item__label">操作记录</span>
+          <div class="aw-metric-item__value-group">
+            <WbFlipNumber class="aw-metric-item__value" :value="recentOperationTotal" />
+            <span class="aw-metric-item__sub">近7天</span>
           </div>
         </button>
       </div>
@@ -207,24 +164,36 @@
             >
               <div class="aw-asset-card__body">
                 <div class="aw-asset-card__head">
-                  <el-tag size="small" round :type="getAssetStatusTagType(item.status)">
+                  <el-tag size="small" round :type="item.status === 1 || item.status === '1' ? 'success' : 'info'">
                     {{ getAssetStatusText(item.status) }}
                   </el-tag>
-                  <button
-                    type="button"
-                    class="aw-asset-card__edit-btn"
-                    title="编辑"
-                    @click.stop="handleViewAssetDetail(item)"
-                  >
-                    <el-icon>
-                      <Edit />
-                    </el-icon>
-                  </button>
+                  <div class="aw-asset-card__head-actions">
+                    <el-tag
+                      v-if="item.needReboot == 1"
+                      size="small"
+                      round
+                      type="warning"
+                      class="aw-asset-card__reboot-tag"
+                      title="系统需重启"
+                    >
+                      <i class="fa fa-sync-alt" /> 需重启
+                    </el-tag>
+                    <button
+                      type="button"
+                      class="aw-asset-card__edit-btn"
+                      title="编辑"
+                      @click.stop="handleViewAssetDetail(item)"
+                    >
+                      <el-icon>
+                        <Edit />
+                      </el-icon>
+                    </button>
+                  </div>
                 </div>
                 <strong class="aw-asset-card__name">{{ getAssetPrimaryText(item) }}</strong>
-                <!-- <span class="aw-asset-card__meta">{{ getAssetBusinessText(item) }}</span> -->
                 <span class="aw-asset-card__os">
-                  <span class="aw-asset-card__os-distro" :class="getOsDistroClass(item.os_distro)">
+                  <i :class="getOsIconClass(item.os_distro)" class="aw-asset-card__os-icon" />
+                  <span class="aw-asset-card__os-distro">
                     {{ item.os_distro || '--' }}
                   </span>
                   <span class="aw-asset-card__os-version">{{ item.os_version || '' }}</span>
@@ -233,7 +202,7 @@
               <div class="aw-asset-card__footer">
                 <button
                   type="button"
-                  class="aw-asset-card__chip"
+                  class="aw-asset-card__action-btn"
                   :class="[
                     getConnToneClass(item.CONN_LATEST_STATUS),
                     { 'is-loading': checkingConnIds.includes(item.id) }
@@ -242,15 +211,11 @@
                   @click.stop="handleAssetCheckConn(item)"
                 >
                   <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
-                  {{ getConnStatusText(item.CONN_LATEST_STATUS) }}
+                  <span v-else class="aw-asset-card__status-indicator">
+                    <span class="aw-status-dot" />
+                    {{ getConnStatusText(item.CONN_LATEST_STATUS) }}
+                  </span>
                 </button>
-                <span
-                  class="aw-asset-card__chip"
-                  :class="item.needReboot == 1 ? 'is-danger' : 'is-success'"
-                  style="pointer-events: none; cursor: none"
-                >
-                  {{ item.needReboot == 1 ? '需重启' : '无需重启' }}
-                </span>
               </div>
             </article>
           </transition-group>
@@ -292,7 +257,12 @@
                 @click="openExceptionDrawer"
               >
                 <span class="aw-exception-row__ip">{{ item.title }}</span>
-                <span class="aw-exception-row__badge">{{ item.badge }}</span>
+                <span
+                  class="aw-exception-row__badge"
+                  :class="'is-' + getConnRateBadgeType(item.raw.CONN_RATE)"
+                >
+                  连通率: {{ item.badge }}
+                </span>
                 <span class="aw-exception-row__desc">{{ item.desc }}</span>
                 <span class="aw-exception-row__actions">
                   <i
@@ -422,24 +392,36 @@
             >
               <div class="aw-asset-card__body">
                 <div class="aw-asset-card__head">
-                  <el-tag size="small" round :type="getAssetStatusTagType(item.status)">
+                  <el-tag size="small" round :type="item.status === 1 || item.status === '1' ? 'success' : 'info'">
                     {{ getAssetStatusText(item.status) }}
                   </el-tag>
-                  <button
-                    type="button"
-                    class="aw-asset-card__edit-btn"
-                    title="编辑"
-                    @click.stop="handleViewAssetDetail(item)"
-                  >
-                    <el-icon>
-                      <Edit />
-                    </el-icon>
-                  </button>
+                  <div class="aw-asset-card__head-actions">
+                    <el-tag
+                      v-if="item.needReboot == 1"
+                      size="small"
+                      round
+                      type="warning"
+                      class="aw-asset-card__reboot-tag"
+                      title="系统需重启"
+                    >
+                      <i class="fa fa-sync-alt" /> 需重启
+                    </el-tag>
+                    <button
+                      type="button"
+                      class="aw-asset-card__edit-btn"
+                      title="编辑"
+                      @click.stop="handleViewAssetDetail(item)"
+                    >
+                      <el-icon>
+                        <Edit />
+                      </el-icon>
+                    </button>
+                  </div>
                 </div>
                 <strong class="aw-asset-card__name">{{ getAssetPrimaryText(item) }}</strong>
-                <!-- <span class="aw-asset-card__meta">{{ getAssetBusinessText(item) }}</span> -->
                 <span class="aw-asset-card__os">
-                  <span class="aw-asset-card__os-distro" :class="getOsDistroClass(item.os_distro)">
+                  <i :class="getOsIconClass(item.os_distro)" class="aw-asset-card__os-icon" />
+                  <span class="aw-asset-card__os-distro">
                     {{ item.os_distro || '--' }}
                   </span>
                   <span class="aw-asset-card__os-version">{{ item.os_version || '' }}</span>
@@ -448,7 +430,7 @@
               <div class="aw-asset-card__footer">
                 <button
                   type="button"
-                  class="aw-asset-card__chip"
+                  class="aw-asset-card__action-btn"
                   :class="[
                     getConnToneClass(item.CONN_LATEST_STATUS),
                     { 'is-loading': checkingConnIds.includes(item.id) }
@@ -457,15 +439,11 @@
                   @click.stop="handleAssetCheckConn(item)"
                 >
                   <i v-if="checkingConnIds.includes(item.id)" class="fa fa-spinner fa-spin" />
-                  {{ getConnStatusText(item.CONN_LATEST_STATUS) }}
+                  <span v-else class="aw-asset-card__status-indicator">
+                    <span class="aw-status-dot" />
+                    {{ getConnStatusText(item.CONN_LATEST_STATUS) }}
+                  </span>
                 </button>
-                <span
-                  class="aw-asset-card__chip"
-                  :class="item.needReboot == 1 ? 'is-danger' : 'is-success'"
-                  style="pointer-events: none; cursor: none"
-                >
-                  {{ item.needReboot == 1 ? '需重启' : '无需重启' }}
-                </span>
               </div>
             </article>
           </div>
@@ -529,7 +507,12 @@
               @click="handleExceptionDeviceRowClick(item.raw || item)"
             >
               <strong class="aw-drawer-row__title">{{ item.title }}</strong>
-              <span class="aw-drawer-row__badge">{{ item.badge }}</span>
+              <span
+                class="aw-drawer-row__badge"
+                :class="'is-' + getConnRateBadgeType(item.raw.CONN_RATE)"
+              >
+                连通率: {{ item.badge }}
+              </span>
               <span class="aw-drawer-row__desc">{{ item.desc }}</span>
               <span class="aw-drawer-row__meta">{{ item.meta }}</span>
               <span class="aw-drawer-row__actions">
@@ -963,6 +946,29 @@ function getOsDistroClass(distro) {
   if (value.includes('suse')) return 'is-suse'
   if (value.includes('windows')) return 'is-windows'
   return 'is-unknown'
+}
+function getOsIconClass(distro) {
+  const value = String(distro || '').toLowerCase()
+  if (value.includes('ubuntu')) return 'fab fa-ubuntu'
+  if (value.includes('debian')) return 'fab fa-debian'
+  if (
+    value.includes('centos') ||
+    value.includes('redhat') ||
+    value.includes('red hat') ||
+    value.includes('rhel') ||
+    value.includes('oracle') ||
+    value.includes('suse') ||
+    value.includes('linux')
+  )
+    return 'fab fa-linux'
+  if (value.includes('windows')) return 'fab fa-windows'
+  return 'fa fa-server'
+}
+function getConnRateBadgeType(rate) {
+  const r = toNumber(rate)
+  if (r >= 95) return 'success'
+  if (r >= 60) return 'warning'
+  return 'danger'
 }
 function getOperationActionLabel(a) {
   if (!a) return '未知操作'
@@ -1560,307 +1566,89 @@ onUnmounted(() => {
   }
 }
 
-// ── 统计卡片 ──
-.aw-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(164px, 1fr));
-  gap: 10px;
-}
-
-.aw-stat {
+// ── 数据指标条（Metrics Bar） ──
+.aw-metrics-bar {
   display: flex;
-  flex-direction: column;
   align-items: stretch;
-  gap: 8px;
-  padding: 12px 14px;
   background: var(--aw-panel-bg);
   border: 1px solid var(--aw-panel-border);
   border-radius: var(--aw-radius);
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 0;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.02),
-    0 4px 12px -4px rgba(0, 0, 0, 0.04);
-  text-align: left;
-  position: relative;
-  overflow: hidden;
+  padding: 10px 0;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  flex-wrap: wrap;
+  gap: 0;
+}
 
-  &__top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
+.aw-metric-item {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--aw-panel-border);
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4px 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  min-width: 120px;
+  text-align: left;
+
+  &:last-child {
+    border-right: none;
   }
 
-  &__content {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
+  &:hover {
+    background: #f8fafc;
   }
 
   &__label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--aw-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    margin-bottom: 2px;
   }
 
-  &__value {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--aw-text-primary);
-    line-height: 1.1;
+  &__value-group {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
 
-    .wb-flip-number {
-      color: inherit;
+    &.is-danger {
+      .aw-metric-item__value {
+        color: var(--aw-danger);
+      }
+      .aw-metric-item__sub {
+        color: color-mix(in srgb, var(--aw-danger) 80%, transparent);
+        font-weight: 600;
+      }
+    }
+
+    &.is-warning {
+      .aw-metric-item__value {
+        color: var(--aw-warning);
+      }
     }
   }
 
-  &__icon {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 999px;
-    font-size: 15px;
-    transition: transform 0.25s;
-    background: rgba(148, 163, 184, 0.1);
-    color: var(--aw-text-secondary);
-  }
-
-  &__meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+  &__value,
+  &__value-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--aw-text-primary);
+    line-height: 1.2;
   }
 
   &__sub {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--aw-text-muted);
-  }
-
-  &__hint {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--aw-accent);
-    opacity: 0;
-    padding: 2px 10px;
-    border-radius: 999px;
-    background: rgba(13, 148, 136, 0.1);
-    transition: opacity 0.2s;
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    border-color: rgba(148, 163, 184, 0.35);
-    box-shadow:
-      0 8px 24px rgba(148, 163, 184, 0.08),
-      var(--aw-panel-shadow);
-
-    .aw-stat__icon {
-      transform: scale(1.12);
-    }
-  }
-
-  &:hover &__hint {
-    opacity: 1;
-  }
-
-  // ── 变体着色与高端渐变 ──
-  &--accent {
-    background: linear-gradient(135deg, rgba(13, 148, 136, 0.03) 0%, var(--aw-panel-bg) 100%);
-    border-color: rgba(13, 148, 136, 0.14);
-
-    .aw-stat__icon {
-      background: rgba(13, 148, 136, 0.1);
-      color: var(--aw-accent);
-    }
-
-    .aw-stat__value {
-      color: var(--aw-accent);
-    }
-
-    &:hover {
-      border-color: rgba(13, 148, 136, 0.35);
-      box-shadow:
-        0 8px 24px rgba(13, 148, 136, 0.08),
-        var(--aw-panel-shadow);
-    }
-  }
-
-  &--danger {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, var(--aw-panel-bg) 100%);
-    border-color: rgba(239, 68, 68, 0.14);
-
-    .aw-stat__icon {
-      background: rgba(239, 68, 68, 0.1);
-      color: var(--aw-danger);
-    }
-
-    .aw-stat__value {
-      color: var(--aw-danger);
-    }
-
-    .aw-stat__hint {
-      color: var(--aw-danger);
-      background: rgba(239, 68, 68, 0.1);
-    }
-
-    &:hover {
-      border-color: rgba(239, 68, 68, 0.35);
-      box-shadow:
-        0 8px 24px rgba(239, 68, 68, 0.08),
-        var(--aw-panel-shadow);
-    }
-  }
-
-  &--warning {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.03) 0%, var(--aw-panel-bg) 100%);
-    border-color: rgba(245, 158, 11, 0.14);
-
-    .aw-stat__icon {
-      background: rgba(245, 158, 11, 0.1);
-      color: var(--aw-warning);
-    }
-
-    .aw-stat__value {
-      color: var(--aw-warning);
-    }
-
-    .aw-stat__hint {
-      color: var(--aw-warning);
-      background: rgba(245, 158, 11, 0.1);
-    }
-
-    &:hover {
-      border-color: rgba(245, 158, 11, 0.35);
-      box-shadow:
-        0 8px 24px rgba(245, 158, 11, 0.08),
-        var(--aw-panel-shadow);
-    }
-  }
-
-  &--success,
-  &--ok {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, var(--aw-panel-bg) 100%);
-    border-color: rgba(16, 185, 129, 0.14);
-
-    .aw-stat__icon {
-      background: rgba(16, 185, 129, 0.1);
-      color: var(--aw-success);
-    }
-
-    .aw-stat__value {
-      color: var(--aw-success);
-    }
-
-    .aw-stat__hint {
-      color: var(--aw-success);
-      background: rgba(16, 185, 129, 0.1);
-    }
-
-    &:hover {
-      border-color: rgba(16, 185, 129, 0.35);
-      box-shadow:
-        0 8px 24px rgba(16, 185, 129, 0.08),
-        var(--aw-panel-shadow);
-    }
-  }
-
-  &--violet {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, var(--aw-panel-bg) 100%);
-    border-color: rgba(139, 92, 246, 0.14);
-
-    .aw-stat__icon {
-      background: rgba(139, 92, 246, 0.1);
-      color: var(--aw-violet);
-    }
-
-    .aw-stat__value {
-      color: var(--aw-violet);
-    }
-
-    .aw-stat__hint {
-      color: var(--aw-violet);
-      background: rgba(139, 92, 246, 0.1);
-    }
-
-    &:hover {
-      border-color: rgba(139, 92, 246, 0.35);
-      box-shadow:
-        0 8px 24px rgba(139, 92, 246, 0.08),
-        var(--aw-panel-shadow);
-    }
-  }
-
-  &--info {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, var(--aw-panel-bg) 100%);
-    border-color: rgba(59, 130, 246, 0.14);
-
-    .aw-stat__icon {
-      background: rgba(59, 130, 246, 0.1);
-      color: var(--aw-info);
-    }
-
-    .aw-stat__value {
-      color: var(--aw-info);
-    }
-
-    .aw-stat__hint {
-      color: var(--aw-info);
-      background: rgba(59, 130, 246, 0.1);
-    }
-
-    &:hover {
-      border-color: rgba(59, 130, 246, 0.35);
-      box-shadow:
-        0 8px 24px rgba(59, 130, 246, 0.08),
-        var(--aw-panel-shadow);
-    }
-  }
-
-  &--muted {
-    .aw-stat__icon {
-      background: rgba(148, 163, 184, 0.1);
-      color: var(--aw-text-muted);
-    }
-
-    .aw-stat__hint {
-      color: var(--aw-text-muted);
-      background: rgba(148, 163, 184, 0.1);
-    }
-  }
-
-  // ── 脉冲动画（异常卡片有值时触发）──
-  &--pulsing {
-    background: linear-gradient(180deg, var(--aw-panel-bg), rgba(239, 68, 68, 0.04));
-    animation: aw-stat-pulse-glow 2.4s ease-in-out infinite;
-
-    .aw-stat__icon {
-      animation: aw-stat-pulse-icon 2.4s ease-in-out infinite;
-    }
-
-    .aw-stat__hint {
-      background: rgba(239, 68, 68, 0.14);
-    }
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -60%;
-      width: 60%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      transform: skewX(-20deg);
-      animation: aw-stat-pulse-sheen 2.4s ease-in-out infinite;
-    }
+    white-space: nowrap;
   }
 }
 
@@ -2079,7 +1867,7 @@ onUnmounted(() => {
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 10px;
+    gap: 20px;
     min-height: 300px;
   }
 }
@@ -2088,36 +1876,28 @@ onUnmounted(() => {
   --aw-asset-card-accent: var(--aw-accent);
   display: flex;
   position: relative;
-  border: 1px solid var(--aw-panel-border);
-  border-radius: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
   background: var(--aw-panel-bg);
   flex-direction: column;
   min-height: 138px;
   max-height: 150px;
   overflow: hidden;
-  box-shadow: 0 16px 32px -24px rgba(15, 23, 42, 0.42);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
   transition:
-    transform 0.15s,
-    border-color 0.15s;
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s,
+    box-shadow 0.25s;
   cursor: pointer;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(
-      90deg,
-      var(--aw-asset-card-accent) 0%,
-      color-mix(in srgb, var(--aw-asset-card-accent) 10%, transparent) 100%
-    );
-  }
-
   &:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--aw-asset-card-accent) 38%, var(--aw-panel-border));
+    transform: translateY(-3px);
+    border-color: var(--aw-asset-card-accent);
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.08),
+      0 8px 10px -6px rgba(0, 0, 0, 0.04);
   }
 
   &__body {
@@ -2135,6 +1915,23 @@ onUnmounted(() => {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+
+    &-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+
+  &__reboot-tag {
+    font-size: 10px !important;
+    padding: 0 6px !important;
+    height: 18px !important;
+    line-height: 16px !important;
+
+    i {
+      font-size: 9px;
+    }
   }
 
   &__edit-btn {
@@ -2143,14 +1940,16 @@ onUnmounted(() => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     border: 1px solid var(--aw-panel-border);
     border-radius: 999px;
     background: color-mix(in srgb, var(--aw-panel-bg) 82%, #fff);
     color: var(--aw-text-secondary);
     cursor: pointer;
+    opacity: 0;
     transition:
+      opacity 0.2s ease,
       background 0.15s,
       border-color 0.15s,
       color 0.15s;
@@ -2162,10 +1961,14 @@ onUnmounted(() => {
     }
   }
 
+  &:hover &__edit-btn {
+    opacity: 1;
+  }
+
   &__name {
     display: -webkit-box;
     min-height: 1.45em;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     line-height: 1.45;
     color: var(--aw-text-primary);
@@ -2179,8 +1982,8 @@ onUnmounted(() => {
 
   &__os {
     margin-top: auto;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 500;
     color: var(--aw-text-secondary);
     display: flex;
     align-items: center;
@@ -2190,97 +1993,92 @@ onUnmounted(() => {
     text-overflow: ellipsis;
     min-width: 0;
 
+    &-icon {
+      font-size: 12px;
+      color: var(--aw-text-muted);
+      flex-shrink: 0;
+    }
+
     &-distro {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       flex-shrink: 1;
-
-      &.is-debian {
-        color: #2563eb;
-      }
-
-      &.is-redhat {
-        color: #dc2626;
-      }
-
-      &.is-oracle {
-        color: #c2410c;
-      }
-
-      &.is-suse {
-        color: #16a34a;
-      }
-
-      &.is-windows {
-        color: #0284c7;
-      }
-
-      &.is-unknown {
-        color: var(--aw-text-muted);
-      }
+      color: var(--aw-text-secondary);
     }
 
     &-version {
       color: var(--aw-text-muted);
       font-weight: 400;
-      font-size: 12px;
+      font-size: 11px;
       flex-shrink: 0;
     }
   }
 
   &__footer {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    border-top: 1px solid var(--aw-panel-border);
-    background: color-mix(in srgb, var(--aw-panel-bg) 88%, #fff);
+    display: flex;
+    border-top: 1px solid #cbd5e1;
+    background: #f8fafc;
   }
 
-  &__chip {
+  &__action-btn {
     appearance: none;
     -webkit-appearance: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    min-width: 0;
-    height: 38px;
-    padding: 0 8px;
+    width: 100%;
+    height: 34px;
     border: none;
-    border-right: 1px solid var(--aw-panel-border);
     background: transparent;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--aw-text-secondary);
     cursor: pointer;
-    transition:
-      background 0.15s,
-      color 0.15s;
-
-    &:last-child {
-      border-right: none;
-    }
+    transition: background 0.15s ease;
 
     &:hover {
-      background: color-mix(in srgb, var(--aw-accent) 6%, transparent);
-    }
-
-    &.is-success {
-      color: var(--aw-success);
-    }
-
-    &.is-danger {
-      color: var(--aw-danger);
-    }
-
-    &.is-muted {
-      color: var(--aw-text-muted);
+      background: rgba(148, 163, 184, 0.05);
     }
 
     &.is-loading {
       opacity: 0.6;
       cursor: not-allowed;
     }
+  }
+
+  &__status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--aw-text-secondary);
+  }
+
+  &__action-btn.is-success &__status-indicator {
+    color: var(--aw-success);
+  }
+  &__action-btn.is-danger &__status-indicator {
+    color: var(--aw-danger);
+  }
+  &__action-btn.is-muted &__status-indicator {
+    color: var(--aw-text-muted);
+  }
+
+  .aw-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--aw-text-muted);
+    display: inline-block;
+  }
+
+  &__action-btn.is-success .aw-status-dot {
+    background: var(--aw-success);
+    box-shadow: 0 0 6px var(--aw-success);
+  }
+
+  &__action-btn.is-danger .aw-status-dot {
+    background: var(--aw-danger);
+    box-shadow: 0 0 6px var(--aw-danger);
   }
 }
 
@@ -2340,15 +2138,28 @@ onUnmounted(() => {
 
   &__badge {
     flex-shrink: 0;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--aw-danger);
-    background: rgba(239, 68, 68, 0.08);
-    padding: 3px 8px;
-    border-radius: 6px;
-    border: 1px solid rgba(239, 68, 68, 0.16);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
     text-align: center;
-    min-width: 42px;
+    white-space: nowrap;
+
+    &.is-danger {
+      color: var(--aw-danger);
+      background: rgba(239, 68, 68, 0.06);
+      border: 1px solid rgba(239, 68, 68, 0.12);
+    }
+    &.is-warning {
+      color: var(--aw-warning);
+      background: rgba(245, 158, 11, 0.06);
+      border: 1px solid rgba(245, 158, 11, 0.12);
+    }
+    &.is-success {
+      color: var(--aw-success);
+      background: rgba(16, 185, 129, 0.06);
+      border: 1px solid rgba(16, 185, 129, 0.12);
+    }
   }
 
   &__desc {
@@ -2468,7 +2279,7 @@ onUnmounted(() => {
 .aw-drawer-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 10px;
+  gap: 20px;
   padding: 0 8px;
 }
 
@@ -2507,10 +2318,27 @@ onUnmounted(() => {
   }
 
   &__badge {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--aw-danger);
+    font-size: 11px;
+    font-weight: 600;
     flex-shrink: 0;
+    padding: 2px 6px;
+    border-radius: 4px;
+
+    &.is-danger {
+      color: var(--aw-danger);
+      background: rgba(239, 68, 68, 0.06);
+      border: 1px solid rgba(239, 68, 68, 0.12);
+    }
+    &.is-warning {
+      color: var(--aw-warning);
+      background: rgba(245, 158, 11, 0.06);
+      border: 1px solid rgba(245, 158, 11, 0.12);
+    }
+    &.is-success {
+      color: var(--aw-success);
+      background: rgba(16, 185, 129, 0.06);
+      border: 1px solid rgba(16, 185, 129, 0.12);
+    }
   }
 
   &__name {
