@@ -1,6 +1,6 @@
 /**
- * 补丁管理模块 API
- * 与后端 VAP (Vulnerability and Patch) 服务交互
+ * 銵乩�蝞∠�璅∪� API
+ * 銝𤾸�蝡?VAP (Vulnerability and Patch) �滚𦛚鈭支�
  */
 import { apiService, getJaoOperationLogs } from '@/core/api'
 
@@ -8,8 +8,7 @@ const VAP_API_PREFIX = '/secops/api/secops'
 const PATCH_TASK_API_PREFIX = `${VAP_API_PREFIX}/v2/patch/task`
 
 const VAP_DASHBOARD_BASE = `${VAP_API_PREFIX}/dashboard`
-// 以下路径用于 VAP2-DASHBOARD-API-MIGRATION.md 中迁移的 4 个接口
-// 这些接口原先通过 DTS 代理调用，现已迁移至 sjxy-vap 模块直接提供
+// 隞乩�頝臬��其� VAP2-DASHBOARD-API-MIGRATION.md 銝剛�蝘餌� 4 銝芣𦻖�?// 餈嗘��亙藁�笔��朞� DTS 隞��靚�鍂嚗𣬚緵撌脰�蝘餉秐 sjxy-vap 璅∪��湔𦻖�𣂷�
 const VAP_DASHBOARD_MIGRATION_BASE = '/secops/api/secops/dashboard'
 const JAO_DASHBOARD_BASE = '/workflow/api/workflow/dashboard'
 
@@ -217,30 +216,27 @@ function normalizePatchAuditListResponse(response) {
 }
 
 /**
- * 补丁扫描相关 API
+ * 銵乩��急��詨� API
  */
 export const patchScanApi = {
   /**
-   * 执行补丁扫描
-   * @param {Object} params - 扫描参数
-   * @param {Array<string>} params.hosts - 待扫描主机列表
-   * @returns {Promise}
+   * �扯�銵乩��急�
+   * @param {Object} params - �急���㺭
+   * @param {Array<string>} params.hosts - 敺�醌�譍蜓�箏�銵?   * @returns {Promise}
    */
   scan(params) {
     return apiService.post(`${VAP_API_PREFIX}/v2/scan`, params)
   },
 
   /**
-   * 获取扫描结果列表（主机概览）
+   * �瑕��急�蝏𤘪��𡑒”嚗�蜓�箸�閫��
    * GET /secops/api/secops/v2/cve/machine-list
-   * @param {Object} params - 查询参数
-   * @param {string} params.os_distro - 操作系统发行版
-   * @param {string} params.os_version - 操作系统版本
-   * @param {string} params.os_sp_version - 操作系统 SP 版本
-   * @param {Array<string>} params.tags - 标签列表
-   * @param {string} params.keyword - 主机名、主机 IP 或资产 ID
-   * @param {number} params.page - 页码，从 0 开始
-   * @param {number} params.size - 每页大小
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.os_distro - �滢�蝟餌��𤏸��?   * @param {string} params.os_version - �滢�蝟餌���𧋦
+   * @param {string} params.os_sp_version - �滢�蝟餌� SP ��𧋦
+   * @param {Array<string>} params.tags - ��倌�𡑒”
+   * @param {string} params.keyword - 銝餅㦤�溻��蜓�?IP �𤥁�鈭?ID
+   * @param {number} params.page - 憿萇�嚗䔶� 0 撘�憪?   * @param {number} params.size - 瘥誯△憭批�
    * @returns {Promise}
    */
   getScanResults(params = {}) {
@@ -258,8 +254,8 @@ export const patchScanApi = {
   },
 
   /**
-   * 获取主机补丁扫描详情
-   * @param {string} hostId - 主机ID
+   * �瑕�銝餅㦤銵乩��急�霂行�
+   * @param {string} hostId - 銝餅㦤ID
    * @returns {Promise}
    */
   getHostScanDetail(hostId) {
@@ -267,7 +263,7 @@ export const patchScanApi = {
   },
 
   /**
-   * 获取扫描统计信息
+   * �瑕��急�蝏蠘恣靽⊥�
    * @returns {Promise}
    */
   getScanStats() {
@@ -275,11 +271,11 @@ export const patchScanApi = {
   },
 
   /**
-   * 获取单个主机信息
-   * POST /dts/api/dts/q/data/VAP2_GET_MACHINE_INFO/
-   * @param {Object} params - 查询参数
-   * @param {string} params.host_id - 主机ID
-   * @param {string} params.host_key - 主机 IP
+   * �瑕��蓥葵銝餅㦤靽⊥�
+   * API /secops/api/secops/dashboard/VAP2_GET_MACHINE_INFO/
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.host_id - 銝餅㦤ID
+   * @param {string} params.host_key - 銝餅㦤 IP
    * @returns {Promise}
    */
   getMachineInfo(params) {
@@ -291,12 +287,10 @@ export const patchScanApi = {
   },
 
   /**
-   * 获取单个主机的可用补丁列表
-   * GET /secops/api/secops/v2/patch/host-patches
-   * @param {Object} params - 查询参数
-   * @param {string} params.host_id - 主机ID
-   * @param {string} params.severity - 严重程度筛选（逗号分隔：Critical,Important,Moderate,Low）
-   * @returns {Promise}
+   * �瑕��蓥葵銝餅㦤��虾�刻‘銝��銵?   * GET /secops/api/secops/v2/patch/host-patches
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.host_id - 銝餅㦤ID
+   * @param {string} params.severity - 銝仿�蝔见漲蝑偦�㚁��堒噡���嚗鋴ritical,Important,Moderate,Low嚗?   * @returns {Promise}
    */
   getPatchesOfMachine(params = {}) {
     return apiService
@@ -310,10 +304,10 @@ export const patchScanApi = {
   },
 
   /**
-   * 获取指定主机的软件包列表
-   * POST /dts/api/dts/q/data/VAP2_GET_MACHINE_PKGS/
-   * @param {Object} params - 查询参数
-   * @param {string} params.host_id - 主机ID
+   * �瑕����銝餅㦤��蔓隞嗅��𡑒”
+   * API /secops/api/secops/dashboard/VAP2_GET_MACHINE_PKGS/
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.host_id - 銝餅㦤ID
    * @returns {Promise}
    */
   getMachinePackages(params) {
@@ -325,10 +319,10 @@ export const patchScanApi = {
   },
 
   /**
-   * 获取指定主机的CVE漏洞列表
+   * �瑕����銝餅㦤��VE瞍𤩺��𡑒”
    * GET /secops/api/secops/v2/cve/host-cve-list
-   * @param {Object} params - 查询参数
-   * @param {string} params.host_id - 主机ID
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.host_id - 銝餅㦤ID
    * @returns {Promise}
    */
   getMachineCVEList(params) {
@@ -343,10 +337,10 @@ export const patchScanApi = {
   },
 
   /**
-   * 获取补丁详情
-   * POST /dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/
-   * @param {Object} params - 查询参数
-   * @param {string} params.patch_id - 补丁ID
+   * �瑕�銵乩�霂行�
+   * API /secops/api/secops/dashboard/VAP2_GET_PATCH_DETAIL/
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.patch_id - 銵乩�ID
    * @returns {Promise}
    */
   getPatchDetail(params) {
@@ -359,11 +353,11 @@ export const patchScanApi = {
 }
 
 /**
- * 补丁安装相关 API
+ * 銵乩�摰㕑��詨� API
  */
 export const patchInstallApi = {
   /**
-   * 创建补丁安装任务
+   * �𥕦遣銵乩�摰㕑�隞餃𦛚
    * POST /secops/api/secops/v2/patch/task/create
    */
   createTask(params) {
@@ -373,7 +367,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 创建补丁回滚任务
+   * �𥕦遣銵乩��墧�隞餃𦛚
    * POST /secops/api/secops/v2/patch/task/create-rollback
    */
   createRollbackTask(params) {
@@ -383,8 +377,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 创建软件包更新任务
-   * POST /secops/api/secops/v2/patch/task/create-pkg-update
+   * �𥕦遣頧臭辣��凒�唬遙�?   * POST /secops/api/secops/v2/patch/task/create-pkg-update
    */
   createPkgUpdateTask(params) {
     return apiService
@@ -393,7 +386,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 创建漏洞修复任务
+   * �𥕦遣瞍𤩺�靽桀�隞餃𦛚
    * POST /secops/api/secops/v2/patch/task/create-vuln-fix
    */
   createVulnFixTask(params) {
@@ -403,7 +396,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 分页查询任务列表
+   * ��△�亥砭隞餃𦛚�𡑒”
    * GET /secops/api/secops/v2/patch/task/list
    */
   listTasks(params = {}) {
@@ -413,7 +406,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 获取任务详情
+   * �瑕�隞餃𦛚霂行�
    * GET /secops/api/secops/v2/patch/task/{id}
    */
   getTask(id) {
@@ -421,7 +414,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 查询任务操作日志（分页）
+   * �亥砭隞餃𦛚�滢��亙�嚗��憿蛛�
    * GET /secops/api/secops/v2/patch/task/{id}/audit/history?page=0&size=50
    */
   getTaskAuditHistory(id, params = {}) {
@@ -431,8 +424,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 查询任务全量操作日志（不分页）
-   * GET /secops/api/secops/v2/patch/task/{id}/audit/history/all
+   * �亥砭隞餃𦛚�券��滢��亙�嚗����△嚗?   * GET /secops/api/secops/v2/patch/task/{id}/audit/history/all
    */
   getTaskAuditHistoryAll(id) {
     return apiService
@@ -441,16 +433,16 @@ export const patchInstallApi = {
   },
 
   /**
-   * 获取任务审计详情（含步骤汇总）
+   * �瑕�隞餃𦛚摰∟恣霂行�嚗�鉄甇仿炊瘙��鳴�
    * GET /secops/api/secops/v2/patch/task/{id}/audit/detail
-   * 返回 { task, steps: [{ step, label, status, runId, logs }], logs }
+   * 餈𥪜� { task, steps: [{ step, label, status, runId, logs }], logs }
    */
   getAuditDetail(id) {
     return apiService.get(`${PATCH_TASK_API_PREFIX}/${id}/audit/detail`)
   },
 
   /**
-   * 上传任务脚本文件
+   * 銝𠹺�隞餃𦛚�𡁏𧋦��辣
    * POST /secops/api/secops/v2/patch/task/{id}/script/upload
    */
   uploadScript(id, scriptType, file) {
@@ -463,7 +455,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 编辑任务脚本内容
+   * 蝻𤥁�隞餃𦛚�𡁏𧋦��捆
    * PUT /secops/api/secops/v2/patch/task/{id}/script/update
    */
   updateScript(id, scriptType, content) {
@@ -476,7 +468,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 下载任务脚本内容
+   * 銝贝蝸隞餃𦛚�𡁏𧋦��捆
    * GET /secops/api/secops/v2/patch/task/{id}/script/download?type=pre-check
    */
   downloadScript(id, type) {
@@ -484,7 +476,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 获取重启策略
+   * �瑕��滚鍳蝑𣇉裦
    * GET /secops/api/secops/v2/patch/task/{id}/restart/options
    */
   getRestartOptions(id) {
@@ -492,10 +484,9 @@ export const patchInstallApi = {
   },
 
   /**
-   * 查询补丁在指定主机上的重启建议
-   * GET /secops/api/secops/v2/patch/reboot-on-host?patchId=...&hostIp=... (单个 patch)
-   * POST /secops/api/secops/v2/patch/reboot-on-host (多个 patch)
-   * 请求体 { patchIds: [...], hostIp: "..." }
+   * �亥砭銵乩��冽�摰帋蜓�箔�����臬遣霈?   * GET /secops/api/secops/v2/patch/reboot-on-host?patchId=...&hostIp=... (�蓥葵 patch)
+   * POST /secops/api/secops/v2/patch/reboot-on-host (憭帋葵 patch)
+   * 霂瑟�雿?{ patchIds: [...], hostIp: "..." }
    */
   getPatchRebootOnHost(params) {
     let patchIds = []
@@ -535,8 +526,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 步骤1：执行预检查
-   * POST /secops/api/secops/v2/patch/task/{id}/pre-check/execute
+   * 甇仿炊1嚗𡁏�銵屸�璉��?   * POST /secops/api/secops/v2/patch/task/{id}/pre-check/execute
    */
   executePreCheck(id) {
     return apiService
@@ -545,8 +535,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 跳过预检查
-   * POST /secops/api/secops/v2/patch/task/{id}/pre-check/skip
+   * 頝唾�憸���?   * POST /secops/api/secops/v2/patch/task/{id}/pre-check/skip
    */
   skipPreCheck(id) {
     return apiService
@@ -555,8 +544,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 步骤2：执行补丁安装
-   * POST /secops/api/secops/v2/patch/task/{id}/install/execute
+   * 甇仿炊2嚗𡁏�銵諹‘銝��鋆?   * POST /secops/api/secops/v2/patch/task/{id}/install/execute
    */
   executeInstallTask(id) {
     return apiService
@@ -565,8 +553,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 步骤2：执行补丁回滚
-   * POST /secops/api/secops/v2/patch/task/{id}/rollback/execute
+   * 甇仿炊2嚗𡁏�銵諹‘銝��皛?   * POST /secops/api/secops/v2/patch/task/{id}/rollback/execute
    */
   executeRollbackTask(id) {
     return apiService
@@ -575,7 +562,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 获取回滚额外信息
+   * �瑕��墧�憸嘥�靽⊥�
    * GET /secops/api/secops/v2/patch/task/{id}/rollback/info
    */
   getRollbackInfo(id) {
@@ -583,11 +570,10 @@ export const patchInstallApi = {
   },
 
   /**
-   * 步骤3：确认重启方式
-   * POST /api/vap/v2/patch/task/{id}/restart/confirm
-   * @param {string} id - 任务ID
-   * @param {boolean} confirm - 是否确认执行重启
-   * @param {string} confirmText - 确认文案
+   * 甇仿炊3嚗𡁶＆霈日��舀䲮撘?   * POST /api/vap/v2/patch/task/{id}/restart/confirm
+   * @param {string} id - 隞餃𦛚ID
+   * @param {boolean} confirm - �臬炏蝖株恕�扯��滚鍳
+   * @param {string} confirmText - 蝖株恕���
    */
   confirmRestart(id, confirm, confirmText) {
     const payload = { confirm }
@@ -600,8 +586,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 步骤4：执行重启
-   * POST /secops/api/secops/v2/patch/task/{id}/restart/execute
+   * 甇仿炊4嚗𡁏�銵屸��?   * POST /secops/api/secops/v2/patch/task/{id}/restart/execute
    */
   executeRestart(id) {
     return apiService
@@ -610,7 +595,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 步骤5：执行安装后校验
+   * 甇仿炊5嚗𡁏�銵��鋆���⊿�
    * POST /secops/api/secops/v2/patch/task/{id}/validate/execute
    */
   executeValidate(id) {
@@ -620,7 +605,7 @@ export const patchInstallApi = {
   },
 
   /**
-   * 跳过校验
+   * 頝唾��⊿�
    * POST /secops/api/secops/v2/patch/task/{id}/validate/skip
    */
   skipValidate(id) {
@@ -630,15 +615,15 @@ export const patchInstallApi = {
   },
 
   /**
-   * 执行补丁安装
-   * @param {Object} params - 安装参数
-   * @param {Array<string>} params.hosts - 目标主机列表
-   * @param {Array<string>} params.packages - 待安装补丁包列表
-   * @param {Array<string>} params.versions - 补丁版本列表
+   * �扯�銵乩�摰㕑�
+   * @param {Object} params - 摰㕑���㺭
+   * @param {Array<string>} params.hosts - �格�銝餅㦤�𡑒”
+   * @param {Array<string>} params.packages - 敺��鋆�‘銝���𡑒”
+   * @param {Array<string>} params.versions - 銵乩���𧋦�𡑒”
    * @returns {Promise}
    */
   install(params) {
-    // 使用作业方式执行安装，后端期望参数形如 { params: { hosts, patchIds, hostIds, packages } }
+    // 雿輻鍂雿靝��孵��扯�摰㕑�嚗��蝡舀��𥕦��啣耦憒?{ params: { hosts, patchIds, hostIds, packages } }
     return apiService.post('/workflow/api/workflow/jobs/QJb6B8/run', {
       params: {
         hosts: params.hosts || null,
@@ -650,12 +635,11 @@ export const patchInstallApi = {
   },
 
   /**
-   * 执行软件包更新
-   * @param {Object} params - 更新参数
-   * @param {Array<string>} params.hosts - 目标主机列表
-   * @param {Array<string>} params.patchIds - 补丁编号列表
-   * @param {Array<string>} params.hostIds - 主机ID列表
-   * @param {Array<string>} params.packages - 待更新软件包列表
+   * �扯�頧臭辣��凒�?   * @param {Object} params - �湔鰵��㺭
+   * @param {Array<string>} params.hosts - �格�銝餅㦤�𡑒”
+   * @param {Array<string>} params.patchIds - 銵乩�蝻硋噡�𡑒”
+   * @param {Array<string>} params.hostIds - 銝餅㦤ID�𡑒”
+   * @param {Array<string>} params.packages - 敺�凒�啗蔓隞嗅��𡑒”
    * @returns {Promise}
    */
   updatePackages(params) {
@@ -671,11 +655,11 @@ export const patchInstallApi = {
   },
 
   /**
-   * 获取可安装的补丁列表
-   * @param {Object} params - 查询参数
-   * @param {number} params.page - 页码
-   * @param {number} params.size - 每页大小
-   * @param {string} params.severity - 严重程度筛选 (逗号分隔)
+   * �瑕��臬�鋆��銵乩��𡑒”
+   * @param {Object} params - �亥砭��㺭
+   * @param {number} params.page - 憿萇�
+   * @param {number} params.size - 瘥誯△憭批�
+   * @param {string} params.severity - 銝仿�蝔见漲蝑偦�?(�堒噡���)
    * @returns {Promise}
    */
   getAvailablePatches(params = {}) {
@@ -689,9 +673,9 @@ export const patchInstallApi = {
   },
 
   /**
-   * 获取补丁详情
-   * @param {Object} params - 查询参数
-   * @param {string} params.patch_id - 补丁ID
+   * �瑕�銵乩�霂行�
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.patch_id - 銵乩�ID
    * @returns {Promise}
    */
   getPatchDetail(params) {
@@ -699,9 +683,9 @@ export const patchInstallApi = {
   },
 
   /**
-   * 获取补丁影响的软件包列表
-   * @param {Object} params - 查询参数
-   * @param {Array<string>} params.patch_ids - 补丁ID列表
+   * �瑕�銵乩�敶勗���蔓隞嗅��𡑒”
+   * @param {Object} params - �亥砭��㺭
+   * @param {Array<string>} params.patch_ids - 銵乩�ID�𡑒”
    * @returns {Promise}
    */
   getAffectedPackages(params) {
@@ -712,11 +696,9 @@ export const patchInstallApi = {
   },
 
   /**
-   * 获取补丁影响的主机列表
-   * @param {Object} params - 查询参数
-   * @param {Array<string>} params.patch_ids - 补丁ID列表
-   * @param {string} params.hostId - 主机筛选条件
-   * @returns {Promise}
+   * �瑕�銵乩�敶勗���蜓�箏�銵?   * @param {Object} params - �亥砭��㺭
+   * @param {Array<string>} params.patch_ids - 銵乩�ID�𡑒”
+   * @param {string} params.hostId - 銝餅㦤蝑偦�㗇辺隞?   * @returns {Promise}
    */
   getMachinesByPatch(params) {
     return apiService
@@ -730,8 +712,8 @@ export const patchInstallApi = {
   },
 
   /**
-   * 获取安装任务列表
-   * @param {Object} params - 查询参数
+   * �瑕�摰㕑�隞餃𦛚�𡑒”
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getInstallTasks(params = {}) {
@@ -739,8 +721,8 @@ export const patchInstallApi = {
   },
 
   /**
-   * 获取安装任务详情
-   * @param {string} taskId - 任务ID
+   * �瑕�摰㕑�隞餃𦛚霂行�
+   * @param {string} taskId - 隞餃𦛚ID
    * @returns {Promise}
    */
   getInstallTaskDetail(taskId) {
@@ -749,12 +731,11 @@ export const patchInstallApi = {
 }
 
 /**
- * 软件包本地安装 API
+ * 頧臭辣��𧋦�啣�鋆?API
  */
 export const localInstallApi = {
   /**
-   * 启动软件包安装作业
-   * Job Code: QJb6B8
+   * �臬𢆡頧臭辣���鋆��銝?   * Job Code: QJb6B8
    */
   startInstall(params) {
     return apiService
@@ -766,17 +747,15 @@ export const localInstallApi = {
 }
 
 /**
- * 补丁回退相关 API
+ * 銵乩��鮋���詨� API
  */
 export const patchRollbackApi = {
   /**
-   * 获取更新记录历史
-   * @param {Object} params - 查询参数
-   * @param {number} params.page - 页码
-   * @param {number} params.size - 每页大小
-   * @param {string} params.host_key - IP筛选
-   * @param {string} params.vul_id - CVE筛选
-   * @returns {Promise}
+   * �瑕��湔鰵霈啣���蟮
+   * @param {Object} params - �亥砭��㺭
+   * @param {number} params.page - 憿萇�
+   * @param {number} params.size - 瘥誯△憭批�
+   * @param {string} params.host_key - IP蝑偦�?   * @param {string} params.vul_id - CVE蝑偦�?   * @returns {Promise}
    */
   getHistUpdatePkgs(params = {}) {
     return apiService
@@ -792,10 +771,9 @@ export const patchRollbackApi = {
   },
 
   /**
-   * 执行补丁回退（通过作业方式）
-   * Job Code: Uu3eb1
-   * @param {Object} params - 回退参数
-   * @param {Array<string>} params.histUpdateIds - 更新记录ID列表
+   * �扯�銵乩��鮋��嚗��朞�雿靝��孵�嚗?   * Job Code: Uu3eb1
+   * @param {Object} params - �鮋����㺭
+   * @param {Array<string>} params.histUpdateIds - �湔鰵霈啣�ID�𡑒”
    * @returns {Promise}
    */
   async rollback(params) {
@@ -813,7 +791,7 @@ export const patchRollbackApi = {
       const createdTask = createResponse?.data ?? createResponse
       const taskId = createdTask?.id
       if (!taskId) {
-        throw new Error('回滚任务创建失败')
+        throw new Error('�墧�隞餃𦛚�𥕦遣憭梯揖')
       }
 
       return patchInstallApi.executeRollbackTask(taskId)
@@ -830,9 +808,8 @@ export const patchRollbackApi = {
   },
 
   /**
-   * 删除更新记录（通过作业方式）
-   * Job Code: 3Fl7CJ
-   * @param {Array<string>} ids - 记录ID列表
+   * �𣳇膄�湔鰵霈啣�嚗��朞�雿靝��孵�嚗?   * Job Code: 3Fl7CJ
+   * @param {Array<string>} ids - 霈啣�ID�𡑒”
    * @returns {Promise}
    */
   deleteHistUpdatePkgs(ids) {
@@ -844,8 +821,8 @@ export const patchRollbackApi = {
   },
 
   /**
-   * 获取回退任务列表
-   * @param {Object} params - 查询参数
+   * �瑕��鮋��隞餃𦛚�𡑒”
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getRollbackTasks(params = {}) {
@@ -853,8 +830,8 @@ export const patchRollbackApi = {
   },
 
   /**
-   * 获取回退任务详情
-   * @param {string} taskId - 任务ID
+   * �瑕��鮋��隞餃𦛚霂行�
+   * @param {string} taskId - 隞餃𦛚ID
    * @returns {Promise}
    */
   getRollbackTaskDetail(taskId) {
@@ -863,12 +840,12 @@ export const patchRollbackApi = {
 }
 
 /**
- * 补丁仓库相关 API
+ * 銵乩�隞枏��詨� API
  */
 export const patchLibraryApi = {
   /**
-   * 获取厂商补丁统计
-   * POST /dts/api/dts/q/data/VAP2_LIST_VENDOR_PATCH/
+   * �瑕����銵乩�蝏蠘恣
+   * API /secops/api/secops/dashboard/VAP2_LIST_VENDOR_PATCH/
    * @returns {Promise}
    */
   getVendorStats() {
@@ -876,16 +853,14 @@ export const patchLibraryApi = {
   },
 
   /**
-   * 获取补丁仓库列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_PATCH_DATE/
-   * 源系统请求格式: {"params":{"severity":"Critical","vendor":"redhat","is_ignore":"0,1"}}
-   * @param {Object} params - 查询参数
-   * @param {string} params.severity - 严重程度筛选 (逗号分隔: Critical,Important,Moderate,Low)
-   * @param {string} params.vendor - 厂商筛选
-   * @param {string} params.is_ignore - 白名单状态 (0,1 全部 / 1 白名单 / 0 非白名单)
-   * @param {string} params.filter - 按补丁编号、概要、厂商筛选
-   * @param {number} params.page - 页码
-   * @param {number} params.size - 每页大小
+   * �瑕�銵乩�隞枏��𡑒”
+   * API /secops/api/secops/dashboard/VAP2_LIST_PATCH_DATE/
+   * 皞鞟頂蝏蠘窈瘙�聢撘? {"params":{"severity":"Critical","vendor":"redhat","is_ignore":"0,1"}}
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.severity - 銝仿�蝔见漲蝑偦�?(�堒噡���: Critical,Important,Moderate,Low)
+   * @param {string} params.vendor - ���蝑偦�?   * @param {string} params.is_ignore - �賢��閧𠶖�?(0,1 �券� / 1 �賢��?/ 0 �䂿蒾�滚�)
+   * @param {string} params.filter - �㕑‘銝���瑯���閬��������?   * @param {number} params.page - 憿萇�
+   * @param {number} params.size - 瘥誯△憭批�
    * @returns {Promise}
    */
   getPatchList(params = {}) {
@@ -912,22 +887,20 @@ export const patchLibraryApi = {
   },
 
   /**
-   * 获取补丁仓库列表 (旧接口，保持兼容)
-   * @param {Object} params - 查询参数
-   * @param {number} params.page - 页码
-   * @param {number} params.size - 每页大小
-   * @param {string} params.filter - 筛选条件
-   * @param {string} params.severity - 严重程度筛选
-   * @returns {Promise}
+   * �瑕�銵乩�隞枏��𡑒” (�扳𦻖���靽脲��澆捆)
+   * @param {Object} params - �亥砭��㺭
+   * @param {number} params.page - 憿萇�
+   * @param {number} params.size - 瘥誯△憭批�
+   * @param {string} params.filter - 蝑偦�㗇辺隞?   * @param {string} params.severity - 銝仿�蝔见漲蝑偦�?   * @returns {Promise}
    */
   getPatches(params = {}) {
     return apiService.post(`${VAP_API_PREFIX}/v2/library/patches`, params)
   },
 
   /**
-   * 获取补丁详情
-   * POST /dts/api/dts/q/data/VAP2_GET_PATCH_DETAIL/
-   * @param {string} patchId - 补丁ID
+   * �瑕�銵乩�霂行�
+   * API /secops/api/secops/dashboard/VAP2_GET_PATCH_DETAIL/
+   * @param {string} patchId - 銵乩�ID
    * @returns {Promise}
    */
   getPatchDetail(patchId) {
@@ -939,8 +912,7 @@ export const patchLibraryApi = {
   },
 
   /**
-   * 导入补丁库
-   * @param {Object} params - 导入参数
+   * 撖澆�銵乩�摨?   * @param {Object} params - 撖澆���㺭
    * @returns {Promise}
    */
   importPatches(params) {
@@ -948,7 +920,7 @@ export const patchLibraryApi = {
   },
 
   /**
-   * 获取补丁统计
+   * �瑕�銵乩�蝏蠘恣
    * @returns {Promise}
    */
   getLibraryStats() {
@@ -956,9 +928,7 @@ export const patchLibraryApi = {
   },
 
   /**
-   * 上传并导入补丁
-   * @param {FormData} formData - 包含 files 的表单数据
-   * @returns {Promise}
+   * 銝𠹺�撟嗅紡�亥‘銝?   * @param {FormData} formData - ��鉄 files ��”�閙㺭�?   * @returns {Promise}
    */
   uploadAndImport(formData) {
     return apiService.post(`${VAP_API_PREFIX}/v2/patch/upload-and-import`, formData, {
@@ -970,13 +940,13 @@ export const patchLibraryApi = {
 }
 
 /**
- * 漏洞相关 API
+ * 瞍𤩺��詨� API
  */
 export const vulnerabilityApi = {
   /**
-   * 获取补丁仓库分布（饼图）
-   * POST /dts/api/dts/q/data/VAP2_PATCH_INDEX/
-   * 返回: { records: [{ vendor: 'redhat', count: 100 }, ...] }
+   * �瑕�銵乩�隞枏����嚗�未�橘�
+   * API /secops/api/secops/dashboard/VAP2_PATCH_INDEX/
+   * 餈𥪜�: { records: [{ vendor: 'redhat', count: 100 }, ...] }
    * @returns {Promise}
    */
   getPatchIndex() {
@@ -984,20 +954,18 @@ export const vulnerabilityApi = {
   },
 
   /**
-   * 获取当前统计数据（柱状图）
-   * GET /secops/api/secops/dashboard/current-stats
-   * 返回: { records: [{ name: 'scan_count_critical_patch', value: 5 }, ...] }
+   * �瑕�敶枏�蝏蠘恣�唳旿嚗���嗅㦛嚗?   * GET /secops/api/secops/dashboard/current-stats
+   * 餈𥪜�: { records: [{ name: 'scan_count_critical_patch', value: 5 }, ...] }
    * @returns {Promise}
    */
   getCurrentStats() {
-    // VAP2_CURRENT_STATS → GET /sjxy-vap/api/vap/dashboard/current-stats
+    // VAP2_CURRENT_STATS �?GET /sjxy-vap/api/vap/dashboard/current-stats
     return apiService.get(`${VAP_DASHBOARD_MIGRATION_BASE}/current-stats`).then(wrapRecordsResponse)
   },
 
   /**
-   * 获取补丁趋势数据（折线图）
-   * POST /dts/api/dts/q/data/VAP2_PATCH_TREND/
-   * 返回: { records: [{ scan_date: '2024-01-01', patch_count: 100 }, ...] }
+   * �瑕�銵乩�頞见飵�唳旿嚗��蝥踹㦛嚗?   * API /secops/api/secops/dashboard/VAP2_PATCH_TREND/
+   * 餈𥪜�: { records: [{ scan_date: '2024-01-01', patch_count: 100 }, ...] }
    * @returns {Promise}
    */
   getPatchTrend() {
@@ -1005,15 +973,15 @@ export const vulnerabilityApi = {
   },
 
   /**
-   * 获取漏洞概览列表
+   * �瑕�瞍𤩺�璁���𡑒”
    * GET /secops/api/secops/v2/cve/patch-by-cves
-   * @param {Object} params - 查询参数
-   * @param {number} params.page - 页码
-   * @param {number} params.size - 每页大小
-   * @param {string} params.filter - 筛选关键词
-   * @param {string} params.severity - 严重程度筛选 (all/Critical/Important/Moderate/Low)
-   * @param {string} params.os_distro - 操作系统筛选 (all 或具体值)
-   * @param {string} params.patch_status - 补丁状态筛选 (all/未修复/已修复)
+   * @param {Object} params - �亥砭��㺭
+   * @param {number} params.page - 憿萇�
+   * @param {number} params.size - 瘥誯△憭批�
+   * @param {string} params.filter - 蝑偦�匧��株�
+   * @param {string} params.severity - 銝仿�蝔见漲蝑偦�?(all/Critical/Important/Moderate/Low)
+   * @param {string} params.os_distro - �滢�蝟餌�蝑偦�?(all �硋�雿枏�?
+   * @param {string} params.patch_status - 銵乩��嗆����?(all/�芯耨憭?撌脖耨憭?
    * @returns {Promise}
    */
   getVulnerabilityList(params = {}) {
@@ -1035,7 +1003,7 @@ export const vulnerabilityApi = {
   },
 
   /**
-   * 导出漏洞列表 Excel
+   * 撖澆枂瞍𤩺��𡑒” Excel
    * GET /secops/api/secops/v2/cve/patch-by-cves/export
    */
   exportVulnerabilityList(params = {}) {
@@ -1057,28 +1025,28 @@ export const vulnerabilityApi = {
   },
 
   /**
-   * 获取操作系统列表
+   * �瑕��滢�蝟餌��𡑒”
    * GET /secops/api/secops/dashboard/machine-os-info
    * @returns {Promise}
    */
   getOsDistroList() {
-    // VAP2_LIST_MACHINE_OS_INFO → GET /sjxy-vap/api/vap/dashboard/machine-os-info
+    // VAP2_LIST_MACHINE_OS_INFO �?GET /sjxy-vap/api/vap/dashboard/machine-os-info
     return apiService.get(`${VAP_DASHBOARD_MIGRATION_BASE}/machine-os-info`).then(wrapRecordsResponse)
   },
 
   /**
-   * 获取操作系统版本列表
+   * �瑕��滢�蝟餌���𧋦�𡑒”
    * GET /secops/api/secops/dashboard/machine-os-version-info
    * @returns {Promise}
    */
   getOsVersionList() {
-    // VAP2_LIST_MACHINE_OS_VERSION_INFO → GET /sjxy-vap/api/vap/dashboard/machine-os-version-info
+    // VAP2_LIST_MACHINE_OS_VERSION_INFO �?GET /sjxy-vap/api/vap/dashboard/machine-os-version-info
     return apiService.get(`${VAP_DASHBOARD_MIGRATION_BASE}/machine-os-version-info`).then(wrapRecordsResponse)
   },
 
   /**
-   * 获取漏洞列表
-   * @param {Object} params - 查询参数
+   * �瑕�瞍𤩺��𡑒”
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getVulnerabilities(params = {}) {
@@ -1086,9 +1054,9 @@ export const vulnerabilityApi = {
   },
 
   /**
-   * 根据补丁状态ID获取主机列表
+   * �寞旿銵乩��嗆��D�瑕�銝餅㦤�𡑒”
    * GET /secops/api/secops/dashboard/patch-status-info
-   * @param {Array} ids - 补丁状态ID数组
+   * @param {Array} ids - 銵乩��嗆��D�啁�
    * @returns {Promise}
    */
   getPatchStatusHosts(ids) {
@@ -1098,9 +1066,9 @@ export const vulnerabilityApi = {
   },
 
   /**
-   * 根据补丁状态ID获取CVE列表
+   * �寞旿銵乩��嗆��D�瑕�CVE�𡑒”
    * GET /secops/api/secops/dashboard/patch-status-info-by-cve
-   * @param {Array} ids - 补丁状态ID数组
+   * @param {Array} ids - 銵乩��嗆��D�啁�
    * @returns {Promise}
    */
   getPatchStatusCves(ids) {
@@ -1110,9 +1078,9 @@ export const vulnerabilityApi = {
   },
 
   /**
-   * 根据补丁状态ID获取补丁列表
+   * �寞旿銵乩��嗆��D�瑕�銵乩��𡑒”
    * GET /secops/api/secops/dashboard/patch-status-info-by-patch
-   * @param {Array} ids - 补丁状态ID数组
+   * @param {Array} ids - 銵乩��嗆��D�啁�
    * @returns {Promise}
    */
   getPatchStatusPatches(ids) {
@@ -1122,9 +1090,8 @@ export const vulnerabilityApi = {
   },
 
   /**
-   * 根据补丁状态ID获取软件包列表
-   * GET /secops/api/secops/dashboard/patch-status-info-by-pkgs
-   * @param {Array} ids - 补丁状态ID数组
+   * �寞旿銵乩��嗆��D�瑕�頧臭辣���銵?   * GET /secops/api/secops/dashboard/patch-status-info-by-pkgs
+   * @param {Array} ids - 銵乩��嗆��D�啁�
    * @returns {Promise}
    */
   getPatchStatusPackages(ids) {
@@ -1134,8 +1101,8 @@ export const vulnerabilityApi = {
   },
 
   /**
-   * 获取漏洞详情
-   * @param {string} vulnId - 漏洞ID
+   * �瑕�瞍𤩺�霂行�
+   * @param {string} vulnId - 瞍𤩺�ID
    * @returns {Promise}
    */
   getVulnerabilityDetail(vulnId) {
@@ -1143,8 +1110,8 @@ export const vulnerabilityApi = {
   },
 
   /**
-   * 执行漏洞扫描
-   * @param {Object} params - 扫描参数
+   * �扯�瞍𤩺��急�
+   * @param {Object} params - �急���㺭
    * @returns {Promise}
    */
   scanVulnerabilities(params) {
@@ -1153,11 +1120,11 @@ export const vulnerabilityApi = {
 }
 
 /**
- * 操作日志相关 API
+ * �滢��亙��詨� API
  */
 export const patchLogsApi = {
   /**
-   * 查询租户补丁操作日志
+   * �亥砭蝘��銵乩��滢��亙�
    * GET /secops/api/secops/v2/patch/task/audit/logs?taskType=&operator=&startTime=&endTime=&page=0&size=20
    */
   getAuditLogs(params = {}) {
@@ -1167,20 +1134,20 @@ export const patchLogsApi = {
   },
 
   /**
-   * 获取操作日志列表
+   * �瑕��滢��亙��𡑒”
    * GET /workflow/api/workflow/dashboard/list-operation-log
-   * @param {Object} params - 查询参数
-   * @param {number} params.page - 页码
-   * @param {number} params.size - 每页大小
-   * @param {string} params.action - 操作类型筛选 (all 或具体类型)
-   * @param {string} params.status - 状态筛选 (all/COMPLETED/FAILED/RUNNING)
-   * @param {number} params.day - 时间范围（天数）
+   * @param {Object} params - �亥砭��㺭
+   * @param {number} params.page - 憿萇�
+   * @param {number} params.size - 瘥誯△憭批�
+   * @param {string} params.action - �滢�蝐餃�蝑偦�?(all �硋�雿梶掩�?
+   * @param {string} params.status - �嗆����?(all/COMPLETED/FAILED/RUNNING)
+   * @param {number} params.day - �園𡢿��凒嚗�予�堆�
    * @returns {Promise}
    */
   getLogs(params = {}) {
     return getJaoOperationLogs(
       {
-        module: 'vap2',
+        module: 'secops',
         action: params.action || 'all',
         status: params.status || 'all',
         day: params.day || 7
@@ -1194,8 +1161,8 @@ export const patchLogsApi = {
   },
 
   /**
-   * 获取日志详情
-   * @param {string} logId - 日志ID
+   * �瑕��亙�霂行�
+   * @param {string} logId - �亙�ID
    * @returns {Promise}
    */
   getLogDetail(logId) {
@@ -1204,11 +1171,11 @@ export const patchLogsApi = {
 }
 
 /**
- * 概览统计 API
+ * 璁��蝏蠘恣 API
  */
 export const patchOverviewApi = {
   /**
-   * 获取补丁管理概览统计
+   * �瑕�銵乩�蝞∠�璁��蝏蠘恣
    * @returns {Promise}
    */
   getOverview() {
@@ -1216,24 +1183,24 @@ export const patchOverviewApi = {
   },
 
   /**
-   * 获取首页统计卡片数据
+   * �瑕�擐㚚△蝏蠘恣�∠��唳旿
    * GET /secops/api/secops/dashboard/current-stats
    * @returns {Promise}
    */
   getIndexStats() {
-    // VAP2_CURRENT_STATS → GET /sjxy-vap/api/vap/dashboard/current-stats
+    // VAP2_CURRENT_STATS �?GET /sjxy-vap/api/vap/dashboard/current-stats
     return apiService.get(`${VAP_DASHBOARD_MIGRATION_BASE}/current-stats`).then(wrapRecordsResponse)
   }
 }
 
 /**
- * Windows 漏洞扫描相关 API
+ * Windows 瞍𤩺��急��詨� API
  */
 export const windowsVulnerabilityApi = {
   /**
-   * 获取 Windows 主机列表
-   * POST /dts/api/dts/q/data/VAP2_WIN_MACHINE/
-   * @param {Object} params - 查询参数
+   * �瑕� Windows 銝餅㦤�𡑒”
+   * API /secops/api/secops/dashboard/VAP2_WIN_MACHINE/
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getWinMachines(params = {}) {
@@ -1247,9 +1214,9 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 获取 Windows 主机补丁列表 (漏洞概览)
-   * POST /dts/api/dts/q/data/VAP2_WIN_MACHINE_PATCHS/
-   * @param {Object} params - 查询参数
+   * �瑕� Windows 銝餅㦤銵乩��𡑒” (瞍𤩺�璁��)
+   * API /secops/api/secops/dashboard/VAP2_WIN_MACHINE_PATCHS/
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getWinMachinePatches(params = {}) {
@@ -1269,11 +1236,11 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 获取单台 Windows 主机信息
-   * POST /dts/api/dts/q/data/VAP2_GET_WIN_MACHINE_INFO/
+   * �瑕��訫蝱 Windows 銝餅㦤靽⊥�
+   * API /secops/api/secops/dashboard/VAP2_GET_WIN_MACHINE_INFO/
    * @param {Object} params
-   * @param {string} params.host_id - 主机 ID
-   * @param {string} params.host_key - 主机 IP
+   * @param {string} params.host_id - 銝餅㦤 ID
+   * @param {string} params.host_key - 銝餅㦤 IP
    * @returns {Promise}
    */
   getWinMachineInfo(params = {}) {
@@ -1285,11 +1252,10 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 获取单台 Windows 主机的补丁列表
-   * POST /dts/api/dts/q/data/VAP2_GET_WIN_MACHINE_PATCH_INFO/
+   * �瑕��訫蝱 Windows 銝餅㦤��‘銝��銵?   * API /secops/api/secops/dashboard/VAP2_GET_WIN_MACHINE_PATCH_INFO/
    * @param {Object} params
-   * @param {string} params.host_id - 主机 ID
-   * @param {string} params.host_key - 主机 IP
+   * @param {string} params.host_id - 銝餅㦤 ID
+   * @param {string} params.host_key - 銝餅㦤 IP
    * @returns {Promise}
    */
   getWinMachinePatchInfo(params = {}) {
@@ -1303,8 +1269,8 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 获取操作系统列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_WIN_OS_INFO/
+   * �瑕��滢�蝟餌��𡑒”
+   * API /secops/api/secops/dashboard/VAP2_LIST_WIN_OS_INFO/
    * @returns {Promise}
    */
   getWinOsInfo() {
@@ -1312,8 +1278,8 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 获取操作系统版本列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_WIN_OS_VERSION_INFO/
+   * �瑕��滢�蝟餌���𧋦�𡑒”
+   * API /secops/api/secops/dashboard/VAP2_LIST_WIN_OS_VERSION_INFO/
    * @returns {Promise}
    */
   getWinOsVersionInfo() {
@@ -1321,50 +1287,19 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 获取操作系统架构列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_WIN_OS_ARCH_INFO/
+   * �瑕��滢�蝟餌��嗆��𡑒”
+   * API /secops/api/secops/dashboard/VAP2_LIST_WIN_OS_ARCH_INFO/
    * @returns {Promise}
    */
   getWinOsArchInfo() {
     return apiService.get(`${VAP_DASHBOARD_BASE}/win-os-arch-info`).then(wrapRecordsResponse)
   },
 
-  /**
-   * 获取 Windows 漏洞列表
-   * POST /dts/api/dts/q/data/VAP2_WIN_VULNERABILITIES/
-   * @param {Object} params - 查询参数
-   * @returns {Promise}
-   */
-  getWinVulnerabilities(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_WIN_VULNERABILITIES/', {
-      params: {
-        severity: params.severity || ''
-      },
-      page: params.page || 1,
-      size: params.size || 20,
-      filter: params.filter || ''
-    })
-  },
+
 
   /**
-   * 获取主机漏洞详情
-   * @param {Object} params - 查询参数
-   * @param {string} params.host_key - 主机 IP
-   * @param {string} params.host_id - 主机 ID
-   * @returns {Promise}
-   */
-  getHostVulnDetail(params) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_WIN_HOST_DETAIL/', {
-      params: {
-        host_key: params.host_key,
-        host_id: params.host_id
-      }
-    })
-  },
-
-  /**
-   * 执行 Windows 漏洞扫描
-   * @param {Object} params - 扫描参数
+   * �扯� Windows 瞍𤩺��急�
+   * @param {Object} params - �急���㺭
    * @returns {Promise}
    */
   scanVulnerabilities(params) {
@@ -1374,8 +1309,8 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 获取可扫描的主机列表 (设备选择器)
-   * 复用 VAP2_WIN_MACHINE 数据源获取所有 Windows 主机
+   * �瑕��舀醌�讐�銝餅㦤�𡑒” (霈曉��㗇𥋘�?
+   * 憭滨鍂 VAP2_WIN_MACHINE �唳旿皞鞱繮�𡝗��?Windows 銝餅㦤
    * @returns {Promise}
    */
   getAvailableHosts() {
@@ -1385,10 +1320,10 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 执行 Windows 漏洞扫描作业
+   * �扯� Windows 瞍𤩺��急�雿靝�
    * Job Code: Fteqeo
-   * @param {Object} params - 扫描参数
-   * @param {Array<string>} params.host_ids - 主机 ID 列表
+   * @param {Object} params - �急���㺭
+   * @param {Array<string>} params.host_ids - 銝餅㦤 ID �𡑒”
    * @returns {Promise}
    */
   executeWinScan(params) {
@@ -1400,8 +1335,7 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 获取选择的补丁对应主机
-   */
+   * �瑕��㗇𥋘��‘銝�笆摨𥪯蜓�?   */
   getWinPatchStatusInfo(ids = []) {
     return apiService.get(`${VAP_DASHBOARD_BASE}/patch-win-status-info`, {
       params: { ids }
@@ -1409,7 +1343,7 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 获取选择的补丁 KB 列表
+   * �瑕��㗇𥋘��‘銝?KB �𡑒”
    */
   getWinPatchPatchInfo(ids = []) {
     return apiService.get(`${VAP_DASHBOARD_BASE}/patch-win-patch-info`, {
@@ -1418,7 +1352,7 @@ export const windowsVulnerabilityApi = {
   },
 
   /**
-   * 执行补丁修复
+   * �扯�銵乩�靽桀�
    */
   executeWinPatchFix(params = {}) {
     return apiService.post('/workflow/api/workflow/jobs/EAsxlK/run', {
@@ -1431,12 +1365,12 @@ export const windowsVulnerabilityApi = {
 }
 
 /**
- * Windows 相关 API
+ * Windows �詨� API
  */
 export const windowsPatchApi = {
   /**
-   * Windows 漏洞扫描
-   * @param {Object} params - 扫描参数
+   * Windows 瞍𤩺��急�
+   * @param {Object} params - �急���㺭
    * @returns {Promise}
    */
   scanVulnerabilities(params) {
@@ -1444,8 +1378,8 @@ export const windowsPatchApi = {
   },
 
   /**
-   * 获取 Windows 漏洞列表
-   * @param {Object} params - 查询参数
+   * �瑕� Windows 瞍𤩺��𡑒”
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getVulnerabilities(params = {}) {
@@ -1453,8 +1387,8 @@ export const windowsPatchApi = {
   },
 
   /**
-   * Windows 更新
-   * @param {Object} params - 更新参数
+   * Windows �湔鰵
+   * @param {Object} params - �湔鰵��㺭
    * @returns {Promise}
    */
   update(params) {
@@ -1462,8 +1396,8 @@ export const windowsPatchApi = {
   },
 
   /**
-   * 获取 Windows 更新列表
-   * @param {Object} params - 查询参数
+   * �瑕� Windows �湔鰵�𡑒”
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getUpdates(params = {}) {
@@ -1472,7 +1406,7 @@ export const windowsPatchApi = {
 }
 
 /**
- * YUM源管理相关 API
+ * YUM皞鞟恣��㮾�?API
  */
 export const yumManageApi = {
   buildYumConfigPayload(data = {}) {
@@ -1512,8 +1446,7 @@ export const yumManageApi = {
   },
 
   /**
-   * 获取YUM源配置列表
-   * GET /workflow/api/workflow/dc/data?code=yum_configs
+   * �瑕�YUM皞鞾�蝵桀�銵?   * GET /workflow/api/workflow/dc/data?code=yum_configs
    * @returns {Promise}
    */
   getYumConfigs() {
@@ -1526,7 +1459,7 @@ export const yumManageApi = {
   },
 
   /**
-   * 获取 YUM 源配置列表（含采集状态）
+   * �瑕� YUM 皞鞾�蝵桀�銵剁��恍���𠶖���
    * GET /secops/api/secops/v2/yum-repo/configs
    * @returns {Promise}
    */
@@ -1539,9 +1472,8 @@ export const yumManageApi = {
   },
 
   /**
-   * 触发单条 YUM 源采集
-   * POST /secops/api/secops/v2/yum-repo/collect
-   * @param {Object} data - 采集参数
+   * 閫血��閙辺 YUM 皞鞾��?   * POST /secops/api/secops/v2/yum-repo/collect
+   * @param {Object} data - �����㺭
    * @returns {Promise}
    */
   collectYumRepo(data = {}) {
@@ -1549,9 +1481,8 @@ export const yumManageApi = {
   },
 
   /**
-   * 批量触发 YUM 源采集
-   * POST /secops/api/secops/v2/yum-repo/collect/batch
-   * @param {Object} data - 批量采集参数
+   * �寥�閫血� YUM 皞鞾��?   * POST /secops/api/secops/v2/yum-repo/collect/batch
+   * @param {Object} data - �寥������㺭
    * @returns {Promise}
    */
   collectYumRepoBatch(data = {}) {
@@ -1559,9 +1490,7 @@ export const yumManageApi = {
   },
 
   /**
-   * 创建YUM源配置
-   * @param {Object} data - YUM源配置数据
-   * @returns {Promise}
+   * �𥕦遣YUM皞鞾�蝵?   * @param {Object} data - YUM皞鞾�蝵格㺭�?   * @returns {Promise}
    */
   createYumConfig(data) {
     return apiService.post(
@@ -1576,11 +1505,9 @@ export const yumManageApi = {
   },
 
   /**
-   * 更新YUM源配置
-   * PUT /secops/api/secops/v2/yum-repo/configs/{id}
+   * �湔鰵YUM皞鞾�蝵?   * PUT /secops/api/secops/v2/yum-repo/configs/{id}
    * @param {string} id - dcDataId
-   * @param {Object} data - YUM源配置数据
-   * @returns {Promise}
+   * @param {Object} data - YUM皞鞾�蝵格㺭�?   * @returns {Promise}
    */
   updateYumConfig(id, data) {
     return apiService.put(
@@ -1590,8 +1517,7 @@ export const yumManageApi = {
   },
 
   /**
-   * 删除YUM源配置
-   * DELETE /secops/api/secops/v2/yum-repo/configs/{id}
+   * �𣳇膄YUM皞鞾�蝵?   * DELETE /secops/api/secops/v2/yum-repo/configs/{id}
    * @param {string} id - dcDataId
    * @returns {Promise}
    */
@@ -1600,9 +1526,8 @@ export const yumManageApi = {
   },
 
   /**
-   * 获取主机YUM源清单列表
-   * GET /workflow/api/workflow/universal/dc/yum_host_info
-   * @param {Object} params - 查询参数
+   * �瑕�銝餅㦤YUM皞鞉��訫�銵?   * GET /workflow/api/workflow/universal/dc/yum_host_info
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getHostYumList(params = {}) {
@@ -1616,9 +1541,8 @@ export const yumManageApi = {
   },
 
   /**
-   * 获取主机YUM源详情列表
-   * POST /workflow/api/workflow/universal/dc/{model}
-   * @param {Object} params - 查询参数 { data_owner, repo_status }
+   * �瑕�銝餅㦤YUM皞鞱祕���銵?   * POST /workflow/api/workflow/universal/dc/{model}
+   * @param {Object} params - �亥砭��㺭 { data_owner, repo_status }
    * @returns {Promise}
    */
   getHostRepoDetail(params = {}) {
@@ -1630,14 +1554,13 @@ export const yumManageApi = {
 }
 
 /**
- * Windows 更新相关 API
+ * Windows �湔鰵�詨� API
  */
 export const windowsUpdateApi = {
   /**
-   * 获取 Windows 可安装补丁列表
-   * POST /dts/api/dts/q/data/VAP2_PATCH_WIN_LIST/
-   * @param {Object} params - 查询参数
-   * @param {string} params.category_names - 类型筛选，逗号分隔
+   * �瑕� Windows �臬�鋆�‘銝��銵?   * API /secops/api/secops/dashboard/VAP2_PATCH_WIN_LIST/
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.category_names - 蝐餃�蝑偦�㚁��堒噡���
    * @returns {Promise}
    */
   getPatchWinList(params = {}) {
@@ -1651,28 +1574,13 @@ export const windowsUpdateApi = {
     }).then(wrapRecordsResponse)
   },
 
-  /**
-   * 获取补丁受影响的主机列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_BY_WIN_PATCH/
-   * @param {Object} params - 查询参数
-   * @param {string} params.kb_number - KB 编号
-   * @returns {Promise}
-   */
-  getAffectedMachines(params = {}) {
-    return apiService.post('/dts/api/dts/q/data/VAP2_LIST_MACHINE_BY_WIN_PATCH/', {
-      params: {
-        kb_number: params.kb_number || ''
-      },
-      page: 1,
-      size: 500
-    })
-  },
+
 
   /**
-   * 获取选中 KB 的受影响主机列表
-   * POST /dts/api/dts/q/data/VAP2_PATCH_AFFECTED_MACHINES/
-   * @param {Object} params - 查询参数
-   * @param {Array<string>} params.kb_numbers - KB 编号列表
+   * �瑕��劐葉 KB ���敶勗�銝餅㦤�𡑒”
+   * API /secops/api/secops/dashboard/VAP2_PATCH_AFFECTED_MACHINES/
+   * @param {Object} params - �亥砭��㺭
+   * @param {Array<string>} params.kb_numbers - KB 蝻硋噡�𡑒”
    * @returns {Promise}
    */
   getAffectedMachinesByKbNumbers(params = {}) {
@@ -1687,13 +1595,12 @@ export const windowsUpdateApi = {
 }
 
 /**
- * Windows 概览相关 API
+ * Windows 璁���詨� API
  */
 export const windowsViewApi = {
   /**
-   * 获取 Windows 当前统计数据（柱状图）
-   * POST /dts/api/dts/q/data/VAP2_CURRENT_STATS_WIN/
-   * 返回: { records: [{ num_critical, num_rollups, num_security }] }
+   * �瑕� Windows 敶枏�蝏蠘恣�唳旿嚗���嗅㦛嚗?   * API /secops/api/secops/dashboard/VAP2_CURRENT_STATS_WIN/
+   * 餈𥪜�: { records: [{ num_critical, num_rollups, num_security }] }
    * @returns {Promise}
    */
   getCurrentStatsWin() {
@@ -1701,9 +1608,8 @@ export const windowsViewApi = {
   },
 
   /**
-   * 获取 Windows 补丁趋势数据（折线图）
-   * POST /dts/api/dts/q/data/VAP2_PATCH_TREND_WINDOWS/
-   * 返回: { records: [{ scan_date, patch_count }] }
+   * �瑕� Windows 銵乩�頞见飵�唳旿嚗��蝥踹㦛嚗?   * API /secops/api/secops/dashboard/VAP2_PATCH_TREND_WINDOWS/
+   * 餈𥪜�: { records: [{ scan_date, patch_count }] }
    * @returns {Promise}
    */
   getPatchTrendWindows() {
@@ -1712,13 +1618,13 @@ export const windowsViewApi = {
 }
 
 /**
- * Windows 更新回滚相关 API
+ * Windows �湔鰵�墧��詨� API
  */
 export const windowsRollbackApi = {
   /**
-   * 获取 Windows 更新历史记录
-   * POST /dts/api/dts/q/data/VAP_HIST_UPDATE_KBS_WIN/
-   * @param {Object} params - 查询参数
+   * �瑕� Windows �湔鰵��蟮霈啣�
+   * API /secops/api/secops/dashboard/VAP_HIST_UPDATE_KBS_WIN/
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getHistUpdateKbsWin(params = {}) {
@@ -1733,9 +1639,9 @@ export const windowsRollbackApi = {
   },
 
   /**
-   * 执行回滚操作
+   * �扯��墧��滢�
    * Job Code: S9eC0m
-   * @param {Object} params - 回滚参数
+   * @param {Object} params - �墧���㺭
    * @returns {Promise}
    */
   rollback(params) {
@@ -1750,9 +1656,9 @@ export const windowsRollbackApi = {
   },
 
   /**
-   * 批量回滚操作
+   * �寥��墧��滢�
    * Job Code: HiuT3F
-   * @param {Object} params - 回滚参数
+   * @param {Object} params - �墧���㺭
    * @returns {Promise}
    */
   batchRollback(params) {
@@ -1765,9 +1671,9 @@ export const windowsRollbackApi = {
   },
 
   /**
-   * 删除更新记录
+   * �𣳇膄�湔鰵霈啣�
    * Job Code: aJlha6
-   * @param {Array<string>} ids - 记录ID列表
+   * @param {Array<string>} ids - 霈啣�ID�𡑒”
    * @returns {Promise}
    */
   deleteHistUpdateKbs(ids) {
@@ -1780,14 +1686,14 @@ export const windowsRollbackApi = {
 }
 
 /**
- * 操作报告相关 API
+ * �滢��亙��詨� API
  */
 export const operationReportApi = {
   /**
-   * 获取漏洞报告列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_VUL_OTO/
-   * 字段: host_key, os_distro, os_version, vul_id, scan_timestamp
-   * @param {Object} params - 查询参数
+   * �瑕�瞍𤩺��亙��𡑒”
+   * API /secops/api/secops/dashboard/VAP2_LIST_MACHINE_VUL_OTO/
+   * 摮埈挾: host_key, os_distro, os_version, vul_id, scan_timestamp
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getVulnerabilityReport(params = {}) {
@@ -1801,10 +1707,10 @@ export const operationReportApi = {
   },
 
   /**
-   * 获取补丁报告列表
-   * POST /dts/api/dts/q/data/VAP2_LIST_MACHINE_PATCH_OTO/
-   * 字段: host_key, os_distro, os_version, patch_id, title, severity, scan_timestamp
-   * @param {Object} params - 查询参数
+   * �瑕�銵乩��亙��𡑒”
+   * API /secops/api/secops/dashboard/VAP2_LIST_MACHINE_PATCH_OTO/
+   * 摮埈挾: host_key, os_distro, os_version, patch_id, title, severity, scan_timestamp
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getPatchReport(params = {}) {
@@ -1819,31 +1725,28 @@ export const operationReportApi = {
 }
 
 /**
- * CVE 漏洞查询 API
- * 参照 Angular vap.service.js 实现
+ * CVE 瞍𤩺��亥砭 API
+ * ��� Angular vap.service.js 摰䂿緵
  */
 export const cveApi = {
   /**
-   * 分页查询 CVE 列表
+   * ��△�亥砭 CVE �𡑒”
    * GET /secops/api/secops/v2/cve/list
-   * @param {Object} params - 查询参数
-   * @param {string} params.source - 数据源，例如 redhat / kylinos / nvd，具体以 /cve/statistics 返回为准
-   * @param {string} params.severity - 严重等级: critical / important / moderate / low
-   * @param {string} params.keyword - 关键字（搜索CVE ID或描述）
-   * @param {string} params.packageName - 包名
-   * @param {string} params.startDate - 开始日期（格式：yyyy-MM-dd）
-   * @param {string} params.endDate - 结束日期（格式：yyyy-MM-dd）
-   * @param {number} params.page - 页码（从0开始）
-   * @param {number} params.size - 每页数量
-   * @param {string} params.sortBy - 排序字段: publicDate / severity / cveId
-   * @param {string} params.sortDir - 排序方向: asc / desc
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.source - �唳旿皞琜�靘见� redhat / kylinos / nvd嚗��雿㮖誑 /cve/statistics 餈𥪜�銝箏�
+   * @param {string} params.severity - 銝仿�蝑厩漣: critical / important / moderate / low
+   * @param {string} params.keyword - �喲睸摮梹��𦦵揣CVE ID�𡝗�餈堆�
+   * @param {string} params.packageName - ���
+   * @param {string} params.startDate - 撘�憪𧢲𠯫����澆�嚗䱭yyy-MM-dd嚗?   * @param {string} params.endDate - 蝏𤘪��交�嚗�聢撘𧶏�yyyy-MM-dd嚗?   * @param {number} params.page - 憿萇�嚗��0撘�憪页�
+   * @param {number} params.size - 瘥誯△�圈�
+   * @param {string} params.sortBy - �鍦�摮埈挾: publicDate / severity / cveId
+   * @param {string} params.sortDir - �鍦��孵�: asc / desc
    * @returns {Promise}
    */
   getCveList(params = {}) {
     const queryParams = {}
 
-    // 只添加非空且非 'all' 的参数
-    if (params.source && params.source !== 'all') queryParams.source = params.source
+    // �芣溶�𣳇�蝛箔��?'all' ����?    if (params.source && params.source !== 'all') queryParams.source = params.source
     if (params.severity && params.severity !== 'all') queryParams.severity = params.severity
     if (params.keyword) queryParams.keyword = params.keyword
     if (params.packageName) queryParams.packageName = params.packageName
@@ -1858,9 +1761,9 @@ export const cveApi = {
   },
 
   /**
-   * 查询 CVE 详情
+   * �亥砭 CVE 霂行�
    * GET /secops/api/secops/v2/cve/detail/{cveId}
-   * @param {string} cveId - CVE编号，如 CVE-2025-26597
+   * @param {string} cveId - CVE蝻硋噡嚗�� CVE-2025-26597
    * @returns {Promise}
    */
   getCveDetail(cveId) {
@@ -1868,7 +1771,7 @@ export const cveApi = {
   },
 
   /**
-   * 获取统计概览
+   * �瑕�蝏蠘恣璁��
    * GET /secops/api/secops/v2/cve/statistics
    * @returns {Promise}
    */
@@ -1877,9 +1780,8 @@ export const cveApi = {
   },
 
   /**
-   * 查询 CVE 受影响主机列表
-   * GET /secops/api/secops/v2/cve/affected-hosts/{cveId}
-   * @param {string} cveId - CVE编号
+   * �亥砭 CVE �堒蔣�滢蜓�箏�銵?   * GET /secops/api/secops/v2/cve/affected-hosts/{cveId}
+   * @param {string} cveId - CVE蝻硋噡
    * @returns {Promise}
    */
   getAffectedHosts(cveId) {
@@ -1887,9 +1789,8 @@ export const cveApi = {
   },
 
   /**
-   * 批量导出 CVE 报告（Excel）
-   * POST /secops/api/secops/v2/cve/export
-   * @param {string[]|Object} payload - cveIds 数组或完整请求体
+   * �寥�撖澆枂 CVE �亙�嚗𠄌xcel嚗?   * POST /secops/api/secops/v2/cve/export
+   * @param {string[]|Object} payload - cveIds �啁��硋��渲窈瘙��
    * @returns {Promise<Blob>}
    */
   exportReport(payload) {
@@ -1901,10 +1802,8 @@ export const cveApi = {
   },
 
   /**
-   * 批量导出 CVE 漏洞排查反馈模板（Excel）
-   * POST /secops/api/secops/v2/cve/feedback-template-export
-   * @param {string[]|string|Object} payload - cveIds 数组、批量输入文本或完整请求体
-   * @returns {Promise<Blob>}
+   * �寥�撖澆枂 CVE 瞍𤩺��埝䰻�漤�璅⊥踎嚗𠄌xcel嚗?   * POST /secops/api/secops/v2/cve/feedback-template-export
+   * @param {string[]|string|Object} payload - cveIds �啁���鸌�讛��交��祆�摰峕㟲霂瑟�雿?   * @returns {Promise<Blob>}
    */
   exportFeedbackTemplate(payload) {
     const requestBody = Array.isArray(payload)
@@ -1919,10 +1818,8 @@ export const cveApi = {
   },
 
   /**
-   * 执行受影响主机重启
-   * POST /secops/api/secops/v2/patch/reboot-host
-   * @param {Object} payload - 重启请求体
-   * @returns {Promise}
+   * �扯��堒蔣�滢蜓�粹��?   * POST /secops/api/secops/v2/patch/reboot-host
+   * @param {Object} payload - �滚鍳霂瑟�雿?   * @returns {Promise}
    */
   rebootHost(payload) {
     return apiService.post(`${VAP_API_PREFIX}/v2/patch/reboot-host`, payload)
@@ -1930,14 +1827,14 @@ export const cveApi = {
 }
 
 /**
- * Windows CVE 漏洞查询 API
- * 参照 win-cve-api.md 实现
+ * Windows CVE 瞍𤩺��亥砭 API
+ * ��� win-cve-api.md 摰䂿緵
  */
 export const winCveApi = {
   /**
-   * 分页查询 Windows CVE 列表
+   * ��△�亥砭 Windows CVE �𡑒”
    * GET /secops/api/secops/v2/win-cve/list
-   * @param {Object} params - 查询参数
+   * @param {Object} params - �亥砭��㺭
    * @returns {Promise}
    */
   getCveList(params = {}) {
@@ -1956,9 +1853,9 @@ export const winCveApi = {
   },
 
   /**
-   * 查询 Windows CVE 详情
+   * �亥砭 Windows CVE 霂行�
    * GET /secops/api/secops/v2/win-cve/detail/{cveId}
-   * @param {string} cveId - CVE 编号
+   * @param {string} cveId - CVE 蝻硋噡
    * @returns {Promise}
    */
   getCveDetail(cveId) {
@@ -1966,7 +1863,7 @@ export const winCveApi = {
   },
 
   /**
-   * 获取 Windows CVE 统计概览
+   * �瑕� Windows CVE 蝏蠘恣璁��
    * GET /secops/api/secops/v2/win-cve/statistics
    * @returns {Promise}
    */
@@ -1975,9 +1872,9 @@ export const winCveApi = {
   },
 
   /**
-   * 查询受影响的 Windows 产品列表
+   * �亥砭�堒蔣�滨� Windows 鈭批��𡑒”
    * GET /secops/api/secops/v2/win-cve/affected/{cveId}
-   * @param {string} cveId - CVE 编号
+   * @param {string} cveId - CVE 蝻硋噡
    * @returns {Promise}
    */
   getAffectedProducts(cveId) {
@@ -1985,9 +1882,8 @@ export const winCveApi = {
   },
 
   /**
-   * 批量导出 Windows CVE 报告（Excel）
-   * POST v2/win-cve/export
-   * @param {string[]} cveIds - CVE 编号列表
+   * �寥�撖澆枂 Windows CVE �亙�嚗𠄌xcel嚗?   * POST v2/win-cve/export
+   * @param {string[]} cveIds - CVE 蝻硋噡�𡑒”
    * @returns {Promise<Blob>}
    */
   exportReport(cveIds) {
@@ -2002,8 +1898,8 @@ export const winCveApi = {
 }
 
 /**
- * 中间件 CVE Vulnerability 查询 API
- * 参照 middleware-cve-api.md 实现
+ * 銝剝𡢿隞?CVE Vulnerability �亥砭 API
+ * ��� middleware-cve-api.md 摰䂿緵
  */
 export const winKbApi = {
   getKbList(params = {}) {
@@ -2036,18 +1932,15 @@ export const winKbApi = {
 
 export const middlewareCveApi = {
   /**
-   * 分页查询中间件 CVE 列表
+   * ��△�亥砭銝剝𡢿隞?CVE �𡑒”
    * GET /secops/api/secops/v2/middleware-cve/list
-   * @param {Object} params - 查询参数
-   * @param {string} params.middlewareType - 中间件类型
-   * @param {string} params.severity - 严重等级
-   * @param {string} params.keyword - 关键字
-   * @param {string} params.startDate - 开始日期
-   * @param {string} params.endDate - 结束日期
-   * @param {number} params.page - 页码
-   * @param {number} params.size - 每页数量
-   * @param {string} params.sortBy - 排序字段
-   * @param {string} params.sortDir - 排序方向
+   * @param {Object} params - �亥砭��㺭
+   * @param {string} params.middlewareType - 銝剝𡢿隞嗥掩�?   * @param {string} params.severity - 銝仿�蝑厩漣
+   * @param {string} params.keyword - �喲睸摮?   * @param {string} params.startDate - 撘�憪𧢲𠯫�?   * @param {string} params.endDate - 蝏𤘪��交�
+   * @param {number} params.page - 憿萇�
+   * @param {number} params.size - 瘥誯△�圈�
+   * @param {string} params.sortBy - �鍦�摮埈挾
+   * @param {string} params.sortDir - �鍦��孵�
    * @returns {Promise}
    */
   getList(params = {}) {
@@ -2068,9 +1961,9 @@ export const middlewareCveApi = {
   },
 
   /**
-   * 查询 中间件 CVE 详情
+   * �亥砭 銝剝𡢿隞?CVE 霂行�
    * GET /secops/api/secops/v2/middleware-cve/detail/{cveId}
-   * @param {string} cveId - CVE编号
+   * @param {string} cveId - CVE蝻硋噡
    * @returns {Promise}
    */
   getDetail(cveId) {
@@ -2078,8 +1971,7 @@ export const middlewareCveApi = {
   },
 
   /**
-   * 获取中间件类型列表
-   * GET /secops/api/secops/v2/middleware-cve/middleware-types
+   * �瑕�銝剝𡢿隞嗥掩�见�銵?   * GET /secops/api/secops/v2/middleware-cve/middleware-types
    * @returns {Promise}
    */
   getMiddlewareTypes() {
@@ -2088,11 +1980,11 @@ export const middlewareCveApi = {
 }
 
 /**
- * RPM 软件包信息 API
+ * RPM 頧臭辣��縑�?API
  */
 export const rpmInfoApi = {
   /**
-   * 查询架构枚举
+   * �亥砭�嗆��帋蜀
    * GET /secops/api/secops/v2/rpm-info/architectures
    */
   getArchitectures(params = {}) {
@@ -2101,8 +1993,7 @@ export const rpmInfoApi = {
   },
 
   /**
-   * 全量 RPM 软件包分页查询
-   * GET /secops/api/secops/v2/rpm-info/list
+   * �券� RPM 頧臭辣���憿菜䰻霂?   * GET /secops/api/secops/v2/rpm-info/list
    */
   getPackageList(params = {}) {
     const query = buildGenericQuery({
@@ -2118,16 +2009,14 @@ export const rpmInfoApi = {
   },
 
   /**
-   * 按 ID 查询 RPM 软件包详情
-   * GET /secops/api/secops/v2/rpm-info/detail/{id}
+   * �?ID �亥砭 RPM 頧臭辣��祕�?   * GET /secops/api/secops/v2/rpm-info/detail/{id}
    */
   getPackageDetailById(id) {
     return apiService.get(`${VAP_API_PREFIX}/v2/rpm-info/detail/${encodeURIComponent(id)}`)
   },
 
   /**
-   * 按包名查询 RPM 软件包详情
-   * GET /secops/api/secops/v2/rpm-info/detail
+   * �匧��齿䰻霂?RPM 頧臭辣��祕�?   * GET /secops/api/secops/v2/rpm-info/detail
    */
   getPackageDetail(params = {}) {
     const query = buildGenericQuery({
@@ -2140,15 +2029,14 @@ export const rpmInfoApi = {
   },
 
   /**
-   * 批量查询 RPM 软件包详情
-   * POST /secops/api/secops/v2/rpm-info/batch-detail
+   * �寥��亥砭 RPM 頧臭辣��祕�?   * POST /secops/api/secops/v2/rpm-info/batch-detail
    */
   getBatchPackageDetail(payload = {}) {
     return apiService.post(`${VAP_API_PREFIX}/v2/rpm-info/batch-detail`, payload)
   },
 
   /**
-   * 根据 DTS 已安装包行查询软件包详情
+   * �寞旿 DTS 撌脣�鋆��銵峕䰻霂Ｚ蔓隞嗅�霂行�
    * GET /secops/api/secops/v2/rpm-info/installed/detail
    */
   getInstalledDetail(params = {}) {
@@ -2167,7 +2055,7 @@ export const rpmInfoApi = {
   },
 
   /**
-   * 根据扫描记录查询主机已安装软件包
+   * �寞旿�急�霈啣��亥砭銝餅㦤撌脣�鋆�蔓隞嗅�
    * GET /secops/api/secops/v2/rpm-info/installed/scan-list
    */
   getInstalledScanList(params = {}) {
@@ -2182,8 +2070,7 @@ export const rpmInfoApi = {
   },
 
   /**
-   * 按扫描结果分页查询 Linux 机器包清单
-   * GET /secops/api/secops/v2/rpm-info/installed/scan-packages
+   * �㗇醌�讐��𨅯�憿菜䰻霂?Linux �箏膥����?   * GET /secops/api/secops/v2/rpm-info/installed/scan-packages
    */
   getInstalledScanPackages(params = {}) {
     const query = buildGenericQuery({
@@ -2201,8 +2088,7 @@ export const rpmInfoApi = {
   },
 
   /**
-   * 导出 Linux 机器包清单
-   * POST /secops/api/secops/v2/rpm-info/installed/scan-packages/export
+   * 撖澆枂 Linux �箏膥����?   * POST /secops/api/secops/v2/rpm-info/installed/scan-packages/export
    */
   exportInstalledScanPackages(payload = {}) {
     return apiService.post(
@@ -2216,11 +2102,11 @@ export const rpmInfoApi = {
 }
 
 /**
- * R3 · 主机总览自定义视图 API
+ * R3 繚 銝餅㦤�餉��芸�銋㕑��?API
  */
 export const viewConfigApi = {
   /**
-   * 拉取生效视图
+   * �匧����閫�㦛
    * GET /cmdb/api/cmdb/ci/view-config?ciType=host&scope=user
    */
   getViewConfig(params = {}) {
@@ -2232,7 +2118,7 @@ export const viewConfigApi = {
   },
 
   /**
-   * 保存视图
+   * 靽嘥�閫�㦛
    * PUT /cmdb/api/cmdb/ci/view-config
    */
   saveViewConfig(data) {
@@ -2240,8 +2126,7 @@ export const viewConfigApi = {
   },
 
   /**
-   * 可选属性列表
-   * GET /cmdb/api/cmdb/ci/view-config/attrs?ciType=host
+   * �舫�匧��批�銵?   * GET /cmdb/api/cmdb/ci/view-config/attrs?ciType=host
    */
   getAttrs(params = {}) {
     const query = buildGenericQuery({
@@ -2252,11 +2137,11 @@ export const viewConfigApi = {
 }
 
 /**
- * R4 · 主机端口与区域批量配置 API
+ * R4 繚 銝餅㦤蝡臬藁銝𤾸躹��鸌�誯�蝵?API
  */
 export const hostBatchApi = {
   /**
-   * 批量配置端口
+   * �寥��滨蔭蝡臬藁
    * POST /cmdb/api/cmdb/ci/batch/apply-ports
    */
   applyPorts(data) {
@@ -2264,15 +2149,14 @@ export const hostBatchApi = {
   },
 
   /**
-   * 批量设置单个属性
-   * POST /cmdb/api/cmdb/ci/batch/save/attr
+   * �寥�霈曄蔭�蓥葵撅墧�?   * POST /cmdb/api/cmdb/ci/batch/save/attr
    */
   saveAttr(data) {
     return apiService.post('/cmdb/api/cmdb/ci/batch/save/attr', data)
   },
 
   /**
-   * 列出 3 个保留区域名
+   * �堒枂 3 銝芯��坔躹�笔�
    * GET /cmdb/api/cmdb/ci/batch/locations
    */
   getLocations() {
@@ -2280,16 +2164,14 @@ export const hostBatchApi = {
   },
 
   /**
-   * 批量给主机标记区域
-   * POST /cmdb/api/cmdb/ci/batch/set-location
+   * �寥�蝏嗘蜓�箸�霈啣躹�?   * POST /cmdb/api/cmdb/ci/batch/set-location
    */
   setLocation(data) {
     return apiService.post('/cmdb/api/cmdb/ci/batch/set-location', data)
   },
 
   /**
-   * 查单台主机当前区域
-   * GET /cmdb/api/cmdb/ci/batch/get-location?hostId=...
+   * �亙��唬蜓�箏��滚躹�?   * GET /cmdb/api/cmdb/ci/batch/get-location?hostId=...
    */
   getLocation(hostId) {
     return apiService.get(`/cmdb/api/cmdb/ci/batch/get-location?hostId=${hostId}`)
@@ -2297,19 +2179,18 @@ export const hostBatchApi = {
 }
 
 /**
- * R2 · 漏洞紧急程度看板与规则 API
+ * R2 繚 瞍𤩺�蝝扳�亦�摨衣��蹂�閫�� API
  */
 export const urgencyApi = {
   /**
-   * 4 档统计大卡
-   * GET /secops/api/secops/v2/urgency/statistics
+   * 4 獢��霈∪之�?   * GET /secops/api/secops/v2/urgency/statistics
    */
   getStatistics() {
     return apiService.get('/secops/api/secops/v2/urgency/statistics')
   },
 
   /**
-   * 全量重算
+   * �券��滨�
    * POST /secops/api/secops/v2/urgency/recompute?batchSize=1000
    */
   recompute(params = {}) {
@@ -2320,7 +2201,7 @@ export const urgencyApi = {
   },
 
   /**
-   * 单台主机重算
+   * �訫蝱銝餅㦤�滨�
    * POST /secops/api/secops/v2/urgency/recompute-host?hostId=...
    */
   recomputeHost(hostId) {
@@ -2328,7 +2209,7 @@ export const urgencyApi = {
   },
 
   /**
-   * 规则列表
+   * 閫���𡑒”
    * GET /secops/api/secops/v2/urgency/rule
    */
   getRules() {
@@ -2336,7 +2217,7 @@ export const urgencyApi = {
   },
 
   /**
-   * 多 CVE 查紧急程度 (即时计算, 0落库)
+   * 憭?CVE �亦揮�亦�摨?(�單𧒄霈∠�, 0�賢�)
    * POST /secops/api/secops/v2/urgency/lookup
    */
   lookupUrgency(data) {
@@ -2344,7 +2225,7 @@ export const urgencyApi = {
   },
 
   /**
-   * 多 CVE 查询结果导出 Excel
+   * 憭?CVE �亥砭蝏𤘪�撖澆枂 Excel
    * POST /secops/api/secops/v2/urgency/lookup/export
    */
   exportLookupUrgency(data) {
@@ -2354,7 +2235,7 @@ export const urgencyApi = {
   },
 
   /**
-   * 规则编辑
+   * 閫��蝻𤥁�
    * PUT /secops/api/secops/v2/urgency/rule/{id}
    */
   updateRule(id, data) {
@@ -2362,8 +2243,7 @@ export const urgencyApi = {
   },
 
   /**
-   * 全量导入当前租户的紧急程度规则
-   * POST /secops/api/secops/v2/urgency/rule/import
+   * �券�撖澆�敶枏�蝘����揮�亦�摨西��?   * POST /secops/api/secops/v2/urgency/rule/import
    */
   importRules(file) {
     const formData = new FormData()
@@ -2372,7 +2252,7 @@ export const urgencyApi = {
   },
 
   /**
-   * 大卡下钻分页列表
+   * 憭批㨃銝钅凃��△�𡑒”
    * GET /secops/api/secops/v2/urgency/page?urgency=...&page=1&size=20
    */
   getUrgencyPage(params = {}) {
@@ -2386,11 +2266,11 @@ export const urgencyApi = {
 }
 
 /**
- * R1 · CVE 文件导入比对 API
+ * R1 繚 CVE ��辣撖澆�瘥𥪜笆 API
  */
 export const cveImportApi = {
   /**
-   * 上传 Excel
+   * 銝𠹺� Excel
    * POST /secops/api/secops/v2/cve/import/upload
    */
   uploadExcel(file) {
@@ -2404,7 +2284,7 @@ export const cveImportApi = {
   },
 
   /**
-   * 触发比对
+   * 閫血�瘥𥪜笆
    * POST /secops/api/secops/v2/cve/import/batch/{id}/compare
    */
   compareBatch(id) {
@@ -2412,7 +2292,7 @@ export const cveImportApi = {
   },
 
   /**
-   * 历史批次分页
+   * ��蟮�寞活��△
    * GET /secops/api/secops/v2/cve/import/batch?page=0&size=20
    */
   getBatches(params = {}) {
@@ -2424,7 +2304,7 @@ export const cveImportApi = {
   },
 
   /**
-   * 批次详情
+   * �寞活霂行�
    * GET /secops/api/secops/v2/cve/import/batch/{id}
    */
   getBatchDetail(id) {
@@ -2432,7 +2312,7 @@ export const cveImportApi = {
   },
 
   /**
-   * 涉及主机清单
+   * 瘨匧�銝餅㦤皜��
    * GET /secops/api/secops/v2/cve/import/batch/{id}/affected-hosts
    */
   getAffectedHosts(id) {
@@ -2440,7 +2320,7 @@ export const cveImportApi = {
   },
 
   /**
-   * 导出上报模板
+   * 撖澆枂銝𦠜𥁒璅⊥踎
    * POST /secops/api/secops/v2/cve/import/batch/{id}/export-report
    */
   exportReport(id) {
@@ -2454,7 +2334,7 @@ export const cveImportApi = {
   },
 
   /**
-   * 删除批次
+   * �𣳇膄�寞活
    * DELETE /secops/api/secops/v2/cve/import/batch/{id}
    */
   deleteBatch(id) {
@@ -2462,7 +2342,7 @@ export const cveImportApi = {
   }
 }
 
-// 导出所有 API
+// 撖澆枂���?API
 export default {
   scan: patchScanApi,
   install: patchInstallApi,

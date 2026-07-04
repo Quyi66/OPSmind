@@ -112,27 +112,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="operator_name" label="操作人" width="100" />
-        <el-table-column label="操作" width="176" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button
-                text
-                type="primary"
-                size="small"
-                :disabled="row.setup_status === 'PROCESS' || row.setup_status === 'RESET'"
-                @click="handleViewPassword(row)"
-              >
-                查看密码
-              </el-button>
-              <el-button
-                text
-                type="primary"
-                size="small"
-                :disabled="row.setup_status === 'PROCESS' || row.setup_status === 'RESET'"
-                @click="handleViewHistory(row)"
-              >
-                操作历史
-              </el-button>
               <el-button
                 v-if="row.setup_status === 'PROCESS'"
                 text
@@ -166,15 +148,6 @@
     </div>
 
     <!-- 对话框组件 -->
-    <ViewPasswordDialog v-model="viewPasswordDialogVisible" :server-id="currentServerId" />
-
-    <OperationHistoryDialog
-      v-model="operationHistoryDialogVisible"
-      :assests-id="currentAssetsId"
-      :username="currentUsername"
-      :host-key="currentHostKey"
-    />
-
     <BatchModifyDialog v-model="batchModifyDialogVisible" @success="handleDialogSuccess" />
 
     <SelectModifyDialog
@@ -210,8 +183,6 @@ import AcmDeviceSelector from '@/modules/automation/components/job/schedule/comp
 import * as pmsApi from '@/modules/password/api'
 
 // 对话框组件
-import ViewPasswordDialog from './ViewPasswordDialog.vue'
-import OperationHistoryDialog from './OperationHistoryDialog.vue'
 import BatchModifyDialog from './BatchModifyDialog.vue'
 import SelectModifyDialog from './SelectModifyDialog.vue'
 import CheckPasswordStateDialog from './CheckPasswordStateDialog.vue'
@@ -229,19 +200,11 @@ const searchKeyword = ref('')
 const appliedSearch = ref('')
 
 // 对话框可见状态
-const viewPasswordDialogVisible = ref(false)
-const operationHistoryDialogVisible = ref(false)
 const batchModifyDialogVisible = ref(false)
 const selectModifyDialogVisible = ref(false)
 const checkPasswordStateDialogVisible = ref(false)
 const revertPasswordDialogVisible = ref(false)
 const importInitPasswordDialogVisible = ref(false)
-
-// 当前选中行的相关信息
-const currentServerId = ref('')
-const currentAssetsId = ref('')
-const currentUsername = ref('')
-const currentHostKey = ref('')
 
 // 选中的服务器逗号分隔字符串，格式: assests_id@@host_key@@username
 const selectedCommaIpStr = computed(() => {
@@ -404,17 +367,6 @@ function handleDownloadTemplate() {
   document.body.removeChild(link)
 }
 
-function handleViewPassword(row) {
-  currentServerId.value = row.id
-  viewPasswordDialogVisible.value = true
-}
-
-function handleViewHistory(row) {
-  currentAssetsId.value = row.assests_id || row.id
-  currentUsername.value = row.username
-  currentHostKey.value = row.host_key
-  operationHistoryDialogVisible.value = true
-}
 
 function handleDialogSuccess() {
   loadData()

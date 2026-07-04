@@ -326,7 +326,7 @@ async function loadData() {
   try {
     const response = await operationLogApi.getOperationLogs(
       {
-        module: 'acm',
+        module: 'cmdb',
         action: filters.value.action,
         status: filters.value.status,
         day: filters.value.day

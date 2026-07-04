@@ -171,8 +171,6 @@ export function savePasswordComplexity(data = {}) {
   })
 }
 
-const DTS_BASE = '/dts/api/dts/q/data'
-
 /**
  * 获取sudo模板列表
  * API: LUPM_LIST_SUDO_TEMPLATES

@@ -294,7 +294,7 @@ export function useAssetOverviewWorkbench() {
     const [logRes, errorRes] = await Promise.allSettled([
       operationLogApi.getOperationLogs(
         {
-          module: 'acm',
+          module: 'cmdb',
           action: 'all',
           status: 'all',
           day: 7
@@ -306,7 +306,7 @@ export function useAssetOverviewWorkbench() {
       ),
       operationLogApi.getOperationLogs(
         {
-          module: 'acm',
+          module: 'cmdb',
           action: 'all',
           status: 'ERROR',
           day: 7

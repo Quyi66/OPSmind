@@ -8,7 +8,7 @@ const ACM_BASE = '/cmdb/api/cmdb'
 const ACM_DASHBOARD_BASE = `${ACM_BASE}/dashboard`
 const SYS_DASHBOARD_BASE = '/dashboard/api/sys/dashboard'
 const JAO_DASHBOARD_BASE = '/workflow/api/workflow/dashboard'
-const DTS_BASE = '/api/dts/q/data'
+
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
 
@@ -89,25 +89,7 @@ const normalizePagedRecords = (payload) => {
   }
 }
 
-/**
- * DTS 数据查询 API
- */
-export const dtsApi = {
-  /**
-   * 通用数据查询
-   * @param {string} datasetId - 数据集ID
-   * @param {object} params - 查询参数
-   * @param {object} options - 分页等选项
-   */
-  async queryData(datasetId, params = {}, options = {}) {
-    const body = { params }
-    if (options.size) body.size = options.size
-    if (options.page) body.page = options.page
-    if (options.filter !== undefined) body.filter = options.filter
-    const res = await apiService.post(`${DTS_BASE}/${datasetId}/?cacheBuster=${Date.now()}`, body)
-    return res.data
-  }
-}
+
 
 /**
  * 资产总览 API
@@ -547,7 +529,6 @@ export const operationLogApi = {
 }
 
 export default {
-  dtsApi,
   overviewApi,
   assetApi,
   dataManageApi,

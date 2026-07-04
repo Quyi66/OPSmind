@@ -74,7 +74,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { dtsApi } from '../../api'
+import { apiService } from '@/core/api'
 
 const props = defineProps({
   modelValue: {
@@ -134,10 +134,9 @@ const loadAttributes = async () => {
 
   loadingAttrs.value = true
   try {
-    const res = await dtsApi.queryData('ACM_CIT_ATTRS', {
-      citId: props.modelData.id
-    })
-    attributes.value = res?.records || []
+    const response = await apiService.get(`/cmdb/api/cmdb/cit/vo/citid/${props.modelData.id}?cacheBuster=${Date.now()}`)
+    const res = response?.data || response
+    attributes.value = res?.attrs || []
   } catch (error) {
     console.error('加载属性失败:', error)
     attributes.value = []

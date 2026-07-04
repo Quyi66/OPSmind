@@ -1295,7 +1295,7 @@ async function loadFailedLogPreview() {
   failedLogLoading.value = true
   try {
     const r = await operationLogApi.getOperationLogs(
-      { module: 'acm', action: 'all', status: 'ERROR', day: 7 },
+      { module: 'cmdb', action: 'all', status: 'ERROR', day: 7 },
       { page: 1, size: 5 }
     )
     const normalized = normalizePagedResponse(r)

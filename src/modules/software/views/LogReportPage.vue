@@ -377,7 +377,7 @@ async function loadLogs() {
   loading.value = true
   try {
     const params = {
-      module: 'spm',
+      module: 'secops',
       action: actionFilter.value || 'all',
       status: statusFilter.value || 'all',
       day: filterDay.value

@@ -179,14 +179,6 @@
 
             <!-- 操作栏 -->
             <div class="ops-action-bar">
-              <el-button
-                size="small"
-                :disabled="selectedDatasets.length < 1"
-                @click="openMoveDialog('dataset')"
-              >
-                <i class="fa fa-sign-in-alt"></i>
-                移动数据集
-              </el-button>
               <span style="flex: 1"></span>
               <el-button
                 class="toolbar-icon-btn"
@@ -611,7 +603,7 @@ async function loadPages() {
 async function loadDatasets() {
   datasetLoading.value = true
   try {
-    const response = await apiService.get(`/dts/api/dts/datasets?cacheBuster=${Date.now()}`)
+    const response = await apiService.get(`/adm/api/adm/aou/dataset/all?cacheBuster=${Date.now()}`)
     datasets.value = response?.data || response || []
   } catch (error) {
     console.error('Failed to load datasets:', error)
@@ -642,8 +634,6 @@ function openMoveDialog(type) {
 
   if (type === 'page') {
     moveDialogTitle.value = '移动页面'
-  } else if (type === 'dataset') {
-    moveDialogTitle.value = '移动数据集'
   } else if (type === 'job') {
     moveDialogTitle.value = '移动作业'
   }
@@ -669,11 +659,6 @@ async function handleMove() {
     apiUrl = `/workspace/api/workspace/pages/move/${targetAppletCode.value}`
     resourceName = '页面'
     loadFn = loadPages
-  } else if (type === 'dataset') {
-    ids = selectedDatasets.value.map(d => d.id)
-    apiUrl = `/dts/api/dts/datasets/move/${targetAppletCode.value}`
-    resourceName = '数据集'
-    loadFn = loadDatasets
   } else if (type === 'job') {
     ids = selectedJobs.value.map(j => j.id)
     apiUrl = `/workflow/api/workflow/jobs/move/${targetAppletCode.value}`

@@ -5,7 +5,7 @@ import { apiService } from '@/core/api'
 
 // CAC API 基础路径
 const CAC_BASE = '/audit/api/audit'
-const DTS_BASE = '/dts/api/dts/q/data'
+
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
 
@@ -36,20 +36,7 @@ export const dtsApi = {
     return apiService.get(`${CAC_BASE}/v2/custom-kpi/check-item/${jobId}`)
   },
 
-  /**
-   * 通用数据查询（支持分页）
-   * 对应 API: POST /dts/api/dts/q/data/{datasetId}/
-   * @param {string} datasetId - 数据集ID
-   * @param {object} params - 查询参数
-   * @param {object} options - 分页等选项 { size, page, filter }
-   */
-  queryData(datasetId, params = {}, options = {}) {
-    const body = { params }
-    if (options.size) body.size = options.size
-    if (options.page) body.page = options.page
-    if (options.filter !== undefined) body.filter = `name:*${options.filter}*`
-    return apiService.post(`${DTS_BASE}/${datasetId}/`, body)
-  },
+
 
   /**
    * 获取统计数据

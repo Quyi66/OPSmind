@@ -3,8 +3,6 @@
  */
 import { apiService, getJaoOperationLogs } from '@/core/api'
 
-// 数据集 API 基础路径
-const DTS_BASE = '/dts/api/dts/q/data'
 const SYS_DASHBOARD_BASE = '/dashboard/api/sys/dashboard'
 
 const unwrapApiData = (response) => response?.data?.data ?? response?.data
@@ -72,10 +70,13 @@ export const hostOverviewApi = {
   /**
    * 获取主机详情
    */
-  getHostDetail(hostKey) {
-    return apiService.post(`${DTS_BASE}/SPM_MACHINE_DETAIL/`, {
-      host_key: hostKey
+  async getHostDetail(hostKey) {
+    const res = await apiService.get(`${SYS_DASHBOARD_BASE}/spm-machine-detail`, {
+      params: { hostKey }
     })
+    const data = res?.data?.data || res?.data || res || {}
+    const detail = Array.isArray(data) ? data[0] : (Array.isArray(data.records) ? data.records[0] : data)
+    return { data: detail || {} }
   },
 
   /**
@@ -195,12 +196,14 @@ export const hostOverviewApi = {
    * 获取主机已安装软件包
    */
   getHostInstalledPackages(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_HOST_INSTALLED_PACKAGES/`, {
-      host_key: params.hostKey,
-      page: params.page || 1,
-      size: params.size || 10,
-      filter: params.filter || ''
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-host-installed-packages`, {
+      params: {
+        hostKey: params.hostKey,
+        page: params.page || 1,
+        size: params.size || 10,
+        filter: params.filter || ''
+      }
+    }).then(wrapRecordsResponse)
   },
 
   /**
@@ -469,17 +472,7 @@ export const packageApi = {
     }).then(wrapRecordsResponse)
   },
 
-  /**
-   * 获取已安装软件包列表
-   * 对应数据集: SPM_INSTALLED_PACKAGES
-   */
-  getInstalledList(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_INSTALLED_PACKAGES/`, {
-      page: params.page || 1,
-      size: params.size || 10,
-      filter: params.filter || ''
-    })
-  },
+
 
   /**
    * 获取所有已安装的软件包 (支持过滤可升级)
@@ -496,16 +489,7 @@ export const packageApi = {
     }).then(wrapRecordsResponse)
   },
 
-  /**
-   * 获取本地上传的软件包列表
-   */
-  getLocalPackageList(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_LOCAL_PACKAGES/`, {
-      page: params.page || 1,
-      size: params.size || 10,
-      filter: params.filter || ''
-    })
-  },
+
 
   /**
    * 删除本地软件包
@@ -559,38 +543,17 @@ export const hostApi = {
    * 获取主机仓库列表
    */
   getHostRepos(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_HOST_REPOS/`, {
-      host_key: params.hostKey,
-      page: params.page || 1,
-      size: params.size || 10
-    })
+    return apiService.get(`${SYS_DASHBOARD_BASE}/spm-host-repos`, {
+      params: {
+        hostKey: params.hostKey,
+        page: params.page || 1,
+        size: params.size || 10
+      }
+    }).then(wrapRecordsResponse)
   }
 }
 
-/**
- * 日志 API
- */
-export const logApi = {
-  /**
-   * 获取日志列表
-   */
-  getLogList(params = {}) {
-    return apiService.post(`${DTS_BASE}/SPM_OPERATION_LOGS/`, {
-      page: params.page || 1,
-      size: params.size || 10,
-      filter: params.filter || ''
-    })
-  },
 
-  /**
-   * 获取日志详情
-   */
-  getLogDetail(logId) {
-    return apiService.post(`${DTS_BASE}/SPM_OPERATION_LOG_DETAIL/`, {
-      log_id: logId
-    })
-  }
-}
 
 /**
  * 操作日志 API
@@ -602,7 +565,7 @@ export const softwareLogsApi = {
    */
   getLogs(params = {}) {
     return getJaoOperationLogs({
-      module: 'spm',
+      module: 'secops',
       action: params.action || 'all',
       status: params.status || 'all',
       day: params.day || 'all'
@@ -615,7 +578,7 @@ export const softwareLogsApi = {
    */
   getOperationLogs(params = {}) {
     return getJaoOperationLogs({
-      module: params.module || 'spm',
+      module: params.module || 'secops',
       action: params.action || 'all',
       status: params.status || 'all',
       day: params.day || 'all'
@@ -728,7 +691,6 @@ export default {
   repoApi,
   packageApi,
   hostApi,
-  logApi,
   softwareLogsApi,
   scanApi,
   softwareScanApi,

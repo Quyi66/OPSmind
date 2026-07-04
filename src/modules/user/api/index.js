@@ -7,7 +7,6 @@ import {
   getSudoCommandsByTemplate as getSudoCommandsByTemplateApi
 } from '@/modules/sudo/api'
 
-const DTS_BASE = '/dts/api/dts/q/data'
 const SYS_DASHBOARD_BASE = '/dashboard/api/sys/dashboard'
 const JAO_DASHBOARD_BASE = '/workflow/api/workflow/dashboard'
 

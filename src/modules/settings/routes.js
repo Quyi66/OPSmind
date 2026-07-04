@@ -101,14 +101,7 @@ export const SSC_ROUTE_DEFS = [
     icon: 'fas fa-mail-bulk',
     ...createSettingsPageRoute('ssc-email', () => import('./views/SscEmailPage.vue'))
   },
-  {
-    key: 'datasource',
-    path: 'datasource',
-    title: '数据源管理',
-    navLabel: '数据源管理',
-    icon: 'fas fa-code-merge',
-    ...createSettingsPageRoute('ssc-datasource', () => import('./views/SscDataSourcePage.vue'))
-  },
+
   {
     key: 'engine',
     path: 'engine',

@@ -209,7 +209,7 @@ export function useAssetWorkbenchDrawers({
     failedLogDrawer.loading = true
     try {
       const response = await operationLogApi.getOperationLogs(
-        { module: 'acm', action: 'all', status: 'ERROR', day: 7 },
+        { module: 'cmdb', action: 'all', status: 'ERROR', day: 7 },
         { page: 1, size: 20 }
       )
       const { records: rows } = normalizePagedResponse(response)
@@ -256,7 +256,7 @@ export function useAssetWorkbenchDrawers({
     recentLogsDrawer.loading = true
     try {
       const response = await operationLogApi.getOperationLogs(
-        { module: 'acm', action: 'all', status: 'all', day: 7 },
+        { module: 'cmdb', action: 'all', status: 'all', day: 7 },
         { page: recentLogsDrawer.page, size: recentLogsDrawer.pageSize }
       )
       const normalized = normalizePagedResponse(response)

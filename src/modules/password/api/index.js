@@ -24,7 +24,7 @@ const wrapRecordsResponse = (response) => ({
 
 /**
  * 获取临时密码申请列表
- * POST /dts/api/dts/q/data/PMS2_GET_APPLICATION_FORM_BY_ROLE/
+ * GET /dashboard/api/sys/dashboard/pms2-application-form-by-role
  */
 export function getApplicationList(params = {}) {
   return apiService.get(`${SYS_DASHBOARD_BASE}/pms2-application-form-by-role`, {
@@ -38,7 +38,7 @@ export function getApplicationList(params = {}) {
 
 /**
  * 获取默认用户名
- * POST /dts/api/dts/q/data/PMS_GET_DEFAULT_USERNAME/
+ * GET /dashboard/api/sys/dashboard/pms-default-username
  */
 export function getDefaultUsername() {
   return apiService.get(`${SYS_DASHBOARD_BASE}/pms-default-username`).then(wrapRecordsResponse)
@@ -46,7 +46,7 @@ export function getDefaultUsername() {
 
 /**
  * 获取PMS服务器列表
- * POST /dts/api/dts/q/data/GET_PMS_SERVER/
+ * GET /dashboard/api/sys/dashboard/pms-server
  */
 export function getPmsServerList(assestsObjects = '@@(linux)') {
   return apiService.get(`${SYS_DASHBOARD_BASE}/pms-server`, {
@@ -64,7 +64,7 @@ export function exportPasswords() {
 
 /**
  * 获取PMS系统参数列表
- * POST /dts/api/dts/q/data/GET_PMS_SYSTEM_PARAM/
+ * GET /dashboard/api/sys/dashboard/pms-system-param
  */
 export function getSystemParams() {
   return apiService.get(`${SYS_DASHBOARD_BASE}/pms-system-param`).then(wrapRecordsResponse)
@@ -98,7 +98,7 @@ export function saveSystemParam(data) {
 
 /**
  * 获取用户名列表
- * POST /dts/api/dts/q/data/PMS_LIST_USERNAME/
+ * GET /dashboard/api/sys/dashboard/pms-list-username
  */
 export function getUsernameList() {
   return apiService.get(`${SYS_DASHBOARD_BASE}/pms-list-username`).then(wrapRecordsResponse)
@@ -171,29 +171,6 @@ export function getOperationLog(params = {}) {
   }).then(wrapRecordsResponse)
 }
 
-/**
- * 获取服务器密码信息
- * POST /dts/api/dts/q/data/PMS_GET_PASSWORD/
- */
-export function getServerPassword(serverId) {
-  return apiService.post(`/dts/api/dts/q/data/PMS_GET_PASSWORD/?cacheBuster=${Date.now()}`, {
-    params: { serverId }
-  })
-}
-
-/**
- * 获取服务器操作历史
- * POST /dts/api/dts/q/data/PMS_GET_SERVER_HISTORY/
- */
-export function getServerHistory(params = {}) {
-  return apiService.post(`/dts/api/dts/q/data/PMS_GET_SERVER_HISTORY/?cacheBuster=${Date.now()}`, {
-    params: {
-      assestsId: params.assestsId,
-      username: params.username,
-      module: params.module || 'pms'
-    }
-  })
-}
 
 /**
  * 批量修改密码 - 全部服务器
@@ -278,8 +255,6 @@ export default {
   deleteApplication,
   getJobResult,
   getOperationLog,
-  getServerPassword,
-  getServerHistory,
   batchModifyPassword,
   selectModifyPassword,
   checkPasswordState,
