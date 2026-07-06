@@ -9,6 +9,13 @@ const normalizeRecords = payload => {
   if (payload && Array.isArray(payload.records)) {
     return payload
   }
+  if (payload && Array.isArray(payload.content)) {
+    return {
+      ...payload,
+      records: payload.content,
+      total: payload.totalElements !== undefined ? payload.totalElements : (payload.total || payload.content.length)
+    }
+  }
   return payload || { records: [], total: 0 }
 }
 

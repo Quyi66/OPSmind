@@ -142,7 +142,6 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
-import { dtsApi } from '@/modules/asset/api'
 import { getSudoTemplates, getSudoCommandsByTemplate } from '@/modules/user/api'
 import { useJobPolling } from '@/composables/useJobPolling'
 

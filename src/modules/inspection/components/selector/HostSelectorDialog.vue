@@ -465,7 +465,9 @@ async function loadHostData() {
       hostname: h.hostname || h.name,
       os: h.os_distro || h.os,
       osVersion: h.os_version || h.osVersion,
-      status: h.CONN_LATEST_STATUS === 1 || h.status === 1 ? 'online' : 'offline',
+      status: (h.CONN_LATEST_STATUS !== null && h.CONN_LATEST_STATUS !== undefined)
+        ? (h.CONN_LATEST_STATUS === 1 || h.CONN_LATEST_STATUS === '1' ? 'online' : 'offline')
+        : (h.status === 1 ? 'online' : 'offline'),
       connectRate: h.CONN_RATE ? `${h.CONN_RATE}%` : '',
       owner: h['负责人'] || h.owner,
       systemName: h['系统名称'] || h.systemName,

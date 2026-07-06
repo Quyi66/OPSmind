@@ -14,7 +14,7 @@
             v-model="filters.lockStatus"
             multiple
             placeholder="请选择"
-            style="width: 160px"
+            style="width: 200px"
           >
             <el-option label="锁定" value="1" />
             <el-option label="未锁定" value="2" />

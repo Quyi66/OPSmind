@@ -110,7 +110,6 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { dtsApi } from '../../api'
 import { apiService } from '@/core/api'
 
 const props = defineProps({
