@@ -9,14 +9,6 @@ const DEFAULT_BACKEND_ROOT = (import.meta.env.VITE_BACKEND_URL || 'http://10.1.4
 // 环境类型
 export type Environment = 'development' | 'production' | 'test' | 'staging'
 
-// 应用 URL 配置类型
-export interface AppUrlConfig {
-  entryUrl: string        // 应用入口 URL
-  description?: string    // 应用描述
-  enabled?: boolean      // 是否启用
-  urlPrefix?: string     // URL前缀（用于iframe集成）
-}
-
 // 环境配置
 export interface EnvironmentConfig {
   vue: {
@@ -124,102 +116,9 @@ const ENVIRONMENT_CONFIGS: Record<Environment, EnvironmentConfig> = {
   }
 }
 
-// 应用 URL 配置 - 只配置入口 URL，不关心内部路由
-const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
-  gfs: {
-    entryUrl: '#/gfs/scriptLibrary',
-    description: '脚本',
-    enabled: true
-  },
-  jao: {
-    entryUrl: '#/jao/jobs',
-    description: '作业',
-    enabled: true
-  },
-  cmd: {
-    entryUrl: '#/cmd/list',
-    description: '命令',
-    enabled: true
-  },
-  cac: {
-    entryUrl: '#/cac/overview',
-    description: '系统巡检',
-    enabled: true
-  },
-  password: {
-    entryUrl: '#/password/application',
-    description: '密码管理',
-    enabled: true
-  },
-  sudo: {
-    entryUrl: '#/sudo/permission',
-    description: 'sudo权限管理',
-    enabled: true
-  },
-  acm: {
-    entryUrl: '#/acm/overview',
-    description: '资产管理',
-    enabled: true
-  },
-  patches: {
-    entryUrl: '#/patches/cveList',
-    description: '补丁管理',
-    enabled: true
-  },
-  'yum-repo': {
-    entryUrl: '#/apw/spm',
-    description: 'Yum仓库管理',
-    enabled: true
-  },
-  software: {
-    entryUrl: '#/apw/spm',
-    description: 'Yum仓库管理',
-    enabled: true
-  },
-  // 帮助中心
-  help: {
-    entryUrl: '#/help',
-    description: '帮助中心',
-    enabled: true
-  },
-  // 个人资料（打开 Angular 基座 settings 页面）
-  settings: {
-    entryUrl: '#/settings',
-    description: '个人资料设置',
-    enabled: true
-  },
-  // 系统设置中心（自定义 ssc 页面）
-  ssc: {
-    entryUrl: '#/ssc/applet',
-    description: '系统设置中心',
-    enabled: true
-  },
-  uam: {
-    entryUrl: '#/uam/user',
-    description: '用户与团队管理',
-    enabled: true
-  },
-  // 新增流程（二级功能：#/flow）。保留 workflow 作为别名以兼容
-  flow: {
-    entryUrl: '#/flow/list',
-    description: '流程管理',
-    enabled: true
-  },
-  workflow: {
-    entryUrl: '#/flow/list',
-    description: '流程管理（别名）',
-    enabled: true
-  },
-  users: {
-    entryUrl: '#/users/users',
-    description: '用户管理',
-    enabled: true
-  }
-}
-
 /**
  * 应用 URL 管理器
- * 专门管理 iframe 集成应用的入口 URL
+ * 专门管理各种环境下的基础 URL 配置
  */
 export class AppUrlManager {
   private currentEnv: Environment
@@ -255,23 +154,6 @@ export class AppUrlManager {
   }
 
   /**
-   * 获取应用的完整 URL
-   */
-  getAppUrl(appCode: string): string {
-    const appConfig = APP_URLS_CONFIG[appCode]
-    if (!appConfig || !appConfig.enabled) {
-      console.warn(`App config not found or disabled for: ${appCode}`)
-      return this.getAngularBaseUrl()
-    }
-
-    // 直接构建标准的Angular URL，不使用URL前缀
-    // URL前缀功能暂时禁用，避免路径错误
-    const fullUrl = this.buildAngularUrl(appConfig.entryUrl)
-
-    return fullUrl
-  }
-
-  /**
    * 获取iframe配置
    */
   getIframeConfig() {
@@ -290,22 +172,6 @@ export class AppUrlManager {
    */
   getUrlPrefix(): string {
     return this.envConfig.iframe.urlPrefix
-  }
-
-  /**
-   * 构建 AngularJS 应用 URL
-   */
-  private buildAngularUrl(path: string): string {
-    const { baseUrl } = this.envConfig.angularjs
-
-    // 如果路径已经包含 #，直接拼接（注意避免双斜杠）
-    if (path.startsWith('#')) {
-      return `${baseUrl}${path}`
-    }
-
-    // 否则添加 # 前缀
-    const normalizedPath = path.startsWith('/') ? path : `/${path}`
-    return `${baseUrl}/#${normalizedPath}`
   }
 
   /**
@@ -334,80 +200,6 @@ export class AppUrlManager {
    */
   getStaticBaseUrl(): string {
     return this.envConfig.static.baseUrl
-  }
-
-  /**
-   * 获取应用配置
-   */
-  getAppConfig(appCode: string): AppUrlConfig | null {
-    return APP_URLS_CONFIG[appCode] || null
-  }
-
-  /**
-   * 检查应用是否存在且启用
-   */
-  hasApp(appCode: string): boolean {
-    const config = APP_URLS_CONFIG[appCode]
-    return config ? config.enabled !== false : false
-  }
-
-  /**
-   * 获取所有可用应用
-   */
-  getAvailableApps(): string[] {
-    return Object.keys(APP_URLS_CONFIG).filter(appCode => {
-      const config = APP_URLS_CONFIG[appCode]
-      return config.enabled !== false
-    })
-  }
-
-  /**
-   * 切换环境（用于测试）
-   */
-  switchEnvironment(environment: Environment): void {
-    this.currentEnv = environment
-    this.envConfig = ENVIRONMENT_CONFIGS[environment]
-  }
-
-  /**
-   * 获取当前环境信息
-   */
-  getCurrentEnvironment(): { env: Environment; config: EnvironmentConfig } {
-    return {
-      env: this.currentEnv,
-      config: this.envConfig
-    }
-  }
-
-  /**
-   * 动态更新环境配置
-   */
-  updateEnvironmentConfig(updates: Partial<EnvironmentConfig>): void {
-    this.envConfig = { ...this.envConfig, ...updates }
-  }
-
-  /**
-   * 动态添加应用配置
-   */
-  addAppConfig(appCode: string, config: AppUrlConfig): void {
-    APP_URLS_CONFIG[appCode] = config
-  }
-
-  /**
-   * 移除应用配置
-   */
-  removeAppConfig(appCode: string): void {
-    delete APP_URLS_CONFIG[appCode]
-  }
-
-  /**
-   * 更新应用配置
-   */
-  updateAppConfig(appCode: string, updates: Partial<AppUrlConfig>): void {
-    const existing = APP_URLS_CONFIG[appCode]
-    if (existing) {
-      APP_URLS_CONFIG[appCode] = { ...existing, ...updates }
-    }
   }
 }
 

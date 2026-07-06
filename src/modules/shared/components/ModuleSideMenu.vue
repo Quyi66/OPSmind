@@ -291,7 +291,7 @@ function getGroupBadgeCount(group) {
   &::after {
     content: '';
     position: absolute;
-    right: -9px;
+    right: -8px;
     top: 0;
     bottom: 0;
     width: 8px;
@@ -374,7 +374,7 @@ function getGroupBadgeCount(group) {
     .el-sub-menu__icon-arrow {
       color: var(--el-text-color-regular);
       font-size: 12px;
-      right: 12px;
+      right: 4px;
     }
   }
 

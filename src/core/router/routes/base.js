@@ -205,7 +205,7 @@ export const baseRoutes = [
       {
         path: '',
         component: PatchGroupLayout,
-        redirect: '/patches/cveList',
+        redirect: '/patches/machineScan',
         children: [...patchesChildren]
       }
     ]

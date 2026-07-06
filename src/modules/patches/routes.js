@@ -5,36 +5,6 @@
 
 export const PATCHES_ROUTE_DEFS = [
   {
-    key: 'cveList',
-    path: 'cveList',
-    name: 'patches-cveList',
-    title: 'CVE漏洞列表',
-    navLabel: 'CVE漏洞列表',
-    icon: 'fas fa-bug',
-    platform: 'common',
-    component: () => import('./views/CveListPage.vue')
-  },
-  {
-    key: 'middlewareCveList',
-    path: 'middlewareCveList',
-    name: 'patches-middlewareCveList',
-    title: '中间件CVE列表',
-    navLabel: '中间件CVE列表',
-    icon: 'fas fa-shield-virus',
-    platform: 'common',
-    component: () => import('./views/MiddlewareCveListPage.vue')
-  },
-  {
-    key: 'urgencyDashboard',
-    path: 'urgencyDashboard',
-    name: 'patches-urgencyDashboard',
-    title: '漏洞紧急程度管理',
-    navLabel: '漏洞紧急程度管理',
-    icon: 'fas fa-exclamation-triangle',
-    platform: 'linux',
-    component: () => import('./views/UrgencyDashboardPage.vue')
-  },
-  {
     key: 'machineScan',
     path: 'machineScan',
     name: 'patches-machineScan',
@@ -90,14 +60,14 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./views/LinuxPatchLibraryPage.vue')
   },
   {
-    key: 'rpmPackageList',
-    path: 'rpmPackageList',
-    name: 'patches-rpmPackageList',
-    title: '软件包信息查询',
-    navLabel: '软件包信息查询',
-    icon: 'fas fa-cube',
-    platform: 'linux',
-    component: () => import('./views/RpmPackageListPage.vue')
+    key: 'cveList',
+    path: 'cveList',
+    name: 'patches-cveList',
+    title: 'CVE漏洞列表',
+    navLabel: 'CVE漏洞列表',
+    icon: 'fas fa-bug',
+    platform: 'common',
+    component: () => import('./views/CveListPage.vue')
   },
   {
     key: 'linuxMachinePackageList',
@@ -110,14 +80,34 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./views/LinuxMachinePackageListPage.vue')
   },
   {
-    key: 'vulnerability',
-    path: 'vulnerability',
-    name: 'patches-vulnerability',
-    title: '漏洞概览',
-    navLabel: '漏洞概览',
-    icon: 'fas fa-shield-alt',
+    key: 'rpmPackageList',
+    path: 'rpmPackageList',
+    name: 'patches-rpmPackageList',
+    title: '软件包信息查询',
+    navLabel: '软件包信息查询',
+    icon: 'fas fa-cube',
     platform: 'linux',
-    component: () => import('./views/LinuxVulnerabilityPage.vue')
+    component: () => import('./views/RpmPackageListPage.vue')
+  },
+  {
+    key: 'middlewareCveList',
+    path: 'middlewareCveList',
+    name: 'patches-middlewareCveList',
+    title: '中间件CVE列表',
+    navLabel: '中间件CVE列表',
+    icon: 'fas fa-shield-virus',
+    platform: 'common',
+    component: () => import('./views/MiddlewareCveListPage.vue')
+  },
+  {
+    key: 'urgencyDashboard',
+    path: 'urgencyDashboard',
+    name: 'patches-urgencyDashboard',
+    title: '漏洞紧急程度管理',
+    navLabel: '漏洞紧急程度管理',
+    icon: 'fas fa-exclamation-triangle',
+    platform: 'linux',
+    component: () => import('./views/UrgencyDashboardPage.vue')
   },
   {
     key: 'localInstall',

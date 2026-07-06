@@ -96,7 +96,7 @@ export const MENU_CONFIG = {
       children: [
         {
           code: 'patches',
-          name: '补丁管理',
+          name: '补丁管理(linux)',
           icon: 'fab fa-linux',
           description: '系统补丁和更新管理'
         },
