@@ -4,7 +4,7 @@
     <div v-if="!hideBreadcrumb" class="cve-detail-breadcrumb">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <a @click.prevent="goBack">CVE 漏洞列表</a>
+          <a @click.prevent="goBack">CVE漏洞</a>
         </el-breadcrumb-item>
         <el-breadcrumb-item>{{ cveId }}</el-breadcrumb-item>
       </el-breadcrumb>
@@ -470,7 +470,6 @@ import { useTheme } from '@/composables/useTheme'
 import RpmPackageDetailDialog from '../../rpm/RpmPackageDetailDialog.vue'
 import {
   TopRight,
-  Box,
   TrendCharts,
   Warning,
   Clock,

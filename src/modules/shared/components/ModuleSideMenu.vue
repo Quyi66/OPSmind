@@ -53,6 +53,7 @@
                 :index="`${group.code}::${item.key}`"
               >
                 <template #title>
+                  <el-icon v-if="item.icon"><i :class="item.icon" /></el-icon>
                   <span>{{ item.label }}</span>
                 </template>
                 <el-menu-item
@@ -277,7 +278,7 @@ function getGroupBadgeCount(group) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  width: 180px;
+  width: 200px;
   min-width: 180px;
   background-color: var(--el-bg-color);
   transition:
@@ -409,6 +410,12 @@ function getGroupBadgeCount(group) {
     background-color: var(--el-bg-color) !important;
   }
 
+  // 特别针对三级菜单嵌套容器的背景设置
+  :deep(.el-sub-menu .el-sub-menu .el-menu) {
+    background-color: #fafafa !important; // 独立调色的浅灰色（如 #fafafa），避免与页面分割背景色相同导致视觉融合
+    padding: 4px 0;
+  }
+
   // 激活的子菜单标题
   :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
     color: #409eff;
@@ -443,11 +450,12 @@ function getGroupBadgeCount(group) {
 
   // 新增：第三层级子菜单项样式，增加左侧内边距区分层级
   :deep(.el-sub-menu .el-sub-menu .el-menu-item) {
-    padding-left: 60px !important; // 从68降到60，增加右侧呼吸感，配合更小的字号
-    height: 38px;
-    line-height: 38px;
+    padding-left: 72px !important; // 标准 20px 缩进
+    font-size: 13px;              // 字号微调为 13px，区分主次
+    height: 34px;                 // 收紧高度以增强紧凑感
+    line-height: 34px;            // 同步调整行高
     color: var(--el-text-color-regular);
-    margin: 2px 0; // 增加上下微小间距
+    margin: 1px 0;                // 缩减上下微小间距
 
     &:hover {
       color: #409eff;
@@ -455,11 +463,10 @@ function getGroupBadgeCount(group) {
     }
 
     &.is-active {
-      background-color: transparent !important; // 三级子菜单也去掉背景色
-      color: #409eff !important;
-      border-right: none; // 三级不显示右border，维持主层级的标识感
+      background-color: var(--el-color-primary-light-9) !important; // 恢复与二级菜单一致的背景高亮色
+      color: var(--el-color-primary) !important;                  // 统一使用主题主色调
+      border-right: 3px solid var(--el-color-primary) !important; // 恢复右侧高亮边框以保持视觉统一
       font-weight: 600;
-      position: relative;
     }
   }
 }

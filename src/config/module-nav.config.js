@@ -128,15 +128,44 @@ export const REVIEW_CENTER_NAV_ITEMS = [
 ]
 
 // 补丁漏洞 - 补丁模块(Linux/Common，不包含日志)的页面导航
-export const PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
-  def => def.navLabel && def.platform !== 'windows' && !['logs', 'processLogs'].includes(def.key)
-).map(def => ({
-  key: def.key,
-  label: def.navLabel || def.title,
-  icon: def.icon,
-  path: `/patches/${def.path}`,
-  platform: def.platform || 'common'
-}))
+export const PATCHES_NAV_ITEMS = [
+  {
+    key: 'machineScan',
+    label: '主机概览',
+    path: '/patches/machineScan'
+  },
+  {
+    key: 'installManage',
+    label: '安装与回滚',
+    children: [
+      { key: 'patchInstall', label: '补丁安装', path: '/patches/patchInstall' },
+      { key: 'changeRollback', label: '变更回滚', path: '/patches/changeRollback' },
+      { key: 'localInstall', label: '软件包安装', path: '/patches/localInstall' }
+    ]
+  },
+  {
+    key: 'vulnManage',
+    label: '漏洞管理',
+    children: [
+      { key: 'cveList', label: 'CVE漏洞', path: '/patches/cveList' },
+      { key: 'middlewareCveList', label: '中间件CVE', path: '/patches/middlewareCveList' },
+      { key: 'urgencyDashboard', label: '紧急度评估', path: '/patches/urgencyDashboard' }
+    ]
+  },
+  {
+    key: 'repoManage',
+    label: '软件与仓库',
+    children: [
+      {
+        key: 'linuxMachinePackageList',
+        label: '机器包清单',
+        path: '/patches/linuxMachinePackageList'
+      },
+      { key: 'rpmPackageList', label: '软件包查询', path: '/patches/rpmPackageList' },
+      { key: 'patchLibrary', label: '补丁仓库', path: '/patches/patchLibrary' }
+    ]
+  }
+]
 
 // 补丁漏洞 - 补丁模块(Win)的页面导航
 export const WINDOWS_PATCHES_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(

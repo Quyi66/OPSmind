@@ -4,7 +4,7 @@
     <div class="cve-detail-breadcrumb">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <a @click.prevent="goBack">中间件CVE列表</a>
+          <a @click.prevent="goBack">中间件CVE</a>
         </el-breadcrumb-item>
         <el-breadcrumb-item>{{ cveId }}</el-breadcrumb-item>
       </el-breadcrumb>
