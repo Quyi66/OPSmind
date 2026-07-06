@@ -110,6 +110,19 @@ export const baseRoutes = [
     }
   },
   {
+    path: '/redirect/:path(.*)',
+    component: MainLayout,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/redirect/index.vue')
+      }
+    ],
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
     path: '/home',
     name: 'home',
     component: MainLayout,
@@ -117,7 +130,8 @@ export const baseRoutes = [
       {
         path: '',
         name: 'home-index',
-        component: () => import('@/views/home/HomePage.vue')
+        component: () => import('@/views/home/HomePage.vue'),
+        meta: { title: '首页' }
       }
     ],
     meta: {
@@ -140,7 +154,8 @@ export const baseRoutes = [
       {
         path: '',
         name: 'settings-index',
-        component: () => import('@/views/settings/ProfileSettingsPage.vue')
+        component: () => import('@/views/settings/ProfileSettingsPage.vue'),
+        meta: { title: '个人资料' }
       }
     ]
   },

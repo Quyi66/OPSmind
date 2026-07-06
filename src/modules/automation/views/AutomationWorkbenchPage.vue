@@ -1958,7 +1958,7 @@ onBeforeUnmount(() => {
   gap: 16px;
   padding: 20px;
   background: var(--wb-bg);
-  min-height: 100vh;
+  min-height: 100%;
   box-sizing: border-box;
 
   :deep(.wb-inline-action.el-button) {
@@ -1972,12 +1972,6 @@ onBeforeUnmount(() => {
 
   :deep(.wb-inline-action.el-button + .wb-inline-action.el-button) {
     margin-left: 0 !important;
-  }
-}
-
-@supports (min-height: 100dvh) {
-  .automation-workbench {
-    min-height: 100dvh;
   }
 }
 

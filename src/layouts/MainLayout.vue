@@ -1,5 +1,13 @@
 <template>
-  <div class="main-layout" :class="{ 'is-home': isHomeRoute }">
+  <div
+    class="main-layout"
+    :class="{
+      'is-home': isHomeRoute,
+      'has-side-menu': showSideMenu,
+      'side-menu-collapsed': sideMenuCollapsed,
+      'fullscreen-mode': isFullscreen
+    }"
+  >
     <!-- 顶部菜单 -->
     <TopNavMenu :user="currentUser" :is-home-route="isHomeRoute" class="main-header" />
 
@@ -15,9 +23,14 @@
             </button>
           </div>
 
+          <!-- 标签导航栏 -->
+          <TagsView v-show="!isHomeRoute" />
+
           <router-view v-slot="{ Component, route }">
             <transition name="fade-slide" mode="out-in">
-              <component :is="Component" :key="getRouterViewKey(route)" />
+              <keep-alive :include="keepAliveIncludes">
+                <component :is="Component" :key="getRouterViewKey(route)" />
+              </keep-alive>
             </transition>
           </router-view>
         </div>
@@ -33,18 +46,26 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import TopNavMenu from '@/components/layout/TopNavMenu.vue'
+import TagsView from '@/components/layout/TagsView/index.vue'
+import { buildKeepAliveIncludes } from '@/utils/componentName'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useMenuStore } from '@/stores/menu.js'
+import { useTagsViewStore } from '@/stores/tagsView'
+import { storeToRefs } from 'pinia'
 
 const dashboardStore = useDashboardStore()
 const router = useRouter()
 const menuStore = useMenuStore()
 const route = useRoute()
+const tagsViewStore = useTagsViewStore()
+const { cachedViews, isFullscreen } = storeToRefs(tagsViewStore)
 
 // 响应式状态
 const isMobile = ref(false)
 
 // 计算属性
+const showSideMenu = computed(() => menuStore.showSideMenu)
+const sideMenuCollapsed = computed(() => menuStore.sideMenuCollapsed)
 const currentUser = computed(() => dashboardStore.currentUser)
 const activeMenuItem = computed(() => menuStore.activeMenuItem)
 const currentMenuItemTitle = computed(() => {
@@ -111,6 +132,8 @@ const getRouterViewKey = routeObj => {
   return routeObj.matched[1]?.path || routeObj.path
 }
 
+const keepAliveIncludes = computed(() => buildKeepAliveIncludes(router, cachedViews.value))
+
 // 检查是否为移动端
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768
@@ -128,24 +151,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-// 路由切换过渡动画
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
-}
-
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateX(8px);
-}
-
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateX(-8px);
-}
-
 // 主布局容器
 .main-layout {
   display: flex;
@@ -270,6 +275,68 @@ onUnmounted(() => {
 
   .main-body {
     overflow: hidden;
+  }
+}
+
+// 路由切换过渡动画
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(8px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+// 侧边栏与标签栏布局尺寸变量
+$side-menu-width: 212px;
+$side-menu-collapsed-width: 76px;
+$tags-bar-height: 34px;
+
+// 当有侧边栏时，调整标签导航栏的左边距，并使侧边栏向上通顶
+.main-layout.has-side-menu {
+  :deep(.tags-view-container) {
+    margin-left: $side-menu-width;
+    width: calc(100% - #{$side-menu-width});
+    transition: margin-left 0.3s ease, width 0.3s ease;
+  }
+
+  &.side-menu-collapsed {
+    :deep(.tags-view-container) {
+      margin-left: $side-menu-collapsed-width;
+      width: calc(100% - #{$side-menu-collapsed-width});
+    }
+  }
+
+  :deep(.group-side-menu) {
+    margin-top: -$tags-bar-height;
+    height: calc(100% + #{$tags-bar-height}) !important;
+    z-index: 10;
+  }
+}
+
+// 全屏模式：隐藏顶部导航和侧边菜单，TagsView 全宽
+.main-layout.fullscreen-mode {
+  .main-header {
+    display: none;
+  }
+
+  :deep(.group-side-menu) {
+    display: none !important;
+  }
+
+  // 全屏时 TagsView 全宽，覆盖侧边栏偏移
+  &.has-side-menu :deep(.tags-view-container) {
+    margin-left: 0;
+    width: 100%;
   }
 }
 </style>

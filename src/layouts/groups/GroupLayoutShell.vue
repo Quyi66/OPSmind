@@ -13,12 +13,9 @@
       <div class="group-content__view">
         <router-view v-slot="{ Component, route }">
           <transition name="fade-content" mode="out-in">
-            <template v-if="shouldCacheRoute(route)">
-              <keep-alive>
-                <component :is="Component" :key="getViewKey(route)" />
-              </keep-alive>
-            </template>
-            <component v-else :is="Component" :key="getViewKey(route)" />
+            <keep-alive :include="keepAliveIncludes">
+              <component :is="Component" :key="getViewKey(route)" />
+            </keep-alive>
           </transition>
         </router-view>
 
@@ -33,9 +30,14 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import RouteLoadingFallback from '@/components/common/RouteLoadingFallback.vue'
 import { useRouteLoading } from '@/core/router/loading.js'
 import ModuleSideMenu from '@/modules/shared/components/ModuleSideMenu.vue'
+import { useTagsViewStore } from '@/stores/tagsView'
+import { buildKeepAliveIncludes } from '@/utils/componentName'
 
 defineProps({
   menuGroups: {
@@ -57,17 +59,21 @@ defineProps({
 })
 
 const { isLoading } = useRouteLoading()
+const router = useRouter()
+const tagsViewStore = useTagsViewStore()
+const { cachedViews } = storeToRefs(tagsViewStore)
 
 function getRouteName(route) {
   return String(route?.name || '')
 }
 
-function shouldCacheRoute(route) {
-  return getRouteName(route) === 'cmd-list'
-}
+// 'cmd-list' 始终保持缓存：命令执行工作台需要在切换子菜单时保持 WebSocket 连接和终端状态
+const keepAliveIncludes = computed(() =>
+  buildKeepAliveIncludes(router, [...cachedViews.value, 'cmd-list'])
+)
 
 function getViewKey(route) {
-  return shouldCacheRoute(route) ? 'cmd-workspace' : String(route?.path || '')
+  return getRouteName(route) === 'cmd-list' ? 'cmd-workspace' : String(route?.path || '')
 }
 </script>
 
@@ -105,12 +111,12 @@ function getViewKey(route) {
 }
 
 .group-content--page-scroll {
-  overflow: auto;
+  overflow: hidden;
 }
 
 .group-content--page-scroll > .group-content__view {
-  flex: 1 0 auto;
-  overflow: visible;
+  flex: 1;
+  overflow: auto;
 }
 
 .group-content--page-scroll :deep(.ops-module__content) {

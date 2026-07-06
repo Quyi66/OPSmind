@@ -274,6 +274,14 @@ function getGroupBadgeCount(group) {
 </script>
 
 <style scoped lang="scss">
+:global(:root) {
+  --nested-menu-bg: #fafafa;
+}
+
+:global(html.dark) {
+  --nested-menu-bg: #141414;
+}
+
 .module-side-menu-wrapper {
   display: flex;
   flex-direction: column;
@@ -412,9 +420,11 @@ function getGroupBadgeCount(group) {
 
   // 特别针对三级菜单嵌套容器的背景设置
   :deep(.el-sub-menu .el-sub-menu .el-menu) {
-    background-color: #fafafa !important; // 独立调色的浅灰色（如 #fafafa），避免与页面分割背景色相同导致视觉融合
+    background-color: var(--nested-menu-bg) !important; // 独立调色的灰色，避免与页面分割背景色相同导致视觉融合
     padding: 4px 0;
   }
+
+
 
   // 激活的子菜单标题
   :deep(.el-sub-menu.is-active > .el-sub-menu__title) {

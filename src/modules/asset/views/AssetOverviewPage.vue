@@ -2,12 +2,6 @@
   <div class="ops-page-layout asset-workbench">
     <!-- ══════════ 头部：标题 + 快捷操作 ══════════ -->
     <section class="aw-header">
-      <div class="aw-header__top">
-        <div class="aw-header__summary">
-          <h2 class="aw-header__title">资产工作台</h2>
-        </div>
-      </div>
-
       <!-- ── 数据指标条 ── -->
       <div class="aw-metrics-bar">
         <button
@@ -1459,14 +1453,8 @@ onUnmounted(() => {
   gap: 16px;
   padding: 20px;
   background: var(--aw-bg);
-  min-height: 100vh;
+  min-height: 100%;
   box-sizing: border-box;
-}
-
-@supports (min-height: 100dvh) {
-  .asset-workbench {
-    min-height: 100dvh;
-  }
 }
 
 // ── 头部 ──
