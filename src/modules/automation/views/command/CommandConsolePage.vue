@@ -346,7 +346,7 @@ function formatDate(dateStr) {
 function getWebsocketUrl(runId) {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   const host = window.location.host
-  return `${protocol}//${host}/oplus-ws/log/${runId}`
+  return `${protocol}//${host}/sjxy-ws/log/${runId}`
 }
 
 // 打开日志查看器

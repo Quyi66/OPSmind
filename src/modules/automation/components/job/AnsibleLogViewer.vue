@@ -169,7 +169,7 @@ const virtualOffset = computed(() => startLineIndex.value * LINE_HEIGHT)
 function getWebsocketUrl(runId) {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   const host = window.location.host
-  return `${protocol}//${host === 'localhost:5173' ? '192.168.1.200' : host}/oplus-ws/log/${runId}`
+  return `${protocol}//${host === 'localhost:5173' ? '192.168.1.200' : host}/sjxy-ws/log/${runId}`
 }
 
 // 连接 WebSocket
