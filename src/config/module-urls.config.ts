@@ -162,7 +162,7 @@ const APP_URLS_CONFIG: Record<string, AppUrlConfig> = {
     enabled: true
   },
   patches: {
-    entryUrl: '#/patches/cveList',
+    entryUrl: '#/patches/machineScan',
     description: '补丁管理',
     enabled: true
   },

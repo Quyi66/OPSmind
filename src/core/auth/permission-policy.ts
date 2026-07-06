@@ -55,7 +55,7 @@ export const MENU_DEFAULT_ROUTES: Record<string, string> = {
   'task-scheduler': '/jao/taskScheduler',
   gfs: '/gfs/scriptLibrary',
   cmd: '/cmd/list',
-  patches: '/patches/cveList',
+  patches: '/patches/machineScan',
   'windows-patches': '/patches/windowsVulnerability',
   'patch-logs': '/patches/logs',
   'patch-process-logs': '/patches/processLogs',

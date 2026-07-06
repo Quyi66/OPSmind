@@ -31,10 +31,10 @@
           </div>
         </div>
 
-        <!-- 2. 漏洞概览卡片 -->
+        <!-- 2. 漏洞统计卡片 -->
         <div class="stat-card vul-card">
           <div class="compact-card-header">
-            <div class="card-title">漏洞概览</div>
+            <div class="card-title">漏洞统计</div>
             <div class="card-subtitle">CVE 漏洞总数</div>
           </div>
           <div class="vul-content">
@@ -85,7 +85,7 @@
           @click="activeTab = 'host'"
         >
           <i class="fa fa-laptop" />
-          主机概览
+          主机列表
         </div>
         <div
           class="nav-tab"
@@ -93,11 +93,11 @@
           @click="activeTab = 'vulnerability'"
         >
           <i class="fa fa-bug" />
-          漏洞概览
+          漏洞列表
         </div>
       </div>
 
-      <!-- 主机概览视图 -->
+      <!-- 主机列表视图 -->
       <div v-if="activeTab === 'host'" class="tab-content ops-page-layout">
         <!-- 筛选栏 -->
         <div class="ops-filter-bar">
@@ -415,7 +415,7 @@
         </div>
       </div>
 
-      <!-- 漏洞概览视图 -->
+      <!-- 漏洞列表视图 -->
       <div v-else-if="activeTab === 'vulnerability'" class="tab-content ops-page-layout">
         <!-- 筛选栏 -->
         <div class="ops-filter-bar">
@@ -538,15 +538,6 @@
             border
           >
             <el-table-column type="selection" width="45" />
-            <el-table-column prop="host_key" label="主机" width="130">
-              <template #default="{ row }">
-                <a href="javascript:void(0)" class="host-link" @click="handleHostClick(row)">
-                  {{ row.host_key }}
-                </a>
-              </template>
-            </el-table-column>
-            <el-table-column prop="os_distro" label="操作系统" width="90" />
-            <el-table-column prop="os_major_version" label="系统版本" width="90" />
             <el-table-column prop="patch_id" label="补丁编号" min-width="180" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="patch-list">
@@ -585,6 +576,15 @@
                 </div>
               </template>
             </el-table-column>
+            <el-table-column prop="host_key" label="主机" width="130">
+              <template #default="{ row }">
+                <a href="javascript:void(0)" class="host-link" @click="handleHostClick(row)">
+                  {{ row.host_key }}
+                </a>
+              </template>
+            </el-table-column>
+            <el-table-column prop="os_distro" label="操作系统" width="90" />
+            <el-table-column prop="os_major_version" label="系统版本" width="90" />
             <el-table-column
               prop="affected_pkgs"
               label="影响的软件包"
@@ -610,8 +610,9 @@
                     <span v-else class="affected-package-text" :title="pkg.currentPackage">
                       {{ pkg.currentPackage }}
                     </span>
-                    <template
+                    <div
                       v-if="pkg.restartType === 'service' && pkg.services && pkg.services.length"
+                      class="reboot-services-list"
                     >
                       <el-tag
                         v-for="service in pkg.services"
@@ -620,11 +621,10 @@
                         type="warning"
                         effect="plain"
                         class="reboot-service-tag"
-                        style="margin-left: 4px"
                       >
                         {{ service }}
                       </el-tag>
-                    </template>
+                    </div>
                   </div>
                   <el-popover
                     v-if="getAffectedPackages(row).length > 2"
@@ -653,10 +653,11 @@
                         <span v-else class="affected-package-text" :title="pkg.currentPackage">
                           {{ pkg.currentPackage }}
                         </span>
-                        <template
+                        <div
                           v-if="
                             pkg.restartType === 'service' && pkg.services && pkg.services.length
                           "
+                          class="reboot-services-list"
                         >
                           <el-tag
                             v-for="service in pkg.services"
@@ -665,11 +666,10 @@
                             type="warning"
                             effect="plain"
                             class="reboot-service-tag"
-                            style="margin-left: 4px"
                           >
                             {{ service }}
                           </el-tag>
-                        </template>
+                        </div>
                       </div>
                     </div>
                   </el-popover>
@@ -1608,7 +1608,7 @@ async function loadHostData() {
     const records = Array.isArray(data.content) ? data.content : []
     mergeHostOsVersionOptions(records)
 
-    // 一次性获取所有主机的资产信息，回填主机概览固定列
+    // 一次性获取所有主机的资产信息，回填主机列表固定列
     try {
       const assetParams = {
         hostKeys: '@@',
@@ -3017,8 +3017,9 @@ defineExpose({
 
 .affected-package-row {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .affected-packages-popover {
