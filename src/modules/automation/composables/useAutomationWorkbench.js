@@ -1,4 +1,4 @@
-import { computed, onScopeDispose, ref } from 'vue'
+import { computed, onActivated, onDeactivated, onScopeDispose, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { findAllUnapprovedCommand, findCommandByTenantId } from '@/modules/automation/api/command'
@@ -345,6 +345,15 @@ export function useAutomationWorkbench({ canViewJobs = true, canViewCommands = t
 
   onScopeDispose(() => {
     stopActiveRunPolling()
+  })
+
+  onDeactivated(() => {
+    stopActiveRunPolling()
+  })
+
+  onActivated(() => {
+    if (!canViewJobs) return
+    void loadRunLogData()
   })
 
   return {

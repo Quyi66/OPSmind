@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { ElMessage } from 'element-plus'
 
@@ -70,6 +70,14 @@ function normalizeParamDefaultValue(param, value) {
   return value ?? ''
 }
 
+function normalizeCronJobType(jobType) {
+  return jobType === 'cac' ? 'audit' : jobType
+}
+
+function isAuditJobType(jobType) {
+  return normalizeCronJobType(jobType) === 'audit'
+}
+
 /**
  * CRON 任务表单管理
  * 处理表单数据、作业列表加载、表单提交等功能
@@ -94,13 +102,26 @@ export function useCronJobForm(props, emit) {
     isEncrypt: '1'
   })
 
+  const validateJobSelection = (_, __, callback) => {
+    const hasJobId = isMultipleJobType.value
+      ? multipleJobIds.value.length > 0
+      : !!formData.value.jobId
+
+    if (hasJobId) {
+      callback()
+      return
+    }
+
+    callback(new Error('请选择执行运维工具'))
+  }
+
   const formRules = {
     jobDesc: [{ required: true, message: '请输入任务描述', trigger: 'blur' }],
     logOutput: [{ required: true, message: '请选择是否输出日志', trigger: 'change' }],
     isEncrypt: [{ required: true, message: '请选择是否参数加密', trigger: 'change' }],
     scheduleConf: [{ required: true, message: '请输入Cron表达式', trigger: 'blur' }],
     jobType: [{ required: true, message: '请选择运维工具类型', trigger: 'change' }],
-    jobId: [{ required: true, message: '请选择执行运维工具', trigger: 'change' }]
+    jobId: [{ validator: validateJobSelection, trigger: 'change' }]
   }
 
   /**
@@ -149,6 +170,7 @@ export function useCronJobForm(props, emit) {
     try {
       const response = await jaoApi.fetchCronJobById(id)
       const cronJob = response.data || response
+      const normalizedJobType = normalizeCronJobType(cronJob.jobType)
 
       // 保存 jobId，因为 handleJobTypeChange 会清空它
       const savedJobId = cronJob.jobId
@@ -159,20 +181,20 @@ export function useCronJobForm(props, emit) {
         triggerStatus: cronJob.triggerStatus,
         jobId: '',
         jobParam: cronJob.jobParam || {},
-        jobType: cronJob.jobType,
+        jobType: normalizedJobType,
         appCode: cronJob.appCode || '',
         logOutput: cronJob.logOutput === true ? '0' : '1',
         isEncrypt: cronJob.isEncrypt === true ? '0' : '1'
       }
 
       // 加载运维工具列表
-      await handleJobTypeChange(cronJob.jobType)
+      await handleJobTypeChange(normalizedJobType)
 
       // 处理多选类型和单选类型的 jobId 回显
-      const multipleTypes = ['cac', 'cmd', 'flows']
-      if (multipleTypes.includes(cronJob.jobType)) {
+      const multipleTypes = ['audit', 'cmd', 'flows']
+      if (multipleTypes.includes(normalizedJobType)) {
         multipleJobIds.value = savedJobId ? savedJobId.split(',') : []
-        formData.value.jobId = ''
+        formData.value.jobId = savedJobId || ''
       } else {
         formData.value.jobId = savedJobId
       }
@@ -201,7 +223,7 @@ export function useCronJobForm(props, emit) {
       }
 
       // 如果是script/rest类型,加载运维工具参数定义
-      if (!multipleTypes.includes(cronJob.jobType) && cronJob.jobId) {
+      if (!multipleTypes.includes(normalizedJobType) && cronJob.jobId) {
         try {
           const jobResponse = await jaoApi.fetchJobById(cronJob.jobId)
           const job = jobResponse.data || jobResponse
@@ -228,15 +250,18 @@ export function useCronJobForm(props, emit) {
    * 处理运维工具类型变更
    */
   async function handleJobTypeChange(jobType) {
+    const normalizedJobType = normalizeCronJobType(jobType)
+
+    formData.value.jobType = normalizedJobType
     formData.value.jobId = ''
     multipleJobIds.value = []
     jobList.value = []
 
-    const multipleTypes = ['cac', 'cmd', 'flows']
-    isMultipleJobType.value = multipleTypes.includes(jobType)
+    const multipleTypes = ['audit', 'cmd', 'flows']
+    isMultipleJobType.value = multipleTypes.includes(normalizedJobType)
 
     // 根据运维工具类型预设参数
-    if (jobType === 'cac') {
+    if (isAuditJobType(normalizedJobType)) {
       jobParams.value = [
         {
           name: 'annex_name',
@@ -247,7 +272,7 @@ export function useCronJobForm(props, emit) {
           secret: false
         }
       ]
-    } else if (jobType === 'cmd') {
+    } else if (normalizedJobType === 'cmd') {
       jobParams.value = [
         {
           name: 'hosts',
@@ -262,17 +287,17 @@ export function useCronJobForm(props, emit) {
       jobParams.value = []
     }
 
-    if (!jobType) return
+    if (!normalizedJobType) return
 
     try {
       let response
-      switch (jobType) {
+      switch (normalizedJobType) {
         case 'script':
         case 'rest':
-          response = await jaoApi.fetchJobsByType(jobType)
+          response = await jaoApi.fetchJobsByType(normalizedJobType)
           jobList.value = response.data || response || []
           break
-        case 'cac':
+        case 'audit':
           response = await jaoApi.fetchCacJobs()
           jobList.value = response.data || response || []
           break
@@ -285,9 +310,12 @@ export function useCronJobForm(props, emit) {
           jobList.value = response.data || response || []
           break
       }
-    } catch (error) {
+    } catch {
       ElMessage.error('获取运维工具列表失败')
     }
+
+    await nextTick()
+    formRef.value?.clearValidate?.('jobId')
   }
 
   /**
@@ -296,7 +324,7 @@ export function useCronJobForm(props, emit) {
   async function handleJobChange(jobId) {
     if (!jobId) return
 
-    const multipleTypes = ['cac', 'cmd', 'flows']
+    const multipleTypes = ['audit', 'cmd', 'flows']
     if (multipleTypes.includes(formData.value.jobType)) {
       return
     }
@@ -322,7 +350,7 @@ export function useCronJobForm(props, emit) {
   function getJobLabel(job) {
     if (!job) return ''
 
-    if (formData.value.jobType === 'cac') {
+    if (isAuditJobType(formData.value.jobType)) {
       return job.templateName || job.id
     }
     if (formData.value.jobType === 'cmd') {
@@ -386,7 +414,7 @@ export function useCronJobForm(props, emit) {
 
       // 构建jobParam
       const jobParam = {}
-      const multipleTypes = ['cac', 'cmd', 'flows']
+      const multipleTypes = ['audit', 'cmd', 'flows']
       const needParams =
         multipleTypes.includes(formData.value.jobType) ||
         formData.value.jobType === 'script' ||
@@ -396,7 +424,7 @@ export function useCronJobForm(props, emit) {
         needParams &&
         (multipleTypes.indexOf(formData.value.jobType) <= -1 ||
           formData.value.jobType === 'cmd' ||
-          formData.value.jobType === 'cac')
+          isAuditJobType(formData.value.jobType))
       ) {
         jobParams.value.forEach(param => {
           jobParam[param.name] =
@@ -431,6 +459,20 @@ export function useCronJobForm(props, emit) {
   }
 
   // 监听编辑ID变化，加载编辑数据
+  watch(
+    multipleJobIds,
+    async newValue => {
+      if (!isMultipleJobType.value) {
+        return
+      }
+
+      formData.value.jobId = newValue.join(',')
+      await nextTick()
+      formRef.value?.clearValidate?.('jobId')
+    },
+    { deep: true }
+  )
+
   watch(
     () => props.editingId,
     async newId => {

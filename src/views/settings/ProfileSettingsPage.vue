@@ -274,7 +274,7 @@ const passwordRules = {
 
 function getUploadBaseUrl() {
   // 文件上传服务基础路径
-  return '/oplus-upload'
+  return '/sjxy-upload'
 }
 
 function formatDate(dateStr) {

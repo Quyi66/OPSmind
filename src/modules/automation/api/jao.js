@@ -152,6 +152,13 @@ export const getExecuteResult = runId => {
   return useApi().get(`/workflow/api/workflow/runlogs/${runId}/result`)
 }
 
+/** 获取执行作业历史日志文本 */
+export const getExecuteLogText = runId => {
+  return useApi().get(`/workflow/api/workflow/runlogs/${runId}/log-text`, {
+    responseType: 'text'
+  })
+}
+
 /** 检查执行作业状态 */
 export const checkExecuteResult = runId => {
   return useApi().get(`/workflow/api/workflow/runlogs/${runId}/check-result`)

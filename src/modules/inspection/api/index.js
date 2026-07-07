@@ -144,7 +144,7 @@ export const dtsApi = {
     }).then(wrapRecordsResponse)
   },
 
-  getBlackList(module = 'cac') {
+  getBlackList(module = 'audit') {
     return apiService.get(`${CAC_BASE}/dashboard/black-list`, {
       params: { module }
     }).then(wrapRecordsResponse)
@@ -207,7 +207,7 @@ export const templateApi = {
    * 获取团队配置
    */
   getTeamConfig(templateId) {
-    return apiService.get(`${CAC_BASE}/v2/get/cac-team-config/${templateId}`)
+    return apiService.get(`${CAC_BASE}/v2/get/audit-team-config/${templateId}`)
   },
 
   /**
@@ -322,7 +322,7 @@ export const jobApi = {
   addHostToWhitelist(hostIds) {
     return apiService.post(`/workflow/api/workflow/jobs/DbnJiF/run?cacheBuster=${Date.now()}`, {
       params: {
-        module: 'cac',
+        module: 'audit',
         blackHost: hostIds
       }
     })
@@ -336,7 +336,7 @@ export const jobApi = {
   removeHostFromWhitelist(hostIds) {
     return apiService.post(`/workflow/api/workflow/jobs/3x6mlL/run?cacheBuster=${Date.now()}`, {
       params: {
-        module: 'cac',
+        module: 'audit',
         blackHost: hostIds
       }
     })
@@ -484,7 +484,7 @@ export const whitelistApi = {
   removeBlackHost(hostIds) {
     return apiService.post(`/workflow/api/workflow/jobs/3x6mlL/run?cacheBuster=${Date.now()}`, {
       params: {
-        module: 'cac',
+        module: 'audit',
         blackHost: hostIds
       }
     })
@@ -498,7 +498,7 @@ export const whitelistApi = {
   addBlackHost(hostIds) {
     return apiService.post(`/workflow/api/workflow/jobs/DbnJiF/run?cacheBuster=${Date.now()}`, {
       params: {
-        module: 'cac',
+        module: 'audit',
         blackHost: hostIds
       }
     })
@@ -563,18 +563,18 @@ export const assetModelApi = {
 export const emailConfigApi = {
   /**
    * 获取邮件开关状态
-   * 对应 API: GET /api/email-config/cac-on-off
+   * 对应 API: GET /api/email-config/audit-on-off
    */
   getEmailSwitch() {
-    return apiService.get('/api/email-config/cac-on-off')
+    return apiService.get('/api/email-config/audit-on-off')
   },
 
   /**
    * 保存邮件开关状态
-   * 对应 API: POST /api/email-config/cac-on-off
+   * 对应 API: POST /api/email-config/audit-on-off
    */
   saveEmailSwitch(data) {
-    return apiService.post('/api/email-config/cac-on-off', data)
+    return apiService.post('/api/email-config/audit-on-off', data)
   },
 
   /**

@@ -358,7 +358,11 @@
 
           <template v-else-if="tab.name === 'output'">
             <div class="output-tab">
-              <AnsibleLogViewer :run-id="props.runId" :active="activeTab === 'output'" />
+              <AnsibleLogViewer
+                :run-id="props.runId"
+                :status="result?.status || ''"
+                :active="activeTab === 'output'"
+              />
             </div>
           </template>
 

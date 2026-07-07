@@ -145,6 +145,7 @@ function getJobTypeName(type) {
   const typeMap = {
     rest: 'REST接口',
     script: '脚本任务',
+    audit: '巡检任务',
     cac: '巡检任务',
     cmd: '命令任务',
     flows: '流程任务'
@@ -157,6 +158,7 @@ function getJobTypeName(type) {
  */
 function getJobTypeTag(type) {
   const tagMap = {
+    audit: 'success',
     cac: 'success',
     script: 'primary',
     rest: 'warning',

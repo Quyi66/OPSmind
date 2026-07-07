@@ -54,7 +54,7 @@
           <el-option label="" value="" />
           <el-option label="脚本任务" value="script" />
           <el-option label="REST接口" value="rest" />
-          <el-option label="巡检任务" value="cac" />
+          <el-option label="巡检任务" value="audit" />
           <el-option label="命令任务" value="cmd" />
           <el-option label="流程任务" value="flows" />
         </el-select>
@@ -181,7 +181,7 @@ const showParamsSection = computed(() => {
 
   return (
     jobParams.value.length > 0 &&
-    (hasSelectedJob || ['cmd', 'cac'].includes(formData.value.jobType))
+    (hasSelectedJob || ['cmd', 'audit'].includes(formData.value.jobType))
   )
 })
 

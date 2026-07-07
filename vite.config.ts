@@ -214,7 +214,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
             })
           }
         },
-        '/oplus-upload': {
+        '/sjxy-upload': {
           target: backendTarget,
           changeOrigin: true,
           secure: false

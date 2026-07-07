@@ -101,15 +101,25 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { authService } from '@/core/auth'
+import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
   runId: { type: String, default: '' },
   content: { type: String, default: '' },
-  active: { type: Boolean, default: false } // 是否激活状态，用于控制 WebSocket 连接
+  active: { type: Boolean, default: false }, // 是否激活状态，用于控制 WebSocket 连接
+  status: { type: String, default: '' }
 })
 
 const emit = defineEmits(['loaded'])
+const TERMINAL_RUN_STATUSES = new Set([
+  'COMPLETED',
+  'FAILED',
+  'ERROR',
+  'INTERRUPTED',
+  'SUCCESS',
+  'PARTIAL_SUCCESS',
+  'CANCELLED'
+])
 
 // 状态
 const autoScroll = ref(true)
@@ -132,6 +142,9 @@ let programmaticScroll = false // 标记是否为程序化滚动
 
 // WebSocket 实例
 let websocket = null
+let isManualClose = false
+const historicalLogRunId = ref('')
+const historicalLogLoading = ref(false)
 
 // 计算日志内容
 const logContent = computed(() => {
@@ -172,12 +185,74 @@ function getWebsocketUrl(runId) {
   return `${protocol}//${host === 'localhost:5173' ? '192.168.1.200' : host}/sjxy-ws/log/${runId}`
 }
 
+function isTerminalRunStatus(status) {
+  return TERMINAL_RUN_STATUSES.has(String(status || '').toUpperCase())
+}
+
+function applyLogContent(content) {
+  batchData.value = {
+    default: {
+      content: content || ''
+    }
+  }
+  batchList.value = ['default']
+  activeBatch.value = 'default'
+
+  nextTick(() => {
+    if (autoScroll.value) {
+      scrollToBottom()
+    }
+  })
+}
+
+async function loadHistoricalLog(force = false) {
+  if (!props.runId || historicalLogLoading.value) {
+    return
+  }
+
+  if (!force && historicalLogRunId.value === props.runId) {
+    return
+  }
+
+  historicalLogLoading.value = true
+  try {
+    const response = await jaoApi.getExecuteLogText(props.runId)
+    const text = typeof response?.data === 'string' ? response.data : String(response?.data ?? '')
+    historicalLogRunId.value = props.runId
+    applyLogContent(text)
+    wsStatus.value = 'closed'
+    emit('loaded')
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      const text =
+        typeof error.response?.data === 'string'
+          ? error.response.data
+          : '未找到该任务的历史日志，可能任务不存在、尚未产生输出或日志已过期被清除'
+      historicalLogRunId.value = props.runId
+      applyLogContent(text)
+      wsStatus.value = 'closed'
+      return
+    }
+
+    console.error('Failed to load historical log:', error)
+    wsStatus.value = 'error'
+  } finally {
+    historicalLogLoading.value = false
+  }
+}
+
 // 连接 WebSocket
 function connectWebsocket() {
   if (!props.runId || websocket) return
 
+  if (isTerminalRunStatus(props.status)) {
+    void loadHistoricalLog()
+    return
+  }
+
   wsStatus.value = 'connecting'
   const url = getWebsocketUrl(props.runId)
+  isManualClose = false
 
   try {
     websocket = new WebSocket(url)
@@ -224,24 +299,36 @@ function connectWebsocket() {
     websocket.onerror = error => {
       console.error('WebSocket error:', error)
       wsStatus.value = 'error'
+      void loadHistoricalLog(true)
     }
 
     websocket.onclose = () => {
+      const shouldLoadHistoricalLog = !isManualClose && props.active && !!props.runId
       wsStatus.value = 'closed'
       websocket = null
+      isManualClose = false
+
+      if (shouldLoadHistoricalLog) {
+        void loadHistoricalLog(true)
+      }
     }
   } catch (error) {
     console.error('Failed to connect WebSocket:', error)
     wsStatus.value = 'error'
+    void loadHistoricalLog(true)
   }
 }
 
 // 关闭 WebSocket
-function closeWebsocket() {
-  if (websocket && websocket.readyState === WebSocket.OPEN) {
+function closeWebsocket(manual = true) {
+  isManualClose = manual
+  if (websocket && websocket.readyState <= WebSocket.OPEN) {
     websocket.close()
+    return
   }
+
   websocket = null
+  isManualClose = false
 }
 
 // 切换自动滚动
@@ -453,6 +540,7 @@ watch(
       batchData.value = {}
       batchList.value = []
       activeBatch.value = 'default'
+      historicalLogRunId.value = ''
       closeWebsocket()
       // 只有在激活状态时才连接
       if (props.active) {
@@ -467,6 +555,11 @@ watch(
   () => props.active,
   isActive => {
     if (isActive && props.runId) {
+      if (isTerminalRunStatus(props.status)) {
+        void loadHistoricalLog()
+        return
+      }
+
       // 激活时，如果有 runId 且未连接，则建立连接
       if (!websocket) {
         connectWebsocket()
@@ -479,18 +572,26 @@ watch(
   { immediate: true }
 )
 
+watch(
+  () => props.status,
+  status => {
+    if (!props.active || !props.runId) {
+      return
+    }
+
+    if (isTerminalRunStatus(status)) {
+      closeWebsocket()
+      void loadHistoricalLog()
+    }
+  }
+)
+
 // 监听静态 content
 watch(
   () => props.content,
   newVal => {
     if (newVal) {
-      batchData.value = { default: { content: newVal } }
-      batchList.value = ['default']
-      activeBatch.value = 'default'
-      // 自动滚动到底部
-      if (autoScroll.value) {
-        scrollToBottom()
-      }
+      applyLogContent(newVal)
     }
   },
   { immediate: true }

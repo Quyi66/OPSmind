@@ -362,7 +362,7 @@ const displayUserName = computed(() => {
 
 const displayAvatarUrl = computed(() => {
   if (!userAvatarUrl.value) return avatarImage
-  return `/oplus-upload${userAvatarUrl.value}`
+  return `/sjxy-upload${userAvatarUrl.value}`
 })
 
 const notificationCount = ref(0)

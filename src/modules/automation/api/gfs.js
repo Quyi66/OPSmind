@@ -10,7 +10,7 @@ const GIT_REPO_INIT_PAYLOAD = Object.freeze({
   dest: ' ',
   is_keep_folder: false
 })
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/oplus-portal').replace(/\/$/, '')
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/sjxy-console').replace(/\/$/, '')
 
 function withApiBaseUrl(path) {
   if (!path) return API_BASE_URL

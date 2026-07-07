@@ -179,7 +179,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     selectedWhitelistIds.value = []
 
     try {
-      const res = await dtsApi.getBlackList('cac')
+      const res = await dtsApi.getBlackList('audit')
       const data = res?.data || res || {}
       whitelistData.value = data.records || []
     } catch (error) {
