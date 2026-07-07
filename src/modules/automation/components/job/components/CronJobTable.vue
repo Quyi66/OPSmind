@@ -3,7 +3,7 @@
     <el-table
       v-loading="loading"
       :data="pagedData"
-      max-height="calc(100vh - 240px)"
+      max-height="calc(100vh - 274px)"
       :default-sort="{ prop: 'id', order: 'descending' }"
       @selection-change="$emit('selection-change', $event)"
     >

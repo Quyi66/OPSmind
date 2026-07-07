@@ -73,7 +73,7 @@
 
     <!-- 用户列表表格 -->
     <div class="ops-table-wrapper">
-      <el-table :data="tableData" v-loading="loading" max-height="calc(100vh - 230px)">
+      <el-table :data="tableData" v-loading="loading" max-height="calc(100vh - 264px)">
         <el-table-column prop="host_key" label="IP" width="130" />
 
         <el-table-column prop="hostname" label="主机名" width="120" show-overflow-tooltip />

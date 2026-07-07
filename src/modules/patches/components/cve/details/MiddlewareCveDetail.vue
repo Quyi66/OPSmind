@@ -154,7 +154,7 @@
             <div class="ops-table-wrapper" v-if="currentMiddleware">
               <el-table
                 :data="currentMiddleware.affectedVersions || []"
-                max-height="calc(100vh - 240px)"
+                max-height="calc(100vh - 274px)"
                 style="width: 100%"
               >
                 <el-table-column prop="productName" label="产品名称" min-width="150" />

@@ -175,7 +175,7 @@
             <div class="ops-table-wrapper" v-loading="productsLoading">
               <el-table
                 :data="filteredProducts"
-                max-height="calc(100vh - 240px)"
+                max-height="calc(100vh - 274px)"
                 style="width: 100%"
               >
                 <el-table-column

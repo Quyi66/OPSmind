@@ -81,7 +81,7 @@
         :data="filteredTableData"
         v-loading="loading"
         style="width: 100%"
-        max-height="calc(100vh - 280px)"
+        max-height="calc(100vh - 314px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" :selectable="isRowSelectable" />

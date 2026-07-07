@@ -66,7 +66,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="pagedCommands"
-        max-height="calc(100vh - 230px)"
+        max-height="calc(100vh - 264px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="45" :selectable="checkSelectable" />

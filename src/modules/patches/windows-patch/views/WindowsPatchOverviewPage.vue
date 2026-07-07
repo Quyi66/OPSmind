@@ -100,7 +100,7 @@
       <el-table
         v-loading="loading"
         :data="hostList"
-        max-height="calc(100vh - 320px)"
+        max-height="calc(100vh - 354px)"
         @selection-change="selection => (selectedHostRows = selection)"
       >
         <el-table-column type="selection" width="48" />

@@ -31,7 +31,7 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="pagedTemplates" max-height="calc(100vh - 180px)">
+      <el-table v-loading="loading" :data="pagedTemplates" max-height="calc(100vh - 214px)">
         <el-table-column
           prop="template_name"
           label="模板名称"

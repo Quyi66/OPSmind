@@ -53,7 +53,7 @@
         :data="paginatedData"
         v-loading="loading"
         style="width: 100%"
-        max-height="calc(100vh - 230px)"
+        max-height="calc(100vh - 264px)"
       >
         <el-table-column label="主机" prop="$data_owner" min-width="120" show-overflow-tooltip>
           <template #default="{ row }">

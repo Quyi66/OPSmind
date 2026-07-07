@@ -56,7 +56,7 @@
         :data="filteredData"
         v-loading="loading"
         style="width: 100%"
-        max-height="calc(100vh - 280px)"
+        max-height="calc(100vh - 314px)"
       >
         <el-table-column prop="login" label="用户名" width="120" />
         <el-table-column prop="fullName" label="姓名" min-width="120" />

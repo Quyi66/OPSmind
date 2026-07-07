@@ -69,7 +69,7 @@
             v-loading="loading"
             style="width: 100%"
             @selection-change="handleSelectionChange"
-            max-height="calc(100vh - 240px)"
+            max-height="calc(100vh - 274px)"
           >
             <el-table-column type="selection" width="55" />
             <el-table-column label="版本备注" prop="versionRemarks" show-overflow-tooltip>

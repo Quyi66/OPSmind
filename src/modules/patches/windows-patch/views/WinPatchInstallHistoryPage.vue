@@ -45,7 +45,7 @@
       <el-table
         v-loading="loading"
         :data="logList"
-        max-height="calc(100vh - 360px)"
+        max-height="calc(100vh - 394px)"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="48" :selectable="isRollbackRowSelectable" />

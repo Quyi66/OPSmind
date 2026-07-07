@@ -1,5 +1,5 @@
 <template>
-  <div class="ops-page-layout">
+  <div class="ops-page-layout ops-page-layout--page-scroll">
     <!-- 面包屑导航 -->
     <div class="ops-breadcrumb-bar">
       <el-breadcrumb separator="/">

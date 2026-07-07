@@ -43,7 +43,7 @@
       <el-table
         :data="filteredData"
         v-loading="loading"
-        max-height="calc(100vh - 230px)"
+        max-height="calc(100vh - 264px)"
         style="width: 100%"
       >
         <el-table-column prop="type" label="类型" width="100" show-overflow-tooltip>

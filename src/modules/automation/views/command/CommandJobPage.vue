@@ -49,7 +49,7 @@
       <el-table
         v-loading="loading"
         :data="pagedJobs"
-        max-height="calc(100vh - 230px)"
+        max-height="calc(100vh - 264px)"
         row-key="id"
         :default-sort="{ prop: sortField, order: sortOrder }"
         @sort-change="handleSortChange"

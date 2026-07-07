@@ -90,7 +90,7 @@
         <el-table
           v-loading="loading"
           :data="tableData"
-          max-height="calc(100vh - 230px)"
+          max-height="calc(100vh - 264px)"
           row-key="id"
         >
           <el-table-column prop="templateName" label="模板" show-overflow-tooltip sortable />

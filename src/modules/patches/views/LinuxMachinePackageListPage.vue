@@ -91,7 +91,7 @@
     </div>
 
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 260px)">
+      <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 294px)">
         <el-table-column prop="hostKey" label="主机IP" width="130" show-overflow-tooltip />
         <el-table-column prop="osDistro" label="操作系统" width="140" show-overflow-tooltip />
         <el-table-column prop="osVersion" label="系统版本" width="100" show-overflow-tooltip />

@@ -15,7 +15,7 @@
     </div>
 
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="configList" max-height="calc(100vh - 220px)">
+      <el-table v-loading="loading" :data="configList" max-height="calc(100vh - 254px)">
         <el-table-column label="WSUS 地址" min-width="260" show-overflow-tooltip>
           <template #default="{ row }">
             {{ pickValue(row, ['wsusUrl', 'wsus_url'], '-') }}

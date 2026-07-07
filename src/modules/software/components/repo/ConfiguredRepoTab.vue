@@ -12,7 +12,7 @@
       </el-checkbox-group>
     </div>
 
-    <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 240px)">
+    <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 274px)">
       <el-table-column prop="refid" label="仓库ID" min-width="150" show-overflow-tooltip>
         <template #default="{ row }">
           <el-link type="primary" @click="handleViewDetail(row)">

@@ -62,7 +62,7 @@
 
     <!-- 表格区域 -->
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="paginatedData" max-height="calc(100vh - 230px)">
+      <el-table v-loading="loading" :data="paginatedData" max-height="calc(100vh - 264px)">
         <el-table-column label="运维工具" min-width="150">
           <template #default="{ row }">
             <el-button type="primary" text @click="handleViewDetail(row)">

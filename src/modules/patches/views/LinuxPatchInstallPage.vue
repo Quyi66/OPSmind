@@ -73,7 +73,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="paginatedData"
-        max-height="calc(100vh - 230px)"
+        max-height="calc(100vh - 264px)"
         @select="handleTableSelect"
         @select-all="handleTableSelect"
       >

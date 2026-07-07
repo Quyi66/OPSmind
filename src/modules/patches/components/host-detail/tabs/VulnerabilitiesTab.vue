@@ -94,7 +94,6 @@
       :data="vulTableData"
       class="header-border-only-table"
       size="small"
-      max-height="calc(100vh - 400px)"
       @select="handleTableSelect"
       @select-all="handleTableSelect"
       border

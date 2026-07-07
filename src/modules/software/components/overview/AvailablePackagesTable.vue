@@ -41,7 +41,7 @@
         :data="tableData"
         style="width: 100%"
         size="small"
-        max-height="calc(100vh - 380px)"
+        max-height="calc(100vh - 414px)"
       >
         <el-table-column prop="pkg_name" label="名称" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">

@@ -76,7 +76,7 @@
           </div>
 
           <div class="ops-table-wrapper">
-            <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 290px)">
+            <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 324px)">
               <el-table-column label="开始时间" width="180" sortable>
                 <template #default="{ row }">
                   {{ formatDateTime(row.start_time) }}

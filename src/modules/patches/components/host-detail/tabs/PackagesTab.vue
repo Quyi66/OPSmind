@@ -58,7 +58,6 @@
       v-loading="packageLoading"
       :data="packageTableData"
       size="small"
-      max-height="calc(100vh - 390px)"
       @select="handleTableSelect"
       @select-all="handleTableSelect"
     >

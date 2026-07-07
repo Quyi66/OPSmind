@@ -42,7 +42,7 @@
         :data="paginatedTemplates"
         v-loading="loading"
         style="width: 100%"
-        max-height="calc(100vh - 280px)"
+        max-height="calc(100vh - 314px)"
       >
         <el-table-column prop="templateName" label="名称" min-width="150" show-overflow-tooltip />
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />

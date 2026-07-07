@@ -87,7 +87,7 @@
                 v-loading="pageLoading"
                 :data="paginatedPages"
                 style="width: 100%"
-                max-height="calc(100vh - 320px)"
+                max-height="calc(100vh - 354px)"
                 @selection-change="handlePageSelectionChange"
               >
                 <el-table-column type="selection" width="55" />
@@ -197,7 +197,7 @@
                 v-loading="datasetLoading"
                 :data="paginatedDatasets"
                 style="width: 100%"
-                max-height="calc(100vh - 320px)"
+                max-height="calc(100vh - 354px)"
                 @selection-change="handleDatasetSelectionChange"
               >
                 <el-table-column type="selection" width="55" />
@@ -312,7 +312,7 @@
                 v-loading="jobLoading"
                 :data="paginatedJobs"
                 style="width: 100%"
-                max-height="calc(100vh - 320px)"
+                max-height="calc(100vh - 354px)"
                 @selection-change="handleJobSelectionChange"
               >
                 <el-table-column type="selection" width="55" />

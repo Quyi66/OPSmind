@@ -177,7 +177,7 @@
         :data="displayedJobs"
         @selection-change="handleSelectionChange"
         @sort-change="handleSortChange"
-        max-height="calc(100vh - 240px)"
+        max-height="calc(100vh - 274px)"
         :default-sort="{ prop: 'updatedAt', order: 'descending' }"
       >
         <el-table-column type="selection" width="48" />

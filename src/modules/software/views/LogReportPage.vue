@@ -90,7 +90,7 @@
         style="width: 100%"
         size="small"
         row-key="run_id"
-        max-height="calc(100vh - 230px)"
+        max-height="calc(100vh - 264px)"
         :default-sort="{ prop: 'start_time', order: 'descending' }"
         empty-text="没有数据"
       >

@@ -47,7 +47,7 @@
 
     <!-- 数据表格 -->
     <div class="ops-table-wrapper">
-      <el-table :data="scheduleTasks" v-loading="loadingTasks" max-height="calc(100vh - 270px)">
+      <el-table :data="scheduleTasks" v-loading="loadingTasks" max-height="calc(100vh - 304px)">
         <el-table-column prop="id" label="任务ID" width="120" />
         <el-table-column
           prop="description"

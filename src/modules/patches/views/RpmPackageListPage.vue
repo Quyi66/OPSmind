@@ -54,7 +54,7 @@
     </div>
 
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 260px)">
+      <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 294px)">
         <el-table-column
           prop="completePackageName"
           label="包名"

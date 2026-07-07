@@ -1778,6 +1778,7 @@ onUnmounted(() => {
 .aw-panel--actions {
   order: 1;
   grid-column: span 12;
+  min-height: 410px;
 }
 
 .aw-panel--exceptions {
@@ -1827,6 +1828,9 @@ onUnmounted(() => {
 // ── 最近设备清单 ──
 .aw-recent-assets {
   padding: 8px 12px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
 
   &__header {
     display: flex;
@@ -2076,6 +2080,9 @@ onUnmounted(() => {
   flex-direction: column;
   padding: 6px 8px;
   gap: 8px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
 
   &__section {
     display: flex;
@@ -2193,6 +2200,8 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 3px;
   overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .aw-log-item {
@@ -2663,6 +2672,49 @@ html.dark .asset-workbench .aw-asset-card {
 
   .aw-drawer-row--exception .aw-drawer-row__actions {
     justify-self: start;
+  }
+}
+
+@media (max-width: 1366px) {
+  .aw-asset-card {
+    max-height: none;
+  }
+  .aw-asset-card__body {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .aw-exception-row {
+    display: grid;
+    grid-template-areas:
+      "ip badge"
+      "desc actions";
+    grid-template-columns: 1fr auto;
+    row-gap: 6px;
+    column-gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+  }
+
+  .aw-exception-row__ip {
+    grid-area: ip;
+    min-width: 0;
+  }
+
+  .aw-exception-row__badge {
+    grid-area: badge;
+    justify-self: end;
+  }
+
+  .aw-exception-row__desc {
+    grid-area: desc;
+    min-width: 0;
+    margin-right: 0;
+  }
+
+  .aw-exception-row__actions {
+    grid-area: actions;
+    justify-self: end;
   }
 }
 </style>

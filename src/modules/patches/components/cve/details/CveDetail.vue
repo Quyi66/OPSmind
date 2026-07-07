@@ -235,7 +235,7 @@
             <div class="ops-table-wrapper">
               <el-table
                 :data="filteredPackages"
-                max-height="calc(100vh - 240px)"
+                max-height="calc(100vh - 274px)"
                 style="width: 100%"
                 border
               >

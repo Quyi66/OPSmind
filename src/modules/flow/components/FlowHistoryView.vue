@@ -40,7 +40,7 @@
         :data="paginatedList"
         v-loading="loading"
         style="width: 100%"
-        max-height="calc(100vh - 200px)"
+        max-height="calc(100vh - 234px)"
       >
         <el-table-column label="版本" width="150">
           <template #default="{ row }">

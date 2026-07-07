@@ -52,7 +52,7 @@
             v-loading="loading"
             :data="paginatedApplets"
             style="width: 100%"
-            max-height="calc(100vh - 330px)"
+            max-height="calc(100vh - 364px)"
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="55" />
@@ -178,7 +178,7 @@
             v-loading="recycleLoading"
             :data="paginatedRecycledApplets"
             style="width: 100%"
-            max-height="calc(100vh - 330px)"
+            max-height="calc(100vh - 364px)"
             @selection-change="handleRecycleSelectionChange"
           >
             <el-table-column type="selection" width="55" />

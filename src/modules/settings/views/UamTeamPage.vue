@@ -50,7 +50,7 @@
 
     <!-- 团队列表表格 -->
     <div class="ops-table-wrapper" v-loading="loading">
-      <el-table :data="filteredData" style="width: 100%" max-height="calc(100vh - 280px)">
+      <el-table :data="filteredData" style="width: 100%" max-height="calc(100vh - 314px)">
         <el-table-column prop="name" label="名称" min-width="150" />
         <el-table-column prop="code" label="编码" min-width="120">
           <template #default="{ row }">

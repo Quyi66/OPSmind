@@ -94,7 +94,6 @@
       v-loading="patchLoading"
       :data="patchTableData"
       size="small"
-      max-height="calc(100vh - 385px)"
       @select="handleTableSelect"
       @select-all="handleTableSelect"
     >

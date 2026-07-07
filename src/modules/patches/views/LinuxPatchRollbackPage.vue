@@ -72,7 +72,7 @@
         ref="tableRef"
         v-loading="loading"
         :data="pagedData"
-        max-height="calc(100vh - 230px)"
+        max-height="calc(100vh - 264px)"
         @selection-change="handleSelectionChange"
         @sort-change="handleSortChange"
         :default-sort="sortState"

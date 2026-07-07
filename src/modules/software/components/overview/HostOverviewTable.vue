@@ -45,7 +45,7 @@
         :data="tableData"
         style="width: 100%"
         size="small"
-        max-height="calc(100vh - 380px)"
+        max-height="calc(100vh - 414px)"
       >
         <el-table-column prop="host_key" label="主机" min-width="150">
           <template #default="{ row }">

@@ -63,7 +63,7 @@
     </div>
 
     <div class="ops-table-wrapper">
-      <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 280px)">
+      <el-table v-loading="loading" :data="tableData" max-height="calc(100vh - 314px)">
         <el-table-column prop="createdTime" label="记录时间" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.createdTime) }}

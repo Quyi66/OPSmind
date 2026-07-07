@@ -51,7 +51,7 @@
 
     <!-- 数据表格 -->
     <div class="ops-table-wrapper">
-      <el-table :data="sudoTemplates" v-loading="loadingTemplates" max-height="calc(100vh - 230px)">
+      <el-table :data="sudoTemplates" v-loading="loadingTemplates" max-height="calc(100vh - 264px)">
         <el-table-column prop="name" label="模板名称" min-width="150" />
         <el-table-column prop="description" label="备注" min-width="150" show-overflow-tooltip />
         <el-table-column prop="created_at" label="创建时间" width="180">

@@ -50,7 +50,7 @@
 
     <!-- 用户组列表表格 -->
     <div class="ops-table-wrapper">
-      <el-table :data="tableData" v-loading="loading" max-height="calc(100vh - 230px)">
+      <el-table :data="tableData" v-loading="loading" max-height="calc(100vh - 264px)">
         <el-table-column prop="host_key" label="IP" width="130" />
         <el-table-column prop="hostname" label="主机名" width="150" show-overflow-tooltip />
         <el-table-column prop="group_name" label="组名" min-width="140" />

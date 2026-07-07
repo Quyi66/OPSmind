@@ -55,7 +55,7 @@
         v-loading="loading"
         :data="paginatedTags"
         style="width: 100%"
-        max-height="calc(100vh - 290px)"
+        max-height="calc(100vh - 324px)"
       >
         <el-table-column prop="name" label="标签名称" min-width="200" />
         <el-table-column prop="count" label="应用数量" min-width="120" align="left">
