@@ -275,7 +275,7 @@ function getGroupBadgeCount(group) {
 
 <style scoped lang="scss">
 :global(:root) {
-  --nested-menu-bg: #fafafa;
+  --nested-menu-bg: #F9F9FC;
 }
 
 :global(html.dark) {
