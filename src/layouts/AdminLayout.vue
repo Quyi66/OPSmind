@@ -73,7 +73,7 @@
                 shape="circle"
                 :fit="'cover'"
                 class="user-avatar"
-                :src="avatarImage"
+                :src="displayAvatarUrl"
               ></el-avatar>
               <span class="user-name">{{ displayUserName }}</span>
               <svg class="dropdown-arrow" fill="currentColor" viewBox="0 0 20 20">
@@ -121,11 +121,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ADMIN_MENU_CONFIG, getDefaultAdminTarget } from '@/config/admin-menu.config'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
+import { accountService } from '@/core/account'
 import logoImage from '@/assets/icons/logo.png'
 import avatarImage from '@/assets/icons/avatar@2x.png'
 import { Search, User, SwitchButton } from '@element-plus/icons-vue'
@@ -154,6 +155,28 @@ const displayUserName = computed(() => {
   if (!u) return '未登录'
   return u.fullName || u.firstName || u.name || u.login || '用户'
 })
+
+const userAvatarUrl = ref('')
+
+const displayAvatarUrl = computed(() => {
+  if (!userAvatarUrl.value) return avatarImage
+  return `/sjxy-upload${userAvatarUrl.value}`
+})
+
+async function loadAccountInfo(forceRefresh = false) {
+  try {
+    const account = await accountService.getAccount({ forceRefresh }).catch(() => null)
+    if (account) {
+      userAvatarUrl.value = account.imageUrl || ''
+    }
+  } catch {
+    // 忽略错误，保持回退逻辑
+  }
+}
+
+const handleAccountUpdated = () => {
+  void loadAccountInfo(true)
+}
 
 const goHome = () => router.push('/home')
 
@@ -218,6 +241,12 @@ function normalizeOrRedirect() {
 onMounted(() => {
   normalizeOrRedirect()
   updateDocumentTitle()
+  window.addEventListener('account-updated', handleAccountUpdated)
+  void loadAccountInfo(false)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('account-updated', handleAccountUpdated)
 })
 
 watch(

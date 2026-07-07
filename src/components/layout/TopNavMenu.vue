@@ -395,17 +395,29 @@ const handleNotificationCountChange = count => {
 const showMobileMenu = ref(false)
 const currentLanguage = ref('zh-cn')
 
-onMounted(async () => {
+async function loadAccountInfo(forceRefresh = false) {
   try {
-    const account =
-      accountService.getCached() || (await accountService.getAccount().catch(() => null))
+    const account = await accountService.getAccount({ forceRefresh }).catch(() => null)
     if (account) {
-      if (account.fullName || account.login) accountFullName.value = account.fullName || ''
-      if (account.imageUrl) userAvatarUrl.value = account.imageUrl
+      accountFullName.value = account.fullName || account.login || ''
+      userAvatarUrl.value = account.imageUrl || ''
     }
-  } catch (error) {
+  } catch {
     // 忽略错误，保持回退逻辑
   }
+}
+
+const handleAccountUpdated = () => {
+  void loadAccountInfo(true)
+}
+
+onMounted(() => {
+  window.addEventListener('account-updated', handleAccountUpdated)
+  void loadAccountInfo(false)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('account-updated', handleAccountUpdated)
 })
 
 const handleHomeClick = () => {

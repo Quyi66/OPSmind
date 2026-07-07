@@ -198,6 +198,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Phone, Message, OfficeBuilding, Medal, Calendar } from '@element-plus/icons-vue'
 import { apiService } from '@/core/api'
+import { accountService } from '@/core/account'
 
 const router = useRouter()
 
@@ -369,6 +370,10 @@ async function handleSave() {
       login: account.login,
       imageUrl: finalImageUrl
     })
+    // 强制刷新本地 session 缓存中的账号信息，并通知 TopNavMenu 更新头像和名字
+    await accountService.getAccount({ forceRefresh: true }).catch(() => null)
+    window.dispatchEvent(new CustomEvent('account-updated'))
+
     ElMessage.success('保存成功')
     loadAccount()
   } catch (error) {

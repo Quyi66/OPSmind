@@ -76,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
@@ -118,23 +118,33 @@ const userInfo = ref({
 const loadUserInfo = async () => {
   try {
     let displayName = '管理员'
+    let avatarUrl = avatarImage
 
     // 优先使用缓存；若无则拉取并缓存
     const cached = accountService.getCached()
-    if (cached && (cached.fullName || cached.login)) {
-      displayName = cached.fullName || cached.login
+    if (cached) {
+      if (cached.fullName || cached.login) {
+        displayName = cached.fullName || cached.login
+      }
+      if (cached.imageUrl) {
+        avatarUrl = `/sjxy-upload${cached.imageUrl}`
+      }
     } else {
       try {
         const account = await accountService.getAccount()
-        if (account && (account.fullName || account.login)) {
-          displayName = account.fullName || account.login
+        if (account) {
+          if (account.fullName || account.login) {
+            displayName = account.fullName || account.login
+          }
+          if (account.imageUrl) {
+            avatarUrl = `/sjxy-upload${account.imageUrl}`
+          }
         }
-        // eslint-disable-next-line no-unused-vars
-      } catch (e) {
+      } catch {
         // 接口不可用时回退到本地认证信息
         const user = authService.getCurrentUser()
         if (user) {
-          displayName = (user && (user.fullName || user.name || user.login)) || '管理员'
+          displayName = user.fullName || user.name || user.login || '管理员'
         }
       }
     }
@@ -142,7 +152,7 @@ const loadUserInfo = async () => {
     const timeOfDay = getTimeOfDay()
     userInfo.value = {
       name: displayName,
-      avatar: avatarImage,
+      avatar: avatarUrl,
       greeting: `${displayName}${timeOfDay}好，欢迎登录`,
       date: getCurrentDate()
     }
@@ -151,8 +161,17 @@ const loadUserInfo = async () => {
   }
 }
 
+const handleAccountUpdated = () => {
+  void loadUserInfo()
+}
+
 onMounted(() => {
-  loadUserInfo()
+  window.addEventListener('account-updated', handleAccountUpdated)
+  void loadUserInfo()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('account-updated', handleAccountUpdated)
 })
 
 // 待办事项列表（移除mock数据，保留固定展示高度）
