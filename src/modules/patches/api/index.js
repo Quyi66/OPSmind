@@ -692,7 +692,15 @@ export const patchInstallApi = {
     const requestBody = {
       patch_ids: params.patch_ids
     }
-    return apiService.post('/secops/api/secops/v2/patch/affected-pkgs', requestBody).then(wrapRecordsResponse)
+    return apiService
+      .post('/secops/api/secops/v2/patch/affected-pkgs', requestBody)
+      .then(res => {
+        if (res?.data) {
+          const rawData = res.data.data ?? res.data.records ?? res.data
+          res.data = Array.isArray(rawData) ? rawData : []
+        }
+        return res
+      })
   },
 
   /**
@@ -702,13 +710,31 @@ export const patchInstallApi = {
    */
   getMachinesByPatch(params) {
     return apiService
-      .get(`${VAP_DASHBOARD_BASE}/machine-by-patch`, {
-        params: {
-          patchIds: params.patch_ids,
-          hostId: params.hostId || '@@(linux)'
-        }
+      .post(`${VAP_DASHBOARD_BASE}/machine-by-patch`, {
+        patchIds: params.patch_ids,
+        hostId: params.hostId || '@@(linux)'
       })
       .then(wrapRecordsResponse)
+      .then(res => {
+        if (res?.data?.records) {
+          const uniqueHosts = []
+          const seen = new Set()
+          for (const item of res.data.records) {
+            const key = item.hostId || item.hostKey
+            if (key && !seen.has(key)) {
+              seen.add(key)
+              uniqueHosts.push({
+                ...item,
+                hostId: item.hostId || item.id,
+                hostKey: item.hostKey || item.host_key || item.hostname
+              })
+            }
+          }
+          res.data.records = uniqueHosts
+          res.data.total = uniqueHosts.length
+        }
+        return res
+      })
   },
 
   /**

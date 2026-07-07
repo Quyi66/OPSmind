@@ -110,6 +110,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { useMenuStore } from '@/stores/menu.js'
 
 const props = defineProps({
   // 菜单组数据
@@ -160,7 +161,11 @@ function matchesItemPath(currentPath, item) {
 }
 
 // 折叠状态
-const isCollapsed = ref(false)
+const menuStore = useMenuStore()
+const isCollapsed = computed({
+  get: () => menuStore.sideMenuCollapsed,
+  set: (val) => menuStore.setSideMenuCollapsed(val)
+})
 
 // 判断是否只有一个分组
 const isSingleGroup = computed(() => {
