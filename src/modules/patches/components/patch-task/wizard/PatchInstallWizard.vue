@@ -765,26 +765,6 @@
               前置环境检查结果
             </div>
 
-            <!-- 不可达主机列表 -->
-            <div v-if="parsedPreCheckResult.unreachable && parsedPreCheckResult.unreachable.length > 0" style="margin-bottom: 12px; width: 100%;">
-              <el-alert type="error" :closable="false" show-icon style="width: 100%;">
-                <template #title>
-                  <span style="font-weight: bold;">不可达主机（{{ parsedPreCheckResult.unreachable.length }} 台）</span>
-                </template>
-                <div style="margin-top: 8px;">
-                  <el-tag
-                    v-for="hostId in parsedPreCheckResult.unreachable"
-                    :key="hostId"
-                    type="danger"
-                    size="small"
-                    style="margin-right: 6px; margin-bottom: 6px;"
-                  >
-                    {{ getHostDisplayName(hostId) }}
-                  </el-tag>
-                </div>
-              </el-alert>
-            </div>
-
             <!-- 主机结果详情 -->
             <div v-if="parsedPreCheckResult.results && parsedPreCheckResult.results.length > 0" style="width: 100%;">
               <div
@@ -792,10 +772,26 @@
                 :key="hostResult.host_id"
                 style="background: #ffffff; border: 1px solid #e4e7ed; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04); transition: all 0.3s;"
               >
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f2f6fc; background-color: #fafafa; border-top-left-radius: 6px; border-top-right-radius: 6px; flex-wrap: wrap; gap: 8px;">
-                  <span style="font-weight: 600; color: #303133; font-size: 14px; display: flex; align-items: center;">
-                    <i class="fa fa-server" style="margin-right: 8px; color: #909399;"></i>
+                <div
+                  style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f2f6fc; border-top-left-radius: 6px; border-top-right-radius: 6px; flex-wrap: wrap; gap: 8px; transition: all 0.3s;"
+                  :style="{
+                    backgroundColor: isHostUnreachable(hostResult) ? '#fef0f0' : '#fafafa',
+                    borderBottomColor: isHostUnreachable(hostResult) ? '#fde2e2' : '#f2f6fc'
+                  }"
+                >
+                  <span
+                    style="font-weight: 600; font-size: 14px; display: flex; align-items: center; transition: all 0.3s;"
+                    :style="{ color: isHostUnreachable(hostResult) ? '#f56c6c' : '#303133' }"
+                  >
+                    <i
+                      class="fa fa-server"
+                      style="margin-right: 8px; transition: all 0.3s;"
+                      :style="{ color: isHostUnreachable(hostResult) ? '#f56c6c' : '#909399' }"
+                    ></i>
                     {{ getHostDisplayName(hostResult.host_id) }}
+                    <span v-if="isHostUnreachable(hostResult)" style="font-size: 12px; margin-left: 8px; font-weight: normal; color: #f56c6c;">
+                      (无法连通)
+                    </span>
                   </span>
                   <div style="display: flex; gap: 6px; align-items: center;">
                     <el-tag v-if="hostResult.blockers > 0" type="danger" size="small" effect="dark">
@@ -1508,7 +1504,12 @@ watch(parsedPreCheckResult, (newVal) => {
   }
 }, { immediate: true })
 
+function isHostUnreachable(hostResult) {
+  return Array.isArray(hostResult.checks) && hostResult.checks.some(c => c.id === 'conn' && c.status === 'fail')
+}
+
 const checkTitles = {
+  conn: '连通性',
   sudo: '提权权限',
   os: '操作系统识别',
   pkg_manager: '包管理器',
