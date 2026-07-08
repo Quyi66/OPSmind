@@ -117,17 +117,7 @@ export function usePatchTaskPipeline({
     scrollToPipelineSection()
 
     try {
-      if (installConfig.preScript && !isSkipped.pre) {
-        stepStates[preStepIndex] = 'running'
-        await patchInstallApi.executePreCheck(createdTaskId.value)
-        await refreshTaskDetail()
-        const preSuccess = await pollStatusPromise(
-          preStepIndex,
-          ['PRE_CHECK_DONE'],
-          ['PRE_CHECK_FAILED', 'FAILED']
-        )
-        if (!preSuccess) throw new Error('预执行脚本执行失败')
-      } else {
+      if (isSkipped.pre) {
         stepStates[preStepIndex] = 'running'
         await patchInstallApi.skipPreCheck(createdTaskId.value)
         await refreshTaskDetail()
@@ -136,8 +126,17 @@ export function usePatchTaskPipeline({
           ['PRE_CHECK_DONE'],
           ['PRE_CHECK_FAILED', 'FAILED']
         )
-        if (!preSkipped) throw new Error('预执行脚本跳过失败')
-        isSkipped.pre = true
+        if (!preSkipped) throw new Error('跳过预检查失败')
+      } else {
+        stepStates[preStepIndex] = 'running'
+        await patchInstallApi.executePreCheck(createdTaskId.value)
+        await refreshTaskDetail()
+        const preSuccess = await pollStatusPromise(
+          preStepIndex,
+          ['PRE_CHECK_DONE'],
+          ['PRE_CHECK_FAILED', 'FAILED']
+        )
+        if (!preSuccess) throw new Error('前置环境检查失败')
       }
 
       stepStates[executeStepIndex] = 'running'

@@ -758,6 +758,108 @@
             </div>
           </div>
 
+          <!-- 前置环境检查详细结果 -->
+          <div v-if="parsedPreCheckResult" class="pre-check-result-panel" style="margin-top: 20px; border: 1px solid #dcdfe6; border-radius: 4px; padding: 16px; background-color: #fafafa; width: 100%; box-sizing: border-box;">
+            <div class="panel-title" style="font-size: 15px; font-weight: bold; margin-bottom: 12px; color: #303133; display: flex; align-items: center;">
+              <i class="fa fa-heartbeat" style="margin-right: 6px; color: #409eff;"></i>
+              前置环境检查结果
+            </div>
+
+            <!-- 不可达主机列表 -->
+            <div v-if="parsedPreCheckResult.unreachable && parsedPreCheckResult.unreachable.length > 0" style="margin-bottom: 12px; width: 100%;">
+              <el-alert type="error" :closable="false" show-icon style="width: 100%;">
+                <template #title>
+                  <span style="font-weight: bold;">不可达主机（{{ parsedPreCheckResult.unreachable.length }} 台）</span>
+                </template>
+                <div style="margin-top: 8px;">
+                  <el-tag
+                    v-for="hostId in parsedPreCheckResult.unreachable"
+                    :key="hostId"
+                    type="danger"
+                    size="small"
+                    style="margin-right: 6px; margin-bottom: 6px;"
+                  >
+                    {{ getHostDisplayName(hostId) }}
+                  </el-tag>
+                </div>
+              </el-alert>
+            </div>
+
+            <!-- 主机结果详情 -->
+            <div v-if="parsedPreCheckResult.results && parsedPreCheckResult.results.length > 0" style="width: 100%;">
+              <div
+                v-for="hostResult in parsedPreCheckResult.results"
+                :key="hostResult.host_id"
+                style="background: #ffffff; border: 1px solid #e4e7ed; border-radius: 6px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04); transition: all 0.3s;"
+              >
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f2f6fc; background-color: #fafafa; border-top-left-radius: 6px; border-top-right-radius: 6px; flex-wrap: wrap; gap: 8px;">
+                  <span style="font-weight: 600; color: #303133; font-size: 14px; display: flex; align-items: center;">
+                    <i class="fa fa-server" style="margin-right: 8px; color: #909399;"></i>
+                    {{ getHostDisplayName(hostResult.host_id) }}
+                  </span>
+                  <div style="display: flex; gap: 6px; align-items: center;">
+                    <el-tag v-if="hostResult.blockers > 0" type="danger" size="small" effect="dark">
+                      阻断项: {{ hostResult.blockers }}
+                    </el-tag>
+                    <el-tag v-if="hostResult.warnings > 0" type="warning" size="small" effect="dark">
+                      警告项: {{ hostResult.warnings }}
+                    </el-tag>
+                    <el-tag v-if="hostResult.blockers === 0 && hostResult.warnings === 0" type="success" size="small" effect="dark">
+                      检查通过
+                    </el-tag>
+                  </div>
+                </div>
+
+                <div style="padding: 16px;">
+                  <!-- 检查项明细折叠面板 -->
+                  <el-collapse v-model="activeCollapseNames" style="border: none;">
+                    <el-collapse-item title="查看检查项明细" :name="hostResult.host_id" style="border: none;">
+                      <div style="padding: 8px 0 0 0;">
+                        <div
+                          v-for="check in sortChecks(hostResult.checks)"
+                          :key="check.id"
+                          style="display: flex; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #f2f6fc;"
+                        >
+                          <i
+                            class="fa"
+                            :class="{
+                              'fa-times-circle': check.status === 'fail',
+                              'fa-exclamation-circle': check.status === 'warn',
+                              'fa-check-circle': check.status === 'ok'
+                            }"
+                            :style="{
+                              color: check.status === 'fail' ? '#f56c6c' : check.status === 'warn' ? '#e6a23c' : '#67c23a',
+                              fontSize: '16px',
+                              marginTop: '2px',
+                              marginRight: '10px'
+                            }"
+                          />
+                          <div style="flex: 1;">
+                            <div style="display: flex; justify-content: flex-start; align-items: center; gap: 8px; flex-wrap: wrap;">
+                              <span style="font-weight: 600; font-size: 13px; color: #303133;">
+                                {{ getCheckTitle(check.id) }}
+                              </span>
+                              <el-tag
+                                :type="check.status === 'fail' ? 'danger' : check.status === 'warn' ? 'warning' : 'success'"
+                                size="small"
+                                style="font-size: 10px; height: 16px; line-height: 14px; padding: 0 4px;"
+                              >
+                                {{ check.status === 'fail' ? '阻断' : check.status === 'warn' ? '警告' : '通过' }}
+                              </el-tag>
+                            </div>
+                            <div style="font-size: 12px; color: #606266; margin-top: 4px; line-height: 1.4;">
+                              {{ check.detail }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </el-collapse-item>
+                  </el-collapse>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- 全流程终点提示 -->
           <el-alert
             v-if="pipelineFinished"
@@ -832,9 +934,30 @@
             <i class="fa fa-chevron-right" style="margin-left: 4px" />
           </el-button>
 
+          <!-- 预检查失败时的特定操作 -->
+          <template v-if="installStep === finalStepIndex && stepStates[stepIndexes.pre] === 'failed' && pipelineStatus === 'failed'">
+            <el-button
+              type="primary"
+              :loading="executionSubmitting"
+              @click="handleRetryPreCheck"
+            >
+              <i class="fa fa-refresh" style="margin-right: 4px" />
+              重新检查
+            </el-button>
+            <el-button
+              type="danger"
+              plain
+              :loading="executionSubmitting"
+              @click="handleSkipPreCheck"
+            >
+              <i class="fa fa-forward" style="margin-right: 4px" />
+              跳过检查并继续
+            </el-button>
+          </template>
+
           <!-- 最后一步确认与离开按钮 -->
           <el-button
-            v-if="
+            v-else-if="
               installStep === finalStepIndex && pipelineStatus !== 'running' && !executionSubmitting
             "
             type="primary"
@@ -861,6 +984,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 import { patchInstallApi } from '../../../api'
 import { getPatchTaskWizardSteps } from '../../../constants/task-display'
 import { formatHostDisplay } from './patchTaskWizardUtils'
@@ -1267,7 +1391,7 @@ const { loadRestartAdviceByHostPatch } = usePatchTaskBackendRestartAdvice({
   restartAdviceCacheKey,
   applyLocalRestartAdvice
 })
-const { goBack, handleAdvanceStep, handlePrimaryAction, handleSkipStep, resetInstallState } =
+const { goBack, handleAdvanceStep, handlePrimaryAction, handleSkipStep, resetInstallState, executeStep } =
   usePatchTaskFlow({
     createdTaskId,
     executionSubmitting,
@@ -1358,6 +1482,88 @@ function resetSkippedSteps() {
   isSkipped.pre = false
   isSkipped.validate = false
   isSkipped.restart = false
+}
+
+const parsedPreCheckResult = computed(() => {
+  if (!taskDetailData.value?.preCheckResult) return null
+  try {
+    return typeof taskDetailData.value.preCheckResult === 'string'
+      ? JSON.parse(taskDetailData.value.preCheckResult)
+      : taskDetailData.value.preCheckResult
+  } catch (e) {
+    console.error('Failed to parse preCheckResult:', e)
+    return null
+  }
+})
+
+const activeCollapseNames = ref([])
+
+watch(parsedPreCheckResult, (newVal) => {
+  if (newVal?.results) {
+    activeCollapseNames.value = newVal.results
+      .filter(r => r.blockers > 0 || r.warnings > 0)
+      .map(r => r.host_id)
+  } else {
+    activeCollapseNames.value = []
+  }
+}, { immediate: true })
+
+const checkTitles = {
+  sudo: '提权权限',
+  os: '操作系统识别',
+  pkg_manager: '包管理器',
+  pkg_lock: '包管理器占用',
+  pkg_db: '包数据库健康',
+  disk: '磁盘空间',
+  disk_boot: '/boot 空间',
+  kernel_pending: '待重启内核',
+  repo: '软件仓库',
+  pkg_exists: '目标包存在性',
+  version_ok: '目标版本可用性',
+  depsolve: '依赖解析',
+  already_satisfied: '已是目标版本',
+  exec: '检查执行异常'
+}
+
+function getCheckTitle(id) {
+  return checkTitles[id] || id
+}
+
+function getHostDisplayName(hostId) {
+  const host = confirmedHosts.value.find(
+    h => (h.hostId || h.id || h.hostKey) === hostId
+  )
+  return host ? formatHostDisplay(host) : hostId
+}
+
+function sortChecks(checks) {
+  if (!Array.isArray(checks)) return []
+  const severityMap = { fail: 0, warn: 1, ok: 2 }
+  return [...checks].sort((a, b) => {
+    const aVal = severityMap[a.status] ?? 3
+    const bVal = severityMap[b.status] ?? 3
+    return aVal - bVal
+  })
+}
+
+function handleRetryPreCheck() {
+  isSkipped.pre = false
+  executeStep()
+}
+
+function handleSkipPreCheck() {
+  ElMessageBox.confirm(
+    '前置环境检查未通过，跳过检查强行安装可能导致安装失败。是否确认跳过检查并继续？',
+    '提示',
+    {
+      confirmButtonText: '确认跳过',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(() => {
+    isSkipped.pre = true
+    executeStep()
+  }).catch(() => {})
 }
 </script>
 
