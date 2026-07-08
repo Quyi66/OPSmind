@@ -63,12 +63,12 @@
         <el-table-column label="连通状态" width="80" align="left">
           <template #default="{ row }">
             <i
-              v-if="row.CONN_LATEST_STATUS === 1"
+              v-if="String(row.CONN_LATEST_STATUS) === '1'"
               class="fa fa-check-circle"
               style="color: #67c23a"
             ></i>
             <i
-              v-else-if="row.CONN_LATEST_STATUS === 0"
+              v-else-if="String(row.CONN_LATEST_STATUS) === '0'"
               class="fa fa-times-circle"
               style="color: #f56c6c"
             ></i>
@@ -142,14 +142,6 @@ const assetList = ref([])
 const selectedRows = ref([])
 const pagination = ref({ page: 1, size: 10, total: 0 })
 
-// 分页信息
-const paginationInfo = computed(() => {
-  const start = (pagination.value.page - 1) * pagination.value.size + 1
-  const end = Math.min(pagination.value.page * pagination.value.size, pagination.value.total)
-  if (pagination.value.total === 0) return '0 - 0 / 0'
-  return `${start} - ${end} / ${pagination.value.total}`
-})
-
 // 加载标签内的资产
 const loadAssetList = async () => {
   if (!props.tagData) return
@@ -165,8 +157,10 @@ const loadAssetList = async () => {
       }
     })
     const data = res?.data || res
-    assetList.value = data?.records || []
-    pagination.value.total = data?.total || 0
+    assetList.value = data?.content || data?.records || []
+    pagination.value.total = Number(
+      data?.totalElements ?? data?.total ?? assetList.value.length ?? 0
+    )
   } catch (error) {
     console.error('加载设备清单失败:', error)
     ElMessage.error('加载设备清单失败')
