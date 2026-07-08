@@ -10,7 +10,7 @@ import GroupLayoutShell from './GroupLayoutShell.vue'
 import { provideCurrentGroupModuleCode } from './useGroupLayoutContext.js'
 
 const menuGroups = computed(() => getGroupMenuConfig('patch-testing', MENU_CONFIG))
-const defaultOpeneds = ['patches', 'windows-patches', 'yum-repo']
+const defaultOpeneds = ['patches', 'windows-patches']
 
 provideCurrentGroupModuleCode('patches')
 </script>

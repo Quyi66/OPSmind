@@ -69,7 +69,8 @@ export function buildModuleRoutes() {
     'flow',
     'password', // 其他共享分组
     'uam', // 用户管理分组
-    'ssc' // 系统设置分组
+    'ssc', // 系统设置分组
+    'middleware-cve'
   ]
 
   moduleRegistryEntries.forEach(entry => {

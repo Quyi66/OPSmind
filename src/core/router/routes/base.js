@@ -234,7 +234,8 @@ export const baseRoutes = [
       requiresAuth: true,
       moduleType: 'vue-native',
       moduleCode: 'yum-repo',
-      groupCode: 'patch-testing'
+      groupCode: 'patch-testing',
+      requiresPermission: 'applet:spm'
     },
     children: [
       {

@@ -8,8 +8,8 @@ export const YUM_REPO_ROUTE_DEFS = [
     key: 'yumRepo',
     path: 'yumRepo',
     name: 'yum-repo-yumRepo',
-    title: 'Yum仓库管理',
-    navLabel: 'Yum仓库管理',
+    title: '仓库管理',
+    navLabel: '仓库管理',
     icon: 'fas fa-database',
     component: () => import('./views/YumRepoManagementPage.vue')
   },
@@ -33,8 +33,8 @@ export const YUM_REPO_ROUTE_DEFS = [
     key: 'repos',
     path: 'repos',
     name: 'yum-repo-repos',
-    title: '仓库管理',
-    navLabel: 'Yum配置下发',
+    title: '配置下发',
+    navLabel: '配置下发',
     icon: 'fas fa-database',
     component: () => import('@/modules/software/views/RepoManagementPage.vue')
   },

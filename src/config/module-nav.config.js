@@ -148,7 +148,6 @@ export const PATCHES_NAV_ITEMS = [
     label: '漏洞管理',
     children: [
       { key: 'cveList', label: 'CVE漏洞', path: '/patches/cveList' },
-      { key: 'middlewareCveList', label: '中间件CVE', path: '/patches/middlewareCveList' },
       { key: 'urgencyDashboard', label: '紧急度评估', path: '/patches/urgencyDashboard' }
     ]
   },
@@ -163,6 +162,18 @@ export const PATCHES_NAV_ITEMS = [
       },
       { key: 'rpmPackageList', label: '软件包查询', path: '/patches/rpmPackageList' },
       { key: 'patchLibrary', label: '补丁仓库', path: '/patches/patchLibrary' }
+    ]
+  },
+  {
+    key: 'yumRepoManage',
+    label: 'Yum仓库',
+    accessCode: 'yum-repo',
+    children: [
+      { key: 'yumRepo', label: '仓库管理', path: '/yum-repo/yumRepo' },
+      { key: 'yumManage', label: 'Yum源清单', path: '/yum-repo/yumManage' },
+      { key: 'repos', label: '配置下发', path: '/yum-repo/repos' },
+      { key: 'packages', label: '软件概览', path: '/yum-repo/packages' },
+      { key: 'logs', label: '操作日志', path: '/yum-repo/logs' }
     ]
   }
 ]
@@ -192,6 +203,17 @@ export const PATCH_LOGS_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
 // 补丁漏洞 - 流程操作记录的导航
 export const PATCH_PROCESS_LOGS_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
   def => def.navLabel && def.key === 'processLogs'
+).map(def => ({
+  key: def.key,
+  label: def.navLabel || def.title,
+  icon: def.icon,
+  path: `/patches/${def.path}`,
+  platform: 'common'
+}))
+
+// 补丁漏洞 - 中间件CVE的导航
+export const MIDDLEWARE_CVE_NAV_ITEMS = PATCHES_ROUTE_DEFS.filter(
+  def => def.navLabel && def.key === 'middlewareCveList'
 ).map(def => ({
   key: def.key,
   label: def.navLabel || def.title,
@@ -291,6 +313,7 @@ export const MODULE_NAV_CONFIG = {
   'windows-patches': WINDOWS_PATCHES_NAV_ITEMS,
   'patch-logs': PATCH_LOGS_NAV_ITEMS,
   'patch-process-logs': PATCH_PROCESS_LOGS_NAV_ITEMS,
+  'middleware-cve': MIDDLEWARE_CVE_NAV_ITEMS,
   'yum-repo': YUM_REPO_NAV_ITEMS,
   software: YUM_REPO_NAV_ITEMS,
   cac: CAC_NAV_ITEMS,
