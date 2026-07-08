@@ -1605,7 +1605,11 @@ async function loadHostData() {
     }
     const response = await patchScanApi.getScanResults(params)
     const data = response?.data || response || {}
-    const records = Array.isArray(data.content) ? data.content : []
+    const records = Array.isArray(data.records)
+      ? data.records
+      : Array.isArray(data.content)
+        ? data.content
+        : []
     mergeHostOsVersionOptions(records)
 
     // 一次性获取所有主机的资产信息，回填主机列表固定列
@@ -1659,7 +1663,7 @@ async function loadHostData() {
     }
 
     hostTableData.value = records
-    pagination.total = Number(data.totalElements) || 0
+    pagination.total = Number(data.total ?? data.totalElements) || 0
   } catch (error) {
     console.error('Failed to load host data:', error)
     hostTableData.value = []
