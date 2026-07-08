@@ -1,12 +1,12 @@
-/**
- * 系统巡检模块 (CAC - Configuration Audit & Compliance)
- * 对应源系统 applet: cac
- */
+import { CAC_ROUTE_DEFS } from './routes.js'
 
-export default {
-  name: 'inspection',
-  title: '系统巡检',
-  icon: 'fa-search',
-  // 模块使用单页面内部导航，不需要 vue-router 子路由
-  routes: []
+export const cacModule = {
+  code: 'cac',
+  groupCode: 'system-inspection',
+  name: '巡检中心',
+  icon: 'fas fa-search',
+  description: '系统配置审计与合规性检查',
+  permissions: ['applet:cac'],
+  defaultRoute: '/cac/overview',
+  routes: CAC_ROUTE_DEFS
 }

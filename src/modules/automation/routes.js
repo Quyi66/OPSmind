@@ -83,6 +83,7 @@ export const JAO_ROUTE_DEFS = [
     key: 'taskScheduler',
     path: 'taskScheduler',
     title: '定时任务',
+    menuCode: 'task-scheduler',
     navLabel: '定时任务',
     icon: 'fas fa-clock',
     ...createJobOrchestrationPageRoute(
@@ -120,6 +121,7 @@ export const JAO_ROUTE_DEFS = [
     key: 'approvals',
     path: 'approvals',
     title: '运维工具审批',
+    menuCode: 'review-center',
     navLabel: '运维工具审批',
     icon: 'fas fa-user-check',
     ...createJobOrchestrationPageRoute(
@@ -141,6 +143,7 @@ export const RUN_RECORDS_ROUTE_DEFS = [
     key: 'logs',
     path: 'logs',
     title: '运行记录',
+    menuCode: 'run-records',
     navLabel: '运行记录',
     icon: 'fas fa-history',
     ...createJobOrchestrationPageRoute(
@@ -152,6 +155,7 @@ export const RUN_RECORDS_ROUTE_DEFS = [
     key: 'statistics',
     path: 'statistics',
     title: '数据统计',
+    menuCode: 'run-records',
     name: 'run-records-statistics',
     redirect: '/run-records/logs?tab=statistics'
   }
@@ -186,6 +190,7 @@ export const GFS_ROUTE_DEFS = [
     key: 'scriptReview',
     path: 'scriptReview',
     title: '脚本审核',
+    menuCode: 'review-center',
     navLabel: '脚本审核',
     icon: 'fas fa-clipboard-check',
     ...createScriptLibraryPageRoute(
@@ -216,6 +221,7 @@ export const CMD_ROUTE_DEFS = [
     key: 'review',
     path: 'review',
     title: '命令审核',
+    menuCode: 'review-center',
     navLabel: '命令审核',
     icon: 'fas fa-clipboard-check',
     ...createCommandCenterPageRoute(

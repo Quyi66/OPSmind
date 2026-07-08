@@ -151,7 +151,7 @@ export const useMenuStore = defineStore('menu', () => {
   }
 
   // 根据当前路由自动设置菜单状态
-  const setMenuFromRoute = routePath => {
+  const setMenuFromRoute = (routePath, routeMeta) => {
     // 规范化路径
     const clean = routePath.startsWith('/') ? routePath.slice(1) : routePath
 
@@ -170,7 +170,7 @@ export const useMenuStore = defineStore('menu', () => {
       return
     }
 
-    const resolvedMenuCode = resolveMenuCodeFromRoutePath(routePath)
+    const resolvedMenuCode = routeMeta?.menuCode || resolveMenuCodeFromRoutePath(routePath)
     if (resolvedMenuCode) {
       const resolvedInfo = getMenuItemInfo(resolvedMenuCode)
       if (resolvedInfo) {

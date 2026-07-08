@@ -1,78 +1,20 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 import type { AccountInfo, AccountRolePermission } from '@/core/account'
 import type { AppletInfo } from '@/core/applet'
+import { getMenuPermissions, getMenuDefaultRoute } from '@/config/menu.config.js'
 
 type PermissionChecker = (permission: string) => boolean
 
 const ADMIN_ROLE_NAMES = new Set(['admin', 'role_admin', 'role_super_admin', 'super_admin'])
 
-const WINDOWS_PATCH_ROUTE_ALIASES: Record<string, string> = {
-  windowsUpdate: 'windowsVulnerability',
-  windowsView: 'windowsRollback'
-}
-
-const WINDOWS_PATCH_PATHS = new Set([
-  'windowsVulnerability',
-  'windowsWsus',
-  'windowsRollback',
-  'windowsCveList'
-])
-
-export const MENU_ACCESS_REQUIREMENTS: Record<string, string[]> = {
-  home: [],
-  dashboard: [],
-  settings: [],
-  aiops: [],
-  'auto-workbench': ['jao:view', 'gfs:view', 'cmd:view'],
-  jao: ['jao:view'],
-  'task-scheduler': ['jao:view'],
-  gfs: ['gfs:view'],
-  cmd: ['cmd:view'],
-  'review-center': ['jao:view', 'gfs:view', 'cmd:view'],
-  patches: ['applet:vap'],
-  'windows-patches': ['applet:vap'],
-  'patch-logs': ['applet:vap'],
-  'patch-process-logs': ['applet:vap'],
-  'middleware-cve': ['applet:vap'],
-  'yum-repo': ['applet:spm', 'applet:vap'],
-  software: ['applet:spm', 'applet:vap'],
-  cac: ['applet:cac'],
-  acm: ['applet:acm'],
-  users: ['applet:uim'],
-  flow: ['applet:flow'],
-  sudo: ['applet:sudo'],
-  password: ['applet:pmsv2'],
-  uam: ['applet:uim'],
-  ssc: ['applet:uim'],
-  admin: ['applet:uim'],
+const SPECIAL_MENU_REQUIREMENTS: Record<string, string[]> = {
+  admin: ['admin'],
   'super-admin': ['admin']
 }
 
-export const MENU_DEFAULT_ROUTES: Record<string, string> = {
-  home: '/home',
-  settings: '/settings',
-  'auto-workbench': '/auto-workbench/overview',
-  jao: '/jao/jobs',
-  'task-scheduler': '/jao/taskScheduler',
-  gfs: '/gfs/scriptLibrary',
-  cmd: '/cmd/list',
-  patches: '/patches',
-  'windows-patches': '/patches/windowsVulnerability',
-  'patch-logs': '/patches/logs',
-  'patch-process-logs': '/patches/processLogs',
-  'middleware-cve': '/patches/middlewareCveList',
-  'yum-repo': '/yum-repo',
-  software: '/yum-repo',
-  cac: '/cac',
-  acm: '/acm',
-  users: '/users',
-  flow: '/flow',
-  sudo: '/sudo',
-  password: '/password',
-  uam: '/uam',
-  ssc: '/ssc',
+const SPECIAL_MENU_DEFAULT_ROUTES: Record<string, string> = {
   admin: '/admin/assets/auto-config',
-  aiops: '/aiops'
+  'super-admin': '/admin/assets/auto-config'
 }
 
 function normalizeValue(value?: string | null): string {
@@ -157,7 +99,9 @@ export function mergePermissionTokens(
 }
 
 export function getMenuRequirements(menuCode?: string | null): string[] {
-  return MENU_ACCESS_REQUIREMENTS[normalizeValue(menuCode)] || []
+  const normalized = normalizeValue(menuCode)
+  const modulePermissions = getMenuPermissions(normalized)
+  return modulePermissions.length ? modulePermissions : SPECIAL_MENU_REQUIREMENTS[normalized] || []
 }
 
 export function canAccessMenuCode(
@@ -189,7 +133,11 @@ export function filterAccessibleMenuGroups<
 
 export function getDefaultRouteForMenuCode(menuCode?: string | null): string {
   const normalized = normalizeValue(menuCode)
-  return MENU_DEFAULT_ROUTES[normalized] || (normalized ? `/${normalized}` : '/home')
+  return (
+    getMenuDefaultRoute(normalized) ||
+    SPECIAL_MENU_DEFAULT_ROUTES[normalized] ||
+    (normalized ? `/${normalized}` : '/home')
+  )
 }
 
 export function getGroupDefaultRoute(
@@ -210,38 +158,19 @@ export function resolveMenuCodeFromRoutePath(path?: string | null): string | nul
   const segments = normalizedPath.split('/').filter(Boolean)
   if (!segments.length) return 'home'
 
-  const [first, second] = segments
-
-  if (first === 'jao' && second === 'taskScheduler') {
-    return 'task-scheduler'
-  }
-
-  if (first === 'patches') {
-    const normalizedPatchPath = WINDOWS_PATCH_ROUTE_ALIASES[second || ''] || second || ''
-
-    if (second === 'windowsYumRepo' || second === 'linuxYumManage') return 'patches'
-    if (second === 'logs') return 'patch-logs'
-    if (second === 'processLogs') return 'patch-process-logs'
-    if (second === 'middlewareCveList') return 'middleware-cve'
-    if (WINDOWS_PATCH_PATHS.has(normalizedPatchPath)) return 'windows-patches'
-    return 'patches'
-  }
-
-  if (first === 'yum-repo') {
-    return 'patches'
-  }
-  if (first === 'software') {
-    return 'patches'
-  }
-  if (first === 'admin') return 'admin'
+  const [first] = segments
   if (first === 'login' || first === 'about' || first.startsWith('error')) return null
+  if (first === 'yum-repo' || first === 'software') return 'patches'
 
   return first || null
 }
 
 export function resolveMenuCodeFromRoute(
-  route: Pick<RouteLocationNormalizedLoaded, 'path'> | { path?: string | null }
+  route: Pick<RouteLocationNormalizedLoaded, 'path' | 'meta'> | { path?: string | null; meta?: any }
 ): string | null {
+  if (route?.meta?.menuCode) {
+    return route.meta.menuCode
+  }
   return resolveMenuCodeFromRoutePath(route?.path)
 }
 

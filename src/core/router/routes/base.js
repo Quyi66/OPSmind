@@ -1,27 +1,12 @@
 /**
- * 基础路由配置
+ * 基础路由配置（使用统一注册中心动态注册）
  * 按一级菜单分组组织路由，使用动态路由参数让同一分组内的模块共享布局组件
  * 这样在同一分组内切换模块时，侧边菜单不会重新加载
  */
 
 // 同步导入布局组件
 import MainLayout from '@/layouts/MainLayout.vue'
-import { PATCHES_ROUTE_DEFS } from '@/modules/patches/routes.js'
-import { YUM_REPO_ROUTE_DEFS } from '@/modules/yum-repo/routes.js'
-import { CAC_ROUTE_DEFS } from '@/modules/inspection/routes.js'
-import { ACM_ROUTE_DEFS } from '@/modules/asset/routes.js'
-import { USERS_ROUTE_DEFS } from '@/modules/user/routes.js'
-import {
-  AUTO_WORKBENCH_ROUTE_DEFS,
-  JAO_ROUTE_DEFS,
-  RUN_RECORDS_ROUTE_DEFS,
-  GFS_ROUTE_DEFS,
-  CMD_ROUTE_DEFS
-} from '@/modules/automation/routes.js'
-import { FLOW_ROUTE_DEFS } from '@/modules/flow/routes.js'
-import { SUDO_ROUTE_DEFS } from '@/modules/sudo/routes.js'
-import { PASSWORD_ROUTE_DEFS } from '@/modules/password/routes.js'
-import { SSC_ROUTE_DEFS, UAM_ROUTE_DEFS } from '@/modules/settings/routes.js'
+import { registeredModules } from '@/modules/registry'
 
 // 分组布局组件（懒加载）
 const AutomationGroupLayout = () => import('@/layouts/groups/AutomationGroupLayout.vue')
@@ -33,12 +18,28 @@ const SettingsGroupLayout = () => import('@/layouts/groups/SettingsGroupLayout.v
 const HostAccountGroupLayout = () => import('@/layouts/groups/FlowGroupLayout.vue')
 const SecurityGroupLayout = () => import('@/layouts/groups/SecurityGroupLayout.vue')
 
-const buildModuleChildren = (defs, moduleCode) =>
+const GROUP_LAYOUTS = {
+  'asset-management': AssetGroupLayout,
+  'automation': AutomationGroupLayout,
+  'patch-testing': PatchGroupLayout,
+  'system-inspection': InspectionGroupLayout,
+  'flow-management': HostAccountGroupLayout,
+  'user-management': UserGroupLayout,
+  'security-management': SecurityGroupLayout,
+  'system-settings': SettingsGroupLayout
+}
+
+const buildModuleChildren = (defs, moduleCode, menuCodeOverride) =>
   defs.map(def => {
     const route = {
       path: def.path,
       component: def.component,
-      meta: { title: def.title, moduleCode, ...(def.meta || {}) }
+      meta: {
+        title: def.title,
+        moduleCode,
+        menuCode: def.menuCode || menuCodeOverride || moduleCode,
+        ...(def.meta || {})
+      }
     }
 
     if (def.alias) route.alias = def.alias
@@ -50,40 +51,31 @@ const buildModuleChildren = (defs, moduleCode) =>
     return route
   })
 
-const patchesChildren = buildModuleChildren(PATCHES_ROUTE_DEFS, 'patches')
-const cacChildren = buildModuleChildren(CAC_ROUTE_DEFS, 'cac')
-const acmChildren = buildModuleChildren(ACM_ROUTE_DEFS, 'acm')
-const usersChildren = buildModuleChildren(USERS_ROUTE_DEFS, 'users')
-const yumRepoChildren = buildModuleChildren(YUM_REPO_ROUTE_DEFS, 'yum-repo')
-const autoWorkbenchChildren = buildModuleChildren(AUTO_WORKBENCH_ROUTE_DEFS, 'auto-workbench')
-const jaoChildren = buildModuleChildren(JAO_ROUTE_DEFS, 'jao')
-const runRecordsChildren = buildModuleChildren(RUN_RECORDS_ROUTE_DEFS, 'run-records')
-const gfsChildren = buildModuleChildren(GFS_ROUTE_DEFS, 'gfs')
-const cmdChildren = buildModuleChildren(CMD_ROUTE_DEFS, 'cmd')
-const flowChildren = buildModuleChildren(FLOW_ROUTE_DEFS, 'flow')
-const sudoChildren = buildModuleChildren(SUDO_ROUTE_DEFS, 'sudo')
-const passwordChildren = buildModuleChildren(PASSWORD_ROUTE_DEFS, 'password')
-const uamChildren = buildModuleChildren(UAM_ROUTE_DEFS, 'uam')
-const sscChildren = buildModuleChildren(SSC_ROUTE_DEFS, 'ssc')
-
-const buildAutomationModuleRoute = (moduleCode, redirect, children) => ({
-  path: `/${moduleCode}`,
-  component: MainLayout,
-  meta: {
-    requiresAuth: true,
-    moduleType: 'vue-native',
-    moduleCode,
-    groupCode: 'automation'
-  },
-  children: [
-    {
-      path: '',
-      component: AutomationGroupLayout,
-      redirect,
-      children: [...children]
+// 动态根据模块列表派生路由
+const derivedModuleRoutes = registeredModules
+  .filter(m => !m.isVirtual)
+  .map(m => {
+    const children = buildModuleChildren(m.routes || [], m.code, m.menuCodeOverride)
+    return {
+      path: `/${m.code}`,
+      component: MainLayout,
+      meta: {
+        requiresAuth: true,
+        ...(m.routePermission ? { requiresPermission: m.routePermission } : {}),
+        moduleType: 'vue-native',
+        moduleCode: m.code,
+        groupCode: m.groupCode
+      },
+      children: [
+        {
+          path: '',
+          component: GROUP_LAYOUTS[m.groupCode],
+          redirect: m.defaultRoute,
+          children
+        }
+      ]
     }
-  ]
-})
+  })
 
 export const baseRoutes = [
   {
@@ -197,54 +189,9 @@ export const baseRoutes = [
     }
   },
 
-  // ========== 自动化分组 (jao, run-records, gfs, cmd, flow) ==========
-  // 按模块分别挂载，避免 logs 等重复子路径在同一父级下发生匹配冲突
-  buildAutomationModuleRoute('auto-workbench', '/auto-workbench/overview', autoWorkbenchChildren),
-  buildAutomationModuleRoute('jao', '/jao/jobs', jaoChildren),
-  buildAutomationModuleRoute('run-records', '/run-records/logs', runRecordsChildren),
-  buildAutomationModuleRoute('gfs', '/gfs/scriptLibrary', gfsChildren),
-  buildAutomationModuleRoute('cmd', '/cmd/list', cmdChildren),
-  buildAutomationModuleRoute('flow', '/flow/list', flowChildren),
-
   {
     path: '/rpm-install/:pathMatch(.*)*',
     redirect: '/patches/localInstall'
-  },
-
-  // ========== 补丁管理 (patches) ==========
-  {
-    path: '/patches',
-    component: MainLayout,
-    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'patch-testing' },
-    children: [
-      {
-        path: '',
-        component: PatchGroupLayout,
-        redirect: '/patches/machineScan',
-        children: [...patchesChildren]
-      }
-    ]
-  },
-
-  // ========== Yum仓库管理 (yum-repo) ==========
-  {
-    path: '/yum-repo',
-    component: MainLayout,
-    meta: {
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'yum-repo',
-      groupCode: 'patch-testing',
-      requiresPermission: 'applet:spm'
-    },
-    children: [
-      {
-        path: '',
-        component: PatchGroupLayout,
-        redirect: '/yum-repo/repos',
-        children: [...yumRepoChildren]
-      }
-    ]
   },
 
   {
@@ -258,135 +205,8 @@ export const baseRoutes = [
     }
   },
 
-  // ========== 系统巡检分组 (cac) - 单模块分组 ==========
-  {
-    path: '/cac',
-    component: MainLayout,
-    meta: {
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'cac',
-      groupCode: 'system-inspection'
-    },
-    children: [
-      {
-        path: '',
-        component: InspectionGroupLayout,
-        redirect: '/cac/overview',
-        children: [...cacChildren]
-      }
-    ]
-  },
-
-  // ========== 资产管理分组 (acm) - 单模块分组 ==========
-  {
-    path: '/acm',
-    component: MainLayout,
-    meta: {
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'acm',
-      groupCode: 'asset-management'
-    },
-    children: [
-      {
-        path: '',
-        component: AssetGroupLayout,
-        redirect: '/acm/overview',
-        children: [...acmChildren]
-      }
-    ]
-  },
-
-  // ========== 主机用户管理分组 (users) ==========
-  {
-    path: '/users',
-    component: MainLayout,
-    meta: {
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      moduleCode: 'users',
-      groupCode: 'flow-management'
-    },
-    children: [
-      {
-        path: '',
-        component: HostAccountGroupLayout,
-        redirect: '/users/users',
-        children: [...usersChildren]
-      }
-    ]
-  },
-
-  // ========== sudo权限管理 (安全中心) ==========
-  {
-    path: '/sudo',
-    component: MainLayout,
-    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'security-management' },
-    children: [
-      {
-        path: '',
-        component: SecurityGroupLayout,
-        redirect: '/sudo/permission',
-        children: [...sudoChildren]
-      }
-    ]
-  },
-
-  // ========== 密码管理 (安全中心) ==========
-  {
-    path: '/password',
-    component: MainLayout,
-    meta: { requiresAuth: true, moduleType: 'vue-native', groupCode: 'security-management' },
-    children: [
-      {
-        path: '',
-        component: SecurityGroupLayout,
-        redirect: '/password/application',
-        children: [...passwordChildren]
-      }
-    ]
-  },
-
-  // ========== 用户管理分组 (uam) ==========
-  {
-    path: '/uam',
-    component: MainLayout,
-    meta: {
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      groupCode: 'user-management',
-      moduleCode: 'uam'
-    },
-    children: [
-      {
-        path: '',
-        component: UserGroupLayout,
-        redirect: '/uam/user',
-        children: [...uamChildren]
-      }
-    ]
-  },
-
-  // ========== 系统设置分组 (ssc) ==========
-  {
-    path: '/ssc',
-    component: MainLayout,
-    meta: {
-      requiresAuth: true,
-      moduleType: 'vue-native',
-      groupCode: 'system-settings',
-      moduleCode: 'ssc'
-    },
-    children: [
-      {
-        path: '',
-        component: SettingsGroupLayout,
-        redirect: '/ssc/applet',
-        children: [...sscChildren]
-      }
-    ]
-  },
+  // 动态派生的业务模块路由
+  ...derivedModuleRoutes,
 
   // 通配符路由 - 必须放在最后
   {
@@ -394,3 +214,7 @@ export const baseRoutes = [
     redirect: '/error/404'
   }
 ]
+
+export const BASE_REGISTERED_MODULES = new Set(
+  registeredModules.filter(m => !m.isVirtual).map(m => m.code)
+)

@@ -1,10 +1,12 @@
-/**
- * 资产管理模块 (ACM - Asset Configuration Management)
- * 对应源系统 applet: acm
- */
+import { ACM_ROUTE_DEFS } from './routes.js'
 
-export default {
-  name: 'asset',
-  title: '资产管理',
-  icon: 'fa-server'
+export const acmModule = {
+  code: 'acm',
+  groupCode: 'asset-management',
+  name: '资产',
+  icon: 'fas fa-server',
+  description: 'IT基础设施资产管理',
+  permissions: ['applet:acm'],
+  defaultRoute: '/acm/overview',
+  routes: ACM_ROUTE_DEFS
 }

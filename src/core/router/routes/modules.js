@@ -5,9 +5,10 @@
  * 此文件仅处理需要动态生成的模块路由（如软件管理等非核心模块）
  */
 
-import { moduleRegistryEntries } from '@/modules/registry'
+import { moduleRegistryEntries, getModuleDefinition } from '@/modules/registry'
 import { GROUP_ALIAS_MAP } from '@/config/menu.config.js'
 import MainLayout from '@/layouts/MainLayout.vue'
+import { BASE_REGISTERED_MODULES } from './base.js'
 
 const ModuleHost = () => import('@/views/modules/ModuleRouterView.vue')
 
@@ -54,28 +55,10 @@ function createModuleRoute(entry, path, nameSuffix, extraMeta = {}) {
 export function buildModuleRoutes() {
   const routes = []
 
-  // 这些模块已在 base.js 中使用分组布局定义，需要从动态生成中排除
-  const skipModules = [
-    'sudo',
-    'jao',
-    'cmd',
-    'gfs',
-    'users',
-    'patches',
-    'yum-repo',
-    'software', // 补丁漏洞分组
-    'cac', // 系统巡检分组
-    'acm', // 资产管理分组
-    'flow',
-    'password', // 其他共享分组
-    'uam', // 用户管理分组
-    'ssc', // 系统设置分组
-    'middleware-cve'
-  ]
-
   moduleRegistryEntries.forEach(entry => {
-    // 跳过已在 baseRoutes 中定义的模块
-    if (skipModules.includes(entry.code)) {
+    const def = getModuleDefinition(entry.code)
+    // 跳过已在 baseRoutes 中定义或属于虚拟菜单项的模块
+    if (BASE_REGISTERED_MODULES.has(entry.code) || def?.isVirtual) {
       return
     }
 

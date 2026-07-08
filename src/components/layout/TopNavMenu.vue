@@ -594,7 +594,7 @@ const handleLanguageCommand = _language => {
 watch(
   () => route.path,
   newPath => {
-    menuStore.setMenuFromRoute(newPath)
+    menuStore.setMenuFromRoute(newPath, route.meta)
   },
   { immediate: true }
 )

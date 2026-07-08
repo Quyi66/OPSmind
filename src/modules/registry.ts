@@ -1,5 +1,77 @@
 import type { AsyncComponentLoader } from 'vue'
-import { MENU_CONFIG } from '@/config/menu.config.js'
+
+import {
+  patchesModule,
+  windowsPatchesModule,
+  patchLogsModule,
+  patchProcessLogsModule,
+  middlewareCveModule
+} from './patches'
+import { yumRepoModule } from './yum-repo'
+import {
+  autoWorkbenchModule,
+  jaoModule,
+  gfsModule,
+  cmdModule,
+  runRecordsModule,
+  taskSchedulerModule,
+  reviewCenterModule
+} from './automation'
+import { cacModule } from './inspection'
+import { acmModule } from './asset'
+import { usersModule } from './user'
+import { flowModule } from './flow'
+import { sudoModule } from './sudo'
+import { passwordModule } from './password'
+import { sscModule, uamModule } from './settings'
+
+export interface ModuleDefinition {
+  code: string
+  groupCode: string
+  name: string
+  icon: string
+  description?: string
+  permissions?: string[]
+  defaultRoute: string
+  routePermission?: string
+  isVirtual?: boolean
+  routes?: any[]
+  menuCodeOverride?: string
+  navItems?: any[]
+}
+
+// 统一注册的模块列表（定义一级菜单分组中子菜单的整体集合）
+export const registeredModules: ModuleDefinition[] = [
+  acmModule,
+  autoWorkbenchModule,
+  jaoModule,
+  gfsModule,
+  cmdModule,
+  taskSchedulerModule,
+  runRecordsModule,
+  reviewCenterModule,
+  flowModule,
+  patchesModule,
+  windowsPatchesModule,
+  patchLogsModule,
+  patchProcessLogsModule,
+  middlewareCveModule,
+  yumRepoModule,
+  cacModule,
+  usersModule,
+  sudoModule,
+  passwordModule,
+  uamModule,
+  sscModule
+]
+
+const moduleLookup = Object.fromEntries(registeredModules.map(m => [m.code, m]))
+
+export function getModuleDefinition(code: string): ModuleDefinition | null {
+  return moduleLookup[code] || null
+}
+
+// ================== 以下为向下兼容的旧接口 ==================
 
 export interface ModuleRegistryEntry {
   code: string
@@ -31,43 +103,28 @@ const moduleComponentLoaders: Partial<Record<string, AsyncComponentLoader>> = {
   password: () => import('@/modules/password/views/PasswordManagementModule.vue'),
   uam: () => import('@/modules/settings/views/SystemSettingsModule.vue'),
   ssc: () => import('@/modules/settings/views/SystemSettingsModule.vue')
-  // 其余模块将逐步补充 Vue 实现
 }
 
-const moduleRegistry: Record<string, ModuleRegistryEntry> = {}
+const legacyRegistry: Record<string, ModuleRegistryEntry> = {}
 
-MENU_CONFIG.groups.forEach(group => {
-  group.children.forEach(child => {
-    const loader = moduleComponentLoaders[child.code]
-
-    const entry: ModuleRegistryEntry = {
-      code: child.code,
-      name: child.name,
-      title: child.name,
-      groupCode: group.code,
-      description: child.description,
-      icon: child.icon,
-      path: child.code,
-      moduleType: 'vue-native',
-      status: loader ? 'ready' : 'under-construction'
-    }
-
-    if (loader) {
-      entry.loader = loader
-    }
-
-    moduleRegistry[child.code] = entry
-  })
+registeredModules.forEach(m => {
+  const loader = moduleComponentLoaders[m.code]
+  legacyRegistry[m.code] = {
+    code: m.code,
+    name: m.name,
+    title: m.name,
+    groupCode: m.groupCode,
+    description: m.description,
+    icon: m.icon,
+    path: m.code,
+    moduleType: 'vue-native',
+    status: loader ? 'ready' : 'under-construction',
+    ...(loader && { loader })
+  }
 })
 
-export const moduleRegistryEntries: ModuleRegistryEntry[] = Object.values(moduleRegistry)
-
-export function getModuleDefinition(code: string): ModuleRegistryEntry | null {
-  return moduleRegistry[code] || null
-}
-
+export const moduleRegistryEntries: ModuleRegistryEntry[] = Object.values(legacyRegistry)
+export const moduleRegistry = legacyRegistry
 export function listModuleCodes(): string[] {
-  return moduleRegistryEntries.map(entry => entry.code)
+  return registeredModules.map(m => m.code)
 }
-
-export { moduleRegistry }
