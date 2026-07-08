@@ -70,12 +70,14 @@ export function usePatchList(hostContext) {
       const records = Array.isArray(data?.records) ? data.records : Array.isArray(data) ? data : []
       patchAllData.value = records
       applyClientPaging()
+      selectedPatches.value = []
     } catch (error) {
       console.error('Failed to load patch list:', error)
       ElMessage.error('获取补丁列表失败')
       patchAllData.value = []
       patchTableData.value = []
       patchPagination.total = 0
+      selectedPatches.value = []
     } finally {
       patchLoading.value = false
     }
