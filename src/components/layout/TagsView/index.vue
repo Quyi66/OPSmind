@@ -498,6 +498,7 @@ $tags-bar-height: 34px;
   overflow: hidden;
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color-light);
+  flex-shrink: 0;
 
   $btn-width: 32px;
   $btn-color: var(--el-text-color-regular);

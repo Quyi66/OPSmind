@@ -16,15 +16,15 @@
       <div class="main-container">
         <!-- 主内容区域 -->
         <div class="main-content">
+          <!-- 标签导航栏 -->
+          <TagsView v-show="!isHomeRoute" />
+
           <div v-if="moduleToolbarTitle" class="module-toolbar">
             <div class="module-toolbar-title">{{ moduleToolbarTitle }}</div>
             <button class="module-toolbar-close" @click="handleCloseModule" aria-label="关闭">
               ×
             </button>
           </div>
-
-          <!-- 标签导航栏 -->
-          <TagsView v-show="!isHomeRoute" />
 
           <router-view v-slot="{ Component, route }">
             <transition name="fade-slide" mode="out-in">
@@ -219,6 +219,7 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--el-border-color-lighter);
   padding: 12px 24px;
   margin: 0 -16px 0 -16px;
+  flex-shrink: 0;
 }
 
 .module-toolbar-title {

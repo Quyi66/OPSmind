@@ -36,7 +36,7 @@
                   />
                 </el-select>
               </el-form-item>
-              <el-form-item label="关键词">
+              <!-- <el-form-item label="关键词">
                 <el-input
                   v-model="filters.search"
                   placeholder="搜索任务标题"
@@ -47,7 +47,7 @@
                     <el-icon><Search /></el-icon>
                   </template>
                 </el-input>
-              </el-form-item>
+              </el-form-item> -->
               <el-form-item>
                 <el-button type="primary" :loading="loading" @click="handleSearch">
                   <el-icon><Search /></el-icon>
