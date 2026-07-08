@@ -110,7 +110,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="effect_host_count" label="受影响的软件包" width="130" align="left">
+        <el-table-column prop="effect_host_count" label="受影响的主机" width="130" align="left">
           <template #default="{ row }">
             <el-link type="primary" :underline="false" @click="handleViewAffectedHosts(row)">
               {{ row.effect_host_count }}
