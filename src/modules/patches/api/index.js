@@ -12,14 +12,36 @@ const VAP_DASHBOARD_BASE = `${VAP_API_PREFIX}/dashboard`
 const VAP_DASHBOARD_MIGRATION_BASE = '/secops/api/secops/dashboard'
 const JAO_DASHBOARD_BASE = '/workflow/api/workflow/dashboard'
 
-const unwrapApiData = (response) => response?.data?.data ?? response?.data
+const unwrapApiData = (response) => {
+  const body = response?.data
+  if (body && body.data && Array.isArray(body.data) && body.total !== undefined) {
+    return body
+  }
+  return body?.data ?? body
+}
 
 const normalizeRecords = (payload) => {
+  if (!payload) return { records: [], total: 0 }
   if (Array.isArray(payload)) {
     return { records: payload, total: payload.length }
   }
-  if (payload && Array.isArray(payload.records)) {
-    return payload
+  if (Array.isArray(payload.data)) {
+    return {
+      records: payload.data,
+      total: payload.total ?? payload.data.length
+    }
+  }
+  if (Array.isArray(payload.records)) {
+    return {
+      records: payload.records,
+      total: payload.total ?? payload.records.length
+    }
+  }
+  if (Array.isArray(payload.content)) {
+    return {
+      records: payload.content,
+      total: payload.totalElements !== undefined ? payload.totalElements : (payload.total || payload.content.length)
+    }
   }
   if (payload && typeof payload === 'object') {
     return { ...payload, records: payload.records || [payload], total: payload.total || 1 }

@@ -10,16 +10,38 @@ import {
 const SYS_DASHBOARD_BASE = '/dashboard/api/sys/dashboard'
 const JAO_DASHBOARD_BASE = '/workflow/api/workflow/dashboard'
 
-const unwrapApiData = (response) => response?.data?.data ?? response?.data
+const unwrapApiData = (response) => {
+  const body = response?.data
+  if (body && body.data && Array.isArray(body.data) && body.total !== undefined) {
+    return body
+  }
+  return body?.data ?? body
+}
 
 const normalizeRecords = (payload) => {
+  if (!payload) return { records: [], total: 0 }
   if (Array.isArray(payload)) {
     return { records: payload, total: payload.length }
   }
-  if (payload && Array.isArray(payload.records)) {
-    return payload
+  if (Array.isArray(payload.data)) {
+    return {
+      records: payload.data,
+      total: payload.total ?? payload.data.length
+    }
   }
-  return payload || { records: [], total: 0 }
+  if (Array.isArray(payload.records)) {
+    return {
+      records: payload.records,
+      total: payload.total ?? payload.records.length
+    }
+  }
+  if (Array.isArray(payload.content)) {
+    return {
+      records: payload.content,
+      total: payload.totalElements !== undefined ? payload.totalElements : (payload.total || payload.content.length)
+    }
+  }
+  return { records: [], total: 0 }
 }
 
 const wrapRecordsResponse = (response) => ({

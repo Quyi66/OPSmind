@@ -5,21 +5,31 @@ import { apiService, getJaoOperationLogs } from '@/core/api'
 
 const SYS_DASHBOARD_BASE = '/dashboard/api/sys/dashboard'
 
-const unwrapApiData = (response) => response?.data?.data ?? response?.data
+const unwrapApiData = (response) => {
+  const body = response?.data
+  if (body && body.data && Array.isArray(body.data) && body.total !== undefined) {
+    return body
+  }
+  return body?.data ?? body
+}
 
 const normalizeRecords = (payload) => {
   if (!payload) return { records: [], total: 0 }
   if (Array.isArray(payload)) {
     return { records: payload, total: payload.length }
   }
-  // 处理 records 格式
+  if (Array.isArray(payload.data)) {
+    return {
+      records: payload.data,
+      total: payload.total ?? payload.data.length
+    }
+  }
   if (Array.isArray(payload.records)) {
     return {
       records: payload.records,
       total: payload.total ?? payload.records.length
     }
   }
-  // 处理 Spring Data Page 格式 (content + totalElements)
   if (Array.isArray(payload.content)) {
     return {
       records: payload.content,
