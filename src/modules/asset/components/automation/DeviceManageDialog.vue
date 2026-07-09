@@ -55,7 +55,7 @@
             style="width: 100%"
             clearable
           >
-            <el-option label="none" value="" />
+
             <el-option
               v-for="item in instanceGroupOptions"
               :key="item"
@@ -84,29 +84,34 @@
 
         <!-- 自动化配置信息 -->
         <el-form-item label="自动化配置信息">
-          <el-select
-            v-model="passwordForm.ansibleVarsSetId"
-            placeholder="请选择"
-            style="width: 100%"
-            clearable
-          >
-            <el-option label="none" :value="null" />
-            <el-option
-              v-for="item in autoConfigOptions"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
+          <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
+            <el-select
+              v-model="passwordForm.ansibleVarsSetId"
+              placeholder="请选择"
+              style="flex: 1"
+              clearable
+            >
+
+              <el-option
+                v-for="item in autoConfigOptions"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+            <el-button type="primary" plain @click="emit('create-template')">
+              <i class="fa fa-plus" style="margin-right: 4px"></i>新增模板
+            </el-button>
+          </div>
         </el-form-item>
 
         <!-- 登录用户 -->
-        <el-form-item label="loginUser">
+        <el-form-item label="登录用户">
           <el-input v-model="passwordForm.loginUser" placeholder="请输入登录用户" />
         </el-form-item>
 
         <!-- 登录密码 -->
-        <el-form-item label="loginPasswd">
+        <el-form-item label="登录密码">
           <el-input
             v-model="passwordForm.loginPasswd"
             type="password"
@@ -117,12 +122,12 @@
         </el-form-item>
 
         <!-- 执行用户 -->
-        <el-form-item label="runUser">
+        <el-form-item label="执行用户">
           <el-input v-model="passwordForm.runUser" placeholder="请输入执行用户" />
         </el-form-item>
 
         <!-- 执行密码 -->
-        <el-form-item label="runPasswd">
+        <el-form-item label="执行密码">
           <el-input
             v-model="passwordForm.runPasswd"
             type="password"
@@ -222,7 +227,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'success'])
+const emit = defineEmits(['update:modelValue', 'success', 'create-template'])
 
 // 弹窗可见性
 const visible = computed({
@@ -393,6 +398,21 @@ function handleClose() {
   sshForm.value.hosts = []
   activeTab.value = 'password'
 }
+
+async function refreshAndSelectConfig(configId) {
+  try {
+    autoConfigOptions.value = await automationApi.getAllAssetAutoConfigOptions()
+    if (configId) {
+      passwordForm.value.ansibleVarsSetId = configId
+    }
+  } catch (error) {
+    console.error('刷新配置失败:', error)
+  }
+}
+
+defineExpose({
+  refreshAndSelectConfig
+})
 </script>
 
 <style scoped lang="scss">

@@ -30,6 +30,16 @@
           <!-- 筛选区 -->
           <div class="ops-filter-bar">
             <el-form :inline="true" size="small">
+              <el-form-item label="IP 地址">
+                <el-input
+                  v-model="filters.ip"
+                  placeholder="请输入 IP 地址"
+                  clearable
+                  style="width: 180px"
+                  maxlength="50"
+                  @keyup.enter="handleAutomationSearch"
+                />
+              </el-form-item>
               <el-form-item label="设备类型">
                 <el-select v-model="filters.cit" style="width: 140px">
                   <el-option label="全部" value="sjxy_all" />
@@ -41,15 +51,15 @@
                   />
                 </el-select>
               </el-form-item>
-              <el-form-item label="关键词">
-                <el-input
-                  v-model="automationSearch"
-                  placeholder="IP / 资产代码 / 登录用户..."
-                  clearable
-                  style="width: 240px"
-                  maxlength="50"
-                  @keyup.enter="handleAutomationSearch"
-                />
+              <el-form-item label="连接模板">
+                <el-select v-model="filters.ansible_config_id" placeholder="选择关联模板" clearable style="width: 200px">
+                  <el-option
+                    v-for="item in ansibleConfigOptions"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                  />
+                </el-select>
               </el-form-item>
               <el-form-item class="filter-actions">
                 <el-button type="primary" @click="handleAutomationSearch">
@@ -69,6 +79,10 @@
             <el-button type="primary" size="small" @click="handleDeviceManage">
               <i class="fa fa-cogs" style="margin-right: 4px"></i>
               批量设备纳管
+            </el-button>
+            <el-button size="small" @click="quickCreateAnsibleConfig" plain>
+              <i class="fa fa-plus" style="margin-right: 4px"></i>
+              新增模板
             </el-button>
             <el-button size="small" @click="openOperationLog" plain>
               <i class="fa fa-history" style="margin-right: 4px"></i>
@@ -401,19 +415,30 @@
           </el-form-item>
 
           <el-form-item label="引用连接凭据模板">
-            <el-select
-              v-model="automationForm.ansibleConfigId"
-              clearable
-              placeholder="选择已创建的 Ansible 凭据模板进行参数同步"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="item in ansibleConfigOptions"
-                :key="item.id"
-                :label="item.name"
-                :value="item.id"
-              />
-            </el-select>
+            <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
+              <el-select
+                v-model="automationForm.ansibleConfigId"
+                clearable
+                placeholder="选择已创建的 Ansible 凭据模板进行参数同步"
+                style="flex: 1"
+              >
+                <template #empty>
+                  <div style="padding: 12px; text-align: center; color: var(--el-text-color-secondary);">
+                    <span>暂无凭据模板，</span>
+                    <el-button type="primary" link @click="quickCreateAnsibleConfig">去新增</el-button>
+                  </div>
+                </template>
+                <el-option
+                  v-for="item in ansibleConfigOptions"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
+                />
+              </el-select>
+              <el-button type="primary" plain @click="quickCreateAnsibleConfig">
+                <i class="fa fa-plus" style="margin-right: 4px"></i>新增模板
+              </el-button>
+            </div>
           </el-form-item>
 
           <el-row :gutter="16">
@@ -617,7 +642,12 @@
     </el-drawer>
 
     <!-- 设备纳管弹窗 -->
-    <DeviceManageDialog v-model="deviceManageDialogVisible" @success="handleDeviceManageSuccess" />
+    <DeviceManageDialog
+      ref="deviceManageDialogRef"
+      v-model="deviceManageDialogVisible"
+      @success="handleDeviceManageSuccess"
+      @create-template="quickCreateAnsibleConfig"
+    />
   </div>
 </template>
 
@@ -630,6 +660,7 @@ import { automationApi, dataManageApi } from '../api'
 import { apiService } from '@/core/api'
 import { authService } from '@/core/auth'
 import DeviceManageDialog from '../components/automation/DeviceManageDialog.vue'
+import { formatDateTime } from '../utils/helpers'
 
 const router = useRouter()
 const route = useRoute()
@@ -642,13 +673,14 @@ const resourceTypes = ref([])
 
 // 筛选条件
 const filters = ref({
-  cit: 'sjxy_all'
+  ip: '',
+  cit: 'sjxy_all',
+  ansible_config_id: ''
 })
 
 // 自动化配置数据
 const automationLoading = ref(false)
 const automationData = ref([])
-const automationSearch = ref('')
 const automationPage = ref(1)
 const automationPageSize = ref(10)
 const automationTotal = ref(0)
@@ -671,6 +703,19 @@ const groupOptions = ref([])
 const editAutomationDialogVisible = ref(false)
 const editAnsibleDialogVisible = ref(false)
 const deviceManageDialogVisible = ref(false)
+const deviceManageDialogRef = ref(null)
+const isQuickCreatingAnsible = ref(false)
+
+function quickCreateAnsibleConfig() {
+  isQuickCreatingAnsible.value = true
+  handleAddAnsibleConfig()
+}
+
+watch(editAnsibleDialogVisible, newVal => {
+  if (!newVal) {
+    isQuickCreatingAnsible.value = false
+  }
+})
 
 // 表单
 const automationForm = ref({})
@@ -791,7 +836,7 @@ const ansibleTotal = computed(() => {
 onMounted(() => {
   loadResourceTypes()
   if (route.query.ip) {
-    automationSearch.value = route.query.ip
+    filters.value.ip = route.query.ip
     activeTab.value = 'automation'
   }
   loadAutomationData()
@@ -803,7 +848,7 @@ watch(
   () => route.query,
   query => {
     if (query.ip) {
-      automationSearch.value = query.ip
+      filters.value.ip = query.ip
       activeTab.value = 'automation'
       loadAutomationData()
     }
@@ -826,15 +871,13 @@ async function loadAutomationData() {
   try {
     const response = await automationApi.getAutomationConfigs(
       {
-        cit: filters.value.cit
-        //param: 'x'
+        ip: filters.value.ip || undefined,
+        cit: filters.value.cit || undefined,
+        ansible_config_id: filters.value.ansible_config_id || undefined
       },
       {
         size: automationPageSize.value,
-        page: automationPage.value,
-        filter: automationSearch.value
-          ? `ip|hostKey|ci_id|ci_type|login_user|loginUser|instance_group|instanceGroup:*${automationSearch.value}*`
-          : ''
+        page: automationPage.value
       }
     )
     automationData.value = response?.records || []
@@ -934,25 +977,11 @@ function handleAutomationSearch() {
   loadAutomationData()
 }
 
-// 设备凭据搜索防抖
-let automationDebounceTimer = null
-watch(automationSearch, newVal => {
-  if (automationDebounceTimer) {
-    clearTimeout(automationDebounceTimer)
-  }
-  if (!newVal) {
-    handleAutomationSearch()
-  } else {
-    automationDebounceTimer = setTimeout(() => {
-      handleAutomationSearch()
-    }, 300)
-  }
-})
-
 // 自动化配置重置
 function handleAutomationReset() {
+  filters.value.ip = ''
   filters.value.cit = 'sjxy_all'
-  automationSearch.value = ''
+  filters.value.ansible_config_id = ''
   automationPage.value = 1
   loadAutomationData()
 }
@@ -985,16 +1014,6 @@ async function loadAnsibleFormOptions() {
   } catch (error) {
     console.error('加载表单选项失败:', error)
   }
-}
-
-// 格式化日期时间
-function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  if (typeof dateStr === 'string' && dateStr.includes('-')) {
-    return dateStr
-  }
-  const date = new Date(dateStr)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
 }
 
 // 编辑自动化配置
@@ -1206,6 +1225,20 @@ async function saveAnsibleConfig() {
 
     ElMessage.success('保存成功')
     editAnsibleDialogVisible.value = false
+    if (isQuickCreatingAnsible.value) {
+      await loadAutomationFormOptions()
+      const newConfig = ansibleConfigOptions.value.find(
+        item => item.name === ansibleForm.value.name
+      )
+      if (newConfig) {
+        if (deviceManageDialogVisible.value && deviceManageDialogRef.value) {
+          await deviceManageDialogRef.value.refreshAndSelectConfig(newConfig.id)
+        } else {
+          automationForm.value.ansibleConfigId = newConfig.id
+        }
+      }
+      isQuickCreatingAnsible.value = false
+    }
     loadAnsibleData()
   } catch (error) {
     console.error('保存失败:', error)
