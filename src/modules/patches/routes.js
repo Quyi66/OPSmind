@@ -118,6 +118,17 @@ export const PATCHES_ROUTE_DEFS = [
     component: () => import('./views/UrgencyDashboardPage.vue')
   },
   {
+    key: 'packageSet',
+    path: 'packageSet',
+    name: 'patches-packageSet',
+    title: '包集安装',
+    navLabel: '包集安装',
+    navGroup: 'installManage',
+    icon: 'fas fa-cubes',
+    platform: 'linux',
+    component: () => import('./views/PackageSetPage.vue')
+  },
+  {
     key: 'localInstall',
     path: 'localInstall',
     name: 'patches-localInstall',

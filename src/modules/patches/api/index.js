@@ -382,6 +382,12 @@ export const patchInstallApi = {
    * �𥕦遣銵乩�摰㕑�隞餃𦛚
    * POST /secops/api/secops/v2/patch/task/create
    */
+  createAndRunTask(params) {
+    return apiService
+      .post(`${PATCH_TASK_API_PREFIX}/create-and-run`, params)
+      .then(normalizePatchTaskResponse)
+  },
+
   createTask(params) {
     return apiService
       .post(`${PATCH_TASK_API_PREFIX}/create`, params)
@@ -2390,10 +2396,26 @@ export const cveImportApi = {
   }
 }
 
+export const packageSetApi = {
+  list(params = {}) {
+    return apiService.get(`${VAP_API_PREFIX}/v2/patch/package-set/list`, { params }).then(unwrapApiData)
+  },
+  get(id) {
+    return apiService.get(`${VAP_API_PREFIX}/v2/patch/package-set/${id}`).then(unwrapApiData)
+  },
+  save(data) {
+    return apiService.post(`${VAP_API_PREFIX}/v2/patch/package-set/save`, data).then(unwrapApiData)
+  },
+  delete(id) {
+    return apiService.delete(`${VAP_API_PREFIX}/v2/patch/package-set/${id}`).then(unwrapApiData)
+  }
+}
+
 // 撖澆枂���?API
 export default {
   scan: patchScanApi,
   install: patchInstallApi,
+  packageSet: packageSetApi,
   localInstall: localInstallApi,
   rollback: patchRollbackApi,
   library: patchLibraryApi,
