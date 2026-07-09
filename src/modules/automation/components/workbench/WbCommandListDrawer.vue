@@ -1,6 +1,7 @@
 <script setup>
 import { computed, reactive, watch } from 'vue'
 import { getCommandStatusInfo } from '@/modules/automation/api/command'
+import { formatDateTime as formatDateTimeGlobal } from '../../utils/helpers'
 
 const props = defineProps({
   title: { type: String, default: '命令列表' },
@@ -101,11 +102,7 @@ function toggleLabel(item) {
 }
 
 function formatDateTime(value) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  const pad = n => (n < 10 ? `0${n}` : String(n))
-  return `${date.getMonth() + 1}-${date.getDate()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+  return formatDateTimeGlobal(value, 'MM-DD HH:mm')
 }
 
 function handleSearch() {

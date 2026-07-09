@@ -209,6 +209,7 @@ import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
 import ExecuteResultDialog from '../../components/job/JobListView/ExecuteResultDialog.vue'
 import JobStatisticsPage from './JobStatisticsPage.vue'
 import { translateText } from '@/utils/i18n.js'
+import { formatDateTime } from '../../utils/helpers'
 import {
   RUN_LOG_STATUS_MAP,
   getRunLogStatusLabel,
@@ -440,13 +441,6 @@ function getStatusType(status) {
   return getRunLogStatusType(status)
 }
 
-function formatDateTime(value) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  const pad = n => (n < 10 ? `0${n}` : String(n))
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
-}
 
 function calculateDuration(startTime, endTime) {
   if (!startTime || !endTime) return '-'

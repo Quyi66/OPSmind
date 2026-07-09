@@ -97,6 +97,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { translateText } from '@/utils/i18n'
+import { formatDateTime as formatDateTimeGlobal } from '../../utils/helpers'
 import {
   getRunLogStatusLabel,
   getRunLogStatusType
@@ -222,11 +223,7 @@ function formatStats(statsJson) {
 }
 
 function formatDateTime(value) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  const pad = n => (n < 10 ? `0${n}` : String(n))
-  return `${date.getMonth() + 1}-${date.getDate()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+  return formatDateTimeGlobal(value, 'MM-DD HH:mm')
 }
 
 function normalizeStatus(status) {

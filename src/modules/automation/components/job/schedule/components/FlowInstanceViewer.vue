@@ -222,6 +222,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { ElMessage, useZIndex } from 'element-plus'
+import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
 
 const props = defineProps({
@@ -555,15 +556,7 @@ function handleClose() {
   visible.value = false
 }
 
-function formatDateTime(value) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  const pad = n => (n < 10 ? `0${n}` : String(n))
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
-    date.getHours()
-  )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
-}
+
 </script>
 
 <style scoped lang="scss">

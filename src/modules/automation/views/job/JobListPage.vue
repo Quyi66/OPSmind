@@ -118,49 +118,7 @@
       </el-button>
     </div>
 
-    <!-- <div class="job-overview-panel">
-        <div class="job-overview-cards">
-          <article
-            v-for="card in overviewCards"
-            :key="card.label"
-            class="job-overview-card"
-          >
-            <span class="job-overview-card__label">{{ card.label }}</span>
-            <strong class="job-overview-card__value">{{ card.value }}</strong>
-          </article>
-        </div>
 
-        <div class="job-type-strip">
-          <span class="job-type-strip__label">快捷筛选</span>
-          <button
-            v-for="option in quickTypeOptions"
-            :key="option.value"
-            type="button"
-            class="job-type-chip"
-            :class="{ 'is-active': filters.jobType === option.value }"
-            @click="applyJobTypeFilter(option.value)"
-          >
-            <i :class="['fa', option.icon]" />
-            <span>{{ option.label }}</span>
-            <span class="job-type-chip__count">{{ option.count }}</span>
-          </button>
-        </div>
-
-        <div class="job-context-strip">
-          <span>范围：{{ currentAppTitle }}</span>
-          <span>筛选结果：{{ filteredJobsCount }} 项</span>
-          <span>已选：{{ selectedIds.length }} 项</span>
-          <el-button
-            v-if="hasActiveFilters"
-            link
-            type="primary"
-            class="job-context-strip__reset"
-            @click="handleReset"
-          >
-            清空筛选
-          </el-button>
-        </div>
-      </div> -->
 
     <el-alert
       v-if="error"

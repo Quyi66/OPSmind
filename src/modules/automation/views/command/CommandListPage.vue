@@ -193,6 +193,8 @@
 import { ref, reactive, computed, onMounted, inject, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
+import { formatDateTime } from '../../utils/helpers'
+const formatDate = formatDateTime
 import {
   findByTenantIdAndCreatedBy,
   deleteCommand as apiDeleteCommand,
@@ -460,21 +462,6 @@ function getStatusText(status) {
   return info.text
 }
 
-// 格式化日期
-function formatDate(dateStr) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date
-    .toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-    .replace(/\//g, '/')
-}
 
 // 截断命令预览
 function truncateCommand(command) {

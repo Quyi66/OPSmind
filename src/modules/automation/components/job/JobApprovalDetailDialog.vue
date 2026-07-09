@@ -92,6 +92,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { formatDateTime } from '@/modules/automation/utils/helpers'
 import CreateJobDialog from './JobListView/CreateJobDialog.vue'
 
 const props = defineProps({
@@ -177,13 +178,7 @@ function getStatusType(status) {
   return statusMap[status]?.type || 'info'
 }
 
-function formatDateTime(value) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  const pad = n => (n < 10 ? `0${n}` : String(n))
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
-}
+
 
 function formatExpirationTime(value) {
   if (!value) return '-'

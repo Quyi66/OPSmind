@@ -110,6 +110,7 @@
 <script setup>
 import { ref, watch, computed, nextTick } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
+import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { JOB_TYPE_OPTIONS } from '@/modules/automation/stores/useJobStore'
@@ -291,11 +292,7 @@ function handleViewResult(row) {
   resultDialogVisible.value = true
 }
 
-function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
-}
+
 
 function getAnsibleNodeLabel(nodeValue) {
   if (!nodeValue) return ''

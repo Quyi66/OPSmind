@@ -117,6 +117,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
+import { formatDateTime } from '../../utils/helpers'
+const formatDate = formatDateTime
 import { findAllUnapprovedCommand } from '@/modules/automation/api/command'
 import { useReviewCountStore } from '@/stores/useReviewCountStore.js'
 import CommandApproveDialog from '../../components/command/dialogs/CommandApproveDialog.vue'
@@ -246,21 +248,6 @@ function handleApproveSuccess() {
   loadData()
 }
 
-// 格式化日期
-function formatDate(dateStr) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date
-    .toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-    .replace(/\//g, '/')
-}
 
 // 截断命令预览
 function truncateCommand(command) {

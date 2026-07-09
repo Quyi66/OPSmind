@@ -250,6 +250,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
+import { formatDateTime } from '../../utils/helpers'
 import {
   findAllJobs,
   findJobById,
@@ -388,12 +389,7 @@ function getHostCount(job) {
   return parseJobConfig(job).hosts.length
 }
 
-function formatDateTime(val) {
-  if (!val) return ''
-  const date = new Date(val)
-  if (Number.isNaN(date.getTime())) return val
-  return date.toLocaleString('zh-CN')
-}
+
 
 async function loadJobs() {
   loading.value = true

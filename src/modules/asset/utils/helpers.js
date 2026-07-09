@@ -2,39 +2,9 @@
  * 资产管理模块工具函数
  */
 
-/**
- * 格式化日期时间
- * @param {string|Date} date - 日期
- * @param {string} format - 格式
- */
-export function formatDateTime(date, format = 'YYYY-MM-DD HH:mm:ss') {
-  if (!date) return '-'
-  const d = new Date(date)
-  if (isNaN(d.getTime())) return '-'
+import { formatDateTime, formatDate } from '@/utils/date'
 
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hours = String(d.getHours()).padStart(2, '0')
-  const minutes = String(d.getMinutes()).padStart(2, '0')
-  const seconds = String(d.getSeconds()).padStart(2, '0')
-
-  return format
-    .replace('YYYY', year)
-    .replace('MM', month)
-    .replace('DD', day)
-    .replace('HH', hours)
-    .replace('mm', minutes)
-    .replace('ss', seconds)
-}
-
-/**
- * 格式化日期（短格式）
- * @param {string|Date} date - 日期
- */
-export function formatDate(date) {
-  return formatDateTime(date, 'MM-DD')
-}
+export { formatDateTime, formatDate }
 
 /**
  * 处理操作系统分布数据

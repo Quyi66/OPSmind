@@ -2,6 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { appTableList } from '@/modules/automation/api/jao'
 import { translateText } from '@/utils/i18n'
+import { formatDateTime as formatDateTimeGlobal } from '../../utils/helpers'
 import { useAppletTranslation } from '@/modules/automation/components/job/composables/useAppletTranslation.js'
 
 const props = defineProps({
@@ -116,11 +117,7 @@ function handleReset() {
 }
 
 function formatDateTime(value) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  const pad = n => (n < 10 ? `0${n}` : String(n))
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  return formatDateTimeGlobal(value, 'YYYY-MM-DD')
 }
 
 async function ensureAppletOptions() {

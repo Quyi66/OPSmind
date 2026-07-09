@@ -177,6 +177,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { formatDateTime } from '@/modules/automation/utils/helpers'
 import { Search, RefreshRight, Refresh } from '@element-plus/icons-vue'
 import * as jaoApi from '@/modules/automation/api/jao'
 import ExecuteResultDialog from './ExecuteResultDialog.vue'
@@ -494,11 +495,7 @@ function toDate(value) {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-function formatDateTime(value) {
-  const date = toDate(value)
-  if (!date) return '-'
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
-}
+
 
 function formatDuration(startValue, endValue) {
   const start = toDate(startValue)

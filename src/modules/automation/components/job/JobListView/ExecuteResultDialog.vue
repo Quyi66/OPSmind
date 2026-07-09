@@ -395,6 +395,7 @@
 <script setup>
 import { computed, ref, watch, nextTick, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
+import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/constants/jobStatus'
 import { authService } from '@/core/auth'
@@ -881,18 +882,7 @@ function parseStepMessage(message) {
   }
 }
 
-function formatDateTime(value) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  const Y = date.getFullYear()
-  const M = String(date.getMonth() + 1).padStart(2, '0')
-  const D = String(date.getDate()).padStart(2, '0')
-  const h = String(date.getHours()).padStart(2, '0')
-  const m = String(date.getMinutes()).padStart(2, '0')
-  const s = String(date.getSeconds()).padStart(2, '0')
-  return `${Y}-${M}-${D} ${h}:${m}:${s}`
-}
+
 
 function formatDuration(start, end) {
   const startDate = start ? new Date(start) : null

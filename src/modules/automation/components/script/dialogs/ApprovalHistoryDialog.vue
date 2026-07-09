@@ -89,6 +89,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as gfsApi from '@/modules/automation/api/gfs'
 
 const props = defineProps({
@@ -200,19 +201,7 @@ function detectActionOfApprove(record) {
   return action?.text || fileStatus || '-'
 }
 
-// 格式化日期时间
-function formatDateTime(timestamp) {
-  if (!timestamp) return '-'
-  const date = new Date(timestamp)
-  if (isNaN(date.getTime())) return timestamp
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+
 
 // 显示审批详情 (与源代码 showApprovalDetail 逻辑一致)
 async function showApprovalDetail(approvalId) {

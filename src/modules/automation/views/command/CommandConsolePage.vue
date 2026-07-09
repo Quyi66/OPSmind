@@ -27,7 +27,6 @@
 
         <el-form-item label="语法">
           <el-select v-model="commandType" placeholder="请选择执行语法" class="grammar-select">
-            <el-option label="请选择执行语法" value="" disabled />
             <el-option label="cmd" value="cmd" />
             <el-option label="shell" value="shell" />
             <el-option label="python" value="python" />

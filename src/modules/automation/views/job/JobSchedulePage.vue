@@ -412,6 +412,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
+import { formatDateTime } from '../../utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
 import FlowEditor from '../../components/job/schedule/components/FlowEditor.vue'
 import FlowInstanceViewer from '../../components/job/schedule/components/FlowInstanceViewer.vue'
@@ -960,16 +961,7 @@ function resolveResponseArray(response) {
   return []
 }
 
-function formatDateTime(value) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
 
-function pad(value) {
-  return value < 10 ? `0${value}` : String(value)
-}
 </script>
 
 <style scoped lang="scss">

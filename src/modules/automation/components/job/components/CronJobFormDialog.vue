@@ -35,7 +35,6 @@
 
       <el-form-item label="应用资源" prop="appCode">
         <el-select v-model="formData.appCode" placeholder="请选择应用资源" clearable filterable>
-          <el-option label="" value="" />
           <el-option
             v-for="app in appletsList"
             :key="app.name"
@@ -49,9 +48,9 @@
         <el-select
           v-model="formData.jobType"
           placeholder="请选择运维工具类型"
+          clearable
           @change="handleJobTypeChange"
         >
-          <el-option label="" value="" />
           <el-option label="脚本任务" value="script" />
           <el-option label="REST接口" value="rest" />
           <el-option label="巡检任务" value="audit" />

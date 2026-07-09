@@ -165,6 +165,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
+import { formatDateTime } from '../../utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
 import JobApproveDetailDialog from '../../components/job/JobApproveDetailDialog.vue'
 
@@ -283,13 +284,7 @@ function getStatusType(status) {
   return statusMap[status]?.type || 'info'
 }
 
-function formatDateTime(value) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  const pad = n => (n < 10 ? `0${n}` : String(n))
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
-}
+
 
 function formatExpirationTime(value) {
   if (!value) return '-'
