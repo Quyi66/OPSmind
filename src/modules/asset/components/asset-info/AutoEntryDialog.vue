@@ -65,17 +65,18 @@
           <el-input v-model="formData.value" type="textarea" :rows="3" placeholder="请输入属性值" />
         </el-form-item>
 
-        <el-form-item label="执行引擎节点(instance group)">
+        <el-form-item label="执行引擎节点 (Instance Group)">
           <el-select
             v-model="formData.instanceGroup"
             placeholder="请选择执行引擎节点"
             style="width: 100%"
+            clearable
           >
             <el-option
               v-for="item in instanceGroupOptions"
-              :key="item"
-              :label="item"
-              :value="item"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
             />
           </el-select>
           <div class="form-desc">此为Ansible或者Tower引擎节点</div>
@@ -135,7 +136,7 @@ const formRules = {
 // 下拉选项
 const groupOptions = ref([])
 const attrOptions = ref([])
-const instanceGroupOptions = ref(['default'])
+const instanceGroupOptions = ref([{ label: 'default', value: 'default' }])
 
 // 加载分组列表
 const loadGroupOptions = async () => {
@@ -165,10 +166,17 @@ const loadAttrOptions = async () => {
 const loadInstanceGroupOptions = async () => {
   try {
     const instanceGroups = await automationApi.getInstanceGroupList()
-    instanceGroupOptions.value = instanceGroups.length > 0 ? ['none', ...instanceGroups] : ['default']
+    if (instanceGroups.length > 0) {
+      instanceGroupOptions.value = [
+        { label: '不指定 (none)', value: 'none' },
+        ...instanceGroups.map(item => ({ label: item, value: item }))
+      ]
+    } else {
+      instanceGroupOptions.value = [{ label: 'default', value: 'default' }]
+    }
   } catch (error) {
     console.error('加载执行引擎节点失败:', error)
-    instanceGroupOptions.value = ['default']
+    instanceGroupOptions.value = [{ label: 'default', value: 'default' }]
   }
 }
 

@@ -575,6 +575,7 @@ import CustomViewDialog from '@/modules/patches/components/host-detail/dialogs/C
 import BatchLocationDialog from '@/modules/patches/components/host-detail/dialogs/BatchLocationDialog.vue'
 
 import { viewConfigApi } from '@/modules/patches/api'
+import { formatDateTime } from '../utils/helpers'
 
 // 路由
 const route = useRoute()
@@ -871,22 +872,6 @@ const _getConnRateClass = rate => {
   return 'text-warning'
 }
 
-// 格式化日期时间
-const formatDateTime = dateStr => {
-  if (!dateStr) return ''
-  try {
-    const date = new Date(dateStr)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hour = String(date.getHours()).padStart(2, '0')
-    const minute = String(date.getMinutes()).padStart(2, '0')
-    const second = String(date.getSeconds()).padStart(2, '0')
-    return `${year}-${month}-${day} ${hour}:${minute}:${second}`
-  } catch {
-    return dateStr
-  }
-}
 
 // 解决 ElProgress 异常连通率转换并进行类型安全防御
 const getProgressRate = rate => {

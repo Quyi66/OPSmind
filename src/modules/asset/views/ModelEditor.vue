@@ -189,7 +189,7 @@
                     <el-collapse v-model="settingPanels">
                       <el-collapse-item title="基本" name="basic">
                         <el-form label-position="top" size="small">
-                          <el-form-item label="Code">
+                          <el-form-item label="属性代码">
                             <el-input v-model="selectedAttr.code" placeholder="属性代码" />
                           </el-form-item>
                           <el-form-item label="标题">
@@ -430,13 +430,13 @@
                             <DataConverterInput v-model="displayConverter" :kinds="'js,str'" />
                           </el-form-item>
 
-                          <el-form-item label="Click">
+                          <el-form-item label="点击行为">
                             <el-select
                               v-model="displayClick"
-                              placeholder="None"
+                              placeholder="请选择点击行为"
                               style="width: 100%"
                             >
-                              <el-option label="None" value="" />
+                              <el-option label="无动作" value="" />
                               <el-option label="复制到剪贴板" value="copy" />
                               <el-option label="打开链接" value="link" />
                             </el-select>
@@ -1222,7 +1222,8 @@ onMounted(() => {
   }
 
   :deep(.el-tab-pane) {
-    height: auto;
+    height: 100%;
+    overflow: auto;
   }
 }
 
@@ -1231,7 +1232,8 @@ onMounted(() => {
 
   &.attrs-tab {
     padding: 0;
-    height: calc(100vh - 160px);
+    height: 100%;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
   }

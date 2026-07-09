@@ -742,6 +742,7 @@ import { apiService } from '@/core/api'
 import { pollJobStatus } from '@/composables/useJobPolling'
 import { translateI18nKey } from '@/utils/i18n'
 import { assetApi, dataManageApi, exceptionApi, operationLogApi } from '../api'
+import { formatDateTime } from '../utils/helpers'
 import { useAssetOverviewWorkbench } from '../utils/useAssetOverviewWorkbench'
 import { useAssetWorkbenchDrawers } from '../composables/useAssetWorkbenchDrawers'
 import { ensureArray, ensurePositiveInteger, normalizePagedResponse } from '../utils/response'
@@ -895,13 +896,11 @@ function toNumber(v) {
 function formatCount(v) {
   return toNumber(v).toLocaleString('zh-CN')
 }
-function formatDateTime(v) {
+const formatDateTimeShort = (v) => {
   if (!v) return '--'
-  const d = new Date(v)
-  if (Number.isNaN(d.getTime())) return '--'
-  return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  const res = formatDateTime(v, 'MM-DD HH:mm')
+  return res === '-' ? '--' : res
 }
-const formatDateTimeShort = formatDateTime
 
 function formatConnRate(v) {
   if (v === null || v === undefined || v === '') return '--'
@@ -2416,7 +2415,7 @@ onUnmounted(() => {
   .aw-drawer-row__engine,
   .aw-drawer-row__user,
   .aw-drawer-row__time {
-    min-width: 0;
+    min-width: 130px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

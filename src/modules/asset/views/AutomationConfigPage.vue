@@ -381,7 +381,7 @@
             <el-input v-model="automationForm.ip" disabled />
           </el-form-item>
 
-          <el-form-item label="执行引擎节点 (Instance Group)" v-if="scriptEngine !== 'aap'">
+          <el-form-item label="执行引擎节点" v-if="scriptEngine !== 'aap'">
             <el-select
               v-model="automationForm.instanceGroup"
               placeholder="请选择连接所适用的执行引擎节点"
@@ -398,7 +398,7 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="AAP instance_group" v-if="scriptEngine === 'aap'">
+          <el-form-item label="AAP 引擎节点" v-if="scriptEngine === 'aap'">
             <el-select
               v-model="automationForm.aapInstanceGroup"
               placeholder="请选择"
@@ -563,7 +563,7 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="AAP instance_group" v-if="scriptEngine === 'aap'">
+          <el-form-item label="AAP 引擎节点" v-if="scriptEngine === 'aap'">
             <el-select
               v-model="ansibleForm.aapInstanceGroup"
               placeholder="请选择"

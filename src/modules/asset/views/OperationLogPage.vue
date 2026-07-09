@@ -210,6 +210,7 @@ import { ElMessage } from 'element-plus'
 import { operationLogApi } from '../api'
 import { translateI18nKey } from '@/utils/i18n'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import { formatDateTime } from '../utils/helpers'
 
 const route = useRoute()
 const router = useRouter()
@@ -423,12 +424,6 @@ function showRunResult(row) {
   runResultDialogVisible.value = true
 }
 
-// 格式化日期时间
-function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
-}
 
 // 获取操作标签
 function getActionLabel(action) {

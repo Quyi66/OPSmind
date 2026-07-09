@@ -124,7 +124,7 @@
                   <el-collapse v-model="settingPanels">
                     <el-collapse-item title="基本" name="basic">
                       <el-form label-position="top" size="small">
-                        <el-form-item label="Code">
+                        <el-form-item label="属性代码">
                           <el-input v-model="selectedAttr.code" placeholder="属性代码" />
                         </el-form-item>
                         <el-form-item label="标题">
