@@ -161,7 +161,7 @@
         >
           <el-table-column prop="cveId" label="CVE 编号" width="180" sortable="custom">
             <template #default="{ row }">
-              <el-link type="primary" :underline="false" @click="viewDetail(row)">
+              <el-link type="primary" underline="never" @click="viewDetail(row)">
                 {{ row.cveId }}
               </el-link>
             </template>

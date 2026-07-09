@@ -94,7 +94,7 @@
                 <template #default="{ row }">
                   <el-link
                     type="primary"
-                    :underline="false"
+                    underline="never"
                     class="path-link"
                     @click="handleViewGroup(row)"
                   >
@@ -216,7 +216,7 @@
                 <template #default="{ row }">
                   <el-link
                     type="primary"
-                    :underline="false"
+                    underline="never"
                     class="path-link"
                     @click="handleViewTag(row)"
                   >

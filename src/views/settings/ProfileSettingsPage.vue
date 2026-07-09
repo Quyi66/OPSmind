@@ -133,6 +133,13 @@
                   label-position="left"
                   class="profile-form"
                 >
+                  <!-- 隐藏的用户名输入框，用于提升无障碍访问和协助密码管理器 -->
+                  <el-input
+                    v-model="account.login"
+                    autocomplete="username"
+                    style="position: absolute; top: -9999px; left: -9999px; width: 0; height: 0; opacity: 0;"
+                  />
+
                   <el-form-item label="新密码" prop="password">
                     <el-input
                       v-model="passwordForm.password"

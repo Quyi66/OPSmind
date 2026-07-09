@@ -345,7 +345,7 @@
         :page-sizes="[10, 20, 50, 100]"
         :total="vulPagination.total"
         layout="total, sizes, prev, pager, next"
-        small
+        size="small"
         background
         @size-change="handleVulSizeChange"
         @current-change="handleVulPageChange"

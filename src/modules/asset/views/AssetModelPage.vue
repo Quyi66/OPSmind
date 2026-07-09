@@ -46,7 +46,7 @@
             <template #default="{ row }">
               <el-link
                 type="primary"
-                :underline="false"
+                underline="never"
                 class="model-name-link"
                 @click="handleViewModel(row)"
               >

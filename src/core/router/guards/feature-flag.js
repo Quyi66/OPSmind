@@ -6,7 +6,7 @@ import { FeatureFlagEvaluator } from '@/config/feature-flags.config.js'
 import { authService } from '@/core/auth'
 
 export function setupFeatureFlagGuard(router) {
-  router.beforeEach(async (to, from, next) => {
+  router.beforeEach(async (to) => {
     // 检查功能开关
     if (to.meta.featureFlag) {
       const currentUser = authService.getCurrentUser()
@@ -16,8 +16,7 @@ export function setupFeatureFlagGuard(router) {
 
       if (!isEnabled) {
         // 重定向到首页或显示功能不可用页面
-        next('/home')
-        return
+        return '/home'
       }
     }
 
@@ -33,7 +32,5 @@ export function setupFeatureFlagGuard(router) {
         // 这里可以动态修改组件或重定向到 Vue 路由
       }
     }
-
-    next()
   })
 }

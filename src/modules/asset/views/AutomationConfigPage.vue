@@ -127,7 +127,7 @@
                   <el-link
                     v-if="row.ansibleConfigName"
                     type="primary"
-                    :underline="false"
+                    underline="never"
                     class="link-with-icon"
                     @click="switchToTab('ansible')"
                   >

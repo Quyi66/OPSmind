@@ -62,7 +62,7 @@
           show-overflow-tooltip
         >
           <template #default="{ row }">
-            <el-link type="primary" :underline="false" @click="handleViewDetail(row)">
+            <el-link type="primary" underline="never" @click="handleViewDetail(row)">
               {{ row.completePackageName || '-' }}
             </el-link>
           </template>

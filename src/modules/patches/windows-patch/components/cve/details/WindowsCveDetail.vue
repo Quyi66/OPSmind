@@ -50,7 +50,7 @@
                       :href="cveDetail.webUrl"
                       target="_blank"
                       type="primary"
-                      :underline="false"
+                      underline="never"
                       class="cve-link"
                     >
                       {{ cveDetail.cveId }}
@@ -109,7 +109,7 @@
                       :href="cveDetail.webUrl"
                       target="_blank"
                       type="primary"
-                      :underline="false"
+                      underline="never"
                     >
                       查看详情
                       <el-icon class="ms-1"><TopRight /></el-icon>
@@ -167,9 +167,9 @@
           <div class="tab-content-container">
             <div class="ops-filter-bar compact packages-filter-bar">
               <el-radio-group v-model="productFilter" size="small">
-                <el-radio-button label="all">全部</el-radio-button>
-                <el-radio-button label="affected">受影响</el-radio-button>
-                <el-radio-button label="fixed">已修复</el-radio-button>
+                <el-radio-button value="all">全部</el-radio-button>
+                <el-radio-button value="affected">受影响</el-radio-button>
+                <el-radio-button value="fixed">已修复</el-radio-button>
               </el-radio-group>
             </div>
             <div class="ops-table-wrapper" v-loading="productsLoading">
@@ -191,7 +191,7 @@
                       :href="row.kbUrl"
                       target="_blank"
                       type="primary"
-                      :underline="false"
+                      underline="never"
                     >
                       {{ row.kbArticle }}
                     </el-link>

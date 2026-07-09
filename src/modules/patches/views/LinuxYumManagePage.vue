@@ -41,7 +41,7 @@
       <el-table v-loading="hostLoading" :data="paginatedHostTableData" height="100%">
         <el-table-column prop="$data_owner" label="主机" min-width="150">
           <template #default="{ row }">
-            <el-link type="primary" :underline="false" @click="handleViewHostDetail(row)">
+            <el-link type="primary" underline="never" @click="handleViewHostDetail(row)">
               {{ row.$data_owner }}
             </el-link>
           </template>

@@ -166,7 +166,7 @@
         <el-table :data="kbList" class="natural-height-table" style="width: 100%">
           <el-table-column prop="kbNumber" label="KB 编号" width="140">
             <template #default="{ row }">
-              <el-link type="primary" :underline="false" @click="viewDetail(row)">
+              <el-link type="primary" underline="never" @click="viewDetail(row)">
                 {{ row.kbNumber }}
               </el-link>
             </template>

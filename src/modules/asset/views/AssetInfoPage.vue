@@ -208,7 +208,7 @@
                   <div class="identity-text">
                     <el-link
                       type="primary"
-                      :underline="false"
+                      underline="never"
                       class="hostname-link"
                       @click="handleView(row)"
                     >

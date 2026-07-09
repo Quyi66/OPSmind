@@ -88,7 +88,7 @@
 
         <el-table-column prop="pkg_name" label="名称" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-link type="primary" :underline="false" @click="openDetail(row)">
+            <el-link type="primary" underline="never" @click="openDetail(row)">
               {{ row.pkg_name }}
             </el-link>
           </template>
@@ -152,7 +152,7 @@
           :page-sizes="[10, 20, 50]"
           :total="detailPagination.total"
           layout="total, sizes, prev, pager, next"
-          small
+          size="small"
           background
           @size-change="handleDetailSizeChange"
           @current-change="handleDetailCurrentChange"

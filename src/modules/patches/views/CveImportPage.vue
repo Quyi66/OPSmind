@@ -12,7 +12,7 @@
             <el-breadcrumb-item>
               <el-link
                 type="primary"
-                :underline="false"
+                underline="never"
                 style="color: var(--el-color-primary); font-weight: 500"
                 @click="backToList"
               >
@@ -148,7 +148,7 @@
                   <el-table-column prop="rawRowNo" label="Excel行号" width="90" align="center" />
                   <el-table-column prop="cveId" label="CVE 编号" width="180">
                     <template #default="{ row }">
-                      <el-link type="primary" :underline="false" @click="showCveDetail(row.cveId)">
+                      <el-link type="primary" underline="never" @click="showCveDetail(row.cveId)">
                         {{ row.cveId }}
                       </el-link>
                     </template>
@@ -189,7 +189,7 @@
                         v-if="row.affectedHosts > 0"
                         type="primary"
                         class="fw-bold"
-                        :underline="false"
+                        underline="never"
                         @click="showAffectedHostsDialog(row)"
                       >
                         {{ row.affectedHosts }}
@@ -255,7 +255,7 @@
                   <el-table-column type="index" label="序号" width="60" align="center" />
                   <el-table-column prop="hostKey" label="主机 IP" width="150">
                     <template #default="{ row }">
-                      <el-link type="primary" :underline="false" @click="goToHostDetail(row)">
+                      <el-link type="primary" underline="never" @click="goToHostDetail(row)">
                         {{ row.hostKey }}
                       </el-link>
                     </template>
@@ -273,7 +273,7 @@
                               v-for="cveId in row.cveIds"
                               :key="cveId"
                               type="primary"
-                              :underline="false"
+                              underline="never"
                               @click="showCveDetail(cveId)"
                             >
                               {{ cveId }}
@@ -285,14 +285,14 @@
                               v-for="cveId in row.cveIds.slice(0, 2)"
                               :key="cveId"
                               type="primary"
-                              :underline="false"
+                              underline="never"
                               @click="showCveDetail(cveId)"
                             >
                               {{ cveId }}
                             </el-link>
                             <el-link
                               type="warning"
-                              :underline="false"
+                              underline="never"
                               class="fw-bold"
                               @click="showCvesForHostDialog(row)"
                             >
@@ -525,7 +525,7 @@
         <el-table :data="hostsForSelectedCve" style="width: 100%">
           <el-table-column prop="hostKey" label="主机 IP" width="180">
             <template #default="{ row }">
-              <el-link type="primary" :underline="false" @click="goToHostDetail(row)">
+              <el-link type="primary" underline="never" @click="goToHostDetail(row)">
                 {{ row.hostKey }}
               </el-link>
             </template>
@@ -570,7 +570,7 @@
             <template #default="{ row }">
               <el-link
                 type="primary"
-                :underline="false"
+                underline="never"
                 @click="handleCveClickFromHostDialog(row.cveId)"
               >
                 {{ row.cveId }}

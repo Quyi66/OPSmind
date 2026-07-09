@@ -199,7 +199,7 @@
         >
           <el-table-column prop="cveId" label="CVE 编号" width="180" sortable="custom">
             <!-- <template #default="{ row }">
-              <el-link type="primary" :underline="false" @click="viewDetail(row)">
+              <el-link type="primary" underline="never" @click="viewDetail(row)">
                 {{ row.cveId }}
               </el-link>
               <el-link
@@ -207,7 +207,7 @@
                 :href="row.webUrl"
                 target="_blank"
                 type="info"
-                :underline="false"
+                underline="never"
                 class="ms-1"
                 title="查看官方详情"
               >

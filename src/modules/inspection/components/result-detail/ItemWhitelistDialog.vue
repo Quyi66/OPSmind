@@ -43,7 +43,7 @@
         :total="filteredData.length"
         layout="total, sizes, prev, pager, next"
         background
-        small
+        size="small"
         @size-change="handlePageSizeChange"
         @current-change="handlePageChange"
       />

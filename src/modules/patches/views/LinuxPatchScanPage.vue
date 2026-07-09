@@ -213,7 +213,7 @@
             <el-table-column type="selection" width="45" />
             <el-table-column prop="host_key" label="主机" width="140">
               <template #default="{ row }">
-                <el-link type="primary" :underline="false" @click="handleHostClick(row)">
+                <el-link type="primary" underline="never" @click="handleHostClick(row)">
                   {{ row.host_key }}
                 </el-link>
               </template>

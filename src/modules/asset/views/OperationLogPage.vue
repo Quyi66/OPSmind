@@ -166,7 +166,7 @@
               <el-link
                 v-if="extractIpFromRow(row)"
                 type="primary"
-                :underline="false"
+                underline="never"
                 size="small"
                 @click="goToDevice(extractIpFromRow(row))"
               >

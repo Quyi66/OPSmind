@@ -195,8 +195,8 @@
                 stepStates[stepIndexes.pre] === 'success'
               "
             >
-              <el-radio-button label="edit">手动编辑</el-radio-button>
-              <el-radio-button label="upload">上传脚本</el-radio-button>
+              <el-radio-button value="edit">手动编辑</el-radio-button>
+              <el-radio-button value="upload">上传脚本</el-radio-button>
             </el-radio-group>
           </div>
           <div v-if="scriptModes.pre === 'edit'">
@@ -301,8 +301,8 @@
                 stepStates[stepIndexes.validate] === 'success'
               "
             >
-              <el-radio-button label="edit">手动编辑</el-radio-button>
-              <el-radio-button label="upload">上传脚本</el-radio-button>
+              <el-radio-button value="edit">手动编辑</el-radio-button>
+              <el-radio-button value="upload">上传脚本</el-radio-button>
             </el-radio-group>
           </div>
           <div v-if="scriptModes.post === 'edit'">

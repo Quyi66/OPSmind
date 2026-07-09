@@ -117,7 +117,7 @@ async function loadScheduleTasks() {
     const response = await apiService.get('/workflow/api/workflow/cron/app', {
       params: { appCode: 'uim' }
     })
-    const allTasks = response || []
+    const allTasks = response?.data || response || []
     // 客户端筛选
     if (taskKeyword.value) {
       const kw = taskKeyword.value.toLowerCase()

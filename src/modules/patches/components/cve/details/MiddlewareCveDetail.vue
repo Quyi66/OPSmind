@@ -53,7 +53,7 @@
                     <el-radio-button
                       v-for="(mw, index) in cveDetail.middlewares"
                       :key="index"
-                      :label="index"
+                      :value="index"
                     >
                       {{ mw.middlewareType }}
                     </el-radio-button>
@@ -74,7 +74,7 @@
                       :href="currentMiddleware.webUrl"
                       target="_blank"
                       type="primary"
-                      :underline="false"
+                      underline="never"
                       class="cve-link"
                     >
                       {{ cveId }}

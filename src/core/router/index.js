@@ -45,7 +45,7 @@ export function setupRouter() {
   setupFeatureFlagGuard(router)
 
   // 全局前置守卫 - 开始加载
-  router.beforeEach(async (to, from, next) => {
+  router.beforeEach(async (to, from) => {
     // 固定页面标题
     document.title = 'KoreOPS'
 
@@ -53,8 +53,6 @@ export function setupRouter() {
     if (to.path !== from.path) {
       startRouteLoading()
     }
-
-    next()
   })
 
   // beforeResolve - 组件加载完成后触发（异步组件已下载完成）

@@ -106,7 +106,7 @@
         <el-table-column type="selection" width="48" />
         <el-table-column label="主机" width="130">
           <template #default="{ row }">
-            <el-link type="primary" :underline="false" @click="openHostDrawer(row)">
+            <el-link type="primary" underline="never" @click="openHostDrawer(row)">
               {{ resolveHostKey(row) }}
             </el-link>
           </template>

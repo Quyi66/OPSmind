@@ -3,14 +3,14 @@
     <el-radio-group v-model="selectedType" @change="handleTypeChange">
       <!-- 每秒/每分/每时... -->
       <div class="field-option">
-        <el-radio label="every">
+        <el-radio value="every">
           {{ getEveryLabel() }}
         </el-radio>
       </div>
 
       <!-- 周期 -->
       <div class="field-option">
-        <el-radio label="range">
+        <el-radio value="range">
           周期 从
           <el-input-number
             v-model="rangeStart"
@@ -36,7 +36,7 @@
 
       <!-- 循环 -->
       <div class="field-option">
-        <el-radio label="interval">
+        <el-radio value="interval">
           从
           <el-input-number
             v-model="intervalStart"
@@ -63,7 +63,7 @@
 
       <!-- 指定（不适用于日和周的冲突） -->
       <div v-if="!isSpecialField" class="field-option">
-        <el-radio label="specific">指定</el-radio>
+        <el-radio value="specific">指定</el-radio>
       </div>
       <div v-if="!isSpecialField && selectedType === 'specific'" class="checkbox-group">
         <el-checkbox-group v-model="specificValues" @change="handleSpecificChange">
@@ -75,12 +75,12 @@
 
       <!-- 不指定（仅用于日和周） -->
       <div v-if="isSpecialField" class="field-option">
-        <el-radio label="unspecified">不指定</el-radio>
+        <el-radio value="unspecified">不指定</el-radio>
       </div>
 
       <!-- 年份可选项 -->
       <div v-if="fieldType === 'year' && optional" class="field-option">
-        <el-radio label="empty">不限制年份</el-radio>
+        <el-radio value="empty">不限制年份</el-radio>
       </div>
     </el-radio-group>
   </div>

@@ -47,7 +47,7 @@
                     <el-radio-button
                       v-for="source in sources"
                       :key="source.source"
-                      :label="source.source"
+                      :value="source.source"
                     >
                       {{ getSourceLabel(source.source) }}
                     </el-radio-button>
@@ -68,7 +68,7 @@
                       :href="cveDetail.webUrl"
                       target="_blank"
                       type="primary"
-                      :underline="false"
+                      underline="never"
                       class="cve-link"
                     >
                       {{ cveDetail.cveId || cveId }}
@@ -185,19 +185,19 @@
                 <el-radio-button
                   v-for="option in packageSourceOptions"
                   :key="option.value"
-                  :label="option.value"
+                  :value="option.value"
                 >
                   {{ option.label }}
                 </el-radio-button>
               </el-radio-group>
 
               <el-radio-group v-model="packageFilter" size="small">
-                <el-radio-button label="全部">全部</el-radio-button>
-                <el-radio-button label="受影响">受影响</el-radio-button>
-                <el-radio-button label="延迟修复">延迟修复</el-radio-button>
-                <el-radio-button label="已修复">已修复</el-radio-button>
-                <el-radio-button label="不受影响">不受影响</el-radio-button>
-                <el-radio-button label="不修复">不修复</el-radio-button>
+                <el-radio-button value="全部">全部</el-radio-button>
+                <el-radio-button value="受影响">受影响</el-radio-button>
+                <el-radio-button value="延迟修复">延迟修复</el-radio-button>
+                <el-radio-button value="已修复">已修复</el-radio-button>
+                <el-radio-button value="不受影响">不受影响</el-radio-button>
+                <el-radio-button value="不修复">不修复</el-radio-button>
               </el-radio-group>
 
               <el-select
@@ -256,7 +256,7 @@
                     <el-link
                       v-if="hasPackageDetail(row)"
                       type="primary"
-                      :underline="false"
+                      underline="never"
                       @click="handleViewPackageDetail(row)"
                     >
                       {{ row.packageName }}

@@ -80,7 +80,7 @@
         <el-table-column type="selection" width="50" />
         <el-table-column prop="patch_id" label="补丁编号" min-width="160" sortable>
           <template #default="{ row }">
-            <el-link type="primary" :underline="false" @click="handleViewPatchDetail(row)">
+            <el-link type="primary" underline="never" @click="handleViewPatchDetail(row)">
               {{ row.patch_id }}
             </el-link>
           </template>
@@ -112,7 +112,7 @@
         </el-table-column>
         <el-table-column prop="effect_host_count" label="受影响的主机" width="130" align="left">
           <template #default="{ row }">
-            <el-link type="primary" :underline="false" @click="handleViewAffectedHosts(row)">
+            <el-link type="primary" underline="never" @click="handleViewAffectedHosts(row)">
               {{ row.effect_host_count }}
             </el-link>
           </template>

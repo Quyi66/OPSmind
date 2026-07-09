@@ -7,14 +7,13 @@ import { authService } from '@/core/auth'
 import { canAccessMenuCode, resolveMenuCodeFromRoute } from '@/core/auth/permission-policy'
 
 export function setupPermissionGuard(router: Router): void {
-  router.beforeEach(async (to, _from, next) => {
+  router.beforeEach(async (to) => {
     // 检查是否需要特定权限
     if (to.meta?.requiresPermission) {
       const hasPermission = authService.hasPermission(to.meta.requiresPermission as string)
 
       if (!hasPermission) {
-        next('/home')
-        return
+        return '/home'
       }
     }
 
@@ -26,11 +25,8 @@ export function setupPermissionGuard(router: Router): void {
       )
 
       if (!hasMenuAccess) {
-        next('/home')
-        return
+        return '/home'
       }
     }
-
-    next()
   })
 }

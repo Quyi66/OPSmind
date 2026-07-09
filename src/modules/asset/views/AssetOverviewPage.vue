@@ -452,7 +452,7 @@
             :total="assetListDrawer.total"
             layout="sizes, prev, pager, next"
             background
-            small
+            size="small"
             @current-change="handleAssetListPageChange"
             @size-change="handleAssetListPageSizeChange"
           />
@@ -534,7 +534,7 @@
             :total="exceptionDrawer.total"
             layout="sizes, prev, pager, next"
             background
-            small
+            size="small"
             @current-change="handleExceptionPageChange"
             @size-change="handleExceptionPageSizeChange"
           />
@@ -615,7 +615,7 @@
             :total="recentLogsDrawer.total"
             layout="sizes, prev, pager, next"
             background
-            small
+            size="small"
             @current-change="handleRecentLogsPageChange"
             @size-change="handleRecentLogsPageSizeChange"
           />

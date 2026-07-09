@@ -309,7 +309,7 @@
                 <template #default="{ row }">
                   <el-link
                     type="primary"
-                    :underline="false"
+                    underline="never"
                     style="font-weight: 500"
                     @click="showCveDetail(row.cveId)"
                   >
@@ -319,7 +319,7 @@
               </el-table-column>
               <el-table-column prop="hostKey" label="主机 IP" width="150">
                 <template #default="{ row }">
-                  <el-link type="primary" :underline="false" @click="goToHostDetail(row)">
+                  <el-link type="primary" underline="never" @click="goToHostDetail(row)">
                     {{ row.hostKey }}
                   </el-link>
                 </template>
@@ -364,7 +364,7 @@
                     <template v-for="(pId, index) in getPatchIds(row.patchId)" :key="pId">
                       <el-link
                         type="primary"
-                        :underline="false"
+                        underline="never"
                         style="font-weight: 500"
                         @click="showPatchDetail(pId, row.osDistro)"
                       >
@@ -482,7 +482,7 @@
                 <template #default="{ row }">
                   <el-link
                     type="primary"
-                    :underline="false"
+                    underline="never"
                     style="font-weight: 500"
                     @click="showCveDetail(row.cveId)"
                   >
@@ -493,7 +493,7 @@
 
               <el-table-column prop="hostKey" label="主机 IP" width="150">
                 <template #default="{ row }">
-                  <el-link type="primary" :underline="false" @click="goToHostDetail(row)">
+                  <el-link type="primary" underline="never" @click="goToHostDetail(row)">
                     {{ row.hostKey }}
                   </el-link>
                 </template>
@@ -544,7 +544,7 @@
                     <template v-for="(pId, index) in getPatchIds(row.patchId)" :key="pId">
                       <el-link
                         type="primary"
-                        :underline="false"
+                        underline="never"
                         style="font-weight: 500"
                         @click="showPatchDetail(pId, row.osDistro)"
                       >

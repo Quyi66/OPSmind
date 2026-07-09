@@ -10,11 +10,11 @@
       <el-form label-position="top">
         <el-form-item label="操作">
           <el-radio-group v-model="status">
-            <el-radio label="PUBLISHED">
+            <el-radio value="PUBLISHED">
               <i class="fa fa-play-circle text-success me-1"></i>
               启用
             </el-radio>
-            <el-radio label="DISABLED">
+            <el-radio value="DISABLED">
               <i class="fa fa-stop-circle text-danger me-1"></i>
               停用
             </el-radio>

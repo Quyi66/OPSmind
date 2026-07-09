@@ -112,7 +112,7 @@
           :page-sizes="[10, 20, 50]"
           :total="pagination.total"
           layout="total, sizes, prev, pager, next"
-          small
+          size="small"
           background
           @size-change="handleSizeChange"
           @current-change="handlePageChange"

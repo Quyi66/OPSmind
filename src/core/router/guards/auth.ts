@@ -7,36 +7,22 @@ import { authService } from '@/core/auth'
 import { LOGIN_REDIRECT_URL } from '@/config/route-paths'
 
 export function setupAuthGuard(router: Router): void {
-  router.beforeEach(async (to, from, next) => {
+  router.beforeEach(async (to, from) => {
     // 如果是从登录页面跳转到主页面，延迟一下确保认证状态已更新
     if (from.path === '/login' && to.path === '/home') {
       await new Promise(resolve => setTimeout(resolve, 100))
     }
 
     const isAuthenticated = authService.isAuthenticated()
-    const currentUser = authService.getCurrentUser()
-
-    //   from: from.path,
-    //   to: to.path,
-    //   isAuthenticated,
-    //   hasUser: !!currentUser,
-    //   userLogin: currentUser?.login,
-    //   requiresAuth: to.meta?.requiresAuth,
-    //   requiresGuest: to.meta?.requiresGuest
-    // })
 
     // 需要认证但未登录
     if (to.meta?.requiresAuth && !isAuthenticated) {
-      next('/login')
-      return
+      return '/login'
     }
 
     // 已登录用户访问登录页
     if (to.meta?.requiresGuest && isAuthenticated) {
-      next('/home')
-      return
+      return '/home'
     }
-
-    next()
   })
 }

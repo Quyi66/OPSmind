@@ -12,8 +12,8 @@
           :disabled="disabled"
           @update:model-value="handleModeChange"
         >
-          <el-radio-button label="edit">手动编辑</el-radio-button>
-          <el-radio-button label="upload">上传脚本</el-radio-button>
+          <el-radio-button value="edit">手动编辑</el-radio-button>
+          <el-radio-button value="upload">上传脚本</el-radio-button>
         </el-radio-group>
       </div>
 
