@@ -216,6 +216,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { formatDateTime } from '@/utils/date'
 import { Refresh } from '@element-plus/icons-vue'
 import { useApi } from '@/core/api'
 import { authService } from '@/core/auth'
@@ -272,22 +273,7 @@ const hostDetailContext = ref({
   runId: ''
 })
 
-function formatDateTime(timestamp) {
-  if (!timestamp) return '-'
-  try {
-    const date = new Date(timestamp)
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-  } catch {
-    return timestamp
-  }
-}
+
 
 function formatFilenameTimestamp(timestamp) {
   if (!timestamp) return 'unknown'

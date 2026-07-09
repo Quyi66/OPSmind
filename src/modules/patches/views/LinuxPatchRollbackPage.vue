@@ -197,6 +197,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { formatDateTime } from '@/utils/date'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchRollbackApi } from '../api'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
@@ -443,21 +444,7 @@ function parseUpdatePkgs(pkgsStr) {
   }
 }
 
-// 格式化日期时间
-function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  return date
-    .toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-    .replace(/\//g, '-')
-}
+
 
 // 加载数据
 async function loadData() {

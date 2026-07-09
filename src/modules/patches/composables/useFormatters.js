@@ -2,36 +2,17 @@
  * 格式化工具函数 Composable
  */
 
+import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
+
 // 格式化日期
 export function formatDate(dateStr) {
   if (!dateStr) return '-'
-  try {
-    const date = new Date(dateStr)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  } catch {
-    return dateStr
-  }
+  return formatDateTimeGlobal(dateStr, 'YYYY-MM-DD')
 }
 
 // 格式化日期时间
 export function formatDateTime(timestamp) {
-  if (!timestamp) return '-'
-  try {
-    const date = new Date(timestamp)
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-  } catch {
-    return timestamp
-  }
+  return formatDateTimeGlobal(timestamp)
 }
 
 // 获取已安装软件包数量

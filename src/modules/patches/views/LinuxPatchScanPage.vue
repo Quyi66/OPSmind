@@ -1000,6 +1000,7 @@
 import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { formatDateTime } from '@/utils/date'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi } from '../api'
 import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
@@ -1508,19 +1509,7 @@ const rollbackTargetHosts = ref([])
 const rollbackPackageCandidates = ref([])
 const rollbackSelectionSummary = ref([])
 
-// 格式化日期时间
-function formatDateTime(timestamp) {
-  if (!timestamp) return '-'
-  const date = new Date(timestamp)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
-}
+
 
 // 加载 KPI 数据
 async function loadKpiData() {

@@ -980,6 +980,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
+import { formatDateTime } from '@/utils/date'
 import { ElMessageBox } from 'element-plus'
 import { patchInstallApi } from '../../../api'
 import { getPatchTaskWizardSteps } from '../../../constants/task-display'
@@ -1245,21 +1246,7 @@ const installConfig = reactive({
   postScript: ''
 })
 
-// 格式化日期时间
-function formatDateTime(timestamp) {
-  if (!timestamp) return '-'
-  const date = new Date(timestamp)
-  return date
-    .toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-    .replace(/\//g, '-')
-}
+
 
 // ============================================================
 // 向导步骤定义

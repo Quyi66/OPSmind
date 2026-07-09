@@ -166,6 +166,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
+import { formatDateTime } from '@/utils/date'
 import { Refresh } from '@element-plus/icons-vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n'
@@ -253,23 +254,7 @@ async function loadData() {
   }
 }
 
-// 格式化日期时间
-function formatDateTime(timestamp) {
-  if (!timestamp) return '-'
-  try {
-    const date = new Date(timestamp)
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-  } catch (error) {
-    return timestamp
-  }
-}
+
 
 // 格式化操作类型
 function formatAction(action) {

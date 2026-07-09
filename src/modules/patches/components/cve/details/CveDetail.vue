@@ -464,6 +464,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import * as echarts from 'echarts'
 import { useTheme } from '@/composables/useTheme'
@@ -649,17 +650,8 @@ const impactLegendItems = computed(() => {
   ]
 })
 
-// 格式化日期 (含时间)
 function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  if (isNaN(date.getTime())) return dateStr
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const hh = String(date.getHours()).padStart(2, '0')
-  const mm = String(date.getMinutes()).padStart(2, '0')
-  return `${y}-${m}-${d} ${hh}:${mm}`
+  return formatDateTimeGlobal(dateStr, 'YYYY-MM-DD HH:mm')
 }
 
 // 获取严重等级样式

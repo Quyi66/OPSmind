@@ -740,6 +740,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { formatDateTime } from '@/utils/date'
 import { Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { urgencyApi, patchScanApi } from '../api'
@@ -1194,20 +1195,7 @@ function formatNumber(val) {
   return typeof val === 'number' ? val.toLocaleString() : val || 0
 }
 
-// 格式化日期
-function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  if (Number.isNaN(date.getTime())) return dateStr
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
-}
+
 
 // 标签颜色映射
 function getExploitTagType(exploit) {
