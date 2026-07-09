@@ -2,22 +2,9 @@
  * 通用工具函数
  */
 
-/**
- * 格式化日期时间
- * @param {string} dateStr - 日期字符串
- * @returns {string} 格式化后的日期时间
- */
-export function formatDateTime(dateStr) {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-}
+import { formatDateTime } from '@/utils/date'
+
+export { formatDateTime }
 
 /**
  * 解析 auditParams 获取主机和脚本信息

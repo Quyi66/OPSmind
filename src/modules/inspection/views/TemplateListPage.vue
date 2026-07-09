@@ -63,7 +63,7 @@
         style="width: 100%"
         row-key="id"
         :default-sort="{ prop: 'executedAt', order: 'descending' }"
-        max-heigth="calc(100vh - 260px)"
+        max-height="calc(100vh - 260px)"
       >
         <!-- 名称 -->
         <el-table-column
@@ -145,6 +145,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { templateApi, paramApi } from '../api'
 import TemplateEditDialog from '../components/template/TemplateEditDialog.vue'
@@ -202,14 +203,7 @@ const paginatedData = computed(() => {
  */
 function formatDateTime(dateStr) {
   if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+  return formatDateTimeGlobal(dateStr)
 }
 
 /**

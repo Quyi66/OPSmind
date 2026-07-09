@@ -107,6 +107,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
 import axios from 'axios'
 import { authService } from '@/core/auth'
 import { jobApi, paramApi } from '../../api'
@@ -265,14 +266,7 @@ async function handleShowJobStatus(row) {
 // Utility functions
 function formatDateTime(dateStr) {
   if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+  return formatDateTimeGlobal(dateStr)
 }
 
 function getStatusType(status) {

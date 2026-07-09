@@ -165,6 +165,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { formatDateTime as formatDateTimeGlobal } from '@/utils/date'
 import { Search, RefreshRight, Refresh } from '@element-plus/icons-vue'
 import { packageApi } from '../api'
 
@@ -281,17 +282,7 @@ function handleDetailCurrentChange(val) {
 // 格式化时间
 function formatDateTime(dateStr) {
   if (!dateStr) return ''
-  const date = new Date(dateStr)
-  if (isNaN(date.getTime())) return dateStr
-
-  const pad = n => (n < 10 ? `0${n}` : n)
-  const y = date.getFullYear()
-  const m = pad(date.getMonth() + 1)
-  const d = pad(date.getDate())
-  const h = pad(date.getHours())
-  const min = pad(date.getMinutes())
-  const s = pad(date.getSeconds())
-  return `${y}-${m}-${d} ${h}:${min}:${s}`
+  return formatDateTimeGlobal(dateStr)
 }
 
 // 打开详情
