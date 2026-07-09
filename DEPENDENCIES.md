@@ -31,29 +31,29 @@ npm install --save-dev typescript vue-tsc @types/node
 ```json
 {
    "devDependencies": {
-      "@tailwindcss/postcss": "^4.1.18",
+      "@tailwindcss/postcss": "^4.3.2",
       "@types/crypto-js": "^4.2.2",
-      "@types/node": "^24.3.0",
-      "@vitejs/plugin-vue": "^6.0.1",
-      "@vitest/ui": "^4.0.15",
+      "@types/node": "^26.1.1",
+      "@vitejs/plugin-vue": "^6.0.7",
+      "@vitest/ui": "^4.1.10",
       "@vue/eslint-config-prettier": "^10.2.0",
-      "@vue/test-utils": "^2.4.6",
-      "autoprefixer": "^10.4.21",
+      "@vue/test-utils": "^2.4.11",
+      "autoprefixer": "^10.5.2",
       "eslint": "^9.39.1",
       "eslint-plugin-vue": "^9.19.2",
-      "happy-dom": "^18.0.1",
+      "happy-dom": "^20.10.6",
       "husky": "^9.1.7",
       "jsdom": "^26.1.0",
-      "lint-staged": "^16.1.5",
-      "postcss": "^8.5.6",
-      "prettier": "^3.6.2",
-      "rimraf": "^6.0.1",
-      "sass-embedded": "^1.90.0",
-      "tailwindcss": "^4.1.18",
+      "lint-staged": "^17.0.8",
+      "postcss": "^8.5.16",
+      "prettier": "^3.9.4",
+      "rimraf": "^6.1.3",
+      "sass-embedded": "^1.100.0",
+      "tailwindcss": "^4.3.2",
       "typescript": "^5.9.3",
       "vite": "^7.1.2",
-      "vitest": "^4.0.15",
-      "vue-tsc": "^3.1.8"
+      "vitest": "^4.1.10",
+      "vue-tsc": "^3.3.7"
    }
 }
 ```
