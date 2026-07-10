@@ -94,7 +94,7 @@
   //margin-bottom: 12px;
 
   // 使用 el-form 时的样式
-  :deep(.el-form) {
+  .el-form {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
@@ -102,7 +102,7 @@
     width: 100%;
   }
 
-  :deep(.el-form-item) {
+  .el-form-item {
     margin-right: 0;
     margin-bottom: 0;
 
@@ -114,13 +114,13 @@
   }
 
   // 复选框组样式
-  :deep(.el-checkbox-group) {
+  .el-checkbox-group {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
 
-  :deep(.el-checkbox) {
+  .el-checkbox {
     margin-right: 0;
     height: auto;
 

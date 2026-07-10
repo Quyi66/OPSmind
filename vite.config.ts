@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv, type Plugin, type UserConfig } from 'vite'
+import { transform as esbuildTransform } from 'esbuild'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import { resolve } from 'path'
@@ -58,6 +59,35 @@ function buildVersionPlugin(buildHash: string, outDir: string): Plugin {
   }
 }
 
+/**
+ * Vite 8 的 Rolldown/Oxc minifier 暂不支持 dropConsole，
+ * 通过 esbuild transform API 在构建时移除 console/debugger 语句。
+ */
+function dropConsolePlugin(drop: ('console' | 'debugger')[]): Plugin {
+  return {
+    name: 'opsmind-drop-console',
+    apply: 'build',
+    enforce: 'post',
+    async transform(code, id) {
+      const [filepath] = id.split('?')
+      if (
+        !id.includes('node_modules') &&
+        /\.(vue|ts|js|tsx|jsx|mts|cts)$/.test(filepath)
+      ) {
+        const ext = filepath.split('.').pop()
+        const loader = ext && ['js', 'jsx', 'ts', 'tsx'].includes(ext) ? (ext as any) : 'js'
+        const result = await esbuildTransform(code, {
+          loader,
+          drop,
+          minify: false,
+          sourcemap: true
+        })
+        return { code: result.code, map: result.map || null }
+      }
+    }
+  }
+}
+
 export default defineConfig(({ command, mode }): UserConfig => {
   const env = loadEnv(mode, process.cwd(), '')
   const isProduction = mode === 'production'
@@ -81,6 +111,15 @@ export default defineConfig(({ command, mode }): UserConfig => {
 
       // 构建时生成 version.json（仅生产环境）
       ...(isProduction ? [buildVersionPlugin(buildHash, env.VITE_BUILD_OUTDIR || 'dist')] : []),
+
+      // 生产环境移除 console/debugger（Vite 8 Rolldown/Oxc 暂不支持 dropConsole，通过 esbuild transform 实现）
+      ...(isProduction
+        ? [
+            dropConsolePlugin(
+              env.VITE_DEBUG === 'true' ? ['debugger'] : ['console', 'debugger']
+            )
+          ]
+        : []),
 
       // 生产环境将构建产物 CSS 设为非阻塞加载
       ...(isProduction
@@ -251,37 +290,76 @@ export default defineConfig(({ command, mode }): UserConfig => {
       // 禁用模块预加载 - 让大型库真正按需加载
       modulePreload: false,
 
-      rollupOptions: {
+      rolldownOptions: {
         input: {
           main: resolve(__dirname, 'index.html')
         },
         output: {
           // 优化代码分割，减少首屏加载体积
-          manualChunks(id) {
-            if (!id.includes('node_modules')) return undefined
-
-            // Element Plus 合并为一个 chunk（避免组件间循环依赖导致初始化错误）
-            if (/element-plus|@element-plus|@popperjs|@floating-ui/.test(id))
-              return 'vendor-element'
-
-            // 大型库单独分割（懒加载）
-            if (/vue-echarts|echarts/.test(id)) return 'vendor-echarts'
-            if (/zrender/.test(id)) return 'vendor-zrender'
-            if (/codemirror|@codemirror|@lezer|vue-codemirror/.test(id)) return 'vendor-codemirror'
-            if (/bpmn-js|diagram-js/.test(id)) return 'vendor-bpmn'
-            if (/bpmn-moddle|moddle|moddle-xml|saxen|bluebird/.test(id)) return 'vendor-bpmn-core'
-            if (/xlsx/.test(id)) return 'vendor-xlsx'
-            if (/mammoth|jszip|@xmldom|dingbat-to-unicode/.test(id)) return 'vendor-doc'
-            if (/lodash|lodash-es|lodash-unified|lodash\.merge/.test(id)) return 'vendor-lodash'
-
-            // Vue 核心（首屏必需）
-            if (/vue-router|pinia|@vue\//.test(id)) return 'vendor-vue'
-            if (/^vue$|vue[\\/]dist/.test(id)) return 'vendor-vue'
-
-            // 工具类库（首屏必需，体积小）
-            if (/axios|crypto-js/.test(id)) return 'vendor-utils'
-
-            return 'vendor'
+          codeSplitting: {
+            minSize: 20000,
+            groups: [
+              {
+                name: 'vendor-element',
+                test: /node_modules[\\/](element-plus|@element-plus|@popperjs|@floating-ui)/,
+                priority: 100
+              },
+              {
+                name: 'vendor-echarts',
+                test: /node_modules[\\/](vue-echarts|echarts)/,
+                priority: 95
+              },
+              {
+                name: 'vendor-zrender',
+                test: /node_modules[\\/]zrender/,
+                priority: 90
+              },
+              {
+                name: 'vendor-codemirror',
+                test: /node_modules[\\/](codemirror|@codemirror|@lezer|vue-codemirror)/,
+                priority: 85
+              },
+              {
+                name: 'vendor-bpmn',
+                test: /node_modules[\\/](bpmn-js|diagram-js)/,
+                priority: 80
+              },
+              {
+                name: 'vendor-bpmn-core',
+                test: /node_modules[\\/](bpmn-moddle|moddle|moddle-xml|saxen|bluebird)/,
+                priority: 75
+              },
+              {
+                name: 'vendor-xlsx',
+                test: /node_modules[\\/]xlsx/,
+                priority: 70
+              },
+              {
+                name: 'vendor-doc',
+                test: /node_modules[\\/](mammoth|jszip|@xmldom|dingbat-to-unicode)/,
+                priority: 65
+              },
+              {
+                name: 'vendor-lodash',
+                test: /node_modules[\\/](lodash|lodash-es|lodash-unified|lodash\.merge)/,
+                priority: 60
+              },
+              {
+                name: 'vendor-vue',
+                test: /node_modules[\\/](vue-router|pinia|@vue\/|vue$|vue[\\/]dist)/,
+                priority: 55
+              },
+              {
+                name: 'vendor-utils',
+                test: /node_modules[\\/](axios|crypto-js)/,
+                priority: 50
+              },
+              {
+                name: 'vendor',
+                test: /node_modules/,
+                priority: 10
+              }
+            ]
           },
           chunkFileNames: 'js/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',
@@ -300,7 +378,6 @@ export default defineConfig(({ command, mode }): UserConfig => {
         }
       },
 
-      minify: isProduction ? 'esbuild' : false,
 
       reportCompressedSize: isProduction,
       chunkSizeWarningLimit: 1000 // ECharts 体积较大但已懒加载，保留接近实际上限的预警阈值
@@ -314,11 +391,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
       }
     },
 
-    esbuild: isProduction
-      ? {
-          drop: env.VITE_DEBUG ? ['debugger'] : ['console', 'debugger']
-        }
-      : undefined,
+    // console/debugger 移除已通过 dropConsolePlugin 实现（见插件配置）
 
     define: {
       __VUE_OPTIONS_API__: true,
