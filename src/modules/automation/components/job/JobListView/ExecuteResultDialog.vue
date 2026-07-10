@@ -335,7 +335,16 @@
                 </el-button>
               </div>
               <el-scrollbar class="raw-scroll">
-                <pre>{{ truncatedAnsibleRawOutput }}</pre>
+                <div class="raw-code-container">
+                  <div
+                    v-for="line in rawOutputLines"
+                    :key="line.id"
+                    class="raw-code-line"
+                    :style="{ paddingLeft: `${line.indent}ch` }"
+                  >
+                    {{ line.text || ' ' }}
+                  </div>
+                </div>
                 <div
                   v-if="ansibleRawOutput.length > 500000 && !showFullRawOutput"
                   class="load-all-wrapper"
@@ -513,6 +522,19 @@ const truncatedAnsibleRawOutput = computed(() => {
   return ansibleRawOutput.value.length > MAX_LEN
     ? `${ansibleRawOutput.value.slice(0, MAX_LEN)}\n\n... (截断)`
     : ansibleRawOutput.value
+})
+
+const rawOutputLines = computed(() => {
+  const content = truncatedAnsibleRawOutput.value
+  if (!content) return []
+  return content.split('\n').map((line, index) => {
+    const trimmed = line.trimStart()
+    return {
+      id: index,
+      text: trimmed,
+      indent: line.length - trimmed.length
+    }
+  })
 })
 
 const restDetail = computed(() => buildRestDetail(result.value))
@@ -1658,13 +1680,19 @@ onBeforeUnmount(() => {
 }
 
 .raw-scroll {
-  max-height: 420px;
-  overflow-y: scroll;
+  max-height: calc(100vh - 360px);
 }
 
-.raw-scroll pre {
-  margin: 0;
+.raw-code-container {
+  font-family: Consolas, 'SFMono-Regular', Menlo, Monaco, monospace;
   font-size: 14px;
+  line-height: 1.6;
+}
+
+.raw-code-line {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .output-tab {
