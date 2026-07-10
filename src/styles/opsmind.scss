@@ -94,40 +94,40 @@
   //margin-bottom: 12px;
 
   // 使用 el-form 时的样式
-  .el-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 12px;
-    width: 100%;
-  }
+  // :deep(.el-form) {
+  //   display: flex;
+  //   flex-wrap: wrap;
+  //   align-items: flex-start;
+  //   gap: 12px;
+  //   width: 100%;
+  // }
 
-  .el-form-item {
-    margin-right: 0;
-    margin-bottom: 0;
+  // :deep(.el-form-item) {
+  //   margin-right: 0;
+  //   margin-bottom: 0;
 
-    .el-form-item__label {
-      font-size: 14px;
-      // color: #606266;
-      padding-right: 8px;
-    }
-  }
+  //   .el-form-item__label {
+  //     font-size: 14px;
+  //     // color: #606266;
+  //     padding-right: 8px;
+  //   }
+  // }
 
-  // 复选框组样式
-  .el-checkbox-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+  // // 复选框组样式
+  // :deep(.el-checkbox-group) {
+  //   display: flex;
+  //   flex-wrap: wrap;
+  //   gap: 8px;
+  // }
 
-  .el-checkbox {
-    margin-right: 0;
-    height: auto;
+  // :deep(.el-checkbox) {
+  //   margin-right: 0;
+  //   height: auto;
 
-    .el-checkbox__label {
-      padding-left: 6px;
-    }
-  }
+  //   .el-checkbox__label {
+  //     padding-left: 6px;
+  //   }
+  // }
 
   // 按钮组样式
   .filter-buttons {
