@@ -138,7 +138,7 @@ export function addSudoPermission(data = {}) {
  * @param {string} runId 执行ID
  */
 export function getJobResult(runId) {
-  return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result?cacheBuster=${Date.now()}`)
+  return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result`)
 }
 
 /**

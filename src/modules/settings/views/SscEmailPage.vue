@@ -177,7 +177,7 @@ const sending = ref(false)
 async function loadConfig() {
   loading.value = true
   try {
-    const response = await apiService.get(`/api/email-config?cacheBuster=${Date.now()}`)
+    const response = await apiService.get('/api/email-config')
     const data = response?.data || response
 
     if (data) {

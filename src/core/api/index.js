@@ -59,9 +59,13 @@ class ApiService {
 
         // 添加缓存破坏参数（后端约定使用 cacheBuster）
         if (config.method === 'get' && config.cache !== false) {
-          config.params = {
-            ...config.params,
-            cacheBuster: Date.now()
+          const hasCacheBusterInUrl = config.url && /[?&]cacheBuster=/i.test(config.url)
+          const hasCacheBusterInParams = config.params && config.params.cacheBuster !== undefined
+          if (!hasCacheBusterInUrl && !hasCacheBusterInParams) {
+            config.params = {
+              ...config.params,
+              cacheBuster: Date.now()
+            }
           }
         }
 

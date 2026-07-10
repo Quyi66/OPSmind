@@ -180,7 +180,7 @@ export function deleteApplication(id) {
  * GET /workflow/api/workflow/runlogs/{runId}/result
  */
 export function getJobResult(runId) {
-  return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result?cacheBuster=${Date.now()}`)
+  return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result`)
 }
 
 /**

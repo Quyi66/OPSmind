@@ -13,7 +13,7 @@ const APP_PARAMS_BASE = '/adm/api/adm/tenant-param'
  * GET /api/params
  */
 export function getSysParams() {
-  return apiService.get(`${SYS_PARAMS_BASE}?cacheBuster=${Date.now()}`)
+  return apiService.get(`${SYS_PARAMS_BASE}`)
 }
 
 /**
@@ -21,7 +21,7 @@ export function getSysParams() {
  * GET /api/params/:id
  */
 export function getSysParamById(id) {
-  return apiService.get(`${SYS_PARAMS_BASE}/${id}?cacheBuster=${Date.now()}`)
+  return apiService.get(`${SYS_PARAMS_BASE}/${id}`)
 }
 
 /**
@@ -55,7 +55,7 @@ export function deleteSysParam(id) {
  * GET /adm/api/adm/tenant-param
  */
 export function getAppParams() {
-  return apiService.get(`${APP_PARAMS_BASE}?cacheBuster=${Date.now()}`)
+  return apiService.get(`${APP_PARAMS_BASE}`)
 }
 
 /**
@@ -63,7 +63,7 @@ export function getAppParams() {
  * GET /adm/api/adm/tenant-param/:id
  */
 export function getAppParamById(id) {
-  return apiService.get(`${APP_PARAMS_BASE}/${id}?cacheBuster=${Date.now()}`)
+  return apiService.get(`${APP_PARAMS_BASE}/${id}`)
 }
 
 /**

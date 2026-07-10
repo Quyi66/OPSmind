@@ -8,7 +8,7 @@ import { apiService } from '@/core/api'
  * GET /workspace/api/workspace/applets
  */
 export function getApplets() {
-  return apiService.get(`/workspace/api/workspace/applets?cacheBuster=${Date.now()}`)
+  return apiService.get('/workspace/api/workspace/applets')
 }
 
 /**
@@ -99,7 +99,7 @@ export function importApplets(importType, udpAppletList) {
  */
 export function getPages(appletCode) {
   return apiService.get(
-    `/workspace/api/workspace/pages?isPaging=true&appletCode=${appletCode}&page=0&size=1000&cacheBuster=${Date.now()}`
+    `/workspace/api/workspace/pages?isPaging=true&appletCode=${appletCode}&page=0&size=1000`
   )
 }
 
@@ -108,7 +108,7 @@ export function getPages(appletCode) {
  * GET /workflow/api/workflow/jobs/app
  */
 export function getJobs(appletCode) {
-  return apiService.get(`/workflow/api/workflow/jobs/app?appletCode=${appletCode}&cacheBuster=${Date.now()}`)
+  return apiService.get(`/workflow/api/workflow/jobs/app?appletCode=${appletCode}`)
 }
 
 export default {

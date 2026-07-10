@@ -123,7 +123,7 @@ const loadAttributes = async () => {
 
   loadingAttrs.value = true
   try {
-    const response = await apiService.get(`/cmdb/api/cmdb/cit/vo/citid/${props.modelData.id}?cacheBuster=${Date.now()}`)
+    const response = await apiService.get(`/cmdb/api/cmdb/cit/vo/citid/${props.modelData.id}`)
     const res = response?.data || response
     attributes.value = res?.attrs || []
   } catch (error) {

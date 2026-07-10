@@ -653,8 +653,7 @@ export const softwareScanApi = {
    * GET: /workflow/api/workflow/runlogs/{runId}/result
    */
   getRunResult(runId) {
-    const cacheBuster = Date.now()
-    return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+    return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result`)
   }
 }
 

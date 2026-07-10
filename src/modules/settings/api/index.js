@@ -5,9 +5,7 @@ import { apiService } from '@/core/api'
  * GET /api/users
  */
 export function getUsers(tenantId) {
-  const params = tenantId
-    ? `?tenantId=${tenantId}&cacheBuster=${Date.now()}`
-    : `?cacheBuster=${Date.now()}`
+  const params = tenantId ? `?tenantId=${tenantId}` : ''
   return apiService.get(`/api/users${params}`)
 }
 
@@ -16,7 +14,7 @@ export function getUsers(tenantId) {
  * GET /api/users/basic
  */
 export function getBasicUsers(tenantId) {
-  return apiService.get(`/api/users/basic?tenantId=${tenantId}&cacheBuster=${Date.now()}`)
+  return apiService.get(`/api/users/basic?tenantId=${tenantId}`)
 }
 
 /**
@@ -74,7 +72,7 @@ export function getRoles(withPermission = false) {
  */
 export function getUserApplets(login, tenantUserId) {
   return apiService.get(
-    `/workspace/api/workspace/applets/tenant/user?cacheBuster=${Date.now()}&login=${login}&tenantUserId=${tenantUserId}`
+    `/workspace/api/workspace/applets/tenant/user?login=${login}&tenantUserId=${tenantUserId}`
   )
 }
 
@@ -128,7 +126,7 @@ export function associateTenantUsers(tenantId, userIds) {
  */
 export function getTenantApplets(tenantId) {
   return apiService.get(
-    `/workspace/api/workspace/applets/tenant?tenantId=${tenantId}&cacheBuster=${Date.now()}`
+    `/workspace/api/workspace/applets/tenant?tenantId=${tenantId}`
   )
 }
 

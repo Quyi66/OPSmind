@@ -546,7 +546,7 @@ const targetAppletTitle = computed(() => {
 async function loadApplets() {
   try {
     const response = await apiService.get(
-      `/workspace/api/workspace/applets?isPaging=true&cacheBuster=${Date.now()}`
+      '/workspace/api/workspace/applets?isPaging=true'
     )
     applets.value = response?.data || response || []
   } catch (error) {
@@ -588,7 +588,7 @@ async function loadPages() {
   pageLoading.value = true
   try {
     const response = await apiService.get(
-      `/workspace/api/workspace/pages?isPaging=true&page=0&size=1000&appletCode=&cacheBuster=${Date.now()}`
+      '/workspace/api/workspace/pages?isPaging=true&page=0&size=1000&appletCode='
     )
     pages.value = response?.data?.content || response?.content || response?.data || []
   } catch (error) {
@@ -603,7 +603,7 @@ async function loadPages() {
 async function loadDatasets() {
   datasetLoading.value = true
   try {
-    const response = await apiService.get(`/adm/api/adm/aou/dataset/all?cacheBuster=${Date.now()}`)
+    const response = await apiService.get('/adm/api/adm/aou/dataset/all')
     datasets.value = response?.data || response || []
   } catch (error) {
     console.error('Failed to load datasets:', error)
@@ -617,7 +617,7 @@ async function loadDatasets() {
 async function loadJobs() {
   jobLoading.value = true
   try {
-    const response = await apiService.get(`/workflow/api/workflow/jobs/app?cacheBuster=${Date.now()}`)
+    const response = await apiService.get('/workflow/api/workflow/jobs/app')
     jobs.value = response?.data || response || []
   } catch (error) {
     console.error('Failed to load jobs:', error)

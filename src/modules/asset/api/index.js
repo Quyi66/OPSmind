@@ -176,7 +176,7 @@ export const assetApi = {
    * @param {string} citCode - 资产类型代码
    */
   async getAssetTypeConfig(citCode) {
-    const res = await apiService.get(`${ACM_BASE}/cit/code/${citCode}?cacheBuster=${Date.now()}`)
+    const res = await apiService.get(`${ACM_BASE}/cit/code/${citCode}`)
     return res.data
   },
 
@@ -186,7 +186,7 @@ export const assetApi = {
    * @param {string} id - 资产ID
    */
   async getAssetAttrs(id) {
-    const res = await apiService.get(`${ACM_BASE}/ci/attr/${id}?cacheBuster=${Date.now()}`)
+    const res = await apiService.get(`${ACM_BASE}/ci/attr/${id}`)
     return res.data
   },
 
@@ -196,7 +196,7 @@ export const assetApi = {
    * @param {string} id - 资产ID
    */
   async getAssetTypeByAssetId(id) {
-    const res = await apiService.get(`${ACM_BASE}/cit/vo/cid/${id}?cacheBuster=${Date.now()}`)
+    const res = await apiService.get(`${ACM_BASE}/cit/vo/cid/${id}`)
     return res.data
   },
 
@@ -235,7 +235,7 @@ export const assetApi = {
    */
   async getGroupList(citCode) {
     const res = await apiService.get(
-      `${ACM_BASE}/query/group/view/${citCode}?cacheBuster=${Date.now()}`
+      `${ACM_BASE}/query/group/view/${citCode}`
     )
     return normalizeRecords(unwrapApiData(res))
   },
@@ -247,7 +247,7 @@ export const assetApi = {
    */
   async getTagList(citCode) {
     const res = await apiService.get(
-      `${ACM_BASE}/query/tag/view/${citCode}?cacheBuster=${Date.now()}`
+      `${ACM_BASE}/query/tag/view/${citCode}`
     )
     return normalizeRecords(unwrapApiData(res))
   },
@@ -257,7 +257,7 @@ export const assetApi = {
    * GET /cmdb/api/cmdb/cit/get/all/list
    */
   async getAllAssetTypes() {
-    const res = await apiService.get(`${ACM_BASE}/cit/get/all/list?cacheBuster=${Date.now()}`)
+    const res = await apiService.get(`${ACM_BASE}/cit/get/all/list`)
     return res.data
   },
 
@@ -414,7 +414,7 @@ export const exceptionApi = {
           ...params,
           page: options.page || 1,
           size: options.size || 10,
-          filter: options.filter || undefined
+          // filter: options.ip || undefined
         }
       })
       .then(res => normalizeRecords(unwrapApiData(res)))
@@ -506,8 +506,7 @@ export const permissionApi = {
    * 获取团队表格权限
    */
   getTablePermission: () => {
-    const cacheBuster = Date.now()
-    return apiService.get(`/cmdb/api/cmdb/permission/team/table?cacheBuster=${cacheBuster}`).then(res => res.data)
+    return apiService.get('/cmdb/api/cmdb/permission/team/table').then(res => res.data)
   },
 
   /**

@@ -36,8 +36,7 @@ export function isJobSuccess(status) {
  * @param {string} runId - 运行ID
  */
 export async function getJobRunResult(runId) {
-  const cacheBuster = Date.now()
-  return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result?cacheBuster=${cacheBuster}`)
+  return apiService.get(`/workflow/api/workflow/runlogs/${runId}/result`)
 }
 
 /**

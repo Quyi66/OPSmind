@@ -583,7 +583,7 @@ function handleRunJob(job) {
 async function handleCopyJob(job) {
   if (!job?.id) return
   try {
-    await apiService.get(`/workflow/api/workflow/jobs/clone/${job.id}?cacheBuster=${Date.now()}`)
+    await apiService.get(`/workflow/api/workflow/jobs/clone/${job.id}`)
     ElMessage.success('复制成功')
     // 刷新作业列表
     loadJobs(true)

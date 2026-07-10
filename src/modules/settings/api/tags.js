@@ -16,7 +16,7 @@ export function getTags() {
  * GET /workspace/api/workspace/tags/id/:id
  */
 export function getTagById(id) {
-  return apiService.get(`/workspace/api/workspace/tags/id/${id}?cacheBuster=${Date.now()}`)
+  return apiService.get(`/workspace/api/workspace/tags/id/${id}`)
 }
 
 /**
@@ -48,7 +48,7 @@ export function deleteTag(id) {
  * GET /workspace/api/workspace/tags/applet/:id
  */
 export function getTagApplets(tagId) {
-  return apiService.get(`/workspace/api/workspace/tags/applet/${tagId}?cacheBuster=${Date.now()}`)
+  return apiService.get(`/workspace/api/workspace/tags/applet/${tagId}`)
 }
 
 /**

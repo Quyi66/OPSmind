@@ -136,7 +136,7 @@ export function getUserLoginFailMessage(id) {
  * 获取功能配置
  */
 export function getFeatureConfig() {
-  return apiService.get(`/uim/api/uim/config?cacheBuster=${Date.now()}`)
+  return apiService.get('/uim/api/uim/config')
 }
 
 /**
