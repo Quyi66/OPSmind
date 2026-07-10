@@ -53,6 +53,14 @@
       >
         删除
       </el-button>
+      <el-button
+        size="small"
+        :type="allSelected ? 'default' : 'primary'"
+        @click="handleToggleSelectAll"
+      >
+        <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
+        {{ allSelected ? '一键取消' : '一键全选' }}
+      </el-button>
       <span style="flex: 1"></span>
       <el-button
         class="toolbar-icon-btn"
@@ -73,7 +81,8 @@
         v-loading="loading"
         :data="pagedData"
         max-height="calc(100vh - 264px)"
-        @selection-change="handleSelectionChange"
+        @select="handleTableSelect"
+        @select-all="handleTableSelect"
         @sort-change="handleSortChange"
         :default-sort="sortState"
       >
@@ -195,11 +204,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchRollbackApi } from '../api'
+import { useTableSelectAll } from '../composables/useTableSelectAll'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 
 // 加载状态
@@ -280,6 +290,29 @@ const pagedData = computed(() => {
 
 // 总数（基于前端过滤）
 const totalCount = computed(() => filteredData.value.length)
+
+// 全选逻辑
+const {
+  allSelected,
+  handleToggleAllSelection: handleToggleSelectAll,
+  handleTableSelect,
+  resetAllSelected
+} = useTableSelectAll(tableRef, {
+  tableData: pagedData,
+  filteredData,
+  selectedItems: selectedRows,
+  matchFn: (a, b) => a.id === b.id
+})
+
+// 监听筛选条件变化，自动重置分页和选择状态
+watch(
+  () => [filters.host_key, filters.vul_id],
+  () => {
+    resetAllSelected()
+    selectedRows.value = []
+    pagination.page = 1
+  }
+)
 
 const rollbackWizardVisible = ref(false)
 const rollbackTaskPatches = ref([])
@@ -460,6 +493,8 @@ async function loadData() {
     if (response?.data) {
       allData.value = response.data.records || []
     }
+    resetAllSelected()
+    selectedRows.value = []
   } catch (error) {
     console.error('Failed to load rollback history:', error)
     ElMessage.error('加载回滚历史失败，请稍后重试')
@@ -470,11 +505,9 @@ async function loadData() {
 }
 
 // 事件处理
-function handleSelectionChange(selection) {
-  selectedRows.value = selection
-}
-
 function handleReset() {
+  resetAllSelected()
+  selectedRows.value = []
   filters.host_key = ''
   filters.vul_id = ''
   pagination.page = 1
