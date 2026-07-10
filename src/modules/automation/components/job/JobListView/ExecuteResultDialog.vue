@@ -81,7 +81,7 @@
                 :closable="false"
                 class="mb-3"
               />
-              <el-scrollbar class="process-scroll">
+              <el-scrollbar max-height="calc(100vh - 320px)" class="process-scroll">
                 <pre class="process-json">{{ processModelPretty }}</pre>
               </el-scrollbar>
             </div>
@@ -285,7 +285,7 @@
                   </el-form-item>
                 </el-form>
               </div>
-              <el-table :data="paginatedListRows" height="420" class="result-table">
+              <el-table :data="paginatedListRows" :height="'calc(100vh - 320px)'" class="result-table">
                 <el-table-column prop="host" label="主机" width="180" show-overflow-tooltip />
                 <el-table-column
                   prop="delegateHost"
@@ -334,7 +334,7 @@
                   下载 Ansible 原始输出
                 </el-button>
               </div>
-              <el-scrollbar class="raw-scroll">
+              <el-scrollbar max-height="calc(100vh - 320px)" class="raw-scroll">
                 <div class="raw-code-container">
                   <div
                     v-for="line in rawOutputLines"
@@ -390,7 +390,7 @@
                 </div>
               </div>
               <pre v-if="restDetail.error" class="rest-error">{{ restDetail.error }}</pre>
-              <el-scrollbar v-else class="rest-payload">
+              <el-scrollbar v-else max-height="calc(100vh - 320px)" class="rest-payload">
                 <pre>{{ restDetail.payload }}</pre>
               </el-scrollbar>
             </div>
@@ -1464,7 +1464,6 @@ onBeforeUnmount(() => {
 }
 
 .process-scroll {
-  max-height: 420px;
 }
 
 .process-json {
@@ -1480,7 +1479,7 @@ onBeforeUnmount(() => {
 .hosts-pane {
   display: flex;
   gap: 16px;
-  min-height: 420px;
+  height: calc(100vh - 320px);
 }
 
 .hosts-tree-panel {
@@ -1665,7 +1664,6 @@ onBeforeUnmount(() => {
 }
 
 .result-table :deep(.el-table__body-wrapper) {
-  max-height: 420px;
 }
 
 .raw-output {
@@ -1680,7 +1678,6 @@ onBeforeUnmount(() => {
 }
 
 .raw-scroll {
-  max-height: calc(100vh - 360px);
 }
 
 .raw-code-container {
@@ -1696,7 +1693,7 @@ onBeforeUnmount(() => {
 }
 
 .output-tab {
-  height: 500px;
+  height: calc(100vh - 320px);
 }
 
 .rest-tab {
@@ -1731,7 +1728,6 @@ onBeforeUnmount(() => {
 }
 
 .rest-payload {
-  max-height: 420px;
   background: #1e1e1e;
   border-radius: 6px;
 }
