@@ -30,11 +30,12 @@
         </el-form-item>
         <el-form-item label="设备 IP">
           <el-input
-            v-model="searchKeyword"
+            v-model="filters.ip"
             placeholder="搜索设备 IP..."
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
+            @clear="handleSearch"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -301,11 +302,9 @@ const resourceTypes = ref([])
 // 筛选条件
 const filters = reactive({
   cit: 'sjxy_all',
-  conditions: 'recently'
+  conditions: 'recently',
+  ip: ''
 })
-
-// 搜索关键词
-const searchKeyword = ref('')
 
 // 表格数据
 const tableData = ref([])
@@ -352,12 +351,12 @@ const loadTableData = async () => {
     const res = await exceptionApi.getConnectException(
       {
         cit: filters.cit,
-        conditions: filters.conditions
+        conditions: filters.conditions,
+        ip: filters.ip || undefined
       },
       {
         size: pageSize.value,
-        page: currentPage.value,
-        filter: searchKeyword.value || undefined
+        page: currentPage.value
       }
     )
     tableData.value = res.records || []
@@ -379,7 +378,7 @@ const normalizeCondition = value => {
 const applyRouteQuery = query => {
   filters.cit = typeof query.cit === 'string' && query.cit ? query.cit : 'sjxy_all'
   filters.conditions = normalizeCondition(query.conditions)
-  searchKeyword.value = typeof query.keyword === 'string' ? query.keyword : ''
+  filters.ip = typeof query.ip === 'string' ? query.ip : ''
   currentPage.value = 1
   pageSize.value = 10
   loadTableData()
@@ -397,26 +396,13 @@ const handleSearch = () => {
   loadTableData()
 }
 
-// 搜索输入防抖
-let searchDebounceTimer = null
-watch(searchKeyword, newVal => {
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer)
-  }
-  if (!newVal) {
-    handleSearch()
-  } else {
-    searchDebounceTimer = setTimeout(() => {
-      handleSearch()
-    }, 300)
-  }
-})
+
 
 // 重置
 const handleReset = () => {
   filters.cit = 'sjxy_all'
   filters.conditions = 'recently'
-  searchKeyword.value = ''
+  filters.ip = ''
   currentPage.value = 1
   pageSize.value = 10
   loadTableData()
@@ -490,13 +476,11 @@ const pollActionResult = async (runId, actionKey) => {
   const actionMeta = ACTION_CONFIG[actionKey]
   const maxAttempts = 360
   let attempts = 0
-
   const poll = async () => {
     attempts++
     try {
-      const cacheBuster = Date.now()
       const { data: result } = await apiService.get(
-        `/workflow/api/workflow/runlogs/${runId}/result?cacheBuster=${cacheBuster}`
+        `/workflow/api/workflow/runlogs/${runId}/result`
       )
 
       if (isJobPending(result)) {
@@ -658,7 +642,7 @@ const handleCheckSingleConn = async row => {
         attempts++
         try {
           const { data: res } = await apiService.get(
-            `/workflow/api/workflow/runlogs/${result.runId}/result?cacheBuster=${Date.now()}`
+            `/workflow/api/workflow/runlogs/${result.runId}/result`
           )
           if (isJobPending(res)) {
             if (attempts < maxAttempts) {

@@ -68,10 +68,11 @@
             <el-form-item label="关键词">
               <el-input
                 v-model="searchText"
-                placeholder="IP/主机名/责任人"
+                placeholder="IP/主机名"
                 clearable
                 style="width: 240px"
                 @keyup.enter="handleSearch"
+                @clear="handleSearch"
               />
             </el-form-item>
 
@@ -1037,20 +1038,7 @@ const handleSearch = () => {
   loadAssetList()
 }
 
-// 搜索输入防抖
-let searchDebounceTimer = null
-watch(searchText, newVal => {
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer)
-  }
-  if (!newVal) {
-    handleSearch()
-  } else {
-    searchDebounceTimer = setTimeout(() => {
-      handleSearch()
-    }, 300)
-  }
-})
+
 
 // 重置
 const handleReset = () => {
