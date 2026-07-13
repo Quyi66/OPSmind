@@ -203,11 +203,11 @@
                         :class="`is-${task.status}`"
                       >
                         <div class="host-task-card__header">
-                          <div>
+                          <div class="host-task-card__title">
                             <span v-if="task.delegateHost" class="delegate-badge">
                               {{ task.delegateHost }}
                             </span>
-                            <span>{{ task.name }}</span>
+                            <span class="task-name">{{ task.name }}</span>
                           </div>
                           <el-tag size="small" :type="taskStatusTag(task.status)">
                             {{ taskStatusLabel(task.status) }}
@@ -1529,6 +1529,7 @@ onBeforeUnmount(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
 }
 
@@ -1620,6 +1621,20 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  gap: 16px;
+}
+
+.host-task-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.host-task-card__title .task-name {
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .host-task-card__output {
@@ -1630,6 +1645,8 @@ onBeforeUnmount(() => {
   padding: 10px;
   border-radius: 4px;
   white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .hosts-detail-panel :deep(.el-empty) {
