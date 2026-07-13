@@ -88,10 +88,10 @@
                 v-model="installForm.customPackagesText"
                 type="textarea"
                 :rows="5"
-                placeholder="请输入软件包名称，支持换行、空格或逗号分隔。例如：&#10;openssl, bash, sudo"
+                placeholder="请输入软件包名称，支持换行/逗号分隔。可直接粘贴 RPM 文件名或带版本号的格式（例如：openssl-1.0.2k-23.el7_9.x86_64.rpm、openssl 1.0.2、openssl==1.0.2）"
               />
               <div style="font-size: 12px; color: var(--el-text-color-secondary);" class="mt-1">
-                请输入在当前系统 YUM/APT 源中存在的软件包名，支持多种分隔符。
+                支持直接粘贴包含版本的软件包条目，系统将自动识别包名与版本。
               </div>
             </el-form-item>
 
@@ -238,7 +238,7 @@
             v-model="editForm.packagesText"
             type="textarea"
             :rows="8"
-            placeholder="请输入软件包名称，支持换行、空格或逗号分隔。例如：&#10;openssl, bash, sudo"
+            placeholder="请输入软件包，支持换行/逗号分隔。可直接粘贴包含版本号的复杂包名或 RPM 文件名（例如：openssl-1.0.2k-23.el7_9.x86_64.rpm、openssl 1.0.2、openssl==1.0.2）"
           />
         </el-form-item>
       </el-form>
@@ -664,6 +664,104 @@ async function handleDeletePackageSet(row) {
   }
 }
 
+/**
+ * 智能解析单个包名与版本
+ * @param {string} rawStr 原始输入字符串
+ * @returns {{name: string, version: string}} 解析后的包名和版本
+ */
+function parsePackageItem(rawStr) {
+  let str = rawStr.trim()
+  if (!str) return null
+
+  // 1. 去除常见的包文件后缀 (如 .rpm, .deb)
+  const isDeb = /\.deb$/i.test(str)
+  str = str.replace(/\.(rpm|deb)$/i, '')
+
+  // 1.5 DEB 文件名使用 _ 分隔 (name_version_arch)，单独处理
+  if (isDeb && str.includes('_')) {
+    const debParts = str.split('_')
+    const knownArch = /^(x86_64|i[36]86|noarch|amd64|arm64|aarch64|all|mips64el|loongarch64)$/i
+    if (debParts.length >= 3 && knownArch.test(debParts[debParts.length - 1])) {
+      return { name: debParts[0], version: debParts.slice(1, -1).join('_') }
+    }
+    if (debParts.length >= 2 && /^[0-9]/.test(debParts[1])) {
+      return { name: debParts[0], version: debParts.slice(1).join('_') }
+    }
+  }
+
+  // 2. 去除常见的架构后缀 (如 .x86_64, .i686, .amd64, .noarch 等)
+  const archRegex = /\.(x86_64|i[36]86|noarch|amd64|arm64|aarch64|mips64el|loongarch64)$/i
+  str = str.replace(archRegex, '')
+
+  // 3. 兼容双等号 == 或单等号 =（使用 indexOf 单次分割，避免版本中含 = 时丢失后续部分）
+  if (str.includes('==')) {
+    const idx = str.indexOf('==')
+    return { name: str.slice(0, idx).trim(), version: str.slice(idx + 2).trim() }
+  }
+  if (str.includes('=')) {
+    const idx = str.indexOf('=')
+    return { name: str.slice(0, idx).trim(), version: str.slice(idx + 1).trim() }
+  }
+
+  // 4. 处理冒号分隔
+  if (str.includes(':')) {
+    const idx = str.indexOf(':')
+    const before = str.slice(0, idx).trim()
+    const after = str.slice(idx + 1).trim()
+    if (/^\d+$/.test(before)) {
+      // epoch 前缀 (如 1:openssl-1.0.2k)，剥离 epoch 后继续解析后续格式
+      str = after
+    } else if (/^[0-9]/.test(after)) {
+      // 包名:版本 格式 (如 openssl: 1.0.2)
+      return { name: before, version: after }
+    }
+  }
+
+  // 5. 智能识别 NVR 连字符格式 (如 openssl-devel-1.0.2k-23.el7)，非贪婪匹配找到第一个 -数字 边界
+  const nvrMatch = str.match(/^([\w\-+]+?)-([0-9].*)$/)
+  if (nvrMatch) {
+    return { name: nvrMatch[1], version: nvrMatch[2] }
+  }
+
+  // 6. 兼容空格或制表符分隔 (如 openssl 1.0.2, yum list / apt list 输出)
+  const spaceParts = str.split(/\s+/)
+  if (spaceParts.length >= 2) {
+    // 清理包名中的 .arch 后缀 (如 openssl.x86_64) 和 /repo 后缀 (如 openssl/focal-updates)
+    let name = spaceParts[0].replace(/\.(x86_64|i[36]86|noarch|amd64|arm64|aarch64|mips64el|loongarch64)$/i, '')
+    name = name.replace(/\/.*$/, '')
+    // 过滤版本后的噪声字段 (如 @updates, amd64, [installed])
+    const verParts = spaceParts.slice(1).filter(p =>
+      !/^[@\[]/.test(p) &&
+      !/^(x86_64|i[36]86|noarch|amd64|arm64|aarch64|mips64el|loongarch64)$/i.test(p)
+    )
+    const possibleVer = verParts.join(' ')
+    if (possibleVer && /^[0-9]/.test(possibleVer)) {
+      return { name, version: possibleVer }
+    }
+  }
+
+  // 7. 无版本，仅包名
+  return { name: str, version: '' }
+}
+
+/**
+ * 批量解析用户输入
+ * @param {string} text 用户输入的原始多行文本
+ * @returns {string[]} 转换为后端需要的 name==version 数组
+ */
+function parseRawPackagesText(text) {
+  if (!text) return []
+  const rawItems = text.split(/[,\n\r，]+/).map(p => p.trim()).filter(Boolean)
+  const results = rawItems
+    .map(item => {
+      const res = parsePackageItem(item)
+      if (!res) return ''
+      return res.version ? `${res.name}==${res.version}` : res.name
+    })
+    .filter(Boolean)
+  return [...new Set(results)]
+}
+
 async function submitEditForm() {
   if (!editFormRef.value) return
   await editFormRef.value.validate(async (valid) => {
@@ -671,10 +769,7 @@ async function submitEditForm() {
 
     savingSet.value = true
     try {
-      const packageList = editForm.packagesText
-        .split(/[,\s，\n\r]+/)
-        .map(p => p.trim())
-        .filter(Boolean)
+      const packageList = parseRawPackagesText(editForm.packagesText)
 
       if (packageList.length === 0) {
         ElMessage.warning('软件包列表不能为空')
@@ -980,10 +1075,7 @@ async function handleStartOneClickInstall() {
   }
 
   if (installForm.useCustomPackages) {
-    const pkgs = installForm.customPackagesText
-      .split(/[,\s，\n\r]+/)
-      .map(p => p.trim())
-      .filter(Boolean)
+    const pkgs = parseRawPackagesText(installForm.customPackagesText)
     if (pkgs.length === 0) {
       ElMessage.warning('请输入软件包名称')
       return
