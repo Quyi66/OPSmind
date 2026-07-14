@@ -7,7 +7,10 @@
         巡检概览
       </h3>
       <div class="header-actions">
-        <button class="more-btn" @click="navigateToInspectionOverview">...</button>
+        <button class="more-btn" @click="navigateToInspectionOverview" title="查看全部">
+          <span>查看全部</span>
+          <i class="fas fa-chevron-right more-arrow"></i>
+        </button>
       </div>
     </div>
 
@@ -251,13 +254,13 @@ const chartOption = computed(() => ({
 // 标题区域
 .section-header {
   flex: 0 0 auto;
-  height: 40px;
+  height: auto;
 }
 
 // 统计区域
 .inspection-stats {
   flex: 0 0 auto;
-  height: 92px; // 60px卡片高度 + 32px padding (16px * 2)
+  height: 64px; // 48px卡片高度 + 16px padding (8px * 2)
 }
 
 // 图表标题区域
@@ -276,12 +279,14 @@ const chartOption = computed(() => ({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px;
+  padding: 8px 16px;
   margin-bottom: 0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: transparent;
 }
 
 .section-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
   margin: 0;
@@ -303,11 +308,27 @@ const chartOption = computed(() => ({
   cursor: pointer;
   padding: 6px 12px;
   border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   transition: all 0.3s ease;
 
   &:hover {
     background: var(--el-fill-color-light);
     color: var(--el-text-color-primary);
+
+    .more-arrow {
+      transform: translateX(2px);
+    }
+  }
+
+  .more-arrow {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    margin-top: 1px;
   }
 }
 
@@ -315,6 +336,9 @@ const chartOption = computed(() => ({
   width: 18px;
   height: 18px;
   object-fit: contain;
+  background: rgba(219, 234, 254, 0.6);
+  border-radius: 4px;
+  padding: 2px;
 }
 
 // 巡检统计样式
@@ -322,8 +346,34 @@ const chartOption = computed(() => ({
   display: flex;
   gap: 12px; /* 收紧卡片间距 */
   align-items: center;
-  padding: 12px 12px; /* 收紧左右内边距 */
-  background: var(--el-fill-color-light);
+  padding: 8px 12px; /* 压缩内边距 */
+  background: linear-gradient(135deg, var(--el-fill-color-light) 0%, rgba(219, 234, 254, 0.15) 100%);
+
+  /* 深度重写 TypeCountCard 尺寸，以适应紧凑高度 */
+  :deep(.type-count-card) {
+    height: 48px;
+    padding: 6px 12px;
+    gap: 8px;
+  }
+
+  :deep(.icon-container) {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+
+    .icon-image {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  :deep(.type-name) {
+    font-size: 12px;
+  }
+
+  :deep(.type-count) {
+    font-size: 16px;
+  }
   border-radius: 4px;
   margin: 0 12px; /* 收紧左右外边距 */
 }
@@ -342,6 +392,8 @@ const chartOption = computed(() => ({
   font-weight: 600;
   color: var(--el-text-color-primary);
   margin: 0;
+  padding-left: 10px;
+  border-left: 3px solid #10b981;
 }
 
 .chart-legend {
@@ -365,8 +417,8 @@ const chartOption = computed(() => ({
 
 .chart-container {
   flex: 1;
-  /* 中等屏高下更充裕，但避免溢出导致轴被裁切 */
-  min-height: clamp(210px, 26vh, 280px);
+  /* 调整缩小的行高下能够自适应收缩，防止溢出裁切 */
+  min-height: clamp(140px, 18vh, 200px);
   display: flex;
   flex-direction: column;
   padding: 0 16px;
@@ -375,7 +427,7 @@ const chartOption = computed(() => ({
 .chart {
   width: 100%;
   height: 100%;
-  min-height: clamp(210px, 26vh, 280px);
+  min-height: clamp(140px, 18vh, 200px);
 }
 
 .stat-icon {

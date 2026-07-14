@@ -23,6 +23,8 @@ import {
   resolveMenuCodeFromRoutePath
 } from '@/core/auth/permission-policy'
 
+export const RECENT_ITEM_LIMIT = 18
+
 export const useMenuStore = defineStore('menu', () => {
   const BASE_RECENT_KEY = 'opsmind_recent_features'
   // 状态
@@ -355,8 +357,8 @@ export const useMenuStore = defineStore('menu', () => {
     const filtered = recentItems.value.filter(i => i.code !== item.code)
     filtered.unshift(item)
 
-    // 仅保留最近10个
-    const limited = filtered.slice(0, 10)
+    // 仅保留最近 18 个
+    const limited = filtered.slice(0, RECENT_ITEM_LIMIT)
     recentItems.value = limited
     saveRecent(limited)
   }

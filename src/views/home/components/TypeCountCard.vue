@@ -53,40 +53,43 @@ const formattedCount = computed(() => {
 <style scoped lang="scss">
 .type-count-card {
   background: var(--el-bg-color);
-  border-radius: 4px;
-  padding: 12px 10px; /* 收紧左右内边距，给标题留空间 */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-left: 3px solid #3b82f6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
   width: 100%;
   height: 60px;
   flex: 1;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    border-color: var(--el-color-primary-light-5);
+    border-left-color: #2563eb;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
+    background: linear-gradient(to right, rgba(219, 234, 254, 0.15), var(--el-bg-color));
   }
 }
 
 .card-left {
   flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  height: 100%;
+  align-items: center;
+  justify-content: center;
 }
 
 .icon-container {
-  width: 36px; /* 收窄以释放文本宽度 */
-  height: 48px;
+  width: 36px;
+  height: 36px;
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  font-size: 24px;
-  margin-top: 4px; // 让icon位于上半部分
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
 
   .icon-image {
     width: 32px;
@@ -100,7 +103,7 @@ const formattedCount = computed(() => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .type-name {
@@ -112,9 +115,11 @@ const formattedCount = computed(() => {
 
 .type-count {
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 700;
   color: var(--el-text-color-primary);
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
 }
 
 // 响应式设计

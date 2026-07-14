@@ -29,23 +29,24 @@
             </div>
           </div>
 
-          <!-- 第二行：作业概览 & 巡检概览 -->
+          <!-- 第二行：主机漏洞概览 & 严重漏洞预警 -->
           <div class="dashboard-row">
             <div class="dashboard-card half-width">
-              <JobOverview />
+              <!-- <JobOverview /> -->
+              <HostVulnerabilityOverview />
             </div>
             <div class="dashboard-card half-width">
-              <InspectionOverview />
+              <CriticalCveAlert />
             </div>
           </div>
 
-          <!-- 第三行：资产概览 & 漏洞概览 -->
+          <!-- 第三行：资产概览 & 巡检概览 -->
           <div class="dashboard-row">
             <div class="dashboard-card half-width">
               <AssetOverview />
             </div>
             <div class="dashboard-card half-width">
-              <VulnerabilityOverview />
+              <InspectionOverview />
             </div>
           </div>
         </div>
@@ -74,8 +75,11 @@ const asyncComponentOptions = loader => ({
   timeout: 10000 // 10 秒超时
 })
 
-const JobOverview = defineAsyncComponent(
-  asyncComponentOptions(() => import('@/views/home/components/JobOverview.vue'))
+// const JobOverview = defineAsyncComponent(
+//   asyncComponentOptions(() => import('@/views/home/components/JobOverview.vue'))
+// )
+const HostVulnerabilityOverview = defineAsyncComponent(
+  asyncComponentOptions(() => import('@/views/home/components/HostVulnerabilityOverview.vue'))
 )
 const InspectionOverview = defineAsyncComponent(
   asyncComponentOptions(() => import('@/views/home/components/InspectionOverview.vue'))
@@ -83,8 +87,8 @@ const InspectionOverview = defineAsyncComponent(
 const AssetOverview = defineAsyncComponent(
   asyncComponentOptions(() => import('@/views/home/components/AssetOverview.vue'))
 )
-const VulnerabilityOverview = defineAsyncComponent(
-  asyncComponentOptions(() => import('@/views/home/components/VulnerabilityOverview.vue'))
+const CriticalCveAlert = defineAsyncComponent(
+  asyncComponentOptions(() => import('@/views/home/components/CriticalCveAlert.vue'))
 )
 
 const dashboardStore = useDashboardStore()
@@ -186,7 +190,7 @@ onMounted(async () => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 /* Dashboard行布局 */
@@ -217,13 +221,13 @@ onMounted(async () => {
 /* Dashboard卡片 */
 .dashboard-card {
   background: var(--el-bg-color);
-  border-radius: 4px; /* 进一步收窄圆角 */
-  border: 1px solid var(--el-border-color-light);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.06);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -231,9 +235,10 @@ onMounted(async () => {
 
 .dashboard-card:hover {
   box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  transform: translateY(-1px);
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(96, 165, 250, 0.08);
+  transform: translateY(-2px);
+  border-color: rgba(96, 165, 250, 0.15);
 }
 
 .dashboard-card.full-width {
@@ -255,8 +260,8 @@ onMounted(async () => {
   width: 100%;
   min-height: 400px;
   background: var(--el-bg-color);
-  border-radius: 4px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 /* 响应式设计 */

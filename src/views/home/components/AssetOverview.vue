@@ -21,8 +21,11 @@
           >
             按系统
           </button>
-          <button class="more-btn" @click="navigateToAssetOverview">...</button>
         </div>
+        <button class="more-btn" @click="navigateToAssetOverview" title="查看全部">
+          <span>查看全部</span>
+          <i class="fas fa-chevron-right more-arrow"></i>
+        </button>
       </div>
     </div>
 
@@ -209,14 +212,19 @@ const chartOption = computed(() => ({
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0;
-  padding: 0 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: transparent;
 }
 
 .section-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .header-actions {
@@ -239,16 +247,28 @@ const chartOption = computed(() => ({
   color: var(--el-text-color-regular);
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
 
   &:hover {
     background: var(--el-fill-color-light);
   }
 
   &.active {
-    /* 仅强调文字颜色，不要背景和边框；颜色更浅一些 */
     border-color: transparent;
     background: transparent;
-    color: #60a5fa; /* 浅蓝（blue-400） */
+    color: #3b82f6;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 2px;
+      background: #3b82f6;
+      border-radius: 1px;
+    }
   }
 }
 
@@ -270,11 +290,27 @@ const chartOption = computed(() => ({
   font-weight: 500;
   color: var(--el-text-color-regular);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   transition: all 0.3s ease;
 
   &:hover {
     background: var(--el-fill-color-light);
     color: var(--el-text-color-primary);
+
+    .more-arrow {
+      transform: translateX(2px);
+    }
+  }
+
+  .more-arrow {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    margin-top: 1px;
   }
 }
 
@@ -290,25 +326,15 @@ const chartOption = computed(() => ({
   height: 100%;
 }
 
-.section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 
-  i {
-    color: #1890ff;
-    font-size: 14px;
-  }
-}
 
 .section-icon {
   width: 18px;
   height: 18px;
   object-fit: contain;
+  background: rgba(219, 234, 254, 0.6);
+  border-radius: 4px;
+  padding: 2px;
 }
 
 .header-actions {

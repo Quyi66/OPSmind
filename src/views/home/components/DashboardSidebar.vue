@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard-sidebar">
-    <!-- 第一张卡片：个人信息 + 我的待办 -->
+    <!-- 合并后的卡片：个人信息 + 最近使用 -->
     <div class="user-todo-card">
       <!-- 个人信息区域 -->
       <div class="user-profile-card">
@@ -13,8 +13,8 @@
         </div>
       </div>
 
-      <!-- 我的待办区域 -->
-      <div class="todo-section">
+      <!-- 我的待办区域（已注释掉） -->
+      <!-- <div class="todo-section">
         <div class="section-header">
           <h4 class="section-title">我的待办</h4>
         </div>
@@ -49,26 +49,29 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div> -->
 
-    <!-- 第二张卡片：最近使用 -->
-    <div class="recent-card">
-      <div class="section-header">
-        <h4 class="section-title">最近使用</h4>
-      </div>
+      <!-- 最近使用区域 -->
+      <div class="recent-section">
+        <div class="section-header">
+          <h4 class="section-title">
+            <i class="fas fa-history title-icon"></i>
+            最近使用
+          </h4>
+        </div>
 
-      <div class="recent-grid">
-        <div
-          v-for="item in displayRecentItems"
-          :key="item.code"
-          :class="['recent-item', { placeholder: item._placeholder }]"
-          @click="handleRecentClick(item)"
-        >
-          <div class="recent-icon">
-            <i :class="item.icon"></i>
+        <div class="recent-grid">
+          <div
+            v-for="item in displayRecentItems"
+            :key="item.code"
+            :class="['recent-item', { placeholder: item._placeholder }]"
+            @click="handleRecentClick(item)"
+          >
+            <div class="recent-icon">
+              <i :class="item.icon"></i>
+            </div>
+            <span class="recent-name">{{ item.name }}</span>
           </div>
-          <span class="recent-name">{{ item.name }}</span>
         </div>
       </div>
     </div>
@@ -78,11 +81,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { authService } from '@/core/auth'
 import { accountService } from '@/core/account'
 import { getDefaultRouteForMenuCode } from '@/core/auth/permission-policy'
-import { useMenuStore } from '@/stores/menu.js'
+import { RECENT_ITEM_LIMIT, useMenuStore } from '@/stores/menu.js'
 
 import avatarImage from '@/assets/icons/avatar@2x.png'
 
@@ -175,21 +177,22 @@ onUnmounted(() => {
 })
 
 // 待办事项列表（移除mock数据，保留固定展示高度）
-const todoList = ref([])
+// const todoList = ref([])
 
-// 最近使用：来源于菜单 Store，固定 10 个格子（5 行 × 2 列）
+// 最近使用：来源于菜单 Store，固定 18 个格子（9 行 × 2 列）
 const menuStore = useMenuStore()
 const router = useRouter()
 const displayRecentItems = computed(() => {
-  const items = (menuStore.recentItems || []).slice(0, 10)
+  const items = (menuStore.recentItems || []).slice(0, RECENT_ITEM_LIMIT)
   const padded = [...items]
-  while (padded.length < 10) {
+  while (padded.length < RECENT_ITEM_LIMIT) {
     padded.push({ code: `__placeholder_${padded.length}`, name: '', icon: '', _placeholder: true })
   }
   return padded
 })
 
 // 事件处理
+/*
 const handleTodoClick = todo => {
   ElMessage.info(`点击待办: ${todo.title}`)
 }
@@ -201,6 +204,7 @@ const handleTodoProcess = _todo => {
 const handleTodoIgnore = _todo => {
   ElMessage.info('我的待办功能开发中...')
 }
+*/
 
 const handleRecentClick = item => {
   if (item._placeholder) return
@@ -230,8 +234,8 @@ const handleRecentClick = item => {
   // 进一步调小：左 10px，右 5px（与内容左边距 5px 合计 10px）
   padding-left: 10px;
   padding-right: 5px;
-  // 与仪表盘主内容底部间距一致
-  padding-bottom: 16px;
+  // 由于 card 自身有 margin-bottom: 16px，这里 padding-bottom 设为 0 以保证对齐
+  padding-bottom: 0;
   font-family:
     'PingFang SC',
     -apple-system,
@@ -266,17 +270,16 @@ const handleRecentClick = item => {
     width: 400px;
   }
 
-  /* 让两张卡片在大屏下竖向铺满侧栏高度 */
-  .user-todo-card,
-  .recent-card {
+  /* 让合并后的卡片在大屏下竖向铺满侧栏高度 */
+  .user-todo-card {
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
     min-height: 0;
   }
 
-  .todo-section {
-    flex: 1 1 0;
+  .recent-section {
+    flex: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -290,8 +293,8 @@ const handleRecentClick = item => {
   .dashboard-sidebar .recent-grid {
     height: auto;
     min-height: 0;
-    flex: 1 1 0;
-    overflow: auto;
+    grid-template-rows: repeat(9, 54px);
+    gap: 14px;
   }
 
   .user-profile-card {
@@ -338,7 +341,7 @@ const handleRecentClick = item => {
   }
 
   .recent-grid {
-    gap: 3px; /* 27寸：行间距调为原来的约1/3 */
+    gap: 14px; /* 27寸：增加行间距 */
   }
 
   .recent-item {
@@ -348,8 +351,8 @@ const handleRecentClick = item => {
   }
 
   .recent-icon {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
 
     i {
       font-size: 14px;
@@ -366,16 +369,15 @@ const handleRecentClick = item => {
     width: 440px;
   }
 
-  .user-todo-card,
-  .recent-card {
+  .user-todo-card {
     display: flex;
     flex-direction: column;
-    flex: 1 1 0;
+    flex: 1;
     min-height: 0;
   }
 
-  .todo-section {
-    flex: 1 1 0;
+  .recent-section {
+    flex: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -389,8 +391,8 @@ const handleRecentClick = item => {
   .dashboard-sidebar .recent-grid {
     height: auto;
     min-height: 0;
-    flex: 1 1 0;
-    overflow: auto;
+    grid-template-rows: repeat(9, 60px);
+    gap: 18px;
   }
 
   .user-profile-card {
@@ -437,7 +439,7 @@ const handleRecentClick = item => {
   }
 
   .recent-grid {
-    gap: 3px; /* 27寸+：继续保持紧凑 */
+    gap: 18px; /* 27寸+：增加行间距 */
   }
 
   .recent-item {
@@ -447,8 +449,8 @@ const handleRecentClick = item => {
   }
 
   .recent-icon {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
 
     i {
       font-size: 16px;
@@ -456,18 +458,23 @@ const handleRecentClick = item => {
   }
 
   .recent-name {
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 
 // 第一张卡片：个人信息 + 待办
 .user-todo-card {
   // 顶部间距更紧凑，与内容区保持一致
-  margin: 16px 16px 16px 16px;
+  margin: 16px;
   background: var(--el-bg-color);
-  border-radius: 4px;
-  border: 1px solid var(--el-border-color-light);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .user-profile-card {
@@ -490,6 +497,7 @@ const handleRecentClick = item => {
   border-radius: 50%;
   border: none;
   object-fit: cover;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
 }
 
 .user-info {
@@ -502,6 +510,7 @@ const handleRecentClick = item => {
   margin: 0 0 4px 0;
   color: white;
   line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .user-date {
@@ -509,16 +518,14 @@ const handleRecentClick = item => {
   color: rgba(255, 255, 255, 0.9);
   margin: 0;
   line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-// 第二张卡片：最近使用
-.recent-card {
-  // 末卡片底部去掉外边距，统一由容器 padding-bottom 提供 16px 留白
-  margin: 0 16px 0 16px;
-  background: var(--el-bg-color);
-  border-radius: 4px;
-  border: 1px solid var(--el-border-color-light);
-  overflow: hidden;
+.recent-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .section-header {
@@ -527,9 +534,32 @@ const handleRecentClick = item => {
 }
 
 // 最近使用标题更紧凑，且移除下分割线
-.recent-card .section-header {
-  padding: 10px 16px 8px 16px;
+.recent-section .section-header {
+  padding: 8px 16px;
   border-bottom: none;
+}
+
+.recent-section .section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recent-section .title-icon {
+  color: var(--el-color-primary);
+  font-size: 11px;
+  background: rgba(219, 234, 254, 0.6);
+  border-radius: 4px;
+  padding: 2px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 // 待办区域的标题不需要下边框，与个人信息紧贴
@@ -690,30 +720,39 @@ const handleRecentClick = item => {
 // 最近使用样式
 .recent-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 列，共 5 行 */
-  gap: 6px; /* 行距 */
-  padding: 8px 16px 8px; /* 与标题左右对齐 */
-  /* 自适应行高：5 行等比分配可用高度，最小 36px */
-  grid-template-rows: repeat(5, minmax(36px, 1fr));
-  align-content: stretch;
+  grid-template-columns: repeat(2, 1fr); /* 2 列，共 9 行 */
+  gap: 14px; /* 行距 */
+  padding: 8px 16px 16px; /* 与标题左右对齐，底部留白 */
+  grid-template-rows: repeat(9, 48px); /* 固定行高为 48px */
 }
 
 .recent-item {
   display: flex;
   flex-direction: row; /* 左图标 右名称 */
   align-items: center;
-  gap: 6px; /* 更紧凑的间距 */
-  padding: 6px 6px; /* 再压缩行高，便于 5 行固定占位 */
-  border-radius: 8px;
-  background: var(--el-fill-color-light);
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease-in-out;
   min-height: 36px;
-  height: 100%; /* 随网格行高自适应填满 */
+  height: 100%;
 
   &:hover {
-    background: var(--el-fill-color);
+    background: var(--el-fill-color-blank);
+    border-color: var(--el-color-primary-light-5);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.08);
     transform: translateY(-1px);
+
+    & .recent-icon {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    }
+
+    & .recent-icon i {
+      color: #2563eb;
+    }
   }
 }
 
@@ -724,23 +763,24 @@ const handleRecentClick = item => {
 }
 
 .recent-icon {
-  width: 24px; /* 更小图标 */
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--el-fill-color);
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
   border-radius: 6px;
-  margin: 0; /* 水平布局不需要底部间距 */
+  margin: 0;
+  transition: all 0.2s ease;
 
   i {
-    font-size: 12px;
-    color: var(--el-text-color-regular);
+    font-size: 13px;
+    color: #3b82f6;
   }
 }
 
 .recent-name {
-  font-size: 12px; /* 文本整体放大一档 */
+  font-size: 13px; /* 文本整体放大一档 */
   color: var(--el-text-color-regular);
   text-align: left;
   line-height: 1.2;
@@ -819,10 +859,6 @@ const handleRecentClick = item => {
     margin: 20px 12px 12px 12px;
   }
 
-  .recent-card {
-    margin: 0 12px 12px 12px;
-  }
-
   .user-profile-card {
     padding: 12px;
   }
@@ -840,9 +876,9 @@ const handleRecentClick = item => {
     font-size: 10px;
   }
 
-  .user-todo-card,
-  .recent-card {
+  .user-todo-card {
     margin: 12px;
+    height: auto;
   }
 
   .section-title {
@@ -851,8 +887,9 @@ const handleRecentClick = item => {
 
   .recent-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-    padding: 10px 10px 6px;
+    gap: 10px;
+    padding: 10px 10px 12px;
+    grid-template-rows: repeat(9, 38px);
   }
 
   .recent-item {
@@ -892,10 +929,7 @@ const handleRecentClick = item => {
 
   .user-todo-card {
     margin: 18px 10px 10px 10px;
-  }
-
-  .recent-card {
-    margin: 0 10px 8px 10px;
+    height: auto;
   }
 
   .user-profile-card {
@@ -917,8 +951,9 @@ const handleRecentClick = item => {
 
   .recent-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 4px;
-    padding: 8px 8px 6px;
+    gap: 8px;
+    padding: 8px 8px 10px;
+    grid-template-rows: repeat(9, 34px);
   }
 
   .recent-item {
