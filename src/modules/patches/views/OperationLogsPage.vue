@@ -1,14 +1,6 @@
 <template>
   <div class="ops-page-layout">
-    <!-- Tab 导航 -->
-    <el-tabs v-model="activeTab">
-      <el-tab-pane label="操作记录" name="operation" />
-      <el-tab-pane label="漏洞报表" name="vulnerability" />
-      <el-tab-pane label="补丁报表" name="patch" />
-    </el-tabs>
-
-    <!-- 操作记录 Tab -->
-    <template v-if="activeTab === 'operation'">
+    <!-- 操作记录 -->
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
           <el-form-item label="时间范围">
@@ -209,190 +201,7 @@
           @current-change="handlePageChange"
         />
       </div>
-    </template>
 
-    <!-- 漏洞报表 Tab -->
-    <template v-if="activeTab === 'vulnerability'">
-      <div class="ops-filter-bar">
-        <el-form inline size="small">
-          <el-form-item label="搜索">
-            <el-input
-              v-model="vulFilterText"
-              placeholder="主机/KB编号"
-              size="small"
-              style="width: 220px"
-              clearable
-              @keyup.enter="handleVulSearch"
-              @clear="handleVulSearch"
-            >
-              <template #prefix>
-                <i class="fa fa-search" />
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :loading="vulLoading" @click="handleVulSearch">
-              <el-icon><Search /></el-icon>
-              搜索
-            </el-button>
-            <el-button @click="handleVulReset">
-              <el-icon><RefreshRight /></el-icon>
-              重置
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <div class="ops-action-bar">
-        <span style="flex: 1"></span>
-        <el-button
-          class="toolbar-icon-btn"
-          circle
-          size="small"
-          :loading="vulLoading"
-          @click="loadVulData"
-          title="刷新"
-        >
-          <el-icon v-show="!vulLoading">
-            <Refresh />
-          </el-icon>
-        </el-button>
-      </div>
-
-      <!-- 表格区域 -->
-      <div class="ops-table-wrapper">
-        <el-table v-loading="vulLoading" :data="vulTableData" max-height="calc(100vh - 314px)">
-          <el-table-column prop="host_key" label="主机" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="os_distro" label="OS" width="100" />
-          <el-table-column prop="os_version" label="OS版本" width="150" />
-          <el-table-column prop="vul_id" label="KB编号" min-width="120" />
-          <el-table-column prop="scan_timestamp" label="扫描时间" width="200">
-            <template #default="{ row }">
-              {{ formatTimestamp(row.scan_timestamp) }}
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-
-      <!-- 分页区域 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="vulPagination.page"
-          v-model:page-size="vulPagination.pageSize"
-          :page-sizes="[10, 25, 50, 100]"
-          :total="vulPagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handleVulSizeChange"
-          @current-change="handleVulPageChange"
-        />
-      </div>
-    </template>
-
-    <!-- 补丁报表 Tab -->
-    <template v-if="activeTab === 'patch'">
-      <div class="ops-filter-bar">
-        <el-form inline size="small">
-          <el-form-item label="严重性">
-            <el-select
-              v-model="patchSeverityFilter"
-              placeholder="全部"
-              clearable
-              style="width: 100px"
-            >
-              <el-option label="全部" value="" />
-              <el-option label="严重" value="Critical" />
-              <el-option label="重要" value="Important" />
-              <el-option label="中等" value="Moderate" />
-              <el-option label="低" value="Low" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="搜索">
-            <el-input
-              v-model="patchFilterText"
-              placeholder="主机/补丁编号/标题"
-              size="small"
-              style="width: 300px"
-              clearable
-              @keyup.enter="handlePatchSearch"
-              @clear="handlePatchSearch"
-            >
-              <template #prefix>
-                <i class="fa fa-search" />
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" :loading="patchLoading" @click="handlePatchSearch">
-              <el-icon><Search /></el-icon>
-              搜索
-            </el-button>
-            <el-button @click="handlePatchReset">
-              <el-icon><RefreshRight /></el-icon>
-              重置
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <div class="ops-action-bar">
-        <span style="flex: 1"></span>
-        <el-button
-          class="toolbar-icon-btn"
-          circle
-          size="small"
-          :loading="patchLoading"
-          @click="loadPatchData"
-          title="刷新"
-        >
-          <el-icon v-show="!patchLoading">
-            <Refresh />
-          </el-icon>
-        </el-button>
-      </div>
-
-      <!-- 表格区域 -->
-      <div class="ops-table-wrapper">
-        <el-table v-loading="patchLoading" :data="patchTableData" max-height="calc(100vh - 314px)">
-          <el-table-column prop="host_key" label="主机" min-width="100" show-overflow-tooltip />
-          <el-table-column prop="os_distro" label="OS" width="100" />
-          <el-table-column prop="os_version" label="OS版本" width="100" />
-          <el-table-column prop="patch_id" label="补丁编号" min-width="120" />
-          <el-table-column prop="title" label="概要" min-width="300" show-overflow-tooltip />
-          <el-table-column prop="severity" label="严重性" width="100">
-            <template #default="{ row }">
-              <el-tag
-                class="severity-tag"
-                :class="getSeverityClass(row.severity)"
-                type="info"
-                size="small"
-              >
-                {{ translateSeverity(row.severity) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="scan_timestamp" label="扫描时间" width="180">
-            <template #default="{ row }">
-              {{ formatTimestamp(row.scan_timestamp) }}
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-
-      <!-- 分页区域 -->
-      <div class="ops-pagination-wrapper">
-        <el-pagination
-          v-model:current-page="patchPagination.page"
-          v-model:page-size="patchPagination.pageSize"
-          :page-sizes="[10, 25, 50, 100]"
-          :total="patchPagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handlePatchSizeChange"
-          @current-change="handlePatchPageChange"
-        />
-      </div>
-    </template>
 
     <!-- 运行结果对话框 -->
     <ExecuteResultDialog
@@ -421,42 +230,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { ElMessage, ElSpace, ElTag } from 'element-plus'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { ElMessage, ElTag } from 'element-plus'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
-import { patchLogsApi, operationReportApi } from '../api'
+import { patchLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n'
-import { PATCH_SEVERITY_LABELS, PATCH_SEVERITY_STYLES } from '../constants'
 import { useApi } from '@/core/api'
 import { authService } from '@/core/auth'
 import ScanReportDialog from '../components/logs/ScanReportDialog.vue'
 import WindowsScanReportDialog from '../components/logs/WindowsScanReportDialog.vue'
 
-// Tab 状态
-const activeTab = ref('operation')
-
-// ========== 操作记录 Tab ==========
+// ========== 操作记录 ==========
 const loading = ref(false)
 const tableData = ref([])
 
-function getSeverityClass(severity) {
-  if (!severity) return ''
-  const key = severity.toUpperCase()
-  const map = {
-    CRITICAL: 'is-critical',
-    IMPORTANT: 'is-important',
-    MODERATE: 'is-moderate',
-    LOW: 'is-low'
-  }
-  return map[key] || ''
-}
-
-function translateSeverity(severity) {
-  if (!severity) return ''
-  const key = severity.toUpperCase()
-  return PATCH_SEVERITY_LABELS[key] || severity
-}
 const pagination = reactive({
   page: 1,
   pageSize: 10,
@@ -467,7 +255,6 @@ const pagination = reactive({
 const actionFilter = ref('all')
 const statusFilter = ref('all')
 const dayFilter = ref(1)
-const engineFilter = ref('')
 const searchText = ref('')
 const filters = reactive({
   keyword: ''
@@ -497,59 +284,12 @@ const actionColumnWidth = computed(() => {
 const hostsDialogVisible = ref(false)
 const hostsDialogList = ref([])
 
-// ========== 漏洞报告 Tab ==========
-const vulLoading = ref(false)
-const vulFilterText = ref('')
-const vulTableData = ref([])
-const vulPagination = reactive({
-  page: 1,
-  pageSize: 10,
-  total: 0
-})
-
-// 漏洞报表分页信息
-const vulPaginationInfo = computed(() => {
-  const total = vulPagination.total
-  if (total === 0) return '0 - 0 / 0'
-  const start = (vulPagination.page - 1) * vulPagination.pageSize + 1
-  const end = Math.min(vulPagination.page * vulPagination.pageSize, total)
-  return `${start} - ${end} / ${total.toLocaleString()}`
-})
-
-const vulTotalPages = computed(() => {
-  return Math.ceil(vulPagination.total / vulPagination.pageSize) || 1
-})
-
-// ========== 补丁报表 Tab ==========
-const patchLoading = ref(false)
-const patchFilterText = ref('')
-const patchSeverityFilter = ref('')
-const patchTableData = ref([])
-const patchPagination = reactive({
-  page: 1,
-  pageSize: 10,
-  total: 0
-})
-
 const ACTION_KEYS = {
   patchScan: '#{app_vap.menu.patch_scan.title}',
   patchInstall: '#{app_vap.menu.patch_install.title}',
   patchRollback: '#{app_vap.menu.patch_rollback.title}',
   winPatchScan: '#{app_vap.menu.win_patch_scan.title}'
 }
-
-// 补丁报表分页信息
-const patchPaginationInfo = computed(() => {
-  const total = patchPagination.total
-  if (total === 0) return '0 - 0 / 0'
-  const start = (patchPagination.page - 1) * patchPagination.pageSize + 1
-  const end = Math.min(patchPagination.page * patchPagination.pageSize, total)
-  return `${start} - ${end} / ${total.toLocaleString()}`
-})
-
-const patchTotalPages = computed(() => {
-  return Math.ceil(patchPagination.total / patchPagination.pageSize) || 1
-})
 
 // 状态映射
 function getStatusType(status) {
@@ -972,115 +712,6 @@ async function downloadRollbackReport(row) {
     ElMessage.error(`下载回退报告失败: ${error.message || '未知错误'}`)
   }
 }
-
-// ========== 漏洞报表相关方法 ==========
-async function loadVulData() {
-  vulLoading.value = true
-  try {
-    const response = await operationReportApi.getVulnerabilityReport({
-      page: vulPagination.page,
-      size: vulPagination.pageSize,
-      filter: vulFilterText.value ? `host_key|vul_id:*${vulFilterText.value}*` : ''
-    })
-    const data = response?.data || response
-    vulTableData.value = data?.records || []
-    vulPagination.total = data?.total || 0
-  } catch (error) {
-    console.error('Failed to load vulnerability data:', error)
-    ElMessage.error('加载漏洞报表失败')
-  } finally {
-    vulLoading.value = false
-  }
-}
-
-function handleVulSearch() {
-  vulPagination.page = 1
-  loadVulData()
-}
-
-function handleVulReset() {
-  vulFilterText.value = ''
-  vulPagination.page = 1
-  vulPagination.pageSize = 10
-  loadVulData()
-}
-
-function handleVulPageChange(page) {
-  vulPagination.page = page
-  loadVulData()
-}
-
-function handleVulSizeChange(size) {
-  vulPagination.pageSize = size
-  vulPagination.page = 1
-  loadVulData()
-}
-
-// ========== 补丁报表相关方法 ==========
-async function loadPatchData() {
-  patchLoading.value = true
-  try {
-    let filter = ''
-    const conditions = []
-
-    if (patchFilterText.value) {
-      conditions.push(`host_key|patch_id|title:*${patchFilterText.value}*`)
-    }
-
-    if (patchSeverityFilter.value) {
-      conditions.push(`severity:${patchSeverityFilter.value}`)
-    }
-
-    filter = conditions.join('|')
-
-    const response = await operationReportApi.getPatchReport({
-      page: patchPagination.page,
-      size: patchPagination.pageSize,
-      filter
-    })
-    const data = response?.data || response
-    patchTableData.value = data?.records || []
-    patchPagination.total = data?.total || 0
-  } catch (error) {
-    console.error('Failed to load patch data:', error)
-    ElMessage.error('加载补丁报表失败')
-  } finally {
-    patchLoading.value = false
-  }
-}
-
-function handlePatchSearch() {
-  patchPagination.page = 1
-  loadPatchData()
-}
-
-function handlePatchReset() {
-  patchFilterText.value = ''
-  patchSeverityFilter.value = ''
-  patchPagination.page = 1
-  patchPagination.pageSize = 10
-  loadPatchData()
-}
-
-function handlePatchPageChange(page) {
-  patchPagination.page = page
-  loadPatchData()
-}
-
-function handlePatchSizeChange(size) {
-  patchPagination.pageSize = size
-  patchPagination.page = 1
-  loadPatchData()
-}
-
-// Tab 切换时加载数据
-watch(activeTab, newTab => {
-  if (newTab === 'vulnerability' && vulTableData.value.length === 0) {
-    loadVulData()
-  } else if (newTab === 'patch' && patchTableData.value.length === 0) {
-    loadPatchData()
-  }
-})
 
 onMounted(() => {
   loadData()
