@@ -1,9 +1,9 @@
 <template>
   <div ref="statsViewRef" class="stats-view">
     <div ref="statsContentRef" class="stats-content">
-      <section class="chart-section chart-section--trend" :style="chartSectionStyle">
-        <header class="chart-section__header">
-          <h4 class="chart-section__title">最近30天执行趋势</h4>
+      <div class="ops-section trend-card" :style="chartSectionStyle">
+        <div class="ops-section__header">
+          <h4 class="ops-section__title">最近30天执行趋势</h4>
           <el-button
             class="toolbar-icon-btn"
             circle
@@ -14,8 +14,8 @@
           >
             <el-icon v-show="!contentLoading"><RefreshRight /></el-icon>
           </el-button>
-        </header>
-        <div v-loading="statsLoading" class="chart-section__body chart-section__body--trend">
+        </div>
+        <div v-loading="statsLoading" class="card-body">
           <el-empty v-if="!statsLoading && !recentTrendRows.length" description="暂无统计数据" />
           <VChart
             v-else-if="recentTrendRows.length"
@@ -24,14 +24,11 @@
             class="chart-view"
           />
         </div>
-      </section>
+      </div>
 
-      <section
-        class="chart-section chart-section--summary"
-        :style="{ height: chartSectionHeight ? chartSectionHeight + 50 + 'px' : 'auto' }"
-      >
-        <header class="chart-section__header">
-          <h4 class="chart-section__title">运维工具运行次数排行</h4>
+      <div class="ops-section summary-card" :style="summarySectionStyle">
+        <div class="ops-section__header">
+          <h4 class="ops-section__title">运维工具运行次数排行</h4>
           <el-input
             v-model="summaryQuery"
             clearable
@@ -43,8 +40,8 @@
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
-        </header>
-        <div v-loading="summaryLoading" class="chart-section__body chart-section__body--summary">
+        </div>
+        <div v-loading="summaryLoading" class="card-body">
           <el-empty v-if="!summaryLoading && !filteredSummary.length" description="暂无统计数据" />
           <VChart
             v-else-if="filteredSummary.length"
@@ -53,7 +50,7 @@
             class="chart-view"
           />
         </div>
-      </section>
+      </div>
     </div>
   </div>
 </template>
@@ -81,6 +78,7 @@ const summaryQuery = ref('')
 const statsViewRef = ref(null)
 const statsContentRef = ref(null)
 const chartSectionHeight = ref(0)
+const summarySectionHeight = ref(0)
 const { isDark } = useTheme()
 
 const DESKTOP_BREAKPOINT = 900
@@ -97,7 +95,7 @@ onMounted(() => {
 
   if (statsViewRef.value && window.ResizeObserver) {
     resizeObserver = new ResizeObserver(() => {
-      updateChartSectionHeightChartSectionHeight()
+      updateChartSectionHeight()
     })
     resizeObserver.observe(statsViewRef.value)
   }
@@ -119,16 +117,19 @@ function updateChartSectionHeight() {
   const contentEl = statsContentRef.value
   if (!contentEl || window.innerWidth <= DESKTOP_BREAKPOINT) {
     chartSectionHeight.value = 0
+    summarySectionHeight.value = 0
     return
   }
 
-  const contentHeight = Math.floor(contentEl.getBoundingClientRect().height)
+  const contentHeight = contentEl.clientHeight
   if (!contentHeight) return
 
-  chartSectionHeight.value = Math.max(
-    Math.floor((contentHeight - CONTENT_GAP) / 2),
-    MIN_SECTION_HEIGHT
-  )
+  const availableHeight = contentHeight - CONTENT_GAP
+  const trendHeight = Math.floor(availableHeight * 0.48)
+  const summaryHeight = availableHeight - trendHeight
+
+  chartSectionHeight.value = Math.max(trendHeight, MIN_SECTION_HEIGHT)
+  summarySectionHeight.value = Math.max(summaryHeight, MIN_SECTION_HEIGHT)
 }
 
 async function fetchStats() {
@@ -172,14 +173,20 @@ const contentLoading = computed(() => statsLoading.value || summaryLoading.value
 const chartSectionStyle = computed(() =>
   chartSectionHeight.value ? { height: `${chartSectionHeight.value}px` } : undefined
 )
+const summarySectionStyle = computed(() =>
+  summarySectionHeight.value ? { height: `${summarySectionHeight.value}px` } : undefined
+)
 
 const recentTrendRows = computed(() => {
   const byDate = new Map()
 
   rawData.value.forEach(item => {
     if (!item.start_date) return
+    const dateStr = item.start_date.includes('T')
+      ? item.start_date.split('T')[0]
+      : item.start_date.slice(0, 10)
     const count = Number(item.run_count) || 0
-    byDate.set(item.start_date, (byDate.get(item.start_date) || 0) + count)
+    byDate.set(dateStr, (byDate.get(dateStr) || 0) + count)
   })
 
   return Array.from(byDate.entries())
@@ -234,13 +241,20 @@ const chartTheme = computed(() =>
 const recentTrendOption = computed(() => ({
   color: [chartTheme.value.trendLine],
   tooltip: {
-    trigger: 'axis'
+    trigger: 'axis',
+    backgroundColor: isDark.value ? '#1e293b' : '#ffffff',
+    borderColor: isDark.value ? '#334155' : '#e2e8f0',
+    borderWidth: 1,
+    textStyle: {
+      color: isDark.value ? '#f8fafc' : '#0f172a'
+    },
+    extraCssText: 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); border-radius: 8px;'
   },
   grid: {
     left: 48,
     right: 24,
     top: 36,
-    bottom: 64
+    bottom: 40
   },
   xAxis: {
     type: 'category',
@@ -248,9 +262,10 @@ const recentTrendOption = computed(() => ({
     data: recentTrendRows.value.map(item => item.date),
     axisLabel: {
       color: chartTheme.value.axisText,
-      interval: 0,
-      hideOverlap: false,
-      rotate: 40
+      interval: 'auto',
+      hideOverlap: true,
+      rotate: 0,
+      margin: 12
     },
     axisLine: {
       lineStyle: {
@@ -275,16 +290,27 @@ const recentTrendOption = computed(() => ({
       type: 'line',
       smooth: true,
       symbolSize: 8,
+      showSymbol: true,
       label: {
         show: true,
         position: 'top',
         color: chartTheme.value.trendLabel,
         fontSize: 11,
-        formatter: ({ value }) => `${value ?? 0}`
+        formatter: ({ value }) => value > 0 ? `${value}` : ''
       },
       data: recentTrendRows.value.map(item => item.count),
       areaStyle: {
-        color: chartTheme.value.trendArea
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            { offset: 0, color: isDark.value ? 'rgba(96, 165, 250, 0.22)' : 'rgba(37, 99, 235, 0.18)' },
+            { offset: 1, color: isDark.value ? 'rgba(96, 165, 250, 0.00)' : 'rgba(37, 99, 235, 0.00)' }
+          ]
+        }
       },
       lineStyle: {
         width: 3
@@ -298,7 +324,14 @@ const summaryChartOption = computed(() => ({
     trigger: 'axis',
     axisPointer: {
       type: 'shadow'
-    }
+    },
+    backgroundColor: isDark.value ? '#1e293b' : '#ffffff',
+    borderColor: isDark.value ? '#334155' : '#e2e8f0',
+    borderWidth: 1,
+    textStyle: {
+      color: isDark.value ? '#f8fafc' : '#0f172a'
+    },
+    extraCssText: 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); border-radius: 8px;'
   },
   dataZoom:
     filteredSummary.value.length > 12
@@ -327,7 +360,7 @@ const summaryChartOption = computed(() => ({
         ]
       : [],
   grid: {
-    left: 180,
+    left: 260,
     right: filteredSummary.value.length > 12 ? 42 : 24,
     top: 16,
     bottom: 24
@@ -349,7 +382,7 @@ const summaryChartOption = computed(() => ({
     data: filteredSummary.value.map(row => row.translatedTitle),
     axisLabel: {
       color: chartTheme.value.summaryAxis,
-      width: 150,
+      width: 220,
       overflow: 'truncate'
     },
     axisLine: {
@@ -412,52 +445,18 @@ const summaryChartOption = computed(() => ({
   overflow: hidden;
 }
 
-.chart-section {
+.trend-card,
+.summary-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
   min-height: 0;
-  padding: 16px;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 16px;
-  box-shadow: var(--stats-chart-shadow);
+  margin-bottom: 0 !important;
 }
 
-.chart-section--trend {
-  flex: 1 1 auto;
-}
-
-.chart-section--summary {
-  flex: 1 1 auto;
-}
-
-.chart-section__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.chart-section__title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.chart-section__body {
+.card-body {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
-}
-
-.chart-section__body--trend {
-  min-height: 280px;
-}
-
-.chart-section__body--summary {
-  min-height: 320px;
 }
 
 .chart-view {
@@ -482,14 +481,10 @@ const summaryChartOption = computed(() => ({
     width: 100%;
   }
 
-  .chart-section__header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .chart-section--trend,
-  .chart-section--summary {
+  .trend-card,
+  .summary-card {
     flex: none;
+    height: auto !important;
   }
 }
 </style>

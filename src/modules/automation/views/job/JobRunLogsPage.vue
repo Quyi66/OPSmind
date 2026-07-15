@@ -566,10 +566,17 @@ async function handleRerun(row) {
   height: 100%;
 }
 
-.run-logs-tab-content,
+.run-logs-tab-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
 .stats-tab-wrapper {
   display: flex;
   flex: 1;
+  height: 100%;
   min-height: 0;
   flex-direction: column;
 }
