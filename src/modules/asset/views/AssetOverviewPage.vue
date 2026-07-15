@@ -104,16 +104,7 @@
               <i class="fa fa-file-import" />
               导入
             </el-button>
-            <el-button
-              class="aw-inline-action"
-              link
-              type="primary"
-              size="small"
-              @click="exportDialogVisible = true"
-            >
-              <i class="fa fa-file-export" />
-              导出
-            </el-button>
+
           </div>
         </div>
 
@@ -333,7 +324,6 @@
       :tenant-id="currentTenantId"
       @saved="handleDialogSaved"
     />
-    <ExportAssetDialog v-model="exportDialogVisible" />
     <AssetEditDialog
       v-model="assetDetailDialogVisible"
       :asset-id="currentAssetId"
@@ -754,7 +744,6 @@ import DataEditTagDialog from '../components/data/DataEditTagDialog.vue'
 import AssetEditDialog from '../components/asset-info/AssetEditDialog.vue'
 import AutoEntryDialog from '../components/asset-info/AutoEntryDialog.vue'
 import ImportAssetDialog from '../components/asset-info/ImportAssetDialog.vue'
-import ExportAssetDialog from '../components/asset-info/ExportAssetDialog.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { Edit } from '@element-plus/icons-vue'
 import WbFlipNumber from '@/modules/automation/components/workbench/WbFlipNumber.vue'
@@ -834,7 +823,6 @@ const failedLogTotal = ref(0)
 // 弹窗
 const autoEntryDialogVisible = ref(false)
 const importDialogVisible = ref(false)
-const exportDialogVisible = ref(false)
 const currentTenantId = ref('')
 const addGroupDialogVisible = ref(false)
 const addTagDialogVisible = ref(false)

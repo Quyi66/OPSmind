@@ -100,10 +100,7 @@
               <i class="fa fa-file-import" style="margin-right: 4px"></i>
               导入设备
             </el-button>
-            <el-button size="small" @click="exportDialogVisible = true">
-              <i class="fa fa-file-export" style="margin-right: 4px"></i>
-              设备信息导出
-            </el-button>
+
             <el-button type="danger" plain size="small" @click="deleteImportDialogVisible = true">
               <i class="fa fa-trash-alt" style="margin-right: 4px"></i>
               批量删除设备
@@ -505,7 +502,6 @@
       @saved="handleAssetDataSaved"
     />
 
-    <ExportAssetDialog v-model="exportDialogVisible" :default-ci-type="currentType" />
 
     <DeleteAssetImportDialog v-model="deleteImportDialogVisible" @saved="handleAssetDataSaved" />
 
@@ -567,7 +563,6 @@ import AssetEditDialog from '../components/asset-info/AssetEditDialog.vue'
 import AssetHistoryDialog from '../components/asset-info/AssetHistoryDialog.vue'
 import AutoEntryDialog from '../components/asset-info/AutoEntryDialog.vue'
 import ImportAssetDialog from '../components/asset-info/ImportAssetDialog.vue'
-import ExportAssetDialog from '../components/asset-info/ExportAssetDialog.vue'
 import DeleteAssetImportDialog from '../components/asset-info/DeleteAssetImportDialog.vue'
 import BatchEditDialog from '../components/asset-info/BatchEditDialog.vue'
 import AddTagDialog from '../components/asset-info/AddTagDialog.vue'
@@ -587,7 +582,6 @@ const editDialogVisible = ref(false)
 const historyDialogVisible = ref(false)
 const autoEntryDialogVisible = ref(false)
 const importDialogVisible = ref(false)
-const exportDialogVisible = ref(false)
 const deleteImportDialogVisible = ref(false)
 const batchEditDialogVisible = ref(false)
 const addTagDialogVisible = ref(false)
