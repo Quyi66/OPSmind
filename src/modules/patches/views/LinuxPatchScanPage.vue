@@ -186,6 +186,15 @@
             <i class="fa fa-bug" />
             重新扫描补丁
           </el-button>
+          <el-button
+            type="primary"
+            size="small"
+            :disabled="batchSelectedHosts.length === 0"
+            @click="batchInstallDrawerVisible = true"
+          >
+            <i class="fa fa-chevron-circle-right" />
+            安装补丁 ({{ batchSelectedHosts.length }})
+          </el-button>
           <span style="flex: 1"></span>
           <el-button
             class="toolbar-icon-btn"
@@ -860,6 +869,13 @@
     <!-- 操作记录对话框 -->
     <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
 
+    <!-- 批量安装补丁抽屉 -->
+    <BatchInstallPatchDrawer
+      v-model:visible="batchInstallDrawerVisible"
+      :hosts="batchSelectedHosts"
+      @success="loadHostData"
+    />
+
     <PatchInstallWizard
       v-model:visible="rollbackWizardVisible"
       :patches-to-install="rollbackTaskPatches"
@@ -1019,6 +1035,7 @@ import AcmDeviceSelector from '@/modules/automation/components/job/schedule/comp
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
 import HostSeverityPatchDialog from '../components/host-detail/dialogs/HostSeverityPatchDialog.vue'
+import BatchInstallPatchDrawer from '../components/host-detail/dialogs/BatchInstallPatchDrawer.vue'
 import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
@@ -1261,6 +1278,7 @@ const patchDetailData = ref({})
 const currentPatchOsDistro = ref('')
 const severityPatchesDialogVisible = ref(false)
 const severityPatchesDialogHost = ref(null)
+const batchInstallDrawerVisible = ref(false)
 const severityPatchesDialogSeverity = ref('')
 const rpmDetailVisible = ref(false)
 const rpmDetailLoading = ref(false)

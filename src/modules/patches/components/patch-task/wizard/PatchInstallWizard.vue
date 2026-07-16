@@ -5,6 +5,7 @@
       v-model="isVisible"
       :title="wizardDialogTitle"
       width="1000px"
+      top="5vh"
       :close-on-click-modal="false"
       class="install-dialog"
       @closed="resetInstallState"
@@ -100,7 +101,7 @@
         </div>
 
         <!-- 更新主机 -->
-        <div class="install-card mt-3">
+        <div class="install-card install-card-full">
           <div class="card-header">
             <i class="fa fa-list" />
             {{ hostCardTitle }}
@@ -1557,4 +1558,27 @@ function handleSkipPreCheck() {
 
 <style scoped lang="scss">
 @use './PatchTaskWizard.scss' as *;
+
+.install-content {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.install-card-full {
+  grid-column: span 2;
+}
+
+:deep(.install-card) {
+  margin-bottom: 0 !important;
+}
+
+.install-content > .install-card:not(.install-card-full) .card-body--scroll {
+  max-height: 320px;
+}
+
+.install-content > .install-card.install-card-full .card-body--scroll {
+  max-height: 260px;
+}
 </style>
