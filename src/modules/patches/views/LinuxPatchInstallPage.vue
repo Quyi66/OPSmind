@@ -1,138 +1,403 @@
 <template>
-  <div class="ops-page-layout">
-    <!-- 筛选区 -->
-    <div class="ops-filter-bar">
-      <el-form :model="filters" inline size="small">
-        <el-form-item label="严重程度">
-          <el-select v-model="filters.severity" multiple placeholder="请选择" style="width: auto">
-            <el-option label="严重" value="Critical" />
-            <el-option label="重要" value="Important" />
-            <el-option label="中等" value="Moderate" />
-            <el-option label="低危" value="Low" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="关键词">
-          <el-input
-            v-model="filters.keyword"
-            placeholder="搜索补丁编号、概要、CVE..."
-            style="width: 240px"
-            clearable
-          >
-            <template #prefix>
+  <div class="ops-page-layout ops-page-layout--page-scroll linux-patch-install-page">
+    <!-- 顶部 Tab 导航 -->
+    <div class="nav-tabs">
+      <div
+        class="nav-tab"
+        :class="{ 'nav-tab--active': activeTab === 'host' }"
+        @click="handleTabChange('host')"
+      >
+        <i class="fa fa-laptop" style="margin-right: 6px" />
+        按主机安装
+      </div>
+      <div
+        class="nav-tab"
+        :class="{ 'nav-tab--active': activeTab === 'patch' }"
+        @click="handleTabChange('patch')"
+      >
+        <i class="fa fa-download" style="margin-right: 6px" />
+        按补丁安装
+      </div>
+    </div>
+
+    <!-- 按主机安装 Tab 内容 -->
+    <div v-if="activeTab === 'host'" class="tab-content">
+      <!-- 主机筛选栏 -->
+      <div class="ops-filter-bar">
+        <el-form :model="hostFilters" inline size="small">
+          <el-form-item label="操作系统">
+            <el-select
+              v-model="hostFilters.os_distro"
+              placeholder="全部"
+              clearable
+              filterable
+              allow-create
+              default-first-option
+              style="width: 180px"
+            >
+              <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="系统版本">
+            <el-select
+              v-model="hostVersionFilter"
+              placeholder="全部"
+              clearable
+              filterable
+              allow-create
+              default-first-option
+              style="width: 180px"
+              @change="handleHostVersionChange"
+            >
+              <el-option
+                v-for="item in hostOsVersionOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="标签">
+            <el-select
+              v-model="hostFilters.tags"
+              placeholder="全部标签"
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
+              clearable
+              filterable
+              :loading="hostTagLoading"
+              style="width: 180px"
+            >
+              <el-option v-for="tag in hostTagOptions" :key="tag" :label="tag" :value="tag" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="关键词">
+            <el-input
+              v-model="hostFilters.keyword"
+              placeholder="主机名 / IP / 资产 ID"
+              style="width: 220px"
+              clearable
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="hostLoading" @click="handleHostFilter">
               <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleHostReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- 操作栏 -->
+      <div class="ops-action-bar">
+        <el-button type="primary" size="small" @click="handleRescan">
+          <i class="fa fa-bug" />
+          重新扫描补丁
+        </el-button>
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="batchSelectedHosts.length === 0"
+          @click="batchInstallDrawerVisible = true"
+        >
+          <i class="fa fa-chevron-circle-right" />
+          安装选中主机补丁 ({{ batchSelectedHosts.length }})
+        </el-button>
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="hostLoading"
+          @click="loadHostData"
+          title="刷新"
+        >
+          <el-icon v-show="!hostLoading"><Refresh /></el-icon>
+        </el-button>
+      </div>
+
+      <!-- 主机表格 -->
+      <div class="ops-table-wrapper">
+        <el-table
+          ref="hostTableRef"
+          v-loading="hostLoading"
+          :data="hostTableData"
+          class="natural-height-table"
+          style="width: 100%"
+          @selection-change="handleHostSelectionChange"
+        >
+          <el-table-column type="selection" width="45" />
+          <el-table-column prop="host_key" label="主机" width="140">
+            <template #default="{ row }">
+              <el-link type="primary" underline="never" @click="handleHostClick(row)">
+                {{ row.host_key }}
+              </el-link>
             </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleSearch">
-            <el-icon><Search /></el-icon>
-            搜索
-          </el-button>
-          <el-button @click="handleReset">
-            <el-icon><RefreshRight /></el-icon>
-            重置
-          </el-button>
+          </el-table-column>
+          <el-table-column prop="num_critical" width="80">
+            <template #header>
+              严重
+              <i class="fa fa-circle text-danger" />
+            </template>
+            <template #default="{ row }">
+              <span class="severity-count">{{ row.num_critical }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="num_important" width="80">
+            <template #header>
+              重要
+              <i class="fa fa-circle text-warning" />
+            </template>
+            <template #default="{ row }">
+              <span class="severity-count">{{ row.num_important }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="num_moderate" width="80">
+            <template #header>
+              中等
+              <i class="fa fa-circle text-dark" />
+            </template>
+            <template #default="{ row }">
+              <span class="severity-count">{{ row.num_moderate }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="num_low" width="80">
+            <template #header>
+              低
+              <i class="fa fa-circle text-info" />
+            </template>
+            <template #default="{ row }">
+              <span class="severity-count">{{ row.num_low }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="hostname" label="主机名" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="tags" label="标签" min-width="140">
+            <template #default="{ row }">
+              <div v-if="Array.isArray(row.tags) && row.tags.length" class="host-list-tags">
+                <el-tag
+                  v-for="(tag, index) in row.tags"
+                  :key="`${tag}-${index}`"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ tag }}
+                </el-tag>
+              </div>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="系统版本" min-width="200">
+            <template #default="{ row }">
+              {{ row.os_distro }} {{ [row.os_version, row.os_sp_version].filter(Boolean).join(' ') || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="scan_timestamp" label="最后扫描时间" width="200" sortable>
+            <template #default="{ row }">
+              {{ formatDateTime(row.scan_timestamp) }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 主机分页 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="hostPagination.page"
+          v-model:page-size="hostPagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="hostPagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleHostSizeChange"
+          @current-change="handleHostPageChange"
+        />
+      </div>
+    </div>
+
+    <!-- 按补丁安装 Tab 内容 -->
+    <!-- eslint-disable-next-line vue/no-v-else-if-without-v-else -->
+    <div v-else-if="activeTab === 'patch'" class="tab-content">
+      <!-- 补丁筛选区 -->
+      <div class="ops-filter-bar">
+        <el-form :model="filters" inline size="small">
+          <el-form-item label="严重程度">
+            <el-select v-model="filters.severity" multiple placeholder="请选择" style="width: auto">
+              <el-option label="严重" value="Critical" />
+              <el-option label="重要" value="Important" />
+              <el-option label="中等" value="Moderate" />
+              <el-option label="低危" value="Low" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="关键词">
+            <el-input
+              v-model="filters.keyword"
+              placeholder="搜索补丁编号、概要、CVE..."
+              style="width: 240px"
+              clearable
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="loading" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><RefreshRight /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- 补丁操作区 -->
+      <div class="ops-action-bar">
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="selectedPatchIds.length === 0"
+          @click="handleInstallSelected"
+        >
+          安装选中的补丁 ({{ selectedPatchIds.length }})
+        </el-button>
+        <el-button
+          size="small"
+          :type="allSelected ? 'default' : 'primary'"
+          @click="handleToggleSelectAll"
+        >
+          <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
+          {{ allSelected ? '一键取消' : '一键全选' }}
+        </el-button>
+        <span style="flex: 1"></span>
+        <el-button
+          class="toolbar-icon-btn"
+          circle
+          size="small"
+          :loading="loading"
+          @click="loadData"
+          title="刷新"
+        >
+          <el-icon v-show="!loading"><Refresh /></el-icon>
+        </el-button>
+      </div>
+
+      <!-- 补丁表格 -->
+      <div class="ops-table-wrapper">
+        <el-table
+          ref="tableRef"
+          v-loading="loading"
+          :data="paginatedData"
+          class="natural-height-table"
+          @select="handleTableSelect"
+          @select-all="handleTableSelect"
+        >
+          <el-table-column type="selection" width="50" />
+          <el-table-column prop="patch_id" label="补丁编号" min-width="160" sortable>
+            <template #default="{ row }">
+              <el-link type="primary" underline="never" @click="handleViewPatchDetail(row)">
+                {{ row.patch_id }}
+              </el-link>
+            </template>
+          </el-table-column>
+          <el-table-column prop="title" label="概要" min-width="220" show-overflow-tooltip />
+          <el-table-column prop="severity" label="严重性" width="100" sortable>
+            <template #default="{ row }">
+              <el-tag
+                effect="dark"
+                class="severity-tag"
+                :class="'is-' + (row.severity || '').toLowerCase()"
+              >
+                {{ getSeverityLabel(row.severity) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="publish_date" label="发布时间" width="120" sortable>
+            <template #default="{ row }">
+              {{ formatDate(row.publish_date) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="related_vuls" label="关联CVE" min-width="320">
+            <template #default="{ row }">
+              <CveLinkList
+                :cves="row.related_vuls"
+                :url-resolver="cve => getCveUrl(cve, resolvePatchDistro(row))"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column prop="effect_host_count" label="受影响的主机" width="130" align="left">
+            <template #default="{ row }">
+              <el-link type="primary" underline="never" @click="handleViewAffectedHosts(row)">
+                {{ row.effect_host_count }}
+              </el-link>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <!-- 补丁分页 -->
+      <div class="ops-pagination-wrapper">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="totalCount"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
+    </div>
+
+    <!-- 重新扫描对话框 -->
+    <el-dialog v-model="rescanDialogVisible" title="重新扫描补丁" width="600px">
+      <el-form ref="rescanFormRef" :model="rescanForm" label-width="100px">
+        <el-form-item label="选择主机">
+          <AcmDeviceSelector
+            v-model="selectedHosts"
+            ci-types="linux"
+            :options="{
+              selectMode: 'host,group,tag,input,recently',
+              selector: 'multiple',
+              label: '选择主机'
+            }"
+          />
         </el-form-item>
       </el-form>
-    </div>
+      <template #footer>
+        <el-button @click="rescanDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="rescanLoading"
+          :disabled="selectedHosts.length === 0"
+          @click="executeRescan"
+        >
+          开始扫描
+        </el-button>
+      </template>
+    </el-dialog>
 
-    <!-- 操作区 -->
-    <div class="ops-action-bar">
-      <el-button
-        type="primary"
-        size="small"
-        :disabled="selectedPatchIds.length === 0"
-        @click="handleInstallSelected"
-      >
-        安装选中的补丁
-      </el-button>
-      <el-button
-        size="small"
-        :type="allSelected ? 'default' : 'primary'"
-        @click="handleToggleSelectAll"
-      >
-        <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
-        {{ allSelected ? '一键取消' : '一键全选' }}
-      </el-button>
-      <span style="flex: 1"></span>
-      <el-button
-        class="toolbar-icon-btn"
-        circle
-        size="small"
-        :loading="loading"
-        @click="loadData"
-        title="刷新"
-      >
-        <el-icon v-show="!loading"><Refresh /></el-icon>
-      </el-button>
-    </div>
+    <!-- 作业运行结果对话框 -->
+    <ExecuteResultDialog
+      v-if="runResultDialogVisible"
+      v-model:visible="runResultDialogVisible"
+      :run-id="runResultRunId"
+    />
 
-    <!-- 表格区域 -->
-    <div class="ops-table-wrapper">
-      <el-table
-        ref="tableRef"
-        v-loading="loading"
-        :data="paginatedData"
-        max-height="calc(100vh - 264px)"
-        @select="handleTableSelect"
-        @select-all="handleTableSelect"
-      >
-        <el-table-column type="selection" width="50" />
-        <el-table-column prop="patch_id" label="补丁编号" min-width="160" sortable>
-          <template #default="{ row }">
-            <el-link type="primary" underline="never" @click="handleViewPatchDetail(row)">
-              {{ row.patch_id }}
-            </el-link>
-          </template>
-        </el-table-column>
-        <el-table-column prop="title" label="概要" min-width="220" show-overflow-tooltip />
-        <el-table-column prop="severity" label="严重性" width="100" sortable>
-          <template #default="{ row }">
-            <el-tag
-              effect="dark"
-              class="severity-tag"
-              :class="'is-' + (row.severity || '').toLowerCase()"
-            >
-              {{ getSeverityLabel(row.severity) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="publish_date" label="发布时间" width="120" sortable>
-          <template #default="{ row }">
-            {{ formatDate(row.publish_date) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="related_vuls" label="关联CVE" min-width="320">
-          <template #default="{ row }">
-            <CveLinkList
-              :cves="row.related_vuls"
-              :url-resolver="cve => getCveUrl(cve, resolvePatchDistro(row))"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column prop="effect_host_count" label="受影响的主机" width="130" align="left">
-          <template #default="{ row }">
-            <el-link type="primary" underline="never" @click="handleViewAffectedHosts(row)">
-              {{ row.effect_host_count }}
-            </el-link>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-
-    <!-- 分页区域 -->
-    <div class="ops-pagination-wrapper">
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="totalCount"
-        layout="total, sizes, prev, pager, next, jumper"
-        background
-        @size-change="handleSizeChange"
-        @current-change="handlePageChange"
-      />
-    </div>
+    <!-- 操作记录对话框 -->
+    <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
 
     <!-- 补丁详情对话框 -->
     <el-dialog
@@ -149,6 +414,13 @@
       />
     </el-dialog>
 
+    <!-- 批量安装补丁抽屉 -->
+    <BatchInstallPatchDrawer
+      v-model:visible="batchInstallDrawerVisible"
+      :hosts="batchSelectedHosts"
+      @success="handleBatchInstallSuccess"
+    />
+
     <!-- 统一补丁向导组件 -->
     <PatchInstallWizard
       v-model:visible="installDialogVisible"
@@ -159,44 +431,392 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
-import { patchInstallApi } from '../api'
+import { patchInstallApi, patchScanApi, vulnerabilityApi } from '../api'
+import { dataManageApi } from '@/modules/asset/api'
+import { parseOsVersionFilter } from '../utils/linuxPatchScan'
+import { formatDateTime } from '@/utils/date'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
+import BatchInstallPatchDrawer from '../components/host-detail/dialogs/BatchInstallPatchDrawer.vue'
 import PatchDetailContent from '../components/common/PatchDetailContent.vue'
 import CveLinkList from '../components/common/CveLinkList.vue'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
+import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
+import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
+import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
+
+// Router & Route
+const route = useRoute()
+const router = useRouter()
+
+// 当前激活的 Tab
+const activeTab = ref('host')
+const hostDataLoaded = ref(false)
+const patchDataLoaded = ref(false)
 
 // 加载状态
 const loading = ref(false)
 
-// 统一筛选条件
-const filters = reactive({
-  severity: ['Critical', 'Important', 'Moderate', 'Low'], // 默认勾选严重和重要
+// ============================================================
+// 主机维度数据加载与操作 (按主机安装)
+// ============================================================
+const hostTableRef = ref(null)
+const hostLoading = ref(false)
+const hostTableData = ref([])
+const hostTagLoading = ref(false)
+const hostTagOptions = ref([])
+const osDistroList = ref([])
+const osVersionList = ref([])
+const hostOsVersionOptions = ref([])
+const hostVersionFilter = ref('')
+
+const hostFilters = reactive({
+  os_distro: '',
+  os_version: '',
+  os_sp_version: '',
+  tags: [],
   keyword: ''
 })
 
-// 表格数据
+const hostPagination = reactive({
+  page: 1,
+  pageSize: 20,
+  total: 0
+})
+
+const batchSelectedHosts = ref([])
+const batchInstallDrawerVisible = ref(false)
+
+// 重新扫描相关状态
+const rescanDialogVisible = ref(false)
+const rescanLoading = ref(false)
+const rescanFormRef = ref(null)
+const rescanForm = reactive({
+  hostsInput: ''
+})
+const selectedHosts = ref([])
+const runResultDialogVisible = ref(false)
+const runResultRunId = ref('')
+const operationLogsVisible = ref(false)
+const lastSubmittedRunId = ref('')
+
+function handleHostSelectionChange(selection) {
+  batchSelectedHosts.value = selection
+}
+
+async function loadHostData() {
+  hostLoading.value = true
+  try {
+    const params = {
+      page: hostPagination.page - 1,
+      size: hostPagination.pageSize,
+      os_distro: hostFilters.os_distro,
+      os_version: hostFilters.os_version,
+      os_sp_version: hostFilters.os_sp_version,
+      tags: hostFilters.tags,
+      keyword: hostFilters.keyword
+    }
+    const response = await patchScanApi.getScanResults(params)
+    const data = response?.data || response || {}
+    const records = Array.isArray(data.records)
+      ? data.records
+      : Array.isArray(data.content)
+        ? data.content
+        : []
+    mergeHostOsVersionOptions(records)
+
+    hostTableData.value = records
+    hostPagination.total = Number(data.total ?? data.totalElements) || 0
+
+    nextTick(() => {
+      restoreHostPageSelection()
+    })
+  } catch (error) {
+    console.error('Failed to load host data:', error)
+    hostTableData.value = []
+    hostPagination.total = 0
+  } finally {
+    hostLoading.value = false
+    hostDataLoaded.value = true
+  }
+}
+
+function mergeHostOsVersionOptions(records = []) {
+  const optionMap = new Map(hostOsVersionOptions.value.map(item => [item.value, item]))
+  records.forEach(item => {
+    const osVersion = item.os_major_version || item.os_version || ''
+    const osSpVersion = item.os_sp_version || ''
+    const label = [osVersion, osSpVersion].filter(Boolean).join(' ')
+    if (!label) return
+    optionMap.set(label, {
+      label,
+      value: label,
+      osVersion,
+      osSpVersion
+    })
+  })
+  hostOsVersionOptions.value = [...optionMap.values()]
+}
+
+async function loadHostTagOptions() {
+  hostTagLoading.value = true
+  try {
+    const responses = await Promise.all([
+      dataManageApi.getAllTags('linux'),
+      dataManageApi.getAllTags('host')
+    ])
+    const records = responses.flatMap(response =>
+      Array.isArray(response?.records) ? response.records : []
+    )
+    hostTagOptions.value = [
+      ...new Set(
+        records
+          .map(item => (typeof item === 'string' ? item : item?.name || item?.tagName))
+          .filter(Boolean)
+      )
+    ].sort((a, b) => a.localeCompare(b, 'zh-CN'))
+  } catch (error) {
+    console.error('Failed to load host tags:', error)
+  } finally {
+    hostTagLoading.value = false
+  }
+}
+
+async function loadOsLists() {
+  try {
+    const [osDistroRes, osVersionRes] = await Promise.all([
+      vulnerabilityApi.getOsDistroList(),
+      vulnerabilityApi.getOsVersionList()
+    ])
+    if (osDistroRes?.data?.records) {
+      osDistroList.value = osDistroRes.data.records.map(item => item.os_distro)
+    }
+    if (osVersionRes?.data?.records) {
+      const records = osVersionRes.data.records
+      osVersionList.value = [
+        ...new Set(records.map(item => item.os_major_version || item.os_version).filter(Boolean))
+      ]
+      mergeHostOsVersionOptions(records)
+    }
+  } catch (error) {
+    console.error('Failed to load OS metadata lists:', error)
+  }
+}
+
+function handleHostFilter() {
+  hostPagination.page = 1
+  loadHostData()
+}
+
+function handleHostVersionChange(value) {
+  const option = hostOsVersionOptions.value.find(item => item.value === value)
+  const parsedValue = parseOsVersionFilter(value)
+  hostFilters.os_version = option?.osVersion || parsedValue.osVersion
+  hostFilters.os_sp_version = option?.osSpVersion || parsedValue.osSpVersion
+}
+
+function handleHostReset() {
+  hostFilters.os_distro = ''
+  hostFilters.os_version = ''
+  hostFilters.os_sp_version = ''
+  hostFilters.tags = []
+  hostVersionFilter.value = ''
+  hostFilters.keyword = ''
+  hostPagination.page = 1
+  hostPagination.pageSize = 20
+  loadHostData()
+}
+
+function handleHostPageChange(page) {
+  hostPagination.page = page
+  loadHostData()
+}
+
+function handleHostSizeChange(size) {
+  hostPagination.pageSize = size
+  hostPagination.page = 1
+  loadHostData()
+}
+
+function restoreHostPageSelection() {
+  if (!hostTableRef.value) return
+  hostTableRef.value.clearSelection()
+  hostTableData.value.forEach(row => {
+    const isSelected = batchSelectedHosts.value.some(h =>
+      (h.host_id || h.id || '') === (row.host_id || row.id || '') ||
+      h.host_key === row.host_key
+    )
+    if (isSelected) {
+      hostTableRef.value.toggleRowSelection(row, true)
+    }
+  })
+}
+
+function handleHostClick(row) {
+  router.push({
+    name: 'patches-hostDetail',
+    query: {
+      host_key: row.host_key || row.hostKey || '',
+      host_id: row.host_id || row.hostId || row.id || '',
+      os_distro: row.os_distro,
+      os_version: row.os_version,
+      hostname: row.hostname,
+      fromLabel: '补丁安装',
+      fromRouteName: 'patches-patchInstall'
+    }
+  })
+}
+
+function handleBatchInstallSuccess() {
+  loadHostData()
+}
+
+// 重新扫描逻辑
+function handleRescan() {
+  rescanForm.hostsInput = ''
+  selectedHosts.value = []
+  rescanDialogVisible.value = true
+}
+
+
+
+function normalizeRescanHost(host) {
+  if (typeof host === 'object' && host !== null) {
+    return {
+      key: host.key || host.id || host.host_id || host.hostId || '',
+      value: host.value || host.hostname || host.name || host.host_key || host.hostKey || '',
+      assetType: host.assetType || host.asset_type || 'linux'
+    }
+  }
+  return {
+    key: '',
+    value: String(host || '').trim(),
+    assetType: 'linux'
+  }
+}
+
+async function submitRescan(hosts, { closeDialog = false } = {}) {
+  const normalizedHosts = (Array.isArray(hosts) ? hosts : [])
+    .map(normalizeRescanHost)
+    .filter(item => item.value)
+
+  if (normalizedHosts.length === 0) {
+    ElMessage.warning('请输入或选择至少一个主机')
+    return false
+  }
+
+  rescanLoading.value = true
+  try {
+    const { executeJob } = await import('@/modules/automation/api/jao')
+    const response = await executeJob({
+      jobId: '0g3GfW',
+      params: { hosts: normalizedHosts }
+    })
+
+    const runId = response?.data?.[0]?.runId || response?.[0]?.runId
+    if (!runId) {
+      ElMessage.error('扫描任务提交失败：未返回运行ID')
+      return false
+    }
+
+    ElMessage.success('扫描任务已提交')
+    if (closeDialog) {
+      rescanDialogVisible.value = false
+    }
+
+    lastSubmittedRunId.value = runId
+    operationLogsVisible.value = true
+
+    setTimeout(() => {
+      loadHostData()
+    }, 2000)
+
+    return true
+  } catch (error) {
+    console.error('Scan failed:', error)
+    ElMessage.error(`扫描任务提交失败: ${error.message || '未知错误'}`)
+    return false
+  } finally {
+    rescanLoading.value = false
+  }
+}
+
+
+
+function updateHostsInput() {
+  const hostList = selectedHosts.value
+    .map(h => {
+      if (typeof h === 'object') {
+        return h.value || h.hostname || h.name || h.host_key || ''
+      }
+      return String(h)
+    })
+    .filter(Boolean)
+  rescanForm.hostsInput = hostList.join('\n')
+}
+
+async function executeRescan() {
+  if (selectedHosts.value.length > 0) {
+    updateHostsInput()
+  }
+
+  let hosts = []
+  if (selectedHosts.value.length > 0) {
+    hosts = selectedHosts.value
+  } else {
+    const hostLines = rescanForm.hostsInput.split('\n').filter(line => line.trim())
+    if (hostLines.length === 0) {
+      ElMessage.warning('请输入或选择至少一个主机')
+      return
+    }
+    hosts = hostLines.map(line => line.trim())
+  }
+
+  await submitRescan(hosts, { closeDialog: true })
+}
+
+// 监听主机数据变化，自动恢复勾选状态
+watch(hostTableData, () => {
+  nextTick(() => {
+    restoreHostPageSelection()
+  })
+})
+
+// 监听重新扫描主机选择器变化
+watch(
+  selectedHosts,
+  () => {
+    updateHostsInput()
+  },
+  { deep: true }
+)
+
+
+// ============================================================
+// 补丁维度数据加载与操作 (按补丁安装)
+// ============================================================
+const filters = reactive({
+  severity: ['Critical', 'Important', 'Moderate', 'Low'],
+  keyword: ''
+})
+
 const tableRef = ref(null)
-const allData = ref([]) // 存储所有数据
+const allData = ref([])
 const selectedRows = ref([])
 
-// 选中的补丁ID列表
 const selectedPatchIds = computed(() => selectedRows.value.map(r => r.patch_id))
 
-// 分页
 const pagination = reactive({
   page: 1,
   pageSize: 10
 })
 
-// 筛选后的数据（仅关键词筛选，严重程度已由后端筛选）
 const filteredData = computed(() => {
   let data = allData.value
-
-  // 根据关键词筛选
   if (filters.keyword) {
     const keyword = filters.keyword.toLowerCase().trim()
     data = data.filter(
@@ -206,28 +826,21 @@ const filteredData = computed(() => {
         item.related_vuls?.toLowerCase().includes(keyword)
     )
   }
-
   return data
 })
 
-// 分页后的数据
 const paginatedData = computed(() => {
   const start = (pagination.page - 1) * pagination.pageSize
   const end = start + pagination.pageSize
   return filteredData.value.slice(start, end)
 })
 
-// 总数
 const totalCount = computed(() => filteredData.value.length)
 
-// 补丁详情对话框
 const patchDetailVisible = ref(false)
 const patchDetail = ref(null)
 const patchDetailLoading = ref(false)
 
-// ============================================================
-// 补丁安装相关
-// ============================================================
 const installDialogVisible = ref(false)
 const patchesToInstall = ref([])
 
@@ -250,7 +863,6 @@ function handleInstallSuccess() {
   loadData()
 }
 
-// 获取严重程度显示标签
 function getSeverityLabel(severity) {
   const map = {
     Critical: '严重',
@@ -261,7 +873,6 @@ function getSeverityLabel(severity) {
   return map[severity] || severity
 }
 
-// 格式化日期
 function formatDate(dateStr) {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
@@ -274,41 +885,21 @@ function formatDate(dateStr) {
     .replace(/\//g, '-')
 }
 
-// 解析CVE列表
-function parseCveList(cveStr) {
-  if (!cveStr) return []
-  return cveStr
-    .split(',')
-    .map(cve => cve.trim())
-    .filter(cve => cve)
-}
-
 function resolvePatchDistro(patch) {
   if (!patch) return ''
   return patch.os_distro || patch.vendor || (patch.patch_id.includes('KYSA') ? 'kylin' : 'redhat')
 }
 
-// 预处理数据 - 提前解析CVE列表
-function preprocessData(records) {
-  return records.map(item => ({
-    ...item,
-    _cveList: parseCveList(item.related_vuls)
-  }))
-}
-
-// 加载数据 - 一次性获取所有数据
 async function loadData() {
   loading.value = true
   try {
-    // 构建 params 参数
     const params = {}
     if (filters.severity.length > 0) {
       params.severity = filters.severity.join(',')
     }
-
     const response = await patchInstallApi.getAvailablePatches(params)
     if (response?.data) {
-      allData.value = preprocessData(response.data.records || response.data || [])
+      allData.value = response.data.records || response.data || []
     }
     resetAllSelected()
   } catch (error) {
@@ -317,17 +908,16 @@ async function loadData() {
     allData.value = []
   } finally {
     loading.value = false
+    patchDataLoaded.value = true
   }
 }
 
-// 搜索处理（严重程度改变时需要重新加载）
 function handleSearch() {
   resetAllSelected()
   pagination.page = 1
   loadData()
 }
 
-// 重置处理
 function handleReset() {
   resetAllSelected()
   filters.severity = ['Critical', 'Important', 'Moderate', 'Low']
@@ -337,7 +927,6 @@ function handleReset() {
   loadData()
 }
 
-// 全选逻辑
 const {
   allSelected,
   handleToggleAllSelection: handleToggleSelectAll,
@@ -363,7 +952,6 @@ function handleViewPatchDetail(row) {
   loadPatchDetail(row.patch_id)
 }
 
-// 加载补丁详情
 async function loadPatchDetail(patchId) {
   patchDetailLoading.value = true
   patchDetail.value = null
@@ -381,53 +969,128 @@ async function loadPatchDetail(patchId) {
   }
 }
 
-function refresh() {
-  loadData()
+// ============================================================
+// Tab 切换逻辑
+// ============================================================
+function handleTabChange(tab) {
+  activeTab.value = tab
+  // 切换路由查询参数，维持状态在刷新后不丢失
+  router.replace({
+    query: {
+      ...route.query,
+      tab
+    }
+  })
+  if (tab === 'host') {
+    if (!hostDataLoaded.value) {
+      loadOsLists()
+      loadHostTagOptions()
+      loadHostData()
+    }
+  } else {
+    if (!patchDataLoaded.value) {
+      loadData()
+    }
+  }
 }
 
-onMounted(() => {
-  loadData()
+function refresh() {
+  if (activeTab.value === 'host') {
+    loadHostData()
+  } else {
+    loadData()
+  }
+}
+
+// 挂载周期与路由参数自动响应
+onMounted(async () => {
+  const queryTab = route.query.tab
+  if (queryTab === 'host' || !queryTab) {
+    activeTab.value = 'host'
+    loadOsLists()
+    loadHostTagOptions()
+    await loadHostData()
+  } else if (queryTab === 'patch') {
+    activeTab.value = 'patch'
+    loadData()
+  }
 })
 
+// 暴露刷新接口
 defineExpose({ refresh })
 </script>
 
 <style scoped lang="scss">
-.task-done-title {
-  font-size: 18px;
-  font-weight: 600;
+.nav-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
   color: var(--el-text-color-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+
+  &:hover {
+    color: #0d6efd;
+  }
+
+  &--active {
+    color: #0d6efd;
+    font-weight: 500;
+    border-bottom-color: #0d6efd;
+  }
 }
 
-.task-done-desc {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
-// 徽章样式
-.badge {
-  display: inline-block;
-  padding: 4px 8px;
-  font-size: 12px;
+
+.host-list-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+
+
+.severity-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
   font-weight: 500;
-  border-radius: 4px;
-  color: #fff;
+}
 
-  &-danger {
-    background-color: #dc3545;
-  }
+.text-danger {
+  color: #f53f3f;
+}
 
-  &-warning {
-    background-color: #ffc107;
-    color: var(--el-text-color-primary);
-  }
+.text-warning {
+  color: #ff7d00;
+}
 
-  &-dark {
-    background-color: #343a40;
-  }
+.text-dark {
+  color: #ffc72e;
+}
 
-  &-secondary {
-    background-color: var(--el-text-color-secondary);
-  }
+.text-info {
+  color: #165dff;
 }
 
 .severity-tag {
@@ -453,18 +1116,6 @@ defineExpose({ refresh })
   &.is-low {
     background-color: #6c757d;
     color: #fff;
-  }
-}
-
-.patch-link {
-  color: #409eff;
-  text-decoration: none;
-  cursor: pointer;
-  user-select: text;
-
-  &:hover {
-    color: #66b1ff;
-    text-decoration: underline;
   }
 }
 </style>

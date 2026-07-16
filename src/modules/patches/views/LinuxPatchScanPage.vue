@@ -189,11 +189,11 @@
           <el-button
             type="primary"
             size="small"
-            :disabled="batchSelectedHosts.length === 0"
-            @click="batchInstallDrawerVisible = true"
+            plain
+            @click="handleNavigateToInstall"
           >
-            <i class="fa fa-chevron-circle-right" />
-            安装补丁 ({{ batchSelectedHosts.length }})
+            <i class="fa fa-arrow-right" />
+            前往安装补丁
           </el-button>
           <span style="flex: 1"></span>
           <el-button
@@ -217,9 +217,7 @@
             :data="hostTableData"
             class="natural-height-table"
             style="width: 100%"
-            @selection-change="handleHostSelectionChange"
           >
-            <el-table-column type="selection" width="45" />
             <el-table-column prop="host_key" label="主机" width="140">
               <template #default="{ row }">
                 <el-link type="primary" underline="never" @click="handleHostClick(row)">
@@ -869,12 +867,7 @@
     <!-- 操作记录对话框 -->
     <OperationLogsDialog v-model="operationLogsVisible" :highlight-run-id="lastSubmittedRunId" />
 
-    <!-- 批量安装补丁抽屉 -->
-    <BatchInstallPatchDrawer
-      v-model:visible="batchInstallDrawerVisible"
-      :hosts="batchSelectedHosts"
-      @success="loadHostData"
-    />
+
 
     <PatchInstallWizard
       v-model:visible="rollbackWizardVisible"
@@ -1035,7 +1028,6 @@ import AcmDeviceSelector from '@/modules/automation/components/job/schedule/comp
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
 import HostSeverityPatchDialog from '../components/host-detail/dialogs/HostSeverityPatchDialog.vue'
-import BatchInstallPatchDrawer from '../components/host-detail/dialogs/BatchInstallPatchDrawer.vue'
 import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDialog.vue'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
@@ -1173,12 +1165,7 @@ const pagination = reactive({
   total: 0
 })
 
-const batchSelectedHosts = ref([]) // 批量选中的主机列表
 
-// 表格多选发生变化
-function handleHostSelectionChange(selection) {
-  batchSelectedHosts.value = selection
-}
 
 // 漏洞表格
 const vulnLoading = ref(false)
@@ -1278,7 +1265,6 @@ const patchDetailData = ref({})
 const currentPatchOsDistro = ref('')
 const severityPatchesDialogVisible = ref(false)
 const severityPatchesDialogHost = ref(null)
-const batchInstallDrawerVisible = ref(false)
 const severityPatchesDialogSeverity = ref('')
 const rpmDetailVisible = ref(false)
 const rpmDetailLoading = ref(false)
@@ -2595,6 +2581,13 @@ watch(
     }
   }
 )
+
+function handleNavigateToInstall() {
+  router.push({
+    name: 'patches-patchInstall',
+    query: { tab: 'host' }
+  })
+}
 
 // 暴露方法
 defineExpose({
