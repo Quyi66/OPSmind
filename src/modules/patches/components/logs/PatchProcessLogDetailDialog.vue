@@ -62,8 +62,7 @@
               <div v-if="affectedPackages.length === 0" class="no-data">暂无数据</div>
             </div>
           </div>
-
-          <div class="install-card mt-3">
+          <div class="install-card install-card-full">
             <div class="card-header">
               <i class="fa fa-list" />
               {{ operationConfig.hostCardTitle }}
@@ -427,13 +426,26 @@ function handleClosed() {
 }
 
 .install-content {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+  align-items: start;
+}
+
+.install-card-full {
+  grid-column: span 2;
+}
+
+.install-content > .install-card:not(.install-card-full) .card-body--scroll {
+  max-height: 320px;
+}
+
+.install-content > .install-card.install-card-full .card-body--scroll {
+  max-height: 260px;
 }
 
 .install-card {
-  margin-bottom: 16px;
+  margin-bottom: 0;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
   overflow: hidden;

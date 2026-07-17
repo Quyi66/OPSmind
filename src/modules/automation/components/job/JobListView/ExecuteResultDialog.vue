@@ -5,6 +5,7 @@
     width="1260px"
     append-to-body
     destroy-on-close
+    class="execute-result-dialog-wrapper"
     @close="handleClose"
   >
     <div class="result-dialog" v-loading="loading">
@@ -12,7 +13,7 @@
         <el-tab-pane v-for="tab in visibleTabs" :key="tab.name" :label="tab.label" :name="tab.name">
           <template v-if="tab.name === 'overview'">
             <template v-if="result">
-              <div class="overview-header">
+              <div v-if="!hasHostInfo" class="overview-header">
                 <div class="overview-status">
                   <div class="status-chip" :class="statusClass">{{ summary.statusLabel }}</div>
                   <div class="status-duration">{{ summary.duration }}</div>
@@ -33,13 +34,17 @@
                   </div>
                 </div>
               </div>
-
               <div v-if="summary.errorTitle || summary.errorDetails" class="result-error">
                 <p class="error-title">{{ summary.errorTitle }}</p>
                 <pre class="error-details">{{ summary.errorDetails }}</pre>
               </div>
 
-              <div v-if="batches.length" class="result-section">
+              <JobUpgradeOverview
+                v-if="isAnsibleJob"
+                :ansible-contents="ansibleContents"
+              />
+
+              <div v-if="batches.length && !hasHostInfo" class="result-section">
                 <div class="section-header">
                   <span>批次状态</span>
                 </div>
@@ -81,7 +86,7 @@
                 :closable="false"
                 class="mb-3"
               />
-              <el-scrollbar max-height="calc(100vh - 320px)" class="process-scroll">
+              <el-scrollbar max-height="calc(100vh - 260px)" class="process-scroll">
                 <pre class="process-json">{{ processModelPretty }}</pre>
               </el-scrollbar>
             </div>
@@ -285,7 +290,7 @@
                   </el-form-item>
                 </el-form>
               </div>
-              <el-table :data="paginatedListRows" :height="'calc(100vh - 320px)'" class="result-table">
+              <el-table :data="paginatedListRows" :height="'calc(100vh - 350px)'" class="result-table">
                 <el-table-column prop="host" label="主机" width="180" show-overflow-tooltip />
                 <el-table-column
                   prop="delegateHost"
@@ -334,7 +339,7 @@
                   下载 Ansible 原始输出
                 </el-button>
               </div>
-              <el-scrollbar max-height="calc(100vh - 320px)" class="raw-scroll">
+              <el-scrollbar max-height="calc(100vh - 260px)" class="raw-scroll">
                 <div class="raw-code-container">
                   <div
                     v-for="line in rawOutputLines"
@@ -390,7 +395,7 @@
                 </div>
               </div>
               <pre v-if="restDetail.error" class="rest-error">{{ restDetail.error }}</pre>
-              <el-scrollbar v-else max-height="calc(100vh - 320px)" class="rest-payload">
+              <el-scrollbar v-else max-height="calc(100vh - 260px)" class="rest-payload">
                 <pre>{{ restDetail.payload }}</pre>
               </el-scrollbar>
             </div>
@@ -409,11 +414,12 @@ import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/constants/jobStatus'
 import { authService } from '@/core/auth'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
+import JobUpgradeOverview from './JobUpgradeOverview.vue'
 
 const ANSIBLE_JOB_TYPES = ['script', 'command', 'process']
 const TASK_STATUS_LABELS = {
   ok: '成功',
-  changed: '已变更',
+  changed: '成功',
   failed: '失败',
   unreachable: '不可达',
   ignored: '忽略',
@@ -423,7 +429,7 @@ const TASK_STATUS_LABELS = {
 }
 const TASK_STATUS_TAGS = {
   ok: 'success',
-  changed: 'warning',
+  changed: 'success',
   failed: 'danger',
   unreachable: 'danger',
   ignored: 'info',
@@ -491,6 +497,20 @@ const showFullRawOutput = ref(false)
 const ansibleTreeData = computed(
   () => buildHostTree(ansibleContents.value, { mergeBatches: mergeBatches.value }).tree
 )
+
+const hasHostInfo = computed(() => {
+  if (!isAnsibleJob.value || !ansibleContents.value.length) return false
+  return ansibleContents.value.some(content => {
+    const plays = Array.isArray(content?.plays) ? content.plays : []
+    return plays.some(play => {
+      const tasks = Array.isArray(play?.tasks) ? play.tasks : []
+      return tasks.some(task => Array.isArray(task?.hosts) && task.hosts.length > 0)
+    })
+  })
+})
+
+
+
 const hostTaskStats = computed(() => computeStatusStats(selectedHost.value?.tasks || []))
 const hostStatusChips = computed(() => buildStatusChips(hostTaskStats.value))
 const filteredHostTasks = computed(() =>
@@ -1479,7 +1499,7 @@ onBeforeUnmount(() => {
 .hosts-pane {
   display: flex;
   gap: 16px;
-  height: calc(100vh - 320px);
+  height: calc(100vh - 260px);
 }
 
 .hosts-tree-panel {
@@ -1710,7 +1730,7 @@ onBeforeUnmount(() => {
 }
 
 .output-tab {
-  height: calc(100vh - 320px);
+  height: calc(100vh - 260px);
 }
 
 .rest-tab {
@@ -1756,5 +1776,14 @@ onBeforeUnmount(() => {
 
 .mr-1 {
   margin-right: 4px;
+}
+
+
+</style>
+
+<style>
+.execute-result-dialog-wrapper .el-dialog__body {
+  max-height: calc(100vh - 140px) !important;
+  overflow-y: hidden !important;
 }
 </style>
