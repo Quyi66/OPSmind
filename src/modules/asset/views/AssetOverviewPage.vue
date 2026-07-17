@@ -433,7 +433,7 @@
           </div>
           <el-empty v-else description="暂无资产" :image-size="60" />
         </template>
-        <div v-if="assetListDrawer.total > assetListDrawer.pageSize" class="aw-drawer__pagination">
+        <div v-if="assetListDrawer.total > 0" class="aw-drawer__pagination">
           <el-pagination
             v-model:current-page="assetListDrawer.page"
             v-model:page-size="assetListDrawer.pageSize"
@@ -515,7 +515,7 @@
           </div>
           <el-empty v-else description="暂无连通异常设备" :image-size="60" />
         </template>
-        <div v-if="exceptionDrawer.total > exceptionDrawer.pageSize" class="aw-drawer__pagination">
+        <div v-if="exceptionDrawer.total > 0" class="aw-drawer__pagination">
           <el-pagination
             v-model:current-page="exceptionDrawer.page"
             v-model:page-size="exceptionDrawer.pageSize"
@@ -594,7 +594,7 @@
           </div>
         </template>
         <div
-          v-if="recentLogsDrawer.total > recentLogsDrawer.pageSize"
+          v-if="recentLogsDrawer.total > 0"
           class="aw-drawer__pagination"
         >
           <el-pagination
