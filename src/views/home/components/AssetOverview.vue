@@ -124,10 +124,11 @@ const chartOption = computed(() => ({
     }
   },
   grid: {
-    left: '5%',
-    right: '15%',
-    top: '10%',
-    bottom: '15%'
+    left: '2%',
+    right: '6%',
+    top: '8%',
+    bottom: '12%',
+    containLabel: true
   },
   xAxis: {
     type: 'value',
@@ -169,8 +170,18 @@ const chartOption = computed(() => ({
       type: 'bar',
       data: assetData.value.values,
       itemStyle: {
-        color: '#1890ff',
-        borderRadius: [0, 2, 2, 0]
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 1,
+          y2: 0,
+          colorStops: [
+            { offset: 0, color: '#2563eb' },
+            { offset: 1, color: '#3b82f6' }
+          ]
+        },
+        borderRadius: [0, 6, 6, 0]
       },
       barWidth: '30%',
       label: {

@@ -16,32 +16,31 @@
 
     <!-- 主体布局 -->
     <div v-else class="dashboard-layout">
-      <!-- 左侧边栏 -->
-      <DashboardSidebar />
-
       <!-- 主内容区 -->
       <main class="dashboard-content">
         <div class="dashboard-main">
-          <!-- 第一行：操作提示区域 -->
-          <div class="dashboard-row">
-            <div class="dashboard-card full-width">
+          <!-- 第一行：个人迎宾 Banner & AI 智能助手 -->
+          <div class="dashboard-row greeting-ai-row">
+            <div class="dashboard-card greeting-card">
+              <UserGreetingBanner />
+            </div>
+            <div class="dashboard-card ai-card">
               <AIAssistant />
             </div>
           </div>
 
-          <!-- 第二行：主机漏洞概览 & 严重漏洞预警 -->
-          <div class="dashboard-row">
-            <div class="dashboard-card half-width">
-              <!-- <JobOverview /> -->
+          <!-- 第二行：主机漏洞概览 (38% 紧凑) & 严重漏洞预警 (62% 扩展) -->
+          <div class="dashboard-row core-data-row">
+            <div class="dashboard-card host-vuln-card">
               <HostVulnerabilityOverview />
             </div>
-            <div class="dashboard-card half-width">
+            <div class="dashboard-card critical-cve-card">
               <CriticalCveAlert />
             </div>
           </div>
 
           <!-- 第三行：资产概览 & 巡检概览 -->
-          <div class="dashboard-row">
+          <div class="dashboard-row overview-data-row">
             <div class="dashboard-card half-width">
               <AssetOverview />
             </div>
@@ -61,23 +60,17 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
 
-import { getAllMenuItems } from '@/config/menu.config.js'
-// 非图表组件保持同步加载（关键 UI）
-import DashboardSidebar from '@/views/home/components/DashboardSidebar.vue'
+import UserGreetingBanner from '@/views/home/components/UserGreetingBanner.vue'
 import AIAssistant from '@/components/ai/AIAssistant.vue'
 import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
 
 // 图表组件异步加载 - 延迟加载 ECharts 相关组件，优化首屏性能
-// 配置加载状态和超时处理
 const asyncComponentOptions = loader => ({
   loader,
   delay: 200, // 延迟 200ms 后才显示 loading
   timeout: 10000 // 10 秒超时
 })
 
-// const JobOverview = defineAsyncComponent(
-//   asyncComponentOptions(() => import('@/views/home/components/JobOverview.vue'))
-// )
 const HostVulnerabilityOverview = defineAsyncComponent(
   asyncComponentOptions(() => import('@/views/home/components/HostVulnerabilityOverview.vue'))
 )
@@ -102,7 +95,7 @@ const loadDashboardData = async () => {
     // 启动模块预加载（延迟执行，避免影响主要加载）
     setTimeout(() => {
       ModulePreloadManager.preloadCommonModules()
-    }, 2000) // 2秒后开始预加载
+    }, 2000)
 
     // 登录成功后（首页）获取 AI OPS URL 参数并打印
     await dashboardStore.fetchAiOpsUrl()
@@ -121,9 +114,7 @@ const handleRefresh = async () => {
 watch(
   () => route.path,
   async newPath => {
-    // 返回首页时，确保加载仪表盘数据（修复偶现返回首页后全是0的问题）
     if (newPath === '/home' || route.name === 'home') {
-      // 避免重复请求：仅在未加载或需要刷新时触发
       const shouldLoad =
         !dashboardStore.loading &&
         (!dashboardStore.dashboardFullData || dashboardStore.needsRefresh)
@@ -136,10 +127,8 @@ watch(
 )
 
 onMounted(async () => {
-  // 仅在首页（/home）加载仪表盘数据，避免在切换到其他应用时触发
   if (route.name === 'home' || route.path === '/home') {
     await loadDashboardData()
-  } else {
   }
 })
 </script>
@@ -174,8 +163,7 @@ onMounted(async () => {
 .dashboard-content {
   flex: 1;
   overflow: hidden;
-  /* 更紧凑顶部间距：24px -> 16px；底部保持 16px；左侧 5px 保持 */
-  padding: 16px 16px 16px 0;
+  padding: 16px;
   background: transparent;
   min-height: 0;
   display: flex;
@@ -200,20 +188,40 @@ onMounted(async () => {
   width: 100%;
 }
 
-/* 第一行 - AI助手区域 */
-.dashboard-row:nth-child(1) {
-  flex: 0 0 60px;
-  min-height: 60px;
+/* 第一行 - 迎宾 & AI助手区域 */
+.dashboard-row.greeting-ai-row {
+  flex: 0 0 64px;
+  min-height: 64px;
 }
 
-/* 第二行 - 作业概览 & 巡检概览 */
-.dashboard-row:nth-child(2) {
+.greeting-card {
+  flex: 0 0 38%;
+  width: 38%;
+}
+
+.ai-card {
+  flex: 0 0 calc(62% - 16px);
+  width: calc(62% - 16px);
+}
+
+/* 第二行 - 主机漏洞概览(38%) & 严重漏洞预警(62%) */
+.dashboard-row.core-data-row {
   flex: 6;
   min-height: 0;
 }
 
-/* 第三行 - 资产概览 & 漏洞概览 */
-.dashboard-row:nth-child(3) {
+.host-vuln-card {
+  flex: 0 0 38%;
+  width: 38%;
+}
+
+.critical-cve-card {
+  flex: 0 0 calc(62% - 16px);
+  width: calc(62% - 16px);
+}
+
+/* 第三行 - 资产概览 & 巡检概览 */
+.dashboard-row.overview-data-row {
   flex: 4;
   min-height: 0;
 }
@@ -265,40 +273,21 @@ onMounted(async () => {
 }
 
 /* 响应式设计 */
-@media (max-width: 1024px) {
-  .dashboard-main {
-    gap: 16px;
+@media (max-width: 1200px) {
+  .greeting-card,
+  .host-vuln-card {
+    flex: 0 0 42%;
+    width: 42%;
   }
 
-  .dashboard-row {
-    gap: 16px;
-  }
-
-  /* 保持1:4:5的比例 */
-  .dashboard-row:nth-child(1) {
-    flex: 1;
-  }
-
-  .dashboard-row:nth-child(2) {
-    flex: 4;
-  }
-
-  .dashboard-row:nth-child(3) {
-    flex: 5;
+  .ai-card,
+  .critical-cve-card {
+    flex: 0 0 calc(58% - 16px);
+    width: calc(58% - 16px);
   }
 }
 
-@media (max-width: 768px) {
-  .dashboard-layout {
-    flex-direction: column;
-  }
-
-  .dashboard-sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--el-border-color-light);
-  }
-
+@media (max-width: 900px) {
   .dashboard-content {
     padding: 12px;
     overflow-y: auto;
@@ -315,16 +304,21 @@ onMounted(async () => {
     flex: none;
   }
 
-  /* 移动端重置高度 */
-  .dashboard-row:nth-child(1),
-  .dashboard-row:nth-child(2),
-  .dashboard-row:nth-child(3) {
+  .dashboard-row.greeting-ai-row,
+  .dashboard-row.core-data-row,
+  .dashboard-row.overview-data-row {
     flex: none;
     min-height: auto;
   }
 
+  .greeting-card,
+  .ai-card,
+  .host-vuln-card,
+  .critical-cve-card,
   .dashboard-card.half-width {
     width: 100%;
+    flex: none;
   }
 }
 </style>
+

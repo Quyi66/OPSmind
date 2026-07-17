@@ -153,6 +153,7 @@ function handleFocus(e) {
 .ai-assistant {
   padding: 0;
   height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -161,23 +162,23 @@ function handleFocus(e) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--el-fill-color-light);
-  border-radius: 4px;
-  padding: 12px 16px;
-  gap: 20px;
+  background: transparent;
+  padding: 0 20px;
+  gap: 16px;
   height: 100%;
+  box-sizing: border-box;
 }
 
 .banner-left {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .ai-ops-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   flex-shrink: 0;
 }
@@ -187,10 +188,10 @@ function handleFocus(e) {
 }
 
 .banner-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--el-text-color-primary);
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
   line-height: 1.2;
 }
 
@@ -199,33 +200,31 @@ function handleFocus(e) {
   font-weight: 400;
   color: var(--el-text-color-secondary);
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .search-container {
-  flex: 2;
+  flex: 1;
+  max-width: 480px;
   display: flex;
   justify-content: flex-end;
-  padding-left: 16px;
+  padding-left: 12px;
 }
 
 .search-input-wrapper {
   display: flex;
   align-items: center;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-light); /* 默认无边框视觉，仅占位避免抖动 */
-  border-radius: 4px; /* 收紧圆角 */
-  padding: 8px 16px;
+  background: var(--el-fill-color-blank);
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  padding: 0 12px;
   width: 100%;
-  min-width: 280px;
-  height: 40px;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.3s ease;
+  height: 38px;
+  transition: all 0.2s ease;
 
   &:focus-within {
-    border-color: #93c5fd; /* 聚焦时更浅蓝色边框 */
-    box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.25); /* 更细的高亮 */
+    border-color: var(--el-color-primary);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
   }
 }
 

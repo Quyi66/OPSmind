@@ -44,6 +44,10 @@
 
     <!-- ECharts图表容器 -->
     <div class="chart-container clickable-area" @click="navigateToInspectionOverview">
+      <div v-if="!hasData" class="chart-empty-overlay">
+        <i class="fas fa-chart-line empty-icon"></i>
+        <span>暂无近10天巡检数据</span>
+      </div>
       <v-chart class="chart" :option="chartOption" autoresize :theme="isDark ? 'dark' : ''" />
     </div>
   </div>
@@ -83,6 +87,10 @@ const navigateToInspectionOverview = () => {
   router.push({ name: 'cac-results' })
 }
 
+const navigateToInspectionTask = () => {
+  router.push({ name: 'cac-taskConfig' })
+}
+
 // 巡检统计（来自 API 数据）
 const inspectionStats = computed(() => {
   const m = dashboardStore.dashboardFullData?.monthlyInspectionStats
@@ -115,6 +123,12 @@ const inspectionStats = computed(() => {
 const handleStatClick = statId => {
   navigateToInspectionOverview()
 }
+
+// 判断是否有近10天巡检数据
+const hasData = computed(() => {
+  const list = dashboardStore.dashboardFullData?.recentInspectionStats || []
+  return list.length > 0 && list.some(i => (Number(i.normalInspections) || 0) + (Number(i.abnormalInspections) || 0) > 0)
+})
 
 // 图表数据（来自 API 数据）
 const chartData = computed(() => {
@@ -410,18 +424,38 @@ const chartOption = computed(() => ({
 }
 
 .legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
 .chart-container {
   flex: 1;
-  /* 调整缩小的行高下能够自适应收缩，防止溢出裁切 */
+  position: relative;
   min-height: clamp(140px, 18vh, 200px);
   display: flex;
   flex-direction: column;
   padding: 0 16px;
+}
+
+.chart-empty-overlay {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--el-text-color-placeholder);
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 2;
+
+  .empty-icon {
+    font-size: 28px;
+    opacity: 0.25;
+  }
 }
 
 .chart {

@@ -25,6 +25,7 @@
           <span class="header-label cve-label">CVE 编号</span>
           <span class="header-label source-label">影响系统</span>
           <span class="header-label affected-label">受影响机器</span>
+          <span class="header-label packages-label">受影响软件包</span>
           <span class="header-label score-label">CVSS 评分</span>
         </div>
 
@@ -44,27 +45,30 @@
               @click="navigateToDetail(cve)"
             >
               <div class="cve-card-header">
-                <div class="cve-identity">
-                  <span class="cve-id-badge">{{ cve.cveId }}</span>
-                  <div class="cve-source-tags">
-                    <template v-if="cve.sources && cve.sources.length">
-                      <span
-                        v-for="src in cve.sources"
-                        :key="src"
-                        :class="['source-tag', getSourceClass(src)]"
-                      >
-                        {{ getSourceLabel(src) }}
-                      </span>
-                    </template>
-                    <span v-else-if="cve.source" :class="['source-tag', getSourceClass(cve.source)]">
-                      {{ getSourceLabel(cve.source) }}
+                <span class="cve-id-badge">{{ cve.cveId }}</span>
+                <div class="cve-source-tags">
+                  <template v-if="cve.sources && cve.sources.length">
+                    <span
+                      v-for="src in cve.sources"
+                      :key="src"
+                      :class="['source-tag', getSourceClass(src)]"
+                    >
+                      {{ getSourceLabel(src) }}
                     </span>
-                  </div>
-                  <!-- 受影响机器数量 -->
-                  <div class="cve-affected-hosts">
-                    <span class="affected-count">{{ cve.affectedHostCount ?? 0 }}</span>
-                    <span class="affected-unit">台</span>
-                  </div>
+                  </template>
+                  <span v-else-if="cve.source" :class="['source-tag', getSourceClass(cve.source)]">
+                    {{ getSourceLabel(cve.source) }}
+                  </span>
+                </div>
+                <!-- 受影响机器数量 -->
+                <div class="cve-affected-hosts">
+                  <span class="affected-count">{{ cve.affectedHostCount ?? 0 }}</span>
+                  <span class="affected-unit">台</span>
+                </div>
+                <!-- 受影响软件包数量 -->
+                <div class="cve-packages">
+                  <span class="pkg-count">{{ cve.totalPackageCount ?? 0 }}</span>
+                  <span class="pkg-unit">个</span>
                 </div>
                 <div class="cve-score-badge" :style="getScoreStyle(cve.cvss3Score)">
                   <span class="score-value">{{ cve.cvss3Score ? cve.cvss3Score.toFixed(1) : '9.0' }}</span>
@@ -163,7 +167,18 @@ const loadCveData = async () => {
       sortDir: 'desc'
     })
     const result = res?.data || res
-    cveList.value = result?.content || []
+    const rawList = result?.content || []
+    // 智能排序优化：优先按受影响机器台数降序排列，受影响台数相同时按 CVSS 评分降序
+    cveList.value = [...rawList].sort((a, b) => {
+      const countA = Number(a.affectedHostCount) || 0
+      const countB = Number(b.affectedHostCount) || 0
+      if (countB !== countA) {
+        return countB - countA
+      }
+      const scoreA = Number(a.cvss3Score) || 0
+      const scoreB = Number(b.cvss3Score) || 0
+      return scoreB - scoreA
+    })
   } catch (error) {
     console.error('Failed to fetch critical CVEs:', error)
   } finally {
@@ -384,15 +399,11 @@ onMounted(() => {
 }
 
 .cve-card-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 130px 1.5fr 1fr 1fr 70px;
+  column-gap: 12px;
   align-items: center;
-}
-
-.cve-identity {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  width: 100%;
 }
 
 .cve-id-badge {
@@ -401,22 +412,20 @@ onMounted(() => {
   font-size: 13px;
   color: var(--el-text-color-primary);
   letter-spacing: 0.3px;
-  width: 130px;
-  display: inline-block;
-  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
 }
 
 .cve-source-tags {
   display: flex;
   gap: 4px;
-  width: 180px;
-  flex-shrink: 0;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .cve-affected-hosts {
-  width: 60px;
-  flex-shrink: 0;
   display: flex;
   align-items: baseline;
   gap: 2px;
@@ -435,33 +444,60 @@ onMounted(() => {
   }
 }
 
+.cve-packages {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+  text-align: left;
+
+  .pkg-count {
+    font-weight: 700;
+    color: var(--el-text-color-primary);
+  }
+
+  .pkg-unit {
+    font-size: 11px;
+    color: var(--el-text-color-secondary);
+  }
+}
+
 .source-tag {
   font-size: 11px;
-  padding: 1px 6px;
+  padding: 2px 8px;
   border-radius: 4px;
   font-weight: 500;
+  background-color: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color-lighter);
+  color: var(--el-text-color-regular);
 
   &.is-redhat {
-    background-color: #fee2e2;
-    color: #ef4444;
+    color: #dc2626;
+    background-color: rgba(254, 242, 242, 0.7);
+    border-color: rgba(254, 202, 202, 0.5);
   }
 
   &.is-kylin {
-    background-color: #dbeafe;
-    color: #3b82f6;
+    color: #2563eb;
+    background-color: rgba(239, 246, 255, 0.7);
+    border-color: rgba(191, 219, 254, 0.5);
   }
 
   &.is-other {
-    background-color: #f3f4f6;
-    color: #6b7280;
+    color: #4b5563;
+    background-color: var(--el-fill-color-lighter);
+    border-color: var(--el-border-color-lighter);
   }
 }
 
 .cve-score-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 42px;
   gap: 4px;
-  padding: 2px 8px;
+  padding: 2px 0;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
@@ -684,41 +720,21 @@ onMounted(() => {
 }
 
 .list-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 130px 1.5fr 1fr 1fr 70px;
+  column-gap: 12px;
   align-items: center;
-  padding: 8px 30px 4px 30px;
+  padding: 8px 37px 4px 31px;
   background: transparent;
   border-bottom: none;
   flex-shrink: 0;
-  gap: 12px;
 
   .header-label {
     font-size: 11px;
     font-weight: 500;
     color: var(--el-text-color-secondary);
     opacity: 0.8;
-
-    &.cve-label {
-      width: 130px;
-      flex-shrink: 0;
-    }
-
-    &.source-label {
-      width: 180px;
-      flex-shrink: 0;
-    }
-
-    &.affected-label {
-      width: 60px;
-      flex-shrink: 0;
-    }
-
-    &.score-label {
-      margin-left: auto;
-      width: 80px;
-      text-align: right;
-      flex-shrink: 0;
-    }
+    text-align: left;
   }
 }
 
