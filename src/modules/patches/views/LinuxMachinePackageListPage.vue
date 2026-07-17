@@ -9,6 +9,7 @@
               ci-types="[auto]"
               :show-tag-list="false"
               :options="selectorOptions"
+              @change="handleSearch"
             />
           </div>
         </el-form-item>
@@ -19,7 +20,7 @@
             placeholder="输入主机IP"
             style="width: 150px"
             @keyup.enter="handleSearch"
-          />
+          @clear="handleSearch" />
         </el-form-item>
         <el-form-item label="关键词">
           <el-input
@@ -28,7 +29,7 @@
             placeholder="完整包名或包名"
             style="width: 150px"
             @keyup.enter="handleSearch"
-          />
+          @clear="handleSearch" />
         </el-form-item>
         <el-form-item label="操作系统">
           <el-select
@@ -52,7 +53,7 @@
             placeholder="如 V10"
             style="width: 120px"
             @keyup.enter="handleSearch"
-          />
+          @clear="handleSearch" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">

@@ -8,8 +8,7 @@
             v-model="filters.keyword"
             placeholder="搜索运维工具名称"
             clearable
-            style="width: 240px"
-          >
+            style="width: 240px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon>
                 <Search />
@@ -18,7 +17,7 @@
           </el-input>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="状态筛选" clearable style="width: 140px">
+          <el-select v-model="filters.status" placeholder="状态筛选" clearable style="width: 140px" @change="handleSearch">
             <el-option label="全部状态" value="" />
             <el-option label="审批中" :value="0" />
             <el-option label="审批通过" :value="1" />

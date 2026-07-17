@@ -14,7 +14,7 @@
     <div v-show="!isCollapsed" class="sidebar-content">
       <!-- 搜索过滤 -->
       <div class="sidebar-search">
-        <el-input v-model="filterText" placeholder="快速查找分组/标签..." clearable size="small">
+        <el-input v-model="filterText" placeholder="快速查找分组/标签..." clearable size="small" @keyup.enter="search" @clear="search">
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>

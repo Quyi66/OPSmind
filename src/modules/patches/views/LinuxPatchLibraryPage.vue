@@ -45,7 +45,7 @@
     <div class="ops-filter-bar">
       <el-form :inline="true" size="small">
         <el-form-item v-if="pickerMode" label="厂商">
-          <el-select v-model="currentVendor" style="width: 140px" clearable>
+          <el-select v-model="currentVendor" style="width: 140px" clearable @change="handleSearch">
             <el-option
               v-for="vendor in vendorStats"
               :key="vendor.vendor"
@@ -55,7 +55,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="严重级别">
-          <el-select v-model="severityFilter" multiple placeholder="请选择" style="width: auto">
+          <el-select v-model="severityFilter" multiple placeholder="请选择" style="width: auto" @change="handleSearch">
             <el-option label="严重" value="Critical" />
             <el-option label="重要" value="Important" />
             <el-option label="中等" value="Moderate" />
@@ -63,7 +63,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="ignoreFilter" style="width: 100px">
+          <el-select v-model="ignoreFilter" style="width: 100px" @change="handleSearch">
             <el-option label="全部" value="0,1" />
             <el-option label="白名单" value="1" />
             <el-option label="非白名单" value="0" />
@@ -75,7 +75,7 @@
             placeholder="请输入关键词"
             style="width: 240px"
             clearable
-          />
+          @keyup.enter="handleSearch" @clear="handleSearch" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">

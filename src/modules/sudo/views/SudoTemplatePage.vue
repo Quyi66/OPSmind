@@ -10,8 +10,7 @@
             clearable
             style="width: 200px"
             maxlength="50"
-            @keyup.enter="handleSearchTemplates"
-          >
+            @keyup.enter="handleSearchTemplates" @clear="handleSearchTemplates">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

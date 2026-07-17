@@ -8,8 +8,7 @@
             v-model="searchKeyword"
             placeholder="搜索运维工具标题"
             clearable
-            style="width: 240px"
-          >
+            style="width: 240px" @keyup.enter="currentPage = 1" @clear="currentPage = 1">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

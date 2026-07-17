@@ -9,7 +9,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="设备类型">
-          <el-select v-model="filters.cit" placeholder="全部" style="width: 140px">
+          <el-select v-model="filters.cit" placeholder="全部" style="width: 140px" @change="handleSearch">
             <el-option label="全部" value="sjxy_all" />
             <el-option
               v-for="item in resourceTypes"
@@ -20,7 +20,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="状态筛选">
-          <el-select v-model="filters.conditions" placeholder="筛选条件" style="width: 180px">
+          <el-select v-model="filters.conditions" placeholder="筛选条件" style="width: 180px" @change="handleSearch">
             <el-option label="全部异常" value="sjxy_all" />
             <el-option label="今日异常" value="today" />
             <el-option label="连通率小于50%设备" value="low" />

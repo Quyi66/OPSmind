@@ -7,8 +7,7 @@
             v-model="filterParams.availablePkg"
             placeholder="全部"
             style="width: auto"
-            multiple
-          >
+            multiple @change="handleSearch">
             <el-option label="全部" value="all" />
             <el-option label="可升级" value="可升级" />
           </el-select>

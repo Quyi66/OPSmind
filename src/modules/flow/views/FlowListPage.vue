@@ -8,8 +8,7 @@
             v-model="filters.processName"
             placeholder="搜索流程名称"
             clearable
-            style="width: 250px"
-          >
+            style="width: 250px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

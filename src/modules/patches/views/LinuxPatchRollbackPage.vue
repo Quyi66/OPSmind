@@ -8,15 +8,14 @@
             v-model="filters.host_key"
             placeholder="请输入IP"
             style="width: 200px"
-            clearable
-          >
+            clearable @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item label="CVE">
-          <el-input v-model="filters.vul_id" placeholder="请输入CVE" style="width: 200px" clearable>
+          <el-input v-model="filters.vul_id" placeholder="请输入CVE" style="width: 200px" clearable @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -505,6 +504,11 @@ async function loadData() {
 }
 
 // 事件处理
+function handleSearch() {
+  pagination.page = 1
+  loadData()
+}
+
 function handleReset() {
   resetAllSelected()
   selectedRows.value = []

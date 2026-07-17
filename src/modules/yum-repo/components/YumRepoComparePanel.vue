@@ -9,8 +9,7 @@
               clearable
               filterable
               placeholder="请选择仓库"
-              style="width: 350px"
-            >
+              style="width: 350px" @change="handleCompare">
               <el-option
                 v-for="item in compareRepoOptions"
                 :key="resolveYumConfigId(item)"

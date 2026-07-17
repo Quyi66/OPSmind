@@ -28,8 +28,7 @@
             placeholder="搜索 IP/主机名/用户名"
             clearable
             style="width: 200px"
-            @keyup.enter="handleSearch"
-          >
+            @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

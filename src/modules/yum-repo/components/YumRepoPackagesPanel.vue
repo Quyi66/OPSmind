@@ -8,8 +8,7 @@
             clearable
             filterable
             placeholder="请选择已采集仓库"
-            style="width: 480px"
-          >
+            style="width: 480px" @change="handleSearch">
             <el-option
               v-for="item in packageRepoOptions"
               :key="resolveYumConfigId(item)"
@@ -25,7 +24,7 @@
             clearable
             style="width: 300px"
             @keyup.enter="handleSearch"
-          />
+          @clear="handleSearch" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :disabled="!hasSelectedRepo" @click="handleSearch">

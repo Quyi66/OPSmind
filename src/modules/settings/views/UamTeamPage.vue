@@ -9,8 +9,7 @@
             placeholder="搜索团队名称/编码"
             clearable
             style="width: 200px"
-            @input="handleSearch"
-          >
+            @input="handleSearch" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

@@ -4,7 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="时间范围">
-          <el-select v-model="filters.day" style="width: 120px">
+          <el-select v-model="filters.day" style="width: 120px" @change="handleSearch">
             <el-option label="全部" value="3650" />
             <el-option label="今天" value="0" />
             <el-option label="最近7天" value="7" />
@@ -13,7 +13,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="filters.status" style="width: 120px">
+          <el-select v-model="filters.status" style="width: 120px" @change="handleSearch">
             <el-option label="全部状态" value="all" />
             <el-option label="等待中" value="WAITING" />
             <el-option label="运行中" value="RUNNING" />
@@ -29,8 +29,7 @@
             v-model="filters.keyword"
             placeholder="搜索运维工具、用户或执行节点"
             clearable
-            style="width: 240px"
-          >
+            style="width: 240px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

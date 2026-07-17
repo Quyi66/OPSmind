@@ -3,7 +3,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="数据源">
-          <el-select v-model="filters.source" clearable placeholder="全部" style="width: 140px">
+          <el-select v-model="filters.source" clearable placeholder="全部" style="width: 140px" @change="handleSearch">
             <el-option label="全部" value="" />
             <el-option label="麒麟" value="kylin" />
             <el-option label="Oracle" value="oracle" />
@@ -18,10 +18,10 @@
             placeholder="请输入包名"
             style="width: 280px"
             @keyup.enter="handleSearch"
-          />
+          @clear="handleSearch" />
         </el-form-item>
         <el-form-item label="架构">
-          <el-select v-model="filters.arch" clearable placeholder="全部" style="width: 160px">
+          <el-select v-model="filters.arch" clearable placeholder="全部" style="width: 160px" @change="handleSearch">
             <el-option v-for="arch in archOptions" :key="arch" :label="arch" :value="arch" />
           </el-select>
         </el-form-item>

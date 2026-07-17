@@ -7,8 +7,7 @@
             v-model="filters.taskType"
             clearable
             placeholder="全部"
-            class="task-type-filter"
-          >
+            class="task-type-filter" @change="handleSearch">
             <el-option label="全部" value="" />
             <el-option label="补丁安装" value="install" />
             <el-option label="变更回滚" value="rollback" />
@@ -22,7 +21,7 @@
             placeholder="请输入"
             clearable
             class="operator-filter"
-          />
+          @keyup.enter="handleSearch" @clear="handleSearch" />
         </el-form-item>
         <el-form-item label="时间范围">
           <el-date-picker
@@ -33,6 +32,7 @@
             end-placeholder="结束时间"
             value-format="YYYY-MM-DD"
             class="time-range-filter"
+            @change="handleSearch"
           />
         </el-form-item>
         <el-form-item>

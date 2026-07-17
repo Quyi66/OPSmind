@@ -60,8 +60,7 @@
           placeholder=""
           style="width: 260px"
           clearable
-          @keyup.enter.native="applySearch"
-        >
+          @keyup.enter.native="applySearch" @clear="search">
           <template #suffix>
             <el-icon class="search-icon"><Search /></el-icon>
           </template>

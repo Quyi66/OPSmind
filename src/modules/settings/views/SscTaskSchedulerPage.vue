@@ -10,8 +10,7 @@
             clearable
             style="width: 200px"
             maxlength="50"
-            @keyup.enter="loadScheduleTasks"
-          >
+            @keyup.enter="loadScheduleTasks" @clear="loadScheduleTasks">
             <template #prefix>
               <i class="fa fa-search"></i>
             </template>

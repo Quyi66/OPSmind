@@ -38,10 +38,10 @@
                   style="width: 180px"
                   maxlength="50"
                   @keyup.enter="handleAutomationSearch"
-                />
+                @clear="handleAutomationSearch" />
               </el-form-item>
               <el-form-item label="设备类型">
-                <el-select v-model="filters.cit" style="width: 140px">
+                <el-select v-model="filters.cit" style="width: 140px" @change="handleAutomationSearch">
                   <el-option label="全部" value="sjxy_all" />
                   <el-option
                     v-for="item in resourceTypes"
@@ -52,7 +52,7 @@
                 </el-select>
               </el-form-item>
               <el-form-item label="连接模板">
-                <el-select v-model="filters.ansible_config_id" placeholder="选择关联模板" clearable style="width: 200px">
+                <el-select v-model="filters.ansible_config_id" placeholder="选择关联模板" clearable style="width: 200px" @change="handleAutomationSearch">
                   <el-option
                     v-for="item in ansibleConfigOptions"
                     :key="item.id"

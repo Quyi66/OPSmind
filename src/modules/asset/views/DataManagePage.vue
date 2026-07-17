@@ -31,7 +31,7 @@
           <div class="ops-filter-bar">
             <el-form :inline="true" size="small">
               <el-form-item label="类型">
-                <el-select v-model="groupFilter.ciType" style="width: 140px">
+                <el-select v-model="groupFilter.ciType" style="width: 140px" @change="handleGroupSearch">
                   <el-option label="全部" value="sjxy_all" />
                   <el-option
                     v-for="item in resourceTypes"
@@ -48,7 +48,7 @@
                   style="width: 200px"
                   clearable
                   @keyup.enter="handleGroupSearch"
-                />
+                @clear="handleGroupSearch" />
               </el-form-item>
               <el-form-item class="filter-actions">
                 <el-button type="primary" @click="handleGroupSearch">

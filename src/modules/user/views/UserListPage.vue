@@ -4,7 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="用户类型">
-          <el-select v-model="filters.types" multiple placeholder="请选择" style="width: 200px">
+          <el-select v-model="filters.types" multiple placeholder="请选择" style="width: 200px" @change="handleSearch">
             <el-option label="系统用户" value="0" />
             <el-option label="普通用户" value="1" />
           </el-select>
@@ -14,8 +14,7 @@
             v-model="filters.lockStatus"
             multiple
             placeholder="请选择"
-            style="width: 200px"
-          >
+            style="width: 200px" @change="handleSearch">
             <el-option label="锁定" value="1" />
             <el-option label="未锁定" value="2" />
           </el-select>
@@ -27,7 +26,7 @@
             clearable
             style="width: 220px"
             @keyup.enter="handleSearch"
-          />
+          @clear="handleSearch" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">

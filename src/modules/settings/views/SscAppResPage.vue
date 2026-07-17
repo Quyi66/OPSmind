@@ -44,7 +44,7 @@
                     placeholder="页面标题/Code"
                     clearable
                     style="width: 200px"
-                  />
+                  @keyup.enter="handlePageSearch" @clear="handlePageSearch" />
                 </el-form-item>
                 <el-form-item>
                   <el-button type="primary" @click="handlePageSearch">

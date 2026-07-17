@@ -7,15 +7,14 @@
             v-model="filters.keyword"
             placeholder="搜索用户名/姓名"
             clearable
-            style="width: 200px"
-          >
+            style="width: 200px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="状态" clearable style="width: 120px">
+          <el-select v-model="filters.status" placeholder="状态" clearable style="width: 120px" @change="handleSearch">
             <el-option label="已激活" value="activated" />
             <el-option label="已禁用" value="disabled" />
           </el-select>

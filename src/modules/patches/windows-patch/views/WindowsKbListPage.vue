@@ -104,10 +104,10 @@
               clearable
               style="width: 220px"
               @keyup.enter="search"
-            />
+            @clear="search" />
           </el-form-item>
           <el-form-item label="严重等级">
-            <el-select v-model="searchParams.severity" style="width: 120px">
+            <el-select v-model="searchParams.severity" style="width: 120px" @change="search">
               <el-option value="all" label="全部" />
               <el-option value="Critical" label="严重" />
               <el-option value="Important" label="重要" />
@@ -123,6 +123,7 @@
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 150px"
+              @change="search"
             />
             <span class="mx-1 text-muted">-</span>
             <el-date-picker
@@ -132,6 +133,7 @@
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
               style="width: 150px"
+              @change="search"
             />
           </el-form-item>
           <el-form-item>

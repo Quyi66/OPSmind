@@ -16,15 +16,14 @@
               clearable
               style="width: 200px"
               @keyup.enter="search"
-            />
+            @clear="search" />
           </el-form-item>
           <el-form-item label="中间件类型">
             <el-select
               v-model="searchParams.middlewareType"
               style="width: 120px"
               clearable
-              placeholder="全部"
-            >
+              placeholder="全部" @change="search">
               <el-option label="全部" value="" />
               <el-option v-for="type in middlewareTypes" :key="type" :label="type" :value="type" />
             </el-select>
@@ -34,8 +33,7 @@
               v-model="searchParams.severity"
               style="width: 100px"
               clearable
-              placeholder="全部"
-            >
+              placeholder="全部" @change="search">
               <el-option value="" label="全部" />
               <el-option value="critical" label="严重" />
               <el-option value="important" label="重要" />

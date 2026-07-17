@@ -30,7 +30,7 @@
         <div class="ops-filter-bar">
           <el-form :inline="true" size="small">
             <el-form-item label="在线状态">
-              <el-select v-model="filters.status" style="width: 85px">
+              <el-select v-model="filters.status" style="width: 85px" @change="handleSearch">
                 <el-option label="全部" value="all" />
                 <el-option label="在线" value="1" />
                 <el-option label="下线" value="0" />
@@ -38,7 +38,7 @@
             </el-form-item>
 
             <el-form-item label="最近连通">
-              <el-select v-model="filters.connLatestStatus" style="width: 105px">
+              <el-select v-model="filters.connLatestStatus" style="width: 105px" @change="handleSearch">
                 <el-option label="所有" value="all" />
                 <el-option label="连通成功" value="1" />
                 <el-option label="连通失败" value="0" />
@@ -54,8 +54,7 @@
                 collapse-tags
                 collapse-tags-tooltip
                 clearable
-                style="width: 130px"
-              >
+                style="width: 130px" @change="handleSearch">
                 <el-option
                   v-for="item in osVersionOptions"
                   :key="item.value"

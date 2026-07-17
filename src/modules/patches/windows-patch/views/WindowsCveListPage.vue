@@ -92,10 +92,10 @@
               clearable
               style="width: 200px"
               @keyup.enter="search"
-            />
+            @clear="search" />
           </el-form-item>
           <el-form-item label="严重等级">
-            <el-select v-model="searchParams.severity" style="width: 100px">
+            <el-select v-model="searchParams.severity" style="width: 100px" @change="search">
               <el-option value="all" label="全部" />
               <el-option value="critical" label="严重" />
               <el-option value="important" label="重要" />

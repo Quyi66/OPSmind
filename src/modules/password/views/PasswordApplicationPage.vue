@@ -4,7 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="全部" style="width: 140px">
+          <el-select v-model="filters.status" placeholder="全部" style="width: 140px" @change="handleSearch">
             <el-option label="全部" value="all" />
             <el-option label="待提交" value="new" />
             <el-option label="待审批" value="approving" />
@@ -18,7 +18,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
-          <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 200px">
+          <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 200px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

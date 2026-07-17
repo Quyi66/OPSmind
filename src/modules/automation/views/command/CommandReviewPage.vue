@@ -9,7 +9,7 @@
             placeholder="搜索名称或待审核命令"
             style="width: 240px"
             clearable
-          />
+          @keyup.enter="handleSearch" @clear="handleSearch" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">搜索</el-button>

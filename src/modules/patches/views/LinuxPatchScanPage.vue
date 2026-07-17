@@ -110,8 +110,7 @@
                 filterable
                 allow-create
                 default-first-option
-                style="width: 180px"
-              >
+                style="width: 180px" @change="handleFilter">
                 <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
               </el-select>
             </el-form-item>
@@ -144,8 +143,7 @@
                 clearable
                 filterable
                 :loading="hostTagLoading"
-                style="width: 180px"
-              >
+                style="width: 180px" @change="handleFilter">
                 <el-option v-for="tag in hostTagOptions" :key="tag" :label="tag" :value="tag" />
               </el-select>
             </el-form-item>
@@ -154,8 +152,7 @@
                 v-model="hostFilters.keyword"
                 placeholder="主机名 / IP / 资产 ID"
                 style="width: 220px"
-                clearable
-              >
+                clearable @keyup.enter="handleFilter" @clear="handleFilter">
                 <template #prefix>
                   <el-icon>
                     <Search />
@@ -1745,6 +1742,7 @@ function handleHostVersionChange(value) {
   const parsedValue = parseOsVersionFilter(value)
   hostFilters.os_version = option?.osVersion || parsedValue.osVersion
   hostFilters.os_sp_version = option?.osSpVersion || parsedValue.osSpVersion
+  handleFilter()
 }
 
 function handleHostReset() {

@@ -38,7 +38,7 @@
           </template>
           <div class="attr-select-list">
             <div class="attr-search">
-              <el-input v-model="searchKeyword" placeholder="搜索属性" size="small" clearable>
+              <el-input v-model="searchKeyword" placeholder="搜索属性" size="small" clearable @keyup.enter="search" @clear="search">
                 <template #prefix>
                   <i class="fa fa-search"></i>
                 </template>

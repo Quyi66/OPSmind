@@ -5,7 +5,7 @@
       <div class="ops-filter-bar">
         <el-form :inline="true" size="small">
           <el-form-item label="时间范围">
-            <el-select v-model="filters.day" style="width: 95px">
+            <el-select v-model="filters.day" style="width: 95px" @change="handleFilterChange">
               <el-option label="今天" :value="1" />
               <el-option label="近 3 天" :value="3" />
               <el-option label="近 7 天" :value="7" />
@@ -14,7 +14,7 @@
           </el-form-item>
 
           <el-form-item label="执行状态">
-            <el-select v-model="filters.status" style="width: 105px">
+            <el-select v-model="filters.status" style="width: 105px" @change="handleFilterChange">
               <el-option label="全部" value="all" />
               <el-option label="运行成功" value="COMPLETED" />
               <el-option label="运行异常" value="ERROR" />
@@ -23,7 +23,7 @@
           </el-form-item>
 
           <el-form-item label="操作类型">
-            <el-select v-model="filters.action" style="width: 155px">
+            <el-select v-model="filters.action" style="width: 155px" @change="handleFilterChange">
               <el-option label="全部操作" value="all" />
               <el-option
                 v-for="action in actionTypes"
@@ -41,7 +41,7 @@
               clearable
               style="width: 170px"
               @keyup.enter="handleFilterChange"
-            />
+            @clear="handleFilterChange" />
           </el-form-item>
 
           <el-form-item class="filter-actions">

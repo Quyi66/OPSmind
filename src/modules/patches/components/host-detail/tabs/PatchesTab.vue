@@ -49,8 +49,7 @@
         clearable
         style="width: 260px; margin-left: 12px"
         @input="handlePatchKeywordChange"
-        @clear="handlePatchKeywordChange"
-      >
+        @clear="handlePatchKeywordChange" @keyup.enter="handleFilterChange">
         <template #prefix>
           <el-icon><Search /></el-icon>
         </template>

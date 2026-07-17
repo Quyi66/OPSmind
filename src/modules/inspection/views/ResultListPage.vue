@@ -3,7 +3,7 @@
     <!-- 左侧模板列表 -->
     <aside class="ops-sidebar-nav">
       <div class="ops-sidebar-header">
-        <el-input v-model="templateSearchText" placeholder="搜索模板" clearable style="width: 100%">
+        <el-input v-model="templateSearchText" placeholder="搜索模板" clearable style="width: 100%" @keyup.enter="handleSearch" @clear="handleSearch">
           <template #prefix>
             <i class="fa fa-search"></i>
           </template>
@@ -40,7 +40,7 @@
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
           <el-form-item label="模版名称">
-            <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 200px">
+            <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 200px" @keyup.enter="handleSearch" @clear="handleSearch">
               <template #prefix>
                 <el-icon><Search /></el-icon>
               </template>

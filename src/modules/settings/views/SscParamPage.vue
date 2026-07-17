@@ -14,7 +14,7 @@
                 style="width: 220px"
                 maxlength="50"
                 @input="handleSysSearch"
-              />
+              @keyup.enter="handleSysSearch" @clear="handleSysSearch" />
             </el-form-item>
             <!-- <el-form-item>
               <el-button type="primary" @click="handleSysSearch">

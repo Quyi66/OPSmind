@@ -4,14 +4,14 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 180px">
+          <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 180px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item label="操作类型">
-          <el-select v-model="filters.action" placeholder="全部" clearable style="width: 150px">
+          <el-select v-model="filters.action" placeholder="全部" clearable style="width: 150px" @change="handleSearch">
             <el-option label="全部操作" value="all" />
             <el-option label="设置密码复杂度" value="设置密码复杂度" />
             <el-option label="新增sudo配置" value="新增sudo配置" />
@@ -20,14 +20,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="全部" clearable style="width: 120px">
+          <el-select v-model="filters.status" placeholder="全部" clearable style="width: 120px" @change="handleSearch">
             <el-option label="全部状态" value="all" />
             <el-option label="成功" value="COMPLETED" />
             <el-option label="失败" value="ERROR" />
           </el-select>
         </el-form-item>
         <el-form-item label="时间范围">
-          <el-select v-model="filters.day" placeholder="全部" style="width: 120px">
+          <el-select v-model="filters.day" placeholder="全部" style="width: 120px" @change="handleSearch">
             <el-option label="全部时间" value="all" />
             <el-option label="最近1天" value="1" />
             <el-option label="最近7天" value="7" />

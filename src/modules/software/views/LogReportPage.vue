@@ -4,7 +4,7 @@
     <div class="ops-filter-bar">
       <el-form inline size="small">
         <el-form-item label="时间范围">
-          <el-select v-model="filterDay" style="width: 100px">
+          <el-select v-model="filterDay" style="width: 100px" @change="handleSearch">
             <el-option label="全部" value="all" />
             <el-option label="今天" value="1" />
             <el-option label="最近7天" value="7" />
@@ -17,8 +17,7 @@
             v-model="engineFilter"
             placeholder="全部"
             clearable
-            style="width: 130px"
-          >
+            style="width: 130px" @change="handleSearch">
             <el-option
               v-for="node in engineOptions"
               :key="node"
@@ -28,7 +27,7 @@
           </el-select>
         </el-form-item> -->
         <el-form-item label="状态">
-          <el-select v-model="statusFilter" placeholder="全部" clearable style="width: 100px">
+          <el-select v-model="statusFilter" placeholder="全部" clearable style="width: 100px" @change="handleSearch">
             <el-option
               v-for="status in statusOptions"
               :key="status.value"
@@ -38,7 +37,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="操作">
-          <el-select v-model="actionFilter" placeholder="全部" clearable style="width: 100px">
+          <el-select v-model="actionFilter" placeholder="全部" clearable style="width: 100px" @change="handleSearch">
             <el-option
               v-for="action in actionOptions"
               :key="action"
@@ -48,7 +47,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
-          <el-input v-model="searchText" placeholder="搜索..." clearable style="width: 180px">
+          <el-input v-model="searchText" placeholder="搜索..." clearable style="width: 180px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

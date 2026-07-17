@@ -31,8 +31,7 @@
               placeholder="搜索流程"
               size="small"
               clearable
-              class="flow-search"
-            >
+              class="flow-search" @keyup.enter="handleRefreshFlows" @clear="handleRefreshFlows">
               <template #prefix>
                 <i class="fa fa-search" />
               </template>
@@ -243,8 +242,7 @@
                       placeholder="搜索流程实例"
                       size="small"
                       clearable
-                      class="instance-search"
-                    >
+                      class="instance-search" @keyup.enter="handleRefreshFlows" @clear="handleRefreshFlows">
                       <template #prefix>
                         <i class="fa fa-search" />
                       </template>

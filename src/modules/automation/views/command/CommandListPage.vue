@@ -8,8 +8,7 @@
             v-model="filters.keyword"
             placeholder="搜索名称、描述或命令内容"
             clearable
-            style="width: 240px"
-          >
+            style="width: 240px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

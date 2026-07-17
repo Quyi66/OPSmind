@@ -11,7 +11,7 @@
               clearable
               style="width: 240px"
               @keyup.enter="handleSearch"
-            />
+            @clear="handleSearch" />
           </el-form-item>
           <el-form-item class="filter-actions">
             <el-button type="primary" @click="handleSearch">

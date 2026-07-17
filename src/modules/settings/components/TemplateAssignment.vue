@@ -9,8 +9,7 @@
             placeholder="模版名称/描述"
             clearable
             style="width: 200px"
-            @input="handleSearch"
-          >
+            @input="handleSearch" @keyup.enter="search" @clear="search">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

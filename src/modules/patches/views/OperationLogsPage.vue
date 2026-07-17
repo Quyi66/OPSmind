@@ -4,7 +4,7 @@
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
           <el-form-item label="时间范围">
-            <el-select v-model="dayFilter" style="width: 100px">
+            <el-select v-model="dayFilter" style="width: 100px" @change="handleFilterChange">
               <el-option label="今天" :value="1" />
               <el-option label="近3天" :value="3" />
               <el-option label="近7天" :value="7" />
@@ -13,7 +13,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="状态">
-            <el-select v-model="statusFilter" placeholder="状态" style="width: 80px" clearable>
+            <el-select v-model="statusFilter" placeholder="状态" style="width: 80px" clearable @change="handleFilterChange">
               <el-option label="全部" value="all" />
               <el-option label="完成" value="COMPLETED" />
               <el-option label="失败" value="FAILED" />
@@ -21,7 +21,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="操作类型">
-            <el-select v-model="actionFilter" placeholder="操作类型" style="width: 150px" clearable>
+            <el-select v-model="actionFilter" placeholder="操作类型" style="width: 150px" clearable @change="handleFilterChange">
               <el-option label="全部" value="all" />
               <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
               <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
@@ -31,7 +31,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="关键词">
-            <el-input v-model="searchText" placeholder="搜索" style="width: 250px" clearable>
+            <el-input v-model="searchText" placeholder="搜索" style="width: 250px" clearable @keyup.enter="handleFilterChange" @clear="handleFilterChange">
               <template #prefix>
                 <el-icon>
                   <Search />

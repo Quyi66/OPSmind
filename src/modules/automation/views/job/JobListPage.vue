@@ -8,8 +8,7 @@
             v-model="selectedAppletName"
             filterable
             style="width: 220px"
-            placeholder="全部应用"
-          >
+            placeholder="全部应用" @change="handleSearch">
             <el-option
               v-for="applet in appOptions"
               :key="applet.name || 'all'"

@@ -10,8 +10,7 @@
             style="width: 180px"
             multiple
             collapse-tags
-            collapse-tags-tooltip
-          >
+            collapse-tags-tooltip @change="handleSearch">
             <el-option label="已完成" value="COMPLETED" />
             <el-option label="运行失败" value="FAILED" />
             <el-option label="运行中" value="RUNNING" />
@@ -19,7 +18,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="时间范围">
-          <el-select v-model="filters.day" style="width: 120px">
+          <el-select v-model="filters.day" style="width: 120px" @change="handleSearch">
             <el-option label="全部" value="3650" />
             <el-option label="今天" value="1" />
             <el-option label="最近一周" value="7" />
@@ -32,8 +31,7 @@
             v-model="filters.keyword"
             placeholder="用户名、执行引擎节点、结果"
             clearable
-            style="width: 220px"
-          >
+            style="width: 220px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

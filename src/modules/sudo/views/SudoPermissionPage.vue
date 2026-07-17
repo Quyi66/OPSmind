@@ -9,8 +9,7 @@
             placeholder="搜索主机、用户..."
             clearable
             style="width: 200px"
-            maxlength="50"
-          >
+            maxlength="50" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

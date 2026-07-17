@@ -19,8 +19,7 @@
           placeholder="搜索标签名称"
           clearable
           style="width: 200px"
-          @input="handleSearch"
-        >
+          @input="handleSearch" @keyup.enter="search" @clear="search">
           <template #prefix>
             <i class="fa fa-search"></i>
           </template>

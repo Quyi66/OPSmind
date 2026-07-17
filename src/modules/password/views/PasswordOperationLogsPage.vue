@@ -4,7 +4,7 @@
     <div class="ops-filter-bar">
       <el-form :model="filters" inline size="small">
         <el-form-item label="关键词">
-          <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 180px">
+          <el-input v-model="filters.keyword" placeholder="搜索" clearable style="width: 180px" @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

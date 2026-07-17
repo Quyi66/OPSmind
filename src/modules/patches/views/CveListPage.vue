@@ -99,10 +99,10 @@
               clearable
               style="width: 200px"
               @keyup.enter="search"
-            />
+            @clear="search" />
           </el-form-item>
           <el-form-item label="系统">
-            <el-select v-model="searchParams.source" style="width: 100px">
+            <el-select v-model="searchParams.source" style="width: 100px" @change="search">
               <el-option
                 v-for="option in sourceOptions"
                 :key="option.value"
@@ -112,7 +112,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="严重等级">
-            <el-select v-model="searchParams.severity" style="width: 100px">
+            <el-select v-model="searchParams.severity" style="width: 100px" @change="search">
               <el-option value="all" label="全部" />
               <el-option value="critical" label="严重" />
               <el-option value="important" label="重要" />
@@ -127,7 +127,7 @@
               clearable
               style="width: 120px"
               @keyup.enter="search"
-            />
+            @clear="search" />
           </el-form-item>
           <el-form-item label="发布日期">
             <el-date-picker

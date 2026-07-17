@@ -9,7 +9,7 @@
             clearable
             style="width: 190px"
             @keyup.enter="handleSearch"
-          />
+          @clear="handleSearch" />
         </el-form-item>
         <el-form-item label="操作系统">
           <el-select
@@ -18,8 +18,7 @@
             clearable
             filterable
             allow-create
-            style="width: 290px"
-          >
+            style="width: 290px" @change="handleSearch">
             <el-option
               v-for="item in hostFilterOptions.osDistros"
               :key="item"
@@ -35,8 +34,7 @@
             clearable
             filterable
             allow-create
-            style="width: 180px"
-          >
+            style="width: 180px" @change="handleSearch">
             <el-option
               v-for="item in hostFilterOptions.osVersions"
               :key="item"
@@ -55,8 +53,7 @@
             clearable
             filterable
             :loading="tagLoading"
-            style="width: 180px"
-          >
+            style="width: 180px" @change="handleSearch">
             <el-option v-for="tag in tagOptions" :key="tag" :label="tag" :value="tag" />
           </el-select>
         </el-form-item>

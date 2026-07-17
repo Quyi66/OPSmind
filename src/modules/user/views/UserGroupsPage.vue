@@ -10,7 +10,7 @@
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
-          />
+          @clear="handleSearch" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleSearch">

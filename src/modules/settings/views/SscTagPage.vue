@@ -11,7 +11,7 @@
             style="width: 200px"
             maxlength="50"
             @input="handleSearch"
-          />
+          @keyup.enter="handleSearch" @clear="handleSearch" />
         </el-form-item>
         <!-- <el-form-item>
           <el-button type="primary" @click="handleSearch">
