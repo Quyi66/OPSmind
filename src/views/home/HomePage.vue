@@ -19,12 +19,9 @@
       <!-- 主内容区 -->
       <main class="dashboard-content">
         <div class="dashboard-main">
-          <!-- 第一行：个人迎宾 Banner & AI 智能助手 -->
+          <!-- 第一行：AI 智能助手 (100% 全宽) -->
           <div class="dashboard-row greeting-ai-row">
-            <div class="dashboard-card greeting-card">
-              <UserGreetingBanner />
-            </div>
-            <div class="dashboard-card ai-card">
+            <div class="dashboard-card full-width-card">
               <AIAssistant />
             </div>
           </div>
@@ -60,7 +57,6 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useDashboardStore } from '@/stores/dashboard'
 
-import UserGreetingBanner from '@/views/home/components/UserGreetingBanner.vue'
 import AIAssistant from '@/components/ai/AIAssistant.vue'
 import { ModulePreloadManager } from '@/composables/useOptimizedModuleLoader'
 
@@ -194,14 +190,9 @@ onMounted(async () => {
   min-height: 64px;
 }
 
-.greeting-card {
-  flex: 0 0 38%;
-  width: 38%;
-}
-
-.ai-card {
-  flex: 0 0 calc(62% - 16px);
-  width: calc(62% - 16px);
+.full-width-card {
+  width: 100%;
+  flex: 1;
 }
 
 /* 第二行 - 主机漏洞概览(38%) & 严重漏洞预警(62%) */

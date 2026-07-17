@@ -161,11 +161,11 @@ function handleFocus(e) {
 .assistant-banner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   background: transparent;
   padding: 0 20px;
-  gap: 16px;
+  gap: 24px;
   height: 100%;
+  width: 100%;
   box-sizing: border-box;
 }
 
@@ -174,6 +174,7 @@ function handleFocus(e) {
   align-items: center;
   gap: 12px;
   flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .ai-ops-icon {
@@ -184,7 +185,7 @@ function handleFocus(e) {
 }
 
 .banner-text {
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .banner-title {
@@ -205,10 +206,10 @@ function handleFocus(e) {
 
 .search-container {
   flex: 1;
-  max-width: 480px;
+  min-width: 0;
   display: flex;
-  justify-content: flex-end;
-  padding-left: 12px;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .search-input-wrapper {

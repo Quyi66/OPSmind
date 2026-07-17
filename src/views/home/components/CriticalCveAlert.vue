@@ -67,7 +67,7 @@
                 </div>
                 <!-- 受影响软件包数量 -->
                 <div class="cve-packages">
-                  <span class="pkg-count">{{ cve.totalPackageCount ?? 0 }}</span>
+                  <span class="pkg-count">{{ cve.affectedCount ?? cve.affected_count ?? 0 }}</span>
                   <span class="pkg-unit">个</span>
                 </div>
                 <div class="cve-score-badge" :style="getScoreStyle(cve.cvss3Score)">
