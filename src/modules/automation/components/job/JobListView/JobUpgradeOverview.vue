@@ -147,11 +147,25 @@ function findAdvisories(obj, found = new Set()) {
   return found
 }
 
+function parsePkgs(raw) {
+  if (!raw) return []
+  if (Array.isArray(raw)) {
+    return raw
+      .map(item => (typeof item === 'string' ? item : item?.name || item?.pkg || String(item)))
+      .filter(Boolean)
+  }
+  if (typeof raw === 'string') {
+    return raw.split(/[\s,]+/).filter(Boolean)
+  }
+  return []
+}
+
 const patchOverviewInfo = computed(() => {
   if (!props.ansibleContents || !props.ansibleContents.length) return null
 
   const hostsMap = new Map()
-  let fullPkgsStr = ''
+  let targetNvrPkgsRaw = null
+  let fullPkgsRaw = null
   const advisoriesSet = new Set()
 
   props.ansibleContents.forEach(content => {
@@ -177,8 +191,14 @@ const patchOverviewInfo = computed(() => {
             }
           }
 
-          if (host?.ansible_facts?.full_pkgs) {
-            fullPkgsStr = host.ansible_facts.full_pkgs
+          const targetNvr = host?.ansible_facts?.target_nvr_pkgs ?? host?.target_nvr_pkgs
+          if (targetNvr) {
+            targetNvrPkgsRaw = targetNvr
+          }
+
+          const fullPkgs = host?.ansible_facts?.full_pkgs ?? host?.full_pkgs
+          if (fullPkgs) {
+            fullPkgsRaw = fullPkgs
           }
         })
       })
@@ -186,9 +206,9 @@ const patchOverviewInfo = computed(() => {
   })
 
   const hosts = Array.from(hostsMap.values())
-  const packages = fullPkgsStr
-    ? fullPkgsStr.split(/\s+/).filter(Boolean)
-    : []
+  const packages = targetNvrPkgsRaw
+    ? parsePkgs(targetNvrPkgsRaw)
+    : parsePkgs(fullPkgsRaw)
   const patches = Array.from(advisoriesSet).sort()
 
   if (hosts.length === 0 && packages.length === 0 && patches.length === 0) return null
@@ -211,7 +231,7 @@ const gridClass = computed(() => {
 
 <style scoped>
 .result-section {
-  margin-top: 24px;
+  margin-top: 0 !important;
 }
 
 .section-header {

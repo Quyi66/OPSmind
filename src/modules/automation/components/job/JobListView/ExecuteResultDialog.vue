@@ -34,15 +34,27 @@
                   </div>
                 </div>
               </div>
-              <div v-if="summary.errorTitle || summary.errorDetails" class="result-error">
-                <p class="error-title">{{ summary.errorTitle }}</p>
-                <pre class="error-details">{{ summary.errorDetails }}</pre>
-              </div>
-
               <JobUpgradeOverview
                 v-if="isAnsibleJob"
                 :ansible-contents="ansibleContents"
               />
+
+              <div
+                v-if="summary.errorTitle || summary.errorDetails || (summary.errorList && summary.errorList.length)"
+                class="result-error"
+              >
+                <div class="error-title-bar">
+                  <i class="fa fa-exclamation-triangle error-icon" />
+                  <span class="error-title">{{ summary.errorTitle }}</span>
+                </div>
+                <div v-if="summary.errorList && summary.errorList.length" class="error-list">
+                  <div v-for="(err, idx) in summary.errorList" :key="idx" class="error-item">
+                    <span class="error-bullet">•</span>
+                    <span class="error-text">{{ err }}</span>
+                  </div>
+                </div>
+                <pre v-if="summary.errorDetails" class="error-details">{{ summary.errorDetails }}</pre>
+              </div>
 
               <div v-if="batches.length && !hasHostInfo" class="result-section">
                 <div class="section-header">
@@ -412,7 +424,7 @@ import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/constants/jobStatus'
-import { authService } from '@/core/auth'
+import { translateText } from '@/utils/i18n'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 import JobUpgradeOverview from './JobUpgradeOverview.vue'
 
@@ -745,22 +757,253 @@ function stopResultPolling() {
   }
 }
 
+const KNOWN_MSG_MAP = {
+  'app_secops.log.exec_script_fail': '脚本执行失败',
+  'app_secops.log.exec_install_fail': '安装/升级任务执行失败',
+  'app_secops.log.exec_scan_fail': '漏洞/补丁扫描失败',
+  'app_secops.log.exec_rollback_fail': '补丁回滚任务失败',
+  'acm.common.log.conn_failed': '主机连通性检测失败',
+  'acm.common.log.collect_failed': '资产采集失败'
+}
+
+function isIgnorableDebugMsg(msgStr) {
+  if (!msgStr || typeof msgStr !== 'string') return true
+  const s = msgStr.trim()
+  if (!s) return true
+  if (s.startsWith('export_data_file_name is')) return true
+  if (s.startsWith('secops_func is')) return true
+  if (s.startsWith('full_pkgs:')) return true
+  if (s.startsWith('target_nvr_pkgs=')) return true
+  if (s.startsWith('latest_only_pkgs=')) return true
+  return false
+}
+
+function parseJsonDeep(input) {
+  let curr = input
+  for (let i = 0; i < 3; i++) {
+    if (typeof curr === 'string') {
+      const trimmed = curr.trim()
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          curr = JSON.parse(trimmed)
+        } catch {
+          break
+        }
+      } else {
+        break
+      }
+    } else {
+      break
+    }
+  }
+  return curr
+}
+
+function extractMsgsFromMsgInfo(msgInfo) {
+  const extractedMsgs = []
+  if (!msgInfo) return extractedMsgs
+
+  const infoObj = parseJsonDeep(msgInfo)
+
+  if (typeof infoObj === 'object' && infoObj !== null) {
+    const plays = Array.isArray(infoObj?.plays) ? infoObj.plays : []
+    plays.forEach(play => {
+      const tasks = Array.isArray(play?.tasks) ? play.tasks : []
+      tasks.forEach(task => {
+        const hosts = Array.isArray(task?.hosts) ? task.hosts : []
+        hosts.forEach(h => {
+          const msgVal = h.msg || h.message || h.stderr || h.stdout
+          if (typeof msgVal === 'string' && msgVal.trim()) {
+            if (!isIgnorableDebugMsg(msgVal)) {
+              const hostKey = h.hostKey || h.host || h.name
+              const hostPrefix = hostKey ? `[${hostKey}] ` : ''
+              const formatted = `${hostPrefix}${msgVal.trim()}`
+              if (!extractedMsgs.includes(formatted)) {
+                extractedMsgs.push(formatted)
+              }
+            }
+          }
+        })
+      })
+    })
+  }
+
+  if (extractedMsgs.length === 0 && typeof msgInfo === 'string') {
+    const msgRegex = /"msg"\s*:\s*"((?:[^"\\]|\\.)*)"/g
+    let match
+    while ((match = msgRegex.exec(msgInfo)) !== null) {
+      try {
+        const unescaped = JSON.parse(`"${match[1]}"`)
+        if (typeof unescaped === 'string' && !isIgnorableDebugMsg(unescaped)) {
+          if (!extractedMsgs.includes(unescaped)) {
+            extractedMsgs.push(unescaped)
+          }
+        }
+      } catch {
+        if (!isIgnorableDebugMsg(match[1])) {
+          extractedMsgs.push(match[1])
+        }
+      }
+    }
+  }
+
+  return extractedMsgs
+}
+
+function extractMsgsFromAnsibleContents(contents) {
+  const msgs = []
+  if (!Array.isArray(contents)) return msgs
+
+  contents.forEach(content => {
+    const plays = Array.isArray(content?.plays) ? content.plays : []
+    plays.forEach(play => {
+      const tasks = Array.isArray(play?.tasks) ? play.tasks : []
+      tasks.forEach(task => {
+        const hosts = Array.isArray(task?.hosts) ? task.hosts : []
+        hosts.forEach(h => {
+          // 必须包含失败/不可达/非零退出码标示才判定为错误节点
+          const isFailedHost = h.failed || h.unreachable || (h.rc !== undefined && h.rc !== 0 && h.rc !== 0.0)
+          if (isFailedHost) {
+            const msgVal = h.msg || h.message || h.stderr || h.stdout
+            if (typeof msgVal === 'string' && msgVal.trim()) {
+              if (!isIgnorableDebugMsg(msgVal)) {
+                const hostKey = h.hostKey || h.host || h.name
+                const hostPrefix = hostKey ? `[${hostKey}] ` : ''
+                const formatted = `${hostPrefix}${msgVal.trim()}`
+                if (!msgs.includes(formatted)) {
+                  msgs.push(formatted)
+                }
+              }
+            }
+          }
+        })
+      })
+    })
+  })
+
+  return msgs
+}
+
+function parseJobExecutionError(errorRaw, ansibleContents = [], jobStatus = '') {
+  const isStatusFailed = ['FAILED', 'ERROR'].includes(String(jobStatus).toUpperCase())
+
+  if (!errorRaw && (!ansibleContents || !ansibleContents.length)) {
+    return { title: '', list: [], details: '' }
+  }
+
+  // 状态成功且没有后端显式错误文本时，不展示错误
+  if (!isStatusFailed && !errorRaw) {
+    return { title: '', list: [], details: '' }
+  }
+
+  const lines = String(errorRaw || '').split('\n').map(l => l.trim()).filter(Boolean)
+  let failedTaskCount = null
+  const messagesList = []
+  let isJsonFormatted = false
+
+  lines.forEach(line => {
+    let obj = null
+    try {
+      obj = JSON.parse(line)
+    } catch {
+      const msgIdMatch = /"msg_id"\s*:\s*"([^"]+)"/.exec(line)
+      if (msgIdMatch) {
+        obj = { msg_id: msgIdMatch[1] }
+      }
+    }
+
+    if (obj) {
+      isJsonFormatted = true
+
+      if (obj.FailedTask !== undefined) {
+        failedTaskCount = obj.FailedTask
+        return
+      }
+
+      if (obj.msg_id) {
+        const msgId = obj.msg_id
+        let translated = KNOWN_MSG_MAP[msgId]
+        if (!translated) {
+          const i18nVal = translateText(`#{${msgId}}`)
+          translated = i18nVal && i18nVal !== msgId && !i18nVal.includes('#{') ? i18nVal : msgId
+        }
+
+        if (translated && !messagesList.includes(translated)) {
+          messagesList.push(translated)
+        }
+
+        if (obj.msg_info) {
+          const msgs = extractMsgsFromMsgInfo(obj.msg_info)
+          msgs.forEach(m => {
+            if (!messagesList.includes(m)) {
+              messagesList.push(m)
+            }
+          })
+        }
+      } else if (obj.message || obj.error || obj.msg) {
+        const msg = obj.message || obj.error || obj.msg
+        if (typeof msg === 'string' && !isIgnorableDebugMsg(msg) && !messagesList.includes(msg)) {
+          messagesList.push(msg)
+        }
+      }
+    }
+  })
+
+  // 只有当真正的失败节点存在时，才提取 ansibleContents 中的 msg
+  const ansibleMsgs = extractMsgsFromAnsibleContents(ansibleContents)
+  ansibleMsgs.forEach(m => {
+    if (!messagesList.includes(m)) {
+      messagesList.push(m)
+    }
+  })
+
+  // 如果作业状态成功，且没有提取到真正失败节点的报错，不展示错误框
+  if (!isStatusFailed && messagesList.length === 0) {
+    return { title: '', list: [], details: '' }
+  }
+
+  if (isJsonFormatted || ansibleMsgs.length > 0 || isStatusFailed) {
+    let title = '作业执行失败'
+    if (failedTaskCount !== null) {
+      title += `（${failedTaskCount} 个任务失败）`
+    }
+
+    if (messagesList.length === 0 && isStatusFailed) {
+      messagesList.push('检测到运行异常，但未提取到具体报错消息')
+    }
+
+    return {
+      title,
+      list: messagesList,
+      details: ''
+    }
+  }
+
+  const [firstLine = '', ...rest] = lines
+  return {
+    title: firstLine || '执行报错',
+    list: [],
+    details: rest.join('\n')
+  }
+}
+
 const summary = computed(() => {
   const data = result.value || {}
   const start = data.startTime || data.start_time
   const end = data.endTime || data.end_time
-  const error = data.error || ''
-  const [errorTitle = '', ...details] = error.split('\n')
+  const status = data.status || ''
+  const parsedError = parseJobExecutionError(data.error || '', ansibleContents.value, status)
   return {
-    status: data.status || '',
-    statusLabel: JOB_STATUS_LABELS[data.status] || data.status || '-',
+    status,
+    statusLabel: JOB_STATUS_LABELS[status] || status || '-',
     duration: formatDuration(start, end),
     startTime: formatDateTime(start),
     endTime: formatDateTime(end),
     username: data.username || '-',
     runId: data.runId || data.id || '-',
-    errorTitle,
-    errorDetails: details.join('\n')
+    errorTitle: parsedError.title,
+    errorList: parsedError.list,
+    errorDetails: parsedError.details
   }
 })
 
@@ -1293,6 +1536,14 @@ onBeforeUnmount(() => {
   min-height: 360px;
 }
 
+:deep(.el-tabs__header) {
+  margin-bottom: 8px !important;
+}
+
+:deep(.el-tabs__content) {
+  padding-top: 4px !important;
+}
+
 .overview-header {
   display: flex;
   justify-content: space-between;
@@ -1382,22 +1633,60 @@ onBeforeUnmount(() => {
   border: 1px solid var(--result-danger-border);
   background: var(--result-danger-bg);
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px 16px;
+  margin-top: 16px;
   margin-bottom: 16px;
 }
 
+.error-title-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-icon {
+  color: var(--result-danger-text);
+  font-size: 15px;
+}
+
 .error-title {
-  margin: 0 0 8px;
+  margin: 0;
   color: var(--result-danger-text);
   font-weight: 600;
+  font-size: 14px;
+}
+
+.error-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.error-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--result-danger-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.error-bullet {
+  font-weight: bold;
+}
+
+.error-text {
+  word-break: break-all;
 }
 
 .error-details {
-  margin: 0;
+  margin: 8px 0 0;
   font-family: Consolas, 'SFMono-Regular', Menlo, Monaco, monospace;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--result-danger-text);
   white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .result-section {
