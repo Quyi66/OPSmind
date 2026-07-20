@@ -96,18 +96,35 @@
 
       <!-- 操作栏 -->
       <div class="ops-action-bar">
-        <el-button type="primary" size="small" @click="handleRescan">
-          <i class="fa fa-bug" />
-          重新扫描补丁
-        </el-button>
         <el-button
           type="primary"
+          plain
           size="small"
           :disabled="batchSelectedHosts.length === 0"
           @click="batchInstallDrawerVisible = true"
         >
           <i class="fa fa-chevron-circle-right" />
           安装选中主机补丁 ({{ batchSelectedHosts.length }})
+        </el-button>
+        <el-button
+          type="primary"
+          plain
+          size="small"
+          :disabled="batchSelectedHosts.length === 0"
+          :loading="rescanLoading"
+          @click="handleRescan"
+        >
+          <i class="fa fa-bug" />
+          重新扫描补丁 ({{ batchSelectedHosts.length }})
+        </el-button>
+        <el-button
+          size="small"
+          :type="hostAllSelected ? 'default' : 'primary'"
+          @click="handleToggleHostSelectAll"
+          plain
+        >
+          <i :class="`fa fa-${hostAllSelected ? 'times' : 'check-double'} me-1`" />
+          {{ hostAllSelected ? '一键取消' : '一键全选' }}
         </el-button>
         <span style="flex: 1"></span>
         <el-button
@@ -130,7 +147,8 @@
           :data="hostTableData"
           class="natural-height-table"
           style="width: 100%"
-          @selection-change="handleHostSelectionChange"
+          @select="handleHostTableSelect"
+          @select-all="handleHostTableSelect"
         >
           <el-table-column type="selection" width="45" />
           <el-table-column prop="host_key" label="主机" width="140">
@@ -358,34 +376,6 @@
       </div>
     </div>
 
-    <!-- 重新扫描对话框 -->
-    <el-dialog v-model="rescanDialogVisible" title="重新扫描补丁" width="600px">
-      <el-form ref="rescanFormRef" :model="rescanForm" label-width="100px">
-        <el-form-item label="选择主机">
-          <AcmDeviceSelector
-            v-model="selectedHosts"
-            ci-types="linux"
-            :options="{
-              selectMode: 'host,group,tag,input,recently',
-              selector: 'multiple',
-              label: '选择主机'
-            }"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="rescanDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="rescanLoading"
-          :disabled="selectedHosts.length === 0"
-          @click="executeRescan"
-        >
-          开始扫描
-        </el-button>
-      </template>
-    </el-dialog>
-
     <!-- 作业运行结果对话框 -->
     <ExecuteResultDialog
       v-if="runResultDialogVisible"
@@ -442,7 +432,6 @@ import BatchInstallPatchDrawer from '../components/host-detail/dialogs/BatchInst
 import PatchDetailContent from '../components/common/PatchDetailContent.vue'
 import CveLinkList from '../components/common/CveLinkList.vue'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
-import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
 
@@ -463,7 +452,7 @@ const loading = ref(false)
 // ============================================================
 const hostTableRef = ref(null)
 const hostLoading = ref(false)
-const hostTableData = ref([])
+const allHostData = ref([])
 const hostTagLoading = ref(false)
 const hostTagOptions = ref([])
 const osDistroList = ref([])
@@ -488,29 +477,43 @@ const hostPagination = reactive({
 const batchSelectedHosts = ref([])
 const batchInstallDrawerVisible = ref(false)
 
-// 重新扫描相关状态
-const rescanDialogVisible = ref(false)
-const rescanLoading = ref(false)
-const rescanFormRef = ref(null)
-const rescanForm = reactive({
-  hostsInput: ''
+const hostFilteredData = computed(() => {
+  return allHostData.value
 })
-const selectedHosts = ref([])
+
+const hostTableData = computed(() => {
+  const start = (hostPagination.page - 1) * hostPagination.pageSize
+  const end = start + hostPagination.pageSize
+  return hostFilteredData.value.slice(start, end)
+})
+
+const {
+  allSelected: hostAllSelected,
+  handleToggleAllSelection: handleToggleHostSelectAll,
+  handleTableSelect: handleHostTableSelect,
+  resetAllSelected: resetHostAllSelected,
+  restorePageSelection: restoreHostPageSelection
+} = useTableSelectAll(hostTableRef, {
+  tableData: hostTableData,
+  filteredData: hostFilteredData,
+  selectedItems: batchSelectedHosts,
+  matchFn: (a, b) =>
+    (a.host_id || a.id || a.host_key || '') === (b.host_id || b.id || b.host_key || '')
+})
+
+// 重新扫描相关状态
+const rescanLoading = ref(false)
 const runResultDialogVisible = ref(false)
 const runResultRunId = ref('')
 const operationLogsVisible = ref(false)
 const lastSubmittedRunId = ref('')
 
-function handleHostSelectionChange(selection) {
-  batchSelectedHosts.value = selection
-}
-
 async function loadHostData() {
   hostLoading.value = true
   try {
     const params = {
-      page: hostPagination.page - 1,
-      size: hostPagination.pageSize,
+      page: 0,
+      size: 10000,
       os_distro: hostFilters.os_distro,
       os_version: hostFilters.os_version,
       os_sp_version: hostFilters.os_sp_version,
@@ -526,15 +529,15 @@ async function loadHostData() {
         : []
     mergeHostOsVersionOptions(records)
 
-    hostTableData.value = records
-    hostPagination.total = Number(data.total ?? data.totalElements) || 0
+    allHostData.value = records
+    hostPagination.total = records.length
 
     nextTick(() => {
       restoreHostPageSelection()
     })
   } catch (error) {
     console.error('Failed to load host data:', error)
-    hostTableData.value = []
+    allHostData.value = []
     hostPagination.total = 0
   } finally {
     hostLoading.value = false
@@ -605,6 +608,8 @@ async function loadOsLists() {
 }
 
 function handleHostFilter() {
+  resetHostAllSelected()
+  batchSelectedHosts.value = []
   hostPagination.page = 1
   loadHostData()
 }
@@ -618,6 +623,8 @@ function handleHostVersionChange(value) {
 }
 
 function handleHostReset() {
+  resetHostAllSelected()
+  batchSelectedHosts.value = []
   hostFilters.os_distro = ''
   hostFilters.os_version = ''
   hostFilters.os_sp_version = ''
@@ -631,27 +638,11 @@ function handleHostReset() {
 
 function handleHostPageChange(page) {
   hostPagination.page = page
-  loadHostData()
 }
 
 function handleHostSizeChange(size) {
   hostPagination.pageSize = size
   hostPagination.page = 1
-  loadHostData()
-}
-
-function restoreHostPageSelection() {
-  if (!hostTableRef.value) return
-  hostTableRef.value.clearSelection()
-  hostTableData.value.forEach(row => {
-    const isSelected = batchSelectedHosts.value.some(h =>
-      (h.host_id || h.id || '') === (row.host_id || row.id || '') ||
-      h.host_key === row.host_key
-    )
-    if (isSelected) {
-      hostTableRef.value.toggleRowSelection(row, true)
-    }
-  })
 }
 
 function handleHostClick(row) {
@@ -670,23 +661,25 @@ function handleHostClick(row) {
 }
 
 function handleBatchInstallSuccess() {
+  resetHostAllSelected()
+  batchSelectedHosts.value = []
   loadHostData()
 }
 
 // 重新扫描逻辑
-function handleRescan() {
-  rescanForm.hostsInput = ''
-  selectedHosts.value = []
-  rescanDialogVisible.value = true
+async function handleRescan() {
+  if (batchSelectedHosts.value.length === 0) {
+    ElMessage.warning('请先在列表中勾选要重新扫描的主机')
+    return
+  }
+  await submitRescan(batchSelectedHosts.value)
 }
-
-
 
 function normalizeRescanHost(host) {
   if (typeof host === 'object' && host !== null) {
     return {
-      key: host.key || host.id || host.host_id || host.hostId || '',
-      value: host.value || host.hostname || host.name || host.host_key || host.hostKey || '',
+      key: host.host_id || host.hostId || host.id || host.key || host.host_key || host.hostKey || '',
+      value: host.host_key || host.hostKey || host.hostname || host.value || host.name || '',
       assetType: host.assetType || host.asset_type || 'linux'
     }
   }
@@ -697,13 +690,13 @@ function normalizeRescanHost(host) {
   }
 }
 
-async function submitRescan(hosts, { closeDialog = false } = {}) {
+async function submitRescan(hosts) {
   const normalizedHosts = (Array.isArray(hosts) ? hosts : [])
     .map(normalizeRescanHost)
     .filter(item => item.value)
 
   if (normalizedHosts.length === 0) {
-    ElMessage.warning('请输入或选择至少一个主机')
+    ElMessage.warning('请选择至少一个有效的待扫描主机')
     return false
   }
 
@@ -722,9 +715,6 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
     }
 
     ElMessage.success('扫描任务已提交')
-    if (closeDialog) {
-      rescanDialogVisible.value = false
-    }
 
     lastSubmittedRunId.value = runId
     operationLogsVisible.value = true
@@ -742,56 +732,6 @@ async function submitRescan(hosts, { closeDialog = false } = {}) {
     rescanLoading.value = false
   }
 }
-
-
-
-function updateHostsInput() {
-  const hostList = selectedHosts.value
-    .map(h => {
-      if (typeof h === 'object') {
-        return h.value || h.hostname || h.name || h.host_key || ''
-      }
-      return String(h)
-    })
-    .filter(Boolean)
-  rescanForm.hostsInput = hostList.join('\n')
-}
-
-async function executeRescan() {
-  if (selectedHosts.value.length > 0) {
-    updateHostsInput()
-  }
-
-  let hosts = []
-  if (selectedHosts.value.length > 0) {
-    hosts = selectedHosts.value
-  } else {
-    const hostLines = rescanForm.hostsInput.split('\n').filter(line => line.trim())
-    if (hostLines.length === 0) {
-      ElMessage.warning('请输入或选择至少一个主机')
-      return
-    }
-    hosts = hostLines.map(line => line.trim())
-  }
-
-  await submitRescan(hosts, { closeDialog: true })
-}
-
-// 监听主机数据变化，自动恢复勾选状态
-watch(hostTableData, () => {
-  nextTick(() => {
-    restoreHostPageSelection()
-  })
-})
-
-// 监听重新扫描主机选择器变化
-watch(
-  selectedHosts,
-  () => {
-    updateHostsInput()
-  },
-  { deep: true }
-)
 
 
 // ============================================================
@@ -1019,10 +959,11 @@ defineExpose({ refresh })
 </script>
 
 <style scoped lang="scss">
+// 导航标签 - 保留原配色与风格的微调增强
 .nav-tabs {
   display: flex;
-  gap: 0;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 12px;
   border-bottom: 1px solid var(--el-border-color-lighter);
   background: transparent;
   flex-shrink: 0;
@@ -1032,14 +973,21 @@ defineExpose({ refresh })
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  font-size: 14px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 500;
   color: var(--el-text-color-primary);
   cursor: pointer;
-  transition: all 0.2s;
-  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
   margin-bottom: -1px;
   background: transparent;
+  user-select: none;
+
+  i {
+    font-size: 15px;
+    transition: color 0.2s ease;
+  }
 
   &:hover {
     color: #0d6efd;
@@ -1047,8 +995,12 @@ defineExpose({ refresh })
 
   &--active {
     color: #0d6efd;
-    font-weight: 500;
+    font-weight: 600;
     border-bottom-color: #0d6efd;
+
+    i {
+      color: #0d6efd;
+    }
   }
 }
 

@@ -96,12 +96,43 @@ export function usePatchProcessLogDetail(sourceTask) {
     getLatestRecord(executeRecords.value, isExecutionRecord)
   )
 
+  const taskErrorMessage = computed(() => {
+    return task.value?.errorMessage || task.value?.failReason || task.value?.remark || ''
+  })
+
+  const isTaskFailed = computed(() => {
+    const status = task.value?.status
+    if (status === 'FAILED' || status?.endsWith('_FAILED')) return true
+    return pipelineItems.value.some(item => item.state === 'failed')
+  })
+
+  const parsedPreCheckResult = computed(() => {
+    if (!task.value?.preCheckResult) return null
+    try {
+      return typeof task.value.preCheckResult === 'string'
+        ? JSON.parse(task.value.preCheckResult)
+        : task.value.preCheckResult
+    } catch (e) {
+      console.error('Failed to parse preCheckResult:', e)
+      return null
+    }
+  })
+
+  const isPreCheckFailed = computed(() => {
+    return (
+      task.value?.status === 'PRE_CHECK_FAILED' ||
+      Boolean(parsedPreCheckResult.value?.blocked) ||
+      parsedPreCheckResult.value?.conclusion === 'not_satisfied'
+    )
+  })
+
   const preCheckAlert = computed(() =>
     buildScriptAlert(
       'pre',
       latestPreCheckRecord.value,
       preCheckScript.value,
-      getStepStatus(PRE_CHECK_STEP)
+      isPreCheckFailed.value ? 'FAILED' : getStepStatus(PRE_CHECK_STEP),
+      task.value
     )
   )
   const validateAlert = computed(() =>
@@ -109,7 +140,8 @@ export function usePatchProcessLogDetail(sourceTask) {
       'validate',
       latestValidateRecord.value,
       validateScript.value,
-      getStepStatus(VALIDATE_STEP)
+      getStepStatus(VALIDATE_STEP),
+      task.value
     )
   )
   const restartAlert = computed(() =>
@@ -128,12 +160,15 @@ export function usePatchProcessLogDetail(sourceTask) {
 
   const pipelineItems = computed(() => {
     const executeStep = taskType.value === 'rollback' ? 'ROLLBACK' : 'INSTALL'
+    const errMsg = taskErrorMessage.value
 
     return [
       buildPipelineItem('pre-check', '预检查', preCheckRecords.value, {
         fallbackRunId: task.value?.preCheckRunId || '',
-        stepStatus: getStepStatus(PRE_CHECK_STEP),
-        stepRunId: getStepRunId(PRE_CHECK_STEP)
+        stepStatus: isPreCheckFailed.value ? 'FAILED' : getStepStatus(PRE_CHECK_STEP),
+        stepRunId: getStepRunId(PRE_CHECK_STEP),
+        taskErrorMessage: errMsg,
+        isPreCheckFailed: isPreCheckFailed.value
       }),
       buildPipelineItem(
         taskType.value === 'rollback' ? 'rollback' : 'execute',
@@ -142,19 +177,22 @@ export function usePatchProcessLogDetail(sourceTask) {
         {
           fallbackRunId: task.value?.executeRunId || '',
           stepStatus: getStepStatus(executeStep),
-          stepRunId: getStepRunId(executeStep)
+          stepRunId: getStepRunId(executeStep),
+          taskErrorMessage: errMsg
         }
       ),
       buildPipelineItem('restart', '重启策略', restartRecords.value, {
         treatNoneAsSuccess: task.value?.restartType === 'none',
         fallbackRunId: task.value?.restartRunId || '',
         stepStatus: getStepStatus(RESTART_STEP),
-        stepRunId: getStepRunId(RESTART_STEP)
+        stepRunId: getStepRunId(RESTART_STEP),
+        taskErrorMessage: errMsg
       }),
       buildPipelineItem('validate', '脚本校验', validateRecords.value, {
         fallbackRunId: task.value?.validateRunId || '',
         stepStatus: getStepStatus(VALIDATE_STEP),
-        stepRunId: getStepRunId(VALIDATE_STEP)
+        stepRunId: getStepRunId(VALIDATE_STEP),
+        taskErrorMessage: errMsg
       })
     ]
   })
@@ -194,6 +232,7 @@ export function usePatchProcessLogDetail(sourceTask) {
   function getWizardStepState(stepKey) {
     if (stepKey === 'select') return task.value ? 'success' : 'idle'
     if (stepKey === 'pre') {
+      if (isPreCheckFailed.value) return 'failed'
       return resolveStepState(PRE_CHECK_STEP, latestPreCheckRecord.value, preCheckRecords.value)
     }
     if (stepKey === 'validate') {
@@ -280,6 +319,9 @@ export function usePatchProcessLogDetail(sourceTask) {
     validateRunId,
     restartRunId,
     pipelineItems,
+    taskErrorMessage,
+    isTaskFailed,
+    parsedPreCheckResult,
     load,
     reset,
     getWizardStepState

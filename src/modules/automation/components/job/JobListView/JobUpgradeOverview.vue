@@ -130,11 +130,63 @@ function pickDominantStatus(current, nextStatus) {
   return statusPriority(nextStatus) < statusPriority(current) ? nextStatus : current
 }
 
+function extractStringOrArrayItems(val) {
+  if (!val) return []
+  if (Array.isArray(val)) {
+    return val
+      .map(v => (typeof v === 'string' ? v.trim() : v?.name || v?.pkg || String(v)))
+      .filter(Boolean)
+  }
+  if (typeof val === 'string') {
+    const trimmed = val.trim()
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(trimmed)
+        if (Array.isArray(parsed)) {
+          return parsed
+            .map(v => (typeof v === 'string' ? v.trim() : v?.name || v?.pkg || String(v)))
+            .filter(Boolean)
+        }
+      } catch {
+        // non-JSON string
+      }
+    }
+    return trimmed
+      .split(/[\s,]+/)
+      .map(v => v.trim())
+      .filter(Boolean)
+  }
+  return []
+}
+
+const PATCH_KEY_NAMES = [
+  'patch_ids',
+  'patch_id',
+  'patchids',
+  'patchid',
+  'patches',
+  'advisories',
+  'patch_list',
+  'advisory_ids'
+]
+
+const PKG_KEY_NAMES = [
+  'target_nvr_pkgs',
+  'full_pkgs',
+  'patch_pkgs',
+  'packages',
+  'target_pkgs',
+  'affected_packages',
+  'pkgs',
+  'package_list',
+  'secops_packages',
+  'secops_pkgs'
+]
+
 function findAdvisories(obj, found = new Set()) {
   if (!obj) return found
   if (typeof obj === 'string') {
-    // 仅匹配各系统的安全公告（以 SA 结尾的补丁编号，过滤掉 CVE 漏洞编号）
-    const regex = /(?:KYSA|RHSA|ALSA|RLSA|ELSA)-\d{4,6}[-:]\d{4,6}/g
+    const regex = /\b(?:KYSA|RHSA|ALSA|RLSA|ELSA|GLSA|USN|DSA|CAN|CVE|KB)[-:]?[A-Za-z0-9_.:-]+\b/gi
     let match
     while ((match = regex.exec(obj)) !== null) {
       found.add(match[0])
@@ -142,22 +194,33 @@ function findAdvisories(obj, found = new Set()) {
   } else if (Array.isArray(obj)) {
     obj.forEach(item => findAdvisories(item, found))
   } else if (typeof obj === 'object') {
-    Object.values(obj).forEach(val => findAdvisories(val, found))
+    Object.entries(obj).forEach(([key, val]) => {
+      const lowerKey = key.toLowerCase()
+      if (PATCH_KEY_NAMES.includes(lowerKey)) {
+        extractStringOrArrayItems(val).forEach(item => found.add(item))
+      } else {
+        findAdvisories(val, found)
+      }
+    })
   }
   return found
 }
 
+function collectPackages(obj, pkgsSet = new Set()) {
+  if (!obj) return pkgsSet
+  if (typeof obj === 'object' && obj !== null) {
+    Object.entries(obj).forEach(([key, val]) => {
+      const lowerKey = key.toLowerCase()
+      if (PKG_KEY_NAMES.includes(lowerKey)) {
+        extractStringOrArrayItems(val).forEach(item => pkgsSet.add(item))
+      }
+    })
+  }
+  return pkgsSet
+}
+
 function parsePkgs(raw) {
-  if (!raw) return []
-  if (Array.isArray(raw)) {
-    return raw
-      .map(item => (typeof item === 'string' ? item : item?.name || item?.pkg || String(item)))
-      .filter(Boolean)
-  }
-  if (typeof raw === 'string') {
-    return raw.split(/[\s,]+/).filter(Boolean)
-  }
-  return []
+  return extractStringOrArrayItems(raw)
 }
 
 const patchOverviewInfo = computed(() => {
@@ -167,17 +230,30 @@ const patchOverviewInfo = computed(() => {
   let targetNvrPkgsRaw = null
   let fullPkgsRaw = null
   const advisoriesSet = new Set()
+  const pkgsSet = new Set()
 
   props.ansibleContents.forEach(content => {
-    // 递归检索所有的安全公告ID / 补丁ID
     findAdvisories(content, advisoriesSet)
+    collectPackages(content, pkgsSet)
+    collectPackages(content?.extra_vars, pkgsSet)
+    collectPackages(content?.vars, pkgsSet)
 
     const plays = Array.isArray(content?.plays) ? content.plays : []
     plays.forEach(play => {
+      collectPackages(play?.vars, pkgsSet)
+      collectPackages(play?.extra_vars, pkgsSet)
+
       const tasks = Array.isArray(play?.tasks) ? play.tasks : []
       tasks.forEach(task => {
+        collectPackages(task?.vars, pkgsSet)
+        collectPackages(task?.args, pkgsSet)
+
         const hosts = Array.isArray(task?.hosts) ? task.hosts : []
         hosts.forEach(host => {
+          collectPackages(host, pkgsSet)
+          collectPackages(host?.ansible_facts, pkgsSet)
+          collectPackages(host?.invocation?.module_args, pkgsSet)
+
           const hostKey = host?.hostKey ?? host?.host ?? host?.name
           if (hostKey) {
             const parsed = parseHostKey(hostKey)
@@ -206,9 +282,10 @@ const patchOverviewInfo = computed(() => {
   })
 
   const hosts = Array.from(hostsMap.values())
-  const packages = targetNvrPkgsRaw
-    ? parsePkgs(targetNvrPkgsRaw)
-    : parsePkgs(fullPkgsRaw)
+  const fallbackPkgs = targetNvrPkgsRaw ? parsePkgs(targetNvrPkgsRaw) : parsePkgs(fullPkgsRaw)
+  fallbackPkgs.forEach(p => pkgsSet.add(p))
+
+  const packages = Array.from(pkgsSet).sort()
   const patches = Array.from(advisoriesSet).sort()
 
   if (hosts.length === 0 && packages.length === 0 && patches.length === 0) return null

@@ -179,9 +179,9 @@
 
         <!-- 操作栏 -->
         <div class="ops-action-bar">
-          <el-button type="primary" size="small" @click="handleRescan">
+          <el-button type="primary" size="small" @click="handleRescan" plain>
             <i class="fa fa-bug" />
-            重新扫描补丁
+            扫描补丁
           </el-button>
           <el-button
             type="primary"
@@ -2832,11 +2832,11 @@ defineExpose({
   }
 }
 
-// 导航标签 - 简洁样式
+// 导航标签 - 保留原配色与风格的微调增强
 .nav-tabs {
   display: flex;
-  gap: 0;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 12px;
   border-bottom: 1px solid var(--el-border-color-lighter);
   background: transparent;
   flex-shrink: 0;
@@ -2846,14 +2846,21 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  font-size: 14px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 500;
   color: var(--el-text-color-primary);
   cursor: pointer;
-  transition: all 0.2s;
-  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
   margin-bottom: -1px;
   background: transparent;
+  user-select: none;
+
+  i {
+    font-size: 15px;
+    transition: color 0.2s ease;
+  }
 
   &:hover {
     color: #0d6efd;
@@ -2861,12 +2868,12 @@ defineExpose({
 
   &--active {
     color: #0d6efd;
-    font-weight: 500;
+    font-weight: 600;
     border-bottom-color: #0d6efd;
-  }
 
-  i {
-    font-size: 14px;
+    i {
+      color: #0d6efd;
+    }
   }
 }
 

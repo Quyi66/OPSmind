@@ -77,15 +77,153 @@
           </div>
         </div>
 
-        <ScriptStepContent
-          v-show="currentStepKey === 'pre'"
-          icon="fa-code"
-          title="预执行脚本"
-          :alert="preCheckAlert"
-          :run-id="preCheckRunId"
-          :script-content="preCheckScript"
-          @show-result="openExecuteResult($event, '预执行脚本')"
-        />
+        <div v-show="currentStepKey === 'pre'" class="task-step-content">
+          <ScriptStepContent
+            icon="fa-code"
+            title="预执行脚本"
+            :alert="preCheckAlert"
+            :run-id="preCheckRunId"
+            :script-content="preCheckScript"
+            @show-result="openExecuteResult($event, '预执行脚本')"
+          />
+
+          <!-- 前置环境检查详细结果 -->
+          <div v-if="parsedPreCheckResult" class="pre-check-result-panel">
+            <div class="panel-title">
+              <i class="fa fa-heartbeat text-primary" />
+              前置环境检查结果
+            </div>
+
+            <!-- 不可达主机列表 -->
+            <div
+              v-if="parsedPreCheckResult.unreachable && parsedPreCheckResult.unreachable.length > 0"
+              class="unreachable-hosts-block"
+            >
+              <div class="unreachable-hosts-title">
+                不可达主机 ({{ parsedPreCheckResult.unreachable.length }} 台)：
+              </div>
+              <div class="unreachable-hosts-tags">
+                <el-tag
+                  v-for="hostId in parsedPreCheckResult.unreachable"
+                  :key="hostId"
+                  type="danger"
+                  size="small"
+                >
+                  {{ getHostDisplayName(hostId) }}
+                </el-tag>
+              </div>
+            </div>
+
+            <!-- 主机结果详情列表 -->
+            <div
+              v-if="parsedPreCheckResult.results && parsedPreCheckResult.results.length > 0"
+              class="host-results-list"
+            >
+              <div
+                v-for="hostResult in parsedPreCheckResult.results"
+                :key="hostResult.host_id"
+                class="host-result-card"
+              >
+                <div
+                  class="host-result-header"
+                  :class="{ 'is-unreachable': isHostUnreachable(hostResult) }"
+                >
+                  <span class="host-name">
+                    <i class="fa fa-server me-1" />
+                    {{ getHostDisplayName(hostResult.host_id) }}
+                    <span v-if="isHostUnreachable(hostResult)" class="unreachable-label">
+                      (无法连通)
+                    </span>
+                  </span>
+                  <div class="host-tags">
+                    <el-tag
+                      v-if="hostResult.blockers > 0"
+                      type="danger"
+                      size="small"
+                      effect="dark"
+                    >
+                      阻断项: {{ hostResult.blockers }}
+                    </el-tag>
+                    <el-tag
+                      v-if="hostResult.warnings > 0"
+                      type="warning"
+                      size="small"
+                      effect="dark"
+                    >
+                      警告项: {{ hostResult.warnings }}
+                    </el-tag>
+                    <el-tag
+                      v-if="hostResult.blockers === 0 && hostResult.warnings === 0"
+                      type="success"
+                      size="small"
+                      effect="dark"
+                    >
+                      检查通过
+                    </el-tag>
+                  </div>
+                </div>
+
+                <div class="host-result-body">
+                  <el-collapse v-model="activeCollapseNames" class="no-border-collapse">
+                    <el-collapse-item title="查看检查项明细" :name="hostResult.host_id">
+                      <div class="checks-list">
+                        <div
+                          v-for="check in sortChecks(hostResult.checks)"
+                          :key="check.id"
+                          class="check-item"
+                        >
+                          <i
+                            class="fa"
+                            :class="{
+                              'fa-times-circle': check.status === 'fail',
+                              'fa-exclamation-circle': check.status === 'warn',
+                              'fa-check-circle': check.status === 'ok'
+                            }"
+                            :style="{
+                              color:
+                                check.status === 'fail'
+                                  ? 'var(--el-color-danger)'
+                                  : check.status === 'warn'
+                                    ? 'var(--el-color-warning)'
+                                    : 'var(--el-color-success)'
+                            }"
+                          />
+                          <div class="check-item-content">
+                            <div class="check-item-header">
+                              <span class="check-title">{{ getCheckTitle(check.id) }}</span>
+                              <el-tag
+                                :type="
+                                  check.status === 'fail'
+                                    ? 'danger'
+                                    : check.status === 'warn'
+                                      ? 'warning'
+                                      : 'success'
+                                "
+                                size="small"
+                                class="check-status-tag"
+                              >
+                                {{
+                                  check.status === 'fail'
+                                    ? '阻断'
+                                    : check.status === 'warn'
+                                      ? '警告'
+                                      : '通过'
+                                }}
+                              </el-tag>
+                            </div>
+                            <div class="check-detail-text">
+                              {{ check.detail }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </el-collapse-item>
+                  </el-collapse>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <ScriptStepContent
           v-show="currentStepKey === 'validate'"
@@ -182,6 +320,162 @@
                 </div>
               </div>
             </div>
+
+            <!-- 前置环境检查详细结果 -->
+            <div v-if="parsedPreCheckResult" class="pre-check-result-panel">
+              <div class="panel-title">
+                <i class="fa fa-heartbeat text-primary" />
+                前置环境检查结果
+              </div>
+
+              <!-- 不可达主机列表 -->
+              <div
+                v-if="
+                  parsedPreCheckResult.unreachable &&
+                  parsedPreCheckResult.unreachable.length > 0
+                "
+                class="unreachable-hosts-block"
+              >
+                <div class="unreachable-hosts-title">
+                  不可达主机 ({{ parsedPreCheckResult.unreachable.length }} 台)：
+                </div>
+                <div class="unreachable-hosts-tags">
+                  <el-tag
+                    v-for="hostId in parsedPreCheckResult.unreachable"
+                    :key="hostId"
+                    type="danger"
+                    size="small"
+                  >
+                    {{ getHostDisplayName(hostId) }}
+                  </el-tag>
+                </div>
+              </div>
+
+              <!-- 主机结果详情列表 -->
+              <div
+                v-if="parsedPreCheckResult.results && parsedPreCheckResult.results.length > 0"
+                class="host-results-list"
+              >
+                <div
+                  v-for="hostResult in parsedPreCheckResult.results"
+                  :key="hostResult.host_id"
+                  class="host-result-card"
+                >
+                  <div
+                    class="host-result-header"
+                    :class="{ 'is-unreachable': isHostUnreachable(hostResult) }"
+                  >
+                    <span class="host-name">
+                      <i class="fa fa-server me-1" />
+                      {{ getHostDisplayName(hostResult.host_id) }}
+                      <span v-if="isHostUnreachable(hostResult)" class="unreachable-label">
+                        (无法连通)
+                      </span>
+                    </span>
+                    <div class="host-tags">
+                      <el-tag
+                        v-if="hostResult.blockers > 0"
+                        type="danger"
+                        size="small"
+                        effect="dark"
+                      >
+                        阻断项: {{ hostResult.blockers }}
+                      </el-tag>
+                      <el-tag
+                        v-if="hostResult.warnings > 0"
+                        type="warning"
+                        size="small"
+                        effect="dark"
+                      >
+                        警告项: {{ hostResult.warnings }}
+                      </el-tag>
+                      <el-tag
+                        v-if="hostResult.blockers === 0 && hostResult.warnings === 0"
+                        type="success"
+                        size="small"
+                        effect="dark"
+                      >
+                        检查通过
+                      </el-tag>
+                    </div>
+                  </div>
+
+                  <div class="host-result-body">
+                    <el-collapse v-model="activeCollapseNames" class="no-border-collapse">
+                      <el-collapse-item title="查看检查项明细" :name="hostResult.host_id">
+                        <div class="checks-list">
+                          <div
+                            v-for="check in sortChecks(hostResult.checks)"
+                            :key="check.id"
+                            class="check-item"
+                          >
+                            <i
+                              class="fa"
+                              :class="{
+                                'fa-times-circle': check.status === 'fail',
+                                'fa-exclamation-circle': check.status === 'warn',
+                                'fa-check-circle': check.status === 'ok'
+                              }"
+                              :style="{
+                                color:
+                                  check.status === 'fail'
+                                    ? 'var(--el-color-danger)'
+                                    : check.status === 'warn'
+                                      ? 'var(--el-color-warning)'
+                                      : 'var(--el-color-success)'
+                              }"
+                            />
+                            <div class="check-item-content">
+                              <div class="check-item-header">
+                                <span class="check-title">{{ getCheckTitle(check.id) }}</span>
+                                <el-tag
+                                  :type="
+                                    check.status === 'fail'
+                                      ? 'danger'
+                                      : check.status === 'warn'
+                                        ? 'warning'
+                                        : 'success'
+                                  "
+                                  size="small"
+                                  class="check-status-tag"
+                                >
+                                  {{
+                                    check.status === 'fail'
+                                      ? '阻断'
+                                      : check.status === 'warn'
+                                        ? '警告'
+                                        : '通过'
+                                  }}
+                                </el-tag>
+                              </div>
+                              <div class="check-detail-text">
+                                {{ check.detail }}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </el-collapse-item>
+                    </el-collapse>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 全流程中断异常提示 -->
+            <el-alert
+              v-if="isTaskFailed"
+              type="error"
+              :closable="false"
+              show-icon
+              :title="`执行任务中断${taskErrorMessage ? '：' + taskErrorMessage : ''}`"
+              class="task-step-alert mt-3"
+            >
+              <template #default>
+                <div style="font-size: 13px">
+                  由于部分环节出现异常{{ taskErrorMessage ? `（${taskErrorMessage}）` : '' }}，任务已停止。请检查原因。
+                </div>
+              </template>
+            </el-alert>
           </div>
         </div>
       </template>
@@ -210,7 +504,7 @@
 </template>
 
 <script setup>
-import { computed, ref, toRef } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { usePatchProcessLogDetail } from '../../composables/usePatchProcessLogDetail'
 import ScriptStepContent from './PatchProcessLogScriptStep.vue'
@@ -237,6 +531,7 @@ const sourceTask = toRef(props, 'task')
 const executeResultVisible = ref(false)
 const executeRunId = ref('')
 const executeJobTitle = ref('')
+const activeCollapseNames = ref([])
 
 const {
   loading,
@@ -257,10 +552,71 @@ const {
   validateRunId,
   restartRunId,
   pipelineItems,
+  taskErrorMessage,
+  isTaskFailed,
+  parsedPreCheckResult,
   load,
   reset,
   getWizardStepState
 } = usePatchProcessLogDetail(sourceTask)
+
+watch(
+  parsedPreCheckResult,
+  newVal => {
+    if (newVal?.results) {
+      activeCollapseNames.value = newVal.results
+        .filter(r => r.blockers > 0 || r.warnings > 0)
+        .map(r => r.host_id)
+    } else {
+      activeCollapseNames.value = []
+    }
+  },
+  { immediate: true }
+)
+
+const checkTitles = {
+  conn: '连通性',
+  sudo: '提权权限',
+  os: '操作系统识别',
+  pkg_manager: '包管理器',
+  pkg_lock: '包管理器占用',
+  pkg_db: '包数据库健康',
+  disk: '磁盘空间',
+  disk_boot: '/boot 空间',
+  kernel_pending: '待重启内核',
+  repo: '软件仓库',
+  pkg_exists: '目标包存在性',
+  version_ok: '目标版本可用性',
+  depsolve: '依赖解析',
+  already_satisfied: '已是目标版本',
+  exec: '检查执行异常'
+}
+
+function getCheckTitle(id) {
+  return checkTitles[id] || id
+}
+
+function isHostUnreachable(hostResult) {
+  return (
+    Array.isArray(hostResult.checks) &&
+    hostResult.checks.some(c => c.id === 'conn' && c.status === 'fail')
+  )
+}
+
+function sortChecks(checks) {
+  if (!Array.isArray(checks)) return []
+  const severityMap = { fail: 0, warn: 1, ok: 2 }
+  return [...checks].sort((a, b) => {
+    const aVal = severityMap[a.status] ?? 3
+    const bVal = severityMap[b.status] ?? 3
+    return aVal - bVal
+  })
+}
+
+function getHostDisplayName(hostId) {
+  if (!hostId) return ''
+  return hostId
+}
 
 function getStepperClasses(stepKey, index) {
   const state = getWizardStepState(stepKey)
@@ -629,6 +985,171 @@ function handleClosed() {
 
 .mt-3 {
   margin-top: 12px;
+}
+
+.text-primary {
+  color: var(--el-color-primary);
+}
+
+.pre-check-result-panel {
+  margin-top: 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  padding: 16px;
+  background-color: var(--el-fill-color-blank);
+  width: 100%;
+  box-sizing: border-box;
+
+  .panel-title {
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    color: var(--el-text-color-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.unreachable-hosts-block {
+  margin-bottom: 12px;
+
+  .unreachable-hosts-title {
+    font-weight: 600;
+    color: var(--el-color-danger);
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .unreachable-hosts-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+.host-results-list {
+  width: 100%;
+}
+
+.host-result-card {
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+
+  .host-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background-color: var(--el-fill-color-light);
+    border-bottom: 1px solid var(--el-border-color-extra-light);
+    flex-wrap: wrap;
+    gap: 8px;
+
+    &.is-unreachable {
+      background-color: var(--el-color-danger-light-9);
+      border-bottom-color: var(--el-color-danger-light-7);
+    }
+
+    .host-name {
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      color: var(--el-text-color-primary);
+
+      .unreachable-label {
+        font-size: 12px;
+        margin-left: 8px;
+        font-weight: normal;
+        color: var(--el-color-danger);
+      }
+    }
+
+    .host-tags {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+  }
+
+  .host-result-body {
+    padding: 12px 16px;
+  }
+}
+
+.no-border-collapse {
+  border: none;
+
+  :deep(.el-collapse-item__header) {
+    border-bottom: none;
+    font-size: 13px;
+    color: var(--el-text-color-regular);
+  }
+
+  :deep(.el-collapse-item__wrap) {
+    border-bottom: none;
+  }
+
+  :deep(.el-collapse-item__content) {
+    padding-bottom: 0;
+  }
+}
+
+.checks-list {
+  padding-top: 4px;
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--el-border-color-extra-light);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    i {
+      font-size: 16px;
+      margin-top: 2px;
+      margin-right: 10px;
+    }
+
+    .check-item-content {
+      flex: 1;
+
+      .check-item-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+
+        .check-title {
+          font-weight: 600;
+          font-size: 13px;
+          color: var(--el-text-color-primary);
+        }
+
+        .check-status-tag {
+          font-size: 10px;
+          height: 16px;
+          line-height: 14px;
+          padding: 0 4px;
+        }
+      }
+
+      .check-detail-text {
+        font-size: 12px;
+        color: var(--el-text-color-regular);
+        margin-top: 4px;
+        line-height: 1.4;
+      }
+    }
+  }
 }
 
 @media (max-width: 900px) {

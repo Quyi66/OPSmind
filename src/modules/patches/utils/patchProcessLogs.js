@@ -188,7 +188,7 @@ export function stepStatusToDisplayState(status) {
   return 'idle'
 }
 
-export function buildScriptAlert(scriptType, record, scriptContent, stepStatus) {
+export function buildScriptAlert(scriptType, record, scriptContent, stepStatus, task) {
   const isPreCheck = scriptType === 'pre'
   const labels = isPreCheck
     ? {
@@ -207,13 +207,13 @@ export function buildScriptAlert(scriptType, record, scriptContent, stepStatus) 
       }
 
   if (stepStatus) {
-    if (stepStatus === 'FAILED') return buildFailureAlert('执行失败', record)
+    if (stepStatus === 'FAILED') return buildFailureAlert('执行失败', record, task)
     if (stepStatus === 'SKIPPED') return { type: 'success', title: labels.skipped }
     if (stepStatus === 'SUCCESS') return { type: 'success', title: labels.success }
     if (stepStatus === 'RUNNING') return { type: 'warning', title: labels.running }
   } else {
     if (getRecordDisplayState(record) === 'failed') {
-      return buildFailureAlert('执行失败', record)
+      return buildFailureAlert('执行失败', record, task)
     }
     if (isSkippedRecord(record)) return { type: 'success', title: labels.skipped }
     if (record?.action === 'COMPLETE' || record?.status === 'SUCCESS') {
@@ -229,13 +229,13 @@ export function buildScriptAlert(scriptType, record, scriptContent, stepStatus) 
 
 export function buildRestartAlert(task, record, stepStatus) {
   if (stepStatus) {
-    if (stepStatus === 'FAILED') return buildFailureAlert('重启失败', record)
+    if (stepStatus === 'FAILED') return buildFailureAlert('重启失败', record, task)
     if (stepStatus === 'SKIPPED') return { type: 'success', title: '已跳过重启' }
     if (stepStatus === 'SUCCESS') return { type: 'success', title: '重启完成' }
     if (stepStatus === 'RUNNING') return { type: 'warning', title: '正在重启中...' }
   } else {
     if (getRecordDisplayState(record) === 'failed') {
-      return buildFailureAlert('重启失败', record)
+      return buildFailureAlert('重启失败', record, task)
     }
     if (isSkippedRecord(record)) return { type: 'success', title: '已跳过重启' }
     if (record?.action === 'COMPLETE' || record?.status === 'SUCCESS') {
@@ -297,10 +297,17 @@ function formatRestartType(value) {
   return value || '-'
 }
 
-function buildFailureAlert(prefix, record) {
+function buildFailureAlert(prefix, record, task) {
+  const errMsg =
+    record?.errorMessage ||
+    record?.remark ||
+    task?.errorMessage ||
+    task?.failReason ||
+    task?.remark ||
+    '未知错误'
   return {
     type: 'error',
-    title: `${prefix}：${record?.errorMessage || record?.remark || '未知错误'}`
+    title: `${prefix}：${errMsg}`
   }
 }
 
@@ -321,7 +328,7 @@ function getPipelineText(state, record, options) {
   if (options.stepStatus === 'SKIPPED' || isSkippedRecord(record)) return '系统已跳过执行'
   if (state === 'success') return '任务执行成功'
   if (state === 'failed') {
-    return `任务执行失败${record?.errorMessage ? `：${record.errorMessage}` : ''}`
+    return record?.errorMessage || options.taskErrorMessage || record?.remark || '任务执行失败，请检查'
   }
   if (state === 'running') return '正在执行中...'
   return '等待调度中'

@@ -122,7 +122,7 @@
                 <template #default="{ row }">
                   <div class="node-list">
                     <el-tag
-                      v-for="(ip, index) in parseNodes(row.ata_url)"
+                      v-for="(ip, index) in parseNodes(row.executor_url)"
                       :key="index"
                       size="small"
                       type="info"
@@ -334,7 +334,7 @@ async function fetchData() {
       page: pagination.value.page,
       orderBy: 'start_time desc',
       filter: filters.value.search
-        ? `start_time|username|ata_url:*${filters.value.search}*`
+        ? `start_time|username|executor_url:*${filters.value.search}*`
         : undefined
     }
 
