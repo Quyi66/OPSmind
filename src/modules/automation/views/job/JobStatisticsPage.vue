@@ -34,7 +34,8 @@
             clearable
             size="small"
             class="summary-search"
-            placeholder="搜索运维工具" @keyup.enter="search" @clear="search">
+            placeholder="搜索运维工具"
+          >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>

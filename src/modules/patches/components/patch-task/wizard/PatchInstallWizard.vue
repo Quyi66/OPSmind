@@ -738,7 +738,7 @@
                             ? '系统已跳过执行'
                             : '任务执行成功'
                           : stepStates[item.idx] === 'failed'
-                            ? '任务执行失败，请检查'
+                            ? (taskErrorMessage || '任务执行失败，请检查')
                             : '等待调度中'
                     }}
                   </div>

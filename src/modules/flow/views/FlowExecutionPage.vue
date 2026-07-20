@@ -3,7 +3,7 @@
     <!-- 左侧流程列表 -->
     <aside class="ops-sidebar-nav ops-sidebar-nav--wide" style="width: 240px">
       <div class="ops-sidebar-header">
-        <el-input v-model="searchKeyword" size="small" placeholder="搜索流程" clearable @keyup.enter="search" @clear="search">
+        <el-input v-model="searchKeyword" size="small" placeholder="搜索流程" clearable>
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>

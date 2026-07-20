@@ -96,7 +96,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="ata_node" label="执行引擎节点" width="120" />
+          <el-table-column prop="executor_node" label="执行引擎节点" width="120" />
           <el-table-column prop="target_hosts" label="目标节点" width="180">
             <template #default="{ row }">
               <div v-if="row.target_hosts" class="host-tags">

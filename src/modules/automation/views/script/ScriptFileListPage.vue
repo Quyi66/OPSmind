@@ -123,7 +123,7 @@
           v-model="searchText"
           clearable
           :placeholder="searchPlaceholder"
-          @keyup.enter="handleSearch" @clear="search">
+          @keyup.enter="handleSearch" @clear="handleSearch">
           <template #prefix>
             <i class="fa fa-search" />
           </template>

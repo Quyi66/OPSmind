@@ -41,7 +41,7 @@
               clearable
               size="small"
               class="nav-search"
-              @keyup.enter="handleAdminSearch" @clear="search">
+              @keyup.enter="handleAdminSearch" @clear="handleAdminSearch">
               <template #suffix>
                 <el-icon class="search-icon"><Search /></el-icon>
               </template>

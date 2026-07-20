@@ -204,7 +204,13 @@ export function usePatchTaskPipeline({
     } catch (error) {
       pipelineFinished.value = true
       pipelineStatus.value = 'failed'
-      taskErrorMessage.value = resolveApiErrorMessage(error, '执行异常')
+      const runningIdx = stepStates.findIndex(s => s === 'running')
+      if (runningIdx !== -1) {
+        stepStates[runningIdx] = 'failed'
+      }
+      if (!taskErrorMessage.value) {
+        taskErrorMessage.value = resolveApiErrorMessage(error, '执行异常')
+      }
       ElMessage.error(`任务执行中断：${taskErrorMessage.value}`)
     }
   }

@@ -12,82 +12,84 @@
       <el-tabs v-model="activeTab">
         <el-tab-pane v-for="tab in visibleTabs" :key="tab.name" :label="tab.label" :name="tab.name">
           <template v-if="tab.name === 'overview'">
-            <template v-if="result">
-              <div v-if="!hasHostInfo" class="overview-header">
-                <div class="overview-status">
-                  <div class="status-chip" :class="statusClass">{{ summary.statusLabel }}</div>
-                  <div class="status-duration">{{ summary.duration }}</div>
-                  <div class="status-range">
-                    <span>{{ summary.startTime }}</span>
-                    <span class="status-sep">→</span>
-                    <span>{{ summary.endTime }}</span>
-                  </div>
-                </div>
-                <div class="overview-meta">
-                  <div class="meta-item">
-                    <span class="meta-label">运行 ID</span>
-                    <span class="meta-value">{{ summary.runId }}</span>
-                  </div>
-                  <div class="meta-item">
-                    <span class="meta-label">执行人</span>
-                    <span class="meta-value">{{ summary.username }}</span>
-                  </div>
-                </div>
-              </div>
-              <JobUpgradeOverview
-                v-if="isAnsibleJob"
-                :ansible-contents="ansibleContents"
-              />
-
-              <div
-                v-if="summary.errorTitle || summary.errorDetails || (summary.errorList && summary.errorList.length)"
-                class="result-error"
-              >
-                <div class="error-title-bar">
-                  <i class="fa fa-exclamation-triangle error-icon" />
-                  <span class="error-title">{{ summary.errorTitle }}</span>
-                </div>
-                <div v-if="summary.errorList && summary.errorList.length" class="error-list">
-                  <div v-for="(err, idx) in summary.errorList" :key="idx" class="error-item">
-                    <span class="error-bullet">•</span>
-                    <span class="error-text">{{ err }}</span>
-                  </div>
-                </div>
-                <pre v-if="summary.errorDetails" class="error-details">{{ summary.errorDetails }}</pre>
-              </div>
-
-              <div v-if="batches.length && !hasHostInfo" class="result-section">
-                <div class="section-header">
-                  <span>批次状态</span>
-                </div>
-                <div class="batch-list">
-                  <div v-for="batch in batches" :key="batch.batch" class="batch-card">
-                    <div class="batch-card__header">
-                      <div>
-                        <span class="batch-name">{{ batch.batch }}</span>
-                        <span class="batch-status" :class="`is-${batch.status?.toLowerCase?.()}`">
-                          {{ statusLabel(batch.status) }}
-                        </span>
-                      </div>
-                      <span class="batch-meta">主机数：{{ batch.machineCount ?? 0 }}</span>
+            <el-scrollbar max-height="calc(100vh - 240px)" class="overview-scroll">
+              <template v-if="result">
+                <div v-if="!hasHostInfo" class="overview-header">
+                  <div class="overview-status">
+                    <div class="status-chip" :class="statusClass">{{ summary.statusLabel }}</div>
+                    <div class="status-duration">{{ summary.duration }}</div>
+                    <div class="status-range">
+                      <span>{{ summary.startTime }}</span>
+                      <span class="status-sep">→</span>
+                      <span>{{ summary.endTime }}</span>
                     </div>
-                    <div v-if="batch.steps && batch.steps.length" class="batch-steps">
-                      <div v-for="step in batch.steps" :key="step.name" class="batch-step">
-                        <div class="batch-step__title">
-                          <span>{{ step.name }}</span>
-                          <el-tag size="small" :type="statusTagType(step.status)">
-                            {{ statusLabel(step.status) }}
-                          </el-tag>
+                  </div>
+                  <div class="overview-meta">
+                    <div class="meta-item">
+                      <span class="meta-label">运行 ID</span>
+                      <span class="meta-value">{{ summary.runId }}</span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-label">执行人</span>
+                      <span class="meta-value">{{ summary.username }}</span>
+                    </div>
+                  </div>
+                </div>
+                <JobUpgradeOverview
+                  v-if="isAnsibleJob"
+                  :ansible-contents="ansibleContents"
+                />
+
+                <div
+                  v-if="summary.errorTitle || summary.errorDetails || (summary.errorList && summary.errorList.length)"
+                  class="result-error"
+                >
+                  <div class="error-title-bar">
+                    <i class="fa fa-exclamation-triangle error-icon" />
+                    <span class="error-title">{{ summary.errorTitle }}</span>
+                  </div>
+                  <div v-if="summary.errorList && summary.errorList.length" class="error-list">
+                    <div v-for="(err, idx) in summary.errorList" :key="idx" class="error-item">
+                      <span class="error-bullet">•</span>
+                      <span class="error-text">{{ err }}</span>
+                    </div>
+                  </div>
+                  <pre v-if="summary.errorDetails" class="error-details">{{ summary.errorDetails }}</pre>
+                </div>
+
+                <div v-if="batches.length && !hasHostInfo" class="result-section">
+                  <div class="section-header">
+                    <span>批次状态</span>
+                  </div>
+                  <div class="batch-list">
+                    <div v-for="batch in batches" :key="batch.batch" class="batch-card">
+                      <div class="batch-card__header">
+                        <div>
+                          <span class="batch-name">{{ batch.batch }}</span>
+                          <span class="batch-status" :class="`is-${batch.status?.toLowerCase?.()}`">
+                            {{ statusLabel(batch.status) }}
+                          </span>
                         </div>
-                        <p class="batch-step__message">{{ step.message }}</p>
+                        <span class="batch-meta">主机数：{{ batch.machineCount ?? 0 }}</span>
                       </div>
+                      <div v-if="batch.steps && batch.steps.length" class="batch-steps">
+                        <div v-for="step in batch.steps" :key="step.name" class="batch-step">
+                          <div class="batch-step__title">
+                            <span>{{ step.name }}</span>
+                            <el-tag size="small" :type="statusTagType(step.status)">
+                              {{ statusLabel(step.status) }}
+                            </el-tag>
+                          </div>
+                          <p class="batch-step__message">{{ step.message }}</p>
+                        </div>
+                      </div>
+                      <div v-else class="batch-step__message">无步骤信息</div>
                     </div>
-                    <div v-else class="batch-step__message">无步骤信息</div>
                   </div>
                 </div>
-              </div>
-            </template>
-            <el-empty v-else description="暂无执行数据" />
+              </template>
+              <el-empty v-else description="暂无执行数据" />
+            </el-scrollbar>
           </template>
 
           <template v-else-if="tab.name === 'process'">
@@ -1661,6 +1663,9 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 4px;
   margin-top: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .error-item {
@@ -1687,6 +1692,9 @@ onBeforeUnmount(() => {
   color: var(--result-danger-text);
   white-space: pre-wrap;
   word-break: break-all;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .result-section {

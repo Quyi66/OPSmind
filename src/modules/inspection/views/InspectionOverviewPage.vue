@@ -67,7 +67,8 @@
                 placeholder="搜索模板名称"
                 clearable
                 class="template-search-input"
-                size="small" @keyup.enter="search" @clear="search">
+                size="small"
+              >
                 <template #prefix>
                   <i class="fa fa-search"></i>
                 </template>
