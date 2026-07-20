@@ -54,8 +54,8 @@
         </el-table-column>
         <el-table-column label="Ansible Node" width="150" align="left">
           <template #default="{ row }">
-            <el-tag v-if="getAnsibleNodeLabel(row.ata_node)" type="primary" size="small">
-              {{ getAnsibleNodeLabel(row.ata_node) }}
+            <el-tag v-if="getAnsibleNodeLabel(row.executor_node)" type="primary" size="small">
+              {{ getAnsibleNodeLabel(row.executor_node) }}
             </el-tag>
             <span v-else>-</span>
           </template>

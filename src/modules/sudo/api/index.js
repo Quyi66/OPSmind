@@ -112,7 +112,7 @@ export function getOperationLog(options = {}) {
     {
       page,
       size,
-      filter: keyword ? `ata_node|message:*${keyword}*` : ''
+      filter: keyword ? `executor_node|message:*${keyword}*` : ''
     }
   )
 }

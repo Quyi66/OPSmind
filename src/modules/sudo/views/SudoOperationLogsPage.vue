@@ -89,9 +89,9 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="ata_node" label="执行引擎节点" min-width="140">
+        <el-table-column prop="executor_node" label="执行引擎节点" min-width="140">
           <template #default="{ row }">
-            {{ row.ata_node || '' }}
+            {{ row.executor_node || '' }}
           </template>
         </el-table-column>
         <el-table-column prop="message" label="结果" min-width="140">

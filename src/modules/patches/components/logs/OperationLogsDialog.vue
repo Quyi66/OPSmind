@@ -70,7 +70,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="ata_node" label="执行引擎节点" width="140" show-overflow-tooltip />
+        <el-table-column prop="executor_node" label="执行引擎节点" width="140" show-overflow-tooltip />
         <el-table-column prop="message" label="结果" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatMessage(row.message) }}

@@ -112,7 +112,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="ata_node" label="执行引擎节点" min-width="130" sortable />
+        <el-table-column prop="executor_node" label="执行引擎节点" min-width="130" sortable />
         <el-table-column prop="message" label="结果" min-width="200" sortable show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatMessage(row.message) }}
@@ -195,7 +195,7 @@ const actionOptions = computed(() => {
 const engineOptions = computed(() => {
   const nodes = new Set()
   allData.value.forEach(row => {
-    if (row.ata_node) nodes.add(row.ata_node)
+    if (row.executor_node) nodes.add(row.executor_node)
   })
   return Array.from(nodes)
 })
@@ -339,7 +339,7 @@ function applyFilters() {
     filtered = filtered.filter(row => row.status === statusFilter.value)
   }
   if (engineFilter.value) {
-    filtered = filtered.filter(row => row.ata_node === engineFilter.value)
+    filtered = filtered.filter(row => row.executor_node === engineFilter.value)
   }
   if (searchText.value) {
     const keyword = searchText.value.toLowerCase()
@@ -348,7 +348,7 @@ function applyFilters() {
         (row.action && row.action.toLowerCase().includes(keyword)) ||
         (row.message && row.message.toLowerCase().includes(keyword)) ||
         (row.username && row.username.toLowerCase().includes(keyword)) ||
-        (row.ata_node && row.ata_node.toLowerCase().includes(keyword))
+        (row.executor_node && row.executor_node.toLowerCase().includes(keyword))
       )
     })
   }

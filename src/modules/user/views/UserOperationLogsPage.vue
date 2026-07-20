@@ -95,7 +95,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="ata_node" label="执行引擎节点" width="140" sortable />
+        <el-table-column prop="executor_node" label="执行引擎节点" width="140" sortable />
         <el-table-column prop="message" label="结果" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.message || '-' }}
@@ -258,7 +258,7 @@ async function loadData() {
         status: statusParam,
         day: filters.value.day
       },
-      filters.value.keyword ? `username|ata_node|message:*${filters.value.keyword}*` : '',
+      filters.value.keyword ? `username|executor_node|message:*${filters.value.keyword}*` : '',
       currentPage.value,
       pageSize.value
     )

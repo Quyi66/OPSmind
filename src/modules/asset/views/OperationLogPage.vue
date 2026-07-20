@@ -114,16 +114,16 @@
           </el-table-column>
 
           <!-- 4. 引擎节点 -->
-          <el-table-column prop="ata_node" label="执行引擎节点" width="150" align="left">
+          <el-table-column prop="executor_node" label="执行引擎节点" width="150" align="left">
             <template #default="{ row }">
               <el-tag
-                v-if="row.ata_node"
+                v-if="row.executor_node"
                 type="info"
                 size="small"
                 effect="plain"
                 class="node-badge"
               >
-                {{ row.ata_node }}
+                {{ row.executor_node }}
               </el-tag>
               <span v-else class="placeholder-dash">-</span>
             </template>
@@ -335,18 +335,18 @@ async function loadData() {
       {
         page: currentPage.value,
         size: pageSize.value,
-        filter: searchKeyword.value.trim() ? `ata_node:*${searchKeyword.value.trim()}*` : undefined
+        filter: searchKeyword.value.trim() ? `executor_node:*${searchKeyword.value.trim()}*` : undefined
       }
     )
 
     const data = response?.records || []
     tableData.value = data
 
-    // 提取所有的 ata_node
+    // 提取所有的 executor_node
     const nodes = new Set()
     data.forEach(item => {
-      if (item.ata_node) {
-        nodes.add(item.ata_node)
+      if (item.executor_node) {
+        nodes.add(item.executor_node)
       }
     })
     ataNodes.value = Array.from(nodes)

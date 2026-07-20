@@ -539,7 +539,7 @@ async function loadRecentlyData() {
       const list = res.data || res || []
       recentlyUsedHosts.value = list.map(h => {
         const hosts = h.run_result_hosts ? h.run_result_hosts.map(host => host.value) : []
-        const ataNode = h.ata_node || []
+        const ataNode = h.executor_node || []
         let totalHosts = 0
         if (h.statsJson) {
           try {

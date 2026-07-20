@@ -300,7 +300,7 @@
             @click="handleLogItemClick(item)"
           >
             <span class="aw-log-item__title">{{ getOperationActionLabel(item.action) }}</span>
-            <span class="aw-log-item__engine">{{ item.ata_node || '--' }}</span>
+            <span class="aw-log-item__engine">{{ item.executor_node || '--' }}</span>
             <span class="aw-log-item__user">{{ item.username || '--' }}</span>
             <span class="aw-log-item__time">{{ formatDateTime(item.start_time) }}</span>
             <el-tag
@@ -576,7 +576,7 @@
               @click="handleLogItemClick(item)"
             >
               <span class="aw-drawer-row__title">{{ getOperationActionLabel(item.action) }}</span>
-              <span class="aw-drawer-row__engine">{{ item.ata_node || '--' }}</span>
+              <span class="aw-drawer-row__engine">{{ item.executor_node || '--' }}</span>
               <span class="aw-drawer-row__user">{{ item.username || '--' }}</span>
               <span class="aw-drawer-row__time">{{ formatDateTime(item.start_time) }}</span>
               <el-tag

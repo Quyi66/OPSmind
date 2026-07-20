@@ -222,7 +222,7 @@ export function useAssetWorkbenchDrawers({
           title: actionLabel,
           badge: formatDateTimeShort(row.start_time),
           desc: formatOperationMessage(row.message),
-          meta: `${row.ata_node || '--'} · ${row.username || '--'}`,
+          meta: `${row.executor_node || '--'} · ${row.username || '--'}`,
           raw: row
         }
       })
