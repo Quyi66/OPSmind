@@ -157,7 +157,7 @@ const STATIC_TRANSLATIONS = {
   // 补丁管理 - 菜单
   'app_vap.menu.patch_scan.title': '补丁扫描',
   'app_vap.menu.patch_install.title': '补丁安装',
-  'app_vap.menu.patch_rollback.title': '补丁回退',
+  'app_vap.menu.patch_rollback.title': '补丁回滚',
   'app_vap.menu.win_patch_scan.title': 'Windows漏洞扫描',
   'app_vap.menu.import_patch_library.title': '导入补丁库',
   'app_vap.menu.import_patch_library_time': '定时导入补丁库',

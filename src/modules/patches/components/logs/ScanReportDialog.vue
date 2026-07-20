@@ -498,7 +498,7 @@ async function handleExport() {
     if (!filePath) {
       throw new Error('未找到报告文件')
     }
-    const reportPath = `VAP_EXPORT_DATA/patch_scan/${filePath}`
+    const reportPath = `SECOPS_EXPORT_DATA/patch_scan/${filePath}`
     const fileInfo = await fetchReportFileInfo(reportPath)
     const downloadUri = fileInfo?.fileContent?.downloadUri
     const filename = `patch_scan_${formatFilenameTimestamp(summary.value.scan_timestamp)}.xlsx`

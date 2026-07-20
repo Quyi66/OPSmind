@@ -24,8 +24,8 @@
             <el-select v-model="actionFilter" placeholder="操作类型" style="width: 150px" clearable @change="handleFilterChange">
               <el-option label="全部" value="all" />
               <el-option label="补丁扫描" value="#{app_vap.menu.patch_scan.title}" />
-              <el-option label="补丁安装" value="#{app_vap.menu.patch_install.title}" />
-              <el-option label="补丁回退" value="#{app_vap.menu.patch_rollback.title}" />
+              <el-option label="补丁安装" value="补丁安装" />
+              <el-option label="补丁回滚" value="补丁回滚" />
               <el-option label="Windows漏洞扫描" value="#{app_vap.menu.win_patch_scan.title}" />
               <el-option label="定时导入补丁库" value="#{app_vap.menu.import_patch_library_time}" />
             </el-select>
@@ -180,7 +180,7 @@
                   type="primary"
                   @click="handleRollbackReport(row)"
                 >
-                  回退报告
+                  回滚报告
                 </el-button>
               </div>
             </template>
@@ -339,7 +339,7 @@ function translateAction(action) {
     const staticMap = {
       '#{app_vap.menu.patch_scan.title}': '补丁扫描',
       '#{app_vap.menu.patch_install.title}': '补丁安装',
-      '#{app_vap.menu.patch_rollback.title}': '补丁回退',
+      '#{app_vap.menu.patch_rollback.title}': '补丁回滚',
       '#{app_vap.menu.win_patch_scan.title}': 'Windows漏洞扫描',
       '#{app_vap.menu.import_patch_library_time}': '定时导入补丁库',
       '#{app_vap.menu.import_patch_library.title}': '导入补丁库',
@@ -441,10 +441,16 @@ async function loadData() {
   loading.value = true
   try {
     const keywordFilter = searchText.value ? `message|username:*${searchText.value}*` : ''
+    let actionParam = actionFilter.value
+    if (actionParam === '#{app_vap.menu.patch_install.title}') {
+      actionParam = '补丁安装'
+    } else if (actionParam === '#{app_vap.menu.patch_rollback.title}') {
+      actionParam = '补丁回滚'
+    }
     const response = await patchLogsApi.getLogs({
       page: pagination.page,
       size: pagination.pageSize,
-      action: actionFilter.value,
+      action: actionParam,
       status: statusFilter.value,
       day: dayFilter.value,
       filter: keywordFilter
@@ -497,19 +503,19 @@ function handleViewRunResult(row) {
 }
 
 function isPatchScan(row) {
-  return row?.action === ACTION_KEYS.patchScan
+  return row?.action === ACTION_KEYS.patchScan || row?.action === '补丁扫描' || translateAction(row?.action) === '补丁扫描'
 }
 
 function isWindowsScan(row) {
-  return row?.action === ACTION_KEYS.winPatchScan
+  return row?.action === ACTION_KEYS.winPatchScan || row?.action === 'Windows漏洞扫描' || translateAction(row?.action) === 'Windows漏洞扫描'
 }
 
 function isPatchInstall(row) {
-  return row?.action === ACTION_KEYS.patchInstall
+  return row?.action === ACTION_KEYS.patchInstall || row?.action === '补丁安装' || translateAction(row?.action) === '补丁安装'
 }
 
 function isPatchRollback(row) {
-  return row?.action === ACTION_KEYS.patchRollback
+  return row?.action === ACTION_KEYS.patchRollback || row?.action === '补丁回滚' || row?.action === '补丁回退' || translateAction(row?.action) === '补丁回滚' || translateAction(row?.action) === '补丁回退'
 }
 
 function isCompleted(row) {
@@ -621,7 +627,7 @@ async function downloadReport(row, dir, extension) {
       throw new Error('未找到报告文件')
     }
     const filename = `${dir}_${formatFilenameTimestamp(row.start_time)}.${extension}`
-    downloadFile('staticfs', null, `VAP_EXPORT_DATA/${dir}/${filePath}`, filename)
+    downloadFile('staticfs', null, `SECOPS_EXPORT_DATA/${dir}/${filePath}`, filename)
   } catch (error) {
     ElMessage.error(`下载报告失败: ${error.message || '未知错误'}`)
   }
@@ -661,8 +667,8 @@ async function downloadInstallReport(row) {
   try {
     const filePath = await fetchReportPath(row.run_id, 'patch_install')
     const reportPath = filePath
-      ? `VAP_EXPORT_DATA/patch_install/${filePath}`
-      : 'VAP_EXPORT_DATA/patch_install/'
+      ? `SECOPS_EXPORT_DATA/patch_install/${filePath}`
+      : 'SECOPS_EXPORT_DATA/patch_install/'
     const fileInfo = await fetchReportFileInfo(reportPath)
     const downloadUri = fileInfo?.fileContent?.downloadUri || fileInfo?.downloadUri
     const filename =
@@ -677,10 +683,10 @@ async function downloadInstallReport(row) {
 }
 
 function buildReportPath(dir, filePath) {
-  if (!filePath) return `VAP_EXPORT_DATA/${dir}/`
+  if (!filePath) return `SECOPS_EXPORT_DATA/${dir}/`
   const normalized = filePath.startsWith(`${dir}/`)
-    ? `VAP_EXPORT_DATA/${filePath}`
-    : `VAP_EXPORT_DATA/${dir}/${filePath}`
+    ? `SECOPS_EXPORT_DATA/${filePath}`
+    : `SECOPS_EXPORT_DATA/${dir}/${filePath}`
   return normalized
 }
 
@@ -709,7 +715,7 @@ async function downloadRollbackReport(row) {
     const filename = resolveDownloadFilename(fileInfo, 'patch_rollback', row.start_time)
     await downloadFromUri(`${downloadUri}?cacheBuster=${Date.now()}`, filename)
   } catch (error) {
-    ElMessage.error(`下载回退报告失败: ${error.message || '未知错误'}`)
+    ElMessage.error(`下载回滚报告失败: ${error.message || '未知错误'}`)
   }
 }
 
