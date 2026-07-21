@@ -165,6 +165,13 @@ export function getCveUrl(cveId, source) {
   return `https://access.redhat.com/security/cve/${id}`
 }
 
+// 获取 CNNVD 外链地址
+export function getCnnvdUrl(cnnvdId) {
+  const id = String(cnnvdId || '').trim()
+  if (!id) return ''
+  return `https://www.cnnvd.org.cn/home/globalSearch?keyword=${encodeURIComponent(id)}`
+}
+
 function normalizeSeverityKey(severity) {
   const raw = String(severity || '').trim()
   if (!raw) return ''

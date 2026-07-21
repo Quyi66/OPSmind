@@ -139,6 +139,15 @@
           />
         </template>
       </el-table-column>
+      <el-table-column prop="related_cnnvds" label="关联CNNVD" min-width="180">
+        <template #default="{ row }">
+          <CveLinkList
+            :cves="row.related_cnnvds"
+            :url-resolver="cnnvd => getCnnvdUrl(cnnvd)"
+            dialog-title="关联 CNNVD"
+          />
+        </template>
+      </el-table-column>
     </el-table>
 
     <!-- 分页 -->
@@ -164,6 +173,7 @@ import {
   formatDate,
   formatPackages,
   getCveUrl,
+  getCnnvdUrl,
   getSeverityType
 } from '../../../composables/useFormatters'
 import { usePatchList } from '../../../composables/usePatchList'

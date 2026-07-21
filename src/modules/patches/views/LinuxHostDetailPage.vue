@@ -109,7 +109,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { patchScanApi } from '../api'
@@ -212,20 +212,9 @@ watch(
   () => {
     activeTab.value = route.query.tab || 'patches'
     loadMachineInfo()
-    nextTick(() => {
-      if (patchesTabRef.value) {
-        patchesTabRef.value.loadPatchList()
-      }
-    })
   },
   { immediate: true }
 )
-
-watch(hostId, value => {
-  if (value && patchesTabRef.value) {
-    patchesTabRef.value.loadPatchList()
-  }
-})
 
 // 点击补丁
 function handlePatchClick(row) {

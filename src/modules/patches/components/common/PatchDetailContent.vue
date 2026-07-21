@@ -38,6 +38,20 @@
           empty-text="暂无关联 CVE"
         />
       </section>
+
+      <section class="patch-detail__section">
+        <h4 class="patch-detail__section-title">
+          关联 CNNVD
+          <span v-if="cnnvdList.length" class="patch-detail__count">{{ cnnvdList.length }}</span>
+        </h4>
+        <CveLinkList
+          :cves="cnnvdList"
+          :url-resolver="cnnvd => getCnnvdUrl(cnnvd)"
+          :max="0"
+          dialog-title="关联 CNNVD"
+          empty-text="暂无关联 CNNVD"
+        />
+      </section>
     </template>
     <el-empty v-else-if="!loading" description="暂无补丁详情" :image-size="80" />
   </div>
@@ -49,6 +63,7 @@ import {
   formatDate,
   getCVEList,
   getCveUrl,
+  getCnnvdUrl,
   getSeverityClass,
   getSeverityLabel
 } from '../../composables/useFormatters'
@@ -82,6 +97,7 @@ const props = defineProps({
 })
 
 const cveList = computed(() => getCVEList(props.patch?.related_vuls))
+const cnnvdList = computed(() => getCVEList(props.patch?.related_cnnvds))
 
 const linkSource = computed(
   () => props.patch?.os_distro || props.patch?.vendor || props.cveSource || ''

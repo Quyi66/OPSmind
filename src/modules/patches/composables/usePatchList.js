@@ -34,7 +34,8 @@ export function usePatchList(hostContext) {
             item.severity,
             item.publish_date,
             item.affected_pkgs,
-            Array.isArray(item.related_vuls) ? item.related_vuls.join(',') : item.related_vuls
+            Array.isArray(item.related_vuls) ? item.related_vuls.join(',') : item.related_vuls,
+            Array.isArray(item.related_cnnvds) ? item.related_cnnvds.join(',') : item.related_cnnvds
           ]
           return parts
             .filter(Boolean)
