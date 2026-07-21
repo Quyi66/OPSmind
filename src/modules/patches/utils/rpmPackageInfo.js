@@ -271,6 +271,52 @@ export function formatRpmVersion(detail = {}) {
   return '-'
 }
 
+export function normalizePackageDetailSource({ source, osDistro } = {}) {
+  const normalizedSource = String(source || '')
+    .trim()
+    .toLowerCase()
+  if (
+    normalizedSource.includes('suse') ||
+    normalizedSource.includes('sles') ||
+    normalizedSource.includes('opensuse')
+  ) {
+    return 'suse'
+  }
+  if (normalizedSource.includes('kylin')) return 'kylin'
+  if (normalizedSource.includes('oracle')) return 'oracle'
+  if (normalizedSource.includes('ubuntu')) return 'ubuntu'
+  if (
+    normalizedSource.includes('redhat') ||
+    normalizedSource.includes('red hat') ||
+    normalizedSource.includes('rhel')
+  ) {
+    return 'redhat'
+  }
+
+  const normalizedOsDistro = String(osDistro || '')
+    .trim()
+    .toLowerCase()
+  if (
+    normalizedOsDistro.includes('suse') ||
+    normalizedOsDistro.includes('sles') ||
+    normalizedOsDistro.includes('opensuse')
+  ) {
+    return 'suse'
+  }
+  if (normalizedOsDistro.includes('kylin')) return 'kylin'
+  if (normalizedOsDistro.includes('oracle')) return 'oracle'
+  if (normalizedOsDistro.includes('ubuntu')) return 'ubuntu'
+  if (
+    normalizedOsDistro.includes('redhat') ||
+    normalizedOsDistro.includes('red hat') ||
+    normalizedOsDistro.includes('rhel')
+  ) {
+    return 'redhat'
+  }
+
+  return ''
+}
+
 export function inferRpmSource(source, osDistro = '') {
   const normalizedSource = String(source || '')
     .trim()

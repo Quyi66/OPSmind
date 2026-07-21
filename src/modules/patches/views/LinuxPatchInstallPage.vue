@@ -825,7 +825,11 @@ function formatDate(dateStr) {
 
 function resolvePatchDistro(patch) {
   if (!patch) return ''
-  return patch.os_distro || patch.vendor || (patch.patch_id.includes('KYSA') ? 'kylin' : 'redhat')
+  if (patch.os_distro || patch.vendor) return patch.os_distro || patch.vendor
+  const patchId = String(patch.patch_id || '').toUpperCase()
+  if (patchId.includes('KYSA')) return 'kylin'
+  if (patchId.includes('SUSE') || patchId.includes('SLES')) return 'suse'
+  return 'redhat'
 }
 
 async function loadData() {

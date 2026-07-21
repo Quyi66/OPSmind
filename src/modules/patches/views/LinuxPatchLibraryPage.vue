@@ -151,7 +151,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" :reserve-selection="true" width="50" />
-        <el-table-column prop="patch_id" label="补丁编号" width="180" show-overflow-tooltip>
+        <el-table-column prop="patch_id" label="补丁编号" width="190" show-overflow-tooltip>
           <template #default="{ row }">
             <el-link type="primary" underline="never" @click="handleViewDetail(row)">
               {{ row.patch_id }}

@@ -47,6 +47,7 @@ function normalizeCveLinkTarget(source) {
     .trim()
     .toLowerCase()
   if (!value) return 'redhat'
+  if (value.includes('suse') || value.includes('sles') || value.includes('opensuse')) return 'suse'
   if (value.includes('oracle')) return 'oracle'
   if (value.includes('ubuntu')) return 'ubuntu'
   if (value.includes('kylin')) return 'kylin'
@@ -63,6 +64,9 @@ export function normalizeCveSourceKey(source) {
     return 'redhat'
   }
   if (lower.includes('kylin')) return 'kylin'
+  if (lower.includes('suse') || lower.includes('sles') || lower.includes('opensuse')) return 'suse'
+  if (lower.includes('ubuntu')) return 'ubuntu'
+  if (lower.includes('oracle')) return 'oracle'
   if (lower === 'nvd') return 'nvd'
 
   return lower
@@ -73,6 +77,9 @@ export function getCveSourceLabel(source) {
   const labelMap = {
     redhat: 'Red Hat',
     kylin: '麒麟',
+    suse: 'SUSE',
+    ubuntu: 'Ubuntu',
+    oracle: 'Oracle',
     nvd: 'NVD'
   }
 
@@ -84,6 +91,9 @@ export function getCveSourceType(source) {
   const typeMap = {
     redhat: 'danger',
     kylin: 'primary',
+    suse: 'success',
+    ubuntu: 'warning',
+    oracle: 'info',
     nvd: 'info'
   }
 
@@ -140,6 +150,9 @@ export function getCveUrl(cveId, source) {
   if (!id) return ''
 
   const target = normalizeCveLinkTarget(source)
+  if (target === 'suse') {
+    return `https://www.suse.com/security/cve/${encodeURIComponent(id)}.html`
+  }
   if (target === 'oracle') {
     return `https://linux.oracle.com/cve/${encodeURIComponent(id)}.html`
   }
