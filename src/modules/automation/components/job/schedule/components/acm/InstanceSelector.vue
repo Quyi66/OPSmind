@@ -112,9 +112,9 @@
             >
               {{
                 [1, '1'].includes(row.CONN_LATEST_STATUS)
-                  ? '在线'
+                  ? '正常'
                   : [0, '0'].includes(row.CONN_LATEST_STATUS)
-                    ? '离线'
+                    ? '失联'
                     : '未知'
               }}
             </el-tag>
@@ -134,13 +134,11 @@
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :total="pagination.total"
-        :teleported="true"
-        append-size-to="body"
-        :popper-style="{ zIndex: 4000 }"
+        popper-class="acm-pagination-popper"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="fetchData"
-        @current-change="fetchData"
+        @size-change="handlePageSizeChange"
+        @current-change="handlePageChange"
       />
     </div>
   </div>
@@ -383,6 +381,18 @@ async function fetchData() {
   } finally {
     loading.value = false
   }
+}
+
+function handlePageSizeChange(val) {
+  pagination.value.pageSize = val
+  pagination.value.page = 1
+  allSelected.value = false
+  fetchData()
+}
+
+function handlePageChange(val) {
+  pagination.value.page = val
+  fetchData()
 }
 
 // 恢复选中状态

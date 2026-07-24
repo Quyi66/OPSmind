@@ -88,9 +88,7 @@
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.pageSize"
         :total="filteredData.length"
-        :teleported="true"
-        append-size-to="body"
-        :popper-style="{ zIndex: 4000 }"
+        popper-class="acm-pagination-popper"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
         @size-change="handlePageSizeChange"
@@ -103,6 +101,7 @@
       v-model:visible="resultDialogVisible"
       :run-id="currentRunId"
       :job-title="currentJobTitle"
+      :z-index="6000"
     />
   </div>
 </template>

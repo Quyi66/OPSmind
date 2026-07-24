@@ -3,6 +3,7 @@
     v-model="dialogVisible"
     :title="`运维工具运行结果${jobTitle ? ` · ${jobTitle}` : ''}`"
     width="1260px"
+    :z-index="zIndex"
     append-to-body
     destroy-on-close
     class="execute-result-dialog-wrapper"
@@ -467,7 +468,8 @@ const ACTIVE_RUN_STATUSES = ['WAITING', 'RUNNING', 'CALLBACK']
 const props = defineProps({
   visible: { type: Boolean, default: false },
   runId: { type: String, default: '' },
-  jobTitle: { type: String, default: '' }
+  jobTitle: { type: String, default: '' },
+  zIndex: { type: Number, default: undefined }
 })
 
 const emit = defineEmits(['update:visible', 'settled'])
