@@ -108,7 +108,7 @@ const STATIC_TRANSLATIONS = {
   'cac.profile.inspection_items_profile': '巡检项概览',
   'cac.profile.inspection_items_details': '巡检项详情',
   'cac.profile.status_profile': '状态概览',
-  'cac.profile.whitelist_list': '白名单列表',
+  'cac.profile.whitelist_list': '黑名单列表',
   'cac.profile.host_key': '主机',
   'cac.profile.manual_inspection': '人工检查',
   'cac.result.status.error': '失败',

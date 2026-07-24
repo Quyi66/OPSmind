@@ -499,7 +499,7 @@ function getStatusLabel(status) {
     OK: '检查通过',
     FAILED: '检查失败',
     CHECK: '人工检查',
-    SKIPPING: '白名单',
+    SKIPPING: '黑名单',
     UNREACHABLE: '无数据'
   }
   return labelMap[status] || status || '-'

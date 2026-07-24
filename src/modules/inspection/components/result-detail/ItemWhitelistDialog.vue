@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="白名单列表"
+    title="黑名单列表"
     width="900px"
     destroy-on-close
     @close="$emit('close')"

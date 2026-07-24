@@ -79,15 +79,15 @@
         <template v-if="activeTab === 'host'">
           <el-button :disabled="selectedHostIds.length === 0" @click="addToWhitelist">
             <i class="fa fa-plus"></i>
-            添加白名单
+            添加黑名单
           </el-button>
           <el-button :disabled="selectedHostIds.length === 0" @click="removeFromWhitelist">
             <i class="fa fa-trash-alt"></i>
-            移除白名单
+            移除黑名单
           </el-button>
           <el-button @click="dialogs.showWhitelistDialog()">
             <i class="fa fa-list"></i>
-            白名单列表
+            黑名单列表
           </el-button>
         </template>
         <div class="toolbar-right">
@@ -146,7 +146,7 @@
           </el-table-column>
           <el-table-column prop="os_distro" label="操作系统" min-width="180" />
           <el-table-column prop="os_version" label="系统版本" width="100" />
-          <el-table-column label="白名单" width="80" align="left">
+          <el-table-column label="黑名单" width="80" align="left">
             <template #default="{ row }">
               <el-tag v-if="row.black_count > 0" type="primary" size="small" round>
                 <i class="fa fa-check"></i>
@@ -197,11 +197,11 @@
               </el-button>
             </template>
           </el-table-column>
-          <el-table-column label="白名单" width="100" align="left">
+          <el-table-column label="黑名单" width="100" align="left">
             <template #header>
               <span>
                 <!-- <i class="fa fa-adjust"></i> -->
-                白名单
+                黑名单
               </span>
             </template>
             <template #default="{ row }">
@@ -308,7 +308,7 @@
             <el-option label="通过" value="OK" />
             <el-option label="失败" value="FAILED" />
             <el-option label="人工检查" value="CHECK" />
-            <el-option label="白名单" value="SKIPPING" />
+            <el-option label="黑名单" value="SKIPPING" />
             <el-option label="无数据" value="UNREACHABLE" />
           </el-select>
           <el-input
@@ -325,7 +325,7 @@
         </div>
         <el-button size="small" @click="dialogs.showItemWhitelist()">
           <i class="fa fa-adjust"></i>
-          白名单列表
+          黑名单列表
         </el-button>
       </div>
       <el-table
@@ -341,7 +341,7 @@
             <el-tag v-if="row.status === 'OK'" type="success" size="small">通过</el-tag>
             <el-tag v-else-if="row.status === 'FAILED'" type="danger" size="small">失败</el-tag>
             <el-tag v-else-if="row.status === 'CHECK'" type="warning" size="small">人工检查</el-tag>
-            <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">白名单</el-tag>
+            <el-tag v-else-if="row.status === 'SKIPPING'" type="info" size="small">黑名单</el-tag>
             <el-tag v-else type="info" size="small">无数据</el-tag>
           </template>
         </el-table-column>
@@ -358,10 +358,10 @@
               link
               @click="handleAddToWhitelist(row)"
             >
-              添加白名单
+              添加黑名单
             </el-button>
             <el-button v-else type="danger" link @click="handleRemoveFromWhitelist(row)">
-              移出白名单
+              移出黑名单
             </el-button>
           </template>
         </el-table-column>
@@ -606,7 +606,7 @@ async function handleHostClick(row) {
 }
 
 /**
- * 白名单操作
+ * 黑名单操作
  */
 const isInWhitelist = item => {
   const value = item?.whetherWhiteList
@@ -617,7 +617,7 @@ async function handleAddToWhitelist(item) {
   if (!item) return
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项添加到白名单吗？', '确认')
+    await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认')
     inspectionDetailLoading.value = true
 
     await whitelistApi.saveWhitelist({
@@ -629,12 +629,12 @@ async function handleAddToWhitelist(item) {
       checkName: item.name
     })
 
-    ElMessage.success('添加白名单成功')
+    ElMessage.success('添加黑名单成功')
     handleWhitelistChanged()
   } catch (e) {
     if (e !== 'cancel') {
-      console.error('添加白名单失败:', e)
-      ElMessage.error('添加白名单失败')
+      console.error('添加黑名单失败:', e)
+      ElMessage.error('添加黑名单失败')
     }
   } finally {
     inspectionDetailLoading.value = false
@@ -645,7 +645,7 @@ async function handleRemoveFromWhitelist(item) {
   if (!item) return
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项从白名单移除吗？', '确认')
+    await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认')
     inspectionDetailLoading.value = true
 
     let whitelistId = ''
@@ -655,15 +655,15 @@ async function handleRemoveFromWhitelist(item) {
 
     if (whitelistId) {
       await whitelistApi.deleteWhitelist(whitelistId)
-      ElMessage.success('移除白名单成功')
+      ElMessage.success('移除黑名单成功')
       handleWhitelistChanged()
     } else {
-      ElMessage.error('无法获取白名单ID')
+      ElMessage.error('无法获取黑名单ID')
     }
   } catch (e) {
     if (e !== 'cancel') {
-      console.error('移除白名单失败:', e)
-      ElMessage.error('移除白名单失败')
+      console.error('移除黑名单失败:', e)
+      ElMessage.error('移除黑名单失败')
     }
   } finally {
     inspectionDetailLoading.value = false
@@ -671,7 +671,7 @@ async function handleRemoveFromWhitelist(item) {
 }
 
 /**
- * 从KPI详情弹窗显示检查项详情（不显示白名单按钮）
+ * 从KPI详情弹窗显示检查项详情（不显示黑名单按钮）
  */
 function handleKpiShowDetail(row) {
   showWhitelistButton.value = false
@@ -694,7 +694,7 @@ function getScriptPath() {
 }
 
 /**
- * 白名单变更后刷新数据
+ * 黑名单变更后刷新数据
  */
 function handleWhitelistChanged() {
   // 刷新巡检项详情列表
@@ -706,7 +706,7 @@ function handleWhitelistChanged() {
 }
 
 /**
- * 从白名单列表中删除白名单项
+ * 从黑名单列表中删除黑名单项
  */
 async function handleItemWhitelistDelete(item) {
   await dialogs.deleteItemWhitelist(item)
@@ -776,7 +776,7 @@ async function addToWhitelist() {
   }
   try {
     await ElMessageBox.confirm(
-      `确定要将选中的 ${selectedHostIds.value.length} 台主机添加到白名单吗？`,
+      `确定要将选中的 ${selectedHostIds.value.length} 台主机添加到黑名单吗？`,
       '确认'
     )
 
@@ -789,15 +789,15 @@ async function addToWhitelist() {
       result[0]?.status === 'COMPLETED' &&
       result[0]?.data?.result === 'ok'
     ) {
-      ElMessage.success('添加白名单成功')
+      ElMessage.success('添加黑名单成功')
       refreshData()
     } else {
-      ElMessage.error('添加白名单失败')
+      ElMessage.error('添加黑名单失败')
     }
   } catch (e) {
     if (e !== 'cancel') {
-      console.error('添加白名单失败:', e)
-      ElMessage.error('添加白名单失败')
+      console.error('添加黑名单失败:', e)
+      ElMessage.error('添加黑名单失败')
     }
   }
 }
@@ -809,7 +809,7 @@ async function removeFromWhitelist() {
   }
   try {
     await ElMessageBox.confirm(
-      `确定要将选中的 ${selectedHostIds.value.length} 台主机从白名单移除吗？`,
+      `确定要将选中的 ${selectedHostIds.value.length} 台主机从黑名单移除吗？`,
       '确认'
     )
 
@@ -822,15 +822,15 @@ async function removeFromWhitelist() {
       result[0]?.status === 'COMPLETED' &&
       result[0]?.data?.result === 'ok'
     ) {
-      ElMessage.success('移除白名单成功')
+      ElMessage.success('移除黑名单成功')
       refreshData()
     } else {
-      ElMessage.error('移除白名单失败')
+      ElMessage.error('移除黑名单失败')
     }
   } catch (e) {
     if (e !== 'cancel') {
-      console.error('移除白名单失败:', e)
-      ElMessage.error('移除白名单失败')
+      console.error('移除黑名单失败:', e)
+      ElMessage.error('移除黑名单失败')
     }
   }
 }

@@ -1,13 +1,13 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="白名单列表"
+    title="黑名单列表"
     width="700px"
     destroy-on-close
     @close="$emit('close')"
   >
     <el-alert type="info" :closable="false" show-icon class="mb-3">
-      白名单中的主机将在巡检时跳过检查
+      黑名单中的主机将在巡检时跳过检查
     </el-alert>
     <div class="whitelist-toolbar mb-3">
       <el-button
@@ -16,7 +16,7 @@
         @click="$emit('remove-selected')"
       >
         <i class="fa fa-trash-alt"></i>
-        移除白名单
+        移除黑名单
       </el-button>
     </div>
     <el-table

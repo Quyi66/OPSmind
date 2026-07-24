@@ -15,7 +15,7 @@ export const CHECK_STATUS_MAP = {
   OK: { type: 'success', text: '检查通过', icon: 'fa-check', tagType: 'success' },
   FAILED: { type: 'danger', text: '检查失败', icon: 'fa-times', tagType: 'danger' },
   CHECK: { type: 'warning', text: '人工检查', icon: 'fa-user-md', tagType: 'warning' },
-  SKIPPING: { type: 'info', text: '白名单', icon: 'fa-adjust', tagType: 'info' },
+  SKIPPING: { type: 'info', text: '黑名单', icon: 'fa-adjust', tagType: 'info' },
   UNREACHABLE: { type: 'info', text: '无数据', icon: 'fa-question', tagType: 'info' }
 }
 
@@ -24,7 +24,7 @@ export const STATISTICS_CARD_CONFIG = [
   { name: 'OK', label: '检查通过', icon: 'fa fa-check', theme: 'theme-success' },
   { name: 'FAILED', label: '检查失败', icon: 'fa fa-times', theme: 'theme-danger' },
   { name: 'CHECK', label: '人工检查', icon: 'fa fa-user-md', theme: 'theme-info' },
-  { name: 'SKIPPING', label: '白名单', icon: 'fa fa-adjust', theme: 'theme-secondary' },
+  { name: 'SKIPPING', label: '黑名单', icon: 'fa fa-adjust', theme: 'theme-secondary' },
   { name: 'UNREACHABLE', label: '数据缺失', icon: 'fa fa-question', theme: 'theme-warning' }
 ]
 

@@ -146,7 +146,7 @@
                       </div>
                       <div class="metric metric-skip">
                         <span class="metric-num">{{ template.stats.skipping }}</span>
-                        <span class="metric-txt">白名单</span>
+                        <span class="metric-txt">黑名单</span>
                       </div>
                     </div>
                   </div>

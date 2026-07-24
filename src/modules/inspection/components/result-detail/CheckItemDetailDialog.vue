@@ -31,7 +31,7 @@
     <template #footer>
       <div class="dialog-footer">
         <div class="footer-left">
-          <!-- 白名单操作按钮 -->
+          <!-- 黑名单操作按钮 -->
           <template v-if="showWhitelistButton">
             <el-button
               v-if="!isInWhitelist"
@@ -40,7 +40,7 @@
               :loading="whitelistLoading"
             >
               <i class="fa fa-plus"></i>
-              添加白名单
+              添加黑名单
             </el-button>
             <el-button
               v-else
@@ -49,7 +49,7 @@
               :loading="whitelistLoading"
             >
               <i class="fa fa-trash-alt"></i>
-              移除白名单
+              移除黑名单
             </el-button>
           </template>
         </div>
@@ -84,20 +84,20 @@ const emit = defineEmits(['close', 'whitelist-changed'])
 
 const whitelistLoading = ref(false)
 
-// 判断当前项是否在白名单中（whetherWhiteList 格式为 "y,{id}" 或 "n"）
+// 判断当前项是否在黑名单中（whetherWhiteList 格式为 "y,{id}" 或 "n"）
 const isInWhitelist = computed(() => {
   const value = props.item?.whetherWhiteList
   return value && value.startsWith('y')
 })
 
 /**
- * 添加到白名单
+ * 添加到黑名单
  */
 async function handleAddToWhitelist() {
   if (!props.item) return
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项添加到白名单吗？', '确认')
+    await ElMessageBox.confirm('确定要将此检查项添加到黑名单吗？', '确认')
     whitelistLoading.value = true
 
     await whitelistApi.saveWhitelist({
@@ -109,13 +109,13 @@ async function handleAddToWhitelist() {
       checkName: props.item.name
     })
 
-    ElMessage.success('添加白名单成功')
+    ElMessage.success('添加黑名单成功')
     emit('whitelist-changed')
     emit('close')
   } catch (e) {
     if (e !== 'cancel') {
-      console.error('添加白名单失败:', e)
-      ElMessage.error('添加白名单失败')
+      console.error('添加黑名单失败:', e)
+      ElMessage.error('添加黑名单失败')
     }
   } finally {
     whitelistLoading.value = false
@@ -123,16 +123,16 @@ async function handleAddToWhitelist() {
 }
 
 /**
- * 从白名单移除
+ * 从黑名单移除
  */
 async function handleRemoveFromWhitelist() {
   if (!props.item) return
 
   try {
-    await ElMessageBox.confirm('确定要将此检查项从白名单移除吗？', '确认')
+    await ElMessageBox.confirm('确定要将此检查项从黑名单移除吗？', '确认')
     whitelistLoading.value = true
 
-    // 从 whetherWhiteList 字段解析白名单ID（格式: "y,{whitelistId}"）
+    // 从 whetherWhiteList 字段解析黑名单ID（格式: "y,{whitelistId}"）
     let whitelistId = ''
     if (props.item.whetherWhiteList && props.item.whetherWhiteList.startsWith('y,')) {
       whitelistId = props.item.whetherWhiteList.split(',')[1]
@@ -140,16 +140,16 @@ async function handleRemoveFromWhitelist() {
 
     if (whitelistId) {
       await whitelistApi.deleteWhitelist(whitelistId)
-      ElMessage.success('移除白名单成功')
+      ElMessage.success('移除黑名单成功')
       emit('whitelist-changed')
       emit('close')
     } else {
-      ElMessage.error('无法获取白名单ID')
+      ElMessage.error('无法获取黑名单ID')
     }
   } catch (e) {
     if (e !== 'cancel') {
-      console.error('移除白名单失败:', e)
-      ElMessage.error('移除白名单失败')
+      console.error('移除黑名单失败:', e)
+      ElMessage.error('移除黑名单失败')
     }
   } finally {
     whitelistLoading.value = false

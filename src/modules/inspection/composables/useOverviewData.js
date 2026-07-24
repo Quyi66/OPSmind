@@ -127,7 +127,7 @@ export function useOverviewData() {
       },
       {
         key: 'SKIPPING',
-        label: '白名单',
+        label: '黑名单',
         value: skippingTotal,
         color: '#6c757d',
         percent: total ? (skippingTotal / total) * 100 : 0

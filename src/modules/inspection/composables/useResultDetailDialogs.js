@@ -77,7 +77,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
       OK: '检查通过',
       FAILED: '检查失败',
       CHECK: '人工检查',
-      SKIPPING: '白名单',
+      SKIPPING: '黑名单',
       UNREACHABLE: '数据缺失'
     }
 
@@ -167,7 +167,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     }
   }
 
-  // ===== 白名单弹窗 =====
+  // ===== 黑名单弹窗 =====
   const whitelistVisible = ref(false)
   const whitelistLoading = ref(false)
   const whitelistData = ref([])
@@ -183,8 +183,8 @@ export function useResultDetailDialogs(jobId, jobInfo) {
       const data = res?.data || res || {}
       whitelistData.value = data.records || []
     } catch (error) {
-      console.error('加载白名单失败:', error)
-      ElMessage.error('加载白名单失败')
+      console.error('加载黑名单失败:', error)
+      ElMessage.error('加载黑名单失败')
     } finally {
       whitelistLoading.value = false
     }
@@ -201,18 +201,18 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     }
 
     try {
-      await ElMessageBox.confirm('确定要将选中的主机从白名单移除吗？', '确认')
+      await ElMessageBox.confirm('确定要将选中的主机从黑名单移除吗？', '确认')
       await whitelistApi.removeBlackHost(selectedWhitelistIds.value)
       ElMessage.success('移除成功')
       showWhitelistDialog()
     } catch (e) {
       if (e !== 'cancel') {
-        console.error('移除白名单失败:', e)
+        console.error('移除黑名单失败:', e)
       }
     }
   }
 
-  // ===== 检查项白名单弹窗 =====
+  // ===== 检查项黑名单弹窗 =====
   const itemWhitelistVisible = ref(false)
   const itemWhitelistLoading = ref(false)
   const itemWhitelistData = ref([])
@@ -229,8 +229,8 @@ export function useResultDetailDialogs(jobId, jobInfo) {
         itemWhitelistData.value = res?.data || res || []
       }
     } catch (error) {
-      console.error('加载检查项白名单失败:', error)
-      ElMessage.error('加载白名单失败')
+      console.error('加载检查项黑名单失败:', error)
+      ElMessage.error('加载黑名单失败')
     } finally {
       itemWhitelistLoading.value = false
     }
@@ -238,13 +238,13 @@ export function useResultDetailDialogs(jobId, jobInfo) {
 
   async function deleteItemWhitelist(item) {
     try {
-      await ElMessageBox.confirm('确定要删除此白名单项吗？', '确认')
+      await ElMessageBox.confirm('确定要删除此黑名单项吗？', '确认')
       await whitelistApi.deleteWhitelist(item.id)
       ElMessage.success('删除成功')
       showItemWhitelist()
     } catch (e) {
       if (e !== 'cancel') {
-        console.error('删除白名单失败:', e)
+        console.error('删除黑名单失败:', e)
       }
     }
   }
@@ -279,7 +279,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     checkItemHostsStatusFilter,
     showCheckItemHostsDialog,
     loadCheckItemHosts,
-    // 白名单
+    // 黑名单
     whitelistVisible,
     whitelistLoading,
     whitelistData,
@@ -287,7 +287,7 @@ export function useResultDetailDialogs(jobId, jobInfo) {
     showWhitelistDialog,
     handleWhitelistSelectionChange,
     removeSelectedWhitelist,
-    // 检查项白名单
+    // 检查项黑名单
     itemWhitelistVisible,
     itemWhitelistLoading,
     itemWhitelistData,
