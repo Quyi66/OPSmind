@@ -18,6 +18,26 @@
           <span class="value">{{ machineInfo.hostKey }}</span>
         </div>
         <div class="info-item">
+          <span class="label">接入方式：</span>
+          <span class="value">
+            <el-tag v-if="agentInfo && agentInfo.connectionType === 'koreops_agent'" type="success" size="small">
+              Agent<span v-if="agentInfo.agentMode === 'gateway'"> (跳板: {{ agentInfo.targetIp }})</span>
+            </el-tag>
+            <el-tag v-else type="info" size="small">SSH</el-tag>
+          </span>
+        </div>
+        <div class="info-item" v-if="agentInfo && agentInfo.connectionType === 'koreops_agent'">
+          <span class="label">Agent 状态：</span>
+          <span class="value">
+            <el-tag :type="agentInfo.agentStatus === 'online' ? 'success' : 'danger'" size="small">
+              {{ agentInfo.agentStatus === 'online' ? '在线' : '离线' }}
+            </el-tag>
+            <span v-if="agentInfo.agentVersion" style="font-size: 12px; color: #909399; margin-left: 6px">
+              v{{ agentInfo.agentVersion }}
+            </span>
+          </span>
+        </div>
+        <div class="info-item">
           <span class="label">OS：</span>
           <span class="value">{{ machineInfo.os_distro }} {{ hostInfoRef.os_version }}</span>
         </div>
@@ -29,8 +49,58 @@
           <span class="label">已安装软件包：</span>
           <span class="value">{{ getInstalledPkgsCount(machineInfo.installed_pkgs) }}</span>
         </div>
+        <div class="info-item" v-if="agentInfo && agentInfo.connectionType === 'koreops_agent'">
+          <el-button type="primary" plain size="small" @click="agentDiagVisible = true">
+            <i class="fa fa-stethoscope" /> Agent 通道诊断
+          </el-button>
+        </div>
       </div>
     </div>
+
+    <!-- Agent 通道诊断弹窗 -->
+    <el-dialog
+      v-model="agentDiagVisible"
+      title="Agent 通道诊断"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <div v-if="agentInfo" class="agent-diag-content">
+        <el-descriptions :column="1" border size="default">
+          <el-descriptions-item label="主机资产 ID">{{ hostId }}</el-descriptions-item>
+          <el-descriptions-item label="Client ID">{{ agentInfo.agentClientId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="接入类型">
+            {{ agentInfo.connectionType === 'koreops_agent' ? 'KoreOps Agent' : 'SSH' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="运行模式">
+            {{ agentInfo.agentMode === 'gateway' ? `跳板模式 (目标 IP: ${agentInfo.targetIp || '-'})` : '本机直连 (Local)' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="在线状态">
+            <el-tag :type="agentInfo.agentStatus === 'online' ? 'success' : 'danger'">
+              {{ agentInfo.agentStatus === 'online' ? '在线' : '离线' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="Agent 版本">v{{ agentInfo.agentVersion || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="支持能力列表">
+            <template v-if="agentInfo.capabilities">
+              <el-tag
+                v-for="cap in agentInfo.capabilities.split(',')"
+                :key="cap"
+                size="small"
+                style="margin-right: 4px"
+              >
+                {{ cap.trim() }}
+              </el-tag>
+            </template>
+            <span v-else>-</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="最后打卡心跳时间">{{ agentInfo.lastSeenAt || '-' }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <template #footer>
+        <el-button @click="agentDiagVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
 
     <!-- Tab 导航 -->
     <el-tabs v-model="activeTab" class="host-tabs">
@@ -112,7 +182,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { patchScanApi } from '../api'
+import { patchScanApi, getHostAgentInfos } from '../api'
 import { formatDateTime, getInstalledPkgsCount } from '../composables/useFormatters'
 import { useHostDetail } from '../composables/useHostDetail'
 import { getAffectedPackageNames } from '../utils/vulnerabilityPackages'
@@ -154,6 +224,30 @@ const fromRouteQuery = computed(() => {
 // Tab 状态
 const activeTab = ref('patches')
 
+// Agent 通道诊断状态
+const agentDiagVisible = ref(false)
+const agentInfo = ref(null)
+
+async function loadAgentInfo() {
+  if (!hostId.value) return
+  try {
+    const res = await getHostAgentInfos(hostId.value)
+    if (Array.isArray(res) && res.length > 0) {
+      agentInfo.value = res[0]
+    }
+  } catch (err) {
+    console.error('Failed to load Agent info for host detail:', err)
+  }
+}
+
+watch(
+  hostId,
+  () => {
+    loadAgentInfo()
+  },
+  { immediate: true }
+)
+
 // 标签页组件引用
 const patchesTabRef = ref(null)
 const packagesTabRef = ref(null)
@@ -161,6 +255,7 @@ const vulnerabilitiesTabRef = ref(null)
 
 // 使用主机详情逻辑
 const { machineLoading, machineInfo, loadMachineInfo } = useHostDetail(hostId, hostInfoRef)
+
 
 // 补丁详情弹窗
 const patchDetailVisible = ref(false)

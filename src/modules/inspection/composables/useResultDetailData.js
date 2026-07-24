@@ -63,6 +63,7 @@ export function useResultDetailData() {
     }
   }
 
+
   /**
    * 加载统计数据
    */
@@ -74,7 +75,7 @@ export function useResultDetailData() {
       const records = data.records || []
 
       // 重置统计
-      statistics.value = {
+      const newStats = {
         OK: 0,
         FAILED: 0,
         CHECK: 0,
@@ -84,10 +85,12 @@ export function useResultDetailData() {
 
       // 填充统计数据
       records.forEach(rec => {
-        if (statistics.value.hasOwnProperty(rec.name)) {
-          statistics.value[rec.name] = rec.value
+        if (newStats.hasOwnProperty(rec.name)) {
+          newStats[rec.name] = Number(rec.value) || 0
         }
       })
+
+      statistics.value = newStats
     } catch (error) {
       console.error('加载统计数据失败:', error)
     } finally {

@@ -133,6 +133,30 @@
                 />
               </el-select>
             </el-form-item>
+            <el-form-item label="接入方式">
+              <el-select
+                v-model="hostFilters.connectionType"
+                placeholder="全部接入方式"
+                clearable
+                style="width: 140px"
+                @change="handleFilter"
+              >
+                <el-option label="SSH" value="ssh" />
+                <el-option label="Agent" value="koreops_agent" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="Agent 状态">
+              <el-select
+                v-model="hostFilters.agentStatus"
+                placeholder="全部状态"
+                clearable
+                style="width: 130px"
+                @change="handleFilter"
+              >
+                <el-option label="在线" value="online" />
+                <el-option label="离线" value="offline" />
+              </el-select>
+            </el-form-item>
             <el-form-item label="标签">
               <el-select
                 v-model="hostFilters.tags"
@@ -183,6 +207,10 @@
             <i class="fa fa-bug" />
             扫描补丁
           </el-button>
+          <el-button type="primary" size="small" @click="agentEnrollDialogVisible = true" plain>
+            <i class="fa fa-plus-circle" />
+            Agent 接入
+          </el-button>
           <el-button
             type="primary"
             size="small"
@@ -222,6 +250,37 @@
                 </el-link>
               </template>
             </el-table-column>
+            <el-table-column label="接入方式" width="120">
+              <template #default="{ row }">
+                <el-tag
+                  v-if="row.connectionType === 'koreops_agent'"
+                  type="success"
+                  size="small"
+                  effect="plain"
+                >
+                  Agent<span v-if="row.agentMode === 'gateway'"> (跳板)</span>
+                </el-tag>
+                <el-tag v-else type="info" size="small" effect="plain">SSH</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="Agent 状态" width="120">
+              <template #default="{ row }">
+                <template v-if="row.connectionType === 'koreops_agent'">
+                  <el-tag
+                    :type="row.agentStatus === 'online' ? 'success' : 'danger'"
+                    size="small"
+                    :title="row.agentStatus === 'offline' ? `最后在线: ${row.lastSeenAt || '未知'}` : ''"
+                  >
+                    {{ row.agentStatus === 'online' ? '在线' : '离线' }}
+                  </el-tag>
+                  <span v-if="row.agentVersion" style="font-size: 11px; color: #909399; margin-left: 4px">
+                    v{{ row.agentVersion }}
+                  </span>
+                </template>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+
             <el-table-column prop="need_reboot" label="是否需要重启" width="110">
               <template #default="{ row }">
                 <el-tag
@@ -999,6 +1058,13 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- Agent 纳管弹窗 -->
+    <AgentEnrollDialog
+      v-model="agentEnrollDialogVisible"
+      :available-hosts="hostTableData"
+      @success="handleAgentEnrollSuccess"
+    />
   </div>
 </template>
 
@@ -1008,7 +1074,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
-import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi } from '../api'
+import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi, getHostAgentInfos } from '../api'
 import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
 import {
   getAffectedPackageDetailParams,
@@ -1029,6 +1095,8 @@ import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDial
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
 import CveLinkList from '../components/common/CveLinkList.vue'
+import AgentEnrollDialog from '../components/common/AgentEnrollDialog.vue'
+
 
 // ECharts
 import { use } from 'echarts/core'
@@ -1148,13 +1216,19 @@ const loading = ref(false)
 const hostTableData = ref([])
 const hostTagLoading = ref(false)
 const hostTagOptions = ref([])
+// Agent 纳管弹窗状态
+const agentEnrollDialogVisible = ref(false)
+
 const hostFilters = reactive({
   os_distro: '',
   os_version: '',
   os_sp_version: '',
+  connectionType: '',
+  agentStatus: '',
   tags: [],
   keyword: ''
 })
+
 const hostVersionFilter = ref('')
 const pagination = reactive({
   page: 1,
@@ -1652,8 +1726,50 @@ async function loadHostData() {
       console.error('Failed to load reboot status:', err)
     }
 
-    hostTableData.value = records
+    // 异步富化 Agent 信息
+    try {
+      const hostIds = records
+        .map(r => r.hosts_id || r.hostsId || r.host_id || r.hostId || r.id || r.host_key)
+        .filter(Boolean)
+      if (hostIds.length > 0) {
+        const agentInfos = await getHostAgentInfos(hostIds)
+        if (Array.isArray(agentInfos) && agentInfos.length > 0) {
+          const agentMap = new Map(agentInfos.map(info => [String(info.hostId), info]))
+          records.forEach(r => {
+            const key = String(r.hosts_id || r.hostsId || r.host_id || r.hostId || r.id || r.host_key)
+            const info = agentMap.get(key)
+            if (info) {
+              r.connectionType = info.connectionType || 'ssh'
+              r.agentStatus = info.agentStatus
+              r.agentClientId = info.agentClientId
+              r.agentVersion = info.agentVersion
+              r.capabilities = info.capabilities
+              r.agentMode = info.agentMode
+              r.targetIp = info.targetIp
+              r.lastSeenAt = info.lastSeenAt
+            } else {
+              r.connectionType = 'ssh'
+              r.agentStatus = null
+            }
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load Agent info:', err)
+    }
+
+    // 本地 Filter: 接入方式 & 在线状态
+    let filteredRecords = records
+    if (hostFilters.connectionType) {
+      filteredRecords = filteredRecords.filter(r => (r.connectionType || 'ssh') === hostFilters.connectionType)
+    }
+    if (hostFilters.agentStatus) {
+      filteredRecords = filteredRecords.filter(r => r.agentStatus === hostFilters.agentStatus)
+    }
+
+    hostTableData.value = filteredRecords
     pagination.total = Number(data.total ?? data.totalElements) || 0
+
   } catch (error) {
     console.error('Failed to load host data:', error)
     hostTableData.value = []
@@ -1662,6 +1778,14 @@ async function loadHostData() {
     loading.value = false
   }
 }
+
+function handleAgentEnrollSuccess(boundHostId) {
+  loadHostData()
+  if (boundHostId) {
+    router.push(`/patches/linux-patch-scan/host/${boundHostId}`)
+  }
+}
+
 
 async function loadHostTagOptions() {
   hostTagLoading.value = true

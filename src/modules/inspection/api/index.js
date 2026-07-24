@@ -55,7 +55,7 @@ export const dtsApi = {
    * CAC_STRUCTURAL_KPI → GET /cac/api/cac/v2/custom-kpi/check-item/{jobId}
    */
   getStructuralKpi(jobId) {
-    return apiService.get(`${CAC_BASE}/v2/custom-kpi/check-item/${jobId}`)
+    return apiService.get(`${CAC_BASE}/v2/custom-kpi/check-item/${jobId}`).then(wrapRecordsResponse)
   },
 
 
@@ -65,7 +65,7 @@ export const dtsApi = {
    * CAC_GET_STATISTICS → GET /cac/api/cac/v2/statistics/check-item/{jobId}
    */
   getStatistics(jobId) {
-    return apiService.get(`${CAC_BASE}/v2/statistics/check-item/${jobId}`)
+    return apiService.get(`${CAC_BASE}/v2/statistics/check-item/${jobId}`).then(wrapRecordsResponse)
   },
 
   getStructuralKpiHostAll(jobId) {
