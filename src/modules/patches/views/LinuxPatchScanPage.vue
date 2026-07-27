@@ -1873,6 +1873,8 @@ function handleHostReset() {
   hostFilters.os_distro = ''
   hostFilters.os_version = ''
   hostFilters.os_sp_version = ''
+  hostFilters.connectionType = ''
+  hostFilters.agentStatus = ''
   hostFilters.tags = []
   hostVersionFilter.value = ''
   hostFilters.keyword = ''
