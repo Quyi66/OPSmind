@@ -36,10 +36,16 @@ export function formatPackages(pkgsStr) {
   return pkgs.join(', ')
 }
 
-// 获取CVE列表
+// 获取CVE/CNNVD列表
 export function getCVEList(vulsStr) {
   if (!vulsStr) return []
-  return vulsStr.split(',').filter(v => v.trim())
+  if (Array.isArray(vulsStr)) {
+    return vulsStr.map(v => String(v).trim()).filter(Boolean)
+  }
+  return String(vulsStr)
+    .split(',')
+    .map(v => v.trim())
+    .filter(Boolean)
 }
 
 function normalizeCveLinkTarget(source) {

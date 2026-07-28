@@ -1341,24 +1341,39 @@ const rpmDetailVisible = ref(false)
 const rpmDetailLoading = ref(false)
 const rpmDetailData = ref({})
 
-async function loadPatchDetail(patchId, osDistro) {
+async function loadPatchDetail(patchId, osDistro, patchRow = null) {
   currentPatchOsDistro.value = osDistro || ''
   patchDetailVisible.value = true
   patchDetailLoading.value = true
-  patchDetailData.value = {}
+  patchDetailData.value = patchRow ? { ...patchRow } : {}
   try {
     const response = await patchScanApi.getPatchDetail({ patch_id: patchId })
     const records = response?.data?.records || response?.records || []
     if (records.length > 0) {
-      patchDetailData.value = records[0]
+      const detail = records[0]
+      const hasCnnvd =
+        (Array.isArray(detail.related_cnnvds) && detail.related_cnnvds.length > 0) ||
+        (typeof detail.related_cnnvds === 'string' && detail.related_cnnvds.trim())
+
+      patchDetailData.value = {
+        ...(patchRow || {}),
+        ...detail,
+        related_cnnvds: hasCnnvd ? detail.related_cnnvds : patchRow?.related_cnnvds || detail.related_cnnvds
+      }
+    } else if (patchRow) {
+      patchDetailData.value = patchRow
     } else {
       ElMessage.warning('未找到补丁详情')
       patchDetailVisible.value = false
     }
   } catch (error) {
     console.error('Failed to load patch detail:', error)
-    ElMessage.error('获取补丁详情失败')
-    patchDetailVisible.value = false
+    if (patchRow) {
+      patchDetailData.value = patchRow
+    } else {
+      ElMessage.error('获取补丁详情失败')
+      patchDetailVisible.value = false
+    }
   } finally {
     patchDetailLoading.value = false
   }
@@ -2024,8 +2039,8 @@ function handleVulnFilterChange() {
 }
 
 function handlePatchClick(row) {
-  if (row.patch_id) {
-    loadPatchDetail(row.patch_id, row.os_distro)
+  if (row?.patch_id) {
+    loadPatchDetail(row.patch_id, row.os_distro, row)
   }
 }
 
