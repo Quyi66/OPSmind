@@ -84,7 +84,7 @@
           </el-tooltip>
 
           <!-- Notification Button -->
-          <NotificationPopover
+          <!-- <NotificationPopover
             v-model:visible="notificationPopoverVisible"
             @count-change="handleNotificationCountChange"
           >
@@ -107,7 +107,7 @@
                 </button>
               </el-tooltip>
             </div>
-          </NotificationPopover>
+          </NotificationPopover> -->
 
           <!-- User Dropdown -->
           <el-dropdown @command="handleUserCommand" class="user-dropdown">
