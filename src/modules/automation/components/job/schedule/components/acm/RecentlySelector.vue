@@ -234,26 +234,18 @@ function handleSelectionChange(selection) {
     if (latestRow) {
       tableRef.value?.toggleRowSelection(latestRow, true)
     }
-    setTimeout(() => {
+    nextTick(() => {
       isInternalUpdate = false
-    }, 0)
+    })
   }
 
-  const currentPageIds = pagedData.value.map(row => row.id)
-  const otherPageSelections = filteredData.value.filter(
-    row => !currentPageIds.includes(row.id) && doesJobMatchSelection(row)
-  )
-
-  const mergedRows = isSingleSelector.value
-    ? effectiveSelection
-    : [...otherPageSelections, ...effectiveSelection]
-  const selectedHosts = extractHostsFromJobs(mergedRows)
+  const selectedHosts = extractHostsFromJobs(effectiveSelection)
 
   isInternalUpdate = true
   emit('update:modelValue', isSingleSelector.value ? selectedHosts.slice(0, 1) : selectedHosts)
-  setTimeout(() => {
+  nextTick(() => {
     isInternalUpdate = false
-  }, 0)
+  })
 }
 
 async function syncSelectionFromModelValue() {
@@ -268,16 +260,18 @@ async function syncSelectionFromModelValue() {
 
   const selectedKeySet = new Set((props.modelValue || []).map(item => item.key || item.value))
 
-  pagedData.value.forEach(row => {
-    const matched = doesJobMatchSelection(row, selectedKeySet)
-    if (matched) {
-      tableRef.value.toggleRowSelection(row, true)
-    }
-  })
+  if (selectedKeySet.size > 0) {
+    filteredData.value.forEach(row => {
+      const matched = doesJobMatchSelection(row, selectedKeySet)
+      if (matched) {
+        tableRef.value.toggleRowSelection(row, true)
+      }
+    })
+  }
 
-  setTimeout(() => {
+  nextTick(() => {
     isInternalUpdate = false
-  }, 0)
+  })
 }
 
 /**

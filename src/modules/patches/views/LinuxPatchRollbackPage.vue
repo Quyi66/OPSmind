@@ -462,8 +462,8 @@ function parseHosts(hostsStr) {
   if (!hostsStr) return []
   return hostsStr
     .split(',')
-    .map(h => h.trim())
-    .filter(h => h)
+    .map(h => h.replace(/^['"“”‘’\s]+|['"“”‘’\s]+$/g, '').trim())
+    .filter(Boolean)
 }
 
 // 解析更新软件包

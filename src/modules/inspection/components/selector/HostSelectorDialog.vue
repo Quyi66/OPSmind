@@ -787,20 +787,24 @@ function searchByInput() {
 // 最近使用选择变化
 function handleRecentlySelectionChange(selection) {
   selectedRecentlyHosts.value = selection
-  selection.forEach(job => {
-    // 将作业中的主机添加到已选列表
+  const recentlyHosts = []
+  ;(selection || []).forEach(job => {
     if (job.run_result_hosts) {
       job.run_result_hosts.forEach(host => {
-        if (!selectedHosts.value.some(h => h.value === host.value)) {
-          selectedHosts.value.push({
-            key: host.key || host.value,
-            value: host.value,
-            assetType: host.assetType || 'linux'
-          })
+        const item = {
+          key: host.key || host.value,
+          value: host.value,
+          assetType: host.assetType || 'linux',
+          fromRecently: true
+        }
+        if (!recentlyHosts.some(h => h.value === item.value)) {
+          recentlyHosts.push(item)
         }
       })
     }
   })
+  const otherHosts = selectedHosts.value.filter(h => !h.fromRecently)
+  selectedHosts.value = [...otherHosts, ...recentlyHosts]
 }
 
 // 移除主机

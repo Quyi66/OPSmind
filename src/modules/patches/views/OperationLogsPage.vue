@@ -97,29 +97,37 @@
             </template>
           </el-table-column>
           <el-table-column prop="executor_node" label="执行引擎节点" width="120" />
-          <el-table-column prop="target_hosts" label="目标节点" width="180">
+          <el-table-column prop="target_hosts" label="目标节点" width="240">
             <template #default="{ row }">
-              <div v-if="row.target_hosts" class="host-tags">
-                <el-tag
-                  v-for="(host, idx) in getHostPreview(row.target_hosts).leading"
-                  :key="idx"
-                  type="info"
-                >
-                  {{ host }}
-                </el-tag>
-                <span v-if="getHostPreview(row.target_hosts).last" class="host-tag-group">
-                  <el-tag type="info">
-                    {{ getHostPreview(row.target_hosts).last }}
-                  </el-tag>
+              <div
+                v-if="row.target_hosts"
+                class="host-tags-wrapper"
+                @click="handleShowAllHosts(row)"
+              >
+                <div class="host-tags">
                   <el-tag
-                    v-if="getHostPreview(row.target_hosts).extraCount > 0"
-                    @click="handleShowAllHosts(row)"
-                    style="cursor: pointer"
+                    v-for="(host, idx) in getHostPreview(row.target_hosts).leading"
+                    :key="idx"
                     type="info"
+                    size="small"
+                    class="host-clickable-tag"
                   >
-                    +{{ getHostPreview(row.target_hosts).extraCount }}
+                    {{ host }}
                   </el-tag>
-                </span>
+                  <template v-if="getHostPreview(row.target_hosts).last">
+                    <el-tag type="info" size="small" class="host-clickable-tag">
+                      {{ getHostPreview(row.target_hosts).last }}
+                    </el-tag>
+                    <el-tag
+                      v-if="getHostPreview(row.target_hosts).extraCount > 0"
+                      type="info"
+                      size="small"
+                      class="host-clickable-tag"
+                    >
+                      +{{ getHostPreview(row.target_hosts).extraCount }}
+                    </el-tag>
+                  </template>
+                </div>
               </div>
               <span v-else>-</span>
             </template>
@@ -215,15 +223,73 @@
     <WindowsScanReportDialog v-model="winScanReportVisible" :run-id="winScanReportRunId" />
 
     <!-- 目标节点列表对话框 -->
-    <el-dialog v-model="hostsDialogVisible" title="目标节点" width="520px" destroy-on-close>
-      <div v-if="hostsDialogList.length" style="display: flex; flex-wrap: wrap; gap: 8px">
-        <el-tag v-for="(host, idx) in hostsDialogList" :key="idx" type="info">
-          {{ host }}
-        </el-tag>
+    <el-dialog
+      v-model="hostsDialogVisible"
+      width="680px"
+      destroy-on-close
+      class="hosts-dialog"
+    >
+      <template #header>
+        <div class="hosts-dialog-header">
+          <span class="hosts-dialog-title">目标节点</span>
+          <el-tag size="small" type="info" effect="light" round class="hosts-count-badge">
+            共 {{ hostsDialogList.length }} 台主机
+          </el-tag>
+        </div>
+      </template>
+
+      <div class="hosts-dialog-body">
+        <div class="hosts-dialog-toolbar">
+          <el-input
+            v-model="hostSearchKey"
+            placeholder="搜索 IP 或主机名..."
+            clearable
+            size="default"
+            :prefix-icon="Search"
+            class="hosts-search-input"
+          />
+        </div>
+
+        <el-scrollbar max-height="340px" class="hosts-scrollbar">
+          <div v-if="filteredHostsDialogList.length" class="hosts-tag-container">
+            <el-tooltip
+              v-for="(host, idx) in filteredHostsDialogList"
+              :key="idx"
+              content="点击复制 IP"
+              placement="top"
+              :show-after="300"
+            >
+              <div
+                class="host-item-tag"
+                @click="handleCopyHost(host)"
+              >
+                <el-icon class="host-icon"><Monitor /></el-icon>
+                <span>{{ host }}</span>
+              </div>
+            </el-tooltip>
+          </div>
+          <el-empty
+            v-else-if="hostsDialogList.length && !filteredHostsDialogList.length"
+            description="未找到匹配的目标节点"
+            :image-size="70"
+          />
+          <el-empty
+            v-else
+            description="暂无目标节点数据"
+            :image-size="70"
+          />
+        </el-scrollbar>
       </div>
-      <span v-else>-</span>
+
       <template #footer>
-        <el-button @click="hostsDialogVisible = false">关闭</el-button>
+        <div class="hosts-dialog-footer">
+          <span class="hosts-filter-info">
+            <template v-if="hostSearchKey && hostsDialogList.length">
+              已筛选 {{ filteredHostsDialogList.length }} / 共 {{ hostsDialogList.length }} 项
+            </template>
+          </span>
+          <el-button @click="hostsDialogVisible = false">关闭</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -232,7 +298,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElTag } from 'element-plus'
-import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
+import { Refresh, Search, RefreshRight, Monitor } from '@element-plus/icons-vue'
 import { patchLogsApi } from '../api'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import { translateText } from '@/utils/i18n'
@@ -283,6 +349,13 @@ const actionColumnWidth = computed(() => {
 // 目标节点对话框
 const hostsDialogVisible = ref(false)
 const hostsDialogList = ref([])
+const hostSearchKey = ref('')
+
+const filteredHostsDialogList = computed(() => {
+  if (!hostSearchKey.value) return hostsDialogList.value
+  const kw = hostSearchKey.value.trim().toLowerCase()
+  return hostsDialogList.value.filter(host => host.toLowerCase().includes(kw))
+})
 
 const ACTION_KEYS = {
   patchScan: '#{app_vap.menu.patch_scan.title}',
@@ -396,13 +469,44 @@ function parseHosts(hostsStr) {
   if (!hostsStr) return []
   return hostsStr
     .split(',')
-    .map(host => host.trim())
+    .map(host => host.replace(/^['"“”‘’\s]+|['"“”‘’\s]+$/g, '').trim())
     .filter(Boolean)
 }
 
 function handleShowAllHosts(row) {
   hostsDialogList.value = parseHosts(row.target_hosts)
+  hostSearchKey.value = ''
   hostsDialogVisible.value = true
+}
+
+async function copyToClipboard(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+    return true
+  } catch (err) {
+    console.error('Copy failed', err)
+    return false
+  }
+}
+
+async function handleCopyHost(host) {
+  const success = await copyToClipboard(host)
+  if (success) {
+    ElMessage.success(`已复制 IP: ${host}`)
+  } else {
+    ElMessage.error('复制失败')
+  }
 }
 
 function getHostPreview(hostsStr) {
@@ -743,22 +847,136 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+.host-tags-wrapper {
+  cursor: pointer;
+  display: inline-block;
+  width: 100%;
+}
+
 .host-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   align-items: center;
-}
 
-.host-tag-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  .host-clickable-tag {
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      border-color: var(--el-color-primary-light-5, #a0cfff);
+      color: var(--el-color-primary, #409eff);
+      background-color: var(--el-color-primary-light-9, #ecf5ff);
+      transform: translateY(-1px);
+    }
+  }
 }
 
 .action-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.hosts-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hosts-dialog-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.hosts-count-badge {
+  font-weight: 500;
+}
+
+.hosts-dialog-body {
+  padding: 4px 0;
+}
+
+.hosts-dialog-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .hosts-search-input {
+    flex: 1;
+  }
+}
+
+.hosts-scrollbar {
+  border: 1px solid var(--el-border-color-lighter, #e2e8f0);
+  border-radius: 8px;
+  padding: 14px;
+  background-color: var(--el-fill-color-light, #f8fafc);
+}
+
+.hosts-tag-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.host-item-tag {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 12px;
+  height: 32px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--el-text-color-regular, #334155);
+  background-color: var(--el-bg-color-overlay, #ffffff);
+  border: 1px solid var(--el-border-color, #cbd5e1);
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+
+  &:hover {
+    border-color: var(--el-color-primary-light-3, #79bbff);
+    color: var(--el-color-primary, #409eff);
+    background-color: var(--el-color-primary-light-9, #ecf5ff);
+    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
+    transform: translateY(-1px);
+
+    .host-icon {
+      color: var(--el-color-primary, #409eff);
+    }
+  }
+
+  .host-icon {
+    font-size: 14px;
+    color: #64748b;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1;
+  }
+}
+
+.hosts-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .hosts-filter-info {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+  }
 }
 </style>
