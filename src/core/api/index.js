@@ -475,7 +475,7 @@ function normalizeOperationLogStatusFilter(status) {
     .split(',')
     .map(item => item.trim())
     .filter(Boolean)
-    .map(item => (item === 'COMPLETED' ? 'SUCCESS' : item))
+    .map(item => item)
     .join(',')
 }
 

@@ -72,7 +72,7 @@
 
     <!-- 用户列表表格 -->
     <div class="ops-table-wrapper">
-      <el-table :data="tableData" v-loading="loading" max-height="calc(100vh - 264px)">
+      <el-table :data="paginatedData" v-loading="loading" max-height="calc(100vh - 264px)">
         <el-table-column prop="host_key" label="IP" width="130" />
 
         <el-table-column prop="hostname" label="主机名" width="120" show-overflow-tooltip />
@@ -166,8 +166,8 @@
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
         background
-        @size-change="loadData"
-        @current-change="loadData"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
       />
     </div>
 
@@ -196,7 +196,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import * as userApi from '@/modules/user/api'
 import ScanHostDialog from '@/modules/user/components/dialogs/ScanHostDialog.vue'
@@ -207,17 +207,27 @@ import LoginErrorDialog from '@/modules/user/components/dialogs/LoginErrorDialog
 
 const filters = ref({
   types: ['0', '1'],
-  lockStatus: ['2'],
+  lockStatus: ['1', '2'],
   host_key: '',
   username: '',
   keyword: ''
 })
 
 const loading = ref(false)
-const tableData = ref([])
+const allData = ref([])       // 后端返回的全量数据
+const filteredData = ref([])  // 经过前端筛选后的数据
 const currentPage = ref(1)
 const pageSize = ref(10)
-const total = ref(0)
+
+// 总条数：基于筛选后的数据计算
+const total = computed(() => filteredData.value.length)
+
+// 当前页数据：基于前端分页切片
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredData.value.slice(start, end)
+})
 
 const showScanHostDialog = ref(false)
 const showCreateUserDialog = ref(false)
@@ -272,23 +282,43 @@ function formatDateTime(isoString) {
   }
 }
 
+/**
+ * 对全量数据做前端关键词筛选，并重置到第一页
+ */
+function applyFrontendFilter() {
+  const keyword = (filters.value.keyword || '').trim().toLowerCase()
+  if (!keyword) {
+    filteredData.value = allData.value
+  } else {
+    const searchFields = ['host_key', 'hostname', 'username', 'primary_group', 'secondary_group', 'comment', 'shell', 'home']
+    filteredData.value = allData.value.filter(row =>
+      searchFields.some(field => {
+        const val = row[field]
+        return val && String(val).toLowerCase().includes(keyword)
+      })
+    )
+  }
+}
+
+/**
+ * 从后端获取全量数据（不传分页参数），然后在前端做筛选和分页
+ */
 async function loadData() {
   loading.value = true
   try {
     const response = await userApi.getUsers({
       types: filters.value.types.join(','),
       lockStatus: filters.value.lockStatus.join(','),
-      page: currentPage.value,
-      size: pageSize.value,
       filter: filters.value.keyword
         ? `host_key|hostname|primary_group|secondary_group|comment|shell|home|username:*${filters.value.keyword}*`
         : undefined
     })
-    tableData.value = response?.records || response?.data?.records || []
-    total.value = response?.total || response?.data?.total || 0
+    allData.value = response?.records || response?.data?.records || []
+    applyFrontendFilter()
   } catch (error) {
     console.error('Failed to load users:', error)
-    tableData.value = []
+    allData.value = []
+    filteredData.value = []
   } finally {
     loading.value = false
   }
@@ -321,6 +351,14 @@ function handleLoginErrorDetail(row) {
 function handleSearch() {
   currentPage.value = 1
   loadData()
+}
+
+function handleSizeChange() {
+  currentPage.value = 1
+}
+
+function handleCurrentChange() {
+  // 切换页码无需操作，paginatedData computed 会自动响应
 }
 
 function handleReset() {
