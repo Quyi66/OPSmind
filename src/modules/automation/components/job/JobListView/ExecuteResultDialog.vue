@@ -261,10 +261,10 @@
             >
               <div class="ops-filter-bar">
                 <el-form :inline="true" size="small">
-                  <el-form-item label="Play" v-if="listPlayOptions.length">
+                  <el-form-item label="剧本" v-if="listPlayOptions.length">
                     <el-select
                       v-model="selectedPlayFilter"
-                      placeholder="全部主机"
+                      placeholder="全部剧本"
                       clearable
                       style="width: 180px"
                     >
@@ -308,14 +308,14 @@
               <el-table :data="paginatedListRows" :height="'calc(100vh - 350px)'" class="result-table">
                 <el-table-column prop="host" label="主机" width="180" show-overflow-tooltip />
                 <el-table-column
-                  prop="delegateHost"
-                  label="Delegate"
-                  width="160"
+                  prop="executorUrl"
+                  label="执行主机"
+                  width="220"
                   show-overflow-tooltip
                 />
                 <el-table-column prop="task" label="任务" min-width="220" show-overflow-tooltip />
-                <el-table-column prop="play" label="Play" width="200" show-overflow-tooltip />
-                <el-table-column label="状态" width="120">
+                <el-table-column prop="play" label="剧本" width="200" show-overflow-tooltip />
+                <el-table-column label="状态" width="100">
                   <template #default="{ row }">
                     <el-tag size="small" :type="taskStatusTag(row.status)">
                       {{ taskStatusLabel(row.status) }}
@@ -1214,6 +1214,9 @@ function buildAnsibleArtifacts(data, enabled) {
     if (!output) return
     const parsed = safeJsonParse(output, null)
     if (parsed) {
+      if (typeof parsed === 'object' && parsed !== null) {
+        parsed._executorUrl = batch?.executorUrl ?? batch?.executor_url ?? ''
+      }
       contents.push(parsed)
     }
   })
@@ -1227,6 +1230,7 @@ function summarizeHostRows(contents) {
   const rows = []
   let counter = 0
   contents.forEach((content, contentIndex) => {
+    const executorUrl = content?._executorUrl ?? ''
     const plays = Array.isArray(content?.plays) ? content.plays : []
     plays.forEach((play, playIndex) => {
       const playName = play?.play?.name || play?.name || `Play ${contentIndex + 1}-${playIndex + 1}`
@@ -1241,6 +1245,7 @@ function summarizeHostRows(contents) {
             id: `row-${counter++}`,
             host: parsedHost.targetHost || parsedHost.delegateHost || hostKey,
             delegateHost: parsedHost.delegateHost,
+            executorUrl: executorUrl || '',
             play: playName,
             task: taskName,
             status: detectHostStatus(host),
@@ -1440,11 +1445,13 @@ function filterListRows(rows, filters) {
     const task = row.task ? row.task.toLowerCase() : ''
     const rowHost = row.host ? row.host.toLowerCase() : ''
     const delegate = row.delegateHost ? row.delegateHost.toLowerCase() : ''
+    const executorUrl = row.executorUrl ? row.executorUrl.toLowerCase() : ''
     return (
       output.includes(term) ||
       task.includes(term) ||
       rowHost.includes(term) ||
-      delegate.includes(term)
+      delegate.includes(term) ||
+      executorUrl.includes(term)
     )
   })
 }
