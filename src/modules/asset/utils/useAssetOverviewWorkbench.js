@@ -77,25 +77,31 @@ export function useAssetOverviewWorkbench() {
   })
 
   const connectionStats = computed(() => {
-    const statsMap = connectionData.value.reduce((result, item) => {
-      if (item?.condi) {
-        result[item.condi] = toNumber(item?.c)
-      }
-      return result
-    }, {})
+    let successCount = 0
+    let failureCount = 0
 
-    const successCount = statsMap.recently_ok || 0
-    const failureCount = statsMap.recently || 0
+    connectionData.value.forEach(item => {
+      const statusStr = String(item?.status ?? item?.condi ?? '')
+      const countVal = toNumber(item?.count ?? item?.c ?? 0)
+      if (statusStr === '0' || statusStr === 'recently_ok') {
+        successCount = countVal
+      } else if (statusStr === '1' || statusStr === 'recently' || statusStr === 'sjxy_all') {
+        failureCount = countVal
+      }
+    })
+
     const totalConnection = successCount + failureCount
+    const rawRate = totalConnection ? (successCount / totalConnection) * 100 : 0
+    const successRate = totalConnection
+      ? (successCount < totalConnection && rawRate > 99 ? rawRate.toFixed(1) : Math.round(rawRate))
+      : 0
 
     return {
       successCount,
       failureCount,
-      anomalyCount: statsMap.sjxy_all || failureCount,
-      todayCount: statsMap.today || 0,
-      lowCount: statsMap.low || 0,
+      anomalyCount: failureCount,
       totalConnection,
-      successRate: totalConnection ? Math.round((successCount / totalConnection) * 100) : 0
+      successRate
     }
   })
 

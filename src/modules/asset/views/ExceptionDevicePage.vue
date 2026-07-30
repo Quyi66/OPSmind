@@ -1,9 +1,9 @@
 <template>
   <div class="ops-page-layout ops-page-layout--page-scroll">
     <!-- KPI 卡片区域 -->
-    <div class="kpi-section">
+    <!-- <div class="kpi-section">
       <KpiCards :data="kpiData" :loading="kpiLoading" @click="handleKpiClick" />
-    </div>
+    </div> -->
 
     <!-- 筛选区 -->
     <div class="ops-filter-bar">
@@ -21,11 +21,9 @@
         </el-form-item>
         <el-form-item label="状态筛选">
           <el-select v-model="filters.conditions" placeholder="筛选条件" style="width: 180px" @change="handleSearch">
-            <el-option label="全部异常" value="sjxy_all" />
-            <el-option label="今日异常" value="today" />
-            <el-option label="连通率小于50%设备" value="low" />
-            <el-option label="最近一次连通失败" value="recently" />
-            <el-option label="最近一次连通成功设备" value="recently_ok" />
+            <el-option label="全部设备" value="sjxy_all" />
+            <el-option label="连通正常设备" value="recently_ok" />
+            <el-option label="连通异常设备" value="recently" />
           </el-select>
         </el-form-item>
         <el-form-item label="设备 IP">
@@ -173,11 +171,11 @@
         </el-table-column>
 
         <!-- 3. 异常原因 -->
-        <el-table-column label="异常详情" min-width="180" show-overflow-tooltip>
+        <!-- <el-table-column label="异常详情" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
             <span>{{ row.description || '-' }}</span>
           </template>
-        </el-table-column>
+        </el-table-column> -->
 
         <!-- 4. 更新时间 -->
         <el-table-column label="最后同步时间" min-width="160">

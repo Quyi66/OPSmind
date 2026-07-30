@@ -8,17 +8,17 @@
       <div class="chart-container" ref="chartRef"></div>
     </div>
 
-    <!-- 右侧卡片：异常详情列表 -->
+    <!-- 右侧卡片：连通诊断详情 -->
     <div class="dashboard-card right-card">
       <div class="list-header">
-        <span class="list-title">异常诊断详情</span>
+        <span class="list-title">连通诊断详情</span>
       </div>
       <div class="metrics-list">
         <div
           v-for="item in listData"
           :key="item.condi"
           class="metric-item"
-          @click="handleItemClick(item.condi)"
+          @click="handleItemClick(item.queryCondi)"
         >
           <!-- 图标 -->
           <div class="metric-icon-wrapper" :class="item.theme">
@@ -29,14 +29,14 @@
           <div class="metric-content">
             <div class="metric-info-row">
               <span class="metric-name">{{ item.title }}</span>
-              <span class="metric-value" :class="item.theme">{{ item.value }}</span>
+              <span class="metric-value" :class="item.theme">{{ item.value.toLocaleString('zh-CN') }} 台</span>
             </div>
             <!-- 进度条背景 -->
             <div class="metric-progress-bg">
               <div
                 class="metric-progress-bar"
                 :class="item.theme"
-                :style="{ width: calculatePercent(item.value) }"
+                :style="{ width: `${item.percent}%` }"
               ></div>
             </div>
           </div>
@@ -75,63 +75,63 @@ const chartRef = ref(null)
 let chartInstance = null
 let resizeObserver = null
 
-// KPI 定义
-const kpiConfig = {
-  recently_ok: { title: '连通成功', color: '#67C23A' },
-  recently: { title: '连通失败', color: '#F56C6C' },
-  sjxy_all: {
-    title: '所有连通异常',
-    icon: 'fa-exclamation',
-    theme: 'warning'
-  },
-  today: {
-    title: '当日新增异常',
-    icon: 'fa-bell',
-    theme: 'danger'
-  },
-  low: {
-    title: '连通率 < 50%',
-    icon: 'fa-chart-pie',
-    theme: 'primary'
-  }
-}
+// 解析接口数据 (兼容 status "0"/"1" 以及旧 condi "recently_ok"/"recently")
+const parsedStats = computed(() => {
+  let okCount = 0
+  let failCount = 0
 
-// 数据映射
-const dataMap = computed(() => {
-  const map = {}
   props.data.forEach(item => {
-    map[item.condi] = item.c
+    const s = String(item.status ?? item.condi ?? '')
+    const c = Number(item.count ?? item.c ?? 0) || 0
+    if (s === '0' || s === 'recently_ok') {
+      okCount += c
+    } else if (s === '1' || s === 'recently' || s === 'sjxy_all') {
+      failCount += c
+    }
   })
-  return map
+
+  const total = okCount + failCount
+  const rawRate = total > 0 ? (okCount / total) * 100 : 0
+  const successRate = total > 0
+    ? (okCount < total && rawRate > 99 ? rawRate.toFixed(1) : Math.round(rawRate))
+    : 0
+
+  return { okCount, failCount, total, successRate }
 })
 
 // 列表数据
 const listData = computed(() => {
-  const list = ['sjxy_all', 'today', 'low']
-  return list.map(key => {
-    const conf = kpiConfig[key]
-    return {
-      condi: key,
-      title: conf.title,
-      icon: conf.icon,
-      theme: conf.theme,
-      value: dataMap.value[key] || 0
+  const { okCount, failCount, total } = parsedStats.value
+
+  const calcProgressPercent = (val) => {
+    if (!val || !total) return 0
+    if (val === total) return 100
+    // 使用平方根比例尺处理极大值与较小值差异，确保非零的小数量（如 132 台）也能展现明显可视长度（约 7% 宽度）
+    const ratioPct = (Math.sqrt(val) / Math.sqrt(total)) * 100
+    return Math.min(Math.max(Number(ratioPct.toFixed(1)), 5), 100)
+  }
+
+  return [
+    {
+      condi: '0',
+      queryCondi: 'recently_ok',
+      title: '连通正常设备',
+      icon: 'fa-check-circle',
+      theme: 'success',
+      value: okCount,
+      percent: calcProgressPercent(okCount)
+    },
+    {
+      condi: '1',
+      queryCondi: 'recently',
+      title: '连通异常设备',
+      icon: 'fa-exclamation-triangle',
+      theme: 'danger',
+      value: failCount,
+      percent: calcProgressPercent(failCount)
     }
-  })
+  ]
 })
-
-const maxValue = computed(() => {
-  const values = listData.value.map(i => i.value)
-  return Math.max(...values, 5) // 最小基数5
-})
-
-function calculatePercent(val) {
-  if (val <= 0) return '0%'
-  // 使用平方根比例尺（Square Root Scale）来处理高动态范围（High Dynamic Range）的数据，
-  // 确保在最大值很大（例如几百）时，较小的不同非零值（如 5 和 2）依然能够呈现明显区别的条形图长度，且不会过于微小。
-  const computedPercent = (Math.sqrt(val) / Math.sqrt(maxValue.value)) * 100
-  return `${Math.min(Math.max(computedPercent, 3), 100)}%`
-}
 
 // 初始化图表
 function initChart() {
@@ -144,39 +144,37 @@ function initChart() {
 
   chartInstance = echarts.init(chartRef.value, isDark.value ? 'dark' : '')
 
-  const okCount = dataMap.value['recently_ok'] || 0
-  const failCount = dataMap.value['recently'] || 0
-  const total = okCount + failCount
-  const successRate = total > 0 ? Math.round((okCount / total) * 100) : 0
+  const { okCount, failCount, successRate } = parsedStats.value
 
   const option = {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'item',
-      formatter: '{b}: {c} ({d}%)'
+      confine: true,
+      formatter: '{b}: {c} 台 ({d}%)'
     },
     title: {
       text: `${successRate}%`,
       subtext: '连通率',
       left: 'center',
-      top: '32%',
+      top: '26%',
       textStyle: {
-        fontSize: 28,
+        fontSize: 18,
         fontWeight: 'bold',
         color: isDark.value ? '#e5e7eb' : '#303133',
         fontFamily: 'Inter, sans-serif'
       },
       subtextStyle: {
-        fontSize: 12,
+        fontSize: 11,
         color: isDark.value ? '#9ca3af' : '#909399',
-        marginTop: 4
+        marginTop: 2
       }
     },
     legend: {
-      bottom: '10',
+      bottom: '0',
       left: 'center',
       icon: 'circle',
-      itemGap: 24,
+      itemGap: 16,
       textStyle: {
         color: isDark.value ? '#d1d5db' : '#606266',
         fontSize: 12
@@ -186,28 +184,28 @@ function initChart() {
       {
         name: '连通状态',
         type: 'pie',
-        radius: ['55%', '70%'],
-        center: ['50%', '45%'],
+        radius: ['58%', '76%'],
+        center: ['50%', '40%'],
         avoidLabelOverlap: false,
         itemStyle: {
-          borderRadius: 8,
+          borderRadius: 6,
           borderColor: isDark.value ? '#374151' : '#fff',
-          borderWidth: 3
+          borderWidth: 2
         },
         label: { show: false },
         labelLine: { show: false },
         data: [
           {
             value: okCount,
-            name: '连通成功',
+            name: '连通正常',
             condi: 'recently_ok',
-            itemStyle: { color: kpiConfig['recently_ok'].color }
+            itemStyle: { color: '#67C23A' }
           },
           {
             value: failCount,
-            name: '连通失败',
+            name: '连通异常',
             condi: 'recently',
-            itemStyle: { color: kpiConfig['recently'].color }
+            itemStyle: { color: '#F56C6C' }
           }
         ]
       }
@@ -282,14 +280,12 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .kpi-dashboard {
-  /* 移除一体化样式，改为 Flex 布局容器 */
   display: flex;
-  gap: 24px; /* 卡片间距 */
-  margin-bottom: 24px;
-  height: 260px;
+  gap: 16px;
+  margin-bottom: 16px;
+  height: 170px;
 }
 
-/* 统一样式 */
 .dashboard-card {
   background: var(--el-bg-color);
   border-radius: 12px;
@@ -305,20 +301,19 @@ onUnmounted(() => {
   }
 }
 
-/* 左侧卡片 */
 .left-card {
-  flex: 0 0 320px; /* 固定宽度，比之前稍微宽一点以适应白色背景 */
-  padding: 12px 20px;
+  flex: 0 0 260px;
+  padding: 10px 16px;
   position: relative;
 }
 
 .chart-header {
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .chart-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
 }
@@ -328,22 +323,21 @@ onUnmounted(() => {
   width: 100%;
 }
 
-/* 右侧卡片 */
 .right-card {
-  flex: 1; /* 占据剩余空间 */
-  padding: 12px 30px;
+  flex: 1;
+  padding: 10px 20px;
 }
 
 .list-header {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .list-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
   position: relative;
-  padding-left: 12px;
+  padding-left: 10px;
 
   &::before {
     content: '';
@@ -351,8 +345,8 @@ onUnmounted(() => {
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 4px;
-    height: 16px;
+    width: 3px;
+    height: 14px;
     background: var(--el-color-primary);
     border-radius: 2px;
   }
@@ -362,17 +356,18 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: space-around;
+  gap: 8px;
 }
 
 .metric-item {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
-  border-radius: 10px;
+  padding: 8px 14px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: var(--el-bg-color-page); /* 列表项稍微加一点底色，与白色卡片区分 */
+  background: var(--el-bg-color-page);
   border: 1px solid transparent;
 
   &:hover {
@@ -387,16 +382,20 @@ onUnmounted(() => {
 }
 
 .metric-icon-wrapper {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  margin-right: 16px;
+  font-size: 15px;
+  margin-right: 12px;
   flex-shrink: 0;
 
+  &.success {
+    background: rgba(103, 194, 58, 0.1);
+    color: #67c23a;
+  }
   &.warning {
     background: rgba(250, 173, 20, 0.1);
     color: #faad14;
@@ -415,8 +414,8 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-right: 20px;
+  gap: 4px;
+  margin-right: 16px;
 }
 
 .metric-info-row {
@@ -426,16 +425,19 @@ onUnmounted(() => {
 }
 
 .metric-name {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--el-text-color-regular);
   font-weight: 500;
 }
 
 .metric-value {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   font-family: 'Inter', sans-serif;
 
+  &.success {
+    color: #67c23a;
+  }
   &.warning {
     color: #faad14;
   }
@@ -449,7 +451,7 @@ onUnmounted(() => {
 
 .metric-progress-bg {
   height: 6px;
-  background: var(--el-fill-color); /* 加深一点背景条颜色 */
+  background: var(--el-fill-color);
   border-radius: 3px;
   width: 100%;
   overflow: hidden;
@@ -457,10 +459,13 @@ onUnmounted(() => {
 
 .metric-progress-bar {
   height: 100%;
-  border-radius: 1px;
+  border-radius: 3px;
   width: 0;
   transition: width 0.8s ease-out;
 
+  &.success {
+    background: linear-gradient(90deg, #67c23a, #95d475);
+  }
   &.warning {
     background: linear-gradient(90deg, #faad14, #ffd666);
   }
@@ -474,7 +479,7 @@ onUnmounted(() => {
 
 .metric-arrow {
   color: var(--el-text-color-secondary);
-  font-size: 14px;
+  font-size: 13px;
   opacity: 0;
   transform: translateX(-4px);
   transition: all 0.2s ease;
