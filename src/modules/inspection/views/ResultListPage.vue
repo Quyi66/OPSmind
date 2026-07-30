@@ -92,19 +92,21 @@
           :data="tableData"
           max-height="calc(100vh - 264px)"
           row-key="id"
+          :default-sort="{ prop: 'createdAt', order: 'descending' }"
+          @sort-change="handleSortChange"
         >
-          <el-table-column prop="templateName" label="模板" show-overflow-tooltip sortable />
+          <el-table-column prop="templateName" label="模板" show-overflow-tooltip sortable="custom" />
           <el-table-column label="检查项">
             <template #default="{ row }">
               <div v-html="formatAuditParams(row.auditParams)"></div>
             </template>
           </el-table-column>
-          <el-table-column label="开始时间" width="200" sortable>
+          <el-table-column prop="createdAt" label="开始时间" width="200" sortable="custom">
             <template #default="{ row }">
               {{ formatDateTime(row.createdAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="结束时间" width="200" sortable>
+          <el-table-column prop="endedAt" label="结束时间" width="200" sortable="custom">
             <template #default="{ row }">
               {{ formatDateTime(row.endedAt) }}
             </template>
@@ -202,6 +204,21 @@ const filters = reactive({
   keyword: ''
 })
 const structuralSwitch = ref('no')
+
+// 排序与 DataTables 状态
+const drawCounter = ref(1)
+const sortState = reactive({
+  prop: 'createdAt',
+  order: 'descending'
+})
+
+const COLUMN_INDEX_MAP = {
+  templateName: 0,
+  auditParams: 1,
+  createdAt: 2,
+  endedAt: 3,
+  createdBy: 4
+}
 
 // 分页
 const pagination = ref({
@@ -347,10 +364,13 @@ async function loadResults() {
       params.append(`columns[${i}][searchable]`, col.searchable)
     })
 
-    params.append('draw', '1')
+    const colIndex = COLUMN_INDEX_MAP[sortState.prop] ?? 2
+    const dir = sortState.order === 'ascending' ? 'asc' : 'desc'
+
+    params.append('draw', String(drawCounter.value++))
     params.append('length', String(pagination.value.size))
-    params.append('order[0][column]', '2')
-    params.append('order[0][dir]', 'desc')
+    params.append('order[0][column]', String(colIndex))
+    params.append('order[0][dir]', dir)
     params.append('search[regex]', 'false')
     params.append('search[value]', filters.keyword)
     params.append('start', String((pagination.value.page - 1) * pagination.value.size))
@@ -402,6 +422,16 @@ function getCurrentRouteStateQuery() {
  */
 function selectTemplate(templateId) {
   selectedTemplateId.value = templateId
+  pagination.value.page = 1
+  loadResults()
+}
+
+/**
+ * 处理表格排序变更
+ */
+function handleSortChange({ prop, order }) {
+  sortState.prop = prop || 'createdAt'
+  sortState.order = order || 'descending'
   pagination.value.page = 1
   loadResults()
 }
