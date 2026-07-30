@@ -353,7 +353,10 @@ onMounted(() => {
   padding: 0 !important;
 }
 
-:global(html.dark) .overview-dashboard {
+:global(html.dark .overview-dashboard),
+:global(.dark .overview-dashboard),
+:global(html.dark) .overview-dashboard,
+:global(.dark) .overview-dashboard {
   --page-bg: #0b1220;
   --surface: #121c2d;
   --surface-soft: #172336;
@@ -663,9 +666,9 @@ onMounted(() => {
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--line-strong);
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.8) 0%, rgba(255, 255, 255, 1) 100%);
+  background: var(--surface);
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -884,8 +887,8 @@ onMounted(() => {
   padding: 5px 8px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid #cbd5e1;
-  background: #f8fafc;
+  border-top: 1px solid var(--line);
+  background: var(--surface-soft);
 }
 
 .hc-action-btn {
