@@ -922,14 +922,12 @@ watch(activeTab, newTab => {
 })
 
 onMounted(() => {
-  setTimeout(() => {
-    const id = extractJobId()
-    if (!id) {
-      ElMessage.error('缺少任务ID')
-      return
-    }
-    initData(id)
-  }, 100)
+  const id = extractJobId()
+  if (!id) {
+    ElMessage.error('缺少任务ID')
+    return
+  }
+  initData(id)
 })
 </script>
 

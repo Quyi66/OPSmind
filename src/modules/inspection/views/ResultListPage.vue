@@ -76,17 +76,6 @@
 
       <!-- 表格区域 -->
       <div class="ops-table-wrapper">
-        <div class="table-toolbar-icons">
-          <el-button
-            class="toolbar-icon-btn"
-            circle
-            :loading="loading"
-            @click="refreshTable"
-            title="刷新"
-          >
-            <el-icon v-show="!loading"><Refresh /></el-icon>
-          </el-button>
-        </div>
         <el-table
           v-loading="loading"
           :data="tableData"
@@ -130,7 +119,7 @@
                 text
                 type="primary"
                 size="small"
-                :disabled="row.jobStatus === 'WAITING'"
+                :disabled="row.jobStatus !== 'OK' && row.jobStatus !== 'ERROR'"
                 @click="viewStructuralDiagram(row)"
               >
                 架构
@@ -139,7 +128,7 @@
                 text
                 type="primary"
                 size="small"
-                :disabled="row.jobStatus === 'WAITING'"
+                :disabled="row.jobStatus !== 'OK' && row.jobStatus !== 'ERROR'"
                 @click="viewResult(row)"
               >
                 结果

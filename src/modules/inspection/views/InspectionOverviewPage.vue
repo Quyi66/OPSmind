@@ -313,7 +313,8 @@ function handleRunSuccess() {
 }
 
 function goToAddTemplate() {
-  router.push('/cac/templates?action=add')
+  editTemplateId.value = ''
+  editDialogVisible.value = true
 }
 
 onMounted(() => {

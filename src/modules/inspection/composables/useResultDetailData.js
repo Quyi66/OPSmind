@@ -112,7 +112,7 @@ export function useResultDetailData() {
       )
       const data = res?.data || res || {}
       machineData.value = data.records || []
-      pagination.value.total = data.total || machineData.value.length
+      pagination.value.total = data.total ?? machineData.value.length
     } catch (error) {
       console.error('加载主机数据失败:', error)
       ElMessage.error('加载主机数据失败')
@@ -135,7 +135,7 @@ export function useResultDetailData() {
       )
       const data = res?.data || res || {}
       overviewData.value = data.records || []
-      overviewPagination.value.total = data.total || overviewData.value.length
+      overviewPagination.value.total = data.total ?? overviewData.value.length
     } catch (error) {
       console.error('加载巡检概览数据失败:', error)
       ElMessage.error('加载巡检概览数据失败')
