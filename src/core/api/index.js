@@ -10,7 +10,7 @@ import { LOGIN_REDIRECT_URL } from '@/config/route-paths'
 // API 配置
 const API_CONFIG = {
   baseURL: import.meta.env.VITE_API_BASE_URL || '/sjxy-console',
-  timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
+  timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 60000,
   retryAttempts: 3,
   retryDelay: 1000
 }
@@ -127,6 +127,12 @@ class ApiService {
 
     // 如果是取消请求，不进行重试
     if (axios.isCancel(error)) {
+      return false
+    }
+
+    // 非幂等请求（POST/PUT/PATCH/DELETE）不自动重试，防止重复提交
+    const idempotentMethods = ['get', 'head', 'options']
+    if (!idempotentMethods.includes(config?.method?.toLowerCase())) {
       return false
     }
 

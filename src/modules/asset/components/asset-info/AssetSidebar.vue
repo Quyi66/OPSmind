@@ -14,7 +14,7 @@
     <div v-show="!isCollapsed" class="sidebar-content">
       <!-- 搜索过滤 -->
       <div class="sidebar-search">
-        <el-input v-model="filterText" placeholder="快速查找分组/标签..." clearable size="small" @keyup.enter="search" @clear="search">
+        <el-input v-model="filterText" placeholder="快速查找分组/标签..." clearable size="small" @keyup.enter="handleSearch" @clear="handleSearch">
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>
@@ -155,6 +155,13 @@ watch(filterText, val => {
   }
 })
 
+// 搜索/过滤处理
+const handleSearch = () => {
+  if (activeTab.value === 'group' && groupTreeRef.value) {
+    groupTreeRef.value.filter(filterText.value)
+  }
+}
+
 // 过滤分组节点
 const filterGroupNode = (value, data) => {
   if (!value) return true
@@ -164,8 +171,8 @@ const filterGroupNode = (value, data) => {
 // 过滤标签列表
 const filteredTags = computed(() => {
   if (!filterText.value) return props.tagList
-  const search = filterText.value.toLowerCase()
-  return props.tagList.filter(tag => tag.name && tag.name.toLowerCase().includes(search))
+  const keyword = filterText.value.toLowerCase()
+  return props.tagList.filter(tag => tag.name && tag.name.toLowerCase().includes(keyword))
 })
 
 // 选择分组
