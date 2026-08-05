@@ -245,7 +245,13 @@
       <div class="ops-filter-bar">
         <el-form :model="filters" inline size="small">
           <el-form-item label="严重程度">
-            <el-select v-model="filters.severity" multiple placeholder="请选择" style="width: auto">
+            <el-select
+              v-model="filters.severity"
+              multiple
+              placeholder="请选择"
+              style="width: auto"
+              @change="handleSearch"
+            >
               <el-option label="严重" value="Critical" />
               <el-option label="重要" value="Important" />
               <el-option label="中等" value="Moderate" />
@@ -258,6 +264,8 @@
               placeholder="搜索补丁编号、概要、CVE..."
               style="width: 240px"
               clearable
+              @keyup.enter="handleSearch"
+              @clear="handleSearch"
             >
               <template #prefix>
                 <el-icon><Search /></el-icon>

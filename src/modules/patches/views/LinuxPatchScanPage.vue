@@ -499,6 +499,8 @@
                 placeholder="输入主机IP"
                 style="width: 140px"
                 clearable
+                @keyup.enter="handleVulnFilterChange"
+                @clear="handleVulnFilterChange"
               />
             </el-form-item>
             <el-form-item label="CVE编号" label-width="70">
@@ -507,11 +509,13 @@
                 placeholder="输入CVE编号"
                 style="width: 140px"
                 clearable
+                @keyup.enter="handleVulnFilterChange"
+                @clear="handleVulnFilterChange"
               />
             </el-form-item>
 
             <el-form-item label="严重程度" label-width="70">
-              <el-select v-model="vulnFilters.severity" style="width: 80px">
+              <el-select v-model="vulnFilters.severity" clearable style="width: 80px" @change="handleVulnFilterChange">
                 <el-option label="所有" value="all" />
                 <el-option label="严重" value="Critical" />
                 <el-option label="重要" value="Important" />
@@ -520,7 +524,7 @@
               </el-select>
             </el-form-item>
             <el-form-item label="补丁状态" label-width="70">
-              <el-select v-model="vulnFilters.patch_status" style="width: 110px">
+              <el-select v-model="vulnFilters.patch_status" clearable style="width: 110px" @change="handleVulnFilterChange">
                 <el-option label="所有" value="all" />
                 <el-option label="未修复" value="no_repair" />
                 <el-option label="已修复" value="is_repair" />
@@ -533,20 +537,20 @@
               </el-select>
             </el-form-item>
             <el-form-item label="内核漏洞" label-width="70">
-              <el-select v-model="vulnFilters.is_kernel" style="width: 80px">
+              <el-select v-model="vulnFilters.is_kernel" clearable style="width: 80px" @change="handleVulnFilterChange">
                 <el-option label="所有" value="all" />
                 <el-option label="是" value="is_kernel" />
                 <el-option label="否" value="no_kernel" />
               </el-select>
             </el-form-item>
             <el-form-item label="操作系统" label-width="70">
-              <el-select v-model="vulnFilters.os_distro" style="width: 80px">
+              <el-select v-model="vulnFilters.os_distro" clearable style="width: 80px" @change="handleVulnFilterChange">
                 <el-option label="所有" value="all" />
                 <el-option v-for="item in osDistroList" :key="item" :label="item" :value="item" />
               </el-select>
             </el-form-item>
             <el-form-item label="系统版本" label-width="70" style="margin-right: 16px">
-              <el-select v-model="vulnFilters.os_major_version" style="width: 80px">
+              <el-select v-model="vulnFilters.os_major_version" clearable style="width: 80px" @change="handleVulnFilterChange">
                 <el-option label="所有" value="all" />
                 <el-option v-for="item in osVersionList" :key="item" :label="item" :value="item" />
               </el-select>
