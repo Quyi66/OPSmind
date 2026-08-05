@@ -573,6 +573,7 @@
           <el-button
             type="primary"
             size="small"
+            plain
             :disabled="vulnSelectedCount === 0"
             @click="handleFixSelected"
           >

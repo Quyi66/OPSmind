@@ -282,6 +282,7 @@
         <el-button
           type="primary"
           size="small"
+          plain
           :disabled="selectedPatchIds.length === 0"
           @click="handleInstallSelected"
         >
@@ -291,6 +292,7 @@
           size="small"
           :type="allSelected ? 'default' : 'primary'"
           @click="handleToggleSelectAll"
+          plain
         >
           <i :class="`fa fa-${allSelected ? 'times' : 'check-double'} me-1`" />
           {{ allSelected ? '一键取消' : '一键全选' }}
