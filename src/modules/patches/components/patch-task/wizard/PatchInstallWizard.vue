@@ -982,8 +982,13 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { formatDateTime } from '@/utils/date'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { patchInstallApi } from '../../../api'
+import {
+  getAgentHostId,
+  resolveAgentCapabilityHosts,
+  validateAgentCapability
+} from '../../../utils/agentCapability'
 import { getPatchTaskWizardSteps } from '../../../constants/task-display'
 import { formatHostDisplay } from './patchTaskWizardUtils'
 import { usePatchTaskBackendRestartAdvice } from './usePatchTaskBackendRestartAdvice'
@@ -1158,6 +1163,14 @@ async function loadInstallData(patchIds) {
       const hostResponse = responses[1]
       if (hostResponse?.data?.records) {
         affectedHosts.value = hostResponse.data.records
+        try {
+          await refreshAgentInfoForHosts(affectedHosts.value)
+        } catch (error) {
+          affectedHosts.value.forEach(host => {
+            host.agentInfoUnavailable = true
+          })
+          console.error('Failed to load Agent capability data:', error)
+        }
       }
     }
   } catch (error) {
@@ -1174,6 +1187,34 @@ const hostPagination = reactive({ page: 1, pageSize: 10, total: 0 })
 const pipelineSectionRef = ref(null)
 const executionSubmitting = ref(false)
 const stepTransitionLoading = ref(false)
+
+async function refreshAgentInfoForHosts(hosts) {
+  const resolvedHosts = await resolveAgentCapabilityHosts(hosts)
+  const infoByHostId = new Map(
+    resolvedHosts.map(host => [getAgentHostId(host), host]).filter(([hostId]) => hostId)
+  )
+
+  hosts.forEach(host => {
+    const resolved = infoByHostId.get(getAgentHostId(host))
+    if (resolved) Object.assign(host, resolved)
+  })
+  return resolvedHosts
+}
+
+async function validateSelectedHostCapabilities(hosts) {
+  try {
+    const resolvedHosts = await refreshAgentInfoForHosts(hosts)
+    return validateAgentCapability(
+      resolvedHosts,
+      isRollbackTask.value ? 'rollback' : 'patch',
+      []
+    )
+  } catch (error) {
+    console.error('Failed to refresh Agent capability data:', error)
+    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止继续操作')
+    return false
+  }
+}
 
 // 过滤后的主机列表
 const filteredHostList = computed(() => {
@@ -1414,7 +1455,8 @@ const { goBack, handleAdvanceStep, handlePrimaryAction, handleSkipStep, resetIns
     installConfig,
     resetScriptState,
     hasFixedHosts,
-    resetHostAllSelected
+    resetHostAllSelected,
+    validateSelectedHosts: validateSelectedHostCapabilities
   })
 
 const pipelineItems = computed(() => {

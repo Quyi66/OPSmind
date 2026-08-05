@@ -143,6 +143,7 @@
               >
                 <el-option label="SSH" value="ssh" />
                 <el-option label="Agent" value="koreops_agent" />
+                <el-option label="未知" value="unknown" />
               </el-select>
             </el-form-item>
             <el-form-item label="Agent 状态">
@@ -253,25 +254,32 @@
             <el-table-column label="接入方式" width="120">
               <template #default="{ row }">
                 <el-tag
-                  v-if="row.connectionType === 'koreops_agent'"
+                  v-if="isAgentConnectionType(row.connectionType)"
                   type="success"
                   size="small"
                   effect="plain"
                 >
                   Agent<span v-if="row.agentMode === 'gateway'"> (跳板)</span>
                 </el-tag>
-                <el-tag v-else type="info" size="small" effect="plain">SSH</el-tag>
+                <el-tag
+                  v-else
+                  :type="row.connectionType === 'ssh' ? 'info' : 'warning'"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ row.connectionType === 'ssh' ? 'SSH' : '未知' }}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column label="Agent 状态" width="120">
               <template #default="{ row }">
-                <template v-if="row.connectionType === 'koreops_agent'">
+                <template v-if="isAgentConnectionType(row.connectionType)">
                   <el-tag
-                    :type="row.agentStatus === 'online' ? 'success' : 'danger'"
+                    :type="row.agentStatus === 'online' ? 'success' : row.agentStatus === 'offline' ? 'danger' : 'warning'"
                     size="small"
                     :title="row.agentStatus === 'offline' ? `最后在线: ${row.lastSeenAt || '未知'}` : ''"
                   >
-                    {{ row.agentStatus === 'online' ? '在线' : '离线' }}
+                    {{ row.agentStatus === 'online' ? '在线' : row.agentStatus === 'offline' ? '离线' : '未知' }}
                   </el-tag>
                   <span v-if="row.agentVersion" style="font-size: 11px; color: #909399; margin-left: 4px">
                     v{{ row.agentVersion }}
@@ -877,10 +885,19 @@
             v-model="selectedHosts"
             ci-types="linux"
             :options="{
-              selectMode: 'host,group,tag,input,recently',
+              selectMode: 'host',
               selector: 'multiple',
               label: '选择主机'
             }"
+          />
+          <div v-if="selectedScanAgentLoading" class="text-muted mt-2">正在校验 Agent 实时状态…</div>
+          <el-alert
+            v-else-if="selectedScanCapabilityHint"
+            class="mt-2"
+            type="warning"
+            :closable="false"
+            show-icon
+            :title="selectedScanCapabilityHint"
           />
         </el-form-item>
       </el-form>
@@ -889,7 +906,8 @@
         <el-button
           type="primary"
           :loading="rescanLoading"
-          :disabled="selectedHosts.length === 0"
+          :disabled="selectedHosts.length === 0 || selectedScanAgentLoading || selectedScanCapabilityIssues.length > 0"
+          :title="selectedScanCapabilityHint"
           @click="executeRescan"
         >
           开始扫描
@@ -1062,7 +1080,6 @@
     <!-- Agent 纳管弹窗 -->
     <AgentEnrollDialog
       v-model="agentEnrollDialogVisible"
-      :available-hosts="hostTableData"
       @success="handleAgentEnrollSuccess"
     />
   </div>
@@ -1074,7 +1091,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/utils/date'
 import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
-import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi, getHostAgentInfos } from '../api'
+import { patchScanApi, patchOverviewApi, rpmInfoApi, vulnerabilityApi } from '../api'
 import { getCveUrl, getSeverityClass, getSeverityLabel } from '../composables/useFormatters'
 import {
   getAffectedPackageDetailParams,
@@ -1086,7 +1103,7 @@ import {
   hasAffectedPackageDetail
 } from '../utils/vulnerabilityPackages'
 import { buildMemoryOverview, parseOsVersionFilter } from '../utils/linuxPatchScan'
-import { assetApi, dataManageApi } from '@/modules/asset/api'
+import { agentApi, assetApi, dataManageApi } from '@/modules/asset/api'
 import AcmDeviceSelector from '@/modules/automation/components/job/schedule/components/AcmDeviceSelector.vue'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
@@ -1095,7 +1112,14 @@ import PatchDetailDialog from '../components/host-detail/dialogs/PatchDetailDial
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
 import RpmPackageDetailDialog from '../components/rpm/RpmPackageDetailDialog.vue'
 import CveLinkList from '../components/common/CveLinkList.vue'
-import AgentEnrollDialog from '../components/common/AgentEnrollDialog.vue'
+import AgentEnrollDialog from '@/modules/asset/components/asset-info/AgentEnrollmentDialog.vue'
+import {
+  validateAgentCapability,
+  getAgentCapabilityIssues,
+  formatAgentCapabilityIssues,
+  getAgentHostId,
+  resolveAgentCapabilityHosts
+} from '../utils/agentCapability'
 
 
 // ECharts
@@ -1320,6 +1344,49 @@ const rescanForm = reactive({
   hostsInput: ''
 })
 const selectedHosts = ref([])
+const selectedScanAgentLoading = ref(false)
+let selectedScanResolveSequence = 0
+const selectedScanCapabilityIssues = computed(() =>
+  getAgentCapabilityIssues(selectedHosts.value, 'scan', hostTableData.value || [])
+)
+const selectedScanCapabilityHint = computed(() => formatAgentCapabilityIssues(selectedScanCapabilityIssues.value))
+
+const isAgentConnectionType = connectionType =>
+  ['koreops_agent', 'agent', 'oplus_agent'].includes(connectionType)
+
+watch(
+  () => selectedHosts.value.map(getAgentHostId).join('|'),
+  async hostKey => {
+    const sequence = ++selectedScanResolveSequence
+    if (!hostKey) {
+      selectedScanAgentLoading.value = false
+      return
+    }
+
+    selectedScanAgentLoading.value = true
+    try {
+      const resolvedHosts = await resolveAgentCapabilityHosts(selectedHosts.value)
+      if (sequence !== selectedScanResolveSequence) return
+      const infoByHostId = new Map(resolvedHosts.map(host => [getAgentHostId(host), host]))
+      selectedHosts.value = selectedHosts.value.map(host => ({
+        ...host,
+        ...(infoByHostId.get(getAgentHostId(host)) || { agentInfoUnavailable: true })
+      }))
+    } catch (error) {
+      if (sequence !== selectedScanResolveSequence) return
+      console.error('Failed to resolve selected host Agent status:', error)
+      selectedHosts.value = selectedHosts.value.map(host => ({
+        ...host,
+        agentInfoUnavailable: true
+      }))
+    } finally {
+      if (sequence === selectedScanResolveSequence) {
+        selectedScanAgentLoading.value = false
+      }
+    }
+  },
+  { flush: 'sync' }
+)
 
 // 作业运行结果对话框
 const runResultDialogVisible = ref(false)
@@ -1673,9 +1740,10 @@ async function loadKpiData() {
 async function loadHostData() {
   loading.value = true
   try {
+    const usesLocalAgentFilter = Boolean(hostFilters.connectionType || hostFilters.agentStatus)
     const params = {
-      page: pagination.page - 1,
-      size: pagination.pageSize,
+      page: usesLocalAgentFilter ? 0 : pagination.page - 1,
+      size: usesLocalAgentFilter ? 10000 : pagination.pageSize,
       os_distro: hostFilters.os_distro,
       os_version: hostFilters.os_version,
       os_sp_version: hostFilters.os_sp_version,
@@ -1747,8 +1815,13 @@ async function loadHostData() {
         .map(r => r.hosts_id || r.hostsId || r.host_id || r.hostId || r.id || r.host_key)
         .filter(Boolean)
       if (hostIds.length > 0) {
-        const agentInfos = await getHostAgentInfos(hostIds)
-        if (Array.isArray(agentInfos) && agentInfos.length > 0) {
+        const agentInfos = []
+        for (let index = 0; index < hostIds.length; index += 100) {
+          const batch = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
+          if (!Array.isArray(batch)) throw new Error('主机 Agent 状态接口返回格式异常')
+          agentInfos.push(...batch)
+        }
+        if (Array.isArray(agentInfos)) {
           const agentMap = new Map(agentInfos.map(info => [String(info.hostId), info]))
           records.forEach(r => {
             const key = String(r.hosts_id || r.hostsId || r.host_id || r.hostId || r.id || r.host_key)
@@ -1763,27 +1836,44 @@ async function loadHostData() {
               r.targetIp = info.targetIp
               r.lastSeenAt = info.lastSeenAt
             } else {
-              r.connectionType = 'ssh'
-              r.agentStatus = null
+              r.connectionType = 'unknown'
+              r.agentStatus = 'unknown'
+              r.agentInfoUnavailable = true
             }
           })
         }
       }
     } catch (err) {
       console.error('Failed to load Agent info:', err)
+      records.forEach(record => {
+        record.connectionType = 'unknown'
+        record.agentStatus = 'unknown'
+        record.agentInfoUnavailable = true
+      })
     }
 
     // 本地 Filter: 接入方式 & 在线状态
     let filteredRecords = records
     if (hostFilters.connectionType) {
-      filteredRecords = filteredRecords.filter(r => (r.connectionType || 'ssh') === hostFilters.connectionType)
+      filteredRecords = filteredRecords.filter(r => {
+        if (hostFilters.connectionType === 'koreops_agent') {
+          return isAgentConnectionType(r.connectionType)
+        }
+        return (r.connectionType || 'unknown') === hostFilters.connectionType
+      })
     }
     if (hostFilters.agentStatus) {
       filteredRecords = filteredRecords.filter(r => r.agentStatus === hostFilters.agentStatus)
     }
 
-    hostTableData.value = filteredRecords
-    pagination.total = Number(data.total ?? data.totalElements) || 0
+    if (usesLocalAgentFilter) {
+      pagination.total = filteredRecords.length
+      const start = (pagination.page - 1) * pagination.pageSize
+      hostTableData.value = filteredRecords.slice(start, start + pagination.pageSize)
+    } else {
+      hostTableData.value = filteredRecords
+      pagination.total = Number(data.total ?? data.totalElements) || 0
+    }
 
   } catch (error) {
     console.error('Failed to load host data:', error)
@@ -1797,7 +1887,14 @@ async function loadHostData() {
 function handleAgentEnrollSuccess(boundHostId) {
   loadHostData()
   if (boundHostId) {
-    router.push(`/patches/linux-patch-scan/host/${boundHostId}`)
+    router.push({
+      name: 'patches-hostDetail',
+      query: {
+        host_id: boundHostId,
+        fromLabel: '主机概览',
+        fromRouteName: 'patches-machineScan'
+      }
+    })
   }
 }
 
@@ -2556,7 +2653,20 @@ function normalizeRescanHost(host) {
 }
 
 async function submitRescan(hosts, { closeDialog = false } = {}) {
-  const normalizedHosts = (Array.isArray(hosts) ? hosts : [])
+  let resolvedHosts
+  try {
+    resolvedHosts = await resolveAgentCapabilityHosts(hosts)
+  } catch (error) {
+    console.error('Failed to refresh scan target Agent status:', error)
+    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止扫描')
+    return false
+  }
+
+  if (!validateAgentCapability(resolvedHosts, 'scan', [])) {
+    return false
+  }
+
+  const normalizedHosts = resolvedHosts
     .map(normalizeRescanHost)
     .filter(item => item.value)
 

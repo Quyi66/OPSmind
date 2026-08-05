@@ -210,6 +210,7 @@ import { Refresh, Search, RefreshRight } from '@element-plus/icons-vue'
 import { patchRollbackApi } from '../api'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
+import { resolveAgentCapabilityHosts, validateAgentCapability } from '../utils/agentCapability'
 
 // 加载状态
 const loading = ref(false)
@@ -383,6 +384,7 @@ function buildRollbackTargetHosts(rows) {
     const hostIds = parseCommaSeparatedValues(
       row.hosts_id || row.hostsId || row.host_id || row.hostId || row.host_ids || row.hostIds
     )
+    const hostObj = row.host || row.targetHost || row.hostInfo || {}
     hostIds.forEach((hostId, index) => {
       const hostKey = hostKeys[index] || hostKeys[0] || hostId
 
@@ -392,12 +394,21 @@ function buildRollbackTargetHosts(rows) {
 
       const mapKey = `${hostId}-${hostKey}`
       if (!hostMap.has(mapKey)) {
-        hostMap.set(mapKey, {
+        const connType = row.connectionType || row.connection_type || hostObj.connectionType || hostObj.connection_type
+        const agentStatus = row.agentStatus || row.agent_status || hostObj.agentStatus || hostObj.agent_status
+        const capabilities = row.capabilities || hostObj.capabilities
+
+        const targetObj = {
           hostId,
           hostKey,
-          os_distro: row.os_distro || row.osDistro || '',
-          os_version: row.os_version || row.osVersion || ''
-        })
+          os_distro: row.os_distro || row.osDistro || hostObj.os_distro || hostObj.osDistro || '',
+          os_version: row.os_version || row.osVersion || hostObj.os_version || hostObj.osVersion || ''
+        }
+        if (connType) targetObj.connectionType = connType
+        if (agentStatus) targetObj.agentStatus = agentStatus
+        if (capabilities) targetObj.capabilities = capabilities
+
+        hostMap.set(mapKey, targetObj)
       }
     })
   })
@@ -424,23 +435,40 @@ function buildRollbackPackageCandidates(rows) {
   ).filter(Boolean)
 }
 
-function openRollbackWizard(rows) {
+async function enrichRollbackAgentInfo(targetHosts) {
+  return resolveAgentCapabilityHosts(targetHosts)
+}
+
+async function openRollbackWizard(rows) {
   if (!rows.length) {
     ElMessage.warning('请先选择要回滚的记录')
     return
   }
 
   const histUpdateIds = rows.map(row => row.id).filter(Boolean)
-  const targetHosts = buildRollbackTargetHosts(rows)
+  let targetHosts = buildRollbackTargetHosts(rows)
   const patches = buildRollbackTaskPatches(rows)
-
-  if (histUpdateIds.length === 0) {
-    ElMessage.warning('当前记录缺少历史更新ID，无法创建回滚任务')
-    return
-  }
 
   if (targetHosts.length === 0) {
     ElMessage.warning('当前记录缺少主机ID，无法创建回滚任务')
+    return
+  }
+
+  try {
+    // 回滚历史并不保证携带 Agent 字段，必须以 host-info 的实时结果为准。
+    targetHosts = await enrichRollbackAgentInfo(targetHosts)
+  } catch (error) {
+    console.error('加载回滚目标的 Agent 状态失败:', error)
+    ElMessage.error('无法确认目标 Agent 状态，已阻止创建回滚任务')
+    return
+  }
+
+  if (!validateAgentCapability(targetHosts, 'rollback', [])) {
+    return
+  }
+
+  if (histUpdateIds.length === 0) {
+    ElMessage.warning('当前记录缺少历史更新ID，无法创建回滚任务')
     return
   }
 

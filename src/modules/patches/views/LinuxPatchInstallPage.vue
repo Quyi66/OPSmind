@@ -100,8 +100,9 @@
           type="primary"
           plain
           size="small"
-          :disabled="batchSelectedHosts.length === 0"
-          @click="batchInstallDrawerVisible = true"
+          :disabled="batchSelectedHosts.length === 0 || batchInstallCapabilityIssues.length > 0"
+          :title="batchInstallCapabilityHint"
+          @click="handleOpenBatchInstallDrawer"
         >
           <i class="fa fa-chevron-circle-right" />
           安装选中主机补丁 ({{ batchSelectedHosts.length }})
@@ -110,7 +111,8 @@
           type="primary"
           plain
           size="small"
-          :disabled="batchSelectedHosts.length === 0"
+          :disabled="batchSelectedHosts.length === 0 || batchScanCapabilityIssues.length > 0"
+          :title="batchScanCapabilityHint"
           :loading="rescanLoading"
           @click="handleRescan"
         >
@@ -424,7 +426,7 @@ import { ElMessage } from 'element-plus'
 import { Search, Refresh, RefreshRight } from '@element-plus/icons-vue'
 import { getCveUrl } from '../composables/useFormatters'
 import { patchInstallApi, patchScanApi, vulnerabilityApi } from '../api'
-import { dataManageApi } from '@/modules/asset/api'
+import { dataManageApi, agentApi } from '@/modules/asset/api'
 import { parseOsVersionFilter } from '../utils/linuxPatchScan'
 import { formatDateTime } from '@/utils/date'
 import PatchInstallWizard from '../components/patch-task/wizard/PatchInstallWizard.vue'
@@ -434,6 +436,12 @@ import CveLinkList from '../components/common/CveLinkList.vue'
 import { useTableSelectAll } from '../composables/useTableSelectAll'
 import ExecuteResultDialog from '@/modules/automation/components/job/JobListView/ExecuteResultDialog.vue'
 import OperationLogsDialog from '../components/logs/OperationLogsDialog.vue'
+import {
+  validateAgentCapability,
+  getAgentCapabilityIssues,
+  formatAgentCapabilityIssues,
+  resolveAgentCapabilityHosts
+} from '../utils/agentCapability'
 
 // Router & Route
 const route = useRoute()
@@ -487,6 +495,15 @@ const hostTableData = computed(() => {
   return hostFilteredData.value.slice(start, end)
 })
 
+const batchInstallCapabilityIssues = computed(() =>
+  getAgentCapabilityIssues(batchSelectedHosts.value, 'patch', hostTableData.value || [])
+)
+const batchScanCapabilityIssues = computed(() =>
+  getAgentCapabilityIssues(batchSelectedHosts.value, 'scan', hostTableData.value || [])
+)
+const batchInstallCapabilityHint = computed(() => formatAgentCapabilityIssues(batchInstallCapabilityIssues.value))
+const batchScanCapabilityHint = computed(() => formatAgentCapabilityIssues(batchScanCapabilityIssues.value))
+
 const {
   allSelected: hostAllSelected,
   handleToggleAllSelection: handleToggleHostSelectAll,
@@ -527,6 +544,12 @@ async function loadHostData() {
       : Array.isArray(data.content)
         ? data.content
         : []
+    try {
+      await enrichHostAgentInfo(records)
+    } catch (error) {
+      // Agent 信息富化失败不能阻断原有 SSH 主机列表；提交时仍会执行能力校验。
+      console.warn('获取主机 Agent 信息失败:', error)
+    }
     mergeHostOsVersionOptions(records)
 
     allHostData.value = records
@@ -543,6 +566,32 @@ async function loadHostData() {
     hostLoading.value = false
     hostDataLoaded.value = true
   }
+}
+
+async function enrichHostAgentInfo(records) {
+  const hostIds = [...new Set(records
+    .map(row => row.host_id || row.hostId || row.id || row.hosts_id || row.hostsId)
+    .filter(Boolean))]
+  if (hostIds.length === 0) return
+
+  const infoByHostId = new Map()
+  for (let index = 0; index < hostIds.length; index += 100) {
+    const result = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
+    if (Array.isArray(result)) {
+      result.forEach(info => {
+        if (info?.hostId) infoByHostId.set(String(info.hostId), info)
+      })
+    }
+  }
+
+  records.forEach(row => {
+    const hostId = String(row.host_id || row.hostId || row.id || row.hosts_id || row.hostsId || '')
+    const info = infoByHostId.get(hostId)
+    if (!info) return
+    row.connectionType = info.connectionType || row.connectionType
+    row.agentStatus = info.agentStatus ?? row.agentStatus
+    row.capabilities = info.capabilities ?? row.capabilities
+  })
 }
 
 function mergeHostOsVersionOptions(records = []) {
@@ -691,7 +740,20 @@ function normalizeRescanHost(host) {
 }
 
 async function submitRescan(hosts) {
-  const normalizedHosts = (Array.isArray(hosts) ? hosts : [])
+  let resolvedHosts
+  try {
+    resolvedHosts = await resolveAgentCapabilityHosts(hosts)
+  } catch (error) {
+    console.error('Failed to refresh Agent status before scan:', error)
+    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止扫描')
+    return false
+  }
+
+  if (!validateAgentCapability(resolvedHosts, 'scan', [])) {
+    return false
+  }
+
+  const normalizedHosts = resolvedHosts
     .map(normalizeRescanHost)
     .filter(item => item.value)
 
@@ -787,11 +849,29 @@ function handleViewAffectedHosts(row) {
   installDialogVisible.value = true
 }
 
+async function handleOpenBatchInstallDrawer() {
+  let resolvedHosts
+  try {
+    resolvedHosts = await resolveAgentCapabilityHosts(batchSelectedHosts.value)
+  } catch (error) {
+    console.error('Failed to refresh Agent status before install:', error)
+    ElMessage.error(error?.message || '无法确认目标主机的 Agent 状态，已阻止安装')
+    return
+  }
+
+  if (!validateAgentCapability(resolvedHosts, 'patch', [])) {
+    return
+  }
+  batchSelectedHosts.value = resolvedHosts
+  batchInstallDrawerVisible.value = true
+}
+
 function handleInstallSelected() {
   if (selectedRows.value.length === 0) {
     ElMessage.warning('请先选择要安装的补丁')
     return
   }
+  // 注意：selectedRows 是补丁维度记录，Agent 能力校验在安装向导中基于实际目标主机进行
   patchesToInstall.value = [...selectedRows.value]
   installDialogVisible.value = true
 }

@@ -31,6 +31,29 @@
                       <span class="meta-value">{{ summary.runId }}</span>
                     </div>
                     <div class="meta-item">
+                      <span class="meta-label">执行通道</span>
+                      <span class="meta-value">
+                        <el-tag
+                          size="small"
+                          :type="summary.connectionType === 'mixed' ? 'warning' : (summary.isAgentConnection ? 'success' : summary.connectionType === 'ssh' ? 'info' : 'warning')"
+                        >
+                          {{ summary.connectionTypeLabel }}
+                        </el-tag>
+                      </span>
+                    </div>
+                    <div v-if="summary.agentClientId" class="meta-item">
+                      <span class="meta-label">Agent Client ID</span>
+                      <span class="meta-value">{{ summary.agentClientId }}</span>
+                    </div>
+                    <div v-if="summary.agentVersion" class="meta-item">
+                      <span class="meta-label">Agent 版本</span>
+                      <span class="meta-value">{{ summary.agentVersion }}</span>
+                    </div>
+                    <div v-if="summary.relayTraceId" class="meta-item">
+                      <span class="meta-label">Relay 追踪 ID</span>
+                      <span class="meta-value">{{ summary.relayTraceId }}</span>
+                    </div>
+                    <div class="meta-item">
                       <span class="meta-label">执行人</span>
                       <span class="meta-value">{{ summary.username }}</span>
                     </div>
@@ -427,6 +450,7 @@ import { ElMessage } from 'element-plus'
 import { formatDateTime } from '@/modules/automation/utils/helpers'
 import * as jaoApi from '@/modules/automation/api/jao'
 import { JOB_STATUS_LABELS, JOB_STATUS_TAG_TYPES } from '@/modules/automation/constants/jobStatus'
+import { AGENT_ERROR_MESSAGES, agentApi } from '@/modules/asset/api'
 import { translateText } from '@/utils/i18n'
 import AnsibleLogViewer from '../AnsibleLogViewer.vue'
 import JobUpgradeOverview from './JobUpgradeOverview.vue'
@@ -482,6 +506,8 @@ const dialogVisible = computed({
 const activeTab = ref('overview')
 const loading = ref(false)
 const result = ref(null)
+const executionChannelInfo = ref({})
+let executionChannelRequestSequence = 0
 const pollTimer = ref()
 const hasObservedActiveRun = ref(false)
 const jobType = computed(() => normalizeJobType(result.value?.jobType ?? result.value?.job_type))
@@ -698,6 +724,8 @@ function handleClose() {
 function resetState() {
   activeTab.value = 'overview'
   result.value = null
+  executionChannelInfo.value = {}
+  executionChannelRequestSequence += 1
   hasObservedActiveRun.value = false
   hostFilterText.value = ''
   hostTaskSearch.value = ''
@@ -719,6 +747,7 @@ async function fetchResult() {
   try {
     const response = await jaoApi.getExecuteResult(props.runId)
     result.value = response?.data ?? response ?? null
+    void refreshExecutionChannelInfo(result.value)
     syncResultPolling(result.value)
   } catch (error) {
     stopResultPolling()
@@ -768,6 +797,15 @@ const KNOWN_MSG_MAP = {
   'app_secops.log.exec_rollback_fail': '补丁回滚任务失败',
   'acm.common.log.conn_failed': '主机连通性检测失败',
   'acm.common.log.collect_failed': '资产采集失败'
+}
+
+function translateAgentErrorText(value) {
+  const text = String(value || '').trim()
+  if (!text) return text
+  const matchedCode = Object.keys(AGENT_ERROR_MESSAGES).find(code => text.includes(code))
+  if (!matchedCode) return text
+  const translated = AGENT_ERROR_MESSAGES[matchedCode]
+  return text === matchedCode ? translated : `${translated}（${text}）`
 }
 
 function isIgnorableDebugMsg(msgStr) {
@@ -978,16 +1016,154 @@ function parseJobExecutionError(errorRaw, ansibleContents = [], jobStatus = '') 
 
     return {
       title,
-      list: messagesList,
+      list: messagesList.map(translateAgentErrorText),
       details: ''
     }
   }
 
   const [firstLine = '', ...rest] = lines
   return {
-    title: firstLine || '执行报错',
+    title: translateAgentErrorText(firstLine) || '执行报错',
     list: [],
     details: rest.join('\n')
+  }
+}
+
+const AGENT_CONNECTION_TYPES = ['koreops_agent', 'agent', 'oplus_agent']
+
+function normalizeConnectionType(value) {
+  const connectionType = String(value || '').toLowerCase()
+  if (AGENT_CONNECTION_TYPES.includes(connectionType)) return 'koreops_agent'
+  if (connectionType === 'ssh') return 'ssh'
+  if (connectionType === 'mixed') return 'mixed'
+  return ''
+}
+
+function firstDefined(...values) {
+  return values.find(value => value !== undefined && value !== null && value !== '')
+}
+
+function joinDisplayValues(value) {
+  const values = Array.isArray(value) ? value : value ? [value] : []
+  return [...new Set(
+    values
+      .flatMap(item => String(item).split(','))
+      .map(item => item.trim())
+      .filter(Boolean)
+  )].join(', ')
+}
+
+function getDirectExecutionChannelInfo(data) {
+  const detail = data?.detail || {}
+  return {
+    connectionType: normalizeConnectionType(firstDefined(
+      data?.executionChannel,
+      data?.execution_channel,
+      data?.connectionType,
+      data?.connection_type,
+      detail.executionChannel,
+      detail.execution_channel,
+      detail.connectionType,
+      detail.connection_type
+    )),
+    agentClientId: joinDisplayValues(firstDefined(
+      data?.agentClientId,
+      data?.agent_client_id,
+      detail.agentClientId,
+      detail.agent_client_id
+    )),
+    agentVersion: joinDisplayValues(firstDefined(
+      data?.agentVersion,
+      data?.agent_version,
+      detail.agentVersion,
+      detail.agent_version
+    )),
+    relayTraceId: joinDisplayValues(firstDefined(
+      data?.relayTraceId,
+      data?.relay_trace_id,
+      data?.traceId,
+      data?.trace_id,
+      detail.relayTraceId,
+      detail.relay_trace_id,
+      detail.traceId,
+      detail.trace_id
+    ))
+  }
+}
+
+function extractResultHostIds(data) {
+  const detail = data?.detail || {}
+  const params = data?.params || detail.params || {}
+  const ids = []
+  const append = value => {
+    if (Array.isArray(value)) {
+      value.forEach(append)
+      return
+    }
+    if (value && typeof value === 'object') {
+      const id = value.hostId || value.host_id || value.id || value.key
+      if (id) ids.push(String(id))
+      return
+    }
+    if (value !== undefined && value !== null && value !== '') {
+      String(value)
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean)
+        .forEach(id => ids.push(id))
+    }
+  }
+
+  ;[
+    data?.hostIds,
+    data?.host_ids,
+    data?.targetHostIds,
+    data?.target_host_ids,
+    detail.hostIds,
+    detail.host_ids,
+    detail.targetHostIds,
+    detail.target_host_ids,
+    params.hostIds,
+    params.host_ids
+  ].forEach(append)
+
+  return [...new Set(ids)]
+}
+
+async function refreshExecutionChannelInfo(data) {
+  const sequence = ++executionChannelRequestSequence
+  const directInfo = getDirectExecutionChannelInfo(data)
+  executionChannelInfo.value = directInfo
+  const hostIds = extractResultHostIds(data)
+  if (hostIds.length === 0) return
+
+  try {
+    const infos = []
+    for (let index = 0; index < hostIds.length; index += 100) {
+      const response = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
+      if (Array.isArray(response)) infos.push(...response)
+    }
+    if (sequence !== executionChannelRequestSequence || infos.length === 0) return
+    const returnedHostIds = new Set(infos.map(info => String(info?.hostId || '')).filter(Boolean))
+    if (returnedHostIds.size !== hostIds.length) return
+
+    const channels = [...new Set(
+      infos.map(info => normalizeConnectionType(info?.connectionType)).filter(Boolean)
+    )]
+    executionChannelInfo.value = {
+      ...directInfo,
+      connectionType: channels.length > 1 ? 'mixed' : channels[0] || directInfo.connectionType,
+      agentClientId: joinDisplayValues(
+        infos.map(info => info?.agentClientId || info?.clientId).filter(Boolean)
+      ) || directInfo.agentClientId,
+      agentVersion: joinDisplayValues(
+        infos.map(info => info?.agentVersion).filter(Boolean)
+      ) || directInfo.agentVersion
+    }
+  } catch (error) {
+    if (sequence === executionChannelRequestSequence) {
+      console.warn('获取任务目标的 Agent 通道信息失败:', error)
+    }
   }
 }
 
@@ -997,6 +1173,8 @@ const summary = computed(() => {
   const end = data.endTime || data.end_time
   const status = data.status || ''
   const parsedError = parseJobExecutionError(data.error || '', ansibleContents.value, status)
+  const connectionType = executionChannelInfo.value.connectionType || ''
+  const isAgentConnection = connectionType === 'koreops_agent'
   return {
     status,
     statusLabel: JOB_STATUS_LABELS[status] || status || '-',
@@ -1004,7 +1182,19 @@ const summary = computed(() => {
     startTime: formatDateTime(start),
     endTime: formatDateTime(end),
     username: data.username || '-',
-    runId: data.runId || data.id || '-',
+    runId: data.runId || data.id || props.runId || '-',
+    connectionType,
+    isAgentConnection,
+    connectionTypeLabel: connectionType === 'mixed'
+      ? '混合通道（Agent / SSH）'
+      : isAgentConnection
+        ? 'Agent (koreops_agent)'
+        : connectionType === 'ssh'
+          ? 'SSH'
+          : '未知',
+    agentClientId: executionChannelInfo.value.agentClientId || '',
+    agentVersion: executionChannelInfo.value.agentVersion || '',
+    relayTraceId: executionChannelInfo.value.relayTraceId || '',
     errorTitle: parsedError.title,
     errorList: parsedError.list,
     errorDetails: parsedError.details

@@ -37,6 +37,23 @@
               </el-select>
             </el-form-item>
 
+            <el-form-item label="连接方式">
+              <el-select v-model="filters.connectionType" style="width: 105px" @change="handleSearch">
+                <el-option label="全部" value="all" />
+                <el-option label="Agent" value="koreops_agent" />
+                <el-option label="SSH" value="ssh" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="Agent 状态">
+              <el-select v-model="filters.agentStatus" style="width: 105px" @change="handleSearch">
+                <el-option label="全部" value="all" />
+                <el-option label="在线" value="online" />
+                <el-option label="离线" value="offline" />
+                <el-option label="未知" value="unknown" />
+              </el-select>
+            </el-form-item>
+
             <el-form-item label="最近连通">
               <el-select v-model="filters.connLatestStatus" style="width: 105px" @change="handleSearch">
                 <el-option label="所有" value="all" />
@@ -94,6 +111,10 @@
             <el-button type="primary" @click="handleAutoEntry" size="small">
               <i class="fa fa-plus" style="margin-right: 4px"></i>
               自动化设备录入
+            </el-button>
+            <el-button type="success" size="small" @click="agentEnrollmentVisible = true">
+              <i class="fa fa-plug" style="margin-right: 4px"></i>
+              Agent 接入
             </el-button>
             <el-button size="small" @click="importDialogVisible = true">
               <i class="fa fa-file-import" style="margin-right: 4px"></i>
@@ -214,6 +235,42 @@
                     <span class="ip-subtext">{{ row.IP || '-' }}</span>
                   </div>
                 </div>
+              </template>
+            </el-table-column>
+
+            <!-- Agent 接入通道与能力列 (F3) -->
+            <el-table-column label="接入通道" min-width="130">
+              <template #default="{ row }">
+                <el-tag
+                  size="small"
+                  :type="getConnectionTypeTag(row)"
+                >
+                  {{ getConnectionTypeLabel(row) }}
+                </el-tag>
+                <div v-if="row.clientId || row.client_id" class="text-xs text-muted font-mono" :title="row.clientId || row.client_id">
+                  {{ (row.clientId || row.client_id).length > 10 ? (row.clientId || row.client_id).slice(0, 10) + '...' : (row.clientId || row.client_id) }}
+                </div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="Agent 状态与能力" min-width="160">
+              <template #default="{ row }">
+                <template v-if="['koreops_agent', 'agent', 'oplus_agent'].includes(row.connectionType || row.connection_type)">
+                  <el-tag
+                    size="small"
+                    :type="getAgentStatusTag(row)"
+                  >
+                    {{ getAgentStatusLabel(row) }}
+                  </el-tag>
+                  <span v-if="row.agentVersion" class="text-xs text-muted ms-1">v{{ row.agentVersion }}</span>
+                  <div v-if="row.capabilities" class="text-xs text-secondary mt-1">
+                    {{ Array.isArray(row.capabilities) ? row.capabilities.join(',') : row.capabilities }}
+                  </div>
+                  <div v-if="row.lastSeenAt" class="text-xs text-muted mt-1">
+                    最后在线：{{ formatDateTime(row.lastSeenAt) }}
+                  </div>
+                </template>
+                <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
 
@@ -535,6 +592,8 @@
       @success="loadAssetList"
     />
 
+    <!-- Agent 接入向导弹窗 -->
+    <AgentEnrollmentDialog v-model="agentEnrollmentVisible" @success="handleAgentEnrollmentSuccess" />
 
   </div>
 </template>
@@ -543,6 +602,7 @@
 import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import AgentEnrollmentDialog from '../components/asset-info/AgentEnrollmentDialog.vue'
 import {
   Edit,
   Delete,
@@ -553,7 +613,7 @@ import {
   RefreshRight,
   Clock as _Clock
 } from '@element-plus/icons-vue'
-import { assetApi, dataManageApi } from '../api'
+import { assetApi, dataManageApi, agentApi } from '../api'
 import { apiService } from '@/core/api'
 import { pollJobStatus } from '@/composables/useJobPolling'
 import AssetSidebar from '../components/asset-info/AssetSidebar.vue'
@@ -592,7 +652,7 @@ const currentTenantId = ref('')
 // 自定义列及视图配置 (R3)
 const customViewVisible = ref(false)
 const batchLocationVisible = ref(false)
-
+const agentEnrollmentVisible = ref(false)
 
 const activeColumns = ref(['OS', 'LOCATION', 'RUN_ENVIRONMENT', 'CONN_LATEST_STATUS', 'DEPT_NAME'])
 
@@ -650,6 +710,8 @@ function createDefaultFilters() {
   return {
     hostKeys: '@@',
     status: 'all',
+    connectionType: 'all',
+    agentStatus: 'all',
     connLatestStatus: 'all',
     osVersion: []
   }
@@ -714,6 +776,84 @@ const normalizeAssetRecord = item => {
   }
 }
 
+const isAgentConnection = connectionType => ['koreops_agent', 'agent', 'oplus_agent'].includes(connectionType)
+
+const getConnectionType = record => {
+  const connectionType = record.connectionType || record.connection_type
+  if (isAgentConnection(connectionType)) return 'koreops_agent'
+  if (connectionType === 'ssh') return 'ssh'
+  return 'unknown'
+}
+
+const getConnectionTypeLabel = record => {
+  const connectionType = getConnectionType(record)
+  if (connectionType === 'koreops_agent') return 'Agent'
+  if (connectionType === 'ssh') return 'SSH'
+  return '未知'
+}
+
+const getConnectionTypeTag = record => {
+  const connectionType = getConnectionType(record)
+  if (connectionType === 'koreops_agent') return 'success'
+  if (connectionType === 'ssh') return 'info'
+  return 'warning'
+}
+
+const getAgentStatus = record => record.agentStatus || record.agent_status || 'unknown'
+const getAgentStatusLabel = record => ({ online: '在线', offline: '离线', unknown: '未知' })[getAgentStatus(record)] || '未知'
+const getAgentStatusTag = record => ({ online: 'success', offline: 'danger', unknown: 'warning' })[getAgentStatus(record)] || 'warning'
+
+const hasAgentLocalFilter = () =>
+  filters.value.connectionType !== 'all' || filters.value.agentStatus !== 'all'
+
+const matchesAgentFilters = record => {
+  const connectionType = getConnectionType(record)
+  if (filters.value.connectionType !== 'all' && connectionType !== filters.value.connectionType) {
+    return false
+  }
+  if (filters.value.agentStatus === 'all') return true
+  return connectionType === 'koreops_agent' && getAgentStatus(record) === filters.value.agentStatus
+}
+
+const enrichAssetAgentInfo = async records => {
+  const hostIds = records
+    .map(r => r.id || r.host_id || r.hostId)
+    .filter(Boolean)
+  if (hostIds.length === 0) return records
+
+  const agentInfoArr = []
+  // host-info 使用 GET query；分批避免大量资产导致 URL 过长。
+  for (let index = 0; index < hostIds.length; index += 100) {
+    const agentInfoList = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
+    if (Array.isArray(agentInfoList)) agentInfoArr.push(...agentInfoList)
+  }
+  const agentMap = new Map()
+  agentInfoArr.forEach(info => {
+    if (info?.hostId) agentMap.set(String(info.hostId), info)
+  })
+
+  records.forEach(record => {
+    const hid = String(record.id || record.host_id || record.hostId || '')
+    const agentInfo = agentMap.get(hid)
+    if (!agentInfo) {
+      record.connectionType = 'unknown'
+      record.agentStatus = 'unknown'
+      record.agentInfoUnavailable = true
+      return
+    }
+    record.connectionType = agentInfo.connectionType || record.connectionType
+    record.agentStatus = agentInfo.agentStatus ?? record.agentStatus
+    record.capabilities = agentInfo.capabilities ?? record.capabilities
+    record.clientId = agentInfo.agentClientId || agentInfo.clientId || record.clientId
+    record.agentVersion = agentInfo.agentVersion || record.agentVersion
+    record.lastSeenAt = agentInfo.lastSeenAt || record.lastSeenAt
+    record.agentMode = agentInfo.agentMode || record.agentMode
+    record.agentInfoUnavailable = false
+  })
+
+  return records
+}
+
 const buildAssetListParams = () => ({
   hostKeys: filters.value.hostKeys,
   assetType: currentType.value,
@@ -759,7 +899,8 @@ const fetchAllMatchedAssets = async () => {
   const requestParams = buildAssetListParams()
   const batchSize = Math.max(pageSize.value, 200)
   let page = 1
-  let totalCount = Number(total.value || 0)
+  // total.value 在 Agent 本地筛选时是筛选后的数量，不能用于原始资产列表分页。
+  let totalCount = 0
   const allRows = []
 
   while (true) {
@@ -785,7 +926,9 @@ const fetchAllMatchedAssets = async () => {
     page += 1
   }
 
-  return allRows
+  if (!hasAgentLocalFilter()) return allRows
+  await enrichAssetAgentInfo(allRows)
+  return allRows.filter(matchesAgentFilters)
 }
 
 const handleTableSelect = selection => {
@@ -985,16 +1128,36 @@ const loadAssetList = async ({ preserveSelection = false } = {}) => {
   }
   loading.value = true
   try {
-    const params = buildAssetListParams()
-    const res = await assetApi.getAssetList(params, {
-      size: pageSize.value,
-      page: currentPage.value,
-      filter: searchText.value
-    })
-    const records = res.records || []
-    tableData.value = records.map(normalizeAssetRecord)
+    let normalizedRecords
+    if (hasAgentLocalFilter()) {
+      // 原资产列表接口不认识 connectionType，必须先富化后在前端筛选，再自行分页。
+      const matchedRecords = await fetchAllMatchedAssets()
+      total.value = matchedRecords.length
+      const start = (currentPage.value - 1) * pageSize.value
+      normalizedRecords = matchedRecords.slice(start, start + pageSize.value)
+    } else {
+      const params = buildAssetListParams()
+      const res = await assetApi.getAssetList(params, {
+        size: pageSize.value,
+        page: currentPage.value,
+        filter: searchText.value
+      })
+      normalizedRecords = (res.records || []).map(normalizeAssetRecord)
+      try {
+        await enrichAssetAgentInfo(normalizedRecords)
+      } catch (agentErr) {
+        // Agent 富化不可用时保留原有资产列表，避免影响 SSH 主机管理。
+        console.warn('获取主机 Agent 附加信息失败（不影响主列表）:', agentErr)
+        normalizedRecords.forEach(record => {
+          record.connectionType = 'unknown'
+          record.agentStatus = 'unknown'
+          record.agentInfoUnavailable = true
+        })
+      }
+      total.value = res.total || 0
+    }
 
-    total.value = res.total || 0
+    tableData.value = normalizedRecords
     if (preserveSelection && allSelected.value) {
       await nextTick()
       restorePageSelection()
@@ -1047,6 +1210,14 @@ const handleReset = () => {
 // 刷新
 const handleRefresh = () => {
   loadAssetList()
+}
+
+const handleAgentEnrollmentSuccess = async boundHostId => {
+  await loadAssetList()
+  if (boundHostId) {
+    currentAssetId.value = String(boundHostId)
+    detailDialogVisible.value = true
+  }
 }
 
 const loadCurrentTenantId = async () => {

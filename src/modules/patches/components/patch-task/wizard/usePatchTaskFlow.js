@@ -38,7 +38,8 @@ export function usePatchTaskFlow({
   installConfig,
   resetScriptState,
   hasFixedHosts,
-  resetHostAllSelected
+  resetHostAllSelected,
+  validateSelectedHosts
 }) {
   function resetInstallState() {
     stopPolling()
@@ -69,6 +70,11 @@ export function usePatchTaskFlow({
       ElMessage.warning('请先选择目标主机')
       installStep.value = getStepIndex('select')
       return false
+    }
+
+    if (typeof validateSelectedHosts === 'function') {
+      const valid = await validateSelectedHosts(confirmedHosts.value)
+      if (!valid) return false
     }
 
     if (!canReusePreparedTask()) {
@@ -109,6 +115,11 @@ export function usePatchTaskFlow({
     try {
       if (stepKey === 'select') {
         if (selectedHosts.value.length === 0) return
+
+        if (typeof validateSelectedHosts === 'function') {
+          const valid = await validateSelectedHosts(selectedHosts.value)
+          if (!valid) return
+        }
 
         confirmedHosts.value = [...selectedHosts.value]
         for (let i = 1; i < stepStates.length; i++) stepStates[i] = 'idle'

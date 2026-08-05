@@ -69,8 +69,9 @@
         </template>
       </el-input>
 
-      <!-- 一键全选 / 一键取消 -->
+      <!-- 一键全选 / 一键取消 (单选模式下隐藏) -->
       <el-button
+        v-if="!isSingleSelector"
         class="select-all-btn"
         :type="allSelected ? 'default' : 'primary'"
         size="small"
@@ -445,7 +446,16 @@ function handleSelectionChange(selection) {
   let effectiveSelection = Array.isArray(selection) ? [...selection] : []
 
   if (isSingleSelector.value && effectiveSelection.length > 1) {
-    const latestRow = effectiveSelection[effectiveSelection.length - 1]
+    ElMessage.warning({
+      message: '当前为单选模式，仅支持选择单台主机',
+      customClass: 'high-z-index-message'
+    })
+    // el-table 的 selection 数组按表格行顺序排列，而非用户点击顺序。
+    // 以当前 v-model 中已选主机为基准，保留本次新加入的那一行，避免用户
+    // 从靠后的主机切换到靠前主机时又被错误地保留为旧选择。
+    const previousSelectedKey = props.modelValue?.[0]?.key
+    const latestRow = effectiveSelection.find(row => row.id !== previousSelectedKey)
+      || effectiveSelection[effectiveSelection.length - 1]
     effectiveSelection = latestRow ? [latestRow] : []
 
     isInternalUpdate = true
@@ -509,7 +519,7 @@ function handleTagFilter() {
 
 // 一键全选 / 一键取消 切换
 async function handleToggleSelectAll() {
-  if (!props.ciType || selectAllLoading.value) return
+  if (!props.ciType || selectAllLoading.value || isSingleSelector.value) return
 
   // 取消全选
   if (allSelected.value) {
@@ -546,7 +556,10 @@ async function handleToggleSelectAll() {
     const records = Array.isArray(data?.records) ? data.records : Array.isArray(data) ? data : []
 
     if (!records.length) {
-      ElMessage.info('没有可选的设备')
+      ElMessage.info({
+        message: '没有可选的设备',
+        customClass: 'high-z-index-message'
+      })
       return
     }
 
@@ -704,5 +717,11 @@ async function handleToggleSelectAll() {
 .instance-selector :deep(.el-table td.el-table__cell .cell) {
   display: flex;
   align-items: center;
+}
+</style>
+
+<style>
+.el-message.high-z-index-message {
+  z-index: 10000 !important;
 }
 </style>

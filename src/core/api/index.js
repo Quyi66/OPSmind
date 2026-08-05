@@ -92,6 +92,47 @@ class ApiService {
           message: error.message
         })
 
+        // 捕获并解析 Agent 专属业务错误与 401（仅针对端点级通信接口 /agent/api/agent，避免管理接口 401 被误判为端点鉴权）
+        const data = response?.data
+        const isAgentEndpointRequest = config?.url && /\/agent\/api\/agent(\/|$|\?)/.test(config.url)
+        const isAgentManagementRequest = config?.url && /\/cmdb\/api\/cmdb\/agent(\/|$|\?)/.test(config.url)
+        const errCode = data?.errorCode || data?.code
+        const agentErrorMap = {
+          'AGENT_AUTH_FAILED': 'Agent 鉴权失败，Token 凭据可能无效或已被吊销',
+          'ENROLL_TOKEN_INVALID': 'Agent 安装 Token 已用尽或失效，请重新签发',
+          'CLIENT_ALREADY_BOUND': '该 Agent 已绑定其他资产',
+          'HOST_ALREADY_BOUND': '该资产已绑定 Agent，请先解绑',
+          'AGENT_OFFLINE': '目标主机 Agent 处于离线状态，无法下发指令',
+          'RELAY_UNAVAILABLE': 'Agent 通道不可达',
+          'DISPATCH_TIMEOUT': 'Agent 指令下发/响应超时',
+          'CAPABILITY_UNSUPPORTED': '该 Agent 不支持此操作',
+          'MISSING_CAPABILITY': 'Agent 缺少执行此操作的必要能力',
+          'COMMAND_FAILED': 'Agent 主机命令执行失败',
+          'RESULT_INGEST_FAILED': 'Agent 执行结果回写失败',
+          'ROLLBACK_UNSUPPORTED': '该补丁不支持回滚',
+          'ROLLBACK_FAILED': '补丁回滚失败'
+        }
+        if (isAgentEndpointRequest) {
+          if (errCode && agentErrorMap[errCode]) {
+            error.message = `${agentErrorMap[errCode]} (${data.message || errCode})`
+            return Promise.reject(error)
+          }
+          if (response?.status === 401) {
+            error.message = data?.message || data?.error || 'Agent 接口认证失败 (401)'
+            return Promise.reject(error)
+          }
+        } else if (errCode && agentErrorMap[errCode]) {
+          error.message = `${agentErrorMap[errCode]} (${data.message || errCode})`
+          return Promise.reject(error)
+        } else if (
+          isAgentManagementRequest &&
+          ![401, 403].includes(response?.status) &&
+          (data?.message || data?.error)
+        ) {
+          error.message = data.message || data.error
+          return Promise.reject(error)
+        }
+
         // 处理认证错误
         if (response?.status === 401) {
           await authService.logout()
