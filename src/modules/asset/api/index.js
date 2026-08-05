@@ -594,8 +594,9 @@ export const agentApi = {
    * GET /cmdb/api/cmdb/agent/host-info?hostIds=...
    */
   getHostAgentInfo: (hostIds) => {
-    const ids = Array.isArray(hostIds) ? hostIds.join(',') : hostIds
-    return apiService.get(`${ACM_BASE}/agent/host-info`, { params: { hostIds: ids } }).then(unwrapApiData)
+    // const ids = Array.isArray(hostIds) ? hostIds.join(',') : hostIds
+    // return apiService.get(`${ACM_BASE}/agent/host-info`, { params: { hostIds: ids } }).then(unwrapApiData)
+    return Promise.resolve([])
   },
 
   /**

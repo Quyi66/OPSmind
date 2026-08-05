@@ -17,6 +17,7 @@
           <span class="label">主机名：</span>
           <span class="value">{{ machineInfo.hostKey }}</span>
         </div>
+        <!-- [Agent 功能暂停]
         <div class="info-item">
           <span class="label">接入方式：</span>
           <span class="value">
@@ -37,6 +38,7 @@
             </span>
           </span>
         </div>
+        -->
         <div class="info-item">
           <span class="label">OS：</span>
           <span class="value">{{ machineInfo.os_distro }} {{ hostInfoRef.os_version }}</span>
@@ -49,15 +51,17 @@
           <span class="label">已安装软件包：</span>
           <span class="value">{{ getInstalledPkgsCount(machineInfo.installed_pkgs) }}</span>
         </div>
+<!-- [Agent 功能暂停]
         <div class="info-item" v-if="agentInfo && agentInfo.connectionType === 'koreops_agent'">
           <el-button type="primary" plain size="small" @click="agentDiagVisible = true">
             <i class="fa fa-stethoscope" /> Agent 通道诊断
           </el-button>
         </div>
+-->
       </div>
     </div>
 
-    <!-- Agent 通道诊断弹窗 -->
+<!-- [Agent 功能暂停] Agent 通道诊断弹窗 
     <el-dialog
       v-model="agentDiagVisible"
       title="Agent 通道诊断"
@@ -100,6 +104,7 @@
         <el-button @click="agentDiagVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+-->
 
 
     <!-- Tab 导航 -->
@@ -182,7 +187,7 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { patchScanApi, getHostAgentInfos } from '../api'
+import { patchScanApi } from '../api' // [Agent 功能暂停] getHostAgentInfos removed
 import { formatDateTime, getInstalledPkgsCount } from '../composables/useFormatters'
 import { useHostDetail } from '../composables/useHostDetail'
 import { getAffectedPackageNames } from '../utils/vulnerabilityPackages'
@@ -224,29 +229,28 @@ const fromRouteQuery = computed(() => {
 // Tab 状态
 const activeTab = ref('patches')
 
-// Agent 通道诊断状态
-const agentDiagVisible = ref(false)
-const agentInfo = ref(null)
+// [Agent 功能暂停] Agent 通道诊断状态
+// [Agent 功能暂停] const agentDiagVisible = ref(false)
 
-async function loadAgentInfo() {
-  if (!hostId.value) return
-  try {
-    const res = await getHostAgentInfos(hostId.value)
-    if (Array.isArray(res) && res.length > 0) {
-      agentInfo.value = res[0]
-    }
-  } catch (err) {
-    console.error('Failed to load Agent info for host detail:', err)
-  }
-}
+// [Agent 功能暂停] async function loadAgentInfo() {
+// [Agent 功能暂停]   if (!hostId.value) return
+// [Agent 功能暂停]   try {
+// [Agent 功能暂停]     const res = await getHostAgentInfos(hostId.value)
+// [Agent 功能暂停]     if (Array.isArray(res) && res.length > 0) {
+// [Agent 功能暂停]       agentInfo.value = res[0]
+// [Agent 功能暂停]     }
+// [Agent 功能暂停]   } catch (err) {
+// [Agent 功能暂停]     console.error('Failed to load Agent info for host detail:', err)
+// [Agent 功能暂停]   }
+// [Agent 功能暂停] }
 
-watch(
-  hostId,
-  () => {
-    loadAgentInfo()
-  },
-  { immediate: true }
-)
+// [Agent 功能暂停] watch(
+// [Agent 功能暂停]   hostId,
+// [Agent 功能暂停]   () => {
+// [Agent 功能暂停]     loadAgentInfo()
+// [Agent 功能暂停]   },
+// [Agent 功能暂停]   { immediate: true }
+// [Agent 功能暂停] )
 
 // 标签页组件引用
 const patchesTabRef = ref(null)

@@ -38,7 +38,7 @@ export const JOB_STATUS_TAG_TYPES: Record<string, '' | 'success' | 'info' | 'war
 }
 
 export const JOB_HISTORY_STATUS_OPTIONS = [
-  { label: 'ALL', value: 'all' },
+  { label: '全部', value: 'all' },
   { label: '等待中', value: 'WAITING' },
   { label: '正在运行', value: 'RUNNING' },
   { label: '回调', value: 'CALLBACK' },

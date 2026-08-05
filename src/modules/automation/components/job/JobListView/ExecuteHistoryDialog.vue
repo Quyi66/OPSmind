@@ -91,8 +91,8 @@
               <span>{{ jobTypeLabel(row.jobTypeKey, row.jobType) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="username" label="执行人" width="100" />
-          <el-table-column prop="reviewUser" label="审核人" width="100" />
+          <!-- <el-table-column prop="username" label="执行人" width="100" /> -->
+          <!-- <el-table-column prop="reviewUser" label="审核人" width="100" /> -->
           <el-table-column prop="duration" label="耗时" width="100" />
           <el-table-column
             prop="endTime"
@@ -101,11 +101,11 @@
             sortable="custom"
             column-key="end_time"
           />
-          <el-table-column label="Ansible Node" min-width="180">
+          <el-table-column label="Ansible Node" min-width="120">
             <template #default="{ row }">
-              <div v-if="row.ansibleNodes.length" class="node-badges">
+              <div v-if="row.executor_url" class="node-badges">
                 <el-tag
-                  v-for="node in row.ansibleNodes"
+                  v-for="node in row.executor_url.split(',')"
                   :key="node"
                   type="info"
                   size="small"
@@ -441,6 +441,7 @@ function mapRunLogRecord(record = {}) {
     startTime: formatDateTime(startValue),
     endTime: formatDateTime(endValue),
     status: record.status ?? '',
+    executor_url: record.executor_url ?? record.executorUrl ?? '',
     ansibleNodes: parseNodes(
       record.ata_url ?? record.ataUrl ?? record.ansible_node ?? record.ansibleNode
     ),

@@ -13,10 +13,12 @@ export async function getHostAgentInfos(hostIds) {
   const idsParam = Array.isArray(hostIds) ? hostIds.join(',') : hostIds
   if (!idsParam) return []
   try {
-    const response = await apiService.get(`${CMDB_AGENT_BASE}/host-info`, {
-      params: { hostIds: idsParam }
-    })
-    return response.data || response || []
+    // 接口 /agent/host-info 返回 404，已注释掉调用
+    // const response = await apiService.get(`${CMDB_AGENT_BASE}/host-info`, {
+    //   params: { hostIds: idsParam }
+    // })
+    // return response.data || response || []
+    return []
   } catch (error) {
     console.error('获取主机 Agent 信息失败:', error)
     return []

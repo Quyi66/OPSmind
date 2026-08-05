@@ -45,21 +45,24 @@ export async function resolveAgentCapabilityHosts(hosts) {
   const hostIds = [...new Set(hostList.map(getAgentHostId).filter(Boolean))]
 
   if (hostIds.length === 0) {
-    throw new Error('目标主机缺少资产 ID，无法确认 Agent 状态')
+    return hostList
   }
 
-  const infoByHostId = new Map()
-  for (let index = 0; index < hostIds.length; index += 100) {
-    const response = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
-    if (!Array.isArray(response)) {
-      throw new Error('主机 Agent 状态接口返回格式异常')
+  try {
+    const infoByHostId = new Map()
+    for (let index = 0; index < hostIds.length; index += 100) {
+      const response = await agentApi.getHostAgentInfo(hostIds.slice(index, index + 100))
+      if (Array.isArray(response)) {
+        response.forEach(info => {
+          if (info?.hostId) infoByHostId.set(String(info.hostId), info)
+        })
+      }
     }
-    response.forEach(info => {
-      if (info?.hostId) infoByHostId.set(String(info.hostId), info)
-    })
-  }
 
-  return hostList.map(host => mergeAgentInfo(host, infoByHostId.get(getAgentHostId(host))))
+    return hostList.map(host => mergeAgentInfo(host, infoByHostId.get(getAgentHostId(host))))
+  } catch {
+    return hostList
+  }
 }
 
 /**
@@ -207,12 +210,6 @@ export function formatAgentCapabilityIssues(issues = []) {
 }
 
 export function validateAgentCapability(hosts, requiredCap = 'scan', availableHosts = []) {
-  const issues = getAgentCapabilityIssues(hosts, requiredCap, availableHosts)
-  if (issues.length === 0) return true
-
-  ElMessage.warning({
-    message: formatAgentCapabilityIssues(issues),
-    duration: 5000
-  })
-  return false
+  // 不再拦截操作，直接放行
+  return true
 }
