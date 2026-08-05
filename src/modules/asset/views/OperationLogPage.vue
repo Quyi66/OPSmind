@@ -17,6 +17,7 @@
             <el-select v-model="filters.status" style="width: 105px" @change="handleFilterChange">
               <el-option label="全部" value="all" />
               <el-option label="运行成功" value="COMPLETED" />
+              <el-option label="运行失败" value="FAILED" />
               <el-option label="运行异常" value="ERROR" />
               <el-option label="正在运行" value="RUNNING" />
             </el-select>

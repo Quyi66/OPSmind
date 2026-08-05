@@ -164,7 +164,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column prop="runUser" label="提权执行账号" width="130">
+              <!-- <el-table-column prop="runUser" label="特权执行账号" width="130">
                 <template #default="{ row }">
                   <div class="credentials-cell">
                     <span class="cred-item" title="提权执行用户">
@@ -173,7 +173,7 @@
                     </span>
                   </div>
                 </template>
-              </el-table-column>
+              </el-table-column> -->
 
               <!-- 6. 更新时间 -->
               <el-table-column prop="updated_at" label="最后修改" width="180">
