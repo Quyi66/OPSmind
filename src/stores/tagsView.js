@@ -1,7 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { authService } from '@/core/auth'
 
-const PERSIST_KEY = 'tags-view-visited'
+const LEGACY_PERSIST_KEY = 'tags-view-visited'
+const PERSIST_KEY_PREFIX = `${LEGACY_PERSIST_KEY}:`
+
+function getPersistKey() {
+  const user = authService.getCurrentUser()
+  const userId = user?.id || user?.login
+
+  if (!userId) return null
+
+  const tenantId = user?.tenantId || 'default'
+  return `${PERSIST_KEY_PREFIX}${encodeURIComponent(tenantId)}:${encodeURIComponent(userId)}`
+}
 
 export const useTagsViewStore = defineStore('tagsView', () => {
   // 状态
@@ -9,9 +21,20 @@ export const useTagsViewStore = defineStore('tagsView', () => {
   const cachedViews = ref([])
   const iframeViews = ref([])
   const isFullscreen = ref(false)
+  let loadedPersistKey = null
+
+  const clearViewState = () => {
+    visitedViews.value = []
+    cachedViews.value = []
+    iframeViews.value = []
+    isFullscreen.value = false
+  }
 
   // 辅助方法：持久化缓存
   const saveVisitedViews = () => {
+    const persistKey = getPersistKey()
+    if (!persistKey) return
+
     const toSave = visitedViews.value
       .filter(v => !(v.meta && v.meta.affix))
       .map(v => ({
@@ -22,12 +45,22 @@ export const useTagsViewStore = defineStore('tagsView', () => {
         query: v.query,
         meta: { ...v.meta }
       }))
-    localStorage.setItem(PERSIST_KEY, JSON.stringify(toSave))
+    localStorage.setItem(persistKey, JSON.stringify(toSave))
   }
 
   const loadPersistedViews = () => {
     try {
-      const stored = localStorage.getItem(PERSIST_KEY)
+      const persistKey = getPersistKey()
+      if (!persistKey || loadedPersistKey === persistKey) return
+
+      // 旧版本使用全局 key，无法安全归属到任何用户，升级后直接丢弃。
+      localStorage.removeItem(LEGACY_PERSIST_KEY)
+
+      // 账号发生切换时，连同 KeepAlive 和 iframe 状态一起清空，避免页面实例跨用户复用。
+      clearViewState()
+      loadedPersistKey = persistKey
+
+      const stored = localStorage.getItem(persistKey)
       if (stored) {
         const views = JSON.parse(stored)
         views.forEach(view => {
@@ -182,7 +215,8 @@ export const useTagsViewStore = defineStore('tagsView', () => {
       const affixTags = visitedViews.value.filter(tag => tag.meta && tag.meta.affix)
       visitedViews.value = affixTags
       iframeViews.value = []
-      localStorage.removeItem(PERSIST_KEY)
+      const persistKey = getPersistKey()
+      if (persistKey) localStorage.removeItem(persistKey)
       resolve([...visitedViews.value])
     })
   }

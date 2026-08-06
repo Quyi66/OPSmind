@@ -6,7 +6,8 @@ export const yumRepoModule = {
   name: 'Yum仓库管理',
   icon: 'fas fa-database',
   description: 'Yum 仓库管理与源清单查看',
-  permissions: ['applet:spm', 'applet:vap'],
+  // YUM 仓库仍使用独立的 SPM 权限；不能因嵌入补丁管理导航而继承 VAP 权限。
+  permissions: ['applet:spm'],
   routePermission: 'applet:spm',
   defaultRoute: '/yum-repo/repos',
   routes: YUM_REPO_ROUTE_DEFS,
