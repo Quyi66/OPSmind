@@ -23,7 +23,7 @@
           <el-input
             v-model="vulKeyword"
             size="small"
-            placeholder="搜索CVE/补丁/包名/状态等"
+            placeholder="搜索漏洞编号/补丁/包名/状态等"
             clearable
             style="width: 260px"
             @input="handleVulKeywordChange"
@@ -99,7 +99,7 @@
       border
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="vul_id" label="CVE" width="150">
+      <el-table-column prop="vul_id" label="漏洞编号" width="150">
         <template #default="{ row }">
           <CveLinkList :cves="[row.vul_id]" :url-resolver="cve => getCveUrl(cve, osDistro)" />
         </template>

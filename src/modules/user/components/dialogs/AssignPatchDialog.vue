@@ -175,7 +175,7 @@
             <el-form-item label="关键词">
               <el-input
                 v-model="patchFilters.keyword"
-                placeholder="搜索补丁编号、概要、CVE"
+                placeholder="搜索补丁编号、概要、漏洞编号"
                 clearable
                 style="width: 240px"
               />

@@ -3,7 +3,7 @@
     <div class="cve-detail-breadcrumb">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item>
-          <a @click.prevent="goBack">Windows CVE 列表</a>
+          <a @click.prevent="goBack">Windows 漏洞详情</a>
         </el-breadcrumb-item>
         <el-breadcrumb-item>{{ cveId }}</el-breadcrumb-item>
       </el-breadcrumb>
@@ -43,7 +43,7 @@
               <div class="card-title">基础信息</div>
               <div class="details-grid two-col inline">
                 <div class="detail-cell">
-                  <span class="label">CVE 编号</span>
+                  <span class="label">漏洞编号</span>
                   <div class="value">
                     <el-link
                       v-if="cveDetail.webUrl"

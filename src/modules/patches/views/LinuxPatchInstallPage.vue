@@ -261,7 +261,7 @@
           <el-form-item label="关键词">
             <el-input
               v-model="filters.keyword"
-              placeholder="搜索补丁编号、概要、CVE..."
+              placeholder="搜索补丁编号、概要、漏洞编号..."
               style="width: 240px"
               clearable
               @keyup.enter="handleSearch"
@@ -353,7 +353,7 @@
               {{ formatDate(row.publish_date) }}
             </template>
           </el-table-column>
-          <el-table-column prop="related_vuls" label="关联CVE" min-width="320">
+          <el-table-column prop="related_vuls" label="关联漏洞" min-width="320">
             <template #default="{ row }">
               <CveLinkList
                 :cves="row.related_vuls"

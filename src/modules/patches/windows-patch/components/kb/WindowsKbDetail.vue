@@ -74,7 +74,7 @@
                   <strong>{{ formatBytes(detail.sizeBytes) }}</strong>
                 </div>
                 <div class="win-kb-detail-cell">
-                  <span>关联 CVE</span>
+                  <span>关联漏洞</span>
                   <strong>{{ detail.totalCves ?? cves.length }}</strong>
                 </div>
                 <div class="win-kb-detail-cell win-kb-detail-cell--wide">
@@ -161,12 +161,12 @@
 
         <el-tab-pane name="cves">
           <template #label>
-            关联 CVE
+            关联漏洞
             <span class="ops-tab-count" v-if="cves.length">{{ cves.length }}</span>
           </template>
           <div class="win-kb-table-pane">
             <el-table :data="cves" height="100%">
-              <el-table-column prop="cveId" label="CVE 编号" width="180">
+              <el-table-column prop="cveId" label="漏洞编号" width="180">
                 <template #default="{ row }">
                   <CveLinkList :cves="[row.cveId]" :url-resolver="getCveUrl" />
                 </template>

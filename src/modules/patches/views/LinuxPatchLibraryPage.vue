@@ -175,7 +175,7 @@
             {{ formatDate(row.publish_date) }}
           </template>
         </el-table-column>
-        <el-table-column prop="related_vuls" label="关联CVE" min-width="200">
+        <el-table-column prop="related_vuls" label="关联漏洞" min-width="200">
           <template #default="{ row }">
             <CveLinkList
               :cves="row.related_vuls"

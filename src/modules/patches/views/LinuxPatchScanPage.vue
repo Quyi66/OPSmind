@@ -35,7 +35,7 @@
         <div class="stat-card vul-card">
           <div class="compact-card-header">
             <div class="card-title">漏洞统计</div>
-            <div class="card-subtitle">CVE 漏洞总数</div>
+            <div class="card-subtitle">漏洞总数</div>
           </div>
           <div class="vul-content">
             <div class="metric-main">
@@ -503,10 +503,10 @@
                 @clear="handleVulnFilterChange"
               />
             </el-form-item>
-            <el-form-item label="CVE编号" label-width="70">
+            <el-form-item label="漏洞编号" label-width="70">
               <el-input
                 v-model="vulnFilters.vul_id"
-                placeholder="输入CVE编号"
+                placeholder="输入漏洞编号"
                 style="width: 140px"
                 clearable
                 @keyup.enter="handleVulnFilterChange"
@@ -764,7 +764,7 @@
                 <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
-            <el-table-column prop="vul_id" label="CVE" width="150">
+            <el-table-column prop="vul_id" label="漏洞编号" width="150">
               <template #default="{ row }">
                 <CveLinkList
                   :cves="[row.vul_id]"
@@ -1664,10 +1664,10 @@ const fixSectionCards = [
   },
   {
     key: 'cves',
-    label: '待更新的 CVE',
+    label: '待更新的漏洞',
     icon: 'fa fa-suitcase text-muted',
     badgeType: 'danger',
-    emptyText: '暂无 CVE'
+    emptyText: '暂无漏洞'
   },
   {
     key: 'packages',

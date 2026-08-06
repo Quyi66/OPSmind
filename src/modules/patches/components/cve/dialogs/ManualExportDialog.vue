@@ -175,11 +175,11 @@ const props = defineProps({
   },
   itemName: {
     type: String,
-    default: 'CVE'
+    default: '漏洞'
   },
   itemIdentifierLabel: {
     type: String,
-    default: 'CVE 编号'
+    default: '漏洞编号'
   },
   itemKeyField: {
     type: [String, Function],
@@ -191,11 +191,11 @@ const props = defineProps({
   },
   searchTitle: {
     type: String,
-    default: '搜索 CVE'
+    default: '搜索漏洞'
   },
   searchPlaceholder: {
     type: String,
-    default: '输入 CVE 编号或关键字'
+    default: '输入漏洞编号或关键字'
   },
   selectedTitle: {
     type: String,
@@ -203,15 +203,15 @@ const props = defineProps({
   },
   batchTip: {
     type: String,
-    default: '支持使用英文逗号、中文逗号、空格或换行分隔多个 CVE 编号'
+    default: '支持使用英文逗号、中文逗号、空格或换行分隔多个漏洞编号'
   },
   batchPlaceholder: {
     type: String,
-    default: '请输入完整的CVE编号，例如：\nCVE-2023-1234\nCVE-2023-1235, CVE-2023-1236'
+    default: '请输入完整的漏洞编号，例如：\nCVE-2023-1234\nCVE-2023-1235, CVE-2023-1236'
   },
   exportFilename: {
     type: String,
-    default: 'CVE漏洞报告.xlsx'
+    default: '漏洞报告.xlsx'
   },
   successMessage: {
     type: String,

@@ -45,7 +45,7 @@
       <el-input
         v-model="patchKeyword"
         size="small"
-        placeholder="搜索补丁编号/摘要/CVE等"
+        placeholder="搜索补丁编号/摘要/漏洞编号等"
         clearable
         style="width: 260px; margin-left: 12px"
         @input="handlePatchKeywordChange"
@@ -131,7 +131,7 @@
           {{ formatPackages(row.affected_pkgs) }}
         </template>
       </el-table-column>
-      <el-table-column prop="related_vuls" label="关联CVE" min-width="180">
+      <el-table-column prop="related_vuls" label="关联漏洞" min-width="180">
         <template #default="{ row }">
           <CveLinkList
             :cves="row.related_vuls"

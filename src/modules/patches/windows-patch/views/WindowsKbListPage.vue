@@ -100,7 +100,7 @@
           <el-form-item label="关键字">
             <el-input
               v-model="searchParams.keyword"
-              placeholder="输入 CVE / KB 号 / 标题"
+              placeholder="输入漏洞编号 / KB 号 / 标题"
               clearable
               style="width: 220px"
               @keyup.enter="search"
@@ -187,12 +187,12 @@
           <el-table-column prop="title" label="标题" min-width="260" show-overflow-tooltip />
           <el-table-column prop="classification" label="分类" width="150" show-overflow-tooltip />
           <el-table-column prop="products" label="产品" min-width="180" show-overflow-tooltip />
-          <el-table-column label="关联 CVE" min-width="220">
+          <el-table-column label="关联漏洞" min-width="220">
             <template #default="{ row }">
               <CveLinkList
                 :cves="resolveCveIds(row)"
                 :url-resolver="getWinCveUrl"
-                dialog-title="关联 CVE"
+                dialog-title="关联漏洞"
               />
             </template>
           </el-table-column>

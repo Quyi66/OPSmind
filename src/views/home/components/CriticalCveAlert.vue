@@ -22,7 +22,7 @@
       <template v-else>
         <!-- 列表表头 -->
         <div class="list-header">
-          <span class="header-label cve-label">CVE 编号</span>
+          <span class="header-label cve-label">漏洞编号</span>
           <span class="header-label source-label">影响系统</span>
           <span class="header-label affected-label">受影响机器</span>
           <span class="header-label packages-label">受影响软件包</span>

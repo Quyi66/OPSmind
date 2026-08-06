@@ -28,14 +28,14 @@
 
       <section class="patch-detail__section">
         <h4 class="patch-detail__section-title">
-          关联 CVE
+          关联漏洞
           <span v-if="cveList.length" class="patch-detail__count">{{ cveList.length }}</span>
         </h4>
         <CveLinkList
           :cves="cveList"
           :url-resolver="cve => getCveUrl(cve, linkSource)"
           :max="0"
-          empty-text="暂无关联 CVE"
+          empty-text="暂无关联漏洞"
         />
       </section>
 

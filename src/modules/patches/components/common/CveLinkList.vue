@@ -71,7 +71,7 @@ const props = defineProps({
   // "+N" 弹窗标题
   dialogTitle: {
     type: String,
-    default: '关联 CVE'
+    default: '关联漏洞'
   },
   // 空数据占位文案
   emptyText: {

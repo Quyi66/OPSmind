@@ -57,7 +57,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="关联 CVE" min-width="200" show-overflow-tooltip>
+            <el-table-column label="关联漏洞" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
                 <template v-if="resolveCveIds(row).length">
                   <el-tag

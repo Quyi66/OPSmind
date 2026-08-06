@@ -74,7 +74,7 @@
           <div class="batch-meta-item" style="display: flex; align-items: center">
             <span class="meta-label" style="color: var(--el-text-color-regular)">比对汇总：</span>
             <span class="meta-value" style="color: var(--el-text-color-primary)">
-              导入 CVE 数
+              导入漏洞数
               <strong style="color: var(--el-color-primary); font-weight: 600">
                 {{ activeBatch.totalInput }}
               </strong>
@@ -101,7 +101,7 @@
       <!-- 比对穿透 Tab -->
       <div class="ops-section flex-detail-container">
         <el-tabs v-model="activeDetailTab" class="detail-tabs">
-          <el-tab-pane label="漏洞整改比对列表 (CVE View)" name="cve">
+          <el-tab-pane label="漏洞整改比对列表" name="cve">
             <template #label>
               <i class="fas fa-bug me-1"></i>
               漏洞整改比对
@@ -120,7 +120,7 @@
                   <el-form-item label="模糊匹配" style="margin-bottom: 0; margin-right: 0">
                     <el-input
                       v-model="cveFilterQuery"
-                      placeholder="搜索 CVE 编号 / 漏洞名称 / 分类 / 威胁等级"
+                      placeholder="搜索 漏洞编号 / 漏洞名称 / 分类 / 威胁等级"
                       clearable
                       style="width: 320px"
                     />
@@ -146,7 +146,7 @@
                 <el-table :data="filteredCveItems" height="100%" style="width: 100%">
                   <el-table-column type="index" label="序号" width="60" align="center" />
                   <el-table-column prop="rawRowNo" label="Excel行号" width="90" align="center" />
-                  <el-table-column prop="cveId" label="CVE 编号" width="180">
+                  <el-table-column prop="cveId" label="漏洞编号" width="180">
                     <template #default="{ row }">
                       <el-link type="primary" underline="never" @click="showCveDetail(row.cveId)">
                         {{ row.cveId }}
@@ -263,7 +263,7 @@
                   <el-table-column prop="osDistro" label="操作系统" width="140">
                     <template #default="{ row }">{{ row.osDistro }} {{ row.osVersion }}</template>
                   </el-table-column>
-                  <el-table-column label="关联 CVE" min-width="240">
+                  <el-table-column label="关联漏洞" min-width="240">
                     <template #default="{ row }">
                       <div class="cve-link-group">
                         <template v-if="row.cveIds && row.cveIds.length > 0">
@@ -347,7 +347,7 @@
       <!-- 操作栏 -->
       <div class="ops-section mb-3">
         <div class="toolbar-wrapper">
-          <h3 class="toolbar-title">CVE文件比对导入批次</h3>
+          <h3 class="toolbar-title">漏洞文件比对导入批次</h3>
           <div class="toolbar-actions">
             <el-button type="primary" @click="openUploadDialog">
               <el-icon><Upload /></el-icon>
@@ -375,7 +375,7 @@
               width="180"
               show-overflow-tooltip
             />
-            <el-table-column prop="totalInput" label="导入CVE数" width="100" align="center" />
+            <el-table-column prop="totalInput" label="导入漏洞数" width="100" align="center" />
             <el-table-column prop="matchedCount" label="成功匹配" width="90" align="center" />
             <el-table-column prop="affectedHosts" label="影响主机" width="90" align="center" />
             <el-table-column prop="status" label="批次状态" width="110" align="center">
@@ -484,7 +484,7 @@
     <!-- CVE 详情对话框 -->
     <el-dialog
       v-model="cveDetailVisible"
-      :title="`CVE 漏洞详情 - ${selectedCveId}`"
+      :title="`漏洞详情 - ${selectedCveId}`"
       width="90%"
       destroy-on-close
     >
@@ -499,7 +499,7 @@
         <CveDetail
           :cve-id="selectedCveId"
           :hide-breadcrumb="true"
-          host-back-label="CVE比对详情"
+          host-back-label="漏洞比对详情"
           host-back-route-name="patches-urgencyDashboard"
           :host-back-route-query="cveDetailHostBackRouteQuery"
           @back="cveDetailVisible = false"
@@ -510,7 +510,7 @@
     <!-- CVE 影响主机清单对话框 -->
     <el-dialog
       v-model="affectedHostsDialogVisible"
-      :title="`CVE 影响主机清单 - ${selectedCveIdForHosts}`"
+      :title="`漏洞影响主机清单 - ${selectedCveIdForHosts}`"
       width="680px"
       destroy-on-close
     >
@@ -552,7 +552,7 @@
     <!-- 主机波及 CVE 详情对话框 -->
     <el-dialog
       v-model="cvesForHostDialogVisible"
-      :title="`主机 CVE 漏洞清单 - ${selectedHostKeyForCves}`"
+      :title="`主机漏洞清单 - ${selectedHostKeyForCves}`"
       width="780px"
       destroy-on-close
     >
@@ -566,7 +566,7 @@
       >
         <el-table :data="cvesForSelectedHost" style="width: 100%">
           <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column prop="cveId" label="CVE 编号" width="180">
+          <el-table-column prop="cveId" label="漏洞编号" width="180">
             <template #default="{ row }">
               <el-link
                 type="primary"
@@ -862,7 +862,7 @@ async function handleCompare(row) {
   comparingId.value = row.id
   try {
     await cveImportApi.compareBatch(row.id)
-    ElMessage.success(`批次 [${row.batchNo}] CVE 比对计算完成！`)
+    ElMessage.success(`批次 [${row.batchNo}] 漏洞比对计算完成！`)
     loadBatches()
   } catch (error) {
     console.error('触发比对失败:', error)
@@ -909,7 +909,7 @@ async function loadBatchCves(batchId) {
     cveItems.value = res?.items || res?.data?.items || []
   } catch (error) {
     console.error('加载CVE详情失败:', error)
-    ElMessage.error('获取CVE比对分析记录失败')
+    ElMessage.error('获取漏洞比对分析记录失败')
   } finally {
     detailLoading.value = false
   }
@@ -1024,7 +1024,7 @@ async function submitUpload() {
     // 1. 上传文件得到解析结果
     const uploadRes = await cveImportApi.uploadExcel(rawFile)
     const batch = uploadRes?.data || uploadRes
-    ElMessage.success('文件上传解析成功！正在后台为您自动执行 CVE 比对，请稍候...')
+    ElMessage.success('文件上传解析成功！正在后台为您自动执行漏洞比对，请稍候...')
 
     uploadDialogVisible.value = false
 
@@ -1051,7 +1051,7 @@ function goToHostDetail(row) {
     query: {
       hostId: row.hostId,
       hostKey: row.hostKey,
-      fromLabel: 'CVE比对详情',
+      fromLabel: '漏洞比对详情',
       fromRouteName: 'patches-urgencyDashboard',
       fromRouteQuery: snapshotHostBackRouteQuery()
     }

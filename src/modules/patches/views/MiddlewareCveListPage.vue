@@ -12,7 +12,7 @@
           <el-form-item label="关键字">
             <el-input
               v-model="searchParams.keyword"
-              placeholder="CVE 编号或描述"
+              placeholder="漏洞编号或描述"
               clearable
               style="width: 200px"
               @keyup.enter="search"
@@ -77,7 +77,7 @@
 
       <div class="ops-table-wrapper" v-loading="loading">
         <el-table :data="cveList" height="100%" style="width: 100%" @sort-change="handleSortChange">
-          <el-table-column prop="cveId" label="CVE 编号" width="180" sortable="custom" />
+          <el-table-column prop="cveId" label="漏洞编号" width="180" sortable="custom" />
           <el-table-column prop="middlewareType" label="中间件" width="120">
             <template #default="{ row }">
               <!-- <el-tag size="small" type="info" effect="light">{{ row.middlewareType }}</el-tag> -->

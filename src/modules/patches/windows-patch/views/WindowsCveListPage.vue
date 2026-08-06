@@ -10,7 +10,7 @@
           </div>
           <div class="cve-stats-total" @click="filterBySeverity('all')" title="查看全部">
             <div class="cve-stats-total-number">{{ formatNumber(statistics.totalCves) }}</div>
-            <div class="cve-stats-total-label">CVE漏洞信息总计</div>
+            <div class="cve-stats-total-label">漏洞信息总计</div>
           </div>
         </div>
 
@@ -88,7 +88,7 @@
           <el-form-item label="关键字">
             <el-input
               v-model="searchParams.keyword"
-              placeholder="CVE 编号或描述关键字"
+              placeholder="漏洞编号或描述关键字"
               clearable
               style="width: 200px"
               @keyup.enter="search"
@@ -159,7 +159,7 @@
           style="width: 100%"
           @sort-change="handleSortChange"
         >
-          <el-table-column prop="cveId" label="CVE 编号" width="180" sortable="custom">
+          <el-table-column prop="cveId" label="漏洞编号" width="180" sortable="custom">
             <template #default="{ row }">
               <el-link type="primary" underline="never" @click="viewDetail(row)">
                 {{ row.cveId }}

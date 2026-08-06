@@ -14,8 +14,8 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item label="CVE">
-          <el-input v-model="filters.vul_id" placeholder="请输入CVE" style="width: 200px" clearable @keyup.enter="handleSearch" @clear="handleSearch">
+        <el-form-item label="漏洞编号">
+          <el-input v-model="filters.vul_id" placeholder="请输入漏洞编号" style="width: 200px" clearable @keyup.enter="handleSearch" @clear="handleSearch">
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -110,7 +110,7 @@
         </el-table-column>
         <el-table-column
           prop="update_id"
-          label="更新维度（CVE/PKG）"
+          label="更新维度（漏洞/软件包）"
           min-width="160"
           show-overflow-tooltip
         />

@@ -136,7 +136,7 @@
             <!-- CVE Card -->
             <div class="fix-info-card">
               <div class="fix-info-header cve-header">
-                <span>受影响的 CVE</span>
+                <span>受影响的漏洞</span>
                 <el-tag size="small" type="danger" effect="light" round>
                   {{ hostDetail.vuls.length || 0 }}
                 </el-tag>
@@ -161,7 +161,7 @@
                       </el-button>
                     </div>
                   </template>
-                  <el-empty v-else description="无受影响的 CVE" :image-size="48" />
+                  <el-empty v-else description="无受影响的漏洞" :image-size="48" />
                 </div>
               </el-scrollbar>
             </div>

@@ -145,7 +145,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="关联 CVE" min-width="220">
+          <el-table-column label="关联漏洞" min-width="220">
             <template #default="{ row }">
               <CveLinkList :cves="resolveCveIds(row)" :url-resolver="getWinCveUrl" />
             </template>

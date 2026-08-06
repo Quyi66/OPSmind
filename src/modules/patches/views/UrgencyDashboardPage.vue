@@ -39,7 +39,7 @@
             </div>
             <div class="rule-header-actions">
               <span class="text-muted fs-7">
-                紧急程度 = f(资产网络区域 × CVE 利用程度 × CVE 风险等级)
+                紧急程度 = f(资产网络区域 × 漏洞利用程度 × 漏洞风险等级)
               </span>
               <el-button
                 type="primary"
@@ -138,14 +138,14 @@
                   <el-tag size="small" effect="plain" type="info">{{ row.location }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="exploit" label="CVE 利用程度" width="130">
+              <el-table-column prop="exploit" label="漏洞利用程度" width="130">
                 <template #default="{ row }">
                   <el-tag size="small" effect="light" :type="getExploitTagType(row.exploit)">
                     {{ row.exploit }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="riskLevel" label="CVE 风险等级" width="130">
+              <el-table-column prop="riskLevel" label="漏洞风险等级" width="130">
                 <template #default="{ row }">
                   <el-tag size="small" effect="light" :type="getRiskTagType(row.riskLevel)">
                     {{ row.riskLevel }}
@@ -198,13 +198,13 @@
           <div class="lookup-input-bar">
             <div class="lookup-input-title mb-2">
               <i class="fas fa-search-plus text-primary me-2"></i>
-              请输入待排查的 CVE 编号或文本
+              请输入待排查的漏洞编号或文本
             </div>
             <el-input
               v-model="lookupText"
               type="textarea"
               :rows="3"
-              placeholder="粘贴包含一个或多个 CVE 编号的排查文本（例如：CVE-2024-1234, CVE-2024-5678&#10;或者直接粘贴整篇通知正文，后台会自动正则提取 CVE 编号并执行即时诊断，结果不落库）"
+              placeholder="粘贴包含一个或多个漏洞编号的排查文本（例如：CVE-2024-1234, CVE-2024-5678&#10;或者直接粘贴整篇通知正文，后台会自动正则提取漏洞编号并执行即时诊断，结果不落库）"
               class="mb-2"
             />
             <div class="lookup-actions">
@@ -234,7 +234,7 @@
               <i class="fas fa-table text-primary me-2"></i>
               即时排查诊断结果
               <span v-if="lookupResults.length" class="text-muted fs-7">
-                (已匹配 {{ lookupResults.length }} 项关联，涉及 {{ totalInputCves }} 个 CVE 编号)
+                (已匹配 {{ lookupResults.length }} 项关联，涉及 {{ totalInputCves }} 个漏洞编号)
               </span>
             </div>
           </div>
@@ -260,7 +260,7 @@
               <el-form-item label="模糊匹配" style="margin-bottom: 0; margin-right: 0">
                 <el-input
                   v-model="lookupSearchQuery"
-                  placeholder="搜索 CVE 编号 / 主机 IP"
+                  placeholder="搜索漏洞编号 / 主机 IP"
                   clearable
                   style="width: 220px"
                 />
@@ -305,7 +305,7 @@
               :data="filteredLookupResults"
               style="width: 100%"
             >
-              <el-table-column prop="cveId" label="CVE 编号" width="160">
+              <el-table-column prop="cveId" label="漏洞编号" width="160">
                 <template #default="{ row }">
                   <el-link
                     type="primary"
@@ -462,7 +462,7 @@
             <el-form-item label="模糊匹配" style="margin-bottom: 0; margin-right: 0">
               <el-input
                 v-model="listSearchQuery"
-                placeholder="搜索 CVE 编号 / 主机 IP"
+                placeholder="搜索漏洞编号 / 主机 IP"
                 clearable
                 style="width: 220px"
               />
@@ -478,7 +478,7 @@
               :data="filteredListResults"
               style="width: 100%"
             >
-              <el-table-column prop="cveId" label="CVE 编号" min-width="160">
+              <el-table-column prop="cveId" label="漏洞编号" min-width="160">
                 <template #default="{ row }">
                   <el-link
                     type="primary"
@@ -584,7 +584,7 @@
       <el-tab-pane name="cveImport" lazy>
         <template #label>
           <i class="fas fa-file-import me-1"></i>
-          CVE 导入比对
+          漏洞导入比对
         </template>
 
         <CveImportPage />
@@ -597,7 +597,7 @@
         <el-alert
           title="重算影响提示"
           type="warning"
-          :description="`系统将分批读取全量资产与漏洞关联数据，并按照当前租户导入的 ${rules.length} 条规则对所有 CVE 漏洞的紧急程度进行重新评估写入。未命中规则时按“一般”兜底。`"
+          :description="`系统将分批读取全量资产与漏洞关联数据，并按照当前租户导入的 ${rules.length} 条规则对所有漏洞的紧急程度进行重新评估写入。未命中规则时按“一般”兜底。`"
           :closable="false"
           show-icon
         />
@@ -677,10 +677,10 @@
         <el-form-item label="资产网络区域">
           <el-tag type="info" effect="plain" style="filter: grayscale(100%);">{{ editForm.location }}</el-tag>
         </el-form-item>
-        <el-form-item label="CVE 利用程度">
+        <el-form-item label="漏洞利用程度">
           <el-tag type="info" effect="plain" style="filter: grayscale(100%);">{{ editForm.exploit }}</el-tag>
         </el-form-item>
-        <el-form-item label="CVE 风险等级">
+        <el-form-item label="漏洞风险等级">
           <el-tag type="info" effect="plain" style="filter: grayscale(100%);">{{ editForm.riskLevel }}</el-tag>
         </el-form-item>
         <el-form-item label="漏洞紧急程度">
@@ -708,7 +708,7 @@
     </el-dialog>
 
     <!-- CVE 详情弹窗 -->
-    <el-dialog v-model="cveDetailVisible" title="CVE 漏洞详情" width="90%" destroy-on-close>
+    <el-dialog v-model="cveDetailVisible" title="漏洞详情" width="90%" destroy-on-close>
       <div
         style="
           max-height: calc(100vh - 200px);
@@ -1314,7 +1314,7 @@ async function saveRule() {
 // 多 CVE 即时诊断排查
 async function handleLookup(preventReset = false) {
   if (!lookupText.value || !lookupText.value.trim()) {
-    ElMessage.warning('请输入待排查的 CVE 编号或文本')
+    ElMessage.warning('请输入待排查的漏洞编号或文本')
     return
   }
 
@@ -1347,7 +1347,7 @@ async function handleLookup(preventReset = false) {
 // 导出即时排查结果为 Excel
 async function handleExportLookup() {
   if (!lookupText.value || !lookupText.value.trim()) {
-    ElMessage.warning('请先输入要排查的 CVE 文本并进行诊断')
+    ElMessage.warning('请先输入要排查的漏洞文本并进行诊断')
     return
   }
 
