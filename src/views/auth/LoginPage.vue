@@ -1,64 +1,30 @@
 <template>
-  <div class="login-page login-background relative overflow-hidden">
-    <!-- Background Pattern -->
-    <div class="absolute inset-0 opacity-20">
-      <div class="absolute top-20 left-20 w-2 h-2 bg-white rounded-full"></div>
-      <div class="absolute top-32 left-40 w-1 h-1 bg-white rounded-full"></div>
-      <div class="absolute top-40 left-60 w-2 h-2 bg-white rounded-full"></div>
-      <div class="absolute top-60 left-80 w-1 h-1 bg-white rounded-full"></div>
-      <div class="absolute top-80 left-32 w-2 h-2 bg-white rounded-full"></div>
-      <div class="absolute bottom-40 right-40 w-2 h-2 bg-white rounded-full"></div>
-      <div class="absolute bottom-60 right-60 w-1 h-1 bg-white rounded-full"></div>
-      <div class="absolute bottom-80 right-80 w-2 h-2 bg-white rounded-full"></div>
-      <!-- Dotted pattern -->
-      <div class="absolute bottom-0 right-0 w-96 h-96 opacity-30">
-        <div class="grid grid-cols-12 gap-2 p-8">
-          <div v-for="i in 144" :key="i" class="w-1 h-1 bg-white rounded-full"></div>
-        </div>
-      </div>
+  <div
+    class="login-page relative w-full h-screen min-h-[580px] overflow-hidden flex items-center justify-center select-none bg-slate-50"
+  >
+    <!-- 全屏 3D 背景图 -->
+    <div class="absolute inset-0 z-0">
+      <img
+        src="@/assets/images/login-bg.png"
+        alt=""
+        aria-hidden="true"
+        class="block w-full h-full object-fill"
+      />
     </div>
 
-    <!-- Header -->
-    <header class="relative z-10 p-6">
-      <div class="login-container">
-        <div class="login-brand">
-          <img src="@/assets/icons/logo.png" alt="KoreOPS" class="h-10 w-auto object-contain mr-1.5" />
-          <span class="login-brand-name">KoreOPS</span>
-        </div>
-      </div>
-    </header>
+    <!-- 以 1920 × 1080 设计画布为基准叠加前景登录面板。 -->
+    <main class="login-design-layer absolute inset-0 z-20 pointer-events-none">
+      <img
+        src="@/assets/images/loginForm-bg.png"
+        alt=""
+        aria-hidden="true"
+        class="login-card-art pointer-events-none"
+      />
 
-    <!-- Main Content -->
-    <div class="login-main relative z-10">
-      <div class="login-container w-full px-4 py-6 md:py-8">
-        <!-- 合并的登录卡片控件 -->
-        <div
-          class="login-card mx-auto flex w-full max-w-[760px] min-h-[400px] flex-col overflow-hidden rounded-2xl border border-gray-100 shadow-2xl md:min-h-[420px] md:flex-row lg:min-h-[460px]"
-        >
-          <!-- 左侧插图卡片（中等及以上屏幕显示） -->
-          <div
-            class="relative hidden overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 md:block md:flex-1"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-indigo-400/5 to-purple-400/5"
-            ></div>
-            <img
-              src="@/assets/images/login-illu@2x.png"
-              alt="KoreOPS Login Illustration"
-              class="w-full h-full object-cover drop-shadow-lg"
-              loading="eager"
-            />
-          </div>
-
-          <!-- 右侧登录表单卡片：占满右半部分 -->
-          <div class="flex flex-1 items-center bg-white">
-            <div class="w-full px-6 md:px-10">
-              <LoginForm />
-            </div>
-          </div>
-        </div>
+      <div class="login-form-overlay pointer-events-auto">
+        <LoginForm />
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -67,76 +33,32 @@ import LoginForm from '@/components/auth/LoginForm.vue'
 </script>
 
 <style scoped>
-/* Login Layout */
 .login-page {
   min-height: 100vh;
   min-height: 100dvh;
 }
 
-.login-main {
-  display: flex;
-  align-items: center;
-  min-height: calc(100vh - 120px);
-  min-height: calc(100dvh - 120px);
+.login-design-layer {
+  width: 100%;
+  height: 100%;
+  inset: 0;
 }
 
-.login-brand {
-  display: flex;
-  align-items: center;
+.login-card-art {
+  position: absolute;
+  top: 22.592593%;
+  left: 28.020833%;
+  width: 43.4375%;
+  height: 62.916667%;
+  object-fit: fill;
 }
 
-.login-brand-name {
-  color: #1269c3;
-  font-family: Inter, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-size: 1.9rem;
-  font-weight: 800;
-  letter-spacing: -0.045em;
-  line-height: 1;
+.login-form-overlay {
+  position: absolute;
+  top: 29.537037%;
+  left: 37.5%;
+  width: 25%;
+  height: 37.12963%;
+  container-type: size;
 }
-
-/* Login Background */
-.login-background {
-  background-image: url('@/assets/images/bg-login@2x.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.login-card {
-  background-color: rgba(255, 255, 255, 0.92);
-}
-
-@supports ((-webkit-backdrop-filter: blur(4px)) or (backdrop-filter: blur(4px))) {
-  .login-card {
-    background-color: rgba(255, 255, 255, 0.72);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
-  }
-}
-
-/* 定宽居中容器（登录页专用） */
-.login-container {
-  max-width: var(--app-max-width);
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-/* 自定义动画 */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Tailwind CSS 样式已经通过类名应用，这里只需要添加自定义动画 */
 </style>

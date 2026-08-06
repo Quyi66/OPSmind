@@ -1,153 +1,134 @@
 <template>
-  <div class="h-full">
-    <!-- 优化的垂直布局容器：使用固定内边距与间距，移除上下挤压 -->
-    <div class="flex flex-col h-full px-1 py-6 justify-center">
-      <!-- 用户登录标题 -->
-      <div class="-mt-2 mb-6">
-        <h2 class="text-lg font-medium text-gray-800 text-left">用户登录</h2>
+  <div class="login-form-shell">
+    <!-- 标题 KoreOPS 与 3D 光标箭头 -->
+    <div class="login-heading">
+      <h1>KoreOPS</h1>
+      <img src="@/assets/images/arrow.png" alt="" aria-hidden="true" class="login-heading-arrow" />
+    </div>
+
+    <!-- 密码登录表单主区域 -->
+    <form
+      class="login-form-content"
+      :class="{ 'login-form-content--with-otp': showOTP }"
+      @submit.prevent="handleLogin"
+      novalidate
+    >
+      <!-- Error Alert -->
+      <div v-if="authError" class="login-error" role="alert" aria-live="assertive">
+        <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <p>{{ errorMessage }}</p>
       </div>
 
-      <!-- Login Form -->
-      <!-- 表单区域（语义化 form，便于键盘提交与无障碍） -->
-      <form class="space-y-6" @submit.prevent="handleLogin" novalidate>
-        <!-- Error Message -->
-        <div
-          v-if="authError"
-          class="p-3 bg-red-50 border border-red-200 rounded"
-          role="alert"
-          aria-live="assertive"
-        >
-          <p class="text-sm font-medium text-red-800">{{ errorMessage }}</p>
-        </div>
+      <!-- 用户名框 -->
+      <div class="login-field login-field--username">
+        <label for="username">用户名</label>
+        <input
+          id="username"
+          v-model="loginForm.username"
+          type="text"
+          placeholder="请输入用户名"
+          autocomplete="username"
+          spellcheck="false"
+          class="login-text-input login-text-input--username"
+          :class="{
+            'login-text-input--error': authError && !loginForm.username
+          }"
+          :disabled="loading"
+          :aria-invalid="authError && !loginForm.username ? 'true' : 'false'"
+          required
+        />
+      </div>
 
-        <!-- 用户名输入框 -->
-        <div>
-          <label for="username" class="sr-only">用户名</label>
+      <!-- 密码框 -->
+      <div class="login-field login-field--password">
+        <label for="password">密码</label>
+        <input
+          id="password"
+          v-model="loginForm.password"
+          type="password"
+          placeholder="请输入密码"
+          autocomplete="current-password"
+          spellcheck="false"
+          class="login-text-input login-text-input--password"
+          :class="{ 'login-text-input--error': authError && !loginForm.password }"
+          :disabled="loading"
+          :aria-invalid="authError && !loginForm.password ? 'true' : 'false'"
+          :aria-describedby="capsLockOn ? 'capslock-hint' : undefined"
+          @keyup="checkCaps"
+          @keydown="checkCaps"
+          required
+        />
+        <p v-if="capsLockOn" id="capslock-hint" class="caps-lock-hint">大写锁定已开启</p>
+      </div>
+
+      <!-- OTP Field (if enabled) -->
+      <div v-if="showOTP" class="login-field login-field--otp">
+        <label for="otp">动态验证码</label>
+        <input
+          id="otp"
+          v-model="loginForm.otpCode"
+          type="text"
+          placeholder="请输入 6 位动态验证码"
+          autocomplete="one-time-code"
+          spellcheck="false"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          class="login-text-input login-text-input--otp"
+          :disabled="loading"
+          maxlength="6"
+        />
+      </div>
+
+      <!-- Options Row -->
+      <div class="login-options">
+        <label>
           <input
-            id="username"
-            v-model="loginForm.username"
-            type="text"
-            placeholder="用户名"
-            autocomplete="username"
-            spellcheck="false"
-            class="login-text-input"
-            :class="{
-              'login-text-input--error': authError && !loginForm.username
-            }"
-            :disabled="loading"
-            :aria-invalid="authError && !loginForm.username ? 'true' : 'false'"
-            :aria-describedby="authError && !loginForm.username ? 'username-error' : undefined"
-            required
-          />
-        </div>
-
-        <!-- 密码输入框 -->
-        <div>
-          <label for="password" class="sr-only">密码</label>
-          <div class="relative">
-            <input
-              id="password"
-              v-model="loginForm.password"
-              type="password"
-              placeholder="密码"
-              autocomplete="current-password"
-              spellcheck="false"
-              class="login-text-input"
-              :class="{ 'login-text-input--error': authError && !loginForm.password }"
-              :disabled="loading"
-              :aria-invalid="authError && !loginForm.password ? 'true' : 'false'"
-              :aria-describedby="
-                [
-                  authError && !loginForm.password ? 'password-error' : '',
-                  capsLockOn ? 'capslock-hint' : ''
-                ]
-                  .filter(Boolean)
-                  .join(' ') || undefined
-              "
-              @keyup="checkCaps"
-              @keydown="checkCaps"
-              required
-            />
-          </div>
-          <p
-            v-if="capsLockOn"
-            id="capslock-hint"
-            class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 inline-block"
-          >
-            大写锁定已开启，可能导致密码错误
-          </p>
-        </div>
-
-        <!-- OTP Field (if enabled) -->
-        <div v-if="showOTP">
-          <label for="otp" class="sr-only">动态验证码</label>
-          <input
-            id="otp"
-            v-model="loginForm.otpCode"
-            type="text"
-            placeholder="动态验证码"
-            autocomplete="one-time-code"
-            spellcheck="false"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            class="login-text-input text-center tracking-widest"
-            :disabled="loading"
-            maxlength="6"
-          />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="flex items-center">
-          <input
-            id="remember"
             v-model="loginForm.rememberMe"
             type="checkbox"
-            class="login-checkbox"
+            name="rememberMe"
             :disabled="loading"
           />
-          <label for="remember" class="ml-2 text-sm text-gray-600 cursor-pointer select-none">
-            保持登录状态
-          </label>
-        </div>
+          <span>保持登录状态</span>
+        </label>
+      </div>
 
-        <!-- 登录按钮 -->
-        <div>
-          <button
-            type="submit"
-            class="login-submit-button"
-            :disabled="loading || !loginForm.username || !loginForm.password"
-            :aria-label="loading ? '登录中，请稍候' : '登录'"
-          >
-            <span v-if="loading" class="flex items-center justify-center">
-              <svg
-                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <circle
-                  class="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  stroke-width="4"
-                ></circle>
-                <path
-                  class="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              <span>登录中...</span>
-            </span>
-            <span v-else>登录</span>
-          </button>
-        </div>
-      </form>
-
-      <!-- 固定底部间距通过父容器 py 控制，无需额外挤压占位 -->
-    </div>
+      <!-- 登录按钮 -->
+      <div class="login-submit-wrap">
+        <button
+          type="submit"
+          class="login-submit-button"
+          :disabled="loading || !loginForm.username || !loginForm.password"
+          :aria-label="loading ? '登录中，请稍候' : '登录'"
+        >
+          <span v-if="loading" class="login-loading">
+            <svg aria-hidden="true" class="animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <span>登录中...</span>
+          </span>
+          <span v-else>登录</span>
+        </button>
+      </div>
+    </form>
   </div>
 </template>
 
@@ -168,7 +149,7 @@ const loginForm = reactive({
   username: '',
   password: '',
   otpCode: '',
-  rememberMe: false
+  rememberMe: true
 })
 
 const loading = ref(false)
@@ -323,7 +304,7 @@ const initializeLoginPage = async () => {
 
     // 自动聚焦到用户名输入框
     setTimeout(() => {
-      const usernameInput = document.querySelector('input[placeholder="用户名"]')
+      const usernameInput = document.getElementById('username')
       if (usernameInput) {
         usernameInput.focus()
       }
@@ -366,108 +347,295 @@ watch(
 </script>
 
 <style scoped>
-.login-text-input {
-  display: block;
+.login-form-shell {
+  position: relative;
   width: 100%;
-  height: 40px;
-  padding: 0 16px;
-  color: #1f2937;
-  font-size: 14px;
-  line-height: 1.25;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  background-color: #f9fafb;
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease,
-    opacity 0.2s ease;
+  height: 100%;
+  color: #344054;
+  font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-.login-text-input::placeholder {
-  color: #6b7280;
-  opacity: 1;
-}
-
-.login-text-input:hover {
-  border-color: #cbd5e1;
-}
-
-.login-text-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
-}
-
-.login-text-input:disabled {
-  color: #6b7280;
-  background-color: #f3f4f6;
-  cursor: not-allowed;
-}
-
-.login-text-input--error {
-  border-color: #fca5a5;
-  background-color: #fef2f2;
-}
-
-.login-text-input--error:focus {
-  border-color: #ef4444;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.12);
-}
-
-.login-checkbox {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  cursor: pointer;
-  accent-color: #2563eb;
-}
-
-.login-checkbox:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.login-submit-button {
-  display: inline-flex;
+.login-heading {
+  position: relative;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 40px;
-  padding: 0 16px;
-  color: #ffffff;
-  font-size: 14px;
+  height: 15.461347cqh;
+}
+
+.login-heading h1 {
+  margin: 0;
+  color: #0088ee;
+  font-family: 'Arial Black', Arial, 'Helvetica Neue', sans-serif;
+  font-size: 8.333333cqw;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.208333cqw;
+  line-height: 15.461347cqh;
+  text-shadow: 0 0.498753cqh 1.666667cqw rgba(0, 136, 238, 0.1);
+  user-select: none;
+}
+
+.login-heading-arrow {
+  position: absolute;
+  top: 2.86783cqh;
+  left: 80.9375cqw;
+  width: 17.916667cqw;
+  height: 21.446384cqh;
+  object-fit: contain;
+  opacity: 0.94;
+  pointer-events: none;
+}
+
+.login-form-content {
+  position: relative;
+  width: 100%;
+  margin-top: 7.481297cqh;
+}
+
+.login-error {
+  position: absolute;
+  top: -7.23192cqh;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 1.25cqw;
+  max-width: 100%;
+  min-height: 5.985037cqh;
+  padding: 0 1.666667cqw;
+  color: #e5484d;
+  font-size: 2.5cqw;
+  line-height: 4.488778cqh;
+  border: 1px solid rgba(229, 72, 77, 0.32);
+  border-radius: 0.833333cqw;
+  background: rgba(255, 245, 245, 0.92);
+}
+
+.login-error svg {
+  width: 2.916667cqw;
+  height: 3.491272cqh;
+  flex: 0 0 auto;
+}
+
+.login-error p {
+  margin: 0;
+}
+
+.login-field {
+  position: relative;
+  width: 100%;
+}
+
+.login-field label {
+  display: block;
+  height: 4.987531cqh;
+  color: #344054;
+  font-size: 3.75cqw;
   font-weight: 500;
-  line-height: 1.2;
-  border: 1px solid #3b82f6;
-  border-radius: 4px;
-  background-color: #3b82f6;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  line-height: 4.987531cqh;
+  text-align: left;
+}
+
+.login-field--username {
+  margin-bottom: 6.234414cqh;
+}
+
+.login-field--username label {
+  margin-bottom: 2.992519cqh;
+}
+
+.login-field--password label,
+.login-field--otp label {
+  margin-bottom: 2.992519cqh;
+}
+
+.login-field--otp {
+  margin-top: 6.234414cqh;
+}
+
+.login-text-input {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  padding: 0 3.125cqw;
+  color: #27364a;
+  font-family: 'Source Code Pro', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  font-size: 3.75cqw;
+  font-weight: 400;
+  line-height: 1;
+  border: 1px solid #d9e0e8;
+  border-radius: 1.041667cqw;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: inset 0 1px 2px rgba(40, 75, 115, 0.035);
+  outline: none;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.login-text-input--username {
+  height: 12.468828cqh;
+}
+
+.login-text-input--password,
+.login-text-input--otp {
+  height: 10.972569cqh;
+}
+
+.login-text-input::placeholder {
+  color: #aeb7c2;
+  opacity: 1;
+}
+
+.login-text-input:hover:not(:disabled) {
+  border-color: #b7c5d4;
+}
+
+.login-text-input:focus {
+  border-color: #0088ee;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 0.625cqw rgba(0, 136, 238, 0.09),
+    inset 0 1px 2px rgba(40, 75, 115, 0.025);
+}
+
+.login-text-input:disabled {
+  cursor: not-allowed;
+}
+
+.caps-lock-hint {
+  position: absolute;
+  top: calc(100% + 0.74813cqh);
+  left: 0;
+  margin: 0;
+  color: #9a6700;
+  font-size: 2.291667cqw;
+  line-height: 4.488778cqh;
+}
+
+.login-options {
+  height: 4.239401cqh;
+  margin-top: 6.234414cqh;
+}
+
+.login-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  height: 100%;
+  color: #005cb2;
+  font-family: 'Source Code Pro', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  font-size: 2.5cqw;
+  font-weight: 400;
+  line-height: 3.740648cqh;
+  cursor: pointer;
+  user-select: none;
+}
+
+.login-options input {
+  appearance: none;
+  width: 2.291667cqw;
+  height: 2.743142cqh;
+  margin: 0 1.458333cqw;
+  flex: 0 0 auto;
+  border: 1px solid #005cb2;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.login-options input:checked {
+  box-shadow: inset 0 0 0 0.416667cqw rgba(255, 255, 255, 0.94);
+  background: #0088ee;
+}
+
+.login-options input:focus-visible {
+  outline: 0.416667cqw solid rgba(0, 136, 238, 0.28);
+  outline-offset: 0.416667cqw;
+}
+
+.login-options input:disabled,
+.login-options input:disabled + span {
+  cursor: not-allowed;
+}
+
+.login-submit-wrap {
+  width: 100%;
+  height: 13.466334cqh;
+  margin-top: 7.481297cqh;
+}
+
+.login-submit-button {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  color: #ffffff;
+  font-family: 'Source Code Pro', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  font-size: 4.166667cqw;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  border: 0;
+  border-radius: 1.25cqw;
+  background: linear-gradient(100deg, #078fe9 0%, #0088ee 55%, #087fe2 100%);
+  box-shadow: 0 1.995012cqh 3.75cqw rgba(0, 111, 205, 0.16);
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    opacity 0.2s ease;
+    transform 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .login-submit-button:hover:not(:disabled) {
-  border-color: #2563eb;
-  background-color: #2563eb;
+  transform: translateY(-1px);
+  background: linear-gradient(100deg, #0088ee 0%, #007edc 100%);
+  box-shadow: 0 2.493766cqh 4.583333cqw rgba(0, 111, 205, 0.2);
 }
 
-.login-submit-button:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.45);
+.login-submit-button:active:not(:disabled) {
+  transform: translateY(0);
+  background: #0078d2;
+  box-shadow: 0 0.997506cqh 2.083333cqw rgba(0, 111, 205, 0.15);
+}
+
+.login-submit-button:focus-visible {
+  outline: 0.416667cqw solid rgba(0, 136, 238, 0.35);
+  outline-offset: 0.416667cqw;
 }
 
 .login-submit-button:disabled {
-  color: #eff6ff;
-  border-color: #93c5fd;
-  background-color: #93c5fd;
-  box-shadow: none;
+  color: #ffffff;
+  background: linear-gradient(100deg, #078fe9 0%, #0088ee 55%, #087fe2 100%);
   cursor: not-allowed;
+}
+
+.login-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.666667cqw;
+}
+
+.login-loading svg {
+  width: 3.333333cqw;
+  height: 3.990025cqh;
+}
+
+.login-text-input--error {
+  border-color: #f87171 !important;
+  background-color: #fef2f2 !important;
+}
+
+.login-text-input--error:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
 }
 </style>
