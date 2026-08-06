@@ -283,7 +283,8 @@
   <el-dialog
     v-model="hostDialogVisible"
     :title="currentHostPatch ? `选择机器 - ${currentHostPatch.patch_id}` : '选择机器'"
-    width="760px"
+    width="900px"
+    top="6vh"
     append-to-body
     destroy-on-close
     :close-on-click-modal="false"
@@ -292,20 +293,29 @@
     <div v-loading="hostLoading" class="host-dialog-body">
       <div class="host-dialog-toolbar">
         <span>仅可分配扫描结果中存在的机器</span>
+        <el-input
+          v-model="hostFilters.keyword"
+          clearable
+          placeholder="搜索 IP"
+          style="width: 180px"
+          @input="handleHostSearch"
+          @clear="handleHostSearch"
+          @keyup.enter="handleHostSearch"
+        />
         <el-tag size="small" type="success">已选 {{ tempSelectedHostIds.length }} 台</el-tag>
       </div>
 
       <el-empty
-        v-if="!hostLoading && availableHosts.length === 0"
-        description="该补丁当前没有可分配的机器"
+        v-if="!hostLoading && filteredAvailableHosts.length === 0"
+        :description="availableHosts.length ? '未找到匹配的机器' : '该补丁当前没有可分配的机器'"
       />
 
       <el-table
         v-else
         ref="hostTableRef"
-        :data="availableHosts"
+        :data="paginatedAvailableHosts"
         row-key="host_id"
-        max-height="420px"
+        max-height="calc(100vh - 400px)"
         @selection-change="handleHostSelectionChange"
       >
         <el-table-column type="selection" :reserve-selection="true" width="50" />
@@ -316,6 +326,19 @@
         </el-table-column>
         <el-table-column prop="host_id" label="机器ID" min-width="220" show-overflow-tooltip />
       </el-table>
+
+      <div v-if="filteredAvailableHosts.length > 0" class="host-dialog-pagination">
+        <el-pagination
+          v-model:current-page="hostPagination.page"
+          v-model:page-size="hostPagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="filteredAvailableHosts.length"
+          layout="total, sizes, prev, pager, next"
+          background
+          @current-change="handleHostPageChange"
+          @size-change="handleHostPageSizeChange"
+        />
+      </div>
     </div>
 
     <template #footer>
@@ -326,7 +349,7 @@
 </template>
 
 <script setup>
-import { nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiService } from '@/core/api'
 
@@ -368,6 +391,27 @@ const patchPagination = reactive({
   page: 1,
   pageSize: 20,
   total: 0
+})
+const hostFilters = reactive({
+  keyword: ''
+})
+const hostPagination = reactive({
+  page: 1,
+  pageSize: 20
+})
+
+const filteredAvailableHosts = computed(() => {
+  const keyword = hostFilters.keyword.trim().toLowerCase()
+  if (!keyword) return availableHosts.value
+
+  return availableHosts.value.filter(host =>
+    String(host.host_key || host.host_id || '').toLowerCase().includes(keyword)
+  )
+})
+
+const paginatedAvailableHosts = computed(() => {
+  const start = (hostPagination.page - 1) * hostPagination.pageSize
+  return filteredAvailableHosts.value.slice(start, start + hostPagination.pageSize)
 })
 
 function padDateTimeUnit(value) {
@@ -897,6 +941,9 @@ async function openHostSelector(patch) {
   tempSelectedHosts.value = Array.isArray(patch.selectedHosts)
     ? patch.selectedHosts.map(normalizeHostItem)
     : []
+  hostFilters.keyword = ''
+  hostPagination.page = 1
+  hostPagination.pageSize = 20
   hostDialogVisible.value = true
   availableHosts.value = ensureAvailableHosts(patch)
 
@@ -913,7 +960,7 @@ function syncHostTableSelection() {
 
   syncingHostSelection.value = true
   hostTableRef.value.clearSelection()
-  availableHosts.value.forEach(row => {
+  paginatedAvailableHosts.value.forEach(row => {
     if (tempSelectedHostIds.value.includes(normalizeId(row.host_id))) {
       hostTableRef.value.toggleRowSelection(row, true)
     }
@@ -928,8 +975,40 @@ function handleHostSelectionChange(selection) {
     return
   }
 
-  tempSelectedHostIds.value = selection.map(item => normalizeId(item.host_id)).filter(Boolean)
-  tempSelectedHosts.value = selection.map(normalizeHostItem)
+  const pageHostIds = new Set(
+    paginatedAvailableHosts.value.map(item => normalizeId(item.host_id)).filter(Boolean)
+  )
+  const selectedHostsById = new Map(
+    tempSelectedHosts.value
+      .map(normalizeHostItem)
+      .filter(item => item.host_id && !pageHostIds.has(normalizeId(item.host_id)))
+      .map(item => [normalizeId(item.host_id), item])
+  )
+
+  selection.map(normalizeHostItem).forEach(item => {
+    if (item.host_id) {
+      selectedHostsById.set(normalizeId(item.host_id), item)
+    }
+  })
+
+  tempSelectedHosts.value = Array.from(selectedHostsById.values())
+  tempSelectedHostIds.value = Array.from(selectedHostsById.keys())
+}
+
+function handleHostSearch() {
+  hostPagination.page = 1
+  nextTick(syncHostTableSelection)
+}
+
+function handleHostPageChange(page) {
+  hostPagination.page = page
+  nextTick(syncHostTableSelection)
+}
+
+function handleHostPageSizeChange(size) {
+  hostPagination.pageSize = size
+  hostPagination.page = 1
+  nextTick(syncHostTableSelection)
 }
 
 function confirmHostSelection() {
@@ -959,6 +1038,9 @@ function resetAssignForm() {
   availableHosts.value = []
   tempSelectedHostIds.value = []
   tempSelectedHosts.value = []
+  hostFilters.keyword = ''
+  hostPagination.page = 1
+  hostPagination.pageSize = 20
   patchFilters.keyword = ''
   patchFilters.severity = []
   patchPagination.page = 1
@@ -1188,8 +1270,19 @@ function getSeverityTagType(severity) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
   color: var(--el-text-color-secondary);
   font-size: 13px;
+}
+
+.host-dialog-toolbar :deep(.el-input) {
+  margin-left: auto;
+}
+
+.host-dialog-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 12px;
 }
 </style>
