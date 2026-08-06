@@ -1842,10 +1842,10 @@ export const cveApi = {
   getCveList(params = {}) {
     const queryParams = {}
 
-    // �芣溶�𣳇�蝛箔��?'all' ����?    if (params.source && params.source !== 'all') queryParams.source = params.source
+    // 过滤“全部”选项，具体系统需原样传给列表接口。
+    if (params.source && params.source !== 'all') queryParams.source = params.source
     if (params.severity && params.severity !== 'all') queryParams.severity = params.severity
     if (params.keyword) queryParams.keyword = params.keyword
-    if (params.packageName) queryParams.packageName = params.packageName
     if (params.startDate) queryParams.startDate = params.startDate
     if (params.endDate) queryParams.endDate = params.endDate
     if (params.page !== undefined) queryParams.page = params.page

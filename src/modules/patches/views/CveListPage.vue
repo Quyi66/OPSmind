@@ -120,15 +120,6 @@
               <el-option value="low" label="低危" />
             </el-select>
           </el-form-item>
-          <el-form-item label="软件包">
-            <el-input
-              v-model="searchParams.packageName"
-              placeholder="包名"
-              clearable
-              style="width: 120px"
-              @keyup.enter="search"
-            @clear="search" />
-          </el-form-item>
           <el-form-item label="发布日期">
             <el-date-picker
               v-model="searchParams.startDateObj"
@@ -328,13 +319,13 @@ const cveList = ref([])
 const statistics = ref(null)
 const loading = ref(false)
 const statisticsLoading = ref(false)
+let latestListRequestId = 0
 
 // 查询参数
 const searchParams = reactive({
   source: 'all',
   severity: 'all',
   keyword: '',
-  packageName: '',
   startDate: '',
   endDate: '',
   startDateObj: null,
@@ -487,10 +478,14 @@ async function loadStatistics() {
 
 // 加载数据
 async function loadData() {
+  const requestId = ++latestListRequestId
   loading.value = true
   try {
     const data = await cveApi.getCveList(searchParams)
     const result = data?.data || data
+
+    // 筛选条件快速变化时，只保留最后一次请求的结果。
+    if (requestId !== latestListRequestId) return
 
     cveList.value = result.content || []
     pagination.totalElements = result.totalElements || 0
@@ -499,12 +494,16 @@ async function loadData() {
     pagination.first = result.first !== false
     pagination.last = result.last !== false
   } catch (error) {
+    if (requestId !== latestListRequestId) return
+
     console.error('CVE列表查询失败:', error)
     ElMessage.error('查询失败，请稍后重试')
     cveList.value = []
     pagination.totalElements = 0
   } finally {
-    loading.value = false
+    if (requestId === latestListRequestId) {
+      loading.value = false
+    }
   }
 }
 
@@ -519,7 +518,6 @@ function resetFilters() {
   searchParams.source = 'all'
   searchParams.severity = 'all'
   searchParams.keyword = ''
-  searchParams.packageName = ''
   searchParams.startDate = ''
   searchParams.endDate = ''
   searchParams.startDateObj = null
@@ -546,8 +544,12 @@ function onDateChange() {
     const startDate = new Date(searchParams.startDate)
     const autoEndDate = new Date(startDate)
     autoEndDate.setFullYear(autoEndDate.getFullYear() + 1)
-    searchParams.endDate = autoEndDate.toISOString().split('T')[0]
+    const autoEndDateValue = autoEndDate.toISOString().split('T')[0]
+    searchParams.endDate = autoEndDateValue
+    searchParams.endDateObj = autoEndDateValue
   }
+
+  search()
 }
 
 // 分页变化处理
