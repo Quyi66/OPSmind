@@ -2,6 +2,11 @@
   <div class="login-form-shell">
     <!-- 品牌标题 -->
     <div class="login-heading">
+      <img
+        src="@/assets/icons/logo-transparent.png"
+        alt="KoreOPS Logo"
+        class="login-brand-logo"
+      />
       <h1>KoreOPS</h1>
     </div>
 
@@ -403,6 +408,16 @@ watch(
   line-height: 15.461347cqh;
   text-shadow: 0 0.498753cqh 1.666667cqw rgba(0, 136, 238, 0.1);
   user-select: none;
+}
+
+.login-brand-logo {
+  height: 9.3cqh;
+  width: auto;
+  object-fit: contain;
+  margin-right: 0.8cqw;
+  user-select: none;
+  pointer-events: none;
+  flex-shrink: 0;
 }
 
 .login-form-content {

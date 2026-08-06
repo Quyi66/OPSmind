@@ -10,6 +10,8 @@
         aria-hidden="true"
         class="block w-full h-full object-fill"
       />
+      <!-- 弱化左下角装饰元素的遮罩 -->
+      <div class="login-bottom-left-mask" aria-hidden="true"></div>
     </div>
 
     <!-- 以 1920 × 1080 设计画布为基准叠加前景登录面板。 -->
@@ -83,5 +85,20 @@ import LoginForm from '@/components/auth/LoginForm.vue'
   width: 25%;
   height: 37.12963%;
   container-type: size;
+}
+
+.login-bottom-left-mask {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 18%;
+  height: 35%;
+  background: radial-gradient(
+    ellipse at 0% 100%,
+    rgba(225, 233, 243, 0.75) 0%,
+    rgba(225, 233, 243, 0.5) 40%,
+    transparent 72%
+  );
+  pointer-events: none;
 }
 </style>
