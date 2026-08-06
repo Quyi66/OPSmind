@@ -162,7 +162,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
             prefix: 'Icon'
           })
         ],
-        dts: 'src/auto-imports.d.ts'
+        // Declarations are only needed by the editor/type checker. Avoid rewriting
+        // them during production builds, where Windows may have them temporarily locked.
+        dts: isProduction ? false : 'src/auto-imports.d.ts'
       }),
 
       // 自动注册 Element Plus 组件（无需手动 import）
@@ -177,7 +179,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
             enabledCollections: ['ep']
           })
         ],
-        dts: 'src/components.d.ts'
+        // See the AutoImport declaration setting above.
+        dts: isProduction ? false : 'src/components.d.ts'
       }),
 
       // 图标支持（按需加载）
