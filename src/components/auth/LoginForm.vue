@@ -1,15 +1,15 @@
 <template>
   <div class="login-form-shell">
-    <!-- 标题 KoreOPS 与 3D 光标箭头 -->
+    <!-- 品牌标题 -->
     <div class="login-heading">
       <h1>KoreOPS</h1>
-      <img src="@/assets/images/arrow.png" alt="" aria-hidden="true" class="login-heading-arrow" />
     </div>
 
     <!-- 密码登录表单主区域 -->
     <form
       class="login-form-content"
       :class="{ 'login-form-content--with-otp': showOTP }"
+      autocomplete="on"
       @submit.prevent="handleLogin"
       novalidate
     >
@@ -31,6 +31,7 @@
         <label for="username">用户名</label>
         <input
           id="username"
+          name="username"
           v-model="loginForm.username"
           type="text"
           placeholder="请输入用户名"
@@ -49,22 +50,45 @@
       <!-- 密码框 -->
       <div class="login-field login-field--password">
         <label for="password">密码</label>
-        <input
-          id="password"
-          v-model="loginForm.password"
-          type="password"
-          placeholder="请输入密码"
-          autocomplete="current-password"
-          spellcheck="false"
-          class="login-text-input login-text-input--password"
-          :class="{ 'login-text-input--error': authError && !loginForm.password }"
-          :disabled="loading"
-          :aria-invalid="authError && !loginForm.password ? 'true' : 'false'"
-          :aria-describedby="capsLockOn ? 'capslock-hint' : undefined"
-          @keyup="checkCaps"
-          @keydown="checkCaps"
-          required
-        />
+        <div class="login-password-control">
+          <input
+            id="password"
+            name="password"
+            v-model="loginForm.password"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="请输入密码"
+            autocomplete="current-password"
+            spellcheck="false"
+            class="login-text-input login-text-input--password"
+            :class="{ 'login-text-input--error': authError && !loginForm.password }"
+            :disabled="loading"
+            :aria-invalid="authError && !loginForm.password ? 'true' : 'false'"
+            :aria-describedby="capsLockOn ? 'capslock-hint' : undefined"
+            @keyup="checkCaps"
+            @keydown="checkCaps"
+            required
+          />
+          <button
+            type="button"
+            class="password-visibility-button"
+            :disabled="loading"
+            :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+            :aria-pressed="showPassword"
+            @click="showPassword = !showPassword"
+          >
+            <svg v-if="showPassword" aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M3 3l18 18" />
+              <path d="M10.6 10.6a2 2 0 002.8 2.8" />
+              <path
+                d="M9.9 5.3A10.7 10.7 0 0112 5.1c6.2 0 9.5 6.9 9.5 6.9a15.9 15.9 0 01-2.5 3.5M6.2 6.2C3.8 7.8 2.5 12 2.5 12s3.3 6.9 9.5 6.9a9.7 9.7 0 004.1-.9"
+              />
+            </svg>
+            <svg v-else aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M2.5 12s3.3-6.9 9.5-6.9 9.5 6.9 9.5 6.9-3.3 6.9-9.5 6.9S2.5 12 2.5 12z" />
+              <circle cx="12" cy="12" r="2.6" />
+            </svg>
+          </button>
+        </div>
         <p v-if="capsLockOn" id="capslock-hint" class="caps-lock-hint">大写锁定已开启</p>
       </div>
 
@@ -104,6 +128,7 @@
         <button
           type="submit"
           class="login-submit-button"
+          :class="{ 'login-submit-button--loading': loading }"
           :disabled="loading || !loginForm.username || !loginForm.password"
           :aria-label="loading ? '登录中，请稍候' : '登录'"
         >
@@ -160,6 +185,7 @@ const initializing = ref(true)
 const tenants = ref([])
 const licenseInfo = ref(null)
 const capsLockOn = ref(false)
+const showPassword = ref(false)
 
 const checkCaps = e => {
   try {
@@ -379,17 +405,6 @@ watch(
   user-select: none;
 }
 
-.login-heading-arrow {
-  position: absolute;
-  top: 2.86783cqh;
-  left: 80.9375cqw;
-  width: 17.916667cqw;
-  height: 21.446384cqh;
-  object-fit: contain;
-  opacity: 0.94;
-  pointer-events: none;
-}
-
 .login-form-content {
   position: relative;
   width: 100%;
@@ -486,9 +501,74 @@ watch(
   height: 10.972569cqh;
 }
 
+.login-password-control {
+  position: relative;
+  width: 100%;
+}
+
+.login-password-control .login-text-input {
+  padding-right: 10cqw;
+}
+
+.password-visibility-button {
+  position: absolute;
+  top: 50%;
+  right: 2.083333cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6.666667cqw;
+  height: 7.98005cqh;
+  padding: 0;
+  color: #7a8ba0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.password-visibility-button:hover:not(:disabled) {
+  color: #0088ee;
+  background: rgba(0, 136, 238, 0.07);
+}
+
+.password-visibility-button:focus-visible {
+  outline: 0.416667cqw solid rgba(0, 136, 238, 0.32);
+  outline-offset: 0.208333cqw;
+}
+
+.password-visibility-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.password-visibility-button svg {
+  width: 3.75cqw;
+  height: 4.488778cqh;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .login-text-input::placeholder {
   color: #aeb7c2;
   opacity: 1;
+}
+
+.login-text-input:not(.login-text-input--error):-webkit-autofill,
+.login-text-input:not(.login-text-input--error):-webkit-autofill:hover {
+  caret-color: #27364a;
+  -webkit-text-fill-color: #27364a;
+  -webkit-box-shadow:
+    0 0 0 1000px #ffffff inset,
+    inset 0 1px 2px rgba(40, 75, 115, 0.035);
+  transition: background-color 9999s ease-out 0s;
 }
 
 .login-text-input:hover:not(:disabled) {
@@ -499,6 +579,13 @@ watch(
   border-color: #0088ee;
   background: #ffffff;
   box-shadow:
+    0 0 0 0.625cqw rgba(0, 136, 238, 0.09),
+    inset 0 1px 2px rgba(40, 75, 115, 0.025);
+}
+
+.login-text-input:not(.login-text-input--error):-webkit-autofill:focus {
+  -webkit-box-shadow:
+    0 0 0 1000px #ffffff inset,
     0 0 0 0.625cqw rgba(0, 136, 238, 0.09),
     inset 0 1px 2px rgba(40, 75, 115, 0.025);
 }
@@ -523,34 +610,49 @@ watch(
 }
 
 .login-options label {
+  position: relative;
+  top: -1.870324cqh;
   display: inline-flex;
   align-items: center;
   gap: 0;
-  height: 100%;
+  height: 7.98005cqh;
   color: #005cb2;
   font-family: 'Source Code Pro', 'Microsoft YaHei', 'PingFang SC', sans-serif;
-  font-size: 2.5cqw;
+  font-size: 2.708333cqw;
   font-weight: 400;
-  line-height: 3.740648cqh;
+  line-height: 4.239401cqh;
   cursor: pointer;
   user-select: none;
 }
 
 .login-options input {
   appearance: none;
-  width: 2.291667cqw;
-  height: 2.743142cqh;
-  margin: 0 1.458333cqw;
+  width: 2.916667cqw;
+  height: 3.491272cqh;
+  margin: 0 1.145833cqw;
   flex: 0 0 auto;
   border: 1px solid #005cb2;
-  border-radius: 50%;
+  border-radius: 0.625cqw;
   background: transparent;
   cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .login-options input:checked {
-  box-shadow: inset 0 0 0 0.416667cqw rgba(255, 255, 255, 0.94);
-  background: #0088ee;
+  border-color: #0088ee;
+  background-color: #0088ee;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 10'%3E%3Cpath d='M1 5l3 3 7-7' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 72% 72%;
+}
+
+.login-options input:hover:not(:disabled) {
+  border-color: #0088ee;
+  box-shadow: 0 0 0 0.416667cqw rgba(0, 136, 238, 0.08);
 }
 
 .login-options input:focus-visible {
@@ -612,9 +714,16 @@ watch(
 }
 
 .login-submit-button:disabled {
+  color: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(100deg, #91c5e8 0%, #83bde5 100%);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.login-submit-button--loading:disabled {
   color: #ffffff;
   background: linear-gradient(100deg, #078fe9 0%, #0088ee 55%, #087fe2 100%);
-  cursor: not-allowed;
+  box-shadow: 0 1.995012cqh 3.75cqw rgba(0, 111, 205, 0.16);
 }
 
 .login-loading {

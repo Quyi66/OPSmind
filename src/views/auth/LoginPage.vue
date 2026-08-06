@@ -15,6 +15,13 @@
     <!-- 以 1920 × 1080 设计画布为基准叠加前景登录面板。 -->
     <main class="login-design-layer absolute inset-0 z-20 pointer-events-none">
       <img
+        src="@/assets/images/bottom-shadow.png"
+        alt=""
+        aria-hidden="true"
+        class="login-card-reflection pointer-events-none"
+      />
+
+      <img
         src="@/assets/images/loginForm-bg.png"
         alt=""
         aria-hidden="true"
@@ -46,6 +53,7 @@ import LoginForm from '@/components/auth/LoginForm.vue'
 
 .login-card-art {
   position: absolute;
+  z-index: 1;
   top: 22.592593%;
   left: 28.020833%;
   width: 43.4375%;
@@ -53,8 +61,23 @@ import LoginForm from '@/components/auth/LoginForm.vue'
   object-fit: fill;
 }
 
+.login-card-reflection {
+  position: absolute;
+  z-index: 0;
+  top: 76.851852%;
+  left: 28.020833%;
+  width: 43.90625%;
+  height: 23.796296%;
+  object-fit: fill;
+  opacity: 0.55;
+  filter: blur(0.6px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.7) 34%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.7) 34%, transparent 100%);
+}
+
 .login-form-overlay {
   position: absolute;
+  z-index: 2;
   top: 29.537037%;
   left: 37.5%;
   width: 25%;
